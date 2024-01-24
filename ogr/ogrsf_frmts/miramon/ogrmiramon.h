@@ -38,7 +38,7 @@
 #include "mm_wrlayr.h"
 
 /************************************************************************/
-/*                             OGRMiraMonLayer                              */
+/*                             OGRMiraMonLayer                          */
 /************************************************************************/
 
 class OGRMiraMonLayer final : public OGRLayer,
@@ -49,7 +49,19 @@ class OGRMiraMonLayer final : public OGRLayer,
 
     GUIntBig iNextFID;
 
-    struct MiraMonVectLayerInfo hMiraMonLayer; // MiraMon layer
+    // Pointer to one of three possible MiraMon layers: points,
+    // arcs or polygons. Every time a feature is readed this pointer
+    // points to the appropiate layer
+    struct MiraMonVectLayerInfo *phMiraMonLayer;
+
+    // When writing a layer
+    struct MiraMonVectLayerInfo hMiraMonLayerPNT; // MiraMon points layer
+    struct MiraMonVectLayerInfo hMiraMonLayerARC; // MiraMon arcs layer
+    struct MiraMonVectLayerInfo hMiraMonLayerPOL; // MiraMon polygons layer
+
+    // When reading a layer or the result of writting is only a DBF
+    struct MiraMonVectLayerInfo hMiraMonLayerReadOrNonGeom; 
+
     struct MiraMonFeature hMMFeature; // Feature reading/writing
     struct MiraMonDataBase hLayerDB;
 
@@ -78,13 +90,14 @@ class OGRMiraMonLayer final : public OGRLayer,
     void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
                     MM_EXT_DBF_N_RECORDS nIRecord, MM_EXT_DBF_N_FIELDS nIField);
 
-    OGRErr OGRMiraMonLayer::DumpVertices(OGRGeometryH hGeom,
-                    bool bExternalRing, int eLT);
-    OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom,
-                                        bool bExternalRing,
-                                        OGRFeature *poFeature);
-    OGRErr MMWriteGeometry(bool bExternalRing, 
+    OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
+                    MM_BOOLEAN bExternalRing, MM_BOOLEAN bUsepbArcInfo);
+    OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH poGeom,
                     OGRFeature *poFeature);
+    OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
+                    OGRFeature* poFeature);
+    OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom);
+    OGRErr MMWriteGeometry(bool bExternalRing);
     GIntBig GetFeatureCount(int bForce);
     
   public:
@@ -92,7 +105,7 @@ class OGRMiraMonLayer final : public OGRLayer,
 
     OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                 const OGRSpatialReference *poSRS, int bUpdate,
-                char **papszOpenOptions);
+                char **papszOpenOptions, struct MiraMonVectMapInfo *MMMap);
     virtual ~OGRMiraMonLayer();
 
     void ResetReading() override;
@@ -128,8 +141,10 @@ class OGRMiraMonDataSource final : public OGRDataSource
 {
     OGRMiraMonLayer **papoLayers;
     int nLayers;
+    char *pszRootName;
     char *pszDSName;
     bool bUpdate;
+    struct MiraMonVectMapInfo MMMap;
        
   public:
     OGRMiraMonDataSource();

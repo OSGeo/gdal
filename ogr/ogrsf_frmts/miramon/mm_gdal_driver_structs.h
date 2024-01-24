@@ -60,7 +60,7 @@ CPL_C_START // Necessary for compiling in GDAL project
 
 
 // Types of layers in MiraMon
-#define MM_LayerType_Unknown    0 // Unknown type
+#define MM_LayerType_Unknown    0 // Unknown type or only table
 #define MM_LayerType_Point      1 // Layer of Points
 #define MM_LayerType_Point3d    2 // Layer of 3D Points
 #define MM_LayerType_Arc        3 // Layer of Arcs
@@ -643,6 +643,10 @@ struct MiraMonVectLayerInfo
     int bIsArc; // Also 1 in a polygon layer
     int bIsNode; // Not used in GDAL
     int bIsPoint;
+
+    // In writting mode when one of the features is 3D, the MM layer will be 3D,
+    // but if none of the features are 3D, then the layer will not be 3D.
+    int bIsReal3d; 
     
     // Final number of elements of the layer. 
     MM_INTERNAL_FID nFinalElemCount; // Real element count after conversion
@@ -663,7 +667,9 @@ struct MiraMonVectLayerInfo
 
     int eLT;    // Type of layer: Point, line or polygon (3d or not)
     int bIsBeenInit; // 1 if layer has already been initialized
-    
+
+    // A Layer can have objects of all kinds and in MiraMon
+    // they are all translate to one of them of descarted
     // Point layer
     struct MiraMonPointLayer MMPoint;
 
@@ -688,7 +694,12 @@ struct MiraMonVectLayerInfo
 
     // In MiraMon->GDAL sense:
     // MiraMon extended DBF header
+    // In GDAL->MiraMon, used when there is no geometry
     struct MM_BASE_DADES_XP *pMMBDXP;
+
+    // In GDAL->MiraMon, used when there is no geometry
+    struct MMAdmDatabase MMAdmDBWriting;
+    
 
     // Offset of every FID in the database
     MM_BOOLEAN isListField;  // It determines if fiels ar List or simple (multirecord).
@@ -722,6 +733,17 @@ struct MiraMonVectLayerInfo
     struct MM_PAL_MEM *pArcs;
 
     struct MM_FLUSH_INFO FlushPAL;
+
+    struct MiraMonVectMapInfo *MMMap; // Don't free
+};
+
+// There is the possibility of creating a map with all layers
+// to visualize it with only one click
+struct MiraMonVectMapInfo
+{
+    char pszMapName[MM_CPL_PATH_BUF_SIZE];
+    FILE *fMMMap;
+    int nNumberOfLayers;
 };
 
 enum DataType {MMDTByte, MMDTInteger, MMDTuInteger, 

@@ -32,8 +32,11 @@
 /************************************************************************/
 
 OGRMiraMonDataSource::OGRMiraMonDataSource()
-    : papoLayers(nullptr), nLayers(0), pszDSName(nullptr), bUpdate(false)
+    : papoLayers(nullptr), nLayers(0), pszDSName(nullptr), bUpdate(false),
+    pszRootName(nullptr)
 {
+    MMMap.nNumberOfLayers=0;
+    MMMap.fMMMap=NULL;
 }
 
 /************************************************************************/
@@ -47,6 +50,10 @@ OGRMiraMonDataSource::~OGRMiraMonDataSource()
         delete papoLayers[i];
     CPLFree(papoLayers);
     CPLFree(pszDSName);
+    CPLFree(pszRootName);
+
+    if(MMMap.fMMMap)
+        VSIFClose(MMMap.fMMMap);
 }
 
 /************************************************************************/
@@ -61,19 +68,37 @@ int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
     bUpdate = CPL_TO_BOOL(bUpdateIn);
 
     OGRMiraMonLayer *poLayer = new OGRMiraMonLayer(pszFilename, fp, poSRS,
-                bUpdate, papszOpenOptionsUsr);
+                bUpdate, papszOpenOptionsUsr, &MMMap);
     if (!poLayer->bValidFile)
     {
         delete poLayer;
         return FALSE;
     }
-
     papoLayers = static_cast<OGRMiraMonLayer **>(
         CPLRealloc(papoLayers, (size_t)(sizeof(OGRMiraMonLayer *) *
             ((size_t)nLayers + (size_t)1))));
     papoLayers[nLayers] = poLayer;
     nLayers++;
 
+    if (pszDSName)
+    {
+        strcpy(MMMap.pszMapName, CPLFormFilename(pszDSName, CPLGetBasename(pszDSName), "mmm"));
+        if (!MMMap.nNumberOfLayers)
+        {
+            MMMap.fMMMap = VSIFOpen(MMMap.pszMapName, "w+");
+            VSIFPrintf(MMMap.fMMMap, "[VERSIO]\n");
+            VSIFPrintf(MMMap.fMMMap, "Vers=2\n");
+            VSIFPrintf(MMMap.fMMMap, "SubVers=0\n");
+            VSIFPrintf(MMMap.fMMMap, "variant=b\n");
+            VSIFPrintf(MMMap.fMMMap, "\n");
+            VSIFPrintf(MMMap.fMMMap, "[DOCUMENT]\n");
+            VSIFPrintf(MMMap.fMMMap, "Titol= %s(map)\n", CPLGetBasename(poLayer->GetName()));
+            VSIFPrintf(MMMap.fMMMap, "\n");
+        }
+    }
+    else
+        *MMMap.pszMapName='\0';
+    
     CPLFree(pszDSName);
     pszDSName = CPLStrdup(pszFilename);
 
@@ -92,6 +117,7 @@ int OGRMiraMonDataSource::Create(const char *pszDataSetName,
 
 {
     pszDSName = CPLStrdup(pszDataSetName);
+    pszRootName = CPLStrdup(pszDataSetName);
 
     return TRUE;
 }
@@ -108,7 +134,7 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     CPLAssert(nullptr != pszLayerName);
 
     const char *osPath;
-    CPLString osFilename(pszDSName);
+    CPLString osFilename(pszRootName);
     char *pszMMLayerName;
     const char *pszFullMMLayerName;
     const char *pszFlags = "wb+";
@@ -122,32 +148,32 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     // If the dataset has an extension, we understand that the path
     // of the file is where to write, and the layer name is the
     // dataset name (without extension).
-    const char *pszExtension = CPLGetExtension(pszDSName);
+    const char *pszExtension = CPLGetExtension(pszRootName);
     if(EQUAL(pszExtension, "pol") ||
         EQUAL(pszExtension, "arc") ||
         EQUAL(pszExtension, "pnt"))
     {
-        pszMMLayerName = CPLStrdup(CPLResetExtension(pszDSName, ""));
+        pszMMLayerName = CPLStrdup(CPLResetExtension(pszRootName, ""));
         pszMMLayerName[strlen(pszMMLayerName)-1]='\0';
 
         pszFullMMLayerName = (const char *)pszMMLayerName;
-        osPath = CPLGetPath(pszDSName);
+        osPath = CPLGetPath(pszRootName);
     }
     else
     {
         pszMMLayerName = CPLStrdup(pszLayerName);
-        osPath = pszDSName;
-        pszFullMMLayerName = CPLFormFilename(pszDSName, pszLayerName, NULL);
+        osPath = pszRootName;
+        pszFullMMLayerName = CPLFormFilename(pszRootName, pszLayerName, NULL);
     }
 
     // Let's create the folder if it's not already created.
     if (VSIMkdirRecursive(osPath,  0777) !=0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Unable to create directory %s.",
-                 pszDSName);
+                 pszRootName);
         return nullptr;
     }    
-    
+
     /* -------------------------------------------------------------------- */
     /*      Return open layer handle.                                       */
     /* -------------------------------------------------------------------- */

@@ -57,7 +57,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define OGR_L_ResetReading_function(a)      ptr_MM_OGR_L_ResetReading((a))
     #define GDALDatasetGetLayer_function(a,b)   ptr_MM_GDALDatasetGetLayer((a),(b))
     #define form_filename_function(a,b)         MuntaPath((a),(b),TRUE)
-    #define form_filename_extension_function(a,b)  MuntaPath((a),(b),TRUE) // ·$· REVISAR (es simplement afegir l'extensio pero demanant memoria)
+    #define form_filename_extension_function(a,b)  MuntaPath((a),(b),TRUE) // Â·$Â· REVISAR (es simplement afegir l'extensio pero demanant memoria)
 #else
     #define calloc_function(a) CPLCalloc(1,(a))
     #define realloc_function CPLRealloc
@@ -118,7 +118,7 @@ int MMInitLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 const char *pzFileName, 
                 __int32 LayerVersion, double nMMMemoryRatio,
                 struct MiraMonDataBase *pLayerDB,
-                MM_BOOLEAN ReadOrWrite);
+                MM_BOOLEAN ReadOrWrite, struct MiraMonVectMapInfo *MMMap);
 int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer);
 int MMFreeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer);
 int MMCloseLayer(struct MiraMonVectLayerInfo *hMiraMonLayer);
