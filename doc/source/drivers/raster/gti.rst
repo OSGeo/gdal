@@ -164,7 +164,7 @@ PostGIS, ...), the following layer metadata items may be set:
   virtual mosaic. Defaults to 256x256.
 
 * ``MASK_BAND=YES|NO``: whether a dataset-level mask band should be exposed.
-   Defaults to NO.
+  Defaults to NO.
 
 * ``RESAMPLING=<val>``: Resampling method to use for on-the-fly reprojection,
   or rendering of tiles whose origin coordinates are not at an offset multiple
