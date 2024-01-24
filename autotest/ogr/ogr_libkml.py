@@ -2193,3 +2193,21 @@ def test_ogr_libkml_write_reproject(tmp_vsimem):
     ds = None
 
     gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test reading a gx:Track without <when> elements
+
+
+def test_ogr_libkml_gx_track_without_when():
+    if not ogrtest.have_read_libkml:
+        pytest.skip()
+
+    ds = ogr.Open("data/kml/gx_track_without_when.kml")
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(
+        feat,
+        "LINESTRING Z (-122.207881 37.371915 156,-122.205712 37.373288 152,-122.204678 37.373939 147,-122.203572 37.37463 142.199997,-122.203451 37.374706 141.800003,-122.203329 37.37478 141.199997,-122.203207 37.374857 140.199997)",
+    )
+    ds = None
