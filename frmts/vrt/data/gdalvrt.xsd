@@ -413,6 +413,7 @@
                 <xs:group ref="SimpleSourceElementsGroup"/>
                 <xs:element name="NODATA" type="DoubleOrNanType"/> <!-- NODATA and UseMaskBand are mutually exclusive -->
                 <xs:element name="MaskValueThreshold" type="xs:double"/>
+                <xs:element name="RemappedValue" type="xs:double"/>
             </xs:choice>
         </xs:sequence>
     </xs:group>

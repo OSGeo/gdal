@@ -1204,6 +1204,8 @@ class VRTNoDataFromMaskSource final : public VRTSimpleSource
     bool m_bNoDataSet = false;
     double m_dfNoDataValue = 0;
     double m_dfMaskValueThreshold = 0;
+    bool m_bHasRemappedValue = false;
+    double m_dfRemappedValue = 0;
 
   public:
     VRTNoDataFromMaskSource();
@@ -1223,6 +1225,8 @@ class VRTNoDataFromMaskSource final : public VRTSimpleSource
                                 void *pProgressData) override;
 
     void SetParameters(double dfNoDataValue, double dfMaskValueThreshold);
+    void SetParameters(double dfNoDataValue, double dfMaskValueThreshold,
+                       double dfRemappedValue);
 
     virtual CPLErr XMLInit(CPLXMLNode *psTree, const char *,
                            std::map<CPLString, GDALDataset *> &) override;

@@ -2042,6 +2042,13 @@ CPLErr VRTNoDataFromMaskSource::XMLInit(
     m_dfMaskValueThreshold =
         CPLAtofM(CPLGetXMLValue(psSrc, "MaskValueThreshold", "0"));
 
+    if (const char *pszRemappedValue =
+            CPLGetXMLValue(psSrc, "RemappedValue", nullptr))
+    {
+        m_bHasRemappedValue = true;
+        m_dfRemappedValue = CPLAtofM(pszRemappedValue);
+    }
+
     return CE_None;
 }
 
@@ -2086,6 +2093,12 @@ CPLXMLNode *VRTNoDataFromMaskSource::SerializeToXML(const char *pszVRTPath)
                        VRTSerializeNoData(dfNoDataValue, eBandDT, 18).c_str());
     }
 
+    if (m_bHasRemappedValue)
+    {
+        CPLSetXMLValue(psSrc, "RemappedValue",
+                       CPLSPrintf("%.18g", m_dfRemappedValue));
+    }
+
     return psSrc;
 }
 
@@ -2099,6 +2112,21 @@ void VRTNoDataFromMaskSource::SetParameters(double dfNoDataValue,
     m_bNoDataSet = true;
     m_dfNoDataValue = dfNoDataValue;
     m_dfMaskValueThreshold = dfMaskValueThreshold;
+    if (!m_bHasRemappedValue)
+        m_dfRemappedValue = m_dfNoDataValue;
+}
+
+/************************************************************************/
+/*                           SetParameters()                            */
+/************************************************************************/
+
+void VRTNoDataFromMaskSource::SetParameters(double dfNoDataValue,
+                                            double dfMaskValueThreshold,
+                                            double dfRemappedValue)
+{
+    SetParameters(dfNoDataValue, dfMaskValueThreshold);
+    m_bHasRemappedValue = true;
+    m_dfRemappedValue = dfRemappedValue;
 }
 
 /************************************************************************/
@@ -2172,13 +2200,57 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
     const int nSrcBandDTSize = GDALGetDataTypeSizeBytes(eSrcBandDT);
     const auto eSrcMaskBandDT = l_band->GetMaskBand()->GetRasterDataType();
     const int nSrcMaskBandDTSize = GDALGetDataTypeSizeBytes(eSrcMaskBandDT);
+    double dfRemappedValue = m_dfRemappedValue;
+    if (!m_bHasRemappedValue)
+    {
+        if (eSrcBandDT == GDT_Byte &&
+            m_dfNoDataValue >= std::numeric_limits<GByte>::min() &&
+            m_dfNoDataValue <= std::numeric_limits<GByte>::max() &&
+            static_cast<int>(m_dfNoDataValue) == m_dfNoDataValue)
+        {
+            if (m_dfNoDataValue == std::numeric_limits<GByte>::max())
+                dfRemappedValue = m_dfNoDataValue - 1;
+            else
+                dfRemappedValue = m_dfNoDataValue + 1;
+        }
+        else if (eSrcBandDT == GDT_UInt16 &&
+                 m_dfNoDataValue >= std::numeric_limits<uint16_t>::min() &&
+                 m_dfNoDataValue <= std::numeric_limits<uint16_t>::max() &&
+                 static_cast<int>(m_dfNoDataValue) == m_dfNoDataValue)
+        {
+            if (m_dfNoDataValue == std::numeric_limits<uint16_t>::max())
+                dfRemappedValue = m_dfNoDataValue - 1;
+            else
+                dfRemappedValue = m_dfNoDataValue + 1;
+        }
+        else if (eSrcBandDT == GDT_Int16 &&
+                 m_dfNoDataValue >= std::numeric_limits<int16_t>::min() &&
+                 m_dfNoDataValue <= std::numeric_limits<int16_t>::max() &&
+                 static_cast<int>(m_dfNoDataValue) == m_dfNoDataValue)
+        {
+            if (m_dfNoDataValue == std::numeric_limits<int16_t>::max())
+                dfRemappedValue = m_dfNoDataValue - 1;
+            else
+                dfRemappedValue = m_dfNoDataValue + 1;
+        }
+        else
+        {
+            constexpr double EPS = 1e-3;
+            if (m_dfNoDataValue == 0)
+                dfRemappedValue = EPS;
+            else
+                dfRemappedValue = m_dfNoDataValue * (1 + EPS);
+        }
+    }
     const bool bByteOptim =
         (eSrcBandDT == GDT_Byte && eBufType == GDT_Byte &&
          eSrcMaskBandDT == GDT_Byte && m_dfMaskValueThreshold >= 0 &&
          m_dfMaskValueThreshold <= 255 &&
          static_cast<int>(m_dfMaskValueThreshold) == m_dfMaskValueThreshold &&
          m_dfNoDataValue >= 0 && m_dfNoDataValue <= 255 &&
-         static_cast<int>(m_dfNoDataValue) == m_dfNoDataValue);
+         static_cast<int>(m_dfNoDataValue) == m_dfNoDataValue &&
+         dfRemappedValue >= 0 && dfRemappedValue <= 255 &&
+         static_cast<int>(dfRemappedValue) == dfRemappedValue);
     GByte *abyWrkBuffer;
     try
     {
@@ -2251,6 +2323,7 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
         const GByte nMaskValueThreshold =
             static_cast<GByte>(m_dfMaskValueThreshold);
         const GByte nNoDataValue = static_cast<GByte>(m_dfNoDataValue);
+        const GByte nRemappedValue = static_cast<GByte>(dfRemappedValue);
         size_t nSrcIdx = 0;
         for (int iY = 0; iY < nOutYSize; iY++)
         {
@@ -2265,8 +2338,16 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
                 }
                 else
                 {
-                    pabyOut[static_cast<GPtrDiff_t>(nDstOffset)] =
-                        abyWrkBuffer[nSrcIdx];
+                    if (abyWrkBuffer[nSrcIdx] == nNoDataValue)
+                    {
+                        pabyOut[static_cast<GPtrDiff_t>(nDstOffset)] =
+                            nRemappedValue;
+                    }
+                    else
+                    {
+                        pabyOut[static_cast<GPtrDiff_t>(nDstOffset)] =
+                            abyWrkBuffer[nSrcIdx];
+                    }
                 }
                 nDstOffset += nPixelSpace;
                 nSrcIdx++;
@@ -2280,6 +2361,9 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
         const int nBufDTSize = GDALGetDataTypeSizeBytes(eBufType);
         std::vector<GByte> abyDstNoData(nBufDTSize);
         GDALCopyWords(&m_dfNoDataValue, GDT_Float64, 0, abyDstNoData.data(),
+                      eBufType, 0, 1);
+        std::vector<GByte> abyRemappedValue(nBufDTSize);
+        GDALCopyWords(&dfRemappedValue, GDT_Float64, 0, abyRemappedValue.data(),
                       eBufType, 0, 1);
         for (int iY = 0; iY < nOutYSize; iY++)
         {
@@ -2316,6 +2400,8 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
                         GDALCopyWords(pSrc, eSrcBandDT, 0, pDst, eBufType, 0,
                                       1);
                     }
+                    if (memcmp(pDst, abyDstNoData.data(), nBufDTSize) == 0)
+                        memcpy(pDst, abyRemappedValue.data(), nBufDTSize);
                 }
                 nDstOffset += nPixelSpace;
                 nSrcIdx++;

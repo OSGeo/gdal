@@ -506,14 +506,16 @@ NoDataFromMaskSource
 .. versionadded:: 3.9
 
 The NoDataFromMaskSource is derived from the SimpleSource and shares the same properties except that it replaces the value of the source with the value of the NODATA child element when the value of the mask band of the source is less or equal to the MaskValueThreshold child element.
+An optional RemappedValue element can be set to specify the value onto which valid pixels whose value is the one of NODATA should be remapped to. When RemappedValue is not explicitly specified, for Byte bands, if NODATA=255, it is implicitly set to 254, otherwise it is set to NODATA+1.
 
 .. code-block:: xml
 
     <NoDataFromMaskSource>
       <SourceFilename relativeToVRT="1">in.tif</SourceFilename>
       <SourceBand>1</SourceBand>
-      <MaskValueThreshold>128</MaskValueThreshold>
+      <MaskValueThreshold>128</MaskValueThreshold> <!-- if the mask value is &lt;= 128, pixels are set to NODATA=0 -->
       <NODATA>0</NODATA>
+      <RemappedValue>1</RemappedValue> <!-- valid/unmasked pixels at NODATA=0 are remapped to 1 -->
     </NoDataFromMaskSource>
 
 
