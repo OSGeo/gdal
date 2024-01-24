@@ -1795,17 +1795,26 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
                     ->GetOverviewCount();
             for (int i = 1; i < psOptions->nInputSpectralBands; i++)
             {
-                if (GDALRasterBand::FromHandle(
-                        psOptions->pahInputSpectralBands[i])
-                        ->GetOverviewCount() != nSpectralOvrCount)
+                auto poSpectralBand = GDALRasterBand::FromHandle(
+                    psOptions->pahInputSpectralBands[i]);
+                if (poSpectralBand->GetOverviewCount() != nSpectralOvrCount)
                 {
                     return 0;
                 }
             }
+            auto poPanBandDS = poPanBand->GetDataset();
             for (int j = 0; j < std::min(nPanOvrCount, nSpectralOvrCount); j++)
             {
                 auto poPanOvrDS =
-                    GDALCreateOverviewDataset(poPanBand->GetDataset(), j, true);
+                    GDALCreateOverviewDataset(poPanBandDS, j, true);
+                if (!poPanOvrDS)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "GDALCreateOverviewDataset(poPanBandDS, %d, true) "
+                             "failed",
+                             j);
+                    break;
+                }
                 GDALRasterBand *poPanOvrBand =
                     poPanOvrDS->GetRasterBand(poPanBand->GetBand());
                 VRTPansharpenedDataset *poOvrDS = new VRTPansharpenedDataset(
@@ -1833,6 +1842,16 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
                         psOptions->pahInputSpectralBands[i]);
                     auto poSpectralOvrDS = GDALCreateOverviewDataset(
                         poSpectralBand->GetDataset(), j, true);
+                    if (!poSpectralOvrDS)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "GDALCreateOverviewDataset(poSpectralBand->"
+                                 "GetDataset(), %d, true) failed",
+                                 j);
+                        delete poOvrDS;
+                        GDALDestroyPansharpenOptions(psPanOvrOptions);
+                        return 0;
+                    }
                     psPanOvrOptions->pahInputSpectralBands[i] =
                         poSpectralOvrDS->GetRasterBand(
                             poSpectralBand->GetBand());
