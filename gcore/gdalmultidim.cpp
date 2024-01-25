@@ -8411,12 +8411,35 @@ class GDALDatasetFromArray final : public GDALPamDataset
     bool m_bHasGT = false;
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
     GDALMultiDomainMetadata m_oMDD{};
+    std::string m_osOvrFilename{};
 
   public:
     GDALDatasetFromArray(const std::shared_ptr<GDALMDArray> &array,
                          size_t iXDim, size_t iYDim)
         : m_poArray(array), m_iXDim(iXDim), m_iYDim(iYDim)
     {
+        // Initialize an overview filename from the filename of the array
+        // and its name.
+        const std::string &osFilename = m_poArray->GetFilename();
+        if (!osFilename.empty())
+        {
+            m_osOvrFilename = osFilename;
+            m_osOvrFilename += '.';
+            for (char ch : m_poArray->GetName())
+            {
+                if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') ||
+                    (ch >= 'a' && ch <= 'z') || ch == '_')
+                {
+                    m_osOvrFilename += ch;
+                }
+                else
+                {
+                    m_osOvrFilename += '_';
+                }
+            }
+            m_osOvrFilename += ".ovr";
+            oOvManager.Initialize(this);
+        }
     }
 
     static GDALDatasetFromArray *
@@ -8482,6 +8505,12 @@ class GDALDatasetFromArray final : public GDALPamDataset
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override
     {
+        if (!m_osOvrFilename.empty() && pszName &&
+            EQUAL(pszName, "OVERVIEW_FILE") && pszDomain &&
+            EQUAL(pszDomain, "OVERVIEWS"))
+        {
+            return m_osOvrFilename.c_str();
+        }
         return m_oMDD.GetMetadataItem(pszName, pszDomain);
     }
 };

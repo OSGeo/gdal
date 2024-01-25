@@ -3977,3 +3977,32 @@ def test_netcdf_multidim_serialize_statistics_asclassicdataset(tmp_path):
     test()
     test2()
     reopen()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_multidim_as_classic_dataset_overview(tmp_path):
+
+    filename = str(tmp_path / "test_netcdf_multidim_as_classic_dataset_overview.nc")
+    shutil.copy("data/netcdf/byte.nc", filename)
+
+    def test():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("Band1")
+        classic_ds = ar.AsClassicDataset(1, 0)
+        classic_ds.BuildOverviews("NEAR", [2])
+
+    def test2():
+        assert gdal.VSIStatL(filename + ".Band1.ovr") is not None
+
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("Band1")
+        classic_ds = ar.AsClassicDataset(1, 0)
+        assert classic_ds.GetRasterBand(1).GetOverviewCount() == 1
+
+    test()
+    test2()
