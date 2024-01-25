@@ -42,7 +42,7 @@ CPLString OGRPGDumpEscapeColumnName(const char *pszColumnName);
 CPLString OGRPGDumpEscapeString(const char *pszStrValue, int nMaxLength = -1,
                                 const char *pszFieldName = "");
 char CPL_DLL *OGRPGCommonGByteArrayToBYTEA(const GByte *pabyData, size_t nLen);
-CPLString CPL_DLL OGRPGCommonLayerGetType(OGRFieldDefn &oField,
+CPLString CPL_DLL OGRPGCommonLayerGetType(const OGRFieldDefn &oField,
                                           bool bPreservePrecision,
                                           bool bApproxOK);
 bool CPL_DLL OGRPGCommonLayerSetType(OGRFieldDefn &oField, const char *pszType,

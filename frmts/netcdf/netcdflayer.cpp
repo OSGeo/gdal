@@ -597,7 +597,8 @@ bool netCDFLayer::Create(char **papszOptions,
                         CF_GRD_MAPPING, "attribute");
                 }
 
-                std::vector<int> &ncv = m_layerSGDefn.get_nodeCoordVarIDs();
+                const std::vector<int> &ncv =
+                    m_layerSGDefn.get_nodeCoordVarIDs();
                 int xVar = ncv[0];
                 int yVar = ncv[1];
 

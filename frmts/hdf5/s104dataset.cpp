@@ -145,7 +145,7 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (!poDS->Init())
         return nullptr;
 
-    auto &poRootGroup = poDS->m_poRootGroup;
+    const auto &poRootGroup = poDS->m_poRootGroup;
 
     auto poWaterLevel = poRootGroup->OpenGroup("WaterLevel");
     if (!poWaterLevel)

@@ -248,13 +248,14 @@ class CPL_DLL OGRStyleTool
                                OGRStyleValue *pasStyleValue, int nSize);
 
     const char *GetParamStr(const OGRStyleParamId &sStyleParam,
-                            OGRStyleValue &sStyleValue, GBool &bValueIsNull);
+                            const OGRStyleValue &sStyleValue,
+                            GBool &bValueIsNull);
 
     int GetParamNum(const OGRStyleParamId &sStyleParam,
-                    OGRStyleValue &sStyleValue, GBool &bValueIsNull);
+                    const OGRStyleValue &sStyleValue, GBool &bValueIsNull);
 
     double GetParamDbl(const OGRStyleParamId &sStyleParam,
-                       OGRStyleValue &sStyleValue, GBool &bValueIsNull);
+                       const OGRStyleValue &sStyleValue, GBool &bValueIsNull);
 
     void SetParamStr(const OGRStyleParamId &sStyleParam,
                      OGRStyleValue &sStyleValue, const char *pszParamString);

@@ -3035,7 +3035,7 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     GetView(const std::vector<GUInt64> &indices) const;
 
     inline std::shared_ptr<GDALMDArray>
-    atInternal(std::vector<GUInt64> &indices) const
+    atInternal(const std::vector<GUInt64> &indices) const
     {
         return GetView(indices);
     }

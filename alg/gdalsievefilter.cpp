@@ -110,7 +110,7 @@ static CPLErr GPMaskImageData(GDALRasterBandH hMaskBand, GByte *pabyMaskLine,
 static inline void CompareNeighbour(int nPolyId1, int nPolyId2,
                                     int *panPolyIdMap,
                                     std::int64_t * /* panPolyValue */,
-                                    std::vector<int> &anPolySizes,
+                                    const std::vector<int> &anPolySizes,
                                     std::vector<int> &anBigNeighbour)
 
 {

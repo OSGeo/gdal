@@ -267,7 +267,8 @@ static CPLErr CompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img,
 }
 
 // LERC 1 Decompression
-static CPLErr DecompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img)
+static CPLErr DecompressLERC1(buf_mgr &dst, const buf_mgr &src,
+                              const ILImage &img)
 {
     Lerc1Image zImg;
 

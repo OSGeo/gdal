@@ -739,7 +739,7 @@ bool ZarrV3Array::FlushDirtyTile() const
 
     const size_t nSourceSize =
         m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
-    auto &abyTile =
+    const auto &abyTile =
         m_abyDecodedTileData.empty() ? m_abyRawTileData : m_abyDecodedTileData;
 
     if (IsEmptyTile(abyTile))

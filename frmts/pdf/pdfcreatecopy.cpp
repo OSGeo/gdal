@@ -2767,7 +2767,7 @@ void GDALPDFBaseWriter::GetObjectStyle(
                         }
                         else
                         {
-                            GDALPDFImageDesc &oDesc =
+                            const GDALPDFImageDesc &oDesc =
                                 oMapSymbolFilenameToDesc[os.osSymbolId];
                             os.nImageSymbolId = oDesc.nImageId;
                             os.nImageWidth = (int)oDesc.dfXSize;
@@ -3700,7 +3700,7 @@ int GDALPDFWriter::EndPage(const char *pszExtraImages,
     int iObj = 0;
     for (size_t iLayer = 0; iLayer < oPageContext.asVectorDesc.size(); iLayer++)
     {
-        GDALPDFLayerDesc &oLayerDesc = oPageContext.asVectorDesc[iLayer];
+        const GDALPDFLayerDesc &oLayerDesc = oPageContext.asVectorDesc[iLayer];
 
         VSIFPrintfL(m_fp, "/OC /Lyr%d BDC\n", oLayerDesc.nOCGId.toInt());
 
@@ -3733,9 +3733,8 @@ int GDALPDFWriter::EndPage(const char *pszExtraImages,
     /*  Write drawing instructions for labels of vector features      */
     /* -------------------------------------------------------------- */
     iObj = 0;
-    for (size_t iLayer = 0; iLayer < oPageContext.asVectorDesc.size(); iLayer++)
+    for (const GDALPDFLayerDesc &oLayerDesc : oPageContext.asVectorDesc)
     {
-        GDALPDFLayerDesc &oLayerDesc = oPageContext.asVectorDesc[iLayer];
         if (oLayerDesc.nOCGTextId.toBool())
         {
             VSIFPrintfL(m_fp, "/OC /Lyr%d BDC\n", oLayerDesc.nOCGId.toInt());
@@ -3828,7 +3827,8 @@ int GDALPDFWriter::EndPage(const char *pszExtraImages,
         for (size_t iLayer = 0; iLayer < oPageContext.asVectorDesc.size();
              iLayer++)
         {
-            GDALPDFLayerDesc &oLayerDesc = oPageContext.asVectorDesc[iLayer];
+            const GDALPDFLayerDesc &oLayerDesc =
+                oPageContext.asVectorDesc[iLayer];
             for (size_t iVector = 0; iVector < oLayerDesc.aIds.size();
                  iVector++)
             {
@@ -3868,10 +3868,8 @@ int GDALPDFWriter::EndPage(const char *pszExtraImages,
         GDALPDFDictionaryRW *poDictXObject = new GDALPDFDictionaryRW();
         oDict.Add("XObject", poDictXObject);
         size_t iImage;
-        for (size_t iRaster = 0; iRaster < oPageContext.asRasterDesc.size();
-             iRaster++)
+        for (const GDALPDFRasterDesc &oDesc : oPageContext.asRasterDesc)
         {
-            const GDALPDFRasterDesc &oDesc = oPageContext.asRasterDesc[iRaster];
             for (iImage = 0; iImage < oDesc.asImageDesc.size(); iImage++)
             {
                 poDictXObject->Add(
@@ -3887,10 +3885,8 @@ int GDALPDFWriter::EndPage(const char *pszExtraImages,
                            asExtraImageDesc[iImage].nImageId.toInt()),
                 asExtraImageDesc[iImage].nImageId, 0);
         }
-        for (size_t iLayer = 0; iLayer < oPageContext.asVectorDesc.size();
-             iLayer++)
+        for (const GDALPDFLayerDesc &oLayerDesc : oPageContext.asVectorDesc)
         {
-            GDALPDFLayerDesc &oLayerDesc = oPageContext.asVectorDesc[iLayer];
             for (size_t iVector = 0; iVector < oLayerDesc.aIds.size();
                  iVector++)
             {

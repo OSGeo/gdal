@@ -93,6 +93,18 @@ class GDALFeaturePoint
      */
     double &operator[](int nIndex);
 
+    /**
+     * Provide access to point's descriptor.
+     *
+     * @param nIndex Position of descriptor's value.
+     * nIndex should be within range from 0 to DESC_SIZE (in current version -
+     * 64)
+     *
+     * @return Reference to value of descriptor in 'nIndex' position.
+     * If index is out of range then behavior is undefined.
+     */
+    double operator[](int nIndex) const;
+
     /** Descriptor length */
     static const int DESC_SIZE = 64;
 
@@ -555,8 +567,8 @@ class GDALSimpleSURF
      *
      * @return Euclidean distance between descriptors.
      */
-    static double GetEuclideanDistance(GDALFeaturePoint &firstPoint,
-                                       GDALFeaturePoint &secondPoint);
+    static double GetEuclideanDistance(const GDALFeaturePoint &firstPoint,
+                                       const GDALFeaturePoint &secondPoint);
 
     /**
      * Set provided distance values to range from 0 to 1.

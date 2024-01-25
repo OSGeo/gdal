@@ -2329,10 +2329,8 @@ static bool WriteLayer(const char *pszName, OGRXLSXLayer *poLayer, int iLayer,
 /*                        WriteSharedStrings()                          */
 /************************************************************************/
 
-static bool
-WriteSharedStrings(const char *pszName,
-                   CPL_UNUSED std::map<std::string, int> &oStringMap,
-                   std::vector<std::string> &oStringList)
+static bool WriteSharedStrings(const char *pszName,
+                               std::vector<std::string> &oStringList)
 {
     CPLString osTmpFilename(
         CPLSPrintf("/vsizip/%s/xl/sharedStrings.xml", pszName));
@@ -2540,7 +2538,7 @@ CPLErr OGRXLSXDataSource::FlushCache(bool /* bAtClosing */)
         bOK &= WriteLayer(pszName, papoLayers[i], i, oStringMap, oStringList);
     }
 
-    bOK &= WriteSharedStrings(pszName, oStringMap, oStringList);
+    bOK &= WriteSharedStrings(pszName, oStringList);
     bOK &= WriteStyles(pszName);
 
     // VSIMkdir(CPLSPrintf("/vsizip/%s/xl/_rels", pszName),0755);

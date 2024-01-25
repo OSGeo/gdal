@@ -3776,7 +3776,7 @@ void VSICurlFilesystemHandlerBase::InvalidateCachedData(const char *pszURL)
     };
     auto *poRegionCache = GetRegionCache();
     poRegionCache->cwalk(lambda);
-    for (auto &key : keysToRemove)
+    for (const auto &key : keysToRemove)
         poRegionCache->remove(key);
 }
 
@@ -3826,7 +3826,7 @@ void VSICurlFilesystemHandlerBase::PartialClearCache(
         };
         auto *poRegionCache = GetRegionCache();
         poRegionCache->cwalk(lambda);
-        for (auto &key : keysToRemove)
+        for (const auto &key : keysToRemove)
             poRegionCache->remove(key);
     }
 
@@ -3839,7 +3839,7 @@ void VSICurlFilesystemHandlerBase::PartialClearCache(
                 keysToRemove.push_back(kv.key);
         };
         oCacheFileProp.cwalk(lambda);
-        for (auto &key : keysToRemove)
+        for (const auto &key : keysToRemove)
             oCacheFileProp.remove(key);
     }
     VSICURLInvalidateCachedFilePropPrefix(osURL.c_str());
@@ -3858,7 +3858,7 @@ void VSICurlFilesystemHandlerBase::PartialClearCache(
             }
         };
         oCacheDirList.cwalk(lambda);
-        for (auto &key : keysToRemove)
+        for (const auto &key : keysToRemove)
             oCacheDirList.remove(key);
     }
 }
@@ -5597,7 +5597,7 @@ std::vector<NetworkStatisticsLogger::Counters *>
 NetworkStatisticsLogger::GetCountersForContext()
 {
     std::vector<Counters *> v;
-    auto &contextPath = gInstance.m_mapThreadIdToContextPath[CPLGetPID()];
+    const auto &contextPath = gInstance.m_mapThreadIdToContextPath[CPLGetPID()];
 
     Stats *curStats = &m_stats;
     v.push_back(&(curStats->counters));
@@ -5855,7 +5855,7 @@ void VSICURLInvalidateCachedFilePropPrefix(const char *pszURL)
                 keysToRemove.push_back(kv.key);
         };
         poCacheFileProp->cwalk(lambda);
-        for (auto &key : keysToRemove)
+        for (const auto &key : keysToRemove)
             poCacheFileProp->remove(key);
     }
 }

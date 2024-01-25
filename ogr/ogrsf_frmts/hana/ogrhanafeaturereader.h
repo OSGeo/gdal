@@ -39,7 +39,7 @@ namespace OGRHANA
 class OGRHanaFeatureReader
 {
   public:
-    explicit OGRHanaFeatureReader(OGRFeature &feature);
+    explicit OGRHanaFeatureReader(const OGRFeature &feature);
 
     odbc::Boolean GetFieldAsBoolean(int fieldIndex) const;
     odbc::Byte GetFieldAsByte(int fieldIndex) const;

@@ -381,7 +381,7 @@ class GDALWMSDataset final : public GDALPamDataset
         m_data_type = type;
     }
 
-    void WMSSetDataWindow(GDALWMSDataWindow &window)
+    void WMSSetDataWindow(const GDALWMSDataWindow &window)
     {
         m_data_window = window;
     }

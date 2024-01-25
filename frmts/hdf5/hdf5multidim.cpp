@@ -1337,7 +1337,7 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
             std::map<std::string, std::shared_ptr<GDALDimension>> oMap;
             const auto groupDims = m_poShared->GetEOSGridDimensions(
                 oGridDataFieldMetadata.poGridMetadata->osGridName);
-            for (auto &dim : groupDims)
+            for (const auto &dim : groupDims)
             {
                 oMap[dim->GetName()] = dim;
             }
@@ -1383,7 +1383,7 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
             std::map<std::string, std::shared_ptr<GDALDimension>> oMap;
             const auto groupDims = m_poShared->GetEOSSwathDimensions(
                 oSwathDataFieldMetadata.poSwathMetadata->osSwathName);
-            for (auto &dim : groupDims)
+            for (const auto &dim : groupDims)
             {
                 oMap[dim->GetName()] = dim;
             }
@@ -1408,7 +1408,7 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
             std::map<std::string, std::shared_ptr<GDALDimension>> oMap;
             const auto groupDims = m_poShared->GetEOSSwathDimensions(
                 oSwathGeolocationFieldMetadata.poSwathMetadata->osSwathName);
-            for (auto &dim : groupDims)
+            for (const auto &dim : groupDims)
             {
                 oMap[dim->GetName()] = dim;
             }
@@ -1508,7 +1508,7 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
     if (poGroup && !mapDimIndexToDimFullName.empty())
     {
         auto groupDims = poGroup->GetDimensions();
-        for (auto &dim : groupDims)
+        for (const auto &dim : groupDims)
         {
             oMapFullNameToDim[dim->GetFullName()] = dim;
         }

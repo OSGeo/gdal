@@ -4818,8 +4818,8 @@ void OGRMVTWriterDataset::EncodeFeature(
                     if (nSrcIdxKey < srcKeys.size() &&
                         nSrcIdxValue < srcValues.size())
                     {
-                        auto &osKey = srcKeys[nSrcIdxKey];
-                        auto &oValue = srcValues[nSrcIdxValue];
+                        const auto &osKey = srcKeys[nSrcIdxKey];
+                        const auto &oValue = srcValues[nSrcIdxValue];
 
                         if (poLayerProperties)
                         {

@@ -3594,6 +3594,7 @@ CSLConstList OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()
 /*                      RemoveIDFromMemberOfEnsembles()                 */
 /************************************************************************/
 
+// cppcheck-suppress constParameterReference
 static void RemoveIDFromMemberOfEnsembles(CPLJSONObject &obj)
 {
     // Remove "id" from members of datum ensembles for compatibility with

@@ -175,7 +175,8 @@ void VSIDIRWithMissingDirSynthesis::SynthetizeMissingDirectories(
 
     if (bAddEntryForThisSubdir)
     {
-        aoEntries.push_back(std::unique_ptr<VSIDIREntry>(new VSIDIREntry()));
+        aoEntries.push_back(std::make_unique<VSIDIREntry>());
+        // cppcheck-suppress constVariableReference
         auto &entry = aoEntries.back();
         entry->pszName = CPLStrdup(osCurSubdir.c_str());
         entry->nMode = S_IFDIR;
@@ -451,8 +452,8 @@ bool VSIDIRS3::AnalyseS3FileList(
                 const char *pszName = CPLGetXMLValue(psIter, "Name", nullptr);
                 if (pszName)
                 {
-                    aoEntries.push_back(
-                        std::unique_ptr<VSIDIREntry>(new VSIDIREntry()));
+                    aoEntries.push_back(std::make_unique<VSIDIREntry>());
+                    // cppcheck-suppress constVariableReference
                     auto &entry = aoEntries.back();
                     entry->pszName = CPLStrdup(pszName);
                     entry->nMode = S_IFDIR;

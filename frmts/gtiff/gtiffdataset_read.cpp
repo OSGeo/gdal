@@ -1212,6 +1212,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
 
         // Make sure that all blocks that we are going to read and that are
         // being written by a worker thread are completed.
+        // cppcheck-suppress constVariableReference
         auto &oQueue =
             m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
         if (!oQueue.empty())

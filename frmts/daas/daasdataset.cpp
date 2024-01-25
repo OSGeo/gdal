@@ -601,7 +601,8 @@ bool GDALDAASDataset::GetAuthorization()
 /*                           GetObject()                                */
 /************************************************************************/
 
-static CPLJSONObject GetObject(CPLJSONObject &oContainer, const char *pszPath,
+static CPLJSONObject GetObject(const CPLJSONObject &oContainer,
+                               const char *pszPath,
                                CPLJSONObject::Type eExpectedType,
                                const char *pszExpectedType, bool bVerboseError,
                                bool &bError)
@@ -632,7 +633,7 @@ static CPLJSONObject GetObject(CPLJSONObject &oContainer, const char *pszPath,
 /*                          GetInteger()                                */
 /************************************************************************/
 
-static int GetInteger(CPLJSONObject &oContainer, const char *pszPath,
+static int GetInteger(const CPLJSONObject &oContainer, const char *pszPath,
                       bool bVerboseError, bool &bError)
 {
     CPLJSONObject oObj =
@@ -649,7 +650,7 @@ static int GetInteger(CPLJSONObject &oContainer, const char *pszPath,
 /*                          GetDouble()                                */
 /************************************************************************/
 
-static double GetDouble(CPLJSONObject &oContainer, const char *pszPath,
+static double GetDouble(const CPLJSONObject &oContainer, const char *pszPath,
                         bool bVerboseError, bool &bError)
 {
     CPLJSONObject oObj = oContainer.GetObj(pszPath);
@@ -676,7 +677,7 @@ static double GetDouble(CPLJSONObject &oContainer, const char *pszPath,
 /*                          GetString()                                 */
 /************************************************************************/
 
-static CPLString GetString(CPLJSONObject &oContainer, const char *pszPath,
+static CPLString GetString(const CPLJSONObject &oContainer, const char *pszPath,
                            bool bVerboseError, bool &bError)
 {
     CPLJSONObject oObj =
@@ -2168,7 +2169,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
 
     CPLJSONArray oBands;
     bool bOK = true;
-    for (auto &iBand : anRequestedBands)
+    for (const int iBand : anRequestedBands)
     {
         auto desc = (iBand == MAIN_MASK_BAND_NUMBER)
                         ? poGDS->m_poMaskBand->GetDescription()
@@ -2215,7 +2216,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
         {
             for (int iXBlock = 0; iXBlock < nXBlocks; iXBlock++)
             {
-                for (auto &iBand : anRequestedBands)
+                for (const int iBand : anRequestedBands)
                 {
                     GByte *pabyDstBuffer = nullptr;
                     GDALDAASRasterBand *poIterBand;

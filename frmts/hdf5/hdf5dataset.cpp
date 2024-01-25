@@ -1379,7 +1379,7 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects(HDF5GroupObjects *poRootGroup,
             int nYDimSize = 0;
             int nOtherDimSize = 0;
             std::string osOtherDimName;
-            for (auto &oDim : oGridMetadata.aoDimensions)
+            for (const auto &oDim : oGridMetadata.aoDimensions)
             {
                 if (oDim.osName == "XDim")
                     nXDimSize = oDim.nSize;

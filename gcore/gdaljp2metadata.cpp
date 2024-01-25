@@ -3213,7 +3213,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     /*      Additional user specified boxes.                                */
     /* -------------------------------------------------------------------- */
-    for (auto &oBox : aoBoxes)
+    for (const auto &oBox : aoBoxes)
     {
         GByte *pabyContent = nullptr;
         if (VSIIngestFile(nullptr, oBox.osFile, &pabyContent, nullptr, -1))
