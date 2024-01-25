@@ -201,6 +201,15 @@
 /* Define to 1 if you have the <atlbase.h> header file. */
 #cmakedefine HAVE_ATLBASE_H 1
 
+/* Define to 1 if you have the `ctime_r' function. */
+#cmakedefine HAVE_CTIME_R 1
+
+/* Define to 1 if you have the `localtime_r' function. */
+#cmakedefine HAVE_LOCALTIME_R 1
+
+/* Define to 1 if you have the `gmtime_r' function. */
+#cmakedefine HAVE_GMTIME_R 1
+
 #endif /* GDAL_COMPILATION */
 
 #endif

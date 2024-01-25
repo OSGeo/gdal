@@ -44,6 +44,10 @@ check_type_size("long int" SIZEOF_LONG_INT)
 check_type_size("void*" SIZEOF_VOIDP)
 check_type_size("size_t" SIZEOF_SIZE_T)
 
+check_function_exists(ctime_r HAVE_CTIME_R)
+check_function_exists(gmtime_r HAVE_GMTIME_R)
+check_function_exists(localtime_r HAVE_LOCALTIME_R)
+
 if(MSVC AND NOT BUILD_SHARED_LIBS)
   set(CPL_DISABLE_DLL 1)
 endif()
@@ -58,7 +62,6 @@ if (MSVC)
   set(HAVE_SEARCH_H 1)
   set(HAVE_DIRECT_H 1)
 
-  set(HAVE_LOCALTIME_R 0)
   set(HAVE_DLFCN_H 1)
 
   set(VSI_STAT64 _stat64)
