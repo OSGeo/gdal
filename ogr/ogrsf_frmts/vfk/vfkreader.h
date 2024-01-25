@@ -122,7 +122,7 @@ class IVFKFeature
     OGRwkbGeometryType m_nGeometryType;
     bool m_bGeometry;
     bool m_bValid;
-    OGRGeometry *m_paGeom;
+    std::unique_ptr<OGRGeometry> m_paGeom{};
 
     virtual bool LoadGeometryPoint() = 0;
     virtual bool LoadGeometryLineStringSBP() = 0;
@@ -153,8 +153,8 @@ class IVFKFeature
     {
         return m_nGeometryType;
     }
-    bool SetGeometry(OGRGeometry *, const char * = nullptr);
-    OGRGeometry *GetGeometry();
+    bool SetGeometry(const OGRGeometry *, const char * = nullptr);
+    const OGRGeometry *GetGeometry();
 
     bool LoadGeometry();
     virtual OGRErr LoadProperties(OGRFeature *) = 0;
