@@ -2033,8 +2033,15 @@ static OGRCurve *OGRShapeCreateCompoundCurve(int nPartStartIdx, int nPartPoints,
     }
 
     if (!bHasCircularArcs)
+    {
+        OGRwkbGeometryType eLSType = wkbLineString;
+        if (OGR_GT_HasZ(poCC->getGeometryType()))
+            eLSType = OGR_GT_SetZ(eLSType);
+        if (OGR_GT_HasM(poCC->getGeometryType()))
+            eLSType = OGR_GT_SetM(eLSType);
         return reinterpret_cast<OGRCurve *>(OGR_G_ForceTo(
-            OGRGeometry::ToHandle(poCC.release()), wkbLineString, nullptr));
+            OGRGeometry::ToHandle(poCC.release()), eLSType, nullptr));
+    }
     else
         return poCC.release();
 }

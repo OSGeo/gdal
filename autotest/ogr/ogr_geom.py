@@ -215,10 +215,10 @@ def test_ogr_geom_polyhedral_surface():
     wkt_string = geom.Clone().ExportToWkt()
     assert wkt_string == wkt_original, "Failure in Clone()"
 
-    polygon_wkt = ogr.ForceTo(geom.Clone(), ogr.wkbPolygon).ExportToWkt()
+    polygon_wkt = ogr.ForceTo(geom.Clone(), ogr.wkbPolygon25D).ExportToWkt()
     assert polygon_wkt == wkt_original
 
-    polygon_wkt = ogr.ForceTo(geom.Clone(), ogr.wkbMultiPolygon).ExportToWkt()
+    polygon_wkt = ogr.ForceTo(geom.Clone(), ogr.wkbMultiPolygon25D).ExportToWkt()
     assert (
         polygon_wkt
         == "MULTIPOLYGON (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)),((0 0 0,0 1 0,1 1 0,1 0 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 1 0,1 1 1,1 0 1,1 0 0,1 1 0)),((0 1 0,0 1 1,1 1 1,1 1 0,0 1 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))"
@@ -3982,7 +3982,7 @@ def test_ogr_geom_normalize():
 def test_ogr_geom_force_multipolygon_z_to_compound_curve():
 
     g = ogr.CreateGeometryFromWkt("MULTIPOLYGON Z (((0 0 0,0 1 0,1 1 0,0 0 0)))")
-    g = ogr.ForceTo(g, ogr.wkbCompoundCurve)
+    g = ogr.ForceTo(g, ogr.wkbCompoundCurveZ)
     assert g.ExportToIsoWkt() == "COMPOUNDCURVE Z ((0 0 0,0 1 0,1 1 0,0 0 0))"
 
 

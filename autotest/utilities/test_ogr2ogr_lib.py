@@ -1248,10 +1248,10 @@ def test_ogr2ogr_lib_clipsrc_3d_polygon(tmp_vsimem):
     assert lyr.GetFeatureCount() == 2
 
     feat = lyr.GetNextFeature()
-    ogrtest.check_feature_geometry(feat, "LINESTRING Z (0 0 0, 5 5 5)")
+    ogrtest.check_feature_geometry(feat, "LINESTRING (0 0, 5 5)")
 
     feat = lyr.GetNextFeature()
-    ogrtest.check_feature_geometry(feat, "LINESTRING Z (5 5 5, 10 0 10)")
+    ogrtest.check_feature_geometry(feat, "LINESTRING (5 5, 10 0)")
 
     ds = None
 
