@@ -652,10 +652,10 @@ def ReleaseResultSet(self, sql_lyr):
            obj:
                Object implementing the __arrow_c_stream__ or __arrow_c_array__ interface
 
-           requested_schema: PyCapsule, default None
+           requested_schema: PyCapsule, object implementing __arrow_c_schema__ or None. Default None
                The schema to which the stream should be casted, passed as a
                PyCapsule containing a C ArrowSchema representation of the
-               requested schema.
+               requested schema, or an object implementing the __arrow_c_schema__ interface.
 
            createFieldsFromSchema: boolean or None. Default to None
                Whether OGRLayer::CreateFieldFromArrowSchema() should be called. If None
@@ -672,6 +672,9 @@ def ReleaseResultSet(self, sql_lyr):
             createFieldsFromSchema = 1
         else:
             createFieldsFromSchema = 0
+
+        if requested_schema is not None and hasattr(requested_schema, "__arrow_c_schema__"):
+            requested_schema = requested_schema.__arrow_c_schema__()
 
         if hasattr(obj, "__arrow_c_stream__"):
             stream_capsule = obj.__arrow_c_stream__(requested_schema=requested_schema)
