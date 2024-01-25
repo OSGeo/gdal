@@ -840,7 +840,7 @@ void MMChangeMMRareExtension(char *pszName, const char *pszExt)
 {
     if(strlen(pszExt)<=0)
         return;
-    strcpy(pszName, CPLResetExtension(pszName, pszExt));
+    strcpy(pszName, reset_extension(pszName, pszExt));
     memcpy(pszName+ strlen(pszName)-strlen(pszExt)-1,
         pszName+ strlen(pszName)-strlen(pszExt), strlen(pszExt));
     pszName[strlen(pszName)-1]='\0';
@@ -988,7 +988,7 @@ struct MiraMonArcLayer *pMMArcLayer;
     // are going to be written.
     strcpy(pMMArcLayer->MMNode.pszLayerName, pMMArcLayer->pszLayerName);
     strcpy(pMMArcLayer->MMNode.pszLayerName,
-            CPLResetExtension(pMMArcLayer->MMNode.pszLayerName, "nod"));
+            reset_extension(pMMArcLayer->MMNode.pszLayerName, "nod"));
 
     if(NULL==(pMMArcLayer->MMNode.pF = 
             fopen_function(pMMArcLayer->MMNode.pszLayerName, 
@@ -1011,12 +1011,10 @@ struct MiraMonArcLayer *pMMArcLayer;
             pMMArcLayer->MMNode.nSizeNodeHeader = MM_SIZE_OF_NH_64BITS;
 
         // NL Section
-        strcpy(pMMArcLayer->MMNode.pszNLName, hMiraMonLayer->pszSrcLayerName);
-        if(hMiraMonLayer->bIsPolygon)
-            strcat(pMMArcLayer->MMNode.pszNLName, "_bound.~NL");
-        else
-            strcat(pMMArcLayer->MMNode.pszNLName, ".~NL");
-
+        strcpy(pMMArcLayer->MMNode.pszNLName, pMMArcLayer->MMNode.pszLayerName);
+        strcpy(pMMArcLayer->MMNode.pszNLName,
+            reset_extension(pMMArcLayer->MMNode.pszNLName, "~NL"));
+        
         if (NULL == (pMMArcLayer->MMNode.pFNL =
             fopen_function(pMMArcLayer->MMNode.pszNLName,
                 hMiraMonLayer->pszFlags)))
@@ -1030,18 +1028,12 @@ struct MiraMonArcLayer *pMMArcLayer;
             return 1;
 
         // Creating the DBF file name
-        strcpy(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName, hMiraMonLayer->pszSrcLayerName);
-        if(hMiraMonLayer->bIsPolygon)
-            strcat(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName, "_boundN.dbf");
-        else
-            strcat(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName, "N.dbf");
-
+        strcpy(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName, pMMArcLayer->MMNode.pszLayerName);
+        MMChangeMMRareExtension(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName, "N.dbf");
+        
         // MiraMon metadata
-        strcpy(pMMArcLayer->MMNode.pszREL_LayerName, hMiraMonLayer->pszSrcLayerName);
-        if(hMiraMonLayer->bIsPolygon)
-            strcat(pMMArcLayer->MMNode.pszREL_LayerName, "_boundN.rel");
-        else
-            strcat(pMMArcLayer->MMNode.pszREL_LayerName, "N.rel");
+        strcpy(pMMArcLayer->MMNode.pszREL_LayerName, pMMArcLayer->MMNode.pszLayerName);
+        MMChangeMMRareExtension(pMMArcLayer->MMNode.pszREL_LayerName, "N.rel");
     }
     return 0;
 }
