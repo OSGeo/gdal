@@ -3242,7 +3242,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
 
     else
     {
-        int nLayerCount = 0;
         std::vector<OGRLayer *> apoLayers;
 
         /* --------------------------------------------------------------------
@@ -3250,10 +3249,9 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         /*      Process each data source layer. */
         /* --------------------------------------------------------------------
          */
-        if (psOptions->aosLayers.size() == 0)
+        if (psOptions->aosLayers.empty())
         {
-            nLayerCount = poDS->GetLayerCount();
-            apoLayers.resize(nLayerCount);
+            const int nLayerCount = poDS->GetLayerCount();
 
             for (int iLayer = 0; iLayer < nLayerCount; iLayer++)
             {
@@ -3268,8 +3266,10 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                     delete poGCPCoordTrans;
                     return nullptr;
                 }
-
-                apoLayers[iLayer] = poLayer;
+                if (!poDS->IsLayerPrivate(iLayer))
+                {
+                    apoLayers.push_back(poLayer);
+                }
             }
         }
         /* --------------------------------------------------------------------
@@ -3279,8 +3279,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
          */
         else
         {
-            nLayerCount = psOptions->aosLayers.size();
-            apoLayers.resize(nLayerCount);
 
             for (int iLayer = 0; psOptions->aosLayers[iLayer] != nullptr;
                  iLayer++)
@@ -3302,7 +3300,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                     }
                 }
 
-                apoLayers[iLayer] = poLayer;
+                apoLayers.emplace_back(poLayer);
             }
         }
 
@@ -3314,6 +3312,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         /* --------------------------------------------------------------------
          */
         VSIStatBufL sStat;
+        const int nLayerCount = static_cast<int>(apoLayers.size());
         if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
             nLayerCount == 1 && psOptions->osNewLayerName.empty() &&
             VSIStatL(osDestFilename, &sStat) == 0 && VSI_ISREG(sStat.st_mode) &&
