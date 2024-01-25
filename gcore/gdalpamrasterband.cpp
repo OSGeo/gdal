@@ -554,13 +554,10 @@ CPLErr GDALPamRasterBand::XMLInit(CPLXMLNode *psTree,
     CPLXMLNode *psRAT = CPLGetXMLNode(psTree, "GDALRasterAttributeTable");
     if (psRAT != nullptr)
     {
-        if (psPam->poDefaultRAT != nullptr)
-        {
-            delete psPam->poDefaultRAT;
-            psPam->poDefaultRAT = nullptr;
-        }
-        psPam->poDefaultRAT = new GDALDefaultRasterAttributeTable();
-        psPam->poDefaultRAT->XMLInit(psRAT, "");
+        delete psPam->poDefaultRAT;
+        auto poNewRAT = new GDALDefaultRasterAttributeTable();
+        poNewRAT->XMLInit(psRAT, "");
+        psPam->poDefaultRAT = poNewRAT;
     }
 
     return CE_None;
