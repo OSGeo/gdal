@@ -73,43 +73,6 @@ int TIFFReInitJPEG_12(TIFF *tif, const JPEGOtherSettings *otherSettings,
                       int scheme, int is_encode);
 int TIFFJPEGIsFullStripRequired_12(TIFF *tif);
 
-/* We undefine FAR to avoid conflict with JPEG definition */
-
-#ifdef FAR
-#undef FAR
-#endif
-
-/*
-  Libjpeg's jmorecfg.h defines INT16 and INT32, but only if XMD_H is
-  not defined.  Unfortunately, the MinGW and Borland compilers include
-  a typedef for INT32, which causes a conflict.  MSVC does not include
-  a conflicting typedef given the headers which are included.
-*/
-#if defined(__BORLANDC__) || defined(__MINGW32__)
-#define XMD_H 1
-#endif
-
-/*
-   The windows RPCNDR.H file defines boolean, but defines it with the
-   unsigned char size.  You should compile JPEG library using appropriate
-   definitions in jconfig.h header, but many users compile library in wrong
-   way. That causes errors of the following type:
-
-   "JPEGLib: JPEG parameter struct mismatch: library thinks size is 432,
-   caller expects 464"
-
-   For such users we will fix the problem here. See install.doc file from
-   the JPEG library distribution for details.
-*/
-
-/* Define "boolean" as unsigned char, not int, per Windows custom. */
-#if defined(__WIN32__) && !defined(__MINGW32__)
-#ifndef __RPCNDR_H__ /* don't conflict if rpcndr.h already read */
-typedef unsigned char boolean;
-#endif
-#define HAVE_BOOLEAN /* prevent jmorecfg.h from redefining it */
-#endif
-
 #include "jerror.h"
 #include "jpeglib.h"
 

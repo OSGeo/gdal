@@ -334,7 +334,7 @@ struct TIFFOpenOptions
 #define ftell(stream, offset, whence) ftello(stream, offset, whence)
 #endif
 #endif
-#if defined(__WIN32__) && !(defined(_MSC_VER) && _MSC_VER < 1400) &&           \
+#if defined(_WIN32) &&                                                         \
     !(defined(__MSVCRT_VERSION__) && __MSVCRT_VERSION__ < 0x800)
 typedef unsigned int TIFFIOSize_t;
 #define _TIFF_lseek_f(fildes, offset, whence)                                  \
@@ -439,9 +439,6 @@ extern "C"
     extern void *_TIFFCheckMalloc(TIFF *, tmsize_t, tmsize_t, const char *);
     extern void *_TIFFCheckRealloc(TIFF *, void *, tmsize_t, tmsize_t,
                                    const char *);
-
-    extern double _TIFFUInt64ToDouble(uint64_t);
-    extern float _TIFFUInt64ToFloat(uint64_t);
 
     extern float _TIFFClampDoubleToFloat(double);
     extern uint32_t _TIFFClampDoubleToUInt32(double);
