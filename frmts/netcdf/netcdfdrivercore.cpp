@@ -249,7 +249,8 @@ struct NCDFDriverSubdatasetInfo : public GDALSubdatasetInfo
             const bool hasDriveLetter{
                 (strlen(aosParts[2]) > 1 &&
                  (aosParts[2][0] == '\\' || aosParts[2][0] == '/')) &&
-                part1.length() == 1 && std::isalpha(part1.at(0))};
+                part1.length() == 1 &&
+                std::isalpha(static_cast<unsigned char>(part1.at(0)))};
 
             const bool hasProtocol{part1 == "/vsicurl/http" ||
                                    part1 == "/vsicurl/https" ||

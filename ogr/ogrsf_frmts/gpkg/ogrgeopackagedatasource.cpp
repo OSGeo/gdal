@@ -7070,7 +7070,8 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
 
     FlushMetadata();
 
-    while (*pszSQLCommand != '\0' && isspace(*pszSQLCommand))
+    while (*pszSQLCommand != '\0' &&
+           isspace(static_cast<unsigned char>(*pszSQLCommand)))
         pszSQLCommand++;
 
     CPLString osSQLCommand(pszSQLCommand);

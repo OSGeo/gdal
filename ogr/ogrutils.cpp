@@ -512,9 +512,10 @@ const char *OGRWktReadPoints(const char *pszInput, OGRRawPoint **ppaoPoints,
         pszInput = OGRWktReadToken(pszInput, szTokenX);
         pszInput = OGRWktReadToken(pszInput, szTokenY);
 
-        if ((!isdigit(szTokenX[0]) && szTokenX[0] != '-' &&
-             szTokenX[0] != '.') ||
-            (!isdigit(szTokenY[0]) && szTokenY[0] != '-' && szTokenY[0] != '.'))
+        if ((!isdigit(static_cast<unsigned char>(szTokenX[0])) &&
+             szTokenX[0] != '-' && szTokenX[0] != '.') ||
+            (!isdigit(static_cast<unsigned char>(szTokenY[0])) &&
+             szTokenY[0] != '-' && szTokenY[0] != '.'))
             return nullptr;
 
         /* --------------------------------------------------------------------
@@ -550,7 +551,8 @@ const char *OGRWktReadPoints(const char *pszInput, OGRRawPoint **ppaoPoints,
          */
         pszInput = OGRWktReadToken(pszInput, szDelim);
 
-        if (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.')
+        if (isdigit(static_cast<unsigned char>(szDelim[0])) ||
+            szDelim[0] == '-' || szDelim[0] == '.')
         {
             if (*ppadfZ == nullptr)
             {
@@ -575,7 +577,8 @@ const char *OGRWktReadPoints(const char *pszInput, OGRRawPoint **ppaoPoints,
         /*      If we do, just skip it. */
         /* --------------------------------------------------------------------
          */
-        if (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.')
+        if (isdigit(static_cast<unsigned char>(szDelim[0])) ||
+            szDelim[0] == '-' || szDelim[0] == '.')
         {
             pszInput = OGRWktReadToken(pszInput, szDelim);
         }
@@ -658,10 +661,12 @@ const char *OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
         pszInput = OGRWktReadToken(pszInput, szTokenX);
         pszInput = OGRWktReadToken(pszInput, szTokenY);
 
-        if ((!isdigit(szTokenX[0]) && szTokenX[0] != '-' &&
-             szTokenX[0] != '.' && !EQUAL(szTokenX, "nan")) ||
-            (!isdigit(szTokenY[0]) && szTokenY[0] != '-' &&
-             szTokenY[0] != '.' && !EQUAL(szTokenY, "nan")))
+        if ((!isdigit(static_cast<unsigned char>(szTokenX[0])) &&
+             szTokenX[0] != '-' && szTokenX[0] != '.' &&
+             !EQUAL(szTokenX, "nan")) ||
+            (!isdigit(static_cast<unsigned char>(szTokenY[0])) &&
+             szTokenY[0] != '-' && szTokenY[0] != '.' &&
+             !EQUAL(szTokenY, "nan")))
             return nullptr;
 
         /* --------------------------------------------------------------------
@@ -711,8 +716,8 @@ const char *OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
 
         if (!(*flags & OGRGeometry::OGR_G_3D) &&
             !(*flags & OGRGeometry::OGR_G_MEASURED) &&
-            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ||
-             EQUAL(szDelim, "nan")))
+            (isdigit(static_cast<unsigned char>(szDelim[0])) ||
+             szDelim[0] == '-' || szDelim[0] == '.' || EQUAL(szDelim, "nan")))
         {
             *flags |= OGRGeometry::OGR_G_3D;
         }
@@ -731,8 +736,8 @@ const char *OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
                 *ppadfZ = static_cast<double *>(
                     CPLCalloc(sizeof(double), *pnMaxPoints));
             }
-            if (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ||
-                EQUAL(szDelim, "nan"))
+            if (isdigit(static_cast<unsigned char>(szDelim[0])) ||
+                szDelim[0] == '-' || szDelim[0] == '.' || EQUAL(szDelim, "nan"))
             {
                 (*ppadfZ)[*pnPointsRead] = CPLAtof(szDelim);
                 pszInput = OGRWktReadToken(pszInput, szDelim);
@@ -756,8 +761,8 @@ const char *OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
          */
 
         if (!(*flags & OGRGeometry::OGR_G_MEASURED) &&
-            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ||
-             EQUAL(szDelim, "nan")))
+            (isdigit(static_cast<unsigned char>(szDelim[0])) ||
+             szDelim[0] == '-' || szDelim[0] == '.' || EQUAL(szDelim, "nan")))
         {
             if (bNoFlags)
             {
@@ -783,8 +788,8 @@ const char *OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
                 *ppadfM = static_cast<double *>(
                     CPLCalloc(sizeof(double), *pnMaxPoints));
             }
-            if (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ||
-                EQUAL(szDelim, "nan"))
+            if (isdigit(static_cast<unsigned char>(szDelim[0])) ||
+                szDelim[0] == '-' || szDelim[0] == '.' || EQUAL(szDelim, "nan"))
             {
                 (*ppadfM)[*pnPointsRead] = CPLAtof(szDelim);
                 pszInput = OGRWktReadToken(pszInput, szDelim);
@@ -808,8 +813,8 @@ const char *OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
          */
 
         if (!(*flags & OGRGeometry::OGR_G_3D) &&
-            (isdigit(szDelim[0]) || szDelim[0] == '-' || szDelim[0] == '.' ||
-             EQUAL(szDelim, "nan")))
+            (isdigit(static_cast<unsigned char>(szDelim[0])) ||
+             szDelim[0] == '-' || szDelim[0] == '.' || EQUAL(szDelim, "nan")))
         {
             *flags |= OGRGeometry::OGR_G_3D;
             if (*ppadfZ == nullptr)
@@ -1313,7 +1318,9 @@ int OGRParseDate(const char *pszInput, OGRField *psField, int nOptions)
             if (pszInput[0] == '-')
                 psField->Date.TZFlag = -1 * (psField->Date.TZFlag - 100) + 100;
         }
-        else if (isdigit(pszInput[3]) && isdigit(pszInput[4])  // +HHMM offset
+        else if (isdigit(static_cast<unsigned char>(pszInput[3])) &&
+                 isdigit(
+                     static_cast<unsigned char>(pszInput[4]))  // +HHMM offset
                  && atoi(pszInput + 3) % 15 == 0)
         {
             psField->Date.TZFlag = static_cast<GByte>(
@@ -1323,7 +1330,8 @@ int OGRParseDate(const char *pszInput, OGRField *psField, int nOptions)
             if (pszInput[0] == '-')
                 psField->Date.TZFlag = -1 * (psField->Date.TZFlag - 100) + 100;
         }
-        else if (isdigit(pszInput[3]) && pszInput[4] == '\0'  // +HMM offset
+        else if (isdigit(static_cast<unsigned char>(pszInput[3])) &&
+                 pszInput[4] == '\0'  // +HMM offset
                  && atoi(pszInput + 2) % 15 == 0)
         {
             psField->Date.TZFlag = static_cast<GByte>(

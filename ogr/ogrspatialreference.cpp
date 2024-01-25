@@ -3721,7 +3721,7 @@ OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition,
                                              CSLConstList papszOptions)
 {
     // Skip leading white space
-    while (isspace(*pszDefinition))
+    while (isspace(static_cast<unsigned char>(*pszDefinition)))
         pszDefinition++;
 
     if (STARTS_WITH_CI(pszDefinition, "ESRI::"))

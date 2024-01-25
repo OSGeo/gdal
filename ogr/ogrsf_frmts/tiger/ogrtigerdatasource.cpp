@@ -470,8 +470,10 @@ int OGRTigerDataSource::Open(const char *pszFilename, int bTestOpen,
             if (pszRecStart[0] != '1')
                 continue;
 
-            if (!isdigit(pszRecStart[1]) || !isdigit(pszRecStart[2]) ||
-                !isdigit(pszRecStart[3]) || !isdigit(pszRecStart[4]))
+            if (!isdigit(static_cast<unsigned char>(pszRecStart[1])) ||
+                !isdigit(static_cast<unsigned char>(pszRecStart[2])) ||
+                !isdigit(static_cast<unsigned char>(pszRecStart[3])) ||
+                !isdigit(static_cast<unsigned char>(pszRecStart[4])))
                 continue;
 
             nVersionCode = atoi(TigerFileBase::GetField(pszRecStart, 2, 5));

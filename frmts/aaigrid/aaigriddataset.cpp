@@ -1134,7 +1134,8 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
                 poOpenInfo->pabyHeader[i - 1] == '\r' ||
                 poOpenInfo->pabyHeader[i - 2] == '\r')
             {
-                if ((!isalpha(poOpenInfo->pabyHeader[i]) ||
+                if ((!isalpha(static_cast<unsigned char>(
+                         poOpenInfo->pabyHeader[i])) ||
                      // null seems to be specific of D12 software
                      // See https://github.com/OSGeo/gdal/issues/5095
                      (i + 5 < poOpenInfo->nHeaderBytes &&

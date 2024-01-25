@@ -2227,7 +2227,8 @@ OGRLayer *OGRWFSDataSource::ExecuteSQL(const char *pszSQLCommand,
                                        const char *pszDialect)
 
 {
-    while (*pszSQLCommand && isspace(*pszSQLCommand))
+    while (*pszSQLCommand &&
+           isspace(static_cast<unsigned char>(*pszSQLCommand)))
         ++pszSQLCommand;
 
     swq_select_parse_options oParseOptions;

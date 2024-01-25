@@ -111,7 +111,8 @@ std::string GMLASResourceCache::GetCachedFilename(const std::string &osResource)
         osLaunderedName = osLaunderedName.substr(strlen("https://"));
     for (size_t i = 0; i < osLaunderedName.size(); i++)
     {
-        if (!isalnum(osLaunderedName[i]) && osLaunderedName[i] != '.')
+        if (!isalnum(static_cast<unsigned char>(osLaunderedName[i])) &&
+            osLaunderedName[i] != '.')
             osLaunderedName[i] = '_';
     }
 

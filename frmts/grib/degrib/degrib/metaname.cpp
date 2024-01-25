@@ -867,8 +867,8 @@ static void ElemNamePerc (uChar mstrVersion, uShort2 center, uShort2 subcenter, 
  * the percentile (or exceedance value) so don't tack on percentile here.*/
             size_t len = strlen(pszShortName);
             if (len >= 2 &&
-                isdigit(pszShortName[len -1]) &&
-                isdigit(pszShortName[len -2])) {
+                isdigit(static_cast<unsigned char>(pszShortName[len -1])) &&
+                isdigit(static_cast<unsigned char>(pszShortName[len -2]))) {
                mallocSprintf (name, "%s", pszShortName);
             } else if ((strcmp (pszShortName, "Surge") == 0) ||
                        (strcmp (pszShortName, "SURGE") == 0)) {

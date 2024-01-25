@@ -821,7 +821,8 @@ GDALDataset *MFFDataset::Open(GDALOpenInfo *poOpenInfo)
                 continue;
 
             pszExtension = CPLGetExtension(papszDirFiles[i]);
-            if (strlen(pszExtension) >= 2 && isdigit(pszExtension[1]) &&
+            if (strlen(pszExtension) >= 2 &&
+                isdigit(static_cast<unsigned char>(pszExtension[1])) &&
                 atoi(pszExtension + 1) == nRawBand &&
                 strchr("bBcCiIjJrRxXzZ", pszExtension[0]) != nullptr)
                 break;

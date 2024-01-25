@@ -2747,7 +2747,7 @@ static void SetSWEValue(OGRFeature *poFeature, int iField, CPLString &osValue)
 
 static size_t SkipSpace(const char *pszValues, size_t i)
 {
-    while (isspace(static_cast<int>(pszValues[i])))
+    while (isspace(static_cast<unsigned char>(pszValues[i])))
         i++;
     return i;
 }

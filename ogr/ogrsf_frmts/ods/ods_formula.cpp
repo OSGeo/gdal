@@ -205,7 +205,7 @@ int ods_formulalex(YYSTYPE *ppNode, ods_formula_parse_context *context)
     /* -------------------------------------------------------------------- */
     /*      Handle alpha-numerics.                                          */
     /* -------------------------------------------------------------------- */
-    else if (*pszInput == '.' || isalnum(*pszInput))
+    else if (*pszInput == '.' || isalnum(static_cast<unsigned char>(*pszInput)))
     {
         int nReturn = ODST_IDENTIFIER;
         const char *pszNext = pszInput + 1;
@@ -214,8 +214,8 @@ int ods_formulalex(YYSTYPE *ppNode, ods_formula_parse_context *context)
         osToken += *pszInput;
 
         // collect text characters
-        while (isalnum(*pszNext) || *pszNext == '_' ||
-               ((unsigned char)*pszNext) > 127)
+        while (isalnum(static_cast<unsigned char>(*pszNext)) ||
+               *pszNext == '_' || ((unsigned char)*pszNext) > 127)
             osToken += *(pszNext++);
 
         context->pszNext = pszNext;

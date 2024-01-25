@@ -133,11 +133,11 @@ void CPCIDSKGCP2Segment::Load()
         double x = pimpl_->seg_data.GetDouble(offset + 48, 22);
         double y = pimpl_->seg_data.GetDouble(offset + 70, 22);
 
-        char cElevDatum = (char)toupper(pimpl_->seg_data.buffer[offset + 47]);
+        char cElevDatum = (char)toupper(static_cast<unsigned char>(pimpl_->seg_data.buffer[offset + 47]));
         PCIDSK::GCP::EElevationDatum elev_datum = cElevDatum != 'M' ?
             GCP::EEllipsoidal : GCP::EMeanSeaLevel;
 
-        char elev_unit_c = (char)toupper(pimpl_->seg_data.buffer[offset + 46]);
+        char elev_unit_c = (char)toupper(static_cast<unsigned char>(pimpl_->seg_data.buffer[offset + 46]));
         PCIDSK::GCP::EElevationUnit elev_unit = elev_unit_c == 'M' ? GCP::EMetres :
             elev_unit_c == 'F' ? GCP::EInternationalFeet :
             elev_unit_c == 'A' ? GCP::EAmericanFeet : GCP::EUnknown;

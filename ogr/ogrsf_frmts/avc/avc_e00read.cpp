@@ -982,7 +982,8 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo, char **papszCoverDir)
      *----------------------------------------------------------------*/
 #ifdef _WIN32
     if (psInfo->pszCoverPath[0] != '\\' &&
-        !(isalpha(psInfo->pszCoverPath[0]) && psInfo->pszCoverPath[1] == ':'))
+        !(isalpha((unsigned char)psInfo->pszCoverPath[0]) &&
+          psInfo->pszCoverPath[1] == ':'))
 #else
     if (psInfo->pszCoverPath[0] != '/')
 #endif
@@ -1007,7 +1008,7 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo, char **papszCoverDir)
         CPLSPrintf("EXP  0 %s%s.E00", szCWD, osCoverPathTruncated.c_str()));
     pcTmp = pszEXPPath;
     for (; *pcTmp != '\0'; pcTmp++)
-        *pcTmp = (char)toupper(*pcTmp);
+        *pcTmp = (char)toupper(static_cast<unsigned char>(*pcTmp));
 
     /*-----------------------------------------------------------------
      * EXP Header
@@ -1308,7 +1309,7 @@ static int _AVCE00ReadBuildSqueleton(AVCE00ReadPtr psInfo, char **papszCoverDir)
                                      papszCoverDir[iFile]);
                 pcTmp = (char *)szFname;
                 for (; *pcTmp != '\0'; pcTmp++)
-                    *pcTmp = (char)toupper(*pcTmp);
+                    *pcTmp = (char)toupper(static_cast<unsigned char>(*pcTmp));
                 papszCoverDir[iFile][nLen - 4] = '.';
 
                 papszTables = CSLAddString(papszTables, szFname);

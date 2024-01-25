@@ -1819,7 +1819,8 @@ const char *TABCustomPoint::GetSymbolStyleString(double dfAngle) const
 
     for (i = 0; i < 7 && *pszPtr != '\0' && *pszPtr != ' '; i++, pszPtr++)
     {
-        szLowerExt[i] = static_cast<char>(tolower(*pszPtr));
+        szLowerExt[i] =
+            static_cast<char>(tolower(static_cast<unsigned char>(*pszPtr)));
     }
     szLowerExt[i] = '\0';
 
@@ -6311,8 +6312,9 @@ const char *TABText::GetLabelStyleString() const
 
     if (QueryFontStyle(TABFSAllCaps))
         for (int i = 0; pszTextString[i]; ++i)
-            if (isalpha(pszTextString[i]))
-                pszTextString[i] = static_cast<char>(toupper(pszTextString[i]));
+            if (isalpha(static_cast<unsigned char>(pszTextString[i])))
+                pszTextString[i] = static_cast<char>(
+                    toupper(static_cast<unsigned char>(pszTextString[i])));
 
     /* Escape the double quote chars and expand the text */
     char *pszTmpTextString = nullptr;

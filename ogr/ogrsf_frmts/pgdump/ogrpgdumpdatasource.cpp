@@ -135,7 +135,8 @@ char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix)
     int i = 0;  // needed after loop
     for (; i < OGR_PG_NAMEDATALEN - 1 && pszSafeName[i] != '\0'; i++)
     {
-        pszSafeName[i] = (char)tolower(pszSafeName[i]);
+        pszSafeName[i] =
+            (char)tolower(static_cast<unsigned char>(pszSafeName[i]));
         if (pszSafeName[i] == '\'' || pszSafeName[i] == '-' ||
             pszSafeName[i] == '#')
         {

@@ -210,7 +210,8 @@ static void USGSDEMPrintDouble(char *pszBuffer, double dfValue)
             szTemp[i] = 'D';
 #ifdef MSVC_HACK
         if ((szTemp[i] == '+' || szTemp[i] == '-') && szTemp[i + 1] == '0' &&
-            isdigit(szTemp[i + 2]) && isdigit(szTemp[i + 3]) &&
+            isdigit(static_cast<unsigned char>(szTemp[i + 2])) &&
+            isdigit(static_cast<unsigned char>(szTemp[i + 3])) &&
             szTemp[i + 4] == '\0')
         {
             szTemp[i + 1] = szTemp[i + 2];
@@ -260,7 +261,8 @@ static void USGSDEMPrintSingle(char *pszBuffer, double dfValue)
             szTemp[i] = 'D';
 #ifdef MSVC_HACK
         if ((szTemp[i] == '+' || szTemp[i] == '-') && szTemp[i + 1] == '0' &&
-            isdigit(szTemp[i + 2]) && isdigit(szTemp[i + 3]) &&
+            isdigit(static_cast<unsigned char>(szTemp[i + 2])) &&
+            isdigit(static_cast<unsigned char>(szTemp[i + 3])) &&
             szTemp[i + 4] == '\0')
         {
             szTemp[i + 1] = szTemp[i + 2];

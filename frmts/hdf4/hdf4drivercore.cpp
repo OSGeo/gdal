@@ -88,9 +88,11 @@ struct HDF4DriverSubdatasetInfo : public GDALSubdatasetInfo
                     (strlen(aosParts[3]) > 1 &&
                      (aosParts[3][0] == '\\' || aosParts[3][0] == '/')) &&
                     ((strlen(aosParts[2]) == 2 &&
-                      std::isalpha(aosParts[2][1])) ||
+                      std::isalpha(
+                          static_cast<unsigned char>(aosParts[2][1]))) ||
                      (strlen(aosParts[2]) == 1 &&
-                      std::isalpha(aosParts[2][0])))};
+                      std::isalpha(
+                          static_cast<unsigned char>(aosParts[2][0]))))};
                 m_pathComponent = aosParts[2];
 
                 const bool hasProtocol{m_pathComponent.find("/vsicurl/") !=

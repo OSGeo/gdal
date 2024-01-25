@@ -641,7 +641,7 @@ char *DDFFieldDefn::ExpandFormat(const char *pszSrc)
 
         // This is a repeated subclause.
         else if ((iSrc == 0 || pszSrc[iSrc - 1] == ',') &&
-                 isdigit(pszSrc[iSrc]))
+                 isdigit(static_cast<unsigned char>(pszSrc[iSrc])))
         {
             const int nRepeat = atoi(pszSrc + iSrc);
             // 100: arbitrary number. Higher values might cause performance
@@ -654,7 +654,7 @@ char *DDFFieldDefn::ExpandFormat(const char *pszSrc)
 
             // Skip over repeat count.
             const char *pszNext = pszSrc + iSrc;  // Used after for.
-            for (; isdigit(*pszNext); pszNext++)
+            for (; isdigit(static_cast<unsigned char>(*pszNext)); pszNext++)
                 iSrc++;
 
             char *pszContents = ExtractSubstring(pszNext);

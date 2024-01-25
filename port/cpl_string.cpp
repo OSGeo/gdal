@@ -1514,9 +1514,9 @@ int CPLsscanf(const char *str, CPL_SCANF_FORMAT_STRING(const char *fmt), ...)
                 break;
             }
         }
-        else if (isspace(*fmt))
+        else if (isspace(static_cast<unsigned char>(*fmt)))
         {
-            while (*str != '\0' && isspace(*str))
+            while (*str != '\0' && isspace(static_cast<unsigned char>(*str)))
                 ++str;
         }
         else if (*str != *fmt)
@@ -2842,7 +2842,7 @@ CPLValueType CPLGetValueType(const char *pszValue)
             if (!bFoundMantissa)
                 return CPL_VALUE_STRING;
             if (!(pszValue[1] == '+' || pszValue[1] == '-' ||
-                  isdigit(pszValue[1])))
+                  isdigit(static_cast<unsigned char>(pszValue[1]))))
                 return CPL_VALUE_STRING;
 
             bIsReal = true;

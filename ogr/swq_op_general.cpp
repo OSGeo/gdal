@@ -156,7 +156,9 @@ int swq_test_like(const char *input, const char *pattern, char chEscape,
                 input += input_codepoint_size;
             }
             else if ((!insensitive && *pattern != *input) ||
-                     (insensitive && tolower(*pattern) != tolower(*input)))
+                     (insensitive &&
+                      tolower(static_cast<unsigned char>(*pattern)) !=
+                          tolower(static_cast<unsigned char>(*input))))
             {
                 return 0;
             }

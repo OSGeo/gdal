@@ -290,8 +290,9 @@ struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
             m_driverPrefixComponent = aosParts[0];
 
             int subdatasetIndex{2};
-            const bool hasDriveLetter{strlen(aosParts[1]) == 1 &&
-                                      std::isalpha(aosParts[1][0])};
+            const bool hasDriveLetter{
+                strlen(aosParts[1]) == 1 &&
+                std::isalpha(static_cast<unsigned char>(aosParts[1][0]))};
 
             // Check for drive letter
             if (iPartsCount == 4)

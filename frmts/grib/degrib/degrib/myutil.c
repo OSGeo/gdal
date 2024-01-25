@@ -212,7 +212,7 @@ int myAtoI (const char *ptr, sInt4 *value)
    myAssert (ptr != NULL);
    *value = 0;
    while (*ptr != '\0') {
-      if (isdigit (*ptr) || (*ptr == '+') || (*ptr == '-')) {
+      if (isdigit ((unsigned char)*ptr) || (*ptr == '+') || (*ptr == '-')) {
          *value = (int)strtol (ptr, &extra, 10);
          myAssert (extra != NULL);
          if (*extra == '\0') {
@@ -283,7 +283,7 @@ int myAtoF (const char *ptr, double *value)
    myAssert (ptr != NULL);
    *value = 0;
    while (*ptr != '\0') {
-      if (isdigit (*ptr) || (*ptr == '+') || (*ptr == '-') || (*ptr == '.')) {
+      if (isdigit ((unsigned char)*ptr) || (*ptr == '+') || (*ptr == '-') || (*ptr == '.')) {
          *value = strtod (ptr, &extra);
          myAssert (extra != NULL);
          if (*extra == '\0') {
@@ -327,15 +327,15 @@ int myIsReal_old (const char *ptr, double *value)
    size_t len, i;
 
    *value = 0;
-   if ((!isdigit (*ptr)) && (*ptr != '.'))
+   if ((!isdigit ((unsigned char)*ptr)) && (*ptr != '.'))
       if (*ptr != '-')
          return 0;
    len = strlen (ptr);
    for (i = 1; i < len - 1; i++) {
-      if ((!isdigit (ptr[i])) && (ptr[i] != '.'))
+      if ((!isdigit ((unsigned char)ptr[i])) && (ptr[i] != '.'))
          return 0;
    }
-   if ((!isdigit (ptr[len - 1])) && (ptr[len - 1] != '.')) {
+   if ((!isdigit ((unsigned char)ptr[len - 1])) && (ptr[len - 1] != '.')) {
       if (ptr[len - 1] != ',') {
          return 0;
       } else {
@@ -702,7 +702,7 @@ void strTrim (char *str)
    }
 
    /* Trim the string to the left first. */
-   for (ptr = str; isspace (*ptr); ptr++) {
+   for (ptr = str; isspace ((unsigned char)*ptr); ptr++) {
    }
    /* Did we hit the end of an all space string? */
    if (*ptr == '\0') {
@@ -711,7 +711,7 @@ void strTrim (char *str)
    }
 
    /* now work on the right side. */
-   for (ptr2 = ptr + (strlen (ptr) - 1); isspace (*ptr2); ptr2--) {
+   for (ptr2 = ptr + (strlen (ptr) - 1); isspace ((unsigned char)*ptr2); ptr2--) {
    }
 
    /* adjust the pointer to add the null byte. */
@@ -873,7 +873,7 @@ void strToUpper (char *str)
       return;
    }
 
-   while ((*ptr++ = toupper (*str++)) != '\0') {
+   while ((*ptr++ = toupper ((unsigned char)(*str++))) != '\0') {
    }
 }
 #endif
@@ -908,7 +908,7 @@ void strToLower (char *str)
       return;
    }
 
-   while ((*ptr++ = tolower (*str++)) != '\0') {
+   while ((*ptr++ = tolower ((unsigned char)*str++)) != '\0') {
    }
 }
 #endif
@@ -920,7 +920,7 @@ void strToLower (char *str)
 int str2lw (char *s) {
   int i = 0, len = strlen (s);
   while (i < len) {
-    s[i] = (char) tolower(s[i]);
+    s[i] = (char) tolower((unsigned char)s[i]);
     i++;
   }
   return len;
@@ -968,18 +968,18 @@ int strcmpNoCase (const char *str1, const char *str2)
       return 1;
    }
 
-   for (; tolower (*str1) == tolower (*str2); str1++, str2++) {
+   for (; tolower ((unsigned char)*str1) == tolower ((unsigned char)*str2); str1++, str2++) {
       if (*str1 == '\0')
          return 0;
    }
-   return (tolower (*str1) - tolower (*str2) < 0) ? -1 : 1;
+   return (tolower ((unsigned char)*str1) - tolower ((unsigned char)*str2) < 0) ? -1 : 1;
 /*
    strlen1 = strlen (str1);
    strlen2 = strlen (str2);
    min = (strlen1 < strlen2) ? strlen1 : strlen2;
    for (i = 0; i < min; i++) {
-      c1 = tolower (str1[i]);
-      c2 = tolower (str2[i]);
+      c1 = tolower ((unsigned char)str1[i]);
+      c2 = tolower ((unsigned char)str2[i]);
       if (c1 < c2)
          return -1;
       if (c1 > c2)
