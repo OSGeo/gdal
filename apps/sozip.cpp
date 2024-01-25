@@ -381,6 +381,7 @@ MAIN_START(nArgc, papszArgv)
 
     EarlySetConfigOptions(nArgc, papszArgv);
     nArgc = GDALGeneralCmdLineProcessor(nArgc, &papszArgv, 0);
+    CPLStringList aosArgv(papszArgv, /* bTakeOwnership= */ true);
     if (nArgc < 1)
         exit(-nArgc);
 
@@ -395,7 +396,6 @@ MAIN_START(nArgc, papszArgv)
                    "is running against GDAL %s\n",
                    papszArgv[0], GDAL_RELEASE_NAME,
                    GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy(papszArgv);
             return 0;
         }
         else if (strcmp(papszArgv[iArg], "--help") == 0)
@@ -769,7 +769,6 @@ MAIN_START(nArgc, papszArgv)
         }
     }
     CPLCloseZip(hZIP);
-    CSLDestroy(papszArgv);
     return 0;
 }
 MAIN_END
