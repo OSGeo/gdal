@@ -1199,43 +1199,48 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString(OGRGeometry *poGeom)
     /* -------------------------------------------------------------------- */
     if (OGR_GT_IsSubClassOf(eGeomType, wkbCurvePolygon))
     {
-        OGRMultiLineString *poMP = new OGRMultiLineString();
-        OGRPolygon *poPoly = nullptr;
+        OGRMultiLineString *poMLS = new OGRMultiLineString();
+        poMLS->assignSpatialReference(poGeom->getSpatialReference());
+
+        const auto AddRingFromSrcPoly = [poMLS](const OGRPolygon *poPoly)
+        {
+            for (int iRing = 0; iRing < poPoly->getNumInteriorRings() + 1;
+                 iRing++)
+            {
+                const OGRLineString *poLR;
+
+                if (iRing == 0)
+                {
+                    poLR = poPoly->getExteriorRing();
+                    if (poLR == nullptr)
+                        break;
+                }
+                else
+                    poLR = poPoly->getInteriorRing(iRing - 1);
+
+                if (poLR == nullptr || poLR->getNumPoints() == 0)
+                    continue;
+
+                auto poNewLS = new OGRLineString();
+                poNewLS->addSubLineString(poLR);
+                poMLS->addGeometryDirectly(poNewLS);
+            }
+        };
+
         if (OGR_GT_IsSubClassOf(eGeomType, wkbPolygon))
-            poPoly = poGeom->toPolygon();
+        {
+            AddRingFromSrcPoly(poGeom->toPolygon());
+        }
         else
         {
-            poPoly = poGeom->toCurvePolygon()->CurvePolyToPoly();
-            delete poGeom;
-            poGeom = poPoly;
+            auto poTmpPoly = std::unique_ptr<OGRPolygon>(
+                poGeom->toCurvePolygon()->CurvePolyToPoly());
+            AddRingFromSrcPoly(poTmpPoly.get());
         }
 
-        poMP->assignSpatialReference(poGeom->getSpatialReference());
+        delete poGeom;
 
-        for (int iRing = 0; iRing < poPoly->getNumInteriorRings() + 1; iRing++)
-        {
-            OGRLineString *poNewLS, *poLR;
-
-            if (iRing == 0)
-            {
-                poLR = poPoly->getExteriorRing();
-                if (poLR == nullptr)
-                    break;
-            }
-            else
-                poLR = poPoly->getInteriorRing(iRing - 1);
-
-            if (poLR == nullptr || poLR->getNumPoints() == 0)
-                continue;
-
-            poNewLS = new OGRLineString();
-            poNewLS->addSubLineString(poLR);
-            poMP->addGeometryDirectly(poNewLS);
-        }
-
-        delete poPoly;
-
-        return poMP;
+        return poMLS;
     }
 
     /* -------------------------------------------------------------------- */
