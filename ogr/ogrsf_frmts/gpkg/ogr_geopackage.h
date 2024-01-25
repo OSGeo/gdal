@@ -156,6 +156,9 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     mutable int m_nHasMetadataTables = -1;  // -1 = unknown, 0 = false, 1 = true
     int m_nCreateMetadataTables = -1;  // -1 = on demand, 0 = false, 1 = true
 
+    // Set by CreateTileGriddedTable() and used by FinalizeRasterRegistration()
+    std::string m_osSQLInsertIntoGpkg2dGriddedCoverageAncillary{};
+
     CPLString m_osIdentifier{};
     bool m_bIdentifierAsCO = false;
     CPLString m_osDescription{};
@@ -410,6 +413,44 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     static std::string GetCurrentDateEscapedSQL();
 
     GDALDataset *GetRasterLayerDataset(const char *pszLayerName);
+
+    //! Instance of that class temporarily disable foreign key checks
+    class TemporaryForeignKeyCheckDisabler
+    {
+      public:
+        explicit TemporaryForeignKeyCheckDisabler(GDALGeoPackageDataset *poDS)
+            : m_poDS(poDS),
+              m_nPragmaForeignKeysOldValue(SQLGetInteger(
+                  m_poDS->GetDB(), "PRAGMA foreign_keys", nullptr))
+        {
+            if (m_nPragmaForeignKeysOldValue)
+            {
+                CPL_IGNORE_RET_VAL(
+                    SQLCommand(m_poDS->GetDB(), "PRAGMA foreign_keys = 0"));
+            }
+        }
+
+        ~TemporaryForeignKeyCheckDisabler()
+        {
+            if (m_nPragmaForeignKeysOldValue)
+            {
+                CPL_IGNORE_RET_VAL(
+                    SQLCommand(m_poDS->GetDB(), "PRAGMA foreign_keys = 1"));
+            }
+        }
+
+      private:
+        CPL_DISALLOW_COPY_ASSIGN(TemporaryForeignKeyCheckDisabler)
+
+        GDALGeoPackageDataset *m_poDS = nullptr;
+        int m_nPragmaForeignKeysOldValue = 0;
+    };
+
+    //! Return an object that, while alive, temporarily disables foreign key checks
+    TemporaryForeignKeyCheckDisabler GetTemporaryForeignKeyCheckDisabler()
+    {
+        return TemporaryForeignKeyCheckDisabler(this);
+    }
 
   protected:
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
