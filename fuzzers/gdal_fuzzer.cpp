@@ -121,7 +121,7 @@ static void ExploreArray(const std::shared_ptr<GDALMDArray> &poArray,
     constexpr size_t MAX_ALLOC = 1000 * 1000 * 1000U;
     if (pszDriverName && EQUAL(pszDriverName, "GRIB"))
     {
-        const auto poDims = poArray->GetDimensions();
+        const auto &poDims = poArray->GetDimensions();
         if (nDimCount >= 2 &&
             poDims[nDimCount - 2]->GetSize() >
                 MAX_ALLOC / sizeof(double) / poDims[nDimCount - 1]->GetSize())

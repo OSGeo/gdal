@@ -2147,8 +2147,8 @@ VSIDIR *VSIADLSFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
     dir->m_poFS = this;
     dir->m_bRecursiveRequestFromAccountRoot =
         osFilesystem.empty() && nRecurseDepth < 0;
-    dir->m_osFilesystem = osFilesystem;
-    dir->m_osObjectKey = osObjectKey;
+    dir->m_osFilesystem = std::move(osFilesystem);
+    dir->m_osObjectKey = std::move(osObjectKey);
     dir->m_nMaxFiles =
         atoi(CSLFetchNameValueDef(papszOptions, "MAXFILES", "0"));
     dir->m_bCacheEntries =

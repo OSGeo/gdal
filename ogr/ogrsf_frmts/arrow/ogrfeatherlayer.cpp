@@ -164,7 +164,7 @@ void OGRFeatherLayer::EstablishFeatureDefn()
     const auto oMapFieldNameToGDALSchemaFieldDefn =
         LoadGDALSchema(kv_metadata.get());
 
-    const auto fields = m_poSchema->fields();
+    const auto &fields = m_poSchema->fields();
     for (int i = 0; i < m_poSchema->num_fields(); ++i)
     {
         const auto &field = fields[i];

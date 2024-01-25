@@ -831,7 +831,7 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
                     subArray.Add(subdtype);
                 array.Add(subArray);
             }
-            dtype = array;
+            dtype = std::move(array);
             break;
         }
     }

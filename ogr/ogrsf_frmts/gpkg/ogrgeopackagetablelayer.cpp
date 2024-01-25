@@ -197,7 +197,7 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
         // Can happen if ignoring all fields on a view...
         soColumns = "NULL";
     }
-    m_soColumns = soColumns;
+    m_soColumns = std::move(soColumns);
     return OGRERR_NONE;
 }
 
@@ -4957,10 +4957,8 @@ bool OGRGeoPackageTableLayer::HasSpatialIndex()
 
     const char *pszT = m_pszTableName;
     const char *pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
-    CPLString osRTreeName("rtree_");
-    osRTreeName += pszT;
-    osRTreeName += "_";
-    osRTreeName += pszC;
+    const CPLString osRTreeName(
+        CPLString("rtree_").append(pszT).append("_").append(pszC));
     const std::map<CPLString, CPLString> &oMap =
         m_poDS->GetNameTypeMapFromSQliteMaster();
     if (oMap.find(CPLString(osRTreeName).toupper()) != oMap.end())

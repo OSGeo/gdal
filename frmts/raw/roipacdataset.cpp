@@ -447,7 +447,7 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
                 oSRS.SetWellKnownGeogCS("NAD27");
             }
         }
-        poDS->m_oSRS = oSRS;
+        poDS->m_oSRS = std::move(oSRS);
         poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     if (aosRSC.FetchNameValue("Z_OFFSET") != nullptr)

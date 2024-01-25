@@ -340,7 +340,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer(
                                         {
                                             m_poKmlSchema = nullptr;
                                         }
-                                        kml2FeatureDef(schema,
+                                        kml2FeatureDef(std::move(schema),
                                                        m_poOgrFeatureDefn);
                                     }
                                 }

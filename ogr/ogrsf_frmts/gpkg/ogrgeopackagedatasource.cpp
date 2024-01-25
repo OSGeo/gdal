@@ -1279,7 +1279,8 @@ GDALGeoPackageDataset::GetContents()
                 oDesc.osMaxX = pszMaxX;
             if (pszMaxY)
                 oDesc.osMaxY = pszMaxY;
-            m_oMapTableToContents[CPLString(pszTableName).toupper()] = oDesc;
+            m_oMapTableToContents[CPLString(pszTableName).toupper()] =
+                std::move(oDesc);
         }
     }
 

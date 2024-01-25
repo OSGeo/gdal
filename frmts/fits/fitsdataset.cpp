@@ -1084,7 +1084,8 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
         const char *pszRepeat = m_aosCreationOptions.FetchNameValue(
             (CPLString("REPEAT_") + pszFieldName).c_str());
 
-        const auto osTFormFromMD = oMapColNameToMetadata[pszFieldName]["TFORM"];
+        const auto &osTFormFromMD =
+            oMapColNameToMetadata[pszFieldName]["TFORM"];
 
         // For fields of type list, determine if we can know if it has a fixed
         // number of elements
@@ -1232,6 +1233,7 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
                 osTForm = oCol.typechar;
             }
         }
+        CPL_IGNORE_RET_VAL(osRepeat);
         int status = 0;
         fits_insert_col(m_poDS->m_hFITS, oCol.iCol, &osTType[0], &osTForm[0],
                         &status);

@@ -1267,8 +1267,8 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
             {
                 memcpy(&v, pabyMarkerDataIter, 2);
                 CPL_MSBPTR16(&v);
-                const auto comment =
-                    commentFunc ? commentFunc(v) : std::string();
+                const std::string comment(commentFunc ? commentFunc(v)
+                                                      : std::string());
                 AddField(psMarker, psLastChild, psDumpContext, name, v,
                          comment.empty() ? nullptr : comment.c_str());
                 pabyMarkerDataIter += 2;
@@ -1292,8 +1292,8 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
             {
                 memcpy(&v, pabyMarkerDataIter, 4);
                 CPL_MSBPTR32(&v);
-                const auto comment =
-                    commentFunc ? commentFunc(v) : std::string();
+                const std::string comment(commentFunc ? commentFunc(v)
+                                                      : std::string());
                 AddField(psMarker, psLastChild, psDumpContext, name, v,
                          comment.empty() ? nullptr : comment.c_str());
                 pabyMarkerDataIter += 4;

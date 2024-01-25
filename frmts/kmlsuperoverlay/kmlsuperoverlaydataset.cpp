@@ -1443,6 +1443,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO(
                                4 * sizeof(double));
                         aosImages.push_back(oImageDesc);
                     }
+                    CPL_IGNORE_RET_VAL(osSubFilename);
                 }
             }
             psIter = psIter->psNext;
@@ -2451,7 +2452,7 @@ GDALDataset *KmlSingleDocRasterDataset::Open(const char *pszFilename,
     poDS->nRasterYSize = nYSize;
     poDS->nLevel = (int)aosDescs.size();
     poDS->nTileSize = nTileSize;
-    poDS->osDirname = osDirname;
+    poDS->osDirname = std::move(osDirname);
     poDS->osNominalExt = oDesc.szExtI;
     memcpy(poDS->adfGlobalExtents, adfGlobalExtents, 4 * sizeof(double));
     poDS->adfGeoTransform[0] = adfGlobalExtents[0];

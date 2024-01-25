@@ -1193,7 +1193,7 @@ GDALDataset *OGRVDVDataSource::Open(GDALOpenInfo *poOpenInfo)
             if (EQUAL(*papszIter, ".") || EQUAL(*papszIter, ".."))
                 continue;
             nFiles++;
-            CPLString osExtension(CPLGetExtension(*papszIter));
+            const std::string osExtension(CPLGetExtension(*papszIter));
             int nCount = ++oMapOtherExtensions[osExtension];
             if (osMajorityExtension == "" ||
                 nCount > oMapOtherExtensions[osMajorityExtension])

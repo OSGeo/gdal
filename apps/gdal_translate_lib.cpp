@@ -1083,7 +1083,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     if (psOptions->osFormat.empty())
     {
-        CPLString osFormat = GetOutputDriverForRaster(pszDest);
+        const std::string osFormat = GetOutputDriverForRaster(pszDest);
         if (osFormat.empty())
         {
             GDALTranslateOptionsFree(psOptions);
@@ -1641,7 +1641,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                        fabs(adfSrcGeoTransform[5] / adfDstGeoTransform[5]);
     }
 
-    const auto adfSrcWinOri = psOptions->adfSrcWin;
+    const std::array<double, 4> adfSrcWinOri(psOptions->adfSrcWin);
     const double dfRatioX =
         poSrcDS->GetRasterXSize() == 0
             ? 1.0

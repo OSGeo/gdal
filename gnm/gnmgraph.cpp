@@ -50,7 +50,7 @@ void GNMGraph::AddVertex(GNMGFID nFID)
 
     GNMStdVertex stVertex;
     stVertex.bIsBlocked = false;
-    m_mstVertices[nFID] = stVertex;
+    m_mstVertices[nFID] = std::move(stVertex);
 }
 
 void GNMGraph::DeleteVertex(GNMGFID nFID)

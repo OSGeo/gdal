@@ -809,7 +809,7 @@ static void GDALVectorInfoReportMetadata(CPLString &osRet, CPLJSONObject &oRoot,
 /*                           ReportOnLayer()                            */
 /************************************************************************/
 
-static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
+static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                           const GDALVectorInfoOptions *psOptions,
                           OGRLayer *poLayer, bool bForceSummary,
                           bool bTakeIntoAccountWHERE,
@@ -1146,7 +1146,7 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
                        "Coordinate epoch: %s\n", osCoordinateEpoch.c_str());
             }
 
-            const auto mapping = poSRS->GetDataAxisToSRSAxisMapping();
+            const auto &mapping = poSRS->GetDataAxisToSRSAxisMapping();
             Concat(osRet, psOptions->bStdoutOutput,
                    "Data axis to CRS axis mapping: ");
             for (size_t i = 0; i < mapping.size(); i++)

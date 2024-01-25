@@ -58,9 +58,9 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
 
     const CPLString osDirName = CPLGetDirname(pszPath);
 
-    CPLString osIMDSourceFilename = CPLFormFilename(
+    std::string osIMDSourceFilename = CPLFormFilename(
         osDirName, CPLSPrintf("DIM_%s", osBaseName.c_str() + 4), "XML");
-    CPLString osRPBSourceFilename = CPLFormFilename(
+    std::string osRPBSourceFilename = CPLFormFilename(
         osDirName, CPLSPrintf("RPC_%s", osBaseName.c_str() + 4), "XML");
 
     // find last underline
@@ -95,7 +95,7 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
 
     if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
-        m_osIMDSourceFilename = osIMDSourceFilename;
+        m_osIMDSourceFilename = std::move(osIMDSourceFilename);
     }
     else
     {
@@ -103,13 +103,13 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
             CPLFormFilename(osDirName, CPLSPrintf("DIM_%s", sBaseName), "XML");
         if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osIMDSourceFilename = osIMDSourceFilename;
+            m_osIMDSourceFilename = std::move(osIMDSourceFilename);
         }
     }
 
     if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
     {
-        m_osRPBSourceFilename = osRPBSourceFilename;
+        m_osRPBSourceFilename = std::move(osRPBSourceFilename);
     }
     else
     {
@@ -117,7 +117,7 @@ GDALMDReaderPleiades::GDALMDReaderPleiades(const char *pszPath,
             CPLFormFilename(osDirName, CPLSPrintf("RPC_%s", sBaseName), "XML");
         if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = osRPBSourceFilename;
+            m_osRPBSourceFilename = std::move(osRPBSourceFilename);
         }
     }
 

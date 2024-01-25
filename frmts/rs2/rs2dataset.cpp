@@ -1292,7 +1292,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
 
             if (bUseProjInfo)
             {
-                poDS->m_oSRS = oPrj;
+                poDS->m_oSRS = std::move(oPrj);
             }
             else
             {
@@ -1303,7 +1303,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
-        poDS->m_oGCPSRS = oLL;
+        poDS->m_oGCPSRS = std::move(oLL);
     }
 
     /* -------------------------------------------------------------------- */

@@ -370,7 +370,7 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
             const auto timestampType =
                 static_cast<arrow::TimestampType *>(type.get());
             eType = OFTDateTime;
-            const auto osTZ = timestampType->timezone();
+            const auto &osTZ = timestampType->timezone();
             int nTZFlag = OGRTimezoneToTZFlag(osTZ.c_str(), false);
             if (nTZFlag == OGR_TZFLAG_UNKNOWN && !osTZ.empty())
             {
@@ -799,7 +799,7 @@ static bool IsPointType(const std::shared_ptr<arrow::DataType> &type,
         return false;
     auto poListType = std::static_pointer_cast<arrow::FixedSizeListType>(type);
     const int nOutDimensionality = poListType->list_size();
-    const auto osValueFieldName = poListType->value_field()->name();
+    const std::string osValueFieldName(poListType->value_field()->name());
     if (nOutDimensionality == 2)
     {
         bHasZOut = false;

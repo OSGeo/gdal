@@ -320,15 +320,15 @@ static GDALDataType ParseChannelsInfo(const CPLXMLNode *psElt)
 
         if (EQUAL(osName, "type"))
         {
-            osType = osValue;
+            osType = std::move(osValue);
         }
         else if (EQUAL(osName, "bytes_ps"))
         {
-            osBytesPS = osValue;
+            osBytesPS = std::move(osValue);
         }
         else if (EQUAL(osName, "channels"))
         {
-            osChannels = osValue;
+            osChannels = std::move(osValue);
         }
     }
 

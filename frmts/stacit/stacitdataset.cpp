@@ -363,7 +363,7 @@ static void ParseAsset(const CPLJSONObject &jAsset,
     {
         Collection collection;
         collection.osName = osCollection;
-        oMapCollection[osCollection] = collection;
+        oMapCollection[osCollection] = std::move(collection);
     }
     auto &collection = oMapCollection[osCollection];
 

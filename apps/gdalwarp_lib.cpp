@@ -1402,7 +1402,7 @@ GDALDatasetH GDALWarp(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     {
         if (psOptions->osFormat.empty())
         {
-            CPLString osFormat = GetOutputDriverForRaster(pszDest);
+            const std::string osFormat = GetOutputDriverForRaster(pszDest);
             if (osFormat.empty())
             {
                 return nullptr;

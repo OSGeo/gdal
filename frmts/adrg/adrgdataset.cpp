@@ -1489,7 +1489,7 @@ char **ADRGDataset::GetIMGListFromGEN(const char *pszFileName,
             /* Build full IMG file name from BAD value */
             CPLString osGENDir(CPLGetDirname(pszFileName));
 
-            CPLString osFileName =
+            const CPLString osFileName =
                 CPLFormFilename(osGENDir.c_str(), osBAD.c_str(), nullptr);
             VSIStatBufL sStatBuf;
             if (VSIStatL(osFileName, &sStatBuf) == 0)

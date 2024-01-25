@@ -327,12 +327,13 @@ bool PCIDSK::BigEndianSystem()
 /*      _DBLayout metadata.                                             */
 /************************************************************************/
 
-void PCIDSK::ParseTileFormat(std::string oOptions,
+void PCIDSK::ParseTileFormat(const std::string& oOptionsIn,
                              int & nTileSize, std::string & oCompress)
 {
     nTileSize = PCIDSK_DEFAULT_TILE_SIZE;
     oCompress = "NONE";
 
+    std::string oOptions(oOptionsIn);
     UCaseStr(oOptions);
 
     std::string::size_type nStart = oOptions.find_first_not_of(" ");
@@ -340,7 +341,7 @@ void PCIDSK::ParseTileFormat(std::string oOptions,
 
     while (nStart != std::string::npos || nEnd != std::string::npos)
     {
-        std::string oToken = oOptions.substr(nStart, nEnd - nStart);
+        const std::string oToken = oOptions.substr(nStart, nEnd - nStart);
 
         if (oToken.size() > 5 && STARTS_WITH(oToken.c_str(), "TILED"))
         {

@@ -290,7 +290,7 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
                         oDataFieldMetadata.poGridMetadata = poGridMetadataRef;
                         m_oMapSubdatasetNameToGridDataFieldMetadata
                             ["//HDFEOS/GRIDS/" + osGridName + "/Data_Fields/" +
-                             osDataFieldName] = oDataFieldMetadata;
+                             osDataFieldName] = std::move(oDataFieldMetadata);
                     }
                 }
             }

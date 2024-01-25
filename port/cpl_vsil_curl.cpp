@@ -2092,7 +2092,7 @@ void VSICurlHandle::UpdateRedirectInfo(
                 // figure out the expiration timestamp in local time.
                 oFileProp.bS3LikeRedirect = true;
                 oFileProp.nExpireTimestampLocal = time(nullptr) + nValidity;
-                oFileProp.osRedirectURL = osEffectiveURL;
+                oFileProp.osRedirectURL = std::move(osEffectiveURL);
                 poFS->SetCachedFileProp(m_pszURL, oFileProp);
             }
         }
@@ -2584,7 +2584,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
 
         if (nMergedRanges == 1)
             osFirstRange = osCurRange;
-        osLastRange = osCurRange;
+        osLastRange = std::move(osCurRange);
     }
 
     const char *pszMaxRanges =

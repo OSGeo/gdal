@@ -308,8 +308,7 @@ OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
 
     pConnection->CloseGeodatabase();
 
-    CPLString osEditedName(osName);
-    osEditedName += ".ogredited";
+    const CPLString osEditedName(CPLString(osName).append(".ogredited"));
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
     CPL_IGNORE_RET_VAL(CPLUnlinkTree(osEditedName));

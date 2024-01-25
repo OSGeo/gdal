@@ -478,13 +478,13 @@ static CPLHTTPResult *DAAS_CPLHTTPFetch(const char *pszURL, char **papszOptions)
 
 bool GDALDAASDataset::GetAuthorization()
 {
-    CPLString osClientId =
+    const CPLString osClientId =
         CSLFetchNameValueDef(m_papszOpenOptions, "CLIENT_ID",
                              CPLGetConfigOption("GDAL_DAAS_CLIENT_ID", ""));
-    CPLString osAPIKey =
+    const CPLString osAPIKey =
         CSLFetchNameValueDef(m_papszOpenOptions, "API_KEY",
                              CPLGetConfigOption("GDAL_DAAS_API_KEY", ""));
-    CPLString osAuthorization =
+    const CPLString osAuthorization =
         CSLFetchNameValueDef(m_papszOpenOptions, "ACCESS_TOKEN",
                              CPLGetConfigOption("GDAL_DAAS_ACCESS_TOKEN", ""));
     m_osXForwardUser = CSLFetchNameValueDef(
@@ -815,6 +815,7 @@ bool GDALDAASDataset::GetImageMetadata()
     {
         oGetBufferDict = oGetBufferObj;
     }
+    CPL_IGNORE_RET_VAL(oGetBufferObj);
     if (!oGetBufferDict.IsValid())
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s missing",
@@ -995,8 +996,10 @@ void GDALDAASDataset::ReadSRS(const CPLJSONObject &oProperties)
             if (oSRSObj.GetType() == CPLJSONObject::Type::Object)
             {
                 bool bError = false;
-                CPLString osType(GetString(oSRSObj, "type", true, bError));
-                CPLString osValue(GetString(oSRSObj, "value", true, bError));
+                const std::string osType(
+                    GetString(oSRSObj, "type", true, bError));
+                const std::string osValue(
+                    GetString(oSRSObj, "value", true, bError));
                 // Use urn in priority
                 if (osType == "urn" && !osValue.empty())
                 {
@@ -1193,7 +1196,7 @@ bool GDALDAASDataset::SetupServerSideReprojection(const char *pszTargetSRS)
     m_bRequestInGeoreferencedCoordinates = true;
     m_osSRSType = "epsg";
     m_osSRSValue = std::move(osTargetEPSGCode);
-    m_oSRS = oSRS;
+    m_oSRS = std::move(oSRS);
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
     return true;

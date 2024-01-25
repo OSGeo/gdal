@@ -798,8 +798,7 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
         {
             CPLString osLeft(aosTokens[0]);
             osLeft.Trim();
-            CPLString osRight(aosTokens[1]);
-            osRight.Trim();
+            const CPLString osRight(CPLString(aosTokens[1]).Trim());
             if (osLeft == "lat min")
                 osLatMin = osRight;
             else if (osLeft == "lat max")
@@ -1251,7 +1250,7 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
                 poDS->adfGeoTransform[5] /= 3600.0;
             }
 
-            poDS->m_oSRS = oSRS;
+            poDS->m_oSRS = std::move(oSRS);
         }
     }
 

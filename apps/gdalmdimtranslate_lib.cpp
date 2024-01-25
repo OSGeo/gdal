@@ -853,7 +853,7 @@ static bool TranslateArray(
             auto tmpArrayNew = tmpArray->GetView(viewExpr, false, viewSpecs);
             if (!tmpArrayNew)
                 return false;
-            tmpArray = tmpArrayNew;
+            tmpArray = std::move(tmpArrayNew);
             size_t j = 0;
             const auto &tmpArrayDims(tmpArray->GetDimensions());
             for (size_t i = 0; i < srcArrayDims.size(); ++i)
@@ -1086,7 +1086,7 @@ static bool TranslateArray(
             CPLErrorStateBackuper oErrorStateBackuper;
             auto poDstIndexingVar(poDstGroup->OpenMDArray(newDimName));
             if (poDstIndexingVar)
-                dstDim->SetIndexingVariable(poDstIndexingVar);
+                dstDim->SetIndexingVariable(std::move(poDstIndexingVar));
         }
     }
     if (outputType.GetClass() == GEDTC_NUMERIC &&
@@ -1230,7 +1230,7 @@ GetGroup(const std::shared_ptr<GDALGroup> &poRootGroup,
                      aosTokens[i]);
             return nullptr;
         }
-        poCurGroup = poCurGroupNew;
+        poCurGroup = std::move(poCurGroupNew);
     }
     return poCurGroup;
 }
@@ -1560,7 +1560,7 @@ CopyToNonMultiDimensionalDriver(GDALDriver *poDriver, const char *pszDest,
                                  "output to non-multidimensional driver");
                         return nullptr;
                     }
-                    srcArray = tmpArray;
+                    srcArray = std::move(tmpArray);
                 }
             }
         }

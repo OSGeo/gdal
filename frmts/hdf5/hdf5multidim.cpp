@@ -1530,7 +1530,7 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
             auto nPos = osDimName.rfind('/');
             if (nPos != std::string::npos)
             {
-                std::string osDimParentName(osDimName.substr(0, nPos));
+                const std::string osDimParentName(osDimName.substr(0, nPos));
                 osDimName = osDimName.substr(nPos + 1);
 
                 m_dims.emplace_back(std::make_shared<HDF5Dimension>(
@@ -2210,12 +2210,12 @@ static void CopyValue(const GByte *pabySrcBuffer, hid_t hSrcDataType,
             {
                 const unsigned iSrc = mapDstCompsToSrcComps[iDst];
                 auto hMemberType = H5Tget_member_type(hSrcDataType, iSrc);
-                const auto mapDstSubCompsToSrcSubComps =
+                const std::vector<unsigned> mapDstSubCompsToSrcSubComps(
                     (H5Tget_class(hMemberType) == H5T_COMPOUND &&
                      comps[iDst]->GetType().GetClass() == GEDTC_COMPOUND)
                         ? CreateMapTargetComponentsToSrc(hMemberType,
                                                          comps[iDst]->GetType())
-                        : std::vector<unsigned>();
+                        : std::vector<unsigned>());
                 CopyValue(pabySrcBuffer +
                               H5Tget_member_offset(hSrcDataType, iSrc),
                           hMemberType, pabyDstBuffer + comps[iDst]->GetOffset(),
@@ -2255,11 +2255,11 @@ static void CopyToFinalBuffer(void *pDstBuffer, const void *pTemp, size_t nDims,
     const GByte *pabySrcBuffer = static_cast<const GByte *>(pTemp);
     pabyDstBufferStack[0] = static_cast<GByte *>(pDstBuffer);
     size_t iDim = 0;
-    const auto mapDstCompsToSrcComps =
+    const std::vector<unsigned> mapDstCompsToSrcComps(
         (H5Tget_class(hSrcDataType) == H5T_COMPOUND &&
          bufferDataType.GetClass() == GEDTC_COMPOUND)
             ? CreateMapTargetComponentsToSrc(hSrcDataType, bufferDataType)
-            : std::vector<unsigned>();
+            : std::vector<unsigned>());
 
     bool bFastCopyOfCompoundToSingleComponentCompound = false;
     GDALDataType eSrcTypeComp = GDT_Unknown;
@@ -2545,11 +2545,11 @@ static void CopyAllAttrValuesInto(size_t nDims, const GUInt64 *arrayStartIdx,
     std::vector<size_t> anStackCount(nDims);
     std::vector<const GByte *> pabySrcBufferStack(nDims + 1);
     std::vector<GByte *> pabyDstBufferStack(nDims + 1);
-    const auto mapDstCompsToSrcComps =
+    const std::vector<unsigned> mapDstCompsToSrcComps(
         (H5Tget_class(hSrcBufferType) == H5T_COMPOUND &&
          bufferDataType.GetClass() == GEDTC_COMPOUND)
             ? CreateMapTargetComponentsToSrc(hSrcBufferType, bufferDataType)
-            : std::vector<unsigned>();
+            : std::vector<unsigned>());
 
     pabySrcBufferStack[0] = static_cast<const GByte *>(pabySrcBuffer);
     if (nDims > 0)

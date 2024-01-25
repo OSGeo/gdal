@@ -448,7 +448,7 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
-    poDS->aosHDR = aosHDR;
+    poDS->aosHDR = std::move(aosHDR);
 
     /* -------------------------------------------------------------------- */
     /*      Open target binary file.                                        */

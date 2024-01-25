@@ -2064,7 +2064,7 @@ ZarrArray::OpenTilePresenceCache(bool bCanCreate) const
     if (poTilePresenceArray)
     {
         bool ok = true;
-        const auto apoDimsCache = poTilePresenceArray->GetDimensions();
+        const auto &apoDimsCache = poTilePresenceArray->GetDimensions();
         if (poTilePresenceArray->GetDataType() != eByteDT ||
             apoDimsCache.size() != m_aoDims.size())
         {
@@ -2202,7 +2202,7 @@ bool ZarrArray::CacheTilePresence()
     const std::vector<size_t> anCount(m_aoDims.size(), 1);
     const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
     const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
-    const auto apoDimsCache = poTilePresenceArray->GetDimensions();
+    const auto &apoDimsCache = poTilePresenceArray->GetDimensions();
     const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
 
     CPLDebug(ZARR_DEBUG_KEY,

@@ -1337,19 +1337,19 @@ CPLErr ECWDataset::SetMetadataItem(const char *pszName, const char *pszValue,
         if (strcmp(pszName, "PROJ") == 0)
         {
             bProjCodeChanged = (osNewVal != m_osProjCode);
-            m_osProjCode = osNewVal;
+            m_osProjCode = std::move(osNewVal);
             bHdrDirty |= bProjCodeChanged;
         }
         else if (strcmp(pszName, "DATUM") == 0)
         {
             bDatumCodeChanged |= (osNewVal != m_osDatumCode) ? TRUE : FALSE;
-            m_osDatumCode = osNewVal;
+            m_osDatumCode = std::move(osNewVal);
             bHdrDirty |= bDatumCodeChanged;
         }
         else
         {
             bUnitsCodeChanged |= (osNewVal != m_osUnitsCode) ? TRUE : FALSE;
-            m_osUnitsCode = osNewVal;
+            m_osUnitsCode = std::move(osNewVal);
             bHdrDirty |= bUnitsCodeChanged;
         }
         return CE_None;
@@ -3437,7 +3437,7 @@ void ECWDataset::ECW2WKTProjection()
     if (oSRS.importFromERM(psFileInfo->szProjection, psFileInfo->szDatum,
                            osUnits) == OGRERR_NONE)
     {
-        m_oSRS = oSRS;
+        m_oSRS = std::move(oSRS);
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 

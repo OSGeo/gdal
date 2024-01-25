@@ -1414,7 +1414,7 @@ void OGRHanaDataSource::CreateSpatialReferenceSystem(
 void OGRHanaDataSource::CreateParseArrayFunctions(const char *schemaName)
 {
     auto replaceAll = [](const CPLString &str, const CPLString &before,
-                         const CPLString &after)
+                         const CPLString &after) -> CPLString
     {
         CPLString res = str;
         return res.replaceAll(before, after);

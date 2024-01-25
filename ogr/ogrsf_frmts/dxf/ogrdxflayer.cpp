@@ -836,7 +836,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT(const bool bIsAttribOrAttdef)
             else
                 osEscaped += osText[iC];
         }
-        osText = osEscaped;
+        osText = std::move(osEscaped);
     }
 
     /* -------------------------------------------------------------------- */
@@ -2884,8 +2884,8 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline(
             {
                 poSubFeature = InsertBlockInline(
                     nInitialErrorCounter, poSubFeature->osBlockName,
-                    oInnerTransformer, poSubFeature, apoInnerExtraFeatures,
-                    true, bMergeGeometry);
+                    std::move(oInnerTransformer), poSubFeature,
+                    apoInnerExtraFeatures, true, bMergeGeometry);
             }
             catch (const std::invalid_argument &)
             {
@@ -3281,7 +3281,7 @@ bool OGRDXFLayer::GenerateINSERTFeatures()
         {
             poFeature = InsertBlockInline(
                 CPLGetErrorCounter(), m_oInsertState.m_osBlockName,
-                oTransformer, poFeature, apoExtraFeatures, true,
+                std::move(oTransformer), poFeature, apoExtraFeatures, true,
                 poDS->ShouldMergeBlockGeometries());
         }
         catch (const std::invalid_argument &)

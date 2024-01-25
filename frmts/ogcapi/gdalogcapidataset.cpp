@@ -1597,25 +1597,22 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
         }
         if (pszRequiredTileMatrixSet != nullptr)
         {
-            osTilesetURL = osCandidateTilesetURL;
-            break;
+            osTilesetURL = std::move(osCandidateTilesetURL);
         }
-        if (pszPreferredTileMatrixSet != nullptr &&
-            !osCandidateTilesetURL.empty() &&
-            (oTileMatrixSetURI.find(pszPreferredTileMatrixSet) !=
-             std::string::npos))
+        else if (pszPreferredTileMatrixSet != nullptr &&
+                 !osCandidateTilesetURL.empty() &&
+                 (oTileMatrixSetURI.find(pszPreferredTileMatrixSet) !=
+                  std::string::npos))
         {
-            osTilesetURL = osCandidateTilesetURL;
-            break;
+            osTilesetURL = std::move(osCandidateTilesetURL);
         }
-
-        if (oTileMatrixSetURI.find("WorldCRS84Quad") != std::string::npos)
+        else if (oTileMatrixSetURI.find("WorldCRS84Quad") != std::string::npos)
         {
-            osTilesetURL = osCandidateTilesetURL;
+            osTilesetURL = std::move(osCandidateTilesetURL);
         }
         else if (osTilesetURL.empty())
         {
-            osTilesetURL = osCandidateTilesetURL;
+            osTilesetURL = std::move(osCandidateTilesetURL);
         }
     }
     if (osTilesetURL.empty())

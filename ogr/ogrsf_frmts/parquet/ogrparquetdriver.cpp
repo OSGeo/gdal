@@ -354,7 +354,7 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
     std::shared_ptr<arrow::dataset::DatasetFactory> factory;
     PARQUET_ASSIGN_OR_THROW(
         factory, arrow::dataset::FileSystemDatasetFactory::Make(
-                     std::move(fs), selector,
+                     std::move(fs), std::move(selector),
                      std::make_shared<arrow::dataset::ParquetFileFormat>(),
                      std::move(options)));
 
@@ -520,8 +520,8 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
         std::unique_ptr<parquet::arrow::FileReader> arrow_reader;
         auto poMemoryPool = std::shared_ptr<arrow::MemoryPool>(
             arrow::MemoryPool::CreateDefault().release());
-        auto st =
-            parquet::arrow::OpenFile(infile, poMemoryPool.get(), &arrow_reader);
+        auto st = parquet::arrow::OpenFile(std::move(infile),
+                                           poMemoryPool.get(), &arrow_reader);
         if (!st.ok())
         {
             CPLError(CE_Failure, CPLE_AppDefined,

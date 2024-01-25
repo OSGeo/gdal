@@ -1377,7 +1377,7 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
                     }
 
                     oLL.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    poDS->m_oGCPSRS = oLL;
+                    poDS->m_oGCPSRS = std::move(oLL);
                 }
 
                 /* --------------------------------------------------------------------

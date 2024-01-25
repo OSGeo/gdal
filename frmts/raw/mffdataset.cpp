@@ -648,7 +648,7 @@ void MFFDataset::ScanForProjectionInfo()
     }
 
     m_oSRS = oProj;
-    m_oGCPSRS = oProj;
+    m_oGCPSRS = std::move(oProj);
 
     if (!transform_ok)
     {

@@ -1603,7 +1603,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
         }
         if (EQUAL(osGTiffSRSSource.c_str(), "EPSG"))
         {
-            oSRS = oSRSTmp;
+            oSRS = std::move(oSRSTmp);
         }
         else if (bPCSCodeValid && EQUAL(osGTiffSRSSource.c_str(), ""))
         {

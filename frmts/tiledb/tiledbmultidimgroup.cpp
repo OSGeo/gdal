@@ -247,7 +247,7 @@ TileDBGroup::OpenGroup(const std::string &osName,
         }
     }
     if (osSubPath.empty())
-        osSubPath = osSubPathCandidate;
+        osSubPath = std::move(osSubPathCandidate);
     if (osSubPath.empty())
         return nullptr;
 

@@ -1285,7 +1285,7 @@ static CPLString GetAnnotationDoc(const XSElementDeclaration *poEltDecl)
             break;
         poTypeDef = poNewTypeDef;
     }
-    CPLString osDoc2 = GetAnnotationDoc(list);
+    const CPLString osDoc2 = GetAnnotationDoc(list);
     if (!osDoc.empty() && !osDoc2.empty())
     {
         osDoc += "\n";
