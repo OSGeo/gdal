@@ -1253,34 +1253,38 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString(OGRGeometry *poGeom)
     /* -------------------------------------------------------------------- */
     if (eGeomType == wkbMultiPolygon || eGeomType == wkbMultiSurface)
     {
-        OGRMultiLineString *poMP = new OGRMultiLineString();
-        OGRMultiPolygon *poMPoly = nullptr;
+        OGRMultiLineString *poMLS = new OGRMultiLineString();
+        poMLS->assignSpatialReference(poGeom->getSpatialReference());
+
+        const auto AddRingFromSrcMP = [poMLS](const OGRMultiPolygon *poSrcMP)
+        {
+            for (auto &&poPoly : poSrcMP)
+            {
+                for (auto &&poLR : poPoly)
+                {
+                    if (poLR->IsEmpty())
+                        continue;
+
+                    OGRLineString *poNewLS = new OGRLineString();
+                    poNewLS->addSubLineString(poLR);
+                    poMLS->addGeometryDirectly(poNewLS);
+                }
+            }
+        };
+
         if (eGeomType == wkbMultiPolygon)
-            poMPoly = poGeom->toMultiPolygon();
+        {
+            AddRingFromSrcMP(poGeom->toMultiPolygon());
+        }
         else
         {
-            poMPoly = poGeom->getLinearGeometry()->toMultiPolygon();
-            delete poGeom;
-            poGeom = CPLAssertNotNull(poMPoly);
+            auto poTmpMPoly = std::unique_ptr<OGRMultiPolygon>(
+                poGeom->getLinearGeometry()->toMultiPolygon());
+            AddRingFromSrcMP(poTmpMPoly.get());
         }
 
-        poMP->assignSpatialReference(poGeom->getSpatialReference());
-
-        for (auto &&poPoly : poMPoly)
-        {
-            for (auto &&poLR : poPoly)
-            {
-                if (poLR->IsEmpty())
-                    continue;
-
-                OGRLineString *poNewLS = new OGRLineString();
-                poNewLS->addSubLineString(poLR);
-                poMP->addGeometryDirectly(poNewLS);
-            }
-        }
-        delete poMPoly;
-
-        return poMP;
+        delete poGeom;
+        return poMLS;
     }
 
     /* -------------------------------------------------------------------- */
