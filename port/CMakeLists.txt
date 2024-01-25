@@ -109,10 +109,7 @@ add_library(cpl OBJECT ${CPL_SOURCES})
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:cpl>)
 target_compile_options(cpl PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
 set_property(TARGET cpl PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
-if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-  # Part of those files have CPL_CVSID() which break UNITY_BUILD
-  set_property(TARGET cpl PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
-endif ()
+
 # include path to generated cpl_config.h
 target_include_directories(cpl PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
