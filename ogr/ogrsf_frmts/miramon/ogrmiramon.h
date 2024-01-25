@@ -91,9 +91,9 @@ class OGRMiraMonLayer final : public OGRLayer,
                     MM_EXT_DBF_N_RECORDS nIRecord, MM_EXT_DBF_N_FIELDS nIField);
 
     OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
-                    MM_BOOLEAN bExternalRing, MM_BOOLEAN bUsepbArcInfo);
+                    MM_BOOLEAN bExternalRing, MM_BOOLEAN bUseVFG);
     OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH poGeom,
-                    OGRFeature *poFeature);
+                    OGRFeature *poFeature, MM_BOOLEAN bcalculateRecord);
     OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
                     OGRFeature* poFeature);
     OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom);

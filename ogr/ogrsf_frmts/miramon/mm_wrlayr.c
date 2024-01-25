@@ -1715,7 +1715,7 @@ struct MM_TH *pArcTopHeader;
     if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
     {
         hMiraMonLayer->nFinalElemCount = pArcTopHeader->nElemCount;
-        hMiraMonLayer->TopHeader.bIs3d=hMiraMonLayer->bIsReal3d;
+        pArcTopHeader->bIs3d=hMiraMonLayer->bIsReal3d;
 
         if (MMWriteHeader(pMMArcLayer->pF, pArcTopHeader))
             return 1;
@@ -2039,10 +2039,10 @@ int MMFreeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         free(hMiraMonLayer->ReadedFeature.pRecords);
         hMiraMonLayer->ReadedFeature.pRecords=NULL;
     }
-    if(hMiraMonLayer->ReadedFeature.pbArcInfo)
+    if(hMiraMonLayer->ReadedFeature.flag_VFG)
     {
-        free(hMiraMonLayer->ReadedFeature.pbArcInfo);
-        hMiraMonLayer->ReadedFeature.pbArcInfo=NULL;
+        free(hMiraMonLayer->ReadedFeature.flag_VFG);
+        hMiraMonLayer->ReadedFeature.flag_VFG=NULL;
     }
 
     if(hMiraMonLayer->pArcs)
@@ -3001,7 +3001,7 @@ int MMInitFeature(struct MiraMonFeature *hMMFeature)
 }
 
 // Conserves all allocated memory but reset the information
-void MMResetFeature(struct MiraMonFeature *hMMFeature)
+void MMResetFeatureGeometry(struct MiraMonFeature *hMMFeature)
 {
     if(hMMFeature->pNCoordRing)
     {
@@ -3025,28 +3025,31 @@ void MMResetFeature(struct MiraMonFeature *hMMFeature)
     hMMFeature->nNRings=0;
     hMMFeature->nIRing=0;
     
-    if(hMMFeature->pbArcInfo)
+    if(hMMFeature->flag_VFG)
     {
-        memset(hMMFeature->pbArcInfo, 
-            0, hMMFeature->nMaxpbArcInfo*
-            sizeof(*(hMMFeature->pbArcInfo)));
+        memset(hMMFeature->flag_VFG, 
+            0, hMMFeature->nMaxVFG*
+            sizeof(*(hMMFeature->flag_VFG)));
     }
+}
 
-    if(hMMFeature->pRecords)
+void MMResetFeatureRecord(struct MiraMonFeature *hMMFeature)
+{
+    if(!hMMFeature->pRecords)
+        return;
+
+    MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord;
+    MM_EXT_DBF_N_FIELDS nIField;
+
+    for(nIRecord=0; nIRecord<hMMFeature->nMaxMRecords; nIRecord++)
     {
-        MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord;
-        MM_EXT_DBF_N_FIELDS nIField;
-
-        for(nIRecord=0; nIRecord<hMMFeature->nMaxMRecords; nIRecord++)
+        if(!hMMFeature->pRecords[nIRecord].pField)
+            continue;
+        for(nIField=0; nIField<hMMFeature->pRecords[nIRecord].nMaxField; nIField++)
         {
-            if(!hMMFeature->pRecords[nIRecord].pField)
-                continue;
-            for(nIField=0; nIField<hMMFeature->pRecords[nIRecord].nMaxField; nIField++)
-            {
-                if(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)
-                    *(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)='\0';
-                hMMFeature->pRecords[nIRecord].pField[nIField].bIsValid=0;
-            }
+            if(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)
+                *(hMMFeature->pRecords[nIRecord].pField[nIField].pDinValue)='\0';
+            hMMFeature->pRecords[nIRecord].pField[nIField].bIsValid=0;
         }
     }
 }
@@ -3070,10 +3073,10 @@ void MMDestroyFeature(struct MiraMonFeature *hMMFeature)
         hMMFeature->pNCoordRing=NULL;
     }
     
-    if(hMMFeature->pbArcInfo)
+    if(hMMFeature->flag_VFG)
     {
-        free_function(hMMFeature->pbArcInfo);
-        hMMFeature->pbArcInfo=NULL;
+        free_function(hMMFeature->flag_VFG);
+        hMMFeature->flag_VFG=NULL;
     }
 
     if(hMMFeature->pRecords)
@@ -3105,7 +3108,7 @@ int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 struct MiraMonFeature *hMMFeature)
 {
 double *pZ=NULL;
-struct MM_POINT_2D *pCoord;
+struct MM_POINT_2D *pCoord, *pCoordReal;
 unsigned __int64 nIPart, nIVertice;
 double dtempx, dtempy;
 MM_POLYGON_RINGS_COUNT nExternalRingsCount;
@@ -3117,11 +3120,13 @@ struct MiraMonArcLayer *pMMArc;
 struct MiraMonNodeLayer *pMMNode;
 struct MM_TH *pArcTopHeader;
 struct MM_TH *pNodeTopHeader;
-unsigned char VFG;
+char VFG=0;
 MM_FILE_OFFSET nOffsetTmp;
 struct MM_ZD *pZDesc=NULL;
 struct MM_FLUSH_INFO *pFlushAL, *pFlushNL, *pFlushZL, *pFlushPS, *pFlushPAL;
 MM_N_VERTICES_TYPE nPolVertices=0;
+MM_BOOLEAN bReverseArc;
+int prevCoord=-1;
 
     // Setting pointer to 3d structure (if exists).
     if(hMiraMonLayer->TopHeader.bIs3d)
@@ -3389,42 +3394,68 @@ MM_N_VERTICES_TYPE nPolVertices=0;
 
         // Dumping vertices and calculating stuff that 
         // MiraMon needs (longitude/perimeter, area)
-        for (nIVertice=0; nIVertice<pCurrentArcHeader->nElemCount; 
-            nIVertice++, pCoord++)
+        bReverseArc=FALSE;
+        if (hMiraMonLayer->bIsPolygon)
         {
-			pFlushAL->SizeOfBlockToBeSaved=sizeof(pCoord->dfX);
-            pFlushAL->pBlockToBeSaved=(void *)&pCoord->dfX;
+            VFG = hMMFeature->flag_VFG[nIPart];
+            bReverseArc = (VFG & MM_ROTATE_ARC)?TRUE:FALSE;
+        }
+
+        if (bReverseArc)
+        {
+            prevCoord = 1; // to find previous coordinate
+            pCoordReal = pCoord + pCurrentArcHeader->nElemCount -1;
+        }
+        else
+        {
+            prevCoord = -1; // to find previous coordinate
+            pCoordReal = pCoord;
+        }
+
+        for (nIVertice = 0; nIVertice < pCurrentArcHeader->nElemCount;
+            nIVertice++, (bReverseArc)?pCoordReal--:pCoordReal++)
+        {
+            pFlushAL->SizeOfBlockToBeSaved = sizeof(pCoordReal->dfX);
+            pFlushAL->pBlockToBeSaved = (void*)&pCoordReal->dfX;
             if (MM_AppendBlockToBuffer(pFlushAL))
             {
                 MM_CPLDebug("MiraMon", "Error in MM_AppendBlockToBuffer() (1)");
                 return MM_FATAL_ERROR_WRITING_FEATURES;
             }
 
-            pFlushAL->pBlockToBeSaved=(void *)&pCoord->dfY;
+            pFlushAL->pBlockToBeSaved = (void*)&pCoordReal->dfY;
             if (MM_AppendBlockToBuffer(pFlushAL))
             {
                 MM_CPLDebug("MiraMon", "Error in MM_AppendBlockToBuffer() (2)");
                 return MM_FATAL_ERROR_WRITING_FEATURES;
             }
 
-			MMUpdateBoundingBoxXY(&pCurrentArcHeader->dfBB, pCoord);
-            if(nIVertice==0 || 
-                        nIVertice==pCurrentArcHeader->nElemCount-1)
-                MMUpdateBoundingBoxXY(&pNodeTopHeader->hBB, pCoord);
-            if (nIVertice>0)
-			{
-                dtempx=pCoord->dfX - (pCoord-1)->dfX;
-				dtempy=pCoord->dfY - (pCoord-1)->dfY;
-				pCurrentArcHeader->dfLenght += 
-                    sqrt(dtempx*dtempx + dtempy*dtempy);
-	            if (hMiraMonLayer->bIsPolygon)
+            MMUpdateBoundingBoxXY(&pCurrentArcHeader->dfBB, pCoordReal);
+            if (nIVertice == 0 ||
+                nIVertice == pCurrentArcHeader->nElemCount - 1)
+                MMUpdateBoundingBoxXY(&pNodeTopHeader->hBB, pCoordReal);
+            if (nIVertice > 0)
+            {
+                dtempx = pCoordReal->dfX - (pCoordReal + prevCoord)->dfX;
+                dtempy = pCoordReal->dfY - (pCoordReal + prevCoord)->dfY;
+                pCurrentArcHeader->dfLenght +=
+                    sqrt(dtempx * dtempx + dtempy * dtempy);
+                if (hMiraMonLayer->bIsPolygon)
                 {
-					pCurrentPolHeader->dfArea += 
-                        ( pCoord->dfX * (pCoord-1)->dfY - 
-                        (pCoord-1)->dfX * pCoord->dfY);
+                    pCurrentPolHeader->dfArea +=
+                        (pCoordReal->dfX * (pCoordReal + prevCoord)->dfY -
+                            (pCoordReal + prevCoord)->dfX * pCoordReal->dfY);
                 }
-			}
-		}
+            }
+        }
+        if (bReverseArc)
+        {
+            VFG&=(~MM_ROTATE_ARC);
+            pCoord = pCoordReal + pCurrentArcHeader->nElemCount;
+        }
+        else
+            pCoord += pCurrentArcHeader->nElemCount;
+
         nPolVertices+=pCurrentArcHeader->nElemCount;
 
         // Updating bounding boxes 
@@ -3594,14 +3625,9 @@ MM_N_VERTICES_TYPE nPolVertices=0;
 			// Vertices of rings defining
 			// holes in polygons are in a counterclockwise direction.
             // Hole are at the end of al external rings that contain the hole!!
-            VFG=0L;
-			VFG|=MM_END_ARC_IN_RING;
-            if(hMMFeature->pbArcInfo[nIPart])
-            {
-				nExternalRingsCount++;
-				VFG|=MM_EXTERIOR_ARC_SIDE;
-			}
-
+            if(VFG&MM_EXTERIOR_ARC_SIDE)
+            	nExternalRingsCount++;
+			
 			pCurrentPolHeader->nArcsCount=(MM_POLYGON_ARCS_COUNT)hMMFeature->nNRings;
             pCurrentPolHeader->nExternalRingsCount=nExternalRingsCount;
             pCurrentPolHeader->nRingsCount=hMMFeature->nNRings;
@@ -3612,8 +3638,8 @@ MM_N_VERTICES_TYPE nPolVertices=0;
             }
 
             if(nIPart==hMMFeature->nNRings-1)
-                pCurrentPolHeader->dfArea/=2;
-
+                pCurrentPolHeader->dfArea /= 2;
+            
             pFlushPAL->SizeOfBlockToBeSaved=1;
             pFlushPAL->pBlockToBeSaved=(void *)&VFG;
             if (MM_AppendBlockToBuffer(pFlushPAL))
@@ -4097,7 +4123,7 @@ int MMResize_MM_N_VERTICES_TYPE_Pointer(MM_N_VERTICES_TYPE **pVrt,
     return 0;
 }
 
-int MMResizeIntPointer(int **pInt, 
+int MMResizeVFGPointer(char **pInt, 
                         unsigned __int64 *nMax, 
                         unsigned __int64 nNum, 
                         unsigned __int64 nIncr,

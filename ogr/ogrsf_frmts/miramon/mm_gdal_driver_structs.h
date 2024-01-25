@@ -594,10 +594,11 @@ struct MiraMonFeature
     struct MM_POINT_2D *pCoord; 
 
     // Number of reserved elements in *pbArcInfo
-    unsigned __int64 nMaxpbArcInfo;
-	int *pbArcInfo; // In case of multipolygons, for each ring:
-						 // TRUE if it's a outer ring,
-						 // FALSE if it's a inner ring.
+    unsigned __int64 nMaxVFG;
+	char *flag_VFG; // In case of multipolygons, for each ring:
+			    // if flag_VFG[i]|MM_EXTERIOR_ARC_SIDE: outer ring if actived
+                // if flag_VFG[i]|MM_END_ARC_IN_RING: always actived (every ring has only one arc)
+                // if flag_VFG[i]|MM_ROTATE_ARC: coordinates are in the order inverse than readed
 
     // List of the Z-coordinates (as many as pCoord)
     // Number of reserved elements in *pZCoord

@@ -3,9 +3,9 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  C API to create a MiraMon layer
  * Author:   Abel Pau, a.pau@creaf.uab.cat, based on the MiraMon codes, 
- *           mainly written by Xavier Pons, Joan Masó, Abel Pau, Núria Julià,
- *           Xavier Calaf, Lluís Pesquer and Alaitz Zabala, from CREAF and
- *           Universitat Autònoma de Barcelona. For a complete list of
+ *           mainly written by Xavier Pons, Joan MasÃ³, Abel Pau, NÃºria JuliÃ ,
+ *           Xavier Calaf, LluÃ­s Pesquer and Alaitz Zabala, from CREAF and
+ *           Universitat AutÃ²noma de Barcelona. For a complete list of
  *           contributors: https://www.miramon.cat/USA/QuiSom.htm
  ******************************************************************************
  * Copyright (c) 2024, Xavier Pons
@@ -289,7 +289,8 @@ MM_POLYGON_ARCS_COUNT nIndex;
 MM_BOOLEAN bAvoidFirst;
 MM_N_VERTICES_TYPE nNAcumulVertices=0;
 
-    MMResetFeature(&hMiraMonLayer->ReadedFeature);
+    MMResetFeatureGeometry(&hMiraMonLayer->ReadedFeature);
+    MMResetFeatureRecord(&hMiraMonLayer->ReadedFeature);
     pPolHeader=hMiraMonLayer->MMPolygon.pPolHeader+i_pol;
     
     if(MMResizeMiraMonPolygonArcs(&hMiraMonLayer->pArcs, 
@@ -320,8 +321,8 @@ MM_N_VERTICES_TYPE nNAcumulVertices=0;
             hMiraMonLayer->ReadedFeature.nNRings+1, 10, 10))
         return 1;
 
-    if(MMResizeIntPointer(&hMiraMonLayer->ReadedFeature.pbArcInfo, 
-            &hMiraMonLayer->ReadedFeature.nMaxpbArcInfo,
+    if(MMResizeVFGPointer(&hMiraMonLayer->ReadedFeature.flag_VFG, 
+            &hMiraMonLayer->ReadedFeature.nMaxVFG,
             pPolHeader->nArcsCount, 0, 0)) // Perhaps more memory than needed
         return 1;
 
@@ -405,11 +406,7 @@ MM_N_VERTICES_TYPE nNAcumulVertices=0;
         nNAcumulVertices+=hMiraMonLayer->ReadedFeature.nNumpCoord;
         if ((hMiraMonLayer->pArcs + nIndex)->VFG & MM_POL_END_RING)
         {
-            if((hMiraMonLayer->pArcs+nIndex)->VFG&MM_POL_EXTERIOR_SIDE)
-                hMiraMonLayer->ReadedFeature.pbArcInfo[hMiraMonLayer->ReadedFeature.nNRings]=TRUE;
-            else
-                hMiraMonLayer->ReadedFeature.pbArcInfo[hMiraMonLayer->ReadedFeature.nNRings]=FALSE;
-
+            hMiraMonLayer->ReadedFeature.flag_VFG[hMiraMonLayer->ReadedFeature.nNRings]=(hMiraMonLayer->pArcs + nIndex)->VFG;
             hMiraMonLayer->ReadedFeature.nNRings++;
             hMiraMonLayer->ReadedFeature.pNCoordRing[hMiraMonLayer->ReadedFeature.nNRings]=0;
         }

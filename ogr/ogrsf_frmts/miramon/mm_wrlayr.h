@@ -137,7 +137,8 @@ int MMReadZSection(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
 // Feature functions
 int MMInitFeature(struct MiraMonFeature *MMFeature);
-void MMResetFeature(struct MiraMonFeature *MMFeature);
+void MMResetFeatureGeometry(struct MiraMonFeature *MMFeature);
+void MMResetFeatureRecord(struct MiraMonFeature *hMMFeature);
 void MMDestroyFeature(struct MiraMonFeature *MMFeature);
 int AddMMFeature(struct MiraMonVectLayerInfo *hMiraMonLayer, 
             struct MiraMonFeature *hMiraMonFeature);
@@ -187,7 +188,7 @@ int MMResize_MM_N_VERTICES_TYPE_Pointer(MM_N_VERTICES_TYPE **pUI64,
                         MM_POLYGON_RINGS_COUNT nIncr,
                         MM_POLYGON_RINGS_COUNT nProposedMax);
 
-int MMResizeIntPointer(int **pInt, 
+int MMResizeVFGPointer(char **pInt, 
                         unsigned __int64 *nMax, 
                         unsigned __int64 nNum, 
                         unsigned __int64 nIncr,

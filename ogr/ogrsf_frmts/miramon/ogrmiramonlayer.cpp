@@ -262,7 +262,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                             oField.SetType(phMiraMonLayer->isListField?OFTIntegerList:OFTInteger);
                     }
                     else if (phMiraMonLayer->pMMBDXP->Camp[nIField].TipusDeCamp == 'D')
-                        oField.SetType(OFTDateTime);
+                        oField.SetType(OFTDate);
 
                     oField.SetWidth(phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
                     oField.SetPrecision(phMiraMonLayer->pMMBDXP->Camp[nIField].DecimalsSiEsFloat);
@@ -453,19 +453,19 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                     return nullptr;
 
                 nIVrtAcum = 0;
-                if (!phMiraMonLayer->ReadedFeature.pbArcInfo[0])
+                if (!(phMiraMonLayer->ReadedFeature.flag_VFG[0]|MM_EXTERIOR_ARC_SIDE))
                 {
                     CPLError(CE_Failure, CPLE_NoWriteAccess,
                         "\nWrong polygon format.");
                     return nullptr;
                 }
-                int IAmExternal;
+                MM_BOOLEAN IAmExternal;
 
                 for (nIRing = 0; nIRing < phMiraMonLayer->ReadedFeature.nNRings; nIRing++)
                 {
                     OGRLinearRing poRing;
 
-                    IAmExternal = phMiraMonLayer->ReadedFeature.pbArcInfo[nIRing];
+                    IAmExternal = (MM_BOOLEAN)(phMiraMonLayer->ReadedFeature.flag_VFG[nIRing]|MM_EXTERIOR_ARC_SIDE);
 
                     for (MM_N_VERTICES_TYPE nIVrt = 0; nIVrt < phMiraMonLayer->ReadedFeature.pNCoordRing[nIRing]; nIVrt++)
                     {
@@ -486,7 +486,7 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
 
                     // If I'm going to start a new polygon...
                     if ((IAmExternal && nIRing + 1 < phMiraMonLayer->ReadedFeature.nNRings &&
-                        phMiraMonLayer->ReadedFeature.pbArcInfo[nIRing + 1]) ||
+                        (phMiraMonLayer->ReadedFeature.flag_VFG[nIRing + 1]|MM_EXTERIOR_ARC_SIDE)) ||
                         nIRing + 1 >= phMiraMonLayer->ReadedFeature.nNRings)
                     {
                         poPoly.addRing(&poRing);
@@ -510,19 +510,19 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                     return nullptr;
 
                 nIVrtAcum = 0;
-                if (!phMiraMonLayer->ReadedFeature.pbArcInfo[0])
+                if (!(phMiraMonLayer->ReadedFeature.flag_VFG[0]|MM_EXTERIOR_ARC_SIDE))
                 {
                     CPLError(CE_Failure, CPLE_NoWriteAccess,
                         "\nWrong polygon format.");
                     return nullptr;
                 }
-                int IAmExternal;
+                MM_BOOLEAN IAmExternal;
 
                 for (nIRing = 0; nIRing < phMiraMonLayer->ReadedFeature.nNRings; nIRing++)
                 {
                     OGRLinearRing poRing;
 
-                    IAmExternal = phMiraMonLayer->ReadedFeature.pbArcInfo[nIRing];
+                    IAmExternal =  (MM_BOOLEAN)(phMiraMonLayer->ReadedFeature.flag_VFG[nIRing]|MM_EXTERIOR_ARC_SIDE);
 
                     for (MM_N_VERTICES_TYPE nIVrt = 0; nIVrt < phMiraMonLayer->ReadedFeature.pNCoordRing[nIRing]; nIVrt++)
                     {
@@ -660,8 +660,7 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                 MM_TreuBlancsDeFinalDeCadena(phMiraMonLayer->szStringToOperate);
                 poFeature->SetField(nIField, atof(phMiraMonLayer->szStringToOperate));
             }
-            else if (poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTDate ||
-                poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTDateTime)
+            else if (poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTDate)
             {
                 GoToFieldOfMultipleRecord(nIElem, 0, nIField);
                 memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
@@ -730,7 +729,7 @@ GIntBig OGRMiraMonLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                           MMProcessGeometry()                        */
+/*                      MMProcessMultiGeometry()                        */
 /************************************************************************/
 OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
     OGRFeature* poFeature)
@@ -769,8 +768,9 @@ OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
         int nGeom=OGR_G_GetGeometryCount(OGRGeometry::ToHandle(poGeom));
         for (int iGeom = 0; iGeom < nGeom; iGeom++)
         {
-            OGRGeometryH poNewGeometry=OGR_G_GetGeometryRef(OGRGeometry::ToHandle(poGeom), iGeom);
-            eErr=MMProcessGeometry(poNewGeometry, poFeature);
+            OGRGeometryH poNewGeometry=
+                OGR_G_GetGeometryRef(OGRGeometry::ToHandle(poGeom), iGeom);
+            eErr=MMProcessGeometry(poNewGeometry, poFeature, (iGeom==0));
             if(eErr != OGRERR_NONE)
                 return eErr;
         }
@@ -778,14 +778,16 @@ OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
     }
 
     // Processing a simple geometry
-    return MMProcessGeometry(OGRGeometry::ToHandle(poGeom), poFeature);
+    return MMProcessGeometry(OGRGeometry::ToHandle(poGeom),
+        poFeature, TRUE);
 }
 
 /************************************************************************/
 /*                           MMProcessGeometry()                        */
 /************************************************************************/
 OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
-                                        OGRFeature *poFeature)
+    OGRFeature *poFeature,
+    MM_BOOLEAN bcalculateRecord)
 
 {
     OGRErr eErr = OGRERR_NONE;
@@ -828,7 +830,7 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
         default:
         {
             MM_CPLWarning(CE_Warning, CPLE_NotSupported, "MiraMon "
-                "doesn't support %d type", eLT);
+                "doesn't support %d geometry type", eLT);
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
         }
@@ -844,20 +846,24 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
     /*      Field translation from GDAL to MiraMon                      */
     /* ---------------------------------------------------------------- */
     // Reset the object where readed coordinates are going to be stored
-    MMResetFeature(&hMMFeature);
 
-    if (!phMiraMonLayer->pLayerDB)
+    MMResetFeatureGeometry(&hMMFeature);
+    if (bcalculateRecord)
     {
-        eErr = TranslateFieldsToMM();
-        if(eErr != OGRERR_NONE)
+        MMResetFeatureRecord(&hMMFeature);
+        if (!phMiraMonLayer->pLayerDB)
+        {
+            eErr = TranslateFieldsToMM();
+            if (eErr != OGRERR_NONE)
+                return eErr;
+        }
+        // Content field translation from GDAL to MiraMon
+        eErr = TranslateFieldsValuesToMM(poFeature);
+        if (eErr != OGRERR_NONE)
+        {
+            CPLDebug("MiraMon", "Error in TranslateFieldsValuesToMM()");
             return eErr;
-    }
-    // Content field translation from GDAL to MiraMon
-    eErr = TranslateFieldsValuesToMM(poFeature);
-    if (eErr != OGRERR_NONE)
-    {
-        CPLDebug("MiraMon", "Error in TranslateFieldsValuesToMM()");
-        return eErr;
+        }
     }
 
     /* ---------------------------------------------------------------- */
@@ -878,13 +884,9 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
 
     // Writes coordinates to the disk
     if (eErr == OGRERR_NONE)
-    {
-        eErr=MMWriteGeometry(true);
-        return eErr;
-    }
-    else
-        CPLDebug("MiraMon", "Error in MMLoadGeometry()");
+        return MMWriteGeometry(true);
 
+    CPLDebug("MiraMon", "Error in MMLoadGeometry()");
     return eErr;
 
 }
@@ -911,14 +913,7 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
 
     if (poGeom == nullptr)
-    {
-        // Processing the geometry
-        return MMProcessGeometry(NULL, poFeature);
-
-        //CPLError(CE_Failure, CPLE_AppDefined,
-        //         "\nFeatures without geometry not supported by MiraMon writer.");
-        //return OGRERR_FAILURE;
-    }
+        return MMProcessGeometry(NULL, poFeature, TRUE);
 
     if(poGeom->getGeometryType() == wkbUnknown)
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
@@ -947,7 +942,7 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
 /************************************************************************/
 
 OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
-                        MM_BOOLEAN bExternalRing, MM_BOOLEAN bUsepbArcInfo)
+                        MM_BOOLEAN bExternalRing, MM_BOOLEAN bUseVFG)
 {
     // If the MiraMonLayer structure has not been init,
     // here is the moment to do that.
@@ -965,19 +960,25 @@ OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
         return OGRERR_FAILURE;
     }
 
-    if (bUsepbArcInfo)
+    if (bUseVFG)
     {
-        if (MMResizeIntPointer(&hMMFeature.pbArcInfo, &hMMFeature.nMaxpbArcInfo,
+        if (MMResizeVFGPointer(&hMMFeature.flag_VFG, &hMMFeature.nMaxVFG,
             hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS, 0))
         {
             CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
                 VSIStrerror(errno));
             return OGRERR_FAILURE;
         }
+        
+        hMMFeature.flag_VFG[hMMFeature.nIRing] = MM_END_ARC_IN_RING;
         if (bExternalRing)
-            hMMFeature.pbArcInfo[hMMFeature.nIRing] = 1;
-        else
-            hMMFeature.pbArcInfo[hMMFeature.nIRing] = 0;
+            hMMFeature.flag_VFG[hMMFeature.nIRing]|=MM_EXTERIOR_ARC_SIDE;
+        // In MiraMon the external ring is clockwise and the internals are
+        // coounterclockwise.
+        OGRGeometry *poGeom = OGRGeometry::FromHandle(hGeom);
+        if ((bExternalRing && !poGeom->toLinearRing()->isClockwise()) ||
+            (!bExternalRing && poGeom->toLinearRing()->isClockwise()))
+                hMMFeature.flag_VFG[hMMFeature.nIRing]|=MM_ROTATE_ARC;
     }
 
     hMMFeature.pNCoordRing[hMMFeature.nIRing] = OGR_G_GetPointCount(hGeom);
@@ -1154,7 +1155,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
     {
         memset(phMiraMonLayer->pLayerDB->pFields, 0,
             poFeatureDefn->GetFieldCount()*sizeof(*phMiraMonLayer->pLayerDB->pFields));
-        for (MM_EXT_DBF_N_FIELDS iField = 0; iField < (MM_EXT_DBF_N_FIELDS)poFeatureDefn->GetFieldCount(); iField++)
+        for (MM_EXT_DBF_N_FIELDS iField = 0; iField <
+            (MM_EXT_DBF_N_FIELDS)poFeatureDefn->GetFieldCount(); iField++)
         {
             if(!(phMiraMonLayer->pLayerDB->pFields+iField))
                 continue;
@@ -1183,10 +1185,18 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
                 case OFTBinary:
                     phMiraMonLayer->pLayerDB->pFields[iField].eFieldType = MM_Logic;
                     break;
+
                 case OFTDate:
+                    phMiraMonLayer->pLayerDB->pFields[iField].eFieldType = MM_Data;
+                    break;
+
                 case OFTTime:
                 case OFTDateTime:
-                    phMiraMonLayer->pLayerDB->pFields[iField].eFieldType = MM_Data;
+                    MM_CPLWarning(CE_Warning, CPLE_NotSupported, "MiraMon "
+                        "doesn't support %d field type. It will be conserved "
+                        "as string field type",
+                        poFeatureDefn->GetFieldDefn(iField)->GetType());
+                    phMiraMonLayer->pLayerDB->pFields[iField].eFieldType = MM_Character;
                     break;
 
                 case OFTString:
@@ -1426,6 +1436,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTDate)
         {
+            char szDate[15];
+
             hMMFeature.nNumMRecords = max_function(hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
              if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
@@ -1434,9 +1446,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                     MM_INC_NUMBER_OF_FIELDS, hMMFeature.pRecords[0].nNumField))
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
-
             const OGRField *poField = poFeature->GetRawFieldRef(iField);
-            char szDate[9];
             if (poField->Date.Year >= 0 && poField->Date.Month >= 0 && poField->Date.Day >= 0)
                 sprintf(szDate, "%04d%02d%02d", poField->Date.Year,
                     poField->Date.Month, poField->Date.Day);
@@ -1446,6 +1456,23 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             if(MM_SecureCopyStringFieldValue(&hMMFeature.pRecords[0].pField[iField].pDinValue,
                     szDate, &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
                 return OGRERR_NOT_ENOUGH_MEMORY;
+            hMMFeature.pRecords[0].pField[iField].bIsValid = 1;
+        }
+        else if(eFType == OFTTime || eFType == OFTDateTime)
+        {
+            hMMFeature.nNumMRecords = max_function(hMMFeature.nNumMRecords, 1);
+            hMMFeature.pRecords[0].nNumField = nNumFields;
+            if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
+                    &hMMFeature.pRecords[0].nMaxField,
+                    hMMFeature.pRecords[0].nNumField,
+                    MM_INC_NUMBER_OF_FIELDS, hMMFeature.pRecords[0].nNumField))
+                        return OGRERR_NOT_ENOUGH_MEMORY;
+
+            // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
+            if (MM_SecureCopyStringFieldValue(&hMMFeature.pRecords[0].pField[iField].pDinValue,
+                    pszRawValue, &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
+                return OGRERR_NOT_ENOUGH_MEMORY;
+
             hMMFeature.pRecords[0].pField[iField].bIsValid = 1;
         }
         else if (eFType == OFTInteger)
@@ -1579,9 +1606,14 @@ OGRErr OGRMiraMonLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
     switch (poField->GetType())
     {
         case OFTInteger:
+        case OFTIntegerList:
+        case OFTInteger64:
+        case OFTInteger64List:
         case OFTReal:
+        case OFTRealList:
         case OFTString:
-        case OFTDateTime:
+        case OFTStringList:
+        case OFTDate:
             poFeatureDefn->AddFieldDefn(poField);
             return OGRERR_NONE;
         default:
@@ -1592,14 +1624,6 @@ OGRErr OGRMiraMonLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
                          poField->GetNameRef(),
                          poField->GetFieldTypeName(poField->GetType()));
                 return OGRERR_FAILURE;
-            }
-            else if (poField->GetType() == OFTDate ||
-                     poField->GetType() == OFTTime)
-            {
-                OGRFieldDefn oModDef(poField);
-                oModDef.SetType(OFTDateTime);
-                poFeatureDefn->AddFieldDefn(poField);
-                return OGRERR_NONE;
             }
             else
             {
