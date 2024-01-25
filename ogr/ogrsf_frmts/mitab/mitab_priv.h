@@ -1050,7 +1050,7 @@ class TABMAPIndexBlock final : public TABRawBinBlock
     TABBinBlockManager *m_poBlockManagerRef;
 
     // Info about child currently loaded
-    TABMAPIndexBlock *m_poCurChild;
+    std::unique_ptr<TABMAPIndexBlock> m_poCurChild{};
     int m_nCurChildIndex;
     // Also need to know about its parent
     TABMAPIndexBlock *m_poParentRef;
@@ -1100,7 +1100,8 @@ class TABMAPIndexBlock final : public TABRawBinBlock
 
     void SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr);
     void SetParentRef(TABMAPIndexBlock *poParent);
-    void SetCurChildRef(TABMAPIndexBlock *poChild, int nChildIndex);
+    void SetCurChild(std::unique_ptr<TABMAPIndexBlock> &&poChild,
+                     int nChildIndex);
 
     int GetCurChildIndex()
     {
@@ -1108,7 +1109,7 @@ class TABMAPIndexBlock final : public TABRawBinBlock
     }
     TABMAPIndexBlock *GetCurChild()
     {
-        return m_poCurChild;
+        return m_poCurChild.get();
     }
     TABMAPIndexBlock *GetParentRef()
     {
