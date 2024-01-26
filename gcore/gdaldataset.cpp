@@ -3325,10 +3325,7 @@ CPLErr GDALDataset::CreateMaskBand(int nFlagsIn)
         for (int i = 0; i < nBands; ++i)
         {
             GDALRasterBand *poBand = papoBands[i];
-            if (poBand->bOwnMask)
-                delete poBand->poMask;
-            poBand->bOwnMask = false;
-            poBand->poMask = nullptr;
+            poBand->poMask.reset();
         }
 
         return CE_None;

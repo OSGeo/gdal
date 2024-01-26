@@ -626,8 +626,7 @@ CPLErr ISISTiledBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 
 void ISISTiledBand::SetMaskBand(GDALRasterBand *poMaskBand)
 {
-    bOwnMask = true;
-    poMask = poMaskBand;
+    poMask.reset(poMaskBand, true);
     nMaskFlags = 0;
 }
 
@@ -814,8 +813,7 @@ CPLErr ISIS3RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
 void ISIS3RawRasterBand::SetMaskBand(GDALRasterBand *poMaskBand)
 {
-    bOwnMask = true;
-    poMask = poMaskBand;
+    poMask.reset(poMaskBand, true);
     nMaskFlags = 0;
 }
 
@@ -902,8 +900,7 @@ ISIS3WrapperRasterBand::ISIS3WrapperRasterBand(GDALRasterBand *poBaseBandIn)
 
 void ISIS3WrapperRasterBand::SetMaskBand(GDALRasterBand *poMaskBand)
 {
-    bOwnMask = true;
-    poMask = poMaskBand;
+    poMask.reset(poMaskBand, true);
     nMaskFlags = 0;
 }
 
