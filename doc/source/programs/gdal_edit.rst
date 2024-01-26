@@ -15,9 +15,10 @@ Synopsis
 
 .. code-block::
 
-    gdal_edit [--help] [--help-general] [-ro] [-a_srs <srs_def>]
+    gdal_edit [--help] [--help-general] [-ro] [-a_srs <srs_def>] 
             [-a_ullr <ulx> <uly> <lrx> <lry>] [-a_ulurll <ulx> <uly> <urx> <ury> <llx> <lly>]
             [-tr <xres> <yres>] [-unsetgt] [-unsetrpc] [-a_nodata <value>] [-unsetnodata]
+            [-a_coord_epoch <epoch>] [-unsetepoch]
             [-unsetstats] [-stats] [-approx_stats]
             [-setstats <min> <max> <mean> <stddev>]
             [-scale <value>] [-offset <value>] [-units <value>]
@@ -57,6 +58,18 @@ It works only with raster formats that support update access to existing dataset
     If the empty string or None is specified, then the existing
     coordinate system will be removed (for TIFF/GeoTIFF, might not be well
     supported besides that).
+
+.. option:: -a_coord_epoch <epoch>
+
+    Assign/override the coordinate epoch of the dataset, as a decimal year (e.g., 2021.3).
+
+    .. versionadded:: 3.9
+
+.. option:: -unsetepoch
+
+    Remove the coordinate epoch of the dataset.
+
+    .. versionadded:: 3.9
 
 .. option:: -a_ullr  <ulx> <uly> <lrx> <lry>
 
