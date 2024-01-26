@@ -271,8 +271,8 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
 
         // We should clean overviews, but this is not allowed in an MRF
         CPLError(CE_Warning, CPLE_NotSupported,
-                "MRF: Internal overviews cannot be removed, "
-                "but they can be rebuilt");
+                 "MRF: Internal overviews cannot be removed, "
+                 "but they can be rebuilt");
         return CE_None;
     }
 
