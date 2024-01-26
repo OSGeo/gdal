@@ -7886,21 +7886,21 @@ void GDALRasterBand::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
 
     va_start(args, fmt);
 
-    char szNewFmt[256] = {'\0'};
     const char *pszDSName = poDS ? poDS->GetDescription() : "";
-    if (strlen(fmt) + strlen(pszDSName) + 20 >= sizeof(szNewFmt) - 1)
-        pszDSName = CPLGetFilename(pszDSName);
-    if (pszDSName[0] != '\0' && strchr(pszDSName, '%') == nullptr &&
-        strlen(fmt) + strlen(pszDSName) + 20 < sizeof(szNewFmt) - 1)
+    pszDSName = CPLGetFilename(pszDSName);
+    if (pszDSName[0] != '\0')
     {
-        snprintf(szNewFmt, sizeof(szNewFmt), "%s, band %d: %s", pszDSName,
-                 GetBand(), fmt);
-        CPLErrorV(eErrClass, err_no, szNewFmt, args);
+        CPLError(eErrClass, err_no, "%s",
+                 CPLString()
+                     .Printf("%s, band %d: ", pszDSName, GetBand())
+                     .append(CPLString().vPrintf(fmt, args))
+                     .c_str());
     }
     else
     {
         CPLErrorV(eErrClass, err_no, fmt, args);
     }
+
     va_end(args);
 }
 #endif

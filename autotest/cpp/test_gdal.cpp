@@ -2969,7 +2969,7 @@ TEST_F(test_gdal, GDALDatasetReportError)
     CPLPushErrorHandler(CPLQuietErrorHandler);
     poSrcDS->ReportError("%foo", CE_Warning, CPLE_AppDefined, "bar");
     CPLPopErrorHandler();
-    EXPECT_STREQ(CPLGetLastErrorMsg(), "bar");
+    EXPECT_STREQ(CPLGetLastErrorMsg(), "%foo: bar");
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
     poSrcDS->ReportError(
