@@ -718,7 +718,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     void DisableFeatureCountTriggers(bool bNullifyFeatureCount = true);
 #endif
 
-    void CheckGeometryType(OGRFeature *poFeature);
+    void CheckGeometryType(const OGRFeature *poFeature);
 
     OGRErr ReadTableDefinition();
     void InitView();

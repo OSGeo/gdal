@@ -5585,6 +5585,42 @@ def test_ogr_gpkg_mixed_dimensionality_unknown_layer_geometry_type(
 
 
 ###############################################################################
+# Test creating a table with layer geometry type POINT and non-2D geometries
+
+
+def test_ogr_gpkg_z_or_m_geometry_in_non_zm_layer(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("GPKG").Create(
+        tmp_vsimem / "tmp.gpkg", 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT Z (1 2 3)"))
+    with gdal.quiet_errors():
+        lyr.CreateFeature(feat)
+        assert (
+            gdal.GetLastErrorMsg()
+            == "Layer 'foo' has been declared with non-Z geometry type Point, but it does contain geometries with Z. Setting the Z=2 hint into gpkg_geometry_columns"
+        )
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT M (1 2 3)"))
+    with gdal.quiet_errors():
+        lyr.CreateFeature(feat)
+        assert (
+            gdal.GetLastErrorMsg()
+            == "Layer 'foo' has been declared with non-M geometry type Point, but it does contain geometries with M. Setting the M=2 hint into gpkg_geometry_columns"
+        )
+
+    ds = None
+
+    ds = ogr.Open(tmp_vsimem / "tmp.gpkg")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbPointZM
+
+
+###############################################################################
 # Test fixing up wrong RTree update3 trigger from GeoPackage < 1.2.1
 
 

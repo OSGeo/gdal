@@ -2036,17 +2036,24 @@ void OGRGeoPackageTableLayer::DisableFeatureCountTriggers(
 /*                      CheckGeometryType()                             */
 /************************************************************************/
 
-void OGRGeoPackageTableLayer::CheckGeometryType(OGRFeature *poFeature)
+/** Check that the feature geometry type is consistent with the layer geometry
+ * type.
+ *
+ * And potentially update the Z and M flags of gpkg_geometry_columns to
+ * reflect the dimensionality of feature geometries.
+ */
+void OGRGeoPackageTableLayer::CheckGeometryType(const OGRFeature *poFeature)
 {
-    OGRwkbGeometryType eLayerGeomType = wkbFlatten(GetGeomType());
-    if (eLayerGeomType != wkbNone && eLayerGeomType != wkbUnknown)
+    const OGRwkbGeometryType eLayerGeomType = GetGeomType();
+    const OGRwkbGeometryType eFlattenLayerGeomType = wkbFlatten(eLayerGeomType);
+    const OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    if (eFlattenLayerGeomType != wkbNone && eFlattenLayerGeomType != wkbUnknown)
     {
-        OGRGeometry *poGeom = poFeature->GetGeometryRef();
         if (poGeom != nullptr)
         {
             OGRwkbGeometryType eGeomType =
                 wkbFlatten(poGeom->getGeometryType());
-            if (!OGR_GT_IsSubClassOf(eGeomType, eLayerGeomType) &&
+            if (!OGR_GT_IsSubClassOf(eGeomType, eFlattenLayerGeomType) &&
                 m_eSetBadGeomTypeWarned.find(eGeomType) ==
                     m_eSetBadGeomTypeWarned.end())
             {
@@ -2061,29 +2068,47 @@ void OGRGeoPackageTableLayer::CheckGeometryType(OGRFeature *poFeature)
                          "This warning will no longer be emitted for this "
                          "combination of layer and feature geometry type.",
                          OGRToOGCGeomType(eGeomType), GetName(),
-                         OGRToOGCGeomType(eLayerGeomType));
+                         OGRToOGCGeomType(eFlattenLayerGeomType));
                 m_eSetBadGeomTypeWarned.insert(eGeomType);
             }
         }
     }
 
-    // wkbUnknown is a rather loose type in OGR. Make sure to update
-    // the z and m columns of gpkg_geometry_columns to 2 if we have geometries
-    // with Z and M components
-    if (GetGeomType() == wkbUnknown && (m_nZFlag == 0 || m_nMFlag == 0))
+    // Make sure to update the z and m columns of gpkg_geometry_columns to 2
+    // if we have geometries with Z and M components
+    if (m_nZFlag == 0 || m_nMFlag == 0)
     {
-        OGRGeometry *poGeom = poFeature->GetGeometryRef();
         if (poGeom != nullptr)
         {
             bool bUpdateGpkgGeometryColumnsTable = false;
-            OGRwkbGeometryType eGeomType = poGeom->getGeometryType();
+            const OGRwkbGeometryType eGeomType = poGeom->getGeometryType();
             if (m_nZFlag == 0 && wkbHasZ(eGeomType))
             {
+                if (eLayerGeomType != wkbUnknown && !wkbHasZ(eLayerGeomType))
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Layer '%s' has been declared with non-Z geometry type "
+                        "%s, but it does contain geometries with Z. Setting "
+                        "the Z=2 hint into gpkg_geometry_columns",
+                        GetName(),
+                        OGRToOGCGeomType(eLayerGeomType, true, true, true));
+                }
                 m_nZFlag = 2;
                 bUpdateGpkgGeometryColumnsTable = true;
             }
             if (m_nMFlag == 0 && wkbHasM(eGeomType))
             {
+                if (eLayerGeomType != wkbUnknown && !wkbHasM(eLayerGeomType))
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Layer '%s' has been declared with non-M geometry type "
+                        "%s, but it does contain geometries with M. Setting "
+                        "the M=2 hint into gpkg_geometry_columns",
+                        GetName(),
+                        OGRToOGCGeomType(eLayerGeomType, true, true, true));
+                }
                 m_nMFlag = 2;
                 bUpdateGpkgGeometryColumnsTable = true;
             }
