@@ -3665,7 +3665,7 @@ def BuildVRTOptions(options=None,
                     srcNodata=None,
                     VRTNodata=None,
                     hideNodata=None,
-                    nodataIfMaskLessOrEqual=None,
+                    nodataMaxMaskThreshold=None,
                     strict=False,
                     callback=None, callback_data=None):
     """Create a BuildVRTOptions() object that can be passed to gdal.BuildVRT()
@@ -3703,7 +3703,7 @@ def BuildVRTOptions(options=None,
         nodata values at the VRT band level.
     hideNodata:
         whether to make the VRT band not report the NoData value.
-    nodataIfMaskLessOrEqual:
+    nodataMaxMaskThreshold:
         value of the mask band of a source below which the source band values should be replaced by VRTNodata (or 0 if not specified)
     strict:
         set to True if warnings should be failures
@@ -3752,8 +3752,8 @@ def BuildVRTOptions(options=None,
             new_options += ['-srcnodata', str(srcNodata)]
         if VRTNodata is not None:
             new_options += ['-vrtnodata', str(VRTNodata)]
-        if nodataIfMaskLessOrEqual is not None:
-            new_options += ['-nodata_if_mask_less_or_equal', str(nodataIfMaskLessOrEqual)]
+        if nodataMaxMaskThreshold is not None:
+            new_options += ['-nodata_max_mask_threshold', str(nodataMaxMaskThreshold)]
         if hideNodata:
             new_options += ['-hidenodata']
         if strict:

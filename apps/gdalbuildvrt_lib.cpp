@@ -2208,7 +2208,7 @@ GDALBuildVRTOptionsNew(char **papszArgv,
         {
             psOptions->bUseSrcMaskBand = false;
         }
-        else if (EQUAL(papszArgv[iArg], "-nodata_if_mask_less_or_equal") &&
+        else if (EQUAL(papszArgv[iArg], "-nodata_max_mask_threshold") &&
                  iArg + 1 < argc)
         {
             psOptions->bNoDataFromMask = true;

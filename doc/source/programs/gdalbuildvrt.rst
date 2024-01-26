@@ -24,7 +24,7 @@ Synopsis
                  [-addalpha] [-hidenodata]
                  [-srcnodata "<value>[ <value>]..."] [-vrtnodata "<value>[ <value>]..."
                  [-ignore_srcmaskband]
-                 [-nodata_if_mask_less_or_equal <threshold>]
+                 [-nodata_max_mask_threshold <threshold>]
                  [-a_srs <srs_def>]
                  [-r {nearest|bilinear|cubic|cubicspline|lanczos|average|mode}]
                  [-oo <NAME>=<VALUE>]...
@@ -147,7 +147,7 @@ changed in later versions.
     not be taken into account, and in case of overlapping between sources, the
     last one will override previous ones in areas of overlap.
 
-.. option:: -nodata_if_mask_less_or_equal <threshold>
+.. option:: -nodata_max_mask_threshold <threshold>
 
     .. versionadded:: 3.9
 

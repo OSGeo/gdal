@@ -753,7 +753,7 @@ def test_gdalbuildvrt_lib_stable_average():
 ###############################################################################
 
 
-def test_gdalbuildvrt_lib_nodataIfMaskLessOrEqual_rgba(tmp_vsimem):
+def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgba(tmp_vsimem):
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 4)
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
@@ -764,7 +764,7 @@ def test_gdalbuildvrt_lib_nodataIfMaskLessOrEqual_rgba(tmp_vsimem):
     ds.GetRasterBand(4).WriteRaster(0, 0, 2, 1, b"\x00\xFF")
     ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_AlphaBand)
 
-    vrt_ds = gdal.BuildVRT("", [ds], nodataIfMaskLessOrEqual=128, VRTNodata=0)
+    vrt_ds = gdal.BuildVRT("", [ds], nodataMaxMaskThreshold=128, VRTNodata=0)
     assert vrt_ds.RasterCount == 3
     assert vrt_ds.GetRasterBand(1).GetNoDataValue() == 0
     assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\x00\x01"
@@ -777,7 +777,7 @@ def test_gdalbuildvrt_lib_nodataIfMaskLessOrEqual_rgba(tmp_vsimem):
         "h" * 2, vrt_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Int16)
     ) == (0, 1)
 
-    vrt_ds = gdal.BuildVRT("", [ds], nodataIfMaskLessOrEqual=128.5, VRTNodata=0)
+    vrt_ds = gdal.BuildVRT("", [ds], nodataMaxMaskThreshold=128.5, VRTNodata=0)
     assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\x00\x01"
 
     # VRTNodata=255, test remapping of 255 to 254
@@ -787,14 +787,14 @@ def test_gdalbuildvrt_lib_nodataIfMaskLessOrEqual_rgba(tmp_vsimem):
     ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\x00\xFF")
     ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
 
-    vrt_ds = gdal.BuildVRT("", [ds], nodataIfMaskLessOrEqual=128, VRTNodata=255)
+    vrt_ds = gdal.BuildVRT("", [ds], nodataMaxMaskThreshold=128, VRTNodata=255)
     assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\xFF\xFE"
 
 
 ###############################################################################
 
 
-def test_gdalbuildvrt_lib_nodataIfMaskLessOrEqual_rgb_mask(tmp_vsimem):
+def test_gdalbuildvrt_lib_nodataMaxMaskThreshold_rgb_mask(tmp_vsimem):
 
     # UInt16, VRTNodata=0
     src_filename = str(tmp_vsimem / "src.tif")
@@ -808,9 +808,7 @@ def test_gdalbuildvrt_lib_nodataIfMaskLessOrEqual_rgb_mask(tmp_vsimem):
     ds.Close()
 
     vrt_filename = str(tmp_vsimem / "test.vrt")
-    gdal.BuildVRT(
-        vrt_filename, [src_filename], nodataIfMaskLessOrEqual=128, VRTNodata=0
-    )
+    gdal.BuildVRT(vrt_filename, [src_filename], nodataMaxMaskThreshold=128, VRTNodata=0)
     vrt_ds = gdal.Open(vrt_filename)
     assert struct.unpack(
         "H" * 2, vrt_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_UInt16)
@@ -831,7 +829,7 @@ def test_gdalbuildvrt_lib_nodataIfMaskLessOrEqual_rgb_mask(tmp_vsimem):
 
     vrt_filename = str(tmp_vsimem / "test.vrt")
     gdal.BuildVRT(
-        vrt_filename, [src_filename], nodataIfMaskLessOrEqual=128, VRTNodata=65535
+        vrt_filename, [src_filename], nodataMaxMaskThreshold=128, VRTNodata=65535
     )
     vrt_ds = gdal.Open(vrt_filename)
     assert struct.unpack(
@@ -849,7 +847,7 @@ def test_gdalbuildvrt_lib_nodataIfMaskLessOrEqual_rgb_mask(tmp_vsimem):
 
     vrt_filename = str(tmp_vsimem / "test.vrt")
     gdal.BuildVRT(
-        vrt_filename, [src_filename], nodataIfMaskLessOrEqual=128, VRTNodata=-32768
+        vrt_filename, [src_filename], nodataMaxMaskThreshold=128, VRTNodata=-32768
     )
     vrt_ds = gdal.Open(vrt_filename)
     assert struct.unpack(
@@ -867,7 +865,7 @@ def test_gdalbuildvrt_lib_nodataIfMaskLessOrEqual_rgb_mask(tmp_vsimem):
 
     vrt_filename = str(tmp_vsimem / "test.vrt")
     gdal.BuildVRT(
-        vrt_filename, [src_filename], nodataIfMaskLessOrEqual=128, VRTNodata=32767
+        vrt_filename, [src_filename], nodataMaxMaskThreshold=128, VRTNodata=32767
     )
     vrt_ds = gdal.Open(vrt_filename)
     assert struct.unpack(
@@ -884,9 +882,7 @@ def test_gdalbuildvrt_lib_nodataIfMaskLessOrEqual_rgb_mask(tmp_vsimem):
     ds.Close()
 
     vrt_filename = str(tmp_vsimem / "test.vrt")
-    gdal.BuildVRT(
-        vrt_filename, [src_filename], nodataIfMaskLessOrEqual=128, VRTNodata=0
-    )
+    gdal.BuildVRT(vrt_filename, [src_filename], nodataMaxMaskThreshold=128, VRTNodata=0)
     vrt_ds = gdal.Open(vrt_filename)
     assert struct.unpack(
         "f" * 2, vrt_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Float32)
@@ -902,9 +898,7 @@ def test_gdalbuildvrt_lib_nodataIfMaskLessOrEqual_rgb_mask(tmp_vsimem):
     ds.Close()
 
     vrt_filename = str(tmp_vsimem / "test.vrt")
-    gdal.BuildVRT(
-        vrt_filename, [src_filename], nodataIfMaskLessOrEqual=128, VRTNodata=1
-    )
+    gdal.BuildVRT(vrt_filename, [src_filename], nodataMaxMaskThreshold=128, VRTNodata=1)
     vrt_ds = gdal.Open(vrt_filename)
     assert struct.unpack(
         "f" * 3, vrt_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Float32)
