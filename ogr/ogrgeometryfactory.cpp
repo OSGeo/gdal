@@ -3818,14 +3818,9 @@ static void SnapCoordsCloseToLatLongBounds(OGRGeometry *poGeom)
 
 struct OGRGeometryFactory::TransformWithOptionsCache::Private
 {
-    OGRCoordinateTransformation *poRevCT = nullptr;
+    std::unique_ptr<OGRCoordinateTransformation> poRevCT{};
     bool bIsPolar = false;
     bool bIsNorthPolar = false;
-
-    ~Private()
-    {
-        delete poRevCT;
-    }
 };
 
 /************************************************************************/
@@ -3879,19 +3874,18 @@ OGRGeometry *OGRGeometryFactory::transformWithOptions(
                 if (cache.d->poRevCT == nullptr ||
                     !cache.d->poRevCT->GetTargetCS()->IsSame(poSourceCRS))
                 {
-                    delete cache.d->poRevCT;
-                    cache.d->poRevCT = OGRCreateCoordinateTransformation(
-                        &oSRSWGS84, poSourceCRS);
+                    cache.d->poRevCT.reset(OGRCreateCoordinateTransformation(
+                        &oSRSWGS84, poSourceCRS));
                     cache.d->bIsNorthPolar = false;
                     cache.d->bIsPolar = false;
                     if (cache.d->poRevCT &&
-                        IsPolarToWGS84(poCT, cache.d->poRevCT,
+                        IsPolarToWGS84(poCT, cache.d->poRevCT.get(),
                                        cache.d->bIsNorthPolar))
                     {
                         cache.d->bIsPolar = true;
                     }
                 }
-                auto poRevCT = cache.d->poRevCT;
+                auto poRevCT = cache.d->poRevCT.get();
                 if (poRevCT != nullptr)
                 {
                     if (cache.d->bIsPolar)
