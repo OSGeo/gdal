@@ -758,6 +758,66 @@ def test_ogr_mem_arrow_stream_pycapsule_interface():
 
 
 ###############################################################################
+# Test consuming __arrow_c_stream__() interface.
+# Cf https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mem_consume_arrow_stream_pycapsule_interface():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbNone)
+    lyr.CreateGeomField(ogr.GeomFieldDefn("my_geometry"))
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["foo"] = "bar"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr.CreateFeature(f)
+
+    lyr2 = ds.CreateLayer("foo2")
+    lyr2.WriteArrow(lyr)
+
+    f = lyr2.GetNextFeature()
+    assert f["foo"] == "bar"
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
+
+
+###############################################################################
+# Test consuming __arrow_c_array__() interface.
+# Cf https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mem_consume_arrow_array_pycapsule_interface():
+    pyarrow = pytest.importorskip("pyarrow")
+    if int(pyarrow.__version__.split(".")[0]) < 14:
+        pytest.skip("pyarrow >= 14 needed")
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo")
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["foo"] = "bar"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr.CreateFeature(f)
+
+    table = pyarrow.table(lyr)
+
+    lyr2 = ds.CreateLayer("foo2")
+    batches = table.to_batches()
+    for batch in batches:
+        array = batch.to_struct_array()
+        if not hasattr(array, "__arrow_c_array__"):
+            pytest.skip("table does not declare __arrow_c_array__")
+
+        lyr2.WriteArrow(array)
+
+    f = lyr2.GetNextFeature()
+    assert f["foo"] == "bar"
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
+
+
+###############################################################################
 
 
 def test_ogr_mem_arrow_stream_numpy():
