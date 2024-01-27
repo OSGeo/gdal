@@ -261,7 +261,7 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
         // If there are none, nothing to do
         if (GetRasterBand(1)->GetOverviewCount() == 0)
             return CE_None;
-        
+
         auto *b = static_cast<MRFRasterBand *>(GetRasterBand(1));
         // If the first band internal overviews don't exist, they are external
         if (b->overviews.empty())
