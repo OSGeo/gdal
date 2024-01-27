@@ -3912,3 +3912,37 @@ def test_gdalwarp_lib_ortho_to_long_lat():
         ), (
             "line %d" % j
         )
+
+
+###############################################################################
+# Test warping to a projection that has no inverse
+# Note: this test will break if PROJ get support for inverse isea !
+
+
+@pytest.mark.require_proj(8, 0, 0)
+@gdaltest.enable_exceptions()
+def test_gdalwarp_lib_to_projection_without_inverse_method():
+
+    with pytest.raises(Exception, match="No inverse operation"):
+        gdal.Warp(
+            "",
+            "../gdrivers/data/byte.tif",
+            format="MEM",
+            dstSRS="+proj=isea +datum=WGS84 +no_defs",
+        )
+
+    with pytest.raises(Exception, match="No inverse operation"):
+        gdal.Warp(
+            "",
+            "../gdrivers/data/byte.tif",
+            format="MEM",
+            dstSRS="+proj=isea +datum=WGS84 +no_defs",
+            xRes=60,
+            yRes=60,
+            outputBounds=[
+                -14787944.0360835,
+                1216599.66706888,
+                -14787210.0893576,
+                1218250.2778614,
+            ],
+        )

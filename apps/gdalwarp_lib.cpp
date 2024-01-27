@@ -1387,6 +1387,8 @@ GDALDatasetH GDALWarp(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                       GDALDatasetH *pahSrcDS,
                       const GDALWarpAppOptions *psOptionsIn, int *pbUsageError)
 {
+    CPLErrorReset();
+
     for (int i = 0; i < nSrcCount; i++)
     {
         if (!pahSrcDS[i])
@@ -2699,13 +2701,32 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
             return nullptr;
         }
 
+        pfnTransformer = GDALGenImgProjTransform;
+
+        // Check if transformation is inversible
+        {
+            double dfX = GDALGetRasterXSize(hDstDS) / 2;
+            double dfY = GDALGetRasterYSize(hDstDS) / 2;
+            double dfZ = 0;
+            int bSuccess = false;
+            const auto nErrorCounterBefore = CPLGetErrorCounter();
+            pfnTransformer(hTransformArg, TRUE, 1, &dfX, &dfY, &dfZ, &bSuccess);
+            if (!bSuccess && CPLGetErrorCounter() > nErrorCounterBefore &&
+                strstr(CPLGetLastErrorMsg(), "No inverse operation"))
+            {
+                GDALDestroyTransformer(hTransformArg);
+                OGR_G_DestroyGeometry(hCutline);
+                GDALReleaseDataset(hDstDS);
+                return nullptr;
+            }
+        }
+
         /* --------------------------------------------------------------------
          */
         /*      Determine if we must work with the full-resolution source */
         /*      dataset, or one of its overview level. */
         /* --------------------------------------------------------------------
          */
-        pfnTransformer = GDALGenImgProjTransform;
         GDALDataset *poSrcDS = static_cast<GDALDataset *>(hSrcDS);
         GDALDataset *poSrcOvrDS = nullptr;
         int nOvCount = poSrcDS->GetRasterBand(1)->GetOverviewCount();
