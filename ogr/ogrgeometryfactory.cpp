@@ -4964,8 +4964,7 @@ OGRGeometry *OGRGeometryFactory::forceTo(OGRGeometry *poGeom,
     if (eTargetTypeFlat == wkbLineString)
     {
         poGeom = forceToLineString(poGeom);
-        if (poGeom)
-            poGeom->set3D(OGR_GT_HasZ(eTargetType));
+        poGeom->set3D(OGR_GT_HasZ(eTargetType));
         poGeom->setMeasured(OGR_GT_HasM(eTargetType));
     }
     else if (eTargetTypeFlat == wkbPolygon)
