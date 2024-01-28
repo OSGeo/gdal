@@ -444,3 +444,26 @@ def test_gdal_edit_py_unsetrpc(script_path):
         ds = None
     finally:
         gdal.GetDriverByName("GTiff").Delete(filename)
+
+
+###############################################################################
+# Test -a_coord_epoch
+
+
+def test_gdal_edit_py_epoch(script_path):
+
+    filename = "tmp/test_gdal_edit_py.tif"
+    shutil.copy(test_py_scripts.get_data_path("gcore") + "byte.tif", filename)
+
+    try:
+        test_py_scripts.run_py_script(
+            script_path, "gdal_edit", filename + " -a_coord_epoch 2021.3"
+        )
+
+        ds = gdal.Open(filename)
+        srs = ds.GetSpatialRef()
+        assert srs.GetCoordinateEpoch() == 2021.3
+        ds = None
+
+    finally:
+        gdal.GetDriverByName("GTiff").Delete(filename)

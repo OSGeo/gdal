@@ -52,6 +52,7 @@ def Usage(isError):
         "                 [-colorinterp_<X> {red|green|blue|alpha|gray|undefined]]...",
         file=f,
     )
+    print("                 [-a_coord_epoch <epoch>] [-unsetepoch]", file=f)
     print("                 [-unsetstats] [-stats] [-approx_stats]", file=f)
     print("                 [-setstats <min> <max> <mean> <stddev>]", file=f)
     print(
@@ -107,6 +108,8 @@ def gdal_edit(argv):
     xres = None
     yres = None
     unsetgt = False
+    epoch = None
+    unsetepoch = False
     unsetstats = False
     stats = False
     setstats = False
@@ -130,6 +133,9 @@ def gdal_edit(argv):
             ro = True
         elif argv[i] == "-a_srs" and i < len(argv) - 1:
             srs = argv[i + 1]
+            i = i + 1
+        elif argv[i] == "-a_coord_epoch" and i < len(argv) - 1:
+            epoch = float(argv[i + 1])
             i = i + 1
         elif argv[i] == "-a_ullr" and i < len(argv) - 4:
             ulx = float(argv[i + 1])
@@ -199,6 +205,8 @@ def gdal_edit(argv):
             unsetgt = True
         elif argv[i] == "-unsetrpc":
             unsetrpc = True
+        elif argv[i] == "-unsetepoch":
+            unsetepoch = True
         elif argv[i] == "-unsetstats":
             unsetstats = True
         elif argv[i] == "-approx_stats":
@@ -279,9 +287,11 @@ def gdal_edit(argv):
 
     if (
         srs is None
+        and epoch is None
         and lry is None
         and yres is None
         and not unsetgt
+        and not unsetepoch
         and not unsetstats
         and not stats
         and not setstats
@@ -327,6 +337,11 @@ def gdal_edit(argv):
 
     if unsetnodata and nodata:
         print("-unsetnodata and -nodata options are exclusive.", file=sys.stderr)
+        print("", file=sys.stderr)
+        return Usage(isError=True)
+
+    if unsetepoch and epoch:
+        print("-unsetepoch and -a_coord_epoch options are exclusive.", file=sys.stderr)
         print("", file=sys.stderr)
         return Usage(isError=True)
 
@@ -378,6 +393,26 @@ def gdal_edit(argv):
         wkt = sr.ExportToWkt()
         if not gcp_list:
             ds.SetProjection(wkt)
+
+    if epoch is not None:
+        sr = ds.GetSpatialRef()
+        if sr is None:
+            print(
+                "Dataset SRS is undefined, cannot set epoch. See the -a_srs option.",
+                file=sys.stderr,
+            )
+            return -1
+        sr.SetCoordinateEpoch(epoch)
+        ds.SetSpatialRef(sr)
+
+    if unsetepoch:
+        sr = ds.GetSpatialRef()
+        if sr is None:
+            print("Dataset SRS is undefined, with no epoch specified.", file=sys.stderr)
+            return -1
+        # Set to 0.0, which is what GetCoordinateEpoch() returns for SRS with no epoch defined
+        sr.SetCoordinateEpoch(0.0)
+        ds.SetSpatialRef(sr)
 
     if lry is not None:
         gt = [
