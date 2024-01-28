@@ -1000,13 +1000,13 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                     if (poSrcSRS->exportToProj4(&pszProj4) == OGRERR_NONE)
                     {
                         poFeature->SetField(i_SrcSRSName, pszProj4);
-                        CPLFree(pszProj4);
                     }
                     else
                     {
                         poFeature->SetField(i_SrcSRSName,
                                             poSrcDS->GetProjectionRef());
                     }
+                    CPLFree(pszProj4);
                 }
             }
             else if (psOptions->eSrcSRSFormat == FORMAT_WKT)
@@ -1031,8 +1031,8 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                 if (poSrcSRS->exportToProj4(&pszProj4) == OGRERR_NONE)
                 {
                     poFeature->SetField(i_SrcSRSName, pszProj4);
-                    CPLFree(pszProj4);
                 }
+                CPLFree(pszProj4);
             }
             else if (psOptions->eSrcSRSFormat == FORMAT_EPSG)
             {
