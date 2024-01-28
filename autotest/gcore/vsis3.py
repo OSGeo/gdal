@@ -3720,6 +3720,78 @@ def test_vsis3_sync_source_target_in_vsis3(aws_test_config, webserver_port):
 
 
 ###############################################################################
+# Test VSISync() with Windows special filenames (prefix with "\\?\")
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows specific test")
+def test_vsis3_sync_win32_special_filenames(aws_test_config, webserver_port, tmp_path):
+
+    options = ["SYNC_STRATEGY=OVERWRITE"]
+
+    tmp_path_str = str(tmp_path)
+    if "/" in tmp_path_str:
+        pytest.skip("Found forward slash in tmp_path")
+
+    prefix_path = "\\\\?\\" + tmp_path_str
+
+    f = gdal.VSIFOpenL(prefix_path + "\\testsync.txt", "wb")
+    assert f
+    gdal.VSIFCloseL(f)
+
+    # S3 to local: S3 file is newer
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+
+    handler.add(
+        "GET",
+        "/out/testsync.txt",
+        206,
+        {
+            "Content-Length": "3",
+            "Content-Range": "bytes 0-2/3",
+            "Last-Modified": "Mon, 01 Jan 2037 00:00:01 GMT",
+        },
+        "foo",
+    )
+    handler.add(
+        "GET",
+        "/out/testsync.txt",
+        200,
+        {"Content-Length": "3", "Last-Modified": "Mon, 01 Jan 2037 00:00:01 GMT"},
+        "foo",
+    )
+    with webserver.install_http_handler(handler):
+        assert gdal.Sync("/vsis3/out/testsync.txt", prefix_path, options=options)
+
+    # Local to S3: S3 file is newer
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/out/", 404)
+    handler.add("GET", "/out/", 404)
+    handler.add(
+        "GET",
+        "/out/?delimiter=%2F&max-keys=100",
+        200,
+        {},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Marker/>
+                <IsTruncated>false</IsTruncated>
+                <Contents>
+                    <Key>testsync.txt</Key>
+                    <LastModified>2037-01-01T00:00:01.000Z</LastModified>
+                    <Size>3</Size>
+                </Contents>
+            </ListBucketResult>
+        """,
+    )
+    handler.add("PUT", "/out/testsync.txt", 200)
+    with webserver.install_http_handler(handler):
+        assert gdal.Sync(prefix_path + "\\", "/vsis3/out/", options=options)
+
+
+###############################################################################
 # Test rename
 
 

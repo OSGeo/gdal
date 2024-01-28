@@ -518,23 +518,59 @@ static size_t VSIWin32StrlenW(const wchar_t *pwszString)
 
 static void VSIWin32TryLongFilename(wchar_t *&pwszFilename)
 {
-    size_t nLen = VSIWin32StrlenW(pwszFilename);
+    const size_t nLen = VSIWin32StrlenW(pwszFilename);
+    constexpr const wchar_t LONG_FILENAME_PREFIX[] = L"\\\\?\\";
+    constexpr size_t LONG_FILENAME_PREFIX_LEN =
+        std::char_traits<wchar_t>::length(LONG_FILENAME_PREFIX);
+    static_assert(LONG_FILENAME_PREFIX_LEN == 4);
+
+    // <drive_letter>:\ or <drive_letter>:/
     if (pwszFilename[0] != 0 && pwszFilename[1] == ':' &&
         (pwszFilename[2] == '\\' || pwszFilename[2] == '/'))
     {
         pwszFilename = static_cast<wchar_t *>(
-            CPLRealloc(pwszFilename, (4 + nLen + 1) * sizeof(wchar_t)));
-        memmove(pwszFilename + 4, pwszFilename, (nLen + 1) * sizeof(wchar_t));
+            CPLRealloc(pwszFilename, (LONG_FILENAME_PREFIX_LEN + nLen + 1) *
+                                         sizeof(wchar_t)));
+        memmove(pwszFilename + LONG_FILENAME_PREFIX_LEN, pwszFilename,
+                (nLen + 1) * sizeof(wchar_t));
+        memcpy(pwszFilename, LONG_FILENAME_PREFIX,
+               LONG_FILENAME_PREFIX_LEN * sizeof(wchar_t));
+    }
+    // \\network_path or //network_path
+    else if (pwszFilename[0] != 0 &&
+             ((pwszFilename[0] == '\\' && pwszFilename[1] == '\\') ||
+              (pwszFilename[0] == '/' && pwszFilename[1] == '/')))
+    {
+        constexpr const wchar_t UNC_PREFIX[] = L"\\\\?\\UNC\\";
+        constexpr size_t UNC_PREFIX_LEN =
+            std::char_traits<wchar_t>::length(UNC_PREFIX);
+        static_assert(UNC_PREFIX_LEN == 8);
+        constexpr const wchar_t NETWORK_PATH_PREFIX[] = L"\\\\";
+        constexpr size_t NETWORK_PATH_PREFIX_LEN =
+            std::char_traits<wchar_t>::length(NETWORK_PATH_PREFIX);
+        static_assert(NETWORK_PATH_PREFIX_LEN == 2);
+        constexpr size_t EXTRA_ALLOC_SIZE =
+            UNC_PREFIX_LEN - NETWORK_PATH_PREFIX_LEN;
+
+        pwszFilename = static_cast<wchar_t *>(CPLRealloc(
+            pwszFilename, (EXTRA_ALLOC_SIZE + nLen + 1) * sizeof(wchar_t)));
+        memmove(pwszFilename + UNC_PREFIX_LEN,
+                pwszFilename + NETWORK_PATH_PREFIX_LEN,
+                (nLen - NETWORK_PATH_PREFIX_LEN + 1) * sizeof(wchar_t));
+        memcpy(pwszFilename, UNC_PREFIX, UNC_PREFIX_LEN * sizeof(wchar_t));
     }
     else
     {
-        // TODO(schwehr): 32768 should be a symbolic constant.
-        wchar_t *pwszCurDir =
-            static_cast<wchar_t *>(CPLMalloc(32768 * sizeof(wchar_t)));
-        DWORD nCurDirLen = GetCurrentDirectoryW(32768, pwszCurDir);
-        CPLAssert(nCurDirLen < 32768);
-        pwszFilename = static_cast<wchar_t *>(CPLRealloc(
-            pwszFilename, (4 + nCurDirLen + 1 + nLen + 1) * sizeof(wchar_t)));
+        constexpr size_t MAX_LONG_FILENAME_SIZE = 32768;
+        wchar_t *pwszCurDir = static_cast<wchar_t *>(
+            CPLMalloc(MAX_LONG_FILENAME_SIZE * sizeof(wchar_t)));
+        DWORD nCurDirLen =
+            GetCurrentDirectoryW(MAX_LONG_FILENAME_SIZE, pwszCurDir);
+        CPLAssert(nCurDirLen < MAX_LONG_FILENAME_SIZE);
+        pwszFilename = static_cast<wchar_t *>(
+            CPLRealloc(pwszFilename,
+                       (LONG_FILENAME_PREFIX_LEN + nCurDirLen + 1 + nLen + 1) *
+                           sizeof(wchar_t)));
         int nOffset = 0;
         if (pwszFilename[0] == '.' &&
             (pwszFilename[1] == '/' || pwszFilename[1] == '\\'))
@@ -556,18 +592,17 @@ static void VSIWin32TryLongFilename(wchar_t *&pwszFilename)
             nCurDirLen--;
             nOffset += 3;
         }
-        memmove(pwszFilename + 4 + nCurDirLen + 1, pwszFilename + nOffset,
-                (nLen - nOffset + 1) * sizeof(wchar_t));
-        memmove(pwszFilename + 4, pwszCurDir, nCurDirLen * sizeof(wchar_t));
-        pwszFilename[4 + nCurDirLen] = '\\';
+        memmove(pwszFilename + LONG_FILENAME_PREFIX_LEN + nCurDirLen + 1,
+                pwszFilename + nOffset, (nLen - nOffset + 1) * sizeof(wchar_t));
+        memmove(pwszFilename + LONG_FILENAME_PREFIX_LEN, pwszCurDir,
+                nCurDirLen * sizeof(wchar_t));
+        pwszFilename[LONG_FILENAME_PREFIX_LEN + nCurDirLen] = '\\';
+        memcpy(pwszFilename, LONG_FILENAME_PREFIX,
+               LONG_FILENAME_PREFIX_LEN * sizeof(wchar_t));
         CPLFree(pwszCurDir);
     }
-    pwszFilename[0] = '\\';
-    pwszFilename[1] = '\\';
-    pwszFilename[2] = '?';
-    pwszFilename[3] = '\\';
 
-    for (size_t i = 4; pwszFilename[i] != 0; i++)
+    for (size_t i = LONG_FILENAME_PREFIX_LEN; pwszFilename[i] != 0; i++)
     {
         if (pwszFilename[i] == '/')
             pwszFilename[i] = '\\';
@@ -803,34 +838,25 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
         wchar_t *pwszFilename =
             CPLRecodeToWChar(pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2);
 
-        bool bTryOtherStatImpl = false;
-        int nResult = 0;
-        if (VSIWin32IsLongFilename(pwszFilename))
+        int nResult = _wstat64(pwszFilename, pStatBuf);
+
+        // If _wstat64() fails and the original name is not an extended one,
+        // then retry with an extended filename
+        if (nResult < 0 && !VSIWin32IsLongFilename(pwszFilename))
         {
-            bTryOtherStatImpl = true;
-            nResult = -1;
-        }
-        else
-        {
-            nResult = _wstat64(pwszFilename, pStatBuf);
-            if (nResult < 0)
+            DWORD nLastError = GetLastError();
+            if (nLastError == ERROR_PATH_NOT_FOUND ||
+                nLastError == ERROR_FILENAME_EXCED_RANGE)
             {
-                DWORD nLastError = GetLastError();
-                if (nLastError == ERROR_PATH_NOT_FOUND ||
-                    nLastError == ERROR_FILENAME_EXCED_RANGE)
-                {
-                    VSIWin32TryLongFilename(pwszFilename);
-                    bTryOtherStatImpl = true;
-                }
+                VSIWin32TryLongFilename(pwszFilename);
+                nResult = _wstat64(pwszFilename, pStatBuf);
             }
         }
 
-        if (bTryOtherStatImpl)
+        // There are some issues with mingw64 runtime with extended file names.
+        // In that situation try a poor-man implementation with Open()
+        if (nResult < 0 && VSIWin32IsLongFilename(pwszFilename))
         {
-            // _wstat64 doesn't like \\?\ paths, so do our poor-man
-            // stat like.
-            // nResult = _wstat64( pwszFilename, pStatBuf );
-
             VSIVirtualHandle *poHandle = Open(pszFilename, "rb");
             if (poHandle != nullptr)
             {
