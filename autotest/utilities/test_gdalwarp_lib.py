@@ -1796,7 +1796,6 @@ def test_gdalwarp_lib_134(tmp_vsimem):
 
 
 @pytest.fixture()
-@pytest.mark.require_driver("GTX")
 def gdalwarp_135_grid_gtx(tmp_path):
 
     grid_gtx = str(tmp_path / "grid.gtx")
@@ -1814,7 +1813,6 @@ def gdalwarp_135_grid_gtx(tmp_path):
 
 
 @pytest.fixture()
-@pytest.mark.require_driver("GTX")
 def gdalwarp_135_grid2_gtx(tmp_path):
 
     grid2_gtx = str(tmp_path / "grid2.gtx")
