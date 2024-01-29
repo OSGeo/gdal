@@ -53,7 +53,7 @@ OGRMiraMonDataSource::~OGRMiraMonDataSource()
     CPLFree(pszRootName);
 
     if(MMMap.fMMMap)
-        VSIFClose(MMMap.fMMMap);
+        VSIFCloseL(MMMap.fMMMap);
 }
 
 /************************************************************************/
@@ -85,15 +85,15 @@ int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
         strcpy(MMMap.pszMapName, CPLFormFilename(pszDSName, CPLGetBasename(pszDSName), "mmm"));
         if (!MMMap.nNumberOfLayers)
         {
-            MMMap.fMMMap = VSIFOpen(MMMap.pszMapName, "w+");
-            VSIFPrintf(MMMap.fMMMap, "[VERSIO]\n");
-            VSIFPrintf(MMMap.fMMMap, "Vers=2\n");
-            VSIFPrintf(MMMap.fMMMap, "SubVers=0\n");
-            VSIFPrintf(MMMap.fMMMap, "variant=b\n");
-            VSIFPrintf(MMMap.fMMMap, "\n");
-            VSIFPrintf(MMMap.fMMMap, "[DOCUMENT]\n");
-            VSIFPrintf(MMMap.fMMMap, "Titol= %s(map)\n", CPLGetBasename(poLayer->GetName()));
-            VSIFPrintf(MMMap.fMMMap, "\n");
+            MMMap.fMMMap = VSIFOpenL(MMMap.pszMapName, "w+");
+            VSIFPrintfL(MMMap.fMMMap, "[VERSIO]\n");
+            VSIFPrintfL(MMMap.fMMMap, "Vers=2\n");
+            VSIFPrintfL(MMMap.fMMMap, "SubVers=0\n");
+            VSIFPrintfL(MMMap.fMMMap, "variant=b\n");
+            VSIFPrintfL(MMMap.fMMMap, "\n");
+            VSIFPrintfL(MMMap.fMMMap, "[DOCUMENT]\n");
+            VSIFPrintfL(MMMap.fMMMap, "Titol= %s(map)\n", CPLGetBasename(poLayer->GetName()));
+            VSIFPrintfL(MMMap.fMMMap, "\n");
         }
     }
     else

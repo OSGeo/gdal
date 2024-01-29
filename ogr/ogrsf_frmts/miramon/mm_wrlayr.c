@@ -3,9 +3,9 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  C API to create a MiraMon layer
  * Author:   Abel Pau, a.pau@creaf.uab.cat, based on the MiraMon codes, 
- *           mainly written by Xavier Pons, Joan MasÃ³, Abel Pau, NÃºria JuliÃ ,
- *           Xavier Calaf, LluÃ­s Pesquer and Alaitz Zabala, from CREAF and
- *           Universitat AutÃ²noma de Barcelona. For a complete list of
+ *           mainly written by Xavier Pons, Joan Masó, Abel Pau, Núria Julià,
+ *           Xavier Calaf, Lluís Pesquer and Alaitz Zabala, from CREAF and
+ *           Universitat Autònoma de Barcelona. For a complete list of
  *           contributors: https://www.miramon.cat/USA/QuiSom.htm
  ******************************************************************************
  * Copyright (c) 2024, Xavier Pons
@@ -31,6 +31,7 @@
 
 #ifndef GDAL_COMPILATION
 #include "CmptCmp.h"                    // Compatibility between compilators
+#include "PrjMMVGl.h"	                // For a DirectoriPrograma
 #include "mm_gdal\mm_wrlayr.h"          // For fseek_function()
 #include "mm_gdal\mm_gdal_functions.h"  // For MM_strnzcpy()
 #include "mm_gdal\mmrdlayr.h"           // For MM_ReadExtendedDBFHeader()
@@ -128,6 +129,7 @@ int MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
 /* -------------------------------------------------------------------- */
 /*      Functions to be used in GDAL and in MiraMon                     */
 /* -------------------------------------------------------------------- */
+static char local_message[5000];
 void MM_CPLError(
     int level, int code,
     const char* format, ...)
@@ -135,7 +137,8 @@ void MM_CPLError(
     #ifdef GDAL_COMPILATION
     CPLError(level, code, format);
     #else
-    ErrorMsg(format);
+    sprintf(local_message, format);
+    ErrorMsg(local_message);
     #endif
 }
 
@@ -146,7 +149,8 @@ void MM_CPLWarning(
     #ifdef GDAL_COMPILATION
     CPLError(level, code, format);
     #else
-    InfoMsg(format);
+    sprintf(local_message, format);
+    InfoMsg(local_message);
     #endif
 }
 
@@ -157,7 +161,8 @@ void MM_CPLDebug(
     #ifdef GDAL_COMPILATION
     CPLDebug(c, format);
     #else
-    printf(format);
+    sprintf(local_message, format);
+    printf(local_message);
     printf("\n");
     #endif
 }
@@ -840,13 +845,17 @@ void MMChangeMMRareExtension(char *pszName, const char *pszExt)
 {
     if(strlen(pszExt)<=0)
         return;
+    #if GDAL_COMPILATION
     strcpy(pszName, reset_extension(pszName, pszExt));
     memcpy(pszName+ strlen(pszName)-strlen(pszExt)-1,
         pszName+ strlen(pszName)-strlen(pszExt), strlen(pszExt));
     pszName[strlen(pszName)-1]='\0';
+    #else
+    strcpy(pszName, reset_extension(pszName, pszExt));
+    #endif
 }
 
-int MMInitPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer, int bIs3d)
+int MMInitPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
     CheckMMVectorLayerVersion(hMiraMonLayer,1)
 
@@ -962,7 +971,7 @@ int MMInitPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer, int bIs3d)
     return 0;
 }
 
-int MMInitNodeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer, int bIs3d)
+int MMInitNodeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
 struct MiraMonArcLayer *pMMArcLayer;
 
@@ -1030,15 +1039,15 @@ struct MiraMonArcLayer *pMMArcLayer;
         // Creating the DBF file name
         strcpy(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName, pMMArcLayer->MMNode.pszLayerName);
         MMChangeMMRareExtension(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName, "N.dbf");
-        
+                
         // MiraMon metadata
         strcpy(pMMArcLayer->MMNode.pszREL_LayerName, pMMArcLayer->MMNode.pszLayerName);
         MMChangeMMRareExtension(pMMArcLayer->MMNode.pszREL_LayerName, "N.rel");
     }
-    return 0;
+     return 0;
 }
 
-int MMInitArcLayer(struct MiraMonVectLayerInfo* hMiraMonLayer, int bIs3d)
+int MMInitArcLayer(struct MiraMonVectLayerInfo* hMiraMonLayer)
 {
     struct MiraMonArcLayer* pMMArcLayer;
     struct MM_TH* pArcTopHeader;
@@ -1227,7 +1236,7 @@ int MMInitArcLayer(struct MiraMonVectLayerInfo* hMiraMonLayer, int bIs3d)
     }
 
     // Node part
-    if(MMInitNodeLayer(hMiraMonLayer, bIs3d))
+    if(MMInitNodeLayer(hMiraMonLayer))
         return 1;
     if(hMiraMonLayer->LayerVersion==MM_32BITS_VERSION)
         MMSet1_1Version(&pMMArcLayer->TopNodeHeader);
@@ -1237,7 +1246,7 @@ int MMInitArcLayer(struct MiraMonVectLayerInfo* hMiraMonLayer, int bIs3d)
     return 0;
 }
 
-int MMInitPolygonLayer(struct MiraMonVectLayerInfo *hMiraMonLayer, int bIs3d)
+int MMInitPolygonLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
 struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
 
@@ -1373,17 +1382,17 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer)
         strcpy(hMiraMonLayer->MMPoint.pszLayerName, hMiraMonLayer->pszSrcLayerName);
         if(hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
             strcat(hMiraMonLayer->MMPoint.pszLayerName, ".pnt");
-        if (hMiraMonLayer->MMMap)
+        if (hMiraMonLayer->MMMap && hMiraMonLayer->MMMap->fMMMap)
         {
             hMiraMonLayer->MMMap->nNumberOfLayers++;
-            VSIFPrintf(hMiraMonLayer->MMMap->fMMMap, "[VECTOR_%d]\n", hMiraMonLayer->MMMap->nNumberOfLayers);
-            VSIFPrintf(hMiraMonLayer->MMMap->fMMMap, "Fitxer=%s.pnt\n", CPLGetBasename( hMiraMonLayer->pszSrcLayerName));
+            printf_function(hMiraMonLayer->MMMap->fMMMap, "[VECTOR_%d]\n", hMiraMonLayer->MMMap->nNumberOfLayers);
+            printf_function(hMiraMonLayer->MMMap->fMMMap, "Fitxer=%s.pnt\n", MM_CPLGetBasename( hMiraMonLayer->pszSrcLayerName));
         }
 
         if(hMiraMonLayer->eLT==MM_LayerType_Point3d)
             bIs3d=1;
 
-        if(MMInitPointLayer(hMiraMonLayer, bIs3d))
+        if(MMInitPointLayer(hMiraMonLayer))
             return 1;
         return 0;
     }
@@ -1396,17 +1405,17 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer)
         if(hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
             strcat(pMMArcLayer->pszLayerName, ".arc");
 
-        if (hMiraMonLayer->MMMap)
+        if (hMiraMonLayer->MMMap && hMiraMonLayer->MMMap->fMMMap)
         {
             hMiraMonLayer->MMMap->nNumberOfLayers++;
-            VSIFPrintf(hMiraMonLayer->MMMap->fMMMap, "[VECTOR_%d]\n", hMiraMonLayer->MMMap->nNumberOfLayers);
-            VSIFPrintf(hMiraMonLayer->MMMap->fMMMap, "Fitxer=%s.arc\n", CPLGetBasename( hMiraMonLayer->pszSrcLayerName));
+            printf_function(hMiraMonLayer->MMMap->fMMMap, "[VECTOR_%d]\n", hMiraMonLayer->MMMap->nNumberOfLayers);
+            printf_function(hMiraMonLayer->MMMap->fMMMap, "Fitxer=%s.arc\n", MM_CPLGetBasename( hMiraMonLayer->pszSrcLayerName));
         }
 
         if(hMiraMonLayer->eLT==MM_LayerType_Arc3d)
             bIs3d=1;
 
-        if(MMInitArcLayer(hMiraMonLayer, bIs3d))
+        if(MMInitArcLayer(hMiraMonLayer))
             return 1;
         return 0;
     }
@@ -1419,17 +1428,17 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer)
         if(hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
             strcat(pMMPolygonLayer->pszLayerName, ".pol");
 
-        if (hMiraMonLayer->MMMap)
+        if (hMiraMonLayer->MMMap && hMiraMonLayer->MMMap->fMMMap)
         {
             hMiraMonLayer->MMMap->nNumberOfLayers++;
-            VSIFPrintf(hMiraMonLayer->MMMap->fMMMap, "[VECTOR_%d]\n", hMiraMonLayer->MMMap->nNumberOfLayers);
-            VSIFPrintf(hMiraMonLayer->MMMap->fMMMap, "Fitxer=%s.pol\n", CPLGetBasename( hMiraMonLayer->pszSrcLayerName));
+            printf_function(hMiraMonLayer->MMMap->fMMMap, "[VECTOR_%d]\n", hMiraMonLayer->MMMap->nNumberOfLayers);
+            printf_function(hMiraMonLayer->MMMap->fMMMap, "Fitxer=%s.pol\n", MM_CPLGetBasename( hMiraMonLayer->pszSrcLayerName));
         }
 
         if(hMiraMonLayer->eLT==MM_LayerType_Pol3d)
             bIs3d=1;
         
-        if(MMInitPolygonLayer(hMiraMonLayer, bIs3d))
+        if(MMInitPolygonLayer(hMiraMonLayer))
             return 1;
         
         if(hMiraMonLayer->ReadOrWrite == MM_READING_MODE)
@@ -1482,7 +1491,7 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer)
             strcat(pMMPolygonLayer->MMArc.pszLayerName, ".arc");
         }
         
-        if(MMInitArcLayer(hMiraMonLayer, bIs3d))
+        if(MMInitArcLayer(hMiraMonLayer))
             return 1;
 
         // Polygon is 3D if Arc is 3D, by definition.
@@ -1884,9 +1893,7 @@ int MMDestroyPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         hMiraMonLayer->MMPoint.pTL=NULL;
     }
     
-    if(hMiraMonLayer->TopHeader.bIs3d)
-        MMDestroyZSectionDescription(&hMiraMonLayer->MMPoint.pZSection);
-
+    MMDestroyZSectionDescription(&hMiraMonLayer->MMPoint.pZSection);
     MMDestroyMMAdmDB(&hMiraMonLayer->MMPoint.MMAdmDB);
 
     return 0;
@@ -1941,9 +1948,7 @@ struct MiraMonArcLayer *pMMArcLayer;
         pMMArcLayer->pArcHeader=NULL;
     }
 
-    if(hMiraMonLayer->TopHeader.bIs3d)
-        MMDestroyZSectionDescription(&pMMArcLayer->pZSection);
-
+    MMDestroyZSectionDescription(&pMMArcLayer->pZSection);
     MMDestroyMMAdmDB(&pMMArcLayer->MMAdmDB);
 
     MMDestroyNodeLayer(hMiraMonLayer);
@@ -3035,11 +3040,11 @@ void MMResetFeatureGeometry(struct MiraMonFeature *hMMFeature)
 
 void MMResetFeatureRecord(struct MiraMonFeature *hMMFeature)
 {
-    if(!hMMFeature->pRecords)
-        return;
-
     MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord;
     MM_EXT_DBF_N_FIELDS nIField;
+
+    if(!hMMFeature->pRecords)
+        return;
 
     for(nIRecord=0; nIRecord<hMMFeature->nMaxMRecords; nIRecord++)
     {
@@ -4289,7 +4294,7 @@ char *trimmed_line=NULL, *parsed_key=NULL, *parsed_value=NULL;
 int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char * szResult, MM_BYTE direction)
 {
     static char aEPSGCodeSRS[MM_MAX_ID_SNY];
-    const char* aMMIDDBFFile = NULL; //m_idofic.dbf
+    char* aMMIDDBFFile = NULL; //m_idofic.dbf
     FILE* pfMMSRS;
     size_t nLong;
     int nLongBuffer = 5000;
@@ -4309,9 +4314,13 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char * szResult, MM_BYTE dir
     memset(aEPSGCodeSRS, '\0', sizeof(*aEPSGCodeSRS));
 
     #ifdef GDAL_COMPILATION
-    aMMIDDBFFile=CPLFindFile("gdal", "MM_m_idofic.csv");
+    aMMIDDBFFile=strdup(CPLFindFile("gdal", "MM_m_idofic.csv"));
     #else
-    aMMIDDBFFile=strdup("m_idofic.csv");
+    {
+        char temp_file[MM_CPL_PATH_BUF_SIZE];
+        MuntaPath(DirectoriPrograma, strcpy(temp_file, "m_idofic.csv"),TRUE);
+        aMMIDDBFFile=strdup_function(temp_file);
+    }
     #endif
 
     if(!aMMIDDBFFile)
@@ -4328,6 +4337,7 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char * szResult, MM_BYTE dir
         printf("Error opening data\\m_idofic.csv.\n");
         return 1;
     }
+    free_function(aMMIDDBFFile);
 
     // Checking the header of the csv file
     memset(pszBuffer, 0, nLongBuffer);
@@ -4478,7 +4488,7 @@ char aTimeString[30];
     if(!hMMMD->aLayerName)
         return 0;
 
-    if(NULL==(pF=fopen_function(hMMMD->aLayerName, "w+t")))
+    if(NULL==(pF=fopen_function(hMMMD->aLayerName, "w+b")))
     {
         MM_CPLError(CE_Failure, CPLE_OpenFailed,
                              "The file %s must exist.",
@@ -4487,73 +4497,72 @@ char aTimeString[30];
     }
    
     // Writing MiraMon version section
-    printf_function(pF, "[%s]\n", SECTION_VERSIO);
+    printf_function(pF, "[%s]\r\n", SECTION_VERSIO);
     
-    printf_function(pF, "%s=%u\n", KEY_Vers, (unsigned)MM_VERS);
-    printf_function(pF, "%s=%u\n", KEY_SubVers, (unsigned)MM_SUBVERS);
+    printf_function(pF, "%s=%u\r\n", KEY_Vers, (unsigned)MM_VERS);
+    printf_function(pF, "%s=%u\r\n", KEY_SubVers, (unsigned)MM_SUBVERS);
 
-    printf_function(pF, "%s=%u\n", KEY_VersMetaDades, (unsigned)MM_VERS_METADADES);
-    printf_function(pF, "%s=%u\n", KEY_SubVersMetaDades, (unsigned)MM_SUBVERS_METADADES);
+    printf_function(pF, "%s=%u\r\n", KEY_VersMetaDades, (unsigned)MM_VERS_METADADES);
+    printf_function(pF, "%s=%u\r\n", KEY_SubVersMetaDades, (unsigned)MM_SUBVERS_METADADES);
 
     // Writing METADADES section
-    printf_function(pF, "\n[%s]\n", SECTION_METADADES);
+    printf_function(pF, "\r\n[%s]\r\n", SECTION_METADADES);
     strcpy(aMessage, hMMMD->aLayerName);
     strcpy(aFileIdentifier, GenerateFileIdentifierFromMetadataFileName(aMessage));
-    printf_function(pF, "%s=%s\n", KEY_FileIdentifier, aFileIdentifier);
-    printf_function(pF, "%s=%s\n", KEY_language, KEY_Value_eng);
-    printf_function(pF, "%s=%s\n", KEY_MDIdiom, KEY_Value_eng);
-    printf_function(pF, "%s=%s\n", KEY_characterSet, KEY_Value_characterSet);
+    printf_function(pF, "%s=%s\r\n", KEY_FileIdentifier, aFileIdentifier);
+    printf_function(pF, "%s=%s\r\n", KEY_language, KEY_Value_eng);
+    printf_function(pF, "%s=%s\r\n", KEY_MDIdiom, KEY_Value_eng);
+    printf_function(pF, "%s=%s\r\n", KEY_characterSet, KEY_Value_characterSet);
 
     // Writing IDENTIFICATION section
-    printf_function(pF, "\n[%s]\n", SECTION_IDENTIFICATION);
-    printf_function(pF, "%s=%s\n", KEY_code, aFileIdentifier);
-    printf_function(pF, "%s=\n", KEY_codeSpace);
+    printf_function(pF, "\r\n[%s]\r\n", SECTION_IDENTIFICATION);
+    printf_function(pF, "%s=%s\r\n", KEY_code, aFileIdentifier);
+    printf_function(pF, "%s=\r\n", KEY_codeSpace);
     if(hMMMD->szLayerTitle && !IsEmptyString(hMMMD->szLayerTitle))
     {
         if(hMMMD->ePlainLT==MM_LayerType_Point)
-            printf_function(pF, "%s=%s (pnt)\n", KEY_DatasetTitle, hMMMD->szLayerTitle);
+            printf_function(pF, "%s=%s (pnt)\r\n", KEY_DatasetTitle, hMMMD->szLayerTitle);
         if(hMMMD->ePlainLT==MM_LayerType_Arc)
-            printf_function(pF, "%s=%s (arc)\n", KEY_DatasetTitle, hMMMD->szLayerTitle);
+            printf_function(pF, "%s=%s (arc)\r\n", KEY_DatasetTitle, hMMMD->szLayerTitle);
         if(hMMMD->ePlainLT==MM_LayerType_Pol)
-            printf_function(pF, "%s=%s (pol)\n", KEY_DatasetTitle, hMMMD->szLayerTitle);
+            printf_function(pF, "%s=%s (pol)\r\n", KEY_DatasetTitle, hMMMD->szLayerTitle);
     }
-    printf_function(pF, "%s=%s\n", KEY_language, KEY_Value_eng);
+    printf_function(pF, "%s=%s\r\n", KEY_language, KEY_Value_eng);
 
     if(hMMMD->ePlainLT!=MM_LayerType_Node)
     {
         if(hMMMD->pSRS && hMMMD->ePlainLT!=MM_LayerType_Pol)
         {
-            printf_function(pF, "\n[%s:%s]\n", SECTION_SPATIAL_REFERENCE_SYSTEM, SECTION_HORIZONTAL);
-            ReturnMMIDSRSFromEPSGCodeSRS(hMMMD->pSRS,aMMIDSRS);
-            if(!IsEmptyString(aMMIDSRS))
-                printf_function(pF, "%s=%s\n", KEY_HorizontalSystemIdentifier, aMMIDSRS);
+            printf_function(pF, "\r\n[%s:%s]\r\n", SECTION_SPATIAL_REFERENCE_SYSTEM, SECTION_HORIZONTAL);
+            if(!ReturnMMIDSRSFromEPSGCodeSRS(hMMMD->pSRS,aMMIDSRS) && !IsEmptyString(aMMIDSRS))
+                printf_function(pF, "%s=%s\r\n", KEY_HorizontalSystemIdentifier, aMMIDSRS);
             else
             {
                 MM_CPLWarning(CE_Warning, CPLE_NotSupported,
                             "The MiraMon driver cannot assign any HRS.");
     
-                printf_function(pF, "%s=plane\n", KEY_HorizontalSystemIdentifier);
-                printf_function(pF, "%s=local\n", KEY_HorizontalSystemDefinition);
+                printf_function(pF, "%s=plane\r\n", KEY_HorizontalSystemIdentifier);
+                printf_function(pF, "%s=local\r\n", KEY_HorizontalSystemDefinition);
                 if(hMMMD->pXUnit)
-                    printf_function(pF, "%s=%s\n", KEY_unitats, hMMMD->pXUnit);
+                    printf_function(pF, "%s=%s\r\n", KEY_unitats, hMMMD->pXUnit);
                 if(hMMMD->pYUnit)
                 {
                     if(!hMMMD->pXUnit || stricmp(hMMMD->pXUnit, hMMMD->pYUnit))
-                        printf_function(pF, "%s=%s\n", KEY_unitatsY, hMMMD->pYUnit);
+                        printf_function(pF, "%s=%s\r\n", KEY_unitatsY, hMMMD->pYUnit);
                 }
             }
         }
         else
         {
-            printf_function(pF, "%s=plane\n", KEY_HorizontalSystemIdentifier);
-            printf_function(pF, "%s=local\n", KEY_HorizontalSystemDefinition);
+            printf_function(pF, "%s=plane\r\n", KEY_HorizontalSystemIdentifier);
+            printf_function(pF, "%s=local\r\n", KEY_HorizontalSystemDefinition);
             if(hMMMD->pXUnit)
             {
-                printf_function(pF, "%s=%s\n", KEY_unitats, hMMMD->pXUnit);
+                printf_function(pF, "%s=%s\r\n", KEY_unitats, hMMMD->pXUnit);
                 if(hMMMD->pYUnit)
                 {
                     if(!hMMMD->pXUnit || stricmp(hMMMD->pXUnit, hMMMD->pYUnit))
-                        printf_function(pF, "%s=%s\n", KEY_unitatsY, hMMMD->pYUnit);
+                        printf_function(pF, "%s=%s\r\n", KEY_unitatsY, hMMMD->pYUnit);
                 }
             }
         }
@@ -4563,34 +4572,34 @@ char aTimeString[30];
     // ArcSource=fitx_pol.arc
     if(hMMMD->ePlainLT==MM_LayerType_Pol)
     {
-        printf_function(pF, "\n[%s]\n", SECTION_OVVW_ASPECTES_TECNICS);
-        printf_function(pF, "%s=\"%s\"\n", KEY_ArcSource, hMMMD->aArcFile);
+        printf_function(pF, "\r\n[%s]\r\n", SECTION_OVVW_ASPECTES_TECNICS);
+        printf_function(pF, "%s=\"%s\"\r\n", KEY_ArcSource, hMMMD->aArcFile);
     }
     
     // Writing EXTENT section
-    printf_function(pF, "\n[%s]\n", SECTION_EXTENT);
-    printf_function(pF, "%s=0\n", KEY_toler_env);
+    printf_function(pF, "\r\n[%s]\r\n", SECTION_EXTENT);
+    printf_function(pF, "%s=0\r\n", KEY_toler_env);
     
     if(hMMMD->hBB.dfMinX!=MM_UNDEFINED_STATISTICAL_VALUE &&
         hMMMD->hBB.dfMaxX!=-MM_UNDEFINED_STATISTICAL_VALUE &&
         hMMMD->hBB.dfMinY!=MM_UNDEFINED_STATISTICAL_VALUE &&
         hMMMD->hBB.dfMaxY!=-MM_UNDEFINED_STATISTICAL_VALUE)
     {
-        printf_function(pF, "%s=%lf\n", KEY_MinX, hMMMD->hBB.dfMinX);
-        printf_function(pF, "%s=%lf\n", KEY_MaxX, hMMMD->hBB.dfMaxX);
-        printf_function(pF, "%s=%lf\n", KEY_MinY, hMMMD->hBB.dfMinY);
-        printf_function(pF, "%s=%lf\n", KEY_MaxY, hMMMD->hBB.dfMaxY);
+        printf_function(pF, "%s=%lf\r\n", KEY_MinX, hMMMD->hBB.dfMinX);
+        printf_function(pF, "%s=%lf\r\n", KEY_MaxX, hMMMD->hBB.dfMaxX);
+        printf_function(pF, "%s=%lf\r\n", KEY_MinY, hMMMD->hBB.dfMinY);
+        printf_function(pF, "%s=%lf\r\n", KEY_MaxY, hMMMD->hBB.dfMaxY);
     }
     
     // Writing OVERVIEW section
-    printf_function(pF, "\n[%s]\n", SECTION_OVERVIEW);
+    printf_function(pF, "\r\n[%s]\r\n", SECTION_OVERVIEW);
         
     currentTime = time(NULL);
     pLocalTime = localtime(&currentTime);
     sprintf(aTimeString, "%04d%02d%02d %02d%02d%02d%02d+00:00",
         pLocalTime->tm_year + 1900, pLocalTime->tm_mon + 1, pLocalTime->tm_mday,
         pLocalTime->tm_hour, pLocalTime->tm_min, pLocalTime->tm_sec, 0);
-    printf_function(pF, "%s=%s\n", KEY_CreationDate, aTimeString);
+    printf_function(pF, "%s=%s\r\n", KEY_CreationDate, aTimeString);
 
     // Â·$Â· TEMPORAL MENTRE NO HO FEM BÃ‰:
     // A la documentaciÃ³ posa:
@@ -4601,112 +4610,112 @@ char aTimeString[30];
     // option, in which case the name of the source FID column will be used and source 
     // feature IDs will be attempted to be preserved. This behavior can be disabled by setting -unsetFid.
 
-    printf_function(pF, "\n");
-    printf_function(pF, "[TAULA_PRINCIPAL]\n");
-    printf_function(pF, "IdGrafic=ID_GRAFIC\n");
-    printf_function(pF, "TipusRelacio=RELACIO_1_1_DICC\n");
+    printf_function(pF, "\r\n");
+    printf_function(pF, "[TAULA_PRINCIPAL]\r\n");
+    printf_function(pF, "IdGrafic=ID_GRAFIC\r\n");
+    printf_function(pF, "TipusRelacio=RELACIO_1_1_DICC\r\n");
 
-    printf_function(pF, "\n");
-    printf_function(pF, "[TAULA_PRINCIPAL:ID_GRAFIC]\n");
-    printf_function(pF, "visible=1\n");
-    printf_function(pF, "MostrarUnitats=0\n");
-    printf_function(pF, "descriptor=Internal graphic identifier\n");
+    printf_function(pF, "\r\n");
+    printf_function(pF, "[TAULA_PRINCIPAL:ID_GRAFIC]\r\n");
+    printf_function(pF, "visible=1\r\n");
+    printf_function(pF, "MostrarUnitats=0\r\n");
+    printf_function(pF, "descriptor=Internal graphic identifier\r\n");
     
     if(hMMMD->ePlainLT==MM_LayerType_Arc)
     {
-        printf_function(pF, "\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:N_VERTEXS]\n");
-        printf_function(pF, "visible=0\n");
-        printf_function(pF, "simbolitzable=0\n");
-        printf_function(pF, "MostrarUnitats=0\n");
-        printf_function(pF, "descriptor=Number of vertices\n");
+        printf_function(pF, "\r\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:N_VERTEXS]\r\n");
+        printf_function(pF, "visible=0\r\n");
+        printf_function(pF, "simbolitzable=0\r\n");
+        printf_function(pF, "MostrarUnitats=0\r\n");
+        printf_function(pF, "descriptor=Number of vertices\r\n");
 
-        printf_function(pF, "\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:LONG_ARC]\n");
-        printf_function(pF, "visible=0\n");
-        printf_function(pF, "simbolitzable=0\n");
-        printf_function(pF, "MostrarUnitats=0\n");
-        printf_function(pF, "descriptor=Lenght of arc\n");
+        printf_function(pF, "\r\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:LONG_ARC]\r\n");
+        printf_function(pF, "visible=0\r\n");
+        printf_function(pF, "simbolitzable=0\r\n");
+        printf_function(pF, "MostrarUnitats=0\r\n");
+        printf_function(pF, "descriptor=Lenght of arc\r\n");
 
-        printf_function(pF, "\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:NODE_INI]\n");
-        printf_function(pF, "visible=0\n");
-        printf_function(pF, "simbolitzable=0\n");
-        printf_function(pF, "MostrarUnitats=0\n");
-        printf_function(pF, "descriptor=Initial node\n");
+        printf_function(pF, "\r\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:NODE_INI]\r\n");
+        printf_function(pF, "visible=0\r\n");
+        printf_function(pF, "simbolitzable=0\r\n");
+        printf_function(pF, "MostrarUnitats=0\r\n");
+        printf_function(pF, "descriptor=Initial node\r\n");
 
-        printf_function(pF, "\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:NODE_FI]\n");
-        printf_function(pF, "visible=0\n");
-        printf_function(pF, "simbolitzable=0\n");
-        printf_function(pF, "MostrarUnitats=0\n");
-        printf_function(pF, "descriptor=Final node\n");
+        printf_function(pF, "\r\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:NODE_FI]\r\n");
+        printf_function(pF, "visible=0\r\n");
+        printf_function(pF, "simbolitzable=0\r\n");
+        printf_function(pF, "MostrarUnitats=0\r\n");
+        printf_function(pF, "descriptor=Final node\r\n");
 
-        printf_function(pF, "[GEOMETRIA_I_TOPOLOGIA]\n");
-        printf_function(pF, "NomCampNVertexs=N_VERTEXS\n");
-        printf_function(pF, "NomCampLongitudArc=LONG_ARC\n");
-        printf_function(pF, "NomCampNodeIni=NODE_INI\n");
-        printf_function(pF, "NomCampNodeFi=NODE_FI\n");
+        printf_function(pF, "[GEOMETRIA_I_TOPOLOGIA]\r\n");
+        printf_function(pF, "NomCampNVertexs=N_VERTEXS\r\n");
+        printf_function(pF, "NomCampLongitudArc=LONG_ARC\r\n");
+        printf_function(pF, "NomCampNodeIni=NODE_INI\r\n");
+        printf_function(pF, "NomCampNodeFi=NODE_FI\r\n");
     }
     else if(hMMMD->ePlainLT==MM_LayerType_Node)
     {
-        printf_function(pF, "\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:ARCS_A_NOD]\n");
-        printf_function(pF, "visible=0\n");
-        printf_function(pF, "simbolitzable=0\n");
-        printf_function(pF, "MostrarUnitats=0\n");
-        printf_function(pF, "descriptor=Number of arcs to node\n");
+        printf_function(pF, "\r\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:ARCS_A_NOD]\r\n");
+        printf_function(pF, "visible=0\r\n");
+        printf_function(pF, "simbolitzable=0\r\n");
+        printf_function(pF, "MostrarUnitats=0\r\n");
+        printf_function(pF, "descriptor=Number of arcs to node\r\n");
 
-        printf_function(pF, "\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:TIPUS_NODE]\n");
-        printf_function(pF, "visible=0\n");
-        printf_function(pF, "simbolitzable=0\n");
-        printf_function(pF, "MostrarUnitats=0\n");
-        printf_function(pF, "descriptor=Node type\n");
+        printf_function(pF, "\r\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:TIPUS_NODE]\r\n");
+        printf_function(pF, "visible=0\r\n");
+        printf_function(pF, "simbolitzable=0\r\n");
+        printf_function(pF, "MostrarUnitats=0\r\n");
+        printf_function(pF, "descriptor=Node type\r\n");
     }
     else if(hMMMD->ePlainLT==MM_LayerType_Pol)
     {
-        printf_function(pF, "\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:N_VERTEXS]\n");
-        printf_function(pF, "visible=0\n");
-        printf_function(pF, "simbolitzable=0\n");
-        printf_function(pF, "MostrarUnitats=0\n");
-        printf_function(pF, "descriptor=Number of vertices\n");
+        printf_function(pF, "\r\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:N_VERTEXS]\r\n");
+        printf_function(pF, "visible=0\r\n");
+        printf_function(pF, "simbolitzable=0\r\n");
+        printf_function(pF, "MostrarUnitats=0\r\n");
+        printf_function(pF, "descriptor=Number of vertices\r\n");
 
-        printf_function(pF, "\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:PERIMETRE]\n");
-        printf_function(pF, "visible=0\n");
-        printf_function(pF, "simbolitzable=0\n");
-        printf_function(pF, "MostrarUnitats=0\n");
-        printf_function(pF, "descriptor=Perimeter of the polygon\n");
+        printf_function(pF, "\r\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:PERIMETRE]\r\n");
+        printf_function(pF, "visible=0\r\n");
+        printf_function(pF, "simbolitzable=0\r\n");
+        printf_function(pF, "MostrarUnitats=0\r\n");
+        printf_function(pF, "descriptor=Perimeter of the polygon\r\n");
 
-        printf_function(pF, "\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:AREA]\n");
-        printf_function(pF, "visible=0\n");
-        printf_function(pF, "simbolitzable=0\n");
-        printf_function(pF, "MostrarUnitats=0\n");
-        printf_function(pF, "descriptor=Area of the polygon\n");
+        printf_function(pF, "\r\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:AREA]\r\n");
+        printf_function(pF, "visible=0\r\n");
+        printf_function(pF, "simbolitzable=0\r\n");
+        printf_function(pF, "MostrarUnitats=0\r\n");
+        printf_function(pF, "descriptor=Area of the polygon\r\n");
 
-        printf_function(pF, "\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:N_ARCS]\n");
-        printf_function(pF, "visible=0\n");
-        printf_function(pF, "simbolitzable=0\n");
-        printf_function(pF, "MostrarUnitats=0\n");
-        printf_function(pF, "descriptor=Number of arcs\n");
+        printf_function(pF, "\r\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:N_ARCS]\r\n");
+        printf_function(pF, "visible=0\r\n");
+        printf_function(pF, "simbolitzable=0\r\n");
+        printf_function(pF, "MostrarUnitats=0\r\n");
+        printf_function(pF, "descriptor=Number of arcs\r\n");
 
-        printf_function(pF, "\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:N_POLIG]\n");
-        printf_function(pF, "visible=0\n");
-        printf_function(pF, "simbolitzable=0\n");
-        printf_function(pF, "MostrarUnitats=0\n");
-        printf_function(pF, "descriptor=Number of elemental polygons\n");
+        printf_function(pF, "\r\n");
+        printf_function(pF, "[TAULA_PRINCIPAL:N_POLIG]\r\n");
+        printf_function(pF, "visible=0\r\n");
+        printf_function(pF, "simbolitzable=0\r\n");
+        printf_function(pF, "MostrarUnitats=0\r\n");
+        printf_function(pF, "descriptor=Number of elemental polygons\r\n");
 
-        printf_function(pF, "[GEOMETRIA_I_TOPOLOGIA]\n");
-        printf_function(pF, "NomCampNVertexs=N_VERTEXS\n");
-        printf_function(pF, "NomCampPerimetre=PERIMETRE\n");
-        printf_function(pF, "NomCampArea=AREA\n");
-        printf_function(pF, "NomCampNArcs=N_ARCS\n");
-        printf_function(pF, "NomCampNPoligons=N_POLIG\n");
+        printf_function(pF, "[GEOMETRIA_I_TOPOLOGIA]\r\n");
+        printf_function(pF, "NomCampNVertexs=N_VERTEXS\r\n");
+        printf_function(pF, "NomCampPerimetre=PERIMETRE\r\n");
+        printf_function(pF, "NomCampArea=AREA\r\n");
+        printf_function(pF, "NomCampNArcs=N_ARCS\r\n");
+        printf_function(pF, "NomCampNPoligons=N_POLIG\r\n");
     }
 
     // Writing TAULA_PRINCIPAL section
@@ -4717,8 +4726,8 @@ char aTimeString[30];
         {
             if(!IsEmptyString(hMMMD->pLayerDB->pFields[nIField].pszFieldDescription))
             {
-                printf_function(pF, "\n[%s:%s]\n", SECTION_TAULA_PRINCIPAL, hMMMD->pLayerDB->pFields[nIField].pszFieldName);
-                printf_function(pF, "%s=%s\n", KEY_descriptor, hMMMD->pLayerDB->pFields[nIField].pszFieldDescription);
+                printf_function(pF, "\r\n[%s:%s]\r\n", SECTION_TAULA_PRINCIPAL, hMMMD->pLayerDB->pFields[nIField].pszFieldName);
+                printf_function(pF, "%s=%s\r\n", KEY_descriptor, hMMMD->pLayerDB->pFields[nIField].pszFieldDescription);
             }
         }
     }
@@ -5829,8 +5838,16 @@ void MMDestroyMMDBFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
         hMiraMonLayer->nNumStringToOperate=0;
     }
     
-    MM_ReleaseDBFHeader(pMMAdmDB->pMMBDXP);
-    hMiraMonLayer->pMMBDXP=pMMAdmDB->pMMBDXP=NULL;
+    if(pMMAdmDB->pMMBDXP)
+    {
+        MM_ReleaseDBFHeader(pMMAdmDB->pMMBDXP);
+        hMiraMonLayer->pMMBDXP=pMMAdmDB->pMMBDXP=NULL;
+    }
+    if(pMMAdmDB->pRecList)
+    {
+        free_function(pMMAdmDB->pRecList);
+        pMMAdmDB->pRecList=NULL;
+    }
 }
 
 void MMDestroyMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer)
@@ -5839,6 +5856,7 @@ void MMDestroyMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer)
     {
         MMDestroyMMDBFile(hMiraMonLayer, 
                 &hMiraMonLayer->MMPoint.MMAdmDB);
+        return;
     }
     if(hMiraMonLayer->bIsArc && !hMiraMonLayer->bIsPolygon)
     {
@@ -5846,6 +5864,7 @@ void MMDestroyMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer)
                 &hMiraMonLayer->MMArc.MMAdmDB);
         MMDestroyMMDBFile(hMiraMonLayer, 
                 &hMiraMonLayer->MMArc.MMNode.MMAdmDB);
+        return;
     }
     if(hMiraMonLayer->bIsPolygon)
     {
@@ -5856,6 +5875,8 @@ void MMDestroyMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer)
         MMDestroyMMDBFile(hMiraMonLayer, 
                 &hMiraMonLayer->MMPolygon.MMArc.MMNode.MMAdmDB);
     }
+    MMDestroyMMDBFile(hMiraMonLayer, 
+        &hMiraMonLayer->MMAdmDBWriting);
 }
 
 CPL_C_END // Necessary for compiling in GDAL project

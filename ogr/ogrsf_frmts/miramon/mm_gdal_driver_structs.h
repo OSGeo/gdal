@@ -10,10 +10,9 @@
 #include "mm_gdal_structures.h"
 CPL_C_START // Necessary for compiling in GDAL project
 #else
+#include <stdio.h> // For FILE
 #include "mm_gdal\mm_gdal_constants.h"
 #include "mm_gdal\mm_gdal_structures.h"
-// Falta això o es queixa a diversos llocs
-#include "str_snyd.h"	// Per a struct SNY_TRANSFORMADOR_GEODESIA  
 #endif
 
 // For MetaData
@@ -60,7 +59,7 @@ CPL_C_START // Necessary for compiling in GDAL project
 
 
 // Types of layers in MiraMon
-#define MM_LayerType_Unknown    0 // Unknown type or only table
+#define MM_LayerType_Unknown    0 // Unknown type or only DBF
 #define MM_LayerType_Point      1 // Layer of Points
 #define MM_LayerType_Point3d    2 // Layer of 3D Points
 #define MM_LayerType_Arc        3 // Layer of Arcs
@@ -520,10 +519,6 @@ struct MiraMonArcLayer
     struct MM_TH TopNodeHeader;
     struct MiraMonNodeLayer MMNode;
 
-    // An Arc layer can store some ellipsoidal information
-    double *pEllipLong;
-    struct SNY_TRANSFORMADOR_GEODESIA *GeodesiaTransform;
-
     // Private data
     unsigned __int64 nMaxArcVrt; // Number of allocated 
     struct ARC_VRT_STRUCTURE *pArcVrt;
@@ -612,6 +607,15 @@ struct MiraMonFeature
     // Number of reserved elements in *pRecords
     MM_EXT_DBF_N_MULTIPLE_RECORDS nMaxMRecords; 
 	struct MiraMonRecord *pRecords;
+};
+
+// There is the possibility of creating a map with all layers
+// to visualize it with only one click
+struct MiraMonVectMapInfo
+{
+    char pszMapName[MM_CPL_PATH_BUF_SIZE];
+    FILE_TYPE *fMMMap;
+    int nNumberOfLayers;
 };
 
 // MIRAMON OBJECT: Contains everything
@@ -738,14 +742,6 @@ struct MiraMonVectLayerInfo
     struct MiraMonVectMapInfo *MMMap; // Don't free
 };
 
-// There is the possibility of creating a map with all layers
-// to visualize it with only one click
-struct MiraMonVectMapInfo
-{
-    char pszMapName[MM_CPL_PATH_BUF_SIZE];
-    FILE *fMMMap;
-    int nNumberOfLayers;
-};
 
 enum DataType {MMDTByte, MMDTInteger, MMDTuInteger, 
                MMDTLong, MMDTReal, MMDTDouble, MMDT4bits};

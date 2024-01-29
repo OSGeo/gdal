@@ -748,7 +748,7 @@ OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
     if(poGeom->getGeometryType() == wkbUnknown)
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
-    // Geometry field processing
+    // MUltigeometry field processing (just in case of a MG inside a MG)
     if(wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection)
     {
         int nGeom=OGR_G_GetGeometryCount(OGRGeometry::ToHandle(poGeom));
@@ -801,38 +801,38 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
         int eLT = poGeom->getGeometryType();
         switch (wkbFlatten(eLT))
         {
-        case wkbPoint:
-            phMiraMonLayer = &hMiraMonLayerPNT;
-            if (OGR_G_Is3D(hGeom))
-                phMiraMonLayer->eLT = MM_LayerType_Point3d;
-            else
-                phMiraMonLayer->eLT = MM_LayerType_Point;
-            break;
-        case wkbLineString:
-            phMiraMonLayer = &hMiraMonLayerARC;
-            if (OGR_G_Is3D(hGeom))
-                phMiraMonLayer->eLT = MM_LayerType_Arc3d;
-            else
-                phMiraMonLayer->eLT = MM_LayerType_Arc;
-            break;
-        case wkbPolygon:
-        case wkbMultiPolygon:
-        case wkbPolyhedralSurface:
-        case wkbTIN:
-        case wkbTriangle:
-            phMiraMonLayer = &hMiraMonLayerPOL;
-            if (OGR_G_Is3D(hGeom))
-                phMiraMonLayer->eLT = MM_LayerType_Pol3d;
-            else
-                phMiraMonLayer->eLT = MM_LayerType_Pol;
-            break;
-        case wkbUnknown:
-        default:
-        {
-            MM_CPLWarning(CE_Warning, CPLE_NotSupported, "MiraMon "
-                "doesn't support %d geometry type", eLT);
-            return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
-        }
+            case wkbPoint:
+                phMiraMonLayer = &hMiraMonLayerPNT;
+                if (OGR_G_Is3D(hGeom))
+                    phMiraMonLayer->eLT = MM_LayerType_Point3d;
+                else
+                    phMiraMonLayer->eLT = MM_LayerType_Point;
+                break;
+            case wkbLineString:
+                phMiraMonLayer = &hMiraMonLayerARC;
+                if (OGR_G_Is3D(hGeom))
+                    phMiraMonLayer->eLT = MM_LayerType_Arc3d;
+                else
+                    phMiraMonLayer->eLT = MM_LayerType_Arc;
+                break;
+            case wkbPolygon:
+            case wkbMultiPolygon:
+            case wkbPolyhedralSurface:
+            case wkbTIN:
+            case wkbTriangle:
+                phMiraMonLayer = &hMiraMonLayerPOL;
+                if (OGR_G_Is3D(hGeom))
+                    phMiraMonLayer->eLT = MM_LayerType_Pol3d;
+                else
+                    phMiraMonLayer->eLT = MM_LayerType_Pol;
+                break;
+            case wkbUnknown:
+            default:
+            {
+                MM_CPLWarning(CE_Warning, CPLE_NotSupported, "MiraMon "
+                    "doesn't support %d geometry type", eLT);
+                return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+            }
         }
     }
     else
@@ -884,7 +884,7 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
 
     // Writes coordinates to the disk
     if (eErr == OGRERR_NONE)
-        return MMWriteGeometry(true);
+        return MMWriteGeometry();
 
     CPLDebug("MiraMon", "Error in MMLoadGeometry()");
     return eErr;
@@ -912,9 +912,11 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     /* -------------------------------------------------------------------- */
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
 
+    // Processing a feature without geometry.
     if (poGeom == nullptr)
         return MMProcessGeometry(NULL, poFeature, TRUE);
 
+    // At this point MiraMon doesn't support unkwnon type geometry
     if(poGeom->getGeometryType() == wkbUnknown)
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
@@ -1041,7 +1043,7 @@ OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom)
     if (eLT == wkbMultiPolygon || eLT == wkbPolyhedralSurface  ||
         eLT == wkbTIN || eLT==wkbTriangle)
     {
-        for (int iGeom = 0; iGeom < nGeom && eErr == OGRERR_NONE; iGeom++)
+        for (int iGeom = 0; iGeom < nGeom; iGeom++)
         {
             OGRGeometryH poNewGeometry=OGR_G_GetGeometryRef(hGeom, iGeom);
                 
@@ -1092,7 +1094,7 @@ OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom)
 /*                                                                      */
 /************************************************************************/
 
-OGRErr OGRMiraMonLayer::MMWriteGeometry(bool bExternalRing)
+OGRErr OGRMiraMonLayer::MMWriteGeometry()
 
 {
     OGRErr eErr = AddMMFeature(phMiraMonLayer, &hMMFeature);
@@ -1145,11 +1147,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
             poFeatureDefn->GetFieldCount(),
             sizeof(*(phMiraMonLayer->pLayerDB->pFields))));
     if(!phMiraMonLayer->pLayerDB->pFields)
-    {
-	    CPLFree(phMiraMonLayer->pLayerDB);
         return OGRERR_NOT_ENOUGH_MEMORY;
-    }
-
+    
     phMiraMonLayer->pLayerDB->nNFields=0;
     if (phMiraMonLayer->pLayerDB->pFields)
     {
@@ -1265,7 +1264,6 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         return OGRERR_NONE;
     }
 
-    CPLString osFieldData;
     MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord;
     int nNumFields = poFeatureDefn->GetFieldCount();
     MM_EXT_DBF_N_MULTIPLE_RECORDS nNumRecords;

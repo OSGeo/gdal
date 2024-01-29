@@ -97,7 +97,7 @@ class OGRMiraMonLayer final : public OGRLayer,
     OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
                     OGRFeature* poFeature);
     OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom);
-    OGRErr MMWriteGeometry(bool bExternalRing);
+    OGRErr MMWriteGeometry();
     GIntBig GetFeatureCount(int bForce);
     
   public:

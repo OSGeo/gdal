@@ -57,7 +57,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define OGR_L_ResetReading_function(a)      ptr_MM_OGR_L_ResetReading((a))
     #define GDALDatasetGetLayer_function(a,b)   ptr_MM_GDALDatasetGetLayer((a),(b))
     #define form_filename_function(a,b)         MuntaPath((a),(b),TRUE)
-    #define form_filename_extension_function(a,b)  MuntaPath((a),(b),TRUE) // ·$· REVISAR (es simplement afegir l'extensio pero demanant memoria)
+    #define MM_CPLGetBasename(a)                    TreuAdreca((a))
 #else
     #define calloc_function(a) CPLCalloc(1,(a))
     #define realloc_function CPLRealloc
@@ -92,7 +92,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define OGR_L_ResetReading_function(a)      OGR_L_ResetReading((a))
     #define GDALDatasetGetLayer_function(a,b)   GDALDatasetGetLayer((a),(b))
     #define form_filename_function(a,b)       CPLFormFilename((a),(b),NULL)
-    #define form_filename_extension_function(a,b)       CPLFormFilename(NULL,(a),(b))
+    #define MM_CPLGetBasename(a)                    CPLGetBasename((a))
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -105,6 +105,9 @@ void MM_CPLError(
 
 void MM_CPLWarning(
     int level, int code,
+    const char* format, ...);
+void MM_CPLDebug(
+    const char *c,
     const char* format, ...);
 
 // Layer functions
