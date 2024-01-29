@@ -822,7 +822,7 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
             poDS->SetMetadata(aosSubDS.List(), "SUBDATASETS");
         }
 
-        poDS->SetPamFlags(0);
+        poDS->SetPamFlags(poDS->GetPamFlags() & ~GPF_DIRTY);
 
         // Initialize any PAM information.
         poDS->SetDescription(poOpenInfo->pszFilename);

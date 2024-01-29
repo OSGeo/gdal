@@ -2431,7 +2431,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     CPLDestroyXMLNode(psXML);
 
-    poDS->SetPamFlags(0);
+    poDS->SetPamFlags(poDS->GetPamFlags() & ~GPF_DIRTY);
     return poDS;
 }
 /************************************************************************/
