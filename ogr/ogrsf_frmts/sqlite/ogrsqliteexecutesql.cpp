@@ -804,16 +804,25 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
         // but there is no possible use of that given we run that into
         // an ephemeral database.
     }
-    else if (!STARTS_WITH_CI(pszStatement, "SELECT ") &&
-             !STARTS_WITH_CI(pszStatement, "WITH ") &&
-             !STARTS_WITH_CI(pszStatement, "EXPLAIN ") &&
-             !STARTS_WITH_CI(pszStatement, "INSERT ") &&
-             !STARTS_WITH_CI(pszStatement, "UPDATE ") &&
-             !STARTS_WITH_CI(pszStatement, "DELETE ") &&
-             !STARTS_WITH_CI(pszStatement, "REPLACE "))
+    else
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported SQL command.");
-        return nullptr;
+        bool bUnderstoodStatement = false;
+        for (const char *pszKeyword : {"SELECT", "WITH", "EXPLAIN", "INSERT",
+                                       "UPDATE", "DELETE", "REPLACE"})
+        {
+            if (STARTS_WITH_CI(pszStatement, pszKeyword) &&
+                std::isspace(static_cast<unsigned char>(
+                    pszStatement[strlen(pszKeyword)])))
+            {
+                bUnderstoodStatement = true;
+                break;
+            }
+        }
+        if (!bUnderstoodStatement)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Unsupported SQL command.");
+            return nullptr;
+        }
     }
 
     char *pszTmpDBName = (char *)CPLMalloc(256);
