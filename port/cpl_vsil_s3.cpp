@@ -3796,7 +3796,8 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
 
     std::string osSource(pszSource);
     std::string osSourceWithoutSlash(pszSource);
-    if (osSourceWithoutSlash.back() == '/')
+    if (osSourceWithoutSlash.back() == '/' ||
+        osSourceWithoutSlash.back() == '\\')
     {
         osSourceWithoutSlash.resize(osSourceWithoutSlash.size() - 1);
     }
@@ -3845,7 +3846,8 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
     // If the source is likely to be a directory, try to issue a ReadDir()
     // if we haven't stat'ed it yet
     std::unique_ptr<VSIDIR> poSourceDir;
-    if (STARTS_WITH(pszSource, GetFSPrefix().c_str()) && osSource.back() == '/')
+    if (STARTS_WITH(pszSource, GetFSPrefix().c_str()) &&
+        (osSource.back() == '/' || osSource.back() == '\\'))
     {
         const char *const apszOptions[] = {"SYNTHETIZE_MISSING_DIRECTORIES=YES",
                                            nullptr};
@@ -4079,7 +4081,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
     if (VSI_ISDIR(sSource.st_mode))
     {
         osTargetDir = pszTarget;
-        if (osSource.back() != '/')
+        if (osSource.back() != '/' && osSource.back() != '\\')
         {
             osTargetDir = CPLFormFilename(osTargetDir.c_str(),
                                           CPLGetFilename(pszSource), nullptr);
