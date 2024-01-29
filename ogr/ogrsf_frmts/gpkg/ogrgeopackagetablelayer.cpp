@@ -5168,8 +5168,8 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char *pszDstTableName)
     }
 
     // Temporary remove foreign key checks
-    const auto oTemporaryForeignKeyCheckDisabler(
-        m_poDS->GetTemporaryForeignKeyCheckDisabler());
+    const GPKGTemporaryForeignKeyCheckDisabler
+        oGPKGTemporaryForeignKeyCheckDisabler(m_poDS);
 
     if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
     {
@@ -6208,8 +6208,8 @@ OGRErr OGRGeoPackageTableLayer::DeleteField(int iFieldToDelete)
     m_poDS->ResetReadingAllLayers();
 
     // Temporary remove foreign key checks
-    const auto oTemporaryForeignKeyCheckDisabler(
-        m_poDS->GetTemporaryForeignKeyCheckDisabler());
+    const GPKGTemporaryForeignKeyCheckDisabler
+        oGPKGTemporaryForeignKeyCheckDisabler(m_poDS);
 
     if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
     {
@@ -7140,8 +7140,8 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
              !poOldSRS->IsSame(poNewSRS.get(), apszOptions)))
         {
             // Temporary remove foreign key checks
-            const auto oTemporaryForeignKeyCheckDisabler(
-                m_poDS->GetTemporaryForeignKeyCheckDisabler());
+            const GPKGTemporaryForeignKeyCheckDisabler
+                oGPKGTemporaryForeignKeyCheckDisabler(m_poDS);
 
             if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
                 return OGRERR_FAILURE;

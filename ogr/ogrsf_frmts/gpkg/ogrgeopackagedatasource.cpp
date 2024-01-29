@@ -380,8 +380,8 @@ bool GDALGeoPackageDataset::ConvertGpkgSpatialRefSysToExtensionWkt2(
         return false;
 
     // Temporary remove foreign key checks
-    const auto oTemporaryForeignKeyCheckDisabler(
-        GetTemporaryForeignKeyCheckDisabler());
+    const GPKGTemporaryForeignKeyCheckDisabler
+        oGPKGTemporaryForeignKeyCheckDisabler(this);
 
     bool bRet = SoftStartTransaction() == OGRERR_NONE;
 
@@ -6756,8 +6756,8 @@ int GDALGeoPackageDataset::FindLayerIndex(const char *pszLayerName)
 OGRErr GDALGeoPackageDataset::DeleteLayerCommon(const char *pszLayerName)
 {
     // Temporary remove foreign key checks
-    const auto oTemporaryForeignKeyCheckDisabler(
-        GetTemporaryForeignKeyCheckDisabler());
+    const GPKGTemporaryForeignKeyCheckDisabler
+        oGPKGTemporaryForeignKeyCheckDisabler(this);
 
     char *pszSQL = sqlite3_mprintf(
         "DELETE FROM gpkg_contents WHERE lower(table_name) = lower('%q')",
@@ -6889,8 +6889,8 @@ OGRErr GDALGeoPackageDataset::DeleteLayer(int iLayer)
     CPLDebug("GPKG", "DeleteLayer(%s)", osLayerName.c_str());
 
     // Temporary remove foreign key checks
-    const auto oTemporaryForeignKeyCheckDisabler(
-        GetTemporaryForeignKeyCheckDisabler());
+    const GPKGTemporaryForeignKeyCheckDisabler
+        oGPKGTemporaryForeignKeyCheckDisabler(this);
 
     OGRErr eErr = SoftStartTransaction();
 
@@ -6959,8 +6959,8 @@ OGRErr GDALGeoPackageDataset::DeleteLayer(int iLayer)
 OGRErr GDALGeoPackageDataset::DeleteRasterLayer(const char *pszLayerName)
 {
     // Temporary remove foreign key checks
-    const auto oTemporaryForeignKeyCheckDisabler(
-        GetTemporaryForeignKeyCheckDisabler());
+    const GPKGTemporaryForeignKeyCheckDisabler
+        oGPKGTemporaryForeignKeyCheckDisabler(this);
 
     OGRErr eErr = SoftStartTransaction();
 

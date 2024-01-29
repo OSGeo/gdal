@@ -414,44 +414,6 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
     GDALDataset *GetRasterLayerDataset(const char *pszLayerName);
 
-    //! Instance of that class temporarily disable foreign key checks
-    class TemporaryForeignKeyCheckDisabler
-    {
-      public:
-        explicit TemporaryForeignKeyCheckDisabler(GDALGeoPackageDataset *poDS)
-            : m_poDS(poDS),
-              m_nPragmaForeignKeysOldValue(SQLGetInteger(
-                  m_poDS->GetDB(), "PRAGMA foreign_keys", nullptr))
-        {
-            if (m_nPragmaForeignKeysOldValue)
-            {
-                CPL_IGNORE_RET_VAL(
-                    SQLCommand(m_poDS->GetDB(), "PRAGMA foreign_keys = 0"));
-            }
-        }
-
-        ~TemporaryForeignKeyCheckDisabler()
-        {
-            if (m_nPragmaForeignKeysOldValue)
-            {
-                CPL_IGNORE_RET_VAL(
-                    SQLCommand(m_poDS->GetDB(), "PRAGMA foreign_keys = 1"));
-            }
-        }
-
-      private:
-        CPL_DISALLOW_COPY_ASSIGN(TemporaryForeignKeyCheckDisabler)
-
-        GDALGeoPackageDataset *m_poDS = nullptr;
-        int m_nPragmaForeignKeysOldValue = 0;
-    };
-
-    //! Return an object that, while alive, temporarily disables foreign key checks
-    TemporaryForeignKeyCheckDisabler GetTemporaryForeignKeyCheckDisabler()
-    {
-        return TemporaryForeignKeyCheckDisabler(this);
-    }
-
   protected:
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                              GDALDataType, int, int *, GSpacing, GSpacing,
@@ -501,6 +463,41 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     bool OpenOrCreateDB(int flags);
     void InstallSQLFunctions();
     bool HasGDALAspatialExtension();
+};
+
+/************************************************************************/
+/*                   GPKGTemporaryForeignKeyCheckDisabler               */
+/************************************************************************/
+
+//! Instance of that class temporarily disable foreign key checks
+class GPKGTemporaryForeignKeyCheckDisabler
+{
+  public:
+    explicit GPKGTemporaryForeignKeyCheckDisabler(GDALGeoPackageDataset *poDS)
+        : m_poDS(poDS), m_nPragmaForeignKeysOldValue(SQLGetInteger(
+                            m_poDS->GetDB(), "PRAGMA foreign_keys", nullptr))
+    {
+        if (m_nPragmaForeignKeysOldValue)
+        {
+            CPL_IGNORE_RET_VAL(
+                SQLCommand(m_poDS->GetDB(), "PRAGMA foreign_keys = 0"));
+        }
+    }
+
+    ~GPKGTemporaryForeignKeyCheckDisabler()
+    {
+        if (m_nPragmaForeignKeysOldValue)
+        {
+            CPL_IGNORE_RET_VAL(
+                SQLCommand(m_poDS->GetDB(), "PRAGMA foreign_keys = 1"));
+        }
+    }
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GPKGTemporaryForeignKeyCheckDisabler)
+
+    GDALGeoPackageDataset *m_poDS = nullptr;
+    int m_nPragmaForeignKeysOldValue = 0;
 };
 
 /************************************************************************/
