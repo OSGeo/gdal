@@ -1149,9 +1149,9 @@ int MMInitArcLayer(struct MiraMonVectLayerInfo* hMiraMonLayer)
         {
             strcpy(pMMArcLayer->psz3DLayerName, hMiraMonLayer->pszSrcLayerName);
             if(hMiraMonLayer->bIsPolygon)
-                strcat(pMMArcLayer->psz3DLayerName, "_bound.~z");
+                strcat(pMMArcLayer->psz3DLayerName, "_bound.~Az");
             else
-                strcat(pMMArcLayer->psz3DLayerName, ".~z");
+                strcat(pMMArcLayer->psz3DLayerName, ".~Az");
 
             if (NULL == (pMMArcLayer->pF3d = fopen_function(pMMArcLayer->psz3DLayerName,
                 hMiraMonLayer->pszFlags)))
