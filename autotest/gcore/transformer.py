@@ -993,6 +993,7 @@ def test_transformer_longlat_wrap_outside_180():
 # might fail
 
 
+@pytest.mark.require_proj(8, 0, 0)
 def test_transformer_no_reverse_method():
     tr = gdal.Transformer(
         None,
@@ -1006,9 +1007,8 @@ def test_transformer_no_reverse_method():
     assert pnt[0] == pytest.approx(141270.54731856665, abs=1e-3), pnt
     assert pnt[1] == pytest.approx(4656605.104980032, abs=1e-3), pnt
 
-    with gdal.quiet_errors():
-        (success, pnt) = tr.TransformPoint(1, 2, 49)
-    assert not success
+    with pytest.raises(Exception, match="No inverse operation"):
+        tr.TransformPoint(1, 2, 49)
 
 
 ###############################################################################
