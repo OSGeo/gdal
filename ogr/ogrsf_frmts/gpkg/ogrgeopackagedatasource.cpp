@@ -1870,7 +1870,7 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
         FixupWrongMedataReferenceColumnNameUpdate();
     }
 
-    SetPamFlags(0);
+    SetPamFlags(GetPamFlags() & ~GPF_DIRTY);
 
     return bRet;
 }
@@ -3384,7 +3384,7 @@ CPLErr GDALGeoPackageDataset::FlushCache(bool bAtClosing)
 
     if (eAccess == GA_Update || !m_bMetadataDirty)
     {
-        SetPamFlags(0);
+        SetPamFlags(GetPamFlags() & ~GPF_DIRTY);
     }
 
     if (m_bRemoveOGREmptyTable)
@@ -3402,7 +3402,7 @@ CPLErr GDALGeoPackageDataset::FlushCache(bool bAtClosing)
         // Needed again as above IFlushCacheWithErrCode()
         // may have call GDALGeoPackageRasterBand::InvalidateStatistics()
         // which modifies metadata
-        SetPamFlags(0);
+        SetPamFlags(GetPamFlags() & ~GPF_DIRTY);
     }
 
     return eErr;
@@ -6017,7 +6017,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
             }
         }
         if (poDS)
-            poDS->SetPamFlags(0);
+            poDS->SetPamFlags(poDS->GetPamFlags() & ~GPF_DIRTY);
         return poDS;
     }
 
@@ -6397,7 +6397,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
     GDALDestroyWarpOptions(psWO);
 
     if (poDS)
-        poDS->SetPamFlags(0);
+        poDS->SetPamFlags(poDS->GetPamFlags() & ~GPF_DIRTY);
 
     return poDS;
 }
