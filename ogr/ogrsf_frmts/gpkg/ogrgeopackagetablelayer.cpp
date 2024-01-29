@@ -5142,8 +5142,14 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char *pszDstTableName)
         return OGRERR_FAILURE;
     }
 
+    // Temporary remove foreign key checks
+    const auto oTemporaryForeignKeyCheckDisabler(
+        m_poDS->GetTemporaryForeignKeyCheckDisabler());
+
     if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
+    {
         return OGRERR_FAILURE;
+    }
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     DisableFeatureCountTriggers(false);
@@ -5736,11 +5742,6 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
     /* Update gpkg_contents with the table info */
     const OGRwkbGeometryType eGType = GetGeomType();
     const bool bIsSpatial = (eGType != wkbNone);
-    if (bIsSpatial)
-        err = RegisterGeometryColumn();
-
-    if (err != OGRERR_NONE)
-        return OGRERR_FAILURE;
 
     if (bIsSpatial || m_eASpatialVariant == GPKG_ATTRIBUTES)
     {
@@ -5762,6 +5763,15 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
 
         err = SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
+        if (err != OGRERR_NONE)
+            return OGRERR_FAILURE;
+    }
+
+    if (bIsSpatial)
+    {
+        // Insert into gpkg_geometry_columns after gpkg_contents because of
+        // foreign key constraints
+        err = RegisterGeometryColumn();
         if (err != OGRERR_NONE)
             return OGRERR_FAILURE;
     }
@@ -6172,11 +6182,17 @@ OGRErr OGRGeoPackageTableLayer::DeleteField(int iFieldToDelete)
     /* -------------------------------------------------------------------- */
     m_poDS->ResetReadingAllLayers();
 
-    if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
-        return OGRERR_FAILURE;
+    // Temporary remove foreign key checks
+    const auto oTemporaryForeignKeyCheckDisabler(
+        m_poDS->GetTemporaryForeignKeyCheckDisabler());
 
-        // ALTER TABLE ... DROP COLUMN ... was first implemented in 3.35.0 but
-        // there was bug fixes related to it until 3.35.5
+    if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
+    {
+        return OGRERR_FAILURE;
+    }
+
+    // ALTER TABLE ... DROP COLUMN ... was first implemented in 3.35.0 but
+    // there was bug fixes related to it until 3.35.5
 #if SQLITE_VERSION_NUMBER >= 3035005L
     OGRErr eErr = SQLCommand(
         m_poDS->GetDB(), CPLString()
@@ -7098,6 +7114,10 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
             (poOldSRS != nullptr && poNewSRS != nullptr &&
              !poOldSRS->IsSame(poNewSRS.get(), apszOptions)))
         {
+            // Temporary remove foreign key checks
+            const auto oTemporaryForeignKeyCheckDisabler(
+                m_poDS->GetTemporaryForeignKeyCheckDisabler());
+
             if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
                 return OGRERR_FAILURE;
 
@@ -7169,7 +7189,9 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
             }
 
             if (m_poDS->SoftCommitTransaction() != OGRERR_NONE)
+            {
                 return OGRERR_FAILURE;
+            }
 
             m_iSrs = nNewSRID;
             OGRSpatialReference *poSRS = poNewSRS.release();
