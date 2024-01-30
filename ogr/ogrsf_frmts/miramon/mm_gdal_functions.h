@@ -19,7 +19,7 @@ CPL_C_START // Necessary for compiling in GDAL project
 			memcpy((bd_xp)->Camp[(i_camp)].reservat_2+MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES,&(offset_nom_camp),4)
 
 char *MM_strnzcpy(char *dest, const char *src, size_t maxlen);
-char *MM_PassaAMajuscules(char *linia);
+char *MM_oemansi(char *szcadena);
 void MM_InitializeField(struct MM_CAMP *camp);
 struct MM_CAMP *MM_CreateAllFields(int ncamps);
 MM_FIRST_RECORD_OFFSET_TYPE MM_GiveOffsetExtendedFieldName(const struct MM_CAMP *camp);

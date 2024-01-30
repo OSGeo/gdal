@@ -5713,21 +5713,39 @@ struct MM_FLUSH_INFO *pFlushRecList;
 int MM_WriteNRecordsMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
             struct MMAdmDatabase *MMAdmDB)
 {
+    unsigned __int32 nRecords;
     if(!MMAdmDB->pMMBDXP)
         return 0;
 
     // Updating number of features in database
     fseek_function(MMAdmDB->pFExtDBF, MM_FIRST_OFFSET_to_N_RECORDS, SEEK_SET);
-    if (fwrite_function(&MMAdmDB->pMMBDXP->nRecords, 4, 1, 
-            MMAdmDB->pFExtDBF) != 1)
-	    return 1;
-    if(hMiraMonLayer->LayerVersion==MM_64BITS_VERSION)
+
+    if (MMAdmDB->pMMBDXP->nRecords <= _UI32_MAX)
     {
-        fseek_function(MMAdmDB->pFExtDBF, MM_SECOND_OFFSET_to_N_RECORDS, SEEK_SET);
-        if (fwrite_function(((char*)&MMAdmDB->pMMBDXP->nRecords)+4, 4, 1, 
+        nRecords = (unsigned __int32)MMAdmDB->pMMBDXP->nRecords;
+        if (fwrite_function(&nRecords, 4, 1,
             MMAdmDB->pFExtDBF) != 1)
-		return 1;
+            return 1;
+
+        fseek_function(MMAdmDB->pFExtDBF, MM_SECOND_OFFSET_to_N_RECORDS, SEEK_SET);
+        nRecords = 0;
+        if (fwrite_function(&nRecords, 4, 1,
+            MMAdmDB->pFExtDBF) != 1)
+            return 1;
     }
+    else
+    {
+        nRecords = _UI32_MAX;
+        if (fwrite_function(&nRecords, 4, 1,
+            MMAdmDB->pFExtDBF) != 1)
+            return 1;
+
+        fseek_function(MMAdmDB->pFExtDBF, MM_SECOND_OFFSET_to_N_RECORDS, SEEK_SET);
+        nRecords = (unsigned __int32)MMAdmDB->pMMBDXP->nRecords - _UI32_MAX;
+        if (fwrite_function(&nRecords, 4, 1,
+            MMAdmDB->pFExtDBF) != 1)
+            return 1;
+    }    
         
     return 0;
 }

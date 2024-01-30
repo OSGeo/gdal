@@ -38,6 +38,8 @@
 #include "mm_gdal\mm_wrlayr.h" // For calloc_function(),...
 #endif
 
+#include "cpl_string.h"  // For CPL_ENC_UTF8
+
 #ifdef GDAL_COMPILATION
 CPL_C_START // Necessary for compiling in GDAL project
 #endif
@@ -435,6 +437,7 @@ int estat;
 char nom_camp[MM_MAX_LON_FIELD_NAME_DBF];
 size_t retorn_fwrite;
 MM_BOOLEAN cal_tancar_taula=FALSE;
+unsigned __int32 nRecords;
 
 	if ((zero=calloc_function(max_n_zeros))==NULL)
 		return FALSE;
@@ -497,9 +500,13 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
                 base_dades_XP->pfBaseDades) != 1)
         return FALSE;
     /* from 4 a 7, position MM_FIRST_OFFSET_to_N_RECORDS */
-    if (fwrite_function(&(base_dades_XP->nRecords), 4, 1,
+    if (base_dades_XP->nRecords > _UI32_MAX)
+        nRecords=_UI32_MAX;
+
+    if (fwrite_function(&nRecords, 4, 1,
                 base_dades_XP->pfBaseDades) != 1)
         return FALSE;
+
     /* from 8 a 9, position MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA */
     if (fwrite_function(&(base_dades_XP->OffsetPrimeraFitxa), 2, 1,
                 base_dades_XP->pfBaseDades) != 1)
@@ -532,7 +539,7 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
         return FALSE;
 
     /* from 16 to 27 */
-    if (base_dades_XP->nRecords < _UI32_MAX)
+    if (base_dades_XP->nRecords <= _UI32_MAX)
     {
         if (fwrite_function(&(base_dades_XP->dbf_on_a_LAN), 12, 1,
             base_dades_XP->pfBaseDades) != 1)
@@ -540,8 +547,9 @@ MM_BOOLEAN cal_tancar_taula=FALSE;
     }
     else
     {
+        nRecords = (unsigned __int32)(base_dades_XP->nRecords) - nRecords;
         /* from 16 to 19, position MM_SECOND_OFFSET_to_N_RECORDS */
-        if (fwrite_function((char*)&(base_dades_XP->nRecords), 4, 1,
+        if (fwrite_function(&nRecords, 4, 1,
             base_dades_XP->pfBaseDades) != 1)
             return FALSE;
 
@@ -831,8 +839,7 @@ MM_FILE_OFFSET offset_reintent=0;
 char cpg_file[MM_MAX_PATH];
 const char *pszDesc;
 char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
-unsigned __int32 second_part_n_records;
-unsigned __int32 nRecords;
+unsigned __int32 nRecords, nRecords2;
 
     if(!szFileName)
         return 1;
@@ -845,15 +852,6 @@ unsigned __int32 nRecords;
 	      return 1;
 
     pf=pMMBDXP->pfBaseDades;
-
-    // Guessing if the number of records is a 32 or 64 bits variable.
-    // second_part_n_records==0 => 32 bits is enough
-    fseek_function(pf, MM_SECOND_OFFSET_to_N_RECORDS, SEEK_SET);
-    if(1!=fread_function(&second_part_n_records, 4, 1, pf))
-    {
-		fclose_function(pf);
-        return 1;
-	}
 
     fseek_function(pf, 0, SEEK_SET);
     /* ====== Header reading (32 bytes) =================== */
@@ -868,23 +866,10 @@ unsigned __int32 nRecords;
         return 1;
 	}
 
-    if (!second_part_n_records)
+    if (1 != fread_function(&nRecords, 4, 1, pf))
     {
-        if (1 != fread_function(&nRecords, 4, 1, pf))
-        {
-            fclose_function(pf);
-            return 1;
-        }
-        pMMBDXP->nRecords=nRecords;
-    }
-    else
-    {
-        //�$� Revisar!!
-        if (1 != fread_function(&pMMBDXP->nRecords, 4, 1, pf))
-        {
-            fclose_function(pf);
-            return 1;
-        }
+        fclose_function(pf);
+        return 1;
     }
 
     if (1!=fread_function(&offset_primera_fitxa, 2, 1, pf))
@@ -920,27 +905,17 @@ unsigned __int32 nRecords;
         return 1;
 	}
 
-    if (!second_part_n_records)
+    if (1 != fread_function(&nRecords2, 4, 1, pf))
     {
-        if (1 != fread_function(&(pMMBDXP->dbf_on_a_LAN), 12, 1, pf))
-        {
-            fclose_function(pf);
-            return 1;
-        }
+        fclose_function(pf);
+        return 1;
     }
-    else
+    pMMBDXP->nRecords=(MM_EXT_DBF_N_RECORDS)nRecords2 + nRecords;
+        
+    if (1 != fread_function(&(pMMBDXP->dbf_on_a_LAN), 8, 1, pf))
     {
-        if (1 != fread_function(((char *)&(pMMBDXP->nRecords))+4, 4, 1, pf))
-        {
-            fclose_function(pf);
-            return 1;
-        }
-
-        if (1 != fread_function(&(pMMBDXP->dbf_on_a_LAN), 8, 1, pf))
-        {
-            fclose_function(pf);
-            return 1;
-        }
+        fclose_function(pf);
+        return 1;
     }
 
     if (1!=fread_function(&(pMMBDXP->MDX_flag), 1, 1, pf) ||
@@ -1152,39 +1127,40 @@ unsigned __int32 nRecords;
         {
             offset_nom_camp=MM_GiveOffsetExtendedFieldName(pMMBDXP->Camp+nIField);
 			mida_nom=MM_DonaBytesNomEstesCamp(pMMBDXP->Camp+nIField);
-            if(mida_nom>0 && mida_nom<MM_MAX_LON_FIELD_NAME_DBF &&
-            	offset_nom_camp>=offset_possible &&
-            	offset_nom_camp<pMMBDXP->OffsetPrimeraFitxa)
+            if (mida_nom > 0 && mida_nom < MM_MAX_LON_FIELD_NAME_DBF &&
+                offset_nom_camp >= offset_possible &&
+                offset_nom_camp < pMMBDXP->OffsetPrimeraFitxa)
             {
-            	MM_strnzcpy(pMMBDXP->Camp[nIField].NomCampDBFClassica, pMMBDXP->Camp[nIField].NomCamp, MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF);
-            	fseek_function(pf, offset_nom_camp, SEEK_SET);
-                if (1!=fread_function(pMMBDXP->Camp[nIField].NomCamp, mida_nom, 1, pf))
+                MM_strnzcpy(pMMBDXP->Camp[nIField].NomCampDBFClassica, pMMBDXP->Camp[nIField].NomCamp, MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF);
+                fseek_function(pf, offset_nom_camp, SEEK_SET);
+                if (1 != fread_function(pMMBDXP->Camp[nIField].NomCamp, mida_nom, 1, pf))
                 {
                     free(pMMBDXP->Camp);
                     fclose_function(pf);
                     return 1;
                 }
-                pMMBDXP->Camp[nIField].NomCamp[mida_nom]='\0';
-                #ifdef CODIFICATION_NEED_TO_BE_FINISHED
-                CanviaJocCaracLlegitDeDBF(pMMBDXP->Camp[nIField].NomCamp, JocCaracDBFaMM(pMMBDXP->JocCaracters, 850));
-                #endif          
-            }
-            else
-            {
-				MM_strnzcpy(pMMBDXP->Camp[nIField].NomCampDBFClassica, pMMBDXP->Camp[nIField].NomCamp, MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF);
-				MM_PassaAMajuscules(pMMBDXP->Camp[nIField].NomCampDBFClassica);
+                pMMBDXP->Camp[nIField].NomCamp[mida_nom] = '\0';
+
+                // All field names to UTF-8
+                if (pMMBDXP->JocCaracters == MM_JOC_CARAC_ANSI_DBASE)
+                {
+                    char *pszString =
+                        CPLRecode_function(pMMBDXP->Camp[nIField].NomCamp, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+                    strncpy(pMMBDXP->Camp[nIField].NomCamp, pszString, MM_MAX_LON_FIELD_NAME_DBF);
+                    CPLFree(pszString);
+                }
+                else if (pMMBDXP->JocCaracters == MM_JOC_CARAC_OEM850_DBASE)
+                {
+                    MM_oemansi(pMMBDXP->Camp[nIField].NomCamp);
+                    char *pszString =
+                        CPLRecode_function(pMMBDXP->Camp[nIField].NomCamp, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+                    strncpy(pMMBDXP->Camp[nIField].NomCamp, pszString, MM_MAX_LON_FIELD_NAME_DBF);
+                    CPLFree(pszString);
+                }
             }
         }
     }
-    else 
-    {
-    	for(nIField=0; nIField<pMMBDXP->ncamps; nIField++)
-		{
-	    	MM_strnzcpy(pMMBDXP->Camp[nIField].NomCampDBFClassica, pMMBDXP->Camp[nIField].NomCamp, MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF);
-			MM_PassaAMajuscules(pMMBDXP->Camp[nIField].NomCampDBFClassica);
-		}
-    }
-
+    
     pMMBDXP->CampIdEntitat=MM_MAX_EXT_DBF_N_FIELDS_TYPE;
     return 0;
 } // End of MM_ReadExtendedDBFHeaderFromFile()
@@ -1391,32 +1367,29 @@ size_t i;
 	return dest;
 }
 
-static const char MM_LletresMajusculesOEM850[]="ÂµÂ·ÂÃ”Ã–ÃžÃ Ã£Ã©Ã«Ã˜Å¡â‚¬Â¥Å½Ã‡Â¶ÂÃ“Ã’Ã—â„¢Ã¢Ã¥ÃªÃ­Ã‘";
-static const char MM_LletresMinusculesOEM850[]="Â â€¦â€šÅ Â¡ÂÂ¢â€¢Â£â€”â€¹Ââ€¡Â¤â€žÃ†Æ’â€ â€°Ë†Å’â€â€œÃ¤â€“Ã¬ÃÂ";
-char *MM_PassaAMajuscules(char *linia)
+char *MM_oemansi(char *szcadena)
 {
-    const char *pm;
-    char *p;
-
-	for (p=linia; *p; p++)
-    {
-        if (*p>='a' && *p<='z')
-            *p = (char)('A'+(*p-'a'));
-
-        if (*p>0)
-            continue;
-
-		for (pm=MM_LletresMinusculesOEM850; *pm; pm++)
-        {
-			if (*p==*pm)
-            {
-				*p=*(MM_LletresMajusculesOEM850+((ptrdiff_t)pm-(ptrdiff_t)MM_LletresMinusculesOEM850));
-                break;
-            }
-        }
-    }
-	return linia;
+unsigned char *punter_bait;
+unsigned char t_oemansi[128]=
+	{	199, 252, 233, 226, 228, 224, 229, 231, 234, 235, 232, 239, 238, 236,
+		196, 197, 201, 230, 198, 244, 246, 242, 251, 249, 255, 214, 220, 248,
+		163, 216, 215, 131, 225, 237, 243, 250, 241, 209, 170, 186, 191, 174,
+		172, 189, 188, 161, 171, 187, 164, 164, 164, 166, 166, 193, 194, 192,
+		169, 166, 166, 164, 164, 162, 165, 164, 164, 164, 164, 164, 164, 164,
+		227, 195, 164, 164, 164, 164, 166, 164, 164, 164, 240, 208, 202, 203,
+		200, 180, 205, 206, 207, 164, 164, 164, 164, 166, 204, 164, 211, 223,
+		212, 210, 245, 213, 181, 254, 222, 218, 219, 217, 253, 221, 175, 180,
+		173, 177, 164, 190, 182, 167, 247, 184, 176, 168, 183, 185, 179, 178,
+		164, 183
+	};
+	for ( punter_bait = (unsigned char *)szcadena; *punter_bait; punter_bait++)
+	{
+		if ( *punter_bait > 127)
+			*punter_bait = t_oemansi[*punter_bait-128];
+	} 
+	return szcadena;
 }
+
 
 MM_BOOLEAN MM_FillFieldDB_XP(struct MM_CAMP *camp, const char *NomCamp, const char *DescripcioCamp, char TipusDeCamp,
 					MM_TIPUS_BYTES_PER_CAMP_DBF BytesPerCamp, MM_BYTE DecimalsSiEsFloat, MM_BYTE mostrar_camp)

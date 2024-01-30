@@ -143,9 +143,12 @@ char szResult[MM_MAX_ID_SNY+10];
 
     if(hMiraMonLayer->nSRS_EPSG == 0)
     {
-        MM_CPLWarning(CE_Warning, CPLE_NotSupported,
-                            "The MiraMon layer HRS has no equivalent "
-                            "in EPSG code");
+        if (hMiraMonLayer->pSRS && strcmp(hMiraMonLayer->pSRS, "plane"))
+        {
+            MM_CPLWarning(CE_Warning, CPLE_NotSupported,
+                "The MiraMon layer HRS has no equivalent "
+                "in EPSG code");
+        }
     }
 
     // If more nNumStringToOperate is needed, it'll be increased.

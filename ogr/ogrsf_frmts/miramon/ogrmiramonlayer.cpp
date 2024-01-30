@@ -611,10 +611,9 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                 phMiraMonLayer->szStringToOperate[phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp] = '\0';
                 MM_TreuBlancsDeFinalDeCadena(phMiraMonLayer->szStringToOperate);
 
-                if(phMiraMonLayer->pMMBDXP->JocCaracters==MM_JOC_CARAC_OEM850_DBASE)
-                    OemToCharBuff(phMiraMonLayer->szStringToOperate, phMiraMonLayer->szStringToOperate,
-                        phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
-
+                if (phMiraMonLayer->pMMBDXP->JocCaracters == MM_JOC_CARAC_OEM850_DBASE)
+                    MM_oemansi(phMiraMonLayer->szStringToOperate);
+                
                 if (phMiraMonLayer->pMMBDXP->JocCaracters != MM_JOC_CARAC_UTF8_DBF)
                 {
                     // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
@@ -1109,8 +1108,8 @@ OGRErr OGRMiraMonLayer::MMWriteGeometry()
     if(eErr==MM_STOP_WRITING_FEATURES)
     {
         CPLDebug("MiraMon", "Error in AddMMFeature() MM_STOP_WRITING_FEATURES");
-        CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon format limitations.");
-        CPLError(CE_Failure, CPLE_FileIO, "\nTry V2.0 option.");
+        CPLError(CE_Failure, CPLE_FileIO, "MiraMon format limitations.");
+        CPLError(CE_Failure, CPLE_FileIO, "Try V2.0 option (-lco Version=V20).");
         return OGRERR_FAILURE;
     }
 
@@ -1582,6 +1581,9 @@ int OGRMiraMonLayer::TestCapability(const char *pszCap)
         return TRUE;
     
     if (EQUAL(pszCap, OLCZGeometries))
+        return TRUE;
+
+    if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TRUE;
 
     return FALSE;

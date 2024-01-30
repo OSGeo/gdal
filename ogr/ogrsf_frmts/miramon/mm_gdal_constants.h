@@ -154,6 +154,7 @@ typedef __int32 MM_FIRST_RECORD_OFFSET_TYPE;
 
 #define MM_JOC_CARAC_ANSI_MM        1252
 #define MM_JOC_CARAC_ANSI_DBASE     0x58
+#define MM_JOC_CARAC_OEM850_MM      850
 #define MM_JOC_CARAC_OEM850_DBASE   0x14
 #define MM_JOC_CARAC_UTF8_DBF       0xFF
 #define MM_JOC_CARAC_UTF8_MM        8
