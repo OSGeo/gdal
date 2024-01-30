@@ -3420,21 +3420,23 @@ int prevCoord=-1;
         for (nIVertice = 0; nIVertice < pCurrentArcHeader->nElemCount;
             nIVertice++, (bReverseArc)?pCoordReal--:pCoordReal++)
         {
+            // Writing the arc in the normal way
             pFlushAL->SizeOfBlockToBeSaved = sizeof(pCoordReal->dfX);
-            pFlushAL->pBlockToBeSaved = (void*)&pCoordReal->dfX;
+            pFlushAL->pBlockToBeSaved = (void*)&(pCoord+nIVertice)->dfX;
             if (MM_AppendBlockToBuffer(pFlushAL))
             {
                 MM_CPLDebug("MiraMon", "Error in MM_AppendBlockToBuffer() (1)");
                 return MM_FATAL_ERROR_WRITING_FEATURES;
             }
 
-            pFlushAL->pBlockToBeSaved = (void*)&pCoordReal->dfY;
+            pFlushAL->pBlockToBeSaved = (void*)&(pCoord+nIVertice)->dfY;
             if (MM_AppendBlockToBuffer(pFlushAL))
             {
                 MM_CPLDebug("MiraMon", "Error in MM_AppendBlockToBuffer() (2)");
                 return MM_FATAL_ERROR_WRITING_FEATURES;
             }
 
+            // Calculating stuff using the inverse coordinates if it's needed
             MMUpdateBoundingBoxXY(&pCurrentArcHeader->dfBB, pCoordReal);
             if (nIVertice == 0 ||
                 nIVertice == pCurrentArcHeader->nElemCount - 1)
@@ -3454,10 +3456,7 @@ int prevCoord=-1;
             }
         }
         if (bReverseArc)
-        {
-            VFG&=(~MM_ROTATE_ARC);
             pCoord = pCoordReal + pCurrentArcHeader->nElemCount;
-        }
         else
             pCoord += pCurrentArcHeader->nElemCount;
 
@@ -4600,15 +4599,6 @@ char aTimeString[30];
         pLocalTime->tm_year + 1900, pLocalTime->tm_mon + 1, pLocalTime->tm_mday,
         pLocalTime->tm_hour, pLocalTime->tm_min, pLocalTime->tm_sec, 0);
     printf_function(pF, "%s=%s\r\n", KEY_CreationDate, aTimeString);
-
-    // ·$· TEMPORAL MENTRE NO HO FEM BÉ:
-    // A la documentació posa:
-    // -preserve_fid
-    // Use the FID of the source features instead of letting the output driver automatically 
-    // assign a new one (for formats that require a FID). If not in append mode, 
-    // this behavior is the default if the output driver has a FID layer creation 
-    // option, in which case the name of the source FID column will be used and source 
-    // feature IDs will be attempted to be preserved. This behavior can be disabled by setting -unsetFid.
 
     printf_function(pF, "\r\n");
     printf_function(pF, "[TAULA_PRINCIPAL]\r\n");
