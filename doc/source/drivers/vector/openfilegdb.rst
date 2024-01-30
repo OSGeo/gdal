@@ -92,6 +92,13 @@ available:
       using the native spatial index. See `Spatial filtering`_.
 
 
+-  .. config:: OPENFILEGDB_DEFAULT_STRING_WIDTH
+      :choices: <integer>
+
+      Width of string fields to use on creation, when the width specified to
+      CreateField() is the unspecified value 0. This defaults to 65536.
+
+
 Dataset open options
 --------------------
 

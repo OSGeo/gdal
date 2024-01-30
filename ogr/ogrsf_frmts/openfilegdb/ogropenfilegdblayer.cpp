@@ -664,7 +664,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         // string width is 0, we pick up 65536 by default to mean unlimited
         // string length, but we do not want to advertise such a big number.
         if (eType == OFTString &&
-            (nWidth < 65536 ||
+            (nWidth < OPENFILEGDB_DEFAULT_STRING_WIDTH ||
              CPLTestBool(CPLGetConfigOption(
                  "OPENFILEGDB_REPORT_GENUINE_FIELD_WIDTH", "NO"))))
         {

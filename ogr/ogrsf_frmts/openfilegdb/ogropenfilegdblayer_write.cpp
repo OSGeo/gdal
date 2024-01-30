@@ -1352,9 +1352,15 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
         {
             // We can't use a 0 width value since that prevents ArcMap
             // from editing (#5952)
-            nWidth = atoi(CPLGetConfigOption("OPENFILEGDB_DEFAULT_STRING_WIDTH",
-                                             "65536"));
-            if (nWidth < 65536)
+            nWidth = OPENFILEGDB_DEFAULT_STRING_WIDTH;
+            if (const char *pszVal = CPLGetConfigOption(
+                    "OPENFILEGDB_DEFAULT_STRING_WIDTH", nullptr))
+            {
+                const int nVal = atoi(pszVal);
+                if (nVal >= 0)
+                    nWidth = nVal;
+            }
+            if (nWidth < OPENFILEGDB_DEFAULT_STRING_WIDTH)
                 poField->SetWidth(nWidth);
         }
     }

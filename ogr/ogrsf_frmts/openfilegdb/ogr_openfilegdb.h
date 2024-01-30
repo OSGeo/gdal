@@ -48,6 +48,8 @@ std::string OFGDBGenerateUUID();
 
 int OGROpenFileGDBIsComparisonOp(int op);
 
+constexpr int OPENFILEGDB_DEFAULT_STRING_WIDTH = 65536;
+
 // UUID of object type
 constexpr const char *pszFolderTypeUUID =
     "{f3783e6f-65ca-4514-8315-ce3985dad3b1}";
