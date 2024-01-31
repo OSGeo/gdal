@@ -2000,6 +2000,11 @@ template <class STAT_TYPE> struct GetStats
                     v = rowGroupVal;
                 }
             }
+            else if (columnChunk->num_values() > 0)
+            {
+                bFound = false;
+                break;
+            }
         }
         return v;
     }
@@ -2027,7 +2032,7 @@ template <class STAT_TYPE> struct GetStats
                     v = rowGroupVal;
                 }
             }
-            else
+            else if (columnChunk->num_values() > 0)
             {
                 bFound = false;
                 break;
