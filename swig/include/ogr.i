@@ -511,6 +511,7 @@ typedef void retGetPoints;
 %constant char *OLCZGeometries         = "ZGeometries";
 %constant char *OLCRename              = "Rename";
 %constant char *OLCFastGetArrowStream  = "FastGetArrowStream";
+%constant char *OLCFastWriteArrowBatch = "FastWriteArrowBatch";
 
 %constant char *ODsCCreateLayer        = "CreateLayer";
 %constant char *ODsCDeleteLayer        = "DeleteLayer";
@@ -568,6 +569,7 @@ typedef int OGRErr;
 #define OLCZGeometries         "ZGeometries"
 #define OLCRename              "Rename"
 #define OLCFastGetArrowStream  "FastGetArrowStream"
+#define OLCFastWriteArrowBatch "FastWriteArrowBatch"
 
 #define ODsCCreateLayer        "CreateLayer"
 #define ODsCDeleteLayer        "DeleteLayer"
