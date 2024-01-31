@@ -1436,7 +1436,8 @@ bool OGRParquetLayer::ReadNextBatch()
         }
         if (poNextBatch == nullptr)
         {
-            if (m_iRecordBatch == 1)
+            if (m_iRecordBatch == 1 && m_poBatch && m_poAttrQuery == nullptr &&
+                m_poFilterGeom == nullptr)
             {
                 m_iRecordBatch = 0;
                 m_bSingleBatch = true;
