@@ -86,6 +86,9 @@ static const TilingSchemeDefinition asTilingSchemes[] = {
      256, 78271.516, 78271.516},
 };
 
+// Setting it above 30 would lead to integer overflow ((1 << 31) > INT_MAX)
+constexpr int MAX_ZOOM_LEVEL = 30;
+
 /************************************************************************/
 /*                     GetTilingScheme()                                */
 /************************************************************************/
@@ -2421,22 +2424,33 @@ bool GDALGeoPackageDataset::ComputeTileAndPixelShifts()
     GetRasterBand(1)->GetBlockSize(&nTileWidth, &nTileHeight);
 
     // Compute shift between GDAL origin and TileMatrixSet origin
-    double dfShiftXPixels =
+    const double dfShiftXPixels =
         (m_adfGeoTransform[0] - m_dfTMSMinX) / m_adfGeoTransform[1];
-    if (dfShiftXPixels < INT_MIN || dfShiftXPixels + 0.5 > INT_MAX)
+    if (dfShiftXPixels / nTileWidth <= INT_MIN ||
+        dfShiftXPixels / nTileWidth > INT_MAX)
         return false;
-    int nShiftXPixels = static_cast<int>(floor(0.5 + dfShiftXPixels));
-    m_nShiftXTiles = static_cast<int>(floor(1.0 * nShiftXPixels / nTileWidth));
+    const int64_t nShiftXPixels =
+        static_cast<int64_t>(floor(0.5 + dfShiftXPixels));
+    m_nShiftXTiles = static_cast<int>(nShiftXPixels / nTileWidth);
+    if (nShiftXPixels < 0 && (nShiftXPixels % nTileWidth) != 0)
+        m_nShiftXTiles--;
     m_nShiftXPixelsMod =
-        ((nShiftXPixels % nTileWidth) + nTileWidth) % nTileWidth;
-    double dfShiftYPixels =
+        (static_cast<int>(nShiftXPixels % nTileWidth) + nTileWidth) %
+        nTileWidth;
+
+    const double dfShiftYPixels =
         (m_adfGeoTransform[3] - m_dfTMSMaxY) / m_adfGeoTransform[5];
-    if (dfShiftYPixels < INT_MIN || dfShiftYPixels + 0.5 > INT_MAX)
+    if (dfShiftYPixels / nTileHeight <= INT_MIN ||
+        dfShiftYPixels / nTileHeight > INT_MAX)
         return false;
-    int nShiftYPixels = static_cast<int>(floor(0.5 + dfShiftYPixels));
-    m_nShiftYTiles = static_cast<int>(floor(1.0 * nShiftYPixels / nTileHeight));
+    const int64_t nShiftYPixels =
+        static_cast<int64_t>(floor(0.5 + dfShiftYPixels));
+    m_nShiftYTiles = static_cast<int>(nShiftYPixels / nTileHeight);
+    if (nShiftYPixels < 0 && (nShiftYPixels % nTileHeight) != 0)
+        m_nShiftYTiles--;
     m_nShiftYPixelsMod =
-        ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
+        (static_cast<int>(nShiftYPixels % nTileHeight) + nTileHeight) %
+        nTileHeight;
     return true;
 }
 
@@ -3152,33 +3166,38 @@ CPLErr GDALGeoPackageDataset::SetGeoTransform(double *padfGeoTransform)
         return CE_Failure;
     }
 
-    const auto poTS = GetTilingScheme(m_osTilingScheme);
-    if (poTS)
+    if (m_nZoomLevel < 0)
     {
-        double dfPixelXSizeZoomLevel0 = poTS->dfPixelXSizeZoomLevel0;
-        double dfPixelYSizeZoomLevel0 = poTS->dfPixelYSizeZoomLevel0;
-        for (m_nZoomLevel = 0; m_nZoomLevel < 25; m_nZoomLevel++)
+        const auto poTS = GetTilingScheme(m_osTilingScheme);
+        if (poTS)
         {
-            double dfExpectedPixelXSize =
-                dfPixelXSizeZoomLevel0 / (1 << m_nZoomLevel);
-            double dfExpectedPixelYSize =
-                dfPixelYSizeZoomLevel0 / (1 << m_nZoomLevel);
-            if (fabs(padfGeoTransform[1] - dfExpectedPixelXSize) <
-                    1e-8 * dfExpectedPixelXSize &&
-                fabs(fabs(padfGeoTransform[5]) - dfExpectedPixelYSize) <
-                    1e-8 * dfExpectedPixelYSize)
+            double dfPixelXSizeZoomLevel0 = poTS->dfPixelXSizeZoomLevel0;
+            double dfPixelYSizeZoomLevel0 = poTS->dfPixelYSizeZoomLevel0;
+            for (m_nZoomLevel = 0; m_nZoomLevel < MAX_ZOOM_LEVEL;
+                 m_nZoomLevel++)
             {
-                break;
+                double dfExpectedPixelXSize =
+                    dfPixelXSizeZoomLevel0 / (1 << m_nZoomLevel);
+                double dfExpectedPixelYSize =
+                    dfPixelYSizeZoomLevel0 / (1 << m_nZoomLevel);
+                if (fabs(padfGeoTransform[1] - dfExpectedPixelXSize) <
+                        1e-8 * dfExpectedPixelXSize &&
+                    fabs(fabs(padfGeoTransform[5]) - dfExpectedPixelYSize) <
+                        1e-8 * dfExpectedPixelYSize)
+                {
+                    break;
+                }
             }
-        }
-        if (m_nZoomLevel == 25)
-        {
-            m_nZoomLevel = -1;
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Could not find an appropriate zoom level of %s tiling "
-                     "scheme that matches raster pixel size",
-                     m_osTilingScheme.c_str());
-            return CE_Failure;
+            if (m_nZoomLevel == MAX_ZOOM_LEVEL)
+            {
+                m_nZoomLevel = -1;
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "Could not find an appropriate zoom level of %s tiling "
+                    "scheme that matches raster pixel size",
+                    m_osTilingScheme.c_str());
+                return CE_Failure;
+            }
         }
     }
 
@@ -5704,6 +5723,30 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
                 return FALSE;
             }
 
+            const char *pszZoomLevel =
+                CSLFetchNameValue(papszOptions, "ZOOM_LEVEL");
+            if (pszZoomLevel)
+            {
+                m_nZoomLevel = atoi(pszZoomLevel);
+                int nMaxZoomLevelForThisTM = MAX_ZOOM_LEVEL;
+                while ((1 << nMaxZoomLevelForThisTM) >
+                           INT_MAX / poTS->nTileXCountZoomLevel0 ||
+                       (1 << nMaxZoomLevelForThisTM) >
+                           INT_MAX / poTS->nTileYCountZoomLevel0)
+                {
+                    --nMaxZoomLevelForThisTM;
+                }
+
+                if (m_nZoomLevel < 0 || m_nZoomLevel > nMaxZoomLevelForThisTM)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "ZOOM_LEVEL = %s is invalid. It should be in "
+                             "[0,%d] range",
+                             pszZoomLevel, nMaxZoomLevelForThisTM);
+                    return FALSE;
+                }
+            }
+
             // Implicitly sets SRS.
             OGRSpatialReference oSRS;
             if (oSRS.importFromEPSG(poTS->nEPSGCode) != OGRERR_NONE)
@@ -5712,6 +5755,16 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
             oSRS.exportToWkt(&pszWKT);
             SetProjection(pszWKT);
             CPLFree(pszWKT);
+        }
+        else
+        {
+            if (CSLFetchNameValue(papszOptions, "ZOOM_LEVEL"))
+            {
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "ZOOM_LEVEL only supported for TILING_SCHEME != CUSTOM");
+                return false;
+            }
         }
     }
 
@@ -5998,6 +6051,13 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
 
     if (EQUAL(pszTilingScheme, "CUSTOM"))
     {
+        if (CSLFetchNameValue(papszOptions, "ZOOM_LEVEL"))
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "ZOOM_LEVEL only supported for TILING_SCHEME != CUSTOM");
+            return nullptr;
+        }
+
         GDALGeoPackageDataset *poDS = nullptr;
         GDALDriver *poThisDriver =
             reinterpret_cast<GDALDriver *>(GDALGetDriverByName("GPKG"));
@@ -6163,39 +6223,68 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
     double dfPrevRes = 0.0;
     double dfRes = 0.0;
     int nZoomLevel = 0;  // Used after for.
-    for (; nZoomLevel < 25; nZoomLevel++)
+    const char *pszZoomLevel = CSLFetchNameValue(papszOptions, "ZOOM_LEVEL");
+    if (pszZoomLevel)
     {
-        dfRes = poTS->dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
-        if (dfComputedRes > dfRes ||
-            fabs(dfComputedRes - dfRes) / dfRes <= 1e-8)
-            break;
-        dfPrevRes = dfRes;
-    }
-    if (nZoomLevel == 25)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Could not find an appropriate zoom level");
-        CPLFree(pszWKT);
-        CSLDestroy(papszTO);
-        return nullptr;
-    }
+        nZoomLevel = atoi(pszZoomLevel);
 
-    if (nZoomLevel > 0 && fabs(dfComputedRes - dfRes) / dfRes > 1e-8)
+        int nMaxZoomLevelForThisTM = MAX_ZOOM_LEVEL;
+        while ((1 << nMaxZoomLevelForThisTM) >
+                   INT_MAX / poTS->nTileXCountZoomLevel0 ||
+               (1 << nMaxZoomLevelForThisTM) >
+                   INT_MAX / poTS->nTileYCountZoomLevel0)
+        {
+            --nMaxZoomLevelForThisTM;
+        }
+
+        if (nZoomLevel < 0 || nZoomLevel > nMaxZoomLevelForThisTM)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "ZOOM_LEVEL = %s is invalid. It should be in [0,%d] range",
+                     pszZoomLevel, nMaxZoomLevelForThisTM);
+            CPLFree(pszWKT);
+            CSLDestroy(papszTO);
+            return nullptr;
+        }
+    }
+    else
     {
-        const char *pszZoomLevelStrategy =
-            CSLFetchNameValueDef(papszOptions, "ZOOM_LEVEL_STRATEGY", "AUTO");
-        if (EQUAL(pszZoomLevelStrategy, "LOWER"))
+        for (; nZoomLevel < MAX_ZOOM_LEVEL; nZoomLevel++)
         {
-            nZoomLevel--;
+            dfRes = poTS->dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
+            if (dfComputedRes > dfRes ||
+                fabs(dfComputedRes - dfRes) / dfRes <= 1e-8)
+                break;
+            dfPrevRes = dfRes;
         }
-        else if (EQUAL(pszZoomLevelStrategy, "UPPER"))
+        if (nZoomLevel == MAX_ZOOM_LEVEL ||
+            (1 << nZoomLevel) > INT_MAX / poTS->nTileXCountZoomLevel0 ||
+            (1 << nZoomLevel) > INT_MAX / poTS->nTileYCountZoomLevel0)
         {
-            /* do nothing */
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Could not find an appropriate zoom level");
+            CPLFree(pszWKT);
+            CSLDestroy(papszTO);
+            return nullptr;
         }
-        else
+
+        if (nZoomLevel > 0 && fabs(dfComputedRes - dfRes) / dfRes > 1e-8)
         {
-            if (dfPrevRes / dfComputedRes < dfComputedRes / dfRes)
+            const char *pszZoomLevelStrategy = CSLFetchNameValueDef(
+                papszOptions, "ZOOM_LEVEL_STRATEGY", "AUTO");
+            if (EQUAL(pszZoomLevelStrategy, "LOWER"))
+            {
                 nZoomLevel--;
+            }
+            else if (EQUAL(pszZoomLevelStrategy, "UPPER"))
+            {
+                /* do nothing */
+            }
+            else
+            {
+                if (dfPrevRes / dfComputedRes < dfComputedRes / dfRes)
+                    nZoomLevel--;
+            }
         }
     }
 

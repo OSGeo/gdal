@@ -1321,7 +1321,9 @@ def test_gpkg_14():
     # Overflow occurred in ComputeTileAndPixelShifts()
     gdal.Translate("/vsimem/tmp.gpkg", "data/byte.tif", format="GPKG")
     ds = gdal.OpenEx("/vsimem/tmp.gpkg", gdal.OF_UPDATE)
-    ds.ExecuteSQL("UPDATE gpkg_contents SET min_x=-1000000002000, max_x=-1000000000000")
+    ds.ExecuteSQL(
+        "UPDATE gpkg_contents SET min_x=-100000000002000, max_x=-100000000000000"
+    )
     ds = None
     with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/tmp.gpkg")
@@ -2297,6 +2299,16 @@ def test_gpkg_26():
             [14445, 14445, 14445, 14448],
             ["ZOOM_LEVEL_STRATEGY=UPPER"],
         ),
+        (
+            "GoogleCRS84Quad",
+            [14445, 14445, 14445, 14448],
+            ["ZOOM_LEVEL=12"],
+        ),
+        (
+            "GoogleCRS84Quad",
+            None,
+            ["ZOOM_LEVEL=31"],
+        ),
         ("GoogleCRS84Quad", [3562, 3562, 3562, 3691], ["ZOOM_LEVEL_STRATEGY=LOWER"]),
         ("GoogleMapsCompatible", [4118, 4118, 4118, 4406], None),
         ("PseudoTMS_GlobalGeodetic", [3562, 3562, 3562, 3691], None),
@@ -2309,6 +2321,14 @@ def test_gpkg_26():
         options = ["TILE_FORMAT=PNG", "TILING_SCHEME=" + scheme]
         if other_options:
             options = options + other_options
+        if expected_cs is None:
+            with gdal.quiet_errors():
+                ds = gdaltest.gpkg_dr.CreateCopy(
+                    "/vsimem/tmp.gpkg", src_ds, options=options
+                )
+                assert ds is None
+                continue
+
         ds = gdaltest.gpkg_dr.CreateCopy("/vsimem/tmp.gpkg", src_ds, options=options)
         ds = None
 

@@ -507,6 +507,9 @@ void GDALGPKGDriver::InitializeCreationOptionList()
 
     const char *pszCOEnd =
         "  </Option>"
+        "  <Option name='ZOOM_LEVEL' type='integer' scope='raster' "
+        "description='Zoom level of full resolution. Only "
+        "used for TILING_SCHEME != CUSTOM' min='0' max='30'/>"
         "  <Option name='ZOOM_LEVEL_STRATEGY' type='string-select' "
         "scope='raster' description='Strategy to determine zoom level. Only "
         "used for TILING_SCHEME != CUSTOM' default='AUTO'>"

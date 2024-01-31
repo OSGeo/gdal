@@ -134,7 +134,9 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
         poTMS->mBbox.mUpperCornerY = 90;
         poTMS->mWellKnownScaleSet =
             "http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad";
-        for (int i = 0; i < 18; i++)
+        // Limit to zoom level 29, because at that zoom level nMatrixWidth = 2 * (1 << 29) = 1073741824
+        // and at 30 it would overflow int32.
+        for (int i = 0; i <= 29; i++)
         {
             TileMatrix tm;
             tm.mId = CPLSPrintf("%d", i);
