@@ -1,0 +1,9 @@
+<VSISparseFile>
+  <Length>12884901942</Length>
+  <SubfileRegion>
+    <Filename relative="1">huge_header.bmp.bin</Filename>
+    <DestinationOffset>0</DestinationOffset>
+    <SourceOffset>0</SourceOffset>
+    <RegionLength>128</RegionLength>
+  </SubfileRegion>
+</VSISparseFile>
