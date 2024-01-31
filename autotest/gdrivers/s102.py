@@ -233,6 +233,7 @@ def test_s102_QualityOfSurvey():
     assert ds.GetGeoTransform() == pytest.approx((1.8, 0.4, 0.0, 48.75, 0.0, -0.5))
     band = ds.GetRasterBand(1)
     assert band.DataType == gdal.GDT_UInt32
+    assert band.GetNoDataValue() == 0
     assert struct.unpack("I" * 6, band.ReadRaster()) == (1000000, 3, 2, 0, 1, 2)
 
     rat = band.GetDefaultRAT()

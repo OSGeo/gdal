@@ -1052,6 +1052,57 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
         memcpy(m_abyNoData.data(), afNoData, m_abyNoData.size());
     }
 
+    // Special case for S102 QualityOfSurvey nodata value that is typically at 0
+    if (GetFullName() ==
+            "/QualityOfSurvey/QualityOfSurvey.01/Group_001/values" &&
+        m_dt.GetClass() == GEDTC_NUMERIC &&
+        m_dt.GetNumericDataType() == GDT_UInt32)
+    {
+        if (auto poRootGroup = HDF5Array::GetRootGroup())
+        {
+            if (const auto poGroupF = poRootGroup->OpenGroup("Group_F"))
+            {
+                const auto poGroupFArray =
+                    poGroupF->OpenMDArray("QualityOfSurvey");
+                if (poGroupFArray &&
+                    poGroupFArray->GetDataType().GetClass() == GEDTC_COMPOUND &&
+                    poGroupFArray->GetDataType().GetComponents().size() == 8 &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[0]
+                            ->GetName() == "code" &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[3]
+                            ->GetName() == "fillValue" &&
+                    poGroupFArray->GetDimensionCount() == 1 &&
+                    poGroupFArray->GetDimensions()[0]->GetSize() == 1)
+                {
+                    auto poFillValue =
+                        poGroupFArray->GetView("[\"fillValue\"]");
+                    if (poFillValue)
+                    {
+                        char *pszVal0 = nullptr;
+                        const GUInt64 anArrayStartIdx0[] = {0};
+                        const size_t anCount[] = {1};
+                        const GInt64 anArrayStep[] = {0};
+                        const GPtrDiff_t anBufferStride[] = {0};
+                        poFillValue->Read(anArrayStartIdx0, anCount,
+                                          anArrayStep, anBufferStride,
+                                          GDALExtendedDataType::CreateString(),
+                                          &pszVal0);
+                        if (pszVal0)
+                        {
+                            const uint32_t nNoData = atoi(pszVal0);
+                            m_abyNoData.resize(m_dt.GetSize());
+                            memcpy(m_abyNoData.data(), &nNoData,
+                                   m_abyNoData.size());
+                        }
+                        CPLFree(pszVal0);
+                    }
+                }
+            }
+        }
+    }
+
     // Special case for S104 nodata value that is typically -9999
     if (STARTS_WITH(GetFullName().c_str(), "/WaterLevel/WaterLevel.01/") &&
         GetFullName().find("/values") != std::string::npos &&
