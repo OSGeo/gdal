@@ -2979,22 +2979,16 @@ def test_ogr_parquet_nested_types():
 
 
 ###############################################################################
-# Test GetExtent() using bbox.minx, bbox.miny, bbox.maxx, bbox.maxy fields
-# as in Ouverture Maps datasets
+# Test float32 bounding box column
 
 
-def test_ogr_parquet_bbox_minx_miny_maxx_maxy(tmp_vsimem):
+def test_ogr_parquet_bbox_float32(tmp_vsimem):
 
-    outfilename = str(tmp_vsimem / "test_ogr_parquet_bbox_minx_miny_maxx_maxy.parquet")
+    outfilename = str(tmp_vsimem / "test_ogr_parquet_bbox_float32.parquet")
     ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
     lyr = ds.CreateLayer(
-        "test", geom_type=ogr.wkbNone, options=["FID=fid", "ROW_GROUP_SIZE=2"]
+        "test", geom_type=ogr.wkbPolygon, options=["FID=fid", "ROW_GROUP_SIZE=2"]
     )
-    lyr.CreateField(ogr.FieldDefn("bbox.minx", ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn("bbox.miny", ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn("bbox.maxx", ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn("bbox.maxy", ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn("geometry", ogr.OFTBinary))
     fid = 0
     for wkt in ["LINESTRING(1 2,3 4)", None, "LINESTRING(-1 0,1 10)"]:
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -3002,15 +2996,41 @@ def test_ogr_parquet_bbox_minx_miny_maxx_maxy(tmp_vsimem):
         fid += 1
         if wkt:
             g = ogr.CreateGeometryFromWkt(wkt)
-            minx, maxx, miny, maxy = g.GetEnvelope()
-            f["bbox.minx"] = minx
-            f["bbox.miny"] = miny
-            f["bbox.maxx"] = maxx
-            f["bbox.maxy"] = maxy
-            wkb = g.ExportToIsoWkb()
-            f.SetFieldBinaryFromHexString("geometry", "".join("%02X" % x for x in wkb))
+            f.SetGeometryDirectly(g)
         lyr.CreateFeature(f)
     ds = None
+
+    def check_file(filename):
+        with gdaltest.config_option("OGR_PARQUET_USE_BBOX", "NO"):
+            ds = ogr.Open(filename)
+            lyr = ds.GetLayer(0)
+            assert lyr.TestCapability(ogr.OLCFastGetExtent) == 0
+            minx, maxx, miny, maxy = lyr.GetExtent()
+            assert (minx, miny, maxx, maxy) == (-1.0, 0.0, 3.0, 10.0)
+            f = lyr.GetNextFeature()
+            assert f["geometry_bbox.xmin"] == 1
+            assert f["geometry_bbox.ymin"] == 2
+            assert f["geometry_bbox.xmax"] == 3
+            assert f["geometry_bbox.ymax"] == 4
+            f = lyr.GetNextFeature()
+            assert f["geometry_bbox.xmin"] is None
+            assert f["geometry_bbox.ymin"] is None
+            assert f["geometry_bbox.xmax"] is None
+            assert f["geometry_bbox.ymax"] is None
+            f = lyr.GetNextFeature()
+            assert f["geometry_bbox.xmin"] == -1
+            assert f["geometry_bbox.ymin"] == 0
+            assert f["geometry_bbox.xmax"] == 1
+            assert f["geometry_bbox.ymax"] == 10
+            ds = None
+
+    check_file(outfilename)
+
+    # Check that re-creating the bounding box column works with the Arrow
+    # interface
+    outfilename2 = str(tmp_vsimem / "test_ogr_parquet_bbox_float32_copy.parquet")
+    gdal.VectorTranslate(outfilename2, outfilename)
+    check_file(outfilename2)
 
     ds = ogr.Open(outfilename)
     lyr = ds.GetLayer(0)
@@ -3023,14 +3043,6 @@ def test_ogr_parquet_bbox_minx_miny_maxx_maxy(tmp_vsimem):
         f = lyr.GetNextFeature()
         assert f.GetFID() == 0
         assert lyr.GetNextFeature() is None
-
-    for field_name in ("bbox.minx", "bbox.miny", "bbox.maxx", "bbox.maxy"):
-        lyr.SetIgnoredFields([field_name])
-        with ogrtest.spatial_filter(lyr, 1, 2, 1, 2):
-            f = lyr.GetNextFeature()
-            assert f.GetFID() == 0
-            assert lyr.GetNextFeature() is None
-        lyr.SetIgnoredFields([])
 
     # Test dfGroupMaxY < m_sFilterEnvelope.MinY
     with ogrtest.spatial_filter(lyr, 1, 10, 1, 10):
@@ -3062,16 +3074,47 @@ def test_ogr_parquet_bbox_minx_miny_maxx_maxy(tmp_vsimem):
         f = lyr.GetNextFeature()
         assert f.GetFID() == 0
         assert lyr.GetNextFeature() is None
+    ds = None
+
+
+###############################################################################
+# Test GetExtent() using bbox.minx, bbox.miny, bbox.maxx, bbox.maxy fields
+# as in Ouverture Maps datasets
+
+
+def test_ogr_parquet_bbox_double():
+
+    ds = ogr.Open("data/parquet/overture_map_extract.parquet")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeometryColumn() == "geometry"
+    assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
+    minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx(
+        (-36.831345, -10.049401, -36.831238, -10.049268)
+    )
+
+    with ogrtest.spatial_filter(
+        lyr,
+        minx + (maxx - minx) / 2,
+        miny + (maxy - miny) / 2,
+        maxx - (maxx - minx) / 2,
+        maxy - (maxy - miny) / 2,
+    ):
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 0
+        assert lyr.GetNextFeature() is None
 
     ds = None
 
     with gdaltest.config_option("OGR_PARQUET_USE_BBOX", "NO"):
-        ds = ogr.Open(outfilename)
+        ds = ogr.Open("data/parquet/overture_map_extract.parquet")
         lyr = ds.GetLayer(0)
         assert lyr.GetGeometryColumn() == "geometry"
         assert lyr.TestCapability(ogr.OLCFastGetExtent) == 0
         minx, maxx, miny, maxy = lyr.GetExtent()
-        assert (minx, miny, maxx, maxy) == (-1.0, 0.0, 3.0, 10.0)
+        assert (minx, miny, maxx, maxy) == pytest.approx(
+            (-36.831345, -10.049401, -36.831238, -10.049268)
+        )
         ds = None
 
 

@@ -94,7 +94,24 @@ class OGRParquetLayer final : public OGRParquetLayerBase
 #endif
     CPLStringList m_aosFeatherMetadata{};
 
+    //! Describe the bbox column of a geometry column
+    struct GeomColBBOXParquet
+    {
+        int iParquetXMin = -1;
+        int iParquetYMin = -1;
+        int iParquetXMax = -1;
+        int iParquetYMax = -1;
+        std::vector<int> anParquetCols{};
+    };
+    //! Map from OGR geometry field index to GeomColBBOXParquet
+    std::map<int, GeomColBBOXParquet>
+        m_oMapGeomFieldIndexToGeomColBBOXParquet{};
+
     void EstablishFeatureDefn();
+    void ProcessGeometryColumnCovering(
+        const std::shared_ptr<arrow::Field> &field,
+        const CPLJSONObject &oJSONGeometryColumn,
+        const std::map<std::string, int> &oMapParquetColumnNameToIdx);
     bool CreateRecordBatchReader(int iStartingRowGroup);
     bool CreateRecordBatchReader(const std::vector<int> &anRowGroups);
     bool ReadNextBatch() override;
@@ -162,12 +179,24 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     }
 
     static constexpr int OGR_FID_INDEX = -2;
-    bool GetMinMaxForField(int iRowGroup,  // -1 for all
-                           int iOGRField,  // or OGR_FID_INDEX
-                           bool bComputeMin, OGRField &sMin, bool &bFoundMin,
-                           bool bComputeMax, OGRField &sMax, bool &bFoundMax,
-                           OGRFieldType &eType, OGRFieldSubType &eSubType,
-                           std::string &osMinTmp, std::string &osMaxTmp) const;
+    bool GetMinMaxForOGRField(int iRowGroup,  // -1 for all
+                              int iOGRField,  // or OGR_FID_INDEX
+                              bool bComputeMin, OGRField &sMin, bool &bFoundMin,
+                              bool bComputeMax, OGRField &sMax, bool &bFoundMax,
+                              OGRFieldType &eType, OGRFieldSubType &eSubType,
+                              std::string &osMinTmp,
+                              std::string &osMaxTmp) const;
+
+    bool GetMinMaxForParquetCol(int iRowGroup,  // -1 for all
+                                int iCol,
+                                const std::shared_ptr<arrow::DataType>
+                                    &arrowType,  // potentially nullptr
+                                bool bComputeMin, OGRField &sMin,
+                                bool &bFoundMin, bool bComputeMax,
+                                OGRField &sMax, bool &bFoundMax,
+                                OGRFieldType &eType, OGRFieldSubType &eSubType,
+                                std::string &osMinTmp,
+                                std::string &osMaxTmp) const;
 };
 
 /************************************************************************/

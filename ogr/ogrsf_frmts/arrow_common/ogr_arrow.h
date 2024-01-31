@@ -110,19 +110,31 @@ class OGRArrowLayer CPL_NON_FINAL
     std::vector<int> m_anMapGeomFieldIndexToArrowColumn{};
     std::vector<OGRArrowGeomEncoding> m_aeGeomEncoding{};
 
-    // OGR field indexes for bbox.minx/miny/maxx/maxy Real fields
-    int m_iBBOXMinXField = -1;
-    int m_iBBOXMinYField = -1;
-    int m_iBBOXMaxXField = -1;
-    int m_iBBOXMaxYField = -1;
+    //! Describe the bbox column of a geometry column
+    struct GeomColBBOX
+    {
+        bool bIsFloat = false;
+        int iArrowCol = -1;
+        int iArrayIdx = -1;  // only valid when m_bIgnoredFields == true
+        int iArrowSubfieldXMin = -1;
+        int iArrowSubfieldYMin = -1;
+        int iArrowSubfieldXMax = -1;
+        int iArrowSubfieldYMax = -1;
+    };
+    //! Map from OGR geometry field index to GeomColBBOX
+    std::map<int, GeomColBBOX> m_oMapGeomFieldIndexToGeomColBBOX{};
 
     const arrow::BinaryArray *m_poArrayWKB = nullptr;
     const arrow::LargeBinaryArray *m_poArrayWKBLarge = nullptr;
     const arrow::Array *m_poArrayBBOX = nullptr;
-    const arrow::DoubleArray *m_poArrayMinX = nullptr;
-    const arrow::DoubleArray *m_poArrayMinY = nullptr;
-    const arrow::DoubleArray *m_poArrayMaxX = nullptr;
-    const arrow::DoubleArray *m_poArrayMaxY = nullptr;
+    const arrow::DoubleArray *m_poArrayXMinDouble = nullptr;
+    const arrow::DoubleArray *m_poArrayYMinDouble = nullptr;
+    const arrow::DoubleArray *m_poArrayXMaxDouble = nullptr;
+    const arrow::DoubleArray *m_poArrayYMaxDouble = nullptr;
+    const arrow::FloatArray *m_poArrayXMinFloat = nullptr;
+    const arrow::FloatArray *m_poArrayYMinFloat = nullptr;
+    const arrow::FloatArray *m_poArrayXMaxFloat = nullptr;
+    const arrow::FloatArray *m_poArrayYMaxFloat = nullptr;
 
     //! References values in range [0, m_poSchema->field_count()-1]
     std::set<int> m_oSetBBoxArrowColumns{};
