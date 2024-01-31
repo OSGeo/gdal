@@ -4316,7 +4316,8 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
         {
             if (m_iFIDArrowColumn == i)
             {
-                j++;
+                out_schema->children[j] = out_schema->children[i];
+                ++j;
             }
             else
             {
