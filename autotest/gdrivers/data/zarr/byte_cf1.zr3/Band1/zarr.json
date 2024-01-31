@@ -1,0 +1,37 @@
+{
+  "zarr_format":3,
+  "node_type":"array",
+  "shape":[
+    20,
+    20
+  ],
+  "data_type":"uint8",
+  "chunk_grid":{
+    "name":"regular",
+    "configuration":{
+      "chunk_shape":[
+        20,
+        20
+      ]
+    }
+  },
+  "chunk_key_encoding":{
+    "name":"default",
+    "configuration":{
+      "separator":"\/"
+    }
+  },
+  "fill_value":255,
+  "attributes":{
+    "long_name":"GDAL Band Number 1",
+    "valid_range":[
+      0,
+      255
+    ],
+    "grid_mapping":"transverse_mercator"
+  },
+  "dimension_names":[
+    "y",
+    "x"
+  ]
+}

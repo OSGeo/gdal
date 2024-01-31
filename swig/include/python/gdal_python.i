@@ -4003,7 +4003,7 @@ def TileIndex(destName, srcFilenames, **kwargs):
 
 
 def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
-         arraySpecs=None, groupSpecs=None, subsetSpecs=None, scaleAxesSpecs=None,
+         arraySpecs=None, arrayOptions=None, groupSpecs=None, subsetSpecs=None, scaleAxesSpecs=None,
          callback=None, callback_data=None):
     """Create a MultiDimTranslateOptions() object that can be passed to gdal.MultiDimTranslate()
 
@@ -4018,6 +4018,8 @@ def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
     arraySpecs:
         list of array specifications, each of them being an array name or
         "name={src_array_name},dstname={dst_name},transpose=[1,0],view=[:,::-1]"
+    arrayOptions:
+        list of options passed to `GDALGroup.GetMDArrayNames` to filter reported arrays.
     groupSpecs:
         list of group specifications, each of them being a group name or
         "name={src_array_name},dstname={dst_name},recursive=no"
@@ -4057,6 +4059,9 @@ def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
         if arraySpecs is not None:
             for s in arraySpecs:
                 new_options += ['-array', s]
+        if arrayOptions:
+            for option in arrayOptions:
+                new_options += ['-arrayoption', option]
         if groupSpecs is not None:
             for s in groupSpecs:
                 new_options += ['-group', s]

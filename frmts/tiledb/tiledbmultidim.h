@@ -423,6 +423,7 @@ class TileDBArray final : public GDALMDArray, public TileDBAttributeHolder
 
     static std::shared_ptr<TileDBArray>
     OpenFromDisk(const std::shared_ptr<TileDBSharedResource> &poSharedResource,
+                 const std::shared_ptr<GDALGroup> &poParent,
                  const std::string &osParentName, const std::string &osName,
                  const std::string &osAttributeName, const std::string &osPath,
                  CSLConstList papszOptions);

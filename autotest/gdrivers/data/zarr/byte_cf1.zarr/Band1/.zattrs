@@ -1,0 +1,12 @@
+{
+  "long_name":"GDAL Band Number 1",
+  "valid_range":[
+    0,
+    255
+  ],
+  "grid_mapping":"transverse_mercator",
+  "_ARRAY_DIMENSIONS":[
+    "y",
+    "x"
+  ]
+}

@@ -751,3 +751,19 @@ def test_tiledb_multidim_translate_from_netcdf():
     finally:
         if os.path.exists(filename):
             shutil.rmtree(filename)
+
+
+###############################################################################
+
+
+def test_tiledb_multidim_open_converted_by_tiledb_cf_netcdf_convert():
+
+    filename = "data/tiledb/byte_epsg_3949_cf1.tiledb"
+    ds = gdal.Open(filename)
+    assert (
+        ds.GetSpatialRef().ExportToProj4()
+        == "+proj=lcc +lat_0=49 +lon_0=3 +lat_1=48.25 +lat_2=49.75 +x_0=1700000 +y_0=8200000 +ellps=GRS80 +units=m +no_defs"
+    )
+    assert ds.GetGeoTransform() == pytest.approx(
+        (440720.0, 60.0, 0.0, 3750120.0, 0.0, 60.0)
+    )

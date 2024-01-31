@@ -44,6 +44,7 @@ static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
             "                         [-if <format>]... [-of <format>]\n"
             "                         [-co <NAME>=<VALUE>]...\n"
             "                         [-array <array_spec>]...\n"
+            "                         [-arrayoption <NAME>=<VALUE>]...\n"
             "                         [-group <group_spec>]...\n"
             "                         [-subset <subset_spec>]...\n"
             "                         [-scaleaxes <scaleaxes_spec>]\n"

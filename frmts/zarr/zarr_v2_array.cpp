@@ -1955,7 +1955,32 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
     {
         poArray->RegisterNoDataValue(abyNoData.data());
     }
-    poArray->ParseSpecialAttributes(oAttributes);
+
+    const auto gridMapping = oAttributes["grid_mapping"];
+    if (gridMapping.GetType() == CPLJSONObject::Type::String)
+    {
+        const std::string gridMappingName = gridMapping.ToString();
+        if (m_oMapMDArrays.find(gridMappingName) == m_oMapMDArrays.end())
+        {
+            const std::string osArrayFilenameDim = CPLFormFilename(
+                CPLFormFilename(m_osDirectoryName.c_str(),
+                                gridMappingName.c_str(), nullptr),
+                ".zarray", nullptr);
+            VSIStatBufL sStat;
+            if (VSIStatL(osArrayFilenameDim.c_str(), &sStat) == 0)
+            {
+                CPLJSONDocument oDoc;
+                if (oDoc.Load(osArrayFilenameDim))
+                {
+                    LoadArray(gridMappingName, osArrayFilenameDim,
+                              oDoc.GetRoot(), false, CPLJSONObject(),
+                              oSetFilenamesInLoading);
+                }
+            }
+        }
+    }
+
+    poArray->ParseSpecialAttributes(m_pSelf.lock(), oAttributes);
     poArray->SetAttributes(oAttributes);
     poArray->SetDtype(oDtype);
     RegisterArray(poArray);

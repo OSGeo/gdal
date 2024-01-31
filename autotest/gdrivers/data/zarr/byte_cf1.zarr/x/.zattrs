@@ -1,0 +1,8 @@
+{
+  "long_name":"x coordinate of projection",
+  "standard_name":"projection_x_coordinate",
+  "units":"m",
+  "_ARRAY_DIMENSIONS":[
+    "x"
+  ]
+}

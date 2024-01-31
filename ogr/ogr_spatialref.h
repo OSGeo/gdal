@@ -216,6 +216,8 @@ class CPL_DLL OGRSpatialReference
     OGRErr exportVertCSToPanorama(int *) const;
     OGRErr exportToERM(char *pszProj, char *pszDatum, char *pszUnits);
     OGRErr exportToMICoordSys(char **) const;
+    OGRErr exportToCF1(char **ppszGridMappingName, char ***ppapszKeyValues,
+                       char **ppszUnits, CSLConstList papszOptions) const;
 
     OGRErr importFromWkt(char **)
         /*! @cond Doxygen_Suppress */
@@ -256,6 +258,7 @@ class CPL_DLL OGRSpatialReference
                          const char *pszUnits);
     OGRErr importFromUrl(const char *);
     OGRErr importFromMICoordSys(const char *);
+    OGRErr importFromCF1(CSLConstList papszKeyValues, const char *pszUnits);
 
     OGRErr morphToESRI();
     OGRErr morphFromESRI();

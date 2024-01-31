@@ -1,0 +1,31 @@
+{
+  "zarr_format":3,
+  "node_type":"array",
+  "shape":[
+    20
+  ],
+  "data_type":"float64",
+  "chunk_grid":{
+    "name":"regular",
+    "configuration":{
+      "chunk_shape":[
+        20
+      ]
+    }
+  },
+  "chunk_key_encoding":{
+    "name":"default",
+    "configuration":{
+      "separator":"\/"
+    }
+  },
+  "fill_value":"NaN",
+  "attributes":{
+    "long_name":"y coordinate of projection",
+    "standard_name":"projection_y_coordinate",
+    "units":"m"
+  },
+  "dimension_names":[
+    "y"
+  ]
+}

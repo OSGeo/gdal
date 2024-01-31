@@ -942,7 +942,8 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
         m_osDimSeparator = osDimSeparator;
     }
 
-    void ParseSpecialAttributes(CPLJSONObject &oAttributes);
+    void ParseSpecialAttributes(const std::shared_ptr<GDALGroup> &poGroup,
+                                CPLJSONObject &oAttributes);
 
     void SetAttributes(const CPLJSONObject &attrs)
     {
