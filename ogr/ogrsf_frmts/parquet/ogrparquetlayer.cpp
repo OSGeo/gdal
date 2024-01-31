@@ -118,6 +118,67 @@ void OGRParquetLayerBase::LoadGeoMetadata(
 }
 
 /************************************************************************/
+/*                   ParseGeometryColumnCovering()                      */
+/************************************************************************/
+
+//! Parse bounding box column definition
+static bool ParseGeometryColumnCovering(const CPLJSONObject &oJSONDef,
+                                        std::string &osBBOXColumn,
+                                        std::string &osXMin,
+                                        std::string &osYMin,
+                                        std::string &osXMax,
+                                        std::string &osYMax)
+{
+    const auto oCovering = oJSONDef["covering"];
+    if (oCovering.IsValid() &&
+        oCovering.GetType() == CPLJSONObject::Type::Object)
+    {
+        const auto oBBOX = oCovering["bbox"];
+        if (oBBOX.IsValid() && oBBOX.GetType() == CPLJSONObject::Type::Object)
+        {
+            const auto oXMin = oBBOX["xmin"];
+            const auto oYMin = oBBOX["ymin"];
+            const auto oXMax = oBBOX["xmax"];
+            const auto oYMax = oBBOX["ymax"];
+            if (oXMin.IsValid() && oYMin.IsValid() && oXMax.IsValid() &&
+                oYMax.IsValid() &&
+                oXMin.GetType() == CPLJSONObject::Type::String &&
+                oYMin.GetType() == CPLJSONObject::Type::String &&
+                oXMax.GetType() == CPLJSONObject::Type::String &&
+                oYMax.GetType() == CPLJSONObject::Type::String)
+            {
+                const auto osXMinFull = oXMin.ToString();
+                const auto osYMinFull = oYMin.ToString();
+                const auto osXMaxFull = oXMax.ToString();
+                const auto osYMaxFull = oYMax.ToString();
+                const CPLStringList aosXMinTokens(
+                    CSLTokenizeString2(osXMinFull.c_str(), ".", 0));
+                const CPLStringList aosYMinTokens(
+                    CSLTokenizeString2(osYMinFull.c_str(), ".", 0));
+                const CPLStringList aosXMaxTokens(
+                    CSLTokenizeString2(osXMaxFull.c_str(), ".", 0));
+                const CPLStringList aosYMaxTokens(
+                    CSLTokenizeString2(osYMaxFull.c_str(), ".", 0));
+                if (aosXMinTokens.size() == 2 && aosYMinTokens.size() == 2 &&
+                    aosXMaxTokens.size() == 2 && aosYMaxTokens.size() == 2 &&
+                    strcmp(aosXMinTokens[0], aosYMinTokens[0]) == 0 &&
+                    strcmp(aosXMinTokens[0], aosXMaxTokens[0]) == 0 &&
+                    strcmp(aosXMinTokens[0], aosYMaxTokens[0]) == 0)
+                {
+                    osBBOXColumn = aosXMinTokens[0];
+                    osXMin = aosXMinTokens[1];
+                    osYMin = aosYMinTokens[1];
+                    osXMax = aosXMaxTokens[1];
+                    osYMax = aosYMaxTokens[1];
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+/************************************************************************/
 /*                      DealWithGeometryColumn()                        */
 /************************************************************************/
 
@@ -457,6 +518,18 @@ void OGRParquetLayer::EstablishFeatureDefn()
         return;
     }
 
+    std::set<std::string> oSetBBOXColumns;
+    for (const auto &iter : m_oMapGeometryColumns)
+    {
+        std::string osBBOXColumn;
+        std::string osXMin, osYMin, osXMax, osYMax;
+        if (ParseGeometryColumnCovering(iter.second, osBBOXColumn, osXMin,
+                                        osYMin, osXMax, osYMax))
+        {
+            oSetBBOXColumns.insert(osBBOXColumn);
+        }
+    }
+
     const auto &fields = m_poSchema->fields();
     const auto poParquetSchema = metadata->schema();
     int iParquetCol = 0;
@@ -480,6 +553,14 @@ void OGRParquetLayer::EstablishFeatureDefn()
                 m_iFIDParquetColumn = iParquetCol;
                 iParquetCol++;
             }
+            continue;
+        }
+
+        if (oSetBBOXColumns.find(field->name()) != oSetBBOXColumns.end())
+        {
+            m_oSetBBoxArrowColumns.insert(i);
+            if (bParquetColValid)
+                iParquetCol++;
             continue;
         }
 

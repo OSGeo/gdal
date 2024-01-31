@@ -95,6 +95,10 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
                                        const OGRSpatialReference *poSpatialRef,
                                        OGRwkbGeometryType eGType)
 {
+    m_bWriteBBoxStruct = CPLTestBool(CSLFetchNameValueDef(
+        papszOptions, "WRITE_COVERING_BBOX",
+        CPLGetConfigOption("OGR_PARQUET_WRITE_COVERING_BBOX", "YES")));
+
     const char *pszGeomEncoding =
         CSLFetchNameValue(papszOptions, "GEOMETRY_ENCODING");
     m_eGeomEncoding = OGRArrowGeomEncoding::WKB;
@@ -477,6 +481,27 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
                 oColumn.Add("bbox", oBBOX);
             }
 
+            // Bounding box column definition
+            if (m_bWriteBBoxStruct)
+            {
+                CPLJSONObject oCovering;
+                oColumn.Add("covering", oCovering);
+                CPLJSONObject oBBOX;
+                oCovering.Add("bbox", oBBOX);
+                const auto AddComponent =
+                    [this, i, &oBBOX](const char *pszComponent)
+                {
+                    CPLJSONArray oArray;
+                    oArray.Add(m_apoFieldsBBOX[i]->name());
+                    oArray.Add(pszComponent);
+                    oBBOX.Add(pszComponent, oArray);
+                };
+                AddComponent("xmin");
+                AddComponent("ymin");
+                AddComponent("xmax");
+                AddComponent("ymax");
+            }
+
             const auto GetStringGeometryType = [](OGRwkbGeometryType eType)
             {
                 const auto eFlattenType = wkbFlatten(eType);
@@ -726,7 +751,7 @@ bool OGRParquetWriterLayer::FlushGroup()
     {
         CPLError(CE_Failure, CPLE_AppDefined, "NewRowGroup() failed with %s",
                  status.message().c_str());
-        m_apoBuilders.clear();
+        ClearArrayBuilers();
         return false;
     }
 
@@ -745,7 +770,7 @@ bool OGRParquetWriterLayer::FlushGroup()
             return true;
         });
 
-    m_apoBuilders.clear();
+    ClearArrayBuilers();
     return ret;
 }
 

@@ -115,6 +115,14 @@ Layer creation options
 
      Name of creating application.
 
+- .. lco:: WRITE_COVERING_BBOX
+     :choices: YES, NO
+     :default: YES
+     :since: 3.9
+
+     Whether to write xmin/ymin/xmax/ymax columns with the bounding box of
+     geometries.
+
 SQL support
 -----------
 

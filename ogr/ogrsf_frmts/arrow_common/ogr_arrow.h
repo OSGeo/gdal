@@ -124,6 +124,9 @@ class OGRArrowLayer CPL_NON_FINAL
     const arrow::DoubleArray *m_poArrayMaxX = nullptr;
     const arrow::DoubleArray *m_poArrayMaxY = nullptr;
 
+    //! References values in range [0, m_poSchema->field_count()-1]
+    std::set<int> m_oSetBBoxArrowColumns{};
+
     bool m_bIgnoredFields = false;
     std::vector<int>
         m_anMapFieldIndexToArrayIndex{};  // only valid when m_bIgnoredFields is
@@ -319,6 +322,25 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     std::vector<OGRArrowGeomEncoding> m_aeGeomEncoding{};
     int m_nWKTCoordinatePrecision = -1;
 
+    //! Whether to use a struct field with the values of the bounding box
+    // of the geometries. Used by Parquet.
+    bool m_bWriteBBoxStruct = false;
+
+    //! Schema fields for bounding box of geometry columns.
+    // Constraint: if not empty, m_apoFieldsBBOX.size() == m_poFeatureDefn->GetGeomFieldCount()
+    std::vector<std::shared_ptr<arrow::Field>> m_apoFieldsBBOX{};
+
+    //! Array builers for bounding box of geometry columns.
+    // m_apoBuildersBBOXStruct is for the top-level field of type struct.
+    // m_apoBuildersBBOX{XMin|YMin|XMax|YMax} are for the floating-point values
+    // Constraint: if not empty, m_apoBuildersBBOX{Struct|XMin|YMin|XMax|YMax}.size() == m_poFeatureDefn->GetGeomFieldCount()
+    std::vector<std::shared_ptr<arrow::StructBuilder>>
+        m_apoBuildersBBOXStruct{};
+    std::vector<std::shared_ptr<arrow::FloatBuilder>> m_apoBuildersBBOXXMin{};
+    std::vector<std::shared_ptr<arrow::FloatBuilder>> m_apoBuildersBBOXYMin{};
+    std::vector<std::shared_ptr<arrow::FloatBuilder>> m_apoBuildersBBOXXMax{};
+    std::vector<std::shared_ptr<arrow::FloatBuilder>> m_apoBuildersBBOXYMax{};
+
     std::string m_osFIDColumn{};
     int64_t m_nFeatureCount = 0;
 
@@ -357,6 +379,10 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     }
 
     void CreateArrayBuilders();
+
+    //! Clear array builders
+    void ClearArrayBuilers();
+
     virtual bool FlushGroup() = 0;
     void FinalizeWriting();
     bool WriteArrays(std::function<bool(const std::shared_ptr<arrow::Field> &,

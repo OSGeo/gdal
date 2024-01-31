@@ -738,6 +738,17 @@ void OGRParquetDriver::InitMetadata()
                                    "Name of creating application");
     }
 
+    {
+        auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psOption, "name", "WRITE_COVERING_BBOX");
+        CPLAddXMLAttributeAndValue(psOption, "type", "boolean");
+        CPLAddXMLAttributeAndValue(psOption, "default", "YES");
+        CPLAddXMLAttributeAndValue(psOption, "description",
+                                   "Whether to write xmin/ymin/xmax/ymax "
+                                   "columns with the bounding box of "
+                                   "geometries");
+    }
+
     char *pszXML = CPLSerializeXMLTree(oTree.get());
     GDALDriver::SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST, pszXML);
     CPLFree(pszXML);

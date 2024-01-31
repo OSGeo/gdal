@@ -615,6 +615,14 @@ def test_ogr_parquet_write_from_another_dataset(use_vsi, row_group_size, fid):
         assert "geometry" in j["columns"]
         assert "encoding" in j["columns"]["geometry"]
         assert j["columns"]["geometry"]["encoding"] == "WKB"
+        assert j["columns"]["geometry"]["covering"] == {
+            "bbox": {
+                "xmax": ["geometry_bbox", "xmax"],
+                "xmin": ["geometry_bbox", "xmin"],
+                "ymax": ["geometry_bbox", "ymax"],
+                "ymin": ["geometry_bbox", "ymin"],
+            }
+        }
 
         md = lyr.GetMetadata("_PARQUET_METADATA_")
         assert "geo" in md

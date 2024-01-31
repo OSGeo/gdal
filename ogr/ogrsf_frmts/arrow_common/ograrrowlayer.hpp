@@ -4319,6 +4319,13 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
                 out_schema->children[j] = out_schema->children[i];
                 ++j;
             }
+            else if (m_oSetBBoxArrowColumns.find(i) !=
+                     m_oSetBBoxArrowColumns.end())
+            {
+                // Remove bounding box columns from exported schema
+                out_schema->children[i]->release(out_schema->children[i]);
+                out_schema->children[i] = nullptr;
+            }
             else
             {
                 // shouldn't happen
@@ -4454,6 +4461,32 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                      "ExportRecordBatch() failed with %s",
                      status.message().c_str());
             return EIO;
+        }
+
+        if (!m_bIgnoredFields)
+        {
+            // Remove bounding box columns from exported array
+            int j = 0;
+            for (int i = 0; i < static_cast<int>(schema.n_children); ++i)
+            {
+                if (m_oSetBBoxArrowColumns.find(i) !=
+                    m_oSetBBoxArrowColumns.end())
+                {
+                    out_array->children[i]->release(out_array->children[i]);
+                    out_array->children[i] = nullptr;
+
+                    schema.children[i]->release(schema.children[i]);
+                    schema.children[i] = nullptr;
+                }
+                else
+                {
+                    out_array->children[j] = out_array->children[i];
+                    schema.children[j] = schema.children[i];
+                    ++j;
+                }
+            }
+            out_array->n_children = j;
+            schema.n_children = j;
         }
 
         if (EQUAL(m_aosArrowArrayStreamOptions.FetchNameValueDef(

@@ -457,7 +457,7 @@ bool OGRFeatherWriterLayer::FlushGroup()
         }
     }
 
-    m_apoBuilders.clear();
+    ClearArrayBuilers();
     return ret;
 }
 
