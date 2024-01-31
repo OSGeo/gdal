@@ -631,7 +631,7 @@ jobs:
         ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal
     - name: Test post-install usage (with CMake)
       run: |
-        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal
+        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal --dynamic --disable-odbc
     - name: ccache statistics
       run: ccache -s
 
