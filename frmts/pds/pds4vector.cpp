@@ -2574,6 +2574,16 @@ bool PDS4DelimitedTable::InitializeNewLayer(const OGRSpatialReference *poSRS,
 /************************************************************************/
 
 template <class T>
+class PDS4EditableSynchronizer final : public IOGREditableLayerSynchronizer
+{
+  public:
+    PDS4EditableSynchronizer() = default;
+
+    OGRErr EditableSyncToDisk(OGRLayer *poEditableLayer,
+                              OGRLayer **ppoDecoratedLayer) override;
+};
+
+template <class T>
 OGRErr
 PDS4EditableSynchronizer<T>::EditableSyncToDisk(OGRLayer *poEditableLayer,
                                                 OGRLayer **ppoDecoratedLayer)
