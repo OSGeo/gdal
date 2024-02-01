@@ -1350,9 +1350,11 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
         nWidth = poField->GetWidth();
         if (nWidth == 0)
         {
-            // We can't use a 0 width value since that prevents ArcMap
-            // from editing (#5952)
-            nWidth = OPENFILEGDB_DEFAULT_STRING_WIDTH;
+            // Hard-coded non-zero default string width if the user doesn't
+            // override it with the below configuration option.
+            // See comment at declaration of DEFAULT_STRING_WIDTH for more
+            // details
+            nWidth = DEFAULT_STRING_WIDTH;
             if (const char *pszVal = CPLGetConfigOption(
                     "OPENFILEGDB_DEFAULT_STRING_WIDTH", nullptr))
             {
@@ -1360,7 +1362,11 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
                 if (nVal >= 0)
                     nWidth = nVal;
             }
-            if (nWidth < OPENFILEGDB_DEFAULT_STRING_WIDTH)
+            // Advertise a non-zero user-modified width back to the created
+            // OGRFieldDefn, only if it is less than the hard-coded default
+            // value (this will avoid potential issues with excessively large
+            // field width afterwards)
+            if (nWidth < DEFAULT_STRING_WIDTH)
                 poField->SetWidth(nWidth);
         }
     }

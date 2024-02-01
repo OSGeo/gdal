@@ -48,7 +48,17 @@ std::string OFGDBGenerateUUID();
 
 int OGROpenFileGDBIsComparisonOp(int op);
 
-constexpr int OPENFILEGDB_DEFAULT_STRING_WIDTH = 65536;
+// The FileGeodatabase format does not really allow strings of arbitrary width
+// in the XML and .gdbtable header declaration. They must have a non-zero
+// maximum width. But if we put it to a huge value (let's say 1 billion), this
+// causes crashes in some Esri products (cf #5952, perhaps they allocate
+// std::string's to that maximum size?).
+// Hence this default of a relative large but not too large
+// width when creating a OGR string field width of unspecified width.
+// Note that when opening a FileGeodatabase with string fields of that width,
+// we do not advertise it in OGRFieldDefn::GetWidth() but we advertise 0 instead,
+// to allow round-tripping.
+constexpr int DEFAULT_STRING_WIDTH = 65536;
 
 // UUID of object type
 constexpr const char *pszFolderTypeUUID =
