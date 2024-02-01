@@ -31,7 +31,7 @@ import pytest
 
 from osgeo import gdal
 
-pytestmark = pytest.mark.require_driver("HDF4")
+pytestmark = pytest.mark.require_driver("BMP")
 
 init_list = [
     ("1bit.bmp", 200),
