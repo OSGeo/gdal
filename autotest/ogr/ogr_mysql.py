@@ -960,6 +960,11 @@ def test_ogr_mysql_longlat(mysql_ds, mysql_is_8_or_later):
             pytest.fail("Not found SRID definition with GEOMETORY field.")
         mysql_ds.ReleaseResultSet(sql_lyr)
 
+    lyr.SetSpatialFilterRect(-181, -91, 181, 91)
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    ogrtest.check_feature_geometry(f, geom)
+
 
 ###############################################################################
 # Test writing and reading back geometries
