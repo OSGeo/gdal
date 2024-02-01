@@ -106,19 +106,6 @@ set(GDAL_PYTHON_CSOURCES
         COMMAND ${CMAKE_COMMAND} ${WERROR_DEV_FLAG} "-DFILE=${_file}" -P ${CMAKE_CURRENT_SOURCE_DIR}/modify_cpp_files.cmake)
   endforeach()
 
-  if (NOT Python_EXECUTABLE)
-    message(FATAL_ERROR "Python_EXECUTABLE variable not set")
-  endif()
-  foreach(_file IN ITEMS ${GDAL_PYTHON_PYSOURCES})
-      file(TO_NATIVE_PATH "${_file}" _native_file)
-      add_custom_command(
-        OUTPUT ${_file}
-        APPEND
-        COMMAND
-          ${Python_EXECUTABLE} -m lib2to3 --fix=import --fix=next --fix=renames --fix=unicode --fix=ws_comma --fix=xrange
-          --write --write-unchanged-files --nobackups  ${_native_file})
-  endforeach()
-
 add_custom_target(python_generated_files
   DEPENDS ${GDAL_PYTHON_PYSOURCES} ${GDAL_PYTHON_CSOURCES}
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
