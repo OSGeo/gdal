@@ -3383,3 +3383,103 @@ def test_ogr_parquet_get_extent_3d(tmp_vsimem):
         lyr = ds.GetLayer(0)
         assert lyr.TestCapability(ogr.OLCFastGetExtent3D) == 0
         assert lyr.GetExtent3D() == (1.0, 4.0, 2.0, 5.0, 3.0, 6.0)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("GPKG")
+def test_ogr_parquet_sort_by_bbox(tmp_vsimem):
+
+    outfilename = str(tmp_vsimem / "test_ogr_parquet_sort_by_bbox.parquet")
+    ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
+
+    gpkg_drv = gdal.GetDriverByName("GPKG")
+    gpkg_drv.Deregister()
+    ROW_GROUP_SIZE = 100
+    try:
+        with pytest.raises(
+            Exception,
+            match="Driver GPKG required for SORT_BY_BBOX layer creation option",
+        ):
+            ds.CreateLayer(
+                "test",
+                geom_type=ogr.wkbPoint,
+                options=["SORT_BY_BBOX=YES", f"ROW_GROUP_SIZE={ROW_GROUP_SIZE}"],
+            )
+    finally:
+        gpkg_drv.Register()
+
+    lyr = ds.CreateLayer(
+        "test",
+        geom_type=ogr.wkbPoint,
+        options=["SORT_BY_BBOX=YES", f"ROW_GROUP_SIZE={ROW_GROUP_SIZE}", "FID=fid"],
+    )
+    assert lyr.TestCapability(ogr.OLCFastWriteArrowBatch) == 0
+    lyr.CreateField(ogr.FieldDefn("i", ogr.OFTInteger))
+    COUNT_NON_SPATIAL = 501
+    COUNT_SPATIAL = 601
+    for i in range(COUNT_NON_SPATIAL):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["i"] = i
+        lyr.CreateFeature(f)
+    for i in range(COUNT_SPATIAL):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["i"] = i + COUNT_NON_SPATIAL
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(f"POINT({i} {i})"))
+        lyr.CreateFeature(f)
+    ds = None
+
+    with gdaltest.config_option("OGR_PARQUET_SHOW_ROW_GROUP_EXTENT", "YES"):
+        ds = ogr.Open(outfilename)
+        lyr = ds.GetLayer(0)
+        theorical_number_of_groups = (
+            COUNT_SPATIAL + ROW_GROUP_SIZE - 1
+        ) // ROW_GROUP_SIZE
+        assert lyr.GetFeatureCount() - theorical_number_of_groups <= max(
+            1, 0.3 * theorical_number_of_groups
+        )
+        assert sum([f["feature_count"] for f in lyr]) == COUNT_SPATIAL
+
+    def check_file(filename):
+        ds = ogr.Open(filename)
+        lyr = ds.GetLayer(0)
+
+        # First features should be non spatial ones
+        for i in range(COUNT_NON_SPATIAL):
+            f = lyr.GetNextFeature()
+            assert f.GetFID() == i
+            assert f["i"] == i
+            assert f.GetGeometryRef() is None
+
+        # Now spatial features
+        count = 0
+        foundNonSequential = False
+        set_i = set()
+        while True:
+            f = lyr.GetNextFeature()
+            if not f:
+                break
+            assert f["i"] >= COUNT_NON_SPATIAL
+            if f["i"] != i + COUNT_NON_SPATIAL:
+                foundNonSequential = True
+            assert f["i"] not in set_i
+            set_i.add(f["i"])
+            assert f.GetFID() == f["i"]
+            assert f.GetGeometryRef().GetX() == f["i"] - COUNT_NON_SPATIAL
+            count += 1
+
+        assert count == COUNT_SPATIAL
+        assert foundNonSequential
+
+    check_file(outfilename)
+
+    # Check that this works also when using the Arrow interface for creation
+    outfilename2 = str(tmp_vsimem / "test_ogr_parquet_sort_by_bbox2.parquet")
+    gdal.VectorTranslate(
+        outfilename2,
+        outfilename,
+        layerCreationOptions=["SORT_BY_BBOX=YES", "ROW_GROUP_SIZE=100"],
+    )
+    check_file(outfilename2)

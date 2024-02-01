@@ -381,7 +381,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
 
     virtual bool IsFileWriterCreated() const = 0;
     virtual void CreateWriter() = 0;
-    virtual void CloseFileWriter() = 0;
+    virtual bool CloseFileWriter() = 0;
 
     void CreateSchemaCommon();
     void FinalizeSchema();
@@ -396,7 +396,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     void ClearArrayBuilers();
 
     virtual bool FlushGroup() = 0;
-    void FinalizeWriting();
+    bool FinalizeWriting();
     bool WriteArrays(std::function<bool(const std::shared_ptr<arrow::Field> &,
                                         const std::shared_ptr<arrow::Array> &)>
                          postProcessArray);
@@ -468,6 +468,8 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
 
   protected:
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
+
+    bool FlushFeatures();
 };
 
 #endif  // OGR_ARROW_H

@@ -2547,3 +2547,28 @@ bool OGRParquetLayer::GetMinMaxForParquetCol(
 
     return bFoundMin || bFoundMax;
 }
+
+/************************************************************************/
+/*                        GeomColsBBOXParquet()                         */
+/************************************************************************/
+
+/** Return for a given geometry column (iGeom: in [0, GetGeomFieldCount()-1] range),
+ * the Parquet column number of the corresponding xmin,ymin,xmax,ymax bounding
+ * box columns, if existing.
+ */
+bool OGRParquetLayer::GeomColsBBOXParquet(int iGeom, int &iParquetXMin,
+                                          int &iParquetYMin, int &iParquetXMax,
+                                          int &iParquetYMax) const
+{
+    const auto oIter = m_oMapGeomFieldIndexToGeomColBBOXParquet.find(iGeom);
+    const bool bFound =
+        (oIter != m_oMapGeomFieldIndexToGeomColBBOXParquet.end());
+    if (bFound)
+    {
+        iParquetXMin = oIter->second.iParquetXMin;
+        iParquetYMin = oIter->second.iParquetYMin;
+        iParquetXMax = oIter->second.iParquetXMax;
+        iParquetYMax = oIter->second.iParquetYMax;
+    }
+    return bFound;
+}

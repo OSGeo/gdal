@@ -94,8 +94,10 @@ inline OGRArrowWriterLayer::~OGRArrowWriterLayer()
 /*                         FinalizeWriting()                            */
 /************************************************************************/
 
-inline void OGRArrowWriterLayer::FinalizeWriting()
+inline bool OGRArrowWriterLayer::FinalizeWriting()
 {
+    bool ret = true;
+
     if (!IsFileWriterCreated())
     {
         CreateWriter();
@@ -105,10 +107,13 @@ inline void OGRArrowWriterLayer::FinalizeWriting()
         PerformStepsBeforeFinalFlushGroup();
 
         if (!m_apoBuilders.empty() && m_apoFieldsFromArrowSchema.empty())
-            FlushGroup();
+            ret = FlushGroup();
 
-        CloseFileWriter();
+        if (!CloseFileWriter())
+            ret = false;
     }
+
+    return ret;
 }
 
 /************************************************************************/
@@ -1767,18 +1772,30 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
     // Flush the current row group if reaching the limit of rows per group.
     if (!m_apoBuilders.empty() && m_apoBuilders[0]->length() == m_nRowGroupSize)
     {
-        if (!IsFileWriterCreated())
-        {
-            CreateWriter();
-            if (!IsFileWriterCreated())
-                return OGRERR_FAILURE;
-        }
-
-        if (!FlushGroup())
+        if (!FlushFeatures())
             return OGRERR_FAILURE;
     }
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         FlushFeatures()                              */
+/************************************************************************/
+
+inline bool OGRArrowWriterLayer::FlushFeatures()
+{
+    if (m_apoBuilders.empty() || m_apoBuilders[0]->length() == 0)
+        return true;
+
+    if (!IsFileWriterCreated())
+    {
+        CreateWriter();
+        if (!IsFileWriterCreated())
+            return false;
+    }
+
+    return FlushGroup();
 }
 
 /************************************************************************/
