@@ -33,6 +33,7 @@
 
 import gdaltest
 import ogrtest
+import pytest
 
 from osgeo import gdal, ogr
 
@@ -899,6 +900,31 @@ def test_ogr_factory_8():
             assert False, (src_wkt, exp_wkt, target_type)
 
         ogrtest.check_feature_geometry(dst_geom, exp_wkt)
+
+
+###############################################################################
+# Test forceTo() to wkbUnknown
+
+
+@pytest.mark.parametrize(
+    "src_wkt,target_type,exp_wkt",
+    [
+        (
+            "POINT (1 2)",
+            ogr.wkbUnknown,
+            "POINT (1 2)",
+        ),
+        (
+            "POINT EMPTY",
+            ogr.wkbUnknown,
+            "POINT EMPTY",
+        ),
+    ],
+)
+def test_ogr_factory_forceTo_unknown(src_wkt, target_type, exp_wkt):
+    src_geom = ogr.CreateGeometryFromWkt(src_wkt)
+    dst_geom = ogr.ForceTo(src_geom, target_type)
+    ogrtest.check_feature_geometry(dst_geom, exp_wkt)
 
 
 ###############################################################################

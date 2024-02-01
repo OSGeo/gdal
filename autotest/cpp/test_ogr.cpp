@@ -425,6 +425,11 @@ TEST_F(test_ogr, geometry_get_point)
     }
 }
 
+TEST_F(test_ogr, OGR_G_CreateGeometry_unknown)
+{
+    EXPECT_EQ(OGR_G_CreateGeometry(wkbUnknown), nullptr);
+}
+
 TEST_F(test_ogr, style_manager)
 {
     OGRStyleMgrH hSM = OGR_SM_Create(nullptr);
