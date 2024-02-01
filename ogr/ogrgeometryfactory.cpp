@@ -621,6 +621,9 @@ OGRGeometryFactory::createGeometry(OGRwkbGeometryType eGeometryType)
             poGeom = new (std::nothrow) OGRTriangulatedSurface();
             break;
 
+        case wkbUnknown:
+            break;
+
         default:
             CPLAssert(false);
             break;
@@ -4551,6 +4554,10 @@ OGRGeometry *OGRGeometryFactory::forceTo(OGRGeometry *poGeom,
     if (poGeom == nullptr)
         return poGeom;
 
+    const OGRwkbGeometryType eTargetTypeFlat = wkbFlatten(eTargetType);
+    if (eTargetTypeFlat == wkbUnknown)
+        return poGeom;
+
     if (poGeom->IsEmpty())
     {
         OGRGeometry *poRet = createGeometry(eTargetType);
@@ -4563,10 +4570,6 @@ OGRGeometry *OGRGeometryFactory::forceTo(OGRGeometry *poGeom,
         delete poGeom;
         return poRet;
     }
-
-    const OGRwkbGeometryType eTargetTypeFlat = wkbFlatten(eTargetType);
-    if (eTargetTypeFlat == wkbUnknown)
-        return poGeom;
 
     OGRwkbGeometryType eType = poGeom->getGeometryType();
     OGRwkbGeometryType eTypeFlat = wkbFlatten(eType);
