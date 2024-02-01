@@ -621,6 +621,9 @@ OGRGeometryFactory::createGeometry(OGRwkbGeometryType eGeometryType)
             poGeom = new (std::nothrow) OGRTriangulatedSurface();
             break;
 
+        case wkbUnknown:
+            break;
+
         default:
             CPLAssert(false);
             break;
