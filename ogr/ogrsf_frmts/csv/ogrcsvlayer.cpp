@@ -248,11 +248,15 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
             }
 
             // Tokenize without quotes to get the actual values.
+            VSIRewindL(fpCSV);
             CSLDestroy(papszTokens);
-            int l_nFlags = CSLT_HONOURSTRINGS;
-            if (!bMergeDelimiter)
-                l_nFlags |= CSLT_ALLOWEMPTYTOKENS;
-            papszTokens = CSLTokenizeString2(pszLine, szDelimiter, l_nFlags);
+            papszTokens =
+                CSVReadParseLine3L(fpCSV, m_nMaxLineSize, szDelimiter,
+                                   true,   // bHonourStrings
+                                   false,  // bKeepLeadingAndClosingQuotes
+                                   bMergeDelimiter,
+                                   true  // bSkipBOM
+                );
             nFieldCount = CSLCount(papszTokens);
         }
     }

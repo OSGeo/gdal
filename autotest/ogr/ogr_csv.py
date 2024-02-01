@@ -2988,6 +2988,37 @@ def test_ogr_csv_getextent3d(tmp_vsimem):
 ###############################################################################
 
 
+def test_ogr_csv_read_header_with_line_break():
+
+    ds = ogr.Open("data/csv/header_with_line_break.csv")
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert [
+        lyr_defn.GetFieldDefn(i).GetName() for i in range(lyr_defn.GetFieldCount())
+    ] == [
+        "Column one",
+        "Column two",
+        "Column with a\nline break",
+        "Column three",
+        "Another\nline break",
+        "Column four",
+        "Column five",
+    ]
+    f = lyr.GetNextFeature()
+    assert [f.GetField(i) for i in range(lyr_defn.GetFieldCount())] == [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+    ]
+
+
+###############################################################################
+
+
 if __name__ == "__main__":
     gdal.UseExceptions()
     if len(sys.argv) != 2:
