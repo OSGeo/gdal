@@ -661,10 +661,11 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         oFieldDefn.SetAlternativeName(poGDBField->GetAlias().c_str());
         oFieldDefn.SetSubType(eSubType);
         // On creation in the FileGDB driver (GDBFieldTypeToLengthInBytes) if
-        // string width is 0, we pick up 65536 by default to mean unlimited
-        // string length, but we do not want to advertise such a big number.
+        // string width is 0, we pick up DEFAULT_STRING_WIDTH=65536 by default
+        // to mean unlimited string length, but we do not want to advertise
+        // such a big number.
         if (eType == OFTString &&
-            (nWidth < 65536 ||
+            (nWidth < DEFAULT_STRING_WIDTH ||
              CPLTestBool(CPLGetConfigOption(
                  "OPENFILEGDB_REPORT_GENUINE_FIELD_WIDTH", "NO"))))
         {
