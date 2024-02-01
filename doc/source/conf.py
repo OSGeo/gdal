@@ -57,6 +57,7 @@ smartquotes = False
 #
 html_theme_path = ["."]
 html_theme = "gdal_rtd"
+# html_theme = "classic"
 
 html_context = {
     "display_github": True,
