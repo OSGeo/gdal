@@ -1708,8 +1708,6 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
                                         char **papszOptions)
 
 {
-    PGresult *hResult = nullptr;
-    CPLString osCommand;
     const char *pszGeomType = nullptr;
     char *pszTableName = nullptr;
     char *pszSchemaName = nullptr;
@@ -1840,6 +1838,20 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
     if (pszSchemaName == nullptr)
     {
         pszSchemaName = CPLStrdup(osCurrentSchema);
+    }
+
+    // Check that the schema exist. If there is a single match in a case
+    // insensitive way, use it. Otherwise error out if the match is not exact.
+    {
+        const auto osNewSchemaName = FindSchema(pszSchemaName);
+        if (!osNewSchemaName.has_value())
+        {
+            CPLFree(pszTableName);
+            CPLFree(pszSchemaName);
+            return nullptr;
+        }
+        CPLFree(pszSchemaName);
+        pszSchemaName = CPLStrdup(osNewSchemaName->c_str());
     }
 
     /* -------------------------------------------------------------------- */
@@ -2037,44 +2049,52 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
     else
         suffix = "";
 
-    if (eType != wkbNone && !bHavePostGIS)
     {
-        pszGFldName = "wkb_geometry";
-        osCommand.Printf("%s ( "
-                         "    %s %s, "
-                         "   %s %s, "
-                         "   PRIMARY KEY (%s)",
-                         osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(),
-                         pszSerialType, pszGFldName, pszGeomType,
-                         osFIDColumnNameEscaped.c_str());
+        CPLString osCommand;
+        if (eType != wkbNone && !bHavePostGIS)
+        {
+            pszGFldName = "wkb_geometry";
+            osCommand.Printf("%s ( "
+                             "    %s %s, "
+                             "   %s %s, "
+                             "   PRIMARY KEY (%s)",
+                             osCreateTable.c_str(),
+                             osFIDColumnNameEscaped.c_str(), pszSerialType,
+                             pszGFldName, pszGeomType,
+                             osFIDColumnNameEscaped.c_str());
+        }
+        else if (!bDeferredCreation && eType != wkbNone &&
+                 EQUAL(pszGeomType, "geography"))
+        {
+            osCommand.Printf(
+                "%s ( %s %s, %s geography(%s%s%s), PRIMARY KEY (%s)",
+                osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(),
+                pszSerialType, OGRPGEscapeColumnName(pszGFldName).c_str(),
+                pszGeometryType, suffix,
+                nSRSId ? CPLSPrintf(",%d", nSRSId) : "",
+                osFIDColumnNameEscaped.c_str());
+        }
+        else if (!bDeferredCreation && eType != wkbNone &&
+                 !EQUAL(pszGeomType, "geography") &&
+                 sPostGISVersion.nMajor >= 2)
+        {
+            osCommand.Printf(
+                "%s ( %s %s, %s geometry(%s%s%s), PRIMARY KEY (%s)",
+                osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(),
+                pszSerialType, OGRPGEscapeColumnName(pszGFldName).c_str(),
+                pszGeometryType, suffix,
+                nSRSId ? CPLSPrintf(",%d", nSRSId) : "",
+                osFIDColumnNameEscaped.c_str());
+        }
+        else
+        {
+            osCommand.Printf("%s ( %s %s, PRIMARY KEY (%s)",
+                             osCreateTable.c_str(),
+                             osFIDColumnNameEscaped.c_str(), pszSerialType,
+                             osFIDColumnNameEscaped.c_str());
+        }
+        osCreateTable = osCommand;
     }
-    else if (!bDeferredCreation && eType != wkbNone &&
-             EQUAL(pszGeomType, "geography"))
-    {
-        osCommand.Printf(
-            "%s ( %s %s, %s geography(%s%s%s), PRIMARY KEY (%s)",
-            osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(),
-            pszSerialType, OGRPGEscapeColumnName(pszGFldName).c_str(),
-            pszGeometryType, suffix, nSRSId ? CPLSPrintf(",%d", nSRSId) : "",
-            osFIDColumnNameEscaped.c_str());
-    }
-    else if (!bDeferredCreation && eType != wkbNone &&
-             !EQUAL(pszGeomType, "geography") && sPostGISVersion.nMajor >= 2)
-    {
-        osCommand.Printf(
-            "%s ( %s %s, %s geometry(%s%s%s), PRIMARY KEY (%s)",
-            osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(),
-            pszSerialType, OGRPGEscapeColumnName(pszGFldName).c_str(),
-            pszGeometryType, suffix, nSRSId ? CPLSPrintf(",%d", nSRSId) : "",
-            osFIDColumnNameEscaped.c_str());
-    }
-    else
-    {
-        osCommand.Printf("%s ( %s %s, PRIMARY KEY (%s)", osCreateTable.c_str(),
-                         osFIDColumnNameEscaped.c_str(), pszSerialType,
-                         osFIDColumnNameEscaped.c_str());
-    }
-    osCreateTable = osCommand;
 
     const char *pszSI =
         CSLFetchNameValueDef(papszOptions, "SPATIAL_INDEX", "GIST");
@@ -2119,12 +2139,13 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
          * Note: PostGIS 2.0 defines geometry_columns as a view (no clean up is
          * needed)
          */
+        CPLString osCommand;
         osCommand.Printf("DELETE FROM geometry_columns WHERE f_table_name = %s "
                          "AND f_table_schema = %s",
                          pszEscapedTableNameSingleQuote,
                          pszEscapedSchemaNameSingleQuote);
 
-        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
         OGRPGClearResult(hResult);
     }
 
@@ -2132,10 +2153,10 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
     {
         SoftStartTransaction();
 
-        osCommand = osCreateTable;
+        CPLString osCommand = osCreateTable;
         osCommand += " )";
 
-        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
         if (PQresultStatus(hResult) != PGRES_COMMAND_OK)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s\n%s", osCommand.c_str(),
@@ -2357,6 +2378,64 @@ OGRLayer *OGRPGDataSource::GetLayer(int iLayer)
 }
 
 /************************************************************************/
+/*                             FindSchema()                             */
+/************************************************************************/
+
+// Check that the schema exists. If there is a single match in a case
+// insensitive way, use it. Otherwise error out if the match is not exact.
+// Return the schema name with its exact case from pg_catalog, or an empty
+// string if an error occurs.
+std::optional<std::string>
+OGRPGDataSource::FindSchema(const char *pszSchemaNameIn)
+{
+    if (strcmp(pszSchemaNameIn, "public") == 0 ||
+        strcmp(pszSchemaNameIn, "pg_temp") == 0)
+    {
+        return pszSchemaNameIn;
+    }
+
+    std::string osSchemaName;
+    std::string osCommand(
+        "SELECT nspname FROM pg_catalog.pg_namespace WHERE nspname ILIKE ");
+    osCommand += OGRPGEscapeString(hPGConn, pszSchemaNameIn);
+    PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+    if (hResult && PQntuples(hResult) == 1)
+    {
+        osSchemaName = PQgetvalue(hResult, 0, 0);
+    }
+    else if (hResult)
+    {
+        const int nTuples = PQntuples(hResult);
+        if (nTuples == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Schema \"%s\" does not exist.", pszSchemaNameIn);
+            return {};
+        }
+        for (int i = 0; i < nTuples; ++i)
+        {
+            if (strcmp(PQgetvalue(hResult, i, 0), pszSchemaNameIn) == 0)
+            {
+                osSchemaName = pszSchemaNameIn;
+                break;
+            }
+        }
+        if (osSchemaName.empty())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Several schemas exist whose name matches \"%s\", but "
+                     "not with that case. "
+                     "Please specify the schema name with the exact case.",
+                     pszSchemaNameIn);
+            return {};
+        }
+    }
+    OGRPGClearResult(hResult);
+
+    return osSchemaName;
+}
+
+/************************************************************************/
 /*                           GetLayerByName()                           */
 /************************************************************************/
 
@@ -2408,7 +2487,13 @@ OGRLayer *OGRPGDataSource::GetLayerByName(const char *pszNameIn)
     if (pos != nullptr)
     {
         *pos = '\0';
-        pszSchemaName = CPLStrdup(pszNameWithoutBracket);
+        const auto osSchemaName = FindSchema(pszNameWithoutBracket);
+        if (!osSchemaName.has_value())
+        {
+            CPLFree(pszNameWithoutBracket);
+            return nullptr;
+        }
+        pszSchemaName = CPLStrdup(osSchemaName->c_str());
         pszTableName = CPLStrdup(pos + 1);
     }
     else
