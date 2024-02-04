@@ -137,7 +137,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && cd tiledb \
     && mkdir build_cmake \
     && cd build_cmake \
-    && ../bootstrap --prefix=/usr --disable-werror --disable-tests \
+    && ../bootstrap --prefix=/usr --disable-werror --disable-tests --disable-avx2 \
     && make -j$(nproc) \
     && make install-tiledb DESTDIR="/build_thirdparty" \
     && make install-tiledb \
