@@ -231,13 +231,11 @@ char **GDALWMSMetaDataset::GetMetadata(const char *pszDomain)
 /*                           AddSubDataset()                            */
 /************************************************************************/
 
-void GDALWMSMetaDataset::AddSubDataset(const char *pszLayerName,
-                                       const char *pszTitle,
-                                       CPL_UNUSED const char *pszAbstract,
-                                       const char *pszSRS, const char *pszMinX,
-                                       const char *pszMinY, const char *pszMaxX,
-                                       const char *pszMaxY, CPLString osFormat,
-                                       CPLString osTransparent)
+void GDALWMSMetaDataset::AddSubDataset(
+    const char *pszLayerName, const char *pszTitle,
+    CPL_UNUSED const char *pszAbstract, const char *pszSRS, const char *pszMinX,
+    const char *pszMinY, const char *pszMaxX, const char *pszMaxY,
+    const std::string &osFormat, const std::string &osTransparent)
 {
     CPLString osSubdatasetName = "WMS:";
     osSubdatasetName += osGetURL;
@@ -258,10 +256,11 @@ void GDALWMSMetaDataset::AddSubDataset(const char *pszLayerName,
         osSubdatasetName, "BBOX",
         CPLSPrintf("%s,%s,%s,%s", pszMinX, pszMinY, pszMaxX, pszMaxY));
     if (!osFormat.empty())
-        osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "FORMAT", osFormat);
-    if (!osTransparent.empty())
         osSubdatasetName =
-            CPLURLAddKVP(osSubdatasetName, "TRANSPARENT", osTransparent);
+            CPLURLAddKVP(osSubdatasetName, "FORMAT", osFormat.c_str());
+    if (!osTransparent.empty())
+        osSubdatasetName = CPLURLAddKVP(osSubdatasetName, "TRANSPARENT",
+                                        osTransparent.c_str());
 
     if (pszTitle)
     {
