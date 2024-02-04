@@ -289,7 +289,7 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
                             {
                                 if (!poCandidateArray)
                                 {
-                                    poCandidateArray = poArray;
+                                    poCandidateArray = std::move(poArray);
                                 }
                                 else
                                 {
