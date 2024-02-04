@@ -729,7 +729,6 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema(const char *pszSchemaUrl)
     char *pszID = nullptr;
     char *pszFile = nullptr;
     char *pszSchemaName = nullptr;
-    char *pszPound = nullptr;
     DocumentPtr poKmlDocument = nullptr;
     SchemaPtr poKmlSchemaResult = nullptr;
 
@@ -746,13 +745,11 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema(const char *pszSchemaUrl)
                  m_poKmlDocKml->IsA(kmldom::Type_Document))
             poKmlDocument = AsDocument(m_poKmlDocKml);
     }
-    else if ((pszPound = strchr(const_cast<char *>(pszSchemaUrl), '#')) !=
-             nullptr)
+    else if (const char *pszPound = strchr(pszSchemaUrl, '#'))
     {
         pszFile = CPLStrdup(pszSchemaUrl);
         pszID = CPLStrdup(pszPound + 1);
-        pszPound = strchr(pszFile, '#');
-        *pszPound = '\0';
+        pszFile[pszPound - pszSchemaUrl] = '\0';
     }
     else
     {
