@@ -22,6 +22,29 @@
 #include "cpl_conv.h"
 #endif
 
+#if !defined(SHP_BIG_ENDIAN)
+#if defined(CPL_MSB)
+#define SHP_BIG_ENDIAN 1
+#elif (defined(__GNUC__) && __GNUC__ >= 5) ||                                  \
+    (defined(__GNUC__) && defined(__GNUC_MINOR__) && __GNUC__ == 4 &&          \
+     __GNUC_MINOR__ >= 6)
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define SHP_BIG_ENDIAN 1
+#endif
+#elif defined(__GLIBC__)
+#if __BYTE_ORDER == __BIG_ENDIAN
+#define SHP_BIG_ENDIAN 1
+#endif
+#elif defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN)
+#define SHP_BIG_ENDIAN 1
+#elif defined(_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN)
+#elif defined(__sparc) || defined(__sparc__) || defined(_POWER) ||             \
+    defined(__powerpc__) || defined(__ppc__) || defined(__hpux) ||             \
+    defined(_MIPSEB) || defined(_POWER) || defined(__s390__)
+#define SHP_BIG_ENDIAN 1
+#endif
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -193,6 +216,13 @@ extern "C"
 
     typedef SHPInfo *SHPHandle;
 
+    typedef struct
+    {
+        int year;
+        int month;
+        int day;
+    } SHPDate;
+
 /* -------------------------------------------------------------------- */
 /*      Shape types (nSHPType)                                          */
 /* -------------------------------------------------------------------- */
@@ -358,7 +388,6 @@ extern "C"
     int SHPAPI_CALL SHPWriteTree(SHPTree *hTree, const char *pszFilename);
 
     int SHPAPI_CALL SHPTreeAddShapeId(SHPTree *hTree, SHPObject *psObject);
-    int SHPAPI_CALL SHPTreeRemoveShapeId(SHPTree *hTree, int nShapeId);
 
     void SHPAPI_CALL SHPTreeTrimExtraNodes(SHPTree *hTree);
 
@@ -522,6 +551,8 @@ extern "C"
         DBFReadStringAttribute(DBFHandle hDBF, int iShape, int iField);
     const char SHPAPI_CALL1(*)
         DBFReadLogicalAttribute(DBFHandle hDBF, int iShape, int iField);
+    SHPDate SHPAPI_CALL DBFReadDateAttribute(DBFHandle hDBF, int iShape,
+                                             int iField);
     int SHPAPI_CALL DBFIsAttributeNULL(DBFHandle hDBF, int iShape, int iField);
 
     int SHPAPI_CALL DBFWriteIntegerAttribute(DBFHandle hDBF, int iShape,
@@ -537,6 +568,9 @@ extern "C"
     int SHPAPI_CALL DBFWriteLogicalAttribute(DBFHandle hDBF, int iShape,
                                              int iField,
                                              const char lFieldValue);
+    int SHPAPI_CALL DBFWriteDateAttribute(DBFHandle hDBF, int iShape,
+                                          int iField,
+                                          const SHPDate *dateFieldValue);
     int SHPAPI_CALL DBFWriteAttributeDirectly(DBFHandle psDBF, int hEntity,
                                               int iField, const void *pValue);
     const char SHPAPI_CALL1(*) DBFReadTuple(DBFHandle psDBF, int hEntity);
