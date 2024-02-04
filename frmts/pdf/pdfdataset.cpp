@@ -3903,8 +3903,8 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int nRecLevel,
     if (nRecLevel == 16)
         return;
 
-    int nLength = poArray->GetLength();
-    CPLString osCurLayer;
+    const int nLength = poArray->GetLength();
+    std::string osCurLayer;
     for (int i = 0; i < nLength; i++)
     {
         GDALPDFObject *poObj = poArray->Get(i);
@@ -3912,9 +3912,10 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int nRecLevel,
             continue;
         if (i == 0 && poObj->GetType() == PDFObjectType_String)
         {
-            CPLString osName = PDFSanitizeLayerName(poObj->GetString().c_str());
+            const std::string osName =
+                PDFSanitizeLayerName(poObj->GetString().c_str());
             if (!osTopLayer.empty())
-                osTopLayer = osTopLayer + "." + osName;
+                osTopLayer = std::string(osTopLayer).append(".").append(osName);
             else
                 osTopLayer = osName;
             AddLayer(osTopLayer.c_str());
@@ -3923,7 +3924,7 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int nRecLevel,
         else if (poObj->GetType() == PDFObjectType_Array)
         {
             ExploreLayersPdfium(poObj->GetArray(), nRecLevel + 1, osCurLayer);
-            osCurLayer = "";
+            osCurLayer.clear();
         }
         else if (poObj->GetType() == PDFObjectType_Dictionary)
         {
@@ -3931,17 +3932,16 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int nRecLevel,
             GDALPDFObject *poName = poDict->Get("Name");
             if (poName != nullptr && poName->GetType() == PDFObjectType_String)
             {
-                CPLString osName =
+                const std::string osName =
                     PDFSanitizeLayerName(poName->GetString().c_str());
                 // coverity[copy_paste_error]
                 if (!osTopLayer.empty())
                 {
-                    osCurLayer = osTopLayer;
-                    osCurLayer += '.';
-                    osCurLayer += std::move(osName);
+                    osCurLayer =
+                        std::string(osTopLayer).append(".").append(osName);
                 }
                 else
-                    osCurLayer = std::move(osName);
+                    osCurLayer = osName;
                 // CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
 
                 AddLayer(osCurLayer.c_str());
