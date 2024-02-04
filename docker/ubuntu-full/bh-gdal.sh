@@ -67,6 +67,7 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
         -DBUILD_TESTING=OFF \
         -DPROJ_INCLUDE_DIR="/build${PROJ_INSTALL_PREFIX-/usr/local}/include" \
         -DPROJ_LIBRARY="/build${PROJ_INSTALL_PREFIX-/usr/local}/lib/libinternalproj.so" \
+        -DGDAL_ENABLE_PLUGINS=ON \
         -DGDAL_USE_TIFF_INTERNAL=ON \
         -DBUILD_PYTHON_BINDINGS=ON \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON ${GDAL_CMAKE_EXTRA_OPTS}
