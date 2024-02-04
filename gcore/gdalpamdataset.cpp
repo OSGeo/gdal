@@ -609,11 +609,8 @@ CPLErr GDALPamDataset::XMLInit(CPLXMLNode *psTree, const char *pszUnused)
                 {
                     std::vector<GDAL_GCP> asGCPs;
                     asGCPs.resize(adfSource.size() / 2);
-                    char szEmptyString[] = {0};
                     for (size_t i = 0; i + 1 < adfSource.size(); i += 2)
                     {
-                        asGCPs[i / 2].pszId = szEmptyString;
-                        asGCPs[i / 2].pszInfo = szEmptyString;
                         asGCPs[i / 2].dfGCPPixel = adfSource[i];
                         asGCPs[i / 2].dfGCPLine = ySourceAllNegative
                                                       ? -adfSource[i + 1]

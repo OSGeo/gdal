@@ -3597,4 +3597,72 @@ TEST_F(test_gdal, drop_cache)
     }
 }
 
+TEST_F(test_gdal, GDAL_GCP)
+{
+    // Test default constructor
+    {
+        GDAL_GCP x;
+        EXPECT_STREQ(x.pszId, "");
+        EXPECT_STREQ(x.pszInfo, "");
+        EXPECT_EQ(x.dfGCPPixel, 0.0);
+        EXPECT_EQ(x.dfGCPLine, 0.0);
+        EXPECT_EQ(x.dfGCPX, 0.0);
+        EXPECT_EQ(x.dfGCPY, 0.0);
+        EXPECT_EQ(x.dfGCPZ, 0.0);
+    }
+
+    // Test move constructor
+    {
+        GDAL_GCP x;
+        x.SetId("id");
+        x.SetInfo("info");
+        x.dfGCPPixel = 1.0;
+        x.dfGCPLine = 2.0;
+        x.dfGCPX = 3.0;
+        x.dfGCPY = 4.0;
+        x.dfGCPZ = 5.0;
+
+        const GDAL_GCP y(std::move(x));
+        EXPECT_STREQ(y.pszId, "id");
+        EXPECT_STREQ(y.pszInfo, "info");
+        EXPECT_EQ(y.dfGCPPixel, 1.0);
+        EXPECT_EQ(y.dfGCPLine, 2.0);
+        EXPECT_EQ(y.dfGCPX, 3.0);
+        EXPECT_EQ(y.dfGCPY, 4.0);
+        EXPECT_EQ(y.dfGCPZ, 5.0);
+    }
+
+    // Test move assignment operator
+    {
+        GDAL_GCP x;
+        x.SetId("id");
+        x.SetInfo("info");
+        x.dfGCPPixel = 1.0;
+        x.dfGCPLine = 2.0;
+        x.dfGCPX = 3.0;
+        x.dfGCPY = 4.0;
+        x.dfGCPZ = 5.0;
+
+        GDAL_GCP y;
+        y.SetId("id_old");
+        y.SetInfo("info_old");
+        y = std::move(x);
+        EXPECT_STREQ(y.pszId, "id");
+        EXPECT_STREQ(y.pszInfo, "info");
+        EXPECT_EQ(y.dfGCPPixel, 1.0);
+        EXPECT_EQ(y.dfGCPLine, 2.0);
+        EXPECT_EQ(y.dfGCPX, 3.0);
+        EXPECT_EQ(y.dfGCPY, 4.0);
+        EXPECT_EQ(y.dfGCPZ, 5.0);
+    }
+
+    // Non-nominal use, mixing C++ and C habits, but useful to ensure
+    // minimum backward compatibility with old practices.
+    {
+        GDAL_GCP x;
+        GDALInitGCPs(1, &x);
+        GDALDeinitGCPs(1, &x);
+    }
+}
+
 }  // namespace

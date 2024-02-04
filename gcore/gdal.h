@@ -1061,8 +1061,23 @@ const char CPL_DLL *CPL_STDCALL GDALGetDriverCreationOptionList(GDALDriverH);
 /*      GDAL_GCP                                                        */
 /* ==================================================================== */
 
+/* clang-format off */
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(GDAL_SUPPRESS_GCP_CPLUSPLUS)
+extern "C++"
+{
+#endif
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(GDAL_SUPPRESS_GCP_CPLUSPLUS)
+/** Ground Control Point.
+ *
+ * Usable as a C++ object since GDAL 3.9.
+ */
+struct CPL_DLL GDAL_GCP
+#else
 /** Ground Control Point */
 typedef struct
+#endif
 {
     /** Unique identifier, often numeric */
     char *pszId;
@@ -1072,6 +1087,7 @@ typedef struct
 
     /** Pixel (x) location of GCP on raster */
     double dfGCPPixel;
+
     /** Line (y) location of GCP on raster */
     double dfGCPLine;
 
@@ -1083,7 +1099,35 @@ typedef struct
 
     /** Elevation of GCP, or zero if not known */
     double dfGCPZ;
-} GDAL_GCP;
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(GDAL_SUPPRESS_GCP_CPLUSPLUS)
+    /** Constructor. */
+    GDAL_GCP(): pszId(VSIGetStaticEmptyString()), pszInfo(VSIGetStaticEmptyString()),
+                dfGCPPixel(0), dfGCPLine(0),
+                dfGCPX(0), dfGCPY(0), dfGCPZ(0) {}
+    ~GDAL_GCP();
+    GDAL_GCP(GDAL_GCP &&);
+    GDAL_GCP &operator=(GDAL_GCP &&);
+
+    void SetId(const char* pszNewId);
+
+    void SetInfo(const char* pszNewInfo);
+
+  private:
+    GDAL_GCP(const GDAL_GCP &) = delete;
+    GDAL_GCP &operator=(const GDAL_GCP &) = delete;
+#endif
+}
+#if !(defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(GDAL_SUPPRESS_GCP_CPLUSPLUS))
+GDAL_GCP
+#endif
+;
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(GDAL_SUPPRESS_GCP_CPLUSPLUS)
+}  // extern "C++"
+#endif
+
+/* clang-format on */
 
 void CPL_DLL CPL_STDCALL GDALInitGCPs(int, GDAL_GCP *);
 void CPL_DLL CPL_STDCALL GDALDeinitGCPs(int, GDAL_GCP *);

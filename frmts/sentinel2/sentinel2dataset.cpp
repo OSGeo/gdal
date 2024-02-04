@@ -2234,7 +2234,6 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset(GDALOpenInfo *poOpenInfo)
             if (poRing != nullptr && poRing->getNumPoints() == 5)
             {
                 GDAL_GCP asGCPList[5];
-                memset(asGCPList, 0, sizeof(asGCPList));
                 for (int i = 0; i < 4; i++)
                 {
                     asGCPList[i].dfGCPX = poRing->getX(i);
@@ -2279,7 +2278,6 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset(GDALOpenInfo *poOpenInfo)
                 }
 
                 poDS->SetGCPs(nGCPCount, asGCPList, SRS_WKT_WGS84_LAT_LONG);
-                GDALDeinitGCPs(nGCPCount, asGCPList);
             }
         }
         delete poGeom;

@@ -1346,6 +1346,83 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
 }
 
 /************************************************************************/
+/*                            ~GDAL_GCP()                               */
+/************************************************************************/
+
+/** Destructor */
+GDAL_GCP::~GDAL_GCP()
+{
+    CPLFree(pszId);
+    CPLFree(pszInfo);
+}
+
+/************************************************************************/
+/*                             GDAL_GCP()                               */
+/************************************************************************/
+
+/** Move constructor. */
+GDAL_GCP::GDAL_GCP(GDAL_GCP &&other)
+    : pszId(nullptr), pszInfo(nullptr), dfGCPPixel(other.dfGCPPixel),
+      dfGCPLine(other.dfGCPLine), dfGCPX(other.dfGCPX), dfGCPY(other.dfGCPY),
+      dfGCPZ(other.dfGCPZ)
+{
+    std::swap(pszId, other.pszId);
+    std::swap(pszInfo, other.pszInfo);
+}
+
+/************************************************************************/
+/*                              operator=()                             */
+/************************************************************************/
+
+/** Move assignment operator. */
+GDAL_GCP &GDAL_GCP::operator=(GDAL_GCP &&other)
+{
+    if (this != &other)
+    {
+        VSIFree(pszId);
+        pszId = nullptr;
+        std::swap(pszId, other.pszId);
+
+        VSIFree(pszInfo);
+        pszInfo = nullptr;
+        std::swap(pszInfo, other.pszInfo);
+
+        dfGCPPixel = other.dfGCPPixel;
+        dfGCPLine = other.dfGCPLine;
+        dfGCPX = other.dfGCPX;
+        dfGCPY = other.dfGCPY;
+        dfGCPZ = other.dfGCPZ;
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*                               SetId()                                */
+/************************************************************************/
+
+/** Set the ID of a GCP.
+ * @since 3.9
+ */
+void GDAL_GCP::SetId(const char *pszNewId)
+{
+    VSIFree(pszId);
+    pszId = CPLStrdup(pszNewId);
+}
+
+/************************************************************************/
+/*                              SetInfo()                               */
+/************************************************************************/
+
+/** Set the info of a GCP.
+ * @since 3.9
+ */
+void GDAL_GCP::SetInfo(const char *pszNewInfo)
+{
+    VSIFree(pszInfo);
+    pszInfo = CPLStrdup(pszNewInfo);
+}
+
+/************************************************************************/
 /*                            GDALInitGCPs()                            */
 /************************************************************************/
 
@@ -1369,9 +1446,13 @@ void CPL_STDCALL GDALInitGCPs(int nCount, GDAL_GCP *psGCP)
 
     for (int iGCP = 0; iGCP < nCount; iGCP++)
     {
-        memset(psGCP, 0, sizeof(GDAL_GCP));
-        psGCP->pszId = CPLStrdup("");
-        psGCP->pszInfo = CPLStrdup("");
+        psGCP->pszId = VSIGetStaticEmptyString();
+        psGCP->pszInfo = VSIGetStaticEmptyString();
+        psGCP->dfGCPPixel = 0.0;
+        psGCP->dfGCPLine = 0.0;
+        psGCP->dfGCPX = 0.0;
+        psGCP->dfGCPY = 0.0;
+        psGCP->dfGCPZ = 0.0;
         psGCP++;
     }
 }
@@ -1383,21 +1464,22 @@ void CPL_STDCALL GDALInitGCPs(int nCount, GDAL_GCP *psGCP)
 /** De-initialize an array of GCPs (initialized with GDALInitGCPs())
  *
  * @param nCount number of GCPs in psGCP
- * @param psGCP array of GCPs of size nCount.
+ * @param psGCPs array of GCPs of size nCount.
  */
-void CPL_STDCALL GDALDeinitGCPs(int nCount, GDAL_GCP *psGCP)
+void CPL_STDCALL GDALDeinitGCPs(int nCount, GDAL_GCP *psGCPs)
 
 {
     if (nCount > 0)
     {
-        VALIDATE_POINTER0(psGCP, "GDALDeinitGCPs");
+        VALIDATE_POINTER0(psGCPs, "GDALDeinitGCPs");
     }
 
     for (int iGCP = 0; iGCP < nCount; iGCP++)
     {
-        CPLFree(psGCP->pszId);
-        CPLFree(psGCP->pszInfo);
-        psGCP++;
+        CPLFree(psGCPs[iGCP].pszId);
+        psGCPs[iGCP].pszId = nullptr;
+        CPLFree(psGCPs[iGCP].pszInfo);
+        psGCPs[iGCP].pszInfo = nullptr;
     }
 }
 
@@ -1421,12 +1503,8 @@ GDAL_GCP *CPL_STDCALL GDALDuplicateGCPs(int nCount, const GDAL_GCP *pasGCPList)
 
     for (int iGCP = 0; iGCP < nCount; iGCP++)
     {
-        CPLFree(pasReturn[iGCP].pszId);
-        pasReturn[iGCP].pszId = CPLStrdup(pasGCPList[iGCP].pszId);
-
-        CPLFree(pasReturn[iGCP].pszInfo);
-        pasReturn[iGCP].pszInfo = CPLStrdup(pasGCPList[iGCP].pszInfo);
-
+        pasReturn[iGCP].SetId(pasGCPList[iGCP].pszId);
+        pasReturn[iGCP].SetInfo(pasGCPList[iGCP].pszInfo);
         pasReturn[iGCP].dfGCPPixel = pasGCPList[iGCP].dfGCPPixel;
         pasReturn[iGCP].dfGCPLine = pasGCPList[iGCP].dfGCPLine;
         pasReturn[iGCP].dfGCPX = pasGCPList[iGCP].dfGCPX;
@@ -1591,9 +1669,7 @@ int CPL_STDCALL GDALLoadOziMapFile(const char *pszFilename,
             oSRS.exportToWkt(ppszWKT);
     }
 
-    int nCoordinateCount = 0;
-    // TODO(schwehr): Initialize asGCPs.
-    GDAL_GCP asGCPs[30];
+    std::vector<GDAL_GCP> asGCPs;
 
     // Iterate all lines in the MAP-file
     for (int iLine = 5; iLine < nLines; iLine++)
@@ -1609,8 +1685,7 @@ int CPL_STDCALL GDALLoadOziMapFile(const char *pszFilename,
         }
 
         if (CSLCount(papszTok) >= 17 && STARTS_WITH_CI(papszTok[0], "Point") &&
-            !EQUAL(papszTok[2], "") && !EQUAL(papszTok[3], "") &&
-            nCoordinateCount < static_cast<int>(CPL_ARRAYSIZE(asGCPs)))
+            !EQUAL(papszTok[2], "") && !EQUAL(papszTok[3], ""))
         {
             bool bReadOk = false;
             double dfLon = 0.0;
@@ -1664,18 +1739,16 @@ int CPL_STDCALL GDALLoadOziMapFile(const char *pszFilename,
 
             if (bReadOk)
             {
-                GDALInitGCPs(1, asGCPs + nCoordinateCount);
+                GDAL_GCP gcp;
 
                 // Set pixel/line part
-                asGCPs[nCoordinateCount].dfGCPPixel =
-                    CPLAtofM(papszTok[2]) / dfMSF;
-                asGCPs[nCoordinateCount].dfGCPLine =
-                    CPLAtofM(papszTok[3]) / dfMSF;
+                gcp.dfGCPPixel = CPLAtofM(papszTok[2]) / dfMSF;
+                gcp.dfGCPLine = CPLAtofM(papszTok[3]) / dfMSF;
 
-                asGCPs[nCoordinateCount].dfGCPX = dfLon;
-                asGCPs[nCoordinateCount].dfGCPY = dfLat;
+                gcp.dfGCPX = dfLon;
+                gcp.dfGCPY = dfLat;
 
-                nCoordinateCount++;
+                asGCPs.emplace_back(std::move(gcp));
             }
         }
 
@@ -1684,7 +1757,7 @@ int CPL_STDCALL GDALLoadOziMapFile(const char *pszFilename,
 
     CSLDestroy(papszLines);
 
-    if (nCoordinateCount == 0)
+    if (asGCPs.empty())
     {
         CPLDebug("GDAL", "GDALLoadOziMapFile(\"%s\") did read no GCPs.",
                  pszFilename);
@@ -1696,7 +1769,7 @@ int CPL_STDCALL GDALLoadOziMapFile(const char *pszFilename,
     /*      possible.  Otherwise we will need to use them as GCPs.          */
     /* -------------------------------------------------------------------- */
     if (!GDALGCPsToGeoTransform(
-            nCoordinateCount, asGCPs, padfGeoTransform,
+            static_cast<int>(asGCPs.size()), asGCPs.data(), padfGeoTransform,
             CPLTestBool(CPLGetConfigOption("OZI_APPROX_GEOTRANSFORM", "NO"))))
     {
         if (pnGCPCount && ppasGCPs)
@@ -1708,14 +1781,11 @@ int CPL_STDCALL GDALLoadOziMapFile(const char *pszFilename,
                 pszFilename);
 
             *ppasGCPs = static_cast<GDAL_GCP *>(
-                CPLCalloc(sizeof(GDAL_GCP), nCoordinateCount));
-            memcpy(*ppasGCPs, asGCPs, sizeof(GDAL_GCP) * nCoordinateCount);
-            *pnGCPCount = nCoordinateCount;
+                CPLCalloc(sizeof(GDAL_GCP), asGCPs.size()));
+            for (size_t i = 0; i < asGCPs.size(); ++i)
+                (*ppasGCPs)[i] = std::move(asGCPs[i]);
+            *pnGCPCount = static_cast<int>(asGCPs.size());
         }
-    }
-    else
-    {
-        GDALDeinitGCPs(nCoordinateCount, asGCPs);
     }
 
     return TRUE;
@@ -1795,8 +1865,7 @@ int CPL_STDCALL GDALLoadTabFile(const char *pszFilename,
     char **papszTok = nullptr;
     bool bTypeRasterFound = false;
     bool bInsideTableDef = false;
-    int nCoordinateCount = 0;
-    GDAL_GCP asGCPs[256];  // TODO(schwehr): Initialize.
+    std::vector<GDAL_GCP> asGCPs;
     const int numLines = CSLCount(papszLines);
 
     // Iterate all lines in the TAB-file
@@ -1829,22 +1898,18 @@ int CPL_STDCALL GDALLoadTabFile(const char *pszFilename,
             }
         }
         else if (bTypeRasterFound && bInsideTableDef &&
-                 CSLCount(papszTok) > 4 && EQUAL(papszTok[4], "Label") &&
-                 nCoordinateCount < static_cast<int>(CPL_ARRAYSIZE(asGCPs)))
+                 CSLCount(papszTok) > 4 && EQUAL(papszTok[4], "Label"))
         {
-            GDALInitGCPs(1, asGCPs + nCoordinateCount);
-
-            asGCPs[nCoordinateCount].dfGCPPixel = CPLAtofM(papszTok[2]);
-            asGCPs[nCoordinateCount].dfGCPLine = CPLAtofM(papszTok[3]);
-            asGCPs[nCoordinateCount].dfGCPX = CPLAtofM(papszTok[0]);
-            asGCPs[nCoordinateCount].dfGCPY = CPLAtofM(papszTok[1]);
+            GDAL_GCP gcp;
+            gcp.dfGCPPixel = CPLAtofM(papszTok[2]);
+            gcp.dfGCPLine = CPLAtofM(papszTok[3]);
+            gcp.dfGCPX = CPLAtofM(papszTok[0]);
+            gcp.dfGCPY = CPLAtofM(papszTok[1]);
             if (papszTok[5] != nullptr)
             {
-                CPLFree(asGCPs[nCoordinateCount].pszId);
-                asGCPs[nCoordinateCount].pszId = CPLStrdup(papszTok[5]);
+                gcp.SetId(papszTok[5]);
             }
-
-            nCoordinateCount++;
+            asGCPs.emplace_back(std::move(gcp));
         }
         else if (bTypeRasterFound && bInsideTableDef &&
                  EQUAL(papszTok[0], "CoordSys") && ppszWKT != nullptr)
@@ -1879,7 +1944,7 @@ int CPL_STDCALL GDALLoadTabFile(const char *pszFilename,
     CSLDestroy(papszTok);
     CSLDestroy(papszLines);
 
-    if (nCoordinateCount == 0)
+    if (asGCPs.empty())
     {
         CPLDebug("GDAL", "GDALLoadTabFile(%s) did not get any GCPs.",
                  pszFilename);
@@ -1891,7 +1956,7 @@ int CPL_STDCALL GDALLoadTabFile(const char *pszFilename,
     /*      possible.  Otherwise we will need to use them as GCPs.          */
     /* -------------------------------------------------------------------- */
     if (!GDALGCPsToGeoTransform(
-            nCoordinateCount, asGCPs, padfGeoTransform,
+            static_cast<int>(asGCPs.size()), asGCPs.data(), padfGeoTransform,
             CPLTestBool(CPLGetConfigOption("TAB_APPROX_GEOTRANSFORM", "NO"))))
     {
         if (pnGCPCount && ppasGCPs)
@@ -1902,14 +1967,11 @@ int CPL_STDCALL GDALLoadTabFile(const char *pszFilename,
                      pszFilename);
 
             *ppasGCPs = static_cast<GDAL_GCP *>(
-                CPLCalloc(sizeof(GDAL_GCP), nCoordinateCount));
-            memcpy(*ppasGCPs, asGCPs, sizeof(GDAL_GCP) * nCoordinateCount);
-            *pnGCPCount = nCoordinateCount;
+                CPLCalloc(sizeof(GDAL_GCP), asGCPs.size()));
+            for (size_t i = 0; i < asGCPs.size(); ++i)
+                (*ppasGCPs)[i] = std::move(asGCPs[i]);
+            *pnGCPCount = static_cast<int>(asGCPs.size());
         }
-    }
-    else
-    {
-        GDALDeinitGCPs(nCoordinateCount, asGCPs);
     }
 
     return TRUE;

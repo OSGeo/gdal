@@ -286,6 +286,8 @@ const char CPL_DLL *VSIGetCredential(const char *pszPath, const char *pszKey,
 /*      Memory allocation                                               */
 /* ==================================================================== */
 
+char CPL_DLL *VSIGetStaticEmptyString();
+
 void CPL_DLL *VSICalloc(size_t, size_t) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL *VSIMalloc(size_t) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL VSIFree(void *);
