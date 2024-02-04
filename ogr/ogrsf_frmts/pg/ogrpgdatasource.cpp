@@ -2491,6 +2491,7 @@ OGRLayer *OGRPGDataSource::GetLayerByName(const char *pszNameIn)
         if (!osSchemaName.has_value())
         {
             CPLFree(pszNameWithoutBracket);
+            CPLFree(pszGeomColumnName);
             return nullptr;
         }
         pszSchemaName = CPLStrdup(osSchemaName->c_str());
