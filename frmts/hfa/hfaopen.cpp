@@ -3859,9 +3859,9 @@ CPLErr HFARenameReferences(HFAHandle hHFA, const char *pszNewBase,
         // Update the filename.
         if (strncmp(osFileName, pszOldBase, strlen(pszOldBase)) == 0)
         {
-            CPLString osNew = pszNewBase;
-            osNew += osFileName.c_str() + strlen(pszOldBase);
-            osFileName = osNew;
+            std::string osNew = pszNewBase;
+            osNew += (osFileName.c_str() + strlen(pszOldBase));
+            osFileName = std::move(osNew);
         }
 
         apoNodeList[iNode]->SetStringField("dependent.string", osFileName);
