@@ -2093,7 +2093,7 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
                              osFIDColumnNameEscaped.c_str(), pszSerialType,
                              osFIDColumnNameEscaped.c_str());
         }
-        osCreateTable = osCommand;
+        osCreateTable = std::move(osCommand);
     }
 
     const char *pszSI =
