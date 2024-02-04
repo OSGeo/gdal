@@ -1440,8 +1440,7 @@ OGRSpatialReference::exportToCF1(char **ppszGridMappingName,
         {
             std::string key{};
             std::string valueStr{};
-            size_t doubleCount = 0;
-            double doubles[2] = {0, 0};
+            std::vector<double> doubles{};
         };
 
         std::vector<Value> oParams;
@@ -1452,16 +1451,15 @@ OGRSpatialReference::exportToCF1(char **ppszGridMappingName,
             Value v;
             v.key = key;
             v.valueStr = value;
-            oParams.push_back(v);
+            oParams.emplace_back(std::move(v));
         };
 
         const auto addParamDouble = [&oParams](const char *key, double value)
         {
             Value v;
             v.key = key;
-            v.doubleCount = 1;
-            v.doubles[0] = value;
-            oParams.push_back(v);
+            v.doubles.push_back(value);
+            oParams.emplace_back(std::move(v));
         };
 
         const auto addParam2Double =
@@ -1469,10 +1467,9 @@ OGRSpatialReference::exportToCF1(char **ppszGridMappingName,
         {
             Value v;
             v.key = key;
-            v.doubleCount = 2;
-            v.doubles[0] = value1;
-            v.doubles[1] = value2;
-            oParams.push_back(v);
+            v.doubles.push_back(value1);
+            v.doubles.push_back(value2);
+            oParams.emplace_back(std::move(v));
         };
 
         std::string osCFProjection;
@@ -1694,11 +1691,11 @@ OGRSpatialReference::exportToCF1(char **ppszGridMappingName,
                 else
                 {
                     std::string osVal;
-                    for (size_t i = 0; i < param.doubleCount; ++i)
+                    for (const double dfVal : param.doubles)
                     {
-                        if (i > 0)
+                        if (!osVal.empty())
                             osVal += ',';
-                        osVal += CPLSPrintf("%.18g", param.doubles[i]);
+                        osVal += CPLSPrintf("%.18g", dfVal);
                     }
                     aosKeyValues.AddNameValue(param.key.c_str(), osVal.c_str());
                 }
