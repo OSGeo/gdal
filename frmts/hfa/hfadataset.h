@@ -53,7 +53,7 @@ class HFADataset final : public GDALPamDataset
 {
     friend class HFARasterBand;
 
-    HFAHandle hHFA;
+    HFAHandle hHFA = nullptr;
 
     bool bMetadataDirty = false;
 
