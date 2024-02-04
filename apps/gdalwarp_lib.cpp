@@ -2705,8 +2705,8 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
 
         // Check if transformation is inversible
         {
-            double dfX = GDALGetRasterXSize(hDstDS) / 2;
-            double dfY = GDALGetRasterYSize(hDstDS) / 2;
+            double dfX = GDALGetRasterXSize(hDstDS) / 2.0;
+            double dfY = GDALGetRasterYSize(hDstDS) / 2.0;
             double dfZ = 0;
             int bSuccess = false;
             const auto nErrorCounterBefore = CPLGetErrorCounter();
