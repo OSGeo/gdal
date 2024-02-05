@@ -102,7 +102,7 @@ mv /build/usr/bin                    /build_gdal_version_changing/usr
 
 if [ "${WITH_DEBUG_SYMBOLS}" = "yes" ]; then
     # separate debug symbols
-    for P in "/build_gdal_version_changing/usr/lib/${GCC_ARCH}-linux-gnu"/* /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so /build_gdal_version_changing/usr/bin/*; do
+    for P in "/build_gdal_version_changing/usr/lib/${GCC_ARCH}-linux-gnu"/* "/build_gdal_version_changing/usr/lib/${GCC_ARCH}-linux-gnu"/gdalplugins/* /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so /build_gdal_version_changing/usr/bin/*; do
         if file -h "$P" | grep -qi elf; then
             F=$(basename "$P")
             mkdir -p "$(dirname "$P")/.debug"
@@ -114,6 +114,7 @@ if [ "${WITH_DEBUG_SYMBOLS}" = "yes" ]; then
     done
 else
     for P in "/build_gdal_version_changing/usr/lib/${GCC_ARCH}-linux-gnu"/*; do ${GCC_ARCH}-linux-gnu-strip -s "$P" 2>/dev/null || /bin/true; done
+    for P in "/build_gdal_version_changing/usr/lib/${GCC_ARCH}-linux-gnu"/gdalplugins/*; do ${GCC_ARCH}-linux-gnu-strip -s "$P" 2>/dev/null || /bin/true; done
     for P in /build_gdal_python/usr/lib/python3/dist-packages/osgeo/*.so; do ${GCC_ARCH}-linux-gnu-strip -s "$P" 2>/dev/null || /bin/true; done
     for P in /build_gdal_version_changing/usr/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s "$P" 2>/dev/null || /bin/true; done
 fi
