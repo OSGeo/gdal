@@ -3734,17 +3734,58 @@ def test_vsis3_sync_win32_special_filenames(aws_test_config, webserver_port, tmp
 
     prefix_path = "\\\\?\\" + tmp_path_str
 
-    f = gdal.VSIFOpenL(prefix_path + "\\testsync.txt", "wb")
-    assert f
-    gdal.VSIFCloseL(f)
-
-    # S3 to local: S3 file is newer
+    # S3 to local
     gdal.VSICurlClearCache()
     handler = webserver.SequentialHandler()
-
     handler.add(
         "GET",
-        "/out/testsync.txt",
+        "/bucket/",
+        200,
+        {},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Marker/>
+                <IsTruncated>false</IsTruncated>
+                <Contents>
+                    <Key>subdir/</Key>
+                    <LastModified>2037-01-01T00:00:01.000Z</LastModified>
+                    <Size>0</Size>
+                </Contents>
+                <Contents>
+                    <Key>subdir/testsync.txt</Key>
+                    <LastModified>2037-01-01T00:00:01.000Z</LastModified>
+                    <Size>3</Size>
+                </Contents>
+            </ListBucketResult>
+        """,
+    )
+    handler.add(
+        "GET",
+        "/bucket/",
+        200,
+        {},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Marker/>
+                <IsTruncated>false</IsTruncated>
+                <Contents>
+                    <Key>subdir/</Key>
+                    <LastModified>2037-01-01T00:00:01.000Z</LastModified>
+                    <Size>0</Size>
+                </Contents>
+                <Contents>
+                    <Key>subdir/testsync.txt</Key>
+                    <LastModified>2037-01-01T00:00:01.000Z</LastModified>
+                    <Size>3</Size>
+                </Contents>
+            </ListBucketResult>
+        """,
+    )
+    handler.add(
+        "GET",
+        "/bucket/subdir/testsync.txt",
         206,
         {
             "Content-Length": "3",
@@ -3755,15 +3796,35 @@ def test_vsis3_sync_win32_special_filenames(aws_test_config, webserver_port, tmp
     )
     handler.add(
         "GET",
-        "/out/testsync.txt",
+        "/bucket/?delimiter=%2F&prefix=subdir%2F",
+        200,
+        {},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>subdir/</Prefix>
+                <Marker/>
+                <IsTruncated>false</IsTruncated>
+                <Contents>
+                    <Key>subdir/testsync.txt</Key>
+                    <LastModified>2037-01-01T00:00:01.000Z</LastModified>
+                    <Size>3</Size>
+                </Contents>
+            </ListBucketResult>
+        """,
+    )
+    handler.add(
+        "GET",
+        "/bucket/subdir/testsync.txt",
         200,
         {"Content-Length": "3", "Last-Modified": "Mon, 01 Jan 2037 00:00:01 GMT"},
         "foo",
     )
     with webserver.install_http_handler(handler):
-        assert gdal.Sync("/vsis3/out/testsync.txt", prefix_path, options=options)
+        assert gdal.Sync("/vsis3/bucket/", prefix_path, options=options)
 
-    # Local to S3: S3 file is newer
+    assert gdal.VSIStatL(prefix_path + "\\subdir\\testsync.txt") is not None
+
+    # Local to S3
     gdal.VSICurlClearCache()
     handler = webserver.SequentialHandler()
     handler.add("GET", "/out/", 404)
@@ -3779,14 +3840,12 @@ def test_vsis3_sync_win32_special_filenames(aws_test_config, webserver_port, tmp
                 <Marker/>
                 <IsTruncated>false</IsTruncated>
                 <Contents>
-                    <Key>testsync.txt</Key>
-                    <LastModified>2037-01-01T00:00:01.000Z</LastModified>
-                    <Size>3</Size>
                 </Contents>
             </ListBucketResult>
         """,
     )
-    handler.add("PUT", "/out/testsync.txt", 200)
+    handler.add("PUT", "/out/subdir/", 200)
+    handler.add("PUT", "/out/subdir/testsync.txt", 200)
     with webserver.install_http_handler(handler):
         assert gdal.Sync(prefix_path + "\\", "/vsis3/out/", options=options)
 
