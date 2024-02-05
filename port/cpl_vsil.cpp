@@ -192,6 +192,11 @@ const char *VSIGetDirectorySeparator(const char *pszPath)
  * Note that no error is issued via CPLError() if the directory path is
  * invalid, though NULL is returned.
  *
+ * Note: since GDAL 3.9, for recursive mode, the directory separator will no
+ * longer be always forward slash, but will be the one returned by
+ * VSIGetDirectorySeparator(pszPathIn), so potentially backslash on Windows
+ * file systems.
+ *
  * @param pszPathIn the relative, or absolute path of a directory to read.
  * UTF-8 encoded.
  *
@@ -204,11 +209,7 @@ const char *VSIGetDirectorySeparator(const char *pszPath)
 
 char **VSIReadDirRecursive(const char *pszPathIn)
 {
-#if defined(_WIN32)
-    const char SEP = pszPathIn[0] == '\\' ? '\\' : '/';
-#else
-    constexpr char SEP = '/';
-#endif
+    const char SEP = VSIGetDirectorySeparator(pszPathIn)[0];
 
     const char *const apszOptions[] = {"NAME_AND_TYPE_ONLY=YES", nullptr};
     VSIDIR *psDir = VSIOpenDir(pszPathIn, -1, apszOptions);
@@ -315,6 +316,11 @@ VSIDIR *VSIOpenDir(const char *pszPath, int nRecurseDepth,
  *
  * The returned entry remains valid until the next call to VSINextDirEntry()
  * or VSICloseDir() with the same handle.
+ *
+ * Note: since GDAL 3.9, for recursive mode, the directory separator will no
+ * longer be always forward slash, but will be the one returned by
+ * VSIGetDirectorySeparator(pszPathIn), so potentially backslash on Windows
+ * file systems.
  *
  * @param dir Directory handled returned by VSIOpenDir(). Must not be NULL.
  *
@@ -1396,11 +1402,7 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
                                 GDALProgressFunc pProgressFunc,
                                 void *pProgressData, char ***ppapszOutputs)
 {
-#if defined(_WIN32)
-    const char SOURCE_SEP = pszSource[0] == '\\' ? '\\' : '/';
-#else
-    constexpr char SOURCE_SEP = '/';
-#endif
+    const char SOURCE_SEP = VSIGetDirectorySeparator(pszSource)[0];
 
     if (ppapszOutputs)
     {
@@ -1685,11 +1687,7 @@ VSIDIR *VSIFilesystemHandler::OpenDir(const char *pszPath, int nRecurseDepth,
 
 const VSIDIREntry *VSIDIRGeneric::NextDirEntry()
 {
-#if defined(_WIN32)
-    const char SEP = osRootPath[0] == '\\' ? '\\' : '/';
-#else
-    constexpr char SEP = '/';
-#endif
+    const char SEP = VSIGetDirectorySeparator(osRootPath.c_str())[0];
 
 begin:
     if (VSI_ISDIR(entry.nMode) && nRecurseDepth != 0)
@@ -1837,11 +1835,7 @@ int VSIFilesystemHandler::RmdirRecursive(const char *pszDirname)
         osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
     }
 
-#if defined(_WIN32)
-    const char SEP = pszDirname[0] == '\\' ? '\\' : '/';
-#else
-    constexpr char SEP = '/';
-#endif
+    const char SEP = VSIGetDirectorySeparator(pszDirname)[0];
 
     CPLStringList aosOptions;
     auto poDir =

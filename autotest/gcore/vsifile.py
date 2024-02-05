@@ -937,8 +937,9 @@ def test_vsifile_opendir(basepath):
     for i in range(4):
         entry = gdal.GetNextDirEntry(d)
         assert entry
-        if entry.name == "test":
-            entries_found.append(entry.name)
+        name = entry.name.replace("\\", "/")
+        if name == "test":
+            entries_found.append(name)
             assert (entry.mode & 32768) != 0
             assert entry.modeKnown
             assert entry.size == 3
@@ -946,14 +947,14 @@ def test_vsifile_opendir(basepath):
             assert entry.mtime != 0
             assert entry.mtimeKnown
             assert not entry.extra
-        elif entry.name == "subdir":
-            entries_found.append(entry.name)
+        elif name == "subdir":
+            entries_found.append(name)
             assert (entry.mode & 16384) != 0
-        elif entry.name == "subdir/subdir2":
-            entries_found.append(entry.name)
+        elif name == "subdir/subdir2":
+            entries_found.append(name)
             assert (entry.mode & 16384) != 0
-        elif entry.name == "subdir/subdir2/test2":
-            entries_found.append(entry.name)
+        elif name == "subdir/subdir2/test2":
+            entries_found.append(name)
             assert (entry.mode & 32768) != 0
         else:
             assert False, entry.name
@@ -970,19 +971,20 @@ def test_vsifile_opendir(basepath):
     for i in range(4):
         entry = gdal.GetNextDirEntry(d)
         assert entry
-        if entry.name == "test":
-            entries_found.append(entry.name)
+        name = entry.name.replace("\\", "/")
+        if name == "test":
+            entries_found.append(name)
             assert (entry.mode & 32768) != 0
             if os.name == "posix" and basepath == "tmp/":
                 assert entry.size == 0
-        elif entry.name == "subdir":
-            entries_found.append(entry.name)
+        elif name == "subdir":
+            entries_found.append(name)
             assert (entry.mode & 16384) != 0
-        elif entry.name == "subdir/subdir2":
-            entries_found.append(entry.name)
+        elif name == "subdir/subdir2":
+            entries_found.append(name)
             assert (entry.mode & 16384) != 0
-        elif entry.name == "subdir/subdir2/test2":
-            entries_found.append(entry.name)
+        elif name == "subdir/subdir2/test2":
+            entries_found.append(name)
             assert (entry.mode & 32768) != 0
             if os.name == "posix" and basepath == "tmp/":
                 assert entry.size == 0
@@ -1009,7 +1011,10 @@ def test_vsifile_opendir(basepath):
 
     # Depth 1
     files = set(
-        [l_entry.name for l_entry in gdal.listdir(basepath + "/vsifile_opendir", 1)]
+        [
+            l_entry.name.replace("\\", "/")
+            for l_entry in gdal.listdir(basepath + "/vsifile_opendir", 1)
+        ]
     )
     assert files == set(["test", "subdir", "subdir/subdir2"])
 
@@ -1030,18 +1035,19 @@ def test_vsifile_opendir(basepath):
     entry = gdal.GetNextDirEntry(d)
     assert entry.name == "subdir"
     entry = gdal.GetNextDirEntry(d)
-    assert entry.name == "subdir/subdir2"
+    sep = "\\" if "\\" in entry.name else "/"
+    assert entry.name.replace("\\", "/") == "subdir/subdir2"
     entry = gdal.GetNextDirEntry(d)
-    assert entry.name == "subdir/subdir2/test2"
+    assert entry.name.replace("\\", "/") == "subdir/subdir2/test2"
     entry = gdal.GetNextDirEntry(d)
     assert not entry
     gdal.CloseDir(d)
 
-    d = gdal.OpenDir(basepath + "/vsifile_opendir", -1, ["PREFIX=subdir/sub"])
+    d = gdal.OpenDir(basepath + "/vsifile_opendir", -1, ["PREFIX=subdir" + sep + "sub"])
     entry = gdal.GetNextDirEntry(d)
-    assert entry.name == "subdir/subdir2"
+    assert entry.name.replace("\\", "/") == "subdir/subdir2"
     entry = gdal.GetNextDirEntry(d)
-    assert entry.name == "subdir/subdir2/test2"
+    assert entry.name.replace("\\", "/") == "subdir/subdir2/test2"
     entry = gdal.GetNextDirEntry(d)
     assert not entry
     gdal.CloseDir(d)

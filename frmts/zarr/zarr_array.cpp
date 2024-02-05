@@ -2210,12 +2210,16 @@ bool ZarrArray::CacheTilePresence()
              "present...",
              osDirectoryName.c_str());
     uint64_t nCounter = 0;
+    const char chSrcFilenameDirSeparator =
+        VSIGetDirectorySeparator(osDirectoryName.c_str())[0];
     while (const VSIDIREntry *psEntry = VSIGetNextDirEntry(psDir))
     {
         if (!VSI_ISDIR(psEntry->nMode))
         {
-            const CPLStringList aosTokens =
-                GetTileIndicesFromFilename(psEntry->pszName);
+            const CPLStringList aosTokens = GetTileIndicesFromFilename(
+                CPLString(psEntry->pszName)
+                    .replaceAll(chSrcFilenameDirSeparator, '/')
+                    .c_str());
             if (aosTokens.size() == static_cast<int>(m_aoDims.size()))
             {
                 // Get tile indices from filename
