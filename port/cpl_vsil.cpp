@@ -156,6 +156,27 @@ char **VSISiblingFiles(const char *pszFilename)
 }
 
 /************************************************************************/
+/*                      VSIGetDirectorySeparator()                      */
+/************************************************************************/
+
+/** Return the directory separator for the specified path.
+ *
+ * Default is forward slash. The only exception currently is the Windows
+ * file system which returns anti-slash, unless the specified path is of the
+ * form "{drive_letter}:/{rest_of_the_path}".
+ *
+ * @since 3.9
+ */
+const char *VSIGetDirectorySeparator(const char *pszPath)
+{
+    if (STARTS_WITH(pszPath, "http://") || STARTS_WITH(pszPath, "https://"))
+        return "/";
+
+    VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszPath);
+    return poFSHandler->GetDirectorySeparator(pszPath);
+}
+
+/************************************************************************/
 /*                             VSIReadRecursive()                       */
 /************************************************************************/
 
