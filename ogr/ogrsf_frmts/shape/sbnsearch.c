@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT OR LGPL-2.0-or-later
  ******************************************************************************/
 
-#include "shapefil.h"
+#include "shapefil_private.h"
 
 #include <assert.h>
 #include <math.h>
@@ -32,18 +32,6 @@
 #endif
 
 #define CACHED_DEPTH_LIMIT 8
-
-#ifdef __cplusplus
-#define STATIC_CAST(type, x) static_cast<type>(x)
-#define REINTERPRET_CAST(type, x) reinterpret_cast<type>(x)
-#define CONST_CAST(type, x) const_cast<type>(x)
-#define SHPLIB_NULLPTR nullptr
-#else
-#define STATIC_CAST(type, x) ((type)(x))
-#define REINTERPRET_CAST(type, x) ((type)(x))
-#define CONST_CAST(type, x) ((type)(x))
-#define SHPLIB_NULLPTR NULL
-#endif
 
 #define READ_MSB_INT(ptr)                                                      \
     STATIC_CAST(int, (((STATIC_CAST(unsigned, (ptr)[0])) << 24) |              \
@@ -110,44 +98,12 @@ typedef struct
 } SearchStruct;
 
 /************************************************************************/
-/*                              SwapWord()                              */
-/*                                                                      */
-/*      Swap a 2, 4 or 8 byte word.                                     */
-/************************************************************************/
-
-#ifndef SwapWord_defined
-#define SwapWord_defined
-static void SwapWord(int length, void *wordP)
-{
-    for (int i = 0; i < length / 2; i++)
-    {
-        const unsigned char temp = STATIC_CAST(unsigned char *, wordP)[i];
-        STATIC_CAST(unsigned char *, wordP)
-        [i] = STATIC_CAST(unsigned char *, wordP)[length - i - 1];
-        STATIC_CAST(unsigned char *, wordP)[length - i - 1] = temp;
-    }
-}
-#endif
-
-/************************************************************************/
 /*                         SBNOpenDiskTree()                            */
 /************************************************************************/
 
 SBNSearchHandle SBNOpenDiskTree(const char *pszSBNFilename,
                                 const SAHooks *psHooks)
 {
-    /* -------------------------------------------------------------------- */
-    /*  Establish the byte order on this machine.                           */
-    /* -------------------------------------------------------------------- */
-    bool bBigEndian;
-    {
-        int i = 1;
-        if (*REINTERPRET_CAST(unsigned char *, &i) == 1)
-            bBigEndian = false;
-        else
-            bBigEndian = true;
-    }
-
     /* -------------------------------------------------------------------- */
     /*      Initialize the handle structure.                                */
     /* -------------------------------------------------------------------- */
@@ -186,18 +142,17 @@ SBNSearchHandle SBNOpenDiskTree(const char *pszSBNFilename,
     /*      Read shapes bounding box.                                       */
     /* -------------------------------------------------------------------- */
 
+#if !defined(SHP_BIG_ENDIAN)
+    SHP_SWAPDOUBLE_CPY(&hSBN->dfMinX, abyHeader + 32);
+    SHP_SWAPDOUBLE_CPY(&hSBN->dfMinY, abyHeader + 40);
+    SHP_SWAPDOUBLE_CPY(&hSBN->dfMaxX, abyHeader + 48);
+    SHP_SWAPDOUBLE_CPY(&hSBN->dfMaxY, abyHeader + 56);
+#else
     memcpy(&hSBN->dfMinX, abyHeader + 32, 8);
     memcpy(&hSBN->dfMinY, abyHeader + 40, 8);
     memcpy(&hSBN->dfMaxX, abyHeader + 48, 8);
     memcpy(&hSBN->dfMaxY, abyHeader + 56, 8);
-
-    if (!bBigEndian)
-    {
-        SwapWord(8, &hSBN->dfMinX);
-        SwapWord(8, &hSBN->dfMinY);
-        SwapWord(8, &hSBN->dfMaxX);
-        SwapWord(8, &hSBN->dfMaxY);
-    }
+#endif
 
     if (hSBN->dfMinX > hSBN->dfMaxX || hSBN->dfMinY > hSBN->dfMaxY)
     {
