@@ -56,7 +56,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define OGR_L_GetNextFeature_function(a)    ptr_MM_OGR_L_GetNextFeature((a))
     #define OGR_L_ResetReading_function(a)      ptr_MM_OGR_L_ResetReading((a))
     #define GDALDatasetGetLayer_function(a,b)   ptr_MM_GDALDatasetGetLayer((a),(b))
-    #define CPLRecode_function(a,b,c)           PTR_MM_CPLRecode((a),(b),(c))
+    #define CPLRecode_function(a,b,c)           ptr_MM_CPLRecode((a),(b),(c))
     #define form_filename_function(a,b)         MuntaPath((a),(b),TRUE)
     #define MM_CPLGetBasename(a)                    TreuAdreca((a))
 #else
