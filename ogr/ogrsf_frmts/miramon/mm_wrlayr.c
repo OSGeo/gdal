@@ -99,8 +99,6 @@ int MMCheckVersionForFID(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
 // Extended DBF functions
 int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer);
-int MM_WriteNRecordsMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
-    struct MMAdmDatabase *MMAdmDB);
 int MMAddDBFRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer, 
                         struct MiraMonFeature *hMMFeature);
 int MMAddPointRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer, 
@@ -1217,8 +1215,8 @@ int MMInitArcLayer(struct MiraMonVectLayerInfo* hMiraMonLayer)
             strcat(pMMArcLayer->MMAdmDB.pszExtDBFLayerName, "_boundA.dbf");
         else
         {
-            strcpy(pMMArcLayer->pszREL_LayerName, pMMArcLayer->pszLayerName);
-            MMChangeMMRareExtension(pMMArcLayer->pszREL_LayerName, "A.dbf");
+            strcpy(pMMArcLayer->MMAdmDB.pszExtDBFLayerName, pMMArcLayer->pszLayerName);
+            MMChangeMMRareExtension(pMMArcLayer->MMAdmDB.pszExtDBFLayerName, "A.dbf");
         }
     }
     else
@@ -1448,6 +1446,7 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer)
             // StringLine associated to the polygon
             pszArcLayerName = strdup_function(ReturnValueFromSectionINIFile( pMMPolygonLayer->pszREL_LayerName,
                 SECTION_OVVW_ASPECTES_TECNICS, KEY_ArcSource));
+            MM_RemoveInitial_and_FinalQuotationMarks(pszArcLayerName);
 
             // If extension is not specified, then we'll use ".arc"
             pszExt=get_extension_function(pszArcLayerName);
@@ -4483,11 +4482,12 @@ FILE_TYPE *pF;
 time_t currentTime;
 struct tm *pLocalTime;
 char aTimeString[30];
+#define LineReturn "\r\n"
 
     if(!hMMMD->aLayerName)
         return 0;
 
-    if(NULL==(pF=fopen_function(hMMMD->aLayerName, "w+b")))
+    if(NULL==(pF=fopen_function(hMMMD->aLayerName, "wb")))
     {
         MM_CPLError(CE_Failure, CPLE_OpenFailed,
                              "The file %s must exist.",
@@ -4496,72 +4496,72 @@ char aTimeString[30];
     }
    
     // Writing MiraMon version section
-    printf_function(pF, "[%s]\r\n", SECTION_VERSIO);
+    printf_function(pF, "[%s]"LineReturn, SECTION_VERSIO);
     
-    printf_function(pF, "%s=%u\r\n", KEY_Vers, (unsigned)MM_VERS);
-    printf_function(pF, "%s=%u\r\n", KEY_SubVers, (unsigned)MM_SUBVERS);
+    printf_function(pF, "%s=%u"LineReturn, KEY_Vers, (unsigned)MM_VERS);
+    printf_function(pF, "%s=%u"LineReturn, KEY_SubVers, (unsigned)MM_SUBVERS);
 
-    printf_function(pF, "%s=%u\r\n", KEY_VersMetaDades, (unsigned)MM_VERS_METADADES);
-    printf_function(pF, "%s=%u\r\n", KEY_SubVersMetaDades, (unsigned)MM_SUBVERS_METADADES);
+    printf_function(pF, "%s=%u"LineReturn, KEY_VersMetaDades, (unsigned)MM_VERS_METADADES);
+    printf_function(pF, "%s=%u"LineReturn, KEY_SubVersMetaDades, (unsigned)MM_SUBVERS_METADADES);
 
     // Writing METADADES section
-    printf_function(pF, "\r\n[%s]\r\n", SECTION_METADADES);
+    printf_function(pF, "\r\n[%s]"LineReturn, SECTION_METADADES);
     strcpy(aMessage, hMMMD->aLayerName);
     strcpy(aFileIdentifier, GenerateFileIdentifierFromMetadataFileName(aMessage));
-    printf_function(pF, "%s=%s\r\n", KEY_FileIdentifier, aFileIdentifier);
-    printf_function(pF, "%s=%s\r\n", KEY_language, KEY_Value_eng);
-    printf_function(pF, "%s=%s\r\n", KEY_MDIdiom, KEY_Value_eng);
-    printf_function(pF, "%s=%s\r\n", KEY_characterSet, KEY_Value_characterSet);
+    printf_function(pF, "%s=%s"LineReturn, KEY_FileIdentifier, aFileIdentifier);
+    printf_function(pF, "%s=%s"LineReturn, KEY_language, KEY_Value_eng);
+    printf_function(pF, "%s=%s"LineReturn, KEY_MDIdiom, KEY_Value_eng);
+    printf_function(pF, "%s=%s"LineReturn, KEY_characterSet, KEY_Value_characterSet);
 
     // Writing IDENTIFICATION section
-    printf_function(pF, "\r\n[%s]\r\n", SECTION_IDENTIFICATION);
-    printf_function(pF, "%s=%s\r\n", KEY_code, aFileIdentifier);
-    printf_function(pF, "%s=\r\n", KEY_codeSpace);
+    printf_function(pF, LineReturn"[%s]"LineReturn, SECTION_IDENTIFICATION);
+    printf_function(pF, "%s=%s"LineReturn, KEY_code, aFileIdentifier);
+    printf_function(pF, "%s="LineReturn, KEY_codeSpace);
     if(hMMMD->szLayerTitle && !IsEmptyString(hMMMD->szLayerTitle))
     {
         if(hMMMD->ePlainLT==MM_LayerType_Point)
-            printf_function(pF, "%s=%s (pnt)\r\n", KEY_DatasetTitle, hMMMD->szLayerTitle);
+            printf_function(pF, "%s=%s (pnt)"LineReturn, KEY_DatasetTitle, hMMMD->szLayerTitle);
         if(hMMMD->ePlainLT==MM_LayerType_Arc)
-            printf_function(pF, "%s=%s (arc)\r\n", KEY_DatasetTitle, hMMMD->szLayerTitle);
+            printf_function(pF, "%s=%s (arc)"LineReturn, KEY_DatasetTitle, hMMMD->szLayerTitle);
         if(hMMMD->ePlainLT==MM_LayerType_Pol)
-            printf_function(pF, "%s=%s (pol)\r\n", KEY_DatasetTitle, hMMMD->szLayerTitle);
+            printf_function(pF, "%s=%s (pol)"LineReturn, KEY_DatasetTitle, hMMMD->szLayerTitle);
     }
-    printf_function(pF, "%s=%s\r\n", KEY_language, KEY_Value_eng);
+    printf_function(pF, "%s=%s"LineReturn, KEY_language, KEY_Value_eng);
 
     if(hMMMD->ePlainLT!=MM_LayerType_Node)
     {
         if(hMMMD->pSRS && hMMMD->ePlainLT!=MM_LayerType_Pol)
         {
-            printf_function(pF, "\r\n[%s:%s]\r\n", SECTION_SPATIAL_REFERENCE_SYSTEM, SECTION_HORIZONTAL);
+            printf_function(pF, LineReturn"[%s:%s]"LineReturn, SECTION_SPATIAL_REFERENCE_SYSTEM, SECTION_HORIZONTAL);
             if(!ReturnMMIDSRSFromEPSGCodeSRS(hMMMD->pSRS,aMMIDSRS) && !IsEmptyString(aMMIDSRS))
-                printf_function(pF, "%s=%s\r\n", KEY_HorizontalSystemIdentifier, aMMIDSRS);
+                printf_function(pF, "%s=%s"LineReturn, KEY_HorizontalSystemIdentifier, aMMIDSRS);
             else
             {
                 MM_CPLWarning(CE_Warning, CPLE_NotSupported,
                             "The MiraMon driver cannot assign any HRS.");
     
-                printf_function(pF, "%s=plane\r\n", KEY_HorizontalSystemIdentifier);
-                printf_function(pF, "%s=local\r\n", KEY_HorizontalSystemDefinition);
+                printf_function(pF, "%s=plane"LineReturn, KEY_HorizontalSystemIdentifier);
+                printf_function(pF, "%s=local"LineReturn, KEY_HorizontalSystemDefinition);
                 if(hMMMD->pXUnit)
-                    printf_function(pF, "%s=%s\r\n", KEY_unitats, hMMMD->pXUnit);
+                    printf_function(pF, "%s=%s"LineReturn, KEY_unitats, hMMMD->pXUnit);
                 if(hMMMD->pYUnit)
                 {
                     if(!hMMMD->pXUnit || stricmp(hMMMD->pXUnit, hMMMD->pYUnit))
-                        printf_function(pF, "%s=%s\r\n", KEY_unitatsY, hMMMD->pYUnit);
+                        printf_function(pF, "%s=%s"LineReturn, KEY_unitatsY, hMMMD->pYUnit);
                 }
             }
         }
         else
         {
-            printf_function(pF, "%s=plane\r\n", KEY_HorizontalSystemIdentifier);
-            printf_function(pF, "%s=local\r\n", KEY_HorizontalSystemDefinition);
+            printf_function(pF, "%s=plane"LineReturn, KEY_HorizontalSystemIdentifier);
+            printf_function(pF, "%s=local"LineReturn, KEY_HorizontalSystemDefinition);
             if(hMMMD->pXUnit)
             {
-                printf_function(pF, "%s=%s\r\n", KEY_unitats, hMMMD->pXUnit);
+                printf_function(pF, "%s=%s"LineReturn, KEY_unitats, hMMMD->pXUnit);
                 if(hMMMD->pYUnit)
                 {
                     if(!hMMMD->pXUnit || stricmp(hMMMD->pXUnit, hMMMD->pYUnit))
-                        printf_function(pF, "%s=%s\r\n", KEY_unitatsY, hMMMD->pYUnit);
+                        printf_function(pF, "%s=%s"LineReturn, KEY_unitatsY, hMMMD->pYUnit);
                 }
             }
         }
@@ -4571,141 +4571,141 @@ char aTimeString[30];
     // ArcSource=fitx_pol.arc
     if(hMMMD->ePlainLT==MM_LayerType_Pol)
     {
-        printf_function(pF, "\r\n[%s]\r\n", SECTION_OVVW_ASPECTES_TECNICS);
-        printf_function(pF, "%s=\"%s\"\r\n", KEY_ArcSource, hMMMD->aArcFile);
+        printf_function(pF, LineReturn"[%s]"LineReturn, SECTION_OVVW_ASPECTES_TECNICS);
+        printf_function(pF, "%s=\"%s\""LineReturn, KEY_ArcSource, hMMMD->aArcFile);
     }
     
     // Writing EXTENT section
-    printf_function(pF, "\r\n[%s]\r\n", SECTION_EXTENT);
-    printf_function(pF, "%s=0\r\n", KEY_toler_env);
+    printf_function(pF, LineReturn"[%s]"LineReturn, SECTION_EXTENT);
+    printf_function(pF, "%s=0"LineReturn, KEY_toler_env);
     
     if(hMMMD->hBB.dfMinX!=MM_UNDEFINED_STATISTICAL_VALUE &&
         hMMMD->hBB.dfMaxX!=-MM_UNDEFINED_STATISTICAL_VALUE &&
         hMMMD->hBB.dfMinY!=MM_UNDEFINED_STATISTICAL_VALUE &&
         hMMMD->hBB.dfMaxY!=-MM_UNDEFINED_STATISTICAL_VALUE)
     {
-        printf_function(pF, "%s=%lf\r\n", KEY_MinX, hMMMD->hBB.dfMinX);
-        printf_function(pF, "%s=%lf\r\n", KEY_MaxX, hMMMD->hBB.dfMaxX);
-        printf_function(pF, "%s=%lf\r\n", KEY_MinY, hMMMD->hBB.dfMinY);
-        printf_function(pF, "%s=%lf\r\n", KEY_MaxY, hMMMD->hBB.dfMaxY);
+        printf_function(pF, "%s=%lf"LineReturn, KEY_MinX, hMMMD->hBB.dfMinX);
+        printf_function(pF, "%s=%lf"LineReturn, KEY_MaxX, hMMMD->hBB.dfMaxX);
+        printf_function(pF, "%s=%lf"LineReturn, KEY_MinY, hMMMD->hBB.dfMinY);
+        printf_function(pF, "%s=%lf"LineReturn, KEY_MaxY, hMMMD->hBB.dfMaxY);
     }
     
     // Writing OVERVIEW section
-    printf_function(pF, "\r\n[%s]\r\n", SECTION_OVERVIEW);
+    printf_function(pF, LineReturn"[%s]"LineReturn, SECTION_OVERVIEW);
         
     currentTime = time(NULL);
     pLocalTime = localtime(&currentTime);
     sprintf(aTimeString, "%04d%02d%02d %02d%02d%02d%02d+00:00",
         pLocalTime->tm_year + 1900, pLocalTime->tm_mon + 1, pLocalTime->tm_mday,
         pLocalTime->tm_hour, pLocalTime->tm_min, pLocalTime->tm_sec, 0);
-    printf_function(pF, "%s=%s\r\n", KEY_CreationDate, aTimeString);
+    printf_function(pF, "%s=%s"LineReturn, KEY_CreationDate, aTimeString);
 
-    printf_function(pF, "\r\n");
-    printf_function(pF, "[TAULA_PRINCIPAL]\r\n");
-    printf_function(pF, "IdGrafic=ID_GRAFIC\r\n");
-    printf_function(pF, "TipusRelacio=RELACIO_1_1_DICC\r\n");
+    printf_function(pF, LineReturn);
+    printf_function(pF, "[TAULA_PRINCIPAL]"LineReturn);
+    printf_function(pF, "IdGrafic=ID_GRAFIC"LineReturn);
+    printf_function(pF, "TipusRelacio=RELACIO_1_1_DICC"LineReturn);
 
-    printf_function(pF, "\r\n");
-    printf_function(pF, "[TAULA_PRINCIPAL:ID_GRAFIC]\r\n");
-    printf_function(pF, "visible=1\r\n");
-    printf_function(pF, "MostrarUnitats=0\r\n");
-    printf_function(pF, "descriptor=Internal graphic identifier\r\n");
+    printf_function(pF, LineReturn);
+    printf_function(pF, "[TAULA_PRINCIPAL:ID_GRAFIC]"LineReturn);
+    printf_function(pF, "visible=1"LineReturn);
+    printf_function(pF, "MostrarUnitats=0"LineReturn);
+    printf_function(pF, "descriptor=Internal graphic identifier"LineReturn);
     
     if(hMMMD->ePlainLT==MM_LayerType_Arc)
     {
-        printf_function(pF, "\r\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:N_VERTEXS]\r\n");
-        printf_function(pF, "visible=0\r\n");
-        printf_function(pF, "simbolitzable=0\r\n");
-        printf_function(pF, "MostrarUnitats=0\r\n");
-        printf_function(pF, "descriptor=Number of vertices\r\n");
+        printf_function(pF, LineReturn);
+        printf_function(pF, "[TAULA_PRINCIPAL:N_VERTEXS]"LineReturn);
+        printf_function(pF, "visible=0"LineReturn);
+        printf_function(pF, "simbolitzable=0"LineReturn);
+        printf_function(pF, "MostrarUnitats=0"LineReturn);
+        printf_function(pF, "descriptor=Number of vertices"LineReturn);
 
-        printf_function(pF, "\r\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:LONG_ARC]\r\n");
-        printf_function(pF, "visible=0\r\n");
-        printf_function(pF, "simbolitzable=0\r\n");
-        printf_function(pF, "MostrarUnitats=0\r\n");
-        printf_function(pF, "descriptor=Lenght of arc\r\n");
+        printf_function(pF, LineReturn);
+        printf_function(pF, "[TAULA_PRINCIPAL:LONG_ARC]"LineReturn);
+        printf_function(pF, "visible=0"LineReturn);
+        printf_function(pF, "simbolitzable=0"LineReturn);
+        printf_function(pF, "MostrarUnitats=0"LineReturn);
+        printf_function(pF, "descriptor=Lenght of arc"LineReturn);
 
-        printf_function(pF, "\r\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:NODE_INI]\r\n");
-        printf_function(pF, "visible=0\r\n");
-        printf_function(pF, "simbolitzable=0\r\n");
-        printf_function(pF, "MostrarUnitats=0\r\n");
-        printf_function(pF, "descriptor=Initial node\r\n");
+        printf_function(pF, LineReturn);
+        printf_function(pF, "[TAULA_PRINCIPAL:NODE_INI]"LineReturn);
+        printf_function(pF, "visible=0"LineReturn);
+        printf_function(pF, "simbolitzable=0"LineReturn);
+        printf_function(pF, "MostrarUnitats=0"LineReturn);
+        printf_function(pF, "descriptor=Initial node"LineReturn);
 
-        printf_function(pF, "\r\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:NODE_FI]\r\n");
-        printf_function(pF, "visible=0\r\n");
-        printf_function(pF, "simbolitzable=0\r\n");
-        printf_function(pF, "MostrarUnitats=0\r\n");
-        printf_function(pF, "descriptor=Final node\r\n");
+        printf_function(pF, LineReturn);
+        printf_function(pF, "[TAULA_PRINCIPAL:NODE_FI]"LineReturn);
+        printf_function(pF, "visible=0"LineReturn);
+        printf_function(pF, "simbolitzable=0"LineReturn);
+        printf_function(pF, "MostrarUnitats=0"LineReturn);
+        printf_function(pF, "descriptor=Final node"LineReturn);
 
-        printf_function(pF, "[GEOMETRIA_I_TOPOLOGIA]\r\n");
-        printf_function(pF, "NomCampNVertexs=N_VERTEXS\r\n");
-        printf_function(pF, "NomCampLongitudArc=LONG_ARC\r\n");
-        printf_function(pF, "NomCampNodeIni=NODE_INI\r\n");
-        printf_function(pF, "NomCampNodeFi=NODE_FI\r\n");
+        printf_function(pF, "[GEOMETRIA_I_TOPOLOGIA]"LineReturn);
+        printf_function(pF, "NomCampNVertexs=N_VERTEXS"LineReturn);
+        printf_function(pF, "NomCampLongitudArc=LONG_ARC"LineReturn);
+        printf_function(pF, "NomCampNodeIni=NODE_INI"LineReturn);
+        printf_function(pF, "NomCampNodeFi=NODE_FI"LineReturn);
     }
     else if(hMMMD->ePlainLT==MM_LayerType_Node)
     {
-        printf_function(pF, "\r\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:ARCS_A_NOD]\r\n");
-        printf_function(pF, "visible=0\r\n");
-        printf_function(pF, "simbolitzable=0\r\n");
-        printf_function(pF, "MostrarUnitats=0\r\n");
-        printf_function(pF, "descriptor=Number of arcs to node\r\n");
+        printf_function(pF, LineReturn);
+        printf_function(pF, "[TAULA_PRINCIPAL:ARCS_A_NOD]"LineReturn);
+        printf_function(pF, "visible=0"LineReturn);
+        printf_function(pF, "simbolitzable=0"LineReturn);
+        printf_function(pF, "MostrarUnitats=0"LineReturn);
+        printf_function(pF, "descriptor=Number of arcs to node"LineReturn);
 
-        printf_function(pF, "\r\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:TIPUS_NODE]\r\n");
-        printf_function(pF, "visible=0\r\n");
-        printf_function(pF, "simbolitzable=0\r\n");
-        printf_function(pF, "MostrarUnitats=0\r\n");
-        printf_function(pF, "descriptor=Node type\r\n");
+        printf_function(pF, LineReturn);
+        printf_function(pF, "[TAULA_PRINCIPAL:TIPUS_NODE]"LineReturn);
+        printf_function(pF, "visible=0"LineReturn);
+        printf_function(pF, "simbolitzable=0"LineReturn);
+        printf_function(pF, "MostrarUnitats=0"LineReturn);
+        printf_function(pF, "descriptor=Node type"LineReturn);
     }
     else if(hMMMD->ePlainLT==MM_LayerType_Pol)
     {
-        printf_function(pF, "\r\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:N_VERTEXS]\r\n");
-        printf_function(pF, "visible=0\r\n");
-        printf_function(pF, "simbolitzable=0\r\n");
-        printf_function(pF, "MostrarUnitats=0\r\n");
-        printf_function(pF, "descriptor=Number of vertices\r\n");
+        printf_function(pF, LineReturn);
+        printf_function(pF, "[TAULA_PRINCIPAL:N_VERTEXS]"LineReturn);
+        printf_function(pF, "visible=0"LineReturn);
+        printf_function(pF, "simbolitzable=0"LineReturn);
+        printf_function(pF, "MostrarUnitats=0"LineReturn);
+        printf_function(pF, "descriptor=Number of vertices"LineReturn);
 
-        printf_function(pF, "\r\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:PERIMETRE]\r\n");
-        printf_function(pF, "visible=0\r\n");
-        printf_function(pF, "simbolitzable=0\r\n");
-        printf_function(pF, "MostrarUnitats=0\r\n");
-        printf_function(pF, "descriptor=Perimeter of the polygon\r\n");
+        printf_function(pF, LineReturn);
+        printf_function(pF, "[TAULA_PRINCIPAL:PERIMETRE]"LineReturn);
+        printf_function(pF, "visible=0"LineReturn);
+        printf_function(pF, "simbolitzable=0"LineReturn);
+        printf_function(pF, "MostrarUnitats=0"LineReturn);
+        printf_function(pF, "descriptor=Perimeter of the polygon"LineReturn);
 
-        printf_function(pF, "\r\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:AREA]\r\n");
-        printf_function(pF, "visible=0\r\n");
-        printf_function(pF, "simbolitzable=0\r\n");
-        printf_function(pF, "MostrarUnitats=0\r\n");
-        printf_function(pF, "descriptor=Area of the polygon\r\n");
+        printf_function(pF, LineReturn);
+        printf_function(pF, "[TAULA_PRINCIPAL:AREA]"LineReturn);
+        printf_function(pF, "visible=0"LineReturn);
+        printf_function(pF, "simbolitzable=0"LineReturn);
+        printf_function(pF, "MostrarUnitats=0"LineReturn);
+        printf_function(pF, "descriptor=Area of the polygon"LineReturn);
 
-        printf_function(pF, "\r\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:N_ARCS]\r\n");
-        printf_function(pF, "visible=0\r\n");
-        printf_function(pF, "simbolitzable=0\r\n");
-        printf_function(pF, "MostrarUnitats=0\r\n");
-        printf_function(pF, "descriptor=Number of arcs\r\n");
+        printf_function(pF, LineReturn);
+        printf_function(pF, "[TAULA_PRINCIPAL:N_ARCS]"LineReturn);
+        printf_function(pF, "visible=0"LineReturn);
+        printf_function(pF, "simbolitzable=0"LineReturn);
+        printf_function(pF, "MostrarUnitats=0"LineReturn);
+        printf_function(pF, "descriptor=Number of arcs"LineReturn);
 
-        printf_function(pF, "\r\n");
-        printf_function(pF, "[TAULA_PRINCIPAL:N_POLIG]\r\n");
-        printf_function(pF, "visible=0\r\n");
-        printf_function(pF, "simbolitzable=0\r\n");
-        printf_function(pF, "MostrarUnitats=0\r\n");
-        printf_function(pF, "descriptor=Number of elemental polygons\r\n");
+        printf_function(pF, LineReturn);
+        printf_function(pF, "[TAULA_PRINCIPAL:N_POLIG]"LineReturn);
+        printf_function(pF, "visible=0"LineReturn);
+        printf_function(pF, "simbolitzable=0"LineReturn);
+        printf_function(pF, "MostrarUnitats=0"LineReturn);
+        printf_function(pF, "descriptor=Number of elemental polygons"LineReturn);
 
-        printf_function(pF, "[GEOMETRIA_I_TOPOLOGIA]\r\n");
-        printf_function(pF, "NomCampNVertexs=N_VERTEXS\r\n");
-        printf_function(pF, "NomCampPerimetre=PERIMETRE\r\n");
-        printf_function(pF, "NomCampArea=AREA\r\n");
-        printf_function(pF, "NomCampNArcs=N_ARCS\r\n");
-        printf_function(pF, "NomCampNPoligons=N_POLIG\r\n");
+        printf_function(pF, "[GEOMETRIA_I_TOPOLOGIA]"LineReturn);
+        printf_function(pF, "NomCampNVertexs=N_VERTEXS"LineReturn);
+        printf_function(pF, "NomCampPerimetre=PERIMETRE"LineReturn);
+        printf_function(pF, "NomCampArea=AREA"LineReturn);
+        printf_function(pF, "NomCampNArcs=N_ARCS"LineReturn);
+        printf_function(pF, "NomCampNPoligons=N_POLIG"LineReturn);
     }
 
     // Writing TAULA_PRINCIPAL section
@@ -4716,8 +4716,8 @@ char aTimeString[30];
         {
             if(!IsEmptyString(hMMMD->pLayerDB->pFields[nIField].pszFieldDescription))
             {
-                printf_function(pF, "\r\n[%s:%s]\r\n", SECTION_TAULA_PRINCIPAL, hMMMD->pLayerDB->pFields[nIField].pszFieldName);
-                printf_function(pF, "%s=%s\r\n", KEY_descriptor, hMMMD->pLayerDB->pFields[nIField].pszFieldDescription);
+                printf_function(pF, LineReturn"[%s:%s]"LineReturn, SECTION_TAULA_PRINCIPAL, hMMMD->pLayerDB->pFields[nIField].pszFieldName);
+                printf_function(pF, "%s=%s"LineReturn, KEY_descriptor, hMMMD->pLayerDB->pFields[nIField].pszFieldDescription);
             }
         }
     }
@@ -5084,8 +5084,6 @@ MM_EXT_DBF_N_FIELDS nNFields;
             
 		    MM_DuplicateFieldDBXP(pBD_XP->Camp+nIField, &MMField);
 		    MM_ModifyFieldNameAndDescriptorIfPresentBD_XP(pBD_XP->Camp+nIField, pBD_XP, FALSE, 0);
-		    if (pBD_XP->Camp[nIField].mostrar_camp==MM_CAMP_NO_MOSTRABLE)
-			    pBD_XP->Camp[nIField].mostrar_camp=MM_CAMP_MOSTRABLE;
 		    if (pBD_XP->Camp[nIField].TipusDeCamp=='F')
 			    pBD_XP->Camp[nIField].TipusDeCamp='N';
 	    }
@@ -5140,7 +5138,7 @@ int MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     if(nNewWidth>camp->BytesPerCamp)
     {
-        if(MM_WriteNRecordsMMBD_XPFile(hMiraMonLayer, pMMAdmDB))
+        if(MM_WriteNRecordsMMBD_XPFile(pMMAdmDB))
             return 1;
         
         // Flushing all to be flushed
@@ -5710,46 +5708,6 @@ struct MM_FLUSH_INFO *pFlushRecList;
     return MM_CONTINUE_WRITING_FEATURES;
 }
 
-int MM_WriteNRecordsMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
-            struct MMAdmDatabase *MMAdmDB)
-{
-    unsigned __int32 nRecords;
-    if(!MMAdmDB->pMMBDXP)
-        return 0;
-
-    // Updating number of features in database
-    fseek_function(MMAdmDB->pFExtDBF, MM_FIRST_OFFSET_to_N_RECORDS, SEEK_SET);
-
-    if (MMAdmDB->pMMBDXP->nRecords <= _UI32_MAX)
-    {
-        nRecords = (unsigned __int32)MMAdmDB->pMMBDXP->nRecords;
-        if (fwrite_function(&nRecords, 4, 1,
-            MMAdmDB->pFExtDBF) != 1)
-            return 1;
-
-        fseek_function(MMAdmDB->pFExtDBF, MM_SECOND_OFFSET_to_N_RECORDS, SEEK_SET);
-        nRecords = 0;
-        if (fwrite_function(&nRecords, 4, 1,
-            MMAdmDB->pFExtDBF) != 1)
-            return 1;
-    }
-    else
-    {
-        nRecords = _UI32_MAX;
-        if (fwrite_function(&nRecords, 4, 1,
-            MMAdmDB->pFExtDBF) != 1)
-            return 1;
-
-        fseek_function(MMAdmDB->pFExtDBF, MM_SECOND_OFFSET_to_N_RECORDS, SEEK_SET);
-        nRecords = (unsigned __int32)MMAdmDB->pMMBDXP->nRecords - _UI32_MAX;
-        if (fwrite_function(&nRecords, 4, 1,
-            MMAdmDB->pFExtDBF) != 1)
-            return 1;
-    }    
-        
-    return 0;
-}
-
 int MMCloseMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
                     struct MMAdmDatabase *MMAdmDB)
 {
@@ -5777,7 +5735,7 @@ int MMCloseMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
     {
-        if (MM_WriteNRecordsMMBD_XPFile(hMiraMonLayer, MMAdmDB))
+        if (MM_WriteNRecordsMMBD_XPFile(MMAdmDB))
             return 1;
         
         // Flushing all to be flushed

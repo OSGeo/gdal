@@ -29,6 +29,7 @@ void MM_ReleaseMainFields(struct MM_BASE_DADES_XP * base_dades_XP);
 void MM_ReleaseDBFHeader(struct MM_BASE_DADES_XP * base_dades_XP);
 MM_BOOLEAN MM_CreateDBFFile(struct MM_BASE_DADES_XP * bd_xp, const char *NomFitxer);
 int MM_DuplicateFieldDBXP(struct MM_CAMP *camp_final, const struct MM_CAMP *camp_inicial);
+int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB);
 
 size_t MM_DefineFirstPolygonFieldsDB_XP(struct MM_BASE_DADES_XP *bd_xp, MM_BYTE n_decimals);
 size_t MM_DefineFirstArcFieldsDB_XP(struct MM_BASE_DADES_XP *bd_xp, MM_BYTE n_decimals);
@@ -54,6 +55,7 @@ int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
 int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt, struct MM_ZD *pZDescription, unsigned long int flag);
 
 // Strings
+char * MM_RemoveInitial_and_FinalQuotationMarks(char *cadena);
 char *MM_RemoveWhitespacesFromEndOfString(char * str);
 char *MM_RemoveLeadingWhitespaceOfString(char * cadena);
 

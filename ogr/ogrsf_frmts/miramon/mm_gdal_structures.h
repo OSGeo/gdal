@@ -59,36 +59,6 @@ struct MM_CAMP // FIELD
     // Description of the field
 	char DescripcioCamp[MM_NUM_IDIOMES_MD_MULTIDIOMA][MM_MAX_LON_DESCRIPCIO_CAMP_DBF];
 
-    // Show field
-	MM_BYTE mostrar_camp;
-
-    // Not used in GDAL: Simbolize field
-	MM_BYTE simbolitzable;
-
-    // Not used in GDAL: Field descriptions as a link
-	MM_EXT_DBF_N_FIELDS CampDescHipervincle; 
-
-    // Not used in GDAL: Content as a link
-    MM_BOOLEAN EsHipervincle;
-
-    // Not used in GDAL: Inserted content
-    MM_BOOLEAN EsContingutIncrustat;
-
-    // Not used in GDAL: Content as expression
-    MM_BOOLEAN EsExpressio; 
-
-    // Not used in GDAL
-	//MM_BYTE ProveDeNivJerarqSup;
-
-    // MM_TIPUS_NUMERADOR_TAULA_ASSOC NTaulesAssoc;
-    // struct BDXP_O_BDODBC * TaulaAssoc; 
-    //
-    MM_BYTE TractamentVariable; 
-    //char unitats[MM_MAX_LON_UNITATS_CAMP];
-    //MM_BOOLEAN MostrarUnitats;
-
-    //char NODATADef[MAX_NODATA_DEF]; 
-
     MM_BYTE AmpleDesitjat; 
     MM_BYTE AmpleDesitjatOriginal; 
 

@@ -49,10 +49,6 @@ void MM_InitializeField(struct MM_CAMP *camp)
 {
 	memset(camp, '\0', sizeof(*camp));
 	camp->TipusDeCamp='C';
-	camp->mostrar_camp=MM_CAMP_MOSTRABLE;
-    camp->simbolitzable=MM_CAMP_SIMBOLITZABLE;
-	camp->CampDescHipervincle=MM_MAX_EXT_DBF_N_FIELDS_TYPE;	
-    camp->TractamentVariable=MM_CAMP_INDETERMINAT;
 	camp->TipusCampGeoTopo=MM_NO_ES_CAMP_GEOTOPO;
 }
 
@@ -122,7 +118,6 @@ MM_EXT_DBF_N_FIELDS i;
 		camp->TipusDeCamp='C';
         camp->DecimalsSiEsFloat=0;
 		camp->BytesPerCamp=50;
-		camp->mostrar_camp=MM_CAMP_MOSTRABLE;
 	}
     return bd_xp;
 }
@@ -286,8 +281,6 @@ MM_BOOLEAN cal_DBF_estesa=FALSE;
     {
 		camp->BytesAcumulats=bd_xp->BytesPerFitxa;
 		bd_xp->BytesPerFitxa+=camp->BytesPerCamp;
-        if (camp->TractamentVariable==0)
-	        camp->TractamentVariable=MM_DBFFieldTypeToVariableProcessing(camp->TipusDeCamp);
         if (camp->AmpleDesitjat==0)
 			camp->AmpleDesitjat=camp->AmpleDesitjatOriginal=MM_GetDefaultDesiredDBFFieldWidth(camp); //camp->BytesPerCamp;
         if (camp->TipusDeCamp=='C' && camp->BytesPerCamp>MM_MAX_AMPLADA_CAMP_C_DBF_CLASSICA)
@@ -298,7 +291,8 @@ MM_BOOLEAN cal_DBF_estesa=FALSE;
 
     bd_xp->OffsetPrimeraFitxa=MM_CalculateBytesFirstRecordOffset(bd_xp);
 
-    if (cal_DBF_estesa || bd_xp->ncamps>MM_MAX_N_CAMPS_DBF_CLASSICA)
+    if (cal_DBF_estesa || bd_xp->ncamps>MM_MAX_N_CAMPS_DBF_CLASSICA
+        || bd_xp->nRecords>_UI32_MAX)
 		bd_xp->versio_dbf=(MM_BYTE)MM_MARCA_VERSIO_1_DBF_ESTESA;
     else
         bd_xp->versio_dbf=MM_MARCA_DBASE4;
@@ -423,6 +417,56 @@ MM_FIRST_RECORD_OFFSET_TYPE offset_nom_camp;
     return offset_nom_camp;
 }
 
+int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
+{
+    unsigned __int32 nRecords;
+    if(!MMAdmDB->pMMBDXP)
+        return 0;
+
+    // Updating number of features in database
+    fseek_function(MMAdmDB->pFExtDBF, MM_FIRST_OFFSET_to_N_RECORDS, SEEK_SET);
+
+    //MMAdmDB->pMMBDXP->nRecords=939439764538373;
+    if (MMAdmDB->pMMBDXP->nRecords > _UI32_MAX)
+    {
+        MMAdmDB->pMMBDXP->versio_dbf=MM_MARCA_VERSIO_1_DBF_ESTESA;
+
+        if (fwrite_function(&MMAdmDB->pMMBDXP->nRecords, 4, 1,
+                MMAdmDB->pFExtDBF) != 1)
+            return FALSE;
+    }
+    else
+    {
+        MMAdmDB->pMMBDXP->versio_dbf=MM_MARCA_DBASE4;
+
+        nRecords=(unsigned __int32)MMAdmDB->pMMBDXP->nRecords;
+        if (fwrite_function(&nRecords, 4, 1, MMAdmDB->pFExtDBF) != 1)
+            return FALSE;
+    }
+
+    fseek_function(MMAdmDB->pFExtDBF, MM_SECOND_OFFSET_to_N_RECORDS, SEEK_SET);
+    if (MMAdmDB->pMMBDXP->versio_dbf == MM_MARCA_VERSIO_1_DBF_ESTESA)
+    {
+        /* from 16 to 19, position MM_SECOND_OFFSET_to_N_RECORDS */
+        if (fwrite_function(((char *)(&MMAdmDB->pMMBDXP->nRecords))+4, 4, 1,
+            MMAdmDB->pFExtDBF) != 1)
+            return FALSE;
+
+        /* from 20 to 27 */
+        if (fwrite_function(&(MMAdmDB->pMMBDXP->dbf_on_a_LAN), 8, 1,
+            MMAdmDB->pFExtDBF) != 1)
+            return FALSE;
+    }
+    else
+    {
+        if (fwrite_function(&(MMAdmDB->pMMBDXP->dbf_on_a_LAN), 12, 1,
+            MMAdmDB->pFExtDBF) != 1)
+            return FALSE;
+    }
+        
+    return 0;
+}
+
 MM_BOOLEAN MM_UpdateEntireHeader(struct MM_BASE_DADES_XP * base_dades_XP)
 {
 MM_BYTE variable_byte;
@@ -457,6 +501,8 @@ unsigned __int32 nRecords;
 	}
 
 	if((base_dades_XP->ncamps)>MM_MAX_N_CAMPS_DBF_CLASSICA)
+    	base_dades_XP->versio_dbf=MM_MARCA_VERSIO_1_DBF_ESTESA;
+    else if((base_dades_XP->nRecords)>_UI32_MAX)
     	base_dades_XP->versio_dbf=MM_MARCA_VERSIO_1_DBF_ESTESA;
     else
     {
@@ -499,13 +545,20 @@ unsigned __int32 nRecords;
     if (fwrite_function(&(base_dades_XP->dia), 1, 1,
                 base_dades_XP->pfBaseDades) != 1)
         return FALSE;
+
     /* from 4 a 7, position MM_FIRST_OFFSET_to_N_RECORDS */
     if (base_dades_XP->nRecords > _UI32_MAX)
-        nRecords=_UI32_MAX;
-
-    if (fwrite_function(&nRecords, 4, 1,
+    {
+        if (fwrite_function(&base_dades_XP->nRecords, 4, 1,
                 base_dades_XP->pfBaseDades) != 1)
-        return FALSE;
+            return FALSE;
+    }
+    else
+    {
+        nRecords=(unsigned __int32)base_dades_XP->nRecords;
+        if (fwrite_function(&nRecords, 4, 1, base_dades_XP->pfBaseDades) != 1)
+            return FALSE;
+    }
 
     /* from 8 a 9, position MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA */
     if (fwrite_function(&(base_dades_XP->OffsetPrimeraFitxa), 2, 1,
@@ -539,22 +592,22 @@ unsigned __int32 nRecords;
         return FALSE;
 
     /* from 16 to 27 */
-    if (base_dades_XP->nRecords <= _UI32_MAX)
+    if (base_dades_XP->nRecords > _UI32_MAX)
     {
-        if (fwrite_function(&(base_dades_XP->dbf_on_a_LAN), 12, 1,
-            base_dades_XP->pfBaseDades) != 1)
-            return FALSE;
-    }
-    else
-    {
-        nRecords = (unsigned __int32)(base_dades_XP->nRecords) - nRecords;
         /* from 16 to 19, position MM_SECOND_OFFSET_to_N_RECORDS */
-        if (fwrite_function(&nRecords, 4, 1,
+        if (fwrite_function(((char *)(&base_dades_XP->nRecords))+4, 4, 1,
             base_dades_XP->pfBaseDades) != 1)
             return FALSE;
 
         /* from 20 to 27 */
         if (fwrite_function(&(base_dades_XP->dbf_on_a_LAN), 8, 1,
+            base_dades_XP->pfBaseDades) != 1)
+            return FALSE;
+    }
+    else
+    {
+        /* from 16 to 27 */
+        if (fwrite_function(&(base_dades_XP->dbf_on_a_LAN), 12, 1,
             base_dades_XP->pfBaseDades) != 1)
             return FALSE;
     }
@@ -839,7 +892,7 @@ MM_FILE_OFFSET offset_reintent=0;
 char cpg_file[MM_MAX_PATH];
 const char *pszDesc;
 char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
-unsigned __int32 nRecords, nRecords2;
+unsigned __int32 nRecords;
 
     if(!szFileName)
         return 1;
@@ -899,19 +952,21 @@ unsigned __int32 nRecords, nRecords2;
 	if (1!=fread_function(&ushort, 2, 1, pf) ||
 		1!=fread_function(&(pMMBDXP->reservat_1), 2, 1, pf) ||
 		1!=fread_function(&(pMMBDXP->transaction_flag), 1, 1, pf) ||
-		1!=fread_function(&(pMMBDXP->encryption_flag), 1, 1, pf))
+		1!=fread_function(&(pMMBDXP->encryption_flag), 1, 1, pf) ||
+        1!=fread_function(&(pMMBDXP->dbf_on_a_LAN), 12, 1, pf))
 	{
 		fclose_function(pf);
         return 1;
 	}
 
-    if (1 != fread_function(&nRecords2, 4, 1, pf))
+    if (MM_ES_DBF_ESTESA(pMMBDXP->versio_dbf))
     {
-        fclose_function(pf);
-        return 1;
+    	memcpy(&pMMBDXP->nRecords,&nRecords,4);
+    	memcpy(((char*)&pMMBDXP->nRecords)+4,&pMMBDXP->dbf_on_a_LAN,4);
     }
-    pMMBDXP->nRecords=(MM_EXT_DBF_N_RECORDS)nRecords2 + nRecords;
-        
+    else
+    	pMMBDXP->nRecords=nRecords;
+            
     if (1 != fread_function(&(pMMBDXP->dbf_on_a_LAN), 8, 1, pf))
     {
         fclose_function(pf);
@@ -1090,9 +1145,6 @@ unsigned __int32 nRecords, nRecords2;
                 }
             }
 		}
-		pMMBDXP->Camp[nIField].mostrar_camp=MM_CAMP_MOSTRABLE;
-        pMMBDXP->Camp[nIField].simbolitzable=MM_CAMP_SIMBOLITZABLE;
-        pMMBDXP->Camp[nIField].TractamentVariable=MM_DBFFieldTypeToVariableProcessing(pMMBDXP->Camp[nIField].TipusDeCamp);
 	}
 
     if (!pMMBDXP->ncamps)
@@ -1420,7 +1472,6 @@ int retorn_valida_nom_camp;
 	camp->TipusDeCamp=TipusDeCamp;
 	camp->DecimalsSiEsFloat=DecimalsSiEsFloat;
 	camp->BytesPerCamp=BytesPerCamp;
-	camp->mostrar_camp=mostrar_camp;
 	return TRUE;
 }
 
@@ -2129,6 +2180,32 @@ int longitud_cadena=(int)l_cadena;
 	return  punter;
 }
 
+char * MM_RemoveInitial_and_FinalQuotationMarks(char *cadena)
+{
+char *ptr1, *ptr2;
+char cometa='"';
+
+	if (*cadena==cometa)
+    {
+        ptr1=cadena;
+    	ptr2=ptr1+1;
+        if (*ptr2)
+        {
+            while (*ptr2)
+            {
+                *ptr1=*ptr2;
+                ptr1++;
+                ptr2++;
+            }
+            if (*ptr1==cometa)
+                *(ptr1-1)=0;
+            else
+                *ptr1=0;
+        }
+	}
+    return cadena;
+} /* Fi de MM_RemoveInitial_and_FinalQuotationMarks() */
+
 char *MM_RemoveLeadingWhitespaceOfString(char * cadena)
 {
 char *ptr;
@@ -2137,7 +2214,6 @@ char *ptr2;
 	if (cadena == NULL)
 		return cadena;
 
-	/* Salto fins a l'inici dels caràcters NO blancs */
 	for (ptr=cadena; *ptr && (*ptr==' '||*ptr=='\t'); ptr++)
 	  continue;
 
