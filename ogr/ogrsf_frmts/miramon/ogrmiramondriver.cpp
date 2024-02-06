@@ -27,9 +27,9 @@
 
 #include "ogrmiramon.h"
 
-/************************************************************************/
-/*                    OGRMMDriverIdentify()                             */
-/************************************************************************/
+/****************************************************************************/
+/*                    OGRMMDriverIdentify()                                 */
+/****************************************************************************/
 
 static int OGRMMDriverIdentify(GDALOpenInfo *poOpenInfo)
 
@@ -72,9 +72,9 @@ static int OGRMMDriverIdentify(GDALOpenInfo *poOpenInfo)
     return FALSE;
 }
 
-/************************************************************************/
-/*                           OGRMMDriverOpen()                         */
-/************************************************************************/
+/****************************************************************************/
+/*                           OGRMMDriverOpen()                              */
+/****************************************************************************/
 
 static GDALDataset *OGRMMDriverOpen(GDALOpenInfo *poOpenInfo)
 
@@ -95,9 +95,9 @@ static GDALDataset *OGRMMDriverOpen(GDALOpenInfo *poOpenInfo)
     return poDS;
 }
 
-/************************************************************************/
-/*                         OGRMMDriverCreate()                          */
-/************************************************************************/
+/****************************************************************************/
+/*                         OGRMMDriverCreate()                              */
+/****************************************************************************/
 
 static GDALDataset *
 OGRMMDriverCreate(const char *pszName, CPL_UNUSED int nBands,
@@ -113,9 +113,9 @@ OGRMMDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     return nullptr;
 }
 
-/************************************************************************/
-/*                           RegisterOGRMM()                            */
-/************************************************************************/
+/****************************************************************************/
+/*                           RegisterOGRMM()                                */
+/****************************************************************************/
 
 void RegisterOGRMiraMon()
 
@@ -132,39 +132,30 @@ void RegisterOGRMiraMon()
             "MiraMon Vectors (.pol, .arc, .pnt)");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "pol");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "pol arc pnt");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/miramon.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
+            "drivers/vector/miramon.html");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "NO");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
-    //poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
-    poDriver->SetMetadataItem(
-        GDAL_DS_LAYER_CREATIONOPTIONLIST,
-        "<LayerCreationOptionList>"
-        "  <Option name='Version' type='string' description='Version of the file."
-        "V11 is a limited 32 bits for FID and internal offsets. "
-        "V20 is the 64 bits version for FID and internal offsets.' default='last_version'>"
-        "<Value>V11</Value>"
-        "<Value>V20</Value>"
-        "<Value>last_version</Value>"
-        "<Value>NULL</Value>"
-        "</Option>"
-        "</LayerCreationOptionList>");
-
+        
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
         "<OpenOptionList>"
         "  <Option name='Height' scope='vector' type='string' "
         "   description='Sets which of the possible heights is chosen: "
-        "   the first, the highest or the lowest one.' default='First'>"
+        "   the first, the highest or the lowest one.'>"
         "    <Value>First</Value>"
+        "    <Value>Loewr</Value>"
         "    <Value>Highest</Value>"
-        "    <Value>default</Value>"
-        "    <Value>NULL</Value>"
         "  </Option>"
-        "</OpenOptionList>");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_OPENOPTIONLIST,
-        "<OpenOptionList>"
+        "  <Option name='iMultiRecord' scope='vector' type='string' "
+        "   description='Sets which of the possible records is chosen: "
+        "   0, 1, 2,... or the Last one. Use JSON when a serialized "
+        "   JSON is wanted'>"
+        "    <Value>0</Value>"
+        "    <Value>1,...</Value>"
+        "    <Value>Last</Value>"
+        "    <Value>JSON</Value>"
+        "  </Option>"
         "  <Option name='MemoryRatio' scope='vector' type='float' "
         "   description='Ratio used to enhance certain aspects of memory"
         "   In some memory settings, a block of 256 or 512 bytes is used."
@@ -179,6 +170,19 @@ void RegisterOGRMiraMon()
         "    <Value>2</Value>"
         "  </Option>"
         "</OpenOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DS_LAYER_CREATIONOPTIONLIST,
+        "<LayerCreationOptionList>"
+        "  <Option name='Version' type='string' description='Version of the file."
+        "V11 is a limited 32 bits for FID and internal offsets. "
+        "V20 is the 64 bits version for FID and internal offsets.' default='last_version'>"
+        "<Value>V11</Value>"
+        "<Value>V20</Value>"
+        "<Value>last_version</Value>"
+        "<Value>NULL</Value>"
+        "</Option>"
+        "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONFIELDDATATYPES,

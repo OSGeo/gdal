@@ -54,7 +54,8 @@ int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
 int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt, struct MM_ZD *pZDescription, unsigned long int flag);
 
 // Strings
-char *MM_TreuBlancsDeFinalDeCadena(char * str);
+char *MM_RemoveWhitespacesFromEndOfString(char * str);
+char *MM_RemoveLeadingWhitespaceOfString(char * cadena);
 
 // DBF
 struct MM_ID_GRAFIC_MULTIPLE_RECORD *MMCreateExtendedDBFIndex(FILE_TYPE *f, size_t n, MM_EXT_DBF_N_RECORDS n_dbf,

@@ -3,9 +3,9 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  C API to create a MiraMon layer
  * Author:   Abel Pau, a.pau@creaf.uab.cat, based on the MiraMon codes, 
- *           mainly written by Xavier Pons, Joan Masó, Abel Pau, Núria Julià,
- *           Xavier Calaf, Lluís Pesquer and Alaitz Zabala, from CREAF and
- *           Universitat Autònoma de Barcelona. For a complete list of
+ *           mainly written by Xavier Pons, Joan MasÃ³, Abel Pau, NÃºria JuliÃ ,
+ *           Xavier Calaf, LluÃ­s Pesquer and Alaitz Zabala, from CREAF and
+ *           Universitat AutÃ²noma de Barcelona. For a complete list of
  *           contributors: https://www.miramon.cat/USA/QuiSom.htm
  ******************************************************************************
  * Copyright (c) 2024, Xavier Pons
@@ -2129,7 +2129,33 @@ int longitud_cadena=(int)l_cadena;
 	return  punter;
 }
 
-char *MM_TreuBlancsDeFinalDeCadena(char * str)
+char *MM_RemoveLeadingWhitespaceOfString(char * cadena)
+{
+char *ptr;
+char *ptr2;
+
+	if (cadena == NULL)
+		return cadena;
+
+	/* Salto fins a l'inici dels carÃ cters NO blancs */
+	for (ptr=cadena; *ptr && (*ptr==' '||*ptr=='\t'); ptr++)
+	  continue;
+
+	if (ptr!=cadena)
+	{
+		ptr2=cadena;
+		while (*ptr)
+		{
+			*ptr2=*ptr;
+			 ptr2++;
+			 ptr++;
+		}
+		*ptr2=0;
+	}
+	return cadena;
+}
+
+char *MM_RemoveWhitespacesFromEndOfString(char * str)
 {
 const char *s;
 

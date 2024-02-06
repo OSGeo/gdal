@@ -29,13 +29,14 @@
 #include "mm_gdal_functions.h"  // For MMCreateExtendedDBFIndex()
 #include "mmrdlayr.h"
 
-/************************************************************************/
-/*                            OGRMiraMonLayer()                         */
-/************************************************************************/
+/****************************************************************************/
+/*                            OGRMiraMonLayer()                             */
+/****************************************************************************/
 
 OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                          const OGRSpatialReference *poSRS, int bUpdateIn,
-                         char **papszOpenOptions, struct MiraMonVectMapInfo *MMMap)
+                         char **papszOpenOptions,
+                         struct MiraMonVectMapInfo *MMMap)
     : poFeatureDefn(nullptr), iNextFID(0), bUpdate(CPL_TO_BOOL(bUpdateIn)),
       m_fp(fp ? fp : VSIFOpenL(pszFilename, (bUpdateIn ? "r+" : "r"))),
       papszKeyedValues(nullptr), bValidFile(false), hMMFeature(),
@@ -65,9 +66,9 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
 
     if (bUpdate)
     {
-        /* -------------------------------------------------------------------- */
-        /*      Establish the version to use                                    */
-        /* -------------------------------------------------------------------- */
+        /* ---------------------------------------------------------------- */
+        /*      Establish the version to use                                */
+        /* ---------------------------------------------------------------- */
         const char *pszVersion =
             CSLFetchNameValue(papszOpenOptions, "Version");
         int nMMVersion;
@@ -76,7 +77,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
         {
             if (EQUAL(pszVersion, "V11"))
                 nMMVersion = MM_32BITS_VERSION;
-            else if (EQUAL(pszVersion, "V20") || EQUAL(pszVersion, "last_version"))
+            else if (EQUAL(pszVersion, "V20") ||
+                EQUAL(pszVersion, "last_version"))
                 nMMVersion = MM_64BITS_VERSION;
             else
                 nMMVersion = MM_32BITS_VERSION; // Default
@@ -84,9 +86,9 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
         else
             nMMVersion = MM_32BITS_VERSION; // Default
 
-        /* -------------------------------------------------------------------- */
-        /*      Preparing to write the layer                                    */
-        /* -------------------------------------------------------------------- */
+        /* ---------------------------------------------------------------- */
+        /*      Preparing to write the layer                                */
+        /* ---------------------------------------------------------------- */
         if (!STARTS_WITH(pszFilename, "/vsistdout"))
         {
             // Init the feature (memory, num,...)
@@ -106,8 +108,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                 nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE, MMMap);
             hMiraMonLayerPOL.bIsBeenInit = 0;
 
-            // Just in case that there is no geometry but some other information
-            // to get. A DBF will be generated
+            // Just in case that there is no geometry but some other
+            // information to get. A DBF will be generated
             MMInitLayer(&hMiraMonLayerReadOrNonGeom, pszFilename,
                 nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE, NULL);
             hMiraMonLayerPOL.bIsBeenInit = 0;
@@ -122,9 +124,12 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             if (poSRS->GetAuthorityName(nullptr) &&
                 EQUAL(poSRS->GetAuthorityName(nullptr), "EPSG"))
             {
-                hMiraMonLayerPNT.pSRS = CPLStrdup(poSRS->GetAuthorityCode(nullptr));
-                hMiraMonLayerARC.pSRS = CPLStrdup(poSRS->GetAuthorityCode(nullptr));
-                hMiraMonLayerPOL.pSRS = CPLStrdup(poSRS->GetAuthorityCode(nullptr));
+                hMiraMonLayerPNT.pSRS =
+                    CPLStrdup(poSRS->GetAuthorityCode(nullptr));
+                hMiraMonLayerARC.pSRS =
+                    CPLStrdup(poSRS->GetAuthorityCode(nullptr));
+                hMiraMonLayerPOL.pSRS =
+                    CPLStrdup(poSRS->GetAuthorityCode(nullptr));
             }
         }
     }
@@ -133,14 +138,15 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
         if (m_fp == nullptr)
             return;
 
-        /* ---------------------------------------------------------------- */
-        /*      Read the header.                                            */
-        /* -----------------------------------------------------------------*/
+        /* ------------------------------------------------------------------*/
+        /*      Read the header.                                             */
+        /* ------------------------------------------------------------------*/
         if (!STARTS_WITH(pszFilename, "/vsistdout"))
         {
             int nMMLayerVersion;
 
-            if (MMInitLayerToRead(&hMiraMonLayerReadOrNonGeom, m_fp, pszFilename))
+            if (MMInitLayerToRead(&hMiraMonLayerReadOrNonGeom, m_fp,
+                pszFilename))
             {
                 phMiraMonLayer=&hMiraMonLayerReadOrNonGeom;
                 bValidFile = false;
@@ -188,15 +194,19 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
 
             if (phMiraMonLayer->TopHeader.bIs3d)
             {
-                const char* szHeight = CSLFetchNameValue(papszOpenOptions, "Height");
+                const char* szHeight = CSLFetchNameValue(papszOpenOptions,
+                    "Height");
                 if (szHeight)
                 {
                     if (!stricmp(szHeight, "Highest"))
-                        phMiraMonLayer->nSelectCoordz = MM_SELECT_HIGHEST_COORDZ;
+                        phMiraMonLayer->nSelectCoordz =
+                            MM_SELECT_HIGHEST_COORDZ;
                     else if (!stricmp(szHeight, "Lowest"))
-                        phMiraMonLayer->nSelectCoordz = MM_SELECT_LOWEST_COORDZ;
+                        phMiraMonLayer->nSelectCoordz =
+                            MM_SELECT_LOWEST_COORDZ;
                     else
-                        phMiraMonLayer->nSelectCoordz = MM_SELECT_FIRST_COORDZ;
+                        phMiraMonLayer->nSelectCoordz =
+                            MM_SELECT_FIRST_COORDZ;
                 }
                 else
                     phMiraMonLayer->nSelectCoordz = MM_SELECT_FIRST_COORDZ;
@@ -206,7 +216,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             {
                 m_poSRS = new OGRSpatialReference();
                 m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                if (m_poSRS->importFromEPSG(phMiraMonLayer->nSRS_EPSG) != OGRERR_NONE)
+                if (m_poSRS->importFromEPSG(phMiraMonLayer->nSRS_EPSG) !=
+                    OGRERR_NONE)
                 {
                     delete m_poSRS;
                     m_poSRS = nullptr;
@@ -218,54 +229,123 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                 if(!phMiraMonLayer->pMMBDXP->pfBaseDades)
                 {
 		            if ( (phMiraMonLayer->pMMBDXP->pfBaseDades =
-                            fopen_function(phMiraMonLayer->pMMBDXP->szNomFitxer,"r"))==NULL )
+                            fopen_function(
+                                phMiraMonLayer->pMMBDXP->szNomFitxer,
+                                "r"))==NULL)
                     {
                         CPLDebug("MiraMon", "File '%s' cannot be opened.",
                             phMiraMonLayer->pMMBDXP->szNomFitxer);
                         bValidFile=false;
                     }
 
-                    // First time we open the extended DBF we create an index to fastly find
-                    // all non geometrical features.
+                    // First time we open the extended DBF we create an index 
+                    // to fastly find all non geometrical features.
                     phMiraMonLayer->pMultRecordIndex=MMCreateExtendedDBFIndex(
                         phMiraMonLayer->pMMBDXP->pfBaseDades,
                         phMiraMonLayer->pMMBDXP->nRecords,
                         phMiraMonLayer->pMMBDXP->nRecords,
                         phMiraMonLayer->pMMBDXP->OffsetPrimeraFitxa,
                         phMiraMonLayer->pMMBDXP->BytesPerFitxa,
-                        phMiraMonLayer->pMMBDXP->Camp[phMiraMonLayer->pMMBDXP->CampIdGrafic].BytesAcumulats,
-                        phMiraMonLayer->pMMBDXP->Camp[phMiraMonLayer->pMMBDXP->CampIdGrafic].BytesPerCamp,
+                        phMiraMonLayer->pMMBDXP->Camp[phMiraMonLayer->pMMBDXP->
+                            CampIdGrafic].BytesAcumulats,
+                        phMiraMonLayer->pMMBDXP->Camp[phMiraMonLayer->pMMBDXP->
+                            CampIdGrafic].BytesPerCamp,
                         &phMiraMonLayer->isListField,
                         &phMiraMonLayer->nMaxN);
 
-                    // Creation of maximum number needed for processing multiple records
+                    // Creation of maximum number needed for processing
+                    // multiple records
                     papszValues =  
                     static_cast<char**>(CPLCalloc((size_t)phMiraMonLayer->nMaxN +
                         1, sizeof(*papszValues)));
 
                     padfValues = static_cast<double*>(CPLCalloc(
                         (size_t)phMiraMonLayer->nMaxN, sizeof(*padfValues)));
+
+                    phMiraMonLayer->iMultiRecord = -2; // No option iMultiRecord
+                    const char* szMultiRecord = CSLFetchNameValue(
+                        papszOpenOptions, "iMultiRecord");
+                    if (phMiraMonLayer->isListField && szMultiRecord)
+                    {
+                        if (!stricmp(szMultiRecord, "Last"))
+                            phMiraMonLayer->iMultiRecord = -1;
+                        else if (!stricmp(szMultiRecord, "JSON"))
+                            phMiraMonLayer->iMultiRecord = -3;
+                        else
+                            phMiraMonLayer->iMultiRecord  = atoi(szMultiRecord);
+                    }
                 }
 
-                for (MM_EXT_DBF_N_FIELDS nIField = 0; nIField < phMiraMonLayer->pMMBDXP->ncamps; nIField++)
+                for (MM_EXT_DBF_N_FIELDS nIField = 0; nIField <
+                    phMiraMonLayer->pMMBDXP->ncamps; nIField++)
                 {
                     OGRFieldDefn oField("", OFTString);
                     oField.SetName(phMiraMonLayer->pMMBDXP->Camp[nIField].NomCamp);
 
                     if (phMiraMonLayer->pMMBDXP->Camp[nIField].TipusDeCamp == 'C')
-                        oField.SetType(phMiraMonLayer->isListField?OFTStringList:OFTString);
-                    else if (phMiraMonLayer->pMMBDXP->Camp[nIField].TipusDeCamp == 'N')
                     {
-                        if (phMiraMonLayer->pMMBDXP->Camp[nIField].DecimalsSiEsFloat)
-                            oField.SetType(phMiraMonLayer->isListField?OFTRealList:OFTReal);
-                        else
-                            oField.SetType(phMiraMonLayer->isListField?OFTIntegerList:OFTInteger);
+                        // It's a list?
+                        if (phMiraMonLayer->iMultiRecord == -2)
+                        {
+                            if (phMiraMonLayer->isListField)
+                                oField.SetType(OFTStringList);
+                            else
+                                oField.SetType(OFTString);
+                        }
+                        // It's a serialized JSON array
+                        else if (phMiraMonLayer->iMultiRecord == -3)
+                        {
+                            oField.SetType(OFTString);
+                            oField.SetSubType(OFSTJSON);
+                        }
+                        else // iMultiRecord decides which Record translate
+                            oField.SetType(OFTString); 
                     }
-                    else if (phMiraMonLayer->pMMBDXP->Camp[nIField].TipusDeCamp == 'D')
+                    else if (phMiraMonLayer->pMMBDXP->
+                        Camp[nIField].TipusDeCamp == 'N')
+                    {
+                        // It's a list?
+                        if (phMiraMonLayer->iMultiRecord == -2)
+                        {
+                            if (phMiraMonLayer->pMMBDXP->
+                                Camp[nIField].DecimalsSiEsFloat)
+                                oField.SetType(phMiraMonLayer->isListField ?
+                                    OFTRealList : OFTReal);
+                            else
+                                oField.SetType(phMiraMonLayer->isListField ?
+                                    OFTIntegerList : OFTInteger);
+                        }
+                        // It's a serialized JSON array
+                        else if (phMiraMonLayer->iMultiRecord == -3)
+                        {
+                            oField.SetType(OFTString);
+                            oField.SetSubType(OFSTJSON);
+                        }
+                        else
+                        {
+                            if (phMiraMonLayer->pMMBDXP->
+                                Camp[nIField].DecimalsSiEsFloat)
+                                oField.SetType(OFTReal);
+                            else
+                                oField.SetType(OFTInteger);
+                        }
+                    }
+                    else if (phMiraMonLayer->pMMBDXP->
+                        Camp[nIField].TipusDeCamp == 'D')
+                    {
+                        // It's a serialized JSON array
                         oField.SetType(OFTDate);
+                        if (phMiraMonLayer->iMultiRecord == -3)
+                        {
+                            oField.SetType(OFTString);
+                            oField.SetSubType(OFSTJSON);
+                        }     
+                    }
 
-                    oField.SetWidth(phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
-                    oField.SetPrecision(phMiraMonLayer->pMMBDXP->Camp[nIField].DecimalsSiEsFloat);
+                    oField.SetWidth(phMiraMonLayer->pMMBDXP->
+                        Camp[nIField].BytesPerCamp);
+                    oField.SetPrecision(phMiraMonLayer->pMMBDXP->
+                        Camp[nIField].DecimalsSiEsFloat);
 
                     poFeatureDefn->AddFieldDefn(&oField);
                 }
@@ -284,9 +364,9 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
     bValidFile = true;
 }
 
-/************************************************************************/
-/*                           ~OGRMiraMonLayer()                           */
-/************************************************************************/
+/****************************************************************************/
+/*                           ~OGRMiraMonLayer()                             */
+/****************************************************************************/
 
 OGRMiraMonLayer::~OGRMiraMonLayer()
 
@@ -336,9 +416,9 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
 }
 
 
-/************************************************************************/
-/*                            ResetReading()                            */
-/************************************************************************/
+/****************************************************************************/
+/*                            ResetReading()                                */
+/****************************************************************************/
 
 void OGRMiraMonLayer::ResetReading()
 
@@ -350,12 +430,12 @@ void OGRMiraMonLayer::ResetReading()
     VSIFSeekL(m_fp, 0, SEEK_SET);
 }
 
-/************************************************************************/
-/*                         GetNextRawFeature()                          */
-/************************************************************************/
+/****************************************************************************/
+/*                         GetNextRawFeature()                              */
+/****************************************************************************/
 
 void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
-                    MM_EXT_DBF_N_RECORDS nIRecord, MM_EXT_DBF_N_FIELDS nIField)
+                 MM_EXT_DBF_N_RECORDS nIRecord, MM_EXT_DBF_N_FIELDS nIField)
 
 {
     fseek_function(phMiraMonLayer->pMMBDXP->pfBaseDades,
@@ -365,9 +445,9 @@ void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
         SEEK_SET);
 }
 
-/************************************************************************/
-/*                         GetNextRawFeature()                          */
-/************************************************************************/
+/****************************************************************************/
+/*                         GetNextRawFeature()                              */
+/****************************************************************************/
 
 OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
 
@@ -422,14 +502,17 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
             if (MMGetFeatureFromVector(phMiraMonLayer, nIElem))
                 return nullptr;
 
-            for (MM_N_VERTICES_TYPE nIVrt = 0; nIVrt < phMiraMonLayer->ReadedFeature.pNCoordRing[0]; nIVrt++)
+            for (MM_N_VERTICES_TYPE nIVrt = 0; nIVrt <
+                phMiraMonLayer->ReadedFeature.pNCoordRing[0]; nIVrt++)
             {
                 if (phMiraMonLayer->TopHeader.bIs3d)
-                    poLS->addPoint(phMiraMonLayer->ReadedFeature.pCoord[nIVrt].dfX,
+                    poLS->addPoint(phMiraMonLayer->
+                        ReadedFeature.pCoord[nIVrt].dfX,
                         phMiraMonLayer->ReadedFeature.pCoord[nIVrt].dfY,
                         phMiraMonLayer->ReadedFeature.pZCoord[nIVrt]);
                 else
-                    poLS->addPoint(phMiraMonLayer->ReadedFeature.pCoord[nIVrt].dfX,
+                    poLS->addPoint(phMiraMonLayer->
+                        ReadedFeature.pCoord[nIVrt].dfX,
                         phMiraMonLayer->ReadedFeature.pCoord[nIVrt].dfY);
             }
             break;
@@ -453,7 +536,8 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                     return nullptr;
 
                 nIVrtAcum = 0;
-                if (!(phMiraMonLayer->ReadedFeature.flag_VFG[0]|MM_EXTERIOR_ARC_SIDE))
+                if (!(phMiraMonLayer->
+                    ReadedFeature.flag_VFG[0]|MM_EXTERIOR_ARC_SIDE))
                 {
                     CPLError(CE_Failure, CPLE_NoWriteAccess,
                         "\nWrong polygon format.");
@@ -461,32 +545,44 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                 }
                 MM_BOOLEAN IAmExternal;
 
-                for (nIRing = 0; nIRing < phMiraMonLayer->ReadedFeature.nNRings; nIRing++)
+                for (nIRing = 0; nIRing < phMiraMonLayer->
+                    ReadedFeature.nNRings; nIRing++)
                 {
                     OGRLinearRing poRing;
 
-                    IAmExternal = (MM_BOOLEAN)(phMiraMonLayer->ReadedFeature.flag_VFG[nIRing]|MM_EXTERIOR_ARC_SIDE);
+                    IAmExternal = (MM_BOOLEAN)(phMiraMonLayer->
+                        ReadedFeature.flag_VFG[nIRing]|MM_EXTERIOR_ARC_SIDE);
 
-                    for (MM_N_VERTICES_TYPE nIVrt = 0; nIVrt < phMiraMonLayer->ReadedFeature.pNCoordRing[nIRing]; nIVrt++)
+                    for (MM_N_VERTICES_TYPE nIVrt = 0; nIVrt <
+                        phMiraMonLayer->ReadedFeature.pNCoordRing[nIRing];
+                        nIVrt++)
                     {
                         if (phMiraMonLayer->TopHeader.bIs3d)
                         {
-                            poRing.addPoint(phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum].dfX,
-                                phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum].dfY,
-                                phMiraMonLayer->ReadedFeature.pZCoord[nIVrtAcum]);
+                            poRing.addPoint(phMiraMonLayer->
+                                    ReadedFeature.pCoord[nIVrtAcum].dfX,
+                                phMiraMonLayer->
+                                    ReadedFeature.pCoord[nIVrtAcum].dfY,
+                                phMiraMonLayer->
+                                    ReadedFeature.pZCoord[nIVrtAcum]);
                         }
                         else
                         {
-                            poRing.addPoint(phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum].dfX,
-                                phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum].dfY);
+                            poRing.addPoint(phMiraMonLayer->
+                                ReadedFeature.pCoord[nIVrtAcum].dfX,
+                                phMiraMonLayer->
+                                ReadedFeature.pCoord[nIVrtAcum].dfY);
                         }
 
                         nIVrtAcum++;
                     }
 
                     // If I'm going to start a new polygon...
-                    if ((IAmExternal && nIRing + 1 < phMiraMonLayer->ReadedFeature.nNRings &&
-                        (phMiraMonLayer->ReadedFeature.flag_VFG[nIRing + 1]|MM_EXTERIOR_ARC_SIDE)) ||
+                    if ((IAmExternal && nIRing + 1 <
+                        phMiraMonLayer->ReadedFeature.nNRings &&
+                        (phMiraMonLayer->
+                            ReadedFeature.flag_VFG[nIRing + 1]|
+                            MM_EXTERIOR_ARC_SIDE)) ||
                         nIRing + 1 >= phMiraMonLayer->ReadedFeature.nNRings)
                     {
                         poPoly.addRing(&poRing);
@@ -510,7 +606,8 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                     return nullptr;
 
                 nIVrtAcum = 0;
-                if (!(phMiraMonLayer->ReadedFeature.flag_VFG[0]|MM_EXTERIOR_ARC_SIDE))
+                if (!(phMiraMonLayer->ReadedFeature.flag_VFG[0]|
+                    MM_EXTERIOR_ARC_SIDE))
                 {
                     CPLError(CE_Failure, CPLE_NoWriteAccess,
                         "\nWrong polygon format.");
@@ -518,24 +615,34 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                 }
                 MM_BOOLEAN IAmExternal;
 
-                for (nIRing = 0; nIRing < phMiraMonLayer->ReadedFeature.nNRings; nIRing++)
+                for (nIRing = 0; nIRing <
+                    phMiraMonLayer->ReadedFeature.nNRings; nIRing++)
                 {
                     OGRLinearRing poRing;
 
-                    IAmExternal =  (MM_BOOLEAN)(phMiraMonLayer->ReadedFeature.flag_VFG[nIRing]|MM_EXTERIOR_ARC_SIDE);
+                    IAmExternal =  (MM_BOOLEAN)(phMiraMonLayer->
+                        ReadedFeature.flag_VFG[nIRing]|
+                        MM_EXTERIOR_ARC_SIDE);
 
-                    for (MM_N_VERTICES_TYPE nIVrt = 0; nIVrt < phMiraMonLayer->ReadedFeature.pNCoordRing[nIRing]; nIVrt++)
+                    for (MM_N_VERTICES_TYPE nIVrt = 0; nIVrt <
+                        phMiraMonLayer->ReadedFeature.pNCoordRing[nIRing];
+                        nIVrt++)
                     {
                         if (phMiraMonLayer->TopHeader.bIs3d)
                         {
-                            poRing.addPoint(phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum].dfX,
-                                phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum].dfY,
-                                phMiraMonLayer->ReadedFeature.pZCoord[nIVrtAcum]);
+                            poRing.addPoint(phMiraMonLayer->
+                                ReadedFeature.pCoord[nIVrtAcum].dfX,
+                                phMiraMonLayer->
+                                    ReadedFeature.pCoord[nIVrtAcum].dfY,
+                                phMiraMonLayer->
+                                    ReadedFeature.pZCoord[nIVrtAcum]);
                         }
                         else
                         {
-                            poRing.addPoint(phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum].dfX,
-                                phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum].dfY);
+                            poRing.addPoint(phMiraMonLayer->
+                                ReadedFeature.pCoord[nIVrtAcum].dfX,
+                                phMiraMonLayer->
+                                    ReadedFeature.pCoord[nIVrtAcum].dfY);
                         }
 
                         nIVrtAcum++;
@@ -567,49 +674,115 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
         for (nIField = 0; nIField < phMiraMonLayer->pMMBDXP->ncamps; nIField ++)
         {
             MM_ResizeStringToOperateIfNeeded(phMiraMonLayer, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
-            
-                
-            if(poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType()==OFTStringList)
+                            
+            if(poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType()==OFTStringList ||
+                (poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType()==OFTString &&
+                poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetSubType()==OFSTJSON))
             {
-                for (nIRecord = 0; nIRecord < phMiraMonLayer->pMultRecordIndex[nIElem].nMR; nIRecord++)
+                if (poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetSubType()==OFSTJSON)
                 {
-                    GoToFieldOfMultipleRecord(nIElem, nIRecord, nIField);
-                    memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
-                    fread_function(phMiraMonLayer->szStringToOperate,
-                        phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp,
-                        1, phMiraMonLayer->pMMBDXP->pfBaseDades);
-                    phMiraMonLayer->szStringToOperate[phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp] = '\0';
-                    MM_TreuBlancsDeFinalDeCadena(phMiraMonLayer->szStringToOperate);
-
-                    if(phMiraMonLayer->pMMBDXP->JocCaracters==MM_JOC_CARAC_OEM850_DBASE)
-                        OemToCharBuff(phMiraMonLayer->szStringToOperate, phMiraMonLayer->szStringToOperate,
-                            phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
-
-                    if (phMiraMonLayer->pMMBDXP->JocCaracters != MM_JOC_CARAC_UTF8_DBF)
+                    // REVISAR
+                    MM_ResizeStringToOperateIfNeeded(phMiraMonLayer, phMiraMonLayer->pMMBDXP->BytesPerFitxa+
+                        2*phMiraMonLayer->pMultRecordIndex[nIElem].nMR+8);
+                    strcpy(phMiraMonLayer->szStringToOperate, "(``[");
+                    size_t nBytes=4;
+                    for (nIRecord = 0; nIRecord < phMiraMonLayer->pMultRecordIndex[nIElem].nMR; nIRecord++)
                     {
-                        // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
-                        char* pszString =
-                            CPLRecode(phMiraMonLayer->szStringToOperate, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+                        GoToFieldOfMultipleRecord(nIElem, nIRecord, nIField);
+                        
+                        fread_function(phMiraMonLayer->szStringToOperate+nBytes,
+                            phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp,
+                            1, phMiraMonLayer->pMMBDXP->pfBaseDades);
+                        (phMiraMonLayer->szStringToOperate+nBytes)[phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp] = '\0';
+                        MM_RemoveLeadingWhitespaceOfString(phMiraMonLayer->szStringToOperate+nBytes);
+                        MM_RemoveWhitespacesFromEndOfString(phMiraMonLayer->szStringToOperate);
+                        
+                        nBytes+=strlen(phMiraMonLayer->szStringToOperate+nBytes);
+                        if (phMiraMonLayer->pMMBDXP->JocCaracters == MM_JOC_CARAC_OEM850_DBASE)
+                            OemToCharBuff(phMiraMonLayer->szStringToOperate+nBytes,
+                                phMiraMonLayer->szStringToOperate+nBytes,
+                                phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
 
-                        CPLStrlcpy(phMiraMonLayer->szStringToOperate, pszString,
-                            (size_t)phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp + 1);
+                        if (phMiraMonLayer->pMMBDXP->JocCaracters != MM_JOC_CARAC_UTF8_DBF)
+                        {
+                            // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
+                            char* pszString =
+                                CPLRecode(phMiraMonLayer->szStringToOperate+nBytes, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
 
-                        CPLFree(pszString);
+                            CPLStrlcpy(phMiraMonLayer->szStringToOperate+nBytes, pszString,
+                                (size_t)phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp + 1);
+
+                            CPLFree(pszString);
+                        }
+
+                        if (nIRecord < phMiraMonLayer->pMultRecordIndex[nIElem].nMR - 1)
+                        {
+                            strcat(phMiraMonLayer->szStringToOperate + nBytes, ",");
+                            nBytes += 1;
+                        }
+                        else
+                        {
+                            strcat(phMiraMonLayer->szStringToOperate + nBytes, "]``)");
+                            nBytes += 4;
+                        }
                     }
-                    papszValues[nIRecord] = CPLStrdup(phMiraMonLayer->szStringToOperate);
+                    poFeature->SetField(nIField, phMiraMonLayer->szStringToOperate);
                 }
-                papszValues[nIRecord] = nullptr; // Necessary to finish the list
-                poFeature->SetField(nIField, papszValues);
+                else
+                {
+                    for (nIRecord = 0; nIRecord < phMiraMonLayer->pMultRecordIndex[nIElem].nMR; nIRecord++)
+                    {
+                        GoToFieldOfMultipleRecord(nIElem, nIRecord, nIField);
+                        memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                        fread_function(phMiraMonLayer->szStringToOperate,
+                            phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp,
+                            1, phMiraMonLayer->pMMBDXP->pfBaseDades);
+                        phMiraMonLayer->szStringToOperate[phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp] = '\0';
+                        MM_RemoveWhitespacesFromEndOfString(phMiraMonLayer->szStringToOperate);
+
+                        if (phMiraMonLayer->pMMBDXP->JocCaracters == MM_JOC_CARAC_OEM850_DBASE)
+                            OemToCharBuff(phMiraMonLayer->szStringToOperate, phMiraMonLayer->szStringToOperate,
+                                phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+
+                        if (phMiraMonLayer->pMMBDXP->JocCaracters != MM_JOC_CARAC_UTF8_DBF)
+                        {
+                            // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
+                            char* pszString =
+                                CPLRecode(phMiraMonLayer->szStringToOperate, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+
+                            CPLStrlcpy(phMiraMonLayer->szStringToOperate, pszString,
+                                (size_t)phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp + 1);
+
+                            CPLFree(pszString);
+                        }
+                        papszValues[nIRecord] = CPLStrdup(phMiraMonLayer->szStringToOperate);
+                    }
+                    papszValues[nIRecord] = nullptr; // Necessary to finish the list
+                    poFeature->SetField(nIField, papszValues);
+                }
             }
             else if (poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTString)
             {
-                GoToFieldOfMultipleRecord(nIElem, 0, nIField);
+                if (phMiraMonLayer->pMultRecordIndex[nIElem].nMR == 0)
+                {
+                    memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                    continue;
+                }
+                if(phMiraMonLayer->iMultiRecord==-1)
+                    GoToFieldOfMultipleRecord(nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR-1, nIField);
+                else if((MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord<phMiraMonLayer->pMultRecordIndex[nIElem].nMR)
+                    GoToFieldOfMultipleRecord(nIElem, (MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord, nIField);
+                else
+                {
+                    memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                    continue;
+                }
                 memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
                 fread_function(phMiraMonLayer->szStringToOperate,
                     phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp,
                     1, phMiraMonLayer->pMMBDXP->pfBaseDades);
                 phMiraMonLayer->szStringToOperate[phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp] = '\0';
-                MM_TreuBlancsDeFinalDeCadena(phMiraMonLayer->szStringToOperate);
+                MM_RemoveWhitespacesFromEndOfString(phMiraMonLayer->szStringToOperate);
 
                 if (phMiraMonLayer->pMMBDXP->JocCaracters == MM_JOC_CARAC_OEM850_DBASE)
                     MM_oemansi(phMiraMonLayer->szStringToOperate);
@@ -650,25 +823,52 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                 poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTInteger64 ||
                 poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTReal)
             {
-                GoToFieldOfMultipleRecord(nIElem, 0, nIField);
+                if (phMiraMonLayer->pMultRecordIndex[nIElem].nMR == 0)
+                {
+                    memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                    continue;
+                }
+                if(phMiraMonLayer->iMultiRecord==-1)
+                    GoToFieldOfMultipleRecord(nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR-1, nIField);
+                else if((MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord<phMiraMonLayer->pMultRecordIndex[nIElem].nMR)
+                    GoToFieldOfMultipleRecord(nIElem, (MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord, nIField);
+                else
+                {
+                    memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                    continue;
+                }
+                
                 memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
                 fread_function(phMiraMonLayer->szStringToOperate,
                     phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp,
                     1, phMiraMonLayer->pMMBDXP->pfBaseDades);
                 phMiraMonLayer->szStringToOperate[phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp] = '\0';
-                MM_TreuBlancsDeFinalDeCadena(phMiraMonLayer->szStringToOperate);
+                MM_RemoveWhitespacesFromEndOfString(phMiraMonLayer->szStringToOperate);
                 poFeature->SetField(nIField, atof(phMiraMonLayer->szStringToOperate));
             }
             else if (poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() == OFTDate)
             {
-                GoToFieldOfMultipleRecord(nIElem, 0, nIField);
+                if (phMiraMonLayer->pMultRecordIndex[nIElem].nMR == 0)
+                {
+                    memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                    continue;
+                }
+                if(phMiraMonLayer->iMultiRecord==-1)
+                    GoToFieldOfMultipleRecord(nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR-1, nIField);
+                else if((MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord<phMiraMonLayer->pMultRecordIndex[nIElem].nMR)
+                    GoToFieldOfMultipleRecord(nIElem, (MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord, nIField);
+                else
+                {
+                    memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                    continue;
+                }
                 memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
                 fread_function(phMiraMonLayer->szStringToOperate,
                     phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp,
                     1, phMiraMonLayer->pMMBDXP->pfBaseDades);
                 phMiraMonLayer->szStringToOperate[phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp] = '\0';
 
-                MM_TreuBlancsDeFinalDeCadena(phMiraMonLayer->szStringToOperate);
+                MM_RemoveWhitespacesFromEndOfString(phMiraMonLayer->szStringToOperate);
                 if(!IsEmptyString(phMiraMonLayer->szStringToOperate))
                 {
                     char pszDate[9];
@@ -713,9 +913,9 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
     return poFeature;
 }
 
-/************************************************************************/
-/*                         GetFeatureCount()                            */
-/************************************************************************/
+/****************************************************************************/
+/*                         GetFeatureCount()                                */
+/****************************************************************************/
 GIntBig OGRMiraMonLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
@@ -727,9 +927,9 @@ GIntBig OGRMiraMonLayer::GetFeatureCount(int bForce)
         return (GIntBig)phMiraMonLayer->TopHeader.nElemCount;
 }
 
-/************************************************************************/
-/*                      MMProcessMultiGeometry()                        */
-/************************************************************************/
+/****************************************************************************/
+/*                      MMProcessMultiGeometry()                            */
+/****************************************************************************/
 OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
     OGRFeature* poFeature)
 
@@ -781,9 +981,9 @@ OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
         poFeature, TRUE);
 }
 
-/************************************************************************/
-/*                           MMProcessGeometry()                        */
-/************************************************************************/
+/****************************************************************************/
+/*                           MMProcessGeometry()                            */
+/****************************************************************************/
 OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
     OGRFeature *poFeature,
     MM_BOOLEAN bcalculateRecord)
@@ -841,9 +1041,9 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
         phMiraMonLayer->eLT = MM_LayerType_Unknown;
     }
 
-    /* ---------------------------------------------------------------- */
-    /*      Field translation from GDAL to MiraMon                      */
-    /* ---------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Field translation from GDAL to MiraMon                          */
+    /* -------------------------------------------------------------------- */
     // Reset the object where readed coordinates are going to be stored
 
     MMResetFeatureGeometry(&hMMFeature);
@@ -865,9 +1065,9 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
         }
     }
 
-    /* ---------------------------------------------------------------- */
-    /*      Write Geometry                                              */
-    /* ---------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Write Geometry                                                  */
+    /* -------------------------------------------------------------------- */
     
     // Reads objects with coordinates and transform them to MiraMon
     if (poGeom)
@@ -890,9 +1090,9 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
 
 }
 
-/************************************************************************/
-/*                           ICreateFeature()                           */
-/************************************************************************/
+/****************************************************************************/
+/*                           ICreateFeature()                               */
+/****************************************************************************/
 
 OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
 
@@ -925,7 +1125,8 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
         int nGeom=OGR_G_GetGeometryCount(OGRGeometry::ToHandle(poGeom));
         for (int iGeom = 0; iGeom < nGeom; iGeom++)
         {
-            OGRGeometryH poNewGeometry=OGR_G_GetGeometryRef(OGRGeometry::ToHandle(poGeom), iGeom);
+            OGRGeometryH poNewGeometry=OGR_G_GetGeometryRef(
+                OGRGeometry::ToHandle(poGeom), iGeom);
             eErr=MMProcessMultiGeometry(poNewGeometry, poFeature);
             if(eErr != OGRERR_NONE)
                 return eErr;
@@ -938,9 +1139,9 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     return MMProcessMultiGeometry(OGRGeometry::ToHandle(poGeom), poFeature);
 }
 
-/************************************************************************/
-/*                          MMDumpVertices()                            */
-/************************************************************************/
+/****************************************************************************/
+/*                          MMDumpVertices()                                */
+/****************************************************************************/
 
 OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
                         MM_BOOLEAN bExternalRing, MM_BOOLEAN bUseVFG)
@@ -953,7 +1154,8 @@ OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
         phMiraMonLayer->bIsBeenInit = 1;
     }
 
-    if (MMResize_MM_N_VERTICES_TYPE_Pointer(&hMMFeature.pNCoordRing, &hMMFeature.nMaxpNCoordRing,
+    if (MMResize_MM_N_VERTICES_TYPE_Pointer(&hMMFeature.pNCoordRing,
+        &hMMFeature.nMaxpNCoordRing,
         hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS, 0))
     {
         CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
@@ -1020,12 +1222,12 @@ OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
     return OGRERR_NONE;
  }
 
-/************************************************************************/
-/*                           MMLoadGeometry()                           */
-/*                                                                      */
-/*      Loads on a MiraMon object Feature all coordinates from feature  */
-/*                                                                      */
-/************************************************************************/
+/****************************************************************************/
+/*                           MMLoadGeometry()                               */
+/*                                                                          */
+/*      Loads on a MiraMon object Feature all coordinates from feature      */
+/*                                                                          */
+/****************************************************************************/
 OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom)
 
 {
@@ -1085,13 +1287,13 @@ OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom)
     return OGRERR_NONE;
 }
 
-/************************************************************************/
-/*                           WriteGeometry()                            */
-/*                                                                      */
-/*      Write a geometry to the file.  If bExternalRing is true it      */
-/*      means the ring is being processed is external.                  */
-/*                                                                      */
-/************************************************************************/
+/****************************************************************************/
+/*                           WriteGeometry()                                */
+/*                                                                          */
+/*      Write a geometry to the file.  If bExternalRing is true it          */
+/*      means the ring is being processed is external.                      */
+/*                                                                          */
+/****************************************************************************/
 
 OGRErr OGRMiraMonLayer::MMWriteGeometry()
 
@@ -1100,14 +1302,16 @@ OGRErr OGRMiraMonLayer::MMWriteGeometry()
         
     if(eErr==MM_FATAL_ERROR_WRITING_FEATURES)
     {
-        CPLDebug("MiraMon", "Error in AddMMFeature() MM_FATAL_ERROR_WRITING_FEATURES");
+        CPLDebug("MiraMon", "Error in AddMMFeature() "
+            "MM_FATAL_ERROR_WRITING_FEATURES");
         CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
                         VSIStrerror(errno));
         return OGRERR_FAILURE;
     }
     if(eErr==MM_STOP_WRITING_FEATURES)
     {
-        CPLDebug("MiraMon", "Error in AddMMFeature() MM_STOP_WRITING_FEATURES");
+        CPLDebug("MiraMon", "Error in AddMMFeature() "
+            "MM_STOP_WRITING_FEATURES");
         CPLError(CE_Failure, CPLE_FileIO, "MiraMon format limitations.");
         CPLError(CE_Failure, CPLE_FileIO, "Try V2.0 option (-lco Version=V20).");
         return OGRERR_FAILURE;
@@ -1116,13 +1320,11 @@ OGRErr OGRMiraMonLayer::MMWriteGeometry()
     return OGRERR_NONE;
 }
 
-/************************************************************************/
-/*                       TranslateFieldsToMM()                          */
-/*                                                                      */
-/*      Translase ogr Fields to a structure that MiraMon can understand */
-/*                                                                      */
-/*      Returns OGRERR_NONE/OGRERR_NOT_ENOUGH_MEMORY.                   */
-/************************************************************************/
+/****************************************************************************/
+/*                       TranslateFieldsToMM()                              */
+/*                                                                          */
+/*      Translase ogr Fields to a structure that MiraMon can understand     */
+/****************************************************************************/
 
 OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
 
@@ -1245,13 +1447,11 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
     return OGRERR_NONE;
 }
 
-/************************************************************************/
-/*                       TranslateFieldsValuesToMM()                    */
-/*                                                                      */
-/*      Translase ogr Fields to a structure that MiraMon can understand */
-/*                                                                      */
-/*      Returns OGRERR_NONE/OGRRERR_FAILURE/OGRERR_NOT_ENOUGH_MEMORY    */
-/************************************************************************/
+/****************************************************************************/
+/*                       TranslateFieldsValuesToMM()                        */
+/*                                                                          */
+/*      Translase ogr Fields to a structure that MiraMon can understand     */
+/****************************************************************************/
 
 OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
 
@@ -1537,15 +1737,13 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
     return OGRERR_NONE;
 }
 
-/************************************************************************/
-/*                             GetExtent()                              */
-/*                                                                      */
-/*      Fetch extent of the data currently stored in the dataset.       */
-/*      The bForce flag has no effect on SHO files since that value     */
-/*      is always in the header.                                        */
-/*                                                                      */
-/*      Returns OGRERR_NONE/OGRRERR_FAILURE.                            */
-/************************************************************************/
+/****************************************************************************/
+/*                             GetExtent()                                  */
+/*                                                                          */
+/*      Fetch extent of the data currently stored in the dataset.           */
+/*      The bForce flag has no effect on SHO files since that value         */
+/*      is always in the header.                                            */
+/****************************************************************************/
 
 OGRErr OGRMiraMonLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
@@ -1558,9 +1756,9 @@ OGRErr OGRMiraMonLayer::GetExtent(OGREnvelope *psExtent, int bForce)
     return OGRERR_NONE;
 }
 
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
+/****************************************************************************/
+/*                           TestCapability()                               */
+/****************************************************************************/
 
 int OGRMiraMonLayer::TestCapability(const char *pszCap)
 
@@ -1589,9 +1787,9 @@ int OGRMiraMonLayer::TestCapability(const char *pszCap)
     return FALSE;
 }
 
-/************************************************************************/
-/*                            CreateField()                             */
-/************************************************************************/
+/****************************************************************************/
+/*                            CreateField()                                 */
+/****************************************************************************/
 
 OGRErr OGRMiraMonLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 

@@ -27,9 +27,9 @@
 
 #include "ogrmiramon.h"
 
-/************************************************************************/
+/****************************************************************************/
 /*                          OGRMiraMonDataSource()                          */
-/************************************************************************/
+/****************************************************************************/
 
 OGRMiraMonDataSource::OGRMiraMonDataSource()
     : papoLayers(nullptr), nLayers(0), pszDSName(nullptr), bUpdate(false),
@@ -39,9 +39,9 @@ OGRMiraMonDataSource::OGRMiraMonDataSource()
     MMMap.fMMMap=NULL;
 }
 
-/************************************************************************/
+/****************************************************************************/
 /*                         ~OGRMiraMonDataSource()                          */
-/************************************************************************/
+/****************************************************************************/
 
 OGRMiraMonDataSource::~OGRMiraMonDataSource()
 
@@ -56,9 +56,9 @@ OGRMiraMonDataSource::~OGRMiraMonDataSource()
         VSIFCloseL(MMMap.fMMMap);
 }
 
-/************************************************************************/
-/*                                Open()                                */
-/************************************************************************/
+/****************************************************************************/
+/*                                Open()                                    */
+/****************************************************************************/
 
 int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
                            const OGRSpatialReference *poSRS, int bUpdateIn,
@@ -82,7 +82,8 @@ int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
 
     if (pszDSName)
     {
-        strcpy(MMMap.pszMapName, CPLFormFilename(pszDSName, CPLGetBasename(pszDSName), "mmm"));
+        strcpy(MMMap.pszMapName, CPLFormFilename(pszDSName,
+            CPLGetBasename(pszDSName), "mmm"));
         if (!MMMap.nNumberOfLayers)
         {
             MMMap.fMMMap = VSIFOpenL(MMMap.pszMapName, "w+");
@@ -92,7 +93,8 @@ int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
             VSIFPrintfL(MMMap.fMMMap, "variant=b\n");
             VSIFPrintfL(MMMap.fMMMap, "\n");
             VSIFPrintfL(MMMap.fMMMap, "[DOCUMENT]\n");
-            VSIFPrintfL(MMMap.fMMMap, "Titol= %s(map)\n", CPLGetBasename(poLayer->GetName()));
+            VSIFPrintfL(MMMap.fMMMap, "Titol= %s(map)\n",
+                CPLGetBasename(poLayer->GetName()));
             VSIFPrintfL(MMMap.fMMMap, "\n");
         }
     }
@@ -105,12 +107,12 @@ int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
     return TRUE;
 }
 
-/************************************************************************/
-/*                               Create()                               */
-/*                                                                      */
-/*      Create a new datasource.  This does not really do anything      */
-/*      currently but save the name.                                    */
-/************************************************************************/
+/****************************************************************************/
+/*                               Create()                                   */
+/*                                                                          */
+/*      Create a new datasource.  This does not really do anything          */
+/*      currently but save the name.                                        */
+/****************************************************************************/
 
 int OGRMiraMonDataSource::Create(const char *pszDataSetName,
     char ** /* papszOptions */)
@@ -122,9 +124,9 @@ int OGRMiraMonDataSource::Create(const char *pszDataSetName,
     return TRUE;
 }
 
-/************************************************************************/
-/*                           ICreateLayer()                             */
-/************************************************************************/
+/****************************************************************************/
+/*                           ICreateLayer()                                 */
+/****************************************************************************/
 
 OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
                                          const OGRSpatialReference *poSRS,
@@ -188,9 +190,9 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     return nullptr;
 }
 
-/************************************************************************/
-/*                           TestCapability()                           */
-/************************************************************************/
+/****************************************************************************/
+/*                           TestCapability()                               */
+/****************************************************************************/
 
 int OGRMiraMonDataSource::TestCapability(const char *pszCap)
 
@@ -205,9 +207,9 @@ int OGRMiraMonDataSource::TestCapability(const char *pszCap)
     return FALSE;
 }
 
-/************************************************************************/
-/*                              GetLayer()                              */
-/************************************************************************/
+/****************************************************************************/
+/*                              GetLayer()                                  */
+/****************************************************************************/
 
 OGRLayer *OGRMiraMonDataSource::GetLayer(int iLayer)
 

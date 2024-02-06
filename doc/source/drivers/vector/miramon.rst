@@ -1,6 +1,6 @@
 .. _vector.miramon:
 
-MiraMon (TO FINALIZE)
+MiraMon
 ====================
 
 .. shortname:: MiraMon
@@ -9,47 +9,42 @@ MiraMon (TO FINALIZE)
 
 All varieties of MiraMon files should be available for reading and creation.
 
-Normally the OGR Shapefile driver treats a whole directory of shapefiles
-as a dataset, and a single shapefile within that directory as a layer.
+[[Explicacio dels fitxers miramon, capa a capa. Part geometrica, part dades i part metadades]]
+[[Link a les especificacions del format, tant geometrica com features.]]
+
+More information about the MiraMon format is available `MiraMon Technical notes
+ page <https://www.miramon.cat/USA/NotesTecniques.htm>`__ under the
+ 'Format specification of the MiraMon structured vector files' title.
+
+
+Normally the OGR MiraMon driver treats a whole directory of shapefiles
+as a dataset, and a single miramon file within that directory as a layer.
 In this case the directory name should be used as the dataset name.
 However, it is also possible to use one of the files (.shp, .shx or
-.dbf) in a shapefile set as the dataset name, and then it will be
+.dbf) in a miramon file set as the dataset name, and then it will be
 treated as a dataset with one layer.
 
-Note that when reading a Shapefile of type SHPT_ARC, the corresponding
-layer will be reported as of type wkbLineString, but depending on the
+Note that when reading a MiraMon file of type POL, the corresponding
+layer will be reported as of type wkbPolygon, but depending on the
 number of parts of each geometry, the actual type of the geometry for
-each feature can be either OGRLineString or OGRMultiLineString. The same
-applies for SHPT_POLYGON shapefiles, reported as layers of type
-wkbPolygon, but depending on the number of parts of each geometry, the
-actual type can be either OGRPolygon or OGRMultiPolygon.
+each feature can be either OGRPolygon or OGRMultiPolygon. This not 
+applies for ARC and PNT MiraMon files because the concept of 
+OGRMultiLineString or OGRMultiPoint doesn't exist. 
 
-Measures (M coordinate) are supported. A
-Shapefile with measures is created if the specified geometry type is
-measured or an appropriate layer creation option is used. When a
-shapefile which may have measured geometries is opened, the first shape
-is examined and if it uses measures, the geometry type of the layer is
-set accordingly. This behavior can be changed with the ADJUST_GEOM_TYPE
-open option.
+Measures (M coordinate) are not supported. 
 
-MultiPatch files are read and each patch geometry is turned into a TIN
-or a GEOMETRYCOLLECTION of TIN representation for fans and meshes.
-
-If a .prj files in old Arc/Info style or new ESRI OGC WKT style is
+If a .REL (REL 4 format) MiraMon metadata file is
 present, it will be read and used to associate a projection with
-features. Starting with GDAL 2.3, a match will be attempted with the
+features. A match will be attempted with the
 EPSG databases to identify the SRS of the .prj with an entry in the
-catalog.
+catalog. If a .REL (REL 1 format) or other old MiraMon metadata file
+is present, a warning message will appear explaining how to convert it 
+in a REL 4 file (using a MiraMon Suport Aplication called ConvRel).
 
 The read driver assumes that multipart polygons follow the
 specification, that is to say the vertices of outer rings should be
 oriented clockwise on the X/Y plane, and those of inner rings
-counterclockwise. If a Shapefile is broken w.r.t. that rule, it is
-possible to define the configuration option
-:config:`OGR_ORGANIZE_POLYGONS` to DEFAULT to proceed to
-a full analysis based on topological relationships of the parts of the
-polygons so that the resulting polygons are correctly defined in the
-OGC Simple Feature convention.
+counterclockwise. 
 
 Driver capabilities
 -------------------
@@ -61,82 +56,14 @@ Driver capabilities
 Encoding
 --------
 
-An attempt is made to read the code page setting in the .cpg file, or as
-a fallback in the LDID/codepage setting from the .dbf file, and use it
-to translate string fields to UTF-8 on read, and back when writing. LDID
-"87 / 0x57" is treated as ISO-8859-1 which may not be appropriate. The
-:config:`SHAPE_ENCODING` configuration option may be used to
+An attempt is made to read the code page setting in the in the codepage 
+setting from the .dbf file, and use it
+to translate string fields to UTF-8 on read, and back when writing. 
+At the moment of the first version of the driver the codepage of DBF files is ANSI 
+which may not be appropriate. The
+:config:`DBF_ENCODING` configuration option may be used to
 override the encoding interpretation of the shapefile with any encoding
 supported by CPLRecode or to "" to avoid any recoding.
-
-Starting with GDAL 3.1, the following metadata items are available in the
-"SHAPEFILE" domain:
-
--  **LDID_VALUE**\ =integer: Raw LDID value from the DBF header. Only present
-   if this value is not zero.
--  **ENCODING_FROM_LDID**\ =string: Encoding name deduced from LDID_VALUE. Only
-   present if LDID_VALUE is present
--  **CPG_VALUE**\ =string: Content of the .cpg file. Only present if the file
-   exists.
--  **ENCODING_FROM_CPG**\ =string: Encoding name deduced from CPG_VALUE. Only
-   present if CPG_VALUE is present
--  **SOURCE_ENCODING**\ =string: Encoding used by GDAL to encode/recode strings.
-   If the user has provided the :config:`SHAPE_ENCODING`
-   configuration option or ``ENCODING`` open option have been provided
-   (included to empty value), then their value is used to fill this metadata
-   item. Otherwise it is equal to ENCODING_FROM_CPG if it is present.
-   Otherwise it is equal to ENCODING_FROM_LDID.
-
-Spatial and attribute indexing
-------------------------------
-
-The OGR Shapefile driver supports spatial indexing and a limited form of
-attribute indexing.
-
-The spatial indexing uses the same .qix quadtree spatial index files
-that are used by UMN MapServer. Spatial indexing can accelerate
-spatially filtered passes through large datasets to pick out a small
-area quite dramatically.
-
-It can also use the ESRI spatial index files
-(.sbn / .sbx), but writing them is not supported currently.
-
-To create a spatial index (in .qix format), issue a SQL command of the
-form
-
-::
-
-   CREATE SPATIAL INDEX ON tablename [DEPTH N]
-
-where optional DEPTH specifier can be used to control number of index
-tree levels generated. If DEPTH is omitted, tree depth is estimated on
-basis of number of features in a shapefile and its value ranges from 1
-to 12.
-
-To delete a spatial index issue a command of the form
-
-::
-
-   DROP SPATIAL INDEX ON tablename
-
-Otherwise, the `MapServer <http://mapserver.org>`__ shptree utility can
-be used:
-
-::
-
-   shptree <shpfile> [<depth>] [<index_format>]
-
-More information is available about this utility at the `MapServer
-shptree page <http://mapserver.org/utilities/shptree.html>`__
-
-Currently the OGR Shapefile driver only supports attribute indexes for
-looking up specific values in a unique key column. To create an
-attribute index for a column issue an SQL command of the form "CREATE
-INDEX ON tablename USING fieldname". To drop the attribute indexes issue
-a command of the form "DROP INDEX ON tablename". The attribute index
-will accelerate WHERE clause searches of the form "fieldname = value".
-The attribute index is actually stored as a mapinfo format index and is
-not compatible with any other shapefile applications.
 
 Creation Issues
 ---------------
