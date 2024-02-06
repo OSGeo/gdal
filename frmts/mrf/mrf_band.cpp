@@ -144,6 +144,7 @@ static int isAllVal(GDALDataType gt, void *b, size_t bytecount, double ndv)
 }
 
 // Swap bytes in place, unconditional
+// cppcheck-suppress constParameterReference
 static void swab_buff(buf_mgr &src, const ILImage &img)
 {
     size_t i;
@@ -482,7 +483,7 @@ const char *MRFRasterBand::GetOptionValue(const char *opt,
 
 // Utility function, returns a value from a vector corresponding to the band
 // index or the first entry
-static double getBandValue(std::vector<double> &v, int idx)
+static double getBandValue(const std::vector<double> &v, int idx)
 {
     return (static_cast<int>(v.size()) > idx) ? v[idx] : v[0];
 }
@@ -510,7 +511,7 @@ CPLErr MRFRasterBand::SetNoDataValue(double val)
 
 double MRFRasterBand::GetNoDataValue(int *pbSuccess)
 {
-    std::vector<double> &v = poMRFDS->vNoData;
+    const std::vector<double> &v = poMRFDS->vNoData;
     if (v.empty())
         return GDALPamRasterBand::GetNoDataValue(pbSuccess);
     if (pbSuccess)
@@ -520,7 +521,7 @@ double MRFRasterBand::GetNoDataValue(int *pbSuccess)
 
 double MRFRasterBand::GetMinimum(int *pbSuccess)
 {
-    std::vector<double> &v = poMRFDS->vMin;
+    const std::vector<double> &v = poMRFDS->vMin;
     if (v.empty())
         return GDALPamRasterBand::GetMinimum(pbSuccess);
     if (pbSuccess)
@@ -530,7 +531,7 @@ double MRFRasterBand::GetMinimum(int *pbSuccess)
 
 double MRFRasterBand::GetMaximum(int *pbSuccess)
 {
-    std::vector<double> &v = poMRFDS->vMax;
+    const std::vector<double> &v = poMRFDS->vMax;
     if (v.empty())
         return GDALPamRasterBand::GetMaximum(pbSuccess);
     if (pbSuccess)

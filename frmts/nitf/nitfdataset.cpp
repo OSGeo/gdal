@@ -1068,7 +1068,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
                     fabs(dfULY_AEQD - dfURY_AEQD) < 1e-6 * fabs(dfURY_AEQD) &&
                     fabs(dfLLY_AEQD - dfLRY_AEQD) < 1e-6 * fabs(dfLRY_AEQD))
                 {
-                    poDS->m_oSRS = oSRS_AEQD;
+                    poDS->m_oSRS = std::move(oSRS_AEQD);
 
                     poDS->bGotGeoTransform = TRUE;
                     poDS->adfGeoTransform[0] = dfULX_AEQD;
@@ -2055,7 +2055,7 @@ void NITFDataset::CheckGeoSDEInfo()
     /* -------------------------------------------------------------------- */
     /*      Apply back to dataset.                                          */
     /* -------------------------------------------------------------------- */
-    m_oSRS = oSRS;
+    m_oSRS = std::move(oSRS);
 
     memcpy(adfGeoTransform, adfGT, sizeof(double) * 6);
     bGotGeoTransform = TRUE;
@@ -6224,9 +6224,9 @@ static bool NITFWriteDES(VSILFILE *&fp, const char *pszFilename,
         char szDESITEM[LEN_DESITEM + 1];
         memcpy(szDESITEM, pabyDESData + 169 + LEN_DESOFLW, LEN_DESITEM);
         szDESITEM[LEN_DESITEM] = '\0';
-        if (!isdigit(static_cast<int>(szDESITEM[0])) ||
-            !isdigit(static_cast<int>(szDESITEM[1])) ||
-            !isdigit(static_cast<int>(szDESITEM[2])))
+        if (!isdigit(static_cast<unsigned char>(szDESITEM[0])) ||
+            !isdigit(static_cast<unsigned char>(szDESITEM[1])) ||
+            !isdigit(static_cast<unsigned char>(szDESITEM[2])))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid value for DESITEM: '%s'", szDESITEM);
@@ -6328,10 +6328,10 @@ static bool NITFWriteDES(VSILFILE *&fp, const char *pszFilename,
         169 + (bIsTRE_OVERFLOW ? LEN_DESOFLW + LEN_DESITEM : 0);
     memcpy(szDESSHL, pabyDESData + OFFSET_DESSHL, LEN_DESSHL);
     szDESSHL[LEN_DESSHL] = '\0';
-    if (!isdigit(static_cast<int>(szDESSHL[0])) ||
-        !isdigit(static_cast<int>(szDESSHL[1])) ||
-        !isdigit(static_cast<int>(szDESSHL[2])) ||
-        !isdigit(static_cast<int>(szDESSHL[3])))
+    if (!isdigit(static_cast<unsigned char>(szDESSHL[0])) ||
+        !isdigit(static_cast<unsigned char>(szDESSHL[1])) ||
+        !isdigit(static_cast<unsigned char>(szDESSHL[2])) ||
+        !isdigit(static_cast<unsigned char>(szDESSHL[3])))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid value for DESSHL: '%s'",
                  szDESSHL);

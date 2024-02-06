@@ -183,6 +183,12 @@ char **VSISiblingFiles(const char *pszFilename)
 
 char **VSIReadDirRecursive(const char *pszPathIn)
 {
+#if defined(_WIN32)
+    const char SEP = pszPathIn[0] == '\\' ? '\\' : '/';
+#else
+    constexpr char SEP = '/';
+#endif
+
     const char *const apszOptions[] = {"NAME_AND_TYPE_ONLY=YES", nullptr};
     VSIDIR *psDir = VSIOpenDir(pszPathIn, -1, apszOptions);
     if (!psDir)
@@ -191,9 +197,9 @@ char **VSIReadDirRecursive(const char *pszPathIn)
     while (auto psEntry = VSIGetNextDirEntry(psDir))
     {
         if (VSI_ISDIR(psEntry->nMode) && psEntry->pszName[0] &&
-            psEntry->pszName[strlen(psEntry->pszName) - 1] != '/')
+            psEntry->pszName[strlen(psEntry->pszName) - 1] != SEP)
         {
-            oFiles.AddString((std::string(psEntry->pszName) + '/').c_str());
+            oFiles.AddString((std::string(psEntry->pszName) + SEP).c_str());
         }
         else
         {
@@ -1369,6 +1375,12 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
                                 GDALProgressFunc pProgressFunc,
                                 void *pProgressData, char ***ppapszOutputs)
 {
+#if defined(_WIN32)
+    const char SOURCE_SEP = pszSource[0] == '\\' ? '\\' : '/';
+#else
+    constexpr char SOURCE_SEP = '/';
+#endif
+
     if (ppapszOutputs)
     {
         *ppapszOutputs = nullptr;
@@ -1377,7 +1389,8 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
     VSIStatBufL sSource;
     CPLString osSource(pszSource);
     CPLString osSourceWithoutSlash(pszSource);
-    if (osSourceWithoutSlash.back() == '/')
+    if (osSourceWithoutSlash.back() == '/' ||
+        osSourceWithoutSlash.back() == '\\')
     {
         osSourceWithoutSlash.resize(osSourceWithoutSlash.size() - 1);
     }
@@ -1390,7 +1403,7 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
     if (VSI_ISDIR(sSource.st_mode))
     {
         CPLString osTargetDir(pszTarget);
-        if (osSource.back() != '/')
+        if (osSource.back() != '/' && osSource.back() != '\\')
         {
             osTargetDir = CPLFormFilename(osTargetDir,
                                           CPLGetFilename(pszSource), nullptr);
@@ -1441,7 +1454,7 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
                 void *pScaledProgress = GDALCreateScaledProgress(
                     double(iFile) / nFileCount, double(iFile + 1) / nFileCount,
                     pProgressFunc, pProgressData);
-                ret = Sync((osSubSource + '/').c_str(), osSubTarget,
+                ret = Sync((osSubSource + SOURCE_SEP).c_str(), osSubTarget,
                            aosChildOptions.List(), GDALScaledProgress,
                            pScaledProgress, nullptr);
                 GDALDestroyScaledProgress(pScaledProgress);
@@ -1651,12 +1664,18 @@ VSIDIR *VSIFilesystemHandler::OpenDir(const char *pszPath, int nRecurseDepth,
 
 const VSIDIREntry *VSIDIRGeneric::NextDirEntry()
 {
+#if defined(_WIN32)
+    const char SEP = osRootPath[0] == '\\' ? '\\' : '/';
+#else
+    constexpr char SEP = '/';
+#endif
+
 begin:
     if (VSI_ISDIR(entry.nMode) && nRecurseDepth != 0)
     {
         CPLString osCurFile(osRootPath);
         if (!osCurFile.empty())
-            osCurFile += '/';
+            osCurFile += SEP;
         osCurFile += entry.pszName;
         auto subdir =
             static_cast<VSIDIRGeneric *>(poFS->VSIFilesystemHandler::OpenDir(
@@ -1705,7 +1724,7 @@ begin:
             CPLFree(entry.pszName);
             CPLString osName(osBasePath);
             if (!osName.empty())
-                osName += '/';
+                osName += SEP;
             osName += papszContent[nPos];
             nPos++;
 
@@ -1713,7 +1732,7 @@ begin:
             entry.nMode = 0;
             CPLString osCurFile(osRootPath);
             if (!osCurFile.empty())
-                osCurFile += '/';
+                osCurFile += SEP;
             osCurFile += entry.pszName;
 
             const auto StatFile = [&osCurFile, this]()
@@ -1743,7 +1762,7 @@ begin:
                 m_osFilterPrefix.size() > osName.size())
             {
                 if (STARTS_WITH(m_osFilterPrefix.c_str(), osName.c_str()) &&
-                    m_osFilterPrefix[osName.size()] == '/')
+                    m_osFilterPrefix[osName.size()] == SEP)
                 {
                     StatFile();
                     if (VSI_ISDIR(entry.nMode))
@@ -1791,8 +1810,17 @@ int VSIFilesystemHandler::RmdirRecursive(const char *pszDirname)
 {
     CPLString osDirnameWithoutEndSlash(pszDirname);
     if (!osDirnameWithoutEndSlash.empty() &&
-        osDirnameWithoutEndSlash.back() == '/')
+        (osDirnameWithoutEndSlash.back() == '/' ||
+         osDirnameWithoutEndSlash.back() == '\\'))
+    {
         osDirnameWithoutEndSlash.resize(osDirnameWithoutEndSlash.size() - 1);
+    }
+
+#if defined(_WIN32)
+    const char SEP = pszDirname[0] == '\\' ? '\\' : '/';
+#else
+    constexpr char SEP = '/';
+#endif
 
     CPLStringList aosOptions;
     auto poDir =
@@ -1806,7 +1834,7 @@ int VSIFilesystemHandler::RmdirRecursive(const char *pszDirname)
         if (!entry)
             break;
 
-        const CPLString osFilename(osDirnameWithoutEndSlash + '/' +
+        const CPLString osFilename(osDirnameWithoutEndSlash + SEP +
                                    entry->pszName);
         if ((entry->nMode & S_IFDIR))
         {

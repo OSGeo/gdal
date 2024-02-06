@@ -1603,7 +1603,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
         }
         if (EQUAL(osGTiffSRSSource.c_str(), "EPSG"))
         {
-            oSRS = oSRSTmp;
+            oSRS = std::move(oSRSTmp);
         }
         else if (bPCSCodeValid && EQUAL(osGTiffSRSSource.c_str(), ""))
         {
@@ -3703,20 +3703,22 @@ CPLErr GTIFMemBufFromSRS(OGRSpatialReferenceH hSRS,
     {
         hGTIF = GTIFNew(hTIFF);
         if (hGTIF)
+        {
             GTIFAttachPROJContext(hGTIF, OSRGetProjTLSContext());
 
-        if (hSRS != nullptr)
-            GTIFSetFromOGISDefnEx(hGTIF, hSRS, GEOTIFF_KEYS_STANDARD,
-                                  GEOTIFF_VERSION_1_0);
+            if (hSRS != nullptr)
+                GTIFSetFromOGISDefnEx(hGTIF, hSRS, GEOTIFF_KEYS_STANDARD,
+                                      GEOTIFF_VERSION_1_0);
 
-        if (bPixelIsPoint)
-        {
-            GTIFKeySet(hGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1,
-                       RasterPixelIsPoint);
+            if (bPixelIsPoint)
+            {
+                GTIFKeySet(hGTIF, GTRasterTypeGeoKey, TYPE_SHORT, 1,
+                           RasterPixelIsPoint);
+            }
+
+            GTIFWriteKeys(hGTIF);
+            GTIFFree(hGTIF);
         }
-
-        GTIFWriteKeys(hGTIF);
-        GTIFFree(hGTIF);
     }
 
     /* -------------------------------------------------------------------- */

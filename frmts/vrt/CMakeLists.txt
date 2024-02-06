@@ -15,12 +15,14 @@ add_gdal_driver(
           pixelfunctions.cpp
           vrtpansharpened.cpp
           vrtmultidim.cpp
+          gdaltileindexdataset.cpp
           STRONG_CXX_WFLAGS)
 gdal_standard_includes(gdal_vrt)
 target_include_directories(gdal_vrt PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw)
 
 set(GDAL_DATA_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalvrt.xsd
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/gdaltileindex.xsd
 )
 set_property(
   TARGET ${GDAL_LIB_TARGET_NAME}

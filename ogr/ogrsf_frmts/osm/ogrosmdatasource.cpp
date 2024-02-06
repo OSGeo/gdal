@@ -2258,6 +2258,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
 
     if (bMissing)
     {
+        // cppcheck-suppress constVariableReference
         for (auto &oIter : aoMapWays)
             CPLFree(oIter.second.second);
 
@@ -2402,6 +2403,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
 
     CPLFree(papoPolygons);
 
+    // cppcheck-suppress constVariableReference
     for (auto &oIter : aoMapWays)
         CPLFree(oIter.second.second);
 
@@ -2477,6 +2479,7 @@ OGRGeometry *OGROSMDataSource::BuildGeometryCollection(OSMRelation *psRelation,
         poColl = nullptr;
     }
 
+    // cppcheck-suppress constVariableReference
     for (auto &oIter : aoMapWays)
         CPLFree(oIter.second.second);
 
@@ -4147,19 +4150,18 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
 
             CloseDB();
 
-            CPLString osNewTmpDBName;
-
-            osNewTmpDBName = CPLGenerateTempFilename("osm_tmp");
+            const std::string osNewTmpDBName(
+                CPLGenerateTempFilename("osm_tmp"));
 
             CPLDebug("OSM",
                      "%s too big for RAM. Transferring it onto disk in %s",
                      m_osTmpDBName.c_str(), osNewTmpDBName.c_str());
 
-            if (CPLCopyFile(osNewTmpDBName, m_osTmpDBName) != 0)
+            if (CPLCopyFile(osNewTmpDBName.c_str(), m_osTmpDBName) != 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Cannot copy %s to %s",
                          m_osTmpDBName.c_str(), osNewTmpDBName.c_str());
-                VSIUnlink(osNewTmpDBName);
+                VSIUnlink(osNewTmpDBName.c_str());
                 m_bStopParsing = true;
                 return false;
             }

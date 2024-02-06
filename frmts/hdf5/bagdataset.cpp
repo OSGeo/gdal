@@ -2733,8 +2733,8 @@ GDALDataset *BAGDataset::Open(GDALOpenInfo *poOpenInfo)
     BAGDataset *const poDS = new BAGDataset();
 
     poDS->eAccess = poOpenInfo->eAccess;
-    poDS->m_poRootGroup = poRootGroup;
-    poDS->m_poSharedResources = poSharedResources;
+    poDS->m_poRootGroup = std::move(poRootGroup);
+    poDS->m_poSharedResources = std::move(poSharedResources);
 
     // Extract version as metadata.
     CPLString osVersion;
@@ -2906,8 +2906,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
             delete poElevBand;
             return false;
         }
-        const auto poValuesDims = poValues->GetDimensions();
-        if (poValuesDims.size() != 1)
+        if (poValues->GetDimensionCount() != 1)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Wrong dimensions for %s/values",
@@ -3675,8 +3674,8 @@ GDALDataset *BAGDataset::OpenForCreate(GDALOpenInfo *poOpenInfo, int nXSizeIn,
     BAGDataset *const poDS = new BAGDataset();
 
     poDS->eAccess = poOpenInfo->eAccess;
-    poDS->m_poRootGroup = poRootGroup;
-    poDS->m_poSharedResources = poSharedResources;
+    poDS->m_poRootGroup = std::move(poRootGroup);
+    poDS->m_poSharedResources = std::move(poSharedResources);
     poDS->m_aosCreationOptions = papszCreationOptions;
 
     poDS->nRasterXSize = nXSizeIn;

@@ -82,7 +82,7 @@ template <typename T> T strToInt(const char *value)
 
 }  // anonymous namespace
 
-OGRHanaFeatureReader::OGRHanaFeatureReader(OGRFeature &feature)
+OGRHanaFeatureReader::OGRHanaFeatureReader(const OGRFeature &feature)
     : feature_(feature)
 {
 }
@@ -487,7 +487,7 @@ odbc::String OGRHanaFeatureReader::GetFieldAsDoubleArray(int fieldIndex) const
         feature_.GetFieldAsDoubleList(fieldIndex, &numElements);
     return CreateStringFromValues<double>(
         values, numElements,
-        [](double value)
+        [](double value) -> std::string
         { return std::isnan(value) ? "NULL" : std::to_string(value); });
 }
 

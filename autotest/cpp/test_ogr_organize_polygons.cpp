@@ -65,7 +65,7 @@ class OrganizePolygonsTest : public testing::TestWithParam<std::string>
 INSTANTIATE_TEST_SUITE_P(
     test_gdal, OrganizePolygonsTest,
     ::testing::Values("DEFAULT", "ONLY_CCW", "SKIP"),
-    [](const ::testing::TestParamInfo<std::string> &param_info)
+    [](const ::testing::TestParamInfo<std::string> &param_info) -> std::string
     { return param_info.param; });
 
 TEST_P(OrganizePolygonsTest, EmptyInputVector)

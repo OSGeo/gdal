@@ -1569,7 +1569,7 @@ bool OGRShapeDataSource::UncompressIfNeeded()
         }
     }
 
-    m_osTemporaryUnzipDir = osTemporaryDir;
+    m_osTemporaryUnzipDir = std::move(osTemporaryDir);
 
     for (int i = 0; i < nLayers; i++)
     {

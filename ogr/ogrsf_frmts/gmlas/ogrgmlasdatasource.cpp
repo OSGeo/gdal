@@ -401,34 +401,34 @@ void GMLASTopElementParser::startElement(const XMLCh *const /*uri*/,
 
     for (unsigned int i = 0; i < attrs.getLength(); i++)
     {
-        CPLString osAttrURIPrefix(transcode(attrs.getURI(i)));
-        CPLString osAttrLocalname(transcode(attrs.getLocalName(i)));
-        CPLString osAttrValue(transcode(attrs.getValue(i)));
+        const std::string osAttrURIPrefix(transcode(attrs.getURI(i)));
+        const std::string osAttrLocalname(transcode(attrs.getLocalName(i)));
+        const std::string osAttrValue(transcode(attrs.getValue(i)));
 
         if (osAttrURIPrefix == szXSI_URI &&
             osAttrLocalname == szSCHEMA_LOCATION)
         {
             CPLDebug("GMLAS", "%s=%s", szSCHEMA_LOCATION, osAttrValue.c_str());
 
-            char **papszTokens = CSLTokenizeString2(osAttrValue, " ", 0);
-            int nTokens = CSLCount(papszTokens);
+            const CPLStringList aosTokens(
+                CSLTokenizeString2(osAttrValue.c_str(), " ", 0));
+            const int nTokens = aosTokens.size();
             if ((nTokens % 2) == 0)
             {
                 for (int j = 0; j < nTokens; j += 2)
                 {
-                    if (!STARTS_WITH(papszTokens[j], szWFS_URI) &&
-                        !(EQUAL(papszTokens[j], szGML_URI) ||
-                          STARTS_WITH(papszTokens[j],
+                    if (!STARTS_WITH(aosTokens[j], szWFS_URI) &&
+                        !(EQUAL(aosTokens[j], szGML_URI) ||
+                          STARTS_WITH(aosTokens[j],
                                       (CPLString(szGML_URI) + "/").c_str())))
                     {
                         CPLDebug("GMLAS", "Schema to analyze: %s -> %s",
-                                 papszTokens[j], papszTokens[j + 1]);
-                        m_aoFilenames.push_back(PairURIFilename(
-                            papszTokens[j], papszTokens[j + 1]));
+                                 aosTokens[j], aosTokens[j + 1]);
+                        m_aoFilenames.push_back(
+                            PairURIFilename(aosTokens[j], aosTokens[j + 1]));
                     }
                 }
             }
-            CSLDestroy(papszTokens);
         }
         else if (osAttrURIPrefix == szXSI_URI &&
                  osAttrLocalname == szNO_NAMESPACE_SCHEMA_LOCATION)

@@ -29,21 +29,20 @@ a CRS is a dynamic one.
 The :cpp:func:`OGRSpatialReference::SetCoordinateEpoch` and
 :cpp:func:`OGRSpatialReference::GetCoordinateEpoch` methods can be used to
 set/retrieve a coordinate epoch associated with a CRS. The coordinate epoch is
-expressed as a decimal year (e.g. 2021.3).
+expressed as a decimal year (e.g. 2021.3 for April 21, 2021).
 
 Formally, the coordinate epoch of an observation belongs to the
-observation.  However, almost all formats do not allow for storing
+observation. However, almost all formats do not allow for storing
 per-observation epoch, and typical usage is a set of observations with
-the same epoch.  Therefore we store the epoch as property of the CRS,
-and the meaning of this is as if that epoch value were part of every
-observation.  This choice eases processing, storage and format
-complexity for most usage.  For now, this means that a dataset where
-points have different epochs cannot be handled.
+the same epoch. Therefore we store the epoch as property of the CRS,
+and assume that it is valid for every observation. This choice eases processing,
+storage and format complexity for most usage. For now, this means that a dataset 
+containing observations or points with different epochs cannot be handled.
 
 For vector formats, per-geometry coordinate epoch could also make sense, but as
 most formats only support a per-layer CRS, we also for now limit support of
-coordinate epoch at the layer level. The coordinate transformation mechanics
-itself can support per-vertex coordinate epoch.
+coordinate epoch at the layer level. The underlying coordinate transformation mechanics
+can support per-vertex coordinate epoch.
 
 Support in raster and vector formats
 ------------------------------------
@@ -161,6 +160,8 @@ Support in utilities
 
 :program:`gdalinfo` and :program:`ogrinfo` report the coordinate epoch, when
 attached to a dataset/layer SRS.
+
+:program:`gdal_edit.py` has a ``-a_coord_epoch`` option to define the epoch of a dataset in place. 
 
 :program:`gdal_translate` and :program:`ogr2ogr` have a ``-a_coord_epoch`` option to be used
 together with ``-a_srs``, and otherwise preserve the coordinate epoch in the output SRS

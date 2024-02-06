@@ -814,7 +814,7 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                     poDS->ndims)
             {
                 int iDim = 0;
-                for (auto &oDim : oGridDataFieldMetadata.aoDimensions)
+                for (const auto &oDim : oGridDataFieldMetadata.aoDimensions)
                 {
                     if (oDim.osName == "XDim")
                         poDS->m_nXIndex = iDim;

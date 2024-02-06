@@ -167,25 +167,25 @@ static bool IsValidXPath(const CPLString &osXPath)
         }
         else if (chCur == '@' && (i == 0 || osXPath[i - 1] == '/') &&
                  i < osXPath.size() - 1 &&
-                 isalpha(static_cast<int>(osXPath[i + 1])))
+                 isalpha(static_cast<unsigned char>(osXPath[i + 1])))
         {
             // OK
         }
-        else if (chCur == '_' || isalpha(static_cast<int>(chCur)))
+        else if (chCur == '_' || isalpha(static_cast<unsigned char>(chCur)))
         {
             // OK
         }
-        else if (isdigit(static_cast<int>(chCur)) && i > 0 &&
-                 (isalnum(static_cast<int>(osXPath[i - 1])) ||
+        else if (isdigit(static_cast<unsigned char>(chCur)) && i > 0 &&
+                 (isalnum(static_cast<unsigned char>(osXPath[i - 1])) ||
                   osXPath[i - 1] == '_'))
         {
             // OK
         }
         else if (chCur == ':' && i > 0 &&
-                 (isalnum(static_cast<int>(osXPath[i - 1])) ||
+                 (isalnum(static_cast<unsigned char>(osXPath[i - 1])) ||
                   osXPath[i - 1] == '_') &&
                  i < osXPath.size() - 1 &&
-                 isalpha(static_cast<int>(osXPath[i + 1])))
+                 isalpha(static_cast<unsigned char>(osXPath[i + 1])))
         {
             // OK
         }
@@ -227,8 +227,9 @@ static void ParseNamespaces(CPLXMLNode *psContainerNode,
             if (psIter->eType == CXT_Element &&
                 EQUAL(psIter->pszValue, "Namespace"))
             {
-                CPLString osPrefix = CPLGetXMLValue(psIter, "prefix", "");
-                CPLString osURI = CPLGetXMLValue(psIter, "uri", "");
+                const std::string osPrefix =
+                    CPLGetXMLValue(psIter, "prefix", "");
+                const std::string osURI = CPLGetXMLValue(psIter, "uri", "");
                 if (!osPrefix.empty() && !osURI.empty())
                 {
                     if (oMap.find(osPrefix) == oMap.end())

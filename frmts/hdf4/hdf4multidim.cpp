@@ -2512,7 +2512,7 @@ HDF4SDSGroup::GetDimensions(CSLConstList) const
     std::string osTransformationMatrix;
     if (m_bIsGDALDataset)
     {
-        for (auto &poAttr : m_oGlobalAttributes)
+        for (const auto &poAttr : m_oGlobalAttributes)
         {
             if (poAttr->GetName() == "Projection" &&
                 poAttr->GetDataType().GetClass() == GEDTC_STRING)
@@ -2622,7 +2622,7 @@ HDF4SDSGroup::GetDimensions(CSLConstList) const
                         GetFullName(), "Band", std::string(), std::string(),
                         m_dims[2]->GetSize()));
             }
-            m_dims = newDims;
+            m_dims = std::move(newDims);
 
             m_varX = GDALMDArrayRegularlySpaced::Create(
                 GetFullName(), m_dims[1]->GetName(), m_dims[1],
@@ -2812,7 +2812,7 @@ std::shared_ptr<OGRSpatialReference> HDF4SDSArray::GetSpatialRef() const
     if (m_bIsGDALDataset)
     {
         std::string osProjection;
-        for (auto &poAttr : m_oGlobalAttributes)
+        for (const auto &poAttr : m_oGlobalAttributes)
         {
             if (poAttr->GetName() == "Projection" &&
                 poAttr->GetDataType().GetClass() == GEDTC_STRING)

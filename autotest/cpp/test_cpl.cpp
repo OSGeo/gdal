@@ -2563,9 +2563,11 @@ TEST_F(test_cpl, CPLJSONDocument)
         CPLJSONObject oObj2(oObj);
         ASSERT_TRUE(oObj2.ToBool());
         // Assignment operator
+        // coverity[copy_assignment_call]
         oDocument2 = oDocument;
         auto &oDocument2Ref(oDocument2);
         oDocument2 = oDocument2Ref;
+        // coverity[copy_assignment_call]
         oObj2 = oObj;
         auto &oObj2Ref(oObj2);
         oObj2 = oObj2Ref;

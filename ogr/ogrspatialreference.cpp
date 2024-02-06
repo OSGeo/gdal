@@ -3594,6 +3594,7 @@ CSLConstList OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()
 /*                      RemoveIDFromMemberOfEnsembles()                 */
 /************************************************************************/
 
+// cppcheck-suppress constParameterReference
 static void RemoveIDFromMemberOfEnsembles(CPLJSONObject &obj)
 {
     // Remove "id" from members of datum ensembles for compatibility with
@@ -3720,7 +3721,7 @@ OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition,
                                              CSLConstList papszOptions)
 {
     // Skip leading white space
-    while (isspace(*pszDefinition))
+    while (isspace(static_cast<unsigned char>(*pszDefinition)))
         pszDefinition++;
 
     if (STARTS_WITH_CI(pszDefinition, "ESRI::"))

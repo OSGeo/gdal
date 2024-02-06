@@ -729,7 +729,7 @@ bool OGRDXFWriterDS::WriteNewLineTypeRecords(VSILFILE *fpIn)
     if (poLayer == nullptr)
         return true;
 
-    std::map<CPLString, std::vector<double>> &oNewLineTypes =
+    const std::map<CPLString, std::vector<double>> &oNewLineTypes =
         poLayer->GetNewLineTypeMap();
 
     bool bRet = true;

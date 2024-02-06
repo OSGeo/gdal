@@ -67,7 +67,9 @@ CPLString ACTextUnescape(const char *pszRawInput, const char *pszEncoding,
             if (pszInput[1] == ' ')
                 osResult += '^';
             else
-                osResult += static_cast<char>(toupper(pszInput[1])) ^ 0x40;
+                osResult += static_cast<char>(toupper(
+                                static_cast<unsigned char>(pszInput[1]))) ^
+                            0x40;
             pszInput++;
         }
         else if (STARTS_WITH_CI(pszInput, "%%c") ||

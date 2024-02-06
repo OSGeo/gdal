@@ -1236,3 +1236,57 @@ def test_vsifile_copyfile():
 
 def test_vsimem_illegal_filename():
     assert gdal.FileFromMemBuffer("/vsimem/\\\\", "foo") == -1
+
+
+###############################################################################
+# Test operations with Windows special filenames (prefix with "\\?\")
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows specific test")
+def test_vsifile_win32_special_filenames(tmp_path):
+
+    # Try prefix filenames
+    tmp_path_str = str(tmp_path)
+    if "/" not in tmp_path_str:
+        prefix_path = "\\\\?\\" + tmp_path_str
+        assert gdal.VSIStatL(prefix_path) is not None
+
+        assert gdal.MkdirRecursive(prefix_path + "\\foo\\bar", 0o755) == 0
+        assert gdal.VSIStatL(prefix_path + "\\foo\\bar") is not None
+
+        assert gdal.Mkdir(prefix_path + "\\foo\\baz", 0o755) == 0
+
+        f = gdal.VSIFOpenL(prefix_path + "\\foo\\file.bin", "wb")
+        assert f
+        gdal.VSIFCloseL(f)
+
+        assert set(gdal.ReadDir(prefix_path)) == set([".", "..", "foo"])
+        assert set(gdal.ReadDirRecursive(prefix_path)) == set(
+            ["foo\\", "foo\\file.bin", "foo\\bar\\", "foo\\baz\\"]
+        )
+
+        assert gdal.Sync(prefix_path + "\\foo\\", prefix_path + "\\foo2")
+        assert set(gdal.ReadDirRecursive(prefix_path + "\\foo2")) == set(
+            ["file.bin", "bar\\", "baz\\"]
+        )
+
+        assert gdal.Rmdir(prefix_path + "\\foo\\bar") == 0
+        assert gdal.RmdirRecursive(prefix_path + "\\foo") == 0
+        assert gdal.VSIStatL(prefix_path + "\\foo") is None
+
+
+###############################################################################
+# Test operations with Windows network path
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows specific test")
+@pytest.mark.skipif(
+    gdaltest.is_travis_branch("mingw64"), reason="does not work with mingw64"
+)
+def test_vsifile_win32_network_path():
+
+    # Try the code path that converts network paths "\\foo\bar" to prefixed ones
+    # "\\?\foo\bar"
+    drive_letter = os.getcwd()[0]
+    dirname = f"\\\\localhost\\{drive_letter}$"
+    assert gdal.VSIStatL(dirname) is not None

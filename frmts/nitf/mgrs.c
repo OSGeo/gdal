@@ -326,7 +326,7 @@ static long Check_Zone(char *MGRS, long *zone_exists)
     while (MGRS[i] == ' ')
         i++;
     j = i;
-    while (isdigit(MGRS[i]))
+    while (isdigit((unsigned char)MGRS[i]))
         i++;
     num_digits = i - j;
     if (num_digits <= 2)
@@ -428,7 +428,7 @@ static long Break_MGRS_String(char *MGRS, long *Zone,
     while (MGRS[i] == ' ')
         i++; /* skip any leading blanks */
     j = i;
-    while (isdigit(MGRS[i]))
+    while (isdigit((unsigned char)MGRS[i]))
         i++;
     num_digits = i - j;
     if (num_digits <= 2)
@@ -448,26 +448,26 @@ static long Break_MGRS_String(char *MGRS, long *Zone,
         error_code |= MGRS_STRING_ERROR;
     j = i;
 
-    while (isalpha(MGRS[i]))
+    while (isalpha((unsigned char)MGRS[i]))
         i++;
     num_letters = i - j;
     if (num_letters == 3)
     {
         /* get letters */
-        Letters[0] = (toupper(MGRS[j]) - (long)'A');
+        Letters[0] = (toupper((unsigned char)MGRS[j]) - (long)'A');
         if ((Letters[0] == LETTER_I) || (Letters[0] == LETTER_O))
             error_code |= MGRS_STRING_ERROR;
-        Letters[1] = (toupper(MGRS[j + 1]) - (long)'A');
+        Letters[1] = (toupper((unsigned char)MGRS[j + 1]) - (long)'A');
         if ((Letters[1] == LETTER_I) || (Letters[1] == LETTER_O))
             error_code |= MGRS_STRING_ERROR;
-        Letters[2] = (toupper(MGRS[j + 2]) - (long)'A');
+        Letters[2] = (toupper((unsigned char)MGRS[j + 2]) - (long)'A');
         if ((Letters[2] == LETTER_I) || (Letters[2] == LETTER_O))
             error_code |= MGRS_STRING_ERROR;
     }
     else
         error_code |= MGRS_STRING_ERROR;
     j = i;
-    while (isdigit(MGRS[i]))
+    while (isdigit((unsigned char)MGRS[i]))
         i++;
     num_digits = i - j;
     if ((num_digits <= 10) && (num_digits % 2 == 0))

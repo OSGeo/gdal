@@ -1693,14 +1693,13 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     /*      What file contains the actual data?                             */
     /* -------------------------------------------------------------------- */
     const char *pszCore = poDS->GetKeyword("IsisCube.Core.^Core");
-    CPLString osQubeFile;
-
-    if (EQUAL(pszCore, ""))
-        osQubeFile = poOpenInfo->pszFilename;
-    else
+    const CPLString osQubeFile(
+        EQUAL(pszCore, "")
+            ? poOpenInfo->pszFilename
+            : CPLFormFilename(CPLGetPath(poOpenInfo->pszFilename), pszCore,
+                              nullptr));
+    if (!EQUAL(pszCore, ""))
     {
-        CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
-        osQubeFile = CPLFormFilename(osPath, pszCore, nullptr);
         poDS->m_osExternalFilename = osQubeFile;
     }
 
@@ -2064,7 +2063,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
 
         // translate back into a projection string.
-        poDS->m_oSRS = oSRS;
+        poDS->m_oSRS = std::move(oSRS);
         poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
@@ -3188,7 +3187,7 @@ void ISIS3Dataset::BuildLabel()
             m_aoNonPixelSections.push_back(oSection);
         }
     }
-    m_oJSonLabel = oLabel;
+    m_oJSonLabel = std::move(oLabel);
 }
 
 /************************************************************************/
@@ -3345,7 +3344,7 @@ void ISIS3Dataset::BuildHistory()
         osHistory += SerializeAsPDL(oHistoryObj);
     }
 
-    m_osHistory = osHistory;
+    m_osHistory = std::move(osHistory);
 }
 
 /************************************************************************/

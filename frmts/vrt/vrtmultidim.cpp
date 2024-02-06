@@ -1455,7 +1455,7 @@ bool VRTMDArraySourceInlinedValues::Read(
     std::vector<GByte *> abyStackDstPtr(nDims + 1);
     abyStackDstPtr[0] = static_cast<GByte *>(pDstBuffer) + nDstOffset;
 
-    const auto dt(m_poDstArray->GetDataType());
+    const auto &dt(m_poDstArray->GetDataType());
     std::vector<size_t> anStackCount(nDims);
     size_t iDim = 0;
 
@@ -1498,7 +1498,7 @@ lbl_next_depth:
 void VRTMDArraySourceInlinedValues::Serialize(CPLXMLNode *psParent,
                                               const char *) const
 {
-    const auto dt(m_poDstArray->GetDataType());
+    const auto &dt(m_poDstArray->GetDataType());
     CPLXMLNode *psSource = CPLCreateXMLNode(psParent, CXT_Element,
                                             m_bIsConstantValue ? "ConstantValue"
                                             : dt.GetClass() == GEDTC_STRING
@@ -2714,8 +2714,7 @@ CPLErr VRTArraySource::XMLInit(
     {
         return CE_Failure;
     }
-    auto apoDims = poArray->GetDimensions();
-    if (apoDims.size() != 2)
+    if (poArray->GetDimensionCount() != 2)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Array referenced in <ArraySource> should be a "

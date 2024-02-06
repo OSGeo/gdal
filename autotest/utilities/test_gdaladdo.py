@@ -38,7 +38,7 @@ import pytest
 import test_cli_utilities
 
 from gcore import tiff_ovr
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.skipif(
     test_cli_utilities.get_gdaladdo_path() is None, reason="gdaladdo not available"
@@ -374,4 +374,80 @@ def test_gdaladdo_reuse_previous_resampling_and_levels(
     ds = gdal.Open(tmpfilename)
     assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem("RESAMPLING") == "CUBIC"
     assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1059
+    ds = None
+
+
+###############################################################################
+# Test --partial-refresh-from-source-timestamp with GTI dataset
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdaladdo_partial_refresh_from_source_timestamp_gti(gdaladdo_path, tmp_path):
+
+    left_tif = str(tmp_path / "left.tif")
+    right_tif = str(tmp_path / "right.tif")
+
+    gdal.Translate(left_tif, "../gcore/data/byte.tif", options="-srcwin 0 0 10 20")
+    gdal.Translate(right_tif, "../gcore/data/byte.tif", options="-srcwin 10 0 10 20")
+
+    source_ds = [gdal.Open(left_tif), gdal.Open(right_tif)]
+    tmp_vrt = str(tmp_path / "test.gti.gpkg")
+    index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(tmp_vrt)
+    lyr = index_ds.CreateLayer("index", srs=source_ds[0].GetSpatialRef())
+    lyr.CreateField(ogr.FieldDefn("location"))
+    for i, src_ds in enumerate(source_ds):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        src_gt = src_ds.GetGeoTransform()
+        minx = src_gt[0]
+        maxx = minx + src_ds.RasterXSize * src_gt[1]
+        maxy = src_gt[3]
+        miny = maxy + src_ds.RasterYSize * src_gt[5]
+        f["location"] = src_ds.GetDescription()
+        f.SetGeometry(
+            ogr.CreateGeometryFromWkt(
+                f"POLYGON(({minx} {miny},{minx} {maxy},{maxx} {maxy},{maxx} {miny},{minx} {miny}))"
+            )
+        )
+        lyr.CreateFeature(f)
+    index_ds.Close()
+    del source_ds
+
+    gdaltest.runexternal(f"{gdaladdo_path} -r bilinear {tmp_vrt} 2")
+
+    ds = gdal.Open(tmp_vrt, gdal.GA_Update)
+    ovr_data_ori = array.array("B", ds.GetRasterBand(1).GetOverview(0).ReadRaster())
+    ds = None
+
+    ds = gdal.Open(left_tif, gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+
+    # Make sure timestamp of left.tif is before tmp.vrt.ovr
+    timestamp = int(os.stat(tmp_vrt + ".ovr").st_mtime) - 10
+    os.utime(left_tif, times=(timestamp, timestamp))
+
+    ds = gdal.Open(right_tif, gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+
+    # Make sure timestamp of right.tif is after tmp.vrt.ovr
+    timestamp = int(os.stat(tmp_vrt + ".ovr").st_mtime) + 10
+    os.utime(right_tif, times=(timestamp, timestamp))
+
+    out, err = gdaltest.runexternal_out_and_err(
+        f"{gdaladdo_path} -r bilinear --partial-refresh-from-source-timestamp {tmp_vrt}"
+    )
+    assert "ERROR" not in err, (out, err)
+
+    ds = gdal.Open(tmp_vrt)
+    ovr_band = ds.GetRasterBand(1).GetOverview(0)
+    ovr_data_refreshed = array.array("B", ovr_band.ReadRaster())
+    # Test that data is zero only in the refreshed area, and unchanged
+    # in other areas
+    for j in range(10):
+        for i in range(5):
+            idx = (j) * ovr_band.XSize + (i + 5)
+            assert ovr_data_refreshed[idx] == 0
+            ovr_data_refreshed[idx] = ovr_data_ori[idx]
+    assert ovr_data_refreshed == ovr_data_ori
     ds = None

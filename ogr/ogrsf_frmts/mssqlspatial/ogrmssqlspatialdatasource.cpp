@@ -1361,7 +1361,8 @@ char *OGRMSSQLSpatialDataSource::LaunderName(const char *pszSrcName)
 
     for (i = 0; pszSafeName[i] != '\0'; i++)
     {
-        pszSafeName[i] = (char)tolower(pszSafeName[i]);
+        pszSafeName[i] =
+            (char)tolower(static_cast<unsigned char>(pszSafeName[i]));
         if (pszSafeName[i] == '-' || pszSafeName[i] == '#')
             pszSafeName[i] = '_';
     }
@@ -1514,15 +1515,31 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     if (poSRS)
     {
-        panSRID = (int *)CPLRealloc(panSRID, sizeof(int) * (nKnownSRID + 1));
-        papoSRS = (OGRSpatialReference **)CPLRealloc(
-            papoSRS, sizeof(void *) * (nKnownSRID + 1));
-        panSRID[nKnownSRID] = nId;
-        papoSRS[nKnownSRID] = poSRS;
-        nKnownSRID++;
+        AddSRIDToCache(nId, poSRS);
     }
 
     return poSRS;
+}
+
+/************************************************************************/
+/*                         AddSRIDToCache()                             */
+/*                                                                      */
+/*      Note: this will not add a reference on the poSRS object. Make   */
+/*      sure it is freshly created, or add a reference yourself if not. */
+/************************************************************************/
+
+void OGRMSSQLSpatialDataSource::AddSRIDToCache(int nId,
+                                               OGRSpatialReference *poSRS)
+{
+    /* -------------------------------------------------------------------- */
+    /*      Add to the cache.                                               */
+    /* -------------------------------------------------------------------- */
+    panSRID = (int *)CPLRealloc(panSRID, sizeof(int) * (nKnownSRID + 1));
+    papoSRS = (OGRSpatialReference **)CPLRealloc(papoSRS, sizeof(void *) *
+                                                              (nKnownSRID + 1));
+    panSRID[nKnownSRID] = nId;
+    papoSRS[nKnownSRID] = poSRS;
+    nKnownSRID++;
 }
 
 /************************************************************************/
@@ -1541,6 +1558,19 @@ int OGRMSSQLSpatialDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
     if (poSRS == nullptr)
         return 0;
+    /* -------------------------------------------------------------------- */
+    /*      First, we look through our SRID cache, is it there?             */
+    /* -------------------------------------------------------------------- */
+    for (int i = 0; i < nKnownSRID; i++)
+    {
+        if (papoSRS[i] == poSRS)
+            return panSRID[i];
+    }
+    for (int i = 0; i < nKnownSRID; i++)
+    {
+        if (papoSRS[i] != nullptr && papoSRS[i]->IsSame(poSRS))
+            return panSRID[i];
+    }
 
     OGRSpatialReference oSRS(*poSRS);
     // cppcheck-suppress uselessAssignmentPtrArg
@@ -1590,6 +1620,12 @@ int OGRMSSQLSpatialDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
         if (oStmt.ExecuteSQL() && oStmt.Fetch() && oStmt.GetColData(0))
         {
             nSRSId = atoi(oStmt.GetColData(0));
+            if (nSRSId != 0)
+            {
+                auto poCachedSRS = new OGRSpatialReference(oSRS);
+                poCachedSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                AddSRIDToCache(nSRSId, poCachedSRS);
+            }
             return nSRSId;
         }
     }

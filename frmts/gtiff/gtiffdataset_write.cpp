@@ -1181,7 +1181,9 @@ void GTiffDataset::WaitCompletionForBlock(int nBlockId)
 {
     auto poQueue = m_poBaseDS ? m_poBaseDS->m_poCompressQueue.get()
                               : m_poCompressQueue.get();
+    // cppcheck-suppress constVariableReference
     auto &oQueue = m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
+    // cppcheck-suppress constVariableReference
     auto &asJobs =
         m_poBaseDS ? m_poBaseDS->m_asCompressionJobs : m_asCompressionJobs;
 
@@ -1227,6 +1229,7 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
         poQueue->WaitCompletion();
 
         // Flush remaining data
+        // cppcheck-suppress constVariableReference
         auto &oQueue =
             m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
         while (!oQueue.empty())
@@ -2085,6 +2088,8 @@ CPLErr GTiffDataset::FlushCacheInternal(bool bAtClosing, bool bFlushDirectory)
         poQueue->WaitCompletion();
 
         // Flush remaining data
+        // cppcheck-suppress constVariableReference
+
         auto &oQueue =
             m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
         while (!oQueue.empty())

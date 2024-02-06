@@ -2541,8 +2541,8 @@ VSIDIR *VSIAzureFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
     dir->nRecurseDepth = nRecurseDepth;
     dir->poFS = this;
     dir->poHandleHelper = std::move(poHandleHelper);
-    dir->osBucket = osBucket;
-    dir->osObjectKey = osObjectKey;
+    dir->osBucket = std::move(osBucket);
+    dir->osObjectKey = std::move(osObjectKey);
     dir->nMaxFiles = atoi(CSLFetchNameValueDef(papszOptions, "MAXFILES", "0"));
     dir->bCacheEntries =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "CACHE_ENTRIES", "YES"));

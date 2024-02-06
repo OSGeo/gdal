@@ -1153,7 +1153,7 @@ CPLHTTPResult *CPLHTTPFetchEx(const char *pszURL, CSLConstList papszOptions,
         for (size_t i = pCtx->stack.size(); i > 0;)
         {
             --i;
-            auto &cbk = pCtx->stack[i];
+            const auto &cbk = pCtx->stack[i];
             auto cbkFunc = cbk.first;
             auto pUserData = cbk.second;
             auto res = cbkFunc(pszURL, papszOptions, pfnProgress, pProgressArg,
@@ -1517,7 +1517,7 @@ CPLHTTPResult *CPLHTTPFetchEx(const char *pszURL, CSLConstList papszOptions,
 /*                       CPLMultiPerformWait()                          */
 /************************************************************************/
 
-bool CPLMultiPerformWait(void *hCurlMultiHandleIn, int &repeats)
+bool CPLMultiPerformWait(void *hCurlMultiHandleIn, int & /*repeats*/)
 {
     CURLM *hCurlMultiHandle = static_cast<CURLM *>(hCurlMultiHandleIn);
 
@@ -1525,7 +1525,6 @@ bool CPLMultiPerformWait(void *hCurlMultiHandleIn, int &repeats)
 
     // Using curl_multi_poll() is preferred to avoid hitting the 1024 file
     // descriptor limit
-    (void)repeats;
 
     int numfds = 0;
     if (curl_multi_poll(hCurlMultiHandle, nullptr, 0, 1000, &numfds) !=

@@ -643,8 +643,55 @@ def ReleaseResultSet(self, sql_lyr):
         return self.CreateFieldFromArrowSchema(schema, options)
 
 
+    def WriteArrow(self, obj, requested_schema=None, createFieldsFromSchema=None, options=[]):
+        """Write the content of the passed object, which must implement the
+           __arrow_c_stream__ or __arrow_c_array__ interface, into the layer.
+
+           Parameters
+           ----------
+           obj:
+               Object implementing the __arrow_c_stream__ or __arrow_c_array__ interface
+
+           requested_schema: PyCapsule, object implementing __arrow_c_schema__ or None. Default None
+               The schema to which the stream should be casted, passed as a
+               PyCapsule containing a C ArrowSchema representation of the
+               requested schema, or an object implementing the __arrow_c_schema__ interface.
+
+           createFieldsFromSchema: boolean or None. Default to None
+               Whether OGRLayer::CreateFieldFromArrowSchema() should be called. If None
+               specified, it is called if no fields have been created yet
+
+           options: list of strings
+               Options to pass to OGRLayer::CreateFieldFromArrowSchema() and OGRLayer::WriteArrowBatch()
+
+        """
+
+        if createFieldsFromSchema is None:
+            createFieldsFromSchema = -1
+        elif createFieldsFromSchema is True:
+            createFieldsFromSchema = 1
+        else:
+            createFieldsFromSchema = 0
+
+        if requested_schema is not None and hasattr(requested_schema, "__arrow_c_schema__"):
+            requested_schema = requested_schema.__arrow_c_schema__()
+
+        if hasattr(obj, "__arrow_c_stream__"):
+            stream_capsule = obj.__arrow_c_stream__(requested_schema=requested_schema)
+            return self.WriteArrowStreamCapsule(stream_capsule, createFieldsFromSchema, options)
+
+        if hasattr(obj, "__arrow_c_array__"):
+            schema_capsule, array_capsule = obj.__arrow_c_array__(requested_schema=requested_schema)
+            return self.WriteArrowSchemaAndArrowArrayCapsule(schema_capsule, array_capsule, createFieldsFromSchema, options)
+
+        raise Exception("Passed object does not implement the __arrow_c_stream__ or __arrow_c_array__ interface.")
+
+
     def WritePyArrow(self, pa_batch, options=[]):
-        """Write the content of the passed PyArrow batch (either a pyarrow.Table, a pyarrow.RecordBatch or a pyarrow.StructArray) into the layer."""
+        """Write the content of the passed PyArrow batch (either a pyarrow.Table, a pyarrow.RecordBatch or a pyarrow.StructArray) into the layer.
+
+           See also the WriteArrow() method to be independent of PyArrow
+        """
 
         import pyarrow as pa
 

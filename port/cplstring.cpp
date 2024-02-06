@@ -277,7 +277,8 @@ size_t CPLString::ifind(const char *s, size_t nPos) const
 
 {
     const char *pszHaystack = c_str();
-    const char chFirst = static_cast<char>(::tolower(s[0]));
+    const char chFirst =
+        static_cast<char>(::tolower(static_cast<unsigned char>(s[0])));
     const size_t nTargetLen = strlen(s);
 
     if (nPos > size())
@@ -287,7 +288,7 @@ size_t CPLString::ifind(const char *s, size_t nPos) const
 
     while (*pszHaystack != '\0')
     {
-        if (chFirst == ::tolower(*pszHaystack))
+        if (chFirst == ::tolower(static_cast<unsigned char>(*pszHaystack)))
         {
             if (EQUALN(pszHaystack, s, nTargetLen))
                 return nPos;
@@ -329,7 +330,8 @@ CPLString &CPLString::tolower()
 
 {
     for (size_t i = 0; i < size(); i++)
-        (*this)[i] = static_cast<char>(::tolower((*this)[i]));
+        (*this)[i] = static_cast<char>(
+            ::tolower(static_cast<unsigned char>((*this)[i])));
 
     return *this;
 }
@@ -446,16 +448,15 @@ CPLString CPLURLGetValue(const char *pszURL, const char *pszKey)
 CPLString CPLURLAddKVP(const char *pszURL, const char *pszKey,
                        const char *pszValue)
 {
-    CPLString osURL(pszURL);
-    if (strchr(osURL, '?') == nullptr)
-        osURL += "?";
-    pszURL = osURL.c_str();
+    const CPLString osURL(strchr(pszURL, '?') == nullptr
+                              ? CPLString(pszURL).append("?")
+                              : pszURL);
 
     CPLString osKey(pszKey);
     osKey += "=";
     size_t nKeyPos = osURL.ifind(osKey);
     if (nKeyPos != std::string::npos && nKeyPos > 0 &&
-        (pszURL[nKeyPos - 1] == '?' || pszURL[nKeyPos - 1] == '&'))
+        (osURL[nKeyPos - 1] == '?' || osURL[nKeyPos - 1] == '&'))
     {
         CPLString osNewURL(osURL);
         osNewURL.resize(nKeyPos);
@@ -464,7 +465,7 @@ CPLString CPLURLAddKVP(const char *pszURL, const char *pszKey,
             osNewURL += osKey;
             osNewURL += pszValue;
         }
-        const char *pszNext = strchr(pszURL + nKeyPos, '&');
+        const char *pszNext = strchr(osURL.c_str() + nKeyPos, '&');
         if (pszNext)
         {
             if (osNewURL.back() == '&' || osNewURL.back() == '?')
@@ -476,14 +477,15 @@ CPLString CPLURLAddKVP(const char *pszURL, const char *pszKey,
     }
     else
     {
+        CPLString osNewURL(osURL);
         if (pszValue)
         {
-            if (osURL.back() != '&' && osURL.back() != '?')
-                osURL += '&';
-            osURL += osKey;
-            osURL += pszValue;
+            if (osNewURL.back() != '&' && osNewURL.back() != '?')
+                osNewURL += '&';
+            osNewURL += osKey;
+            osNewURL += pszValue;
         }
-        return osURL;
+        return osNewURL;
     }
 }
 

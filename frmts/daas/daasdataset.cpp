@@ -478,13 +478,13 @@ static CPLHTTPResult *DAAS_CPLHTTPFetch(const char *pszURL, char **papszOptions)
 
 bool GDALDAASDataset::GetAuthorization()
 {
-    CPLString osClientId =
+    const CPLString osClientId =
         CSLFetchNameValueDef(m_papszOpenOptions, "CLIENT_ID",
                              CPLGetConfigOption("GDAL_DAAS_CLIENT_ID", ""));
-    CPLString osAPIKey =
+    const CPLString osAPIKey =
         CSLFetchNameValueDef(m_papszOpenOptions, "API_KEY",
                              CPLGetConfigOption("GDAL_DAAS_API_KEY", ""));
-    CPLString osAuthorization =
+    const CPLString osAuthorization =
         CSLFetchNameValueDef(m_papszOpenOptions, "ACCESS_TOKEN",
                              CPLGetConfigOption("GDAL_DAAS_ACCESS_TOKEN", ""));
     m_osXForwardUser = CSLFetchNameValueDef(
@@ -601,7 +601,8 @@ bool GDALDAASDataset::GetAuthorization()
 /*                           GetObject()                                */
 /************************************************************************/
 
-static CPLJSONObject GetObject(CPLJSONObject &oContainer, const char *pszPath,
+static CPLJSONObject GetObject(const CPLJSONObject &oContainer,
+                               const char *pszPath,
                                CPLJSONObject::Type eExpectedType,
                                const char *pszExpectedType, bool bVerboseError,
                                bool &bError)
@@ -632,7 +633,7 @@ static CPLJSONObject GetObject(CPLJSONObject &oContainer, const char *pszPath,
 /*                          GetInteger()                                */
 /************************************************************************/
 
-static int GetInteger(CPLJSONObject &oContainer, const char *pszPath,
+static int GetInteger(const CPLJSONObject &oContainer, const char *pszPath,
                       bool bVerboseError, bool &bError)
 {
     CPLJSONObject oObj =
@@ -649,7 +650,7 @@ static int GetInteger(CPLJSONObject &oContainer, const char *pszPath,
 /*                          GetDouble()                                */
 /************************************************************************/
 
-static double GetDouble(CPLJSONObject &oContainer, const char *pszPath,
+static double GetDouble(const CPLJSONObject &oContainer, const char *pszPath,
                         bool bVerboseError, bool &bError)
 {
     CPLJSONObject oObj = oContainer.GetObj(pszPath);
@@ -676,7 +677,7 @@ static double GetDouble(CPLJSONObject &oContainer, const char *pszPath,
 /*                          GetString()                                 */
 /************************************************************************/
 
-static CPLString GetString(CPLJSONObject &oContainer, const char *pszPath,
+static CPLString GetString(const CPLJSONObject &oContainer, const char *pszPath,
                            bool bVerboseError, bool &bError)
 {
     CPLJSONObject oObj =
@@ -815,6 +816,7 @@ bool GDALDAASDataset::GetImageMetadata()
     {
         oGetBufferDict = oGetBufferObj;
     }
+    CPL_IGNORE_RET_VAL(oGetBufferObj);
     if (!oGetBufferDict.IsValid())
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s missing",
@@ -995,8 +997,10 @@ void GDALDAASDataset::ReadSRS(const CPLJSONObject &oProperties)
             if (oSRSObj.GetType() == CPLJSONObject::Type::Object)
             {
                 bool bError = false;
-                CPLString osType(GetString(oSRSObj, "type", true, bError));
-                CPLString osValue(GetString(oSRSObj, "value", true, bError));
+                const std::string osType(
+                    GetString(oSRSObj, "type", true, bError));
+                const std::string osValue(
+                    GetString(oSRSObj, "value", true, bError));
                 // Use urn in priority
                 if (osType == "urn" && !osValue.empty())
                 {
@@ -1193,7 +1197,7 @@ bool GDALDAASDataset::SetupServerSideReprojection(const char *pszTargetSRS)
     m_bRequestInGeoreferencedCoordinates = true;
     m_osSRSType = "epsg";
     m_osSRSValue = std::move(osTargetEPSGCode);
-    m_oSRS = oSRS;
+    m_oSRS = std::move(oSRS);
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
     return true;
@@ -2165,7 +2169,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
 
     CPLJSONArray oBands;
     bool bOK = true;
-    for (auto &iBand : anRequestedBands)
+    for (const int iBand : anRequestedBands)
     {
         auto desc = (iBand == MAIN_MASK_BAND_NUMBER)
                         ? poGDS->m_poMaskBand->GetDescription()
@@ -2212,7 +2216,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
         {
             for (int iXBlock = 0; iXBlock < nXBlocks; iXBlock++)
             {
-                for (auto &iBand : anRequestedBands)
+                for (const int iBand : anRequestedBands)
                 {
                     GByte *pabyDstBuffer = nullptr;
                     GDALDAASRasterBand *poIterBand;

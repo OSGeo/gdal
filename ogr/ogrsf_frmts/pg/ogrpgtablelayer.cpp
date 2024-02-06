@@ -351,7 +351,7 @@ void OGRPGTableLayer::SerializeMetadata()
         hResult = OGRPG_PQexec(
             hPGConn,
             "DROP FUNCTION IF EXISTS "
-            "ogr_system_tables.event_trigger_function_for_metadata CASCADE");
+            "ogr_system_tables.event_trigger_function_for_metadata() CASCADE");
         OGRPGClearResult(hResult);
 
         hResult = OGRPG_PQexec(

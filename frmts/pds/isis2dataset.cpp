@@ -426,7 +426,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     /***********  Grab TARGET_NAME  ************/
     /**** This is the planets name i.e. MARS ***/
-    CPLString target_name = poDS->GetKeyword("QUBE.TARGET_NAME");
+    const CPLString target_name = poDS->GetKeyword("QUBE.TARGET_NAME");
 
     /***********   Grab MAP_PROJECTION_TYPE ************/
     CPLString map_proj_name =
@@ -620,7 +620,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
 
         // translate back into a projection string.
-        poDS->m_oSRS = oSRS;
+        poDS->m_oSRS = std::move(oSRS);
     }
 
     /* END ISIS2 Label Read */

@@ -581,9 +581,9 @@ static GInt32 GetInt32(const GByte *pBaseAddr, int iOffset)
 /************************************************************************/
 
 static CPL_INLINE void UpdateNextOGRFIDAndFGDBFID(
-    int i, std::map<int, int> &oMapOGRFIDToFGDBFID,
+    int i, const std::map<int, int> &oMapOGRFIDToFGDBFID,
     std::map<int, int>::iterator &oIterO2F, int &nNextOGRFID,
-    std::map<int, int> &oMapFGDBFIDToOGRFID,
+    const std::map<int, int> &oMapFGDBFIDToOGRFID,
     std::map<int, int>::iterator &oIterF2O, int &nNextFGDBFID)
 {
     while (nNextOGRFID > 0 && i > nNextOGRFID)
@@ -3423,7 +3423,7 @@ void FGdbLayer::ResetReading()
     EndBulkLoad();
 
 #ifdef WORKAROUND_CRASH_ON_CDF_WITH_BINARY_FIELD
-    const auto wstrSubFieldBackup = m_wstrSubfields;
+    const std::wstring wstrSubFieldBackup(m_wstrSubfields);
     if (!m_apoByteArrays.empty())
     {
         m_bWorkaroundCrashOnCDFWithBinaryField = CPLTestBool(CPLGetConfigOption(

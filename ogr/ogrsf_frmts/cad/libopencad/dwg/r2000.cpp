@@ -738,7 +738,7 @@ int DWGFileR2000::ReadClasses( enum OpenOptions eOptions )
             stClass.bWasZombie       = buffer.ReadBIT();
             stClass.bIsEntity        = buffer.ReadBITSHORT() == 0x1F2;
 
-            oClasses.addClass( stClass );
+            oClasses.addClass( std::move(stClass) );
         }
 
         buffer.Seek(dSectionBitSize, CADBuffer::BEG);
@@ -3409,7 +3409,7 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
 
             dimension->setSize( dObjectSize );
             dimension->stCed = stCommonEntityData;
-            dimension->cdd   = stCDD;
+            dimension->cdd   = std::move(stCDD);
 
             CADVector vert10pt = buffer.ReadVector();
             dimension->vert10pt = vert10pt;
@@ -3438,7 +3438,7 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
 
             dimension->setSize( dObjectSize );
             dimension->stCed = stCommonEntityData;
-            dimension->cdd   = stCDD;
+            dimension->cdd   = std::move(stCDD);
 
             CADVector vert13pt = buffer.ReadVector();
             dimension->vert13pt = vert13pt;
@@ -3468,7 +3468,7 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
 
             dimension->setSize( dObjectSize );
             dimension->stCed = stCommonEntityData;
-            dimension->cdd   = stCDD;
+            dimension->cdd   = std::move(stCDD);
 
             CADVector vert13pt = buffer.ReadVector();
             dimension->vert13pt = vert13pt;
@@ -3497,7 +3497,7 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
 
             dimension->setSize( dObjectSize );
             dimension->stCed = stCommonEntityData;
-            dimension->cdd   = stCDD;
+            dimension->cdd   = std::move(stCDD);
 
             CADVector vert10pt = buffer.ReadVector();
             dimension->vert10pt = vert10pt;
@@ -3527,7 +3527,7 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
 
             dimension->setSize( dObjectSize );
             dimension->stCed = stCommonEntityData;
-            dimension->cdd   = stCDD;
+            dimension->cdd   = std::move(stCDD);
 
             CADVector vert16pt = buffer.ReadVector();
             dimension->vert16pt = vert16pt;
@@ -3560,7 +3560,7 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
 
             dimension->setSize( dObjectSize );
             dimension->stCed = stCommonEntityData;
-            dimension->cdd   = stCDD;
+            dimension->cdd   = std::move(stCDD);
 
             CADVector vert10pt = buffer.ReadVector();
             dimension->vert10pt = vert10pt;
@@ -3586,7 +3586,7 @@ CADDimensionObject * DWGFileR2000::getDimension(short dObjectType,
 
             dimension->setSize( dObjectSize );
             dimension->stCed = stCommonEntityData;
-            dimension->cdd   = stCDD;
+            dimension->cdd   = std::move(stCDD);
 
             CADVector vert15pt = buffer.ReadVector();
             dimension->vert15pt = vert15pt;

@@ -204,7 +204,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (!poDS->Init())
         return nullptr;
 
-    auto &poRootGroup = poDS->m_poRootGroup;
+    const auto &poRootGroup = poDS->m_poRootGroup;
     auto poBathymetryCoverage01 = poRootGroup->OpenGroupFromFullname(
         "/BathymetryCoverage/BathymetryCoverage.01");
     if (!poBathymetryCoverage01)

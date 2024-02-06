@@ -1376,9 +1376,9 @@ static void WriteTag(GByte *pabyData, GUInt32 &nBufferOff, GUInt16 nTag,
 /************************************************************************/
 
 static void WriteTags(GByte *pabyData, GUInt32 &nBufferOff,
-                      GUInt32 offsetIFDData, std::vector<TagValue> &tags)
+                      GUInt32 offsetIFDData, const std::vector<TagValue> &tags)
 {
-    for (auto &tag : tags)
+    for (const auto &tag : tags)
     {
         WriteLEUInt16(pabyData, nBufferOff, tag.tag);
         WriteLEUInt16(pabyData, nBufferOff, static_cast<GUInt16>(tag.datatype));

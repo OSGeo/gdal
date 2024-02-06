@@ -793,7 +793,7 @@ GDALMDArray::GetGridded(const std::string &osGridOptions,
     // CPLDebug("GDAL", "nXSize = %d, nYSize = %d", nXSize, nYSize);
 
     std::vector<std::shared_ptr<GDALDimension>> apoNewDims;
-    const auto apoSelfDims = GetDimensions();
+    const auto &apoSelfDims = GetDimensions();
     for (size_t i = 0; i < GetDimensionCount() - 1; ++i)
         apoNewDims.emplace_back(apoSelfDims[i]);
 

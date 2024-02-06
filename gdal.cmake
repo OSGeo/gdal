@@ -662,6 +662,9 @@ set_property(
   APPEND
   PROPERTY RESOURCE "${GDAL_DATA_FILES}")
 
+# Copy all resource files from their source location to ${CMAKE_CURRENT_BINARY_DIR}/data
+# Note that this is not only the small list of files set a few lines above,
+# but also resource files attached to ${GDAL_LIB_TARGET_NAME} in other directories (drivers, etc.)
 get_property(
   _data_files
   TARGET ${GDAL_LIB_TARGET_NAME}

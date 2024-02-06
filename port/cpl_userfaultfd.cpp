@@ -143,7 +143,7 @@ static int64_t get_page_limit()
     int64_t retval;
     const char *variable = CPLGetConfigOption(GDAL_UFFD_LIMIT, nullptr);
 
-    if (variable && sscanf(variable, "%" PRId64, &retval))
+    if (variable && sscanf(variable, "%" PRId64, &retval) == 1)
         return retval;
     else
         return -1;

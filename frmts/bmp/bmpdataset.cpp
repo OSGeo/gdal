@@ -237,7 +237,7 @@ class BMPDataset final : public GDALPamDataset
     double adfGeoTransform[6];
     int bGeoTransformValid;
     bool m_bNewFile = false;
-    vsi_l_offset m_nLargeFileSize = 0;
+    vsi_l_offset m_nFileSize = 0;
 
     char *pszFilename;
     VSILFILE *fp;
@@ -720,16 +720,17 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
         return;
     }
 
-    if (poDSIn->sFileHeader.iSize <= poDSIn->sFileHeader.iOffBits ||
-        poDSIn->sFileHeader.iSize - poDSIn->sFileHeader.iOffBits > knIntMax)
+    if (poDSIn->m_nFileSize <= poDSIn->sFileHeader.iOffBits ||
+        poDSIn->m_nFileSize - poDSIn->sFileHeader.iOffBits > knIntMax)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Invalid header");
         return;
     }
 
-    GUInt32 iComprSize =
-        poDSIn->sFileHeader.iSize - poDSIn->sFileHeader.iOffBits;
-    GUInt32 iUncomprSize = poDS->GetRasterXSize() * poDS->GetRasterYSize();
+    const GUInt32 iComprSize = static_cast<GUInt32>(
+        poDSIn->m_nFileSize - poDSIn->sFileHeader.iOffBits);
+    const GUInt32 iUncomprSize =
+        poDS->GetRasterXSize() * poDS->GetRasterYSize();
 
 #ifdef DEBUG
     CPLDebug("BMP", "RLE compression detected.");
@@ -974,9 +975,9 @@ BMPDataset::~BMPDataset()
         // Extend the file with zeroes if needed
         VSIFSeekL(fp, 0, SEEK_END);
 
-        if (VSIFTellL(fp) < m_nLargeFileSize)
+        if (VSIFTellL(fp) < m_nFileSize)
         {
-            VSIFTruncateL(fp, m_nLargeFileSize);
+            VSIFTruncateL(fp, m_nFileSize);
         }
     }
 
@@ -1123,17 +1124,18 @@ GDALDataset *BMPDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef CPL_MSB
     CPL_SWAP32PTR(&poDS->sFileHeader.iOffBits);
 #endif
-    poDS->sFileHeader.iSize = (GUInt32)sStat.st_size;
+    poDS->m_nFileSize = sStat.st_size;
 
 #ifdef BMP_DEBUG
-    CPLDebug("BMP", "File size %d bytes.", poDS->sFileHeader.iSize);
+    CPLDebug("BMP", "File size " CPL_FRMT_GUIB " bytes.",
+             static_cast<GUIntBig>(poDS->m_nFileSize));
     CPLDebug("BMP", "Image offset 0x%x bytes from file start.",
              poDS->sFileHeader.iOffBits);
 #endif
 
     // Validatate iOffBits
     if (poDS->sFileHeader.iOffBits <= BFH_SIZE + SIZE_OF_INFOHEADER_SIZE ||
-        poDS->sFileHeader.iOffBits >= poDS->sFileHeader.iSize)
+        poDS->sFileHeader.iOffBits >= poDS->m_nFileSize)
     {
         delete poDS;
         return nullptr;
@@ -1546,7 +1548,7 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
 
     const vsi_l_offset nLargeImageSize =
         static_cast<vsi_l_offset>(nScanSize) * poDS->sInfoHeader.iHeight;
-    poDS->m_nLargeFileSize = poDS->sFileHeader.iOffBits + nLargeImageSize;
+    poDS->m_nFileSize = poDS->sFileHeader.iOffBits + nLargeImageSize;
     if (nLargeImageSize > std::numeric_limits<uint32_t>::max())
     {
         CPLError(CE_Warning, CPLE_AppDefined,
@@ -1556,7 +1558,7 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         poDS->sFileHeader.iSize = std::numeric_limits<uint32_t>::max();
         poDS->sInfoHeader.iSizeImage = std::numeric_limits<uint32_t>::max();
     }
-    else if (poDS->m_nLargeFileSize > std::numeric_limits<uint32_t>::max())
+    else if (poDS->m_nFileSize > std::numeric_limits<uint32_t>::max())
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "File too big for its size to fit in a 32 bit integer! "
@@ -1567,7 +1569,7 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     }
     else
     {
-        poDS->sFileHeader.iSize = static_cast<uint32_t>(poDS->m_nLargeFileSize);
+        poDS->sFileHeader.iSize = static_cast<uint32_t>(poDS->m_nFileSize);
         poDS->sInfoHeader.iSizeImage = static_cast<uint32_t>(nLargeImageSize);
     }
 

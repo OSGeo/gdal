@@ -1423,7 +1423,7 @@ static CPLString FixupTableFilename(const CPLString &osFilename)
     if (!osExt.empty())
     {
         CPLString osTry(osFilename);
-        if (islower(osExt[0]))
+        if (islower(static_cast<unsigned char>(osExt[0])))
         {
             osTry = CPLResetExtension(osFilename, osExt.toupper());
         }
@@ -4140,7 +4140,8 @@ OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
     std::string osBasename(pszName);
     for (char &ch : osBasename)
     {
-        if (!isalnum(ch) && static_cast<unsigned>(ch) <= 127)
+        if (!isalnum(static_cast<unsigned char>(ch)) &&
+            static_cast<unsigned>(ch) <= 127)
             ch = '_';
     }
 

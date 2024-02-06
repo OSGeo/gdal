@@ -91,7 +91,8 @@ class GDALWMSMetaDataset final : public GDALPamDataset
 
     // WMS-C only
     void AddWMSCSubDataset(WMSCTileSetDesc &oWMSCTileSetDesc,
-                           const char *pszTitle, CPLString osTransparent);
+                           const char *pszTitle,
+                           const CPLString &osTransparent);
 
     // WMS-C only
     void ParseWMSCTileSets(CPLXMLNode *psXML);

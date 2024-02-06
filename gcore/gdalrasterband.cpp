@@ -8506,7 +8506,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
         std::string osDirectionX;
         if (poSRS && poSRS->GetAxesCount() == 2)
         {
-            const auto mapping = poSRS->GetDataAxisToSRSAxisMapping();
+            const auto &mapping = poSRS->GetDataAxisToSRSAxisMapping();
             OGRAxisOrientation eOrientation1 = OAO_Other;
             poSRS->GetAxis(nullptr, 0, &eOrientation1);
             OGRAxisOrientation eOrientation2 = OAO_Other;

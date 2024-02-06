@@ -2756,7 +2756,11 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
 #else
                     const char *pszError = proj_errno_string(err);
 #endif
-                    if (m_bEmitErrors)
+                    if (m_bEmitErrors
+#ifdef PROJ_ERR_OTHER_NO_INVERSE_OP
+                        || (i == 0 && err == PROJ_ERR_OTHER_NO_INVERSE_OP)
+#endif
+                    )
                     {
                         if (nLastErrorCounter != CPLGetErrorCounter() &&
                             CPLGetLastErrorType() == CE_Failure &&

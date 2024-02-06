@@ -3602,11 +3602,20 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand *poBand, int &nXOff,
 
     const char *pszOversampligThreshold =
         CPLGetConfigOption("GDAL_OVERVIEW_OVERSAMPLING_THRESHOLD", nullptr);
-    const double dfOversamplingThreshold =
+
+    // Cf https://github.com/OSGeo/gdal/pull/9040#issuecomment-1898524693
+    // Do not exactly use a oversampling threshold of 1.0 because of numerical
+    // instability.
+    const auto AdjustThreshold = [](double x)
+    {
+        constexpr double EPS = 1e-2;
+        return x == 1.0 ? x + EPS : x;
+    };
+    const double dfOversamplingThreshold = AdjustThreshold(
         pszOversampligThreshold ? CPLAtof(pszOversampligThreshold)
         : psExtraArg && psExtraArg->eResampleAlg != GRIORA_NearestNeighbour
             ? 1.0
-            : 1.2;
+            : 1.2);
     for (int iOverview = 0; iOverview < nOverviewCount; iOverview++)
     {
         GDALRasterBand *poOverview = poBand->GetOverview(iOverview);
@@ -3624,11 +3633,8 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand *poBand, int &nXOff,
 
         // Is it nearly the requested factor and better (lower) than
         // the current best factor?
-        if ((dfOversamplingThreshold == 1.0 &&
-             dfDownsamplingFactor > dfDesiredDownsamplingFactor) ||
-            (dfOversamplingThreshold > 1.0 &&
-             dfDownsamplingFactor >=
-                 dfDesiredDownsamplingFactor * dfOversamplingThreshold) ||
+        if (dfDownsamplingFactor >=
+                dfDesiredDownsamplingFactor * dfOversamplingThreshold ||
             dfDownsamplingFactor <= dfBestDownsamplingFactor)
         {
             continue;

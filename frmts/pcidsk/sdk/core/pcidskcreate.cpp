@@ -65,9 +65,9 @@ using namespace PCIDSK;
  */
 
 PCIDSKFile PCIDSK_DLL *
-PCIDSK::Create( std::string filename, int pixels, int lines,
+PCIDSK::Create( const std::string&  filename, int pixels, int lines,
                 int channel_count, eChanType *channel_types,
-                std::string options, const PCIDSKInterfaces *interfaces )
+                const std::string& oOrigOptions, const PCIDSKInterfaces *interfaces )
 
 {
     if( pixels < 0 || pixels > 99999999 ||
@@ -105,7 +105,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     int  tilesize = PCIDSK_DEFAULT_TILE_SIZE;
     std::string oLinkFilename;
 
-    const std::string oOrigOptions = options;
+    std::string options = oOrigOptions;
     UCaseStr( options );
     for(auto & c : options)
     {

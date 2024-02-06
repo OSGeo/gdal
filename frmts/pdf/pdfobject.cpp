@@ -461,13 +461,10 @@ GDALPDFObject *GDALPDFDictionary::LookupObject(const char *pszPath)
 void GDALPDFDictionary::Serialize(CPLString &osStr)
 {
     osStr.append("<< ");
-    std::map<CPLString, GDALPDFObject *> &oMap = GetValues();
-    std::map<CPLString, GDALPDFObject *>::iterator oIter = oMap.begin();
-    std::map<CPLString, GDALPDFObject *>::iterator oEnd = oMap.end();
-    for (; oIter != oEnd; ++oIter)
+    for (const auto &oIter : GetValues())
     {
-        const char *pszKey = oIter->first.c_str();
-        GDALPDFObject *poObj = oIter->second;
+        const char *pszKey = oIter.first.c_str();
+        GDALPDFObject *poObj = oIter.second;
         osStr.append("/");
         osStr.append(pszKey);
         osStr.append(" ");
@@ -484,13 +481,10 @@ void GDALPDFDictionary::Serialize(CPLString &osStr)
 GDALPDFDictionaryRW *GDALPDFDictionary::Clone()
 {
     GDALPDFDictionaryRW *poDict = new GDALPDFDictionaryRW();
-    std::map<CPLString, GDALPDFObject *> &oMap = GetValues();
-    std::map<CPLString, GDALPDFObject *>::iterator oIter = oMap.begin();
-    std::map<CPLString, GDALPDFObject *>::iterator oEnd = oMap.end();
-    for (; oIter != oEnd; ++oIter)
+    for (const auto &oIter : GetValues())
     {
-        const char *pszKey = oIter->first.c_str();
-        GDALPDFObject *poObj = oIter->second;
+        const char *pszKey = oIter.first.c_str();
+        GDALPDFObject *poObj = oIter.second;
         poDict->Add(pszKey, poObj->Clone());
     }
     return poDict;
@@ -2320,7 +2314,7 @@ GDALPDFObjectPdfium::Build(RetainPtr<const CPDF_Object> obj)
             return nullptr;
         }
     }
-    return new GDALPDFObjectPdfium(obj);
+    return new GDALPDFObjectPdfium(std::move(obj));
 }
 
 /************************************************************************/

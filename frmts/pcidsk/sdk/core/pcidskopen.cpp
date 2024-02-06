@@ -54,7 +54,7 @@ using namespace PCIDSK;
  * @return a pointer to a file object for accessing the PCIDSK file.
  */
 
-PCIDSKFile *PCIDSK::Open( std::string filename, std::string access,
+PCIDSKFile *PCIDSK::Open( const std::string& filename, const std::string& access,
                           const PCIDSKInterfaces *interfaces,
                           int max_channel_count )
 

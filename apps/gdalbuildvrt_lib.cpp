@@ -42,8 +42,9 @@
 
 #include <algorithm>
 #include <memory>
-#include <vector>
 #include <set>
+#include <string>
+#include <vector>
 
 #include "commonutils.h"
 #include "cpl_conv.h"

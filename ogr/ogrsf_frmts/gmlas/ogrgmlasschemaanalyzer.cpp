@@ -306,7 +306,7 @@ CPLString GMLASSchemaAnalyzer::GetPrefix(const CPLString &osNamespaceURI)
             osPrefix = osNamespaceURI;
         for (size_t i = 0; i < osPrefix.size(); i++)
         {
-            if (!isalnum(osPrefix[i]))
+            if (!isalnum(static_cast<unsigned char>(osPrefix[i])))
                 osPrefix[i] = '_';
         }
         m_oMapURIToPrefix[osNamespaceURI] = osPrefix;
@@ -1285,7 +1285,7 @@ static CPLString GetAnnotationDoc(const XSElementDeclaration *poEltDecl)
             break;
         poTypeDef = poNewTypeDef;
     }
-    CPLString osDoc2 = GetAnnotationDoc(list);
+    const CPLString osDoc2 = GetAnnotationDoc(list);
     if (!osDoc.empty() && !osDoc2.empty())
     {
         osDoc += "\n";
@@ -1738,7 +1738,7 @@ static OGRwkbGeometryType GetOGRGeometryType(XSTypeDefinition *poTypeDef)
                    {"MultiSurfacePropertyType", wkbMultiSurface},
                    {"MultiSolidPropertyType", wkbUnknown},
                    // GeometryArrayPropertyType ?
-                   // GeometricPrimitivePropertyType ?
+                   {"GeometricPrimitivePropertyType", wkbUnknown},
                    {"CurvePropertyType", wkbCurve},
                    {"SurfacePropertyType", wkbSurface},
                    // SurfaceArrayPropertyType ?

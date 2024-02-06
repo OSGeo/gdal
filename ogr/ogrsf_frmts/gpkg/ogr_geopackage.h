@@ -156,6 +156,9 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     mutable int m_nHasMetadataTables = -1;  // -1 = unknown, 0 = false, 1 = true
     int m_nCreateMetadataTables = -1;  // -1 = on demand, 0 = false, 1 = true
 
+    // Set by CreateTileGriddedTable() and used by FinalizeRasterRegistration()
+    std::string m_osSQLInsertIntoGpkg2dGriddedCoverageAncillary{};
+
     CPLString m_osIdentifier{};
     bool m_bIdentifierAsCO = false;
     CPLString m_osDescription{};
@@ -463,6 +466,41 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 };
 
 /************************************************************************/
+/*                   GPKGTemporaryForeignKeyCheckDisabler               */
+/************************************************************************/
+
+//! Instance of that class temporarily disable foreign key checks
+class GPKGTemporaryForeignKeyCheckDisabler
+{
+  public:
+    explicit GPKGTemporaryForeignKeyCheckDisabler(GDALGeoPackageDataset *poDS)
+        : m_poDS(poDS), m_nPragmaForeignKeysOldValue(SQLGetInteger(
+                            m_poDS->GetDB(), "PRAGMA foreign_keys", nullptr))
+    {
+        if (m_nPragmaForeignKeysOldValue)
+        {
+            CPL_IGNORE_RET_VAL(
+                SQLCommand(m_poDS->GetDB(), "PRAGMA foreign_keys = 0"));
+        }
+    }
+
+    ~GPKGTemporaryForeignKeyCheckDisabler()
+    {
+        if (m_nPragmaForeignKeysOldValue)
+        {
+            CPL_IGNORE_RET_VAL(
+                SQLCommand(m_poDS->GetDB(), "PRAGMA foreign_keys = 1"));
+        }
+    }
+
+  private:
+    CPL_DISALLOW_COPY_ASSIGN(GPKGTemporaryForeignKeyCheckDisabler)
+
+    GDALGeoPackageDataset *m_poDS = nullptr;
+    int m_nPragmaForeignKeysOldValue = 0;
+};
+
+/************************************************************************/
 /*                        GDALGeoPackageRasterBand                      */
 /************************************************************************/
 
@@ -718,7 +756,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     void DisableFeatureCountTriggers(bool bNullifyFeatureCount = true);
 #endif
 
-    void CheckGeometryType(OGRFeature *poFeature);
+    void CheckGeometryType(const OGRFeature *poFeature);
 
     OGRErr ReadTableDefinition();
     void InitView();

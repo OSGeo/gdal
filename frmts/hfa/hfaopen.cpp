@@ -3807,9 +3807,9 @@ CPLErr HFARenameReferences(HFAHandle hHFA, const char *pszNewBase,
         // Update the filename.
         if (strncmp(osFileName, pszOldBase, strlen(pszOldBase)) == 0)
         {
-            CPLString osNew = pszNewBase;
+            std::string osNew = pszNewBase;
             osNew += osFileName.c_str() + strlen(pszOldBase);
-            osFileName = osNew;
+            osFileName = std::move(osNew);
         }
 
         // Grow the node if needed.

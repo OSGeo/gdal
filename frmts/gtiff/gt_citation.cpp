@@ -389,7 +389,7 @@ void SetLinearUnitCitation(std::map<geokey_t, std::string> &oMapAsciiKeys,
         osCitation = "LUnits = ";
         osCitation += pszLinearUOMName;
     }
-    oMapAsciiKeys[PCSCitationGeoKey] = osCitation;
+    oMapAsciiKeys[PCSCitationGeoKey] = std::move(osCitation);
 }
 
 /************************************************************************/
@@ -416,11 +416,11 @@ void SetGeogCSCitation(GTIF *psGTIF,
     if (!STARTS_WITH_CI(osOriginalGeogCitation, "GCS Name = "))
     {
         osCitation = "GCS Name = ";
-        osCitation += osOriginalGeogCitation;
+        osCitation += std::move(osOriginalGeogCitation);
     }
     else
     {
-        osCitation = osOriginalGeogCitation;
+        osCitation = std::move(osOriginalGeogCitation);
     }
 
     if (nDatum == KvUserDefined)

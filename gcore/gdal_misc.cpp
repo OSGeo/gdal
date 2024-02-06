@@ -1488,7 +1488,7 @@ CPLString GDALFindAssociatedFile(const char *pszBaseFilename,
         {
             CPLString osAltExt = pszExt;
 
-            if (islower(pszExt[0]))
+            if (islower(static_cast<unsigned char>(pszExt[0])))
                 osAltExt.toupper();
             else
                 osAltExt.tolower();
@@ -2202,8 +2202,10 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
 
     for (int i = 0; szExtUpper[i] != '\0'; i++)
     {
-        szExtUpper[i] = static_cast<char>(toupper(szExtUpper[i]));
-        szExtLower[i] = static_cast<char>(tolower(szExtLower[i]));
+        szExtUpper[i] = static_cast<char>(
+            toupper(static_cast<unsigned char>(szExtUpper[i])));
+        szExtLower[i] = static_cast<char>(
+            tolower(static_cast<unsigned char>(szExtLower[i])));
     }
 
     const char *pszTFW = CPLResetExtension(pszBaseFilename, szExtLower);
@@ -4259,13 +4261,14 @@ void GDALSerializeOpenOptionsToXML(CPLXMLNode *psParentNode,
 /*                  GDALDeserializeOpenOptionsFromXML()                 */
 /************************************************************************/
 
-char **GDALDeserializeOpenOptionsFromXML(CPLXMLNode *psParentNode)
+char **GDALDeserializeOpenOptionsFromXML(const CPLXMLNode *psParentNode)
 {
     char **papszOpenOptions = nullptr;
-    CPLXMLNode *psOpenOptions = CPLGetXMLNode(psParentNode, "OpenOptions");
+    const CPLXMLNode *psOpenOptions =
+        CPLGetXMLNode(psParentNode, "OpenOptions");
     if (psOpenOptions != nullptr)
     {
-        CPLXMLNode *psOOI;
+        const CPLXMLNode *psOOI;
         for (psOOI = psOpenOptions->psChild; psOOI != nullptr;
              psOOI = psOOI->psNext)
         {

@@ -1337,7 +1337,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
                             ++oIter;
                         }
                     }
-                    adfStepX = adfStepXNew;
+                    adfStepX = std::move(adfStepXNew);
                     if (bAddNewValue)
                     {
                         CPLDebug("XYZ", "New stepX=%.15f", dfStepX);

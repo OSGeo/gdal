@@ -116,7 +116,7 @@ static CPLString OGR2SQLITEExtractUnquotedString(const char **ppszSQLCommand)
                     chQuoteChar = *pszSQLCommand;
                 }
                 else if (nParenthesisLevel == 0 &&
-                         (isspace((int)*pszSQLCommand) ||
+                         (isspace(static_cast<unsigned char>(*pszSQLCommand)) ||
                           *pszSQLCommand == '.' || *pszSQLCommand == ','))
                 {
                     break;
@@ -145,7 +145,7 @@ static LayerDesc OGR2SQLITEExtractLayerDesc(const char **ppszSQLCommand)
     const char *pszSQLCommand = *ppszSQLCommand;
     LayerDesc oLayerDesc;
 
-    while (isspace((int)*pszSQLCommand))
+    while (isspace(static_cast<unsigned char>(*pszSQLCommand)))
         pszSQLCommand++;
 
     const char *pszOriginalStrStart = pszSQLCommand;
@@ -291,7 +291,7 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(
             pszSQLCommand++;
             nParenthesisLevel++;
 
-            while (isspace((int)*pszSQLCommand))
+            while (isspace(static_cast<unsigned char>(*pszSQLCommand)))
                 pszSQLCommand++;
 
             OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSetLayers,
@@ -301,18 +301,19 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(
         else if (bLookforFTableName &&
                  STARTS_WITH_CI(pszSQLCommand, "f_table_name") &&
                  (pszSQLCommand[strlen("f_table_name")] == '=' ||
-                  isspace((int)pszSQLCommand[strlen("f_table_name")])))
+                  isspace(static_cast<unsigned char>(
+                      pszSQLCommand[strlen("f_table_name")]))))
         {
             pszSQLCommand += strlen("f_table_name");
 
-            while (isspace((int)*pszSQLCommand))
+            while (isspace(static_cast<unsigned char>(*pszSQLCommand)))
                 pszSQLCommand++;
 
             if (*pszSQLCommand == '=')
             {
                 pszSQLCommand++;
 
-                while (isspace((int)*pszSQLCommand))
+                while (isspace(static_cast<unsigned char>(*pszSQLCommand)))
                     pszSQLCommand++;
 
                 oSetSpatialIndex.insert(
@@ -323,15 +324,17 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(
         }
 
         else if (STARTS_WITH_CI(pszSQLCommand, "FROM") &&
-                 isspace(pszSQLCommand[strlen("FROM")]))
+                 isspace(
+                     static_cast<unsigned char>(pszSQLCommand[strlen("FROM")])))
         {
             pszSQLCommand += strlen("FROM") + 1;
 
-            while (isspace((int)*pszSQLCommand))
+            while (isspace(static_cast<unsigned char>(*pszSQLCommand)))
                 pszSQLCommand++;
 
             if (STARTS_WITH_CI(pszSQLCommand, "SpatialIndex") &&
-                isspace((int)pszSQLCommand[strlen("SpatialIndex")]))
+                isspace(static_cast<unsigned char>(
+                    pszSQLCommand[strlen("SpatialIndex")])))
             {
                 pszSQLCommand += strlen("SpatialIndex") + 1;
 
@@ -360,16 +363,17 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(
 
             while (*pszSQLCommand != '\0')
             {
-                if (isspace((int)*pszSQLCommand))
+                if (isspace(static_cast<unsigned char>(*pszSQLCommand)))
                 {
                     pszSQLCommand++;
-                    while (isspace((int)*pszSQLCommand))
+                    while (isspace(static_cast<unsigned char>(*pszSQLCommand)))
                         pszSQLCommand++;
 
                     if (STARTS_WITH_CI(pszSQLCommand, "AS"))
                     {
                         pszSQLCommand += 2;
-                        while (isspace((int)*pszSQLCommand))
+                        while (
+                            isspace(static_cast<unsigned char>(*pszSQLCommand)))
                             pszSQLCommand++;
                     }
 
@@ -384,7 +388,7 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(
                 else if (*pszSQLCommand == ',')
                 {
                     pszSQLCommand++;
-                    while (isspace((int)*pszSQLCommand))
+                    while (isspace(static_cast<unsigned char>(*pszSQLCommand)))
                         pszSQLCommand++;
 
                     if (*pszSQLCommand == '(')
@@ -410,21 +414,24 @@ static void OGR2SQLITEGetPotentialLayerNamesInternal(
             }
         }
         else if (STARTS_WITH_CI(pszSQLCommand, "JOIN") &&
-                 isspace(pszSQLCommand[strlen("JOIN")]))
+                 isspace(
+                     static_cast<unsigned char>(pszSQLCommand[strlen("JOIN")])))
         {
             pszSQLCommand += strlen("JOIN") + 1;
             OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSetLayers,
                                osModifiedSQL);
         }
         else if (STARTS_WITH_CI(pszSQLCommand, "INTO") &&
-                 isspace(pszSQLCommand[strlen("INTO")]))
+                 isspace(
+                     static_cast<unsigned char>(pszSQLCommand[strlen("INTO")])))
         {
             pszSQLCommand += strlen("INTO") + 1;
             OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSetLayers,
                                osModifiedSQL);
         }
         else if (STARTS_WITH_CI(pszSQLCommand, "UPDATE") &&
-                 isspace(pszSQLCommand[strlen("UPDATE")]))
+                 isspace(static_cast<unsigned char>(
+                     pszSQLCommand[strlen("UPDATE")])))
         {
             pszSQLCommand += strlen("UPDATE") + 1;
             OGR2SQLITEAddLayer(pszStart, nNum, pszSQLCommand, oSetLayers,
@@ -781,7 +788,8 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
                               OGRGeometry *poSpatialFilter,
                               CPL_UNUSED const char *pszDialect)
 {
-    while (*pszStatement != '\0' && isspace(*pszStatement))
+    while (*pszStatement != '\0' &&
+           isspace(static_cast<unsigned char>(*pszStatement)))
         pszStatement++;
 
     if (STARTS_WITH_CI(pszStatement, "ALTER TABLE ") ||
@@ -804,16 +812,25 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
         // but there is no possible use of that given we run that into
         // an ephemeral database.
     }
-    else if (!STARTS_WITH_CI(pszStatement, "SELECT ") &&
-             !STARTS_WITH_CI(pszStatement, "WITH ") &&
-             !STARTS_WITH_CI(pszStatement, "EXPLAIN ") &&
-             !STARTS_WITH_CI(pszStatement, "INSERT ") &&
-             !STARTS_WITH_CI(pszStatement, "UPDATE ") &&
-             !STARTS_WITH_CI(pszStatement, "DELETE ") &&
-             !STARTS_WITH_CI(pszStatement, "REPLACE "))
+    else
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Unsupported SQL command.");
-        return nullptr;
+        bool bUnderstoodStatement = false;
+        for (const char *pszKeyword : {"SELECT", "WITH", "EXPLAIN", "INSERT",
+                                       "UPDATE", "DELETE", "REPLACE"})
+        {
+            if (STARTS_WITH_CI(pszStatement, pszKeyword) &&
+                std::isspace(static_cast<unsigned char>(
+                    pszStatement[strlen(pszKeyword)])))
+            {
+                bUnderstoodStatement = true;
+                break;
+            }
+        }
+        if (!bUnderstoodStatement)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Unsupported SQL command.");
+            return nullptr;
+        }
     }
 
     char *pszTmpDBName = (char *)CPLMalloc(256);

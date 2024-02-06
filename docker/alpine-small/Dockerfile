@@ -149,19 +149,6 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && mv /build/usr/bin                    /build_gdal_version_changing/usr \
     && for i in /build_gdal_version_changing/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_gdal_version_changing/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    # Remove resource files of uncompiled drivers
-    && (for i in \
-            # BAG driver
-            /build/usr/share/gdal/bag*.xml \
-            # unused
-            /build/usr/share/gdal/*.svg \
-            # unused
-            /build/usr/share/gdal/*.png \
-            # GMLAS driver
-            /build/usr/share/gdal/gmlas* \
-            # netCDF driver
-            /build/usr/share/gdal/netcdf_config.xsd \
-       ;do rm $i; done)\
     && apk del cmake
 
 # Build final image

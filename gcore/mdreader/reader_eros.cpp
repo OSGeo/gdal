@@ -56,11 +56,11 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
     {
         if (STARTS_WITH_CI(osBaseName + i, "."))
         {
-            CPLString osPassFileName =
+            std::string osPassFileName =
                 CPLFormFilename(osDirName, szMetadataName, "pass");
             if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
             {
-                m_osIMDSourceFilename = osPassFileName;
+                m_osIMDSourceFilename = std::move(osPassFileName);
                 break;
             }
             else
@@ -69,7 +69,7 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
                     CPLFormFilename(osDirName, szMetadataName, "PASS");
                 if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
                 {
-                    m_osIMDSourceFilename = osPassFileName;
+                    m_osIMDSourceFilename = std::move(osPassFileName);
                     break;
                 }
             }
@@ -79,33 +79,34 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
 
     if (m_osIMDSourceFilename.empty())
     {
-        CPLString osPassFileName =
+        std::string osPassFileName =
             CPLFormFilename(osDirName, szMetadataName, "pass");
         if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
         {
-            m_osIMDSourceFilename = osPassFileName;
+            m_osIMDSourceFilename = std::move(osPassFileName);
         }
         else
         {
             osPassFileName = CPLFormFilename(osDirName, szMetadataName, "PASS");
             if (CPLCheckForFile(&osPassFileName[0], papszSiblingFiles))
             {
-                m_osIMDSourceFilename = osPassFileName;
+                m_osIMDSourceFilename = std::move(osPassFileName);
             }
         }
     }
 
-    CPLString osRPCFileName = CPLFormFilename(osDirName, szMetadataName, "rpc");
+    std::string osRPCFileName =
+        CPLFormFilename(osDirName, szMetadataName, "rpc");
     if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
     {
-        m_osRPBSourceFilename = osRPCFileName;
+        m_osRPBSourceFilename = std::move(osRPCFileName);
     }
     else
     {
         osRPCFileName = CPLFormFilename(osDirName, szMetadataName, "RPC");
         if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = osRPCFileName;
+            m_osRPBSourceFilename = std::move(osRPCFileName);
         }
     }
 

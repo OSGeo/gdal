@@ -399,7 +399,8 @@ CPLErr GSAGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                 *szEnd = cOldEnd;
 
                 szEnd = szStart;
-                while (!isdigit(*szEnd) && *szEnd != '.' && *szEnd != '\0')
+                while (!isdigit(static_cast<unsigned char>(*szEnd)) &&
+                       *szEnd != '.' && *szEnd != '\0')
                     szEnd++;
 
                 continue;

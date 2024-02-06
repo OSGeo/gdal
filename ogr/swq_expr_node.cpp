@@ -489,7 +489,8 @@ CPLString swq_expr_node::QuoteIfNecessary(const CPLString &osExpr, char chQuote)
     for (int i = 0; i < static_cast<int>(osExpr.size()); i++)
     {
         char ch = osExpr[i];
-        if ((!(isalnum(static_cast<int>(ch)) || ch == '_')) || ch == '.')
+        if ((!(isalnum(static_cast<unsigned char>(ch)) || ch == '_')) ||
+            ch == '.')
         {
             return Quote(osExpr, chQuote);
         }

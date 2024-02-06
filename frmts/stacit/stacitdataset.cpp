@@ -148,7 +148,7 @@ static std::string SanitizeCRSValue(const std::string &v)
     bool lastWasAlphaNum = true;
     for (char ch : v)
     {
-        if (!isalnum(static_cast<int>(ch)))
+        if (!isalnum(static_cast<unsigned char>(ch)))
         {
             if (lastWasAlphaNum)
                 ret += '_';
@@ -363,7 +363,7 @@ static void ParseAsset(const CPLJSONObject &jAsset,
     {
         Collection collection;
         collection.osName = osCollection;
-        oMapCollection[osCollection] = collection;
+        oMapCollection[osCollection] = std::move(collection);
     }
     auto &collection = oMapCollection[osCollection];
 

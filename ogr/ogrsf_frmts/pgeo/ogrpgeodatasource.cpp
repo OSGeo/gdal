@@ -297,7 +297,7 @@ int OGRPGeoDataSource::Open(GDALOpenInfo *poOpenInfo)
                 {
                     if (auto poDomain = ParseXMLFieldDomainDef(osDefinition))
                     {
-                        const auto domainName = poDomain->GetName();
+                        const std::string domainName(poDomain->GetName());
                         m_oMapFieldDomains[domainName] = std::move(poDomain);
                     }
                 }

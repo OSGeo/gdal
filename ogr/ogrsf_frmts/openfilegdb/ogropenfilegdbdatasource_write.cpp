@@ -1883,7 +1883,7 @@ bool OGROpenFileGDBDataSource::AddRelationship(
     std::unique_ptr<GDALRelationship> &&relationship,
     std::string &failureReason)
 {
-    const auto relationshipName = relationship->GetName();
+    const std::string relationshipName(relationship->GetName());
     if (eAccess != GA_Update)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -2161,7 +2161,7 @@ bool OGROpenFileGDBDataSource::UpdateRelationship(
     std::unique_ptr<GDALRelationship> &&relationship,
     std::string &failureReason)
 {
-    const auto relationshipName = relationship->GetName();
+    const std::string relationshipName(relationship->GetName());
     if (eAccess != GA_Update)
     {
         CPLError(CE_Failure, CPLE_NotSupported,

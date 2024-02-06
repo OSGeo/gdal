@@ -825,7 +825,7 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
             auto dstDim = CreateDimension(dim->GetName(), dim->GetType(),
                                           dim->GetDirection(), dim->GetSize());
             EXIT_OR_CONTINUE_IF_NULL(dstDim);
-            mapExistingDstDims[dim->GetName()] = dstDim;
+            mapExistingDstDims[dim->GetName()] = std::move(dstDim);
             auto poIndexingVarSrc(dim->GetIndexingVariable());
             if (poIndexingVarSrc)
             {
@@ -1133,7 +1133,7 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                     CPLErrorHandlerPusher oHandlerPusher(CPLQuietErrorHandler);
                     CPLErrorStateBackuper oErrorStateBackuper;
                     oCorrespondingDimIter->second->SetIndexingVariable(
-                        dstArray);
+                        std::move(dstArray));
                 }
             }
 
@@ -3826,7 +3826,7 @@ bool GDALMDArray::CopyFrom(CPL_UNUSED GDALDataset *poSrcDS,
                           const size_t *chunkCount, GUInt64 iCurChunk,
                           GUInt64 nChunkCount, void *pUserData)
             {
-                const auto dt(l_poSrcArray->GetDataType());
+                const auto &dt(l_poSrcArray->GetDataType());
                 auto data = static_cast<CopyFunc *>(pUserData);
                 auto poDstArray = data->poDstArray;
                 if (!l_poSrcArray->Read(chunkArrayStartIdx, chunkCount, nullptr,
@@ -4048,7 +4048,7 @@ bool GDALMDArray::IAdviseRead(const GUInt64 *, const size_t *,
     std::string ret;
     for (const char ch : inputName)
     {
-        if (!isalnum(ch))
+        if (!isalnum(static_cast<unsigned char>(ch)))
             ret += '_';
         else
             ret += ch;
@@ -6687,11 +6687,12 @@ bool GDALMDArrayMask::Init(CSLConstList papszOptions)
             }
         }
 
-        const auto adfValues = bHasFlagValues
-                                   ? poFlagValues->ReadAsDoubleArray()
-                                   : std::vector<double>();
-        const auto adfMasks = bHasFlagMasks ? poFlagMasks->ReadAsDoubleArray()
-                                            : std::vector<double>();
+        const std::vector<double> adfValues(
+            bHasFlagValues ? poFlagValues->ReadAsDoubleArray()
+                           : std::vector<double>());
+        const std::vector<double> adfMasks(
+            bHasFlagMasks ? poFlagMasks->ReadAsDoubleArray()
+                          : std::vector<double>());
 
         if (bHasFlagValues &&
             adfValues.size() != static_cast<size_t>(aosFlagMeanings.size()))
@@ -8410,12 +8411,35 @@ class GDALDatasetFromArray final : public GDALPamDataset
     bool m_bHasGT = false;
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
     GDALMultiDomainMetadata m_oMDD{};
+    std::string m_osOvrFilename{};
 
   public:
     GDALDatasetFromArray(const std::shared_ptr<GDALMDArray> &array,
                          size_t iXDim, size_t iYDim)
         : m_poArray(array), m_iXDim(iXDim), m_iYDim(iYDim)
     {
+        // Initialize an overview filename from the filename of the array
+        // and its name.
+        const std::string &osFilename = m_poArray->GetFilename();
+        if (!osFilename.empty())
+        {
+            m_osOvrFilename = osFilename;
+            m_osOvrFilename += '.';
+            for (char ch : m_poArray->GetName())
+            {
+                if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'Z') ||
+                    (ch >= 'a' && ch <= 'z') || ch == '_')
+                {
+                    m_osOvrFilename += ch;
+                }
+                else
+                {
+                    m_osOvrFilename += '_';
+                }
+            }
+            m_osOvrFilename += ".ovr";
+            oOvManager.Initialize(this);
+        }
     }
 
     static GDALDatasetFromArray *
@@ -8481,6 +8505,12 @@ class GDALDatasetFromArray final : public GDALPamDataset
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override
     {
+        if (!m_osOvrFilename.empty() && pszName &&
+            EQUAL(pszName, "OVERVIEW_FILE") && pszDomain &&
+            EQUAL(pszDomain, "OVERVIEWS"))
+        {
+            return m_osOvrFilename.c_str();
+        }
         return m_oMDD.GetMetadataItem(pszName, pszDomain);
     }
 };
@@ -8599,7 +8629,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                             CPLFree(pszTmp);
                         }
 
-                        const auto unit(indexingVar->GetUnit());
+                        const auto &unit(indexingVar->GetUnit());
                         if (!unit.empty())
                         {
                             SetMetadataItem(
@@ -9014,7 +9044,7 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
                          osBandArrayFullname.c_str());
                 return nullptr;
             }
-            const auto osAuxArrayDimName =
+            const auto &osAuxArrayDimName =
                 oItem.poArray->GetDimensions()[0]->GetName();
             auto oIter = oMapArrayDimNameToExtraDimIdx.find(osAuxArrayDimName);
             if (oIter == oMapArrayDimNameToExtraDimIdx.end())
@@ -12612,7 +12642,7 @@ void GDALAttributeFreeRawResult(GDALAttributeH hAttr, GByte *raw,
     VALIDATE_POINTER0(hAttr, __func__);
     if (raw)
     {
-        const auto dt(hAttr->m_poImpl->GetDataType());
+        const auto &dt(hAttr->m_poImpl->GetDataType());
         const auto nDTSize(dt.GetSize());
         GByte *pabyPtr = raw;
         const auto nEltCount(hAttr->m_poImpl->GetTotalElementsCount());
@@ -13512,7 +13542,7 @@ void GDALPamMultiDim::Load()
                 if (pszCoordinateEpoch)
                     poSRS->SetCoordinateEpoch(CPLAtof(pszCoordinateEpoch));
 
-                d->m_oMapArray[oKey].poSRS = poSRS;
+                d->m_oMapArray[oKey].poSRS = std::move(poSRS);
             }
 
             const CPLXMLNode *psStatistics =

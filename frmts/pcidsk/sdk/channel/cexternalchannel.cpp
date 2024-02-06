@@ -54,7 +54,7 @@ using namespace PCIDSK;
 CExternalChannel::CExternalChannel( PCIDSKBuffer &image_headerIn,
                                     uint64 ih_offsetIn,
                                     CPL_UNUSED PCIDSKBuffer &file_headerIn,
-                                    std::string filenameIn,
+                                    const std::string& filenameIn,
                                     int channelnumIn,
                                     CPCIDSKFile *fileIn,
                                     eChanType pixel_typeIn )
@@ -111,7 +111,7 @@ CExternalChannel::~CExternalChannel()
 void CExternalChannel::AccessDB() const
 
 {
-    if( db != nullptr )
+    if( db )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -119,25 +119,32 @@ void CExternalChannel::AccessDB() const
 /* -------------------------------------------------------------------- */
     writable = file->GetEDBFileDetails( &db, &mutex, filename );
 
-    if( echannel < 0 || echannel > db->GetChannels() )
+    if( !db )
     {
-        ThrowPCIDSKException( 0,
-            "Invalid channel number: %d", echannel );
+        ThrowPCIDSKException("db == nullptr");
     }
+    else
+    {
+        if( echannel < 0 || echannel > db->GetChannels() )
+        {
+            ThrowPCIDSKException( 0,
+                "Invalid channel number: %d", echannel );
+        }
 
-    pixel_type = db->GetType(echannel);
+        pixel_type = db->GetType(echannel);
 
-/* -------------------------------------------------------------------- */
-/*      Capture the block size.                                         */
-/* -------------------------------------------------------------------- */
-    block_width = db->GetBlockWidth( echannel );
-    if( block_width > width )
-        block_width = width;
-    block_height = db->GetBlockHeight( echannel );
-    if( block_height > height )
-        block_height = height;
+    /* -------------------------------------------------------------------- */
+    /*      Capture the block size.                                         */
+    /* -------------------------------------------------------------------- */
+        block_width = db->GetBlockWidth( echannel );
+        if( block_width > width )
+            block_width = width;
+        block_height = db->GetBlockHeight( echannel );
+        if( block_height > height )
+            block_height = height;
 
-    blocks_per_row = (GetWidth() + block_width - 1) / block_width;
+        blocks_per_row = (GetWidth() + block_width - 1) / block_width;
+    }
 }
 
 /************************************************************************/

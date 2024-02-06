@@ -197,7 +197,7 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
         // Can happen if ignoring all fields on a view...
         soColumns = "NULL";
     }
-    m_soColumns = soColumns;
+    m_soColumns = std::move(soColumns);
     return OGRERR_NONE;
 }
 
@@ -2036,17 +2036,24 @@ void OGRGeoPackageTableLayer::DisableFeatureCountTriggers(
 /*                      CheckGeometryType()                             */
 /************************************************************************/
 
-void OGRGeoPackageTableLayer::CheckGeometryType(OGRFeature *poFeature)
+/** Check that the feature geometry type is consistent with the layer geometry
+ * type.
+ *
+ * And potentially update the Z and M flags of gpkg_geometry_columns to
+ * reflect the dimensionality of feature geometries.
+ */
+void OGRGeoPackageTableLayer::CheckGeometryType(const OGRFeature *poFeature)
 {
-    OGRwkbGeometryType eLayerGeomType = wkbFlatten(GetGeomType());
-    if (eLayerGeomType != wkbNone && eLayerGeomType != wkbUnknown)
+    const OGRwkbGeometryType eLayerGeomType = GetGeomType();
+    const OGRwkbGeometryType eFlattenLayerGeomType = wkbFlatten(eLayerGeomType);
+    const OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    if (eFlattenLayerGeomType != wkbNone && eFlattenLayerGeomType != wkbUnknown)
     {
-        OGRGeometry *poGeom = poFeature->GetGeometryRef();
         if (poGeom != nullptr)
         {
             OGRwkbGeometryType eGeomType =
                 wkbFlatten(poGeom->getGeometryType());
-            if (!OGR_GT_IsSubClassOf(eGeomType, eLayerGeomType) &&
+            if (!OGR_GT_IsSubClassOf(eGeomType, eFlattenLayerGeomType) &&
                 m_eSetBadGeomTypeWarned.find(eGeomType) ==
                     m_eSetBadGeomTypeWarned.end())
             {
@@ -2061,29 +2068,47 @@ void OGRGeoPackageTableLayer::CheckGeometryType(OGRFeature *poFeature)
                          "This warning will no longer be emitted for this "
                          "combination of layer and feature geometry type.",
                          OGRToOGCGeomType(eGeomType), GetName(),
-                         OGRToOGCGeomType(eLayerGeomType));
+                         OGRToOGCGeomType(eFlattenLayerGeomType));
                 m_eSetBadGeomTypeWarned.insert(eGeomType);
             }
         }
     }
 
-    // wkbUnknown is a rather loose type in OGR. Make sure to update
-    // the z and m columns of gpkg_geometry_columns to 2 if we have geometries
-    // with Z and M components
-    if (GetGeomType() == wkbUnknown && (m_nZFlag == 0 || m_nMFlag == 0))
+    // Make sure to update the z and m columns of gpkg_geometry_columns to 2
+    // if we have geometries with Z and M components
+    if (m_nZFlag == 0 || m_nMFlag == 0)
     {
-        OGRGeometry *poGeom = poFeature->GetGeometryRef();
         if (poGeom != nullptr)
         {
             bool bUpdateGpkgGeometryColumnsTable = false;
-            OGRwkbGeometryType eGeomType = poGeom->getGeometryType();
+            const OGRwkbGeometryType eGeomType = poGeom->getGeometryType();
             if (m_nZFlag == 0 && wkbHasZ(eGeomType))
             {
+                if (eLayerGeomType != wkbUnknown && !wkbHasZ(eLayerGeomType))
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Layer '%s' has been declared with non-Z geometry type "
+                        "%s, but it does contain geometries with Z. Setting "
+                        "the Z=2 hint into gpkg_geometry_columns",
+                        GetName(),
+                        OGRToOGCGeomType(eLayerGeomType, true, true, true));
+                }
                 m_nZFlag = 2;
                 bUpdateGpkgGeometryColumnsTable = true;
             }
             if (m_nMFlag == 0 && wkbHasM(eGeomType))
             {
+                if (eLayerGeomType != wkbUnknown && !wkbHasM(eLayerGeomType))
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Layer '%s' has been declared with non-M geometry type "
+                        "%s, but it does contain geometries with M. Setting "
+                        "the M=2 hint into gpkg_geometry_columns",
+                        GetName(),
+                        OGRToOGCGeomType(eLayerGeomType, true, true, true));
+                }
                 m_nMFlag = 2;
                 bUpdateGpkgGeometryColumnsTable = true;
             }
@@ -4957,10 +4982,8 @@ bool OGRGeoPackageTableLayer::HasSpatialIndex()
 
     const char *pszT = m_pszTableName;
     const char *pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
-    CPLString osRTreeName("rtree_");
-    osRTreeName += pszT;
-    osRTreeName += "_";
-    osRTreeName += pszC;
+    const CPLString osRTreeName(
+        CPLString("rtree_").append(pszT).append("_").append(pszC));
     const std::map<CPLString, CPLString> &oMap =
         m_poDS->GetNameTypeMapFromSQliteMaster();
     if (oMap.find(CPLString(osRTreeName).toupper()) != oMap.end())
@@ -5144,8 +5167,14 @@ OGRErr OGRGeoPackageTableLayer::Rename(const char *pszDstTableName)
         return OGRERR_FAILURE;
     }
 
+    // Temporary remove foreign key checks
+    const GPKGTemporaryForeignKeyCheckDisabler
+        oGPKGTemporaryForeignKeyCheckDisabler(m_poDS);
+
     if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
+    {
         return OGRERR_FAILURE;
+    }
 
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     DisableFeatureCountTriggers(false);
@@ -5738,11 +5767,6 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
     /* Update gpkg_contents with the table info */
     const OGRwkbGeometryType eGType = GetGeomType();
     const bool bIsSpatial = (eGType != wkbNone);
-    if (bIsSpatial)
-        err = RegisterGeometryColumn();
-
-    if (err != OGRERR_NONE)
-        return OGRERR_FAILURE;
 
     if (bIsSpatial || m_eASpatialVariant == GPKG_ATTRIBUTES)
     {
@@ -5764,6 +5788,15 @@ OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
 
         err = SQLCommand(m_poDS->GetDB(), pszSQL);
         sqlite3_free(pszSQL);
+        if (err != OGRERR_NONE)
+            return OGRERR_FAILURE;
+    }
+
+    if (bIsSpatial)
+    {
+        // Insert into gpkg_geometry_columns after gpkg_contents because of
+        // foreign key constraints
+        err = RegisterGeometryColumn();
         if (err != OGRERR_NONE)
             return OGRERR_FAILURE;
     }
@@ -6174,11 +6207,17 @@ OGRErr OGRGeoPackageTableLayer::DeleteField(int iFieldToDelete)
     /* -------------------------------------------------------------------- */
     m_poDS->ResetReadingAllLayers();
 
-    if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
-        return OGRERR_FAILURE;
+    // Temporary remove foreign key checks
+    const GPKGTemporaryForeignKeyCheckDisabler
+        oGPKGTemporaryForeignKeyCheckDisabler(m_poDS);
 
-        // ALTER TABLE ... DROP COLUMN ... was first implemented in 3.35.0 but
-        // there was bug fixes related to it until 3.35.5
+    if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
+    {
+        return OGRERR_FAILURE;
+    }
+
+    // ALTER TABLE ... DROP COLUMN ... was first implemented in 3.35.0 but
+    // there was bug fixes related to it until 3.35.5
 #if SQLITE_VERSION_NUMBER >= 3035005L
     OGRErr eErr = SQLCommand(
         m_poDS->GetDB(), CPLString()
@@ -7100,6 +7139,10 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
             (poOldSRS != nullptr && poNewSRS != nullptr &&
              !poOldSRS->IsSame(poNewSRS.get(), apszOptions)))
         {
+            // Temporary remove foreign key checks
+            const GPKGTemporaryForeignKeyCheckDisabler
+                oGPKGTemporaryForeignKeyCheckDisabler(m_poDS);
+
             if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
                 return OGRERR_FAILURE;
 
@@ -7171,7 +7214,9 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
             }
 
             if (m_poDS->SoftCommitTransaction() != OGRERR_NONE)
+            {
                 return OGRERR_FAILURE;
+            }
 
             m_iSrs = nNewSRID;
             OGRSpatialReference *poSRS = poNewSRS.release();

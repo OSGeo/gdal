@@ -1763,7 +1763,7 @@ def test_sentinel2_l2a_1():
 
 
 ###############################################################################
-# Test opening a L21 subdataset on the 60m bands
+# Test opening a L2A subdataset on the 60m bands
 
 
 def test_sentinel2_l2a_2():
@@ -2056,7 +2056,7 @@ def test_sentinel2_l2a_4():
         pytest.fail()
 
     expected_md = {
-        "SUBDATASET_1_DESC": "Bands B2, B3, B4, B8 with 10m resolution, UTM 34N",
+        "SUBDATASET_1_DESC": "Bands B2, B3, B4, B8, AOT, WVP with 10m resolution, UTM 34N",
         "SUBDATASET_1_NAME": "SENTINEL2_L2A:data/sentinel2/fake_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634",
         "SUBDATASET_2_DESC": "Bands B5, B6, B7, B8A, B11, B12, AOT, CLD, SCL, SNW, WVP with 20m resolution, UTM 34N",
         "SUBDATASET_2_NAME": "SENTINEL2_L2A:data/sentinel2/fake_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/MTD_MSIL2A.xml:20m:EPSG_32634",
@@ -2278,7 +2278,7 @@ def test_sentinel2_l2a_6():
         pytest.fail()
 
     expected_md = {
-        "SUBDATASET_1_DESC": "Bands B2, B3, B4, B8 with 10m resolution, UTM 34N",
+        "SUBDATASET_1_DESC": "Bands B2, B3, B4, B8, AOT, WVP with 10m resolution, UTM 34N",
         "SUBDATASET_1_NAME": "SENTINEL2_L2A:data/sentinel2/fake_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634",
         "SUBDATASET_2_DESC": "Bands B5, B6, B7, B8A, B11, B12, AOT, CLD, SCL, SNW, WVP with 20m resolution, UTM 34N",
         "SUBDATASET_2_NAME": "SENTINEL2_L2A:data/sentinel2/fake_l2a_MSIL2Ap/S2A_MSIL2A_20170823T094031_N0205_R036_T34VFJ_20170823T094252.SAFE/MTD_MSIL2A.xml:20m:EPSG_32634",
@@ -3007,7 +3007,7 @@ def test_sentinel2_l2a_processing_baseline_5_09__1():
     got_gt = ds.GetGeoTransform()
     assert got_gt == (300000.0, 10.0, 0.0, 6100020.0, 0.0, -10.0)
 
-    assert ds.RasterCount == 4
+    assert ds.RasterCount == 6
 
     assert ds.GetMetadata("xml:SENTINEL2") is not None
 

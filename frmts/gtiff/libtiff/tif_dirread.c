@@ -1016,16 +1016,7 @@ TIFFReadDirEntryFloat(TIFF *tif, TIFFDirEntry *direntry, float *value)
             err = TIFFReadDirEntryCheckedLong8(tif, direntry, &m);
             if (err != TIFFReadDirEntryErrOk)
                 return (err);
-#if defined(__WIN32__) && (_MSC_VER < 1500)
-            /*
-             * XXX: MSVC 6.0 does not support conversion
-             * of 64-bit integers into floating point
-             * values.
-             */
-            *value = _TIFFUInt64ToFloat(m);
-#else
             *value = (float)m;
-#endif
             return (TIFFReadDirEntryErrOk);
         }
         case TIFF_SLONG8:
@@ -1130,16 +1121,7 @@ TIFFReadDirEntryDouble(TIFF *tif, TIFFDirEntry *direntry, double *value)
             err = TIFFReadDirEntryCheckedLong8(tif, direntry, &m);
             if (err != TIFFReadDirEntryErrOk)
                 return (err);
-#if defined(__WIN32__) && (_MSC_VER < 1500)
-            /*
-             * XXX: MSVC 6.0 does not support conversion
-             * of 64-bit integers into floating point
-             * values.
-             */
-            *value = _TIFFUInt64ToDouble(m);
-#else
             *value = (double)m;
-#endif
             return (TIFFReadDirEntryErrOk);
         }
         case TIFF_SLONG8:
@@ -2904,16 +2886,7 @@ TIFFReadDirEntryFloatArray(TIFF *tif, TIFFDirEntry *direntry, float **value)
             {
                 if (tif->tif_flags & TIFF_SWAB)
                     TIFFSwabLong8(ma);
-#if defined(__WIN32__) && (_MSC_VER < 1500)
-                /*
-                 * XXX: MSVC 6.0 does not support
-                 * conversion of 64-bit integers into
-                 * floating point values.
-                 */
-                *mb++ = _TIFFUInt64ToFloat(*ma++);
-#else
                 *mb++ = (float)(*ma++);
-#endif
             }
         }
         break;
@@ -3149,16 +3122,7 @@ TIFFReadDirEntryDoubleArray(TIFF *tif, TIFFDirEntry *direntry, double **value)
             {
                 if (tif->tif_flags & TIFF_SWAB)
                     TIFFSwabLong8(ma);
-#if defined(__WIN32__) && (_MSC_VER < 1500)
-                /*
-                 * XXX: MSVC 6.0 does not support
-                 * conversion of 64-bit integers into
-                 * floating point values.
-                 */
-                *mb++ = _TIFFUInt64ToDouble(*ma++);
-#else
                 *mb++ = (double)(*ma++);
-#endif
             }
         }
         break;

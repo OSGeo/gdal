@@ -50,10 +50,8 @@
 static GDALDataset *GetUnderlyingDataset(GDALDataset *poSrcDS)
 {
     // Test if we can directly copy original JPEG content if available.
-    if (poSrcDS->GetDriver() != nullptr &&
-        poSrcDS->GetDriver() == GDALGetDriverByName("VRT"))
+    if (auto poVRTDS = dynamic_cast<VRTDataset *>(poSrcDS))
     {
-        VRTDataset *poVRTDS = cpl::down_cast<VRTDataset *>(poSrcDS);
         poSrcDS = poVRTDS->GetSingleSimpleSource();
     }
 

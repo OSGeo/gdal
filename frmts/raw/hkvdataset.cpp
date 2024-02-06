@@ -1183,7 +1183,7 @@ void HKVDataset::ProcessGeoref(const char *pszFilename)
             }
             else
             {
-                m_oSRS = oUTM;
+                m_oSRS = std::move(oUTM);
             }
         }
 
@@ -1244,7 +1244,7 @@ void HKVDataset::ProcessGeoref(const char *pszFilename)
             m_oSRS = oLL;
         }
 
-        m_oGCPSRS = oLL;
+        m_oGCPSRS = std::move(oLL);
     }
 
     delete hkvEllipsoids;

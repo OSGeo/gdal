@@ -457,7 +457,7 @@ void OGRParquetLayer::EstablishFeatureDefn()
         return;
     }
 
-    const auto fields = m_poSchema->fields();
+    const auto &fields = m_poSchema->fields();
     const auto poParquetSchema = metadata->schema();
     int iParquetCol = 0;
     for (int i = 0; i < m_poSchema->num_fields(); ++i)
@@ -552,7 +552,7 @@ bool OGRParquetLayer::CheckMatchArrowParquetColumnNames(
     const auto metadata = m_poArrowReader->parquet_reader()->metadata();
     const auto poParquetSchema = metadata->schema();
     const int nParquetColumns = poParquetSchema->num_columns();
-    const auto fieldName = field->name();
+    const auto &fieldName = field->name();
     const int iParquetColBefore = iParquetCol;
 
     while (iParquetCol < nParquetColumns)

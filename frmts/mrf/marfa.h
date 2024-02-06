@@ -782,7 +782,7 @@ class PNG_Codec
         CPLFree(PNGAlpha);
     }
 
-    CPLErr CompressPNG(buf_mgr &dst, buf_mgr &src);
+    CPLErr CompressPNG(buf_mgr &dst, const buf_mgr &src);
     static CPLErr DecompressPNG(buf_mgr &dst, buf_mgr &src);
 
     const ILImage img;
@@ -824,14 +824,14 @@ class JPEG_Codec
     }
 
     CPLErr CompressJPEG(buf_mgr &dst, buf_mgr &src);
-    CPLErr DecompressJPEG(buf_mgr &dst, buf_mgr &src);
+    CPLErr DecompressJPEG(buf_mgr &dst, const buf_mgr &src);
 
     // Returns true for both JPEG and JPEG-XL (brunsli)
     static bool IsJPEG(const buf_mgr &src);
 
 #if defined(JPEG12_SUPPORTED)  // Internal only
     CPLErr CompressJPEG12(buf_mgr &dst, buf_mgr &src);
-    CPLErr DecompressJPEG12(buf_mgr &dst, buf_mgr &src);
+    CPLErr DecompressJPEG12(buf_mgr &dst, const buf_mgr &src);
 #endif
 
     const ILImage img;

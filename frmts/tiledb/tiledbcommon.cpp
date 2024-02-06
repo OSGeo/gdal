@@ -160,6 +160,10 @@ int TileDBDataset::Identify(GDALOpenInfo *poOpenInfo)
 #endif
             if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0)
             {
+#ifdef HAS_TILEDB_MULTIDIM
+                if (eType == tiledb::Object::Type::Group)
+                    return GDAL_IDENTIFY_UNKNOWN;
+#endif
                 return eType == tiledb::Object::Type::Array;
             }
         }
@@ -209,7 +213,8 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
 {
     try
     {
-        if (!TileDBDataset::Identify(poOpenInfo))
+        const auto eIdentify = TileDBDataset::Identify(poOpenInfo);
+        if (eIdentify == GDAL_IDENTIFY_FALSE)
             return nullptr;
 
         if (STARTS_WITH_CI(poOpenInfo->pszFilename, "TILEDB:") &&
@@ -252,6 +257,56 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 return OGRTileDBDataset::Open(poOpenInfo, eType);
             }
+#ifdef HAS_TILEDB_MULTIDIM
+            else if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
+                     eType == tiledb::Object::Type::Group)
+            {
+                // If this is a group which has only a single 2D array and
+                // no 3D+ arrays, then return this 2D array.
+                auto poDSUnique = std::unique_ptr<GDALDataset>(
+                    TileDBDataset::OpenMultiDimensional(poOpenInfo));
+                if (poDSUnique)
+                {
+                    auto poRootGroup = poDSUnique->GetRootGroup();
+                    if (poRootGroup && poRootGroup->GetGroupNames().empty())
+                    {
+                        std::shared_ptr<GDALMDArray> poCandidateArray;
+                        for (const auto &osName :
+                             poRootGroup->GetMDArrayNames())
+                        {
+                            auto poArray = poRootGroup->OpenMDArray(osName);
+                            if (poArray && poArray->GetDimensionCount() >= 3)
+                            {
+                                poCandidateArray.reset();
+                                break;
+                            }
+                            else if (poArray &&
+                                     poArray->GetDimensionCount() == 2 &&
+                                     poArray->GetDimensions()[0]->GetType() ==
+                                         GDAL_DIM_TYPE_HORIZONTAL_Y &&
+                                     poArray->GetDimensions()[1]->GetType() ==
+                                         GDAL_DIM_TYPE_HORIZONTAL_X)
+                            {
+                                if (!poCandidateArray)
+                                {
+                                    poCandidateArray = poArray;
+                                }
+                                else
+                                {
+                                    poCandidateArray.reset();
+                                    break;
+                                }
+                            }
+                        }
+                        if (poCandidateArray)
+                        {
+                            return poCandidateArray->AsClassicDataset(1, 0);
+                        }
+                    }
+                }
+                return nullptr;
+            }
+#endif
 #endif
 
             tiledb::ArraySchema schema(oCtx, osPath);

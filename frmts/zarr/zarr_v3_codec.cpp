@@ -1015,7 +1015,7 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs)
         {
             return false;
         }
-        oInputArrayMetadata = oOutputArrayMetadata;
+        oInputArrayMetadata = std::move(oOutputArrayMetadata);
         eLastType = poCodec->GetOutputType();
         osLastCodec = poCodec->GetName();
 

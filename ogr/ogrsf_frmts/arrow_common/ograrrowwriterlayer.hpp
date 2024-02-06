@@ -325,8 +325,8 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
         }
 
-        auto field = arrow::field(poGeomFieldDefn->GetNameRef(), dt,
-                                  poGeomFieldDefn->IsNullable());
+        std::shared_ptr<arrow::Field> field(arrow::field(
+            poGeomFieldDefn->GetNameRef(), dt, poGeomFieldDefn->IsNullable()));
         if (m_bWriteFieldArrowExtensionName)
         {
             auto kvMetadata = field->metadata()
@@ -344,7 +344,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
     m_aoEnvelopes.resize(m_poFeatureDefn->GetGeomFieldCount());
     m_oSetWrittenGeometryTypes.resize(m_poFeatureDefn->GetGeomFieldCount());
 
-    m_poSchema = arrow::schema(fields);
+    m_poSchema = arrow::schema(std::move(fields));
     CPLAssert(m_poSchema);
     if (bNeedGDALSchema &&
         CPLTestBool(CPLGetConfigOption(
@@ -489,7 +489,7 @@ OGRArrowWriterLayer::AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
         return false;
     }
 
-    m_oMapFieldDomainToStringArray[domain->GetName()] = stringArray;
+    m_oMapFieldDomainToStringArray[domain->GetName()] = std::move(stringArray);
     m_oMapFieldDomains[domain->GetName()] = std::move(domain);
     return true;
 }
@@ -2167,7 +2167,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
             }
         }
         poRecordBatchResult = arrow::RecordBatch::Make(
-            m_poSchema, poRecordBatch->num_rows(), apoArrays);
+            m_poSchema, poRecordBatch->num_rows(), std::move(apoArrays));
         if (!poRecordBatchResult.ok())
         {
             CPLError(CE_Failure, CPLE_AppDefined,

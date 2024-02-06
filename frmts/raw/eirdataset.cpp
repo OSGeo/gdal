@@ -399,7 +399,8 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
         else if (EQUAL(aosTokens[0], "BYTE_ORDER"))
         {
             // M for MSB, L for LSB
-            chByteOrder = static_cast<char>(toupper(aosTokens[1][0]));
+            chByteOrder = static_cast<char>(
+                toupper(static_cast<unsigned char>(aosTokens[1][0])));
         }
         else if (EQUAL(aosTokens[0], "DATA_OFFSET"))
         {
@@ -448,7 +449,7 @@ GDALDataset *EIRDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
-    poDS->aosHDR = aosHDR;
+    poDS->aosHDR = std::move(aosHDR);
 
     /* -------------------------------------------------------------------- */
     /*      Open target binary file.                                        */

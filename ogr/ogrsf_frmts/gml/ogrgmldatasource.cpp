@@ -2991,7 +2991,8 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE *fp)
             const char *pszEndTag = nullptr;
             for (const char *pszIter = pszStartTag; *pszIter != '\0'; pszIter++)
             {
-                if (isspace(*pszIter) || *pszIter == '>')
+                if (isspace(static_cast<unsigned char>(*pszIter)) ||
+                    *pszIter == '>')
                 {
                     pszEndTag = pszIter;
                     break;

@@ -86,7 +86,7 @@ class PDSDataset final : public RawDataset
     int ParseCompressedImage();
     int ParseImage(const CPLString &osPrefix,
                    const CPLString &osFilenamePrefix);
-    static void CleanString(CPLString &osInput);
+    static CPLString CleanString(const CPLString &osInput);
 
     const char *GetKeyword(const std::string &osPath,
                            const char *pszDefault = "");
@@ -416,13 +416,11 @@ void PDSDataset::ParseSRS()
 
     /***********  Grab TARGET_NAME  ************/
     /**** This is the planets name i.e. MARS ***/
-    CPLString target_name = GetKeyword("TARGET_NAME");
-    CleanString(target_name);
+    const CPLString target_name = CleanString(GetKeyword("TARGET_NAME"));
 
     /**********   Grab MAP_PROJECTION_TYPE *****/
-    CPLString map_proj_name =
-        GetKeyword(osPrefix + "IMAGE_MAP_PROJECTION.MAP_PROJECTION_TYPE");
-    CleanString(map_proj_name);
+    const CPLString map_proj_name = CleanString(
+        GetKeyword(osPrefix + "IMAGE_MAP_PROJECTION.MAP_PROJECTION_TYPE"));
 
     /******  Grab semi_major & convert to KM ******/
     const double semi_major =
@@ -689,7 +687,7 @@ void PDSDataset::ParseSRS()
         }
 
         // translate back into a projection string.
-        m_oSRS = oSRS;
+        m_oSRS = std::move(oSRS);
     }
 
     /* ==================================================================== */
@@ -856,8 +854,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
 
     if (!osQube.empty() && osQube[0] == '"')
     {
-        CPLString osFilename = osQube;
-        CleanString(osFilename);
+        const CPLString osFilename = CleanString(osQube);
         if (!osFilenamePrefix.empty())
         {
             m_osImageFilename = osFilenamePrefix + osFilename;
@@ -877,9 +874,8 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
     /*      Compressed types will not be supported in this routine          */
     /* -------------------------------------------------------------------- */
 
-    CPLString osEncodingType =
-        GetKeyword(osPrefix + "IMAGE.ENCODING_TYPE", "N/A");
-    CleanString(osEncodingType);
+    const CPLString osEncodingType =
+        CleanString(GetKeyword(osPrefix + "IMAGE.ENCODING_TYPE", "N/A"));
     if (!EQUAL(osEncodingType, "N/A") &&
         !EQUAL(osEncodingType, "DCT_DECOMPRESSED"))
     {
@@ -1345,8 +1341,8 @@ class PDSWrapperRasterBand final : public GDALProxyRasterBand
 int PDSDataset::ParseCompressedImage()
 
 {
-    CPLString osFileName = GetKeyword("COMPRESSED_FILE.FILE_NAME", "");
-    CleanString(osFileName);
+    const CPLString osFileName =
+        CleanString(GetKeyword("COMPRESSED_FILE.FILE_NAME", ""));
 
     const CPLString osPath = CPLGetPath(GetDescription());
     const CPLString osFullFileName =
@@ -1428,15 +1424,14 @@ GDALDataset *PDSDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->GetKeyword("COMPRESSED_FILE.ENCODING_TYPE", "");
 
     CPLString osCompressedFilename =
-        poDS->GetKeyword("COMPRESSED_FILE.FILE_NAME", "");
-    CleanString(osCompressedFilename);
+        CleanString(poDS->GetKeyword("COMPRESSED_FILE.FILE_NAME", ""));
 
-    CPLString osUncompressedFilename =
+    const char *pszImageName =
         poDS->GetKeyword("UNCOMPRESSED_FILE.IMAGE.NAME", "");
-    if (osUncompressedFilename.empty())
-        osUncompressedFilename =
-            poDS->GetKeyword("UNCOMPRESSED_FILE.FILE_NAME", "");
-    CleanString(osUncompressedFilename);
+    CPLString osUncompressedFilename =
+        CleanString(!EQUAL(pszImageName, "")
+                        ? pszImageName
+                        : poDS->GetKeyword("UNCOMPRESSED_FILE.FILE_NAME", ""));
 
     VSIStatBufL sStat;
     CPLString osFilenamePrefix;
@@ -1607,16 +1602,15 @@ const char *PDSDataset::GetKeywordUnit(const char *pszPath, int iSubscript,
 /*                            CleanString()                             */
 /*                                                                      */
 /* Removes single or double quotes, and converts spaces to underscores. */
-/* The change is made in-place to CPLString.                            */
 /************************************************************************/
 
-void PDSDataset::CleanString(CPLString &osInput)
+CPLString PDSDataset::CleanString(const CPLString &osInput)
 
 {
     if ((osInput.size() < 2) ||
         ((osInput.at(0) != '"' || osInput.back() != '"') &&
          (osInput.at(0) != '\'' || osInput.back() != '\'')))
-        return;
+        return osInput;
 
     char *pszWrk = CPLStrdup(osInput.c_str() + 1);
 
@@ -1628,8 +1622,9 @@ void PDSDataset::CleanString(CPLString &osInput)
             pszWrk[i] = '_';
     }
 
-    osInput = pszWrk;
+    CPLString osOutput = pszWrk;
     CPLFree(pszWrk);
+    return osOutput;
 }
 
 /************************************************************************/

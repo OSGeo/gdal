@@ -24,7 +24,7 @@
 #if _MSC_VER < 1900
 #define snprintf _snprintf
 #endif
-#elif defined(WIN32) || defined(_WIN32)
+#elif defined(_WIN32)
 #ifndef snprintf
 #define snprintf _snprintf
 #endif

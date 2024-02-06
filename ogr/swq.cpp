@@ -216,7 +216,7 @@ int swqlex(YYSTYPE *ppNode, swq_parse_context *context)
     /* -------------------------------------------------------------------- */
     /*      Handle alpha-numerics.                                          */
     /* -------------------------------------------------------------------- */
-    else if (isalnum(*pszInput))
+    else if (isalnum(static_cast<unsigned char>(*pszInput)))
     {
         int nReturn = SWQT_IDENTIFIER;
         CPLString osToken;
@@ -225,8 +225,8 @@ int swqlex(YYSTYPE *ppNode, swq_parse_context *context)
         osToken += *pszInput;
 
         // collect text characters
-        while (isalnum(*pszNext) || *pszNext == '_' ||
-               static_cast<unsigned char>(*pszNext) > 127)
+        while (isalnum(static_cast<unsigned char>(*pszNext)) ||
+               *pszNext == '_' || static_cast<unsigned char>(*pszNext) > 127)
             osToken += *(pszNext++);
 
         context->pszNext = pszNext;

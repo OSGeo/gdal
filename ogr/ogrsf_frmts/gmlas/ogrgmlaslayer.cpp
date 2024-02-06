@@ -936,6 +936,8 @@ void OGRGMLASLayer::PostInit(bool bIncludeGeometryXML)
                 [GMLASField::MakeXLinkRawContentFieldXPathFromXLinkHrefXPath(
                     oField.GetXPath())] = m_poFeatureDefn->GetFieldCount() - 1;
         }
+
+        CPL_IGNORE_RET_VAL(osOGRFieldName);
     }
 
     CreateCompoundFoldedMappings();
@@ -1091,7 +1093,8 @@ static void InsertTargetIndex(std::map<CPLString, int> &oMap, int nIdx)
 /*                            InsertNewField()                          */
 /************************************************************************/
 
-void OGRGMLASLayer::InsertNewField(int nInsertPos, OGRFieldDefn &oFieldDefn,
+void OGRGMLASLayer::InsertNewField(int nInsertPos,
+                                   const OGRFieldDefn &oFieldDefn,
                                    const CPLString &osXPath)
 {
     CPLAssert(nInsertPos >= 0 &&
@@ -1123,7 +1126,7 @@ void OGRGMLASLayer::InsertNewField(int nInsertPos, OGRFieldDefn &oFieldDefn,
             else
                 oMapOGRFieldIdxtoFCFieldIdx[oIter.first + 1] = oIter.second;
         }
-        m_oMapOGRFieldIdxtoFCFieldIdx = oMapOGRFieldIdxtoFCFieldIdx;
+        m_oMapOGRFieldIdxtoFCFieldIdx = std::move(oMapOGRFieldIdxtoFCFieldIdx);
     }
 
     OGRLayer *poFieldsMetadataLayer = m_poDS->GetFieldsMetadataLayer();
@@ -1276,15 +1279,15 @@ CPLString OGRGMLASLayer::LaunderFieldName(const CPLString &osFieldName)
     if (m_poFeatureDefn->GetFieldIndex(osLaunderedName) >= 0)
     {
         nCounter = 1;
-        CPLString osCandidate;
+        std::string osCandidate;
         do
         {
             nCounter++;
             osCandidate = OGRGMLASAddSerialNumber(
                 osLaunderedName, nCounter, nCounter + 1, nIdentifierMaxLength);
         } while (nCounter < 100 &&
-                 m_poFeatureDefn->GetFieldIndex(osCandidate) >= 0);
-        osLaunderedName = osCandidate;
+                 m_poFeatureDefn->GetFieldIndex(osCandidate.c_str()) >= 0);
+        osLaunderedName = std::move(osCandidate);
     }
 
     return osLaunderedName;

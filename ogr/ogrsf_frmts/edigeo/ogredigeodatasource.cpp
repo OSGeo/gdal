@@ -190,7 +190,7 @@ VSILFILE *OGREDIGEODataSource::OpenFile(const char *pszType,
     {
         CPLString osExtLower = osExt;
         for (int i = 0; i < (int)osExt.size(); i++)
-            osExtLower[i] = (char)tolower(osExt[i]);
+            osExtLower[i] = (char)tolower(static_cast<unsigned char>(osExt[i]));
         CPLString osFilename2 = CPLFormCIFilename(
             CPLGetPath(pszName), osTmp.c_str(), osExtLower.c_str());
         fp = VSIFOpenL(osFilename2, "rb");
@@ -369,7 +369,7 @@ int OGREDIGEODataSource::ReadDIC()
                 OGREDIGEOAttributeDef sAttributeDef;
                 sAttributeDef.osLAB = osLAB;
                 sAttributeDef.osTYP = osTYP;
-                mapAttributes[osRID] = sAttributeDef;
+                mapAttributes[osRID] = std::move(sAttributeDef);
             }
         }
 
@@ -753,7 +753,7 @@ int OGREDIGEODataSource::ReadVEC(const char *pszVECName)
                 feaDesc.aosAttIdVal = aosAttIdVal;
                 feaDesc.osSCP = osSCP;
                 feaDesc.osQUP_RID = osQUP_RID;
-                mapFEA[osRID] = feaDesc;
+                mapFEA[osRID] = std::move(feaDesc);
             }
             else if (osRTY == "PNO")
             {

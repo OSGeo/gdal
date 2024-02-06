@@ -19,7 +19,8 @@ add_library(
   nearblack_lib_floodfill.cpp
   gdal_footprint_lib.cpp
   gdalmdiminfo_lib.cpp
-  gdalmdimtranslate_lib.cpp)
+  gdalmdimtranslate_lib.cpp
+  gdaltindex_lib.cpp)
 add_dependencies(appslib generate_gdal_version_h)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:appslib>)
 gdal_standard_includes(appslib)
@@ -55,7 +56,7 @@ if (BUILD_APPS)
   add_executable(gdalmanage gdalmanage.cpp)
   add_executable(gdalsrsinfo gdalsrsinfo.cpp)
   target_link_libraries(gdalsrsinfo PRIVATE PROJ::proj)
-  add_executable(gdaltindex gdaltindex.cpp)
+  add_executable(gdaltindex gdal_utils_priv.h gdaltindex_bin.cpp)
   add_executable(gdal_rasterize gdal_rasterize_bin.cpp)
   add_executable(gdaldem gdaldem_bin.cpp)
   add_executable(gdaltransform gdaltransform.cpp)

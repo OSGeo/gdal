@@ -748,4 +748,4 @@ def test_ogrinfo_if_ko(ogrinfo_path):
     (_, err) = gdaltest.runexternal_out_and_err(
         ogrinfo_path + " -if GeoJSON ../ogr/data/gpkg/2d_envelope.gpkg"
     )
-    assert "not recognized as a supported file format" in err
+    assert "not recognized as being in a supported file format" in err

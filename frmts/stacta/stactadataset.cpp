@@ -888,7 +888,7 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
     }
-    const auto tmsList = poTMS->tileMatrixList();
+    const auto &tmsList = poTMS->tileMatrixList();
     if (tmsList.empty())
         return false;
 

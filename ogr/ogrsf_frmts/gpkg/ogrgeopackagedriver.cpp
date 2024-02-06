@@ -35,6 +35,11 @@
 // g++ -g -Wall -fPIC -shared -o ogr_geopackage.so -Iport -Igcore -Iogr
 // -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpkg ogr/ogrsf_frmts/gpkg/*.c* -L. -lgdal
 
+static inline bool ENDS_WITH_CI(const char *a, const char *b)
+{
+    return strlen(a) >= strlen(b) && EQUAL(a + strlen(a) - strlen(b), b);
+}
+
 /************************************************************************/
 /*                       OGRGeoPackageDriverIdentify()                  */
 /************************************************************************/
@@ -239,6 +244,13 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
         }
     }
 
+    if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
+        ENDS_WITH_CI(poOpenInfo->pszFilename, ".gti.gpkg"))
+    {
+        // Most likely handled by GTI driver, but we can't be sure
+        return GDAL_IDENTIFY_UNKNOWN;
+    }
+
     return TRUE;
 }
 
@@ -278,8 +290,9 @@ struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
             m_driverPrefixComponent = aosParts[0];
 
             int subdatasetIndex{2};
-            const bool hasDriveLetter{strlen(aosParts[1]) == 1 &&
-                                      std::isalpha(aosParts[1][0])};
+            const bool hasDriveLetter{
+                strlen(aosParts[1]) == 1 &&
+                std::isalpha(static_cast<unsigned char>(aosParts[1][0]))};
 
             // Check for drive letter
             if (iPartsCount == 4)
@@ -331,7 +344,8 @@ OGRGeoPackageDriverGetSubdatasetInfo(const char *pszFileName)
 static GDALDataset *OGRGeoPackageDriverOpen(GDALOpenInfo *poOpenInfo)
 {
     std::string osFilenameInGpkgZip;
-    if (!OGRGeoPackageDriverIdentify(poOpenInfo, osFilenameInGpkgZip, true))
+    if (OGRGeoPackageDriverIdentify(poOpenInfo, osFilenameInGpkgZip, true) ==
+        GDAL_IDENTIFY_FALSE)
         return nullptr;
 
     GDALGeoPackageDataset *poDS = new GDALGeoPackageDataset();
@@ -493,6 +507,9 @@ void GDALGPKGDriver::InitializeCreationOptionList()
 
     const char *pszCOEnd =
         "  </Option>"
+        "  <Option name='ZOOM_LEVEL' type='integer' scope='raster' "
+        "description='Zoom level of full resolution. Only "
+        "used for TILING_SCHEME != CUSTOM' min='0' max='30'/>"
         "  <Option name='ZOOM_LEVEL_STRATEGY' type='string-select' "
         "scope='raster' description='Strategy to determine zoom level. Only "
         "used for TILING_SCHEME != CUSTOM' default='AUTO'>"

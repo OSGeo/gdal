@@ -54,7 +54,8 @@ IndexedArc RPolygon::newArc(bool bFollowRighthand)
     return IndexedArc{poArc, iArcIndex};
 }
 
-void RPolygon::setArcConnection(IndexedArc &oArc, IndexedArc &oNextArc)
+void RPolygon::setArcConnection(const IndexedArc &oArc,
+                                const IndexedArc &oNextArc)
 {
     oArcConnections[oArc.iIndex] = oNextArc.iIndex;
 }
@@ -350,6 +351,7 @@ Polygonizer<PolyIdType, DataType>::Polygonizer(
 template <typename PolyIdType, typename DataType>
 Polygonizer<PolyIdType, DataType>::~Polygonizer()
 {
+    // cppcheck-suppress constVariableReference
     for (auto &pair : oPolygonMap_)
     {
         delete pair.second;
@@ -436,6 +438,7 @@ void Polygonizer<PolyIdType, DataType>::processLine(
             oCompletedPolygons.push_back(entry);
         }
     }
+    // cppcheck-suppress constVariableReference
     for (auto &entry : oCompletedPolygons)
     {
         PolyIdType nPolyId = entry.first;
@@ -483,7 +486,7 @@ void OGRPolygonWriter<DataType>::receive(RPolygon *poPolygon,
                 poPolygon->oArcRighthandFollow[iArcIndex];
             for (std::size_t i = 0; i < oArc->size(); ++i)
             {
-                Point &oPixel =
+                const Point &oPixel =
                     (*oArc)[bArcFollowRighthand ? i : (oArc->size() - i - 1)];
 
                 const double dfX = padfGeoTransform[0] +

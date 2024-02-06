@@ -57,7 +57,7 @@ static bool IsJSONObject(const char *pszText)
     /* -------------------------------------------------------------------- */
     /*      This is a primitive test, but we need to perform it fast.       */
     /* -------------------------------------------------------------------- */
-    while (*pszText != '\0' && isspace((unsigned char)*pszText))
+    while (*pszText != '\0' && isspace(static_cast<unsigned char>(*pszText)))
         pszText++;
 
     const char *const apszPrefix[] = {"loadGeoJSON(", "jsonp("};
@@ -89,12 +89,12 @@ static bool IsTypeSomething(const char *pszText, const char *pszTypeValue)
         if (pszIter == nullptr)
             return false;
         pszIter += strlen("\"type\"");
-        while (isspace(*pszIter))
+        while (isspace(static_cast<unsigned char>(*pszIter)))
             pszIter++;
         if (*pszIter != ':')
             return false;
         pszIter++;
-        while (isspace(*pszIter))
+        while (isspace(static_cast<unsigned char>(*pszIter)))
             pszIter++;
         CPLString osValue;
         osValue.Printf("\"%s\"", pszTypeValue);
@@ -143,7 +143,7 @@ static CPLString GetCompactJSon(const char *pszText, size_t nMaxSize)
             bInString = true;
             osWithoutSpace += '"';
         }
-        else if (!isspace(static_cast<int>(pszText[i])))
+        else if (!isspace(static_cast<unsigned char>(pszText[i])))
         {
             osWithoutSpace += pszText[i];
         }
@@ -336,7 +336,7 @@ static bool IsLikelyNewlineSequenceGeoJSON(VSILFILE *fpL,
                 {
                     bEOLFound = true;
                 }
-                else if (!isspace(static_cast<int>(abyBuffer[i])))
+                else if (!isspace(static_cast<unsigned char>(abyBuffer[i])))
                 {
                     bCompatibleOfSequence = false;
                     break;

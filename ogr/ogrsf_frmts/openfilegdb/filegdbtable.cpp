@@ -894,7 +894,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
         pabyIter++;
         nRemaining--;
         returnErrorIf(nCarCount > nRemaining / 2);
-        std::string osName(ReadUTF16String(pabyIter, nCarCount));
+        const std::string osName(ReadUTF16String(pabyIter, nCarCount));
         pabyIter += 2 * nCarCount;
         nRemaining -= 2 * nCarCount;
 
@@ -903,7 +903,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
         pabyIter++;
         nRemaining--;
         returnErrorIf(nCarCount > nRemaining / 2);
-        std::string osAlias(ReadUTF16String(pabyIter, nCarCount));
+        const std::string osAlias(ReadUTF16String(pabyIter, nCarCount));
         pabyIter += 2 * nCarCount;
         nRemaining -= 2 * nCarCount;
 

@@ -39,18 +39,10 @@
 #if _MSC_VER < 1900
 #define snprintf _snprintf
 #endif
-#elif defined(WIN32) || defined(_WIN32)
+#elif defined(_WIN32)
 #ifndef snprintf
 #define snprintf _snprintf
 #endif
-#endif
-#endif
-
-#ifndef CPL_UNUSED
-#if defined(__GNUC__) && __GNUC__ >= 4
-#define CPL_UNUSED __attribute((__unused__))
-#else
-#define CPL_UNUSED
 #endif
 #endif
 
@@ -2936,8 +2928,9 @@ static int SHPRewindIsInnerRing(const SHPObject *psObject, int iOpRing,
 /*      specification.                                                  */
 /************************************************************************/
 
-int SHPAPI_CALL SHPRewindObject(CPL_UNUSED SHPHandle hSHP, SHPObject *psObject)
+int SHPAPI_CALL SHPRewindObject(SHPHandle hSHP, SHPObject *psObject)
 {
+    (void)hSHP;
     /* -------------------------------------------------------------------- */
     /*      Do nothing if this is not a polygon object.                     */
     /* -------------------------------------------------------------------- */

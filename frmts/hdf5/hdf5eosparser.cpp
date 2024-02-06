@@ -290,7 +290,7 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
                         oDataFieldMetadata.poGridMetadata = poGridMetadataRef;
                         m_oMapSubdatasetNameToGridDataFieldMetadata
                             ["//HDFEOS/GRIDS/" + osGridName + "/Data_Fields/" +
-                             osDataFieldName] = oDataFieldMetadata;
+                             osDataFieldName] = std::move(oDataFieldMetadata);
                     }
                 }
             }
@@ -619,7 +619,7 @@ bool HDF5EOSParser::GridMetadata::GetGeoTransform(
         int nRasterXSize = 0;
         int nRasterYSize = 0;
 
-        for (auto &oDim : aoDimensions)
+        for (const auto &oDim : aoDimensions)
         {
             if (oDim.osName == "XDim")
                 nRasterXSize = oDim.nSize;

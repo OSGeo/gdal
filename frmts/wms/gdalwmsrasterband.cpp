@@ -1185,7 +1185,7 @@ CPLErr GDALWMSRasterBand::SetColorInterpretation(GDALColorInterp eNewInterp)
 
 // Utility function, returns a value from a vector corresponding to the band
 // index or the first entry
-static double getBandValue(std::vector<double> &v, size_t idx)
+static double getBandValue(const std::vector<double> &v, size_t idx)
 {
     idx--;
     if (v.size() > idx)

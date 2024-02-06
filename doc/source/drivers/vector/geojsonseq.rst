@@ -121,6 +121,7 @@ See Also
    GeoJSON Format.
 -  `RFC 8142 <https://tools.ietf.org/html/rfc8142>`__ standard: GeoJSON
    Text Sequences (RS separator)
--  `Newline Delimited JSON <http://ndjson.org/>`__
 -  `GeoJSONL <https://www.interline.io/blog/geojsonl-extracts/>`__: An
    optimized format for large geographic datasets
+-  `JSON streaming on Wikipedia <https://en.wikipedia.org/wiki/JSON_streaming>`__: An
+   overview over formats for concatenated JSON in a single file 

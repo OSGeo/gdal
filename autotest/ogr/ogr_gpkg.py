@@ -1884,11 +1884,11 @@ def test_ogr_gpkg_20a(tmp_vsimem):
     ds = None
 
     # Unable to parse srs_id '4326' well-known text 'invalid'
-    with gdal.quiet_errors():
+    with gdal.config_option("OGR_SQLITE_PRAGMA", "FOREIGN_KEYS=0"), gdal.quiet_errors():
         ds = ogr.Open(fname, update=1)
+        ds.ExecuteSQL("DELETE FROM gpkg_spatial_ref_sys WHERE srs_id = 4326")
+        ds = None
 
-    ds.ExecuteSQL("DELETE FROM gpkg_spatial_ref_sys WHERE srs_id = 4326")
-    ds = None
     with gdal.config_option(
         "OGR_GPKG_FOREIGN_KEY_CHECK", "NO"
     ), gdaltest.error_handler():
@@ -1901,24 +1901,25 @@ def test_ogr_gpkg_20b(tmp_vsimem):
 
     fname = tmp_vsimem / "ogr_gpkg_20.gpkg"
 
-    ds = gdaltest.gpkg_dr.CreateDataSource(fname)
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-    lyr = ds.CreateLayer("foo4326", srs=srs)
-    assert lyr is not None
+    with gdal.config_option("OGR_SQLITE_PRAGMA", "FOREIGN_KEYS=0"):
+        ds = gdaltest.gpkg_dr.CreateDataSource(fname)
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(4326)
+        lyr = ds.CreateLayer("foo4326", srs=srs)
+        assert lyr is not None
 
-    ds.ExecuteSQL("DROP TABLE gpkg_spatial_ref_sys")
-    ds.ExecuteSQL(
-        "CREATE TABLE gpkg_spatial_ref_sys (srs_name TEXT, "
-        "srs_id INTEGER, organization TEXT, "
-        "organization_coordsys_id INTEGER, definition TEXT)"
-    )
-    ds.ExecuteSQL(
-        "INSERT INTO gpkg_spatial_ref_sys "
-        "(srs_name,srs_id,organization,organization_coordsys_id,"
-        "definition) VALUES (NULL,4326,NULL,NULL,NULL)"
-    )
-    ds = None
+        ds.ExecuteSQL("DROP TABLE gpkg_spatial_ref_sys")
+        ds.ExecuteSQL(
+            "CREATE TABLE gpkg_spatial_ref_sys (srs_name TEXT, "
+            "srs_id INTEGER, organization TEXT, "
+            "organization_coordsys_id INTEGER, definition TEXT)"
+        )
+        ds.ExecuteSQL(
+            "INSERT INTO gpkg_spatial_ref_sys "
+            "(srs_name,srs_id,organization,organization_coordsys_id,"
+            "definition) VALUES (NULL,4326,NULL,NULL,NULL)"
+        )
+        ds = None
 
     # Warning 1: null definition for srs_id '4326' in gpkg_spatial_ref_sys
     with gdal.config_option(
@@ -3430,7 +3431,14 @@ def test_ogr_gpkg_35(tmp_vsimem, tmp_path):
     ):
         f.DumpReadable()
         pytest.fail()
+    lyr = None
+    lyr_nonspatial = None
+    ds = None
 
+    with gdaltest.config_option("OGR_SQLITE_PRAGMA", "FOREIGN_KEYS=0"):
+        ds = ogr.Open(dbname, update=1)
+    lyr = ds.GetLayerByName("test")
+    lyr_nonspatial = ds.GetLayerByName("test_nonspatial")
     lyr.StartTransaction()
     ret = lyr_nonspatial.DeleteField(1)
     lyr.CommitTransaction()
@@ -5069,7 +5077,8 @@ def test_ogr_gpkg_57(tmp_vsimem):
     out_filename = tmp_vsimem / "test_ogr_gpkg_57.gpkg"
     ogr.GetDriverByName("GPKG").CreateDataSource(out_filename)
 
-    ds = ogr.Open(out_filename, update=1)
+    with gdal.config_option("OGR_SQLITE_PRAGMA", "FOREIGN_KEYS=0"):
+        ds = ogr.Open(out_filename, update=1)
     ds.ExecuteSQL("DROP TABLE gpkg_contents")
     ds.ExecuteSQL(
         "CREATE TABLE gpkg_contents (table_name,data_type,identifier,description,last_change,min_x, min_y,max_x, max_y,srs_id)"
@@ -5582,6 +5591,42 @@ def test_ogr_gpkg_mixed_dimensionality_unknown_layer_geometry_type(
     assert f.GetField(0) == 2
     ds.ReleaseResultSet(sql_lyr)
     ds = None
+
+
+###############################################################################
+# Test creating a table with layer geometry type POINT and non-2D geometries
+
+
+def test_ogr_gpkg_z_or_m_geometry_in_non_zm_layer(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("GPKG").Create(
+        tmp_vsimem / "tmp.gpkg", 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint)
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT Z (1 2 3)"))
+    with gdal.quiet_errors():
+        lyr.CreateFeature(feat)
+        assert (
+            gdal.GetLastErrorMsg()
+            == "Layer 'foo' has been declared with non-Z geometry type Point, but it does contain geometries with Z. Setting the Z=2 hint into gpkg_geometry_columns"
+        )
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT M (1 2 3)"))
+    with gdal.quiet_errors():
+        lyr.CreateFeature(feat)
+        assert (
+            gdal.GetLastErrorMsg()
+            == "Layer 'foo' has been declared with non-M geometry type Point, but it does contain geometries with M. Setting the M=2 hint into gpkg_geometry_columns"
+        )
+
+    ds = None
+
+    ds = ogr.Open(tmp_vsimem / "tmp.gpkg")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbPointZM
 
 
 ###############################################################################
@@ -10004,3 +10049,11 @@ def test_ogr_gpkg_extent3d_on_2d_dataset_with_filters(tmp_vsimem):
     assert ext3d == (3, 3, 4, 4, float("inf"), float("-inf"))
 
     ds = None
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_creation_with_foreign_key_constraint_enabled(tmp_vsimem):
+
+    with gdaltest.config_option("OGR_SQLITE_PRAGMA", "FOREIGN_KEYS=1"):
+        out_filename = str(tmp_vsimem / "out.gpkg")
+        gdal.VectorTranslate(out_filename, "data/poly.shp")

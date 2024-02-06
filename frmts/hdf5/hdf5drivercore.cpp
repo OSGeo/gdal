@@ -193,7 +193,8 @@ struct HDF5DriverSubdatasetInfo : public GDALSubdatasetInfo
 
             int subdatasetIndex{2};
             const bool hasDriveLetter{
-                part1.length() == 1 && std::isalpha(part1.at(0)) &&
+                part1.length() == 1 &&
+                std::isalpha(static_cast<unsigned char>(part1.at(0))) &&
                 (strlen(aosParts[2]) > 1 &&
                  (aosParts[2][0] == '\\' ||
                   (aosParts[2][0] == '/' && aosParts[2][1] != '/')))};

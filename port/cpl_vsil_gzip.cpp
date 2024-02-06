@@ -4076,7 +4076,7 @@ bool VSIZipFilesystemHandler::GetFileInfo(const char *pszFilename,
                             memcpy(&osVal[0], &abyExtra[nPos + nPos2], nValLen);
                             nPos2 += nValLen;
 
-                            info.oMapProperties[osKey] = osVal;
+                            info.oMapProperties[osKey] = std::move(osVal);
                         }
                     }
                 }

@@ -198,12 +198,12 @@ bool OGRJSONFGDataset::Open(GDALOpenInfo *poOpenInfo,
         if (pszStr)
         {
             pszStr += strlen("\"features\"");
-            while (*pszStr && isspace(*pszStr))
+            while (*pszStr && isspace(static_cast<unsigned char>(*pszStr)))
                 pszStr++;
             if (*pszStr == ':')
             {
                 pszStr++;
-                while (*pszStr && isspace(*pszStr))
+                while (*pszStr && isspace(static_cast<unsigned char>(*pszStr)))
                     pszStr++;
                 if (*pszStr == '[')
                 {

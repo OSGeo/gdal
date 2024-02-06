@@ -581,46 +581,32 @@ CPLErr WCSDataset100::ParseCapabilities(CPLXMLNode *Capabilities,
 
     // identification metadata
     CPLString path2 = path;
-    std::vector<std::string> keys2;
-    keys2.push_back("description");
-    keys2.push_back("name");
-    keys2.push_back("label");
-    keys2.push_back("fees");
-    keys2.push_back("accessConstraints");
-    CPLXMLNode *service =
-        AddSimpleMetaData(&metadata, Capabilities, path2, "Service", keys2);
+    CPLXMLNode *service = AddSimpleMetaData(
+        &metadata, Capabilities, path2, "Service",
+        {"description", "name", "label", "fees", "accessConstraints"});
     if (service)
     {
-        CPLString path3 = path2;
-        std::vector<std::string> keys3;
-        keys3.push_back("individualName");
-        keys3.push_back("organisationName");
-        keys3.push_back("positionName");
+        CPLString path3 = std::move(path2);
         CPLString kw = GetKeywords(service, "keywords", "keyword");
         if (kw != "")
         {
             CPLString name = path + "keywords";
             metadata = CSLSetNameValue(metadata, name, kw);
         }
-        CPLXMLNode *party = AddSimpleMetaData(&metadata, service, path3,
-                                              "responsibleParty", keys3);
+        CPLXMLNode *party = AddSimpleMetaData(
+            &metadata, service, path3, "responsibleParty",
+            {"individualName", "organisationName", "positionName"});
         CPLXMLNode *info = CPLGetXMLNode(party, "contactInfo");
         if (party && info)
         {
             CPLString path4 = path3 + "contactInfo.";
-            std::vector<std::string> keys4;
-            keys4.push_back("deliveryPoint");
-            keys4.push_back("city");
-            keys4.push_back("administrativeArea");
-            keys4.push_back("postalCode");
-            keys4.push_back("country");
-            keys4.push_back("electronicMailAddress");
             CPLString path5 = path4;
-            std::vector<std::string> keys5;
-            keys5.push_back("voice");
-            keys5.push_back("facsimile");
-            AddSimpleMetaData(&metadata, info, path4, "address", keys4);
-            AddSimpleMetaData(&metadata, info, path5, "phone", keys5);
+            AddSimpleMetaData(&metadata, info, path4, "address",
+                              {"deliveryPoint", "city", "administrativeArea",
+                               "postalCode", "country",
+                               "electronicMailAddress"});
+            AddSimpleMetaData(&metadata, info, path5, "phone",
+                              {"voice", "facsimile"});
         }
     }
 

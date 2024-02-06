@@ -237,7 +237,7 @@ void GMLASErrorHandler::handle(const SAXParseException &e, CPLErr eErr)
             "http://www.opengis.net/gml/3.2:AbstractCRS' not found") !=
             std::string::npos)
     {
-        m_osGMLTypeNotFoundError = osFullErrorMsg;
+        m_osGMLTypeNotFoundError = std::move(osFullErrorMsg);
     }
     else if (m_bHideGMLTypeNotFound && !m_osGMLTypeNotFoundError.empty())
     {
@@ -2747,7 +2747,7 @@ static void SetSWEValue(OGRFeature *poFeature, int iField, CPLString &osValue)
 
 static size_t SkipSpace(const char *pszValues, size_t i)
 {
-    while (isspace(static_cast<int>(pszValues[i])))
+    while (isspace(static_cast<unsigned char>(pszValues[i])))
         i++;
     return i;
 }
@@ -3473,7 +3473,7 @@ bool GMLASReader::RunFirstPass(
                 delete poLayer;
             }
         }
-        *m_papoLayers = apoNewLayers;
+        *m_papoLayers = std::move(apoNewLayers);
     }
     if (bRemoveUnusedFields)
     {

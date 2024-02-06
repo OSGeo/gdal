@@ -21,6 +21,7 @@ Synopsis
                       [-if <format>]... [-of <format>]
                       [-co <NAME>=<VALUE>]...
                       [-array <array_spec>]...
+                      [-arrayoption <NAME>=<VALUE>]...
                       [-group <group_spec>]...
                       [-subset <subset_spec>]...
                       [-scaleaxes <scaleaxes_spec>]
@@ -90,6 +91,14 @@ The following command line parameters can appear in any order.
 
     When specifying a view_expr that performs a slicing or subsetting on a dimension, the
     equivalent operation will be applied to the corresponding indexing variable.
+
+.. option:: -arrayoption <NAME>=<VALUE>
+
+    .. versionadded:: 3.9
+
+    Option passed to :cpp:func:`GDALGroup::GetMDArrayNames` to filter reported
+    arrays. Such option is format specific. Consult driver documentation.
+    This option may be used several times.
 
 .. option:: -group <group_spec>
 

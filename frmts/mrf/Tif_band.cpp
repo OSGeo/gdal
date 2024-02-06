@@ -76,7 +76,7 @@ static CPLString uniq_memfname(const char *prefix)
 // Uses GDAL to create a temporary TIF file, using the band create options
 // copies the content to the destination buffer then erases the temp TIF
 //
-static CPLErr CompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img,
+static CPLErr CompressTIF(buf_mgr &dst, const buf_mgr &src, const ILImage &img,
                           char **papszOptions)
 {
     CPLErr ret;
@@ -136,7 +136,9 @@ static CPLErr CompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img,
 }
 
 // Read from a RAM Tiff. This is rather generic
-static CPLErr DecompressTIF(buf_mgr &dst, buf_mgr &src, const ILImage &img)
+// cppcheck-suppress constParameterReference
+static CPLErr DecompressTIF(buf_mgr &dst, const buf_mgr &src,
+                            const ILImage &img)
 {
     CPLString fname = uniq_memfname("mrf_tif_read");
     VSILFILE *fp =

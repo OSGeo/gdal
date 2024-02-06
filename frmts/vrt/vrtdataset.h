@@ -46,11 +46,10 @@
 #include <memory>
 #include <vector>
 
-int VRTApplyMetadata(CPLXMLNode *, GDALMajorObject *);
-CPLXMLNode *VRTSerializeMetadata(GDALMajorObject *);
 CPLErr GDALRegisterDefaultPixelFunc();
 CPLString VRTSerializeNoData(double dfVal, GDALDataType eDataType,
                              int nPrecision);
+
 #if 0
 int VRTWarpedOverviewTransform( void *pTransformArg, int bDstToSrc,
                                 int nPointCount,
@@ -541,7 +540,7 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL : public GDALRasterBand
     GDALColorInterp m_eColorInterp = GCI_Undefined;
 
     char *m_pszUnitType = nullptr;
-    char **m_papszCategoryNames = nullptr;
+    CPLStringList m_aosCategoryNames{};
 
     double m_dfOffset = 0.0;
     double m_dfScale = 1.0;
@@ -1025,6 +1024,8 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
   protected:
     friend class VRTSourcedRasterBand;
     friend class VRTDataset;
+    friend class GDALTileIndexDataset;
+    friend class GDALTileIndexBand;
 
     int m_nBand = 0;
     bool m_bGetMaskBand = false;
@@ -1055,6 +1056,12 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     GDALRasterBand *GetRasterBandNoOpen() const
     {
         return m_poRasterBand;
+    }
+
+    void SetRasterBand(GDALRasterBand *poBand, bool bDropRef)
+    {
+        m_poRasterBand = poBand;
+        m_bDropRefOnSrcBand = bDropRef;
     }
 
     virtual bool ValidateOpenedBand(GDALRasterBand * /*poBand*/) const

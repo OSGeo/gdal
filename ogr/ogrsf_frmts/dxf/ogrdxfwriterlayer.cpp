@@ -928,7 +928,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE(OGRFeature *poFeature,
             if (poDS->oHeaderDS.LookupLineType(osLineType).empty() &&
                 oNewLineTypes.count(osLineType) == 0)
             {
-                oNewLineTypes[osLineType] = adfDefinition;
+                oNewLineTypes[osLineType] = std::move(adfDefinition);
             }
 
             WriteValue(6, osLineType);

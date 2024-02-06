@@ -247,7 +247,7 @@ TileDBGroup::OpenGroup(const std::string &osName,
         }
     }
     if (osSubPath.empty())
-        osSubPath = osSubPathCandidate;
+        osSubPath = std::move(osSubPathCandidate);
     if (osSubPath.empty())
         return nullptr;
 
@@ -480,9 +480,9 @@ TileDBGroup::OpenMDArray(const std::string &osName,
     if (osSubPath.empty())
         return nullptr;
 
-    auto poArray =
-        TileDBArray::OpenFromDisk(m_poSharedResource, m_osFullName, osName,
-                                  osNameSuffix, osSubPath, papszOptions);
+    auto poArray = TileDBArray::OpenFromDisk(m_poSharedResource, m_pSelf.lock(),
+                                             m_osFullName, osName, osNameSuffix,
+                                             osSubPath, papszOptions);
     if (!poArray)
         return nullptr;
 

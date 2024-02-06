@@ -67,7 +67,7 @@ static int ReadInt(VSILFILE *fp)
         }
         if (bInProlog)
         {
-            if (!isspace(static_cast<int>(c)))
+            if (!isspace(static_cast<unsigned char>(c)))
             {
                 bInProlog = false;
             }
@@ -166,7 +166,7 @@ static int USGSDEMReadIntFromBuffer(Buffer *psBuffer, int *pbSuccess = nullptr)
 
         c = psBuffer->buffer[psBuffer->cur_index];
         psBuffer->cur_index++;
-        if (!isspace(static_cast<int>(c)))
+        if (!isspace(static_cast<unsigned char>(c)))
             break;
     }
 
@@ -793,7 +793,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
             sr.SetStatePlane(iUTMZone, bNAD83);
     }
 
-    m_oSRS = sr;
+    m_oSRS = std::move(sr);
 
     /* -------------------------------------------------------------------- */
     /*      For UTM we use the extents (really the UTM coordinates of       */

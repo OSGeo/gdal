@@ -1094,11 +1094,13 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         }
         else if (EQUAL(papszTokens[0], "PIXELTYPE"))
         {
-            chPixelType = static_cast<char>(toupper(papszTokens[1][0]));
+            chPixelType = static_cast<char>(
+                toupper(static_cast<unsigned char>(papszTokens[1][0])));
         }
         else if (EQUAL(papszTokens[0], "byteorder"))
         {
-            chByteOrder = static_cast<char>(toupper(papszTokens[1][0]));
+            chByteOrder = static_cast<char>(
+                toupper(static_cast<unsigned char>(papszTokens[1][0])));
         }
 
         // http://www.worldclim.org/futdown.htm have the projection extensions

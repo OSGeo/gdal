@@ -1452,11 +1452,13 @@ GDALDataset *RRASTERDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    CPLString osGRIExtension((osGRDExtension[0] == 'g') ? "gri" : "GRI");
-    CPLString osGriFilename(CPLResetExtension(pszFilename, osGRIExtension));
+    const std::string osGRIExtension((osGRDExtension[0] == 'g') ? "gri"
+                                                                : "GRI");
+    const std::string osGriFilename(
+        CPLResetExtension(pszFilename, osGRIExtension.c_str()));
 
     // Try to create the file.
-    VSILFILE *fpImage = VSIFOpenL(osGriFilename, "wb+");
+    VSILFILE *fpImage = VSIFOpenL(osGriFilename.c_str(), "wb+");
 
     if (fpImage == nullptr)
     {

@@ -506,6 +506,17 @@ The following creation options are available:
       with gdalwarp, it requires setting the -tr switch to the exact value
       expected by one zoom level of the tiling scheme.
 
+      In non-CUSTOM mode, the actual resolution can be controlled with the
+      :co:`ZOOM_LEVEL` or :co:`ZOOM_LEVEL_STRATEGY` options.
+
+- .. co:: ZOOM_LEVEL
+     :choices: <integer>
+     :since: 3.9
+
+     Zoom level number (starting at 0 for
+     coarsest zoom level). Only used for :co:`TILING_SCHEME` different from CUSTOM.
+     If this option is specified, :co:`ZOOM_LEVEL_STRATEGY` is ignored.
+
 -  .. co:: ZOOM_LEVEL_STRATEGY
       :choices: AUTO, LOWER, UPPER
       :default: AUTO

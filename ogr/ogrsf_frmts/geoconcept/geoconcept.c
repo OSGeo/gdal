@@ -1411,7 +1411,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*)
         while (isspace((unsigned char)*p))
             p++;
         e = p;
-        while (isalpha(*p))
+        while (isalpha((unsigned char)*p))
             p++;
         *p = '\0';
         SetMetaVersion_GCIO(Meta, CPLStrdup(e));
@@ -1468,7 +1468,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*)
         while (isspace((unsigned char)*p))
             p++;
         e = p;
-        while (isalpha(*p))
+        while (isalpha((unsigned char)*p))
             p++;
         *p = '\0';
         SetMetaCharset_GCIO(Meta, str2GCCharset_GCIO(e));
@@ -1483,7 +1483,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*)
             while (isspace((unsigned char)*p))
                 p++;
             e = p;
-            while (isalpha(*p) || *p == '.')
+            while (isalpha((unsigned char)*p) || *p == '.')
                 p++;
             *p = '\0';
             SetMetaUnit_GCIO(Meta, e); /* FIXME : check value ? */
@@ -1529,7 +1529,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*)
             e = p;
             if (*p == '-')
                 p++; /* allow -1 as SysCoord */
-            while (isdigit(*p))
+            while (isdigit((unsigned char)*p))
                 p++;
             *p = '\0';
             if (sscanf(e, "%d", &v) != 1)
@@ -1551,7 +1551,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*)
                     e = p;
                     if (*p == '-')
                         p++; /* allow -1 as TimeZone */
-                    while (isdigit(*p))
+                    while (isdigit((unsigned char)*p))
                         p++;
                     *p = '\0';
                     if (sscanf(e, "%d", &z) != 1)
@@ -1727,7 +1727,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*)
         }
         p = vl[1];
         e = p;
-        while (isdigit(*p))
+        while (isdigit((unsigned char)*p))
             p++;
         *p = '\0';
         if (sscanf(e, "%d", &v) != 1 || v < 1 || v > 4)

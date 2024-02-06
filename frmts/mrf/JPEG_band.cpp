@@ -611,9 +611,9 @@ static boolean MaskProcessor(j_decompress_ptr pcinfo)
  * @param sz if non-zero, test that uncompressed data fits in the buffer.
  */
 #if defined(JPEG12_ON)
-CPLErr JPEG_Codec::DecompressJPEG12(buf_mgr &dst, buf_mgr &isrc)
+CPLErr JPEG_Codec::DecompressJPEG12(buf_mgr &dst, const buf_mgr &isrc)
 #else
-CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
+CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, const buf_mgr &isrc)
 #endif
 
 {

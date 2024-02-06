@@ -477,7 +477,7 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
                     {
                         const auto poFieldRaster =
                             static_cast<FileGDBRasterField *>(poField);
-                        const auto osWKT = poFieldRaster->GetWKT();
+                        const auto &osWKT = poFieldRaster->GetWKT();
                         if (!osWKT.empty() && osWKT[0] != '{')
                         {
                             auto poSRS = BuildSRS(osWKT.c_str());

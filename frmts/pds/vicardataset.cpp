@@ -1750,7 +1750,7 @@ void VICARDataset::BuildLabel()
         }
     }
 
-    m_oJSonLabel = oLabel;
+    m_oJSonLabel = std::move(oLabel);
 }
 
 /************************************************************************/
@@ -2278,7 +2278,7 @@ void VICARDataset::ReadProjectionFromMapGroup()
             }
         }
 
-        m_oSRS = oSRS;
+        m_oSRS = std::move(oSRS);
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     if (bProjectionSet)

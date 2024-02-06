@@ -52,7 +52,8 @@ CPLString OGRGMLASTruncateIdentifier(const CPLString &osName,
         const char *pszToken = papszTokens[j];
         bool bIsCamelCase = false;
         // Split parts like camelCase or CamelCase into several tokens
-        if (pszToken[0] != '\0' && islower(pszToken[1]))
+        if (pszToken[0] != '\0' &&
+            islower(static_cast<unsigned char>(pszToken[1])))
         {
             bIsCamelCase = true;
             bool bLastIsLower = true;
@@ -62,7 +63,7 @@ CPLString OGRGMLASTruncateIdentifier(const CPLString &osName,
             osCurrentPart += pszToken[1];
             for (int k = 2; pszToken[k]; ++k)
             {
-                if (isupper(pszToken[k]))
+                if (isupper(static_cast<unsigned char>(pszToken[k])))
                 {
                     if (!bLastIsLower)
                     {

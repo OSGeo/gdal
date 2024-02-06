@@ -236,7 +236,7 @@ OGRErr OGRSpatialReference::importFromPCI(const char *pszProj,
 
             if (nCode >= -99 && nCode <= 999)
                 snprintf(szEarthModel, sizeof(szEarthModel), "%c%03d",
-                         toupper(*pszEM), nCode);
+                         toupper(static_cast<unsigned char>(*pszEM)), nCode);
 
             break;
         }

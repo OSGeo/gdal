@@ -68,18 +68,20 @@ static CPLXMLNode *GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
     if (STARTS_WITH_CI(pszBaseURL, "WMS:"))
         pszBaseURL += 4;
 
-    CPLString osLayer = CPLURLGetValue(pszBaseURL, "LAYERS");
+    const CPLString osLayer = CPLURLGetValue(pszBaseURL, "LAYERS");
     CPLString osVersion = CPLURLGetValue(pszBaseURL, "VERSION");
-    CPLString osSRS = CPLURLGetValue(pszBaseURL, "SRS");
-    CPLString osCRS = CPLURLGetValue(pszBaseURL, "CRS");
+    const CPLString osSRS = CPLURLGetValue(pszBaseURL, "SRS");
+    const CPLString osCRS = CPLURLGetValue(pszBaseURL, "CRS");
     CPLString osBBOX = CPLURLGetValue(pszBaseURL, "BBOX");
     CPLString osFormat = CPLURLGetValue(pszBaseURL, "FORMAT");
-    CPLString osTransparent = CPLURLGetValue(pszBaseURL, "TRANSPARENT");
+    const CPLString osTransparent = CPLURLGetValue(pszBaseURL, "TRANSPARENT");
 
     /* GDAL specific extensions to alter the default settings */
-    CPLString osOverviewCount = CPLURLGetValue(pszBaseURL, "OVERVIEWCOUNT");
-    CPLString osTileSize = CPLURLGetValue(pszBaseURL, "TILESIZE");
-    CPLString osMinResolution = CPLURLGetValue(pszBaseURL, "MINRESOLUTION");
+    const CPLString osOverviewCount =
+        CPLURLGetValue(pszBaseURL, "OVERVIEWCOUNT");
+    const CPLString osTileSize = CPLURLGetValue(pszBaseURL, "TILESIZE");
+    const CPLString osMinResolution =
+        CPLURLGetValue(pszBaseURL, "MINRESOLUTION");
     CPLString osBBOXOrder = CPLURLGetValue(pszBaseURL, "BBOXORDER");
 
     CPLString osBaseURL = pszBaseURL;

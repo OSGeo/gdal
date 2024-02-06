@@ -239,7 +239,7 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
     const auto attrs = m_poGroup->GetAttributes(nullptr);
     for (const auto &attr : attrs)
     {
-        const auto oType = attr->GetDataType();
+        const auto &oType = attr->GetDataType();
         if (oType.GetClass() == GEDTC_STRING)
         {
             const auto anDims = attr->GetDimensionsSize();

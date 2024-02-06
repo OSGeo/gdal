@@ -95,9 +95,9 @@ class OGCAPIDataset final : public GDALDataset
 
     bool InitFromFile(GDALOpenInfo *poOpenInfo);
     bool InitFromURL(GDALOpenInfo *poOpenInfo);
-    void ProcessScale(CPLJSONObject &oScaleDenominator, const double dfXMin,
-                      const double dfYMin, const double dfXMax,
-                      const double dfYMax);
+    void ProcessScale(const CPLJSONObject &oScaleDenominator,
+                      const double dfXMin, const double dfYMin,
+                      const double dfXMax, const double dfYMax);
     bool InitFromCollection(GDALOpenInfo *poOpenInfo, CPLJSONDocument &oDoc);
     bool Download(const CPLString &osURL, const char *pszPostContent,
                   const char *pszAccept, CPLString &osResult,
@@ -665,7 +665,7 @@ bool OGCAPIDataset::InitFromFile(GDALOpenInfo *poOpenInfo)
 /*                        ProcessScale()                          */
 /************************************************************************/
 
-void OGCAPIDataset::ProcessScale(CPLJSONObject &oScaleDenominator,
+void OGCAPIDataset::ProcessScale(const CPLJSONObject &oScaleDenominator,
                                  const double dfXMin, const double dfYMin,
                                  const double dfXMax, const double dfYMax)
 
@@ -1597,25 +1597,22 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
         }
         if (pszRequiredTileMatrixSet != nullptr)
         {
-            osTilesetURL = osCandidateTilesetURL;
-            break;
+            osTilesetURL = std::move(osCandidateTilesetURL);
         }
-        if (pszPreferredTileMatrixSet != nullptr &&
-            !osCandidateTilesetURL.empty() &&
-            (oTileMatrixSetURI.find(pszPreferredTileMatrixSet) !=
-             std::string::npos))
+        else if (pszPreferredTileMatrixSet != nullptr &&
+                 !osCandidateTilesetURL.empty() &&
+                 (oTileMatrixSetURI.find(pszPreferredTileMatrixSet) !=
+                  std::string::npos))
         {
-            osTilesetURL = osCandidateTilesetURL;
-            break;
+            osTilesetURL = std::move(osCandidateTilesetURL);
         }
-
-        if (oTileMatrixSetURI.find("WorldCRS84Quad") != std::string::npos)
+        else if (oTileMatrixSetURI.find("WorldCRS84Quad") != std::string::npos)
         {
-            osTilesetURL = osCandidateTilesetURL;
+            osTilesetURL = std::move(osCandidateTilesetURL);
         }
         else if (osTilesetURL.empty())
         {
-            osTilesetURL = osCandidateTilesetURL;
+            osTilesetURL = std::move(osCandidateTilesetURL);
         }
     }
     if (osTilesetURL.empty())

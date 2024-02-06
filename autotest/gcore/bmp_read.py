@@ -26,9 +26,12 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
-
 import gdaltest
 import pytest
+
+from osgeo import gdal
+
+pytestmark = pytest.mark.require_driver("BMP")
 
 init_list = [
     ("1bit.bmp", 200),
@@ -43,10 +46,17 @@ init_list = [
     init_list,
     ids=[tup[0].split(".")[0] for tup in init_list],
 )
-@pytest.mark.require_driver("BMP")
 def test_bmp_open(filename, checksum):
     ut = gdaltest.GDALTest("BMP", filename, 1, checksum)
     ut.testOpen()
+
+
+def test_bmp_read_more_than_4GB():
+
+    ds = gdal.Open("/vsisparse/data/bmp/huge_sparse.xml")
+    assert ds.RasterXSize == 65536
+    assert ds.RasterYSize == 65536
+    assert ds.GetRasterBand(1).ReadRaster(65535, 65535, 1, 1) == b"\0"
 
 
 def test_bmp_online_1():
