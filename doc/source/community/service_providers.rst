@@ -198,7 +198,7 @@ The steps to add a company to the service providers list are outlined in the :re
 
 
 .. _`Hobu, Inc.`: https://hobu.co/
-.. |logo_mundialis| image:: ../../images/logo-hobu.png
+.. |logo_hobu| image:: ../../images/logo-hobu.png
    :class: img-logos
    :width: 100 px
    :target: `hobu`_
