@@ -480,7 +480,7 @@ void OGRSVGLayer::dataHandlerCbk(const char *data, int nLen)
         return;
 
     nDataHandlerCounter++;
-    if (nDataHandlerCounter >= BUFSIZ)
+    if (nDataHandlerCounter >= PARSER_BUF_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");
@@ -539,7 +539,7 @@ OGRFeature *OGRSVGLayer::GetNextFeature()
     if (VSIFEofL(fpSVG))
         return nullptr;
 
-    char aBuf[BUFSIZ];
+    std::vector<char> aBuf(PARSER_BUF_SIZE);
 
     CPLFree(ppoFeatureTab);
     ppoFeatureTab = nullptr;
@@ -553,9 +553,9 @@ OGRFeature *OGRSVGLayer::GetNextFeature()
     {
         nDataHandlerCounter = 0;
         unsigned int nLen =
-            (unsigned int)VSIFReadL(aBuf, 1, sizeof(aBuf), fpSVG);
+            (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fpSVG);
         nDone = VSIFEofL(fpSVG);
-        if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
@@ -657,15 +657,16 @@ void OGRSVGLayer::LoadSchema()
     nWithoutEventCounter = 0;
     bStopParsing = false;
 
-    char aBuf[BUFSIZ];
+    std::vector<char> aBuf(PARSER_BUF_SIZE);
     int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
         unsigned int nLen =
-            (unsigned int)VSIFReadL(aBuf, 1, sizeof(aBuf), fpSVG);
+            (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fpSVG);
         nDone = VSIFEofL(fpSVG);
-        if (XML_Parse(oSchemaParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(oSchemaParser, aBuf.data(), nLen, nDone) ==
+            XML_STATUS_ERROR)
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
@@ -797,7 +798,7 @@ void OGRSVGLayer::dataHandlerLoadSchemaCbk(CPL_UNUSED const char *data,
         return;
 
     nDataHandlerCounter++;
-    if (nDataHandlerCounter >= BUFSIZ)
+    if (nDataHandlerCounter >= PARSER_BUF_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");
