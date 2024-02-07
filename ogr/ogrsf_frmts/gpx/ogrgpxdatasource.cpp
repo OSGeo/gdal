@@ -443,7 +443,7 @@ void OGRGPXDataSource::dataHandlerValidateCbk(const char *data, int nLen)
     }
 
     nDataHandlerCounter++;
-    if (nDataHandlerCounter >= BUFSIZ)
+    if (nDataHandlerCounter >= PARSER_BUF_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");
@@ -509,7 +509,7 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
                           ::endElementValidateCbk);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
 
-    char aBuf[BUFSIZ];
+    std::vector<char> aBuf(PARSER_BUF_SIZE);
     int nDone = 0;
     unsigned int nLen = 0;
     int nCount = 0;
@@ -522,16 +522,17 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
     do
     {
         nDataHandlerCounter = 0;
-        nLen = static_cast<unsigned int>(VSIFReadL(aBuf, 1, sizeof(aBuf), fp));
+        nLen = static_cast<unsigned int>(
+            VSIFReadL(aBuf.data(), 1, aBuf.size(), fp));
         nTotalBytesRead += nLen;
         nDone = VSIFEofL(fp);
-        if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
-            if (nLen <= BUFSIZ - 1)
+            if (nLen <= PARSER_BUF_SIZE - 1)
                 aBuf[nLen] = 0;
             else
-                aBuf[BUFSIZ - 1] = 0;
-            if (strstr(aBuf, "<?xml") && strstr(aBuf, "<gpx"))
+                aBuf[PARSER_BUF_SIZE - 1] = 0;
+            if (strstr(aBuf.data(), "<?xml") && strstr(aBuf.data(), "<gpx"))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "XML parsing of GPX file failed : %s at line %d, "
@@ -559,7 +560,7 @@ int OGRGPXDataSource::Open(const char *pszFilename, int bUpdateIn)
         }
         else
         {
-            // After reading 50 * BUFSIZE bytes, and not finding whether the
+            // After reading 50 * PARSER_BUF_SIZE bytes, and not finding whether the
             // file is GPX or not, we give up and fail silently.
             nCount++;
             if (nCount == 50)
