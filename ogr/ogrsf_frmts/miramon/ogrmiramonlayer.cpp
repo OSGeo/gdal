@@ -92,26 +92,50 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
         if (!STARTS_WITH(pszFilename, "/vsistdout"))
         {
             // Init the feature (memory, num,...)
-            MMInitFeature(&hMMFeature);
+            if(MMInitFeature(&hMMFeature))
+            {
+                bValidFile = false;
+                return;
+            }
 
             // Init the Layers (not in disk, only in memory until
             // the first element is readed)
-            MMInitLayer(&hMiraMonLayerPNT, pszFilename,
-                nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE, MMMap);
+            CPLDebug("MiraMon", "Initializing MiraMon points layer...");
+            if(MMInitLayer(&hMiraMonLayerPNT, pszFilename,
+                nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE, MMMap))
+            {
+                bValidFile = false;
+                return;
+            }
             hMiraMonLayerPNT.bIsBeenInit = 0;
-            
-            MMInitLayer(&hMiraMonLayerARC, pszFilename,
-                nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE, MMMap);
+
+            CPLDebug("MiraMon", "Initializing MiraMon arcs layer...");
+            if (MMInitLayer(&hMiraMonLayerARC, pszFilename,
+                nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE, MMMap))
+            {
+                bValidFile = false;
+                return;
+            }
             hMiraMonLayerARC.bIsBeenInit = 0;
 
-            MMInitLayer(&hMiraMonLayerPOL, pszFilename,
-                nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE, MMMap);
+            CPLDebug("MiraMon", "Initializing MiraMon polygons layer...");
+            if(MMInitLayer(&hMiraMonLayerPOL, pszFilename,
+                nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE, MMMap))
+            {
+                bValidFile = false;
+                return;
+            }
             hMiraMonLayerPOL.bIsBeenInit = 0;
 
             // Just in case that there is no geometry but some other
             // information to get. A DBF will be generated
-            MMInitLayer(&hMiraMonLayerReadOrNonGeom, pszFilename,
-                nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE, NULL);
+            CPLDebug("MiraMon", "Initializing MiraMon only-ext-DBF layer...");
+            if(MMInitLayer(&hMiraMonLayerReadOrNonGeom, pszFilename,
+                nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE, NULL))
+            {
+                bValidFile = false;
+                return;
+            }
             hMiraMonLayerPOL.bIsBeenInit = 0;
 
             // This helps the map to be created
@@ -124,6 +148,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             if (poSRS->GetAuthorityName(nullptr) &&
                 EQUAL(poSRS->GetAuthorityName(nullptr), "EPSG"))
             {
+                CPLDebug("MiraMon", "Setting EPSG code %s", poSRS->GetAuthorityCode(nullptr));
                 hMiraMonLayerPNT.pSRS =
                     CPLStrdup(poSRS->GetAuthorityCode(nullptr));
                 hMiraMonLayerARC.pSRS =
@@ -156,7 +181,12 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
 
             nMMLayerVersion = MMGetVectorVersion(&phMiraMonLayer->TopHeader);
             if (nMMLayerVersion == MM_UNKNOWN_VERSION)
+            {
+                MM_CPLError(CE_Failure, CPLE_NotSupported,
+                             "MiraMon version file unknown.");
                 bValidFile = false;
+                return;
+            }
             if (phMiraMonLayer->bIsPoint)
             {
                 if (phMiraMonLayer->TopHeader.bIs3d)
@@ -190,7 +220,12 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                 }
             }
             else
+            {
+                MM_CPLError(CE_Failure, CPLE_NotSupported,
+                             "MiraMon file type not supported.");
                 bValidFile = false;
+                return;
+            }
 
             if (phMiraMonLayer->TopHeader.bIs3d)
             {
@@ -236,6 +271,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                         CPLDebug("MiraMon", "File '%s' cannot be opened.",
                             phMiraMonLayer->pMMBDXP->szNomFitxer);
                         bValidFile=false;
+                        return;
                     }
 
                     // First time we open the extended DBF we create an index 
@@ -381,12 +417,48 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
     /*      Write out the region bounds if we know where they go, and we    */
     /*      are in update mode.                                             */
     /* -------------------------------------------------------------------- */
-    if(hMiraMonLayerPOL.bIsPolygon)
+    if (hMiraMonLayerPOL.bIsPolygon)
+    {
+        if (hMiraMonLayerPOL.TopHeader.nElemCount)
+        {
+            CPLDebug("MiraMon", "MiraMon polygons layer created "
+                "with %I64u elements.", hMiraMonLayerPOL.TopHeader.nElemCount-1);
+        }
+        CPLDebug("MiraMon", "Closing MiraMon polygons layer...");
         MMCloseLayer(&hMiraMonLayerPOL);
-    if(hMiraMonLayerARC.bIsArc)
+        CPLDebug("MiraMon", "MiraMon polygons layer closed");
+    }
+    else
+        CPLDebug("MiraMon", "No MiraMon polygons layer created.");
+
+    if (hMiraMonLayerARC.bIsArc)
+    {
+        if (hMiraMonLayerARC.TopHeader.nElemCount)
+        {
+            CPLDebug("MiraMon", "MiraMon arcs layer created "
+                "with %I64u elements.", hMiraMonLayerARC.TopHeader.nElemCount);
+        }
+        CPLDebug("MiraMon", "Closing MiraMon arcs layer...");
         MMCloseLayer(&hMiraMonLayerARC);
-    if(hMiraMonLayerPNT.bIsPoint)
+        CPLDebug("MiraMon", "MiraMon arcs layer closed");
+    }
+    else
+        CPLDebug("MiraMon", "No MiraMon arcs layer created.");
+
+    if (hMiraMonLayerPNT.bIsPoint)
+    {
+        if (hMiraMonLayerPNT.TopHeader.nElemCount)
+        {
+            CPLDebug("MiraMon", "MiraMon points layer created "
+                "with %I64u elements.", hMiraMonLayerPNT.TopHeader.nElemCount);
+        }
+        CPLDebug("MiraMon", "Closing MiraMon points layer...");
         MMCloseLayer(&hMiraMonLayerPNT);
+        CPLDebug("MiraMon", "MiraMon points layer closed");
+    }
+    else
+        CPLDebug("MiraMon", "No MiraMon points layer created.");
+    
     MMCloseLayer(&hMiraMonLayerReadOrNonGeom);
 	MMFreeLayer(&hMiraMonLayerPNT);
     MMFreeLayer(&hMiraMonLayerARC);
@@ -1332,7 +1404,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
     if (poFeatureDefn->GetFieldCount() == 0)
         return OGRERR_NONE;
 
-    CPLDebug("MiraMon", "Starting TranslateFieldsToMM()");
+    CPLDebug("MiraMon", "Translating fields to MiraMon...");
     // If the structure is filled we do anything
     if(phMiraMonLayer->pLayerDB)
         return OGRERR_NONE;
@@ -1443,7 +1515,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
         }
     }
 
-    CPLDebug("MiraMon", "Finishing TranslateFieldsToMM()");
+    CPLDebug("MiraMon", "Fields to MiraMon translated.");
     return OGRERR_NONE;
 }
 

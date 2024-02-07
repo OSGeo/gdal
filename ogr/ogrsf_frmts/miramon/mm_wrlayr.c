@@ -1517,14 +1517,11 @@ int MMInitLayer(struct MiraMonVectLayerInfo *hMiraMonLayer, const char *pzFileNa
                 struct MiraMonDataBase *pLayerDB,
                 MM_BOOLEAN ReadOrWrite, struct MiraMonVectMapInfo *MMMap)
 {
-    MM_CPLDebug("MiraMon", "Initializing MiraMon layer...");
-
     memset(hMiraMonLayer, 0, sizeof(*hMiraMonLayer));
 
     hMiraMonLayer->Version=MM_VECTOR_LAYER_LAST_VERSION;
     hMiraMonLayer->nMemoryRatio=nMMMemoryRatio;
-    MM_CPLDebug("MiraMon", "Setting MemoryRatio to %f...", nMMMemoryRatio);
-
+    
     hMiraMonLayer->ReadOrWrite=ReadOrWrite;
     hMiraMonLayer->MMMap=MMMap;
 
@@ -1821,7 +1818,6 @@ int MMCloseLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
     CheckMMVectorLayerVersion(hMiraMonLayer,1)
 
-    MM_CPLDebug("MiraMon", "Closing MiraMon layer");
     if(!hMiraMonLayer)
         return 0;
 
@@ -1860,7 +1856,6 @@ int MMCloseLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
     if(MMCloseMMBD_XP(hMiraMonLayer))
         return 1;
 
-    MM_CPLDebug("MiraMon", "MiraMon layer closed");
     return 0;
 }
 
@@ -2093,28 +2088,6 @@ void MMDestroyLayer(struct MiraMonVectLayerInfo **hMiraMonLayer)
     *hMiraMonLayer=NULL;
 }
 
-/* -------------------------------------------------------------------- */
-/*      Layer Functions: Creating a layer                               */
-/* -------------------------------------------------------------------- */
-#ifndef GDAL_COMPILATION
-struct MiraMonVectLayerInfo * MMCreateLayer(char *pzFileName, 
-            __int32 LayerVersion, double nMMMemoryRatio,
-            struct MiraMonDataBase *hLayerDB,
-            MM_BOOLEAN ReadOrWrite)
-{
-struct MiraMonVectLayerInfo *hMiraMonLayer;
-
-    // Creating of the handle to a MiraMon Layer
-    hMiraMonLayer=(struct MiraMonVectLayerInfo *)calloc_function(
-                    sizeof(*hMiraMonLayer));
-    if(MMInitLayer(hMiraMonLayer, pzFileName, LayerVersion, nMMMemoryRatio,
-                hLayerDB, ReadOrWrite, NULL /*Map*/))
-        return NULL;
-
-    // Return the handle to the layer
-    return hMiraMonLayer;
-}
-#endif
 /* -------------------------------------------------------------------- */
 /*      Flush Layer Functions                                           */
 /* -------------------------------------------------------------------- */
