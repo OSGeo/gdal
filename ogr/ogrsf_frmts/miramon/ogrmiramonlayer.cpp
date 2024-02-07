@@ -419,13 +419,14 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
     /* -------------------------------------------------------------------- */
     if (hMiraMonLayerPOL.bIsPolygon)
     {
-        if (hMiraMonLayerPOL.TopHeader.nElemCount)
-        {
-            CPLDebug("MiraMon", "MiraMon polygons layer created "
-                "with %I64u elements.", hMiraMonLayerPOL.TopHeader.nElemCount-1);
-        }
         CPLDebug("MiraMon", "Closing MiraMon polygons layer...");
         MMCloseLayer(&hMiraMonLayerPOL);
+        if (hMiraMonLayerPOL.TopHeader.nElemCount)
+        {
+            CPLDebug("MiraMon", "%I64u polygons written in the file %s.pol",
+                hMiraMonLayerPOL.TopHeader.nElemCount-1,
+                hMiraMonLayerPOL.pszSrcLayerName);
+        }
         CPLDebug("MiraMon", "MiraMon polygons layer closed");
     }
     else
@@ -433,13 +434,15 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
 
     if (hMiraMonLayerARC.bIsArc)
     {
-        if (hMiraMonLayerARC.TopHeader.nElemCount)
-        {
-            CPLDebug("MiraMon", "MiraMon arcs layer created "
-                "with %I64u elements.", hMiraMonLayerARC.TopHeader.nElemCount);
-        }
         CPLDebug("MiraMon", "Closing MiraMon arcs layer...");
         MMCloseLayer(&hMiraMonLayerARC);
+        if (hMiraMonLayerARC.TopHeader.nElemCount)
+        {
+            CPLDebug("MiraMon", "%I64u arcs written in the file %s.arc",
+                hMiraMonLayerARC.TopHeader.nElemCount,
+                hMiraMonLayerARC.pszSrcLayerName);
+        }
+        
         CPLDebug("MiraMon", "MiraMon arcs layer closed");
     }
     else
@@ -447,24 +450,38 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
 
     if (hMiraMonLayerPNT.bIsPoint)
     {
-        if (hMiraMonLayerPNT.TopHeader.nElemCount)
-        {
-            CPLDebug("MiraMon", "MiraMon points layer created "
-                "with %I64u elements.", hMiraMonLayerPNT.TopHeader.nElemCount);
-        }
         CPLDebug("MiraMon", "Closing MiraMon points layer...");
         MMCloseLayer(&hMiraMonLayerPNT);
+        if (hMiraMonLayerPNT.TopHeader.nElemCount)
+        {
+            CPLDebug("MiraMon", "%I64u points written in the file %s.pnt",
+                hMiraMonLayerPNT.TopHeader.nElemCount,
+                hMiraMonLayerPNT.pszSrcLayerName);
+        }
         CPLDebug("MiraMon", "MiraMon points layer closed");
     }
     else
         CPLDebug("MiraMon", "No MiraMon points layer created.");
-    
+
+    CPLDebug("MiraMon", "Closing MiraMon DBF table layer...");
     MMCloseLayer(&hMiraMonLayerReadOrNonGeom);
-	MMFreeLayer(&hMiraMonLayerPNT);
-    MMFreeLayer(&hMiraMonLayerARC);
+    CPLDebug("MiraMon", "MiraMon DBF table layer closed");
+    
+    MM_CPLDebug("MiraMon", "Destroying MiraMon polygons layer memory");
     MMFreeLayer(&hMiraMonLayerPOL);
+    MM_CPLDebug("MiraMon", "MiraMon polygons layer memory destroyed");
+    MM_CPLDebug("MiraMon", "Destroying MiraMon arcs layer memory");
+    MMFreeLayer(&hMiraMonLayerARC);
+    MM_CPLDebug("MiraMon", "MiraMon arcs layer memory destroyed");
+    MM_CPLDebug("MiraMon", "Destroying MiraMon points layer memory");
+    MMFreeLayer(&hMiraMonLayerPNT);
+    MM_CPLDebug("MiraMon", "MiraMon points layer memory destroyed");
+    MM_CPLDebug("MiraMon", "Destroying MiraMon points layer memory");
     MMFreeLayer(&hMiraMonLayerReadOrNonGeom);
+    MM_CPLDebug("MiraMon", "MiraMon points layer memory destroyed");
+    MM_CPLDebug("MiraMon", "Destroying MiraMon DBF table layer memory");
     MMDestroyFeature(&hMMFeature);
+    MM_CPLDebug("MiraMon", "MiraMon DBF table layer memory destroyed");
 
     /* -------------------------------------------------------------------- */
     /*      Clean up.                                                       */
@@ -1227,23 +1244,15 @@ OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
     }
 
     if (MMResize_MM_N_VERTICES_TYPE_Pointer(&hMMFeature.pNCoordRing,
-        &hMMFeature.nMaxpNCoordRing,
-        hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS, 0))
-    {
-        CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
-            VSIStrerror(errno));
+            &hMMFeature.nMaxpNCoordRing,
+            hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS, 0))
         return OGRERR_FAILURE;
-    }
-
+    
     if (bUseVFG)
     {
         if (MMResizeVFGPointer(&hMMFeature.flag_VFG, &hMMFeature.nMaxVFG,
             hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS, 0))
-        {
-            CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
-                VSIStrerror(errno));
             return OGRERR_FAILURE;
-        }
         
         hMMFeature.flag_VFG[hMMFeature.nIRing] = MM_END_ARC_IN_RING;
         if (bExternalRing)
@@ -1259,22 +1268,14 @@ OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
     hMMFeature.pNCoordRing[hMMFeature.nIRing] = OGR_G_GetPointCount(hGeom);
 
     if (MMResizeMM_POINT2DPointer(&hMMFeature.pCoord, &hMMFeature.nMaxpCoord,
-        hMMFeature.nICoord + hMMFeature.pNCoordRing[hMMFeature.nIRing],
-        MM_MEAN_NUMBER_OF_NCOORDS, 0))
-    {
-        CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
-            VSIStrerror(errno));
+            hMMFeature.nICoord + hMMFeature.pNCoordRing[hMMFeature.nIRing],
+            MM_MEAN_NUMBER_OF_NCOORDS, 0))
         return OGRERR_FAILURE;
-    }
     if (MMResizeDoublePointer(&hMMFeature.pZCoord, &hMMFeature.nMaxpZCoord,
-        hMMFeature.nICoord + hMMFeature.pNCoordRing[hMMFeature.nIRing],
-        MM_MEAN_NUMBER_OF_NCOORDS, 0))
-    {
-        CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
-            VSIStrerror(errno));
+            hMMFeature.nICoord + hMMFeature.pNCoordRing[hMMFeature.nIRing],
+            MM_MEAN_NUMBER_OF_NCOORDS, 0))
         return OGRERR_FAILURE;
-    }
-
+    
     for (int iPoint = 0; iPoint < hMMFeature.pNCoordRing[hMMFeature.nIRing]; iPoint++)
     {
         hMMFeature.pCoord[hMMFeature.nICoord].dfX = OGR_G_GetX(hGeom, iPoint);
@@ -1353,7 +1354,9 @@ OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom)
     }
     else if(eLT == wkbGeometryCollection)
     {
-        printf("MiraMon: not expected being here");
+        MM_CPLError(CE_Failure, CPLE_NotSupported,
+                "MiraMon: wkbGeometryCollection inside a wkbGeometryCollection?");
+        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
     }
 
     return OGRERR_NONE;
