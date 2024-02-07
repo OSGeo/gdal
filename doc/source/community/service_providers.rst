@@ -201,4 +201,4 @@ The steps to add a company to the service providers list are outlined in the :re
 .. |logo_hobu| image:: ../../images/logo-hobu.png
    :class: img-logos
    :width: 100 px
-   :target: `hobu`_
+   :target: `Hobu, Inc.`_
