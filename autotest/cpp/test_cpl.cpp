@@ -57,6 +57,7 @@
 #include "cpl_threadsafe_queue.hpp"
 
 #include <atomic>
+#include <cmath>
 #include <limits>
 #include <fstream>
 #include <string>
@@ -4887,6 +4888,139 @@ TEST_F(test_cpl, VSIGetCanonicalFilename)
         }
     }
     VSIUnlink(osLC.c_str());
+}
+
+TEST_F(test_cpl, CPLStrtod)
+{
+    {
+        const char *pszVal = "5";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd), 5.0);
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+
+    {
+        const char *pszVal = "5 foo";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd), 5.0);
+        EXPECT_EQ(pszEnd, pszVal + 1);
+    }
+
+    {
+        const char *pszVal = "foo";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd), 0.0);
+        EXPECT_EQ(pszEnd, pszVal);
+    }
+
+    {
+        const char *pszVal = "-inf";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  -std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "-Inf";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  -std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "-INF";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  -std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "-Infinity";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  -std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "-1.#INF";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  -std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+
+    {
+        const char *pszVal = "inf";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "Inf";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "INF";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "Infinity";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "1.#INF";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+
+    {
+        const char *pszVal = "-1.#QNAN";
+        char *pszEnd = nullptr;
+        EXPECT_TRUE(std::isnan(CPLStrtod(pszVal, &pszEnd)));
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "-1.#IND";
+        char *pszEnd = nullptr;
+        EXPECT_TRUE(std::isnan(CPLStrtod(pszVal, &pszEnd)));
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "1.#QNAN";
+        char *pszEnd = nullptr;
+        EXPECT_TRUE(std::isnan(CPLStrtod(pszVal, &pszEnd)));
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "1.#SNAN";
+        char *pszEnd = nullptr;
+        EXPECT_TRUE(std::isnan(CPLStrtod(pszVal, &pszEnd)));
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "NaN";
+        char *pszEnd = nullptr;
+        EXPECT_TRUE(std::isnan(CPLStrtod(pszVal, &pszEnd)));
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "nan";
+        char *pszEnd = nullptr;
+        EXPECT_TRUE(std::isnan(CPLStrtod(pszVal, &pszEnd)));
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
 }
 
 }  // namespace
