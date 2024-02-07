@@ -13,7 +13,7 @@ main imagery file.
 
 This driver works with most Radarsat, JERS-1 and ERS data products, including
 single look complex products; however, it is unlikely to work for
-non-Radar CEOS products. The simpler `CEOS <#CEOS>`__ driver is often
+non-Radar CEOS products. The simpler :ref:`raster.ceos` driver is often
 appropriate for these.
 
 This driver will attempt to read 15 lat/long GCPS by sampling the
