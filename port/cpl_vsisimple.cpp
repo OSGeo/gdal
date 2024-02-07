@@ -838,7 +838,7 @@ void *VSIRealloc(void *pData, size_t nNewSize)
 /*                       VSIGetStaticEmptyString()                      */
 /************************************************************************/
 
-static char *VSI_STATIC_EMPTY_STRING = const_cast<char *>("");
+static char VSI_STATIC_EMPTY_STRING = 0;
 
 /** Return an empty string ("") that VSIFree() does not free.
  *
@@ -846,7 +846,7 @@ static char *VSI_STATIC_EMPTY_STRING = const_cast<char *>("");
  */
 char *VSIGetStaticEmptyString()
 {
-    return VSI_STATIC_EMPTY_STRING;
+    return &VSI_STATIC_EMPTY_STRING;
 }
 
 /************************************************************************/
@@ -858,7 +858,7 @@ char *VSIGetStaticEmptyString()
 void VSIFree(void *pData)
 
 {
-    if (pData == nullptr || pData == VSI_STATIC_EMPTY_STRING)
+    if (pData == nullptr || pData == VSIGetStaticEmptyString())
         return;
 
 #ifdef DEBUG_VSIMALLOC
