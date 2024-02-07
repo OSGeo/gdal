@@ -1273,7 +1273,7 @@ void kml2field(OGRFeature *poOgrFeat, FeaturePtr poKmlFeature)
             GxTrackPtr poKmlGxTrack = AsGxTrack(poKmlGeometry);
             if (poKmlGxTrack)
             {
-                size_t nCoords = poKmlGxTrack->get_gx_coord_array_size();
+                const size_t nCoords = poKmlGxTrack->get_when_array_size();
                 if (nCoords > 0)
                 {
                     kmldatetime2ogr(poOgrFeat, oFC.beginfield,
@@ -1293,28 +1293,35 @@ void kml2field(OGRFeature *poOgrFeat, FeaturePtr poKmlFeature)
             GxMultiTrackPtr poKmlGxMultiTrack = AsGxMultiTrack(poKmlGeometry);
             if (poKmlGxMultiTrack)
             {
-                size_t nGeom = poKmlGxMultiTrack->get_gx_track_array_size();
+                const size_t nGeom =
+                    poKmlGxMultiTrack->get_gx_track_array_size();
                 if (nGeom >= 1)
                 {
-                    GxTrackPtr poKmlGxTrack =
-                        poKmlGxMultiTrack->get_gx_track_array_at(0);
-                    size_t nCoords = poKmlGxTrack->get_gx_coord_array_size();
-                    if (nCoords > 0)
                     {
-                        kmldatetime2ogr(
-                            poOgrFeat, oFC.beginfield,
-                            poKmlGxTrack->get_when_array_at(0).c_str());
+                        GxTrackPtr poKmlGxTrack =
+                            poKmlGxMultiTrack->get_gx_track_array_at(0);
+                        const size_t nCoords =
+                            poKmlGxTrack->get_when_array_size();
+                        if (nCoords > 0)
+                        {
+                            kmldatetime2ogr(
+                                poOgrFeat, oFC.beginfield,
+                                poKmlGxTrack->get_when_array_at(0).c_str());
+                        }
                     }
 
-                    poKmlGxTrack =
-                        poKmlGxMultiTrack->get_gx_track_array_at(nGeom - 1);
-                    nCoords = poKmlGxTrack->get_gx_coord_array_size();
-                    if (nCoords > 0)
                     {
-                        kmldatetime2ogr(
-                            poOgrFeat, oFC.endfield,
-                            poKmlGxTrack->get_when_array_at(nCoords - 1)
-                                .c_str());
+                        GxTrackPtr poKmlGxTrack =
+                            poKmlGxMultiTrack->get_gx_track_array_at(nGeom - 1);
+                        const size_t nCoords =
+                            poKmlGxTrack->get_when_array_size();
+                        if (nCoords > 0)
+                        {
+                            kmldatetime2ogr(
+                                poOgrFeat, oFC.endfield,
+                                poKmlGxTrack->get_when_array_at(nCoords - 1)
+                                    .c_str());
+                        }
                     }
                 }
             }
