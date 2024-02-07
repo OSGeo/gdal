@@ -108,7 +108,7 @@ void OGRSVGDataSource::dataHandlerValidateCbk(CPL_UNUSED const char *data,
                                               CPL_UNUSED int nLen)
 {
     nDataHandlerCounter++;
-    if (nDataHandlerCounter >= BUFSIZ)
+    if (nDataHandlerCounter >= PARSER_BUF_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");
@@ -165,7 +165,7 @@ int OGRSVGDataSource::Open(const char *pszFilename)
     XML_SetElementHandler(oParser, ::startElementValidateCbk, nullptr);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
 
-    char aBuf[BUFSIZ];
+    std::vector<char> aBuf(PARSER_BUF_SIZE);
     int nDone = 0;
     unsigned int nLen = 0;
     int nCount = 0;
@@ -177,15 +177,15 @@ int OGRSVGDataSource::Open(const char *pszFilename)
     do
     {
         nDataHandlerCounter = 0;
-        nLen = (unsigned int)VSIFReadL(aBuf, 1, sizeof(aBuf), fp);
+        nLen = (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fp);
         nDone = VSIFEofL(fp);
-        if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
-            if (nLen <= BUFSIZ - 1)
+            if (nLen <= PARSER_BUF_SIZE - 1)
                 aBuf[nLen] = 0;
             else
-                aBuf[BUFSIZ - 1] = 0;
-            if (strstr(aBuf, "<?xml") && strstr(aBuf, "<svg"))
+                aBuf[PARSER_BUF_SIZE - 1] = 0;
+            if (strstr(aBuf.data(), "<?xml") && strstr(aBuf.data(), "<svg"))
             {
                 CPLError(
                     CE_Failure, CPLE_AppDefined,
@@ -207,7 +207,7 @@ int OGRSVGDataSource::Open(const char *pszFilename)
         }
         else
         {
-            /* After reading 50 * BUFSIZE bytes, and not finding whether the
+            /* After reading 50 * PARSER_BUF_SIZE bytes, and not finding whether the
              * file */
             /* is SVG or not, we give up and fail silently */
             nCount++;
