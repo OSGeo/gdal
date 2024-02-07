@@ -1622,35 +1622,41 @@ struct CurrentDownload
     std::string m_osURL{};
     vsi_l_offset m_nStartOffset = 0;
     int m_nBlocks = 0;
-    std::string m_osData{};
-    bool m_bDone = false;
+    std::string m_osAlreadyDownloadedData{};
+    bool m_bHasAlreadyDownloadedData = false;
 
     CurrentDownload(VSICurlFilesystemHandlerBase *poFS, const char *pszURL,
                     vsi_l_offset startOffset, int nBlocks)
         : m_poFS(poFS), m_osURL(pszURL), m_nStartOffset(startOffset),
           m_nBlocks(nBlocks)
     {
-        m_osData = m_poFS->NotifyStartDownloadRegion(m_osURL, m_nStartOffset,
+        auto res = m_poFS->NotifyStartDownloadRegion(m_osURL, m_nStartOffset,
                                                      m_nBlocks);
-        m_bDone = !m_osData.empty();
+        m_bHasAlreadyDownloadedData = res.first;
+        m_osAlreadyDownloadedData = std::move(res.second);
+    }
+
+    bool HasAlreadyDownloadedData() const
+    {
+        return m_bHasAlreadyDownloadedData;
     }
 
     const std::string &GetAlreadyDownloadedData() const
     {
-        return m_osData;
+        return m_osAlreadyDownloadedData;
     }
 
     void SetData(const std::string &osData)
     {
-        CPLAssert(!m_bDone);
-        m_bDone = true;
+        CPLAssert(!m_bHasAlreadyDownloadedData);
+        m_bHasAlreadyDownloadedData = true;
         m_poFS->NotifyStopDownloadRegion(m_osURL, m_nStartOffset, m_nBlocks,
                                          osData);
     }
 
     ~CurrentDownload()
     {
-        if (!m_bDone)
+        if (!m_bHasAlreadyDownloadedData)
             m_poFS->NotifyStopDownloadRegion(m_osURL, m_nStartOffset, m_nBlocks,
                                              std::string());
     }
@@ -1664,7 +1670,19 @@ struct CurrentDownload
 /*                      NotifyStartDownloadRegion()                     */
 /************************************************************************/
 
-std::string VSICurlFilesystemHandlerBase::NotifyStartDownloadRegion(
+/** Indicate intent at downloading a new region.
+ *
+ * If the region is already in download in another thread, then wait for its
+ * completion.
+ *
+ * Returns:
+ * - (false, empty string) if a new download is needed
+ * - (true, region_content) if we have been waiting for a download of the same
+ *   region to be completed and got its result. Note that region_content will be
+ *   empty if the download of that region failed.
+ */
+std::pair<bool, std::string>
+VSICurlFilesystemHandlerBase::NotifyStartDownloadRegion(
     const std::string &osURL, vsi_l_offset startOffset, int nBlocks)
 {
     std::string osId(osURL);
@@ -1688,7 +1706,7 @@ std::string VSICurlFilesystemHandlerBase::NotifyStartDownloadRegion(
         std::string osRet = region.osData;
         region.nWaiters--;
         region.oCond.notify_one();
-        return osRet;
+        return std::pair<bool, std::string>(true, osRet);
     }
     else
     {
@@ -1696,7 +1714,7 @@ std::string VSICurlFilesystemHandlerBase::NotifyStartDownloadRegion(
         poRegionInDownload->bDownloadInProgress = true;
         m_oMapRegionInDownload[osId] = std::move(poRegionInDownload);
         m_oMutex.unlock();
-        return std::string();
+        return std::pair<bool, std::string>(false, std::string());
     }
 }
 
@@ -1752,10 +1770,10 @@ std::string VSICurlHandle::DownloadRegion(const vsi_l_offset startOffset,
     // Check if there is not a download of the same region in progress in
     // another thread, and if so wait for it to be completed
     CurrentDownload currentDownload(poFS, m_pszURL, startOffset, nBlocks);
-    const std::string &osAlreadyDownloadedData =
-        currentDownload.GetAlreadyDownloadedData();
-    if (!osAlreadyDownloadedData.empty())
-        return osAlreadyDownloadedData;
+    if (currentDownload.HasAlreadyDownloadedData())
+    {
+        return currentDownload.GetAlreadyDownloadedData();
+    }
 
 begin:
     CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
