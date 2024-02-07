@@ -1635,7 +1635,7 @@ bool CheckError(sword nStatus, OCIError *hError)
             OCIErrorGet((dvoid *)hError, (ub4)1, (text *)nullptr, &nCode, szMsg,
                         (ub4)sizeof(szMsg), OCI_HTYPE_ERROR);
 
-            if (nCode == 1405)  // Null field
+            if (nCode == 1405 || nCode == 28002)  // Null field and password expire
             {
                 return false;
             }

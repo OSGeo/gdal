@@ -3937,11 +3937,11 @@ bool GeoRasterWrapper::GenerateStatistics(int nSamplingFactor,
                    "  IF :usebin = 'FALSE' THEN\n"
                    "    binfunc := NULL;\n"
                    "  END IF;"
-                   "  SELECT %s INTO gr FROM %s t WHERE %s FOR UPDATE;\n"
+                   "  SELECT t.%s INTO gr FROM %s t WHERE %s FOR UPDATE;\n"
                    "  res := sdo_geor.generateStatistics(gr, "
                    "'samplingFactor='||:samplingfactor, swin,\n"
                    "  :histogram, :layernums, :usebin, binfunc, :nodata);\n"
-                   "  UPDATE %s t SET %s = gr WHERE %s;\n"
+                   "  UPDATE %s t SET t.%s = gr WHERE %s;\n"
                    "  COMMIT;\n"
                    "END;\n",
                    sColumn.c_str(), sTable.c_str(), sWhere.c_str(),
