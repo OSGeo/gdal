@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import shutil
 import sys
 
 import gdaltest
@@ -1955,6 +1956,24 @@ def test_pdf_metadata(poppler_or_pdfium):
     ds = None
 
     gdal.GetDriverByName("PDF").Delete("tmp/pdf_metadata.pdf")
+
+
+###############################################################################
+# Test PAM support with subdatasets
+
+
+def test_pdf_pam_subdatasets(poppler_or_pdfium, tmp_path):
+
+    tmpfilename = str(tmp_path / "test_pdf_pam_subdatasets.pdf")
+    shutil.copy("data/pdf/byte_and_rgbsmall_2pages.pdf", tmpfilename)
+
+    ds = gdal.Open("PDF:1:" + tmpfilename)
+    ds.GetRasterBand(1).ComputeStatistics(False)
+    ds = None
+    assert gdal.VSIStatL(tmpfilename + ".aux.xml")
+    ds = gdal.Open("PDF:1:" + tmpfilename)
+    assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is not None
+    ds = None
 
 
 ###############################################################################
