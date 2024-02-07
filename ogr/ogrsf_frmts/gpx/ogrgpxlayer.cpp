@@ -949,7 +949,7 @@ void OGRGPXLayer::dataHandlerCbk(const char *data, int nLen)
         return;
 
     m_nDataHandlerCounter++;
-    if (m_nDataHandlerCounter >= BUFSIZ)
+    if (m_nDataHandlerCounter >= PARSER_BUF_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");
@@ -1022,17 +1022,17 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
     if (m_fpGPX->Eof())
         return nullptr;
 
-    char aBuf[BUFSIZ];
+    std::vector<char> aBuf(PARSER_BUF_SIZE);
     m_nWithoutEventCounter = 0;
 
     int nDone = 0;
     do
     {
         m_nDataHandlerCounter = 0;
-        unsigned int nLen =
-            static_cast<unsigned int>(m_fpGPX->Read(aBuf, 1, sizeof(aBuf)));
+        unsigned int nLen = static_cast<unsigned int>(
+            m_fpGPX->Read(aBuf.data(), 1, aBuf.size()));
         nDone = m_fpGPX->Eof();
-        if (XML_Parse(m_oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(m_oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "XML parsing of GPX file failed : "
@@ -1885,15 +1885,16 @@ void OGRGPXLayer::LoadExtensionsSchema()
     m_nWithoutEventCounter = 0;
     m_bStopParsing = false;
 
-    char aBuf[BUFSIZ];
+    std::vector<char> aBuf(PARSER_BUF_SIZE);
     int nDone = 0;
     do
     {
         m_nDataHandlerCounter = 0;
-        unsigned int nLen =
-            static_cast<unsigned int>(m_fpGPX->Read(aBuf, 1, sizeof(aBuf)));
+        unsigned int nLen = static_cast<unsigned int>(
+            m_fpGPX->Read(aBuf.data(), 1, aBuf.size()));
         nDone = m_fpGPX->Eof();
-        if (XML_Parse(m_oSchemaParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(m_oSchemaParser, aBuf.data(), nLen, nDone) ==
+            XML_STATUS_ERROR)
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
@@ -2138,7 +2139,7 @@ void OGRGPXLayer::dataHandlerLoadSchemaCbk(const char *data, int nLen)
         return;
 
     m_nDataHandlerCounter++;
-    if (m_nDataHandlerCounter >= BUFSIZ)
+    if (m_nDataHandlerCounter >= PARSER_BUF_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");
