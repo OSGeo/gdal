@@ -48,6 +48,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <utility>
 
 // To avoid aliasing to CopyFile to CopyFileA on Windows
 #ifdef CopyFile
@@ -308,9 +309,9 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     void AddRegion(const char *pszURL, vsi_l_offset nFileOffsetStart,
                    size_t nSize, const char *pData);
 
-    std::string NotifyStartDownloadRegion(const std::string &osURL,
-                                          vsi_l_offset startOffset,
-                                          int nBlocks);
+    std::pair<bool, std::string>
+    NotifyStartDownloadRegion(const std::string &osURL,
+                              vsi_l_offset startOffset, int nBlocks);
     void NotifyStopDownloadRegion(const std::string &osURL,
                                   vsi_l_offset startOffset, int nBlocks,
                                   const std::string &osData);
