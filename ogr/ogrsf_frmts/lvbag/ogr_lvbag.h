@@ -57,6 +57,7 @@ using LayerVector = std::vector<std::pair<LayerType, OGRLayerUniquePtr>>;
 /************************************************************************/
 /*                           OGRLVBAGLayer                              */
 /************************************************************************/
+constexpr int PARSER_BUF_SIZE = 8192;
 
 class OGRLVBAGLayer final : public OGRAbstractProxiedLayer,
                             public OGRGetNextFeatureThroughRaw<OGRLVBAGLayer>
@@ -103,7 +104,7 @@ class OGRLVBAGLayer final : public OGRAbstractProxiedLayer,
     CPLString osAttributeString;
     bool bCollectData;
 
-    char aBuf[BUFSIZ];
+    std::vector<char> aBuf = std::vector<char>(PARSER_BUF_SIZE);
 
     void AddSpatialRef(OGRwkbGeometryType eTypeIn);
     void AddOccurrenceFieldDefn();

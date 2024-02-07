@@ -977,13 +977,13 @@ OGRFeature *OGRGeoRSSLayer::GetNextFeature()
     nFeatureTabIndex = 0;
 
     int nDone = 0;
-    char aBuf[BUFSIZ];
+    std::vector<char> aBuf(PARSER_BUF_SIZE);
     do
     {
         unsigned int nLen = static_cast<unsigned int>(
-            VSIFReadL(aBuf, 1, sizeof(aBuf), fpGeoRSS));
+            VSIFReadL(aBuf.data(), 1, aBuf.size(), fpGeoRSS));
         nDone = VSIFEofL(fpGeoRSS);
-        if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "XML parsing of GeoRSS file failed : %s "
@@ -1785,15 +1785,16 @@ void OGRGeoRSSLayer::LoadSchema()
     nTotalFeatureCount = 0;
     setOfFoundFields = nullptr;
 
-    char aBuf[BUFSIZ] = {};
+    std::vector<char> aBuf(PARSER_BUF_SIZE);
     int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
         unsigned int nLen =
-            (unsigned int)VSIFReadL(aBuf, 1, sizeof(aBuf), fpGeoRSS);
+            (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fpGeoRSS);
         nDone = VSIFEofL(fpGeoRSS);
-        if (XML_Parse(oSchemaParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(oSchemaParser, aBuf.data(), nLen, nDone) ==
+            XML_STATUS_ERROR)
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
@@ -2209,7 +2210,7 @@ void OGRGeoRSSLayer::dataHandlerLoadSchemaCbk(const char *data, int nLen)
         return;
 
     nDataHandlerCounter++;
-    if (nDataHandlerCounter >= BUFSIZ)
+    if (nDataHandlerCounter >= PARSER_BUF_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");

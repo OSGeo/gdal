@@ -1032,7 +1032,7 @@ void OGRGPXLayer::dataHandlerCbk(const char *data, int nLen)
         return;
 
     nDataHandlerCounter++;
-    if (nDataHandlerCounter >= BUFSIZ)
+    if (nDataHandlerCounter >= PARSER_BUF_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");
@@ -1102,8 +1102,7 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
     if (VSIFEofL(fpGPX))
         return nullptr;
 
-    char aBuf[BUFSIZ];
-
+    std::vector<char> aBuf(PARSER_BUF_SIZE);
     CPLFree(ppoFeatureTab);
     ppoFeatureTab = nullptr;
     nFeatureTabLength = 0;
@@ -1114,10 +1113,10 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
     do
     {
         nDataHandlerCounter = 0;
-        unsigned int nLen =
-            static_cast<unsigned int>(VSIFReadL(aBuf, 1, sizeof(aBuf), fpGPX));
+        unsigned int nLen = static_cast<unsigned int>(
+            VSIFReadL(aBuf.data(), 1, aBuf.size(), fpGPX));
         nDone = VSIFEofL(fpGPX);
-        if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "XML parsing of GPX file failed : "
@@ -1960,15 +1959,16 @@ void OGRGPXLayer::LoadExtensionsSchema()
     nWithoutEventCounter = 0;
     bStopParsing = false;
 
-    char aBuf[BUFSIZ];
+    std::vector<char> aBuf(PARSER_BUF_SIZE);
     int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
-        unsigned int nLen =
-            static_cast<unsigned int>(VSIFReadL(aBuf, 1, sizeof(aBuf), fpGPX));
+        unsigned int nLen = static_cast<unsigned int>(
+            VSIFReadL(aBuf.data(), 1, aBuf.size(), fpGPX));
         nDone = VSIFEofL(fpGPX);
-        if (XML_Parse(oSchemaParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(oSchemaParser, aBuf.data(), nLen, nDone) ==
+            XML_STATUS_ERROR)
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
@@ -2218,7 +2218,7 @@ void OGRGPXLayer::dataHandlerLoadSchemaCbk(const char *data, int nLen)
         return;
 
     nDataHandlerCounter++;
-    if (nDataHandlerCounter >= BUFSIZ)
+    if (nDataHandlerCounter >= PARSER_BUF_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");

@@ -38,6 +38,8 @@
 #include "ogr_expat.h"
 #endif
 
+constexpr int PARSER_BUF_SIZE = 8192;
+
 class OGRGeoRSSDataSource;
 
 typedef enum
