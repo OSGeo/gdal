@@ -52,7 +52,13 @@ int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer, FILE_TYPE *m_f
 char szResult[MM_MAX_ID_SNY+10];
 
     memset(hMiraMonLayer, 0, sizeof(*hMiraMonLayer));
-    MMReadHeader(m_fp, &hMiraMonLayer->TopHeader);
+    if(MMReadHeader(m_fp, &hMiraMonLayer->TopHeader))
+    {
+        MM_CPLError(CE_Failure, CPLE_NoWriteAccess,
+                "Error reading header of the file %s",
+                pszFilename);
+        return 1;
+    }
     hMiraMonLayer->nMemoryRatio=1.0;
     hMiraMonLayer->ReadOrWrite=MM_READING_MODE;
     strcpy(hMiraMonLayer->pszFlags, "rb");
@@ -61,7 +67,11 @@ char szResult[MM_MAX_ID_SNY+10];
         
     hMiraMonLayer->LayerVersion = (char)MMGetVectorVersion(&hMiraMonLayer->TopHeader);
     if (hMiraMonLayer->LayerVersion == MM_UNKNOWN_VERSION)
+    {
+        MM_CPLError(CE_Failure, CPLE_NotSupported,
+                "MiraMon version file unknown.");
         return 1;
+    }
     if(hMiraMonLayer->LayerVersion==MM_LAST_VERSION)
         hMiraMonLayer->nHeaderDiskSize=MM_HEADER_SIZE_64_BITS;
     else if(hMiraMonLayer->LayerVersion==MM_32BITS_VERSION)
@@ -570,7 +580,12 @@ const char *szDBFFileName=NULL;
     }        
 
     if(MM_ReadExtendedDBFHeaderFromFile(szDBFFileName, pMMBDXP, pszRelFile))
+    {
+        MM_CPLError(CE_Failure, CPLE_NotSupported,
+            "Erorr reading the format in the DBF file %s.",
+            szDBFFileName);
         return 1;
+    }
 
     fclose_function(pMMBDXP->pfBaseDades);
 	pMMBDXP->pfBaseDades=NULL;

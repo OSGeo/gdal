@@ -65,6 +65,8 @@ struct MM_ID_GRAFIC_MULTIPLE_RECORD *MMCreateExtendedDBFIndex(FILE_TYPE *f, size
         MM_TIPUS_BYTES_ACUMULATS_DBF bytes_acumulats_id_grafic,
         MM_TIPUS_BYTES_PER_CAMP_DBF bytes_id_grafic, MM_BOOLEAN *isListField, MM_EXT_DBF_N_RECORDS *nMaxN);
 
+int MM_ReadExtendedDBFHeaderFromFile(const char * szFileName, struct MM_BASE_DADES_XP *pMMBDXP, const char * pszRelFile);
+
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project
 #endif

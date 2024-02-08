@@ -57,6 +57,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define OGR_L_ResetReading_function(a)      ptr_MM_OGR_L_ResetReading((a))
     #define GDALDatasetGetLayer_function(a,b)   ptr_MM_GDALDatasetGetLayer((a),(b))
     #define CPLRecode_function(a,b,c)           ptr_MM_CPLRecode((a),(b),(c))
+    #define CPLFree_function(a)                 ptr_MM_CPLFree((a))
     #define form_filename_function(a,b)         MuntaPath((a),(b),TRUE)
     #define MM_CPLGetBasename(a)                    TreuAdreca((a))
 #else
@@ -93,6 +94,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define OGR_L_ResetReading_function(a)      OGR_L_ResetReading((a))
     #define GDALDatasetGetLayer_function(a,b)   GDALDatasetGetLayer((a),(b))
     #define CPLRecode_function(a,b,c)       CPLRecode((a),(b),(c))
+    #define CPLFree_function(a)               CPLFree((a))
     #define form_filename_function(a,b)       CPLFormFilename((a),(b),NULL)
     #define MM_CPLGetBasename(a)                    CPLGetBasename((a))
 #endif

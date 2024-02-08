@@ -15,7 +15,6 @@ int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer, FILE_TYPE *m_f
 
 
 int MMGetFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer, MM_INTERNAL_FID i_elem);
-int MM_ReadExtendedDBFHeaderFromFile(const char * szFileName, struct MM_BASE_DADES_XP *pMMBDXP, const char * pszRelFile);
 int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer);
 
 #ifdef GDAL_COMPILATION

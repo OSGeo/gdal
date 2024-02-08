@@ -424,12 +424,13 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         if (hMiraMonLayerPOL.TopHeader.nElemCount)
         {
             CPLDebug("MiraMon", "%I64u polygons written in the file %s.pol",
-                hMiraMonLayerPOL.TopHeader.nElemCount-1,
+                // The polygon 0 is not imported
+                hMiraMonLayerPOL.TopHeader.nElemCount-1, 
                 hMiraMonLayerPOL.pszSrcLayerName);
         }
         CPLDebug("MiraMon", "MiraMon polygons layer closed");
     }
-    else
+    else if(hMiraMonLayerPOL.ReadOrWrite==MM_WRITTING_MODE)
         CPLDebug("MiraMon", "No MiraMon polygons layer created.");
 
     if (hMiraMonLayerARC.bIsArc)
@@ -445,7 +446,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         
         CPLDebug("MiraMon", "MiraMon arcs layer closed");
     }
-    else
+    else if(hMiraMonLayerARC.ReadOrWrite==MM_WRITTING_MODE)
         CPLDebug("MiraMon", "No MiraMon arcs layer created.");
 
     if (hMiraMonLayerPNT.bIsPoint)
@@ -460,28 +461,42 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         }
         CPLDebug("MiraMon", "MiraMon points layer closed");
     }
-    else
+    else if(hMiraMonLayerPNT.ReadOrWrite==MM_WRITTING_MODE)
         CPLDebug("MiraMon", "No MiraMon points layer created.");
 
-    CPLDebug("MiraMon", "Closing MiraMon DBF table layer...");
+    if(hMiraMonLayerPNT.ReadOrWrite==MM_WRITTING_MODE)
+        CPLDebug("MiraMon", "Closing MiraMon DBF table layer...");
     MMCloseLayer(&hMiraMonLayerReadOrNonGeom);
-    CPLDebug("MiraMon", "MiraMon DBF table layer closed");
-    
-    MM_CPLDebug("MiraMon", "Destroying MiraMon polygons layer memory");
+    if(hMiraMonLayerPNT.ReadOrWrite==MM_WRITTING_MODE)
+        CPLDebug("MiraMon", "MiraMon DBF table layer closed");
+
+    if(hMiraMonLayerPOL.ReadOrWrite==MM_WRITTING_MODE)
+        MM_CPLDebug("MiraMon", "Destroying MiraMon polygons layer memory");
     MMFreeLayer(&hMiraMonLayerPOL);
-    MM_CPLDebug("MiraMon", "MiraMon polygons layer memory destroyed");
-    MM_CPLDebug("MiraMon", "Destroying MiraMon arcs layer memory");
+    if(hMiraMonLayerPOL.ReadOrWrite==MM_WRITTING_MODE)
+        MM_CPLDebug("MiraMon", "MiraMon polygons layer memory destroyed");
+    if(hMiraMonLayerARC.ReadOrWrite==MM_WRITTING_MODE)
+        MM_CPLDebug("MiraMon", "Destroying MiraMon arcs layer memory");
     MMFreeLayer(&hMiraMonLayerARC);
-    MM_CPLDebug("MiraMon", "MiraMon arcs layer memory destroyed");
-    MM_CPLDebug("MiraMon", "Destroying MiraMon points layer memory");
+    if(hMiraMonLayerARC.ReadOrWrite==MM_WRITTING_MODE)
+        MM_CPLDebug("MiraMon", "MiraMon arcs layer memory destroyed");
+    if(hMiraMonLayerPNT.ReadOrWrite==MM_WRITTING_MODE)
+        MM_CPLDebug("MiraMon", "Destroying MiraMon points layer memory");
     MMFreeLayer(&hMiraMonLayerPNT);
-    MM_CPLDebug("MiraMon", "MiraMon points layer memory destroyed");
-    MM_CPLDebug("MiraMon", "Destroying MiraMon points layer memory");
+    if(hMiraMonLayerPNT.ReadOrWrite==MM_WRITTING_MODE)
+        MM_CPLDebug("MiraMon", "MiraMon points layer memory destroyed");
+    if(hMiraMonLayerReadOrNonGeom.ReadOrWrite==MM_WRITTING_MODE)
+        MM_CPLDebug("MiraMon", "Destroying MiraMon DBF table layer memory");
+    else
+        MM_CPLDebug("MiraMon", "Destroying MiraMon layer memory");
     MMFreeLayer(&hMiraMonLayerReadOrNonGeom);
-    MM_CPLDebug("MiraMon", "MiraMon points layer memory destroyed");
-    MM_CPLDebug("MiraMon", "Destroying MiraMon DBF table layer memory");
+    if(hMiraMonLayerReadOrNonGeom.ReadOrWrite==MM_WRITTING_MODE)
+        MM_CPLDebug("MiraMon", "MiraMon DBF table layer memory destroyed");
+    else
+        MM_CPLDebug("MiraMon", "MiraMon layer memory destroyed");
+    MM_CPLDebug("MiraMon", "Destroying MiraMon temporary feature memory");
     MMDestroyFeature(&hMMFeature);
-    MM_CPLDebug("MiraMon", "MiraMon DBF table layer memory destroyed");
+    MM_CPLDebug("MiraMon", "MiraMon temporary feature memory");
 
     /* -------------------------------------------------------------------- */
     /*      Clean up.                                                       */
@@ -857,15 +872,21 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                     memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
                     continue;
                 }
-                if(phMiraMonLayer->iMultiRecord==-1)
-                    GoToFieldOfMultipleRecord(nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR-1, nIField);
-                else if((MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord<phMiraMonLayer->pMultRecordIndex[nIElem].nMR)
-                    GoToFieldOfMultipleRecord(nIElem, (MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord, nIField);
-                else
+                if (phMiraMonLayer->iMultiRecord != -2)
                 {
-                    memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
-                    continue;
+                    if (phMiraMonLayer->iMultiRecord == -1)
+                        GoToFieldOfMultipleRecord(nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR - 1, nIField);
+                    else if ((MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord < phMiraMonLayer->pMultRecordIndex[nIElem].nMR)
+                        GoToFieldOfMultipleRecord(nIElem, (MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord, nIField);
+                    else
+                    {
+                        memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                        continue;
+                    }
                 }
+                else
+                    GoToFieldOfMultipleRecord(nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR, nIField);
+
                 memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
                 fread_function(phMiraMonLayer->szStringToOperate,
                     phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp,
@@ -917,15 +938,20 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                     memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
                     continue;
                 }
-                if(phMiraMonLayer->iMultiRecord==-1)
-                    GoToFieldOfMultipleRecord(nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR-1, nIField);
-                else if((MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord<phMiraMonLayer->pMultRecordIndex[nIElem].nMR)
-                    GoToFieldOfMultipleRecord(nIElem, (MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord, nIField);
-                else
+                if (phMiraMonLayer->iMultiRecord != -2)
                 {
-                    memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
-                    continue;
+                    if (phMiraMonLayer->iMultiRecord == -1)
+                        GoToFieldOfMultipleRecord(nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR - 1, nIField);
+                    else if ((MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord < phMiraMonLayer->pMultRecordIndex[nIElem].nMR)
+                        GoToFieldOfMultipleRecord(nIElem, (MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord, nIField);
+                    else
+                    {
+                        memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                        continue;
+                    }
                 }
+                else
+                    GoToFieldOfMultipleRecord(nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR, nIField);
                 
                 memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
                 fread_function(phMiraMonLayer->szStringToOperate,
@@ -942,15 +968,21 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
                     memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
                     continue;
                 }
-                if(phMiraMonLayer->iMultiRecord==-1)
-                    GoToFieldOfMultipleRecord(nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR-1, nIField);
-                else if((MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord<phMiraMonLayer->pMultRecordIndex[nIElem].nMR)
-                    GoToFieldOfMultipleRecord(nIElem, (MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord, nIField);
-                else
+                if (phMiraMonLayer->iMultiRecord != -2)
                 {
-                    memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
-                    continue;
+                    if (phMiraMonLayer->iMultiRecord == -1)
+                        GoToFieldOfMultipleRecord(nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR - 1, nIField);
+                    else if ((MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord < phMiraMonLayer->pMultRecordIndex[nIElem].nMR)
+                        GoToFieldOfMultipleRecord(nIElem, (MM_EXT_DBF_N_MULTIPLE_RECORDS)phMiraMonLayer->iMultiRecord, nIField);
+                    else
+                    {
+                        memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                        continue;
+                    }
                 }
+                else
+                    GoToFieldOfMultipleRecord(nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR, nIField);
+
                 memset(phMiraMonLayer->szStringToOperate, 0, phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
                 fread_function(phMiraMonLayer->szStringToOperate,
                     phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp,

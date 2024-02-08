@@ -893,6 +893,7 @@ char cpg_file[MM_MAX_PATH];
 const char *pszDesc;
 char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
 unsigned __int32 nRecords;
+char *pszString;
 
     if(!szFileName)
         return 1;
@@ -1196,18 +1197,16 @@ unsigned __int32 nRecords;
                 // All field names to UTF-8
                 if (pMMBDXP->JocCaracters == MM_JOC_CARAC_ANSI_DBASE)
                 {
-                    char *pszString =
-                        CPLRecode_function(pMMBDXP->Camp[nIField].NomCamp, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+                    pszString=CPLRecode_function(pMMBDXP->Camp[nIField].NomCamp, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
                     strncpy(pMMBDXP->Camp[nIField].NomCamp, pszString, MM_MAX_LON_FIELD_NAME_DBF);
-                    CPLFree(pszString);
+                    CPLFree_function(pszString);
                 }
                 else if (pMMBDXP->JocCaracters == MM_JOC_CARAC_OEM850_DBASE)
                 {
                     MM_oemansi(pMMBDXP->Camp[nIField].NomCamp);
-                    char *pszString =
-                        CPLRecode_function(pMMBDXP->Camp[nIField].NomCamp, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+                    pszString=CPLRecode_function(pMMBDXP->Camp[nIField].NomCamp, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
                     strncpy(pMMBDXP->Camp[nIField].NomCamp, pszString, MM_MAX_LON_FIELD_NAME_DBF);
-                    CPLFree(pszString);
+                    CPLFree_function(pszString);
                 }
             }
         }
@@ -1444,7 +1443,7 @@ unsigned char t_oemansi[128]=
 
 
 MM_BOOLEAN MM_FillFieldDB_XP(struct MM_CAMP *camp, const char *NomCamp, const char *DescripcioCamp, char TipusDeCamp,
-					MM_TIPUS_BYTES_PER_CAMP_DBF BytesPerCamp, MM_BYTE DecimalsSiEsFloat, MM_BYTE mostrar_camp)
+					MM_TIPUS_BYTES_PER_CAMP_DBF BytesPerCamp, MM_BYTE DecimalsSiEsFloat)
 {
 char nom_temp[MM_MAX_LON_FIELD_NAME_DBF];
 int retorn_valida_nom_camp;
@@ -1494,43 +1493,37 @@ MM_EXT_DBF_N_FIELDS i_camp=0;
 
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampIdGraficDefecte,
 			"Internal graphic identifier", 'N',
-			MM_MAX_AMPLADA_CAMP_N_DBF, 0,
-			FALSE);
+			MM_MAX_AMPLADA_CAMP_N_DBF, 0);
 	bd_xp->CampIdGrafic=0;
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_ID_GRAFIC;
     i_camp++;
 
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampNVertexsDefecte,
 			"Number of vertices", 'N',
-			MM_MAX_AMPLADA_CAMP_N_DBF, 0,
-			FALSE);
+			MM_MAX_AMPLADA_CAMP_N_DBF, 0);
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_N_VERTEXS;
 	i_camp++;
 
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampPerimetreDefecte,
-			"Perimeter of the polygon", 'N', MM_MAX_AMPLADA_CAMP_N_DBF, n_decimals,
-			(MM_BOOLEAN)TRUE);
+			"Perimeter of the polygon", 'N', MM_MAX_AMPLADA_CAMP_N_DBF, n_decimals);
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_PERIMETRE;
 	i_camp++;
 
     MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampAreaDefecte,
             "Area of the polygon", 'N',
-            MM_MAX_AMPLADA_CAMP_N_DBF, n_decimals,
-            (MM_BOOLEAN)TRUE);
+            MM_MAX_AMPLADA_CAMP_N_DBF, n_decimals);
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_AREA;
     i_camp++;
 
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampNArcsDefecte,
 			"Number of arcs", 'N',
-			MM_MAX_AMPLADA_CAMP_N_DBF, 0,
-			FALSE);
+			MM_MAX_AMPLADA_CAMP_N_DBF, 0);
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_N_ARCS;
 	i_camp++;
 
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampNPoligonsDefecte,
 			"Number of elemental polygons", 'N',
-			MM_MAX_AMPLADA_CAMP_N_DBF, 0,
-			FALSE);
+			MM_MAX_AMPLADA_CAMP_N_DBF, 0);
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_N_POLIG;
 	i_camp++;
 
@@ -1544,36 +1537,31 @@ MM_EXT_DBF_N_FIELDS i_camp;
 	i_camp=0;
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampIdGraficDefecte,
 			"Internal graphic identifier", 'N',
-			MM_MAX_AMPLADA_CAMP_N_DBF, 0,
-			FALSE);
+			MM_MAX_AMPLADA_CAMP_N_DBF, 0);
 	bd_xp->CampIdGrafic=0;
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_ID_GRAFIC;
 	i_camp++;
 
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampNVertexsDefecte,
 			"Number of vertices", 'N',
-			MM_MAX_AMPLADA_CAMP_N_DBF, 0,
-			FALSE);
+			MM_MAX_AMPLADA_CAMP_N_DBF, 0);
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_N_VERTEXS;
 	i_camp++;
 
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampLongitudArcDefecte,
-			"Lenght of arc", 'N', MM_MAX_AMPLADA_CAMP_N_DBF, n_decimals,
-			TRUE);
+			"Lenght of arc", 'N', MM_MAX_AMPLADA_CAMP_N_DBF, n_decimals);
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_LONG_ARC;
 	i_camp++;
 
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampNodeIniDefecte,
 			"Initial node", 'N',
-			MM_MAX_AMPLADA_CAMP_N_DBF, 0,
-			FALSE);
+			MM_MAX_AMPLADA_CAMP_N_DBF, 0);
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_NODE_INI;
 	i_camp++;
 
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampNodeFiDefecte,
 			"Final node", 'N',
-			MM_MAX_AMPLADA_CAMP_N_DBF, 0,
-			FALSE);
+			MM_MAX_AMPLADA_CAMP_N_DBF, 0);
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_NODE_FI;
 	i_camp++;
 
@@ -1588,21 +1576,19 @@ MM_EXT_DBF_N_FIELDS i_camp;
 
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampIdGraficDefecte,
 			"Internal graphic identifier", 'N',
-			MM_MAX_AMPLADA_CAMP_N_DBF, 0,
-			FALSE);
+			MM_MAX_AMPLADA_CAMP_N_DBF, 0);
 	bd_xp->CampIdGrafic=0;
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_ID_GRAFIC;
 	i_camp++;
 
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampArcsANodeDefecte,
 			"Number of arcs to node", 'N',
-			MM_MAX_AMPLADA_CAMP_N_DBF, 0,
-			TRUE);
+			MM_MAX_AMPLADA_CAMP_N_DBF, 0);
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_ARCS_A_NOD;
 	i_camp++;
 
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampTipusNodeDefecte,
-			"Node type", 'N',1, 0,TRUE);
+			"Node type", 'N',1, 0);
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_TIPUS_NODE;
 	i_camp++;
 
@@ -1615,8 +1601,7 @@ size_t i_camp=0;
 
 	MM_FillFieldDB_XP(bd_xp->Camp+i_camp, szMMNomCampIdGraficDefecte,
 			"Internal graphic identifier", 'N',
-			MM_MAX_AMPLADA_CAMP_N_DBF, 0,
-			FALSE);
+			MM_MAX_AMPLADA_CAMP_N_DBF, 0);
 	bd_xp->CampIdGrafic=0;
     (bd_xp->Camp+i_camp)->TipusCampGeoTopo=(MM_BYTE)MM_CAMP_ES_ID_GRAFIC;
 	i_camp++;
