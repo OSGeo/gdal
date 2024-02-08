@@ -571,7 +571,23 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
         iMMFeature = (MM_INTERNAL_FID)iNextFID;
     }
 
-    return GetFeature((GIntBig)iMMFeature);
+    OGRFeature *poFeature=GetFeature((GIntBig)iMMFeature);
+
+    // In polygons, if MiraMon is asked to give the 0-th element,
+    // in fact is the first one, because the 0-th one is the called
+    // universal polygon (you can find the description of that in
+    // the format description).
+    if(phMiraMonLayer->bIsPolygon)
+    {
+        iNextFID++;
+        poFeature->SetFID(iNextFID);
+    }
+    else
+    {
+        poFeature->SetFID(iNextFID);
+        iNextFID++;
+    }
+    return poFeature;
 }
 /****************************************************************************/
 /*                         GetFeature()                              */
@@ -1025,20 +1041,6 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
         }
     }
 
-    // In polygons, if MiraMon is asked to give the 0-th element,
-    // in fact is the first one, because the 0-th one is the called
-    // universal polygon (you can find the description of that in
-    // the format description).
-    if(phMiraMonLayer->bIsPolygon)
-    {
-        nFeatureId++;
-        poFeature->SetFID(nFeatureId);
-    }
-    else
-    {
-        poFeature->SetFID(nFeatureId);
-        nFeatureId++;
-    }
     m_nFeaturesRead++;
 
     return poFeature;
@@ -1881,9 +1883,12 @@ int OGRMiraMonLayer::TestCapability(const char *pszCap)
 
 {
     if (EQUAL(pszCap, OLCRandomRead))
-        return FALSE;
+        return TRUE;
 
     if (EQUAL(pszCap, OLCSequentialWrite))
+        return TRUE;
+
+    if (EQUAL(pszCap, OLCFastFeatureCount))
         return TRUE;
 
     if (EQUAL(pszCap, OLCFastGetExtent))
