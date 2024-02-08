@@ -156,7 +156,7 @@ static const PDFOperator asPDFOperators[] = {
     {"cm", 6},
     {"CS", 1},
     {"cs", 1},
-    {"d", 1}, /* we have ignored the first arg */
+    {"d", 1}, /* we have ignored the first arg which is an array */
     // d0
     // d1
     {"Do", 1},
@@ -784,6 +784,7 @@ OGRGeometry *PDFDataset::ParseContent(
         else if (!bInString && nArrayLevel && ch == ']')
         {
             nArrayLevel--;
+            nTokenSize = 0;  // completely ignore content in arrays
         }
 
         else if (!bInString && nTokenSize == 0 && ch == '(')
