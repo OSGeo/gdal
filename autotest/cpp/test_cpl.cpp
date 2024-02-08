@@ -3128,6 +3128,7 @@ TEST_F(test_cpl, cpl_minixml)
     CPLXMLNode *psElt = CPLCreateXMLElementAndValue(psRoot, "Elt", "value");
     CPLAddXMLAttributeAndValue(psElt, "attr1", "val1");
     CPLAddXMLAttributeAndValue(psElt, "attr2", "val2");
+    EXPECT_GE(CPLXMLNodeGetRAMUsageEstimate(psRoot), 0);
     char *str = CPLSerializeXMLTree(psRoot);
     CPLDestroyXMLNode(psRoot);
     ASSERT_STREQ(
