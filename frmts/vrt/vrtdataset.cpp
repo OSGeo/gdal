@@ -328,10 +328,14 @@ CPLXMLNode *VRTDataset::SerializeToXML(const char *pszVRTPathIn)
     {
     }
     CPLAssert(psLastChild);  // we have at least rasterXSize
+    bool bHasWarnedAboutRAMUsage = false;
+    size_t nAccRAMUsage = 0;
     for (int iBand = 0; iBand < nBands; iBand++)
     {
-        CPLXMLNode *psBandTree = static_cast<VRTRasterBand *>(papoBands[iBand])
-                                     ->SerializeToXML(pszVRTPathIn);
+        CPLXMLNode *psBandTree =
+            static_cast<VRTRasterBand *>(papoBands[iBand])
+                ->SerializeToXML(pszVRTPathIn, bHasWarnedAboutRAMUsage,
+                                 nAccRAMUsage);
 
         if (psBandTree != nullptr)
         {
@@ -345,7 +349,8 @@ CPLXMLNode *VRTDataset::SerializeToXML(const char *pszVRTPathIn)
     /* -------------------------------------------------------------------- */
     if (m_poMaskBand)
     {
-        CPLXMLNode *psBandTree = m_poMaskBand->SerializeToXML(pszVRTPathIn);
+        CPLXMLNode *psBandTree = m_poMaskBand->SerializeToXML(
+            pszVRTPathIn, bHasWarnedAboutRAMUsage, nAccRAMUsage);
 
         if (psBandTree != nullptr)
         {

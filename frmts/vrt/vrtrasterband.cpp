@@ -646,7 +646,9 @@ CPLString VRTSerializeNoData(double dfVal, GDALDataType eDataType,
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTRasterBand::SerializeToXML(const char *pszVRTPath)
+CPLXMLNode *VRTRasterBand::SerializeToXML(const char *pszVRTPath,
+                                          bool &bHasWarnedAboutRAMUsage,
+                                          size_t &nAccRAMUsage)
 
 {
     CPLXMLNode *psTree =
@@ -830,9 +832,12 @@ CPLXMLNode *VRTRasterBand::SerializeToXML(const char *pszVRTPath)
     /*      Mask band (specific to that raster band)                        */
     /* ==================================================================== */
 
+    nAccRAMUsage += CPLXMLNodeGetRAMUsageEstimate(psTree);
+
     if (m_poMaskBand != nullptr)
     {
-        CPLXMLNode *psBandTree = m_poMaskBand->SerializeToXML(pszVRTPath);
+        CPLXMLNode *psBandTree = m_poMaskBand->SerializeToXML(
+            pszVRTPath, bHasWarnedAboutRAMUsage, nAccRAMUsage);
 
         if (psBandTree != nullptr)
         {

@@ -565,7 +565,9 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL : public GDALRasterBand
 
     virtual CPLErr XMLInit(CPLXMLNode *, const char *,
                            std::map<CPLString, GDALDataset *> &);
-    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath);
+    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
+                                       bool &bHasWarnedAboutRAMUsage,
+                                       size_t &nAccRAMUsage);
 
     CPLErr SetNoDataValue(double) override;
     CPLErr SetNoDataValueAsInt64(int64_t nNoData) override;
@@ -705,7 +707,9 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
 
     virtual CPLErr XMLInit(CPLXMLNode *, const char *,
                            std::map<CPLString, GDALDataset *> &) override;
-    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
+    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
+                                       bool &bHasWarnedAboutRAMUsage,
+                                       size_t &nAccRAMUsage) override;
 
     virtual double GetMinimum(int *pbSuccess = nullptr) override;
     virtual double GetMaximum(int *pbSuccess = nullptr) override;
@@ -804,7 +808,9 @@ class CPL_DLL VRTWarpedRasterBand final : public VRTRasterBand
                         GDALDataType eType = GDT_Unknown);
     virtual ~VRTWarpedRasterBand();
 
-    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
+    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
+                                       bool &bHasWarnedAboutRAMUsage,
+                                       size_t &nAccRAMUsage) override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;
@@ -825,7 +831,9 @@ class VRTPansharpenedRasterBand final : public VRTRasterBand
                               GDALDataType eDataType = GDT_Unknown);
     virtual ~VRTPansharpenedRasterBand();
 
-    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
+    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
+                                       bool &bHasWarnedAboutRAMUsage,
+                                       size_t &nAccRAMUsage) override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
 
@@ -906,7 +914,9 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
 
     virtual CPLErr XMLInit(CPLXMLNode *, const char *,
                            std::map<CPLString, GDALDataset *> &) override;
-    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
+    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
+                                       bool &bHasWarnedAboutRAMUsage,
+                                       size_t &nAccRAMUsage) override;
 
     virtual double GetMinimum(int *pbSuccess = nullptr) override;
     virtual double GetMaximum(int *pbSuccess = nullptr) override;
@@ -947,7 +957,9 @@ class CPL_DLL VRTRawRasterBand CPL_NON_FINAL : public VRTRasterBand
 
     virtual CPLErr XMLInit(CPLXMLNode *, const char *,
                            std::map<CPLString, GDALDataset *> &) override;
-    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
+    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
+                                       bool &bHasWarnedAboutRAMUsage,
+                                       size_t &nAccRAMUsage) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                              GDALDataType, GSpacing nPixelSpace,
