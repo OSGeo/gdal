@@ -87,6 +87,7 @@ class OGRMiraMonLayer final : public OGRLayer,
     double* padfValues;
 
     OGRFeature *GetNextRawFeature();
+    OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId);
     void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
                     MM_EXT_DBF_N_RECORDS nIRecord, MM_EXT_DBF_N_FIELDS nIField);
 

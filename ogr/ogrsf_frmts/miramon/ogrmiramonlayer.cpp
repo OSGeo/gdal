@@ -554,31 +554,41 @@ void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
 /****************************************************************************/
 
 OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
-
 {
-    OGRGeometry *poGeom = nullptr;
-    OGRPoint *poPoint = nullptr;
-    OGRLineString *poLS = nullptr;
-    MM_INTERNAL_FID nIElem;
-    MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord = 0;
-    
-    /* -------------------------------------------------------------------- */
-    /*      Read iNextFID feature directly from the file.                   */
-    /* -------------------------------------------------------------------- */
+    MM_INTERNAL_FID iMMFeature;
+
     if (phMiraMonLayer->bIsPolygon)
     {
         // First polygon is not returned because it's the universal polygon
         if (iNextFID+1 >= phMiraMonLayer->TopHeader.nElemCount)
             return nullptr;
-        nIElem = (MM_INTERNAL_FID)iNextFID+1;
+        iMMFeature = (MM_INTERNAL_FID)iNextFID+1;
     }
     else
     {
         if(iNextFID>=phMiraMonLayer->TopHeader.nElemCount)
             return nullptr;
-        nIElem = (MM_INTERNAL_FID)iNextFID;
+        iMMFeature = (MM_INTERNAL_FID)iNextFID;
     }
+
+    return GetFeature((GIntBig)iMMFeature);
+}
+/****************************************************************************/
+/*                         GetFeature()                              */
+/****************************************************************************/
+
+OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
+
+{
+    OGRGeometry *poGeom = nullptr;
+    OGRPoint *poPoint = nullptr;
+    OGRLineString *poLS = nullptr;
+    MM_INTERNAL_FID nIElem=(MM_INTERNAL_FID)nFeatureId;
+    MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord = 0;
     
+    /* -------------------------------------------------------------------- */
+    /*      Read nFeatureId feature directly from the file.                   */
+    /* -------------------------------------------------------------------- */
     switch(phMiraMonLayer->eLT)
     {
         case MM_LayerType_Point:
@@ -1021,13 +1031,13 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
     // the format description).
     if(phMiraMonLayer->bIsPolygon)
     {
-        iNextFID++;
-        poFeature->SetFID(iNextFID);
+        nFeatureId++;
+        poFeature->SetFID(nFeatureId);
     }
     else
     {
-        poFeature->SetFID(iNextFID);
-        iNextFID++;
+        poFeature->SetFID(nFeatureId);
+        nFeatureId++;
     }
     m_nFeaturesRead++;
 
