@@ -209,26 +209,26 @@ struct MM_VARIABLES_LLEGEIX_POLS
 struct MM_FLUSH_INFO
 {
     __int32 nMyDiskSize;
-    unsigned __int64 NTimesFlushed;
+    GUInt64 NTimesFlushed;
 
     // Pointer to an OPEN file where to flush.
     FILE_TYPE *pF; 
     // Offset in the disk where to flush 
     MM_FILE_OFFSET OffsetWhereToFlush;
     
-    unsigned __int64 TotalSavedBytes;  // Internal use
+    GUInt64 TotalSavedBytes;  // Internal use
 
 
     // Block where to be saved
-    unsigned __int64 SizeOfBlockToBeSaved;
+    GUInt64 SizeOfBlockToBeSaved;
     void *pBlockToBeSaved;
 
     // Block where to save the pBlockToBeSaved or read from
     void *pBlockWhereToSaveOrRead;
     // Number of full bytes: flushed every time it's needed
-    unsigned __int64 nNumBytes;
+    GUInt64 nNumBytes;
     // Number of bytes allocated: flushed every time it's needed
-    unsigned __int64 nBlockSize;
+    GUInt64 nBlockSize;
 
     // Internal Use
     MM_FILE_OFFSET CurrentOffset;
@@ -322,7 +322,7 @@ struct MMAdmDatabase
 
     // Temporary space where to mount the DBF record.
     // Reused every time a feature is created
-    unsigned __int64 nNumRecordOnCourse;
+    GUInt64 nNumRecordOnCourse;
     char *szRecordOnCourse;
 };
 
@@ -382,7 +382,7 @@ struct MM_ZSection
     // nMaxZDescription = nElemCount from LayerInfo
     MM_FILE_OFFSET ZDOffset;
     __int32 nZDDiskSize;
-    unsigned __int64 nMaxZDescription; 
+    GUInt64 nMaxZDescription; 
     struct MM_ZD *pZDescription; //(I mode)
 
     struct MM_FLUSH_INFO FlushZL;
@@ -475,7 +475,7 @@ struct MiraMonNodeLayer
     
     // Header of every node
     __int32 nSizeNodeHeader;
-    unsigned __int64 nMaxNodeHeader; // Number of pNodeHeader allocated
+    MM_INTERNAL_FID nMaxNodeHeader; // Number of pNodeHeader allocated
     struct MM_NH *pNodeHeader;// (I mode)
     
     // NL: arcs confuent to node 
@@ -502,7 +502,7 @@ struct MiraMonArcLayer
                 
     // Header of every arc
     __int32 nSizeArcHeader;
-    unsigned __int64 nMaxArcHeader; // Number of allocated pArcHeader 
+    MM_INTERNAL_FID nMaxArcHeader; // Number of allocated pArcHeader 
     struct MM_AH *pArcHeader;// (I mode)
 
     // AL Section
@@ -520,7 +520,7 @@ struct MiraMonArcLayer
     struct MiraMonNodeLayer MMNode;
 
     // Private data
-    unsigned __int64 nMaxArcVrt; // Number of allocated 
+    GUInt64 nMaxArcVrt; // Number of allocated 
     struct ARC_VRT_STRUCTURE *pArcVrt;
     MM_FILE_OFFSET nOffsetArc; // It's an auxiliary offset
 
@@ -543,7 +543,7 @@ struct MiraMonPolygonLayer
     FILE_TYPE *pFPS; // Pointer to temporary file where to flush
     
     // Header of every polygon
-    unsigned __int64 nMaxPolHeader; // Number of pPolHeader allocated
+    MM_INTERNAL_FID nMaxPolHeader; // Number of pPolHeader allocated
     int nPHElementSize;
     struct MM_PH *pPolHeader;// (I mode)
     
@@ -588,8 +588,8 @@ struct MiraMonFeature
     // List of the coordinates of the feature
     struct MM_POINT_2D *pCoord; 
 
-    // Number of reserved elements in *pbArcInfo
-    unsigned __int64 nMaxVFG;
+    // Number of reserved elements in *flag_VFG
+    MM_INTERNAL_FID nMaxVFG;
 	char *flag_VFG; // In case of multipolygons, for each ring:
 			    // if flag_VFG[i]|MM_EXTERIOR_ARC_SIDE: outer ring if actived
                 // if flag_VFG[i]|MM_END_ARC_IN_RING: always actived (every ring has only one arc)
@@ -725,7 +725,7 @@ struct MiraMonVectLayerInfo
     // Dinamic string that is used as temporary buffer
     // with variable size as needed. Its value is 
     // very temporary. Copy in a safe place to save its value.
-    unsigned __int64 nNumStringToOperate;
+    GUInt64 nNumStringToOperate;
     char *szStringToOperate;
 
     // Temporary elements when reading features from MiraMon files

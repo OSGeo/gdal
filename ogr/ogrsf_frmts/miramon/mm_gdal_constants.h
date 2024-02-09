@@ -5,6 +5,11 @@
 /* -------------------------------------------------------------------- */
 #ifdef GDAL_COMPILATION
 CPL_C_START // Necessary for compiling C in GDAL project
+#else
+typedef __int32             GInt32
+typedef unsigned __int32    GUInt32
+typedef __int32             GInt64
+typedef unsigned __int32    GUInt64
 #endif
 
 #include <stddef.h> // For size_t 
@@ -42,9 +47,9 @@ CPL_C_START // Necessary for compiling C in GDAL project
 
 // Common types
 // Type of the Feature ID: determines the maximum number of features in a layer.
-typedef unsigned __int64 MM_INTERNAL_FID;
+typedef GUInt64 MM_INTERNAL_FID;
 // Offset to the coordinates of the Features.
-typedef unsigned __int64 MM_FILE_OFFSET;
+typedef GUInt64 MM_FILE_OFFSET;
 
 // Type of the coordinates of a Point, Arc or Polygons points.
 typedef double MM_COORD_TYPE;
@@ -52,11 +57,11 @@ typedef double MM_COORD_TYPE;
 // Points
 
 // StringLines (or Arcs)
-typedef size_t MM_N_VERTICES_TYPE;
+typedef GUInt64 MM_N_VERTICES_TYPE; // size_t in MiraMon
 
 // Polygons (or polypolygons)
-typedef unsigned __int64 MM_POLYGON_ARCS_COUNT;
-typedef unsigned __int64 MM_POLYGON_RINGS_COUNT; 
+typedef GUInt64 MM_POLYGON_ARCS_COUNT;
+typedef GUInt64 MM_POLYGON_RINGS_COUNT; 
 
 #define MM_POL_EXTERIOR_SIDE  0x01
 #define MM_POL_END_RING       0x02
@@ -89,13 +94,13 @@ typedef int MM_SELEC_COORDZ_TYPE;
 
 // Extended DBF
 // Type of the number of fields of an extended DBF
-typedef unsigned __int32 MM_EXT_DBF_N_FIELDS;  //(TIPUS_NUMERADOR_CAMP in MiraMon internal code) 
+typedef GUInt32 MM_EXT_DBF_N_FIELDS;  //(TIPUS_NUMERADOR_CAMP in MiraMon internal code) 
 // Type of the number of records of an extended DBF
-typedef unsigned __int32 MM_EXT_DBF_N_MULTIPLE_RECORDS;
-typedef unsigned __int64 MM_EXT_DBF_N_RECORDS;
-typedef signed __int64 MM_EXT_DBF_SIGNED_N_RECORDS;
+typedef GUInt32 MM_EXT_DBF_N_MULTIPLE_RECORDS;
+typedef GUInt64 MM_EXT_DBF_N_RECORDS;
+typedef GInt64 MM_EXT_DBF_SIGNED_N_RECORDS;
 #define scanf_MM_EXT_DBF_SIGNED_N_RECORDS  "%I64d"
-typedef __int32 MM_FIRST_RECORD_OFFSET_TYPE;
+typedef GInt32 MM_FIRST_RECORD_OFFSET_TYPE;
 
 #define MM_MAX_EXT_DBF_N_FIELDS_TYPE            _UI32_MAX
 #define MM_MAX_N_CAMPS_DBF_CLASSICA             255 
@@ -108,8 +113,8 @@ typedef __int32 MM_FIRST_RECORD_OFFSET_TYPE;
 #define MM_MAX_LON_RESERVAT_2_BASE_DADES_XP     2
 
 
-#define MM_TIPUS_BYTES_PER_CAMP_DBF     unsigned __int32
-#define MM_TIPUS_BYTES_ACUMULATS_DBF    unsigned __int32
+#define MM_TIPUS_BYTES_PER_CAMP_DBF     GUInt32
+#define MM_TIPUS_BYTES_ACUMULATS_DBF    GUInt32
 
 #define MM_MAX_LON_DESCRIPCIO_CAMP_DBF ((256 >(_MAX_PATH+100))? 256 :(_MAX_PATH+100))
 #define MM_NUM_IDIOMES_MD_MULTIDIOMA 4
@@ -183,7 +188,7 @@ enum MM_TipusNomCamp { MM_NOM_DBF_CLASSICA_I_VALID=0, MM_NOM_DBF_MINUSCULES_I_VA
 #define MM_PRIVATE_POLYGON_DB_FIELDS    6
 
 typedef unsigned char       MM_BYTE;
-typedef signed __int32      MM_N_HEIGHT_TYPE;
+typedef GInt32      MM_N_HEIGHT_TYPE;
 
 #define MM_NOU_N_DECIMALS_NO_APLICA		    0
 #define MM_APLICAR_NOU_N_DECIMALS			1

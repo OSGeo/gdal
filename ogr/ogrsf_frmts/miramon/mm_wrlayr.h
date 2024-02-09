@@ -145,15 +145,20 @@ int AddMMFeature(struct MiraMonVectLayerInfo *hMiraMonLayer,
             struct MiraMonFeature *hMiraMonFeature);
 int MMGetVectorVersion(struct MM_TH *pTopHeader);
 int MMInitFlush(struct MM_FLUSH_INFO *pFlush, FILE_TYPE *pF, 
-            unsigned __int64 nBlockSize, char **pBuffer, 
+            GUInt64 nBlockSize, char **pBuffer, 
             MM_FILE_OFFSET DiskOffsetWhereToFlush, 
             __int32 nMyDiskSize);
 int MMReadFlush(struct MM_FLUSH_INFO *pFlush);
 int MM_ReadBlockFromBuffer(struct MM_FLUSH_INFO *FlushInfo);
-int MMReadIntegerDependingOnVersion(
+int MMReadGUInt64DependingOnVersion(
                             struct MiraMonVectLayerInfo *hMiraMonLayer,
                             struct MM_FLUSH_INFO *FlushInfo, 
-                                unsigned __int64 *nUI64);
+                                GUInt64 *nUI64);
+int MMReadOffsetDependingOnVersion(
+                            struct MiraMonVectLayerInfo *hMiraMonLayer,
+                            struct MM_FLUSH_INFO *FlushInfo, 
+                                MM_FILE_OFFSET *nUI64);
+
 
 
 // Tool functions
@@ -184,16 +189,16 @@ int MMResizeMiraMonRecord(struct MiraMonRecord **pMiraMonRecord,
                         MM_EXT_DBF_N_MULTIPLE_RECORDS nProposedMax);
 
 int MMResize_MM_N_VERTICES_TYPE_Pointer(MM_N_VERTICES_TYPE **pUI64, 
-                        MM_POLYGON_RINGS_COUNT *nMax, 
-                        MM_POLYGON_RINGS_COUNT nNum, 
-                        MM_POLYGON_RINGS_COUNT nIncr,
-                        MM_POLYGON_RINGS_COUNT nProposedMax);
+                        MM_N_VERTICES_TYPE *nMax, 
+                        MM_N_VERTICES_TYPE nNum, 
+                        MM_N_VERTICES_TYPE nIncr,
+                        MM_N_VERTICES_TYPE nProposedMax);
 
 int MMResizeVFGPointer(char **pInt, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax);
+                        MM_INTERNAL_FID *nMax, 
+                        MM_INTERNAL_FID nNum, 
+                        MM_INTERNAL_FID nIncr,
+                        MM_INTERNAL_FID nProposedMax);
 
 int MMResizeMM_POINT2DPointer(struct MM_POINT_2D **pPoint2D, 
                         MM_N_VERTICES_TYPE *nMax, 
@@ -201,11 +206,11 @@ int MMResizeMM_POINT2DPointer(struct MM_POINT_2D **pPoint2D,
                         MM_N_VERTICES_TYPE nIncr,
                         MM_N_VERTICES_TYPE nProposedMax);
 
-int MMResizeDoublePointer(double **pDouble, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax);
+int MMResizeDoublePointer(MM_COORD_TYPE **pDouble, 
+                        MM_N_VERTICES_TYPE *nMax, 
+                        MM_N_VERTICES_TYPE nNum, 
+                        MM_N_VERTICES_TYPE nIncr,
+                        MM_N_VERTICES_TYPE nProposedMax);
 int MM_ResizeStringToOperateIfNeeded(struct MiraMonVectLayerInfo *hMiraMonLayer,
                         MM_EXT_DBF_N_FIELDS nNewSize);
 int IsEmptyString(const char *string);

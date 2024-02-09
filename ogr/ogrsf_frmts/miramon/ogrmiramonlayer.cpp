@@ -560,13 +560,13 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
     if (phMiraMonLayer->bIsPolygon)
     {
         // First polygon is not returned because it's the universal polygon
-        if (iNextFID+1 >= phMiraMonLayer->TopHeader.nElemCount)
+        if (iNextFID+1 >= (GUInt64) phMiraMonLayer->TopHeader.nElemCount)
             return nullptr;
         iMMFeature = (MM_INTERNAL_FID)iNextFID+1;
     }
     else
     {
-        if(iNextFID>=phMiraMonLayer->TopHeader.nElemCount)
+        if(iNextFID>=(GUInt64)phMiraMonLayer->TopHeader.nElemCount)
             return nullptr;
         iMMFeature = (MM_INTERNAL_FID)iNextFID;
     }
@@ -590,7 +590,7 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
     return poFeature;
 }
 /****************************************************************************/
-/*                         GetFeature()                              */
+/*                         GetFeature()                                     */
 /****************************************************************************/
 
 OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
@@ -603,7 +603,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
     MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord = 0;
     
     /* -------------------------------------------------------------------- */
-    /*      Read nFeatureId feature directly from the file.                   */
+    /*      Read nFeatureId feature directly from the file.                 */
     /* -------------------------------------------------------------------- */
     switch(phMiraMonLayer->eLT)
     {
@@ -1289,13 +1289,13 @@ OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
 
     if (MMResize_MM_N_VERTICES_TYPE_Pointer(&hMMFeature.pNCoordRing,
             &hMMFeature.nMaxpNCoordRing,
-            hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS, 0))
+            (MM_N_VERTICES_TYPE)hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS, 0))
         return OGRERR_FAILURE;
     
     if (bUseVFG)
     {
         if (MMResizeVFGPointer(&hMMFeature.flag_VFG, &hMMFeature.nMaxVFG,
-            hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS, 0))
+            (MM_INTERNAL_FID)hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS, 0))
             return OGRERR_FAILURE;
         
         hMMFeature.flag_VFG[hMMFeature.nIRing] = MM_END_ARC_IN_RING;

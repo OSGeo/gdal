@@ -3,9 +3,9 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  C API to create a MiraMon layer
  * Author:   Abel Pau, a.pau@creaf.uab.cat, based on the MiraMon codes, 
- *           mainly written by Xavier Pons, Joan Masó, Abel Pau, Núria Julià,
- *           Xavier Calaf, Lluís Pesquer and Alaitz Zabala, from CREAF and
- *           Universitat Autònoma de Barcelona. For a complete list of
+ *           mainly written by Xavier Pons, Joan MasÃ³, Abel Pau, NÃºria JuliÃ ,
+ *           Xavier Calaf, LluÃ­s Pesquer and Alaitz Zabala, from CREAF and
+ *           Universitat AutÃ²noma de Barcelona. For a complete list of
  *           contributors: https://www.miramon.cat/USA/QuiSom.htm
  ******************************************************************************
  * Copyright (c) 2024, Xavier Pons
@@ -392,7 +392,7 @@ size_t longnomcamp;
     
     strcpy (NomCamp_SubIndex, nom_camp);
 
-    sprintf(subindex, "%I64u", (unsigned __int64)index);
+    sprintf(subindex, "%I64u", (GInt64)index);
 
 	_subindex = MM_GiveNewStringWithCharacterAhead(subindex, '_');
     longsubindex = strlen(_subindex);
@@ -1625,7 +1625,7 @@ __int64 exp, mantissa;
 	return FALSE;
 }
 
-#define MM_EsDoubleInfinit(a) (((*(unsigned __int64*)&(a)&0x7FFFFFFFFFFFFFFFui64)==0x7FF0000000000000ui64)?TRUE:FALSE)
+#define MM_EsDoubleInfinit(a) (((*(GInt64*)&(a)&0x7FFFFFFFFFFFFFFFui64)==0x7FF0000000000000ui64)?TRUE:FALSE)
 
 int MM_SprintfDoubleAmplada(char * cadena, int amplada, int n_decimals, double valor_double,
                             MM_BOOLEAN *Error_sprintf_n_decimals)

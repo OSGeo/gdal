@@ -3,9 +3,9 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  C API to create a MiraMon layer
  * Author:   Abel Pau, a.pau@creaf.uab.cat, based on the MiraMon codes, 
- *           mainly written by Xavier Pons, Joan Masó, Abel Pau, Núria Julià,
- *           Xavier Calaf, Lluís Pesquer and Alaitz Zabala, from CREAF and
- *           Universitat Autònoma de Barcelona. For a complete list of
+ *           mainly written by Xavier Pons, Joan MasÃ³, Abel Pau, NÃºria JuliÃ ,
+ *           Xavier Calaf, LluÃ­s Pesquer and Alaitz Zabala, from CREAF and
+ *           Universitat AutÃ²noma de Barcelona. For a complete list of
  *           contributors: https://www.miramon.cat/USA/QuiSom.htm
  ******************************************************************************
  * Copyright (c) 2024, Xavier Pons
@@ -292,7 +292,7 @@ struct MM_ZD *pZDescription=NULL;
 }
 
 int MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
-                IN size_t i_pol,
+                IN MM_INTERNAL_FID i_pol,
 				IN unsigned long int flag_z)
 {
 struct MM_PH *pPolHeader;
@@ -331,12 +331,12 @@ MM_N_VERTICES_TYPE nNAcumulVertices=0;
     hMiraMonLayer->ReadedFeature.nNumpCoord=0;
     if(MMResize_MM_N_VERTICES_TYPE_Pointer(&hMiraMonLayer->ReadedFeature.pNCoordRing, 
             &hMiraMonLayer->ReadedFeature.nMaxpNCoordRing, 
-            hMiraMonLayer->ReadedFeature.nNRings+1, 10, 10))
+            (MM_N_VERTICES_TYPE)hMiraMonLayer->ReadedFeature.nNRings+1, 10, 10))
         return 1;
 
     if(MMResizeVFGPointer(&hMiraMonLayer->ReadedFeature.flag_VFG, 
             &hMiraMonLayer->ReadedFeature.nMaxVFG,
-            pPolHeader->nArcsCount, 0, 0)) // Perhaps more memory than needed
+            (MM_INTERNAL_FID)pPolHeader->nArcsCount, 0, 0)) // Perhaps more memory than needed
         return 1;
 
     
@@ -355,7 +355,7 @@ MM_N_VERTICES_TYPE nNAcumulVertices=0;
         }
 
         // Arc index
-        if(MMReadIntegerDependingOnVersion(hMiraMonLayer,
+        if(MMReadGUInt64DependingOnVersion(hMiraMonLayer,
             &hMiraMonLayer->FlushPAL,
             &((hMiraMonLayer->pArcs+nIndex)->nIArc)))
         {
@@ -390,7 +390,7 @@ MM_N_VERTICES_TYPE nNAcumulVertices=0;
         }
 
         // Arc index
-        if(MMReadIntegerDependingOnVersion(hMiraMonLayer,
+        if(MMReadGUInt64DependingOnVersion(hMiraMonLayer,
             &hMiraMonLayer->FlushPAL,
             &((hMiraMonLayer->pArcs+nIndex)->nIArc)))
         {
@@ -412,7 +412,7 @@ MM_N_VERTICES_TYPE nNAcumulVertices=0;
 
         if(MMResize_MM_N_VERTICES_TYPE_Pointer(&hMiraMonLayer->ReadedFeature.pNCoordRing, 
                         &hMiraMonLayer->ReadedFeature.nMaxpNCoordRing, 
-                        hMiraMonLayer->ReadedFeature.nNRings+1, 10, 10))
+                        (MM_N_VERTICES_TYPE)hMiraMonLayer->ReadedFeature.nNRings+1, 10, 10))
             return 1;
 
         hMiraMonLayer->ReadedFeature.pNCoordRing[hMiraMonLayer->ReadedFeature.nNRings]+=hMiraMonLayer->ReadedFeature.nNumpCoord;

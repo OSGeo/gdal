@@ -3,9 +3,9 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  C API to create a MiraMon layer
  * Author:   Abel Pau, a.pau@creaf.uab.cat, based on the MiraMon codes, 
- *           mainly written by Xavier Pons, Joan Masó, Abel Pau, Núria Julià,
- *           Xavier Calaf, Lluís Pesquer and Alaitz Zabala, from CREAF and
- *           Universitat Autònoma de Barcelona. For a complete list of
+ *           mainly written by Xavier Pons, Joan MasÃ³, Abel Pau, NÃºria JuliÃ ,
+ *           Xavier Calaf, LluÃ­s Pesquer and Alaitz Zabala, from CREAF and
+ *           Universitat AutÃ²noma de Barcelona. For a complete list of
  *           contributors: https://www.miramon.cat/USA/QuiSom.htm
  ******************************************************************************
  * Copyright (c) 2024, Xavier Pons
@@ -62,29 +62,29 @@ int MMAppendIntegerDependingOnVersion(
             struct MiraMonVectLayerInfo *hMiraMonLayer,
             struct MM_FLUSH_INFO *FlushInfo, 
             unsigned long *nUL32, 
-            unsigned __int64 nUI64);
+            GUInt64 nUI64);
 int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile, 
             MM_FILE_OFFSET *nOffset);
 int MMResizeZSectionDescrPointer(struct MM_ZD **pZDescription, 
-            unsigned __int64 *nMax, 
-            unsigned __int64 nNum, 
-            unsigned __int64 nIncr,
-            unsigned __int64 nProposedMax);
+            GUInt64 *nMax, 
+            GUInt64 nNum, 
+            GUInt64 nIncr,
+            GUInt64 nProposedMax);
 int MMResizeArcHeaderPointer(struct MM_AH **pArcHeader, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax);
+                        GUInt64 *nMax, 
+                        GUInt64 nNum, 
+                        GUInt64 nIncr,
+                        GUInt64 nProposedMax);
 int MMResizeNodeHeaderPointer(struct MM_NH **pNodeHeader, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax);
+                        GUInt64 *nMax, 
+                        GUInt64 nNum, 
+                        GUInt64 nIncr,
+                        GUInt64 nProposedMax);
 int MMResizePolHeaderPointer(struct MM_PH **pPolHeader, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax);
+                        GUInt64 *nMax, 
+                        GUInt64 nNum, 
+                        GUInt64 nIncr,
+                        GUInt64 nProposedMax);
 void MMUpdateBoundingBoxXY(struct MMBoundingBox *dfBB, 
             struct MM_POINT_2D *pCoord);
 void MMUpdateBoundingBox(struct MMBoundingBox *dfBBToBeAct, 
@@ -644,7 +644,7 @@ struct MM_ZD *pZDescription=pZSection->pZDescription;
             }
         }
 
-        if(MMReadIntegerDependingOnVersion(hMiraMonLayer, &FlushTMP,
+        if(MMReadOffsetDependingOnVersion(hMiraMonLayer, &FlushTMP,
             &(pZDescription+nIndex)->nOffsetZ))
         {
             if(pBuffer)free_function(pBuffer);
@@ -677,7 +677,7 @@ struct MM_ZD *pZDescription=pZSection->pZDescription;
 
     if(MMInitFlush(&FlushTMP, pF,
         hMiraMonLayer->nMemoryRatio?
-        (unsigned __int64)(hMiraMonLayer->nMemoryRatio*MM_500MB):MM_500MB,
+        (GUInt64)(hMiraMonLayer->nMemoryRatio*MM_500MB):MM_500MB,
         &pBuffer, 
                 pZSection->ZSectionOffset, 0))
     {
@@ -829,7 +829,7 @@ int MMInitZSectionLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
     {
         if(MMInitFlush(&pZSection->FlushZL, pF3d, 
                 hMiraMonLayer->nMemoryRatio?
-                (unsigned __int64)(hMiraMonLayer->nMemoryRatio*MM_250MB):MM_250MB,
+                (GUInt64)(hMiraMonLayer->nMemoryRatio*MM_250MB):MM_250MB,
                 &pZSection->pZL, 
                 0, sizeof(double)))
             return 1;
@@ -908,7 +908,7 @@ int MMInitPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         if(MMInitFlush(&hMiraMonLayer->MMPoint.FlushTL, 
                 hMiraMonLayer->MMPoint.pFTL, 
                 hMiraMonLayer->nMemoryRatio?
-                    (unsigned __int64)(hMiraMonLayer->nMemoryRatio*MM_250MB):MM_250MB,
+                    (GUInt64)(hMiraMonLayer->nMemoryRatio*MM_250MB):MM_250MB,
                 &hMiraMonLayer->MMPoint.pTL, 
                 0, MM_SIZE_OF_TL))
                return 1;
@@ -1060,7 +1060,7 @@ struct MiraMonArcLayer *pMMArcLayer;
 
         if (MMInitFlush(&pMMArcLayer->MMNode.FlushNL, pMMArcLayer->MMNode.pFNL,
             hMiraMonLayer->nMemoryRatio?
-                (unsigned __int64)(hMiraMonLayer->nMemoryRatio*MM_250MB):MM_250MB,
+                (GUInt64)(hMiraMonLayer->nMemoryRatio*MM_250MB):MM_250MB,
             &pMMArcLayer->MMNode.pNL, 0, 0))
             return 1;
 
@@ -1191,7 +1191,7 @@ int MMInitArcLayer(struct MiraMonVectLayerInfo* hMiraMonLayer)
 
         if (MMInitFlush(&pMMArcLayer->FlushAL, pMMArcLayer->pFAL,
             hMiraMonLayer->nMemoryRatio?
-                (unsigned __int64)(hMiraMonLayer->nMemoryRatio*MM_500MB):MM_500MB,
+                (GUInt64)(hMiraMonLayer->nMemoryRatio*MM_500MB):MM_500MB,
                 &pMMArcLayer->pAL, 0, 0))
             return 1;
     }
@@ -1374,7 +1374,7 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
 
         if (MMInitFlush(&pMMPolygonLayer->FlushPS, pMMPolygonLayer->pFPS,
             hMiraMonLayer->nMemoryRatio?
-                (unsigned __int64)(hMiraMonLayer->nMemoryRatio*MM_500MB):MM_500MB,
+                (GUInt64)(hMiraMonLayer->nMemoryRatio*MM_500MB):MM_500MB,
             &pMMPolygonLayer->pPS, 0,
             pMMPolygonLayer->nPSElementSize))
             return 1;
@@ -1430,7 +1430,7 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
 
         if (MMInitFlush(&pMMPolygonLayer->FlushPAL, pMMPolygonLayer->pFPAL,
             hMiraMonLayer->nMemoryRatio?
-                (unsigned __int64)(hMiraMonLayer->nMemoryRatio*MM_500MB):MM_500MB,
+                (GUInt64)(hMiraMonLayer->nMemoryRatio*MM_500MB):MM_500MB,
             &pMMPolygonLayer->pPAL, 0, 0))
             return 1;
     }
@@ -2309,7 +2309,7 @@ void MMDestroyLayer(struct MiraMonVectLayerInfo **hMiraMonLayer)
 /*      Flush Layer Functions                                           */
 /* -------------------------------------------------------------------- */
 int MMInitFlush(struct MM_FLUSH_INFO *pFlush, FILE_TYPE *pF, 
-                unsigned __int64 nBlockSize, char **pBuffer, 
+                GUInt64 nBlockSize, char **pBuffer, 
                 MM_FILE_OFFSET DiskOffsetWhereToFlush, 
                 __int32 nMyDiskSize)
 {
@@ -2333,7 +2333,7 @@ int MMInitFlush(struct MM_FLUSH_INFO *pFlush, FILE_TYPE *pF,
 int MMReadFlush(struct MM_FLUSH_INFO *pFlush)
 {
     fseek_function(pFlush->pF, pFlush->OffsetWhereToFlush, SEEK_SET);
-    if(pFlush->nBlockSize!=(fread_function(pFlush->pBlockWhereToSaveOrRead, 1, pFlush->nBlockSize, pFlush->pF)))
+    if(pFlush->nBlockSize!=(GUInt64)(fread_function(pFlush->pBlockWhereToSaveOrRead, 1, pFlush->nBlockSize, pFlush->pF)))
         return 1;
     return 0;
 }
@@ -2345,7 +2345,7 @@ int MMFlushToDisk(struct MM_FLUSH_INFO *FlushInfo)
     // Just flush to the disk at the correct place.
     fseek_function(FlushInfo->pF, FlushInfo->OffsetWhereToFlush, SEEK_SET);
 
-    if(FlushInfo->nNumBytes!=fwrite_function(FlushInfo->pBlockWhereToSaveOrRead, 1, 
+    if(FlushInfo->nNumBytes!=(GUInt64)fwrite_function(FlushInfo->pBlockWhereToSaveOrRead, 1, 
             FlushInfo->nNumBytes, FlushInfo->pF))
         return 1;
     FlushInfo->OffsetWhereToFlush+=FlushInfo->nNumBytes;
@@ -2468,10 +2468,10 @@ MM_FILE_OFFSET reajust;
 	}
 }
 
-int MMReadIntegerDependingOnVersion(
+int MMReadGUInt64DependingOnVersion(
                             struct MiraMonVectLayerInfo *hMiraMonLayer,
                             struct MM_FLUSH_INFO *FlushInfo, 
-                            unsigned __int64 *nUI64)
+                            GUInt64 *nUI64)
 {
 unsigned long nUL32;
 
@@ -2481,7 +2481,32 @@ unsigned long nUL32;
         FlushInfo->SizeOfBlockToBeSaved=sizeof(nUL32);
         if(MM_ReadBlockFromBuffer(FlushInfo))
             return 1;
-        *nUI64=(unsigned __int64)nUL32;
+        *nUI64=(GUInt64)nUL32;
+    }
+    else
+    {
+        FlushInfo->pBlockToBeSaved=(void *)nUI64;
+        FlushInfo->SizeOfBlockToBeSaved=sizeof(&nUI64);
+        if(MM_ReadBlockFromBuffer(FlushInfo))
+            return 1;
+    }
+    return 0;
+}
+
+int MMReadOffsetDependingOnVersion(
+                            struct MiraMonVectLayerInfo *hMiraMonLayer,
+                            struct MM_FLUSH_INFO *FlushInfo, 
+                            MM_FILE_OFFSET *nUI64)
+{
+unsigned long nUL32;
+
+    if(hMiraMonLayer->LayerVersion==MM_32BITS_VERSION)
+    {
+        FlushInfo->pBlockToBeSaved=(void *)&nUL32;
+        FlushInfo->SizeOfBlockToBeSaved=sizeof(nUL32);
+        if(MM_ReadBlockFromBuffer(FlushInfo))
+            return 1;
+        *nUI64=(MM_FILE_OFFSET)nUL32;
     }
     else
     {
@@ -2496,7 +2521,7 @@ unsigned long nUL32;
 int MMAppendIntegerDependingOnVersion(
                             struct MiraMonVectLayerInfo *hMiraMonLayer,
                             struct MM_FLUSH_INFO *FlushInfo, 
-                            unsigned long *nUL32, unsigned __int64 nUI64)
+                            unsigned long *nUL32, GUInt64 nUI64)
 {
     if(hMiraMonLayer->LayerVersion==MM_32BITS_VERSION)
     {
@@ -2521,7 +2546,7 @@ struct MM_FLUSH_INFO FlushTMP;
 char *pBuffer=NULL;
 MM_FILE_OFFSET nBlockSize;
 struct MiraMonArcLayer *pMMArcLayer;
-unsigned __int64 nElementCount;
+MM_N_VERTICES_TYPE nElementCount;
 
     if(hMiraMonLayer->bIsPolygon)
     {
@@ -2591,30 +2616,30 @@ unsigned __int64 nElementCount;
 
         // Element count: number of vertices of the arc
         nElementCount=pMMArcLayer->pArcHeader[iElem].nElemCount;
-        if(MMReadIntegerDependingOnVersion(hMiraMonLayer, &FlushTMP,
+        if(MMReadGUInt64DependingOnVersion(hMiraMonLayer, &FlushTMP,
             &nElementCount))
         {
             if(pBuffer)free_function(pBuffer);
             return 1;
         }
-        pMMArcLayer->pArcHeader[iElem].nElemCount=(MM_N_VERTICES_TYPE)nElementCount;
+        pMMArcLayer->pArcHeader[iElem].nElemCount=nElementCount;
         
         // Offset: offset of the first vertice of the arc
-        if(MMReadIntegerDependingOnVersion(hMiraMonLayer, &FlushTMP,
+        if(MMReadOffsetDependingOnVersion(hMiraMonLayer, &FlushTMP,
             &pMMArcLayer->pArcHeader[iElem].nOffset))
         {
             if(pBuffer)free_function(pBuffer);
             return 1;
         }
         // First node: first node of the arc
-        if(MMReadIntegerDependingOnVersion(hMiraMonLayer, &FlushTMP,
+        if(MMReadGUInt64DependingOnVersion(hMiraMonLayer, &FlushTMP,
             &pMMArcLayer->pArcHeader[iElem].nFirstIdNode))
         {
             if(pBuffer)free_function(pBuffer);
             return 1;
         }
         // Last node: first node of the arc
-        if(MMReadIntegerDependingOnVersion(hMiraMonLayer, &FlushTMP,
+        if(MMReadGUInt64DependingOnVersion(hMiraMonLayer, &FlushTMP,
             &pMMArcLayer->pArcHeader[iElem].nLastIdNode))
         {
             if(pBuffer)free_function(pBuffer);
@@ -2658,7 +2683,7 @@ struct MiraMonArcLayer *pMMArcLayer;
 
     if(MMInitFlush(&FlushTMP, pMMArcLayer->pF, 
         hMiraMonLayer->nMemoryRatio?
-            (unsigned __int64)(hMiraMonLayer->nMemoryRatio*MM_500MB):MM_500MB,
+            (GUInt64)(hMiraMonLayer->nMemoryRatio*MM_500MB):MM_500MB,
         &pBuffer, DiskOffset, 0))
     {
         if(pBuffer)free_function(pBuffer);
@@ -2819,7 +2844,7 @@ struct MiraMonArcLayer *pMMArcLayer;
         }
         
         // Offset: offset of the first arc to the node
-        if(MMReadIntegerDependingOnVersion(hMiraMonLayer, &FlushTMP,
+        if(MMReadOffsetDependingOnVersion(hMiraMonLayer, &FlushTMP,
             &pMMArcLayer->MMNode.pNodeHeader[iElem].nOffset))
         {
             if(pBuffer)free_function(pBuffer);
@@ -2853,7 +2878,7 @@ struct MiraMonArcLayer *pMMArcLayer;
 
     if(MMInitFlush(&FlushTMP, pMMArcLayer->MMNode.pF, 
         hMiraMonLayer->nMemoryRatio?
-        (unsigned __int64)(hMiraMonLayer->nMemoryRatio*MM_500MB):MM_500MB,
+        (GUInt64)(hMiraMonLayer->nMemoryRatio*MM_500MB):MM_500MB,
         &pBuffer, DiskOffset, 0))
     {
         if(pBuffer)free_function(pBuffer);
@@ -2983,7 +3008,7 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
         }
 
         // Arcs count: number of the arcs of the polygon
-        if(MMReadIntegerDependingOnVersion(hMiraMonLayer, &FlushTMP,
+        if(MMReadGUInt64DependingOnVersion(hMiraMonLayer, &FlushTMP,
             &pMMPolygonLayer->pPolHeader[iElem].nArcsCount))
         {
             if(pBuffer)free_function(pBuffer);
@@ -2991,7 +3016,7 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
         }
 
         // External arcs count: number of the external arcs of the polygon
-        if(MMReadIntegerDependingOnVersion(hMiraMonLayer, &FlushTMP,
+        if(MMReadGUInt64DependingOnVersion(hMiraMonLayer, &FlushTMP,
             &pMMPolygonLayer->pPolHeader[iElem].nExternalRingsCount))
         {
             if(pBuffer)free_function(pBuffer);
@@ -2999,7 +3024,7 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
         }
 
         // Rings count: number of the rings of the polygon
-        if(MMReadIntegerDependingOnVersion(hMiraMonLayer, &FlushTMP,
+        if(MMReadGUInt64DependingOnVersion(hMiraMonLayer, &FlushTMP,
             &pMMPolygonLayer->pPolHeader[iElem].nRingsCount))
         {
             if(pBuffer)free_function(pBuffer);
@@ -3007,7 +3032,7 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
         }
         
         // Offset: offset of the first vertice of the arc
-        if(MMReadIntegerDependingOnVersion(hMiraMonLayer, &FlushTMP,
+        if(MMReadOffsetDependingOnVersion(hMiraMonLayer, &FlushTMP,
             &pMMPolygonLayer->pPolHeader[iElem].nOffset))
         {
             if(pBuffer)free_function(pBuffer);
@@ -3062,7 +3087,7 @@ struct MiraMonPolygonLayer *pMMPolygonLayer=&hMiraMonLayer->MMPolygon;
 
     if(MMInitFlush(&FlushTMP, pMMPolygonLayer->pF, 
         hMiraMonLayer->nMemoryRatio?
-        (unsigned __int64)(hMiraMonLayer->nMemoryRatio*MM_500MB):MM_500MB,
+        (GUInt64)(hMiraMonLayer->nMemoryRatio*MM_500MB):MM_500MB,
         &pBuffer, DiskOffset, 0))
     {
         if(pBuffer)free_function(pBuffer);
@@ -3308,7 +3333,8 @@ int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
 {
 double *pZ=NULL;
 struct MM_POINT_2D *pCoord, *pCoordReal;
-unsigned __int64 nIPart, nIVertice;
+MM_POLYGON_RINGS_COUNT nIPart;
+MM_N_VERTICES_TYPE nIVertice;
 double dtempx, dtempy;
 MM_POLYGON_RINGS_COUNT nExternalRingsCount;
 struct MM_PH *pCurrentPolHeader=NULL;
@@ -3923,8 +3949,8 @@ int MMCreateFeaturePoint(struct MiraMonVectLayerInfo *hMiraMonLayer, struct Mira
 {
 double *pZ=NULL;
 struct MM_POINT_2D *pCoord;
-unsigned __int64 nIPart, nIVertice;
-unsigned __int64 nCoord;
+MM_POLYGON_RINGS_COUNT nIPart;
+MM_N_VERTICES_TYPE nIVertice, nCoord;
 struct MM_ZD *pZDescription=NULL;
 MM_INTERNAL_FID nElemCount;
 int result;
@@ -4127,13 +4153,6 @@ int AddMMFeature(struct MiraMonVectLayerInfo *hMiraMonLayer,
 /* -------------------------------------------------------------------- */
 /*      Tools that MiraMon uses                                         */
 /* -------------------------------------------------------------------- */
-unsigned long GetUnsignedLongFromINT64(unsigned __int64 Nnumber)
-{
-    unsigned long Nulnumber=(unsigned long) Nnumber;
-    if(Nulnumber!=Nnumber)
-        return (unsigned long )-1; // To detect out of range
-    return Nulnumber;
-}
 
 void MMInitBoundingBox(struct MMBoundingBox *dfBB)
 {
@@ -4257,10 +4276,10 @@ unsigned __int32 nPrevMax;
 }
 
 int MMResizeZSectionDescrPointer(struct MM_ZD **pZDescription, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax)
+                        GUInt64 *nMax, 
+                        GUInt64 nNum, 
+                        GUInt64 nIncr,
+                        GUInt64 nProposedMax)
 {
     if(nNum<*nMax)
         return 0;
@@ -4278,10 +4297,10 @@ int MMResizeZSectionDescrPointer(struct MM_ZD **pZDescription,
 }
 
 int MMResizeNodeHeaderPointer(struct MM_NH **pNodeHeader, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax)
+                        GUInt64 *nMax, 
+                        GUInt64 nNum, 
+                        GUInt64 nIncr,
+                        GUInt64 nProposedMax)
 {
     if(nNum<*nMax)
         return 0;
@@ -4299,10 +4318,10 @@ int MMResizeNodeHeaderPointer(struct MM_NH **pNodeHeader,
 }
 
 int MMResizeArcHeaderPointer(struct MM_AH **pArcHeader, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax)
+                        GUInt64 *nMax, 
+                        GUInt64 nNum, 
+                        GUInt64 nIncr,
+                        GUInt64 nProposedMax)
 {
     if(nNum<*nMax)
         return 0;
@@ -4320,10 +4339,10 @@ int MMResizeArcHeaderPointer(struct MM_AH **pArcHeader,
 }
 
 int MMResizePolHeaderPointer(struct MM_PH **pPolHeader, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax)
+                        GUInt64 *nMax, 
+                        GUInt64 nNum, 
+                        GUInt64 nIncr,
+                        GUInt64 nProposedMax)
 {
     if(nNum<*nMax)
         return 0;
@@ -4341,10 +4360,10 @@ int MMResizePolHeaderPointer(struct MM_PH **pPolHeader,
 }
 
 int MMResize_MM_N_VERTICES_TYPE_Pointer(MM_N_VERTICES_TYPE **pVrt, 
-                        MM_POLYGON_RINGS_COUNT *nMax, 
-                        MM_POLYGON_RINGS_COUNT nNum, 
-                        MM_POLYGON_RINGS_COUNT nIncr,
-                        MM_POLYGON_RINGS_COUNT nProposedMax)
+                        MM_N_VERTICES_TYPE *nMax, 
+                        MM_N_VERTICES_TYPE nNum, 
+                        MM_N_VERTICES_TYPE nIncr,
+                        MM_N_VERTICES_TYPE nProposedMax)
 {
     if(nNum<*nMax)
         return 0;
@@ -4362,10 +4381,10 @@ int MMResize_MM_N_VERTICES_TYPE_Pointer(MM_N_VERTICES_TYPE **pVrt,
 }
 
 int MMResizeVFGPointer(char **pInt, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax)
+                        MM_INTERNAL_FID *nMax, 
+                        MM_INTERNAL_FID nNum, 
+                        MM_INTERNAL_FID nIncr,
+                        MM_INTERNAL_FID nProposedMax)
 {
     if(nNum<*nMax)
         return 0;
@@ -4402,11 +4421,11 @@ int MMResizeMM_POINT2DPointer(struct MM_POINT_2D **pPoint2D,
     return 0;
 }
 
-int MMResizeDoublePointer(double **pDouble, 
-                        unsigned __int64 *nMax, 
-                        unsigned __int64 nNum, 
-                        unsigned __int64 nIncr,
-                        unsigned __int64 nProposedMax)
+int MMResizeDoublePointer(MM_COORD_TYPE **pDouble, 
+                        MM_N_VERTICES_TYPE *nMax, 
+                        MM_N_VERTICES_TYPE nNum, 
+                        MM_N_VERTICES_TYPE nIncr,
+                        MM_N_VERTICES_TYPE nProposedMax)
 {
     if(nNum<*nMax)
         return 0;
@@ -5189,12 +5208,12 @@ int MMInitMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
     if(MMInitFlush(&pMMAdmDB->FlushRecList, 
             pMMAdmDB->pFExtDBF,
             hMiraMonLayer->nMemoryRatio?
-                (unsigned __int64)(hMiraMonLayer->nMemoryRatio*MM_250MB):MM_250MB,
+                (GUInt64)(hMiraMonLayer->nMemoryRatio*MM_250MB):MM_250MB,
             &pMMAdmDB->pRecList, 
             pMMAdmDB->pMMBDXP->OffsetPrimeraFitxa, 0))
         return 1;
 
-    pMMAdmDB->nNumRecordOnCourse=(unsigned __int64)pMMAdmDB->pMMBDXP->BytesPerFitxa+1;
+    pMMAdmDB->nNumRecordOnCourse=(GUInt64)pMMAdmDB->pMMBDXP->BytesPerFitxa+1;
     pMMAdmDB->szRecordOnCourse=calloc_function(pMMAdmDB->nNumRecordOnCourse);
     if(!pMMAdmDB->szRecordOnCourse)
     {
@@ -5409,11 +5428,11 @@ int MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
             return 1;
 
         // The record on course also has to change its size.
-        if ((unsigned __int64)pMMAdmDB->pMMBDXP->BytesPerFitxa + 1 >= pMMAdmDB->nNumRecordOnCourse)
+        if ((GUInt64)pMMAdmDB->pMMBDXP->BytesPerFitxa + 1 >= pMMAdmDB->nNumRecordOnCourse)
         {
             if (NULL == (pMMAdmDB->szRecordOnCourse =
                 realloc_function(pMMAdmDB->szRecordOnCourse,
-                    (unsigned __int64)pMMAdmDB->pMMBDXP->BytesPerFitxa + 1)))
+                    (GUInt64)pMMAdmDB->pMMBDXP->BytesPerFitxa + 1)))
             {
                 MM_CPLError(CE_Failure, CPLE_OutOfMemory,
                     "Memory error in MiraMon "
