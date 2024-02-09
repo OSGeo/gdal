@@ -12,7 +12,9 @@ export LD_PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so)
 export ASAN_OPTIONS=allocator_may_return_null=1:symbolize=1:suppressions=$PWD/../autotest/asan_suppressions.txt
 export LSAN_OPTIONS=detect_leaks=1,print_suppressions=0,suppressions=$PWD/../autotest/lsan_suppressions.txt
 
-gdalinfo autotest/gcore/data/byte.tif
+TEST_DIR=${GDAL_SOURCE_DIR:=..}/autotest
+
+gdalinfo ${TEST_DIR}/gcore/data/byte.tif
 python3 -c "from osgeo import gdal; print('yes')"
 
 cd autotest
@@ -26,7 +28,7 @@ cd autotest
 
 echo "#!/bin/sh" > pytest_wrapper.sh
 echo 'ARGS="$*"' >> pytest_wrapper.sh
-echo "python3 -m pytest --capture=no -ra -vv -p no:sugar --color=no -o console_output_style=classic \${ARGS} 2>&1" >> pytest_wrapper.sh
+echo "python3 -m pytest -c pytest.ini --capture=no -ra -vv -p no:sugar --color=no -o console_output_style=classic \${ARGS} 2>&1" >> pytest_wrapper.sh
 cat pytest_wrapper.sh
 chmod +x pytest_wrapper.sh
 
@@ -34,7 +36,7 @@ chmod +x pytest_wrapper.sh
 # That turns out to be what we want here though, since we want
 # to not fail when the address sanitizer finds errors.
 # So we tee the output to a file and grep it to discover if the tests failed.
-find -L \
+find ${TEST_DIR} \
     ogr gcore gdrivers osr alg gnm utilities pyscripts \
     -name '*.py' \
         ! -name netcdf_cfchecks.py \

@@ -12,15 +12,16 @@ export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 . ../scripts/setdevenv.sh
 
 IP=host.docker.internal
+TEST_DIR=${GDAL_SOURCE_DIR:=..}/autotest
 
 # MySQL 8
-(cd autotest && OGR_MYSQL_CONNECTION_STRING=mysql:test,user=root,password=passwd,port=33060,host=$IP $PYTEST ogr/ogr_mysql.py)
+(cd autotest && OGR_MYSQL_CONNECTION_STRING=mysql:test,user=root,password=passwd,port=33060,host=$IP $PYTEST ${TEST_DIR}/ogr/ogr_mysql.py)
 # MariaDB 10.3.9
-(cd autotest && OGR_MYSQL_CONNECTION_STRING=mysql:test,user=root,password=passwd,port=33061,host=$IP $PYTEST ogr/ogr_mysql.py)
+(cd autotest && OGR_MYSQL_CONNECTION_STRING=mysql:test,user=root,password=passwd,port=33061,host=$IP $PYTEST ${TEST_DIR}/ogr/ogr_mysql.py)
 
 # PostGIS tests
-(cd autotest && OGR_PG_CONNECTION_STRING="host=$IP port=25432 dbname=autotest user=docker password=docker" $PYTEST --capture=no -ra ogr/ogr_pg.py)
-(cd autotest && PGHOST="$IP" PGPORT=25432 PGUSER=docker PGPASSWORD=docker $PYTEST --capture=no -ra gdrivers/postgisraster.py)
+(cd autotest && OGR_PG_CONNECTION_STRING="host=$IP port=25432 dbname=autotest user=docker password=docker" $PYTEST --capture=no -ra ${TEST_DIR}/ogr/ogr_pg.py)
+(cd autotest && PGHOST="$IP" PGPORT=25432 PGUSER=docker PGPASSWORD=docker $PYTEST --capture=no -ra ${TEST_DIR}/gdrivers/postgisraster.py)
 
 # Generate coverage report
 lcov --directory . --capture --output-file gdal.info 2>/dev/null
