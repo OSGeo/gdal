@@ -102,7 +102,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             // the first element is readed)
             CPLDebug("MiraMon", "Initializing MiraMon points layer...");
             if(MMInitLayer(&hMiraMonLayerPNT, pszFilename,
-                nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE, MMMap))
+                nMMVersion, nMMMemoryRatio, nullptr, MM_WRITTING_MODE, MMMap))
             {
                 bValidFile = false;
                 return;
@@ -111,7 +111,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
 
             CPLDebug("MiraMon", "Initializing MiraMon arcs layer...");
             if (MMInitLayer(&hMiraMonLayerARC, pszFilename,
-                nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE, MMMap))
+                nMMVersion, nMMMemoryRatio, nullptr, MM_WRITTING_MODE, MMMap))
             {
                 bValidFile = false;
                 return;
@@ -120,7 +120,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
 
             CPLDebug("MiraMon", "Initializing MiraMon polygons layer...");
             if(MMInitLayer(&hMiraMonLayerPOL, pszFilename,
-                nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE, MMMap))
+                nMMVersion, nMMMemoryRatio, nullptr, MM_WRITTING_MODE, MMMap))
             {
                 bValidFile = false;
                 return;
@@ -131,7 +131,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             // information to get. A DBF will be generated
             CPLDebug("MiraMon", "Initializing MiraMon only-ext-DBF layer...");
             if(MMInitLayer(&hMiraMonLayerReadOrNonGeom, pszFilename,
-                nMMVersion, nMMMemoryRatio, NULL, MM_WRITTING_MODE, NULL))
+                nMMVersion, nMMMemoryRatio, nullptr, MM_WRITTING_MODE, nullptr))
             {
                 bValidFile = false;
                 return;
@@ -266,7 +266,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
 		            if ( (phMiraMonLayer->pMMBDXP->pfBaseDades =
                             fopen_function(
                                 phMiraMonLayer->pMMBDXP->szNomFitxer,
-                                "r"))==NULL)
+                                "r"))==nullptr)
                     {
                         CPLDebug("MiraMon", "File '%s' cannot be opened.",
                             phMiraMonLayer->pMMBDXP->szNomFitxer);
@@ -1123,7 +1123,7 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
 
 {
     OGRErr eErr = OGRERR_NONE;
-    OGRGeometry* poGeom = NULL;
+    OGRGeometry* poGeom = nullptr;
 
     if (hGeom)
     {
@@ -1246,7 +1246,7 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
 
     // Processing a feature without geometry.
     if (poGeom == nullptr)
-        return MMProcessGeometry(NULL, poFeature, TRUE);
+        return MMProcessGeometry(nullptr, poFeature, TRUE);
 
     // At this point MiraMon doesn't support unkwnon type geometry
     if(poGeom->getGeometryType() == wkbUnknown)

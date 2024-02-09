@@ -180,7 +180,7 @@ void RegisterOGRMiraMon()
         "<Value>V11</Value>"
         "<Value>V20</Value>"
         "<Value>last_version</Value>"
-        "<Value>NULL</Value>"
+        "<Value>nullptr</Value>"
         "</Option>"
         "</LayerCreationOptionList>");
 

@@ -36,7 +36,7 @@ OGRMiraMonDataSource::OGRMiraMonDataSource()
     pszRootName(nullptr)
 {
     MMMap.nNumberOfLayers=0;
-    MMMap.fMMMap=NULL;
+    MMMap.fMMMap=nullptr;
 }
 
 /****************************************************************************/
@@ -165,7 +165,7 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     {
         pszMMLayerName = CPLStrdup(pszLayerName);
         osPath = pszRootName;
-        pszFullMMLayerName = CPLFormFilename(pszRootName, pszLayerName, NULL);
+        pszFullMMLayerName = CPLFormFilename(pszRootName, pszLayerName, "");
     }
 
     // Let's create the folder if it's not already created.
@@ -179,7 +179,7 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Return open layer handle.                                       */
     /* -------------------------------------------------------------------- */
-    if (Open(pszFullMMLayerName, NULL, poSRS, TRUE,papszOptions))
+    if (Open(pszFullMMLayerName, nullptr, poSRS, TRUE,papszOptions))
     {
         CPLFree(pszMMLayerName);
         auto poLayer = papoLayers[nLayers - 1];

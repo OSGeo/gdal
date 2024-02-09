@@ -179,7 +179,7 @@ int MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
 FILE_TYPE *pF;
 struct MM_AH *pArcHeader;
 struct MiraMonArcLayer *pMMArc;
-struct MM_ZD *pZDescription=NULL;
+struct MM_ZD *pZDescription=nullptr;
 
     if (hMiraMonLayer->bIsPolygon)
         pMMArc=&hMiraMonLayer->MMPolygon.MMArc;
@@ -549,9 +549,9 @@ struct MM_PH *pPolHeader;
 
 int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
-const char * pszRelFile=NULL;
+const char * pszRelFile=nullptr;
 struct MM_BASE_DADES_XP *pMMBDXP;
-const char *szDBFFileName=NULL;
+const char *szDBFFileName=nullptr;
 
     // If readed don't read again. It happens when Polygon reads
     // the database and then in initArc() it's readed again.
@@ -588,7 +588,7 @@ const char *szDBFFileName=NULL;
     }
 
     fclose_function(pMMBDXP->pfBaseDades);
-	pMMBDXP->pfBaseDades=NULL;
+	pMMBDXP->pfBaseDades=nullptr;
 
     return 0;
 } 

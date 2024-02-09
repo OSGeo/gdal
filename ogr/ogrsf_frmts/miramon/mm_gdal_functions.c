@@ -57,8 +57,8 @@ struct MM_CAMP *MM_CreateAllFields(int ncamps)
 struct MM_CAMP *camp;
 MM_EXT_DBF_N_FIELDS i;
 
-    if ((camp=calloc_function(ncamps*sizeof(*camp)))==NULL)
-        return NULL;
+    if ((camp=calloc_function(ncamps*sizeof(*camp)))==nullptr)
+        return nullptr;
     
     for (i=0; i<(size_t)ncamps; i++)
     	MM_InitializeField(camp+i);
@@ -70,8 +70,8 @@ struct MM_BASE_DADES_XP * MM_CreateEmptyHeader(MM_EXT_DBF_N_FIELDS n_camps)
 struct MM_BASE_DADES_XP *base_dades_XP;
 
 	if ((base_dades_XP = (struct MM_BASE_DADES_XP *)
-						calloc_function(sizeof(struct MM_BASE_DADES_XP))) == NULL)
-		return NULL;
+						calloc_function(sizeof(struct MM_BASE_DADES_XP))) == nullptr)
+		return nullptr;
 	
 	if (n_camps==0)
 	{
@@ -83,7 +83,7 @@ struct MM_BASE_DADES_XP *base_dades_XP;
 		if (!base_dades_XP->Camp)
 		{
 			free_function (base_dades_XP);
-			return NULL;
+			return nullptr;
 		}
 	}
 	base_dades_XP->ncamps=n_camps;
@@ -97,8 +97,8 @@ struct MM_BASE_DADES_XP *bd_xp;
 struct MM_CAMP *camp;
 MM_EXT_DBF_N_FIELDS i;
 
-	if (NULL==(bd_xp=MM_CreateEmptyHeader(n_camps)))
-    	return NULL;
+	if (nullptr==(bd_xp=MM_CreateEmptyHeader(n_camps)))
+    	return nullptr;
 
     bd_xp->JocCaracters=charset;
     
@@ -219,15 +219,15 @@ MM_BOOLEAN MM_Is_character_valid_for_extended_DBF_field_name(int valor, int *val
 
 int MM_ISExtendedNameBD_XP(const char *nom_camp)
 {
-size_t mida, j;
+GInt32 mida, j;
 
-	mida=strlen(nom_camp);
+	mida=(GInt32)strlen(nom_camp);
 	if(mida>=MM_MAX_LON_FIELD_NAME_DBF)
 		return MM_NOM_DBF_NO_VALID;
 
 	for(j=0;j<mida;j++)
 	{
-		if(!MM_Is_character_valid_for_extended_DBF_field_name((unsigned char)nom_camp[j], NULL))
+		if(!MM_Is_character_valid_for_extended_DBF_field_name((unsigned char)nom_camp[j], nullptr))
 			return MM_NOM_DBF_NO_VALID;
 	}
 
@@ -367,11 +367,11 @@ char *ptr;
 size_t i;
 
 	if(!text)
-		return NULL;
+		return nullptr;
 
     i=strlen(text);
-	if ((ptr=calloc_function(i+2)) == NULL)
-        return NULL;
+	if ((ptr=calloc_function(i+2)) == nullptr)
+        return nullptr;
 
     *ptr=caracter;
     memcpy(ptr+1,text,i+1);
@@ -388,7 +388,7 @@ size_t longnomcamp;
        					
     NomCamp_SubIndex = calloc_function(ampladamax*sizeof(char));
     if(!NomCamp_SubIndex)
-        return NULL;
+        return nullptr;
     
     strcpy (NomCamp_SubIndex, nom_camp);
 
@@ -483,15 +483,15 @@ size_t retorn_fwrite;
 MM_BOOLEAN cal_tancar_taula=FALSE;
 GUInt32 nRecords;
 
-	if ((zero=calloc_function(max_n_zeros))==NULL)
+	if ((zero=calloc_function(max_n_zeros))==nullptr)
 		return FALSE;
 	
-    if (base_dades_XP->pfBaseDades == NULL)
+    if (base_dades_XP->pfBaseDades == nullptr)
 	{
 		strcpy(ModeLectura_previ,base_dades_XP->ModeLectura);
 		strcpy(base_dades_XP->ModeLectura, "wb");
         
-        if ( (base_dades_XP->pfBaseDades =fopen_function(base_dades_XP->szNomFitxer,base_dades_XP->ModeLectura))==NULL )
+        if ( (base_dades_XP->pfBaseDades =fopen_function(base_dades_XP->szNomFitxer,base_dades_XP->ModeLectura))==nullptr )
         {
             free_function(zero);
 			return FALSE;
@@ -831,7 +831,7 @@ GUInt32 nRecords;
     if(cal_tancar_taula)
     {
         fclose_function(base_dades_XP->pfBaseDades);
-        base_dades_XP->pfBaseDades = NULL;
+        base_dades_XP->pfBaseDades = nullptr;
     }
 
 	return TRUE;
@@ -861,12 +861,12 @@ char **cadena;
                 if (cadena[j])
                 {
                     free_function(cadena[j]);
-                    cadena[j]=NULL;
+                    cadena[j]=nullptr;
                 }
             }
         }
 		free_function(base_dades_XP->Camp);
-		base_dades_XP->Camp = NULL;
+		base_dades_XP->Camp = nullptr;
         base_dades_XP->ncamps=0;
 	}
 	return;
@@ -902,7 +902,7 @@ char *pszString;
     strcpy(pMMBDXP->ModeLectura, "rb");
 
 	if ((pMMBDXP->pfBaseDades=fopen_function(pMMBDXP->szNomFitxer,
-    	 pMMBDXP->ModeLectura))==NULL)
+    	 pMMBDXP->ModeLectura))==nullptr)
 	      return 1;
 
     pf=pMMBDXP->pfBaseDades;
@@ -994,7 +994,7 @@ char *pszString;
         {
             char local_message[11];
 			fseek(f_cpg, 0L, SEEK_SET);
-			if(NULL!=fgets(local_message, 10, f_cpg))
+			if(nullptr!=fgets(local_message, 10, f_cpg))
 			{
                 char *p=strstr(local_message, "UTF-8");
 				if(p)
@@ -1071,7 +1071,7 @@ char *pszString;
         }
     }
     else
-    	pMMBDXP->Camp = NULL;
+    	pMMBDXP->Camp = nullptr;
 
     fseek_function(pf, 32, SEEK_SET);
 	for (nIField=0; nIField<pMMBDXP->ncamps; nIField++)
@@ -1128,7 +1128,7 @@ char *pszString;
 
 	    for (j=0; j<MM_NUM_IDIOMES_MD_MULTIDIOMA; j++)
 		{
-        	pMMBDXP->Camp[nIField].separador[j]=NULL;
+        	pMMBDXP->Camp[nIField].separador[j]=nullptr;
 
             if (pszRelFile)
             {
@@ -1381,11 +1381,11 @@ size_t i;
     {
         if (cadena_inicial[i])
         {
-            if (NULL==(cadena_final[i]=strdup(cadena_inicial[i])))
+            if (nullptr==(cadena_final[i]=strdup(cadena_inicial[i])))
                 return 1;
         }
 		else
-			cadena_final[i]=NULL;
+			cadena_final[i]=nullptr;
     }
     return 0;
 }
@@ -1616,10 +1616,10 @@ const char MM_CadenaEspai[]={" "};
 
 MM_BOOLEAN MM_EsNANDouble(double a)
 {
-__int64 exp, mantissa;
+GInt64 exp, mantissa;
 
-	exp = *(__int64*)&a& 0x7FF0000000000000ui64;
-	mantissa = *(__int64*)&a & 0x000FFFFFFFFFFFFFui64;
+	exp = *(GInt64*)&a& 0x7FF0000000000000ui64;
+	mantissa = *(GInt64*)&a & 0x000FFFFFFFFFFFFFui64;
 	if (exp == 0x7FF0000000000000ui64 && mantissa != 0)
 		return TRUE;
 	return FALSE;
@@ -1785,11 +1785,11 @@ int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
                             MM_BYTE nNewPrecision,
 							MM_BYTE que_fer_amb_reformatat_decimals)
 {
-char *record, *whites=NULL;
+char *record, *whites=nullptr;
 MM_TIPUS_BYTES_PER_CAMP_DBF l_glop1, l_glop2, i_glop2;
 MM_EXT_DBF_N_RECORDS nfitx, i_reg;
 int canvi_amplada;
-signed __int32 j;
+GInt32 j;
 MM_EXT_DBF_N_FIELDS i_camp;
 size_t retorn_fwrite;
 int retorn_TruncaFitxer;
@@ -1809,12 +1809,12 @@ int retorn_printf;
 			l_glop2 = base_dades_XP->BytesPerFitxa -
 					base_dades_XP->Camp[nIField + 1].BytesAcumulats;
 
-		if ((record = calloc_function(base_dades_XP->BytesPerFitxa)) == NULL)
+		if ((record = calloc_function(base_dades_XP->BytesPerFitxa)) == nullptr)
 		    return 1;
 		
         record[base_dades_XP->BytesPerFitxa-1]=MM_MarcaFinalDeCadena;
 
-        if ((whites = (char *) calloc_function(nNewWidth)) == NULL)
+        if ((whites = (char *) calloc_function(nNewWidth)) == nullptr)
         {
             free_function (record);
             return 1;
@@ -1913,12 +1913,12 @@ int retorn_printf;
                             #ifdef _MSC_VER
                             #pragma warning( disable : 4127 )
                             #endif
-                            for(j=(signed __int32)(l_glop1 + (base_dades_XP->Camp[nIField].BytesPerCamp-1));TRUE;j--)
+                            for(j=(GInt32)(l_glop1 + (base_dades_XP->Camp[nIField].BytesPerCamp-1));TRUE;j--)
                             #ifdef _MSC_VER
                             #pragma warning( default : 4127 )
                             #endif
                             {
-                                if(j<(signed)l_glop1 || record[j] ==  ' ')
+                                if(j<(GInt32)l_glop1 || record[j] ==  ' ')
                                 {
                                     j++;
                                     break;
@@ -1926,7 +1926,7 @@ int retorn_printf;
                             }
 
                             if((base_dades_XP->Camp[nIField].BytesPerCamp + l_glop1- j) < nNewWidth)
-                                j -= (signed __int32)(nNewWidth - (base_dades_XP->Camp[nIField].BytesPerCamp + l_glop1-j));
+                                j -= (GInt32)(nNewWidth - (base_dades_XP->Camp[nIField].BytesPerCamp + l_glop1-j));
 
                             retorn_fwrite=fwrite_function(record+j, nNewWidth, 1, base_dades_XP->pfBaseDades);
                             if(1!=retorn_fwrite)
@@ -1942,7 +1942,7 @@ int retorn_printf;
                         double valor;
                         char *sz_valor;
 
-                        if ((sz_valor=calloc_function(max(nNewWidth,base_dades_XP->Camp[nIField].BytesPerCamp)+1))==NULL) // Sumo 1 per poder posar-hi el \0
+                        if ((sz_valor=calloc_function(max(nNewWidth,base_dades_XP->Camp[nIField].BytesPerCamp)+1))==nullptr) // Sumo 1 per poder posar-hi el \0
                         {
                             if (whites) free_function(whites);
                             free_function (record);
@@ -2074,7 +2074,7 @@ MM_N_VERTICES_TYPE i_vrt;
 double *pcoord_z;
 MM_N_HEIGHT_TYPE n_alcada, n_h_total;
 int tipus;
-double *alcada=NULL, *palcada, *palcada_i;
+double *alcada=nullptr, *palcada, *palcada_i;
 #define MM_N_ALCADA_LOCAL 50
 double local_CinquantaAlcades[MM_N_ALCADA_LOCAL];
 
@@ -2095,7 +2095,7 @@ double local_CinquantaAlcades[MM_N_ALCADA_LOCAL];
         palcada=local_CinquantaAlcades;
     else
     {
-        if (NULL==(palcada=alcada=malloc(n_vrt*sizeof(double)*n_alcada)))
+        if (nullptr==(palcada=alcada=malloc(n_vrt*sizeof(double)*n_alcada)))
             return 1;
     }
 
@@ -2196,7 +2196,7 @@ char *MM_RemoveLeadingWhitespaceOfString(char * cadena)
 char *ptr;
 char *ptr2;
 
-	if (cadena == NULL)
+	if (cadena == nullptr)
 		return cadena;
 
 	for (ptr=cadena; *ptr && (*ptr==' '||*ptr=='\t'); ptr++)
@@ -2220,7 +2220,7 @@ char *MM_RemoveWhitespacesFromEndOfString(char * str)
 {
 const char *s;
 
-  if (str == NULL)
+  if (str == nullptr)
 	return str;
 
   for (s = str; *s; ++s)
@@ -2240,13 +2240,13 @@ char *fitxa;
 MM_TIPUS_BYTES_PER_CAMP_DBF bytes_final_id_principi_id1=bytes_per_fitxa-bytes_id_grafic;
 
     *isListField=FALSE;
-	if (NULL==(id = (struct MM_ID_GRAFIC_MULTIPLE_RECORD *)calloc_function(n*sizeof(*id))))
-    	return NULL;
+	if (nullptr==(id = (struct MM_ID_GRAFIC_MULTIPLE_RECORD *)calloc_function(n*sizeof(*id))))
+    	return nullptr;
 	
-	if (NULL==( fitxa = (char *)calloc_function(bytes_id_grafic+1)))
+	if (nullptr==( fitxa = (char *)calloc_function(bytes_id_grafic+1)))
 	{
 		free_function (id);
-		return NULL;
+		return nullptr;
 	}
     fitxa[bytes_id_grafic]='\0';
 
@@ -2259,7 +2259,7 @@ MM_TIPUS_BYTES_PER_CAMP_DBF bytes_final_id_principi_id1=bytes_per_fitxa-bytes_id
 		{
 			free_function (id);
 			free_function (fitxa);
-            return NULL;
+            return nullptr;
 		}
 		i_dbf++;
 	}while (1!=sscanf(fitxa, scanf_MM_EXT_DBF_SIGNED_N_RECORDS, &id_grafic) || id_grafic<0);
@@ -2277,7 +2277,7 @@ MM_TIPUS_BYTES_PER_CAMP_DBF bytes_final_id_principi_id1=bytes_per_fitxa-bytes_id
         {
         	free_function(id);
             free_function (fitxa);
-            return NULL;
+            return nullptr;
         }
 		i=id_grafic;
 		if (i>=(MM_EXT_DBF_SIGNED_N_RECORDS)n)
@@ -2304,7 +2304,7 @@ MM_TIPUS_BYTES_PER_CAMP_DBF bytes_final_id_principi_id1=bytes_per_fitxa-bytes_id
 			{
 				free_function (id);
 				free_function (fitxa);
-				return NULL;
+				return nullptr;
 			}
 			if (1!=sscanf(fitxa,scanf_MM_EXT_DBF_SIGNED_N_RECORDS,&id_grafic) || id_grafic>=(MM_EXT_DBF_SIGNED_N_RECORDS)n)
 			{

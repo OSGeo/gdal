@@ -8,11 +8,14 @@ CPL_C_START // Necessary for compiling C in GDAL project
 #else
 typedef __int32             GInt32
 typedef unsigned __int32    GUInt32
-typedef __int32             GInt64
-typedef unsigned __int32    GUInt64
+typedef __int64             GInt64
+typedef unsigned __int64    GUInt64
 #endif
 
 #include <stddef.h> // For size_t 
+
+
+#define nullptr NULL
 
 #define MM_UNDEFINED_STATISTICAL_VALUE (2.9E+301)
 

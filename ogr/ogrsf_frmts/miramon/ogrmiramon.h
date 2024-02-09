@@ -87,19 +87,19 @@ class OGRMiraMonLayer final : public OGRLayer,
     double* padfValues;
 
     OGRFeature *GetNextRawFeature();
-    OGRFeature *GetFeature(GIntBig nFeatureId);
-    void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    void GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
                     MM_EXT_DBF_N_RECORDS nIRecord, MM_EXT_DBF_N_FIELDS nIField);
 
-    OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
+    OGRErr MMDumpVertices(OGRGeometryH hGeom,
                     MM_BOOLEAN bExternalRing, MM_BOOLEAN bUseVFG);
-    OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH poGeom,
+    OGRErr MMProcessGeometry(OGRGeometryH poGeom,
                     OGRFeature *poFeature, MM_BOOLEAN bcalculateRecord);
-    OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
+    OGRErr MMProcessMultiGeometry(OGRGeometryH hGeom,
                     OGRFeature* poFeature);
-    OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom);
+    OGRErr MMLoadGeometry(OGRGeometryH hGeom);
     OGRErr MMWriteGeometry();
-    GIntBig GetFeatureCount(int bForce);
+    GIntBig GetFeatureCount(int bForce) override;
     
   public:
     bool bValidFile;
@@ -129,7 +129,7 @@ class OGRMiraMonLayer final : public OGRLayer,
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
-                               int bApproxOK = TRUE) ;
+                               int bApproxOK = TRUE) override;
 
     int TestCapability(const char *) override;
 };

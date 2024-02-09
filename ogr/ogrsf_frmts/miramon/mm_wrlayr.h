@@ -95,7 +95,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define GDALDatasetGetLayer_function(a,b)   GDALDatasetGetLayer((a),(b))
     #define CPLRecode_function(a,b,c)       CPLRecode((a),(b),(c))
     #define CPLFree_function(a)               CPLFree((a))
-    #define form_filename_function(a,b)       CPLFormFilename((a),(b),NULL)
+    #define form_filename_function(a,b)       CPLFormFilename((a),(b),nullptr)
     #define MM_CPLGetBasename(a)                    CPLGetBasename((a))
 #endif
 
@@ -117,7 +117,7 @@ void MM_CPLDebug(
 // Layer functions
 int MMInitLayer(struct MiraMonVectLayerInfo *hMiraMonLayer, 
                 const char *pzFileName, 
-                __int32 LayerVersion, double nMMMemoryRatio,
+                GInt32 LayerVersion, double nMMMemoryRatio,
                 struct MiraMonDataBase *pLayerDB,
                 MM_BOOLEAN ReadOrWrite, struct MiraMonVectMapInfo *MMMap);
 int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer);
@@ -147,7 +147,7 @@ int MMGetVectorVersion(struct MM_TH *pTopHeader);
 int MMInitFlush(struct MM_FLUSH_INFO *pFlush, FILE_TYPE *pF, 
             GUInt64 nBlockSize, char **pBuffer, 
             MM_FILE_OFFSET DiskOffsetWhereToFlush, 
-            __int32 nMyDiskSize);
+            GInt32 nMyDiskSize);
 int MMReadFlush(struct MM_FLUSH_INFO *pFlush);
 int MM_ReadBlockFromBuffer(struct MM_FLUSH_INFO *FlushInfo);
 int MMReadGUInt64DependingOnVersion(
