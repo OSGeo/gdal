@@ -280,7 +280,7 @@ struct MiraMonFieldValue
 	MM_EXT_DBF_N_FIELDS nNumDinValue; // Size of the reserved string value
     char *pDinValue;       // Used if MM_MAX_STRING_FIELD_VALUE is not enough
 	double dValue;     // For double and 32 bit integer numeric values and 
-    __int64 iValue;    // For 64 bit integer values. 
+    GInt64 iValue;    // For 64 bit integer values. 
 	//MM_BOOLEAN kbValue;	// For binary values.
 };
 

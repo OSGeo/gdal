@@ -95,7 +95,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define GDALDatasetGetLayer_function(a,b)   GDALDatasetGetLayer((a),(b))
     #define CPLRecode_function(a,b,c)       CPLRecode((a),(b),(c))
     #define CPLFree_function(a)               CPLFree((a))
-    #define form_filename_function(a,b)       CPLFormFilename((a),(b),nullptr)
+    #define form_filename_function(a,b)       CPLFormFilename((a),(b),"")
     #define MM_CPLGetBasename(a)                    CPLGetBasename((a))
 #endif
 
@@ -171,10 +171,10 @@ const char * ReturnValueFromSectionINIFile(const char *filename,
 // In order to be efficient we reserve space to reuse it every
 // time a feature is added.
 int MMResizeMiraMonFieldValue(struct MiraMonFieldValue **pFieldValue, 
-                        unsigned __int32 *nMax, 
-                        unsigned __int32 nNum, 
-                        unsigned __int32 nIncr,
-                        unsigned __int32 nProposedMax);
+                        MM_EXT_DBF_N_FIELDS *nMax, 
+                        MM_EXT_DBF_N_FIELDS nNum, 
+                        MM_EXT_DBF_N_FIELDS nIncr,
+                        MM_EXT_DBF_N_FIELDS nProposedMax);
 
 int MMResizeMiraMonPolygonArcs(struct MM_PAL_MEM **pFID, 
                         MM_POLYGON_ARCS_COUNT *nMax, 
@@ -214,7 +214,7 @@ int MMResizeDoublePointer(MM_COORD_TYPE **pDouble,
 int MM_ResizeStringToOperateIfNeeded(struct MiraMonVectLayerInfo *hMiraMonLayer,
                         MM_EXT_DBF_N_FIELDS nNewSize);
 int IsEmptyString(const char *string);
-char *MMGetNFieldValue(const char *pszStringList, unsigned __int32 nIRecord);
+char *MMGetNFieldValue(const char *pszStringList, GUInt32 nIRecord);
 // Metadata functions
 int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char * result, MM_BYTE direction);
 
