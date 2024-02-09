@@ -78,16 +78,12 @@ struct MM_BASE_DADES_XP // MiraMon Database Structure
 {
     // Extended DBF file name
     char szNomFitxer[MM_MAX_PATH];
-    
+
     // Temporal table
     MM_BOOLEAN EsTaulaTemporal;
 
-    // Charset of the DBF
-    //struct CARACT_FITX caract_fitxerDBF;
-
     FILE_TYPE  *pfBaseDades;
-    //FILE_MEM *pfBaseDades_mem;
-
+    
     // Charset of the DBF
     MM_BYTE JocCaracters; 
     //BYTE InfoJocCaracExterna;
@@ -111,11 +107,6 @@ struct MM_BASE_DADES_XP // MiraMon Database Structure
     MM_BYTE dbf_on_a_LAN[MM_MAX_LON_DBF_ON_A_LAN_BASE_DADES_XP];
     MM_BYTE MDX_flag;
     MM_BYTE reservat_2[MM_MAX_LON_RESERVAT_2_BASE_DADES_XP];
-
-    //TIPUS_NUMERADOR_CAMP_DBF CampQueTeFitxerObert;
-    //TIPUS_NUMERADOR_CAMP_DBF CampRelacional;
-    //void huge * IndexICampRelacional;
-    //MM_BOOLEAN PucFerCercaBinaria;
 
     #define MM_ES_DBF_ESTESA(versio_dbf) (((versio_dbf)==MM_MARCA_VERSIO_1_DBF_ESTESA)?TRUE:FALSE)
 };
