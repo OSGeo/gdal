@@ -519,6 +519,15 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         CPLFree(padfValues);
 }
 
+/****************************************************************************/
+/*                            GetLayerDefn()                                */
+/****************************************************************************/
+
+OGRFeatureDefn *OGRMiraMonLayer::GetLayerDefn()
+{
+    return poFeatureDefn;
+}
+    
 
 /****************************************************************************/
 /*                            ResetReading()                                */
@@ -711,7 +720,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     if ((IAmExternal && nIRing + 1 <
                         phMiraMonLayer->ReadedFeature.nNRings &&
                         ((phMiraMonLayer->
-                            ReadedFeature.flag_VFG[nIRing + 1])|
+                            ReadedFeature.flag_VFG[nIRing + 1])&
                             MM_EXTERIOR_ARC_SIDE)) ||
                         nIRing + 1 >= phMiraMonLayer->ReadedFeature.nNRings)
                     {
@@ -829,8 +838,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         
                         nBytes+=strlen(phMiraMonLayer->szStringToOperate+nBytes);
                         if (phMiraMonLayer->pMMBDXP->JocCaracters == MM_JOC_CARAC_OEM850_DBASE)
-                            OemToCharBuff(phMiraMonLayer->szStringToOperate+nBytes,
-                                phMiraMonLayer->szStringToOperate+nBytes,
+                            MM_oemansi_n(phMiraMonLayer->szStringToOperate+nBytes,
                                 phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
 
                         if (phMiraMonLayer->pMMBDXP->JocCaracters != MM_JOC_CARAC_UTF8_DBF)
@@ -871,7 +879,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         MM_RemoveWhitespacesFromEndOfString(phMiraMonLayer->szStringToOperate);
 
                         if (phMiraMonLayer->pMMBDXP->JocCaracters == MM_JOC_CARAC_OEM850_DBASE)
-                            OemToCharBuff(phMiraMonLayer->szStringToOperate, phMiraMonLayer->szStringToOperate,
+                            MM_oemansi_n(phMiraMonLayer->szStringToOperate,
                                 phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
 
                         if (phMiraMonLayer->pMMBDXP->JocCaracters != MM_JOC_CARAC_UTF8_DBF)
@@ -1015,21 +1023,20 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 MM_RemoveWhitespacesFromEndOfString(phMiraMonLayer->szStringToOperate);
                 if(!IsEmptyString(phMiraMonLayer->szStringToOperate))
                 {
-                    char pszDate[9];
+                    char pszDate_5[5];
+                    char pszDate_3[3];
                     int Year, Month, Day;
 
-                    memset(pszDate, 0, 9);
-                    strncpy(pszDate, phMiraMonLayer->szStringToOperate, 9);
-                    pszDate[4]='\0';
-                    Year=atoi(pszDate);
+                    strncpy(pszDate_5, phMiraMonLayer->szStringToOperate, 4);
+                    Year=atoi(pszDate_5);
 
-                    strncpy(pszDate, phMiraMonLayer->szStringToOperate, 9);
-                    (pszDate+4)[2]='\0';
-                    Month=atoi(pszDate+4);
+                    strncpy(pszDate_3, phMiraMonLayer->szStringToOperate+4, 2);
+                    (pszDate_3)[2]='\0';
+                    Month=atoi(pszDate_3);
 
-                    strncpy(pszDate, phMiraMonLayer->szStringToOperate, 9);
-                    (pszDate+6)[2]='\0';
-                    Day=atoi(pszDate+6);
+                    strncpy(pszDate_3, phMiraMonLayer->szStringToOperate+6, 2);
+                    (pszDate_3)[2]='\0';
+                    Day=atoi(pszDate_3);
 
                     poFeature->SetField(nIField, Year, Month, Day);
                 }

@@ -1,7 +1,6 @@
 #ifndef __MMRDLAYR_H
 #define __MMRDLAYR_H
 
-#include <windows.h>
 #ifndef GDAL_COMPILATION
 #include "mm_gdal\mm_gdal_driver_structs.h"
 #else

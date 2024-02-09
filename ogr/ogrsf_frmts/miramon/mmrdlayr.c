@@ -171,7 +171,7 @@ char szResult[MM_MAX_ID_SNY+10];
 
 int MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 MM_INTERNAL_FID i_elem,
-				IN unsigned long int flag_z,
+				unsigned long int flag_z,
                 MM_N_VERTICES_TYPE nStartVertice,
                 MM_BOOLEAN bAvoidFirst,
                 unsigned char VFG)
@@ -292,8 +292,8 @@ struct MM_ZD *pZDescription=nullptr;
 }
 
 int MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
-                IN MM_INTERNAL_FID i_pol,
-				IN unsigned long int flag_z)
+                MM_INTERNAL_FID i_pol,
+				unsigned long int flag_z)
 {
 struct MM_PH *pPolHeader;
 struct MM_AH *pArcHeader;

@@ -20,6 +20,7 @@ CPL_C_START // Necessary for compiling in GDAL project
 
 char *MM_strnzcpy(char *dest, const char *src, size_t maxlen);
 char *MM_oemansi(char *szcadena);
+char *MM_oemansi_n(char *szcadena, size_t n_bytes);
 void MM_InitializeField(struct MM_CAMP *camp);
 struct MM_CAMP *MM_CreateAllFields(int ncamps);
 MM_FIRST_RECORD_OFFSET_TYPE MM_GiveOffsetExtendedFieldName(const struct MM_CAMP *camp);
