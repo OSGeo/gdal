@@ -354,8 +354,8 @@ MM_EXT_DBF_N_FIELDS i;
 
     for(i=0; i<base_dades_XP->ncamps; i++)
     {				
-        if((stricmp(base_dades_XP->Camp[i].NomCampDBFClassica, nom_camp_classic)) == 0 ||
-            (stricmp(base_dades_XP->Camp[i].NomCamp, nom_camp_classic)) == 0)
+        if((strcasecmp(base_dades_XP->Camp[i].NomCampDBFClassica, nom_camp_classic)) == 0 ||
+            (strcasecmp(base_dades_XP->Camp[i].NomCamp, nom_camp_classic)) == 0)
             return TRUE;
     }
     return FALSE;
@@ -1240,7 +1240,7 @@ int retorn=0;
     {
         if (bd_xp->Camp+i_camp==camp)
             continue;
-        if (!stricmp(bd_xp->Camp[i_camp].NomCamp, camp->NomCamp))
+        if (!strcasecmp(bd_xp->Camp[i_camp].NomCamp, camp->NomCamp))
             break;
     }
     if (i_camp<bd_xp->ncamps)
@@ -1256,7 +1256,7 @@ int retorn=0;
             {
                 if (bd_xp->Camp+i_camp==camp)
                     continue;
-                if (!stricmp(bd_xp->Camp[i_camp].NomCamp, camp->NomCamp))
+                if (!strcasecmp(bd_xp->Camp[i_camp].NomCamp, camp->NomCamp))
                     break;
             }
             if (i_camp==bd_xp->ncamps)
@@ -1278,7 +1278,7 @@ int retorn=0;
                 {
                     if (bd_xp->Camp+i_camp==camp)
                         continue;
-                    if (!stricmp(bd_xp->Camp[i_camp].NomCamp, camp->NomCamp))
+                    if (!strcasecmp(bd_xp->Camp[i_camp].NomCamp, camp->NomCamp))
                         break;
                 }
                 if (i_camp==bd_xp->ncamps)
@@ -1300,7 +1300,7 @@ int retorn=0;
                     {
                         if (bd_xp->Camp+i_camp==camp)
                             continue;
-                        if (!stricmp(bd_xp->Camp[i_camp].NomCamp, camp->NomCamp))
+                        if (!strcasecmp(bd_xp->Camp[i_camp].NomCamp, camp->NomCamp))
                             break;
                     }
                     if (i_camp==bd_xp->ncamps)
@@ -1326,7 +1326,7 @@ int retorn=0;
     {
         if (bd_xp->Camp+i_camp==camp)
             continue;
-        if (!stricmp(bd_xp->Camp[i_camp].DescripcioCamp[0], camp->DescripcioCamp[0]))
+        if (!strcasecmp(bd_xp->Camp[i_camp].DescripcioCamp[0], camp->DescripcioCamp[0]))
             break;
     }
     if (i_camp==bd_xp->ncamps)
@@ -1342,7 +1342,7 @@ int retorn=0;
         {
             if (bd_xp->Camp+i_camp==camp)
                 continue;
-            if (!stricmp(bd_xp->Camp[i_camp].DescripcioCamp[0], camp->DescripcioCamp[0]))
+            if (!strcasecmp(bd_xp->Camp[i_camp].DescripcioCamp[0], camp->DescripcioCamp[0]))
                 break;
         }
         if (i_camp==bd_xp->ncamps)
@@ -1363,7 +1363,7 @@ int retorn=0;
         {
             if (bd_xp->Camp+i_camp==camp)
                 continue;
-            if (!stricmp(bd_xp->Camp[i_camp].NomCamp, camp->NomCamp))
+            if (!strcasecmp(bd_xp->Camp[i_camp].NomCamp, camp->NomCamp))
                 break;
         }
         if (i_camp==bd_xp->ncamps)

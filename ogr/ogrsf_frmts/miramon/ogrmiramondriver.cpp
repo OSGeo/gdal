@@ -55,13 +55,13 @@ static int OGRMMDriverIdentify(GDALOpenInfo *poOpenInfo)
                 poOpenInfo->pabyHeader[2] == 'L'))
         {
             // Version 1.1 or 2.0 
-            if(((poOpenInfo->pabyHeader[3] == ' ' &&
-                    poOpenInfo->pabyHeader[4] == '1') &&
-                    (poOpenInfo->pabyHeader[5] == '.' &&
-                    poOpenInfo->pabyHeader[6] == '1')) ||
+            if((poOpenInfo->pabyHeader[3] == ' ' &&
+                    poOpenInfo->pabyHeader[4] == '1' &&
+                    poOpenInfo->pabyHeader[5] == '.' &&
+                    poOpenInfo->pabyHeader[6] == '1') ||
                 (poOpenInfo->pabyHeader[3] == ' ' &&
-                    poOpenInfo->pabyHeader[4] == '2') &&
-                    (poOpenInfo->pabyHeader[5] == '.' &&
+                    poOpenInfo->pabyHeader[4] == '2' &&
+                    poOpenInfo->pabyHeader[5] == '.' &&
                     poOpenInfo->pabyHeader[6] == '0'))
             {
                 return TRUE;

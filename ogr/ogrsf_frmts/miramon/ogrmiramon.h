@@ -63,8 +63,7 @@ class OGRMiraMonLayer final : public OGRLayer,
     struct MiraMonVectLayerInfo hMiraMonLayerReadOrNonGeom; 
 
     struct MiraMonFeature hMMFeature; // Feature reading/writing
-    struct MiraMonDataBase hLayerDB;
-
+    
     bool bUpdate;
 
     // Ratio used to enhance certain aspects of memory

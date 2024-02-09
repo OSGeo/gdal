@@ -4815,7 +4815,7 @@ int MMWriteMetadataFile(struct MiraMonVectorMetaData* hMMMD)
                     printf_function(pF, "%s=%s"LineReturn, KEY_unitats, hMMMD->pXUnit);
                 if (hMMMD->pYUnit)
                 {
-                    if (!hMMMD->pXUnit || stricmp(hMMMD->pXUnit, hMMMD->pYUnit))
+                    if (!hMMMD->pXUnit || strcasecmp(hMMMD->pXUnit, hMMMD->pYUnit))
                         printf_function(pF, "%s=%s"LineReturn, KEY_unitatsY, hMMMD->pYUnit);
                 }
             }
@@ -4829,7 +4829,7 @@ int MMWriteMetadataFile(struct MiraMonVectorMetaData* hMMMD)
                 printf_function(pF, "%s=%s"LineReturn, KEY_unitats, hMMMD->pXUnit);
                 if (hMMMD->pYUnit)
                 {
-                    if (!hMMMD->pXUnit || stricmp(hMMMD->pXUnit, hMMMD->pYUnit))
+                    if (!hMMMD->pXUnit || strcasecmp(hMMMD->pXUnit, hMMMD->pYUnit))
                         printf_function(pF, "%s=%s"LineReturn, KEY_unitatsY, hMMMD->pYUnit);
                 }
             }

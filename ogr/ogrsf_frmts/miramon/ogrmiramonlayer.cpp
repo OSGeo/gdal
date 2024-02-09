@@ -27,6 +27,7 @@
 #include "ogrmiramon.h"
 
 #include "mm_gdal_functions.h"  // For MMCreateExtendedDBFIndex()
+#include "mm_gdal_constants.h"  // For strcasecmp()
 #include "mmrdlayr.h"
 
 /****************************************************************************/
@@ -41,7 +42,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
       m_fp(fp ? fp : VSIFOpenL(pszFilename, (bUpdateIn ? "r+" : "r"))),
       papszKeyedValues(nullptr), bValidFile(false), hMMFeature(),
       phMiraMonLayer(nullptr), hMiraMonLayerPNT(), hMiraMonLayerARC(),
-      hMiraMonLayerPOL(), hMiraMonLayerReadOrNonGeom(), hLayerDB(),
+      hMiraMonLayerPOL(), hMiraMonLayerReadOrNonGeom(),
       papszValues(nullptr), padfValues(nullptr)
 {
 
@@ -233,10 +234,10 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                     "Height");
                 if (szHeight)
                 {
-                    if (!stricmp(szHeight, "Highest"))
+                    if (!strcasecmp(szHeight, "Highest"))
                         phMiraMonLayer->nSelectCoordz =
                             MM_SELECT_HIGHEST_COORDZ;
-                    else if (!stricmp(szHeight, "Lowest"))
+                    else if (!strcasecmp(szHeight, "Lowest"))
                         phMiraMonLayer->nSelectCoordz =
                             MM_SELECT_LOWEST_COORDZ;
                     else
@@ -303,9 +304,9 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                         papszOpenOptions, "iMultiRecord");
                     if (phMiraMonLayer->isListField && szMultiRecord)
                     {
-                        if (!stricmp(szMultiRecord, "Last"))
+                        if (!strcasecmp(szMultiRecord, "Last"))
                             phMiraMonLayer->iMultiRecord = -1;
-                        else if (!stricmp(szMultiRecord, "JSON"))
+                        else if (!strcasecmp(szMultiRecord, "JSON"))
                             phMiraMonLayer->iMultiRecord = -3;
                         else
                             phMiraMonLayer->iMultiRecord  = atoi(szMultiRecord);
@@ -1325,7 +1326,7 @@ OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
             MM_MEAN_NUMBER_OF_NCOORDS, 0))
         return OGRERR_FAILURE;
     
-    for (int iPoint = 0; iPoint < hMMFeature.pNCoordRing[hMMFeature.nIRing]; iPoint++)
+    for (int iPoint = 0; (MM_N_VERTICES_TYPE)iPoint < hMMFeature.pNCoordRing[hMMFeature.nIRing]; iPoint++)
     {
         hMMFeature.pCoord[hMMFeature.nICoord].dfX = OGR_G_GetX(hGeom, iPoint);
         hMMFeature.pCoord[hMMFeature.nICoord].dfY = OGR_G_GetY(hGeom, iPoint);

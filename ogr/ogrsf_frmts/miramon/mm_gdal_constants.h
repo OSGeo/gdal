@@ -13,7 +13,9 @@ typedef unsigned __int64    GUInt64
 #endif
 
 #include <stddef.h> // For size_t 
-
+#if defined(_WIN32)
+#define strcasecmp stricmp
+#endif
 
 #define nullptr NULL
 
