@@ -33,6 +33,8 @@
 #include "ogrsf_frmts.h"
 #include "cpl_odbc.h"
 #include "cpl_error.h"
+
+#include <map>
 #include <unordered_set>
 
 /************************************************************************/
@@ -190,11 +192,15 @@ class OGRODBCDataSource final : public OGRDataSource
 
     CPLODBCSession oSession;
 
+#if 0
+    // NOTE: nothing uses the SRS cache currently. Hence disabled.
+
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    int nKnownSRID;
-    int *panSRID;
-    OGRSpatialReference **papoSRS;
+    std::map<int,
+             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
+        m_oSRSCache{};
+#endif
 
     // set of all lowercase table names. Note that this is only used when
     // opening MDB datasources, not generic ODBC ones.
