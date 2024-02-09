@@ -208,7 +208,7 @@ struct MM_VARIABLES_LLEGEIX_POLS
 
 struct MM_FLUSH_INFO
 {
-    __int32 nMyDiskSize;
+    GInt32 nMyDiskSize;
     GUInt64 NTimesFlushed;
 
     // Pointer to an OPEN file where to flush.
@@ -296,8 +296,8 @@ struct MiraMonDataBaseField
     char pszFieldName[MM_MAX_LON_FIELD_NAME_DBF+1];
     char pszFieldDescription[MM_MAX_BYTES_FIELD_DESC+1];
     enum FieldType eFieldType; // See enum FieldType
-    unsigned __int32 nFieldSize; // MM_MAX_BYTES_IN_A_FIELD_EXT as maximum
-    unsigned __int32 nNumberOfDecimals; // MM_MAX_BYTES_IN_A_FIELD_EXT as maximum
+    GUInt32 nFieldSize; // MM_MAX_BYTES_IN_A_FIELD_EXT as maximum
+    GUInt32 nNumberOfDecimals; // MM_MAX_BYTES_IN_A_FIELD_EXT as maximum
     MM_BOOLEAN bIs64BitInteger; // For 64 bits integer fields
 };
 
@@ -355,7 +355,7 @@ struct MM_TH
 // Z Header (32 bytes)
 struct MM_ZH 
 {
-    __int32 nMyDiskSize;
+    GInt32 nMyDiskSize;
     // 16 bytes reserved
     double dfBBminz; // 8 bytes Minimum Z
     double dfBBmaxz; // 8 bytes Maximum Z
@@ -366,7 +366,7 @@ struct MM_ZD
 {
     double dfBBminz; // 8 bytes Minimum Z
     double dfBBmaxz; // 8 bytes Maximum Z
-    unsigned __int32 nZCount;  // 4 bytes
+    GUInt32 nZCount;  // 4 bytes
     // 4 bytes reserved (Only in version 2.0)
     MM_FILE_OFFSET nOffsetZ; // 4 or 8 bytes depending on the version
 };
@@ -381,7 +381,7 @@ struct MM_ZSection
     // Number of pZDescription allocated
     // nMaxZDescription = nElemCount from LayerInfo
     MM_FILE_OFFSET ZDOffset;
-    __int32 nZDDiskSize;
+    GInt32 nZDDiskSize;
     GUInt64 nMaxZDescription; 
     struct MM_ZD *pZDescription; //(I mode)
 
@@ -474,7 +474,7 @@ struct MiraMonNodeLayer
     FILE_TYPE *pF;
     
     // Header of every node
-    __int32 nSizeNodeHeader;
+    GInt32 nSizeNodeHeader;
     MM_INTERNAL_FID nMaxNodeHeader; // Number of pNodeHeader allocated
     struct MM_NH *pNodeHeader;// (I mode)
     
@@ -501,7 +501,7 @@ struct MiraMonArcLayer
     FILE_TYPE *pF3d; 
                 
     // Header of every arc
-    __int32 nSizeArcHeader;
+    GInt32 nSizeArcHeader;
     MM_INTERNAL_FID nMaxArcHeader; // Number of allocated pArcHeader 
     struct MM_AH *pArcHeader;// (I mode)
 
@@ -622,7 +622,7 @@ struct MiraMonVectMapInfo
 struct MiraMonVectLayerInfo
 {
     // Version of the structure
-    __int32 Version; 
+    GInt32 Version; 
 
     // Version of the layer
     // MM_32BITS_LAYER_VERSION: less than 2 Gb files
@@ -667,7 +667,7 @@ struct MiraMonVectLayerInfo
     double nMemoryRatio;
 
     // Header of the layer
-    __int32 nHeaderDiskSize;
+    GInt32 nHeaderDiskSize;
     struct MM_TH TopHeader;
 
     int eLT;    // Type of layer: Point, line or polygon (3d or not)

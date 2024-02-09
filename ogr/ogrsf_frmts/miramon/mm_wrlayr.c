@@ -4198,12 +4198,12 @@ void MMUpdateBoundingBoxXY(struct MMBoundingBox *dfBB,
 /*      Resize reused structures if needed                              */
 /* -------------------------------------------------------------------- */
 int MMResizeMiraMonFieldValue(struct MiraMonFieldValue **pFieldValue, 
-                        unsigned __int32 *nMax, 
-                        unsigned __int32 nNum, 
-                        unsigned __int32 nIncr,
-                        unsigned __int32 nProposedMax)
+                        MM_EXT_DBF_N_MULTIPLE_RECORDS *nMax, 
+                        MM_EXT_DBF_N_MULTIPLE_RECORDS nNum, 
+                        MM_EXT_DBF_N_MULTIPLE_RECORDS nIncr,
+                        MM_EXT_DBF_N_MULTIPLE_RECORDS nProposedMax)
 {
-unsigned __int32 nPrevMax;
+MM_EXT_DBF_N_MULTIPLE_RECORDS nPrevMax;
 
     if(nNum<*nMax)
         return 0;
@@ -4255,7 +4255,7 @@ int MMResizeMiraMonRecord(struct MiraMonRecord **pMiraMonRecord,
                         MM_EXT_DBF_N_MULTIPLE_RECORDS nIncr,
                         MM_EXT_DBF_N_MULTIPLE_RECORDS nProposedMax)
 {
-unsigned __int32 nPrevMax;
+MM_EXT_DBF_N_MULTIPLE_RECORDS nPrevMax;
 
     if(nNum<*nMax)
         return 0;
@@ -5490,10 +5490,10 @@ int MMWriteValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
 }
 
 // Gets the n-th value of the format (number_of_values:val1,val2,...,valN)
-char *MMGetNFieldValue(const char *pszStringList, unsigned __int32 nIRecord)
+char *MMGetNFieldValue(const char *pszStringList, GUInt32 nIRecord)
 {
 char *p, *q;
-int nNValues, nIValues;
+GUInt32 nNValues, nIValues;
 char *pszAux;
 
     if(!pszStringList)
@@ -5509,12 +5509,12 @@ char *pszAux;
     q=strstr(p, ":");
     p[(ptrdiff_t)q-(ptrdiff_t)p]='\0';	
     nNValues=atoi(p);
-    if(nIRecord>(unsigned __int32)nNValues)
+    if(nIRecord>nNValues)
         return NULL;
 
     q++;
     nIValues=0;
-    while((unsigned __int32)nIValues<=nIRecord)
+    while(nIValues<=nIRecord)
     {
         if(!q)
             return NULL;
@@ -5527,7 +5527,7 @@ char *pszAux;
             q[(ptrdiff_t)p-(ptrdiff_t)q]='\0';	
             return q;
         }
-        if ((unsigned __int32)nIValues == nIRecord)
+        if (nIValues == nIRecord)
         {
             p = strstr(q, ",");
             q[(ptrdiff_t)p - (ptrdiff_t)q] = '\0';

@@ -419,7 +419,7 @@ MM_FIRST_RECORD_OFFSET_TYPE offset_nom_camp;
 
 int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
 {
-    unsigned __int32 nRecords;
+    GUInt32 nRecords;
     if(!MMAdmDB->pMMBDXP)
         return 0;
 
@@ -439,7 +439,7 @@ int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
     {
         MMAdmDB->pMMBDXP->versio_dbf=MM_MARCA_DBASE4;
 
-        nRecords=(unsigned __int32)MMAdmDB->pMMBDXP->nRecords;
+        nRecords=(GUInt32)MMAdmDB->pMMBDXP->nRecords;
         if (fwrite_function(&nRecords, 4, 1, MMAdmDB->pFExtDBF) != 1)
             return FALSE;
     }
@@ -481,7 +481,7 @@ int estat;
 char nom_camp[MM_MAX_LON_FIELD_NAME_DBF];
 size_t retorn_fwrite;
 MM_BOOLEAN cal_tancar_taula=FALSE;
-unsigned __int32 nRecords;
+GUInt32 nRecords;
 
 	if ((zero=calloc_function(max_n_zeros))==NULL)
 		return FALSE;
@@ -555,7 +555,7 @@ unsigned __int32 nRecords;
     }
     else
     {
-        nRecords=(unsigned __int32)base_dades_XP->nRecords;
+        nRecords=(GUInt32)base_dades_XP->nRecords;
         if (fwrite_function(&nRecords, 4, 1, base_dades_XP->pfBaseDades) != 1)
             return FALSE;
     }
@@ -892,7 +892,7 @@ MM_FILE_OFFSET offset_reintent=0;
 char cpg_file[MM_MAX_PATH];
 const char *pszDesc;
 char section[MM_MAX_LON_FIELD_NAME_DBF+25]; // TAULA_PRINCIPAL:field_name
-unsigned __int32 nRecords;
+GUInt32 nRecords;
 char *pszString;
 
     if(!szFileName)
