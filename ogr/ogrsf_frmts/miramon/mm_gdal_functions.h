@@ -16,7 +16,7 @@ CPL_C_START // Necessary for compiling in GDAL project
 #endif
 
 #define MM_EscriuOffsetNomEstesBD_XP(bd_xp,i_camp,offset_nom_camp) \
-			memcpy((bd_xp)->Camp[(i_camp)].reservat_2+MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES,&(offset_nom_camp),4)
+            memcpy((bd_xp)->Camp[(i_camp)].reservat_2+MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES,&(offset_nom_camp),4)
 
 char *MM_strnzcpy(char *dest, const char *src, size_t maxlen);
 char *MM_oemansi(char *szcadena);
@@ -36,7 +36,7 @@ size_t MM_DefineFirstArcFieldsDB_XP(struct MM_BASE_DADES_XP *bd_xp, MM_BYTE n_de
 size_t MM_DefineFirstNodeFieldsDB_XP(struct MM_BASE_DADES_XP *bd_xp);
 size_t MM_DefineFirstPointFieldsDB_XP(struct MM_BASE_DADES_XP *bd_xp);
 int MM_ModifyFieldNameAndDescriptorIfPresentBD_XP(struct MM_CAMP *camp,
-			struct MM_BASE_DADES_XP * bd_xp, MM_BOOLEAN no_modifica_descriptor, size_t mida_nom);
+            struct MM_BASE_DADES_XP * bd_xp, MM_BOOLEAN no_modifica_descriptor, size_t mida_nom);
 
 int MMWriteValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
                             char *registre, 
@@ -47,10 +47,10 @@ int MM_SecureCopyStringFieldValue(char **pszStringDst,
                                  const char *pszStringSrc,
                                  MM_EXT_DBF_N_FIELDS *nStringCurrentLenght);
 int MM_ChangeDBFWidthField(struct MM_BASE_DADES_XP * base_dades_XP,
-							MM_EXT_DBF_N_FIELDS quincamp,
-							MM_TIPUS_BYTES_PER_CAMP_DBF novaamplada,
+                            MM_EXT_DBF_N_FIELDS quincamp,
+                            MM_TIPUS_BYTES_PER_CAMP_DBF novaamplada,
                             MM_BYTE nou_decimals,
-							MM_BYTE que_fer_amb_reformatat_decimals);
+                            MM_BYTE que_fer_amb_reformatat_decimals);
 
 int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt, struct MM_ZD *pZDescription, unsigned long int flag);
 

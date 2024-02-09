@@ -710,8 +710,8 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     // If I'm going to start a new polygon...
                     if ((IAmExternal && nIRing + 1 <
                         phMiraMonLayer->ReadedFeature.nNRings &&
-                        (phMiraMonLayer->
-                            ReadedFeature.flag_VFG[nIRing + 1]|
+                        ((phMiraMonLayer->
+                            ReadedFeature.flag_VFG[nIRing + 1])|
                             MM_EXTERIOR_ARC_SIDE)) ||
                         nIRing + 1 >= phMiraMonLayer->ReadedFeature.nNRings)
                     {
@@ -947,10 +947,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         1, phMiraMonLayer->pMMBDXP->pfBaseDades);
                     phMiraMonLayer->szStringToOperate[phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp] = '\0';
 
-                    if(phMiraMonLayer->pMMBDXP->Camp[nIField].DecimalsSiEsFloat)
-                        padfValues[nIRecord] = atof(phMiraMonLayer->szStringToOperate);
-                    else
-                        padfValues[nIRecord] = atof(phMiraMonLayer->szStringToOperate);
+                    padfValues[nIRecord] = atof(phMiraMonLayer->szStringToOperate);
                 }
 
                 poFeature->SetField(nIField,phMiraMonLayer->pMultRecordIndex[nIElem].nMR, padfValues);
@@ -1021,6 +1018,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     char pszDate[9];
                     int Year, Month, Day;
 
+                    memset(pszDate, 0, 9);
                     strncpy(pszDate, phMiraMonLayer->szStringToOperate, 9);
                     pszDate[4]='\0';
                     Year=atoi(pszDate);
