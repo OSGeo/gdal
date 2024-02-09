@@ -60,7 +60,7 @@ class OGRVFKLayer : public OGRLayer
     int m_iNextFeature;
 
     /* private methods */
-    static OGRGeometry *CreateGeometry(IVFKFeature *);
+    static const OGRGeometry *GetGeometry(IVFKFeature *);
     OGRFeature *GetFeature(IVFKFeature *);
 
   public:

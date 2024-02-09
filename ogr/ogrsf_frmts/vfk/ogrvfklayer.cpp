@@ -108,13 +108,13 @@ void OGRVFKLayer::ResetReading()
 }
 
 /*!
-  \brief Create geometry from VFKFeature
+  \brief Get geometry from VFKFeature
 
   \param poVfkFeature pointer to VFKFeature
 
   \return pointer to OGRGeometry or NULL on error
 */
-OGRGeometry *OGRVFKLayer::CreateGeometry(IVFKFeature *poVfkFeature)
+const OGRGeometry *OGRVFKLayer::GetGeometry(IVFKFeature *poVfkFeature)
 {
     return poVfkFeature->GetGeometry();
 }
@@ -222,12 +222,10 @@ OGRFeature *OGRVFKLayer::GetFeature(IVFKFeature *poVFKFeature)
         return nullptr;
 
     /* get features geometry */
-    OGRGeometry *poGeom = CreateGeometry(poVFKFeature);
-    if (poGeom != nullptr)
-        poGeom->assignSpatialReference(poSRS);
+    const OGRGeometry *poGeomRef = GetGeometry(poVFKFeature);
 
     /* does it satisfy the spatial query, if there is one? */
-    if (m_poFilterGeom != nullptr && poGeom && !FilterGeometry(poGeom))
+    if (m_poFilterGeom != nullptr && poGeomRef && !FilterGeometry(poGeomRef))
     {
         return nullptr;
     }
@@ -244,8 +242,12 @@ OGRFeature *OGRVFKLayer::GetFeature(IVFKFeature *poVFKFeature)
         return nullptr;
     }
 
-    if (poGeom)
-        poOGRFeature->SetGeometryDirectly(poGeom->clone());
+    if (poGeomRef)
+    {
+        auto poGeom = poGeomRef->clone();
+        poGeom->assignSpatialReference(poSRS);
+        poOGRFeature->SetGeometryDirectly(poGeom);
+    }
 
     m_iNextFeature++;
 

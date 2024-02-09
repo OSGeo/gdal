@@ -504,11 +504,10 @@ CPLErr MEMRasterBand::CreateMaskBand(int nFlagsIn)
         return CE_Failure;
 
     nMaskFlags = nFlagsIn;
-    bOwnMask = true;
     auto poMemMaskBand =
         new MEMRasterBand(pabyMaskData, GDT_Byte, nRasterXSize, nRasterYSize);
-    poMask = poMemMaskBand;
     poMemMaskBand->m_bIsMask = true;
+    poMask.reset(poMemMaskBand, true);
     if ((nFlagsIn & GMF_PER_DATASET) != 0 && nBand == 1 && poMemDS != nullptr)
     {
         for (int i = 2; i <= poMemDS->GetRasterCount(); ++i)
@@ -517,8 +516,7 @@ CPLErr MEMRasterBand::CreateMaskBand(int nFlagsIn)
                 cpl::down_cast<MEMRasterBand *>(poMemDS->GetRasterBand(i));
             poOtherBand->InvalidateMaskBand();
             poOtherBand->nMaskFlags = nFlagsIn;
-            poOtherBand->bOwnMask = false;
-            poOtherBand->poMask = poMask;
+            poOtherBand->poMask.reset(poMask.get(), false);
         }
     }
     return CE_None;
@@ -986,7 +984,7 @@ CPLErr MEMDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
         // for it
         MEMRasterBand *poMEMBand = cpl::down_cast<MEMRasterBand *>(poBand);
         const bool bMustGenerateMaskOvr =
-            ((poMEMBand->bOwnMask && poMEMBand->poMask != nullptr) ||
+            ((poMEMBand->poMask != nullptr && poMEMBand->poMask.IsOwned()) ||
              // Or if it is a per-dataset mask, in which case just do it for the
              // first band
              ((poMEMBand->nMaskFlags & GMF_PER_DATASET) != 0 && iBand == 0)) &&
@@ -998,8 +996,8 @@ CPLErr MEMDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             {
                 MEMRasterBand *poMEMOvrBand =
                     cpl::down_cast<MEMRasterBand *>(papoOverviewBands[i]);
-                if (!(poMEMOvrBand->bOwnMask &&
-                      poMEMOvrBand->poMask != nullptr) &&
+                if (!(poMEMOvrBand->poMask != nullptr &&
+                      poMEMOvrBand->poMask.IsOwned()) &&
                     (poMEMOvrBand->nMaskFlags & GMF_PER_DATASET) == 0)
                 {
                     poMEMOvrBand->CreateMaskBand(poMEMBand->nMaskFlags);
@@ -1016,8 +1014,7 @@ CPLErr MEMDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             // Make the mask band to be its own mask, similarly to what is
             // done for alpha bands in GDALRegenerateOverviews() (#5640)
             poMaskBand->InvalidateMaskBand();
-            poMaskBand->bOwnMask = false;
-            poMaskBand->poMask = poMaskBand;
+            poMaskBand->poMask.reset(poMaskBand, false);
             poMaskBand->nMaskFlags = 0;
             eErr = GDALRegenerateOverviewsEx(
                 (GDALRasterBandH)poMaskBand, nNewOverviews,

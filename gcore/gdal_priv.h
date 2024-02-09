@@ -1327,8 +1327,53 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int nBlockReads = 0;
     int bForceCachedIO = 0;
 
-    GDALRasterBand *poMask = nullptr;
-    bool bOwnMask = false;
+    class GDALRasterBandOwnedOrNot
+    {
+      public:
+        GDALRasterBandOwnedOrNot()
+        {
+        }
+
+        GDALRasterBandOwnedOrNot(GDALRasterBand *poBand, bool bOwned)
+            : m_poBandOwned(bOwned ? poBand : nullptr),
+              m_poBandRef(bOwned ? nullptr : poBand)
+        {
+        }
+
+        void reset()
+        {
+            m_poBandOwned.reset();
+            m_poBandRef = nullptr;
+        }
+
+        void reset(GDALRasterBand *poBand, bool bOwned)
+        {
+            m_poBandOwned.reset(bOwned ? poBand : nullptr);
+            m_poBandRef = bOwned ? nullptr : poBand;
+        }
+
+        GDALRasterBand *get()
+        {
+            return static_cast<GDALRasterBand *>(*this);
+        }
+
+        bool IsOwned() const
+        {
+            return m_poBandOwned != nullptr;
+        }
+
+        operator GDALRasterBand *()
+        {
+            return m_poBandOwned ? m_poBandOwned.get() : m_poBandRef;
+        }
+
+      private:
+        CPL_DISALLOW_COPY_ASSIGN(GDALRasterBandOwnedOrNot)
+        std::unique_ptr<GDALRasterBand> m_poBandOwned{};
+        GDALRasterBand *m_poBandRef = nullptr;
+    };
+
+    GDALRasterBandOwnedOrNot poMask{};
     bool m_bEnablePixelTypeSignedByteWarning =
         true;  // Remove me in GDAL 4.0. See GetMetadataItem() implementation
     int nMaskFlags = 0;

@@ -109,7 +109,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     int m_iGeomFieldFilter;  // specify the index on which the spatial
                              // filter is active.
 
-    int FilterGeometry(OGRGeometry *);
+    int FilterGeometry(const OGRGeometry *);
     // int          FilterGeometry( OGRGeometry *, OGREnvelope*
     // psGeometryEnvelope);
     int InstallFilter(OGRGeometry *);

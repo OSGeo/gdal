@@ -655,13 +655,14 @@ TABRawBinBlock *TABMAPFile::PushBlock(int nFileOffset)
 
     if (poBlock->GetBlockType() == TABMAP_INDEX_BLOCK)
     {
-        TABMAPIndexBlock *poIndex = cpl::down_cast<TABMAPIndexBlock *>(poBlock);
+        auto poIndex = std::unique_ptr<TABMAPIndexBlock>(
+            cpl::down_cast<TABMAPIndexBlock *>(poBlock));
 
         if (m_poSpIndexLeaf == nullptr)
         {
             delete m_poSpIndex;
-            m_poSpIndexLeaf = poIndex;
-            m_poSpIndex = poIndex;
+            m_poSpIndex = poIndex.release();
+            m_poSpIndexLeaf = m_poSpIndex;
         }
         else
         {
@@ -669,10 +670,9 @@ TABRawBinBlock *TABMAPFile::PushBlock(int nFileOffset)
                 m_poSpIndexLeaf->GetEntry(m_poSpIndexLeaf->GetCurChildIndex())
                     ->nBlockPtr == nFileOffset);
 
-            m_poSpIndexLeaf->SetCurChildRef(
-                poIndex, m_poSpIndexLeaf->GetCurChildIndex());
-            poIndex->SetParentRef(m_poSpIndexLeaf);
-            m_poSpIndexLeaf = poIndex;
+            m_poSpIndexLeaf->SetCurChild(std::move(poIndex),
+                                         m_poSpIndexLeaf->GetCurChildIndex());
+            m_poSpIndexLeaf = m_poSpIndexLeaf->GetCurChild();
         }
     }
     else
@@ -738,18 +738,16 @@ int TABMAPFile::LoadNextMatchingObjectBlock(int bFirstObject)
             TABMAPIndexBlock *poParent = m_poSpIndexLeaf->GetParentRef();
             if (m_poSpIndexLeaf == m_poSpIndex)
                 m_poSpIndex->UnsetCurChild();
-            else
-                delete m_poSpIndexLeaf;
             m_poSpIndexLeaf = poParent;
 
             if (poParent != nullptr)
             {
-                poParent->SetCurChildRef(nullptr, poParent->GetCurChildIndex());
+                poParent->SetCurChild(nullptr, poParent->GetCurChildIndex());
             }
             continue;
         }
 
-        m_poSpIndexLeaf->SetCurChildRef(nullptr, ++iEntry);
+        m_poSpIndexLeaf->SetCurChild(nullptr, ++iEntry);
 
         TABMAPIndexEntry *psEntry = m_poSpIndexLeaf->GetEntry(iEntry);
         if (!psEntry)
