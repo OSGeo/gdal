@@ -53,8 +53,7 @@ inline void FreeResultAndNullify(MYSQL_RES *&hResult)
 
 OGRMySQLDataSource::OGRMySQLDataSource()
     : papoLayers(nullptr), nLayers(0), pszName(nullptr), bDSUpdate(FALSE),
-      hConn(nullptr), nKnownSRID(0), panSRID(nullptr), papoSRS(nullptr),
-      poLongResultLayer(nullptr)
+      hConn(nullptr), poLongResultLayer(nullptr)
 {
 }
 
@@ -76,14 +75,6 @@ OGRMySQLDataSource::~OGRMySQLDataSource()
 
     if (hConn != nullptr)
         mysql_close(hConn);
-
-    for (int i = 0; i < nKnownSRID; i++)
-    {
-        if (papoSRS[i] != nullptr)
-            papoSRS[i]->Release();
-    }
-    CPLFree(panSRID);
-    CPLFree(papoSRS);
 }
 
 /************************************************************************/
@@ -557,7 +548,7 @@ OGRErr OGRMySQLDataSource::UpdateMetadataTables(const char *pszLayerName,
 /*      OGRSpatialReference, as handles may be cached.                  */
 /************************************************************************/
 
-OGRSpatialReference *OGRMySQLDataSource::FetchSRS(int nId)
+const OGRSpatialReference *OGRMySQLDataSource::FetchSRS(int nId)
 {
     if (nId < 0)
         return nullptr;
@@ -565,13 +556,11 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      First, we look through our SRID cache, is it there?             */
     /* -------------------------------------------------------------------- */
-    for (int i = 0; i < nKnownSRID; i++)
+    auto oIter = m_oSRSCache.find(nId);
+    if (oIter != m_oSRSCache.end())
     {
-        if (panSRID[i] == nId)
-            return papoSRS[i];
+        return oIter->second.get();
     }
-
-    OGRSpatialReference *poSRS = nullptr;
 
     // make sure to attempt to free any old results
     MYSQL_RES *hResult = mysql_store_result(GetConn());
@@ -608,12 +597,12 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS(int nId)
 
     FreeResultAndNullify(hResult);
 
-    poSRS = new OGRSpatialReference();
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS(
+        new OGRSpatialReference());
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if (pszWKT == nullptr || poSRS->importFromWkt(pszWKT) != OGRERR_NONE)
     {
-        delete poSRS;
-        poSRS = nullptr;
+        poSRS.reset();
     }
 
     CPLFree(pszWKT);
@@ -635,14 +624,8 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      Add to the cache.                                               */
     /* -------------------------------------------------------------------- */
-    panSRID = (int *)CPLRealloc(panSRID, sizeof(int) * (nKnownSRID + 1));
-    papoSRS = (OGRSpatialReference **)CPLRealloc(papoSRS, sizeof(void *) *
-                                                              (nKnownSRID + 1));
-    panSRID[nKnownSRID] = nId;
-    papoSRS[nKnownSRID] = poSRS;
-    nKnownSRID++;
-
-    return poSRS;
+    oIter = m_oSRSCache.emplace(nId, std::move(poSRS)).first;
+    return oIter->second.get();
 }
 
 /************************************************************************/
