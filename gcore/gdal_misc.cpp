@@ -4202,11 +4202,36 @@ void GDALDeserializeGCPListFromXML(CPLXMLNode *psGCPList,
         CPLFree(psGCP->pszInfo);
         psGCP->pszInfo = CPLStrdup(CPLGetXMLValue(psXMLGCP, "Info", ""));
 
-        psGCP->dfGCPPixel = CPLAtof(CPLGetXMLValue(psXMLGCP, "Pixel", "0.0"));
-        psGCP->dfGCPLine = CPLAtof(CPLGetXMLValue(psXMLGCP, "Line", "0.0"));
+        const auto ParseDoubleValue =
+            [psXMLGCP](const char *pszParameter, double &dfVal)
+        {
+            const char *pszVal =
+                CPLGetXMLValue(psXMLGCP, pszParameter, nullptr);
+            if (!pszVal)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "GCP#%s is missing",
+                         pszParameter);
+                return false;
+            }
+            char *endptr = nullptr;
+            dfVal = CPLStrtod(pszVal, &endptr);
+            if (endptr == pszVal)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "GCP#%s=%s is an invalid value", pszParameter, pszVal);
+                return false;
+            }
+            return true;
+        };
 
-        psGCP->dfGCPX = CPLAtof(CPLGetXMLValue(psXMLGCP, "X", "0.0"));
-        psGCP->dfGCPY = CPLAtof(CPLGetXMLValue(psXMLGCP, "Y", "0.0"));
+        if (!ParseDoubleValue("Pixel", psGCP->dfGCPPixel))
+            continue;
+        if (!ParseDoubleValue("Line", psGCP->dfGCPLine))
+            continue;
+        if (!ParseDoubleValue("X", psGCP->dfGCPX))
+            continue;
+        if (!ParseDoubleValue("Y", psGCP->dfGCPY))
+            continue;
         const char *pszZ = CPLGetXMLValue(psXMLGCP, "Z", nullptr);
         if (pszZ == nullptr)
         {
@@ -4214,7 +4239,14 @@ void GDALDeserializeGCPListFromXML(CPLXMLNode *psGCPList,
             // but could not read it back.
             pszZ = CPLGetXMLValue(psXMLGCP, "GCPZ", "0.0");
         }
-        psGCP->dfGCPZ = CPLAtof(pszZ);
+        char *endptr = nullptr;
+        psGCP->dfGCPZ = CPLStrtod(pszZ, &endptr);
+        if (endptr == pszZ)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GCP#Z=%s is an invalid value", pszZ);
+            continue;
+        }
 
         (*pnGCPCount)++;
     }
