@@ -1,8 +1,12 @@
 name: "CodeQL"
 
 on:
-  push:
-  pull_request:
+    push:
+        paths-ignore:
+            - 'doc/**'
+    pull_request:
+        paths-ignore:
+            - 'doc/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
