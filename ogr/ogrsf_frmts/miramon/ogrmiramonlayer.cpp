@@ -456,7 +456,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         MMCloseLayer(&hMiraMonLayerPNT);
         if (hMiraMonLayerPNT.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", "%llu " points written in the file %s.pnt",
+            CPLDebug("MiraMon", "%llu points written in the file %s.pnt",
                 hMiraMonLayerPNT.TopHeader.nElemCount,
                 hMiraMonLayerPNT.pszSrcLayerName);
         }
