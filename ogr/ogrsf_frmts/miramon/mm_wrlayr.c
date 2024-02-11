@@ -151,9 +151,9 @@ void MM_CPLDebug(
     const char* format, ...)
 {
 #ifdef GDAL_COMPILATION
-    CPLDebug(c, format);
+    CPLDebug(c, "%s", format);
 #else
-    sprintf(local_message, format);
+    sprintf(local_message, "%s", format);
     printf(local_message);
     printf("\n");
 #endif
@@ -651,7 +651,7 @@ int MMReadZDescriptionHeaders(struct MiraMonVectLayerInfo* hMiraMonLayer,
     return 0;
 }
 
-int MMWriteZDescriptionHeaders(struct MiraMonVectLayerInfo* hMiraMonLayer,
+static int MMWriteZDescriptionHeaders(struct MiraMonVectLayerInfo* hMiraMonLayer,
     FILE_TYPE* pF, MM_INTERNAL_FID nElements,
     struct MM_ZSection* pZSection)
 {
@@ -1842,7 +1842,7 @@ static int MMCloseNodeLayer(struct MiraMonVectLayerInfo* hMiraMonLayer)
 
         if (pMMArcLayer->MMNode.pFNL)
             fclose_function(pMMArcLayer->MMNode.pFNL);
-        if (pMMArcLayer->MMNode.pszNLName)
+        if (*pMMArcLayer->MMNode.pszNLName!='\0')
             remove_function(pMMArcLayer->MMNode.pszNLName);
     }
 
@@ -1912,7 +1912,7 @@ static int MMCloseArcLayer(struct MiraMonVectLayerInfo* hMiraMonLayer)
         }
         if (pMMArcLayer->pFAL)
             fclose_function(pMMArcLayer->pFAL);
-        if (pMMArcLayer->pszALName)
+        if (*pMMArcLayer->pszALName!='\0')
             remove_function(pMMArcLayer->pszALName);
 
         // 3D Section
@@ -2776,7 +2776,7 @@ int MMWriteAHArcSection(struct MiraMonVectLayerInfo* hMiraMonLayer,
     return 0;
 }
 
-int MMReadNHNodeSection(struct MiraMonVectLayerInfo* hMiraMonLayer)
+static int MMReadNHNodeSection(struct MiraMonVectLayerInfo* hMiraMonLayer)
 {
     MM_INTERNAL_FID iElem, nElem;
     struct MM_FLUSH_INFO FlushTMP;
@@ -5534,7 +5534,7 @@ char* MMGetNFieldValue(const char* pszStringList, GUInt32 nIRecord)
     return q;
 }
 
-int MMAddFeatureRecordToMMDB(struct MiraMonVectLayerInfo* hMiraMonLayer,
+static int MMAddFeatureRecordToMMDB(struct MiraMonVectLayerInfo* hMiraMonLayer,
     struct MiraMonFeature* hMMFeature,
     struct MMAdmDatabase* pMMAdmDB,
     char* pszRecordOnCourse,

@@ -13,6 +13,7 @@ CPL_C_START // Necessary for compiling in GDAL project
 #include <stdio.h> // For FILE
 #include "mm_gdal\mm_gdal_constants.h"
 #include "mm_gdal\mm_gdal_structures.h"
+#define UINT32_MAX _UI32_MAX 
 #endif
 
 // For MetaData

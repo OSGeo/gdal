@@ -29,7 +29,6 @@
 #include "mm_gdal_functions.h"  // For MMCreateExtendedDBFIndex()
 #include "mm_gdal_constants.h"  // For strcasecmp()
 #include "mmrdlayr.h"
-#include <cinttypes>
 
 /****************************************************************************/
 /*                            OGRMiraMonLayer()                             */
@@ -425,7 +424,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         MMCloseLayer(&hMiraMonLayerPOL);
         if (hMiraMonLayerPOL.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", "%" PRIu64" polygons written in the file %s.pol",
+            CPLDebug("MiraMon", "%llu polygons written in the file %s.pol",
                 // The polygon 0 is not imported
                 hMiraMonLayerPOL.TopHeader.nElemCount-1, 
                 hMiraMonLayerPOL.pszSrcLayerName);
@@ -441,7 +440,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         MMCloseLayer(&hMiraMonLayerARC);
         if (hMiraMonLayerARC.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", "%" PRIu64" arcs written in the file %s.arc",
+            CPLDebug("MiraMon", "%llu arcs written in the file %s.arc",
                 hMiraMonLayerARC.TopHeader.nElemCount,
                 hMiraMonLayerARC.pszSrcLayerName);
         }
@@ -457,7 +456,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         MMCloseLayer(&hMiraMonLayerPNT);
         if (hMiraMonLayerPNT.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", "%" PRIu64" points written in the file %s.pnt",
+            CPLDebug("MiraMon", "%llu " points written in the file %s.pnt",
                 hMiraMonLayerPNT.TopHeader.nElemCount,
                 hMiraMonLayerPNT.pszSrcLayerName);
         }
@@ -1874,10 +1873,18 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
 OGRErr OGRMiraMonLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 {
-    psExtent->MinX = phMiraMonLayer->TopHeader.hBB.dfMinX;
-    psExtent->MaxX = phMiraMonLayer->TopHeader.hBB.dfMaxX;
-    psExtent->MinY = phMiraMonLayer->TopHeader.hBB.dfMinY;
-    psExtent->MaxY = phMiraMonLayer->TopHeader.hBB.dfMaxY;
+    if (phMiraMonLayer)
+    {
+        psExtent->MinX = phMiraMonLayer->TopHeader.hBB.dfMinX;
+        psExtent->MaxX = phMiraMonLayer->TopHeader.hBB.dfMaxX;
+        psExtent->MinY = phMiraMonLayer->TopHeader.hBB.dfMinY;
+        psExtent->MaxY = phMiraMonLayer->TopHeader.hBB.dfMaxY;
+    }
+    else
+    {
+        if (!bForce)
+            return OGRERR_FAILURE;
+    }
 
     return OGRERR_NONE;
 }

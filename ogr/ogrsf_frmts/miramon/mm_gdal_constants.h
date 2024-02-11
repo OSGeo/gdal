@@ -6,10 +6,10 @@
 #ifdef GDAL_COMPILATION
 CPL_C_START // Necessary for compiling C in GDAL project
 #else
-typedef __int32             GInt32
-typedef unsigned __int32    GUInt32
-typedef __int64             GInt64
-typedef unsigned __int64    GUInt64
+typedef __int32             GInt32;
+typedef unsigned __int32    GUInt32;
+typedef __int64             GInt64;
+typedef unsigned __int64    GUInt64;
 #endif
 
 #include <stddef.h> // For size_t 
