@@ -42,7 +42,7 @@ typedef unsigned __int64    GUInt64;
 #define MM_MAX_PATH                         260
 #define MM_MESSAGE_LENGHT                   512
 #define MM_MAX_BYTES_FIELD_DESC             360
-#define MM_MAX_BYTES_IN_A_FIELD_EXT         (_UI32_MAX-1)
+#define MM_MAX_BYTES_IN_A_FIELD_EXT         (UINT32_MAX-1)
 #define MM_MAX_LON_FIELD_NAME_DBF              129
 #define MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF    11
 #define MM_MAX_LON_UNITATS                  66
@@ -104,10 +104,10 @@ typedef GUInt32 MM_EXT_DBF_N_FIELDS;  //(TIPUS_NUMERADOR_CAMP in MiraMon interna
 typedef GUInt32 MM_EXT_DBF_N_MULTIPLE_RECORDS;
 typedef GUInt64 MM_EXT_DBF_N_RECORDS;
 typedef GInt64 MM_EXT_DBF_SIGNED_N_RECORDS;
-#define scanf_MM_EXT_DBF_SIGNED_N_RECORDS  "%I64d"
+#define scanf_MM_EXT_DBF_SIGNED_N_RECORDS  "%lld"
 typedef GInt32 MM_FIRST_RECORD_OFFSET_TYPE;
 
-#define MM_MAX_EXT_DBF_N_FIELDS_TYPE            _UI32_MAX
+#define MM_MAX_EXT_DBF_N_FIELDS_TYPE            UINT32_MAX
 #define MM_MAX_N_CAMPS_DBF_CLASSICA             255 
 #define MM_MAX_AMPLADA_CAMP_C_DBF_CLASSICA      254 
 

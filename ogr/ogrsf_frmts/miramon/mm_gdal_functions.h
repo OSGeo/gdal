@@ -61,7 +61,7 @@ char *MM_RemoveWhitespacesFromEndOfString(char * str);
 char *MM_RemoveLeadingWhitespaceOfString(char * cadena);
 
 // DBF
-struct MM_ID_GRAFIC_MULTIPLE_RECORD *MMCreateExtendedDBFIndex(FILE_TYPE *f, size_t n, MM_EXT_DBF_N_RECORDS n_dbf,
+struct MM_ID_GRAFIC_MULTIPLE_RECORD *MMCreateExtendedDBFIndex(FILE_TYPE *f, MM_EXT_DBF_N_RECORDS n, MM_EXT_DBF_N_RECORDS n_dbf,
         MM_FIRST_RECORD_OFFSET_TYPE offset_1era, MM_TIPUS_BYTES_ACUMULATS_DBF bytes_per_fitxa,
         MM_TIPUS_BYTES_ACUMULATS_DBF bytes_acumulats_id_grafic,
         MM_TIPUS_BYTES_PER_CAMP_DBF bytes_id_grafic, MM_BOOLEAN *isListField, MM_EXT_DBF_N_RECORDS *nMaxN);

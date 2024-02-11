@@ -209,7 +209,7 @@ struct MM_VARIABLES_LLEGEIX_POLS
 
 struct MM_FLUSH_INFO
 {
-    GInt32 nMyDiskSize;
+    GUInt32 nMyDiskSize;
     GUInt64 NTimesFlushed;
 
     // Pointer to an OPEN file where to flush.
@@ -356,7 +356,7 @@ struct MM_TH
 // Z Header (32 bytes)
 struct MM_ZH 
 {
-    GInt32 nMyDiskSize;
+    GUInt32 nMyDiskSize;
     // 16 bytes reserved
     double dfBBminz; // 8 bytes Minimum Z
     double dfBBmaxz; // 8 bytes Maximum Z
@@ -367,7 +367,7 @@ struct MM_ZD
 {
     double dfBBminz; // 8 bytes Minimum Z
     double dfBBmaxz; // 8 bytes Maximum Z
-    GUInt32 nZCount;  // 4 bytes
+    GInt32 nZCount;  // 4 bytes (signed)
     // 4 bytes reserved (Only in version 2.0)
     MM_FILE_OFFSET nOffsetZ; // 4 or 8 bytes depending on the version
 };
@@ -382,7 +382,7 @@ struct MM_ZSection
     // Number of pZDescription allocated
     // nMaxZDescription = nElemCount from LayerInfo
     MM_FILE_OFFSET ZDOffset;
-    GInt32 nZDDiskSize;
+    GUInt32 nZDDiskSize;
     GUInt64 nMaxZDescription; 
     struct MM_ZD *pZDescription; //(I mode)
 
@@ -475,7 +475,7 @@ struct MiraMonNodeLayer
     FILE_TYPE *pF;
     
     // Header of every node
-    GInt32 nSizeNodeHeader;
+    GUInt32 nSizeNodeHeader;
     MM_INTERNAL_FID nMaxNodeHeader; // Number of pNodeHeader allocated
     struct MM_NH *pNodeHeader;// (I mode)
     
@@ -502,7 +502,7 @@ struct MiraMonArcLayer
     FILE_TYPE *pF3d; 
                 
     // Header of every arc
-    GInt32 nSizeArcHeader;
+    GUInt32 nSizeArcHeader;
     MM_INTERNAL_FID nMaxArcHeader; // Number of allocated pArcHeader 
     struct MM_AH *pArcHeader;// (I mode)
 
@@ -623,7 +623,7 @@ struct MiraMonVectMapInfo
 struct MiraMonVectLayerInfo
 {
     // Version of the structure
-    GInt32 Version; 
+    GUInt32 Version; 
 
     // Version of the layer
     // MM_32BITS_LAYER_VERSION: less than 2 Gb files
@@ -668,7 +668,7 @@ struct MiraMonVectLayerInfo
     double nMemoryRatio;
 
     // Header of the layer
-    GInt32 nHeaderDiskSize;
+    GUInt32 nHeaderDiskSize;
     struct MM_TH TopHeader;
 
     int eLT;    // Type of layer: Point, line or polygon (3d or not)

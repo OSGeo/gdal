@@ -121,7 +121,9 @@ void MMDestroyMMDB(struct MiraMonVectLayerInfo* hMiraMonLayer);
 /* -------------------------------------------------------------------- */
 /*      Functions to be used in GDAL and in MiraMon                     */
 /* -------------------------------------------------------------------- */
+#ifndef GDAL_COMPILATION
 static char local_message[5000];
+#endif
 void MM_CPLError(
     int level, int code,
     const char* format, ...)

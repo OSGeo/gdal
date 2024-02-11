@@ -44,6 +44,10 @@
 CPL_C_START // Necessary for compiling in GDAL project
 #endif
 
+static int MM_max(int a, int b) {
+    return (a > b) ? a : b;
+}
+
 // CREATING AN EXTENDED MIRAMON DBF
 void MM_InitializeField(struct MM_CAMP *camp)
 {
@@ -65,7 +69,7 @@ MM_EXT_DBF_N_FIELDS i;
     return camp;
 }
 
-struct MM_BASE_DADES_XP * MM_CreateEmptyHeader(MM_EXT_DBF_N_FIELDS n_camps)
+static struct MM_BASE_DADES_XP * MM_CreateEmptyHeader(MM_EXT_DBF_N_FIELDS n_camps)
 {
 struct MM_BASE_DADES_XP *base_dades_XP;
 
@@ -136,7 +140,7 @@ MM_BYTE MM_DBFFieldTypeToVariableProcessing(MM_BYTE tipus_camp_DBF)
     return MM_CAMP_CATEGORIC;
 }
 
-MM_BYTE MM_GetDefaultDesiredDBFFieldWidth(const struct MM_CAMP *camp)
+static MM_BYTE MM_GetDefaultDesiredDBFFieldWidth(const struct MM_CAMP *camp)
 {
 size_t a, b, c, d, e;
 
@@ -155,7 +159,7 @@ size_t a, b, c, d, e;
     return (MM_BYTE)(e<80?e:80);
 }
 
-MM_BOOLEAN MM_is_field_name_lowercase(const char *cadena)
+static MM_BOOLEAN MM_is_field_name_lowercase(const char *cadena)
 {
 const char *p;
 
@@ -167,7 +171,7 @@ const char *p;
     return FALSE;
 }
 
-MM_BOOLEAN MM_is_classical_field_DBF_name_or_lowercase(const char *cadena)
+static MM_BOOLEAN MM_is_classical_field_DBF_name_or_lowercase(const char *cadena)
 {
 const char *p;
 
@@ -183,7 +187,7 @@ const char *p;
     return TRUE;
 }
 
-MM_BOOLEAN MM_Is_character_valid_for_extended_DBF_field_name(int valor, int *valor_substitut)
+static MM_BOOLEAN MM_Is_character_valid_for_extended_DBF_field_name(int valor, int *valor_substitut)
 {
     if(valor_substitut)
     {
@@ -217,7 +221,7 @@ MM_BOOLEAN MM_Is_character_valid_for_extended_DBF_field_name(int valor, int *val
     return TRUE;
 }
 
-int MM_ISExtendedNameBD_XP(const char *nom_camp)
+static int MM_ISExtendedNameBD_XP(const char *nom_camp)
 {
 GInt32 mida, j;
 
@@ -243,13 +247,13 @@ GInt32 mida, j;
     return MM_NOM_DBF_CLASSICA_I_VALID;
 }
 
-MM_BYTE MM_CalculateBytesExtendedFieldName(struct MM_CAMP *camp)
+static MM_BYTE MM_CalculateBytesExtendedFieldName(struct MM_CAMP *camp)
 {
     camp->reservat_2[MM_OFFSET_RESERVAT2_MIDA_NOM_ESTES]=(MM_BYTE)strlen(camp->NomCamp);
     return MM_DonaBytesNomEstesCamp(camp);
 }
 
-MM_TIPUS_BYTES_ACUMULATS_DBF MM_CalculateBytesExtendedFieldNames(const struct MM_BASE_DADES_XP *bd_xp)
+static MM_TIPUS_BYTES_ACUMULATS_DBF MM_CalculateBytesExtendedFieldNames(const struct MM_BASE_DADES_XP *bd_xp)
 {
 MM_TIPUS_BYTES_ACUMULATS_DBF bytes_acumulats=0;
 MM_EXT_DBF_N_FIELDS i_camp;
@@ -263,14 +267,14 @@ MM_EXT_DBF_N_FIELDS i_camp;
     return bytes_acumulats;
 }
 
-MM_FIRST_RECORD_OFFSET_TYPE MM_CalculateBytesFirstRecordOffset(struct MM_BASE_DADES_XP *bd_xp)
+static MM_FIRST_RECORD_OFFSET_TYPE MM_CalculateBytesFirstRecordOffset(struct MM_BASE_DADES_XP *bd_xp)
 {
     if(bd_xp)
         return (32+32*bd_xp->ncamps+1+MM_CalculateBytesExtendedFieldNames(bd_xp));
     return 0;	
 }
 
-void MM_CheckDBFHeader(struct MM_BASE_DADES_XP * bd_xp)
+static void MM_CheckDBFHeader(struct MM_BASE_DADES_XP * bd_xp)
 {
 struct MM_CAMP *camp;
 MM_EXT_DBF_N_FIELDS i;
@@ -292,30 +296,33 @@ MM_BOOLEAN cal_DBF_estesa=FALSE;
     bd_xp->OffsetPrimeraFitxa=MM_CalculateBytesFirstRecordOffset(bd_xp);
 
     if (cal_DBF_estesa || bd_xp->ncamps>MM_MAX_N_CAMPS_DBF_CLASSICA
-        || bd_xp->nRecords>_UI32_MAX)
+        || bd_xp->nRecords>UINT32_MAX)
         bd_xp->versio_dbf=(MM_BYTE)MM_MARCA_VERSIO_1_DBF_ESTESA;
     else
         bd_xp->versio_dbf=MM_MARCA_DBASE4;
 }
 
 
-void MM_InitializeOffsetExtendedFieldNameFields(struct MM_BASE_DADES_XP *bd_xp, MM_EXT_DBF_N_FIELDS i_camp)
+static void MM_InitializeOffsetExtendedFieldNameFields(struct MM_BASE_DADES_XP *bd_xp, MM_EXT_DBF_N_FIELDS i_camp)
 {
     memset((char*)(&bd_xp->Camp[i_camp].reservat_2)+MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES, 0, 4);
 }
-void MM_InitializeBytesExtendedFieldNameFields(struct MM_BASE_DADES_XP *bd_xp, MM_EXT_DBF_N_FIELDS i_camp)
+static void MM_InitializeBytesExtendedFieldNameFields(struct MM_BASE_DADES_XP *bd_xp, MM_EXT_DBF_N_FIELDS i_camp)
 {
     memset((char*)(&bd_xp->Camp[i_camp].reservat_2)+MM_OFFSET_RESERVAT2_MIDA_NOM_ESTES, 0, 1);
 }
 
-short int MM_return_common_valid_DBF_field_name_string(char *cadena)
+static short int MM_return_common_valid_DBF_field_name_string(char *cadena)
 {
 char *p;
 short int error_retornat=0;
 
-    strupr(cadena);
+    if(!cadena)
+        return 0;
+    //strupr(cadena);
     for (p=cadena; *p; p++)
     {
+        (*p)=(char)toupper(*p);
         if ((*p>='A' && *p<='Z') || (*p>='0' && *p<='9') || *p=='_')
             ;
         else
@@ -332,7 +339,7 @@ short int error_retornat=0;
     return error_retornat;
 }
 
-short int MM_ReturnValidClassicDBFFieldName(char *cadena)
+static short int MM_ReturnValidClassicDBFFieldName(char *cadena)
 {
 size_t long_nom_camp;
 short int error_retornat=0;
@@ -347,7 +354,7 @@ short int error_retornat=0;
     return error_retornat;
 }
 
-MM_BOOLEAN MM_CheckClassicFieldNameEqual(const struct MM_BASE_DADES_XP * base_dades_XP,
+static MM_BOOLEAN MM_CheckClassicFieldNameEqual(const struct MM_BASE_DADES_XP * base_dades_XP,
                             const char *nom_camp_classic)
 {
 MM_EXT_DBF_N_FIELDS i;
@@ -361,7 +368,7 @@ MM_EXT_DBF_N_FIELDS i;
     return FALSE;
 }
 
-char *MM_GiveNewStringWithCharacterAhead(const char *text, char caracter)
+static char *MM_GiveNewStringWithCharacterAhead(const char *text, char caracter)
 {
 char *ptr;
 size_t i;
@@ -378,7 +385,7 @@ size_t i;
     return ptr;
 }
 
-char *MM_SetSubIndexFieldNam(char *nom_camp, MM_EXT_DBF_N_FIELDS index, size_t ampladamax)
+static char *MM_SetSubIndexFieldNam(char *nom_camp, MM_EXT_DBF_N_FIELDS index, size_t ampladamax)
 {
 char *NomCamp_SubIndex;
 char *_subindex;
@@ -392,7 +399,7 @@ size_t longnomcamp;
     
     strcpy (NomCamp_SubIndex, nom_camp);
 
-    sprintf(subindex, "%I64u", (GInt64)index);
+    sprintf(subindex, "%llu", (GUInt64)index);
 
     _subindex = MM_GiveNewStringWithCharacterAhead(subindex, '_');
     longsubindex = strlen(_subindex);
@@ -427,7 +434,7 @@ int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
     fseek_function(MMAdmDB->pFExtDBF, MM_FIRST_OFFSET_to_N_RECORDS, SEEK_SET);
 
     //MMAdmDB->pMMBDXP->nRecords=939439764538373;
-    if (MMAdmDB->pMMBDXP->nRecords > _UI32_MAX)
+    if (MMAdmDB->pMMBDXP->nRecords > UINT32_MAX)
     {
         MMAdmDB->pMMBDXP->versio_dbf=MM_MARCA_VERSIO_1_DBF_ESTESA;
 
@@ -467,7 +474,7 @@ int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
     return 0;
 }
 
-MM_BOOLEAN MM_UpdateEntireHeader(struct MM_BASE_DADES_XP * base_dades_XP)
+static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_BASE_DADES_XP * base_dades_XP)
 {
 MM_BYTE variable_byte;
 MM_EXT_DBF_N_FIELDS i, j=0;
@@ -502,7 +509,7 @@ GUInt32 nRecords;
 
     if((base_dades_XP->ncamps)>MM_MAX_N_CAMPS_DBF_CLASSICA)
         base_dades_XP->versio_dbf=MM_MARCA_VERSIO_1_DBF_ESTESA;
-    else if((base_dades_XP->nRecords)>_UI32_MAX)
+    else if((base_dades_XP->nRecords)>UINT32_MAX)
         base_dades_XP->versio_dbf=MM_MARCA_VERSIO_1_DBF_ESTESA;
     else
     {
@@ -547,7 +554,7 @@ GUInt32 nRecords;
         return FALSE;
 
     /* from 4 a 7, position MM_FIRST_OFFSET_to_N_RECORDS */
-    if (base_dades_XP->nRecords > _UI32_MAX)
+    if (base_dades_XP->nRecords > UINT32_MAX)
     {
         if (fwrite_function(&base_dades_XP->nRecords, 4, 1,
                 base_dades_XP->pfBaseDades) != 1)
@@ -592,7 +599,7 @@ GUInt32 nRecords;
         return FALSE;
 
     /* from 16 to 27 */
-    if (base_dades_XP->nRecords > _UI32_MAX)
+    if (base_dades_XP->nRecords > UINT32_MAX)
     {
         /* from 16 to 19, position MM_SECOND_OFFSET_to_N_RECORDS */
         if (fwrite_function(((char *)(&base_dades_XP->nRecords))+4, 4, 1,
@@ -988,7 +995,7 @@ char *pszString;
         FILE *f_cpg;
 
         strcpy(cpg_file, pMMBDXP->szNomFitxer);
-        reset_extension(cpg_file, ".cpg");
+        strcpy(cpg_file, reset_extension(cpg_file, ".cpg"));
         f_cpg=fopen(cpg_file, "rt");
         if(f_cpg)
         {
@@ -1460,7 +1467,7 @@ char *MM_oemansi(char *szcadena)
 }
 
 
-MM_BOOLEAN MM_FillFieldDB_XP(struct MM_CAMP *camp, const char *NomCamp, const char *DescripcioCamp, char TipusDeCamp,
+static MM_BOOLEAN MM_FillFieldDB_XP(struct MM_CAMP *camp, const char *NomCamp, const char *DescripcioCamp, char TipusDeCamp,
                     MM_TIPUS_BYTES_PER_CAMP_DBF BytesPerCamp, MM_BYTE DecimalsSiEsFloat)
 {
 char nom_temp[MM_MAX_LON_FIELD_NAME_DBF];
@@ -1632,20 +1639,20 @@ const char MM_CadenaBuida[]={""};
 #define MM_MarcaFinalDeCadena (*MM_CadenaBuida)
 const char MM_CadenaEspai[]={" "};
 
-MM_BOOLEAN MM_EsNANDouble(double a)
+static MM_BOOLEAN MM_EsNANDouble(double a)
 {
 GInt64 exp, mantissa;
 
-    exp = *(GInt64*)&a& 0x7FF0000000000000ui64;
-    mantissa = *(GInt64*)&a & 0x000FFFFFFFFFFFFFui64;
-    if (exp == 0x7FF0000000000000ui64 && mantissa != 0)
+    exp = *(GInt64*)&a& 0x7FF0000000000000ull;
+    mantissa = *(GInt64*)&a & 0x000FFFFFFFFFFFFFull;
+    if (exp == 0x7FF0000000000000ull && mantissa != 0)
         return TRUE;
     return FALSE;
 }
 
-#define MM_EsDoubleInfinit(a) (((*(GInt64*)&(a)&0x7FFFFFFFFFFFFFFFui64)==0x7FF0000000000000ui64)?TRUE:FALSE)
+#define MM_EsDoubleInfinit(a) (((*(GInt64*)&(a)&0x7FFFFFFFFFFFFFFFull)==0x7FF0000000000000ull)?TRUE:FALSE)
 
-int MM_SprintfDoubleAmplada(char * cadena, int amplada, int n_decimals, double valor_double,
+static int MM_SprintfDoubleAmplada(char * cadena, int amplada, int n_decimals, double valor_double,
                             MM_BOOLEAN *Error_sprintf_n_decimals)
 {
 #define VALOR_LIMIT_IMPRIMIR_EN_FORMAT_E 1E+17
@@ -1673,7 +1680,7 @@ int retorn_printf;
     }
 
     *Error_sprintf_n_decimals=FALSE;
-    if (!valor_double)
+    if (valor_double==0)
     {
         retorn_printf=sprintf (cadena_treball, "%*.*f", amplada, n_decimals, valor_double);
         if (retorn_printf==EOF)
@@ -1757,7 +1764,7 @@ int retorn_printf;
 #undef VALOR_MASSA_PETIT_PER_IMPRIMIR_f
 } // Fi de MM_SprintfDoubleAmplada()
 
-MM_BOOLEAN MM_EsCadenaDeBlancs(const char *cadena)
+static MM_BOOLEAN MM_EsCadenaDeBlancs(const char *cadena)
 {
 char *ptr;
 
@@ -1960,7 +1967,7 @@ int retorn_printf;
                         double valor;
                         char *sz_valor;
 
-                        if ((sz_valor=calloc_function(max(nNewWidth,base_dades_XP->Camp[nIField].BytesPerCamp)+1))==nullptr) // Sumo 1 per poder posar-hi el \0
+                        if ((sz_valor=calloc_function(MM_max(nNewWidth,base_dades_XP->Camp[nIField].BytesPerCamp)+1))==nullptr) // Sumo 1 per poder posar-hi el \0
                         {
                             if (whites) free_function(whites);
                             free_function (record);
@@ -1972,7 +1979,7 @@ int retorn_printf;
                         if(!MM_EsCadenaDeBlancs(sz_valor))
                         {
                             if (sscanf(sz_valor, "%lf", &valor)!=1)
-                                memset(sz_valor, *MM_CadenaEspai, max(nNewWidth,base_dades_XP->Camp[nIField].BytesPerCamp));
+                                memset(sz_valor, *MM_CadenaEspai, MM_max(nNewWidth,base_dades_XP->Camp[nIField].BytesPerCamp));
                             else
                             {
                                 retorn_printf=MM_SprintfDoubleAmplada(sz_valor, nNewWidth, 
@@ -2062,7 +2069,7 @@ int retorn_printf;
 } /* End of MMChangeCFieldWidthDBF() */
 
 
-void MM_AdoptaAlcada(double *desti, const double *proposta, unsigned long int flag)
+static void MM_AdoptaAlcada(double *desti, const double *proposta, unsigned long int flag)
 {
     if (*proposta==MM_NODATA_COORD_Z)
         return;
@@ -2158,7 +2165,7 @@ double local_CinquantaAlcades[MM_N_ALCADA_LOCAL];
     return 0;
 } // End of MM_GetArcHeights()
 
-char *MM_l_TreuBlancsDeFinalDeCadena(char *punter,
+static char *MM_l_TreuBlancsDeFinalDeCadena(char *punter,
                                             size_t l_cadena)
 {
 int longitud_cadena=(int)l_cadena;
