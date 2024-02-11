@@ -30,10 +30,10 @@
 /****************************************************************************/
 /*                          OGRMiraMonDataSource()                          */
 /****************************************************************************/
-
 OGRMiraMonDataSource::OGRMiraMonDataSource()
-    : papoLayers(nullptr), nLayers(0), pszDSName(nullptr), bUpdate(false),
-    pszRootName(nullptr)
+    : papoLayers(nullptr), nLayers(0), pszRootName(nullptr),
+    pszDSName(nullptr), bUpdate(false)
+    
 {
     MMMap.nNumberOfLayers=0;
     MMMap.fMMMap=nullptr;
@@ -129,9 +129,9 @@ int OGRMiraMonDataSource::Create(const char *pszDataSetName,
 /****************************************************************************/
 
 OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
-                                         const OGRSpatialReference *poSRS,
-                                         OGRwkbGeometryType eType,
-                                         char **papszOptions)
+                        const OGRSpatialReference *poSRS,
+                        OGRwkbGeometryType eType, // Unused parameter
+                        char **papszOptions)
 {
     CPLAssert(nullptr != pszLayerName);
 

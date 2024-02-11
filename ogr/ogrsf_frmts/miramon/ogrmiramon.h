@@ -78,7 +78,6 @@ class OGRMiraMonLayer final : public OGRLayer,
     
     VSILFILE *m_fp = nullptr;
 
-    CPLString osLine;
     char **papszKeyedValues;
 
     // Array of string or doubles used in the field features processing

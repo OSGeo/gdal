@@ -29,21 +29,22 @@
 #include "mm_gdal_functions.h"  // For MMCreateExtendedDBFIndex()
 #include "mm_gdal_constants.h"  // For strcasecmp()
 #include "mmrdlayr.h"
+#include <cinttypes>
 
 /****************************************************************************/
 /*                            OGRMiraMonLayer()                             */
 /****************************************************************************/
-
 OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                          const OGRSpatialReference *poSRS, int bUpdateIn,
                          char **papszOpenOptions,
                          struct MiraMonVectMapInfo *MMMap)
-    : poFeatureDefn(nullptr), iNextFID(0), bUpdate(CPL_TO_BOOL(bUpdateIn)),
+    : poFeatureDefn(nullptr), iNextFID(0), phMiraMonLayer(nullptr), 
+      hMiraMonLayerPNT(), hMiraMonLayerARC(),
+      hMiraMonLayerPOL(),hMiraMonLayerReadOrNonGeom(),
+      hMMFeature(), bUpdate(CPL_TO_BOOL(bUpdateIn)), nMMMemoryRatio(1.0),
       m_fp(fp ? fp : VSIFOpenL(pszFilename, (bUpdateIn ? "r+" : "r"))),
-      papszKeyedValues(nullptr), bValidFile(false), hMMFeature(),
-      phMiraMonLayer(nullptr), hMiraMonLayerPNT(), hMiraMonLayerARC(),
-      hMiraMonLayerPOL(), hMiraMonLayerReadOrNonGeom(),
-      papszValues(nullptr), padfValues(nullptr)
+      papszKeyedValues(nullptr), papszValues(nullptr),
+      padfValues(nullptr), bValidFile(false)
 {
 
     CPLDebug("MiraMon", "Creating/Opening MiraMon layer...");
@@ -424,7 +425,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         MMCloseLayer(&hMiraMonLayerPOL);
         if (hMiraMonLayerPOL.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", "%I64u polygons written in the file %s.pol",
+            CPLDebug("MiraMon", "%" PRIu64" polygons written in the file %s.pol",
                 // The polygon 0 is not imported
                 hMiraMonLayerPOL.TopHeader.nElemCount-1, 
                 hMiraMonLayerPOL.pszSrcLayerName);
@@ -440,7 +441,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         MMCloseLayer(&hMiraMonLayerARC);
         if (hMiraMonLayerARC.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", "%I64u arcs written in the file %s.arc",
+            CPLDebug("MiraMon", "%" PRIu64" arcs written in the file %s.arc",
                 hMiraMonLayerARC.TopHeader.nElemCount,
                 hMiraMonLayerARC.pszSrcLayerName);
         }
@@ -456,7 +457,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         MMCloseLayer(&hMiraMonLayerPNT);
         if (hMiraMonLayerPNT.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", "%I64u points written in the file %s.pnt",
+            CPLDebug("MiraMon", "%" PRIu64" points written in the file %s.pnt",
                 hMiraMonLayerPNT.TopHeader.nElemCount,
                 hMiraMonLayerPNT.pszSrcLayerName);
         }

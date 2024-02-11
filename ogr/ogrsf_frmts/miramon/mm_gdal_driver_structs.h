@@ -109,8 +109,8 @@ CPL_C_START // Necessary for compiling in GDAL project
 
 #define STATISTICAL_UNDEF_VALUE (2.9E+301)
 
-#define MAXIMUM_OBJECT_INDEX_IN_2GB_VECTORS _UI32_MAX 
-#define MAXIMUM_OFFSET_IN_2GB_VECTORS _UI32_MAX
+#define MAXIMUM_OBJECT_INDEX_IN_2GB_VECTORS UINT32_MAX //_UI32_MAX 
+#define MAXIMUM_OFFSET_IN_2GB_VECTORS UINT32_MAX  //_UI32_MAX
 
 // Number of rings a polygon could have (it's just an aproximation)
 #define MM_MEAN_NUMBER_OF_RINGS 10  
