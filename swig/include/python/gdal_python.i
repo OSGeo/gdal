@@ -523,6 +523,10 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                   buf_string,
                   buf_xsize=None, buf_ysize=None, buf_type=None,
                   buf_pixel_space=None, buf_line_space=None ):
+      """
+      Write the contents of a buffer to a dataset.
+
+      """
 
       if buf_xsize is None:
           buf_xsize = xsize
@@ -549,8 +553,72 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                   resample_alg=gdalconst.GRIORA_NearestNeighbour,
                   callback=None,
                   callback_data=None):
-      """ Reading a chunk of a GDAL band into a numpy array. The optional (buf_xsize,buf_ysize,buf_type)
-      parameters should generally not be specified if buf_obj is specified. The array is returned"""
+      """
+      Read a window of this raster band into a NumPy array.
+
+      Parameters
+      ----------
+      xoff : int, default=0
+         The pixel offset to left side of the region of the band to
+         be read. This would be zero to start from the left side.
+      yoff : int, default=0
+         The line offset to top side of the region of the band to
+         be read. This would be zero to start from the top side.
+      win_xsize : int, optional
+           The number of pixels to read in the x direction. By default,
+           equal to the number of columns in the raster.
+      win_ysize : int, optional
+           The number of rows to read in the y direction. By default,
+           equal to the number of bands in the raster.
+      buf_xsize : int, optional
+           The number of columns in the returned array. If not equal
+           to ``win_xsize``, the returned values will be determined
+           by ``resample_alg``.
+      buf_ysize : int, optional
+           The number of rows in the returned array. If not equal
+           to ``win_ysize``, the returned values will be determined
+           by ``resample_alg``.
+      buf_type : int, optional
+           The data type of the returned array
+      buf_obj : np.ndarray, optional
+           Optional buffer into which values will be read. If ``buf_obj``
+           is specified, then ``buf_xsize``/``buf_ysize``/``buf_type``
+           should generally not be specified.
+      resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`.
+           Specifies the resampling algorithm to use when the size of
+           the read window and the buffer are not equal.
+      callback : function, optional
+          A progress callback function
+      callback_data: optional
+          Optional data to be passed to callback function
+
+      Returns
+      -------
+      np.ndarray
+
+      Examples
+      --------
+      >>> import numpy as np
+      >>> ds = gdal.GetDriverByName("GTiff").Create("test.tif", 4, 4)
+      >>> ds.WriteArray(np.arange(16).reshape(4, 4))
+      0
+      >>> band = ds.GetRasterBand(1)
+      >>> band.ReadAsArray()
+      array([[ 0,  1,  2,  3],
+             [ 4,  5,  6,  7],
+             [ 8,  9, 10, 11],
+             [12, 13, 14, 15]], dtype=uint8)
+      >>> band.ReadAsArray(xoff=2, yoff=2, win_xsize=2, win_ysize=2)
+      array([[10, 11],
+             [14, 15]], dtype=uint8)
+      >>> band.ReadAsArray(buf_xsize=2, buf_ysize=2, buf_type=gdal.GDT_Float64, resample_alg=gdal.GRIORA_Average)
+      array([[ 3.,  5.],
+             [11., 13.]])
+      >>> buf = np.zeros((2,2))
+      >>> band.ReadAsArray(buf_obj=buf)
+      array([[ 5.,  7.],
+             [13., 15.]])
+      """
 
       from osgeo import gdal_array
 
@@ -845,8 +913,92 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                     callback_data=None,
                     interleave='band',
                     band_list=None):
-        """ Reading a chunk of a GDAL band into a numpy array. The optional (buf_xsize,buf_ysize,buf_type)
-        parameters should generally not be specified if buf_obj is specified. The array is returned"""
+        """
+        Read a window from raster bands into a NumPy array.
+
+        Parameters
+        ----------
+        xoff : int, default=0
+           The pixel offset to left side of the region of the band to
+           be read. This would be zero to start from the left side.
+        yoff : int, default=0
+           The line offset to top side of the region of the band to
+           be read. This would be zero to start from the top side.
+        xsize : int, optional
+             The number of pixels to read in the x direction. By default,
+             equal to the number of columns in the raster.
+        ysize : int, optional
+             The number of rows to read in the y direction. By default,
+             equal to the number of bands in the raster.
+        buf_xsize : int, optional
+             The number of columns in the returned array. If not equal
+             to ``win_xsize``, the returned values will be determined
+             by ``resample_alg``.
+        buf_ysize : int, optional
+             The number of rows in the returned array. If not equal
+             to ``win_ysize``, the returned values will be determined
+             by ``resample_alg``.
+        buf_type : int, optional
+             The data type of the returned array
+        buf_obj : np.ndarray, optional
+             Optional buffer into which values will be read. If ``buf_obj``
+             is specified, then ``buf_xsize``/``buf_ysize``/``buf_type``
+             should generally not be specified.
+        resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`.
+             Specifies the resampling algorithm to use when the size of
+             the read window and the buffer are not equal.
+        callback : function, optional
+            A progress callback function
+        callback_data: optional
+            Optional data to be passed to callback function
+        band_list : list, optional
+            Indexes of bands from which data should be read. By default,
+            data will be read from all bands.
+
+        Returns
+        -------
+        np.ndarray
+
+        Examples
+        --------
+        >>> ds = gdal.GetDriverByName("GTiff").Create("test.tif", 4, 4, bands=2)
+        >>> ds.WriteArray(np.arange(32).reshape(2, 4, 4))
+        0
+        >>> ds.ReadAsArray()
+        array([[[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11],
+                [12, 13, 14, 15]],
+               [[16, 17, 18, 19],
+                [20, 21, 22, 23],
+                [24, 25, 26, 27],
+                [28, 29, 30, 31]]], dtype=uint8)
+        >>> ds.ReadAsArray(xoff=2, yoff=2, xsize=2, ysize=2)
+        array([[[10, 11],
+                [14, 15]],
+               [[26, 27],
+                [30, 31]]], dtype=uint8)
+        >>> ds.ReadAsArray(buf_xsize=2, buf_ysize=2, buf_type=gdal.GDT_Float64, resample_alg=gdal.GRIORA_Average)
+        array([[[ 3.,  5.],
+                [11., 13.]],
+               [[19., 21.],
+                [27., 29.]]])
+        >>> buf = np.zeros((2,2,2))
+        >>> ds.ReadAsArray(buf_obj=buf)
+        array([[[ 5.,  7.],
+                [13., 15.]],
+               [[21., 23.],
+                [29., 31.]]])
+        >>> ds.ReadAsArray(band_list=[2,1])
+        array([[[16, 17, 18, 19],
+                [20, 21, 22, 23],
+                [24, 25, 26, 27],
+                [28, 29, 30, 31]],
+               [[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11],
+                [12, 13, 14, 15]]], dtype=uint8)
+        """
 
         from osgeo import gdal_array
         return gdal_array.DatasetReadAsArray(self, xoff, yoff, xsize, ysize, buf_obj,
@@ -863,6 +1015,73 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                    resample_alg=gdalconst.GRIORA_NearestNeighbour,
                    callback=None,
                    callback_data=None):
+        """
+        Write the contents of a NumPy array to a Dataset.
+
+        Parameters
+        ----------
+        array : np.ndarray
+            Two- or three-dimensional array containing values to write
+        xoff : int, default=0
+           The pixel offset to left side of the region of the band to
+           be written. This would be zero to start from the left side.
+        yoff : int, default=0
+           The line offset to top side of the region of the band to
+           be written. This would be zero to start from the top side.
+        band_list : list, optional
+            Indexes of bands to which data should be written. By default,
+            it is assumed that the Dataset contains the same number of
+            bands as levels in ``array``.
+        interleave : str, default="band"
+            Interleaving, "band" or "pixel". For band-interleaved writing,
+            ``array`` should have shape ``(nband, ny, nx)``. For pixel-
+            interleaved-writing, ``array`` should have shape
+            ``(ny, nx, nbands)``.
+        resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`
+        callback : function, optional
+            A progress callback function
+        callback_data: optional
+            Optional data to be passed to callback function
+
+        Returns
+        -------
+        int:
+            Error code, or ``gdal.CE_None`` if no error occurred.
+
+        Examples
+        --------
+
+        >>> import numpy as np
+        >>>
+        >>> nx = 4
+        >>> ny = 3
+        >>> nbands = 2
+        >>> with gdal.GetDriverByName("GTiff").Create("band3_px.tif", nx, ny, bands=nbands) as ds:
+        ...     data = np.arange(nx*ny*nbands).reshape(ny,nx,nbands)
+        ...     ds.WriteArray(data, interleave="pixel")
+        ...     ds.ReadAsArray()
+        ...
+        0
+        array([[[ 0,  2,  4,  6],
+                [ 8, 10, 12, 14],
+                [16, 18, 20, 22]],
+               [[ 1,  3,  5,  7],
+                [ 9, 11, 13, 15],
+                [17, 19, 21, 23]]], dtype=uint8)
+        >>> with gdal.GetDriverByName("GTiff").Create("band3_band.tif", nx, ny, bands=nbands) as ds:
+        ...     data = np.arange(nx*ny*nbands).reshape(nbands, ny, nx)
+        ...     ds.WriteArray(data, interleave="band")
+        ...     ds.ReadAsArray()
+        ...
+        0
+        array([[[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]],
+               [[12, 13, 14, 15],
+                [16, 17, 18, 19],
+                [20, 21, 22, 23]]], dtype=uint8)
+        """
+
         from osgeo import gdal_array
 
         return gdal_array.DatasetWriteArray(self, array, xoff, yoff,
@@ -993,6 +1212,15 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         return gdal_array.VirtualMemGetArray( virtualmem )
 
     def GetSubDatasets(self):
+        """
+        Return a list of Subdatasets.
+
+
+        Returns
+        -------
+        list
+
+        """
         sd_list = []
 
         sd = self.GetMetadata('SUBDATASETS')
@@ -1034,7 +1262,18 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         return _gdal.Dataset_BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj, buf_xsize, buf_ysize, buf_type, band_list,  0, 0, 0, options)
 
     def GetLayer(self, iLayer=0):
-        """Return the layer given an index or a name"""
+        """
+        Get the indicated layer from the Dataset
+
+        Parameters
+        ----------
+        value : int/str
+                Name or 0-based index of the layer to delete.
+
+        Returns
+        -------
+        ogr.Layer, or ``None`` on error
+        """
 
         _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions()
 
@@ -1046,7 +1285,21 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             raise TypeError("Input %s is not of String or Int type" % type(iLayer))
 
     def DeleteLayer(self, value):
-        """Deletes the layer given an index or layer name"""
+        """
+        Delete the indicated layer from the Dataset.
+
+        Parameters
+        ----------
+        value : int/str
+                Name or 0-based index of the layer to delete.
+
+        Returns
+        -------
+        int
+            :py:const:`ogr.OGRERR_NONE` on success or
+            :py:const:`ogr.OGRERR_UNSUPPORTED_OPERATION` if DeleteLayer is not supported
+            for this dataset.
+        """
         if isinstance(value, str):
             for i in range(self.GetLayerCount()):
                 name = self.GetLayer(i).GetName()
@@ -1059,6 +1312,19 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             raise TypeError("Input %s is not of String or Int type" % type(value))
 
     def SetGCPs(self, gcps, wkt_or_spatial_ref):
+        """
+        Assign GCPs.
+
+        See :cpp:func:`GDALSetGCPs`.
+
+        Parameters
+        ----------
+        gcps : list
+               a list of :py:class:`GCP` objects
+        wkt_or_spatial_ref : str/osr.SpatialReference
+               spatial reference of the GCPs
+        """
+
         if isinstance(wkt_or_spatial_ref, str):
             return self._SetGCPs(gcps, wkt_or_spatial_ref)
         else:
@@ -1108,10 +1374,10 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
       - None (or an exception if exceptions are enabled) for statements
         that are in error
       - or None for statements that have no results set,
-      - or a ogr.Layer handle representing a results set from the query.
+      - or a :py:class:`ogr.Layer` handle representing a results set from the query.
 
-    Note that this ogr.Layer is in addition to the layers in the data store
-    and must be released with ReleaseResultSet() before the data source is closed
+    Note that this :py:class:`ogr.Layer` is in addition to the layers in the data store
+    and must be released with :py:meth:`ReleaseResultSet` before the data source is closed
     (destroyed).
 
     Starting with GDAL 3.7, this method can also be used as a context manager,
@@ -1175,14 +1441,14 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
 def ReleaseResultSet(self, sql_lyr):
     """ReleaseResultSet(self, sql_lyr: ogr.Layer)
 
-    Release ogr.Layer returned by ExecuteSQL() (when not called as an execution manager)
+    Release :py:class:`ogr.Layer` returned by :py:meth:`ExecuteSQL` (when not called as a context manager)
 
     The sql_lyr object is invalidated after this call.
 
     Parameters
     ----------
     sql_lyr:
-        ogr.Layer got with ExecuteSQL()
+        :py:class:`ogr.Layer` got with :py:meth:`ExecuteSQL`
     """
 
     if sql_lyr and not hasattr(sql_lyr, "_to_release"):
@@ -4178,9 +4444,9 @@ def config_options(options, thread_local=True):
        ----------
        options: dict
             Dictionary of configuration options passed as key, value
-       thread_local: bool
+       thread_local: bool, default=True
             Whether the configuration options should be only set on the current
-            thread. The default is True.
+            thread.
 
        Returns
        -------
@@ -4189,8 +4455,8 @@ def config_options(options, thread_local=True):
        Example
        -------
 
-           with gdal.config_options({"GDAL_NUM_THREADS": "ALL_CPUS"}):
-               gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
+       >>> with gdal.config_options({"GDAL_NUM_THREADS": "ALL_CPUS"}):
+       ...     gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
     """
     get_config_option = GetThreadLocalConfigOption if thread_local else GetGlobalConfigOption
     set_config_option = SetThreadLocalConfigOption if thread_local else SetConfigOption
@@ -4215,9 +4481,9 @@ def config_option(key, value, thread_local=True):
             Name of the configuration option
        value: str
             Value of the configuration option
-       thread_local: bool
+       thread_local: bool, default=True
             Whether the configuration option should be only set on the current
-            thread. The default is True.
+            thread.
 
        Returns
        -------
@@ -4226,8 +4492,8 @@ def config_option(key, value, thread_local=True):
        Example
        -------
 
-           with gdal.config_option("GDAL_NUM_THREADS", "ALL_CPUS"):
-               gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
+       >>> with gdal.config_option("GDAL_NUM_THREADS", "ALL_CPUS"):
+       ...     gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
     """
     return config_options({key: value}, thread_local=thread_local)
 
@@ -4243,8 +4509,8 @@ def quiet_errors():
        Example
        -------
 
-           with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
-               gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "you will never see me")
+       >>> with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
+       ...     gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "you will never see me")
     """
     PushErrorHandler("CPLQuietErrorHandler")
     try:
