@@ -107,6 +107,9 @@ int MMAddPolygonRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
 int MMCloseMMBD_XP(struct MiraMonVectLayerInfo *hMiraMonLayer);
 void MMDestroyMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer);
 
+#define MAX_LINE_LENGTH 16000
+static char line_INI[MAX_LINE_LENGTH];
+
 /* -------------------------------------------------------------------- */
 /*      Functions to be used in GDAL and in MiraMon                     */
 /* -------------------------------------------------------------------- */
@@ -3717,6 +3720,11 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
         {
             // Writing the arc in the normal way
             pFlushAL->SizeOfBlockToBeSaved = sizeof(pCoordReal->dfX);
+            if (!pCoord + nIVertice)
+            {
+                MM_CPLDebug("MiraMon", "Error in MM_AppendBlockToBuffer() (1)");
+                return MM_FATAL_ERROR_WRITING_FEATURES;
+            }
             pFlushAL->pBlockToBeSaved = (void *)&(pCoord + nIVertice)->dfX;
             if (MM_AppendBlockToBuffer(pFlushAL))
             {
@@ -4244,10 +4252,10 @@ void MMInitBoundingBox(struct MMBoundingBox *dfBB)
 {
     if (!dfBB)
         return;
-    dfBB->dfMinX = dfBB->dfMinX = STATISTICAL_UNDEF_VALUE;
-    dfBB->dfMinX = dfBB->dfMaxX = -STATISTICAL_UNDEF_VALUE;
-    dfBB->dfMinX = dfBB->dfMinY = STATISTICAL_UNDEF_VALUE;
-    dfBB->dfMaxX = dfBB->dfMaxY = -STATISTICAL_UNDEF_VALUE;
+    dfBB->dfMinX = STATISTICAL_UNDEF_VALUE;
+    dfBB->dfMaxX = -STATISTICAL_UNDEF_VALUE;
+    dfBB->dfMinY = STATISTICAL_UNDEF_VALUE;
+    dfBB->dfMaxY = -STATISTICAL_UNDEF_VALUE;
 }
 
 void MMUpdateBoundingBox(struct MMBoundingBox *dfBBToBeAct,
@@ -4554,8 +4562,6 @@ const char *ReturnValueFromSectionINIFile(const char *filename,
                                           const char *section, const char *key)
 {
     FILE *file;
-#define MAX_LINE_LENGTH 1024 * 40
-    char line[MAX_LINE_LENGTH];
     int section_found = 0;
     char *trimmed_line = nullptr, *parsed_key = nullptr,
          *parsed_value = nullptr;
@@ -4570,10 +4576,10 @@ const char *ReturnValueFromSectionINIFile(const char *filename,
         return nullptr;
     }
 
-    while (fgets(line, sizeof(line), file))
+    while (fgets(line_INI, sizeof(line_INI), file))
     {
-        // Remove blank spaces and new line characters from the end of the line
-        trimmed_line = strtok(line, "\r\n");
+        // Remove blank spaces and new line_INI characters from the end of the line_INI
+        trimmed_line = strtok(line_INI, "\r\n");
 
         if (trimmed_line == nullptr)
             continue;
@@ -4778,7 +4784,7 @@ int ReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
             nLong = strlen("EPSG:");
             if (epsg && !strncmp(epsg, psidgeodes, nLong))
             {
-                if (strlen(epsg + nLong) > 0)
+                if (epsg[nLong] != '\0')
                 {
                     strcpy(szResult, epsg + nLong);
                     free_function(pszBuffer);
