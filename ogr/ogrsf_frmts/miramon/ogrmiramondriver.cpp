@@ -34,40 +34,40 @@
 static int OGRMMDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes<7)
+    if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes < 7)
         return FALSE;
     else if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "PNT") ||
-        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ARC") ||
-        EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "POL"))
+             EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "ARC") ||
+             EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "POL"))
     {
         if (!poOpenInfo->TryToIngest(7))
             return FALSE;
 
         // Format
         if ((poOpenInfo->pabyHeader[0] == 'P' &&
-                poOpenInfo->pabyHeader[1] == 'N' &&
-                poOpenInfo->pabyHeader[2] == 'T') ||
-                (poOpenInfo->pabyHeader[0] == 'A' &&
-                poOpenInfo->pabyHeader[1] == 'R' &&
-                poOpenInfo->pabyHeader[2] == 'C') ||
-                (poOpenInfo->pabyHeader[0] == 'P' &&
-                poOpenInfo->pabyHeader[1] == 'O' &&
-                poOpenInfo->pabyHeader[2] == 'L'))
+             poOpenInfo->pabyHeader[1] == 'N' &&
+             poOpenInfo->pabyHeader[2] == 'T') ||
+            (poOpenInfo->pabyHeader[0] == 'A' &&
+             poOpenInfo->pabyHeader[1] == 'R' &&
+             poOpenInfo->pabyHeader[2] == 'C') ||
+            (poOpenInfo->pabyHeader[0] == 'P' &&
+             poOpenInfo->pabyHeader[1] == 'O' &&
+             poOpenInfo->pabyHeader[2] == 'L'))
         {
-            // Version 1.1 or 2.0 
-            if((poOpenInfo->pabyHeader[3] == ' ' &&
-                    poOpenInfo->pabyHeader[4] == '1' &&
-                    poOpenInfo->pabyHeader[5] == '.' &&
-                    poOpenInfo->pabyHeader[6] == '1') ||
+            // Version 1.1 or 2.0
+            if ((poOpenInfo->pabyHeader[3] == ' ' &&
+                 poOpenInfo->pabyHeader[4] == '1' &&
+                 poOpenInfo->pabyHeader[5] == '.' &&
+                 poOpenInfo->pabyHeader[6] == '1') ||
                 (poOpenInfo->pabyHeader[3] == ' ' &&
-                    poOpenInfo->pabyHeader[4] == '2' &&
-                    poOpenInfo->pabyHeader[5] == '.' &&
-                    poOpenInfo->pabyHeader[6] == '0'))
+                 poOpenInfo->pabyHeader[4] == '2' &&
+                 poOpenInfo->pabyHeader[5] == '.' &&
+                 poOpenInfo->pabyHeader[6] == '0'))
             {
                 return TRUE;
             }
         }
-    }    
+    }
 
     return FALSE;
 }
@@ -101,8 +101,8 @@ static GDALDataset *OGRMMDriverOpen(GDALOpenInfo *poOpenInfo)
 
 static GDALDataset *
 OGRMMDriverCreate(const char *pszName, CPL_UNUSED int nBands,
-                   CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                   CPL_UNUSED GDALDataType eDT, char **papszOptions)
+                  CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
+                  CPL_UNUSED GDALDataType eDT, char **papszOptions)
 {
     OGRMiraMonDataSource *poDS = new OGRMiraMonDataSource();
 
@@ -129,14 +129,14 @@ void RegisterOGRMiraMon()
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-            "MiraMon Vectors (.pol, .arc, .pnt)");
+                              "MiraMon Vectors (.pol, .arc, .pnt)");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "pol");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "pol arc pnt");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-            "drivers/vector/miramon.html");
+                              "drivers/vector/miramon.html");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "NO");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
-        
+
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
         "<OpenOptionList>"
@@ -174,9 +174,11 @@ void RegisterOGRMiraMon()
     poDriver->SetMetadataItem(
         GDAL_DS_LAYER_CREATIONOPTIONLIST,
         "<LayerCreationOptionList>"
-        "  <Option name='Version' type='string' description='Version of the file."
+        "  <Option name='Version' type='string' description='Version of the "
+        "file."
         "V11 is a limited 32 bits for FID and internal offsets. "
-        "V20 is the 64 bits version for FID and internal offsets.' default='last_version'>"
+        "V20 is the 64 bits version for FID and internal offsets.' "
+        "default='last_version'>"
         "<Value>V11</Value>"
         "<Value>V20</Value>"
         "<Value>last_version</Value>"

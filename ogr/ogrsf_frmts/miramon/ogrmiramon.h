@@ -41,8 +41,9 @@
 /*                             OGRMiraMonLayer                          */
 /************************************************************************/
 
-class OGRMiraMonLayer final : public OGRLayer,
-                          public OGRGetNextFeatureThroughRaw<OGRMiraMonLayer>
+class OGRMiraMonLayer final
+    : public OGRLayer,
+      public OGRGetNextFeatureThroughRaw<OGRMiraMonLayer>
 {
     OGRSpatialReference *m_poSRS = nullptr;
     OGRFeatureDefn *poFeatureDefn;
@@ -55,15 +56,15 @@ class OGRMiraMonLayer final : public OGRLayer,
     struct MiraMonVectLayerInfo *phMiraMonLayer;
 
     // When writing a layer
-    struct MiraMonVectLayerInfo hMiraMonLayerPNT; // MiraMon points layer
-    struct MiraMonVectLayerInfo hMiraMonLayerARC; // MiraMon arcs layer
-    struct MiraMonVectLayerInfo hMiraMonLayerPOL; // MiraMon polygons layer
+    struct MiraMonVectLayerInfo hMiraMonLayerPNT;  // MiraMon points layer
+    struct MiraMonVectLayerInfo hMiraMonLayerARC;  // MiraMon arcs layer
+    struct MiraMonVectLayerInfo hMiraMonLayerPOL;  // MiraMon polygons layer
 
     // When reading a layer or the result of writting is only a DBF
-    struct MiraMonVectLayerInfo hMiraMonLayerReadOrNonGeom; 
+    struct MiraMonVectLayerInfo hMiraMonLayerReadOrNonGeom;
 
-    struct MiraMonFeature hMMFeature; // Feature reading/writing
-    
+    struct MiraMonFeature hMMFeature;  // Feature reading/writing
+
     bool bUpdate;
 
     // Ratio used to enhance certain aspects of memory
@@ -75,36 +76,36 @@ class OGRMiraMonLayer final : public OGRLayer,
     // By increasing this parameter, more memory will be required,
     // but there will be fewer read/write operations to the disk.
     double nMMMemoryRatio;
-    
+
     VSILFILE *m_fp = nullptr;
 
     char **papszKeyedValues;
 
     // Array of string or doubles used in the field features processing
-    char** papszValues;
-    double* padfValues;
+    char **papszValues;
+    double *padfValues;
 
     OGRFeature *GetNextRawFeature();
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
     void GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
-                    MM_EXT_DBF_N_RECORDS nIRecord, MM_EXT_DBF_N_FIELDS nIField);
+                                   MM_EXT_DBF_N_RECORDS nIRecord,
+                                   MM_EXT_DBF_N_FIELDS nIField);
 
-    OGRErr MMDumpVertices(OGRGeometryH hGeom,
-                    MM_BOOLEAN bExternalRing, MM_BOOLEAN bUseVFG);
-    OGRErr MMProcessGeometry(OGRGeometryH poGeom,
-                    OGRFeature *poFeature, MM_BOOLEAN bcalculateRecord);
-    OGRErr MMProcessMultiGeometry(OGRGeometryH hGeom,
-                    OGRFeature* poFeature);
+    OGRErr MMDumpVertices(OGRGeometryH hGeom, MM_BOOLEAN bExternalRing,
+                          MM_BOOLEAN bUseVFG);
+    OGRErr MMProcessGeometry(OGRGeometryH poGeom, OGRFeature *poFeature,
+                             MM_BOOLEAN bcalculateRecord);
+    OGRErr MMProcessMultiGeometry(OGRGeometryH hGeom, OGRFeature *poFeature);
     OGRErr MMLoadGeometry(OGRGeometryH hGeom);
     OGRErr MMWriteGeometry();
     GIntBig GetFeatureCount(int bForce) override;
-    
+
   public:
     bool bValidFile;
 
     OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
-                const OGRSpatialReference *poSRS, int bUpdate,
-                char **papszOpenOptions, struct MiraMonVectMapInfo *MMMap);
+                    const OGRSpatialReference *poSRS, int bUpdate,
+                    char **papszOpenOptions, struct MiraMonVectMapInfo *MMMap);
     virtual ~OGRMiraMonLayer();
 
     void ResetReading() override;
@@ -115,7 +116,7 @@ class OGRMiraMonLayer final : public OGRLayer,
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
 
     OGRFeatureDefn *GetLayerDefn() override;
-        
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
@@ -142,14 +143,14 @@ class OGRMiraMonDataSource final : public OGRDataSource
     char *pszDSName;
     bool bUpdate;
     struct MiraMonVectMapInfo MMMap;
-       
+
   public:
     OGRMiraMonDataSource();
     virtual ~OGRMiraMonDataSource();
 
     int Open(const char *pszFilename, VSILFILE *fp,
              const OGRSpatialReference *poSRS, int bUpdate,
-            char **papszOpenOptions);
+             char **papszOpenOptions);
     int Create(const char *pszFilename, char **papszOptions);
 
     const char *GetName() override
@@ -169,6 +170,5 @@ class OGRMiraMonDataSource final : public OGRDataSource
 
     int TestCapability(const char *) override;
 };
-
 
 #endif /* ndef OGRMIRAMON_H_INCLUDED */

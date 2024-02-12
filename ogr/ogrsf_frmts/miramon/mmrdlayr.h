@@ -9,14 +9,14 @@
 CPL_C_START // Necessary for compiling in GDAL project
 #endif
 
-int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer, FILE_TYPE *m_fp, 
-                      const char *pszFilename);
+int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer,
+                      FILE_TYPE *m_fp, const char *pszFilename);
 
-
-int MMGetFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer, MM_INTERNAL_FID i_elem);
+int MMGetFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer,
+                           MM_INTERNAL_FID i_elem);
 int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer);
 
 #ifdef GDAL_COMPILATION
-CPL_C_END // Necessary for compiling in GDAL project
+CPL_C_END  // Necessary for compiling in GDAL project
 #endif
-#endif //__MMRDLAYR_H
+#endif  //__MMRDLAYR_H

@@ -31,12 +31,12 @@
 /*                          OGRMiraMonDataSource()                          */
 /****************************************************************************/
 OGRMiraMonDataSource::OGRMiraMonDataSource()
-    : papoLayers(nullptr), nLayers(0), pszRootName(nullptr),
-    pszDSName(nullptr), bUpdate(false)
-    
+    : papoLayers(nullptr), nLayers(0), pszRootName(nullptr), pszDSName(nullptr),
+      bUpdate(false)
+
 {
-    MMMap.nNumberOfLayers=0;
-    MMMap.fMMMap=nullptr;
+    MMMap.nNumberOfLayers = 0;
+    MMMap.fMMMap = nullptr;
 }
 
 /****************************************************************************/
@@ -52,7 +52,7 @@ OGRMiraMonDataSource::~OGRMiraMonDataSource()
     CPLFree(pszDSName);
     CPLFree(pszRootName);
 
-    if(MMMap.fMMMap)
+    if (MMMap.fMMMap)
         VSIFCloseL(MMMap.fMMMap);
 }
 
@@ -61,29 +61,29 @@ OGRMiraMonDataSource::~OGRMiraMonDataSource()
 /****************************************************************************/
 
 int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
-                           const OGRSpatialReference *poSRS, int bUpdateIn,
-                            char **papszOpenOptionsUsr)
+                               const OGRSpatialReference *poSRS, int bUpdateIn,
+                               char **papszOpenOptionsUsr)
 
 {
     bUpdate = CPL_TO_BOOL(bUpdateIn);
 
-    OGRMiraMonLayer *poLayer = new OGRMiraMonLayer(pszFilename, fp, poSRS,
-                bUpdate, papszOpenOptionsUsr, &MMMap);
+    OGRMiraMonLayer *poLayer = new OGRMiraMonLayer(
+        pszFilename, fp, poSRS, bUpdate, papszOpenOptionsUsr, &MMMap);
     if (!poLayer->bValidFile)
     {
         delete poLayer;
         return FALSE;
     }
-    papoLayers = static_cast<OGRMiraMonLayer **>(
-        CPLRealloc(papoLayers, (size_t)(sizeof(OGRMiraMonLayer *) *
-            ((size_t)nLayers + (size_t)1))));
+    papoLayers = static_cast<OGRMiraMonLayer **>(CPLRealloc(
+        papoLayers,
+        (size_t)(sizeof(OGRMiraMonLayer *) * ((size_t)nLayers + (size_t)1))));
     papoLayers[nLayers] = poLayer;
     nLayers++;
 
     if (pszDSName)
     {
-        strcpy(MMMap.pszMapName, CPLFormFilename(pszDSName,
-            CPLGetBasename(pszDSName), "mmm"));
+        strcpy(MMMap.pszMapName,
+               CPLFormFilename(pszDSName, CPLGetBasename(pszDSName), "mmm"));
         if (!MMMap.nNumberOfLayers)
         {
             MMMap.fMMMap = VSIFOpenL(MMMap.pszMapName, "w+");
@@ -94,13 +94,13 @@ int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
             VSIFPrintfL(MMMap.fMMMap, "\n");
             VSIFPrintfL(MMMap.fMMMap, "[DOCUMENT]\n");
             VSIFPrintfL(MMMap.fMMMap, "Titol= %s(map)\n",
-                CPLGetBasename(poLayer->GetName()));
+                        CPLGetBasename(poLayer->GetName()));
             VSIFPrintfL(MMMap.fMMMap, "\n");
         }
     }
     else
-        *MMMap.pszMapName='\0';
-    
+        *MMMap.pszMapName = '\0';
+
     CPLFree(pszDSName);
     pszDSName = CPLStrdup(pszFilename);
 
@@ -115,7 +115,7 @@ int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
 /****************************************************************************/
 
 int OGRMiraMonDataSource::Create(const char *pszDataSetName,
-    char ** /* papszOptions */)
+                                 char ** /* papszOptions */)
 
 {
     pszDSName = CPLStrdup(pszDataSetName);
@@ -129,9 +129,9 @@ int OGRMiraMonDataSource::Create(const char *pszDataSetName,
 /****************************************************************************/
 
 OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
-                        const OGRSpatialReference *poSRS,
-                        OGRwkbGeometryType eType,
-                        char **papszOptions)
+                                             const OGRSpatialReference *poSRS,
+                                             OGRwkbGeometryType eType,
+                                             char **papszOptions)
 {
     CPLAssert(nullptr != pszLayerName);
 
@@ -176,7 +176,7 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
         case wkbTINZM:
         case wkbTriangleZM:
             CPLError(CE_Warning, CPLE_NotSupported,
-                 "Measures in this layer will be ignored.");
+                     "Measures in this layer will be ignored.");
             break;
         default:
             break;
@@ -186,12 +186,11 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     // of the file is where to write, and the layer name is the
     // dataset name (without extension).
     const char *pszExtension = CPLGetExtension(pszRootName);
-    if(EQUAL(pszExtension, "pol") ||
-        EQUAL(pszExtension, "arc") ||
+    if (EQUAL(pszExtension, "pol") || EQUAL(pszExtension, "arc") ||
         EQUAL(pszExtension, "pnt"))
     {
         pszMMLayerName = CPLStrdup(CPLResetExtension(pszRootName, ""));
-        pszMMLayerName[strlen(pszMMLayerName)-1]='\0';
+        pszMMLayerName[strlen(pszMMLayerName) - 1] = '\0';
 
         pszFullMMLayerName = (const char *)pszMMLayerName;
         osPath = CPLGetPath(pszRootName);
@@ -204,17 +203,17 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     }
 
     // Let's create the folder if it's not already created.
-    if (VSIMkdirRecursive(osPath,  0777) !=0 )
+    if (VSIMkdirRecursive(osPath, 0777) != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Unable to create directory %s.",
                  pszRootName);
         return nullptr;
-    }    
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Return open layer handle.                                       */
     /* -------------------------------------------------------------------- */
-    if (Open(pszFullMMLayerName, nullptr, poSRS, TRUE,papszOptions))
+    if (Open(pszFullMMLayerName, nullptr, poSRS, TRUE, papszOptions))
     {
         CPLFree(pszMMLayerName);
         auto poLayer = papoLayers[nLayers - 1];
@@ -236,7 +235,7 @@ int OGRMiraMonDataSource::TestCapability(const char *pszCap)
         return TRUE;
     else if (EQUAL(pszCap, ODsCZGeometries))
         return TRUE;
-    
+
     return FALSE;
 }
 
@@ -252,5 +251,3 @@ OGRLayer *OGRMiraMonDataSource::GetLayer(int iLayer)
 
     return papoLayers[iLayer];
 }
-
-
