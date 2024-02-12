@@ -3325,10 +3325,7 @@ CPLErr GDALDataset::CreateMaskBand(int nFlagsIn)
         for (int i = 0; i < nBands; ++i)
         {
             GDALRasterBand *poBand = papoBands[i];
-            if (poBand->bOwnMask)
-                delete poBand->poMask;
-            poBand->bOwnMask = false;
-            poBand->poMask = nullptr;
+            poBand->poMask.reset();
         }
 
         return CE_None;
@@ -4543,20 +4540,14 @@ void GDALDataset::ReportErrorV(const char *pszDSName, CPLErr eErrClass,
                                CPLErrorNum err_no, const char *fmt,
                                va_list args)
 {
-    char szNewFmt[256] = {};
-    const size_t strlen_fmt = strlen(fmt);
-    constexpr const char *sep = ": ";
-    const size_t strlen_sep = strlen(sep);
-    if (strlen_fmt + strlen(pszDSName) + strlen_sep + 1 >= sizeof(szNewFmt) - 1)
-        pszDSName = CPLGetFilename(pszDSName);
-    const size_t strlen_dsname = strlen(pszDSName);
-    if (pszDSName[0] != '\0' && strchr(pszDSName, '%') == nullptr &&
-        strlen_fmt + strlen_dsname + strlen_sep + 1 < sizeof(szNewFmt) - 1)
+    pszDSName = CPLGetFilename(pszDSName);
+    if (pszDSName[0] != '\0')
     {
-        memcpy(szNewFmt, pszDSName, strlen_dsname);
-        memcpy(szNewFmt + strlen_dsname, sep, strlen_sep);
-        memcpy(szNewFmt + strlen_dsname + strlen_sep, fmt, strlen_fmt + 1);
-        CPLErrorV(eErrClass, err_no, szNewFmt, args);
+        CPLError(eErrClass, err_no, "%s",
+                 std::string(pszDSName)
+                     .append(": ")
+                     .append(CPLString().vPrintf(fmt, args))
+                     .c_str());
     }
     else
     {

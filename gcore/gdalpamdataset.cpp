@@ -556,15 +556,14 @@ CPLErr GDALPamDataset::XMLInit(CPLXMLNode *psTree, const char *pszUnused)
                 CPLGetXMLValue(psGeodataXform, "SpatialReference.WKT", nullptr);
             if (pszESRI_WKT)
             {
-                delete psPam->poSRS;
-                psPam->poSRS = new OGRSpatialReference(nullptr);
-                psPam->poSRS->SetAxisMappingStrategy(
-                    OAMS_TRADITIONAL_GIS_ORDER);
-                if (psPam->poSRS->importFromWkt(pszESRI_WKT) != OGRERR_NONE)
+                auto poSRS = std::make_unique<OGRSpatialReference>();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (poSRS->importFromWkt(pszESRI_WKT) != OGRERR_NONE)
                 {
-                    delete psPam->poSRS;
-                    psPam->poSRS = nullptr;
+                    poSRS.reset();
                 }
+                delete psPam->poSRS;
+                psPam->poSRS = poSRS.release();
             }
 
             // Parse GCPs

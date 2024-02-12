@@ -1697,7 +1697,7 @@ static bool DoesGeometryHavePointInEnvelope(const OGRGeometry *poGeometry,
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-int OGRLayer::FilterGeometry(OGRGeometry *poGeometry)
+int OGRLayer::FilterGeometry(const OGRGeometry *poGeometry)
 
 {
     /* -------------------------------------------------------------------- */
@@ -1760,7 +1760,9 @@ int OGRLayer::FilterGeometry(OGRGeometry *poGeometry)
             // CPLDebug("OGRLayer", "GEOS intersection");
             if (m_pPreparedFilterGeom != nullptr)
                 return OGRPreparedGeometryIntersects(
-                    m_pPreparedFilterGeom, OGRGeometry::ToHandle(poGeometry));
+                    m_pPreparedFilterGeom,
+                    OGRGeometry::ToHandle(
+                        const_cast<OGRGeometry *>(poGeometry)));
             else
                 return m_poFilterGeom->Intersects(poGeometry);
         }

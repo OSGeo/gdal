@@ -367,6 +367,7 @@ bool OGRGeoJSONSeqLayer::Init(bool bLooseIdentification,
         {
             m_poFeatureDefn->AddFieldDefn(apoFieldDefn[idx].get());
         }
+        m_poFeatureDefn->Seal(true);
         m_oReader.FinalizeLayerDefn(this, m_osFIDColumn);
     }
 

@@ -1202,43 +1202,48 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString(OGRGeometry *poGeom)
     /* -------------------------------------------------------------------- */
     if (OGR_GT_IsSubClassOf(eGeomType, wkbCurvePolygon))
     {
-        OGRMultiLineString *poMP = new OGRMultiLineString();
-        OGRPolygon *poPoly = nullptr;
+        OGRMultiLineString *poMLS = new OGRMultiLineString();
+        poMLS->assignSpatialReference(poGeom->getSpatialReference());
+
+        const auto AddRingFromSrcPoly = [poMLS](const OGRPolygon *poPoly)
+        {
+            for (int iRing = 0; iRing < poPoly->getNumInteriorRings() + 1;
+                 iRing++)
+            {
+                const OGRLineString *poLR;
+
+                if (iRing == 0)
+                {
+                    poLR = poPoly->getExteriorRing();
+                    if (poLR == nullptr)
+                        break;
+                }
+                else
+                    poLR = poPoly->getInteriorRing(iRing - 1);
+
+                if (poLR == nullptr || poLR->getNumPoints() == 0)
+                    continue;
+
+                auto poNewLS = new OGRLineString();
+                poNewLS->addSubLineString(poLR);
+                poMLS->addGeometryDirectly(poNewLS);
+            }
+        };
+
         if (OGR_GT_IsSubClassOf(eGeomType, wkbPolygon))
-            poPoly = poGeom->toPolygon();
+        {
+            AddRingFromSrcPoly(poGeom->toPolygon());
+        }
         else
         {
-            poPoly = poGeom->toCurvePolygon()->CurvePolyToPoly();
-            delete poGeom;
-            poGeom = poPoly;
+            auto poTmpPoly = std::unique_ptr<OGRPolygon>(
+                poGeom->toCurvePolygon()->CurvePolyToPoly());
+            AddRingFromSrcPoly(poTmpPoly.get());
         }
 
-        poMP->assignSpatialReference(poGeom->getSpatialReference());
+        delete poGeom;
 
-        for (int iRing = 0; iRing < poPoly->getNumInteriorRings() + 1; iRing++)
-        {
-            OGRLineString *poNewLS, *poLR;
-
-            if (iRing == 0)
-            {
-                poLR = poPoly->getExteriorRing();
-                if (poLR == nullptr)
-                    break;
-            }
-            else
-                poLR = poPoly->getInteriorRing(iRing - 1);
-
-            if (poLR == nullptr || poLR->getNumPoints() == 0)
-                continue;
-
-            poNewLS = new OGRLineString();
-            poNewLS->addSubLineString(poLR);
-            poMP->addGeometryDirectly(poNewLS);
-        }
-
-        delete poPoly;
-
-        return poMP;
+        return poMLS;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1256,34 +1261,38 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString(OGRGeometry *poGeom)
     /* -------------------------------------------------------------------- */
     if (eGeomType == wkbMultiPolygon || eGeomType == wkbMultiSurface)
     {
-        OGRMultiLineString *poMP = new OGRMultiLineString();
-        OGRMultiPolygon *poMPoly = nullptr;
+        OGRMultiLineString *poMLS = new OGRMultiLineString();
+        poMLS->assignSpatialReference(poGeom->getSpatialReference());
+
+        const auto AddRingFromSrcMP = [poMLS](const OGRMultiPolygon *poSrcMP)
+        {
+            for (auto &&poPoly : poSrcMP)
+            {
+                for (auto &&poLR : poPoly)
+                {
+                    if (poLR->IsEmpty())
+                        continue;
+
+                    OGRLineString *poNewLS = new OGRLineString();
+                    poNewLS->addSubLineString(poLR);
+                    poMLS->addGeometryDirectly(poNewLS);
+                }
+            }
+        };
+
         if (eGeomType == wkbMultiPolygon)
-            poMPoly = poGeom->toMultiPolygon();
+        {
+            AddRingFromSrcMP(poGeom->toMultiPolygon());
+        }
         else
         {
-            poMPoly = poGeom->getLinearGeometry()->toMultiPolygon();
-            delete poGeom;
-            poGeom = CPLAssertNotNull(poMPoly);
+            auto poTmpMPoly = std::unique_ptr<OGRMultiPolygon>(
+                poGeom->getLinearGeometry()->toMultiPolygon());
+            AddRingFromSrcMP(poTmpMPoly.get());
         }
 
-        poMP->assignSpatialReference(poGeom->getSpatialReference());
-
-        for (auto &&poPoly : poMPoly)
-        {
-            for (auto &&poLR : poPoly)
-            {
-                if (poLR->IsEmpty())
-                    continue;
-
-                OGRLineString *poNewLS = new OGRLineString();
-                poNewLS->addSubLineString(poLR);
-                poMP->addGeometryDirectly(poNewLS);
-            }
-        }
-        delete poMPoly;
-
-        return poMP;
+        delete poGeom;
+        return poMLS;
     }
 
     /* -------------------------------------------------------------------- */
@@ -3812,14 +3821,9 @@ static void SnapCoordsCloseToLatLongBounds(OGRGeometry *poGeom)
 
 struct OGRGeometryFactory::TransformWithOptionsCache::Private
 {
-    OGRCoordinateTransformation *poRevCT = nullptr;
+    std::unique_ptr<OGRCoordinateTransformation> poRevCT{};
     bool bIsPolar = false;
     bool bIsNorthPolar = false;
-
-    ~Private()
-    {
-        delete poRevCT;
-    }
 };
 
 /************************************************************************/
@@ -3873,19 +3877,18 @@ OGRGeometry *OGRGeometryFactory::transformWithOptions(
                 if (cache.d->poRevCT == nullptr ||
                     !cache.d->poRevCT->GetTargetCS()->IsSame(poSourceCRS))
                 {
-                    delete cache.d->poRevCT;
-                    cache.d->poRevCT = OGRCreateCoordinateTransformation(
-                        &oSRSWGS84, poSourceCRS);
+                    cache.d->poRevCT.reset(OGRCreateCoordinateTransformation(
+                        &oSRSWGS84, poSourceCRS));
                     cache.d->bIsNorthPolar = false;
                     cache.d->bIsPolar = false;
                     if (cache.d->poRevCT &&
-                        IsPolarToWGS84(poCT, cache.d->poRevCT,
+                        IsPolarToWGS84(poCT, cache.d->poRevCT.get(),
                                        cache.d->bIsNorthPolar))
                     {
                         cache.d->bIsPolar = true;
                     }
                 }
-                auto poRevCT = cache.d->poRevCT;
+                auto poRevCT = cache.d->poRevCT.get();
                 if (poRevCT != nullptr)
                 {
                     if (cache.d->bIsPolar)

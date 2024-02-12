@@ -70,8 +70,7 @@ PDS4WrapperRasterBand::PDS4WrapperRasterBand(GDALRasterBand *poBaseBandIn)
 
 void PDS4WrapperRasterBand::SetMaskBand(GDALRasterBand *poMaskBand)
 {
-    bOwnMask = true;
-    poMask = poMaskBand;
+    poMask.reset(poMaskBand, true);
     nMaskFlags = 0;
 }
 
@@ -234,8 +233,7 @@ PDS4RawRasterBand::PDS4RawRasterBand(GDALDataset *l_poDS, int l_nBand,
 
 void PDS4RawRasterBand::SetMaskBand(GDALRasterBand *poMaskBand)
 {
-    bOwnMask = true;
-    poMask = poMaskBand;
+    poMask.reset(poMaskBand, true);
     nMaskFlags = 0;
 }
 

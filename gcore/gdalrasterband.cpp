@@ -7165,9 +7165,9 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
 
     if (poMask != nullptr)
     {
-        if (bOwnMask)
+        if (poMask.IsOwned())
         {
-            if (dynamic_cast<GDALAllValidMaskBand *>(poMask) != nullptr)
+            if (dynamic_cast<GDALAllValidMaskBand *>(poMask.get()) != nullptr)
             {
                 if (HasNoData())
                 {
@@ -7175,7 +7175,7 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
                 }
             }
             else if (auto poNoDataMaskBand =
-                         dynamic_cast<GDALNoDataMaskBand *>(poMask))
+                         dynamic_cast<GDALNoDataMaskBand *>(poMask.get()))
             {
                 int bHaveNoDataRaw = FALSE;
                 bool bIsSame = false;
@@ -7205,8 +7205,8 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
             }
         }
 
-        if (poMask != nullptr)
-            return poMask;
+        if (poMask)
+            return poMask.get();
     }
 
     /* -------------------------------------------------------------------- */
@@ -7214,11 +7214,11 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
     /* -------------------------------------------------------------------- */
     if (poDS != nullptr && poDS->oOvManager.HaveMaskFile())
     {
-        poMask = poDS->oOvManager.GetMaskBand(nBand);
+        poMask.reset(poDS->oOvManager.GetMaskBand(nBand), false);
         if (poMask != nullptr)
         {
             nMaskFlags = poDS->oOvManager.GetMaskFlags(nBand);
-            return poMask;
+            return poMask.get();
         }
     }
 
@@ -7257,16 +7257,15 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
                     nMaskFlags = GMF_NODATA | GMF_PER_DATASET;
                     try
                     {
-                        poMask = new GDALNoDataValuesMaskBand(poDS);
+                        poMask.reset(new GDALNoDataValuesMaskBand(poDS), true);
                     }
                     catch (const std::bad_alloc &)
                     {
                         CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
-                        poMask = nullptr;
+                        poMask.reset();
                     }
-                    bOwnMask = true;
                     CSLDestroy(papszNoDataValues);
-                    return poMask;
+                    return poMask.get();
                 }
                 else
                 {
@@ -7297,15 +7296,14 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
         nMaskFlags = GMF_NODATA;
         try
         {
-            poMask = new GDALNoDataMaskBand(this);
+            poMask.reset(new GDALNoDataMaskBand(this), true);
         }
         catch (const std::bad_alloc &)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
-            poMask = nullptr;
+            poMask.reset();
         }
-        bOwnMask = true;
-        return poMask;
+        return poMask.get();
     }
 
     /* -------------------------------------------------------------------- */
@@ -7318,23 +7316,23 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
         if (poDS->GetRasterBand(2)->GetRasterDataType() == GDT_Byte)
         {
             nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
-            poMask = poDS->GetRasterBand(2);
-            return poMask;
+            poMask.reset(poDS->GetRasterBand(2), false);
+            return poMask.get();
         }
         else if (poDS->GetRasterBand(2)->GetRasterDataType() == GDT_UInt16)
         {
             nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
             try
             {
-                poMask = new GDALRescaledAlphaBand(poDS->GetRasterBand(2));
+                poMask.reset(new GDALRescaledAlphaBand(poDS->GetRasterBand(2)),
+                             true);
             }
             catch (const std::bad_alloc &)
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
-                poMask = nullptr;
+                poMask.reset();
             }
-            bOwnMask = true;
-            return poMask;
+            return poMask.get();
         }
     }
 
@@ -7346,23 +7344,23 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
         if (poDS->GetRasterBand(4)->GetRasterDataType() == GDT_Byte)
         {
             nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
-            poMask = poDS->GetRasterBand(4);
-            return poMask;
+            poMask.reset(poDS->GetRasterBand(4), false);
+            return poMask.get();
         }
         else if (poDS->GetRasterBand(4)->GetRasterDataType() == GDT_UInt16)
         {
             nMaskFlags = GMF_ALPHA | GMF_PER_DATASET;
             try
             {
-                poMask = new GDALRescaledAlphaBand(poDS->GetRasterBand(4));
+                poMask.reset(new GDALRescaledAlphaBand(poDS->GetRasterBand(4)),
+                             true);
             }
             catch (const std::bad_alloc &)
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
-                poMask = nullptr;
+                poMask.reset();
             }
-            bOwnMask = true;
-            return poMask;
+            return poMask.get();
         }
     }
 
@@ -7372,16 +7370,15 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
     nMaskFlags = GMF_ALL_VALID;
     try
     {
-        poMask = new GDALAllValidMaskBand(this);
+        poMask.reset(new GDALAllValidMaskBand(this), true);
     }
     catch (const std::bad_alloc &)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Out of memory");
-        poMask = nullptr;
+        poMask.reset();
     }
-    bOwnMask = true;
 
-    return poMask;
+    return poMask.get();
 }
 
 /************************************************************************/
@@ -7497,11 +7494,8 @@ int CPL_STDCALL GDALGetMaskFlags(GDALRasterBandH hBand)
 //! @cond Doxygen_Suppress
 void GDALRasterBand::InvalidateMaskBand()
 {
-    if (bOwnMask)
-        delete poMask;
-    bOwnMask = false;
+    poMask.reset();
     nMaskFlags = 0;
-    poMask = nullptr;
 }
 //! @endcond
 
@@ -7892,21 +7886,21 @@ void GDALRasterBand::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
 
     va_start(args, fmt);
 
-    char szNewFmt[256] = {'\0'};
     const char *pszDSName = poDS ? poDS->GetDescription() : "";
-    if (strlen(fmt) + strlen(pszDSName) + 20 >= sizeof(szNewFmt) - 1)
-        pszDSName = CPLGetFilename(pszDSName);
-    if (pszDSName[0] != '\0' && strchr(pszDSName, '%') == nullptr &&
-        strlen(fmt) + strlen(pszDSName) + 20 < sizeof(szNewFmt) - 1)
+    pszDSName = CPLGetFilename(pszDSName);
+    if (pszDSName[0] != '\0')
     {
-        snprintf(szNewFmt, sizeof(szNewFmt), "%s, band %d: %s", pszDSName,
-                 GetBand(), fmt);
-        CPLErrorV(eErrClass, err_no, szNewFmt, args);
+        CPLError(eErrClass, err_no, "%s",
+                 CPLString()
+                     .Printf("%s, band %d: ", pszDSName, GetBand())
+                     .append(CPLString().vPrintf(fmt, args))
+                     .c_str());
     }
     else
     {
         CPLErrorV(eErrClass, err_no, fmt, args);
     }
+
     va_end(args);
 }
 #endif

@@ -29,6 +29,8 @@
 #include "ogr_jml.h"
 #include "ogr_p.h"
 
+constexpr int PARSER_BUF_SIZE = 8192;
+
 #ifdef HAVE_EXPAT
 
 /************************************************************************/
@@ -397,7 +399,7 @@ void OGRJMLLayer::dataHandlerCbk(const char *data, int nLen)
         return;
 
     nDataHandlerCounter++;
-    if (nDataHandlerCounter >= BUFSIZ)
+    if (nDataHandlerCounter >= PARSER_BUF_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");
@@ -434,7 +436,7 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
     if (VSIFEofL(fp))
         return nullptr;
 
-    char aBuf[BUFSIZ];
+    std::vector<char> aBuf(PARSER_BUF_SIZE);
 
     nFeatureTabLength = 0;
     nFeatureTabIndex = 0;
@@ -445,9 +447,10 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
     do
     {
         nDataHandlerCounter = 0;
-        unsigned int nLen = (unsigned int)VSIFReadL(aBuf, 1, sizeof(aBuf), fp);
+        unsigned int nLen =
+            (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fp);
         nDone = VSIFEofL(fp);
-        if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "XML parsing of JML file failed : %s "
@@ -505,15 +508,15 @@ void OGRJMLLayer::LoadSchema()
 
     VSIFSeekL(fp, 0, SEEK_SET);
 
-    char aBuf[BUFSIZ];
+    std::vector<char> aBuf(PARSER_BUF_SIZE);
     int nDone = 0;
     do
     {
         nDataHandlerCounter = 0;
-        const unsigned int nLen =
-            static_cast<unsigned int>(VSIFReadL(aBuf, 1, sizeof(aBuf), fp));
+        const unsigned int nLen = static_cast<unsigned int>(
+            VSIFReadL(aBuf.data(), 1, aBuf.size(), fp));
         nDone = VSIFEofL(fp);
-        if (XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "XML parsing of JML file failed : %s at line %d, "

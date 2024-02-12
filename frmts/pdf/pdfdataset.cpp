@@ -4262,11 +4262,12 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     const char *pszUserPwd =
         GetOption(poOpenInfo->papszOpenOptions, "USER_PWD", nullptr);
 
-    int bOpenSubdataset = STARTS_WITH(poOpenInfo->pszFilename, "PDF:");
-    int bOpenSubdatasetImage =
+    const bool bOpenSubdataset = STARTS_WITH(poOpenInfo->pszFilename, "PDF:");
+    const bool bOpenSubdatasetImage =
         STARTS_WITH(poOpenInfo->pszFilename, "PDF_IMAGE:");
     int iPage = -1;
     int nImageNum = -1;
+    std::string osSubdatasetName;
     const char *pszFilename = poOpenInfo->pszFilename;
 
     if (bOpenSubdataset)
@@ -4278,6 +4279,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
         if (pszFilename == nullptr)
             return nullptr;
         pszFilename++;
+        osSubdatasetName = CPLSPrintf("Page %d", iPage);
     }
     else if (bOpenSubdatasetImage)
     {
@@ -4294,6 +4296,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
         if (pszFilename == nullptr)
             return nullptr;
         pszFilename++;
+        osSubdatasetName = CPLSPrintf("Image %d", nImageNum);
     }
     else
         iPage = 1;
@@ -5444,7 +5447,16 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */
     /* -------------------------------------------------------------------- */
-    poDS->SetDescription(poOpenInfo->pszFilename);
+    if (bOpenSubdataset || bOpenSubdatasetImage)
+    {
+        poDS->SetPhysicalFilename(pszFilename);
+        poDS->SetSubdatasetName(osSubdatasetName.c_str());
+    }
+    else
+    {
+        poDS->SetDescription(poOpenInfo->pszFilename);
+    }
+
     poDS->TryLoadXML();
 
     /* -------------------------------------------------------------------- */

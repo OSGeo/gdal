@@ -58,8 +58,6 @@ OGRLVBAGLayer::OGRLVBAGLayer(const char *pszFilename, OGRLayerPool *poPoolIn,
     SetDescription(CPLGetBasename(pszFilename));
 
     poFeatureDefn->Reference();
-
-    memset(aBuf, '\0', sizeof(aBuf));
 }
 
 /************************************************************************/
@@ -858,12 +856,11 @@ void OGRLVBAGLayer::ParseDocument()
             case XML_INITIALIZED:
             case XML_PARSING:
             {
-                memset(aBuf, '\0', sizeof(aBuf));
                 const unsigned int nLen = static_cast<unsigned int>(
-                    VSIFReadL(aBuf, 1, sizeof(aBuf), fp));
+                    VSIFReadL(aBuf.data(), 1, aBuf.size(), fp));
 
-                if (IsParserFinished(
-                        XML_Parse(oParser.get(), aBuf, nLen, VSIFEofL(fp))))
+                if (IsParserFinished(XML_Parse(oParser.get(), aBuf.data(), nLen,
+                                               VSIFEofL(fp))))
                     return;
 
                 break;

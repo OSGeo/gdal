@@ -43,7 +43,7 @@
 IVFKFeature::IVFKFeature(IVFKDataBlock *poDataBlock)
     : m_poDataBlock(poDataBlock), m_nFID(-1),
       m_nGeometryType(poDataBlock->GetGeometryType()), m_bGeometry(false),
-      m_bValid(false), m_paGeom(nullptr)
+      m_bValid(false)
 {
     CPLAssert(nullptr != poDataBlock);
 }
@@ -53,9 +53,6 @@ IVFKFeature::IVFKFeature(IVFKDataBlock *poDataBlock)
 */
 IVFKFeature::~IVFKFeature()
 {
-    if (m_paGeom)
-        delete m_paGeom;
-
     m_poDataBlock = nullptr;
 }
 
@@ -96,12 +93,10 @@ void IVFKFeature::SetFID(GIntBig nFID)
 
   \return true on valid feature or otherwise false
 */
-bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
+bool IVFKFeature::SetGeometry(const OGRGeometry *poGeom, const char *ftype)
 {
     m_bGeometry = true;
 
-    delete m_paGeom;
-    m_paGeom = nullptr;
     m_bValid = true;
 
     if (!poGeom)
@@ -135,7 +130,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
     /* check degenerated polygons */
     if (m_nGeometryType == wkbPolygon)
     {
-        OGRLinearRing *poRing = poGeom->toPolygon()->getExteriorRing();
+        const OGRLinearRing *poRing = poGeom->toPolygon()->getExteriorRing();
         if (!poRing || poRing->getNumPoints() < 3)
         {
             CPLDebug("OGR-VFK", "%s: invalid polygon fid = " CPL_FRMT_GIB,
@@ -144,6 +139,7 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
         }
     }
 
+    std::unique_ptr<OGRGeometry> newGeom;
     if (m_bValid)
     {
         if (ftype)
@@ -288,12 +284,12 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
                          "= " CPL_FRMT_GIB,
                          m_poDataBlock->GetName(), ftype, npoints, m_nFID);
                 if (npoints > 1)
-                    m_paGeom = poGeomCurved->clone();
+                    newGeom.reset(poGeomCurved->clone());
                 delete poGeomCurved;
             }
         }
 
-        if (!m_paGeom)
+        if (!newGeom)
         {
             /* check degenerated linestrings */
             if (m_nGeometryType == wkbLineString)
@@ -311,9 +307,11 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
             }
 
             if (m_bValid)
-                m_paGeom = poGeom->clone(); /* make copy */
+                newGeom.reset(poGeom->clone()); /* make copy */
         }
     }
+
+    m_paGeom = std::move(newGeom);
 
     return m_bValid;
 }
@@ -323,12 +321,12 @@ bool IVFKFeature::SetGeometry(OGRGeometry *poGeom, const char *ftype)
 
   \return pointer to OGRGeometry or NULL on error
 */
-OGRGeometry *IVFKFeature::GetGeometry()
+const OGRGeometry *IVFKFeature::GetGeometry()
 {
     if (m_nGeometryType != wkbNone && !m_bGeometry)
         LoadGeometry();
 
-    return m_paGeom;
+    return m_paGeom.get();
 }
 
 /*!
@@ -730,7 +728,7 @@ bool VFKFeature::LoadGeometryLineStringSBP()
         {
             continue;
         }
-        OGRPoint *pt = poPoint->GetGeometry()->toPoint();
+        const OGRPoint *pt = poPoint->GetGeometry()->toPoint();
         OGRLine.addPoint(pt);
 
         poLine = (VFKFeature *)m_poDataBlock->GetNextFeature();

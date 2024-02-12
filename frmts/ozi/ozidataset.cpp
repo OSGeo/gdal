@@ -74,12 +74,13 @@ class OZIRasterBand final : public GDALPamRasterBand
 
     int nXBlocks;
     int nZoomLevel;
-    GDALColorTable *poColorTable;
+    std::unique_ptr<GDALColorTable> poColorTable{};
     GByte *pabyTranslationTable;
 
   public:
     OZIRasterBand(OZIDataset *, int nZoomLevel, int nRasterXSize,
-                  int nRasterYSize, int nXBlocks, GDALColorTable *poColorTable);
+                  int nRasterYSize, int nXBlocks,
+                  std::unique_ptr<GDALColorTable> &&poColorTableIn);
     virtual ~OZIRasterBand();
 
     virtual CPLErr IReadBlock(int, int, void *) override;
@@ -162,9 +163,10 @@ static short ReadShort(VSILFILE *fp, int bOzi3 = FALSE, int nKeyInit = 0)
 
 OZIRasterBand::OZIRasterBand(OZIDataset *poDSIn, int nZoomLevelIn,
                              int nRasterXSizeIn, int nRasterYSizeIn,
-                             int nXBlocksIn, GDALColorTable *poColorTableIn)
+                             int nXBlocksIn,
+                             std::unique_ptr<GDALColorTable> &&poColorTableIn)
     : nXBlocks(nXBlocksIn), nZoomLevel(nZoomLevelIn),
-      poColorTable(poColorTableIn), pabyTranslationTable(nullptr)
+      poColorTable(std::move(poColorTableIn)), pabyTranslationTable(nullptr)
 {
     poDS = poDSIn;
     nBand = 1;
@@ -184,7 +186,6 @@ OZIRasterBand::OZIRasterBand(OZIDataset *poDSIn, int nZoomLevelIn,
 
 OZIRasterBand::~OZIRasterBand()
 {
-    delete poColorTable;
     CPLFree(pabyTranslationTable);
 }
 
@@ -203,7 +204,7 @@ GDALColorInterp OZIRasterBand::GetColorInterpretation()
 
 GDALColorTable *OZIRasterBand::GetColorTable()
 {
-    return poColorTable;
+    return poColorTable.get();
 }
 
 /************************************************************************/
@@ -613,7 +614,7 @@ GDALDataset *OZIDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
 
-        GDALColorTable *poColorTable = new GDALColorTable();
+        auto poColorTable = std::make_unique<GDALColorTable>();
         GByte abyColorTable[256 * 4];
         VSIFReadL(abyColorTable, 1, 1024, fp);
         if (bOzi3)
@@ -629,7 +630,7 @@ GDALDataset *OZIDataset::Open(GDALOpenInfo *poOpenInfo)
         }
 
         poDS->papoOvrBands[i] =
-            new OZIRasterBand(poDS, i, nW, nH, nTileX, poColorTable);
+            new OZIRasterBand(poDS, i, nW, nH, nTileX, std::move(poColorTable));
 
         if (i > 0)
         {
@@ -637,9 +638,8 @@ GDALDataset *OZIDataset::Open(GDALOpenInfo *poOpenInfo)
                 poDS->papoOvrBands[i]->GetIndexColorTranslationTo(
                     poDS->papoOvrBands[0], nullptr, nullptr);
 
-            delete poDS->papoOvrBands[i]->poColorTable;
-            poDS->papoOvrBands[i]->poColorTable =
-                poDS->papoOvrBands[0]->poColorTable->Clone();
+            poDS->papoOvrBands[i]->poColorTable.reset(
+                poDS->papoOvrBands[0]->poColorTable->Clone());
             poDS->papoOvrBands[i]->pabyTranslationTable = pabyTranslationTable;
         }
     }
