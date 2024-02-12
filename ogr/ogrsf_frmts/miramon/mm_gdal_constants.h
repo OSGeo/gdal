@@ -4,15 +4,15 @@
 /*      Constants used in GDAL and in MiraMon                           */
 /* -------------------------------------------------------------------- */
 #ifdef GDAL_COMPILATION
-CPL_C_START // Necessary for compiling C in GDAL project
+CPL_C_START  // Necessary for compiling C in GDAL project
 #else
-typedef __int32             GInt32;
-typedef unsigned __int32    GUInt32;
-typedef __int64             GInt64;
-typedef unsigned __int64    GUInt64;
+typedef __int32 GInt32;
+typedef unsigned __int32 GUInt32;
+typedef __int64 GInt64;
+typedef unsigned __int64 GUInt64;
 #endif
 
-#include <stddef.h> // For size_t 
+#include <stddef.h>  // For size_t 
 #if defined(_WIN32)
 #define strcasecmp stricmp
 #endif
@@ -24,13 +24,13 @@ typedef unsigned __int64    GUInt64;
 #define MM_CPL_PATH_BUF_SIZE 2048
 
 // BIT 1
-#define MM_BIT_1_ON     0x02    // Generated using MiraMon
+#define MM_BIT_1_ON  0x02  // Generated using MiraMon
 // BIT 3
-#define MM_BIT_3_ON     0x08    // Multipolygon
+#define MM_BIT_3_ON     0x08  // Multipolygon
 // BIT 4
-#define MM_BIT_4_ON     0x10    // 3d
+#define MM_BIT_4_ON     0x10  // 3d
 // BIT 5
-#define MM_BIT_5_ON     0x20    // Explicital polygons (every polygon has only one arc)
+#define MM_BIT_5_ON     0x20  // Explicital polygons (every polygon has only one arc)
 
 #define MM_CREATED_USING_MIRAMON    MM_BIT_1_ON
 #define MM_LAYER_MULTIPOLYGON       MM_BIT_3_ON
@@ -185,7 +185,7 @@ enum MM_TipusNomCamp { MM_NOM_DBF_CLASSICA_I_VALID=0, MM_NOM_DBF_MINUSCULES_I_VA
 #define MM_NOM_CAMP_PRIMER_CARACTER_    0x04
 
 #define MM_MAX_AMPLADA_CAMP_N_DBF       21
-#define MM_MAX_AMPLADA_CAMP_C_DBF       3//500  // But it can be modified on the fly
+#define MM_MAX_AMPLADA_CAMP_C_DBF       3  //500  // But it can be modified on the fly
 #define MM_MAX_AMPLADA_CAMP_D_DBF       10
 
 #define MM_PRIVATE_POINT_DB_FIELDS      1
@@ -208,6 +208,6 @@ typedef GInt32      MM_N_HEIGHT_TYPE;
 #define MM_ARC_N_TOTAL_ALCADES_DISC(n,n_vrt) (((n)<0) ? -n : (n)*(MM_N_HEIGHT_TYPE)(n_vrt))
 
 #ifdef GDAL_COMPILATION
-CPL_C_END // Necessary for compiling in GDAL project
+CPL_C_END  // Necessary for compiling in GDAL project
 #endif
-#endif //__MM_GDAL_CONSTANTS_H
+#endif  //__MM_GDAL_CONSTANTS_H

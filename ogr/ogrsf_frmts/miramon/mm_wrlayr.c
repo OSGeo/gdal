@@ -156,8 +156,8 @@ void MM_CPLDebug(
     CPLDebug(c, "%s", format);
 #else
     sprintf(local_message, "%s", format);
-    printf(local_message);
-    printf("\n");
+    printf(local_message);/*ok*/
+    printf("\n");/*ok*/
 #endif
 }
 
@@ -4555,7 +4555,9 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char* szResult, MM_BYTE dire
 
     if (!pszBuffer)
     {
-        printf("No memory.\n");
+        MM_CPLError(CE_Failure, CPLE_OutOfMemory,
+                "Memory error in MiraMon "
+                "driver (ReturnCodeFromMM_m_idofic())");
         return 1;
     }
     if (!pMMSRS_or_pSRS)
@@ -4578,7 +4580,8 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char* szResult, MM_BYTE dire
     if (!aMMIDDBFFile)
     {
         free_function(pszBuffer);
-        printf("Error opening data\\MM_m_idofic.csv.\n");
+        MM_CPLError(CE_Failure, CPLE_OpenFailed,
+                "Error opening data\\MM_m_idofic.csv.\n");
         return 1;
     }
 
@@ -4586,7 +4589,8 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char* szResult, MM_BYTE dire
     if (nullptr == (pfMMSRS = fopen(aMMIDDBFFile, "r")))
     {
         free_function(pszBuffer);
-        printf("Error opening data\\m_idofic.csv.\n");
+        MM_CPLError(CE_Failure, CPLE_OpenFailed,
+                "Error opening data\\MM_m_idofic.csv.\n");
         return 1;
     }
     free_function(aMMIDDBFFile);
@@ -4597,7 +4601,8 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char* szResult, MM_BYTE dire
     {
         free_function(pszBuffer);
         fclose(pfMMSRS);
-        printf("Wrong format in data\\m_idofic.csv.\n");
+        MM_CPLError(CE_Failure, CPLE_NotSupported,
+                "Wrong format in data\\MM_m_idofic.csv.\n");
         return 1;
     }
     id_geodes = strstr(pszBuffer, "ID_GEODES");
@@ -4605,7 +4610,8 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char* szResult, MM_BYTE dire
     {
         free_function(pszBuffer);
         fclose(pfMMSRS);
-        printf("Wrong format in data\\m_idofic.csv.\n");
+        MM_CPLError(CE_Failure, CPLE_NotSupported,
+                "Wrong format in data\\MM_m_idofic.csv.\n");
         return 1;
     }
     id_geodes[strlen("ID_GEODES")] = '\0';
@@ -4614,7 +4620,8 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char* szResult, MM_BYTE dire
     {
         free_function(pszBuffer);
         fclose(pfMMSRS);
-        printf("Wrong format in data\\m_idofic.csv.\n");
+        MM_CPLError(CE_Failure, CPLE_NotSupported,
+                "Wrong format in data\\MM_m_idofic.csv.\n");
         return 1;
     }
     psidgeodes[strlen("PSIDGEODES")] = '\0';
@@ -4624,7 +4631,8 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char* szResult, MM_BYTE dire
     {
         free_function(pszBuffer);
         fclose(pfMMSRS);
-        printf("Wrong format in data\\m_idofic.csv.\n");
+        MM_CPLError(CE_Failure, CPLE_NotSupported,
+                "Wrong format in data\\MM_m_idofic.csv.\n");
         return 1;
     }
     // Is ID_GEODES after PSIDGEODES?
@@ -4632,7 +4640,8 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char* szResult, MM_BYTE dire
     {
         free_function(pszBuffer);
         fclose(pfMMSRS);
-        printf("Wrong format in data\\m_idofic.csv.\n");
+        MM_CPLError(CE_Failure, CPLE_NotSupported,
+                "Wrong format in data\\MM_m_idofic.csv.\n");
         return 1;
     }
 
@@ -4644,7 +4653,8 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char* szResult, MM_BYTE dire
         {
             free_function(pszBuffer);
             fclose(pfMMSRS);
-            printf("Wrong format in data\\m_idofic.csv.\n");
+            MM_CPLError(CE_Failure, CPLE_NotSupported,
+                "Wrong format in data\\MM_m_idofic.csv.\n");
             return 1;
         }
 
@@ -4653,7 +4663,8 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char* szResult, MM_BYTE dire
         {
             free_function(pszBuffer);
             fclose(pfMMSRS);
-            printf("Wrong format in data\\m_idofic.csv.\n");
+            MM_CPLError(CE_Failure, CPLE_NotSupported,
+                "Wrong format in data\\MM_m_idofic.csv.\n");
             return 1;
         }
 
