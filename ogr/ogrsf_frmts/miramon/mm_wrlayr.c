@@ -4133,6 +4133,8 @@ int AddMMFeature(struct MiraMonVectLayerInfo* hMiraMonLayer,
 
 void MMInitBoundingBox(struct MMBoundingBox* dfBB)
 {
+    if(!dfBB)
+        return;
     dfBB->dfMinX = dfBB->dfMinX = STATISTICAL_UNDEF_VALUE;
     dfBB->dfMinX = dfBB->dfMaxX = -STATISTICAL_UNDEF_VALUE;
     dfBB->dfMinX = dfBB->dfMinY = STATISTICAL_UNDEF_VALUE;
@@ -4142,6 +4144,9 @@ void MMInitBoundingBox(struct MMBoundingBox* dfBB)
 void MMUpdateBoundingBox(struct MMBoundingBox* dfBBToBeAct,
     struct MMBoundingBox* dfBBWithData)
 {
+    if(!dfBBToBeAct)
+        return;
+
     if (dfBBToBeAct->dfMinX > dfBBWithData->dfMinX)
         dfBBToBeAct->dfMinX = dfBBWithData->dfMinX;
 
@@ -4158,6 +4163,9 @@ void MMUpdateBoundingBox(struct MMBoundingBox* dfBBToBeAct,
 void MMUpdateBoundingBoxXY(struct MMBoundingBox* dfBB,
     struct MM_POINT_2D* pCoord)
 {
+    if(!pCoord)
+        return;
+
     if (pCoord->dfX < dfBB->dfMinX)
         dfBB->dfMinX = pCoord->dfX;
 
@@ -4585,7 +4593,13 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char* szResult, MM_BYTE dire
 
     // Checking the header of the csv file
     memset(pszBuffer, 0, nLongBuffer);
-    fgets(pszBuffer, nLongBuffer, pfMMSRS);
+    if(!fgets(pszBuffer, nLongBuffer, pfMMSRS))
+    {
+        free_function(pszBuffer);
+        fclose(pfMMSRS);
+        printf("Wrong format in data\\m_idofic.csv.\n");
+        return 1;
+    }
     id_geodes = strstr(pszBuffer, "ID_GEODES");
     if (!id_geodes)
     {
@@ -4658,7 +4672,7 @@ int ReturnCodeFromMM_m_idofic(char* pMMSRS_or_pSRS, char* szResult, MM_BYTE dire
             nLong = strlen("EPSG:");
             if (epsg && !strncmp(epsg, psidgeodes, nLong))
             {
-                if (epsg + nLong)
+                if (strlen(epsg + nLong)>0)
                 {
                     strcpy(szResult, epsg + nLong);
                     free_function(pszBuffer);
@@ -4841,7 +4855,7 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData* hMMMD)
 
     currentTime = time(nullptr);
     pLocalTime = localtime(&currentTime);
-    sprintf(aTimeString, "%04d%02d%02d %02d%02d%02d%02d+00:00",
+    snprintf(aTimeString, 24, "%04d%02d%02d %02d%02d%02d%02d+00:00",
         pLocalTime->tm_year + 1900, pLocalTime->tm_mon + 1, pLocalTime->tm_mday,
         pLocalTime->tm_hour, pLocalTime->tm_min, pLocalTime->tm_sec, 0);
     fprintf_function(pF, "%s=%s"LineReturn, KEY_CreationDate, aTimeString);
@@ -5645,11 +5659,6 @@ int MMAddDBFRecordToMMDB(struct MiraMonVectLayerInfo* hMiraMonLayer,
     char* pszRecordOnCourse;
     struct MM_FLUSH_INFO* pFlushRecList;
 
-    // In V1.1 only _UI32_MAX records number is allowed
-    if (MMCheckVersionForFID(hMiraMonLayer,
-        hMMFeature->nNumMRecords))
-        return MM_STOP_WRITING_FEATURES;
-
     // Adding record to the MiraMon database (extended DBF)
     // Flush settings
     pFlushRecList = &hMiraMonLayer->MMAdmDBWriting.FlushRecList;
@@ -5885,7 +5894,7 @@ int MMAddPolygonRecordToMMDB(struct MiraMonVectLayerInfo* hMiraMonLayer,
 
     // In V1.1 only _UI32_MAX records number is allowed
     if (MMCheckVersionForFID(hMiraMonLayer,
-        (hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP->nRecords + hMMFeature) ? hMMFeature->nNumMRecords : 0))
+        hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP->nRecords + hMMFeature->nNumMRecords))
         return MM_STOP_WRITING_FEATURES;
 
     // Adding record to the MiraMon database (extended DBF)

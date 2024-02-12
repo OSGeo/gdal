@@ -1753,10 +1753,10 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
 
             const OGRField *poField = poFeature->GetRawFieldRef(iField);
             if (poField->Date.Year >= 0)
-                snprintf(szDate, 8, "%04d%02d%02d", poField->Date.Year,
+                snprintf(szDate, 9, "%04d%02d%02d", poField->Date.Year,
                     poField->Date.Month, poField->Date.Day);
             else
-                snprintf(szDate, 8, "%04d%02d%02d", 0, 0, 0);
+                snprintf(szDate, 9, "%04d%02d%02d", 0, 0, 0);
 
             if(MM_SecureCopyStringFieldValue(&hMMFeature.pRecords[0].pField[iField].pDinValue,
                     szDate, &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
@@ -1843,6 +1843,15 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
     }
 
     return OGRERR_NONE;
+}
+
+/****************************************************************************/
+/*                             GetLayerDefn()                               */
+/*                                                                          */
+/****************************************************************************/
+OGRFeatureDefn *OGRMiraMonLayer::GetLayerDefn()
+{
+    return poFeatureDefn;
 }
 
 /****************************************************************************/
