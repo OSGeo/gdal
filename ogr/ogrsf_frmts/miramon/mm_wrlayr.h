@@ -15,15 +15,15 @@ CPL_C_START // Necessary for compiling in GDAL project
 
 #ifndef GDAL_COMPILATION
     #include "memo.h"
-    #include "F64_str.h"	//For FILE_64
-    #include "FILE_64.h"	// Per a fseek_64(),...
-    #include "bd_xp.h"	    //For MAX_LON_CAMP_DBF
+    #include "F64_str.h"    //For FILE_64
+    #include "FILE_64.h"    // Per a fseek_64(),...
+    #include "bd_xp.h"      //For MAX_LON_CAMP_DBF
     #include "deftoler.h"   // For QUASI_IGUAL
-    //#include "LbTopStr.h"	// For struct GEOMETRIC_I_TOPOLOGIC_POL
-    //#include "str_snyd.h"   // For struct SNY_TRANSFORMADOR_GEODESIA
+    //#include "LbTopStr.h" // For struct GEOMETRIC_I_TOPOLOGIC_POL
+    //#include "str_snyd.h" // For struct SNY_TRANSFORMADOR_GEODESIA
     #include "nomsfitx.h"   // Per a CanviaExtensio()
     #include "fitxers.h"    // Per a removeAO()
-    #include "cadenes.h"	// Per a EsCadenaDeBlancs()
+    #include "cadenes.h"    // Per a EsCadenaDeBlancs()
     #define calloc_function(a) MM_calloc((a))
     #define realloc_function MM_realloc
     #define free_function(a) MM_free((a))

@@ -7,11 +7,11 @@
 #include "cpl_conv.h"   // For FILE_TYPE
 #include "mm_gdal_constants.h"
 #else
-#include "F64_str.h"	// For FILE_64
+#include "F64_str.h"    // For FILE_64
 #include "mm_gdal\mm_gdal_constants.h"
 #endif
 
-
+    
 
 #ifdef GDAL_COMPILATION
 CPL_C_START // Necessary for compiling in GDAL project
@@ -36,7 +36,7 @@ struct MM_CAMP // FIELD
 
     // Name of the field in dBASEIII
     char NomCampDBFClassica[MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF]; 
-    
+
     // Type of the field C, N, D, L, M, F, G and B
     char TipusDeCamp;
     MM_BOOLEAN Is64;  // Is an signed 64 bit integer
@@ -66,8 +66,8 @@ struct MM_CAMP // FIELD
     MM_BYTE reservat_1[MM_MAX_LON_RESERVAT_1_CAMP_BD_XP];
 
 #define MM_OFFSET_RESERVAT2_BYTESxCAMP_CAMP_ESPECIAL 3
-#define MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES	 7
-#define MM_OFFSET_RESERVAT2_MIDA_NOM_ESTES		11
+#define MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES     7
+#define MM_OFFSET_RESERVAT2_MIDA_NOM_ESTES        11
 #define MM_MAX_LON_RESERVAT_2_CAMP_BD_XP 13
     MM_BYTE reservat_2[MM_MAX_LON_RESERVAT_2_CAMP_BD_XP];
     MM_BYTE MDX_camp_flag;
@@ -96,7 +96,7 @@ struct MM_BASE_DADES_XP // MiraMon Database Structure
     MM_EXT_DBF_N_FIELDS CampIdGrafic;
     MM_EXT_DBF_N_FIELDS CampIdEntitat;
     short int any;       
-    MM_BYTE mes;		
+    MM_BYTE mes;        
     MM_BYTE dia;
                          
     MM_BYTE versio_dbf;     

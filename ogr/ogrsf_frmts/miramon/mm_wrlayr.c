@@ -31,11 +31,11 @@
 
 #ifndef GDAL_COMPILATION
 #include "CmptCmp.h"                    // Compatibility between compilators
-#include "PrjMMVGl.h"	                // For a DirectoriPrograma
+#include "PrjMMVGl.h"                   // For a DirectoriPrograma
 #include "mm_gdal\mm_wrlayr.h"          // For fseek_function()
 #include "mm_gdal\mm_gdal_functions.h"  // For MM_strnzcpy()
 #include "mm_gdal\mmrdlayr.h"           // For MM_ReadExtendedDBFHeader()
-#include "msg.h"		                // For ErrorMsg()
+#include "msg.h"                        // For ErrorMsg()
 #else
 #include "mm_wrlayr.h" 
 #include "mm_gdal_functions.h"
@@ -43,8 +43,8 @@
 #include "mmrdlayr.h" // For MM_ReadExtendedDBFHeader()
 #endif
 
-#include "gdal.h"			// For GDALDatasetH
-#include "ogr_srs_api.h"	// For OSRGetAuthorityCode
+#include "gdal.h"            // For GDALDatasetH
+#include "ogr_srs_api.h"    // For OSRGetAuthorityCode
 CPL_C_START  // Necessary for compiling in GDAL project
 
 /* -------------------------------------------------------------------- */

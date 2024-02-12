@@ -264,7 +264,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             {
                 if(!phMiraMonLayer->pMMBDXP->pfBaseDades)
                 {
-		            if ( (phMiraMonLayer->pMMBDXP->pfBaseDades =
+                    if ( (phMiraMonLayer->pMMBDXP->pfBaseDades =
                             fopen_function(
                                 phMiraMonLayer->pMMBDXP->szNomFitxer,
                                 "r"))==nullptr)
@@ -1628,7 +1628,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         pszString, &hMMFeature.pRecords[nIRecord].pField[iField].nNumDinValue))
                 {
                     CPLFree(pszString);
-                	return OGRERR_NOT_ENOUGH_MEMORY;
+                    return OGRERR_NOT_ENOUGH_MEMORY;
                 }
                 CPLFree(pszString);
                 hMMFeature.pRecords[nIRecord].pField[iField].bIsValid = 1;

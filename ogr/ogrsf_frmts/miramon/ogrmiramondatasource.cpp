@@ -178,6 +178,8 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
             CPLError(CE_Warning, CPLE_NotSupported,
                  "Measures in this layer will be ignored.");
             break;
+        default:
+            break;
     }
 
     // If the dataset has an extension, we understand that the path

@@ -191,20 +191,20 @@ struct MM_POINT_2D
 
 struct ARC_VRT_STRUCTURE
 {
-	struct MM_POINT_2D vertice;   
-	MM_BOOLEAN bIniFi; // boolean:  0=inicial, 1=final
-	MM_INTERNAL_FID nIArc;  // Internal arc index 
-	MM_INTERNAL_FID nINod;	// Internal node index, empty at the beginning */
+    struct MM_POINT_2D vertice;   
+    MM_BOOLEAN bIniFi; // boolean:  0=inicial, 1=final
+    MM_INTERNAL_FID nIArc;  // Internal arc index 
+    MM_INTERNAL_FID nINod;    // Internal node index, empty at the beginning */
 };
 
 struct MM_VARIABLES_LLEGEIX_POLS
 {
-	size_t Nomb_Max_Coord;
-	size_t Bloc_Max_Coord;
-	size_t Nomb_Max_Coord_Z;
-	size_t Nomb_Max_avnp;
-	size_t Nomb_Max_Elem;
-	size_t Nomb_Max_vora_de_qui;
+    size_t Nomb_Max_Coord;
+    size_t Bloc_Max_Coord;
+    size_t Nomb_Max_Coord_Z;
+    size_t Nomb_Max_avnp;
+    size_t Nomb_Max_Elem;
+    size_t Nomb_Max_vora_de_qui;
 };
 
 struct MM_FLUSH_INFO
@@ -243,12 +243,12 @@ struct MiraMonVectorMetaData
     char *aArcFile; // Polygon's arc name
     int ePlainLT; // Plain layer type (no 3D specified): MM_LayerType_Point, 
                 // MM_LayerType_Arc, MM_LayerType_Node, MM_LayerType_Pol
-	char *pSRS; // EPSG code of the coordinate system information.
+    char *pSRS; // EPSG code of the coordinate system information.
     char *pXUnit; // X units if pszSRS is empty. 
     char *pYUnit; // Y units if pszSRS is empty. If Y units is empty,
                   // X unit will be assigned as Y unit by default.
 
-	struct MMBoundingBox hBB; // Bounding box of the entire layer
+    struct MMBoundingBox hBB; // Bounding box of the entire layer
 
     // Pointer to a Layer DataBase, used to create MiraMon DBF (extended) file.
     struct MiraMonDataBase *pLayerDB;
@@ -278,18 +278,18 @@ struct MiraMonFieldValue
 {
     MM_BOOLEAN bIsValid;   // If 1 the value is filled. If 0, there is no value.
     #define MM_INIT_STRING_FIELD_VALUE   50000  // Never less than 10
-	MM_EXT_DBF_N_FIELDS nNumDinValue; // Size of the reserved string value
+    MM_EXT_DBF_N_FIELDS nNumDinValue; // Size of the reserved string value
     char *pDinValue;       // Used if MM_MAX_STRING_FIELD_VALUE is not enough
-	double dValue;     // For double and 32 bit integer numeric values and 
+    double dValue;     // For double and 32 bit integer numeric values and 
     GInt64 iValue;    // For 64 bit integer values. 
-	//MM_BOOLEAN kbValue;	// For binary values.
+    //MM_BOOLEAN kbValue;    // For binary values.
 };
 
 struct MiraMonRecord
 {
-    MM_EXT_DBF_N_FIELDS nMaxField;	// Number of reserved fields
-	MM_EXT_DBF_N_FIELDS nNumField;	// Number of fields
-	struct MiraMonFieldValue *pField;	// Value of the fields.
+    MM_EXT_DBF_N_FIELDS nMaxField;    // Number of reserved fields
+    MM_EXT_DBF_N_FIELDS nNumField;    // Number of fields
+    struct MiraMonFieldValue *pField;    // Value of the fields.
 };
 
 struct MiraMonDataBaseField
@@ -329,8 +329,8 @@ struct MMAdmDatabase
 
 struct MM_ID_GRAFIC_MULTIPLE_RECORD
 {
-	MM_FILE_OFFSET offset;
-	MM_EXT_DBF_N_MULTIPLE_RECORDS nMR;  // Determines the number of the list (multiple record)
+    MM_FILE_OFFSET offset;
+    MM_EXT_DBF_N_MULTIPLE_RECORDS nMR;  // Determines the number of the list (multiple record)
 };
 
 // MIRAMON GEOMETRY
@@ -591,8 +591,8 @@ struct MiraMonFeature
 
     // Number of reserved elements in *flag_VFG
     MM_INTERNAL_FID nMaxVFG;
-	char *flag_VFG; // In case of multipolygons, for each ring:
-			    // if flag_VFG[i]|MM_EXTERIOR_ARC_SIDE: outer ring if actived
+    char *flag_VFG; // In case of multipolygons, for each ring:
+                // if flag_VFG[i]|MM_EXTERIOR_ARC_SIDE: outer ring if actived
                 // if flag_VFG[i]|MM_END_ARC_IN_RING: always actived (every ring has only one arc)
                 // if flag_VFG[i]|MM_ROTATE_ARC: coordinates are in the order inverse than readed
 
@@ -604,10 +604,10 @@ struct MiraMonFeature
     MM_COORD_TYPE *pZCoord; 
 
     // Records of the feature
-	MM_EXT_DBF_N_MULTIPLE_RECORDS nNumMRecords;
+    MM_EXT_DBF_N_MULTIPLE_RECORDS nNumMRecords;
     // Number of reserved elements in *pRecords
     MM_EXT_DBF_N_MULTIPLE_RECORDS nMaxMRecords; 
-	struct MiraMonRecord *pRecords;
+    struct MiraMonRecord *pRecords;
 };
 
 // There is the possibility of creating a map with all layers

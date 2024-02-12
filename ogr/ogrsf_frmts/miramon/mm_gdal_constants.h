@@ -30,7 +30,7 @@ typedef unsigned __int64    GUInt64;
 // BIT 4
 #define MM_BIT_4_ON     0x10    // 3d
 // BIT 5
-#define MM_BIT_5_ON     0x20	// Explicital polygons (every polygon has only one arc)
+#define MM_BIT_5_ON     0x20    // Explicital polygons (every polygon has only one arc)
 
 #define MM_CREATED_USING_MIRAMON    MM_BIT_1_ON
 #define MM_LAYER_MULTIPOLYGON       MM_BIT_3_ON
@@ -43,8 +43,8 @@ typedef unsigned __int64    GUInt64;
 #define MM_MESSAGE_LENGHT                   512
 #define MM_MAX_BYTES_FIELD_DESC             360
 #define MM_MAX_BYTES_IN_A_FIELD_EXT         (UINT32_MAX-1)
-#define MM_MAX_LON_FIELD_NAME_DBF              129
-#define MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF    11
+#define MM_MAX_LON_FIELD_NAME_DBF           129
+#define MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF 11
 #define MM_MAX_LON_UNITATS                  66
 #define MM_MAX_LON_UNITATS_CAMP MM_MAX_LON_UNITATS
 
@@ -75,9 +75,9 @@ typedef GUInt64 MM_POLYGON_RINGS_COUNT;
 
 // Z Part
 typedef int MM_SELEC_COORDZ_TYPE;
-#define MM_SELECT_FIRST_COORDZ 	    0
-#define MM_SELECT_HIGHEST_COORDZ  	1
-#define MM_SELECT_LOWEST_COORDZ 	2
+#define MM_SELECT_FIRST_COORDZ      0
+#define MM_SELECT_HIGHEST_COORDZ    1
+#define MM_SELECT_LOWEST_COORDZ     2
 
 #define MM_STRING_HIGHEST_ALTITUDE  0x0001
 #define MM_STRING_LOWEST_ALTITUDE   0x0002
@@ -94,7 +94,7 @@ typedef int MM_SELEC_COORDZ_TYPE;
 #define MM_RING_NODE                    2
 #define MM_FINAL_NODE                   3
 
-#define MM_MAX_ID_SNY                    41
+#define MM_MAX_ID_SNY                  41
 
 
 // Extended DBF
@@ -135,8 +135,8 @@ typedef GInt32 MM_FIRST_RECORD_OFFSET_TYPE;
 #define MM_CAMP_ORDINAL             2
 #define MM_CAMP_QUANTITATIU_CONTINU 3
 
-#define MM_CAMP_NO_SIMBOLITZABLE   0
-#define MM_CAMP_SIMBOLITZABLE		1
+#define MM_CAMP_NO_SIMBOLITZABLE    0
+#define MM_CAMP_SIMBOLITZABLE       1
 
 
 #define MM_NO_ES_CAMP_GEOTOPO       0
@@ -156,7 +156,7 @@ typedef GInt32 MM_FIRST_RECORD_OFFSET_TYPE;
 #define MM_CAMP_ES_PERIMETRE_3D     18    
 #define MM_CAMP_ES_AREA             13
 #define MM_CAMP_ES_AREAE            14
-#define MM_CAMP_ES_AREA_3D	        19
+#define MM_CAMP_ES_AREA_3D          19
 #define MM_CAMP_ES_N_ARCS           15
 #define MM_CAMP_ES_N_POLIG          16
 #define MM_CAMP_ES_PENDENT          20
@@ -195,10 +195,10 @@ enum MM_TipusNomCamp { MM_NOM_DBF_CLASSICA_I_VALID=0, MM_NOM_DBF_MINUSCULES_I_VA
 typedef unsigned char       MM_BYTE;
 typedef GInt32      MM_N_HEIGHT_TYPE;
 
-#define MM_NOU_N_DECIMALS_NO_APLICA		    0
-#define MM_APLICAR_NOU_N_DECIMALS			1
-#define MM_NOMES_DOCUMENTAR_NOU_N_DECIMALS	2
-#define MM_PREGUNTA_SI_APLICAR_NOU_N_DECIM	3
+#define MM_NOU_N_DECIMALS_NO_APLICA          0
+#define MM_APLICAR_NOU_N_DECIMALS            1
+#define MM_NOMES_DOCUMENTAR_NOU_N_DECIMALS   2
+#define MM_PREGUNTA_SI_APLICAR_NOU_N_DECIM   3
 #define MM_CARACTERS_DOUBLE                 40
 
 #define MM_ARC_ALCADA_PER_CADA_VERTEX  1

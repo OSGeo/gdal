@@ -171,7 +171,7 @@ char szResult[MM_MAX_ID_SNY+10];
 
 int MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 MM_INTERNAL_FID i_elem,
-				unsigned long int flag_z,
+                unsigned long int flag_z,
                 MM_N_VERTICES_TYPE nStartVertice,
                 MM_BOOLEAN bAvoidFirst,
                 unsigned char VFG)
@@ -293,7 +293,7 @@ struct MM_ZD *pZDescription=nullptr;
 
 int MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 MM_INTERNAL_FID i_pol,
-				unsigned long int flag_z)
+                unsigned long int flag_z)
 {
 struct MM_PH *pPolHeader;
 struct MM_AH *pArcHeader;
@@ -428,7 +428,7 @@ MM_N_VERTICES_TYPE nNAcumulVertices=0;
     if(pBuffer)
         free_function(pBuffer);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
     
-	return 0;
+    return 0;
 }
 
 int MMGetFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer, MM_INTERNAL_FID i_elem)
@@ -442,8 +442,8 @@ struct MM_AH *pArcHeader;
 struct MM_PH *pPolHeader;
 
     if (hMiraMonLayer->nSelectCoordz==MM_SELECT_HIGHEST_COORDZ)
-    	flag_z=MM_STRING_HIGHEST_ALTITUDE;
-	else if (hMiraMonLayer->nSelectCoordz==MM_SELECT_LOWEST_COORDZ)
+        flag_z=MM_STRING_HIGHEST_ALTITUDE;
+    else if (hMiraMonLayer->nSelectCoordz==MM_SELECT_LOWEST_COORDZ)
         flag_z=MM_STRING_LOWEST_ALTITUDE;
     else
         flag_z=0L;
@@ -543,7 +543,7 @@ struct MM_PH *pPolHeader;
         if(MMGetMultiPolygonCoordinates(hMiraMonLayer, i_elem, flag_z))
             return 1;
 
-	return 0;
+    return 0;
 }
 
 
@@ -588,7 +588,7 @@ const char *szDBFFileName=nullptr;
     }
 
     fclose_function(pMMBDXP->pfBaseDades);
-	pMMBDXP->pfBaseDades=nullptr;
+    pMMBDXP->pfBaseDades=nullptr;
 
     return 0;
 } 

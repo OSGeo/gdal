@@ -271,7 +271,7 @@ static MM_FIRST_RECORD_OFFSET_TYPE MM_CalculateBytesFirstRecordOffset(struct MM_
 {
     if(bd_xp)
         return (32+32*bd_xp->ncamps+1+MM_CalculateBytesExtendedFieldNames(bd_xp));
-    return 0;	
+    return 0;    
 }
 
 static void MM_CheckDBFHeader(struct MM_BASE_DADES_XP * bd_xp)
@@ -360,7 +360,7 @@ static MM_BOOLEAN MM_CheckClassicFieldNameEqual(const struct MM_BASE_DADES_XP * 
 MM_EXT_DBF_N_FIELDS i;
 
     for(i=0; i<base_dades_XP->ncamps; i++)
-    {				
+    {                
         if((strcasecmp(base_dades_XP->Camp[i].NomCampDBFClassica, nom_camp_classic)) == 0 ||
             (strcasecmp(base_dades_XP->Camp[i].NomCamp, nom_camp_classic)) == 0)
             return TRUE;
@@ -644,13 +644,13 @@ GUInt32 nRecords;
     
 
 
-    /* At 32th byte begins fields description	*/
+    /* At 32th byte begins fields description    */
     /* Every description is 32 bytes long       */
     bytes_acumulats=32+32*(base_dades_XP->ncamps)+1;
 
     for (i = 0; i < base_dades_XP->ncamps; i++)
     {
-        /* Bytes from 0 to 10	-> Field name, \0 finished */
+        /* Bytes from 0 to 10    -> Field name, \0 finished */
         estat=MM_ISExtendedNameBD_XP(base_dades_XP->Camp[i].NomCamp);
         if(estat==MM_NOM_DBF_CLASSICA_I_VALID || estat==MM_NOM_DBF_MINUSCULES_I_VALID)
         {
@@ -797,7 +797,7 @@ GUInt32 nRecords;
                 return FALSE;
             }
         }
-        /* Byte 31 --> MDX flag.	*/
+        /* Byte 31 --> MDX flag.    */
         if (fwrite_function(&base_dades_XP->Camp[i].MDX_camp_flag, 1, 1, base_dades_XP->pfBaseDades) != 1)
         {
             free_function(zero);
@@ -1179,7 +1179,7 @@ char *pszString;
 
     if (!grandaria_registre_incoherent &&
         offset_possible!=pMMBDXP->OffsetPrimeraFitxa)
-    {	// Extended names
+    {    // Extended names
         MM_FIRST_RECORD_OFFSET_TYPE offset_nom_camp;
         int mida_nom;
 
@@ -1430,17 +1430,17 @@ char *MM_oemansi_n(char *szcadena, size_t n_bytes)
 size_t u_i;
 unsigned char *punter_bait;
 unsigned char t_oemansi[128]=
-	{	199, 252, 233, 226, 228, 224, 229, 231, 234, 235, 232, 239, 238, 236,
-		196, 197, 201, 230, 198, 244, 246, 242, 251, 249, 255, 214, 220, 248,
-		163, 216, 215, 131, 225, 237, 243, 250, 241, 209, 170, 186, 191, 174,
-		172, 189, 188, 161, 171, 187, 164, 164, 164, 166, 166, 193, 194, 192,
-		169, 166, 166, 164, 164, 162, 165, 164, 164, 164, 164, 164, 164, 164,
-		227, 195, 164, 164, 164, 164, 166, 164, 164, 164, 240, 208, 202, 203,
-		200, 180, 205, 206, 207, 164, 164, 164, 164, 166, 204, 164, 211, 223,
-		212, 210, 245, 213, 181, 254, 222, 218, 219, 217, 253, 221, 175, 180,
-		173, 177, 164, 190, 182, 167, 247, 184, 176, 168, 183, 185, 179, 178,
-		164, 183
-	};
+    {    199, 252, 233, 226, 228, 224, 229, 231, 234, 235, 232, 239, 238, 236,
+        196, 197, 201, 230, 198, 244, 246, 242, 251, 249, 255, 214, 220, 248,
+        163, 216, 215, 131, 225, 237, 243, 250, 241, 209, 170, 186, 191, 174,
+        172, 189, 188, 161, 171, 187, 164, 164, 164, 166, 166, 193, 194, 192,
+        169, 166, 166, 164, 164, 162, 165, 164, 164, 164, 164, 164, 164, 164,
+        227, 195, 164, 164, 164, 164, 166, 164, 164, 164, 240, 208, 202, 203,
+        200, 180, 205, 206, 207, 164, 164, 164, 164, 166, 204, 164, 211, 223,
+        212, 210, 245, 213, 181, 254, 222, 218, 219, 217, 253, 221, 175, 180,
+        173, 177, 164, 190, 182, 167, 247, 184, 176, 168, 183, 185, 179, 178,
+        164, 183
+    };
     if (n_bytes == USHRT_MAX)
     {
         for (punter_bait = (unsigned char*)szcadena; *punter_bait; punter_bait++)
@@ -1458,12 +1458,12 @@ unsigned char t_oemansi[128]=
                 *punter_bait = t_oemansi[*punter_bait - 128];
         }
     }
-	return szcadena;
+    return szcadena;
 }
 
 char *MM_oemansi(char *szcadena)
 {
-	return MM_oemansi_n(szcadena, USHRT_MAX);
+    return MM_oemansi_n(szcadena, USHRT_MAX);
 }
 
 
@@ -1963,7 +1963,7 @@ int retorn_printf;
                         }
                     }
                     else // MM_APLICAR_NOU_N_DECIMALS
-                    {	
+                    {    
                         double valor;
                         char *sz_valor;
 
@@ -2296,7 +2296,7 @@ MM_TIPUS_BYTES_PER_CAMP_DBF bytes_final_id_principi_id1=bytes_per_fitxa-bytes_id
     while(TRUE)
     #ifdef _MSC_VER
     #pragma warning( default : 4127 )
-    #endif		
+    #endif        
     {
         if (i>id_grafic)
         {
