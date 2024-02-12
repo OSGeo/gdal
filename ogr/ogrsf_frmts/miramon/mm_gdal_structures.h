@@ -54,7 +54,7 @@ struct MM_CAMP // FIELD
     MM_TIPUS_BYTES_ACUMULATS_DBF BytesAcumulats; 
 
     // Not used in GDAL
-    char *(separador[MM_NUM_IDIOMES_MD_MULTIDIOMA]); 
+    char *separador[MM_NUM_IDIOMES_MD_MULTIDIOMA];
 
     // Description of the field
     char DescripcioCamp[MM_NUM_IDIOMES_MD_MULTIDIOMA][MM_MAX_LON_DESCRIPCIO_CAMP_DBF];

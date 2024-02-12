@@ -130,22 +130,55 @@ int OGRMiraMonDataSource::Create(const char *pszDataSetName,
 
 OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
                         const OGRSpatialReference *poSRS,
-                        OGRwkbGeometryType eType, // Unused parameter
+                        OGRwkbGeometryType eType,
                         char **papszOptions)
 {
     CPLAssert(nullptr != pszLayerName);
 
     const char *osPath;
-    CPLString osFilename(pszRootName);
     char *pszMMLayerName;
     const char *pszFullMMLayerName;
-    const char *pszFlags = "wb+";
 
-    if (osFilename == "/dev/stdout")
-        osFilename = "/vsistdout";
-
-    if (STARTS_WITH(osFilename, "/vsistdout"))
-        pszFlags = "wb";
+    switch (eType)
+    {
+        case wkbPointM:
+        case wkbLineStringM:
+        case wkbPolygonM:
+        case wkbMultiPointM:
+        case wkbMultiLineStringM:
+        case wkbMultiPolygonM:
+        case wkbGeometryCollectionM:
+        case wkbCircularStringM:
+        case wkbCompoundCurveM:
+        case wkbCurvePolygonM:
+        case wkbMultiCurveM:
+        case wkbMultiSurfaceM:
+        case wkbCurveM:
+        case wkbSurfaceM:
+        case wkbPolyhedralSurfaceM:
+        case wkbTINM:
+        case wkbTriangleM:
+        case wkbPointZM:
+        case wkbLineStringZM:
+        case wkbPolygonZM:
+        case wkbMultiPointZM:
+        case wkbMultiLineStringZM:
+        case wkbMultiPolygonZM:
+        case wkbGeometryCollectionZM:
+        case wkbCircularStringZM:
+        case wkbCompoundCurveZM:
+        case wkbCurvePolygonZM:
+        case wkbMultiCurveZM:
+        case wkbMultiSurfaceZM:
+        case wkbCurveZM:
+        case wkbSurfaceZM:
+        case wkbPolyhedralSurfaceZM:
+        case wkbTINZM:
+        case wkbTriangleZM:
+            CPLError(CE_Warning, CPLE_NotSupported,
+                 "Measures in this layer will be ignored.");
+            break;
+    }
 
     // If the dataset has an extension, we understand that the path
     // of the file is where to write, and the layer name is the
