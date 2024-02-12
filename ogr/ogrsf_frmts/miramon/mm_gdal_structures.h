@@ -11,6 +11,8 @@
 #include "mm_gdal\mm_gdal_constants.h"
 #endif
 
+#include "mm_constants.h"
+
 #ifdef GDAL_COMPILATION
 CPL_C_START  // Necessary for compiling in GDAL project
 #endif
@@ -41,9 +43,6 @@ CPL_C_START  // Necessary for compiling in GDAL project
     // Number of decimals if it's a float
     MM_BYTE DecimalsSiEsFloat;
 
-#define MM_OFFSET_BYTESxCAMP_CAMP_CLASSIC 16
-#define MM_OFFSET_BYTESxCAMP_CAMP_ESPECIAL 21
-
     // Number of bytes of a field
     MM_TIPUS_BYTES_PER_CAMP_DBF BytesPerCamp;
 
@@ -60,13 +59,8 @@ CPL_C_START  // Necessary for compiling in GDAL project
     MM_BYTE AmpleDesitjat;
     MM_BYTE AmpleDesitjatOriginal;
 
-#define MM_MAX_LON_RESERVAT_1_CAMP_BD_XP 4
     MM_BYTE reservat_1[MM_MAX_LON_RESERVAT_1_CAMP_BD_XP];
 
-#define MM_OFFSET_RESERVAT2_BYTESxCAMP_CAMP_ESPECIAL 3
-#define MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES 7
-#define MM_OFFSET_RESERVAT2_MIDA_NOM_ESTES 11
-#define MM_MAX_LON_RESERVAT_2_CAMP_BD_XP 13
     MM_BYTE reservat_2[MM_MAX_LON_RESERVAT_2_CAMP_BD_XP];
     MM_BYTE MDX_camp_flag;
     MM_BYTE TipusCampGeoTopo;
@@ -75,7 +69,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
 struct MM_BASE_DADES_XP  // MiraMon Database Structure
 {
     // Extended DBF file name
-    char szNomFitxer[MM_MAX_PATH];
+    char szNomFitxer[MM_CPL_PATH_BUF_SIZE];
 
     // Temporal table
     MM_BOOLEAN EsTaulaTemporal;
@@ -105,9 +99,6 @@ struct MM_BASE_DADES_XP  // MiraMon Database Structure
     MM_BYTE dbf_on_a_LAN[MM_MAX_LON_DBF_ON_A_LAN_BASE_DADES_XP];
     MM_BYTE MDX_flag;
     MM_BYTE reservat_2[MM_MAX_LON_RESERVAT_2_BASE_DADES_XP];
-
-#define MM_ES_DBF_ESTESA(versio_dbf)                                           \
-    (((versio_dbf) == MM_MARCA_VERSIO_1_DBF_ESTESA) ? TRUE : FALSE)
 };
 #ifdef GDAL_COMPILATION
 CPL_C_END  // Necessary for compiling in GDAL project

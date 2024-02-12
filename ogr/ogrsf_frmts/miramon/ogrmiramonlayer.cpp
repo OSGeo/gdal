@@ -87,6 +87,23 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             nMMVersion = MM_32BITS_VERSION;  // Default
 
         /* ---------------------------------------------------------------- */
+        /*      Establish the charset of the .dbf files                     */
+        /* ---------------------------------------------------------------- */
+        const char *pszdbfEncoding =
+            CSLFetchNameValue(papszOpenOptions, "DBFEncoding");
+        char nMMRecode;
+
+        if (pszdbfEncoding)
+        {
+            if (EQUAL(pszdbfEncoding, "UTF8"))
+                nMMRecode = MM_RECODE_UTF8;
+            else  //if (EQUAL(pszdbfEncoding, "ANSI"))
+                nMMRecode = MM_RECODE_ANSI;
+        }
+        else
+            nMMRecode = MM_RECODE_ANSI;  // Default
+
+        /* ---------------------------------------------------------------- */
         /*      Preparing to write the layer                                */
         /* ---------------------------------------------------------------- */
         if (!STARTS_WITH(pszFilename, "/vsistdout"))
@@ -102,7 +119,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             // the first element is readed)
             CPLDebug("MiraMon", "Initializing MiraMon points layer...");
             if (MMInitLayer(&hMiraMonLayerPNT, pszFilename, nMMVersion,
-                            nMMMemoryRatio, nullptr, MM_WRITTING_MODE, MMMap))
+                            nMMRecode, nMMMemoryRatio, nullptr,
+                            MM_WRITTING_MODE, MMMap))
             {
                 bValidFile = false;
                 return;
@@ -111,7 +129,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
 
             CPLDebug("MiraMon", "Initializing MiraMon arcs layer...");
             if (MMInitLayer(&hMiraMonLayerARC, pszFilename, nMMVersion,
-                            nMMMemoryRatio, nullptr, MM_WRITTING_MODE, MMMap))
+                            nMMRecode, nMMMemoryRatio, nullptr,
+                            MM_WRITTING_MODE, MMMap))
             {
                 bValidFile = false;
                 return;
@@ -120,7 +139,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
 
             CPLDebug("MiraMon", "Initializing MiraMon polygons layer...");
             if (MMInitLayer(&hMiraMonLayerPOL, pszFilename, nMMVersion,
-                            nMMMemoryRatio, nullptr, MM_WRITTING_MODE, MMMap))
+                            nMMRecode, nMMMemoryRatio, nullptr,
+                            MM_WRITTING_MODE, MMMap))
             {
                 bValidFile = false;
                 return;
@@ -131,7 +151,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             // information to get. A DBF will be generated
             CPLDebug("MiraMon", "Initializing MiraMon only-ext-DBF layer...");
             if (MMInitLayer(&hMiraMonLayerReadOrNonGeom, pszFilename,
-                            nMMVersion, nMMMemoryRatio, nullptr,
+                            nMMVersion, nMMRecode, nMMMemoryRatio, nullptr,
                             MM_WRITTING_MODE, nullptr))
             {
                 bValidFile = false;
@@ -140,7 +160,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             hMiraMonLayerPOL.bIsBeenInit = 0;
 
             // This helps the map to be created
-            GetLayerDefn()->SetName(hMiraMonLayerPNT.pszSrcLayerName);
+            //GetLayerDefn()->SetName(hMiraMonLayerPNT.pszSrcLayerName);
+            poFeatureDefn->SetName(hMiraMonLayerPNT.pszSrcLayerName);
         }
 
         // Saving the HRS in the layer structure
@@ -184,8 +205,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             nMMLayerVersion = MMGetVectorVersion(&phMiraMonLayer->TopHeader);
             if (nMMLayerVersion == MM_UNKNOWN_VERSION)
             {
-                MM_CPLError(CE_Failure, CPLE_NotSupported,
-                            "MiraMon version file unknown.");
+                MMCPLError(CE_Failure, CPLE_NotSupported,
+                           "MiraMon version file unknown.");
                 bValidFile = false;
                 return;
             }
@@ -223,8 +244,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             }
             else
             {
-                MM_CPLError(CE_Failure, CPLE_NotSupported,
-                            "MiraMon file type not supported.");
+                MMCPLError(CE_Failure, CPLE_NotSupported,
+                           "MiraMon file type not supported.");
                 bValidFile = false;
                 return;
             }
@@ -476,32 +497,32 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         CPLDebug("MiraMon", "MiraMon DBF table layer closed");
 
     if (hMiraMonLayerPOL.ReadOrWrite == MM_WRITTING_MODE)
-        MM_CPLDebug("MiraMon", "Destroying MiraMon polygons layer memory");
+        MMCPLDebug("MiraMon", "Destroying MiraMon polygons layer memory");
     MMFreeLayer(&hMiraMonLayerPOL);
     if (hMiraMonLayerPOL.ReadOrWrite == MM_WRITTING_MODE)
-        MM_CPLDebug("MiraMon", "MiraMon polygons layer memory destroyed");
+        MMCPLDebug("MiraMon", "MiraMon polygons layer memory destroyed");
     if (hMiraMonLayerARC.ReadOrWrite == MM_WRITTING_MODE)
-        MM_CPLDebug("MiraMon", "Destroying MiraMon arcs layer memory");
+        MMCPLDebug("MiraMon", "Destroying MiraMon arcs layer memory");
     MMFreeLayer(&hMiraMonLayerARC);
     if (hMiraMonLayerARC.ReadOrWrite == MM_WRITTING_MODE)
-        MM_CPLDebug("MiraMon", "MiraMon arcs layer memory destroyed");
+        MMCPLDebug("MiraMon", "MiraMon arcs layer memory destroyed");
     if (hMiraMonLayerPNT.ReadOrWrite == MM_WRITTING_MODE)
-        MM_CPLDebug("MiraMon", "Destroying MiraMon points layer memory");
+        MMCPLDebug("MiraMon", "Destroying MiraMon points layer memory");
     MMFreeLayer(&hMiraMonLayerPNT);
     if (hMiraMonLayerPNT.ReadOrWrite == MM_WRITTING_MODE)
-        MM_CPLDebug("MiraMon", "MiraMon points layer memory destroyed");
+        MMCPLDebug("MiraMon", "MiraMon points layer memory destroyed");
     if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITTING_MODE)
-        MM_CPLDebug("MiraMon", "Destroying MiraMon DBF table layer memory");
+        MMCPLDebug("MiraMon", "Destroying MiraMon DBF table layer memory");
     else
-        MM_CPLDebug("MiraMon", "Destroying MiraMon layer memory");
+        MMCPLDebug("MiraMon", "Destroying MiraMon layer memory");
     MMFreeLayer(&hMiraMonLayerReadOrNonGeom);
     if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITTING_MODE)
-        MM_CPLDebug("MiraMon", "MiraMon DBF table layer memory destroyed");
+        MMCPLDebug("MiraMon", "MiraMon DBF table layer memory destroyed");
     else
-        MM_CPLDebug("MiraMon", "MiraMon layer memory destroyed");
-    MM_CPLDebug("MiraMon", "Destroying MiraMon temporary feature memory");
+        MMCPLDebug("MiraMon", "MiraMon layer memory destroyed");
+    MMCPLDebug("MiraMon", "Destroying MiraMon temporary feature memory");
     MMDestroyFeature(&hMMFeature);
-    MM_CPLDebug("MiraMon", "MiraMon temporary feature memory");
+    MMCPLDebug("MiraMon", "MiraMon temporary feature memory");
 
     /* -------------------------------------------------------------------- */
     /*      Clean up.                                                       */
@@ -621,7 +642,10 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
             // Get X,Y (z). MiraMon has no multipoints
             if (MMGetFeatureFromVector(phMiraMonLayer, nIElem))
+            {
+                delete poGeom;
                 return nullptr;
+            }
 
             poPoint->setX(phMiraMonLayer->ReadedFeature.pCoord[0].dfX);
             poPoint->setY(phMiraMonLayer->ReadedFeature.pCoord[0].dfY);
@@ -636,7 +660,10 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
             // Get X,Y (Z) n times MiraMon has no multilines
             if (MMGetFeatureFromVector(phMiraMonLayer, nIElem))
+            {
+                delete poGeom;
                 return nullptr;
+            }
 
             for (MM_N_VERTICES_TYPE nIVrt = 0;
                  nIVrt < phMiraMonLayer->ReadedFeature.pNCoordRing[0]; nIVrt++)
@@ -669,7 +696,10 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                 // Get X,Y (Z) n times MiraMon has no multilines
                 if (MMGetFeatureFromVector(phMiraMonLayer, nIElem))
+                {
+                    delete poGeom;
                     return nullptr;
+                }
 
                 nIVrtAcum = 0;
                 if (!(phMiraMonLayer->ReadedFeature.flag_VFG[0] |
@@ -677,6 +707,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 {
                     CPLError(CE_Failure, CPLE_NoWriteAccess,
                              "\nWrong polygon format.");
+                    delete poGeom;
                     return nullptr;
                 }
                 MM_BOOLEAN IAmExternal;
@@ -741,7 +772,10 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                 // Get X,Y (Z) n times MiraMon has no multilines
                 if (MMGetFeatureFromVector(phMiraMonLayer, nIElem))
+                {
+                    delete poGeom;
                     return nullptr;
+                }
 
                 nIVrtAcum = 0;
                 if (!(phMiraMonLayer->ReadedFeature.flag_VFG[0] |
@@ -749,6 +783,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 {
                     CPLError(CE_Failure, CPLE_AssertionFailed,
                              "\nWrong polygon format.");
+                    delete poGeom;
                     return nullptr;
                 }
 
@@ -809,7 +844,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
         for (nIField = 0; nIField < phMiraMonLayer->pMMBDXP->ncamps; nIField++)
         {
-            MM_ResizeStringToOperateIfNeeded(
+            MMResizeStringToOperateIfNeeded(
                 phMiraMonLayer,
                 phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
 
@@ -825,7 +860,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         ->GetSubType() == OFSTJSON)
                 {
                     // REVISAR
-                    MM_ResizeStringToOperateIfNeeded(
+                    MMResizeStringToOperateIfNeeded(
                         phMiraMonLayer,
                         phMiraMonLayer->pMMBDXP->BytesPerFitxa +
                             2 * phMiraMonLayer->pMultRecordIndex[nIElem].nMR +
@@ -1157,13 +1192,14 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                 MM_RemoveWhitespacesFromEndOfString(
                     phMiraMonLayer->szStringToOperate);
-                if (!IsEmptyString(phMiraMonLayer->szStringToOperate))
+                if (!MMIsEmptyString(phMiraMonLayer->szStringToOperate))
                 {
                     char pszDate_5[5];
                     char pszDate_3[3];
                     int Year, Month, Day;
 
                     strncpy(pszDate_5, phMiraMonLayer->szStringToOperate, 4);
+                    pszDate_5[4] = '\0';
                     Year = atoi(pszDate_5);
 
                     strncpy(pszDate_3, phMiraMonLayer->szStringToOperate + 4,
@@ -1306,10 +1342,10 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
             case wkbUnknown:
             default:
             {
-                MM_CPLWarning(CE_Warning, CPLE_NotSupported,
-                              "MiraMon "
-                              "doesn't support %d geometry type",
-                              eLT);
+                MMCPLWarning(CE_Warning, CPLE_NotSupported,
+                             "MiraMon "
+                             "doesn't support %d geometry type",
+                             eLT);
                 return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
             }
         }
@@ -1550,7 +1586,7 @@ OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom)
     }
     else if (eLT == wkbGeometryCollection)
     {
-        MM_CPLError(
+        MMCPLError(
             CE_Failure, CPLE_NotSupported,
             "MiraMon: wkbGeometryCollection inside a wkbGeometryCollection?");
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
@@ -1570,11 +1606,11 @@ OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom)
 OGRErr OGRMiraMonLayer::MMWriteGeometry()
 
 {
-    OGRErr eErr = AddMMFeature(phMiraMonLayer, &hMMFeature);
+    OGRErr eErr = MMAddFeature(phMiraMonLayer, &hMMFeature);
 
     if (eErr == MM_FATAL_ERROR_WRITING_FEATURES)
     {
-        CPLDebug("MiraMon", "Error in AddMMFeature() "
+        CPLDebug("MiraMon", "Error in MMAddFeature() "
                             "MM_FATAL_ERROR_WRITING_FEATURES");
         CPLError(CE_Failure, CPLE_FileIO, "\nMiraMon write failure: %s",
                  VSIStrerror(errno));
@@ -1582,7 +1618,7 @@ OGRErr OGRMiraMonLayer::MMWriteGeometry()
     }
     if (eErr == MM_STOP_WRITING_FEATURES)
     {
-        CPLDebug("MiraMon", "Error in AddMMFeature() "
+        CPLDebug("MiraMon", "Error in MMAddFeature() "
                             "MM_STOP_WRITING_FEATURES");
         CPLError(CE_Failure, CPLE_FileIO, "MiraMon format limitations.");
         CPLError(CE_Failure, CPLE_FileIO,
@@ -1673,7 +1709,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
 
                 case OFTTime:
                 case OFTDateTime:
-                    MM_CPLWarning(
+                    MMCPLWarning(
                         CE_Warning, CPLE_NotSupported,
                         "MiraMon "
                         "doesn't support %d field type. It will be conserved "
@@ -1709,24 +1745,46 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
             if (poFeatureDefn->GetFieldDefn(iField)->GetNameRef())
             {
                 // Interlis 1 encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
-                char *pszString =
-                    CPLRecode(poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
-                              CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
-                MM_strnzcpy(
-                    phMiraMonLayer->pLayerDB->pFields[iField].pszFieldName,
-                    pszString, MM_MAX_LON_FIELD_NAME_DBF);
-                CPLFree(pszString);
+                if (phMiraMonLayer->nCharSet != MM_JOC_CARAC_UTF8_DBF)
+                {
+                    char *pszString = CPLRecode(
+                        poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
+                        CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+                    MM_strnzcpy(
+                        phMiraMonLayer->pLayerDB->pFields[iField].pszFieldName,
+                        pszString, MM_MAX_LON_FIELD_NAME_DBF);
+                    CPLFree(pszString);
+                }
+                else
+                {
+                    MM_strnzcpy(
+                        phMiraMonLayer->pLayerDB->pFields[iField].pszFieldName,
+                        poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
+                        MM_MAX_LON_FIELD_NAME_DBF);
+                }
             }
 
             if (poFeatureDefn->GetFieldDefn(iField)->GetAlternativeNameRef())
             {
-                char *pszString = CPLRecode(poFeatureDefn->GetFieldDefn(iField)
-                                                ->GetAlternativeNameRef(),
-                                            CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
-                MM_strnzcpy(phMiraMonLayer->pLayerDB->pFields[iField]
-                                .pszFieldDescription,
-                            pszString, MM_MAX_BYTES_FIELD_DESC);
-                CPLFree(pszString);
+                if (phMiraMonLayer->nCharSet != MM_JOC_CARAC_UTF8_DBF)
+                {
+                    char *pszString =
+                        CPLRecode(poFeatureDefn->GetFieldDefn(iField)
+                                      ->GetAlternativeNameRef(),
+                                  CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+                    MM_strnzcpy(phMiraMonLayer->pLayerDB->pFields[iField]
+                                    .pszFieldDescription,
+                                pszString, MM_MAX_BYTES_FIELD_DESC);
+                    CPLFree(pszString);
+                }
+                else
+                {
+                    MM_strnzcpy(phMiraMonLayer->pLayerDB->pFields[iField]
+                                    .pszFieldDescription,
+                                poFeatureDefn->GetFieldDefn(iField)
+                                    ->GetAlternativeNameRef(),
+                                MM_MAX_BYTES_FIELD_DESC);
+                }
             }
             phMiraMonLayer->pLayerDB->nNFields++;
         }
@@ -1789,20 +1847,37 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         hMMFeature.pRecords[nIRecord].nNumField))
                     return OGRERR_NOT_ENOUGH_MEMORY;
 
-                // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
-                char *pszString = CPLRecode(panValues[nIRecord], CPL_ENC_UTF8,
-                                            CPL_ENC_ISO8859_1);
-                if (MM_SecureCopyStringFieldValue(
-                        &hMMFeature.pRecords[nIRecord].pField[iField].pDinValue,
-                        pszString,
-                        &hMMFeature.pRecords[nIRecord]
-                             .pField[iField]
-                             .nNumDinValue))
+                if (phMiraMonLayer->nCharSet != MM_JOC_CARAC_UTF8_DBF)
                 {
+                    // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
+                    char *pszString = CPLRecode(
+                        panValues[nIRecord], CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+                    if (MM_SecureCopyStringFieldValue(
+                            &hMMFeature.pRecords[nIRecord]
+                                 .pField[iField]
+                                 .pDinValue,
+                            pszString,
+                            &hMMFeature.pRecords[nIRecord]
+                                 .pField[iField]
+                                 .nNumDinValue))
+                    {
+                        CPLFree(pszString);
+                        return OGRERR_NOT_ENOUGH_MEMORY;
+                    }
                     CPLFree(pszString);
-                    return OGRERR_NOT_ENOUGH_MEMORY;
                 }
-                CPLFree(pszString);
+                else
+                {
+                    if (MM_SecureCopyStringFieldValue(
+                            &hMMFeature.pRecords[nIRecord]
+                                 .pField[iField]
+                                 .pDinValue,
+                            panValues[nIRecord],
+                            &hMMFeature.pRecords[nIRecord]
+                                 .pField[iField]
+                                 .nNumDinValue))
+                        return OGRERR_NOT_ENOUGH_MEMORY;
+                }
                 hMMFeature.pRecords[nIRecord].pField[iField].bIsValid = 1;
             }
         }
@@ -1940,17 +2015,31 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                                           hMMFeature.pRecords[0].nNumField))
                 return OGRERR_NOT_ENOUGH_MEMORY;
 
-            // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
-            char *pszString =
-                CPLRecode(pszRawValue, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
-            if (MM_SecureCopyStringFieldValue(
-                    &hMMFeature.pRecords[0].pField[iField].pDinValue, pszString,
-                    &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
+            if (phMiraMonLayer->nCharSet != MM_JOC_CARAC_UTF8_DBF)
             {
+                // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
+                char *pszString =
+                    CPLRecode(pszRawValue, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+                if (MM_SecureCopyStringFieldValue(
+                        &hMMFeature.pRecords[0].pField[iField].pDinValue,
+                        pszString,
+                        &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
+                {
+                    CPLFree(pszString);
+                    return OGRERR_NOT_ENOUGH_MEMORY;
+                }
                 CPLFree(pszString);
-                return OGRERR_NOT_ENOUGH_MEMORY;
             }
-            CPLFree(pszString);
+            else
+            {
+                if (MM_SecureCopyStringFieldValue(
+                        &hMMFeature.pRecords[0].pField[iField].pDinValue,
+                        pszRawValue,
+                        &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
+                {
+                    return OGRERR_NOT_ENOUGH_MEMORY;
+                }
+            }
             hMMFeature.pRecords[0].pField[iField].bIsValid = 1;
         }
         else if (eFType == OFTDate)
@@ -1968,10 +2057,11 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
 
             const OGRField *poField = poFeature->GetRawFieldRef(iField);
             if (poField->Date.Year >= 0)
-                snprintf(szDate, 9, "%04d%02d%02d", poField->Date.Year,
-                         poField->Date.Month, poField->Date.Day);
+                snprintf(szDate, sizeof(szDate), "%04d%02d%02d",
+                         poField->Date.Year, poField->Date.Month,
+                         poField->Date.Day);
             else
-                snprintf(szDate, 9, "%04d%02d%02d", 0, 0, 0);
+                snprintf(szDate, sizeof(szDate), "%04d%02d%02d", 0, 0, 0);
 
             if (MM_SecureCopyStringFieldValue(
                     &hMMFeature.pRecords[0].pField[iField].pDinValue, szDate,
@@ -2061,9 +2151,9 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else
         {
-            MM_CPLError(CE_Failure, CPLE_NotSupported,
-                        "MiraMon: Field type %d not processed by MiraMon\n",
-                        eFType);
+            MMCPLError(CE_Failure, CPLE_NotSupported,
+                       "MiraMon: Field type %d not processed by MiraMon\n",
+                       eFType);
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
     }

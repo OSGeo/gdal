@@ -10,9 +10,8 @@
 CPL_C_START  // Necessary for compiling in GDAL project
 #else
 #include <stdio.h>  // For FILE
-#include "mm_gdal\mm_gdal_constants.h"
+#include "mm_constants.h"
 #include "mm_gdal\mm_gdal_structures.h"
-#define UINT32_MAX _UI32_MAX
 #endif
 
 // For MetaData
@@ -169,6 +168,10 @@ CPL_C_START  // Necessary for compiling in GDAL project
 // Coordinates
 #define MM_SIZE_OF_COORDINATE 16
 
+// Recode in DBF's
+#define MM_RECODE_UTF8 0
+#define MM_RECODE_ANSI 1
+
 /* -------------------------------------------------------------------- */
 /*      Structures                                                      */
 /* -------------------------------------------------------------------- */
@@ -207,7 +210,7 @@ struct MM_VARIABLES_LLEGEIX_POLS
 
 struct MM_FLUSH_INFO
 {
-    GUInt32 nMyDiskSize;
+    size_t nMyDiskSize;
     GUInt64 NTimesFlushed;
 
     // Pointer to an OPEN file where to flush.
@@ -218,7 +221,7 @@ struct MM_FLUSH_INFO
     GUInt64 TotalSavedBytes;  // Internal use
 
     // Block where to be saved
-    GUInt64 SizeOfBlockToBeSaved;
+    size_t SizeOfBlockToBeSaved;
     void *pBlockToBeSaved;
 
     // Block where to save the pBlockToBeSaved or read from
@@ -351,7 +354,7 @@ struct MM_TH
 // Z Header (32 bytes)
 struct MM_ZH
 {
-    GUInt32 nMyDiskSize;
+    size_t nMyDiskSize;
     // 16 bytes reserved
     double dfBBminz;  // 8 bytes Minimum Z
     double dfBBmaxz;  // 8 bytes Maximum Z
@@ -377,7 +380,7 @@ struct MM_ZSection
     // Number of pZDescription allocated
     // nMaxZDescription = nElemCount from LayerInfo
     MM_FILE_OFFSET ZDOffset;
-    GUInt32 nZDDiskSize;
+    size_t nZDDiskSize;
     GUInt64 nMaxZDescription;
     struct MM_ZD *pZDescription;  //(I mode)
 
@@ -564,12 +567,14 @@ struct MiraMonPolygonLayer
     char pszREL_LayerName[MM_CPL_PATH_BUF_SIZE];
 };
 
+/*
 #define MM_VECTOR_LAYER_LAST_VERSION 1
 #define CheckMMVectorLayerVersion(a, r)                                        \
     {                                                                          \
         if ((a)->Version != MM_VECTOR_LAYER_LAST_VERSION)                      \
             return (r);                                                        \
     }
+*/
 
 // Information that allows to reuse memory stuff when
 // features are being read
@@ -626,7 +631,7 @@ struct MiraMonVectMapInfo
 struct MiraMonVectLayerInfo
 {
     // Version of the structure
-    GUInt32 Version;
+    //GUInt32 Version;
 
     // Version of the layer
     // MM_32BITS_LAYER_VERSION: less than 2 Gb files
@@ -671,7 +676,7 @@ struct MiraMonVectLayerInfo
     double nMemoryRatio;
 
     // Header of the layer
-    GUInt32 nHeaderDiskSize;
+    size_t nHeaderDiskSize;
     struct MM_TH TopHeader;
 
     int eLT;          // Type of layer: Point, line or polygon (3d or not)

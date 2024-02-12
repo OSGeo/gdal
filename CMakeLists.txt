@@ -164,9 +164,6 @@ endif ()
 #   $ cmake -DPython_ROOT=C:\Python38 ..
 # ~~~
 #
-
-#set(ODBCCPP_INCLUDE_DIR "D:/GitHub-repository/odbc-cpp-wrapper/src")
-
 include(FeatureSummary)
 
 find_package(SWIG)

@@ -170,3 +170,4 @@ gdal/share
 /build
 CMakeSettings.json
 out/
+autotest/build/

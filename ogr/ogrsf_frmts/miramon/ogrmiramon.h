@@ -115,7 +115,7 @@ class OGRMiraMonLayer final
     OGRErr TranslateFieldsValuesToMM(OGRFeature *poFeature);
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
 
-    OGRFeatureDefn *GetLayerDefn();
+    OGRFeatureDefn *GetLayerDefn() override;
 
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override

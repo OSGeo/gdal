@@ -134,7 +134,7 @@ void RegisterOGRMiraMon()
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "pol arc pnt");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
                               "drivers/vector/miramon.html");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "NO");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
 
     poDriver->SetMetadataItem(
@@ -144,7 +144,7 @@ void RegisterOGRMiraMon()
         "   description='Sets which of the possible heights is chosen: "
         "   the first, the highest or the lowest one.'>"
         "    <Value>First</Value>"
-        "    <Value>Loewr</Value>"
+        "    <Value>Lower</Value>"
         "    <Value>Highest</Value>"
         "  </Option>"
         "  <Option name='iMultiRecord' scope='vector' type='string' "
@@ -158,7 +158,7 @@ void RegisterOGRMiraMon()
         "  </Option>"
         "  <Option name='MemoryRatio' scope='vector' type='float' "
         "   description='Ratio used to enhance certain aspects of memory"
-        "   In some memory settings, a block of 256 or 512 bytes is used."
+        "   In some memory allocations, a block of 256 or 512 bytes is used."
         "   This parameter can be adjusted to achieve"
         "   nMemoryRatio*256 or nMemoryRatio*512."
         "   For example, nMemoryRatio=2 in powerful computers and"
@@ -184,11 +184,21 @@ void RegisterOGRMiraMon()
         "<Value>last_version</Value>"
         "<Value>nullptr</Value>"
         "</Option>"
+        "  <Option name='DBFEncoding' type='string' description='Encoding of "
+        "the "
+        ".dbf files."
+        "MiraMon can write *.dbf* files in these two charsets. "
+        "V20 is the 64 bits version for FID and internal offsets.' "
+        "default='ANSI'>"
+        "<Value>UTF8</Value>"
+        "<Value>ANSI</Value>"
+        "<Value>last_version</Value>"
+        "</Option>"
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONFIELDDATATYPES,
-        "Integer Integer64 Real String Date Time DateTime "
+        "Integer Integer64 Real String Date Time "
         "Binary IntegerList Integer64List RealList StringList");
     poDriver->pfnOpen = OGRMMDriverOpen;
     poDriver->pfnIdentify = OGRMMDriverIdentify;

@@ -10,15 +10,10 @@
 #include "mm_gdal_driver_structs.h"  // struct MMAdmDatabase
 CPL_C_START                          // Necessary for compiling in GDAL project
 #else
-#include "mm_gdal\mm_gdal_constants.h"       // MM_BYTE
+#include "mm_constants.h"                    // MM_BYTE
 #include "mm_gdal\mm_gdal_structures.h"      // struct BASE_DADES_XP
 #include "mm_gdal\mm_gdal_driver_structs.h"  // struct MMAdmDatabase
 #endif
-
-#define MM_EscriuOffsetNomEstesBD_XP(bd_xp, i_camp, offset_nom_camp)           \
-    memcpy((bd_xp)->Camp[(i_camp)].reservat_2 +                                \
-               MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES,                           \
-           &(offset_nom_camp), 4)
 
     char *
     MM_strnzcpy(char *dest, const char *src, size_t maxlen);
