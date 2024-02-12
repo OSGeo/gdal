@@ -116,7 +116,7 @@ class OGRMiraMonLayer final : public OGRLayer,
 
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
-        return poFeatureDefn;
+        return OGRLayer::GetLayerDefn();
     }
         
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,

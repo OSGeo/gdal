@@ -39,7 +39,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define strdup_function(p)  strdup((p))
     #define get_filename_function TreuAdreca
     #define get_path_function DonaAdreca
-    #define printf_function fprintf_64
+    #define fprintf_function fprintf_64
     #define max_function(a,b) max((a),(b))
     #define get_extension_function(a) extensio(a)
     #define is_empty_string_function(a) EsCadenaDeBlancs(a)
@@ -76,7 +76,7 @@ CPL_C_START // Necessary for compiling in GDAL project
     #define strdup_function(p)  CPLStrdup((p))
     #define get_filename_function CPLGetFilename
     #define get_path_function CPLGetPath
-    #define printf_function /*ok*/VSIFPrintfL
+    #define fprintf_function VSIFPrintfL
     #define max_function(a,b) MAX((a),(b))
     #define get_extension_function(a) CPLGetExtension((a))
     #define is_empty_string_function(a) IsEmptyString((a))
