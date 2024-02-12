@@ -1635,8 +1635,13 @@ bool CheckError(sword nStatus, OCIError *hError)
             OCIErrorGet((dvoid *)hError, (ub4)1, (text *)nullptr, &nCode, szMsg,
                         (ub4)sizeof(szMsg), OCI_HTYPE_ERROR);
 
-            if (nCode == 1405 || nCode == 28002)  // Null field and password expire
+            if (nCode == 1405)  // Null field
             {
+                return false;
+            }
+            else if (nCode == 28002 || nCode == 28098) // password expires codes (ORA-28002, ORA-28098)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined, "%s", szMsg);
                 return false;
             }
 
