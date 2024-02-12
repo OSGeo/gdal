@@ -169,7 +169,7 @@ char szResult[MM_MAX_ID_SNY+10];
     return 0;
 }
 
-int MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
+static int MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 MM_INTERNAL_FID i_elem,
                 unsigned long int flag_z,
                 MM_N_VERTICES_TYPE nStartVertice,
@@ -291,7 +291,7 @@ struct MM_ZD *pZDescription=nullptr;
     return 0;
 }
 
-int MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
+static int MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 MM_INTERNAL_FID i_pol,
                 unsigned long int flag_z)
 {
@@ -438,8 +438,6 @@ struct MM_ZD *pZDescription;
 unsigned long int flag_z;
 int num;
 double cz;
-struct MM_AH *pArcHeader;
-struct MM_PH *pPolHeader;
 
     if (hMiraMonLayer->nSelectCoordz==MM_SELECT_HIGHEST_COORDZ)
         flag_z=MM_STRING_HIGHEST_ALTITUDE;
@@ -529,10 +527,6 @@ struct MM_PH *pPolHeader;
     }
 
     // Polygons or multipolygons
-    pF=hMiraMonLayer->MMPolygon.pF;
-    pPolHeader=hMiraMonLayer->MMPolygon.pPolHeader;
-    pArcHeader=hMiraMonLayer->MMPolygon.MMArc.pArcHeader;
-
     if(hMiraMonLayer->TopHeader.bIs3d && hMiraMonLayer->ReadedFeature.pZCoord)
     {
         pZDescription=hMiraMonLayer->MMPolygon.MMArc.pZSection.pZDescription;

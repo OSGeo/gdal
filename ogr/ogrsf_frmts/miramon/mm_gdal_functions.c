@@ -1379,7 +1379,7 @@ int retorn=0;
     return 2;
 } // End of MM_ModifyFieldNameAndDescriptorIfPresentBD_XP()
 
-int MM_DuplicateMultilingualString(char *(cadena_final[MM_NUM_IDIOMES_MD_MULTIDIOMA]), 
+static int MM_DuplicateMultilingualString(char *(cadena_final[MM_NUM_IDIOMES_MD_MULTIDIOMA]), 
                                const char * const (cadena_inicial[MM_NUM_IDIOMES_MD_MULTIDIOMA]))
 {
 size_t i;
@@ -1820,7 +1820,6 @@ size_t retorn_fwrite;
 int retorn_TruncaFitxer;
 
 MM_BOOLEAN error_sprintf_n_decimals=FALSE;
-int retorn_printf;
 
     canvi_amplada = nNewWidth - base_dades_XP->Camp[nIField].BytesPerCamp;
     
@@ -1982,7 +1981,7 @@ int retorn_printf;
                                 memset(sz_valor, *MM_CadenaEspai, MM_max(nNewWidth,base_dades_XP->Camp[nIField].BytesPerCamp));
                             else
                             {
-                                retorn_printf=MM_SprintfDoubleAmplada(sz_valor, nNewWidth, 
+                                MM_SprintfDoubleAmplada(sz_valor, nNewWidth, 
                                     nNewPrecision, valor, &error_sprintf_n_decimals);
                             }
 
@@ -2130,7 +2129,7 @@ double local_CinquantaAlcades[MM_N_ALCADA_LOCAL];
             free(alcada);
         return 1;
     }
-    if (n_h_total!=(MM_N_VERTICES_TYPE)fread_function(palcada, sizeof(double), n_h_total, pF))
+    if (n_h_total!=(MM_N_HEIGHT_TYPE)fread_function(palcada, sizeof(double), n_h_total, pF))
     {
         if (alcada)
             free(alcada);

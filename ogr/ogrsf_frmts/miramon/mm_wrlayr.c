@@ -1465,8 +1465,6 @@ static int MMInitPolygonLayer(struct MiraMonVectLayerInfo* hMiraMonLayer)
 
 int MMInitLayerByType(struct MiraMonVectLayerInfo* hMiraMonLayer)
 {
-    int bIs3d = 0;
-
     if (hMiraMonLayer->eLT == MM_LayerType_Point ||
         hMiraMonLayer->eLT == MM_LayerType_Point3d)
     {
@@ -1479,9 +1477,6 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo* hMiraMonLayer)
             printf_function(hMiraMonLayer->MMMap->fMMMap, "[VECTOR_%d]\n", hMiraMonLayer->MMMap->nNumberOfLayers);
             printf_function(hMiraMonLayer->MMMap->fMMMap, "Fitxer=%s.pnt\n", MM_CPLGetBasename(hMiraMonLayer->pszSrcLayerName));
         }
-
-        if (hMiraMonLayer->eLT == MM_LayerType_Point3d)
-            bIs3d = 1;
 
         if (MMInitPointLayer(hMiraMonLayer))
         {
@@ -1506,9 +1501,6 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo* hMiraMonLayer)
             printf_function(hMiraMonLayer->MMMap->fMMMap, "Fitxer=%s.arc\n", MM_CPLGetBasename(hMiraMonLayer->pszSrcLayerName));
         }
 
-        if (hMiraMonLayer->eLT == MM_LayerType_Arc3d)
-            bIs3d = 1;
-
         if (MMInitArcLayer(hMiraMonLayer))
         {
             // Error specified inside the function
@@ -1531,9 +1523,6 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo* hMiraMonLayer)
             printf_function(hMiraMonLayer->MMMap->fMMMap, "[VECTOR_%d]\n", hMiraMonLayer->MMMap->nNumberOfLayers);
             printf_function(hMiraMonLayer->MMMap->fMMMap, "Fitxer=%s.pol\n", MM_CPLGetBasename(hMiraMonLayer->pszSrcLayerName));
         }
-
-        if (hMiraMonLayer->eLT == MM_LayerType_Pol3d)
-            bIs3d = 1;
 
         if (MMInitPolygonLayer(hMiraMonLayer))
         {
@@ -3443,12 +3432,11 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo* hMiraMonLayer,
     // to version limitations.
     if (hMiraMonLayer->LayerVersion == MM_32BITS_VERSION)
     {
-        MM_FILE_OFFSET nNodeOffset, nArcOffset, nPolOffset;
+        MM_FILE_OFFSET nNodeOffset, nArcOffset;
         MM_INTERNAL_FID nArcElemCount, nNodeElemCount;
         nNodeOffset = pFlushNL->TotalSavedBytes + pFlushNL->nNumBytes;
         nArcOffset = pMMArc->nOffsetArc;
-        nPolOffset = pFlushPAL->TotalSavedBytes + pFlushPAL->nNumBytes;
-
+        
         nArcElemCount = pArcTopHeader->nElemCount;
         nNodeElemCount = pNodeTopHeader->nElemCount;
         for (nIPart = 0; nIPart < hMMFeature->nNRings; nIPart++,
@@ -3520,15 +3508,6 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo* hMiraMonLayer,
                 }
                 // Setting next offset
                 nNodeOffset += MM_SIZE_OF_NL_32BITS;
-            }
-
-            // PAL
-            if (hMiraMonLayer->bIsPolygon)
-            {
-                nPolOffset += hMMFeature->nNRings *
-                    hMiraMonLayer->MMPolygon.nPSElementSize +
-                    hMiraMonLayer->MMPolygon.nPHElementSize +
-                    hMMFeature->nNRings * MM_SIZE_OF_PAL_32BITS;
             }
 
             // Where 3D part is going to start
@@ -5624,12 +5603,9 @@ static int MM_DetectAndFixDBFWidthChange(struct MiraMonVectLayerInfo* hMiraMonLa
     MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord,
     MM_EXT_DBF_N_FIELDS nIField)
 {
-    struct MM_BASE_DADES_XP* pBD_XP;
-
     if (!hMMFeature)
         return 0;
 
-    pBD_XP = pMMAdmDB->pMMBDXP;
     if (nIRecord >= hMMFeature->nNumMRecords)
         return 0;
 

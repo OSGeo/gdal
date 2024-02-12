@@ -521,16 +521,6 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
 }
 
 /****************************************************************************/
-/*                            GetLayerDefn()                                */
-/****************************************************************************/
-
-OGRFeatureDefn *OGRMiraMonLayer::GetLayerDefn()
-{
-    return poFeatureDefn;
-}
-    
-
-/****************************************************************************/
 /*                            ResetReading()                                */
 /****************************************************************************/
 
@@ -749,20 +739,15 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 if (!(phMiraMonLayer->ReadedFeature.flag_VFG[0]|
                     MM_EXTERIOR_ARC_SIDE))
                 {
-                    CPLError(CE_Failure, CPLE_NoWriteAccess,
+                    CPLError(CE_Failure, CPLE_AssertionFailed,
                         "\nWrong polygon format.");
                     return nullptr;
                 }
-                MM_BOOLEAN IAmExternal;
 
                 for (nIRing = 0; nIRing <
                     phMiraMonLayer->ReadedFeature.nNRings; nIRing++)
                 {
                     OGRLinearRing poRing;
-
-                    IAmExternal =  (MM_BOOLEAN)(phMiraMonLayer->
-                        ReadedFeature.flag_VFG[nIRing]|
-                        MM_EXTERIOR_ARC_SIDE);
 
                     for (MM_N_VERTICES_TYPE nIVrt = 0; nIVrt <
                         phMiraMonLayer->ReadedFeature.pNCoordRing[nIRing];
@@ -1483,8 +1468,6 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
         for (MM_EXT_DBF_N_FIELDS iField = 0; iField <
             (MM_EXT_DBF_N_FIELDS)poFeatureDefn->GetFieldCount(); iField++)
         {
-            if(!(phMiraMonLayer->pLayerDB->pFields+iField))
-                continue;
             switch (poFeatureDefn->GetFieldDefn(iField)->GetType())
             {
                 case OFTInteger:
@@ -1769,11 +1752,11 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         return OGRERR_NOT_ENOUGH_MEMORY;
 
             const OGRField *poField = poFeature->GetRawFieldRef(iField);
-            if (poField->Date.Year >= 0 && poField->Date.Month >= 0 && poField->Date.Day >= 0)
-                sprintf(szDate, "%04d%02d%02d", poField->Date.Year,
+            if (poField->Date.Year >= 0)
+                snprintf(szDate, 8, "%04d%02d%02d", poField->Date.Year,
                     poField->Date.Month, poField->Date.Day);
             else
-                sprintf(szDate, "%04d%02d%02d", 0, 0, 0);
+                snprintf(szDate, 8, "%04d%02d%02d", 0, 0, 0);
 
             if(MM_SecureCopyStringFieldValue(&hMMFeature.pRecords[0].pField[iField].pDinValue,
                     szDate, &hMMFeature.pRecords[0].pField[iField].nNumDinValue))

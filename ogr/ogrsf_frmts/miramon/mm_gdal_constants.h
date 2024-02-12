@@ -204,8 +204,8 @@ typedef GInt32      MM_N_HEIGHT_TYPE;
 #define MM_ARC_ALCADA_PER_CADA_VERTEX  1
 #define MM_ARC_ALCADA_CONSTANT        -1
 #define MM_ARC_TIPUS_ALCADA(n)        (((n)<0) ? MM_ARC_ALCADA_CONSTANT : MM_ARC_ALCADA_PER_CADA_VERTEX)
-#define MM_ARC_N_ALCADES(n)           labs(n)
-#define MM_ARC_N_TOTAL_ALCADES_DISC(n,n_vrt) (((n)<0) ? labs(n) : (n)*(MM_N_HEIGHT_TYPE)(n_vrt))
+#define MM_ARC_N_ALCADES(n)           (((n)<0) ? -n: n)
+#define MM_ARC_N_TOTAL_ALCADES_DISC(n,n_vrt) (((n)<0) ? -n : (n)*(MM_N_HEIGHT_TYPE)(n_vrt))
 
 #ifdef GDAL_COMPILATION
 CPL_C_END // Necessary for compiling in GDAL project
