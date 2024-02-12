@@ -110,11 +110,15 @@ class OGRMiraMonLayer final : public OGRLayer,
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRMiraMonLayer)
 
-    OGRFeatureDefn *GetLayerDefn() override;
-    
     OGRErr TranslateFieldsToMM();
     OGRErr TranslateFieldsValuesToMM(OGRFeature *poFeature);
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+
+    virtual OGRFeatureDefn *GetLayerDefn() override
+    {
+        return poFeatureDefn;
+    }
+        
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
