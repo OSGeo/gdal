@@ -191,8 +191,9 @@ Creation Options
 
       To generate statistics from the given rasters, set this value to TRUE.
       Default value is FALSE.
-      This option must be set to true in order to generate the statistics 
-      even if the other GENSTATS options are set.
+      This option must be present in order to generate the stats, otherwise,
+      other GENSTATS options are ignored.
+
 
 -  .. co:: GENSTATS_SAMPLINGFACTOR
       :choices: <integer>
