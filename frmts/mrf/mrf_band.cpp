@@ -379,10 +379,20 @@ static void *ZstdCompBlock(buf_mgr &src, size_t extrasize, int c_level,
         dst = dbuff.data();
     }
 
-    size_t val =
-        ZSTD_compressCCtx(cctx, dst, size, src.buffer, src.size, c_level);
+    // Use the streaming interface, it's faster and better
+    // See discussion at https://github.com/facebook/zstd/issues/3729
+    ZSTD_outBuffer output = {dst, size, 0};
+    ZSTD_inBuffer input = {src.buffer, src.size, 0};
+    // Set level
+    ZSTD_CCtx_setParameter(cctx, ZSTD_c_compressionLevel, c_level);
+    // First, pass a continue flag, otherwise it will compress in one go
+    size_t val = ZSTD_compressStream2(cctx, &output, &input, ZSTD_e_continue);
+    // If it worked, pass the end flag to flush the buffer
+    if (val == 0)
+        val = ZSTD_compressStream2(cctx, &output, &input, ZSTD_e_end);
     if (ZSTD_isError(val))
         return nullptr;
+    val = output.pos;
 
     // If we didn't need the buffer, packed data is already in the user buffer
     if (dbuff.empty())
