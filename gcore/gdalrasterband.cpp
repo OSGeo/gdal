@@ -796,7 +796,7 @@ CPLErr CPL_STDCALL GDALWriteBlock(GDALRasterBandH hBand, int nXOff, int nYOff,
  * block and so forth.
  *
  * @param nYBlockOff the vertical block offset, with zero indicating
- * the left most block, 1 the next block and so forth.
+ * the top most block, 1 the next block and so forth.
  *
  * @param pnXValid pointer to an integer in which the number of valid pixels in
  * the x direction will be stored
@@ -804,7 +804,7 @@ CPLErr CPL_STDCALL GDALWriteBlock(GDALRasterBandH hBand, int nXOff, int nYOff,
  * @param pnYValid pointer to an integer in which the number of valid pixels in
  * the y direction will be stored
  *
- * @return CE_None if the input parameter are valid, CE_Failure otherwise
+ * @return CE_None if the input parameters are valid, CE_Failure otherwise
  *
  * @since GDAL 2.2
  */

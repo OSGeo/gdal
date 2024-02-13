@@ -7,6 +7,7 @@
 
 %feature("autodoc");
 
+%include "gdal_band_docs.i"
 %include "gdal_dataset_docs.i"
 
 %init %{
@@ -633,6 +634,30 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                  resample_alg=gdalconst.GRIORA_NearestNeighbour,
                  callback=None,
                  callback_data=None):
+      """
+      Write the contents of a NumPy array to a Band.
+
+      Parameters
+      ----------
+      array : np.ndarray
+          Two-dimensional array containing values to write
+      xoff : int, default=0
+         The pixel offset to left side of the region of the band to
+         be written. This would be zero to start from the left side.
+      yoff : int, default=0
+         The line offset to top side of the region of the band to
+         be written. This would be zero to start from the top side.
+      resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`
+      callback : function, optional
+          A progress callback function
+      callback_data: optional
+          Optional data to be passed to callback function
+
+      Returns
+      -------
+      int:
+          Error code, or ``gdal.CE_None`` if no error occurred.
+      """
       from osgeo import gdal_array
 
       return gdal_array.BandWriteArray(self, array, xoff, yoff,
@@ -717,7 +742,36 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 
 %feature("shadow") ComputeStatistics %{
 def ComputeStatistics(self, *args, **kwargs) -> "CPLErr":
-    """ComputeStatistics(Band self, bool approx_ok, callback=None, callback_data=None) -> CPLErr"""
+    """ComputeStatistics(Band self, bool approx_ok, callback=None, callback_data=None) -> CPLErr
+
+    Compute image statistics.
+    See :cpp:func:`GDALRasterBand::ComputeStatistics`.
+
+    Parameters
+    ----------
+    approx_ok : bool
+                 If ``True``, compute statistics based on overviews or a
+                 subset of tiles.
+    callback : function, optional
+                 A progress callback function
+    callback_data: optional
+                 Optional data to be passed to callback function
+
+    Returns
+    -------
+    list
+       a list with the min, max, mean, and standard deviation of values
+       in the Band.
+
+    See Also
+    --------
+    :py:meth:`ComputeBandStats`
+    :py:meth:`ComputeRasterMinMax`
+    :py:meth:`GetMaximum`
+    :py:meth:`GetMinimum`
+    :py:meth:`GetStatistics`
+    :py:meth:`SetStatistics`
+    """
 
     if len(args) == 1:
         kwargs["approx_ok"] = args[0]
@@ -737,7 +791,17 @@ def ComputeStatistics(self, *args, **kwargs) -> "CPLErr":
 
 %feature("shadow") GetNoDataValue %{
 def GetNoDataValue(self):
-    """GetNoDataValue(Band self) -> value """
+    """GetNoDataValue(Band self) -> value
+
+    Fetch the nodata value for this band.
+    Unlike :cpp:func:`GDALRasterBand::GetNoDataValue`, this
+    method handles 64-bit integer data types.
+
+    Returns
+    -------
+    float/int
+        The nodata value, or ``None`` if it has not been set.
+    """
 
     if self.DataType == gdalconst.GDT_Int64:
         return _gdal.Band_GetNoDataValueAsInt64(self)
@@ -751,7 +815,23 @@ def GetNoDataValue(self):
 
 %feature("shadow") SetNoDataValue %{
 def SetNoDataValue(self, value) -> "CPLErr":
-    """SetNoDataValue(Band self, value) -> CPLErr"""
+    """SetNoDataValue(Band self, value) -> CPLErr
+
+    Set the nodata value for this band.
+    Unlike :cpp:func:`GDALRasterBand::SetNoDataValue`, this
+    method handles 64-bit integer types.
+
+    Parameters
+    ----------
+    value : float/int
+        The nodata value to set
+
+    Returns
+    -------
+    int:
+       :py:const:`CE_None` on success or :py:const:`CE_Failure` on failure.
+
+    """
 
     if self.DataType == gdalconst.GDT_Int64:
         return _gdal.Band_SetNoDataValueAsInt64(self, value)
@@ -764,7 +844,33 @@ def SetNoDataValue(self, value) -> "CPLErr":
 
 %feature("shadow") ComputeRasterMinMax %{
 def ComputeRasterMinMax(self, *args, **kwargs):
-    """ComputeRasterMinMax(Band self, bool approx_ok=False, bool can_return_none=False) -> (min, max) or None"""
+    """ComputeRasterMinMax(Band self, bool approx_ok=False, bool can_return_none=False) -> (min, max) or None
+
+    Computes the minimum and maximum values for this Band.
+    See :cpp:func:`GDALComputeRasterMinMax`.
+
+    Parameters
+    ----------
+    approx_ok : bool, default=False
+        If ``False``, read all pixels in the band. If ``True``, check
+        :py:meth:`GetMinimum`/:py:meth:`GetMaximum` or read a subsample.
+    can_return_none : bool, default=False
+        If ``True``, return ``None`` on error. Otherwise, return a tuple
+        with NaN values.
+
+    Returns
+    -------
+    tuple
+
+    See Also
+    --------
+    :py:meth:`ComputeBandStats`
+    :py:meth:`ComputeStatistics`
+    :py:meth:`GetMaximum`
+    :py:meth:`GetMinimum`
+    :py:meth:`GetStatistics`
+    :py:meth:`SetStatistics`
+    """
 
     if len(args) == 1:
         kwargs["approx_ok"] = args[0]
