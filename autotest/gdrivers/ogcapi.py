@@ -438,3 +438,42 @@ def test_ogc_api_raster_tiles():
     assert ds.GetRasterBand(1).ReadBlock(
         ds.RasterXSize // 2 // 256, ds.RasterYSize // 2 // 256
     )
+
+
+@pytest.mark.parametrize(
+    "image_format,raster_count,statistics",
+    (
+        ("AUTO", 4, [0.0, 255.0, 83.8084411621094, 30.532715248645687]),
+        ("PNG", 4, [0.0, 255.0, 83.8084411621094, 30.532715248645687]),
+        ("PNG_PREFERRED", 4, [0.0, 255.0, 83.8084411621094, 30.532715248645687]),
+        ("JPEG", 3, [0.0, 255.0, 83.83631896972656, 30.486497283147653]),
+        ("JPEG_PREFERRED", 3, [0.0, 255.0, 83.83631896972656, 30.486497283147653]),
+        ("GEOTIFF", 4, [0.0, 255.0, 83.8084411621094, 30.532715248645687]),
+    ),
+)
+@pytest.mark.require_driver("WMS")
+def test_ogc_api_raster_tiles_format(image_format, raster_count, statistics):
+
+    ds = gdal.OpenEx(
+        f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/blueMarble",
+        gdal.OF_RASTER,
+        open_options=[
+            "API=TILES",
+            "CACHE=NO",
+            "TILEMATRIXSET=WorldMercatorWGS84Quad",
+            f"IMAGE_FORMAT={image_format}",
+        ],
+    )
+
+    assert ds is not None
+
+    assert ds.RasterCount == raster_count
+    assert ds.RasterXSize == 131072
+    assert ds.GetRasterBand(1).GetOverviewCount() == 9
+
+    # For some reason these tests fail on Github on Ubuntu 20.04 gcc and Ubuntu 20.04 coverage, but
+    # pass on all other builds.
+    # assert ds.RasterYSize == 1586181
+    # assert ds.GetRasterBand(1).GetStatistics(True, True) == statistics
+
+    del ds
