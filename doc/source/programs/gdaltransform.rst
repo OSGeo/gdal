@@ -154,7 +154,7 @@ Produces the following output in meters in the "Belge 1972 / Belgian Lambert
 
 ::
 
-    244510.77404604 166154.532871342 -1046.79270555763
+    244296.724777415 165937.350217148 0
 
 Image RPC Example
 +++++++++++++++++
