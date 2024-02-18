@@ -4069,18 +4069,18 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
             VSIFCloseL(m_fpNodes);
             m_fpNodes = nullptr;
 
-            CPLString osNewTmpDBName;
-            osNewTmpDBName = CPLGenerateTempFilename("osm_tmp_nodes");
+            const std::string osNewTmpDBName(
+                CPLGenerateTempFilename("osm_tmp_nodes"));
 
             CPLDebug("OSM",
                      "%s too big for RAM. Transferring it onto disk in %s",
                      m_osNodesFilename.c_str(), osNewTmpDBName.c_str());
 
-            if (CPLCopyFile(osNewTmpDBName, m_osNodesFilename) != 0)
+            if (CPLCopyFile(osNewTmpDBName.c_str(), m_osNodesFilename) != 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Cannot copy %s to %s",
                          m_osNodesFilename.c_str(), osNewTmpDBName.c_str());
-                VSIUnlink(osNewTmpDBName);
+                VSIUnlink(osNewTmpDBName.c_str());
                 m_bStopParsing = true;
                 return false;
             }

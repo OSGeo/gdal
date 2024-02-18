@@ -2085,7 +2085,7 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
                              osFIDColumnNameEscaped.c_str(), pszSerialType,
                              osFIDColumnNameEscaped.c_str());
         }
-        osCreateTable = osCommand;
+        osCreateTable = std::move(osCommand);
     }
 
     const char *pszSI =
@@ -2483,6 +2483,7 @@ OGRLayer *OGRPGDataSource::GetLayerByName(const char *pszNameIn)
         if (!osSchemaName.has_value())
         {
             CPLFree(pszNameWithoutBracket);
+            CPLFree(pszGeomColumnName);
             return nullptr;
         }
         pszSchemaName = CPLStrdup(osSchemaName->c_str());

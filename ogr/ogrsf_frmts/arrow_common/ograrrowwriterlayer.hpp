@@ -252,7 +252,8 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
             }
         }
-        fields.emplace_back(arrow::field(poFieldDefn->GetNameRef(), dt,
+        fields.emplace_back(arrow::field(poFieldDefn->GetNameRef(),
+                                         std::move(dt),
                                          poFieldDefn->IsNullable()));
         if (poFieldDefn->GetAlternativeNameRef()[0])
             bNeedGDALSchema = true;
@@ -325,8 +326,9 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
         }
 
-        std::shared_ptr<arrow::Field> field(arrow::field(
-            poGeomFieldDefn->GetNameRef(), dt, poGeomFieldDefn->IsNullable()));
+        std::shared_ptr<arrow::Field> field(
+            arrow::field(poGeomFieldDefn->GetNameRef(), std::move(dt),
+                         poGeomFieldDefn->IsNullable()));
         if (m_bWriteFieldArrowExtensionName)
         {
             auto kvMetadata = field->metadata()
@@ -338,7 +340,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
             field = field->WithMetadata(kvMetadata);
         }
 
-        fields.emplace_back(field);
+        fields.emplace_back(std::move(field));
     }
 
     m_aoEnvelopes.resize(m_poFeatureDefn->GetGeomFieldCount());
