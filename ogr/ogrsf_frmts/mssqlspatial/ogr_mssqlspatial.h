@@ -41,6 +41,8 @@
 #include "include_msodbcsql.h"
 #endif
 
+#include <map>
+
 class OGRMSSQLSpatialDataSource;
 
 /* layer status */
@@ -598,9 +600,9 @@ class OGRMSSQLSpatialDataSource final : public OGRDataSource
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    int nKnownSRID;
-    int *panSRID;
-    OGRSpatialReference **papoSRS;
+    std::map<int,
+             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
+        m_oSRSCache{};
 
     OGRMSSQLSpatialTableLayer *poLayerInCopyMode;
 
@@ -666,7 +668,10 @@ class OGRMSSQLSpatialDataSource final : public OGRDataSource
     static char *LaunderName(const char *pszSrcName);
     OGRErr InitializeMetadataTables();
 
-    void AddSRIDToCache(int nId, OGRSpatialReference *poSRS);
+    OGRSpatialReference *AddSRIDToCache(
+        int nId,
+        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
+            &&poSRS);
 
     OGRSpatialReference *FetchSRS(int nId);
     int FetchSRSId(const OGRSpatialReference *poSRS);

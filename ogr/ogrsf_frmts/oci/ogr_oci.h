@@ -34,6 +34,8 @@
 #include "oci.h"
 #include "cpl_error.h"
 
+#include <map>
+
 /* -------------------------------------------------------------------- */
 /*      Low level Oracle spatial declarations.                          */
 /* -------------------------------------------------------------------- */
@@ -564,9 +566,9 @@ class OGROCIDataSource final : public OGRDataSource
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    int nKnownSRID;
-    int *panSRID;
-    OGRSpatialReference **papoSRS;
+    std::map<int,
+             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
+        m_oSRSCache{};
 
   public:
     OGROCIDataSource();
