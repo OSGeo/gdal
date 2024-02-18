@@ -83,6 +83,14 @@ class VSIWin32FilesystemHandler final : public VSIFilesystemHandler
     virtual bool IsLocal(const char *pszPath) override;
     std::string
     GetCanonicalFilename(const std::string &osFilename) const override;
+
+    const char *GetDirectorySeparator(const char *pszPath) override
+    {
+        // Return forward slash for paths of the form
+        // "{drive_letter}:/{rest_of_the_path}", and backslash otherwise.
+        return (pszPath[0] && pszPath[1] == ':' && pszPath[2] == '/') ? "/"
+                                                                      : "\\";
+    }
 };
 
 /************************************************************************/

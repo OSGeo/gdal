@@ -380,6 +380,8 @@ char CPL_DLL **VSIReadDirRecursive(const char *pszPath);
 char CPL_DLL **VSIReadDirEx(const char *pszPath, int nMaxFiles);
 char CPL_DLL **VSISiblingFiles(const char *pszPath);
 
+const char CPL_DLL *VSIGetDirectorySeparator(const char *pszPath);
+
 /** Opaque type for a directory iterator */
 typedef struct VSIDIR VSIDIR;
 
