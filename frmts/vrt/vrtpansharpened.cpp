@@ -1747,10 +1747,14 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO(
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTPansharpenedRasterBand::SerializeToXML(const char *pszVRTPathIn)
+CPLXMLNode *
+VRTPansharpenedRasterBand::SerializeToXML(const char *pszVRTPathIn,
+                                          bool &bHasWarnedAboutRAMUsage,
+                                          size_t &nAccRAMUsage)
 
 {
-    CPLXMLNode *psTree = VRTRasterBand::SerializeToXML(pszVRTPathIn);
+    CPLXMLNode *psTree = VRTRasterBand::SerializeToXML(
+        pszVRTPathIn, bHasWarnedAboutRAMUsage, nAccRAMUsage);
 
     /* -------------------------------------------------------------------- */
     /*      Set subclass.                                                   */

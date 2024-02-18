@@ -1487,9 +1487,12 @@ CPLErr VRTDerivedRasterBand::XMLInit(
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTDerivedRasterBand::SerializeToXML(const char *pszVRTPath)
+CPLXMLNode *VRTDerivedRasterBand::SerializeToXML(const char *pszVRTPath,
+                                                 bool &bHasWarnedAboutRAMUsage,
+                                                 size_t &nAccRAMUsage)
 {
-    CPLXMLNode *psTree = VRTSourcedRasterBand::SerializeToXML(pszVRTPath);
+    CPLXMLNode *psTree = VRTSourcedRasterBand::SerializeToXML(
+        pszVRTPath, bHasWarnedAboutRAMUsage, nAccRAMUsage);
 
     /* -------------------------------------------------------------------- */
     /*      Set subclass.                                                   */

@@ -1929,10 +1929,13 @@ CPLErr VRTWarpedRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTWarpedRasterBand::SerializeToXML(const char *pszVRTPathIn)
+CPLXMLNode *VRTWarpedRasterBand::SerializeToXML(const char *pszVRTPathIn,
+                                                bool &bHasWarnedAboutRAMUsage,
+                                                size_t &nAccRAMUsage)
 
 {
-    CPLXMLNode *const psTree = VRTRasterBand::SerializeToXML(pszVRTPathIn);
+    CPLXMLNode *const psTree = VRTRasterBand::SerializeToXML(
+        pszVRTPathIn, bHasWarnedAboutRAMUsage, nAccRAMUsage);
 
     /* -------------------------------------------------------------------- */
     /*      Set subclass.                                                   */

@@ -177,6 +177,8 @@ CPLXMLNode CPL_DLL *CPLParseXMLFile(const char *pszFilename);
 int CPL_DLL CPLSerializeXMLTreeToFile(const CPLXMLNode *psTree,
                                       const char *pszFilename);
 
+size_t CPL_DLL CPLXMLNodeGetRAMUsageEstimate(const CPLXMLNode *psNode);
+
 CPL_C_END
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
