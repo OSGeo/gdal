@@ -768,15 +768,30 @@ def test_vsicurl_planetary_computer_url_signing(server):
     )
 
     with webserver.install_http_handler(handler):
-        with gdaltest.config_option(
-            "VSICURL_PC_SAS_SIGN_HREF_URL",
-            "http://localhost:%d/pc_sas_sign_href?href=" % server.port,
-        ):
-            statres = gdal.VSIStatL(
-                "/vsicurl?pc_url_signing=yes&url=http://localhost:%d/test_vsicurl_planetary_computer_url_signing.bin"
-                % server.port
+        try:
+            gdal.SetPathSpecificOption(
+                "/vsicurl/http://localhost:%d/test_vsicurl_planetary_computer_url_signing"
+                % server.port,
+                "VSICURL_PC_URL_SIGNING",
+                "YES",
             )
-            assert statres.size == 3
+
+            with gdaltest.config_option(
+                "VSICURL_PC_SAS_SIGN_HREF_URL",
+                "http://localhost:%d/pc_sas_sign_href?href=" % server.port,
+            ):
+                statres = gdal.VSIStatL(
+                    "/vsicurl/http://localhost:%d/test_vsicurl_planetary_computer_url_signing.bin"
+                    % server.port
+                )
+                assert statres.size == 3
+        finally:
+            gdal.SetPathSpecificOption(
+                "/vsicurl/http://localhost:%d/test_vsicurl_planetary_computer_url_signing"
+                % server.port,
+                "VSICURL_PC_URL_SIGNING",
+                None,
+            )
 
     # Check that signing request is done since it has expired
     gdal.VSICurlClearCache()
@@ -788,14 +803,14 @@ def test_vsicurl_planetary_computer_url_signing(server):
         % server.port,
         200,
         {},
-        '{"msft:expiry":"9999-01-01T00:00:00","href":"http://localhost:%d/test_vsicurl_planetary_computer_url_signing.bin?my_token"}'
+        '{"msft:expiry":"9999-01-01T00:00:00","href":"http://localhost:%d/test_vsicurl_planetary_computer_url_signing.bin?my_token2"}'
         % server.port,
     )
     handler.add(
         "HEAD",
-        "/test_vsicurl_planetary_computer_url_signing.bin?my_token",
+        "/test_vsicurl_planetary_computer_url_signing.bin?my_token2",
         200,
-        {"Content-Length": "3"},
+        {"Content-Length": "4"},
     )
 
     with webserver.install_http_handler(handler):
@@ -807,7 +822,7 @@ def test_vsicurl_planetary_computer_url_signing(server):
                 "/vsicurl?pc_url_signing=yes&url=http://localhost:%d/test_vsicurl_planetary_computer_url_signing.bin"
                 % server.port
             )
-            assert statres.size == 3
+            assert statres.size == 4
 
     # Check that signing request is not needed
     gdal.VSICurlClearCache()
@@ -815,7 +830,7 @@ def test_vsicurl_planetary_computer_url_signing(server):
     handler = webserver.SequentialHandler()
     handler.add(
         "HEAD",
-        "/test_vsicurl_planetary_computer_url_signing.bin?my_token",
+        "/test_vsicurl_planetary_computer_url_signing.bin?my_token2",
         200,
         {"Content-Length": "3"},
     )
@@ -838,12 +853,12 @@ def test_vsicurl_planetary_computer_url_signing(server):
         % server.port,
         200,
         {},
-        '{"msft:expiry":"9999-01-01T00:00:00","href":"http://localhost:%d/test_vsicurl_planetary_computer_url_signing2.bin?my_token2"}'
+        '{"msft:expiry":"9999-01-01T00:00:00","href":"http://localhost:%d/test_vsicurl_planetary_computer_url_signing2.bin?my_token3"}'
         % server.port,
     )
     handler.add(
         "HEAD",
-        "/test_vsicurl_planetary_computer_url_signing2.bin?my_token2",
+        "/test_vsicurl_planetary_computer_url_signing2.bin?my_token3",
         200,
         {"Content-Length": "4"},
     )
@@ -866,14 +881,14 @@ def test_vsicurl_planetary_computer_url_signing(server):
 
     handler.add(
         "HEAD",
-        "/test_vsicurl_planetary_computer_url_signing.bin?my_token",
+        "/test_vsicurl_planetary_computer_url_signing.bin?my_token2",
         200,
         {"Content-Length": "3"},
     )
 
     handler.add(
         "HEAD",
-        "/test_vsicurl_planetary_computer_url_signing2.bin?my_token2",
+        "/test_vsicurl_planetary_computer_url_signing2.bin?my_token3",
         200,
         {"Content-Length": "4"},
     )

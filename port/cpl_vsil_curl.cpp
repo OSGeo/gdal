@@ -310,6 +310,19 @@ static std::string VSICurlGetURLFromFilename(
     if (!STARTS_WITH(pszFilename, "/vsicurl/") &&
         !STARTS_WITH(pszFilename, "/vsicurl?"))
         return pszFilename;
+
+    if (pbPlanetaryComputerURLSigning)
+    {
+        // It may be more convenient sometimes to store Planetary Computer URL
+        // signing as a per-path specific option rather than capturing it in
+        // the filename with the &pc_url_signing=yes option.
+        if (CPLTestBool(VSIGetPathSpecificOption(
+                pszFilename, "VSICURL_PC_URL_SIGNING", "FALSE")))
+        {
+            *pbPlanetaryComputerURLSigning = true;
+        }
+    }
+
     pszFilename += strlen("/vsicurl/");
     if (!STARTS_WITH(pszFilename, "http://") &&
         !STARTS_WITH(pszFilename, "https://") &&
