@@ -2174,9 +2174,11 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     }
 
     const int nMaxTileDim = std::max(nBlockXSize, nBlockYSize);
+    const int nMinTileDim = std::min(nBlockXSize, nBlockYSize);
     int nNumResolutions = 1;
     /* Pickup a reasonable value compatible with PROFILE_1 requirements */
-    while ((nMaxTileDim >> (nNumResolutions - 1)) > 128)
+    while ((nMaxTileDim >> (nNumResolutions - 1)) > 128 &&
+           (nMinTileDim >> nNumResolutions) > 0)
         nNumResolutions++;
     int nMinProfile1Resolutions = nNumResolutions;
     const char *pszResolutions =
@@ -2185,6 +2187,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     {
         nNumResolutions = atoi(pszResolutions);
         if (nNumResolutions <= 0 || nNumResolutions >= 32 ||
+            (nMinTileDim >> nNumResolutions) == 0 ||
             (nMaxTileDim >> nNumResolutions) == 0)
         {
             CPLError(CE_Warning, CPLE_NotSupported,

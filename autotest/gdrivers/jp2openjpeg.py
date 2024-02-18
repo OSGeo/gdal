@@ -3850,3 +3850,17 @@ def test_jp2openjpeg_vrt_protocol():
         webserver.server_stop(webserver_process, webserver_port)
 
         gdal.VSICurlClearCache()
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/9236
+
+
+def test_jp2openjpeg_limit_resolution_count_from_image_size(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "out.jp2")
+    assert gdal.Translate(filename, "data/byte.tif", width=1024, height=7)
+
+    # Check number of resolutions
+    ret = gdal.GetJPEG2000StructureAsString(filename, ["ALL=YES"])
+    assert '<Field name="SPcod_NumDecompositions" type="uint8">2</Field>' in ret
