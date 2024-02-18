@@ -185,7 +185,7 @@ The attributes for VRTRasterBand are:
 - **blockYSize** (optional, GDAL >= 3.3): block height.
   If not specified, defaults to the minimum of the raster height and 128.
 
-This element may have Metadata, ColorInterp, NoDataValue, HideNoDataValue, ColorTable, GDALRasterAttributeTable, Description and MaskBand subelements as well as the various kinds of source elements such as SimpleSource, ComplexSource, AveragedSource, KernelFilteredSource and ArraySource.  A raster band may have many "sources" indicating where the actual raster data should be fetched from, and how it should be mapped into the raster bands pixel space.
+This element may have Metadata, ColorInterp, NoDataValue, HideNoDataValue, ColorTable, GDALRasterAttributeTable, Description and MaskBand subelements as well as the various kinds of source elements such as SimpleSource, ComplexSource, AveragedSource, NoDataFromMaskSource, KernelFilteredSource and ArraySource.  A raster band may have many "sources" indicating where the actual raster data should be fetched from, and how it should be mapped into the raster bands pixel space.
 
 The allowed subelements for VRTRasterBand are :
 
@@ -303,6 +303,8 @@ The allowed subelements for VRTRasterBand are :
 - **SimpleSource**: The SimpleSource_ indicates that raster data should be read from a separate dataset, indicating the dataset, and band to be read from, and how the data should map into this band's raster space.
 
 - **AveragedSource**: The AveragedSource is derived from the SimpleSource and shares the same properties except that it uses an averaging resampling instead of a nearest neighbour algorithm as in SimpleSource, when the size of the destination rectangle is not the same as the size of the source rectangle. Note: a more general mechanism to specify resampling algorithms can be used. See above paragraph about the 'resampling' attribute.
+
+- **NoDataFromMaskSource**: (GDAL >= 3.9) The NoDataFromMaskSource is derived from the SimpleSource and shares the same properties except that it replaces the value of the source with the value of the NODATA child element when the value of the mask band of the source is less or equal to the MaskValueThreshold child element.
 
 - **ComplexSource**: The ComplexSource_ is derived from the SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and DstRect elements), but it provides support to rescale and offset the range of the source values. Certain regions of the source can be masked by specifying the NODATA value, or starting with GDAL 3.3, with the <UseMaskBand>true</UseMaskBand> element.
 
@@ -497,6 +499,25 @@ For example, a Gaussian blur:
         <Coefs>0.01111 0.04394 0.13534 0.32465 0.60653 0.8825 1.0 0.8825 0.60653 0.32465 0.13534 0.04394 0.01111</Coefs>
       </Kernel>
     </KernelFilteredSource>
+
+NoDataFromMaskSource
+~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 3.9
+
+The NoDataFromMaskSource is derived from the SimpleSource and shares the same properties except that it replaces the value of the source with the value of the NODATA child element when the value of the mask band of the source is less or equal to the MaskValueThreshold child element.
+An optional RemappedValue element can be set to specify the value onto which valid pixels whose value is the one of NODATA should be remapped to. When RemappedValue is not explicitly specified, for Byte bands, if NODATA=255, it is implicitly set to 254, otherwise it is set to NODATA+1.
+
+.. code-block:: xml
+
+    <NoDataFromMaskSource>
+      <SourceFilename relativeToVRT="1">in.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <MaskValueThreshold>128</MaskValueThreshold> <!-- if the mask value is &lt;= 128, pixels are set to NODATA=0 -->
+      <NODATA>0</NODATA>
+      <RemappedValue>1</RemappedValue> <!-- valid/unmasked pixels at NODATA=0 are remapped to 1 -->
+    </NoDataFromMaskSource>
+
 
 ArraySource
 ~~~~~~~~~~~

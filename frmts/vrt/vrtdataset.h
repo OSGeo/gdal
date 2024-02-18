@@ -124,6 +124,10 @@ class CPL_DLL VRTSource
                 // do nothing
                 /* coverity[uninit_member] */
             }
+            inline operator GByte() const
+            {
+                return value;
+            }
         };
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -1186,6 +1190,50 @@ class VRTAveragedSource final : public VRTSimpleSource
     virtual const char *GetType() override
     {
         return "AveragedSource";
+    }
+};
+
+/************************************************************************/
+/*                       VRTNoDataFromMaskSource                        */
+/************************************************************************/
+
+class VRTNoDataFromMaskSource final : public VRTSimpleSource
+{
+    CPL_DISALLOW_COPY_ASSIGN(VRTNoDataFromMaskSource)
+
+    bool m_bNoDataSet = false;
+    double m_dfNoDataValue = 0;
+    double m_dfMaskValueThreshold = 0;
+    bool m_bHasRemappedValue = false;
+    double m_dfRemappedValue = 0;
+
+  public:
+    VRTNoDataFromMaskSource();
+    virtual CPLErr RasterIO(GDALDataType eVRTBandDataType, int nXOff, int nYOff,
+                            int nXSize, int nYSize, void *pData, int nBufXSize,
+                            int nBufYSize, GDALDataType eBufType,
+                            GSpacing nPixelSpace, GSpacing nLineSpace,
+                            GDALRasterIOExtraArg *psExtraArgIn,
+                            WorkingState &oWorkingState) override;
+
+    virtual double GetMinimum(int nXSize, int nYSize, int *pbSuccess) override;
+    virtual double GetMaximum(int nXSize, int nYSize, int *pbSuccess) override;
+    virtual CPLErr GetHistogram(int nXSize, int nYSize, double dfMin,
+                                double dfMax, int nBuckets,
+                                GUIntBig *panHistogram, int bIncludeOutOfRange,
+                                int bApproxOK, GDALProgressFunc pfnProgress,
+                                void *pProgressData) override;
+
+    void SetParameters(double dfNoDataValue, double dfMaskValueThreshold);
+    void SetParameters(double dfNoDataValue, double dfMaskValueThreshold,
+                       double dfRemappedValue);
+
+    virtual CPLErr XMLInit(CPLXMLNode *psTree, const char *,
+                           std::map<CPLString, GDALDataset *> &) override;
+    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
+    virtual const char *GetType() override
+    {
+        return "VRTNoDataFromMaskSource";
     }
 };
 
