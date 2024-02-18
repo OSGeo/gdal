@@ -1566,18 +1566,17 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
         return m_poParent->GetBackDrop();
     }
 
-    virtual bool SetDIBits(const RetainPtr<CFX_DIBBase> &pBitmap,
-                           uint32_t color, const FX_RECT &src_rect,
-                           int dest_left, int dest_top,
+    virtual bool SetDIBits(RetainPtr<const CFX_DIBBase> bitmap, uint32_t color,
+                           const FX_RECT &src_rect, int dest_left, int dest_top,
                            BlendMode blend_type) override
     {
         if (!bEnableBitmap && !bTemporaryEnableVectorForTextStroking)
             return true;
-        return m_poParent->SetDIBits(pBitmap, color, src_rect, dest_left,
+        return m_poParent->SetDIBits(bitmap, color, src_rect, dest_left,
                                      dest_top, blend_type);
     }
 
-    virtual bool StretchDIBits(const RetainPtr<CFX_DIBBase> &pBitmap,
+    virtual bool StretchDIBits(RetainPtr<const CFX_DIBBase> bitmap,
                                uint32_t color, int dest_left, int dest_top,
                                int dest_width, int dest_height,
                                const FX_RECT *pClipRect,
@@ -1586,22 +1585,21 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
     {
         if (!bEnableBitmap && !bTemporaryEnableVectorForTextStroking)
             return true;
-        return m_poParent->StretchDIBits(pBitmap, color, dest_left, dest_top,
+        return m_poParent->StretchDIBits(bitmap, color, dest_left, dest_top,
                                          dest_width, dest_height, pClipRect,
                                          options, blend_type);
     }
 
-    virtual bool StartDIBits(const RetainPtr<CFX_DIBBase> &pBitmap,
-                             int bitmap_alpha, uint32_t color,
-                             const CFX_Matrix &matrix,
+    virtual bool StartDIBits(RetainPtr<const CFX_DIBBase> bitmap, float alpha,
+                             uint32_t color, const CFX_Matrix &matrix,
                              const FXDIB_ResampleOptions &options,
                              std::unique_ptr<CFX_ImageRenderer> *handle,
                              BlendMode blend_type) override
     {
         if (!bEnableBitmap && !bTemporaryEnableVectorForTextStroking)
             return true;
-        return m_poParent->StartDIBits(pBitmap, bitmap_alpha, color, matrix,
-                                       options, handle, blend_type);
+        return m_poParent->StartDIBits(bitmap, alpha, color, matrix, options,
+                                       handle, blend_type);
     }
 
     virtual bool ContinueDIBits(CFX_ImageRenderer *handle,
@@ -1655,21 +1653,21 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
         return m_poParent->MultiplyAlpha(alpha);
     }
 
-    bool MultiplyAlpha(const RetainPtr<CFX_DIBBase> &mask) override
+    bool MultiplyAlphaMask(RetainPtr<const CFX_DIBitmap> mask) override
     {
-        return m_poParent->MultiplyAlpha(mask);
+        return m_poParent->MultiplyAlphaMask(mask);
     }
 
 #if defined(_SKIA_SUPPORT_)
-    virtual bool SetBitsWithMask(const RetainPtr<CFX_DIBBase> &pBitmap,
-                                 const RetainPtr<CFX_DIBBase> &pMask, int left,
-                                 int top, int bitmap_alpha,
+    virtual bool SetBitsWithMask(RetainPtr<const CFX_DIBBase> bitmap,
+                                 RetainPtr<const CFX_DIBBase> mask, int left,
+                                 int top, float alpha,
                                  BlendMode blend_type) override
     {
         if (!bEnableBitmap && !bTemporaryEnableVectorForTextStroking)
             return true;
-        return m_poParent->SetBitsWithMask(pBitmap, pMask, left, top,
-                                           bitmap_alpha, blend_type);
+        return m_poParent->SetBitsWithMask(bitmap, mask, left, top, alpha,
+                                           blend_type);
     }
     virtual void SetGroupKnockout(bool group_knockout) override
     {
