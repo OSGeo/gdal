@@ -24,4 +24,4 @@ BENCHMARK_COMPARE_OPTIONS=(
         "--benchmark-compare=0001_ref" \
 )
 
-(source ${GDAL_SOURCE_DIR:=..}/scripts/setdevenv.sh; pytest autotest/benchmark "${BENCHMARK_OPTIONS[@]}" "${BENCHMARK_COMPARE_OPTIONS[@]}" --capture=no -ra -vv || (echo "Retrying..."; pytest autotest/benchmark "${BENCHMARK_OPTIONS[@]}" "${BENCHMARK_COMPARE_OPTIONS[@]}" --capture=no -ra -vv))
+(source ${GDAL_SOURCE_DIR:=..}/scripts/setdevenv.sh; pytest ${GDAL_SOURCE_DIR:=..}/autotest/benchmark "${BENCHMARK_OPTIONS[@]}" "${BENCHMARK_COMPARE_OPTIONS[@]}" --capture=no -ra -vv || (echo "Retrying..."; pytest ${GDAL_SOURCE_DIR:=..}/autotest/benchmark "${BENCHMARK_OPTIONS[@]}" "${BENCHMARK_COMPARE_OPTIONS[@]}" --capture=no -ra -vv))

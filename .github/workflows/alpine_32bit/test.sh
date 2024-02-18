@@ -4,7 +4,8 @@ set -e
 
 . ../scripts/setdevenv.sh
 
-export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
+export PYTEST="python3 -m pytest -c pytest.ini -vv -p no:sugar --color=no"
+TEST_DIR=${GDAL_SOURCE_DIR:=..}/autotest
 
 make quicktest
 
@@ -20,11 +21,11 @@ PYTEST_SKIP="gdrivers/jp2openjpeg.py $PYTEST_SKIP"
 # Failures for the following tests. See https://github.com/OSGeo/gdal/runs/1425843044
 
 # depends on tiff_ovr.py that is going to be removed below
-(cd autotest && $PYTEST utilities/test_gdaladdo.py)
+(cd autotest && $PYTEST ${TEST_DIR}/utilities/test_gdaladdo.py)
 PYTEST_SKIP="autotest/utilities/test_gdaladdo.py $PYTEST_SKIP"
 
 for i in $PYTEST_XFAIL ; do
-    (cd autotest && $PYTEST $i || echo "Ignoring failure")
+    (cd autotest && $PYTEST ${TEST_DIR}/$i || echo "Ignoring failure")
 done
 
-(cd autotest && $PYTEST $(echo " $PYTEST_SKIP $PYTEST_XFAIL" | sed -r 's/[[:space:]]+/ --ignore=/g'))
+(cd autotest && $PYTEST ${TEST_DIR} $(echo " $PYTEST_SKIP $PYTEST_XFAIL" | sed -r 's/[[:space:]]+/ --ignore=/g'))

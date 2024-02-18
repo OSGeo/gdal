@@ -69,18 +69,7 @@ function (symlink_or_copy source destination)
     endif ()
 endfunction ()
 
-  symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/conftest.py ${CMAKE_CURRENT_BINARY_DIR}/conftest.py)
   symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/run_slow_tests.sh ${CMAKE_CURRENT_BINARY_DIR}/run_slow_tests.sh)
-
-  if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
-      foreach (subdir IN ITEMS pymod proj_grids cpp/data)
-          if (SKIP_COPYING_AUTOTEST_SUBDIRS)
-            message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}")
-          else ()
-            symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/${subdir} ${CMAKE_CURRENT_BINARY_DIR}/${subdir})
-          endif ()
-      endforeach ()
-  endif()
 
   foreach (
     tgt IN
@@ -94,20 +83,13 @@ endfunction ()
           utilities
           benchmark
           slow_tests)
-    if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
-        if (SKIP_COPYING_AUTOTEST_SUBDIRS)
-          message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}")
-        else ()
-          symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/${tgt} ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
-        endif ()
-    endif()
     add_custom_target(
       autotest_${tgt}
       COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} ${Python_EXECUTABLE} -m pytest -c
-              ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini ${tgt}
+          ${CMAKE_CURRENT_LIST_DIR}/pytest.ini ${CMAKE_CURRENT_LIST_DIR}/${tgt}
       DEPENDS ${GDAL_LIB_TARGET_NAME} gdalapps python_binding)
-    add_test(NAME autotest_${tgt} COMMAND ${Python_EXECUTABLE} -m pytest -c ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini
-                                          ${tgt})
+    add_test(NAME autotest_${tgt}
+        COMMAND ${Python_EXECUTABLE} -m pytest -c ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini ${CMAKE_CURRENT_LIST_DIR}/${tgt})
     set_property(TEST autotest_${tgt} PROPERTY ENVIRONMENT "${PYTHON_RUN_ENV}")
   endforeach ()
   add_custom_target(
@@ -175,7 +157,7 @@ int main(int argc, char **argv) {
       COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} $<TARGET_FILE:pytest_runner> -c
               ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini
       DEPENDS ${GDAL_LIB_TARGET_NAME} gdalapps python_binding pytest_runner
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+      WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
   endif ()
 
 endif ()
