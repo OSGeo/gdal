@@ -116,9 +116,8 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
             }
             const std::string osArrayName(
                 CPLGetBasename(m_osRootDirectoryName.c_str()));
-            std::set<std::string> oSetFilenamesInLoading;
             if (!poRG->LoadArray(osArrayName, osZarrayFilename, oRoot, false,
-                                 CPLJSONObject(), oSetFilenamesInLoading))
+                                 CPLJSONObject()))
                 return nullptr;
 
             return poRG;
@@ -184,9 +183,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
             const std::string osArrayName(
                 CPLGetBasename(m_osRootDirectoryName.c_str()));
             poRG_V3->SetExplored();
-            std::set<std::string> oSetFilenamesInLoading;
-            if (!poRG_V3->LoadArray(osArrayName, osZarrJsonFilename, oRoot,
-                                    oSetFilenamesInLoading))
+            if (!poRG_V3->LoadArray(osArrayName, osZarrJsonFilename, oRoot))
                 return nullptr;
 
             return poRG_V3;
@@ -333,4 +330,38 @@ void ZarrSharedResource::UpdateDimensionSize(
         CPLError(CE_Failure, CPLE_AppDefined, "UpdateDimensionSize() failed");
     }
     poRG.reset();
+}
+
+/************************************************************************/
+/*             ZarrSharedResource::AddArrayInLoading()                  */
+/************************************************************************/
+
+bool ZarrSharedResource::AddArrayInLoading(const std::string &osZarrayFilename)
+{
+    // Prevent too deep or recursive array loading
+    if (m_oSetArrayInLoading.find(osZarrayFilename) !=
+        m_oSetArrayInLoading.end())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Attempt at recursively loading %s", osZarrayFilename.c_str());
+        return false;
+    }
+    if (m_oSetArrayInLoading.size() == 32)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too deep call stack in LoadArray()");
+        return false;
+    }
+    m_oSetArrayInLoading.insert(osZarrayFilename);
+    return true;
+}
+
+/************************************************************************/
+/*             ZarrSharedResource::RemoveArrayInLoading()               */
+/************************************************************************/
+
+void ZarrSharedResource::RemoveArrayInLoading(
+    const std::string &osZarrayFilename)
+{
+    m_oSetArrayInLoading.erase(osZarrayFilename);
 }

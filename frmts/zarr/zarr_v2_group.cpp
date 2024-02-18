@@ -151,9 +151,8 @@ std::shared_ptr<ZarrArray> ZarrV2Group::OpenZarrArray(const std::string &osName,
             if (!oDoc.Load(osZarrayFilename))
                 return nullptr;
             const auto oRoot = oDoc.GetRoot();
-            std::set<std::string> oSetFilenamesInLoading;
             return LoadArray(osName, osZarrayFilename, oRoot, false,
-                             CPLJSONObject(), oSetFilenamesInLoading);
+                             CPLJSONObject());
         }
     }
 
@@ -332,9 +331,8 @@ void ZarrV2Group::InitFromZMetadata(const CPLJSONObject &obj)
             CPLFormFilename(poBelongingGroup->m_osDirectoryName.c_str(),
                             osArrayName.c_str(), nullptr),
             ".zarray", nullptr);
-        std::set<std::string> oSetFilenamesInLoading;
         poBelongingGroup->LoadArray(osArrayName, osZarrayFilename, oArray, true,
-                                    oAttributes, oSetFilenamesInLoading);
+                                    oAttributes);
     };
 
     struct ArrayDesc
