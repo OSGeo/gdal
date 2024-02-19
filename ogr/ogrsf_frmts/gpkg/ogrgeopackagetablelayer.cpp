@@ -2433,7 +2433,7 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature(OGRFeature *poFeature,
 #if SQLITE_VERSION_NUMBER >= 3035000L
                              sqlite3_column_int64(m_poInsertStatement, 0)
 #else
-                             0
+                             OGRNullFID
 #endif
                              : sqlite3_last_insert_rowid(m_poDS->GetDB());
 
@@ -2446,7 +2446,7 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature(OGRFeature *poFeature,
         m_poInsertStatement = nullptr;
     }
 
-    if (nFID != 0)
+    if (nFID != OGRNullFID)
     {
         poFeature->SetFID(nFID);
         if (m_iFIDAsRegularColumnIndex >= 0)
