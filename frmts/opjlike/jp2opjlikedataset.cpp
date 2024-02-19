@@ -2461,7 +2461,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         else
         {
             const OGRSpatialReference *poSRS = poSrcDS->GetSpatialRef();
-            if (poSRS != nullptr)
+            if (poSRS)
             {
                 bGeoreferencingCompatOfGeoJP2 = TRUE;
                 oJP2MD.SetSpatialRef(poSRS);
@@ -2471,10 +2471,18 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
             {
                 bGeoreferencingCompatOfGeoJP2 = TRUE;
                 oJP2MD.SetGeoTransform(adfGeoTransform);
+                if (poSRS && !poSRS->IsEmpty())
+                {
+                    bGeoreferencingCompatOfGMLJP2 =
+                        GDALJP2Metadata::IsSRSCompatible(poSRS);
+                    if (!bGeoreferencingCompatOfGMLJP2)
+                    {
+                        CPLDebug(
+                            CODEC::debugId(),
+                            "Cannot write GMLJP2 box due to unsupported SRS");
+                    }
+                }
             }
-            bGeoreferencingCompatOfGMLJP2 =
-                poSRS != nullptr && !poSRS->IsEmpty() &&
-                poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None;
         }
         if (poSrcDS->GetMetadata("RPC") != nullptr)
         {
