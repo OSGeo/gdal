@@ -1294,10 +1294,13 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         poGRD->poGeoRaster->bGenStats = EQUAL(pszFetched, "TRUE");
     }
 
+    bool bGenStatsOptionsUsed = false;
+
     pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_SAMPLINGFACTOR");
 
     if (pszFetched != nullptr)
     {
+        bGenStatsOptionsUsed = true;
         poGRD->poGeoRaster->nGenStatsSamplingFactor = atoi(pszFetched);
     }
 
@@ -1305,6 +1308,8 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
     if (pszFetched != nullptr)
     {
+        bGenStatsOptionsUsed = true;
+
         // Sampling window contains 4 double values
         const int nSize = 4;
         if (!ParseCommaSeparatedString(
@@ -1325,6 +1330,7 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
     if (pszFetched != nullptr)
     {
+        bGenStatsOptionsUsed = true;
         poGRD->poGeoRaster->bGenStatsHistogram = EQUAL(pszFetched, "TRUE");
     }
 
@@ -1332,6 +1338,7 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
     if (pszFetched != nullptr)
     {
+        bGenStatsOptionsUsed = true;
         poGRD->poGeoRaster->sGenStatsLayerNumbers = pszFetched;
     }
 
@@ -1339,6 +1346,7 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
     if (pszFetched != nullptr)
     {
+        bGenStatsOptionsUsed = true;
         poGRD->poGeoRaster->bGenStatsUseBin = EQUAL(pszFetched, "TRUE");
     }
 
@@ -1346,6 +1354,7 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
     if (pszFetched != nullptr)
     {
+        bGenStatsOptionsUsed = true;
         const int nSize = 5;
         if (!ParseCommaSeparatedString(
                 pszFetched, poGRD->poGeoRaster->dfGenStatsBinFunction, nSize))
@@ -1362,7 +1371,16 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
     if (pszFetched != nullptr)
     {
+        bGenStatsOptionsUsed = true;
         poGRD->poGeoRaster->bGenStatsNodata = EQUAL(pszFetched, "TRUE");
+    }
+
+    if (bGenStatsOptionsUsed && !poGRD->poGeoRaster->bGenStats)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Some GENSTATS* options were used but GENSTATS is not set. "
+                 "Statistics won't be computed, please set GENSTATS option to true "
+                 "if you want to generate statistics");
     }
 
     //  -------------------------------------------------------------------

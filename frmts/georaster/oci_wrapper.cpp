@@ -1641,7 +1641,12 @@ bool CheckError(sword nStatus, OCIError *hError)
             }
             else if (nCode == 28002 || nCode == 28098) // password expires codes (ORA-28002, ORA-28098)
             {
-                CPLError(CE_Warning, CPLE_AppDefined, "%s", szMsg);
+                static bool bPasswordExpiredLogged = false;
+                if (!bPasswordExpiredLogged)
+                {
+                    bPasswordExpiredLogged = true;
+                    CPLError(CE_Warning, CPLE_AppDefined, "%s", szMsg);
+                }
                 return false;
             }
 
