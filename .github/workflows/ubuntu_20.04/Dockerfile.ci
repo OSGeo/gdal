@@ -182,12 +182,12 @@ RUN mkdir geos \
     && rm -rf geos
 
 # Install pdfium
-RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_8/releases/download/pdfium_5952_v1/install-ubuntu2004-rev5952.tar.gz \
-  && tar -xzf install-ubuntu2004-rev5952.tar.gz \
+RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_9/releases/download/pdfium_6309_v1/install-ubuntu2004-rev6309.tar.gz \
+  && tar -xzf install-ubuntu2004-rev6309.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev5952.tar.gz install
+  && rm -rf install-ubuntu2004-rev6309.tar.gz install
 
 # HANA: client side
 # Install hdbsql tool
