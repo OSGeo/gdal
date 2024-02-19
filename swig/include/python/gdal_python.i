@@ -559,16 +559,16 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 
       Parameters
       ----------
-      xoff : int, default=0
+      xoff : float, default=0
          The pixel offset to left side of the region of the band to
          be read. This would be zero to start from the left side.
-      yoff : int, default=0
+      yoff : float, default=0
          The line offset to top side of the region of the band to
          be read. This would be zero to start from the top side.
-      win_xsize : int, optional
+      win_xsize : float, optional
            The number of pixels to read in the x direction. By default,
            equal to the number of columns in the raster.
-      win_ysize : int, optional
+      win_ysize : float, optional
            The number of rows to read in the y direction. By default,
            equal to the number of bands in the raster.
       buf_xsize : int, optional
@@ -600,27 +600,36 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       Examples
       --------
       >>> import numpy as np
-      >>> ds = gdal.GetDriverByName("GTiff").Create("test.tif", 4, 4)
+      >>> ds = gdal.GetDriverByName("GTiff").Create("test.tif", 4, 4, eType=gdal.GDT_Float32)
       >>> ds.WriteArray(np.arange(16).reshape(4, 4))
       0
       >>> band = ds.GetRasterBand(1)
+      >>> # Reading an entire band
       >>> band.ReadAsArray()
-      array([[ 0,  1,  2,  3],
-             [ 4,  5,  6,  7],
-             [ 8,  9, 10, 11],
-             [12, 13, 14, 15]], dtype=uint8)
+      array([[ 0.,  1.,  2.,  3.],
+             [ 4.,  5.,  6.,  7.],
+             [ 8.,  9., 10., 11.],
+             [12., 13., 14., 15.]], dtype=float32)
+      >>> # Reading a window of a band
       >>> band.ReadAsArray(xoff=2, yoff=2, win_xsize=2, win_ysize=2)
-      array([[10, 11],
-             [14, 15]], dtype=uint8)
+      array([[10., 11.],
+             [14., 15.]], dtype=float32)
+      >>> # Reading a band into a new buffer at higher resolution
+      >>> band.ReadAsArray(xoff=0.5, yoff=0.5, win_xsize=2.5, win_ysize=2.5, buf_xsize=5, buf_ysize=5)
+      array([[ 0.,  1.,  1.,  2.,  2.],
+             [ 4.,  5.,  5.,  6.,  6.],
+             [ 4.,  5.,  5.,  6.,  6.],
+             [ 8.,  9.,  9., 10., 10.],
+             [ 8.,  9.,  9., 10., 10.]], dtype=float32)
+      >>> # Reading a band into an existing buffer at lower resolution
       >>> band.ReadAsArray(buf_xsize=2, buf_ysize=2, buf_type=gdal.GDT_Float64, resample_alg=gdal.GRIORA_Average)
-      array([[ 3.,  5.],
-             [11., 13.]])
+      array([[ 2.5,  4.5],
+             [10.5, 12.5]])
       >>> buf = np.zeros((2,2))
       >>> band.ReadAsArray(buf_obj=buf)
       array([[ 5.,  7.],
              [13., 15.]])
       """
-
       from osgeo import gdal_array
 
       return gdal_array.BandReadAsArray(self, xoff, yoff,
@@ -648,6 +657,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
          The line offset to top side of the region of the band to
          be written. This would be zero to start from the top side.
       resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`
+         Resampling algorithm. Placeholder argument, not currently supported.
       callback : function, optional
           A progress callback function
       callback_data: optional
@@ -1024,16 +1034,16 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
         Parameters
         ----------
-        xoff : int, default=0
+        xoff : float, default=0
            The pixel offset to left side of the region of the band to
            be read. This would be zero to start from the left side.
-        yoff : int, default=0
+        yoff : float, default=0
            The line offset to top side of the region of the band to
            be read. This would be zero to start from the top side.
-        xsize : int, optional
+        xsize : float, optional
              The number of pixels to read in the x direction. By default,
              equal to the number of columns in the raster.
-        ysize : int, optional
+        ysize : float, optional
              The number of rows to read in the y direction. By default,
              equal to the number of bands in the raster.
         buf_xsize : int, optional
@@ -1144,6 +1154,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             interleaved-writing, ``array`` should have shape
             ``(ny, nx, nbands)``.
         resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`
+            Resampling algorithm. Placeholder argument, not currently supported.
         callback : function, optional
             A progress callback function
         callback_data: optional
