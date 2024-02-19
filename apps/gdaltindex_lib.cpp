@@ -75,6 +75,7 @@ struct GDALTileIndexOptions
     std::string osFormat{};
     std::string osIndexLayerName{};
     std::string osLocationField = "location";
+    CPLStringList aosLCO{};
     std::string osTargetSRS{};
     bool bWriteAbsolutePath = false;
     bool bSkipDifferentProjection = false;
@@ -504,9 +505,9 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
                 oSRS = *poSrcSRS;
         }
 
-        poLayer = poTileIndexDS->CreateLayer(osLayerName.c_str(),
-                                             oSRS.IsEmpty() ? nullptr : &oSRS,
-                                             wkbPolygon, nullptr);
+        poLayer = poTileIndexDS->CreateLayer(
+            osLayerName.c_str(), oSRS.IsEmpty() ? nullptr : &oSRS, wkbPolygon,
+            psOptions->aosLCO.List());
         if (!poLayer)
             return nullptr;
 
@@ -1192,6 +1193,11 @@ GDALTileIndexOptionsNew(char **papszArgv,
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->osLocationField = papszArgv[++iArg];
+        }
+        else if (strcmp(papszArgv[iArg], "-lco") == 0)
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            psOptions->aosLCO.AddString(papszArgv[++iArg]);
         }
         else if (strcmp(papszArgv[iArg], "-t_srs") == 0)
         {
