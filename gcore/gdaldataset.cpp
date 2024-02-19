@@ -1094,7 +1094,7 @@ int CPL_STDCALL GDALGetRasterCount(GDALDatasetH hDS)
  * When a projection definition is not available an empty (but not NULL)
  * string is returned.
  *
- * \note Startig with GDAL 3.0, this is a compatibility layer around
+ * \note Starting with GDAL 3.0, this is a compatibility layer around
  * GetSpatialRef()
  *
  * @return a pointer to an internal projection reference string.  It should
