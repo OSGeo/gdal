@@ -672,7 +672,7 @@ bool
 
 Examples
 --------
->>> ds = gdal.GetDriverByName('ESRI Shapefile').Create('test.shp', 0, 0)
+>>> ds = gdal.GetDriverByName('ESRI Shapefile').Create('test.shp', 0, 0, 0, gdal.GDT_Unknown)
 >>> ds.TestCapability(ogr.ODsCTransactions)
 False
 >>> ds.TestCapability(ogr.ODsCMeasuredGeometries)
