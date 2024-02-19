@@ -713,10 +713,19 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
             {
                 bGeoreferencingCompatOfGeoJP2 = true;
                 oJP2MD.SetGeoTransform(adfGeoTransform);
+
+                if (poSRS && !poSRS->IsEmpty())
+                {
+                    bGeoreferencingCompatOfGMLJP2 =
+                        GDALJP2Metadata::IsSRSCompatible(poSRS);
+                    if (!bGeoreferencingCompatOfGMLJP2)
+                    {
+                        CPLDebug(
+                            "JP2LURA",
+                            "Cannot write GMLJP2 box due to unsupported SRS");
+                    }
+                }
             }
-            bGeoreferencingCompatOfGMLJP2 =
-                poSRS != nullptr && !poSRS->IsEmpty() &&
-                poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None;
         }
         if (poSrcDS->GetMetadata("RPC") != nullptr)
         {
