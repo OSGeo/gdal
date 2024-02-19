@@ -307,12 +307,6 @@ def pg_quote_with_E(pg_autotest_ds):
     return True
 
 
-@pytest.fixture(scope="module")
-def pg_retrieve_fid(pg_version):
-
-    return pg_version >= (8, 2)
-
-
 ###############################################################################
 # Create table from data/poly.shp
 
@@ -2023,7 +2017,7 @@ def test_ogr_pg_39(pg_ds):
 
 
 @only_with_postgis
-def test_ogr_pg_39_bis(pg_ds, pg_has_postgis, pg_postgis_version):
+def test_ogr_pg_39_bis(pg_ds, pg_has_postgis):
 
     schema = current_schema(pg_ds)
 
@@ -2038,10 +2032,6 @@ def test_ogr_pg_39_bis(pg_ds, pg_has_postgis, pg_postgis_version):
 
     # Create a view
     pg_ds.ExecuteSQL("CREATE VIEW testview AS SELECT * FROM inherited")
-    if pg_postgis_version[0] < 2:
-        pg_ds.ExecuteSQL(
-            f"INSERT INTO geometry_columns VALUES ( '', '{schema}', 'testview', 'wkb_geometry', 2, -1, 'POINT') "
-        )
     pg_ds.ExecuteSQL(
         "INSERT INTO inherited (col1, wkb_geometry) VALUES ( 'a', GeomFromEWKT('POINT (0 1)') )"
     )
@@ -2069,10 +2059,7 @@ def test_ogr_pg_39_bis(pg_ds, pg_has_postgis, pg_postgis_version):
     ), ("bad geometry %s" % feat.GetGeometryRef().ExportToWkt())
 
     # Test another geometry column
-    if pg_postgis_version[0] < 2:
-        pg_ds.ExecuteSQL(
-            f"INSERT INTO geometry_columns VALUES ( '', '{schema}', 'testview', 'point25D', 3, -1, 'POINT') "
-        )
+
     pg_ds.ExecuteSQL(
         "UPDATE inherited SET \"point25D\" = GeomFromEWKT('POINT (0 1 2)') "
     )
@@ -2796,12 +2783,9 @@ def test_ogr_pg_53_bis(tmp_path, pg_ds):
 
 
 @only_with_postgis
-def test_ogr_pg_54(pg_ds, pg_postgis_version):
+def test_ogr_pg_54(pg_ds):
 
-    if pg_postgis_version[0] >= 2:
-        sql_lyr = pg_ds.ExecuteSQL("SELECT ST_AsEWKB(GeomFromEWKT('POINT (0 1 2)'))")
-    else:
-        sql_lyr = pg_ds.ExecuteSQL("SELECT AsEWKB(GeomFromEWKT('POINT (0 1 2)'))")
+    sql_lyr = pg_ds.ExecuteSQL("SELECT ST_AsEWKB(GeomFromEWKT('POINT (0 1 2)'))")
     feat = sql_lyr.GetNextFeature()
     pg_ds.ReleaseResultSet(sql_lyr)
 
@@ -3538,7 +3522,7 @@ def test_ogr_pg_70bis(pg_ds, pg_postgis_schema):
 
 
 @only_with_postgis
-def test_ogr_pg_71(pg_ds, pg_postgis_version):
+def test_ogr_pg_71(pg_ds):
 
     curve_lyr = pg_ds.CreateLayer("test_curve")
     curve_lyr2 = pg_ds.CreateLayer(
@@ -3574,25 +3558,7 @@ def test_ogr_pg_71(pg_ds, pg_postgis_version):
         "GEOMETRYCOLLECTION (CIRCULARSTRING (0 1,2 3,4 5),COMPOUNDCURVE ((0 1,2 3,4 5)),CURVEPOLYGON ((0 0,0 1,1 1,1 0,0 0)),MULTICURVE ((0 0,1 1)),MULTISURFACE (((0 0,0 10,10 10,10 0,0 0))))",
     ]:
 
-        # would cause PostGIS 1.X to crash
-        if pg_postgis_version[0] < 2 and wkt == "CURVEPOLYGON EMPTY":
-            continue
-        # Parsing error of WKT by PostGIS 1.X
-        if (
-            pg_postgis_version[0] < 2
-            and "MULTICURVE" in wkt
-            and "CIRCULARSTRING" in wkt
-        ):
-            continue
-
         postgis_in_wkt = wkt
-        while True:
-            z_pos = postgis_in_wkt.find("Z ")
-            # PostGIS 1.X doesn't like Z in WKT
-            if pg_postgis_version[0] < 2 and z_pos >= 0:
-                postgis_in_wkt = postgis_in_wkt[0:z_pos] + postgis_in_wkt[z_pos + 2 :]
-            else:
-                break
 
         # Test parsing PostGIS WKB
         lyr = pg_ds.ExecuteSQL("SELECT ST_GeomFromText('%s')" % postgis_in_wkt)
@@ -3604,18 +3570,11 @@ def test_ogr_pg_71(pg_ds, pg_postgis_version):
         pg_ds.ReleaseResultSet(lyr)
 
         expected_wkt = wkt
-        if pg_postgis_version[0] < 2 and "EMPTY" in wkt:
-            expected_wkt = "GEOMETRYCOLLECTION EMPTY"
         assert out_wkt == expected_wkt
 
         # Test parsing PostGIS WKT
-        if pg_postgis_version[0] >= 2:
-            fct = "ST_AsText"
-        else:
-            fct = "AsEWKT"
-
         lyr = pg_ds.ExecuteSQL(
-            "SELECT %s(ST_GeomFromText('%s'))" % (fct, postgis_in_wkt)
+            "SELECT ST_AsText(ST_GeomFromText('%s'))" % (postgis_in_wkt)
         )
         f = lyr.GetNextFeature()
         g = f.GetGeometryRef()
@@ -3625,8 +3584,6 @@ def test_ogr_pg_71(pg_ds, pg_postgis_version):
         pg_ds.ReleaseResultSet(lyr)
 
         expected_wkt = wkt
-        if pg_postgis_version[0] < 2 and "EMPTY" in wkt:
-            expected_wkt = "GEOMETRYCOLLECTION EMPTY"
         assert out_wkt == expected_wkt
 
         g = ogr.CreateGeometryFromWkt(wkt)
@@ -3643,13 +3600,9 @@ def test_ogr_pg_71(pg_ds, pg_postgis_version):
         assert ret == 0, wkt
         fid = f.GetFID()
 
-        # AsEWKT() in PostGIS 1.X does not like CIRCULARSTRING EMPTY
-        if pg_postgis_version[0] < 2 and "CIRCULARSTRING" in wkt and "EMPTY" in wkt:
-            continue
-
         lyr = pg_ds.ExecuteSQL(
-            "SELECT %s(wkb_geometry) FROM %s WHERE ogc_fid = %d"
-            % (fct, active_lyr.GetName(), fid)
+            "SELECT ST_AsText(wkb_geometry) FROM %s WHERE ogc_fid = %d"
+            % (active_lyr.GetName(), fid)
         )
         f = lyr.GetNextFeature()
         g = f.GetGeometryRef()
@@ -4165,14 +4118,14 @@ def ogr_pg_76_get_transaction_state(ds):
     )
 
 
-def test_ogr_pg_76(pg_ds, pg_postgis_version, use_postgis):
+def test_ogr_pg_76(pg_ds, use_postgis):
 
     assert pg_ds.TestCapability(ogr.ODsCTransactions) == 1
 
     level = int(pg_ds.GetMetadataItem("nSoftTransactionLevel", "_DEBUG_"))
     assert level == 0
 
-    if use_postgis and pg_postgis_version[0] >= 2:
+    if use_postgis:
         pg_ds.StartTransaction()
         lyr = pg_ds.CreateLayer("will_not_be_created", options=["OVERWRITE=YES"])
         lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
@@ -4505,10 +4458,7 @@ def test_ogr_pg_77(pg_ds, tmp_path):
 
 
 @only_with_postgis
-def test_ogr_pg_78(pg_ds, pg_postgis_version):
-
-    if pg_postgis_version[0] < 2:
-        pytest.skip("Requires PostGIS >= 2.0")
+def test_ogr_pg_78(pg_ds):
 
     pg_ds.ExecuteSQL("CREATE TABLE ogr_pg_78 (ID INTEGER PRIMARY KEY)")
     pg_ds.ExecuteSQL("ALTER TABLE ogr_pg_78 ADD COLUMN my_geom GEOMETRY")
@@ -4802,7 +4752,7 @@ def ogr_pg_83_ids(param):
     ],
     ids=ogr_pg_83_ids,
 )
-def test_ogr_pg_83(pg_ds, pg_postgis_version, geom_type, options, wkt, expected_wkt):
+def test_ogr_pg_83(pg_ds, geom_type, options, wkt, expected_wkt):
 
     lyr = pg_ds.CreateLayer("ogr_pg_83", geom_type=geom_type, options=options)
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -4821,12 +4771,8 @@ def test_ogr_pg_83(pg_ds, pg_postgis_version, geom_type, options, wkt, expected_
 
     if "GEOM_TYPE=geography" in options:
         return
-    # Cannot do AddGeometryColumn( 'GEOMETRYM', 3 ) with PostGIS 2, and doesn't accept inserting a XYM geometry
-    if (
-        pg_postgis_version[0] >= 2
-        and geom_type == ogr.wkbUnknown
-        and options == ["DIM=XYM"]
-    ):
+    # Cannot do AddGeometryColumn( 'GEOMETRYM', 3 ) with PostGIS >= 2, and doesn't accept inserting a XYM geometry
+    if geom_type == ogr.wkbUnknown and options == ["DIM=XYM"]:
         return
 
     lyr = pg_ds.CreateLayer(
