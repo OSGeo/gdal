@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <climits>
 #include <cstring>
+#include <mutex>
 
 #include "cpl_atomic_ops.h"
 #include "cpl_conv.h"
@@ -43,7 +44,6 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
-static bool bCacheMaxInitialized = false;
 // Will later be overridden by the default 5% if GDAL_CACHEMAX not defined.
 static GIntBig nCacheMax = 40 * 1024 * 1024;
 static GIntBig nCacheUsed = 0;
@@ -153,10 +153,8 @@ void CPL_STDCALL GDALSetCacheMax64(GIntBig nNewSizeInBytes)
     }
 #endif
 
-    {
-        INITIALIZE_LOCK;
-    }
-    bCacheMaxInitialized = true;
+    // To force one-time initialization of nCacheMax if not already done
+    GDALGetCacheMax64();
     nCacheMax = nNewSizeInBytes;
 
     /* -------------------------------------------------------------------- */
@@ -237,73 +235,77 @@ int CPL_STDCALL GDALGetCacheMax()
 
 GIntBig CPL_STDCALL GDALGetCacheMax64()
 {
-    if (!bCacheMaxInitialized)
-    {
+    static std::once_flag flagSetupGDALGetCacheMax64;
+    std::call_once(
+        flagSetupGDALGetCacheMax64,
+        []()
         {
-            INITIALIZE_LOCK;
-        }
-        bSleepsForBockCacheDebug =
-            CPLTestBool(CPLGetConfigOption("GDAL_DEBUG_BLOCK_CACHE", "NO"));
-
-        const char *pszCacheMax = CPLGetConfigOption("GDAL_CACHEMAX", "5%");
-
-        GIntBig nNewCacheMax;
-        if (strchr(pszCacheMax, '%') != nullptr)
-        {
-            GIntBig nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
-            if (nUsablePhysicalRAM > 0)
             {
-                // For some reason, coverity pretends that this will overflow.
-                // "Multiply operation overflows on operands
-                // static_cast<double>( nUsablePhysicalRAM ) and
-                // CPLAtof(pszCacheMax). Example values for operands: CPLAtof(
-                // pszCacheMax ) = 2251799813685248,
-                // static_cast<double>(nUsablePhysicalRAM) =
-                // -9223372036854775808." coverity[overflow,tainted_data]
-                double dfCacheMax = static_cast<double>(nUsablePhysicalRAM) *
-                                    CPLAtof(pszCacheMax) / 100.0;
-                if (dfCacheMax >= 0 && dfCacheMax < 1e15)
-                    nNewCacheMax = static_cast<GIntBig>(dfCacheMax);
+                INITIALIZE_LOCK;
+            }
+            bSleepsForBockCacheDebug =
+                CPLTestBool(CPLGetConfigOption("GDAL_DEBUG_BLOCK_CACHE", "NO"));
+
+            const char *pszCacheMax = CPLGetConfigOption("GDAL_CACHEMAX", "5%");
+
+            GIntBig nNewCacheMax;
+            if (strchr(pszCacheMax, '%') != nullptr)
+            {
+                GIntBig nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
+                if (nUsablePhysicalRAM > 0)
+                {
+                    // For some reason, coverity pretends that this will overflow.
+                    // "Multiply operation overflows on operands
+                    // static_cast<double>( nUsablePhysicalRAM ) and
+                    // CPLAtof(pszCacheMax). Example values for operands: CPLAtof(
+                    // pszCacheMax ) = 2251799813685248,
+                    // static_cast<double>(nUsablePhysicalRAM) =
+                    // -9223372036854775808." coverity[overflow,tainted_data]
+                    double dfCacheMax =
+                        static_cast<double>(nUsablePhysicalRAM) *
+                        CPLAtof(pszCacheMax) / 100.0;
+                    if (dfCacheMax >= 0 && dfCacheMax < 1e15)
+                        nNewCacheMax = static_cast<GIntBig>(dfCacheMax);
+                    else
+                        nNewCacheMax = nCacheMax;
+                }
                 else
+                {
+                    CPLDebug("GDAL", "Cannot determine usable physical RAM.");
                     nNewCacheMax = nCacheMax;
+                }
             }
             else
             {
-                CPLDebug("GDAL", "Cannot determine usable physical RAM.");
-                nNewCacheMax = nCacheMax;
-            }
-        }
-        else
-        {
-            nNewCacheMax = CPLAtoGIntBig(pszCacheMax);
-            if (nNewCacheMax < 100000)
-            {
-                if (nNewCacheMax < 0)
+                nNewCacheMax = CPLAtoGIntBig(pszCacheMax);
+                if (nNewCacheMax < 100000)
                 {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "Invalid value for GDAL_CACHEMAX. "
-                             "Using default value.");
-                    GIntBig nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
-                    if (nUsablePhysicalRAM)
-                        nNewCacheMax = nUsablePhysicalRAM / 20;
+                    if (nNewCacheMax < 0)
+                    {
+                        CPLError(CE_Failure, CPLE_NotSupported,
+                                 "Invalid value for GDAL_CACHEMAX. "
+                                 "Using default value.");
+                        GIntBig nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
+                        if (nUsablePhysicalRAM)
+                            nNewCacheMax = nUsablePhysicalRAM / 20;
+                        else
+                        {
+                            CPLDebug("GDAL",
+                                     "Cannot determine usable physical RAM.");
+                            nNewCacheMax = nCacheMax;
+                        }
+                    }
                     else
                     {
-                        CPLDebug("GDAL",
-                                 "Cannot determine usable physical RAM.");
-                        nNewCacheMax = nCacheMax;
+                        nNewCacheMax *= 1024 * 1024;
                     }
                 }
-                else
-                {
-                    nNewCacheMax *= 1024 * 1024;
-                }
             }
-        }
-        nCacheMax = nNewCacheMax;
-        CPLDebug("GDAL", "GDAL_CACHEMAX = " CPL_FRMT_GIB " MB",
-                 nCacheMax / (1024 * 1024));
-        bCacheMaxInitialized = true;
-    }
+            nCacheMax = nNewCacheMax;
+            CPLDebug("GDAL", "GDAL_CACHEMAX = " CPL_FRMT_GIB " MB",
+                     nCacheMax / (1024 * 1024));
+        });
+
     // coverity[overflow_sink]
     return nCacheMax;
 }
