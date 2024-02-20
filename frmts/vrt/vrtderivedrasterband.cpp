@@ -1406,7 +1406,7 @@ int VRTDerivedRasterBand::IGetDataCoverageStatus(
 /************************************************************************/
 
 CPLErr VRTDerivedRasterBand::XMLInit(
-    CPLXMLNode *psTree, const char *pszVRTPath,
+    const CPLXMLNode *psTree, const char *pszVRTPath,
     std::map<CPLString, GDALDataset *> &oMapSharedSources)
 
 {
@@ -1457,10 +1457,11 @@ CPLErr VRTDerivedRasterBand::XMLInit(
         return CE_Failure;
     }
 
-    CPLXMLNode *psArgs = CPLGetXMLNode(psTree, "PixelFunctionArguments");
+    const CPLXMLNode *const psArgs =
+        CPLGetXMLNode(psTree, "PixelFunctionArguments");
     if (psArgs != nullptr)
     {
-        for (CPLXMLNode *psIter = psArgs->psChild; psIter != nullptr;
+        for (const CPLXMLNode *psIter = psArgs->psChild; psIter;
              psIter = psIter->psNext)
         {
             if (psIter->eType == CXT_Attribute)
