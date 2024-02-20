@@ -471,6 +471,13 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
                 }
 
                 m_data_window.m_tlevel = atoi(tlevel);
+                // Limit to 30 to avoid 1 << m_tlevel overflow
+                if (m_data_window.m_tlevel < 0 || m_data_window.m_tlevel > 30)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Invalid value for TileLevel");
+                    return CE_Failure;
+                }
 
                 if (ret == CE_None)
                 {
@@ -483,10 +490,43 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
                              (str_tile_count_x[0] != '\0') &&
                              (str_tile_count_y[0] != '\0'))
                     {
-                        int tile_count_x = atoi(str_tile_count_x);
-                        int tile_count_y = atoi(str_tile_count_y);
+                        const int tile_count_x = atoi(str_tile_count_x);
+                        if (tile_count_x <= 0)
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Invalid value for TileCountX");
+                            return CE_Failure;
+                        }
+                        if (tile_count_x > INT_MAX / m_block_size_x ||
+                            tile_count_x * m_block_size_x >
+                                INT_MAX / (1 << m_data_window.m_tlevel))
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Integer overflow in tile_count_x * "
+                                     "m_block_size_x * (1 << "
+                                     "m_data_window.m_tlevel)");
+                            return CE_Failure;
+                        }
                         m_data_window.m_sx = tile_count_x * m_block_size_x *
                                              (1 << m_data_window.m_tlevel);
+
+                        const int tile_count_y = atoi(str_tile_count_y);
+                        if (tile_count_y <= 0)
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Invalid value for TileCountY");
+                            return CE_Failure;
+                        }
+                        if (tile_count_y > INT_MAX / m_block_size_y ||
+                            tile_count_y * m_block_size_y >
+                                INT_MAX / (1 << m_data_window.m_tlevel))
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Integer overflow in tile_count_y * "
+                                     "m_block_size_y * (1 << "
+                                     "m_data_window.m_tlevel)");
+                            return CE_Failure;
+                        }
                         m_data_window.m_sy = tile_count_y * m_block_size_y *
                                              (1 << m_data_window.m_tlevel);
                     }
