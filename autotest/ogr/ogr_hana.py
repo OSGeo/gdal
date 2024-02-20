@@ -41,7 +41,10 @@ try:
 except ImportError:
     pytest.skip("hdbcli not available", allow_module_level=True)
 
-pytestmark = pytest.mark.require_driver("HANA")
+pytestmark = [
+    pytest.mark.require_driver("HANA"),
+    pytest.mark.random_order(disabled=True),
+]
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
