@@ -1024,6 +1024,51 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
 
 
 ###############################################################################
+
+
+@pytest.mark.parametrize("dtype", range(1, gdal.GDT_TypeCount))
+def test_vrt_derived_dtype(tmp_vsimem, dtype):
+    pytest.importorskip("numpy")
+
+    input_fname = tmp_vsimem / "input.tif"
+
+    nx = 1
+    ny = 1
+
+    with gdal.GetDriverByName("GTiff").Create(
+        input_fname, nx, ny, 1, eType=gdal.GDT_Int8
+    ) as input_ds:
+        input_ds.GetRasterBand(1).Fill(1)
+        gt = input_ds.GetGeoTransform()
+
+    vrt_xml = f"""
+        <VRTDataset rasterXSize="{nx}" rasterYSize="{ny}">
+          <GeoTransform>{', '.join([str(x) for x in gt])}</GeoTransform>
+          <VRTRasterBand dataType="{gdal.GetDataTypeName(dtype)}" band="1" subClass="VRTDerivedRasterBand">
+            <PixelFunctionLanguage>Python</PixelFunctionLanguage>
+            <PixelFunctionType>identity</PixelFunctionType>
+            <PixelFunctionCode><![CDATA[
+def identity(in_ar, out_ar, *args, **kwargs):
+    out_ar[:] = in_ar[0]
+]]>
+    </PixelFunctionCode>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">{input_fname}</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="{nx}" ySize="{ny}" />
+      <DstRect xOff="0" yOff="0" xSize="{nx}" ySize="{ny}" />
+    </SimpleSource>
+    </VRTRasterBand></VRTDataset>"""
+
+    with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "YES"):
+        with gdal.Open(vrt_xml) as vrt_ds:
+            arr = vrt_ds.ReadAsArray()
+            if dtype not in {gdal.GDT_CInt16, gdal.GDT_CInt32}:
+                assert arr[0, 0] == 1
+            assert vrt_ds.GetRasterBand(1).DataType == dtype
+
+
+###############################################################################
 # Cleanup.
 
 
