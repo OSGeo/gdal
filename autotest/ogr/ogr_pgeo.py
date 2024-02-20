@@ -910,7 +910,7 @@ def test_ogr_openfilegdb_read_relationships():
     assert rel.GetRightMappingTableFields() is None
     assert rel.GetForwardPathLabel() == "forward label"
     assert rel.GetBackwardPathLabel() == "backward label"
-    assert rel.GetRelatedTableType() == "feature"
+    assert rel.GetRelatedTableType() == "features"
 
     rel = ds.GetRelationship("simple_one_to_many")
     assert rel is not None
@@ -922,7 +922,7 @@ def test_ogr_openfilegdb_read_relationships():
     assert rel.GetType() == gdal.GRT_ASSOCIATION
     assert rel.GetLeftTableFields() == ["pk"]
     assert rel.GetRightTableFields() == ["primary_key"]
-    assert rel.GetRelatedTableType() == "feature"
+    assert rel.GetRelatedTableType() == "features"
 
     rel = ds.GetRelationship("simple_many_to_many")
     assert rel is not None
@@ -936,7 +936,7 @@ def test_ogr_openfilegdb_read_relationships():
     assert rel.GetLeftMappingTableFields() == ["rel_pk"]
     assert rel.GetRightTableFields() == ["primary_key"]
     assert rel.GetRightMappingTableFields() == ["rel_primary_key"]
-    assert rel.GetRelatedTableType() == "feature"
+    assert rel.GetRelatedTableType() == "features"
 
     rel = ds.GetRelationship("composite_one_to_one")
     assert rel is not None
@@ -948,7 +948,7 @@ def test_ogr_openfilegdb_read_relationships():
     assert rel.GetType() == gdal.GRT_COMPOSITE
     assert rel.GetLeftTableFields() == ["pk"]
     assert rel.GetRightTableFields() == ["primary_key"]
-    assert rel.GetRelatedTableType() == "feature"
+    assert rel.GetRelatedTableType() == "features"
 
     rel = ds.GetRelationship("composite_one_to_many")
     assert rel is not None
@@ -962,7 +962,7 @@ def test_ogr_openfilegdb_read_relationships():
     assert rel.GetLeftMappingTableFields() == None
     assert rel.GetRightTableFields() == ["primary_key"]
     assert rel.GetRightMappingTableFields() == None
-    assert rel.GetRelatedTableType() == "feature"
+    assert rel.GetRelatedTableType() == "features"
 
     rel = ds.GetRelationship("points__ATTACHREL")
     assert rel is not None

@@ -637,7 +637,7 @@ def test_ogrinfo_lib_relationships():
     ret = gdal.VectorInfo(ds)
     expected = """Relationship: composite_many_to_many
   Type: Composite
-  Related table type: feature
+  Related table type: features
   Cardinality: ManyToMany
   Left table name: table6
   Right table name: table7
@@ -667,7 +667,7 @@ def test_ogrinfo_lib_json_relationships():
     # print(ret["relationships"]["composite_many_to_many"])
     assert ret["relationships"]["composite_many_to_many"] == {
         "type": "Composite",
-        "related_table_type": "feature",
+        "related_table_type": "features",
         "cardinality": "ManyToMany",
         "left_table_name": "table6",
         "right_table_name": "table7",
