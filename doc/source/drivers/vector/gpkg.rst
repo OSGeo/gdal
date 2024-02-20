@@ -177,6 +177,12 @@ only be updated to change their base or related table fields, or the relationshi
 table type. It is not permissible to change the base or related table itself, or the mapping
 table details. If this is desired then a new relationship should be created instead.
 
+Note that when a many-to-many relationship is created in a GeoPackage, GDAL will always
+insert the mapping table into the gpkg_contents table. Formally this is not required
+by the Related Tables Extension (instead, the table should only be listed in gpkgext_relations),
+however failing to list the mapping table in gpkg_contents prevents it from being usable
+in some other applications (e.g. ESRI software).
+
 Dataset open options
 --------------------
 

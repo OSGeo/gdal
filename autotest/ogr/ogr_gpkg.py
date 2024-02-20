@@ -7260,6 +7260,16 @@ def test_ogr_gpkg_alter_relations(tmp_vsimem, tmp_path):
         == 1
     )
 
+    # validate mapping table was created
+    assert get_query_row_count("SELECT * FROM 'origin_table_dest_table'") == 0
+    # validate mapping table is present in gpkg_contents
+    assert (
+        get_query_row_count(
+            "SELECT * FROM gpkg_contents WHERE table_name='origin_table_dest_table' AND data_type='attributes'"
+        )
+        == 1
+    )
+
     lyr = ds.CreateLayer("origin_table2", geom_type=ogr.wkbNone)
     fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
