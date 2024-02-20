@@ -902,21 +902,6 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
             OGRPGDecodeVersionString(&sPostGISVersion, pszVer);
         }
         OGRPGClearResult(hResult);
-
-        if (sPostGISVersion.nMajor == 0 && sPostGISVersion.nMinor < 8)
-        {
-            // Turning off sequential scans for PostGIS < 0.8
-            hResult = OGRPG_PQexec(hPGConn, "SET ENABLE_SEQSCAN = OFF");
-
-            CPLDebug("PG", "SET ENABLE_SEQSCAN=OFF");
-        }
-        else
-        {
-            // PostGIS >=0.8 is correctly integrated with query planner,
-            // thus PostgreSQL will use indexes whenever appropriate.
-            hResult = OGRPG_PQexec(hPGConn, "SET ENABLE_SEQSCAN = ON");
-        }
-        OGRPGClearResult(hResult);
     }
 
     m_bHasGeometryColumns =
@@ -1941,33 +1926,6 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
         bCreateSpatialIndex = false;
     }
 
-    CPLString osEscapedTableNameSingleQuote =
-        OGRPGEscapeString(hPGConn, pszTableName);
-    const char *pszEscapedTableNameSingleQuote =
-        osEscapedTableNameSingleQuote.c_str();
-    CPLString osEscapedSchemaNameSingleQuote =
-        OGRPGEscapeString(hPGConn, pszSchemaName);
-    const char *pszEscapedSchemaNameSingleQuote =
-        osEscapedSchemaNameSingleQuote.c_str();
-
-    if (eType != wkbNone && bHavePostGIS && sPostGISVersion.nMajor <= 1)
-    {
-        /* Sometimes there is an old cruft entry in the geometry_columns
-         * table if things were not properly cleaned up before.  We make
-         * an effort to clean out such cruft.
-         * Note: PostGIS 2.0 defines geometry_columns as a view (no clean up is
-         * needed)
-         */
-        CPLString osCommand;
-        osCommand.Printf("DELETE FROM geometry_columns WHERE f_table_name = %s "
-                         "AND f_table_schema = %s",
-                         pszEscapedTableNameSingleQuote,
-                         pszEscapedSchemaNameSingleQuote);
-
-        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-        OGRPGClearResult(hResult);
-    }
-
     if (!bDeferredCreation)
     {
         SoftStartTransaction();
@@ -1990,49 +1948,6 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
         }
 
         OGRPGClearResult(hResult);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Eventually we should be adding this table to a table of */
-        /*      "geometric layers", capturing the WKT projection, and */
-        /*      perhaps some other housekeeping. */
-        /* --------------------------------------------------------------------
-         */
-        if (eType != wkbNone && bHavePostGIS &&
-            !EQUAL(pszGeomType, "geography") && sPostGISVersion.nMajor <= 1)
-        {
-            int dim = 2;
-            if (GeometryTypeFlags & OGRGeometry::OGR_G_3D)
-                dim++;
-            if (GeometryTypeFlags & OGRGeometry::OGR_G_MEASURED)
-                dim++;
-            osCommand.Printf("SELECT AddGeometryColumn(%s,%s,%s,%d,'%s',%d)",
-                             pszEscapedSchemaNameSingleQuote,
-                             pszEscapedTableNameSingleQuote,
-                             OGRPGEscapeString(hPGConn, pszGFldName).c_str(),
-                             nSRSId, pszGeometryType, dim);
-
-            hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-
-            if (!hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "AddGeometryColumn failed for layer %s, layer "
-                         "creation has failed.",
-                         pszLayerName);
-
-                CPLFree(pszTableName);
-                CPLFree(pszSchemaName);
-
-                OGRPGClearResult(hResult);
-
-                SoftRollbackTransaction();
-
-                return nullptr;
-            }
-
-            OGRPGClearResult(hResult);
-        }
 
         if (eType != wkbNone && bHavePostGIS && bCreateSpatialIndex)
         {

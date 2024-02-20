@@ -649,7 +649,7 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                      STARTS_WITH(pszVal, "\\x00") ||
                      STARTS_WITH(pszVal, "\\x01")))
                 {
-                    poGeom = BYTEAToGeometry(pszVal, false);
+                    poGeom = BYTEAToGeometry(pszVal);
                 }
                 else
                 {
@@ -812,7 +812,7 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                 if (poGeometry == nullptr)
 #endif
                 {
-                    poGeometry = BYTEAToGeometry(pszData, false);
+                    poGeometry = BYTEAToGeometry(pszData);
                 }
             }
 
@@ -1723,7 +1723,7 @@ GByte *OGRPGLayer::BYTEAToGByteArray(const char *pszBytea, int *pnLength)
 /*                          BYTEAToGeometry()                           */
 /************************************************************************/
 
-OGRGeometry *OGRPGLayer::BYTEAToGeometry(const char *pszBytea, int bIsPostGIS1)
+OGRGeometry *OGRPGLayer::BYTEAToGeometry(const char *pszBytea)
 
 {
     if (pszBytea == nullptr)
@@ -1734,8 +1734,7 @@ OGRGeometry *OGRPGLayer::BYTEAToGeometry(const char *pszBytea, int bIsPostGIS1)
 
     OGRGeometry *poGeometry = nullptr;
     OGRGeometryFactory::createFromWkb(pabyWKB, nullptr, &poGeometry, nLen,
-                                      (bIsPostGIS1) ? wkbVariantPostGIS1
-                                                    : wkbVariantOldOgc);
+                                      wkbVariantOldOgc);
 
     CPLFree(pabyWKB);
     return poGeometry;

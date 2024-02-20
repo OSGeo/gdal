@@ -1250,7 +1250,7 @@ CPLString OGRPGTableLayer::BuildFields()
 
         if (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY)
         {
-            if (poDS->sPostGISVersion.nMajor < 0 || poDS->bUseBinaryCursor)
+            if (!poDS->HavePostGIS() || poDS->bUseBinaryCursor)
             {
                 osFieldList += osEscapedGeom;
             }
@@ -1262,18 +1262,10 @@ CPLString OGRPGTableLayer::BuildFields()
                 osFieldList += OGRPGEscapeColumnName(
                     CPLSPrintf("EWKBBase64_%s", poGeomFieldDefn->GetNameRef()));
             }
-            else if (poDS->sPostGISVersion.nMajor > 0)
+            else
             {
                 /* This will return EWKB in an hex encoded form */
                 osFieldList += osEscapedGeom;
-            }
-            else
-            {
-                osFieldList += "AsText(";
-                osFieldList += osEscapedGeom;
-                osFieldList += ") AS ";
-                osFieldList += OGRPGEscapeColumnName(
-                    CPLSPrintf("AsText_%s", poGeomFieldDefn->GetNameRef()));
             }
         }
         else if (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY)
@@ -3822,7 +3814,7 @@ OGRErr OGRPGTableLayer::RunDeferredCreationIfNecessary()
     {
         OGRPGGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(i);
 
-        if (poDS->sPostGISVersion.nMajor > 0 ||
+        if (poDS->HavePostGIS() ||
             poGeomField->ePostgisType == GEOM_TYPE_GEOGRAPHY)
         {
             const char *pszGeometryType =
