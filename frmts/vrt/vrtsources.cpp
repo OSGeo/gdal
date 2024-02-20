@@ -3010,7 +3010,9 @@ CPLErr VRTComplexSource::RasterIOProcessNoData(
         // Cannot overflow since pData should at least have that number of
         // elements
         const size_t nPixelCount = static_cast<size_t>(nOutXSize) * nOutYSize;
-        if (nPixelCount > std::numeric_limits<size_t>::max() / sizeof(SourceDT))
+        if (nPixelCount >
+            static_cast<size_t>(std::numeric_limits<ptrdiff_t>::max()) /
+                sizeof(SourceDT))
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
                      "Too large temporary buffer");
@@ -3226,8 +3228,9 @@ CPLErr VRTComplexSource::RasterIOInternal(
         {
             // Cannot overflow since pData should at least have that number of
             // elements
-            if (nPixelCount > std::numeric_limits<size_t>::max() /
-                                  static_cast<size_t>(nWordSize))
+            if (nPixelCount >
+                static_cast<size_t>(std::numeric_limits<ptrdiff_t>::max()) /
+                    static_cast<size_t>(nWordSize))
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory,
                          "Too large temporary buffer");
