@@ -88,6 +88,9 @@ static PyObject *GDALCreateNumpyArray(PyObject *pCreateArray, void *pBuffer,
         case GDT_Byte:
             pszDataType = "uint8";
             break;
+        case GDT_Int8:
+            pszDataType = "int8";
+            break;
         case GDT_UInt16:
             pszDataType = "uint16";
             break;
@@ -99,6 +102,12 @@ static PyObject *GDALCreateNumpyArray(PyObject *pCreateArray, void *pBuffer,
             break;
         case GDT_Int32:
             pszDataType = "int32";
+            break;
+        case GDT_Int64:
+            pszDataType = "int64";
+            break;
+        case GDT_UInt64:
+            pszDataType = "uint64";
             break;
         case GDT_Float32:
             pszDataType = "float32";
@@ -116,7 +125,8 @@ static PyObject *GDALCreateNumpyArray(PyObject *pCreateArray, void *pBuffer,
         case GDT_CFloat64:
             pszDataType = "complex128";
             break;
-        default:
+        case GDT_Unknown:
+        case GDT_TypeCount:
             CPLAssert(FALSE);
             break;
     }
