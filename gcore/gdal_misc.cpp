@@ -4125,7 +4125,7 @@ void GDALSerializeGCPListToXML(CPLXMLNode *psParentNode, GDAL_GCP *pasGCPList,
 /*                     GDALDeserializeGCPListFromXML()                  */
 /************************************************************************/
 
-void GDALDeserializeGCPListFromXML(CPLXMLNode *psGCPList,
+void GDALDeserializeGCPListFromXML(const CPLXMLNode *psGCPList,
                                    GDAL_GCP **ppasGCPList, int *pnGCPCount,
                                    OGRSpatialReference **ppoGCP_SRS)
 {
@@ -4168,7 +4168,7 @@ void GDALDeserializeGCPListFromXML(CPLXMLNode *psGCPList,
     // Count GCPs.
     int nGCPMax = 0;
 
-    for (CPLXMLNode *psXMLGCP = psGCPList->psChild; psXMLGCP != nullptr;
+    for (const CPLXMLNode *psXMLGCP = psGCPList->psChild; psXMLGCP != nullptr;
          psXMLGCP = psXMLGCP->psNext)
     {
 
@@ -4185,7 +4185,7 @@ void GDALDeserializeGCPListFromXML(CPLXMLNode *psGCPList,
     if (nGCPMax == 0)
         return;
 
-    for (CPLXMLNode *psXMLGCP = psGCPList->psChild;
+    for (const CPLXMLNode *psXMLGCP = psGCPList->psChild;
          *ppasGCPList != nullptr && psXMLGCP != nullptr;
          psXMLGCP = psXMLGCP->psNext)
     {
