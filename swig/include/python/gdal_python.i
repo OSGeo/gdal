@@ -1628,7 +1628,8 @@ def InfoOptions(options=None, format='text', deserialize=True,
         if '-json' in new_options:
             format = 'json'
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format == 'json':
             new_options += ['-json']
         elif format != "text":
@@ -1747,7 +1748,8 @@ def VectorInfoOptions(options=None,
         if '-json' in new_options:
             format = 'json'
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format == 'json':
             new_options += ['-json']
         elif format != "text":
@@ -1822,7 +1824,8 @@ def MultiDimInfoOptions(options=None, detailed=False, array=None, arrayoptions=N
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if detailed:
             new_options += ['-detailed']
         if array:
@@ -1979,7 +1982,8 @@ def TranslateOptions(options=None, format=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
         if outputType != gdalconst.GDT_Unknown:
@@ -2234,7 +2238,8 @@ def WarpOptions(options=None, format=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if srcBands:
             for b in srcBands:
                 new_options += ['-srcband', str(b)]
@@ -2580,7 +2585,8 @@ def VectorTranslateOptions(options=None, format=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-f', format]
         if srcSRS is not None:
@@ -2849,7 +2855,8 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
@@ -2981,7 +2988,8 @@ def NearblackOptions(options=None, format=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
@@ -3126,7 +3134,8 @@ def GridOptions(options=None, format=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
         if outputType != gdalconst.GDT_Unknown:
@@ -3293,7 +3302,8 @@ def RasterizeOptions(options=None, format=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
         if outputType != gdalconst.GDT_Unknown:
@@ -3476,7 +3486,8 @@ def FootprintOptions(options=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
         if bands is not None:
@@ -3692,7 +3703,8 @@ def BuildVRTOptions(options=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if resolution is not None:
             new_options += ['-resolution', str(resolution)]
         if outputBounds is not None:
@@ -3820,7 +3832,8 @@ def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
