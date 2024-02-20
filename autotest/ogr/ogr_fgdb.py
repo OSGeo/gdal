@@ -2875,7 +2875,7 @@ def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
     assert rel.GetRightMappingTableFields() is None
     assert rel.GetForwardPathLabel() == "my forward path label"
     assert rel.GetBackwardPathLabel() == "my backward path label"
-    assert rel.GetRelatedTableType() == "feature"
+    assert rel.GetRelatedTableType() == "features"
 
     rel = ds.GetRelationship("simple_one_to_many")
     assert rel is not None
@@ -2887,7 +2887,7 @@ def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
     assert rel.GetType() == gdal.GRT_ASSOCIATION
     assert rel.GetLeftTableFields() == ["pk"]
     assert rel.GetRightTableFields() == ["parent_pk"]
-    assert rel.GetRelatedTableType() == "feature"
+    assert rel.GetRelatedTableType() == "features"
 
     rel = ds.GetRelationship("simple_many_to_many")
     assert rel is not None
@@ -2901,7 +2901,7 @@ def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
     assert rel.GetLeftMappingTableFields() == ["origin_foreign_key"]
     assert rel.GetRightTableFields() == ["parent_pk"]
     assert rel.GetRightMappingTableFields() == ["destination_foreign_key"]
-    assert rel.GetRelatedTableType() == "feature"
+    assert rel.GetRelatedTableType() == "features"
 
     rel = ds.GetRelationship("composite_one_to_one")
     assert rel is not None
@@ -2913,7 +2913,7 @@ def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
     assert rel.GetType() == gdal.GRT_COMPOSITE
     assert rel.GetLeftTableFields() == ["pk"]
     assert rel.GetRightTableFields() == ["parent_pk"]
-    assert rel.GetRelatedTableType() == "feature"
+    assert rel.GetRelatedTableType() == "features"
 
     rel = ds.GetRelationship("composite_one_to_many")
     assert rel is not None
@@ -2925,7 +2925,7 @@ def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
     assert rel.GetType() == gdal.GRT_COMPOSITE
     assert rel.GetLeftTableFields() == ["pk"]
     assert rel.GetRightTableFields() == ["parent_pk"]
-    assert rel.GetRelatedTableType() == "feature"
+    assert rel.GetRelatedTableType() == "features"
 
     rel = ds.GetRelationship("composite_many_to_many")
     assert rel is not None
@@ -2939,7 +2939,7 @@ def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
     assert rel.GetLeftMappingTableFields() == ["origin_foreign_key"]
     assert rel.GetRightTableFields() == ["parent_pk"]
     assert rel.GetRightMappingTableFields() == ["dest_foreign_key"]
-    assert rel.GetRelatedTableType() == "feature"
+    assert rel.GetRelatedTableType() == "features"
 
     rel = ds.GetRelationship("points__ATTACHREL")
     assert rel is not None
