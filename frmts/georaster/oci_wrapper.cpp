@@ -1596,7 +1596,6 @@ const char *OWSetDataType(const GDALDataType eType)
 /*****************************************************************************/
 /*                            Check for Failure                              */
 /*****************************************************************************/
-
 bool CheckError(sword nStatus, OCIError *hError)
 {
     text szMsg[OWTEXT];
@@ -1645,8 +1644,13 @@ bool CheckError(sword nStatus, OCIError *hError)
                 if (!bPasswordExpiredLogged)
                 {
                     bPasswordExpiredLogged = true;
+                    // Workaround, when this is called with gdal_translate,
+                    // the error message is not printed because it has
+                    // an error handler that suppresses the message.
+                    CPLPopErrorHandler();
                     CPLError(CE_Warning, CPLE_AppDefined, "%s", szMsg);
                 }
+
                 return false;
             }
 
