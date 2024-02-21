@@ -28,77 +28,85 @@ CPL_C_START  // Necessary for compiling in GDAL project
     review the code of the driver
 */
 
-    struct MM_CAMP  // FIELD
+    struct MM_FIELD  // In MiraMon code: MM_CAMP
 {
     // Name of the field
-    char NomCamp[MM_MAX_LON_FIELD_NAME_DBF];
+    char FieldName[MM_MAX_LON_FIELD_NAME_DBF];  // In MiraMon code: NomCamp
 
     // Name of the field in dBASEIII
-    char NomCampDBFClassica[MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF];
+    char ClassicalDBFFieldName
+        [MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF];  // In MiraMon code: NomCampDBFClassica
 
     // Type of the field C, N, D, L, M, F, G and B
-    char TipusDeCamp;
+    char FieldType;   // In MiraMon code: TipusDeCamp
     MM_BOOLEAN Is64;  // Is an signed 64 bit integer
 
     // Number of decimals if it's a float
-    MM_BYTE DecimalsSiEsFloat;
+    MM_BYTE DecimalsIfFloat;  // In MiraMon code: DecimalsSiEsFloat
 
     // Number of bytes of a field
-    MM_TIPUS_BYTES_PER_CAMP_DBF BytesPerCamp;
+    MM_BYTES_PER_FIELD_TYPE_DBF
+    BytesPerField;  // In MiraMon code: MM_TIPUS_BYTES_PER_CAMP_DBF BytesPerCamp
 
     // Acumulated bytes before a field
-    MM_TIPUS_BYTES_ACUMULATS_DBF BytesAcumulats;
+    MM_ACUMULATED_BYTES_TYPE_DBF
+    AcumulatedBytes;  // In MiraMon code: MM_TIPUS_BYTES_ACUMULATS_DBF BytesAcumulats
 
     // Not used in GDAL
-    char *separador[MM_NUM_IDIOMES_MD_MULTIDIOMA];
+    char
+        *Separator[MM_NUM_IDIOMES_MD_MULTIDIOMA];  // In MiraMon code: separador
 
     // Description of the field
-    char DescripcioCamp[MM_NUM_IDIOMES_MD_MULTIDIOMA]
-                       [MM_MAX_LON_DESCRIPCIO_CAMP_DBF];
+    char FieldDescription
+        [MM_NUM_IDIOMES_MD_MULTIDIOMA]
+        [MM_MAX_LON_DESCRIPCIO_CAMP_DBF];  // In MiraMon code: DescripcioCamp
 
-    MM_BYTE AmpleDesitjat;
-    MM_BYTE AmpleDesitjatOriginal;
+    MM_BYTE DesiredWidth;          // In MiraMon code: AmpleDesitjat
+    MM_BYTE OriginalDesiredWidth;  // In MiraMon code: AmpleDesitjatOriginal
 
-    MM_BYTE reservat_1[MM_MAX_LON_RESERVAT_1_CAMP_BD_XP];
+    MM_BYTE reserved_1
+        [MM_MAX_LON_RESERVAT_1_CAMP_BD_XP];  // In MiraMon code: reservat_1
 
-    MM_BYTE reservat_2[MM_MAX_LON_RESERVAT_2_CAMP_BD_XP];
-    MM_BYTE MDX_camp_flag;
-    MM_BYTE TipusCampGeoTopo;
+    MM_BYTE reserved_2
+        [MM_MAX_LON_RESERVAT_2_CAMP_BD_XP];  // In MiraMon code: reservat_2
+    MM_BYTE MDX_field_flag;                  // In MiraMon code: MDX_camp_flag
+    MM_BYTE GeoTopoTypeField;  // In MiraMon code: TipusCampGeoTopo
 };
 
 struct MM_BASE_DADES_XP  // MiraMon Database Structure
 {
     // Extended DBF file name
-    char szNomFitxer[MM_CPL_PATH_BUF_SIZE];
+    char szFileName[MM_CPL_PATH_BUF_SIZE];  // In MiraMon code: szNomFitxer
 
-    // Temporal table
-    MM_BOOLEAN EsTaulaTemporal;
-
-    FILE_TYPE *pfBaseDades;
+    FILE_TYPE *pfDataBase;  // In MiraMon code: pfBaseDades
 
     // Charset of the DBF
-    MM_BYTE JocCaracters;
-    //BYTE InfoJocCaracExterna;
-    char ModeLectura[4];
-    MM_EXT_DBF_N_RECORDS nRecords;
-    MM_TIPUS_BYTES_ACUMULATS_DBF BytesPerFitxa;
-    MM_EXT_DBF_N_FIELDS ncamps;
-    struct MM_CAMP *Camp;
-    MM_FIRST_RECORD_OFFSET_TYPE OffsetPrimeraFitxa;
-    MM_EXT_DBF_N_FIELDS CampIdGrafic;
-    MM_EXT_DBF_N_FIELDS CampIdEntitat;
-    short int any;
-    MM_BYTE mes;
-    MM_BYTE dia;
+    MM_BYTE CharSet;
 
-    MM_BYTE versio_dbf;
+    char ReadingMode[4];            // In MiraMon code: ModeLectura
+    MM_EXT_DBF_N_RECORDS nRecords;  // In MiraMon code: n_fitxes
+    MM_ACUMULATED_BYTES_TYPE_DBF
+    BytesPerRecord;               // In MiraMon code: BytesPerFitxa
+    MM_EXT_DBF_N_FIELDS nFields;  // In MiraMon code: ncamps
+    struct MM_FIELD *pField;      // In MiraMon code: Camp
+    MM_FIRST_RECORD_OFFSET_TYPE
+    FirstRecordOffset;                  // In MiraMon code: OffsetPrimeraFitxa
+    MM_EXT_DBF_N_FIELDS IdGraficField;  // In MiraMon code: CampIdGrafic
+    MM_EXT_DBF_N_FIELDS IdEntityField;  // In MiraMon code: CampIdEntitat
+    short int year;                     // In MiraMon code: any
+    MM_BYTE month;                      // In MiraMon code: mes
+    MM_BYTE day;                        // In MiraMon code: dia
 
-    MM_BYTE reservat_1[MM_MAX_LON_RESERVAT_1_BASE_DADES_XP];
+    MM_BYTE dbf_version;  // In MiraMon code: versio_dbf
+
+    MM_BYTE reserved_1
+        [MM_MAX_LON_RESERVAT_1_BASE_DADES_XP];  // In MiraMon code: reservat_1
     MM_BYTE transaction_flag;
     MM_BYTE encryption_flag;
     MM_BYTE dbf_on_a_LAN[MM_MAX_LON_DBF_ON_A_LAN_BASE_DADES_XP];
     MM_BYTE MDX_flag;
-    MM_BYTE reservat_2[MM_MAX_LON_RESERVAT_2_BASE_DADES_XP];
+    MM_BYTE reserved_2
+        [MM_MAX_LON_RESERVAT_2_BASE_DADES_XP];  // In MiraMon code: reservat_2
 };
 #ifdef GDAL_COMPILATION
 CPL_C_END  // Necessary for compiling in GDAL project

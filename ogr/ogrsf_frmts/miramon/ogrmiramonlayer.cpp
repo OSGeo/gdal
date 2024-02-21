@@ -28,7 +28,7 @@
 
 #include "mm_gdal_functions.h"  // For MMCreateExtendedDBFIndex()
 #include "mm_gdal_constants.h"  // For strcasecmp()
-#include "mmrdlayr.h"
+#include "mm_rdlayr.h"          // For MMInitLayerToRead()
 
 /****************************************************************************/
 /*                            OGRMiraMonLayer()                             */
@@ -282,14 +282,14 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
 
             if (phMiraMonLayer->pMMBDXP)
             {
-                if (!phMiraMonLayer->pMMBDXP->pfBaseDades)
+                if (!phMiraMonLayer->pMMBDXP->pfDataBase)
                 {
-                    if ((phMiraMonLayer->pMMBDXP->pfBaseDades = fopen_function(
-                             phMiraMonLayer->pMMBDXP->szNomFitxer, "r")) ==
-                        nullptr)
+                    if ((phMiraMonLayer->pMMBDXP->pfDataBase =
+                             fopen_function(phMiraMonLayer->pMMBDXP->szFileName,
+                                            "r")) == nullptr)
                     {
                         CPLDebug("MiraMon", "File '%s' cannot be opened.",
-                                 phMiraMonLayer->pMMBDXP->szNomFitxer);
+                                 phMiraMonLayer->pMMBDXP->szFileName);
                         bValidFile = false;
                         return;
                     }
@@ -297,17 +297,17 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                     // First time we open the extended DBF we create an index
                     // to fastly find all non geometrical features.
                     phMiraMonLayer->pMultRecordIndex = MMCreateExtendedDBFIndex(
-                        phMiraMonLayer->pMMBDXP->pfBaseDades,
+                        phMiraMonLayer->pMMBDXP->pfDataBase,
                         phMiraMonLayer->pMMBDXP->nRecords,
                         phMiraMonLayer->pMMBDXP->nRecords,
-                        phMiraMonLayer->pMMBDXP->OffsetPrimeraFitxa,
-                        phMiraMonLayer->pMMBDXP->BytesPerFitxa,
+                        phMiraMonLayer->pMMBDXP->FirstRecordOffset,
+                        phMiraMonLayer->pMMBDXP->BytesPerRecord,
                         phMiraMonLayer->pMMBDXP
-                            ->Camp[phMiraMonLayer->pMMBDXP->CampIdGrafic]
-                            .BytesAcumulats,
+                            ->pField[phMiraMonLayer->pMMBDXP->IdGraficField]
+                            .AcumulatedBytes,
                         phMiraMonLayer->pMMBDXP
-                            ->Camp[phMiraMonLayer->pMMBDXP->CampIdGrafic]
-                            .BytesPerCamp,
+                            ->pField[phMiraMonLayer->pMMBDXP->IdGraficField]
+                            .BytesPerField,
                         &phMiraMonLayer->isListField, &phMiraMonLayer->nMaxN);
 
                     // Creation of maximum number needed for processing
@@ -335,13 +335,13 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                 }
 
                 for (MM_EXT_DBF_N_FIELDS nIField = 0;
-                     nIField < phMiraMonLayer->pMMBDXP->ncamps; nIField++)
+                     nIField < phMiraMonLayer->pMMBDXP->nFields; nIField++)
                 {
                     OGRFieldDefn oField("", OFTString);
                     oField.SetName(
-                        phMiraMonLayer->pMMBDXP->Camp[nIField].NomCamp);
+                        phMiraMonLayer->pMMBDXP->pField[nIField].FieldName);
 
-                    if (phMiraMonLayer->pMMBDXP->Camp[nIField].TipusDeCamp ==
+                    if (phMiraMonLayer->pMMBDXP->pField[nIField].FieldType ==
                         'C')
                     {
                         // It's a list?
@@ -361,14 +361,14 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                         else  // iMultiRecord decides which Record translate
                             oField.SetType(OFTString);
                     }
-                    else if (phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                 .TipusDeCamp == 'N')
+                    else if (phMiraMonLayer->pMMBDXP->pField[nIField]
+                                 .FieldType == 'N')
                     {
                         // It's a list?
                         if (phMiraMonLayer->iMultiRecord == -2)
                         {
-                            if (phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                    .DecimalsSiEsFloat)
+                            if (phMiraMonLayer->pMMBDXP->pField[nIField]
+                                    .DecimalsIfFloat)
                                 oField.SetType(phMiraMonLayer->isListField
                                                    ? OFTRealList
                                                    : OFTReal);
@@ -385,15 +385,15 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                         }
                         else
                         {
-                            if (phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                    .DecimalsSiEsFloat)
+                            if (phMiraMonLayer->pMMBDXP->pField[nIField]
+                                    .DecimalsIfFloat)
                                 oField.SetType(OFTReal);
                             else
                                 oField.SetType(OFTInteger);
                         }
                     }
-                    else if (phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                 .TipusDeCamp == 'D')
+                    else if (phMiraMonLayer->pMMBDXP->pField[nIField]
+                                 .FieldType == 'D')
                     {
                         // It's a serialized JSON array
                         oField.SetType(OFTDate);
@@ -405,9 +405,9 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                     }
 
                     oField.SetWidth(
-                        phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
-                    oField.SetPrecision(phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                            .DecimalsSiEsFloat);
+                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
+                    oField.SetPrecision(phMiraMonLayer->pMMBDXP->pField[nIField]
+                                            .DecimalsIfFloat);
 
                     poFeatureDefn->AddFieldDefn(&oField);
                 }
@@ -568,11 +568,11 @@ void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
                                                 MM_EXT_DBF_N_FIELDS nIField)
 
 {
-    fseek_function(phMiraMonLayer->pMMBDXP->pfBaseDades,
+    fseek_function(phMiraMonLayer->pMMBDXP->pfDataBase,
                    phMiraMonLayer->pMultRecordIndex[iFID].offset +
                        (MM_FILE_OFFSET)nIRecord *
-                           phMiraMonLayer->pMMBDXP->BytesPerFitxa +
-                       phMiraMonLayer->pMMBDXP->Camp[nIField].BytesAcumulats,
+                           phMiraMonLayer->pMMBDXP->BytesPerRecord +
+                       phMiraMonLayer->pMMBDXP->pField[nIField].AcumulatedBytes,
                    SEEK_SET);
 }
 
@@ -842,11 +842,11 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
     {
         MM_EXT_DBF_N_FIELDS nIField;
 
-        for (nIField = 0; nIField < phMiraMonLayer->pMMBDXP->ncamps; nIField++)
+        for (nIField = 0; nIField < phMiraMonLayer->pMMBDXP->nFields; nIField++)
         {
             MMResizeStringToOperateIfNeeded(
                 phMiraMonLayer,
-                phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
 
             if (poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() ==
                     OFTStringList ||
@@ -862,7 +862,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     // REVISAR
                     MMResizeStringToOperateIfNeeded(
                         phMiraMonLayer,
-                        phMiraMonLayer->pMMBDXP->BytesPerFitxa +
+                        phMiraMonLayer->pMMBDXP->BytesPerRecord +
                             2 * phMiraMonLayer->pMultRecordIndex[nIElem].nMR +
                             8);
                     strcpy(phMiraMonLayer->szStringToOperate, "(``[");
@@ -874,13 +874,14 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     {
                         GoToFieldOfMultipleRecord(nIElem, nIRecord, nIField);
 
-                        fread_function(
-                            phMiraMonLayer->szStringToOperate + nBytes,
-                            phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp,
-                            1, phMiraMonLayer->pMMBDXP->pfBaseDades);
+                        fread_function(phMiraMonLayer->szStringToOperate +
+                                           nBytes,
+                                       phMiraMonLayer->pMMBDXP->pField[nIField]
+                                           .BytesPerField,
+                                       1, phMiraMonLayer->pMMBDXP->pfDataBase);
                         (phMiraMonLayer->szStringToOperate +
-                         nBytes)[phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                     .BytesPerCamp] = '\0';
+                         nBytes)[phMiraMonLayer->pMMBDXP->pField[nIField]
+                                     .BytesPerField] = '\0';
                         MM_RemoveLeadingWhitespaceOfString(
                             phMiraMonLayer->szStringToOperate + nBytes);
                         MM_RemoveWhitespacesFromEndOfString(
@@ -888,14 +889,14 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                         nBytes +=
                             strlen(phMiraMonLayer->szStringToOperate + nBytes);
-                        if (phMiraMonLayer->pMMBDXP->JocCaracters ==
+                        if (phMiraMonLayer->pMMBDXP->CharSet ==
                             MM_JOC_CARAC_OEM850_DBASE)
-                            MM_oemansi_n(phMiraMonLayer->szStringToOperate +
-                                             nBytes,
-                                         phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                             .BytesPerCamp);
+                            MM_oemansi_n(
+                                phMiraMonLayer->szStringToOperate + nBytes,
+                                phMiraMonLayer->pMMBDXP->pField[nIField]
+                                    .BytesPerField);
 
-                        if (phMiraMonLayer->pMMBDXP->JocCaracters !=
+                        if (phMiraMonLayer->pMMBDXP->CharSet !=
                             MM_JOC_CARAC_UTF8_DBF)
                         {
                             // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
@@ -906,8 +907,8 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                             CPLStrlcpy(
                                 phMiraMonLayer->szStringToOperate + nBytes,
                                 pszString,
-                                (size_t)phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                        .BytesPerCamp +
+                                (size_t)phMiraMonLayer->pMMBDXP->pField[nIField]
+                                        .BytesPerField +
                                     1);
 
                             CPLFree(pszString);
@@ -939,26 +940,27 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     {
                         GoToFieldOfMultipleRecord(nIElem, nIRecord, nIField);
                         memset(phMiraMonLayer->szStringToOperate, 0,
-                               phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                   .BytesPerCamp);
-                        fread_function(
-                            phMiraMonLayer->szStringToOperate,
-                            phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp,
-                            1, phMiraMonLayer->pMMBDXP->pfBaseDades);
+                               phMiraMonLayer->pMMBDXP->pField[nIField]
+                                   .BytesPerField);
+                        fread_function(phMiraMonLayer->szStringToOperate,
+                                       phMiraMonLayer->pMMBDXP->pField[nIField]
+                                           .BytesPerField,
+                                       1, phMiraMonLayer->pMMBDXP->pfDataBase);
                         phMiraMonLayer
                             ->szStringToOperate[phMiraMonLayer->pMMBDXP
-                                                    ->Camp[nIField]
-                                                    .BytesPerCamp] = '\0';
+                                                    ->pField[nIField]
+                                                    .BytesPerField] = '\0';
                         MM_RemoveWhitespacesFromEndOfString(
                             phMiraMonLayer->szStringToOperate);
 
-                        if (phMiraMonLayer->pMMBDXP->JocCaracters ==
+                        if (phMiraMonLayer->pMMBDXP->CharSet ==
                             MM_JOC_CARAC_OEM850_DBASE)
-                            MM_oemansi_n(phMiraMonLayer->szStringToOperate,
-                                         phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                             .BytesPerCamp);
+                            MM_oemansi_n(
+                                phMiraMonLayer->szStringToOperate,
+                                phMiraMonLayer->pMMBDXP->pField[nIField]
+                                    .BytesPerField);
 
-                        if (phMiraMonLayer->pMMBDXP->JocCaracters !=
+                        if (phMiraMonLayer->pMMBDXP->CharSet !=
                             MM_JOC_CARAC_UTF8_DBF)
                         {
                             // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
@@ -968,8 +970,8 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                             CPLStrlcpy(
                                 phMiraMonLayer->szStringToOperate, pszString,
-                                (size_t)phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                        .BytesPerCamp +
+                                (size_t)phMiraMonLayer->pMMBDXP->pField[nIField]
+                                        .BytesPerField +
                                     1);
 
                             CPLFree(pszString);
@@ -988,8 +990,9 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
             {
                 if (phMiraMonLayer->pMultRecordIndex[nIElem].nMR == 0)
                 {
-                    memset(phMiraMonLayer->szStringToOperate, 0,
-                           phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                    memset(
+                        phMiraMonLayer->szStringToOperate, 0,
+                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
                     continue;
                 }
                 if (phMiraMonLayer->iMultiRecord != -2)
@@ -1010,8 +1013,8 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     else
                     {
                         memset(phMiraMonLayer->szStringToOperate, 0,
-                               phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                   .BytesPerCamp);
+                               phMiraMonLayer->pMMBDXP->pField[nIField]
+                                   .BytesPerField);
                         continue;
                     }
                 }
@@ -1021,31 +1024,30 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         nIField);
 
                 memset(phMiraMonLayer->szStringToOperate, 0,
-                       phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                       phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
                 fread_function(
                     phMiraMonLayer->szStringToOperate,
-                    phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp, 1,
-                    phMiraMonLayer->pMMBDXP->pfBaseDades);
+                    phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField, 1,
+                    phMiraMonLayer->pMMBDXP->pfDataBase);
                 phMiraMonLayer
-                    ->szStringToOperate[phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                            .BytesPerCamp] = '\0';
+                    ->szStringToOperate[phMiraMonLayer->pMMBDXP->pField[nIField]
+                                            .BytesPerField] = '\0';
                 MM_RemoveWhitespacesFromEndOfString(
                     phMiraMonLayer->szStringToOperate);
 
-                if (phMiraMonLayer->pMMBDXP->JocCaracters ==
+                if (phMiraMonLayer->pMMBDXP->CharSet ==
                     MM_JOC_CARAC_OEM850_DBASE)
                     MM_oemansi(phMiraMonLayer->szStringToOperate);
 
-                if (phMiraMonLayer->pMMBDXP->JocCaracters !=
-                    MM_JOC_CARAC_UTF8_DBF)
+                if (phMiraMonLayer->pMMBDXP->CharSet != MM_JOC_CARAC_UTF8_DBF)
                 {
                     // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode to UTF-8
                     char *pszString =
                         CPLRecode(phMiraMonLayer->szStringToOperate,
                                   CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
                     CPLStrlcpy(phMiraMonLayer->szStringToOperate, pszString,
-                               (size_t)phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                       .BytesPerCamp +
+                               (size_t)phMiraMonLayer->pMMBDXP->pField[nIField]
+                                       .BytesPerField +
                                    1);
                     CPLFree(pszString);
                 }
@@ -1066,14 +1068,16 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                      nIRecord++)
                 {
                     GoToFieldOfMultipleRecord(nIElem, nIRecord, nIField);
-                    memset(phMiraMonLayer->szStringToOperate, 0,
-                           phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                    memset(
+                        phMiraMonLayer->szStringToOperate, 0,
+                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
                     fread_function(
                         phMiraMonLayer->szStringToOperate,
-                        phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp, 1,
-                        phMiraMonLayer->pMMBDXP->pfBaseDades);
-                    phMiraMonLayer->szStringToOperate
-                        [phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp] =
+                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField,
+                        1, phMiraMonLayer->pMMBDXP->pfDataBase);
+                    phMiraMonLayer->szStringToOperate[phMiraMonLayer->pMMBDXP
+                                                          ->pField[nIField]
+                                                          .BytesPerField] =
                         '\0';
 
                     padfValues[nIRecord] =
@@ -1096,8 +1100,9 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
             {
                 if (phMiraMonLayer->pMultRecordIndex[nIElem].nMR == 0)
                 {
-                    memset(phMiraMonLayer->szStringToOperate, 0,
-                           phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                    memset(
+                        phMiraMonLayer->szStringToOperate, 0,
+                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
                     continue;
                 }
                 if (phMiraMonLayer->iMultiRecord != -2)
@@ -1118,8 +1123,8 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     else
                     {
                         memset(phMiraMonLayer->szStringToOperate, 0,
-                               phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                   .BytesPerCamp);
+                               phMiraMonLayer->pMMBDXP->pField[nIField]
+                                   .BytesPerField);
                         continue;
                     }
                 }
@@ -1129,14 +1134,14 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         nIField);
 
                 memset(phMiraMonLayer->szStringToOperate, 0,
-                       phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                       phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
                 fread_function(
                     phMiraMonLayer->szStringToOperate,
-                    phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp, 1,
-                    phMiraMonLayer->pMMBDXP->pfBaseDades);
+                    phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField, 1,
+                    phMiraMonLayer->pMMBDXP->pfDataBase);
                 phMiraMonLayer
-                    ->szStringToOperate[phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                            .BytesPerCamp] = '\0';
+                    ->szStringToOperate[phMiraMonLayer->pMMBDXP->pField[nIField]
+                                            .BytesPerField] = '\0';
                 MM_RemoveWhitespacesFromEndOfString(
                     phMiraMonLayer->szStringToOperate);
                 poFeature->SetField(nIField,
@@ -1148,8 +1153,9 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
             {
                 if (phMiraMonLayer->pMultRecordIndex[nIElem].nMR == 0)
                 {
-                    memset(phMiraMonLayer->szStringToOperate, 0,
-                           phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                    memset(
+                        phMiraMonLayer->szStringToOperate, 0,
+                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
                     continue;
                 }
                 if (phMiraMonLayer->iMultiRecord != -2)
@@ -1170,8 +1176,8 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     else
                     {
                         memset(phMiraMonLayer->szStringToOperate, 0,
-                               phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                   .BytesPerCamp);
+                               phMiraMonLayer->pMMBDXP->pField[nIField]
+                                   .BytesPerField);
                         continue;
                     }
                 }
@@ -1181,14 +1187,14 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         nIField);
 
                 memset(phMiraMonLayer->szStringToOperate, 0,
-                       phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp);
+                       phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
                 fread_function(
                     phMiraMonLayer->szStringToOperate,
-                    phMiraMonLayer->pMMBDXP->Camp[nIField].BytesPerCamp, 1,
-                    phMiraMonLayer->pMMBDXP->pfBaseDades);
+                    phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField, 1,
+                    phMiraMonLayer->pMMBDXP->pfDataBase);
                 phMiraMonLayer
-                    ->szStringToOperate[phMiraMonLayer->pMMBDXP->Camp[nIField]
-                                            .BytesPerCamp] = '\0';
+                    ->szStringToOperate[phMiraMonLayer->pMMBDXP->pField[nIField]
+                                            .BytesPerField] = '\0';
 
                 MM_RemoveWhitespacesFromEndOfString(
                     phMiraMonLayer->szStringToOperate);

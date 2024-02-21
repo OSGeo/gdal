@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  C API to create a MiraMon layer
+ * Purpose:  C API to read a MiraMon layer
  * Author:   Abel Pau, a.pau@creaf.uab.cat, based on the MiraMon codes, 
  *           mainly written by Xavier Pons, Joan Masó, Abel Pau, Núria Julià,
  *           Xavier Calaf, Lluís Pesquer and Alaitz Zabala, from CREAF and
@@ -42,7 +42,7 @@
 #include "mm_constants.h"
 #endif
 
-#include "mmrdlayr.h"
+#include "mm_rdlayr.h"
 
 #ifdef GDAL_COMPILATION
 CPL_C_START  // Necessary for compiling in GDAL project
@@ -531,7 +531,7 @@ int MMGetFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer,
         {
             pZDescription =
                 hMiraMonLayer->MMPoint.pZSection.pZDescription + i_elem;
-            num = MM_ARC_N_TOTAL_ALCADES_DISC(pZDescription->nZCount, 1);
+            num = MM_ARC_TOTAL_N_HEIGHTS_DISK(pZDescription->nZCount, 1);
             if (num == 0)
                 hMiraMonLayer->ReadedFeature.pZCoord[0] = MM_NODATA_COORD_Z;
             else
@@ -639,8 +639,8 @@ int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
         return 1;
     }
 
-    fclose_function(pMMBDXP->pfBaseDades);
-    pMMBDXP->pfBaseDades = nullptr;
+    fclose_function(pMMBDXP->pfDataBase);
+    pMMBDXP->pfDataBase = nullptr;
 
     return 0;
 }

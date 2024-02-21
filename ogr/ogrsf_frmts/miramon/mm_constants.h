@@ -20,12 +20,12 @@ CPL_C_START  // Necessary for compiling C in GDAL project
 #define MM_MAX_LON_RESERVAT_2_CAMP_BD_XP 13
 
 #define MM_EscriuOffsetNomEstesBD_XP(bd_xp, i_camp, offset_nom_camp)           \
-    memcpy((bd_xp)->Camp[(i_camp)].reservat_2 +                                \
+    memcpy((bd_xp)->pField[(i_camp)].reserved_2 +                              \
                MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES,                           \
            &(offset_nom_camp), 4)
 
-#define MM_ES_DBF_ESTESA(versio_dbf)                                           \
-    (((versio_dbf) == MM_MARCA_VERSIO_1_DBF_ESTESA) ? TRUE : FALSE)
+#define MM_ES_DBF_ESTESA(dbf_version)                                          \
+    (((dbf_version) == MM_MARCA_VERSIO_1_DBF_ESTESA) ? TRUE : FALSE)
 
 #define MM_UNDEFINED_STATISTICAL_VALUE (2.9E+301)
 #define MM_CPL_PATH_BUF_SIZE 2048
@@ -150,7 +150,7 @@ CPL_C_START  // Necessary for compiling C in GDAL project
 typedef unsigned char MM_BYTE;
 
 #define MM_DonaBytesNomEstesCamp(camp)                                         \
-    ((MM_BYTE)((camp)->reservat_2[MM_OFFSET_RESERVAT2_MIDA_NOM_ESTES]))
+    ((MM_BYTE)((camp)->reserved_2[MM_OFFSET_RESERVAT2_MIDA_NOM_ESTES]))
 
 #define MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA 8
 #define MM_SEGON_OFFSET_a_OFFSET_1a_FITXA 30

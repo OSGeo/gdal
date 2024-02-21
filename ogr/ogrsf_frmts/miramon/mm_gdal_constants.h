@@ -40,8 +40,10 @@ typedef GUInt32
     MM_EXT_DBF_N_FIELDS;  //(TIPUS_NUMERADOR_CAMP in MiraMon internal code)
 #define MM_MAX_EXT_DBF_N_FIELDS_TYPE UINT32_MAX
 
-#define MM_TIPUS_BYTES_PER_CAMP_DBF GUInt32
-#define MM_TIPUS_BYTES_ACUMULATS_DBF GUInt32
+#define MM_BYTES_PER_FIELD_TYPE_DBF                                            \
+    GUInt32  // In MiraMon code: MM_TIPUS_BYTES_PER_CAMP_DBF
+#define MM_ACUMULATED_BYTES_TYPE_DBF                                           \
+    GUInt32  // In MiraMon code: MM_TIPUS_BYTES_ACUMULATS_DBF
 
 // Type of the number of records of an extended DBF
 typedef GUInt32 MM_EXT_DBF_N_MULTIPLE_RECORDS;
@@ -52,12 +54,16 @@ typedef GInt32 MM_FIRST_RECORD_OFFSET_TYPE;
 
 typedef GInt32 MM_N_HEIGHT_TYPE;
 
-#define MM_ARC_ALCADA_PER_CADA_VERTEX 1
-#define MM_ARC_ALCADA_CONSTANT -1
-#define MM_ARC_TIPUS_ALCADA(n)                                                 \
-    (((n) < 0) ? MM_ARC_ALCADA_CONSTANT : MM_ARC_ALCADA_PER_CADA_VERTEX)
-#define MM_ARC_N_ALCADES(n) (((n) < 0) ? -n : n)
-#define MM_ARC_N_TOTAL_ALCADES_DISC(n, n_vrt)                                  \
+#define MM_ARC_HEIGHT_FOR_EACH_VERTEX                                          \
+    1  // In MiraMon code: MM_ARC_ALCADA_PER_CADA_VERTEX
+#define MM_ARC_CONSTANT_HEIGHT -1  // In MiraMon code: MM_ARC_ALCADA_CONSTANT
+// In MiraMon code: MM_ARC_TIPUS_ALCADA
+#define MM_ARC_HEIGHT_TYPE(n)                                                  \
+    (((n) < 0) ? MM_ARC_CONSTANT_HEIGHT : MM_ARC_HEIGHT_FOR_EACH_VERTEX)
+// In MiraMon code: MM_ARC_N_ALCADES
+#define MM_ARC_N_HEIGHTS(n) (((n) < 0) ? -n : n)
+// In MiraMon code: MM_ARC_N_TOTAL_ALCADES_DISC
+#define MM_ARC_TOTAL_N_HEIGHTS_DISK(n, n_vrt)                                  \
     (((n) < 0) ? -n : (n) * (MM_N_HEIGHT_TYPE)(n_vrt))
 
 #ifdef GDAL_COMPILATION
