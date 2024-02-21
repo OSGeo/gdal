@@ -274,50 +274,47 @@ Layer creation options
       in `MiraD application <https://www.miramon.cat/USA/Prod-MiraD.htm>`__.
       Use ANSI instead if there are no codification problems.
 
-Configuration options
----------------------
-
-The following :ref:`configuration options <configoptions>` are
-available:
-
-- .. config:: DBF_ENCODING
-
-     may be used to override the encoding
-     interpretation of the shapefile with any encoding supported by :cpp:func:`CPLRecode`
-     or to an empty string ("") to avoid any recoding.
-
 Examples
 --------
 
 -  A translation from a *.dxf* file with one layer but some diferent types in the layer 'file1.dxf' into a new MiraMon bunch of layers
-   'output_folder' is performed like this:
+   'output_folder' in Version 2.0 is performed like this:
 
    ::
 
-      ogr2ogr output_folder file1.dxf -f MiraMon
+      ogr2ogr output_folder file1.dxf -f MiraMon -lco Version=V11
+
 
 -  A translation from a *.dxf* file with one polygons type layer 'file1.dxf' into a new MiraMon of layer
-   'territories.pol' is performed like this:
+   'territories.pol' (with UTF-8 encoding at the *.dbf* files) is performed like this:
 
    ::
 
-      ogr2ogr territories.pol file1.dxf (you don't need to add **-f MiraMon**)
+      ogr2ogr territories.pol file1.dxf -lco DBFEncoding=UTF8 (you do not need to add **-f MiraMon**)
 
 
--  A translation from a arcs MiraMon layer 'rivers.arc' into a new gml file is performed like this:
+-  A translation from a arcs MiraMon layer 'rivers.arc' into a new gml file (taking only the first element of
+   multirecords) is performed like this:
 
    ::
 
-      ogr2ogr rivers.gml rivers.arc 
+      ogr2ogr rivers.gml rivers.arc -oo iMultiRecord=1
+
+-  A translation from a arcs MiraMon layer 'tracks.arc' into a new gml file taking the first height of
+   every point is performed like this:
+
+   ::
+
+      ogr2ogr tracks.gml tracks.arc -oo Height=First
+
 
 See Also
 --------
 
 -  `Miramon page <https://www.miramon.cat/Index_usa.htm>`__
+-  `CREAF page <https://www.creaf.cat/>`__
 -  `Miramon help guide <https://www.miramon.cat/help/eng>`__
 -  `Miramon video tutorials <https://www.miramon.cat/USA/Videos.htm>`__
 -  `Miramon users forum <https://www.miramon.cat/Fum/viewforum.php?f=16>`__
 -  `Miramon technical notes <https://www.miramon.cat/USA/NotesTecniques.htm>`__
 -  `Research group strongly linked to Miramon <https://www.grumets.cat/index_eng.htm>`__
--  `CREAF page <https://www.creaf.cat/>`__
-
