@@ -156,11 +156,8 @@ Encoding
 An attempt is made to read the code page setting in the codepage 
 setting from the *.dbf* file, and use it
 to translate string fields to UTF-8 on read, and back when writing. 
-At the moment of the first version of the driver the codepage of *.dbf* files is ANSI 
-which may not be appropriate. The
-:config:`DBF_ENCODING` configuration option may be used to
-override the encoding interpretation of the *.dbf* file with any encoding
-supported by CPLRecode or to "" to avoid any recoding.
+The codepage of *.dbf* files can be ANSI or UTF8 (choose that in creation
+options by setting DBFEncoding).
 
 Creation Issues
 ---------------
