@@ -2,13 +2,10 @@
  * $Id$
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  Private definitions within the Shapefile driver to implement
- *           integration with OGR.
- * Author:   Frank Warmerdam, warmerdam@pobox.com
- *
+ * Purpose:  C API to create a MiraMon layer
+ * Author:   Abel Pau
  ******************************************************************************
- * Copyright (c) 1999,  Les Technologies SoftMap Inc.
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2024, Xavier Pons
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
