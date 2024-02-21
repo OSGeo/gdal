@@ -9986,6 +9986,35 @@ bool GDALGeoPackageDataset::AddRelationship(
             return false;
         }
 
+        /*
+         * Strictly speaking we should NOT be inserting the mapping table into gpkg_contents.
+         * The related tables extension explicitly states that the mapping table should only be
+         * in the gpkgext_relations table and not in gpkg_contents. (See also discussion at
+         * https://github.com/opengeospatial/geopackage/issues/679).
+         *
+         * However, if we don't insert the mapping table into gpkg_contents then it is no longer
+         * visible to some clients (eg ESRI software only allows opening tables that are present
+         * in gpkg_contents). So we'll do this anyway, for maximum compatiblity and flexibility.
+         *
+         * More related discussion is at https://github.com/OSGeo/gdal/pull/9258
+         */
+        pszSQL = sqlite3_mprintf(
+            "INSERT INTO gpkg_contents "
+            "(table_name,data_type,identifier,description,last_change,srs_id) "
+            "VALUES "
+            "('%q','attributes','%q','Mapping table for relationship between "
+            "%q and %q',%s,0)",
+            osMappingTableName.c_str(), /*table_name*/
+            osMappingTableName.c_str(), /*identifier*/
+            osLeftTableName.c_str(),    /*description left table name*/
+            osRightTableName.c_str(),   /*description right table name*/
+            GDALGeoPackageDataset::GetCurrentDateEscapedSQL().c_str());
+
+        // Note -- we explicitly ignore failures here, because hey, we aren't really
+        // supposed to be adding this table to gpkg_contents anyway!
+        (void)SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+
         pszSQL = sqlite3_mprintf(
             "CREATE INDEX \"idx_%w_base_id\" ON \"%w\" (base_id);",
             osMappingTableName.c_str(), osMappingTableName.c_str());
