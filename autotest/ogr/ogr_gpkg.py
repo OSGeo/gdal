@@ -7008,6 +7008,13 @@ def test_ogr_gpkg_relations(tmp_vsimem, tmp_path):
     assert rel.GetRightMappingTableFields() == ["related_id"]
     assert rel.GetRelatedTableType() == "attributes"
 
+    # ensure that the mapping table, which is present in gpkgext_relations but
+    # NOT gpkg_contents can be opened as a layer
+    lyr = ds.GetLayer("my_mapping_table")
+    assert lyr is not None
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "base_id"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "related_id"
+
     lyr = ds.GetLayer("a")
     lyr.Rename("a_renamed")
     lyr.AlterFieldDefn(
@@ -7269,6 +7276,21 @@ def test_ogr_gpkg_alter_relations(tmp_vsimem, tmp_path):
         )
         == 1
     )
+    # force delete from gpkg_contents, and then ensure that we CAN successfully
+    # load layers which are present ONLY in gpkgext_relations but NOT
+    # gpkg_contents (i.e. datasources which follow the Related Tables specification
+    # exactly)
+    ds.ExecuteSQL(
+        "DELETE FROM gpkg_contents WHERE table_name='origin_table_dest_table'"
+    )
+
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    # ensure that the mapping table, which is present in gpkgext_relations but
+    # NOT gpkg_contents can be opened as a layer
+    lyr = ds.GetLayer("origin_table_dest_table")
+    assert lyr is not None
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "base_id"
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "related_id"
 
     lyr = ds.CreateLayer("origin_table2", geom_type=ogr.wkbNone)
     fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
