@@ -133,6 +133,10 @@ the health of the project:
 
     .. container:: horizontal-logo
 
+        `Satelligence <https://satelligence.com/>`__
+
+    .. container:: horizontal-logo
+
         `Space Intelligence <https://www.space-intelligence.com>`__
 
     .. container:: horizontal-logo
