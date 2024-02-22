@@ -75,9 +75,9 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
 
         if (pszVersion)
         {
-            if (EQUAL(pszVersion, "V11"))
+            if (EQUAL(pszVersion, "V1.1"))
                 nMMVersion = MM_32BITS_VERSION;
-            else if (EQUAL(pszVersion, "V20") ||
+            else if (EQUAL(pszVersion, "V2.0") ||
                      EQUAL(pszVersion, "last_version"))
                 nMMVersion = MM_64BITS_VERSION;
             else
@@ -1628,7 +1628,7 @@ OGRErr OGRMiraMonLayer::MMWriteGeometry()
                             "MM_STOP_WRITING_FEATURES");
         CPLError(CE_Failure, CPLE_FileIO, "MiraMon format limitations.");
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Try V2.0 option (-lco Version=V20).");
+                 "Try V2.0 option (-lco Version=V2.0).");
         return OGRERR_FAILURE;
     }
 

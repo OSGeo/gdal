@@ -120,11 +120,11 @@ OGRMMDriverCreate(const char *pszName, CPL_UNUSED int nBands,
 void RegisterOGRMiraMon()
 
 {
-    if (GDALGetDriverByName("MiraMon") != nullptr)
+    if (GDALGetDriverByName("MiraMonVector") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-    poDriver->SetDescription("MiraMon");
+    poDriver->SetDescription("MiraMonVector");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
@@ -176,11 +176,11 @@ void RegisterOGRMiraMon()
         "<LayerCreationOptionList>"
         "  <Option name='Version' type='string' description='Version of the "
         "file."
-        "V11 is a limited 32 bits for FID and internal offsets. "
-        "V20 is the 64 bits version for FID and internal offsets.' "
+        "V1.1 is a limited 32 bits for FID and for internal offsets. "
+        "V2.0 is the 64 bits version for FID and for internal offsets.' "
         "default='last_version'>"
-        "<Value>V11</Value>"
-        "<Value>V20</Value>"
+        "<Value>V1.1</Value>"
+        "<Value>V2.0</Value>"
         "<Value>last_version</Value>"
         "<Value>nullptr</Value>"
         "</Option>"
@@ -188,7 +188,7 @@ void RegisterOGRMiraMon()
         "the "
         ".dbf files."
         "MiraMon can write *.dbf* files in these two charsets. "
-        "V20 is the 64 bits version for FID and internal offsets.' "
+        "V2.0 is the 64 bits version for FID and internal offsets.' "
         "default='ANSI'>"
         "<Value>UTF8</Value>"
         "<Value>ANSI</Value>"
