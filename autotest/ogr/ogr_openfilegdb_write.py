@@ -2833,7 +2833,7 @@ def test_ogr_openfilegdb_write_relationships():
         assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
         assert retrieved_rel.GetForwardPathLabel() == "fwd label"
         assert retrieved_rel.GetBackwardPathLabel() == "backward label"
-        assert retrieved_rel.GetRelatedTableType() == "feature"
+        assert retrieved_rel.GetRelatedTableType() == "features"
 
         items_lyr = ds.GetLayerByName("GDB_Items")
         f = items_lyr.GetFeature(8)
@@ -3182,7 +3182,7 @@ def test_ogr_openfilegdb_write_relationships():
         assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
         assert retrieved_rel.GetForwardPathLabel() == "my new fwd label"
         assert retrieved_rel.GetBackwardPathLabel() == "my new backward label"
-        assert retrieved_rel.GetRelatedTableType() == "feature"
+        assert retrieved_rel.GetRelatedTableType() == "features"
 
         # change relationship tables
         lyr = ds.CreateLayer("new_origin_table", geom_type=ogr.wkbNone)

@@ -75,9 +75,7 @@ std::shared_ptr<ZarrArray> ZarrV3Group::OpenZarrArray(const std::string &osName,
         if (!oDoc.Load(osZarrayFilename))
             return nullptr;
         const auto oRoot = oDoc.GetRoot();
-        std::set<std::string> oSetFilenamesInLoading;
-        return LoadArray(osName, osZarrayFilename, oRoot,
-                         oSetFilenamesInLoading);
+        return LoadArray(osName, osZarrayFilename, oRoot);
     }
 
     return nullptr;

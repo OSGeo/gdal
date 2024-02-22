@@ -2263,6 +2263,41 @@ void CPLCleanXMLElementName(char *pszTarget)
 }
 
 /************************************************************************/
+/*                     CPLXMLNodeGetRAMUsageEstimate()                  */
+/************************************************************************/
+
+static size_t CPLXMLNodeGetRAMUsageEstimate(const CPLXMLNode *psNode,
+                                            bool bVisitSiblings)
+{
+    size_t nRet = sizeof(CPLXMLNode);
+    // malloc() aligns on 16-byte boundaries on 64 bit.
+    nRet += std::max(2 * sizeof(void *), strlen(psNode->pszValue) + 1);
+    if (bVisitSiblings)
+    {
+        for (const CPLXMLNode *psIter = psNode->psNext; psIter;
+             psIter = psIter->psNext)
+        {
+            nRet += CPLXMLNodeGetRAMUsageEstimate(psIter, false);
+        }
+    }
+    if (psNode->psChild)
+    {
+        nRet += CPLXMLNodeGetRAMUsageEstimate(psNode->psChild, true);
+    }
+    return nRet;
+}
+
+/** Return a conservative estimate of the RAM usage of this node, its children
+ * and siblings. The returned values is in bytes.
+ *
+ * @since 3.9
+ */
+size_t CPLXMLNodeGetRAMUsageEstimate(const CPLXMLNode *psNode)
+{
+    return CPLXMLNodeGetRAMUsageEstimate(psNode, true);
+}
+
+/************************************************************************/
 /*            CPLXMLTreeCloser::getDocumentElement()                    */
 /************************************************************************/
 

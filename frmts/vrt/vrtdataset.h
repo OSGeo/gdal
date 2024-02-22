@@ -124,6 +124,10 @@ class CPL_DLL VRTSource
                 // do nothing
                 /* coverity[uninit_member] */
             }
+            inline operator GByte() const
+            {
+                return value;
+            }
         };
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -565,7 +569,9 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL : public GDALRasterBand
 
     virtual CPLErr XMLInit(CPLXMLNode *, const char *,
                            std::map<CPLString, GDALDataset *> &);
-    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath);
+    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
+                                       bool &bHasWarnedAboutRAMUsage,
+                                       size_t &nAccRAMUsage);
 
     CPLErr SetNoDataValue(double) override;
     CPLErr SetNoDataValueAsInt64(int64_t nNoData) override;
@@ -705,7 +711,9 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
 
     virtual CPLErr XMLInit(CPLXMLNode *, const char *,
                            std::map<CPLString, GDALDataset *> &) override;
-    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
+    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
+                                       bool &bHasWarnedAboutRAMUsage,
+                                       size_t &nAccRAMUsage) override;
 
     virtual double GetMinimum(int *pbSuccess = nullptr) override;
     virtual double GetMaximum(int *pbSuccess = nullptr) override;
@@ -804,7 +812,9 @@ class CPL_DLL VRTWarpedRasterBand final : public VRTRasterBand
                         GDALDataType eType = GDT_Unknown);
     virtual ~VRTWarpedRasterBand();
 
-    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
+    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
+                                       bool &bHasWarnedAboutRAMUsage,
+                                       size_t &nAccRAMUsage) override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;
@@ -825,7 +835,9 @@ class VRTPansharpenedRasterBand final : public VRTRasterBand
                               GDALDataType eDataType = GDT_Unknown);
     virtual ~VRTPansharpenedRasterBand();
 
-    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
+    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
+                                       bool &bHasWarnedAboutRAMUsage,
+                                       size_t &nAccRAMUsage) override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
 
@@ -906,7 +918,9 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
 
     virtual CPLErr XMLInit(CPLXMLNode *, const char *,
                            std::map<CPLString, GDALDataset *> &) override;
-    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
+    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
+                                       bool &bHasWarnedAboutRAMUsage,
+                                       size_t &nAccRAMUsage) override;
 
     virtual double GetMinimum(int *pbSuccess = nullptr) override;
     virtual double GetMaximum(int *pbSuccess = nullptr) override;
@@ -947,7 +961,9 @@ class CPL_DLL VRTRawRasterBand CPL_NON_FINAL : public VRTRasterBand
 
     virtual CPLErr XMLInit(CPLXMLNode *, const char *,
                            std::map<CPLString, GDALDataset *> &) override;
-    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
+    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath,
+                                       bool &bHasWarnedAboutRAMUsage,
+                                       size_t &nAccRAMUsage) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                              GDALDataType, GSpacing nPixelSpace,
@@ -1186,6 +1202,50 @@ class VRTAveragedSource final : public VRTSimpleSource
     virtual const char *GetType() override
     {
         return "AveragedSource";
+    }
+};
+
+/************************************************************************/
+/*                       VRTNoDataFromMaskSource                        */
+/************************************************************************/
+
+class VRTNoDataFromMaskSource final : public VRTSimpleSource
+{
+    CPL_DISALLOW_COPY_ASSIGN(VRTNoDataFromMaskSource)
+
+    bool m_bNoDataSet = false;
+    double m_dfNoDataValue = 0;
+    double m_dfMaskValueThreshold = 0;
+    bool m_bHasRemappedValue = false;
+    double m_dfRemappedValue = 0;
+
+  public:
+    VRTNoDataFromMaskSource();
+    virtual CPLErr RasterIO(GDALDataType eVRTBandDataType, int nXOff, int nYOff,
+                            int nXSize, int nYSize, void *pData, int nBufXSize,
+                            int nBufYSize, GDALDataType eBufType,
+                            GSpacing nPixelSpace, GSpacing nLineSpace,
+                            GDALRasterIOExtraArg *psExtraArgIn,
+                            WorkingState &oWorkingState) override;
+
+    virtual double GetMinimum(int nXSize, int nYSize, int *pbSuccess) override;
+    virtual double GetMaximum(int nXSize, int nYSize, int *pbSuccess) override;
+    virtual CPLErr GetHistogram(int nXSize, int nYSize, double dfMin,
+                                double dfMax, int nBuckets,
+                                GUIntBig *panHistogram, int bIncludeOutOfRange,
+                                int bApproxOK, GDALProgressFunc pfnProgress,
+                                void *pProgressData) override;
+
+    void SetParameters(double dfNoDataValue, double dfMaskValueThreshold);
+    void SetParameters(double dfNoDataValue, double dfMaskValueThreshold,
+                       double dfRemappedValue);
+
+    virtual CPLErr XMLInit(CPLXMLNode *psTree, const char *,
+                           std::map<CPLString, GDALDataset *> &) override;
+    virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
+    virtual const char *GetType() override
+    {
+        return "VRTNoDataFromMaskSource";
     }
 };
 

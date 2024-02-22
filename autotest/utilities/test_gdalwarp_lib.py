@@ -31,6 +31,7 @@
 ###############################################################################
 
 import collections
+import json
 import shutil
 import struct
 
@@ -2998,6 +2999,94 @@ def test_gdalwarp_lib_cutline_zero_width_sliver(tmp_vsimem):
     srs.ImportFromEPSG(32615)
     src_ds.SetSpatialRef(srs)
     src_ds.SetGeoTransform([690129, 30, 0, 3723432, 0, -30])
+    ds = gdal.Warp(
+        "", src_ds, format="MEM", cutlineDSName=tmp_vsimem / "cutline.geojson"
+    )
+    assert ds is not None
+
+
+###############################################################################
+# Test cutline with zero-width sliver
+
+
+def test_gdalwarp_lib_cutline_zero_width_sliver_remove_empty_polygon(tmp_vsimem):
+
+    geojson = {
+        "type": "MultiPolygon",
+        "coordinates": [
+            [
+                [
+                    [-101.43346, 36.91886],
+                    [-101.43337, 36.91864],
+                    [-101.43332, 36.91865],
+                    [-101.43342, 36.91888],
+                    [-101.43346, 36.91886],
+                ]
+            ],
+            # The below polygon has a zero-width sliver
+            [
+                [
+                    [-101.4311, 36.91909],
+                    [-101.43106, 36.91913],
+                    [-101.43111, 36.91908],
+                    [-101.4311, 36.91909],
+                ]
+            ],
+        ],
+    }
+    gdal.FileFromMemBuffer(tmp_vsimem / "cutline.geojson", json.dumps(geojson))
+    src_ds = gdal.GetDriverByName("MEM").Create("", 100, 100)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([-101.5, 0.1, 0, 37, 0, -0.1])
+    ds = gdal.Warp(
+        "", src_ds, format="MEM", cutlineDSName=tmp_vsimem / "cutline.geojson"
+    )
+    assert ds is not None
+
+
+###############################################################################
+# Test cutline with zero-width sliver
+
+
+def test_gdalwarp_lib_cutline_zero_width_sliver_remove_empty_inner_ring(tmp_vsimem):
+
+    geojson = {
+        "type": "MultiPolygon",
+        "coordinates": [
+            [
+                [
+                    [-101.5, 37],
+                    [-101.4, 37],
+                    [-101.4, 36.9],
+                    [-101.5, 36.9],
+                    [-101.5, 37],
+                ],
+                # The below ring has a zero-width sliver
+                [
+                    [-101.4311, 36.91909],
+                    [-101.43106, 36.91913],
+                    [-101.43111, 36.91908],
+                    [-101.4311, 36.91909],
+                ],
+                # This one is OK
+                [
+                    [-101.49, 36.95],
+                    [-101.48, 36.95],
+                    [-101.48, 36.94],
+                    [-101.49, 36.94],
+                    [-101.49, 36.95],
+                ],
+            ]
+        ],
+    }
+    gdal.FileFromMemBuffer(tmp_vsimem / "cutline.geojson", json.dumps(geojson))
+    src_ds = gdal.GetDriverByName("MEM").Create("", 100, 100)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([-101.6, 0.1, 0, 37.1, 0, -0.1])
     ds = gdal.Warp(
         "", src_ds, format="MEM", cutlineDSName=tmp_vsimem / "cutline.geojson"
     )

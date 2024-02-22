@@ -242,7 +242,7 @@ ParseXMLRelationshipDef(const std::string &domainDef)
     }
     else
     {
-        poRelationship->SetRelatedTableType("feature");
+        poRelationship->SetRelatedTableType("features");
     }
     return poRelationship;
 }

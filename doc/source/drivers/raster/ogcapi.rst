@@ -81,16 +81,18 @@ The following open options are available:
      GeoJSON items otherwise.
 
 - .. oo:: IMAGE_FORMAT
-     :choices: AUTO, PNG, PNG_PREFERRED, JPEG, JPEG_PREFERRED
+     :choices: AUTO, PNG, PNG_PREFERRED, JPEG, JPEG_PREFERRED, GEOTIFF
      :default: AUTO
 
      Which format to use for pixel acquisition, for tiles or map API.
-     Defaults to AUTO, which means
-     that PNG will be used if available, and fallback to JPEG otherwise.
-     If specifying PNG or JPEG, they must be available, otherwise the driver will
-     return an error. If specifying the one of the PNG_PREFERRED or JPEG_PREFERRED
-     value, the specified format will be used if available, and the driver will
-     fallback to the other format otherwise.
+     AUTO - This is the default and specifies that PNG images will be checked first,
+     then JPEG and then any additional formats the server supports.
+     PNG_PREFERRED - Same as AUTO
+     JPEG_PREFERRED - Similar to AUTO, but the order is JPEG, PNG and then any additional
+     formats the server supports
+     JPEG - Use only JPEG images. If none are available then the driver will return an error
+     PNG - Use only PNG images. If none are available then the driver will return an error
+     GEOTIFF - Use only GEOTIFF images. If none are available then the driver will return an error
 
 - .. oo:: VECTOR_FORMAT
      :choices: AUTO, GEOJSON, GEOJSON_PREFERRED, MVT, MVT_PREFERRED

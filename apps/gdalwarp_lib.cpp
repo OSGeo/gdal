@@ -2705,8 +2705,8 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
 
         // Check if transformation is inversible
         {
-            double dfX = GDALGetRasterXSize(hDstDS) / 2;
-            double dfY = GDALGetRasterYSize(hDstDS) / 2;
+            double dfX = GDALGetRasterXSize(hDstDS) / 2.0;
+            double dfY = GDALGetRasterYSize(hDstDS) / 2.0;
             double dfZ = 0;
             int bSuccess = false;
             const auto nErrorCounterBefore = CPLGetErrorCounter();
@@ -4818,16 +4818,56 @@ static void RemoveZeroWidthSlivers(OGRGeometry *poGeom)
     const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
     if (eType == wkbMultiPolygon)
     {
-        for (auto poSubGeom : *(poGeom->toMultiPolygon()))
+        auto poMP = poGeom->toMultiPolygon();
+        int nNumGeometries = poMP->getNumGeometries();
+        for (int i = 0; i < nNumGeometries; /* incremented in loop */)
         {
-            RemoveZeroWidthSlivers(poSubGeom);
+            auto poPoly = poMP->getGeometryRef(i);
+            RemoveZeroWidthSlivers(poPoly);
+            if (poPoly->IsEmpty())
+            {
+                CPLDebug("WARP",
+                         "RemoveZeroWidthSlivers: removing empty polygon");
+                poMP->removeGeometry(i, /* bDelete = */ true);
+                --nNumGeometries;
+            }
+            else
+            {
+                ++i;
+            }
         }
     }
     else if (eType == wkbPolygon)
     {
-        for (auto poSubGeom : *(poGeom->toPolygon()))
+        auto poPoly = poGeom->toPolygon();
+        if (auto poExteriorRing = poPoly->getExteriorRing())
         {
-            RemoveZeroWidthSlivers(poSubGeom);
+            RemoveZeroWidthSlivers(poExteriorRing);
+            if (poExteriorRing->getNumPoints() < 4)
+            {
+                poPoly->empty();
+                return;
+            }
+        }
+        int nNumInteriorRings = poPoly->getNumInteriorRings();
+        for (int i = 0; i < nNumInteriorRings; /* incremented in loop */)
+        {
+            auto poRing = poPoly->getInteriorRing(i);
+            RemoveZeroWidthSlivers(poRing);
+            if (poRing->getNumPoints() < 4)
+            {
+                CPLDebug(
+                    "WARP",
+                    "RemoveZeroWidthSlivers: removing empty interior ring");
+                constexpr int OFFSET_EXTERIOR_RING = 1;
+                poPoly->removeRing(i + OFFSET_EXTERIOR_RING,
+                                   /* bDelete = */ true);
+                --nNumInteriorRings;
+            }
+            else
+            {
+                ++i;
+            }
         }
     }
     else if (eType == wkbLineString)

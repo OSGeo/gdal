@@ -2002,6 +2002,453 @@ CPLErr VRTAveragedSource::GetHistogram(
 
 /************************************************************************/
 /* ==================================================================== */
+/*                     VRTNoDataFromMaskSource                          */
+/* ==================================================================== */
+/************************************************************************/
+
+/************************************************************************/
+/*                     VRTNoDataFromMaskSource()                        */
+/************************************************************************/
+
+VRTNoDataFromMaskSource::VRTNoDataFromMaskSource()
+{
+}
+
+/************************************************************************/
+/*                              XMLInit()                               */
+/************************************************************************/
+
+CPLErr VRTNoDataFromMaskSource::XMLInit(
+    CPLXMLNode *psSrc, const char *pszVRTPath,
+    std::map<CPLString, GDALDataset *> &oMapSharedSources)
+
+{
+    /* -------------------------------------------------------------------- */
+    /*      Do base initialization.                                         */
+    /* -------------------------------------------------------------------- */
+    {
+        const CPLErr eErr =
+            VRTSimpleSource::XMLInit(psSrc, pszVRTPath, oMapSharedSources);
+        if (eErr != CE_None)
+            return eErr;
+    }
+
+    if (CPLGetXMLValue(psSrc, "NODATA", nullptr) != nullptr)
+    {
+        m_bNoDataSet = true;
+        m_dfNoDataValue = CPLAtofM(CPLGetXMLValue(psSrc, "NODATA", "0"));
+    }
+
+    m_dfMaskValueThreshold =
+        CPLAtofM(CPLGetXMLValue(psSrc, "MaskValueThreshold", "0"));
+
+    if (const char *pszRemappedValue =
+            CPLGetXMLValue(psSrc, "RemappedValue", nullptr))
+    {
+        m_bHasRemappedValue = true;
+        m_dfRemappedValue = CPLAtofM(pszRemappedValue);
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           SerializeToXML()                           */
+/************************************************************************/
+
+CPLXMLNode *VRTNoDataFromMaskSource::SerializeToXML(const char *pszVRTPath)
+
+{
+    CPLXMLNode *const psSrc = VRTSimpleSource::SerializeToXML(pszVRTPath);
+
+    if (psSrc == nullptr)
+        return nullptr;
+
+    CPLFree(psSrc->pszValue);
+    psSrc->pszValue = CPLStrdup("NoDataFromMaskSource");
+
+    if (m_bNoDataSet)
+    {
+        CPLSetXMLValue(psSrc, "MaskValueThreshold",
+                       CPLSPrintf("%.18g", m_dfMaskValueThreshold));
+
+        GDALDataType eBandDT = GDT_Unknown;
+        double dfNoDataValue = m_dfNoDataValue;
+        const auto kMaxFloat = std::numeric_limits<float>::max();
+        if (std::fabs(std::fabs(m_dfNoDataValue) - kMaxFloat) <
+            1e-10 * kMaxFloat)
+        {
+            auto l_band = GetRasterBand();
+            if (l_band)
+            {
+                eBandDT = l_band->GetRasterDataType();
+                if (eBandDT == GDT_Float32)
+                {
+                    dfNoDataValue =
+                        GDALAdjustNoDataCloseToFloatMax(m_dfNoDataValue);
+                }
+            }
+        }
+        CPLSetXMLValue(psSrc, "NODATA",
+                       VRTSerializeNoData(dfNoDataValue, eBandDT, 18).c_str());
+    }
+
+    if (m_bHasRemappedValue)
+    {
+        CPLSetXMLValue(psSrc, "RemappedValue",
+                       CPLSPrintf("%.18g", m_dfRemappedValue));
+    }
+
+    return psSrc;
+}
+
+/************************************************************************/
+/*                           SetParameters()                            */
+/************************************************************************/
+
+void VRTNoDataFromMaskSource::SetParameters(double dfNoDataValue,
+                                            double dfMaskValueThreshold)
+{
+    m_bNoDataSet = true;
+    m_dfNoDataValue = dfNoDataValue;
+    m_dfMaskValueThreshold = dfMaskValueThreshold;
+    if (!m_bHasRemappedValue)
+        m_dfRemappedValue = m_dfNoDataValue;
+}
+
+/************************************************************************/
+/*                           SetParameters()                            */
+/************************************************************************/
+
+void VRTNoDataFromMaskSource::SetParameters(double dfNoDataValue,
+                                            double dfMaskValueThreshold,
+                                            double dfRemappedValue)
+{
+    SetParameters(dfNoDataValue, dfMaskValueThreshold);
+    m_bHasRemappedValue = true;
+    m_dfRemappedValue = dfRemappedValue;
+}
+
+/************************************************************************/
+/*                              RasterIO()                              */
+/************************************************************************/
+
+CPLErr VRTNoDataFromMaskSource::RasterIO(
+    GDALDataType eVRTBandDataType, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    GSpacing nPixelSpace, GSpacing nLineSpace,
+    GDALRasterIOExtraArg *psExtraArgIn, WorkingState &oWorkingState)
+
+{
+    if (!m_bNoDataSet)
+    {
+        return VRTSimpleSource::RasterIO(eVRTBandDataType, nXOff, nYOff, nXSize,
+                                         nYSize, pData, nBufXSize, nBufYSize,
+                                         eBufType, nPixelSpace, nLineSpace,
+                                         psExtraArgIn, oWorkingState);
+    }
+
+    GDALRasterIOExtraArg sExtraArg;
+    INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+    GDALRasterIOExtraArg *psExtraArg = &sExtraArg;
+
+    double dfXOff = nXOff;
+    double dfYOff = nYOff;
+    double dfXSize = nXSize;
+    double dfYSize = nYSize;
+    if (psExtraArgIn != nullptr && psExtraArgIn->bFloatingPointWindowValidity)
+    {
+        dfXOff = psExtraArgIn->dfXOff;
+        dfYOff = psExtraArgIn->dfYOff;
+        dfXSize = psExtraArgIn->dfXSize;
+        dfYSize = psExtraArgIn->dfYSize;
+    }
+
+    // The window we will actually request from the source raster band.
+    double dfReqXOff = 0.0;
+    double dfReqYOff = 0.0;
+    double dfReqXSize = 0.0;
+    double dfReqYSize = 0.0;
+    int nReqXOff = 0;
+    int nReqYOff = 0;
+    int nReqXSize = 0;
+    int nReqYSize = 0;
+
+    // The window we will actual set _within_ the pData buffer.
+    int nOutXOff = 0;
+    int nOutYOff = 0;
+    int nOutXSize = 0;
+    int nOutYSize = 0;
+
+    bool bError = false;
+    if (!GetSrcDstWindow(dfXOff, dfYOff, dfXSize, dfYSize, nBufXSize, nBufYSize,
+                         &dfReqXOff, &dfReqYOff, &dfReqXSize, &dfReqYSize,
+                         &nReqXOff, &nReqYOff, &nReqXSize, &nReqYSize,
+                         &nOutXOff, &nOutYOff, &nOutXSize, &nOutYSize, bError))
+    {
+        return bError ? CE_Failure : CE_None;
+    }
+
+    auto l_band = GetRasterBand();
+    if (!l_band)
+        return CE_Failure;
+
+    /* -------------------------------------------------------------------- */
+    /*      Allocate temporary buffer(s).                                   */
+    /* -------------------------------------------------------------------- */
+    const auto eSrcBandDT = l_band->GetRasterDataType();
+    const int nSrcBandDTSize = GDALGetDataTypeSizeBytes(eSrcBandDT);
+    const auto eSrcMaskBandDT = l_band->GetMaskBand()->GetRasterDataType();
+    const int nSrcMaskBandDTSize = GDALGetDataTypeSizeBytes(eSrcMaskBandDT);
+    double dfRemappedValue = m_dfRemappedValue;
+    if (!m_bHasRemappedValue)
+    {
+        if (eSrcBandDT == GDT_Byte &&
+            m_dfNoDataValue >= std::numeric_limits<GByte>::min() &&
+            m_dfNoDataValue <= std::numeric_limits<GByte>::max() &&
+            static_cast<int>(m_dfNoDataValue) == m_dfNoDataValue)
+        {
+            if (m_dfNoDataValue == std::numeric_limits<GByte>::max())
+                dfRemappedValue = m_dfNoDataValue - 1;
+            else
+                dfRemappedValue = m_dfNoDataValue + 1;
+        }
+        else if (eSrcBandDT == GDT_UInt16 &&
+                 m_dfNoDataValue >= std::numeric_limits<uint16_t>::min() &&
+                 m_dfNoDataValue <= std::numeric_limits<uint16_t>::max() &&
+                 static_cast<int>(m_dfNoDataValue) == m_dfNoDataValue)
+        {
+            if (m_dfNoDataValue == std::numeric_limits<uint16_t>::max())
+                dfRemappedValue = m_dfNoDataValue - 1;
+            else
+                dfRemappedValue = m_dfNoDataValue + 1;
+        }
+        else if (eSrcBandDT == GDT_Int16 &&
+                 m_dfNoDataValue >= std::numeric_limits<int16_t>::min() &&
+                 m_dfNoDataValue <= std::numeric_limits<int16_t>::max() &&
+                 static_cast<int>(m_dfNoDataValue) == m_dfNoDataValue)
+        {
+            if (m_dfNoDataValue == std::numeric_limits<int16_t>::max())
+                dfRemappedValue = m_dfNoDataValue - 1;
+            else
+                dfRemappedValue = m_dfNoDataValue + 1;
+        }
+        else
+        {
+            constexpr double EPS = 1e-3;
+            if (m_dfNoDataValue == 0)
+                dfRemappedValue = EPS;
+            else
+                dfRemappedValue = m_dfNoDataValue * (1 + EPS);
+        }
+    }
+    const bool bByteOptim =
+        (eSrcBandDT == GDT_Byte && eBufType == GDT_Byte &&
+         eSrcMaskBandDT == GDT_Byte && m_dfMaskValueThreshold >= 0 &&
+         m_dfMaskValueThreshold <= 255 &&
+         static_cast<int>(m_dfMaskValueThreshold) == m_dfMaskValueThreshold &&
+         m_dfNoDataValue >= 0 && m_dfNoDataValue <= 255 &&
+         static_cast<int>(m_dfNoDataValue) == m_dfNoDataValue &&
+         dfRemappedValue >= 0 && dfRemappedValue <= 255 &&
+         static_cast<int>(dfRemappedValue) == dfRemappedValue);
+    GByte *abyWrkBuffer;
+    try
+    {
+        if (bByteOptim && nOutXOff == 0 && nOutYOff == 0 &&
+            nOutXSize == nBufXSize && nOutYSize == nBufYSize &&
+            eSrcBandDT == eBufType && nPixelSpace == nSrcBandDTSize &&
+            nLineSpace == nPixelSpace * nBufXSize)
+        {
+            abyWrkBuffer = static_cast<GByte *>(pData);
+        }
+        else
+        {
+            oWorkingState.m_abyWrkBuffer.resize(static_cast<size_t>(nOutXSize) *
+                                                nOutYSize * nSrcBandDTSize);
+            abyWrkBuffer = &oWorkingState.m_abyWrkBuffer[0].value;
+        }
+        oWorkingState.m_abyWrkBufferMask.resize(static_cast<size_t>(nOutXSize) *
+                                                nOutYSize * nSrcMaskBandDTSize);
+    }
+    catch (const std::exception &)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Out of memory when allocating buffers");
+        return CE_Failure;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Load data.                                                      */
+    /* -------------------------------------------------------------------- */
+    if (!m_osResampling.empty())
+    {
+        psExtraArg->eResampleAlg = GDALRasterIOGetResampleAlg(m_osResampling);
+    }
+    else if (psExtraArgIn != nullptr)
+    {
+        psExtraArg->eResampleAlg = psExtraArgIn->eResampleAlg;
+    }
+
+    psExtraArg->bFloatingPointWindowValidity = TRUE;
+    psExtraArg->dfXOff = dfReqXOff;
+    psExtraArg->dfYOff = dfReqYOff;
+    psExtraArg->dfXSize = dfReqXSize;
+    psExtraArg->dfYSize = dfReqYSize;
+
+    if (l_band->RasterIO(GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                         abyWrkBuffer, nOutXSize, nOutYSize, eSrcBandDT, 0, 0,
+                         psExtraArg) != CE_None)
+    {
+        return CE_Failure;
+    }
+
+    if (l_band->GetMaskBand()->RasterIO(
+            GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+            oWorkingState.m_abyWrkBufferMask.data(), nOutXSize, nOutYSize,
+            eSrcMaskBandDT, 0, 0, psExtraArg) != CE_None)
+    {
+        return CE_Failure;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Do the processing.                                              */
+    /* -------------------------------------------------------------------- */
+
+    GByte *const pabyOut = static_cast<GByte *>(pData) +
+                           nPixelSpace * nOutXOff +
+                           static_cast<GPtrDiff_t>(nLineSpace) * nOutYOff;
+    if (bByteOptim)
+    {
+        // Special case when everything fits on Byte
+        const GByte nMaskValueThreshold =
+            static_cast<GByte>(m_dfMaskValueThreshold);
+        const GByte nNoDataValue = static_cast<GByte>(m_dfNoDataValue);
+        const GByte nRemappedValue = static_cast<GByte>(dfRemappedValue);
+        size_t nSrcIdx = 0;
+        for (int iY = 0; iY < nOutYSize; iY++)
+        {
+            GSpacing nDstOffset = iY * nLineSpace;
+            for (int iX = 0; iX < nOutXSize; iX++)
+            {
+                const GByte nMaskVal =
+                    oWorkingState.m_abyWrkBufferMask[nSrcIdx];
+                if (nMaskVal <= nMaskValueThreshold)
+                {
+                    pabyOut[static_cast<GPtrDiff_t>(nDstOffset)] = nNoDataValue;
+                }
+                else
+                {
+                    if (abyWrkBuffer[nSrcIdx] == nNoDataValue)
+                    {
+                        pabyOut[static_cast<GPtrDiff_t>(nDstOffset)] =
+                            nRemappedValue;
+                    }
+                    else
+                    {
+                        pabyOut[static_cast<GPtrDiff_t>(nDstOffset)] =
+                            abyWrkBuffer[nSrcIdx];
+                    }
+                }
+                nDstOffset += nPixelSpace;
+                nSrcIdx++;
+            }
+        }
+    }
+    else
+    {
+        size_t nSrcIdx = 0;
+        double dfMaskVal = 0;
+        const int nBufDTSize = GDALGetDataTypeSizeBytes(eBufType);
+        std::vector<GByte> abyDstNoData(nBufDTSize);
+        GDALCopyWords(&m_dfNoDataValue, GDT_Float64, 0, abyDstNoData.data(),
+                      eBufType, 0, 1);
+        std::vector<GByte> abyRemappedValue(nBufDTSize);
+        GDALCopyWords(&dfRemappedValue, GDT_Float64, 0, abyRemappedValue.data(),
+                      eBufType, 0, 1);
+        for (int iY = 0; iY < nOutYSize; iY++)
+        {
+            GSpacing nDstOffset = iY * nLineSpace;
+            for (int iX = 0; iX < nOutXSize; iX++)
+            {
+                if (eSrcMaskBandDT == GDT_Byte)
+                {
+                    dfMaskVal = oWorkingState.m_abyWrkBufferMask[nSrcIdx];
+                }
+                else
+                {
+                    GDALCopyWords(oWorkingState.m_abyWrkBufferMask.data() +
+                                      nSrcIdx * nSrcMaskBandDTSize,
+                                  eSrcMaskBandDT, 0, &dfMaskVal, GDT_Float64, 0,
+                                  1);
+                }
+                void *const pDst =
+                    pabyOut + static_cast<GPtrDiff_t>(nDstOffset);
+                if (!(dfMaskVal > m_dfMaskValueThreshold))
+                {
+                    memcpy(pDst, abyDstNoData.data(), nBufDTSize);
+                }
+                else
+                {
+                    const void *const pSrc =
+                        abyWrkBuffer + nSrcIdx * nSrcBandDTSize;
+                    if (eSrcBandDT == eBufType)
+                    {
+                        memcpy(pDst, pSrc, nBufDTSize);
+                    }
+                    else
+                    {
+                        GDALCopyWords(pSrc, eSrcBandDT, 0, pDst, eBufType, 0,
+                                      1);
+                    }
+                    if (memcmp(pDst, abyDstNoData.data(), nBufDTSize) == 0)
+                        memcpy(pDst, abyRemappedValue.data(), nBufDTSize);
+                }
+                nDstOffset += nPixelSpace;
+                nSrcIdx++;
+            }
+        }
+    }
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                             GetMinimum()                             */
+/************************************************************************/
+
+double VRTNoDataFromMaskSource::GetMinimum(int /* nXSize */, int /* nYSize */,
+                                           int *pbSuccess)
+{
+    *pbSuccess = FALSE;
+    return 0.0;
+}
+
+/************************************************************************/
+/*                             GetMaximum()                             */
+/************************************************************************/
+
+double VRTNoDataFromMaskSource::GetMaximum(int /* nXSize */, int /* nYSize */,
+                                           int *pbSuccess)
+{
+    *pbSuccess = FALSE;
+    return 0.0;
+}
+
+/************************************************************************/
+/*                            GetHistogram()                            */
+/************************************************************************/
+
+CPLErr VRTNoDataFromMaskSource::GetHistogram(
+    int /* nXSize */, int /* nYSize */, double /* dfMin */, double /* dfMax */,
+    int /* nBuckets */, GUIntBig * /* panHistogram */,
+    int /* bIncludeOutOfRange */, int /* bApproxOK */,
+    GDALProgressFunc /* pfnProgress */, void * /* pProgressData */)
+{
+    return CE_Failure;
+}
+
+/************************************************************************/
+/* ==================================================================== */
 /*                          VRTComplexSource                            */
 /* ==================================================================== */
 /************************************************************************/
@@ -3219,6 +3666,10 @@ VRTParseCoreSources(CPLXMLNode *psChild, const char *pszVRTPath,
     else if (EQUAL(psChild->pszValue, "ComplexSource"))
     {
         poSource = new VRTComplexSource();
+    }
+    else if (EQUAL(psChild->pszValue, "NoDataFromMaskSource"))
+    {
+        poSource = new VRTNoDataFromMaskSource();
     }
     else
     {

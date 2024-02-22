@@ -251,6 +251,7 @@ class ZarrSharedResource
     std::shared_ptr<GDALPamMultiDim> m_poPAM{};
     CPLStringList m_aosOpenOptions{};
     std::weak_ptr<ZarrGroupBase> m_poWeakRootGroup{};
+    std::set<std::string> m_oSetArrayInLoading{};
 
     explicit ZarrSharedResource(const std::string &osRootDirectoryName,
                                 bool bUpdatable);
@@ -313,6 +314,35 @@ class ZarrSharedResource
     {
         m_poWeakRootGroup = poRootGroup;
     }
+
+    bool AddArrayInLoading(const std::string &osZarrayFilename);
+    void RemoveArrayInLoading(const std::string &osZarrayFilename);
+
+    struct SetFilenameAdder
+    {
+        std::shared_ptr<ZarrSharedResource> m_poSharedResource;
+        const std::string m_osFilename;
+        const bool m_bOK;
+
+        SetFilenameAdder(
+            const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+            const std::string &osFilename)
+            : m_poSharedResource(poSharedResource), m_osFilename(osFilename),
+              m_bOK(m_poSharedResource->AddArrayInLoading(m_osFilename))
+        {
+        }
+
+        ~SetFilenameAdder()
+        {
+            if (m_bOK)
+                m_poSharedResource->RemoveArrayInLoading(m_osFilename);
+        }
+
+        bool ok() const
+        {
+            return m_bOK;
+        }
+    };
 };
 
 /************************************************************************/
@@ -518,8 +548,8 @@ class ZarrV2Group final : public ZarrGroupBase
     std::shared_ptr<ZarrArray>
     LoadArray(const std::string &osArrayName,
               const std::string &osZarrayFilename, const CPLJSONObject &oRoot,
-              bool bLoadedFromZMetadata, const CPLJSONObject &oAttributes,
-              std::set<std::string> &oSetFilenamesInLoading) const;
+              bool bLoadedFromZMetadata,
+              const CPLJSONObject &oAttributes) const;
 
     std::shared_ptr<GDALMDArray> CreateMDArray(
         const std::string &osName,
@@ -569,10 +599,9 @@ class ZarrV3Group final : public ZarrGroupBase
     CreateGroup(const std::string &osName,
                 CSLConstList papszOptions = nullptr) override;
 
-    std::shared_ptr<ZarrArray>
-    LoadArray(const std::string &osArrayName,
-              const std::string &osZarrayFilename, const CPLJSONObject &oRoot,
-              std::set<std::string> &oSetFilenamesInLoading) const;
+    std::shared_ptr<ZarrArray> LoadArray(const std::string &osArrayName,
+                                         const std::string &osZarrayFilename,
+                                         const CPLJSONObject &oRoot) const;
 
     std::shared_ptr<GDALMDArray> CreateMDArray(
         const std::string &osName,

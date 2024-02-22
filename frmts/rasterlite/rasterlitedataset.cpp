@@ -1096,7 +1096,7 @@ GDALDataset *RasterliteDataset::Open(GDALOpenInfo *poOpenInfo)
     if (osTableName.empty())
     {
         int nCountSubdataset = 0;
-        int nLayers = OGR_DS_GetLayerCount(hDS);
+        const int nLayers = OGR_DS_GetLayerCount(hDS);
         /* --------------------------------------------------------------------
          */
         /*      Add raster layers as subdatasets */
@@ -1105,14 +1105,15 @@ GDALDataset *RasterliteDataset::Open(GDALOpenInfo *poOpenInfo)
         for (int i = 0; i < nLayers; i++)
         {
             OGRLayerH hLyr = OGR_DS_GetLayer(hDS, i);
-            const char *pszLayerName = OGR_L_GetName(hLyr);
-            if (strstr(pszLayerName, "_metadata"))
+            const std::string osLayerName = OGR_L_GetName(hLyr);
+            const auto nPosMetadata = osLayerName.find("_metadata");
+            if (nPosMetadata != std::string::npos)
             {
-                char *pszShortName = CPLStrdup(pszLayerName);
-                *strstr(pszShortName, "_metadata") = '\0';
+                const std::string osShortName =
+                    osLayerName.substr(0, nPosMetadata);
 
-                CPLString osRasterTableName = pszShortName;
-                osRasterTableName += "_rasters";
+                const std::string osRasterTableName =
+                    std::string(osShortName).append("_rasters");
 
                 if (OGR_DS_GetLayerByName(hDS, osRasterTableName.c_str()) !=
                     nullptr)
@@ -1120,21 +1121,19 @@ GDALDataset *RasterliteDataset::Open(GDALOpenInfo *poOpenInfo)
                     if (poDS == nullptr)
                     {
                         poDS = new RasterliteDataset();
-                        osTableName = pszShortName;
+                        osTableName = osShortName;
                     }
 
-                    CPLString osSubdatasetName;
+                    std::string osSubdatasetName;
                     if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "RASTERLITE:"))
                         osSubdatasetName += "RASTERLITE:";
                     osSubdatasetName += poOpenInfo->pszFilename;
                     osSubdatasetName += ",table=";
-                    osSubdatasetName += pszShortName;
+                    osSubdatasetName += osShortName;
                     poDS->AddSubDataset(osSubdatasetName.c_str());
 
                     nCountSubdataset++;
                 }
-
-                CPLFree(pszShortName);
             }
         }
 

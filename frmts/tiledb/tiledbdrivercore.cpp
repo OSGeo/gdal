@@ -51,10 +51,20 @@ static int TileDBDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
 
-    if (poOpenInfo->bIsDirectory ||
-        ((STARTS_WITH_CI(poOpenInfo->pszFilename, "/VSIS3/") ||
-          STARTS_WITH_CI(poOpenInfo->pszFilename, "/VSIGS/")) &&
-         !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "tif")))
+    const bool bIsS3OrGS = STARTS_WITH_CI(poOpenInfo->pszFilename, "/VSIS3/") ||
+                           STARTS_WITH_CI(poOpenInfo->pszFilename, "/VSIGS/");
+    // If this is a /vsi virtual file systems, bail out, except if it is S3 or GS.
+    if (!bIsS3OrGS && STARTS_WITH(poOpenInfo->pszFilename, "/vsi"))
+    {
+        return false;
+    }
+
+    if (poOpenInfo->bIsDirectory)
+    {
+        return GDAL_IDENTIFY_UNKNOWN;
+    }
+
+    if (bIsS3OrGS && !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "tif"))
     {
         return GDAL_IDENTIFY_UNKNOWN;
     }

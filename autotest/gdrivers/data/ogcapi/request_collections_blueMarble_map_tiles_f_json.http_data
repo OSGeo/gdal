@@ -1,0 +1,433 @@
+HTTP/1.1 200 OK
+Date: Wed, 14 Feb 2024 05:33:25 GMT
+Server: Apache/2.4.52 (Ubuntu)
+Expires: Thu, 13 Feb 2025 04:01:39 GMT
+Access-Control-Allow-Origin: *
+Vary: Accept,Accept-Encoding,Prefer
+Content-Length: 20038
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Age: 5505
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: application/json
+
+{
+   "links" : [
+      {
+         "rel" : "self",
+         "type" : "application/json",
+         "title" : "The JSON representation of the available map tilesets for blueMarble",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/?f=json"
+      },
+      {
+         "rel" : "alternate",
+         "type" : "text/plain",
+         "title" : "The ECON representation of the available map tilesets for blueMarble",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/?f=econ"
+      },
+      {
+         "rel" : "alternate",
+         "type" : "text/html",
+         "title" : "The HTML representation of the available map tilesets for blueMarble",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/?f=html"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "application/json",
+         "title" : "Map tilesets for blueMarble (default style) (as JSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/default/map/tiles?f=json"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "text/plain",
+         "title" : "Map tilesets for blueMarble (default style) (as ECON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/default/map/tiles?f=econ"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "text/html",
+         "title" : "Map tilesets for blueMarble (default style) (as HTML)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/default/map/tiles?f=html"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "application/json",
+         "title" : "Map tilesets for blueMarble (evi style) (as JSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/evi/map/tiles?f=json"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "text/plain",
+         "title" : "Map tilesets for blueMarble (evi style) (as ECON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/evi/map/tiles?f=econ"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "text/html",
+         "title" : "Map tilesets for blueMarble (evi style) (as HTML)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/evi/map/tiles?f=html"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "application/json",
+         "title" : "Map tilesets for blueMarble (nir style) (as JSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/nir/map/tiles?f=json"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "text/plain",
+         "title" : "Map tilesets for blueMarble (nir style) (as ECON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/nir/map/tiles?f=econ"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "text/html",
+         "title" : "Map tilesets for blueMarble (nir style) (as HTML)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/nir/map/tiles?f=html"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "application/json",
+         "title" : "Map tilesets for blueMarble (scl style) (as JSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/scl/map/tiles?f=json"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "text/plain",
+         "title" : "Map tilesets for blueMarble (scl style) (as ECON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/scl/map/tiles?f=econ"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "text/html",
+         "title" : "Map tilesets for blueMarble (scl style) (as HTML)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/scl/map/tiles?f=html"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "application/json",
+         "title" : "Map tilesets for blueMarble (ndvi style) (as JSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/ndvi/map/tiles?f=json"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "text/plain",
+         "title" : "Map tilesets for blueMarble (ndvi style) (as ECON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/ndvi/map/tiles?f=econ"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "text/html",
+         "title" : "Map tilesets for blueMarble (ndvi style) (as HTML)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/ndvi/map/tiles?f=html"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "application/json",
+         "title" : "Map tilesets for blueMarble (evi2 style) (as JSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/evi2/map/tiles?f=json"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "text/plain",
+         "title" : "Map tilesets for blueMarble (evi2 style) (as ECON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/evi2/map/tiles?f=econ"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "text/html",
+         "title" : "Map tilesets for blueMarble (evi2 style) (as HTML)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/styles/evi2/map/tiles?f=html"
+      }
+   ],
+   "tilesets" : [
+      {
+         "title" : "Blue Marble Next Generation (2004)",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/CDB1GlobalGrid",
+         "crs" : "http://www.opengis.net/def/crs/EPSG/0/4326",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "CDB1GlobalGridTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/CDB1GlobalGrid"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "CDB1GlobalGrid map tileset for blueMarble (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/CDB1GlobalGrid?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "CDB1GlobalGrid map tileset for blueMarble (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/CDB1GlobalGrid?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "CDB1GlobalGrid map tileset for blueMarble (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/CDB1GlobalGrid?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "Blue Marble Next Generation (2004)",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/GlobalCRS84Pixel",
+         "crs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "GlobalCRS84PixelTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/GlobalCRS84Pixel"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "GlobalCRS84Pixel map tileset for blueMarble (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/GlobalCRS84Pixel?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "GlobalCRS84Pixel map tileset for blueMarble (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/GlobalCRS84Pixel?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "GlobalCRS84Pixel map tileset for blueMarble (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/GlobalCRS84Pixel?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "Blue Marble Next Generation (2004)",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/GlobalCRS84Scale",
+         "crs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "GlobalCRS84ScaleTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/GlobalCRS84Scale"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "GlobalCRS84Scale map tileset for blueMarble (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/GlobalCRS84Scale?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "GlobalCRS84Scale map tileset for blueMarble (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/GlobalCRS84Scale?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "GlobalCRS84Scale map tileset for blueMarble (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/GlobalCRS84Scale?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "Blue Marble Next Generation (2004)",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/GNOSISGlobalGrid",
+         "crs" : "http://www.opengis.net/def/crs/EPSG/0/4326",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "GNOSISGlobalGridTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/GNOSISGlobalGrid"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "GNOSISGlobalGrid map tileset for blueMarble (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/GNOSISGlobalGrid?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "GNOSISGlobalGrid map tileset for blueMarble (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/GNOSISGlobalGrid?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "GNOSISGlobalGrid map tileset for blueMarble (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/GNOSISGlobalGrid?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "Blue Marble Next Generation (2004)",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/GoogleCRS84Quad",
+         "crs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "GoogleCRS84QuadTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/GoogleCRS84Quad"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "GoogleCRS84Quad map tileset for blueMarble (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/GoogleCRS84Quad?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "GoogleCRS84Quad map tileset for blueMarble (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/GoogleCRS84Quad?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "GoogleCRS84Quad map tileset for blueMarble (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/GoogleCRS84Quad?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "Blue Marble Next Generation (2004)",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/ISEA9R",
+         "crs" : "http://www.opengis.net/def/crs/OGC/0/153456",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "ISEA9RTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/ISEA9R"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "ISEA9R map tileset for blueMarble (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/ISEA9R?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "ISEA9R map tileset for blueMarble (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/ISEA9R?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "ISEA9R map tileset for blueMarble (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/ISEA9R?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "Blue Marble Next Generation (2004)",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/WebMercatorQuad",
+         "crs" : "http://www.opengis.net/def/crs/EPSG/0/3857",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "WebMercatorQuadTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/WebMercatorQuad"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "WebMercatorQuad map tileset for blueMarble (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/WebMercatorQuad?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "WebMercatorQuad map tileset for blueMarble (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/WebMercatorQuad?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "WebMercatorQuad map tileset for blueMarble (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/WebMercatorQuad?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "Blue Marble Next Generation (2004)",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/WorldCRS84Quad",
+         "crs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "WorldCRS84QuadTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/WorldCRS84Quad"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "WorldCRS84Quad map tileset for blueMarble (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/WorldCRS84Quad?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "WorldCRS84Quad map tileset for blueMarble (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/WorldCRS84Quad?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "WorldCRS84Quad map tileset for blueMarble (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/WorldCRS84Quad?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "Blue Marble Next Generation (2004)",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/WorldMercatorWGS84Quad",
+         "crs" : "http://www.opengis.net/def/crs/EPSG/0/3395",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "WorldMercatorWGS84QuadTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/WorldMercatorWGS84Quad"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "WorldMercatorWGS84Quad map tileset for blueMarble (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/WorldMercatorWGS84Quad?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "WorldMercatorWGS84Quad map tileset for blueMarble (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/WorldMercatorWGS84Quad?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "WorldMercatorWGS84Quad map tileset for blueMarble (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/blueMarble/map/tiles/WorldMercatorWGS84Quad?f=tilejson"
+            }
+         ]
+      }
+   ]
+}

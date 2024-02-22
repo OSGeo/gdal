@@ -5636,7 +5636,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
 
 /** Undocumented
  * @param hSrcBand undocumented.
- * @param nSampleStep undocumented.
+ * @param nSampleStep Step between scanlines used to compute statistics.
+ *                    When nSampleStep is equal to 1, all scanlines will
+ *                    be processed.
  * @param pdfMean undocumented.
  * @param pdfStdDev undocumented.
  * @param pfnProgress undocumented.

@@ -197,12 +197,12 @@ RUN . /buildscripts/bh-set-envvars.sh \
 
 ARG WITH_PDFIUM=yes
 RUN if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
-  wget -q https://github.com/rouault/pdfium_build_gdal_3_8/releases/download/pdfium_5952_v1/install-ubuntu2004-rev5952.tar.gz \
-  && tar -xzf install-ubuntu2004-rev5952.tar.gz \
+  wget -q https://github.com/rouault/pdfium_build_gdal_3_9/releases/download/pdfium_6309_v1/install-ubuntu2004-rev6309.tar.gz \
+  && tar -xzf install-ubuntu2004-rev6309.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev5952.tar.gz install \
+  && rm -rf install-ubuntu2004-rev6309.tar.gz install \
   && apt-get update -y \
   && apt-get install -y --fix-missing --no-install-recommends liblcms2-dev${APT_ARCH_SUFFIX} \
   && rm -rf /var/lib/apt/lists/* \
@@ -243,7 +243,8 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libparquet-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-acero-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dataset-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
 
 RUN apt-get update -y \
     && apt-get install -y --fix-missing --no-install-recommends rsync ccache \

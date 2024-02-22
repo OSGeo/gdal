@@ -555,6 +555,7 @@ void GDALRegister_VRT()
     poDriver->AddSourceParser("SimpleSource", VRTParseCoreSources);
     poDriver->AddSourceParser("ComplexSource", VRTParseCoreSources);
     poDriver->AddSourceParser("AveragedSource", VRTParseCoreSources);
+    poDriver->AddSourceParser("NoDataFromMaskSource", VRTParseCoreSources);
     poDriver->AddSourceParser("KernelFilteredSource", VRTParseFilterSources);
     poDriver->AddSourceParser("ArraySource", VRTParseArraySource);
 

@@ -24,6 +24,7 @@ Synopsis
                  [-addalpha] [-hidenodata]
                  [-srcnodata "<value>[ <value>]..."] [-vrtnodata "<value>[ <value>]..."
                  [-ignore_srcmaskband]
+                 [-nodata_max_mask_threshold <threshold>]
                  [-a_srs <srs_def>]
                  [-r {nearest|bilinear|cubic|cubicspline|lanczos|average|mode}]
                  [-oo <NAME>=<VALUE>]...
@@ -145,6 +146,14 @@ changed in later versions.
     When specifying the -ignore_srcmaskband option, the mask band of sources will
     not be taken into account, and in case of overlapping between sources, the
     last one will override previous ones in areas of overlap.
+
+.. option:: -nodata_max_mask_threshold <threshold>
+
+    .. versionadded:: 3.9
+
+    Insert a <NoDataFromMaskSource> source, which replaces the value of the source
+    with the value of :option:`-vrtnodata` (or 0 if not specified) when the value
+    of the mask band of the source is less or equal to the threshold.
 
 .. option:: -b <band>
 

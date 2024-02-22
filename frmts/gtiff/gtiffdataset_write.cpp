@@ -5066,6 +5066,44 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         }
     }
 
+#ifdef HAVE_JXL
+    if (l_nCompression == COMPRESSION_JXL)
+    {
+        // Reflects tif_jxl's GetJXLDataType()
+        if (eType != GDT_Byte && eType != GDT_UInt16 && eType != GDT_Float32)
+        {
+            ReportError(pszFilename, CE_Failure, CPLE_NotSupported,
+                        "Data type %s not supported for JXL compression. Only "
+                        "Byte, UInt16, Float32 are supported",
+                        GDALGetDataTypeName(eType));
+            return nullptr;
+        }
+        const struct
+        {
+            GDALDataType eDT;
+            int nBitsPerSample;
+        } asSupportedDTBitsPerSample[] = {
+            {GDT_Byte, 8},
+            {GDT_UInt16, 16},
+            {GDT_Float32, 32},
+        };
+        for (const auto &sSupportedDTBitsPerSample : asSupportedDTBitsPerSample)
+        {
+            if (eType == sSupportedDTBitsPerSample.eDT &&
+                l_nBitsPerSample != sSupportedDTBitsPerSample.nBitsPerSample)
+            {
+                ReportError(
+                    pszFilename, CE_Failure, CPLE_NotSupported,
+                    "Bits per sample=%d not supported for JXL compression. "
+                    "Only %d is supported for %s data type.",
+                    l_nBitsPerSample, sSupportedDTBitsPerSample.nBitsPerSample,
+                    GDALGetDataTypeName(eType));
+                return nullptr;
+            }
+        }
+    }
+#endif
+
     int nPredictor = PREDICTOR_NONE;
     pszValue = CSLFetchNameValue(papszParamList, "PREDICTOR");
     if (pszValue != nullptr)

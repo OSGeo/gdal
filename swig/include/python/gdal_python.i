@@ -7,6 +7,7 @@
 
 %feature("autodoc");
 
+%include "gdal_band_docs.i"
 %include "gdal_dataset_docs.i"
 
 %init %{
@@ -523,6 +524,10 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                   buf_string,
                   buf_xsize=None, buf_ysize=None, buf_type=None,
                   buf_pixel_space=None, buf_line_space=None ):
+      """
+      Write the contents of a buffer to a dataset.
+
+      """
 
       if buf_xsize is None:
           buf_xsize = xsize
@@ -549,9 +554,82 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                   resample_alg=gdalconst.GRIORA_NearestNeighbour,
                   callback=None,
                   callback_data=None):
-      """ Reading a chunk of a GDAL band into a numpy array. The optional (buf_xsize,buf_ysize,buf_type)
-      parameters should generally not be specified if buf_obj is specified. The array is returned"""
+      """
+      Read a window of this raster band into a NumPy array.
 
+      Parameters
+      ----------
+      xoff : float, default=0
+         The pixel offset to left side of the region of the band to
+         be read. This would be zero to start from the left side.
+      yoff : float, default=0
+         The line offset to top side of the region of the band to
+         be read. This would be zero to start from the top side.
+      win_xsize : float, optional
+           The number of pixels to read in the x direction. By default,
+           equal to the number of columns in the raster.
+      win_ysize : float, optional
+           The number of rows to read in the y direction. By default,
+           equal to the number of bands in the raster.
+      buf_xsize : int, optional
+           The number of columns in the returned array. If not equal
+           to ``win_xsize``, the returned values will be determined
+           by ``resample_alg``.
+      buf_ysize : int, optional
+           The number of rows in the returned array. If not equal
+           to ``win_ysize``, the returned values will be determined
+           by ``resample_alg``.
+      buf_type : int, optional
+           The data type of the returned array
+      buf_obj : np.ndarray, optional
+           Optional buffer into which values will be read. If ``buf_obj``
+           is specified, then ``buf_xsize``/``buf_ysize``/``buf_type``
+           should generally not be specified.
+      resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`.
+           Specifies the resampling algorithm to use when the size of
+           the read window and the buffer are not equal.
+      callback : function, optional
+          A progress callback function
+      callback_data: optional
+          Optional data to be passed to callback function
+
+      Returns
+      -------
+      np.ndarray
+
+      Examples
+      --------
+      >>> import numpy as np
+      >>> ds = gdal.GetDriverByName("GTiff").Create("test.tif", 4, 4, eType=gdal.GDT_Float32)
+      >>> ds.WriteArray(np.arange(16).reshape(4, 4))
+      0
+      >>> band = ds.GetRasterBand(1)
+      >>> # Reading an entire band
+      >>> band.ReadAsArray()
+      array([[ 0.,  1.,  2.,  3.],
+             [ 4.,  5.,  6.,  7.],
+             [ 8.,  9., 10., 11.],
+             [12., 13., 14., 15.]], dtype=float32)
+      >>> # Reading a window of a band
+      >>> band.ReadAsArray(xoff=2, yoff=2, win_xsize=2, win_ysize=2)
+      array([[10., 11.],
+             [14., 15.]], dtype=float32)
+      >>> # Reading a band into a new buffer at higher resolution
+      >>> band.ReadAsArray(xoff=0.5, yoff=0.5, win_xsize=2.5, win_ysize=2.5, buf_xsize=5, buf_ysize=5)
+      array([[ 0.,  1.,  1.,  2.,  2.],
+             [ 4.,  5.,  5.,  6.,  6.],
+             [ 4.,  5.,  5.,  6.,  6.],
+             [ 8.,  9.,  9., 10., 10.],
+             [ 8.,  9.,  9., 10., 10.]], dtype=float32)
+      >>> # Reading a band into an existing buffer at lower resolution
+      >>> band.ReadAsArray(buf_xsize=2, buf_ysize=2, buf_type=gdal.GDT_Float64, resample_alg=gdal.GRIORA_Average)
+      array([[ 2.5,  4.5],
+             [10.5, 12.5]])
+      >>> buf = np.zeros((2,2))
+      >>> band.ReadAsArray(buf_obj=buf)
+      array([[ 5.,  7.],
+             [13., 15.]])
+      """
       from osgeo import gdal_array
 
       return gdal_array.BandReadAsArray(self, xoff, yoff,
@@ -565,6 +643,31 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                  resample_alg=gdalconst.GRIORA_NearestNeighbour,
                  callback=None,
                  callback_data=None):
+      """
+      Write the contents of a NumPy array to a Band.
+
+      Parameters
+      ----------
+      array : np.ndarray
+          Two-dimensional array containing values to write
+      xoff : int, default=0
+         The pixel offset to left side of the region of the band to
+         be written. This would be zero to start from the left side.
+      yoff : int, default=0
+         The line offset to top side of the region of the band to
+         be written. This would be zero to start from the top side.
+      resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`
+         Resampling algorithm. Placeholder argument, not currently supported.
+      callback : function, optional
+          A progress callback function
+      callback_data: optional
+          Optional data to be passed to callback function
+
+      Returns
+      -------
+      int:
+          Error code, or ``gdal.CE_None`` if no error occurred.
+      """
       from osgeo import gdal_array
 
       return gdal_array.BandWriteArray(self, array, xoff, yoff,
@@ -649,7 +752,36 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 
 %feature("shadow") ComputeStatistics %{
 def ComputeStatistics(self, *args, **kwargs) -> "CPLErr":
-    """ComputeStatistics(Band self, bool approx_ok, callback=None, callback_data=None) -> CPLErr"""
+    """ComputeStatistics(Band self, bool approx_ok, callback=None, callback_data=None) -> CPLErr
+
+    Compute image statistics.
+    See :cpp:func:`GDALRasterBand::ComputeStatistics`.
+
+    Parameters
+    ----------
+    approx_ok : bool
+                 If ``True``, compute statistics based on overviews or a
+                 subset of tiles.
+    callback : function, optional
+                 A progress callback function
+    callback_data: optional
+                 Optional data to be passed to callback function
+
+    Returns
+    -------
+    list
+       a list with the min, max, mean, and standard deviation of values
+       in the Band.
+
+    See Also
+    --------
+    :py:meth:`ComputeBandStats`
+    :py:meth:`ComputeRasterMinMax`
+    :py:meth:`GetMaximum`
+    :py:meth:`GetMinimum`
+    :py:meth:`GetStatistics`
+    :py:meth:`SetStatistics`
+    """
 
     if len(args) == 1:
         kwargs["approx_ok"] = args[0]
@@ -669,7 +801,17 @@ def ComputeStatistics(self, *args, **kwargs) -> "CPLErr":
 
 %feature("shadow") GetNoDataValue %{
 def GetNoDataValue(self):
-    """GetNoDataValue(Band self) -> value """
+    """GetNoDataValue(Band self) -> value
+
+    Fetch the nodata value for this band.
+    Unlike :cpp:func:`GDALRasterBand::GetNoDataValue`, this
+    method handles 64-bit integer data types.
+
+    Returns
+    -------
+    float/int
+        The nodata value, or ``None`` if it has not been set.
+    """
 
     if self.DataType == gdalconst.GDT_Int64:
         return _gdal.Band_GetNoDataValueAsInt64(self)
@@ -683,7 +825,23 @@ def GetNoDataValue(self):
 
 %feature("shadow") SetNoDataValue %{
 def SetNoDataValue(self, value) -> "CPLErr":
-    """SetNoDataValue(Band self, value) -> CPLErr"""
+    """SetNoDataValue(Band self, value) -> CPLErr
+
+    Set the nodata value for this band.
+    Unlike :cpp:func:`GDALRasterBand::SetNoDataValue`, this
+    method handles 64-bit integer types.
+
+    Parameters
+    ----------
+    value : float/int
+        The nodata value to set
+
+    Returns
+    -------
+    int:
+       :py:const:`CE_None` on success or :py:const:`CE_Failure` on failure.
+
+    """
 
     if self.DataType == gdalconst.GDT_Int64:
         return _gdal.Band_SetNoDataValueAsInt64(self, value)
@@ -696,7 +854,33 @@ def SetNoDataValue(self, value) -> "CPLErr":
 
 %feature("shadow") ComputeRasterMinMax %{
 def ComputeRasterMinMax(self, *args, **kwargs):
-    """ComputeRasterMinMax(Band self, bool approx_ok=False, bool can_return_none=False) -> (min, max) or None"""
+    """ComputeRasterMinMax(Band self, bool approx_ok=False, bool can_return_none=False) -> (min, max) or None
+
+    Computes the minimum and maximum values for this Band.
+    See :cpp:func:`GDALComputeRasterMinMax`.
+
+    Parameters
+    ----------
+    approx_ok : bool, default=False
+        If ``False``, read all pixels in the band. If ``True``, check
+        :py:meth:`GetMinimum`/:py:meth:`GetMaximum` or read a subsample.
+    can_return_none : bool, default=False
+        If ``True``, return ``None`` on error. Otherwise, return a tuple
+        with NaN values.
+
+    Returns
+    -------
+    tuple
+
+    See Also
+    --------
+    :py:meth:`ComputeBandStats`
+    :py:meth:`ComputeStatistics`
+    :py:meth:`GetMaximum`
+    :py:meth:`GetMinimum`
+    :py:meth:`GetStatistics`
+    :py:meth:`SetStatistics`
+    """
 
     if len(args) == 1:
         kwargs["approx_ok"] = args[0]
@@ -845,8 +1029,92 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                     callback_data=None,
                     interleave='band',
                     band_list=None):
-        """ Reading a chunk of a GDAL band into a numpy array. The optional (buf_xsize,buf_ysize,buf_type)
-        parameters should generally not be specified if buf_obj is specified. The array is returned"""
+        """
+        Read a window from raster bands into a NumPy array.
+
+        Parameters
+        ----------
+        xoff : float, default=0
+           The pixel offset to left side of the region of the band to
+           be read. This would be zero to start from the left side.
+        yoff : float, default=0
+           The line offset to top side of the region of the band to
+           be read. This would be zero to start from the top side.
+        xsize : float, optional
+             The number of pixels to read in the x direction. By default,
+             equal to the number of columns in the raster.
+        ysize : float, optional
+             The number of rows to read in the y direction. By default,
+             equal to the number of bands in the raster.
+        buf_xsize : int, optional
+             The number of columns in the returned array. If not equal
+             to ``win_xsize``, the returned values will be determined
+             by ``resample_alg``.
+        buf_ysize : int, optional
+             The number of rows in the returned array. If not equal
+             to ``win_ysize``, the returned values will be determined
+             by ``resample_alg``.
+        buf_type : int, optional
+             The data type of the returned array
+        buf_obj : np.ndarray, optional
+             Optional buffer into which values will be read. If ``buf_obj``
+             is specified, then ``buf_xsize``/``buf_ysize``/``buf_type``
+             should generally not be specified.
+        resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`.
+             Specifies the resampling algorithm to use when the size of
+             the read window and the buffer are not equal.
+        callback : function, optional
+            A progress callback function
+        callback_data: optional
+            Optional data to be passed to callback function
+        band_list : list, optional
+            Indexes of bands from which data should be read. By default,
+            data will be read from all bands.
+
+        Returns
+        -------
+        np.ndarray
+
+        Examples
+        --------
+        >>> ds = gdal.GetDriverByName("GTiff").Create("test.tif", 4, 4, bands=2)
+        >>> ds.WriteArray(np.arange(32).reshape(2, 4, 4))
+        0
+        >>> ds.ReadAsArray()
+        array([[[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11],
+                [12, 13, 14, 15]],
+               [[16, 17, 18, 19],
+                [20, 21, 22, 23],
+                [24, 25, 26, 27],
+                [28, 29, 30, 31]]], dtype=uint8)
+        >>> ds.ReadAsArray(xoff=2, yoff=2, xsize=2, ysize=2)
+        array([[[10, 11],
+                [14, 15]],
+               [[26, 27],
+                [30, 31]]], dtype=uint8)
+        >>> ds.ReadAsArray(buf_xsize=2, buf_ysize=2, buf_type=gdal.GDT_Float64, resample_alg=gdal.GRIORA_Average)
+        array([[[ 3.,  5.],
+                [11., 13.]],
+               [[19., 21.],
+                [27., 29.]]])
+        >>> buf = np.zeros((2,2,2))
+        >>> ds.ReadAsArray(buf_obj=buf)
+        array([[[ 5.,  7.],
+                [13., 15.]],
+               [[21., 23.],
+                [29., 31.]]])
+        >>> ds.ReadAsArray(band_list=[2,1])
+        array([[[16, 17, 18, 19],
+                [20, 21, 22, 23],
+                [24, 25, 26, 27],
+                [28, 29, 30, 31]],
+               [[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11],
+                [12, 13, 14, 15]]], dtype=uint8)
+        """
 
         from osgeo import gdal_array
         return gdal_array.DatasetReadAsArray(self, xoff, yoff, xsize, ysize, buf_obj,
@@ -863,6 +1131,74 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                    resample_alg=gdalconst.GRIORA_NearestNeighbour,
                    callback=None,
                    callback_data=None):
+        """
+        Write the contents of a NumPy array to a Dataset.
+
+        Parameters
+        ----------
+        array : np.ndarray
+            Two- or three-dimensional array containing values to write
+        xoff : int, default=0
+           The pixel offset to left side of the region of the band to
+           be written. This would be zero to start from the left side.
+        yoff : int, default=0
+           The line offset to top side of the region of the band to
+           be written. This would be zero to start from the top side.
+        band_list : list, optional
+            Indexes of bands to which data should be written. By default,
+            it is assumed that the Dataset contains the same number of
+            bands as levels in ``array``.
+        interleave : str, default="band"
+            Interleaving, "band" or "pixel". For band-interleaved writing,
+            ``array`` should have shape ``(nband, ny, nx)``. For pixel-
+            interleaved-writing, ``array`` should have shape
+            ``(ny, nx, nbands)``.
+        resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`
+            Resampling algorithm. Placeholder argument, not currently supported.
+        callback : function, optional
+            A progress callback function
+        callback_data: optional
+            Optional data to be passed to callback function
+
+        Returns
+        -------
+        int:
+            Error code, or ``gdal.CE_None`` if no error occurred.
+
+        Examples
+        --------
+
+        >>> import numpy as np
+        >>>
+        >>> nx = 4
+        >>> ny = 3
+        >>> nbands = 2
+        >>> with gdal.GetDriverByName("GTiff").Create("band3_px.tif", nx, ny, bands=nbands) as ds:
+        ...     data = np.arange(nx*ny*nbands).reshape(ny,nx,nbands)
+        ...     ds.WriteArray(data, interleave="pixel")
+        ...     ds.ReadAsArray()
+        ...
+        0
+        array([[[ 0,  2,  4,  6],
+                [ 8, 10, 12, 14],
+                [16, 18, 20, 22]],
+               [[ 1,  3,  5,  7],
+                [ 9, 11, 13, 15],
+                [17, 19, 21, 23]]], dtype=uint8)
+        >>> with gdal.GetDriverByName("GTiff").Create("band3_band.tif", nx, ny, bands=nbands) as ds:
+        ...     data = np.arange(nx*ny*nbands).reshape(nbands, ny, nx)
+        ...     ds.WriteArray(data, interleave="band")
+        ...     ds.ReadAsArray()
+        ...
+        0
+        array([[[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]],
+               [[12, 13, 14, 15],
+                [16, 17, 18, 19],
+                [20, 21, 22, 23]]], dtype=uint8)
+        """
+
         from osgeo import gdal_array
 
         return gdal_array.DatasetWriteArray(self, array, xoff, yoff,
@@ -993,6 +1329,15 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         return gdal_array.VirtualMemGetArray( virtualmem )
 
     def GetSubDatasets(self):
+        """
+        Return a list of Subdatasets.
+
+
+        Returns
+        -------
+        list
+
+        """
         sd_list = []
 
         sd = self.GetMetadata('SUBDATASETS')
@@ -1034,7 +1379,18 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         return _gdal.Dataset_BeginAsyncReader(self, xoff, yoff, xsize, ysize, buf_obj, buf_xsize, buf_ysize, buf_type, band_list,  0, 0, 0, options)
 
     def GetLayer(self, iLayer=0):
-        """Return the layer given an index or a name"""
+        """
+        Get the indicated layer from the Dataset
+
+        Parameters
+        ----------
+        value : int/str
+                Name or 0-based index of the layer to delete.
+
+        Returns
+        -------
+        ogr.Layer, or ``None`` on error
+        """
 
         _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions()
 
@@ -1046,7 +1402,21 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             raise TypeError("Input %s is not of String or Int type" % type(iLayer))
 
     def DeleteLayer(self, value):
-        """Deletes the layer given an index or layer name"""
+        """
+        Delete the indicated layer from the Dataset.
+
+        Parameters
+        ----------
+        value : int/str
+                Name or 0-based index of the layer to delete.
+
+        Returns
+        -------
+        int
+            :py:const:`ogr.OGRERR_NONE` on success or
+            :py:const:`ogr.OGRERR_UNSUPPORTED_OPERATION` if DeleteLayer is not supported
+            for this dataset.
+        """
         if isinstance(value, str):
             for i in range(self.GetLayerCount()):
                 name = self.GetLayer(i).GetName()
@@ -1059,6 +1429,19 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
             raise TypeError("Input %s is not of String or Int type" % type(value))
 
     def SetGCPs(self, gcps, wkt_or_spatial_ref):
+        """
+        Assign GCPs.
+
+        See :cpp:func:`GDALSetGCPs`.
+
+        Parameters
+        ----------
+        gcps : list
+               a list of :py:class:`GCP` objects
+        wkt_or_spatial_ref : str/osr.SpatialReference
+               spatial reference of the GCPs
+        """
+
         if isinstance(wkt_or_spatial_ref, str):
             return self._SetGCPs(gcps, wkt_or_spatial_ref)
         else:
@@ -1108,10 +1491,10 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
       - None (or an exception if exceptions are enabled) for statements
         that are in error
       - or None for statements that have no results set,
-      - or a ogr.Layer handle representing a results set from the query.
+      - or a :py:class:`ogr.Layer` handle representing a results set from the query.
 
-    Note that this ogr.Layer is in addition to the layers in the data store
-    and must be released with ReleaseResultSet() before the data source is closed
+    Note that this :py:class:`ogr.Layer` is in addition to the layers in the data store
+    and must be released with :py:meth:`ReleaseResultSet` before the data source is closed
     (destroyed).
 
     Starting with GDAL 3.7, this method can also be used as a context manager,
@@ -1175,14 +1558,14 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
 def ReleaseResultSet(self, sql_lyr):
     """ReleaseResultSet(self, sql_lyr: ogr.Layer)
 
-    Release ogr.Layer returned by ExecuteSQL() (when not called as an execution manager)
+    Release :py:class:`ogr.Layer` returned by :py:meth:`ExecuteSQL` (when not called as a context manager)
 
     The sql_lyr object is invalidated after this call.
 
     Parameters
     ----------
     sql_lyr:
-        ogr.Layer got with ExecuteSQL()
+        :py:class:`ogr.Layer` got with :py:meth:`ExecuteSQL`
     """
 
     if sql_lyr and not hasattr(sql_lyr, "_to_release"):
@@ -1628,7 +2011,8 @@ def InfoOptions(options=None, format='text', deserialize=True,
         if '-json' in new_options:
             format = 'json'
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format == 'json':
             new_options += ['-json']
         elif format != "text":
@@ -1747,7 +2131,8 @@ def VectorInfoOptions(options=None,
         if '-json' in new_options:
             format = 'json'
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format == 'json':
             new_options += ['-json']
         elif format != "text":
@@ -1824,7 +2209,8 @@ def MultiDimInfoOptions(options=None, detailed=False, array=None, arrayoptions=N
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if detailed:
             new_options += ['-detailed']
         if array:
@@ -1984,7 +2370,8 @@ def TranslateOptions(options=None, format=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
         if outputType != gdalconst.GDT_Unknown:
@@ -2250,7 +2637,8 @@ def WarpOptions(options=None, format=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if srcBands:
             for b in srcBands:
                 new_options += ['-srcband', str(b)]
@@ -2596,7 +2984,8 @@ def VectorTranslateOptions(options=None, format=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-f', format]
         if srcSRS is not None:
@@ -2865,7 +3254,8 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
@@ -2997,7 +3387,8 @@ def NearblackOptions(options=None, format=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
@@ -3142,7 +3533,8 @@ def GridOptions(options=None, format=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
         if outputType != gdalconst.GDT_Unknown:
@@ -3309,7 +3701,8 @@ def RasterizeOptions(options=None, format=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
         if outputType != gdalconst.GDT_Unknown:
@@ -3498,7 +3891,8 @@ def FootprintOptions(options=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
         if bands is not None:
@@ -3665,6 +4059,7 @@ def BuildVRTOptions(options=None,
                     srcNodata=None,
                     VRTNodata=None,
                     hideNodata=None,
+                    nodataMaxMaskThreshold=None,
                     strict=False,
                     callback=None, callback_data=None):
     """Create a BuildVRTOptions() object that can be passed to gdal.BuildVRT()
@@ -3702,6 +4097,8 @@ def BuildVRTOptions(options=None,
         nodata values at the VRT band level.
     hideNodata:
         whether to make the VRT band not report the NoData value.
+    nodataMaxMaskThreshold:
+        value of the mask band of a source below which the source band values should be replaced by VRTNodata (or 0 if not specified)
     strict:
         set to True if warnings should be failures
     callback:
@@ -3720,7 +4117,8 @@ def BuildVRTOptions(options=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if resolution is not None:
             new_options += ['-resolution', str(resolution)]
         if outputBounds is not None:
@@ -3749,6 +4147,8 @@ def BuildVRTOptions(options=None,
             new_options += ['-srcnodata', str(srcNodata)]
         if VRTNodata is not None:
             new_options += ['-vrtnodata', str(VRTNodata)]
+        if nodataMaxMaskThreshold is not None:
+            new_options += ['-nodata_max_mask_threshold', str(nodataMaxMaskThreshold)]
         if hideNodata:
             new_options += ['-hidenodata']
         if strict:
@@ -3890,7 +4290,8 @@ def TileIndexOptions(options=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if overwrite:
             new_options += ['-overwrite']
         if recursive:
@@ -4046,7 +4447,8 @@ def MultiDimTranslateOptions(options=None, format=None, creationOptions=None,
     if isinstance(options, str):
         new_options = ParseCommandLine(options)
     else:
-        new_options = options
+        import copy
+        new_options = copy.copy(options)
         if format is not None:
             new_options += ['-of', format]
         if creationOptions is not None:
@@ -4178,9 +4580,9 @@ def config_options(options, thread_local=True):
        ----------
        options: dict
             Dictionary of configuration options passed as key, value
-       thread_local: bool
+       thread_local: bool, default=True
             Whether the configuration options should be only set on the current
-            thread. The default is True.
+            thread.
 
        Returns
        -------
@@ -4189,8 +4591,8 @@ def config_options(options, thread_local=True):
        Example
        -------
 
-           with gdal.config_options({"GDAL_NUM_THREADS": "ALL_CPUS"}):
-               gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
+       >>> with gdal.config_options({"GDAL_NUM_THREADS": "ALL_CPUS"}):
+       ...     gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
     """
     get_config_option = GetThreadLocalConfigOption if thread_local else GetGlobalConfigOption
     set_config_option = SetThreadLocalConfigOption if thread_local else SetConfigOption
@@ -4215,9 +4617,9 @@ def config_option(key, value, thread_local=True):
             Name of the configuration option
        value: str
             Value of the configuration option
-       thread_local: bool
+       thread_local: bool, default=True
             Whether the configuration option should be only set on the current
-            thread. The default is True.
+            thread.
 
        Returns
        -------
@@ -4226,8 +4628,8 @@ def config_option(key, value, thread_local=True):
        Example
        -------
 
-           with gdal.config_option("GDAL_NUM_THREADS", "ALL_CPUS"):
-               gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
+       >>> with gdal.config_option("GDAL_NUM_THREADS", "ALL_CPUS"):
+       ...     gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
     """
     return config_options({key: value}, thread_local=thread_local)
 
@@ -4243,8 +4645,8 @@ def quiet_errors():
        Example
        -------
 
-           with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
-               gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "you will never see me")
+       >>> with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
+       ...     gdal.Error(gdal.CE_Failure, gdal.CPLE_AppDefined, "you will never see me")
     """
     PushErrorHandler("CPLQuietErrorHandler")
     try:

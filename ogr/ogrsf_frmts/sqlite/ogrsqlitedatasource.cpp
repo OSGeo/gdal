@@ -910,13 +910,7 @@ CPLErr OGRSQLiteDataSource::Close()
 
         CPLFree(m_papoLayers);
 
-        for (int i = 0; i < m_nKnownSRID; i++)
-        {
-            if (m_papoSRS[i] != nullptr)
-                m_papoSRS[i]->Release();
-        }
-        CPLFree(m_panSRID);
-        CPLFree(m_papoSRS);
+        m_oSRSCache.clear();
 
         if (!CloseDB())
             eErr = CE_Failure;
@@ -4102,17 +4096,15 @@ const char *OGRSQLiteDataSource::GetSRTEXTColName()
 /*      sure it is freshly created, or add a reference yourself if not. */
 /************************************************************************/
 
-void OGRSQLiteDataSource::AddSRIDToCache(int nId, OGRSpatialReference *poSRS)
+OGRSpatialReference *OGRSQLiteDataSource::AddSRIDToCache(
+    int nId,
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> &&poSRS)
 {
     /* -------------------------------------------------------------------- */
     /*      Add to the cache.                                               */
     /* -------------------------------------------------------------------- */
-    m_panSRID = (int *)CPLRealloc(m_panSRID, sizeof(int) * (m_nKnownSRID + 1));
-    m_papoSRS = (OGRSpatialReference **)CPLRealloc(
-        m_papoSRS, sizeof(void *) * (m_nKnownSRID + 1));
-    m_panSRID[m_nKnownSRID] = nId;
-    m_papoSRS[m_nKnownSRID] = poSRS;
-    m_nKnownSRID++;
+    auto oIter = m_oSRSCache.emplace(nId, std::move(poSRS)).first;
+    return oIter->second.get();
 }
 
 /************************************************************************/
@@ -4132,15 +4124,15 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
     /* -------------------------------------------------------------------- */
     /*      First, we look through our SRID cache, is it there?             */
     /* -------------------------------------------------------------------- */
-    for (int i = 0; i < m_nKnownSRID; i++)
+    for (const auto &pair : m_oSRSCache)
     {
-        if (m_papoSRS[i] == poSRS)
-            return m_panSRID[i];
+        if (pair.second.get() == poSRS)
+            return pair.first;
     }
-    for (int i = 0; i < m_nKnownSRID; i++)
+    for (const auto &pair : m_oSRSCache)
     {
-        if (m_papoSRS[i] != nullptr && m_papoSRS[i]->IsSame(poSRS))
-            return m_panSRID[i];
+        if (pair.second != nullptr && pair.second->IsSame(poSRS))
+            return pair.first;
     }
 
     /* -------------------------------------------------------------------- */
@@ -4251,10 +4243,12 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
                 if (nSRSId != m_nUndefinedSRID)
                 {
-                    auto poCachedSRS = new OGRSpatialReference(oSRS);
+                    std::unique_ptr<OGRSpatialReference,
+                                    OGRSpatialReferenceReleaser>
+                        poCachedSRS(new OGRSpatialReference(oSRS));
                     poCachedSRS->SetAxisMappingStrategy(
                         OAMS_TRADITIONAL_GIS_ORDER);
-                    AddSRIDToCache(nSRSId, poCachedSRS);
+                    AddSRIDToCache(nSRSId, std::move(poCachedSRS));
                 }
 
                 return nSRSId;
@@ -4352,7 +4346,12 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
         sqlite3_finalize(hSelectStmt);
 
         if (nSRSId != m_nUndefinedSRID)
-            AddSRIDToCache(nSRSId, new OGRSpatialReference(oSRS));
+        {
+            auto poSRSClone = std::unique_ptr<OGRSpatialReference,
+                                              OGRSpatialReferenceReleaser>(
+                new OGRSpatialReference(oSRS));
+            AddSRIDToCache(nSRSId, std::move(poSRSClone));
+        }
 
         return nSRSId;
     }
@@ -4584,9 +4583,10 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
     if (nSRSId != m_nUndefinedSRID)
     {
-        auto poCachedSRS = new OGRSpatialReference(std::move(oSRS));
+        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
+            poCachedSRS(new OGRSpatialReference(std::move(oSRS)));
         poCachedSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        AddSRIDToCache(nSRSId, poCachedSRS);
+        AddSRIDToCache(nSRSId, std::move(poCachedSRS));
     }
 
     return nSRSId;
@@ -4609,10 +4609,10 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      First, we look through our SRID cache, is it there?             */
     /* -------------------------------------------------------------------- */
-    for (int i = 0; i < m_nKnownSRID; i++)
+    auto oIter = m_oSRSCache.find(nId);
+    if (oIter != m_oSRSCache.end())
     {
-        if (m_panSRID[i] == nId)
-            return m_papoSRS[i];
+        return oIter->second.get();
     }
 
     /* -------------------------------------------------------------------- */
@@ -4622,7 +4622,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS(int nId)
     char **papszResult = nullptr;
     int nRowCount = 0;
     int nColCount = 0;
-    OGRSpatialReference *poSRS = nullptr;
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
 
     CPLString osCommand;
     osCommand.Printf("SELECT srtext FROM spatial_ref_sys WHERE srid = %d "
@@ -4649,12 +4649,11 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS(int nId)
             /*      Translate into a spatial reference. */
             /* --------------------------------------------------------------------
              */
-            poSRS = new OGRSpatialReference();
+            poSRS.reset(new OGRSpatialReference());
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if (poSRS->importFromWkt(osWKT.c_str()) != OGRERR_NONE)
             {
-                delete poSRS;
-                poSRS = nullptr;
+                poSRS.reset();
             }
         }
 
@@ -4706,7 +4705,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS(int nId)
             const char *pszWKT =
                 (pszSRTEXTColName != nullptr) ? papszRow[3] : nullptr;
 
-            poSRS = new OGRSpatialReference();
+            poSRS.reset(new OGRSpatialReference());
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
             /* Try first from EPSG code */
@@ -4729,8 +4728,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS(int nId)
             }
             else
             {
-                delete poSRS;
-                poSRS = nullptr;
+                poSRS.reset();
             }
 
             sqlite3_free_table(papszResult);
@@ -4756,9 +4754,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      Add to the cache.                                               */
     /* -------------------------------------------------------------------- */
-    AddSRIDToCache(nId, poSRS);
-
-    return poSRS;
+    return AddSRIDToCache(nId, std::move(poSRS));
 }
 
 /************************************************************************/

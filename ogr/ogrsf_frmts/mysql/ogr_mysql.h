@@ -70,6 +70,8 @@
 
 #include "ogrsf_frmts.h"
 
+#include <map>
+
 class OGRMySQLDataSource;
 
 /************************************************************************/
@@ -259,9 +261,9 @@ class OGRMySQLDataSource final : public OGRDataSource
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    int nKnownSRID;
-    int *panSRID;
-    OGRSpatialReference **papoSRS;
+    std::map<int,
+             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
+        m_oSRSCache{};
 
     OGRMySQLLayer *poLongResultLayer;
 
@@ -280,7 +282,7 @@ class OGRMySQLDataSource final : public OGRDataSource
 
     int FetchSRSId(const OGRSpatialReference *poSRS);
 
-    OGRSpatialReference *FetchSRS(int nSRSId);
+    const OGRSpatialReference *FetchSRS(int nSRSId);
 
     OGRErr InitializeMetadataTables();
     OGRErr UpdateMetadataTables(const char *pszLayerName,

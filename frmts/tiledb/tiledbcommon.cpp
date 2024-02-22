@@ -133,9 +133,17 @@ int TileDBDataset::Identify(GDALOpenInfo *poOpenInfo)
             return TRUE;
         }
 
+        const bool bIsS3OrGS =
+            STARTS_WITH_CI(poOpenInfo->pszFilename, "/VSIS3/") ||
+            STARTS_WITH_CI(poOpenInfo->pszFilename, "/VSIGS/");
+        // If this is a /vsi virtual file systems, bail out, except if it is S3 or GS.
+        if (!bIsS3OrGS && STARTS_WITH(poOpenInfo->pszFilename, "/vsi"))
+        {
+            return false;
+        }
+
         if (poOpenInfo->bIsDirectory ||
-            ((STARTS_WITH_CI(poOpenInfo->pszFilename, "/VSIS3/") ||
-              STARTS_WITH_CI(poOpenInfo->pszFilename, "/VSIGS/")) &&
+            (bIsS3OrGS &&
              !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "tif")))
         {
             tiledb::Context ctx;
@@ -289,7 +297,7 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
                             {
                                 if (!poCandidateArray)
                                 {
-                                    poCandidateArray = poArray;
+                                    poCandidateArray = std::move(poArray);
                                 }
                                 else
                                 {

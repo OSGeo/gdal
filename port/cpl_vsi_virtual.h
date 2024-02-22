@@ -305,6 +305,17 @@ class CPL_DLL VSIFilesystemHandler
                  "Duplicate() not supported on this file system");
         return nullptr;
     }
+
+    /** Return the directory separator.
+     *
+     * Default is forward slash. The only exception currently is the Windows
+     * file system which returns anti-slash, unless the specified path is of the
+     * form "{drive_letter}:/{rest_of_the_path}".
+     */
+    virtual const char *GetDirectorySeparator(CPL_UNUSED const char *pszPath)
+    {
+        return "/";
+    }
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 

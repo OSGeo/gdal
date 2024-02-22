@@ -37,8 +37,7 @@
 /************************************************************************/
 
 OGRODBCDataSource::OGRODBCDataSource()
-    : papoLayers(nullptr), nLayers(0), pszName(nullptr), nKnownSRID(0),
-      panSRID(nullptr), papoSRS(nullptr)
+    : papoLayers(nullptr), nLayers(0), pszName(nullptr)
 {
 }
 
@@ -55,14 +54,6 @@ OGRODBCDataSource::~OGRODBCDataSource()
         delete papoLayers[i];
 
     CPLFree(papoLayers);
-
-    for (int i = 0; i < nKnownSRID; i++)
-    {
-        if (papoSRS[i] != nullptr)
-            papoSRS[i]->Release();
-    }
-    CPLFree(panSRID);
-    CPLFree(papoSRS);
 }
 
 /************************************************************************/
@@ -415,6 +406,9 @@ int OGRODBCDataSource::Open(GDALOpenInfo *poOpenInfo)
     CSLDestroy(papszTables);
     CSLDestroy(papszGeomCol);
 
+#if 0
+    // NOTE: nothing uses the SRS cache currently. Hence disabled.
+
     /* -------------------------------------------------------------------- */
     /*      If no explicit list of tables was given, check for a list in    */
     /*      a geometry_columns table.                                       */
@@ -439,11 +433,6 @@ int OGRODBCDataSource::Open(GDALOpenInfo *poOpenInfo)
                  oSRSList.GetCommand());
         if (oSRSList.ExecuteSQL())
         {
-            int nRows = 256;  // A reasonable number of SRIDs to start from
-            panSRID = (int *)CPLMalloc(nRows * sizeof(int));
-            papoSRS = (OGRSpatialReference **)CPLMalloc(
-                nRows * sizeof(OGRSpatialReference *));
-
             while (oSRSList.Fetch())
             {
                 const char *pszSRID = oSRSList.GetColData(pszSRIDCol);
@@ -454,29 +443,18 @@ int OGRODBCDataSource::Open(GDALOpenInfo *poOpenInfo)
 
                 if (pszSRText)
                 {
-                    if (nKnownSRID > nRows)
-                    {
-                        nRows *= 2;
-                        panSRID =
-                            (int *)CPLRealloc(panSRID, nRows * sizeof(int));
-                        papoSRS = (OGRSpatialReference **)CPLRealloc(
-                            papoSRS, nRows * sizeof(OGRSpatialReference *));
-                    }
-                    panSRID[nKnownSRID] = atoi(pszSRID);
-                    papoSRS[nKnownSRID] = new OGRSpatialReference();
-                    papoSRS[nKnownSRID]->SetAxisMappingStrategy(
+                    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS(new OGRSpatialReference());
+                    poSRS->SetAxisMappingStrategy(
                         OAMS_TRADITIONAL_GIS_ORDER);
-                    if (papoSRS[nKnownSRID]->importFromWkt(pszSRText) !=
-                        OGRERR_NONE)
+                    if (poSRS->importFromWkt(pszSRText) == OGRERR_NONE )
                     {
-                        delete papoSRS[nKnownSRID];
-                        continue;
+                        m_oSRSCache[atoi(pszSRID)] = std::move(poSRS);
                     }
-                    nKnownSRID++;
                 }
             }
         }
     }
+#endif
 
     if (pszSRIDCol)
         CPLFree(pszSRIDCol);

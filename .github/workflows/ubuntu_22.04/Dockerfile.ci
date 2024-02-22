@@ -112,6 +112,13 @@ RUN curl -L -O https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_A
 	&& rm -rf FileGDB_API-64gcc51 \
 	&& ldconfig
 
+# Oracle : client side (proprietary software)
+RUN curl -L -O https://download.oracle.com/otn_software/linux/instantclient/199000/instantclient-basic-linux.x64-19.9.0.0.0dbru.zip \
+    && curl -L -O https://download.oracle.com/otn_software/linux/instantclient/199000/instantclient-sdk-linux.x64-19.9.0.0.0dbru.zip \
+    && unzip instantclient-basic-linux.x64-19.9.0.0.0dbru.zip -d /opt \
+    && unzip instantclient-sdk-linux.x64-19.9.0.0.0dbru.zip -d opt \
+    && apt-get install -y libaio1
+
 COPY requirements.txt /tmp/
 RUN python3 -m pip install -U -r /tmp/requirements.txt
 

@@ -187,6 +187,7 @@
                 <xs:element name="SimpleSource" type="SimpleSourceType"/>
                 <xs:element name="ComplexSource" type="ComplexSourceType"/>
                 <xs:element name="AveragedSource" type="SimpleSourceType"/>
+                <xs:element name="NoDataFromMaskSource" type="NoDataFromMaskSourceType"/>
                 <xs:element name="KernelFilteredSource" type="KernelFilteredSourceType"/>
                 <xs:element name="ArraySource" type="ArraySourceType"/>
 
@@ -404,6 +405,21 @@
     <xs:complexType name="ComplexSourceType">
         <xs:group ref="ComplexSourceElementsGroup"/>
         <xs:attribute name="resampling" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:group name="NoDataFromMaskSourceElementsGroup">
+        <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:group ref="SimpleSourceElementsGroup"/>
+                <xs:element name="NODATA" type="DoubleOrNanType"/> <!-- NODATA and UseMaskBand are mutually exclusive -->
+                <xs:element name="MaskValueThreshold" type="xs:double"/>
+                <xs:element name="RemappedValue" type="xs:double"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:group>
+
+    <xs:complexType name="NoDataFromMaskSourceType">
+        <xs:group ref="NoDataFromMaskSourceElementsGroup"/>
     </xs:complexType>
 
     <xs:complexType name="KernelFilteredSourceType">

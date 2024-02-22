@@ -879,8 +879,8 @@ CPLErr CPL_STDCALL CPLGetLastErrorType()
  * been cleared by CPLErrorReset().  The returned pointer is to an internal
  * string that should not be altered or freed.
  *
- * @return the last error message, or NULL if there is no posted error
- * message.
+ * @return the last error message, or an empty string ("") if there is no
+ * posted error message.
  */
 
 const char *CPL_STDCALL CPLGetLastErrorMsg()

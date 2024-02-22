@@ -72,7 +72,8 @@ class GDALWMSMetaDataset final : public GDALPamDataset
                        const char *pszAbstract, const char *pszSRS,
                        const char *pszMinX, const char *pszMinY,
                        const char *pszMaxX, const char *pszMaxY,
-                       CPLString osFormat, CPLString osTransparent);
+                       const std::string &osFormat,
+                       const std::string &osTransparent);
 
     void
     ExploreLayer(CPLXMLNode *psXML, const CPLString &osFormat,
