@@ -712,7 +712,6 @@ sChar Clock_GetTimeZone ()
 {
    struct tm l_time;
    time_t ansTime;
-   struct tm *gmTime;
    static int timeZone = 9999;
 
    if (timeZone == 9999) {
@@ -721,10 +720,21 @@ sChar Clock_GetTimeZone ()
       l_time.tm_year = 70;
       l_time.tm_mday = 2;
       ansTime = mktime (&l_time);
-      gmTime = gmtime (&ansTime);
-      timeZone = gmTime->tm_hour;
-      if (gmTime->tm_mday != 2) {
-         timeZone -= 24;
+#if HAVE_GMTIME_R
+      struct tm gmTime;
+      const struct tm *gmTimePtr = gmtime_r(&ansTime, &gmTime);
+#elif defined(_WIN32)
+      struct tm gmTime;
+      const struct tm *gmTimePtr = gmtime_s(&gmTime, &ansTime) == 0 ? &gmTime : NULL;
+#else
+      const struct tm *gmTimePtr = gmtime (&ansTime);
+#endif
+      if (gmTimePtr)
+      {
+          timeZone = gmTimePtr->tm_hour;
+          if (gmTimePtr->tm_mday != 2) {
+             timeZone -= 24;
+          }
       }
    }
    return timeZone;
@@ -1944,7 +1954,7 @@ static int Clock_GetWord (char **Start, char **End, char word[30],
    f_integer = 1;
    while ((*ptr != ' ') && (*ptr != ',') && (*ptr != '\0')) {
       if (cnt < 29) {
-         word[cnt] = (char) toupper (*ptr);
+         word[cnt] = (char) toupper ((unsigned char)*ptr);
          cnt++;
       }
       if (*ptr == ':') {
@@ -1962,12 +1972,12 @@ static int Clock_GetWord (char **Start, char **End, char word[30],
             f_integer = 0;
          }
       } else if (*ptr == '.') {
-         if (!isdigit (*(ptr + 1))) {
+         if (!isdigit ((unsigned char)*(ptr + 1))) {
             break;
          } else {
             f_integer = 0;
          }
-      } else if (!isdigit (*ptr)) {
+      } else if (!isdigit ((unsigned char)*ptr)) {
          f_integer = 0;
       }
       ptr++;

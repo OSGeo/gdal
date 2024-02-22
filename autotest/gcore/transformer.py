@@ -643,11 +643,11 @@ def test_transformer_12():
         """
     <VRTDataset rasterXSize="20" rasterYSize="20">
   <GCPList Projection="PROJCS[&quot;NAD27 / UTM zone 11N&quot;,GEOGCS[&quot;NAD27&quot;,DATUM[&quot;North_American_Datum_1927&quot;,SPHEROID[&quot;Clarke 1866&quot;,6378206.4,294.9786982139006,AUTHORITY[&quot;EPSG&quot;,&quot;7008&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;6267&quot;]],PRIMEM[&quot;Greenwich&quot;,0],UNIT[&quot;degree&quot;,0.0174532925199433],AUTHORITY[&quot;EPSG&quot;,&quot;4267&quot;]],PROJECTION[&quot;Transverse_Mercator&quot;],PARAMETER[&quot;latitude_of_origin&quot;,0],PARAMETER[&quot;central_meridian&quot;,-117],PARAMETER[&quot;scale_factor&quot;,0.9996],PARAMETER[&quot;false_easting&quot;,500000],PARAMETER[&quot;false_northing&quot;,0],UNIT[&quot;metre&quot;,1,AUTHORITY[&quot;EPSG&quot;,&quot;9001&quot;]],AUTHORITY[&quot;EPSG&quot;,&quot;26711&quot;]]">
-    <GCP Id="" Pixel="0" Line="0" X="0" Y="0"/>
-    <GCP Id="" Pixel="20" Line="0" X="20" Y="0"/>
-    <GCP Id="" Pixel="0" Line="20" X="0" Y="20"/>
-    <GCP Id="" Pixel="20" Line="20" X="20" Y="20"/>
-    <GCP Id="" Pixel="0" Line="0" X="0" Y="0"/> <!-- duplicate entry -->
+    <GCP Id="" Pixel="0" Line="0" X="-1" Y="-1"/>
+    <GCP Id="" Pixel="20" Line="0" X="1" Y="-1"/>
+    <GCP Id="" Pixel="0" Line="20" X="-1" Y="1"/>
+    <GCP Id="" Pixel="20" Line="20" X="1" Y="1"/>
+    <GCP Id="" Pixel="0" Line="0" X="-1" Y="-1"/> <!-- duplicate entry -->
   </GCPList>
   <VRTRasterBand dataType="Byte" band="1">
     <ColorInterp>Gray</ColorInterp>
@@ -663,8 +663,22 @@ def test_transformer_12():
     (success, pnt) = tr.TransformPoint(0, 0, 0)
     assert (
         success
+        and pnt[0] == pytest.approx(-1, abs=1e-7)
+        and pnt[1] == pytest.approx(-1, abs=1e-7)
+    )
+
+    (success, pnt) = tr.TransformPoint(1, -1, -1)
+    assert (
+        success
         and pnt[0] == pytest.approx(0, abs=1e-7)
         and pnt[1] == pytest.approx(0, abs=1e-7)
+    )
+
+    (success, pnt) = tr.TransformPoint(1, 0.2, 0.8)
+    assert (
+        success
+        and pnt[0] == pytest.approx(12, abs=1e-7)
+        and pnt[1] == pytest.approx(18, abs=1e-7)
     )
 
     ds = gdal.Open(
@@ -979,6 +993,7 @@ def test_transformer_longlat_wrap_outside_180():
 # might fail
 
 
+@pytest.mark.require_proj(8, 0, 0)
 def test_transformer_no_reverse_method():
     tr = gdal.Transformer(
         None,
@@ -992,9 +1007,8 @@ def test_transformer_no_reverse_method():
     assert pnt[0] == pytest.approx(141270.54731856665, abs=1e-3), pnt
     assert pnt[1] == pytest.approx(4656605.104980032, abs=1e-3), pnt
 
-    with gdal.quiet_errors():
-        (success, pnt) = tr.TransformPoint(1, 2, 49)
-    assert not success
+    with pytest.raises(Exception, match="No inverse operation"):
+        tr.TransformPoint(1, 2, 49)
 
 
 ###############################################################################
@@ -1009,13 +1023,55 @@ def test_transformer_tps_precision():
 
     success = True
     maxDiffResult = 0.0
-    for gcp in ds.GetGCPs():
+    gcps = ds.GetGCPs()
+    for i, gcp in enumerate(gcps):
         (s, result) = tr.TransformPoint(0, gcp.GCPPixel, gcp.GCPLine)
         success &= s
         diffResult = math.sqrt(
             (gcp.GCPX - result[0]) ** 2 + (gcp.GCPY - result[1]) ** 2
         )
         maxDiffResult = max(maxDiffResult, diffResult)
+
+        (s, result) = tr.TransformPoint(1, result[0], result[1])
+        assert s
+        if i != 1639:
+            assert result[0] == pytest.approx(gcp.GCPPixel, rel=1e-5), (i, result)
+            assert result[1] == pytest.approx(gcp.GCPLine, rel=1e-5), (i, result)
+
+        if i + 1 < len(gcps):
+            # Try transforming "random" points
+            xIn = 0.5 * (gcps[i].GCPPixel + gcps[i + 1].GCPPixel)
+            yIn = 0.5 * (gcps[i].GCPLine + gcps[i + 1].GCPLine)
+            (s, result) = tr.TransformPoint(0, xIn, yIn)
+            assert s
+            (s, result) = tr.TransformPoint(1, result[0], result[1])
+            assert s
+            # A few points fail to converge with reasonable accuracy
+            if i not in (
+                775,
+                776,
+                777,
+                784,
+                785,
+                786,
+                787,
+                802,
+                813,
+                814,
+                1007,
+                1008,
+                1009,
+                1984,
+                1010,
+                1254,
+                1558,
+                1634,
+                1638,
+                1957,
+            ):
+                assert result[0] == pytest.approx(xIn, abs=1e-3), (i, xIn, yIn, result)
+                assert result[1] == pytest.approx(yIn, abs=1e-3), (i, xIn, yIn, result)
+
     assert success, "at least one point could not be transformed"
     assert maxDiffResult < 1e-3, "at least one transformation exceeds the error bound"
 

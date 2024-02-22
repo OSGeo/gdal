@@ -736,3 +736,12 @@ OGRErr OGRMSSQLGeometryWriter::WriteSqlGeometry(unsigned char *pszBuffer,
     }
     return OGRERR_NONE;
 }
+
+#undef ParentOffset
+#undef FigureOffset
+#undef ShapeType
+#undef SegmentType
+
+#undef FigureAttribute
+#undef PointOffset
+#undef NextPointOffset

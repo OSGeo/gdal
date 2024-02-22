@@ -55,7 +55,7 @@ static GDALDataset *OGRPMTilesDriverOpen(GDALOpenInfo *poOpenInfo)
 {
     if (!OGRPMTilesDriverIdentify(poOpenInfo))
         return nullptr;
-    auto poDS = cpl::make_unique<OGRPMTilesDataset>();
+    auto poDS = std::make_unique<OGRPMTilesDataset>();
     if (!poDS->Open(poOpenInfo))
         return nullptr;
     return poDS.release();
@@ -141,7 +141,7 @@ static GDALDataset *OGRPMTilesDriverCreate(const char *pszFilename, int nXSize,
 {
     if (nXSize == 0 && nYSize == 0 && nBandsIn == 0 && eDT == GDT_Unknown)
     {
-        auto poDS = cpl::make_unique<OGRPMTilesWriterDataset>();
+        auto poDS = std::make_unique<OGRPMTilesWriterDataset>();
         if (!poDS->Create(pszFilename, papszOptions))
             return nullptr;
         return poDS.release();

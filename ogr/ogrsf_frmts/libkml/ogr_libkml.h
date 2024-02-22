@@ -120,7 +120,8 @@ class OGRLIBKMLLayer final : public OGRLayer,
 
     // const char               *GetInfo( const char * );
 
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
 
     OGRErr SyncToDisk() override;
 

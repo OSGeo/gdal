@@ -51,8 +51,10 @@ repos:
                 frmts/pcidsk/sdk|
                 frmts/grib/degrib/degrib|
                 frmts/grib/degrib/g2clib|
+                ogr/utf8.h|
                 ogr/ogrsf_frmts/cad/libopencad/|
                 ogr/ogrsf_frmts/geojson/libjson/|
                 ogr/ogrsf_frmts/flatgeobuf/flatbuffers/|
-                ogr/ogrsf_frmts/pmtiles/pmtiles/
+                ogr/ogrsf_frmts/pmtiles/pmtiles/|
+                ogr/ogrsf_frmts/sqlite/sqlite_rtree_bulk_load
               )

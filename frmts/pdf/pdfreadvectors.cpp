@@ -156,7 +156,7 @@ static const PDFOperator asPDFOperators[] = {
     {"cm", 6},
     {"CS", 1},
     {"cs", 1},
-    {"d", 1}, /* we have ignored the first arg */
+    {"d", 1}, /* we have ignored the first arg which is an array */
     // d0
     // d1
     {"Do", 1},
@@ -280,14 +280,14 @@ bool PDFDataset::ExploreTree(GDALPDFObject *poObj,
     GDALPDFDictionary *poDict = poObj->GetDictionary();
 
     GDALPDFObject *poS = poDict->Get("S");
-    CPLString osS;
+    std::string osS;
     if (poS != nullptr && poS->GetType() == PDFObjectType_Name)
     {
         osS = poS->GetName();
     }
 
     GDALPDFObject *poT = poDict->Get("T");
-    CPLString osT;
+    std::string osT;
     if (poT != nullptr && poT->GetType() == PDFObjectType_String)
     {
         osT = poT->GetString();
@@ -330,13 +330,13 @@ bool PDFDataset::ExploreTree(GDALPDFObject *poObj,
                 return false;
             }
 
-            CPLString osLayerName;
+            std::string osLayerName;
             if (!osT.empty())
-                osLayerName = osT;
+                osLayerName = std::move(osT);
             else
             {
                 if (!osS.empty())
-                    osLayerName = osS;
+                    osLayerName = std::move(osS);
                 else
                     osLayerName = CPLSPrintf("Layer%d", m_nLayers + 1);
             }
@@ -784,6 +784,7 @@ OGRGeometry *PDFDataset::ParseContent(
         else if (!bInString && nArrayLevel && ch == ']')
         {
             nArrayLevel--;
+            nTokenSize = 0;  // completely ignore content in arrays
         }
 
         else if (!bInString && nTokenSize == 0 && ch == '(')
@@ -946,8 +947,7 @@ OGRGeometry *PDFDataset::ParseContent(
 
                 if (EQUAL3(pszOC, "/OC") && pszOCGName[0] == '/')
                 {
-                    std::map<CPLString, OGRPDFLayer *>::iterator oIter =
-                        oMapPropertyToLayer.find(pszOCGName + 1);
+                    const auto oIter = oMapPropertyToLayer.find(pszOCGName + 1);
                     if (oIter != oMapPropertyToLayer.end())
                     {
                         poCurLayer = oIter->second;
@@ -1942,9 +1942,8 @@ static void ExploreResourceProperty(
 
     if (osType == "OCG" && poObj->GetRefNum().toBool())
     {
-        const auto oIterNumGenToLayer =
-            oMapNumGenToLayer.find(std::pair<int, int>(
-                poObj->GetRefNum().toInt(), poObj->GetRefGen()));
+        const auto oIterNumGenToLayer = oMapNumGenToLayer.find(
+            std::pair(poObj->GetRefNum().toInt(), poObj->GetRefGen()));
         if (oIterNumGenToLayer != oMapNumGenToLayer.end())
         {
             auto poLayer = oIterNumGenToLayer->second;
@@ -2023,9 +2022,9 @@ static void ExploreResourceProperty(
                         if (osOCGType == "OCG" && poOCG->GetRefNum().toBool())
                         {
                             const auto oIterNumGenToLayer =
-                                oMapNumGenToLayer.find(std::pair<int, int>(
-                                    poOCG->GetRefNum().toInt(),
-                                    poOCG->GetRefGen()));
+                                oMapNumGenToLayer.find(
+                                    std::pair(poOCG->GetRefNum().toInt(),
+                                              poOCG->GetRefGen()));
                             if (oIterNumGenToLayer != oMapNumGenToLayer.end())
                             {
                                 auto poLayer = oIterNumGenToLayer->second;
@@ -2183,15 +2182,14 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,
                     m_nLayers++;
                 }
 
-                oMapNumGenToLayer[std::pair<int, int>(
-                    oLayerWithref.nOCGNum.toInt(), oLayerWithref.nOCGGen)] =
-                    poLayer;
+                oMapNumGenToLayer[std::pair(oLayerWithref.nOCGNum.toInt(),
+                                            oLayerWithref.nOCGGen)] = poLayer;
             }
 
-            for (const auto &oIter : poProperties->GetDictionary()->GetValues())
+            for (const auto &[osKey, poObj] :
+                 poProperties->GetDictionary()->GetValues())
             {
-                const char *pszKey = oIter.first.c_str();
-                GDALPDFObject *poObj = oIter.second;
+                const char *pszKey = osKey.c_str();
                 if (poObj->GetType() == PDFObjectType_Dictionary)
                 {
                     auto poType = poObj->GetDictionary()->Get("Type");

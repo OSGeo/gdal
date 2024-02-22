@@ -247,7 +247,7 @@ TileDBGroup::OpenGroup(const std::string &osName,
         }
     }
     if (osSubPath.empty())
-        osSubPath = osSubPathCandidate;
+        osSubPath = std::move(osSubPathCandidate);
     if (osSubPath.empty())
         return nullptr;
 
@@ -476,13 +476,13 @@ TileDBGroup::OpenMDArray(const std::string &osName,
         }
     }
     if (osSubPath.empty())
-        osSubPath = osSubPathCandidate;
+        osSubPath = std::move(osSubPathCandidate);
     if (osSubPath.empty())
         return nullptr;
 
-    auto poArray =
-        TileDBArray::OpenFromDisk(m_poSharedResource, m_osFullName, osName,
-                                  osNameSuffix, osSubPath, papszOptions);
+    auto poArray = TileDBArray::OpenFromDisk(m_poSharedResource, m_pSelf.lock(),
+                                             m_osFullName, osName, osNameSuffix,
+                                             osSubPath, papszOptions);
     if (!poArray)
         return nullptr;
 
@@ -522,7 +522,7 @@ std::shared_ptr<GDALMDArray> TileDBGroup::CreateMDArray(
     if (!EnsureOpenAs(TILEDB_WRITE))
         return nullptr;
 
-    auto poSelf = m_pSelf.lock();
+    auto poSelf = std::dynamic_pointer_cast<TileDBGroup>(m_pSelf.lock());
     CPLAssert(poSelf);
     auto poArray =
         TileDBArray::CreateOnDisk(m_poSharedResource, poSelf, osName,

@@ -33,6 +33,9 @@
 
 #include <algorithm>
 
+#ifndef UTM_FORMAT_defined
+#define UTM_FORMAT_defined
+
 static const char UTM_FORMAT[] =
     "PROJCS[\"%s / UTM zone %dN\",GEOGCS[%s,PRIMEM[\"Greenwich\",0],"
     "UNIT[\"degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],"
@@ -53,6 +56,8 @@ static const char NAD27_DATUM[] =
 static const char NAD83_DATUM[] =
     "\"NAD83\",DATUM[\"North_American_Datum_1983\","
     "SPHEROID[\"GRS 1980\",6378137,298.257222101]]";
+
+#endif
 
 /************************************************************************/
 /*                            DOQGetField()                             */
@@ -262,7 +267,7 @@ GDALDataset *DOQ1Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<DOQ1Dataset>();
+    auto poDS = std::make_unique<DOQ1Dataset>();
 
     /* -------------------------------------------------------------------- */
     /*      Capture some information from the file that is of interest.     */

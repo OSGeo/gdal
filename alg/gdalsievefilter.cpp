@@ -33,6 +33,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <cassert>
 #include <set>
 #include <vector>
 #include <utility>
@@ -43,8 +44,6 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_alg_priv.h"
-
-CPL_CVSID("$Id$")
 
 #define MY_MAX_INT 2147483647
 
@@ -111,7 +110,7 @@ static CPLErr GPMaskImageData(GDALRasterBandH hMaskBand, GByte *pabyMaskLine,
 static inline void CompareNeighbour(int nPolyId1, int nPolyId2,
                                     int *panPolyIdMap,
                                     std::int64_t * /* panPolyValue */,
-                                    std::vector<int> &anPolySizes,
+                                    const std::vector<int> &anPolySizes,
                                     std::vector<int> &anBigNeighbour)
 
 {
@@ -321,9 +320,9 @@ CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
     /*      Push the sizes of merged polygon fragments into the             */
     /*      merged polygon id's count.                                      */
     /* -------------------------------------------------------------------- */
-    for (int iPoly = 0; oFirstEnum.panPolyIdMap != nullptr &&  // for Coverity
-                        iPoly < oFirstEnum.nNextPolygonId;
-         iPoly++)
+    assert(oFirstEnum.panPolyIdMap != nullptr);  // for Coverity
+    assert(oFirstEnum.panPolyValue != nullptr);  // for Coverity
+    for (int iPoly = 0; iPoly < oFirstEnum.nNextPolygonId; iPoly++)
     {
         if (oFirstEnum.panPolyIdMap[iPoly] != iPoly)
         {
@@ -462,10 +461,7 @@ CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
     int nIsolatedSmall = 0;
     int nSieveTargets = 0;
 
-    for (int iPoly = 0; oFirstEnum.panPolyIdMap != nullptr &&  // for Coverity
-                        oFirstEnum.panPolyValue != nullptr &&  // for Coverity
-                        iPoly < static_cast<int>(anPolySizes.size());
-         iPoly++)
+    for (int iPoly = 0; iPoly < static_cast<int>(anPolySizes.size()); iPoly++)
     {
         if (oFirstEnum.panPolyIdMap[iPoly] != iPoly)
             continue;

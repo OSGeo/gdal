@@ -216,6 +216,8 @@ class CPL_DLL OGRSpatialReference
     OGRErr exportVertCSToPanorama(int *) const;
     OGRErr exportToERM(char *pszProj, char *pszDatum, char *pszUnits);
     OGRErr exportToMICoordSys(char **) const;
+    OGRErr exportToCF1(char **ppszGridMappingName, char ***ppapszKeyValues,
+                       char **ppszUnits, CSLConstList papszOptions) const;
 
     OGRErr importFromWkt(char **)
         /*! @cond Doxygen_Suppress */
@@ -256,6 +258,7 @@ class CPL_DLL OGRSpatialReference
                          const char *pszUnits);
     OGRErr importFromUrl(const char *);
     OGRErr importFromMICoordSys(const char *);
+    OGRErr importFromCF1(CSLConstList papszKeyValues, const char *pszUnits);
 
     OGRErr morphToESRI();
     OGRErr morphFromESRI();
@@ -802,7 +805,8 @@ class CPL_DLL OGRCoordinateTransformation
      *
      * This method is the same as the C function OCTTransformEx().
      *
-     * @param nCount number of points to transform.
+     * @param nCount number of points to transform (`size_t` type since 3.9,
+     *               `int` in previous versions).
      * @param x array of nCount X vertices, modified in place. Should not be
      * NULL.
      * @param y array of nCount Y vertices, modified in place. Should not be
@@ -811,10 +815,10 @@ class CPL_DLL OGRCoordinateTransformation
      * @param pabSuccess array of per-point flags set to TRUE if that point
      * transforms, or FALSE if it does not. Might be NULL.
      *
-     * @return TRUE if some or all points transform successfully, or FALSE if
-     * if none transform.
+     * @return TRUE if a transformation could be found (but not all points may
+     * have necessarily succeed to transform), otherwise FALSE.
      */
-    int Transform(int nCount, double *x, double *y, double *z = nullptr,
+    int Transform(size_t nCount, double *x, double *y, double *z = nullptr,
                   int *pabSuccess = nullptr);
 
     /**
@@ -822,7 +826,8 @@ class CPL_DLL OGRCoordinateTransformation
      *
      * This method is the same as the C function OCTTransform4D().
      *
-     * @param nCount number of points to transform.
+     * @param nCount number of points to transform (`size_t` type since 3.9,
+     *               `int` in previous versions).
      * @param x array of nCount X vertices, modified in place. Should not be
      * NULL.
      * @param y array of nCount Y vertices, modified in place. Should not be
@@ -832,10 +837,10 @@ class CPL_DLL OGRCoordinateTransformation
      * @param pabSuccess array of per-point flags set to TRUE if that point
      * transforms, or FALSE if it does not. Might be NULL.
      *
-     * @return TRUE if some or all points transform successfully, or FALSE if
-     * if none transform.
+     * @return TRUE if a transformation could be found (but not all points may
+     * have necessarily succeed to transform), otherwise FALSE.
      */
-    virtual int Transform(int nCount, double *x, double *y, double *z,
+    virtual int Transform(size_t nCount, double *x, double *y, double *z,
                           double *t, int *pabSuccess) = 0;
 
     /**
@@ -843,7 +848,8 @@ class CPL_DLL OGRCoordinateTransformation
      *
      * This method is the same as the C function OCTTransform4DWithErrorCodes().
      *
-     * @param nCount number of points to transform.
+     * @param nCount number of points to transform (`size_t` type since 3.9,
+     *               `int` in previous versions).
      * @param x array of nCount X vertices, modified in place. Should not be
      * NULL.
      * @param y array of nCount Y vertices, modified in place. Should not be
@@ -853,11 +859,11 @@ class CPL_DLL OGRCoordinateTransformation
      * @param panErrorCodes Output array of nCount value that will be set to 0
      * for success, or a non-zero value for failure. Refer to PROJ 8 public
      * error codes. Might be NULL
-     * @return TRUE if some or all points transform successfully, or FALSE if
-     * if none transform.
+     * @return TRUE if a transformation could be found (but not all points may
+     * have necessarily succeed to transform), otherwise FALSE.
      * @since GDAL 3.3, and PROJ 8 to be able to use PROJ public error codes
      */
-    virtual int TransformWithErrorCodes(int nCount, double *x, double *y,
+    virtual int TransformWithErrorCodes(size_t nCount, double *x, double *y,
                                         double *z, double *t,
                                         int *panErrorCodes);
 

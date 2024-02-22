@@ -1,0 +1,79 @@
+.. _raster.s102:
+
+================================================================================
+S102 -- S-102 Bathymetric Surface Product
+================================================================================
+
+.. shortname:: S102
+
+.. build_dependencies:: libhdf5
+
+.. versionadded:: 3.8
+
+This driver provides read-only support for bathymetry data in the S-102 format,
+which is a specific product profile in an HDF5 file
+
+S-102 files have two image bands representing depth (band 1),
+uncertainty (band 2) values for each cell in a raster grid area.
+
+Note that positive values of depth mean values *below* the reference surface
+of the vertical datum. The :oo:`DEPTH_OR_ELEVATION` open option can be set
+to ``ELEVATION`` to expose depth values as elevation values, by negating their sign
+(i.e. positive values of elevation mean values above the reference surface)
+
+Georeferencing is reported.
+
+Nodata, minimum and maximum values for each band are also reported.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
+Open options
+------------
+
+- .. oo:: DEPTH_OR_ELEVATION
+     :choices: DEPTH, ELEVATION
+     :default: DEPTH
+
+     Whether to report depth or elevation.
+     Positive values of depth mean values *below* the reference surface of the
+     vertical datum.
+     Positive values of elevation mean values *above* the reference surface of the
+     vertical datum (which is the convention used by the :ref:`BAG driver <raster.bag>`)
+
+- .. oo:: NORTH_UP
+     :choices: YES, NO
+     :default: YES
+
+     Whether the top line of the dataset should be the northern-most one.
+
+     This is the default behavior of most GDAL formats, but the native
+     organization of the data in S-102 products is to have the first line of
+     the grid being the southern-most one. This native organization can be
+     exposed by the driver by setting this option to NO (in which case the
+     6th term of the geotransform matrix will be positive)
+
+Spatial metadata support
+------------------------
+
+Starting with GDAL 3.9, GDAL can handle QualityOfSurvey spatial metadata.
+
+When such spatial metadata is present, the subdataset list will include
+a name of the form ``S102:"{filename}":QualityOfSurvey``
+
+The ``/QualityOfSurvey/featureAttributeTable`` dataset is exposed as a
+GDAL Raster Attribute Table associated to the GDAL raster band. The pixel
+values of the raster match the ``id`` column of the Raster Attribute Table.
+
+See Also
+--------
+
+-  Implemented as :source_file:`frmts/hdf5/s102dataset.cpp`.
+-  `S-102 Bathymetric Surface Product Specification <https://registry.iho.int/productspec/view.do?idx=199&product_ID=S-102&statusS=5&domainS=20&category=product_ID&searchValue=>`__
+-  :ref:`BAG driver <raster.bag>`
+-  :ref:`S-104 driver <raster.s104>`
+-  :ref:`S-111 driver <raster.s111>`

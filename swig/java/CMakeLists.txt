@@ -78,6 +78,9 @@ if (ENABLE_GNM)
   list(APPEND GDALALLJNI_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/org/gdal/gnm/gnm_wrap.cpp)
 endif ()
 add_library(gdalalljni SHARED ${GDALALLJNI_SOURCES})
+
+set_property(TARGET gdalalljni PROPERTY UNITY_BUILD OFF)
+
 gdal_standard_includes(gdalalljni)
 target_include_directories(gdalalljni PRIVATE ${JNI_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
 if (ENABLE_GNM)

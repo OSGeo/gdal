@@ -90,14 +90,6 @@ OGRPGDataSource::~OGRPGDataSource()
         PQfinish(hPGConn);
         hPGConn = nullptr;
     }
-
-    for (int i = 0; i < nKnownSRID; i++)
-    {
-        if (papoSRS[i] != nullptr)
-            papoSRS[i]->Release();
-    }
-    CPLFree(panSRID);
-    CPLFree(papoSRS);
 }
 
 /************************************************************************/
@@ -698,34 +690,60 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
     }
 
     /* -------------------------------------------------------------------- */
-    /*      Set active schema and/or postgis schema if different from       */
-    /*      'public'                                                        */
+    /*      Get search_path                                                 */
+    /* -------------------------------------------------------------------- */
+    std::string osSearchPath = "public";
+    {
+        PGresult *hResult = OGRPG_PQexec(hPGConn, "SHOW search_path");
+        if (hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK &&
+            PQntuples(hResult) > 0)
+        {
+            const char *pszVal = PQgetvalue(hResult, 0, 0);
+            if (pszVal)
+            {
+                osSearchPath = pszVal;
+            }
+        }
+        OGRPGClearResult(hResult);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Set active schema if different from 'public'. Also add          */
+    /*      postgis schema if needed.                                       */
     /* -------------------------------------------------------------------- */
     if (osActiveSchema != "public" ||
-        (!osPostgisSchema.empty() && osPostgisSchema != "public"))
+        (!osPostgisSchema.empty() &&
+         osSearchPath.find(osPostgisSchema) == std::string::npos))
     {
-        CPLString osCommand = "SET search_path=";
+        std::string osNewSearchPath;
         if (osActiveSchema != "public")
         {
-            osCommand += OGRPGEscapeString(hPGConn, osActiveSchema.c_str());
-            osCommand += ',';
+            osNewSearchPath +=
+                OGRPGEscapeString(hPGConn, osActiveSchema.c_str());
+            osNewSearchPath += ',';
         }
-        osCommand += "public";
-        if (!osPostgisSchema.empty() && osPostgisSchema != "public")
+        osNewSearchPath += osSearchPath;
+        if (!osPostgisSchema.empty() &&
+            osSearchPath.find(osPostgisSchema) == std::string::npos)
         {
-            osCommand += ',';
-            osCommand += OGRPGEscapeString(hPGConn, osPostgisSchema.c_str());
+            osNewSearchPath += ',';
+            osNewSearchPath +=
+                OGRPGEscapeString(hPGConn, osPostgisSchema.c_str());
         }
+        CPLDebug("PG", "Modifying search_path from %s to %s",
+                 osSearchPath.c_str(), osNewSearchPath.c_str());
 
-        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand);
+        std::string osCommand = "SET search_path=" + osNewSearchPath;
+        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
 
         if (!hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK)
         {
             OGRPGClearResult(hResult);
             CPLDebug("PG", "Command \"%s\" failed. Trying without 'public'.",
                      osCommand.c_str());
-            osCommand.Printf("SET search_path='%s'", osActiveSchema.c_str());
-            PGresult *hResult2 = OGRPG_PQexec(hPGConn, osCommand);
+            osCommand =
+                CPLSPrintf("SET search_path='%s'", osActiveSchema.c_str());
+            PGresult *hResult2 = OGRPG_PQexec(hPGConn, osCommand.c_str());
 
             if (!hResult2 || PQresultStatus(hResult2) != PGRES_COMMAND_OK)
             {
@@ -759,7 +777,8 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
         /* Should work with "PostgreSQL X.Y.Z ..." or "EnterpriseDB X.Y.Z ..."
          */
         const char *pszSpace = strchr(pszVer, ' ');
-        if (pszSpace != nullptr && isdigit(pszSpace[1]))
+        if (pszSpace != nullptr &&
+            isdigit(static_cast<unsigned char>(pszSpace[1])))
         {
             OGRPGDecodeVersionString(&sPostgreSQLVersion, pszSpace + 1);
 #if defined(BINARY_CURSOR_ENABLED)
@@ -1681,8 +1700,6 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
                                         char **papszOptions)
 
 {
-    PGresult *hResult = nullptr;
-    CPLString osCommand;
     const char *pszGeomType = nullptr;
     char *pszTableName = nullptr;
     char *pszSchemaName = nullptr;
@@ -1813,6 +1830,20 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
     if (pszSchemaName == nullptr)
     {
         pszSchemaName = CPLStrdup(osCurrentSchema);
+    }
+
+    // Check that the schema exist. If there is a single match in a case
+    // insensitive way, use it. Otherwise error out if the match is not exact.
+    {
+        const auto osNewSchemaName = FindSchema(pszSchemaName);
+        if (!osNewSchemaName.has_value())
+        {
+            CPLFree(pszTableName);
+            CPLFree(pszSchemaName);
+            return nullptr;
+        }
+        CPLFree(pszSchemaName);
+        pszSchemaName = CPLStrdup(osNewSchemaName->c_str());
     }
 
     /* -------------------------------------------------------------------- */
@@ -2010,44 +2041,52 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
     else
         suffix = "";
 
-    if (eType != wkbNone && !bHavePostGIS)
     {
-        pszGFldName = "wkb_geometry";
-        osCommand.Printf("%s ( "
-                         "    %s %s, "
-                         "   %s %s, "
-                         "   PRIMARY KEY (%s)",
-                         osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(),
-                         pszSerialType, pszGFldName, pszGeomType,
-                         osFIDColumnNameEscaped.c_str());
+        CPLString osCommand;
+        if (eType != wkbNone && !bHavePostGIS)
+        {
+            pszGFldName = "wkb_geometry";
+            osCommand.Printf("%s ( "
+                             "    %s %s, "
+                             "   %s %s, "
+                             "   PRIMARY KEY (%s)",
+                             osCreateTable.c_str(),
+                             osFIDColumnNameEscaped.c_str(), pszSerialType,
+                             pszGFldName, pszGeomType,
+                             osFIDColumnNameEscaped.c_str());
+        }
+        else if (!bDeferredCreation && eType != wkbNone &&
+                 EQUAL(pszGeomType, "geography"))
+        {
+            osCommand.Printf(
+                "%s ( %s %s, %s geography(%s%s%s), PRIMARY KEY (%s)",
+                osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(),
+                pszSerialType, OGRPGEscapeColumnName(pszGFldName).c_str(),
+                pszGeometryType, suffix,
+                nSRSId ? CPLSPrintf(",%d", nSRSId) : "",
+                osFIDColumnNameEscaped.c_str());
+        }
+        else if (!bDeferredCreation && eType != wkbNone &&
+                 !EQUAL(pszGeomType, "geography") &&
+                 sPostGISVersion.nMajor >= 2)
+        {
+            osCommand.Printf(
+                "%s ( %s %s, %s geometry(%s%s%s), PRIMARY KEY (%s)",
+                osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(),
+                pszSerialType, OGRPGEscapeColumnName(pszGFldName).c_str(),
+                pszGeometryType, suffix,
+                nSRSId ? CPLSPrintf(",%d", nSRSId) : "",
+                osFIDColumnNameEscaped.c_str());
+        }
+        else
+        {
+            osCommand.Printf("%s ( %s %s, PRIMARY KEY (%s)",
+                             osCreateTable.c_str(),
+                             osFIDColumnNameEscaped.c_str(), pszSerialType,
+                             osFIDColumnNameEscaped.c_str());
+        }
+        osCreateTable = std::move(osCommand);
     }
-    else if (!bDeferredCreation && eType != wkbNone &&
-             EQUAL(pszGeomType, "geography"))
-    {
-        osCommand.Printf(
-            "%s ( %s %s, %s geography(%s%s%s), PRIMARY KEY (%s)",
-            osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(),
-            pszSerialType, OGRPGEscapeColumnName(pszGFldName).c_str(),
-            pszGeometryType, suffix, nSRSId ? CPLSPrintf(",%d", nSRSId) : "",
-            osFIDColumnNameEscaped.c_str());
-    }
-    else if (!bDeferredCreation && eType != wkbNone &&
-             !EQUAL(pszGeomType, "geography") && sPostGISVersion.nMajor >= 2)
-    {
-        osCommand.Printf(
-            "%s ( %s %s, %s geometry(%s%s%s), PRIMARY KEY (%s)",
-            osCreateTable.c_str(), osFIDColumnNameEscaped.c_str(),
-            pszSerialType, OGRPGEscapeColumnName(pszGFldName).c_str(),
-            pszGeometryType, suffix, nSRSId ? CPLSPrintf(",%d", nSRSId) : "",
-            osFIDColumnNameEscaped.c_str());
-    }
-    else
-    {
-        osCommand.Printf("%s ( %s %s, PRIMARY KEY (%s)", osCreateTable.c_str(),
-                         osFIDColumnNameEscaped.c_str(), pszSerialType,
-                         osFIDColumnNameEscaped.c_str());
-    }
-    osCreateTable = osCommand;
 
     const char *pszSI =
         CSLFetchNameValueDef(papszOptions, "SPATIAL_INDEX", "GIST");
@@ -2092,12 +2131,13 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
          * Note: PostGIS 2.0 defines geometry_columns as a view (no clean up is
          * needed)
          */
+        CPLString osCommand;
         osCommand.Printf("DELETE FROM geometry_columns WHERE f_table_name = %s "
                          "AND f_table_schema = %s",
                          pszEscapedTableNameSingleQuote,
                          pszEscapedSchemaNameSingleQuote);
 
-        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
         OGRPGClearResult(hResult);
     }
 
@@ -2105,10 +2145,10 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
     {
         SoftStartTransaction();
 
-        osCommand = osCreateTable;
+        CPLString osCommand = osCreateTable;
         osCommand += " )";
 
-        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
         if (PQresultStatus(hResult) != PGRES_COMMAND_OK)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s\n%s", osCommand.c_str(),
@@ -2330,6 +2370,64 @@ OGRLayer *OGRPGDataSource::GetLayer(int iLayer)
 }
 
 /************************************************************************/
+/*                             FindSchema()                             */
+/************************************************************************/
+
+// Check that the schema exists. If there is a single match in a case
+// insensitive way, use it. Otherwise error out if the match is not exact.
+// Return the schema name with its exact case from pg_catalog, or an empty
+// string if an error occurs.
+std::optional<std::string>
+OGRPGDataSource::FindSchema(const char *pszSchemaNameIn)
+{
+    if (strcmp(pszSchemaNameIn, "public") == 0 ||
+        strcmp(pszSchemaNameIn, "pg_temp") == 0)
+    {
+        return pszSchemaNameIn;
+    }
+
+    std::string osSchemaName;
+    std::string osCommand(
+        "SELECT nspname FROM pg_catalog.pg_namespace WHERE nspname ILIKE ");
+    osCommand += OGRPGEscapeString(hPGConn, pszSchemaNameIn);
+    PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+    if (hResult && PQntuples(hResult) == 1)
+    {
+        osSchemaName = PQgetvalue(hResult, 0, 0);
+    }
+    else if (hResult)
+    {
+        const int nTuples = PQntuples(hResult);
+        if (nTuples == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Schema \"%s\" does not exist.", pszSchemaNameIn);
+            return {};
+        }
+        for (int i = 0; i < nTuples; ++i)
+        {
+            if (strcmp(PQgetvalue(hResult, i, 0), pszSchemaNameIn) == 0)
+            {
+                osSchemaName = pszSchemaNameIn;
+                break;
+            }
+        }
+        if (osSchemaName.empty())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Several schemas exist whose name matches \"%s\", but "
+                     "not with that case. "
+                     "Please specify the schema name with the exact case.",
+                     pszSchemaNameIn);
+            return {};
+        }
+    }
+    OGRPGClearResult(hResult);
+
+    return osSchemaName;
+}
+
+/************************************************************************/
 /*                           GetLayerByName()                           */
 /************************************************************************/
 
@@ -2381,7 +2479,14 @@ OGRLayer *OGRPGDataSource::GetLayerByName(const char *pszNameIn)
     if (pos != nullptr)
     {
         *pos = '\0';
-        pszSchemaName = CPLStrdup(pszNameWithoutBracket);
+        const auto osSchemaName = FindSchema(pszNameWithoutBracket);
+        if (!osSchemaName.has_value())
+        {
+            CPLFree(pszNameWithoutBracket);
+            CPLFree(pszGeomColumnName);
+            return nullptr;
+        }
+        pszSchemaName = CPLStrdup(osSchemaName->c_str());
         pszTableName = CPLStrdup(pos + 1);
     }
     else
@@ -2462,7 +2567,7 @@ OGRErr OGRPGDataSource::InitializeMetadataTables()
 /*      OGRSpatialReference, as handles may be cached.                  */
 /************************************************************************/
 
-OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
+const OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
 
 {
     if (nId < 0 || !m_bHasSpatialRefSys)
@@ -2471,10 +2576,10 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      First, we look through our SRID cache, is it there?             */
     /* -------------------------------------------------------------------- */
-    for (int i = 0; i < nKnownSRID; i++)
+    auto oIter = m_oSRSCache.find(nId);
+    if (oIter != m_oSRSCache.end())
     {
-        if (panSRID[i] == nId)
-            return papoSRS[i];
+        return oIter->second.get();
     }
 
     EndCopy();
@@ -2483,7 +2588,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
     /*      Try looking up in spatial_ref_sys table.                        */
     /* -------------------------------------------------------------------- */
     CPLString osCommand;
-    OGRSpatialReference *poSRS = nullptr;
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
 
     osCommand.Printf("SELECT srtext, auth_name, auth_srid FROM spatial_ref_sys "
                      "WHERE srid = %d",
@@ -2496,7 +2601,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
         const char *pszWKT = PQgetvalue(hResult, 0, 0);
         const char *pszAuthName = PQgetvalue(hResult, 0, 1);
         const char *pszAuthSRID = PQgetvalue(hResult, 0, 2);
-        poSRS = new OGRSpatialReference();
+        poSRS.reset(new OGRSpatialReference());
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         // Try to import first from EPSG code, and then from WKT
@@ -2508,8 +2613,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
         }
         else if (poSRS->importFromWkt(pszWKT) != OGRERR_NONE)
         {
-            delete poSRS;
-            poSRS = nullptr;
+            poSRS.reset();
         }
     }
     else
@@ -2526,15 +2630,8 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      Add to the cache.                                               */
     /* -------------------------------------------------------------------- */
-    panSRID =
-        static_cast<int *>(CPLRealloc(panSRID, sizeof(int) * (nKnownSRID + 1)));
-    papoSRS = static_cast<OGRSpatialReference **>(
-        CPLRealloc(papoSRS, sizeof(OGRSpatialReference *) * (nKnownSRID + 1)));
-    panSRID[nKnownSRID] = nId;
-    papoSRS[nKnownSRID] = poSRS;
-    nKnownSRID++;
-
-    return poSRS;
+    oIter = m_oSRSCache.emplace(nId, std::move(poSRS)).first;
+    return oIter->second.get();
 }
 
 /************************************************************************/

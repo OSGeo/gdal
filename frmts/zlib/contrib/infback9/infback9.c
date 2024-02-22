@@ -8,6 +8,7 @@
 #include "inftree9.h"
 #include "inflate9.h"
 #include <assert.h>
+#include <string.h>
 
 #undef ZEXPORT
 #define ZEXPORT
@@ -357,7 +358,7 @@ int ZEXPORT inflateBack9(z_stream FAR *strm, in_func in, void FAR *in_desc, out_
                 ROOM();
                 if (copy > have) copy = have;
                 if (copy > left) copy = left;
-                zmemcpy(put, next, copy);
+                zmemcpy(put, next, (unsigned)copy);
                 have -= copy;
                 next += copy;
                 left -= copy;

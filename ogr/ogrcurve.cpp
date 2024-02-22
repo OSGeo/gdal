@@ -686,17 +686,6 @@ OGRCurve::ConstIterator OGRCurve::end() const
 }
 
 /************************************************************************/
-/*                            epsilonEqual()                            */
-/************************************************************************/
-
-constexpr double EPSILON = 1.0E-5;
-
-static inline bool epsilonEqual(double a, double b, double eps)
-{
-    return ::fabs(a - b) < eps;
-}
-
-/************************************************************************/
 /*                            isClockwise()                             */
 /************************************************************************/
 
@@ -771,6 +760,10 @@ int OGRCurve::isClockwise() const
         oPointBeforeSel = oPointN_m2;
     }
 
+    constexpr double EPSILON = 1.0E-5;
+    const auto epsilonEqual = [](double a, double b, double eps)
+    { return ::fabs(a - b) < eps; };
+
     if (epsilonEqual(oPointBeforeSel.getX(), oPointSel.getX(), EPSILON) &&
         epsilonEqual(oPointBeforeSel.getY(), oPointSel.getY(), EPSILON))
     {
@@ -822,7 +815,7 @@ int OGRCurve::isClockwise() const
     for (int i = 1; i < nPointCount - 1; i++)
     {
         ++oIter;
-        auto oPointNext = *oIter;
+        const auto &oPointNext = *oIter;
         dfSum += oPointCur.getX() * (oPointNext.getY() - oPointBefore.getY());
         oPointBefore = oPointCur;
         oPointCur = oPointNext;

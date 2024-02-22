@@ -639,10 +639,7 @@ def test_ogr2ogr_lib_convert_to_linear_promote_to_multi(geometryType):
 @pytest.mark.require_driver("CSV")
 def test_ogr2ogr_lib_makevalid(tmp_vsimem):
 
-    # Check if MakeValid() is available
-    g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
-    with gdaltest.error_handler(), gdaltest.disable_exceptions():
-        make_valid_available = g.MakeValid() is not None
+    make_valid_available = ogrtest.have_geos()
 
     tmpfilename = tmp_vsimem / "tmp.csv"
     with gdaltest.tempfile(
@@ -1076,11 +1073,14 @@ def test_ogr2ogr_lib_spat_srs_geographic():
 def test_ogr2ogr_lib_clipsrc_datasource(tmp_vsimem):
 
     # Prepare the data layer to clip
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_filename = tmp_vsimem / "clip_src.gpkg"
+    srcDS = gdal.GetDriverByName("GPKG").Create(src_filename, 0, 0, 0, gdal.GDT_Unknown)
     srcLayer = srcDS.CreateLayer("test", geom_type=ogr.wkbLineString)
     f = ogr.Feature(srcLayer.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0 0, 2 2)"))
     srcLayer.CreateFeature(f)
+    f = None
+    srcDS = None
 
     # Prepare the data layers to clip with
     clip_path = tmp_vsimem / "clip_test.gpkg"
@@ -1106,41 +1106,47 @@ def test_ogr2ogr_lib_clipsrc_datasource(tmp_vsimem):
 
     # Test clip with 'half_overlap_line_result' using sql statement
     sql = "SELECT * FROM cliptest WHERE filter_field = 'half_overlap_line_result'"
+    dst_filename = tmp_vsimem / "clip_dst.gpkg"
     dst_ds = gdal.VectorTranslate(
-        "", srcDS, format="Memory", clipSrc=clip_path, clipSrcSQL=sql
+        dst_filename, src_filename, format="GPKG", clipSrc=clip_path, clipSrcSQL=sql
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 1
-    dst_feature = dst_lyr.GetFeature(0)
+    dst_lyr.ResetReading()
+    dst_feature = dst_lyr.GetNextFeature()
     assert dst_feature.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,2 2)"
     dst_ds = None
+    gdal.Unlink(dst_filename)
 
     # Test clip with the "exact_overlap_full_result" using clipSrcLayer + clipSrcWhere
     dst_ds = gdal.VectorTranslate(
-        "",
-        srcDS,
-        format="Memory",
+        dst_filename,
+        src_filename,
+        format="GPKG",
         clipSrc=clip_path,
         clipSrcLayer="cliptest",
         clipSrcWhere="filter_field = 'exact_overlap_full_result'",
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 1
-    dst_feature = dst_lyr.GetFeature(0)
+    dst_lyr.ResetReading()
+    dst_feature = dst_lyr.GetNextFeature()
     assert dst_feature.GetGeometryRef().ExportToWkt() == "LINESTRING (0 0,2 2)"
     dst_ds = None
+    gdal.Unlink(dst_filename)
 
     # Test clip with the "no_overlap_no_result" using only clipSrcWhere
     dst_ds = gdal.VectorTranslate(
-        "",
-        srcDS,
-        format="Memory",
+        dst_filename,
+        src_filename,
+        format="GPKG",
         clipSrc=clip_path,
         clipSrcWhere="filter_field = 'no_overlap_no_result'",
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 0
     dst_ds = None
+    gdal.Unlink(dst_filename)
 
     # Cleanup
     gdal.Unlink(clip_path)
@@ -1242,10 +1248,10 @@ def test_ogr2ogr_lib_clipsrc_3d_polygon(tmp_vsimem):
     assert lyr.GetFeatureCount() == 2
 
     feat = lyr.GetNextFeature()
-    ogrtest.check_feature_geometry(feat, "LINESTRING Z (0 0 0, 5 5 5)")
+    ogrtest.check_feature_geometry(feat, "LINESTRING (0 0, 5 5)")
 
     feat = lyr.GetNextFeature()
-    ogrtest.check_feature_geometry(feat, "LINESTRING Z (5 5 5, 10 0 10)")
+    ogrtest.check_feature_geometry(feat, "LINESTRING (5 5, 10 0)")
 
     ds = None
 
@@ -1259,11 +1265,14 @@ def test_ogr2ogr_lib_clipsrc_3d_polygon(tmp_vsimem):
 def test_ogr2ogr_lib_clipdst_datasource(tmp_vsimem):
 
     # Prepare the data layer to clip
-    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_filename = tmp_vsimem / "clip_src.gpkg"
+    srcDS = gdal.GetDriverByName("GPKG").Create(src_filename, 0, 0, 0, gdal.GDT_Unknown)
     srcLayer = srcDS.CreateLayer("test", geom_type=ogr.wkbLineString)
     f = ogr.Feature(srcLayer.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0 0, 2 2)"))
     srcLayer.CreateFeature(f)
+    f = None
+    srcDS = None
 
     # Prepare the data layers to clip with
     clip_path = tmp_vsimem / "clip_test.gpkg"
@@ -1289,41 +1298,47 @@ def test_ogr2ogr_lib_clipdst_datasource(tmp_vsimem):
 
     # Test clip with 'half_overlap_line_result' using sql statement
     sql = "SELECT * FROM cliptest WHERE filter_field = 'half_overlap_line_result'"
+    dst_filename = tmp_vsimem / "clip_dst.gpkg"
     dst_ds = gdal.VectorTranslate(
-        "", srcDS, format="Memory", clipDst=clip_path, clipDstSQL=sql
+        dst_filename, src_filename, format="GPKG", clipDst=clip_path, clipDstSQL=sql
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 1
-    dst_feature = dst_lyr.GetFeature(0)
+    dst_lyr.ResetReading()
+    dst_feature = dst_lyr.GetNextFeature()
     assert dst_feature.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,2 2)"
     dst_ds = None
+    gdal.Unlink(dst_filename)
 
     # Test clip with the "exact_overlap_full_result" using clipDstLayer + clipDstWhere
     dst_ds = gdal.VectorTranslate(
-        "",
-        srcDS,
-        format="Memory",
+        dst_filename,
+        src_filename,
+        format="GPKG",
         clipDst=clip_path,
         clipDstLayer="cliptest",
         clipDstWhere="filter_field = 'exact_overlap_full_result'",
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 1
-    dst_feature = dst_lyr.GetFeature(0)
+    dst_lyr.ResetReading()
+    dst_feature = dst_lyr.GetNextFeature()
     assert dst_feature.GetGeometryRef().ExportToWkt() == "LINESTRING (0 0,2 2)"
     dst_ds = None
+    gdal.Unlink(dst_filename)
 
     # Test clip with the "no_overlap_no_result" using only clipSrcWhere
     dst_ds = gdal.VectorTranslate(
-        "",
-        srcDS,
-        format="Memory",
+        dst_filename,
+        src_filename,
+        format="GPKG",
         clipDst=clip_path,
         clipDstWhere="filter_field = 'no_overlap_no_result'",
     )
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetFeatureCount() == 0
     dst_ds = None
+    gdal.Unlink(dst_filename)
 
     # Cleanup
     gdal.Unlink(clip_path)
@@ -2126,12 +2141,41 @@ def test_ogr2ogr_lib_OGR2OGR_USE_ARROW_API_YES(limit):
     fld_defn = ogr.FieldDefn("json_field")
     fld_defn.SetSubType(ogr.OFSTJSON)
     src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_alternative_name")
+    fld_defn.SetAlternativeName("alias")
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_comment")
+    fld_defn.SetComment("my_comment")
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_default")
+    fld_defn.SetDefault("'default_val'")
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_width")
+    fld_defn.SetWidth(10)
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_unique")
+    fld_defn.SetUnique(True)
+    src_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("field_with_domain", ogr.OFTInteger)
+    fld_defn.SetDomainName("my_domain")
+    src_lyr.CreateField(fld_defn)
     for i in range(2):
         f = ogr.Feature(src_lyr.GetLayerDefn())
         f["str_field"] = "foo%d" % i
         f["json_field"] = '{"foo":"bar"}'
+        f["field_with_domain"] = 1 + i
         f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (%d 2)" % i))
         src_lyr.CreateFeature(f)
+
+    assert src_ds.AddFieldDomain(
+        ogr.CreateCodedFieldDomain(
+            "my_domain",
+            "desc",
+            ogr.OFTString,
+            ogr.OFSTNone,
+            {1: "one", 2: "two", 3: None},
+        )
+    )
 
     got_msg = []
 
@@ -2158,11 +2202,28 @@ def test_ogr2ogr_lib_OGR2OGR_USE_ARROW_API_YES(limit):
     assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "json_field"
     assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
     assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetSubType() == ogr.OFSTJSON
+    assert (
+        out_lyr.GetLayerDefn().GetFieldDefn(2).GetName()
+        == "field_with_alternative_name"
+    )
+    assert out_lyr.GetLayerDefn().GetFieldDefn(2).GetAlternativeName() == "alias"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(3).GetName() == "field_with_comment"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(3).GetComment() == "my_comment"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(4).GetName() == "field_with_default"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(4).GetDefault() == "'default_val'"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(5).GetName() == "field_with_width"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(5).GetWidth() == 10
+    assert out_lyr.GetLayerDefn().GetFieldDefn(6).GetName() == "field_unique"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(6).IsUnique()
+    assert out_lyr.GetLayerDefn().GetFieldDefn(7).GetName() == "field_with_domain"
+    assert out_lyr.GetLayerDefn().GetFieldDefn(7).GetType() == ogr.OFTInteger
+    assert out_lyr.GetLayerDefn().GetFieldDefn(7).GetDomainName() == "my_domain"
     assert out_lyr.GetFeatureCount() == (limit if limit else src_lyr.GetFeatureCount())
 
     f = out_lyr.GetNextFeature()
     assert f["str_field"] == "foo0"
     assert f["json_field"] == '{"foo":"bar"}'
+    assert f["field_with_domain"] == 1
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (0 2)"
 
     if not limit:
@@ -2187,3 +2248,219 @@ def test_ogr2ogr_lib_OGR2OGR_USE_ARROW_API_YES(limit):
     assert (
         out_lyr.GetFeatureCount() == (limit if limit else src_lyr.GetFeatureCount()) + 2
     )
+
+
+###############################################################################
+# Test JSON types roundtrip
+
+
+@pytest.mark.require_driver("GeoJSON")
+@pytest.mark.require_driver("GPKG")
+def test_json_types(tmp_vsimem):
+    """Test JSON types"""
+
+    def test_extended_types(lyr):
+        assert lyr.GetFeatureCount() == 1
+        f = lyr.GetNextFeature()
+
+        fd = f.GetFieldDefnRef(0)
+        assert fd.GetType() == ogr.OFTString
+        assert fd.GetSubType() == ogr.OFSTNone
+
+        fd = f.GetFieldDefnRef(1)
+        assert fd.GetType() == ogr.OFTIntegerList
+        assert fd.GetSubType() == ogr.OFSTNone
+
+        fd = f.GetFieldDefnRef(2)
+        assert fd.GetType() == ogr.OFTString
+        assert fd.GetSubType() == ogr.OFSTJSON
+
+        fd = f.GetFieldDefnRef(3)
+        assert fd.GetType() == ogr.OFTInteger
+        assert fd.GetSubType() == ogr.OFSTNone
+
+    def test_types(lyr):
+        assert lyr.GetFeatureCount() == 1
+        f = lyr.GetNextFeature()
+
+        fd = f.GetFieldDefnRef(0)
+        assert fd.GetType() == ogr.OFTString
+        assert fd.GetSubType() == ogr.OFSTNone
+
+        fd = f.GetFieldDefnRef(1)
+        assert fd.GetType() == ogr.OFTString
+        assert fd.GetSubType() == ogr.OFSTJSON
+
+        fd = f.GetFieldDefnRef(2)
+        assert fd.GetType() == ogr.OFTString
+        assert fd.GetSubType() == ogr.OFSTJSON
+
+        fd = f.GetFieldDefnRef(3)
+        assert fd.GetType() == ogr.OFTInteger
+        assert fd.GetSubType() == ogr.OFSTNone
+
+    with gdal.ExceptionMgr(useExceptions=True):
+
+        src = str(tmp_vsimem / "test_json.geojson")
+        dst = str(tmp_vsimem / "test_json.gpkg")
+
+        data = """{
+                "type": "FeatureCollection",
+                "features": [
+                    { "type": "Feature", "properties": { "str": "[5]", "int_list": [5], "map": {"foo": "bar", "baz": 5}, "int_lit": 5 }, "geometry": {"type": "Point", "coordinates": [ 1, 2 ]} }
+                ]
+            }"""
+        f = gdal.VSIFOpenL(src, "wb")
+        gdal.VSIFWriteL(data, 1, len(data), f)
+        gdal.VSIFCloseL(f)
+
+        with gdal.OpenEx(src, gdal.OF_VECTOR | gdal.OF_READONLY) as ds:
+            lyr = ds.GetLayer(0)
+            test_extended_types(lyr)
+
+        options = gdal.VectorTranslateOptions(layerName="test")
+
+        ds_output = gdal.VectorTranslate(
+            srcDS=src, destNameOrDestDS=dst, options=options
+        )
+        lyr = ds_output.GetLayerByName("test")
+
+        test_types(lyr)
+
+        # Write it back to json
+        round_trip_dst = str(tmp_vsimem / "test_json_back.geojson")
+
+        options = gdal.VectorTranslateOptions(
+            layerCreationOptions={"AUTODETECT_JSON_STRINGS": "FALSE"}
+        )
+        gdal.VectorTranslate(
+            srcDS=dst, destNameOrDestDS=round_trip_dst, options=options
+        )
+
+        with gdal.OpenEx(round_trip_dst, gdal.OF_VECTOR | gdal.OF_READONLY) as ds:
+            lyr = ds.GetLayer(0)
+            test_extended_types(lyr)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("enable_exceptions", [True, False])
+@pytest.mark.parametrize("enable_debug", [True, False])
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_accumulerated_errors(tmp_vsimem, enable_exceptions, enable_debug):
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetFID(1)
+    src_lyr.CreateFeature(f)
+
+    out_filename = str(tmp_vsimem / "test_ogr2ogr_lib_accumulerated_errors.gpkg")
+    gdal.VectorTranslate(out_filename, src_ds)
+
+    def my_handler(errorClass, errno, msg):
+        pass
+
+    with gdaltest.error_handler(my_handler if enable_debug else None):
+        with gdaltest.config_option("CPL_DEBUG", "ON" if enable_debug else "OFF"):
+            with gdal.ExceptionMgr(useExceptions=enable_exceptions):
+                if enable_exceptions:
+                    with pytest.raises(
+                        Exception,
+                        match=r"Unable to write feature 1 from layer test\.\nMay be caused by: failed to execute insert : UNIQUE constraint failed: test\.fid",
+                    ):
+                        gdal.VectorTranslate(
+                            out_filename, src_ds, options="-preserve_fid -append"
+                        )
+                else:
+                    assert (
+                        gdal.VectorTranslate(
+                            out_filename, src_ds, options="-preserve_fid -append"
+                        )
+                        is None
+                    )
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_gpkg_to_shp_preserved_fid(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "test_ogr2ogr_lib_gpkg_to_shp_preserved_fid.gpkg")
+    src_ds = gdal.GetDriverByName("GPKG").Create(
+        src_filename, 0, 0, 0, gdal.GDT_Unknown
+    )
+    src_lyr = src_ds.CreateLayer("test")
+    src_lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField("foo", "bar")
+    src_lyr.CreateFeature(f)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField("foo", "baz")
+    src_lyr.CreateFeature(f)
+    src_ds.Close()
+
+    out_filename = str(tmp_vsimem / "test_ogr2ogr_lib_accumulerated_errors.shp")
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        if errorClass != gdal.CE_Debug:
+            got_msg.append(msg)
+        return
+
+    with gdaltest.error_handler(my_handler):
+        out_ds = gdal.VectorTranslate(out_filename, src_filename, preserveFID=True)
+    assert got_msg == ["Feature id 1 not preserved", "Feature id 2 not preserved"]
+    out_lyr = out_ds.GetLayer(0)
+    f = out_lyr.GetNextFeature()
+    assert f.GetFID() == 0
+    assert f["foo"] == "bar"
+    f = out_lyr.GetNextFeature()
+    assert f.GetFID() == 1
+    assert f["foo"] == "baz"
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_gpkg_to_shp_truncated_field_names(tmp_vsimem):
+
+    src_filename = str(
+        tmp_vsimem / "test_ogr2ogr_lib_gpkg_to_shp_truncated_field_names.gpkg"
+    )
+    src_ds = gdal.GetDriverByName("GPKG").Create(
+        src_filename, 0, 0, 0, gdal.GDT_Unknown
+    )
+    src_lyr = src_ds.CreateLayer("test")
+    src_lyr.CreateField(ogr.FieldDefn("shortname"))
+    src_lyr.CreateField(ogr.FieldDefn("too_long_for_shapefile"))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetField("shortname", "foo")
+    f.SetField("too_long_for_shapefile", "bar")
+    src_lyr.CreateFeature(f)
+    src_ds.Close()
+
+    out_filename = str(
+        tmp_vsimem / "test_ogr2ogr_lib_gpkg_to_shp_truncated_field_names.shp"
+    )
+
+    got_msg = []
+
+    def my_handler(errorClass, errno, msg):
+        if errorClass != gdal.CE_Debug:
+            got_msg.append(msg)
+        return
+
+    with gdaltest.error_handler(my_handler):
+        out_ds = gdal.VectorTranslate(out_filename, src_filename)
+    assert got_msg == [
+        "Normalized/laundered field name: 'too_long_for_shapefile' to 'too_long_f'"
+    ]
+    out_lyr = out_ds.GetLayer(0)
+    f = out_lyr.GetNextFeature()
+    assert f["shortname"] == "foo"
+    assert f["too_long_f"] == "bar"

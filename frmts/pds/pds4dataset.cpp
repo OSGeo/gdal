@@ -35,6 +35,7 @@
 #include "gdal_priv_templates.hpp"
 #include "ogreditablelayer.h"
 #include "pds4dataset.h"
+#include "pdsdrivercore.h"
 
 #include <cstdlib>
 #include <vector>
@@ -69,8 +70,7 @@ PDS4WrapperRasterBand::PDS4WrapperRasterBand(GDALRasterBand *poBaseBandIn)
 
 void PDS4WrapperRasterBand::SetMaskBand(GDALRasterBand *poMaskBand)
 {
-    bOwnMask = true;
-    poMask = poMaskBand;
+    poMask.reset(poMaskBand, true);
     nMaskFlags = 0;
 }
 
@@ -233,8 +233,7 @@ PDS4RawRasterBand::PDS4RawRasterBand(GDALDataset *l_poDS, int l_nBand,
 
 void PDS4RawRasterBand::SetMaskBand(GDALRasterBand *poMaskBand)
 {
-    bOwnMask = true;
-    poMask = poMaskBand;
+    poMask.reset(poMaskBand, true);
     nMaskFlags = 0;
 }
 
@@ -431,7 +430,8 @@ CPLErr PDS4MaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 
     if (m_poBaseBand->RasterIO(GF_Read, nXOff, nYOff, nReqXSize, nReqYSize,
                                m_pBuffer, nReqXSize, nReqYSize, eSrcDT,
-                               nSrcDTSize, nSrcDTSize * nBlockXSize,
+                               nSrcDTSize,
+                               static_cast<GSpacing>(nSrcDTSize) * nBlockXSize,
                                nullptr) != CE_None)
     {
         return CE_Failure;
@@ -683,52 +683,6 @@ char **PDS4Dataset::GetFileList()
         CSLDestroy(papszTemp);
     }
     return papszFileList;
-}
-
-/************************************************************************/
-/*                               Identify()                             */
-/************************************************************************/
-
-int PDS4Dataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "PDS4:"))
-        return TRUE;
-    if (poOpenInfo->nHeaderBytes == 0)
-        return FALSE;
-
-    const auto HasProductSomethingRootElement = [](const char *pszStr)
-    {
-        return strstr(pszStr, "Product_Observational") != nullptr ||
-               strstr(pszStr, "Product_Ancillary") != nullptr ||
-               strstr(pszStr, "Product_Collection") != nullptr;
-    };
-    const auto HasPDS4Schema = [](const char *pszStr)
-    { return strstr(pszStr, "://pds.nasa.gov/pds4/pds/v1") != nullptr; };
-
-    for (int i = 0; i < 2; ++i)
-    {
-        const char *pszHeader =
-            reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
-        int nMatches = 0;
-        if (HasProductSomethingRootElement(pszHeader))
-            nMatches++;
-        if (HasPDS4Schema(pszHeader))
-            nMatches++;
-        if (nMatches == 2)
-        {
-            return TRUE;
-        }
-        if (i == 0)
-        {
-            if (nMatches == 0 || poOpenInfo->nHeaderBytes >= 8192)
-                break;
-            // If we have found one of the 2 matching elements to identify
-            // PDS4 products, but have only ingested the default 1024 bytes,
-            // then try to ingest more.
-            poOpenInfo->TryToIngest(8192);
-        }
-    }
-    return FALSE;
 }
 
 /************************************************************************/
@@ -1424,7 +1378,7 @@ void PDS4Dataset::ReadGeoreferencing(CPLXMLNode *psProduct)
     {
         if (GetRasterCount())
         {
-            m_oSRS = oSRS;
+            m_oSRS = std::move(oSRS);
         }
         else if (GetLayerCount())
         {
@@ -1467,7 +1421,7 @@ static CPLString FixupTableFilename(const CPLString &osFilename)
     if (!osExt.empty())
     {
         CPLString osTry(osFilename);
-        if (islower(osExt[0]))
+        if (islower(static_cast<unsigned char>(osExt[0])))
         {
             osTry = CPLResetExtension(osFilename, osExt.toupper());
         }
@@ -1557,7 +1511,7 @@ bool PDS4Dataset::OpenTableDelimited(const char *pszFilename,
 // and https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.sch
 PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
 {
-    if (!Identify(poOpenInfo))
+    if (!PDS4DriverIdentify(poOpenInfo))
         return nullptr;
 
     CPLString osXMLFilename(poOpenInfo->pszFilename);
@@ -1630,7 +1584,7 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
         "");
     const bool bBottomToTop = EQUAL(pszVertDir, "Bottom to Top");
 
-    auto poDS = cpl::make_unique<PDS4Dataset>();
+    auto poDS = std::make_unique<PDS4Dataset>();
     poDS->m_osXMLFilename = osXMLFilename;
     poDS->eAccess = eAccess;
     poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
@@ -2045,7 +1999,7 @@ PDS4Dataset *PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
 
             for (int i = 0; i < l_nBands; i++)
             {
-                auto poBand = cpl::make_unique<PDS4RawRasterBand>(
+                auto poBand = std::make_unique<PDS4RawRasterBand>(
                     poDS.get(), i + 1, poDS->m_fpImage,
                     (bBottomToTop) ? nOffset + nBandOffset * i +
                                          static_cast<vsi_l_offset>(nLines - 1) *
@@ -3170,7 +3124,9 @@ bool PDS4Dataset::InitImageFile()
                     GIntBig nOffset = CPLAtoGIntBig(pszBlockOffset);
                     if (y != 0)
                     {
-                        if (nOffset != nLastOffset + nBlockSizeBytes * nBands)
+                        if (nOffset !=
+                            nLastOffset +
+                                static_cast<GIntBig>(nBlockSizeBytes) * nBands)
                         {
                             CPLError(CE_Warning, CPLE_AppDefined,
                                      "Block %d,%d not at expected "
@@ -4182,7 +4138,8 @@ OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
     std::string osBasename(pszName);
     for (char &ch : osBasename)
     {
-        if (!isalnum(ch) && static_cast<unsigned>(ch) <= 127)
+        if (!isalnum(static_cast<unsigned char>(ch)) &&
+            static_cast<unsigned>(ch) <= 127)
             ch = '_';
     }
 
@@ -4598,7 +4555,7 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
         }
     }
 
-    auto poDS = cpl::make_unique<PDS4Dataset>();
+    auto poDS = std::make_unique<PDS4Dataset>();
     poDS->SetDescription(pszFilename);
     poDS->m_bMustInitImageFile = true;
     poDS->m_fpImage = fpImage;
@@ -4607,14 +4564,14 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
-    poDS->m_osImageFilename = osImageFilename;
+    poDS->m_osImageFilename = std::move(osImageFilename);
     poDS->m_bCreateHeader = true;
     poDS->m_bStripFileAreaObservationalFromTemplate = true;
     poDS->m_osInterleave = pszInterleave;
     poDS->m_papszCreationOptions = CSLDuplicate(aosOptions.List());
     poDS->m_bUseSrcLabel = aosOptions.FetchBool("USE_SRC_LABEL", true);
     poDS->m_bIsLSB = bIsLSB;
-    poDS->m_osHeaderParsingStandard = osHeaderParsingStandard;
+    poDS->m_osHeaderParsingStandard = std::move(osHeaderParsingStandard);
     poDS->m_bCreatedFromExistingBinaryFile = bCreateLabelOnly;
 
     if (EQUAL(pszInterleave, "BIP"))
@@ -4632,13 +4589,13 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     {
         if (poDS->m_poExternalDS != nullptr)
         {
-            auto poBand = cpl::make_unique<PDS4WrapperRasterBand>(
+            auto poBand = std::make_unique<PDS4WrapperRasterBand>(
                 poDS->m_poExternalDS->GetRasterBand(i + 1));
             poDS->SetBand(i + 1, std::move(poBand));
         }
         else
         {
-            auto poBand = cpl::make_unique<PDS4RawRasterBand>(
+            auto poBand = std::make_unique<PDS4RawRasterBand>(
                 poDS.get(), i + 1, poDS->m_fpImage,
                 poDS->m_nBaseOffset + nBandOffset * i, nPixelOffset,
                 nLineOffset, eType,
@@ -4940,174 +4897,13 @@ CPLErr PDS4Dataset::Delete(const char *pszFilename)
 void GDALRegister_PDS4()
 
 {
-    if (GDALGetDriverByName("PDS4") != nullptr)
+    if (GDALGetDriverByName(PDS4_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("PDS4");
-    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_DELETE_FIELD, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_REORDER_FIELDS, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,
-                              "Name Type WidthPrecision");
-    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
-
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "NASA Planetary Data System 4");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/pds4.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "xml");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte Int8 UInt16 Int16 UInt32 Int32 Float32 "
-                              "Float64 CFloat32 CFloat64");
-    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList/>");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_OPENOPTIONLIST,
-        "<OpenOptionList>"
-        "  <Option name='LAT' type='string' scope='vector' description="
-        "'Name of a field containing a Latitude value' default='Latitude'/>"
-        "  <Option name='LONG' type='string' scope='vector' description="
-        "'Name of a field containing a Longitude value' default='Longitude'/>"
-        "  <Option name='ALT' type='string' scope='vector' description="
-        "'Name of a field containing a Altitude value' default='Altitude'/>"
-        "  <Option name='WKT' type='string' scope='vector' description="
-        "'Name of a field containing a geometry encoded in the WKT format' "
-        "default='WKT'/>"
-        "  <Option name='KEEP_GEOM_COLUMNS' scope='vector' type='boolean' "
-        "description="
-        "'whether to add original x/y/geometry columns as regular fields.' "
-        "default='NO' />"
-        "</OpenOptionList>");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "  <Option name='IMAGE_FILENAME' type='string' scope='raster' "
-        "description="
-        "'Image filename'/>"
-        "  <Option name='IMAGE_EXTENSION' type='string' scope='raster' "
-        "description="
-        "'Extension of the binary raw/geotiff file'/>"
-        "  <Option name='CREATE_LABEL_ONLY' scope='raster' type='boolean' "
-        "description="
-        "'whether to create only the XML label when converting from an "
-        "existing raw format.' default='NO' />"
-        "  <Option name='IMAGE_FORMAT' type='string-select' scope='raster' "
-        "description='Format of the image file' default='RAW'>"
-        "     <Value>RAW</Value>"
-        "     <Value>GEOTIFF</Value>"
-        "  </Option>"
-#ifdef notdef
-        "  <Option name='GEOTIFF_OPTIONS' type='string' scope='raster' "
-        "description='Comma separated list of KEY=VALUE tuples to forward "
-        "to the GeoTIFF driver'/>"
-#endif
-        "  <Option name='INTERLEAVE' type='string-select' scope='raster' "
-        "description="
-        "'Pixel organization' default='BSQ'>"
-        "     <Value>BSQ</Value>"
-        "     <Value>BIP</Value>"
-        "     <Value>BIL</Value>"
-        "  </Option>"
-        "  <Option name='VAR_*' type='string' scope='raster,vector' "
-        "description="
-        "'Value to substitute to a variable in the template'/>"
-        "  <Option name='TEMPLATE' type='string' scope='raster,vector' "
-        "description="
-        "'.xml template to use'/>"
-        "  <Option name='USE_SRC_LABEL' type='boolean' scope='raster' "
-        "description='Whether to use source label in PDS4 to PDS4 conversions' "
-        "default='YES'/>"
-        "  <Option name='LATITUDE_TYPE' type='string-select' "
-        "scope='raster,vector' "
-        "description='Value of latitude_type' default='Planetocentric'>"
-        "     <Value>Planetocentric</Value>"
-        "     <Value>Planetographic</Value>"
-        "  </Option>"
-        "  <Option name='LONGITUDE_DIRECTION' type='string-select' "
-        "scope='raster,vector' "
-        "description='Value of longitude_direction' "
-        "default='Positive East'>"
-        "     <Value>Positive East</Value>"
-        "     <Value>Positive West</Value>"
-        "  </Option>"
-        "  <Option name='RADII' type='string' scope='raster,vector' "
-        "description='Value of form "
-        "semi_major_radius,semi_minor_radius to override the ones of the SRS'/>"
-        "  <Option name='ARRAY_TYPE' type='string-select' scope='raster' "
-        "description='Name of the "
-        "Array XML element' default='Array_3D_Image'>"
-        "     <Value>Array</Value>"
-        "     <Value>Array_2D</Value>"
-        "     <Value>Array_2D_Image</Value>"
-        "     <Value>Array_2D_Map</Value>"
-        "     <Value>Array_2D_Spectrum</Value>"
-        "     <Value>Array_3D</Value>"
-        "     <Value>Array_3D_Image</Value>"
-        "     <Value>Array_3D_Movie</Value>"
-        "     <Value>Array_3D_Spectrum</Value>"
-        "  </Option>"
-        "  <Option name='ARRAY_IDENTIFIER' type='string' scope='raster' "
-        "description='Identifier to put in the Array element'/>"
-        "  <Option name='UNIT' type='string' scope='raster' "
-        "description='Name of the unit of the array elements'/>"
-        "  <Option name='BOUNDING_DEGREES' type='string' scope='raster,vector' "
-        "description='Manually set bounding box with the syntax "
-        "west_lon,south_lat,east_lon,north_lat'/>"
-        "</CreationOptionList>");
-
-    poDriver->SetMetadataItem(
-        GDAL_DS_LAYER_CREATIONOPTIONLIST,
-        "<LayerCreationOptionList>"
-        "  <Option name='TABLE_TYPE' type='string-select' description='Type of "
-        "table' default='DELIMITED'>"
-        "     <Value>DELIMITED</Value>"
-        "     <Value>CHARACTER</Value>"
-        "     <Value>BINARY</Value>"
-        "  </Option>"
-        "  <Option name='LINE_ENDING' type='string-select' description="
-        "'end-of-line sequence. Only applies for "
-        "TABLE_TYPE=DELIMITED/CHARACTER' "
-        "default='CRLF'>"
-        "    <Value>CRLF</Value>"
-        "    <Value>LF</Value>"
-        "  </Option>"
-        "  <Option name='GEOM_COLUMNS' type='string-select' description='How "
-        "geometry is encoded' default='AUTO'>"
-        "     <Value>AUTO</Value>"
-        "     <Value>WKT</Value>"
-        "     <Value>LONG_LAT</Value>"
-        "  </Option>"
-        "  <Option name='CREATE_VRT' type='boolean' description='Whether to "
-        "generate "
-        "a OGR VRT file. Only applies for TABLE_TYPE=DELIMITED' default='YES'/>"
-        "  <Option name='LAT' type='string' description="
-        "'Name of a field containing a Latitude value' default='Latitude'/>"
-        "  <Option name='LONG' type='string' description="
-        "'Name of a field containing a Longitude value' default='Longitude'/>"
-        "  <Option name='ALT' type='string' description="
-        "'Name of a field containing a Altitude value' default='Altitude'/>"
-        "  <Option name='WKT' type='string' description="
-        "'Name of a field containing a WKT value' default='WKT'/>"
-        "  <Option name='SAME_DIRECTORY' type='boolean' description="
-        "'Whether table files should be created in the same "
-        "directory, or in a subdirectory' default='NO'/>"
-        "</LayerCreationOptionList>");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONFIELDDATATYPES,
-        "Integer Integer64 Real String Date DateTime Time");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean");
+    PDS4DriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = PDS4Dataset::Open;
-    poDriver->pfnIdentify = PDS4Dataset::Identify;
     poDriver->pfnCreate = PDS4Dataset::Create;
     poDriver->pfnCreateCopy = PDS4Dataset::CreateCopy;
     poDriver->pfnDelete = PDS4Dataset::Delete;

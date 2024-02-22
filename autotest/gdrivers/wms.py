@@ -55,7 +55,7 @@ def gpwv3_wms():
     tree = ET.parse(wms_xml)
     srv = next(tree.iter("ServerUrl")).text
 
-    wms_srv1_ok = gdaltest.gdalurlopen(srv) is not None
+    wms_srv1_ok = gdaltest.gdalurlopen(srv, timeout=5) is not None
 
     if not wms_srv1_ok:
         pytest.skip(f"Could not read from {srv}")
@@ -869,14 +869,16 @@ def test_wms_19():
 # Test reading data via MRF/LERC
 
 
+@pytest.mark.require_creation_option("MRF", "LERC")
 def test_wms_data_via_mrf():
 
-    mrfdrv = gdal.GetDriverByName("MRF")
+    srv = "http://astro.arcgis.com"
+    if gdaltest.gdalurlopen(srv, timeout=5) is None:
+        pytest.skip(reason=f"{srv} is down")
 
-    if mrfdrv is None or "LERC" not in mrfdrv.GetMetadataItem("DMD_CREATIONOPTIONLIST"):
-        pytest.skip()
-
-    url = "http://astro.arcgis.com/arcgis/rest/services/OnMars/HiRISE_DEM/ImageServer/tile/${z}/${y}/${x}"
+    url = (
+        srv + "/arcgis/rest/services/OnMars/HiRISE_DEM/ImageServer/tile/${z}/${y}/${x}"
+    )
     dstemplate = """<GDAL_WMS>
 <Service name="TMS" ServerUrl="{url}"/>
 <DataWindow SizeX="513" SizeY="513"/>
@@ -1030,3 +1032,129 @@ def test_gdal_subdataset_modify_filename(filename):
             )
             == "WMS:https://xxxx/?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=MODIS_Aqua_L3_Land_Surface_Temp_Monthly_CMG_Night_TES"
         )
+
+
+def test_wms_cache_path():
+
+    with gdaltest.config_option("GDAL_DEFAULT_WMS_CACHE_PATH", "/vsimem/foo"):
+        ds = gdal.Open("data/wms/frmt_wms_openstreetmap_tms.xml")
+        assert (
+            ds.GetMetadataItem("CACHE_PATH")
+            == "/vsimem/foo/b37af3c29458379e6fdf4ed73300f54e"
+        )
+
+    with gdaltest.config_options(
+        {"GDAL_DEFAULT_WMS_CACHE_PATH": "", "XDG_CACHE_HOME": "/vsimem/foo"}
+    ):
+        ds = gdal.Open("data/wms/frmt_wms_openstreetmap_tms.xml")
+        assert (
+            ds.GetMetadataItem("CACHE_PATH")
+            == "/vsimem/foo/gdalwmscache/b37af3c29458379e6fdf4ed73300f54e"
+        )
+
+    with gdaltest.config_options(
+        {
+            "GDAL_DEFAULT_WMS_CACHE_PATH": "",
+            "XDG_CACHE_HOME": "",
+            "HOME": "/vsimem/foo",
+            "USERPROFILE": "/vsimem/foo",
+        }
+    ):
+        ds = gdal.Open("data/wms/frmt_wms_openstreetmap_tms.xml")
+        assert (
+            ds.GetMetadataItem("CACHE_PATH")
+            == "/vsimem/foo/.cache/gdalwmscache/b37af3c29458379e6fdf4ed73300f54e"
+        )
+
+    with gdaltest.config_options(
+        {
+            "GDAL_DEFAULT_WMS_CACHE_PATH": "",
+            "XDG_CACHE_HOME": "",
+            "HOME": "",
+            "USERPROFILE": "",
+            "CPL_TMPDIR": "/vsimem/foo",
+            "USERNAME": "",
+            "USER": "user",
+        }
+    ):
+        ds = gdal.Open("data/wms/frmt_wms_openstreetmap_tms.xml")
+        assert (
+            ds.GetMetadataItem("CACHE_PATH")
+            == "/vsimem/foo/gdalwmscache_user/b37af3c29458379e6fdf4ed73300f54e"
+        )
+
+    with gdaltest.config_options(
+        {
+            "GDAL_DEFAULT_WMS_CACHE_PATH": "",
+            "XDG_CACHE_HOME": "",
+            "HOME": "",
+            "USERPROFILE": "",
+            "CPL_TMPDIR": "/vsimem/foo",
+            "USER": "",
+            "USERNAME": "user",
+        }
+    ):
+        ds = gdal.Open("data/wms/frmt_wms_openstreetmap_tms.xml")
+        assert (
+            ds.GetMetadataItem("CACHE_PATH")
+            == "/vsimem/foo/gdalwmscache_user/b37af3c29458379e6fdf4ed73300f54e"
+        )
+
+    with gdaltest.config_options(
+        {
+            "GDAL_DEFAULT_WMS_CACHE_PATH": "",
+            "XDG_CACHE_HOME": "",
+            "HOME": "",
+            "USERPROFILE": "",
+            "CPL_TMPDIR": "",
+            "TMPDIR": "/vsimem/foo",
+            "USERNAME": "",
+            "USER": "user",
+        }
+    ):
+        ds = gdal.Open("data/wms/frmt_wms_openstreetmap_tms.xml")
+        assert (
+            ds.GetMetadataItem("CACHE_PATH")
+            == "/vsimem/foo/gdalwmscache_user/b37af3c29458379e6fdf4ed73300f54e"
+        )
+
+    with gdaltest.config_options(
+        {
+            "GDAL_DEFAULT_WMS_CACHE_PATH": "",
+            "XDG_CACHE_HOME": "",
+            "HOME": "",
+            "USERPROFILE": "",
+            "CPL_TMPDIR": "",
+            "TMPDIR": "",
+            "TEMP": "/vsimem/foo",
+            "USERNAME": "",
+            "USER": "user",
+        }
+    ):
+        ds = gdal.Open("data/wms/frmt_wms_openstreetmap_tms.xml")
+        assert (
+            ds.GetMetadataItem("CACHE_PATH")
+            == "/vsimem/foo/gdalwmscache_user/b37af3c29458379e6fdf4ed73300f54e"
+        )
+
+    with gdaltest.config_options(
+        {
+            "GDAL_DEFAULT_WMS_CACHE_PATH": "",
+            "XDG_CACHE_HOME": "",
+            "HOME": "",
+            "USERPROFILE": "",
+            "CPL_TMPDIR": "",
+            "TMPDIR": "",
+            "TEMP": "",
+            "USERNAME": "",
+            "USER": "",
+        }
+    ):
+        ds = gdal.Open("data/wms/frmt_wms_openstreetmap_tms.xml")
+        assert (
+            ds.GetMetadataItem("CACHE_PATH").replace("\\", "/")
+            == "./gdalwmscache_b37af3c29458379e6fdf4ed73300f54e/b37af3c29458379e6fdf4ed73300f54e"
+        )
+
+    with pytest.raises(Exception):
+        gdal.Open("<GDAL_WMS><Service/><Cache/></GDAL_WMS>")

@@ -1010,7 +1010,9 @@ static void OGRSQLITE_hstore_get_value(sqlite3_context *pContext,
 #define SQLITE_INNOCUOUS 0
 #endif
 
+#ifndef UTF8_INNOCUOUS
 #define UTF8_INNOCUOUS (SQLITE_UTF8 | SQLITE_DETERMINISTIC | SQLITE_INNOCUOUS)
+#endif
 
 static void *OGRSQLiteRegisterSQLFunctions(sqlite3 *hDB)
 {
@@ -1154,11 +1156,7 @@ static void *OGRSQLiteRegisterSQLFunctions(sqlite3 *hDB)
             }
             if (bRegisterMakeValid)
             {
-                OGRPoint p(0, 0);
-                CPLErrorStateBackuper oBackuper;
-                CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-                auto validGeom = std::unique_ptr<OGRGeometry>(p.MakeValid());
-                return validGeom != nullptr;
+                return OGRGeometryFactory::haveGEOS();
             }
             return false;
         }();

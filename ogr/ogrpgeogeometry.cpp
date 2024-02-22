@@ -302,11 +302,10 @@ RegisterEdge(const double *padfX, const double *padfY, const double *padfZ,
     oVector.push_back(padfX[1 - idx]);
     oVector.push_back(padfY[1 - idx]);
     oVector.push_back(padfZ[1 - idx]);
-    std::map<std::vector<double>, std::pair<int, int>>::iterator oIter =
-        oMapEdges.find(oVector);
+    const auto oIter = oMapEdges.find(oVector);
     if (oIter == oMapEdges.end())
     {
-        oMapEdges[oVector] = std::pair<int, int>(nPart, -1);
+        oMapEdges[oVector] = std::pair(nPart, -1);
     }
     else
     {
@@ -349,8 +348,7 @@ static const std::pair<int, int> &GetEdgeOwners(
     oVector.push_back(padfX[1 - idx]);
     oVector.push_back(padfY[1 - idx]);
     oVector.push_back(padfZ[1 - idx]);
-    std::map<std::vector<double>, std::pair<int, int>>::const_iterator oIter =
-        oMapEdges.find(oVector);
+    const auto oIter = oMapEdges.find(oVector);
     CPLAssert(oIter != oMapEdges.end());
     return oIter->second;
 }
@@ -453,7 +451,7 @@ OGRGeometry *OGRCreateFromMultiPatch(int nParts, const GInt32 *panPartStart,
             const int nPartStart = panPartStart[iPart];
             for (int j = 0; j < 3; j++)
             {
-                const std::pair<int, int> &oPair = GetEdgeOwners(
+                const auto &oPair = GetEdgeOwners(
                     padfX + nPartStart + j, padfY + nPartStart + j,
                     padfZ + nPartStart + j, oMapEdges);
                 const int iOtherPart =
@@ -1710,7 +1708,7 @@ static OGRCurve *OGRShapeCreateCompoundCurve(int nPartStartIdx, int nPartPoints,
                                              /* const */ double *padfM,
                                              int *pnLastCurveIdx)
 {
-    auto poCC = cpl::make_unique<OGRCompoundCurve>();
+    auto poCC = std::make_unique<OGRCompoundCurve>();
     int nLastPointIdx = nPartStartIdx;
     bool bHasCircularArcs = false;
     int i = nFirstCurveIdx;  // Used after for.
@@ -2035,8 +2033,15 @@ static OGRCurve *OGRShapeCreateCompoundCurve(int nPartStartIdx, int nPartPoints,
     }
 
     if (!bHasCircularArcs)
+    {
+        OGRwkbGeometryType eLSType = wkbLineString;
+        if (OGR_GT_HasZ(poCC->getGeometryType()))
+            eLSType = OGR_GT_SetZ(eLSType);
+        if (OGR_GT_HasM(poCC->getGeometryType()))
+            eLSType = OGR_GT_SetM(eLSType);
         return reinterpret_cast<OGRCurve *>(OGR_G_ForceTo(
-            OGRGeometry::ToHandle(poCC.release()), wkbLineString, nullptr));
+            OGRGeometry::ToHandle(poCC.release()), eLSType, nullptr));
+    }
     else
         return poCC.release();
 }

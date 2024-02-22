@@ -105,10 +105,10 @@ void GMLASPrefixMappingHander::startElement(const XMLCh *const uri,
     if (osURI == szXS_URI && osLocalname == "schema")
     {
         bool bIsGML = false;
-        CPLString osVersion;
+        std::string osVersion;
         for (unsigned int i = 0; i < attrs.getLength(); i++)
         {
-            CPLString osAttrLocalName(transcode(attrs.getLocalName(i)));
+            const std::string osAttrLocalName(transcode(attrs.getLocalName(i)));
             if (osAttrLocalName == "targetNamespace")
             {
                 bIsGML = transcode(attrs.getValue(i)) == szGML_URI;
@@ -120,7 +120,7 @@ void GMLASPrefixMappingHander::startElement(const XMLCh *const uri,
         }
         if (bIsGML && !osVersion.empty())
         {
-            m_osGMLVersionFound = osVersion;
+            m_osGMLVersionFound = std::move(osVersion);
         }
     }
 }
@@ -182,6 +182,8 @@ static void CollectNamespacePrefixes(
 
     GMLASErrorHandler oErrorHandler;
     poReader->setErrorHandler(&oErrorHandler);
+
+    poReader->setFeature(XMLUni::fgXercesDisableDefaultEntityResolution, true);
 
     std::string osErrorMsg;
     try
@@ -304,7 +306,7 @@ CPLString GMLASSchemaAnalyzer::GetPrefix(const CPLString &osNamespaceURI)
             osPrefix = osNamespaceURI;
         for (size_t i = 0; i < osPrefix.size(); i++)
         {
-            if (!isalnum(osPrefix[i]))
+            if (!isalnum(static_cast<unsigned char>(osPrefix[i])))
                 osPrefix[i] = '_';
         }
         m_oMapURIToPrefix[osNamespaceURI] = osPrefix;
@@ -881,6 +883,9 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache &oCache,
         //
         poParser->setFeature(XMLUni::fgXercesLoadSchema, false);
 
+        poParser->setFeature(XMLUni::fgXercesDisableDefaultEntityResolution,
+                             true);
+
         Grammar *poGrammar = nullptr;
         if (!GMLASReader::LoadXSDInParser(
                 poParser.get(), oCache, oXSDEntityResolver, osBaseDirname,
@@ -1280,7 +1285,7 @@ static CPLString GetAnnotationDoc(const XSElementDeclaration *poEltDecl)
             break;
         poTypeDef = poNewTypeDef;
     }
-    CPLString osDoc2 = GetAnnotationDoc(list);
+    const CPLString osDoc2 = GetAnnotationDoc(list);
     if (!osDoc.empty() && !osDoc2.empty())
     {
         osDoc += "\n";
@@ -1733,7 +1738,7 @@ static OGRwkbGeometryType GetOGRGeometryType(XSTypeDefinition *poTypeDef)
                    {"MultiSurfacePropertyType", wkbMultiSurface},
                    {"MultiSolidPropertyType", wkbUnknown},
                    // GeometryArrayPropertyType ?
-                   // GeometricPrimitivePropertyType ?
+                   {"GeometricPrimitivePropertyType", wkbUnknown},
                    {"CurvePropertyType", wkbCurve},
                    {"SurfacePropertyType", wkbSurface},
                    // SurfaceArrayPropertyType ?
@@ -2129,7 +2134,7 @@ bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
             {
                 if (!apoChildrenElements.empty())
                 {
-                    apoImplEltList = apoChildrenElements;
+                    apoImplEltList = std::move(apoChildrenElements);
                 }
                 else if (!poElt->getAbstract())
                 {

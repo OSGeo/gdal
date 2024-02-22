@@ -1,0 +1,75 @@
+FROM i386/alpine:edge
+
+RUN apk add \
+    apache-arrow-dev \
+    armadillo-dev \
+    bash \
+    basisu-dev \
+    blosc-dev \
+    brunsli-dev \
+    ccache \
+    cfitsio-dev \
+    cmake \
+    curl-dev \
+    expat-dev \
+    freexl-dev \
+    gcc \
+    g++ \
+    geos-dev \
+    giflib-dev \
+    gnu-libiconv-dev \
+    hdf5-dev \
+    json-c-dev \
+    kealib-dev \
+    libaec-dev \
+    libarchive-dev \
+    libdeflate-dev \
+    libgeotiff-dev \
+    libheif-dev \
+    libjpeg-turbo-dev \
+    libjxl-dev \
+    libkml-dev \
+    libpng-dev \
+    libpq-dev \
+    librasterlite2-dev \
+    libspatialite-dev \
+    libtirpc-dev \
+    libwebp-dev \
+    libxml2-dev \
+    libxslt-dev \
+    linux-headers \
+    lz4-dev \
+    make \
+    mariadb-connector-c-dev \
+    netcdf-dev \
+    odbc-cpp-wrapper-dev \
+    ogdi-dev \
+    openexr-dev \
+    openjpeg-dev \
+    openssl-dev \
+    pcre2-dev \
+    podofo-dev \
+    poppler-dev \
+    proj-dev \
+    proj-util \
+    py3-pyarrow \
+    py3-pyarrow-pyc \
+    py3-numpy \
+    py3-numpy-dev \
+    py3-pip \
+    py3-setuptools \
+    python3-dev \
+    qhull-dev \
+    sfcgal-dev \
+    snappy-dev \
+    sqlite-dev \
+    swig \
+    tiff-dev \
+    unixodbc-dev \
+    xerces-c-dev \
+    xz-dev \
+    zlib-dev \
+    zstd-dev
+
+COPY requirements.txt /tmp/
+RUN python3 -m pip install --break-system-packages -U -r /tmp/requirements.txt

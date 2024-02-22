@@ -40,7 +40,7 @@
 ** implementation will be used.
 */
 
-#if defined(WIN32) && !defined(CPL_MULTIPROC_STUB)
+#if defined(_WIN32) && !defined(CPL_MULTIPROC_STUB)
 #define CPL_MULTIPROC_WIN32
 /* MinGW can have pthread support, so disable it to avoid issues */
 /* in cpl_multiproc.cpp */
@@ -59,15 +59,9 @@ typedef void (*CPLThreadFunc)(void *);
 void CPL_DLL *CPLLockFile(const char *pszPath, double dfWaitInSeconds);
 void CPL_DLL CPLUnlockFile(void *hLock);
 
-#ifdef DEBUG
 typedef struct _CPLMutex CPLMutex;
 typedef struct _CPLCond CPLCond;
 typedef struct _CPLJoinableThread CPLJoinableThread;
-#else
-#define CPLMutex void
-#define CPLCond void
-#define CPLJoinableThread void
-#endif
 
 /* Options for CPLCreateMutexEx() and CPLCreateOrAcquireMutexEx() */
 #define CPL_MUTEX_RECURSIVE 0
@@ -234,10 +228,10 @@ class CPL_DLL CPLLockHolder
 #define CTLS_CONFIGOPTIONS 14           /* cpl_conv.cpp */
 #define CTLS_FINDFILE 15                /* cpl_findfile.cpp */
 #define CTLS_VSIERRORCONTEXT 16         /* cpl_vsi_error.cpp */
-#define CTLS_ERRORHANDLERACTIVEDATA 17  /* cpl_error.cpp */
-#define CTLS_PROJCONTEXTHOLDER 18       /* ogr_proj_p.cpp */
-#define CTLS_GDALDEFAULTOVR_ANTIREC 19  /* gdaldefaultoverviews.cpp */
-#define CTLS_HTTPFETCHCALLBACK 20       /* cpl_http.cpp */
+/* 17: unused */
+#define CTLS_PROJCONTEXTHOLDER 18      /* ogr_proj_p.cpp */
+#define CTLS_GDALDEFAULTOVR_ANTIREC 19 /* gdaldefaultoverviews.cpp */
+#define CTLS_HTTPFETCHCALLBACK 20      /* cpl_http.cpp */
 
 #define CTLS_MAX 32
 

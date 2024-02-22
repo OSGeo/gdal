@@ -28,10 +28,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
 import gdaltest
+import pytest
 
 from osgeo import osr
+
+pytestmark = pytest.mark.require_driver("GenBin")
 
 ###############################################################################
 # Perform simple read test.

@@ -191,9 +191,9 @@ CPLErr GDALMultiDomainMetadata::SetMetadataItem(const char *pszName,
 /*      <Metadata> elements.                                            */
 /************************************************************************/
 
-int GDALMultiDomainMetadata::XMLInit(CPLXMLNode *psTree, int /* bMerge */)
+int GDALMultiDomainMetadata::XMLInit(const CPLXMLNode *psTree, int /* bMerge */)
 {
-    CPLXMLNode *psMetadata = nullptr;
+    const CPLXMLNode *psMetadata = nullptr;
 
     /* ==================================================================== */
     /*      Process all <Metadata> elements, each for one domain.           */
@@ -226,7 +226,7 @@ int GDALMultiDomainMetadata::XMLInit(CPLXMLNode *psTree, int /* bMerge */)
         if (EQUAL(pszFormat, "xml"))
         {
             // Find first non-attribute child of current element.
-            CPLXMLNode *psSubDoc = psMetadata->psChild;
+            const CPLXMLNode *psSubDoc = psMetadata->psChild;
             while (psSubDoc != nullptr && psSubDoc->eType == CXT_Attribute)
                 psSubDoc = psSubDoc->psNext;
 
@@ -244,7 +244,7 @@ int GDALMultiDomainMetadata::XMLInit(CPLXMLNode *psTree, int /* bMerge */)
         else if (EQUAL(pszFormat, "json"))
         {
             // Find first text child of current element.
-            CPLXMLNode *psSubDoc = psMetadata->psChild;
+            const CPLXMLNode *psSubDoc = psMetadata->psChild;
             while (psSubDoc != nullptr && psSubDoc->eType != CXT_Text)
                 psSubDoc = psSubDoc->psNext;
             if (psSubDoc)
@@ -262,8 +262,8 @@ int GDALMultiDomainMetadata::XMLInit(CPLXMLNode *psTree, int /* bMerge */)
          */
         else
         {
-            for (CPLXMLNode *psMDI = psMetadata->psChild; psMDI != nullptr;
-                 psMDI = psMDI->psNext)
+            for (const CPLXMLNode *psMDI = psMetadata->psChild;
+                 psMDI != nullptr; psMDI = psMDI->psNext)
             {
                 if (!EQUAL(psMDI->pszValue, "MDI") ||
                     psMDI->eType != CXT_Element || psMDI->psChild == nullptr ||

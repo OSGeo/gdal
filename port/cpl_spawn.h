@@ -41,7 +41,7 @@ CPL_C_START
 int CPL_DLL CPLSpawn(const char *const papszArgv[], VSILFILE *fin,
                      VSILFILE *fout, int bDisplayErr);
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 typedef HANDLE CPL_FILE_HANDLE;
 #define CPL_FILE_INVALID_HANDLE CPL_NULLPTR

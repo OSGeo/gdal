@@ -38,6 +38,8 @@
 #include "ogr_expat.h"
 #endif
 
+constexpr int PARSER_BUF_SIZE = 8192;
+
 class OGRGeoRSSDataSource;
 
 typedef enum
@@ -135,7 +137,7 @@ class OGRGeoRSSLayer final : public OGRLayer
     OGRFeature *GetNextFeature() override;
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
 
     OGRFeatureDefn *GetLayerDefn() override;
 

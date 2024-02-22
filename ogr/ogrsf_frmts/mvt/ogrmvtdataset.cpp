@@ -49,11 +49,6 @@
 #include <vector>
 #include <set>
 
-#if GEOS_VERSION_MAJOR > 3 ||                                                  \
-    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 8)
-#define HAVE_MAKE_VALID
-#endif
-
 const char *SRS_EPSG_3857 =
     "PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS "
     "84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS "
@@ -2540,8 +2535,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
         osMetadataFile = pszMetadataFile;
     }
 
-    CPLString osTileExtension(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
-                                                   "TILE_EXTENSION", "pbf"));
+    const CPLString osTileExtension(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "TILE_EXTENSION", "pbf"));
     bool bJsonField =
         CPLFetchBool(poOpenInfo->papszOpenOptions, "JSON_FIELD", false);
     VSIStatBufL sStat;
@@ -2778,7 +2773,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
 
     OGRMVTDataset *poDS = new OGRMVTDataset(nullptr);
 
-    CPLString osMetadataMemFilename =
+    const CPLString osMetadataMemFilename =
         CPLSPrintf("/vsimem/%p_metadata.json", poDS);
     if (!LoadMetadata(osMetadataFile, osMetadataContent, oVectorLayers,
                       oTileStatLayers, oBounds, poDS->m_poSRS,
@@ -3332,8 +3327,7 @@ class OGRMVTWriterDataset final : public GDALDataset
     bool EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                        const OGRPolygon *poPoly, OGRPolygon *poOutPoly,
                        double dfTopX, double dfTopY, double dfTileDim,
-                       bool bCanRecurse, int &nLastX, int &nLastY,
-                       double &dfArea) const;
+                       int &nLastX, int &nLastY, double &dfArea) const;
 #ifdef notdef
     bool EncodeRepairedOuterRing(MVTTileLayerFeature *poGPBFeature,
                                  OGRPolygon &oOutPoly, int &nLastX,
@@ -3345,7 +3339,7 @@ class OGRMVTWriterDataset final : public GDALDataset
                                       const MVTTileLayerValue &oValue);
 
     void EncodeFeature(const void *pabyBlob, int nBlobSize,
-                       std::shared_ptr<MVTTileLayer> poTargetLayer,
+                       std::shared_ptr<MVTTileLayer> &poTargetLayer,
                        std::map<CPLString, GUInt32> &oMapKeyToIdx,
                        std::map<MVTTileLayerValue, GUInt32> &oMapValueToIdx,
                        MVTLayerProperties *poLayerProperties, GUInt32 nExtent,
@@ -3425,7 +3419,7 @@ class OGRMVTWriterLayer final : public OGRLayer
     }
     int TestCapability(const char *) override;
     OGRErr ICreateFeature(OGRFeature *) override;
-    OGRErr CreateField(OGRFieldDefn *, int) override;
+    OGRErr CreateField(const OGRFieldDefn *, int) override;
 };
 
 /************************************************************************/
@@ -3483,7 +3477,7 @@ int OGRMVTWriterLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMVTWriterLayer::CreateField(OGRFieldDefn *poFieldDefn, int)
+OGRErr OGRMVTWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn, int)
 {
     m_poFeatureDefn->AddFieldDefn(poFieldDefn);
     return OGRERR_NONE;
@@ -3739,7 +3733,7 @@ bool OGRMVTWriterDataset::EncodeRepairedOuterRing(
     const int nLastYOri = nLastY;
     GUInt32 nLineToCount = 0;
     const int nPoints = poRing->getNumPoints() - 1;
-    auto poOutLinearRing = cpl::make_unique<OGRLinearRing>();
+    auto poOutLinearRing = std::make_unique<OGRLinearRing>();
     poOutLinearRing->setNumPoints(nPoints);
     for (int i = 0; i < nPoints; i++)
     {
@@ -3816,15 +3810,11 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                                         const OGRPolygon *poPoly,
                                         OGRPolygon *poOutPoly, double dfTopX,
                                         double dfTopY, double dfTileDim,
-                                        bool bCanRecurse, int &nLastX,
-                                        int &nLastY, double &dfArea) const
+                                        int &nLastX, int &nLastY,
+                                        double &dfArea) const
 {
-#ifdef HAVE_MAKE_VALID
-    CPL_IGNORE_RET_VAL(bCanRecurse);
-#endif
-
     dfArea = 0;
-    auto poOutOuterRing = cpl::make_unique<OGRLinearRing>();
+    auto poOutOuterRing = std::make_unique<OGRLinearRing>();
     for (int i = 0; i < 1 + poPoly->getNumInteriorRings(); i++)
     {
         const OGRLinearRing *poRing = (i == 0) ? poPoly->getExteriorRing()
@@ -3850,15 +3840,10 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
         const GUInt32 nMinLineTo = 2;
         std::unique_ptr<OGRLinearRing> poOutInnerRing;
         if (i > 0)
-            poOutInnerRing = cpl::make_unique<OGRLinearRing>();
+            poOutInnerRing = std::make_unique<OGRLinearRing>();
         OGRLinearRing *poOutRing =
             poOutInnerRing.get() ? poOutInnerRing.get() : poOutOuterRing.get();
 
-#ifndef HAVE_MAKE_VALID
-        const GUInt32 nInitialSize = poGPBFeature->getGeometryCount();
-        const int nLastXOri = nLastX;
-        const int nLastYOri = nLastY;
-#endif
         bool bSuccess = EncodeLineString(
             poGPBFeature, poRing, poOutRing, bWriteLastPoint, bReverseOrder,
             nMinLineTo, dfTopX, dfTopY, dfTileDim, nLastX, nLastY);
@@ -3877,125 +3862,11 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
 
         poOutRing->closeRings();
 
-#ifdef HAVE_MAKE_VALID
         poOutPoly->addRing(poOutRing);
         if (i > 0)
             dfArea -= poOutRing->get_Area();
         else
             dfArea = poOutRing->get_Area();
-#else
-        OGRPolygon oOutPoly;
-        oOutPoly.addRing(poOutOuterRing.get());
-        if (i > 0)
-        {
-            // If the inner ring turns to be a outer ring once reduced,
-            // discard it
-            if (!poOutInnerRing->isClockwise())
-            {
-                poGPBFeature->resizeGeometryArray(nInitialSize);
-                nLastX = nLastXOri;
-                nLastY = nLastYOri;
-                continue;
-            }
-            dfArea -= poOutInnerRing->get_Area();
-            oOutPoly.addRingDirectly(poOutInnerRing.release());
-        }
-        else
-        {
-            dfArea = poOutOuterRing->get_Area();
-        }
-
-        int bIsValid;
-        {
-            CPLErrorStateBackuper oErrorStateBackuper;
-            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-            bIsValid = oOutPoly.IsValid();
-        }
-
-        if (bIsValid || (i == 0 && !bCanRecurse))
-            poOutPoly->addRing(poOutRing);
-
-        if (i > 0 && bIsValid)
-        {
-            // Adding the current inner ring to the outer ring might be valid
-            // but it might also conflict with a previously added inner ring
-            if (i > 1)
-            {
-                {
-                    CPLErrorStateBackuper oErrorStateBackuper;
-                    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-                    bIsValid = poOutPoly->IsValid();
-                }
-                if (!bIsValid)
-                {
-                    poOutPoly->removeRing(poOutPoly->getNumInteriorRings());
-                    poGPBFeature->resizeGeometryArray(nInitialSize);
-                    nLastX = nLastXOri;
-                    nLastY = nLastYOri;
-                    continue;
-                }
-            }
-        }
-
-        // Do not emit invalid polygons, except if it is an outer ring
-        // and we tried hard to fix it.
-        else if (!bIsValid && !(i == 0 && !bCanRecurse && dfArea > 0 &&
-                                poOutRing->getNumPoints() >= 4))
-        {
-            poGPBFeature->resizeGeometryArray(nInitialSize);
-            nLastX = nLastXOri;
-            nLastY = nLastYOri;
-            if (i == 0)
-            {
-#ifdef nodef
-                if (!EncodeRepairedOuterRing(poGPBFeature, oOutPoly, nLastX,
-                                             nLastY))
-#endif
-                {
-                    if (!bCanRecurse)
-                        return false;
-
-                    CPLErrorStateBackuper oErrorStateBackuper;
-                    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-
-                    // Old logic when MakeValid is not available.
-                    // The Buffer() calls have bad memory requirements on
-                    // densified geometries such as in
-                    // https://github.com/OSGeo/gdal/issues/5109
-
-                    const double dfTol = 2 * dfTileDim / m_nExtent;
-                    std::unique_ptr<OGRGeometry> poBufferedPlus(
-                        poPoly->Buffer(dfTol));
-                    if (!poBufferedPlus.get())
-                        return false;
-
-                    std::unique_ptr<OGRGeometry> poBuffered(
-                        poBufferedPlus->Buffer(-dfTol));
-                    if (!poBuffered.get())
-                        return false;
-
-                    std::unique_ptr<OGRGeometry> poSimplified(
-                        poBuffered->SimplifyPreserveTopology(dfTol));
-                    if (!poSimplified.get() || poSimplified->IsEmpty())
-                        return false;
-
-                    if (wkbFlatten(poSimplified->getGeometryType()) ==
-                        wkbPolygon)
-                    {
-                        OGRPolygon *poSimplifiedPoly =
-                            poSimplified.get()->toPolygon();
-                        poOutPoly->empty();
-                        return EncodePolygon(
-                            poGPBFeature, poSimplifiedPoly, poOutPoly, dfTopX,
-                            dfTopY, dfTileDim, false, nLastX, nLastY, dfArea);
-                    }
-
-                    return false;
-                }
-            }
-            continue;
-        }
-#endif
 
         poGPBFeature->addGeometry(GetCmdCountCombined(knCMD_CLOSEPATH, 1));
     }
@@ -4100,7 +3971,6 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     bool bGeomOK = false;
     double dfAreaOrLength = 0.0;
 
-#ifdef HAVE_MAKE_VALID
     const auto EmitValidPolygon =
         [this, &bGeomOK, &dfAreaOrLength,
          &poGPBFeature](const OGRGeometry *poValidGeom)
@@ -4115,7 +3985,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             const OGRPolygon *poPoly = poValidGeom->toPolygon();
             double dfPartArea = 0.0;
             bGeomOK = EncodePolygon(poGPBFeature.get(), poPoly, nullptr, 0, 0,
-                                    0, false, nLastX, nLastY, dfPartArea);
+                                    0, nLastX, nLastY, dfPartArea);
             dfAreaOrLength = dfPartArea;
         }
         else if (OGR_GT_IsSubClassOf(poValidGeom->getGeometryType(),
@@ -4129,7 +3999,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                     double dfPartArea = 0.0;
                     bGeomOK |=
                         EncodePolygon(poGPBFeature.get(), poPoly, nullptr, 0, 0,
-                                      0, false, nLastX, nLastY, dfPartArea);
+                                      0, nLastX, nLastY, dfPartArea);
                     dfAreaOrLength += dfPartArea;
                 }
                 else if (wkbFlatten(poSubGeom->getGeometryType()) ==
@@ -4140,16 +4010,15 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                     for (const auto *poPoly : poMPoly)
                     {
                         double dfPartArea = 0.0;
-                        bGeomOK |= EncodePolygon(poGPBFeature.get(), poPoly,
-                                                 nullptr, 0, 0, 0, false,
-                                                 nLastX, nLastY, dfPartArea);
+                        bGeomOK |=
+                            EncodePolygon(poGPBFeature.get(), poPoly, nullptr,
+                                          0, 0, 0, nLastX, nLastY, dfPartArea);
                         dfAreaOrLength += dfPartArea;
                     }
                 }
             }
         }
     };
-#endif
 
     if (eGeomType == wkbPoint || eGeomType == wkbMultiPoint)
     {
@@ -4249,11 +4118,6 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     }
     else if (eGeomType == wkbPolygon || eGeomType == wkbMultiPolygon)
     {
-#ifdef HAVE_MAKE_VALID
-        constexpr bool bCanRecurse = false;
-#else
-        constexpr bool bCanRecurse = true;
-#endif
         if (eGeomToEncodeType == wkbPolygon)
         {
             const OGRPolygon *poPoly = poGeomToEncode->toPolygon();
@@ -4263,9 +4127,8 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             const GUInt32 nInitialSize = poGPBFeature->getGeometryCount();
             CPL_IGNORE_RET_VAL(nInitialSize);
             bGeomOK = EncodePolygon(poGPBFeature.get(), poPoly, &oOutPoly,
-                                    dfTopX, dfTopY, dfTileDim, bCanRecurse,
-                                    nLastX, nLastY, dfAreaOrLength);
-#ifdef HAVE_MAKE_VALID
+                                    dfTopX, dfTopY, dfTileDim, nLastX, nLastY,
+                                    dfAreaOrLength);
             int bIsValid;
             {
                 CPLErrorStateBackuper oErrorStateBackuper;
@@ -4283,7 +4146,6 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                     EmitValidPolygon(poPolyValid.get());
                 }
             }
-#endif
         }
         else if (eGeomToEncodeType == wkbMultiPolygon ||
                  eGeomToEncodeType == wkbGeometryCollection)
@@ -4301,16 +4163,14 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                 {
                     const OGRPolygon *poPoly = poSubGeom->toPolygon();
                     double dfPartArea = 0.0;
-                    auto poOutPoly = cpl::make_unique<OGRPolygon>();
-                    bGeomOK |= EncodePolygon(poGPBFeature.get(), poPoly,
-                                             poOutPoly.get(), dfTopX, dfTopY,
-                                             dfTileDim, bCanRecurse, nLastX,
-                                             nLastY, dfPartArea);
+                    auto poOutPoly = std::make_unique<OGRPolygon>();
+                    bGeomOK |= EncodePolygon(
+                        poGPBFeature.get(), poPoly, poOutPoly.get(), dfTopX,
+                        dfTopY, dfTileDim, nLastX, nLastY, dfPartArea);
                     dfAreaOrLength += dfPartArea;
                     oOutMP.addGeometryDirectly(poOutPoly.release());
                 }
             }
-#ifdef HAVE_MAKE_VALID
             int bIsValid;
             {
                 CPLErrorStateBackuper oErrorStateBackuper;
@@ -4328,7 +4188,6 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                     EmitValidPolygon(poMPValid.get());
                 }
             }
-#endif
         }
     }
     if (!bGeomOK)
@@ -4860,7 +4719,7 @@ GetReducedPrecisionGeometry(MVTTileLayerFeature::GeomType eGeomType,
 
 void OGRMVTWriterDataset::EncodeFeature(
     const void *pabyBlob, int nBlobSize,
-    std::shared_ptr<MVTTileLayer> poTargetLayer,
+    std::shared_ptr<MVTTileLayer> &poTargetLayer,
     std::map<CPLString, GUInt32> &oMapKeyToIdx,
     std::map<MVTTileLayerValue, GUInt32> &oMapValueToIdx,
     MVTLayerProperties *poLayerProperties, GUInt32 nExtent,
@@ -4959,8 +4818,8 @@ void OGRMVTWriterDataset::EncodeFeature(
                     if (nSrcIdxKey < srcKeys.size() &&
                         nSrcIdxValue < srcValues.size())
                     {
-                        auto &osKey = srcKeys[nSrcIdxKey];
-                        auto &oValue = srcValues[nSrcIdxValue];
+                        const auto &osKey = srcKeys[nSrcIdxKey];
+                        const auto &oValue = srcValues[nSrcIdxValue];
 
                         if (poLayerProperties)
                         {
@@ -4974,7 +4833,7 @@ void OGRMVTWriterDataset::EncodeFeature(
                 }
 
                 nFeaturesInTile++;
-                poTargetLayer->addFeature(poFeature);
+                poTargetLayer->addFeature(std::move(poFeature));
             }
         }
     }
@@ -5028,7 +4887,7 @@ std::string OGRMVTWriterDataset::EncodeTile(
                     MVTLayerProperties props;
                     props.m_nMinZoom = nZ;
                     props.m_nMaxZoom = nZ;
-                    oMapLayerProps[pszLayerName] = props;
+                    oMapLayerProps[pszLayerName] = std::move(props);
                     poLayerProperties = &(oMapLayerProps[pszLayerName]);
                 }
             }
@@ -5171,7 +5030,7 @@ std::string OGRMVTWriterDataset::EncodeTile(
                 poTargetLayer->setName(pszLayerName);
                 poTargetLayer->setVersion(m_nMVTVersion);
                 poTargetLayer->setExtent(nExtent);
-                oMapLayerNameToTargetLayer[pszLayerName] = props;
+                oMapLayerNameToTargetLayer[pszLayerName] = std::move(props);
                 poMapKeyToIdx =
                     &oMapLayerNameToTargetLayer[pszLayerName].m_oMapKeyToIdx;
                 poMapValueToIdx =
@@ -6000,9 +5859,9 @@ OGRLayer *OGRMVTWriterDataset::ICreateLayer(const char *pszLayerName,
     CPLString osDescription;
     if (oObj.IsValid())
     {
-        CPLString osTargetName = oObj.GetString("target_name");
+        std::string osTargetName = oObj.GetString("target_name");
         if (!osTargetName.empty())
-            poLayer->m_osTargetName = osTargetName;
+            poLayer->m_osTargetName = std::move(osTargetName);
         int nMinZoom = oObj.GetInteger("minzoom", -1);
         if (nMinZoom >= 0)
             poLayer->m_nMinZoom = nMinZoom;
@@ -6026,7 +5885,8 @@ OGRLayer *OGRMVTWriterDataset::ICreateLayer(const char *pszLayerName,
     osDescription =
         CSLFetchNameValueDef(papszOptions, "DESCRIPTION", osDescription);
     if (!osDescription.empty())
-        m_oMapLayerNameToDesc[poLayer->m_osTargetName] = osDescription;
+        m_oMapLayerNameToDesc[poLayer->m_osTargetName] =
+            std::move(osDescription);
 
     m_apoLayers.push_back(std::unique_ptr<OGRMVTWriterLayer>(poLayer));
     return m_apoLayers.back().get();

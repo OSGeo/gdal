@@ -1489,7 +1489,7 @@ char **ADRGDataset::GetIMGListFromGEN(const char *pszFileName,
             /* Build full IMG file name from BAD value */
             CPLString osGENDir(CPLGetDirname(pszFileName));
 
-            CPLString osFileName =
+            const CPLString osFileName =
                 CPLFormFilename(osGENDir.c_str(), osBAD.c_str(), nullptr);
             VSIStatBufL sStatBuf;
             if (VSIStatL(osFileName, &sStatBuf) == 0)
@@ -1779,7 +1779,7 @@ GDALDataset *ADRGDataset::Create(const char *pszFilename, int nXSize,
     poDS->fdIMG = fdIMG;
     poDS->fdTHF = fdTHF;
 
-    poDS->osBaseFileName = osBaseFileName;
+    poDS->osBaseFileName = std::move(osBaseFileName);
     poDS->bCreation = TRUE;
     poDS->nNextAvailableBlock = 1;
     poDS->NFC = (nXSize + 127) / 128;

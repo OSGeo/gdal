@@ -54,9 +54,9 @@ typedef struct
     TIFFVSetMethod vsetparent; /* super-class method */
 } ZSTDState;
 
-#define LState(tif) ((ZSTDState *)(tif)->tif_data)
-#define DecoderState(tif) LState(tif)
-#define EncoderState(tif) LState(tif)
+#define GetZSTDState(tif) ((ZSTDState *)(tif)->tif_data)
+#define ZSTDDecoderState(tif) GetZSTDState(tif)
+#define ZSTDEncoderState(tif) GetZSTDState(tif)
 
 static int ZSTDEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s);
 static int ZSTDDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s);
@@ -69,7 +69,7 @@ static int ZSTDFixupTags(TIFF *tif)
 
 static int ZSTDSetupDecode(TIFF *tif)
 {
-    ZSTDState *sp = DecoderState(tif);
+    ZSTDState *sp = ZSTDDecoderState(tif);
 
     assert(sp != NULL);
 
@@ -91,7 +91,7 @@ static int ZSTDSetupDecode(TIFF *tif)
 static int ZSTDPreDecode(TIFF *tif, uint16_t s)
 {
     static const char module[] = "ZSTDPreDecode";
-    ZSTDState *sp = DecoderState(tif);
+    ZSTDState *sp = ZSTDDecoderState(tif);
     size_t zstd_ret;
 
     (void)s;
@@ -124,7 +124,7 @@ static int ZSTDPreDecode(TIFF *tif, uint16_t s)
 static int ZSTDDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
 {
     static const char module[] = "ZSTDDecode";
-    ZSTDState *sp = DecoderState(tif);
+    ZSTDState *sp = ZSTDDecoderState(tif);
     ZSTD_inBuffer in_buffer;
     ZSTD_outBuffer out_buffer;
     size_t zstd_ret;
@@ -170,7 +170,7 @@ static int ZSTDDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
 
 static int ZSTDSetupEncode(TIFF *tif)
 {
-    ZSTDState *sp = EncoderState(tif);
+    ZSTDState *sp = ZSTDEncoderState(tif);
 
     assert(sp != NULL);
     if (sp->state & LSTATE_INIT_DECODE)
@@ -190,7 +190,7 @@ static int ZSTDSetupEncode(TIFF *tif)
 static int ZSTDPreEncode(TIFF *tif, uint16_t s)
 {
     static const char module[] = "ZSTDPreEncode";
-    ZSTDState *sp = EncoderState(tif);
+    ZSTDState *sp = ZSTDEncoderState(tif);
     size_t zstd_ret;
 
     (void)s;
@@ -229,7 +229,7 @@ static int ZSTDPreEncode(TIFF *tif, uint16_t s)
 static int ZSTDEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
 {
     static const char module[] = "ZSTDEncode";
-    ZSTDState *sp = EncoderState(tif);
+    ZSTDState *sp = ZSTDEncoderState(tif);
     ZSTD_inBuffer in_buffer;
     size_t zstd_ret;
 
@@ -271,7 +271,7 @@ static int ZSTDEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
 static int ZSTDPostEncode(TIFF *tif)
 {
     static const char module[] = "ZSTDPostEncode";
-    ZSTDState *sp = EncoderState(tif);
+    ZSTDState *sp = ZSTDEncoderState(tif);
     size_t zstd_ret;
 
     do
@@ -297,7 +297,7 @@ static int ZSTDPostEncode(TIFF *tif)
 
 static void ZSTDCleanup(TIFF *tif)
 {
-    ZSTDState *sp = LState(tif);
+    ZSTDState *sp = GetZSTDState(tif);
 
     assert(sp != 0);
 
@@ -325,7 +325,7 @@ static void ZSTDCleanup(TIFF *tif)
 static int ZSTDVSetField(TIFF *tif, uint32_t tag, va_list ap)
 {
     static const char module[] = "ZSTDVSetField";
-    ZSTDState *sp = LState(tif);
+    ZSTDState *sp = GetZSTDState(tif);
 
     switch (tag)
     {
@@ -347,7 +347,7 @@ static int ZSTDVSetField(TIFF *tif, uint32_t tag, va_list ap)
 
 static int ZSTDVGetField(TIFF *tif, uint32_t tag, va_list ap)
 {
-    ZSTDState *sp = LState(tif);
+    ZSTDState *sp = GetZSTDState(tif);
 
     switch (tag)
     {
@@ -389,7 +389,7 @@ int TIFFInitZSTD(TIFF *tif, int scheme)
     tif->tif_data = (uint8_t *)_TIFFmallocExt(tif, sizeof(ZSTDState));
     if (tif->tif_data == NULL)
         goto bad;
-    sp = LState(tif);
+    sp = GetZSTDState(tif);
 
     /*
      * Override parent get/set field methods.

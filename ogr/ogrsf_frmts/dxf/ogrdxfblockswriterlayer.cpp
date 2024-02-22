@@ -74,7 +74,7 @@ int OGRDXFBlocksWriterLayer::TestCapability(const char *pszCap)
 /*      This is really a dummy as our fields are precreated.            */
 /************************************************************************/
 
-OGRErr OGRDXFBlocksWriterLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRDXFBlocksWriterLayer::CreateField(const OGRFieldDefn *poField,
                                             int bApproxOK)
 
 {

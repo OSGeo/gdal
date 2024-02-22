@@ -1242,8 +1242,8 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                 tag.nLength = (tagdescArray[i].length == 0)
                                   ? nTokens
                                   : tagdescArray[i].length;
-                tag.pabyVal = reinterpret_cast<GByte *>(
-                    CPLCalloc(1, nDataTypeSize * tag.nLength));
+                tag.pabyVal = reinterpret_cast<GByte *>(CPLCalloc(
+                    1, cpl::fits_on<int>(nDataTypeSize * tag.nLength)));
 
                 GUInt32 nOffset = 0;
                 for (GUInt32 j = 0; j < std::min(nTokens, tag.nLength); j++)
@@ -1376,9 +1376,9 @@ static void WriteTag(GByte *pabyData, GUInt32 &nBufferOff, GUInt16 nTag,
 /************************************************************************/
 
 static void WriteTags(GByte *pabyData, GUInt32 &nBufferOff,
-                      GUInt32 offsetIFDData, std::vector<TagValue> &tags)
+                      GUInt32 offsetIFDData, const std::vector<TagValue> &tags)
 {
-    for (auto &tag : tags)
+    for (const auto &tag : tags)
     {
         WriteLEUInt16(pabyData, nBufferOff, tag.tag);
         WriteLEUInt16(pabyData, nBufferOff, static_cast<GUInt16>(tag.datatype));

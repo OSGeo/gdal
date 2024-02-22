@@ -29,6 +29,7 @@
 #include "gdal_pam.h"
 #include "common.h"
 #include "include_basisu_sdk.h"
+#include "basisudrivercore.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -63,7 +64,7 @@ class BASISUDataset final : public GDALPamDataset
     BASISUDataset(uint32_t iImageIdx, void *pEncodedData,
                   uint32_t nEncodedDataSize);
     BASISUDataset(BASISUDataset *poParent, uint32_t iLevel);
-    static int Identify(GDALOpenInfo *poOpenInfo);
+
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
@@ -87,33 +88,6 @@ class BASISURasterBand final : public GDALPamRasterBand
     int GetOverviewCount() override;
     GDALRasterBand *GetOverview(int nIdx) override;
 };
-
-/************************************************************************/
-/*                                Identify()                            */
-/************************************************************************/
-
-int BASISUDataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-    if (STARTS_WITH(poOpenInfo->pszFilename, "BASISU:"))
-        return true;
-    // See
-    // https://github.com/BinomialLLC/basis_universal/blob/master/spec/basis_spec.txt
-    constexpr int HEADER_SIZE = 77;
-    if (!(poOpenInfo->fpL != nullptr &&
-          poOpenInfo->nHeaderBytes >= HEADER_SIZE &&
-          poOpenInfo->pabyHeader[0] == 0x73 &&         // Signature
-          poOpenInfo->pabyHeader[1] == 0x42 &&         // Signature
-          poOpenInfo->pabyHeader[4] == HEADER_SIZE &&  // Header size
-          poOpenInfo->pabyHeader[5] == 0))             // Header size
-    {
-        return false;
-    }
-    const uint32_t nDataSize = CPL_LSBUINT32PTR(poOpenInfo->pabyHeader + 8);
-    VSIFSeekL(poOpenInfo->fpL, 0, SEEK_END);
-    const auto nFileSize = VSIFTellL(poOpenInfo->fpL);
-    VSIFSeekL(poOpenInfo->fpL, 0, SEEK_SET);
-    return nDataSize + HEADER_SIZE == nFileSize;
-}
 
 /************************************************************************/
 /*                           BASISUDataset()                            */
@@ -270,7 +244,7 @@ GDALRasterBand *BASISURasterBand::GetOverview(int nIdx)
 
 GDALDataset *BASISUDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (!Identify(poOpenInfo) || poOpenInfo->eAccess == GA_Update)
+    if (!BASISUDriverIdentify(poOpenInfo) || poOpenInfo->eAccess == GA_Update)
         return nullptr;
 
     VSILFILE *fpL = nullptr;
@@ -306,7 +280,7 @@ GDALDataset *BASISUDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     const uint32_t nSize = static_cast<uint32_t>(nSizeLarge);
 
-    auto poDS = cpl::make_unique<BASISUDataset>(
+    auto poDS = std::make_unique<BASISUDataset>(
         nImageIdx != static_cast<uint32_t>(-1) ? nImageIdx : 0, pabyRet, nSize);
     auto &transcoder = poDS->m_transcoder;
     basist::basisu_file_info file_info;
@@ -376,7 +350,7 @@ GDALDataset *BASISUDataset::Open(GDALOpenInfo *poOpenInfo)
                                             poDS->m_iImageIdx, level_index))
         {
             auto poOverviewDS =
-                cpl::make_unique<BASISUDataset>(poDS.get(), level_index);
+                std::make_unique<BASISUDataset>(poDS.get(), level_index);
             for (int i = 1; i <= l_nBands; ++i)
             {
                 poOverviewDS->SetBand(
@@ -421,26 +395,12 @@ GDALDataset *BASISUDataset::CreateCopy(const char *pszFilename,
 
 void GDALRegister_BASISU()
 {
-    if (GDALGetDriverByName("BASISU") != nullptr)
+    if (GDALGetDriverByName(BASISU_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
+    BASISUDriverSetCommonMetadata(poDriver);
 
-    poDriver->SetDescription("BASISU");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "Basis Universal texture format");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/basisu.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "basis");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        GDAL_KTX2_BASISU_GetCreationOptions(/* bIsKTX2 = */ false).c_str());
-
-    poDriver->pfnIdentify = BASISUDataset::Identify;
     poDriver->pfnOpen = BASISUDataset::Open;
     poDriver->pfnCreateCopy = BASISUDataset::CreateCopy;
 

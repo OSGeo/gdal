@@ -26,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef OGARROWDATASET_HPP_INCLUDED
+#define OGARROWDATASET_HPP_INCLUDED
+
 #include "ogr_arrow.h"
 
 /************************************************************************/
@@ -84,8 +87,7 @@ OGRArrowDataset::GetFieldDomain(const std::string &name) const
     if (iter == m_oMapDomainNameToCol.end())
         return nullptr;
     return m_oMapFieldDomains
-        .insert(std::pair<std::string, std::unique_ptr<OGRFieldDomain>>(
-            name, m_poLayer->BuildDomain(name, iter->second)))
+        .insert(std::pair(name, m_poLayer->BuildDomain(name, iter->second)))
         .first->second.get();
 }
 
@@ -106,3 +108,5 @@ inline OGRLayer *OGRArrowDataset::GetLayer(int idx)
 {
     return idx == 0 ? m_poLayer.get() : nullptr;
 }
+
+#endif /* OGARROWDATASET_HPP_INCLUDED */

@@ -1,3 +1,5 @@
+#ifndef ERSHDRNODE_H_INCLUDED
+#define ERSHDRNODE_H_INCLUDED
 
 class ERSHdrNode;
 
@@ -31,3 +33,5 @@ class ERSHdrNode
   private:
     static int ReadLine(VSILFILE *, CPLString &);
 };
+
+#endif /* ERSHDRNODE_H_INCLUDED */

@@ -165,14 +165,10 @@ class OGRDWGLayer final : public OGRLayer
 
 class OGRDWGDataSource final : public OGRDataSource
 {
-    VSILFILE *fp;
-
     CPLString m_osName;
     std::vector<OGRLayer *> apoLayers;
 
     std::set<CPLString> attributeFields;
-
-    int iEntitiesSectionOffset;
 
     std::map<CPLString, DWGBlockDefinition> oBlockMap;
     std::map<CPLString, CPLString> oHeaderVariables;
@@ -274,28 +270,6 @@ class OGRDWGServices : public ExSystemServices, public ExHostAppServices
 {
   protected:
     ODRX_USING_HEAP_OPERATORS(ExSystemServices);
-};
-
-/************************************************************************/
-/*                             OGRDWGDriver                             */
-/************************************************************************/
-
-class OGRDWGDriver final : public OGRSFDriver
-{
-    OGRDWGServices *poServices;
-
-  public:
-    OGRDWGDriver();
-    ~OGRDWGDriver();
-
-    OGRDWGServices *GetServices()
-    {
-        return poServices;
-    }
-
-    const char *GetName() override;
-    OGRDataSource *Open(const char *, int) override;
-    int TestCapability(const char *) override;
 };
 
 #endif /* ndef OGR_DWG_H_INCLUDED */

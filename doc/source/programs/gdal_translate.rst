@@ -34,7 +34,7 @@ Synopsis
        [-nogcp] [-gcp <pixel> <line> <easting> <northing> [<elevation>]]...
        |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]
        |-colorinterp {red|green|blue|alpha|gray|undefined},...]
-       [-mo <META-TAG>=<VALUE>]... [-q] [-sds]
+       [-mo <META-TAG>=<VALUE>]... [-dmo "DOMAIN:META-TAG=VALUE"]... [-q] [-sds]
        [-co <NAME>=<VALUE>]... [-stats] [-norat] [-noxmp]
        [-oo <NAME>=<VALUE>]...
        <src_dataset> <dst_dataset>
@@ -306,6 +306,12 @@ resampling, and rescaling pixels in the process.
 .. option:: -mo <META-TAG>=<VALUE>
 
     Passes a metadata key and value to set on the output dataset if possible.
+
+.. option:: -dmo DOMAIN:META-TAG=VALUE
+
+    Passes a metadata key and value in specified domain to set on the output dataset if possible.
+
+    .. versionadded:: 3.9
 
 .. option:: -co <NAME>=<VALUE>
 

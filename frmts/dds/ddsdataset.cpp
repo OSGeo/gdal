@@ -30,12 +30,11 @@
 #include "crunch_headers.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "ddsdrivercore.h"
 
 #include <algorithm>
 
 using namespace crnlib;
-
-#define DDS_SIGNATURE "DDS "
 
 enum
 {
@@ -67,7 +66,6 @@ class DDSDataset final : public GDALPamDataset
     ~DDSDataset();
 
   public:
-    static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
@@ -236,32 +234,12 @@ CPLErr DDSRasterBand::IReadBlock(int, int nYBlock, void *pImage)
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int DDSDataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-    if (poOpenInfo->fpL == nullptr || poOpenInfo->eAccess == GA_Update ||
-        static_cast<size_t>(poOpenInfo->nHeaderBytes) <
-            strlen(DDS_SIGNATURE) + sizeof(crnlib::DDSURFACEDESC2))
-    {
-        return false;
-    }
-
-    // Check signature and dwSize member of DDSURFACEDESC2
-    return memcmp(poOpenInfo->pabyHeader, DDS_SIGNATURE,
-                  strlen(DDS_SIGNATURE)) == 0 &&
-           CPL_LSBUINT32PTR(poOpenInfo->pabyHeader + strlen(DDS_SIGNATURE)) ==
-               sizeof(crnlib::DDSURFACEDESC2);
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *DDSDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (!Identify(poOpenInfo))
+    if (!DDSDriverIdentify(poOpenInfo))
         return nullptr;
 
     crnlib::DDSURFACEDESC2 ddsDesc;
@@ -760,41 +738,12 @@ GDALDataset *DDSDataset::CreateCopy(const char *pszFilename,
 
 void GDALRegister_DDS()
 {
-    if (GDALGetDriverByName("DDS") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
+    DDSDriverSetCommonMetadata(poDriver);
 
-    poDriver->SetDescription("DDS");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "DirectDraw Surface");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/dds.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "dds");
-    poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/dds");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>\n"
-        "   <Option name='FORMAT' type='string-select' description='Texture "
-        "format' default='DXT3'>\n"
-        "     <Value>DXT1</Value>\n"
-        "     <Value>DXT1A</Value>\n"
-        "     <Value>DXT3</Value>\n"
-        "     <Value>DXT5</Value>\n"
-        "     <Value>ETC1</Value>\n"
-        "   </Option>\n"
-        "   <Option name='QUALITY' type='string-select' "
-        "description='Compression Quality' default='NORMAL'>\n"
-        "     <Value>SUPERFAST</Value>\n"
-        "     <Value>FAST</Value>\n"
-        "     <Value>NORMAL</Value>\n"
-        "     <Value>BETTER</Value>\n"
-        "     <Value>UBER</Value>\n"
-        "   </Option>\n"
-        "</CreationOptionList>\n");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->pfnIdentify = DDSDataset::Identify;
     poDriver->pfnOpen = DDSDataset::Open;
     poDriver->pfnCreateCopy = DDSDataset::CreateCopy;
 

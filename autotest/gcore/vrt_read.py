@@ -263,6 +263,26 @@ def test_vrt_read_6():
 
 
 ###############################################################################
+# Test GetMinimum() and GetMaximum()
+
+
+def test_vrt_read_min_max_several_sources(tmp_path):
+
+    src1 = str(tmp_path / "left.tif")
+    src2 = str(tmp_path / "right.tif")
+    vrt = str(tmp_path / "tmp.vrt")
+    ds = gdal.Translate(src1, "data/byte.tif", srcWin=[0, 0, 10, 20])
+    ds.GetRasterBand(1).ComputeStatistics(False)
+    ds = None
+    ds = gdal.Translate(src2, "data/byte.tif", srcWin=[10, 0, 10, 20])
+    ds.GetRasterBand(1).ComputeStatistics(False)
+    ds = None
+    ds = gdal.BuildVRT(vrt, [src1, src2])
+    assert ds.GetRasterBand(1).GetMinimum() == 74
+    assert ds.GetRasterBand(1).GetMaximum() == 255
+
+
+###############################################################################
 # Test GDALOpen() anti-recursion mechanism
 
 
@@ -1584,6 +1604,9 @@ def test_vrt_protocol():
         1e-9,
     )
 
+    ds = gdal.Open("vrt://data/float32.tif?a_nodata=-9999")
+    assert ds.GetRasterBand(1).GetNoDataValue() == -9999.0
+
     ## multiple open options
     ds = gdal.Open(
         "vrt://data/byte_with_ovr.tif?oo=GEOREF_SOURCES=TABFILE,OVERVIEW_LEVEL=0"
@@ -1635,6 +1658,25 @@ def test_vrt_protocol():
     with pytest.raises(Exception):
         assert not gdal.Open("vrt://data/byte.tif?srcwin=0,0,20,21&epo=true")
         assert not gdal.Open("vrt://data/byte.tif?srcwin=20,20,1,1&epo=false&eco=true")
+
+    ds = gdal.Open("vrt://data/tiff_with_subifds.tif?sd=2")
+    assert ds.GetRasterBand(1).Checksum() == 0
+
+    ## the component name is "1"
+    ds = gdal.Open("vrt://data/tiff_with_subifds.tif?sd_name=1")
+    assert ds.GetRasterBand(1).Checksum() == 35731
+    with pytest.raises(Exception):
+        assert not gdal.Open("vrt://data/tiff_with_subifds.tif?sd=2&sd_name=1")
+        assert not gdal.Open("vrt://data/tiff_with_subifds.tif?sd=3")
+        assert not gdal.Open("vrt://data/tiff_with_subifds.tif?sd_name=sds")
+
+
+@pytest.mark.require_driver("NetCDF")
+def test_vrt_protocol_netcdf_component_name():
+    ds = gdal.Open(
+        "vrt://../gdrivers/data/netcdf/alldatatypes.nc?sd_name=ubyte_y2_x2_var"
+    )
+    assert ds.GetRasterBand(1).Checksum() == 71
 
 
 @pytest.mark.require_proj(7, 2)
@@ -2515,3 +2557,32 @@ def test_vrt_read_complex_source_nodata_out_of_range(tmp_vsimem, data_type):
     got_data = vrt_ds.ReadRaster(buf_type=data_type)
     got_data = struct.unpack(array_type, got_data)
     assert got_data == (1,)
+
+
+###############################################################################
+# Test serialization of approximate ComputeStatistics() when there is
+# external overview
+
+
+def test_vrt_read_compute_statistics_approximate(tmp_vsimem):
+
+    gtiff_filename = str(tmp_vsimem / "tmp.tif")
+    gdal.Translate(
+        gtiff_filename, gdal.Open("data/byte.tif"), format="GTiff", width=256
+    )
+    vrt_filename = str(tmp_vsimem / "tmp.vrt")
+    gdal.Translate(vrt_filename, gtiff_filename)
+    ds = gdal.Open(vrt_filename)
+    ds.BuildOverviews("NEAR", [2])
+    ds = None
+    ds = gdal.Open(vrt_filename)
+    ds.GetRasterBand(1).ComputeStatistics(True)
+    ds = None
+    ds = gdal.Open(vrt_filename)
+    md = ds.GetRasterBand(1).GetMetadata()
+    assert md["STATISTICS_APPROXIMATE"] == "YES"
+    assert "STATISTICS_MINIMUM" in md
+    assert "STATISTICS_MAXIMUM" in md
+    assert "STATISTICS_MEAN" in md
+    assert "STATISTICS_STDDEV" in md
+    assert md["STATISTICS_VALID_PERCENT"] == "100"

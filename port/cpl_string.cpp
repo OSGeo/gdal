@@ -338,7 +338,6 @@ char **CSLLoad2(const char *pszFname, int nMaxLines, int nMaxCols,
     int nLines = 0;
     int nAllocatedLines = 0;
 
-    CPLErrorReset();
     while (!VSIFEofL(fp) && (nMaxLines == -1 || nLines < nMaxLines))
     {
         const char *pszLine = CPLReadLine2L(fp, nMaxCols, papszOptions);
@@ -1515,9 +1514,9 @@ int CPLsscanf(const char *str, CPL_SCANF_FORMAT_STRING(const char *fmt), ...)
                 break;
             }
         }
-        else if (isspace(*fmt))
+        else if (isspace(static_cast<unsigned char>(*fmt)))
         {
-            while (*str != '\0' && isspace(*str))
+            while (*str != '\0' && isspace(static_cast<unsigned char>(*str)))
                 ++str;
         }
         else if (*str != *fmt)
@@ -1780,6 +1779,54 @@ const char *CPLParseNameValue(const char *pszNameValue, char **ppszKey)
     for (int i = 0; pszNameValue[i] != '\0'; ++i)
     {
         if (pszNameValue[i] == '=' || pszNameValue[i] == ':')
+        {
+            const char *pszValue = pszNameValue + i + 1;
+            while (*pszValue == ' ' || *pszValue == '\t')
+                ++pszValue;
+
+            if (ppszKey != nullptr)
+            {
+                *ppszKey = static_cast<char *>(CPLMalloc(i + 1));
+                memcpy(*ppszKey, pszNameValue, i);
+                (*ppszKey)[i] = '\0';
+                while (i > 0 &&
+                       ((*ppszKey)[i - 1] == ' ' || (*ppszKey)[i - 1] == '\t'))
+                {
+                    (*ppszKey)[i - 1] = '\0';
+                    i--;
+                }
+            }
+
+            return pszValue;
+        }
+    }
+
+    return nullptr;
+}
+
+/**********************************************************************
+ *                       CPLParseNameValueSep()
+ **********************************************************************/
+/**
+ * Parse NAME<Sep>VALUE string into name and value components.
+ *
+ * This is derived directly from CPLParseNameValue() which will separate
+ * on '=' OR ':', here chSep is required for specifying the separator
+ * explicitly.
+ *
+ * @param pszNameValue string in "NAME=VALUE" format.
+ * @param ppszKey optional pointer though which to return the name
+ * portion.
+ * @param chSep required single char separator
+ * @return the value portion (pointing into original string).
+ */
+
+const char *CPLParseNameValueSep(const char *pszNameValue, char **ppszKey,
+                                 char chSep)
+{
+    for (int i = 0; pszNameValue[i] != '\0'; ++i)
+    {
+        if (pszNameValue[i] == chSep)
         {
             const char *pszValue = pszNameValue + i + 1;
             while (*pszValue == ' ' || *pszValue == '\t')
@@ -2795,7 +2842,7 @@ CPLValueType CPLGetValueType(const char *pszValue)
             if (!bFoundMantissa)
                 return CPL_VALUE_STRING;
             if (!(pszValue[1] == '+' || pszValue[1] == '-' ||
-                  isdigit(pszValue[1])))
+                  isdigit(static_cast<unsigned char>(pszValue[1]))))
                 return CPL_VALUE_STRING;
 
             bIsReal = true;

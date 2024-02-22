@@ -88,7 +88,7 @@ OGRLayer *OGRFeatherWriterDataset::ICreateLayer(
                  "Can write only one layer in a Feather file");
         return nullptr;
     }
-    m_poLayer = cpl::make_unique<OGRFeatherWriterLayer>(
+    m_poLayer = std::make_unique<OGRFeatherWriterLayer>(
         m_poMemoryPool.get(), m_poOutputStream, pszName);
     if (!m_poLayer->SetOptions(m_osFilename, papszOptions, poSpatialRef,
                                eGType))

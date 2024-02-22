@@ -32,8 +32,6 @@
 #include "ntf.h"
 #include "cpl_string.h"
 
-constexpr int MAX_LINK = 5000;
-
 /************************************************************************/
 /*                         TranslateCodePoint()                         */
 /*                                                                      */

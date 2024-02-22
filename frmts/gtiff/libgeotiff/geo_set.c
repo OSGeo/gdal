@@ -11,11 +11,13 @@
  *
  **********************************************************************/
 
+#include <assert.h>
+#include <stdarg.h>
+#include <string.h>
+
 #include "geotiff.h"   /* public interface        */
 #include "geo_tiffp.h" /* external TIFF interface */
 #include "geo_keyp.h"  /* private interface       */
-
-#include <assert.h>
 
 /**
 This function writes a geokey_t value to a GeoTIFF file.

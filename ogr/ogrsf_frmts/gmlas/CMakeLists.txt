@@ -15,9 +15,25 @@ add_gdal_driver(
           ogrgmlasschemaanalyzer.cpp
           ogrgmlasxlinkresolver.cpp
           xercesc_headers.h
-          PLUGIN_CAPABLE_IF
-          "NOT GDAL_USE_JSONC_INTERNAL")
+  CORE_SOURCES
+          ogrgmlasdrivercore.cpp
+  PLUGIN_CAPABLE_IF "NOT GDAL_USE_JSONC_INTERNAL")
+
+if(NOT TARGET ogr_GMLAS)
+    return()
+endif()
+
 gdal_standard_includes(ogr_GMLAS)
+
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/gmlasconf.xml
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/gmlasconf.xsd
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
+
 target_include_directories(
   ogr_GMLAS PRIVATE ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/geojson ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/mem
                     ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/pgdump)

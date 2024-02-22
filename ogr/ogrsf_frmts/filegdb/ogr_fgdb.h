@@ -196,7 +196,8 @@ class FGdbLayer final : public FGdbBaseLayer
         return m_wstrType;
     }
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
+                               int bApproxOK) override;
     virtual OGRErr DeleteField(int iFieldToDelete) override;
 #ifdef AlterFieldDefn_implemented_but_not_working
     virtual OGRErr AlterFieldDefn(int iFieldToAlter,
@@ -324,7 +325,8 @@ class FGdbDataSource final : public OGRDataSource
     int bPerLayerCopyingForTransaction;
 
   public:
-    FGdbDataSource(bool bUseDriverMutex, FGdbDatabaseConnection *pConnection);
+    FGdbDataSource(bool bUseDriverMutex, FGdbDatabaseConnection *pConnection,
+                   bool bUseOpenFileGDB);
     virtual ~FGdbDataSource();
 
     int Open(const char *pszFSName, int bUpdate, const char *pszPublicName);
@@ -416,6 +418,11 @@ class FGdbDataSource final : public OGRDataSource
     }
     void SetSymlinkFlagOnAllLayers();
 
+    bool UseOpenFileGDB() const
+    {
+        return m_bUseOpenFileGDB;
+    }
+
     /*
     protected:
 
@@ -434,6 +441,7 @@ class FGdbDataSource final : public OGRDataSource
     bool m_bUpdate;
     GDALDriver *m_poOpenFileGDBDrv;
     std::unique_ptr<GDALDataset> m_poOpenFileGDBDS;
+    bool m_bUseOpenFileGDB = false;
 };
 
 /************************************************************************/

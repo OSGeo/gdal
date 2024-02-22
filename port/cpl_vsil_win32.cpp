@@ -29,7 +29,7 @@
 
 #include "cpl_vsi_virtual.h"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 
 #include <windows.h>
 #include <winioctl.h>  // for FSCTL_SET_SPARSE
@@ -83,6 +83,14 @@ class VSIWin32FilesystemHandler final : public VSIFilesystemHandler
     virtual bool IsLocal(const char *pszPath) override;
     std::string
     GetCanonicalFilename(const std::string &osFilename) const override;
+
+    const char *GetDirectorySeparator(const char *pszPath) override
+    {
+        // Return forward slash for paths of the form
+        // "{drive_letter}:/{rest_of_the_path}", and backslash otherwise.
+        return (pszPath[0] && pszPath[1] == ':' && pszPath[2] == '/') ? "/"
+                                                                      : "\\";
+    }
 };
 
 /************************************************************************/
@@ -98,6 +106,7 @@ class VSIWin32Handle final : public VSIVirtualHandle
   public:
     HANDLE hFile = nullptr;
     bool bEOF = false;
+    bool m_bWriteThrough = false;
 
     VSIWin32Handle() = default;
 
@@ -316,8 +325,17 @@ int VSIWin32Handle::Flush()
     /* See http://trac.osgeo.org/gdal/ticket/5556 */
 
     // Add this as a hack to make ogr_mitab_30 and _31 tests pass
-    if (CPLTestBool(CPLGetConfigOption("VSI_FLUSH", "FALSE")))
-        FlushFileBuffers(hFile);
+    if (!m_bWriteThrough &&
+        CPLTestBool(CPLGetConfigOption("VSI_FLUSH", "FALSE")))
+    {
+        if (!FlushFileBuffers(hFile))
+        {
+            errno = ErrnoFromGetLastError();
+            CPLDebug("CPL", "VSIWin32Handle::Flush() failed with errno=%d (%s)",
+                     errno, strerror(errno));
+            return -1;
+        }
+    }
     return 0;
 }
 
@@ -363,6 +381,8 @@ size_t VSIWin32Handle::Write(const void *pBuffer, size_t nSize, size_t nCount)
     {
         nResult = 0;
         errno = ErrnoFromGetLastError();
+        CPLDebug("CPL", "VSIWin32Handle::Write() failed with errno=%d (%s)",
+                 errno, strerror(errno));
     }
     else if (nSize == 0)
         nResult = 0;
@@ -506,23 +526,59 @@ static size_t VSIWin32StrlenW(const wchar_t *pwszString)
 
 static void VSIWin32TryLongFilename(wchar_t *&pwszFilename)
 {
-    size_t nLen = VSIWin32StrlenW(pwszFilename);
+    const size_t nLen = VSIWin32StrlenW(pwszFilename);
+    constexpr const wchar_t LONG_FILENAME_PREFIX[] = L"\\\\?\\";
+    constexpr size_t LONG_FILENAME_PREFIX_LEN =
+        std::char_traits<wchar_t>::length(LONG_FILENAME_PREFIX);
+    static_assert(LONG_FILENAME_PREFIX_LEN == 4);
+
+    // <drive_letter>:\ or <drive_letter>:/
     if (pwszFilename[0] != 0 && pwszFilename[1] == ':' &&
         (pwszFilename[2] == '\\' || pwszFilename[2] == '/'))
     {
         pwszFilename = static_cast<wchar_t *>(
-            CPLRealloc(pwszFilename, (4 + nLen + 1) * sizeof(wchar_t)));
-        memmove(pwszFilename + 4, pwszFilename, (nLen + 1) * sizeof(wchar_t));
+            CPLRealloc(pwszFilename, (LONG_FILENAME_PREFIX_LEN + nLen + 1) *
+                                         sizeof(wchar_t)));
+        memmove(pwszFilename + LONG_FILENAME_PREFIX_LEN, pwszFilename,
+                (nLen + 1) * sizeof(wchar_t));
+        memcpy(pwszFilename, LONG_FILENAME_PREFIX,
+               LONG_FILENAME_PREFIX_LEN * sizeof(wchar_t));
+    }
+    // \\network_path or //network_path
+    else if (pwszFilename[0] != 0 &&
+             ((pwszFilename[0] == '\\' && pwszFilename[1] == '\\') ||
+              (pwszFilename[0] == '/' && pwszFilename[1] == '/')))
+    {
+        constexpr const wchar_t UNC_PREFIX[] = L"\\\\?\\UNC\\";
+        constexpr size_t UNC_PREFIX_LEN =
+            std::char_traits<wchar_t>::length(UNC_PREFIX);
+        static_assert(UNC_PREFIX_LEN == 8);
+        constexpr const wchar_t NETWORK_PATH_PREFIX[] = L"\\\\";
+        constexpr size_t NETWORK_PATH_PREFIX_LEN =
+            std::char_traits<wchar_t>::length(NETWORK_PATH_PREFIX);
+        static_assert(NETWORK_PATH_PREFIX_LEN == 2);
+        constexpr size_t EXTRA_ALLOC_SIZE =
+            UNC_PREFIX_LEN - NETWORK_PATH_PREFIX_LEN;
+
+        pwszFilename = static_cast<wchar_t *>(CPLRealloc(
+            pwszFilename, (EXTRA_ALLOC_SIZE + nLen + 1) * sizeof(wchar_t)));
+        memmove(pwszFilename + UNC_PREFIX_LEN,
+                pwszFilename + NETWORK_PATH_PREFIX_LEN,
+                (nLen - NETWORK_PATH_PREFIX_LEN + 1) * sizeof(wchar_t));
+        memcpy(pwszFilename, UNC_PREFIX, UNC_PREFIX_LEN * sizeof(wchar_t));
     }
     else
     {
-        // TODO(schwehr): 32768 should be a symbolic constant.
-        wchar_t *pwszCurDir =
-            static_cast<wchar_t *>(CPLMalloc(32768 * sizeof(wchar_t)));
-        DWORD nCurDirLen = GetCurrentDirectoryW(32768, pwszCurDir);
-        CPLAssert(nCurDirLen < 32768);
-        pwszFilename = static_cast<wchar_t *>(CPLRealloc(
-            pwszFilename, (4 + nCurDirLen + 1 + nLen + 1) * sizeof(wchar_t)));
+        constexpr size_t MAX_LONG_FILENAME_SIZE = 32768;
+        wchar_t *pwszCurDir = static_cast<wchar_t *>(
+            CPLMalloc(MAX_LONG_FILENAME_SIZE * sizeof(wchar_t)));
+        DWORD nCurDirLen =
+            GetCurrentDirectoryW(MAX_LONG_FILENAME_SIZE, pwszCurDir);
+        CPLAssert(nCurDirLen < MAX_LONG_FILENAME_SIZE);
+        pwszFilename = static_cast<wchar_t *>(
+            CPLRealloc(pwszFilename,
+                       (LONG_FILENAME_PREFIX_LEN + nCurDirLen + 1 + nLen + 1) *
+                           sizeof(wchar_t)));
         int nOffset = 0;
         if (pwszFilename[0] == '.' &&
             (pwszFilename[1] == '/' || pwszFilename[1] == '\\'))
@@ -544,18 +600,17 @@ static void VSIWin32TryLongFilename(wchar_t *&pwszFilename)
             nCurDirLen--;
             nOffset += 3;
         }
-        memmove(pwszFilename + 4 + nCurDirLen + 1, pwszFilename + nOffset,
-                (nLen - nOffset + 1) * sizeof(wchar_t));
-        memmove(pwszFilename + 4, pwszCurDir, nCurDirLen * sizeof(wchar_t));
-        pwszFilename[4 + nCurDirLen] = '\\';
+        memmove(pwszFilename + LONG_FILENAME_PREFIX_LEN + nCurDirLen + 1,
+                pwszFilename + nOffset, (nLen - nOffset + 1) * sizeof(wchar_t));
+        memmove(pwszFilename + LONG_FILENAME_PREFIX_LEN, pwszCurDir,
+                nCurDirLen * sizeof(wchar_t));
+        pwszFilename[LONG_FILENAME_PREFIX_LEN + nCurDirLen] = '\\';
+        memcpy(pwszFilename, LONG_FILENAME_PREFIX,
+               LONG_FILENAME_PREFIX_LEN * sizeof(wchar_t));
         CPLFree(pwszCurDir);
     }
-    pwszFilename[0] = '\\';
-    pwszFilename[1] = '\\';
-    pwszFilename[2] = '?';
-    pwszFilename[3] = '\\';
 
-    for (size_t i = 4; pwszFilename[i] != 0; i++)
+    for (size_t i = LONG_FILENAME_PREFIX_LEN; pwszFilename[i] != 0; i++)
     {
         if (pwszFilename[i] == '/')
             pwszFilename[i] = '\\';
@@ -582,9 +637,10 @@ static bool VSIWin32IsLongFilename(const wchar_t *pwszFilename)
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *
-VSIWin32FilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
-                                bool bSetError, CSLConstList /* papszOptions */)
+VSIVirtualHandle *VSIWin32FilesystemHandler::Open(const char *pszFilename,
+                                                  const char *pszAccess,
+                                                  bool bSetError,
+                                                  CSLConstList papszOptions)
 
 {
     DWORD dwDesiredAccess;
@@ -593,9 +649,17 @@ VSIWin32FilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
     HANDLE hFile;
 
     // GENERICs are used instead of FILE_GENERIC_READ.
-    dwDesiredAccess = GENERIC_READ;
-    if (strchr(pszAccess, '+') != nullptr || strchr(pszAccess, 'w') != nullptr)
-        dwDesiredAccess |= GENERIC_WRITE;
+    if (strcmp(pszAccess, "w") == 0 || strcmp(pszAccess, "wb") == 0)
+    {
+        dwDesiredAccess = GENERIC_WRITE;
+    }
+    else
+    {
+        dwDesiredAccess = GENERIC_READ;
+        if (strchr(pszAccess, '+') != nullptr ||
+            strchr(pszAccess, 'w') != nullptr)
+            dwDesiredAccess |= GENERIC_WRITE;
+    }
 
     // Append mode only makes sense on files and pipes, have to use FILE_ access
     // these are very different from the GENERICs
@@ -645,6 +709,13 @@ VSIWin32FilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
     dwFlagsAndAttributes = (dwDesiredAccess == GENERIC_READ)
                                ? FILE_ATTRIBUTE_READONLY
                                : FILE_ATTRIBUTE_NORMAL;
+
+    const bool bWriteThrough =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "WRITE_THROUGH", "NO"));
+    if (bWriteThrough)
+    {
+        dwFlagsAndAttributes |= FILE_FLAG_WRITE_THROUGH;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      On Win32 consider treating the filename as utf-8 and            */
@@ -739,6 +810,7 @@ VSIWin32FilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
     VSIWin32Handle *poHandle = new VSIWin32Handle;
 
     poHandle->hFile = hFile;
+    poHandle->m_bWriteThrough = bWriteThrough;
 
     if (strchr(pszAccess, 'a') != nullptr)
         poHandle->Seek(0, SEEK_END);
@@ -774,34 +846,25 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
         wchar_t *pwszFilename =
             CPLRecodeToWChar(pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2);
 
-        bool bTryOtherStatImpl = false;
-        int nResult = 0;
-        if (VSIWin32IsLongFilename(pwszFilename))
+        int nResult = _wstat64(pwszFilename, pStatBuf);
+
+        // If _wstat64() fails and the original name is not an extended one,
+        // then retry with an extended filename
+        if (nResult < 0 && !VSIWin32IsLongFilename(pwszFilename))
         {
-            bTryOtherStatImpl = true;
-            nResult = -1;
-        }
-        else
-        {
-            nResult = _wstat64(pwszFilename, pStatBuf);
-            if (nResult < 0)
+            DWORD nLastError = GetLastError();
+            if (nLastError == ERROR_PATH_NOT_FOUND ||
+                nLastError == ERROR_FILENAME_EXCED_RANGE)
             {
-                DWORD nLastError = GetLastError();
-                if (nLastError == ERROR_PATH_NOT_FOUND ||
-                    nLastError == ERROR_FILENAME_EXCED_RANGE)
-                {
-                    VSIWin32TryLongFilename(pwszFilename);
-                    bTryOtherStatImpl = true;
-                }
+                VSIWin32TryLongFilename(pwszFilename);
+                nResult = _wstat64(pwszFilename, pStatBuf);
             }
         }
 
-        if (bTryOtherStatImpl)
+        // There are some issues with mingw64 runtime with extended file names.
+        // In that situation try a poor-man implementation with Open()
+        if (nResult < 0 && VSIWin32IsLongFilename(pwszFilename))
         {
-            // _wstat64 doesn't like \\?\ paths, so do our poor-man
-            // stat like.
-            // nResult = _wstat64( pwszFilename, pStatBuf );
-
             VSIVirtualHandle *poHandle = Open(pszFilename, "rb");
             if (poHandle != nullptr)
             {

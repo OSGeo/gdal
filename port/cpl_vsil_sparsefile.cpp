@@ -485,7 +485,7 @@ int VSISparseFileFilesystemHandler::Stat(const char *pszFilename,
         return -1;
 
     poFile->Seek(0, SEEK_END);
-    const size_t nLength = static_cast<size_t>(poFile->Tell());
+    const vsi_l_offset nLength = poFile->Tell();
     delete poFile;
 
     const int nResult =

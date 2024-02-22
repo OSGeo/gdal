@@ -425,6 +425,11 @@ TEST_F(test_ogr, geometry_get_point)
     }
 }
 
+TEST_F(test_ogr, OGR_G_CreateGeometry_unknown)
+{
+    EXPECT_EQ(OGR_G_CreateGeometry(wkbUnknown), nullptr);
+}
+
 TEST_F(test_ogr, style_manager)
 {
     OGRStyleMgrH hSM = OGR_SM_Create(nullptr);
@@ -452,133 +457,199 @@ TEST_F(test_ogr, style_manager)
 TEST_F(test_ogr, OGRParseDate)
 {
     OGRField sField;
-    ASSERT_EQ(OGRParseDate("2017/11/31 12:34:56", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.Year, 2017);
-    ASSERT_EQ(sField.Date.Month, 11);
-    ASSERT_EQ(sField.Date.Day, 31);
-    ASSERT_EQ(sField.Date.Hour, 12);
-    ASSERT_EQ(sField.Date.Minute, 34);
-    ASSERT_EQ(sField.Date.Second, 56.0f);
-    ASSERT_EQ(sField.Date.TZFlag, 0);
+    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:56", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.Year, 2017);
+    EXPECT_EQ(sField.Date.Month, 11);
+    EXPECT_EQ(sField.Date.Day, 31);
+    EXPECT_EQ(sField.Date.Hour, 12);
+    EXPECT_EQ(sField.Date.Minute, 34);
+    EXPECT_EQ(sField.Date.Second, 56.0f);
+    EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    ASSERT_EQ(OGRParseDate("2017/11/31 12:34:56+00", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.TZFlag, 100);
+    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:56+00", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.TZFlag, 100);
 
-    ASSERT_EQ(OGRParseDate("2017/11/31 12:34:56+12:00", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.TZFlag, 100 + 12 * 4);
+    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:56+12:00", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.TZFlag, 100 + 12 * 4);
 
-    ASSERT_EQ(OGRParseDate("2017/11/31 12:34:56+1200", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.TZFlag, 100 + 12 * 4);
+    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:56+1200", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.TZFlag, 100 + 12 * 4);
 
-    ASSERT_EQ(OGRParseDate("2017/11/31 12:34:56+815", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.TZFlag, 100 + 8 * 4 + 1);
+    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:56+815", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.TZFlag, 100 + 8 * 4 + 1);
 
-    ASSERT_EQ(OGRParseDate("2017/11/31 12:34:56-12:00", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.TZFlag, 100 - 12 * 4);
+    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:56-12:00", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.TZFlag, 100 - 12 * 4);
 
-    ASSERT_EQ(OGRParseDate(" 2017/11/31 12:34:56", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.Year, 2017);
+    EXPECT_EQ(OGRParseDate(" 2017/11/31 12:34:56", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.Year, 2017);
 
-    ASSERT_EQ(OGRParseDate("2017/11/31 12:34:56.789", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.Second, 56.789f);
+    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:56.789", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.Second, 56.789f);
 
     // Leap second
-    ASSERT_EQ(OGRParseDate("2017/11/31 12:34:60", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.Second, 60.0f);
+    EXPECT_EQ(OGRParseDate("2017/11/31 12:34:60", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.Second, 60.0f);
 
-    ASSERT_EQ(OGRParseDate("2017-11-31T12:34:56", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.Year, 2017);
-    ASSERT_EQ(sField.Date.Month, 11);
-    ASSERT_EQ(sField.Date.Day, 31);
-    ASSERT_EQ(sField.Date.Hour, 12);
-    ASSERT_EQ(sField.Date.Minute, 34);
-    ASSERT_EQ(sField.Date.Second, 56.0f);
-    ASSERT_EQ(sField.Date.TZFlag, 0);
+    EXPECT_EQ(OGRParseDate("2017-11-31T12:34:56", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.Year, 2017);
+    EXPECT_EQ(sField.Date.Month, 11);
+    EXPECT_EQ(sField.Date.Day, 31);
+    EXPECT_EQ(sField.Date.Hour, 12);
+    EXPECT_EQ(sField.Date.Minute, 34);
+    EXPECT_EQ(sField.Date.Second, 56.0f);
+    EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    ASSERT_EQ(OGRParseDate("2017-11-31T12:34:56Z", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.Second, 56.0f);
-    ASSERT_EQ(sField.Date.TZFlag, 100);
+    EXPECT_EQ(OGRParseDate("2017-11-31T12:34:56Z", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.Second, 56.0f);
+    EXPECT_EQ(sField.Date.TZFlag, 100);
 
-    ASSERT_EQ(OGRParseDate("2017-11-31T12:34:56.789Z", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.Second, 56.789f);
-    ASSERT_EQ(sField.Date.TZFlag, 100);
+    EXPECT_EQ(OGRParseDate("2017-11-31T12:34:56.789Z", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.Second, 56.789f);
+    EXPECT_EQ(sField.Date.TZFlag, 100);
 
-    ASSERT_EQ(OGRParseDate("2017-11-31", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.Year, 2017);
-    ASSERT_EQ(sField.Date.Month, 11);
-    ASSERT_EQ(sField.Date.Day, 31);
-    ASSERT_EQ(sField.Date.Hour, 0);
-    ASSERT_EQ(sField.Date.Minute, 0);
-    ASSERT_EQ(sField.Date.Second, 0.0f);
-    ASSERT_EQ(sField.Date.TZFlag, 0);
+    EXPECT_EQ(OGRParseDate("2017-11-31", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.Year, 2017);
+    EXPECT_EQ(sField.Date.Month, 11);
+    EXPECT_EQ(sField.Date.Day, 31);
+    EXPECT_EQ(sField.Date.Hour, 0);
+    EXPECT_EQ(sField.Date.Minute, 0);
+    EXPECT_EQ(sField.Date.Second, 0.0f);
+    EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    ASSERT_EQ(OGRParseDate("2017-11-31Z", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.Year, 2017);
-    ASSERT_EQ(sField.Date.Month, 11);
-    ASSERT_EQ(sField.Date.Day, 31);
-    ASSERT_EQ(sField.Date.Hour, 0);
-    ASSERT_EQ(sField.Date.Minute, 0);
-    ASSERT_EQ(sField.Date.Second, 0.0f);
-    ASSERT_EQ(sField.Date.TZFlag, 0);
+    EXPECT_EQ(OGRParseDate("2017-11-31Z", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.Year, 2017);
+    EXPECT_EQ(sField.Date.Month, 11);
+    EXPECT_EQ(sField.Date.Day, 31);
+    EXPECT_EQ(sField.Date.Hour, 0);
+    EXPECT_EQ(sField.Date.Minute, 0);
+    EXPECT_EQ(sField.Date.Second, 0.0f);
+    EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    ASSERT_EQ(OGRParseDate("12:34", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.Year, 0);
-    ASSERT_EQ(sField.Date.Month, 0);
-    ASSERT_EQ(sField.Date.Day, 0);
-    ASSERT_EQ(sField.Date.Hour, 12);
-    ASSERT_EQ(sField.Date.Minute, 34);
-    ASSERT_EQ(sField.Date.Second, 0.0f);
-    ASSERT_EQ(sField.Date.TZFlag, 0);
+    EXPECT_EQ(OGRParseDate("12:34", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.Year, 0);
+    EXPECT_EQ(sField.Date.Month, 0);
+    EXPECT_EQ(sField.Date.Day, 0);
+    EXPECT_EQ(sField.Date.Hour, 12);
+    EXPECT_EQ(sField.Date.Minute, 34);
+    EXPECT_EQ(sField.Date.Second, 0.0f);
+    EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    ASSERT_EQ(OGRParseDate("12:34:56", &sField, 0), TRUE);
-    ASSERT_EQ(OGRParseDate("12:34:56.789", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDate("12:34:56", &sField, 0), TRUE);
+    EXPECT_EQ(OGRParseDate("12:34:56.789", &sField, 0), TRUE);
 
-    ASSERT_EQ(OGRParseDate("T12:34:56", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.Year, 0);
-    ASSERT_EQ(sField.Date.Month, 0);
-    ASSERT_EQ(sField.Date.Day, 0);
-    ASSERT_EQ(sField.Date.Hour, 12);
-    ASSERT_EQ(sField.Date.Minute, 34);
-    ASSERT_EQ(sField.Date.Second, 56.0f);
-    ASSERT_EQ(sField.Date.TZFlag, 0);
+    EXPECT_EQ(OGRParseDate("T12:34:56", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.Year, 0);
+    EXPECT_EQ(sField.Date.Month, 0);
+    EXPECT_EQ(sField.Date.Day, 0);
+    EXPECT_EQ(sField.Date.Hour, 12);
+    EXPECT_EQ(sField.Date.Minute, 34);
+    EXPECT_EQ(sField.Date.Second, 56.0f);
+    EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    ASSERT_EQ(OGRParseDate("T123456", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.Year, 0);
-    ASSERT_EQ(sField.Date.Month, 0);
-    ASSERT_EQ(sField.Date.Day, 0);
-    ASSERT_EQ(sField.Date.Hour, 12);
-    ASSERT_EQ(sField.Date.Minute, 34);
-    ASSERT_EQ(sField.Date.Second, 56.0f);
-    ASSERT_EQ(sField.Date.TZFlag, 0);
+    EXPECT_EQ(OGRParseDate("T123456", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.Year, 0);
+    EXPECT_EQ(sField.Date.Month, 0);
+    EXPECT_EQ(sField.Date.Day, 0);
+    EXPECT_EQ(sField.Date.Hour, 12);
+    EXPECT_EQ(sField.Date.Minute, 34);
+    EXPECT_EQ(sField.Date.Second, 56.0f);
+    EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    ASSERT_EQ(OGRParseDate("T123456.789", &sField, 0), TRUE);
-    ASSERT_EQ(sField.Date.Year, 0);
-    ASSERT_EQ(sField.Date.Month, 0);
-    ASSERT_EQ(sField.Date.Day, 0);
-    ASSERT_EQ(sField.Date.Hour, 12);
-    ASSERT_EQ(sField.Date.Minute, 34);
-    ASSERT_EQ(sField.Date.Second, 56.789f);
-    ASSERT_EQ(sField.Date.TZFlag, 0);
+    EXPECT_EQ(OGRParseDate("T123456.789", &sField, 0), TRUE);
+    EXPECT_EQ(sField.Date.Year, 0);
+    EXPECT_EQ(sField.Date.Month, 0);
+    EXPECT_EQ(sField.Date.Day, 0);
+    EXPECT_EQ(sField.Date.Hour, 12);
+    EXPECT_EQ(sField.Date.Minute, 34);
+    EXPECT_EQ(sField.Date.Second, 56.789f);
+    EXPECT_EQ(sField.Date.TZFlag, 0);
 
-    ASSERT_TRUE(!OGRParseDate("2017", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("12:", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("12:3", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("1:23", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("12:34:5", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("2017-a-31T12:34:56", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("2017-00-31T12:34:56", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("2017-13-31T12:34:56", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("2017-01-00T12:34:56", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("2017-01-aT12:34:56", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("2017-01-32T12:34:56", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("a:34:56", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("2017-01-01Ta:34:56", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("2017-01-01T25:34:56", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("2017-01-01T00:a:00", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("2017-01-01T00: 34:56", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("2017-01-01T00:61:00", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("2017-01-01T00:00:61", &sField, 0));
-    ASSERT_TRUE(!OGRParseDate("2017-01-01T00:00:a", &sField, 0));
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    EXPECT_TRUE(!OGRParseDate("123456-01-01", &sField, 0));
+    CPLPopErrorHandler();
+    EXPECT_TRUE(!OGRParseDate("2017", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017x-01-01", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-1-01", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-01-1", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-01-01x", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("12:", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("12:3", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("1:23", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("12:34:5", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("1a:34", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-a-31T12:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-00-31T12:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-13-31T12:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-01-00T12:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-01-aT12:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-01-32T12:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("a:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-01-01Ta:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-01-01T25:34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-01-01T00:a:00", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-01-01T00: 34:56", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-01-01T00:61:00", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-01-01T00:00:61", &sField, 0));
+    EXPECT_TRUE(!OGRParseDate("2017-01-01T00:00:a", &sField, 0));
+
+    // Test OGRPARSEDATE_OPTION_LAX
+    EXPECT_EQ(OGRParseDate("2017-1-9", &sField, OGRPARSEDATE_OPTION_LAX), TRUE);
+    EXPECT_EQ(sField.Date.Year, 2017);
+    EXPECT_EQ(sField.Date.Month, 1);
+    EXPECT_EQ(sField.Date.Day, 9);
+
+    EXPECT_EQ(OGRParseDate("2017-1-31", &sField, OGRPARSEDATE_OPTION_LAX),
+              TRUE);
+    EXPECT_EQ(sField.Date.Year, 2017);
+    EXPECT_EQ(sField.Date.Month, 1);
+    EXPECT_EQ(sField.Date.Day, 31);
+
+    EXPECT_EQ(OGRParseDate("2017-1-31T1:2:3", &sField, OGRPARSEDATE_OPTION_LAX),
+              TRUE);
+    EXPECT_EQ(sField.Date.Year, 2017);
+    EXPECT_EQ(sField.Date.Month, 1);
+    EXPECT_EQ(sField.Date.Day, 31);
+    EXPECT_EQ(sField.Date.Hour, 1);
+    EXPECT_EQ(sField.Date.Minute, 2);
+    EXPECT_EQ(sField.Date.Second, 3.0f);
+    EXPECT_EQ(sField.Date.TZFlag, 0);
+
+    EXPECT_EQ(OGRParseDate("2017-1-31T1:3", &sField, OGRPARSEDATE_OPTION_LAX),
+              TRUE);
+    EXPECT_EQ(sField.Date.Year, 2017);
+    EXPECT_EQ(sField.Date.Month, 1);
+    EXPECT_EQ(sField.Date.Day, 31);
+    EXPECT_EQ(sField.Date.Hour, 1);
+    EXPECT_EQ(sField.Date.Minute, 3);
+    EXPECT_EQ(sField.Date.Second, 0.0f);
+    EXPECT_EQ(sField.Date.TZFlag, 0);
+
+    EXPECT_EQ(OGRParseDate("1:3", &sField, OGRPARSEDATE_OPTION_LAX), TRUE);
+    EXPECT_EQ(sField.Date.Year, 0);
+    EXPECT_EQ(sField.Date.Month, 0);
+    EXPECT_EQ(sField.Date.Day, 0);
+    EXPECT_EQ(sField.Date.Hour, 1);
+    EXPECT_EQ(sField.Date.Minute, 3);
+    EXPECT_EQ(sField.Date.Second, 0.0f);
+    EXPECT_EQ(sField.Date.TZFlag, 0);
+
+    EXPECT_TRUE(!OGRParseDate("2017-a-01", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(!OGRParseDate("2017-0-01", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(!OGRParseDate("2017-1", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(!OGRParseDate("2017-1-", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(!OGRParseDate("2017-1-a", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(!OGRParseDate("2017-1-0", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(!OGRParseDate("2017-1-32", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(
+        !OGRParseDate("2017-1-1Ta:00:00", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(!OGRParseDate("2017-1-1T1", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(
+        !OGRParseDate("2017-1-1T00:a:00", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(!OGRParseDate("2017-1-1T1:", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(
+        !OGRParseDate("2017-1-1T00:00:a", &sField, OGRPARSEDATE_OPTION_LAX));
+    EXPECT_TRUE(!OGRParseDate("1a:3", &sField, OGRPARSEDATE_OPTION_LAX));
 }
 
 // Test OGRPolygon::IsPointOnSurface()
@@ -1376,6 +1447,7 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
     {
         GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
         ++srcIter;
+        // coverity[copy_constructor_call]
         GDALDataset::Layers::Iterator newIter(srcIter);
         ASSERT_EQ(*newIter, layers[1]);
     }
@@ -1385,6 +1457,7 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
         GDALDataset::Layers::Iterator srcIter(poDS->GetLayers().begin());
         ++srcIter;
         GDALDataset::Layers::Iterator newIter;
+        // coverity[copy_assignent_call]
         newIter = srcIter;
         ASSERT_EQ(*newIter, layers[1]);
     }
@@ -1894,6 +1967,36 @@ TEST_F(test_ogr, OGREnvelope)
     }
 }
 
+// Test OGREnvelope3D
+TEST_F(test_ogr, OGREnvelope3D)
+{
+    OGREnvelope3D s1;
+    EXPECT_TRUE(!s1.IsInit());
+    {
+        OGREnvelope3D s2(s1);
+        EXPECT_TRUE(s1 == s2);
+        EXPECT_TRUE(!(s1 != s2));
+    }
+
+    s1.MinX = 0;
+    s1.MinY = 1;
+    s1.MaxX = 2;
+    s1.MaxY = 3;
+    EXPECT_TRUE(s1.IsInit());
+    EXPECT_FALSE(s1.Is3D());
+    s1.MinZ = 4;
+    s1.MaxZ = 5;
+    EXPECT_TRUE(s1.Is3D());
+    {
+        OGREnvelope3D s2(s1);
+        EXPECT_TRUE(s1 == s2);
+        EXPECT_TRUE(!(s1 != s2));
+        s2.MinX += 1;
+        EXPECT_TRUE(s1 != s2);
+        EXPECT_TRUE(!(s1 == s2));
+    }
+}
+
 // Test OGRStyleMgr::InitStyleString() with a style name
 // (https://github.com/OSGeo/gdal/issues/5555)
 TEST_F(test_ogr, InitStyleString_with_style_name)
@@ -2287,9 +2390,6 @@ TEST_F(test_ogr, feature_defn_geomfields_iterator)
 // Test GDALDataset QueryLoggerFunc callback
 TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
 {
-#if SQLITE_VERSION_NUMBER < 3014000
-    GTEST_SKIP() << "SQLite version must be >= 3014000";
-#else
     if (GDALGetDriverByName("GPKG") == nullptr)
     {
         GTEST_SKIP() << "GPKG driver missing";
@@ -2391,7 +2491,6 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
             R"sql(INSERT INTO "poly" ( "geom", "AREA", "EAS_ID", "PRFEDEA") VALUES (NULL, NULL, 123, NULL))sql",
             0),
         0);
-#endif
 }
 
 TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMZ)
@@ -2943,6 +3042,323 @@ TEST_F(test_ogr, importFromWkbReuse)
                 OGRERR_NONE);
             ASSERT_EQ(oMP.getNumGeometries(), 0);
         }
+    }
+}
+
+// Test sealing functionality on OGRFieldDefn
+TEST_F(test_ogr, OGRFieldDefn_sealing)
+{
+    OGRFieldDefn oFieldDefn("test", OFTString);
+    oFieldDefn.Seal();
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetType(OFTInteger);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetSubType(OFSTJSON);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetWidth(1);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetPrecision(1);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetDefault("");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetUnique(true);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetNullable(false);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetComment("");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetAlternativeName("");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetDomainName("");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetTZFlag(0);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        auto oTemporaryUnsealer(oFieldDefn.GetTemporaryUnsealer());
+        CPLErrorReset();
+        oFieldDefn.SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") == nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        whileUnsealing(&oFieldDefn)->SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+}
+
+// Test sealing functionality on OGRGeomFieldDefn
+TEST_F(test_ogr, OGRGeomFieldDefn_sealing)
+{
+    OGRGeomFieldDefn oFieldDefn("test", wkbUnknown);
+
+    oFieldDefn.Seal();
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetType(wkbPoint);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetSpatialRef(nullptr);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetNullable(false);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        auto oTemporaryUnsealer(oFieldDefn.GetTemporaryUnsealer());
+        CPLErrorReset();
+        oFieldDefn.SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFieldDefn.SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        whileUnsealing(&oFieldDefn)->SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+}
+
+// Test sealing functionality on OGRFeatureDefn
+TEST_F(test_ogr, OGRFeatureDefn_sealing)
+{
+    OGRFeatureDefn oFDefn;
+    CPLErrorReset();
+    {
+        oFDefn.SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+    {
+        OGRFieldDefn oFieldDefn("test", OFTString);
+        oFDefn.AddFieldDefn(&oFieldDefn);
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+    {
+        OGRGeomFieldDefn oFieldDefn("test", wkbUnknown);
+        oFDefn.AddGeomFieldDefn(&oFieldDefn);
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFDefn.Unseal(true);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "unsealed") != nullptr);
+
+        CPLErrorReset();
+        auto oTemporaryUnsealer1(oFDefn.GetTemporaryUnsealer(false));
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "unsealed") != nullptr);
+        CPLErrorReset();
+        auto oTemporaryUnsealer2(oFDefn.GetTemporaryUnsealer(false));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+
+    oFDefn.Seal(true);
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFDefn.Seal(true);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFDefn.SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        OGRFieldDefn oFieldDefn("test2", OFTString);
+        oFDefn.AddFieldDefn(&oFieldDefn);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFDefn.DeleteFieldDefn(0);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        int map[] = {0};
+        oFDefn.ReorderFieldDefns(map);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        OGRGeomFieldDefn oFieldDefn("test2", wkbUnknown);
+        oFDefn.AddGeomFieldDefn(&oFieldDefn);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        oFDefn.DeleteGeomFieldDefn(0);
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        auto oTemporaryUnsealer(oFDefn.GetTemporaryUnsealer(false));
+        CPLErrorReset();
+        oFDefn.SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        oFDefn.GetFieldDefn(0)->SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+
+        CPLErrorReset();
+        oFDefn.GetGeomFieldDefn(0)->SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        oFDefn.GetFieldDefn(0)->SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+
+        CPLErrorReset();
+        oFDefn.GetGeomFieldDefn(0)->SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        auto oTemporaryUnsealer(oFDefn.GetTemporaryUnsealer(true));
+        CPLErrorReset();
+        oFDefn.SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+
+        oFDefn.GetFieldDefn(0)->SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+
+        auto oTemporaryUnsealer2(oFDefn.GetTemporaryUnsealer(true));
+
+        oFDefn.GetGeomFieldDefn(0)->SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+
+    {
+
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorReset();
+        oFDefn.GetFieldDefn(0)->SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+
+        CPLErrorReset();
+        oFDefn.GetGeomFieldDefn(0)->SetName("new_name");
+        EXPECT_TRUE(strstr(CPLGetLastErrorMsg(), "sealed") != nullptr);
+    }
+
+    {
+        CPLErrorReset();
+        whileUnsealing(&oFDefn)->SetName("new_name");
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
     }
 }
 

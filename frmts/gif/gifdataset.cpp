@@ -32,6 +32,7 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
+#include "gifdrivercore.h"
 
 CPL_C_START
 #if !(defined(GIFLIB_MAJOR) && GIFLIB_MAJOR >= 5)
@@ -46,9 +47,6 @@ GifFileType *EGifOpen(void *userData, OutputFunc writeFunc);
 #endif  // defined(GIFLIB_MAJOR) && GIFLIB_MAJOR < 5
 
 CPL_C_END
-
-constexpr int InterlacedOffset[] = {0, 4, 2, 1};
-constexpr int InterlacedJumps[] = {8, 8, 4, 2};
 
 /************************************************************************/
 /*                          VSIGIFWriteFunc()                           */
@@ -174,7 +172,7 @@ GIFDataset::GIFDataset()
 GDALDataset *GIFDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
-    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
+    if (!GIFDriverIdentify(poOpenInfo))
         return nullptr;
 
     if (poOpenInfo->eAccess == GA_Update)
@@ -560,7 +558,7 @@ GDALDataset *GIFDataset::CreateCopy(const char *pszFilename,
         {
             const CPLErr eErr = poBand->RasterIO(
                 GF_Read, 0, iLine, nXSize, 1, pabyScanline, nXSize, 1, GDT_Byte,
-                nBands, nBands * nXSize, nullptr);
+                nBands, static_cast<GSpacing>(nBands) * nXSize, nullptr);
 
             if (eErr != CE_None ||
                 EGifPutLine(hGifFile, pabyScanline, nXSize) == GIF_ERROR)
@@ -680,31 +678,18 @@ error:
 void GDALRegister_GIF()
 
 {
-    if (GDALGetDriverByName("GIF") != nullptr)
+    if (GDALGetDriverByName(GIF_DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription("GIF");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "Graphics Interchange Format (.gif)");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/gif.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "gif");
-    poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/gif");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte");
-
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
-                              "<CreationOptionList>\n"
-                              "   <Option name='INTERLACING' type='boolean'/>\n"
-                              "   <Option name='WORLDFILE' type='boolean'/>\n"
-                              "</CreationOptionList>\n");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-
+    GIFDriverSetCommonMetadata(poDriver);
     poDriver->pfnOpen = GIFDataset::Open;
     poDriver->pfnCreateCopy = GIFDataset::CreateCopy;
-    poDriver->pfnIdentify = GIFAbstractDataset::Identify;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
+
+#ifdef GIF_PLUGIN
+    GDALRegister_BIGGIF();
+#endif
 }

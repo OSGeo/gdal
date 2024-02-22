@@ -216,7 +216,7 @@ int swqlex(YYSTYPE *ppNode, swq_parse_context *context)
     /* -------------------------------------------------------------------- */
     /*      Handle alpha-numerics.                                          */
     /* -------------------------------------------------------------------- */
-    else if (isalnum(*pszInput))
+    else if (isalnum(static_cast<unsigned char>(*pszInput)))
     {
         int nReturn = SWQT_IDENTIFIER;
         CPLString osToken;
@@ -225,8 +225,8 @@ int swqlex(YYSTYPE *ppNode, swq_parse_context *context)
         osToken += *pszInput;
 
         // collect text characters
-        while (isalnum(*pszNext) || *pszNext == '_' ||
-               static_cast<unsigned char>(*pszNext) > 127)
+        while (isalnum(static_cast<unsigned char>(*pszNext)) ||
+               *pszNext == '_' || static_cast<unsigned char>(*pszNext) > 127)
             osToken += *(pszNext++);
 
         context->pszNext = pszNext;
@@ -239,6 +239,10 @@ int swqlex(YYSTYPE *ppNode, swq_parse_context *context)
             nReturn = SWQT_ILIKE;
         else if (EQUAL(osToken, "ESCAPE"))
             nReturn = SWQT_ESCAPE;
+        else if (EQUAL(osToken, "EXCEPT"))
+            nReturn = SWQT_EXCEPT;
+        else if (EQUAL(osToken, "EXCLUDE"))
+            nReturn = SWQT_EXCLUDE;
         else if (EQUAL(osToken, "NULL"))
             nReturn = SWQT_NULL;
         else if (EQUAL(osToken, "IS"))
@@ -317,17 +321,17 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
                                  const char *value)
 
 {
-    swq_col_def *def = select_info->column_defs + dest_column;
-
     /* -------------------------------------------------------------------- */
     /*      Do various checking.                                            */
     /* -------------------------------------------------------------------- */
     if (select_info->query_mode == SWQM_RECORDSET)
         return "swq_select_summarize() called on non-summary query.";
 
-    if (dest_column < 0 || dest_column >= select_info->result_columns)
+    if (dest_column < 0 ||
+        dest_column >= static_cast<int>(select_info->column_defs.size()))
         return "dest_column out of range in swq_select_summarize().";
 
+    swq_col_def *def = &select_info->column_defs[dest_column];
     if (def->col_func == SWQCF_NONE && !def->distinct_flag)
         return nullptr;
 
@@ -348,8 +352,8 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
     /* -------------------------------------------------------------------- */
     if (select_info->column_summary.empty())
     {
-        select_info->column_summary.resize(select_info->result_columns);
-        for (int i = 0; i < select_info->result_columns; i++)
+        select_info->column_summary.resize(select_info->column_defs.size());
+        for (std::size_t i = 0; i < select_info->column_defs.size(); i++)
         {
             if (def->distinct_flag)
             {
@@ -357,7 +361,7 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
                 if (select_info->order_specs > 0)
                 {
                     CPLAssert(select_info->order_specs == 1);
-                    CPLAssert(select_info->result_columns == 1);
+                    CPLAssert(select_info->column_defs.size() == 1);
                     oComparator.bSortAsc =
                         CPL_TO_BOOL(select_info->order_defs[0].ascending_flag);
                 }

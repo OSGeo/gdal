@@ -115,10 +115,11 @@ OGRLayer *OGRFileGDBGroup::OpenVectorLayer(const std::string &osName,
 /************************************************************************/
 
 FGdbDataSource::FGdbDataSource(bool bUseDriverMutex,
-                               FGdbDatabaseConnection *pConnection)
+                               FGdbDatabaseConnection *pConnection,
+                               bool bUseOpenFileGDB)
     : OGRDataSource(), m_bUseDriverMutex(bUseDriverMutex),
       m_pConnection(pConnection), m_pGeodatabase(nullptr), m_bUpdate(false),
-      m_poOpenFileGDBDrv(nullptr)
+      m_poOpenFileGDBDrv(nullptr), m_bUseOpenFileGDB(bUseOpenFileGDB)
 {
     bPerLayerCopyingForTransaction = -1;
 }
@@ -285,7 +286,8 @@ int FGdbDataSource::ReOpen()
         return FALSE;
     }
 
-    FGdbDataSource *pDS = new FGdbDataSource(m_bUseDriverMutex, m_pConnection);
+    FGdbDataSource *pDS =
+        new FGdbDataSource(m_bUseDriverMutex, m_pConnection, m_bUseOpenFileGDB);
     if (EQUAL(CPLGetConfigOption("FGDB_SIMUL_FAIL_REOPEN", ""), "CASE2") ||
         !pDS->Open(m_osPublicName, TRUE, m_osFSName))
     {
@@ -513,8 +515,11 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
     const char *const apszDrivers[2] = {"OpenFileGDB", nullptr};
     const char *pszSystemCatalog =
         CPLFormFilename(m_osFSName, "a00000001", "gdbtable");
-    m_poOpenFileGDBDS.reset(GDALDataset::Open(pszSystemCatalog, GDAL_OF_VECTOR,
-                                              apszDrivers, nullptr, nullptr));
+    if (m_bUseOpenFileGDB)
+    {
+        m_poOpenFileGDBDS.reset(GDALDataset::Open(
+            pszSystemCatalog, GDAL_OF_VECTOR, apszDrivers, nullptr, nullptr));
+    }
     if (m_poOpenFileGDBDS != nullptr &&
         m_poOpenFileGDBDS->GetLayer(0) != nullptr)
     {
@@ -587,8 +592,8 @@ bool FGdbDataSource::LoadLayers(const std::wstring &root)
                             poFeature->GetFieldAsString(iDefinition));
                         if (poRelationship)
                         {
-                            const auto relationshipName =
-                                poRelationship->GetName();
+                            const std::string relationshipName(
+                                poRelationship->GetName());
                             m_osMapRelationships[relationshipName] =
                                 std::move(poRelationship);
                         }
@@ -944,7 +949,7 @@ int FGdbDataSource::HasPerLayerCopyingForTransaction()
 {
     if (bPerLayerCopyingForTransaction >= 0)
         return bPerLayerCopyingForTransaction;
-#ifdef WIN32
+#ifdef _WIN32
     bPerLayerCopyingForTransaction = FALSE;
 #else
     bPerLayerCopyingForTransaction =
@@ -992,7 +997,7 @@ FGdbDataSource::GetFieldDomain(const std::string &name) const
     auto poDomain = ParseXMLFieldDomainDef(domainDef);
     if (!poDomain)
         return nullptr;
-    const auto domainName = poDomain->GetName();
+    const std::string domainName(poDomain->GetName());
     m_oMapFieldDomains[domainName] = std::move(poDomain);
     return GDALDataset::GetFieldDomain(name);
 }
@@ -1027,7 +1032,7 @@ std::vector<std::string> FGdbDataSource::GetFieldDomainNames(CSLConstList) const
 bool FGdbDataSource::AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
                                     std::string &failureReason)
 {
-    const auto domainName = domain->GetName();
+    const std::string domainName(domain->GetName());
     if (!m_bUpdate)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1094,7 +1099,7 @@ bool FGdbDataSource::DeleteFieldDomain(const std::string &name,
 bool FGdbDataSource::UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
                                        std::string &failureReason)
 {
-    const auto domainName = domain->GetName();
+    const std::string domainName(domain->GetName());
     if (!m_bUpdate)
     {
         CPLError(CE_Failure, CPLE_NotSupported,

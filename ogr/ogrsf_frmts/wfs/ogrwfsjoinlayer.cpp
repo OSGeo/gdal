@@ -71,9 +71,9 @@ OGRWFSJoinLayer::OGRWFSJoinLayer(OGRWFSDataSource *poDSIn,
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType(wkbNone);
 
-    for (int i = 0; i < psSelectInfo->result_columns; i++)
+    for (int i = 0; i < psSelectInfo->result_columns(); i++)
     {
-        swq_col_def *def = psSelectInfo->column_defs + i;
+        const swq_col_def *def = &psSelectInfo->column_defs[i];
         int table_index = 0;
         if (def->table_index >= 0)
             table_index = def->table_index;
@@ -263,9 +263,9 @@ OGRWFSJoinLayer *OGRWFSJoinLayer::Build(OGRWFSDataSource *poDS,
 {
     CPLString osGlobalFilter;
 
-    for (int i = 0; i < psSelectInfo->result_columns; i++)
+    for (int i = 0; i < psSelectInfo->result_columns(); i++)
     {
-        swq_col_def *def = psSelectInfo->column_defs + i;
+        const swq_col_def *def = &psSelectInfo->column_defs[i];
         if (!(def->col_func == SWQCF_NONE &&
               (def->expr == nullptr || def->expr->eNodeType == SNT_COLUMN ||
                (def->expr->eNodeType == SNT_OPERATION &&

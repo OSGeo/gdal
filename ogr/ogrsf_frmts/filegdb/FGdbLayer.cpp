@@ -121,7 +121,7 @@ OGRFeature *FGdbBaseLayer::GetNextFeature()
 
         OGRFeature *pOGRFeature = nullptr;
 
-        if (!OGRFeatureFromGdbRow(&row, &pOGRFeature))
+        if (!OGRFeatureFromGdbRow(&row, &pOGRFeature) || !pOGRFeature)
         {
             int32 oid = -1;
             CPL_IGNORE_RET_VAL(row.GetOID(oid));
@@ -581,9 +581,9 @@ static GInt32 GetInt32(const GByte *pBaseAddr, int iOffset)
 /************************************************************************/
 
 static CPL_INLINE void UpdateNextOGRFIDAndFGDBFID(
-    int i, std::map<int, int> &oMapOGRFIDToFGDBFID,
+    int i, const std::map<int, int> &oMapOGRFIDToFGDBFID,
     std::map<int, int>::iterator &oIterO2F, int &nNextOGRFID,
-    std::map<int, int> &oMapFGDBFIDToOGRFID,
+    const std::map<int, int> &oMapFGDBFIDToOGRFID,
     std::map<int, int>::iterator &oIterF2O, int &nNextFGDBFID)
 {
     while (nNextOGRFID > 0 && i > nNextOGRFID)
@@ -1911,7 +1911,7 @@ char *FGdbLayer::CreateFieldDefn(OGRFieldDefn &oField, int bApproxOK,
 /*                                                                      */
 /************************************************************************/
 
-OGRErr FGdbLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr FGdbLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 {
     OGRFieldDefn oField(poField);
     std::string fieldname_clean;
@@ -3358,6 +3358,7 @@ bool FGdbLayer::GDBToOGRFields(CPLXMLNode *psRoot)
     /* Using OpenFileGDB to get reliable default values for integer/real fields
      */
     /* and alias */
+    if (m_pDS->UseOpenFileGDB())
     {
         const char *const apszDrivers[] = {"OpenFileGDB", nullptr};
         GDALDataset *poDS = GDALDataset::Open(
@@ -3422,7 +3423,7 @@ void FGdbLayer::ResetReading()
     EndBulkLoad();
 
 #ifdef WORKAROUND_CRASH_ON_CDF_WITH_BINARY_FIELD
-    const auto wstrSubFieldBackup = m_wstrSubfields;
+    const std::wstring wstrSubFieldBackup(m_wstrSubfields);
     if (!m_apoByteArrays.empty())
     {
         m_bWorkaroundCrashOnCDFWithBinaryField = CPLTestBool(CPLGetConfigOption(
@@ -3828,7 +3829,7 @@ OGRFeature *FGdbLayer::GetNextFeature()
             OGRFeature *pOGRFeature = nullptr;
             Row rowFull;
             if (GetRow(enumRows, rowFull, oid) != OGRERR_NONE ||
-                !OGRFeatureFromGdbRow(&rowFull, &pOGRFeature))
+                !OGRFeatureFromGdbRow(&rowFull, &pOGRFeature) || !pOGRFeature)
             {
                 GDBErr(hr,
                        CPLSPrintf(

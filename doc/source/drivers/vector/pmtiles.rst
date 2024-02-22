@@ -8,6 +8,8 @@ PMTiles -- ProtoMaps Tiles
 
 .. shortname:: PMTiles
 
+.. built_in_by_default::
+
 This driver supports reading and writing `PMTiles <https://github.com/protomaps/PMTiles>`__
 datasets containing vector tiles, encoded in the MapVector Tiles (MVT) format.
 

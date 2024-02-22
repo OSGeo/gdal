@@ -6,7 +6,14 @@ add_gdal_driver(
           ogrsosidatatypes.cpp
           ogrsosidriver.cpp
           ogrsosilayer.cpp
-          PLUGIN_CAPABLE)
+  CORE_SOURCES
+          ogrsosidrivercore.cpp
+  PLUGIN_CAPABLE)
+
+if(NOT TARGET ogr_SOSI)
+    return()
+endif()
+
 gdal_standard_includes(ogr_SOSI)
 target_include_directories(ogr_SOSI PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 gdal_target_link_libraries(ogr_SOSI PRIVATE FYBA::FYBA FYBA::FYGM FYBA::FYUT)

@@ -99,7 +99,7 @@ class OGRXLSDataSource final : public OGRDataSource
     const void *xlshandle;
 
     CPLString m_osANSIFilename;
-#ifdef WIN32
+#ifdef _WIN32
     CPLString m_osTempFilename;
 #endif
   public:
@@ -122,20 +122,6 @@ class OGRXLSDataSource final : public OGRDataSource
     virtual int TestCapability(const char *) override;
 
     const void *GetXLSHandle();
-};
-
-/************************************************************************/
-/*                             OGRXLSDriver                             */
-/************************************************************************/
-
-class OGRXLSDriver final : public OGRSFDriver
-{
-  public:
-    virtual ~OGRXLSDriver();
-
-    virtual const char *GetName() override;
-    virtual OGRDataSource *Open(const char *, int) override;
-    virtual int TestCapability(const char *) override;
 };
 
 #endif /* ndef OGR_XLS_H_INCLUDED */

@@ -57,6 +57,8 @@ General creation options
         For the COG driver, JPEG compression for 3 or 4-band images automatically
         selects the PHOTOMETRIC=YCBCR colorspace with a 4:2:2 subsampling of the Y,Cb,Cr
         components.
+        For a input dataset (single-band or 3-band), plus an alpha band,
+        the alpha band will be converted as a 1-bit DEFLATE compressed mask.
 
       * ``LZW``, ``DEFLATE`` and ``ZSTD`` compressions can be used with the PREDICTOR creation option.
 

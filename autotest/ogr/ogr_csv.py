@@ -2633,7 +2633,7 @@ def test_ogr_csv_string_quoting_always(tmp_vsimem):
     data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert data.startswith('"AREA","EAS_ID","PRFEDEA"\n215229.266,"168","35043411"')
+    assert data.startswith('"AREA","EAS_ID","PRFEDEA"\n215229.266,168,"35043411"')
 
     ds = gdal.OpenEx(
         tmp_vsimem / "ogr_csv_string_quoting_always.csv",
@@ -2653,7 +2653,7 @@ def test_ogr_csv_string_quoting_always(tmp_vsimem):
     gdal.VSIFCloseL(f)
 
     assert data.startswith(
-        '"AREA","EAS_ID","PRFEDEA"\n215229.266,"168","35043411"\n247328.172,"179","35043423"'
+        '"AREA","EAS_ID","PRFEDEA"\n215229.266,168,"35043411"\n247328.172,179,"35043423"'
     )
 
 
@@ -2667,10 +2667,16 @@ def test_ogr_csv_string_quoting_if_ambiguous(tmp_vsimem):
     lyr.CreateField(ogr.FieldDefn("foo"))
     lyr.CreateField(ogr.FieldDefn("bar"))
     lyr.CreateField(ogr.FieldDefn("baz"))
+    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
+    lyr.CreateField(ogr.FieldDefn("realfield", ogr.OFTReal))
     f = ogr.Feature(lyr.GetLayerDefn())
     f["foo"] = "00123"
     f["bar"] = "x"
     f["baz"] = "1.25"
+    f["intfield"] = 1
+    f["int64field"] = 1234567890123
+    f["realfield"] = 1.25
     lyr.CreateFeature(f)
 
     gdal.VectorTranslate(
@@ -2681,7 +2687,7 @@ def test_ogr_csv_string_quoting_if_ambiguous(tmp_vsimem):
     data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert '"00123",x,"1.25"' in data
+    assert '"00123",x,"1.25",1,1234567890123,1.25' in data
 
     gdal.Unlink(tmp_vsimem / "ogr_csv_string_quoting_if_ambiguous.csv")
 
@@ -2696,10 +2702,16 @@ def test_ogr_csv_string_quoting_if_needed(tmp_vsimem):
     lyr.CreateField(ogr.FieldDefn("foo"))
     lyr.CreateField(ogr.FieldDefn("bar"))
     lyr.CreateField(ogr.FieldDefn("baz"))
+    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
+    lyr.CreateField(ogr.FieldDefn("realfield", ogr.OFTReal))
     f = ogr.Feature(lyr.GetLayerDefn())
     f["foo"] = "00123"
     f["bar"] = "x"
     f["baz"] = "1.25"
+    f["intfield"] = 1
+    f["int64field"] = 1234567890123
+    f["realfield"] = 1.25
     lyr.CreateFeature(f)
 
     gdal.VectorTranslate(
@@ -2713,7 +2725,7 @@ def test_ogr_csv_string_quoting_if_needed(tmp_vsimem):
     data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert "00123,x,1.25" in data
+    assert "00123,x,1.25,1,1234567890123,1.25" in data
 
 
 ###############################################################################
@@ -2913,6 +2925,95 @@ def test_ogr_csv_separator_open_option(tmp_vsimem, sep, sep_opt_value, other_sep
     assert f["foo"] == "1"
     assert f[f"bar{other_sep}{other_sep}{other_sep}{other_sep}rr"] == "2"
     assert f["baz"] == "3"
+
+
+def test_ogr_csv_getextent3d(tmp_vsimem):
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.csv",
+        "id,WKT\n1,POINT Z(1 1 1)\n1,POINT Z(2 2 2)",
+    )
+
+    gdal.ErrorReset()
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test.csv", gdal.OF_VECTOR, open_options=["SEPARATOR=COMMA"]
+    )
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, 1.0, 2.0)
+
+    # Test 2D
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.csv",
+        "id,WKT\n1,POINT(1 1)\n2,POINT(2 2)",
+    )
+    gdal.ErrorReset()
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test.csv", gdal.OF_VECTOR, open_options=["SEPARATOR=COMMA"]
+    )
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, float("inf"), float("-inf"))
+
+    # Test mixed 2D
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.csv",
+        "id,WKT\n1,POINT Z(1 1 1)\n2,POINT(2 2)",
+    )
+    gdal.ErrorReset()
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test.csv", gdal.OF_VECTOR, open_options=["SEPARATOR=COMMA"]
+    )
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    assert not lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, 1.0, 1.0)
+
+
+###############################################################################
+
+
+def test_ogr_csv_read_header_with_line_break():
+
+    ds = ogr.Open("data/csv/header_with_line_break.csv")
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert [
+        lyr_defn.GetFieldDefn(i).GetName() for i in range(lyr_defn.GetFieldCount())
+    ] == [
+        "Column one",
+        "Column two",
+        "Column with a\nline break",
+        "Column three",
+        "Another\nline break",
+        "Column four",
+        "Column five",
+    ]
+    f = lyr.GetNextFeature()
+    assert [f.GetField(i) for i in range(lyr_defn.GetFieldCount())] == [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+    ]
 
 
 ###############################################################################

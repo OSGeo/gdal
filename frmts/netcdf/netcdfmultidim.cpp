@@ -30,12 +30,9 @@
 #include <map>
 
 #include "netcdfdataset.h"
+#include "netcdfdrivercore.h"
 
-#ifdef HAVE_NETCDF_MEM
 #include "netcdf_mem.h"
-#endif
-
-#ifdef NETCDF_HAS_NC4
 
 /************************************************************************/
 /*                         netCDFSharedResources                        */
@@ -228,7 +225,6 @@ class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
     std::shared_ptr<netCDFSharedResources> m_poShared;
     int m_gid = 0;
     CPLStringList m_aosStructuralInfo{};
-    std::weak_ptr<netCDFGroup> m_poSelf{};
     std::weak_ptr<netCDFGroup> m_poParent{};
     std::set<GDALGroup *> m_oSetGroups{};
     std::set<GDALDimension *> m_oSetDimensions{};
@@ -274,10 +270,14 @@ class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
 
     void NotifyChildrenOfRenaming() override;
 
-  public:
     netCDFGroup(const std::shared_ptr<netCDFSharedResources> &poShared,
                 int gid);
+
+  public:
     ~netCDFGroup();
+
+    static std::shared_ptr<netCDFGroup>
+    Create(const std::shared_ptr<netCDFSharedResources> &poShared, int cdfid);
 
     static std::shared_ptr<netCDFGroup>
     Create(const std::shared_ptr<netCDFSharedResources> &poShared,
@@ -344,10 +344,15 @@ class netCDFVirtualGroupBySameDimension final : public GDALGroup
     std::shared_ptr<netCDFGroup> m_poGroup;
     std::string m_osDimName{};
 
-  public:
+  protected:
     netCDFVirtualGroupBySameDimension(
         const std::shared_ptr<netCDFGroup> &poGroup,
         const std::string &osDimName);
+
+  public:
+    static std::shared_ptr<netCDFVirtualGroupBySameDimension>
+    Create(const std::shared_ptr<netCDFGroup> &poGroup,
+           const std::string &osDimName);
 
     std::vector<std::string>
     GetMDArrayNames(CSLConstList papszOptions) const override;
@@ -685,11 +690,10 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
 
     bool Rename(const std::string &osNewName) override;
 
-    std::shared_ptr<GDALMDArray>
-    GetResampled(const std::vector<std::shared_ptr<GDALDimension>> &apoNewDims,
-                 GDALRIOResampleAlg resampleAlg,
-                 const OGRSpatialReference *poTargetSRS,
-                 CSLConstList papszOptions) const override;
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return netCDFGroup::Create(m_poShared, nullptr, m_gid);
+    }
 };
 
 /************************************************************************/
@@ -795,11 +799,25 @@ netCDFGroup::~netCDFGroup()
 /* static */
 std::shared_ptr<netCDFGroup>
 netCDFGroup::Create(const std::shared_ptr<netCDFSharedResources> &poShared,
+                    int cdfid)
+{
+    auto poGroup =
+        std::shared_ptr<netCDFGroup>(new netCDFGroup(poShared, cdfid));
+    poGroup->SetSelf(poGroup);
+    return poGroup;
+}
+
+/************************************************************************/
+/*                              Create()                                */
+/************************************************************************/
+
+/* static */
+std::shared_ptr<netCDFGroup>
+netCDFGroup::Create(const std::shared_ptr<netCDFSharedResources> &poShared,
                     const std::shared_ptr<netCDFGroup> &poParent,
                     int nSubGroupId)
 {
-    auto poSubGroup = std::make_shared<netCDFGroup>(poShared, nSubGroupId);
-    poSubGroup->m_poSelf = poSubGroup;
+    auto poSubGroup = netCDFGroup::Create(poShared, nSubGroupId);
     poSubGroup->m_poParent = poParent;
     if (poParent)
         poParent->RegisterSubGroup(poSubGroup.get());
@@ -827,7 +845,9 @@ netCDFGroup::CreateGroup(const std::string &osName,
     NCDF_ERR(ret);
     if (ret != NC_NOERR)
         return nullptr;
-    return netCDFGroup::Create(m_poShared, m_poSelf.lock(), nSubGroupId);
+    return netCDFGroup::Create(
+        m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+        nSubGroupId);
 }
 
 /************************************************************************/
@@ -853,8 +873,9 @@ netCDFGroup::CreateDimension(const std::string &osName,
                         static_cast<size_t>(bUnlimited ? 0 : nSize), &nDimId));
     if (nDimId < 0)
         return nullptr;
-    return netCDFDimension::Create(m_poShared, m_poSelf.lock(), m_gid, nDimId,
-                                   static_cast<size_t>(nSize), osType);
+    return netCDFDimension::Create(
+        m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+        m_gid, nDimId, static_cast<size_t>(nSize), osType);
 }
 
 /************************************************************************/
@@ -1032,9 +1053,10 @@ std::shared_ptr<GDALMDArray> netCDFGroup::CreateMDArray(
             if (nc_inq_dimid(m_gid, dim->GetName().c_str(), &nDimId) ==
                 NC_NOERR)
             {
-                netCDFDim =
-                    netCDFDimension::Create(m_poShared, m_poSelf.lock(), m_gid,
-                                            nDimId, 0, dim->GetType());
+                netCDFDim = netCDFDimension::Create(
+                    m_poShared,
+                    std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+                    m_gid, nDimId, 0, dim->GetType());
                 if (netCDFDim->GetSize() != dim->GetSize())
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
@@ -1180,8 +1202,9 @@ std::shared_ptr<GDALMDArray> netCDFGroup::CreateMDArray(
             return nullptr;
     }
 
-    return netCDFVariable::Create(m_poShared, m_poSelf.lock(), m_gid, nVarId,
-                                  dims, papszOptions, true);
+    return netCDFVariable::Create(
+        m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+        m_gid, nVarId, dims, papszOptions, true);
 }
 
 /************************************************************************/
@@ -1192,9 +1215,9 @@ std::shared_ptr<GDALAttribute> netCDFGroup::CreateAttribute(
     const std::string &osName, const std::vector<GUInt64> &anDimensions,
     const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
 {
-    return netCDFAttribute::Create(m_poShared, m_poSelf.lock(), m_gid,
-                                   NC_GLOBAL, osName, anDimensions, oDataType,
-                                   papszOptions);
+    return netCDFAttribute::Create(
+        m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+        m_gid, NC_GLOBAL, osName, anDimensions, oDataType, papszOptions);
 }
 
 /************************************************************************/
@@ -1242,10 +1265,10 @@ netCDFGroup::GetGroupNames(CSLConstList papszOptions) const
             for (const auto &osArrayName : GetMDArrayNames(nullptr))
             {
                 const auto poArray = OpenMDArray(osArrayName, nullptr);
-                const auto apoDims = poArray->GetDimensions();
+                const auto &apoDims = poArray->GetDimensions();
                 if (apoDims.size() == 1)
                 {
-                    const auto osDimName = apoDims[0]->GetName();
+                    const auto &osDimName = apoDims[0]->GetName();
                     if (oSetDimNames.find(osDimName) == oSetDimNames.end())
                     {
                         oSetDimNames.insert(osDimName);
@@ -1298,9 +1321,8 @@ netCDFGroup::OpenGroup(const std::string &osName,
             {
                 if (osCandidateGroupName == osName)
                 {
-                    auto poThisGroup =
-                        std::make_shared<netCDFGroup>(m_poShared, m_gid);
-                    return std::make_shared<netCDFVirtualGroupBySameDimension>(
+                    auto poThisGroup = netCDFGroup::Create(m_poShared, m_gid);
+                    return netCDFVirtualGroupBySameDimension::Create(
                         poThisGroup, osName);
                 }
             }
@@ -1311,7 +1333,9 @@ netCDFGroup::OpenGroup(const std::string &osName,
     if (nc_inq_grp_ncid(m_gid, osName.c_str(), &nSubGroupId) != NC_NOERR ||
         nSubGroupId <= 0)
         return nullptr;
-    return netCDFGroup::Create(m_poShared, m_poSelf.lock(), nSubGroupId);
+    return netCDFGroup::Create(
+        m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+        nSubGroupId);
 }
 
 /************************************************************************/
@@ -1495,8 +1519,9 @@ netCDFGroup::OpenMDArray(const std::string &osName,
     if (nc_inq_varid(m_gid, osName.c_str(), &nVarId) != NC_NOERR)
         return nullptr;
     auto poVar = netCDFVariable::Create(
-        m_poShared, m_poSelf.lock(), m_gid, nVarId,
-        std::vector<std::shared_ptr<GDALDimension>>(), nullptr, false);
+        m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+        m_gid, nVarId, std::vector<std::shared_ptr<GDALDimension>>(), nullptr,
+        false);
     if (poVar)
     {
         poVar->SetUseDefaultFillAsNoData(CPLTestBool(CSLFetchNameValueDef(
@@ -1525,9 +1550,10 @@ netCDFGroup::GetDimensions(CSLConstList) const
         auto poCachedDim = m_poShared->GetCachedDimension(dimids[i]);
         if (poCachedDim == nullptr)
         {
-            poCachedDim =
-                netCDFDimension::Create(m_poShared, m_poSelf.lock(), m_gid,
-                                        dimids[i], 0, std::string());
+            poCachedDim = netCDFDimension::Create(
+                m_poShared,
+                std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()), m_gid,
+                dimids[i], 0, std::string());
             m_poShared->CacheDimension(dimids[i], poCachedDim);
         }
         res.emplace_back(poCachedDim);
@@ -1576,8 +1602,9 @@ netCDFGroup::GetAttribute(const std::string &osName) const
         }
         return nullptr;
     }
-    return netCDFAttribute::Create(m_poShared, m_poSelf.lock(), m_gid,
-                                   NC_GLOBAL, osName);
+    return netCDFAttribute::Create(
+        m_poShared, std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()),
+        m_gid, NC_GLOBAL, osName);
 }
 
 /************************************************************************/
@@ -1600,7 +1627,9 @@ netCDFGroup::GetAttributes(CSLConstList) const
         if (!EQUAL(szAttrName, "_NCProperties"))
         {
             res.emplace_back(netCDFAttribute::Create(
-                m_poShared, m_poSelf.lock(), m_gid, NC_GLOBAL, szAttrName));
+                m_poShared,
+                std::dynamic_pointer_cast<netCDFGroup>(m_pSelf.lock()), m_gid,
+                NC_GLOBAL, szAttrName));
         }
     }
 
@@ -1657,6 +1686,20 @@ netCDFVirtualGroupBySameDimension::netCDFVirtualGroupBySameDimension(
 }
 
 /************************************************************************/
+/*                              Create()                                */
+/************************************************************************/
+
+/* static */ std::shared_ptr<netCDFVirtualGroupBySameDimension>
+netCDFVirtualGroupBySameDimension::Create(
+    const std::shared_ptr<netCDFGroup> &poGroup, const std::string &osDimName)
+{
+    auto poNewGroup = std::shared_ptr<netCDFVirtualGroupBySameDimension>(
+        new netCDFVirtualGroupBySameDimension(poGroup, osDimName));
+    poNewGroup->SetSelf(poNewGroup);
+    return poNewGroup;
+}
+
+/************************************************************************/
 /*                         GetMDArrayNames()                            */
 /************************************************************************/
 
@@ -1670,7 +1713,7 @@ netCDFVirtualGroupBySameDimension::GetMDArrayNames(CSLConstList) const
         auto poArray = m_poGroup->OpenMDArray(srcName, nullptr);
         if (poArray)
         {
-            const auto apoArrayDims = poArray->GetDimensions();
+            const auto &apoArrayDims = poArray->GetDimensions();
             if (apoArrayDims.size() == 1 &&
                 apoArrayDims[0]->GetName() == m_osDimName)
             {
@@ -1889,7 +1932,7 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
         if (!poArrayNC)
             continue;
 
-        const auto apoArrayDims = poArray->GetDimensions();
+        const auto &apoArrayDims = poArray->GetDimensions();
         if (apoArrayDims.size() == 1)
         {
             const auto &poArrayDim = apoArrayDims[0];
@@ -2555,7 +2598,7 @@ std::shared_ptr<OGRSpatialReference> netCDFVariable::GetSpatialRef() const
 /*                            SetSpatialRef()                           */
 /************************************************************************/
 
-static void WriteDimAttr(std::shared_ptr<GDALMDArray> poVar,
+static void WriteDimAttr(std::shared_ptr<GDALMDArray> &poVar,
                          const char *pszAttrName, const char *pszAttrValue)
 {
     auto poAttr = poVar->GetAttribute(pszAttrName);
@@ -2579,7 +2622,7 @@ static void WriteDimAttr(std::shared_ptr<GDALMDArray> poVar,
     }
 }
 
-static void WriteDimAttrs(std::shared_ptr<GDALDimension> dim,
+static void WriteDimAttrs(const std::shared_ptr<GDALDimension> &dim,
                           const char *pszStandardName, const char *pszLongName,
                           const char *pszUnits)
 {
@@ -2627,7 +2670,7 @@ bool netCDFVariable::SetSpatialRef(const OGRSpatialReference *poSRS)
     {
         bool bWriteX = false;
         bool bWriteY = false;
-        const char *pszUnits = NCDFGetProjectedCFUnit(poSRS);
+        const std::string osUnits = NCDFGetProjectedCFUnit(poSRS);
         for (const auto &poDim : apoDims)
         {
             const char *pszStandardName = nullptr;
@@ -2648,7 +2691,8 @@ bool netCDFVariable::SetSpatialRef(const OGRSpatialReference *poSRS)
             }
             if (pszStandardName && pszLongName)
             {
-                WriteDimAttrs(poDim, pszStandardName, pszLongName, pszUnits);
+                WriteDimAttrs(poDim, pszStandardName, pszLongName,
+                              osUnits.c_str());
             }
         }
         if (!bWriteX && !bWriteY && apoDims.size() >= 2 &&
@@ -2662,9 +2706,9 @@ bool netCDFVariable::SetSpatialRef(const OGRSpatialReference *poSRS)
                      "Assuming the last one is X, and the preceding one Y",
                      GetName().c_str());
             WriteDimAttrs(apoDims[apoDims.size() - 1], CF_PROJ_X_COORD,
-                          CF_PROJ_X_COORD_LONG_NAME, pszUnits);
+                          CF_PROJ_X_COORD_LONG_NAME, osUnits.c_str());
             WriteDimAttrs(apoDims[apoDims.size() - 2], CF_PROJ_Y_COORD,
-                          CF_PROJ_Y_COORD_LONG_NAME, pszUnits);
+                          CF_PROJ_Y_COORD_LONG_NAME, osUnits.c_str());
         }
     }
     else if (poSRS->IsGeographic())
@@ -4051,9 +4095,11 @@ netCDFVariable::GetCoordinateVariables() const
 
     // Special case for NASA EMIT datasets
     auto apoDims = GetDimensions();
-    if (apoDims.size() == 3 && apoDims[0]->GetName() == "downtrack" &&
-        apoDims[1]->GetName() == "crosstrack" &&
-        apoDims[2]->GetName() == "bands")
+    if ((apoDims.size() == 3 && apoDims[0]->GetName() == "downtrack" &&
+         apoDims[1]->GetName() == "crosstrack" &&
+         apoDims[2]->GetName() == "bands") ||
+        (apoDims.size() == 2 && apoDims[0]->GetName() == "downtrack" &&
+         apoDims[1]->GetName() == "crosstrack"))
     {
         auto poRootGroup = netCDFGroup::Create(m_poShared, nullptr, m_gid);
         if (poRootGroup)
@@ -4065,7 +4111,7 @@ netCDFVariable::GetCoordinateVariables() const
                 auto poLat = poLocationGroup->OpenMDArray("lat");
                 if (poLon && poLat)
                 {
-                    return {poLon, poLat};
+                    return {std::move(poLon), std::move(poLat)};
                 }
             }
         }
@@ -4218,427 +4264,6 @@ void netCDFVariable::NotifyChildrenOfRenaming()
 {
     for (const auto &iter : m_oMapAttributes)
         iter.second->ParentRenamed(m_osFullName);
-}
-
-/************************************************************************/
-/*                          GetPAM()                                    */
-/************************************************************************/
-
-static std::shared_ptr<GDALPamMultiDim>
-GetPAM(const std::shared_ptr<GDALMDArray> &poParent)
-{
-    auto poPamArray = dynamic_cast<GDALPamMDArray *>(poParent.get());
-    if (poPamArray)
-        return poPamArray->GetPAM();
-    return nullptr;
-}
-
-/************************************************************************/
-/*                           GetResampled()                             */
-/************************************************************************/
-
-class GLTOrthoRectifiedArray final : public GDALPamMDArray
-{
-  private:
-    std::shared_ptr<GDALMDArray> m_poParent{};
-    std::vector<std::shared_ptr<GDALDimension>> m_apoDims;
-    std::vector<GUInt64> m_anBlockSize;
-    GDALExtendedDataType m_dt;
-    std::shared_ptr<OGRSpatialReference> m_poSRS{};
-    std::shared_ptr<GDALMDArray> m_poVarX{};
-    std::shared_ptr<GDALMDArray> m_poVarY{};
-    std::shared_ptr<GDALMDArray> m_poGLTX{};
-    std::shared_ptr<GDALMDArray> m_poGLTY{};
-    int m_nGLTIndexOffset = 0;
-
-  protected:
-    GLTOrthoRectifiedArray(
-        const std::shared_ptr<GDALMDArray> &poParent,
-        const std::vector<std::shared_ptr<GDALDimension>> &apoDims,
-        const std::vector<GUInt64> &anBlockSize)
-        : GDALAbstractMDArray(std::string(), "GLTOrthoRectifiedArray view of " +
-                                                 poParent->GetFullName()),
-          GDALPamMDArray(std::string(),
-                         "GLTOrthoRectifiedArray view of " +
-                             poParent->GetFullName(),
-                         ::GetPAM(poParent)),
-          m_poParent(std::move(poParent)), m_apoDims(apoDims),
-          m_anBlockSize(anBlockSize), m_dt(m_poParent->GetDataType())
-    {
-        CPLAssert(apoDims.size() == m_poParent->GetDimensionCount());
-        CPLAssert(anBlockSize.size() == m_poParent->GetDimensionCount());
-    }
-
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
-               const GDALExtendedDataType &bufferDataType,
-               void *pDstBuffer) const override;
-
-  public:
-    static std::shared_ptr<GDALMDArray>
-    Create(const std::shared_ptr<GDALMDArray> &poParent,
-           const std::shared_ptr<GDALMDArray> &poGLTX,
-           const std::shared_ptr<GDALMDArray> &poGLTY, int nGLTIndexOffset,
-           const std::vector<double> &adfGeoTransform)
-    {
-        std::vector<std::shared_ptr<GDALDimension>> apoNewDims;
-
-        auto poDimY = std::make_shared<GDALDimensionWeakIndexingVar>(
-            std::string(), CF_LATITUDE_VAR_NAME, GDAL_DIM_TYPE_HORIZONTAL_Y,
-            "NORTH", poGLTX->GetDimensions()[0]->GetSize());
-        auto varY = GDALMDArrayRegularlySpaced::Create(
-            std::string(), poDimY->GetName(), poDimY,
-            adfGeoTransform[3] + adfGeoTransform[5] / 2, adfGeoTransform[5], 0);
-        poDimY->SetIndexingVariable(varY);
-        apoNewDims.emplace_back(poDimY);
-
-        auto poDimX = std::make_shared<GDALDimensionWeakIndexingVar>(
-            std::string(), CF_LONGITUDE_VAR_NAME, GDAL_DIM_TYPE_HORIZONTAL_X,
-            "EAST", poGLTX->GetDimensions()[1]->GetSize());
-        auto varX = GDALMDArrayRegularlySpaced::Create(
-            std::string(), poDimX->GetName(), poDimX,
-            adfGeoTransform[0] + adfGeoTransform[1] / 2, adfGeoTransform[1], 0);
-        poDimX->SetIndexingVariable(varX);
-        apoNewDims.emplace_back(poDimX);
-
-        apoNewDims.emplace_back(poParent->GetDimensions()[2]);
-
-        const std::vector<GUInt64> anBlockSize = std::vector<GUInt64>{
-            std::min<GUInt64>(apoNewDims[0]->GetSize(), 512),
-            std::min<GUInt64>(apoNewDims[1]->GetSize(), 512),
-            poParent->GetDimensions()[2]->GetSize()};
-
-        auto newAr(std::shared_ptr<GLTOrthoRectifiedArray>(
-            new GLTOrthoRectifiedArray(poParent, apoNewDims, anBlockSize)));
-        newAr->SetSelf(newAr);
-        newAr->m_poVarX = varX;
-        newAr->m_poVarY = varY;
-        newAr->m_poGLTX = poGLTX;
-        newAr->m_poGLTY = poGLTY;
-        newAr->m_nGLTIndexOffset = nGLTIndexOffset;
-        OGRSpatialReference oSRS;
-        oSRS.importFromEPSG(4326);
-        newAr->m_poSRS.reset(oSRS.Clone());
-        newAr->m_poSRS->SetDataAxisToSRSAxisMapping(
-            {/*latIdx = */ 0, /* lonIdx = */ 1});
-        return newAr;
-    }
-
-    bool IsWritable() const override
-    {
-        return false;
-    }
-
-    const std::string &GetFilename() const override
-    {
-        return m_poParent->GetFilename();
-    }
-
-    const std::vector<std::shared_ptr<GDALDimension>> &
-    GetDimensions() const override
-    {
-        return m_apoDims;
-    }
-
-    const GDALExtendedDataType &GetDataType() const override
-    {
-        return m_dt;
-    }
-
-    std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override
-    {
-        return m_poSRS;
-    }
-
-    std::vector<GUInt64> GetBlockSize() const override
-    {
-        return m_anBlockSize;
-    }
-
-    std::shared_ptr<GDALAttribute>
-    GetAttribute(const std::string &osName) const override
-    {
-        return m_poParent->GetAttribute(osName);
-    }
-
-    std::vector<std::shared_ptr<GDALAttribute>>
-    GetAttributes(CSLConstList papszOptions = nullptr) const override
-    {
-        return m_poParent->GetAttributes(papszOptions);
-    }
-
-    const std::string &GetUnit() const override
-    {
-        return m_poParent->GetUnit();
-    }
-
-    const void *GetRawNoDataValue() const override
-    {
-        return m_poParent->GetRawNoDataValue();
-    }
-
-    double GetOffset(bool *pbHasOffset,
-                     GDALDataType *peStorageType) const override
-    {
-        return m_poParent->GetOffset(pbHasOffset, peStorageType);
-    }
-
-    double GetScale(bool *pbHasScale,
-                    GDALDataType *peStorageType) const override
-    {
-        return m_poParent->GetScale(pbHasScale, peStorageType);
-    }
-};
-
-/************************************************************************/
-/*                   GDALMDArrayResampled::IRead()                      */
-/************************************************************************/
-
-bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
-                                   const size_t *count, const GInt64 *arrayStep,
-                                   const GPtrDiff_t *bufferStride,
-                                   const GDALExtendedDataType &bufferDataType,
-                                   void *pDstBuffer) const
-{
-    if (bufferDataType.GetClass() != GEDTC_NUMERIC)
-        return false;
-
-    const size_t nXYValsCount = count[0] * count[1];
-    const auto eInt32DT = GDALExtendedDataType::Create(GDT_Int32);
-    std::vector<int32_t> anGLTX;
-    std::vector<int32_t> anGLTY;
-    try
-    {
-        anGLTX.resize(nXYValsCount);
-        anGLTY.resize(nXYValsCount);
-    }
-    catch (const std::bad_alloc &e)
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "GLTOrthoRectifiedArray::IRead(): %s", e.what());
-        return false;
-    }
-    if (!m_poGLTX->Read(arrayStartIdx, count, arrayStep, nullptr, eInt32DT,
-                        anGLTX.data()) ||
-        !m_poGLTY->Read(arrayStartIdx, count, arrayStep, nullptr, eInt32DT,
-                        anGLTY.data()))
-    {
-        return false;
-    }
-
-    int32_t nMinX = std::numeric_limits<int32_t>::max();
-    int32_t nMaxX = std::numeric_limits<int32_t>::min();
-    const auto nXSize = m_poParent->GetDimensions()[0]->GetSize();
-    for (size_t i = 0; i < nXYValsCount; ++i)
-    {
-        const int64_t nX64 =
-            static_cast<int64_t>(anGLTX[i]) + m_nGLTIndexOffset;
-        if (nX64 >= 0 && static_cast<uint64_t>(nX64) < nXSize)
-        {
-            const int32_t nX = static_cast<int32_t>(nX64);
-            if (nX < nMinX)
-                nMinX = nX;
-            if (nX > nMaxX)
-                nMaxX = nX;
-        }
-    }
-
-    int32_t nMinY = std::numeric_limits<int32_t>::max();
-    int32_t nMaxY = std::numeric_limits<int32_t>::min();
-    const auto nYSize = m_poParent->GetDimensions()[0]->GetSize();
-    for (size_t i = 0; i < nXYValsCount; ++i)
-    {
-        const int64_t nY64 =
-            static_cast<int64_t>(anGLTY[i]) + m_nGLTIndexOffset;
-        if (nY64 >= 0 && static_cast<uint64_t>(nY64) < nYSize)
-        {
-            const int32_t nY = static_cast<int32_t>(nY64);
-            if (nY < nMinY)
-                nMinY = nY;
-            if (nY > nMaxY)
-                nMaxY = nY;
-        }
-    }
-
-    const auto eBufferDT = bufferDataType.GetNumericDataType();
-    auto pRawNoDataValue = GetRawNoDataValue();
-    std::vector<GByte> abyNoData(16);
-    if (pRawNoDataValue)
-        GDALCopyWords(pRawNoDataValue, GetDataType().GetNumericDataType(), 0,
-                      abyNoData.data(), eBufferDT, 0, 1);
-
-    const auto nBufferDTSize = bufferDataType.GetSize();
-    if (nMinX > nMaxX || nMinY > nMaxY)
-    {
-        for (size_t iY = 0; iY < count[0]; ++iY)
-        {
-            for (size_t iX = 0; iX < count[1]; ++iX)
-            {
-                GByte *pabyDstBuffer =
-                    static_cast<GByte *>(pDstBuffer) +
-                    (iY * bufferStride[0] + iX * bufferStride[1]) *
-                        static_cast<int>(nBufferDTSize);
-                GDALCopyWords(abyNoData.data(), eBufferDT, 0, pabyDstBuffer,
-                              eBufferDT,
-                              static_cast<int>(bufferStride[2] * nBufferDTSize),
-                              static_cast<int>(count[2]));
-            }
-        }
-        return true;
-    }
-
-    GUInt64 parentArrayIdxStart[3] = {static_cast<GUInt64>(nMinY),
-                                      static_cast<GUInt64>(nMinX),
-                                      arrayStartIdx[2]};
-    size_t parentCount[3] = {static_cast<size_t>(nMaxY - nMinY + 1),
-                             static_cast<size_t>(nMaxX - nMinX + 1), count[2]};
-    GInt64 parentArrayStep[3] = {1, 1, arrayStep[2]};
-
-    size_t nParentValueSize = nBufferDTSize;
-    for (int i = 0; i < 3; ++i)
-    {
-        if (parentCount[i] >
-            std::numeric_limits<size_t>::max() / nParentValueSize)
-        {
-            CPLError(
-                CE_Failure, CPLE_OutOfMemory,
-                "GLTOrthoRectifiedArray::IRead(): too big temporary array");
-            return false;
-        }
-        nParentValueSize *= parentCount[i];
-    }
-
-    GPtrDiff_t parentStride[3] = {
-        static_cast<GPtrDiff_t>(parentCount[1] * parentCount[2]),
-        static_cast<GPtrDiff_t>(parentCount[2]), 1};
-    std::vector<GByte> parentValues;
-    try
-    {
-        parentValues.resize(nParentValueSize);
-    }
-    catch (const std::bad_alloc &e)
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "GLTOrthoRectifiedArray::IRead(): %s", e.what());
-        return false;
-    }
-    if (!m_poParent->Read(parentArrayIdxStart, parentCount, parentArrayStep,
-                          parentStride, bufferDataType, parentValues.data()))
-    {
-        return false;
-    }
-
-    size_t iGLTIndex = 0;
-    for (size_t iY = 0; iY < count[0]; ++iY)
-    {
-        for (size_t iX = 0; iX < count[1]; ++iX, ++iGLTIndex)
-        {
-            const int64_t nX64 =
-                static_cast<int64_t>(anGLTX[iGLTIndex]) + m_nGLTIndexOffset;
-            const int64_t nY64 =
-                static_cast<int64_t>(anGLTY[iGLTIndex]) + m_nGLTIndexOffset;
-            GByte *pabyDstBuffer =
-                static_cast<GByte *>(pDstBuffer) +
-                (iY * bufferStride[0] + iX * bufferStride[1]) *
-                    static_cast<int>(nBufferDTSize);
-            if (nX64 >= nMinX && nX64 <= nMaxX && nY64 >= nMinY &&
-                nY64 <= nMaxY)
-            {
-                const int32_t iSrcX = static_cast<int32_t>(nX64) - nMinX;
-                const int32_t iSrcY = static_cast<int32_t>(nY64) - nMinY;
-                const GByte *pabySrcBuffer =
-                    parentValues.data() + (iSrcY * parentCount[1] + iSrcX) *
-                                              parentCount[2] * nBufferDTSize;
-                GDALCopyWords(pabySrcBuffer, eBufferDT,
-                              static_cast<int>(nBufferDTSize), pabyDstBuffer,
-                              eBufferDT,
-                              static_cast<int>(bufferStride[2] * nBufferDTSize),
-                              static_cast<int>(count[2]));
-            }
-            else
-            {
-                GDALCopyWords(abyNoData.data(), eBufferDT, 0, pabyDstBuffer,
-                              eBufferDT,
-                              static_cast<int>(bufferStride[2] * nBufferDTSize),
-                              static_cast<int>(count[2]));
-            }
-        }
-    }
-
-    return true;
-}
-
-/************************************************************************/
-/*                           GetResampled()                             */
-/************************************************************************/
-
-std::shared_ptr<GDALMDArray> netCDFVariable::GetResampled(
-    const std::vector<std::shared_ptr<GDALDimension>> &apoNewDims,
-    GDALRIOResampleAlg resampleAlg, const OGRSpatialReference *poTargetSRS,
-    CSLConstList papszOptions) const
-{
-    // Special case for NASA EMIT datasets
-    auto apoDims = GetDimensions();
-    if (apoDims.size() == 3 && apoDims[0]->GetName() == "downtrack" &&
-        apoDims[1]->GetName() == "crosstrack" &&
-        apoDims[2]->GetName() == "bands" && poTargetSRS == nullptr &&
-        (apoNewDims == std::vector<std::shared_ptr<GDALDimension>>(3) ||
-         apoNewDims ==
-             std::vector<std::shared_ptr<GDALDimension>>{nullptr, nullptr,
-                                                         apoDims[2]}) &&
-        CPLTestBool(CSLFetchNameValueDef(papszOptions,
-                                         "EMIT_ORTHORECTIFICATION", "YES")))
-    {
-        auto poRootGroup = netCDFGroup::Create(m_poShared, nullptr, m_gid);
-        if (poRootGroup)
-        {
-            auto poAttrGeotransform = poRootGroup->GetAttribute("geotransform");
-            auto poLocationGroup = poRootGroup->OpenGroup("location");
-            if (poAttrGeotransform &&
-                poAttrGeotransform->GetDataType().GetClass() == GEDTC_NUMERIC &&
-                poAttrGeotransform->GetDimensionCount() == 1 &&
-                poAttrGeotransform->GetDimensionsSize()[0] == 6 &&
-                poLocationGroup)
-            {
-                auto poGLT_X = poLocationGroup->OpenMDArray("glt_x");
-                auto poGLT_Y = poLocationGroup->OpenMDArray("glt_y");
-                if (poGLT_X && poGLT_X->GetDimensionCount() == 2 &&
-                    poGLT_X->GetDimensions()[0]->GetName() == "ortho_y" &&
-                    poGLT_X->GetDimensions()[1]->GetName() == "ortho_x" &&
-                    poGLT_Y && poGLT_Y->GetDimensionCount() == 2 &&
-                    poGLT_Y->GetDimensions()[0]->GetName() == "ortho_y" &&
-                    poGLT_Y->GetDimensions()[1]->GetName() == "ortho_x")
-                {
-                    auto self =
-                        std::dynamic_pointer_cast<GDALMDArray>(m_pSelf.lock());
-                    CPLAssert(self);
-                    if (GetDataType().GetClass() != GEDTC_NUMERIC)
-                    {
-                        CPLError(
-                            CE_Failure, CPLE_AppDefined,
-                            "GetResampled() only supports numeric data type");
-                        return nullptr;
-                    }
-                    return GLTOrthoRectifiedArray::Create(
-                        self, poGLT_X, poGLT_Y,
-                        /* nGLTIndexOffset = */ -1,
-                        poAttrGeotransform->ReadAsDoubleArray());
-                }
-            }
-        }
-    }
-
-    if (CPLTestBool(CSLFetchNameValueDef(papszOptions,
-                                         "EMIT_ORTHORECTIFICATION", "NO")))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "EMIT_ORTHORECTIFICATION required, but dataset and/or "
-                 "parameters are not compatible with it");
-        return nullptr;
-    }
-
-    return GDALMDArray::GetResampled(apoNewDims, resampleAlg, poTargetSRS,
-                                     papszOptions);
 }
 
 /************************************************************************/
@@ -4918,7 +4543,7 @@ bool netCDFAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         return true;
     }
 
-    const auto dt(GetDataType());
+    const auto &dt(GetDataType());
     if (dt.GetClass() == GEDTC_NUMERIC &&
         dt.GetNumericDataType() == GDT_Unknown)
     {
@@ -5115,7 +4740,7 @@ bool netCDFAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
         return true;
     }
 
-    const auto dt(GetDataType());
+    const auto &dt(GetDataType());
     if (dt.GetClass() == GEDTC_NUMERIC &&
         dt.GetNumericDataType() == GDT_Unknown)
     {
@@ -5258,7 +4883,8 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     else
     {
         osFilename = poOpenInfo->pszFilename;
-        poDS->eFormat = IdentifyFormat(poOpenInfo, /* bCheckExt = */ true);
+        poDS->eFormat =
+            netCDFIdentifyFormat(poOpenInfo, /* bCheckExt = */ true);
     }
 
     poDS->SetDescription(poOpenInfo->pszFilename);
@@ -5303,7 +4929,7 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     const int nMode =
         (poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) != 0 ? NC_WRITE : NC_NOWRITE;
     CPLString osFilenameForNCOpen(osFilename);
-#ifdef WIN32
+#ifdef _WIN32
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         char *pszTemp = CPLRecode(osFilenameForNCOpen, CPL_ENC_UTF8, "CP_ACP");
@@ -5318,7 +4944,6 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     poSharedResources->m_bFileToDestroyAtClosing = bFileToDestroyAtClosing;
 #endif
 
-#ifdef HAVE_NETCDF_MEM
     if (STARTS_WITH(osFilenameForNCOpen, "/vsimem/") &&
         poOpenInfo->eAccess == GA_ReadOnly)
     {
@@ -5339,7 +4964,6 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
         }
     }
     else
-#endif
     {
 #ifdef ENABLE_UFFD
         bool bVsiFile = !strncmp(osFilenameForNCOpen, "/vsi", strlen("/vsi"));
@@ -5381,7 +5005,7 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     CPLDebug("GDAL_netCDF", "got cdfid=%d", cdfid);
 #endif
 
-#if defined(ENABLE_NCDUMP) && !defined(WIN32)
+#if defined(ENABLE_NCDUMP) && !defined(_WIN32)
     // Try to destroy the temporary file right now on Unix
     if (poSharedResources->m_bFileToDestroyAtClosing)
     {
@@ -5413,7 +5037,7 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    poDS->m_poRootGroup.reset(new netCDFGroup(poSharedResources, cdfid));
+    poDS->m_poRootGroup = netCDFGroup::Create(poSharedResources, cdfid);
 
     poDS->TryLoadXML();
 
@@ -5458,7 +5082,7 @@ netCDFDataset::CreateMultiDimensional(const char *pszFilename,
 
     // Create the dataset.
     CPLString osFilenameForNCCreate(pszFilename);
-#ifdef WIN32
+#ifdef _WIN32
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         char *pszTemp =
@@ -5502,5 +5126,3 @@ netCDFDataset::CreateMultiDimensional(const char *pszFilename,
 
     return poDS;
 }
-
-#endif  // NETCDF_HAS_NC4

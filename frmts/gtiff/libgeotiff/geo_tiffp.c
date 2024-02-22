@@ -74,8 +74,7 @@ static int _GTIFGetField (tiff_t *tif, pinfo_t tag, int *count, void *val )
 	int status;
 	unsigned short scount=0;
 	char *tmp;
-	char *value;
-	gsize_t size = _gtiff_size[_GTIFTagType (tif,tag)];
+	const gsize_t size = _gtiff_size[_GTIFTagType (tif,tag)];
 
 	if (_GTIFTagType(tif,  tag) == TYPE_ASCII)
 	{
@@ -88,7 +87,7 @@ static int _GTIFGetField (tiff_t *tif, pinfo_t tag, int *count, void *val )
 
 	*count = scount;
 
-	value = (char *)_GTIFcalloc( (scount+MAX_VALUES)*size);
+	char *value = (char *)_GTIFcalloc( (scount+MAX_VALUES)*size);
 	if (!value) return 0;
 
 	_TIFFmemcpy( value, tmp,  size * scount);
@@ -102,9 +101,9 @@ static int _GTIFGetField (tiff_t *tif, pinfo_t tag, int *count, void *val )
  */
 static int _GTIFSetField (tiff_t *tif, pinfo_t tag, int count, void *value )
 {
-	int status;
-	unsigned short scount = (unsigned short) count;
+	const unsigned short scount = (unsigned short) count;
 
+	int status;
 	/* libtiff ASCII uses null-delimiter */
 	if (_GTIFTagType(tif,  tag) == TYPE_ASCII)
 		status = TIFFSetField((TIFF *)tif,tag,value);
@@ -125,10 +124,9 @@ static int _GTIFSetField (tiff_t *tif, pinfo_t tag, int count, void *value )
  */
 static tagtype_t  _GTIFTagType  (tiff_t *tif, pinfo_t tag)
 {
-	tagtype_t ttype;
-
 	(void) tif; /* dummy reference */
 
+	tagtype_t ttype;
 	switch (tag)
 	{
 		case GTIFF_ASCIIPARAMS:    ttype=TYPE_ASCII; break;

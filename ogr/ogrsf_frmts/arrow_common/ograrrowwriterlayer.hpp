@@ -26,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef OGARROWWRITERLAYER_HPP_INCLUDED
+#define OGARROWWRITERLAYER_HPP_INCLUDED
+
 #include "ogr_arrow.h"
 
 #include "cpl_json.h"
@@ -249,7 +252,8 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
             }
         }
-        fields.emplace_back(arrow::field(poFieldDefn->GetNameRef(), dt,
+        fields.emplace_back(arrow::field(poFieldDefn->GetNameRef(),
+                                         std::move(dt),
                                          poFieldDefn->IsNullable()));
         if (poFieldDefn->GetAlternativeNameRef()[0])
             bNeedGDALSchema = true;
@@ -322,8 +326,9 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 break;
         }
 
-        auto field = arrow::field(poGeomFieldDefn->GetNameRef(), dt,
-                                  poGeomFieldDefn->IsNullable());
+        std::shared_ptr<arrow::Field> field(
+            arrow::field(poGeomFieldDefn->GetNameRef(), std::move(dt),
+                         poGeomFieldDefn->IsNullable()));
         if (m_bWriteFieldArrowExtensionName)
         {
             auto kvMetadata = field->metadata()
@@ -335,13 +340,13 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
             field = field->WithMetadata(kvMetadata);
         }
 
-        fields.emplace_back(field);
+        fields.emplace_back(std::move(field));
     }
 
     m_aoEnvelopes.resize(m_poFeatureDefn->GetGeomFieldCount());
     m_oSetWrittenGeometryTypes.resize(m_poFeatureDefn->GetGeomFieldCount());
 
-    m_poSchema = arrow::schema(fields);
+    m_poSchema = arrow::schema(std::move(fields));
     CPLAssert(m_poSchema);
     if (bNeedGDALSchema &&
         CPLTestBool(CPLGetConfigOption(
@@ -486,7 +491,7 @@ OGRArrowWriterLayer::AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
         return false;
     }
 
-    m_oMapFieldDomainToStringArray[domain->GetName()] = stringArray;
+    m_oMapFieldDomainToStringArray[domain->GetName()] = std::move(stringArray);
     m_oMapFieldDomains[domain->GetName()] = std::move(domain);
     return true;
 }
@@ -523,7 +528,7 @@ OGRArrowWriterLayer::GetFieldDomain(const std::string &name) const
 /*                          CreateField()                               */
 /************************************************************************/
 
-inline OGRErr OGRArrowWriterLayer::CreateField(OGRFieldDefn *poField,
+inline OGRErr OGRArrowWriterLayer::CreateField(const OGRFieldDefn *poField,
                                                int /* bApproxOK */)
 {
     if (m_poSchema)
@@ -689,8 +694,9 @@ OGRArrowWriterLayer::GetGeomEncodingAsString(OGRArrowGeomEncoding eGeomEncoding,
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-inline OGRErr OGRArrowWriterLayer::CreateGeomField(OGRGeomFieldDefn *poField,
-                                                   int /* bApproxOK */)
+inline OGRErr
+OGRArrowWriterLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
+                                     int /* bApproxOK */)
 {
     if (m_poSchema)
     {
@@ -1822,7 +1828,9 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
             const auto oMetadata =
                 OGRParseArrowMetadata(schema->children[i]->metadata);
             auto oIter = oMetadata.find(ARROW_EXTENSION_NAME_KEY);
-            if (oIter != oMetadata.end() && oIter->second == EXTENSION_NAME_WKB)
+            if (oIter != oMetadata.end() &&
+                (oIter->second == EXTENSION_NAME_OGC_WKB ||
+                 oIter->second == EXTENSION_NAME_GEOARROW_WKB))
             {
                 pszSingleGeomFieldName = schema->children[i]->name;
             }
@@ -2123,7 +2131,8 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
         }
     }
 
-    auto poRecordBatchResult = arrow::ImportRecordBatch(array, poSchema);
+    auto poRecordBatchResult =
+        arrow::ImportRecordBatch(array, std::move(poSchema));
     if (!poRecordBatchResult.ok())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -2160,7 +2169,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
             }
         }
         poRecordBatchResult = arrow::RecordBatch::Make(
-            m_poSchema, poRecordBatch->num_rows(), apoArrays);
+            m_poSchema, poRecordBatch->num_rows(), std::move(apoArrays));
         if (!poRecordBatchResult.ok())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -2178,3 +2187,5 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     }
     return false;
 }
+
+#endif /* OGARROWWRITERLAYER_HPP_INCLUDED */

@@ -1,4 +1,6 @@
 /* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */
+#ifndef GDAL_LIBTIFF_SYMBOL_RENAME_H_INCLUDED
+#define GDAL_LIBTIFF_SYMBOL_RENAME_H_INCLUDED
 #define add_ms gdal_add_ms
 #define allocChoppedUpStripArrays gdal_allocChoppedUpStripArrays
 #define buildMap gdal_buildMap
@@ -371,6 +373,7 @@
 #define TIFFDeferStrileArrayWriting gdal_TIFFDeferStrileArrayWriting
 #define _tiffDummyMapProc gdal__tiffDummyMapProc
 #define _tiffDummyUnmapProc gdal__tiffDummyUnmapProc
+#define _TIFFEmitErrorAboveMaxCumulatedMemAlloc gdal__TIFFEmitErrorAboveMaxCumulatedMemAlloc
 #define _TIFFEmitErrorAboveMaxSingleMemAlloc gdal__TIFFEmitErrorAboveMaxSingleMemAlloc
 #define TIFFError gdal_TIFFError
 #define _TIFFErrorEarly gdal__TIFFErrorEarly
@@ -496,6 +499,7 @@
 #define TIFFOpenOptionsAlloc gdal_TIFFOpenOptionsAlloc
 #define TIFFOpenOptionsFree gdal_TIFFOpenOptionsFree
 #define TIFFOpenOptionsSetErrorHandlerExtR gdal_TIFFOpenOptionsSetErrorHandlerExtR
+#define TIFFOpenOptionsSetMaxCumulatedMemAlloc gdal_TIFFOpenOptionsSetMaxCumulatedMemAlloc
 #define TIFFOpenOptionsSetMaxSingleMemAlloc gdal_TIFFOpenOptionsSetMaxSingleMemAlloc
 #define TIFFOpenOptionsSetWarningHandlerExtR gdal_TIFFOpenOptionsSetWarningHandlerExtR
 #define _TIFFPartialReadStripArray gdal__TIFFPartialReadStripArray
@@ -798,6 +802,8 @@
 #define unixWarningHandler gdal_unixWarningHandler
 #define uv_decode gdal_uv_decode
 #define uv_encode gdal_uv_encode
+#define WebPGetFeatures gdal_WebPGetFeatures
+#define WebPInitDecoderConfig gdal_WebPInitDecoderConfig
 #define WriteAsLong4 gdal_WriteAsLong4
 #define WriteAsLong8 gdal_WriteAsLong8
 #define _WriteAsType gdal__WriteAsType
@@ -928,3 +934,4 @@
 #ifdef LERC_SUPPORT
 #define TIFFInitLERC gdal_TIFFInitLERC
 #endif
+#endif /* GDAL_LIBTIFF_SYMBOL_RENAME_H_INCLUDED */

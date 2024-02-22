@@ -32,6 +32,7 @@
 #include "gdal_priv.h"
 #include "commonutils.h"
 #include "vrtdataset.h"
+#include "vrt_priv.h"
 
 #include <algorithm>
 
@@ -275,15 +276,6 @@ static bool PartialRefreshFromSourceTimestamp(
     bool bMinSizeSpecified, int nMinSize, GDALProgressFunc pfnProgress,
     void *pProgressArg)
 {
-    auto poVRTDS = dynamic_cast<VRTDataset *>(poDS);
-    if (!poVRTDS)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "--partial-refresh-from-source-timestamp only works on a VRT "
-                 "dataset");
-        return false;
-    }
-
     std::vector<int> anOvrIndices;
     if (!GetOvrIndices(poDS, nLevelCount, panLevels, bMinSizeSpecified,
                        nMinSize, anOvrIndices))
@@ -304,81 +296,94 @@ static bool PartialRefreshFromSourceTimestamp(
         return false;
     }
 
-    auto poVRTBand =
-        dynamic_cast<VRTSourcedRasterBand *>(poDS->GetRasterBand(1));
-    if (!poVRTBand)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Band is not a VRTSourcedRasterBand");
-        return false;
-    }
-
-    struct Region
-    {
-        std::string osFileName;
-        int nXOff;
-        int nYOff;
-        int nXSize;
-        int nYSize;
-    };
-    std::vector<Region> regions;
+    std::vector<GTISourceDesc> regions;
 
     double dfTotalPixels = 0;
-    for (int i = 0; i < poVRTBand->nSources; ++i)
-    {
-        auto poSource =
-            dynamic_cast<VRTSimpleSource *>(poVRTBand->papoSources[i]);
-        if (poSource)
-        {
-            VSIStatBufL sStatSource;
-            if (VSIStatL(poSource->GetSourceDatasetName().c_str(),
-                         &sStatSource) == 0)
-            {
-                if (sStatSource.st_mtime > sStatVRTOvr.st_mtime)
-                {
-                    double dfXOff, dfYOff, dfXSize, dfYSize;
-                    poSource->GetDstWindow(dfXOff, dfYOff, dfXSize, dfYSize);
-                    constexpr double EPS = 1e-8;
-                    int nXOff = static_cast<int>(dfXOff + EPS);
-                    int nYOff = static_cast<int>(dfYOff + EPS);
-                    int nXSize = static_cast<int>(dfXSize + 0.5);
-                    int nYSize = static_cast<int>(dfYSize + 0.5);
-                    if (nXOff > poDS->GetRasterXSize() ||
-                        nYOff > poDS->GetRasterYSize() || nXSize <= 0 ||
-                        nYSize <= 0)
-                    {
-                        continue;
-                    }
-                    if (nXOff < 0)
-                    {
-                        nXSize += nXOff;
-                        nXOff = 0;
-                    }
-                    if (nXOff > poDS->GetRasterXSize() - nXSize)
-                    {
-                        nXSize = poDS->GetRasterXSize() - nXOff;
-                    }
-                    if (nYOff < 0)
-                    {
-                        nYSize += nYOff;
-                        nYOff = 0;
-                    }
-                    if (nYOff > poDS->GetRasterYSize() - nYSize)
-                    {
-                        nYSize = poDS->GetRasterYSize() - nYOff;
-                    }
 
-                    dfTotalPixels += static_cast<double>(nXSize) * nYSize;
-                    Region region;
-                    region.osFileName = poSource->GetSourceDatasetName();
-                    region.nXOff = nXOff;
-                    region.nYOff = nYOff;
-                    region.nXSize = nXSize;
-                    region.nYSize = nYSize;
-                    regions.push_back(std::move(region));
+    if (dynamic_cast<VRTDataset *>(poDS))
+    {
+        auto poVRTBand =
+            dynamic_cast<VRTSourcedRasterBand *>(poDS->GetRasterBand(1));
+        if (!poVRTBand)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Band is not a VRTSourcedRasterBand");
+            return false;
+        }
+
+        for (int i = 0; i < poVRTBand->nSources; ++i)
+        {
+            auto poSource =
+                dynamic_cast<VRTSimpleSource *>(poVRTBand->papoSources[i]);
+            if (poSource)
+            {
+                VSIStatBufL sStatSource;
+                if (VSIStatL(poSource->GetSourceDatasetName().c_str(),
+                             &sStatSource) == 0)
+                {
+                    if (sStatSource.st_mtime > sStatVRTOvr.st_mtime)
+                    {
+                        double dfXOff, dfYOff, dfXSize, dfYSize;
+                        poSource->GetDstWindow(dfXOff, dfYOff, dfXSize,
+                                               dfYSize);
+                        constexpr double EPS = 1e-8;
+                        int nXOff = static_cast<int>(dfXOff + EPS);
+                        int nYOff = static_cast<int>(dfYOff + EPS);
+                        int nXSize = static_cast<int>(dfXSize + 0.5);
+                        int nYSize = static_cast<int>(dfYSize + 0.5);
+                        if (nXOff > poDS->GetRasterXSize() ||
+                            nYOff > poDS->GetRasterYSize() || nXSize <= 0 ||
+                            nYSize <= 0)
+                        {
+                            continue;
+                        }
+                        if (nXOff < 0)
+                        {
+                            nXSize += nXOff;
+                            nXOff = 0;
+                        }
+                        if (nXOff > poDS->GetRasterXSize() - nXSize)
+                        {
+                            nXSize = poDS->GetRasterXSize() - nXOff;
+                        }
+                        if (nYOff < 0)
+                        {
+                            nYSize += nYOff;
+                            nYOff = 0;
+                        }
+                        if (nYOff > poDS->GetRasterYSize() - nYSize)
+                        {
+                            nYSize = poDS->GetRasterYSize() - nYOff;
+                        }
+
+                        dfTotalPixels += static_cast<double>(nXSize) * nYSize;
+                        GTISourceDesc region;
+                        region.osFilename = poSource->GetSourceDatasetName();
+                        region.nDstXOff = nXOff;
+                        region.nDstYOff = nYOff;
+                        region.nDstXSize = nXSize;
+                        region.nDstYSize = nYSize;
+                        regions.push_back(std::move(region));
+                    }
                 }
             }
         }
+    }
+    else if (auto poGTIDS = GDALDatasetCastToGTIDataset(poDS))
+    {
+        regions = GTIGetSourcesMoreRecentThan(poGTIDS, sStatVRTOvr.st_mtime);
+        for (const auto &region : regions)
+        {
+            dfTotalPixels +=
+                static_cast<double>(region.nDstXSize) * region.nDstYSize;
+        }
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "--partial-refresh-from-source-timestamp only works on a VRT "
+                 "dataset");
+        return false;
     }
 
     if (!regions.empty())
@@ -389,22 +394,22 @@ static bool PartialRefreshFromSourceTimestamp(
             if (pfnProgress == GDALDummyProgress)
             {
                 CPLDebug("GDAL", "Refresh from source %s",
-                         region.osFileName.c_str());
+                         region.osFilename.c_str());
             }
             else
             {
-                printf("Refresh from source %s.\n", region.osFileName.c_str());
+                printf("Refresh from source %s.\n", region.osFilename.c_str());
             }
             double dfNextCurPixels =
                 dfCurPixels +
-                static_cast<double>(region.nXSize) * region.nYSize;
+                static_cast<double>(region.nDstXSize) * region.nDstYSize;
             void *pScaledProgress = GDALCreateScaledProgress(
                 dfCurPixels / dfTotalPixels, dfNextCurPixels / dfTotalPixels,
                 pfnProgress, pProgressArg);
             bool bRet = PartialRefresh(
                 poDS, anOvrIndices, nBandCount, panBandList, pszResampling,
-                region.nXOff, region.nYOff, region.nXSize, region.nYSize,
-                GDALScaledProgress, pScaledProgress);
+                region.nDstXOff, region.nDstYOff, region.nDstXSize,
+                region.nDstYSize, GDALScaledProgress, pScaledProgress);
             GDALDestroyScaledProgress(pScaledProgress);
             if (!bRet)
                 return false;
@@ -635,10 +640,9 @@ MAIN_START(nArgc, papszArgv)
     if (nArgc < 1)
         exit(-nArgc);
 
-    const char *pszResampling = "nearest";
+    std::string osResampling;
     const char *pszFilename = nullptr;
-    int anLevels[1024] = {};
-    int nLevelCount = 0;
+    std::vector<int> anLevels;
     int nResultStatus = 0;
     bool bReadOnly = false;
     bool bClean = false;
@@ -679,7 +683,7 @@ MAIN_START(nArgc, papszArgv)
         else if (EQUAL(papszArgv[iArg], "-r"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszResampling = papszArgv[++iArg];
+            osResampling = papszArgv[++iArg];
         }
         else if (EQUAL(papszArgv[iArg], "-ro"))
         {
@@ -752,11 +756,10 @@ MAIN_START(nArgc, papszArgv)
         {
             pszFilename = papszArgv[iArg];
         }
-        else if (atoi(papszArgv[iArg]) > 0 &&
-                 static_cast<size_t>(nLevelCount) < CPL_ARRAYSIZE(anLevels))
+        else if (atoi(papszArgv[iArg]) > 0)
         {
-            anLevels[nLevelCount++] = atoi(papszArgv[iArg]);
-            if (anLevels[nLevelCount - 1] == 1)
+            anLevels.push_back(atoi(papszArgv[iArg]));
+            if (anLevels.back() == 1)
             {
                 printf(
                     "Warning: Overview with subsampling factor of 1 requested. "
@@ -813,24 +816,54 @@ MAIN_START(nArgc, papszArgv)
     if (hDataset == nullptr)
         exit(2);
 
+    if (!bClean && osResampling.empty())
+    {
+        auto poDS = GDALDataset::FromHandle(hDataset);
+        if (poDS->GetRasterCount() > 0)
+        {
+            auto poBand = poDS->GetRasterBand(1);
+            if (poBand->GetOverviewCount() > 0)
+            {
+                const char *pszResampling =
+                    poBand->GetOverview(0)->GetMetadataItem("RESAMPLING");
+                if (pszResampling)
+                {
+                    osResampling = pszResampling;
+                    if (pfnProgress == GDALDummyProgress)
+                        CPLDebug("GDAL",
+                                 "Reusing resampling method %s from existing "
+                                 "overview",
+                                 pszResampling);
+                    else
+                        printf("Info: reusing resampling method %s from "
+                               "existing overview.\n",
+                               pszResampling);
+                }
+            }
+        }
+        if (osResampling.empty())
+            osResampling = "nearest";
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Clean overviews.                                                */
     /* -------------------------------------------------------------------- */
     if (bClean)
     {
-        if (GDALBuildOverviews(hDataset, pszResampling, 0, nullptr, 0, nullptr,
+        if (GDALBuildOverviews(hDataset, "NONE", 0, nullptr, 0, nullptr,
                                pfnProgress, pProgressArg) != CE_None)
         {
-            printf("Cleaning overviews failed.\n");
+            fprintf(stderr, "Cleaning overviews failed.\n");
             nResultStatus = 200;
         }
     }
     else if (bPartialRefreshFromSourceTimestamp)
     {
         if (!PartialRefreshFromSourceTimestamp(
-                GDALDataset::FromHandle(hDataset), pszResampling, nLevelCount,
-                anLevels, nBandCount, panBandList, bMinSizeSpecified, nMinSize,
-                pfnProgress, pProgressArg))
+                GDALDataset::FromHandle(hDataset), osResampling.c_str(),
+                static_cast<int>(anLevels.size()), anLevels.data(), nBandCount,
+                panBandList, bMinSizeSpecified, nMinSize, pfnProgress,
+                pProgressArg))
         {
             nResultStatus = 1;
         }
@@ -839,8 +872,9 @@ MAIN_START(nArgc, papszArgv)
     {
         if (!PartialRefreshFromProjWin(
                 GDALDataset::FromHandle(hDataset), dfULX, dfULY, dfLRX, dfLRY,
-                pszResampling, nLevelCount, anLevels, nBandCount, panBandList,
-                bMinSizeSpecified, nMinSize, pfnProgress, pProgressArg))
+                osResampling.c_str(), static_cast<int>(anLevels.size()),
+                anLevels.data(), nBandCount, panBandList, bMinSizeSpecified,
+                nMinSize, pfnProgress, pProgressArg))
         {
             nResultStatus = 1;
         }
@@ -848,9 +882,10 @@ MAIN_START(nArgc, papszArgv)
     else if (bPartialRefreshFromSourceExtent)
     {
         if (!PartialRefreshFromSourceExtent(
-                GDALDataset::FromHandle(hDataset), aosSources, pszResampling,
-                nLevelCount, anLevels, nBandCount, panBandList,
-                bMinSizeSpecified, nMinSize, pfnProgress, pProgressArg))
+                GDALDataset::FromHandle(hDataset), aosSources,
+                osResampling.c_str(), static_cast<int>(anLevels.size()),
+                anLevels.data(), nBandCount, panBandList, bMinSizeSpecified,
+                nMinSize, pfnProgress, pProgressArg))
         {
             nResultStatus = 1;
         }
@@ -863,7 +898,32 @@ MAIN_START(nArgc, papszArgv)
         /* --------------------------------------------------------------------
          */
 
-        if (nLevelCount == 0)
+        // If no levels are specified, reuse the potentially existing ones.
+        if (anLevels.empty())
+        {
+            auto poDS = GDALDataset::FromHandle(hDataset);
+            if (poDS->GetRasterCount() > 0)
+            {
+                auto poBand = poDS->GetRasterBand(1);
+                const int nExistingCount = poBand->GetOverviewCount();
+                if (nExistingCount > 0)
+                {
+                    for (int iOvr = 0; iOvr < nExistingCount; ++iOvr)
+                    {
+                        auto poOverview = poBand->GetOverview(iOvr);
+                        if (poOverview)
+                        {
+                            const int nOvFactor = GDALComputeOvFactor(
+                                poOverview->GetXSize(), poBand->GetXSize(),
+                                poOverview->GetYSize(), poBand->GetYSize());
+                            anLevels.push_back(nOvFactor);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (anLevels.empty())
         {
             const int nXSize = GDALGetRasterXSize(hDataset);
             const int nYSize = GDALGetRasterYSize(hDataset);
@@ -872,7 +932,7 @@ MAIN_START(nArgc, papszArgv)
                    DIV_ROUND_UP(nYSize, nOvrFactor) > nMinSize)
             {
                 nOvrFactor *= 2;
-                anLevels[nLevelCount++] = nOvrFactor;
+                anLevels.push_back(nOvrFactor);
             }
         }
 
@@ -880,12 +940,13 @@ MAIN_START(nArgc, papszArgv)
         if (nBandCount > 0)
             CPLSetConfigOption("USE_RRD", "YES");
 
-        if (nLevelCount > 0 &&
-            GDALBuildOverviews(hDataset, pszResampling, nLevelCount, anLevels,
-                               nBandCount, panBandList, pfnProgress,
-                               pProgressArg) != CE_None)
+        if (!anLevels.empty() &&
+            GDALBuildOverviews(hDataset, osResampling.c_str(),
+                               static_cast<int>(anLevels.size()),
+                               anLevels.data(), nBandCount, panBandList,
+                               pfnProgress, pProgressArg) != CE_None)
         {
-            printf("Overview building failed.\n");
+            fprintf(stderr, "Overview building failed.\n");
             nResultStatus = 100;
         }
     }

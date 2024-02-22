@@ -12,14 +12,22 @@ add_gdal_driver(
           NO_DEPS)
 gdal_standard_includes(ogr_DGN)
 
-if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.12)
-  if (NOT OGR_ENABLE_DRIVER_DGN_PLUGIN)
-    add_executable(dgnwritetest EXCLUDE_FROM_ALL dgnwritetest.cpp)
-    target_include_directories(dgnwritetest PRIVATE $<TARGET_PROPERTY:gdal_iso8211,SOURCE_DIR>)
-    target_link_libraries(dgnwritetest PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> ogr_DGN)
+set(GDAL_DATA_FILES
+    LICENSE.TXT
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/seed_2d.dgn
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/seed_3d.dgn
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
 
-    add_executable(dgndump EXCLUDE_FROM_ALL dgndump.cpp)
-    target_include_directories(dgndump PRIVATE $<TARGET_PROPERTY:gdal_iso8211,SOURCE_DIR>)
-    target_link_libraries(dgndump PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> ogr_DGN)
-  endif ()
+if (NOT OGR_ENABLE_DRIVER_DGN_PLUGIN)
+  add_executable(dgnwritetest EXCLUDE_FROM_ALL dgnwritetest.cpp)
+  target_include_directories(dgnwritetest PRIVATE $<TARGET_PROPERTY:gdal_iso8211,SOURCE_DIR>)
+  target_link_libraries(dgnwritetest PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> ogr_DGN)
+
+  add_executable(dgndump EXCLUDE_FROM_ALL dgndump.cpp)
+  target_include_directories(dgndump PRIVATE $<TARGET_PROPERTY:gdal_iso8211,SOURCE_DIR>)
+  target_link_libraries(dgndump PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> ogr_DGN)
 endif ()

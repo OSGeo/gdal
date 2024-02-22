@@ -38,6 +38,8 @@
 #include "ogrpgutility.h"
 #include "ogr_pgdump.h"
 
+#include <map>
+#include <optional>
 #include <vector>
 
 /* These are the OIDs for some builtin types, as returned by PQftype(). */
@@ -222,8 +224,11 @@ class OGRPGLayer CPL_NON_FINAL : public OGRLayer
     void CloseCursor();
 
     virtual CPLString GetFromClauseForGetExtent() = 0;
-    OGRErr RunGetExtentRequest(OGREnvelope *psExtent, int bForce,
-                               CPLString osCommand, int bErrorAsDebug);
+    OGRErr RunGetExtentRequest(OGREnvelope &sExtent, int bForce,
+                               const std::string &osCommand, int bErrorAsDebug);
+    OGRErr RunGetExtent3DRequest(OGREnvelope3D &sExtent3D,
+                                 const std::string &osCommand,
+                                 int bErrorAsDebug);
     static void CreateMapFromFieldNameToIndex(PGresult *hResult,
                                               OGRFeatureDefn *poFeatureDefn,
                                               int *&panMapFieldNameToIndex,
@@ -254,6 +259,9 @@ class OGRPGLayer CPL_NON_FINAL : public OGRLayer
     }
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override;
+
+    OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                       int bForce) override;
 
     virtual OGRErr StartTransaction() override;
     virtual OGRErr CommitTransaction() override;
@@ -294,6 +302,8 @@ class OGRPGTableLayer final : public OGRPGLayer
     char *pszSchemaName = nullptr;
     char *m_pszTableDescription = nullptr;
     CPLString osForcedDescription{};
+    bool m_bMetadataLoaded = false;
+    bool m_bMetadataModified = false;
     char *pszSqlTableName = nullptr;
     int bTableDefinitionValid = -1;
 
@@ -361,6 +371,9 @@ class OGRPGTableLayer final : public OGRPGLayer
 
     void UpdateSequenceIfNeeded();
 
+    void LoadMetadata();
+    void SerializeMetadata();
+
   public:
     OGRPGTableLayer(OGRPGDataSource *, CPLString &osCurrentSchema,
                     const char *pszTableName, const char *pszSchemaName,
@@ -392,9 +405,9 @@ class OGRPGTableLayer final : public OGRPGLayer
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poGeomField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
     virtual OGRErr DeleteField(int iField) override;
     virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
@@ -583,9 +596,9 @@ class OGRPGDataSource final : public OGRDataSource
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    int nKnownSRID = 0;
-    int *panSRID = nullptr;
-    OGRSpatialReference **papoSRS = nullptr;
+    std::map<int,
+             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
+        m_oSRSCache{};
 
     OGRPGTableLayer *poLayerInCopyMode = nullptr;
 
@@ -612,6 +625,8 @@ class OGRPGDataSource final : public OGRDataSource
     OGRErr FlushSoftTransaction();
 
     OGRErr FlushCacheWithRet(bool bAtClosing);
+
+    std::optional<std::string> FindSchema(const char *pszSchemaNameIn);
 
   public:
     PGver sPostgreSQLVersion = {0, 0, 0};
@@ -642,7 +657,7 @@ class OGRPGDataSource final : public OGRDataSource
     }
 
     int FetchSRSId(const OGRSpatialReference *poSRS);
-    OGRSpatialReference *FetchSRS(int nSRSId);
+    const OGRSpatialReference *FetchSRS(int nSRSId);
     static OGRErr InitializeMetadataTables();
 
     int Open(const char *, int bUpdate, int bTestOpen, char **papszOpenOptions);

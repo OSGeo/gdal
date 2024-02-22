@@ -45,8 +45,7 @@
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
-
-CPL_CVSID("$Id$")
+#include "gdalgenericinverse.h"
 
 CPL_C_START
 CPLXMLNode *GDALSerializeTPSTransformer(void *pTransformArg);
@@ -61,6 +60,7 @@ typedef struct
     VizGeorefSpline2D *poReverse;
     bool bForwardSolved;
     bool bReverseSolved;
+    double dfSrcApproxErrorReverse;
 
     bool bReversed;
 
@@ -251,6 +251,9 @@ void *GDALCreateTPSTransformerInt(int nGCPCount, const GDAL_GCP *pasGCPList,
 
     psInfo->nRefCount = 1;
 
+    psInfo->dfSrcApproxErrorReverse = CPLAtof(
+        CSLFetchNameValueDef(papszOptions, "SRC_APPROX_ERROR_IN_PIXEL", "0"));
+
     int nThreads = 1;
     if (nGCPCount > 100)
     {
@@ -363,7 +366,29 @@ int GDALTPSTransform(void *pTransformArg, int bDstToSrc, int nPointCount,
 
         if (bDstToSrc)
         {
+            // Compute initial guess
             psInfo->poReverse->get_point(x[i], y[i], xy_out);
+
+            const auto ForwardTransformer = [](double xIn, double yIn,
+                                               double &xOut, double &yOut,
+                                               void *pUserData)
+            {
+                double xyOut[2] = {0.0, 0.0};
+                TPSTransformInfo *l_psInfo =
+                    static_cast<TPSTransformInfo *>(pUserData);
+                l_psInfo->poForward->get_point(xIn, yIn, xyOut);
+                xOut = xyOut[0];
+                yOut = xyOut[1];
+                return true;
+            };
+
+            // Refine the initial guess
+            GDALGenericInverse2D(
+                x[i], y[i], xy_out[0], xy_out[1], ForwardTransformer, psInfo,
+                xy_out[0], xy_out[1],
+                /* computeJacobianMatrixOnlyAtFirstIter = */ true,
+                /* toleranceOnOutputCoordinates = */ 0,
+                psInfo->dfSrcApproxErrorReverse);
             x[i] = xy_out[0];
             y[i] = xy_out[1];
         }
@@ -409,6 +434,13 @@ CPLXMLNode *GDALSerializeTPSTransformer(void *pTransformArg)
                                   nullptr);
     }
 
+    if (psInfo->dfSrcApproxErrorReverse > 0)
+    {
+        CPLCreateXMLElementAndValue(
+            psTree, "SrcApproxErrorInPixel",
+            CPLString().Printf("%g", psInfo->dfSrcApproxErrorReverse));
+    }
+
     return psTree;
 }
 
@@ -437,10 +469,16 @@ void *GDALDeserializeTPSTransformer(CPLXMLNode *psTree)
     /* -------------------------------------------------------------------- */
     const int bReversed = atoi(CPLGetXMLValue(psTree, "Reversed", "0"));
 
+    CPLStringList aosOptions;
+    aosOptions.SetNameValue(
+        "SRC_APPROX_ERROR_IN_PIXEL",
+        CPLGetXMLValue(psTree, "SrcApproxErrorInPixel", nullptr));
+
     /* -------------------------------------------------------------------- */
     /*      Generate transformation.                                        */
     /* -------------------------------------------------------------------- */
-    void *pResult = GDALCreateTPSTransformer(nGCPCount, pasGCPList, bReversed);
+    void *pResult = GDALCreateTPSTransformerInt(nGCPCount, pasGCPList,
+                                                bReversed, aosOptions.List());
 
     /* -------------------------------------------------------------------- */
     /*      Cleanup GCP copy.                                               */

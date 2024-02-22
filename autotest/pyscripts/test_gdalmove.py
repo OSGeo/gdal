@@ -51,6 +51,28 @@ def script_path():
 #
 
 
+def test_gdalmove_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdalmove", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_gdalmove_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdalmove", "--version"
+    )
+
+
+###############################################################################
+#
+
+
 def test_gdalmove_1(script_path):
 
     shutil.copy(

@@ -41,8 +41,6 @@
 
 #include "gdal_alg.h"
 
-CPL_CVSID("$Id$")
-
 /************************************************************************/
 /*                       dllImageFilledPolygon()                        */
 /*                                                                      */
@@ -477,7 +475,8 @@ void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
 
                 const int iX = static_cast<int>(floor(dfXEnd));
                 int iY = static_cast<int>(floor(dfY));
-                int iYEnd = static_cast<int>(floor(dfYEnd));
+                int iYEnd =
+                    static_cast<int>(floor(dfYEnd - EPSILON_INTERSECT_ONLY));
 
                 if (iX < 0 || iX >= nRasterXSize)
                     continue;
@@ -556,7 +555,8 @@ void GDALdllImageLineAllTouched(int nRasterXSize, int nRasterYSize,
 
                 int iX = static_cast<int>(floor(dfX));
                 const int iY = static_cast<int>(floor(dfY));
-                int iXEnd = static_cast<int>(floor(dfXEnd));
+                int iXEnd =
+                    static_cast<int>(floor(dfXEnd - EPSILON_INTERSECT_ONLY));
 
                 if (iY < 0 || iY >= nRasterYSize)
                     continue;

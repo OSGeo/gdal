@@ -204,7 +204,7 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<LOSLASDataset>();
+    auto poDS = std::make_unique<LOSLASDataset>();
     std::swap(poDS->fpImage, poOpenInfo->fpL);
 
     /* -------------------------------------------------------------------- */
@@ -280,7 +280,7 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->adfGeoTransform[2] = 0.0;
     poDS->adfGeoTransform[3] = min_lat + (poDS->nRasterYSize - 0.5) * delta_lat;
     poDS->adfGeoTransform[4] = 0.0;
-    poDS->adfGeoTransform[5] = -1 * delta_lat;
+    poDS->adfGeoTransform[5] = -1.0 * delta_lat;
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */

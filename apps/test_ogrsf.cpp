@@ -161,8 +161,7 @@ MAIN_START(nArgc, papszArgv)
         {
             pszSQLStatement = papszArgv[++iArg];
         }
-        else if (EQUAL(papszArgv[iArg], "-dialect") &&
-                 papszArgv[iArg + 1] != nullptr)
+        else if (EQUAL(papszArgv[iArg], "-dialect") && iArg + 1 < nArgc)
         {
             pszDialect = papszArgv[++iArg];
         }

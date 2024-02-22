@@ -37,6 +37,8 @@
 #pragma warning(disable : 4996) /* XXXX was deprecated */
 #endif
 
+constexpr const char *RASTER_DATASET_TYPE = "raster";
+
 /************************************************************************/
 /* ==================================================================== */
 /*                            TileDBRasterBand                          */
@@ -795,6 +797,9 @@ CPLErr TileDBRasterDataset::TrySaveXML()
         }
         else
         {
+            m_array->put_metadata("dataset_type", TILEDB_STRING_UTF8,
+                                  static_cast<int>(strlen(RASTER_DATASET_TYPE)),
+                                  RASTER_DATASET_TYPE);
             m_array->put_metadata(GDAL_ATTRIBUTE_NAME, TILEDB_UINT8,
                                   static_cast<int>(strlen(pszTree)), pszTree);
         }
@@ -1091,7 +1096,7 @@ char **TileDBRasterDataset::GetMetadata(const char *pszDomain)
 GDALDataset *TileDBRasterDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
-    auto poDS = cpl::make_unique<TileDBRasterDataset>();
+    auto poDS = std::make_unique<TileDBRasterDataset>();
 
     const char *pszConfig =
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "TILEDB_CONFIG");
@@ -1777,7 +1782,7 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
             return nullptr;
         }
 
-        auto poDS = cpl::make_unique<TileDBRasterDataset>();
+        auto poDS = std::make_unique<TileDBRasterDataset>();
         poDS->nRasterXSize = nXSize;
         poDS->nRasterYSize = nYSize;
         poDS->eDataType = eType;
@@ -2230,6 +2235,8 @@ GDALDataset *TileDBRasterDataset::Create(const char *pszFilename, int nXSize,
                             CPLString().Printf("%d", poDS->nRasterYSize));
         papszImageStruct = CSLAddNameValue(papszImageStruct, "INTERLEAVE",
                                            index_type_name(poDS->eIndexMode));
+        papszImageStruct = CSLAddNameValue(papszImageStruct, "DATASET_TYPE",
+                                           RASTER_DATASET_TYPE);
 
         if (poDS->lpoAttributeDS.size() > 0)
         {

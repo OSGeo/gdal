@@ -35,6 +35,8 @@
 
 #include <xercesc/sax2/Attributes.hpp>
 
+using namespace gdal::ili2;
+
 //
 // constants
 //

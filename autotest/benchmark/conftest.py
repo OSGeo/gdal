@@ -50,5 +50,9 @@ def pytest_report_header(config):
 
     if "debug" in gdal.VersionInfo(""):
         gdal_header_info += "WARNING: Running benchmarks on debug build. Results will not be accurate.\n"
+    gdal_header_info += "Usable RAM: %d MB\n" % (
+        gdal.GetUsablePhysicalRAM() / (1024 * 1024)
+    )
+    gdal_header_info += "Number of CPUs: %d\n" % (gdal.GetNumCPUs())
 
     return gdal_header_info

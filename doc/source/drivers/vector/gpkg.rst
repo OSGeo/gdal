@@ -148,6 +148,16 @@ binary encoding must be done.
 
 Starting with Spatialite 4.3, CastAutomagic is no longer needed.
 
+Note that due to the loose typing mechanism of SQLite, if a geometry expression
+returns a NULL value for the first row, this will generally cause OGR not to
+recognize the column as a geometry column. It might be then useful to sort
+the results by making sure that non-null geometries are returned first:
+
+::
+
+   ogrinfo poly.gpkg -sql "SELECT * FROM (SELECT ST_Buffer(geom,5) AS geom, * FROM poly) ORDER BY geom IS NULL ASC"
+
+
 Transaction support
 -------------------
 
@@ -166,6 +176,12 @@ Relationship creation, deletion and updating is supported since GDAL 3.7. Relati
 only be updated to change their base or related table fields, or the relationship related
 table type. It is not permissible to change the base or related table itself, or the mapping
 table details. If this is desired then a new relationship should be created instead.
+
+Note that when a many-to-many relationship is created in a GeoPackage, GDAL will always
+insert the mapping table into the gpkg_contents table. Formally this is not required
+by the Related Tables Extension (instead, the table should only be listed in gpkgext_relations),
+however failing to list the mapping table in gpkg_contents prevents it from being usable
+in some other applications (e.g. ESRI software).
 
 Dataset open options
 --------------------
@@ -446,6 +462,18 @@ available:
 
 - :copy-config:`SQLITE_USE_OGR_VFS`
 
+- .. config:: OGR_GPKG_NUM_THREADS
+     :since: 3.8.3
+
+     Can be set to an integer or ``ALL_CPUS``.
+     This is the number of threads used when reading tables through the
+     ArrowArray interface, when no filter is applied and when features have
+     consecutive feature ID numbering.
+     The default is the minimum of 4 and the number of CPUs.
+     Note that setting this value too high is not recommended: a value of 4 is
+     close to the optimal.
+
+
 Metadata
 --------
 
@@ -586,6 +614,9 @@ Level of support of GeoPackage Extensions
    * - :ref:`vector.gpkg_spatialite_computed_geom_column`
      - No
      - Yes, starting with GDAL 3.7.1
+   * - `OGC GeoPackage Related Tables Extension <http://www.geopackage.org/spec/related-tables/>`__
+     - Yes
+     - Yes, starting with GDAL 3.6
 
 Compressed files
 ----------------

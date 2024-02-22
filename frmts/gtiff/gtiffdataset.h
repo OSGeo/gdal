@@ -130,6 +130,13 @@ class GTiffDataset final : public GDALPamDataset
     friend void GTIFFSetZLevel(GDALDatasetH hGTIFFDS, int nZLevel);
     friend void GTIFFSetZSTDLevel(GDALDatasetH hGTIFFDS, int nZSTDLevel);
     friend void GTIFFSetMaxZError(GDALDatasetH hGTIFFDS, double dfMaxZError);
+#if HAVE_JXL
+    friend void GTIFFSetJXLLossless(GDALDatasetH hGTIFFDS, bool bIsLossless);
+    friend void GTIFFSetJXLEffort(GDALDatasetH hGTIFFDS, int nEffort);
+    friend void GTIFFSetJXLDistance(GDALDatasetH hGTIFFDS, float fDistance);
+    friend void GTIFFSetJXLAlphaDistance(GDALDatasetH hGTIFFDS,
+                                         float fAlphaDistance);
+#endif
 
     TIFF *m_hTIFF = nullptr;
     VSILFILE *m_fpL = nullptr;
@@ -159,10 +166,8 @@ class GTiffDataset final : public GDALPamDataset
     std::unique_ptr<CPLJobQueue> m_poCompressQueue{};
     CPLMutex *m_hCompressThreadPoolMutex = nullptr;
 
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     lru11::Cache<int, std::pair<vsi_l_offset, vsi_l_offset>>
         m_oCacheStrileToOffsetByteCount{1024};
-#endif
 
     MaskOffset *m_panMaskOffsetLsb = nullptr;
     char *m_pszVertUnit = nullptr;
@@ -198,6 +203,7 @@ class GTiffDataset final : public GDALPamDataset
     int m_nLastWrittenBlockId = -1;  // used for m_bStreamingOut
     int m_nRefBaseMapping = 0;
     int m_nGCPCount = 0;
+    int m_nDisableMultiThreadedRead = 0;
 
     GTIFFKeysFlavorEnum m_eGeoTIFFKeysFlavor = GEOTIFF_KEYS_STANDARD;
     GeoTIFFVersionEnum m_eGeoTIFFVersion = GEOTIFF_VERSION_AUTO;
@@ -462,13 +468,13 @@ class GTiffDataset final : public GDALPamDataset
     virtual const GDAL_GCP *GetGCPs() override;
     CPLErr SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                    const OGRSpatialReference *poSRS) override;
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+
     bool IsMultiThreadedReadCompatible() const;
     CPLErr MultiThreadedRead(int nXOff, int nYOff, int nXSize, int nYSize,
                              void *pData, GDALDataType eBufType, int nBandCount,
                              const int *panBandMap, GSpacing nPixelSpace,
                              GSpacing nLineSpace, GSpacing nBandSpace);
-#endif
+
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,

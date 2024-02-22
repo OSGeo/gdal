@@ -871,7 +871,7 @@ int GDALJP2Metadata::GMLSRSLookup(const char *pszURN)
 
     if (oSRS.importFromXML(pszDictEntryXML) == OGRERR_NONE)
     {
-        m_oSRS = oSRS;
+        m_oSRS = std::move(oSRS);
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         bSuccess = true;
     }
@@ -1021,13 +1021,13 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     /* -------------------------------------------------------------------- */
     bool bNeedAxisFlip = false;
 
-    OGRSpatialReference oSRS;
     if (bSuccess && pszSRSName != nullptr && m_oSRS.IsEmpty())
     {
+        OGRSpatialReference oSRS;
         if (STARTS_WITH_CI(pszSRSName, "epsg:"))
         {
             if (oSRS.SetFromUserInput(pszSRSName) == OGRERR_NONE)
-                m_oSRS = oSRS;
+                m_oSRS = std::move(oSRS);
         }
         else if ((STARTS_WITH_CI(pszSRSName, "urn:") &&
                   strstr(pszSRSName, ":def:") != nullptr &&
@@ -1040,11 +1040,11 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
                                  "http://www.opengis.net/def/crs/") &&
                   oSRS.importFromCRSURL(pszSRSName) == OGRERR_NONE))
         {
-            m_oSRS = oSRS;
+            m_oSRS = std::move(oSRS);
 
             // Per #2131
-            if (oSRS.EPSGTreatsAsLatLong() ||
-                oSRS.EPSGTreatsAsNorthingEasting())
+            if (m_oSRS.EPSGTreatsAsLatLong() ||
+                m_oSRS.EPSGTreatsAsNorthingEasting())
             {
                 CPLDebug("GMLJP2", "Request axis flip for SRS=%s", pszSRSName);
                 bNeedAxisFlip = true;
@@ -2587,7 +2587,6 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     /*      Process metadata, annotations and features collections.         */
     /* -------------------------------------------------------------------- */
-    std::vector<CPLString> aosTmpFiles;
     if (!aoMetadata.empty() || !aoAnnotations.empty() || !aoGMLFiles.empty() ||
         !aoStyles.empty() || !aoExtensions.empty())
     {
@@ -2748,7 +2747,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                     if (hSrcDS)
                     {
                         CPLString osTmpFile =
-                            CPLSPrintf("/vsimem/gmljp2/%p/%d/%s.gml", this, i,
+                            CPLSPrintf("/vsimem/gmljp2_%p/%d/%s.gml", this, i,
                                        CPLGetBasename(aoGMLFiles[i].osFile));
                         char **papszOptions = nullptr;
                         papszOptions =
@@ -2783,8 +2782,6 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                                 CPLXMLTreeCloser(CPLParseXMLFile(osTmpFile));
                             aoGMLFiles[i].osFile = osTmpFile;
                             VSIUnlink(osTmpFile);
-                            aosTmpFiles.emplace_back(
-                                CPLResetExtension(osTmpFile, "xsd"));
                         }
                         else
                         {
@@ -2858,9 +2855,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                     !aoGMLFiles[i].osRemoteResource.empty())
                 {
                     osTmpFile =
-                        CPLSPrintf("/vsimem/gmljp2/%p/%d/%s.gml", this, i,
+                        CPLSPrintf("/vsimem/gmljp2_%p/%d/%s.gml", this, i,
                                    CPLGetBasename(aoGMLFiles[i].osFile));
-                    aosTmpFiles.push_back(osTmpFile);
 
                     GMLJP2V2BoxDesc oDesc;
                     oDesc.osFile = osTmpFile;
@@ -2941,7 +2937,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                         if (!osXSD.empty())
                         {
                             GMLJP2V2BoxDesc oDesc;
-                            oDesc.osFile = osXSD;
+                            oDesc.osFile = std::move(osXSD);
                             oDesc.osLabel = CPLGetFilename(oDesc.osFile);
                             osSchemaLocation += papszTokens[0];
                             osSchemaLocation += " ";
@@ -3039,7 +3035,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                 if (hSrcDS)
                 {
                     CPLString osTmpFile =
-                        CPLSPrintf("/vsimem/gmljp2/%p/%d/%s.kml", this, i,
+                        CPLSPrintf("/vsimem/gmljp2_%p/%d/%s.kml", this, i,
                                    CPLGetBasename(aoAnnotations[i].osFile));
                     char **papszOptions = nullptr;
                     if (aoAnnotations.size() > 1)
@@ -3217,7 +3213,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     /*      Additional user specified boxes.                                */
     /* -------------------------------------------------------------------- */
-    for (auto &oBox : aoBoxes)
+    for (const auto &oBox : aoBoxes)
     {
         GByte *pabyContent = nullptr;
         if (VSIIngestFile(nullptr, oBox.osFile, &pabyContent, nullptr, -1))
@@ -3255,10 +3251,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
     for (auto &poGMLBox : apoGMLBoxes)
         delete poGMLBox;
 
-    for (const auto &osTmpFile : aosTmpFiles)
-    {
-        VSIUnlink(osTmpFile);
-    }
+    VSIRmdirRecursive(CPLSPrintf("/vsimem/gmljp2_%p", this));
 
     return poGMLData;
 }

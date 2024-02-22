@@ -2172,9 +2172,7 @@ def test_ogr_sql_sqlite_geomcollection_in_geomcollection():
 def test_ogr_sql_sqlite_st_makevalid():
 
     # Check if MakeValid() is available
-    g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
-    with gdal.quiet_errors():
-        make_valid_available = g.MakeValid() is not None
+    make_valid_available = ogrtest.have_geos()
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("")
     sql = "SELECT ST_MakeValid(ST_GeomFromText('POLYGON ((0 0,1 1,1 0,0 1,0 0))'))"
@@ -2426,3 +2424,56 @@ def test_ogr_sql_sqlite_unsupported(sql):
     lyr.CreateField(ogr.FieldDefn("foo"))
     with pytest.raises(Exception):
         ds.ExecuteSQL(sql, dialect="SQLite")
+
+
+###############################################################################
+# Test our overloaded LIKE operator
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_sql_sqlite_like_utf8():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test", options=["ADVERTIZE_UTF8=YES"])
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'e' LIKE 'E'", dialect="SQLite"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'e' LIKE 'i'", dialect="SQLite"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'é' LIKE 'É'", dialect="SQLite"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'éx' LIKE 'Éxx' ESCAPE 'x'", dialect="SQLite"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE NULL LIKE 'É'", dialect="SQLite"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'é' LIKE NULL", dialect="SQLite"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'é' LIKE 'É' ESCAPE NULL", dialect="SQLite"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    with ds.ExecuteSQL(
+        "SELECT * FROM test WHERE 'é' LIKE 'É' ESCAPE 'should be single char'",
+        dialect="SQLite",
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0

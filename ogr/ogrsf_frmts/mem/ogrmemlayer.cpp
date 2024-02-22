@@ -69,10 +69,7 @@ class IOGRMemLayerFeatureIterator
 OGRMemLayer::OGRMemLayer(const char *pszName,
                          const OGRSpatialReference *poSRSIn,
                          OGRwkbGeometryType eReqType)
-    : m_poFeatureDefn(new OGRFeatureDefn(pszName)), m_nFeatureCount(0),
-      m_iNextReadFID(0), m_nMaxFeatureCount(0), m_papoFeatures(nullptr),
-      m_bHasHoles(false), m_iNextCreateFID(0), m_bUpdatable(true),
-      m_bAdvertizeUTF8(false), m_bUpdated(false)
+    : m_poFeatureDefn(new OGRFeatureDefn(pszName))
 {
     m_poFeatureDefn->Reference();
 
@@ -87,6 +84,7 @@ OGRMemLayer::OGRMemLayer(const char *pszName,
     }
 
     m_oMapFeaturesIter = m_oMapFeatures.begin();
+    m_poFeatureDefn->Seal(/* bSealFields = */ true);
 }
 
 /************************************************************************/
@@ -110,14 +108,6 @@ OGRMemLayer::~OGRMemLayer()
                 delete m_papoFeatures[i];
         }
         CPLFree(m_papoFeatures);
-    }
-    else
-    {
-        for (m_oMapFeaturesIter = m_oMapFeatures.begin();
-             m_oMapFeaturesIter != m_oMapFeatures.end(); ++m_oMapFeaturesIter)
-        {
-            delete m_oMapFeaturesIter->second;
-        }
     }
 
     if (m_poFeatureDefn)
@@ -155,7 +145,7 @@ OGRFeature *OGRMemLayer::GetNextFeature()
         }
         else if (m_oMapFeaturesIter != m_oMapFeatures.end())
         {
-            poFeature = m_oMapFeaturesIter->second;
+            poFeature = m_oMapFeaturesIter->second.get();
             ++m_oMapFeaturesIter;
         }
         else
@@ -215,7 +205,7 @@ OGRFeature *OGRMemLayer::GetFeatureRef(GIntBig nFeatureId)
     {
         FeatureIterator oIter = m_oMapFeatures.find(nFeatureId);
         if (oIter != m_oMapFeatures.end())
-            poFeature = oIter->second;
+            poFeature = oIter->second.get();
     }
 
     return poFeature;
@@ -295,7 +285,7 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
         }
     }
 
-    OGRFeature *poFeatureCloned = poFeature->Clone();
+    auto poFeatureCloned = std::unique_ptr<OGRFeature>(poFeature->Clone());
     if (poFeatureCloned == nullptr)
         return OGRERR_FAILURE;
 
@@ -303,15 +293,16 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
         nFID > m_nMaxFeatureCount + 1000)
     {
         // Convert to map if gap from current max size is too big.
-        IOGRMemLayerFeatureIterator *poIter = GetIterator();
+        auto poIter =
+            std::unique_ptr<IOGRMemLayerFeatureIterator>(GetIterator());
         try
         {
             OGRFeature *poFeatureIter = nullptr;
             while ((poFeatureIter = poIter->Next()) != nullptr)
             {
-                m_oMapFeatures[poFeatureIter->GetFID()] = poFeatureIter;
+                m_oMapFeatures[poFeatureIter->GetFID()] =
+                    std::unique_ptr<OGRFeature>(poFeatureIter);
             }
-            delete poIter;
             CPLFree(m_papoFeatures);
             m_papoFeatures = nullptr;
             m_nMaxFeatureCount = 0;
@@ -319,10 +310,19 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
         catch (const std::bad_alloc &)
         {
             m_oMapFeatures.clear();
+            m_oMapFeaturesIter = m_oMapFeatures.end();
             CPLError(CE_Failure, CPLE_OutOfMemory, "Cannot allocate memory");
-            delete poFeatureCloned;
-            delete poIter;
             return OGRERR_FAILURE;
+        }
+    }
+
+    for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
+    {
+        OGRGeometry *poGeom = poFeatureCloned->GetGeomFieldRef(i);
+        if (poGeom != nullptr && poGeom->getSpatialReference() == nullptr)
+        {
+            poGeom->assignSpatialReference(
+                m_poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef());
         }
     }
 
@@ -339,7 +339,6 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
                 CPLError(CE_Failure, CPLE_OutOfMemory,
                          "Cannot allocate array of " CPL_FRMT_GIB " elements",
                          nNewCount);
-                delete poFeatureCloned;
                 return OGRERR_FAILURE;
             }
 
@@ -349,7 +348,6 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
                     static_cast<size_t>(sizeof(OGRFeature *) * nNewCount)));
             if (papoNewFeatures == nullptr)
             {
-                delete poFeatureCloned;
                 return OGRERR_FAILURE;
             }
             m_papoFeatures = papoNewFeatures;
@@ -362,7 +360,6 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
         // Just to please Coverity. Cannot happen.
         if (m_papoFeatures == nullptr)
         {
-            delete poFeatureCloned;
             return OGRERR_FAILURE;
         }
 #endif
@@ -377,40 +374,29 @@ OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
             ++m_nFeatureCount;
         }
 
-        m_papoFeatures[nFID] = poFeatureCloned;
+        m_papoFeatures[nFID] = poFeatureCloned.release();
     }
     else
     {
         FeatureIterator oIter = m_oMapFeatures.find(nFID);
         if (oIter != m_oMapFeatures.end())
         {
-            delete oIter->second;
-            oIter->second = poFeatureCloned;
+            oIter->second = std::move(poFeatureCloned);
         }
         else
         {
             try
             {
-                m_oMapFeatures[nFID] = poFeatureCloned;
+                m_oMapFeatures[nFID] = std::move(poFeatureCloned);
+                m_oMapFeaturesIter = m_oMapFeatures.end();
                 m_nFeatureCount++;
             }
             catch (const std::bad_alloc &)
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory,
                          "Cannot allocate memory");
-                delete poFeatureCloned;
                 return OGRERR_FAILURE;
             }
-        }
-    }
-
-    for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
-    {
-        OGRGeometry *poGeom = poFeatureCloned->GetGeomFieldRef(i);
-        if (poGeom != nullptr && poGeom->getSpatialReference() == nullptr)
-        {
-            poGeom->assignSpatialReference(
-                m_poFeatureDefn->GetGeomFieldDefn(i)->GetSpatialRef());
         }
     }
 
@@ -453,7 +439,7 @@ OGRErr OGRMemLayer::ICreateFeature(OGRFeature *poFeature)
         }
     }
 
-    return SetFeature(poFeature);
+    return ISetFeature(poFeature);
 }
 
 /************************************************************************/
@@ -468,11 +454,11 @@ OGRErr OGRMemLayer::IUpsertFeature(OGRFeature *poFeature)
 
     if (GetFeatureRef(poFeature->GetFID()))
     {
-        return SetFeature(poFeature);
+        return ISetFeature(poFeature);
     }
     else
     {
-        return CreateFeature(poFeature);
+        return ICreateFeature(poFeature);
     }
 }
 
@@ -545,7 +531,6 @@ OGRErr OGRMemLayer::DeleteFeature(GIntBig nFID)
         {
             return OGRERR_FAILURE;
         }
-        delete oIter->second;
         m_oMapFeatures.erase(oIter);
     }
 
@@ -629,7 +614,8 @@ int OGRMemLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMemLayer::CreateField(OGRFieldDefn *poField, int /* bApproxOK */)
+OGRErr OGRMemLayer::CreateField(const OGRFieldDefn *poField,
+                                int /* bApproxOK */)
 {
     if (!m_bUpdatable)
         return OGRERR_FAILURE;
@@ -637,22 +623,23 @@ OGRErr OGRMemLayer::CreateField(OGRFieldDefn *poField, int /* bApproxOK */)
     // Simple case, no features exist yet.
     if (m_nFeatureCount == 0)
     {
-        m_poFeatureDefn->AddFieldDefn(poField);
+        whileUnsealing(m_poFeatureDefn)->AddFieldDefn(poField);
         return OGRERR_NONE;
     }
 
     // Add field definition and setup remap definition.
-    m_poFeatureDefn->AddFieldDefn(poField);
+    {
+        whileUnsealing(m_poFeatureDefn)->AddFieldDefn(poField);
+    }
 
     // Remap all the internal features.  Hopefully there aren't any
     // external features referring to our OGRFeatureDefn!
-    IOGRMemLayerFeatureIterator *poIter = GetIterator();
+    auto poIter = std::unique_ptr<IOGRMemLayerFeatureIterator>(GetIterator());
     OGRFeature *poFeature = nullptr;
     while ((poFeature = poIter->Next()) != nullptr)
     {
         poFeature->AppendField();
     }
-    delete poIter;
 
     m_bUpdated = true;
 
@@ -676,9 +663,8 @@ OGRErr OGRMemLayer::DeleteField(int iField)
 
     // Update all the internal features.  Hopefully there aren't any
     // external features referring to our OGRFeatureDefn!
-    IOGRMemLayerFeatureIterator *poIter = GetIterator();
-    OGRFeature *poFeature = nullptr;
-    while ((poFeature = poIter->Next()) != nullptr)
+    auto poIter = std::unique_ptr<IOGRMemLayerFeatureIterator>(GetIterator());
+    while (OGRFeature *poFeature = poIter->Next())
     {
         OGRField *poFieldRaw = poFeature->GetRawFieldRef(iField);
         if (poFeature->IsFieldSetAndNotNull(iField) &&
@@ -697,11 +683,10 @@ OGRErr OGRMemLayer::DeleteField(int iField)
                         (m_poFeatureDefn->GetFieldCount() - 1 - iField));
         }
     }
-    delete poIter;
 
     m_bUpdated = true;
 
-    return m_poFeatureDefn->DeleteFieldDefn(iField);
+    return whileUnsealing(m_poFeatureDefn)->DeleteFieldDefn(iField);
 }
 
 /************************************************************************/
@@ -723,17 +708,15 @@ OGRErr OGRMemLayer::ReorderFields(int *panMap)
 
     // Remap all the internal features.  Hopefully there aren't any
     // external features referring to our OGRFeatureDefn!
-    IOGRMemLayerFeatureIterator *poIter = GetIterator();
-    OGRFeature *poFeature = nullptr;
-    while ((poFeature = poIter->Next()) != nullptr)
+    auto poIter = std::unique_ptr<IOGRMemLayerFeatureIterator>(GetIterator());
+    while (OGRFeature *poFeature = poIter->Next())
     {
         poFeature->RemapFields(nullptr, panMap);
     }
-    delete poIter;
 
     m_bUpdated = true;
 
-    return m_poFeatureDefn->ReorderFieldDefns(panMap);
+    return whileUnsealing(m_poFeatureDefn)->ReorderFieldDefns(panMap);
 }
 
 /************************************************************************/
@@ -753,6 +736,7 @@ OGRErr OGRMemLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
     }
 
     OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn(iField);
+    auto oTemporaryUnsealer(poFieldDefn->GetTemporaryUnsealer());
 
     if ((nFlagsIn & ALTER_TYPE_FLAG) &&
         (poFieldDefn->GetType() != poNewFieldDefn->GetType() ||
@@ -897,6 +881,7 @@ OGRErr OGRMemLayer::AlterGeomFieldDefn(
     }
 
     auto poFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(iGeomField);
+    auto oTemporaryUnsealer(poFieldDefn->GetTemporaryUnsealer());
 
     if (nFlagsIn & ALTER_GEOM_FIELD_DEFN_NAME_FLAG)
         poFieldDefn->SetName(poNewGeomFieldDefn->GetNameRef());
@@ -952,7 +937,7 @@ OGRErr OGRMemLayer::AlterGeomFieldDefn(
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRMemLayer::CreateGeomField(OGRGeomFieldDefn *poGeomField,
+OGRErr OGRMemLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                     int /* bApproxOK */)
 {
     if (!m_bUpdatable)
@@ -961,34 +946,30 @@ OGRErr OGRMemLayer::CreateGeomField(OGRGeomFieldDefn *poGeomField,
     // Simple case, no features exist yet.
     if (m_nFeatureCount == 0)
     {
-        m_poFeatureDefn->AddGeomFieldDefn(poGeomField);
+        whileUnsealing(m_poFeatureDefn)->AddGeomFieldDefn(poGeomField);
         return OGRERR_NONE;
     }
 
     // Add field definition and setup remap definition.
-    m_poFeatureDefn->AddGeomFieldDefn(poGeomField);
+    whileUnsealing(m_poFeatureDefn)->AddGeomFieldDefn(poGeomField);
 
-    int *panRemap = static_cast<int *>(
-        CPLMalloc(sizeof(int) * m_poFeatureDefn->GetGeomFieldCount()));
-    for (GIntBig i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
+    const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
+    std::vector<int> anRemap(nGeomFieldCount);
+    for (int i = 0; i < nGeomFieldCount; ++i)
     {
-        if (i < m_poFeatureDefn->GetGeomFieldCount() - 1)
-            panRemap[i] = static_cast<int>(i);
+        if (i < nGeomFieldCount - 1)
+            anRemap[i] = i;
         else
-            panRemap[i] = -1;
+            anRemap[i] = -1;
     }
 
     // Remap all the internal features.  Hopefully there aren't any
     // external features referring to our OGRFeatureDefn!
-    IOGRMemLayerFeatureIterator *poIter = GetIterator();
-    OGRFeature *poFeature = nullptr;
-    while ((poFeature = poIter->Next()) != nullptr)
+    auto poIter = std::unique_ptr<IOGRMemLayerFeatureIterator>(GetIterator());
+    while (OGRFeature *poFeature = poIter->Next())
     {
-        poFeature->RemapGeomFields(nullptr, panRemap);
+        poFeature->RemapGeomFields(nullptr, anRemap.data());
     }
-    delete poIter;
-
-    CPLFree(panRemap);
 
     m_bUpdated = true;
 
@@ -1001,19 +982,14 @@ OGRErr OGRMemLayer::CreateGeomField(OGRGeomFieldDefn *poGeomField,
 
 class OGRMemLayerIteratorArray final : public IOGRMemLayerFeatureIterator
 {
-    GIntBig m_iCurIdx;
-    GIntBig m_nMaxFeatureCount;
-    OGRFeature **m_papoFeatures;
+    GIntBig m_iCurIdx = 0;
+    const GIntBig m_nMaxFeatureCount;
+    OGRFeature **const m_papoFeatures;
 
   public:
     OGRMemLayerIteratorArray(GIntBig nMaxFeatureCount,
                              OGRFeature **papoFeatures)
-        : m_iCurIdx(0), m_nMaxFeatureCount(nMaxFeatureCount),
-          m_papoFeatures(papoFeatures)
-    {
-    }
-
-    virtual ~OGRMemLayerIteratorArray()
+        : m_nMaxFeatureCount(nMaxFeatureCount), m_papoFeatures(papoFeatures)
     {
     }
 
@@ -1036,10 +1012,10 @@ class OGRMemLayerIteratorArray final : public IOGRMemLayerFeatureIterator
 
 class OGRMemLayerIteratorMap final : public IOGRMemLayerFeatureIterator
 {
-    typedef std::map<GIntBig, OGRFeature *> FeatureMap;
-    typedef std::map<GIntBig, OGRFeature *>::iterator FeatureIterator;
+    typedef std::map<GIntBig, std::unique_ptr<OGRFeature>> FeatureMap;
+    typedef FeatureMap::iterator FeatureIterator;
 
-    FeatureMap &m_oMapFeatures;
+    const FeatureMap &m_oMapFeatures;
     FeatureIterator m_oIter;
 
   public:
@@ -1048,15 +1024,11 @@ class OGRMemLayerIteratorMap final : public IOGRMemLayerFeatureIterator
     {
     }
 
-    virtual ~OGRMemLayerIteratorMap()
-    {
-    }
-
     virtual OGRFeature *Next() override
     {
         if (m_oIter != m_oMapFeatures.end())
         {
-            OGRFeature *poFeature = m_oIter->second;
+            OGRFeature *poFeature = m_oIter->second.get();
             ++m_oIter;
             return poFeature;
         }

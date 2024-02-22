@@ -293,7 +293,7 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
                 paosGeomCols->end())
         {
             m_poFeatureDefn->AddGeomFieldDefn(
-                cpl::make_unique<OGRSQLiteGeomFieldDefn>(pszFieldName, iCol));
+                std::make_unique<OGRSQLiteGeomFieldDefn>(pszFieldName, iCol));
             continue;
         }
 
@@ -463,7 +463,7 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
                             eGeomType = wkbSetM(wkbSetZ(eGeomType));
                         OGRSpatialReference *poSRS = m_poDS->FetchSRS(nSRID);
                         auto poGeomFieldDefn =
-                            cpl::make_unique<OGRSQLiteGeomFieldDefn>(
+                            std::make_unique<OGRSQLiteGeomFieldDefn>(
                                 pszFieldName, iCol);
                         poGeomFieldDefn->m_eGeomFormat = OSGF_SpatiaLite;
                         poGeomFieldDefn->SetSpatialRef(poSRS);
@@ -546,7 +546,7 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
                     if (OGRIsBinaryGeomCol(hStmtIn, iCol, oField, eGeomFormat))
                     {
                         auto poGeomFieldDefn =
-                            cpl::make_unique<OGRSQLiteGeomFieldDefn>(
+                            std::make_unique<OGRSQLiteGeomFieldDefn>(
                                 pszFieldName, iCol);
                         poGeomFieldDefn->m_eGeomFormat = eGeomFormat;
                         m_poFeatureDefn->AddGeomFieldDefn(
@@ -560,7 +560,7 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
                     /* we'll also try to decode as SpatialLite if */
                     /* bTriedAsSpatiaLite is not FALSE */
                     auto poGeomFieldDefn =
-                        cpl::make_unique<OGRSQLiteGeomFieldDefn>(pszFieldName,
+                        std::make_unique<OGRSQLiteGeomFieldDefn>(pszFieldName,
                                                                  iCol);
                     poGeomFieldDefn->m_eGeomFormat = OSGF_WKB;
                     m_poFeatureDefn->AddGeomFieldDefn(
@@ -582,7 +582,7 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
                     {
                         eGeomFormat = OSGF_WKT;
                         auto poGeomFieldDefn =
-                            cpl::make_unique<OGRSQLiteGeomFieldDefn>(
+                            std::make_unique<OGRSQLiteGeomFieldDefn>(
                                 pszFieldName, iCol);
                         poGeomFieldDefn->m_eGeomFormat = eGeomFormat;
                         m_poFeatureDefn->AddGeomFieldDefn(
@@ -597,7 +597,7 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
                 else
                 {
                     auto poGeomFieldDefn =
-                        cpl::make_unique<OGRSQLiteGeomFieldDefn>(pszFieldName,
+                        std::make_unique<OGRSQLiteGeomFieldDefn>(pszFieldName,
                                                                  iCol);
                     poGeomFieldDefn->m_eGeomFormat = OSGF_WKT;
                     m_poFeatureDefn->AddGeomFieldDefn(
@@ -606,6 +606,18 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
                 }
             }
         }
+        else if (paosGeomCols == nullptr && nColType == SQLITE_NULL &&
+                 !STARTS_WITH_CI(pszFieldName, "Gpkg") &&
+                 !STARTS_WITH_CI(pszFieldName, "AsGPB(") &&
+                 !STARTS_WITH_CI(pszFieldName, "CastAutomagic(") &&
+                 OGRSQLiteIsSpatialFunctionReturningGeometry(pszFieldName))
+        {
+            auto poGeomFieldDefn =
+                std::make_unique<OGRSQLiteGeomFieldDefn>(pszFieldName, iCol);
+            poGeomFieldDefn->m_eGeomFormat = OSGF_SpatiaLite;
+            m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
+            continue;
+        }
 
         // SpatialLite / Gaia
         if (paosGeomCols == nullptr && EQUAL(pszFieldName, "GaiaGeometry") &&
@@ -613,7 +625,7 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
              m_poFeatureDefn->GetGeomFieldCount() == 0))
         {
             auto poGeomFieldDefn =
-                cpl::make_unique<OGRSQLiteGeomFieldDefn>(pszFieldName, iCol);
+                std::make_unique<OGRSQLiteGeomFieldDefn>(pszFieldName, iCol);
             poGeomFieldDefn->m_eGeomFormat = OSGF_SpatiaLite;
             m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
             continue;
@@ -630,7 +642,7 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
             if (nBytes > 0 &&
                 OGRIsBinaryGeomCol(hStmtIn, iCol, oField, eGeomFormat))
             {
-                auto poGeomFieldDefn = cpl::make_unique<OGRSQLiteGeomFieldDefn>(
+                auto poGeomFieldDefn = std::make_unique<OGRSQLiteGeomFieldDefn>(
                     pszFieldName, iCol);
                 poGeomFieldDefn->m_eGeomFormat = eGeomFormat;
                 m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));

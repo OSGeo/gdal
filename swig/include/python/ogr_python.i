@@ -411,6 +411,90 @@ def ReleaseResultSet(self, sql_lyr):
     schema = property(schema)
 
 
+    def __arrow_c_stream__(self, requested_schema=None):
+        """
+        Export to a C ArrowArrayStream PyCapsule, according to
+        https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html
+
+        Also note that only one active stream can be queried at a time for a
+        given layer.
+
+        To specify options how the ArrowStream should be generated, use
+        the GetArrowArrayStreamInterface(self, options) method
+
+        Parameters
+        ----------
+        requested_schema : PyCapsule, default None
+            The schema to which the stream should be casted, passed as a
+            PyCapsule containing a C ArrowSchema representation of the
+            requested schema.
+            Currently, this is not supported and will raise a
+            NotImplementedError if the schema is not None
+
+        Returns
+        -------
+        PyCapsule
+            A capsule containing a C ArrowArrayStream struct.
+        """
+
+        if requested_schema is not None:
+            raise NotImplementedError("requested_schema != None not implemented")
+
+        return self.ExportArrowArrayStreamPyCapsule()
+
+
+    def GetArrowArrayStreamInterface(self, options = []):
+        """
+        Return a proxy object that implements the __arrow_c_stream__() method,
+        but allows the user to pass options.
+
+        Parameters
+        ----------
+        options : List of strings or dict with options such as INCLUDE_FID=NO, MAX_FEATURES_IN_BATCH=<number>, etc.
+
+        Returns
+        -------
+        a proxy object which implements the __arrow_c_stream__() method
+        """
+
+        class ArrowArrayStreamInterface:
+            def __init__(self, lyr, options):
+                self.lyr = lyr
+                self.options = options
+
+            def __arrow_c_stream__(self, requested_schema=None):
+                """
+                Export to a C ArrowArrayStream PyCapsule, according to
+                https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html
+
+                Also note that only one active stream can be queried at a time for a
+                given layer.
+
+                To specify options how the ArrowStream should be generated, use
+                the GetArrowArrayStreamInterface(self, options) method
+
+                Parameters
+                ----------
+                requested_schema : PyCapsule, default None
+                    The schema to which the stream should be casted, passed as a
+                    PyCapsule containing a C ArrowSchema representation of the
+                    requested schema.
+                    Currently, this is not supported and will raise a
+                    NotImplementedError if the schema is not None
+
+                Returns
+                -------
+                PyCapsule
+                    A capsule containing a C ArrowArrayStream struct.
+                """
+                if requested_schema is not None:
+                    raise NotImplementedError("requested_schema != None not implemented")
+
+                return self.lyr.ExportArrowArrayStreamPyCapsule(self.options)
+
+        return ArrowArrayStreamInterface(self, options)
+
+
     def GetArrowStreamAsPyArrow(self, options = []):
         """ Return an ArrowStream as PyArrow Schema and Array objects """
 
@@ -559,8 +643,55 @@ def ReleaseResultSet(self, sql_lyr):
         return self.CreateFieldFromArrowSchema(schema, options)
 
 
+    def WriteArrow(self, obj, requested_schema=None, createFieldsFromSchema=None, options=[]):
+        """Write the content of the passed object, which must implement the
+           __arrow_c_stream__ or __arrow_c_array__ interface, into the layer.
+
+           Parameters
+           ----------
+           obj:
+               Object implementing the __arrow_c_stream__ or __arrow_c_array__ interface
+
+           requested_schema: PyCapsule, object implementing __arrow_c_schema__ or None. Default None
+               The schema to which the stream should be casted, passed as a
+               PyCapsule containing a C ArrowSchema representation of the
+               requested schema, or an object implementing the __arrow_c_schema__ interface.
+
+           createFieldsFromSchema: boolean or None. Default to None
+               Whether OGRLayer::CreateFieldFromArrowSchema() should be called. If None
+               specified, it is called if no fields have been created yet
+
+           options: list of strings
+               Options to pass to OGRLayer::CreateFieldFromArrowSchema() and OGRLayer::WriteArrowBatch()
+
+        """
+
+        if createFieldsFromSchema is None:
+            createFieldsFromSchema = -1
+        elif createFieldsFromSchema is True:
+            createFieldsFromSchema = 1
+        else:
+            createFieldsFromSchema = 0
+
+        if requested_schema is not None and hasattr(requested_schema, "__arrow_c_schema__"):
+            requested_schema = requested_schema.__arrow_c_schema__()
+
+        if hasattr(obj, "__arrow_c_stream__"):
+            stream_capsule = obj.__arrow_c_stream__(requested_schema=requested_schema)
+            return self.WriteArrowStreamCapsule(stream_capsule, createFieldsFromSchema, options)
+
+        if hasattr(obj, "__arrow_c_array__"):
+            schema_capsule, array_capsule = obj.__arrow_c_array__(requested_schema=requested_schema)
+            return self.WriteArrowSchemaAndArrowArrayCapsule(schema_capsule, array_capsule, createFieldsFromSchema, options)
+
+        raise Exception("Passed object does not implement the __arrow_c_stream__ or __arrow_c_array__ interface.")
+
+
     def WritePyArrow(self, pa_batch, options=[]):
-        """Write the content of the passed PyArrow batch (either a pyarrow.Table, a pyarrow.RecordBatch or a pyarrow.StructArray) into the layer."""
+        """Write the content of the passed PyArrow batch (either a pyarrow.Table, a pyarrow.RecordBatch or a pyarrow.StructArray) into the layer.
+
+           See also the WriteArrow() method to be independent of PyArrow
+        """
 
         import pyarrow as pa
 

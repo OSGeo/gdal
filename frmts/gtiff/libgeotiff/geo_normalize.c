@@ -29,6 +29,9 @@
  *****************************************************************************/
 
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "cpl_serv.h"
 #include "geo_tiffp.h"
@@ -131,7 +134,6 @@ int GTIFGetPCSInfoEx( void* ctxIn,
                       short *pnGeogCS )
 
 {
-    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
     int         nDatum;
     int         nZone;
 
@@ -156,8 +158,10 @@ int GTIFGetPCSInfoEx( void* ctxIn,
             if (ppszEPSGName)
             {
                 char szEPSGName[64];
-                sprintf(szEPSGName, "%s / UTM zone %d%c",
-                        pszDatumName, nZone, (Proj == MapSys_UTM_North) ? 'N' : 'S');
+                snprintf(
+                    szEPSGName, sizeof(szEPSGName), "%s / UTM zone %d%c",
+                    pszDatumName, nZone,
+                    (Proj == MapSys_UTM_North) ? 'N' : 'S');
                 *ppszEPSGName = CPLStrdup(szEPSGName);
             }
 
@@ -177,12 +181,12 @@ int GTIFGetPCSInfoEx( void* ctxIn,
     if( nPCSCode == KvUserDefined )
         return FALSE;
 
+    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
     {
         char szCode[12];
-        PJ* proj_crs;
 
-        sprintf(szCode, "%d", nPCSCode);
-        proj_crs = proj_create_from_database(
+        snprintf(szCode, sizeof(szCode), "%d", nPCSCode);
+        PJ* proj_crs = proj_create_from_database(
             ctx, "EPSG", szCode, PJ_CATEGORY_CRS, 0, NULL);
         if( !proj_crs )
         {
@@ -311,7 +315,7 @@ double GTIFAngleToDD( double dfAngle, int nUOMAngle )
         {
             char	szAngleString[32];
 
-            sprintf( szAngleString, "%12.7f", dfAngle );
+            snprintf(szAngleString, sizeof(szAngleString), "%12.7f", dfAngle);
             dfAngle = GTIFAngleStringToDD( szAngleString, nUOMAngle );
         }
     }
@@ -418,15 +422,14 @@ int GTIFGetGCSInfoEx( void* ctxIn,
                       short * pnDatum, short * pnPM, short *pnUOMAngle )
 
 {
-    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
-    int		nDatum=0, nPM, nUOMAngle;
+    int		nDatum=0;
 
 /* -------------------------------------------------------------------- */
 /*      Handle some "well known" GCS codes directly                     */
 /* -------------------------------------------------------------------- */
     const char * pszName = NULL;
-    nPM = PM_Greenwich;
-    nUOMAngle = Angular_DMS_Hemisphere;
+    const int nPM = PM_Greenwich;
+    const int nUOMAngle = Angular_DMS_Hemisphere;
     if( nGCSCode == GCS_NAD27 )
     {
         nDatum = Datum_North_American_Datum_1927;
@@ -470,12 +473,12 @@ int GTIFGetGCSInfoEx( void* ctxIn,
 /*      Search the database.                                            */
 /* -------------------------------------------------------------------- */
 
+    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
     {
         char szCode[12];
-        PJ* geod_crs;
 
-        sprintf(szCode, "%d", nGCSCode);
-        geod_crs = proj_create_from_database(
+        snprintf(szCode, sizeof(szCode), "%d", nGCSCode);
+        PJ* geod_crs = proj_create_from_database(
             ctx, "EPSG", szCode, PJ_CATEGORY_CRS, 0, NULL);
         if( !geod_crs )
         {
@@ -483,7 +486,7 @@ int GTIFGetGCSInfoEx( void* ctxIn,
         }
 
         {
-            int objType = proj_get_type(geod_crs);
+            const int objType = proj_get_type(geod_crs);
             if( objType != PJ_TYPE_GEODETIC_CRS &&
                 objType != PJ_TYPE_GEOCENTRIC_CRS &&
                 objType != PJ_TYPE_GEOGRAPHIC_2D_CRS &&
@@ -587,8 +590,8 @@ int GTIFGetGCSInfo( int nGCSCode, char ** ppszName,
 
 {
     PJ_CONTEXT* ctx = proj_context_create();
-    int ret = GTIFGetGCSInfoEx(ctx, nGCSCode, ppszName, pnDatum,
-                               pnPM, pnUOMAngle);
+    const int ret = GTIFGetGCSInfoEx(ctx, nGCSCode, ppszName, pnDatum,
+                                     pnPM, pnUOMAngle);
     proj_context_destroy(ctx);
     return ret;
 }
@@ -666,10 +669,9 @@ int GTIFGetEllipsoidInfoEx( void* ctxIn,
 /* -------------------------------------------------------------------- */
     {
         char szCode[12];
-        PJ* ellipsoid;
 
-        sprintf(szCode, "%d", nEllipseCode);
-        ellipsoid = proj_create_from_database(
+        snprintf(szCode, sizeof(szCode), "%d", nEllipseCode);
+        PJ* ellipsoid = proj_create_from_database(
             ctx, "EPSG", szCode, PJ_CATEGORY_ELLIPSOID, 0, NULL);
         if( !ellipsoid )
         {
@@ -702,8 +704,8 @@ int GTIFGetEllipsoidInfo( int nEllipseCode, char ** ppszName,
 
 {
     PJ_CONTEXT* ctx = proj_context_create();
-    int ret = GTIFGetEllipsoidInfoEx(ctx, nEllipseCode, ppszName, pdfSemiMajor,
-                                     pdfSemiMinor);
+    const int ret = GTIFGetEllipsoidInfoEx(ctx, nEllipseCode, ppszName, pdfSemiMajor,
+                                           pdfSemiMinor);
     proj_context_destroy(ctx);
     return ret;
 }
@@ -719,8 +721,6 @@ int GTIFGetPMInfoEx( void* ctxIn,
                      int nPMCode, char ** ppszName, double *pdfOffset )
 
 {
-    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
-
 /* -------------------------------------------------------------------- */
 /*      Use a special short cut for Greenwich, since it is so common.   */
 /* -------------------------------------------------------------------- */
@@ -740,12 +740,12 @@ int GTIFGetPMInfoEx( void* ctxIn,
 /* -------------------------------------------------------------------- */
 /*      Search the database.                                            */
 /* -------------------------------------------------------------------- */
+    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
     {
         char szCode[12];
-        PJ* pm;
 
-        sprintf(szCode, "%d", nPMCode);
-        pm = proj_create_from_database(
+        snprintf(szCode, sizeof(szCode), "%d", nPMCode);
+        PJ* pm = proj_create_from_database(
             ctx, "EPSG", szCode, PJ_CATEGORY_PRIME_MERIDIAN, 0, NULL);
         if( !pm )
         {
@@ -782,7 +782,7 @@ int GTIFGetPMInfo( int nPMCode, char ** ppszName, double *pdfOffset )
 
 {
     PJ_CONTEXT* ctx = proj_context_create();
-    int ret = GTIFGetPMInfoEx(ctx, nPMCode, ppszName, pdfOffset);
+    const int ret = GTIFGetPMInfoEx(ctx, nPMCode, ppszName, pdfOffset);
     proj_context_destroy(ctx);
     return ret;
 }
@@ -797,7 +797,6 @@ int GTIFGetDatumInfoEx( void* ctxIn,
                         int nDatumCode, char ** ppszName, short * pnEllipsoid )
 
 {
-    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
     const char* pszName = NULL;
     int		nEllipsoid = 0;
 
@@ -842,20 +841,19 @@ int GTIFGetDatumInfoEx( void* ctxIn,
 /* -------------------------------------------------------------------- */
 /*      Search the database.                                            */
 /* -------------------------------------------------------------------- */
+    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
     {
         char szCode[12];
-        PJ* datum;
-        PJ_TYPE pjType;
 
-        sprintf(szCode, "%d", nDatumCode);
-        datum = proj_create_from_database(
+        snprintf(szCode, sizeof(szCode), "%d", nDatumCode);
+        PJ* datum = proj_create_from_database(
             ctx, "EPSG", szCode, PJ_CATEGORY_DATUM, 0, NULL);
         if( !datum )
         {
             return FALSE;
         }
 
-        pjType = proj_get_type(datum);
+        const PJ_TYPE pjType = proj_get_type(datum);
         if( pjType != PJ_TYPE_GEODETIC_REFERENCE_FRAME &&
             pjType != PJ_TYPE_DYNAMIC_GEODETIC_REFERENCE_FRAME )
         {
@@ -904,7 +902,7 @@ int GTIFGetDatumInfo( int nDatumCode, char ** ppszName, short * pnEllipsoid )
 
 {
     PJ_CONTEXT* ctx = proj_context_create();
-    int ret = GTIFGetDatumInfoEx(ctx, nDatumCode, ppszName, pnEllipsoid);
+    const int ret = GTIFGetDatumInfoEx(ctx, nDatumCode, ppszName, pnEllipsoid);
     proj_context_destroy(ctx);
     return ret;
 }
@@ -922,7 +920,6 @@ int GTIFGetUOMLengthInfoEx( void* ctxIn,
                             double * pdfInMeters )
 
 {
-    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
 /* -------------------------------------------------------------------- */
 /*      We short cut meter to save work and avoid failure for missing   */
 /*      in the most common cases.       				*/
@@ -964,22 +961,21 @@ int GTIFGetUOMLengthInfoEx( void* ctxIn,
 /*      Search the units database for this unit.  If we don't find      */
 /*      it return failure.                                              */
 /* -------------------------------------------------------------------- */
-    {
-        char szCode[12];
-        const char* pszName = NULL;
+    char szCode[12];
+    const char* pszName = NULL;
 
-        sprintf(szCode, "%d", nUOMLengthCode);
-        if( !proj_uom_get_info_from_database(
-            ctx, "EPSG", szCode, &pszName, pdfInMeters,  NULL) )
-        {
-            return FALSE;
-        }
-        if( ppszUOMName )
-        {
-            *ppszUOMName = CPLStrdup(pszName);
-        }
-        return TRUE;
+    snprintf(szCode, sizeof(szCode), "%d", nUOMLengthCode);
+    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
+    if( !proj_uom_get_info_from_database(
+        ctx, "EPSG", szCode, &pszName, pdfInMeters,  NULL) )
+    {
+        return FALSE;
     }
+    if( ppszUOMName )
+    {
+        *ppszUOMName = CPLStrdup(pszName);
+    }
+    return TRUE;
 }
 
 int GTIFGetUOMLengthInfo( int nUOMLengthCode,
@@ -988,7 +984,7 @@ int GTIFGetUOMLengthInfo( int nUOMLengthCode,
 
 {
     PJ_CONTEXT* ctx = proj_context_create();
-    int ret = GTIFGetUOMLengthInfoEx(
+    const int ret = GTIFGetUOMLengthInfoEx(
         ctx, nUOMLengthCode, ppszUOMName, pdfInMeters);
     proj_context_destroy(ctx);
     return ret;
@@ -1004,7 +1000,6 @@ int GTIFGetUOMAngleInfoEx( void* ctxIn,
                            double * pdfInDegrees )
 
 {
-    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
     const char	*pszUOMName = NULL;
     double	dfInDegrees = 1.0;
 
@@ -1073,27 +1068,26 @@ int GTIFGetUOMAngleInfoEx( void* ctxIn,
 /*      Search the units database for this unit.  If we don't find      */
 /*      it return failure.                                              */
 /* -------------------------------------------------------------------- */
-    {
-        char szCode[12];
-        const char* pszName = NULL;
-        double dfConvFactorToRadians = 0;
+    char szCode[12];
+    const char* pszName = NULL;
+    double dfConvFactorToRadians = 0;
 
-        sprintf(szCode, "%d", nUOMAngleCode);
-        if( !proj_uom_get_info_from_database(
-            ctx, "EPSG", szCode, &pszName, &dfConvFactorToRadians, NULL) )
-        {
-            return FALSE;
-        }
-        if( ppszUOMName )
-        {
-            *ppszUOMName = CPLStrdup(pszName);
-        }
-        if( pdfInDegrees )
-        {
-            *pdfInDegrees = dfConvFactorToRadians * 180.0 / M_PI;
-        }
-        return TRUE;
+    snprintf(szCode, sizeof(szCode), "%d", nUOMAngleCode);
+    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
+    if( !proj_uom_get_info_from_database(
+        ctx, "EPSG", szCode, &pszName, &dfConvFactorToRadians, NULL) )
+    {
+        return FALSE;
     }
+    if( ppszUOMName )
+    {
+        *ppszUOMName = CPLStrdup(pszName);
+    }
+    if( pdfInDegrees )
+    {
+        *pdfInDegrees = dfConvFactorToRadians * 180.0 / M_PI;
+    }
+    return TRUE;
 }
 
 int GTIFGetUOMAngleInfo( int nUOMAngleCode,
@@ -1102,7 +1096,7 @@ int GTIFGetUOMAngleInfo( int nUOMAngleCode,
 
 {
     PJ_CONTEXT* ctx = proj_context_create();
-    int ret = GTIFGetUOMAngleInfoEx(
+    const int ret = GTIFGetUOMAngleInfoEx(
         ctx, nUOMAngleCode, ppszUOMName, pdfInDegrees);
     proj_context_destroy(ctx);
     return ret;
@@ -1428,8 +1422,6 @@ int GTIFGetProjTRFInfoEx( void* ctxIn,
                           double * padfProjParams )
 
 {
-    PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
-
     if ((nProjTRFCode >= Proj_UTM_zone_1N && nProjTRFCode <= Proj_UTM_zone_60N) ||
         (nProjTRFCode >= Proj_UTM_zone_1S && nProjTRFCode <= Proj_UTM_zone_60S))
     {
@@ -1449,8 +1441,8 @@ int GTIFGetProjTRFInfoEx( void* ctxIn,
         if (ppszProjTRFName)
         {
             char szProjTRFName[64];
-            sprintf(szProjTRFName, "UTM zone %d%c",
-                    nZone, (bNorth) ? 'N' : 'S');
+            snprintf(szProjTRFName, sizeof(szProjTRFName), "UTM zone %d%c",
+                     nZone, (bNorth) ? 'N' : 'S');
             *ppszProjTRFName = CPLStrdup(szProjTRFName);
         }
 
@@ -1475,15 +1467,10 @@ int GTIFGetProjTRFInfoEx( void* ctxIn,
         return FALSE;
 
     {
-        int     nProjMethod, i, anEPSGCodes[7];
-        double  adfProjParams[7];
         char    szCode[12];
-        const char* pszMethodCode = NULL;
-        int     nCTProjMethod;
-        PJ *transf;
-
-        sprintf(szCode, "%d", nProjTRFCode);
-        transf = proj_create_from_database(
+        snprintf(szCode, sizeof(szCode), "%d", nProjTRFCode);
+        PJ_CONTEXT* ctx = (PJ_CONTEXT*)ctxIn;
+        PJ *transf = proj_create_from_database(
             ctx, "EPSG", szCode, PJ_CATEGORY_COORDINATE_OPERATION, 0, NULL);
         if( !transf )
         {
@@ -1497,32 +1484,32 @@ int GTIFGetProjTRFInfoEx( void* ctxIn,
         }
 
         /* Get the projection method code */
+        const char* pszMethodCode = NULL;
         proj_coordoperation_get_method_info(ctx, transf,
                                             NULL, /* method name */
                                             NULL, /* method auth name (should be EPSG) */
                                             &pszMethodCode);
         assert( pszMethodCode );
-        nProjMethod = atoi(pszMethodCode);
+        const int nProjMethod = atoi(pszMethodCode);
 
 /* -------------------------------------------------------------------- */
 /*      Initialize a definition of what EPSG codes need to be loaded    */
 /*      into what fields in adfProjParams.                               */
 /* -------------------------------------------------------------------- */
-        nCTProjMethod = EPSGProjMethodToCTProjMethod( nProjMethod, TRUE );
+        const int nCTProjMethod = EPSGProjMethodToCTProjMethod( nProjMethod, TRUE );
+        int anEPSGCodes[7];
         SetGTParamIds( nCTProjMethod, nProjMethod, NULL, anEPSGCodes );
+
 
 /* -------------------------------------------------------------------- */
 /*      Get the parameters for this projection.                         */
 /* -------------------------------------------------------------------- */
 
-        for( i = 0; i < 7; i++ )
+        double  adfProjParams[7];
+
+        for( int i = 0; i < 7; i++ )
         {
-            double  dfValue = 0.0;
-            double  dfUnitConvFactor = 0.0;
-            const char *pszUOMCategory = NULL;
-            int     nEPSGCode = anEPSGCodes[i];
-            int     iEPSG;
-            int     nParamCount;
+            int nEPSGCode = anEPSGCodes[i];
 
             /* Establish default */
             if( nEPSGCode == EPSGAngleRectifiedToSkewedGrid )
@@ -1538,9 +1525,13 @@ int GTIFGetProjTRFInfoEx( void* ctxIn,
             if( nEPSGCode == 0 )
                 continue;
 
-            nParamCount = proj_coordoperation_get_param_count(ctx, transf);
+            const int nParamCount = proj_coordoperation_get_param_count(ctx, transf);
 
             /* Find the matching parameter */
+            const char *pszUOMCategory = NULL;
+            double  dfValue = 0.0;
+            double  dfUnitConvFactor = 0.0;
+            int iEPSG;  /* Used after for */
             for( iEPSG = 0; iEPSG < nParamCount; iEPSG++ )
             {
                 const char* pszParamCode = NULL;
@@ -1641,7 +1632,7 @@ int GTIFGetProjTRFInfoEx( void* ctxIn,
 
         if( padfProjParams != NULL )
         {
-            for( i = 0; i < 7; i++ )
+            for( int i = 0; i < 7; i++ )
                 padfProjParams[i] = adfProjParams[i];
         }
 
@@ -1658,7 +1649,7 @@ int GTIFGetProjTRFInfo( /* Conversion code */
                         double * padfProjParams )
 {
     PJ_CONTEXT* ctx = proj_context_create();
-    int ret = GTIFGetProjTRFInfoEx(
+    const int ret = GTIFGetProjTRFInfoEx(
         ctx, nProjTRFCode, ppszProjTRFName, pnProjMethod, padfProjParams);
     proj_context_destroy(ctx);
     return ret;
@@ -1673,17 +1664,12 @@ int GTIFGetProjTRFInfo( /* Conversion code */
 /************************************************************************/
 
 static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
-
 {
-    double dfNatOriginLong = 0.0, dfNatOriginLat = 0.0, dfRectGridAngle = 0.0;
-    double dfFalseEasting = 0.0, dfFalseNorthing = 0.0, dfNatOriginScale = 1.0;
-    double dfStdParallel1 = 0.0, dfStdParallel2 = 0.0, dfAzimuth = 0.0;
-    int iParam;
-    int bHaveSP1, bHaveNOS;
 
 /* -------------------------------------------------------------------- */
 /*      Get the false easting, and northing if available.               */
 /* -------------------------------------------------------------------- */
+    double dfFalseEasting = 0.0;
     if( !GTIFKeyGetDOUBLE(psGTIF, ProjFalseEastingGeoKey, &dfFalseEasting, 0, 1)
         && !GTIFKeyGetDOUBLE(psGTIF, ProjCenterEastingGeoKey,
                        &dfFalseEasting, 0, 1)
@@ -1691,12 +1677,17 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
                        &dfFalseEasting, 0, 1) )
         dfFalseEasting = 0.0;
 
+    double dfFalseNorthing = 0.0;
     if( !GTIFKeyGetDOUBLE(psGTIF, ProjFalseNorthingGeoKey, &dfFalseNorthing,0,1)
         && !GTIFKeyGetDOUBLE(psGTIF, ProjCenterNorthingGeoKey,
                        &dfFalseNorthing, 0, 1)
         && !GTIFKeyGetDOUBLE(psGTIF, ProjFalseOriginNorthingGeoKey,
                        &dfFalseNorthing, 0, 1) )
         dfFalseNorthing = 0.0;
+
+    double dfNatOriginLong = 0.0, dfNatOriginLat = 0.0, dfRectGridAngle = 0.0;
+    double dfNatOriginScale = 1.0;
+    double dfStdParallel1 = 0.0, dfStdParallel2 = 0.0, dfAzimuth = 0.0;
 
     switch( psDefn->CTProjection )
     {
@@ -1759,10 +1750,10 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
             dfNatOriginLat = 0.0;
 
 
-        bHaveSP1 = GTIFKeyGetDOUBLE(psGTIF, ProjStdParallel1GeoKey,
+        const int bHaveSP1 = GTIFKeyGetDOUBLE(psGTIF, ProjStdParallel1GeoKey,
                               &dfStdParallel1, 0, 1 );
 
-        bHaveNOS = GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtNatOriginGeoKey,
+        int bHaveNOS = GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtNatOriginGeoKey,
                               &dfNatOriginScale, 0, 1 );
 
         /* Default scale only if dfStdParallel1 isn't defined either */
@@ -2255,7 +2246,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 /*      the linear projection parameter tags are normally in the        */
 /*      units of the coordinate system described.                       */
 /* -------------------------------------------------------------------- */
-    for( iParam = 0; iParam < psDefn->nParms; iParam++ )
+    for( int iParam = 0; iParam < psDefn->nParms; iParam++ )
     {
         switch( psDefn->ProjParmId[iParam] )
         {
@@ -2395,10 +2386,6 @@ system.<p>
 int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 
 {
-    int		i;
-    short	nGeogUOMLinear;
-    double	dfInvFlattening;
-
     if( !GTIFGetPROJContext(psGTIF, TRUE, NULL) )
     {
         return FALSE;
@@ -2431,7 +2418,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
     psDefn->CTProjection = KvUserDefined;
 
     psDefn->nParms = 0;
-    for( i = 0; i < MAX_GTIF_PROJPARMS; i++ )
+    for( int i = 0; i < MAX_GTIF_PROJPARMS; i++ )
     {
         psDefn->ProjParm[i] = 0.0;
         psDefn->ProjParmId[i] = 0;
@@ -2463,7 +2450,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
 /*	Extract the Geog units.  					*/
 /* -------------------------------------------------------------------- */
-    nGeogUOMLinear = 9001; /* Linear_Meter */
+    short nGeogUOMLinear = 9001; /* Linear_Meter */
     if( GTIFKeyGetSSHORT(psGTIF, GeogLinearUnitsGeoKey, &nGeogUOMLinear) == 1 )
     {
         psDefn->UOMLength = nGeogUOMLinear;
@@ -2490,10 +2477,10 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 /* -------------------------------------------------------------------- */
     if( psDefn->PCS != KvUserDefined && psDefn->ProjCode == KvUserDefined )
     {
-        int	nMapSys, nZone;
+        int	nZone;
         int	nGCS = psDefn->GCS;
 
-        nMapSys = GTIFPCSToMapSys( psDefn->PCS, &nGCS, &nZone );
+        const int nMapSys = GTIFPCSToMapSys( psDefn->PCS, &nGCS, &nZone );
         if( nMapSys != KvUserDefined )
         {
             psDefn->ProjCode = (short) GTIFMapSysToProj( nMapSys, nZone );
@@ -2595,6 +2582,7 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
     CPL_IGNORE_RET_VAL_INT(GTIFKeyGetDOUBLE(psGTIF, GeogSemiMajorAxisGeoKey, &(psDefn->SemiMajor), 0, 1 ));
     CPL_IGNORE_RET_VAL_INT(GTIFKeyGetDOUBLE(psGTIF, GeogSemiMinorAxisGeoKey, &(psDefn->SemiMinor), 0, 1 ));
 
+    double dfInvFlattening;
     if( GTIFKeyGetDOUBLE(psGTIF, GeogInvFlatteningGeoKey, &dfInvFlattening,
                    0, 1 ) == 1 )
     {
@@ -2709,32 +2697,24 @@ int GTIFGetDefn( GTIF * psGTIF, GTIFDefn * psDefn )
 
 const char *GTIFDecToDMS( double dfAngle, const char * pszAxis,
                           int nPrecision )
-
 {
-    int		nDegrees, nMinutes;
-    double	dfSeconds;
-    char	szFormat[30];
-    static char szBuffer[50];
-    const char	*pszHemisphere = NULL;
-    double	dfRound;
-    int		i;
-
     if( !(dfAngle >= -360 && dfAngle <= 360) )
         return "";
 
-    dfRound = 0.5/60;
-    for( i = 0; i < nPrecision; i++ )
+    double dfRound = 0.5/60;
+    for( int i = 0; i < nPrecision; i++ )
         dfRound = dfRound * 0.1;
 
-    nDegrees = (int) ABS(dfAngle);
-    nMinutes = (int) ((ABS(dfAngle) - nDegrees) * 60 + dfRound);
+    int nDegrees = (int) ABS(dfAngle);
+    int nMinutes = (int) ((ABS(dfAngle) - nDegrees) * 60 + dfRound);
     if( nMinutes == 60 )
     {
         nDegrees ++;
         nMinutes = 0;
     }
-    dfSeconds = ABS((ABS(dfAngle) * 3600 - nDegrees*3600 - nMinutes*60));
+    const double dfSeconds = ABS((ABS(dfAngle) * 3600 - nDegrees*3600 - nMinutes*60));
 
+    const char	*pszHemisphere = NULL;
     if( EQUAL(pszAxis,"Long") && dfAngle < 0.0 )
         pszHemisphere = "W";
     else if( EQUAL(pszAxis,"Long") )
@@ -2744,9 +2724,12 @@ const char *GTIFDecToDMS( double dfAngle, const char * pszAxis,
     else
         pszHemisphere = "N";
 
-    sprintf( szFormat, "%%3dd%%2d\'%%%d.%df\"%s",
-             nPrecision+3, nPrecision, pszHemisphere );
-    sprintf( szBuffer, szFormat, nDegrees, nMinutes, dfSeconds );
+    char szFormat[30];
+    snprintf(szFormat, sizeof(szFormat), "%%3dd%%2d\'%%%d.%df\"%s",
+             nPrecision+3, nPrecision, pszHemisphere);
+    static char szBuffer[50];
+    snprintf(
+        szBuffer, sizeof(szBuffer), szFormat, nDegrees, nMinutes, dfSeconds);
 
     return szBuffer;
 }
@@ -2821,20 +2804,18 @@ void GTIFPrintDefnEx( GTIF *psGTIF, GTIFDefn * psDefn, FILE * fp )
             GTIFValueNameEx(psGTIF,
                             ProjCoordTransGeoKey,
                             psDefn->CTProjection);
-        int     i;
 
         if( pszProjectionMethodName == NULL )
             pszProjectionMethodName = "(unknown)";
 
         fprintf( fp, "Projection Method: %s\n", pszProjectionMethodName );
 
-        for( i = 0; i < psDefn->nParms; i++ )
+        for( int i = 0; i < psDefn->nParms; i++ )
         {
-            char* pszName;
             if( psDefn->ProjParmId[i] == 0 )
                 continue;
 
-            pszName = GTIFKeyName((geokey_t) psDefn->ProjParmId[i]);
+            char* pszName = GTIFKeyName((geokey_t) psDefn->ProjParmId[i]);
             if( pszName == NULL )
                 pszName = "(unknown)";
 
@@ -2948,11 +2929,9 @@ void GTIFPrintDefnEx( GTIF *psGTIF, GTIFDefn * psDefn, FILE * fp )
 #if !defined(GEO_NORMALIZE_DISABLE_TOWGS84)
     if( psDefn->TOWGS84Count > 0 )
     {
-        int i;
-
         fprintf( fp, "TOWGS84: " );
 
-        for( i = 0; i < psDefn->TOWGS84Count; i++ )
+        for( int i = 0; i < psDefn->TOWGS84Count; i++ )
         {
             if( i > 0 )
                 fprintf( fp, "," );

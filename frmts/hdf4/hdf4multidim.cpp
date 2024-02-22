@@ -92,9 +92,20 @@ class HDF4Group final : public GDALGroup
     std::shared_ptr<HDF4SharedResources> m_poShared;
     std::shared_ptr<HDF4SDSGroup> m_poGDALGroup{};
 
-  public:
+  protected:
     HDF4Group(const std::string &osParentName, const std::string &osName,
               const std::shared_ptr<HDF4SharedResources> &poShared);
+
+  public:
+    static std::shared_ptr<HDF4Group>
+    Create(const std::string &osParentName, const std::string &osName,
+           const std::shared_ptr<HDF4SharedResources> &poShared)
+    {
+        auto poGroup = std::shared_ptr<HDF4Group>(
+            new HDF4Group(osParentName, osName, poShared));
+        poGroup->SetSelf(poGroup);
+        return poGroup;
+    }
 
     std::vector<std::shared_ptr<GDALAttribute>>
     GetAttributes(CSLConstList papszOptions = nullptr) const override;
@@ -580,6 +591,11 @@ class HDF4EOSGridArray final : public GDALPamMDArray
     const std::string &GetUnit() const override;
 
     std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override;
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return HDF4Group::Create(std::string(), "/", m_poShared);
+    }
 };
 
 /************************************************************************/
@@ -738,6 +754,11 @@ class HDF4SDSArray final : public GDALPamMDArray
     const std::string &GetUnit() const override;
 
     std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override;
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return HDF4Group::Create(std::string(), "/", m_poShared);
+    }
 };
 
 /************************************************************************/
@@ -872,6 +893,11 @@ class HDF4GRArray final : public GDALPamMDArray
 
     std::vector<std::shared_ptr<GDALAttribute>>
     GetAttributes(CSLConstList papszOptions = nullptr) const override;
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return HDF4Group::Create(std::string(), "/", m_poShared);
+    }
 };
 
 /************************************************************************/
@@ -2486,7 +2512,7 @@ HDF4SDSGroup::GetDimensions(CSLConstList) const
     std::string osTransformationMatrix;
     if (m_bIsGDALDataset)
     {
-        for (auto &poAttr : m_oGlobalAttributes)
+        for (const auto &poAttr : m_oGlobalAttributes)
         {
             if (poAttr->GetName() == "Projection" &&
                 poAttr->GetDataType().GetClass() == GEDTC_STRING)
@@ -2596,7 +2622,7 @@ HDF4SDSGroup::GetDimensions(CSLConstList) const
                         GetFullName(), "Band", std::string(), std::string(),
                         m_dims[2]->GetSize()));
             }
-            m_dims = newDims;
+            m_dims = std::move(newDims);
 
             m_varX = GDALMDArrayRegularlySpaced::Create(
                 GetFullName(), m_dims[1]->GetName(), m_dims[1],
@@ -2618,7 +2644,7 @@ HDF4SDSGroup::GetDimensions(CSLConstList) const
         if (poArray)
         {
             m_oSetIndexingVariables.push_back(poArray);
-            poDim->SetIndexingVariable(poArray);
+            poDim->SetIndexingVariable(std::move(poArray));
         }
     }
 
@@ -2786,7 +2812,7 @@ std::shared_ptr<OGRSpatialReference> HDF4SDSArray::GetSpatialRef() const
     if (m_bIsGDALDataset)
     {
         std::string osProjection;
-        for (auto &poAttr : m_oGlobalAttributes)
+        for (const auto &poAttr : m_oGlobalAttributes)
         {
             if (poAttr->GetName() == "Projection" &&
                 poAttr->GetDataType().GetClass() == GEDTC_STRING)
@@ -3190,7 +3216,7 @@ void HDF4Dataset::OpenMultiDim(const char *pszFilename,
 
     hSD = -1;
 
-    m_poRootGroup = std::make_shared<HDF4Group>(std::string(), "/", poShared);
+    m_poRootGroup = HDF4Group::Create(std::string(), "/", poShared);
 
     SetDescription(pszFilename);
 

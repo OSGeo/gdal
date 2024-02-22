@@ -82,7 +82,7 @@ static bool ProcessMetadata(GDALDataset *poSQLiteDS, pmtiles::headerv3 &sHeader,
                          "Cannot parse 'json' metadata item");
                 return false;
             }
-            for (auto &oChild : oJsonDoc.GetRoot().GetChildren())
+            for (const auto &oChild : oJsonDoc.GetRoot().GetChildren())
             {
                 oObj.Add(oChild.GetName(), oChild);
             }
@@ -475,8 +475,9 @@ bool OGRPMTilesConvertFromMBTiles(const char *pszDestName,
         }
     };
 
-    const auto oCompressFunc =
-        [psCompressor, &osCompressed](const std::string &osBytes, uint8_t)
+    const auto oCompressFunc = [psCompressor,
+                                &osCompressed](const std::string &osBytes,
+                                               uint8_t) -> std::string
     {
         osCompressed.resize(32 + osBytes.size() * 2);
         size_t nOutputSize = osCompressed.size();

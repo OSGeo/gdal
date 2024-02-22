@@ -3750,9 +3750,9 @@ CPLErr HFARenameReferences(HFAHandle hHFA, const char *pszNewBase,
         {
             if (strncmp(aosNL[i], pszOldBase, strlen(pszOldBase)) == 0)
             {
-                CPLString osNew = pszNewBase;
+                std::string osNew = pszNewBase;
                 osNew += aosNL[i].c_str() + strlen(pszOldBase);
-                aosNL[i] = osNew;
+                aosNL[i] = std::move(osNew);
             }
         }
 
@@ -3807,9 +3807,9 @@ CPLErr HFARenameReferences(HFAHandle hHFA, const char *pszNewBase,
         // Update the filename.
         if (strncmp(osFileName, pszOldBase, strlen(pszOldBase)) == 0)
         {
-            CPLString osNew = pszNewBase;
+            std::string osNew = pszNewBase;
             osNew += osFileName.c_str() + strlen(pszOldBase);
-            osFileName = osNew;
+            osFileName = std::move(osNew);
         }
 
         // Grow the node if needed.
@@ -3859,9 +3859,9 @@ CPLErr HFARenameReferences(HFAHandle hHFA, const char *pszNewBase,
         // Update the filename.
         if (strncmp(osFileName, pszOldBase, strlen(pszOldBase)) == 0)
         {
-            CPLString osNew = pszNewBase;
-            osNew += osFileName.c_str() + strlen(pszOldBase);
-            osFileName = osNew;
+            std::string osNew = pszNewBase;
+            osNew += (osFileName.c_str() + strlen(pszOldBase));
+            osFileName = std::move(osNew);
         }
 
         apoNodeList[iNode]->SetStringField("dependent.string", osFileName);
@@ -4033,7 +4033,7 @@ HFAPCSStructToOSR(const Eprj_Datum *psDatum, const Eprj_ProParameters *psPro,
 
     // We make a particular effort to adapt the mapinfo->proname as
     // the PROJCS[] name per #2422.
-    auto poSRS = cpl::make_unique<OGRSpatialReference>();
+    auto poSRS = std::make_unique<OGRSpatialReference>();
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     if (psPro == nullptr && psMapInfo != nullptr)

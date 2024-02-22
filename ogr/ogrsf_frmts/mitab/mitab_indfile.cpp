@@ -600,7 +600,7 @@ GByte *TABINDFile::BuildKey(int nIndexNumber, const char *pszStr)
     for (i = 0; i < nKeyLength && pszStr[i] != '\0'; i++)
     {
         m_papbyKeyBuffers[nIndexNumber - 1][i] =
-            static_cast<GByte>(toupper(pszStr[i]));
+            static_cast<GByte>(toupper(static_cast<unsigned char>(pszStr[i])));
     }
 
     /* Pad the end of the buffer with '\0' */
@@ -1597,7 +1597,8 @@ int TABINDNode::InsertEntry(GByte *pKeyValue, GInt32 nRecordNo,
 
         memmove(m_poDataBlock->GetCurDataPtr() + (m_nKeyLength + 4),
                 m_poDataBlock->GetCurDataPtr(),
-                (m_numEntriesInNode - iInsertAt) * (m_nKeyLength + 4));
+                static_cast<size_t>(m_numEntriesInNode - iInsertAt) *
+                    (m_nKeyLength + 4));
     }
 
     /*-----------------------------------------------------------------
@@ -1853,11 +1854,12 @@ int TABINDNode::SplitNode()
         memmove(m_poDataBlock->GetCurDataPtr(),
                 m_poDataBlock->GetCurDataPtr() +
                     numInNode1 * (m_nKeyLength + 4),
-                numInNode2 * (m_nKeyLength + 4));
+                static_cast<size_t>(numInNode2) * (m_nKeyLength + 4));
 
 #ifdef DEBUG
         // Just in case, reset space previously used by moved entries
-        memset(m_poDataBlock->GetCurDataPtr() + numInNode2 * (m_nKeyLength + 4),
+        memset(m_poDataBlock->GetCurDataPtr() +
+                   static_cast<size_t>(numInNode2) * (m_nKeyLength + 4),
                0, numInNode1 * (m_nKeyLength + 4));
 #endif
 

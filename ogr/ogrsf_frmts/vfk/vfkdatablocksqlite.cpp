@@ -330,7 +330,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
                 (VFKFeatureSQLite *)poDataBlockPoints->GetFeature("ID", id);
             if (poPoint)
             {
-                OGRGeometry *pt = poPoint->GetGeometry();
+                const OGRGeometry *pt = poPoint->GetGeometry();
                 if (pt)
                 {
                     oOGRLine.addPoint(pt->toPoint());
@@ -434,15 +434,8 @@ int VFKDataBlockSQLite::LoadGeometryLineStringHP()
         VFKFeatureSQLite *poLine =
             poDataBlockLines->GetFeature(vrColumn, vrValue, 2, TRUE);
 
-        OGRGeometry *poOgrGeometry = nullptr;
-        if (!poLine)
-        {
-            poOgrGeometry = nullptr;
-        }
-        else
-        {
-            poOgrGeometry = poLine->GetGeometry();
-        }
+        const OGRGeometry *poOgrGeometry =
+            poLine ? poLine->GetGeometry() : nullptr;
         if (!poOgrGeometry || !poFeature->SetGeometry(poOgrGeometry))
         {
             CPLDebug("OGR-VFK",

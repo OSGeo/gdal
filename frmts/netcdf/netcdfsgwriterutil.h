@@ -330,8 +330,6 @@ typedef OGR_SGFS_NC_Transaction_Generic<float, NC_FLOAT>
     OGR_SGFS_NC_Float_Transaction;
 typedef OGR_SGFS_NC_Transaction_Generic<double, NC_DOUBLE>
     OGR_SGFS_NC_Double_Transaction;
-
-#ifdef NETCDF_HAS_NC4
 typedef OGR_SGFS_NC_Transaction_Generic<unsigned, NC_UINT>
     OGR_SGFS_NC_UInt_Transaction;
 typedef OGR_SGFS_NC_Transaction_Generic<unsigned long long, NC_UINT64>
@@ -376,8 +374,6 @@ class OGR_SGFS_NC_String_Transaction : public OGR_SGFS_Transaction
         OGR_SGFS_Transaction::setVarId(i_varId);
     }
 };
-
-#endif
 
 /* WTransactionLog
  * -

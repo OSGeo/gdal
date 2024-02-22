@@ -392,7 +392,7 @@ The definition in the driver file is:
         poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
         poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Japanese DEM (.mem)");
         poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/jdem.html");
-        poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "mem");
+        poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "mem");
         poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
         poDriver->pfnOpen = JDEMDataset::Open;
@@ -402,7 +402,7 @@ The definition in the driver file is:
     }
 
 
-Note the use of GDAL_CHECK_VERSION macro. This is an optional macro for drivers inside GDAL tree that don't depend on external libraries, but that can be very useful if you compile your driver as a plugin (that is to say, an out-of-tree driver). As the GDAL C++ ABI may, and will, change between GDAL releases (for example from GDAL 1.x to 1.y), it may be necessary to recompile your driver against the header files of the GDAL version with which you want to make it work. The GDAL_CHECK_VERSION macro will check that the GDAL version with which the driver was compiled and the version against which it is running are compatible.
+Note the use of GDAL_CHECK_VERSION macro. This is a macro that should be used by drivers that can be built as a plugin. As the GDAL C++ ABI may, and will, change between GDAL feature releases (for example from GDAL 3.x.0 to 3.y.0), it is necessary to recompile your driver against the header files of the GDAL feature version with which you want to make it work. The GDAL_CHECK_VERSION macro will check that the GDAL version with which the driver was compiled and the version against which it is running are compatible (checking that the major and minor version numbers are equal). The C++ ABI will however remain stable for releases of the same release branch (that is for bug fixes releases x.y.z of a given feature release x.y.0).
 
 The registration function will create an instance of a GDALDriver object when first called, and register it with the GDALDriverManager. The following fields can be set in the driver before registering it with the GDALDriverManager.
 
@@ -410,7 +410,7 @@ The registration function will create an instance of a GDALDriver object when fi
 - GDAL_DCAP_RASTER: set to YES to indicate that this driver handles raster data. (mandatory)
 - GDAL_DMD_LONGNAME: A longer descriptive name for the file format, but still no longer than 50-60 characters. (mandatory)
 - GDAL_DMD_HELPTOPIC: The name of a help topic to display for this driver, if any. In this case JDEM format is contained within the various format web page held in gdal/html. (optional)
-- GDAL_DMD_EXTENSION: The extension used for files of this type. If more than one pick the primary extension, or none at all. (optional)
+- GDAL_DMD_EXTENSIONS: The extensions used for files of this type, without the leading '.'. If more than one, they should be separated with space. (optional)
 - GDAL_DMD_MIMETYPE: The standard mime type for this file format, such as "image/png". (optional)
 - GDAL_DMD_CREATIONOPTIONLIST: There is evolving work on mechanisms to describe creation options. See the geotiff driver for an example of this. (optional)
 - GDAL_DMD_CREATIONDATATYPES: A list of space separated data types supported by this create when creating new datasets. If a Create() method exists, these will be will supported. If a CreateCopy() method exists, this will be a list of types that can be losslessly exported but it may include weaker data types than the type eventually written. For instance, a format with a CreateCopy() method, and that always writes Float32 might also list Byte, Int16, and UInt16 since they can losslessly translated to Float32. An example value might be "Byte Int16 UInt16". (required - if creation supported)
@@ -421,6 +421,8 @@ The registration function will create an instance of a GDALDriver object when fi
 - pfnCreateCopy: The function to call to create a new dataset of this format copied from another source, but not necessary updatable. (optional)
 - pfnDelete: The function to call to delete a dataset of this format. (optional)
 - pfnUnloadDriver: A function called only when the driver is destroyed. Could be used to cleanup data at the driver level. Rarely used. (optional)
+
+For a driver that can be built as a plugin (that is to say a standalone shared object, loaded at runtime by GDAL), since GDAL 3.9 and :ref:`rfc-96`, there is a way to implement the driver in a way where the plugin will be loaded only when necessary, and not immediately at :cpp:func:`GDALAllRegister` time. Consult :ref:`rfc96_example_driver` for the changes needed to make the driver compatible of deferred plugin loading.
 
 Adding Driver to GDAL Tree
 --------------------------

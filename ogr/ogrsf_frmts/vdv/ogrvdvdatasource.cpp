@@ -1193,7 +1193,7 @@ GDALDataset *OGRVDVDataSource::Open(GDALOpenInfo *poOpenInfo)
             if (EQUAL(*papszIter, ".") || EQUAL(*papszIter, ".."))
                 continue;
             nFiles++;
-            CPLString osExtension(CPLGetExtension(*papszIter));
+            const std::string osExtension(CPLGetExtension(*papszIter));
             int nCount = ++oMapOtherExtensions[osExtension];
             if (osMajorityExtension == "" ||
                 nCount > oMapOtherExtensions[osMajorityExtension])
@@ -1527,7 +1527,7 @@ GIntBig OGRVDVWriterLayer::GetFeatureCount(int)
 /*                          CreateField()                               */
 /************************************************************************/
 
-OGRErr OGRVDVWriterLayer::CreateField(OGRFieldDefn *poFieldDefn,
+OGRErr OGRVDVWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn,
                                       int /* bApprox */)
 {
     if (m_nFeatureCount >= 0)

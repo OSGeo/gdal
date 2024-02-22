@@ -185,6 +185,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
     bool bCreateSpatialIndexAtClose;
     bool bRewindOnWrite;
     bool m_bHasWarnedWrongWindingOrder = false;
+    bool m_bLastGetNextArrowArrayUsedOptimizedCodePath = false;
 
     bool m_bAutoRepack;
     typedef enum
@@ -242,6 +243,11 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
     OGRFeature *GetNextFeature() override;
     OGRErr SetNextByIndex(GIntBig nIndex) override;
 
+    int GetNextArrowArray(struct ArrowArrayStream *,
+                          struct ArrowArray *out_array) override;
+    const char *GetMetadataItem(const char *pszName,
+                                const char *pszDomain) override;
+
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
@@ -260,7 +266,11 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
     }
 
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                       int bForce) override;
+
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
     OGRErr DeleteField(int iField) override;
     OGRErr ReorderFields(int *panMap) override;
     OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,

@@ -429,7 +429,9 @@ VRTRawRasterBand::XMLInit(CPLXMLNode *psTree, const char *pszVRTPath,
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTRawRasterBand::SerializeToXML(const char *pszVRTPath)
+CPLXMLNode *VRTRawRasterBand::SerializeToXML(const char *pszVRTPath,
+                                             bool &bHasWarnedAboutRAMUsage,
+                                             size_t &nAccRAMUsage)
 
 {
 
@@ -444,7 +446,8 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML(const char *pszVRTPath)
         return nullptr;
     }
 
-    CPLXMLNode *psTree = VRTRasterBand::SerializeToXML(pszVRTPath);
+    CPLXMLNode *psTree = VRTRasterBand::SerializeToXML(
+        pszVRTPath, bHasWarnedAboutRAMUsage, nAccRAMUsage);
 
     /* -------------------------------------------------------------------- */
     /*      Set subclass.                                                   */

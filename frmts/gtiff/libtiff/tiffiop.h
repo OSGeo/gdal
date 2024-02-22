@@ -233,7 +233,9 @@ struct tiff
     void *tif_errorhandler_user_data;
     TIFFErrorHandlerExtR tif_warnhandler;
     void *tif_warnhandler_user_data;
-    tmsize_t tif_max_single_mem_alloc; /* in bytes. 0 for unlimited */
+    tmsize_t tif_max_single_mem_alloc;    /* in bytes. 0 for unlimited */
+    tmsize_t tif_max_cumulated_mem_alloc; /* in bytes. 0 for unlimited */
+    tmsize_t tif_cur_cumulated_mem_alloc; /* in bytes */
 };
 
 struct TIFFOpenOptions
@@ -243,6 +245,7 @@ struct TIFFOpenOptions
     TIFFErrorHandlerExtR warnhandler;  /* may be NULL */
     void *warnhandler_user_data;       /* may be NULL */
     tmsize_t max_single_mem_alloc;     /* in bytes. 0 for unlimited */
+    tmsize_t max_cumulated_mem_alloc;  /* in bytes. 0 for unlimited */
 };
 
 #define isPseudoTag(t) (t > 0xffff) /* is tag value normal or pseudo */
@@ -331,7 +334,7 @@ struct TIFFOpenOptions
 #define ftell(stream, offset, whence) ftello(stream, offset, whence)
 #endif
 #endif
-#if defined(__WIN32__) && !(defined(_MSC_VER) && _MSC_VER < 1400) &&           \
+#if defined(_WIN32) &&                                                         \
     !(defined(__MSVCRT_VERSION__) && __MSVCRT_VERSION__ < 0x800)
 typedef unsigned int TIFFIOSize_t;
 #define _TIFF_lseek_f(fildes, offset, whence)                                  \
@@ -436,9 +439,6 @@ extern "C"
     extern void *_TIFFCheckMalloc(TIFF *, tmsize_t, tmsize_t, const char *);
     extern void *_TIFFCheckRealloc(TIFF *, void *, tmsize_t, tmsize_t,
                                    const char *);
-
-    extern double _TIFFUInt64ToDouble(uint64_t);
-    extern float _TIFFUInt64ToFloat(uint64_t);
 
     extern float _TIFFClampDoubleToFloat(double);
     extern uint32_t _TIFFClampDoubleToUInt32(double);

@@ -217,7 +217,7 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
             const auto oDataFields = oGrid.GetObj("DataField");
             const auto oDimensions = oGrid.GetObj("Dimension");
             std::map<std::string, int> oMapDimensionNameToSize;
-            auto poGridMetadata = cpl::make_unique<GridMetadata>();
+            auto poGridMetadata = std::make_unique<GridMetadata>();
             poGridMetadata->osGridName = osGridName;
             for (const auto &oDimension : oDimensions.GetChildren())
             {
@@ -290,7 +290,7 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
                         oDataFieldMetadata.poGridMetadata = poGridMetadataRef;
                         m_oMapSubdatasetNameToGridDataFieldMetadata
                             ["//HDFEOS/GRIDS/" + osGridName + "/Data_Fields/" +
-                             osDataFieldName] = oDataFieldMetadata;
+                             osDataFieldName] = std::move(oDataFieldMetadata);
                     }
                 }
             }
@@ -342,7 +342,7 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
 
             const auto oDimensions = oSwath.GetObj("Dimension");
             std::map<std::string, int> oMapDimensionNameToSize;
-            auto poSwathMetadata = cpl::make_unique<SwathMetadata>();
+            auto poSwathMetadata = std::make_unique<SwathMetadata>();
             poSwathMetadata->osSwathName = osSwathName;
             for (const auto &oDimension : oDimensions.GetChildren())
             {
@@ -353,9 +353,9 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
                     int nSize = oDimension.GetInteger("Size");
                     oMapDimensionNameToSize[osDimensionName] = nSize;
                     Dimension oDim;
-                    oDim.osName = osDimensionName;
+                    oDim.osName = std::move(osDimensionName);
                     oDim.nSize = nSize;
-                    poSwathMetadata->aoDimensions.push_back(oDim);
+                    poSwathMetadata->aoDimensions.emplace_back(std::move(oDim));
                 }
             }
 
@@ -439,18 +439,19 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
                     {
                         SwathGeolocationFieldMetadata oMetadata;
                         oMetadata.poSwathMetadata = poSwathMetadataRef;
-                        oMetadata.aoDimensions = aoDimensions;
 
                         if (osGeoFieldName == "Longitude")
                             aoLongitudeDimensions = aoDimensions;
                         else if (osGeoFieldName == "Latitude")
                             aoLatitudeDimensions = aoDimensions;
 
+                        oMetadata.aoDimensions = std::move(aoDimensions);
+
                         const std::string osSubdatasetName =
                             "//HDFEOS/SWATHS/" + osSwathName +
                             "/Geolocation_Fields/" + osGeoFieldName;
                         m_oMapSubdatasetNameToSwathGeolocationFieldMetadata
-                            [osSubdatasetName] = oMetadata;
+                            [osSubdatasetName] = std::move(oMetadata);
                     }
                 }
             }
@@ -549,7 +550,8 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
 
                         m_oMapSubdatasetNameToSwathDataFieldMetadata
                             ["//HDFEOS/SWATHS/" + osSwathName +
-                             "/Data_Fields/" + osDataFieldName] = oMetadata;
+                             "/Data_Fields/" + osDataFieldName] =
+                                std::move(oMetadata);
                     }
                 }
             }
@@ -617,7 +619,7 @@ bool HDF5EOSParser::GridMetadata::GetGeoTransform(
         int nRasterXSize = 0;
         int nRasterYSize = 0;
 
-        for (auto &oDim : aoDimensions)
+        for (const auto &oDim : aoDimensions)
         {
             if (oDim.osName == "XDim")
                 nRasterXSize = oDim.nSize;
@@ -667,7 +669,7 @@ std::unique_ptr<OGRSpatialReference> HDF5EOSParser::GridMetadata::GetSRS() const
 {
     std::vector<double> l_adfProjParams = adfProjParams;
     l_adfProjParams.resize(15);
-    auto poSRS = cpl::make_unique<OGRSpatialReference>();
+    auto poSRS = std::make_unique<OGRSpatialReference>();
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if (poSRS->importFromUSGS(nProjCode, nZone, l_adfProjParams.data(),
                               nSphereCode) == OGRERR_NONE)

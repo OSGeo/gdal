@@ -33,7 +33,14 @@ add_gdal_driver(
           minidriver_virtualearth.h
           minidriver_worldwind.h
           wmsmetadataset.h
-          PLUGIN_CAPABLE)
+  CORE_SOURCES
+          wmsdrivercore.cpp
+  PLUGIN_CAPABLE)
+
+if(NOT TARGET gdal_WMS)
+    return()
+endif()
+
 gdal_standard_includes(gdal_WMS)
 target_include_directories(gdal_WMS PRIVATE ${CURL_INCLUDE_DIRS} $<TARGET_PROPERTY:alg,SOURCE_DIR>
                                             $<TARGET_PROPERTY:gdal_raw,SOURCE_DIR>)

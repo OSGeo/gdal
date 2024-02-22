@@ -328,10 +328,14 @@ CPLXMLNode *VRTDataset::SerializeToXML(const char *pszVRTPathIn)
     {
     }
     CPLAssert(psLastChild);  // we have at least rasterXSize
+    bool bHasWarnedAboutRAMUsage = false;
+    size_t nAccRAMUsage = 0;
     for (int iBand = 0; iBand < nBands; iBand++)
     {
-        CPLXMLNode *psBandTree = static_cast<VRTRasterBand *>(papoBands[iBand])
-                                     ->SerializeToXML(pszVRTPathIn);
+        CPLXMLNode *psBandTree =
+            static_cast<VRTRasterBand *>(papoBands[iBand])
+                ->SerializeToXML(pszVRTPathIn, bHasWarnedAboutRAMUsage,
+                                 nAccRAMUsage);
 
         if (psBandTree != nullptr)
         {
@@ -345,7 +349,8 @@ CPLXMLNode *VRTDataset::SerializeToXML(const char *pszVRTPathIn)
     /* -------------------------------------------------------------------- */
     if (m_poMaskBand)
     {
-        CPLXMLNode *psBandTree = m_poMaskBand->SerializeToXML(pszVRTPathIn);
+        CPLXMLNode *psBandTree = m_poMaskBand->SerializeToXML(
+            pszVRTPathIn, bHasWarnedAboutRAMUsage, nAccRAMUsage);
 
         if (psBandTree != nullptr)
         {
@@ -587,7 +592,7 @@ CPLErr VRTDataset::XMLInit(CPLXMLNode *psTree, const char *pszVRTPathIn)
             return CE_Failure;
         }
 
-        m_poRootGroup = std::make_shared<VRTGroup>(std::string(), "/");
+        m_poRootGroup = VRTGroup::Create(std::string(), "/");
         m_poRootGroup->SetIsRootGroup();
         if (!m_poRootGroup->XMLInit(m_poRootGroup, m_poRootGroup, psGroup,
                                     pszVRTPathIn))
@@ -1044,6 +1049,153 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
         return nullptr;
     }
 
+    // scan for sd_name/sd in tokens, close the source dataset and reopen if found/valid
+    bool bFound_subdataset = false;
+    for (int i = 0; i < aosTokens.size(); i++)
+    {
+        char *pszKey = nullptr;
+        const char *pszValue = CPLParseNameValue(aosTokens[i], &pszKey);
+
+        if (pszKey && pszValue)
+        {
+
+            if (EQUAL(pszKey, "sd_name"))
+            {
+                if (bFound_subdataset)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "'sd_name' is mutually exclusive with option "
+                             "'sd'");
+                    poSrcDS->ReleaseRef();
+
+                    CPLFree(pszKey);
+                    return nullptr;
+                }
+                char **papszSubdatasets = poSrcDS->GetMetadata("SUBDATASETS");
+                int nSubdatasets = CSLCount(papszSubdatasets);
+
+                if (nSubdatasets > 0)
+                {
+                    bool bFound = false;
+                    for (int j = 0; j < nSubdatasets; j += 2)
+                    {
+                        const std::string osSubdatasetSource(
+                            strstr(papszSubdatasets[j], "=") + 1);
+                        if (osSubdatasetSource.empty())
+                        {
+                            CPLError(CE_Failure, CPLE_IllegalArg,
+                                     "'sd_name:' failed to obtain "
+                                     "subdataset string ");
+                            poSrcDS->ReleaseRef();
+
+                            CPLFree(pszKey);
+                            return nullptr;
+                        }
+                        GDALSubdatasetInfoH info =
+                            GDALGetSubdatasetInfo(osSubdatasetSource.c_str());
+                        char *component =
+                            info
+                                ? GDALSubdatasetInfoGetSubdatasetComponent(info)
+                                : nullptr;
+
+                        bFound = component && EQUAL(pszValue, component);
+                        bFound_subdataset = true;
+                        CPLFree(component);
+                        GDALDestroySubdatasetInfo(info);
+                        if (bFound)
+                        {
+                            poSrcDS->ReleaseRef();
+                            poSrcDS = GDALDataset::Open(
+                                osSubdatasetSource.c_str(), GDAL_OF_RASTER,
+                                aosAllowedDrivers.List(), aosOpenOptions.List(),
+                                nullptr);
+                            if (poSrcDS == nullptr)
+                            {
+
+                                CPLFree(pszKey);
+                                return nullptr;
+                            }
+
+                            break;
+                        }
+                        else
+                        {
+                        }
+                    }
+
+                    if (!bFound)
+                    {
+                        CPLError(CE_Failure, CPLE_IllegalArg,
+                                 "'sd_name' option should be be a valid "
+                                 "subdataset component name");
+                        poSrcDS->ReleaseRef();
+
+                        CPLFree(pszKey);
+                        return nullptr;
+                    }
+                }
+            }
+
+            if (EQUAL(pszKey, "sd"))
+            {
+                if (bFound_subdataset)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "'sd' is mutually exclusive with option "
+                             "'sd_name'");
+                    poSrcDS->ReleaseRef();
+
+                    CPLFree(pszKey);
+                    return nullptr;
+                }
+                char **papszSubdatasets = poSrcDS->GetMetadata("SUBDATASETS");
+                int nSubdatasets = CSLCount(papszSubdatasets);
+
+                if (nSubdatasets > 0)
+                {
+                    int iSubdataset = atoi(pszValue);
+                    if (iSubdataset < 1 || iSubdataset > (nSubdatasets) / 2)
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_IllegalArg,
+                            "'sd' option should indicate a valid "
+                            "subdataset component number (starting with 1)");
+                        CPLFree(pszKey);
+                        poSrcDS->ReleaseRef();
+                        return nullptr;
+                    }
+                    const std::string osSubdatasetSource(
+                        strstr(papszSubdatasets[(iSubdataset - 1) * 2], "=") +
+                        1);
+                    if (osSubdatasetSource.empty())
+                    {
+                        CPLError(CE_Failure, CPLE_IllegalArg,
+                                 "'sd:' failed to obtain subdataset "
+                                 "string ");
+                        poSrcDS->ReleaseRef();
+
+                        CPLFree(pszKey);
+                        return nullptr;
+                    }
+                    poSrcDS->ReleaseRef();
+                    poSrcDS = GDALDataset::Open(osSubdatasetSource.c_str(),
+                                                GDAL_OF_RASTER,
+                                                aosAllowedDrivers.List(),
+                                                aosOpenOptions.List(), nullptr);
+                    if (poSrcDS == nullptr)
+                    {
+
+                        CPLFree(pszKey);
+                        return nullptr;
+                    }
+                    bFound_subdataset = true;
+                }
+            }
+        }
+
+        CPLFree(pszKey);
+    }
+
     std::vector<int> anBands;
 
     CPLStringList argv;
@@ -1086,6 +1238,12 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                     argv.AddString(nBand == 0 ? "mask"
                                               : CPLSPrintf("%d", nBand));
                 }
+            }
+
+            else if (EQUAL(pszKey, "a_nodata"))
+            {
+                argv.AddString("-a_nodata");
+                argv.AddString(pszValue);
             }
 
             else if (EQUAL(pszKey, "a_srs"))
@@ -1330,6 +1488,14 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             {
                 // do nothing, we passed this in earlier
             }
+            else if (EQUAL(pszKey, "sd_name"))
+            {
+                // do nothing, we passed this in earlier
+            }
+            else if (EQUAL(pszKey, "sd"))
+            {
+                // do nothing, we passed this in earlier
+            }
             else if (EQUAL(pszKey, "unscale"))
             {
                 if (CPLTestBool(pszValue))
@@ -1392,7 +1558,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
 
     poSrcDS->ReleaseRef();
 
-    auto poDS = cpl::down_cast<VRTDataset *>(GDALDataset::FromHandle(hRet));
+    auto poDS = dynamic_cast<VRTDataset *>(GDALDataset::FromHandle(hRet));
     if (poDS)
     {
         if (bPatchSourceFilename)
@@ -1513,10 +1679,10 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
         const int nWordDataSize = GDALGetDataTypeSizeBytes(eType);
 
         /* --------------------------------------------------------------------
-         */
+     */
         /*      Collect required information. */
         /* --------------------------------------------------------------------
-         */
+     */
         const char *pszImageOffset =
             CSLFetchNameValueDef(papszOptions, "ImageOffset", "0");
         vsi_l_offset nImageOffset = CPLScanUIntBig(
@@ -1560,10 +1726,10 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
             CPLFetchBool(papszOptions, "relativeToVRT", false);
 
         /* --------------------------------------------------------------------
-         */
+     */
         /*      Create and initialize the band. */
         /* --------------------------------------------------------------------
-         */
+     */
 
         VRTRawRasterBand *poBand =
             new VRTRawRasterBand(this, GetRasterCount() + 1, eType);
@@ -1779,7 +1945,7 @@ VRTDataset::CreateMultiDimensional(const char *pszFilename,
     VRTDataset *poDS = new VRTDataset(0, 0);
     poDS->eAccess = GA_Update;
     poDS->SetDescription(pszFilename);
-    poDS->m_poRootGroup = std::make_shared<VRTGroup>(std::string(), "/");
+    poDS->m_poRootGroup = VRTGroup::Create(std::string(), "/");
     poDS->m_poRootGroup->SetIsRootGroup();
     poDS->m_poRootGroup->SetFilename(pszFilename);
     poDS->m_poRootGroup->SetDirty();

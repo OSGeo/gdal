@@ -46,7 +46,7 @@
 #include "ogrsf_frmts.h"
 
 // Emulation of gettimeofday() for Windows.
-#ifdef WIN32
+#ifdef _WIN32
 
 #include <time.h>
 #include <windows.h>
@@ -103,7 +103,7 @@ struct _OGRGeocodingSessionHS
     OGRDataSource *poDS;
 };
 
-static CPLMutex *hMutex = nullptr;
+static CPLMutex *hOGRGeocodingMutex = nullptr;
 static double dfLastQueryTimeStampOSMNominatim = 0.0;
 static double dfLastQueryTimeStampMapQuestNominatim = 0.0;
 
@@ -547,7 +547,7 @@ static OGRLayer *OGRGeocodeGetCacheLayer(OGRGeocodingSessionH hSession,
 static char *OGRGeocodeGetFromCache(OGRGeocodingSessionH hSession,
                                     const char *pszURL)
 {
-    CPLMutexHolderD(&hMutex);
+    CPLMutexHolderD(&hOGRGeocodingMutex);
 
     int nIdxBlob = -1;
     OGRLayer *poLayer = OGRGeocodeGetCacheLayer(hSession, FALSE, &nIdxBlob);
@@ -578,7 +578,7 @@ static char *OGRGeocodeGetFromCache(OGRGeocodingSessionH hSession,
 static bool OGRGeocodePutIntoCache(OGRGeocodingSessionH hSession,
                                    const char *pszURL, const char *pszContent)
 {
-    CPLMutexHolderD(&hMutex);
+    CPLMutexHolderD(&hOGRGeocodingMutex);
 
     int nIdxBlob = -1;
     OGRLayer *poLayer = OGRGeocodeGetCacheLayer(hSession, TRUE, &nIdxBlob);
@@ -1236,8 +1236,11 @@ static OGRLayerH OGRGeocodeBuildLayer(const char *pszContent,
 /************************************************************************/
 
 static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
-                                  CPLString osURL, char **papszOptions)
+                                  const std::string &osURLIn,
+                                  char **papszOptions)
 {
+    std::string osURL(osURLIn);
+
     // Only documented to work with OSM Nominatim.
     if (hSession->pszLanguage != nullptr)
     {
@@ -1286,7 +1289,7 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
 
     char *pszCachedResult = nullptr;
     if (hSession->bReadCache)
-        pszCachedResult = OGRGeocodeGetFromCache(hSession, osURL);
+        pszCachedResult = OGRGeocodeGetFromCache(hSession, osURL.c_str());
     if (pszCachedResult == nullptr)
     {
         double *pdfLastQueryTime = nullptr;
@@ -1308,7 +1311,7 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
         CPLHTTPResult *psResult = nullptr;
         if (pdfLastQueryTime != nullptr)
         {
-            CPLMutexHolderD(&hMutex);
+            CPLMutexHolderD(&hOGRGeocodingMutex);
             struct timeval tv;
 
             gettimeofday(&tv, nullptr);
@@ -1347,7 +1350,7 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
                 if (hSession->bWriteCache)
                 {
                     // coverity[tainted_data]
-                    OGRGeocodePutIntoCache(hSession, osURL, pszResult);
+                    OGRGeocodePutIntoCache(hSession, osURL.c_str(), pszResult);
                 }
                 hLayer = OGRGeocodeBuildLayer(pszResult, bAddRawFeature);
             }
@@ -1443,8 +1446,21 @@ OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession, const char *pszQuery,
         return nullptr;
     }
 
+    constexpr const char *PCT_S = "%s";
+    const char *pszPctS = strstr(hSession->pszQueryTemplate, PCT_S);
+    if (!pszPctS)
+    {
+        // should not happen given OGRGeocodeHasStringValidFormat()
+        return nullptr;
+    }
+
     char *pszEscapedQuery = CPLEscapeString(pszQuery, -1, CPLES_URL);
-    CPLString osURL = CPLSPrintf(hSession->pszQueryTemplate, pszEscapedQuery);
+
+    std::string osURL;
+    osURL.assign(hSession->pszQueryTemplate,
+                 pszPctS - hSession->pszQueryTemplate);
+    osURL += pszEscapedQuery;
+    osURL += (pszPctS + strlen(PCT_S));
     CPLFree(pszEscapedQuery);
 
     if (EQUAL(hSession->pszGeocodingService, "OSM_NOMINATIM") ||

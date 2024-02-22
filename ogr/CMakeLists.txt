@@ -34,6 +34,7 @@ add_library(
   ogr_srsnode.cpp
   ogr_fromepsg.cpp
   ogrct.cpp
+  ogr_srs_cf1.cpp
   ogr_srs_esri.cpp
   ogr_srs_pci.cpp
   ogr_srs_usgs.cpp
@@ -61,17 +62,24 @@ add_library(
   ogr_proj_p.cpp
   ogr_wkb.cpp)
 add_dependencies(ogr generate_gdal_version_h)
-if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-  set_property(
-    SOURCE ogrfeaturequery.cpp
-           ogr_srs_usgs.cpp
-           ogr_srs_panorama.cpp
-           swq_expr_node.cpp
-           swq_op_general.cpp
-           swq_parser.cpp
-           swq_select.cpp
-    PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
-endif ()
+
+set(GDAL_DATA_FILES
+    LICENSE.TXT
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/cubewerx_extra.wkt
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/ecw_cs.wkt
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/epsg.wkt
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/esri_StatePlane_extra.wkt
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/ozi_datum.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/ozi_ellips.csv
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/pci_datum.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/pci_ellips.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/stateplane.csv
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
+
 include(GdalStandardIncludes)
 gdal_standard_includes(ogr)
 target_compile_options(ogr PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
@@ -170,7 +178,7 @@ add_custom_target(check_swq_parser_md5 ALL
                   COMMAND ${CMAKE_COMMAND}
                       "-DIN_FILE=swq_parser.y"
                       "-DTARGET=generate_swq_parser"
-                      "-DEXPECTED_MD5SUM=44620ffbb37fb8665887a175b299781b"
+                      "-DEXPECTED_MD5SUM=f7faffefe55128fc8951556909523ef7"
                       "-DFILENAME_CMAKE=${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
                       -P "${PROJECT_SOURCE_DIR}/cmake/helpers/check_md5sum.cmake"
                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"

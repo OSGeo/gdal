@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "zarr.h"
+#include "zarrdrivercore.h"
 
 #include "cpl_minixml.h"
 
@@ -48,51 +49,6 @@ ZarrDataset::ZarrDataset(const std::shared_ptr<GDALGroup> &poRootGroup)
 }
 
 /************************************************************************/
-/*                    CheckExistenceOfOneZarrFile()                     */
-/************************************************************************/
-
-static bool CheckExistenceOfOneZarrFile(const char *pszFilename)
-{
-
-    CPLString osMDFilename = CPLFormFilename(pszFilename, ".zarray", nullptr);
-
-    VSIStatBufL sStat;
-    if (VSIStatL(osMDFilename, &sStat) == 0)
-        return true;
-
-    osMDFilename = CPLFormFilename(pszFilename, ".zgroup", nullptr);
-    if (VSIStatL(osMDFilename, &sStat) == 0)
-        return true;
-
-    // Zarr V3
-    osMDFilename = CPLFormFilename(pszFilename, "zarr.json", nullptr);
-    if (VSIStatL(osMDFilename, &sStat) == 0)
-        return true;
-
-    return false;
-}
-
-/************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int ZarrDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    if (STARTS_WITH(poOpenInfo->pszFilename, "ZARR:"))
-    {
-        return TRUE;
-    }
-
-    if (!poOpenInfo->bIsDirectory)
-    {
-        return FALSE;
-    }
-
-    return CheckExistenceOfOneZarrFile(poOpenInfo->pszFilename);
-}
-
-/************************************************************************/
 /*                           OpenMultidim()                             */
 /************************************************************************/
 
@@ -107,10 +63,9 @@ GDALDataset *ZarrDataset::OpenMultidim(const char *pszFilename,
     auto poSharedResource = ZarrSharedResource::Create(osFilename, bUpdateMode);
     poSharedResource->SetOpenOptions(papszOpenOptionsIn);
 
-    auto poRG = poSharedResource->OpenRootGroup();
+    auto poRG = poSharedResource->GetRootGroup();
     if (!poRG)
         return nullptr;
-    poSharedResource->SetRootGroup(poRG);
     return new ZarrDataset(poRG);
 }
 
@@ -285,7 +240,7 @@ GetExtraDimSampleCount(const std::shared_ptr<GDALMDArray> &poArray,
 
 GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (!Identify(poOpenInfo))
+    if (!ZARRDriverIdentify(poOpenInfo))
     {
         return nullptr;
     }
@@ -346,7 +301,7 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
 
     auto poRG = poDSMultiDim->GetRootGroup();
 
-    auto poDS = cpl::make_unique<ZarrDataset>(nullptr);
+    auto poDS = std::make_unique<ZarrDataset>(nullptr);
     std::shared_ptr<GDALMDArray> poMainArray;
     std::vector<std::string> aosArrays;
     std::string osMainArray;
@@ -449,7 +404,7 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
                 {
                     if (osMainArray.empty())
                     {
-                        poMainArray = poArray;
+                        poMainArray = std::move(poArray);
                         osMainArray = osArrayName;
                     }
                     else
@@ -1043,7 +998,6 @@ ZarrDataset::CreateMultiDimensional(const char *pszFilename,
     }
     if (!poRG)
         return nullptr;
-    poSharedResource->SetRootGroup(poRG);
 
     auto poDS = new ZarrDataset(poRG);
     poDS->SetDescription(pszFilename);
@@ -1115,7 +1069,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
     if (!poRG)
         return nullptr;
 
-    auto poDS = cpl::make_unique<ZarrDataset>(poRG);
+    auto poDS = std::make_unique<ZarrDataset>(poRG);
     poDS->SetDescription(pszName);
     poDS->nRasterYSize = nYSize;
     poDS->nRasterXSize = nXSize;
@@ -1164,22 +1118,23 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SINGLE_ARRAY", "YES"));
     const bool bBandInterleave =
         EQUAL(CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "BAND"), "BAND");
-    std::shared_ptr<GDALDimension> poBandDim;
-    if (bSingleArray && nBandsIn > 1)
-        poBandDim = poRG->CreateDimension("Band", std::string(), std::string(),
-                                          nBandsIn);
+    const std::shared_ptr<GDALDimension> poBandDim(
+        (bSingleArray && nBandsIn > 1)
+            ? poRG->CreateDimension("Band", std::string(), std::string(),
+                                    nBandsIn)
+            : nullptr);
 
     const char *pszNonNullArrayName =
         pszArrayName ? pszArrayName : CPLGetBasename(pszName);
     if (poBandDim)
     {
-        const auto apoDims =
+        const std::vector<std::shared_ptr<GDALDimension>> apoDims(
             bBandInterleave
                 ? std::vector<std::shared_ptr<GDALDimension>>{poBandDim,
                                                               poDS->m_poDimY,
                                                               poDS->m_poDimX}
                 : std::vector<std::shared_ptr<GDALDimension>>{
-                      poDS->m_poDimY, poDS->m_poDimX, poBandDim};
+                      poDS->m_poDimY, poDS->m_poDimX, poBandDim});
         poDS->m_poSingleArray = poRG->CreateMDArray(
             pszNonNullArrayName, apoDims, GDALExtendedDataType::Create(eType),
             papszOptions);
@@ -1717,56 +1672,12 @@ CPLErr ZarrRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 void GDALRegister_Zarr()
 
 {
-    if (GDALGetDriverByName("Zarr") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new ZarrDriver();
+    ZARRDriverSetCommonMetadata(poDriver);
 
-    poDriver->SetDescription("Zarr");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Zarr");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte Int16 UInt16 Int32 UInt32 Int64 UInt64 "
-                              "Float32 Float64 CFloat32 CFloat64");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_OPENOPTIONLIST,
-        "<OpenOptionList>"
-        "   <Option name='USE_ZMETADATA' type='boolean' description='Whether "
-        "to use consolidated metadata from .zmetadata' default='YES'/>"
-        "   <Option name='CACHE_TILE_PRESENCE' type='boolean' "
-        "description='Whether to establish an initial listing of present "
-        "tiles' default='NO'/>"
-        "   <Option name='MULTIBAND' type='boolean' default='YES' "
-        "description='Whether to expose >= 3D arrays as GDAL multiband "
-        "datasets "
-        "(when using the classic 2D API)'/>"
-        "   <Option name='DIM_X' type='string' description="
-        "'Name or index of the X dimension (only used when MULTIBAND=YES)'/>"
-        "   <Option name='DIM_Y' type='string' description="
-        "'Name or index of the Y dimension (only used when MULTIBAND=YES)'/>"
-        "   <Option name='LOAD_EXTRA_DIM_METADATA_DELAY' type='string' "
-        "description="
-        "'Maximum delay in seconds allowed to set the DIM_{dimname}_VALUE band "
-        "metadata items'/>"
-        "</OpenOptionList>");
-
-    poDriver->SetMetadataItem(
-        GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,
-        "<MultiDimDatasetCreationOptionList>"
-        "   <Option name='FORMAT' type='string-select' default='ZARR_V2'>"
-        "     <Value>ZARR_V2</Value>"
-        "     <Value>ZARR_V3</Value>"
-        "   </Option>"
-        "   <Option name='CREATE_ZMETADATA' type='boolean' "
-        "description='Whether to create consolidated metadata into .zmetadata "
-        "(Zarr V2 only)' default='YES'/>"
-        "</MultiDimDatasetCreationOptionList>");
-
-    poDriver->pfnIdentify = ZarrDataset::Identify;
     poDriver->pfnOpen = ZarrDataset::Open;
     poDriver->pfnCreateMultiDimensional = ZarrDataset::CreateMultiDimensional;
     poDriver->pfnCreate = ZarrDataset::Create;

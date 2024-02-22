@@ -123,8 +123,10 @@ class ECRGTOCDataset final : public GDALPamDataset
     }
 
     static GDALDataset *Build(const char *pszTOCFilename, CPLXMLNode *psXML,
-                              CPLString osProduct, CPLString osDiscId,
-                              CPLString osScale, const char *pszFilename);
+                              const std::string &osProduct,
+                              const std::string &osDiscId,
+                              const std::string &osScale,
+                              const char *pszFilename);
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
@@ -635,8 +637,10 @@ GDALDataset *ECRGTOCSubDataset::Build(
 /************************************************************************/
 
 GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
-                                   CPLXMLNode *psXML, CPLString osProduct,
-                                   CPLString osDiscId, CPLString osScale,
+                                   CPLXMLNode *psXML,
+                                   const std::string &osProduct,
+                                   const std::string &osDiscId,
+                                   const std::string &osScale,
                                    const char *pszOpenInfoFilename)
 {
     CPLXMLNode *psTOC = CPLGetXMLNode(psXML, "=Table_of_Contents");

@@ -271,7 +271,7 @@ ColumnTypeInfo ParseColumnTypeInfo(const CPLString &typeDef)
 
     CPLError(CE_Failure, CPLE_NotSupported, "Unknown column type '%s'.",
              typeName.c_str());
-    return {typeName, odbc::SQLDataTypes::Unknown, 0, 0};
+    return {std::move(typeName), odbc::SQLDataTypes::Unknown, 0, 0};
 }
 
 CPLString GetColumnDefinition(const ColumnTypeInfo &typeInfo)
@@ -1406,7 +1406,8 @@ OGRErr OGRHanaTableLayer::ISetFeature(OGRFeature *feature)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn *srsField, int approxOK)
+OGRErr OGRHanaTableLayer::CreateField(const OGRFieldDefn *srsField,
+                                      int approxOK)
 {
     if (!updateMode_)
     {
@@ -1543,7 +1544,8 @@ OGRErr OGRHanaTableLayer::CreateField(OGRFieldDefn *srsField, int approxOK)
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn *geomField, int)
+OGRErr OGRHanaTableLayer::CreateGeomField(const OGRGeomFieldDefn *geomField,
+                                          int)
 {
     if (!updateMode_)
     {
@@ -1612,7 +1614,7 @@ OGRErr OGRHanaTableLayer::CreateGeomField(OGRGeomFieldDefn *geomField, int)
         return OGRERR_FAILURE;
     }
 
-    auto newGeomField = cpl::make_unique<OGRGeomFieldDefn>(
+    auto newGeomField = std::make_unique<OGRGeomFieldDefn>(
         clmName.c_str(), geomField->GetType());
     newGeomField->SetNullable(geomField->IsNullable());
     newGeomField->SetSpatialRef(geomField->GetSpatialRef());

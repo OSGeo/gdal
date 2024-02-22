@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef MINIDRIVER_MRF_H_INCLUDED
+#define MINIDRIVER_MRF_H_INCLUDED
+
 #include <vector>
 
 namespace WMSMiniDriver_MRF_ns
@@ -130,3 +133,5 @@ class WMSMiniDriver_MRF : public WMSMiniDriver
     // Matching pagecounts
     std::vector<WMSMiniDriver_MRF_ns::ILSize> pages;
 };
+
+#endif /* MINIDRIVER_MRF_H_INCLUDED */

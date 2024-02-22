@@ -64,7 +64,7 @@ OGRJSONFGStreamingParser::~OGRJSONFGStreamingParser() = default;
 std::unique_ptr<OGRJSONFGStreamingParser> OGRJSONFGStreamingParser::Clone()
 {
     auto poRet =
-        cpl::make_unique<OGRJSONFGStreamingParser>(m_oReader, IsFirstPass());
+        std::make_unique<OGRJSONFGStreamingParser>(m_oReader, IsFirstPass());
     poRet->m_osRequestedLayer = m_osRequestedLayer;
     return poRet;
 }
@@ -86,7 +86,7 @@ OGRJSONFGStreamingParser::GetNextFeature()
     }
     m_nCurFeatureIdx = 0;
     m_apoFeatures.clear();
-    return std::pair<std::unique_ptr<OGRFeature>, OGRLayer *>(nullptr, nullptr);
+    return std::pair(nullptr, nullptr);
 }
 
 /************************************************************************/
@@ -109,8 +109,7 @@ void OGRJSONFGStreamingParser::GotFeature(json_object *poObj, bool bFirstPass,
         {
             CPLAssert(poStreamedLayer);
             m_apoFeatures.emplace_back(
-                std::pair<std::unique_ptr<OGRFeature>, OGRLayer *>(
-                    std::move(poFeat), poStreamedLayer));
+                std::pair(std::move(poFeat), poStreamedLayer));
         }
     }
 }

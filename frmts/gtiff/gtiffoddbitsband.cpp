@@ -902,9 +902,7 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
     }
 
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     CacheMaskForBlock(nBlockXOff, nBlockYOff);
-#endif
 
     return CE_None;
 }

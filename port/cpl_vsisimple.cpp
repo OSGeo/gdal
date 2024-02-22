@@ -105,7 +105,7 @@ extern "C" GIntBig CPL_DLL CPL_STDCALL GDALGetCacheUsed64(void);
 #endif
 
 /* Unix or Windows NT/2000/XP */
-#if !defined(WIN32)
+#if !defined(_WIN32)
 #include <unistd.h>
 #else
 #include <io.h>
@@ -120,7 +120,7 @@ extern "C" GIntBig CPL_DLL CPL_STDCALL GDALGetCacheUsed64(void);
 FILE *VSIFOpen(const char *pszFilename, const char *pszAccess)
 
 {
-#if defined(WIN32)
+#if defined(_WIN32)
     FILE *fp = nullptr;
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
@@ -1266,7 +1266,7 @@ char *VSIStrdupVerbose(const char *pszStr, const char *pszFile, int nLine)
 int VSIStat(const char *pszFilename, VSIStatBuf *pStatBuf)
 
 {
-#if defined(WIN32)
+#if defined(_WIN32)
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszFilename =
@@ -1309,8 +1309,21 @@ const char *VSICTime(unsigned long nTime)
 
 {
     time_t tTime = static_cast<time_t>(nTime);
-
+#if HAVE_CTIME_R
+    // Cf https://linux.die.net/man/3/ctime_r:
+    // "The reentrant version ctime_r() does the same, but stores the string in
+    // a user-supplied buffer which should have room for at least 26 bytes"
+    char buffer[26];
+    char *ret = ctime_r(&tTime, buffer);
+    return ret ? CPLSPrintf("%s", ret) : nullptr;
+#elif defined(_WIN32)
+    char buffer[26];
+    return ctime_s(buffer, sizeof(buffer), &tTime) == 0
+               ? CPLSPrintf("%s", buffer)
+               : nullptr;
+#else
     return reinterpret_cast<const char *>(ctime(&tTime));
+#endif
 }
 
 /************************************************************************/
@@ -1322,12 +1335,14 @@ struct tm *VSIGMTime(const time_t *pnTime, struct tm *poBrokenTime)
 
 #if HAVE_GMTIME_R
     gmtime_r(pnTime, poBrokenTime);
+    return poBrokenTime;
+#elif defined(_WIN32)
+    return gmtime_s(poBrokenTime, pnTime) == 0 ? poBrokenTime : nullptr;
 #else
     struct tm *poTime = gmtime(pnTime);
     memcpy(poBrokenTime, poTime, sizeof(tm));
-#endif
-
     return poBrokenTime;
+#endif
 }
 
 /************************************************************************/
@@ -1339,12 +1354,14 @@ struct tm *VSILocalTime(const time_t *pnTime, struct tm *poBrokenTime)
 
 #if HAVE_LOCALTIME_R
     localtime_r(pnTime, poBrokenTime);
+    return poBrokenTime;
+#elif defined(_WIN32)
+    return localtime_s(poBrokenTime, pnTime) == 0 ? poBrokenTime : nullptr;
 #else
     struct tm *poTime = localtime(pnTime);
     memcpy(poBrokenTime, poTime, sizeof(tm));
-#endif
-
     return poBrokenTime;
+#endif
 }
 
 /************************************************************************/
@@ -1458,6 +1475,9 @@ GIntBig CPLGetPhysicalRAM(void)
         {
             // cgroup V1
             // Read memory.limit_in_byte in the whole szGroupName hierarchy
+            // Make sure to end up by reading
+            // /sys/fs/cgroup/memory/memory.limit_in_bytes itself, for
+            // scenarios like https://github.com/OSGeo/gdal/issues/8968
             while (true)
             {
                 snprintf(szFilename, sizeof(szFilename),
@@ -1477,7 +1497,7 @@ GIntBig CPLGetPhysicalRAM(void)
                         std::min(static_cast<GUIntBig>(nVal), nLimit));
                 }
                 char *pszLastSlash = strrchr(szGroupName, '/');
-                if (!pszLastSlash || pszLastSlash == szGroupName)
+                if (!pszLastSlash)
                     break;
                 *pszLastSlash = '\0';
             }
@@ -1539,7 +1559,7 @@ GIntBig CPLGetPhysicalRAM(void)
     return nPhysMem;
 }
 
-#elif defined(WIN32)
+#elif defined(_WIN32)
 
 // GlobalMemoryStatusEx requires _WIN32_WINNT >= 0x0500.
 #ifndef _WIN32_WINNT

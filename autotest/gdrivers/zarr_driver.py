@@ -2506,27 +2506,24 @@ def test_zarr_read_fill_value_complex_datatype_v3(data_type, fill_value, nodata)
 
 
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
-def test_zarr_create_array_bad_compressor(format):
+def test_zarr_create_array_bad_compressor(tmp_vsimem, format):
 
-    try:
-        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-            "/vsimem/test.zarr", options=["FORMAT=" + format]
-        )
-        assert ds is not None
-        rg = ds.GetRootGroup()
-        assert rg
-        with gdal.quiet_errors():
-            assert (
-                rg.CreateMDArray(
-                    "test",
-                    [],
-                    gdal.ExtendedDataType.Create(gdal.GDT_Byte),
-                    ["COMPRESS=invalid"],
-                )
-                is None
+    ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+        tmp_vsimem / "test.zarr", options=["FORMAT=" + format]
+    )
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    assert rg
+    with gdal.quiet_errors():
+        assert (
+            rg.CreateMDArray(
+                "test",
+                [],
+                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                ["COMPRESS=invalid"],
             )
-    finally:
-        gdal.RmdirRecursive("/vsimem/test.zarr")
+            is None
+        )
 
 
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
@@ -5445,3 +5442,31 @@ def test_zarr_multidim_compute_statistics_update_metadata():
     finally:
         if gdal.VSIStatL(filename):
             gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_cf1():
+
+    ds = gdal.Open("data/zarr/byte_cf1.zarr")
+    assert ds
+    assert (
+        ds.GetSpatialRef().ExportToProj4()
+        == "+proj=utm +zone=11 +ellps=clrk66 +units=m +no_defs"
+    )
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_cf1_zarrv3():
+
+    ds = gdal.Open("data/zarr/byte_cf1.zr3")
+    assert ds
+    assert (
+        ds.GetSpatialRef().ExportToProj4()
+        == "+proj=utm +zone=11 +ellps=clrk66 +units=m +no_defs"
+    )

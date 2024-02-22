@@ -1209,7 +1209,7 @@ def ogrmerge(
 def main(argv=sys.argv):
     argv = ogr.GeneralCmdLineProcessor(argv)
     if argv is None:
-        return 1
+        return 0
     return process(argv[1:])
 
 

@@ -1104,11 +1104,10 @@ class GeometryInsertTransformer : public OGRCoordinateTransformation
         return nullptr;
     }
 
-    int Transform(int nCount, double *x, double *y, double *z = nullptr,
+    int Transform(size_t nCount, double *x, double *y, double *z = nullptr,
                   double * /*t*/ = nullptr, int *pabSuccess = nullptr) override
     {
-        int i;
-        for (i = 0; i < nCount; i++)
+        for (size_t i = 0; i < nCount; i++)
         {
             double dfXNew, dfYNew;
 

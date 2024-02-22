@@ -31,6 +31,7 @@
 ###############################################################################
 
 import collections
+import json
 import shutil
 import struct
 
@@ -663,6 +664,36 @@ def test_gdalwarp_lib_32():
     ), "Wrong raster dimensions : %d x %d" % (ds.RasterXSize, ds.RasterYSize)
 
     ds = None
+
+
+###############################################################################
+# Test -tap, -tr and -te
+
+
+def test_gdalwarp_lib_tap_tr_te(tmp_vsimem):
+
+    src_filename = str(tmp_vsimem / "src.tif")
+    src_ds = gdal.GetDriverByName("GTiff").Create(
+        src_filename, 10980, 10980, 1, options=["SPARSE_OK=YES"]
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([600000, 10, 0, 5700000, 0, -10])
+
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="VRT",
+        targetAlignedPixels=True,
+        xRes=10,
+        yRes=10,
+        outputBounds=[599800.0, 5590200.0, 709800.0, 5700000.0],
+    )
+    assert ds is not None
+    assert ds.GetGeoTransform() == pytest.approx(
+        (599800.0, 10.0, 0.0, 5700000.0, 0.0, -10.0)
+    )
 
 
 ###############################################################################
@@ -1766,7 +1797,6 @@ def test_gdalwarp_lib_134(tmp_vsimem):
 
 
 @pytest.fixture()
-@pytest.mark.require_driver("GTX")
 def gdalwarp_135_grid_gtx(tmp_path):
 
     grid_gtx = str(tmp_path / "grid.gtx")
@@ -1784,7 +1814,6 @@ def gdalwarp_135_grid_gtx(tmp_path):
 
 
 @pytest.fixture()
-@pytest.mark.require_driver("GTX")
 def gdalwarp_135_grid2_gtx(tmp_path):
 
     grid2_gtx = str(tmp_path / "grid2.gtx")
@@ -1934,7 +1963,6 @@ def test_gdalwarp_lib_135f(gdalwarp_135_src_ds, gdalwarp_135_grid_gtx):
     assert data == 100, "Bad value"
 
 
-@pytest.mark.require_proj(6, 3)
 @pytest.mark.require_driver("GTX")
 def test_gdalwarp_lib_135g(
     gdalwarp_135_src_ds, gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx
@@ -1952,7 +1980,6 @@ def test_gdalwarp_lib_135g(
     assert data == 115, "Bad value"
 
 
-@pytest.mark.require_proj(6, 3)
 @pytest.mark.require_driver("GTX")
 def test_gdalwarp_lib_135h(gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx):
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
@@ -1972,7 +1999,6 @@ def test_gdalwarp_lib_135h(gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx):
     assert data == pytest.approx(115 / (1200.0 / 3937)), "Bad value"
 
 
-@pytest.mark.require_proj(6, 3)
 @pytest.mark.require_driver("GTX")
 def test_gdalwarp_lib_135i(
     gdalwarp_135_src_ds, gdalwarp_135_grid_gtx, gdalwarp_135_grid2_gtx, tmp_path
@@ -2656,6 +2682,41 @@ def test_gdalwarp_lib_bug_4326_to_3857():
 
 
 ###############################################################################
+# Test warping full world from EPSG:4326 to EPSG:3857
+
+
+def test_gdalwarp_lib_full_world_4326_to_3857():
+    class MyHandler:
+        def __init__(self):
+            self.warning_raised = False
+
+        def callback(self, err_type, err_no, err_msg):
+            if err_type == gdal.CE_Warning and "Clamping output bounds to" in err_msg:
+                self.warning_raised = True
+
+    my_error_handler = MyHandler()
+    with gdaltest.error_handler(my_error_handler.callback):
+        ds = gdal.Warp(
+            "",
+            "../gdrivers/data/small_world.tif",
+            options="-f MEM -t_srs EPSG:3857",
+        )
+    assert my_error_handler.warning_raised
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            -20037508.342789244,
+            103286.12547829507,
+            0.0,
+            20037508.342789248,
+            0.0,
+            -103286.12547829509,
+        )
+    )
+    assert ds.RasterXSize == 388
+    assert ds.RasterYSize == 388
+
+
+###############################################################################
 # Test warping of single source to COG
 
 
@@ -2693,6 +2754,55 @@ def test_gdalwarp_lib_to_cog_reprojection_options(tmp_vsimem):
     assert ds.GetRasterBand(2).Checksum() == 4415
     ds = None
     gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test warping of single source to COG with reprojection options and -te
+
+
+def test_gdalwarp_lib_to_cog_reprojection_options_and_te(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "cog.tif"
+    ds = gdal.Warp(
+        tmpfilename,
+        "../gcore/data/byte.tif",
+        options="-f COG -co TILING_SCHEME=GoogleMapsCompatible -te -13110479.091 4011415.244 -13090911.212 4030983.124",
+    )
+    assert ds.GetRasterBand(1).Checksum() != 0
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test warping of single source to COG with reprojection options and conflicting
+# -t_srs
+
+
+def test_gdalwarp_lib_to_cog_reprojection_options_and_conflicting_t_srs(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "cog.tif"
+    with pytest.raises(Exception):
+        gdal.Warp(
+            tmpfilename,
+            "../gcore/data/byte.tif",
+            options="-f COG -co TILING_SCHEME=GoogleMapsCompatible -t_srs EPSG:4326",
+        )
+
+
+###############################################################################
+# Test warping of single source to COG with reprojection options and conflicting
+# -t_srs
+
+
+def test_gdalwarp_lib_to_cog_reprojection_options_te_and_conflicting_t_srs(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "cog.tif"
+    with pytest.raises(Exception):
+        gdal.Warp(
+            tmpfilename,
+            "../gcore/data/byte.tif",
+            options="-f COG -co TILING_SCHEME=GoogleMapsCompatible -te -13110479.091 4011415.244 -13090911.212 4030983.124 -t_srs EPSG:4326",
+        )
 
 
 ###############################################################################
@@ -2889,6 +2999,94 @@ def test_gdalwarp_lib_cutline_zero_width_sliver(tmp_vsimem):
     srs.ImportFromEPSG(32615)
     src_ds.SetSpatialRef(srs)
     src_ds.SetGeoTransform([690129, 30, 0, 3723432, 0, -30])
+    ds = gdal.Warp(
+        "", src_ds, format="MEM", cutlineDSName=tmp_vsimem / "cutline.geojson"
+    )
+    assert ds is not None
+
+
+###############################################################################
+# Test cutline with zero-width sliver
+
+
+def test_gdalwarp_lib_cutline_zero_width_sliver_remove_empty_polygon(tmp_vsimem):
+
+    geojson = {
+        "type": "MultiPolygon",
+        "coordinates": [
+            [
+                [
+                    [-101.43346, 36.91886],
+                    [-101.43337, 36.91864],
+                    [-101.43332, 36.91865],
+                    [-101.43342, 36.91888],
+                    [-101.43346, 36.91886],
+                ]
+            ],
+            # The below polygon has a zero-width sliver
+            [
+                [
+                    [-101.4311, 36.91909],
+                    [-101.43106, 36.91913],
+                    [-101.43111, 36.91908],
+                    [-101.4311, 36.91909],
+                ]
+            ],
+        ],
+    }
+    gdal.FileFromMemBuffer(tmp_vsimem / "cutline.geojson", json.dumps(geojson))
+    src_ds = gdal.GetDriverByName("MEM").Create("", 100, 100)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([-101.5, 0.1, 0, 37, 0, -0.1])
+    ds = gdal.Warp(
+        "", src_ds, format="MEM", cutlineDSName=tmp_vsimem / "cutline.geojson"
+    )
+    assert ds is not None
+
+
+###############################################################################
+# Test cutline with zero-width sliver
+
+
+def test_gdalwarp_lib_cutline_zero_width_sliver_remove_empty_inner_ring(tmp_vsimem):
+
+    geojson = {
+        "type": "MultiPolygon",
+        "coordinates": [
+            [
+                [
+                    [-101.5, 37],
+                    [-101.4, 37],
+                    [-101.4, 36.9],
+                    [-101.5, 36.9],
+                    [-101.5, 37],
+                ],
+                # The below ring has a zero-width sliver
+                [
+                    [-101.4311, 36.91909],
+                    [-101.43106, 36.91913],
+                    [-101.43111, 36.91908],
+                    [-101.4311, 36.91909],
+                ],
+                # This one is OK
+                [
+                    [-101.49, 36.95],
+                    [-101.48, 36.95],
+                    [-101.48, 36.94],
+                    [-101.49, 36.94],
+                    [-101.49, 36.95],
+                ],
+            ]
+        ],
+    }
+    gdal.FileFromMemBuffer(tmp_vsimem / "cutline.geojson", json.dumps(geojson))
+    src_ds = gdal.GetDriverByName("MEM").Create("", 100, 100)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([-101.6, 0.1, 0, 37.1, 0, -0.1])
     ds = gdal.Warp(
         "", src_ds, format="MEM", cutlineDSName=tmp_vsimem / "cutline.geojson"
     )
@@ -3219,8 +3417,6 @@ def test_gdalwarp_lib_epsg_4326_to_esri_53037():
 @pytest.mark.parametrize(
     "resampleAlg", ["average", "mode", "min", "max", "med", "q1", "q3", "sum", "rms"]
 )
-# 6.3.1 might not be the lowest bound, but 6.0.0 definitely doesn't work for that test
-@pytest.mark.require_proj(6, 3, 1)
 def test_gdalwarp_lib_epsg_4326_to_esri_102020(resampleAlg):
 
     # Scenario of https://github.com/OSGeo/gdal/issues/6155
@@ -3537,7 +3733,6 @@ def test_gdalwarp_lib_preserve_non_square_pixels_if_no_reprojection():
 ###############################################################################
 
 
-@pytest.mark.require_proj(6, 3)
 def test_gdalwarp_lib_preserve_non_square_pixels_same_horizontal_crs():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 20, 10)
@@ -3717,3 +3912,124 @@ def test_gdalwarp_lib_dict_arguments():
     )
 
     assert opt == ["-wo", "SKIP_NOSOURCE=YES", "-wo", "NUM_THREADS=2"]
+
+
+###############################################################################
+# Test warping from long/lat to ortho
+
+
+def test_gdalwarp_lib_long_lat_to_ortho():
+
+    src_ds = gdal.Translate(
+        "", "../gdrivers/data/small_world.tif", options="-f VRT -outsize 10800 5400"
+    )
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="MEM",
+        width=2138,
+        height=2063,
+        outputBounds=[-6378137, 3178376, -3189246, 6356752],
+        dstSRS="+proj=ortho +datum=WGS84 +units=m +no_defs",
+    )
+    assert ds.GetRasterBand(1).ReadRaster()[2100 + 600 * 2138] != 0
+
+
+###############################################################################
+# Test warping from ortho to long/lat
+
+
+def test_gdalwarp_lib_ortho_to_long_lat():
+
+    src_ds = gdal.Warp(
+        "",
+        "../gdrivers/data/small_world.tif",
+        format="MEM",
+        dstSRS="+proj=ortho +datum=WGS84 +units=m +no_defs",
+    )
+
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="MEM",
+        dstSRS="EPSG:4326",
+        # The fact that we have srcNoData set is a key for the heuristics
+        # that detects edges of the projection domain
+        srcNodata=0,
+    )
+    gt = ds.GetGeoTransform()
+    assert gt[0] == pytest.approx(-90, abs=gt[1])
+    assert gt[0] + gt[1] * ds.RasterXSize == pytest.approx(90, abs=gt[1])
+    data1 = ds.GetRasterBand(1).ReadRaster()
+    data2 = ds.GetRasterBand(2).ReadRaster()
+    data3 = ds.GetRasterBand(3).ReadRaster()
+    for j in range(ds.RasterYSize):
+        assert (
+            max(
+                data1[j * ds.RasterXSize],
+                data2[j * ds.RasterXSize],
+                data3[j * ds.RasterXSize],
+            )
+            != 0
+        ), (
+            "line %d" % j
+        )
+
+    ds = gdal.Warp(
+        "",
+        src_ds,
+        format="MEM",
+        dstSRS="EPSG:4326",
+        resampleAlg=gdal.GRA_Cubic,
+        # The fact that we have srcNoData set is a key for the heuristics
+        # that detects edges of the projection domain
+        srcNodata=0,
+    )
+    data1 = ds.GetRasterBand(1).ReadRaster()
+    data2 = ds.GetRasterBand(2).ReadRaster()
+    data3 = ds.GetRasterBand(3).ReadRaster()
+    for j in range(ds.RasterYSize):
+        assert (
+            max(
+                data1[j * ds.RasterXSize],
+                data2[j * ds.RasterXSize],
+                data3[j * ds.RasterXSize],
+            )
+            != 0
+        ), (
+            "line %d" % j
+        )
+
+
+###############################################################################
+# Test warping to a projection that has no inverse
+# Note: this test will break if PROJ get support for inverse isea !
+
+
+@pytest.mark.require_proj(8, 0, 0)
+@gdaltest.enable_exceptions()
+def test_gdalwarp_lib_to_projection_without_inverse_method():
+
+    with pytest.raises(Exception, match="No inverse operation"):
+        gdal.Warp(
+            "",
+            "../gdrivers/data/byte.tif",
+            format="MEM",
+            dstSRS="+proj=isea +datum=WGS84 +no_defs",
+        )
+
+    with pytest.raises(Exception, match="No inverse operation"):
+        gdal.Warp(
+            "",
+            "../gdrivers/data/byte.tif",
+            format="MEM",
+            dstSRS="+proj=isea +datum=WGS84 +no_defs",
+            xRes=60,
+            yRes=60,
+            outputBounds=[
+                -14787944.0360835,
+                1216599.66706888,
+                -14787210.0893576,
+                1218250.2778614,
+            ],
+        )

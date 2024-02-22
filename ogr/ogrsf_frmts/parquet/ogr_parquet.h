@@ -180,7 +180,7 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
 {
     std::shared_ptr<arrow::dataset::Scanner> m_poScanner{};
 
-    void EstablishFeatureDefn(const std::shared_ptr<arrow::Schema> &schema);
+    void EstablishFeatureDefn();
 
   protected:
     std::string GetDriverUCName() const override
@@ -239,11 +239,14 @@ class OGRParquetDataset final : public OGRArrowDataset
 /*                        OGRParquetWriterLayer                         */
 /************************************************************************/
 
+class OGRParquetWriterDataset;
+
 class OGRParquetWriterLayer final : public OGRArrowWriterLayer
 {
     OGRParquetWriterLayer(const OGRParquetWriterLayer &) = delete;
     OGRParquetWriterLayer &operator=(const OGRParquetWriterLayer &) = delete;
 
+    OGRParquetWriterDataset *m_poDataset = nullptr;
     std::unique_ptr<parquet::arrow::FileWriter> m_poFileWriter{};
     std::shared_ptr<const arrow::KeyValueMetadata> m_poKeyValueMetadata{};
     bool m_bForceCounterClockwiseOrientation = false;
@@ -282,17 +285,19 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
 
   public:
     OGRParquetWriterLayer(
-        arrow::MemoryPool *poMemoryPool,
+        OGRParquetWriterDataset *poDS, arrow::MemoryPool *poMemoryPool,
         const std::shared_ptr<arrow::io::OutputStream> &poOutputStream,
         const char *pszLayerName);
 
     ~OGRParquetWriterLayer() override;
 
+    CPLErr SetMetadata(char **papszMetadata, const char *pszDomain) override;
+
     bool SetOptions(CSLConstList papszOptions,
                     const OGRSpatialReference *poSpatialRef,
                     OGRwkbGeometryType eGType);
 
-    OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                            int bApproxOK = TRUE) override;
 
     int TestCapability(const char *pszCap) override;
@@ -318,6 +323,9 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
         return OGRLayer::WriteArrowBatch(schema, array, papszOptions);
     }
 #else
+    bool IsArrowSchemaSupported(const struct ArrowSchema *schema,
+                                CSLConstList papszOptions,
+                                std::string &osErrorMsg) const override;
     bool WriteArrowBatch(const struct ArrowSchema *schema,
                          struct ArrowArray *array,
                          CSLConstList papszOptions = nullptr) override;
@@ -352,6 +360,11 @@ class OGRParquetWriterDataset final : public GDALPamDataset
     GetFieldDomain(const std::string &name) const override;
     bool AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
                         std::string &failureReason) override;
+
+    GDALMultiDomainMetadata &GetMultiDomainMetadata()
+    {
+        return oMDMD;
+    }
 
   protected:
     OGRLayer *ICreateLayer(const char *pszName,

@@ -288,7 +288,7 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
             const char *pszCandidate = papszCandidates[iCan];
             const char *pszLayerName = CPLGetBasename(pszCandidate);
             CPLString osLayerName(pszLayerName);
-#ifdef WIN32
+#ifdef _WIN32
             // On Windows, as filenames are case insensitive, a shapefile layer
             // can be made of foo.shp and FOO.DBF, so to detect unique layer
             // names, put them upper case in the unique set used for detection.
@@ -330,7 +330,7 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
             const char *pszCandidate = papszCandidates[iCan];
             const char *pszLayerName = CPLGetBasename(pszCandidate);
             CPLString osLayerName(pszLayerName);
-#ifdef WIN32
+#ifdef _WIN32
             osLayerName.toupper();
 #endif
 
@@ -1569,7 +1569,7 @@ bool OGRShapeDataSource::UncompressIfNeeded()
         }
     }
 
-    m_osTemporaryUnzipDir = osTemporaryDir;
+    m_osTemporaryUnzipDir = std::move(osTemporaryDir);
 
     for (int i = 0; i < nLayers; i++)
     {
@@ -1683,7 +1683,7 @@ bool OGRShapeDataSource::RecompressIfNeeded(
 
     const bool bOverwrite =
         CPLTestBool(CPLGetConfigOption("OGR_SHAPE_PACK_IN_PLACE",
-#ifdef WIN32
+#ifdef _WIN32
                                        "YES"
 #else
                                        "NO"

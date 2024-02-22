@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+%include RasterAttributeTable.i
+
 %rename (ExtendedDataTypeSubType) GDALExtendedDataTypeSubType;
 typedef enum {
     GEDTST_NONE = 0,
@@ -248,6 +250,12 @@ public:
 
   CPLErr Rename( const char* newName ) {
     return GDALGroupRename( self, newName ) ? CE_None : CE_Failure;
+  }
+
+%newobject SubsetDimensionFromSelection;
+  GDALGroupHS *SubsetDimensionFromSelection( const char *selection,
+                                             char **options = 0 ) {
+    return GDALGroupSubsetDimensionFromSelection(self, selection, options);
   }
 
 } /* extend */
@@ -1558,3 +1566,22 @@ public:
 } /* extend */
 }; /* GDALEDTComponentHS */
 
+
+#if defined(SWIGPYTHON)
+%apply (int object_list_count, GDALMDArrayHS **poObjects) {(int nArrays, GDALMDArrayHS **ahArrays)};
+%apply (int nUsages, GDALRATFieldUsage *paeUsages) {(int nUsages, GDALRATFieldUsage *paeUsages)};
+%newobject CreateRasterAttributeTableFromMDArrays;
+%inline %{
+GDALRasterAttributeTableShadow* CreateRasterAttributeTableFromMDArrays(
+    GDALRATTableType eTableType, int nArrays, GDALMDArrayHS **ahArrays,
+    int nUsages = 0, GDALRATFieldUsage *paeUsages = NULL )
+{
+  if( nUsages != 0 && nUsages != nArrays )
+  {
+      CPLError(CE_Failure, CPLE_AppDefined, "nUsages != nArrays");
+      return NULL;
+  }
+  return GDALCreateRasterAttributeTableFromMDArrays( eTableType, nArrays, (const GDALMDArrayH *)ahArrays, paeUsages );
+}
+%}
+#endif

@@ -91,7 +91,7 @@ class OGRGmtLayer final : public OGRLayer,
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
     int TestCapability(const char *) override;

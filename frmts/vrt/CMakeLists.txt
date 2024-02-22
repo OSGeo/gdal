@@ -15,9 +15,19 @@ add_gdal_driver(
           pixelfunctions.cpp
           vrtpansharpened.cpp
           vrtmultidim.cpp
+          gdaltileindexdataset.cpp
           STRONG_CXX_WFLAGS)
 gdal_standard_includes(gdal_vrt)
 target_include_directories(gdal_vrt PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw)
+
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalvrt.xsd
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/gdaltileindex.xsd
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
 
 if (GDAL_USE_GEOS)
   gdal_target_link_libraries(gdal_vrt PRIVATE ${GEOS_TARGET})
@@ -26,3 +36,6 @@ endif ()
 
 include(TargetPublicHeader)
 target_public_header(TARGET gdal HEADERS vrtdataset.h gdal_vrt.h)
+
+# because of use of GDALOpenVerticalShiftGrid
+set_property(SOURCE vrtwarped.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)

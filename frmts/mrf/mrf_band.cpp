@@ -144,6 +144,7 @@ static int isAllVal(GDALDataType gt, void *b, size_t bytecount, double ndv)
 }
 
 // Swap bytes in place, unconditional
+// cppcheck-suppress constParameterReference
 static void swab_buff(buf_mgr &src, const ILImage &img)
 {
     size_t i;
@@ -378,10 +379,20 @@ static void *ZstdCompBlock(buf_mgr &src, size_t extrasize, int c_level,
         dst = dbuff.data();
     }
 
-    size_t val =
-        ZSTD_compressCCtx(cctx, dst, size, src.buffer, src.size, c_level);
+    // Use the streaming interface, it's faster and better
+    // See discussion at https://github.com/facebook/zstd/issues/3729
+    ZSTD_outBuffer output = {dst, size, 0};
+    ZSTD_inBuffer input = {src.buffer, src.size, 0};
+    // Set level
+    ZSTD_CCtx_setParameter(cctx, ZSTD_c_compressionLevel, c_level);
+    // First, pass a continue flag, otherwise it will compress in one go
+    size_t val = ZSTD_compressStream2(cctx, &output, &input, ZSTD_e_continue);
+    // If it worked, pass the end flag to flush the buffer
+    if (val == 0)
+        val = ZSTD_compressStream2(cctx, &output, &input, ZSTD_e_end);
     if (ZSTD_isError(val))
         return nullptr;
+    val = output.pos;
 
     // If we didn't need the buffer, packed data is already in the user buffer
     if (dbuff.empty())
@@ -482,7 +493,7 @@ const char *MRFRasterBand::GetOptionValue(const char *opt,
 
 // Utility function, returns a value from a vector corresponding to the band
 // index or the first entry
-static double getBandValue(std::vector<double> &v, int idx)
+static double getBandValue(const std::vector<double> &v, int idx)
 {
     return (static_cast<int>(v.size()) > idx) ? v[idx] : v[0];
 }
@@ -510,7 +521,7 @@ CPLErr MRFRasterBand::SetNoDataValue(double val)
 
 double MRFRasterBand::GetNoDataValue(int *pbSuccess)
 {
-    std::vector<double> &v = poMRFDS->vNoData;
+    const std::vector<double> &v = poMRFDS->vNoData;
     if (v.empty())
         return GDALPamRasterBand::GetNoDataValue(pbSuccess);
     if (pbSuccess)
@@ -520,7 +531,7 @@ double MRFRasterBand::GetNoDataValue(int *pbSuccess)
 
 double MRFRasterBand::GetMinimum(int *pbSuccess)
 {
-    std::vector<double> &v = poMRFDS->vMin;
+    const std::vector<double> &v = poMRFDS->vMin;
     if (v.empty())
         return GDALPamRasterBand::GetMinimum(pbSuccess);
     if (pbSuccess)
@@ -530,7 +541,7 @@ double MRFRasterBand::GetMinimum(int *pbSuccess)
 
 double MRFRasterBand::GetMaximum(int *pbSuccess)
 {
-    std::vector<double> &v = poMRFDS->vMax;
+    const std::vector<double> &v = poMRFDS->vMax;
     if (v.empty())
         return GDALPamRasterBand::GetMaximum(pbSuccess);
     if (pbSuccess)
@@ -726,7 +737,7 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
         scl = 1;  // To allow for precision issues
 
     // Prepare parameters for RasterIO, they might be different from a full page
-    int vsz = GDALGetDataTypeSize(eDataType) / 8;
+    const GSpacing vsz = GDALGetDataTypeSizeBytes(eDataType);
     int Xoff = int(xblk * img.pagesize.x * scl + 0.5);
     int Yoff = int(yblk * img.pagesize.y * scl + 0.5);
     int readszx = int(img.pagesize.x * scl + 0.5);

@@ -2,7 +2,7 @@
 
 set -eu
 
-export CXXFLAGS="-std=c++17 -march=native -O2 -Wodr -flto-odr-type-merging -Werror"
+export CXXFLAGS="-march=native -O2 -Wodr -flto-odr-type-merging -Werror"
 export CFLAGS="-O2 -march=native -Werror"
 
 cmake ${GDAL_SOURCE_DIR:=..} \
@@ -21,3 +21,4 @@ unset CXXFLAGS
 unset CFLAGS
 
 make -j$(nproc)
+make -j$(nproc) install DESTDIR=/tmp/install-gdal

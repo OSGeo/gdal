@@ -136,13 +136,6 @@ if (GDAL_USE_WEBP)
   target_include_directories(gdal_GTIFF PRIVATE $<TARGET_PROPERTY:WEBP::WebP,INTERFACE_INCLUDE_DIRECTORIES>)
 endif ()
 
-if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-  set_property(SOURCE geotiff.cpp gt_wkt_srs.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
-  # These files has CPL_CVSID("$id$") which break ODR and UNITY_BUILD
-  set_property(SOURCE gt_citation.cpp gt_wkt_srs.cpp geotiff.cpp gt_jpeg_copy.cpp tifvsi.cpp gt_overview.cpp
-               PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
-endif ()
-
 if(GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL)
     add_executable(generate_quant_table_md5sum EXCLUDE_FROM_ALL generate_quant_table_md5sum.cpp)
     gdal_standard_includes(generate_quant_table_md5sum)

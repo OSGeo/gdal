@@ -137,7 +137,6 @@ class PNGDataset final : public GDALPamDataset
     virtual ~PNGDataset();
 
     static GDALDataset *Open(GDALOpenInfo *);
-    static int Identify(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
                                    char **papszOptions,

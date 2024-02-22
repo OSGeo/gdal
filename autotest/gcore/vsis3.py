@@ -73,6 +73,8 @@ general_s3_options = {
     "AWS_DEFAULT_REGION": "us-east-1",
     "AWS_DEFAULT_PROFILE": "",
     "AWS_PROFILE": "default",
+    "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": "",
+    "AWS_CONTAINER_CREDENTIALS_FULL_URI": "",
 }
 
 
@@ -3499,6 +3501,10 @@ def test_vsis3_sync_timestamp(aws_test_config, webserver_port):
 
 
 @gdaltest.enable_exceptions()
+@pytest.mark.skipif(
+    gdaltest.is_ci(),
+    reason="test skipped on CI due to it not being reliable (also fails randomly when run locally)",
+)
 def test_vsis3_sync_failed(aws_test_config, webserver_port):
 
     gdal.FileFromMemBuffer("/vsimem/testsync.txt", "foo")
@@ -3522,7 +3528,23 @@ def test_vsis3_sync_failed(aws_test_config, webserver_port):
         "/out/testsync.txt",
         200,
         {"Content-Length": "3", "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT"},
-        "xy",  # only returns 2 bytes instead of 3
+        "xy",  # only returns 2 bytes instead of 30, {}
+    )
+    handler.add(
+        "GET",
+        "/out/?delimiter=%2F",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <ListBucketResult>
+            <Prefix></Prefix>
+            <Contents>
+                <Key>testsync.txt</Key>
+                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                <Size>3</Size>
+            </Contents>
+        </ListBucketResult>
+        """,
     )
     with webserver.install_http_handler(handler):
         with pytest.raises(
@@ -3695,6 +3717,137 @@ def test_vsis3_sync_source_target_in_vsis3(aws_test_config, webserver_port):
             "/vsis3/out/",
             options=["x-amz-storage-class=GLACIER"],
         )
+
+
+###############################################################################
+# Test VSISync() with Windows special filenames (prefix with "\\?\")
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows specific test")
+def test_vsis3_sync_win32_special_filenames(aws_test_config, webserver_port, tmp_path):
+
+    options = ["SYNC_STRATEGY=OVERWRITE"]
+
+    tmp_path_str = str(tmp_path)
+    if "/" in tmp_path_str:
+        pytest.skip("Found forward slash in tmp_path")
+
+    prefix_path = "\\\\?\\" + tmp_path_str
+
+    # S3 to local
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/bucket/",
+        200,
+        {},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Marker/>
+                <IsTruncated>false</IsTruncated>
+                <Contents>
+                    <Key>subdir/</Key>
+                    <LastModified>2037-01-01T00:00:01.000Z</LastModified>
+                    <Size>0</Size>
+                </Contents>
+                <Contents>
+                    <Key>subdir/testsync.txt</Key>
+                    <LastModified>2037-01-01T00:00:01.000Z</LastModified>
+                    <Size>3</Size>
+                </Contents>
+            </ListBucketResult>
+        """,
+    )
+    handler.add(
+        "GET",
+        "/bucket/",
+        200,
+        {},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Marker/>
+                <IsTruncated>false</IsTruncated>
+                <Contents>
+                    <Key>subdir/</Key>
+                    <LastModified>2037-01-01T00:00:01.000Z</LastModified>
+                    <Size>0</Size>
+                </Contents>
+                <Contents>
+                    <Key>subdir/testsync.txt</Key>
+                    <LastModified>2037-01-01T00:00:01.000Z</LastModified>
+                    <Size>3</Size>
+                </Contents>
+            </ListBucketResult>
+        """,
+    )
+    handler.add(
+        "GET",
+        "/bucket/subdir/testsync.txt",
+        206,
+        {
+            "Content-Length": "3",
+            "Content-Range": "bytes 0-2/3",
+            "Last-Modified": "Mon, 01 Jan 2037 00:00:01 GMT",
+        },
+        "foo",
+    )
+    handler.add(
+        "GET",
+        "/bucket/?delimiter=%2F&prefix=subdir%2F",
+        200,
+        {},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix>subdir/</Prefix>
+                <Marker/>
+                <IsTruncated>false</IsTruncated>
+                <Contents>
+                    <Key>subdir/testsync.txt</Key>
+                    <LastModified>2037-01-01T00:00:01.000Z</LastModified>
+                    <Size>3</Size>
+                </Contents>
+            </ListBucketResult>
+        """,
+    )
+    handler.add(
+        "GET",
+        "/bucket/subdir/testsync.txt",
+        200,
+        {"Content-Length": "3", "Last-Modified": "Mon, 01 Jan 2037 00:00:01 GMT"},
+        "foo",
+    )
+    with webserver.install_http_handler(handler):
+        assert gdal.Sync("/vsis3/bucket/", prefix_path, options=options)
+
+    assert gdal.VSIStatL(prefix_path + "\\subdir\\testsync.txt") is not None
+
+    # Local to S3
+    gdal.VSICurlClearCache()
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/out/", 404)
+    handler.add("GET", "/out/", 404)
+    handler.add(
+        "GET",
+        "/out/?delimiter=%2F&max-keys=100",
+        200,
+        {},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Marker/>
+                <IsTruncated>false</IsTruncated>
+                <Contents>
+                </Contents>
+            </ListBucketResult>
+        """,
+    )
+    handler.add("PUT", "/out/subdir/", 200)
+    handler.add("PUT", "/out/subdir/testsync.txt", 200)
+    with webserver.install_http_handler(handler):
+        assert gdal.Sync(prefix_path + "\\", "/vsis3/out/", options=options)
 
 
 ###############################################################################
@@ -5002,6 +5155,55 @@ def test_vsis3_read_credentials_ec2_expiration(aws_test_config, webserver_port):
                 with gdal.quiet_errors():
                     f = open_for_read("/vsis3/s3_fake_bucket/bar")
         assert f is None
+
+
+###############################################################################
+# Read credentials from simulated instance with AWS_CONTAINER_CREDENTIALS_FULL_URI
+
+
+@pytest.mark.skipif(sys.platform not in ("linux", "win32"), reason="Incorrect platform")
+def test_vsis3_read_credentials_AWS_CONTAINER_CREDENTIALS_FULL_URI(
+    aws_test_config, webserver_port
+):
+    options = {
+        "CPL_AWS_CREDENTIALS_FILE": "",
+        "AWS_CONFIG_FILE": "",
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_ACCESS_KEY_ID": "",
+        # Disable hypervisor related check to test if we are really on EC2
+        "CPL_AWS_AUTODETECT_EC2": "NO",
+        "CPL_AWS_WEB_IDENTITY_ENABLE": "NO",
+        "AWS_CONTAINER_CREDENTIALS_FULL_URI": f"http://localhost:{webserver_port}/AWS_CONTAINER_CREDENTIALS_FULL_URI",
+    }
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/AWS_CONTAINER_CREDENTIALS_FULL_URI",
+        200,
+        {},
+        """{
+        "AccessKeyId": "AWS_ACCESS_KEY_ID",
+        "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+        "Expiration": "3000-01-01T00:00:00Z"
+        }""",
+    )
+
+    handler.add(
+        "GET",
+        "/s3_fake_bucket/resource",
+        custom_method=get_s3_fake_bucket_resource_method,
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            f = open_for_read("/vsis3/s3_fake_bucket/resource")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+
+    assert data == "foo"
 
 
 ###############################################################################

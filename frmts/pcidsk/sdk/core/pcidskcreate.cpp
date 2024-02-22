@@ -65,9 +65,9 @@ using namespace PCIDSK;
  */
 
 PCIDSKFile PCIDSK_DLL *
-PCIDSK::Create( std::string filename, int pixels, int lines,
+PCIDSK::Create( const std::string&  filename, int pixels, int lines,
                 int channel_count, eChanType *channel_types,
-                std::string options, const PCIDSKInterfaces *interfaces )
+                const std::string& oOrigOptions, const PCIDSKInterfaces *interfaces )
 
 {
     if( pixels < 0 || pixels > 99999999 ||
@@ -105,7 +105,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     int  tilesize = PCIDSK_DEFAULT_TILE_SIZE;
     std::string oLinkFilename;
 
-    const std::string oOrigOptions = options;
+    std::string options = oOrigOptions;
     UCaseStr( options );
     for(auto & c : options)
     {
@@ -685,8 +685,8 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
             interfaces->io->Close( band_io_handle );
 
             // Set the channel header information.
-            channel->SetChanInfo( relative_band_filename, 0, pixel_size,
-                                  pixel_size * pixels, true );
+            channel->SetChanInfo( std::move(relative_band_filename), 0, pixel_size,
+                                  static_cast<size_t>(pixel_size) * pixels, true );
         }
     }
 

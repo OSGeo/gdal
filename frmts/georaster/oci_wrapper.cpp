@@ -1433,7 +1433,8 @@ void OWUpperIfNoQuotes(char *pszText)
 
     for (size_t i = 0; i < nSize; i++)
     {
-        pszText[i] = static_cast<char>(toupper(pszText[i]));
+        pszText[i] =
+            static_cast<char>(toupper(static_cast<unsigned char>(pszText[i])));
     }
 }
 
@@ -1488,7 +1489,7 @@ CPLString OWParseSDO_GEOR_INIT(const char *pszInsert, int nField)
 
     for (pszIn = szUpcase; *pszIn != '\0'; pszIn++)
     {
-        *pszIn = (char)toupper(*pszIn);
+        *pszIn = (char)toupper(static_cast<unsigned char>(*pszIn));
     }
 
     char *pszStart = strstr(szUpcase, "SDO_GEOR.INIT");

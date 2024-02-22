@@ -48,8 +48,11 @@
 extern "C++"
 {
 #if !defined(DOXYGEN_SKIP)
+#include <cmath>
 #include <limits>
 #endif
+
+    class OGREnvelope3D;
 
     /**
      * Simple container for a bounding region (rectangle)
@@ -227,6 +230,12 @@ extern "C++"
 
         /** Assignment operator */
         OGREnvelope3D &operator=(const OGREnvelope3D &) = default;
+
+        /** Returns TRUE if MinZ and MaxZ are both valid numbers. */
+        bool Is3D() const
+        {
+            return std::isfinite(MinZ) && std::isfinite(MaxZ);
+        }
 
         /** Minimum Z value */
         double MinZ;
@@ -973,6 +982,9 @@ inline int OGR_GET_MS(float fSec)
 }
 #endif  // __cplusplus
 
+/** Option for OGRParseDate() to ask for lax checks on the input format */
+#define OGRPARSEDATE_OPTION_LAX 1
+
 int CPL_DLL OGRParseDate(const char *pszInput, OGRField *psOutput,
                          int nOptions);
 
@@ -990,6 +1002,8 @@ int CPL_DLL OGRParseDate(const char *pszInput, OGRField *psOutput,
                         */
 #define OLCFastGetExtent                                                       \
     "FastGetExtent" /**< Layer capability for fast extent retrieval */
+#define OLCFastGetExtent3D                                                     \
+    "FastGetExtent3D" /**< Layer capability for fast 3D extent retrieval */
 #define OLCCreateField                                                         \
     "CreateField" /**< Layer capability for field creation                     \
                    */

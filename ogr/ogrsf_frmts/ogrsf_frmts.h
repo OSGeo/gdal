@@ -37,6 +37,7 @@
 #include "gdal_priv.h"
 
 #include <memory>
+#include <deque>
 
 /**
  * \file ogrsf_frmts.h
@@ -108,7 +109,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     int m_iGeomFieldFilter;  // specify the index on which the spatial
                              // filter is active.
 
-    int FilterGeometry(OGRGeometry *);
+    int FilterGeometry(const OGRGeometry *);
     // int          FilterGeometry( OGRGeometry *, OGREnvelope*
     // psGeometryEnvelope);
     int InstallFilter(OGRGeometry *);
@@ -132,6 +133,9 @@ class CPL_DLL OGRLayer : public GDALMajorObject
         bool m_bArrowArrayStreamInProgress = false;
         bool m_bEOF = false;
         OGRLayer *m_poLayer = nullptr;
+        std::vector<GIntBig> m_anQueriedFIDs{};
+        size_t m_iQueriedFIDS = 0;
+        std::deque<std::unique_ptr<OGRFeature>> m_oFeatureQueue{};
     };
     std::shared_ptr<ArrowArrayStreamPrivateData>
         m_poSharedArrowArrayStreamPrivateData{};
@@ -157,7 +161,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     static struct ArrowSchema *
     CreateSchemaForWKBGeometryColumn(const OGRGeomFieldDefn *poFieldDefn,
-                                     const char *pszArrowFormat = "z");
+                                     const char *pszArrowFormat,
+                                     const char *pszExtensionName);
 
     virtual bool
     CanPostFilterArrowArray(const struct ArrowSchema *schema) const;
@@ -253,11 +258,15 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce = TRUE) CPL_WARN_UNUSED_RESULT;
 
+    virtual OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                               int bForce = TRUE) CPL_WARN_UNUSED_RESULT;
+
     virtual int TestCapability(const char *) = 0;
 
     virtual OGRErr Rename(const char *pszNewName) CPL_WARN_UNUSED_RESULT;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE);
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
+                               int bApproxOK = TRUE);
     virtual OGRErr DeleteField(int iField);
     virtual OGRErr ReorderFields(int *panMap);
     virtual OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
@@ -267,7 +276,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
                        const OGRGeomFieldDefn *poNewGeomFieldDefn,
                        int nFlagsIn);
 
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                                    int bApproxOK = TRUE);
 
     virtual OGRErr SyncToDisk();
@@ -618,6 +627,7 @@ CPL_C_START
 void OGRRegisterAllInternal();
 
 void CPL_DLL RegisterOGRFileGDB();
+void DeclareDeferredOGRFileGDBPlugin();
 void CPL_DLL RegisterOGRShape();
 void CPL_DLL RegisterOGRNTF();
 void CPL_DLL RegisterOGRSDTS();
@@ -626,15 +636,22 @@ void CPL_DLL RegisterOGRS57();
 void CPL_DLL RegisterOGRTAB();
 void CPL_DLL RegisterOGRMIF();
 void CPL_DLL RegisterOGROGDI();
+void DeclareDeferredOGROGDIPlugin();
 void CPL_DLL RegisterOGRODBC();
+void DeclareDeferredOGRODBCPlugin();
 void CPL_DLL RegisterOGRWAsP();
 void CPL_DLL RegisterOGRPG();
+void DeclareDeferredOGRPGPlugin();
 void CPL_DLL RegisterOGRMSSQLSpatial();
+void DeclareDeferredOGRMSSQLSpatialPlugin();
 void CPL_DLL RegisterOGRMySQL();
+void DeclareDeferredOGRMySQLPlugin();
 void CPL_DLL RegisterOGROCI();
+void DeclareDeferredOGROCIPlugin();
 void CPL_DLL RegisterOGRDGN();
 void CPL_DLL RegisterOGRGML();
 void CPL_DLL RegisterOGRLIBKML();
+void DeclareDeferredOGRLIBKMLPlugin();
 void CPL_DLL RegisterOGRKML();
 void CPL_DLL RegisterOGRFlatGeobuf();
 void CPL_DLL RegisterOGRGeoJSON();
@@ -652,15 +669,20 @@ void CPL_DLL RegisterOGRILI2();
 void CPL_DLL RegisterOGRPGeo();
 void CPL_DLL RegisterOGRDXF();
 void CPL_DLL RegisterOGRCAD();
+void DeclareDeferredOGRCADPlugin();
 void CPL_DLL RegisterOGRDWG();
 void CPL_DLL RegisterOGRDGNV8();
+void DeclareDeferredOGRDWGPlugin();
+void DeclareDeferredOGRDGNV8Plugin();
 void CPL_DLL RegisterOGRIDB();
+void DeclareDeferredOGRIDBPlugin();
 void CPL_DLL RegisterOGRGMT();
 void CPL_DLL RegisterOGRGPX();
 void CPL_DLL RegisterOGRGeoconcept();
 void CPL_DLL RegisterOGRNAS();
 void CPL_DLL RegisterOGRGeoRSS();
 void CPL_DLL RegisterOGRVFK();
+void DeclareDeferredOGRVFKPlugin();
 void CPL_DLL RegisterOGRPGDump();
 void CPL_DLL RegisterOGROSM();
 void CPL_DLL RegisterOGRGPSBabel();
@@ -668,32 +690,43 @@ void CPL_DLL RegisterOGRPDS();
 void CPL_DLL RegisterOGRWFS();
 void CPL_DLL RegisterOGROAPIF();
 void CPL_DLL RegisterOGRSOSI();
+void DeclareDeferredOGRSOSIPlugin();
 void CPL_DLL RegisterOGREDIGEO();
 void CPL_DLL RegisterOGRSVG();
 void CPL_DLL RegisterOGRIdrisi();
 void CPL_DLL RegisterOGRXLS();
+void DeclareDeferredOGRXLSPlugin();
 void CPL_DLL RegisterOGRODS();
 void CPL_DLL RegisterOGRXLSX();
 void CPL_DLL RegisterOGRElastic();
+void DeclareDeferredOGRElasticPlugin();
 void CPL_DLL RegisterOGRGeoPackage();
 void CPL_DLL RegisterOGRCarto();
+void DeclareDeferredOGRCartoPlugin();
 void CPL_DLL RegisterOGRAmigoCloud();
 void CPL_DLL RegisterOGRSXF();
 void CPL_DLL RegisterOGROpenFileGDB();
+void DeclareDeferredOGROpenFileGDBPlugin();
 void CPL_DLL RegisterOGRSelafin();
 void CPL_DLL RegisterOGRJML();
 void CPL_DLL RegisterOGRPLSCENES();
+void DeclareDeferredOGRPLSCENESPlugin();
 void CPL_DLL RegisterOGRCSW();
 void CPL_DLL RegisterOGRMongoDBv3();
+void DeclareDeferredOGRMongoDBv3Plugin();
 void CPL_DLL RegisterOGRVDV();
 void CPL_DLL RegisterOGRGMLAS();
+void DeclareDeferredOGRGMLASPlugin();
 void CPL_DLL RegisterOGRMVT();
 void CPL_DLL RegisterOGRNGW();
 void CPL_DLL RegisterOGRMapML();
 void CPL_DLL RegisterOGRLVBAG();
 void CPL_DLL RegisterOGRHANA();
+void DeclareDeferredOGRHANAPlugin();
 void CPL_DLL RegisterOGRParquet();
+void DeclareDeferredOGRParquetPlugin();
 void CPL_DLL RegisterOGRArrow();
+void DeclareDeferredOGRArrowPlugin();
 void CPL_DLL RegisterOGRGTFS();
 void CPL_DLL RegisterOGRPMTiles();
 void CPL_DLL RegisterOGRJSONFG();

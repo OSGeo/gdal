@@ -40,10 +40,6 @@ OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() : bDSUpdate(false)
     papoLayers = nullptr;
     nLayers = 0;
 
-    nKnownSRID = 0;
-    panSRID = nullptr;
-    papoSRS = nullptr;
-
     poLayerInCopyMode = nullptr;
 
     nGeometryFormat = MSSQLGEOMETRY_NATIVE;
@@ -90,13 +86,6 @@ OGRMSSQLSpatialDataSource::~OGRMSSQLSpatialDataSource()
     CPLFree(pszName);
     CPLFree(pszCatalog);
 
-    for (int i = 0; i < nKnownSRID; i++)
-    {
-        if (papoSRS[i] != nullptr)
-            papoSRS[i]->Release();
-    }
-    CPLFree(panSRID);
-    CPLFree(papoSRS);
     CPLFree(pszConnection);
 }
 /************************************************************************/
@@ -1361,7 +1350,8 @@ char *OGRMSSQLSpatialDataSource::LaunderName(const char *pszSrcName)
 
     for (i = 0; pszSafeName[i] != '\0'; i++)
     {
-        pszSafeName[i] = (char)tolower(pszSafeName[i]);
+        pszSafeName[i] =
+            (char)tolower(static_cast<unsigned char>(pszSafeName[i]));
         if (pszSafeName[i] == '-' || pszSafeName[i] == '#')
             pszSafeName[i] = '_';
     }
@@ -1444,17 +1434,13 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      First, we look through our SRID cache, is it there?             */
     /* -------------------------------------------------------------------- */
-    int i;
-
-    for (i = 0; i < nKnownSRID; i++)
+    auto oIter = m_oSRSCache.find(nId);
+    if (oIter != m_oSRSCache.end())
     {
-        if (panSRID[i] == nId)
-            return papoSRS[i];
+        return oIter->second.get();
     }
 
     EndCopy();
-
-    OGRSpatialReference *poSRS = nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Try looking up in spatial_ref_sys table                         */
@@ -1469,15 +1455,12 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS(int nId)
         {
             if (oStmt.GetColData(0))
             {
-                poSRS = new OGRSpatialReference();
+                auto poSRS = std::unique_ptr<OGRSpatialReference,
+                                             OGRSpatialReferenceReleaser>(
+                    new OGRSpatialReference());
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 const char *pszWKT = oStmt.GetColData(0);
-                if (poSRS->importFromWkt(pszWKT) != OGRERR_NONE)
-                {
-                    delete poSRS;
-                    poSRS = nullptr;
-                }
-                else
+                if (poSRS->importFromWkt(pszWKT) == OGRERR_NONE)
                 {
                     const char *pszAuthorityName =
                         poSRS->GetAuthorityName(nullptr);
@@ -1490,6 +1473,8 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS(int nId)
                         poSRS->Clear();
                         poSRS->importFromEPSG(nCode);
                     }
+
+                    return AddSRIDToCache(nId, std::move(poSRS));
                 }
             }
         }
@@ -1498,31 +1483,34 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      Try looking up the EPSG list                                    */
     /* -------------------------------------------------------------------- */
-    if (!poSRS)
+    auto poSRS =
+        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>(
+            new OGRSpatialReference());
+    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    if (poSRS->importFromEPSG(nId) == OGRERR_NONE)
     {
-        poSRS = new OGRSpatialReference();
-        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        if (poSRS->importFromEPSG(nId) != OGRERR_NONE)
-        {
-            delete poSRS;
-            poSRS = nullptr;
-        }
+        return AddSRIDToCache(nId, std::move(poSRS));
     }
 
+    return nullptr;
+}
+
+/************************************************************************/
+/*                         AddSRIDToCache()                             */
+/*                                                                      */
+/*      Note: this will not add a reference on the poSRS object. Make   */
+/*      sure it is freshly created, or add a reference yourself if not. */
+/************************************************************************/
+
+OGRSpatialReference *OGRMSSQLSpatialDataSource::AddSRIDToCache(
+    int nId,
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> &&poSRS)
+{
     /* -------------------------------------------------------------------- */
     /*      Add to the cache.                                               */
     /* -------------------------------------------------------------------- */
-    if (poSRS)
-    {
-        panSRID = (int *)CPLRealloc(panSRID, sizeof(int) * (nKnownSRID + 1));
-        papoSRS = (OGRSpatialReference **)CPLRealloc(
-            papoSRS, sizeof(void *) * (nKnownSRID + 1));
-        panSRID[nKnownSRID] = nId;
-        papoSRS[nKnownSRID] = poSRS;
-        nKnownSRID++;
-    }
-
-    return poSRS;
+    auto oIter = m_oSRSCache.emplace(nId, std::move(poSRS)).first;
+    return oIter->second.get();
 }
 
 /************************************************************************/
@@ -1541,6 +1529,19 @@ int OGRMSSQLSpatialDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
     if (poSRS == nullptr)
         return 0;
+    /* -------------------------------------------------------------------- */
+    /*      First, we look through our SRID cache, is it there?             */
+    /* -------------------------------------------------------------------- */
+    for (const auto &pair : m_oSRSCache)
+    {
+        if (pair.second.get() == poSRS)
+            return pair.first;
+    }
+    for (const auto &pair : m_oSRSCache)
+    {
+        if (pair.second != nullptr && pair.second->IsSame(poSRS))
+            return pair.first;
+    }
 
     OGRSpatialReference oSRS(*poSRS);
     // cppcheck-suppress uselessAssignmentPtrArg
@@ -1590,6 +1591,14 @@ int OGRMSSQLSpatialDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
         if (oStmt.ExecuteSQL() && oStmt.Fetch() && oStmt.GetColData(0))
         {
             nSRSId = atoi(oStmt.GetColData(0));
+            if (nSRSId != 0)
+            {
+                std::unique_ptr<OGRSpatialReference,
+                                OGRSpatialReferenceReleaser>
+                    poCachedSRS(new OGRSpatialReference(oSRS));
+                poCachedSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                AddSRIDToCache(nSRSId, std::move(poCachedSRS));
+            }
             return nSRSId;
         }
     }

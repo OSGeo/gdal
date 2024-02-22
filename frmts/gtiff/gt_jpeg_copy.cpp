@@ -50,10 +50,8 @@
 static GDALDataset *GetUnderlyingDataset(GDALDataset *poSrcDS)
 {
     // Test if we can directly copy original JPEG content if available.
-    if (poSrcDS->GetDriver() != nullptr &&
-        poSrcDS->GetDriver() == GDALGetDriverByName("VRT"))
+    if (auto poVRTDS = dynamic_cast<VRTDataset *>(poSrcDS))
     {
-        VRTDataset *poVRTDS = cpl::down_cast<VRTDataset *>(poSrcDS);
         poSrcDS = poVRTDS->GetSingleSimpleSource();
     }
 
@@ -240,7 +238,10 @@ CPLErr GTIFF_DirectCopyFromJPEG(GDALDataset *poDS, GDALDataset *poSrcDS,
 
 #ifdef HAVE_LIBJPEG
 
-#include "vsidataio.h"
+#define jpeg_vsiio_src GTIFF_jpeg_vsiio_src
+#define jpeg_vsiio_dest GTIFF_jpeg_vsiio_dest
+#include "../jpeg/vsidataio.h"
+#include "../jpeg/vsidataio.cpp"
 
 #include <setjmp.h>
 

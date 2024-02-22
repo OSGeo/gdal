@@ -41,8 +41,6 @@ struct test_ogr_swq : public ::testing::Test
 {
 };
 
-}  // namespace
-
 TEST_F(test_ogr_swq, basic)
 {
     std::vector<swq_expr_node> nodes = {
@@ -59,8 +57,8 @@ TEST_F(test_ogr_swq, basic)
         swq_expr_node(SWQ_OR),
         swq_expr_node(SWQ_NOT),
         swq_expr_node(static_cast<OGRGeometry *>(nullptr)),
-        swq_expr_node(cpl::make_unique<OGRPoint>(1, 2).get()),
-        swq_expr_node(cpl::make_unique<OGRPoint>(1, 3).get()),
+        swq_expr_node(std::make_unique<OGRPoint>(1, 2).get()),
+        swq_expr_node(std::make_unique<OGRPoint>(1, 3).get()),
     };
     {
         auto node = swq_expr_node(SWQ_NOT);
@@ -203,3 +201,31 @@ INSTANTIATE_TEST_SUITE_P(
             osStr.pop_back();
         return osStr;
     });
+
+TEST_F(test_ogr_swq, select_unparse)
+{
+    {
+        swq_select select;
+        const char *pszSQL = "SELECT a FROM FOO";
+        EXPECT_EQ(select.preparse(pszSQL), CE_None);
+        char *ret = select.Unparse();
+        EXPECT_STREQ(ret, pszSQL);
+        CPLFree(ret);
+    }
+    {
+        swq_select select;
+        const char *pszSQL =
+            "SELECT DISTINCT a, \"a b\" AS renamed, AVG(x.a) AS avg, MIN(a), "
+            "MAX(\"a b\"), SUM(a), AVG(a), COUNT(a), COUNT(DISTINCT a) "
+            "FROM 'foo'.\"FOO BAR\" AS x "
+            "JOIN 'bar'.BAR AS y ON FOO.x = BAR.y "
+            "WHERE 1 ORDER BY a, \"a b\" DESC "
+            "LIMIT 1 OFFSET 2";
+        EXPECT_EQ(select.preparse(pszSQL), CE_None);
+        char *ret = select.Unparse();
+        EXPECT_STREQ(ret, pszSQL);
+        CPLFree(ret);
+    }
+}
+
+}  // namespace

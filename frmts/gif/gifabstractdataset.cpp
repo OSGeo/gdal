@@ -28,9 +28,6 @@
 
 #include "gifabstractdataset.h"
 
-constexpr int InterlacedOffset[] = {0, 4, 2, 1};
-constexpr int InterlacedJumps[] = {8, 8, 4, 2};
-
 /************************************************************************/
 /* ==================================================================== */
 /*                         GIFAbstractDataset                           */
@@ -262,23 +259,6 @@ const GDAL_GCP *GIFAbstractDataset::GetGCPs()
         return pasGCPList;
 
     return GDALPamDataset::GetGCPs();
-}
-
-/************************************************************************/
-/*                             Identify()                               */
-/************************************************************************/
-
-int GIFAbstractDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    if (poOpenInfo->nHeaderBytes < 8)
-        return FALSE;
-
-    if (!STARTS_WITH((const char *)poOpenInfo->pabyHeader, "GIF87a") &&
-        !STARTS_WITH((const char *)poOpenInfo->pabyHeader, "GIF89a"))
-        return FALSE;
-
-    return TRUE;
 }
 
 /************************************************************************/

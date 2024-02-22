@@ -40,6 +40,7 @@
  */
 
 #include "pngdataset.h"
+#include "pngdrivercore.h"
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"
@@ -155,7 +156,7 @@ CPLErr PNGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     const int nXSize = GetXSize();
     if (poGDS->fpImage == nullptr)
     {
-        memset(pImage, 0, nPixelSize * nXSize);
+        memset(pImage, 0, cpl::fits_on<int>(nPixelSize * nXSize));
         return CE_None;
     }
 
@@ -173,7 +174,7 @@ CPLErr PNGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     // Transfer between the working buffer and the caller's buffer.
     if (nPixelSize == nPixelOffset)
-        memcpy(pImage, pabyScanline, nPixelSize * nXSize);
+        memcpy(pImage, pabyScanline, cpl::fits_on<int>(nPixelSize * nXSize));
     else if (nPixelSize == 1)
     {
         for (int i = 0; i < nXSize; i++)
@@ -415,7 +416,7 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
 
     // We try to read the zlib compressed data into pData, if there is
     // enough room for that
-    size_t pDataSize = 0;
+    size_t nDataSize = 0;
     std::vector<GByte> abyCompressedData;  // keep in this scope
     GByte *pabyCompressedData = static_cast<GByte *>(pSingleBuffer);
     size_t nCompressedDataSize = 0;
@@ -424,14 +425,14 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
         if (nPixelSpace == nBands && nLineSpace == nPixelSpace * nRasterXSize &&
             (nBands == 1 || nBandSpace == 1))
         {
-            pDataSize =
+            nDataSize =
                 static_cast<size_t>(nRasterXSize) * nRasterYSize * nBands;
         }
         else if (nPixelSpace == 1 && nLineSpace == nRasterXSize &&
                  nBandSpace ==
                      static_cast<GSpacing>(nRasterXSize) * nRasterYSize)
         {
-            pDataSize =
+            nDataSize =
                 static_cast<size_t>(nRasterXSize) * nRasterYSize * nBands;
         }
     }
@@ -485,7 +486,7 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
                 }
             }
 
-            if (nCompressedDataSize + nChunkSize > pDataSize)
+            if (nCompressedDataSize + nChunkSize > nDataSize)
             {
                 const bool bVectorEmptyBefore = abyCompressedData.empty();
                 // unlikely situation: would mean that the zlib compressed
@@ -502,9 +503,12 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
                     bError = true;
                     break;
                 }
-                if (bVectorEmptyBefore && nCompressedDataSize > 0)
+                if (bVectorEmptyBefore && pSingleBuffer &&
+                    nCompressedDataSize > 0)
+                {
                     memcpy(pabyCompressedData, pSingleBuffer,
                            nCompressedDataSize);
+                }
             }
             VSIFReadL(pabyCompressedData + nCompressedDataSize, nChunkSize, 1,
                       fpImage);
@@ -1076,7 +1080,8 @@ CPLErr PNGDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     {
                         memcpy(&(reinterpret_cast<GByte *>(
                                    pData)[(y * nLineSpace)]),
-                               pabyScanline, nBandCount * nXSize);
+                               pabyScanline,
+                               cpl::fits_on<int>(nBandCount * nXSize));
                     }
                     else
                     {
@@ -1202,7 +1207,8 @@ CPLErr PNGRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         else if (nBlockYSize > 1)
         {
             void *apabyBuffers[4];
-            GDALRasterBlock *apoBlocks[4];
+            GDALRasterBlock *apoBlocks[4] = {nullptr, nullptr, nullptr,
+                                             nullptr};
             CPLErr eErr = CE_None;
             bool bNeedToUseDefaultCase = true;
             for (int i = 0; i < poGDS->nBands; ++i)
@@ -1212,7 +1218,6 @@ CPLErr PNGRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 {
                     bNeedToUseDefaultCase = false;
                     apabyBuffers[i] = pData;
-                    apoBlocks[i] = nullptr;
                 }
                 else
                 {
@@ -1375,8 +1380,8 @@ CPLErr PNGDataset::LoadInterlacedChunk(int iLine)
 
     if (pabyBuffer == nullptr)
     {
-        pabyBuffer = reinterpret_cast<GByte *>(VSI_MALLOC_VERBOSE(
-            nPixelOffset * GetRasterXSize() * nMaxChunkLines));
+        pabyBuffer = reinterpret_cast<GByte *>(VSI_MALLOC3_VERBOSE(
+            nPixelOffset, GetRasterXSize(), nMaxChunkLines));
 
         if (pabyBuffer == nullptr)
         {
@@ -1400,8 +1405,8 @@ CPLErr PNGDataset::LoadInterlacedChunk(int iLine)
 
     // Allocate and populate rows array. We create a row for each row in the
     // image but use our dummy line for rows not in the target window.
-    png_bytep dummy_row =
-        reinterpret_cast<png_bytep>(CPLMalloc(nPixelOffset * GetRasterXSize()));
+    png_bytep dummy_row = reinterpret_cast<png_bytep>(
+        CPLMalloc(cpl::fits_on<int>(nPixelOffset * GetRasterXSize())));
     png_bytep *png_rows = reinterpret_cast<png_bytep *>(
         CPLMalloc(sizeof(png_bytep) * GetRasterYSize()));
 
@@ -1462,7 +1467,7 @@ CPLErr PNGDataset::LoadScanline(int nLine)
     // Ensure we have space allocated for one scanline.
     if (pabyBuffer == nullptr)
         pabyBuffer = reinterpret_cast<GByte *>(
-            CPLMalloc(nPixelOffset * GetRasterXSize()));
+            CPLMalloc(cpl::fits_on<int>(nPixelOffset * GetRasterXSize())));
 
     // Otherwise we just try to read the requested row. Do we need to rewind and
     // start over?
@@ -1644,12 +1649,7 @@ void PNGDataset::LoadICCProfile()
 
     png_charp pszProfileName;
     png_uint_32 nProfileLength;
-#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR > 4) ||                 \
-    PNG_LIBPNG_VER_MAJOR > 1
     png_bytep pProfileData;
-#else
-    png_charp pProfileData;
-#endif
     int nCompressionType;
 
     // Avoid setting the PAM dirty bit just for that.
@@ -1771,23 +1771,6 @@ const char *PNGDataset::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                              Identify()                              */
-/************************************************************************/
-
-int PNGDataset::Identify(GDALOpenInfo *poOpenInfo)
-
-{
-    if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes < 4)
-        return FALSE;
-
-    if (png_sig_cmp(poOpenInfo->pabyHeader, static_cast<png_size_t>(0),
-                    poOpenInfo->nHeaderBytes) != 0)
-        return FALSE;
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -1796,7 +1779,7 @@ GDALDataset *PNGDataset::Open(GDALOpenInfo *poOpenInfo)
 {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     // During fuzzing, do not use Identify to reject crazy content.
-    if (!Identify(poOpenInfo))
+    if (!PNGDriverIdentify(poOpenInfo))
         return nullptr;
 #else
     if (poOpenInfo->fpL == nullptr)
@@ -1827,18 +1810,11 @@ GDALDataset *PNGDataset::OpenStage2(GDALOpenInfo *poOpenInfo, PNGDataset *&poDS)
         png_create_read_struct(PNG_LIBPNG_VER_STRING, poDS, nullptr, nullptr);
     if (poDS->hPNG == nullptr)
     {
-#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR >= 2) ||                \
-    PNG_LIBPNG_VER_MAJOR > 1
         int version = static_cast<int>(png_access_version_number());
         CPLError(CE_Failure, CPLE_NotSupported,
                  "The PNG driver failed to access libpng with version '%s',"
                  " library is actually version '%d'.\n",
                  PNG_LIBPNG_VER_STRING, version);
-#else
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "The PNG driver failed to in png_create_read_struct().\n"
-                 "This may be due to version compatibility problems.");
-#endif
         delete poDS;
         return nullptr;
     }
@@ -2058,13 +2034,6 @@ char **PNGDataset::GetFileList()
 /*                          WriteMetadataAsText()                       */
 /************************************************************************/
 
-#if defined(PNG_iTXt_SUPPORTED) ||                                             \
-    ((PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR >= 4) ||               \
-     PNG_LIBPNG_VER_MAJOR > 1)
-#define HAVE_ITXT_SUPPORT
-#endif
-
-#ifdef HAVE_ITXT_SUPPORT
 static bool IsASCII(const char *pszStr)
 {
     for (int i = 0; pszStr[i] != '\0'; i++)
@@ -2074,16 +2043,9 @@ static bool IsASCII(const char *pszStr)
     }
     return true;
 }
-#endif
 
 static bool safe_png_set_text(jmp_buf sSetJmpContext, png_structp png_ptr,
-                              png_infop info_ptr,
-#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR >= 6) ||                \
-    PNG_LIBPNG_VER_MAJOR > 1
-                              png_const_textp text_ptr,
-#else
-                              png_textp text_ptr,
-#endif
+                              png_infop info_ptr, png_const_textp text_ptr,
                               int num_text)
 {
     if (setjmp(sSetJmpContext) != 0)
@@ -2103,11 +2065,11 @@ void PNGDataset::WriteMetadataAsText(jmp_buf sSetJmpContext, png_structp hPNG,
     sText.compression = PNG_TEXT_COMPRESSION_NONE;
     sText.key = (png_charp)pszKey;
     sText.text = (png_charp)pszValue;
-#ifdef HAVE_ITXT_SUPPORT
+
     // UTF-8 values should be written in iTXt, whereas TEXT should be LATIN-1.
     if (!IsASCII(pszValue) && CPLIsUTF8(pszValue, -1))
         sText.compression = PNG_ITXT_COMPRESSION_NONE;
-#endif
+
     safe_png_set_text(sSetJmpContext, hPNG, psPNGInfo, &sText, 1);
 }
 
@@ -2138,13 +2100,7 @@ static bool safe_png_set_compression_level(jmp_buf sSetJmpContext,
 }
 
 static bool safe_png_set_tRNS(jmp_buf sSetJmpContext, png_structp png_ptr,
-                              png_infop info_ptr,
-#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR > 4) ||                 \
-    PNG_LIBPNG_VER_MAJOR > 1
-                              png_const_bytep trans,
-#else
-                              png_bytep trans,
-#endif
+                              png_infop info_ptr, png_const_bytep trans,
                               int num_trans, png_color_16p trans_values)
 {
     if (setjmp(sSetJmpContext) != 0)
@@ -2156,20 +2112,8 @@ static bool safe_png_set_tRNS(jmp_buf sSetJmpContext, png_structp png_ptr,
 }
 
 static bool safe_png_set_iCCP(jmp_buf sSetJmpContext, png_structp png_ptr,
-                              png_infop info_ptr,
-#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR > 4) ||                 \
-    PNG_LIBPNG_VER_MAJOR > 1
-                              png_const_charp name,
-#else
-                              png_charp name,
-#endif
-                              int compression_type,
-#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR > 4) ||                 \
-    PNG_LIBPNG_VER_MAJOR > 1
-                              png_const_bytep profile,
-#else
-                              png_charp profile,
-#endif
+                              png_infop info_ptr, png_const_charp name,
+                              int compression_type, png_const_bytep profile,
                               png_uint_32 proflen)
 {
     if (setjmp(sSetJmpContext) != 0)
@@ -2181,13 +2125,7 @@ static bool safe_png_set_iCCP(jmp_buf sSetJmpContext, png_structp png_ptr,
 }
 
 static bool safe_png_set_PLTE(jmp_buf sSetJmpContext, png_structp png_ptr,
-                              png_infop info_ptr,
-#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR > 4) ||                 \
-    PNG_LIBPNG_VER_MAJOR > 1
-                              png_const_colorp palette,
-#else
-                              png_colorp palette,
-#endif
+                              png_infop info_ptr, png_const_colorp palette,
                               int num_palette)
 {
     if (setjmp(sSetJmpContext) != 0)
@@ -2491,20 +2429,8 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
             (pszICCProfileName != nullptr) ? pszICCProfileName : "ICC Profile";
 
         if (!safe_png_set_iCCP(sSetJmpContext, hPNG, psPNGInfo,
-#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR > 4) ||                 \
-    PNG_LIBPNG_VER_MAJOR > 1
-                               pszLocalICCProfileName,
-#else
-                               (png_charp)pszLocalICCProfileName,
-#endif
-                               0,
-#if (PNG_LIBPNG_VER_MAJOR == 1 && PNG_LIBPNG_VER_MINOR > 4) ||                 \
-    PNG_LIBPNG_VER_MAJOR > 1
-                               (png_const_bytep)pEmbedBuffer,
-#else
-                               (png_charp)pEmbedBuffer,
-#endif
-                               nEmbedLen))
+                               pszLocalICCProfileName, 0,
+                               (png_const_bytep)pEmbedBuffer, nEmbedLen))
         {
             CPLFree(pEmbedBuffer);
             VSIFCloseL(fpImage);
@@ -2751,8 +2677,8 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
     CPLErr eErr = CE_None;
     const int nWordSize = GDALGetDataTypeSize(eType) / 8;
 
-    GByte *pabyScanline =
-        reinterpret_cast<GByte *>(CPLMalloc(nBands * nXSize * nWordSize));
+    GByte *pabyScanline = reinterpret_cast<GByte *>(
+        CPLMalloc(cpl::fits_on<int>(nBands * nXSize * nWordSize)));
 
     for (int iLine = 0; iLine < nYSize && eErr == CE_None; iLine++)
     {
@@ -2760,8 +2686,9 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
 
         eErr = poSrcDS->RasterIO(
             GF_Read, 0, iLine, nXSize, 1, pabyScanline, nXSize, 1, eType,
-            nBands, nullptr, nBands * nWordSize, nBands * nXSize * nWordSize,
-            nWordSize, nullptr);
+            nBands, nullptr, static_cast<GSpacing>(nBands) * nWordSize,
+            static_cast<GSpacing>(nBands) * nXSize * nWordSize, nWordSize,
+            nullptr);
 
 #ifdef CPL_LSB
         if (nBitDepth == 16)
@@ -2922,56 +2849,14 @@ static void png_gdal_warning(CPL_UNUSED png_structp png_ptr,
 void GDALRegister_PNG()
 
 {
-    if (GDALGetDriverByName("PNG") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("PNG");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Portable Network Graphics");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/png.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "png");
-    poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/png");
-
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte UInt16");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>\n"
-        "   <Option name='WORLDFILE' type='boolean' description='Create world "
-        "file' default='FALSE'/>\n"
-        "   <Option name='ZLEVEL' type='int' description='DEFLATE compression "
-        "level 1-9' default='6'/>\n"
-        "   <Option name='SOURCE_ICC_PROFILE' type='string' description='ICC "
-        "Profile'/>\n"
-        "   <Option name='SOURCE_ICC_PROFILE_NAME' type='string' "
-        "description='ICC Profile name'/>\n"
-        "   <Option name='SOURCE_PRIMARIES_RED' type='string' "
-        "description='x,y,1.0 (xyY) red chromaticity'/>\n"
-        "   <Option name='SOURCE_PRIMARIES_GREEN' type='string' "
-        "description='x,y,1.0 (xyY) green chromaticity'/>\n"
-        "   <Option name='SOURCE_PRIMARIES_BLUE' type='string' "
-        "description='x,y,1.0 (xyY) blue chromaticity'/>\n"
-        "   <Option name='SOURCE_WHITEPOINT' type='string' "
-        "description='x,y,1.0 (xyY) whitepoint'/>\n"
-        "   <Option name='PNG_GAMMA' type='string' description='Gamma'/>\n"
-        "   <Option name='TITLE' type='string' description='Title'/>\n"
-        "   <Option name='DESCRIPTION' type='string' "
-        "description='Description'/>\n"
-        "   <Option name='COPYRIGHT' type='string' description='Copyright'/>\n"
-        "   <Option name='COMMENT' type='string' description='Comment'/>\n"
-        "   <Option name='WRITE_METADATA_AS_TEXT' type='boolean' "
-        "description='Whether to write source dataset metadata in TEXT chunks' "
-        "default='FALSE'/>\n"
-        "   <Option name='NBITS' type='int' description='Force output bit "
-        "depth: 1, 2 or 4'/>\n"
-        "</CreationOptionList>\n");
-
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    PNGDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = PNGDataset::Open;
     poDriver->pfnCreateCopy = PNGDataset::CreateCopy;
-    poDriver->pfnIdentify = PNGDataset::Identify;
 #ifdef SUPPORT_CREATE
     poDriver->pfnCreate = PNGDataset::Create;
 #endif

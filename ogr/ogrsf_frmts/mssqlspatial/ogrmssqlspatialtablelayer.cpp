@@ -711,7 +711,7 @@ OGRErr OGRMSSQLSpatialTableLayer::GetExtent(int iGeomField,
     {
         // Prepare statement
         auto poStatement =
-            cpl::make_unique<CPLODBCStatement>(poDS->GetSession());
+            std::make_unique<CPLODBCStatement>(poDS->GetSession());
 
         if (poDS->sMSSQLVersion.nMajor >= 11)
         {
@@ -933,7 +933,7 @@ OGRErr OGRMSSQLSpatialTableLayer::EndCopy()
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRMSSQLSpatialTableLayer::CreateField(OGRFieldDefn *poFieldIn,
+OGRErr OGRMSSQLSpatialTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
                                               int bApproxOK)
 
 {

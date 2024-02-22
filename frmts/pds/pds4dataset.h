@@ -106,25 +106,11 @@ class PDS4TableBaseLayer CPL_NON_FINAL : public OGRLayer
 
 /************************************************************************/
 /* ==================================================================== */
-/*                     PDS4EditableSynchronizer                         */
-/* ==================================================================== */
-/************************************************************************/
-
-template <class T>
-class PDS4EditableSynchronizer final : public IOGREditableLayerSynchronizer
-{
-  public:
-    PDS4EditableSynchronizer() = default;
-
-    OGRErr EditableSyncToDisk(OGRLayer *poEditableLayer,
-                              OGRLayer **ppoDecoratedLayer) override;
-};
-
-/************************************************************************/
-/* ==================================================================== */
 /*                        PDS4FixedWidthTable                           */
 /* ==================================================================== */
 /************************************************************************/
+
+template <class T> class PDS4EditableSynchronizer;
 
 class PDS4FixedWidthTable CPL_NON_FINAL : public PDS4TableBaseLayer
 {
@@ -164,7 +150,7 @@ class PDS4FixedWidthTable CPL_NON_FINAL : public PDS4TableBaseLayer
     int TestCapability(const char *) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *poFieldIn, int) override;
+    OGRErr CreateField(const OGRFieldDefn *poFieldIn, int) override;
 
     bool ReadTableDef(const CPLXMLNode *psTable);
 
@@ -272,7 +258,7 @@ class PDS4DelimitedTable CPL_NON_FINAL : public PDS4TableBaseLayer
     OGRFeature *GetNextFeature() override;
     int TestCapability(const char *) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *poFieldIn, int) override;
+    OGRErr CreateField(const OGRFieldDefn *poFieldIn, int) override;
 
     bool ReadTableDef(const CPLXMLNode *psTable);
 
@@ -429,7 +415,6 @@ class PDS4Dataset final : public RawDataset
                                    char **papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
-    static int Identify(GDALOpenInfo *);
     static CPLErr Delete(const char *pszName);
 
     const char *const *GetOpenOptions() const

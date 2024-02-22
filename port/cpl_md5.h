@@ -18,9 +18,11 @@ struct CPLMD5Context
     unsigned char in[64];
 };
 
-void CPLMD5Init(struct CPLMD5Context *context);
-void CPLMD5Update(struct CPLMD5Context *context, const void *buf, size_t len);
-void CPLMD5Final(unsigned char digest[16], struct CPLMD5Context *context);
+void CPL_DLL CPLMD5Init(struct CPLMD5Context *context);
+void CPL_DLL CPLMD5Update(struct CPLMD5Context *context, const void *buf,
+                          size_t len);
+void CPL_DLL CPLMD5Final(unsigned char digest[16],
+                         struct CPLMD5Context *context);
 void CPLMD5Transform(GUInt32 buf[4], const unsigned char inraw[64]);
 
 #endif  // #ifndef DOXYGEN_SKIP

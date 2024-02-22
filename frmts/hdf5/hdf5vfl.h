@@ -38,10 +38,6 @@
 #include <algorithm>
 #include <mutex>
 
-#ifdef H5FD_FEAT_SUPPORTS_SWMR_IO
-#define HDF5_1_10_OR_LATER
-#endif
-
 #ifdef H5FD_FEAT_MEMMANAGE
 #define HDF5_1_13_OR_LATER
 #endif
@@ -63,12 +59,7 @@ static herr_t HDF5_vsil_close(H5FD_t *_file);
 static herr_t HDF5_vsil_query(const H5FD_t *_f1, unsigned long *flags);
 static haddr_t HDF5_vsil_get_eoa(const H5FD_t *_file, H5FD_mem_t type);
 static herr_t HDF5_vsil_set_eoa(H5FD_t *_file, H5FD_mem_t type, haddr_t addr);
-static haddr_t HDF5_vsil_get_eof(const H5FD_t *_file
-#ifdef HDF5_1_10_OR_LATER
-                                 ,
-                                 H5FD_mem_t type
-#endif
-);
+static haddr_t HDF5_vsil_get_eof(const H5FD_t *_file, H5FD_mem_t type);
 static herr_t HDF5_vsil_read(H5FD_t *_file, H5FD_mem_t type, hid_t fapl_id,
                              haddr_t addr, size_t size, void *buf);
 static herr_t HDF5_vsil_write(H5FD_t *_file, H5FD_mem_t type, hid_t fapl_id,
@@ -90,12 +81,10 @@ static const H5FD_class_t HDF5_vsil_g = {
      * https://portal.hdfgroup.org/pages/viewpage.action?pageId=74188097 */
     (H5FD_class_value_t)(513),
 #endif
-    "vsil",         /* name */
-    MAXADDR,        /* maxaddr  */
-    H5F_CLOSE_WEAK, /* fc_degree  */
-#ifdef HDF5_1_10_OR_LATER
-    nullptr, /* terminate */
-#endif
+    "vsil",            /* name */
+    MAXADDR,           /* maxaddr  */
+    H5F_CLOSE_WEAK,    /* fc_degree  */
+    nullptr,           /* terminate */
     nullptr,           /* sb_size  */
     nullptr,           /* sb_encode */
     nullptr,           /* sb_decode */
@@ -207,11 +196,7 @@ static herr_t HDF5_vsil_set_eoa(H5FD_t *_file, H5FD_mem_t /*type*/,
     return 0;
 }
 
-static haddr_t HDF5_vsil_get_eof(const H5FD_t *_file
-#ifdef HDF5_1_10_OR_LATER
-                                 ,
-                                 H5FD_mem_t /* type */
-#endif
+static haddr_t HDF5_vsil_get_eof(const H5FD_t *_file, H5FD_mem_t /* type */
 )
 {
     const HDF5_vsil_t *fh = reinterpret_cast<const HDF5_vsil_t *>(_file);

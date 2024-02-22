@@ -1128,7 +1128,7 @@ OGRLayer *OGRNGWDataset::ExecuteSQL(const char *pszStatement,
 
             std::set<std::string> aosFields;
             bool bSkip = false;
-            for (int i = 0; i < oSelect.result_columns; ++i)
+            for (int i = 0; i < oSelect.result_columns(); ++i)
             {
                 swq_col_func col_func = oSelect.column_defs[i].col_func;
                 if (col_func != SWQCF_NONE)
@@ -1294,7 +1294,7 @@ CPLErr OGRNGWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
                 // Fill buffer transparent color.
                 memset(pData, 0,
-                       nBufXSize * nBufYSize * nBandCount *
+                       static_cast<size_t>(nBufXSize) * nBufYSize * nBandCount *
                            GDALGetDataTypeSizeBytes(eBufType));
                 return CE_None;
             }

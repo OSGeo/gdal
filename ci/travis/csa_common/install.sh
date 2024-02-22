@@ -15,26 +15,15 @@ case $SCRIPT_DIR in
 esac
 $SCRIPT_DIR/../common_install.sh
 
-# Build proj
-(cd proj;  ./autogen.sh && CFLAGS='-DPROJ_RENAME_SYMBOLS' CXXFLAGS='-DPROJ_RENAME_SYMBOLS' ./configure --disable-static --prefix=/usr/local && make -j3)
-(cd proj; sudo make -j3 install && sudo ldconfig)
-
-export PATH=$PWD/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04/bin:$PATH
-
-wget -q https://github.com/Kitware/CMake/releases/download/v3.22.3/cmake-3.22.3-linux-x86_64.tar.gz
-tar xzf cmake-3.22.3-linux-x86_64.tar.gz
-export PATH=$PWD/cmake-3.22.3-linux-x86_64/bin:$PATH
-
 GDAL_TOPDIR=$PWD
 
 mkdir build
 cd build
-export CXXFLAGS="-std=c++11 -DCSA_BUILD -DPROJ_RENAME_SYMBOLS"
-export CFLAGS="-DCSA_BUILD -DPROJ_RENAME_SYMBOLS"
+export CXXFLAGS="-DCSA_BUILD"
+export CFLAGS="-DCSA_BUILD"
 scan-build cmake  .. \
   -DCMAKE_BUILD_TYPE=Debug \
-  -DPROJ_ROOT=/usr/local \
-  -DECW_ROOT=/usr/local \
+  -DECW_ROOT=/opt \
   -DFileGDB_ROOT=/usr/local \
   -DGDAL_ENABLE_DRIVER_GRIB=OFF \
   -DBUILD_PYTHON_BINDINGS=OFF \

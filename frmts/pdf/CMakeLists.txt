@@ -15,7 +15,33 @@ add_gdal_driver(
           ogrpdflayer.cpp
           pdfwritabledataset.cpp
           pdfcreatefromcomposition.cpp
-          PLUGIN_CAPABLE)
+  CORE_SOURCES pdfdrivercore.cpp
+  PLUGIN_CAPABLE)
+
+if(TARGET gdal_PDF_core)
+    if (GDAL_USE_POPPLER)
+        target_compile_definitions(gdal_PDF_core PRIVATE -DHAVE_POPPLER)
+    endif ()
+    if (GDAL_USE_PODOFO)
+        target_compile_definitions(gdal_PDF_core PRIVATE -DHAVE_PODOFO)
+    endif ()
+    if (GDAL_USE_PDFIUM)
+        target_compile_definitions(gdal_PDF_core PRIVATE -DHAVE_PDFIUM)
+    endif ()
+endif()
+
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/pdfcomposition.xsd
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
+
+if(NOT TARGET gdal_PDF)
+    return()
+endif()
+
 gdal_standard_includes(gdal_PDF)
 target_include_directories(gdal_PDF PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/vrt ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem
                                             ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/mem)
@@ -28,22 +54,17 @@ if (GDAL_USE_POPPLER)
   if ("${Poppler_VERSION_MINOR}" MATCHES "0?[0-9]+")
     string(REGEX REPLACE "0?([0-9]+)" "\\1" Poppler_VERSION_MINOR ${Poppler_VERSION_MINOR})
   endif ()
-  if (Poppler_VERSION_MAJOR GREATER 21)
-    target_compile_features(gdal_PDF PRIVATE cxx_std_17)
-  endif ()
   target_compile_definitions(gdal_PDF PRIVATE -DHAVE_POPPLER -DPOPPLER_MAJOR_VERSION=${Poppler_VERSION_MAJOR}
                                               -DPOPPLER_MINOR_VERSION=${Poppler_VERSION_MINOR})
 endif ()
 if (GDAL_USE_PODOFO)
   if( "${PODOFO_VERSION_STRING}" VERSION_GREATER "0.10")
-    target_compile_features(gdal_PDF PRIVATE cxx_std_17)
     target_compile_definitions(gdal_PDF PRIVATE -DHAVE_PODOFO_0_10_OR_LATER)
   endif()
   target_compile_definitions(gdal_PDF PRIVATE -DHAVE_PODOFO)
   gdal_target_link_libraries(gdal_PDF PRIVATE PODOFO::Podofo)
 endif ()
 if (GDAL_USE_PDFIUM)
-  target_compile_features(gdal_PDF PRIVATE cxx_std_17)
   target_compile_definitions(gdal_PDF PRIVATE -DHAVE_PDFIUM)
   gdal_target_link_libraries(gdal_PDF PRIVATE PDFIUM::PDFIUM)
   if (UNIX)

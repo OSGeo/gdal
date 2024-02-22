@@ -27,6 +27,8 @@
 #include "cpl_string.h"
 #include "ogr_core.h"
 
+#include <list>
+#include <map>
 #include <vector>
 #include <set>
 
@@ -102,10 +104,16 @@ class swq_expr_node;
 class swq_select;
 class OGRGeometry;
 
+struct CPL_UNSTABLE_API swq_evaluation_context
+{
+    bool bUTF8Strings = false;
+};
+
 typedef swq_expr_node *(*swq_field_fetcher)(swq_expr_node *op,
                                             void *record_handle);
-typedef swq_expr_node *(*swq_op_evaluator)(swq_expr_node *op,
-                                           swq_expr_node **sub_field_values);
+typedef swq_expr_node *(*swq_op_evaluator)(
+    swq_expr_node *op, swq_expr_node **sub_field_values,
+    const swq_evaluation_context &sContext);
 typedef swq_field_type (*swq_op_checker)(
     swq_expr_node *op, int bAllowMismatchTypeOnFieldComparison);
 
@@ -114,6 +122,7 @@ class swq_custom_func_registrar;
 class CPL_UNSTABLE_API swq_expr_node
 {
     swq_expr_node *Evaluate(swq_field_fetcher pfnFetcher, void *record,
+                            const swq_evaluation_context &sContext,
                             int nRecLevel);
     void reset();
 
@@ -144,7 +153,8 @@ class CPL_UNSTABLE_API swq_expr_node
                          int bAllowMismatchTypeOnFieldComparison,
                          swq_custom_func_registrar *poCustomFuncRegistrar,
                          int depth = 0);
-    swq_expr_node *Evaluate(swq_field_fetcher pfnFetcher, void *record);
+    swq_expr_node *Evaluate(swq_field_fetcher pfnFetcher, void *record,
+                            const swq_evaluation_context &sContext);
     swq_expr_node *Clone();
 
     void ReplaceBetweenByGEAndLERecurse();
@@ -275,12 +285,14 @@ swq_expr_compile2(const char *where_clause, swq_field_list *field_list,
 */
 int CPL_UNSTABLE_API swq_test_like(const char *input, const char *pattern);
 
-swq_expr_node CPL_UNSTABLE_API *SWQGeneralEvaluator(swq_expr_node *,
-                                                    swq_expr_node **);
+swq_expr_node CPL_UNSTABLE_API *
+SWQGeneralEvaluator(swq_expr_node *, swq_expr_node **,
+                    const swq_evaluation_context &sContext);
 swq_field_type CPL_UNSTABLE_API
 SWQGeneralChecker(swq_expr_node *node, int bAllowMismatchTypeOnFieldComparison);
-swq_expr_node CPL_UNSTABLE_API *SWQCastEvaluator(swq_expr_node *,
-                                                 swq_expr_node **);
+swq_expr_node CPL_UNSTABLE_API *
+SWQCastEvaluator(swq_expr_node *, swq_expr_node **,
+                 const swq_evaluation_context &sContext);
 swq_field_type CPL_UNSTABLE_API
 SWQCastChecker(swq_expr_node *node, int bAllowMismatchTypeOnFieldComparison);
 const char CPL_UNSTABLE_API *SWQFieldTypeToString(swq_field_type field_type);
@@ -401,8 +413,15 @@ class CPL_UNSTABLE_API swq_select
 
     int PushField(swq_expr_node *poExpr, const char *pszAlias = nullptr,
                   int distinct_flag = FALSE);
-    int result_columns = 0;
-    swq_col_def *column_defs = nullptr;
+
+    int PushExcludeField(swq_expr_node *poExpr);
+
+    int result_columns() const
+    {
+        return static_cast<int>(column_defs.size());
+    }
+
+    std::vector<swq_col_def> column_defs{};
     std::vector<swq_summary> column_summary{};
 
     int PushTableDef(const char *pszDataSource, const char *pszTableName,
@@ -438,12 +457,18 @@ class CPL_UNSTABLE_API swq_select
                  swq_select_parse_options *poParseOptions);
 
     char *Unparse();
-    void Dump(FILE *);
-};
 
-CPLErr CPL_UNSTABLE_API swq_select_parse(swq_select *select_info,
-                                         swq_field_list *field_list,
-                                         int parse_flags);
+    bool bExcludedGeometry = false;
+
+  private:
+    bool IsFieldExcluded(int src_index, const char *table, const char *field);
+
+    // map of EXCLUDE columns keyed according to the index of the
+    // asterisk with which it should be associated. key of -1 is
+    // used for column lists that have not yet been associated with
+    // an asterisk.
+    std::map<int, std::list<swq_col_def>> m_exclude_fields{};
+};
 
 const char CPL_UNSTABLE_API *swq_select_summarize(swq_select *select_info,
                                                   int dest_column,
@@ -458,6 +483,8 @@ char CPL_UNSTABLE_API *OGRHStoreGetValue(const char *pszHStore,
 void swq_fixup(swq_parse_context *psParseContext);
 swq_expr_node *swq_create_and_or_or(swq_op op, swq_expr_node *left,
                                     swq_expr_node *right);
+int swq_test_like(const char *input, const char *pattern, char chEscape,
+                  bool insensitive, bool bUTF8Strings);
 #endif
 
 #endif /* #ifndef DOXYGEN_SKIP */

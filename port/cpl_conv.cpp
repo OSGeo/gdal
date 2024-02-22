@@ -49,7 +49,9 @@
 #endif
 
 // For atoll (at least for NetBSD)
+#ifndef _ISOC99_SOURCE
 #define _ISOC99_SOURCE
+#endif
 
 #ifdef MSVC_USE_VLD
 #include <vld.h>
@@ -339,7 +341,8 @@ char *CPLStrlwr(char *pszString)
 
     while (*pszTemp)
     {
-        *pszTemp = static_cast<char>(tolower(*pszTemp));
+        *pszTemp =
+            static_cast<char>(tolower(static_cast<unsigned char>(*pszTemp)));
         pszTemp++;
     }
 
@@ -1124,7 +1127,7 @@ void *CPLScanPointer(const char *pszString, int nMaxLength)
     {
         void *pResult = nullptr;
 
-#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
+#if defined(__MSVCRT__) || (defined(_WIN32) && defined(_MSC_VER))
         // cppcheck-suppress invalidscanf
         sscanf(szTemp + 2, "%p", &pResult);
 #else
@@ -1358,7 +1361,7 @@ int CPLPrintUIntBig(char *pszBuffer, GUIntBig iValue, int nMaxLen)
 
     char szTemp[64] = {};
 
-#if defined(__MSVCRT__) || (defined(WIN32) && defined(_MSC_VER))
+#if defined(__MSVCRT__) || (defined(_WIN32) && defined(_MSC_VER))
 /* x86_64-w64-mingw32-g++ (GCC) 4.8.2 annoyingly warns */
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic push
@@ -2174,7 +2177,7 @@ void CPLLoadConfigOptionsFromFile(const char *pszFilename, int bOverrideEnvVars)
     {
         for (; *pszStr; ++pszStr)
         {
-            if (!isspace(*pszStr))
+            if (!isspace(static_cast<unsigned char>(*pszStr)))
                 return false;
         }
         return true;
@@ -2362,7 +2365,7 @@ void CPLLoadConfigOptionsFromPredefinedFiles()
         CPLLoadConfigOptionsFromFile(pszFile, false);
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
         const char *pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
 #else
         const char *pszHome = CPLGetConfigOption("HOME", nullptr);
@@ -2459,7 +2462,7 @@ double CPLDMSToDec(const char *is)
     double v = 0.0;
     for (; nl < 3; nl = n + 1)
     {
-        if (!(isdigit(*s) || *s == '.'))
+        if (!(isdigit(static_cast<unsigned char>(*s)) || *s == '.'))
             break;
         const double tv = proj_strtod(s, &s);
         if (tv == HUGE_VAL)
@@ -3125,7 +3128,7 @@ int CPLMoveFile(const char *pszNewPath, const char *pszOldPath)
 /************************************************************************/
 
 /** Create a symbolic link */
-#ifdef WIN32
+#ifdef _WIN32
 int CPLSymlink(const char *, const char *, CSLConstList)
 {
     return -1;

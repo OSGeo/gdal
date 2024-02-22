@@ -1414,7 +1414,7 @@ static void decode_geohash_bbox(const char *geohash, double lat[2],
     hashlen = static_cast<int>(strlen(geohash));
     for (i = 0; i < hashlen; i++)
     {
-        c = static_cast<char>(tolower(geohash[i]));
+        c = static_cast<char>(tolower(static_cast<unsigned char>(geohash[i])));
         cd = static_cast<char>(strchr(BASE32, c) - BASE32);
         for (j = 0; j < 5; j++)
         {
@@ -2898,7 +2898,7 @@ bool OGRElasticLayer::PushIndex()
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
+OGRErr OGRElasticLayer::CreateField(const OGRFieldDefn *poFieldDefn,
                                     int /*bApproxOK*/)
 {
     if (m_poDS->GetAccess() != GA_Update)
@@ -2951,7 +2951,7 @@ OGRErr OGRElasticLayer::CreateField(OGRFieldDefn *poFieldDefn,
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRElasticLayer::CreateGeomField(OGRGeomFieldDefn *poFieldIn,
+OGRErr OGRElasticLayer::CreateGeomField(const OGRGeomFieldDefn *poFieldIn,
                                         int /*bApproxOK*/)
 
 {

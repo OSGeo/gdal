@@ -34,16 +34,12 @@
 #include "ogr_swq.h"
 #include "ograpispy.h"
 #include "ogr_wkb.h"
+#include "ogrlayer_private.h"
 
 #include "cpl_time.h"
 #include <cassert>
 #include <limits>
 #include <set>
-
-struct OGRLayer::Private
-{
-    bool m_bInFeatureIterator = false;
-};
 
 /************************************************************************/
 /*                              OGRLayer()                              */
@@ -227,6 +223,82 @@ OGRErr OGRLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
         return GetExtentInternal(iGeomField, psExtent, bForce);
 }
 
+OGRErr OGRLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                             int bForce)
+
+{
+    psExtent3D->MinX = 0.0;
+    psExtent3D->MaxX = 0.0;
+    psExtent3D->MinY = 0.0;
+    psExtent3D->MaxY = 0.0;
+    psExtent3D->MinZ = std::numeric_limits<double>::infinity();
+    psExtent3D->MaxZ = -std::numeric_limits<double>::infinity();
+
+    /* -------------------------------------------------------------------- */
+    /*      If this layer has a none geometry type, then we can             */
+    /*      reasonably assume there are not extents available.              */
+    /* -------------------------------------------------------------------- */
+    if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() ||
+        GetLayerDefn()->GetGeomFieldDefn(iGeomField)->GetType() == wkbNone)
+    {
+        if (iGeomField != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid geometry field index : %d", iGeomField);
+        }
+        return OGRERR_FAILURE;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      If not forced, we should avoid having to scan all the           */
+    /*      features and just return a failure.                             */
+    /* -------------------------------------------------------------------- */
+    if (!bForce)
+        return OGRERR_FAILURE;
+
+    /* -------------------------------------------------------------------- */
+    /*      OK, we hate to do this, but go ahead and read through all       */
+    /*      the features to collect geometries and build extents.           */
+    /* -------------------------------------------------------------------- */
+    OGREnvelope3D oEnv;
+    bool bExtentSet = false;
+
+    for (auto &&poFeature : *this)
+    {
+        OGRGeometry *poGeom = poFeature->GetGeomFieldRef(iGeomField);
+        if (poGeom == nullptr || poGeom->IsEmpty())
+        {
+            /* Do nothing */
+        }
+        else if (!bExtentSet)
+        {
+            poGeom->getEnvelope(psExtent3D);
+            // This is required because getEnvelope initializes Z to 0 for 2D geometries
+            if (!poGeom->Is3D())
+            {
+                psExtent3D->MinZ = std::numeric_limits<double>::infinity();
+                psExtent3D->MaxZ = -std::numeric_limits<double>::infinity();
+            }
+            bExtentSet = true;
+        }
+        else
+        {
+            poGeom->getEnvelope(&oEnv);
+            // This is required because getEnvelope initializes Z to 0 for 2D geometries
+            if (!poGeom->Is3D())
+            {
+                oEnv.MinZ = std::numeric_limits<double>::infinity();
+                oEnv.MaxZ = -std::numeric_limits<double>::infinity();
+            }
+            // Merge handles infinity correctly
+            psExtent3D->Merge(oEnv);
+        }
+    }
+    ResetReading();
+
+    return bExtentSet ? OGRERR_NONE : OGRERR_FAILURE;
+}
+
 //! @cond Doxygen_Suppress
 OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent,
                                    int bForce)
@@ -299,6 +371,7 @@ OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent,
 
     return bExtentSet ? OGRERR_NONE : OGRERR_FAILURE;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -335,6 +408,25 @@ OGRErr OGR_L_GetExtentEx(OGRLayerH hLayer, int iGeomField,
 
     return OGRLayer::FromHandle(hLayer)->GetExtent(iGeomField, psExtent,
                                                    bForce);
+}
+
+/************************************************************************/
+/*                          OGR_L_GetExtent3D()                           */
+/************************************************************************/
+
+OGRErr OGR_L_GetExtent3D(OGRLayerH hLayer, int iGeomField,
+                         OGREnvelope3D *psExtent3D, int bForce)
+
+{
+    VALIDATE_POINTER1(hLayer, "OGR_L_GetExtent3D", OGRERR_INVALID_HANDLE);
+
+#ifdef OGRAPISPY_ENABLED
+    if (bOGRAPISpyEnabled)
+        OGRAPISpy_L_GetExtent3D(hLayer, iGeomField, bForce);
+#endif
+
+    return OGRLayer::FromHandle(hLayer)->GetExtent3D(iGeomField, psExtent3D,
+                                                     bForce);
 }
 
 /************************************************************************/
@@ -810,7 +902,7 @@ OGRErr OGR_L_UpdateFeature(OGRLayerH hLayer, OGRFeatureH hFeat,
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGRLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 
 {
     (void)poField;
@@ -1056,7 +1148,7 @@ OGRErr OGR_L_AlterGeomFieldDefn(OGRLayerH hLayer, int iGeomField,
 /*                         CreateGeomField()                            */
 /************************************************************************/
 
-OGRErr OGRLayer::CreateGeomField(OGRGeomFieldDefn *poField, int bApproxOK)
+OGRErr OGRLayer::CreateGeomField(const OGRGeomFieldDefn *poField, int bApproxOK)
 
 {
     (void)poField;
@@ -1531,6 +1623,72 @@ int OGRLayer::InstallFilter(OGRGeometry *poFilter)
 //! @endcond
 
 /************************************************************************/
+/*                   DoesGeometryHavePointInEnvelope()                  */
+/************************************************************************/
+
+static bool DoesGeometryHavePointInEnvelope(const OGRGeometry *poGeometry,
+                                            const OGREnvelope &sEnvelope)
+{
+    const OGRLineString *poLS = nullptr;
+
+    switch (wkbFlatten(poGeometry->getGeometryType()))
+    {
+        case wkbPoint:
+        {
+            const auto poPoint = poGeometry->toPoint();
+            const double x = poPoint->getX();
+            const double y = poPoint->getY();
+            return (x >= sEnvelope.MinX && y >= sEnvelope.MinY &&
+                    x <= sEnvelope.MaxX && y <= sEnvelope.MaxY);
+        }
+
+        case wkbLineString:
+            poLS = poGeometry->toLineString();
+            break;
+
+        case wkbPolygon:
+        {
+            const OGRPolygon *poPoly = poGeometry->toPolygon();
+            poLS = poPoly->getExteriorRing();
+            break;
+        }
+
+        case wkbMultiPoint:
+        case wkbMultiLineString:
+        case wkbMultiPolygon:
+        case wkbGeometryCollection:
+        {
+            for (const auto &poSubGeom : *(poGeometry->toGeometryCollection()))
+            {
+                if (DoesGeometryHavePointInEnvelope(poSubGeom, sEnvelope))
+                    return true;
+            }
+            return false;
+        }
+
+        default:
+            return false;
+    }
+
+    if (poLS != nullptr)
+    {
+        const int nNumPoints = poLS->getNumPoints();
+        for (int i = 0; i < nNumPoints; i++)
+        {
+            const double x = poLS->getX(i);
+            const double y = poLS->getY(i);
+            if (x >= sEnvelope.MinX && y >= sEnvelope.MinY &&
+                x <= sEnvelope.MaxX && y <= sEnvelope.MaxY)
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/************************************************************************/
 /*                           FilterGeometry()                           */
 /*                                                                      */
 /*      Compare the passed in geometry to the currently installed       */
@@ -1539,7 +1697,7 @@ int OGRLayer::InstallFilter(OGRGeometry *poFilter)
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-int OGRLayer::FilterGeometry(OGRGeometry *poGeometry)
+int OGRLayer::FilterGeometry(const OGRGeometry *poGeometry)
 
 {
     /* -------------------------------------------------------------------- */
@@ -1582,57 +1740,13 @@ int OGRLayer::FilterGeometry(OGRGeometry *poGeometry)
     }
     else
     {
-        /* --------------------------------------------------------------------
-         */
-        /*      If the filter geometry is its own envelope and if the */
-        /*      the geometry (line, or polygon without hole) h has at least one
-         */
-        /*      point inside the filter geometry, the geometry itself is inside
-         */
-        /*      the filter geometry. */
-        /* --------------------------------------------------------------------
-         */
+        // If the filter geometry is its own envelope and if the geometry has
+        // at least one point inside the filter geometry, the geometry itself
+        // intersects the filter geometry.
         if (m_bFilterIsEnvelope)
         {
-            OGRLineString *poLS = nullptr;
-
-            switch (wkbFlatten(poGeometry->getGeometryType()))
-            {
-                case wkbPolygon:
-                {
-                    OGRPolygon *poPoly = poGeometry->toPolygon();
-                    OGRLinearRing *poRing = poPoly->getExteriorRing();
-                    if (poRing != nullptr && poPoly->getNumInteriorRings() == 0)
-                    {
-                        poLS = poRing;
-                    }
-                    break;
-                }
-
-                case wkbLineString:
-                    poLS = poGeometry->toLineString();
-                    break;
-
-                default:
-                    break;
-            }
-
-            if (poLS != nullptr)
-            {
-                int nNumPoints = poLS->getNumPoints();
-                for (int i = 0; i < nNumPoints; i++)
-                {
-                    double x = poLS->getX(i);
-                    double y = poLS->getY(i);
-                    if (x >= m_sFilterEnvelope.MinX &&
-                        y >= m_sFilterEnvelope.MinY &&
-                        x <= m_sFilterEnvelope.MaxX &&
-                        y <= m_sFilterEnvelope.MaxY)
-                    {
-                        return TRUE;
-                    }
-                }
-            }
+            if (DoesGeometryHavePointInEnvelope(poGeometry, m_sFilterEnvelope))
+                return true;
         }
 
         /* --------------------------------------------------------------------
@@ -1646,7 +1760,9 @@ int OGRLayer::FilterGeometry(OGRGeometry *poGeometry)
             // CPLDebug("OGRLayer", "GEOS intersection");
             if (m_pPreparedFilterGeom != nullptr)
                 return OGRPreparedGeometryIntersects(
-                    m_pPreparedFilterGeom, OGRGeometry::ToHandle(poGeometry));
+                    m_pPreparedFilterGeom,
+                    OGRGeometry::ToHandle(
+                        const_cast<OGRGeometry *>(poGeometry)));
             else
                 return m_poFilterGeom->Intersects(poGeometry);
         }
@@ -1677,7 +1793,8 @@ bool OGRLayer::FilterWKBGeometry(const GByte *pabyWKB, size_t nWKBSize,
         else
         {
             if (m_bFilterIsEnvelope &&
-                OGRWKBIsWithinPessimistic(pabyWKB, nWKBSize, m_sFilterEnvelope))
+                OGRWKBIntersectsPessimistic(pabyWKB, nWKBSize,
+                                            m_sFilterEnvelope))
             {
                 return true;
             }

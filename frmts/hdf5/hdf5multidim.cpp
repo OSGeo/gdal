@@ -27,6 +27,7 @@
 
 #include "hdf5dataset.h"
 #include "hdf5eosparser.h"
+#include "s100.h"
 
 #include <algorithm>
 #include <set>
@@ -64,7 +65,7 @@ class HDF5Group final : public GDALGroup
     static herr_t GetAttributesCallback(hid_t hGroup, const char *pszObjName,
                                         void *);
 
-  public:
+  protected:
     HDF5Group(
         const std::string &osParentName, const std::string &osName,
         const std::shared_ptr<HDF5SharedResources> &poShared,
@@ -75,14 +76,26 @@ class HDF5Group final : public GDALGroup
           m_bIsEOSGridGroup(osParentName == "/HDFEOS/GRIDS"),
           m_bIsEOSSwathGroup(osParentName == "/HDFEOS/SWATHS")
     {
-        m_oSetParentIds.insert(
-            std::pair<unsigned long, unsigned long>(objIds[0], objIds[1]));
+        m_oSetParentIds.insert(std::pair(objIds[0], objIds[1]));
 
         // Force registration of EOS dimensions
         if (m_bIsEOSGridGroup || m_bIsEOSSwathGroup)
         {
             HDF5Group::GetDimensions();
         }
+    }
+
+  public:
+    static std::shared_ptr<HDF5Group> Create(
+        const std::string &osParentName, const std::string &osName,
+        const std::shared_ptr<HDF5SharedResources> &poShared,
+        const std::set<std::pair<unsigned long, unsigned long>> &oSetParentIds,
+        hid_t hGroup, unsigned long objIds[2])
+    {
+        auto poGroup = std::shared_ptr<HDF5Group>(new HDF5Group(
+            osParentName, osName, poShared, oSetParentIds, hGroup, objIds));
+        poGroup->SetSelf(poGroup);
+        return poGroup;
     }
 
     ~HDF5Group()
@@ -140,7 +153,7 @@ class HDF5Dimension final : public GDALDimension
 /************************************************************************/
 
 static GDALExtendedDataType
-BuildDataType(hid_t hDataType, bool &bHasVLen, bool &bNonNativeDataType,
+BuildDataType(hid_t hDataType, bool &bHasString, bool &bNonNativeDataType,
               const std::vector<std::pair<std::string, hid_t>> &oTypes)
 {
     const auto klass = H5Tget_class(hDataType);
@@ -149,8 +162,7 @@ BuildDataType(hid_t hDataType, bool &bHasVLen, bool &bNonNativeDataType,
         return GDALExtendedDataType::Create(eDT);
     else if (klass == H5T_STRING)
     {
-        if (H5Tis_variable_str(hDataType))
-            bHasVLen = true;
+        bHasString = true;
         return GDALExtendedDataType::CreateString();
     }
     else if (klass == H5T_COMPOUND)
@@ -170,7 +182,7 @@ BuildDataType(hid_t hDataType, bool &bHasVLen, bool &bNonNativeDataType,
                 return GDALExtendedDataType::Create(GDT_Unknown);
             const hid_t hNativeMemberType =
                 H5Tget_native_type(hMemberType, H5T_DIR_ASCEND);
-            auto memberDT = BuildDataType(hNativeMemberType, bHasVLen,
+            auto memberDT = BuildDataType(hNativeMemberType, bHasString,
                                           bNonNativeDataType, oTypes);
             H5Tclose(hNativeMemberType);
             H5Tclose(hMemberType);
@@ -211,8 +223,8 @@ BuildDataType(hid_t hDataType, bool &bHasVLen, bool &bNonNativeDataType,
     {
         const auto hParent = H5Tget_super(hDataType);
         const hid_t hNativeParent = H5Tget_native_type(hParent, H5T_DIR_ASCEND);
-        auto ret(
-            BuildDataType(hNativeParent, bHasVLen, bNonNativeDataType, oTypes));
+        auto ret(BuildDataType(hNativeParent, bHasString, bNonNativeDataType,
+                               oTypes));
         H5Tclose(hNativeParent);
         H5Tclose(hParent);
         return ret;
@@ -235,7 +247,7 @@ GetDataTypesInGroup(hid_t hHDF5, const std::string &osGroupFullName,
     {
         static herr_t f(hid_t hGroup, const char *pszObjName, void *user_data)
         {
-            std::vector<std::pair<std::string, hid_t>> *poTypes =
+            auto *poTypes =
                 static_cast<std::vector<std::pair<std::string, hid_t>> *>(
                     user_data);
             H5G_stat_t oStatbuf;
@@ -245,8 +257,8 @@ GetDataTypesInGroup(hid_t hHDF5, const std::string &osGroupFullName,
 
             if (oStatbuf.type == H5G_TYPE)
             {
-                poTypes->push_back(std::pair<std::string, hid_t>(
-                    pszObjName, H5Topen(hGroup, pszObjName)));
+                poTypes->push_back(
+                    std::pair(pszObjName, H5Topen(hGroup, pszObjName)));
             }
 
             return 0;
@@ -271,7 +283,7 @@ class HDF5Array final : public GDALMDArray
     hid_t m_hNativeDT = H5I_INVALID_HID;
     mutable std::vector<std::shared_ptr<GDALAttribute>> m_oListAttributes{};
     mutable bool m_bShowAllAttributes = false;
-    bool m_bHasVLenMember = false;
+    bool m_bHasString = false;
     bool m_bHasNonNativeDataType = false;
     mutable bool m_bWarnedNoData = false;
     mutable std::vector<GByte> m_abyNoData{};
@@ -374,6 +386,11 @@ class HDF5Array final : public GDALMDArray
 
     std::vector<std::shared_ptr<GDALMDArray>>
     GetCoordinateVariables() const override;
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return m_poShared->GetRootGroup();
+    }
 };
 
 /************************************************************************/
@@ -389,7 +406,7 @@ class HDF5Attribute final : public GDALAttribute
     GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Unknown);
     hid_t m_hNativeDT = H5I_INVALID_HID;
     size_t m_nElements = 1;
-    bool m_bHasVLenMember = false;
+    bool m_bHasString = false;
     bool m_bHasNonNativeDataType = false;
 
     HDF5Attribute(const std::string &osGroupFullName,
@@ -430,8 +447,8 @@ class HDF5Attribute final : public GDALAttribute
             GetDataTypesInGroup(m_poShared->GetHDF5(), osGroupFullName, oTypes);
         }
 
-        m_dt = BuildDataType(m_hNativeDT, m_bHasVLenMember,
-                             m_bHasNonNativeDataType, oTypes);
+        m_dt = BuildDataType(m_hNativeDT, m_bHasString, m_bHasNonNativeDataType,
+                             oTypes);
         for (auto &oPair : oTypes)
             H5Tclose(oPair.second);
         if (m_dt.GetClass() == GEDTC_NUMERIC &&
@@ -537,10 +554,8 @@ std::shared_ptr<HDF5Group> HDF5SharedResources::GetRootGroup()
 
     auto poSharedResources = m_poSelf.lock();
     CPLAssert(poSharedResources != nullptr);
-    return std::make_shared<HDF5Group>(
-        std::string(), "/", poSharedResources,
-        std::set<std::pair<unsigned long, unsigned long>>(), hGroup,
-        oStatbuf.objno);
+    return HDF5Group::Create(std::string(), "/", poSharedResources, {}, hGroup,
+                             oStatbuf.objno);
 }
 
 /************************************************************************/
@@ -720,8 +735,8 @@ herr_t HDF5Group::GetGroupNamesCallback(hid_t hGroup, const char *pszObjName,
 
     if (oStatbuf.type == H5G_GROUP)
     {
-        if (self->m_oSetParentIds.find(std::pair<unsigned long, unsigned long>(
-                oStatbuf.objno[0], oStatbuf.objno[1])) ==
+        if (self->m_oSetParentIds.find(
+                std::pair(oStatbuf.objno[0], oStatbuf.objno[1])) ==
             self->m_oSetParentIds.end())
         {
             self->m_osListSubGroups.push_back(pszObjName);
@@ -778,9 +793,8 @@ std::shared_ptr<GDALGroup> HDF5Group::OpenGroup(const std::string &osName,
     {
         return nullptr;
     }
-    return std::make_shared<HDF5Group>(GetFullName(), osName, m_poShared,
-                                       m_oSetParentIds, hSubGroup,
-                                       oStatbuf.objno);
+    return HDF5Group::Create(GetFullName(), osName, m_poShared, m_oSetParentIds,
+                             hSubGroup, oStatbuf.objno);
 }
 
 /************************************************************************/
@@ -957,7 +971,7 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
         GetDataTypesInGroup(m_poShared->GetHDF5(), osParentName, oTypes);
     }
 
-    m_dt = BuildDataType(m_hNativeDT, m_bHasVLenMember, m_bHasNonNativeDataType,
+    m_dt = BuildDataType(m_hNativeDT, m_bHasString, m_bHasNonNativeDataType,
                          oTypes);
     for (auto &oPair : oTypes)
         H5Tclose(oPair.second);
@@ -971,6 +985,246 @@ HDF5Array::HDF5Array(const std::string &osParentName, const std::string &osName,
     }
 
     HDF5Array::GetAttributes();
+
+    // Special case for S102 nodata value that is typically at 1e6
+    if (GetFullName() ==
+            "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values" &&
+        m_dt.GetClass() == GEDTC_COMPOUND &&
+        m_dt.GetSize() == 2 * sizeof(float) &&
+        m_dt.GetComponents().size() == 2 &&
+        m_dt.GetComponents()[0]->GetType().GetNumericDataType() ==
+            GDT_Float32 &&
+        m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_Float32)
+    {
+        m_abyNoData.resize(m_dt.GetSize());
+        float afNoData[2] = {1e6f, 1e6f};
+
+        if (auto poRootGroup = HDF5Array::GetRootGroup())
+        {
+            if (const auto poGroupF = poRootGroup->OpenGroup("Group_F"))
+            {
+                const auto poGroupFArray =
+                    poGroupF->OpenMDArray("BathymetryCoverage");
+                if (poGroupFArray &&
+                    poGroupFArray->GetDataType().GetClass() == GEDTC_COMPOUND &&
+                    poGroupFArray->GetDataType().GetComponents().size() == 8 &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[0]
+                            ->GetName() == "code" &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[3]
+                            ->GetName() == "fillValue" &&
+                    poGroupFArray->GetDimensionCount() == 1 &&
+                    poGroupFArray->GetDimensions()[0]->GetSize() == 2)
+                {
+                    auto poFillValue =
+                        poGroupFArray->GetView("[\"fillValue\"]");
+                    if (poFillValue)
+                    {
+                        char *pszVal0 = nullptr;
+                        char *pszVal1 = nullptr;
+                        const GUInt64 anArrayStartIdx0[] = {0};
+                        const GUInt64 anArrayStartIdx1[] = {1};
+                        const size_t anCount[] = {1};
+                        const GInt64 anArrayStep[] = {0};
+                        const GPtrDiff_t anBufferStride[] = {0};
+                        poFillValue->Read(anArrayStartIdx0, anCount,
+                                          anArrayStep, anBufferStride,
+                                          GDALExtendedDataType::CreateString(),
+                                          &pszVal0);
+                        poFillValue->Read(anArrayStartIdx1, anCount,
+                                          anArrayStep, anBufferStride,
+                                          GDALExtendedDataType::CreateString(),
+                                          &pszVal1);
+                        if (pszVal0 && pszVal1)
+                        {
+                            afNoData[0] = static_cast<float>(CPLAtof(pszVal0));
+                            afNoData[1] = static_cast<float>(CPLAtof(pszVal1));
+                        }
+                        CPLFree(pszVal0);
+                        CPLFree(pszVal1);
+                    }
+                }
+            }
+        }
+
+        m_abyNoData.resize(m_dt.GetSize());
+        memcpy(m_abyNoData.data(), afNoData, m_abyNoData.size());
+    }
+
+    // Special case for S102 QualityOfSurvey nodata value that is typically at 0
+    if (GetFullName() ==
+            "/QualityOfSurvey/QualityOfSurvey.01/Group_001/values" &&
+        m_dt.GetClass() == GEDTC_NUMERIC &&
+        m_dt.GetNumericDataType() == GDT_UInt32)
+    {
+        if (auto poRootGroup = HDF5Array::GetRootGroup())
+        {
+            if (const auto poGroupF = poRootGroup->OpenGroup("Group_F"))
+            {
+                const auto poGroupFArray =
+                    poGroupF->OpenMDArray("QualityOfSurvey");
+                if (poGroupFArray &&
+                    poGroupFArray->GetDataType().GetClass() == GEDTC_COMPOUND &&
+                    poGroupFArray->GetDataType().GetComponents().size() == 8 &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[0]
+                            ->GetName() == "code" &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[3]
+                            ->GetName() == "fillValue" &&
+                    poGroupFArray->GetDimensionCount() == 1 &&
+                    poGroupFArray->GetDimensions()[0]->GetSize() == 1)
+                {
+                    auto poFillValue =
+                        poGroupFArray->GetView("[\"fillValue\"]");
+                    if (poFillValue)
+                    {
+                        char *pszVal0 = nullptr;
+                        const GUInt64 anArrayStartIdx0[] = {0};
+                        const size_t anCount[] = {1};
+                        const GInt64 anArrayStep[] = {0};
+                        const GPtrDiff_t anBufferStride[] = {0};
+                        poFillValue->Read(anArrayStartIdx0, anCount,
+                                          anArrayStep, anBufferStride,
+                                          GDALExtendedDataType::CreateString(),
+                                          &pszVal0);
+                        if (pszVal0)
+                        {
+                            const uint32_t nNoData = atoi(pszVal0);
+                            m_abyNoData.resize(m_dt.GetSize());
+                            memcpy(m_abyNoData.data(), &nNoData,
+                                   m_abyNoData.size());
+                        }
+                        CPLFree(pszVal0);
+                    }
+                }
+            }
+        }
+    }
+
+    // Special case for S104 nodata value that is typically -9999
+    if (STARTS_WITH(GetFullName().c_str(), "/WaterLevel/WaterLevel.01/") &&
+        GetFullName().find("/values") != std::string::npos &&
+        m_dt.GetClass() == GEDTC_COMPOUND && m_dt.GetSize() == 8 &&
+        m_dt.GetComponents().size() == 2 &&
+        m_dt.GetComponents()[0]->GetType().GetNumericDataType() ==
+            GDT_Float32 &&
+        // In theory should be Byte, but 104US00_ches_dcf2_20190606T12Z.h5 uses Int32
+        (m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_Byte ||
+         m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_Int32))
+    {
+        m_abyNoData.resize(m_dt.GetSize());
+        float fNoData = -9999.0f;
+
+        if (auto poRootGroup = HDF5Array::GetRootGroup())
+        {
+            if (const auto poGroupF = poRootGroup->OpenGroup("Group_F"))
+            {
+                const auto poGroupFArray = poGroupF->OpenMDArray("WaterLevel");
+                if (poGroupFArray &&
+                    poGroupFArray->GetDataType().GetClass() == GEDTC_COMPOUND &&
+                    poGroupFArray->GetDataType().GetComponents().size() == 8 &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[0]
+                            ->GetName() == "code" &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[3]
+                            ->GetName() == "fillValue" &&
+                    poGroupFArray->GetDimensionCount() == 1 &&
+                    poGroupFArray->GetDimensions()[0]->GetSize() >= 2)
+                {
+                    auto poFillValue =
+                        poGroupFArray->GetView("[\"fillValue\"]");
+                    if (poFillValue)
+                    {
+                        char *pszVal0 = nullptr;
+                        const GUInt64 anArrayStartIdx0[] = {0};
+                        const size_t anCount[] = {1};
+                        const GInt64 anArrayStep[] = {0};
+                        const GPtrDiff_t anBufferStride[] = {0};
+                        poFillValue->Read(anArrayStartIdx0, anCount,
+                                          anArrayStep, anBufferStride,
+                                          GDALExtendedDataType::CreateString(),
+                                          &pszVal0);
+                        if (pszVal0)
+                        {
+                            fNoData = static_cast<float>(CPLAtof(pszVal0));
+                        }
+                        CPLFree(pszVal0);
+                    }
+                }
+            }
+        }
+
+        memcpy(m_abyNoData.data(), &fNoData, sizeof(float));
+    }
+
+    // Special case for S111 nodata value that is typically -9999
+    if (STARTS_WITH(GetFullName().c_str(),
+                    "/SurfaceCurrent/SurfaceCurrent.01/") &&
+        GetFullName().find("/values") != std::string::npos &&
+        m_dt.GetClass() == GEDTC_COMPOUND &&
+        m_dt.GetSize() == 2 * sizeof(float) &&
+        m_dt.GetComponents().size() == 2 &&
+        m_dt.GetComponents()[0]->GetType().GetNumericDataType() ==
+            GDT_Float32 &&
+        m_dt.GetComponents()[1]->GetType().GetNumericDataType() == GDT_Float32)
+    {
+        float afNoData[2] = {-9999.0f, -9999.0f};
+
+        if (auto poRootGroup = HDF5Array::GetRootGroup())
+        {
+            if (const auto poGroupF = poRootGroup->OpenGroup("Group_F"))
+            {
+                const auto poGroupFArray =
+                    poGroupF->OpenMDArray("SurfaceCurrent");
+                if (poGroupFArray &&
+                    poGroupFArray->GetDataType().GetClass() == GEDTC_COMPOUND &&
+                    poGroupFArray->GetDataType().GetComponents().size() == 8 &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[0]
+                            ->GetName() == "code" &&
+                    poGroupFArray->GetDataType()
+                            .GetComponents()[3]
+                            ->GetName() == "fillValue" &&
+                    poGroupFArray->GetDimensionCount() == 1 &&
+                    poGroupFArray->GetDimensions()[0]->GetSize() >= 2)
+                {
+                    auto poFillValue =
+                        poGroupFArray->GetView("[\"fillValue\"]");
+                    if (poFillValue)
+                    {
+                        char *pszVal0 = nullptr;
+                        char *pszVal1 = nullptr;
+                        const GUInt64 anArrayStartIdx0[] = {0};
+                        const GUInt64 anArrayStartIdx1[] = {1};
+                        const size_t anCount[] = {1};
+                        const GInt64 anArrayStep[] = {0};
+                        const GPtrDiff_t anBufferStride[] = {0};
+                        poFillValue->Read(anArrayStartIdx0, anCount,
+                                          anArrayStep, anBufferStride,
+                                          GDALExtendedDataType::CreateString(),
+                                          &pszVal0);
+                        poFillValue->Read(anArrayStartIdx1, anCount,
+                                          anArrayStep, anBufferStride,
+                                          GDALExtendedDataType::CreateString(),
+                                          &pszVal1);
+                        if (pszVal0 && pszVal1)
+                        {
+                            afNoData[0] = static_cast<float>(CPLAtof(pszVal0));
+                            afNoData[1] = static_cast<float>(CPLAtof(pszVal1));
+                        }
+                        CPLFree(pszVal0);
+                        CPLFree(pszVal1);
+                    }
+                }
+            }
+        }
+
+        m_abyNoData.resize(m_dt.GetSize());
+        memcpy(m_abyNoData.data(), afNoData, m_abyNoData.size());
+    }
 
     if (bSkipFullDimensionInstantiation)
     {
@@ -1073,7 +1327,8 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
                             if (ret > 0)
                             {
                                 referenceName.resize(ret);
-                                mapDimIndexToDimFullName[i] = referenceName;
+                                mapDimIndexToDimFullName[i] =
+                                    std::move(referenceName);
                             }
                         }
                     }
@@ -1133,7 +1388,7 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
             std::map<std::string, std::shared_ptr<GDALDimension>> oMap;
             const auto groupDims = m_poShared->GetEOSGridDimensions(
                 oGridDataFieldMetadata.poGridMetadata->osGridName);
-            for (auto &dim : groupDims)
+            for (const auto &dim : groupDims)
             {
                 oMap[dim->GetName()] = dim;
             }
@@ -1179,7 +1434,7 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
             std::map<std::string, std::shared_ptr<GDALDimension>> oMap;
             const auto groupDims = m_poShared->GetEOSSwathDimensions(
                 oSwathDataFieldMetadata.poSwathMetadata->osSwathName);
-            for (auto &dim : groupDims)
+            for (const auto &dim : groupDims)
             {
                 oMap[dim->GetName()] = dim;
             }
@@ -1204,7 +1459,7 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
             std::map<std::string, std::shared_ptr<GDALDimension>> oMap;
             const auto groupDims = m_poShared->GetEOSSwathDimensions(
                 oSwathGeolocationFieldMetadata.poSwathMetadata->osSwathName);
-            for (auto &dim : groupDims)
+            for (const auto &dim : groupDims)
             {
                 oMap[dim->GetName()] = dim;
             }
@@ -1218,6 +1473,85 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
             }
             return;
         }
+
+        // Special case for S100-family of products (S102, S104, S111)
+        const auto SpecialCaseS100 = [&](const std::string &osCoverageName)
+        {
+            auto poRootGroup = m_poShared->GetRootGroup();
+            if (poRootGroup)
+            {
+                m_poSRS = std::make_shared<OGRSpatialReference>();
+                if (S100ReadSRS(poRootGroup.get(), *(m_poSRS.get())))
+                {
+                    if (m_poSRS->GetDataAxisToSRSAxisMapping() ==
+                        std::vector<int>{2, 1})
+                        m_poSRS->SetDataAxisToSRSAxisMapping({1, 2});
+                    else
+                        m_poSRS->SetDataAxisToSRSAxisMapping({2, 1});
+                }
+                else
+                {
+                    m_poSRS.reset();
+                }
+
+                auto poCoverage =
+                    poRootGroup->OpenGroupFromFullname(osCoverageName);
+                if (poCoverage)
+                {
+                    std::vector<std::shared_ptr<GDALMDArray>> apoIndexingVars;
+                    if (S100GetDimensions(poCoverage.get(), m_dims,
+                                          apoIndexingVars) &&
+                        m_dims.size() == 2 &&
+                        m_dims[0]->GetSize() == anDimSizes[0] &&
+                        m_dims[1]->GetSize() == anDimSizes[1])
+                    {
+                        for (const auto &poIndexingVar : apoIndexingVars)
+                            m_poShared->KeepRef(poIndexingVar);
+                        return true;
+                    }
+                    else
+                    {
+                        m_dims.clear();
+                    }
+                }
+            }
+            return false;
+        };
+
+        if (nDims == 2 &&
+            GetFullName() ==
+                "/BathymetryCoverage/BathymetryCoverage.01/Group_001/values")
+        {
+            // S102
+            if (SpecialCaseS100("/BathymetryCoverage/BathymetryCoverage.01"))
+                return;
+        }
+        else if (nDims == 2 &&
+                 GetFullName() ==
+                     "/QualityOfSurvey/QualityOfSurvey.01/Group_001/values")
+        {
+            // S102
+            if (SpecialCaseS100("/QualityOfSurvey/QualityOfSurvey.01"))
+                return;
+        }
+        else if (nDims == 2 &&
+                 STARTS_WITH(GetFullName().c_str(),
+                             "/WaterLevel/WaterLevel.01/") &&
+                 GetFullName().find("/values"))
+        {
+            // S104
+            if (SpecialCaseS100("/WaterLevel/WaterLevel.01"))
+                return;
+        }
+        else if (nDims == 2 &&
+                 STARTS_WITH(GetFullName().c_str(),
+                             "/SurfaceCurrent/SurfaceCurrent.01/") &&
+                 GetFullName().find("/values"))
+        {
+            // S111
+            if (SpecialCaseS100("/SurfaceCurrent/SurfaceCurrent.01"))
+                return;
+        }
     }
 
     std::map<std::string, std::shared_ptr<GDALDimension>> oMapFullNameToDim;
@@ -1225,7 +1559,7 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
     if (poGroup && !mapDimIndexToDimFullName.empty())
     {
         auto groupDims = poGroup->GetDimensions();
-        for (auto &dim : groupDims)
+        for (const auto &dim : groupDims)
         {
             oMapFullNameToDim[dim->GetFullName()] = dim;
         }
@@ -1247,7 +1581,7 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
             auto nPos = osDimName.rfind('/');
             if (nPos != std::string::npos)
             {
-                std::string osDimParentName(osDimName.substr(0, nPos));
+                const std::string osDimParentName(osDimName.substr(0, nPos));
                 osDimName = osDimName.substr(nPos + 1);
 
                 m_dims.emplace_back(std::make_shared<HDF5Dimension>(
@@ -1401,11 +1735,15 @@ herr_t HDF5Array::GetAttributesCallback(hid_t hArray, const char *pszObjName,
                                     &pszVal,
                                     GDALExtendedDataType::CreateString());
                                 CPLError(CE_Warning, CPLE_AppDefined,
-                                         "%s attribute value (%s) is not in "
+                                         "Array %s: %s attribute value (%s) is "
+                                         "not in "
                                          "the range of the "
-                                         "array data type",
-                                         pszObjName,
-                                         pszVal ? pszVal : "(null)");
+                                         "array data type (%s)",
+                                         self->GetName().c_str(), pszObjName,
+                                         pszVal ? pszVal : "(null)",
+                                         GDALGetDataTypeName(
+                                             self->GetDataType()
+                                                 .GetNumericDataType()));
                                 CPLFree(pszVal);
                             }
                         }
@@ -1549,10 +1887,10 @@ bool HDF5Array::ReadSlow(const GUInt64 *arrayStartIdx, const size_t *count,
 
     // Only for testing
     const char *pszThreshold =
-        CPLGetConfigOption("GDAL_HDF5_TEMP_ARRAY_ALLOC_SIZE", "10000000");
+        CPLGetConfigOption("GDAL_HDF5_TEMP_ARRAY_ALLOC_SIZE", "16777216");
     const GUIntBig nThreshold =
         CPLScanUIntBig(pszThreshold, static_cast<int>(strlen(pszThreshold)));
-    if (nEltCount < nThreshold / nBufferDataTypeSize)
+    if (nEltCount == 1 || nEltCount <= nThreshold / nBufferDataTypeSize)
     {
         CPLDebug("HDF5", "Using slow path");
         std::vector<GByte> abyTemp;
@@ -1602,48 +1940,42 @@ bool HDF5Array::ReadSlow(const GUInt64 *arrayStartIdx, const size_t *count,
         return true;
     }
 
-    CPLDebug("HDF5", "Using very slow path");
-    std::vector<GUInt64> anStart(nDims);
-    const std::vector<size_t> anCount(nDims, 1);
-    const std::vector<GInt64> anStep(nDims, 1);
-    const std::vector<GPtrDiff_t> anStride(nDims, 1);
+    std::vector<GUInt64> arrayStartIdxHalf;
+    std::vector<size_t> countHalf;
+    size_t iDimToSplit = nDims;
+    // Find the first dimension that has at least 2 elements, to split along
+    // it
+    for (size_t i = 0; i < nDims; ++i)
+    {
+        arrayStartIdxHalf.push_back(arrayStartIdx[i]);
+        countHalf.push_back(count[i]);
+        if (count[i] >= 2 && iDimToSplit == nDims)
+        {
+            iDimToSplit = i;
+        }
+    }
 
-    std::vector<size_t> anStackCount(nDims);
-    std::vector<GByte *> pabyDstBufferStack(nDims + 1);
-    pabyDstBufferStack[0] = static_cast<GByte *>(pDstBuffer);
-    size_t iDim = 0;
-lbl_next_depth:
-    if (iDim == nDims)
+    CPLAssert(iDimToSplit != nDims);
+
+    countHalf[iDimToSplit] /= 2;
+    if (!ReadSlow(arrayStartIdxHalf.data(), countHalf.data(), arrayStep,
+                  bufferStride, bufferDataType, pDstBuffer))
     {
-        if (!IRead(anStart.data(), anCount.data(), anStep.data(),
-                   anStride.data(), bufferDataType, pabyDstBufferStack[nDims]))
-        {
-            return false;
-        }
+        return false;
     }
-    else
-    {
-        anStart[iDim] = arrayStartIdx[iDim];
-        anStackCount[iDim] = count[iDim];
-        while (true)
-        {
-            ++iDim;
-            pabyDstBufferStack[iDim] = pabyDstBufferStack[iDim - 1];
-            goto lbl_next_depth;
-        lbl_return_to_caller_in_loop:
-            --iDim;
-            --anStackCount[iDim];
-            if (anStackCount[iDim] == 0)
-                break;
-            pabyDstBufferStack[iDim] +=
-                bufferStride[iDim] * nBufferDataTypeSize;
-            anStart[iDim] =
-                CPLUnsanitizedAdd<GUInt64>(anStart[iDim], arrayStep[iDim]);
-        }
-    }
-    if (iDim > 0)
-        goto lbl_return_to_caller_in_loop;
-    return true;
+    arrayStartIdxHalf[iDimToSplit] = static_cast<GUInt64>(
+        arrayStep[iDimToSplit] > 0
+            ? arrayStartIdx[iDimToSplit] +
+                  arrayStep[iDimToSplit] * countHalf[iDimToSplit]
+            : arrayStartIdx[iDimToSplit] -
+                  (-arrayStep[iDimToSplit]) * countHalf[iDimToSplit]);
+    GByte *pOtherHalfDstBuffer =
+        static_cast<GByte *>(pDstBuffer) + bufferStride[iDimToSplit] *
+                                               countHalf[iDimToSplit] *
+                                               nBufferDataTypeSize;
+    countHalf[iDimToSplit] = count[iDimToSplit] - countHalf[iDimToSplit];
+    return ReadSlow(arrayStartIdxHalf.data(), countHalf.data(), arrayStep,
+                    bufferStride, bufferDataType, pOtherHalfDstBuffer);
 }
 
 /************************************************************************/
@@ -1929,12 +2261,12 @@ static void CopyValue(const GByte *pabySrcBuffer, hid_t hSrcDataType,
             {
                 const unsigned iSrc = mapDstCompsToSrcComps[iDst];
                 auto hMemberType = H5Tget_member_type(hSrcDataType, iSrc);
-                const auto mapDstSubCompsToSrcSubComps =
+                const std::vector<unsigned> mapDstSubCompsToSrcSubComps(
                     (H5Tget_class(hMemberType) == H5T_COMPOUND &&
                      comps[iDst]->GetType().GetClass() == GEDTC_COMPOUND)
                         ? CreateMapTargetComponentsToSrc(hMemberType,
                                                          comps[iDst]->GetType())
-                        : std::vector<unsigned>();
+                        : std::vector<unsigned>());
                 CopyValue(pabySrcBuffer +
                               H5Tget_member_offset(hSrcDataType, iSrc),
                           hMemberType, pabyDstBuffer + comps[iDst]->GetOffset(),
@@ -1974,17 +2306,51 @@ static void CopyToFinalBuffer(void *pDstBuffer, const void *pTemp, size_t nDims,
     const GByte *pabySrcBuffer = static_cast<const GByte *>(pTemp);
     pabyDstBufferStack[0] = static_cast<GByte *>(pDstBuffer);
     size_t iDim = 0;
-    const auto mapDstCompsToSrcComps =
+    const std::vector<unsigned> mapDstCompsToSrcComps(
         (H5Tget_class(hSrcDataType) == H5T_COMPOUND &&
          bufferDataType.GetClass() == GEDTC_COMPOUND)
             ? CreateMapTargetComponentsToSrc(hSrcDataType, bufferDataType)
-            : std::vector<unsigned>();
+            : std::vector<unsigned>());
+
+    bool bFastCopyOfCompoundToSingleComponentCompound = false;
+    GDALDataType eSrcTypeComp = GDT_Unknown;
+    size_t nSrcOffset = 0;
+    GDALDataType eDstTypeComp = GDT_Unknown;
+    int bufferStrideLastDim = 0;
+    if (nDims > 0 && mapDstCompsToSrcComps.size() == 1 &&
+        bufferDataType.GetComponents()[0]->GetType().GetClass() ==
+            GEDTC_NUMERIC)
+    {
+        auto hMemberType =
+            H5Tget_member_type(hSrcDataType, mapDstCompsToSrcComps[0]);
+        eSrcTypeComp = HDF5Dataset::GetDataType(hMemberType);
+        if (eSrcTypeComp != GDT_Unknown)
+        {
+            nSrcOffset =
+                H5Tget_member_offset(hSrcDataType, mapDstCompsToSrcComps[0]);
+            eDstTypeComp = bufferDataType.GetComponents()[0]
+                               ->GetType()
+                               .GetNumericDataType();
+            bufferStrideLastDim = static_cast<int>(bufferStride[nDims - 1] *
+                                                   bufferDataType.GetSize());
+            bFastCopyOfCompoundToSingleComponentCompound = true;
+        }
+    }
 
 lbl_next_depth:
-    if (iDim == nDims)
+    if (bFastCopyOfCompoundToSingleComponentCompound && iDim == nDims - 1)
+    {
+        GDALCopyWords64(pabySrcBuffer + nSrcOffset, eSrcTypeComp,
+                        static_cast<int>(nSrcDataTypeSize),
+                        pabyDstBufferStack[iDim], eDstTypeComp,
+                        static_cast<int>(bufferStrideLastDim), count[iDim]);
+        pabySrcBuffer += count[iDim] * nSrcDataTypeSize;
+    }
+    else if (iDim == nDims)
     {
         CopyValue(pabySrcBuffer, hSrcDataType, pabyDstBufferStack[nDims],
                   bufferDataType, mapDstCompsToSrcComps);
+        pabySrcBuffer += nSrcDataTypeSize;
     }
     else
     {
@@ -2001,7 +2367,6 @@ lbl_next_depth:
                 break;
             pabyDstBufferStack[iDim] +=
                 bufferStride[iDim] * bufferDataType.GetSize();
-            pabySrcBuffer += nSrcDataTypeSize;
         }
     }
     if (iDim > 0)
@@ -2111,8 +2476,7 @@ bool HDF5Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
     else
     {
         hBufferType = H5Tcopy(m_hNativeDT);
-        if (m_dt != bufferDataType || m_bHasVLenMember ||
-            m_bHasNonNativeDataType)
+        if (m_dt != bufferDataType || m_bHasString || m_bHasNonNativeDataType)
         {
             const size_t nDataTypeSize = H5Tget_size(m_hNativeDT);
             pabyTemp = static_cast<GByte *>(
@@ -2180,7 +2544,7 @@ bool HDF5Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
             CopyToFinalBuffer(pDstBuffer, pabyTemp, nDims, count, bufferStride,
                               m_hNativeDT, bufferDataType);
 
-            if (m_bHasVLenMember)
+            if (m_bHasString)
             {
                 const size_t nBufferTypeSize = H5Tget_size(hBufferType);
                 GByte *pabyPtr = pabyTemp;
@@ -2232,11 +2596,11 @@ static void CopyAllAttrValuesInto(size_t nDims, const GUInt64 *arrayStartIdx,
     std::vector<size_t> anStackCount(nDims);
     std::vector<const GByte *> pabySrcBufferStack(nDims + 1);
     std::vector<GByte *> pabyDstBufferStack(nDims + 1);
-    const auto mapDstCompsToSrcComps =
+    const std::vector<unsigned> mapDstCompsToSrcComps(
         (H5Tget_class(hSrcBufferType) == H5T_COMPOUND &&
          bufferDataType.GetClass() == GEDTC_COMPOUND)
             ? CreateMapTargetComponentsToSrc(hSrcBufferType, bufferDataType)
-            : std::vector<unsigned>();
+            : std::vector<unsigned>());
 
     pabySrcBufferStack[0] = static_cast<const GByte *>(pabySrcBuffer);
     if (nDims > 0)
@@ -2389,7 +2753,7 @@ bool HDF5Attribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
     }
     CopyAllAttrValuesInto(nDims, arrayStartIdx, count, arrayStep, bufferStride,
                           bufferDataType, pDstBuffer, hBufferType, pabyTemp);
-    if (bufferDataType.GetClass() == GEDTC_COMPOUND && m_bHasVLenMember)
+    if (bufferDataType.GetClass() == GEDTC_COMPOUND && m_bHasString)
     {
         GByte *pabyPtr = pabyTemp;
         for (size_t i = 0; i < m_nElements; ++i)
@@ -2469,7 +2833,7 @@ GDALDataset *HDF5Dataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     }
 
     auto poDS(new HDF5Dataset());
-    poDS->m_poRootGroup = poGroup;
+    poDS->m_poRootGroup = std::move(poGroup);
 
     poDS->SetDescription(poOpenInfo->pszFilename);
 
@@ -2484,7 +2848,7 @@ GDALDataset *HDF5Dataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 std::shared_ptr<GDALGroup> HDF5Dataset::OpenGroup(
-    std::shared_ptr<GDAL::HDF5SharedResources> poSharedResources)
+    const std::shared_ptr<GDAL::HDF5SharedResources> &poSharedResources)
 {
     HDF5_GLOBAL_LOCK();
 
@@ -2495,7 +2859,7 @@ std::shared_ptr<GDALGroup> HDF5Dataset::OpenGroup(
     if (HDF5EOSParser::HasHDFEOS(poGroup->GetID()))
     {
         poSharedResources->m_poHDF5EOSParser =
-            cpl::make_unique<HDF5EOSParser>();
+            std::make_unique<HDF5EOSParser>();
         if (poSharedResources->m_poHDF5EOSParser->Parse(poGroup->GetID()))
         {
             CPLDebug("HDF5", "Successfully parsed HDFEOS metadata");

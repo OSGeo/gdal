@@ -48,6 +48,21 @@ else
     echo "OK."
 fi
 
+
+echo "Checking for missing #include <cctype> statements..."
+rm -f /tmp/missing_include.txt
+while read -r i; do
+   grep -e std::isalpha $i >/dev/null && (grep "#include <cctype>" $i >/dev/null || echo $i) | tee -a /tmp/missing_include.txt;
+done < /tmp/gdal_list_files.txt
+
+
+if test -s /tmp/missing_include.txt; then
+    echo "FAIL: missing #include <cctype> in above listed files"
+    ret_code=1
+else
+    echo "OK."
+fi
+
 rm -f /tmp/missing_include.txt
 rm -f /tmp/gdal_list_files.txt
 

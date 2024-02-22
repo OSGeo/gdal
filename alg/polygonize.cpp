@@ -55,8 +55,6 @@
 
 using namespace gdal::polygonizer;
 
-CPL_CVSID("$Id$")
-
 /************************************************************************/
 /*                          GPMaskImageData()                           */
 /*                                                                      */

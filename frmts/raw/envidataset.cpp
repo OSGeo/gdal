@@ -59,31 +59,7 @@
 constexpr double kdfDegToRad = M_PI / 180.0;
 constexpr double kdfRadToDeg = 180.0 / M_PI;
 
-constexpr int anUsgsEsriZones[] = {
-    101,  3101, 102,  3126, 201,  3151, 202,  3176, 203,  3201, 301,  3226,
-    302,  3251, 401,  3276, 402,  3301, 403,  3326, 404,  3351, 405,  3376,
-    406,  3401, 407,  3426, 501,  3451, 502,  3476, 503,  3501, 600,  3526,
-    700,  3551, 901,  3601, 902,  3626, 903,  3576, 1001, 3651, 1002, 3676,
-    1101, 3701, 1102, 3726, 1103, 3751, 1201, 3776, 1202, 3801, 1301, 3826,
-    1302, 3851, 1401, 3876, 1402, 3901, 1501, 3926, 1502, 3951, 1601, 3976,
-    1602, 4001, 1701, 4026, 1702, 4051, 1703, 6426, 1801, 4076, 1802, 4101,
-    1900, 4126, 2001, 4151, 2002, 4176, 2101, 4201, 2102, 4226, 2103, 4251,
-    2111, 6351, 2112, 6376, 2113, 6401, 2201, 4276, 2202, 4301, 2203, 4326,
-    2301, 4351, 2302, 4376, 2401, 4401, 2402, 4426, 2403, 4451, 2500, 0,
-    2501, 4476, 2502, 4501, 2503, 4526, 2600, 0,    2601, 4551, 2602, 4576,
-    2701, 4601, 2702, 4626, 2703, 4651, 2800, 4676, 2900, 4701, 3001, 4726,
-    3002, 4751, 3003, 4776, 3101, 4801, 3102, 4826, 3103, 4851, 3104, 4876,
-    3200, 4901, 3301, 4926, 3302, 4951, 3401, 4976, 3402, 5001, 3501, 5026,
-    3502, 5051, 3601, 5076, 3602, 5101, 3701, 5126, 3702, 5151, 3800, 5176,
-    3900, 0,    3901, 5201, 3902, 5226, 4001, 5251, 4002, 5276, 4100, 5301,
-    4201, 5326, 4202, 5351, 4203, 5376, 4204, 5401, 4205, 5426, 4301, 5451,
-    4302, 5476, 4303, 5501, 4400, 5526, 4501, 5551, 4502, 5576, 4601, 5601,
-    4602, 5626, 4701, 5651, 4702, 5676, 4801, 5701, 4802, 5726, 4803, 5751,
-    4901, 5776, 4902, 5801, 4903, 5826, 4904, 5851, 5001, 6101, 5002, 6126,
-    5003, 6151, 5004, 6176, 5005, 6201, 5006, 6226, 5007, 6251, 5008, 6276,
-    5009, 6301, 5010, 6326, 5101, 5876, 5102, 5901, 5103, 5926, 5104, 5951,
-    5105, 5976, 5201, 6001, 5200, 6026, 5200, 6076, 5201, 6051, 5202, 6051,
-    5300, 0,    5400, 0};
+#include "usgs_esri_zones.h"
 
 /************************************************************************/
 /*                           ITTVISToUSGSZone()                         */
@@ -161,7 +137,7 @@ CPLErr ENVIDataset::Close()
         if (fpImage)
         {
             // Make sure the binary file has the expected size
-            if (!bSuppressOnClose && bFillFile && nBands > 0)
+            if (!IsMarkedSuppressOnClose() && bFillFile && nBands > 0)
             {
                 const int nDataSize = GDALGetDataTypeSizeBytes(
                     GetRasterBand(1)->GetRasterDataType());
@@ -226,7 +202,7 @@ CPLErr ENVIDataset::FlushCache(bool bAtClosing)
 
     GDALRasterBand *band = GetRasterCount() > 0 ? GetRasterBand(1) : nullptr;
 
-    if (!band || !bHeaderDirty || (bAtClosing && bSuppressOnClose))
+    if (!band || !bHeaderDirty || (bAtClosing && IsMarkedSuppressOnClose()))
         return eErr;
 
     // If opening an existing file in Update mode (i.e. "r+") we need to make
@@ -1622,7 +1598,7 @@ bool ENVIDataset::ProcessMapinfo(const char *pszMapinfo)
     }
     else
     {
-        m_oSRS = oSRS;
+        m_oSRS = std::move(oSRS);
     }
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
@@ -1937,7 +1913,12 @@ bool ENVIDataset::ReadHeader(VSILFILE *fpHdr)
         if (pszNewLine == nullptr)
             break;
 
-        if (strstr(pszNewLine, "=") == nullptr)
+        // Skip leading spaces. This may happen for example with
+        // AVIRIS datasets (https://aviris.jpl.nasa.gov/dataportal/) whose
+        // wavelength metadata starts with a leading space.
+        while (*pszNewLine == ' ')
+            ++pszNewLine;
+        if (strchr(pszNewLine, '=') == nullptr)
             continue;
 
         CPLString osWorkingLine(pszNewLine);
@@ -1956,7 +1937,7 @@ bool ENVIDataset::ReadHeader(VSILFILE *fpHdr)
                 if (osWorkingLine.size() > 10 * 1024 * 1024)
                     return false;
             } while (pszNewLine != nullptr &&
-                     strstr(pszNewLine, "}") == nullptr);
+                     strchr(pszNewLine, '}') == nullptr);
         }
 
         // Try to break input into name and value portions.  Trim whitespace.
@@ -2108,7 +2089,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     }
 
     // Create a corresponding GDALDataset.
-    auto poDS = cpl::make_unique<ENVIDataset>();
+    auto poDS = std::make_unique<ENVIDataset>();
     poDS->pszHDRFilename = CPLStrdup(osHdrFilename);
     poDS->fp = fpHeader;
 
@@ -2404,7 +2385,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     // Create band information objects.
     for (int i = 0; i < nBands; i++)
     {
-        auto poBand = cpl::make_unique<ENVIRasterBand>(
+        auto poBand = std::make_unique<ENVIRasterBand>(
             poDS.get(), i + 1, poDS->fpImage, nHeaderSize + nBandOffset * i,
             nPixelOffset, nLineOffset, eType, eByteOrder);
         if (!poBand->IsValid())
@@ -2443,7 +2424,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         for (int i = 0; i < nBands; i++)
         {
             // First set up the wavelength names and units if available.
-            CPLString osWavelength;
+            std::string osWavelength;
             if (papszWL && nWLCount > i)
             {
                 osWavelength = papszWL[i];
@@ -2455,7 +2436,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
             }
 
             // Build the final name for this band.
-            CPLString osBandName;
+            std::string osBandName;
             if (papszBandNames && CSLCount(papszBandNames) > i)
             {
                 osBandName = papszBandNames[i];
@@ -2469,15 +2450,15 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
             else
             {
                 // WL but no band names.
-                osBandName = osWavelength;
+                osBandName = std::move(osWavelength);
             }
 
             // Description is for internal GDAL usage.
-            poDS->GetRasterBand(i + 1)->SetDescription(osBandName);
+            poDS->GetRasterBand(i + 1)->SetDescription(osBandName.c_str());
 
             // Metadata field named Band_1, etc. Needed for ArcGIS integration.
             CPLString osBandId = CPLSPrintf("Band_%i", i + 1);
-            poDS->SetMetadataItem(osBandId, osBandName);
+            poDS->SetMetadataItem(osBandId, osBandName.c_str());
 
             // Set wavelength metadata to band.
             if (papszWL && nWLCount > i)

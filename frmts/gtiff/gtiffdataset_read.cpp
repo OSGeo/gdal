@@ -36,6 +36,7 @@
 #include "gtiffsplitbitmapband.h"
 
 #include <algorithm>
+#include <cassert>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -345,8 +346,6 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
     }
     return CE_Failure;
 }
-
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
 
 struct GTiffDecompressContext
 {
@@ -855,8 +854,8 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
             (static_cast<size_t>(nYOffsetInBlock) * poDS->m_nBlockXSize +
              nXOffsetInBlock) *
                 nDTSize * nBandsPerStrile;
-        const size_t nSrcLineInc =
-            poDS->m_nBlockXSize * nDTSize * nBandsPerStrile;
+        const size_t nSrcLineInc = static_cast<size_t>(poDS->m_nBlockXSize) *
+                                   nDTSize * nBandsPerStrile;
 
         // Optimization when writing to BIP buffer.
         if (psContext->bUseBIPOptim)
@@ -937,6 +936,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
             psContext->bCacheAllBands ? psContext->panBandMap[i] - 1
             : poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ? i
                                                            : 0;
+        assert(iSrcBandIdx >= 0);
         const int iDstBandIdx = poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG
                                     ? i
                                     : psJob->iDstBandIdxSeparate;
@@ -1140,7 +1140,6 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
 
     if (eAccess == GA_Update)
     {
-        // Make sure to flush all dirty blocks we will access.
         std::vector<int> anBandsToCheck;
         if (m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands > 1)
         {
@@ -1158,35 +1157,62 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
         }
         if (!anBandsToCheck.empty())
         {
+            // If at least one block in the region of intersest is dirty,
+            // fallback to normal reading code path to be able to retrieve
+            // content partly from the block cache.
+            // An alternative that was implemented in GDAL 3.6 to 3.8.0 was
+            // to flush dirty blocks, but this could cause many write&read&write
+            // cycles in some gdalwarp scenarios.
+            // Cf https://github.com/OSGeo/gdal/issues/8729
+            bool bUseBaseImplementation = false;
             for (int y = 0; y < nYBlocks; ++y)
             {
                 for (int x = 0; x < nXBlocks; ++x)
                 {
                     for (const int iBand : anBandsToCheck)
                     {
+                        if (m_nLoadedBlock >= 0 && m_bLoadedBlockDirty &&
+                            cpl::down_cast<GTiffRasterBand *>(papoBands[iBand])
+                                    ->ComputeBlockId(nBlockXStart + x,
+                                                     nBlockYStart + y) ==
+                                m_nLoadedBlock)
+                        {
+                            bUseBaseImplementation = true;
+                            goto after_loop;
+                        }
                         auto poBlock = papoBands[iBand]->TryGetLockedBlockRef(
                             nBlockXStart + x, nBlockYStart + y);
                         if (poBlock)
                         {
-                            CPLErr eErr = CE_None;
                             if (poBlock->GetDirty())
                             {
-                                eErr = poBlock->Write();
+                                poBlock->DropLock();
+                                bUseBaseImplementation = true;
+                                goto after_loop;
                             }
                             poBlock->DropLock();
-                            if (eErr == CE_Failure)
-                            {
-                                return CE_Failure;
-                            }
                         }
                     }
                 }
             }
+        after_loop:
+            if (bUseBaseImplementation)
+            {
+                ++m_nDisableMultiThreadedRead;
+                GDALRasterIOExtraArg sExtraArg;
+                INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+                const CPLErr eErr = GDALDataset::IRasterIO(
+                    GF_Read, nXOff, nYOff, nXSize, nYSize, pData, nXSize,
+                    nYSize, eBufType, nBandCount, const_cast<int *>(panBandMap),
+                    nPixelSpace, nLineSpace, nBandSpace, &sExtraArg);
+                --m_nDisableMultiThreadedRead;
+                return eErr;
+            }
         }
 
-        // Flush last active multi-band contiguous buffer
-        FlushBlockBuf();
-
+        // Make sure that all blocks that we are going to read and that are
+        // being written by a worker thread are completed.
+        // cppcheck-suppress constVariableReference
         auto &oQueue =
             m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
         if (!oQueue.empty())
@@ -1391,8 +1417,6 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
     return sContext.bSuccess ? CE_None : CE_Failure;
 }
 
-#endif  // SUPPORTS_GET_OFFSET_BYTECOUNT
-
 /************************************************************************/
 /*                        FetchBufferVirtualMemIO                       */
 /************************************************************************/
@@ -1414,7 +1438,7 @@ class FetchBufferVirtualMemIO final
     const GByte *FetchBytes(vsi_l_offset nOffset, int nPixels, int nDTSize,
                             bool bIsByteSwapped, bool bIsComplex, int nBlockId)
     {
-        if (nOffset + nPixels * nDTSize > nMappingSize)
+        if (nOffset + static_cast<size_t>(nPixels) * nDTSize > nMappingSize)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Missing data for block %d",
                      nBlockId);
@@ -1422,7 +1446,8 @@ class FetchBufferVirtualMemIO final
         }
         if (!bIsByteSwapped)
             return pabySrcData + nOffset;
-        memcpy(pTempBuffer, pabySrcData + nOffset, nPixels * nDTSize);
+        memcpy(pTempBuffer, pabySrcData + nOffset,
+               static_cast<size_t>(nPixels) * nDTSize);
         if (bIsComplex)
             GDALSwapWords(pTempBuffer, nDTSize / 2, 2 * nPixels, nDTSize / 2);
         else
@@ -1434,13 +1459,14 @@ class FetchBufferVirtualMemIO final
                     int nDTSize, bool bIsByteSwapped, bool bIsComplex,
                     int nBlockId)
     {
-        if (nOffset + nPixels * nDTSize > nMappingSize)
+        if (nOffset + static_cast<size_t>(nPixels) * nDTSize > nMappingSize)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Missing data for block %d",
                      nBlockId);
             return false;
         }
-        memcpy(pabyDstBuffer, pabySrcData + nOffset, nPixels * nDTSize);
+        memcpy(pabyDstBuffer, pabySrcData + nOffset,
+               static_cast<size_t>(nPixels) * nDTSize);
         if (bIsByteSwapped)
         {
             if (bIsComplex)
@@ -2986,7 +3012,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
             (nXOff +
              static_cast<vsi_l_offset>(nYOffsetInBlock) * m_nBlockXSize) *
             nSrcPixelSize;
-        panSizes[iLine] = nReqXSize * nSrcPixelSize;
+        panSizes[iLine] = static_cast<size_t>(nReqXSize) * nSrcPixelSize;
     }
 
     // Extract data from the file.
@@ -3113,7 +3139,6 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
 bool GTiffDataset::ReadStrile(int nBlockId, void *pOutputBuffer,
                               GPtrDiff_t nBlockReqSize)
 {
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     // Optimization by which we can save some libtiff buffer copy
     std::pair<vsi_l_offset, vsi_l_offset> oPair;
     if (
@@ -3143,7 +3168,6 @@ bool GTiffDataset::ReadStrile(int nBlockId, void *pOutputBuffer,
             return true;
         }
     }
-#endif
 
     // For debugging
     if (m_poBaseDS)
@@ -5017,22 +5041,7 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         m_nBlockYSize == nRasterYSize && nRasterYSize > 2000 && !bTreatAsRGBA &&
         CPLTestBool(CPLGetConfigOption("GDAL_ENABLE_TIFF_SPLIT", "YES")))
     {
-        // libtiff 4.0.0beta5 (also
-        // 20091104) and older will crash when trying to open a
-        // all-in-one-strip YCbCr JPEG compressed TIFF (see #3259).
-#if (TIFFLIB_VERSION <= 20091104)
-        if (m_nPhotometric == PHOTOMETRIC_YCBCR &&
-            m_nCompression == COMPRESSION_JPEG)
-        {
-            CPLDebug("GTiff",
-                     "Avoid using split band to open all-in-one-strip "
-                     "YCbCr JPEG compressed TIFF because of older libtiff");
-        }
-        else
-#endif
-        {
-            m_bTreatAsSplit = true;
-        }
+        m_bTreatAsSplit = true;
     }
 
     /* -------------------------------------------------------------------- */
@@ -6572,4 +6581,20 @@ void GTiffDataset::LoadMetadata()
             CSLDestroy(papszRPCMD);
         }
     }
+}
+
+/************************************************************************/
+/*                     HasOptimizedReadMultiRange()                     */
+/************************************************************************/
+
+bool GTiffDataset::HasOptimizedReadMultiRange()
+{
+    if (m_nHasOptimizedReadMultiRange >= 0)
+        return m_nHasOptimizedReadMultiRange != 0;
+    m_nHasOptimizedReadMultiRange = static_cast<signed char>(
+        VSIHasOptimizedReadMultiRange(m_pszFilename)
+        // Config option for debug and testing purposes only
+        || CPLTestBool(CPLGetConfigOption(
+               "GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE", "NO")));
+    return m_nHasOptimizedReadMultiRange != 0;
 }

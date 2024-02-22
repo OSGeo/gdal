@@ -187,7 +187,11 @@ OGRFeature *OGREditableLayer::Translate(OGRFeatureDefn *poTargetDefn,
                                          ->GetNameRef()] = iField;
         }
         if (poTargetDefn == m_poEditableFeatureDefn)
-            m_oMapEditableFDefnFieldNameToIdx = oMapTargetFieldNameToIdx;
+        {
+            m_oMapEditableFDefnFieldNameToIdx =
+                std::move(oMapTargetFieldNameToIdx);
+            poMap = &m_oMapEditableFDefnFieldNameToIdx;
+        }
     }
 
     int *panMap = static_cast<int *>(
@@ -707,7 +711,7 @@ int OGREditableLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGREditableLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGREditableLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 {
     if (!m_poDecoratedLayer)
         return OGRERR_FAILURE;
@@ -852,7 +856,7 @@ OGRErr OGREditableLayer::AlterGeomFieldDefn(
 /*                          CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGREditableLayer::CreateGeomField(OGRGeomFieldDefn *poField,
+OGRErr OGREditableLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
                                          int bApproxOK)
 {
     if (!m_poDecoratedLayer || !m_bSupportsCreateGeomField)

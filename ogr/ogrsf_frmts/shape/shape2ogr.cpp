@@ -348,6 +348,7 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
                     // Only inner rings
                     OGREnvelope sFirstEnvelope;
                     OGREnvelope sCurEnvelope;
+                    auto poExteriorRing = tabPolygons[0]->getExteriorRing();
                     tabPolygons[0]->getEnvelope(&sFirstEnvelope);
                     for (int iRing = 1; iRing < psShape->nParts; iRing++)
                     {
@@ -406,10 +407,10 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
                                     topPoint = p;
                                 }
                             }
-                            if (!poRing->isPointInRing(&leftPoint) &&
-                                !poRing->isPointInRing(&rightPoint) &&
-                                !poRing->isPointInRing(&bottomPoint) &&
-                                !poRing->isPointInRing(&topPoint))
+                            if (!poExteriorRing->isPointInRing(&leftPoint) &&
+                                !poExteriorRing->isPointInRing(&rightPoint) &&
+                                !poExteriorRing->isPointInRing(&bottomPoint) &&
+                                !poExteriorRing->isPointInRing(&topPoint))
                             {
                                 bUseSlowMethod = true;
                                 break;
@@ -1446,12 +1447,6 @@ OGRFeature *SHPReadOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                 const char *const pszDateValue =
                     DBFReadStringAttribute(hDBF, iShape, iField);
 
-                // Some DBF files have fields filled with spaces
-                // (trimmed by DBFReadStringAttribute) to indicate null
-                // values for dates (#4265).
-                if (pszDateValue[0] == '\0')
-                    continue;
-
                 OGRField sFld;
                 memset(&sFld, 0, sizeof(sFld));
 
@@ -1513,6 +1508,7 @@ static OGRErr GrowField(DBFHandle hDBF, int iField, OGRFieldDefn *poFieldDefn,
         return OGRERR_FAILURE;
     }
 
+    auto oTemporaryUnsealer(poFieldDefn->GetTemporaryUnsealer());
     poFieldDefn->SetWidth(nNewSize);
     return OGRERR_NONE;
 }
@@ -1761,6 +1757,12 @@ OGRErr SHPWriteOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                     CPLError(
                         CE_Warning, CPLE_NotSupported,
                         "Year < 0 or > 9999 is not a valid date for shapefile");
+                }
+                else if (psField->Date.Year == 0 && psField->Date.Month == 0 &&
+                         psField->Date.Day == 0)
+                {
+                    DBFWriteNULLAttribute(
+                        hDBF, static_cast<int>(poFeature->GetFID()), iField);
                 }
                 else
                 {

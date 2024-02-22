@@ -234,7 +234,7 @@ void OGRSQLiteTableLayer::SetCreationParameters(const char *pszFIDColumnName,
             nSRSId = m_poDS->GetUndefinedSRID();
         OGRSQLiteGeomFormat eGeomFormat = GetGeomFormat(pszGeomFormat);
         auto poGeomFieldDefn =
-            cpl::make_unique<OGRSQLiteGeomFieldDefn>(pszGeometryName, -1);
+            std::make_unique<OGRSQLiteGeomFieldDefn>(pszGeometryName, -1);
         poGeomFieldDefn->SetType(eGeomType);
         poGeomFieldDefn->m_nSRSId = nSRSId;
         poGeomFieldDefn->m_eGeomFormat = eGeomFormat;
@@ -1517,7 +1517,7 @@ OGRSQLiteTableLayer::FieldDefnToSQliteFieldDefn(OGRFieldDefn *poFieldDefn)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRSQLiteTableLayer::CreateField(OGRFieldDefn *poFieldIn,
+OGRErr OGRSQLiteTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
                                         CPL_UNUSED int bApproxOK)
 {
     OGRFieldDefn oField(poFieldIn);
@@ -1632,8 +1632,9 @@ OGRErr OGRSQLiteTableLayer::CreateField(OGRFieldDefn *poFieldIn,
 /*                           CreateGeomField()                          */
 /************************************************************************/
 
-OGRErr OGRSQLiteTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
-                                            CPL_UNUSED int bApproxOK)
+OGRErr
+OGRSQLiteTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
+                                     CPL_UNUSED int bApproxOK)
 {
     OGRwkbGeometryType eType = poGeomFieldIn->GetType();
     if (eType == wkbNone)
@@ -1656,7 +1657,7 @@ OGRErr OGRSQLiteTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
         }
     }
 
-    auto poGeomField = cpl::make_unique<OGRSQLiteGeomFieldDefn>(
+    auto poGeomField = std::make_unique<OGRSQLiteGeomFieldDefn>(
         poGeomFieldIn->GetNameRef(), -1);
     if (EQUAL(poGeomField->GetNameRef(), ""))
     {
@@ -2273,9 +2274,6 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn(int iFieldToAlter,
         oTmpFieldDefn.SetUnique(poNewFieldDefn->IsUnique());
     }
 
-    // ALTER TABLE ... RENAME COLUMN ... was first implemented in 3.25.0 but
-    // 3.26.0 was required so that foreign key constraints are updated as well
-#if SQLITE_VERSION_NUMBER >= 3026000L
     if (nActualFlags == ALTER_NAME_FLAG)
     {
         CPLDebug("SQLite", "Running ALTER TABLE RENAME COLUMN");
@@ -2292,7 +2290,6 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn(int iFieldToAlter,
             return eErr;
     }
     else
-#endif
     {
         /* --------------------------------------------------------------------
          */

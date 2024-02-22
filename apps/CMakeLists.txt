@@ -19,7 +19,8 @@ add_library(
   nearblack_lib_floodfill.cpp
   gdal_footprint_lib.cpp
   gdalmdiminfo_lib.cpp
-  gdalmdimtranslate_lib.cpp)
+  gdalmdimtranslate_lib.cpp
+  gdaltindex_lib.cpp)
 add_dependencies(appslib generate_gdal_version_h)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:appslib>)
 gdal_standard_includes(appslib)
@@ -31,10 +32,6 @@ target_include_directories(
 gdal_target_link_libraries(appslib PRIVATE PROJ::proj)
 
 set_property(TARGET appslib PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})
-if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-  set_property(SOURCE ogr2ogr_bin.cpp gdal_grid_lib.cpp gdal_translate_lib.cpp gdalbuildvrt_lib.cpp gdaldem_lib.cpp
-                      gdal_rasterize_lib.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
-endif ()
 
 if (GDAL_USE_JSONC_INTERNAL)
   gdal_add_vendored_lib(appslib libjson)
@@ -59,7 +56,7 @@ if (BUILD_APPS)
   add_executable(gdalmanage gdalmanage.cpp)
   add_executable(gdalsrsinfo gdalsrsinfo.cpp)
   target_link_libraries(gdalsrsinfo PRIVATE PROJ::proj)
-  add_executable(gdaltindex gdaltindex.cpp)
+  add_executable(gdaltindex gdal_utils_priv.h gdaltindex_bin.cpp)
   add_executable(gdal_rasterize gdal_rasterize_bin.cpp)
   add_executable(gdaldem gdaldem_bin.cpp)
   add_executable(gdaltransform gdaltransform.cpp)
@@ -198,3 +195,13 @@ if (BUILD_APPS)
     target_link_libraries(${UTILCMD} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
   endforeach ()
 endif ()
+
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalinfo_output.schema.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/gdalmdiminfo_output.schema.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/ogrinfo_output.schema.json
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")

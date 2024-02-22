@@ -726,6 +726,49 @@ def test_rasterio_9():
         assert tab[0] == pytest.approx(1.0, abs=1e-5)
 
 
+##############################################################################
+# Test resampled reading from an overview level (#8794)
+
+
+def test_rasterio_overview_subpixel_resampling():
+
+    numpy = pytest.importorskip("numpy")
+
+    temp_path = "/vsimem/rasterio_ovr.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(temp_path, 8, 8, 1, gdal.GDT_Byte)
+    ds.GetRasterBand(1).WriteArray(
+        numpy.array(
+            [
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 255, 255, 255, 255, 0, 0],
+                [0, 0, 255, 255, 255, 255, 0, 0],
+                [0, 0, 255, 255, 255, 255, 0, 0],
+                [0, 0, 255, 255, 255, 255, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+            ]
+        )
+    )
+    ds.BuildOverviews("NEAREST", overviewlist=[2])
+
+    pix = ds.GetRasterBand(1).ReadAsArray(
+        xoff=1,
+        yoff=1,
+        buf_xsize=3,
+        buf_ysize=3,
+        win_xsize=6,
+        win_ysize=6,
+        resample_alg=gdal.GRIORA_Bilinear,
+    )
+    assert numpy.all(
+        pix == numpy.array([[64, 128, 64], [128, 255, 128], [64, 128, 64]])
+    )
+
+    ds = None
+    gdal.Unlink("/vsimem/rasterio_ovr.tif")
+
+
 ###############################################################################
 # Test error when getting a block
 
@@ -3146,3 +3189,108 @@ def test_rasterio_constant_value(resample_alg, dt, struct_type, val):
     assert struct.unpack(struct_type * (2 * 2), data) == pytest.approx(
         (val, val, val, val), rel=1e-14
     )
+
+
+###############################################################################
+# Test RasterIO() overview selection logic
+
+
+def test_rasterio_overview_selection():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 100, 100, 1)
+    ds.BuildOverviews("NEAR", [2, 4])
+    ds.GetRasterBand(1).Fill(1)
+    ds.GetRasterBand(1).GetOverview(0).Fill(2)
+    ds.GetRasterBand(1).GetOverview(1).Fill(3)
+
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 101, 101)[0] == 1
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 100, 100)[0] == 1
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 99, 99)[0] == 1
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 60, 60)[0] == 1
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 59, 59)[0] == 2
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 50, 50)[0] == 2
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 49, 49)[0] == 2
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 30, 30)[0] == 2
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 29, 29)[0] == 3
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 25, 25)[0] == 3
+    assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 24, 24)[0] == 3
+
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 101, 101, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 1
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 100, 100, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 1
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 99, 99, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 1
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 60, 60, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 1
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 59, 59, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 1
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 50, 50, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 2
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 49, 49, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 2
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 30, 30, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 2
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 29, 29, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 2
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 25, 25, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 3
+    )
+    assert (
+        ds.GetRasterBand(1).ReadRaster(
+            0, 0, 100, 100, 24, 24, resample_alg=gdal.GRIORA_Average
+        )[0]
+        == 3
+    )
+
+    with gdaltest.config_option("GDAL_OVERVIEW_OVERSAMPLING_THRESHOLD", "1.0"):
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 101, 101)[0] == 1
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 100, 100)[0] == 1
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 99, 99)[0] == 1
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 60, 60)[0] == 1
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 59, 59)[0] == 1
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 50, 50)[0] == 2
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 49, 49)[0] == 2
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 30, 30)[0] == 2
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 29, 29)[0] == 2
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 25, 25)[0] == 3
+        assert ds.GetRasterBand(1).ReadRaster(0, 0, 100, 100, 24, 24)[0] == 3

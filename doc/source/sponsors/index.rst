@@ -76,13 +76,6 @@ the health of the project:
 
     .. container:: horizontal-logo
 
-        .. image:: ../../images/sponsors/logo-frontiersi.png
-           :class: img-logos
-           :width: 150 px
-           :target: https://frontiersi.com.au
-
-    .. container:: horizontal-logo
-
         .. image:: ../../images/sponsors/logo-geoczech.png
            :class: img-logos
            :width: 150 px
@@ -109,6 +102,13 @@ the health of the project:
            :width: 150 px
            :target: https://www.sparkgeo.com
 
+    .. container:: horizontal-logo
+
+        .. image:: ../../images/sponsors/logo-maxar.png
+           :class: img-logos
+           :width: 150 px
+           :target: https://www.maxar.com
+
 
 - Supporter level:
 
@@ -130,6 +130,10 @@ the health of the project:
     .. container:: horizontal-logo
 
         `Regrid <https://regrid.com>`__
+
+    .. container:: horizontal-logo
+
+        `Satelligence <https://satelligence.com/>`__
 
     .. container:: horizontal-logo
 

@@ -49,7 +49,8 @@ OGRParquetDatasetLayer::OGRParquetDatasetLayer(
     : OGRParquetLayerBase(poDS, pszLayerName, papszOpenOptions),
       m_poScanner(scanner)
 {
-    EstablishFeatureDefn(schema);
+    m_poSchema = schema;
+    EstablishFeatureDefn();
     CPLAssert(static_cast<int>(m_aeGeomEncoding.size()) ==
               m_poFeatureDefn->GetGeomFieldCount());
 }
@@ -58,17 +59,18 @@ OGRParquetDatasetLayer::OGRParquetDatasetLayer(
 /*                        EstablishFeatureDefn()                        */
 /************************************************************************/
 
-void OGRParquetDatasetLayer::EstablishFeatureDefn(
-    const std::shared_ptr<arrow::Schema> &schema)
+void OGRParquetDatasetLayer::EstablishFeatureDefn()
 {
-    const auto &kv_metadata = schema->metadata();
+    const auto &kv_metadata = m_poSchema->metadata();
 
     LoadGeoMetadata(kv_metadata);
     const auto oMapFieldNameToGDALSchemaFieldDefn =
-        LoadGDALMetadata(kv_metadata.get());
+        LoadGDALSchema(kv_metadata.get());
 
-    const auto fields = schema->fields();
-    for (int i = 0; i < schema->num_fields(); ++i)
+    LoadGDALMetadata(kv_metadata.get());
+
+    const auto &fields = m_poSchema->fields();
+    for (int i = 0; i < m_poSchema->num_fields(); ++i)
     {
         const auto &field = fields[i];
 
@@ -255,20 +257,13 @@ OGRErr OGRParquetDatasetLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
                                 auto oRoot = oDoc.GetRoot();
                                 auto oColumns = oRoot.GetObj("columns");
                                 auto oCol = oColumns.GetObj(pszGeomFieldName);
-                                OGREnvelope sFragmentExtent;
+                                OGREnvelope3D sFragmentExtent;
                                 if (oCol.IsValid() &&
                                     GetExtentFromMetadata(
                                         oCol, &sFragmentExtent) == OGRERR_NONE)
                                 {
                                     nBBoxFragmentCount++;
-                                    psExtent->MinX = std::min(
-                                        psExtent->MinX, sFragmentExtent.MinX);
-                                    psExtent->MinY = std::min(
-                                        psExtent->MinY, sFragmentExtent.MinY);
-                                    psExtent->MaxX = std::max(
-                                        psExtent->MaxX, sFragmentExtent.MaxX);
-                                    psExtent->MaxY = std::max(
-                                        psExtent->MaxY, sFragmentExtent.MaxY);
+                                    psExtent->Merge(sFragmentExtent);
                                 }
                             }
                         }

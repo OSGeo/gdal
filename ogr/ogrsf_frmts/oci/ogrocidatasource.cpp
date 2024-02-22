@@ -59,9 +59,6 @@ OGROCIDataSource::OGROCIDataSource()
     bDSUpdate = FALSE;
     bNoLogging = FALSE;
     poSession = nullptr;
-    papoSRS = nullptr;
-    panSRID = nullptr;
-    nKnownSRID = 0;
 }
 
 /************************************************************************/
@@ -80,13 +77,6 @@ OGROCIDataSource::~OGROCIDataSource()
         delete papoLayers[i];
 
     CPLFree(papoLayers);
-
-    for (i = 0; i < nKnownSRID; i++)
-    {
-        papoSRS[i]->Release();
-    }
-    CPLFree(papoSRS);
-    CPLFree(panSRID);
 
     if (poSession != nullptr)
         delete poSession;
@@ -801,12 +791,10 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      First, we look through our SRID cache, is it there?             */
     /* -------------------------------------------------------------------- */
-    int i;
-
-    for (i = 0; i < nKnownSRID; i++)
+    auto oIter = m_oSRSCache.find(nId);
+    if (oIter != m_oSRSCache.end())
     {
-        if (panSRID[i] == nId)
-            return papoSRS[i];
+        return oIter->second.get();
     }
 
     /* -------------------------------------------------------------------- */
@@ -830,11 +818,11 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      Turn into a spatial reference.                                  */
     /* -------------------------------------------------------------------- */
-    OGRSpatialReference *poSRS = new OGRSpatialReference();
+    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS(
+        new OGRSpatialReference());
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if (poSRS->importFromWkt(papszResult[0]) != OGRERR_NONE)
     {
-        delete poSRS;
         return nullptr;
     }
 
@@ -853,10 +841,10 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS(int nId)
         const char *const apszOptions[] = {
             "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr};
         if (oSRS_EPSG.importFromEPSG(nId) == OGRERR_NONE &&
-            oSRS_EPSG.IsSame(poSRS, apszOptions))
+            oSRS_EPSG.IsSame(poSRS.get(), apszOptions))
         {
             *poSRS = oSRS_EPSG;
-            return poSRS;
+            return poSRS.release();
         }
     }
 
@@ -865,7 +853,7 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS(int nId)
     /*      authority.                                                      */
     /* -------------------------------------------------------------------- */
     int bGotEPSGMapping = FALSE;
-    for (i = 0; anEPSGOracleMapping[i] != 0; i += 2)
+    for (int i = 0; anEPSGOracleMapping[i] != 0; i += 2)
     {
         if (anEPSGOracleMapping[i] == nId)
         {
@@ -890,15 +878,8 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      Add to the cache.                                               */
     /* -------------------------------------------------------------------- */
-    panSRID = (int *)CPLRealloc(panSRID, sizeof(int) * (nKnownSRID + 1));
-    papoSRS = (OGRSpatialReference **)CPLRealloc(papoSRS, sizeof(void *) *
-                                                              (nKnownSRID + 1));
-    panSRID[nKnownSRID] = nId;
-    papoSRS[nKnownSRID] = poSRS;
-
-    nKnownSRID++;
-
-    return poSRS;
+    oIter = m_oSRSCache.emplace(nId, std::move(poSRS)).first;
+    return oIter->second.get();
 }
 
 /************************************************************************/

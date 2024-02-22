@@ -418,14 +418,14 @@ static void PrintSect4_Category (grib_MetaData *meta)
       "Waves", "Currents", "Ice", "Surface Properties",
       "Sub-surface Properties"
    };
-   
+
    if (meta->pds2.mstrVersion == 255) {
       if (meta->center == 161) {
          PrintSect4_Category_OAR(sect4->cat);
       } else {
          Print ("PDS-S4", "Category Description", Prt_DS, sect4->cat, "unknown");
       }
-      return;  
+      return;
    }
    switch (meta->pds2.prodType) {
       case 0:          /* Meteo category. */
@@ -899,7 +899,7 @@ static int PrintSect4 (grib_MetaData *meta, sChar f_unit)
                 sect4->upperLimit.value *
                 pow (10.0, -1 * sect4->upperLimit.factor), buffer);
          /* Intentionally fall through. */
-         CPL_FALLTHROUGH
+         [[fallthrough]];
       case GS4_STATISTIC:
 /*         strftime (buffer, 100, "%m/%d/%Y %H:%M:%S UTC",
                    gmtime (&(sect4->validTime)));*/

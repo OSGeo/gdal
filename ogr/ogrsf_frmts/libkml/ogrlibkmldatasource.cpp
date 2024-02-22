@@ -425,7 +425,7 @@ bool OGRLIBKMLDataSource::WriteKmz()
                 }
             }
 
-            ParseDocumentOptions(kml, AsDocument(m_poKmlDocKml));
+            ParseDocumentOptions(std::move(kml), AsDocument(m_poKmlDocKml));
         }
 
         std::string oKmlOut = kmldom::SerializePretty(m_poKmlDocKmlRoot);
@@ -455,10 +455,10 @@ bool OGRLIBKMLDataSource::WriteKmz()
             if (!poKmlDocument->get_schema_array_size() && poKmlSchema &&
                 poKmlSchema->get_simplefield_array_size())
             {
-                poKmlDocument->add_schema(poKmlSchema);
+                poKmlDocument->add_schema(std::move(poKmlSchema));
             }
 
-            papoLayers[iLayer]->Finalize(poKmlDocument);
+            papoLayers[iLayer]->Finalize(std::move(poKmlDocument));
         }
 
         // If we do not have the layers root
@@ -550,7 +550,7 @@ bool OGRLIBKMLDataSource::WriteDir()
                     kml->set_feature(m_poKmlDocKml);
             }
 
-            ParseDocumentOptions(kml, AsDocument(m_poKmlDocKml));
+            ParseDocumentOptions(std::move(kml), AsDocument(m_poKmlDocKml));
         }
 
         std::string oKmlOut = kmldom::SerializePretty(m_poKmlDocKmlRoot);
@@ -585,10 +585,10 @@ bool OGRLIBKMLDataSource::WriteDir()
             if (!poKmlDocument->get_schema_array_size() && poKmlSchema &&
                 poKmlSchema->get_simplefield_array_size())
             {
-                poKmlDocument->add_schema(poKmlSchema);
+                poKmlDocument->add_schema(std::move(poKmlSchema));
             }
 
-            papoLayers[iLayer]->Finalize(poKmlDocument);
+            papoLayers[iLayer]->Finalize(std::move(poKmlDocument));
         }
 
         // If we do not have the layers root
@@ -729,7 +729,6 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema(const char *pszSchemaUrl)
     char *pszID = nullptr;
     char *pszFile = nullptr;
     char *pszSchemaName = nullptr;
-    char *pszPound = nullptr;
     DocumentPtr poKmlDocument = nullptr;
     SchemaPtr poKmlSchemaResult = nullptr;
 
@@ -746,13 +745,11 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema(const char *pszSchemaUrl)
                  m_poKmlDocKml->IsA(kmldom::Type_Document))
             poKmlDocument = AsDocument(m_poKmlDocKml);
     }
-    else if ((pszPound = strchr(const_cast<char *>(pszSchemaUrl), '#')) !=
-             nullptr)
+    else if (const char *pszPound = strchr(pszSchemaUrl, '#'))
     {
         pszFile = CPLStrdup(pszSchemaUrl);
         pszID = CPLStrdup(pszPound + 1);
-        pszPound = strchr(pszFile, '#');
-        *pszPound = '\0';
+        pszFile[pszPound - pszSchemaUrl] = '\0';
     }
     else
     {
@@ -781,7 +778,7 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema(const char *pszSchemaUrl)
             {
                 if (EQUAL(pszID, poKmlSchema->get_id().c_str()))
                 {
-                    poKmlSchemaResult = poKmlSchema;
+                    poKmlSchemaResult = std::move(poKmlSchema);
                     break;
                 }
             }
@@ -790,7 +787,7 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema(const char *pszSchemaUrl)
             {
                 if (EQUAL(pszSchemaName, poKmlSchema->get_name().c_str()))
                 {
-                    poKmlSchemaResult = poKmlSchema;
+                    poKmlSchemaResult = std::move(poKmlSchema);
                     break;
                 }
             }
@@ -854,7 +851,8 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
     /***** add the layer to the array *****/
     const int iLayer = nLayers++;
     papoLayers[iLayer] = poOgrLayer;
-    m_oMapLayers[CPLString(osUniqueLayername).toupper()] = poOgrLayer;
+    osUniqueLayername.toupper();
+    m_oMapLayers[std::move(osUniqueLayername)] = poOgrLayer;
 
     return poOgrLayer;
 }
@@ -951,7 +949,7 @@ int OGRLIBKMLDataSource::ParseLayers(ContainerPtr poKmlContainer, bool bRecurse)
 
 ******************************************************************************/
 
-static ContainerPtr GetContainerFromRoot(KmlFactory *m_poKmlFactory,
+static ContainerPtr GetContainerFromRoot(KmlFactory *poKmlFactory,
                                          ElementPtr poKmlRoot)
 {
     ContainerPtr poKmlContainer = nullptr;
@@ -976,7 +974,7 @@ static ContainerPtr GetContainerFromRoot(KmlFactory *m_poKmlFactory,
                          (bReadGroundOverlay &&
                           poKmlFeat->IsA(kmldom::Type_GroundOverlay)))
                 {
-                    poKmlContainer = m_poKmlFactory->CreateDocument();
+                    poKmlContainer = poKmlFactory->CreateDocument();
                     poKmlContainer->add_feature(
                         kmldom::AsFeature(kmlengine::Clone(poKmlFeat)));
                 }
@@ -984,7 +982,7 @@ static ContainerPtr GetContainerFromRoot(KmlFactory *m_poKmlFactory,
         }
         else if (poKmlRoot->IsA(kmldom::Type_Container))
         {
-            poKmlContainer = AsContainer(poKmlRoot);
+            poKmlContainer = AsContainer(std::move(poKmlRoot));
         }
     }
 
@@ -1011,12 +1009,13 @@ int OGRLIBKMLDataSource::ParseIntoStyleTable(std::string *poKmlStyleKml,
 
     ContainerPtr poKmlContainer = nullptr;
 
-    if (!(poKmlContainer = GetContainerFromRoot(m_poKmlFactory, poKmlRoot)))
+    if (!(poKmlContainer =
+              GetContainerFromRoot(m_poKmlFactory, std::move(poKmlRoot))))
     {
         return false;
     }
 
-    ParseStyles(AsDocument(poKmlContainer), &m_poStyleTable);
+    ParseStyles(AsDocument(std::move(poKmlContainer)), &m_poStyleTable);
     pszStylePath = CPLStrdup(pszMyStylePath);
 
     return true;
@@ -1266,12 +1265,12 @@ int OGRLIBKMLDataSource::OpenKmz(const char *pszFilename, int bUpdateIn)
 
                 /***** create the layer *****/
                 AddLayer(CPLGetBasename(poKmlHref->get_path().c_str()),
-                         wkbUnknown, nullptr, this, poKmlLyrRoot,
+                         wkbUnknown, nullptr, this, std::move(poKmlLyrRoot),
                          poKmlLyrContainer, poKmlHref->get_path().c_str(),
                          FALSE, bUpdateIn, static_cast<int>(nKmlFeatures));
 
                 /***** check if any features are another layer *****/
-                ParseLayers(poKmlLyrContainer, true);
+                ParseLayers(std::move(poKmlLyrContainer), true);
             }
         }
 
@@ -1283,8 +1282,8 @@ int OGRLIBKMLDataSource::OpenKmz(const char *pszFilename, int bUpdateIn)
      * write it *****/
     if (nLinks)
     {
-        m_poKmlDocKml = poKmlContainer;
-        m_poKmlDocKmlRoot = poKmlDocKmlRoot;
+        m_poKmlDocKml = std::move(poKmlContainer);
+        m_poKmlDocKmlRoot = std::move(poKmlDocKmlRoot);
     }
     /***** if the doc.kml has no links treat it as a normal kml file *****/
     else
@@ -1311,11 +1310,11 @@ int OGRLIBKMLDataSource::OpenKmz(const char *pszFilename, int bUpdateIn)
             }
 
             AddLayer(layername_default.c_str(), wkbUnknown, nullptr, this,
-                     poKmlDocKmlRoot, poKmlContainer, pszFilename, FALSE,
-                     bUpdateIn, 1);
+                     std::move(poKmlDocKmlRoot), poKmlContainer, pszFilename,
+                     FALSE, bUpdateIn, 1);
         }
 
-        ParseLayers(poKmlContainer, true);
+        ParseLayers(std::move(poKmlContainer), true);
     }
 
     /***** read the style table if it has one *****/
@@ -1423,11 +1422,11 @@ int OGRLIBKMLDataSource::OpenDir(const char *pszFilename, int bUpdateIn)
 
         /***** create the layer *****/
         AddLayer(CPLGetBasename(osFilePath.c_str()), wkbUnknown, nullptr, this,
-                 poKmlRoot, poKmlContainer, osFilePath.c_str(), FALSE,
-                 bUpdateIn, nFiles);
+                 std::move(poKmlRoot), poKmlContainer, osFilePath.c_str(),
+                 FALSE, bUpdateIn, nFiles);
 
         /***** check if any features are another layer *****/
-        ParseLayers(poKmlContainer, true);
+        ParseLayers(std::move(poKmlContainer), true);
     }
 
     CSLDestroy(papszDirList);
@@ -1630,7 +1629,7 @@ void OGRLIBKMLDataSource::ParseDocumentOptions(KmlPtr poKml,
                 else
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Invalid IRI for AUTHOR_URI");
+                             "Invalid URI for AUTHOR_URI");
                 }
             }
             if (pszAuthorEmail != nullptr)
@@ -1764,7 +1763,7 @@ void OGRLIBKMLDataSource::ParseDocumentOptions(KmlPtr poKml,
                 LinkSnippetPtr linksnippet =
                     m_poKmlFactory->CreateLinkSnippet();
                 linksnippet->set_text(pszNLCLinkSnippet);
-                nlc->set_linksnippet(linksnippet);
+                nlc->set_linksnippet(std::move(linksnippet));
             }
             if (pszNLCExpires != nullptr)
             {

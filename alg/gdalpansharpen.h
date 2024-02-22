@@ -129,7 +129,6 @@ CPL_C_END
 #include <array>
 #include <vector>
 #include "gdal_priv.h"
-#include "cpl_worker_thread_pool.h"
 
 #ifdef DEBUG_TIMING
 #include <sys/time.h>
@@ -180,6 +179,8 @@ typedef struct
     struct timeval *ptv;
 #endif
 } GDALPansharpenResampleJob;
+
+class CPLWorkerThreadPool;
 //! @endcond
 
 /** Pansharpening operation class.

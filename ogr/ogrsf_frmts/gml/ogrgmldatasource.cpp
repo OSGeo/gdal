@@ -1502,10 +1502,8 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
         size_t iPos = osPrefixClass.find('.');
         if (iPos != std::string::npos)
             osPrefixClass.resize(iPos);
-        // Need to leave a space between > > for -Werror=c++0x-compat.
-        aapoGeomProps.push_back(
-            std::pair<CPLString, std::vector<GMLGeometryPropertyDefn *>>(
-                osPrefixClass, std::vector<GMLGeometryPropertyDefn *>()));
+        aapoGeomProps.emplace_back(
+            std::pair(osPrefixClass, std::vector<GMLGeometryPropertyDefn *>()));
         for (int iField = 0;
              iField < static_cast<int>(aapoProps[iSubClass].size()); iField++)
         {
@@ -1529,9 +1527,8 @@ void OGRGMLDataSource::BuildJointClassFromScannedSchema()
                 break;
         }
         if (iSubClass == static_cast<int>(aapoGeomProps.size()))
-            aapoGeomProps.push_back(
-                std::pair<CPLString, std::vector<GMLGeometryPropertyDefn *>>(
-                    osPrefix, std::vector<GMLGeometryPropertyDefn *>()));
+            aapoGeomProps.emplace_back(
+                std::pair(osPrefix, std::vector<GMLGeometryPropertyDefn *>()));
         aapoGeomProps[iSubClass].second.push_back(poProp);
     }
     poClass->StealGeometryProperties();
@@ -2865,7 +2862,7 @@ void OGRGMLDataSource::PrintLine(VSILFILE *fp, const char *fmt, ...)
     osWork.vPrintf(fmt, args);
     va_end(args);
 
-#ifdef WIN32
+#ifdef _WIN32
     const char *pszEOL = "\r\n";
 #else
     const char *pszEOL = "\n";
@@ -2994,7 +2991,8 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE *fp)
             const char *pszEndTag = nullptr;
             for (const char *pszIter = pszStartTag; *pszIter != '\0'; pszIter++)
             {
-                if (isspace(*pszIter) || *pszIter == '>')
+                if (isspace(static_cast<unsigned char>(*pszIter)) ||
+                    *pszIter == '>')
                 {
                     pszEndTag = pszIter;
                     break;

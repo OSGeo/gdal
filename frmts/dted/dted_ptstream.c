@@ -457,7 +457,7 @@ static void DTEDFillPixel(DTEDInfo *psInfo, GInt16 **papanProfiles,
 
                 fKernelCoef = pafKernel[iXK + iYK * nKernelWidth];
                 dfCoefSum += fKernelCoef;
-                dfValueSum += fKernelCoef * panThisProfile[iYS];
+                dfValueSum += (double)fKernelCoef * (double)panThisProfile[iYS];
             }
         }
     }
@@ -488,7 +488,7 @@ void DTEDFillPtStream(void *hStream, int nPixelSearchDist)
     /*      Setup inverse distance weighting kernel.                        */
     /* -------------------------------------------------------------------- */
     nKernelWidth = 2 * nPixelSearchDist + 1;
-    pafKernel = (float *)CPLMalloc(nKernelWidth * nKernelWidth * sizeof(float));
+    pafKernel = (float *)CPLMalloc(sizeof(float) * nKernelWidth * nKernelWidth);
 
     for (iX = 0; iX < nKernelWidth; iX++)
     {

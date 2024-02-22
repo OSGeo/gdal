@@ -52,6 +52,8 @@
 #include "gdal_libgeotiff_symbol_rename.h"
 #endif
 
+#include "xtiffio.h"
+
 #if (TIFFLIB_VERSION > 20220520) || defined(INTERNAL_LIBTIFF)  // > 4.4.0
 #define SUPPORTS_LIBTIFF_OPEN_OPTIONS
 
@@ -62,16 +64,6 @@ extern int GTiffErrorHandlerExt(TIFF *tif, void *user_data, const char *module,
                                 const char *fmt, va_list ap);
 
 #endif
-
-CPL_C_START
-extern void CPL_DLL XTIFFInitialize(void);
-extern TIFF CPL_DLL *XTIFFClientOpen(const char *name, const char *mode,
-                                     thandle_t thehandle, TIFFReadWriteProc,
-                                     TIFFReadWriteProc, TIFFSeekProc,
-                                     TIFFCloseProc, TIFFSizeProc,
-                                     TIFFMapFileProc, TIFFUnmapFileProc);
-extern void CPL_DLL XTIFFClose(TIFF *tif);
-CPL_C_END
 
 constexpr int BUFFER_SIZE = 65536;
 
@@ -444,6 +436,33 @@ static void InitializeWriteBuffer(GDALTiffHandle *psGTH, const char *pszMode)
     psGTH->nWriteBufferSize = 0;
 }
 
+#ifdef SUPPORTS_LIBTIFF_OPEN_OPTIONS
+static void VSI_TIFFSetOpenOptions(TIFFOpenOptions *opts)
+{
+    TIFFOpenOptionsSetErrorHandlerExtR(opts, GTiffErrorHandlerExt, nullptr);
+    TIFFOpenOptionsSetWarningHandlerExtR(opts, GTiffWarningHandlerExt, nullptr);
+#if defined(INTERNAL_LIBTIFF) || TIFFLIB_VERSION > 20230908
+    // Read-once and stored in static storage otherwise affects
+    // autotest/benchmark/test_gtiff.py::test_gtiff_byte
+    static const GIntBig nMemLimit = []()
+    {
+        if (const char *pszLimit =
+                CPLGetConfigOption("GTIFF_MAX_CUMULATED_MEM_USAGE", nullptr))
+            return CPLAtoGIntBig(pszLimit);
+        else
+            return CPLGetUsablePhysicalRAM() * 9 / 10;
+    }();
+    if (nMemLimit > 0 && nMemLimit < TIFF_TMSIZE_T_MAX)
+    {
+        //CPLDebug("GTiff", "TIFFOpenOptionsSetMaxCumulatedMemAlloc(%" PRIu64 ")",
+        //         static_cast<uint64_t>(nMemLimit));
+        TIFFOpenOptionsSetMaxCumulatedMemAlloc(
+            opts, static_cast<tmsize_t>(nMemLimit));
+    }
+#endif
+}
+#endif
+
 static TIFF *VSI_TIFFOpen_common(GDALTiffHandle *psGTH, const char *pszMode)
 {
     InitializeWriteBuffer(psGTH, pszMode);
@@ -456,8 +475,7 @@ static TIFF *VSI_TIFFOpen_common(GDALTiffHandle *psGTH, const char *pszMode)
         FreeGTH(psGTH);
         return nullptr;
     }
-    TIFFOpenOptionsSetErrorHandlerExtR(opts, GTiffErrorHandlerExt, nullptr);
-    TIFFOpenOptionsSetWarningHandlerExtR(opts, GTiffWarningHandlerExt, nullptr);
+    VSI_TIFFSetOpenOptions(opts);
     TIFF *tif = TIFFClientOpenExt(
         psGTH->psShared->pszName, pszMode, reinterpret_cast<thandle_t>(psGTH),
         _tiffReadProc, _tiffWriteProc, _tiffSeekProc, _tiffCloseProc,
@@ -551,9 +569,7 @@ TIFF *VSI_TIFFReOpen(TIFF *tif)
     TIFFOpenOptions *opts = TIFFOpenOptionsAlloc();
     if (opts != nullptr)
     {
-        TIFFOpenOptionsSetErrorHandlerExtR(opts, GTiffErrorHandlerExt, nullptr);
-        TIFFOpenOptionsSetWarningHandlerExtR(opts, GTiffWarningHandlerExt,
-                                             nullptr);
+        VSI_TIFFSetOpenOptions(opts);
         newHandle = TIFFClientOpenExt(
             psGTH->psShared->pszName, mode, reinterpret_cast<thandle_t>(psGTH),
             _tiffReadProc, _tiffWriteProc, _tiffSeekProc, _tiffCloseProc,

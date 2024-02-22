@@ -10,7 +10,22 @@ add_gdal_driver(
           Packer_RLE.cpp
           Packer_RLE.h
           Tif_band.cpp
-  BUILTIN)
+  CORE_SOURCES
+          mrfdrivercore.cpp
+  PLUGIN_CAPABLE_IF
+          "NOT GDAL_USE_JPEG_INTERNAL\\\;NOT GDAL_USE_JPEG12_INTERNAL\\\;NOT GDAL_USE_LERC_INTERNAL\\\;NOT GDAL_USE_PNG_INTERNAL\\\;NOT GDAL_USE_TIFF_INTERNAL\\\;NOT GDAL_USE_ZLIB_INTERNAL"
+)
+
+if(TARGET gdal_MRF_core)
+    if (GDAL_USE_LERC OR GDAL_USE_LERC_INTERNAL)
+        target_compile_definitions(gdal_MRF_core PRIVATE -DLERC)
+    endif()
+endif()
+
+if(NOT TARGET gdal_MRF)
+    return()
+endif()
+
 gdal_standard_includes(gdal_MRF)
 
 if (GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL)
@@ -32,6 +47,7 @@ if ((GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL) AND GDAL_USE_JPEG12_INTERNAL)
   target_sources(gdal_MRF PRIVATE JPEG12_band.cpp)
   target_compile_definitions(gdal_MRF PRIVATE -DJPEG12_SUPPORTED)
   target_include_directories(gdal_MRF PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+  set_property(SOURCE JPEG12_band.cpp PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
 elseif (GDAL_USE_JPEG AND NOT GDAL_USE_JPEG_INTERNAL AND HAVE_JPEGTURBO_DUAL_MODE_8_12)
   target_sources(gdal_MRF PRIVATE JPEG12_band.cpp)
   target_compile_definitions(gdal_MRF PRIVATE JPEG12_SUPPORTED HAVE_JPEGTURBO_DUAL_MODE_8_12)

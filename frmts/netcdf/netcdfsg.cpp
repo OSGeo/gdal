@@ -459,7 +459,7 @@ SGeometry_Reader::SGeometry_Reader(int ncId, int geoVarId)
 
     // Set values accordingly
     this->inst_dimLen = instance_dim_len;
-    this->pt_buffer = cpl::make_unique<Point>(this->touple_order);
+    this->pt_buffer = std::make_unique<Point>(this->touple_order);
     this->gc_varId = geoVarId;
     this->ncid = ncId;
 }

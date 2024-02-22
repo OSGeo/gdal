@@ -1,38 +1,10 @@
+
 #ifndef FASTFLOAT_FAST_FLOAT_H
 #define FASTFLOAT_FAST_FLOAT_H
 
-#include <system_error>
-
-#include "constexpr_feature_detect.h"
+#include "float_common.h"
 
 namespace fast_float {
-enum chars_format {
-    scientific = 1<<0,
-    fixed = 1<<2,
-    hex = 1<<3,
-    general = fixed | scientific
-};
-
-template <typename UC>
-struct from_chars_result_t {
-  UC const * ptr;
-  std::errc ec;
-};
-using from_chars_result = from_chars_result_t<char>;
-
-template <typename UC>
-struct parse_options_t {
-  constexpr explicit parse_options_t(chars_format fmt = chars_format::general,
-                         UC dot = UC('.'))
-    : format(fmt), decimal_point(dot) {}
-
-  /** Which number formats are accepted */
-  chars_format format;
-  /** The character used as decimal point */
-  UC decimal_point;
-};
-using parse_options = parse_options_t<char>;
-
 /**
  * This function parses the character sequence [first,last) for a number. It parses floating-point numbers expecting
  * a locale-indepent format equivalent to what is used by std::strtod in the default ("C") locale.

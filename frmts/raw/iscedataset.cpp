@@ -577,7 +577,7 @@ GDALDataset *ISCEDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<ISCEDataset>();
+    auto poDS = std::make_unique<ISCEDataset>();
     poDS->nRasterXSize = nWidth;
     poDS->nRasterYSize = nHeight;
     poDS->eAccess = poOpenInfo->eAccess;
@@ -631,7 +631,7 @@ GDALDataset *ISCEDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
                 // theoretical nLineOffset multiplied by nBands...
                 VSIFSeekL(poDS->fpImage, 0, SEEK_END);
                 const GUIntBig nWrongFileSize =
-                    nDTSize * nWidth *
+                    static_cast<GUIntBig>(nDTSize) * nWidth *
                     (static_cast<GUIntBig>(nHeight - 1) * nBands * nBands +
                      nBands);
                 if (VSIFTellL(poDS->fpImage) == nWrongFileSize)
@@ -684,7 +684,7 @@ GDALDataset *ISCEDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
     for (int b = 0; b < nBands; b++)
     {
-        auto poBand = cpl::make_unique<ISCERasterBand>(
+        auto poBand = std::make_unique<ISCERasterBand>(
             poDS.get(), b + 1, poDS->fpImage, nBandOffset * b, nPixelOffset,
             nLineOffset, eDataType, bNativeOrder);
         if (!poBand->IsValid())

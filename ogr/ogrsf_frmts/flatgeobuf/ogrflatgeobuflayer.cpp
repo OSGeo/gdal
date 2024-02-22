@@ -154,13 +154,38 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(const Header *poHeader, GByte *headerBuf,
 
     m_eGType = getOGRwkbGeometryType();
 
+    if (const auto title = poHeader->title())
+        SetMetadataItem("TITLE", title->c_str());
+
+    if (const auto description = poHeader->description())
+        SetMetadataItem("DESCRIPTION", description->c_str());
+
+    if (const auto metadata = poHeader->metadata())
+    {
+        CPLJSONDocument oDoc;
+        CPLErrorHandlerPusher oQuietError(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oErrorStateBackuper;
+        if (oDoc.LoadMemory(metadata->c_str()) &&
+            oDoc.GetRoot().GetType() == CPLJSONObject::Type::Object)
+        {
+            for (const auto &oItem : oDoc.GetRoot().GetChildren())
+            {
+                if (oItem.GetType() == CPLJSONObject::Type::String)
+                {
+                    SetMetadataItem(oItem.GetName().c_str(),
+                                    oItem.ToString().c_str());
+                }
+            }
+        }
+    }
+
     const char *pszName =
         m_poHeader->name() ? m_poHeader->name()->c_str() : "unknown";
     m_poFeatureDefn = new OGRFeatureDefn(pszName);
     SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->SetGeomType(wkbNone);
     auto poGeomFieldDefn =
-        cpl::make_unique<OGRGeomFieldDefn>(nullptr, m_eGType);
+        std::make_unique<OGRGeomFieldDefn>(nullptr, m_eGType);
     if (m_poSRS != nullptr)
         poGeomFieldDefn->SetSpatialRef(m_poSRS);
     m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
@@ -168,19 +193,16 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(const Header *poHeader, GByte *headerBuf,
     m_poFeatureDefn->Reference();
 }
 
-OGRFlatGeobufLayer::OGRFlatGeobufLayer(const char *pszLayerName,
-                                       const char *pszFilename,
-                                       const OGRSpatialReference *poSpatialRef,
-                                       OGRwkbGeometryType eGType,
-                                       bool bCreateSpatialIndexAtClose,
-                                       VSILFILE *poFpWrite,
-                                       std::string &osTempFile)
-    : m_eGType(eGType),
+OGRFlatGeobufLayer::OGRFlatGeobufLayer(
+    GDALDataset *poDS, const char *pszLayerName, const char *pszFilename,
+    const OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType,
+    bool bCreateSpatialIndexAtClose, VSILFILE *poFpWrite,
+    std::string &osTempFile, CSLConstList papszOptions)
+    : m_eGType(eGType), m_poDS(poDS), m_create(true),
       m_bCreateSpatialIndexAtClose(bCreateSpatialIndexAtClose),
-      m_poFpWrite(poFpWrite), m_osTempFile(osTempFile)
+      m_poFpWrite(poFpWrite), m_aosCreationOption(papszOptions),
+      m_osTempFile(osTempFile)
 {
-    m_create = true;
-
     if (pszLayerName)
         m_osLayerName = pszLayerName;
     if (pszFilename)
@@ -216,7 +238,8 @@ OGRwkbGeometryType OGRFlatGeobufLayer::getOGRwkbGeometryType()
     return ogrType;
 }
 
-static ColumnType toColumnType(OGRFieldType type, OGRFieldSubType subType)
+static ColumnType toColumnType(const char *pszFieldName, OGRFieldType type,
+                               OGRFieldSubType subType)
 {
     switch (type)
     {
@@ -240,8 +263,10 @@ static ColumnType toColumnType(OGRFieldType type, OGRFieldSubType subType)
         case OGRFieldType::OFTBinary:
             return ColumnType::Binary;
         default:
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "toColumnType: Unknown OGRFieldType %d", type);
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "toColumnType: %s field is of type %s, which is not "
+                     "handled natively. Falling back to String.",
+                     pszFieldName, OGRFieldDefn::GetFieldTypeName(type));
     }
     return ColumnType::String;
 }
@@ -297,7 +322,7 @@ OGRFlatGeobufLayer::writeColumns(FlatBufferBuilder &fbb)
         const auto field = m_poFeatureDefn->GetFieldDefn(i);
         const auto name = field->GetNameRef();
         const auto columnType =
-            toColumnType(field->GetType(), field->GetSubType());
+            toColumnType(name, field->GetType(), field->GetSubType());
         auto title = field->GetAlternativeNameRef();
         if (EQUAL(title, ""))
             title = nullptr;
@@ -454,9 +479,61 @@ void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount,
         CPLFree(pszWKT);
     }
 
+    std::string osTitle(m_aosCreationOption.FetchNameValueDef("TITLE", ""));
+    std::string osDescription(
+        m_aosCreationOption.FetchNameValueDef("DESCRIPTION", ""));
+    std::string osMetadata;
+    CPLJSONObject oMetadataJSONObj;
+    bool bEmptyMetadata = true;
+    for (GDALMajorObject *poContainer :
+         {static_cast<GDALMajorObject *>(this),
+          static_cast<GDALMajorObject *>(
+              m_poDS && m_poDS->GetLayerCount() == 1 ? m_poDS : nullptr)})
+    {
+        if (poContainer)
+        {
+            if (char **papszMD = poContainer->GetMetadata())
+            {
+                for (CSLConstList papszIter = papszMD; *papszIter; ++papszIter)
+                {
+                    char *pszKey = nullptr;
+                    const char *pszValue =
+                        CPLParseNameValue(*papszIter, &pszKey);
+                    if (pszKey && pszValue && !EQUAL(pszKey, OLMD_FID64))
+                    {
+                        if (EQUAL(pszKey, "TITLE"))
+                        {
+                            if (osTitle.empty())
+                                osTitle = pszValue;
+                        }
+                        else if (EQUAL(pszKey, "DESCRIPTION"))
+                        {
+                            if (osDescription.empty())
+                                osDescription = pszValue;
+                        }
+                        else
+                        {
+                            bEmptyMetadata = false;
+                            oMetadataJSONObj.Add(pszKey, pszValue);
+                        }
+                    }
+                    CPLFree(pszKey);
+                }
+            }
+        }
+    }
+    if (!bEmptyMetadata)
+    {
+        osMetadata =
+            oMetadataJSONObj.Format(CPLJSONObject::PrettyFormat::Plain);
+    }
+
     const auto header = CreateHeaderDirect(
         fbb, m_osLayerName.c_str(), extentVector, m_geometryType, m_hasZ,
-        m_hasM, m_hasT, m_hasTM, &columns, featuresCount, m_indexNodeSize, crs);
+        m_hasM, m_hasT, m_hasTM, &columns, featuresCount, m_indexNodeSize, crs,
+        osTitle.empty() ? nullptr : osTitle.c_str(),
+        osDescription.empty() ? nullptr : osDescription.c_str(),
+        osMetadata.empty() ? nullptr : osMetadata.c_str());
     fbb.FinishSizePrefixed(header);
     c = VSIFWriteL(fbb.GetBufferPointer(), 1, fbb.GetSize(), poFp);
     CPLDebugOnly("FlatGeobuf", "Wrote header (%lu bytes)",
@@ -800,10 +877,9 @@ OGRFeature *OGRFlatGeobufLayer::GetFeature(GIntBig nFeatureId)
     }
     else
     {
-        if (static_cast<uint64_t>(nFeatureId) >= m_featuresCount)
+        if (nFeatureId < 0 ||
+            static_cast<uint64_t>(nFeatureId) >= m_featuresCount)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Requested feature id is out of bounds");
             return nullptr;
         }
         ResetReading();
@@ -938,7 +1014,7 @@ OGRFeature *OGRFlatGeobufLayer::GetNextFeature()
             return nullptr;
         }
 
-        auto poFeature = cpl::make_unique<OGRFeature>(m_poFeatureDefn);
+        auto poFeature = std::make_unique<OGRFeature>(m_poFeatureDefn);
         if (parseFeature(poFeature.get()) != OGRERR_NONE)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1374,7 +1450,8 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature)
 int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                           struct ArrowArray *out_array)
 {
-    if (CPLTestBool(
+    if (!m_poSharedArrowArrayStreamPrivateData->m_anQueriedFIDs.empty() ||
+        CPLTestBool(
             CPLGetConfigOption("OGR_FLATGEOBUF_STREAM_BASE_IMPL", "NO")))
     {
         return OGRLayer::GetNextArrowArray(stream, out_array);
@@ -1404,7 +1481,7 @@ begin:
         return ENOMEM;
     }
 
-    std::vector<bool> abSetFields(sHelper.nFieldCount);
+    std::vector<bool> abSetFields(sHelper.m_nFieldCount);
 
     struct tm brokenDown;
     memset(&brokenDown, 0, sizeof(brokenDown));
@@ -1415,10 +1492,13 @@ begin:
     if (m_queriedSpatialIndex && m_featuresCount == 0)
     {
         CPLDebugOnly("FlatGeobuf", "GetNextFeature: no features found");
-        sHelper.nMaxBatchSize = 0;
+        sHelper.m_nMaxBatchSize = 0;
     }
 
-    while (iFeat < sHelper.nMaxBatchSize)
+    const GIntBig nFeatureIdxStart = m_featuresPos;
+
+    const uint32_t nMemLimit = OGRArrowArrayHelper::GetMemLimit();
+    while (iFeat < sHelper.m_nMaxBatchSize)
     {
         bEOFOrError = true;
         if (m_featuresCount > 0 && m_featuresPos >= m_featuresCount)
@@ -1442,8 +1522,8 @@ begin:
             fid = m_featuresPos;
         }
 
-        if (sHelper.panFIDValues)
-            sHelper.panFIDValues[iFeat] = fid;
+        if (sHelper.m_panFIDValues)
+            sHelper.m_panFIDValues[iFeat] = fid;
 
         if (m_featuresPos == 0)
             seek = true;
@@ -1534,8 +1614,22 @@ begin:
             if (!FilterGeometry(poOGRGeometry.get()))
                 goto end_of_loop;
 
-            const int iArrowField = sHelper.mapOGRGeomFieldToArrowField[0];
+            const int iArrowField = sHelper.m_mapOGRGeomFieldToArrowField[0];
             const size_t nWKBSize = poOGRGeometry->WkbSize();
+
+            if (iFeat > 0)
+            {
+                auto psArray = out_array->children[iArrowField];
+                auto panOffsets = static_cast<int32_t *>(
+                    const_cast<void *>(psArray->buffers[1]));
+                const uint32_t nCurLength =
+                    static_cast<uint32_t>(panOffsets[iFeat]);
+                if (nWKBSize <= nMemLimit && nWKBSize > nMemLimit - nCurLength)
+                {
+                    goto after_loop;
+                }
+            }
+
             GByte *outPtr =
                 sHelper.GetPtrForStringOrBinary(iArrowField, iFeat, nWKBSize);
             if (outPtr == nullptr)
@@ -1547,7 +1641,7 @@ begin:
         }
 
         abSetFields.clear();
-        abSetFields.resize(sHelper.nFieldCount);
+        abSetFields.resize(sHelper.m_nFieldCount);
 
         if (properties != nullptr)
         {
@@ -1590,7 +1684,7 @@ begin:
                 abSetFields[i] = true;
                 const auto column = columns->Get(i);
                 const auto type = column->type();
-                const int iArrowField = sHelper.mapOGRFieldToArrowField[i];
+                const int iArrowField = sHelper.m_mapOGRFieldToArrowField[i];
                 const bool isIgnored = iArrowField < 0;
                 auto psArray =
                     isIgnored ? nullptr : out_array->children[iArrowField];
@@ -1792,6 +1886,19 @@ begin:
                         }
                         if (!isIgnored)
                         {
+                            if (iFeat > 0)
+                            {
+                                auto panOffsets = static_cast<int32_t *>(
+                                    const_cast<void *>(psArray->buffers[1]));
+                                const uint32_t nCurLength =
+                                    static_cast<uint32_t>(panOffsets[iFeat]);
+                                if (len <= nMemLimit &&
+                                    len > nMemLimit - nCurLength)
+                                {
+                                    goto after_loop;
+                                }
+                            }
+
                             GByte *outPtr = sHelper.GetPtrForStringOrBinary(
                                 iArrowField, iFeat, len);
                             if (outPtr == nullptr)
@@ -1829,7 +1936,7 @@ begin:
                                               len, &ogrField))
                             {
                                 sHelper.SetDateTime(psArray, iFeat, brokenDown,
-                                                    sHelper.anTZFlags[i],
+                                                    sHelper.m_anTZFlags[i],
                                                     ogrField);
                             }
                             else
@@ -1841,7 +1948,7 @@ begin:
                                 {
                                     sHelper.SetDateTime(
                                         psArray, iFeat, brokenDown,
-                                        sHelper.anTZFlags[i], ogrField);
+                                        sHelper.m_anTZFlags[i], ogrField);
                                 }
                             }
                         }
@@ -1853,11 +1960,11 @@ begin:
         }
 
         // Mark null fields
-        for (int i = 0; i < sHelper.nFieldCount; i++)
+        for (int i = 0; i < sHelper.m_nFieldCount; i++)
         {
-            if (!abSetFields[i] && sHelper.abNullableFields[i])
+            if (!abSetFields[i] && sHelper.m_abNullableFields[i])
             {
-                const int iArrowField = sHelper.mapOGRFieldToArrowField[i];
+                const int iArrowField = sHelper.m_mapOGRFieldToArrowField[i];
                 if (iArrowField >= 0)
                 {
                     sHelper.SetNull(iArrowField, iFeat);
@@ -1878,7 +1985,7 @@ begin:
         m_featuresPos++;
         bEOFOrError = false;
     }
-
+after_loop:
     if (bEOFOrError)
         m_bEOF = true;
 
@@ -1893,14 +2000,21 @@ begin:
         // Spatial filter already evaluated
         auto poFilterGeomBackup = m_poFilterGeom;
         m_poFilterGeom = nullptr;
-        PostFilterArrowArray(&schema, out_array, nullptr);
+        CPLStringList aosOptions;
+        if (!m_poFilterGeom)
+        {
+            aosOptions.SetNameValue("BASE_SEQUENTIAL_FID",
+                                    CPLSPrintf(CPL_FRMT_GIB, nFeatureIdxStart));
+        }
+        PostFilterArrowArray(&schema, out_array, aosOptions.List());
         schema.release(&schema);
         m_poFilterGeom = poFilterGeomBackup;
     }
 
     if (out_array->length == 0)
     {
-        out_array->release(out_array);
+        if (out_array->release)
+            out_array->release(out_array);
         memset(out_array, 0, sizeof(*out_array));
 
         if (m_poAttrQuery || m_poFilterGeom)
@@ -1916,7 +2030,7 @@ error:
     return errorErrno;
 }
 
-OGRErr OGRFlatGeobufLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRFlatGeobufLayer::CreateField(const OGRFieldDefn *poField,
                                        int /* bApproxOK */)
 {
     // CPLDebugOnly("FlatGeobuf", "CreateField %s %s", poField->GetNameRef(),
@@ -2369,11 +2483,10 @@ VSILFILE *OGRFlatGeobufLayer::CreateOutputFile(const CPLString &osFilename,
     return poFpWrite;
 }
 
-OGRFlatGeobufLayer *
-OGRFlatGeobufLayer::Create(const char *pszLayerName, const char *pszFilename,
-                           const OGRSpatialReference *poSpatialRef,
-                           OGRwkbGeometryType eGType,
-                           bool bCreateSpatialIndexAtClose, char **papszOptions)
+OGRFlatGeobufLayer *OGRFlatGeobufLayer::Create(
+    GDALDataset *poDS, const char *pszLayerName, const char *pszFilename,
+    const OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType,
+    bool bCreateSpatialIndexAtClose, char **papszOptions)
 {
     std::string osTempFile = GetTempFilePath(pszFilename, papszOptions);
     VSILFILE *poFpWrite =
@@ -2381,8 +2494,8 @@ OGRFlatGeobufLayer::Create(const char *pszLayerName, const char *pszFilename,
     if (poFpWrite == nullptr)
         return nullptr;
     OGRFlatGeobufLayer *layer = new OGRFlatGeobufLayer(
-        pszLayerName, pszFilename, poSpatialRef, eGType,
-        bCreateSpatialIndexAtClose, poFpWrite, osTempFile);
+        poDS, pszLayerName, pszFilename, poSpatialRef, eGType,
+        bCreateSpatialIndexAtClose, poFpWrite, osTempFile, papszOptions);
     return layer;
 }
 

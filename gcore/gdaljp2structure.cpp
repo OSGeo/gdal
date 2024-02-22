@@ -1241,8 +1241,8 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
             if (nRemainingMarkerSize >= 1)
             {
                 v = *pabyMarkerDataIter;
-                const auto comment =
-                    commentFunc ? commentFunc(v) : std::string();
+                const std::string comment(commentFunc ? commentFunc(v)
+                                                      : std::string());
                 AddField(psMarker, psLastChild, psDumpContext, name,
                          *pabyMarkerDataIter,
                          comment.empty() ? nullptr : comment.c_str());
@@ -1267,8 +1267,8 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
             {
                 memcpy(&v, pabyMarkerDataIter, 2);
                 CPL_MSBPTR16(&v);
-                const auto comment =
-                    commentFunc ? commentFunc(v) : std::string();
+                const std::string comment(commentFunc ? commentFunc(v)
+                                                      : std::string());
                 AddField(psMarker, psLastChild, psDumpContext, name, v,
                          comment.empty() ? nullptr : comment.c_str());
                 pabyMarkerDataIter += 2;
@@ -1292,8 +1292,8 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
             {
                 memcpy(&v, pabyMarkerDataIter, 4);
                 CPL_MSBPTR32(&v);
-                const auto comment =
-                    commentFunc ? commentFunc(v) : std::string();
+                const std::string comment(commentFunc ? commentFunc(v)
+                                                      : std::string());
                 AddField(psMarker, psLastChild, psDumpContext, name, v,
                          comment.empty() ? nullptr : comment.c_str());
                 pabyMarkerDataIter += 4;
@@ -1779,7 +1779,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                 const GUInt16 Lcpf = nMarkerSize;
                 if (Lcpf > 2 && (Lcpf % 2) == 0)
                 {
-                    for (GUInt16 i = 0; i < (Lcpf - 2) / 2; i++)
+                    for (int i = 0; i < (Lcpf - 2) / 2; i++)
                     {
                         READ_MARKER_FIELD_UINT16(CPLSPrintf("Pcpf%d", i + 1));
                     }

@@ -36,3 +36,5 @@ if (MSVC)
   target_compile_options(libjson PRIVATE ${GDAL_SOFTWARNFLAGS} /wd4306)
 endif ()
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:libjson>)
+
+set_property(TARGET libjson PROPERTY UNITY_BUILD OFF)

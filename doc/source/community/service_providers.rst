@@ -55,6 +55,20 @@ the most out of it.
       to providing to its clients the best of its expertise around Open Source
       geospatial software - such as GDAL/OGR, PROJ, MapServer, and QGIS - and Open standards.
 
+.. container:: service-provider
+
+  |logo_hobu|
+
+  .. container:: service-provider-description
+
+      `Hobu, Inc.`_ (United States) is a `sam.gov
+      <https://sam.gov>`__-registered company founded by Howard Butler with
+      more than twenty years experience supporting the creation, enhancement,
+      and management of geospatial open source geospatial software such as
+      `PDAL <https://pdal.io>`__, GDAL/OGR, PROJ, and open standards such as
+      `GeoJSON <https://datatracker.ietf.org/doc/html/rfc7946>`__, `PROJJSON
+      <https://proj.org/en/latest/specifications/projjson.html>`__, and `Cloud
+      Optimized Point Cloud <https://copc.io/>`__.
 
 Contributors
 ------------
@@ -181,3 +195,10 @@ The steps to add a company to the service providers list are outlined in the :re
    :class: img-logos
    :width: 100 px
    :target: `mundialis`_
+
+
+.. _`Hobu, Inc.`: https://hobu.co/
+.. |logo_hobu| image:: ../../images/logo-hobu.png
+   :class: img-logos
+   :width: 100 px
+   :target: `Hobu, Inc.`_

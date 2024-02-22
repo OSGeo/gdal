@@ -200,6 +200,14 @@ GDALOverviewDataset::GDALOverviewDataset(GDALDataset *poMainDSIn,
     nBands = poMainDS->GetRasterCount();
     for (int i = 0; i < nBands; ++i)
     {
+        if (poOvrDS)
+        {
+            // Check that all overview bands belong to the same dataset
+            auto poOvrBand =
+                GetOverviewEx(poMainDS->GetRasterBand(i + 1), nOvrLevel);
+            if (poOvrBand->GetDataset() != poOvrDS)
+                poOvrDS = nullptr;
+        }
         SetBand(i + 1, new GDALOverviewBand(this, i + 1));
     }
 
@@ -223,9 +231,6 @@ GDALOverviewDataset::GDALOverviewDataset(GDALDataset *poMainDSIn,
         poDriver->SetDescription(poMainDS->GetDriver()->GetDescription());
         poDriver->SetMetadata(poMainDS->GetDriver()->GetMetadata());
     }
-
-    if (poOvrDS)
-        poOvrDS->SetEnableOverviews(false);
 
     SetDescription(poMainDS->GetDescription());
 
@@ -270,9 +275,6 @@ GDALOverviewDataset::~GDALOverviewDataset()
 int GDALOverviewDataset::CloseDependentDatasets()
 {
     bool bRet = false;
-
-    if (poOvrDS)
-        poOvrDS->SetEnableOverviews(true);
 
     if (poMainDS)
     {
@@ -328,12 +330,16 @@ CPLErr GDALOverviewDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     // In case the overview bands are really linked to a dataset, then issue
     // the request to that dataset.
-    if (nOvrLevel != -1 && poOvrDS != nullptr)
+    if (poOvrDS != nullptr)
     {
-        return poOvrDS->RasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
-                                 nBufXSize, nBufYSize, eBufType, nBandCount,
-                                 panBandMap, nPixelSpace, nLineSpace,
-                                 nBandSpace, psExtraArg);
+        const bool bEnabledOverviews = poOvrDS->AreOverviewsEnabled();
+        poOvrDS->SetEnableOverviews(false);
+        CPLErr eErr = poOvrDS->RasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                        pData, nBufXSize, nBufYSize, eBufType,
+                                        nBandCount, panBandMap, nPixelSpace,
+                                        nLineSpace, nBandSpace, psExtraArg);
+        poOvrDS->SetEnableOverviews(bEnabledOverviews);
+        return eErr;
     }
 
     GDALProgressFunc pfnProgressGlobal = psExtraArg->pfnProgress;
@@ -620,14 +626,8 @@ int GDALOverviewBand::GetOverviewCount()
     GDALRasterBand *poMainBand = (nBand == 0)
                                      ? poMainDS->GetRasterBand(1)->GetMaskBand()
                                      : poMainDS->GetRasterBand(nBand);
-    auto poUnderlyingDS =
-        poUnderlyingBand ? poUnderlyingBand->GetDataset() : nullptr;
-    if (poUnderlyingDS)
-        poUnderlyingDS->SetEnableOverviews(true);
-    const int nRet = poMainBand->GetOverviewCount() - poOvrDS->nOvrLevel - 1;
-    if (poUnderlyingDS)
-        poUnderlyingDS->SetEnableOverviews(false);
-    return nRet;
+    return poMainBand->GetOverviewCount() - poOvrDS->nOvrLevel - 1;
+    ;
 }
 
 /************************************************************************/
@@ -644,14 +644,7 @@ GDALRasterBand *GDALOverviewBand::GetOverview(int iOvr)
     GDALRasterBand *poMainBand = (nBand == 0)
                                      ? poMainDS->GetRasterBand(1)->GetMaskBand()
                                      : poMainDS->GetRasterBand(nBand);
-    auto poUnderlyingDS =
-        poUnderlyingBand ? poUnderlyingBand->GetDataset() : nullptr;
-    if (poUnderlyingDS)
-        poUnderlyingDS->SetEnableOverviews(true);
-    auto poRet = poMainBand->GetOverview(iOvr + poOvrDS->nOvrLevel + 1);
-    if (poUnderlyingDS)
-        poUnderlyingDS->SetEnableOverviews(false);
-    return poRet;
+    return poMainBand->GetOverview(iOvr + poOvrDS->nOvrLevel + 1);
 }
 
 /************************************************************************/
@@ -691,6 +684,19 @@ CPLErr GDALOverviewBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    GSpacing nLineSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 {
+    GDALOverviewDataset *const poOvrDS =
+        cpl::down_cast<GDALOverviewDataset *>(poDS);
+    if (poOvrDS->bThisLevelOnly && poOvrDS->poOvrDS)
+    {
+        const bool bEnabledOverviews = poOvrDS->poOvrDS->AreOverviewsEnabled();
+        poOvrDS->poOvrDS->SetEnableOverviews(false);
+        CPLErr eErr = GDALProxyRasterBand::IRasterIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+            eBufType, nPixelSpace, nLineSpace, psExtraArg);
+        poOvrDS->poOvrDS->SetEnableOverviews(bEnabledOverviews);
+        return eErr;
+    }
+
     // Try to pass the request to the most appropriate overview.
     if (nBufXSize < nXSize && nBufYSize < nYSize)
     {

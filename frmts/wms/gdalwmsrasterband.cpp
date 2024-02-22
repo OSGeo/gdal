@@ -85,7 +85,8 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0,
     CPLErr ret = CE_None;
 
     // Get a vector of requests large enough for this call
-    std::vector<WMSHTTPRequest> requests((bx1 - bx0 + 1) * (by1 - by0 + 1));
+    std::vector<WMSHTTPRequest> requests(static_cast<size_t>(bx1 - bx0 + 1) *
+                                         (by1 - by0 + 1));
 
     size_t count = 0;  // How many requests are valid
     GDALWMSCache *cache = m_parent_dataset->m_cache;
@@ -1184,7 +1185,7 @@ CPLErr GDALWMSRasterBand::SetColorInterpretation(GDALColorInterp eNewInterp)
 
 // Utility function, returns a value from a vector corresponding to the band
 // index or the first entry
-static double getBandValue(std::vector<double> &v, size_t idx)
+static double getBandValue(const std::vector<double> &v, size_t idx)
 {
     idx--;
     if (v.size() > idx)

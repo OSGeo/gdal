@@ -704,9 +704,9 @@ def test_ogr_feature_native_data():
     lyr.CreateFeature(f)
     f = None
 
-    dialects = ["OGR_SQL"]
+    dialects = ["OGRSQL"]
     if gdal.GetDriverByName("SQLITE") is not None:
-        dialects += ["OGR_SQLITE"]
+        dialects += ["SQLITE"]
     for dialect in dialects:
         sql_lyr = ds.ExecuteSQL("SELECT * FROM %s" % lyr.GetName(), dialect=dialect)
         native_data = sql_lyr.GetMetadataItem("NATIVE_DATA", "NATIVE_DATA")

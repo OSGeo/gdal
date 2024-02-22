@@ -96,12 +96,19 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     }
 
     const std::string osRealFilename("/vsimem/" + osFilename);
-    VSIFCloseL(VSIFileFromMemBuffer(osRealFilename.c_str(), paby,
-                                    static_cast<size_t>(nSize), TRUE));
+    VSILFILE *fp = VSIFileFromMemBuffer(osRealFilename.c_str(), paby,
+                                        static_cast<size_t>(nSize), TRUE);
+    if (fp)
+    {
+        VSIFCloseL(fp);
+        delete GDALDataset::Open(osRealFilename.c_str());
+    }
+    else
+    {
+        VSIFree(paby);
+    }
 
-    delete GDALDataset::Open(osRealFilename.c_str());
-
-    VSIUnlink(osRealFilename.c_str());
+    VSIRmdirRecursive("/vsimem/");
 
     return 0;
 }

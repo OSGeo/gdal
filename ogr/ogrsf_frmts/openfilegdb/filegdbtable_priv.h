@@ -98,6 +98,18 @@ inline GUInt32 GetUInt32(const GByte *pBaseAddr, int iOffset)
 }
 
 /************************************************************************/
+/*                              GetInt64()                              */
+/************************************************************************/
+
+inline int64_t GetInt64(const GByte *pBaseAddr, int iOffset)
+{
+    int64_t nVal;
+    memcpy(&nVal, pBaseAddr + sizeof(nVal) * iOffset, sizeof(nVal));
+    CPL_LSBPTR64(&nVal);
+    return nVal;
+}
+
+/************************************************************************/
 /*                              GetUInt64()                             */
 /************************************************************************/
 
@@ -226,6 +238,17 @@ inline void WriteFloat64(std::vector<GByte> &abyBuffer, double dfVal)
 inline void WriteInt32(std::vector<GByte> &abyBuffer, int32_t nVal)
 {
     CPL_LSBPTR32(&nVal);
+    const GByte *pabyInput = reinterpret_cast<const GByte *>(&nVal);
+    abyBuffer.insert(abyBuffer.end(), pabyInput, pabyInput + sizeof(nVal));
+}
+
+/************************************************************************/
+/*                          WriteInt64()                                */
+/************************************************************************/
+
+inline void WriteInt64(std::vector<GByte> &abyBuffer, int64_t nVal)
+{
+    CPL_LSBPTR64(&nVal);
     const GByte *pabyInput = reinterpret_cast<const GByte *>(&nVal);
     abyBuffer.insert(abyBuffer.end(), pabyInput, pabyInput + sizeof(nVal));
 }
@@ -437,7 +460,9 @@ inline void WriteUTF16String(std::vector<GByte> &abyBuffer, const char *pszStr,
 /*                      FileGDBOGRDateToDoubleDate()                    */
 /************************************************************************/
 
-inline double FileGDBOGRDateToDoubleDate(const OGRField *psField)
+inline double FileGDBOGRDateToDoubleDate(const OGRField *psField,
+                                         bool bConvertToGMT,
+                                         bool bHighPrecision)
 {
     struct tm brokendowntime;
     brokendowntime.tm_year = psField->Date.Year - 1900;
@@ -445,9 +470,12 @@ inline double FileGDBOGRDateToDoubleDate(const OGRField *psField)
     brokendowntime.tm_mday = psField->Date.Day;
     brokendowntime.tm_hour = psField->Date.Hour;
     brokendowntime.tm_min = psField->Date.Minute;
-    brokendowntime.tm_sec = static_cast<int>(psField->Date.Second + 0.5);
+    brokendowntime.tm_sec = bHighPrecision
+                                ? static_cast<int>(psField->Date.Second)
+                                : static_cast<int>(psField->Date.Second + 0.5);
     GIntBig nUnixTime = CPLYMDHMSToUnixTime(&brokendowntime);
-    if (psField->Date.TZFlag > 1 && psField->Date.TZFlag != 100)
+    if (bConvertToGMT && psField->Date.TZFlag > 1 &&
+        psField->Date.TZFlag != 100)
     {
         // Convert to GMT
         const int TZOffset = std::abs(psField->Date.TZFlag - 100) * 15;
@@ -460,7 +488,25 @@ inline double FileGDBOGRDateToDoubleDate(const OGRField *psField)
             nUnixTime += nOffset;
     }
     // 25569: Number of days between 1899/12/30 00:00:00 and 1970/01/01 00:00:00
-    return static_cast<double>(nUnixTime) / 3600.0 / 24.0 + 25569.0;
+    return static_cast<double>(
+               nUnixTime +
+               (bHighPrecision
+                    ? fmod(static_cast<double>(psField->Date.Second), 1.0)
+                    : 0)) /
+               3600.0 / 24.0 +
+           25569.0;
+}
+
+/************************************************************************/
+/*                      FileGDBOGRTimeToDoubleTime()                    */
+/************************************************************************/
+
+inline double FileGDBOGRTimeToDoubleTime(const OGRField *psField)
+{
+    return static_cast<double>(psField->Date.Hour * 3600 +
+                               psField->Date.Minute * 60 +
+                               psField->Date.Second) /
+           3600.0 / 24.0;
 }
 
 void FileGDBTablePrintError(const char *pszFile, int nLineNumber);

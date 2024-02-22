@@ -184,10 +184,6 @@ int CPL_DLL OGRGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
 
 extern const char *const SpecialFieldNames[SPECIAL_FIELD_COUNT];
 
-#ifdef SWQ_H_INCLUDED_
-extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
-#endif
-
 /************************************************************************/
 /*     Some SRS related stuff, search in SRS data files.                */
 /************************************************************************/

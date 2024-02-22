@@ -2,12 +2,13 @@
 
 set -e
 
+gdalinfo --version
+
 export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 
 (cd "$PWD/build" && make quicktest)
 
-# install pip and use it to install test dependencies
-sudo sh -c "curl -sSL 'https://bootstrap.pypa.io/pip/3.6/get-pip.py' | python3"
+# install test dependencies
 sudo pip3 install -U -r "$PWD/autotest/requirements.txt"
 
 # Run all the Python autotests

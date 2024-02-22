@@ -29,7 +29,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-static const char FILE_CODE[] = "U";
+static const char U_FILE_CODE[] = "U";
 
 static const TigerFieldInfo rtU_fields[] = {
     // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
@@ -53,7 +53,7 @@ static const TigerRecordInfo rtU_info = {
 
 TigerOverUnder::TigerOverUnder(OGRTigerDataSource *poDSIn,
                                CPL_UNUSED const char *pszPrototypeModule)
-    : TigerPoint(&rtU_info, FILE_CODE)
+    : TigerPoint(&rtU_info, U_FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn("OverUnder");

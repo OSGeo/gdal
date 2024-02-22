@@ -819,7 +819,7 @@ bool ZarrV2Array::FlushDirtyTile() const
 
     const size_t nSourceSize =
         m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
-    auto &abyTile =
+    const auto &abyTile =
         m_abyDecodedTileData.empty() ? m_abyRawTileData : m_abyDecodedTileData;
 
     if (IsEmptyTile(abyTile))
@@ -940,7 +940,7 @@ bool ZarrV2Array::FlushDirtyTile() const
             void *out_buffer = &abyCompressedData[0];
             size_t out_size = abyCompressedData.size();
             CPLStringList aosOptions;
-            const auto compressorConfig = m_oCompressorJSon;
+            const auto &compressorConfig = m_oCompressorJSon;
             for (const auto &obj : compressorConfig.GetChildren())
             {
                 aosOptions.SetNameValue(obj.GetName().c_str(),
@@ -1281,45 +1281,14 @@ std::shared_ptr<ZarrArray>
 ZarrV2Group::LoadArray(const std::string &osArrayName,
                        const std::string &osZarrayFilename,
                        const CPLJSONObject &oRoot, bool bLoadedFromZMetadata,
-                       const CPLJSONObject &oAttributesIn,
-                       std::set<std::string> &oSetFilenamesInLoading) const
+                       const CPLJSONObject &oAttributesIn) const
 {
-    // Prevent too deep or recursive array loading
-    if (oSetFilenamesInLoading.find(osZarrayFilename) !=
-        oSetFilenamesInLoading.end())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Attempt at recursively loading %s", osZarrayFilename.c_str());
-        return nullptr;
-    }
-    if (oSetFilenamesInLoading.size() == 32)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too deep call stack in LoadArray()");
-        return nullptr;
-    }
-
-    struct SetFilenameAdder
-    {
-        std::set<std::string> &m_oSetFilenames;
-        std::string m_osFilename;
-
-        SetFilenameAdder(std::set<std::string> &oSetFilenamesIn,
-                         const std::string &osFilename)
-            : m_oSetFilenames(oSetFilenamesIn), m_osFilename(osFilename)
-        {
-            m_oSetFilenames.insert(osFilename);
-        }
-
-        ~SetFilenameAdder()
-        {
-            m_oSetFilenames.erase(m_osFilename);
-        }
-    };
-
-    // Add osZarrayFilename to oSetFilenamesInLoading during the scope
+    // Add osZarrayFilename to m_poSharedResource during the scope
     // of this function call.
-    SetFilenameAdder filenameAdder(oSetFilenamesInLoading, osZarrayFilename);
+    ZarrSharedResource::SetFilenameAdder filenameAdder(m_poSharedResource,
+                                                       osZarrayFilename);
+    if (!filenameAdder.ok())
+        return nullptr;
 
     const auto osFormat = oRoot["zarr_format"].ToString();
     if (osFormat != "2")
@@ -1402,17 +1371,19 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
             return nullptr;
         }
         aoDims.emplace_back(std::make_shared<ZarrDimension>(
-            m_poSharedResource, m_pSelf, std::string(), CPLSPrintf("dim%d", i),
-            std::string(), std::string(), nSize));
+            m_poSharedResource,
+            std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock()),
+            std::string(), CPLSPrintf("dim%d", i), std::string(), std::string(),
+            nSize));
     }
 
     // XArray extension
     const auto arrayDimensionsObj = oAttributes["_ARRAY_DIMENSIONS"];
 
     const auto FindDimension =
-        [this, &aoDims, bLoadedFromZMetadata, &osArrayName, &oAttributes,
-         &oSetFilenamesInLoading](const std::string &osDimName,
-                                  std::shared_ptr<GDALDimension> &poDim, int i)
+        [this, &aoDims, bLoadedFromZMetadata, &osArrayName,
+         &oAttributes](const std::string &osDimName,
+                       std::shared_ptr<GDALDimension> &poDim, int i)
     {
         auto oIter = m_oMapDimensions.find(osDimName);
         if (oIter != m_oMapDimensions.end())
@@ -1474,8 +1445,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                     if (oDoc.Load(osArrayFilenameDim))
                     {
                         LoadArray(osDimName, osArrayFilenameDim, oDoc.GetRoot(),
-                                  false, CPLJSONObject(),
-                                  oSetFilenamesInLoading);
+                                  false, CPLJSONObject());
                     }
                 }
                 else
@@ -1511,8 +1481,9 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
         }
 
         auto poDimLocal = std::make_shared<ZarrDimension>(
-            m_poSharedResource, m_pSelf, GetFullName(), osDimName, osType,
-            osDirection, poDim->GetSize());
+            m_poSharedResource,
+            std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock()),
+            GetFullName(), osDimName, osType, osDirection, poDim->GetSize());
         poDimLocal->SetXArrayDimension();
         m_oMapDimensions[osDimName] = poDimLocal;
         poDim = poDimLocal;
@@ -1553,14 +1524,15 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
         const auto arrayDims = nczarrArrayDimrefs.ToArray();
         if (arrayDims.Size() == oShape.Size())
         {
-            auto poRG = m_pSelf.lock();
+            auto poRG =
+                std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock());
             CPLAssert(poRG != nullptr);
             while (true)
             {
                 auto poNewRG = poRG->m_poParent.lock();
                 if (poNewRG == nullptr)
                     break;
-                poRG = poNewRG;
+                poRG = std::move(poNewRG);
             }
 
             for (int i = 0; i < oShape.Size(); ++i)
@@ -1568,67 +1540,50 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                 if (arrayDims[i].GetType() == CPLJSONObject::Type::String)
                 {
                     const auto osDimFullpath = arrayDims[i].ToString();
-                    auto poDim = poRG->OpenDimensionFromFullname(osDimFullpath);
-                    if (poDim == nullptr)
+                    const std::string osArrayFullname =
+                        (GetFullName() != "/" ? GetFullName() : std::string()) +
+                        '/' + osArrayName;
+                    if (aoDims.size() == 1 &&
+                        (osDimFullpath == osArrayFullname ||
+                         osDimFullpath == "/" + osArrayFullname))
+                    {
+                        // If this is an indexing variable, then fetch the
+                        // dimension type and direction, and patch the dimension
+                        std::string osType;
+                        std::string osDirection;
+                        ZarrArray::GetDimensionTypeDirection(
+                            oAttributes, osType, osDirection);
+
+                        auto poDimLocal = std::make_shared<ZarrDimension>(
+                            m_poSharedResource,
+                            std::dynamic_pointer_cast<ZarrGroupBase>(
+                                m_pSelf.lock()),
+                            GetFullName(), osArrayName, osType, osDirection,
+                            aoDims[i]->GetSize());
+                        aoDims[i] = poDimLocal;
+
+                        m_oMapDimensions[osArrayName] = std::move(poDimLocal);
+                    }
+                    else if (auto poDim =
+                                 poRG->OpenDimensionFromFullname(osDimFullpath))
+                    {
+                        if (poDim->GetSize() != aoDims[i]->GetSize())
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Inconsistency in size between NCZarr "
+                                     "dimension %s and regular dimension",
+                                     osDimFullpath.c_str());
+                        }
+                        else
+                        {
+                            aoDims[i] = poDim;
+                        }
+                    }
+                    else
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "Cannot find NCZarr dimension %s",
                                  osDimFullpath.c_str());
-                    }
-                    else if (poDim->GetSize() != aoDims[i]->GetSize())
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Inconsistency in size between NCZarr "
-                                 "dimension %s and regular dimension",
-                                 osDimFullpath.c_str());
-                    }
-                    else
-                    {
-                        aoDims[i] = poDim;
-
-                        // If this is an indexing variable, then fetch the
-                        // dimension type and direction, and patch the dimension
-                        const std::string osArrayFullname =
-                            (GetFullName() != "/" ? GetFullName()
-                                                  : std::string()) +
-                            '/' + osArrayName;
-                        if (aoDims.size() == 1 &&
-                            osArrayFullname == poDim->GetFullName())
-                        {
-                            std::string osType;
-                            std::string osDirection;
-                            ZarrArray::GetDimensionTypeDirection(
-                                oAttributes, osType, osDirection);
-
-                            std::string osDimParent = osDimFullpath;
-                            const auto nPos = osDimParent.rfind('/');
-                            if (nPos != std::string::npos)
-                            {
-                                if (nPos == 0)
-                                    osDimParent = '/';
-                                else
-                                    osDimParent.resize(nPos);
-                                auto poDimParentGroup =
-                                    dynamic_cast<ZarrGroupBase *>(
-                                        poRG->OpenGroupFromFullname(osDimParent)
-                                            .get());
-                                if (poDimParentGroup)
-                                {
-                                    auto poDimLocal =
-                                        std::make_shared<ZarrDimension>(
-                                            m_poSharedResource,
-                                            poDimParentGroup->m_pSelf,
-                                            poDimParentGroup->GetFullName(),
-                                            poDim->GetName(), osType,
-                                            osDirection, poDim->GetSize());
-                                    aoDims[i] = poDimLocal;
-
-                                    poDimParentGroup
-                                        ->m_oMapDimensions[poDim->GetName()] =
-                                        poDimLocal;
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -1948,7 +1903,31 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
     {
         poArray->RegisterNoDataValue(abyNoData.data());
     }
-    poArray->ParseSpecialAttributes(oAttributes);
+
+    const auto gridMapping = oAttributes["grid_mapping"];
+    if (gridMapping.GetType() == CPLJSONObject::Type::String)
+    {
+        const std::string gridMappingName = gridMapping.ToString();
+        if (m_oMapMDArrays.find(gridMappingName) == m_oMapMDArrays.end())
+        {
+            const std::string osArrayFilenameDim = CPLFormFilename(
+                CPLFormFilename(m_osDirectoryName.c_str(),
+                                gridMappingName.c_str(), nullptr),
+                ".zarray", nullptr);
+            VSIStatBufL sStat;
+            if (VSIStatL(osArrayFilenameDim.c_str(), &sStat) == 0)
+            {
+                CPLJSONDocument oDoc;
+                if (oDoc.Load(osArrayFilenameDim))
+                {
+                    LoadArray(gridMappingName, osArrayFilenameDim,
+                              oDoc.GetRoot(), false, CPLJSONObject());
+                }
+            }
+        }
+    }
+
+    poArray->ParseSpecialAttributes(m_pSelf.lock(), oAttributes);
     poArray->SetAttributes(oAttributes);
     poArray->SetDtype(oDtype);
     RegisterArray(poArray);

@@ -69,6 +69,28 @@ def source_filename(tmp_vsimem):
 
 
 ###############################################################################
+#
+
+
+def test_gdalcompare_help(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdalcompare", "--help"
+    )
+
+
+###############################################################################
+#
+
+
+def test_gdalcompare_version(script_path):
+
+    assert "ERROR" not in test_py_scripts.run_py_script(
+        script_path, "gdalcompare", "--version"
+    )
+
+
+###############################################################################
 
 
 def test_gdalcompare_same(script_path, tmp_path):
@@ -299,5 +321,8 @@ def test_gdalcompare_different_overview(tmp_vsimem, captured_print, source_filen
     ds.BuildOverviews("AVERAGE", [2])
     ds = None
     assert (
-        gdalcompare.find_diff(golden_filename, filename, options=["SKIP_BINARY"]) == 1
+        gdalcompare.find_diff(
+            golden_filename, filename, options=["SKIP_METADATA", "SKIP_BINARY"]
+        )
+        == 1
     )

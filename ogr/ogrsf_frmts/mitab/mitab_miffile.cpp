@@ -316,6 +316,7 @@ int MIFFile::Open(const char *pszFname, TABAccess eAccess,
         CPLFree(pszFeatureClassName);
         // Ref count defaults to 0... set it to 1
         m_poDefn->Reference();
+        m_poDefn->Seal(/* bSealFields = */ true);
     }
 
     return 0;
@@ -341,6 +342,7 @@ int MIFFile::ParseMIFHeader(int *pbIsEmpty)
     CPLFree(pszFeatureClassName);
     // Ref count defaults to 0... set it to 1
     m_poDefn->Reference();
+    m_poDefn->Seal(/* bSealFields = */ true);
 
     if (m_eAccessMode != TABRead)
     {
@@ -1662,6 +1664,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
         CPLFree(pszFeatureClassName);
         // Ref count defaults to 0... set it to 1
         m_poDefn->Reference();
+        m_poDefn->Seal(/* bSealFields = */ true);
     }
 
     CPLString osName(NormalizeFieldName(pszName));
@@ -1772,7 +1775,7 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
     /*-----------------------------------------------------
      * Add the FieldDefn to the FeatureDefn
      *----------------------------------------------------*/
-    m_poDefn->AddFieldDefn(poFieldDefn);
+    whileUnsealing(m_poDefn)->AddFieldDefn(poFieldDefn);
     m_oSetFields.insert(CPLString(poFieldDefn->GetNameRef()).toupper());
     delete poFieldDefn;
 

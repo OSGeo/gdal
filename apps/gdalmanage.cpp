@@ -105,33 +105,29 @@ static void Identify(int nArgc, char **papszArgv)
     bool bForceRecurse = false;
     bool bReportFailures = false;
 
-    while (nArgc > 0 && papszArgv[0][0] == '-')
+    int i = 0;
+    for (; i < nArgc && papszArgv[i][0] == '-'; ++i)
     {
-        if (EQUAL(papszArgv[0], "-r"))
+        if (EQUAL(papszArgv[i], "-r"))
             bRecursive = true;
-        else if (EQUAL(papszArgv[0], "-fr"))
+        else if (EQUAL(papszArgv[i], "-fr"))
         {
             bForceRecurse = true;
             bRecursive = true;
         }
-        else if (EQUAL(papszArgv[0], "-u"))
+        else if (EQUAL(papszArgv[i], "-u"))
             bReportFailures = true;
         else
             Usage(true);
-
-        papszArgv++;
-        nArgc--;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Process given files.                                            */
     /* -------------------------------------------------------------------- */
-    while (nArgc > 0)
+    for (; i < nArgc; ++i)
     {
-        ProcessIdentifyTarget(papszArgv[0], nullptr, bRecursive,
+        ProcessIdentifyTarget(papszArgv[i], nullptr, bRecursive,
                               bReportFailures, bForceRecurse);
-        nArgc--;
-        papszArgv++;
     }
 }
 
@@ -193,9 +189,16 @@ MAIN_START(argc, argv)
     if (argc < 1)
         exit(-argc);
 
-    for (int i = 0; argv != nullptr && argv[i] != nullptr; i++)
+    for (int i = 0; i < argc; i++)
     {
-        if (EQUAL(argv[i], "--help"))
+        if (EQUAL(argv[i], "--utility_version"))
+        {
+            printf("%s was compiled against GDAL %s and is running against "
+                   "GDAL %s\n",
+                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
+            return 0;
+        }
+        else if (EQUAL(argv[i], "--help"))
         {
             Usage(false);
         }
@@ -203,14 +206,6 @@ MAIN_START(argc, argv)
 
     if (argc < 3)
         Usage(true);
-
-    if (EQUAL(argv[1], "--utility_version"))
-    {
-        printf(
-            "%s was compiled against GDAL %s and is running against GDAL %s\n",
-            argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-        return 0;
-    }
 
     /* -------------------------------------------------------------------- */
     /*      Do we have a driver specifier?                                  */

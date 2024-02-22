@@ -40,19 +40,6 @@
 #include <new>
 
 /************************************************************************/
-/*                          GetPAM()                                    */
-/************************************************************************/
-
-static std::shared_ptr<GDALPamMultiDim>
-GetPAM(const std::shared_ptr<GDALMDArray> &poParent)
-{
-    auto poPamArray = dynamic_cast<GDALPamMDArray *>(poParent.get());
-    if (poPamArray)
-        return poPamArray->GetPAM();
-    return nullptr;
-}
-
-/************************************************************************/
 /*                         GDALMDArrayGridded                           */
 /************************************************************************/
 
@@ -89,9 +76,9 @@ class GDALMDArrayGridded final : public GDALPamMDArray
         double dfResY, double dfRadius)
         : GDALAbstractMDArray(std::string(),
                               "Gridded view of " + poParent->GetFullName()),
-          GDALPamMDArray(std::string(),
-                         "Gridded view of " + poParent->GetFullName(),
-                         ::GetPAM(poParent)),
+          GDALPamMDArray(
+              std::string(), "Gridded view of " + poParent->GetFullName(),
+              GDALPamMultiDim::GetPAM(poParent), poParent->GetContext()),
           m_poParent(std::move(poParent)), m_apoDims(apoDims), m_poVarX(poVarX),
           m_poVarY(poVarY), m_poVectorDS(std::move(poVectorDS)), m_eAlg(eAlg),
           m_poGridOptions(std::move(poGridOptions)),
@@ -276,7 +263,7 @@ bool GDALMDArrayGridded::IRead(const GUInt64 *arrayStartIdx,
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnull-dereference"
 #endif
-        m_anLastStartIdx = anStartIdx;
+        m_anLastStartIdx = std::move(anStartIdx);
 #if defined(__GNUC__) && __GNUC__ >= 13
 #pragma GCC diagnostic pop
 #endif
@@ -806,7 +793,7 @@ GDALMDArray::GetGridded(const std::string &osGridOptions,
     // CPLDebug("GDAL", "nXSize = %d, nYSize = %d", nXSize, nYSize);
 
     std::vector<std::shared_ptr<GDALDimension>> apoNewDims;
-    const auto apoSelfDims = GetDimensions();
+    const auto &apoSelfDims = GetDimensions();
     for (size_t i = 0; i < GetDimensionCount() - 1; ++i)
         apoNewDims.emplace_back(apoSelfDims[i]);
 

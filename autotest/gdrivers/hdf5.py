@@ -1252,6 +1252,22 @@ def test_hdf5_band_specific_attribute():
             r'HDF5:"C:\OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5"://HDFEOS/SWATHS/OMI_Column_Amount_O3/Data_Fields/UVAerosolIndex',
             r"C:\OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5",
         ),
+        (
+            r'HDF5:"C:/OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5"://HDFEOS/SWATHS/OMI_Column_Amount_O3/Data_Fields/UVAerosolIndex',
+            r"C:/OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5",
+        ),
+        (
+            r'HDF5:"/vsicurl/http://www.my.com/OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5"://HDFEOS/SWATHS/OMI_Column_Amount_O3/Data_Fields/UVAerosolIndex',
+            r"/vsicurl/http://www.my.com/OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5",
+        ),
+        (
+            r"HDF5:a://HDFEOS/SWATHS/OMI_Column_Amount_O3/Data_Fields/UVAerosolIndex",
+            r"a",
+        ),
+        (
+            r"HDF5:a:/my/path://HDFEOS/SWATHS/OMI_Column_Amount_O3/Data_Fields/UVAerosolIndex",
+            r"a:/my/path",
+        ),
         ("", ""),
     ),
 )
@@ -1286,3 +1302,17 @@ def test_gdal_subdataset_modify_filename(filename):
             info.ModifyPathComponent('"/path/to.he5"')
             == 'HDF5:"/path/to.he5"://HDFEOS/SWATHS/OMI_Column_Amount_O3/Data_Fields/UVAerosolIndex'
         )
+
+
+@pytest.mark.parametrize(
+    "bogus",
+    (
+        "HDF5:a:c",
+        "HDF5:a",
+        "HDF5:",
+    ),
+)
+def test_gdal_subdataset_bogus(bogus):
+    """Test it doesn't crash"""
+
+    gdal.GetSubdatasetInfo(bogus)

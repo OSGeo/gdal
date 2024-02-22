@@ -36,6 +36,7 @@
 #include "gdal_pam.h"
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
+#include "fitsdrivercore.h"
 
 #include <string.h>
 #include <fitsio.h>
@@ -99,7 +100,6 @@ class FITSDataset final : public GDALPamDataset
     ~FITSDataset();
 
     static GDALDataset *Open(GDALOpenInfo *);
-    static int Identify(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
                                char **papszParamList);
@@ -169,7 +169,7 @@ class FITSRasterBand final : public GDALPamRasterBand
 /*                              FITSLayer                               */
 /* ==================================================================== */
 /************************************************************************/
-namespace
+namespace gdal::FITS
 {
 struct ColDesc
 {
@@ -184,7 +184,9 @@ struct ColDesc
     LONGLONG nNullValue = 0;
     int nTypeCode = 0;  // unset
 };
-}  // namespace
+}  // namespace gdal::FITS
+
+using namespace gdal::FITS;
 
 class FITSLayer final : public OGRLayer,
                         public OGRGetNextFeatureThroughRaw<FITSLayer>
@@ -219,7 +221,7 @@ class FITSLayer final : public OGRLayer,
     int TestCapability(const char *) override;
     OGRFeature *GetFeature(GIntBig) override;
     GIntBig GetFeatureCount(int bForce) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
@@ -1046,7 +1048,7 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
                 (iBit = strtol(pszBit + strlen("_bit"), &pszEndPtr, 10)) > 0 &&
                 pszEndPtr && *pszEndPtr == '\0')
             {
-                CPLString osName;
+                std::string osName;
                 osName.assign(pszFieldName, pszBit - pszFieldName);
                 if (oSetBitFieldNames.find(osName) == oSetBitFieldNames.end())
                 {
@@ -1058,7 +1060,7 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
 
                     if (osPendingBitFieldName.empty())
                     {
-                        osPendingBitFieldName = osName;
+                        osPendingBitFieldName = std::move(osName);
                         nPendingBitFieldSize = 1;
                         continue;
                     }
@@ -1082,7 +1084,8 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
         const char *pszRepeat = m_aosCreationOptions.FetchNameValue(
             (CPLString("REPEAT_") + pszFieldName).c_str());
 
-        const auto osTFormFromMD = oMapColNameToMetadata[pszFieldName]["TFORM"];
+        const auto &osTFormFromMD =
+            oMapColNameToMetadata[pszFieldName]["TFORM"];
 
         // For fields of type list, determine if we can know if it has a fixed
         // number of elements
@@ -1230,6 +1233,7 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
                 osTForm = oCol.typechar;
             }
         }
+        CPL_IGNORE_RET_VAL(osRepeat);
         int status = 0;
         fits_insert_col(m_poDS->m_hFITS, oCol.iCol, &osTType[0], &osTForm[0],
                         &status);
@@ -1261,7 +1265,7 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
 /*                           CreateField()                              */
 /************************************************************************/
 
-OGRErr FITSLayer::CreateField(OGRFieldDefn *poField, int /* bApproxOK */)
+OGRErr FITSLayer::CreateField(const OGRFieldDefn *poField, int /* bApproxOK */)
 {
     if (!TestCapability(OLCCreateField))
         return OGRERR_FAILURE;
@@ -2267,25 +2271,6 @@ void FITSDataset::LoadMetadata(GDALMajorObject *poTarget)
 }
 
 /************************************************************************/
-/*                           Identify()                                 */
-/************************************************************************/
-
-int FITSDataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-    if (STARTS_WITH(poOpenInfo->pszFilename, "FITS:"))
-        return true;
-
-    const char *fitsID = "SIMPLE  =                    T";  // Spaces important!
-    const size_t fitsIDLen = strlen(fitsID);  // Should be 30 chars long
-
-    if (static_cast<size_t>(poOpenInfo->nHeaderBytes) < fitsIDLen)
-        return false;
-    if (memcmp(poOpenInfo->pabyHeader, fitsID, fitsIDLen) != 0)
-        return false;
-    return true;
-}
-
-/************************************************************************/
 /*                            GetMetadata()                             */
 /************************************************************************/
 
@@ -2386,7 +2371,7 @@ int FITSDataset::TestCapability(const char *pszCap)
 GDALDataset *FITSDataset::Open(GDALOpenInfo *poOpenInfo)
 {
 
-    if (!Identify(poOpenInfo))
+    if (!FITSDriverIdentify(poOpenInfo))
         return nullptr;
 
     CPLString osFilename(poOpenInfo->pszFilename);
@@ -2425,7 +2410,7 @@ GDALDataset *FITSDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
     // Create a FITSDataset object
-    auto dataset = cpl::make_unique<FITSDataset>();
+    auto dataset = std::make_unique<FITSDataset>();
     dataset->m_isExistingFile = true;
     dataset->m_hFITS = hFITS;
     dataset->eAccess = poOpenInfo->eAccess;
@@ -3723,44 +3708,14 @@ void FITSDataset::LoadFITSInfo()
 void GDALRegister_FITS()
 
 {
-    if (GDALGetDriverByName("FITS") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
+    FITSDriverSetCommonMetadata(poDriver);
 
-    poDriver->SetDescription("FITS");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
-                              "Flexible Image Transport System");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/fits.html");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte UInt16 Int16 UInt32 Int32 Float32 Float64");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "fits");
-
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,
-                              "Integer Integer64 Real String IntegerList "
-                              "Integer64List RealList");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
-                              "Boolean Int16 Float32");
-
-    poDriver->SetMetadataItem(
-        GDAL_DS_LAYER_CREATIONOPTIONLIST,
-        "<LayerCreationOptionList>"
-        "  <Option name='REPEAT_*' type='int' description='Repeat value for "
-        "fields of type List'/>"
-        "  <Option name='COMPUTE_REPEAT' type='string-select' "
-        "description='Determine when the repeat value for fields is computed'>"
-        "    <Value>AT_FIELD_CREATION</Value>"
-        "    <Value>AT_FIRST_FEATURE_CREATION</Value>"
-        "  </Option>"
-        "</LayerCreationOptionList>");
     poDriver->pfnOpen = FITSDataset::Open;
-    poDriver->pfnIdentify = FITSDataset::Identify;
     poDriver->pfnCreate = FITSDataset::Create;
-    poDriver->pfnCreateCopy = nullptr;
     poDriver->pfnDelete = FITSDataset::Delete;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);

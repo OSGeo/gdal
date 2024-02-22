@@ -49,8 +49,8 @@ namespace PCIDSK
 /************************************************************************/
     class CPCIDSKFile final: public PCIDSKFile
     {
-        friend PCIDSKFile PCIDSK_DLL *Open( std::string filename,
-            std::string access, const PCIDSKInterfaces *interfaces, int max_channel_count_allowed );
+        friend PCIDSKFile PCIDSK_DLL *Open( const std::string& filename,
+            const std::string& access, const PCIDSKInterfaces *interfaces, int max_channel_count_allowed );
     public:
 
         CPCIDSKFile( const std::string& filename );
@@ -94,10 +94,10 @@ namespace PCIDSK
         std::string GetFilename() const { return base_filename; }
 
         void      GetIODetails( void ***io_handle_pp, Mutex ***io_mutex_pp,
-                                std::string filename="", bool writable=false ) override;
+                                const std::string& filename=std::string(), bool writable=false ) override;
 
         bool      GetEDBFileDetails( EDBFile** file_p, Mutex **io_mutex_p,
-                                     std::string filename );
+                                     const std::string& filename );
 
         std::string GetUniqueEDBFilename() override;
 

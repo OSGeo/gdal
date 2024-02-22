@@ -260,25 +260,6 @@ wchar_t CPL_DLL *CPLRecodeToWChar(const char *pszSource,
 }
 
 /************************************************************************/
-/*                                 CPLIsUTF8()                          */
-/************************************************************************/
-
-/**
- * Test if a string is encoded as UTF-8.
- *
- * @param pabyData input string to test
- * @param nLen length of the input string, or -1 if the function must compute
- *             the string length. In which case it must be null terminated.
- * @return TRUE if the string is encoded as UTF-8. FALSE otherwise
- *
- * @since GDAL 1.7.0
- */
-int CPLIsUTF8(const char *pabyData, int nLen)
-{
-    return CPLIsUTF8Stub(pabyData, nLen);
-}
-
-/************************************************************************/
 /*                               CPLIsASCII()                           */
 /************************************************************************/
 

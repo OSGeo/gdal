@@ -98,9 +98,9 @@ static void gdal_png_read_filter_row_sub3_sse2(png_row_infop row_info,
         d = _mm_add_epi8(d, a);
         store3(row, d);
 
-        input += 3;
-        row += 3;
-        rb -= 3;
+        //input += 3;
+        //row += 3;
+        //rb -= 3;
     }
 }
 
@@ -188,10 +188,10 @@ static void gdal_png_read_filter_row_avg3_sse2(png_row_infop row_info,
         d = _mm_add_epi8(d, avg);
         store3(row, d);
 
-        input += 3;
-        prev += 3;
-        row += 3;
-        rb -= 3;
+        // input += 3;
+        // prev += 3;
+        // row += 3;
+        // rb -= 3;
     }
 }
 
@@ -366,10 +366,10 @@ static void gdal_png_read_filter_row_paeth3_sse2(png_row_infop row_info,
         d = _mm_add_epi8(d, nearest);
         store3(row, _mm_packus_epi16(d, d));
 
-        input += 3;
-        prev += 3;
-        row += 3;
-        rb -= 3;
+        // input += 3;
+        // prev += 3;
+        // row += 3;
+        // rb -= 3;
     }
 }
 

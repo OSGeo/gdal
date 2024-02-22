@@ -48,6 +48,18 @@ std::string OFGDBGenerateUUID();
 
 int OGROpenFileGDBIsComparisonOp(int op);
 
+// The FileGeodatabase format does not really allow strings of arbitrary width
+// in the XML and .gdbtable header declaration. They must have a non-zero
+// maximum width. But if we put it to a huge value (let's say 1 billion), this
+// causes crashes in some Esri products (cf #5952, perhaps they allocate
+// std::string's to that maximum size?).
+// Hence this default of a relative large but not too large
+// width when creating a OGR string field width of unspecified width.
+// Note that when opening a FileGeodatabase with string fields of that width,
+// we do not advertise it in OGRFieldDefn::GetWidth() but we advertise 0 instead,
+// to allow round-tripping.
+constexpr int DEFAULT_STRING_WIDTH = 65536;
+
 // UUID of object type
 constexpr const char *pszFolderTypeUUID =
     "{f3783e6f-65ca-4514-8315-ce3985dad3b1}";
@@ -132,6 +144,7 @@ class OGROpenFileGDBLayer final : public OGRLayer
     std::string m_osDocumentation{};
     std::string m_osConfigurationKeyword{};
     OGRwkbGeometryType m_eGeomType = wkbNone;
+    bool m_bArcGISPro32OrLater = false;
     int m_bValidLayerDefn = -1;
     int m_bEOF = false;
     bool m_bTimeInUTC = false;
@@ -266,6 +279,8 @@ class OGROpenFileGDBLayer final : public OGRLayer
     {
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
     }
+    OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                       int bForce) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
@@ -280,7 +295,8 @@ class OGROpenFileGDBLayer final : public OGRLayer
 
     virtual OGRErr Rename(const char *pszNewName) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
+                               int bApproxOK) override;
     virtual OGRErr DeleteField(int iFieldToDelete) override;
     virtual OGRErr AlterFieldDefn(int iFieldToAlter,
                                   OGRFieldDefn *poNewFieldDefn,
@@ -468,7 +484,8 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
     bool OpenFileGDBv10(int iGDBItems, int nInterestTable,
                         const GDALOpenInfo *poOpenInfo,
                         const std::string &osRasterLayerName,
-                        std::set<int> &oSetIgnoredRasterLayerTableNum);
+                        std::set<int> &oSetIgnoredRasterLayerTableNum,
+                        bool &bRetryFileGDBOut);
     int OpenFileGDBv9(int iGDBFeatureClasses, int iGDBObjectClasses,
                       int nInterestTable, const GDALOpenInfo *poOpenInfo,
                       const std::string &osRasterLayerName,
@@ -510,7 +527,7 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
     OGROpenFileGDBDataSource();
     virtual ~OGROpenFileGDBDataSource();
 
-    bool Open(const GDALOpenInfo *poOpenInfo);
+    bool Open(const GDALOpenInfo *poOpenInfo, bool &bRetryFileGDBOut);
     bool Create(const char *pszName);
 
     virtual CPLErr FlushCache(bool bAtClosing = false) override;
@@ -715,9 +732,10 @@ class GDALOpenFileGDBRasterAttributeTable final
 
     GDALRasterAttributeTable *Clone() const override
     {
-        auto poDS = cpl::make_unique<OGROpenFileGDBDataSource>();
+        auto poDS = std::make_unique<OGROpenFileGDBDataSource>();
         GDALOpenInfo oOpenInfo(m_poDS->m_osDirName.c_str(), GA_ReadOnly);
-        if (!poDS->Open(&oOpenInfo))
+        bool bRetryFileGDBUnused = false;
+        if (!poDS->Open(&oOpenInfo, bRetryFileGDBUnused))
             return nullptr;
         auto poVatLayer = poDS->BuildLayerFromName(m_osVATTableName.c_str());
         if (!poVatLayer)

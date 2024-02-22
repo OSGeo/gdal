@@ -248,11 +248,15 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
             }
 
             // Tokenize without quotes to get the actual values.
+            VSIRewindL(fpCSV);
             CSLDestroy(papszTokens);
-            int l_nFlags = CSLT_HONOURSTRINGS;
-            if (!bMergeDelimiter)
-                l_nFlags |= CSLT_ALLOWEMPTYTOKENS;
-            papszTokens = CSLTokenizeString2(pszLine, szDelimiter, l_nFlags);
+            papszTokens =
+                CSVReadParseLine3L(fpCSV, m_nMaxLineSize, szDelimiter,
+                                   true,   // bHonourStrings
+                                   false,  // bKeepLeadingAndClosingQuotes
+                                   bMergeDelimiter,
+                                   true  // bSkipBOM
+                );
             nFieldCount = CSLCount(papszTokens);
         }
     }
@@ -338,7 +342,8 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
         const char *pszExt = CPLGetExtension(pszFilename);
         if (pszExt[0])
         {
-            std::string osCSVTFilename = CPLResetExtension(pszFilename, "csvt");
+            const std::string osCSVTFilename =
+                CPLResetExtension(pszFilename, "csvt");
             VSILFILE *fpCSVT = VSIFOpenL(osCSVTFilename.c_str(), "r");
             if (fpCSVT != nullptr)
             {
@@ -1750,7 +1755,7 @@ int OGRCSVLayer::TestCapability(const char *pszCap)
 OGRCSVCreateFieldAction
 OGRCSVLayer::PreCreateField(OGRFeatureDefn *poFeatureDefn,
                             const std::set<CPLString> &oSetFields,
-                            OGRFieldDefn *poNewField, int bApproxOK)
+                            const OGRFieldDefn *poNewField, int bApproxOK)
 {
     // Does this duplicate an existing field?
     if (oSetFields.find(CPLString(poNewField->GetNameRef()).toupper()) !=
@@ -1813,7 +1818,7 @@ OGRCSVLayer::PreCreateField(OGRFeatureDefn *poFeatureDefn,
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRCSVLayer::CreateField(OGRFieldDefn *poNewField, int bApproxOK)
+OGRErr OGRCSVLayer::CreateField(const OGRFieldDefn *poNewField, int bApproxOK)
 
 {
     // If we have already written our field names, then we are not
@@ -1864,7 +1869,7 @@ OGRErr OGRCSVLayer::CreateField(OGRFieldDefn *poNewField, int bApproxOK)
 /*                          CreateGeomField()                           */
 /************************************************************************/
 
-OGRErr OGRCSVLayer::CreateGeomField(OGRGeomFieldDefn *poGeomField,
+OGRErr OGRCSVLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                     int /* bApproxOK */)
 {
     if (!TestCapability(OLCCreateGeomField))
@@ -2309,7 +2314,8 @@ OGRErr OGRCSVLayer::ICreateFeature(OGRFeature *poNewFeature)
         {
             const OGRFieldType eType(
                 poFeatureDefn->GetFieldDefn(iField)->GetType());
-            if (eType == OFTReal)
+            if (eType == OFTReal || eType == OFTInteger ||
+                eType == OFTInteger64)
             {
                 if (poFeatureDefn->GetFieldDefn(iField)->GetSubType() ==
                         OFSTFloat32 &&

@@ -40,10 +40,13 @@ static void InterpolateSpline(OGRLineString *const poLine,
 /*                             PointDist()                              */
 /************************************************************************/
 
+#ifndef PointDist_defined
+#define PointDist_defined
 inline static double PointDist(double x1, double y1, double x2, double y2)
 {
     return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
 }
+#endif
 
 inline static double PointDist(double x1, double y1, double z1, double x2,
                                double y2, double z2)
@@ -1157,7 +1160,7 @@ void OGRDXFLayer::InsertArrowhead(OGRDXFFeature *const poFeature,
         try
         {
             poArrowheadFeature = InsertBlockInline(
-                CPLGetErrorCounter(), osBlockName, oTransformer,
+                CPLGetErrorCounter(), osBlockName, std::move(oTransformer),
                 poArrowheadFeature, apoExtraFeatures, true, false);
         }
         catch (const std::invalid_argument &)

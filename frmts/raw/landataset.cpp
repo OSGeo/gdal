@@ -396,7 +396,7 @@ GDALDataset *LANDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<LANDataset>();
+    auto poDS = std::make_unique<LANDataset>();
 
     poDS->eAccess = poOpenInfo->eAccess;
     std::swap(poDS->fpImage, poOpenInfo->fpL);

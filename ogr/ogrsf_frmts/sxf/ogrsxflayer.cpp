@@ -108,9 +108,7 @@ void OGRSXFLayer::AddClassifyCode(unsigned nClassCode, const char *szName)
     }
     else
     {
-        CPLString szIdName;
-        szIdName.Printf("%d", nClassCode);
-        mnClassificators[nClassCode] = szIdName;
+        mnClassificators[nClassCode] = CPLString().Printf("%d", nClassCode);
     }
 }
 

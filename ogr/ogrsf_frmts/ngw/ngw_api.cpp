@@ -215,7 +215,7 @@ Uri ParseUri(const std::string &osUrl)
     }
     else
     {
-        stOut.osResourceId = osResourceId;
+        stOut.osResourceId = std::move(osResourceId);
     }
 
     return stOut;
@@ -537,7 +537,7 @@ std::string GetResmetaSuffix(CPLJSONObject::Type eType)
     }
 }
 
-void FillResmeta(CPLJSONObject &oRoot, char **papszMetadata)
+void FillResmeta(const CPLJSONObject &oRoot, char **papszMetadata)
 {
     CPLJSONObject oResMeta("resmeta", oRoot);
     CPLJSONObject oResMetaItems("items", oResMeta);

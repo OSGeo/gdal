@@ -379,6 +379,12 @@ MAIN_START(nArgc, papszArgv)
     CPLStringList aosFiles;
     CPLStringList aosOptions;
 
+    EarlySetConfigOptions(nArgc, papszArgv);
+    nArgc = GDALGeneralCmdLineProcessor(nArgc, &papszArgv, 0);
+    CPLStringList aosArgv(papszArgv, /* bTakeOwnership= */ true);
+    if (nArgc < 1)
+        exit(-nArgc);
+
     /* -------------------------------------------------------------------- */
     /*      Parse command line.                                             */
     /* -------------------------------------------------------------------- */

@@ -113,7 +113,7 @@ class OGRODSLayer final : public OGRMemLayer
         return OGRMemLayer::ICreateFeature(poFeature);
     }
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override
     {
         SetUpdated();

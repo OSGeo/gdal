@@ -280,6 +280,15 @@ JP2ECW driver also arranges JP2 codestream to allow optimal access to
 power of two overviews. This is controlled with the creation option
 LEVELS."
 
+Create support
+--------------
+
+While the driver advertizes the Create() capability, contrary to most other
+drivers that implement it, the implementation of RasterIO() and WriteBlock()
+in the JP2ECW driver does not support arbitrary random writing.
+Data must be written in the dataset from top to bottom, whole line(s) at a
+time.
+
 Configuration Options
 ---------------------
 

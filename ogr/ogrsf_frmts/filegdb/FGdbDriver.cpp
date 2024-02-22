@@ -34,11 +34,9 @@
 #include "FGdbUtils.h"
 #include "cpl_multiproc.h"
 #include "ogrmutexeddatasource.h"
+#include "FGdbDriverCore.h"
 
 extern "C" void RegisterOGRFileGDB();
-
-#define ENDS_WITH(str, strLen, end)                                            \
-    (strLen >= strlen(end) && EQUAL(str + strLen - strlen(end), end))
 
 static std::map<CPLString, FGdbDatabaseConnection *> *poMapConnections =
     nullptr;
@@ -62,55 +60,6 @@ static void OGRFileGDBDriverUnload(GDALDriver *)
     delete poMapConnections;
     poMapConnections = nullptr;
 }
-
-/************************************************************************/
-/*                 OGRFileGDBDriverIdentifyInternal()                   */
-/************************************************************************/
-
-static GDALIdentifyEnum
-OGRFileGDBDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
-                                 const char *&pszFilename)
-{
-    // First check if we have to do any work.
-    size_t nLen = strlen(pszFilename);
-    if (ENDS_WITH(pszFilename, nLen, ".gdb") ||
-        ENDS_WITH(pszFilename, nLen, ".gdb/"))
-    {
-        // Check that the filename is really a directory, to avoid confusion
-        // with Garmin MapSource - gdb format which can be a problem when the
-        // driver is loaded as a plugin, and loaded before the GPSBabel driver
-        // (http://trac.osgeo.org/osgeo4w/ticket/245)
-        if (STARTS_WITH(pszFilename, "/vsi") || !poOpenInfo->bStatOK ||
-            !poOpenInfo->bIsDirectory)
-        {
-            return GDAL_IDENTIFY_FALSE;
-        }
-        return GDAL_IDENTIFY_TRUE;
-    }
-    else if (EQUAL(pszFilename, "."))
-    {
-        GDALIdentifyEnum eRet = GDAL_IDENTIFY_FALSE;
-        char *pszCurrentDir = CPLGetCurrentDir();
-        if (pszCurrentDir)
-        {
-            const char *pszTmp = pszCurrentDir;
-            eRet = OGRFileGDBDriverIdentifyInternal(poOpenInfo, pszTmp);
-            CPLFree(pszCurrentDir);
-        }
-        return eRet;
-    }
-    else
-    {
-        return GDAL_IDENTIFY_FALSE;
-    }
-}
-
-static int OGRFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo)
-{
-    const char *pszFilename = poOpenInfo->pszFilename;
-    return OGRFileGDBDriverIdentifyInternal(poOpenInfo, pszFilename);
-}
-
 /************************************************************************/
 /*                      OGRFileGDBDriverOpen()                          */
 /************************************************************************/
@@ -118,26 +67,37 @@ static int OGRFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGRFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
 {
     const char *pszFilename = poOpenInfo->pszFilename;
+    // @MAY_USE_OPENFILEGDB may be set to NO by the OpenFileGDB driver in its
+    // Open() method when it detects that a dataset includes compressed tables
+    // (.cdf), and thus calls the FileGDB driver to make it handle such
+    // datasets. As the FileGDB driver would call, by default, OpenFileGDB for
+    // assistance to get some information, OpenFileGDB needs to instruct it not
+    // to do so to avoid a OpenFileGDB -> FileGDB -> OpenFileGDB cycle.
+    const bool bUseOpenFileGDB = CPLTestBool(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "@MAY_USE_OPENFILEGDB", "YES"));
 
-    if (OGRFileGDBDriverIdentifyInternal(poOpenInfo, pszFilename) ==
-        GDAL_IDENTIFY_FALSE)
-        return nullptr;
-
-    // If this is a raster-only GDB, do not try to open it, to be consistent
-    // with OpenFileGDB behavior.
-    const char *const apszOpenFileGDBDriver[] = {"OpenFileGDB", nullptr};
-    auto poOpenFileGDBDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-        pszFilename, GDAL_OF_RASTER, apszOpenFileGDBDriver, nullptr, nullptr));
-    if (poOpenFileGDBDS)
+    if (bUseOpenFileGDB)
     {
-        poOpenFileGDBDS.reset();
-        poOpenFileGDBDS = std::unique_ptr<GDALDataset>(
-            GDALDataset::Open(pszFilename, GDAL_OF_VECTOR,
-                              apszOpenFileGDBDriver, nullptr, nullptr));
-        if (!poOpenFileGDBDS)
+        if (OGRFileGDBDriverIdentifyInternal(poOpenInfo, pszFilename) ==
+            GDAL_IDENTIFY_FALSE)
             return nullptr;
+
+        // If this is a raster-only GDB, do not try to open it, to be consistent
+        // with OpenFileGDB behavior.
+        const char *const apszOpenFileGDBDriver[] = {"OpenFileGDB", nullptr};
+        auto poOpenFileGDBDS = std::unique_ptr<GDALDataset>(
+            GDALDataset::Open(pszFilename, GDAL_OF_RASTER,
+                              apszOpenFileGDBDriver, nullptr, nullptr));
+        if (poOpenFileGDBDS)
+        {
+            poOpenFileGDBDS.reset();
+            poOpenFileGDBDS = std::unique_ptr<GDALDataset>(
+                GDALDataset::Open(pszFilename, GDAL_OF_VECTOR,
+                                  apszOpenFileGDBDriver, nullptr, nullptr));
+            if (!poOpenFileGDBDS)
+                return nullptr;
+        }
     }
-    poOpenFileGDBDS.reset();
 
     const bool bUpdate = poOpenInfo->eAccess == GA_Update;
     long hr;
@@ -202,7 +162,7 @@ static GDALDataset *OGRFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
 
     FGdbDataSource *pDS;
 
-    pDS = new FGdbDataSource(true, pConnection);
+    pDS = new FGdbDataSource(true, pConnection, bUseOpenFileGDB);
 
     if (!pDS->Open(pszFilename, bUpdate, nullptr))
     {
@@ -286,7 +246,7 @@ OGRFileGDBDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     (*poMapConnections)[pszName] = pConnection;
 
     /* Ready to embed the Geodatabase in an OGR Datasource */
-    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection);
+    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection, true);
     if (!pDS->Open(pszName, bUpdate, nullptr))
     {
         delete pDS;
@@ -335,7 +295,7 @@ OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
     if (osName.back() == '/' || osName.back() == '\\')
         osName.resize(osName.size() - 1);
 
-#ifndef WIN32
+#ifndef _WIN32
     int bPerLayerCopyingForTransaction =
         poDS->HasPerLayerCopyingForTransaction();
 #endif
@@ -348,8 +308,7 @@ OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
 
     pConnection->CloseGeodatabase();
 
-    CPLString osEditedName(osName);
-    osEditedName += ".ogredited";
+    const CPLString osEditedName(CPLString(osName).append(".ogredited"));
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
     CPL_IGNORE_RET_VAL(CPLUnlinkTree(osEditedName));
@@ -358,7 +317,7 @@ OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
     OGRErr eErr = OGRERR_NONE;
 
     CPLString osDatabaseToReopen;
-#ifndef WIN32
+#ifndef _WIN32
     if (bPerLayerCopyingForTransaction)
     {
         int bError = FALSE;
@@ -449,10 +408,10 @@ OGRErr FGdbTransactionManager::StartTransaction(OGRDataSource *&poDSInOut,
         return OGRERR_FAILURE;
     }
 
-    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection);
+    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection, true);
     pDS->Open(osDatabaseToReopen, TRUE, osNameOri);
 
-#ifndef WIN32
+#ifndef _WIN32
     if (eErr == OGRERR_NONE && bPerLayerCopyingForTransaction)
     {
         pDS->SetPerLayerCopyingForTransaction(bPerLayerCopyingForTransaction);
@@ -494,7 +453,7 @@ OGRErr FGdbTransactionManager::CommitTransaction(OGRDataSource *&poDSInOut,
     if (osName.back() == '/' || osName.back() == '\\')
         osName.resize(osName.size() - 1);
 
-#ifndef WIN32
+#ifndef _WIN32
     int bPerLayerCopyingForTransaction =
         poDS->HasPerLayerCopyingForTransaction();
 #endif
@@ -510,7 +469,7 @@ OGRErr FGdbTransactionManager::CommitTransaction(OGRDataSource *&poDSInOut,
     CPLString osEditedName(osName);
     osEditedName += ".ogredited";
 
-#ifndef WIN32
+#ifndef _WIN32
     if (bPerLayerCopyingForTransaction)
     {
         int bError = FALSE;
@@ -701,7 +660,7 @@ OGRErr FGdbTransactionManager::CommitTransaction(OGRDataSource *&poDSInOut,
         return OGRERR_FAILURE;
     }
 
-    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection);
+    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection, true);
     pDS->Open(osNameOri, TRUE, nullptr);
     // pDS->SetPerLayerCopyingForTransaction(bPerLayerCopyingForTransaction);
     poDSInOut = new OGRMutexedDataSource(pDS, TRUE, FGdbDriver::hMutex, TRUE);
@@ -775,7 +734,7 @@ OGRErr FGdbTransactionManager::RollbackTransaction(OGRDataSource *&poDSInOut,
         return OGRERR_FAILURE;
     }
 
-    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection);
+    FGdbDataSource *pDS = new FGdbDataSource(true, pConnection, true);
     pDS->Open(osNameOri, TRUE, nullptr);
     // pDS->SetPerLayerCopyingForTransaction(bPerLayerCopyingForTransaction);
     poDSInOut = new OGRMutexedDataSource(pDS, TRUE, FGdbDriver::hMutex, TRUE);
@@ -884,133 +843,16 @@ static CPLErr OGRFileGDBDeleteDataSource(const char *pszDataSource)
 void RegisterOGRFileGDB()
 
 {
-    if (GDALGetDriverByName("FileGDB") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     if (!GDAL_CHECK_VERSION("OGR FGDB"))
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("FileGDB");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "ESRI FileGDB");
-    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_DELETE_LAYER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_DELETE_FIELD, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "gdb");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                              "drivers/vector/filegdb.html");
-
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
-                              "<CreationOptionList/>");
-
-    poDriver->SetMetadataItem(
-        GDAL_DS_LAYER_CREATIONOPTIONLIST,
-        "<LayerCreationOptionList>"
-        "  <Option name='FEATURE_DATASET' type='string' "
-        "description='FeatureDataset folder into to put the new layer'/>"
-        "  <Option name='LAYER_ALIAS' type='string' description='Alias of "
-        "layer name'/>"
-        "  <Option name='GEOMETRY_NAME' type='string' description='Name of "
-        "geometry column' default='SHAPE'/>"
-        "  <Option name='GEOMETRY_NULLABLE' type='boolean' "
-        "description='Whether the values of the geometry column can be NULL' "
-        "default='YES'/>"
-        "  <Option name='FID' type='string' description='Name of OID column' "
-        "default='OBJECTID' deprecated_alias='OID_NAME'/>"
-        "  <Option name='XYTOLERANCE' type='float' description='Snapping "
-        "tolerance, used for advanced ArcGIS features like network and "
-        "topology rules, on 2D coordinates, in the units of the CRS'/>"
-        "  <Option name='ZTOLERANCE' type='float' description='Snapping "
-        "tolerance, used for advanced ArcGIS features like network and "
-        "topology rules, on Z coordinates, in the units of the CRS'/>"
-        "  <Option name='MTOLERANCE' type='float' description='Snapping "
-        "tolerance, used for advanced ArcGIS features like network and "
-        "topology rules, on M coordinates'/>"
-        "  <Option name='XORIGIN' type='float' description='X origin of the "
-        "coordinate precision grid'/>"
-        "  <Option name='YORIGIN' type='float' description='Y origin of the "
-        "coordinate precision grid'/>"
-        "  <Option name='ZORIGIN' type='float' description='Z origin of the "
-        "coordinate precision grid'/>"
-        "  <Option name='MORIGIN' type='float' description='M origin of the "
-        "coordinate precision grid'/>"
-        "  <Option name='XYSCALE' type='float' description='X,Y scale of the "
-        "coordinate precision grid'/>"
-        "  <Option name='ZSCALE' type='float' description='Z scale of the "
-        "coordinate precision grid'/>"
-        "  <Option name='MSCALE' type='float' description='M scale of the "
-        "coordinate precision grid'/>"
-        "  <Option name='XML_DEFINITION' type='string' description='XML "
-        "definition to create the new table. The root node of such a XML "
-        "definition must be a &lt;esri:DataElement&gt; element conformant to "
-        "FileGDBAPI.xsd'/>"
-        "  <Option name='CREATE_MULTIPATCH' type='boolean' "
-        "description='Whether to write geometries of layers of type "
-        "MultiPolygon as MultiPatch' default='NO'/>"
-        "  <Option name='COLUMN_TYPES' type='string' description='A list of "
-        "strings of format field_name=fgdb_field_type (separated by comma) to "
-        "force the FileGDB column type of fields to be created'/>"
-        "  <Option name='CONFIGURATION_KEYWORD' type='string-select' "
-        "description='Customize how data is stored. By default text in UTF-8 "
-        "and data up to 1TB'>"
-        "    <Value>DEFAULTS</Value>"
-        "    <Value>TEXT_UTF16</Value>"
-        "    <Value>MAX_FILE_SIZE_4GB</Value>"
-        "    <Value>MAX_FILE_SIZE_256TB</Value>"
-        "    <Value>GEOMETRY_OUTOFLINE</Value>"
-        "    <Value>BLOB_OUTOFLINE</Value>"
-        "    <Value>GEOMETRY_AND_BLOB_OUTOFLINE</Value>"
-        "  </Option>"
-        "  <Option name='CREATE_SHAPE_AREA_AND_LENGTH_FIELDS' type='boolean' "
-        "description='Whether to create special Shape_Length and Shape_Area "
-        "fields' default='NO'/>"
-        "</LayerCreationOptionList>");
-
-    // Setting to another value than the default one doesn't really work
-    // with the SDK
-    // Option name='AREA_FIELD_NAME' type='string' description='Name of
-    // the column that contains the geometry area' default='Shape_Area'
-    // Option name='length_field_name' type='string' description='Name of
-    // the column that contains the geometry length'
-    // default='Shape_Length'
-
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,
-                              "Integer Real String Date DateTime Binary");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
-                              "Int16 Float32");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
-                              "Nullable Default "
-                              "AlternativeName Domain");
-    poDriver->SetMetadataItem(GDAL_DCAP_NOTNULL_FIELDS, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_DEFAULT_FIELDS, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_FIELD_DOMAINS, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_RELATIONSHIPS, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_RENAME_LAYERS, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
-    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_GEOMETRY_FLAGS,
-                              "EquatesMultiAndSingleLineStringDuringWrite "
-                              "EquatesMultiAndSinglePolygonDuringWrite");
-    // see https://support.esri.com/en/technical-article/000010906
-    poDriver->SetMetadataItem(
-        GDAL_DMD_ILLEGAL_FIELD_NAMES,
-        "ADD ALTER AND BETWEEN BY COLUMN CREATE DELETE DROP EXISTS FOR FROM "
-        "GROUP IN INSERT INTO IS LIKE NOT NULL OR ORDER SELECT SET TABLE "
-        "UPDATE VALUES WHERE");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES,
-                              "Coded Range");
-    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS,
-                              "NATIVE OGRSQL SQLITE");
-    poDriver->SetMetadataItem(GDAL_DMD_RELATIONSHIP_RELATED_TABLE_TYPES,
-                              "features media");
+    OGRFileGDBDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = OGRFileGDBDriverOpen;
-    poDriver->pfnIdentify = OGRFileGDBDriverIdentify;
     poDriver->pfnCreate = OGRFileGDBDriverCreate;
     poDriver->pfnDelete = OGRFileGDBDeleteDataSource;
     poDriver->pfnUnloadDriver = OGRFileGDBDriverUnload;

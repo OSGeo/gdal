@@ -61,8 +61,8 @@ OGRKMLLayer::OGRKMLLayer(const char *pszName,
     : poDS_(poDSIn),
       poSRS_(poSRSIn ? new OGRSpatialReference(nullptr) : nullptr),
       poCT_(nullptr), poFeatureDefn_(new OGRFeatureDefn(pszName)),
-      iNextKMLId_(0), nTotalKMLCount_(-1), bWriter_(bWriterIn),
-      nLayerNumber_(0), nWroteFeatureCount_(0), bSchemaWritten_(false),
+      iNextKMLId_(0), bWriter_(bWriterIn), nLayerNumber_(0),
+      nWroteFeatureCount_(0), bSchemaWritten_(false),
       pszName_(CPLStrdup(pszName)), nLastAsked(-1), nLastCount(-1)
 {
     // KML should be created as WGS84.
@@ -617,7 +617,8 @@ int OGRKMLLayer::TestCapability(const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRKMLLayer::CreateField(OGRFieldDefn *poField, CPL_UNUSED int bApproxOK)
+OGRErr OGRKMLLayer::CreateField(const OGRFieldDefn *poField,
+                                CPL_UNUSED int bApproxOK)
 {
     if (!bWriter_ || iNextKMLId_ != 0)
         return OGRERR_FAILURE;

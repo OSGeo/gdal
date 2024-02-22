@@ -174,7 +174,8 @@ CPLErr WMSMiniDriver_WMS::Initialize(CPLXMLNode *config,
         // according to the WMS spec so force upper case
         for (int i = 0; i < (int)m_transparent.size(); i++)
         {
-            m_transparent[i] = (char)toupper(m_transparent[i]);
+            m_transparent[i] =
+                (char)toupper(static_cast<unsigned char>(m_transparent[i]));
         }
     }
 

@@ -33,9 +33,12 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#ifndef CPL_IGNORE_RET_VAL_INT_defined
+#define CPL_IGNORE_RET_VAL_INT_defined
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused)
 {
 }
+#endif
 
 /************************************************************************/
 /*                          NITFDESAccess()                             */
@@ -584,6 +587,7 @@ CPLXMLNode *NITFDESGetXml(NITFFile *psFile, int iSegment, bool bValidate,
     psDesNode = CPLCreateXMLNode(NULL, CXT_Element, "des");
     papszTmp = psDes->papszMetadata;
 
+    bool bIsXML_DATA_CONTENT = false;
     while (papszTmp != NULL && *papszTmp != NULL)
     {
         CPLXMLNode *psFieldNode;
@@ -605,6 +609,7 @@ CPLXMLNode *NITFDESGetXml(NITFFile *psFile, int iSegment, bool bValidate,
 
         if (papszTmp == psDes->papszMetadata)
         {
+            bIsXML_DATA_CONTENT = strcmp(pszMDval, "XML_DATA_CONTENT") == 0;
             CPLCreateXMLNode(CPLCreateXMLNode(psDesNode, CXT_Attribute, "name"),
                              CXT_Text, pszMDval);
         }
@@ -646,13 +651,32 @@ CPLXMLNode *NITFDESGetXml(NITFFile *psFile, int iSegment, bool bValidate,
                     return NULL;
                 }
 
-                CPLAddXMLAttributeAndValue(psFieldNode, "value", pszBase64);
                 CPLXMLNode *psChild = NITFCreateXMLDesDataFields(
                     psFile, psDes, (GByte *)pszUnescaped, nLen, bValidate,
                     pbGotError);
                 if (psChild)
                 {
+                    CPLAddXMLAttributeAndValue(psFieldNode, "value", pszBase64);
                     CPLAddXMLChild(psFieldNode, psChild);
+                }
+                else if (bIsXML_DATA_CONTENT)
+                {
+                    CPLXMLNode *psXML = CPLParseXMLString(pszUnescaped);
+                    if (psXML)
+                    {
+                        CPLXMLNode *psXMLContent = CPLCreateXMLNode(
+                            psFieldNode, CXT_Element, "xml_content");
+                        CPLAddXMLChild(psXMLContent, psXML);
+                    }
+                    else
+                    {
+                        CPLAddXMLAttributeAndValue(psFieldNode, "value",
+                                                   pszBase64);
+                    }
+                }
+                else
+                {
+                    CPLAddXMLAttributeAndValue(psFieldNode, "value", pszBase64);
                 }
 
                 CPLFree(pszBase64);
@@ -673,3 +697,5 @@ CPLXMLNode *NITFDESGetXml(NITFFile *psFile, int iSegment, bool bValidate,
 
     return psDesNode;
 }
+
+#undef GetMD

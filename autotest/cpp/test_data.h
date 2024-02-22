@@ -33,7 +33,7 @@
 #ifdef GDAL_TEST_ROOT_DIR
 
 #ifndef SEP
-#if defined(WIN32)
+#if defined(_WIN32)
 #define SEP "\\"
 #else
 #define SEP "/"

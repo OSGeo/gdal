@@ -29,7 +29,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-static const char FILE_CODE[] = "T";
+static const char T_FILE_CODE[] = "T";
 
 static const TigerFieldInfo rtT_fields[] = {
     // fieldname    fmt  type OFTType      beg  end  len  bDefine bSet
@@ -47,7 +47,7 @@ static const TigerRecordInfo rtT_info = {
 
 TigerZeroCellID::TigerZeroCellID(OGRTigerDataSource *poDSIn,
                                  CPL_UNUSED const char *pszPrototypeModule)
-    : TigerFileBase(&rtT_info, FILE_CODE)
+    : TigerFileBase(&rtT_info, T_FILE_CODE)
 {
     poDS = poDSIn;
     poFeatureDefn = new OGRFeatureDefn("ZeroCellID");

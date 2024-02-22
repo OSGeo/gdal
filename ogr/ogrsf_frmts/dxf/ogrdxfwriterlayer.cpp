@@ -97,7 +97,8 @@ int OGRDXFWriterLayer::TestCapability(const char *pszCap)
 /*      This is really a dummy as our fields are precreated.            */
 /************************************************************************/
 
-OGRErr OGRDXFWriterLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGRDXFWriterLayer::CreateField(const OGRFieldDefn *poField,
+                                      int bApproxOK)
 
 {
     if (poFeatureDefn->GetFieldIndex(poField->GetNameRef()) >= 0 && bApproxOK)
@@ -604,7 +605,7 @@ OGRErr OGRDXFWriterLayer::WriteTEXT(OGRFeature *poFeature)
                 osStyleName.Printf("AutoTextStyle-%d", nNextAutoID++);
             } while (poDS->oHeaderDS.TextStyleExists(osStyleName));
 
-            oNewTextStyles[osStyleName] = oTextStyleDef;
+            oNewTextStyles[osStyleName] = std::move(oTextStyleDef);
         }
 
         WriteValue(7, osStyleName);
@@ -927,7 +928,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE(OGRFeature *poFeature,
             if (poDS->oHeaderDS.LookupLineType(osLineType).empty() &&
                 oNewLineTypes.count(osLineType) == 0)
             {
-                oNewLineTypes[osLineType] = adfDefinition;
+                oNewLineTypes[osLineType] = std::move(adfDefinition);
             }
 
             WriteValue(6, osLineType);

@@ -35,9 +35,15 @@
 #include <string>
 
 constexpr const char *ARROW_EXTENSION_NAME_KEY = "ARROW:extension:name";
-constexpr const char *EXTENSION_NAME_WKB = "ogc.wkb";
+constexpr const char *ARROW_EXTENSION_METADATA_KEY = "ARROW:extension:metadata";
+constexpr const char *EXTENSION_NAME_OGC_WKB = "ogc.wkb";
+constexpr const char *EXTENSION_NAME_GEOARROW_WKB = "geoarrow.wkb";
 
 std::map<std::string, std::string>
     CPL_DLL OGRParseArrowMetadata(const char *pabyMetadata);
+
+bool CPL_DLL OGRCloneArrowArray(const struct ArrowSchema *schema,
+                                const struct ArrowArray *array,
+                                struct ArrowArray *out_array);
 
 #endif  // OGRLAYERARROW_H_DEFINED

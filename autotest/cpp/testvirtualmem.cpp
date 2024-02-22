@@ -206,8 +206,8 @@ static void test_raw_auto(const char *pszFormat, int bFileMapping)
     {
         for (int i = 0; i < 400; i++)
         {
-            pBase1[j * nLineSpace1 + i * nPixelSpace1] = 127;
-            pBase2[j * nLineSpace2 + i * nPixelSpace2] = 255;
+            pBase1[j * static_cast<int>(nLineSpace1) + i * nPixelSpace1] = 127;
+            pBase2[j * static_cast<int>(nLineSpace2) + i * nPixelSpace2] = 255;
         }
     }
 

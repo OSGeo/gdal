@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "ogrsf_frmts.h"
+#include <sqlite3.h>
 
 #ifndef OGR_GEOPACKAGEUTILITY_H_INCLUDED
 #define OGR_GEOPACKAGEUTILITY_H_INCLUDED
@@ -64,5 +65,10 @@ OGRGeometry *GPkgGeometryToOGR(const GByte *pabyGpkg, size_t nGpkgLen,
 
 OGRErr GPkgHeaderFromWKB(const GByte *pabyGpkg, size_t nGpkgLen,
                          GPkgHeader *poHeader);
+
+bool OGRGeoPackageGetHeader(sqlite3_context *pContext, int /*argc*/,
+                            sqlite3_value **argv, GPkgHeader *psHeader,
+                            bool bNeedExtent, bool bNeedExtent3D,
+                            int iGeomIdx = 0);
 
 #endif

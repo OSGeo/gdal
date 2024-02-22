@@ -117,7 +117,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
     const GDALNearblackOptions *psOptions = psOptionsIn;
     if (!psOptionsIn)
     {
-        psTmpOptions = cpl::make_unique<GDALNearblackOptions>();
+        psTmpOptions = std::make_unique<GDALNearblackOptions>();
         psOptions = psTmpOptions.get();
     }
 
@@ -358,7 +358,7 @@ bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
     /*      Allocate a line buffer.                                         */
     /* -------------------------------------------------------------------- */
 
-    std::vector<GByte> abyLine(nXSize * nDstBands);
+    std::vector<GByte> abyLine(static_cast<size_t>(nXSize) * nDstBands);
     GByte *pabyLine = abyLine.data();
 
     std::vector<GByte> abyMask;
@@ -769,7 +769,7 @@ GDALNearblackOptions *
 GDALNearblackOptionsNew(char **papszArgv,
                         GDALNearblackOptionsForBinary *psOptionsForBinary)
 {
-    auto psOptions = cpl::make_unique<GDALNearblackOptions>();
+    auto psOptions = std::make_unique<GDALNearblackOptions>();
 
     /* -------------------------------------------------------------------- */
     /*      Handle command line arguments.                                  */

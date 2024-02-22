@@ -123,7 +123,7 @@ void CPLJSonStreamingParser::AdvanceChar(const char *&pStr, size_t &nLength)
 
 void CPLJSonStreamingParser::SkipSpace(const char *&pStr, size_t &nLength)
 {
-    while (nLength > 0 && isspace(*pStr))
+    while (nLength > 0 && isspace(static_cast<unsigned char>(*pStr)))
     {
         AdvanceChar(pStr, nLength);
     }
@@ -170,8 +170,8 @@ bool CPLJSonStreamingParser::EmitUnexpectedChar(char ch,
 static bool IsValidNewToken(char ch)
 {
     return ch == '[' || ch == '{' || ch == '"' || ch == '-' || ch == '.' ||
-           isdigit(ch) || ch == 't' || ch == 'f' || ch == 'n' || ch == 'i' ||
-           ch == 'I' || ch == 'N';
+           isdigit(static_cast<unsigned char>(ch)) || ch == 't' || ch == 'f' ||
+           ch == 'n' || ch == 'i' || ch == 'I' || ch == 'N';
 }
 
 /************************************************************************/
@@ -208,8 +208,9 @@ bool CPLJSonStreamingParser::StartNewToken(const char *&pStr, size_t &nLength)
         m_aState.push_back(ARRAY);
         AdvanceChar(pStr, nLength);
     }
-    else if (ch == '-' || ch == '.' || isdigit(ch) || ch == 'i' || ch == 'I' ||
-             ch == 'N')
+    else if (ch == '-' || ch == '.' ||
+             isdigit(static_cast<unsigned char>(ch)) || ch == 'i' ||
+             ch == 'I' || ch == 'N')
     {
         m_aState.push_back(NUMBER);
     }
@@ -457,7 +458,8 @@ bool CPLJSonStreamingParser::Parse(const char *pStr, size_t nLength,
             while (nLength)
             {
                 char ch = *pStr;
-                if (ch == '+' || ch == '-' || isdigit(ch) || ch == '.' ||
+                if (ch == '+' || ch == '-' ||
+                    isdigit(static_cast<unsigned char>(ch)) || ch == '.' ||
                     ch == 'e' || ch == 'E')
                 {
                     if (m_osToken.size() == 1024)
@@ -466,7 +468,8 @@ bool CPLJSonStreamingParser::Parse(const char *pStr, size_t nLength,
                     }
                     m_osToken += ch;
                 }
-                else if (isspace(ch) || ch == ',' || ch == '}' || ch == ']')
+                else if (isspace(static_cast<unsigned char>(ch)) || ch == ',' ||
+                         ch == '}' || ch == ']')
                 {
                     SkipSpace(pStr, nLength);
                     break;
@@ -840,7 +843,7 @@ bool CPLJSonStreamingParser::Parse(const char *pStr, size_t nLength,
                     m_aState.back() = NUMBER;
                     break;
                 }
-                if (isalpha(ch))
+                if (isalpha(static_cast<unsigned char>(ch)))
                 {
                     m_osToken += ch;
                     if (eCurState == STATE_TRUE &&
@@ -865,7 +868,8 @@ bool CPLJSonStreamingParser::Parse(const char *pStr, size_t nLength,
                         return EmitUnexpectedChar(*pStr);
                     }
                 }
-                else if (isspace(ch) || ch == ',' || ch == '}' || ch == ']')
+                else if (isspace(static_cast<unsigned char>(ch)) || ch == ',' ||
+                         ch == '}' || ch == ']')
                 {
                     SkipSpace(pStr, nLength);
                     break;

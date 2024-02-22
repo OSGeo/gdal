@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import shutil
 import sys
 
 import gdaltest
@@ -1259,11 +1260,17 @@ def test_pdf_check_identity_iso32000(poppler_or_pdfium):
     data_ref = f.read()
     f.close()
 
+    f = open("data/pdf/test_iso32000_libpng_1_6_40.pdf", "rb")
+    data_ref2 = f.read()
+    f.close()
+
     f = open(out_filename, "rb")
     data_got = f.read()
     f.close()
 
-    assert data_ref == data_got, "content does not match reference content"
+    assert (
+        data_got == data_ref or data_got == data_ref2
+    ), "content does not match reference content"
 
     gdaltest.pdf_drv.Delete(out_filename)
 
@@ -1289,11 +1296,17 @@ def test_pdf_check_identity_ogc_bp(poppler_or_pdfium):
     data_ref = f.read()
     f.close()
 
+    f = open("data/pdf/test_ogc_bp_libpng_1_6_40.pdf", "rb")
+    data_ref2 = f.read()
+    f.close()
+
     f = open(out_filename, "rb")
     data_got = f.read()
     f.close()
 
-    assert data_ref == data_got, "content does not match reference content"
+    assert (
+        data_got == data_ref or data_got == data_ref2
+    ), "content does not match reference content"
 
     gdaltest.pdf_drv.Delete(out_filename)
 
@@ -1831,6 +1844,10 @@ def test_pdf_overviews(poppler_or_pdfium):
 
 
 def test_pdf_password(poppler_or_pdfium_or_podofo):
+
+    if gdaltest.is_travis_branch("alpine_32bit"):
+        pytest.skip()
+
     # User password of this test file is user_password and owner password is
     # owner_password
 
@@ -1939,6 +1956,24 @@ def test_pdf_metadata(poppler_or_pdfium):
     ds = None
 
     gdal.GetDriverByName("PDF").Delete("tmp/pdf_metadata.pdf")
+
+
+###############################################################################
+# Test PAM support with subdatasets
+
+
+def test_pdf_pam_subdatasets(poppler_or_pdfium, tmp_path):
+
+    tmpfilename = str(tmp_path / "test_pdf_pam_subdatasets.pdf")
+    shutil.copy("data/pdf/byte_and_rgbsmall_2pages.pdf", tmpfilename)
+
+    ds = gdal.Open("PDF:1:" + tmpfilename)
+    ds.GetRasterBand(1).ComputeStatistics(False)
+    ds = None
+    assert gdal.VSIStatL(tmpfilename + ".aux.xml")
+    ds = gdal.Open("PDF:1:" + tmpfilename)
+    assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") is not None
+    ds = None
 
 
 ###############################################################################
@@ -2093,11 +2128,17 @@ if (button == 4) app.launchURL('http://gdal.org/');</Javascript>
     data_ref = f.read()
     f.close()
 
+    f = open("data/pdf/test_pdf_composition_libpng_1_6_40.pdf", "rb")
+    data_ref2 = f.read()
+    f.close()
+
     f = open(out_filename, "rb")
     data_got = f.read()
     f.close()
 
-    assert data_ref == data_got, "content does not match reference content"
+    assert (
+        data_got == data_ref or data_got == data_ref2
+    ), "content does not match reference content"
 
     gdal.Unlink(out_filename)
 
@@ -2133,11 +2174,19 @@ def test_pdf_composition_raster_tiled_blending():
     data_ref = f.read()
     f.close()
 
+    f = open(
+        "data/pdf/test_pdf_composition_raster_tiled_blending_libpng_1_6_40.pdf", "rb"
+    )
+    data_ref2 = f.read()
+    f.close()
+
     f = open(out_filename, "rb")
     data_got = f.read()
     f.close()
 
-    assert data_ref == data_got, "content does not match reference content"
+    assert (
+        data_got == data_ref or data_got == data_ref2
+    ), "content does not match reference content"
 
     gdal.Unlink(out_filename)
 
@@ -2380,11 +2429,19 @@ def test_pdf_composition_raster_georeferenced():
     data_ref = f.read()
     f.close()
 
+    f = open(
+        "data/pdf/test_pdf_composition_raster_georeferenced_libpng_1_6_40.pdf", "rb"
+    )
+    data_ref2 = f.read()
+    f.close()
+
     f = open(out_filename, "rb")
     data_got = f.read()
     f.close()
 
-    assert data_ref == data_got, "content does not match reference content"
+    assert (
+        data_got == data_ref or data_got == data_ref2
+    ), "content does not match reference content"
 
     gdal.Unlink(out_filename)
 

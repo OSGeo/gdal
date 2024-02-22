@@ -37,6 +37,7 @@
 
 #include <algorithm>
 #include <array>
+#include <limits>
 #include <map>
 #include <memory>
 #include <vector>
@@ -195,6 +196,25 @@ STACTARawRasterBand::STACTARawRasterBand(STACTARawDataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
+/*                        STACTARawRasterBand()                         */
+/************************************************************************/
+
+STACTARawRasterBand::STACTARawRasterBand(STACTARawDataset *poDSIn, int nBandIn,
+                                         GDALDataType eDT, bool bSetNoData,
+                                         double dfNoData)
+{
+    poDS = poDSIn;
+    nBand = nBandIn;
+    eDataType = eDT;
+    nBlockXSize = 256;
+    nBlockYSize = 256;
+    nRasterXSize = poDSIn->GetRasterXSize();
+    nRasterYSize = poDSIn->GetRasterYSize();
+    m_bHasNoDataValue = bSetNoData;
+    m_dfNoData = dfNoData;
+}
+
+/************************************************************************/
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 
@@ -220,8 +240,8 @@ CPLErr STACTARawRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     INIT_RASTERIO_EXTRA_ARG(sExtraArgs);
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
     return IRasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize, pImage, nBlockXSize,
-                     nBlockYSize, eDataType, nDTSize, nDTSize * nBlockXSize,
-                     &sExtraArgs);
+                     nBlockYSize, eDataType, nDTSize,
+                     static_cast<GSpacing>(nDTSize) * nBlockXSize, &sExtraArgs);
 }
 
 /************************************************************************/
@@ -335,12 +355,16 @@ CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             // approach.
             GDALRasterIOExtraArg sExtraArgs;
             INIT_RASTERIO_EXTRA_ARG(sExtraArgs);
-            std::vector<GByte> abyBuf(nXSizeMod * nYSizeMod * nBandCount *
-                                      nDTSize);
+            const size_t nXSizeModeMulYSizeModMulDTSize =
+                static_cast<size_t>(nXSizeMod) * nYSizeMod * nDTSize;
+            std::vector<GByte> abyBuf(nXSizeModeMulYSizeModMulDTSize *
+                                      nBandCount);
             if (IRasterIO(GF_Read, nXOffMod, nYOffMod, nXSizeMod, nYSizeMod,
                           &abyBuf[0], nXSizeMod, nYSizeMod, eBandDT, nBandCount,
-                          panBandMap, nDTSize, nDTSize * nXSizeMod,
-                          nDTSize * nXSizeMod * nYSizeMod,
+                          panBandMap, nDTSize,
+                          static_cast<GSpacing>(nDTSize) * nXSizeMod,
+                          static_cast<GSpacing>(nDTSize) * nXSizeMod *
+                              nYSizeMod,
                           &sExtraArgs) != CE_None)
             {
                 return CE_Failure;
@@ -352,8 +376,8 @@ CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             {
                 auto hBand = MEMCreateRasterBandEx(
                     poMEMDS.get(), i + 1,
-                    &abyBuf[0] + i * nDTSize * nXSizeMod * nYSizeMod, eBandDT,
-                    0, 0, false);
+                    &abyBuf[0] + i * nXSizeModeMulYSizeModMulDTSize, eBandDT, 0,
+                    0, false);
                 poMEMDS->AddMEMBand(hBand);
             }
 
@@ -390,15 +414,6 @@ CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
              nDTSize <
          128 * 1024);
 
-    // Avoid probing side car files
-    std::unique_ptr<CPLConfigOptionSetter> poSetter;
-    const CPLString osExt(CPLGetExtension(m_osURLTemplate));
-    if (osExt.size() > 0 && osExt.size() <= 3)
-    {
-        poSetter.reset(new CPLConfigOptionSetter(
-            "CPL_VSIL_CURL_ALLOWED_EXTENSIONS", osExt, false));
-    }
-
     // Split the request on each metatile that it intersects
     for (int iY = nMinBlockY; iY <= nMaxBlockY; iY++)
     {
@@ -433,6 +448,12 @@ CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     m_poMasterDS->m_oCacheTileDS.getPtr(osURL);
                 if (ppoTileDS == nullptr)
                 {
+
+                    // Avoid probing side car files
+                    CPLConfigOptionSetter oSetter(
+                        "GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR",
+                        /* bSetOnlyIfUndefined = */ true);
+
                     CPLStringList aosAllowedDrivers;
                     aosAllowedDrivers.AddString("GTiff");
                     aosAllowedDrivers.AddString("PNG");
@@ -647,7 +668,10 @@ int STACTADataset::Identify(GDALOpenInfo *poOpenInfo)
         const char *pszHeader =
             reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
         if (strstr(pszHeader, "\"stac_extensions\"") != nullptr &&
-            strstr(pszHeader, "\"tiled-assets\"") != nullptr)
+            (strstr(pszHeader, "\"tiled-assets\"") != nullptr ||
+             strstr(pszHeader,
+                    "https://stac-extensions.github.io/tiled-assets/") !=
+                 nullptr))
         {
             return true;
         }
@@ -864,7 +888,7 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
     }
-    const auto tmsList = poTMS->tileMatrixList();
+    const auto &tmsList = poTMS->tileMatrixList();
     if (tmsList.empty())
         return false;
 
@@ -872,47 +896,190 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
         poOpenInfo->papszOpenOptions, "SKIP_MISSING_METATILE",
         CPLGetConfigOption("GDAL_STACTA_SKIP_MISSING_METATILE", "NO")));
 
-    std::unique_ptr<GDALDataset> poProtoDS;
-    for (int i = 0; i < static_cast<int>(tmsList.size()); i++)
+    // STAC 1.1 uses bands instead of eo:bands and raster:bands
+    const auto oBands = oAssetTemplate.GetArray("bands");
+
+    // Check if there are both eo:bands and raster:bands extension
+    // If so, we don't need to fetch a prototype metatile to derive the
+    // information we need (number of bands, data type and nodata value)
+    const auto oEoBands =
+        oBands.IsValid() ? oBands : oAssetTemplate.GetArray("eo:bands");
+    const auto oRasterBands =
+        oBands.IsValid() ? oBands : oAssetTemplate.GetArray("raster:bands");
+
+    std::vector<GDALDataType> aeDT;
+    std::vector<double> adfNoData;
+    std::vector<bool> abSetNoData;
+    int nExpectedBandCount = 0;
+    if (oRasterBands.IsValid())
     {
-        // Open a metatile to get mostly its band data type
-        int nProtoTileCol = 0;
-        int nProtoTileRow = 0;
-        auto oIterLimit = oMapLimits.find(tmsList[i].mId);
-        if (oIterLimit != oMapLimits.end())
+        if (oEoBands.IsValid() && oEoBands.Size() != oRasterBands.Size())
         {
-            nProtoTileCol = oIterLimit->second.min_tile_col;
-            nProtoTileRow = oIterLimit->second.min_tile_row;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Number of bands in eo:bands and raster:bands is not "
+                     "identical. Ignoring the later");
         }
-        const CPLString osURL =
-            CPLString(osURLTemplate)
-                .replaceAll("{TileMatrix}", tmsList[i].mId)
-                .replaceAll("{TileRow}", CPLSPrintf("%d", nProtoTileRow))
-                .replaceAll("{TileCol}", CPLSPrintf("%d", nProtoTileCol));
-        CPLString osProtoDSName =
-            (STARTS_WITH(osURL, "http://") || STARTS_WITH(osURL, "https://"))
-                ? CPLString("/vsicurl/" + osURL)
-                : osURL;
-        if (m_bSkipMissingMetaTile)
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-        poProtoDS.reset(GDALDataset::Open(osProtoDSName.c_str()));
-        if (m_bSkipMissingMetaTile)
-            CPLPopErrorHandler();
-        if (poProtoDS != nullptr)
+        else
         {
-            break;
-        }
-        if (!m_bSkipMissingMetaTile)
-        {
-            CPLError(CE_Failure, CPLE_OpenFailed, "Cannot open %s",
-                     osURL.c_str());
-            return false;
+            nExpectedBandCount = oRasterBands.Size();
+            const struct
+            {
+                const char *pszStacDataType;
+                GDALDataType eGDALDataType;
+            } aDataTypeMapping[] = {
+                {"int8", GDT_Int8},
+                {"int16", GDT_Int16},
+                {"int32", GDT_Int32},
+                {"int64", GDT_Int64},
+                {"uint8", GDT_Byte},
+                {"uint16", GDT_UInt16},
+                {"uint32", GDT_UInt32},
+                {"uint64", GDT_UInt64},
+                // float16: 16-bit float; unhandled
+                {"float32", GDT_Float32},
+                {"float64", GDT_Float64},
+                {"cint16", GDT_CInt16},
+                {"cint32", GDT_CInt32},
+                {"cfloat32", GDT_CFloat32},
+                {"cfloat64", GDT_CFloat64},
+            };
+            for (int i = 0; i < nExpectedBandCount; ++i)
+            {
+                if (oRasterBands[i].GetType() != CPLJSONObject::Type::Object)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Wrong raster:bands[%d]", i);
+                    return false;
+                }
+                const std::string osDataType =
+                    oRasterBands[i].GetString("data_type");
+                GDALDataType eDT = GDT_Unknown;
+                for (const auto &oTuple : aDataTypeMapping)
+                {
+                    if (osDataType == oTuple.pszStacDataType)
+                    {
+                        eDT = oTuple.eGDALDataType;
+                        break;
+                    }
+                }
+                if (eDT == GDT_Unknown)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Wrong raster:bands[%d].data_type = %s", i,
+                             osDataType.c_str());
+                    return false;
+                }
+                aeDT.push_back(eDT);
+
+                const auto oNoData = oRasterBands[i].GetObj("nodata");
+                if (oNoData.GetType() == CPLJSONObject::Type::String)
+                {
+                    const std::string osNoData = oNoData.ToString();
+                    if (osNoData == "inf")
+                    {
+                        abSetNoData.push_back(true);
+                        adfNoData.push_back(
+                            std::numeric_limits<double>::infinity());
+                    }
+                    else if (osNoData == "-inf")
+                    {
+                        abSetNoData.push_back(true);
+                        adfNoData.push_back(
+                            -std::numeric_limits<double>::infinity());
+                    }
+                    else if (osNoData == "nan")
+                    {
+                        abSetNoData.push_back(true);
+                        adfNoData.push_back(
+                            std::numeric_limits<double>::quiet_NaN());
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Invalid raster:bands[%d].nodata = %s", i,
+                                 osNoData.c_str());
+                        abSetNoData.push_back(false);
+                        adfNoData.push_back(
+                            std::numeric_limits<double>::quiet_NaN());
+                    }
+                }
+                else if (oNoData.GetType() == CPLJSONObject::Type::Integer ||
+                         oNoData.GetType() == CPLJSONObject::Type::Long ||
+                         oNoData.GetType() == CPLJSONObject::Type::Double)
+                {
+                    abSetNoData.push_back(true);
+                    adfNoData.push_back(oNoData.ToDouble());
+                }
+                else if (!oNoData.IsValid())
+                {
+                    abSetNoData.push_back(false);
+                    adfNoData.push_back(
+                        std::numeric_limits<double>::quiet_NaN());
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Invalid raster:bands[%d].nodata", i);
+                    abSetNoData.push_back(false);
+                    adfNoData.push_back(
+                        std::numeric_limits<double>::quiet_NaN());
+                }
+            }
+
+            CPLAssert(aeDT.size() == abSetNoData.size());
+            CPLAssert(adfNoData.size() == abSetNoData.size());
         }
     }
-    if (poProtoDS == nullptr)
+
+    std::unique_ptr<GDALDataset> poProtoDS;
+    if (aeDT.empty())
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find prototype dataset");
-        return false;
+        for (int i = 0; i < static_cast<int>(tmsList.size()); i++)
+        {
+            // Open a metatile to get mostly its band data type
+            int nProtoTileCol = 0;
+            int nProtoTileRow = 0;
+            auto oIterLimit = oMapLimits.find(tmsList[i].mId);
+            if (oIterLimit != oMapLimits.end())
+            {
+                nProtoTileCol = oIterLimit->second.min_tile_col;
+                nProtoTileRow = oIterLimit->second.min_tile_row;
+            }
+            const CPLString osURL =
+                CPLString(osURLTemplate)
+                    .replaceAll("{TileMatrix}", tmsList[i].mId)
+                    .replaceAll("{TileRow}", CPLSPrintf("%d", nProtoTileRow))
+                    .replaceAll("{TileCol}", CPLSPrintf("%d", nProtoTileCol));
+            CPLString osProtoDSName = (STARTS_WITH(osURL, "http://") ||
+                                       STARTS_WITH(osURL, "https://"))
+                                          ? CPLString("/vsicurl/" + osURL)
+                                          : osURL;
+            CPLConfigOptionSetter oSetter("GDAL_DISABLE_READDIR_ON_OPEN",
+                                          "EMPTY_DIR",
+                                          /* bSetOnlyIfUndefined = */ true);
+            if (m_bSkipMissingMetaTile)
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+            poProtoDS.reset(GDALDataset::Open(osProtoDSName.c_str()));
+            if (m_bSkipMissingMetaTile)
+                CPLPopErrorHandler();
+            if (poProtoDS != nullptr)
+            {
+                break;
+            }
+            if (!m_bSkipMissingMetaTile)
+            {
+                CPLError(CE_Failure, CPLE_OpenFailed, "Cannot open %s",
+                         osURL.c_str());
+                return false;
+            }
+        }
+        if (poProtoDS == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot find prototype dataset");
+            return false;
+        }
+        nExpectedBandCount = poProtoDS->GetRasterCount();
     }
 
     // Iterate over tile matrices to create corresponding STACTARawDataset
@@ -935,9 +1102,9 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
         {
             continue;
         }
-        auto poRawDS = cpl::make_unique<STACTARawDataset>();
-        if (!poRawDS->InitRaster(poProtoDS.get(), poTMS.get(), tmsList[i].mId,
-                                 oTM, oMapLimits))
+        auto poRawDS = std::make_unique<STACTARawDataset>();
+        if (!poRawDS->InitRaster(poProtoDS.get(), aeDT, abSetNoData, adfNoData,
+                                 poTMS.get(), tmsList[i].mId, oTM, oMapLimits))
         {
             return false;
         }
@@ -1011,22 +1178,69 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Create main bands
-    const auto oEoBands = oAssetTemplate.GetArray("eo:bands");
     for (int i = 0; i < m_poDS->GetRasterCount(); i++)
     {
         auto poSrcBand = m_poDS->GetRasterBand(i + 1);
         auto poBand = new STACTARasterBand(this, i + 1, poSrcBand);
-        if (oEoBands.IsValid() &&
-            oEoBands.Size() == poProtoDS->GetRasterCount())
+        if (oEoBands.IsValid() && oEoBands.Size() == nExpectedBandCount)
         {
             // Set band metadata
             if (oEoBands[i].GetType() == CPLJSONObject::Type::Object)
             {
                 for (const auto &oItem : oEoBands[i].GetChildren())
                 {
-                    poBand->GDALRasterBand::SetMetadataItem(
-                        oItem.GetName().c_str(), oItem.ToString().c_str());
+                    if (oBands.IsValid())
+                    {
+                        // STAC 1.1
+                        if (STARTS_WITH(oItem.GetName().c_str(), "eo:"))
+                        {
+                            poBand->GDALRasterBand::SetMetadataItem(
+                                oItem.GetName().c_str() + strlen("eo:"),
+                                oItem.ToString().c_str());
+                        }
+                        else if (oItem.GetName() != "data_type" &&
+                                 oItem.GetName() != "nodata" &&
+                                 oItem.GetName() != "unit" &&
+                                 oItem.GetName() != "raster:scale" &&
+                                 oItem.GetName() != "raster:offset" &&
+                                 oItem.GetName() != "raster:bits_per_sample")
+                        {
+                            poBand->GDALRasterBand::SetMetadataItem(
+                                oItem.GetName().c_str(),
+                                oItem.ToString().c_str());
+                        }
+                    }
+                    else
+                    {
+                        // STAC 1.0
+                        poBand->GDALRasterBand::SetMetadataItem(
+                            oItem.GetName().c_str(), oItem.ToString().c_str());
+                    }
                 }
+            }
+        }
+        if (oRasterBands.IsValid() &&
+            oRasterBands.Size() == nExpectedBandCount &&
+            oRasterBands[i].GetType() == CPLJSONObject::Type::Object)
+        {
+            poBand->m_osUnit = oRasterBands[i].GetString("unit");
+            const double dfScale = oRasterBands[i].GetDouble(
+                oBands.IsValid() ? "raster:scale" : "scale");
+            if (dfScale != 0)
+                poBand->m_dfScale = dfScale;
+            poBand->m_dfOffset = oRasterBands[i].GetDouble(
+                oBands.IsValid() ? "raster:offset" : "offset");
+            const int nBitsPerSample = oRasterBands[i].GetInteger(
+                oBands.IsValid() ? "raster:bits_per_sample"
+                                 : "bits_per_sample");
+            if (((nBitsPerSample >= 1 && nBitsPerSample <= 7) &&
+                 poBand->GetRasterDataType() == GDT_Byte) ||
+                ((nBitsPerSample >= 9 && nBitsPerSample <= 15) &&
+                 poBand->GetRasterDataType() == GDT_UInt16))
+            {
+                poBand->GDALRasterBand::SetMetadataItem(
+                    "NBITS", CPLSPrintf("%d", nBitsPerSample),
+                    "IMAGE_STRUCTURE");
             }
         }
         SetBand(i + 1, poBand);
@@ -1044,11 +1258,20 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    const char *pszInterleave =
-        poProtoDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
-    GDALDataset::SetMetadataItem("INTERLEAVE",
-                                 pszInterleave ? pszInterleave : "PIXEL",
-                                 "IMAGE_STRUCTURE");
+    if (poProtoDS)
+    {
+        const char *pszInterleave =
+            poProtoDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem("INTERLEAVE",
+                                     pszInterleave ? pszInterleave : "PIXEL",
+                                     "IMAGE_STRUCTURE");
+    }
+    else
+    {
+        // A bit bold to assume that, but that should be a reasonable
+        // setting
+        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+    }
 
     m_bDownloadWholeMetaTile = CPLTestBool(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "WHOLE_METATILE", "NO"));
@@ -1082,6 +1305,9 @@ CPLErr STACTADataset::FlushCache(bool bAtClosing)
 /************************************************************************/
 
 bool STACTARawDataset::InitRaster(GDALDataset *poProtoDS,
+                                  const std::vector<GDALDataType> &aeDT,
+                                  const std::vector<bool> &abSetNoData,
+                                  const std::vector<double> &adfNoData,
                                   const gdal::TileMatrixSet *poTMS,
                                   const std::string &osTMId,
                                   const gdal::TileMatrixSet::TileMatrix &oTM,
@@ -1102,11 +1328,23 @@ bool STACTARawDataset::InitRaster(GDALDataset *poProtoDS,
     nRasterXSize = nMatrixWidth * m_nMetaTileWidth;
     nRasterYSize = nMatrixHeight * m_nMetaTileHeight;
 
-    for (int i = 0; i < poProtoDS->GetRasterCount(); i++)
+    if (poProtoDS)
     {
-        auto poProtoBand = poProtoDS->GetRasterBand(i + 1);
-        auto poBand = new STACTARawRasterBand(this, i + 1, poProtoBand);
-        SetBand(i + 1, poBand);
+        for (int i = 0; i < poProtoDS->GetRasterCount(); i++)
+        {
+            auto poProtoBand = poProtoDS->GetRasterBand(i + 1);
+            auto poBand = new STACTARawRasterBand(this, i + 1, poProtoBand);
+            SetBand(i + 1, poBand);
+        }
+    }
+    else
+    {
+        for (int i = 0; i < static_cast<int>(aeDT.size()); i++)
+        {
+            auto poBand = new STACTARawRasterBand(this, i + 1, aeDT[i],
+                                                  abSetNoData[i], adfNoData[i]);
+            SetBand(i + 1, poBand);
+        }
     }
 
     CPLString osCRS = poTMS->crs().c_str();
@@ -1155,7 +1393,7 @@ GDALDataset *STACTADataset::OpenStatic(GDALOpenInfo *poOpenInfo)
 {
     if (!Identify(poOpenInfo))
         return nullptr;
-    auto poDS = cpl::make_unique<STACTADataset>();
+    auto poDS = std::make_unique<STACTADataset>();
     if (!poDS->Open(poOpenInfo))
         return nullptr;
     return poDS.release();

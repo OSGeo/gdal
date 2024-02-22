@@ -765,6 +765,8 @@ GIntBig CPL_DLL OGR_L_GetFeatureCount(OGRLayerH, int);
 OGRErr CPL_DLL OGR_L_GetExtent(OGRLayerH, OGREnvelope *, int);
 OGRErr CPL_DLL OGR_L_GetExtentEx(OGRLayerH, int iGeomField,
                                  OGREnvelope *psExtent, int bForce);
+OGRErr CPL_DLL OGR_L_GetExtent3D(OGRLayerH hLayer, int iGeomField,
+                                 OGREnvelope3D *psExtent3D, int bForce);
 int CPL_DLL OGR_L_TestCapability(OGRLayerH, const char *);
 OGRErr CPL_DLL OGR_L_CreateField(OGRLayerH, OGRFieldDefnH, int);
 OGRErr CPL_DLL OGR_L_CreateGeomField(OGRLayerH hLayer,

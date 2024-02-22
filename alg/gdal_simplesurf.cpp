@@ -29,8 +29,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$")
-
 /************************************************************************/
 /* ==================================================================== */
 /*                            GDALFeaturePoint                          */
@@ -136,6 +134,17 @@ double &GDALFeaturePoint::operator[](int nIndex)
     return padfDescriptor[nIndex];
 }
 
+double GDALFeaturePoint::operator[](int nIndex) const
+{
+    if (nIndex < 0 || nIndex >= DESC_SIZE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Descriptor index is out of range");
+    }
+
+    return padfDescriptor[nIndex];
+}
+
 GDALFeaturePoint::~GDALFeaturePoint()
 {
     delete[] padfDescriptor;
@@ -192,9 +201,16 @@ CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(GDALRasterBand *red,
     const int dataGreenSize = GDALGetDataTypeSizeBytes(eGreenType);
     const int dataBlueSize = GDALGetDataTypeSizeBytes(eBlueType);
 
-    void *paRedLayer = CPLMalloc(dataRedSize * nWidth * nHeight);
-    void *paGreenLayer = CPLMalloc(dataGreenSize * nWidth * nHeight);
-    void *paBlueLayer = CPLMalloc(dataBlueSize * nWidth * nHeight);
+    void *paRedLayer = VSI_MALLOC3_VERBOSE(dataRedSize, nWidth, nHeight);
+    void *paGreenLayer = VSI_MALLOC3_VERBOSE(dataGreenSize, nWidth, nHeight);
+    void *paBlueLayer = VSI_MALLOC3_VERBOSE(dataBlueSize, nWidth, nHeight);
+    if (!paRedLayer || !paGreenLayer || !paBlueLayer)
+    {
+        CPLFree(paRedLayer);
+        CPLFree(paGreenLayer);
+        CPLFree(paBlueLayer);
+        return CE_Failure;
+    }
 
     CPLErr eErr = red->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paRedLayer,
                                 nWidth, nHeight, eRedType, 0, 0, nullptr);
@@ -268,8 +284,8 @@ GDALSimpleSURF::ExtractFeaturePoints(GDALIntegralImage *poImg,
     return poCollection;
 }
 
-double GDALSimpleSURF::GetEuclideanDistance(GDALFeaturePoint &firstPoint,
-                                            GDALFeaturePoint &secondPoint)
+double GDALSimpleSURF::GetEuclideanDistance(const GDALFeaturePoint &firstPoint,
+                                            const GDALFeaturePoint &secondPoint)
 {
     double sum = 0.0;
 

@@ -146,11 +146,9 @@ GTiffDataset::~GTiffDataset()
 
 CPLErr GTiffDataset::Close()
 {
-    CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        bool bDroppedRef;
-        std::tie(eErr, bDroppedRef) = Finalize();
+        auto [eErr, bDroppedRef] = Finalize();
 
         if (m_pszTmpFilename)
         {
@@ -160,8 +158,9 @@ CPLErr GTiffDataset::Close()
 
         if (GDALPamDataset::Close() != CE_None)
             eErr = CE_Failure;
+        return eErr;
     }
-    return eErr;
+    return CE_None;
 }
 
 /************************************************************************/
@@ -174,7 +173,7 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
 {
     bool bDroppedRef = false;
     if (m_bIsFinalized)
-        return std::tuple<CPLErr, bool>(CE_None, bDroppedRef);
+        return std::tuple(CE_None, bDroppedRef);
 
     CPLErr eErr = CE_None;
     Crystalize();
@@ -406,7 +405,7 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
 
     m_bIsFinalized = true;
 
-    return std::tuple<CPLErr, bool>(eErr, bDroppedRef);
+    return std::tuple(eErr, bDroppedRef);
 }
 
 /************************************************************************/
@@ -420,11 +419,9 @@ int GTiffDataset::CloseDependentDatasets()
 
     int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
-    CPLErr eErr;
-    bool bHasDroppedRefInFinalize = false;
     // We ignore eErr as it is not relevant for CloseDependentDatasets(),
     // which is called in a "garbage collection" context.
-    std::tie(eErr, bHasDroppedRefInFinalize) = Finalize();
+    auto [eErr, bHasDroppedRefInFinalize] = Finalize();
     if (bHasDroppedRefInFinalize)
         bHasDroppedRef = true;
 
@@ -501,10 +498,10 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             return static_cast<CPLErr>(nErr);
     }
 
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     bool bCanUseMultiThreadedRead = false;
-    if (m_poThreadPool && eRWFlag == GF_Read && nBufXSize == nXSize &&
-        nBufYSize == nYSize && IsMultiThreadedReadCompatible())
+    if (m_nDisableMultiThreadedRead == 0 && m_poThreadPool &&
+        eRWFlag == GF_Read && nBufXSize == nXSize && nBufYSize == nYSize &&
+        IsMultiThreadedReadCompatible())
     {
         const int nBlockX1 = nXOff / m_nBlockXSize;
         const int nBlockY1 = nYOff / m_nBlockYSize;
@@ -520,7 +517,6 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             bCanUseMultiThreadedRead = true;
         }
     }
-#endif
 
     void *pBufferedData = nullptr;
     const auto poFirstBand = cpl::down_cast<GTiffRasterBand *>(papoBands[0]);
@@ -528,24 +524,19 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     if (eAccess == GA_ReadOnly && eRWFlag == GF_Read &&
         (nBands == 1 || m_nPlanarConfig == PLANARCONFIG_CONTIG) &&
-        HasOptimizedReadMultiRange()
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
-        && !(bCanUseMultiThreadedRead &&
-             VSI_TIFFGetVSILFile(TIFFClientdata(m_hTIFF))->HasPRead())
-#endif
-    )
+        HasOptimizedReadMultiRange() &&
+        !(bCanUseMultiThreadedRead &&
+          VSI_TIFFGetVSILFile(TIFFClientdata(m_hTIFF))->HasPRead()))
     {
         pBufferedData = poFirstBand->CacheMultiRange(
             nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, psExtraArg);
     }
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     else if (bCanUseMultiThreadedRead)
     {
         return MultiThreadedRead(nXOff, nYOff, nXSize, nYSize, pData, eBufType,
                                  nBandCount, panBandMap, nPixelSpace,
                                  nLineSpace, nBandSpace);
     }
-#endif
 
     // Write optimization when writing whole blocks, by-passing the block cache.
     // We require the block cache to be non instantiated to simplify things
@@ -587,7 +578,8 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
             if (bOrderedBands && nXSize == m_nBlockXSize &&
                 nYSize == m_nBlockYSize && eBufType == eDataType &&
-                nBandSpace == nDTSize && nPixelSpace == nDTSize * nBands &&
+                nBandSpace == nDTSize &&
+                nPixelSpace == static_cast<GSpacing>(nDTSize) * nBands &&
                 nLineSpace == nPixelSpace * m_nBlockXSize)
             {
                 // If writing one single block with the right data type and
@@ -653,7 +645,8 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 m_pabyBlockBuf + static_cast<size_t>(iY) *
                                                      m_nBlockXSize * nBands *
                                                      nDTSize,
-                                eDataType, nDTSize, nValidX * nBands);
+                                eDataType, nDTSize,
+                                static_cast<GPtrDiff_t>(nValidX) * nBands);
                         }
                     }
                     else
@@ -767,7 +760,6 @@ bool GTiffDataset::IsBlockAvailable(int nBlockId, vsi_l_offset *pnOffset,
     if (pbErrOccurred)
         *pbErrOccurred = false;
 
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     std::pair<vsi_l_offset, vsi_l_offset> oPair;
     if (m_oCacheStrileToOffsetByteCount.tryGet(nBlockId, oPair))
     {
@@ -777,11 +769,9 @@ bool GTiffDataset::IsBlockAvailable(int nBlockId, vsi_l_offset *pnOffset,
             *pnSize = oPair.second;
         return oPair.first != 0;
     }
-#endif
 
     WaitCompletionForBlock(nBlockId);
 
-#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     // Optimization to avoid fetching the whole Strip/TileCounts and
     // Strip/TileOffsets arrays.
     if (eAccess == GA_ReadOnly && !m_bStreamingIn)
@@ -802,7 +792,6 @@ bool GTiffDataset::IsBlockAvailable(int nBlockId, vsi_l_offset *pnOffset,
             *pnSize = bytecount;
         return bytecount != 0;
     }
-#endif
 
     toff_t *panByteCounts = nullptr;
     toff_t *panOffsets = nullptr;
@@ -1077,11 +1066,6 @@ void GTiffDataset::ScanDirectories()
 
     do
     {
-        // Only libtiff 4.0.4 can handle between 32768 and 65535 directories.
-#if !defined(SUPPORTS_MORE_THAN_32768_DIRECTORIES)
-        if (iDirIndex == 32768)
-            break;
-#endif
         toff_t nTopDir = TIFFCurrentDirOffset(m_hTIFF);
         uint32_t nSubType = 0;
 

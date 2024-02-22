@@ -30,9 +30,12 @@
 
 #include "aigrid.h"
 
+#ifndef CPL_IGNORE_RET_VAL_INT_defined
+#define CPL_IGNORE_RET_VAL_INT_defined
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused)
 {
 }
+#endif
 
 /************************************************************************/
 /*                    AIGProcessRaw32bitFloatBlock()                    */
@@ -616,7 +619,7 @@ CPLErr AIGReadBlock(VSILFILE *fp, GUInt32 nBlockOffset, int nBlockSize,
     if (VSIFSeekL(fp, nBlockOffset, SEEK_SET) != 0 ||
         VSIFReadL(pabyRaw, nBlockSize + 2, 1, fp) != 1)
     {
-        memset(panData, 0, nBlockXSize * nBlockYSize * 4);
+        memset(panData, 0, sizeof(int32_t) * nBlockXSize * nBlockYSize);
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Read of %d bytes from offset %d for grid block failed.",
                  nBlockSize + 2, nBlockOffset);
@@ -629,7 +632,7 @@ CPLErr AIGReadBlock(VSILFILE *fp, GUInt32 nBlockOffset, int nBlockSize,
     /* -------------------------------------------------------------------- */
     if (nBlockSize != (pabyRaw[0] * 256 + pabyRaw[1]) * 2)
     {
-        memset(panData, 0, nBlockXSize * nBlockYSize * 4);
+        memset(panData, 0, sizeof(int32_t) * nBlockXSize * nBlockYSize);
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Block is corrupt, block size was %d, but expected to be %d.",
                  (pabyRaw[0] * 256 + pabyRaw[1]) * 2, nBlockSize);
@@ -695,7 +698,7 @@ CPLErr AIGReadBlock(VSILFILE *fp, GUInt32 nBlockOffset, int nBlockSize,
 
     if (nMinSize > 4)
     {
-        memset(panData, 0, nBlockXSize * nBlockYSize * 4);
+        memset(panData, 0, sizeof(int32_t) * nBlockXSize * nBlockYSize);
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Corrupt 'minsize' of %d in block header.  Read aborted.",
                  nMinSize);

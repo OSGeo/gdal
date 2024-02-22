@@ -531,11 +531,18 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature)
             poHeader->nPointsPerElement = nNum - 1;
             if (poHeader->nElements > 0)
             {
-                poHeader->panConnectivity = (int *)CPLRealloc(
-                    poHeader->panConnectivity,
-                    poHeader->nElements * poHeader->nPointsPerElement);
-                if (poHeader->panConnectivity == nullptr)
+                int *panConnectivity =
+                    reinterpret_cast<int *>(VSI_REALLOC_VERBOSE(
+                        poHeader->panConnectivity,
+                        static_cast<size_t>(poHeader->nElements) *
+                            poHeader->nPointsPerElement));
+                if (panConnectivity == nullptr)
+                {
+                    VSIFree(poHeader->panConnectivity);
+                    poHeader->panConnectivity = nullptr;
                     return OGRERR_FAILURE;
+                }
+                poHeader->panConnectivity = panConnectivity;
             }
         }
         else
@@ -679,7 +686,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature)
 /************************************************************************/
 /*                           CreateField()                              */
 /************************************************************************/
-OGRErr OGRSelafinLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRSelafinLayer::CreateField(const OGRFieldDefn *poField,
                                     CPL_UNUSED int bApproxOK)
 {
     CPLDebug("Selafin", "CreateField(%s,%s)", poField->GetNameRef(),

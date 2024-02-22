@@ -38,8 +38,10 @@
 
 // Suppress deprecation warning for GDALOpenVerticalShiftGrid and
 // GDALApplyVerticalShiftGrid
+#ifndef CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid
 #define CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid(x)
 #define CPL_WARN_DEPRECATED_GDALApplyVerticalShiftGrid(x)
+#endif
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -649,10 +651,10 @@ class GDALWarpCoordRescaler : public OGRCoordinateTransformation
         return nullptr;
     }
 
-    virtual int Transform(int nCount, double *x, double *y, double * /*z*/,
+    virtual int Transform(size_t nCount, double *x, double *y, double * /*z*/,
                           double * /*t*/, int *pabSuccess) override
     {
-        for (int i = 0; i < nCount; i++)
+        for (size_t i = 0; i < nCount; i++)
         {
             x[i] *= m_dfRatioX;
             y[i] *= m_dfRatioY;
@@ -1927,10 +1929,13 @@ CPLErr VRTWarpedRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-CPLXMLNode *VRTWarpedRasterBand::SerializeToXML(const char *pszVRTPathIn)
+CPLXMLNode *VRTWarpedRasterBand::SerializeToXML(const char *pszVRTPathIn,
+                                                bool &bHasWarnedAboutRAMUsage,
+                                                size_t &nAccRAMUsage)
 
 {
-    CPLXMLNode *const psTree = VRTRasterBand::SerializeToXML(pszVRTPathIn);
+    CPLXMLNode *const psTree = VRTRasterBand::SerializeToXML(
+        pszVRTPathIn, bHasWarnedAboutRAMUsage, nAccRAMUsage);
 
     /* -------------------------------------------------------------------- */
     /*      Set subclass.                                                   */

@@ -369,7 +369,7 @@ void OGRAmigoCloudTableLayer::FlushDeferredInsert()
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRAmigoCloudTableLayer::CreateField(OGRFieldDefn *poFieldIn,
+OGRErr OGRAmigoCloudTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
                                             CPL_UNUSED int bApproxOK)
 {
     GetLayerDefn();
@@ -564,11 +564,10 @@ OGRErr OGRAmigoCloudTableLayer::ISetFeature(OGRFeature *poFeature)
         return OGRERR_FAILURE;
     }
 
-    std::map<GIntBig, OGRAmigoCloudFID>::iterator it =
-        mFIDs.find(poFeature->GetFID());
+    const auto it = mFIDs.find(poFeature->GetFID());
     if (it != mFIDs.end())
     {
-        OGRAmigoCloudFID &aFID = it->second;
+        const OGRAmigoCloudFID &aFID = it->second;
 
         CPLString osSQL;
         osSQL.Printf("UPDATE %s SET ",
@@ -709,10 +708,10 @@ OGRErr OGRAmigoCloudTableLayer::DeleteFeature(GIntBig nFID)
     if (osFIDColName.empty())
         return OGRERR_FAILURE;
 
-    std::map<GIntBig, OGRAmigoCloudFID>::iterator it = mFIDs.find(nFID);
+    const auto it = mFIDs.find(nFID);
     if (it != mFIDs.end())
     {
-        OGRAmigoCloudFID &aFID = it->second;
+        const OGRAmigoCloudFID &aFID = it->second;
 
         CPLString osSQL;
         osSQL.Printf("DELETE FROM %s WHERE %s = '%s'",
@@ -828,10 +827,10 @@ OGRFeature *OGRAmigoCloudTableLayer::GetFeature(GIntBig nFeatureId)
     if (osFIDColName.empty())
         return OGRAmigoCloudLayer::GetFeature(nFeatureId);
 
-    std::map<GIntBig, OGRAmigoCloudFID>::iterator it = mFIDs.find(nFeatureId);
+    const auto it = mFIDs.find(nFeatureId);
     if (it != mFIDs.end())
     {
-        OGRAmigoCloudFID &aFID = it->second;
+        const OGRAmigoCloudFID &aFID = it->second;
 
         CPLString osSQL = osSELECTWithoutWHERE;
         osSQL += " WHERE ";
@@ -1056,7 +1055,7 @@ void OGRAmigoCloudTableLayer::SetDeferredCreation(OGRwkbGeometryType eGType,
         eGType = wkbMultiPolygon25D;
     if (eGType != wkbNone)
     {
-        auto poFieldDefn = cpl::make_unique<OGRAmigoCloudGeomFieldDefn>(
+        auto poFieldDefn = std::make_unique<OGRAmigoCloudGeomFieldDefn>(
             "wkb_geometry", eGType);
         poFieldDefn->SetNullable(bGeomNullable);
         if (poSRS != nullptr)
@@ -1071,7 +1070,7 @@ void OGRAmigoCloudTableLayer::SetDeferredCreation(OGRwkbGeometryType eGType,
                      OGRAMIGOCLOUDEscapeIdentifier(osTableName).c_str());
 }
 
-CPLString OGRAmigoCloudTableLayer::GetAmigoCloudType(OGRFieldDefn &oField)
+CPLString OGRAmigoCloudTableLayer::GetAmigoCloudType(const OGRFieldDefn &oField)
 {
     char szFieldType[256];
 

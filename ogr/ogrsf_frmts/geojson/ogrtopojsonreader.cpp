@@ -524,7 +524,7 @@ ParseObjectMain(const char *pszId, json_object *poObj,
                     std::set<int> aoSetUndeterminedTypeFieldsLocal;
 
                     apoFieldDefnLocal.emplace_back(
-                        cpl::make_unique<OGRFieldDefn>("id", OFTString));
+                        std::make_unique<OGRFieldDefn>("id", OFTString));
                     oMapFieldNameToIdxLocal["id"] = 0;
                     dagLocal.addNode(0, "id");
                     const int nPrevFieldIdx = 0;
@@ -547,9 +547,12 @@ ParseObjectMain(const char *pszId, json_object *poObj,
 
                     const auto sortedFields = dagLocal.getTopologicalOrdering();
                     CPLAssert(sortedFields.size() == apoFieldDefnLocal.size());
-                    for (int idx : sortedFields)
                     {
-                        poDefn->AddFieldDefn(apoFieldDefnLocal[idx].get());
+                        auto oTemporaryUnsealer(poDefn->GetTemporaryUnsealer());
+                        for (int idx : sortedFields)
+                        {
+                            poDefn->AddFieldDefn(apoFieldDefnLocal[idx].get());
+                        }
                     }
 
                     // Second pass to build objects.
@@ -582,7 +585,7 @@ ParseObjectMain(const char *pszId, json_object *poObj,
                     *ppoMainLayer = new OGRGeoJSONLayer(
                         "TopoJSON", nullptr, wkbUnknown, poDS, nullptr);
                     apoFieldDefn.emplace_back(
-                        cpl::make_unique<OGRFieldDefn>("id", OFTString));
+                        std::make_unique<OGRFieldDefn>("id", OFTString));
                     oMapFieldNameToIdx["id"] = 0;
                     dag.addNode(0, "id");
                 }
@@ -733,6 +736,7 @@ void OGRTopoJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS)
             OGRFeatureDefn *poDefn = poMainLayer->GetLayerDefn();
             const auto sortedFields = dag.getTopologicalOrdering();
             CPLAssert(sortedFields.size() == apoFieldDefn.size());
+            auto oTemporaryUnsealer(poDefn->GetTemporaryUnsealer());
             for (int idx : sortedFields)
             {
                 poDefn->AddFieldDefn(apoFieldDefn[idx].get());
@@ -766,6 +770,7 @@ void OGRTopoJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS)
             OGRFeatureDefn *poDefn = poMainLayer->GetLayerDefn();
             const auto sortedFields = dag.getTopologicalOrdering();
             CPLAssert(sortedFields.size() == apoFieldDefn.size());
+            auto oTemporaryUnsealer(poDefn->GetTemporaryUnsealer());
             for (int idx : sortedFields)
             {
                 poDefn->AddFieldDefn(apoFieldDefn[idx].get());

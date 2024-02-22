@@ -61,10 +61,10 @@ static void Usage(bool bIsError)
 }
 
 /************************************************************************/
-/*                            ArgIsNumeric()                            */
+/*                      ArgIsNumericCreate()                            */
 /************************************************************************/
 
-static bool ArgIsNumeric(const char *pszArg)
+static bool ArgIsNumericCreate(const char *pszArg)
 
 {
     char *pszEnd = nullptr;
@@ -216,7 +216,7 @@ MAIN_START(argc, argv)
             else
             {
                 // coverity[tainted_data]
-                while (i < argc - 1 && ArgIsNumeric(argv[i + 1]))
+                while (i < argc - 1 && ArgIsNumericCreate(argv[i + 1]))
                 {
                     ++i;
                     // coverity[tainted_data]
@@ -426,6 +426,13 @@ MAIN_START(argc, argv)
             exit(1);
         }
     }
+    else if (poInputDS && poInputDS->GetGCPCount() > 0)
+    {
+        GDALDataset::FromHandle(hDS)->SetGCPs(poInputDS->GetGCPCount(),
+                                              poInputDS->GetGCPs(),
+                                              poInputDS->GetGCPSpatialRef());
+    }
+
     if (!aosMetadata.empty())
     {
         GDALSetMetadata(hDS, aosMetadata.List(), nullptr);

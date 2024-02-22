@@ -226,7 +226,7 @@ CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
  *
  */
 
-CPLErr PNG_Codec::CompressPNG(buf_mgr &dst, buf_mgr &src)
+CPLErr PNG_Codec::CompressPNG(buf_mgr &dst, const buf_mgr &src)
 
 {
     png_structp pngp;

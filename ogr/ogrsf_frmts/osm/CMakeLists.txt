@@ -4,6 +4,15 @@ add_gdal_driver(
   SOURCES ogrosmdatasource.cpp ogrosmdriver.cpp ogrosmlayer.cpp osm_parser.cpp
   BUILTIN)
 gdal_standard_includes(ogr_OSM)
+
+set(GDAL_DATA_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/data/osmconf.ini
+)
+set_property(
+  TARGET ${GDAL_LIB_TARGET_NAME}
+  APPEND
+  PROPERTY RESOURCE "${GDAL_DATA_FILES}")
+
 target_include_directories(ogr_OSM PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>
                                            ${GDAL_VECTOR_FORMAT_SOURCE_DIR}/sqlite)
 if (GDAL_USE_EXPAT)

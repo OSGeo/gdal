@@ -380,6 +380,8 @@ char CPL_DLL **VSIReadDirRecursive(const char *pszPath);
 char CPL_DLL **VSIReadDirEx(const char *pszPath, int nMaxFiles);
 char CPL_DLL **VSISiblingFiles(const char *pszPath);
 
+const char CPL_DLL *VSIGetDirectorySeparator(const char *pszPath);
+
 /** Opaque type for a directory iterator */
 typedef struct VSIDIR VSIDIR;
 
@@ -718,6 +720,17 @@ void CPL_DLL VSIFreeFilesystemPluginCallbacksStruct(
  */
 int CPL_DLL VSIInstallPluginHandler(
     const char *pszPrefix, const VSIFilesystemPluginCallbacksStruct *poCb);
+
+/**
+ * Unregister a handler previously installed with VSIInstallPluginHandler() on
+ * the given prefix.
+ * Note: it is generally unsafe to remove a handler while there are still file
+ * handles opened that are managed by that handler. It is the responsibility of
+ * the caller to ensure that it calls this function in a situation where it is
+ * safe to do so.
+ * @since GDAL 3.9
+ */
+int CPL_DLL VSIRemovePluginHandler(const char *pszPrefix);
 
 /* ==================================================================== */
 /*      Time querying.                                                  */

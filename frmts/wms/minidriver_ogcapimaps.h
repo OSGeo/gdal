@@ -25,6 +25,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef MINIDRIVER_OGCAPIMAPS_H_INCLUDED
+#define MINIDRIVER_OGCAPIMAPS_H_INCLUDED
+
 class WMSMiniDriver_OGCAPIMaps : public WMSMiniDriver
 {
   public:
@@ -38,3 +41,5 @@ class WMSMiniDriver_OGCAPIMaps : public WMSMiniDriver
                       const GDALWMSImageRequestInfo &iri,
                       const GDALWMSTiledImageRequestInfo &tiri) override;
 };
+
+#endif /* MINIDRIVER_OGCAPIMAPS_H_INCLUDED */

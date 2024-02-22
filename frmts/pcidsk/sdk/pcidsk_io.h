@@ -44,7 +44,7 @@ namespace PCIDSK
     {
     public:
         virtual ~IOInterfaces() {}
-        virtual void   *Open( std::string filename, std::string access ) const = 0;
+        virtual void   *Open( const std::string& filename, std::string access ) const = 0;
         virtual uint64  Seek( void *io_handle, uint64 offset, int whence ) const = 0;
         virtual uint64  Tell( void *io_handle ) const = 0;
         virtual uint64  Read( void *buffer, uint64 size, uint64 nmemb, void *io_handle ) const = 0;

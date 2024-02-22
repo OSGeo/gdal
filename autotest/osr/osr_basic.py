@@ -1758,11 +1758,7 @@ def test_osr_get_name():
     assert sr.GetName() == "WGS 84"
 
 
-@pytest.mark.require_proj(6, 1)
 def test_SetPROJSearchPath():
-
-    # OSRSetPROJSearchPaths() is only taken into priority over other methods
-    # starting with PROJ >= 6.1
 
     # Do the test in a new thread, so that the EPSG code cache which is thread
     # locale is not used, and we can effectively test that the new search path
@@ -1797,7 +1793,6 @@ def test_SetPROJSearchPath():
     assert sr.ImportFromEPSG(32631) == 0
 
 
-@pytest.mark.require_proj(6, 1)
 def test_Set_PROJ_DATA_config_option():
 
     # OSRSetPROJSearchPaths() is only taken into priority over other methods
@@ -1843,7 +1838,6 @@ def test_Set_PROJ_DATA_config_option():
 ###############################################################################
 
 
-@pytest.mark.require_proj(6, 1)
 def test_Set_PROJ_DATA_config_option_sub_proccess_config_option_ok():
 
     backup_search_paths = osr.GetPROJSearchPaths()
@@ -1862,7 +1856,6 @@ def test_Set_PROJ_DATA_config_option_sub_proccess_config_option_ok():
 ###############################################################################
 
 
-@pytest.mark.require_proj(6, 1)
 def test_Set_PROJ_DATA_config_option_sub_proccess_config_option_ko():
 
     backup_search_paths = osr.GetPROJSearchPaths()
@@ -1878,16 +1871,6 @@ def test_Set_PROJ_DATA_config_option_sub_proccess_config_option_ko():
     )
 
 
-# Test for PROJ < 6.2
-def test_osr_import_projjson_possibly_error_out():
-
-    sr = osr.SpatialReference()
-    projjson = '{"$schema":"https://proj.org/schemas/v0.1/projjson.schema.json","type":"GeographicCRS","name":"WGS 84","datum":{"type":"GeodeticReferenceFrame","name":"World Geodetic System 1984","ellipsoid":{"name":"WGS 84","semi_major_axis":6378137,"inverse_flattening":298.257223563}},"coordinate_system":{"subtype":"ellipsoidal","axis":[{"name":"Geodetic latitude","abbreviation":"Lat","direction":"north","unit":"degree"},{"name":"Geodetic longitude","abbreviation":"Lon","direction":"east","unit":"degree"}]},"area":"World","bbox":{"south_latitude":-90,"west_longitude":-180,"north_latitude":90,"east_longitude":180},"id":{"authority":"EPSG","code":4326}}'
-    with osr.ExceptionMgr(useExceptions=False):
-        sr.SetFromUserInput(projjson)
-
-
-@pytest.mark.require_proj(6, 2)
 def test_osr_import_projjson():
 
     sr = osr.SpatialReference()
@@ -1900,17 +1883,6 @@ def test_osr_import_projjson():
         assert sr.SetFromUserInput(broken_projjson)
 
 
-# Test for PROJ < 6.2
-def test_osr_export_projjson_possibly_error_out():
-
-    sr = osr.SpatialReference()
-    sr.SetFromUserInput("WGS84")
-
-    with osr.ExceptionMgr(useExceptions=False):
-        sr.ExportToPROJJSON()
-
-
-@pytest.mark.require_proj(6, 2)
 def test_osr_export_projjson():
 
     sr = osr.SpatialReference()
@@ -1919,16 +1891,6 @@ def test_osr_export_projjson():
     assert sr.ExportToPROJJSON() != ""
 
 
-# Test for PROJ < 6.3
-def test_osr_promote_to_3D_possibly_error_out():
-
-    sr = osr.SpatialReference()
-    sr.SetFromUserInput("WGS84")
-    with osr.ExceptionMgr(useExceptions=False):
-        sr.PromoteTo3D()
-
-
-@pytest.mark.require_proj(6, 3)
 def test_osr_promote_to_3D():
 
     sr = osr.SpatialReference()
@@ -1992,7 +1954,6 @@ def test_osr_SpatialReference_invalid_wkt_in_constructor():
 # Check GetUTMZone() on a Projected 3D CRS
 
 
-@pytest.mark.require_proj(6, 3)
 def test_osr_GetUTMZone_Projected3D():
 
     utm_srs = osr.SpatialReference()
@@ -2011,7 +1972,6 @@ def test_osr_GetUTMZone_Projected3D():
 # Check GetProjParm() on a Projected 3D CRS
 
 
-@pytest.mark.require_proj(6, 3)
 def test_osr_GetProjParm_Projected3D():
 
     utm_srs = osr.SpatialReference()

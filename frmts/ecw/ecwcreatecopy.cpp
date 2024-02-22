@@ -34,7 +34,7 @@
 #include "gdaljp2metadata.h"
 #include "ogr_spatialref.h"
 
-#if defined(FRMT_ecw) && defined(HAVE_COMPRESS)
+#if defined(HAVE_COMPRESS)
 
 #define OPTIMIZED_FOR_GDALWARP
 
@@ -53,7 +53,7 @@ static CPLString GetCompressionSoftwareName()
     if (CPLGetExecPath(szProcessName, sizeof(szProcessName) - 1))
     {
         szProcessName[sizeof(szProcessName) - 1] = 0;
-#ifdef WIN32
+#ifdef _WIN32
         char *szLastSlash = strrchr(szProcessName, '\\');
 #else
         char *szLastSlash = strrchr(szProcessName, '/');
@@ -1203,7 +1203,7 @@ CPLErr GDALECWCompressor::Initialize(
     {
         if (fpVSIL == nullptr)
         {
-#if ECWSDK_VERSION >= 40 && defined(WIN32)
+#if ECWSDK_VERSION >= 40 && defined(_WIN32)
             if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
             {
                 wchar_t *pwszFilename =
@@ -1857,7 +1857,7 @@ ECWWriteDataset::ECWWriteDataset(const char *pszFilenameIn, int nXSize,
 ECWWriteDataset::~ECWWriteDataset()
 
 {
-    FlushCache(true);
+    ECWWriteDataset::FlushCache(true);
 
     if (bCrystalized)
     {
@@ -2274,4 +2274,4 @@ GDALDataset *ECWCreateECW(const char *pszFilename, int nXSize, int nYSize,
                                papszOptions, FALSE);
 }
 
-#endif /* def FRMT_ecw && def HAVE_COMPRESS */
+#endif /* def HAVE_COMPRESS */

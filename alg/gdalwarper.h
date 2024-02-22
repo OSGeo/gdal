@@ -501,6 +501,12 @@ class CPL_DLL GDALWarpOperation
     void WipeOptions();
     int ValidateOptions();
 
+    bool ComputeSourceWindowTransformPoints(
+        int nDstXOff, int nDstYOff, int nDstXSize, int nDstYSize, bool bUseGrid,
+        bool bAll, int nStepCount, bool bTryWithCheckWithInvertProj,
+        double &dfMinXOut, double &dfMinYOut, double &dfMaxXOut,
+        double &dfMaxYOut, int &nSamplePoints, int &nFailedCount);
+
     CPLErr ComputeSourceWindow(int nDstXOff, int nDstYOff, int nDstXSize,
                                int nDstYSize, int *pnSrcXOff, int *pnSrcYOff,
                                int *pnSrcXSize, int *pnSrcYSize,

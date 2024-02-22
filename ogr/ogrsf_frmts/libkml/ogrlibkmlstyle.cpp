@@ -730,7 +730,7 @@ void kml2stylestring(StylePtr poKmlStyle, OGRStyleMgr *poOgrSM)
 
 ******************************************************************************/
 
-static ContainerPtr MyGetContainerFromRoot(KmlFactory *m_poKmlFactory,
+static ContainerPtr MyGetContainerFromRoot(KmlFactory *poKmlFactory,
                                            ElementPtr poKmlRoot)
 {
     ContainerPtr poKmlContainer = nullptr;
@@ -752,7 +752,7 @@ static ContainerPtr MyGetContainerFromRoot(KmlFactory *m_poKmlFactory,
                 }
                 else if (poKmlFeat->IsA(kmldom::Type_Placemark))
                 {
-                    poKmlContainer = m_poKmlFactory->CreateDocument();
+                    poKmlContainer = poKmlFactory->CreateDocument();
                     poKmlContainer->add_feature(
                         kmldom::AsFeature(kmlengine::Clone(poKmlFeat)));
                 }
@@ -760,7 +760,7 @@ static ContainerPtr MyGetContainerFromRoot(KmlFactory *m_poKmlFactory,
         }
         else if (poKmlRoot->IsA(kmldom::Type_Container))
         {
-            poKmlContainer = AsContainer(poKmlRoot);
+            poKmlContainer = AsContainer(std::move(poKmlRoot));
         }
     }
 
@@ -851,8 +851,8 @@ static StyleSelectorPtr StyleFromStyleURL(const StyleMapPtr &stylemap,
                 kmldom::KmlFactory *poKmlFactory =
                     kmldom::KmlFactory::GetFactory();
                 ContainerPtr poKmlContainer;
-                if (!(poKmlContainer =
-                          MyGetContainerFromRoot(poKmlFactory, poKmlRoot)))
+                if (!(poKmlContainer = MyGetContainerFromRoot(
+                          poKmlFactory, std::move(poKmlRoot))))
                 {
                     CPLFree(pszUrlTmp);
                     CPLFree(pszUrl);

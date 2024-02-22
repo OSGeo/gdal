@@ -1,5 +1,12 @@
-add_gdal_driver(TARGET gdal_PNG SOURCES pngdataset.cpp pngdataset.h PLUGIN_CAPABLE_IF
-                                        "NOT GDAL_USE_PNG_INTERNAL;NOT GDAL_USE_ZLIB_INTERNAL")
+add_gdal_driver(TARGET gdal_PNG
+                SOURCES pngdataset.cpp pngdataset.h
+                CORE_SOURCES pngdrivercore.cpp
+                PLUGIN_CAPABLE_IF "NOT GDAL_USE_PNG_INTERNAL\\\;NOT GDAL_USE_ZLIB_INTERNAL")
+
+if(NOT TARGET gdal_PNG)
+    return()
+endif()
+
 gdal_standard_includes(gdal_PNG)
 
 if (GDAL_USE_PNG_INTERNAL)

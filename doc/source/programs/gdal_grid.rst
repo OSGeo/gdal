@@ -415,11 +415,11 @@ Reading comma separated values
 
 Often you have a text file with a list of comma separated XYZ values to work
 with (so called CSV file). You can easily use that kind of data source in
-:program:`gdal_grid`. All you need is create a virtual dataset header (VRT) for you CSV
-file and use it as input datasource for :program:`gdal_grid`. You can find details
-on VRT format at :ref:`vector.vrt` description page.
+:program:`gdal_grid`. All you need is to create a virtual dataset header (VRT) for your CSV
+file and use it as an input datasource for :program:`gdal_grid`. You can find details
+on the VRT format on the :ref:`vector.vrt` description page.
 
-Here is a small example. Let we have a CSV file called *dem.csv*
+Here is a small example. Let's say we have a CSV file called *dem.csv*
 containing
 
 ::
@@ -431,7 +431,7 @@ containing
     87077.6,891995,135.01
     ...
 
-For above data we will create *dem.vrt* header with the following
+For the above data we will create a *dem.vrt* header with the following
 content:
 
 .. code-block:: xml
@@ -447,7 +447,7 @@ content:
 This description specifies so called 2.5D geometry with three coordinates X, Y
 and Z. Z value will be used for interpolation. Now you can use *dem.vrt*
 with all OGR programs (start with :ref:`ogrinfo` to test that everything works
-fine). The datasource will contain single layer called *"dem"* filled
+fine). The datasource will contain a single layer called *"dem"* filled
 with point features constructed from values in CSV file. Using this technique
 you can handle CSV files with more than three columns, switch columns, etc.
 

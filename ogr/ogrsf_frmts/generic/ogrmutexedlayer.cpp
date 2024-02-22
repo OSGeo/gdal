@@ -205,7 +205,7 @@ int OGRMutexedLayer::TestCapability(const char *pszCapability)
     return OGRLayerDecorator::TestCapability(pszCapability);
 }
 
-OGRErr OGRMutexedLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGRMutexedLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::CreateField(poField, bApproxOK);
@@ -331,7 +331,7 @@ OGRErr OGRMutexedLayer::Rename(const char *pszNewName)
     return OGRLayerDecorator::Rename(pszNewName);
 }
 
-#if defined(WIN32) && defined(_MSC_VER)
+#if defined(_WIN32) && defined(_MSC_VER)
 // Horrible hack: for some reason MSVC doesn't export the class
 // if it is not referenced from the DLL itself
 void OGRRegisterMutexedLayer();

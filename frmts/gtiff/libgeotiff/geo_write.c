@@ -33,39 +33,35 @@ GTIFFree() is used to deallocate a GeoTIFF access handle.
 
 int GTIFWriteKeys(GTIF *gt)
 {
-    int i;
-    GeoKey *keyptr;
-    KeyEntry *entptr;
-    KeyHeader *header;
-    TempKeyData tempData;
-    int sortkeys[MAX_KEYS];
 
     if (!(gt->gt_flags & FLAG_FILE_MODIFIED)) return 1;
 
     if( gt->gt_tif == NULL )
         return 0;
 
+    TempKeyData tempData;
     tempData.tk_asciiParams = 0;
     tempData.tk_asciiParamsLength = 0;
     tempData.tk_asciiParamsOffset = 0;
 
     /*  Sort the Keys into numerical order */
+    int sortkeys[MAX_KEYS];
     if (!SortKeys(gt,sortkeys))
     {
         /* XXX error: a key was not recognized */
     }
 
     /* Set up header of ProjectionInfo tag */
-    header = (KeyHeader *)gt->gt_short;
+    KeyHeader *header = (KeyHeader *)gt->gt_short;
     header->hdr_num_keys = (pinfo_t) gt->gt_num_keys;
     header->hdr_version  = gt->gt_version;
     header->hdr_rev_major  = gt->gt_rev_major;
     header->hdr_rev_minor  = gt->gt_rev_minor;
 
     /* Sum up the ASCII tag lengths */
-    for (i = 0; i < gt->gt_num_keys; i++)
+    for (int i = 0; i < gt->gt_num_keys; i++)
     {
-        keyptr = gt->gt_keys + sortkeys[i];
+        GeoKey *keyptr = gt->gt_keys + sortkeys[i];
         if (keyptr->gk_type == TYPE_ASCII)
         {
             tempData.tk_asciiParamsLength += keyptr->gk_count;
@@ -81,9 +77,9 @@ int GTIFWriteKeys(GTIF *gt)
     }
 
     /* Set up the rest of SHORT array properly */
-    keyptr = gt->gt_keys;
-    entptr = (KeyEntry*)(gt->gt_short + 4);
-    for (i=0; i< gt->gt_num_keys; i++,entptr++)
+    GeoKey *keyptr = gt->gt_keys;
+    KeyEntry *entptr = (KeyEntry*)(gt->gt_short + 4);
+    for (int i=0; i< gt->gt_num_keys; i++,entptr++)
     {
         if (!WriteKey(gt,&tempData,entptr,keyptr+sortkeys[i]))
         {
@@ -132,11 +128,9 @@ int GTIFWriteKeys(GTIF *gt)
 static int WriteKey(GTIF* gt, TempKeyData* tempData,
                     KeyEntry* entptr, GeoKey* keyptr)
 {
-    int count;
-
     entptr->ent_key = (pinfo_t) keyptr->gk_key;
     entptr->ent_count = (pinfo_t) keyptr->gk_count;
-    count = entptr->ent_count;
+    const int count = entptr->ent_count;
 
     if (count==1 && keyptr->gk_type==TYPE_SHORT)
     {
@@ -183,19 +177,18 @@ static int WriteKey(GTIF* gt, TempKeyData* tempData,
 
 static int SortKeys(GTIF* gt,int *sortkeys)
 {
-    int i, did_work;
-
     /* A bit convoluted to make Clang Static Analyzer happy */
     if( gt->gt_num_keys <= 0 )
         return 1;
 
     sortkeys[0] = 1;
-    for( i = 1; i < gt->gt_num_keys; i++ )
+    for( int i = 1; i < gt->gt_num_keys; i++ )
         sortkeys[i] = i+1;
 
+    int did_work;
     do {  /* simple bubble sort */
         did_work = 0;
-        for( i = 0; i < gt->gt_num_keys-1; i++ )
+        for( int i = 0; i < gt->gt_num_keys-1; i++ )
         {
             if( gt->gt_keys[sortkeys[i]].gk_key
                 > gt->gt_keys[sortkeys[i+1]].gk_key )

@@ -45,6 +45,7 @@ struct GDALMultiDimTranslateOptions
     std::string osFormat{};
     CPLStringList aosCreateOptions{};
     std::vector<std::string> aosArraySpec{};
+    CPLStringList aosArrayOptions{};
     std::vector<std::string> aosSubset{};
     std::vector<std::string> aosScaleFactor{};
     std::vector<std::string> aosGroup{};
@@ -424,8 +425,9 @@ GetDimensionDesc(DimensionRemapper &oDimRemapper,
 
             const bool bIsNumeric =
                 var->GetDataType().GetClass() == GEDTC_NUMERIC;
-            const auto dt(bIsNumeric ? GDALExtendedDataType::Create(GDT_Float64)
-                                     : GDALExtendedDataType::CreateString());
+            const GDALExtendedDataType dt(
+                bIsNumeric ? GDALExtendedDataType::Create(GDT_Float64)
+                           : GDALExtendedDataType::CreateString());
 
             double dfMin = 0;
             double dfMax = 0;
@@ -852,7 +854,7 @@ static bool TranslateArray(
             auto tmpArrayNew = tmpArray->GetView(viewExpr, false, viewSpecs);
             if (!tmpArrayNew)
                 return false;
-            tmpArray = tmpArrayNew;
+            tmpArray = std::move(tmpArrayNew);
             size_t j = 0;
             const auto &tmpArrayDims(tmpArray->GetDimensions());
             for (size_t i = 0; i < srcArrayDims.size(); ++i)
@@ -1085,7 +1087,7 @@ static bool TranslateArray(
             CPLErrorStateBackuper oErrorStateBackuper;
             auto poDstIndexingVar(poDstGroup->OpenMDArray(newDimName));
             if (poDstIndexingVar)
-                dstDim->SetIndexingVariable(poDstIndexingVar);
+                dstDim->SetIndexingVariable(std::move(poDstIndexingVar));
         }
     }
     if (outputType.GetClass() == GEDTC_NUMERIC &&
@@ -1158,7 +1160,7 @@ static bool TranslateArray(
                         dt.FreeDynamicMemory(&abyTmp[0]);
                     }
 
-                    const auto unit(srcIndexVar->GetUnit());
+                    const auto &unit(srcIndexVar->GetUnit());
                     if (!unit.empty())
                     {
                         auto dstAttr = dstArray->CreateAttribute(
@@ -1176,7 +1178,7 @@ static bool TranslateArray(
     if (!bSrcArrayAccessibleThroughSrcGroup &&
         tmpArray->IsRegularlySpaced(dfStart, dfIncrement))
     {
-        auto poSource = cpl::make_unique<VRTMDArraySourceRegularlySpaced>(
+        auto poSource = std::make_unique<VRTMDArraySourceRegularlySpaced>(
             dfStart, dfIncrement);
         dstArrayVRT->AddSource(std::move(poSource));
     }
@@ -1197,9 +1199,11 @@ static bool TranslateArray(
                 band < 0 ? srcArray->GetFullName() : std::string(),
                 band >= 1 ? CPLSPrintf("%d", band) : std::string(),
                 std::move(anTransposedAxis),
-                bResampled ? (viewExpr.empty() ? std::string("resample=true")
-                                               : "resample=true," + viewExpr)
-                           : viewExpr,
+                bResampled
+                    ? (viewExpr.empty()
+                           ? std::string("resample=true")
+                           : std::string("resample=true,").append(viewExpr))
+                    : std::move(viewExpr),
                 std::move(anSrcOffset), std::move(anCount), std::move(anStep),
                 std::move(anDstOffset)));
         dstArrayVRT->AddSource(std::move(poSource));
@@ -1227,7 +1231,7 @@ GetGroup(const std::shared_ptr<GDALGroup> &poRootGroup,
                      aosTokens[i]);
             return nullptr;
         }
-        poCurGroup = poCurGroupNew;
+        poCurGroup = std::move(poCurGroupNew);
     }
     return poCurGroup;
 }
@@ -1290,7 +1294,8 @@ static bool CopyGroup(
         }
     }
 
-    auto arrayNames = poSrcGroup->GetMDArrayNames();
+    auto arrayNames =
+        poSrcGroup->GetMDArrayNames(psOptions->aosArrayOptions.List());
     for (const auto &name : arrayNames)
     {
         if (!TranslateArray(oDimRemapper, nullptr, name, poSrcRootGroup,
@@ -1316,7 +1321,8 @@ static bool CopyGroup(
             {
                 CPLErrorHandlerPusher oHandlerPusher(CPLQuietErrorHandler);
                 CPLErrorStateBackuper oErrorStateBackuper;
-                oCorrespondingDimIter->second->SetIndexingVariable(dstArray);
+                oCorrespondingDimIter->second->SetIndexingVariable(
+                    std::move(dstArray));
             }
         }
     }
@@ -1538,7 +1544,8 @@ CopyToNonMultiDimensionalDriver(GDALDriver *poDriver, const char *pszDest,
     }
     else
     {
-        auto srcArrayNames = poRG->GetMDArrayNames();
+        auto srcArrayNames = poRG->GetMDArrayNames(
+            psOptions ? psOptions->aosArrayOptions.List() : nullptr);
         for (const auto &srcArrayName : srcArrayNames)
         {
             auto tmpArray = poRG->OpenMDArray(srcArrayName);
@@ -1556,7 +1563,7 @@ CopyToNonMultiDimensionalDriver(GDALDriver *poDriver, const char *pszDest,
                                  "output to non-multidimensional driver");
                         return nullptr;
                     }
-                    srcArray = tmpArray;
+                    srcArray = std::move(tmpArray);
                 }
             }
         }
@@ -1721,7 +1728,8 @@ GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     GDALDataset *poTmpSrcDS = poSrcDS;
     if (psOptions &&
         (!psOptions->aosArraySpec.empty() || !psOptions->aosGroup.empty() ||
-         !psOptions->aosSubset.empty() || !psOptions->aosScaleFactor.empty()))
+         !psOptions->aosSubset.empty() || !psOptions->aosScaleFactor.empty() ||
+         !psOptions->aosArrayOptions.empty()))
     {
         poTmpDS.reset(VRTDataset::CreateMultiDimensional("", nullptr, nullptr));
         CPLAssert(poTmpDS);
@@ -1828,7 +1836,11 @@ GDALMultiDimTranslateOptions *GDALMultiDimTranslateOptionsNew(
             ++i;
             psOptions->aosArraySpec.push_back(papszArgv[i]);
         }
-
+        else if (i < argc - 1 && EQUAL(papszArgv[i], "-arrayoption"))
+        {
+            ++i;
+            psOptions->aosArrayOptions.AddString(papszArgv[i]);
+        }
         else if (i < argc - 1 && EQUAL(papszArgv[i], "-group"))
         {
             ++i;

@@ -63,18 +63,19 @@ class CPL_DLL MEMAttributeHolder CPL_NON_FINAL
 class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
                                        public MEMAttributeHolder
 {
+    friend class MEMMDArray;
+
     std::map<CPLString, std::shared_ptr<GDALGroup>> m_oMapGroups{};
     std::map<CPLString, std::shared_ptr<GDALMDArray>> m_oMapMDArrays{};
     std::map<CPLString, std::shared_ptr<GDALDimension>> m_oMapDimensions{};
-    std::weak_ptr<MEMGroup> m_pSelf{};
     std::weak_ptr<MEMGroup> m_pParent{};
+    std::weak_ptr<GDALGroup> m_poRootGroupWeak{};
 
   protected:
     friend class MEMDimension;
     bool RenameDimension(const std::string &osOldName,
                          const std::string &osNewName);
 
-    friend class MEMMDArray;
     bool RenameArray(const std::string &osOldName,
                      const std::string &osNewName);
 
@@ -82,7 +83,6 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
 
     void NotifyChildrenOfDeletion() override;
 
-  public:
     MEMGroup(const std::string &osParentName, const char *pszName)
         : GDALGroup(osParentName, pszName ? pszName : "")
     {
@@ -90,6 +90,7 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
             m_osFullName = osParentName;
     }
 
+  public:
     static std::shared_ptr<MEMGroup> Create(const std::string &osParentName,
                                             const char *pszName);
 
@@ -273,6 +274,7 @@ class CPL_DLL MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
     GDALDataType m_eScaleStorageType = GDT_Unknown;
     std::string m_osFilename{};
     std::weak_ptr<GDALGroup> m_poGroupWeak{};
+    std::weak_ptr<GDALGroup> m_poRootGroupWeak{};
 
     MEMMDArray(const MEMMDArray &) = delete;
     MEMMDArray &operator=(const MEMMDArray &) = delete;
@@ -407,6 +409,11 @@ class CPL_DLL MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
                 CSLConstList) override;
 
     bool Rename(const std::string &osNewName) override;
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return m_poRootGroupWeak.lock();
+    }
 };
 
 /************************************************************************/

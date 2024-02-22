@@ -75,9 +75,7 @@ std::shared_ptr<ZarrArray> ZarrV3Group::OpenZarrArray(const std::string &osName,
         if (!oDoc.Load(osZarrayFilename))
             return nullptr;
         const auto oRoot = oDoc.GetRoot();
-        std::set<std::string> oSetFilenamesInLoading;
-        return LoadArray(osName, osZarrayFilename, oRoot,
-                         oSetFilenamesInLoading);
+        return LoadArray(osName, osZarrayFilename, oRoot);
     }
 
     return nullptr;
@@ -254,7 +252,8 @@ ZarrV3Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
             }
             auto poSubGroup = ZarrV3Group::Create(
                 m_poSharedResource, GetFullName(), osName, osSubDir);
-            poSubGroup->m_poParent = m_pSelf;
+            poSubGroup->m_poParent =
+                std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock());
             poSubGroup->SetUpdatable(m_bUpdatable);
             m_oMapGroups[osName] = poSubGroup;
             return poSubGroup;
@@ -267,7 +266,8 @@ ZarrV3Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
     {
         auto poSubGroup = ZarrV3Group::Create(m_poSharedResource, GetFullName(),
                                               osName, osSubDir);
-        poSubGroup->m_poParent = m_pSelf;
+        poSubGroup->m_poParent =
+            std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock());
         poSubGroup->SetUpdatable(m_bUpdatable);
         m_oMapGroups[osName] = poSubGroup;
         return poSubGroup;
@@ -363,7 +363,8 @@ ZarrV3Group::CreateGroup(const std::string &osName,
                                 osDirectoryName);
     if (!poGroup)
         return nullptr;
-    poGroup->m_poParent = m_pSelf;
+    poGroup->m_poParent =
+        std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock());
     m_oMapGroups[osName] = poGroup;
     m_aosGroups.emplace_back(osName);
     return poGroup;
@@ -675,7 +676,7 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
             oInputArrayMetadata.anBlockSizes.push_back(
                 static_cast<size_t>(nSize));
         oInputArrayMetadata.oElt = aoDtypeElts.back();
-        poCodecs = cpl::make_unique<ZarrV3CodecSequence>(oInputArrayMetadata);
+        poCodecs = std::make_unique<ZarrV3CodecSequence>(oInputArrayMetadata);
         if (!poCodecs->InitFromJson(oCodecs))
             return nullptr;
     }

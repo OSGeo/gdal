@@ -42,7 +42,7 @@ CPLString OGRPGDumpEscapeColumnName(const char *pszColumnName);
 CPLString OGRPGDumpEscapeString(const char *pszStrValue, int nMaxLength = -1,
                                 const char *pszFieldName = "");
 char CPL_DLL *OGRPGCommonGByteArrayToBYTEA(const GByte *pabyData, size_t nLen);
-CPLString CPL_DLL OGRPGCommonLayerGetType(OGRFieldDefn &oField,
+CPLString CPL_DLL OGRPGCommonLayerGetType(const OGRFieldDefn &oField,
                                           bool bPreservePrecision,
                                           bool bApproxOK);
 bool CPL_DLL OGRPGCommonLayerSetType(OGRFieldDefn &oField, const char *pszType,
@@ -169,9 +169,9 @@ class OGRPGDumpLayer final : public OGRLayer
     virtual OGRErr CreateFeatureViaInsert(OGRFeature *poFeature);
     virtual OGRErr CreateFeatureViaCopy(OGRFeature *poFeature);
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poGeomField,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                    int bApproxOK = TRUE) override;
 
     virtual OGRFeature *GetNextFeature() override;

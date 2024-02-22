@@ -20,6 +20,9 @@ extension .vrt.
 The VRT format can also describe :ref:`gdal_vrttut_warped`
 and :ref:`gdal_vrttut_pansharpen`
 
+For mosaic with a very large number of tiles (tens of thousands or mores),
+the :ref:`GTI <raster.gti>` driver may be used starting with GDAL 3.9.
+
 An example of a simple .vrt file referring to a 512x512 dataset with one band
 loaded from :file:`utm.tif` might look like this:
 
@@ -182,7 +185,7 @@ The attributes for VRTRasterBand are:
 - **blockYSize** (optional, GDAL >= 3.3): block height.
   If not specified, defaults to the minimum of the raster height and 128.
 
-This element may have Metadata, ColorInterp, NoDataValue, HideNoDataValue, ColorTable, GDALRasterAttributeTable, Description and MaskBand subelements as well as the various kinds of source elements such as SimpleSource, ComplexSource, AveragedSource, KernelFilteredSource and ArraySource.  A raster band may have many "sources" indicating where the actual raster data should be fetched from, and how it should be mapped into the raster bands pixel space.
+This element may have Metadata, ColorInterp, NoDataValue, HideNoDataValue, ColorTable, GDALRasterAttributeTable, Description and MaskBand subelements as well as the various kinds of source elements such as SimpleSource, ComplexSource, AveragedSource, NoDataFromMaskSource, KernelFilteredSource and ArraySource.  A raster band may have many "sources" indicating where the actual raster data should be fetched from, and how it should be mapped into the raster bands pixel space.
 
 The allowed subelements for VRTRasterBand are :
 
@@ -300,6 +303,8 @@ The allowed subelements for VRTRasterBand are :
 - **SimpleSource**: The SimpleSource_ indicates that raster data should be read from a separate dataset, indicating the dataset, and band to be read from, and how the data should map into this band's raster space.
 
 - **AveragedSource**: The AveragedSource is derived from the SimpleSource and shares the same properties except that it uses an averaging resampling instead of a nearest neighbour algorithm as in SimpleSource, when the size of the destination rectangle is not the same as the size of the source rectangle. Note: a more general mechanism to specify resampling algorithms can be used. See above paragraph about the 'resampling' attribute.
+
+- **NoDataFromMaskSource**: (GDAL >= 3.9) The NoDataFromMaskSource is derived from the SimpleSource and shares the same properties except that it replaces the value of the source with the value of the NODATA child element when the value of the mask band of the source is less or equal to the MaskValueThreshold child element.
 
 - **ComplexSource**: The ComplexSource_ is derived from the SimpleSource (so it shares the SourceFilename, SourceBand, SrcRect and DstRect elements), but it provides support to rescale and offset the range of the source values. Certain regions of the source can be masked by specifying the NODATA value, or starting with GDAL 3.3, with the <UseMaskBand>true</UseMaskBand> element.
 
@@ -494,6 +499,25 @@ For example, a Gaussian blur:
         <Coefs>0.01111 0.04394 0.13534 0.32465 0.60653 0.8825 1.0 0.8825 0.60653 0.32465 0.13534 0.04394 0.01111</Coefs>
       </Kernel>
     </KernelFilteredSource>
+
+NoDataFromMaskSource
+~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 3.9
+
+The NoDataFromMaskSource is derived from the SimpleSource and shares the same properties except that it replaces the value of the source with the value of the NODATA child element when the value of the mask band of the source is less or equal to the MaskValueThreshold child element.
+An optional RemappedValue element can be set to specify the value onto which valid pixels whose value is the one of NODATA should be remapped to. When RemappedValue is not explicitly specified, for Byte bands, if NODATA=255, it is implicitly set to 254, otherwise it is set to NODATA+1.
+
+.. code-block:: xml
+
+    <NoDataFromMaskSource>
+      <SourceFilename relativeToVRT="1">in.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <MaskValueThreshold>128</MaskValueThreshold> <!-- if the mask value is &lt;= 128, pixels are set to NODATA=0 -->
+      <NODATA>0</NODATA>
+      <RemappedValue>1</RemappedValue> <!-- valid/unmasked pixels at NODATA=0 are remapped to 1 -->
+    </NoDataFromMaskSource>
+
 
 ArraySource
 ~~~~~~~~~~~
@@ -1902,10 +1926,14 @@ For example:
 
     vrt://my.tif?bands=2&ovr=4
 
+::
 
-The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
+    vrt://my.nc?sd_name=sds
+
+
+The supported options currently are ``bands``, ``a_nodata``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
 ``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, ``projwin``,
-``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, ``nogcp``, ``epo``, and ``eco``.
+``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, ``nogcp``, ``epo``, ``eco``, ``sd_name``, and ``sd``.
 
 Other options may be added in the future.
 
@@ -1913,6 +1941,9 @@ The effect of the ``bands`` option is to change the band composition. The values
 are the source band numbers (between 1 and N), possibly out-of-order or with repetitions.
 The ``mask`` value can be used to specify the global mask band. This can also
 be seen as an equivalent of running `gdal_translate -of VRT -b num1 ... -b numN`.
+
+The effect of the ``a_nodata`` option (added in GDAL 3.9) is to assign (override) the nodata
+value of the source in the same way as (:ref:`gdal_translate`).
 
 The effect of the ``a_srs`` option (added in GDAL 3.7) is to assign (override) the coordinate
 reference system of the source in the same way as (:ref:`gdal_translate`), it may be missing,
@@ -1988,6 +2019,20 @@ use syntax ``nogcp=true``, or ``nogcp=false`` (which is the default if not speci
 The effect of the ``epo`` option (added in GDAL 3.8) is that ``srcwin`` or ``projwin`` values that fall partially outside the source raster extent will be considered as an error as per (:ref:`gdal_translate`). To apply this use syntax ``epo=true``, or ``epo=false`` (which is the default if not specified).
 
 The effect of the ``eco`` option (added in GDAL 3.8) is that ``srcwin`` or ``projwin`` values that fall completely outside the source raster extent will be considered as an error as per (:ref:`gdal_translate`). To apply this use syntax ``eco=true``, or ``eco=false`` (which is the default if not specified).
+
+The effect of the ``sd_name`` option (added in GDAL 3.9) is to choose an individual subdataset by
+name for sources that have multiple subdatasets. This means that rather than a fully-qualified description
+such as "NETCDF:myfile.nc:somearray" we may use "vrt://myfile.nc?sd_name=somearray". This option
+is mutually exclusive with ``sd``.
+
+The effect of the ``sd`` option (added in GDAL 3.9) is to choose an individual subdataset by
+number for sources that have multiple subdatasets. This means that rather than a fully-qualified
+description such as "NETCDF:myfile.nc:somearray" we may use "vrt://myfile.nc?sd=<n>" where "<n>"
+is between 1 and the number of subdatasets. Note that there is no guarantee of the order of the
+subdatasets within a source between GDAL versions (or in some cases between file series in datasets). This
+mode is for convenience only, please use ``sd_name`` to choose a subdataset by name explicitly.
+This option is mutually exclusive with ``sd_name``.
+
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).

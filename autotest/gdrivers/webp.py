@@ -111,6 +111,9 @@ def test_webp_4():
 @pytest.mark.require_creation_option("WEBP", "LOSSLESS")
 def test_webp_5():
 
+    if gdaltest.is_travis_branch("alpine_32bit"):
+        pytest.skip()
+
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
     out_ds = gdaltest.webp_drv.CreateCopy(
         "/vsimem/webp_5.webp", src_ds, options=["LOSSLESS=YES"]

@@ -27,10 +27,6 @@
  *   If you are not using libtiff and XTIFF, replace this include file
  *    with the appropriate one for your own TIFF parsing routines.
  *
- *   Revision History
- *
- *      19 September 1995   ndr    Demoted Intergraph trans matrix.
- *
  **********************************************************************/
 
 #include "geotiff.h"

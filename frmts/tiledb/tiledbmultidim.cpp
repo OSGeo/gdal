@@ -41,7 +41,8 @@ std::string TileDBSharedResource::SanitizeNameForPath(const std::string &osName)
     // Reserved characters on Windows
     for (char ch : {'<', '>', ':', '"', '/', '\\', '|', '?', '*'})
         osSanitized.replaceAll(ch, '_');
-    return osSanitized;
+    std::string osRet = std::move(osSanitized);
+    return osRet;
 }
 
 /************************************************************************/
@@ -60,9 +61,9 @@ std::shared_ptr<GDALGroup> TileDBArrayGroup::Create(
     std::vector<std::shared_ptr<GDALMDArray>> apoArrays;
     if (nAttributes == 1)
     {
-        auto poArray =
-            TileDBArray::OpenFromDisk(poSharedResource, "/", osBaseName,
-                                      std::string(), osArrayPath, nullptr);
+        auto poArray = TileDBArray::OpenFromDisk(poSharedResource, nullptr, "/",
+                                                 osBaseName, std::string(),
+                                                 osArrayPath, nullptr);
         if (!poArray)
             return nullptr;
         apoArrays.emplace_back(poArray);
@@ -72,7 +73,7 @@ std::shared_ptr<GDALGroup> TileDBArrayGroup::Create(
         for (uint32_t i = 0; i < nAttributes; ++i)
         {
             auto poArray = TileDBArray::OpenFromDisk(
-                poSharedResource, "/",
+                poSharedResource, nullptr, "/",
                 osBaseName + "." + schema.attribute(i).name(),
                 schema.attribute(i).name(), osArrayPath, nullptr);
             if (!poArray)

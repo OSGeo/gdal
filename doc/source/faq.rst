@@ -71,7 +71,9 @@ See :ref:`software_using_gdal`:
 What compiler can I use to build GDAL/OGR?
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
-GDAL/OGR can be compiled with a C++11 capable compiler.
+GDAL/OGR must be compiled with a C++17 capable compiler since GDAL 3.9 (C++11 in previous versions)
+
+Build requirements are described in :ref:`build_requirements`.
 
 I have a question that's not answered here. Where can I get more information?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

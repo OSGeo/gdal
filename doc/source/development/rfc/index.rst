@@ -102,3 +102,6 @@ RFC list
     rfc93_update_feature
     rfc94_field_precision_width_metadata
     rfc95_standard_int_types
+    rfc96_deferred_plugin_loading
+    rfc97_feature_and_fielddefn_sealing
+    rfc98_build_requirements_gdal_3_9

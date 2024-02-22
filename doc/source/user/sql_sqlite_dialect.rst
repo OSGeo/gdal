@@ -6,15 +6,15 @@ SQL SQLite dialect
 
 .. highlight:: sql
 
-The SQLite "dialect" can be used as an alternate SQL dialect to the
+The ``SQLite`` dialect can be used as an alternate SQL dialect to the
 :ref:`ogr_sql_dialect`.
 This assumes that GDAL/OGR is built with support for SQLite, and preferably
 with `Spatialite <https://www.gaia-gis.it/fossil/libspatialite/index>`_ support too to benefit from spatial functions.
 
-The SQLite dialect may be used with any OGR datasource, like the OGR SQL dialect. It
-is available through the GDALDataset::ExecuteSQL() method by specifying the pszDialect to
-"SQLITE". For the :ref:`ogrinfo` or :ref:`ogr2ogr`
-utility, you must specify the "-dialect SQLITE" option.
+The SQLite dialect may be used with any OGR datasource, like the OGR SQL dialect.
+The ``SQLite`` dialect can be requested with the ``SQLite`` string passed
+as the dialect parameter of :cpp:func:`GDALDataset::ExecuteSQL`, or with the
+`-dialect` option of the :ref:`ogrinfo` or :ref:`ogr2ogr` utilities.
 
 This is mainly aimed to execute SELECT statements, but, for datasources that support
 update, INSERT/UPDATE/DELETE statements can also be run. GDAL is internally using
@@ -79,6 +79,22 @@ The conditions on fields expressed in WHERE clauses, or in JOINs are
 translated, as far as possible, as attribute filters that are applied on the
 underlying OGR layers. Joins can be very expensive operations if the secondary table is not
 indexed on the key field being used.
+
+LIKE operator
++++++++++++++
+
+In SQLite, the LIKE operator is case insensitive, unless ``PRAGMA case_sensitive_like = 1``
+has been issued.
+
+Starting with GDAL 3.9, GDAL installs a custom LIKE comparison, such that UTF-8
+characters are taken into account by ``LIKE`` and ``ILIKE`` operators.
+For ILIKE case insensitive comparisons, this is restricted to the
+`ASCII <https://en.wikipedia.org/wiki/Basic_Latin_(Unicode_block)>`__,
+`Latin-1 Supplement <https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)>`__,
+`Latin Extended-A <https://en.wikipedia.org/wiki/Latin_Extended-A>`__,
+`Latin Extended-B <https://en.wikipedia.org/wiki/Latin_Extended-B>`__,
+`Greek and Coptic <https://en.wikipedia.org/wiki/Greek_and_Coptic>`__
+and `Cyrillic <https://en.wikipedia.org/wiki/Greek_and_Coptic>`__ Unicode categories.
 
 Delimited identifiers
 +++++++++++++++++++++
@@ -211,6 +227,15 @@ returns:
     EAS_ID (Real) = 170
     area (Real) = 5268.8125
 
+Note that due to the loose typing mechanism of SQLite, if a geometry expression
+returns a NULL value for the first row, this will generally cause OGR not to
+recognize the column as a geometry column. It might be then useful to sort
+the results by making sure that non-null geometries are returned first:
+
+::
+
+   ogrinfo test.shp -sql "SELECT * FROM (SELECT ST_Buffer(geometry,5) AS geometry FROM test) ORDER BY geometry IS NULL ASC" -dialect sqlite
+
 OGR datasource SQL functions
 ++++++++++++++++++++++++++++
 
@@ -222,7 +247,7 @@ function can be used to automatically load all the layers of a datasource as
 
     sqlite> SELECT load_extension('libgdal.so');
 
-    sqlite> SELECT load_extension('libspatialite.so');
+    sqlite> SELECT load_extension('mod_spatialite');
 
     sqlite> SELECT ogr_datasource_load_layers('poly.shp');
     1

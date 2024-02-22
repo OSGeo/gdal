@@ -6,6 +6,7 @@
 # is used to set PKG_CONFIG_PATH and LD_LIBRARY_PATH/DYLD_LIBRARY_PATH
 #
 # Second, optional argument can be '--static', to skip the ldd check.
+# Third,  optional argument can be '--disable-odbc', to avoid linking with ODBC
 
 echo "Running post-install tests with CMake"
 
@@ -13,6 +14,11 @@ prefix=$1
 if [ -z "$prefix" ]; then
     echo "First positional argument to the installed prefix is required"
     exit 1
+fi
+
+CMAKE_EXTRA_ARGS=""
+if test "$3" = "--disable-odbc"; then
+  CMAKE_EXTRA_ARGS="-DUSE_ODBC=OFF"
 fi
 
 export PKG_CONFIG_PATH=$prefix/lib/pkgconfig
@@ -70,7 +76,7 @@ cd $(dirname $0)
 echo Testing C app
 mkdir -p test_c/build
 cd test_c/build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DGDAL_DIR=$prefix/lib/cmake/gdal
+cmake .. -DCMAKE_BUILD_TYPE=Release -DGDAL_DIR=$prefix/lib/cmake/gdal ${CMAKE_EXTRA_ARGS}
 cmake --build .
 
 if test "$2" != "--static"; then
@@ -84,7 +90,7 @@ rm -Rf test_c/build
 echo Testing C++ app
 mkdir -p test_cpp/build
 cd test_cpp/build
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DGDAL_DIR=$prefix/lib/cmake/gdal
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DGDAL_DIR=$prefix/lib/cmake/gdal ${CMAKE_EXTRA_ARGS}
 cmake --build .
 
 if test "$2" != "--static"; then

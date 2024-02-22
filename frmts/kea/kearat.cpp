@@ -907,7 +907,7 @@ CPLErr KEARasterAttributeTable::CreateColumn(const char *pszFieldName,
     }*/
     CPLMutexHolderD(&m_hMutex);
 
-    std::string strUsage = "Generic";
+    const char *strUsage = "Generic";
     switch (eFieldUsage)
     {
         case GFU_PixelCount:

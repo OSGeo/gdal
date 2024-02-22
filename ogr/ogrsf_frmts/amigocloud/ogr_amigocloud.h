@@ -184,7 +184,7 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
     virtual OGRFeature *GetNextRawFeature() override;
@@ -210,7 +210,7 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
     void SetDeferredCreation(OGRwkbGeometryType eGType,
                              OGRSpatialReference *poSRS, int bGeomNullable);
 
-    static CPLString GetAmigoCloudType(OGRFieldDefn &oField);
+    static CPLString GetAmigoCloudType(const OGRFieldDefn &oField);
 
     OGRErr RunDeferredCreationIfNecessary();
     int GetDeferredCreation() const

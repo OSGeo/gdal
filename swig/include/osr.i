@@ -1060,6 +1060,13 @@ public:
     return OSRImportFromOzi( self, papszLines );
   }
 
+%apply Pointer NONNULL {const char* const *keyValues};
+%apply (char **options) { char ** keyValues };
+  OGRErr ImportFromCF1( char** keyValues, const char* units = NULL) {
+      return OSRImportFromCF1(self, keyValues, units);
+  }
+%clear (char **);
+
   OGRErr ExportToWkt( char **argout, char **options = NULL ) {
     return OSRExportToWktEx( self, argout, options );
   }
@@ -1110,6 +1117,21 @@ public:
   OGRErr ExportToMICoordSys( char **argout ) {
     return OSRExportToMICoordSys( self, argout );
   }
+
+%apply (char **dict) { char ** };
+%apply (char **options) { char **options };
+  char** ExportToCF1( char **options = NULL ) {
+    char** ret = NULL;
+    OSRExportToCF1(self, NULL, &ret, NULL, options);
+    return ret;
+  }
+%clear char **;
+
+ retStringAndCPLFree* ExportToCF1Units( char **options = NULL ) {
+    char* units = NULL;
+    OSRExportToCF1(self, NULL, NULL, &units, options);
+    return units;
+ }
 
 %newobject CloneGeogCS;
   OSRSpatialReferenceShadow *CloneGeogCS() {

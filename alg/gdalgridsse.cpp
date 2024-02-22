@@ -32,8 +32,6 @@
 #ifdef HAVE_SSE_AT_COMPILE_TIME
 #include <xmmintrin.h>
 
-CPL_CVSID("$Id$")
-
 /************************************************************************/
 /*         GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE()     */
 /************************************************************************/

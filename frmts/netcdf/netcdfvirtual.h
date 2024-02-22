@@ -444,20 +444,17 @@ class netCDFVID
     void nc_put_vvar1_text(int varid, const size_t *index, const char *value);
     void nc_put_vvara_text(int varid, const size_t *start, const size_t *index,
                            const char *value);
-
-#ifdef NETCDF_HAS_NC4
     void nc_put_vvar1_string(int varid, const size_t *index,
                              const char **value);
-#endif
 
     // Equivalent "enquiry" functions
     netCDFVVariable &
     virtualVIDToVar(int virtualID);  // converts a virtual var ID to a real ID
     netCDFVDimension &
     virtualDIDToDim(int virtualID);  // converts a virtual dim ID to a real ID
-    int nameToVirtualVID(std::string &name);
-    int nameToVirtualDID(std::string &name);
-    bool virtualVarNameDefined(std::string &nm)
+    int nameToVirtualVID(const std::string &name);
+    int nameToVirtualDID(const std::string &name);
+    bool virtualVarNameDefined(const std::string &nm)
     {
         return nameVarTable.count(nm) > 0;
     }

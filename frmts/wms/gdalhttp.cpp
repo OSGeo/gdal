@@ -32,12 +32,6 @@
 #include "wmsdriver.h"
 #include <algorithm>
 
-#if !CURL_AT_LEAST_VERSION(7, 28, 0)
-// Needed for curl_multi_wait()
-#error Need libcurl version 7.28.0 or newer
-// 7.28 was released in Oct 2012
-#endif
-
 static size_t WriteFunc(void *buffer, size_t count, size_t nmemb, void *req)
 {
     WMSHTTPRequest *psRequest = reinterpret_cast<WMSHTTPRequest *>(req);

@@ -36,6 +36,7 @@
 
 #include <xercesc/framework/MemoryManager.hpp>
 #include <xercesc/sax/InputSource.hpp>
+#include <xercesc/sax/Locator.hpp>
 #include <xercesc/util/BinInputStream.hpp>
 #include <xercesc/util/OutOfMemoryException.hpp>
 #include <xercesc/util/PlatformUtils.hpp>

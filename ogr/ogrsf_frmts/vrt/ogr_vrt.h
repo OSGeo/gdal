@@ -303,6 +303,6 @@ class OGRVRTDataSource final : public OGRDataSource
 };
 
 OGRwkbGeometryType OGRVRTGetGeometryType(const char *pszGType, int *pbError);
-CPLString OGRVRTGetSerializedGeometryType(OGRwkbGeometryType eGeomType);
+CPLString CPL_DLL OGRVRTGetSerializedGeometryType(OGRwkbGeometryType eGeomType);
 
 #endif  // ndef OGR_VRT_H_INCLUDED

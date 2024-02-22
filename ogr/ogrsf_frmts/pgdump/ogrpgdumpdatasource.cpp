@@ -46,7 +46,7 @@ OGRPGDumpDataSource::OGRPGDumpDataSource(const char *pszNameIn,
     bool bUseCRLF = false;
     if (pszCRLFFormat == nullptr)
     {
-#ifdef WIN32
+#ifdef _WIN32
         bUseCRLF = true;
 #endif
     }
@@ -63,7 +63,7 @@ OGRPGDumpDataSource::OGRPGDumpDataSource(const char *pszNameIn,
         CPLError(CE_Warning, CPLE_AppDefined,
                  "LINEFORMAT=%s not understood, use one of CRLF or LF.",
                  pszCRLFFormat);
-#ifdef WIN32
+#ifdef _WIN32
         bUseCRLF = true;
 #endif
     }
@@ -135,7 +135,8 @@ char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix)
     int i = 0;  // needed after loop
     for (; i < OGR_PG_NAMEDATALEN - 1 && pszSafeName[i] != '\0'; i++)
     {
-        pszSafeName[i] = (char)tolower(pszSafeName[i]);
+        pszSafeName[i] =
+            (char)tolower(static_cast<unsigned char>(pszSafeName[i]));
         if (pszSafeName[i] == '\'' || pszSafeName[i] == '-' ||
             pszSafeName[i] == '#')
         {
@@ -612,7 +613,7 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     const bool bWriteAsHex =
         !CPLFetchBool(papszOptions, "WRITE_EWKT_GEOM", false);
 
-    auto poLayer = cpl::make_unique<OGRPGDumpLayer>(
+    auto poLayer = std::make_unique<OGRPGDumpLayer>(
         this, osSchema.c_str(), osTable.c_str(),
         !osFIDColumnName.empty() ? osFIDColumnName.c_str() : nullptr,
         bWriteAsHex, bCreateTable);
@@ -652,7 +653,7 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     if (eType != wkbNone)
     {
         OGRGeomFieldDefn oTmp(pszGFldName, eType);
-        auto poGeomField = cpl::make_unique<OGRPGDumpGeomFieldDefn>(&oTmp);
+        auto poGeomField = std::make_unique<OGRPGDumpGeomFieldDefn>(&oTmp);
         poGeomField->m_nSRSId = nSRSId;
         poGeomField->m_nGeometryTypeFlags = nGeometryTypeFlags;
         poLayer->GetLayerDefn()->AddGeomFieldDefn(std::move(poGeomField));

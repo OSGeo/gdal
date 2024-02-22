@@ -32,17 +32,10 @@
 #include "ogr_srs_api.h"
 
 #include "rasterlitedataset.h"
+#include "rasterlitedrivercore.h"
 
 #include <algorithm>
 #include <limits>
-
-#if defined(DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION) ||     \
-    defined(ALLOW_FORMAT_DUMPS)
-// Enable accepting a SQL dump (starting with a "-- SQL SQLITE" or
-// "-- SQL RASTERLITE" line) as a valid
-// file. This makes fuzzer life easier
-#define ENABLE_SQL_SQLITE_FORMAT
-#endif
 
 /************************************************************************/
 /*                        RasterliteOpenSQLiteDB()                      */
@@ -157,7 +150,8 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         OGR_DS_ExecuteSQL(poGDS->hDS, osSQL.c_str(), nullptr, nullptr);
     if (hSQLLyr == nullptr)
     {
-        memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
+        memset(pImage, 0,
+               static_cast<size_t>(nBlockXSize) * nBlockYSize * nDataTypeSize);
         return CE_None;
     }
 
@@ -186,7 +180,9 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             CPLError(CE_Failure, CPLE_AppDefined, "null geometry found");
             OGR_F_Destroy(hFeat);
             OGR_DS_ReleaseResultSet(poGDS->hDS, hSQLLyr);
-            memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
+            memset(pImage, 0,
+                   static_cast<size_t>(nBlockXSize) * nBlockYSize *
+                       nDataTypeSize);
             return CE_Failure;
         }
 
@@ -208,7 +204,9 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             CPLError(CE_Failure, CPLE_AppDefined, "invalid tile size");
             OGR_F_Destroy(hFeat);
             OGR_DS_ReleaseResultSet(poGDS->hDS, hSQLLyr);
-            memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
+            memset(pImage, 0,
+                   static_cast<size_t>(nBlockXSize) * nBlockYSize *
+                       nDataTypeSize);
             return CE_Failure;
         }
 
@@ -223,7 +221,9 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             CPLError(CE_Failure, CPLE_AppDefined, "invalid geometry");
             OGR_F_Destroy(hFeat);
             OGR_DS_ReleaseResultSet(poGDS->hDS, hSQLLyr);
-            memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
+            memset(pImage, 0,
+                   static_cast<size_t>(nBlockXSize) * nBlockYSize *
+                       nDataTypeSize);
             return CE_Failure;
         }
         int nDstXOff = static_cast<int>(dfDstXOff + 0.5);
@@ -348,7 +348,8 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                     !bHasMemsetTile)
                 {
                     memset(pImage, 0,
-                           nBlockXSize * nBlockYSize * nDataTypeSize);
+                           static_cast<size_t>(nBlockXSize) * nBlockYSize *
+                               nDataTypeSize);
                     bHasMemsetTile = true;
                     bHasJustMemsetTileBand1 = true;
                 }
@@ -468,7 +469,8 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
                         if (bHasJustMemsetTileBand1)
                             memset(pabySrcBlock, 0,
-                                   nBlockXSize * nBlockYSize * nDataTypeSize);
+                                   static_cast<size_t>(nBlockXSize) *
+                                       nBlockYSize * nDataTypeSize);
 
                         /* --------------------------------------------------------------------
                          */
@@ -500,9 +502,7 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                             {
                                 const GDALColorEntry *psEntry =
                                     poTileCT->GetColorEntry(i);
-                                if (iOtherBand == 1)
-                                    abyCT[i] = static_cast<GByte>(psEntry->c1);
-                                else if (iOtherBand == 2)
+                                if (iOtherBand == 2)
                                     abyCT[i] = static_cast<GByte>(psEntry->c2);
                                 else
                                     abyCT[i] = static_cast<GByte>(psEntry->c3);
@@ -549,7 +549,8 @@ CPLErr RasterliteBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     if (!bHasFoundTile)
     {
-        memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
+        memset(pImage, 0,
+               static_cast<size_t>(nBlockXSize) * nBlockYSize * nDataTypeSize);
     }
 
     OGR_DS_ReleaseResultSet(poGDS->hDS, hSQLLyr);
@@ -989,47 +990,12 @@ end:
 }
 
 /************************************************************************/
-/*                             Identify()                               */
-/************************************************************************/
-
-int RasterliteDataset::Identify(GDALOpenInfo *poOpenInfo)
-{
-
-#ifdef ENABLE_SQL_SQLITE_FORMAT
-    if (poOpenInfo->pabyHeader &&
-        STARTS_WITH((const char *)poOpenInfo->pabyHeader, "-- SQL RASTERLITE"))
-    {
-        return TRUE;
-    }
-#endif
-
-    if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MBTILES") &&
-        !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "GPKG") &&
-        poOpenInfo->nHeaderBytes >= 1024 && poOpenInfo->pabyHeader &&
-        STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader,
-                       "SQLite Format 3") &&
-        // Do not match direct Amazon S3 signed URLs that contains .mbtiles in
-        // the middle of the URL
-        strstr(poOpenInfo->pszFilename, ".mbtiles") == nullptr)
-    {
-        // Could be a SQLite/Spatialite file as well
-        return -1;
-    }
-    else if (STARTS_WITH_CI(poOpenInfo->pszFilename, "RASTERLITE:"))
-    {
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *RasterliteDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (Identify(poOpenInfo) == FALSE)
+    if (RasterliteDriverIdentify(poOpenInfo) == FALSE)
         return nullptr;
 
     CPLString osFileName;
@@ -1056,7 +1022,7 @@ GDALDataset *RasterliteDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else
 #endif
-        if (poOpenInfo->nHeaderBytes >= 1024 &&
+        if (poOpenInfo->nHeaderBytes >= 1024 && poOpenInfo->pabyHeader &&
             STARTS_WITH_CI((const char *)poOpenInfo->pabyHeader,
                            "SQLite Format 3"))
     {
@@ -1130,7 +1096,7 @@ GDALDataset *RasterliteDataset::Open(GDALOpenInfo *poOpenInfo)
     if (osTableName.empty())
     {
         int nCountSubdataset = 0;
-        int nLayers = OGR_DS_GetLayerCount(hDS);
+        const int nLayers = OGR_DS_GetLayerCount(hDS);
         /* --------------------------------------------------------------------
          */
         /*      Add raster layers as subdatasets */
@@ -1139,14 +1105,15 @@ GDALDataset *RasterliteDataset::Open(GDALOpenInfo *poOpenInfo)
         for (int i = 0; i < nLayers; i++)
         {
             OGRLayerH hLyr = OGR_DS_GetLayer(hDS, i);
-            const char *pszLayerName = OGR_L_GetName(hLyr);
-            if (strstr(pszLayerName, "_metadata"))
+            const std::string osLayerName = OGR_L_GetName(hLyr);
+            const auto nPosMetadata = osLayerName.find("_metadata");
+            if (nPosMetadata != std::string::npos)
             {
-                char *pszShortName = CPLStrdup(pszLayerName);
-                *strstr(pszShortName, "_metadata") = '\0';
+                const std::string osShortName =
+                    osLayerName.substr(0, nPosMetadata);
 
-                CPLString osRasterTableName = pszShortName;
-                osRasterTableName += "_rasters";
+                const std::string osRasterTableName =
+                    std::string(osShortName).append("_rasters");
 
                 if (OGR_DS_GetLayerByName(hDS, osRasterTableName.c_str()) !=
                     nullptr)
@@ -1154,21 +1121,19 @@ GDALDataset *RasterliteDataset::Open(GDALOpenInfo *poOpenInfo)
                     if (poDS == nullptr)
                     {
                         poDS = new RasterliteDataset();
-                        osTableName = pszShortName;
+                        osTableName = osShortName;
                     }
 
-                    CPLString osSubdatasetName;
+                    std::string osSubdatasetName;
                     if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "RASTERLITE:"))
                         osSubdatasetName += "RASTERLITE:";
                     osSubdatasetName += poOpenInfo->pszFilename;
                     osSubdatasetName += ",table=";
-                    osSubdatasetName += pszShortName;
+                    osSubdatasetName += osShortName;
                     poDS->AddSubDataset(osSubdatasetName.c_str());
 
                     nCountSubdataset++;
                 }
-
-                CPLFree(pszShortName);
             }
         }
 
@@ -1530,59 +1495,13 @@ void GDALRegister_Rasterlite()
     if (!GDAL_CHECK_VERSION("Rasterlite driver"))
         return;
 
-    if (GDALGetDriverByName("Rasterlite") != nullptr)
+    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
-
-    poDriver->SetDescription("Rasterlite");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Rasterlite");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
-                              "drivers/raster/rasterlite.html");
-    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "sqlite");
-    poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte UInt16 Int16 UInt32 Int32 Float32 "
-                              "Float64 CInt16 CInt32 CFloat32 CFloat64");
-    poDriver->SetMetadataItem(
-        GDAL_DMD_CREATIONOPTIONLIST,
-        "<CreationOptionList>"
-        "   <Option name='WIPE' type='boolean' default='NO' description='Erase "
-        "all preexisting data in the specified table'/>"
-        "   <Option name='TILED' type='boolean' default='YES' description='Use "
-        "tiling'/>"
-        "   <Option name='BLOCKXSIZE' type='int' default='256' "
-        "description='Tile Width'/>"
-        "   <Option name='BLOCKYSIZE' type='int' default='256' "
-        "description='Tile Height'/>"
-        "   <Option name='DRIVER' type='string' description='GDAL driver to "
-        "use for storing tiles' default='GTiff'/>"
-        "   <Option name='COMPRESS' type='string' description='(GTiff driver) "
-        "Compression method' default='NONE'/>"
-        "   <Option name='QUALITY' type='int' description='(JPEG-compressed "
-        "GTiff, JPEG and WEBP drivers) JPEG/WEBP Quality 1-100' default='75'/>"
-        "   <Option name='PHOTOMETRIC' type='string-select' "
-        "description='(GTiff driver) Photometric interpretation'>"
-        "       <Value>MINISBLACK</Value>"
-        "       <Value>MINISWHITE</Value>"
-        "       <Value>PALETTE</Value>"
-        "       <Value>RGB</Value>"
-        "       <Value>CMYK</Value>"
-        "       <Value>YCBCR</Value>"
-        "       <Value>CIELAB</Value>"
-        "       <Value>ICCLAB</Value>"
-        "       <Value>ITULAB</Value>"
-        "   </Option>"
-        "</CreationOptionList>");
-    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
-
-#ifdef ENABLE_SQL_SQLITE_FORMAT
-    poDriver->SetMetadataItem("ENABLE_SQL_SQLITE_FORMAT", "YES");
-#endif
+    RasterliteDriverSetCommonMetadata(poDriver);
 
     poDriver->pfnOpen = RasterliteDataset::Open;
-    poDriver->pfnIdentify = RasterliteDataset::Identify;
     poDriver->pfnCreateCopy = RasterliteCreateCopy;
     poDriver->pfnDelete = RasterliteDelete;
 

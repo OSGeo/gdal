@@ -8,7 +8,22 @@ add_gdal_driver(
           ogrmssqlspatiallayer.cpp
           ogrmssqlspatialselectlayer.cpp
           ogrmssqlspatialtablelayer.cpp
-          PLUGIN_CAPABLE)
+  CORE_SOURCES
+          ogrmssqlspatialdrivercore.cpp
+  PLUGIN_CAPABLE)
+
+if(TARGET ogr_MSSQLSpatial_core)
+    if (GDAL_USE_MSSQL_ODBC)
+      target_compile_definitions(ogr_MSSQLSpatial_core PRIVATE $<TARGET_PROPERTY:MSSQL_ODBC::MSSQL_ODBC,INTERFACE_COMPILE_DEFINITIONS>)
+    elseif (GDAL_USE_MSSQL_NCLI)
+      target_compile_definitions(ogr_MSSQLSpatial_core PRIVATE $<TARGET_PROPERTY:MSSQL_NCLI::MSSQL_NCLI,INTERFACE_COMPILE_DEFINITIONS>)
+    endif ()
+endif()
+
+if(NOT TARGET ogr_MSSQLSpatial)
+    return()
+endif()
+
 gdal_standard_includes(ogr_MSSQLSpatial)
 gdal_target_link_libraries(ogr_MSSQLSpatial PRIVATE ODBC::ODBC)
 

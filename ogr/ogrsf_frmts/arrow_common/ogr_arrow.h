@@ -93,8 +93,9 @@ class OGRArrowLayer CPL_NON_FINAL
     void ExploreExprNode(const swq_expr_node *poNode);
     bool UseRecordBatchBaseImplementation() const;
 
+    template <typename SourceOffset>
     static struct ArrowArray *
-    CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray);
+    CreateWKBArrayFromWKTArray(const struct ArrowArray *sourceArray);
 
     int GetArrowSchemaInternal(struct ArrowSchema *out) const;
 
@@ -116,6 +117,7 @@ class OGRArrowLayer CPL_NON_FINAL
     int m_iBBOXMaxYField = -1;
 
     const arrow::BinaryArray *m_poArrayWKB = nullptr;
+    const arrow::LargeBinaryArray *m_poArrayWKBLarge = nullptr;
     const arrow::Array *m_poArrayBBOX = nullptr;
     const arrow::DoubleArray *m_poArrayMinX = nullptr;
     const arrow::DoubleArray *m_poArrayMinY = nullptr;
@@ -146,7 +148,9 @@ class OGRArrowLayer CPL_NON_FINAL
     std::vector<Constraint> m_asAttributeFilterConstraints{};
 
     std::map<std::string, std::unique_ptr<OGRFieldDefn>>
-    LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata);
+    LoadGDALSchema(const arrow::KeyValueMetadata *kv_metadata);
+
+    void LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata);
 
     OGRArrowLayer(OGRArrowDataset *poDS, const char *pszLayerName);
 
@@ -206,8 +210,9 @@ class OGRArrowLayer CPL_NON_FINAL
     void ComputeConstraintsArrayIdx();
 
     virtual bool FastGetExtent(int iGeomField, OGREnvelope *psExtent) const;
+    bool FastGetExtent3D(int iGeomField, OGREnvelope3D *psExtent) const;
     static OGRErr GetExtentFromMetadata(const CPLJSONObject &oJSONDef,
-                                        OGREnvelope *psExtent);
+                                        OGREnvelope3D *psExtent);
 
     int GetArrowSchema(struct ArrowArrayStream *,
                        struct ArrowSchema *out) override;
@@ -230,6 +235,8 @@ class OGRArrowLayer CPL_NON_FINAL
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                      int bForce = TRUE) override;
+    OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                       int bForce = TRUE) override;
     OGRErr SetAttributeFilter(const char *pszFilter) override;
 
     void SetSpatialFilter(OGRGeometry *poGeom) override
@@ -402,8 +409,9 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
         return nullptr;
     }
     int TestCapability(const char *pszCap) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
-    OGRErr CreateGeomField(OGRGeomFieldDefn *poField,
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
+    OGRErr CreateGeomField(const OGRGeomFieldDefn *poField,
                            int bApproxOK = TRUE) override;
     GIntBig GetFeatureCount(int bForce) override;
 

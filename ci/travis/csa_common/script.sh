@@ -8,7 +8,7 @@ rm -f filtered_scanbuild.txt
 files=$(find scanbuildoutput -name "*.sarif")
 for f in $files; do
     # CSA 10 uses artifactLocation. Earlier versions used fileLocation
-    (sed 's/fileLocation/artifactLocation/g' < $f) |jq '.runs[].results[] | (if .locations[].physicalLocation.artifactLocation.uri | (contains("/usr/include") or contains("degrib") or contains("libpng") or contains("libjpeg") or contains("EHapi") or contains("GDapi") or contains("SWapi") or contains("osr_cs_wkt_parser") or contains("ods_formula_parser") or contains("swq_parser") or contains("json_tokener") ) then empty else { "uri": .locations[].physicalLocation.artifactLocation.uri, "msg": .message.text, "location": .codeFlows[-1].threadFlows[-1].locations[-1] } end)' > tmp.txt
+    (sed 's/fileLocation/artifactLocation/g' < $f) |jq '.runs[].results[] | (if .locations[].physicalLocation.artifactLocation.uri | (contains("/usr/include") or contains("degrib") or contains("libpng") or contains("libjpeg") or contains("EHapi") or contains("GDapi") or contains("SWapi") or contains("osr_cs_wkt_parser") or contains("ods_formula_parser") or contains("swq_parser") or contains("libjson") or contains("flatbuffers") or contains("cpl_minizip_zip.cpp") or contains("gdal_rpc.cpp") or contains("internal_libqhull") ) then empty else { "uri": .locations[].physicalLocation.artifactLocation.uri, "msg": .message.text, "location": .codeFlows[-1].threadFlows[-1].locations[-1] } end)' > tmp.txt
     if [ -s tmp.txt ]; then
         echo "Errors from $f: "
         cat $f

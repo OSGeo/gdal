@@ -112,7 +112,7 @@ static GDALDataset *OGRNASDriverOpen(GDALOpenInfo *poOpenInfo)
 
     OGRNASDataSource *poDS = new OGRNASDataSource();
 
-    if (!poDS->Open(poOpenInfo->pszFilename) || poDS->GetLayerCount() == 0)
+    if (!poDS->Open(poOpenInfo->pszFilename))
     {
         delete poDS;
         return nullptr;

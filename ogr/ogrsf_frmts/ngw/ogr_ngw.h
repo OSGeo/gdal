@@ -106,7 +106,7 @@ std::string CreateResource(const std::string &osUrl,
                            char **papszHTTPOptions);
 bool UpdateResource(const std::string &osUrl, const std::string &osResourceId,
                     const std::string &osPayload, char **papszHTTPOptions);
-void FillResmeta(CPLJSONObject &oRoot, char **papszMetadata);
+void FillResmeta(const CPLJSONObject &oRoot, char **papszMetadata);
 std::string GetResmetaSuffix(CPLJSONObject::Type eType);
 bool DeleteFeature(const std::string &osUrl, const std::string &osResourceId,
                    const std::string &osFeatureId, char **papszHTTPOptions);
@@ -180,7 +180,7 @@ class OGRNGWLayer final : public OGRLayer
     virtual OGRFeatureDefn *GetLayerDefn() override;
     virtual int TestCapability(const char *) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
     virtual OGRErr DeleteField(int iField) override;
     virtual OGRErr ReorderFields(int *panMap) override;

@@ -50,19 +50,28 @@ static int OGRShapeDriverIdentify(GDALOpenInfo *poOpenInfo)
     if (!poOpenInfo->bStatOK)
         return FALSE;
     if (poOpenInfo->bIsDirectory)
-        return -1;  // Unsure.
+    {
+        if (STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") &&
+            (strstr(poOpenInfo->pszFilename, ".shp.zip") ||
+             strstr(poOpenInfo->pszFilename, ".SHP.ZIP")))
+        {
+            return TRUE;
+        }
+
+        return GDAL_IDENTIFY_UNKNOWN;  // Unsure.
+    }
     if (poOpenInfo->fpL == nullptr)
     {
         return FALSE;
     }
-    CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
-    if (EQUAL(osExt, "SHP") || EQUAL(osExt, "SHX"))
+    const std::string osExt(CPLGetExtension(poOpenInfo->pszFilename));
+    if (EQUAL(osExt.c_str(), "SHP") || EQUAL(osExt.c_str(), "SHX"))
     {
         return poOpenInfo->nHeaderBytes >= 4 &&
                (memcmp(poOpenInfo->pabyHeader, "\x00\x00\x27\x0A", 4) == 0 ||
                 memcmp(poOpenInfo->pabyHeader, "\x00\x00\x27\x0D", 4) == 0);
     }
-    if (EQUAL(osExt, "DBF"))
+    if (EQUAL(osExt.c_str(), "DBF"))
     {
         if (poOpenInfo->nHeaderBytes < 32)
             return FALSE;
@@ -82,8 +91,8 @@ static int OGRShapeDriverIdentify(GDALOpenInfo *poOpenInfo)
             return FALSE;
         return TRUE;
     }
-    if (EQUAL(osExt, "shz") ||
-        (EQUAL(osExt, "zip") &&
+    if (EQUAL(osExt.c_str(), "shz") ||
+        (EQUAL(osExt.c_str(), "zip") &&
          (CPLString(poOpenInfo->pszFilename).endsWith(".shp.zip") ||
           CPLString(poOpenInfo->pszFilename).endsWith(".SHP.ZIP"))))
     {
@@ -95,7 +104,7 @@ static int OGRShapeDriverIdentify(GDALOpenInfo *poOpenInfo)
     if (!STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") &&
         EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input"))
     {
-        return -1;
+        return GDAL_IDENTIFY_UNKNOWN;
     }
 #endif
     return FALSE;

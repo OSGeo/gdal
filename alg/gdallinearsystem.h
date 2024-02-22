@@ -59,12 +59,12 @@ struct GDALMatrix
     /// Returns the reference to the element at the position \a row, \a col.
     inline double &operator()(int row, int col)
     {
-        return v[row + col * n_rows];
+        return v[row + col * static_cast<size_t>(n_rows)];
     }
     /// Returns the element at the position \a row, \a col by value.
     inline double operator()(int row, int col) const
     {
-        return v[row + col * n_rows];
+        return v[row + col * static_cast<size_t>(n_rows)];
     }
     /// Returns the values of the matrix in column major order.
     double const *data() const
@@ -82,7 +82,7 @@ struct GDALMatrix
         n_rows = iRows;
         n_cols = iCols;
         v.clear();
-        v.resize(iRows * iCols);
+        v.resize(static_cast<size_t>(iRows) * iCols);
     }
 
   private:

@@ -3501,7 +3501,7 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             size_t j =
                 (nSrcLineStart - nChunkYOff) * static_cast<size_t>(nDstXSize);
 #ifdef USE_SSE2
-            if (eWrkDataType == GDT_Float32)
+            if constexpr (eWrkDataType == GDT_Float32)
             {
 #ifdef __AVX__
                 for (; iFilteredPixelOff + 15 < nDstXSize;
@@ -4595,7 +4595,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         }
 
         poJob->oDstBufferHolder =
-            cpl::make_unique<PointerHolder>(poJob->pDstBuffer);
+            std::make_unique<PointerHolder>(poJob->pDstBuffer);
 
         {
             std::lock_guard<std::mutex> guard(poJob->mutex);
@@ -5636,7 +5636,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
 
 /** Undocumented
  * @param hSrcBand undocumented.
- * @param nSampleStep undocumented.
+ * @param nSampleStep Step between scanlines used to compute statistics.
+ *                    When nSampleStep is equal to 1, all scanlines will
+ *                    be processed.
  * @param pdfMean undocumented.
  * @param pdfStdDev undocumented.
  * @param pfnProgress undocumented.
@@ -5729,7 +5731,7 @@ CPLErr CPL_STDCALL GDALComputeBandStats(GDALRasterBandH hSrcBand,
             }
 
             dfSum += fValue;
-            dfSum2 += fValue * fValue;
+            dfSum2 += static_cast<double>(fValue) * fValue;
         }
 
         nSamples += nWidth;

@@ -40,7 +40,7 @@
 #include "tiffvers.h"
 
 CPL_C_START
-void GTiffOneTimeInit();
+void CPL_DLL GTiffOneTimeInit();
 void CPL_DLL LibgeotiffOneTimeInit();
 CPL_C_END
 
@@ -54,6 +54,12 @@ void GTIFFSetWebPLossless(GDALDatasetH hGTIFFDS, bool bWebpLossless);
 void GTIFFSetZLevel(GDALDatasetH hGTIFFDS, int nZLevel);
 void GTIFFSetZSTDLevel(GDALDatasetH hGTIFFDS, int nZSTDLevel);
 void GTIFFSetMaxZError(GDALDatasetH hGTIFFDS, double dfMaxZError);
+#if HAVE_JXL
+void GTIFFSetJXLLossless(GDALDatasetH hGTIFFDS, bool bIsLossless);
+void GTIFFSetJXLEffort(GDALDatasetH hGTIFFDS, int nEffort);
+void GTIFFSetJXLDistance(GDALDatasetH hGTIFFDS, float fDistance);
+void GTIFFSetJXLAlphaDistance(GDALDatasetH hGTIFFDS, float fAlphaDistance);
+#endif
 const char *GTIFFGetCompressionMethodName(int nCompressionCode);
 int GTIFFGetCompressionMethod(const char *pszValue,
                               const char *pszVariableName);
@@ -152,15 +158,6 @@ int &GTIFFGetThreadLocalLibtiffError();
 
 #if !defined(TIFFTAG_WEBP_LOSSLESS)
 #define TIFFTAG_WEBP_LOSSLESS 65569 /* WebP lossless/lossy */
-#endif
-
-// Only libtiff 4.0.4 can handle between 32768 and 65535 directories.
-#if TIFFLIB_VERSION >= 20120922
-#define SUPPORTS_MORE_THAN_32768_DIRECTORIES
-#endif
-
-#if TIFFLIB_VERSION > 20181110  // > 4.0.10
-#define SUPPORTS_GET_OFFSET_BYTECOUNT
 #endif
 
 #if (TIFFLIB_VERSION > 20220520) || defined(INTERNAL_LIBTIFF)  // > 4.4.0

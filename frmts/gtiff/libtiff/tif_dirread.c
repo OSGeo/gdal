@@ -1016,16 +1016,7 @@ TIFFReadDirEntryFloat(TIFF *tif, TIFFDirEntry *direntry, float *value)
             err = TIFFReadDirEntryCheckedLong8(tif, direntry, &m);
             if (err != TIFFReadDirEntryErrOk)
                 return (err);
-#if defined(__WIN32__) && (_MSC_VER < 1500)
-            /*
-             * XXX: MSVC 6.0 does not support conversion
-             * of 64-bit integers into floating point
-             * values.
-             */
-            *value = _TIFFUInt64ToFloat(m);
-#else
             *value = (float)m;
-#endif
             return (TIFFReadDirEntryErrOk);
         }
         case TIFF_SLONG8:
@@ -1130,16 +1121,7 @@ TIFFReadDirEntryDouble(TIFF *tif, TIFFDirEntry *direntry, double *value)
             err = TIFFReadDirEntryCheckedLong8(tif, direntry, &m);
             if (err != TIFFReadDirEntryErrOk)
                 return (err);
-#if defined(__WIN32__) && (_MSC_VER < 1500)
-            /*
-             * XXX: MSVC 6.0 does not support conversion
-             * of 64-bit integers into floating point
-             * values.
-             */
-            *value = _TIFFUInt64ToDouble(m);
-#else
             *value = (double)m;
-#endif
             return (TIFFReadDirEntryErrOk);
         }
         case TIFF_SLONG8:
@@ -1307,6 +1289,24 @@ TIFFReadDirEntryArrayWithLimit(TIFF *tif, TIFFDirEntry *direntry,
     *count = (uint32_t)target_count64;
     datasize = (*count) * typesize;
     assert((tmsize_t)datasize > 0);
+
+    if (datasize > 100 * 1024 * 1024)
+    {
+        /* Before allocating a huge amount of memory for corrupted files, check
+         * if size of requested memory is not greater than file size.
+         */
+        const uint64_t filesize = TIFFGetFileSize(tif);
+        if (datasize > filesize)
+        {
+            TIFFWarningExtR(tif, "ReadDirEntryArray",
+                            "Requested memory size for tag %d (0x%x) %" PRIu32
+                            " is greater than filesize %" PRIu64
+                            ". Memory not allocated, tag not read",
+                            direntry->tdir_tag, direntry->tdir_tag, datasize,
+                            filesize);
+            return (TIFFReadDirEntryErrAlloc);
+        }
+    }
 
     if (isMapped(tif) && datasize > (uint64_t)tif->tif_size)
         return TIFFReadDirEntryErrIo;
@@ -2886,16 +2886,7 @@ TIFFReadDirEntryFloatArray(TIFF *tif, TIFFDirEntry *direntry, float **value)
             {
                 if (tif->tif_flags & TIFF_SWAB)
                     TIFFSwabLong8(ma);
-#if defined(__WIN32__) && (_MSC_VER < 1500)
-                /*
-                 * XXX: MSVC 6.0 does not support
-                 * conversion of 64-bit integers into
-                 * floating point values.
-                 */
-                *mb++ = _TIFFUInt64ToFloat(*ma++);
-#else
                 *mb++ = (float)(*ma++);
-#endif
             }
         }
         break;
@@ -3131,16 +3122,7 @@ TIFFReadDirEntryDoubleArray(TIFF *tif, TIFFDirEntry *direntry, double **value)
             {
                 if (tif->tif_flags & TIFF_SWAB)
                     TIFFSwabLong8(ma);
-#if defined(__WIN32__) && (_MSC_VER < 1500)
-                /*
-                 * XXX: MSVC 6.0 does not support
-                 * conversion of 64-bit integers into
-                 * floating point values.
-                 */
-                *mb++ = _TIFFUInt64ToDouble(*ma++);
-#else
                 *mb++ = (double)(*ma++);
-#endif
             }
         }
         break;
@@ -4260,11 +4242,9 @@ int TIFFReadDirectory(TIFF *tif)
                                 dp->tdir_tag, dp->tdir_tag);
                 /* the following knowingly leaks the
                    anonymous field structure */
-                if (!_TIFFMergeFields(
-                        tif,
-                        _TIFFCreateAnonField(tif, dp->tdir_tag,
-                                             (TIFFDataType)dp->tdir_type),
-                        1))
+                const TIFFField *fld = _TIFFCreateAnonField(
+                    tif, dp->tdir_tag, (TIFFDataType)dp->tdir_type);
+                if (fld == NULL || !_TIFFMergeFields(tif, fld, 1))
                 {
                     TIFFWarningExtR(
                         tif, module,
@@ -5138,11 +5118,9 @@ int TIFFReadCustomDirectory(TIFF *tif, toff_t diroff,
                             "Unknown field with tag %" PRIu16 " (0x%" PRIx16
                             ") encountered",
                             dp->tdir_tag, dp->tdir_tag);
-            if (!_TIFFMergeFields(
-                    tif,
-                    _TIFFCreateAnonField(tif, dp->tdir_tag,
-                                         (TIFFDataType)dp->tdir_type),
-                    1))
+            const TIFFField *fld = _TIFFCreateAnonField(
+                tif, dp->tdir_tag, (TIFFDataType)dp->tdir_type);
+            if (fld == NULL || !_TIFFMergeFields(tif, fld, 1))
             {
                 TIFFWarningExtR(tif, module,
                                 "Registering anonymous field with tag %" PRIu16
@@ -5238,9 +5216,7 @@ int TIFFReadCustomDirectory(TIFF *tif, toff_t diroff,
  */
 int TIFFReadEXIFDirectory(TIFF *tif, toff_t diroff)
 {
-    const TIFFFieldArray *exifFieldArray;
-    exifFieldArray = _TIFFGetExifFields();
-    return TIFFReadCustomDirectory(tif, diroff, exifFieldArray);
+    return TIFFReadCustomDirectory(tif, diroff, _TIFFGetExifFields());
 }
 
 /*
@@ -5248,9 +5224,7 @@ int TIFFReadEXIFDirectory(TIFF *tif, toff_t diroff)
  */
 int TIFFReadGPSDirectory(TIFF *tif, toff_t diroff)
 {
-    const TIFFFieldArray *gpsFieldArray;
-    gpsFieldArray = _TIFFGetGpsFields();
-    return TIFFReadCustomDirectory(tif, diroff, gpsFieldArray);
+    return TIFFReadCustomDirectory(tif, diroff, _TIFFGetGpsFields());
 }
 
 static int EstimateStripByteCounts(TIFF *tif, TIFFDirEntry *dir,
@@ -5266,6 +5240,24 @@ static int EstimateStripByteCounts(TIFF *tif, TIFFDirEntry *dir,
     if (!_TIFFFillStrilesInternal(tif, 0))
         return -1;
 
+    const uint64_t allocsize = (uint64_t)td->td_nstrips * sizeof(uint64_t);
+    uint64_t filesize = 0;
+    if (allocsize > 100 * 1024 * 1024)
+    {
+        /* Before allocating a huge amount of memory for corrupted files, check
+         * if size of requested memory is not greater than file size. */
+        filesize = TIFFGetFileSize(tif);
+        if (allocsize > filesize)
+        {
+            TIFFWarningExtR(
+                tif, module,
+                "Requested memory size for StripByteCounts of %" PRIu64
+                " is greater than filesize %" PRIu64 ". Memory not allocated",
+                allocsize, filesize);
+            return -1;
+        }
+    }
+
     if (td->td_stripbytecount_p)
         _TIFFfreeExt(tif, td->td_stripbytecount_p);
     td->td_stripbytecount_p = (uint64_t *)_TIFFCheckMalloc(
@@ -5276,9 +5268,7 @@ static int EstimateStripByteCounts(TIFF *tif, TIFFDirEntry *dir,
     if (td->td_compression != COMPRESSION_NONE)
     {
         uint64_t space;
-        uint64_t filesize;
         uint16_t n;
-        filesize = TIFFGetFileSize(tif);
         if (!(tif->tif_flags & TIFF_BIGTIFF))
             space = sizeof(TIFFHeaderClassic) + 2 + dircount * 12 + 4;
         else
@@ -5314,6 +5304,8 @@ static int EstimateStripByteCounts(TIFF *tif, TIFFDirEntry *dir,
                 return -1;
             space += datasize;
         }
+        if (filesize == 0)
+            filesize = TIFFGetFileSize(tif);
         if (filesize < space)
             /* we should perhaps return in error ? */
             space = filesize;
@@ -5921,6 +5913,20 @@ static uint16_t TIFFFetchDirectory(TIFF *tif, uint64_t diroff,
                           "directories not supported");
             return 0;
         }
+        /* Before allocating a huge amount of memory for corrupted files, check
+         * if size of requested memory is not greater than file size. */
+        uint64_t filesize = TIFFGetFileSize(tif);
+        uint64_t allocsize = (uint64_t)dircount16 * dirsize;
+        if (allocsize > filesize)
+        {
+            TIFFWarningExtR(
+                tif, module,
+                "Requested memory size for TIFF directory of %" PRIu64
+                " is greater than filesize %" PRIu64
+                ". Memory not allocated, TIFF directory not read",
+                allocsize, filesize);
+            return 0;
+        }
         origdir = _TIFFCheckMalloc(tif, dircount16, dirsize,
                                    "to read TIFF directory");
         if (origdir == NULL)
@@ -5968,6 +5974,8 @@ static uint16_t TIFFFetchDirectory(TIFF *tif, uint64_t diroff,
             }
         }
     }
+    /* No check against filesize needed here because "dir" should have same size
+     * than "origdir" checked above. */
     dir = (TIFFDirEntry *)_TIFFCheckMalloc(
         tif, dircount16, sizeof(TIFFDirEntry), "to read TIFF directory");
     if (dir == 0)
@@ -6089,15 +6097,15 @@ static int TIFFFetchNormalTag(TIFF *tif, TIFFDirEntry *dp, int recover)
                         fip->field_name);
                 else if (mb + 1 > (uint32_t)dp->tdir_count)
                 {
-                    uint8_t *o;
-                    TIFFWarningExtR(
-                        tif, module,
-                        "ASCII value for tag \"%s\" does not end in null byte",
-                        fip->field_name);
+                    TIFFWarningExtR(tif, module,
+                                    "ASCII value for tag \"%s\" does not end "
+                                    "in null byte. Forcing it to be null",
+                                    fip->field_name);
                     /* TIFFReadDirEntryArrayWithLimit() ensures this can't be
                      * larger than MAX_SIZE_TAG_DATA */
                     assert((uint32_t)dp->tdir_count + 1 == dp->tdir_count + 1);
-                    o = _TIFFmallocExt(tif, (uint32_t)dp->tdir_count + 1);
+                    uint8_t *o =
+                        _TIFFmallocExt(tif, (uint32_t)dp->tdir_count + 1);
                     if (o == NULL)
                     {
                         if (data != NULL)
@@ -6597,12 +6605,29 @@ static int TIFFFetchNormalTag(TIFF *tif, TIFFDirEntry *dp, int recover)
                     if (data != 0 && dp->tdir_count > 0 &&
                         data[dp->tdir_count - 1] != '\0')
                     {
-                        TIFFWarningExtR(
-                            tif, module,
-                            "ASCII value for tag \"%s\" does not end in null "
-                            "byte. Forcing it to be null",
-                            fip->field_name);
-                        data[dp->tdir_count - 1] = '\0';
+                        TIFFWarningExtR(tif, module,
+                                        "ASCII value for ASCII array tag "
+                                        "\"%s\" does not end in null "
+                                        "byte. Forcing it to be null",
+                                        fip->field_name);
+                        /* Enlarge buffer and add terminating null. */
+                        uint8_t *o =
+                            _TIFFmallocExt(tif, (uint32_t)dp->tdir_count + 1);
+                        if (o == NULL)
+                        {
+                            if (data != NULL)
+                                _TIFFfreeExt(tif, data);
+                            return (0);
+                        }
+                        if (dp->tdir_count > 0)
+                        {
+                            _TIFFmemcpy(o, data, (uint32_t)dp->tdir_count);
+                        }
+                        o[(uint32_t)dp->tdir_count] = 0;
+                        dp->tdir_count++; /* Increment for added null. */
+                        if (data != 0)
+                            _TIFFfreeExt(tif, data);
+                        data = o;
                     }
                     m = TIFFSetField(tif, dp->tdir_tag,
                                      (uint16_t)(dp->tdir_count), data);
@@ -6879,11 +6904,29 @@ static int TIFFFetchNormalTag(TIFF *tif, TIFFDirEntry *dp, int recover)
                 if (data != 0 && dp->tdir_count > 0 &&
                     data[dp->tdir_count - 1] != '\0')
                 {
-                    TIFFWarningExtR(tif, module,
-                                    "ASCII value for tag \"%s\" does not end "
-                                    "in null byte. Forcing it to be null",
-                                    fip->field_name);
-                    data[dp->tdir_count - 1] = '\0';
+                    TIFFWarningExtR(
+                        tif, module,
+                        "ASCII value for ASCII array tag \"%s\" does not end "
+                        "in null byte. Forcing it to be null",
+                        fip->field_name);
+                    /* Enlarge buffer and add terminating null. */
+                    uint8_t *o =
+                        _TIFFmallocExt(tif, (uint32_t)dp->tdir_count + 1);
+                    if (o == NULL)
+                    {
+                        if (data != NULL)
+                            _TIFFfreeExt(tif, data);
+                        return (0);
+                    }
+                    if (dp->tdir_count > 0)
+                    {
+                        _TIFFmemcpy(o, data, (uint32_t)dp->tdir_count);
+                    }
+                    o[(uint32_t)dp->tdir_count] = 0;
+                    dp->tdir_count++; /* Increment for added null. */
+                    if (data != 0)
+                        _TIFFfreeExt(tif, data);
+                    data = o;
                 }
                 m = TIFFSetField(tif, dp->tdir_tag, (uint32_t)(dp->tdir_count),
                                  data);
@@ -7164,6 +7207,25 @@ static int TIFFFetchStripThing(TIFF *tif, TIFFDirEntry *dir, uint32_t nstrips,
             return (0);
         }
 
+        const uint64_t allocsize = (uint64_t)nstrips * sizeof(uint64_t);
+        if (allocsize > 100 * 1024 * 1024)
+        {
+            /* Before allocating a huge amount of memory for corrupted files,
+             * check if size of requested memory is not greater than file size.
+             */
+            const uint64_t filesize = TIFFGetFileSize(tif);
+            if (allocsize > filesize)
+            {
+                TIFFWarningExtR(
+                    tif, module,
+                    "Requested memory size for StripArray of %" PRIu64
+                    " is greater than filesize %" PRIu64
+                    ". Memory not allocated",
+                    allocsize, filesize);
+                _TIFFfreeExt(tif, data);
+                return (0);
+            }
+        }
         resizeddata = (uint64_t *)_TIFFCheckMalloc(
             tif, nstrips, sizeof(uint64_t), "for strip array");
         if (resizeddata == 0)
@@ -7262,6 +7324,26 @@ static void allocChoppedUpStripArrays(TIFF *tif, uint32_t nstrips,
         return;
     }
     bytecount = last_offset + last_bytecount - offset;
+
+    /* Before allocating a huge amount of memory for corrupted files, check if
+     * size of StripByteCount and StripOffset tags is not greater than
+     * file size.
+     */
+    const uint64_t allocsize = (uint64_t)nstrips * sizeof(uint64_t) * 2;
+    if (allocsize > 100 * 1024 * 1024)
+    {
+        const uint64_t filesize = TIFFGetFileSize(tif);
+        if (allocsize > filesize)
+        {
+            TIFFWarningExtR(tif, "allocChoppedUpStripArrays",
+                            "Requested memory size for StripByteCount and "
+                            "StripOffsets %" PRIu64
+                            " is greater than filesize %" PRIu64
+                            ". Memory not allocated",
+                            allocsize, filesize);
+            return;
+        }
+    }
 
     newcounts =
         (uint64_t *)_TIFFCheckMalloc(tif, nstrips, sizeof(uint64_t),

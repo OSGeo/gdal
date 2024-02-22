@@ -1,4 +1,6 @@
 /* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */
+#ifndef GDAL_SHAPELIB_SYMBOL_RENAME_H_INCLUDED
+#define GDAL_SHAPELIB_SYMBOL_RENAME_H_INCLUDED
 #define compare_ints gdal_compare_ints
 #define DBFAddField gdal_DBFAddField
 #define DBFAddNativeFieldType gdal_DBFAddNativeFieldType
@@ -53,7 +55,6 @@
 #define SBNSearchDiskTree gdal_SBNSearchDiskTree
 #define SBNSearchDiskTreeInteger gdal_SBNSearchDiskTreeInteger
 #define SBNSearchFreeIds gdal_SBNSearchFreeIds
-#define SfRealloc gdal_SfRealloc
 #define SHPAllocBuffer gdal_SHPAllocBuffer
 #define SHPCheckBoundsOverlap gdal_SHPCheckBoundsOverlap
 #define SHPCheckObjectContained gdal_SHPCheckObjectContained
@@ -104,3 +105,4 @@
 #define SHPWriteTreeLL gdal_SHPWriteTreeLL
 #define SHPWriteTreeNode gdal_SHPWriteTreeNode
 #define SwapWord gdal_SwapWord
+#endif /* GDAL_SHAPELIB_SYMBOL_RENAME_H_INCLUDED */

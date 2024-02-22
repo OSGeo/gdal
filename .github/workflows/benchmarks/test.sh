@@ -2,7 +2,7 @@
 
 set -eu
 
-BENCHMARK_STORAGE="file:///tmp"
+BENCHMARK_STORAGE="file://${PWD}/benchmark_results"
 
 # Use time.process_time for more reliability on VMs
 BENCHMARK_OPTIONS=(

@@ -72,8 +72,9 @@ void DDFField::Dump(FILE *fp)
 {
     int nMaxRepeat = 8;
 
-    if (getenv("DDF_MAXDUMP") != nullptr)
-        nMaxRepeat = atoi(getenv("DDF_MAXDUMP"));
+    const char *pszDDF_MAXDUMP = getenv("DDF_MAXDUMP");
+    if (pszDDF_MAXDUMP != nullptr)
+        nMaxRepeat = atoi(pszDDF_MAXDUMP);
 
     fprintf(fp, "  DDFField:\n");
     fprintf(fp, "      Tag = `%s'\n", poDefn->GetName());

@@ -74,7 +74,7 @@ predefined files.
 The following locations are tried by :cpp:func:`CPLLoadConfigOptionsFromPredefinedFiles`:
 
  - the location pointed by the environment variable (or configuration option)
-   :config:`GDAL_CONFIG_FILE` is attempted first. If it set, the next steps are not
+   :config:`GDAL_CONFIG_FILE` is attempted first. If it is set, the next steps are not
    attempted
 
  - for Unix builds, the location pointed by ${sysconfdir}/gdal/gdalrc is first
@@ -358,6 +358,9 @@ Driver management
       subdirectory of the gdal home directory are searched on UNIX and
       $(BINDIR)\gdalplugins on Windows.
 
+      Auto loading can be completely disabled by setting the
+      ``GDAL_DRIVER_PATH`` config option to "disable".
+
       This option must be set before calling :cpp:func:`GDALAllRegister`, or an explicit call
       to :cpp:func:`GDALDriverManager::AutoLoadDrivers` will be required.
 
@@ -400,7 +403,7 @@ General options
       :choices: NEAR, BILINEAR, CUBIC, CUBICSPLINE, LANCZOS, AVERAGE, RMS, MODE, GAUSS
       :default: NEAR
 
-      Sets the resampling algorithm to be used when reading a from a raster
+      Sets the resampling algorithm to be used when reading from a raster
       into a buffer with different dimensions from the source region.
 
 -  .. config:: OGR_ARC_STEPSIZE
@@ -573,7 +576,7 @@ Networking options
 
       .. code-block::
 
-         gdalinfo --config CPL_VSIL_CURL_ALLOWED_EXTENSIONS "".tif" /vsicurl/http://igskmncngs506.cr.usgs.gov/gmted/Global_tiles_GMTED/075darcsec/bln/W030/30N030W_20101117_gmted_bln075.tif
+         gdalinfo --config CPL_VSIL_CURL_ALLOWED_EXTENSIONS ".tif" /vsicurl/http://igskmncngs506.cr.usgs.gov/gmted/Global_tiles_GMTED/075darcsec/bln/W030/30N030W_20101117_gmted_bln075.tif
 
 -  .. config:: CPL_VSIL_CURL_CACHE_SIZE
       :choices: <bytes>
@@ -805,14 +808,14 @@ Networking options
 -  .. config:: GDAL_HTTP_MERGE_CONSECUTIVE_RANGES
       :since: 2.3
       :choices: YES, NO
-      :default: NO
+      :default: YES
 
       Only applies when :config:`GDAL_HTTP_MULTIRANGE` is YES. Defines if ranges
       of a single ReadMultiRange() request that are consecutive should be merged
       into a single request.
 
 -  .. config:: GDAL_HTTP_AUTH
-      :choices: BASIC, NTLM, GSSNEGOTIATE, ANY
+      :choices: BASIC, NTLM, NEGOTIATE, ANY, ANYSAFE, BEARER
 
       Set value to tell libcurl which authentication method(s) you want it to
       use. See http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTHTTPAUTH
@@ -828,6 +831,19 @@ Networking options
       separating the domain and name with a forward (/) or backward slash (\). Like
       this: "domain/user:password" or "domain\user:password". Some HTTP servers (on
       Windows) support this style even for Basic authentication.
+
+-  .. config:: GDAL_GSSAPI_DELEGATION
+      :since: 3.3
+      :choices: NONE, POLICY, ALWAYS
+
+      Set allowed GSS-API delegation. Relevant only with
+      :config:`GDAL_HTTP_AUTH=NEGOTIATE`.
+
+-  .. config:: GDAL_HTTP_BEARER
+      :since: 3.9
+
+      Set HTTP OAuth 2.0 Bearer Access Token to use for the connection. Must be used
+      with :config:`GDAL_HTTP_AUTH=BEARER`.
 
 -  .. config:: GDAL_HTTP_PROXY
 
@@ -852,7 +868,7 @@ Networking options
       in the form of [user name]:[password].
 
 -  .. config:: GDAL_PROXY_AUTH
-      :choices: BASIC, NTLM, DIGEST, ANY
+      :choices: BASIC, NTLM, NEGOTIATE, DIGEST, ANY, ANYSAFE
 
       Set value to  to tell libcurl which authentication method(s) you want it to use
       for your proxy authentication. See
@@ -914,11 +930,11 @@ PROJ options
 
       This option can be used to control the behavior of gdalwarp when warping global
       datasets or when transforming from/to polar projections, which causes
-      coordinates discontinuities. See http://trac.osgeo.org/gdal/ticket/2305.
+      coordinate discontinuities. See http://trac.osgeo.org/gdal/ticket/2305.
 
       The background is that PROJ does not guarantee that converting from src_srs to
       dst_srs and then from dst_srs to src_srs will yield to the initial coordinates.
-      This can cause to errors in the computation of the target bounding box of
+      This can lead to errors in the computation of the target bounding box of
       gdalwarp, or to visual artifacts.
 
       If CHECK_WITH_INVERT_PROJ option is not set, gdalwarp will check that the the

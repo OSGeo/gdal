@@ -1048,6 +1048,16 @@ def test_ogr_shape_read_multipolygon_as_invalid_polygon():
     )
 
 
+def test_ogr_shape_read_multipolygon_as_invalid_polygon_no_warning():
+
+    ds = ogr.Open("data/shp/cb_2022_us_county_20m_extract.shp")
+    lyr = ds.GetLayer(0)
+    gdal.ErrorReset()
+    with gdal.quiet_errors():
+        lyr.GetNextFeature()
+        assert gdal.GetLastErrorMsg() == ""
+
+
 ###############################################################################
 # Test alternate date formatting (#2746)
 
@@ -1843,6 +1853,16 @@ def test_ogr_shape_48(tmp_vsimem):
     lyr.SetFeature(feat)
     extent = lyr.GetExtent()
     assert extent == (1, 3, 2, 4), "did not get expected extent (1)"
+    extent3D = lyr.GetExtent3D()
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert extent3D == (
+        1,
+        3,
+        2,
+        4,
+        float("inf"),
+        float("-inf"),
+    ), "did not get expected extent 3D"
 
     ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_48")
     extent = lyr.GetExtent()
@@ -1888,13 +1908,15 @@ def test_ogr_shape_48(tmp_vsimem):
     )
     lyr.CreateFeature(feat)
     feat.SetGeometry(
-        ogr.CreateGeometryFromWkt("POLYGON((0 0 2,0 1 2,1 1 2,1 0 2,0 0 2))")
+        ogr.CreateGeometryFromWkt("POLYGON((0 0 2,0 1 1,1 1 2,1 0 2,0 0 3))")
     )
     lyr.SetFeature(feat)
     ds.ExecuteSQL("RECOMPUTE EXTENT ON ogr_shape_48")
-    # FIXME: when we have a GetExtent3D
     extent = lyr.GetExtent()
     assert extent == (0, 1, 0, 1), "did not get expected extent (4)"
+    extent3D = lyr.GetExtent3D()
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert extent3D == (0, 1, 0, 1, 1, 3), "did not get expected extent 3D"
     ds = None
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
         tmp_vsimem / "ogr_shape_48.shp"
@@ -5777,3 +5799,270 @@ def test_ogr_shape_write_arrow_fallback_types(tmp_vsimem):
     assert f["intlist"] == "[ 1, 2 ]"
     assert f["int64list"] == "[ 12345678901234, 2 ]"
     assert f["reallist"] == "[ 1.5, 2.5 ]"
+
+
+###############################################################################
+# Test WriteArrowBatch()
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_shape_write_arrow_IF_FID_NOT_PRESERVED_ERROR(tmp_vsimem):
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetFID(1)
+    src_lyr.CreateFeature(f)
+
+    filename = tmp_vsimem / "test_ogr_shape_write_arrow_IF_FID_NOT_PRESERVED_ERROR.shp"
+    ds = gdal.GetDriverByName("ESRI Shapefile").Create(
+        filename, 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("test")
+
+    stream = src_lyr.GetArrowStream()
+    schema = stream.GetSchema()
+
+    while True:
+        array = stream.GetNextRecordBatch()
+        if array is None:
+            break
+        with pytest.raises(Exception, match="Feature id 1 not preserved"):
+            lyr.WriteArrowBatch(
+                schema, array, ["FID=OGC_FID", "IF_FID_NOT_PRESERVED=ERROR"]
+            )
+
+
+###############################################################################
+# Test writing an invalid "0000/00/00" date
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_shape_write_date_0000_00_00(tmp_vsimem):
+
+    filename = tmp_vsimem / "test_ogr_shape_write_date_0000_00_00.shp"
+    ds = gdal.GetDriverByName("ESRI Shapefile").Create(
+        filename, 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("date", ogr.OFTDate))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["date"] = "0000/00/00"
+    lyr.CreateFeature(f)
+    f = None
+    ds.Close()
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.IsFieldNull("date")
+
+
+###############################################################################
+# Test GetArrowStream()
+
+
+def test_ogr_shape_arrow_stream():
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    ds = ogr.Open("data/poly.shp")
+    lyr = ds.GetLayer(0)
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    assert (
+        lyr.GetMetadataItem(
+            "LAST_GET_NEXT_ARROW_ARRAY_USED_OPTIMIZED_CODE_PATH", "__DEBUG__"
+        )
+        == "NO"
+    )
+    assert len(batches) == 1
+    assert len(batches[0]) == 5
+    assert len(batches[0]["OGC_FID"]) == 10
+    assert list(batches[0]["OGC_FID"]) == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    assert list(batches[0]["EAS_ID"]) == [
+        168,
+        179,
+        171,
+        173,
+        172,
+        169,
+        166,
+        158,
+        165,
+        170,
+    ]
+
+
+###############################################################################
+# Test GetArrowStream()
+
+
+def test_ogr_shape_arrow_stream_fid_optim(tmp_vsimem):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    ds = ogr.Open("data/poly.shp")
+    lyr = ds.GetLayer(0)
+    ignored_fields = ["OGR_GEOMETRY"]
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        ignored_fields.append(lyr.GetLayerDefn().GetFieldDefn(i).GetName())
+    lyr.SetIgnoredFields(ignored_fields)
+
+    # Optimized code path
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    assert (
+        lyr.GetMetadataItem(
+            "LAST_GET_NEXT_ARROW_ARRAY_USED_OPTIMIZED_CODE_PATH", "__DEBUG__"
+        )
+        == "YES"
+    )
+    assert len(batches) == 1
+    assert len(batches[0]) == 1
+    assert len(batches[0]["OGC_FID"]) == 10
+    assert list(batches[0]["OGC_FID"]) == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+    # Optimized code path
+    stream = lyr.GetArrowStreamAsNumPy(
+        options=["USE_MASKED_ARRAYS=NO", "MAX_FEATURES_IN_BATCH=7"]
+    )
+    batches = [batch for batch in stream]
+    assert (
+        lyr.GetMetadataItem(
+            "LAST_GET_NEXT_ARROW_ARRAY_USED_OPTIMIZED_CODE_PATH", "__DEBUG__"
+        )
+        == "YES"
+    )
+    assert len(batches) == 2
+    assert len(batches[0]) == 1
+    assert len(batches[0]["OGC_FID"]) == 7
+    assert list(batches[0]["OGC_FID"]) == [0, 1, 2, 3, 4, 5, 6]
+    assert len(batches[1]["OGC_FID"]) == 3
+    assert list(batches[1]["OGC_FID"]) == [7, 8, 9]
+
+    # Regular code path
+    lyr.SetAttributeFilter("1 = 1")
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    lyr.SetAttributeFilter(None)
+    assert (
+        lyr.GetMetadataItem(
+            "LAST_GET_NEXT_ARROW_ARRAY_USED_OPTIMIZED_CODE_PATH", "__DEBUG__"
+        )
+        == "NO"
+    )
+    assert len(batches) == 1
+    assert len(batches[0]) == 1
+    assert len(batches[0]["OGC_FID"]) == 10
+    assert list(batches[0]["OGC_FID"]) == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+    # Regular code path
+    minx, maxx, miny, maxy = lyr.GetExtent()
+    lyr.SetSpatialFilterRect(minx, miny, maxx, maxy)
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    lyr.SetSpatialFilter(None)
+    assert (
+        lyr.GetMetadataItem(
+            "LAST_GET_NEXT_ARROW_ARRAY_USED_OPTIMIZED_CODE_PATH", "__DEBUG__"
+        )
+        == "NO"
+    )
+    assert len(batches) == 0
+
+    # Regular code path
+    lyr.SetIgnoredFields(ignored_fields[0:-1])
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    lyr.SetIgnoredFields(ignored_fields)
+    assert (
+        lyr.GetMetadataItem(
+            "LAST_GET_NEXT_ARROW_ARRAY_USED_OPTIMIZED_CODE_PATH", "__DEBUG__"
+        )
+        == "NO"
+    )
+    assert len(batches) == 1
+    assert len(batches[0]) == 2
+    assert len(batches[0]["OGC_FID"]) == 10
+    assert list(batches[0]["OGC_FID"]) == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+    # Regular code path
+    lyr.SetIgnoredFields(ignored_fields[1:])
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    lyr.SetIgnoredFields(ignored_fields)
+    assert (
+        lyr.GetMetadataItem(
+            "LAST_GET_NEXT_ARROW_ARRAY_USED_OPTIMIZED_CODE_PATH", "__DEBUG__"
+        )
+        == "NO"
+    )
+    assert len(batches) == 1
+    assert len(batches[0]) == 2
+    assert len(batches[0]["OGC_FID"]) == 10
+    assert list(batches[0]["OGC_FID"]) == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+    # Regular code path
+    stream = lyr.GetArrowStreamAsNumPy(
+        options=["USE_MASKED_ARRAYS=NO", "INCLUDE_FID=NO"]
+    )
+    batches = [batch for batch in stream]
+    assert (
+        lyr.GetMetadataItem(
+            "LAST_GET_NEXT_ARROW_ARRAY_USED_OPTIMIZED_CODE_PATH", "__DEBUG__"
+        )
+        == "NO"
+    )
+    assert len(batches) == 0
+
+    del ds
+
+    # Test hole in FID numbering
+    filename = str(tmp_vsimem / "test_ogr_shape_arrow_stream_fid_optim.shp")
+    ds = gdal.GetDriverByName("ESRI Shapefile").Create(
+        filename, 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint, options=["AUTO_REPACK=NO"])
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    for i in range(5):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        lyr.CreateFeature(f)
+        f = None
+    lyr.DeleteFeature(3)
+    ds.Close()
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    lyr.SetIgnoredFields(["OGR_GEOMETRY", "str"])
+
+    # Optimized code path
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    assert (
+        lyr.GetMetadataItem(
+            "LAST_GET_NEXT_ARROW_ARRAY_USED_OPTIMIZED_CODE_PATH", "__DEBUG__"
+        )
+        == "YES"
+    )
+    assert len(batches) == 1
+    assert len(batches[0]) == 1
+    assert len(batches[0]["OGC_FID"]) == 4
+    assert list(batches[0]["OGC_FID"]) == [0, 1, 2, 4]
+
+    f = gdal.VSIFOpenL(filename[0:-4] + ".dbf", "rb+")
+    assert f
+    gdal.VSIFTruncateL(f, 300)
+    gdal.VSIFCloseL(f)
+
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    with gdal.quiet_errors():
+        batches = [batch for batch in stream]
+    assert (
+        lyr.GetMetadataItem(
+            "LAST_GET_NEXT_ARROW_ARRAY_USED_OPTIMIZED_CODE_PATH", "__DEBUG__"
+        )
+        == "YES"
+    )
+    assert len(batches) == 0

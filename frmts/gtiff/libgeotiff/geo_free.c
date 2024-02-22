@@ -37,8 +37,6 @@ called on the corresponding TIFF file handle.<p>
 
 void GTIFFree(GTIF* gtif)
 {
-    int     i;
-
     if (!gtif) return;
 
     /* Free parameter arrays */
@@ -48,7 +46,7 @@ void GTIFFree(GTIF* gtif)
     /* Free GeoKey arrays */
     if (gtif->gt_keys)
     {
-        for (i = 0; i < MAX_KEYS; i++)
+        for (int i = 0; i < MAX_KEYS; i++)
         {
             if (gtif->gt_keys[i].gk_type == TYPE_ASCII)
             {

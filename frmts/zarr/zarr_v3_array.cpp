@@ -739,7 +739,7 @@ bool ZarrV3Array::FlushDirtyTile() const
 
     const size_t nSourceSize =
         m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
-    auto &abyTile =
+    const auto &abyTile =
         m_abyDecodedTileData.empty() ? m_abyRawTileData : m_abyDecodedTileData;
 
     if (IsEmptyTile(abyTile))
@@ -886,11 +886,11 @@ ZarrV3Array::GetTileIndicesFromFilename(const char *pszFilename) const
 }
 
 /************************************************************************/
-/*                             ParseDtype()                             */
+/*                           ParseDtypeV3()                             */
 /************************************************************************/
 
-static GDALExtendedDataType ParseDtype(const CPLJSONObject &obj,
-                                       std::vector<DtypeElt> &elts)
+static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
+                                         std::vector<DtypeElt> &elts)
 {
     do
     {
@@ -1071,45 +1071,14 @@ static T ParseNoDataComponent(const CPLJSONObject &oObj, bool &bOK)
 std::shared_ptr<ZarrArray>
 ZarrV3Group::LoadArray(const std::string &osArrayName,
                        const std::string &osZarrayFilename,
-                       const CPLJSONObject &oRoot,
-                       std::set<std::string> &oSetFilenamesInLoading) const
+                       const CPLJSONObject &oRoot) const
 {
-    // Prevent too deep or recursive array loading
-    if (oSetFilenamesInLoading.find(osZarrayFilename) !=
-        oSetFilenamesInLoading.end())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Attempt at recursively loading %s", osZarrayFilename.c_str());
-        return nullptr;
-    }
-    if (oSetFilenamesInLoading.size() == 32)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too deep call stack in LoadArray()");
-        return nullptr;
-    }
-
-    struct SetFilenameAdder
-    {
-        std::set<std::string> &m_oSetFilenames;
-        std::string m_osFilename;
-
-        SetFilenameAdder(std::set<std::string> &oSetFilenamesIn,
-                         const std::string &osFilename)
-            : m_oSetFilenames(oSetFilenamesIn), m_osFilename(osFilename)
-        {
-            m_oSetFilenames.insert(osFilename);
-        }
-
-        ~SetFilenameAdder()
-        {
-            m_oSetFilenames.erase(m_osFilename);
-        }
-    };
-
-    // Add osZarrayFilename to oSetFilenamesInLoading during the scope
+    // Add osZarrayFilename to m_poSharedResource during the scope
     // of this function call.
-    SetFilenameAdder filenameAdder(oSetFilenamesInLoading, osZarrayFilename);
+    ZarrSharedResource::SetFilenameAdder filenameAdder(m_poSharedResource,
+                                                       osZarrayFilename);
+    if (!filenameAdder.ok())
+        return nullptr;
 
     // Warn about unknown members (the spec suggests to error out, but let be
     // a bit more lenient)
@@ -1243,17 +1212,18 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
             return nullptr;
         }
         aoDims.emplace_back(std::make_shared<ZarrDimension>(
-            m_poSharedResource, m_pSelf, std::string(), CPLSPrintf("dim%d", i),
-            std::string(), std::string(), nSize));
+            m_poSharedResource,
+            std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock()),
+            std::string(), CPLSPrintf("dim%d", i), std::string(), std::string(),
+            nSize));
     }
 
     // Deal with dimension_names
     const auto dimensionNames = oRoot["dimension_names"];
 
-    const auto FindDimension =
-        [this, &aoDims, &osArrayName, &oAttributes,
-         &oSetFilenamesInLoading](const std::string &osDimName,
-                                  std::shared_ptr<GDALDimension> &poDim, int i)
+    const auto FindDimension = [this, &aoDims, &osArrayName, &oAttributes](
+                                   const std::string &osDimName,
+                                   std::shared_ptr<GDALDimension> &poDim, int i)
     {
         auto oIter = m_oMapDimensions.find(osDimName);
         if (oIter != m_oMapDimensions.end())
@@ -1293,8 +1263,8 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
                     CPLJSONDocument oDoc;
                     if (oDoc.Load(osArrayFilenameDim))
                     {
-                        LoadArray(osDimName, osArrayFilenameDim, oDoc.GetRoot(),
-                                  oSetFilenamesInLoading);
+                        LoadArray(osDimName, osArrayFilenameDim,
+                                  oDoc.GetRoot());
                     }
                 }
                 else
@@ -1331,8 +1301,9 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         }
 
         auto poDimLocal = std::make_shared<ZarrDimension>(
-            m_poSharedResource, m_pSelf, GetFullName(), osDimName, osType,
-            osDirection, poDim->GetSize());
+            m_poSharedResource,
+            std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock()),
+            GetFullName(), osDimName, osType, osDirection, poDim->GetSize());
         poDimLocal->SetXArrayDimension();
         m_oMapDimensions[osDimName] = poDimLocal;
         poDim = poDimLocal;
@@ -1377,7 +1348,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     if (oDtype["fallback"].IsValid())
         oDtype = oDtype["fallback"];
     std::vector<DtypeElt> aoDtypeElts;
-    const auto oType = ParseDtype(oDtype, aoDtypeElts);
+    const auto oType = ParseDtypeV3(oDtype, aoDtypeElts);
     if (oType.GetClass() == GEDTC_NUMERIC &&
         oType.GetNumericDataType() == GDT_Unknown)
         return nullptr;
@@ -1593,7 +1564,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
             oInputArrayMetadata.anBlockSizes.push_back(
                 static_cast<size_t>(nSize));
         oInputArrayMetadata.oElt = aoDtypeElts.back();
-        poCodecs = cpl::make_unique<ZarrV3CodecSequence>(oInputArrayMetadata);
+        poCodecs = std::make_unique<ZarrV3CodecSequence>(oInputArrayMetadata);
         if (!poCodecs->InitFromJson(oCodecs))
             return nullptr;
     }
@@ -1611,7 +1582,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     {
         poArray->RegisterNoDataValue(abyNoData.data());
     }
-    poArray->ParseSpecialAttributes(oAttributes);
+    poArray->ParseSpecialAttributes(m_pSelf.lock(), oAttributes);
     poArray->SetAttributes(oAttributes);
     poArray->SetDtype(oDtype);
     if (poCodecs)

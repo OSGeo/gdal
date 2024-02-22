@@ -2334,6 +2334,10 @@ def test_ogr_geojson_56():
         except AssertionError as e:
             pytest.fail("At geom %d: %s" % (i, str(e)))
 
+
+@pytest.mark.require_geos
+def test_ogr_geojson_56_world():
+
     # Test polygon geometry that covers the whole world (#2833)
     gdal.VectorTranslate(
         "/vsimem/out.json",
@@ -2359,6 +2363,10 @@ def test_ogr_geojson_56():
 """
     assert json.loads(got) == json.loads(expected)
 
+
+@pytest.mark.require_geos
+def test_ogr_geojson_56_next():
+
     # Test polygon geometry with one longitude at +/- 180deg (#6250)
     gdal.VectorTranslate(
         "/vsimem/out.json",
@@ -2376,13 +2384,23 @@ def test_ogr_geojson_56():
     gdal.Unlink("/vsimem/out.json")
     expected = """{
 "type": "FeatureCollection",
+"bbox": [ 179.5000000, 40.0000000, 180.0000000, 50.0000000 ],
 "features": [
-{ "type": "Feature", "properties": { }, "bbox": [ -180.0, 40.0, 179.5, 50.0 ], "geometry": { "type": "Polygon", "coordinates": [ [ [ -180.0, 50.0 ], [ -180.0, 45.0 ], [ 179.5, 40.0 ], [ 179.5, 50.0 ], [ -180.0, 50.0 ] ] ] } }
-],
-"bbox": [ -180.0000000, 40.0000000, 179.5000000, 50.0000000 ]
+{ "type": "Feature", "properties": { }, "bbox": [ 179.5, 40.0, 180.0, 50.0 ], "geometry": { "type": "Polygon", "coordinates": [ [ [ 179.5, 40.0 ], [ 180.0, 45.0 ], [ 180.0, 50.0 ], [ 179.5, 50.0 ], [ 179.5, 40.0 ] ] ] } }
+]
 }
 """
-    assert json.loads(got) == json.loads(expected)
+    expected_older_geos = """{
+"type": "FeatureCollection",
+"bbox": [ 179.5000000, 40.0000000, 180.0000000, 50.0000000 ],
+"features": [
+{ "type": "Feature", "properties": { }, "bbox": [ 179.5, 40.0, 180.0, 50.0 ], "geometry": { "type": "Polygon", "coordinates": [ [ [ 180.0, 45.0 ], [ 180.0, 50.0 ], [ 179.5, 50.0 ], [ 179.5, 40.0 ], [ 180.0, 45.0 ] ] ] } }
+]
+}
+"""
+    assert json.loads(got) == json.loads(expected) or json.loads(got) == json.loads(
+        expected_older_geos
+    )
 
     # Test WRAPDATELINE=NO (#6250)
     gdal.VectorTranslate(
@@ -2400,6 +2418,56 @@ def test_ogr_geojson_56():
 { "type": "Feature", "properties": { }, "bbox": [ -179.0, 50.0, 179.0, 50.0 ], "geometry": { "type": "LineString", "coordinates": [ [ 179.0, 50.0 ], [ -179.0, 50.0 ] ] } }
 ],
 "bbox": [ -179.0000000, 50.0000000, 179.0000000, 50.0000000 ]
+}
+"""
+    assert json.loads(got) == json.loads(expected)
+
+    # Test line geometry with one longitude at +/- 180deg (#8645)
+    gdal.VectorTranslate(
+        "/vsimem/out.json",
+        """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "geometry": {"type":"LineString","coordinates":[[-179,0],[-180,0],[179,0]]} }
+  ]
+}""",
+        format="GeoJSON",
+        layerCreationOptions=["RFC7946=YES", "WRITE_BBOX=YES"],
+    )
+
+    got = read_file("/vsimem/out.json")
+    gdal.Unlink("/vsimem/out.json")
+    expected = """{
+"type": "FeatureCollection",
+"bbox": [ 179.0000000, 0.0000000, -179.0000000, 0.0000000 ],
+"features": [
+{ "type": "Feature", "properties": { }, "bbox": [ 179.0, 0.0, -179.0, 0.0 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ -179.0, 0.0 ], [ -180.0, 0.0 ] ], [ [ 180.0, 0.0 ], [ 179.0, 0.0 ] ] ] } }
+]
+}
+"""
+    assert json.loads(got) == json.loads(expected)
+
+    # Test line geometry with one longitude at +/- 180deg (#8645)
+    gdal.VectorTranslate(
+        "/vsimem/out.json",
+        """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "geometry": {"type":"LineString","coordinates":[[179,0],[180,0],[-179,0]]} }
+  ]
+}""",
+        format="GeoJSON",
+        layerCreationOptions=["RFC7946=YES", "WRITE_BBOX=YES"],
+    )
+
+    got = read_file("/vsimem/out.json")
+    gdal.Unlink("/vsimem/out.json")
+    expected = """{
+"type": "FeatureCollection",
+"bbox": [ 179.0000000, 0.0000000, -179.0000000, 0.0000000 ],
+"features": [
+{ "type": "Feature", "properties": { }, "bbox": [ 179.0, 0.0, -179.0, 0.0 ], "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 179.0, 0.0 ], [ 180.0, 0.0 ] ], [ [ -180.0, 0.0 ], [ -179.0, 0.0 ] ] ] } }
+]
 }
 """
     assert json.loads(got) == json.loads(expected)
@@ -4349,14 +4417,8 @@ def test_ogr_geojson_open_with_non_C_locale():
 # Test geometry validity fixing due to limited coordinate precision
 
 
+@pytest.mark.require_geos
 def test_ogr_geojson_write_geometry_validity_fixing_rfc7946(tmp_vsimem):
-
-    # Check if MakeValid() is available
-    g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
-    with gdaltest.error_handler(), gdaltest.disable_exceptions():
-        make_valid_available = g.MakeValid() is not None
-    if not make_valid_available:
-        pytest.skip("MakeValid() not available")
 
     filename = str(
         tmp_vsimem / "test_ogr_geojson_write_geometry_validity_fixing.geojson"
@@ -4386,14 +4448,8 @@ def test_ogr_geojson_write_geometry_validity_fixing_rfc7946(tmp_vsimem):
 # Test geometry validity fixing due to limited coordinate precision
 
 
+@pytest.mark.require_geos
 def test_ogr_geojson_write_geometry_validity_fixing(tmp_vsimem):
-
-    # Check if MakeValid() is available
-    g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
-    with gdaltest.error_handler(), gdaltest.disable_exceptions():
-        make_valid_available = g.MakeValid() is not None
-    if not make_valid_available:
-        pytest.skip("MakeValid() not available")
 
     filename = str(
         tmp_vsimem / "test_ogr_geojson_write_geometry_validity_fixing.geojson"
@@ -4561,3 +4617,442 @@ def test_ogr_geojson_arrow_stream_pyarrow_unknown_timezone(tmp_vsimem):
         for x in batch.field("datetime"):
             values.append(x.value)
     assert values == [1654000496789, 1654004096789]
+
+
+###############################################################################
+
+
+def test_ogr_geojson_foreign_members_collection(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test_ogr_geojson_foreign_members_collection.geojson")
+    ds = gdal.GetDriverByName("GeoJSON").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    with pytest.raises(
+        Exception,
+        match="Value of FOREIGN_MEMBERS_COLLECTION should start with { and end with }",
+    ):
+        assert (
+            ds.CreateLayer(
+                "test",
+                geom_type=ogr.wkbNone,
+                options=["FOREIGN_MEMBERS_COLLECTION=invalid"],
+            )
+            is None
+        )
+    with pytest.raises(
+        Exception,
+        match="Value of FOREIGN_MEMBERS_COLLECTION should start with { and end with }",
+    ):
+        assert (
+            ds.CreateLayer(
+                "test",
+                geom_type=ogr.wkbNone,
+                options=["FOREIGN_MEMBERS_COLLECTION={invalid"],
+            )
+            is None
+        )
+    with pytest.raises(
+        Exception, match="Value of FOREIGN_MEMBERS_COLLECTION is invalid JSON"
+    ):
+        assert (
+            ds.CreateLayer(
+                "test",
+                geom_type=ogr.wkbNone,
+                options=["FOREIGN_MEMBERS_COLLECTION={invalid}"],
+            )
+            is None
+        )
+    ds.CreateLayer(
+        "test",
+        geom_type=ogr.wkbNone,
+        options=['FOREIGN_MEMBERS_COLLECTION={"foo":"bar"}'],
+    )
+    ds.Close()
+
+    fp = gdal.VSIFOpenL(filename, "rb")
+    data = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
+    gdal.VSIFCloseL(fp)
+
+    assert """{\n"type": "FeatureCollection",\n"foo":"bar",\n"name": "test",""" in data
+
+
+###############################################################################
+
+
+def test_ogr_geojson_foreign_members_feature(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test_ogr_geojson_foreign_members_feature.geojson")
+    ds = gdal.GetDriverByName("GeoJSON").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    with pytest.raises(
+        Exception,
+        match="Value of FOREIGN_MEMBERS_FEATURE should start with { and end with }",
+    ):
+        assert (
+            ds.CreateLayer(
+                "test",
+                geom_type=ogr.wkbNone,
+                options=["FOREIGN_MEMBERS_FEATURE=invalid"],
+            )
+            is None
+        )
+    with pytest.raises(
+        Exception,
+        match="Value of FOREIGN_MEMBERS_FEATURE should start with { and end with }",
+    ):
+        assert (
+            ds.CreateLayer(
+                "test",
+                geom_type=ogr.wkbNone,
+                options=["FOREIGN_MEMBERS_FEATURE={invalid"],
+            )
+            is None
+        )
+    with pytest.raises(
+        Exception, match="Value of FOREIGN_MEMBERS_FEATURE is invalid JSON"
+    ):
+        assert (
+            ds.CreateLayer(
+                "test",
+                geom_type=ogr.wkbNone,
+                options=["FOREIGN_MEMBERS_FEATURE={invalid}"],
+            )
+            is None
+        )
+    lyr = ds.CreateLayer(
+        "test", geom_type=ogr.wkbNone, options=['FOREIGN_MEMBERS_FEATURE={"foo":"bar"}']
+    )
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+    ds.Close()
+
+    fp = gdal.VSIFOpenL(filename, "rb")
+    data = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
+    gdal.VSIFCloseL(fp)
+
+    assert (
+        """{\n"type": "FeatureCollection",\n"name": "test",\n"features": [\n{ "type": "Feature", "properties": { }, "geometry": null, "foo":"bar"}\n]\n}"""
+        in data
+    )
+
+
+###############################################################################
+def test_ogr_json_getextent3d(tmp_vsimem):
+
+    jdata = r"""{
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {"foo": "bar"},
+                    "geometry": {
+                        "type": "%s",
+                        "coordinates": %s
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {"foo": "baz"},
+                    "geometry": {
+                        "type": "%s",
+                        "coordinates": %s
+                    }
+                }
+            ]
+        }"""
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        jdata % ("Point", "[1, 1, 1]", "Point", "[2, 2, 2]"),
+    )
+
+    gdal.ErrorReset()
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test.json",
+        gdal.OF_VECTOR,
+    )
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, 1.0, 2.0)
+
+    # Test 2D
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        jdata % ("Point", "[1, 1]", "Point", "[2, 2]"),
+    )
+
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test.json",
+        gdal.OF_VECTOR,
+    )
+
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert lyr.TestCapability(ogr.OLCFastGetExtent)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, float("inf"), float("-inf"))
+
+    # Test capabilities and extent with filters and round trip
+    lyr.SetAttributeFilter("foo = 'baz'")
+    assert not lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert not lyr.TestCapability(ogr.OLCFastGetExtent)
+    ext2d = lyr.GetExtent()
+    assert ext2d == (2.0, 2.0, 2.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (2.0, 2.0, 2.0, 2.0, float("inf"), float("-inf"))
+
+    lyr.SetAttributeFilter(None)
+    assert lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert lyr.TestCapability(ogr.OLCFastGetExtent)
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, float("inf"), float("-inf"))
+
+    # Test capability with geometry filter
+    lyr.SetSpatialFilterRect(1.5, 1.5, 2.5, 2.5)
+    assert not lyr.TestCapability(ogr.OLCFastGetExtent3D)
+    assert not lyr.TestCapability(ogr.OLCFastGetExtent)
+    ext2d = lyr.GetExtent()
+    assert ext2d == (2.0, 2.0, 2.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (2.0, 2.0, 2.0, 2.0, float("inf"), float("-inf"))
+
+    # Test mixed 2D
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        jdata % ("Point", "[1, 1, 1]", "Point", "[2, 2]"),
+    )
+
+    ds = gdal.OpenEx(
+        tmp_vsimem / "test.json",
+        gdal.OF_VECTOR,
+    )
+
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, 1.0, 1.0)
+
+    # Text mixed geometry types
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        jdata % ("Point", "[1, 1, 1]", "LineString", "[[2, 2, 2], [3, 3, 3]]"),
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+
+    assert gdal.GetLastErrorMsg() == ""
+
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    # Check geometry type is unknown
+    assert dfn.GetGeomFieldDefn(0).GetType() == ogr.wkbUnknown
+
+    # Test a polygon
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        """{
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[1, 1], [2, 1], [2, 2], [1, 2], [1, 1]]]
+                    }
+                }
+            ]
+        }""",
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+
+    assert gdal.GetLastErrorMsg() == ""
+
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, float("inf"), float("-inf"))
+
+    # Test a polygon with a hole
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        """{
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[1, 1], [2, 1], [2, 2], [1, 2], [1, 1]], [[1.5, 1.5], [1.5, 1.6], [1.6, 1.6], [1.6, 1.5], [1.5, 1.5]]]
+                    }
+                }
+            ]
+        }""",
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+
+    assert gdal.GetLastErrorMsg() == ""
+
+    lyr = ds.GetLayer(0)
+    dfn = lyr.GetLayerDefn()
+    assert dfn.GetGeomFieldCount() == 1
+    ext2d = lyr.GetExtent()
+    assert ext2d == (1.0, 2.0, 1.0, 2.0)
+    ext3d = lyr.GetExtent3D()
+    assert ext3d == (1.0, 2.0, 1.0, 2.0, float("inf"), float("-inf"))
+
+    # Test a series of different 2D geometries including polygons with holes
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        """{
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [1, 1]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [[2, 2], [3, 3]]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[4, 4], [5, 4], [5, 5], [4, 5], [4, 4]]]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[6, 6], [7, 6], [7, 7], [6, 7], [6, 6]], [[6.5, 6.5], [6.5, 6.6], [6.6, 6.6], [6.6, 6.5], [6.5, 6.5]]]
+                    }
+                }
+            ]
+        }""",
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+
+    assert gdal.GetLastErrorMsg() == ""
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetExtent() == (1.0, 7.0, 1.0, 7.0)
+    assert lyr.GetExtent3D() == (1.0, 7.0, 1.0, 7.0, float("inf"), float("-inf"))
+
+    # Test a series of different 3D geometries including polygons with holes
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        """{
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [1, 1, 1]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [[2, 2, 2], [3, 3, 3]]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[4, 4, 4], [5, 4, 4], [5, 5, 5], [4, 5, 5], [4, 4, 4]]]
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [[[6, 6, 6], [7, 6, 6], [7, 7, 7], [6, 7, 7], [6, 6, 6]], [[6.5, 6.5, 6.5], [6.5, 6.6, 6.5], [6.6, 6.6, 6.5], [6.6, 6.5, 6.5], [6.5, 6.5, 6.5]]]
+                    }
+                }
+            ]
+        }""",
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+
+    assert gdal.GetLastErrorMsg() == ""
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetExtent() == (1.0, 7.0, 1.0, 7.0)
+    assert lyr.GetExtent3D() == (1.0, 7.0, 1.0, 7.0, 1.0, 7.0)
+
+    # Test geometrycollection
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.json",
+        r"""
+        {
+            "type": "FeatureCollection",
+            "features": [{
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "GeometryCollection",
+                    "geometries": [{
+                            "type": "Point",
+                            "coordinates": [6, 7]
+                        }, {
+                            "type": "Polygon",
+                            "coordinates": [[[3, 4, 2], [5, 4, 4], [5, 5, 5], [4, 5, 5], [3, 4, 2]]]
+                        }]
+                }
+            }]
+        }
+        """,
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "test.json", gdal.OF_VECTOR)
+
+    assert gdal.GetLastErrorMsg() == ""
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetExtent() == (3.0, 6.0, 4.0, 7.0)
+    assert lyr.GetExtent3D() == (3.0, 6.0, 4.0, 7.0, 2.0, 5.0)

@@ -81,8 +81,8 @@ CPLErr SAFERasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     {
         nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
         memset(pImage, 0,
-               (GDALGetDataTypeSize(eDataType) / 8) * nBlockXSize *
-                   nBlockYSize);
+               static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
+                   nBlockXSize * nBlockYSize);
     }
     else
     {
@@ -98,8 +98,8 @@ CPLErr SAFERasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     {
         nRequestXSize = nRasterXSize - nBlockXOff * nBlockXSize;
         memset(pImage, 0,
-               (GDALGetDataTypeSize(eDataType) / 8) * nBlockXSize *
-                   nBlockYSize);
+               static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
+                   nBlockXSize * nBlockYSize);
     }
     else
     {
@@ -241,9 +241,8 @@ CPLErr SAFESLCRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
         else if (m_eBandType == INTENSITY)
         {
-            GInt16 *pnImageTmp = static_cast<GInt16 *>(
-                VSI_MALLOC_VERBOSE(2 * nBlockXSize * nBlockYSize *
-                                   GDALGetDataTypeSizeBytes(GDT_Int16)));
+            GInt16 *pnImageTmp = static_cast<GInt16 *>(VSI_MALLOC3_VERBOSE(
+                2 * sizeof(int16_t), nBlockXSize, nBlockYSize));
             if (!pnImageTmp)
             {
                 return CE_Failure;
@@ -487,8 +486,7 @@ CPLErr SAFECalibratedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     {
         CPLErr eErr = CE_None;
         GInt16 *pnImageTmp = static_cast<GInt16 *>(
-            VSI_MALLOC_VERBOSE(2 * nBlockXSize * nBlockYSize *
-                               GDALGetDataTypeSizeBytes(GDT_Int16)));
+            VSI_MALLOC3_VERBOSE(2 * sizeof(int16_t), nBlockXSize, nBlockYSize));
         if (!pnImageTmp)
             return CE_Failure;
 
@@ -557,8 +555,8 @@ CPLErr SAFECalibratedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     else if (m_eInputDataType == GDT_UInt16)
     {
         CPLErr eErr = CE_None;
-        GUInt16 *pnImageTmp = static_cast<GUInt16 *>(VSI_MALLOC_VERBOSE(
-            nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(GDT_UInt16)));
+        GUInt16 *pnImageTmp = static_cast<GUInt16 *>(VSI_MALLOC3_VERBOSE(
+            nBlockXSize, nBlockYSize, GDALGetDataTypeSizeBytes(GDT_UInt16)));
         if (!pnImageTmp)
             return CE_Failure;
         eErr = poBandDataset->RasterIO(GF_Read, nBlockXOff * nBlockXSize,
@@ -1067,7 +1065,7 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create the dataset.                                             */
     /* -------------------------------------------------------------------- */
-    auto poDS = cpl::make_unique<SAFEDataset>();
+    auto poDS = std::make_unique<SAFEDataset>();
 
     poDS->psManifest = psManifest;
 
@@ -1379,7 +1377,7 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
                     }
 
                     oLL.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    poDS->m_oGCPSRS = oLL;
+                    poDS->m_oGCPSRS = std::move(oLL);
                 }
 
                 /* --------------------------------------------------------------------
@@ -1481,7 +1479,7 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
                 else if (bCalibrated &&
                          (eRequestType == UNKNOWN || eRequestType == COMPLEX))
                 {
-                    auto poBand = cpl::make_unique<SAFECalibratedRasterBand>(
+                    auto poBand = std::make_unique<SAFECalibratedRasterBand>(
                         poDS.get(), eDataType, osSwath, osPolarization,
                         std::move(poBandFile), osCalibrationFilePath,
                         eCalibrationType);

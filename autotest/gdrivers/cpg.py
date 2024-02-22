@@ -28,8 +28,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-
 import gdaltest
+import pytest
+
+pytestmark = pytest.mark.require_driver("CPG")
 
 ###############################################################################
 # Test a fake CPG dataset

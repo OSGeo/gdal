@@ -39,8 +39,10 @@
 
 #include "gtest_include.h"
 
-namespace marching_squares
+namespace test_marching_squares_square
 {
+using namespace marching_squares;
+
 struct Writer
 {
     typedef std::pair<Point, Point> Segment;
@@ -59,12 +61,6 @@ struct Writer
     std::map<int, std::vector<Segment>> borders;
     const bool polygonize = true;
 };
-
-}  // namespace marching_squares
-
-namespace
-{
-using namespace marching_squares;
 
 // Common fixture with test data
 struct test_ms_square : public ::testing::Test
@@ -722,4 +718,4 @@ TEST_F(test_ms_square, full_border_test_2)
                       writer.borders[1][1].second.y == 0.5)));
     }
 }
-}  // namespace
+}  // namespace test_marching_squares_square

@@ -384,9 +384,9 @@ class OGRSQLiteTableLayer final : public OGRSQLiteLayer
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
-    virtual OGRErr CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
+    virtual OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
                                    int bApproxOK = TRUE) override;
     virtual OGRErr DeleteField(int iField) override;
     virtual OGRErr ReorderFields(int *panMap) override;
@@ -632,6 +632,8 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
 /*                         OGRSQLiteDataSource                          */
 /************************************************************************/
 
+class OGR2SQLITEModule;
+
 class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 {
     OGRSQLiteLayer **m_papoLayers = nullptr;
@@ -639,11 +641,14 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    int m_nKnownSRID = 0;
-    int *m_panSRID = nullptr;
-    OGRSpatialReference **m_papoSRS = nullptr;
+    std::map<int,
+             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
+        m_oSRSCache{};
 
-    void AddSRIDToCache(int nId, OGRSpatialReference *poSRS);
+    OGRSpatialReference *AddSRIDToCache(
+        int nId,
+        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
+            &&poSRS);
 
     bool m_bHaveGeometryColumns = false;
     bool m_bIsSpatiaLiteDB = false;
@@ -687,6 +692,8 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
     bool OpenRasterSubDataset(const char *pszConnectionId);
     OGRSQLiteDataSource *m_poParentDS = nullptr;
     std::vector<OGRSQLiteDataSource *> m_apoOverviewDS{};
+
+    OGR2SQLITEModule *m_poSQLiteModule = nullptr;
 
 #ifdef HAVE_RASTERLITE2
     void ListOverviews();

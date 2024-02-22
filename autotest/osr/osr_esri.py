@@ -887,37 +887,25 @@ def test_osr_esri_28():
     # 1SP transformed to 2SP form !
     srs.MorphToESRI()
     got_wkt = srs.ExportToPrettyWkt()
-    # Do not do exact test because of subtle difference of precision among compilers
-    assert got_wkt.startswith(
-        """PROJCS["Gunung_Segara_Jakarta_NEIEZ",
-    GEOGCS["GCS_Gunung_Segara_Jakarta",
-        DATUM["D_Gunung_Segara",
-            SPHEROID["Bessel_1841",6377397.155,299.1528128]],
-        PRIMEM["Jakarta",106.807719444444],
-        UNIT["Degree",0.0174532925199433]],
-    PROJECTION["Mercator"],
+    # Do not do exact test because of subtle difference of precision among compilers and PROJ versions
+    assert (
+        """PROJECTION["Mercator"],
     PARAMETER["False_Easting",3900000.0],
     PARAMETER["False_Northing",900000.0],
     PARAMETER["Central_Meridian",110.0],
     PARAMETER["Standard_Parallel_1",4.45405154"""
+        in got_wkt
     )
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput(got_wkt)
     srs.MorphFromESRI()
     got_wkt = srs.ExportToPrettyWkt()
-    # Do not do exact test because of subtle difference of precision among compilers
-    assert got_wkt.startswith(
-        """PROJCS["Segara (Jakarta) / NEIEZ",
-    GEOGCS["Segara (Jakarta)",
-        DATUM["Gunung_Segara_Jakarta",
-            SPHEROID["Bessel 1841",6377397.155,299.1528128,
-                AUTHORITY["EPSG","7004"]],
-            AUTHORITY["EPSG","6613"]],
-        PRIMEM["Jakarta",106.807719444444],
-        UNIT["Degree",0.0174532925199433]],
-    PROJECTION["Mercator_2SP"],
+    # Do not do exact test because of subtle difference of precision among compilers and PROJ versions
+    assert (
+        """PROJECTION["Mercator_2SP"],
     PARAMETER["standard_parallel_1",4.45405154"""
+        in got_wkt
     )
 
 

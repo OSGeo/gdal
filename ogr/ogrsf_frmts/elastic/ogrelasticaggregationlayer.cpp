@@ -138,7 +138,7 @@ OGRElasticAggregationLayer::Build(OGRElasticDataSource *poDS,
     auto poLayer = std::unique_ptr<OGRElasticAggregationLayer>(
         new OGRElasticAggregationLayer(poDS));
     poLayer->m_osIndexName = osIndex;
-    poLayer->m_osGeometryField = osGeometryField;
+    poLayer->m_osGeometryField = std::move(osGeometryField);
 
     // Parse geohash_grid options
     auto oGeohashGrid = oRoot["geohash_grid"];
@@ -363,7 +363,7 @@ std::string OGRElasticAggregationLayer::BuildRequest()
     geo_centroid.Set("field", m_osGeometryField);
 
     // Add extra fields
-    for (auto &oChild : m_oAggregatedFieldsRequest.GetChildren())
+    for (const auto &oChild : m_oAggregatedFieldsRequest.GetChildren())
     {
         subaggs.Add(oChild.GetName(), oChild);
     }

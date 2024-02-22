@@ -1,0 +1,33 @@
+{
+  "zarr_format":3,
+  "node_type":"array",
+  "shape":[
+  ],
+  "data_type":"uint8",
+  "chunk_grid":{
+    "name":"regular",
+    "configuration":{
+      "chunk_shape":[
+      ]
+    }
+  },
+  "chunk_key_encoding":{
+    "name":"default",
+    "configuration":{
+      "separator":"\/"
+    }
+  },
+  "fill_value":0,
+  "attributes":{
+    "false_easting":500000.0,
+    "false_northing":0.0,
+    "grid_mapping_name":"transverse_mercator",
+    "inverse_flattening":294.97869821389799,
+    "latitude_of_projection_origin":0.0,
+    "long_name":"CRS definition",
+    "longitude_of_central_meridian":-117.0,
+    "longitude_of_prime_meridian":0.0,
+    "scale_factor_at_central_meridian":0.9996,
+    "semi_major_axis":6378206.4
+  }
+}

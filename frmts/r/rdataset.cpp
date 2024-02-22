@@ -371,7 +371,7 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
         std::string(bCompressed ? "/vsigzip/" : "") + poOpenInfo->pszFilename;
 
     // Establish this as a dataset and open the file using VSI*L.
-    auto poDS = cpl::make_unique<RDataset>();
+    auto poDS = std::make_unique<RDataset>();
 
     poDS->fp = VSIFOpenL(osAdjustedFilename, "r");
     if (poDS->fp == nullptr)
@@ -551,16 +551,18 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
         std::unique_ptr<GDALRasterBand> poBand;
 
         if (poDS->bASCII)
-            poBand = cpl::make_unique<RRasterBand>(
+            poBand = std::make_unique<RRasterBand>(
                 poDS.get(), iBand + 1,
-                poDS->padfMatrixValues +
-                    iBand * poDS->nRasterXSize * poDS->nRasterYSize);
+                poDS->padfMatrixValues + static_cast<size_t>(iBand) *
+                                             poDS->nRasterXSize *
+                                             poDS->nRasterYSize);
         else
         {
             poBand = RawRasterBand::Create(
                 poDS.get(), iBand + 1, poDS->fp,
                 poDS->nStartOfData +
-                    poDS->nRasterXSize * poDS->nRasterYSize * 8 * iBand,
+                    static_cast<vsi_l_offset>(poDS->nRasterXSize) *
+                        poDS->nRasterYSize * 8 * iBand,
                 8, poDS->nRasterXSize * 8, GDT_Float64,
                 RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,
                 RawRasterBand::OwnFP::NO);

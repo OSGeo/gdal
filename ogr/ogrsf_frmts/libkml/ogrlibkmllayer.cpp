@@ -254,7 +254,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer(
                     {
                         m_poKmlSchema = nullptr;
                     }
-                    kml2FeatureDef(schema, m_poOgrFeatureDefn);
+                    kml2FeatureDef(std::move(schema), m_poOgrFeatureDefn);
                 }
             }
         }
@@ -340,7 +340,7 @@ OGRLIBKMLLayer::OGRLIBKMLLayer(
                                         {
                                             m_poKmlSchema = nullptr;
                                         }
-                                        kml2FeatureDef(schema,
+                                        kml2FeatureDef(std::move(schema),
                                                        m_poOgrFeatureDefn);
                                     }
                                 }
@@ -729,7 +729,8 @@ OGRErr OGRLIBKMLLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 ******************************************************************************/
 
-OGRErr OGRLIBKMLLayer::CreateField(OGRFieldDefn *poField, int /* bApproxOK */)
+OGRErr OGRLIBKMLLayer::CreateField(const OGRFieldDefn *poField,
+                                   int /* bApproxOK */)
 {
     if (!bUpdate)
         return OGRERR_UNSUPPORTED_OPERATION;

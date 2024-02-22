@@ -35,6 +35,7 @@
 
 #include <limits>
 #include <set>
+#include <functional>
 
 /************************************************************************/
 /*                      OGRGeoJSONReaderStreamingParser                 */
@@ -342,6 +343,7 @@ void OGRGeoJSONReaderStreamingParser::GotFeature(json_object *poObj,
 void OGRGeoJSONReaderStreamingParser::FinalizeLayerDefn()
 {
     OGRFeatureDefn *poDefn = m_poLayer->GetLayerDefn();
+    auto oTemporaryUnsealer(poDefn->GetTemporaryUnsealer());
     const auto sortedFields = m_dag.getTopologicalOrdering();
     CPLAssert(sortedFields.size() == m_apoFieldDefn.size());
     for (int idx : sortedFields)
@@ -519,7 +521,7 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
         if (poName && json_object_get_type(poName) == json_type_string)
         {
             const char *pszValue = json_object_get_string(poName);
-            poLayer->GetLayerDefn()->SetName(pszValue);
+            whileUnsealing(poLayer->GetLayerDefn())->SetName(pszValue);
             poLayer->SetDescription(pszValue);
         }
 
@@ -548,7 +550,8 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
 
         if (eGeomType != wkbNone && poSRS != nullptr)
         {
-            poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+            auto poGeomFieldDefn = poLayer->GetLayerDefn()->GetGeomFieldDefn(0);
+            whileUnsealing(poGeomFieldDefn)->SetSpatialRef(poSRS);
         }
         if (poSRS)
             poSRS->Release();
@@ -906,7 +909,10 @@ void OGRGeoJSONReader::ReadLayer(OGRGeoJSONDataSource *poDS,
         poSRS = new OGRSpatialReference();
         bDefaultSRS = true;
     }
-    poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+    {
+        auto poGeomFieldDefn = poLayer->GetLayerDefn()->GetGeomFieldDefn(0);
+        whileUnsealing(poGeomFieldDefn)->SetSpatialRef(poSRS);
+    }
 
     if (!GenerateLayerDefn(poLayer, poObj))
     {
@@ -1193,9 +1199,12 @@ bool OGRGeoJSONReader::GenerateLayerDefn(OGRGeoJSONLayer *poLayer,
     OGRFeatureDefn *poDefn = poLayer->GetLayerDefn();
     const auto sortedFields = dag.getTopologicalOrdering();
     CPLAssert(sortedFields.size() == apoFieldDefn.size());
-    for (int idx : sortedFields)
     {
-        poDefn->AddFieldDefn(apoFieldDefn[idx].get());
+        auto oTemporaryUnsealer(poDefn->GetTemporaryUnsealer());
+        for (int idx : sortedFields)
+        {
+            poDefn->AddFieldDefn(apoFieldDefn[idx].get());
+        }
     }
 
     CPLString osFIDColumn;
@@ -1220,7 +1229,7 @@ void OGRGeoJSONBaseReader::FinalizeLayerDefn(OGRLayer *poLayer,
     OGRFeatureDefn *poLayerDefn = poLayer->GetLayerDefn();
     CPLAssert(nullptr != poLayerDefn);
 
-    poLayerDefn->SetGeomType(m_eLayerGeomType);
+    whileUnsealing(poLayerDefn)->SetGeomType(m_eLayerGeomType);
 
     if (m_bNeedFID64)
     {
@@ -1293,7 +1302,7 @@ void OGRGeoJSONReaderAddOrUpdateField(
         OGRFieldSubType eSubType;
         const OGRFieldType eType =
             GeoJSONPropertyToFieldType(poVal, eSubType, bArrayAsString);
-        auto poFieldDefn = cpl::make_unique<OGRFieldDefn>(pszKey, eType);
+        auto poFieldDefn = std::make_unique<OGRFieldDefn>(pszKey, eType);
         poFieldDefn->SetSubType(eSubType);
         if (eSubType == OFSTBoolean)
             poFieldDefn->SetWidth(1);
@@ -1637,7 +1646,7 @@ void OGRGeoJSONGenerateFeatureDefnDealWithID(
                             eType = OFTInteger64;
                     }
                     apoFieldDefn.emplace_back(
-                        cpl::make_unique<OGRFieldDefn>("id", eType));
+                        std::make_unique<OGRFieldDefn>("id", eType));
                     const int nIdx = static_cast<int>(apoFieldDefn.size()) - 1;
                     oMapFieldNameToIdx["id"] = nIdx;
                     nPrevFieldIdx = nIdx;
@@ -1714,14 +1723,19 @@ bool OGRGeoJSONBaseReader::GenerateFeatureDefn(
         poObj, poObjProps, nPrevFieldIdx, oMapFieldNameToIdx, apoFieldDefn, dag,
         bFeatureLevelIdAsFID_, bFeatureLevelIdAsAttribute_, m_bNeedFID64);
 
-    if (m_bDetectLayerGeomType)
+    json_object *poGeomObj = CPL_json_object_object_get(poObj, "geometry");
+    if (poGeomObj && json_object_get_type(poGeomObj) == json_type_object)
     {
-        json_object *poGeomObj = CPL_json_object_object_get(poObj, "geometry");
-        if (poGeomObj && json_object_get_type(poGeomObj) == json_type_object)
+        const auto eType = OGRGeoJSONGetOGRGeometryType(poGeomObj);
+
+        OGRGeoJSONUpdateLayerGeomType(m_bFirstGeometry, eType,
+                                      m_eLayerGeomType);
+
+        if (eType != wkbNone && eType != wkbUnknown)
         {
-            const auto eType = OGRGeoJSONGetOGRGeometryType(poGeomObj);
-            m_bDetectLayerGeomType = OGRGeoJSONUpdateLayerGeomType(
-                m_bFirstGeometry, eType, m_eLayerGeomType);
+            // This is maybe too optimistic: it assumes that the geometry
+            // coordinates array is in the correct format
+            m_bExtentRead |= OGRGeoJSONGetExtent3D(poGeomObj, &m_oEnvelope3D);
         }
     }
 
@@ -2308,6 +2322,20 @@ OGRFeature *OGRGeoJSONBaseReader::ReadFeature(OGRLayer *poLayer,
     }
 
     return poFeature;
+}
+
+/************************************************************************/
+/*                           Extent getters                             */
+/************************************************************************/
+
+bool OGRGeoJSONBaseReader::ExtentRead() const
+{
+    return m_bExtentRead;
+}
+
+OGREnvelope3D OGRGeoJSONBaseReader::GetExtent3D() const
+{
+    return m_oEnvelope3D;
 }
 
 /************************************************************************/
@@ -3148,4 +3176,147 @@ json_object *CPL_json_object_object_get(struct json_object *obj,
     json_object *poRet = nullptr;
     json_object_object_get_ex(obj, key, &poRet);
     return poRet;
+}
+
+bool OGRGeoJSONGetExtent3D(json_object *poObj, OGREnvelope3D *poEnvelope)
+{
+    if (!poEnvelope || !poObj)
+    {
+        return false;
+    }
+
+    // poObjCoords can be an array of arrays, this lambda function will
+    // recursively parse the array
+    std::function<bool(json_object *, OGREnvelope3D *)> fParseCoords;
+    fParseCoords = [&fParseCoords](json_object *poObjCoordsIn,
+                                   OGREnvelope3D *poEnvelopeIn) -> bool
+    {
+        if (json_type_array == json_object_get_type(poObjCoordsIn))
+        {
+            const auto nItems = json_object_array_length(poObjCoordsIn);
+
+            double dXVal = std::numeric_limits<double>::quiet_NaN();
+            double dYVal = std::numeric_limits<double>::quiet_NaN();
+            double dZVal = std::numeric_limits<double>::quiet_NaN();
+
+            for (auto i = decltype(nItems){0}; i < nItems; ++i)
+            {
+
+                // Get the i element
+                json_object *poObjCoordsElement =
+                    json_object_array_get_idx(poObjCoordsIn, i);
+
+                const json_type eType{json_object_get_type(poObjCoordsElement)};
+
+                // if it is an array, recurse
+                if (json_type_array == eType)
+                {
+                    if (!fParseCoords(poObjCoordsElement, poEnvelopeIn))
+                    {
+                        return false;
+                    }
+                }
+                else if (json_type_double == eType || json_type_int == eType)
+                {
+                    switch (i)
+                    {
+                        case 0:
+                        {
+                            dXVal = json_object_get_double(poObjCoordsElement);
+                            break;
+                        }
+                        case 1:
+                        {
+                            dYVal = json_object_get_double(poObjCoordsElement);
+                            break;
+                        }
+                        case 2:
+                        {
+                            dZVal = json_object_get_double(poObjCoordsElement);
+                            break;
+                        }
+                        default:
+                            return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            if (!std::isnan(dXVal) && !std::isnan(dYVal))
+            {
+                if (std::isnan(dZVal))
+                {
+                    static_cast<OGREnvelope *>(poEnvelopeIn)
+                        ->Merge(dXVal, dYVal);
+                }
+                else
+                {
+                    poEnvelopeIn->Merge(dXVal, dYVal, dZVal);
+                }
+            }
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    };
+
+    // This function looks for "coordinates" and for "geometries" to handle
+    // geometry collections.  It will recurse on itself to handle nested geometry.
+    std::function<bool(json_object *, OGREnvelope3D *)> fParseGeometry;
+    fParseGeometry = [&fParseGeometry,
+                      &fParseCoords](json_object *poObjIn,
+                                     OGREnvelope3D *poEnvelopeIn) -> bool
+    {
+        // Get the "coordinates" array from the JSON object
+        json_object *poObjCoords =
+            OGRGeoJSONFindMemberByName(poObjIn, "coordinates");
+
+        // Return if found and not an array
+        if (poObjCoords && json_object_get_type(poObjCoords) != json_type_array)
+        {
+            return false;
+        }
+        else if (poObjCoords)
+        {
+            return fParseCoords(poObjCoords, poEnvelopeIn);
+        }
+
+        // Try "geometries"
+        if (!poObjCoords)
+        {
+            poObjCoords = OGRGeoJSONFindMemberByName(poObjIn, "geometries");
+        }
+
+        // Return if not found or not an array
+        if (!poObjCoords ||
+            json_object_get_type(poObjCoords) != json_type_array)
+        {
+            return false;
+        }
+        else
+        {
+            // Loop thgrough the geometries
+            const auto nItems = json_object_array_length(poObjCoords);
+            for (auto i = decltype(nItems){0}; i < nItems; ++i)
+            {
+                json_object *poObjGeometry =
+                    json_object_array_get_idx(poObjCoords, i);
+
+                // Recurse
+                if (!fParseGeometry(poObjGeometry, poEnvelopeIn))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+    };
+
+    return fParseGeometry(poObj, poEnvelope);
 }

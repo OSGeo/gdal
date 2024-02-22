@@ -88,6 +88,10 @@ struct CPL_DLL VSIVirtualHandle
     }
 
     virtual size_t Write(const void *pBuffer, size_t nSize, size_t nCount) = 0;
+
+    int Printf(CPL_FORMAT_STRING(const char *pszFormat), ...)
+        CPL_PRINT_FUNC_FORMAT(2, 3);
+
     virtual int Eof() = 0;
     virtual int Flush()
     {
@@ -301,6 +305,17 @@ class CPL_DLL VSIFilesystemHandler
                  "Duplicate() not supported on this file system");
         return nullptr;
     }
+
+    /** Return the directory separator.
+     *
+     * Default is forward slash. The only exception currently is the Windows
+     * file system which returns anti-slash, unless the specified path is of the
+     * form "{drive_letter}:/{rest_of_the_path}".
+     */
+    virtual const char *GetDirectorySeparator(CPL_UNUSED const char *pszPath)
+    {
+        return "/";
+    }
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 
@@ -327,8 +342,7 @@ class CPL_DLL VSIFileManager
     static VSIFilesystemHandler *GetHandler(const char *);
     static void InstallHandler(const std::string &osPrefix,
                                VSIFilesystemHandler *);
-    /* RemoveHandler is never defined. */
-    /* static void RemoveHandler( const std::string& osPrefix ); */
+    static void RemoveHandler(const std::string &osPrefix);
 
     static char **GetPrefixes();
 };

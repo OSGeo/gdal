@@ -72,7 +72,8 @@ class GDALWMSMetaDataset final : public GDALPamDataset
                        const char *pszAbstract, const char *pszSRS,
                        const char *pszMinX, const char *pszMinY,
                        const char *pszMaxX, const char *pszMaxY,
-                       CPLString osFormat, CPLString osTransparent);
+                       const std::string &osFormat,
+                       const std::string &osTransparent);
 
     void
     ExploreLayer(CPLXMLNode *psXML, const CPLString &osFormat,
@@ -91,7 +92,8 @@ class GDALWMSMetaDataset final : public GDALPamDataset
 
     // WMS-C only
     void AddWMSCSubDataset(WMSCTileSetDesc &oWMSCTileSetDesc,
-                           const char *pszTitle, CPLString osTransparent);
+                           const char *pszTitle,
+                           const CPLString &osTransparent);
 
     // WMS-C only
     void ParseWMSCTileSets(CPLXMLNode *psXML);

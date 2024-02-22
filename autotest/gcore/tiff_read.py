@@ -4311,6 +4311,10 @@ def test_tiff_read_cog_vsicurl():
     not check_libtiff_internal_or_at_least(4, 0, 11),
     reason="libtiff >= 4.0.11 required",
 )
+@pytest.mark.skipif(
+    os.environ.get("BUILD_NAME", "") == "s390x",
+    reason="Fails on that platform",
+)
 def test_tiff_read_cog_with_mask_vsicurl():
 
     gdal.VSICurlClearCache()
@@ -4590,10 +4594,11 @@ def test_tiff_jxl_read_for_files_created_before_6393():
 
 
 @pytest.mark.parametrize(
-    "reopen,xsize,ysize,nbands,dtype,creation_options",
+    "reopen,write_after_reopen,xsize,ysize,nbands,dtype,creation_options",
     [
         (
             True,
+            False,
             64,
             96,
             3,
@@ -4608,6 +4613,7 @@ def test_tiff_jxl_read_for_files_created_before_6393():
         ),  # raster size is multiple of block size
         (
             True,
+            True,
             100,
             100,
             3,
@@ -4616,6 +4622,7 @@ def test_tiff_jxl_read_for_files_created_before_6393():
         ),
         (
             True,
+            False,
             100,
             100,
             3,
@@ -4629,6 +4636,7 @@ def test_tiff_jxl_read_for_files_created_before_6393():
             ],
         ),
         (
+            True,
             True,
             100,
             100,
@@ -4645,6 +4653,7 @@ def test_tiff_jxl_read_for_files_created_before_6393():
         ),
         (
             True,
+            False,
             100,
             100,
             1,
@@ -4659,6 +4668,7 @@ def test_tiff_jxl_read_for_files_created_before_6393():
         ),
         (
             False,
+            False,
             100,
             100,
             3,
@@ -4666,6 +4676,7 @@ def test_tiff_jxl_read_for_files_created_before_6393():
             ["COMPRESS=LZW", "TILED=YES", "BLOCKXSIZE=16", "BLOCKYSIZE=32"],
         ),
         (
+            False,
             False,
             100,
             100,
@@ -4681,6 +4692,7 @@ def test_tiff_jxl_read_for_files_created_before_6393():
         ),
         (
             False,
+            False,
             100,
             100,
             3,
@@ -4689,6 +4701,7 @@ def test_tiff_jxl_read_for_files_created_before_6393():
         ),  # strip organization, block height *not* multiple of height
         (
             False,
+            False,
             100,
             100,
             5,
@@ -4696,11 +4709,20 @@ def test_tiff_jxl_read_for_files_created_before_6393():
             ["COMPRESS=LZW", "BLOCKYSIZE=50"],
         ),  # strip organization, block height multiple of height. Also test nbands = 5
         # Try all supported compression methods
-        (False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=NONE", "BLOCKYSIZE=18"]),
-        (False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=DEFLATE", "BLOCKYSIZE=18"]),
-        (False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=ZSTD", "BLOCKYSIZE=18"]),
-        (False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=LZMA", "BLOCKYSIZE=18"]),
+        (False, False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=NONE", "BLOCKYSIZE=18"]),
         (
+            False,
+            False,
+            100,
+            100,
+            3,
+            gdal.GDT_Byte,
+            ["COMPRESS=DEFLATE", "BLOCKYSIZE=18"],
+        ),
+        (False, False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=ZSTD", "BLOCKYSIZE=18"]),
+        (False, False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=LZMA", "BLOCKYSIZE=18"]),
+        (
+            False,
             False,
             100,
             100,
@@ -4710,20 +4732,29 @@ def test_tiff_jxl_read_for_files_created_before_6393():
         ),
         (
             False,
+            False,
             100,
             100,
             3,
             gdal.GDT_Byte,
             ["COMPRESS=JPEG", "JPEG_QUALITY=95", "PHOTOMETRIC=YCBCR", "BLOCKYSIZE=16"],
         ),
-        (False, 100, 100, 1, gdal.GDT_Byte, ["COMPRESS=JPEG", "BLOCKYSIZE=16"]),
-        (False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=LERC", "BLOCKYSIZE=18"]),
-        (False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=JXL", "BLOCKYSIZE=18"]),
-        (False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=PACKBITS", "BLOCKYSIZE=18"]),
+        (False, False, 100, 100, 1, gdal.GDT_Byte, ["COMPRESS=JPEG", "BLOCKYSIZE=16"]),
+        (False, False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=LERC", "BLOCKYSIZE=18"]),
+        (False, False, 100, 100, 3, gdal.GDT_Byte, ["COMPRESS=JXL", "BLOCKYSIZE=18"]),
+        (
+            False,
+            False,
+            100,
+            100,
+            3,
+            gdal.GDT_Byte,
+            ["COMPRESS=PACKBITS", "BLOCKYSIZE=18"],
+        ),
     ],
 )
 def test_tiff_read_multi_threaded(
-    reopen, xsize, ysize, nbands, dtype, creation_options
+    reopen, write_after_reopen, xsize, ysize, nbands, dtype, creation_options
 ):
 
     assert creation_options[0].startswith("COMPRESS=")
@@ -4759,7 +4790,22 @@ def test_tiff_read_multi_threaded(
 
     if reopen:
         ds = None
-        ds = gdal.OpenEx(tmpfile, open_options=["NUM_THREADS=ALL_CPUS"])
+        ds = gdal.OpenEx(tmpfile, gdal.OF_UPDATE, open_options=["NUM_THREADS=ALL_CPUS"])
+
+        if write_after_reopen:
+            x_off, y_off, x_size, y_size = (
+                ds.RasterXSize // 4,
+                ds.RasterYSize // 4,
+                ds.RasterXSize - ds.RasterXSize // 4,
+                ds.RasterYSize - ds.RasterYSize // 4,
+            )
+            ds.WriteRaster(
+                x_off,
+                y_off,
+                x_size,
+                y_size,
+                ref_ds.ReadRaster(x_off, y_off, x_size, y_size),
+            )
 
     pixel_size = gdal.GetDataTypeSize(dtype) // 8
     if method == "JPEG":

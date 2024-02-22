@@ -122,7 +122,8 @@ class OGRSelafinLayer final : public OGRLayer
     }
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
     OGRErr DeleteField(int iField) override;
     OGRErr ReorderFields(int *panMap) override;
     OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,

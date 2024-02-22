@@ -151,9 +151,8 @@ std::shared_ptr<ZarrArray> ZarrV2Group::OpenZarrArray(const std::string &osName,
             if (!oDoc.Load(osZarrayFilename))
                 return nullptr;
             const auto oRoot = oDoc.GetRoot();
-            std::set<std::string> oSetFilenamesInLoading;
             return LoadArray(osName, osZarrayFilename, oRoot, false,
-                             CPLJSONObject(), oSetFilenamesInLoading);
+                             CPLJSONObject());
         }
     }
 
@@ -189,7 +188,8 @@ ZarrV2Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
 
             auto poSubGroup =
                 ZarrV2Group::Create(m_poSharedResource, GetFullName(), osName);
-            poSubGroup->m_poParent = m_pSelf;
+            poSubGroup->m_poParent =
+                std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock());
             poSubGroup->SetUpdatable(m_bUpdatable);
             poSubGroup->SetDirectoryName(osSubDir);
             m_oMapGroups[osName] = poSubGroup;
@@ -251,7 +251,8 @@ ZarrV2Group::GetOrCreateSubGroup(const std::string &osSubGroupFullname)
     poSubGroup =
         ZarrV2Group::Create(m_poSharedResource, poBelongingGroup->GetFullName(),
                             osSubGroupFullname.substr(nLastSlashPos + 1));
-    poSubGroup->m_poParent = poBelongingGroup->m_pSelf;
+    poSubGroup->m_poParent = std::dynamic_pointer_cast<ZarrGroupBase>(
+        poBelongingGroup->m_pSelf.lock());
     poSubGroup->SetDirectoryName(
         CPLFormFilename(poBelongingGroup->m_osDirectoryName.c_str(),
                         poSubGroup->GetName().c_str(), nullptr));
@@ -330,9 +331,8 @@ void ZarrV2Group::InitFromZMetadata(const CPLJSONObject &obj)
             CPLFormFilename(poBelongingGroup->m_osDirectoryName.c_str(),
                             osArrayName.c_str(), nullptr),
             ".zarray", nullptr);
-        std::set<std::string> oSetFilenamesInLoading;
         poBelongingGroup->LoadArray(osArrayName, osZarrayFilename, oArray, true,
-                                    oAttributes, oSetFilenamesInLoading);
+                                    oAttributes);
     };
 
     struct ArrayDesc
@@ -629,7 +629,8 @@ ZarrV2Group::CreateGroup(const std::string &osName,
                                 osDirectoryName);
     if (!poGroup)
         return nullptr;
-    poGroup->m_poParent = m_pSelf;
+    poGroup->m_poParent =
+        std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock());
     m_oMapGroups[osName] = poGroup;
     m_aosGroups.emplace_back(osName);
     return poGroup;
@@ -828,7 +829,7 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
                     subArray.Add(subdtype);
                 array.Add(subArray);
             }
-            dtype = array;
+            dtype = std::move(array);
             break;
         }
     }

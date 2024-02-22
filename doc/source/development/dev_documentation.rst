@@ -30,6 +30,26 @@ Once installed, running ``sphinx-autobuild -b html source build`` from the ``doc
 and serve it on a local web server at ``http://127.0.0.1:8000``. The pages served will be automatically refreshed as changes
 are made to underlying ``rst`` documentation files.
 
+Python API documentation
+------------------------
+
+Sphinx uses the `autodoc <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_ extension
+to generate documentation for the Python API from Python function docstrings.
+To be correctly parsed by ``autodoc``, docstrings should follow the `numpydoc Style guide <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
+Docstrings may be found in two locations. If the function was defined in Python
+(i.e., using a ``%pythoncode`` SWIG directive), then the docstring must be
+placed within the function definition. If the function is defined in C++ only,
+then the docstring should be placed in a separate file
+containing only docstrings (located in :source_file:`swig/include/python/docs`).
+Sphinx loads the Python bindings when generating documentation, so for it to see any changes
+the following steps must be completed:
+
+- rebuild the Python bindings from the build directory (``cmake --build . --target python_binding``)
+- make the updated Python bindings visible to Python, either by installing them, or by running ``scripts/setdevenv.sh``
+  from the build directory
+- update the timestamp of the ``rst`` files associated with the page where the documentation appears (e.g., ``touch doc/source/api/python/osgeo.ogr.rst``)
+
+
 .. _rst_style:
 
 Sphinx RST Style guide

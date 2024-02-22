@@ -1980,7 +1980,7 @@ def test_ogr_pg_38(pg_ds):
     if lyr.GetLayerDefn().GetGeomFieldCount() != 3:
         for i in range(lyr.GetLayerDefn().GetGeomFieldCount()):
             print(lyr.GetLayerDefn().GetGeomFieldDefn(i).GetName())
-        pytest.fail(lyr.GetLayerDefn().GetGeomFieldCount())
+        assert lyr.GetLayerDefn().GetGeomFieldCount() == 3
 
     # Explicit query to 'table37_inherited(wkb_geometry)' should also work
     lyr = ds.GetLayerByName("table37_inherited(wkb_geometry)")
@@ -4905,6 +4905,43 @@ def test_ogr_pg_84(pg_ds):
 
 
 ###############################################################################
+# Test metadata
+
+
+@only_without_postgis
+def test_ogr_pg_metadata(pg_ds):
+
+    pg_ds = reconnect(pg_ds, update=1)
+    lyr = pg_ds.CreateLayer(
+        "test_ogr_pg_metadata", geom_type=ogr.wkbPoint, options=["OVERWRITE=YES"]
+    )
+    lyr.SetMetadata({"foo": "bar"})
+    lyr.SetMetadataItem("bar", "baz")
+    lyr.SetMetadataItem("DESCRIPTION", "my_desc")
+
+    pg_ds = reconnect(pg_ds, update=1)
+    with pg_ds.ExecuteSQL(
+        "SELECT * FROM ogr_system_tables.metadata WHERE table_name = 'test_ogr_pg_metadata'"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 1
+    lyr = pg_ds.GetLayerByName("test_ogr_pg_metadata")
+    assert lyr.GetMetadata_Dict() == {
+        "DESCRIPTION": "my_desc",
+        "foo": "bar",
+        "bar": "baz",
+    }
+    lyr.SetMetadata(None)
+
+    pg_ds = reconnect(pg_ds, update=1)
+    with pg_ds.ExecuteSQL(
+        "SELECT * FROM ogr_system_tables.metadata WHERE table_name = 'test_ogr_pg_metadata'"
+    ) as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+    lyr = pg_ds.GetLayerByName("test_ogr_pg_metadata")
+    assert lyr.GetMetadata_Dict() == {}
+
+
+###############################################################################
 # Test append of several layers in PG_USE_COPY mode (#6411)
 
 
@@ -5835,3 +5872,97 @@ def test_ogr_pg_long_identifiers(pg_ds):
     got_lyr = pg_ds.GetLayerByName(long_name)
     assert got_lyr
     assert got_lyr.GetName() == short_name
+
+
+###############################################################################
+# Test extent 3D
+
+
+@only_with_postgis
+def test_extent3d(pg_ds):
+
+    # Create a 3D layer
+    lyr = pg_ds.CreateLayer("test_extent3d", geom_type=ogr.wkbPoint25D)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1 2)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3 4)"))
+    lyr.CreateFeature(f)
+
+    assert lyr.GetFeatureCount() == 2
+    extent = lyr.GetExtent3D()
+    assert extent == (0.0, 2.0, 1.0, 3.0, 2.0, 4.0)
+
+    # Create a 2D layer
+    lyr = pg_ds.CreateLayer("test_extent2d", geom_type=ogr.wkbPoint)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3)"))
+    lyr.CreateFeature(f)
+
+    assert lyr.GetFeatureCount() == 2
+    extent = lyr.GetExtent3D()
+    assert extent == (0.0, 2.0, 1.0, 3.0, float("inf"), float("-inf"))
+
+    # Create a geography layer
+    lyr = pg_ds.CreateLayer(
+        "test_extent3d_geography",
+        geom_type=ogr.wkbPoint25D,
+        options=["GEOM_TYPE=geography"],
+    )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1 2)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3 4)"))
+    lyr.CreateFeature(f)
+
+    assert lyr.GetFeatureCount() == 2
+    extent = lyr.GetExtent3D()
+    assert extent == (0.0, 2.0, 1.0, 3.0, 2.0, 4.0)
+
+
+###############################################################################
+# Test CreateLayer() and schema name with a different case
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_pg_schema_case_createlayer(pg_ds, tmp_schema):
+
+    tmp_schema_uppercase = tmp_schema.upper()
+
+    with pytest.raises(Exception, match='Schema "unexisting_schema" does not exist'):
+        lyr = pg_ds.CreateLayer("unexisting_schema.layer")
+        assert lyr is None
+
+    lyr = pg_ds.CreateLayer(
+        f"{tmp_schema_uppercase}.test_ogr_pg_schema_case_createlayer"
+    )
+    assert lyr
+    assert lyr.GetName() == f"{tmp_schema}.test_ogr_pg_schema_case_createlayer"
+    # Force deferred creation to run
+    lyr.ResetReading()
+
+    pg_ds = reconnect(pg_ds, update=1)
+    assert pg_ds.GetLayerByName(
+        f"{tmp_schema_uppercase}.test_ogr_pg_schema_case_createlayer"
+    )
+
+    pg_ds.ExecuteSQL(f'CREATE SCHEMA "{tmp_schema_uppercase}"')
+    try:
+        lyr = pg_ds.CreateLayer(f"{tmp_schema_uppercase}.another_layer")
+        assert lyr
+        assert lyr.GetName() == f"{tmp_schema_uppercase}.another_layer"
+
+        tmp_schema_mixedcase = (
+            tmp_schema[0 : len(tmp_schema) // 2]
+            + tmp_schema_uppercase[len(tmp_schema) // 2 :]
+        )
+        with pytest.raises(Exception, match="Several schemas exist whose name matches"):
+            lyr = pg_ds.CreateLayer(f"{tmp_schema_mixedcase}.yet_another_layer")
+            assert lyr is None
+    finally:
+        pg_ds.ExecuteSQL(f'DROP SCHEMA "{tmp_schema_uppercase}" CASCADE')

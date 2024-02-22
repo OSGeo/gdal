@@ -32,7 +32,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define SEP_STRING "\\"
 #else
 #define SEP_STRING "/"
@@ -147,7 +147,7 @@
 #define BOTTOM_LEFT_LAT_OFFSET 1168
 #define BOTTOM_LEFT_LON_OFFSET 1184
 
-namespace
+namespace gdal::PSALSARJaxa
 {
 /* a few useful enums */
 enum eFileType
@@ -165,7 +165,9 @@ enum ePolarization
     vh,
     vv
 };
-}  // namespace
+}  // namespace gdal::PSALSARJaxa
+
+using namespace gdal::PSALSARJaxa;
 
 /************************************************************************/
 /* ==================================================================== */

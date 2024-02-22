@@ -30,6 +30,8 @@
 ###############################################################################
 
 
+import json
+
 import gdaltest
 import ogrtest
 import pytest
@@ -492,6 +494,7 @@ def test_ogr_mem_16(mem_ds):
     f.SetFID(100000000)
     ret = lyr.CreateFeature(f)
     assert ret == 0
+    assert lyr.GetNextFeature() is None
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFID(100000000)
@@ -707,6 +710,114 @@ def test_ogr_mem_alter_geom_field_defn():
 
 
 ###############################################################################
+# Test ogr.Layer.__arrow_c_stream__() interface.
+# Cf https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mem_arrow_stream_pycapsule_interface():
+    import ctypes
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo")
+
+    stream = lyr.__arrow_c_stream__()
+    assert stream
+    t = type(stream)
+    assert t.__module__ == "builtins"
+    assert t.__name__ == "PyCapsule"
+    capsule_get_name = ctypes.pythonapi.PyCapsule_GetName
+    capsule_get_name.argtypes = [ctypes.py_object]
+    capsule_get_name.restype = ctypes.c_char_p
+    assert capsule_get_name(ctypes.py_object(stream)) == b"arrow_array_stream"
+
+    with pytest.raises(
+        Exception, match="An arrow Arrow Stream is in progress on that layer"
+    ):
+        lyr.__arrow_c_stream__()
+
+    del stream
+
+    stream = lyr.__arrow_c_stream__()
+    assert stream
+    del stream
+
+    with pytest.raises(Exception, match="requested_schema != None not implemented"):
+        # "something" should rather by a PyCapsule with an ArrowSchema...
+        lyr.__arrow_c_stream__(requested_schema="something")
+
+    # Also test GetArrowArrayStreamInterface() to be able to specify options
+    stream = lyr.GetArrowArrayStreamInterface(
+        {"INCLUDE_FID": "NO"}
+    ).__arrow_c_stream__()
+    assert stream
+    t = type(stream)
+    assert t.__module__ == "builtins"
+    assert t.__name__ == "PyCapsule"
+    del stream
+
+
+###############################################################################
+# Test consuming __arrow_c_stream__() interface.
+# Cf https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mem_consume_arrow_stream_pycapsule_interface():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbNone)
+    lyr.CreateGeomField(ogr.GeomFieldDefn("my_geometry"))
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["foo"] = "bar"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr.CreateFeature(f)
+
+    lyr2 = ds.CreateLayer("foo2")
+    lyr2.WriteArrow(lyr)
+
+    f = lyr2.GetNextFeature()
+    assert f["foo"] == "bar"
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
+
+
+###############################################################################
+# Test consuming __arrow_c_array__() interface.
+# Cf https://arrow.apache.org/docs/format/CDataInterface/PyCapsuleInterface.html
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mem_consume_arrow_array_pycapsule_interface():
+    pyarrow = pytest.importorskip("pyarrow")
+    if int(pyarrow.__version__.split(".")[0]) < 14:
+        pytest.skip("pyarrow >= 14 needed")
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo")
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["foo"] = "bar"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr.CreateFeature(f)
+
+    table = pyarrow.table(lyr)
+
+    lyr2 = ds.CreateLayer("foo2")
+    batches = table.to_batches()
+    for batch in batches:
+        array = batch.to_struct_array()
+        if not hasattr(array, "__arrow_c_array__"):
+            pytest.skip("table does not declare __arrow_c_array__")
+
+        lyr2.WriteArrow(array)
+
+    f = lyr2.GetNextFeature()
+    assert f["foo"] == "bar"
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
+
+
+###############################################################################
 
 
 def test_ogr_mem_arrow_stream_numpy():
@@ -866,6 +977,211 @@ def test_ogr_mem_arrow_stream_numpy():
     assert batch["binary"][1] == b"\xDE\xAD"
     assert len(batch["wkb_geometry"][1]) == 21
 
+    # Test fast FID filtering
+    lyr.SetAttributeFilter("FID IN (1, -2, 1, 0)")
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    lyr.SetAttributeFilter(None)
+    assert len(batches) == 1
+    batch = batches[0]
+    assert len(batch["OGC_FID"]) == 2
+    assert batch["OGC_FID"][0] == 1
+    assert batch["OGC_FID"][1] == 0
+
+    lyr.SetAttributeFilter("FID = 2")
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    lyr.SetAttributeFilter(None)
+    assert len(batches) == 0
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "limited_field",
+    [
+        "str",
+        "strlist",
+        "int32list",
+        "int64list",
+        "float64list",
+        "boollist",
+        "binary",
+        "binary_fixed_width",
+        "geometry",
+    ],
+)
+def test_ogr_mem_arrow_stream_numpy_memlimit(limited_field):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo")
+
+    field = ogr.FieldDefn("str", ogr.OFTString)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("bool", ogr.OFTInteger)
+    field.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int16", ogr.OFTInteger)
+    field.SetSubType(ogr.OFSTInt16)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int32", ogr.OFTInteger)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int64", ogr.OFTInteger64)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("float32", ogr.OFTReal)
+    field.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("float64", ogr.OFTReal)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("date", ogr.OFTDate)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("time", ogr.OFTTime)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("datetime", ogr.OFTDateTime)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("binary", ogr.OFTBinary)
+    lyr.CreateField(field)
+
+    if limited_field == "binary_fixed_width":
+        field = ogr.FieldDefn("binary_fixed_width", ogr.OFTBinary)
+        field.SetWidth(50)
+        lyr.CreateField(field)
+
+    field = ogr.FieldDefn("strlist", ogr.OFTStringList)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("boollist", ogr.OFTIntegerList)
+    field.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int16list", ogr.OFTIntegerList)
+    field.SetSubType(ogr.OFSTInt16)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int32list", ogr.OFTIntegerList)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("int64list", ogr.OFTInteger64List)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("float32list", ogr.OFTRealList)
+    field.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(field)
+
+    field = ogr.FieldDefn("float64list", ogr.OFTRealList)
+    lyr.CreateField(field)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("bool", 1)
+    f.SetField("int16", -12345)
+    f.SetField("int32", 12345678)
+    f.SetField("int64", 12345678901234)
+    f.SetField("float32", 1.25)
+    f.SetField("float64", 1.250123)
+    f.SetField("str", "abc")
+    f.SetField("date", "2022-05-31")
+    f.SetField("time", "12:34:56.789")
+    f.SetField("datetime", "2022-05-31T12:34:56.789Z")
+    f.SetField("boollist", "[False,True]")
+    f.SetField("int16list", "[-12345,12345]")
+    f.SetField("int32list", "[-12345678,12345678]")
+    f.SetField("int64list", "[-12345678901234,12345678901234]")
+    f.SetField("float32list", "[-1.25,1.25]")
+    f.SetField("float64list", "[-1.250123,1.250123]")
+    f.SetField("strlist", '["abc","defghi"]')
+    f.SetField("binary", b"\xDE\xAD")
+    if limited_field == "binary_fixed_width":
+        f.SetField("binary_fixed_width", b"\xDE\xAD" * 25)
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    if limited_field == "str":
+        f["str"] = "x" * 100
+    elif limited_field == "strlist":
+        f["strlist"] = ["x" * 100]
+    elif limited_field == "int32list":
+        f["int32list"] = [0] * 100
+    elif limited_field == "int64list":
+        f["int64list"] = [0] * 100
+    elif limited_field == "float64list":
+        f["float64list"] = [0] * 100
+    elif limited_field == "boollist":
+        f["boollist"] = [False] * 100
+    elif limited_field == "binary":
+        f["binary"] = b"x" * 100
+    elif limited_field == "binary_fixed_width":
+        f.SetField("binary_fixed_width", b"\xDE\xAD" * 25)
+    elif limited_field == "geometry":
+        g = ogr.Geometry(ogr.wkbLineString)
+        sizeof_first_point = 21
+        sizeof_linestring_preamble = 9
+        sizeof_coord_pair = 2 * 8
+        g.SetPoint_2D(
+            (100 - sizeof_linestring_preamble - sizeof_first_point)
+            // sizeof_coord_pair,
+            0,
+            0,
+        )
+        f.SetGeometry(g)
+    lyr.CreateFeature(f)
+
+    with gdaltest.config_option("OGR_ARROW_MEM_LIMIT", "100", thread_local=False):
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        batches = [batch for batch in stream]
+    assert len(batches) == 2
+    assert [x for x in batches[0]["OGC_FID"]] == [0, 1]
+    assert [x for x in batches[1]["OGC_FID"]] == [2]
+
+    if limited_field not in ("binary_fixed_width", "geometry"):
+        lyr.SetNextByIndex(2)
+        with gdaltest.config_option("OGR_ARROW_MEM_LIMIT", "99", thread_local=False):
+            stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+            with gdaltest.enable_exceptions():
+                with pytest.raises(
+                    Exception,
+                    match="Too large feature: not even a single feature can be returned",
+                ):
+                    batches = [batch for batch in stream]
+                    assert len(batches) == 0
+
+    with gdaltest.config_option("OGR_ARROW_MEM_LIMIT", "1", thread_local=False):
+
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        with gdal.quiet_errors():
+            gdal.ErrorReset()
+            batches = [batch for batch in stream]
+            assert (
+                gdal.GetLastErrorMsg()
+                == "Too large feature: not even a single feature can be returned"
+            )
+            assert len(batches) == 0
+
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        with gdaltest.enable_exceptions():
+            with pytest.raises(
+                Exception,
+                match="Too large feature: not even a single feature can be returned",
+            ):
+                batches = [batch for batch in stream]
+                assert len(batches) == 0
+
 
 ###############################################################################
 # Test optimization to save memory on string fields with huge strings compared
@@ -930,6 +1246,45 @@ def test_ogr_mem_arrow_stream_pyarrow():
     assert len(batches) == 1
     arrays = batches[0].flatten()
     assert len(arrays) == 2
+
+
+###############################################################################
+
+
+def test_ogr_mem_arrow_stream_pyarrow_geoarrow_no_crs_metadata():
+    pytest.importorskip("pyarrow")
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo")
+
+    stream = lyr.GetArrowStreamAsPyArrow(["GEOMETRY_METADATA_ENCODING=GEOARROW"])
+    assert str(stream.schema) == "struct<OGC_FID: int64 not null, wkb_geometry: binary>"
+    md = stream.schema["wkb_geometry"].metadata
+    assert b"ARROW:extension:name" in md
+    assert md[b"ARROW:extension:name"] == b"geoarrow.wkb"
+    assert b"ARROW:extension:metadata" not in md
+
+
+###############################################################################
+
+
+def test_ogr_mem_arrow_stream_pyarrow_geoarrow_metadata():
+    pytest.importorskip("pyarrow")
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    lyr = ds.CreateLayer("foo", srs=srs)
+
+    stream = lyr.GetArrowStreamAsPyArrow(["GEOMETRY_METADATA_ENCODING=GEOARROW"])
+    assert str(stream.schema) == "struct<OGC_FID: int64 not null, wkb_geometry: binary>"
+    md = stream.schema["wkb_geometry"].metadata
+    assert b"ARROW:extension:name" in md
+    assert md[b"ARROW:extension:name"] == b"geoarrow.wkb"
+    assert b"ARROW:extension:metadata" in md
+    metadata = json.loads(md[b"ARROW:extension:metadata"])
+    assert "crs" in metadata
+    assert metadata["crs"]["id"] == {"authority": "EPSG", "code": 32631}
 
 
 ###############################################################################
@@ -1051,68 +1406,67 @@ def test_ogr_mem_write_arrow():
     ds = ogr.GetDriverByName("Memory").CreateDataSource("")
     src_lyr = ds.CreateLayer("src_lyr")
 
-    feat_def = src_lyr.GetLayerDefn()
-
     field_def = ogr.FieldDefn("field_bool", ogr.OFTInteger)
     field_def.SetSubType(ogr.OFSTBoolean)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_integer", ogr.OFTInteger)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_int16", ogr.OFTInteger)
     field_def.SetSubType(ogr.OFSTInt16)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_integer64", ogr.OFTInteger64)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_float32", ogr.OFTReal)
     field_def.SetSubType(ogr.OFSTFloat32)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_real", ogr.OFTReal)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_string", ogr.OFTString)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_binary", ogr.OFTBinary)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_date", ogr.OFTDate)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_time", ogr.OFTTime)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_datetime", ogr.OFTDateTime)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_boollist", ogr.OFTIntegerList)
     field_def.SetSubType(ogr.OFSTBoolean)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_integerlist", ogr.OFTIntegerList)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_int16list", ogr.OFTIntegerList)
     field_def.SetSubType(ogr.OFSTInt16)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_integer64list", ogr.OFTInteger64List)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_float32list", ogr.OFTRealList)
     field_def.SetSubType(ogr.OFSTFloat32)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_reallist", ogr.OFTRealList)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
     field_def = ogr.FieldDefn("field_stringlist", ogr.OFTStringList)
-    feat_def.AddFieldDefn(field_def)
+    src_lyr.CreateField(field_def)
 
+    feat_def = src_lyr.GetLayerDefn()
     src_feature = ogr.Feature(feat_def)
     src_feature.SetField("field_bool", True)
     src_feature.SetField("field_integer", 17)
@@ -1167,6 +1521,84 @@ def test_ogr_mem_write_arrow():
 
     dst_feature = dst_lyr.GetNextFeature()
     assert str(src_feature2) == str(dst_feature).replace("dst_lyr", "src_lyr")
+
+
+###############################################################################
+# Test various data types for FID column in WriteArrowBatch()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("fid_type", [ogr.OFTInteger, ogr.OFTInteger64, ogr.OFTString])
+def test_ogr_mem_write_arrow_types_of_fid(fid_type):
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("src_lyr")
+
+    src_lyr.CreateField(ogr.FieldDefn("id", fid_type))
+
+    src_feature = ogr.Feature(src_lyr.GetLayerDefn())
+    src_feature["id"] = 2
+    src_lyr.CreateFeature(src_feature)
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    dst_lyr = ds.CreateLayer("dst_lyr")
+
+    stream = src_lyr.GetArrowStream()
+    schema = stream.GetSchema()
+
+    for i in range(schema.GetChildrenCount()):
+        if schema.GetChild(i).GetName() != "wkb_geometry":
+            dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+    while True:
+        array = stream.GetNextRecordBatch()
+        if array is None:
+            break
+        if fid_type == ogr.OFTString:
+            with pytest.raises(
+                Exception,
+                match=r"FID column 'id' should be of Arrow format 'i' \(int32\) or 'l' \(int64\)",
+            ):
+                dst_lyr.WriteArrowBatch(schema, array, ["FID=id"])
+        else:
+            dst_lyr.WriteArrowBatch(schema, array, ["FID=id"])
+
+    if fid_type != ogr.OFTString:
+        assert dst_lyr.GetFeature(2)
+
+
+###############################################################################
+# Test failure of CreateFeature() in WriteArrowBatch()
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mem_write_arrow_error_negative_fid():
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("src_lyr")
+
+    src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+
+    src_feature = ogr.Feature(src_lyr.GetLayerDefn())
+    src_feature["id"] = -2
+    src_lyr.CreateFeature(src_feature)
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    dst_lyr = ds.CreateLayer("dst_lyr")
+
+    stream = src_lyr.GetArrowStream()
+    schema = stream.GetSchema()
+
+    for i in range(schema.GetChildrenCount()):
+        if schema.GetChild(i).GetName() != "wkb_geometry":
+            dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+    while True:
+        array = stream.GetNextRecordBatch()
+        if array is None:
+            break
+        with pytest.raises(Exception, match="negative FID are not supported"):
+            dst_lyr.WriteArrowBatch(schema, array, ["FID=id"])
 
 
 ###############################################################################

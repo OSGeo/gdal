@@ -793,7 +793,7 @@ once.
 
 The ArrowArrayStream, ArrowSchema, ArrowArray structures are defined in a
 ogr_recordbatch.h public header file, directly derived from
-https://github.com/apache/arrow/blob/master/cpp/src/arrow/c/abi.h
+https://github.com/apache/arrow/blob/main/cpp/src/arrow/c/abi.h
 to get API/ABI compatibility with Apache Arrow C++. This header file must be
 explicitly included when the related array batch API is used.
 

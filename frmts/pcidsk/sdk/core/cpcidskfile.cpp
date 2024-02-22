@@ -1043,8 +1043,8 @@ void *CPCIDSKFile::ReadAndLockBlock( int block_index,
 
     ReadFromFile( last_block_data,
                   first_line_offset + block_index*block_size
-                  + win_xoff * pixel_group_size,
-                  pixel_group_size * win_xsize );
+                  + static_cast<uint64_t>(win_xoff) * pixel_group_size,
+                  static_cast<uint64_t>(pixel_group_size) * win_xsize );
     last_block_index = block_index;
     last_block_xoff = win_xoff;
     last_block_xsize = win_xsize;
@@ -1109,7 +1109,7 @@ void CPCIDSKFile::FlushBlock()
 
 bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
                                      Mutex **io_mutex_p,
-                                     std::string filename )
+                                     const std::string& filename )
 
 {
     *file_p = nullptr;
@@ -1207,7 +1207,7 @@ std::string CPCIDSKFile::GetUniqueEDBFilename()
         //trigger call to AccessDB()
         poChannel->GetBlockWidth();
 
-        std::string oFilename = poExt->GetExternalFilename();
+        const std::string oFilename = poExt->GetExternalFilename();
 
         if(oEDBName.size() == 0)
         {
@@ -1276,7 +1276,7 @@ std::map<int,int> CPCIDSKFile::GetEDBChannelMap(std::string oExtFilename)
 
 void CPCIDSKFile::GetIODetails( void ***io_handle_pp,
                                 Mutex ***io_mutex_pp,
-                                std::string filename,
+                                const std::string& filename,
                                 bool writable )
 
 {

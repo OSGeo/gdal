@@ -290,13 +290,13 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 CPLErr CPL_STDCALL GDALRATValuesIOAsString(GDALRasterAttributeTableH hRAT,
                                            GDALRWFlag eRWFlag, int iField,
                                            int iStartRow, int iLength,
-                                           CSLConstList papszStrList)
+                                           char **papszStrList)
 
 {
     VALIDATE_POINTER1(hRAT, "GDALRATValuesIOAsString", CE_Failure);
 
     return GDALRasterAttributeTable::FromHandle(hRAT)->ValuesIO(
-        eRWFlag, iField, iStartRow, iLength, const_cast<char **>(papszStrList));
+        eRWFlag, iField, iStartRow, iLength, papszStrList);
 }
 
 /************************************************************************/
@@ -831,7 +831,7 @@ void *GDALRasterAttributeTable::SerializeJSON() const
  * @param psTree XML tree
  * @return error code.
  */
-CPLErr GDALRasterAttributeTable::XMLInit(CPLXMLNode *psTree,
+CPLErr GDALRasterAttributeTable::XMLInit(const CPLXMLNode *psTree,
                                          const char * /*pszVRTPath*/)
 
 {
@@ -884,7 +884,7 @@ CPLErr GDALRasterAttributeTable::XMLInit(CPLXMLNode *psTree,
     /* -------------------------------------------------------------------- */
     /*      Row data.                                                       */
     /* -------------------------------------------------------------------- */
-    for (CPLXMLNode *psChild = psTree->psChild; psChild != nullptr;
+    for (const CPLXMLNode *psChild = psTree->psChild; psChild != nullptr;
          psChild = psChild->psNext)
     {
         if (psChild->eType == CXT_Element && EQUAL(psChild->pszValue, "Row"))
@@ -2147,7 +2147,7 @@ void GDALDefaultRasterAttributeTable::RemoveStatistics()
                 }
         }
     }
-    aoFields = aoNewFields;
+    aoFields = std::move(aoNewFields);
 }
 
 /************************************************************************/

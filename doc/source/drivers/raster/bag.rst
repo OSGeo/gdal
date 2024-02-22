@@ -192,7 +192,7 @@ MODE open option:
       -  NODATA_VALUE=value. Override the default value, which is usually
          1000000.
 
-   -  MODE=RESAMPLED: (GDAL >= 3.8) in this mode, the user specify the extent and
+   -  MODE=INTERPOLATED: (GDAL >= 3.8) in this mode, the user specify the extent and
       resolution of a target grid, and for each cell of this target grid,
       the driver will interpolate the value from the surrounding nodes of the
       supergrid(s) that applies to the cell, using in priority bilinear
@@ -474,3 +474,4 @@ See Also
    1.6 <https://github.com/OpenNavigationSurface/BAG/raw/master/docs/BAG_FSD_Release_1.6.3.doc>`__
 -  `Variable resolution grid extension for BAG
    files <https://github.com/OpenNavigationSurface/BAG/raw/master/docs/VariableResolution/2017-08-10_VariableResolution.docx>`__
+-  :ref:`S-102 driver <raster.s102>`

@@ -839,6 +839,10 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  */
 #define GDAL_DMD_SUPPORTED_SQL_DIALECTS "DMD_SUPPORTED_SQL_DIALECTS"
 
+/*! @cond Doxygen_Suppress */
+#define GDAL_DMD_PLUGIN_INSTALLATION_MESSAGE "DMD_PLUGIN_INSTALLATION_MESSAGE"
+/*! @endcond */
+
 /** Value for GDALDimension::GetType() specifying the X axis of a horizontal
  * CRS.
  * @since GDAL 3.1
@@ -1009,6 +1013,12 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenShared(const char *, GDALAccess)
 #define GDAL_OF_BLOCK_ACCESS_MASK 0x300
 #endif
 
+#ifndef DOXYGEN_SKIP
+/** Set by GDALOpenEx() to indicate to Identify() method that they are called
+ * from it */
+#define GDAL_OF_FROM_GDALOPEN 0x400
+#endif
+
 GDALDatasetH CPL_DLL CPL_STDCALL GDALOpenEx(
     const char *pszFilename, unsigned int nOpenFlags,
     const char *const *papszAllowedDrivers, const char *const *papszOpenOptions,
@@ -1036,6 +1046,10 @@ CPLErr CPL_DLL CPL_STDCALL GDALCopyDatasetFiles(GDALDriverH,
                                                 const char *pszOldName);
 int CPL_DLL CPL_STDCALL
 GDALValidateCreationOptions(GDALDriverH, CSLConstList papszCreationOptions);
+char CPL_DLL **GDALGetOutputDriversForDatasetName(const char *pszDestFilename,
+                                                  int nFlagRasterVector,
+                                                  bool bSingleMatch,
+                                                  bool bEmitWarning);
 
 /* The following are deprecated */
 const char CPL_DLL *CPL_STDCALL GDALGetDriverShortName(GDALDriverH);
@@ -1078,10 +1092,10 @@ GDAL_GCP CPL_DLL *CPL_STDCALL GDALDuplicateGCPs(int, const GDAL_GCP *);
 int CPL_DLL CPL_STDCALL GDALGCPsToGeoTransform(
     int nGCPCount, const GDAL_GCP *pasGCPs, double *padfGeoTransform,
     int bApproxOK) CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CPL_STDCALL GDALInvGeoTransform(double *padfGeoTransformIn,
+int CPL_DLL CPL_STDCALL GDALInvGeoTransform(const double *padfGeoTransformIn,
                                             double *padfInvGeoTransformOut)
     CPL_WARN_UNUSED_RESULT;
-void CPL_DLL CPL_STDCALL GDALApplyGeoTransform(double *, double, double,
+void CPL_DLL CPL_STDCALL GDALApplyGeoTransform(const double *, double, double,
                                                double *, double *);
 void CPL_DLL GDALComposeGeoTransforms(const double *padfGeoTransform1,
                                       const double *padfGeoTransform2,
@@ -1187,6 +1201,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALBuildOverviewsEx(
 void CPL_DLL CPL_STDCALL GDALGetOpenDatasets(GDALDatasetH **hDS, int *pnCount);
 int CPL_DLL CPL_STDCALL GDALGetAccess(GDALDatasetH hDS);
 CPLErr CPL_DLL CPL_STDCALL GDALFlushCache(GDALDatasetH hDS);
+CPLErr CPL_DLL CPL_STDCALL GDALDropCache(GDALDatasetH hDS);
 
 CPLErr CPL_DLL CPL_STDCALL GDALCreateDatasetMaskBand(GDALDatasetH hDS,
                                                      int nFlags);
@@ -1541,6 +1556,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALComputeRasterMinMax(GDALRasterBandH hBand,
                                                    int bApproxOK,
                                                    double adfMinMax[2]);
 CPLErr CPL_DLL CPL_STDCALL GDALFlushRasterCache(GDALRasterBandH hBand);
+CPLErr CPL_DLL CPL_STDCALL GDALDropRasterCache(GDALRasterBandH hBand);
 CPLErr CPL_DLL CPL_STDCALL GDALGetRasterHistogram(
     GDALRasterBandH hBand, double dfMin, double dfMax, int nBuckets,
     int *panHistogram, int bIncludeOutOfRange, int bApproxOK,
@@ -1929,7 +1945,7 @@ GDALRATValuesIOAsInteger(GDALRasterAttributeTableH hRAT, GDALRWFlag eRWFlag,
                          int iField, int iStartRow, int iLength, int *pnData);
 CPLErr CPL_DLL CPL_STDCALL GDALRATValuesIOAsString(
     GDALRasterAttributeTableH hRAT, GDALRWFlag eRWFlag, int iField,
-    int iStartRow, int iLength, CSLConstList papszStrList);
+    int iStartRow, int iLength, char **papszStrList);
 
 void CPL_DLL CPL_STDCALL GDALRATSetRowCount(GDALRasterAttributeTableH, int);
 CPLErr CPL_DLL CPL_STDCALL GDALRATCreateColumn(GDALRasterAttributeTableH,
@@ -2219,6 +2235,8 @@ GDALAttributeH CPL_DLL GDALGroupCreateAttribute(
 bool CPL_DLL GDALGroupDeleteAttribute(GDALGroupH hGroup, const char *pszName,
                                       CSLConstList papszOptions);
 bool CPL_DLL GDALGroupRename(GDALGroupH hGroup, const char *pszNewName);
+GDALGroupH CPL_DLL GDALGroupSubsetDimensionFromSelection(
+    GDALGroupH hGroup, const char *pszSelection, CSLConstList papszOptions);
 
 void CPL_DLL GDALMDArrayRelease(GDALMDArrayH hMDArray);
 const char CPL_DLL *GDALMDArrayGetName(GDALMDArrayH hArray);
@@ -2344,6 +2362,10 @@ GDALMDArrayGetCoordinateVariables(GDALMDArrayH hArray,
 void CPL_DLL GDALReleaseArrays(GDALMDArrayH *arrays, size_t nCount);
 int CPL_DLL GDALMDArrayCache(GDALMDArrayH hArray, CSLConstList papszOptions);
 bool CPL_DLL GDALMDArrayRename(GDALMDArrayH hArray, const char *pszNewName);
+
+GDALRasterAttributeTableH CPL_DLL GDALCreateRasterAttributeTableFromMDArrays(
+    GDALRATTableType eTableType, int nArrays, const GDALMDArrayH *ahArrays,
+    const GDALRATFieldUsage *paeUsages);
 
 void CPL_DLL GDALAttributeRelease(GDALAttributeH hAttr);
 void CPL_DLL GDALReleaseAttributes(GDALAttributeH *attributes, size_t nCount);

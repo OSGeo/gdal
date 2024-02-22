@@ -57,7 +57,7 @@ class MSGCommand
     static int iDaysInMonth(int iMonth, int iYear);
     static std::string sChannel(int iChannel);
     static int iChannel(std::string const &sChannel);
-    static std::string sTimeStampToFolder(std::string &sTimeStamp);
+    static std::string sTimeStampToFolder(const std::string &sTimeStamp);
     std::string sRootFolder;
     std::string sTimeStamp;
     int iStep;

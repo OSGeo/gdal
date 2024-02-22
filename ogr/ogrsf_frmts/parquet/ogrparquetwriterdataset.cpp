@@ -86,8 +86,8 @@ OGRLayer *OGRParquetWriterDataset::ICreateLayer(
                  "Can write only one layer in a Parquet file");
         return nullptr;
     }
-    m_poLayer = cpl::make_unique<OGRParquetWriterLayer>(
-        m_poMemoryPool.get(), m_poOutputStream, pszName);
+    m_poLayer = std::make_unique<OGRParquetWriterLayer>(
+        this, m_poMemoryPool.get(), m_poOutputStream, pszName);
     if (!m_poLayer->SetOptions(papszOptions, poSpatialRef, eGType))
     {
         m_poLayer.reset();

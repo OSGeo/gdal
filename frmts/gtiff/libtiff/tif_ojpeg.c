@@ -207,37 +207,21 @@ static const TIFFField ojpegFields[] = {
 #include <setjmp.h>
 #endif
 
-/* We undefine FAR to avoid conflict with JPEG definition */
-
-#ifdef FAR
-#undef FAR
-#endif
-
-/*
-  Libjpeg's jmorecfg.h defines INT16 and INT32, but only if XMD_H is
-  not defined.  Unfortunately, the MinGW and Borland compilers include
-  a typedef for INT32, which causes a conflict.  MSVC does not include
-  a conflicting typedef given the headers which are included.
-*/
-#if defined(__BORLANDC__) || defined(__MINGW32__)
-#define XMD_H 1
-#endif
-
-/* Define "boolean" as unsigned char, not int, per Windows custom. */
-#if defined(__WIN32__) && !defined(__MINGW32__)
-#ifndef __RPCNDR_H__ /* don't conflict if rpcndr.h already read */
-typedef unsigned char boolean;
-#endif
-#define HAVE_BOOLEAN /* prevent jmorecfg.h from redefining it */
-#endif
-
 #include "jerror.h"
 #include "jpeglib.h"
 
+#ifndef TIFF_jpeg_source_mgr_defined
+#define TIFF_jpeg_source_mgr_defined
+typedef struct jpeg_source_mgr jpeg_source_mgr;
+#endif
+
+#ifndef TIFF_jpeg_error_mgr_defined
+#define TIFF_jpeg_error_mgr_defined
 typedef struct jpeg_error_mgr jpeg_error_mgr;
+#endif
+
 typedef struct jpeg_common_struct jpeg_common_struct;
 typedef struct jpeg_decompress_struct jpeg_decompress_struct;
-typedef struct jpeg_source_mgr jpeg_source_mgr;
 
 typedef enum
 {

@@ -63,8 +63,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-CPL_CVSID("$Id$")
-
 #define MAXORDER 3
 
 namespace
@@ -756,7 +754,8 @@ static int calccoef(struct Control_Points *cp, double x_mean, double y_mean,
 
     /* INITIALIZE MATRIX */
 
-    m.v = static_cast<double *>(VSICalloc(m.n * m.n, sizeof(double)));
+    m.v = static_cast<double *>(
+        VSICalloc(cpl::fits_on<int>(m.n * m.n), sizeof(double)));
     if (m.v == nullptr)
     {
         return (MMEMERR);

@@ -49,17 +49,6 @@ def init():
 ###############################################################################
 
 
-@pytest.fixture
-def has_make_valid():
-    # Check if MakeValid() is available
-    g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
-    with gdaltest.error_handler(), gdaltest.disable_exceptions():
-        return g.MakeValid() is not None
-
-
-###############################################################################
-
-
 def test_ogr_mvt_datatypes():
 
     # With metadata.json
@@ -700,26 +689,7 @@ def test_ogr_mvt_errors():
 
 
 @pytest.mark.require_curl()
-def test_ogr_mvt_http_start():
-
-    gdaltest.webserver_process = None
-    gdaltest.webserver_port = 0
-
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
-        handler=webserver.DispatcherHttpHandler
-    )
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-
-###############################################################################
-
-
-@pytest.mark.require_curl()
-def test_ogr_mvt_http():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_ogr_mvt_http(server):
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -744,7 +714,7 @@ def test_ogr_mvt_http():
         open("data/mvt/linestring/0/0/0.pbf", "rb").read(),
     )
     with webserver.install_http_handler(handler):
-        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % gdaltest.webserver_port)
+        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % server.port)
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert f is not None
@@ -756,7 +726,7 @@ def test_ogr_mvt_http():
     handler.add("GET", "/linestring/0/0/0.pbf", 404, {})
     with webserver.install_http_handler(handler):
         with pytest.raises(Exception):
-            ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % gdaltest.webserver_port)
+            ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % server.port)
 
     # No metadata file, but tiles
     handler = webserver.SequentialHandler()
@@ -777,7 +747,7 @@ def test_ogr_mvt_http():
         open("data/mvt/linestring/0/0/0.pbf", "rb").read(),
     )
     with webserver.install_http_handler(handler):
-        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % gdaltest.webserver_port)
+        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % server.port)
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert f is not None
@@ -794,7 +764,7 @@ def test_ogr_mvt_http():
     handler.add("GET", "/linestring/0/0/0.pbf", 404, {})
     handler.add("GET", "/linestring/0/0/0.pbf", 404, {})
     with webserver.install_http_handler(handler):
-        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % gdaltest.webserver_port)
+        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % server.port)
         lyr = ds.GetLayer(0)
         with pytest.raises(Exception):
             lyr.GetNextFeature()
@@ -812,7 +782,7 @@ def test_ogr_mvt_http():
     handler.add("GET", "/linestring/0/0/0.pbf", 404, {})
     handler.add("GET", "/linestring/0/0/0.pbf", 404, {})
     with webserver.install_http_handler(handler):
-        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % gdaltest.webserver_port)
+        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0" % server.port)
         lyr = ds.GetLayer(0)
         with pytest.raises(Exception):
             lyr.GetNextFeature()
@@ -827,9 +797,7 @@ def test_ogr_mvt_http():
         open("data/mvt/linestring/0/0/0.pbf", "rb").read(),
     )
     with webserver.install_http_handler(handler):
-        ds = ogr.Open(
-            "MVT:http://127.0.0.1:%d/linestring/0/0/0.pbf" % gdaltest.webserver_port
-        )
+        ds = ogr.Open("MVT:http://127.0.0.1:%d/linestring/0/0/0.pbf" % server.port)
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert f is not None
@@ -838,21 +806,9 @@ def test_ogr_mvt_http():
 ###############################################################################
 
 
-@pytest.mark.require_curl()
-def test_ogr_mvt_http_stop():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-    webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
-
-
-###############################################################################
-
-
 @pytest.mark.require_driver("SQLite")
 @pytest.mark.require_geos
-def test_ogr_mvt_write_one_layer(has_make_valid):
+def test_ogr_mvt_write_one_layer():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
@@ -1016,24 +972,17 @@ def test_ogr_mvt_write_one_layer(has_make_valid):
     )
 
     out_f = out_lyr.GetNextFeature()
-    if has_make_valid:
-        # Below is what we get with MakeValid() available
+    try:
         # GEOS > 3.8 (not sure which minimum version)
-        try:
-            ogrtest.check_feature_geometry(
-                out_f,
-                "MULTIPOLYGON (((-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126,-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176)),((508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126,508764.860266134 1007745.78091176)))",
-            )
-        except AssertionError:
-            # Below result with GEOS 3.8
-            ogrtest.check_feature_geometry(
-                out_f,
-                "MULTIPOLYGON (((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126)),((-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126,-508764.860266134 997961.84129126)))",
-            )
-    else:
         ogrtest.check_feature_geometry(
             out_f,
-            "MULTIPOLYGON (((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126)),((-498980.920645632 997961.84129126,-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126)))",
+            "MULTIPOLYGON (((-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126,-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176)),((508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126,508764.860266134 1007745.78091176)))",
+        )
+    except AssertionError:
+        # Below result with GEOS 3.8
+        ogrtest.check_feature_geometry(
+            out_f,
+            "MULTIPOLYGON (((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126)),((-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126,-508764.860266134 997961.84129126)))",
         )
 
     for _ in range(2):
@@ -1428,7 +1377,7 @@ def test_ogr_mvt_write_polygon_repaired():
 
 @pytest.mark.require_driver("SQLite")
 @pytest.mark.require_geos
-def test_ogr_mvt_write_conflicting_innner_ring(has_make_valid):
+def test_ogr_mvt_write_conflicting_innner_ring():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
@@ -1452,16 +1401,10 @@ def test_ogr_mvt_write_conflicting_innner_ring(has_make_valid):
     out_lyr = out_ds.GetLayerByName("mylayer")
     out_f = out_lyr.GetNextFeature()
 
-    if has_make_valid:
-        ogrtest.check_feature_geometry(
-            out_f,
-            "MULTIPOLYGON (((-499898.164985052 1000102.07808325,-509987.852718695 1000102.07808325,-509987.852718695 1009886.01770375,-499898.164985052 1000102.07808325),(-502038.401777037 1001019.32242267,-509070.608379273 1008357.27713804,-509070.608379273 1001019.32242267,-509070.608379273 1000713.57430953,-502038.401777037 1001019.32242267)))",
-        )
-    else:
-        ogrtest.check_feature_geometry(
-            out_f,
-            "MULTIPOLYGON (((-499898.164985052 1000102.07808325,-509987.852718695 1000102.07808325,-509987.852718695 1009886.01770375,-499898.164985052 1000102.07808325),(-502038.401777037 1001019.32242267,-509070.608379273 1008357.27713804,-509070.608379273 1001019.32242267,-502038.401777037 1001019.32242267)))",
-        )
+    ogrtest.check_feature_geometry(
+        out_f,
+        "MULTIPOLYGON (((-499898.164985052 1000102.07808325,-509987.852718695 1000102.07808325,-509987.852718695 1009886.01770375,-499898.164985052 1000102.07808325),(-502038.401777037 1001019.32242267,-509070.608379273 1008357.27713804,-509070.608379273 1001019.32242267,-509070.608379273 1000713.57430953,-502038.401777037 1001019.32242267)))",
+    )
 
     out_ds = None
 

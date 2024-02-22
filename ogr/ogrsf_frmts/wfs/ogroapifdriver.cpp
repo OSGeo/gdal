@@ -84,6 +84,7 @@ class OGROAPIFDataset final : public GDALDataset
     CPLString m_osUserQueryParams;
     CPLString m_osUserPwd;
     int m_nPageSize = 1000;
+    int m_nInitialRequestPageSize = 20;
     bool m_bPageSizeSetFromOpenOptions = false;
     std::vector<std::unique_ptr<OGRLayer>> m_apoLayers;
     std::string m_osAskedCRS{};
@@ -301,11 +302,11 @@ CPLString OGROAPIFDataset::ReinjectAuthInURL(const CPLString &osURL) const
         {
             auto osUserPwd = m_osRootURL.substr(
                 strlen("https://"), nArobaseInURLPos - strlen("https://"));
-            auto osServer =
+            std::string osServer(
                 nFirstSlashPos == std::string::npos
                     ? m_osRootURL.substr(nArobaseInURLPos + 1)
                     : m_osRootURL.substr(nArobaseInURLPos + 1,
-                                         nFirstSlashPos - nArobaseInURLPos);
+                                         nFirstSlashPos - nArobaseInURLPos));
             if (STARTS_WITH(osRet, ("https://" + osServer).c_str()))
             {
                 osRet = "https://" + osUserPwd + "@" +
@@ -762,7 +763,7 @@ bool OGROAPIFDataset::LoadJSONCollection(const CPLJSONObject &oCollection,
     }
 
     const auto oLinks = oCollection.GetArray("links");
-    auto poLayer = cpl::make_unique<OGROAPIFLayer>(
+    auto poLayer = std::make_unique<OGROAPIFLayer>(
         this, osName, oBBOX, osBBOXCrs, std::move(oCRSList), osActiveCRS,
         dfCoordinateEpoch, oLinks);
     if (!osTitle.empty())
@@ -1086,6 +1087,14 @@ bool OGROAPIFDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         m_nPageSize = pageSize;
         m_bPageSizeSetFromOpenOptions = true;
+    }
+
+    const int initialRequestPageSize = atoi(CSLFetchNameValueDef(
+        poOpenInfo->papszOpenOptions, "INITIAL_REQUEST_PAGE_SIZE", "-1"));
+
+    if (initialRequestPageSize >= 1)
+    {
+        m_nInitialRequestPageSize = initialRequestPageSize;
     }
 
     m_osUserPwd =
@@ -1548,7 +1557,7 @@ static bool BuildExampleRecursively(CPLJSONObject &oRes,
                 oArray.Add(oChildRes);
             }
         }
-        oRes = oArray;
+        oRes = std::move(oArray);
         return true;
     }
     else if (osType == "string")
@@ -1670,7 +1679,7 @@ void OGROAPIFLayer::GetSchema()
                 const char *pszName =
                     poProperty->GetName() +
                     (bAllPrefixed ? osPropertyNamePrefix.size() : 0);
-                auto poField = cpl::make_unique<OGRFieldDefn>(pszName, eFType);
+                auto poField = std::make_unique<OGRFieldDefn>(pszName, eFType);
                 poField->SetSubType(eSubType);
                 m_apoFieldsFromSchema.emplace_back(std::move(poField));
             }
@@ -1749,7 +1758,7 @@ void OGROAPIFLayer::GetSchema()
                             }
                         }
 
-                        auto poField = cpl::make_unique<OGRFieldDefn>(
+                        auto poField = std::make_unique<OGRFieldDefn>(
                             oProp.GetName().c_str(), eType);
                         poField->SetSubType(eSubType);
                         m_apoFieldsFromSchema.emplace_back(std::move(poField));
@@ -1786,6 +1795,7 @@ void OGROAPIFLayer::EstablishFeatureDefn()
     {
         const int nOldPageSize{m_poDS->m_nPageSize};
         m_poDS->DeterminePageSizeFromAPI(m_osURL);
+        // cppcheck-suppress knownConditionTrueFalse
         if (nOldPageSize != m_poDS->m_nPageSize)
         {
             m_osGetURL = CPLURLAddKVP(m_osGetURL, "limit",
@@ -1795,7 +1805,11 @@ void OGROAPIFLayer::EstablishFeatureDefn()
 
     CPLJSONDocument oDoc;
     CPLString osURL(m_osURL);
-    osURL = CPLURLAddKVP(osURL, "limit", CPLSPrintf("%d", m_poDS->m_nPageSize));
+
+    osURL = CPLURLAddKVP(
+        osURL, "limit",
+        CPLSPrintf("%d", std::min(m_poDS->m_nInitialRequestPageSize,
+                                  m_poDS->m_nPageSize)));
     if (!m_poDS->DownloadJSon(osURL, oDoc))
         return;
 
@@ -2071,7 +2085,7 @@ OGRFeature *OGROAPIFLayer::GetNextRawFeature()
                 if (oLinks.IsValid())
                 {
                     int nCountRelNext = 0;
-                    CPLString osNextURL;
+                    std::string osNextURL;
                     for (int i = 0; i < oLinks.Size(); i++)
                     {
                         CPLJSONObject oLink = oLinks[i];
@@ -2099,7 +2113,7 @@ OGRFeature *OGROAPIFLayer::GetNextRawFeature()
                     if (nCountRelNext == 1 && m_osGetURL.empty())
                     {
                         // In case we go a "rel": "next" without a "type"
-                        m_osGetURL = osNextURL;
+                        m_osGetURL = std::move(osNextURL);
                     }
                 }
 
@@ -2513,13 +2527,11 @@ CPLString OGROAPIFLayer::BuildFilter(const swq_expr_node *poNode)
                  m_aoSetQueryableAttributes.find(poFieldDefn->GetNameRef()) !=
                      m_aoSetQueryableAttributes.end())
         {
-            CPLString osEscapedFieldName;
-            {
-                char *pszEscapedFieldName =
-                    CPLEscapeString(poFieldDefn->GetNameRef(), -1, CPLES_URL);
-                osEscapedFieldName = pszEscapedFieldName;
-                CPLFree(pszEscapedFieldName);
-            }
+            char *pszEscapedFieldName =
+                CPLEscapeString(poFieldDefn->GetNameRef(), -1, CPLES_URL);
+            const CPLString osEscapedFieldName(pszEscapedFieldName);
+            CPLFree(pszEscapedFieldName);
+
             if (poNode->papoSubExpr[1]->field_type == SWQ_STRING)
             {
                 char *pszEscapedValue = CPLEscapeString(
@@ -3119,7 +3131,7 @@ static GDALDataset *OGROAPIFDriverOpen(GDALOpenInfo *poOpenInfo)
 {
     if (!OGROAPIFDriverIdentify(poOpenInfo) || poOpenInfo->eAccess == GA_Update)
         return nullptr;
-    auto poDataset = cpl::make_unique<OGROAPIFDataset>();
+    auto poDataset = std::make_unique<OGROAPIFDataset>();
     if (!poDataset->Open(poOpenInfo))
         return nullptr;
     return poDataset.release();
@@ -3154,6 +3166,9 @@ void RegisterOGROAPIF()
         "  <Option name='PAGE_SIZE' type='int' "
         "description='Maximum number of features to retrieve in a single "
         "request'/>"
+        "  <Option name='INITIAL_REQUEST_PAGE_SIZE' type='int' "
+        "description='Maximum number of features to retrieve in the initial "
+        "request issued to determine the schema from a feature sample'/>"
         "  <Option name='USERPWD' type='string' "
         "description='Basic authentication as username:password'/>"
         "  <Option name='IGNORE_SCHEMA' type='boolean' "

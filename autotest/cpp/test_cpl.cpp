@@ -57,6 +57,7 @@
 #include "cpl_threadsafe_queue.hpp"
 
 #include <atomic>
+#include <cmath>
 #include <limits>
 #include <fstream>
 #include <string>
@@ -648,6 +649,7 @@ TEST_F(test_cpl, CPLStringList_NameValue)
     {
         CPLStringList oTemp;
         oTemp.AddString("test");
+        // coverity[copy_assignment_call]
         oCopy = oTemp;
     }
     EXPECT_STREQ(oCopy[0], "test");
@@ -1136,7 +1138,7 @@ TEST_F(test_cpl, VSIMallocAligned)
 
     VSIFreeAligned(nullptr);
 
-#ifndef WIN32
+#ifndef _WIN32
     // Illegal use of API. Returns non NULL on Windows
     ptr = static_cast<GByte *>(VSIMallocAligned(2, 1));
     EXPECT_TRUE(ptr == nullptr);
@@ -2562,9 +2564,11 @@ TEST_F(test_cpl, CPLJSONDocument)
         CPLJSONObject oObj2(oObj);
         ASSERT_TRUE(oObj2.ToBool());
         // Assignment operator
+        // coverity[copy_assignment_call]
         oDocument2 = oDocument;
         auto &oDocument2Ref(oDocument2);
         oDocument2 = oDocument2Ref;
+        // coverity[copy_assignment_call]
         oObj2 = oObj;
         auto &oObj2Ref(oObj2);
         oObj2 = oObj2Ref;
@@ -3124,6 +3128,7 @@ TEST_F(test_cpl, cpl_minixml)
     CPLXMLNode *psElt = CPLCreateXMLElementAndValue(psRoot, "Elt", "value");
     CPLAddXMLAttributeAndValue(psElt, "attr1", "val1");
     CPLAddXMLAttributeAndValue(psElt, "attr2", "val2");
+    EXPECT_GE(CPLXMLNodeGetRAMUsageEstimate(psRoot), 0);
     char *str = CPLSerializeXMLTree(psRoot);
     CPLDestroyXMLNode(psRoot);
     ASSERT_STREQ(
@@ -3573,7 +3578,7 @@ TEST_F(test_cpl, CPLLoadConfigOptionsFromFile)
 
     // Try CPLLoadConfigOptionsFromPredefinedFiles() with $HOME/.gdal/gdalrc
     // file
-#ifdef WIN32
+#ifdef _WIN32
     const char *pszHOMEEnvVarName = "USERPROFILE";
 #else
     const char *pszHOMEEnvVarName = "HOME";
@@ -4197,6 +4202,16 @@ TEST_F(test_cpl, VSI_plugin_minimal_testing)
 
     VSIFCloseL(fp);
     EXPECT_TRUE(VSIFOpenL("/vsimyplugin/i_dont_exist", "rb") == nullptr);
+
+    // Check that we can remove the handler
+    VSIRemovePluginHandler("/vsimyplugin/");
+
+    EXPECT_TRUE(VSIFOpenL("/vsimyplugin/test", "rb") == nullptr);
+    EXPECT_TRUE(VSIFOpenL("/vsimyplugin/i_dont_exist", "rb") == nullptr);
+
+    // Removing a non-existing handler is a no-op
+    VSIRemovePluginHandler("/vsimyplugin/");
+    VSIRemovePluginHandler("/vsifoobar/");
 }
 
 TEST_F(test_cpl, VSI_plugin_advise_read)
@@ -4874,6 +4889,139 @@ TEST_F(test_cpl, VSIGetCanonicalFilename)
         }
     }
     VSIUnlink(osLC.c_str());
+}
+
+TEST_F(test_cpl, CPLStrtod)
+{
+    {
+        const char *pszVal = "5";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd), 5.0);
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+
+    {
+        const char *pszVal = "5 foo";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd), 5.0);
+        EXPECT_EQ(pszEnd, pszVal + 1);
+    }
+
+    {
+        const char *pszVal = "foo";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd), 0.0);
+        EXPECT_EQ(pszEnd, pszVal);
+    }
+
+    {
+        const char *pszVal = "-inf";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  -std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "-Inf";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  -std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "-INF";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  -std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "-Infinity";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  -std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "-1.#INF";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  -std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+
+    {
+        const char *pszVal = "inf";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "Inf";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "INF";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "Infinity";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "1.#INF";
+        char *pszEnd = nullptr;
+        EXPECT_EQ(CPLStrtod(pszVal, &pszEnd),
+                  std::numeric_limits<double>::infinity());
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+
+    {
+        const char *pszVal = "-1.#QNAN";
+        char *pszEnd = nullptr;
+        EXPECT_TRUE(std::isnan(CPLStrtod(pszVal, &pszEnd)));
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "-1.#IND";
+        char *pszEnd = nullptr;
+        EXPECT_TRUE(std::isnan(CPLStrtod(pszVal, &pszEnd)));
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "1.#QNAN";
+        char *pszEnd = nullptr;
+        EXPECT_TRUE(std::isnan(CPLStrtod(pszVal, &pszEnd)));
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "1.#SNAN";
+        char *pszEnd = nullptr;
+        EXPECT_TRUE(std::isnan(CPLStrtod(pszVal, &pszEnd)));
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "NaN";
+        char *pszEnd = nullptr;
+        EXPECT_TRUE(std::isnan(CPLStrtod(pszVal, &pszEnd)));
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+    {
+        const char *pszVal = "nan";
+        char *pszEnd = nullptr;
+        EXPECT_TRUE(std::isnan(CPLStrtod(pszVal, &pszEnd)));
+        EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
 }
 
 }  // namespace

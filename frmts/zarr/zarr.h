@@ -70,7 +70,6 @@ class ZarrDataset final : public GDALDataset
 
     CPLErr FlushCache(bool bAtClosing = false) override;
 
-    static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *
     CreateMultiDimensional(const char *pszFilename,
@@ -252,9 +251,12 @@ class ZarrSharedResource
     std::shared_ptr<GDALPamMultiDim> m_poPAM{};
     CPLStringList m_aosOpenOptions{};
     std::weak_ptr<ZarrGroupBase> m_poWeakRootGroup{};
+    std::set<std::string> m_oSetArrayInLoading{};
 
     explicit ZarrSharedResource(const std::string &osRootDirectoryName,
                                 bool bUpdatable);
+
+    std::shared_ptr<ZarrGroupBase> OpenRootGroup();
 
   public:
     static std::shared_ptr<ZarrSharedResource>
@@ -295,15 +297,52 @@ class ZarrSharedResource
         m_aosOpenOptions = papszOpenOptions;
     }
 
-    std::shared_ptr<ZarrGroupBase> OpenRootGroup();
-
     void
     UpdateDimensionSize(const std::shared_ptr<GDALDimension> &poUpdatedDim);
+
+    std::shared_ptr<ZarrGroupBase> GetRootGroup()
+    {
+        auto poRootGroup = m_poWeakRootGroup.lock();
+        if (poRootGroup)
+            return poRootGroup;
+        poRootGroup = OpenRootGroup();
+        m_poWeakRootGroup = poRootGroup;
+        return poRootGroup;
+    }
 
     void SetRootGroup(const std::shared_ptr<ZarrGroupBase> &poRootGroup)
     {
         m_poWeakRootGroup = poRootGroup;
     }
+
+    bool AddArrayInLoading(const std::string &osZarrayFilename);
+    void RemoveArrayInLoading(const std::string &osZarrayFilename);
+
+    struct SetFilenameAdder
+    {
+        std::shared_ptr<ZarrSharedResource> m_poSharedResource;
+        const std::string m_osFilename;
+        const bool m_bOK;
+
+        SetFilenameAdder(
+            const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+            const std::string &osFilename)
+            : m_poSharedResource(poSharedResource), m_osFilename(osFilename),
+              m_bOK(m_poSharedResource->AddArrayInLoading(m_osFilename))
+        {
+        }
+
+        ~SetFilenameAdder()
+        {
+            if (m_bOK)
+                m_poSharedResource->RemoveArrayInLoading(m_osFilename);
+        }
+
+        bool ok() const
+        {
+            return m_bOK;
+        }
+    };
 };
 
 /************************************************************************/
@@ -341,7 +380,6 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     mutable bool m_bDimensionsInstantiated = false;
     bool m_bUpdatable = false;
     bool m_bDimSizeInUpdate = false;
-    std::weak_ptr<ZarrGroupBase> m_pSelf{};
 
     virtual void ExploreDirectory() const = 0;
     virtual void LoadAttributes() const = 0;
@@ -364,11 +402,6 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
 
   public:
     ~ZarrGroupBase() override;
-
-    void SetSelf(const std::weak_ptr<ZarrGroupBase> &self)
-    {
-        m_pSelf = self;
-    }
 
     std::shared_ptr<GDALAttribute>
     GetAttribute(const std::string &osName) const override
@@ -515,8 +548,8 @@ class ZarrV2Group final : public ZarrGroupBase
     std::shared_ptr<ZarrArray>
     LoadArray(const std::string &osArrayName,
               const std::string &osZarrayFilename, const CPLJSONObject &oRoot,
-              bool bLoadedFromZMetadata, const CPLJSONObject &oAttributes,
-              std::set<std::string> &oSetFilenamesInLoading) const;
+              bool bLoadedFromZMetadata,
+              const CPLJSONObject &oAttributes) const;
 
     std::shared_ptr<GDALMDArray> CreateMDArray(
         const std::string &osName,
@@ -566,10 +599,9 @@ class ZarrV3Group final : public ZarrGroupBase
     CreateGroup(const std::string &osName,
                 CSLConstList papszOptions = nullptr) override;
 
-    std::shared_ptr<ZarrArray>
-    LoadArray(const std::string &osArrayName,
-              const std::string &osZarrayFilename, const CPLJSONObject &oRoot,
-              std::set<std::string> &oSetFilenamesInLoading) const;
+    std::shared_ptr<ZarrArray> LoadArray(const std::string &osArrayName,
+                                         const std::string &osZarrayFilename,
+                                         const CPLJSONObject &oRoot) const;
 
     std::shared_ptr<GDALMDArray> CreateMDArray(
         const std::string &osName,
@@ -939,7 +971,8 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
         m_osDimSeparator = osDimSeparator;
     }
 
-    void ParseSpecialAttributes(CPLJSONObject &oAttributes);
+    void ParseSpecialAttributes(const std::shared_ptr<GDALGroup> &poGroup,
+                                CPLJSONObject &oAttributes);
 
     void SetAttributes(const CPLJSONObject &attrs)
     {
@@ -1001,6 +1034,11 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     void ParentRenamed(const std::string &osNewParentFullName) override;
 
     virtual void Flush() = 0;
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return m_poSharedResource->GetRootGroup();
+    }
 
     bool CacheTilePresence();
 

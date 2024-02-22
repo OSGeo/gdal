@@ -42,8 +42,8 @@ g2int g2_unpack2(unsigned char *cgrib,g2int *iofst,g2int *lencsec2,unsigned char
 //$$$//
 {
 
-      g2int ierr,isecnum;
-      g2int lensec,ipos,j;
+      g2int ierr,isecnum = 0;
+      g2int lensec = 0,ipos,j;
 
       ierr=0;
       *lencsec2=0;

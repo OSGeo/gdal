@@ -132,7 +132,7 @@ class OGRGeoJSONSeqLayer final : public OGRLayer
     GIntBig GetFeatureCount(int) override;
     int TestCapability(const char *) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *, int) override;
+    OGRErr CreateField(const OGRFieldDefn *, int) override;
 };
 
 /************************************************************************/
@@ -216,7 +216,7 @@ OGRLayer *OGRGeoJSONSeqDataSource::ICreateLayer(
         m_bIsRSSeparated = CPLTestBool(pszRS);
     }
 
-    m_apoLayers.emplace_back(cpl::make_unique<OGRGeoJSONSeqLayer>(
+    m_apoLayers.emplace_back(std::make_unique<OGRGeoJSONSeqLayer>(
         this, pszNameIn, papszOptions, std::move(poCT)));
     return m_apoLayers.back().get();
 }
@@ -367,6 +367,7 @@ bool OGRGeoJSONSeqLayer::Init(bool bLooseIdentification,
         {
             m_poFeatureDefn->AddFieldDefn(apoFieldDefn[idx].get());
         }
+        m_poFeatureDefn->Seal(true);
         m_oReader.FinalizeLayerDefn(this, m_osFIDColumn);
     }
 
@@ -683,7 +684,7 @@ OGRErr OGRGeoJSONSeqLayer::ICreateFeature(OGRFeature *poFeature)
 /*                           CreateField()                              */
 /************************************************************************/
 
-OGRErr OGRGeoJSONSeqLayer::CreateField(OGRFieldDefn *poField,
+OGRErr OGRGeoJSONSeqLayer::CreateField(const OGRFieldDefn *poField,
                                        int /* bApproxOK */)
 {
     if (m_poDS->GetAccess() != GA_Update)

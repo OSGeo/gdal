@@ -32,8 +32,6 @@
 #ifdef HAVE_AVX_AT_COMPILE_TIME
 #include <immintrin.h>
 
-CPL_CVSID("$Id$")
-
 /************************************************************************/
 /*         GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX()     */
 /************************************************************************/

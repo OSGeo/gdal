@@ -345,7 +345,15 @@ CADVariant::CADVariant( long julianday, long milliseconds ) :
     dateTimeVal = static_cast<time_t>( dfUnix + dfSeconds );
 
     char str_buff[256] = "Invalid date";
-    struct tm *poLocaltime = localtime(&dateTimeVal);
+#if HAVE_LOCALTIME_R
+    struct tm localtime_tm;
+    const struct tm *poLocaltime = localtime_r(&dateTimeVal, &localtime_tm);
+#elif defined(_WIN32)
+    struct tm localtime_tm;
+    const struct tm *poLocaltime = localtime_s(&localtime_tm, &dateTimeVal) == 0 ? &localtime_tm : nullptr;
+#else
+    const struct tm *poLocaltime = localtime(&dateTimeVal);
+#endif
     if(poLocaltime)
         strftime(str_buff, 255, "%Y-%m-%d %H:%M:%S", poLocaltime);
     stringVal = str_buff;

@@ -57,8 +57,6 @@
 #include "ogr_spatialref.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$")
-
 CPL_C_START
 void *GDALDeserializeGCPTransformer(CPLXMLNode *psTree);
 void *GDALDeserializeTPSTransformer(CPLXMLNode *psTree);
@@ -958,7 +956,7 @@ retry:
                 {
                     // CHECK_WITH_INVERT_PROJ=YES prevent reliable
                     // transformation of poles.
-                    poSetter = cpl::make_unique<CPLConfigOptionSetter>(
+                    poSetter = std::make_unique<CPLConfigOptionSetter>(
                         "CHECK_WITH_INVERT_PROJ", "NO", false);
                     GDALRefreshGenImgProjTransformer(pTransformArg);
                     // GDALRefreshGenImgProjTransformer() has invalidated psRTI
@@ -982,8 +980,28 @@ retry:
                                                                      &Y) &&
                                 fabs(Y - Yinit) <= 1e-6)
                             {
-                                dfMinXOut = -180;
-                                dfMaxXOut = 180;
+                                bool bMinXMaxXSet = false;
+                                if (poSourceCRS)
+                                {
+                                    const char *pszProjection =
+                                        poSourceCRS->GetAttrValue("PROJECTION");
+                                    if (pszProjection &&
+                                        EQUAL(pszProjection,
+                                              SRS_PT_ORTHOGRAPHIC))
+                                    {
+                                        const double dfLon0 =
+                                            poSourceCRS->GetNormProjParm(
+                                                SRS_PP_CENTRAL_MERIDIAN, 0.0);
+                                        dfMinXOut = dfLon0 - 90;
+                                        dfMaxXOut = dfLon0 + 90;
+                                        bMinXMaxXSet = true;
+                                    }
+                                }
+                                if (!bMinXMaxXSet)
+                                {
+                                    dfMinXOut = -180;
+                                    dfMaxXOut = 180;
+                                }
                                 if (sign < 0)
                                     dfMinYOut = Yinit;
                                 else
@@ -1732,7 +1750,7 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
  * will result in a subset of the GCPs with longitude in the [-180,-170] range
  * and another subset in [170, 180]. By default (AUTO), that situation will be
  * detected and longitudes in [-180,-170] will be shifted to [180, 190] to get
- * a continuous set. This option can be set to YES to force that behaviour
+ * a continuous set. This option can be set to YES to force that behavior
  * (useful if no SRS information is available), or to NO to disable it.
  * </li>
  * <li> SRC_METHOD: may have a value which is one of GEOTRANSFORM,
@@ -4281,9 +4299,9 @@ int GDALTransformLonLatToDestApproxTransformer(void *hTransformArg,
  * location is placed.
  */
 
-void CPL_STDCALL GDALApplyGeoTransform(double *padfGeoTransform, double dfPixel,
-                                       double dfLine, double *pdfGeoX,
-                                       double *pdfGeoY)
+void CPL_STDCALL GDALApplyGeoTransform(const double *padfGeoTransform,
+                                       double dfPixel, double dfLine,
+                                       double *pdfGeoX, double *pdfGeoY)
 {
     *pdfGeoX = padfGeoTransform[0] + dfPixel * padfGeoTransform[1] +
                dfLine * padfGeoTransform[2];
@@ -4307,7 +4325,7 @@ void CPL_STDCALL GDALApplyGeoTransform(double *padfGeoTransform, double dfPixel,
  * @return TRUE on success or FALSE if the equation is uninvertable.
  */
 
-int CPL_STDCALL GDALInvGeoTransform(double *gt_in, double *gt_out)
+int CPL_STDCALL GDALInvGeoTransform(const double *gt_in, double *gt_out)
 
 {
     // Special case - no rotation - to avoid computing determinate

@@ -52,9 +52,6 @@
 CPL_C_START
 #include <jpeglib.h>
 CPL_C_END
-
-void jpeg_vsiio_src(j_decompress_ptr cinfo, VSILFILE *infile);
-void jpeg_vsiio_dest(j_compress_ptr cinfo, VSILFILE *outfile);
 #endif
 
 //  ---------------------------------------------------------------------------

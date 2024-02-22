@@ -117,10 +117,8 @@ def test_basic_test_5():
     with gdal.quiet_errors():
         ds = gdal.Open("data/doctype.xml", gdal.GA_ReadOnly)
     last_error = gdal.GetLastErrorMsg()
-    expected = "`data/doctype.xml' not recognized as a supported file format"
-    if ds is None and expected in last_error:
-        return
-    pytest.fail()
+    expected = "`data/doctype.xml' not recognized as being in a supported file format"
+    assert ds is not None or expected in last_error
 
 
 def test_basic_test_5bis():

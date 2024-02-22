@@ -131,7 +131,7 @@ constexpr int NUMBER_OF_DATUMS = static_cast<int>(CPL_ARRAYSIZE(aoDatums));
 /*  Correspondence between "Panorama" and EPSG ellipsoid codes.         */
 /************************************************************************/
 
-constexpr int aoEllips[] = {
+constexpr int aoPanoramaEllips[] = {
     0,     // 0. Undefined
     7024,  // 1. Krassovsky, 1940
     7043,  // 2. WGS, 1972
@@ -182,7 +182,8 @@ constexpr int aoEllips[] = {
     7054   // 47. PZ-90
 };
 
-constexpr int NUMBER_OF_ELLIPSOIDS = static_cast<int>(CPL_ARRAYSIZE(aoEllips));
+constexpr int NUMBER_OF_PANORAM_ELLIPSOIDS =
+    static_cast<int>(CPL_ARRAYSIZE(aoPanoramaEllips));
 
 /************************************************************************/
 /*  Correspondence between "Panorama" and EPSG vertical CS.             */
@@ -620,14 +621,15 @@ OGRErr OGRSpatialReference::importFromPanorama(long iProjSys, long iDatum,
             oGCS.importFromEPSG(aoDatums[iDatum]);
             CopyGeogCSFrom(&oGCS);
         }
-        else if (iEllips > 0 && iEllips < NUMBER_OF_ELLIPSOIDS &&
-                 aoEllips[iEllips])
+        else if (iEllips > 0 && iEllips < NUMBER_OF_PANORAM_ELLIPSOIDS &&
+                 aoPanoramaEllips[iEllips])
         {
             char *pszName = nullptr;
             double dfSemiMajor = 0.0;
             double dfInvFlattening = 0.0;
 
-            if (OSRGetEllipsoidInfo(aoEllips[iEllips], &pszName, &dfSemiMajor,
+            if (OSRGetEllipsoidInfo(aoPanoramaEllips[iEllips], &pszName,
+                                    &dfSemiMajor,
                                     &dfInvFlattening) == OGRERR_NONE)
             {
                 SetGeogCS(
@@ -637,7 +639,7 @@ OGRErr OGRSpatialReference::importFromPanorama(long iProjSys, long iDatum,
                                        pszName),
                     pszName, dfSemiMajor, dfInvFlattening, nullptr, 0.0,
                     nullptr, 0.0);
-                SetAuthority("SPHEROID", "EPSG", aoEllips[iEllips]);
+                SetAuthority("SPHEROID", "EPSG", aoPanoramaEllips[iEllips]);
             }
             else
             {
@@ -1128,15 +1130,15 @@ OGRErr OGRSpatialReference::exportToPanorama(long *piProjSys, long *piDatum,
 #endif
 
         int i = 0;  // Used after for.
-        for (; i < NUMBER_OF_ELLIPSOIDS; i++)
+        for (; i < NUMBER_OF_PANORAM_ELLIPSOIDS; i++)
         {
-            if (aoEllips[i])
+            if (aoPanoramaEllips[i])
             {
                 double dfSM = 0.0;
                 double dfIF = 1.0;
 
-                if (OSRGetEllipsoidInfo(aoEllips[i], nullptr, &dfSM, &dfIF) ==
-                        OGRERR_NONE &&
+                if (OSRGetEllipsoidInfo(aoPanoramaEllips[i], nullptr, &dfSM,
+                                        &dfIF) == OGRERR_NONE &&
                     std::abs(dfSemiMajor - dfSM) < 1e-10 * dfSemiMajor &&
                     std::abs(dfInvFlattening - dfIF) < 1e-10 * dfInvFlattening)
                 {
@@ -1146,7 +1148,7 @@ OGRErr OGRSpatialReference::exportToPanorama(long *piProjSys, long *piDatum,
             }
         }
 
-        if (i == NUMBER_OF_ELLIPSOIDS)  // Didn't found matches.
+        if (i == NUMBER_OF_PANORAM_ELLIPSOIDS)  // Didn't found matches.
         {
 #ifdef DEBUG
             CPLDebug("OSR_Panorama",

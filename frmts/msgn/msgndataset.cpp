@@ -205,15 +205,17 @@ CPLErr MSGNRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
         data_offset =
             poGDS->msg_reader_core->get_f_data_offset() +
             static_cast<vsi_l_offset>(interline_spacing) * i_nBlockYOff +
-            (band_in_file - 1) * packet_size + (packet_size - data_length);
+            static_cast<vsi_l_offset>(band_in_file - 1) * packet_size +
+            (packet_size - data_length);
     }
     else
     {
-        data_offset = poGDS->msg_reader_core->get_f_data_offset() +
-                      static_cast<vsi_l_offset>(interline_spacing) *
-                          (int(i_nBlockYOff / 3) + 1) -
-                      packet_size * (3 - (i_nBlockYOff % 3)) +
-                      (packet_size - data_length);
+        data_offset =
+            poGDS->msg_reader_core->get_f_data_offset() +
+            static_cast<vsi_l_offset>(interline_spacing) *
+                (int(i_nBlockYOff / 3) + 1) -
+            static_cast<vsi_l_offset>(packet_size) * (3 - (i_nBlockYOff % 3)) +
+            (packet_size - data_length);
     }
 
     if (VSIFSeekL(poGDS->fp, data_offset, SEEK_SET) != 0)
@@ -422,19 +424,22 @@ GDALDataset *MSGNDataset::Open(GDALOpenInfo *poOpenInfo)
 {
     open_mode_type open_mode = MODE_VISIR;
     GDALOpenInfo *open_info = poOpenInfo;
+    std::unique_ptr<GDALOpenInfo> poOpenInfoToFree;
 
     if (!poOpenInfo->bStatOK)
     {
         if (STARTS_WITH_CI(poOpenInfo->pszFilename, "HRV:"))
         {
-            open_info = new GDALOpenInfo(&poOpenInfo->pszFilename[4],
-                                         poOpenInfo->eAccess);
+            poOpenInfoToFree = std::make_unique<GDALOpenInfo>(
+                &poOpenInfo->pszFilename[4], poOpenInfo->eAccess);
+            open_info = poOpenInfoToFree.get();
             open_mode = MODE_HRV;
         }
         else if (STARTS_WITH_CI(poOpenInfo->pszFilename, "RAD:"))
         {
-            open_info = new GDALOpenInfo(&poOpenInfo->pszFilename[4],
-                                         poOpenInfo->eAccess);
+            poOpenInfoToFree = std::make_unique<GDALOpenInfo>(
+                &poOpenInfo->pszFilename[4], poOpenInfo->eAccess);
+            open_info = poOpenInfoToFree.get();
             open_mode = MODE_RAD;
         }
     }
@@ -446,10 +451,6 @@ GDALDataset *MSGNDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (open_info->fpL == nullptr || open_info->nHeaderBytes < 50)
     {
-        if (open_info != poOpenInfo)
-        {
-            delete open_info;
-        }
         return nullptr;
     }
 
@@ -457,10 +458,6 @@ GDALDataset *MSGNDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!STARTS_WITH_CI((char *)open_info->pabyHeader,
                         "FormatName                  : NATIVE"))
     {
-        if (open_info != poOpenInfo)
-        {
-            delete open_info;
-        }
         return nullptr;
     }
 
@@ -472,10 +469,6 @@ GDALDataset *MSGNDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLError(CE_Failure, CPLE_NotSupported,
                  "The MSGN driver does not support update access to existing"
                  " datasets.\n");
-        if (open_info != poOpenInfo)
-        {
-            delete open_info;
-        }
         return nullptr;
     }
 
@@ -485,14 +478,10 @@ GDALDataset *MSGNDataset::Open(GDALOpenInfo *poOpenInfo)
     VSILFILE *fp = VSIFOpenL(open_info->pszFilename, "rb");
     if (fp == nullptr)
     {
-        if (open_info != poOpenInfo)
-        {
-            delete open_info;
-        }
         return nullptr;
     }
 
-    MSGNDataset *poDS = new MSGNDataset();
+    auto poDS = std::make_unique<MSGNDataset>();
 
     poDS->m_open_mode = open_mode;
     poDS->fp = fp;
@@ -507,11 +496,6 @@ GDALDataset *MSGNDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (!poDS->msg_reader_core->get_open_success())
     {
-        if (open_info != poOpenInfo)
-        {
-            delete open_info;
-        }
-        delete poDS;
         return nullptr;
     }
 
@@ -675,8 +659,8 @@ GDALDataset *MSGNDataset::Open(GDALOpenInfo *poOpenInfo)
             if (ok_to_add)
             {
                 poDS->SetBand(band_count,
-                              new MSGNRasterBand(poDS, band_count, open_mode,
-                                                 i + 1,
+                              new MSGNRasterBand(poDS.get(), band_count,
+                                                 open_mode, i + 1,
                                                  i + 1 - missing_band_count));
                 band_map[band_count] = (unsigned char)(i + 1);
                 band_count++;
@@ -824,12 +808,7 @@ GDALDataset *MSGNDataset::Open(GDALOpenInfo *poOpenInfo)
              poDS->msg_reader_core->get_col_start());
     poDS->SetMetadataItem("Origin", field);
 
-    if (open_info != poOpenInfo)
-    {
-        delete open_info;
-    }
-
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/

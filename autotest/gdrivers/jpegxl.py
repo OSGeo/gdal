@@ -34,6 +34,7 @@ import struct
 
 import gdaltest
 import pytest
+import test_cli_utilities
 
 from osgeo import gdal
 
@@ -789,7 +790,7 @@ def test_jpegxl_apply_orientation(orientation):
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 5
     vals = struct.unpack("B" * 3 * 5, ds.ReadRaster())
-    vals = [1 if v else 0 for v in vals]
+    vals = [1 if v >= 128 else 0 for v in vals]
     assert vals == [1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0]
     if orientation != 1:
         assert ds.GetMetadataItem("EXIF_Orientation", "EXIF") is None
@@ -822,3 +823,25 @@ def test_jpegxl_alpha_distance_zero():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test identifying a JPEGXL raw codestream (not withing a JPEGXL container)
+# that has not a .jxl extension
+# Serves as a way of checking that the simplified identification method in GDAL
+# core, when the driver built as a plugin, is followed by a call to the real
+# driver to further refine the identification.
+
+pytest.mark.skipif(
+    test_cli_utilities.get_cli_utility_path("gdalmanage") is None,
+    reason="gdalmanage not available",
+)
+
+
+def test_jpegxl_identify_raw_codestream():
+
+    gdalmanage_path = test_cli_utilities.get_cli_utility_path("gdalmanage")
+    out, err = gdaltest.runexternal_out_and_err(
+        f"{gdalmanage_path} identify data/jpegxl/test.jxl.bin"
+    )
+    assert "JPEGXL" in out

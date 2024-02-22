@@ -190,7 +190,7 @@ VSILFILE *OGREDIGEODataSource::OpenFile(const char *pszType,
     {
         CPLString osExtLower = osExt;
         for (int i = 0; i < (int)osExt.size(); i++)
-            osExtLower[i] = (char)tolower(osExt[i]);
+            osExtLower[i] = (char)tolower(static_cast<unsigned char>(osExt[i]));
         CPLString osFilename2 = CPLFormCIFilename(
             CPLGetPath(pszName), osTmp.c_str(), osExtLower.c_str());
         fp = VSIFOpenL(osFilename2, "rb");
@@ -369,7 +369,7 @@ int OGREDIGEODataSource::ReadDIC()
                 OGREDIGEOAttributeDef sAttributeDef;
                 sAttributeDef.osLAB = osLAB;
                 sAttributeDef.osTYP = osTYP;
-                mapAttributes[osRID] = sAttributeDef;
+                mapAttributes[osRID] = std::move(sAttributeDef);
             }
         }
 
@@ -458,7 +458,7 @@ int OGREDIGEODataSource::ReadSCD()
                     /*CPLDebug("EDIGEO", "Attribute %s = %s, %d",
                             osRID.c_str(), osNameRID.c_str(), nWidth);*/
 
-                    mapAttributesSCD[osRID] = attDesc;
+                    mapAttributesSCD[osRID] = std::move(attDesc);
                 }
             }
         }
@@ -712,15 +712,15 @@ int OGREDIGEODataSource::ReadVEC(const char *pszVECName)
                 {
                     /*CPLDebug("EDIGEO", "FEA[%s] -> PFE[%s]",
                              osLnkStartName.c_str(), osLnkEndName.c_str());*/
-                    listFEA_PFE.push_back(std::pair<CPLString, strListType>(
-                        osLnkStartName, osLnkEndNameList));
+                    listFEA_PFE.push_back(
+                        std::pair(osLnkStartName, osLnkEndNameList));
                 }
                 else if (osLnkStartType == "FEA" && osLnkEndType == "PAR")
                 {
                     /*CPLDebug("EDIGEO", "FEA[%s] -> PAR[%s]",
                              osLnkStartName.c_str(), osLnkEndName.c_str());*/
-                    listFEA_PAR.push_back(std::pair<CPLString, strListType>(
-                        osLnkStartName, osLnkEndNameList));
+                    listFEA_PAR.push_back(
+                        std::pair(osLnkStartName, osLnkEndNameList));
                 }
                 else if (osLnkStartType == "FEA" && osLnkEndType == "PNO")
                 {
@@ -753,7 +753,7 @@ int OGREDIGEODataSource::ReadVEC(const char *pszVECName)
                 feaDesc.aosAttIdVal = aosAttIdVal;
                 feaDesc.osSCP = osSCP;
                 feaDesc.osQUP_RID = osQUP_RID;
-                mapFEA[osRID] = feaDesc;
+                mapFEA[osRID] = std::move(feaDesc);
             }
             else if (osRTY == "PNO")
             {

@@ -1029,8 +1029,10 @@ static bool GDAL_IMD_AA2R(char ***ppapszIMD)
         {
             CPLString osValue = CSLFetchNameValue(papszIMD, osTarget);
             CPLString osLine;
-            osTarget.Printf("IMAGE_1.%c%s", tolower(keylist[iKey][0]),
-                            keylist[iKey] + 1);
+            osTarget.Printf(
+                "IMAGE_1.%c%s",
+                tolower(static_cast<unsigned char>(keylist[iKey][0])),
+                keylist[iKey] + 1);
 
             osLine = osTarget + "=" + osValue;
 
@@ -1183,7 +1185,7 @@ CPLErr GDALWriteIMDFile(const char *pszFilename, char **papszMD)
             bOK &=
                 VSIFPrintfL(fp, "BEGIN_GROUP = %s\n", osKeySection.c_str()) > 0;
 
-        osCurSection = osKeySection;
+        osCurSection = std::move(osKeySection);
 
         /* --------------------------------------------------------------------
          */

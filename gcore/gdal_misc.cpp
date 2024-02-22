@@ -1488,7 +1488,7 @@ CPLString GDALFindAssociatedFile(const char *pszBaseFilename,
         {
             CPLString osAltExt = pszExt;
 
-            if (islower(pszExt[0]))
+            if (islower(static_cast<unsigned char>(pszExt[0])))
                 osAltExt.toupper();
             else
                 osAltExt.tolower();
@@ -2202,8 +2202,10 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
 
     for (int i = 0; szExtUpper[i] != '\0'; i++)
     {
-        szExtUpper[i] = static_cast<char>(toupper(szExtUpper[i]));
-        szExtLower[i] = static_cast<char>(tolower(szExtLower[i]));
+        szExtUpper[i] = static_cast<char>(
+            toupper(static_cast<unsigned char>(szExtUpper[i])));
+        szExtLower[i] = static_cast<char>(
+            tolower(static_cast<unsigned char>(szExtLower[i])));
     }
 
     const char *pszTFW = CPLResetExtension(pszBaseFilename, szExtLower);
@@ -2412,6 +2414,9 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 #elif defined(__INTEL_COMPILER)
         osBuildInfo +=
             "COMPILER=Intel compiler " STRINGIFY(__INTEL_COMPILER) "\n";
+#endif
+#ifdef CMAKE_UNITY_BUILD
+        osBuildInfo += "CMAKE_UNITY_BUILD=YES\n";
 #endif
 
 #undef STRINGIFY_HELPER
@@ -3359,10 +3364,29 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 if (osKind.empty())
                     osKind = "unknown kind";
 
-                printf("  %s -%s- (%s%s%s%s): %s\n", /*ok*/
+                std::string osExtensions;
+                if (const char *pszExtensions = CSLFetchNameValueDef(
+                        papszMD, GDAL_DMD_EXTENSIONS,
+                        CSLFetchNameValue(papszMD, GDAL_DMD_EXTENSION)))
+                {
+                    const CPLStringList aosExt(
+                        CSLTokenizeString2(pszExtensions, " ", 0));
+                    for (int i = 0; i < aosExt.size(); ++i)
+                    {
+                        if (i == 0)
+                            osExtensions = " (*.";
+                        else
+                            osExtensions += ", *.";
+                        osExtensions += aosExt[i];
+                    }
+                    if (!osExtensions.empty())
+                        osExtensions += ')';
+                }
+
+                printf("  %s -%s- (%s%s%s%s): %s%s\n", /*ok*/
                        GDALGetDriverShortName(hDriver), osKind.c_str(),
                        pszRFlag, pszWFlag, pszVirtualIO, pszSubdatasets,
-                       GDALGetDriverLongName(hDriver));
+                       GDALGetDriverLongName(hDriver), osExtensions.c_str());
             }
 
             return 0;
@@ -4178,11 +4202,37 @@ void GDALDeserializeGCPListFromXML(CPLXMLNode *psGCPList,
         CPLFree(psGCP->pszInfo);
         psGCP->pszInfo = CPLStrdup(CPLGetXMLValue(psXMLGCP, "Info", ""));
 
-        psGCP->dfGCPPixel = CPLAtof(CPLGetXMLValue(psXMLGCP, "Pixel", "0.0"));
-        psGCP->dfGCPLine = CPLAtof(CPLGetXMLValue(psXMLGCP, "Line", "0.0"));
+        const auto ParseDoubleValue =
+            [psXMLGCP](const char *pszParameter, double &dfVal)
+        {
+            const char *pszVal =
+                CPLGetXMLValue(psXMLGCP, pszParameter, nullptr);
+            if (!pszVal)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "GCP#%s is missing",
+                         pszParameter);
+                return false;
+            }
+            char *endptr = nullptr;
+            dfVal = CPLStrtod(pszVal, &endptr);
+            if (endptr == pszVal)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "GCP#%s=%s is an invalid value", pszParameter, pszVal);
+                return false;
+            }
+            return true;
+        };
 
-        psGCP->dfGCPX = CPLAtof(CPLGetXMLValue(psXMLGCP, "X", "0.0"));
-        psGCP->dfGCPY = CPLAtof(CPLGetXMLValue(psXMLGCP, "Y", "0.0"));
+        bool bOK = true;
+        if (!ParseDoubleValue("Pixel", psGCP->dfGCPPixel))
+            bOK = false;
+        if (!ParseDoubleValue("Line", psGCP->dfGCPLine))
+            bOK = false;
+        if (!ParseDoubleValue("X", psGCP->dfGCPX))
+            bOK = false;
+        if (!ParseDoubleValue("Y", psGCP->dfGCPY))
+            bOK = false;
         const char *pszZ = CPLGetXMLValue(psXMLGCP, "Z", nullptr);
         if (pszZ == nullptr)
         {
@@ -4190,9 +4240,23 @@ void GDALDeserializeGCPListFromXML(CPLXMLNode *psGCPList,
             // but could not read it back.
             pszZ = CPLGetXMLValue(psXMLGCP, "GCPZ", "0.0");
         }
-        psGCP->dfGCPZ = CPLAtof(pszZ);
+        char *endptr = nullptr;
+        psGCP->dfGCPZ = CPLStrtod(pszZ, &endptr);
+        if (endptr == pszZ)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GCP#Z=%s is an invalid value", pszZ);
+            bOK = false;
+        }
 
-        (*pnGCPCount)++;
+        if (!bOK)
+        {
+            GDALDeinitGCPs(1, psGCP);
+        }
+        else
+        {
+            (*pnGCPCount)++;
+        }
     }
 }
 
@@ -4237,13 +4301,14 @@ void GDALSerializeOpenOptionsToXML(CPLXMLNode *psParentNode,
 /*                  GDALDeserializeOpenOptionsFromXML()                 */
 /************************************************************************/
 
-char **GDALDeserializeOpenOptionsFromXML(CPLXMLNode *psParentNode)
+char **GDALDeserializeOpenOptionsFromXML(const CPLXMLNode *psParentNode)
 {
     char **papszOpenOptions = nullptr;
-    CPLXMLNode *psOpenOptions = CPLGetXMLNode(psParentNode, "OpenOptions");
+    const CPLXMLNode *psOpenOptions =
+        CPLGetXMLNode(psParentNode, "OpenOptions");
     if (psOpenOptions != nullptr)
     {
-        CPLXMLNode *psOOI;
+        const CPLXMLNode *psOOI;
         for (psOOI = psOpenOptions->psChild; psOOI != nullptr;
              psOOI = psOOI->psNext)
         {

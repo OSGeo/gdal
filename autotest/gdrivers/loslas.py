@@ -31,6 +31,10 @@
 import os
 
 import gdaltest
+import pytest
+
+pytestmark = pytest.mark.require_driver("LOSLAS")
+
 
 ###############################################################################
 

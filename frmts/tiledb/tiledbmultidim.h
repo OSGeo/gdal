@@ -161,7 +161,6 @@ class TileDBGroup final : public GDALGroup, public TileDBAttributeHolder
 {
     std::shared_ptr<TileDBSharedResource> m_poSharedResource{};
     const std::string m_osPath;
-    std::weak_ptr<TileDBGroup> m_pSelf{};
     mutable std::unique_ptr<tiledb::Group> m_poTileDBGroup{};
     mutable std::map<std::string, std::shared_ptr<TileDBGroup>> m_oMapGroups{};
     mutable std::map<std::string, std::shared_ptr<TileDBArray>> m_oMapArrays{};
@@ -183,7 +182,7 @@ class TileDBGroup final : public GDALGroup, public TileDBAttributeHolder
     {
         auto poGroup = std::shared_ptr<TileDBGroup>(
             new TileDBGroup(poSharedResource, osParentName, osName, osPath));
-        poGroup->m_pSelf = poGroup;
+        poGroup->SetSelf(poGroup);
         return poGroup;
     }
 
@@ -424,6 +423,7 @@ class TileDBArray final : public GDALMDArray, public TileDBAttributeHolder
 
     static std::shared_ptr<TileDBArray>
     OpenFromDisk(const std::shared_ptr<TileDBSharedResource> &poSharedResource,
+                 const std::shared_ptr<GDALGroup> &poParent,
                  const std::string &osParentName, const std::string &osName,
                  const std::string &osAttributeName, const std::string &osPath,
                  CSLConstList papszOptions);

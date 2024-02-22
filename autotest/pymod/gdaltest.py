@@ -109,6 +109,10 @@ class GDALTest(object):
         self.driver = None
         self.drivername = drivername
         self.filename = filename
+
+        if isinstance(self.filename, os.PathLike):
+            self.filename = str(self.filename)
+
         self.filename_absolute = filename_absolute
         self.band = band
         self.chksum = chksum
@@ -1900,6 +1904,10 @@ def gdalurlopen(url, timeout=10):
         return None
     except urllib.error.URLError as e:
         print(f"HTTP service for {url} is down (URL Error: {e.reason})")
+        socket.setdefaulttimeout(old_timeout)
+        return None
+    except socket.timeout:
+        print(f"HTTP service for {url} timed out")
         socket.setdefaulttimeout(old_timeout)
         return None
 

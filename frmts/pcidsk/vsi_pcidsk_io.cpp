@@ -42,7 +42,8 @@ const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces();
 
 class VSI_IOInterface : public IOInterfaces
 {
-    virtual void *Open(std::string filename, std::string access) const override;
+    virtual void *Open(const std::string &filename,
+                       std::string access) const override;
     virtual uint64 Seek(void *io_handle, uint64 offset,
                         int whence) const override;
     virtual uint64 Tell(void *io_handle) const override;
@@ -76,7 +77,8 @@ const PCIDSK::PCIDSKInterfaces *PCIDSK2GetInterfaces()
 /*                                Open()                                */
 /************************************************************************/
 
-void *VSI_IOInterface::Open(std::string filename, std::string access) const
+void *VSI_IOInterface::Open(const std::string &filename,
+                            std::string access) const
 
 {
     VSILFILE *fp = VSIFOpenL(filename.c_str(), access.c_str());

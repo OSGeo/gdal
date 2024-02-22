@@ -66,8 +66,8 @@ OGRGeoJSONLayer::OGRGeoJSONLayer(const char *pszName,
                                  OGRGeoJSONDataSource *poDS,
                                  OGRGeoJSONReader *poReader)
     : OGRMemLayer(pszName, poSRSIn, eGType), poDS_(poDS), poReader_(poReader),
-      bHasAppendedFeatures_(false), bUpdated_(false),
-      bOriginalIdModified_(false), nTotalFeatureCount_(0)
+      bHasAppendedFeatures_(false), bOriginalIdModified_(false),
+      nTotalFeatureCount_(0)
 {
     SetAdvertizeUTF8(true);
     SetUpdatable(poDS->IsUpdatable());
@@ -91,7 +91,14 @@ void OGRGeoJSONLayer::TerminateAppendSession()
 {
     if (bHasAppendedFeatures_)
     {
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         VSILFILE *fp = poReader_->GetFP();
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         VSIFPrintfL(fp, "\n]\n}\n");
         VSIFFlushL(fp);
         bHasAppendedFeatures_ = false;
@@ -295,7 +302,8 @@ OGRErr OGRGeoJSONLayer::ICreateFeature(OGRFeature *poFeature)
                     szBuffer[10] = 0;
                     int i = 9;
                     // Locate final }
-                    while (isspace(szBuffer[i]) && i > 0)
+                    while (isspace(static_cast<unsigned char>(szBuffer[i])) &&
+                           i > 0)
                         i--;
                     if (szBuffer[i] != '}')
                     {
@@ -305,7 +313,8 @@ OGRErr OGRGeoJSONLayer::ICreateFeature(OGRFeature *poFeature)
                     if (i > 0)
                         i--;
                     // Locate ']' ending features array
-                    while (isspace(szBuffer[i]) && i > 0)
+                    while (isspace(static_cast<unsigned char>(szBuffer[i])) &&
+                           i > 0)
                         i--;
                     if (szBuffer[i] != ']')
                     {
@@ -314,7 +323,8 @@ OGRErr OGRGeoJSONLayer::ICreateFeature(OGRFeature *poFeature)
                     }
                     if (i > 0)
                         i--;
-                    while (isspace(szBuffer[i]) && i > 0)
+                    while (isspace(static_cast<unsigned char>(szBuffer[i])) &&
+                           i > 0)
                         i--;
                     // Locate '}' ending last feature, or '[' starting features
                     // array
@@ -378,7 +388,7 @@ OGRErr OGRGeoJSONLayer::DeleteFeature(GIntBig nFID)
 /*                           CreateField()                              */
 /************************************************************************/
 
-OGRErr OGRGeoJSONLayer::CreateField(OGRFieldDefn *poField, int bApproxOK)
+OGRErr OGRGeoJSONLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 {
     if (!IsUpdatable() || !IngestAll())
         return OGRERR_FAILURE;
@@ -423,12 +433,58 @@ OGRErr OGRGeoJSONLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
 /*                         CreateGeomField()                            */
 /************************************************************************/
 
-OGRErr OGRGeoJSONLayer::CreateGeomField(OGRGeomFieldDefn *poGeomField,
+OGRErr OGRGeoJSONLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
                                         int bApproxOK)
 {
     if (!IsUpdatable() || !IngestAll())
         return OGRERR_FAILURE;
     return OGRMemLayer::CreateGeomField(poGeomField, bApproxOK);
+}
+
+OGRErr OGRGeoJSONLayer::GetExtent(OGREnvelope *psExtent, int bForce)
+{
+    return GetExtent(0, psExtent, bForce);
+}
+
+OGRErr OGRGeoJSONLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
+                                  int bForce)
+{
+    if (iGeomField != 0)
+    {
+        return OGRERR_FAILURE;
+    }
+
+    if (poReader_ && poReader_->ExtentRead() &&
+        TestCapability(OLCFastGetExtent))
+    {
+        *psExtent = poReader_->GetExtent3D();
+        return OGRERR_NONE;
+    }
+    else
+    {
+        return OGRMemLayer::GetExtentInternal(iGeomField, psExtent, bForce);
+    }
+}
+
+OGRErr OGRGeoJSONLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                                    int bForce)
+{
+
+    if (iGeomField != 0)
+    {
+        return OGRERR_FAILURE;
+    }
+
+    if (poReader_ && poReader_->ExtentRead() &&
+        TestCapability(OLCFastGetExtent3D))
+    {
+        *psExtent3D = poReader_->GetExtent3D();
+        return OGRERR_NONE;
+    }
+    else
+    {
+        return OGRMemLayer::GetExtent3D(iGeomField, psExtent3D, bForce);
+    }
 }
 
 /************************************************************************/
@@ -444,6 +500,9 @@ int OGRGeoJSONLayer::TestCapability(const char *pszCap)
         return TRUE;
     else if (EQUAL(pszCap, OLCStringsAsUTF8))
         return TRUE;
+    else if (EQUAL(pszCap, OLCFastGetExtent) ||
+             EQUAL(pszCap, OLCFastGetExtent3D))
+        return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
     return OGRMemLayer::TestCapability(pszCap);
 }
 
@@ -540,7 +599,12 @@ void OGRGeoJSONLayer::DetectGeometryType()
             }
         }
     }
-    GetLayerDefn()->SetGeomType(eLayerGeomType);
+
+    {
+        auto poFDefn = GetLayerDefn();
+        auto oTemporaryUnsealer(poFDefn->GetTemporaryUnsealer());
+        poFDefn->SetGeomType(eLayerGeomType);
+    }
 
     ResetReading();
 }

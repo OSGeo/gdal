@@ -9,17 +9,16 @@
 
 .. build_dependencies:: Parquet component of the Apache Arrow C++ library
 
-From https://databricks.com/glossary/what-is-parquet:
-"Apache Parquet is an open source, column-oriented data file format designed
-for efficient data storage and retrieval. It provides efficient data compression
-and encoding schemes with enhanced performance to handle complex data in bulk.
-Apache Parquet is designed to be a common interchange format for both batch and interactive workloads."
+From https://parquet.apache.org/:
+"Apache Parquet is an open source, column-oriented data file format designed for efficient data storage and retrieval.
+It provides efficient data compression and encoding schemes with enhanced performance to handle complex data in bulk.
+Parquet is available in multiple languages including Java, C++, Python, etc..."
 
 This driver also supports geometry columns using the GeoParquet specification.
 
 .. note:: The driver should be considered experimental as the GeoParquet specification is not finalized yet.
 
-The GeoParquet 1.0.0-beta1 specification is supported since GDAL 3.6.2
+The GeoParquet 1.0.0 specification is supported since GDAL 3.8.0
 
 Driver capabilities
 -------------------
@@ -131,6 +130,14 @@ Parquet files, and expose them as a single layer. This support is only enabled
 if the driver is built against the ``arrowdataset`` C++ library.
 
 Note that no optimization is currently done regarding filtering.
+
+Metadata
+--------
+
+.. versionadded:: 3.9.0
+
+Layer metadata can be read and written. It is serialized as JSON content in a
+``gdal:metadata`` domain.
 
 Multithreading
 --------------

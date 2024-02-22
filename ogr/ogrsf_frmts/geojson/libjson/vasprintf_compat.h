@@ -14,9 +14,9 @@
 /* CAW: compliant version of vasprintf */
 static int vasprintf(char **buf, const char *fmt, va_list ap)
 {
-#ifndef WIN32
+#ifndef _WIN32
 	static char _T_emptybuffer = '\0';
-#endif /* !defined(WIN32) */
+#endif /* !defined(_WIN32) */
 	int chars;
 	char *b;
 
@@ -25,9 +25,9 @@ static int vasprintf(char **buf, const char *fmt, va_list ap)
 		return -1;
 	}
 
-#ifdef WIN32
+#ifdef _WIN32
 	chars = _vscprintf(fmt, ap) + 1;
-#else  /* !defined(WIN32) */
+#else  /* !defined(_WIN32) */
 	/* CAW: RAWR! We have to hope to god here that vsnprintf doesn't overwrite
 	 * our buffer like on some 64bit sun systems.... but hey, its time to move on
 	 */
@@ -36,7 +36,7 @@ static int vasprintf(char **buf, const char *fmt, va_list ap)
 	{
 		chars *= -1;
 	} /* CAW: old glibc versions have this problem */
-#endif /* defined(WIN32) */
+#endif /* defined(_WIN32) */
 
 	b = (char *)malloc(sizeof(char) * chars);
 	if (!b)

@@ -165,7 +165,8 @@ double CPLAtofM(const char *nptr)
  */
 static char *CPLReplacePointByLocalePoint(const char *pszNumber, char point)
 {
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) && __ANDROID_API__ < 20
+    // localeconv() only available since API 20
     static char byPoint = 0;
     if (byPoint == 0)
     {
@@ -328,6 +329,13 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
             answer.ptr = nptr + strlen("-Inf");
         }
         else if (
+            // Reported by user as being understood in previous GDAL versions
+            strcmp(nptr, "-INF") == 0)
+        {
+            dfValue = -std::numeric_limits<double>::infinity();
+            answer.ptr = nptr + strlen("-INF");
+        }
+        else if (
             // Triggered by ogr_pg tests
             strcmp(nptr, "-Infinity") == 0)
         {
@@ -344,6 +352,13 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
         {
             dfValue = std::numeric_limits<double>::infinity();
             answer.ptr = nptr + strlen("Inf");
+        }
+        else if (
+            // Reported by user as being understood in previous GDAL versions
+            strcmp(nptr, "INF") == 0)
+        {
+            dfValue = std::numeric_limits<double>::infinity();
+            answer.ptr = nptr + strlen("INF");
         }
         else if (
             // Triggered by ogr_pg tests

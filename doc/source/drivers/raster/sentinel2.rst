@@ -121,13 +121,15 @@ When opening the main metadata .xml file, the driver will typically
 expose 4 sub-datasets:
 
 -  one for the 4 native 10m bands, and L2A specific bands (AOT and WVP)
--  one for the 6 native 20m bands, plus the 10m bands, except B8,
-   resampled to 20m, and L2A specific bands (AOT, WVP, SCL, CLD and
+-  one for the 6 native 20m bands, and L2A specific bands (AOT, WVP, SCL, CLD and
    SNW),
--  one for the 3 native 60m bands, plus the 10m&20m bands, except B8,
-   resampled to 60m, and L2A specific bands (AOT, WVP, SCL, CLD and
+-  one for the B01 and B09 native 60m bands, and L2A specific bands (AOT, WVP, SCL, CLD and
    SNW),
--  one for a preview of the R,G,B bands at a 320m resolution
+-  one for a true-color image (TCI) of the R,G,B bands at a 10m resolution,
+   for the "compact" L2A product formulation (or a preview of the R,G,B bands
+   at a 320m resolution for the older L2A product formulation). The TCI
+   products at resolution 20m and 60m are not exposed, as they are just
+   subsampled versions of the 10m product.
 
 All tiles of same resolution and projection are mosaiced together. If a
 product spans over several UTM zones, they will be exposed as separate

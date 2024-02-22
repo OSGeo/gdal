@@ -72,7 +72,6 @@ class PCIDSK2Dataset final : public GDALPamDataset
     PCIDSK2Dataset();
     virtual ~PCIDSK2Dataset();
 
-    static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *LLOpen(const char *pszFilename, PCIDSK::PCIDSKFile *,
                                GDALAccess eAccess,
@@ -209,7 +208,7 @@ class OGRPCIDSKLayer final : public OGRLayer,
 
     OGRErr DeleteFeature(GIntBig nFID) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
     GIntBig GetFeatureCount(int) override;

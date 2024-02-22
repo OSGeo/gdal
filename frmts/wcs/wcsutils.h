@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef WCSUTILS_H_INCLUDED
+#define WCSUTILS_H_INCLUDED
+
 #include "cpl_string.h"
 #include "cpl_minixml.h"
 #include <vector>
@@ -126,3 +129,5 @@ ParseGridEnvelope(CPLXMLNode *node, bool swap_the_first_two = false);
 std::vector<std::string> ParseBoundingBox(CPLXMLNode *node);
 
 }  // namespace WCSUtils
+
+#endif /* WCSUTILS_H_INCLUDED */

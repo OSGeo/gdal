@@ -117,6 +117,8 @@ GIntBig OGRILI2Layer::GetFeatureCount(int bForce)
     }
 }
 
+#ifndef d2str_defined
+#define d2str_defined
 static const char *d2str(double val)
 {
     if (val == (int)val)
@@ -128,6 +130,7 @@ static const char *d2str(double val)
 
     return CPLSPrintf("%.3f", val);
 }
+#endif
 
 static void AppendCoordinateList(const OGRLineString *poLine, VSILFILE *fp)
 {
@@ -339,7 +342,8 @@ int OGRILI2Layer::TestCapability(CPL_UNUSED const char *pszCap)
 /*                            CreateField()                             */
 /************************************************************************/
 
-OGRErr OGRILI2Layer::CreateField(OGRFieldDefn *poField, int /* bApproxOK */)
+OGRErr OGRILI2Layer::CreateField(const OGRFieldDefn *poField,
+                                 int /* bApproxOK */)
 {
     poFeatureDefn->AddFieldDefn(poField);
     return OGRERR_NONE;

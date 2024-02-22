@@ -41,6 +41,8 @@
 #include "include_msodbcsql.h"
 #endif
 
+#include <map>
+
 class OGRMSSQLSpatialDataSource;
 
 /* layer status */
@@ -482,7 +484,7 @@ class OGRMSSQLSpatialTableLayer final : public OGRMSSQLSpatialLayer
         return pszSchemaName;
     }
 
-    virtual OGRErr CreateField(OGRFieldDefn *poField,
+    virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
@@ -598,9 +600,9 @@ class OGRMSSQLSpatialDataSource final : public OGRDataSource
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    int nKnownSRID;
-    int *panSRID;
-    OGRSpatialReference **papoSRS;
+    std::map<int,
+             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
+        m_oSRSCache{};
 
     OGRMSSQLSpatialTableLayer *poLayerInCopyMode;
 
@@ -666,6 +668,11 @@ class OGRMSSQLSpatialDataSource final : public OGRDataSource
     static char *LaunderName(const char *pszSrcName);
     OGRErr InitializeMetadataTables();
 
+    OGRSpatialReference *AddSRIDToCache(
+        int nId,
+        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
+            &&poSRS);
+
     OGRSpatialReference *FetchSRS(int nId);
     int FetchSRSId(const OGRSpatialReference *poSRS);
 
@@ -685,24 +692,6 @@ class OGRMSSQLSpatialDataSource final : public OGRDataSource
 
     void StartCopy(OGRMSSQLSpatialTableLayer *poMSSQLSpatialLayer);
     OGRErr EndCopy();
-};
-
-/************************************************************************/
-/*                        OGRMSSQLSpatialDriver                         */
-/************************************************************************/
-
-class OGRMSSQLSpatialDriver final : public OGRSFDriver
-{
-  public:
-    virtual ~OGRMSSQLSpatialDriver();
-
-    const char *GetName() override;
-    OGRDataSource *Open(const char *, int) override;
-
-    virtual OGRDataSource *CreateDataSource(const char *pszName,
-                                            char ** = nullptr) override;
-
-    int TestCapability(const char *) override;
 };
 
 #endif /* ndef OGR_MSSQLSPATIAL_H_INCLUDED */

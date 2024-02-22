@@ -229,10 +229,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
                     newAppendOsValue.append(CPLString(pszPos + 1));
 
                     // the new value
-                    oHeaders[osKey] = newAppendOsValue;
-
-                    // printf ("Append value for %s is %s \n", osKey.c_str(),
-                    // newAppendOsValue.c_str());
+                    oHeaders[osKey] = std::move(newAppendOsValue);
                 }
                 else
                 {
@@ -260,7 +257,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
             { /* Area */
                 oGType = wkbPolygon;
                 auto poOuter =
-                    cpl::make_unique<OGRLinearRing>(); /* Initialize a new
+                    std::make_unique<OGRLinearRing>(); /* Initialize a new
                                                           closed polygon */
                 long nRefNr;
                 unsigned char nRefStatus;
@@ -319,7 +316,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
 
                 if (correct)
                 {
-                    auto poLy = cpl::make_unique<OGRPolygon>();
+                    auto poLy = std::make_unique<OGRPolygon>();
                     poOuter->closeRings();
                     poLy->addRingDirectly(poOuter.release());
 
@@ -437,7 +434,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
             {
                 // CPLError( CE_Warning, CPLE_OpenFailed, "Geometry of type
                 // SYMBOL treated as point (PUNKT).");
-                CPL_FALLTHROUGH
+                [[fallthrough]];
             }
             case L_PUNKT:
             { /* point */

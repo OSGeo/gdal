@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define DEFINE_OGRSQLiteSQLFunctionsSetCaseSensitiveLike
+
 #include "cpl_port.h"
 #include "ogrsqlitevirtualogr.h"
 
@@ -77,6 +79,10 @@ void OGR2SQLITE_Register()
 OGR2SQLITEModule *OGR2SQLITE_Setup(GDALDataset *, OGRSQLiteDataSource *)
 {
     return nullptr;
+}
+
+void OGR2SQLITE_SetCaseSensitiveLike(OGR2SQLITEModule *, bool)
+{
 }
 
 int OGR2SQLITE_AddExtraDS(OGR2SQLITEModule *, OGRDataSource *)
@@ -191,6 +197,11 @@ static SQLITE_EXTENSION_INIT1
     OGRLayer *GetLayerForVTable(const char *pszVTableName);
 
     void SetHandleSQLFunctions(void *hHandleSQLFunctionsIn);
+
+    void SetCaseSensitiveLike(bool b)
+    {
+        OGRSQLiteSQLFunctionsSetCaseSensitiveLike(hHandleSQLFunctions, b);
+    }
 };
 
 /************************************************************************/
@@ -1159,7 +1170,7 @@ static int OGR2SQLITE_Filter(sqlite3_vtab_cursor *pCursor,
             for (int j = 0; !bNeedsQuoting && (ch = pszFieldName[j]) != '\0';
                  j++)
             {
-                if (!(isalnum((int)ch) || ch == '_'))
+                if (!(isalnum(static_cast<unsigned char>(ch)) || ch == '_'))
                     bNeedsQuoting = true;
             }
 
@@ -1703,7 +1714,7 @@ static OGRFeature *OGR2SQLITE_FeatureFromArgs(OGR2SQLITE_vtab *pMyVTab,
         return nullptr;
     }
 
-    auto poFeature = cpl::make_unique<OGRFeature>(poLayerDefn);
+    auto poFeature = std::make_unique<OGRFeature>(poLayerDefn);
 
     if (pMyVTab->bHasFIDColumn)
     {
@@ -1903,15 +1914,13 @@ static const struct sqlite3_module sOGR2SQLITEModule = {
     nullptr,
     /* xFindFunction */  // OGR2SQLITE_FindFunction;
     OGR2SQLITE_Rename,
-#if SQLITE_VERSION_NUMBER >=                                                   \
-    3007007L /* should be the first version with the below symbols */
     nullptr,  // xSavepoint
     nullptr,  // xRelease
     nullptr,  // xRollbackTo
-#if SQLITE_VERSION_NUMBER >=                                                   \
-    3025003L /* should be the first version with the below symbols */
     nullptr,  // xShadowName
-#endif
+#if SQLITE_VERSION_NUMBER >=                                                   \
+    3044000L /* should be the first version with the below symbols */
+    nullptr,  // xIntegrity
 #endif
 };
 
@@ -2712,9 +2721,29 @@ int OGR2SQLITEModule::Setup(sqlite3 *hDBIn)
 OGR2SQLITEModule *OGR2SQLITE_Setup(GDALDataset *poDS,
                                    OGRSQLiteDataSource *poSQLiteDS)
 {
+    if (sqlite3_api == nullptr)
+    {
+        // Unlikely to happen. One theoretical possibility would be that:
+        // - thread A calls OGR2SQLITE_Register(), which calls sqlite3_auto_extension((void (*)(void))OGR2SQLITE_static_register)
+        // - thread B calls sqlite3_reset_auto_extension()
+        // - thread A opens a sqlite3 handle (which normally would have caused OGR2SQLITE_static_register() to be called, and setting the sqlite3_api static variable, without prior B intervention.
+        // - thread A calls us (OGR2SQLITE_Setup()) with sqlite3_api still set to its initial nullptr value
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGR2SQLITE_Setup() failed due to sqlite3_api == nullptr");
+        return nullptr;
+    }
     OGR2SQLITEModule *poModule = new OGR2SQLITEModule();
     poModule->Setup(poDS, poSQLiteDS);
     return poModule;
+}
+
+/************************************************************************/
+/*                  OGR2SQLITE_SetCaseSensitiveLike()                   */
+/************************************************************************/
+
+void OGR2SQLITE_SetCaseSensitiveLike(OGR2SQLITEModule *poModule, bool b)
+{
+    poModule->SetCaseSensitiveLike(b);
 }
 
 /************************************************************************/

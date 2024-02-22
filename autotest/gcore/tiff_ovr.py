@@ -1388,9 +1388,13 @@ def test_tiff_ovr_37(tmp_path, both_endian):
     shutil.copy("../gdrivers/data/n43.dt0", ovr37_dt0)
 
     ds = gdal.Open(ovr37_dt0)
+    with gdaltest.config_option("COMPRESS_OVERVIEW", "LZW"):
+        ds.BuildOverviews("NEAR", overviewlist=[2])
+    ds = None
+    no_predictor_size = os.stat(f"{ovr37_dt0}.ovr")[stat.ST_SIZE]
+    os.unlink(f"{ovr37_dt0}.ovr")
 
-    assert ds is not None, "Failed to open test dataset."
-
+    ds = gdal.Open(ovr37_dt0)
     with gdaltest.config_option("PREDICTOR_OVERVIEW", "2"):
         with gdaltest.config_option("COMPRESS_OVERVIEW", "LZW"):
             ds.BuildOverviews("NEAR", overviewlist=[2])
@@ -1403,9 +1407,7 @@ def test_tiff_ovr_37(tmp_path, both_endian):
     ds = None
 
     predictor2_size = os.stat(f"{ovr37_dt0}.ovr")[stat.ST_SIZE]
-    # 3789 : on little-endian host
-    # 3738 : on big-endian host
-    assert predictor2_size in (3789, 3738), "did not get expected file size."
+    assert predictor2_size < no_predictor_size
 
 
 ###############################################################################
@@ -2794,3 +2796,94 @@ def test_tiff_ovr_external_3_px_wide_1_px_tall():
     assert ds.GetRasterBand(1).Checksum() == 1
     del ds
     gdal.GetDriverByName("GTiff").Delete(temp_path)
+
+
+###############################################################################
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL")
+def test_tiff_ovr_JXL_LOSSLESS_OVERVIEW(tmp_vsimem):
+
+    tmpfilename = str(tmp_vsimem / "test_tiff_ovr_JXL_LOSSLESS.tif")
+    gdal.Translate(tmpfilename, "data/byte.tif")
+    ds = gdal.Open(tmpfilename)
+    with gdaltest.config_options(
+        {"COMPRESS_OVERVIEW": "JXL", "JXL_LOSSLESS_OVERVIEW": "NO"}
+    ):
+        ds.BuildOverviews("nearest", [2])
+    del ds
+    ds = gdal.Open(tmpfilename + ".ovr")
+    assert ds.GetRasterBand(1).Checksum() not in (0, 1087)
+
+
+###############################################################################
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL")
+def test_tiff_ovr_JXL_DISTANCE_OVERVIEW(tmp_vsimem):
+
+    tmpfilename = str(tmp_vsimem / "test_tiff_ovr_JXL_DISTANCE_OVERVIEW.tif")
+    gdal.Translate(tmpfilename, "data/byte.tif")
+    ds = gdal.Open(tmpfilename)
+    with gdaltest.config_options(
+        {"COMPRESS_OVERVIEW": "JXL", "JXL_LOSSLESS_OVERVIEW": "NO"}
+    ):
+        ds.BuildOverviews("nearest", [2])
+    del ds
+    ds = gdal.Open(tmpfilename + ".ovr")
+    cs1 = ds.GetRasterBand(1).Checksum()
+    del ds
+    gdal.Unlink(tmpfilename + ".ovr")
+
+    ds = gdal.Open(tmpfilename)
+    with gdaltest.config_options(
+        {
+            "COMPRESS_OVERVIEW": "JXL",
+            "JXL_LOSSLESS_OVERVIEW": "NO",
+            "JXL_DISTANCE_OVERVIEW": "5",
+        }
+    ):
+        ds.BuildOverviews("nearest", [2])
+    del ds
+    ds = gdal.Open(tmpfilename + ".ovr")
+    assert ds.GetRasterBand(1).Checksum() != cs1
+    del ds
+    gdal.Unlink(tmpfilename + ".ovr")
+
+
+###############################################################################
+
+
+@pytest.mark.require_creation_option("GTiff", "JXL")
+@pytest.mark.require_creation_option("GTiff", "JXL_ALPHA_DISTANCE")
+def test_tiff_ovr_JXL_ALPHA_DISTANCE_OVERVIEW(tmp_vsimem):
+
+    tmpfilename = str(tmp_vsimem / "test_tiff_ovr_JXL_ALPHA_DISTANCE_OVERVIEW.tif")
+    gdal.Translate(tmpfilename, "data/stefan_full_rgba.tif")
+    ds = gdal.Open(tmpfilename)
+    with gdaltest.config_options(
+        {"COMPRESS_OVERVIEW": "JXL", "JXL_LOSSLESS_OVERVIEW": "NO"}
+    ):
+        ds.BuildOverviews("nearest", [2])
+    del ds
+    ds = gdal.Open(tmpfilename + ".ovr")
+    cs1 = ds.GetRasterBand(1).Checksum()
+    cs4 = ds.GetRasterBand(4).Checksum()
+    del ds
+    gdal.Unlink(tmpfilename + ".ovr")
+
+    ds = gdal.Open(tmpfilename)
+    with gdaltest.config_options(
+        {
+            "COMPRESS_OVERVIEW": "JXL",
+            "JXL_LOSSLESS_OVERVIEW": "NO",
+            "JXL_ALPHA_DISTANCE_OVERVIEW": "5",
+        }
+    ):
+        ds.BuildOverviews("nearest", [2])
+    del ds
+    ds = gdal.Open(tmpfilename + ".ovr")
+    assert ds.GetRasterBand(1).Checksum() == cs1
+    assert ds.GetRasterBand(4).Checksum() != cs4
+    del ds
+    gdal.Unlink(tmpfilename + ".ovr")

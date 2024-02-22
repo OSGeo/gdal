@@ -69,8 +69,6 @@ constexpr float INVALID_BMXY = -10.0f;
 #warning "Remove me before committing"
 #endif
 
-CPL_CVSID("$Id$")
-
 CPL_C_START
 CPLXMLNode *GDALSerializeGeoLocTransformer(void *pTransformArg);
 void *GDALDeserializeGeoLocTransformer(CPLXMLNode *psTree);
@@ -260,7 +258,7 @@ void GDALGeoLoc<Accessors>::LoadGeolocFinish(
                     poRing->addPoint(x1 > 0 ? x1 : x1 + 360, y1);
                     poRing->addPoint(x0 > 0 ? x0 : x0 + 360, y0);
                     poPoly->addRingDirectly(poRing);
-                    auto poFeature = cpl::make_unique<OGRFeature>(poLayerDefn);
+                    auto poFeature = std::make_unique<OGRFeature>(poLayerDefn);
                     poFeature->SetField(0, static_cast<int>(iX));
                     poFeature->SetField(1, static_cast<int>(iY));
                     poFeature->SetGeometryDirectly(poPoly);
@@ -283,7 +281,7 @@ void GDALGeoLoc<Accessors>::LoadGeolocFinish(
                 poRing->addPoint(x1, y1);
                 poRing->addPoint(x0, y0);
                 poPoly->addRingDirectly(poRing);
-                auto poFeature = cpl::make_unique<OGRFeature>(poLayerDefn);
+                auto poFeature = std::make_unique<OGRFeature>(poLayerDefn);
                 poFeature->SetField(0, static_cast<int>(iX));
                 poFeature->SetField(1, static_cast<int>(iY));
                 poFeature->SetGeometryDirectly(poPoly);

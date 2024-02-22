@@ -22,12 +22,6 @@
 #     target_link_libararies.
 #
 
-if(CMAKE_VERSION VERSION_LESS 3.12)
-    if(CRYPTOPP_ROOT)
-        set(CRYPTOPP_HINTPATH ${CRYPTOPP_ROOT})
-    endif()
-endif()
-
 find_path(CRYPTOPP_INCLUDE_DIR NAMES cryptopp/aes.h HINTS ${CRYPTOPP_HINTPATH}/include)
 
 if(CRYPTOPP_INCLUDE_DIR)

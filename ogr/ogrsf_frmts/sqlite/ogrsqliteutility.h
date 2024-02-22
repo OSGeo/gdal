@@ -57,6 +57,7 @@ class SQLResult
 
     const char *GetValue(int iColumnNum, int iRowNum) const;
     int GetValueAsInteger(int iColNum, int iRowNum) const;
+    double GetValueAsDouble(int iColNum, int iRowNum) const;
 
   private:
     char **papszResult = nullptr;
@@ -99,5 +100,7 @@ std::set<std::string> SQLGetUniqueFieldUCConstraints(
         std::vector<SQLSqliteMasterContent>());
 
 bool OGRSQLiteRTreeRequiresTrustedSchemaOn();
+
+bool OGRSQLiteIsSpatialFunctionReturningGeometry(const char *pszName);
 
 #endif  // OGR_SQLITEUTILITY_H_INCLUDED

@@ -57,7 +57,8 @@ class OGRKMLLayer final : public OGRLayer
     //
     OGRFeatureDefn *GetLayerDefn() override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr CreateField(const OGRFieldDefn *poField,
+                       int bApproxOK = TRUE) override;
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     GIntBig GetFeatureCount(int bForce = TRUE) override;
@@ -85,7 +86,6 @@ class OGRKMLLayer final : public OGRLayer
     OGRFeatureDefn *poFeatureDefn_;
 
     int iNextKMLId_;
-    int nTotalKMLCount_;
     bool bWriter_;
     int nLayerNumber_;
     int nWroteFeatureCount_;

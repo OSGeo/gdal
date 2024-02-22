@@ -161,15 +161,17 @@ void OGRPDFLayer::Fill(GDALPDFArray *poArray)
         OGRGeometry *poGeom = poFeature->GetGeometryRef();
         if (!bGeomTypeMixed && poGeom != nullptr)
         {
+            auto poLayerDefn = GetLayerDefn();
             if (!bGeomTypeSet)
             {
                 bGeomTypeSet = TRUE;
-                GetLayerDefn()->SetGeomType(poGeom->getGeometryType());
+                whileUnsealing(poLayerDefn)
+                    ->SetGeomType(poGeom->getGeometryType());
             }
-            else if (GetLayerDefn()->GetGeomType() != poGeom->getGeometryType())
+            else if (poLayerDefn->GetGeomType() != poGeom->getGeometryType())
             {
                 bGeomTypeMixed = TRUE;
-                GetLayerDefn()->SetGeomType(wkbUnknown);
+                whileUnsealing(poLayerDefn)->SetGeomType(wkbUnknown);
             }
         }
         ICreateFeature(poFeature);
