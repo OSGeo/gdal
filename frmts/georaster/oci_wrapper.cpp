@@ -1647,8 +1647,12 @@ bool CheckError(sword nStatus, OCIError *hError)
                     // Workaround, when this is called with gdal_translate,
                     // the error message is not printed because it has
                     // an error handler that suppresses the message.
-                    CPLPopErrorHandler();
+                    // It pushes a default error handler that prints the message,
+                    // and then pops it to restore the previous error handler.
+
+                    CPLPushErrorHandler(CPLDefaultErrorHandler);
                     CPLError(CE_Warning, CPLE_AppDefined, "%s", szMsg);
+                    CPLPopErrorHandler();
                 }
 
                 return false;
