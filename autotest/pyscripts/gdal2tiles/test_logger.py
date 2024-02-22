@@ -8,7 +8,7 @@
 # Author:   Even Rouault <even.rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2022, Even Rouault <even.rouault at spatialys.com>
+# Copyright (c) 2024, Even Rouault <even.rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -35,17 +35,29 @@ from osgeo import gdal
 from osgeo_utils import gdal2tiles
 
 
-def test_gdal2tiles_vsimem():
+def test_gdal2tiles_logger():
 
     if gdal.GetDriverByName("PNG") is None:
         pytest.skip("PNG driver is missing")
 
     gdal2tiles.main(
-        argv=["gdal2tiles", "-q", "../../gcore/data/byte.tif", "/vsimem/gdal2tiles"]
+        argv=[
+            "gdal2tiles",
+            "--verbose",
+            "-z",
+            "13-14",
+            "../../gcore/data/byte.tif",
+            "/vsimem/gdal2tiles",
+        ]
     )
 
     assert set(gdal.ReadDirRecursive("/vsimem/gdal2tiles")) == set(
         [
+            "13/",
+            "13/1418/",
+            "13/1418/4916.png",
+            "13/1419/",
+            "13/1419/4916.png",
             "14/",
             "14/2837/",
             "14/2837/9833.png",
