@@ -1567,6 +1567,7 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
     CheckUnknownExtensions();
 
     int bRet = FALSE;
+    bool bHasGPKGExtRelations = false;
     if (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR)
     {
         m_bHasGPKGGeometryColumns =
@@ -1575,6 +1576,7 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
                           "name = 'gpkg_geometry_columns' AND "
                           "type IN ('table', 'view')",
                           nullptr) == 1;
+        bHasGPKGExtRelations = HasGpkgextRelationsTable();
     }
     if (m_bHasGPKGGeometryColumns)
     {
@@ -1614,6 +1616,18 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
             bHasASpatialOrAttributes =
                 (oResultTable && oResultTable->RowCount() == 1);
         }
+        if (bHasGPKGExtRelations)
+        {
+            osSQL += "UNION ALL "
+                     "SELECT mapping_table_name, mapping_table_name, 0 as "
+                     "is_spatial, NULL, NULL, 0, 0, 0 AS "
+                     "xmin, 0 AS ymin, 0 AS xmax, 0 AS ymax, 0 AS "
+                     "is_in_gpkg_contents, 'table' AS object_type "
+                     "FROM gpkgext_relations WHERE "
+                     "lower(mapping_table_name) NOT IN (SELECT "
+                     "lower(table_name) FROM "
+                     "gpkg_contents)";
+        }
         if (EQUAL(pszListAllTables, "YES") ||
             (!bHasASpatialOrAttributes && EQUAL(pszListAllTables, "AUTO")))
         {
@@ -1632,6 +1646,12 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
                 "'st_geometry_columns', 'geometry_columns') "
                 "AND lower(name) NOT IN (SELECT lower(table_name) FROM "
                 "gpkg_contents)";
+            if (bHasGPKGExtRelations)
+            {
+                osSQL += " AND lower(name) NOT IN (SELECT "
+                         "lower(mapping_table_name) FROM "
+                         "gpkgext_relations)";
+            }
         }
         const int nTableLimit = GetOGRTableLimit();
         if (nTableLimit > 0)
