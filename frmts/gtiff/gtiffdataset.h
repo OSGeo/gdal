@@ -153,7 +153,7 @@ class GTiffDataset final : public GDALPamDataset
     std::unique_ptr<GDALDataset>
         m_poMaskExtOvrDS{};  // Used with MASK_OVERVIEW_DATASET open option
     GTiffJPEGOverviewDS **m_papoJPEGOverviewDS = nullptr;
-    GDAL_GCP *m_pasGCPList = nullptr;
+    std::vector<gdal::GCP> m_aoGCPs{};
     GDALColorTable *m_poColorTable = nullptr;
     char **m_papszMetadataFiles = nullptr;
     GByte *m_pabyBlockBuf = nullptr;
@@ -202,7 +202,6 @@ class GTiffDataset final : public GDALPamDataset
     int m_nLastBandRead = -1;        // Used for the all-in-on-strip case.
     int m_nLastWrittenBlockId = -1;  // used for m_bStreamingOut
     int m_nRefBaseMapping = 0;
-    int m_nGCPCount = 0;
     int m_nDisableMultiThreadedRead = 0;
 
     GTIFFKeysFlavorEnum m_eGeoTIFFKeysFlavor = GEOTIFF_KEYS_STANDARD;
