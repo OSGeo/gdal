@@ -284,7 +284,9 @@ std::vector<std::string> OGRSQLiteDataSource::GetRelationshipNames(
 
 {
     if (!m_bHasPopulatedRelationships)
-        LoadRelationshipsFromForeignKeys();
+    {
+        LoadRelationships();
+    }
 
     std::vector<std::string> oasNames;
     oasNames.reserve(m_osMapRelationships.size());
@@ -305,7 +307,9 @@ OGRSQLiteDataSource::GetRelationship(const std::string &name) const
 
 {
     if (!m_bHasPopulatedRelationships)
-        LoadRelationshipsFromForeignKeys();
+    {
+        LoadRelationships();
+    }
 
     auto it = m_osMapRelationships.find(name);
     if (it == m_osMapRelationships.end())
@@ -704,18 +708,28 @@ OGRErr OGRSQLiteBaseDataSource::PragmaCheck(const char *pszPragma,
 }
 
 /************************************************************************/
-/*                LoadRelationshipsFromForeignKeys()                    */
+/*                     LoadRelationships()                              */
 /************************************************************************/
 
-void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys() const
+void OGRSQLiteBaseDataSource::LoadRelationships() const
 
 {
     m_osMapRelationships.clear();
+    LoadRelationshipsFromForeignKeys({});
+    m_bHasPopulatedRelationships = true;
+}
 
+/************************************************************************/
+/*                LoadRelationshipsFromForeignKeys()                    */
+/************************************************************************/
+
+void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys(
+    const std::vector<std::string> &excludedTables) const
+
+{
     if (hDB)
     {
-        auto oResult = SQLQuery(
-            hDB,
+        std::string osSQL =
             "SELECT m.name, p.id, p.seq, p.\"table\" AS base_table_name, "
             "p.\"from\", p.\"to\", "
             "p.on_delete FROM sqlite_master m "
@@ -728,8 +742,27 @@ void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys() const
             // Same with Spatialite system tables
             "AND base_table_name NOT IN ('geometry_columns', "
             "'spatial_ref_sys', 'views_geometry_columns', "
-            "'virts_geometry_columns') "
-            "ORDER BY m.name");
+            "'virts_geometry_columns') ";
+        if (!excludedTables.empty())
+        {
+            std::string oExcludedTablesList;
+            for (const auto &osExcludedTable : excludedTables)
+            {
+                oExcludedTablesList += !oExcludedTablesList.empty() ? "," : "";
+                char *pszEscapedName =
+                    sqlite3_mprintf("'%q'", osExcludedTable.c_str());
+                oExcludedTablesList += pszEscapedName;
+                sqlite3_free(pszEscapedName);
+            }
+
+            osSQL += "AND base_table_name NOT IN (" + oExcludedTablesList +
+                     ")"
+                     " AND m.name NOT IN (" +
+                     oExcludedTablesList + ") ";
+        }
+        osSQL += "ORDER BY m.name";
+
+        auto oResult = SQLQuery(hDB, osSQL.c_str());
 
         if (!oResult)
         {
@@ -806,8 +839,6 @@ void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys() const
                     std::move(poRelationship);
             }
         }
-
-        m_bHasPopulatedRelationships = true;
     }
 }
 

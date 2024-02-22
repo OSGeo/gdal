@@ -280,7 +280,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     void FixupWrongRTreeTrigger();
     void FixupWrongMedataReferenceColumnNameUpdate();
     void ClearCachedRelationships();
-    void LoadRelationships() const;
+    void LoadRelationships() const override;
     void LoadRelationshipsUsingRelatedTablesExtension() const;
     static std::string
     GenerateNameForRelationship(const char *pszBaseTableName,

@@ -168,9 +168,8 @@ Relationships
 
 .. versionadded:: 3.6
 
-Relationship retrieval is supported, respecting the OGC GeoPackage Related Tables Extension.
-If the Related Tables Extension is not in use then relationships will be reported for tables
-which utilize FOREIGN KEY constraints.
+Many-to-many relationship retrieval is supported, respecting the OGC GeoPackage Related Tables Extension.
+One-to-many relationships will also be reported for tables which utilize FOREIGN KEY constraints.
 
 Relationship creation, deletion and updating is supported since GDAL 3.7. Relationships can
 only be updated to change their base or related table fields, or the relationship related
