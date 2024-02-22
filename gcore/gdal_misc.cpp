@@ -1346,6 +1346,118 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
 }
 
 /************************************************************************/
+/*                             gdal::GCP                                */
+/************************************************************************/
+
+namespace gdal
+{
+/** Constructor. */
+GCP::GCP(const char *pszId, const char *pszInfo, double dfPixel, double dfLine,
+         double dfX, double dfY, double dfZ)
+    : gcp{CPLStrdup(pszId ? pszId : ""),
+          CPLStrdup(pszInfo ? pszInfo : ""),
+          dfPixel,
+          dfLine,
+          dfX,
+          dfY,
+          dfZ}
+{
+    static_assert(sizeof(GCP) == sizeof(GDAL_GCP));
+}
+
+/** Destructor. */
+GCP::~GCP()
+{
+    CPLFree(gcp.pszId);
+    CPLFree(gcp.pszInfo);
+}
+
+/** Constructor from a C GDAL_GCP instance. */
+GCP::GCP(const GDAL_GCP &other)
+    : gcp{CPLStrdup(other.pszId),
+          CPLStrdup(other.pszInfo),
+          other.dfGCPPixel,
+          other.dfGCPLine,
+          other.dfGCPX,
+          other.dfGCPY,
+          other.dfGCPZ}
+{
+}
+
+/** Copy constructor. */
+GCP::GCP(const GCP &other) : GCP(other.gcp)
+{
+}
+
+/** Move constructor. */
+GCP::GCP(GCP &&other)
+    : gcp{other.gcp.pszId,     other.gcp.pszInfo, other.gcp.dfGCPPixel,
+          other.gcp.dfGCPLine, other.gcp.dfGCPX,  other.gcp.dfGCPY,
+          other.gcp.dfGCPZ}
+{
+    other.gcp.pszId = nullptr;
+    other.gcp.pszInfo = nullptr;
+}
+
+/** Copy assignment operator. */
+GCP &GCP::operator=(const GCP &other)
+{
+    if (this != &other)
+    {
+        CPLFree(gcp.pszId);
+        CPLFree(gcp.pszInfo);
+        gcp = other.gcp;
+        gcp.pszId = CPLStrdup(other.gcp.pszId);
+        gcp.pszInfo = CPLStrdup(other.gcp.pszInfo);
+    }
+    return *this;
+}
+
+/** Move assignment operator. */
+GCP &GCP::operator=(GCP &&other)
+{
+    if (this != &other)
+    {
+        CPLFree(gcp.pszId);
+        CPLFree(gcp.pszInfo);
+        gcp = other.gcp;
+        other.gcp.pszId = nullptr;
+        other.gcp.pszInfo = nullptr;
+    }
+    return *this;
+}
+
+/** Set the 'id' member of the GCP. */
+void GCP::SetId(const char *pszId)
+{
+    CPLFree(gcp.pszId);
+    gcp.pszId = CPLStrdup(pszId ? pszId : "");
+}
+
+/** Set the 'info' member of the GCP. */
+void GCP::SetInfo(const char *pszInfo)
+{
+    CPLFree(gcp.pszInfo);
+    gcp.pszInfo = CPLStrdup(pszInfo ? pszInfo : "");
+}
+
+/** Cast a vector of gdal::GCP as a C array of GDAL_GCP. */
+/*static */
+const GDAL_GCP *GCP::c_ptr(const std::vector<GCP> &asGCPs)
+{
+    return asGCPs.empty() ? nullptr : asGCPs.front().c_ptr();
+}
+
+/** Creates a vector of GDAL::GCP from a C array of GDAL_GCP. */
+/*static*/
+std::vector<GCP> GCP::fromC(const GDAL_GCP *pasGCPList, int nGCPCount)
+{
+    return std::vector<GCP>(pasGCPList, pasGCPList + nGCPCount);
+}
+
+} /* namespace gdal */
+
+/************************************************************************/
 /*                            GDALInitGCPs()                            */
 /************************************************************************/
 
