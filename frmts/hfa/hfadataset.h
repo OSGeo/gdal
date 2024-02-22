@@ -68,8 +68,7 @@ class HFADataset final : public GDALPamDataset
     bool bForceToPEString = false;
     bool bDisablePEString = false;
 
-    int nGCPCount = 0;
-    GDAL_GCP asGCPList[36];
+    std::vector<gdal::GCP> m_aoGCPs{};
 
     void UseXFormStack(int nStepCount, Efga_Polynomial *pasPolyListForward,
                        Efga_Polynomial *pasPolyListReverse);
