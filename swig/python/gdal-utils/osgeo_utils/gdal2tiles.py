@@ -1574,7 +1574,10 @@ def create_overview_tile(
             gdal.Unlink(aux_xml)
 
     if options.verbose:
-        logger.debug(f"\tbuild from zoom {base_tz}, tiles: %s" % ",".join(base_tiles))
+        logger.debug(
+            f"\tbuild from zoom {base_tz}, tiles: %s"
+            % ",".join(["(%d, %d)" % (t[0], t[1]) for t in base_tiles])
+        )
 
     # Create a KML file for this tile.
     if tile_job_info.kml:
