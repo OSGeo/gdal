@@ -345,12 +345,6 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     bool AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
                         std::string &failureReason) override;
 
-    std::vector<std::string>
-    GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
-
-    const GDALRelationship *
-    GetRelationship(const std::string &name) const override;
-
     bool AddRelationship(std::unique_ptr<GDALRelationship> &&relationship,
                          std::string &failureReason) override;
 

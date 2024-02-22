@@ -217,9 +217,12 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
                        int nRowsExpected);
 
     virtual void LoadRelationships() const;
-
     void LoadRelationshipsFromForeignKeys(
         const std::vector<std::string> &excludedTables) const;
+    std::vector<std::string>
+    GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
+    const GDALRelationship *
+    GetRelationship(const std::string &name) const override;
 
     bool IsSpatialiteLoaded();
     static int MakeSpatialiteVersionNumber(int x, int y, int z)

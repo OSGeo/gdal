@@ -276,49 +276,6 @@ int OGRSQLiteBaseDataSource::GetSpatialiteVersionNumber()
 }
 
 /************************************************************************/
-/*                        GetRelationshipNames()                        */
-/************************************************************************/
-
-std::vector<std::string> OGRSQLiteDataSource::GetRelationshipNames(
-    CPL_UNUSED CSLConstList papszOptions) const
-
-{
-    if (!m_bHasPopulatedRelationships)
-    {
-        LoadRelationships();
-    }
-
-    std::vector<std::string> oasNames;
-    oasNames.reserve(m_osMapRelationships.size());
-    for (auto it = m_osMapRelationships.begin();
-         it != m_osMapRelationships.end(); ++it)
-    {
-        oasNames.emplace_back(it->first);
-    }
-    return oasNames;
-}
-
-/************************************************************************/
-/*                        GetRelationship()                             */
-/************************************************************************/
-
-const GDALRelationship *
-OGRSQLiteDataSource::GetRelationship(const std::string &name) const
-
-{
-    if (!m_bHasPopulatedRelationships)
-    {
-        LoadRelationships();
-    }
-
-    auto it = m_osMapRelationships.find(name);
-    if (it == m_osMapRelationships.end())
-        return nullptr;
-
-    return it->second.get();
-}
-
-/************************************************************************/
 /*                          AddRelationship()                           */
 /************************************************************************/
 
@@ -840,6 +797,49 @@ void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys(
             }
         }
     }
+}
+
+/************************************************************************/
+/*                        GetRelationshipNames()                        */
+/************************************************************************/
+
+std::vector<std::string> OGRSQLiteBaseDataSource::GetRelationshipNames(
+    CPL_UNUSED CSLConstList papszOptions) const
+
+{
+    if (!m_bHasPopulatedRelationships)
+    {
+        LoadRelationships();
+    }
+
+    std::vector<std::string> oasNames;
+    oasNames.reserve(m_osMapRelationships.size());
+    for (auto it = m_osMapRelationships.begin();
+         it != m_osMapRelationships.end(); ++it)
+    {
+        oasNames.emplace_back(it->first);
+    }
+    return oasNames;
+}
+
+/************************************************************************/
+/*                        GetRelationship()                             */
+/************************************************************************/
+
+const GDALRelationship *
+OGRSQLiteBaseDataSource::GetRelationship(const std::string &name) const
+
+{
+    if (!m_bHasPopulatedRelationships)
+    {
+        LoadRelationships();
+    }
+
+    auto it = m_osMapRelationships.find(name);
+    if (it == m_osMapRelationships.end())
+        return nullptr;
+
+    return it->second.get();
 }
 
 /***********************************************************************/
