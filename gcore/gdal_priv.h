@@ -4169,11 +4169,11 @@ double GDALAdjustNoDataCloseToFloatMax(double dfVal);
 // (minimum value, maximum value, etc.)
 #define GDALSTAT_APPROX_NUMSAMPLES 2500
 
-void GDALSerializeGCPListToXML(CPLXMLNode *psParentNode, GDAL_GCP *pasGCPList,
-                               int nGCPCount,
+void GDALSerializeGCPListToXML(CPLXMLNode *psParentNode,
+                               const std::vector<gdal::GCP> &asGCPs,
                                const OGRSpatialReference *poGCP_SRS);
 void GDALDeserializeGCPListFromXML(const CPLXMLNode *psGCPList,
-                                   GDAL_GCP **ppasGCPList, int *pnGCPCount,
+                                   std::vector<gdal::GCP> &asGCPs,
                                    OGRSpatialReference **ppoGCP_SRS);
 
 void GDALSerializeOpenOptionsToXML(CPLXMLNode *psParentNode,

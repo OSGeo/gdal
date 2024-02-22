@@ -4168,8 +4168,8 @@ CPL_C_END
 /*                     GDALSerializeGCPListToXML()                      */
 /************************************************************************/
 
-void GDALSerializeGCPListToXML(CPLXMLNode *psParentNode, GDAL_GCP *pasGCPList,
-                               int nGCPCount,
+void GDALSerializeGCPListToXML(CPLXMLNode *psParentNode,
+                               const std::vector<gdal::GCP> &asGCPs,
                                const OGRSpatialReference *poGCP_SRS)
 {
     CPLString oFmt;
@@ -4199,10 +4199,8 @@ void GDALSerializeGCPListToXML(CPLXMLNode *psParentNode, GDAL_GCP *pasGCPList,
         psLastChild = psPamGCPList->psChild->psNext;
     }
 
-    for (int iGCP = 0; iGCP < nGCPCount; iGCP++)
+    for (const gdal::GCP &gcp : asGCPs)
     {
-        GDAL_GCP *psGCP = pasGCPList + iGCP;
-
         CPLXMLNode *psXMLGCP = CPLCreateXMLNode(nullptr, CXT_Element, "GCP");
 
         if (psLastChild == nullptr)
@@ -4211,25 +4209,23 @@ void GDALSerializeGCPListToXML(CPLXMLNode *psParentNode, GDAL_GCP *pasGCPList,
             psLastChild->psNext = psXMLGCP;
         psLastChild = psXMLGCP;
 
-        CPLSetXMLValue(psXMLGCP, "#Id", psGCP->pszId);
+        CPLSetXMLValue(psXMLGCP, "#Id", gcp.Id());
 
-        if (psGCP->pszInfo != nullptr && strlen(psGCP->pszInfo) > 0)
-            CPLSetXMLValue(psXMLGCP, "Info", psGCP->pszInfo);
+        if (gcp.Info() != nullptr && strlen(gcp.Info()) > 0)
+            CPLSetXMLValue(psXMLGCP, "Info", gcp.Info());
 
-        CPLSetXMLValue(psXMLGCP, "#Pixel",
-                       oFmt.Printf("%.4f", psGCP->dfGCPPixel));
+        CPLSetXMLValue(psXMLGCP, "#Pixel", oFmt.Printf("%.4f", gcp.Pixel()));
 
-        CPLSetXMLValue(psXMLGCP, "#Line",
-                       oFmt.Printf("%.4f", psGCP->dfGCPLine));
+        CPLSetXMLValue(psXMLGCP, "#Line", oFmt.Printf("%.4f", gcp.Line()));
 
-        CPLSetXMLValue(psXMLGCP, "#X", oFmt.Printf("%.12E", psGCP->dfGCPX));
+        CPLSetXMLValue(psXMLGCP, "#X", oFmt.Printf("%.12E", gcp.X()));
 
-        CPLSetXMLValue(psXMLGCP, "#Y", oFmt.Printf("%.12E", psGCP->dfGCPY));
+        CPLSetXMLValue(psXMLGCP, "#Y", oFmt.Printf("%.12E", gcp.Y()));
 
         /* Note: GDAL 1.10.1 and older generated #GCPZ, but could not read it
          * back */
-        if (psGCP->dfGCPZ != 0.0)
-            CPLSetXMLValue(psXMLGCP, "#Z", oFmt.Printf("%.12E", psGCP->dfGCPZ));
+        if (gcp.Z() != 0.0)
+            CPLSetXMLValue(psXMLGCP, "#Z", oFmt.Printf("%.12E", gcp.Z()));
     }
 }
 
@@ -4238,7 +4234,7 @@ void GDALSerializeGCPListToXML(CPLXMLNode *psParentNode, GDAL_GCP *pasGCPList,
 /************************************************************************/
 
 void GDALDeserializeGCPListFromXML(const CPLXMLNode *psGCPList,
-                                   GDAL_GCP **ppasGCPList, int *pnGCPCount,
+                                   std::vector<gdal::GCP> &asGCPs,
                                    OGRSpatialReference **ppoGCP_SRS)
 {
     if (ppoGCP_SRS)
@@ -4277,42 +4273,16 @@ void GDALDeserializeGCPListFromXML(const CPLXMLNode *psGCPList,
         }
     }
 
-    // Count GCPs.
-    int nGCPMax = 0;
-
-    for (const CPLXMLNode *psXMLGCP = psGCPList->psChild; psXMLGCP != nullptr;
+    asGCPs.clear();
+    for (const CPLXMLNode *psXMLGCP = psGCPList->psChild; psXMLGCP;
          psXMLGCP = psXMLGCP->psNext)
     {
-
         if (!EQUAL(psXMLGCP->pszValue, "GCP") || psXMLGCP->eType != CXT_Element)
             continue;
 
-        nGCPMax++;
-    }
-
-    *ppasGCPList = static_cast<GDAL_GCP *>(
-        nGCPMax ? CPLCalloc(sizeof(GDAL_GCP), nGCPMax) : nullptr);
-    *pnGCPCount = 0;
-
-    if (nGCPMax == 0)
-        return;
-
-    for (const CPLXMLNode *psXMLGCP = psGCPList->psChild;
-         *ppasGCPList != nullptr && psXMLGCP != nullptr;
-         psXMLGCP = psXMLGCP->psNext)
-    {
-        GDAL_GCP *psGCP = *ppasGCPList + *pnGCPCount;
-
-        if (!EQUAL(psXMLGCP->pszValue, "GCP") || psXMLGCP->eType != CXT_Element)
-            continue;
-
-        GDALInitGCPs(1, psGCP);
-
-        CPLFree(psGCP->pszId);
-        psGCP->pszId = CPLStrdup(CPLGetXMLValue(psXMLGCP, "Id", ""));
-
-        CPLFree(psGCP->pszInfo);
-        psGCP->pszInfo = CPLStrdup(CPLGetXMLValue(psXMLGCP, "Info", ""));
+        gdal::GCP gcp;
+        gcp.SetId(CPLGetXMLValue(psXMLGCP, "Id", ""));
+        gcp.SetInfo(CPLGetXMLValue(psXMLGCP, "Info", ""));
 
         const auto ParseDoubleValue =
             [psXMLGCP](const char *pszParameter, double &dfVal)
@@ -4337,13 +4307,13 @@ void GDALDeserializeGCPListFromXML(const CPLXMLNode *psGCPList,
         };
 
         bool bOK = true;
-        if (!ParseDoubleValue("Pixel", psGCP->dfGCPPixel))
+        if (!ParseDoubleValue("Pixel", gcp.Pixel()))
             bOK = false;
-        if (!ParseDoubleValue("Line", psGCP->dfGCPLine))
+        if (!ParseDoubleValue("Line", gcp.Line()))
             bOK = false;
-        if (!ParseDoubleValue("X", psGCP->dfGCPX))
+        if (!ParseDoubleValue("X", gcp.X()))
             bOK = false;
-        if (!ParseDoubleValue("Y", psGCP->dfGCPY))
+        if (!ParseDoubleValue("Y", gcp.Y()))
             bOK = false;
         const char *pszZ = CPLGetXMLValue(psXMLGCP, "Z", nullptr);
         if (pszZ == nullptr)
@@ -4353,7 +4323,7 @@ void GDALDeserializeGCPListFromXML(const CPLXMLNode *psGCPList,
             pszZ = CPLGetXMLValue(psXMLGCP, "GCPZ", "0.0");
         }
         char *endptr = nullptr;
-        psGCP->dfGCPZ = CPLStrtod(pszZ, &endptr);
+        gcp.Z() = CPLStrtod(pszZ, &endptr);
         if (endptr == pszZ)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -4361,13 +4331,9 @@ void GDALDeserializeGCPListFromXML(const CPLXMLNode *psGCPList,
             bOK = false;
         }
 
-        if (!bOK)
+        if (bOK)
         {
-            GDALDeinitGCPs(1, psGCP);
-        }
-        else
-        {
-            (*pnGCPCount)++;
+            asGCPs.emplace_back(std::move(gcp));
         }
     }
 }
