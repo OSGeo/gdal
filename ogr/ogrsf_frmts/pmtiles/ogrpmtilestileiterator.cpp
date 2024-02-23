@@ -250,7 +250,7 @@ pmtiles::entry_zxy OGRPMTilesTileIterator::GetNextTile(uint32_t *pnRunLength)
                             static_cast<uint8_t>(m_nZoomLevel), m_nCurX,
                             m_nCurY);
                         m_nMaxTileId = m_nMinTileId;
-                        m_nLastTileId = 0;
+                        m_nLastTileId = INVALID_LAST_TILE_ID;
                         while (m_aoStack.size() > 1)
                             m_aoStack.pop();
                         const int nMinEntryIdx = find_tile_idx_lesser_or_equal(
@@ -323,7 +323,8 @@ pmtiles::entry_zxy OGRPMTilesTileIterator::GetNextTile(uint32_t *pnRunLength)
                     break;
                 }
 
-                if (sContext.sEntries[0].tile_id <= m_nLastTileId)
+                if (m_nLastTileId != INVALID_LAST_TILE_ID &&
+                    sContext.sEntries[0].tile_id <= m_nLastTileId)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Non increasing tile_id");
