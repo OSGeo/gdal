@@ -36,7 +36,6 @@
 #include "mm_rdlayr.h"    // For MM_ReadExtendedDBFHeader()
 #include "gdal.h"         // For GDALDatasetH
 #include "ogr_srs_api.h"  // For OSRGetAuthorityCode
-#include "cpl_string.h"   // For CPL_ENC_UTF8
 #else
 #include "CmptCmp.h"                    // Compatibility between compilators
 #include "PrjMMVGl.h"                   // For a DirectoriPrograma
@@ -45,6 +44,8 @@
 #include "mm_gdal\mm_rdlayr.h"          // For MM_ReadExtendedDBFHeader()
 #include "msg.h"                        // For ErrorMsg()
 #endif
+
+#include "cpl_string.h"  // For CPL_ENC_UTF8
 
 #ifdef GDAL_COMPILATION
 CPL_C_START  // Necessary for compiling in GDAL project
