@@ -121,6 +121,21 @@ bool OGRMutexedDataSource::IsLayerPrivate(int iLayer) const
     return m_poBaseDataSource->IsLayerPrivate(iLayer);
 }
 
+const std::string &
+OGRMutexedDataSource::GetLayerAlternativeName(int iLayer) const
+{
+    if (!m_poBaseDataSource)
+        return m_osEmptyAlternativeName;
+    return m_poBaseDataSource->GetLayerAlternativeName(iLayer);
+}
+
+const std::string &OGRMutexedDataSource::GetLayerComment(int iLayer) const
+{
+    if (!m_poBaseDataSource)
+        return m_osEmptyComment;
+    return m_poBaseDataSource->GetLayerComment(iLayer);
+}
+
 int OGRMutexedDataSource::TestCapability(const char *pszCap)
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
