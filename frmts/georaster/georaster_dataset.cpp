@@ -1357,10 +1357,11 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
     if (bGenStatsOptionsUsed && !poGRD->poGeoRaster->bGenStats)
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "Some GENSTATS* options were used but GENSTATS is not set. "
-                 "Statistics won't be computed, please set GENSTATS option to true "
-                 "if you want to generate statistics");
+        CPLError(
+            CE_Warning, CPLE_AppDefined,
+            "Some GENSTATS* options were used but GENSTATS is not set. "
+            "Statistics won't be computed, please set GENSTATS option to true "
+            "if you want to generate statistics");
     }
 
     //  -------------------------------------------------------------------

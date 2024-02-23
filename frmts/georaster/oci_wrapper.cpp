@@ -1639,7 +1639,10 @@ bool CheckError(sword nStatus, OCIError *hError)
             {
                 return false;
             }
-            else if (nCode == 28002 || nCode == 28098) // password expires codes (ORA-28002, ORA-28098)
+            else if (
+                nCode == 28002 ||
+                nCode ==
+                    28098)  // password expires codes (ORA-28002, ORA-28098)
             {
                 static bool bPasswordExpiredLogged = false;
                 if (!bPasswordExpiredLogged)
