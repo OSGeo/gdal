@@ -5,6 +5,8 @@ MiraMon Vectors
 
 .. shortname:: MiraMonVector
 
+.. built_in_by_default::
+
 This driver is capable of translating (reading and writing) structured vectors
 of point, arc (*linestrings*), and polygon types from MiraMon. Structured vectors is
 the binary format of MiraMon for vector layer data, linked to one or more database tables,
@@ -119,14 +121,11 @@ of the layer file.
       MiraMon but not read directly by the GDAL MiraMon driver.
 
 In MiraMon the concepts of multipoints and multistrings are not supported but the driver translates a
-multipoint into N points and a multistring into N arcs. The concept of multipolygon is translated as
-polypolygon (described above).
-
-Note that when reading a MiraMon file of type *.pol*, the corresponding
+multipoint into N points and a multistring into N arcs. So, when reading a MiraMon file of type *.pol*, the corresponding
 layer will be reported as of type wkbPolygon, but depending on the
 number of parts of each geometry, the actual type of the geometry for
 each feature can be either OGRPolygon or OGRMultiPolygon. This does not 
-apply for ARC and PNT MiraMon files because the concept of 
+apply for *.arc* and *.pnt* MiraMon files because the concept of 
 OGRMultiLineString or OGRMultiPoint does not exist.
 
 The reading driver verifies if multipart polygons adhere to the 
@@ -157,7 +156,7 @@ Encoding
 --------
 
 When writing, the codepage of *.dbf* files can be ANSI or UTF8
-depending on the creation option DBFEncoding.
+depending on the layer creation option DBFEncoding.
 
 Creation Issues
 ---------------
@@ -177,10 +176,10 @@ folder or a file with the appropriate extension (*.pnt*, etc):
 
   - In this case a *.mmm* file will be created referencing all layers in the origin dataset to make an
     easy open of the dataset using the MiraMon software.
-  - In this case, please specify the MiraMon file output format name using the -f option (**-f MiraMon**).
+  - In this case, please specify the MiraMon file output format name using the -f option (**-f MiraMonVector**).
 
 - If it the output is a **file** with extension all the translated layers in the origin dataset will be created with the specified name.
-  Use this option only when you know that there is only one layer in the origin dataset.
+  Use this option only when you know that there is only one layer with one feature type in the origin dataset.
 
 When translating from a MiraMon format, the MiraMon driver input needs a file with one of the
 described extensions: *.pnt*, *.arc* or *.pol*. The extension *.nod* is not valid for translation.
@@ -188,10 +187,7 @@ described extensions: *.pnt*, *.arc* or *.pol*. The extension *.nod* is not vali
 The attributes of the MiraMon feature are stored in an associated *.dbf*.
 If a classical DBF IV table could not be used (too many fields or records,
 large text fields, etc) a file type called extended DBF is used.
-This is an improvement of dBASE IV DBF files. The specification
-of this format can be found in this file.
-
-The specification of this format can be found in `this file
+This is an improvement of dBASE IV DBF files. The specification of this format can be found in `this file
 <https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__.
 
 Note that extended *.dbf* files cannot be opened with Excel or
@@ -250,6 +246,13 @@ The following open options are available.
       By increasing this parameter, more memory will be required,
       but there will be fewer read/write operations to the (network and) disk.
 
+-  .. oo:: Language
+      :choices: ENG, CAT, ESP
+      :default: ENG
+
+      If the layer to be opened is multilingual (in fact the *.rel* file), this
+      parameter sets the language to be read.
+
 
 Dataset creation options
 ------------------------
@@ -284,6 +287,26 @@ Layer creation options
       `MiraD application <https://www.miramon.cat/USA/Prod-MiraD.htm>`__, it is recommended
       to use ANSI instead, if there are no coding problems.
 
+-  .. oo:: MemoryRatio
+      :choices: 0.5, 1, 2, ...
+      :default: 1
+
+      It is a ratio used to enhance certain aspects of memory.
+      In some memory allocations a block of either 256 or 512 bytes is used.
+      This parameter can be adjusted to achieve
+      nMemoryRatio*256 or nMemoryRatio*512.
+      By way of example, please use nMemoryRatio=2 in powerful computers and
+      nMemoryRatio=0.5 in less powerful computers.
+      By increasing this parameter, more memory will be required,
+      but there will be fewer read/write operations to the (network and) disk.
+
+-  .. oo:: Language
+      :choices: ENG, CAT, ESP
+      :default: ENG
+
+      It is the language used in the metadata file (*.rel*) for the descriptors of
+      the *.dbf* fields.
+
 Examples
 --------
 
@@ -316,6 +339,14 @@ Examples
    ::
 
       ogr2ogr tracks.gml tracks.arc -oo Height=First
+
+-  A translation from a MiraMon layer 'tracks.arc' into a new *.gml* file taking the last height of
+   every point and documenting the attribute descriptors in catalan (if the layer is multilingual
+   and it have this language available) is performed like this:
+
+   ::
+
+      ogr2ogr tracks.gml tracks.arc -oo Height=First -oo Language=CAT
 
 
 See Also

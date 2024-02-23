@@ -19,11 +19,6 @@ CPL_C_START  // Necessary for compiling C in GDAL project
 #define MM_OFFSET_RESERVAT2_MIDA_NOM_ESTES 11
 #define MM_MAX_LON_RESERVAT_2_CAMP_BD_XP 13
 
-#define MM_EscriuOffsetNomEstesBD_XP(bd_xp, i_camp, offset_nom_camp)           \
-    memcpy((bd_xp)->pField[(i_camp)].reserved_2 +                              \
-               MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES,                           \
-           &(offset_nom_camp), 4)
-
 #define MM_ES_DBF_ESTESA(dbf_version)                                          \
     (((dbf_version) == MM_MARCA_VERSIO_1_DBF_ESTESA) ? TRUE : FALSE)
 

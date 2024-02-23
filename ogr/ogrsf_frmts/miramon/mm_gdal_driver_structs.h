@@ -172,6 +172,14 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define MM_RECODE_UTF8 0
 #define MM_RECODE_ANSI 1
 
+// Language in REL's:
+// It's the language of the MiraMon generated descriptors.
+// Metadata will not be translated but these descriptors are
+// generated from scratch and it's good to use a custom language.
+#define MM_ENG_LANGUAGE 0
+#define MM_CAT_LANGUAGE 1
+#define MM_SPA_LANGUAGE 2
+
 /* -------------------------------------------------------------------- */
 /*      Structures                                                      */
 /* -------------------------------------------------------------------- */
@@ -252,6 +260,12 @@ struct MiraMonVectorMetaData
 
     // Pointer to a Layer DataBase, used to create MiraMon DBF (extended) file.
     struct MiraMonDataBase *pLayerDB;
+
+    // Language in REL's:
+    // It's the language of the MiraMon generated descriptors.
+    // Metadata will not be translated but these descriptors are
+    // generated from scratch and it's good to use a custom language.
+    char nMMLanguage;
 };
 
 // MIRAMON DATA BASE
@@ -729,6 +743,12 @@ struct MiraMonVectLayerInfo
     //  MM_JOC_CARAC_UTF8_DBF
     //  MM_JOC_CARAC_ANSI_DBASE;
     MM_BYTE nCharSet;
+
+    // Language in REL's:
+    // It's the language of the MiraMon generated descriptors.
+    // Metadata will not be translated but these descriptors are
+    // generated from scratch and it's good to use a custom language.
+    char nMMLanguage;
 
     // This is used only to write temporary stuff
     char szNFieldAux[MM_MAX_AMPLADA_CAMP_N_DBF];

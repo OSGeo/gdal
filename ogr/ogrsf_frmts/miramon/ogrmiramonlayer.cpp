@@ -65,6 +65,25 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
     else
         nMMMemoryRatio = 1;  // Default
 
+    /* -------------------------------------------------------------------- */
+    /*   Establish the descriptors language when                            */
+    /*   opening and creating .rel files                                    */
+    /* -------------------------------------------------------------------- */
+    const char *pszLanguage = CSLFetchNameValue(papszOpenOptions, "Language");
+    char nMMLanguage;
+
+    if (pszLanguage)
+    {
+        if (EQUAL(pszLanguage, "CAT"))
+            nMMLanguage = MM_CAT_LANGUAGE;
+        else if (EQUAL(pszLanguage, "ESP"))
+            nMMLanguage = MM_SPA_LANGUAGE;
+        else
+            nMMLanguage = MM_ENG_LANGUAGE;
+    }
+    else
+        nMMLanguage = MM_ENG_LANGUAGE;  // Default
+
     if (bUpdate)
     {
         /* ---------------------------------------------------------------- */
@@ -119,7 +138,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             // the first element is readed)
             CPLDebug("MiraMon", "Initializing MiraMon points layer...");
             if (MMInitLayer(&hMiraMonLayerPNT, pszFilename, nMMVersion,
-                            nMMRecode, nMMMemoryRatio, nullptr,
+                            nMMRecode, nMMLanguage, nMMMemoryRatio, nullptr,
                             MM_WRITTING_MODE, MMMap))
             {
                 bValidFile = false;
@@ -129,7 +148,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
 
             CPLDebug("MiraMon", "Initializing MiraMon arcs layer...");
             if (MMInitLayer(&hMiraMonLayerARC, pszFilename, nMMVersion,
-                            nMMRecode, nMMMemoryRatio, nullptr,
+                            nMMRecode, nMMLanguage, nMMMemoryRatio, nullptr,
                             MM_WRITTING_MODE, MMMap))
             {
                 bValidFile = false;
@@ -139,7 +158,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
 
             CPLDebug("MiraMon", "Initializing MiraMon polygons layer...");
             if (MMInitLayer(&hMiraMonLayerPOL, pszFilename, nMMVersion,
-                            nMMRecode, nMMMemoryRatio, nullptr,
+                            nMMRecode, nMMLanguage, nMMMemoryRatio, nullptr,
                             MM_WRITTING_MODE, MMMap))
             {
                 bValidFile = false;
@@ -151,8 +170,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             // information to get. A DBF will be generated
             CPLDebug("MiraMon", "Initializing MiraMon only-ext-DBF layer...");
             if (MMInitLayer(&hMiraMonLayerReadOrNonGeom, pszFilename,
-                            nMMVersion, nMMRecode, nMMMemoryRatio, nullptr,
-                            MM_WRITTING_MODE, nullptr))
+                            nMMVersion, nMMRecode, nMMLanguage, nMMMemoryRatio,
+                            nullptr, MM_WRITTING_MODE, nullptr))
             {
                 bValidFile = false;
                 return;

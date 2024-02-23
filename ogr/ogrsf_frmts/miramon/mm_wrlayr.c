@@ -36,6 +36,7 @@
 #include "mm_rdlayr.h"    // For MM_ReadExtendedDBFHeader()
 #include "gdal.h"         // For GDALDatasetH
 #include "ogr_srs_api.h"  // For OSRGetAuthorityCode
+#include "cpl_string.h"   // For CPL_ENC_UTF8
 #else
 #include "CmptCmp.h"                    // Compatibility between compilators
 #include "PrjMMVGl.h"                   // For a DirectoriPrograma
@@ -1713,8 +1714,9 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer)
 
 int MMInitLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 const char *pzFileName, int LayerVersion, char nMMRecode,
-                double nMMMemoryRatio, struct MiraMonDataBase *pLayerDB,
-                MM_BOOLEAN ReadOrWrite, struct MiraMonVectMapInfo *MMMap)
+                char nMMLanguage, double nMMMemoryRatio,
+                struct MiraMonDataBase *pLayerDB, MM_BOOLEAN ReadOrWrite,
+                struct MiraMonVectMapInfo *MMMap)
 {
     memset(hMiraMonLayer, 0, sizeof(*hMiraMonLayer));
 
@@ -1779,6 +1781,8 @@ int MMInitLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
                    "driver (MMInitLayer())");
         return 1;
     }
+
+    hMiraMonLayer->nMMLanguage = nMMLanguage;
 
     if (nMMRecode == MM_RECODE_UTF8)
         hMiraMonLayer->nCharSet = MM_JOC_CARAC_UTF8_DBF;
@@ -4920,6 +4924,7 @@ int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
     return 1;  // not found
 }
 
+#define LineReturn "\r\n"
 static char *MMGenerateFileIdentifierFromMetadataFileName(char *pMMFN)
 {
     static char aCharRand[7],
@@ -4937,6 +4942,35 @@ static char *MMGenerateFileIdentifierFromMetadataFileName(char *pMMFN)
     return aFileIdentifier;
 }
 
+static void MMWrite_ANSI_MetadataKey(struct MiraMonVectorMetaData *hMMMD,
+                                     FILE_TYPE *pF, const char *pszEng,
+                                     const char *pszCat, const char *pszEsp)
+{
+    char *pszString = nullptr;
+
+    switch (hMMMD->nMMLanguage)
+    {
+        case MM_CAT_LANGUAGE:
+            pszString =
+                CPLRecode_function(pszCat, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+            break;
+        case MM_SPA_LANGUAGE:
+            pszString =
+                CPLRecode_function(pszEsp, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+            break;
+        default:
+        case MM_ENG_LANGUAGE:
+            pszString =
+                CPLRecode_function(pszEng, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
+            break;
+    }
+    if (pszString)
+    {
+        fprintf_function(pF, pszString);
+        fprintf_function(pF, LineReturn);
+        CPLFree_function(pszString);
+    }
+}
 /* -------------------------------------------------------------------- */
 /*      MiraMon metadata functions                                      */
 /* -------------------------------------------------------------------- */
@@ -4949,7 +4983,6 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
     time_t currentTime;
     struct tm *pLocalTime;
     char aTimeString[200];
-#define LineReturn "\r\n"
 
     if (!hMMMD->aLayerName)
         return 0;
@@ -5100,7 +5133,11 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
     fprintf_function(pF, "[TAULA_PRINCIPAL:ID_GRAFIC]" LineReturn);
     fprintf_function(pF, "visible=1" LineReturn);
     fprintf_function(pF, "MostrarUnitats=0" LineReturn);
-    fprintf_function(pF, "descriptor=Internal graphic identifier" LineReturn);
+
+    MMWrite_ANSI_MetadataKey(hMMMD, pF,
+                             "descriptor=Internal Graphic identifier",
+                             "descriptor=Identificador Gràfic intern",
+                             "descriptor=Identificador Gráfico interno");
 
     if (hMMMD->ePlainLT == MM_LayerType_Arc)
     {
@@ -5109,28 +5146,36 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
-        fprintf_function(pF, "descriptor=Number of vertices" LineReturn);
+        MMWrite_ANSI_MetadataKey(hMMMD, pF, "descriptor=Number of vertices",
+                                 "descriptor=Nombre de vèrtexs",
+                                 "descriptor=Número de vértices");
 
         fprintf_function(pF, LineReturn);
         fprintf_function(pF, "[TAULA_PRINCIPAL:LONG_ARC]" LineReturn);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
-        fprintf_function(pF, "descriptor=Lenght of arc" LineReturn);
+        MMWrite_ANSI_MetadataKey(hMMMD, pF, "descriptor=Lenght of arc",
+                                 "descriptor=Longitud de l'arc",
+                                 "descriptor=Longitud del arco");
 
         fprintf_function(pF, LineReturn);
         fprintf_function(pF, "[TAULA_PRINCIPAL:NODE_INI]" LineReturn);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
-        fprintf_function(pF, "descriptor=Initial node" LineReturn);
+        MMWrite_ANSI_MetadataKey(hMMMD, pF, "descriptor=Initial node",
+                                 "descriptor=Node inicial",
+                                 "descriptor=Nodo inicial");
 
         fprintf_function(pF, LineReturn);
         fprintf_function(pF, "[TAULA_PRINCIPAL:NODE_FI]" LineReturn);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
-        fprintf_function(pF, "descriptor=Final node" LineReturn);
+        MMWrite_ANSI_MetadataKey(hMMMD, pF, "descriptor=Final node",
+                                 "descriptor=Node final",
+                                 "descriptor=Nodo final");
 
         fprintf_function(pF, "[GEOMETRIA_I_TOPOLOGIA]" LineReturn);
         fprintf_function(pF, "NomCampNVertexs=N_VERTEXS" LineReturn);
@@ -5145,14 +5190,18 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
-        fprintf_function(pF, "descriptor=Number of arcs to node" LineReturn);
+        MMWrite_ANSI_MetadataKey(hMMMD, pF, "descriptor=Number of arcs to node",
+                                 "descriptor=Nombre d'arcs al node",
+                                 "descriptor=Número de arcos al nodo");
 
         fprintf_function(pF, LineReturn);
         fprintf_function(pF, "[TAULA_PRINCIPAL:TIPUS_NODE]" LineReturn);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
-        fprintf_function(pF, "descriptor=Node type" LineReturn);
+        MMWrite_ANSI_MetadataKey(hMMMD, pF, "descriptor=Node type",
+                                 "descriptor=Tipus de node",
+                                 "descriptor=Tipo de nodo");
     }
     else if (hMMMD->ePlainLT == MM_LayerType_Pol)
     {
@@ -5161,36 +5210,47 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
-        fprintf_function(pF, "descriptor=Number of vertices" LineReturn);
+        MMWrite_ANSI_MetadataKey(hMMMD, pF, "descriptor=Number of vertices",
+                                 "descriptor=Nombre de vèrtexs",
+                                 "descriptor=Número de vértices");
 
         fprintf_function(pF, LineReturn);
         fprintf_function(pF, "[TAULA_PRINCIPAL:PERIMETRE]" LineReturn);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
-        fprintf_function(pF, "descriptor=Perimeter of the polygon" LineReturn);
+        MMWrite_ANSI_MetadataKey(hMMMD, pF,
+                                 "descriptor=Perimeter of the polygon",
+                                 "descriptor=Perímetre del polígon",
+                                 "descriptor=Perímetro del polígono");
 
         fprintf_function(pF, LineReturn);
         fprintf_function(pF, "[TAULA_PRINCIPAL:AREA]" LineReturn);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
-        fprintf_function(pF, "descriptor=Area of the polygon" LineReturn);
+        MMWrite_ANSI_MetadataKey(hMMMD, pF, "descriptor=Area of the polygon",
+                                 "descriptor=Àrea del polígon",
+                                 "descriptor=Área del polígono");
 
         fprintf_function(pF, LineReturn);
         fprintf_function(pF, "[TAULA_PRINCIPAL:N_ARCS]" LineReturn);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
-        fprintf_function(pF, "descriptor=Number of arcs" LineReturn);
+        MMWrite_ANSI_MetadataKey(hMMMD, pF, "descriptor=Number of arcs",
+                                 "descriptor=Nombre d'arcs",
+                                 "descriptor=Número de arcos");
 
         fprintf_function(pF, LineReturn);
         fprintf_function(pF, "[TAULA_PRINCIPAL:N_POLIG]" LineReturn);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
-        fprintf_function(pF,
-                         "descriptor=Number of elemental polygons" LineReturn);
+        MMWrite_ANSI_MetadataKey(hMMMD, pF,
+                                 "descriptor=Number of elemental polygons",
+                                 "descriptor=Nombre de polígons elementals",
+                                 "descriptor=Número de polígonos elementales");
 
         fprintf_function(pF, "[GEOMETRIA_I_TOPOLOGIA]" LineReturn);
         fprintf_function(pF, "NomCampNVertexs=N_VERTEXS" LineReturn);
@@ -5232,6 +5292,7 @@ static int MMWriteVectorMetadataFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
     memset(&hMMMD, 0, sizeof(hMMMD));
     hMMMD.ePlainLT = layerPlainType;
     hMMMD.pSRS = hMiraMonLayer->pSRS;
+    hMMMD.nMMLanguage = hMiraMonLayer->nMMLanguage;
 
     hMMMD.szLayerTitle = hMiraMonLayer->szLayerTitle;
     if (layerPlainType == MM_LayerType_Point)

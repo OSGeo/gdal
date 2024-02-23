@@ -66,6 +66,11 @@ typedef GInt32 MM_N_HEIGHT_TYPE;
 #define MM_ARC_TOTAL_N_HEIGHTS_DISK(n, n_vrt)                                  \
     (((n) < 0) ? -n : (n) * (MM_N_HEIGHT_TYPE)(n_vrt))
 
+#define MM_EscriuOffsetNomEstesBD_XP(bd_xp, i_camp, offset_nom_camp)           \
+    memcpy((bd_xp)->pField[(i_camp)].reserved_2 +                              \
+               MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES,                           \
+           &(offset_nom_camp), 4)
+
 #ifdef GDAL_COMPILATION
 CPL_C_END  // Necessary for compiling in GDAL project
 #endif

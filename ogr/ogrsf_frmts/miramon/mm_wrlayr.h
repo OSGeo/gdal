@@ -113,8 +113,9 @@ void MMCPLDebug(const char *c, const char *format, ...);
 // Layer functions
 int MMInitLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 const char *pzFileName, int LayerVersion, char nMMRecode,
-                double nMMMemoryRatio, struct MiraMonDataBase *pLayerDB,
-                MM_BOOLEAN ReadOrWrite, struct MiraMonVectMapInfo *MMMap);
+                char nMMLanguage, double nMMMemoryRatio,
+                struct MiraMonDataBase *pLayerDB, MM_BOOLEAN ReadOrWrite,
+                struct MiraMonVectMapInfo *MMMap);
 int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer);
 int MMFreeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer);
 int MMCloseLayer(struct MiraMonVectLayerInfo *hMiraMonLayer);
