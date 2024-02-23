@@ -792,12 +792,6 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
         return m_bHaveGeometryColumns;
     }
 
-    std::vector<std::string>
-    GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
-
-    const GDALRelationship *
-    GetRelationship(const std::string &name) const override;
-
     bool AddRelationship(std::unique_ptr<GDALRelationship> &&relationship,
                          std::string &failureReason) override;
     bool ValidateRelationship(const GDALRelationship *poRelationship,

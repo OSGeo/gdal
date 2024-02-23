@@ -7093,6 +7093,33 @@ def test_ogr_gpkg_relations(tmp_vsimem, tmp_path):
     assert rel.GetRightMappingTableFields() == ["related_id"]
     assert rel.GetRelatedTableType() == "features"
 
+    # a one-to-many relationship defined using foreign key constraints
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds.ExecuteSQL(
+        "CREATE TABLE test_relation_a(artistid INTEGER PRIMARY KEY, artistname  TEXT)"
+    )
+    ds.ExecuteSQL(
+        "CREATE TABLE test_relation_b(trackid INTEGER, trackname TEXT, trackartist INTEGER, FOREIGN KEY(trackartist) REFERENCES test_relation_a(artistid))"
+    )
+    ds = None
+
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    assert ds.GetRelationshipNames() == [
+        "custom_type",
+        "test_relation_a_test_relation_b",
+    ]
+    assert ds.GetRelationship("custom_type") is not None
+    rel = ds.GetRelationship("test_relation_a_test_relation_b")
+    assert rel is not None
+    assert rel.GetName() == "test_relation_a_test_relation_b"
+    assert rel.GetLeftTableName() == "test_relation_a"
+    assert rel.GetRightTableName() == "test_relation_b"
+    assert rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert rel.GetType() == gdal.GRT_ASSOCIATION
+    assert rel.GetLeftTableFields() == ["artistid"]
+    assert rel.GetRightTableFields() == ["trackartist"]
+    assert rel.GetRelatedTableType() == "features"
+
     ds = None
 
 
