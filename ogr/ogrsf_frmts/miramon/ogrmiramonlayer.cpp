@@ -54,36 +54,6 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
     SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
 
-    /* -------------------------------------------------------------------- */
-    /*      Establish the nMemoryRatio to use                               */
-    /* -------------------------------------------------------------------- */
-    const char *pszMemoryRatio =
-        CSLFetchNameValue(papszOpenOptions, "MemoryRatio");
-
-    if (pszMemoryRatio)
-        nMMMemoryRatio = atof(pszMemoryRatio);
-    else
-        nMMMemoryRatio = 1;  // Default
-
-    /* -------------------------------------------------------------------- */
-    /*   Establish the descriptors language when                            */
-    /*   opening and creating .rel files                                    */
-    /* -------------------------------------------------------------------- */
-    const char *pszLanguage = CSLFetchNameValue(papszOpenOptions, "Language");
-    char nMMLanguage;
-
-    if (pszLanguage)
-    {
-        if (EQUAL(pszLanguage, "CAT"))
-            nMMLanguage = MM_CAT_LANGUAGE;
-        else if (EQUAL(pszLanguage, "ESP"))
-            nMMLanguage = MM_SPA_LANGUAGE;
-        else
-            nMMLanguage = MM_ENG_LANGUAGE;
-    }
-    else
-        nMMLanguage = MM_ENG_LANGUAGE;  // Default
-
     if (bUpdate)
     {
         /* ---------------------------------------------------------------- */
@@ -121,6 +91,37 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
         }
         else
             nMMRecode = MM_RECODE_ANSI;  // Default
+
+        /* ----------------------------------------------------------------- */
+        /*      Establish the nMemoryRatio to use                            */
+        /* ----------------------------------------------------------------- */
+        const char *pszMemoryRatio =
+            CSLFetchNameValue(papszOpenOptions, "CreationMemoryRatio");
+
+        if (pszMemoryRatio)
+            nMMMemoryRatio = atof(pszMemoryRatio);
+        else
+            nMMMemoryRatio = 1;  // Default
+
+        /* ----------------------------------------------------------------- */
+        /*   Establish the descriptors language when                         */
+        /*   creating .rel files                                             */
+        /* ----------------------------------------------------------------- */
+        const char *pszLanguage =
+            CSLFetchNameValue(papszOpenOptions, "CreationLanguage");
+        char nMMLanguage;
+
+        if (pszLanguage)
+        {
+            if (EQUAL(pszLanguage, "CAT"))
+                nMMLanguage = MM_CAT_LANGUAGE;
+            else if (EQUAL(pszLanguage, "ESP"))
+                nMMLanguage = MM_SPA_LANGUAGE;
+            else
+                nMMLanguage = MM_ENG_LANGUAGE;
+        }
+        else
+            nMMLanguage = MM_ENG_LANGUAGE;  // Default
 
         /* ---------------------------------------------------------------- */
         /*      Preparing to write the layer                                */
@@ -286,6 +287,36 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                 else
                     phMiraMonLayer->nSelectCoordz = MM_SELECT_FIRST_COORDZ;
             }
+
+            /* ------------------------------------------------------------ */
+            /*      Establish the nMemoryRatio to use                       */
+            /* ------------------------------------------------------------ */
+            const char *pszMemoryRatio =
+                CSLFetchNameValue(papszOpenOptions, "OpenMemoryRatio");
+
+            if (pszMemoryRatio)
+                phMiraMonLayer->nMemoryRatio = atof(pszMemoryRatio);
+            else
+                phMiraMonLayer->nMemoryRatio = 1;  // Default
+
+            /* ------------------------------------------------------------ */
+            /*   Establish the descriptors language when                    */
+            /*   opening .rel files                                        */
+            /* ------------------------------------------------------------ */
+            const char *pszLanguage =
+                CSLFetchNameValue(papszOpenOptions, "OpenLanguage");
+
+            if (pszLanguage)
+            {
+                if (EQUAL(pszLanguage, "CAT"))
+                    phMiraMonLayer->nMMLanguage = MM_CAT_LANGUAGE;
+                else if (EQUAL(pszLanguage, "ESP"))
+                    phMiraMonLayer->nMMLanguage = MM_SPA_LANGUAGE;
+                else
+                    phMiraMonLayer->nMMLanguage = MM_ENG_LANGUAGE;
+            }
+            else
+                phMiraMonLayer->nMMLanguage = MM_ENG_LANGUAGE;  // Default
 
             if (phMiraMonLayer->nSRS_EPSG != 0)
             {

@@ -233,7 +233,7 @@ The following open options are available.
       *iMultiRecord=JSON* option converts the list in a single value in JSON format.
       If not specified, all elements of the list will be translated by default.
 
--  .. oo:: MemoryRatio
+-  .. oo:: OpenMemoryRatio
       :choices: 0.5, 1, 2, ...
       :default: 1
 
@@ -246,7 +246,7 @@ The following open options are available.
       By increasing this parameter, more memory will be required,
       but there will be fewer read/write operations to the (network and) disk.
 
--  .. oo:: Language
+-  .. oo:: OpenLanguage
       :choices: ENG, CAT, ESP
       :default: ENG
 
@@ -287,7 +287,7 @@ Layer creation options
       `MiraD application <https://www.miramon.cat/USA/Prod-MiraD.htm>`__, it is recommended
       to use ANSI instead, if there are no coding problems.
 
--  .. oo:: MemoryRatio
+-  .. oo:: CreationMemoryRatio
       :choices: 0.5, 1, 2, ...
       :default: 1
 
@@ -300,7 +300,7 @@ Layer creation options
       By increasing this parameter, more memory will be required,
       but there will be fewer read/write operations to the (network and) disk.
 
--  .. oo:: Language
+-  .. oo:: CreationLanguage
       :choices: ENG, CAT, ESP
       :default: ENG
 
