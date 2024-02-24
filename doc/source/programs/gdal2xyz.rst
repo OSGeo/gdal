@@ -22,7 +22,7 @@ Synopsis
         [-skipnodata]
         [-csv]
         [-srcnodata <value>] [-dstnodata <value>]
-        <src_dataset> [<dst_dataset>]
+        <src_dataset> <dst_dataset>
 
 Description
 -----------
