@@ -260,6 +260,8 @@ int OGRXLSXDataSource::TestCapability(const char *pszCap)
         return true;
     else if (EQUAL(pszCap, ODsCCurveGeometries))
         return true;
+    else if (EQUAL(pszCap, OLCStringsAsUTF8))
+        return true;
     else
         return false;
 }
