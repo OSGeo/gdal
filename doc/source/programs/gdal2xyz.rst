@@ -28,8 +28,7 @@ Description
 -----------
 
 The :program:`gdal2xyz` utility can be used to translate a raster file into xyz format.
-`gdal2xyz` can be used as an alternative to `gdal_translate of=xyz`, but supporting other options,
-for example:
+`gdal2xyz` can be used as an alternative to `gdal_translate of=xyz`. Features include:
 
     * Select more then one band
     * Skip or replace nodata value
