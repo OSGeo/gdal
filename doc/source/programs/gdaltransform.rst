@@ -144,7 +144,7 @@ Reprojection Example
 
 Simple reprojection from one projected coordinate system to another:
 
-::
+.. code-block:: bash
 
     gdaltransform -s_srs EPSG:28992 -t_srs EPSG:31370
     177502 311865
@@ -152,7 +152,7 @@ Simple reprojection from one projected coordinate system to another:
 Produces the following output in meters in the "Belge 1972 / Belgian Lambert
 72" projection:
 
-::
+.. code-block:: bash
 
     244296.724777415 165937.350217148 0
 
@@ -165,14 +165,14 @@ used, the transformation is from output georeferenced (WGS84) coordinates
 back to image coordinates.
 
 
-::
+.. code-block:: bash
 
     gdaltransform -i -rpc 06OCT20025052-P2AS-005553965230_01_P001.TIF
     125.67206 39.85307 50
 
 Produces this output measured in pixels and lines on the image:
 
-::
+.. code-block:: bash
 
     3499.49282422381 2910.83892848414 50
 
@@ -182,7 +182,7 @@ X,Y,Z,time transform
 15-term time-dependent Helmert coordinate transformation from ITRF2000 to ITRF93
 for a coordinate at epoch 2000.0
 
-::
+.. code-block:: bash
 
     gdaltransform -ct "+proj=pipeline +step +proj=unitconvert +xy_in=deg \
     +xy_out=rad +step +proj=cart +step +proj=helmert +convention=position_vector \
@@ -194,6 +194,6 @@ for a coordinate at epoch 2000.0
 
 Produces this output measured in longitude degrees, latitude degrees and ellipsoid height in metre:
 
-::
+.. code-block:: bash
 
     2.0000005420366 49.0000003766711 -0.0222802283242345
