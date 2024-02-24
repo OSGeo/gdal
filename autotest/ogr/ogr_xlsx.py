@@ -59,6 +59,8 @@ def ogr_xlsx_check(ds):
 
     assert lyr.TestCapability("foo") == 0
 
+    assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
+
     lyr = ds.GetLayer(6)
     assert lyr.GetName() == "Feuille7", "bad layer name"
 
@@ -277,6 +279,7 @@ def test_ogr_xlsx_8():
 
     ds = ogr.GetDriverByName("XLSX").CreateDataSource("/vsimem/ogr_xlsx_8.xlsx")
     lyr = ds.CreateLayer("foo")
+    assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
     for i in range(30):
         lyr.CreateField(ogr.FieldDefn("Field%d" % (i + 1)))
     f = ogr.Feature(lyr.GetLayerDefn())
