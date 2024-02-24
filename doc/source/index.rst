@@ -4,7 +4,10 @@ GDAL
 
 .. include:: ./about_no_title.rst
 
-This documentation is also available as a `PDF file <gdal.pdf>`_.
+This documentation is also available as a `PDF file <gdal.pdf>`_,
+and `a .ZIP of individual HTML pages <https://github.com/OSGeo/gdal-docs/archive/refs/heads/master.zip>`_ for offline browsing.
+
+
 
 .. toctree::
     :maxdepth: 2
