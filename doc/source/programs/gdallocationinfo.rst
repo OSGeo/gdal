@@ -102,7 +102,7 @@ pixel.  Currently it reports:
 
 The pixel selected is requested by x/y coordinate on the command line, or read
 from stdin. More than one coordinate pair can be supplied when reading
-coordinates from stdin. By default pixel/line coordinates are expected.
+coordinates from stdin. By default integer pixel/line coordinates are expected.
 However with use of the :option:`-geoloc`, :option:`-wgs84`, or :option:`-l_srs` switches it is possible
 to specify the location in other coordinate systems.
 
