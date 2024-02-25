@@ -116,9 +116,11 @@ projection,including GCP-based transformations.
 
 .. option:: <srcfile>
 
-    File with source projection definition or GCP's. If
-    not given, source projection is read from the command-line :option:`-s_srs`
-    or :option:`-gcp` parameters
+    File with source projection definition or GCPs. If
+    not given, source projection/GCPs are read from the command-line :option:`-s_srs`
+    or :option:`-gcp` parameters.
+
+    Note that only the SRS and/or GCPs of this input file is taken into account, and not its pixel content.
 
 .. option:: <dstfile>
 
