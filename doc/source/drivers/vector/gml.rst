@@ -791,7 +791,7 @@ Syntax of .gfs files
 --------------------
 
 A XML Schema for .gfs files can be found at
-https://raw.githubusercontent.com/OSGeo/gdal/master/data/gfs.xsd .
+https://raw.githubusercontent.com/OSGeo/gdal/master/ogr/ogrsf_frmts/gml/data/gfs.xsd .
 
 Let's consider the following test.gml file :
 
