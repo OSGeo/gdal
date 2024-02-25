@@ -120,8 +120,7 @@ projection,including GCP-based transformations.
     not given, source projection/GCPs are read from the command-line :option:`-s_srs`
     or :option:`-gcp` parameters.
 
-    Ome might first inspect via gdalinfo <srcfile> to ensure all
-    projections/GCPs will be interpreted correctly.
+    Note that only the SRS and/or GCPs of this input file is taken into account, and not its pixel content.
 
 .. option:: <dstfile>
 
