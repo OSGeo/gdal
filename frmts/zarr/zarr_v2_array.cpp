@@ -1576,7 +1576,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                         }
                         else
                         {
-                            aoDims[i] = poDim;
+                            aoDims[i] = std::move(poDim);
                         }
                     }
                     else
