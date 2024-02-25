@@ -61,6 +61,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+          sudo apt-get update
           sudo apt-get install -y ccache cmake g++ swig python3-numpy libproj-dev libqhull-dev
           sudo apt-get install -y \
             libblosc-dev \
