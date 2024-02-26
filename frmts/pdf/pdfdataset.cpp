@@ -1572,8 +1572,8 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
     {
         if (!bEnableBitmap && !bTemporaryEnableVectorForTextStroking)
             return true;
-        return m_poParent->SetDIBits(bitmap, color, src_rect, dest_left,
-                                     dest_top, blend_type);
+        return m_poParent->SetDIBits(std::move(bitmap), color, src_rect,
+                                     dest_left, dest_top, blend_type);
     }
 
     virtual bool StretchDIBits(RetainPtr<const CFX_DIBBase> bitmap,
@@ -1585,9 +1585,9 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
     {
         if (!bEnableBitmap && !bTemporaryEnableVectorForTextStroking)
             return true;
-        return m_poParent->StretchDIBits(bitmap, color, dest_left, dest_top,
-                                         dest_width, dest_height, pClipRect,
-                                         options, blend_type);
+        return m_poParent->StretchDIBits(std::move(bitmap), color, dest_left,
+                                         dest_top, dest_width, dest_height,
+                                         pClipRect, options, blend_type);
     }
 
     virtual bool StartDIBits(RetainPtr<const CFX_DIBBase> bitmap, float alpha,
@@ -1598,8 +1598,8 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
     {
         if (!bEnableBitmap && !bTemporaryEnableVectorForTextStroking)
             return true;
-        return m_poParent->StartDIBits(bitmap, alpha, color, matrix, options,
-                                       handle, blend_type);
+        return m_poParent->StartDIBits(std::move(bitmap), alpha, color, matrix,
+                                       options, handle, blend_type);
     }
 
     virtual bool ContinueDIBits(CFX_ImageRenderer *handle,
@@ -1655,7 +1655,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
 
     bool MultiplyAlphaMask(RetainPtr<const CFX_DIBitmap> mask) override
     {
-        return m_poParent->MultiplyAlphaMask(mask);
+        return m_poParent->MultiplyAlphaMask(std::move(mask));
     }
 
 #if defined(_SKIA_SUPPORT_)

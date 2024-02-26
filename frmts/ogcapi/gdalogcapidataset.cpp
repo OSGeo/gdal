@@ -1090,9 +1090,9 @@ bool OGCAPIDataset::InitFromURL(GDALOpenInfo *poOpenInfo)
 /*                          SelectImageURL()                            */
 /************************************************************************/
 
-static const std::pair<std::string, CPLString>
+static const std::pair<std::string, std::string>
 SelectImageURL(const char *const *papszOptionOptions,
-               std::map<std::string, CPLString> &oMapItemUrls)
+               std::map<std::string, std::string> &oMapItemUrls)
 {
     // Map IMAGE_FORMATS to their content types. Would be nice if this was
     // globally defined someplace
@@ -1130,7 +1130,8 @@ SelectImageURL(const char *const *papszOptionOptions,
     {
         std::transform(oMapItemUrls.begin(), oMapItemUrls.end(),
                        std::back_inserter(oContentTypes),
-                       [](const auto &pair) { return pair.first; });
+                       [](const auto &pair) -> const std::string &
+                       { return pair.first; });
     }
 
     // Loop over each content type - return the first one we find
@@ -1182,7 +1183,7 @@ bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo *poOpenInfo,
     auto oLinks = oRoot["links"].ToArray();
 
     // Key - mime type, Value url
-    std::map<std::string, CPLString> oMapItemUrls;
+    std::map<std::string, std::string> oMapItemUrls;
 
     for (const auto &oLink : oLinks)
     {
@@ -1201,10 +1202,10 @@ bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo *poOpenInfo,
         }
     }
 
-    const std::pair<std::string, CPLString> oContentUrlPair =
+    const std::pair<std::string, std::string> oContentUrlPair =
         SelectImageURL(poOpenInfo->papszOpenOptions, oMapItemUrls);
     const std::string osContentType = oContentUrlPair.first;
-    const CPLString osImageURL = oContentUrlPair.second;
+    const std::string osImageURL = oContentUrlPair.second;
 
     if (osImageURL.empty())
     {
@@ -1231,7 +1232,7 @@ bool OGCAPIDataset::InitWithMapAPI(GDALOpenInfo *poOpenInfo,
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MAX_CONNECTIONS",
                              CPLGetConfigOption("GDAL_MAX_CONNECTIONS", "5")));
     CPLString osWMS_XML;
-    char *pszEscapedURL = CPLEscapeString(osImageURL, -1, CPLES_XML);
+    char *pszEscapedURL = CPLEscapeString(osImageURL.c_str(), -1, CPLES_XML);
     osWMS_XML.Printf("<GDAL_WMS>"
                      "    <Service name=\"OGCAPIMaps\">"
                      "        <ServerUrl>%s</ServerUrl>"
@@ -1766,7 +1767,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
     }
 
     // Key - mime type, Value url
-    std::map<std::string, CPLString> oMapItemUrls;
+    std::map<std::string, std::string> oMapItemUrls;
     CPLString osMVT_URL;
     CPLString osGEOJSON_URL;
     CPLString osTilingSchemeURL;
@@ -1856,10 +1857,10 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
         }
     }
 
-    const std::pair<std::string, CPLString> oContentUrlPair =
+    const std::pair<std::string, std::string> oContentUrlPair =
         SelectImageURL(poOpenInfo->papszOpenOptions, oMapItemUrls);
     const std::string osContentType = oContentUrlPair.first;
-    const CPLString osRasterURL = oContentUrlPair.second;
+    const std::string osRasterURL = oContentUrlPair.second;
 
     const CPLString osVectorURL = SelectVectorFormatURL(
         poOpenInfo->papszOpenOptions, osMVT_URL, osGEOJSON_URL);
