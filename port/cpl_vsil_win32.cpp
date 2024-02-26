@@ -838,13 +838,22 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
                                     VSIStatBufL *pStatBuf, int nFlags)
 
 {
-    (void)nFlags;
-
 #if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
     {
         wchar_t *pwszFilename =
             CPLRecodeToWChar(pszFilename, CPL_ENC_UTF8, CPL_ENC_UCS2);
+
+        if (nFlags == VSI_STAT_EXISTS_FLAG)
+        {
+            memset(pStatBuf, 0, sizeof(VSIStatBufL));
+            const int nResult =
+                (GetFileAttributesW(pwszFilename) == INVALID_FILE_ATTRIBUTES)
+                    ? -1
+                    : 0;
+            CPLFree(pwszFilename);
+            return nResult;
+        }
 
         int nResult = _wstat64(pwszFilename, pStatBuf);
 
@@ -887,6 +896,7 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
     else
 #endif
     {
+        (void)nFlags;
         return (VSI_STAT64(pszFilename, pStatBuf));
     }
 }
