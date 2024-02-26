@@ -52,6 +52,7 @@ OGRXLSXLayer::OGRXLSXLayer(OGRXLSXDataSource *poDSIn, const char *pszFilename,
       poDS(poDSIn), osFilename(pszFilename), bUpdated(CPL_TO_BOOL(bUpdatedIn)),
       bHasHeaderLine(false)
 {
+    SetAdvertizeUTF8(true);
 }
 
 /************************************************************************/
@@ -822,7 +823,6 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
         if (poCurLayer)
         {
             ((OGRMemLayer *)poCurLayer)->SetUpdatable(CPL_TO_BOOL(bUpdatable));
-            ((OGRMemLayer *)poCurLayer)->SetAdvertizeUTF8(true);
             ((OGRXLSXLayer *)poCurLayer)->SetUpdated(false);
         }
 
