@@ -63,8 +63,7 @@ class HDF5ImageDataset final : public HDF5Dataset
 
     OGRSpatialReference m_oSRS{};
     OGRSpatialReference m_oGCPSRS{};
-    GDAL_GCP *pasGCPList;
-    int nGCPCount;
+    std::vector<gdal::GCP> m_aoGCPs{};
 
     hsize_t *dims;
     hsize_t *maxdims;
@@ -172,11 +171,10 @@ class HDF5ImageDataset final : public HDF5Dataset
 /*                           HDF5ImageDataset()                         */
 /************************************************************************/
 HDF5ImageDataset::HDF5ImageDataset()
-    : pasGCPList(nullptr), nGCPCount(0), dims(nullptr), maxdims(nullptr),
-      poH5Objects(nullptr), ndims(0), dimensions(0), dataset_id(-1),
-      dataspace_id(-1), size(0), datatype(-1), native(-1),
-      iSubdatasetType(UNKNOWN_PRODUCT), iCSKProductType(PROD_UNKNOWN),
-      bHasGeoTransform(false)
+    : dims(nullptr), maxdims(nullptr), poH5Objects(nullptr), ndims(0),
+      dimensions(0), dataset_id(-1), dataspace_id(-1), size(0), datatype(-1),
+      native(-1), iSubdatasetType(UNKNOWN_PRODUCT),
+      iCSKProductType(PROD_UNKNOWN), bHasGeoTransform(false)
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     m_oGCPSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -208,16 +206,6 @@ HDF5ImageDataset::~HDF5ImageDataset()
 
     CPLFree(dims);
     CPLFree(maxdims);
-
-    if (nGCPCount > 0)
-    {
-        for (int i = 0; i < nGCPCount; i++)
-        {
-            CPLFree(pasGCPList[i].pszId);
-            CPLFree(pasGCPList[i].pszInfo);
-        }
-        CPLFree(pasGCPList);
-    }
 }
 
 /************************************************************************/
@@ -1205,7 +1193,6 @@ CPLErr HDF5ImageDataset::CreateProjections()
                 bool bHasLonNearMinus180 = false;
                 bool bHasLonNearPlus180 = false;
                 bool bHasLonNearZero = false;
-                nGCPCount = 0;
                 for (int j = 0; j < nYLimit; j += nDeltaLat)
                 {
                     for (int i = 0; i < nXLimit; i += nDeltaLon)
@@ -1223,17 +1210,10 @@ CPLErr HDF5ImageDataset::CreateProjections()
                             bHasLonNearMinus180 = true;
                         if (fabs(Longitude[iGCP]) < 90)
                             bHasLonNearZero = true;
-                        nGCPCount++;
                     }
                 }
 
                 // Fill the GCPs list.
-
-                pasGCPList = static_cast<GDAL_GCP *>(
-                    CPLCalloc(nGCPCount, sizeof(GDAL_GCP)));
-
-                GDALInitGCPs(nGCPCount, pasGCPList);
-
                 const char *pszShiftGCP =
                     CPLGetConfigOption("HDF5_SHIFT_GCPX_BY_180", nullptr);
                 const bool bAdd180 =
@@ -1241,7 +1221,6 @@ CPLErr HDF5ImageDataset::CreateProjections()
                      !bHasLonNearZero && pszShiftGCP == nullptr) ||
                     (pszShiftGCP != nullptr && CPLTestBool(pszShiftGCP));
 
-                int k = 0;
                 for (int j = 0; j < nYLimit; j += nDeltaLat)
                 {
                     for (int i = 0; i < nXLimit; i += nDeltaLon)
@@ -1253,15 +1232,14 @@ CPLErr HDF5ImageDataset::CreateProjections()
                              static_cast<float>(dfLongNoData) ==
                                  Longitude[iGCP]))
                             continue;
-                        pasGCPList[k].dfGCPX =
-                            static_cast<double>(Longitude[iGCP]);
+                        double dfGCPX = static_cast<double>(Longitude[iGCP]);
                         if (bAdd180)
-                            pasGCPList[k].dfGCPX += 180.0;
-                        pasGCPList[k].dfGCPY =
+                            dfGCPX += 180.0;
+                        const double dfGCPY =
                             static_cast<double>(Latitude[iGCP]);
 
-                        pasGCPList[k].dfGCPPixel = i + 0.5;
-                        pasGCPList[k++].dfGCPLine = j + 0.5;
+                        m_aoGCPs.emplace_back("", "", i + 0.5, j + 0.5, dfGCPX,
+                                              dfGCPY);
                     }
                 }
 
@@ -1299,8 +1277,8 @@ const OGRSpatialReference *HDF5ImageDataset::GetSpatialRef() const
 int HDF5ImageDataset::GetGCPCount()
 
 {
-    if (nGCPCount > 0)
-        return nGCPCount;
+    if (!m_aoGCPs.empty())
+        return static_cast<int>(m_aoGCPs.size());
 
     return GDALPamDataset::GetGCPCount();
 }
@@ -1312,7 +1290,7 @@ int HDF5ImageDataset::GetGCPCount()
 const OGRSpatialReference *HDF5ImageDataset::GetGCPSpatialRef() const
 
 {
-    if (nGCPCount > 0 && !m_oGCPSRS.IsEmpty())
+    if (!m_aoGCPs.empty() && !m_oGCPSRS.IsEmpty())
         return &m_oGCPSRS;
 
     return GDALPamDataset::GetGCPSpatialRef();
@@ -1324,8 +1302,8 @@ const OGRSpatialReference *HDF5ImageDataset::GetGCPSpatialRef() const
 
 const GDAL_GCP *HDF5ImageDataset::GetGCPs()
 {
-    if (nGCPCount > 0)
-        return pasGCPList;
+    if (!m_aoGCPs.empty())
+        return gdal::GCP::c_ptr(m_aoGCPs);
 
     return GDALPamDataset::GetGCPs();
 }
@@ -1563,8 +1541,6 @@ void HDF5ImageDataset::CaptureCSKGCPs(int iProductType)
     if (iProductType == PROD_CSK_L0 || iProductType == PROD_CSK_L1A ||
         iProductType == PROD_CSK_L1B)
     {
-        nGCPCount = 4;
-        pasGCPList = static_cast<GDAL_GCP *>(CPLCalloc(sizeof(GDAL_GCP), 4));
         CPLString osCornerName[4];
         double pdCornerPixel[4] = {0.0, 0.0, 0.0, 0.0};
         double pdCornerLine[4] = {0.0, 0.0, 0.0, 0.0};
@@ -1596,11 +1572,6 @@ void HDF5ImageDataset::CaptureCSKGCPs(int iProductType)
         // For all the image's corners.
         for (int i = 0; i < 4; i++)
         {
-            GDALInitGCPs(1, pasGCPList + i);
-
-            CPLFree(pasGCPList[i].pszId);
-            pasGCPList[i].pszId = nullptr;
-
             double *pdCornerCoordinates = nullptr;
 
             // Retrieve the attributes.
@@ -1609,29 +1580,15 @@ void HDF5ImageDataset::CaptureCSKGCPs(int iProductType)
             {
                 CPLError(CE_Failure, CPLE_OpenFailed,
                          "Error retrieving CSK GCPs");
-                // Free on failure, e.g. in case of QLK subdataset.
-                for (i = 0; i < 4; i++)
-                {
-                    if (pasGCPList[i].pszId)
-                        CPLFree(pasGCPList[i].pszId);
-                    if (pasGCPList[i].pszInfo)
-                        CPLFree(pasGCPList[i].pszInfo);
-                }
-                CPLFree(pasGCPList);
-                pasGCPList = nullptr;
-                nGCPCount = 0;
+                m_aoGCPs.clear();
                 break;
             }
 
-            // Fill the GCPs name.
-            pasGCPList[i].pszId = CPLStrdup(osCornerName[i].c_str());
-
-            // Fill the coordinates.
-            pasGCPList[i].dfGCPX = pdCornerCoordinates[1];
-            pasGCPList[i].dfGCPY = pdCornerCoordinates[0];
-            pasGCPList[i].dfGCPZ = pdCornerCoordinates[2];
-            pasGCPList[i].dfGCPPixel = pdCornerPixel[i];
-            pasGCPList[i].dfGCPLine = pdCornerLine[i];
+            m_aoGCPs.emplace_back(osCornerName[i].c_str(), "", pdCornerPixel[i],
+                                  pdCornerLine[i],
+                                  /* X = */ pdCornerCoordinates[1],
+                                  /* Y = */ pdCornerCoordinates[0],
+                                  /* Z = */ pdCornerCoordinates[2]);
 
             // Free the returned coordinates.
             CPLFree(pdCornerCoordinates);
