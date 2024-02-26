@@ -32,6 +32,12 @@
 
 #include "header_generated.h"
 
+// For users not using CMake...
+#ifndef flatbuffers
+#error                                                                         \
+    "Make sure to build with -Dflatbuffers=gdal_flatbuffers (for example) to avoid potential conflict of flatbuffers"
+#endif
+
 using namespace flatbuffers;
 using namespace FlatGeobuf;
 
