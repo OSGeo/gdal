@@ -79,8 +79,28 @@ static int OGRMMDriverIdentify(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGRMMDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if (!OGRMMDriverIdentify(poOpenInfo))
+    if (!poOpenInfo->bStatOK)
         return nullptr;
+    char **papszSiblingFiles = poOpenInfo->GetSiblingFiles();
+    if (papszSiblingFiles != nullptr)
+    {
+        bool bFoundCompatibleFile = false;
+        for (int i = 0; papszSiblingFiles[i] != nullptr; i++)
+        {
+            int nLen = (int)strlen(papszSiblingFiles[i]);
+            if (nLen > 4 && papszSiblingFiles[i][nLen - 4] == '.' &&
+                papszSiblingFiles[i][nLen - 1] == '1')
+            {
+                bFoundCompatibleFile = true;
+                break;
+            }
+        }
+        if (!bFoundCompatibleFile)
+            return nullptr;
+    }
+
+    //if (!OGRMMDriverIdentify(poOpenInfo))
+    //    return nullptr;
 
     OGRMiraMonDataSource *poDS = new OGRMiraMonDataSource();
 
@@ -90,6 +110,19 @@ static GDALDataset *OGRMMDriverOpen(GDALOpenInfo *poOpenInfo)
     {
         delete poDS;
         return nullptr;
+    }
+    /*if (!poDS->Open(poOpenInfo->pszFilename, TRUE))
+    {
+        delete poDS;
+        poDS = nullptr;
+    }*/
+
+    if (poDS != nullptr && poOpenInfo->eAccess == GA_Update)
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "MiraMonVector Driver doesn't support update.");
+        delete poDS;
+        poDS = nullptr;
     }
 
     return poDS;

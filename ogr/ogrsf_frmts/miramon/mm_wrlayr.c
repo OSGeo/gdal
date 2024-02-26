@@ -113,10 +113,8 @@ int MMAddPolygonRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
 int MMCloseMMBD_XP(struct MiraMonVectLayerInfo *hMiraMonLayer);
 void MMDestroyMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer);
 
-#define MAX_LINE_LENGTH 16000
-
 /* -------------------------------------------------------------------- */
-/*      Functions to be used in GDAL and in MiraMon                     */
+/*      Managing errors and warnings                                    */
 /* -------------------------------------------------------------------- */
 #ifndef GDAL_COMPILATION
 static char local_message[5000];
@@ -172,7 +170,8 @@ int snprintf(char *str, size_t size, const char *format, ...)
 }
 #endif
 
-// Conversion to size_t is not losing data
+// Checks for potential arithmetic overflow when performing multiplication
+// operations between two GUInt64 values and converting the result to size_t.
 int MMCheckSize_t(GUInt64 nCount, GUInt64 nSize)
 {
     size_t nMul;
@@ -192,7 +191,7 @@ int MMCheckSize_t(GUInt64 nCount, GUInt64 nSize)
 }
 
 /* -------------------------------------------------------------------- */
-/*      Layer Functions: Header                                         */
+/*      Layer Functions: Version                                         */
 /* -------------------------------------------------------------------- */
 int MMGetVectorVersion(struct MM_TH *pTopHeader)
 {
@@ -225,6 +224,9 @@ static void MMSet2_0Version(struct MM_TH *pTopHeader)
     pTopHeader->aLayerSubVersion = '0';
 }
 
+/* -------------------------------------------------------------------- */
+/*      Layer Functions: Header                                         */
+/* -------------------------------------------------------------------- */
 int MMReadHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader)
 {
     char dot;
@@ -507,6 +509,9 @@ int MMWriteEmptyHeader(FILE_TYPE *pF, int layerType, int nVersion)
     return MMWriteHeader(pF, &pMMHeader);
 }
 
+/* -------------------------------------------------------------------- */
+/*      Layer Functions: Z section                                      */
+/* -------------------------------------------------------------------- */
 int MMReadZSection(struct MiraMonVectLayerInfo *hMiraMonLayer, FILE_TYPE *pF,
                    struct MM_ZSection *pZSection)
 {
@@ -809,9 +814,6 @@ static void MMDestroyZSectionDescription(struct MM_ZSection *pZSection)
     }
 }
 
-/* -------------------------------------------------------------------- */
-/*      Layer Functions: Initialization                                 */
-/* -------------------------------------------------------------------- */
 static int MMInitZSectionDescription(struct MM_ZSection *pZSection)
 {
     if (MMCheckSize_t(
@@ -882,6 +884,9 @@ static int MMInitZSectionLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return 0;
 }
 
+/* -------------------------------------------------------------------- */
+/*      Layer Functions: Extensions                                     */
+/* -------------------------------------------------------------------- */
 // AA.pnt -> AAT.rel, for instance
 static void MMChangeMMRareExtension(char *pszName, const char *pszExt)
 {
@@ -897,6 +902,9 @@ static void MMChangeMMRareExtension(char *pszName, const char *pszExt)
 #endif
 }
 
+/* -------------------------------------------------------------------- */
+/*      Layer Functions: initializing MiraMon layers                    */
+/* -------------------------------------------------------------------- */
 static int MMInitPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
     hMiraMonLayer->bIsPoint = 1;
@@ -1793,7 +1801,7 @@ int MMInitLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
 }
 
 /* -------------------------------------------------------------------- */
-/*      Layer Functions: Closing                                        */
+/*      Layer Functions: Closing MiraMon layers                         */
 /* -------------------------------------------------------------------- */
 static int MMClose3DSectionLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
                                  MM_INTERNAL_FID nElements, FILE_TYPE *pF,
@@ -2252,7 +2260,7 @@ static int MMDestroyPolygonLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
     return 0;
 }
 
-int MMFreeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
+int MMDestroyLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
     //CheckMMVectorLayerVersion(hMiraMonLayer, 1)
 
@@ -2344,21 +2352,12 @@ int MMFreeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
     return 0;
 }
 
-void MMDestroyLayer(struct MiraMonVectLayerInfo **hMiraMonLayer)
-{
-    if (!hMiraMonLayer)
-        return;
-    if (!(*hMiraMonLayer))
-        return;
-    if (!(*hMiraMonLayer))
-        return;
-    free_function(*hMiraMonLayer);
-    *hMiraMonLayer = nullptr;
-}
-
 /* -------------------------------------------------------------------- */
 /*      Flush Layer Functions                                           */
 /* -------------------------------------------------------------------- */
+
+// Initializes a MM_FLUSH_INFO structure, which is used for buffering
+// data before writing it to a file.
 int MMInitFlush(struct MM_FLUSH_INFO *pFlush, FILE_TYPE *pF, GUInt64 nBlockSize,
                 char **pBuffer, MM_FILE_OFFSET DiskOffsetWhereToFlush,
                 GInt32 nMyDiskSize)
@@ -2382,6 +2381,7 @@ int MMInitFlush(struct MM_FLUSH_INFO *pFlush, FILE_TYPE *pF, GUInt64 nBlockSize,
     return 0;
 }
 
+// Reads data from a file into a buffer.
 int MMReadFlush(struct MM_FLUSH_INFO *pFlush)
 {
     fseek_function(pFlush->pF, pFlush->OffsetWhereToFlush, SEEK_SET);
@@ -2392,6 +2392,7 @@ int MMReadFlush(struct MM_FLUSH_INFO *pFlush)
     return 0;
 }
 
+// Flushes data from a buffer to a disk file.
 static int MMFlushToDisk(struct MM_FLUSH_INFO *FlushInfo)
 {
     if (!FlushInfo->nNumBytes)
@@ -2411,6 +2412,7 @@ static int MMFlushToDisk(struct MM_FLUSH_INFO *FlushInfo)
     return 0;
 }
 
+// Reads a block of data from a buffer in memory
 int MMReadBlockFromBuffer(struct MM_FLUSH_INFO *FlushInfo)
 {
     if (!FlushInfo->SizeOfBlockToBeSaved)
@@ -2428,6 +2430,8 @@ int MMReadBlockFromBuffer(struct MM_FLUSH_INFO *FlushInfo)
     return 0;
 }
 
+// Appends a block of data to a buffer in memory, which is
+// used for later flushing to disk.
 int MMAppendBlockToBuffer(struct MM_FLUSH_INFO *FlushInfo)
 {
     if (FlushInfo->SizeOfBlockToBeSaved)
@@ -2478,6 +2482,8 @@ int MMAppendBlockToBuffer(struct MM_FLUSH_INFO *FlushInfo)
     return MMFlushToDisk(FlushInfo);
 }
 
+// Copy the contents of a temporary file to a final file.
+// Used everywhere when closing layers.
 int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
                          MM_FILE_OFFSET *nOffset)
 {
@@ -2493,7 +2499,6 @@ int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
     if (!buffer)
         return 1;
 
-    //fflush_function(pSrcFile);
     fseek_function(pSrcFile, 0, SEEK_SET);
     while ((bytesRead = fread_function(buffer, sizeof(unsigned char),
                                        bufferSize, pSrcFile)) > 0)
@@ -2510,9 +2515,10 @@ int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
 }
 
 /* -------------------------------------------------------------------- */
-/*      Layer: Writing sections of layers                               */
+/*      Layer: Offsets and variables types managing                     */
 /* -------------------------------------------------------------------- */
 
+// Alineation described in format documents.
 static void MMGetOffsetAlignedTo8(MM_FILE_OFFSET *Offset)
 {
     MM_FILE_OFFSET reajust;
@@ -2524,6 +2530,7 @@ static void MMGetOffsetAlignedTo8(MM_FILE_OFFSET *Offset)
     }
 }
 
+// Reading integers depending on the version is being read.
 int MMReadGUInt64DependingOnVersion(struct MiraMonVectLayerInfo *hMiraMonLayer,
                                     struct MM_FLUSH_INFO *FlushInfo,
                                     GUInt64 *nUI64)
@@ -2555,6 +2562,7 @@ int MMReadGUInt64DependingOnVersion(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return 0;
 }
 
+// Reading offsets depending on the version is being read.
 int MMReadOffsetDependingOnVersion(struct MiraMonVectLayerInfo *hMiraMonLayer,
                                    struct MM_FLUSH_INFO *FlushInfo,
                                    MM_FILE_OFFSET *nUI64)
@@ -2586,6 +2594,7 @@ int MMReadOffsetDependingOnVersion(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return 0;
 }
 
+// Appending integers depending on the version.
 int MMAppendIntegerDependingOnVersion(
     struct MiraMonVectLayerInfo *hMiraMonLayer, struct MM_FLUSH_INFO *FlushInfo,
     unsigned long *nUL32, GUInt64 nUI64)
@@ -2610,6 +2619,12 @@ int MMAppendIntegerDependingOnVersion(
     return result;
 }
 
+/* -------------------------------------------------------------------- */
+/*      Layer: Reading and writing layer sections                       */
+/*      This code follors the specifications of the following document: */
+/*             https://www.miramon.cat/new_note/usa/notes/   \          */
+/*              FormatFitxersTopologicsMiraMon.pdf                      */
+/* -------------------------------------------------------------------- */
 int MMReadAHArcSection(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
     MM_INTERNAL_FID iElem, nElem;
@@ -3410,6 +3425,7 @@ void MMResetFeatureGeometry(struct MiraMonFeature *hMMFeature)
     }
 }
 
+// Preserves all allocated memory but initializes it to zero.
 void MMResetFeatureRecord(struct MiraMonFeature *hMMFeature)
 {
     MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord;
@@ -3433,7 +3449,7 @@ void MMResetFeatureRecord(struct MiraMonFeature *hMMFeature)
     }
 }
 
-// Conserves all allocated memroy but inicialize the counters to zero.
+// Destroys all allocated memory
 void MMDestroyFeature(struct MiraMonFeature *hMMFeature)
 {
     if (hMMFeature->pCoord)
@@ -3486,6 +3502,7 @@ void MMDestroyFeature(struct MiraMonFeature *hMMFeature)
     hMMFeature->nMaxMRecords = 0;
 }
 
+// Creates a MiraMon polygon, multipolygon, or linestring feature.
 static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
                                    struct MiraMonFeature *hMMFeature)
 {
@@ -4084,6 +4101,7 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return MM_CONTINUE_WRITING_FEATURES;
 }  // End of de MMCreateFeaturePolOrArc()
 
+// Creates a MiraMon DBF record when not associated with a geometric feature.
 static int MMCreateRecordDBF(struct MiraMonVectLayerInfo *hMiraMonLayer,
                              struct MiraMonFeature *hMMFeature)
 {
@@ -4104,6 +4122,7 @@ static int MMCreateRecordDBF(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return MM_CONTINUE_WRITING_FEATURES;
 }  // End of de MMCreateRecordDBF()
 
+// Creates a MiraMon point feature.
 static int MMCreateFeaturePoint(struct MiraMonVectLayerInfo *hMiraMonLayer,
                                 struct MiraMonFeature *hMMFeature)
 {
@@ -4241,6 +4260,8 @@ static int MMCreateFeaturePoint(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return MM_CONTINUE_WRITING_FEATURES;
 }  // End of de MMCreateFeaturePoint()
 
+// Checks whether a given Feature ID (FID) exceeds the maximum allowed
+// index for 2 GB vectors in a specific MiraMon layer.
 int MMCheckVersionForFID(struct MiraMonVectLayerInfo *hMiraMonLayer,
                          MM_INTERNAL_FID FID)
 {
@@ -4252,6 +4273,8 @@ int MMCheckVersionForFID(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return 0;
 }
 
+// Checks whether a given offset exceeds the maximum allowed
+// index for 2 GB vectors in a specific MiraMon layer.
 int MMCheckVersionOffset(struct MiraMonVectLayerInfo *hMiraMonLayer,
                          MM_FILE_OFFSET OffsetToCheck)
 {
@@ -4266,6 +4289,8 @@ int MMCheckVersionOffset(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return 1;
 }
 
+// Checks whether a given offset in 3d section exceeds the maximum allowed
+// index for 2 GB vectors in a specific MiraMon layer.
 int MMCheckVersionFor3DOffset(struct MiraMonVectLayerInfo *hMiraMonLayer,
                               MM_FILE_OFFSET nOffset,
                               MM_INTERNAL_FID nElemCount)
@@ -4288,6 +4313,7 @@ int MMCheckVersionFor3DOffset(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return 1;
 }
 
+// Adds a feature in a MiraMon layer.
 int MMAddFeature(struct MiraMonVectLayerInfo *hMiraMonLayer,
                  struct MiraMonFeature *hMiraMonFeature)
 {
@@ -4315,7 +4341,7 @@ int MMAddFeature(struct MiraMonVectLayerInfo *hMiraMonLayer,
 }
 
 /* -------------------------------------------------------------------- */
-/*      Tools that MiraMon uses                                         */
+/*      Tools used by MiraMon.                                          */
 /* -------------------------------------------------------------------- */
 
 void MMInitBoundingBox(struct MMBoundingBox *dfBB)
@@ -4367,7 +4393,7 @@ void MMUpdateBoundingBoxXY(struct MMBoundingBox *dfBB,
 }
 
 /* -------------------------------------------------------------------- */
-/*      Resize reused structures if needed                              */
+/*      Resize structures for reuse                                     */
 /* -------------------------------------------------------------------- */
 int MMResizeMiraMonFieldValue(struct MiraMonFieldValue **pFieldValue,
                               MM_EXT_DBF_N_MULTIPLE_RECORDS *nMax,
@@ -4624,6 +4650,7 @@ int MMResizeStringToOperateIfNeeded(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return 0;
 }
 
+// Checks if a string is empty
 int MMIsEmptyString(const char *string)
 {
     char *ptr;
@@ -4634,11 +4661,17 @@ int MMIsEmptyString(const char *string)
 
     return 1;
 }
+
+/* -------------------------------------------------------------------- */
+/*      Metadata Functions                                              */
+/* -------------------------------------------------------------------- */
+
+// Returns the value of an INI file. Used to read MiraMon metadata
 char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
                                       const char *key)
 {
     char *value = nullptr;
-    char line[MAX_LINE_LENGTH];
+    char line[16000];
     char *section_header = nullptr;
     size_t key_len = 0;
     size_t bytes_read;
@@ -4737,9 +4770,7 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
     return value;
 }
 
-/* -------------------------------------------------------------------- */
-/*      Metadata Functions                                              */
-/* -------------------------------------------------------------------- */
+// Retrieves EPSG codes from a CSV file based on provided geodetic identifiers.
 int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
                                 MM_BYTE direction)
 {
@@ -4926,6 +4957,8 @@ int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
 }
 
 #define LineReturn "\r\n"
+
+// Generates an idientifier that REL 4 MiraMon metadata needs.
 static char *MMGenerateFileIdentifierFromMetadataFileName(char *pMMFN)
 {
     static char aCharRand[7],
@@ -4943,6 +4976,7 @@ static char *MMGenerateFileIdentifierFromMetadataFileName(char *pMMFN)
     return aFileIdentifier;
 }
 
+// Converts a string from UTF-8 to ANSI to be written in a REL 4 file
 static void
 MMWrite_ANSI_MetadataKeyDescriptor(struct MiraMonVectorMetaData *hMMMD,
                                    FILE_TYPE *pF, const char *pszEng,
@@ -4975,9 +5009,15 @@ MMWrite_ANSI_MetadataKeyDescriptor(struct MiraMonVectorMetaData *hMMMD,
         CPLFree_function(pszString);
     }
 }
-/* -------------------------------------------------------------------- */
-/*      MiraMon metadata functions                                      */
-/* -------------------------------------------------------------------- */
+
+/*
+    Writes a MiraMon REL 4 metadata file. Next sections are included:
+    VERSION, METADADES, IDENTIFICATION, EXTENT, OVERVIEW,
+    TAULA_PRINCIPAL and GEOMETRIA_I_TOPOLOGIA
+
+    Please, consult the meaning of all them at:
+    https://www.miramon.cat/help/eng/GeMPlus/ClausREL.htm
+*/
 static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
 {
     char aMessage[MM_MESSAGE_LENGHT],
@@ -5129,12 +5169,14 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
     fprintf_function(pF, "%s=%s" LineReturn, KEY_CreationDate, aTimeString);
 
     fprintf_function(pF, LineReturn);
-    fprintf_function(pF, "[TAULA_PRINCIPAL]" LineReturn);
+
+    // Writing TAULA_PRINCIPAL section
+    fprintf_function(pF, "[%s]" LineReturn, SECTION_TAULA_PRINCIPAL);
     fprintf_function(pF, "IdGrafic=ID_GRAFIC" LineReturn);
     fprintf_function(pF, "TipusRelacio=RELACIO_1_1_DICC" LineReturn);
 
     fprintf_function(pF, LineReturn);
-    fprintf_function(pF, "[TAULA_PRINCIPAL:ID_GRAFIC]" LineReturn);
+    fprintf_function(pF, "[%s:ID_GRAFIC]" LineReturn, SECTION_TAULA_PRINCIPAL);
     fprintf_function(pF, "visible=1" LineReturn);
     fprintf_function(pF, "MostrarUnitats=0" LineReturn);
 
@@ -5145,7 +5187,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
     if (hMMMD->ePlainLT == MM_LayerType_Arc)
     {
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[TAULA_PRINCIPAL:N_VERTEXS]" LineReturn);
+        fprintf_function(pF, "[%s:N_VERTEXS]" LineReturn,
+                         SECTION_TAULA_PRINCIPAL);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5154,7 +5197,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                                            "Número de vértices");
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[TAULA_PRINCIPAL:LONG_ARC]" LineReturn);
+        fprintf_function(pF, "[%s:LONG_ARC]" LineReturn,
+                         SECTION_TAULA_PRINCIPAL);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5163,7 +5207,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                                            "Longitud del arco");
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[TAULA_PRINCIPAL:NODE_INI]" LineReturn);
+        fprintf_function(pF, "[%s:NODE_INI]" LineReturn,
+                         SECTION_TAULA_PRINCIPAL);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5171,7 +5216,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                                            "Node inicial", "Nodo inicial");
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[TAULA_PRINCIPAL:NODE_FI]" LineReturn);
+        fprintf_function(pF, "[%s:NODE_FI]" LineReturn,
+                         SECTION_TAULA_PRINCIPAL);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5187,7 +5233,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
     else if (hMMMD->ePlainLT == MM_LayerType_Node)
     {
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[TAULA_PRINCIPAL:ARCS_A_NOD]" LineReturn);
+        fprintf_function(pF, "[%s:ARCS_A_NOD]" LineReturn,
+                         SECTION_TAULA_PRINCIPAL);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5196,7 +5243,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                                            "Número de arcos al nodo");
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[TAULA_PRINCIPAL:TIPUS_NODE]" LineReturn);
+        fprintf_function(pF, "[%s:TIPUS_NODE]" LineReturn,
+                         SECTION_TAULA_PRINCIPAL);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5206,7 +5254,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
     else if (hMMMD->ePlainLT == MM_LayerType_Pol)
     {
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[TAULA_PRINCIPAL:N_VERTEXS]" LineReturn);
+        fprintf_function(pF, "[%s:N_VERTEXS]" LineReturn,
+                         SECTION_TAULA_PRINCIPAL);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5215,7 +5264,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                                            "Número de vértices");
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[TAULA_PRINCIPAL:PERIMETRE]" LineReturn);
+        fprintf_function(pF, "[%s:PERIMETRE]" LineReturn,
+                         SECTION_TAULA_PRINCIPAL);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5224,7 +5274,7 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
             "Perímetro del polígono");
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[TAULA_PRINCIPAL:AREA]" LineReturn);
+        fprintf_function(pF, "[%s:AREA]" LineReturn, SECTION_TAULA_PRINCIPAL);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5233,7 +5283,7 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                                            "Área del polígono");
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[TAULA_PRINCIPAL:N_ARCS]" LineReturn);
+        fprintf_function(pF, "[%s:N_ARCS]" LineReturn, SECTION_TAULA_PRINCIPAL);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5241,7 +5291,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                                            "Nombre d'arcs", "Número de arcos");
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[TAULA_PRINCIPAL:N_POLIG]" LineReturn);
+        fprintf_function(pF, "[%s:N_POLIG]" LineReturn,
+                         SECTION_TAULA_PRINCIPAL);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5257,7 +5308,6 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         fprintf_function(pF, "NomCampNPoligons=N_POLIG" LineReturn);
     }
 
-    // Writing TAULA_PRINCIPAL section
     if (hMMMD->pLayerDB && hMMMD->pLayerDB->nNFields > 0)
     {
         // For each field of the databes
@@ -5285,6 +5335,7 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
     return 0;
 }
 
+// Writes metadata files for MiraMon vector layers
 static int MMWriteVectorMetadataFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
                                      int layerPlainType, int layerMainPlainType)
 {
@@ -5404,6 +5455,7 @@ int MMWriteVectorMetadata(struct MiraMonVectLayerInfo *hMiraMonLayer)
                                      MM_LayerType_Unknown);
 }
 
+// Verifies the version of a MiraMon REL 4 file.
 int MMCheck_REL_FILE(char *szREL_file)
 {
     char *pszLine;
@@ -5487,6 +5539,10 @@ int MMCheck_REL_FILE(char *szREL_file)
 /* -------------------------------------------------------------------- */
 /*      MiraMon database functions                                      */
 /* -------------------------------------------------------------------- */
+
+// Initializes a MiraMon database associated with a vector layer:
+// Sets the usual fields that MiraMon needs and after them, adds
+// all fields of the input layer
 static int MMInitMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                       struct MMAdmDatabase *pMMAdmDB)
 {
@@ -5531,6 +5587,11 @@ static int MMInitMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return 0;
 }
 
+// Creates a MiraMon database associated with a vector layer.
+// It determines the number of fields and initializes the database header
+// accordingly. Depending on the layer type (point, arc, polygon, or generic),
+// it defines the fields and initializes the corresponding MiraMon database
+// structures.
 int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
     struct MM_BASE_DADES_XP *pBD_XP = nullptr, *pBD_XP_Aux = nullptr;
@@ -5709,6 +5770,14 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer)
     }
     return 0;
 }
+
+// Checks and adjusts the width of a specific field in a MiraMon database
+// associated with a vector layer. It examines the length of the provided
+// value and resizes the field width if necessary to accommodate the new
+// value. If the new width exceeds the current width of the field,
+// it updates the database structure, including the field width and
+//the size of the record. Additionally, it reallocates memory if needed
+// for the record handling buffer.
 
 static int
 MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
@@ -5953,6 +6022,7 @@ static int MMAddFeatureRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return 0;
 }
 
+// Adds feature records to a MiraMon database associated with a vector layer.
 static int MMDetectAndFixDBFWidthChange(
     struct MiraMonVectLayerInfo *hMiraMonLayer,
     struct MiraMonFeature *hMMFeature, struct MMAdmDatabase *pMMAdmDB,
@@ -5991,6 +6061,10 @@ static int MMDetectAndFixDBFWidthChange(
     return 0;
 }  // End of MMDetectAndFixDBFWidthChange()
 
+// Adds a DBF record to a MiraMon database associated with a vector layer.
+// It sets up flush settings for writing to the database and initializes
+// variables needed for the process. Then, it checks and fixes the width
+// change if necessary.
 int MMAddDBFRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                          struct MiraMonFeature *hMMFeature)
 {
@@ -6030,6 +6104,7 @@ int MMAddDBFRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return MM_CONTINUE_WRITING_FEATURES;
 }
 
+// Adds a point record to a MiraMon database associated with a vector layer.
 int MMAddPointRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                            struct MiraMonFeature *hMMFeature,
                            MM_INTERNAL_FID nElemCount)
@@ -6078,6 +6153,7 @@ int MMAddPointRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return MM_CONTINUE_WRITING_FEATURES;
 }
 
+// Adds a stringline record to a MiraMon database associated with a vector layer.
 int MMAddArcRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                          struct MiraMonFeature *hMMFeature,
                          MM_INTERNAL_FID nElemCount, struct MM_AH *pArcHeader)
@@ -6169,6 +6245,7 @@ int MMAddArcRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return MM_CONTINUE_WRITING_FEATURES;
 }
 
+// Adds a node record to a MiraMon database associated with a vector layer.
 int MMAddNodeRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                           MM_INTERNAL_FID nElemCount, struct MM_NH *pNodeHeader)
 {
@@ -6218,6 +6295,8 @@ int MMAddNodeRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return MM_CONTINUE_WRITING_FEATURES;
 }
 
+// Adds a polygon or multipolygon record to a MiraMon database
+// associated with a vector layer.
 int MMAddPolygonRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                              struct MiraMonFeature *hMMFeature,
                              MM_INTERNAL_FID nElemCount,
@@ -6298,6 +6377,7 @@ int MMAddPolygonRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return MM_CONTINUE_WRITING_FEATURES;
 }
 
+// Close the MiraMon database associated with a vector layer.
 static int MMCloseMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
                               struct MMAdmDatabase *MMAdmDB)
 {
@@ -6377,6 +6457,8 @@ int MMCloseMMBD_XP(struct MiraMonVectLayerInfo *hMiraMonLayer)
     return MMCloseMMBD_XPFile(hMiraMonLayer, &hMiraMonLayer->MMAdmDBWriting);
 }
 
+// Destroys the memory used to create a MiraMon database associated
+// with a vector layer.
 static void MMDestroyMMDBFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
                               struct MMAdmDatabase *pMMAdmDB)
 {

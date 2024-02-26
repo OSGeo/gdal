@@ -548,24 +548,24 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
 
     if (hMiraMonLayerPOL.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "Destroying MiraMon polygons layer memory");
-    MMFreeLayer(&hMiraMonLayerPOL);
+    MMDestroyLayer(&hMiraMonLayerPOL);
     if (hMiraMonLayerPOL.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "MiraMon polygons layer memory destroyed");
     if (hMiraMonLayerARC.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "Destroying MiraMon arcs layer memory");
-    MMFreeLayer(&hMiraMonLayerARC);
+    MMDestroyLayer(&hMiraMonLayerARC);
     if (hMiraMonLayerARC.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "MiraMon arcs layer memory destroyed");
     if (hMiraMonLayerPNT.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "Destroying MiraMon points layer memory");
-    MMFreeLayer(&hMiraMonLayerPNT);
+    MMDestroyLayer(&hMiraMonLayerPNT);
     if (hMiraMonLayerPNT.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "MiraMon points layer memory destroyed");
     if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "Destroying MiraMon DBF table layer memory");
     else
         MMCPLDebug("MiraMon", "Destroying MiraMon layer memory");
-    MMFreeLayer(&hMiraMonLayerReadOrNonGeom);
+    MMDestroyLayer(&hMiraMonLayerReadOrNonGeom);
     if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "MiraMon DBF table layer memory destroyed");
     else
@@ -691,7 +691,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
             poPoint = poGeom->toPoint();
 
             // Get X,Y (z). MiraMon has no multipoints
-            if (MMGetFeatureFromVector(phMiraMonLayer, nIElem))
+            if (MMGetGeoFeatureFromVector(phMiraMonLayer, nIElem))
             {
                 delete poGeom;
                 return nullptr;
@@ -709,7 +709,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
             poLS = poGeom->toLineString();
 
             // Get X,Y (Z) n times MiraMon has no multilines
-            if (MMGetFeatureFromVector(phMiraMonLayer, nIElem))
+            if (MMGetGeoFeatureFromVector(phMiraMonLayer, nIElem))
             {
                 delete poGeom;
                 return nullptr;
@@ -745,7 +745,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 poMP = poGeom->toMultiPolygon();
 
                 // Get X,Y (Z) n times MiraMon has no multilines
-                if (MMGetFeatureFromVector(phMiraMonLayer, nIElem))
+                if (MMGetGeoFeatureFromVector(phMiraMonLayer, nIElem))
                 {
                     delete poGeom;
                     return nullptr;
@@ -821,7 +821,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 poP = poGeom->toPolygon();
 
                 // Get X,Y (Z) n times MiraMon has no multilines
-                if (MMGetFeatureFromVector(phMiraMonLayer, nIElem))
+                if (MMGetGeoFeatureFromVector(phMiraMonLayer, nIElem))
                 {
                     delete poGeom;
                     return nullptr;

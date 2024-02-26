@@ -117,9 +117,8 @@ int MMInitLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 struct MiraMonDataBase *pLayerDB, MM_BOOLEAN ReadOrWrite,
                 struct MiraMonVectMapInfo *MMMap);
 int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer);
-int MMFreeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer);
+int MMDestroyLayer(struct MiraMonVectLayerInfo *hMiraMonLayer);
 int MMCloseLayer(struct MiraMonVectLayerInfo *hMiraMonLayer);
-void MMDestroyLayer(struct MiraMonVectLayerInfo **hMiraMonLayer);
 int MMReadHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader);
 void MMInitHeader(struct MM_TH *pMMHeader, int layerType, int nVersion);
 int MMWriteEmptyHeader(FILE_TYPE *pF, int layerType, int nVersion);

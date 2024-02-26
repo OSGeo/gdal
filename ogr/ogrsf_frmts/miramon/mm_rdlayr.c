@@ -50,6 +50,11 @@ CPL_C_START  // Necessary for compiling in GDAL project
 
 #define nullptr NULL
 
+    /* -------------------------------------------------------------------- */
+    /*      Reading MiraMon format file functions                           */
+    /* -------------------------------------------------------------------- */
+
+    // Initializes a MiraMon vector layer for reading
     int
     MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer,
                       FILE_TYPE *m_fp, const char *pszFilename)
@@ -177,6 +182,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
     return 0;
 }
 
+// Reads stringline coordinates and puts them in a buffer
 static int
 MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                            MM_INTERNAL_FID i_elem, unsigned long int flag_z,
@@ -318,6 +324,7 @@ MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return 0;
 }
 
+// Reads Polygon coordinates and puts them in a buffer
 static int
 MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                              MM_INTERNAL_FID i_pol, unsigned long int flag_z)
@@ -479,8 +486,9 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return 0;
 }
 
-int MMGetFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer,
-                           MM_INTERNAL_FID i_elem)
+// Reads the geographical part of a MiraMon layer feature
+int MMGetGeoFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer,
+                              MM_INTERNAL_FID i_elem)
 {
     FILE_TYPE *pF;
     struct MM_ZD *pZDescription;
@@ -599,6 +607,9 @@ int MMGetFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer,
     return 0;
 }
 
+// Reads the header of a MiraMon DBF
+// Please read the format at this link:
+// https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf
 int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
     const char *pszRelFile = nullptr;
