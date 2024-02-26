@@ -4056,7 +4056,7 @@ double GDALAdjustNoDataCloseToFloatMax(double dfVal);
 void GDALSerializeGCPListToXML(CPLXMLNode *psParentNode, GDAL_GCP *pasGCPList,
                                int nGCPCount,
                                const OGRSpatialReference *poGCP_SRS);
-void GDALDeserializeGCPListFromXML(CPLXMLNode *psGCPList,
+void GDALDeserializeGCPListFromXML(const CPLXMLNode *psGCPList,
                                    GDAL_GCP **ppasGCPList, int *pnGCPCount,
                                    OGRSpatialReference **ppoGCP_SRS);
 

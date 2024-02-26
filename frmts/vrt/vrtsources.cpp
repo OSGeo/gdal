@@ -512,7 +512,7 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML(const char *pszVRTPath)
 /************************************************************************/
 
 CPLErr
-VRTSimpleSource::XMLInit(CPLXMLNode *psSrc, const char *pszVRTPath,
+VRTSimpleSource::XMLInit(const CPLXMLNode *psSrc, const char *pszVRTPath,
                          std::map<CPLString, GDALDataset *> &oMapSharedSources)
 
 {
@@ -523,7 +523,8 @@ VRTSimpleSource::XMLInit(CPLXMLNode *psSrc, const char *pszVRTPath,
     /* -------------------------------------------------------------------- */
     /*      Prepare filename.                                               */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *psSourceFileNameNode = CPLGetXMLNode(psSrc, "SourceFilename");
+    const CPLXMLNode *psSourceFileNameNode =
+        CPLGetXMLNode(psSrc, "SourceFilename");
     const char *pszFilename =
         psSourceFileNameNode ? CPLGetXMLValue(psSourceFileNameNode, nullptr, "")
                              : "";
@@ -2019,7 +2020,7 @@ VRTNoDataFromMaskSource::VRTNoDataFromMaskSource()
 /************************************************************************/
 
 CPLErr VRTNoDataFromMaskSource::XMLInit(
-    CPLXMLNode *psSrc, const char *pszVRTPath,
+    const CPLXMLNode *psSrc, const char *pszVRTPath,
     std::map<CPLString, GDALDataset *> &oMapSharedSources)
 
 {
@@ -2033,10 +2034,10 @@ CPLErr VRTNoDataFromMaskSource::XMLInit(
             return eErr;
     }
 
-    if (CPLGetXMLValue(psSrc, "NODATA", nullptr) != nullptr)
+    if (const char *pszNODATA = CPLGetXMLValue(psSrc, "NODATA", nullptr))
     {
         m_bNoDataSet = true;
-        m_dfNoDataValue = CPLAtofM(CPLGetXMLValue(psSrc, "NODATA", "0"));
+        m_dfNoDataValue = CPLAtofM(pszNODATA);
     }
 
     m_dfMaskValueThreshold =
@@ -2630,7 +2631,7 @@ CPLXMLNode *VRTComplexSource::SerializeToXML(const char *pszVRTPath)
 /************************************************************************/
 
 CPLErr
-VRTComplexSource::XMLInit(CPLXMLNode *psSrc, const char *pszVRTPath,
+VRTComplexSource::XMLInit(const CPLXMLNode *psSrc, const char *pszVRTPath,
                           std::map<CPLString, GDALDataset *> &oMapSharedSources)
 
 {
@@ -2647,12 +2648,15 @@ VRTComplexSource::XMLInit(CPLXMLNode *psSrc, const char *pszVRTPath,
     /* -------------------------------------------------------------------- */
     /*      Complex parameters.                                             */
     /* -------------------------------------------------------------------- */
-    if (CPLGetXMLValue(psSrc, "ScaleOffset", nullptr) != nullptr ||
-        CPLGetXMLValue(psSrc, "ScaleRatio", nullptr) != nullptr)
+    const char *pszScaleOffset = CPLGetXMLValue(psSrc, "ScaleOffset", nullptr);
+    const char *pszScaleRatio = CPLGetXMLValue(psSrc, "ScaleRatio", nullptr);
+    if (pszScaleOffset || pszScaleRatio)
     {
         m_nProcessingFlags |= PROCESSING_FLAG_SCALING_LINEAR;
-        m_dfScaleOff = CPLAtof(CPLGetXMLValue(psSrc, "ScaleOffset", "0"));
-        m_dfScaleRatio = CPLAtof(CPLGetXMLValue(psSrc, "ScaleRatio", "1"));
+        if (pszScaleOffset)
+            m_dfScaleOff = CPLAtof(pszScaleOffset);
+        if (pszScaleRatio)
+            m_dfScaleRatio = CPLAtof(pszScaleRatio);
     }
     else if (CPLGetXMLValue(psSrc, "Exponent", nullptr) != nullptr &&
              CPLGetXMLValue(psSrc, "DstMin", nullptr) != nullptr &&
@@ -2674,10 +2678,10 @@ VRTComplexSource::XMLInit(CPLXMLNode *psSrc, const char *pszVRTPath,
         m_dfDstMax = CPLAtof(CPLGetXMLValue(psSrc, "DstMax", "0.0"));
     }
 
-    if (CPLGetXMLValue(psSrc, "NODATA", nullptr) != nullptr)
+    if (const char *pszNODATA = CPLGetXMLValue(psSrc, "NODATA", nullptr))
     {
         m_nProcessingFlags |= PROCESSING_FLAG_NODATA;
-        m_osNoDataValueOri = CPLGetXMLValue(psSrc, "NODATA", "0");
+        m_osNoDataValueOri = pszNODATA;
         m_dfNoDataValue = CPLAtofM(m_osNoDataValueOri.c_str());
     }
 
@@ -3651,7 +3655,7 @@ CPLErr VRTFuncSource::GetHistogram(
 /************************************************************************/
 
 VRTSource *
-VRTParseCoreSources(CPLXMLNode *psChild, const char *pszVRTPath,
+VRTParseCoreSources(const CPLXMLNode *psChild, const char *pszVRTPath,
                     std::map<CPLString, GDALDataset *> &oMapSharedSources)
 
 {

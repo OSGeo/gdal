@@ -343,7 +343,7 @@ VRTParseColorTable(const CPLXMLNode *psColorTable)
 /************************************************************************/
 
 CPLErr
-VRTRasterBand::XMLInit(CPLXMLNode *psTree, const char *pszVRTPath,
+VRTRasterBand::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
                        std::map<CPLString, GDALDataset *> &oMapSharedSources)
 
 {
@@ -481,20 +481,18 @@ VRTRasterBand::XMLInit(CPLXMLNode *psTree, const char *pszVRTPath,
     /* -------------------------------------------------------------------- */
     /*      Histograms                                                      */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *psHist = CPLGetXMLNode(psTree, "Histograms");
+    const CPLXMLNode *psHist = CPLGetXMLNode(psTree, "Histograms");
     if (psHist != nullptr)
     {
-        CPLXMLNode *psNext = psHist->psNext;
-        psHist->psNext = nullptr;
-
-        m_psSavedHistograms = CPLCloneXMLTree(psHist);
-        psHist->psNext = psNext;
+        CPLXMLNode sHistTemp = *psHist;
+        sHistTemp.psNext = nullptr;
+        m_psSavedHistograms = CPLCloneXMLTree(&sHistTemp);
     }
 
     /* ==================================================================== */
     /*      Overviews                                                       */
     /* ==================================================================== */
-    CPLXMLNode *psNode = psTree->psChild;
+    const CPLXMLNode *psNode = psTree->psChild;
 
     for (; psNode != nullptr; psNode = psNode->psNext)
     {
@@ -507,7 +505,8 @@ VRTRasterBand::XMLInit(CPLXMLNode *psTree, const char *pszVRTPath,
         /*      Prepare filename. */
         /* --------------------------------------------------------------------
          */
-        CPLXMLNode *psFileNameNode = CPLGetXMLNode(psNode, "SourceFilename");
+        const CPLXMLNode *psFileNameNode =
+            CPLGetXMLNode(psNode, "SourceFilename");
         const char *pszFilename =
             psFileNameNode ? CPLGetXMLValue(psFileNameNode, nullptr, nullptr)
                            : nullptr;
@@ -557,7 +556,7 @@ VRTRasterBand::XMLInit(CPLXMLNode *psTree, const char *pszVRTPath,
     /* ==================================================================== */
     /*      Mask band (specific to that raster band)                        */
     /* ==================================================================== */
-    CPLXMLNode *psMaskBandNode = CPLGetXMLNode(psTree, "MaskBand");
+    const CPLXMLNode *psMaskBandNode = CPLGetXMLNode(psTree, "MaskBand");
     if (psMaskBandNode)
         psNode = psMaskBandNode->psChild;
     else

@@ -129,7 +129,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
     GDALDatasetPamInfo *psPam = nullptr;
 
     virtual CPLXMLNode *SerializeToXML(const char *);
-    virtual CPLErr XMLInit(CPLXMLNode *, const char *);
+    virtual CPLErr XMLInit(const CPLXMLNode *, const char *);
 
     virtual CPLErr TryLoadXML(char **papszSiblingFiles = nullptr);
     virtual CPLErr TrySaveXML();
@@ -278,7 +278,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
   protected:
     //! @cond Doxygen_Suppress
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath);
-    virtual CPLErr XMLInit(CPLXMLNode *, const char *);
+    virtual CPLErr XMLInit(const CPLXMLNode *, const char *);
 
     void PamInitialize();
     void PamClear();
