@@ -1987,6 +1987,22 @@ retry:
                 CPLError(CE_Failure, CPLE_AppDefined, "%d: %s",
                          static_cast<int>(response_code), szCurlErrBuf);
         }
+        else if (response_code == 416) /* Range Not Satisfiable */
+        {
+            if (sWriteFuncData.pBuffer)
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "%d: Range downloading not supported by this server: %s",
+                    static_cast<int>(response_code), sWriteFuncData.pBuffer);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "%d: Range downloading not supported by this server",
+                         static_cast<int>(response_code));
+            }
+        }
         if (!oFileProp.bHasComputedFileSize && startOffset == 0)
         {
             oFileProp.bHasComputedFileSize = true;
