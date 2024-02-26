@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  C API to create a MiraMon layer
+ * Purpose:  Implements OGRMiraMonDriver class.
  * Author:   Abel Pau
  ******************************************************************************
  * Copyright (c) 2024, Xavier Pons
@@ -31,7 +31,7 @@
 /*                    OGRMMDriverIdentify()                                 */
 /****************************************************************************/
 
-static int OGRMMDriverIdentify(GDALOpenInfo *poOpenInfo)
+static int OGRMiraMonDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
     if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes < 7)
@@ -73,10 +73,10 @@ static int OGRMMDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /****************************************************************************/
-/*                           OGRMMDriverOpen()                              */
+/*                           OGRMiraMonDriverOpen()                         */
 /****************************************************************************/
 
-static GDALDataset *OGRMMDriverOpen(GDALOpenInfo *poOpenInfo)
+static GDALDataset *OGRMiraMonDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
     if (!poOpenInfo->bStatOK)
@@ -99,7 +99,7 @@ static GDALDataset *OGRMMDriverOpen(GDALOpenInfo *poOpenInfo)
             return nullptr;
     }
 
-    //if (!OGRMMDriverIdentify(poOpenInfo))
+    //if (!OGRMiraMonDriverIdentify(poOpenInfo))
     //    return nullptr;
 
     OGRMiraMonDataSource *poDS = new OGRMiraMonDataSource();
@@ -129,13 +129,13 @@ static GDALDataset *OGRMMDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /****************************************************************************/
-/*                         OGRMMDriverCreate()                              */
+/*                         OGRMiraMonDriverCreate()                              */
 /****************************************************************************/
 
 static GDALDataset *
-OGRMMDriverCreate(const char *pszName, CPL_UNUSED int nBands,
-                  CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                  CPL_UNUSED GDALDataType eDT, char **papszOptions)
+OGRMiraMonDriverCreate(const char *pszName, CPL_UNUSED int nBands,
+                       CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
+                       CPL_UNUSED GDALDataType eDT, char **papszOptions)
 {
     OGRMiraMonDataSource *poDS = new OGRMiraMonDataSource();
 
@@ -264,9 +264,9 @@ void RegisterOGRMiraMon()
         GDAL_DMD_CREATIONFIELDDATATYPES,
         "Integer Integer64 Real String Date Time "
         "Binary IntegerList Integer64List RealList StringList");
-    poDriver->pfnOpen = OGRMMDriverOpen;
-    poDriver->pfnIdentify = OGRMMDriverIdentify;
-    poDriver->pfnCreate = OGRMMDriverCreate;
+    poDriver->pfnOpen = OGRMiraMonDriverOpen;
+    poDriver->pfnIdentify = OGRMiraMonDriverIdentify;
+    poDriver->pfnCreate = OGRMiraMonDriverCreate;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

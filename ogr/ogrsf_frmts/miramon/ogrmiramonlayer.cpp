@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  C API to create a MiraMon layer
+ * Purpose:  Implements OGRMiraMonLayer class.
  * Author:   Abel Pau
  ******************************************************************************
  * Copyright (c) 2024, Xavier Pons

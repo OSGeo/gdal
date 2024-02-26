@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  OpenGIS Simple Features Reference Implementation
- * Purpose:  C API to create a MiraMon layer
+ * Purpose:  Implements OGRMiraMonDataSource class.
  * Author:   Abel Pau
  ******************************************************************************
  * Copyright (c) 2024, Xavier Pons
@@ -190,9 +190,11 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
             break;
     }
 
-    // If the dataset has an extension, we understand that the path
-    // of the file is where to write, and the layer name is the
-    // dataset name (without extension).
+    /* -------------------------------------------------------------------- */
+    /*    If the dataset has an extension, it is understood that the path   */
+    /*       of the file is where to write, and the layer name is the       */
+    /*       dataset name (without extension).                              */
+    /* -------------------------------------------------------------------- */
     const char *pszExtension = CPLGetExtension(pszRootName);
     if (EQUAL(pszExtension, "pol") || EQUAL(pszExtension, "arc") ||
         EQUAL(pszExtension, "pnt"))
@@ -210,7 +212,9 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
         pszFullMMLayerName = CPLFormFilename(pszRootName, pszLayerName, "");
     }
 
-    // Let's create the folder if it's not already created.
+    /* -------------------------------------------------------------------- */
+    /*      Let's create the folder if it's not already created.            */
+    /* -------------------------------------------------------------------- */
     if (VSIMkdirRecursive(osPath, 0777) != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Unable to create directory %s.",
