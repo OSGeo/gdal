@@ -299,7 +299,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                 ? nullptr
                 : GDALGetFileList(hDataset);
 
-        if (papszFileList == nullptr || *papszFileList == nullptr)
+        if (!papszFileList || *papszFileList == nullptr)
         {
             if (bJson)
             {
