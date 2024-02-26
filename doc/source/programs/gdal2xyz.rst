@@ -22,14 +22,13 @@ Synopsis
         [-skipnodata]
         [-csv]
         [-srcnodata <value>] [-dstnodata <value>]
-        <src_dataset> [<dst_dataset>]
+        <src_dataset> <dst_dataset>
 
 Description
 -----------
 
 The :program:`gdal2xyz` utility can be used to translate a raster file into xyz format.
-`gdal2xyz` can be used as an alternative to `gdal_translate of=xyz`, but supporting other options,
-for example:
+`gdal2xyz` can be used as an alternative to `gdal_translate of=xyz`. Features include:
 
     * Select more then one band
     * Skip or replace nodata value
@@ -101,5 +100,7 @@ Examples
     gdal2xyz -b 1 -b 2 -dstnodata 0 input.tif output.txt
 
 
-To create a text file in `xyz` format from the input file `input.tif`, including the first and second bands,
-while replacing the dataset nodata values with zeros.
+To create a text file in `xyz` format from the input file `input.tif`.
+The first columns, x and y, are the coordinates of the centers of each cell.
+The remaining colums represent the first and second bands.
+We also replace the dataset nodata values with zeros.

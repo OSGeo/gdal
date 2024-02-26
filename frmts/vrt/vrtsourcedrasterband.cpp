@@ -1883,6 +1883,9 @@ CPLXMLNode *VRTSourcedRasterBand::SerializeToXML(const char *pszVRTPath,
         CPLXMLNode *const psXMLSrc =
             papoSources[iSource]->SerializeToXML(pszVRTPath);
 
+        if (psXMLSrc == nullptr)
+            break;
+
         // Creating the CPLXMLNode tree representation of a VRT can easily
         // take several times RAM usage than its string serialization, or its
         // internal representation in the driver.
@@ -1905,9 +1908,6 @@ CPLXMLNode *VRTSourcedRasterBand::SerializeToXML(const char *pszVRTPath,
                          double(nUsableRAM) / (1024 * 1024 * 1024));
             }
         }
-
-        if (psXMLSrc == nullptr)
-            break;
 
         if (psLastChild == nullptr)
             psTree->psChild = psXMLSrc;

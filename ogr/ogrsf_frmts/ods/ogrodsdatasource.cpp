@@ -72,6 +72,7 @@ OGRODSLayer::OGRODSLayer(OGRODSDataSource *poDSIn, const char *pszName,
       bUpdated(CPL_TO_BOOL(bUpdatedIn)), bHasHeaderLine(false),
       m_poAttrQueryODS(nullptr)
 {
+    SetAdvertizeUTF8(true);
 }
 
 /************************************************************************/
@@ -846,7 +847,6 @@ void OGRODSDataSource::endElementTable(
 
             reinterpret_cast<OGRMemLayer *>(poCurLayer)
                 ->SetUpdatable(bUpdatable);
-            reinterpret_cast<OGRMemLayer *>(poCurLayer)->SetAdvertizeUTF8(true);
             reinterpret_cast<OGRODSLayer *>(poCurLayer)->SetUpdated(false);
         }
 

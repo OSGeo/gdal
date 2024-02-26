@@ -2251,7 +2251,7 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
          static_cast<int>(m_dfNoDataValue) == m_dfNoDataValue &&
          dfRemappedValue >= 0 && dfRemappedValue <= 255 &&
          static_cast<int>(dfRemappedValue) == dfRemappedValue);
-    GByte *abyWrkBuffer;
+    GByte *pabyWrkBuffer;
     try
     {
         if (bByteOptim && nOutXOff == 0 && nOutYOff == 0 &&
@@ -2259,13 +2259,14 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
             eSrcBandDT == eBufType && nPixelSpace == nSrcBandDTSize &&
             nLineSpace == nPixelSpace * nBufXSize)
         {
-            abyWrkBuffer = static_cast<GByte *>(pData);
+            pabyWrkBuffer = static_cast<GByte *>(pData);
         }
         else
         {
             oWorkingState.m_abyWrkBuffer.resize(static_cast<size_t>(nOutXSize) *
                                                 nOutYSize * nSrcBandDTSize);
-            abyWrkBuffer = &oWorkingState.m_abyWrkBuffer[0].value;
+            pabyWrkBuffer =
+                reinterpret_cast<GByte *>(oWorkingState.m_abyWrkBuffer.data());
         }
         oWorkingState.m_abyWrkBufferMask.resize(static_cast<size_t>(nOutXSize) *
                                                 nOutYSize * nSrcMaskBandDTSize);
@@ -2296,7 +2297,7 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
     psExtraArg->dfYSize = dfReqYSize;
 
     if (l_band->RasterIO(GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-                         abyWrkBuffer, nOutXSize, nOutYSize, eSrcBandDT, 0, 0,
+                         pabyWrkBuffer, nOutXSize, nOutYSize, eSrcBandDT, 0, 0,
                          psExtraArg) != CE_None)
     {
         return CE_Failure;
@@ -2338,7 +2339,7 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
                 }
                 else
                 {
-                    if (abyWrkBuffer[nSrcIdx] == nNoDataValue)
+                    if (pabyWrkBuffer[nSrcIdx] == nNoDataValue)
                     {
                         pabyOut[static_cast<GPtrDiff_t>(nDstOffset)] =
                             nRemappedValue;
@@ -2346,7 +2347,7 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
                     else
                     {
                         pabyOut[static_cast<GPtrDiff_t>(nDstOffset)] =
-                            abyWrkBuffer[nSrcIdx];
+                            pabyWrkBuffer[nSrcIdx];
                     }
                 }
                 nDstOffset += nPixelSpace;
@@ -2390,9 +2391,10 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
                 else
                 {
                     const void *const pSrc =
-                        abyWrkBuffer + nSrcIdx * nSrcBandDTSize;
+                        pabyWrkBuffer + nSrcIdx * nSrcBandDTSize;
                     if (eSrcBandDT == eBufType)
                     {
+                        // coverity[overrun-buffer-arg]
                         memcpy(pDst, pSrc, nBufDTSize);
                     }
                     else
@@ -3010,7 +3012,9 @@ CPLErr VRTComplexSource::RasterIOProcessNoData(
         // Cannot overflow since pData should at least have that number of
         // elements
         const size_t nPixelCount = static_cast<size_t>(nOutXSize) * nOutYSize;
-        if (nPixelCount > std::numeric_limits<size_t>::max() / sizeof(SourceDT))
+        if (nPixelCount >
+            static_cast<size_t>(std::numeric_limits<ptrdiff_t>::max()) /
+                sizeof(SourceDT))
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
                      "Too large temporary buffer");
@@ -3226,8 +3230,9 @@ CPLErr VRTComplexSource::RasterIOInternal(
         {
             // Cannot overflow since pData should at least have that number of
             // elements
-            if (nPixelCount > std::numeric_limits<size_t>::max() /
-                                  static_cast<size_t>(nWordSize))
+            if (nPixelCount >
+                static_cast<size_t>(std::numeric_limits<ptrdiff_t>::max()) /
+                    static_cast<size_t>(nWordSize))
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory,
                          "Too large temporary buffer");

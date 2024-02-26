@@ -290,30 +290,31 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                GDALGetDriverShortName(hDriver), GDALGetDriverLongName(hDriver));
     }
 
-    // The list of files of a raster FileGDB is not super useful and potentially
-    // super long, so omit it, unless the -json mode is enabled
-    char **papszFileList =
-        (!bJson && EQUAL(GDALGetDriverShortName(hDriver), "OpenFileGDB"))
-            ? nullptr
-            : GDALGetFileList(hDataset);
-
-    if (papszFileList == nullptr || *papszFileList == nullptr)
+    if (psOptions->bShowFileList)
     {
-        if (bJson)
+        // The list of files of a raster FileGDB is not super useful and potentially
+        // super long, so omit it, unless the -json mode is enabled
+        char **papszFileList =
+            (!bJson && EQUAL(GDALGetDriverShortName(hDriver), "OpenFileGDB"))
+                ? nullptr
+                : GDALGetFileList(hDataset);
+
+        if (!papszFileList || *papszFileList == nullptr)
         {
-            json_object *poFiles = json_object_new_array();
-            json_object_object_add(poJsonObject, "files", poFiles);
+            if (bJson)
+            {
+                json_object *poFiles = json_object_new_array();
+                json_object_object_add(poJsonObject, "files", poFiles);
+            }
+            else
+            {
+                Concat(osStr, psOptions->bStdoutOutput,
+                       "Files: none associated\n");
+            }
         }
         else
         {
-            Concat(osStr, psOptions->bStdoutOutput, "Files: none associated\n");
-        }
-    }
-    else
-    {
-        if (bJson)
-        {
-            if (psOptions->bShowFileList)
+            if (bJson)
             {
                 json_object *poFiles = json_object_new_array();
 
@@ -327,20 +328,17 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
 
                 json_object_object_add(poJsonObject, "files", poFiles);
             }
-        }
-        else
-        {
-            Concat(osStr, psOptions->bStdoutOutput, "Files: %s\n",
-                   papszFileList[0]);
-            if (psOptions->bShowFileList)
+            else
             {
+                Concat(osStr, psOptions->bStdoutOutput, "Files: %s\n",
+                       papszFileList[0]);
                 for (int i = 1; papszFileList[i] != nullptr; i++)
                     Concat(osStr, psOptions->bStdoutOutput, "       %s\n",
                            papszFileList[i]);
             }
         }
+        CSLDestroy(papszFileList);
     }
-    CSLDestroy(papszFileList);
 
     if (bJson)
     {

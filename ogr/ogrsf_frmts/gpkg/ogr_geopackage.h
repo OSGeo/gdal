@@ -280,7 +280,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     void FixupWrongRTreeTrigger();
     void FixupWrongMedataReferenceColumnNameUpdate();
     void ClearCachedRelationships();
-    void LoadRelationships() const;
+    void LoadRelationships() const override;
     void LoadRelationshipsUsingRelatedTablesExtension() const;
     static std::string
     GenerateNameForRelationship(const char *pszBaseTableName,
@@ -344,12 +344,6 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     GetFieldDomain(const std::string &name) const override;
     bool AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
                         std::string &failureReason) override;
-
-    std::vector<std::string>
-    GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
-
-    const GDALRelationship *
-    GetRelationship(const std::string &name) const override;
 
     bool AddRelationship(std::unique_ptr<GDALRelationship> &&relationship,
                          std::string &failureReason) override;

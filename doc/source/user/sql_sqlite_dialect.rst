@@ -343,11 +343,11 @@ returns:
 ::
 
     OGRFeature(SELECT):0
-    POINT (2.342878767069653 48.85661793020374)
+    POINT (2.34287687375113 48.856622357411)
 
 .. code-block:: shell
 
-    ogrinfo cities.csv -dialect sqlite -sql "SELECT *, ogr_geocode(city, 'country') AS country, ST_Centroid(ogr_geocode(city)) FROM cities"
+    ogrinfo cities.csv -dialect sqlite -sql "SELECT *, ogr_geocode(city, 'country_code') AS country_code, ST_Centroid(ogr_geocode(city)) FROM cities"
 
 returns:
 
@@ -357,57 +357,30 @@ returns:
 ::
 
     OGRFeature(SELECT):0
-    id (Real) = 1
-    city (String) = Paris
-    country (String) = France métropolitaine
-    POINT (2.342878767069653 48.85661793020374)
+      city (String) = Paris
+      country_code (String) = fr
+      POINT (2.34287687375113 48.856622357411)
 
     OGRFeature(SELECT):1
-    id (Real) = 2
-    city (String) = London
-    country (String) = United Kingdom
-    POINT (-0.109369427546499 51.500506667319407)
+      city (String) = London
+      country_code (String) = gb
+      POINT (-0.109415723431508 51.5004964757441)
 
     OGRFeature(SELECT):2
-    id (Real) = 3
-    city (String) = Rennes
-    country (String) = France métropolitaine
-    POINT (-1.68185153381778 48.111663929761093)
+      city (String) = Rennes
+      country_code (String) = fr
+      POINT (-1.68185479486048 48.1116771631195)
 
     OGRFeature(SELECT):3
-    id (Real) = 4
-    city (String) = Strasbourg
-    country (String) = France métropolitaine
-    POINT (7.767762859150757 48.571233274141846)
+      city (String) = New York
+      country_code (String) = us
+      POINT (-73.9388908443975 40.6632061220125)
 
     OGRFeature(SELECT):4
-    id (Real) = 5
-    city (String) = New York
-    country (String) = United States of America
-    POINT (-73.938140243499049 40.663799577449979)
+      city (String) = Beijing
+      country_code (String) = cn
+      POINT (116.3912972 39.9057136)
 
-    OGRFeature(SELECT):5
-    id (Real) = 6
-    city (String) = Berlin
-    country (String) = Deutschland
-    POINT (13.402306623451983 52.501470321410636)
-
-    OGRFeature(SELECT):6
-    id (Real) = 7
-    city (String) = Beijing
-    POINT (116.391195 39.9064702)
-
-    OGRFeature(SELECT):7
-    id (Real) = 8
-    city (String) = Brasilia
-    country (String) = Brasil
-    POINT (-52.830435216371839 -10.828214867369699)
-
-    OGRFeature(SELECT):8
-    id (Real) = 9
-    city (String) = Moscow
-    country (String) = Российская Федерация
-    POINT (37.367988106866868 55.556208255649558)
 
 .. highlight:: sql
 

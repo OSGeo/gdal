@@ -4224,14 +4224,15 @@ void GDALDeserializeGCPListFromXML(CPLXMLNode *psGCPList,
             return true;
         };
 
+        bool bOK = true;
         if (!ParseDoubleValue("Pixel", psGCP->dfGCPPixel))
-            continue;
+            bOK = false;
         if (!ParseDoubleValue("Line", psGCP->dfGCPLine))
-            continue;
+            bOK = false;
         if (!ParseDoubleValue("X", psGCP->dfGCPX))
-            continue;
+            bOK = false;
         if (!ParseDoubleValue("Y", psGCP->dfGCPY))
-            continue;
+            bOK = false;
         const char *pszZ = CPLGetXMLValue(psXMLGCP, "Z", nullptr);
         if (pszZ == nullptr)
         {
@@ -4245,10 +4246,17 @@ void GDALDeserializeGCPListFromXML(CPLXMLNode *psGCPList,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "GCP#Z=%s is an invalid value", pszZ);
-            continue;
+            bOK = false;
         }
 
-        (*pnGCPCount)++;
+        if (!bOK)
+        {
+            GDALDeinitGCPs(1, psGCP);
+        }
+        else
+        {
+            (*pnGCPCount)++;
+        }
     }
 }
 

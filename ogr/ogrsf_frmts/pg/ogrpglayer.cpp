@@ -649,17 +649,14 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                      STARTS_WITH(pszVal, "\\x00") ||
                      STARTS_WITH(pszVal, "\\x01")))
                 {
-                    poGeom = BYTEAToGeometry(
-                        pszVal, (poDS->sPostGISVersion.nMajor < 2));
+                    poGeom = BYTEAToGeometry(pszVal);
                 }
                 else
                 {
                     const GByte *pabyVal =
                         reinterpret_cast<const GByte *>(pszVal);
                     OGRGeometryFactory::createFromWkb(
-                        pabyVal, nullptr, &poGeom, nLength,
-                        (poDS->sPostGISVersion.nMajor < 2) ? wkbVariantPostGIS1
-                                                           : wkbVariantOldOgc);
+                        pabyVal, nullptr, &poGeom, nLength, wkbVariantOldOgc);
                 }
 
                 if (poGeom != nullptr)
@@ -686,8 +683,7 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                 // Potentially dangerous to modify the result of PQgetvalue...
                 nLength = CPLBase64DecodeInPlace(const_cast<GByte *>(pabyData));
                 OGRGeometry *poGeom = OGRGeometryFromEWKB(
-                    const_cast<GByte *>(pabyData), nLength, nullptr,
-                    poDS->sPostGISVersion.nMajor < 2);
+                    const_cast<GByte *>(pabyData), nLength, nullptr, false);
 
                 if (poGeom != nullptr)
                 {
@@ -721,15 +717,13 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                 {
                     GByte *pabyEWKB = BYTEAToGByteArray(pabyData, &nLength);
                     poGeom =
-                        OGRGeometryFromEWKB(pabyEWKB, nLength, nullptr,
-                                            poDS->sPostGISVersion.nMajor < 2);
+                        OGRGeometryFromEWKB(pabyEWKB, nLength, nullptr, false);
                     CPLFree(pabyEWKB);
                 }
                 else if (nLength >= 2 && (STARTS_WITH_CI(pabyData, "00") ||
                                           STARTS_WITH_CI(pabyData, "01")))
                 {
-                    poGeom = OGRGeometryFromHexEWKB(
-                        pabyData, nullptr, poDS->sPostGISVersion.nMajor < 2);
+                    poGeom = OGRGeometryFromHexEWKB(pabyData, nullptr, false);
                 }
                 else
                 {
@@ -738,7 +732,7 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                     poGeom = OGRGeometryFromEWKB(
                         const_cast<GByte *>(
                             reinterpret_cast<const GByte *>(pabyData)),
-                        nLength, nullptr, poDS->sPostGISVersion.nMajor < 2);
+                        nLength, nullptr, false);
                 }
 
                 if (poGeom != nullptr)
@@ -773,8 +767,7 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                 if (STARTS_WITH_CI(pszPostSRID, "00") ||
                     STARTS_WITH_CI(pszPostSRID, "01"))
                 {
-                    poGeometry = OGRGeometryFromHexEWKB(
-                        pszWKT, nullptr, poDS->sPostGISVersion.nMajor < 2);
+                    poGeometry = OGRGeometryFromHexEWKB(pszWKT, nullptr, false);
                 }
                 else
                     OGRGeometryFactory::createFromWkt(pszPostSRID, nullptr,
@@ -814,14 +807,12 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                     const GByte *pabyData =
                         reinterpret_cast<const GByte *>(pszData);
                     poGeometry =
-                        OGRGeometryFromEWKB(pabyData, nLength, NULL,
-                                            poDS->sPostGISVersion.nMajor < 2);
+                        OGRGeometryFromEWKB(pabyData, nLength, NULL, false);
                 }
                 if (poGeometry == nullptr)
 #endif
                 {
-                    poGeometry = BYTEAToGeometry(
-                        pszData, (poDS->sPostGISVersion.nMajor < 2));
+                    poGeometry = BYTEAToGeometry(pszData);
                 }
             }
 
@@ -1732,7 +1723,7 @@ GByte *OGRPGLayer::BYTEAToGByteArray(const char *pszBytea, int *pnLength)
 /*                          BYTEAToGeometry()                           */
 /************************************************************************/
 
-OGRGeometry *OGRPGLayer::BYTEAToGeometry(const char *pszBytea, int bIsPostGIS1)
+OGRGeometry *OGRPGLayer::BYTEAToGeometry(const char *pszBytea)
 
 {
     if (pszBytea == nullptr)
@@ -1743,8 +1734,7 @@ OGRGeometry *OGRPGLayer::BYTEAToGeometry(const char *pszBytea, int bIsPostGIS1)
 
     OGRGeometry *poGeometry = nullptr;
     OGRGeometryFactory::createFromWkb(pabyWKB, nullptr, &poGeometry, nLen,
-                                      (bIsPostGIS1) ? wkbVariantPostGIS1
-                                                    : wkbVariantOldOgc);
+                                      wkbVariantOldOgc);
 
     CPLFree(pabyWKB);
     return poGeometry;
@@ -1813,9 +1803,7 @@ OGRGeometry *OGRPGLayer::OIDToGeometry(Oid oid)
 
     OGRGeometry *poGeometry = nullptr;
     OGRGeometryFactory::createFromWkb(pabyWKB, nullptr, &poGeometry, nBytes,
-                                      poDS->sPostGISVersion.nMajor < 2
-                                          ? wkbVariantPostGIS1
-                                          : wkbVariantOldOgc);
+                                      wkbVariantOldOgc);
 
     CPLFree(pabyWKB);
 
@@ -1840,10 +1828,8 @@ Oid OGRPGLayer::GeometryToOID(OGRGeometry *poGeometry)
     GByte *pabyWKB = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nWkbSize));
     if (pabyWKB == nullptr)
         return 0;
-    if (poGeometry->exportToWkb(wkbNDR, pabyWKB,
-                                (poDS->sPostGISVersion.nMajor < 2)
-                                    ? wkbVariantPostGIS1
-                                    : wkbVariantOldOgc) != OGRERR_NONE)
+    if (poGeometry->exportToWkb(wkbNDR, pabyWKB, wkbVariantOldOgc) !=
+        OGRERR_NONE)
         return 0;
 
     Oid oid = lo_creat(hPGConn, INV_READ | INV_WRITE);
@@ -1937,14 +1923,11 @@ OGRErr OGRPGLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
     OGRPGGeomFieldDefn *poGeomFieldDefn =
         poFeatureDefn->GetGeomFieldDefn(iGeomField);
 
-    const char *pszExtentFct =
-        poDS->sPostGISVersion.nMajor >= 2 ? "ST_Extent" : "Extent";
-
     if (TestCapability(OLCFastGetExtent))
     {
         /* Do not take the spatial filter into account */
         osCommand.Printf(
-            "SELECT %s(%s) FROM %s AS ogrpgextent", pszExtentFct,
+            "SELECT ST_Extent(%s) FROM %s AS ogrpgextent",
             OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef()).c_str(),
             GetFromClauseForGetExtent().c_str());
     }
@@ -1953,8 +1936,8 @@ OGRErr OGRPGLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
         /* Probably not very efficient, but more efficient than client-side
          * implementation */
         osCommand.Printf(
-            "SELECT %s(ST_GeomFromWKB(ST_AsBinary(%s))) FROM %s AS ogrpgextent",
-            pszExtentFct,
+            "SELECT ST_Extent(ST_GeomFromWKB(ST_AsBinary(%s))) FROM %s AS "
+            "ogrpgextent",
             OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef()).c_str(),
             GetFromClauseForGetExtent().c_str());
     }
@@ -2001,14 +1984,11 @@ OGRErr OGRPGLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
     OGRPGGeomFieldDefn *poGeomFieldDefn =
         poFeatureDefn->GetGeomFieldDefn(iGeomField);
 
-    const char *pszExtentFct =
-        poDS->sPostGISVersion.nMajor >= 2 ? "ST_3DExtent" : "ST_Extent3D";
-
     if (TestCapability(OLCFastGetExtent3D))
     {
         /* Do not take the spatial filter into account */
         osCommand.Printf(
-            "SELECT %s(%s) FROM %s AS ogrpgextent", pszExtentFct,
+            "SELECT ST_Extent(%s) FROM %s AS ogrpgextent",
             OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef()).c_str(),
             GetFromClauseForGetExtent().c_str());
     }
@@ -2017,8 +1997,8 @@ OGRErr OGRPGLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
         /* Probably not very efficient, but more efficient than client-side
          * implementation */
         osCommand.Printf(
-            "SELECT %s(ST_GeomFromWKB(ST_AsBinary(%s))) FROM %s AS ogrpgextent",
-            pszExtentFct,
+            "SELECT ST_Extent(ST_GeomFromWKB(ST_AsBinary(%s))) FROM %s AS "
+            "ogrpgextent",
             OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef()).c_str(),
             GetFromClauseForGetExtent().c_str());
     }
@@ -2072,14 +2052,14 @@ OGRErr OGRPGLayer::RunGetExtentRequest(OGREnvelope &sExtent,
     strncpy(szVals, ptr, ptrEndParenthesis - ptr);
     szVals[ptrEndParenthesis - ptr] = '\0';
 
-    char **papszTokens = CSLTokenizeString2(szVals, " ,", CSLT_HONOURSTRINGS);
-    int nTokenCnt = poDS->sPostGISVersion.nMajor >= 1 ? 4 : 6;
+    const CPLStringList aosTokens(
+        CSLTokenizeString2(szVals, " ,", CSLT_HONOURSTRINGS));
+    constexpr int nTokenCnt = 4;
 
-    if (CSLCount(papszTokens) != nTokenCnt)
+    if (aosTokens.size() != nTokenCnt)
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Bad extent representation: '%s'",
                  pszBox);
-        CSLDestroy(papszTokens);
 
         OGRPGClearResult(hResult);
         return OGRERR_FAILURE;
@@ -2091,12 +2071,11 @@ OGRErr OGRPGLayer::RunGetExtentRequest(OGREnvelope &sExtent,
     // =>   X2 index calculated as nTokenCnt/2
     //      Y2 index calculated as nTokenCnt/2+1
 
-    sExtent.MinX = CPLAtof(papszTokens[0]);
-    sExtent.MinY = CPLAtof(papszTokens[1]);
-    sExtent.MaxX = CPLAtof(papszTokens[nTokenCnt / 2]);
-    sExtent.MaxY = CPLAtof(papszTokens[nTokenCnt / 2 + 1]);
+    sExtent.MinX = CPLAtof(aosTokens[0]);
+    sExtent.MinY = CPLAtof(aosTokens[1]);
+    sExtent.MaxX = CPLAtof(aosTokens[nTokenCnt / 2]);
+    sExtent.MaxY = CPLAtof(aosTokens[nTokenCnt / 2 + 1]);
 
-    CSLDestroy(papszTokens);
     OGRPGClearResult(hResult);
 
     return OGRERR_NONE;

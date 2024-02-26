@@ -617,3 +617,15 @@ def test_ogr_pmtiles_read_corrupted_min_zoom_larger_than_30():
             ds = ogr.Open(tmpfilename)
         assert gdal.GetLastErrorMsg() == "Clamping max_zoom from 255 to 30"
         assert ds.GetMetadataItem("ZOOM_LEVEL") == "30"
+
+
+###############################################################################
+
+
+def test_ogr_pmtiles_read_with_many_directories():
+
+    ds = gdal.OpenEx(
+        "data/pmtiles/subset7_truncated.pmtiles", open_options=["ZOOM_LEVEL=0"]
+    )
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() != 0

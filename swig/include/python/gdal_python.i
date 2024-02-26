@@ -4214,6 +4214,7 @@ def TileIndexOptions(options=None,
                      maxPixelSize=None,
                      format=None,
                      layerName=None,
+                     layerCreationOptions=None,
                      locationFieldName="location",
                      outputSRS=None,
                      writeAbsolutePath=None,
@@ -4248,6 +4249,8 @@ def TileIndexOptions(options=None,
         output format ("ESRI Shapefile", "GPKG", etc...)
     layerName:
         output layer name
+    layerCreationOptions:
+        list or dict of layer creation options
     locationFieldName:
         Specifies the name of the field in the resulting vector dataset where the path of the input dataset will be stored. The default field name is "location". Can be set to None to disable creation of such field.
     outputSRS:
@@ -4310,6 +4313,15 @@ def TileIndexOptions(options=None,
             new_options += ['-f', format]
         if layerName is not None:
             new_options += ['-lyr_name', layerName]
+
+        if layerCreationOptions is not None:
+            if isinstance(layerCreationOptions, dict):
+                for k, v in layerCreationOptions.items():
+                    new_options += ['-lco', f'{k}={v}']
+            else:
+                for opt in layerCreationOptions:
+                    new_options += ['-lco', opt]
+
         if locationFieldName is not None:
             new_options += ['-tileindex', locationFieldName]
         if outputSRS is not None:

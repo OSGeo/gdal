@@ -14,7 +14,8 @@ the documentation of the :ref:`gdal_grid` utility).
 
 Those datasets are ASCII files with (at least) 3 columns, each line
 containing the X and Y coordinates of the center of the cell and the
-value of the cell.
+value of the cell. (Note the XYZ driver only uses the first band of
+the dataset. I.e., columns beyond the third are ignored.)
 
 The spacing between each cell must be constant.
 

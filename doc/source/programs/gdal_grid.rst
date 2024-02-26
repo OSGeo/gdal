@@ -461,6 +461,10 @@ following way:
 The :ref:`vector.csv` description page contains
 details on CSV format supported by GDAL/OGR.
 
+Creating multiband files: not directly possible with gdal_grid.
+One might use gdal_grid multiple times to create one band per file,
+and then use gdalbuildvrt -separate + gdal_translate to combine the one-band-files into a single one.
+
 C API
 -----
 

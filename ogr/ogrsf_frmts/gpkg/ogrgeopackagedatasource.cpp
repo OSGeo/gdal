@@ -2038,14 +2038,24 @@ void GDALGeoPackageDataset::ClearCachedRelationships()
 
 void GDALGeoPackageDataset::LoadRelationships() const
 {
+    m_osMapRelationships.clear();
+
+    std::vector<std::string> oExcludedTables;
     if (HasGpkgextRelationsTable())
     {
         LoadRelationshipsUsingRelatedTablesExtension();
+
+        for (const auto &oRelationship : m_osMapRelationships)
+        {
+            oExcludedTables.emplace_back(
+                oRelationship.second->GetMappingTableName());
+        }
     }
-    else
-    {
-        LoadRelationshipsFromForeignKeys();
-    }
+
+    // Also load relationships defined using foreign keys (i.e. one-to-many
+    // relationships). Here we must exclude any relationships defined from the
+    // related tables extension, we don't want them included twice.
+    LoadRelationshipsFromForeignKeys(oExcludedTables);
     m_bHasPopulatedRelationships = true;
 }
 
@@ -9811,45 +9821,6 @@ bool GDALGeoPackageDataset::AddFieldDomain(
 
     m_oMapFieldDomains[domainName] = std::move(domain);
     return true;
-}
-
-/************************************************************************/
-/*                        GetRelationshipNames()                        */
-/************************************************************************/
-
-std::vector<std::string> GDALGeoPackageDataset::GetRelationshipNames(
-    CPL_UNUSED CSLConstList papszOptions) const
-
-{
-    if (!m_bHasPopulatedRelationships)
-        LoadRelationships();
-
-    std::vector<std::string> oasNames;
-    oasNames.reserve(m_osMapRelationships.size());
-    for (auto it = m_osMapRelationships.begin();
-         it != m_osMapRelationships.end(); ++it)
-    {
-        oasNames.emplace_back(it->first);
-    }
-    return oasNames;
-}
-
-/************************************************************************/
-/*                        GetRelationship()                             */
-/************************************************************************/
-
-const GDALRelationship *
-GDALGeoPackageDataset::GetRelationship(const std::string &name) const
-
-{
-    if (!m_bHasPopulatedRelationships)
-        LoadRelationships();
-
-    auto it = m_osMapRelationships.find(name);
-    if (it == m_osMapRelationships.end())
-        return nullptr;
-
-    return it->second.get();
 }
 
 /************************************************************************/
