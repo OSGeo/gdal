@@ -615,11 +615,9 @@ static bool ValidateInsertExpression(const CPLString &sInsertStatement)
 static bool ValidateDescriptionExpression(const CPLString &sInsertStatement)
 {
     const char *rgpszInvalidChars[] = {";", "--", "/*", "*/", "//"};
-    const size_t nInvalidCharsSize = 5;
 
-    for (size_t nPos = 0; nPos < nInvalidCharsSize; ++nPos)
+    for (const char *pszInvalidChar: rgpszInvalidChars)
     {
-        const char *pszInvalidChar = rgpszInvalidChars[nPos];
         if (sInsertStatement.find(pszInvalidChar) != std::string::npos)
         {
             return false;
