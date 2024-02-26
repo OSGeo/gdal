@@ -83,6 +83,10 @@
 #endif
 #include <string>
 
+#if __cplusplus >= 202002L
+#include <type_traits>  // For std::endian
+#endif
+
 #include "cpl_config.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
@@ -185,8 +189,6 @@ void *CPLMalloc(size_t nSize)
 {
     if (nSize == 0)
         return nullptr;
-
-    CPLVerifyConfiguration();
 
     if ((nSize >> (8 * sizeof(nSize) - 1)) != 0)
     {
@@ -1564,33 +1566,36 @@ int CPLPrintTime(char *pszBuffer, int nMaxLen, const char *pszFormat,
 void CPLVerifyConfiguration()
 
 {
-    static bool verified = false;
-    if (verified)
-    {
-        return;
-    }
-    verified = true;
-
     /* -------------------------------------------------------------------- */
     /*      Verify data types.                                              */
     /* -------------------------------------------------------------------- */
-    CPL_STATIC_ASSERT(sizeof(GInt32) == 4);
-    CPL_STATIC_ASSERT(sizeof(GInt16) == 2);
-    CPL_STATIC_ASSERT(sizeof(GByte) == 1);
+    static_assert(sizeof(short) == 2);   // We unfortunately rely on this
+    static_assert(sizeof(int) == 4);     // We unfortunately rely on this
+    static_assert(sizeof(float) == 4);   // We unfortunately rely on this
+    static_assert(sizeof(double) == 8);  // We unfortunately rely on this
+    static_assert(sizeof(GInt64) == 8);
+    static_assert(sizeof(GInt32) == 4);
+    static_assert(sizeof(GInt16) == 2);
+    static_assert(sizeof(GByte) == 1);
 
     /* -------------------------------------------------------------------- */
     /*      Verify byte order                                               */
     /* -------------------------------------------------------------------- */
-    GInt32 nTest = 1;
-
 #ifdef CPL_LSB
-    if (reinterpret_cast<GByte *>(&nTest)[0] != 1)
+#if __cplusplus >= 202002L
+    static_assert(std::endian::native == std::endian::little);
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__)
+    static_assert(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__);
 #endif
-#ifdef CPL_MSB
-        if (reinterpret_cast<GByte *>(&nTest)[3] != 1)
+#elif defined(CPL_MSB)
+#if __cplusplus >= 202002L
+    static_assert(std::endian::native == std::endian::big);
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__)
+    static_assert(__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__);
 #endif
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "CPLVerifyConfiguration(): byte order set wrong.");
+#else
+#error "CPL_LSB or CPL_MSB must be defined"
+#endif
 }
 
 #ifdef DEBUG_CONFIG_OPTIONS
