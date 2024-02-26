@@ -51,7 +51,7 @@ static void Usage(bool bIsError, const char *pszErrorMsg)
         "                  [-skip_different_projection] [-t_srs <target_srs>]\n"
         "                  [-src_srs_name field_name] [-src_srs_format "
         "{AUTO|WKT|EPSG|PROJ}]\n"
-        "                  [-lyr_name <name>]\n"
+        "                  [-lyr_name <name>] [-lco <KEY>=<VALUE>]...\n"
         "                  [-gti_filename <name>]\n"
         "                  [-tr <xres> <yres>] [-te <xmin> <ymin> <xmax> "
         "<ymax>]\n"

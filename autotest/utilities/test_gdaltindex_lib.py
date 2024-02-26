@@ -286,10 +286,12 @@ def test_gdaltindex_lib_gti_non_xml(tmp_path, four_tiles):
         colorInterpretation="gray",
         mask=True,
         metadataOptions={"foo": "bar"},
+        layerCreationOptions=["FID=my_fid"],
     )
 
     ds = ogr.Open(index_filename)
     lyr = ds.GetLayer(0)
+    assert lyr.GetFIDColumn() == "my_fid"
     assert lyr.GetMetadataItem("RESX") == "60"
     assert lyr.GetMetadataItem("RESY") == "60"
     assert lyr.GetMetadataItem("MINX") == "0"

@@ -21,7 +21,7 @@ Synopsis
             [-f <format>] [-tileindex <field_name>] [-write_absolute_path]
             [-skip_different_projection] [-t_srs <target_srs>]
             [-src_srs_name <field_name>] [-src_srs_format {AUTO|WKT|EPSG|PROJ}]
-            [-lyr_name <name>]
+            [-lyr_name <name>] [-lco <NAME>=<VALUE>]...
             [-gti_filename <name>]
             [-tr <xres> <yres>] [-te <xmin> <ymin> <xmax> <ymax>]
             [-ot <datatype>] [-bandcount <val>] [-nodata <val>[,<val>...]]
@@ -129,6 +129,12 @@ tileindex, or as input for the :ref:`GTI <raster.gti>` driver.
 .. option:: -lyr_name <name>
 
     Layer name to create/append to in the output tile index file.
+
+.. option:: -lco <NAME>=<VALUE>
+
+    .. versionadded:: 3.9
+
+    Layer creation option (format specific)
 
 .. option:: <index_file>
 
