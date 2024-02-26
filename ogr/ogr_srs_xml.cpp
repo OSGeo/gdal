@@ -633,8 +633,10 @@ static CPLXMLNode *exportProjCSToXML(const OGRSpatialReference *poSRS)
     }
     else
     {
-        CPLError(CE_Warning, CPLE_NotSupported,
+        CPLError(CE_Failure, CPLE_NotSupported,
                  "Unhandled projection method %s", pszProjection);
+        CPLDestroyXMLNode(psCRS_XML);
+        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -692,6 +694,9 @@ OGRErr OGRSpatialReference::exportToXML(char **ppszRawXML,
     }
     else
         return OGRERR_UNSUPPORTED_SRS;
+
+    if (!psXMLTree)
+        return OGRERR_FAILURE;
 
     *ppszRawXML = CPLSerializeXMLTree(psXMLTree);
     CPLDestroyXMLNode(psXMLTree);

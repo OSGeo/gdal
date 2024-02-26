@@ -33,7 +33,7 @@
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 pytestmark = pytest.mark.require_driver("JP2KAK")
 
@@ -953,3 +953,60 @@ def find_xml_node(ar, element_name, only_attributes=False):
         if found is not None:
             return found
     return None
+
+
+###############################################################################
+# Test unsupported XML SRS
+
+
+def test_jp2kak_unsupported_srs_for_gmljp2(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "out.jp2")
+    # There is no EPSG code and Albers Equal Area is not supported by OGRSpatialReference::exportToXML()
+    wkt = """PROJCRS["Africa_Albers_Equal_Area_Conic",
+    BASEGEOGCRS["WGS 84",
+        DATUM["World Geodetic System 1984",
+            ELLIPSOID["WGS 84",6378137,298.257223563,
+                LENGTHUNIT["metre",1]]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433]],
+        ID["EPSG",4326]],
+    CONVERSION["Albers Equal Area",
+        METHOD["Albers Equal Area",
+            ID["EPSG",9822]],
+        PARAMETER["Latitude of false origin",0,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8821]],
+        PARAMETER["Longitude of false origin",25,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8822]],
+        PARAMETER["Latitude of 1st standard parallel",20,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8823]],
+        PARAMETER["Latitude of 2nd standard parallel",-23,
+            ANGLEUNIT["degree",0.0174532925199433],
+            ID["EPSG",8824]],
+        PARAMETER["Easting at false origin",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8826]],
+        PARAMETER["Northing at false origin",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8827]]],
+    CS[Cartesian,2],
+        AXIS["easting",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]],
+        AXIS["northing",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1,
+                ID["EPSG",9001]]]]"""
+    gdal.ErrorReset()
+    assert gdal.Translate(filename, "data/byte.tif", outputSRS=wkt, format="JP2KAK")
+    assert gdal.GetLastErrorMsg() == ""
+    ds = gdal.Open(filename)
+    ref_srs = osr.SpatialReference()
+    ref_srs.ImportFromWkt(wkt)
+    assert ds.GetSpatialRef().IsSame(ref_srs)
+    # Check that we do *not* have a GMLJP2 box
+    assert "xml:gml.root-instance" not in ds.GetMetadataDomainList()

@@ -235,6 +235,8 @@ class CPL_DLL GDALJP2Metadata
     static GDALJP2Box *CreateIPRBox(GDALDataset *poSrcDS);
     static int IsUUID_MSI(const GByte *abyUUID);
     static int IsUUID_XMP(const GByte *abyUUID);
+
+    static bool IsSRSCompatible(const OGRSpatialReference *poSRS);
 };
 
 CPLXMLNode *GDALGetJPEG2000Structure(const char *pszFilename, VSILFILE *fp,

@@ -1253,6 +1253,32 @@ GDALJP2Box *GDALJP2Metadata::CreateJP2GeoTIFF()
 }
 
 /************************************************************************/
+/*                          IsSRSCompatible()                           */
+/************************************************************************/
+
+/* Returns true if the SRS can be references through a EPSG code, or encoded
+ * as a GML SRS
+ */
+bool GDALJP2Metadata::IsSRSCompatible(const OGRSpatialReference *poSRS)
+{
+    const char *pszAuthName = poSRS->GetAuthorityName(nullptr);
+    const char *pszAuthCode = poSRS->GetAuthorityCode(nullptr);
+
+    if (pszAuthName && pszAuthCode && EQUAL(pszAuthName, "epsg"))
+    {
+        if (atoi(pszAuthCode))
+            return true;
+    }
+
+    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+    CPLErrorStateBackuper oErrorStateBackuper;
+    char *pszGMLDef = nullptr;
+    const bool bRet = (poSRS->exportToXML(&pszGMLDef, nullptr) == OGRERR_NONE);
+    CPLFree(pszGMLDef);
+    return bRet;
+}
+
+/************************************************************************/
 /*                     GetGMLJP2GeoreferencingInfo()                    */
 /************************************************************************/
 
@@ -1269,42 +1295,27 @@ void GDALJP2Metadata::GetGMLJP2GeoreferencingInfo(
     bNeedAxisFlip = false;
     OGRSpatialReference oSRS(m_oSRS);
 
-    if (oSRS.IsProjected())
-    {
-        const char *pszAuthName = oSRS.GetAuthorityName("PROJCS");
+    const char *pszAuthName = oSRS.GetAuthorityName(nullptr);
+    const char *pszAuthCode = oSRS.GetAuthorityCode(nullptr);
 
-        if (pszAuthName != nullptr && EQUAL(pszAuthName, "epsg"))
-        {
-            nEPSGCode = atoi(oSRS.GetAuthorityCode("PROJCS"));
-        }
-    }
-    else if (oSRS.IsGeographic())
+    if (pszAuthName && pszAuthCode && EQUAL(pszAuthName, "epsg"))
     {
-        const char *pszAuthName = oSRS.GetAuthorityName("GEOGCS");
-
-        if (pszAuthName != nullptr && EQUAL(pszAuthName, "epsg"))
-        {
-            nEPSGCode = atoi(oSRS.GetAuthorityCode("GEOGCS"));
-        }
+        nEPSGCode = atoi(pszAuthCode);
     }
 
-    // Save error state as importFromEPSGA() will call CPLReset()
-    CPLErrorNum errNo = CPLGetLastErrorNo();
-    CPLErr eErr = CPLGetLastErrorType();
-    CPLString osLastErrorMsg = CPLGetLastErrorMsg();
-
-    // Determine if we need to flip axis. Reimport from EPSG and make
-    // sure not to strip axis definitions to determine the axis order.
-    if (nEPSGCode != 0 && oSRS.importFromEPSGA(nEPSGCode) == OGRERR_NONE)
     {
-        if (oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting())
+        CPLErrorStateBackuper oErrorStateBackuper;
+        // Determine if we need to flip axis. Reimport from EPSG and make
+        // sure not to strip axis definitions to determine the axis order.
+        if (nEPSGCode != 0 && oSRS.importFromEPSG(nEPSGCode) == OGRERR_NONE)
         {
-            bNeedAxisFlip = true;
+            if (oSRS.EPSGTreatsAsLatLong() ||
+                oSRS.EPSGTreatsAsNorthingEasting())
+            {
+                bNeedAxisFlip = true;
+            }
         }
     }
-
-    // Restore error state
-    CPLErrorSetState(eErr, errNo, osLastErrorMsg);
 
     /* -------------------------------------------------------------------- */
     /*      Prepare coverage origin and offset vectors.  Take axis          */
@@ -1369,6 +1380,7 @@ void GDALJP2Metadata::GetGMLJP2GeoreferencingInfo(
     {
         char *pszGMLDef = nullptr;
 
+        CPLErrorStateBackuper oErrorStateBackuper;
         if (oSRS.exportToXML(&pszGMLDef, nullptr) == OGRERR_NONE)
         {
             char *pszWKT = nullptr;
