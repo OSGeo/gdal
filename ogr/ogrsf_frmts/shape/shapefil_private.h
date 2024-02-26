@@ -28,6 +28,29 @@
 #define SHPLIB_NULLPTR NULL
 #endif
 
+#if !defined(SHP_BIG_ENDIAN)
+#if defined(CPL_MSB)
+#define SHP_BIG_ENDIAN 1
+#elif (defined(__GNUC__) && __GNUC__ >= 5) ||                                  \
+    (defined(__GNUC__) && defined(__GNUC_MINOR__) && __GNUC__ == 4 &&          \
+     __GNUC_MINOR__ >= 6)
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define SHP_BIG_ENDIAN 1
+#endif
+#elif defined(__GLIBC__)
+#if __BYTE_ORDER == __BIG_ENDIAN
+#define SHP_BIG_ENDIAN 1
+#endif
+#elif defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN)
+#define SHP_BIG_ENDIAN 1
+#elif defined(_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN)
+#elif defined(__sparc) || defined(__sparc__) || defined(_POWER) ||             \
+    defined(__powerpc__) || defined(__ppc__) || defined(__hpux) ||             \
+    defined(_MIPSEB) || defined(_POWER) || defined(__s390__)
+#define SHP_BIG_ENDIAN 1
+#endif
+#endif
+
 #include "shapefil.h"
 #include <stdint.h>
 #include <stdlib.h>

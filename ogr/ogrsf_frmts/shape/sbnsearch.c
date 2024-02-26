@@ -709,7 +709,7 @@ static int compare_ints(const void *a, const void *b)
 /*                        SBNSearchDiskTree()                           */
 /************************************************************************/
 
-int *SBNSearchDiskTree(SBNSearchHandle hSBN, const double *padfBoundsMin,
+int *SBNSearchDiskTree(const SBNSearchHandle hSBN, const double *padfBoundsMin,
                        const double *padfBoundsMax, int *pnShapeCount)
 {
     *pnShapeCount = 0;
@@ -808,7 +808,7 @@ int *SBNSearchDiskTree(SBNSearchHandle hSBN, const double *padfBoundsMin,
 /*                     SBNSearchDiskTreeInteger()                       */
 /************************************************************************/
 
-int *SBNSearchDiskTreeInteger(SBNSearchHandle hSBN, int bMinX, int bMinY,
+int *SBNSearchDiskTreeInteger(const SBNSearchHandle hSBN, int bMinX, int bMinY,
                               int bMaxX, int bMaxY, int *pnShapeCount)
 {
     *pnShapeCount = 0;
