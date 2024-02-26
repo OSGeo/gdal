@@ -409,7 +409,7 @@ jobs:
       shell: pwsh
       run: |
         echo "JAVA_HOME=$env:JAVA_HOME_11_X64" >> %GITHUB_ENV%
-    - uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
+    - uses: conda-incubator/setup-miniconda@392cf345b1784333caa1a1185081c71e6ffd61bc # v3.0.2
       with:
         activate-environment: gdalenv
         miniforge-variant: Mambaforge
@@ -506,7 +506,7 @@ jobs:
         git config --global core.autocrlf false
     - name: Checkout GDAL
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    - uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
+    - uses: conda-incubator/setup-miniconda@392cf345b1784333caa1a1185081c71e6ffd61bc # v3.0.2
       with:
         activate-environment: gdalenv
         miniforge-variant: Mambaforge
@@ -653,7 +653,7 @@ jobs:
         git config --global core.autocrlf false
     - name: Checkout GDAL
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    - uses: conda-incubator/setup-miniconda@11b562958363ec5770fef326fe8ef0366f8cbf8a # v3.0.1
+    - uses: conda-incubator/setup-miniconda@392cf345b1784333caa1a1185081c71e6ffd61bc # v3.0.2
       with:
         activate-environment: gdalenv
         python-version: 3.9
