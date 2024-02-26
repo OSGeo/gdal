@@ -542,9 +542,8 @@ bool MEMRasterBand::IsMaskBand() const
 /************************************************************************/
 
 MEMDataset::MEMDataset()
-    : GDALDataset(FALSE), bGeoTransformSet(FALSE), m_nGCPCount(0),
-      m_pasGCPs(nullptr), m_nOverviewDSCount(0), m_papoOverviewDS(nullptr),
-      m_poPrivate(new Private())
+    : GDALDataset(FALSE), bGeoTransformSet(FALSE), m_nOverviewDSCount(0),
+      m_papoOverviewDS(nullptr), m_poPrivate(new Private())
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -566,9 +565,6 @@ MEMDataset::~MEMDataset()
     bSuppressOnClose = true;
     FlushCache(true);
     bSuppressOnClose = bSuppressOnCloseBackup;
-
-    GDALDeinitGCPs(m_nGCPCount, m_pasGCPs);
-    CPLFree(m_pasGCPs);
 
     for (int i = 0; i < m_nOverviewDSCount; ++i)
         delete m_papoOverviewDS[i];
@@ -681,7 +677,7 @@ void *MEMDataset::GetInternalHandle(const char *pszRequest)
 int MEMDataset::GetGCPCount()
 
 {
-    return m_nGCPCount;
+    return static_cast<int>(m_aoGCPs.size());
 }
 
 /************************************************************************/
@@ -701,7 +697,7 @@ const OGRSpatialReference *MEMDataset::GetGCPSpatialRef() const
 const GDAL_GCP *MEMDataset::GetGCPs()
 
 {
-    return m_pasGCPs;
+    return gdal::GCP::c_ptr(m_aoGCPs);
 }
 
 /************************************************************************/
@@ -712,15 +708,11 @@ CPLErr MEMDataset::SetGCPs(int nNewCount, const GDAL_GCP *pasNewGCPList,
                            const OGRSpatialReference *poSRS)
 
 {
-    GDALDeinitGCPs(m_nGCPCount, m_pasGCPs);
-    CPLFree(m_pasGCPs);
-
     m_oGCPSRS.Clear();
     if (poSRS)
         m_oGCPSRS = *poSRS;
 
-    m_nGCPCount = nNewCount;
-    m_pasGCPs = GDALDuplicateGCPs(m_nGCPCount, pasNewGCPList);
+    m_aoGCPs = gdal::GCP::fromC(pasNewGCPList, nNewCount);
 
     return CE_None;
 }
