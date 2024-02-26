@@ -19,6 +19,8 @@ instead use the :ref:`PostgreSQL SQL Dump driver <vector.pgdump>`.
 You can find additional information on the driver in the :ref:`Advanced OGR
 PostgreSQL driver Information <vector.pg_advanced>` page.
 
+Starting with GDAL 3.9, only PostgreSQL >= 9 and PostGIS >= 2 are supported.
+
 Driver capabilities
 -------------------
 
@@ -81,7 +83,7 @@ and named views will be treated as layers.
 
 The driver also supports the
 `geography <http://postgis.net/docs/manual-1.5/ch04.html#PostGIS_Geography>`__
-column type introduced in PostGIS 1.5.
+column type.
 
 The driver also supports reading and writing the
 following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE,
@@ -228,7 +230,7 @@ Layer Creation Options
       :choices: geometry, geography, BYTEA, OID
 
       The GEOM_TYPE layer creation option can be set to one
-      of "geometry", "geography" (PostGIS >= 1.5), "BYTEA" or "OID" to
+      of "geometry", "geography", "BYTEA" or "OID" to
       force the type of geometry used for a table. For a PostGIS database,
       "geometry" is the default value. PostGIS "geography" assumes a geographic
       SRS (before PostGIS 2.2, it was even required to be EPSG:4326), but the
@@ -266,7 +268,7 @@ Layer Creation Options
       :choices: 2, 3, XYM, XYZM
 
       Control the dimension of the layer. Important
-      to set to 2 for 2D layers with PostGIS 1.0+ as it has constraints on
+      to set to 2 for 2D layers as it has constraints on
       the geometry dimension during loading.
 
 -  .. lco:: GEOMETRY_NAME

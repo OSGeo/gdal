@@ -196,7 +196,7 @@ class OGRPGLayer CPL_NON_FINAL : public OGRLayer
     static char *GeometryToBYTEA(const OGRGeometry *, int nPostGISMajor,
                                  int nPostGISMinor);
     static GByte *BYTEAToGByteArray(const char *pszBytea, int *pnLength);
-    static OGRGeometry *BYTEAToGeometry(const char *, int bIsPostGIS1);
+    static OGRGeometry *BYTEAToGeometry(const char *);
     Oid GeometryToOID(OGRGeometry *);
     OGRGeometry *OIDToGeometry(Oid);
 
@@ -637,6 +637,11 @@ class OGRPGDataSource final : public OGRDataSource
 
     bool m_bHasGeometryColumns = false;
     bool m_bHasSpatialRefSys = false;
+
+    bool HavePostGIS() const
+    {
+        return bHavePostGIS;
+    }
 
     int GetUndefinedSRID() const
     {

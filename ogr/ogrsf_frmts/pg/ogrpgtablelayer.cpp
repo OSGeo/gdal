@@ -670,36 +670,18 @@ int OGRPGTableLayer::ReadTableDefinition()
     /*      Identify the integer primary key.                               */
     /* -------------------------------------------------------------------- */
 
-    const char *pszTypnameEqualsAnyClause =
-        poDS->sPostgreSQLVersion.nMajor == 7 &&
-                poDS->sPostgreSQLVersion.nMinor <= 3
-            ? "ANY(SELECT '{int2, int4, int8, serial, bigserial}')"
-            : "ANY(ARRAY['int2','int4','int8','serial','bigserial'])";
-
-    const char *pszAttnumEqualAnyIndkey =
-        poDS->sPostgreSQLVersion.nMajor > 8 ||
-                (poDS->sPostgreSQLVersion.nMajor == 8 &&
-                 poDS->sPostgreSQLVersion.nMinor >= 2)
-            ? "a.attnum = ANY(i.indkey)"
-            : "(i.indkey[0]=a.attnum OR i.indkey[1]=a.attnum OR "
-              "i.indkey[2]=a.attnum "
-              "OR i.indkey[3]=a.attnum OR i.indkey[4]=a.attnum OR "
-              "i.indkey[5]=a.attnum "
-              "OR i.indkey[6]=a.attnum OR i.indkey[7]=a.attnum OR "
-              "i.indkey[8]=a.attnum "
-              "OR i.indkey[9]=a.attnum)";
-
-    /* See #1889 for why we don't use 'AND a.attnum = ANY(i.indkey)' */
     osCommand.Printf(
-        "SELECT a.attname, a.attnum, t.typname, t.typname = %s AS isfid "
+        "SELECT a.attname, a.attnum, t.typname, "
+        "t.typname = ANY(ARRAY['int2','int4','int8','serial','bigserial']) AS "
+        "isfid "
         "FROM pg_attribute a "
         "JOIN pg_type t ON t.oid = a.atttypid "
         "JOIN pg_index i ON i.indrelid = a.attrelid "
         "WHERE a.attnum > 0 AND a.attrelid = %u "
         "AND i.indisprimary = 't' "
         "AND t.typname !~ '^geom' "
-        "AND %s ORDER BY a.attnum",
-        pszTypnameEqualsAnyClause, nTableOID, pszAttnumEqualAnyIndkey);
+        "AND a.attnum = ANY(i.indkey) ORDER BY a.attnum",
+        nTableOID);
 
     PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
 
@@ -1124,9 +1106,8 @@ void OGRPGTableLayer::BuildWhere()
         CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.18g %.18g", sEnvelope.MaxX,
                     sEnvelope.MaxY);
         osWHERE.Printf(
-            "WHERE %s && %s('BOX3D(%s, %s)'::box3d,%d) ",
+            "WHERE %s && ST_SetSRID('BOX3D(%s, %s)'::box3d,%d) ",
             OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef()).c_str(),
-            (poDS->sPostGISVersion.nMajor >= 2) ? "ST_SetSRID" : "SetSRID",
             szBox3D_1, szBox3D_2, poGeomFieldDefn->nSRSId);
     }
 
@@ -1269,45 +1250,22 @@ CPLString OGRPGTableLayer::BuildFields()
 
         if (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY)
         {
-            if (poDS->sPostGISVersion.nMajor < 0 || poDS->bUseBinaryCursor)
+            if (!poDS->HavePostGIS() || poDS->bUseBinaryCursor)
             {
                 osFieldList += osEscapedGeom;
             }
             else if (CPLTestBool(CPLGetConfigOption("PG_USE_BASE64", "NO")))
             {
-                if (poDS->sPostGISVersion.nMajor >= 2)
-                    osFieldList += "encode(ST_AsEWKB(";
-                else
-                    osFieldList += "encode(AsEWKB(";
+                osFieldList += "encode(ST_AsEWKB(";
                 osFieldList += osEscapedGeom;
                 osFieldList += "), 'base64') AS ";
                 osFieldList += OGRPGEscapeColumnName(
                     CPLSPrintf("EWKBBase64_%s", poGeomFieldDefn->GetNameRef()));
             }
-            else if (poDS->sPostGISVersion.nMajor > 1 ||
-                     (poDS->sPostGISVersion.nMajor == 1 &&
-                      poDS->sPostGISVersion.nMinor >= 1))
-            /* perhaps works also for older version, but I didn't check
-                      */
+            else
             {
                 /* This will return EWKB in an hex encoded form */
                 osFieldList += osEscapedGeom;
-            }
-            else if (poDS->sPostGISVersion.nMajor >= 1)
-            {
-                osFieldList += "AsEWKT(";
-                osFieldList += osEscapedGeom;
-                osFieldList += ") AS ";
-                osFieldList += OGRPGEscapeColumnName(
-                    CPLSPrintf("AsEWKT_%s", poGeomFieldDefn->GetNameRef()));
-            }
-            else
-            {
-                osFieldList += "AsText(";
-                osFieldList += osEscapedGeom;
-                osFieldList += ") AS ";
-                osFieldList += OGRPGEscapeColumnName(
-                    CPLSPrintf("AsText_%s", poGeomFieldDefn->GetNameRef()));
             }
         }
         else if (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY)
@@ -2123,14 +2081,10 @@ OGRErr OGRPGTableLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
         osCommand.Printf("INSERT INTO %s DEFAULT VALUES", pszSqlTableName);
 
     int bReturnRequested = FALSE;
-    /* RETURNING is only available since Postgres 8.2 */
     /* We only get the FID, but we also could add the unset fields to get */
     /* the default values */
     if (bRetrieveFID && pszFIDColumn != nullptr &&
-        poFeature->GetFID() == OGRNullFID &&
-        (poDS->sPostgreSQLVersion.nMajor >= 9 ||
-         (poDS->sPostgreSQLVersion.nMajor == 8 &&
-          poDS->sPostgreSQLVersion.nMinor >= 2)))
+        poFeature->GetFID() == OGRNullFID)
     {
         bReturnRequested = TRUE;
         osCommand += " RETURNING ";
@@ -3457,13 +3411,8 @@ void OGRPGTableLayer::ResolveSRID(const OGRPGGeomFieldDefn *poGFldDefn)
     if (nSRSId <= 0 && poGFldDefn->ePostgisType == GEOM_TYPE_GEOMETRY &&
         poDS->sPostGISVersion.nMajor >= 0)
     {
-        const char *psGetSRIDFct =
-            poDS->sPostGISVersion.nMajor >= 2 ? "ST_SRID" : "getsrid";
-
         CPLString osGetSRID;
-        osGetSRID += "SELECT ";
-        osGetSRID += psGetSRIDFct;
-        osGetSRID += "(";
+        osGetSRID += "SELECT ST_SRID(";
         osGetSRID += OGRPGEscapeColumnName(poGFldDefn->GetNameRef());
         osGetSRID += ") FROM ";
         osGetSRID += pszSqlTableName;
@@ -3865,7 +3814,7 @@ OGRErr OGRPGTableLayer::RunDeferredCreationIfNecessary()
     {
         OGRPGGeomFieldDefn *poGeomField = poFeatureDefn->GetGeomFieldDefn(i);
 
-        if (poDS->sPostGISVersion.nMajor >= 2 ||
+        if (poDS->HavePostGIS() ||
             poGeomField->ePostgisType == GEOM_TYPE_GEOGRAPHY)
         {
             const char *pszGeometryType =
@@ -3918,21 +3867,6 @@ OGRErr OGRPGTableLayer::RunDeferredCreationIfNecessary()
         OGRPGClearResult(hResult);
     }
     m_aosDeferredCommentOnColumns.clear();
-
-    // For PostGIS 1.X, use AddGeometryColumn() to create geometry columns
-    if (poDS->sPostGISVersion.nMajor < 2)
-    {
-        for (int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
-        {
-            OGRPGGeomFieldDefn *poGeomField =
-                poFeatureDefn->GetGeomFieldDefn(i);
-            if (poGeomField->ePostgisType == GEOM_TYPE_GEOMETRY &&
-                RunAddGeometryColumn(poGeomField) != OGRERR_NONE)
-            {
-                return OGRERR_FAILURE;
-            }
-        }
-    }
 
     if (bCreateSpatialIndexFlag)
     {
