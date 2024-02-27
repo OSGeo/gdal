@@ -1732,3 +1732,10 @@ def test_non_square():
             2,
             3,
         )
+
+        # Test extent calculation
+        res = gdal.SuggestedWarpOutput(ds, [])
+        assert res.ymin == pytest.approx(29.95)
+        assert res.ymax == pytest.approx(30.25)
+        assert res.xmin == pytest.approx(9.9)
+        assert res.xmax == pytest.approx(10.5)
