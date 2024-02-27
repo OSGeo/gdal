@@ -1672,7 +1672,7 @@ def test_warp_average_oversampling():
 
 
 ###############################################################################
-# Test bug fix for https://github.com/OSGeo/gdal/issues/56288
+# Test bug fix for https://github.com/qgis/QGIS/issues/56288
 
 
 def test_non_square():
@@ -1718,14 +1718,17 @@ def test_non_square():
             warped.RasterXSize == ds.RasterXSize
             and warped.RasterYSize == ds.RasterYSize
         )
+        assert warped.GetGeoTransform() == pytest.approx(
+            (9.9, 0.2, 0.0, 30.25, 0.0, -0.1)
+        )
         assert struct.unpack("b" * (3 * 3), warped.ReadRaster()) == (
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
             7,
             8,
             9,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
         )

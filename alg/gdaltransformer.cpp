@@ -443,7 +443,7 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
             GDALGenImgProjTransformInfo *psInfo{
                 static_cast<GDALGenImgProjTransformInfo *>(pTransformArg)};
 
-            if (psInfo->pSrcTransformer != GDALRPCTransform)
+            if (!psInfo->pSrcTransformer)
             {
                 const OGRSpatialReference *poSourceCRS = nullptr;
                 const OGRSpatialReference *poTargetCRS = nullptr;
@@ -462,8 +462,18 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
                      poSourceCRS->IsSame(poTargetCRS)))
                 {
 
+                    const bool bNorthUp{adfGeoTransform[5] < 0.0};
+
                     memcpy(padfGeoTransformOut, adfGeoTransform,
                            sizeof(double) * 6);
+
+                    if (!bNorthUp)
+                    {
+                        padfGeoTransformOut[3] =
+                            padfGeoTransformOut[3] +
+                            nInYSize * padfGeoTransformOut[5];
+                        padfGeoTransformOut[5] = -padfGeoTransformOut[5];
+                    }
 
                     *pnPixels = nInXSize;
                     *pnLines = nInYSize;
@@ -477,6 +487,10 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
                         padfExtent[2] =
                             adfGeoTransform[0] + nInXSize * adfGeoTransform[1];
                         padfExtent[3] = adfGeoTransform[3];
+                        if (!bNorthUp)
+                        {
+                            std::swap(padfExtent[1], padfExtent[3]);
+                        }
                     }
                     return CE_None;
                 }
