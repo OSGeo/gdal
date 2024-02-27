@@ -48,6 +48,9 @@ computer.
 
 .. include:: options/ot.rst
 
+If not set then a default type is used, which might not be supported
+by the relevant driver, causing a error.
+
 .. include:: options/of.rst
 
 .. option:: -txe <xmin> <xmax>
