@@ -2296,6 +2296,30 @@ def test_ogr_gpkg_22(tmp_vsimem):
 
 
 ###############################################################################
+# Test creating a feature with FID 0
+
+
+def test_ogr_gpkg_create_with_fid_0(tmp_vsimem):
+
+    fname = tmp_vsimem / "test_ogr_gpkg_create_with_fid_0.gpkg"
+
+    ds = gdaltest.gpkg_dr.CreateDataSource(fname)
+    lyr = ds.CreateLayer("test")
+
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFID(0)
+    lyr.CreateFeature(feat)
+    feat = None
+
+    ds = None
+
+    ds = ogr.Open(fname)
+    lyr = ds.GetLayerByName("test")
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 0
+
+
+###############################################################################
 # Test not nullable fields
 
 

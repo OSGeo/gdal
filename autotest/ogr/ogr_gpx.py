@@ -572,3 +572,22 @@ def test_ogr_gpx_N_MAX_LINKS():
     lyr = ds.GetLayerByName("track_points")
     f = lyr.GetNextFeature()
     assert f["link3_href"] is None
+
+
+###############################################################################
+# Test preservation of FID when converting to GPKG
+# (https://github.com/OSGeo/gdal/issues/9225)
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr_gpx_convert_to_gpkg(tmp_vsimem):
+
+    outfilename = str(tmp_vsimem / "out.gpkg")
+    gdal.VectorTranslate(outfilename, "data/gpx/test.gpx")
+
+    ds = ogr.Open(outfilename)
+    lyr = ds.GetLayer("tracks")
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 0
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 1

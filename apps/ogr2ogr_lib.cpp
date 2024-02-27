@@ -4324,6 +4324,21 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                 bPreserveFID = false;
             }
         }
+        // Detect scenario of converting from GPX to a format like GPKG
+        // Cf https://github.com/OSGeo/gdal/issues/9225
+        else if (!bPreserveFID && !m_bUnsetFid && !bAppend &&
+                 m_poSrcDS->GetDriver() &&
+                 EQUAL(m_poSrcDS->GetDriver()->GetDescription(), "GPX") &&
+                 pszDestCreationOptions &&
+                 (strstr(pszDestCreationOptions, "='FID'") != nullptr ||
+                  strstr(pszDestCreationOptions, "=\"FID\"") != nullptr) &&
+                 CSLFetchNameValue(m_papszLCO, "FID") == nullptr)
+        {
+            CPLDebug("GDALVectorTranslate",
+                     "Forcing -preserve_fid because source is GPX and layers "
+                     "have FID cross references");
+            bPreserveFID = true;
+        }
         // Detect scenario of converting GML2 with fid attribute to GPKG
         else if (EQUAL(m_poDstDS->GetDriver()->GetDescription(), "GPKG") &&
                  CSLFetchNameValue(m_papszLCO, "FID") == nullptr)

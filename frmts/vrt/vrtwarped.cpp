@@ -1283,7 +1283,8 @@ CPLErr CPL_STDCALL GDALInitializeWarpedVRT(GDALDatasetH hDS,
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTWarpedDataset::XMLInit(CPLXMLNode *psTree, const char *pszVRTPathIn)
+CPLErr VRTWarpedDataset::XMLInit(const CPLXMLNode *psTree,
+                                 const char *pszVRTPathIn)
 
 {
 
@@ -1330,7 +1331,8 @@ CPLErr VRTWarpedDataset::XMLInit(CPLXMLNode *psTree, const char *pszVRTPathIn)
     /* -------------------------------------------------------------------- */
     /*      Find the GDALWarpOptions XML tree.                              */
     /* -------------------------------------------------------------------- */
-    CPLXMLNode *const psOptionsTree = CPLGetXMLNode(psTree, "GDALWarpOptions");
+    const CPLXMLNode *const psOptionsTree =
+        CPLGetXMLNode(psTree, "GDALWarpOptions");
     if (psOptionsTree == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1355,14 +1357,16 @@ CPLErr VRTWarpedDataset::XMLInit(CPLXMLNode *psTree, const char *pszVRTPathIn)
     else
         pszAbsolutePath = CPLStrdup(pszRelativePath);
 
-    CPLSetXMLValue(psOptionsTree, "SourceDataset", pszAbsolutePath);
+    CPLXMLNode *psOptionsTreeCloned = CPLCloneXMLTree(psOptionsTree);
+    CPLSetXMLValue(psOptionsTreeCloned, "SourceDataset", pszAbsolutePath);
     CPLFree(pszAbsolutePath);
 
     /* -------------------------------------------------------------------- */
     /*      And instantiate the warp options, and corresponding warp        */
     /*      operation.                                                      */
     /* -------------------------------------------------------------------- */
-    GDALWarpOptions *psWO = GDALDeserializeWarpOptions(psOptionsTree);
+    GDALWarpOptions *psWO = GDALDeserializeWarpOptions(psOptionsTreeCloned);
+    CPLDestroyXMLNode(psOptionsTreeCloned);
     if (psWO == nullptr)
         return CE_Failure;
 

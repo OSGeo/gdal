@@ -2627,7 +2627,7 @@ class VRTArraySource : public VRTSource
     }
 
     CPLErr
-    XMLInit(CPLXMLNode *psTree, const char *pszVRTPath,
+    XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
             std::map<CPLString, GDALDataset *> &oMapSharedSources) override;
     CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
 };
@@ -2706,7 +2706,7 @@ ParseSingleSourceArray(const CPLXMLNode *psSingleSourceArray,
 /************************************************************************/
 
 CPLErr VRTArraySource::XMLInit(
-    CPLXMLNode *psTree, const char *pszVRTPath,
+    const CPLXMLNode *psTree, const char *pszVRTPath,
     std::map<CPLString, GDALDataset *> & /*oMapSharedSources*/)
 {
     const auto poArray = ParseArray(psTree, pszVRTPath, "ArraySource");
@@ -2978,7 +2978,7 @@ static std::shared_ptr<GDALMDArray> ParseArray(const CPLXMLNode *psTree,
 /************************************************************************/
 
 VRTSource *
-VRTParseArraySource(CPLXMLNode *psChild, const char *pszVRTPath,
+VRTParseArraySource(const CPLXMLNode *psChild, const char *pszVRTPath,
                     std::map<CPLString, GDALDataset *> &oMapSharedSources)
 {
     VRTSource *poSource = nullptr;

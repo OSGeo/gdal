@@ -2701,7 +2701,7 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
         {
             const char *pszGMLJP2V2Def =
                 CSLFetchNameValue(papszOptions, "GMLJP2V2_DEF");
-            GDALJP2Box *poBox;
+            GDALJP2Box *poBox = nullptr;
             if (pszGMLJP2V2Def != nullptr)
             {
                 poBox = oJP2MD.CreateGMLJP2V2(nXSize, nYSize, pszGMLJP2V2Def,
@@ -2709,18 +2709,42 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
             }
             else
             {
-                poBox = oJP2MD.CreateGMLJP2(nXSize, nYSize);
+                const OGRSpatialReference *poSRS =
+                    poSrcDS->GetGCPCount() > 0 ? poSrcDS->GetGCPSpatialRef()
+                                               : poSrcDS->GetSpatialRef();
+                if (!poSRS || poSRS->IsEmpty() ||
+                    GDALJP2Metadata::IsSRSCompatible(poSRS))
+                {
+                    poBox = oJP2MD.CreateGMLJP2(nXSize, nYSize);
+                }
+                else if (CSLFetchNameValue(papszOptions, "GMLJP2"))
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "GMLJP2 box was explicitly required but cannot be "
+                             "written due "
+                             "to lack of georeferencing and/or unsupported "
+                             "georeferencing "
+                             "for GMLJP2");
+                }
+                else
+                {
+                    CPLDebug("JP2KAK",
+                             "Cannot write GMLJP2 box due to unsupported SRS");
+                }
             }
-            try
+            if (poBox)
             {
-                JP2KAKWriteBox(&family, poBox);
-            }
-            catch (...)
-            {
-                CPLDebug("JP2KAK", "JP2KAKWriteBox) - caught exception.");
-                oCodeStream.destroy();
-                delete poBox;
-                return nullptr;
+                try
+                {
+                    JP2KAKWriteBox(&family, poBox);
+                }
+                catch (...)
+                {
+                    CPLDebug("JP2KAK", "JP2KAKWriteBox) - caught exception.");
+                    oCodeStream.destroy();
+                    delete poBox;
+                    return nullptr;
+                }
             }
         }
         if (CPLFetchBool(papszOptions, "GeoJP2", true))

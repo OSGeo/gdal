@@ -1813,7 +1813,7 @@ CPLErr CPL_STDCALL VRTAddSource(VRTSourcedRasterBandH hVRTBand,
 /************************************************************************/
 
 CPLErr VRTSourcedRasterBand::XMLInit(
-    CPLXMLNode *psTree, const char *pszVRTPath,
+    const CPLXMLNode *psTree, const char *pszVRTPath,
     std::map<CPLString, GDALDataset *> &oMapSharedSources)
 
 {
@@ -1830,7 +1830,7 @@ CPLErr VRTSourcedRasterBand::XMLInit(
     VRTDriver *const poDriver =
         static_cast<VRTDriver *>(GDALGetDriverByName("VRT"));
 
-    for (CPLXMLNode *psChild = psTree->psChild;
+    for (const CPLXMLNode *psChild = psTree->psChild;
          psChild != nullptr && poDriver != nullptr; psChild = psChild->psNext)
     {
         if (psChild->eType != CXT_Element)

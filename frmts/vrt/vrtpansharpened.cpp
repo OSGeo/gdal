@@ -271,14 +271,14 @@ char **VRTPansharpenedDataset::GetFileList()
 /*                              XMLInit()                               */
 /************************************************************************/
 
-CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
+CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
                                        const char *pszVRTPathIn)
 
 {
     return XMLInit(psTree, pszVRTPathIn, nullptr, 0, nullptr);
 }
 
-CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
+CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
                                        const char *pszVRTPathIn,
                                        GDALRasterBandH hPanchroBandIn,
                                        int nInputSpectralBandsIn,
@@ -299,7 +299,7 @@ CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
     /*      Parse PansharpeningOptions                                      */
     /* -------------------------------------------------------------------- */
 
-    CPLXMLNode *psOptions = CPLGetXMLNode(psTree, "PansharpeningOptions");
+    const CPLXMLNode *psOptions = CPLGetXMLNode(psTree, "PansharpeningOptions");
     if (psOptions == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Missing PansharpeningOptions");
@@ -325,7 +325,8 @@ CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
 
     if (hPanchroBandIn == nullptr)
     {
-        CPLXMLNode *psPanchroBand = CPLGetXMLNode(psOptions, "PanchroBand");
+        const CPLXMLNode *psPanchroBand =
+            CPLGetXMLNode(psOptions, "PanchroBand");
         if (psPanchroBand == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "PanchroBand missing");
@@ -433,8 +434,8 @@ CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
     }
 
     std::vector<double> adfWeights;
-    CPLXMLNode *psAlgOptions = CPLGetXMLNode(psOptions, "AlgorithmOptions");
-    if (psAlgOptions != nullptr)
+    if (const CPLXMLNode *psAlgOptions =
+            CPLGetXMLNode(psOptions, "AlgorithmOptions"))
     {
         const char *pszWeights =
             CPLGetXMLValue(psAlgOptions, "Weights", nullptr);
@@ -499,7 +500,7 @@ CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
     /*      First pass on spectral datasets to check their georeferencing.  */
     /* -------------------------------------------------------------------- */
     int iSpectralBand = 0;
-    for (CPLXMLNode *psIter = psOptions->psChild; psIter;
+    for (const CPLXMLNode *psIter = psOptions->psChild; psIter;
          psIter = psIter->psNext)
     {
         GDALDataset *poDataset;

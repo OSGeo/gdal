@@ -3559,31 +3559,106 @@ void PDFDataset::ParseInfo(GDALPDFObject *poInfoObj)
 #if defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
 
 /************************************************************************/
-/*                               AddLayer()                             */
+/*                             AddLayer()                               */
 /************************************************************************/
 
-void PDFDataset::AddLayer(const char *pszLayerName)
+void PDFDataset::AddLayer(const std::string &osName, int iPage)
 {
-    int nNewIndex = m_osLayerList.size() /*/ 2*/;
+    LayerStruct layerStruct;
+    layerStruct.osName = osName;
+    layerStruct.nInsertIdx = static_cast<int>(m_oLayerNameSet.size());
+    layerStruct.iPage = iPage;
+    m_oLayerNameSet.emplace_back(std::move(layerStruct));
+}
 
-    if (nNewIndex == 100)
+/************************************************************************/
+/*                           CreateLayerList()                          */
+/************************************************************************/
+
+void PDFDataset::CreateLayerList()
+{
+    // Sort layers by prioritizing page number and then insertion index
+    std::sort(m_oLayerNameSet.begin(), m_oLayerNameSet.end(),
+              [](const LayerStruct &a, const LayerStruct &b)
+              {
+                  if (a.iPage < b.iPage)
+                      return true;
+                  if (a.iPage > b.iPage)
+                      return false;
+                  return a.nInsertIdx < b.nInsertIdx;
+              });
+
+    if (m_oLayerNameSet.size() >= 100)
     {
-        CPLStringList osNewLayerList;
-        for (int i = 0; i < 100; i++)
+        for (const auto &oLayerStruct : m_oLayerNameSet)
         {
-            osNewLayerList.AddNameValue(CPLSPrintf("LAYER_%03d_NAME", i),
-                                        m_osLayerList[/*2 * */ i] +
-                                            strlen("LAYER_00_NAME="));
+            m_aosLayerNames.AddNameValue(
+                CPLSPrintf("LAYER_%03d_NAME", m_aosLayerNames.size()),
+                oLayerStruct.osName.c_str());
         }
-        m_osLayerList = std::move(osNewLayerList);
+    }
+    else
+    {
+        for (const auto &oLayerStruct : m_oLayerNameSet)
+        {
+            m_aosLayerNames.AddNameValue(
+                CPLSPrintf("LAYER_%02d_NAME", m_aosLayerNames.size()),
+                oLayerStruct.osName.c_str());
+        }
+    }
+}
+
+/************************************************************************/
+/*                  BuildPostfixedLayerNameAndAddLayer()                */
+/************************************************************************/
+
+/** Append a suffix with the page number(s) to the provided layer name, if
+ * it makes sense (that is if it is a multiple page PDF and we haven't selected
+ * a specific name). And also call AddLayer() on it if successful.
+ * If may return an empty string if the layer isn't used by the page of interest
+ */
+std::string PDFDataset::BuildPostfixedLayerNameAndAddLayer(
+    const std::string &osName, const std::pair<int, int> &oOCGRef,
+    int iPageOfInterest, int nPageCount)
+{
+    std::string osPostfixedName = osName;
+    int iLayerPage = 0;
+    if (nPageCount > 1 && !m_oMapOCGNumGenToPages.empty())
+    {
+        const auto oIterToPages = m_oMapOCGNumGenToPages.find(oOCGRef);
+        if (oIterToPages != m_oMapOCGNumGenToPages.end())
+        {
+            const auto &anPages = oIterToPages->second;
+            if (iPageOfInterest > 0)
+            {
+                if (std::find(anPages.begin(), anPages.end(),
+                              iPageOfInterest) == anPages.end())
+                {
+                    return std::string();
+                }
+            }
+            else if (anPages.size() == 1)
+            {
+                iLayerPage = anPages.front();
+                osPostfixedName += CPLSPrintf(" (page %d)", anPages.front());
+            }
+            else
+            {
+                osPostfixedName += " (pages ";
+                for (size_t j = 0; j < anPages.size(); ++j)
+                {
+                    if (j > 0)
+                        osPostfixedName += ", ";
+                    osPostfixedName += CPLSPrintf("%d", anPages[j]);
+                }
+                osPostfixedName += ')';
+            }
+        }
     }
 
-    char szFormatName[64];
-    snprintf(szFormatName, sizeof(szFormatName), "LAYER_%%0%dd_NAME",
-             nNewIndex >= 100 ? 3 : 2);
+    AddLayer(osPostfixedName, iLayerPage);
 
-    m_osLayerList.AddNameValue(CPLSPrintf(szFormatName, nNewIndex),
-                               pszLayerName);
+    return osPostfixedName;
 }
 
 #endif  //  defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
@@ -3595,6 +3670,7 @@ void PDFDataset::AddLayer(const char *pszLayerName)
 /************************************************************************/
 
 void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
+                                      int iPageOfInterest, int nPageCount,
                                       CPLString osTopLayer, int nRecLevel,
                                       int &nVisited, bool &bStop)
 {
@@ -3628,13 +3704,13 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
             }
             else
                 osTopLayer = std::move(osName);
-            AddLayer(osTopLayer.c_str());
+            AddLayer(osTopLayer, 0);
             m_oLayerOCGListPoppler.push_back(std::pair(osTopLayer, nullptr));
         }
         else if (poObj->GetType() == PDFObjectType_Array)
         {
-            ExploreLayersPoppler(poObj->GetArray(), osCurLayer, nRecLevel + 1,
-                                 nVisited, bStop);
+            ExploreLayersPoppler(poObj->GetArray(), iPageOfInterest, nPageCount,
+                                 osCurLayer, nRecLevel + 1, nVisited, bStop);
             if (bStop)
                 return;
             osCurLayer = "";
@@ -3665,10 +3741,17 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
                 OptionalContentGroup *ocg = optContentConfig->findOcgByRef(r);
                 if (ocg)
                 {
-                    AddLayer(osCurLayer.c_str());
+                    const auto oRefPair = std::pair(poObj->GetRefNum().toInt(),
+                                                    poObj->GetRefGen());
+                    const std::string osPostfixedName =
+                        BuildPostfixedLayerNameAndAddLayer(
+                            osCurLayer, oRefPair, iPageOfInterest, nPageCount);
+                    if (osPostfixedName.empty())
+                        continue;
+
                     m_oLayerOCGListPoppler.push_back(
-                        std::make_pair(osCurLayer, ocg));
-                    m_aoLayerWithRef.emplace_back(osCurLayer.c_str(),
+                        std::make_pair(osPostfixedName, ocg));
+                    m_aoLayerWithRef.emplace_back(osPostfixedName.c_str(),
                                                   poObj->GetRefNum(), r.gen);
                 }
             }
@@ -3680,8 +3763,13 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
 /*                         FindLayersPoppler()                          */
 /************************************************************************/
 
-void PDFDataset::FindLayersPoppler()
+void PDFDataset::FindLayersPoppler(int iPageOfInterest)
 {
+    int nPageCount = 0;
+    const auto poPages = GetPagesKids();
+    if (poPages)
+        nPageCount = poPages->GetLength();
+
     OCGs *optContentConfig = m_poDocPoppler->getOptContentConfig();
     if (optContentConfig == nullptr || !optContentConfig->isOk())
         return;
@@ -3692,7 +3780,8 @@ void PDFDataset::FindLayersPoppler()
         GDALPDFArray *poArray = GDALPDFCreateArray(array);
         int nVisited = 0;
         bool bStop = false;
-        ExploreLayersPoppler(poArray, CPLString(), 0, nVisited, bStop);
+        ExploreLayersPoppler(poArray, iPageOfInterest, nPageCount, CPLString(),
+                             0, nVisited, bStop);
         delete poArray;
     }
     else
@@ -3704,14 +3793,15 @@ void PDFDataset::FindLayersPoppler()
             {
                 const char *pszLayerName =
                     (const char *)ocg->getName()->c_str();
-                AddLayer(pszLayerName);
+                AddLayer(pszLayerName, 0);
                 m_oLayerOCGListPoppler.push_back(
                     std::make_pair(CPLString(pszLayerName), ocg));
             }
         }
     }
 
-    m_oMDMD_PDF.SetMetadata(m_osLayerList.List(), "LAYERS");
+    CreateLayerList();
+    m_oMDMD_PDF.SetMetadata(m_aosLayerNames.List(), "LAYERS");
 }
 
 /************************************************************************/
@@ -3895,7 +3985,8 @@ void PDFDataset::TurnLayersOnOffPoppler()
 /*                       ExploreLayersPdfium()                          */
 /************************************************************************/
 
-void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int nRecLevel,
+void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int iPageOfInterest,
+                                     int nPageCount, int nRecLevel,
                                      CPLString osTopLayer)
 {
     if (nRecLevel == 16)
@@ -3916,12 +4007,13 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int nRecLevel,
                 osTopLayer = std::string(osTopLayer).append(".").append(osName);
             else
                 osTopLayer = osName;
-            AddLayer(osTopLayer.c_str());
+            AddLayer(osTopLayer, 0);
             m_oMapLayerNameToOCGNumGenPdfium[osTopLayer] = std::pair(-1, -1);
         }
         else if (poObj->GetType() == PDFObjectType_Array)
         {
-            ExploreLayersPdfium(poObj->GetArray(), nRecLevel + 1, osCurLayer);
+            ExploreLayersPdfium(poObj->GetArray(), iPageOfInterest, nPageCount,
+                                nRecLevel + 1, osCurLayer);
             osCurLayer.clear();
         }
         else if (poObj->GetType() == PDFObjectType_Dictionary)
@@ -3942,11 +4034,17 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int nRecLevel,
                     osCurLayer = osName;
                 // CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
 
-                AddLayer(osCurLayer.c_str());
-                m_aoLayerWithRef.emplace_back(osCurLayer, poObj->GetRefNum(),
-                                              poObj->GetRefGen());
-                m_oMapLayerNameToOCGNumGenPdfium[osCurLayer] =
+                const auto oRefPair =
                     std::pair(poObj->GetRefNum().toInt(), poObj->GetRefGen());
+                const std::string osPostfixedName =
+                    BuildPostfixedLayerNameAndAddLayer(
+                        osCurLayer, oRefPair, iPageOfInterest, nPageCount);
+                if (osPostfixedName.empty())
+                    continue;
+
+                m_aoLayerWithRef.emplace_back(
+                    osPostfixedName, poObj->GetRefNum(), poObj->GetRefGen());
+                m_oMapLayerNameToOCGNumGenPdfium[osPostfixedName] = oRefPair;
             }
         }
     }
@@ -3956,8 +4054,13 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int nRecLevel,
 /*                         FindLayersPdfium()                          */
 /************************************************************************/
 
-void PDFDataset::FindLayersPdfium()
+void PDFDataset::FindLayersPdfium(int iPageOfInterest)
 {
+    int nPageCount = 0;
+    const auto poPages = GetPagesKids();
+    if (poPages)
+        nPageCount = poPages->GetLength();
+
     GDALPDFObject *poCatalog = GetCatalog();
     if (poCatalog == nullptr ||
         poCatalog->GetType() != PDFObjectType_Dictionary)
@@ -3965,7 +4068,8 @@ void PDFDataset::FindLayersPdfium()
     GDALPDFObject *poOrder = poCatalog->LookupObject("OCProperties.D.Order");
     if (poOrder != nullptr && poOrder->GetType() == PDFObjectType_Array)
     {
-        ExploreLayersPdfium(poOrder->GetArray(), 0);
+        ExploreLayersPdfium(poOrder->GetArray(), iPageOfInterest, nPageCount,
+                            0);
     }
 #if 0
     else
@@ -3987,7 +4091,8 @@ void PDFDataset::FindLayersPdfium()
     }
 #endif
 
-    m_oMDMD_PDF.SetMetadata(m_osLayerList.List(), "LAYERS");
+    CreateLayerList();
+    m_oMDMD_PDF.SetMetadata(m_aosLayerNames.List(), "LAYERS");
 }
 
 /************************************************************************/
@@ -4178,6 +4283,84 @@ PDFDataset::VisibilityState PDFDataset::GetVisibilityStateForOGCPdfium(int nNum,
 }
 
 #endif /* HAVE_PDFIUM */
+
+/************************************************************************/
+/*                            GetPagesKids()                            */
+/************************************************************************/
+
+GDALPDFArray *PDFDataset::GetPagesKids()
+{
+    const auto poCatalog = GetCatalog();
+    if (!poCatalog || poCatalog->GetType() != PDFObjectType_Dictionary)
+    {
+        return nullptr;
+    }
+    const auto poKids = poCatalog->LookupObject("Pages.Kids");
+    if (!poKids || poKids->GetType() != PDFObjectType_Array)
+    {
+        return nullptr;
+    }
+    return poKids->GetArray();
+}
+
+/************************************************************************/
+/*                           MapOCGsToPages()                           */
+/************************************************************************/
+
+void PDFDataset::MapOCGsToPages()
+{
+    const auto poKidsArray = GetPagesKids();
+    if (!poKidsArray)
+    {
+        return;
+    }
+    const int nKidsArrayLenght = poKidsArray->GetLength();
+    for (int iPage = 0; iPage < nKidsArrayLenght; ++iPage)
+    {
+        const auto poPage = poKidsArray->Get(iPage);
+        if (poPage && poPage->GetType() == PDFObjectType_Dictionary)
+        {
+            const auto poXObject = poPage->LookupObject("Resources.XObject");
+            if (poXObject && poXObject->GetType() == PDFObjectType_Dictionary)
+            {
+                for (const auto &oNameObjectPair :
+                     poXObject->GetDictionary()->GetValues())
+                {
+                    const auto poProperties =
+                        oNameObjectPair.second->LookupObject(
+                            "Resources.Properties");
+                    if (poProperties &&
+                        poProperties->GetType() == PDFObjectType_Dictionary)
+                    {
+                        const auto &oMap =
+                            poProperties->GetDictionary()->GetValues();
+                        for (const auto &[osKey, poObj] : oMap)
+                        {
+                            if (poObj->GetRefNum().toBool() &&
+                                poObj->GetType() == PDFObjectType_Dictionary)
+                            {
+                                GDALPDFObject *poType =
+                                    poObj->GetDictionary()->Get("Type");
+                                GDALPDFObject *poName =
+                                    poObj->GetDictionary()->Get("Name");
+                                if (poType &&
+                                    poType->GetType() == PDFObjectType_Name &&
+                                    poType->GetName() == "OCG" && poName &&
+                                    poName->GetType() == PDFObjectType_String)
+                                {
+                                    m_oMapOCGNumGenToPages
+                                        [std::pair(poObj->GetRefNum().toInt(),
+                                                   poObj->GetRefGen())]
+                                            .push_back(iPage + 1);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 /************************************************************************/
 /*                           FindLayerOCG()                             */
@@ -5266,6 +5449,8 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLFree(pszNeatLineWkt);
     }
 
+    poDS->MapOCGsToPages();
+
 #ifdef HAVE_POPPLER
     if (bUseLib.test(PDFLIB_POPPLER))
     {
@@ -5297,7 +5482,8 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
         }
 
         /* Find layers */
-        poDS->FindLayersPoppler();
+        poDS->FindLayersPoppler(
+            (bOpenSubdataset || bOpenSubdatasetImage) ? iPage : 0);
 
         /* Turn user specified layers on or off */
         poDS->TurnLayersOnOffPoppler();
@@ -5369,7 +5555,8 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
         delete poRoot;
 
         /* Find layers */
-        poDS->FindLayersPdfium();
+        poDS->FindLayersPdfium((bOpenSubdataset || bOpenSubdatasetImage) ? iPage
+                                                                         : 0);
 
         /* Turn user specified layers on or off */
         poDS->TurnLayersOnOffPdfium();
