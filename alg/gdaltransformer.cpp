@@ -428,6 +428,62 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
     const int nInXSize = GDALGetRasterXSize(hSrcDS);
     const int nInYSize = GDALGetRasterYSize(hSrcDS);
 
+    /* ------------------------------------------------------------- */
+    /* Special case for warping on the same (or null) CRS.           */
+    /* ------------------------------------------------------------- */
+    if (pTransformArg && pfnTransformer == GDALGenImgProjTransform)
+    {
+        double adfGeoTransform[6];
+
+        if (GDALGetGeoTransform(hSrcDS, adfGeoTransform) == CE_None &&
+            !(adfGeoTransform[0] == 1.0 && adfGeoTransform[1] == 1.0 &&
+              adfGeoTransform[2] == 0.0 && adfGeoTransform[3] == 1.0 &&
+              adfGeoTransform[4] == 0.0 && adfGeoTransform[5] == 1.0))
+        {
+            GDALGenImgProjTransformInfo *psInfo{
+                static_cast<GDALGenImgProjTransformInfo *>(pTransformArg)};
+
+            if (psInfo->pSrcTransformer != GDALRPCTransform)
+            {
+                const OGRSpatialReference *poSourceCRS = nullptr;
+                const OGRSpatialReference *poTargetCRS = nullptr;
+
+                if (psInfo && psInfo->pReprojectArg)
+                {
+                    const GDALReprojectionTransformInfo *psRTI =
+                        static_cast<const GDALReprojectionTransformInfo *>(
+                            psInfo->pReprojectArg);
+                    poSourceCRS = psRTI->poForwardTransform->GetSourceCS();
+                    poTargetCRS = psRTI->poForwardTransform->GetTargetCS();
+                }
+
+                if ((!poSourceCRS && !poTargetCRS) ||
+                    (poSourceCRS && poTargetCRS &&
+                     poSourceCRS->IsSame(poTargetCRS)))
+                {
+
+                    memcpy(padfGeoTransformOut, adfGeoTransform,
+                           sizeof(double) * 6);
+
+                    *pnPixels = nInXSize;
+                    *pnLines = nInYSize;
+
+                    // Calculate extent from hSrcDS
+                    if (padfExtent)
+                    {
+                        padfExtent[0] = adfGeoTransform[0];
+                        padfExtent[1] =
+                            adfGeoTransform[3] + nInYSize * adfGeoTransform[5];
+                        padfExtent[2] =
+                            adfGeoTransform[0] + nInXSize * adfGeoTransform[1];
+                        padfExtent[3] = adfGeoTransform[3];
+                    }
+                    return CE_None;
+                }
+            }
+        }
+    }
+
     const int N_PIXELSTEP = 50;
     int nSteps = static_cast<int>(
         static_cast<double>(std::min(nInYSize, nInXSize)) / N_PIXELSTEP + 0.5);
