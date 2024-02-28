@@ -15,7 +15,8 @@ CPL_C_START                          // Necessary for compiling in GDAL project
 #include "mm_gdal\mm_gdal_driver_structs.h"  // struct MMAdmDatabase
 #endif
 
-char *MM_strnzcpy(char *dest, const char *src, size_t maxlen);
+    char *
+    MM_strnzcpy(char *dest, const char *src, size_t maxlen);
 char *MM_oemansi(char *szcadena);
 char *MM_oemansi_n(char *szcadena, size_t n_bytes);
 void MM_InitializeField(struct MM_FIELD *camp);
@@ -23,7 +24,7 @@ struct MM_FIELD *MM_CreateAllFields(MM_EXT_DBF_N_FIELDS ncamps);
 MM_FIRST_RECORD_OFFSET_TYPE
 MM_GiveOffsetExtendedFieldName(const struct MM_FIELD *camp);
 struct MM_DATA_BASE_XP *MM_CreateDBFHeader(MM_EXT_DBF_N_FIELDS n_camps,
-                                            MM_BYTE nCharSet);
+                                           MM_BYTE nCharSet);
 MM_BYTE MM_DBFFieldTypeToVariableProcessing(MM_BYTE tipus_camp_DBF);
 void MM_ReleaseMainFields(struct MM_DATA_BASE_XP *data_base_XP);
 void MM_ReleaseDBFHeader(struct MM_DATA_BASE_XP *data_base_XP);

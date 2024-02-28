@@ -56,7 +56,6 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define KEY_characterSet "characterSet"
 #define KEY_Value_characterSet "006"
 
-
 // MiraMon feature table descriptors
 #define szInternalGraphicIdentifierEng "Internal Graphic identifier"
 #define szInternalGraphicIdentifierCat "Identificador Gràfic intern"
@@ -71,32 +70,32 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define szLenghtOfAarcEsp "Longitud del arco"
 
 #define szInitialNodeEng "Initial node"
-#define szInitialNodeCat "Node inicial" 
+#define szInitialNodeCat "Node inicial"
 #define szInitialNodeEsp "Nodo inicial"
 
 #define szFinalNodeEng "Final node"
-#define szFinalNodeCat "Node final" 
+#define szFinalNodeCat "Node final"
 #define szFinalNodeEsp "Nodo final"
 
 #define szNumberOfArcsToNodeEng "Number of arcs to node"
 #define szNumberOfArcsToNodeCat "Nombre d'arcs al node"
 #define szNumberOfArcsToNodeEsp "Número de arcos al nodo"
 
-#define szNodeTypeEng  "Node type"
-#define szNodeTypeCat  "Tipus de node"
-#define szNodeTypeEsp  "Tipo de nodo"
+#define szNodeTypeEng "Node type"
+#define szNodeTypeCat "Tipus de node"
+#define szNodeTypeEsp "Tipo de nodo"
 
 #define szPerimeterOfThePolygonEng "Perimeter of the polygon"
 #define szPerimeterOfThePolygonCat "Perímetre del polígon"
 #define szPerimeterOfThePolygonEsp "Perímetro del polígono"
 
-#define szAreaOfThePolygonEng  "Area of the polygon"
-#define szAreaOfThePolygonCat  "Àrea del polígon"
-#define szAreaOfThePolygonEsp  "Área del polígono"
+#define szAreaOfThePolygonEng "Area of the polygon"
+#define szAreaOfThePolygonCat "Àrea del polígon"
+#define szAreaOfThePolygonEsp "Área del polígono"
 
-#define szNumberOfArcsEng   "Number of arcs"
-#define szNumberOfArcsCat   "Nombre d'arcs"
-#define szNumberOfArcsEsp   "Número de arcos"
+#define szNumberOfArcsEng "Number of arcs"
+#define szNumberOfArcsCat "Nombre d'arcs"
+#define szNumberOfArcsEsp "Número de arcos"
 
 #define szNumberOfElementaryPolygonsEng "Number of elementary polygons"
 #define szNumberOfElementaryPolygonsCat "Nombre de polígons elementals"
@@ -512,7 +511,7 @@ struct MM_PAL_MEM
           periodically instead of writing them to the disk every time a Feature
           is added (not efficient). The place where they are going to be flushed
           depends on one variable: the number of elements of the layer.
-*/                          
+*/
 
 // MiraMon Point Layer: TH, List of CL (coordinates), ZH, ZD, ZL
 struct MiraMonPointLayer

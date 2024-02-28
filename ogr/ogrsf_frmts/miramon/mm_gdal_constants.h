@@ -15,9 +15,9 @@ CPL_C_START  // Necessary for compiling C in GDAL project
 
 // Common types
 #define printf_UINT64 "%llu"
- 
-// Type of the Feature ID: determines the maximum number of features in a layer.
-typedef GUInt64 MM_INTERNAL_FID;
+
+    // Type of the Feature ID: determines the maximum number of features in a layer.
+    typedef GUInt64 MM_INTERNAL_FID;
 // Offset to the coordinates of the Features.
 typedef GUInt64 MM_FILE_OFFSET;
 
@@ -61,14 +61,14 @@ typedef GInt32 MM_N_HEIGHT_TYPE;
 #define MM_ARC_CONSTANT_HEIGHT -1  // In MiraMon code: MM_ARC_ALCADA_CONSTANT
 // In MiraMon code: MM_ARC_TIPUS_ALCADA
 #define MM_ARC_HEIGHT_TYPE(n)                                                  \
-    (((n)< 0) ? MM_ARC_CONSTANT_HEIGHT : MM_ARC_HEIGHT_FOR_EACH_VERTEX)
+    (((n) < 0) ? MM_ARC_CONSTANT_HEIGHT : MM_ARC_HEIGHT_FOR_EACH_VERTEX)
 // In MiraMon code: MM_ARC_N_ALCADES
 #define MM_ARC_N_HEIGHTS(n) (((n) < 0) ? -(n) : (n))
 // In MiraMon code: MM_ARC_N_TOTAL_ALCADES_DISC
-#define MM_ARC_TOTAL_N_HEIGHTS_DISK(n,n_vrt)                                  \
-    (((n)< 0) ? -(n) : (n) * (MM_N_HEIGHT_TYPE)(n_vrt))
+#define MM_ARC_TOTAL_N_HEIGHTS_DISK(n, n_vrt)                                  \
+    (((n) < 0) ? -(n) : (n) * (MM_N_HEIGHT_TYPE)(n_vrt))
 
-#define MM_EscriuOffsetNomEstesBD_XP(bd_xp,i_camp,offset_nom_camp)           \
+#define MM_EscriuOffsetNomEstesBD_XP(bd_xp, i_camp, offset_nom_camp)           \
     memcpy((bd_xp)->pField[(i_camp)].reserved_2 +                              \
                MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES,                           \
            &(offset_nom_camp), 4)

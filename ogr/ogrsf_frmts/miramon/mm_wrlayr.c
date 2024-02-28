@@ -26,7 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * DEALINGS IN THE SOFTWARE. 
  ****************************************************************************/
 
 #ifdef GDAL_COMPILATION
@@ -978,8 +978,7 @@ static int MMInitPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
                                 hMiraMonLayer->MMPoint.psz3DLayerName,
                                 hMiraMonLayer->pszFlags)))
             {
-                MMCPLError(CE_Failure, CPLE_OpenFailed,
-                           "Cannot open file %s.",
+                MMCPLError(CE_Failure, CPLE_OpenFailed, "Cannot open file %s.",
                            hMiraMonLayer->MMPoint.psz3DLayerName);
                 return 1;
             }
@@ -1014,7 +1013,7 @@ static int MMInitPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         strcat(hMiraMonLayer->MMPoint.pszREL_LayerName, "T.rel");
     else
         MMChangeMMSingularExtension(hMiraMonLayer->MMPoint.pszREL_LayerName,
-                                "T.rel");
+                                    "T.rel");
 
     hMiraMonLayer->pszMainREL_LayerName =
         hMiraMonLayer->MMPoint.pszREL_LayerName;
@@ -1130,13 +1129,14 @@ static int MMInitNodeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         // Creating the DBF file name
         strcpy(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName,
                pMMArcLayer->MMNode.pszLayerName);
-        MMChangeMMSingularExtension(pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName,
-                                "N.dbf");
+        MMChangeMMSingularExtension(
+            pMMArcLayer->MMNode.MMAdmDB.pszExtDBFLayerName, "N.dbf");
 
         // MiraMon metadata
         strcpy(pMMArcLayer->MMNode.pszREL_LayerName,
                pMMArcLayer->MMNode.pszLayerName);
-        MMChangeMMSingularExtension(pMMArcLayer->MMNode.pszREL_LayerName, "N.rel");
+        MMChangeMMSingularExtension(pMMArcLayer->MMNode.pszREL_LayerName,
+                                    "N.rel");
     }
     return 0;
 }
@@ -1279,8 +1279,7 @@ static int MMInitArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
                 (pMMArcLayer->pF3d = fopen_function(pMMArcLayer->psz3DLayerName,
                                                     hMiraMonLayer->pszFlags)))
             {
-                MMCPLError(CE_Failure, CPLE_OpenFailed,
-                           "Cannot open file %s.",
+                MMCPLError(CE_Failure, CPLE_OpenFailed, "Cannot open file %s.",
                            pMMArcLayer->psz3DLayerName);
                 return 1;
             }
@@ -1364,7 +1363,7 @@ static int MMInitArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
             strcpy(pMMArcLayer->MMAdmDB.pszExtDBFLayerName,
                    pMMArcLayer->pszLayerName);
             MMChangeMMSingularExtension(pMMArcLayer->MMAdmDB.pszExtDBFLayerName,
-                                    "A.dbf");
+                                        "A.dbf");
         }
     }
     else
@@ -1373,7 +1372,7 @@ static int MMInitArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
             strcat(pMMArcLayer->MMAdmDB.pszExtDBFLayerName, "A.dbf");
         else
             MMChangeMMSingularExtension(pMMArcLayer->MMAdmDB.pszExtDBFLayerName,
-                                    "A.dbf");
+                                        "A.dbf");
     }
 
     if (hMiraMonLayer->ReadOrWrite == MM_READING_MODE)
@@ -1519,7 +1518,7 @@ static int MMInitPolygonLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         strcat(hMiraMonLayer->MMPolygon.pszREL_LayerName, "P.rel");
     else
         MMChangeMMSingularExtension(hMiraMonLayer->MMPolygon.pszREL_LayerName,
-                                "P.rel");
+                                    "P.rel");
 
     if (hMiraMonLayer->ReadOrWrite == MM_READING_MODE)
     {
@@ -1538,7 +1537,7 @@ static int MMInitPolygonLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         strcat(pMMPolygonLayer->MMAdmDB.pszExtDBFLayerName, "P.dbf");
     else
         MMChangeMMSingularExtension(pMMPolygonLayer->MMAdmDB.pszExtDBFLayerName,
-                                "P.dbf");
+                                    "P.dbf");
 
     if (hMiraMonLayer->ReadOrWrite == MM_READING_MODE)
     {
@@ -1665,8 +1664,7 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer)
                                 pMMPolygonLayer->MMArc.pszLayerName,
                                 hMiraMonLayer->pszFlags)))
             {
-                MMCPLError(CE_Failure, CPLE_OpenFailed,
-                           "Cannot open file %s.",
+                MMCPLError(CE_Failure, CPLE_OpenFailed, "Cannot open file %s.",
                            pMMPolygonLayer->MMArc.pszLayerName);
                 return 1;
             }
@@ -5098,7 +5096,7 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
             {
                 MMCPLWarning(CE_Warning, CPLE_NotSupported,
                              "The MiraMon driver cannot assign any HRS.");
-                             // Horizontal Reference System
+                // Horizontal Reference System
 
                 fprintf_function(pF, "%s=plane" LineReturn,
                                  KEY_HorizontalSystemIdentifier);
@@ -5181,19 +5179,20 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
     fprintf_function(pF, "TipusRelacio=RELACIO_1_1_DICC" LineReturn);
 
     fprintf_function(pF, LineReturn);
-    fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL, szMMNomCampIdGraficDefecte);
+    fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
+                     szMMNomCampIdGraficDefecte);
     fprintf_function(pF, "visible=1" LineReturn);
     fprintf_function(pF, "MostrarUnitats=0" LineReturn);
 
-    MMWrite_ANSI_MetadataKeyDescriptor(hMMMD, pF, szInternalGraphicIdentifierEng,
-                                       szInternalGraphicIdentifierCat,
-                                       szInternalGraphicIdentifierEsp);
+    MMWrite_ANSI_MetadataKeyDescriptor(
+        hMMMD, pF, szInternalGraphicIdentifierEng,
+        szInternalGraphicIdentifierCat, szInternalGraphicIdentifierEsp);
 
     if (hMMMD->ePlainLT == MM_LayerType_Arc)
     {
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[%s:%s]" LineReturn,
-                         SECTION_TAULA_PRINCIPAL, szMMNomCampNVertexsDefecte);
+        fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
+                         szMMNomCampNVertexsDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5202,18 +5201,17 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                                            szNumberOfVerticesEsp);
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[%s:%s]" LineReturn,
-                         SECTION_TAULA_PRINCIPAL, szMMNomCampLongitudArcDefecte);
+        fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
+                         szMMNomCampLongitudArcDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
-        MMWrite_ANSI_MetadataKeyDescriptor(hMMMD, pF, szLenghtOfAarcEng,
-                                           szLenghtOfAarcCat,
-                                           szLenghtOfAarcEsp);
+        MMWrite_ANSI_MetadataKeyDescriptor(
+            hMMMD, pF, szLenghtOfAarcEng, szLenghtOfAarcCat, szLenghtOfAarcEsp);
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[%s:%s]" LineReturn,
-                         SECTION_TAULA_PRINCIPAL, szMMNomCampNodeIniDefecte);
+        fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
+                         szMMNomCampNodeIniDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5221,8 +5219,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                                            szInitialNodeCat, szInitialNodeEsp);
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[%s:%s]" LineReturn,
-                         SECTION_TAULA_PRINCIPAL, szMMNomCampNodeFiDefecte);
+        fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
+                         szMMNomCampNodeFiDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5230,16 +5228,20 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                                            szFinalNodeCat, szFinalNodeEsp);
 
         fprintf_function(pF, "[GEOMETRIA_I_TOPOLOGIA]" LineReturn);
-        fprintf_function(pF, "NomCampNVertexs=%s" LineReturn, szMMNomCampNVertexsDefecte);
-        fprintf_function(pF, "NomCampLongitudArc=%s" LineReturn, szMMNomCampLongitudArcDefecte);
-        fprintf_function(pF, "NomCampNodeIni=%s" LineReturn, szMMNomCampNodeIniDefecte);
-        fprintf_function(pF, "NomCampNodeFi=%s" LineReturn, szMMNomCampNodeFiDefecte);
+        fprintf_function(pF, "NomCampNVertexs=%s" LineReturn,
+                         szMMNomCampNVertexsDefecte);
+        fprintf_function(pF, "NomCampLongitudArc=%s" LineReturn,
+                         szMMNomCampLongitudArcDefecte);
+        fprintf_function(pF, "NomCampNodeIni=%s" LineReturn,
+                         szMMNomCampNodeIniDefecte);
+        fprintf_function(pF, "NomCampNodeFi=%s" LineReturn,
+                         szMMNomCampNodeFiDefecte);
     }
     else if (hMMMD->ePlainLT == MM_LayerType_Node)
     {
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[%s:%s]" LineReturn,
-                         SECTION_TAULA_PRINCIPAL, szMMNomCampArcsANodeDefecte);
+        fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
+                         szMMNomCampArcsANodeDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5248,8 +5250,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                                            szNumberOfArcsToNodeEsp);
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[%s:%s]" LineReturn,
-                         SECTION_TAULA_PRINCIPAL, szMMNomCampTipusNodeDefecte);
+        fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
+                         szMMNomCampTipusNodeDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5259,8 +5261,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
     else if (hMMMD->ePlainLT == MM_LayerType_Pol)
     {
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[%s:%s]" LineReturn,
-                         SECTION_TAULA_PRINCIPAL, szMMNomCampNVertexsDefecte);
+        fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
+                         szMMNomCampNVertexsDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5269,8 +5271,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                                            szNumberOfVerticesEsp);
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[%s:%s]" LineReturn,
-                         SECTION_TAULA_PRINCIPAL, szMMNomCampPerimetreDefecte);
+        fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
+                         szMMNomCampPerimetreDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5279,7 +5281,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
             szPerimeterOfThePolygonEsp);
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL, szMMNomCampAreaDefecte);
+        fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
+                         szMMNomCampAreaDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5288,16 +5291,17 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                                            szAreaOfThePolygonEsp);
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL, szMMNomCampNArcsDefecte);
+        fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
+                         szMMNomCampNArcsDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
-        MMWrite_ANSI_MetadataKeyDescriptor(hMMMD, pF, szNumberOfArcsEng,
-                                           szNumberOfArcsCat, szNumberOfArcsEsp);
+        MMWrite_ANSI_MetadataKeyDescriptor(
+            hMMMD, pF, szNumberOfArcsEng, szNumberOfArcsCat, szNumberOfArcsEsp);
 
         fprintf_function(pF, LineReturn);
-        fprintf_function(pF, "[%s:%s]" LineReturn,
-                         SECTION_TAULA_PRINCIPAL, szMMNomCampNPoligonsDefecte);
+        fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
+                         szMMNomCampNPoligonsDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         fprintf_function(pF, "MostrarUnitats=0" LineReturn);
@@ -5306,11 +5310,16 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
             szNumberOfElementaryPolygonsCat, szNumberOfElementaryPolygonsEsp);
 
         fprintf_function(pF, "[GEOMETRIA_I_TOPOLOGIA]" LineReturn);
-        fprintf_function(pF, "NomCampNVertexs=%s" LineReturn, szMMNomCampNVertexsDefecte);
-        fprintf_function(pF, "NomCampPerimetre=%s" LineReturn, szMMNomCampPerimetreDefecte);
-        fprintf_function(pF, "NomCampArea=%s" LineReturn, szMMNomCampAreaDefecte);
-        fprintf_function(pF, "NomCampNArcs=%s" LineReturn, szMMNomCampNArcsDefecte);
-        fprintf_function(pF, "NomCampNPoligons=%s" LineReturn, szMMNomCampNPoligonsDefecte);
+        fprintf_function(pF, "NomCampNVertexs=%s" LineReturn,
+                         szMMNomCampNVertexsDefecte);
+        fprintf_function(pF, "NomCampPerimetre=%s" LineReturn,
+                         szMMNomCampPerimetreDefecte);
+        fprintf_function(pF, "NomCampArea=%s" LineReturn,
+                         szMMNomCampAreaDefecte);
+        fprintf_function(pF, "NomCampNArcs=%s" LineReturn,
+                         szMMNomCampNArcsDefecte);
+        fprintf_function(pF, "NomCampNPoligons=%s" LineReturn,
+                         szMMNomCampNPoligonsDefecte);
     }
 
     if (hMMMD->pLayerDB && hMMMD->pLayerDB->nNFields > 0)

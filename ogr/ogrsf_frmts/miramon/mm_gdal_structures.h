@@ -23,12 +23,12 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define FILE_TYPE FILE_64
 #endif
 
-/* Internal field of an extended DBF. It is a copy of a MiraMon internal
+    /* Internal field of an extended DBF. It is a copy of a MiraMon internal
 structure but translated to be understood by anyone who wants to
 review the code of the driver.
 */
 
-struct MM_FIELD  // In MiraMon code: MM_CAMP
+    struct MM_FIELD  // In MiraMon code: MM_CAMP
 {
     // Name of the field
     char FieldName[MM_MAX_LON_FIELD_NAME_DBF];  // In MiraMon code: NomCamp
@@ -36,7 +36,7 @@ struct MM_FIELD  // In MiraMon code: MM_CAMP
     // Name of the field in dBASEIII
     char ClassicalDBFFieldName
         [MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF];  // In MiraMon code:
-        										// NomCampDBFClassica
+                                                // NomCampDBFClassica
 
     // Type of the field C, N, D, L, M, F, G and B
     char FieldType;   // In MiraMon code: TipusDeCamp

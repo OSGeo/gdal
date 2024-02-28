@@ -26,7 +26,7 @@
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * DEALINGS IN THE SOFTWARE. 
  ****************************************************************************/
 
 #ifdef GDAL_COMPILATION
@@ -47,15 +47,12 @@ CPL_C_START  // Necessary for compiling in GDAL project
 
 #define nullptr NULL
 
-static const char MM_EmptyString[] = {""};
+    static const char MM_EmptyString[] = {""};
 #define MM_SetEndOfString (*MM_EmptyString)
 static const char MM_BlankString[] = {" "};
 
-
-
-    // CREATING AN EXTENDED MIRAMON DBF
-    void
-    MM_InitializeField(struct MM_FIELD *pField)
+// CREATING AN EXTENDED MIRAMON DBF
+void MM_InitializeField(struct MM_FIELD *pField)
 {
     memset(pField, '\0', sizeof(*pField));
     pField->FieldType = 'C';
@@ -75,8 +72,7 @@ struct MM_FIELD *MM_CreateAllFields(MM_EXT_DBF_N_FIELDS nFields)
     return camp;
 }
 
-static struct MM_DATA_BASE_XP *
-MM_CreateEmptyHeader(MM_EXT_DBF_N_FIELDS nFields)
+static struct MM_DATA_BASE_XP *MM_CreateEmptyHeader(MM_EXT_DBF_N_FIELDS nFields)
 {
     struct MM_DATA_BASE_XP *data_base_XP;
 
@@ -102,7 +98,7 @@ MM_CreateEmptyHeader(MM_EXT_DBF_N_FIELDS nFields)
 }
 
 struct MM_DATA_BASE_XP *MM_CreateDBFHeader(MM_EXT_DBF_N_FIELDS n_camps,
-                                            MM_BYTE charset)
+                                           MM_BYTE charset)
 {
     struct MM_DATA_BASE_XP *bd_xp;
     struct MM_FIELD *camp;
@@ -312,7 +308,8 @@ static void MM_CheckDBFHeader(struct MM_DATA_BASE_XP *bd_xp)
         if (camp->FieldType == 'C' &&
             camp->BytesPerField > MM_MAX_AMPLADA_CAMP_C_DBF_CLASSICA)
             cal_DBF_estesa = TRUE;
-        if (MM_VALID_EXTENDED_DBF_NAME == MM_ISExtendedNameBD_XP(camp->FieldName))
+        if (MM_VALID_EXTENDED_DBF_NAME ==
+            MM_ISExtendedNameBD_XP(camp->FieldName))
             cal_DBF_estesa = TRUE;
     }
 
@@ -395,14 +392,15 @@ MM_CheckClassicFieldNameEqual(const struct MM_DATA_BASE_XP *data_base_XP,
     {
         if ((strcasecmp(data_base_XP->pField[i].ClassicalDBFFieldName,
                         classical_name)) == 0 ||
-            (strcasecmp(data_base_XP->pField[i].FieldName,
-                        classical_name)) == 0)
+            (strcasecmp(data_base_XP->pField[i].FieldName, classical_name)) ==
+                0)
             return TRUE;
     }
     return FALSE;
 }
 
-static char *MM_GiveNewStringWithCharacterInFront(const char *text, char caracter)
+static char *MM_GiveNewStringWithCharacterInFront(const char *text,
+                                                  char caracter)
 {
     char *ptr;
     size_t i;
@@ -441,8 +439,8 @@ static char *MM_SetSubIndexFieldNam(char *nom_camp, MM_EXT_DBF_N_FIELDS index,
     sizet_nomcamp = strlen(NomCamp_SubIndex);
 
     if (sizet_nomcamp + sizet_subindex > ampladamax - 1)
-        memcpy(NomCamp_SubIndex + ((ampladamax - 1) - sizet_subindex), _subindex,
-               strlen(_subindex));
+        memcpy(NomCamp_SubIndex + ((ampladamax - 1) - sizet_subindex),
+               _subindex, strlen(_subindex));
     else
         NomCamp_SubIndex = strcat(NomCamp_SubIndex, _subindex);
 
@@ -590,8 +588,8 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     if (fwrite_function(&(data_base_XP->month), 1, 1,
                         data_base_XP->pfDataBase) != 1)
         return FALSE;
-    if (fwrite_function(&(data_base_XP->day), 1, 1,
-                        data_base_XP->pfDataBase) != 1)
+    if (fwrite_function(&(data_base_XP->day), 1, 1, data_base_XP->pfDataBase) !=
+        1)
         return FALSE;
 
     /* from 4 a 7, position MM_FIRST_OFFSET_to_N_RECORDS */
@@ -673,8 +671,8 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     /* Bytes from 30 to 31, in position MM_SEGON_OFFSET_a_OFFSET_1a_FITXA */
     if (MM_ES_DBF_ESTESA(data_base_XP->dbf_version))
     {
-        if (fwrite_function(((char *)&(data_base_XP->FirstRecordOffset)) + 2,
-                            2, 1, data_base_XP->pfDataBase) != 1)
+        if (fwrite_function(((char *)&(data_base_XP->FirstRecordOffset)) + 2, 2,
+                            1, data_base_XP->pfDataBase) != 1)
             return FALSE;
     }
     else
@@ -892,8 +890,7 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
                 MM_GiveOffsetExtendedFieldName(data_base_XP->pField + i);
             name_size = MM_DonaBytesNomEstesCamp(data_base_XP->pField + i);
 
-            fseek_function(data_base_XP->pfDataBase, bytes_acumulats,
-                           SEEK_SET);
+            fseek_function(data_base_XP->pfDataBase, bytes_acumulats, SEEK_SET);
 
             strcpy(nom_camp, data_base_XP->pField[i].FieldName);
             //CanviaJocCaracPerEscriureDBF(nom_camp, JocCaracDBFaMM(data_base_XP->CharSet, ParMM.JocCaracDBFPerDefecte));
@@ -969,7 +966,7 @@ int MM_ReadExtendedDBFHeaderFromFile(const char *szFileName,
     MM_BYTE tretze_bytes[13];
     MM_FIRST_RECORD_OFFSET_TYPE offset_possible;
     MM_BYTE n_queixes_estructura_incorrecta = 0;
-    MM_FILE_OFFSET offset_reintent = 0; // For retrying
+    MM_FILE_OFFSET offset_reintent = 0;  // For retrying
     char cpg_file[MM_CPL_PATH_BUF_SIZE];
     const char *pszDesc;
     char section[MM_MAX_LON_FIELD_NAME_DBF + 25];  // TAULA_PRINCIPAL:field_name
@@ -1193,7 +1190,8 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
 
         pMMBDXP->pField[nIField]
             .FieldName[MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF - 1] = '\0';
-        if (EQUAL(pMMBDXP->pField[nIField].FieldName, szMMNomCampIdGraficDefecte))
+        if (EQUAL(pMMBDXP->pField[nIField].FieldName,
+                  szMMNomCampIdGraficDefecte))
             pMMBDXP->IdGraficField = nIField;
 
         if (pMMBDXP->pField[nIField].BytesPerField == 0)
@@ -1767,8 +1765,8 @@ size_t MM_DefineFirstPointFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp)
 }
 
 static int MM_SprintfDoubleWidth(char *cadena, int amplada, int n_decimals,
-                                   double valor_double,
-                                   MM_BOOLEAN *Error_sprintf_n_decimals)
+                                 double valor_double,
+                                 MM_BOOLEAN *Error_sprintf_n_decimals)
 {
 #define VALOR_LIMIT_IMPRIMIR_EN_FORMAT_E 1E+17
 #define VALOR_MASSA_PETIT_PER_IMPRIMIR_f 1E-17
@@ -1934,7 +1932,7 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
     char *record, *whites = nullptr;
     MM_BYTES_PER_FIELD_TYPE_DBF l_glop1, l_glop2, i_glop2;
     MM_EXT_DBF_N_RECORDS nfitx, i_reg;
-    int canvi_amplada; // change width
+    int canvi_amplada;  // change width
     GInt32 j;
     MM_EXT_DBF_N_FIELDS i_camp;
     size_t retorn_fwrite;
@@ -2025,11 +2023,10 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
             {
                 case 'C':
                 case 'L':
-                    memcpy(
-                        whites, record + l_glop1,
-                        (canvi_amplada < 0
-                             ? nNewWidth
-                             : data_base_XP->pField[nIField].BytesPerField));
+                    memcpy(whites, record + l_glop1,
+                           (canvi_amplada < 0
+                                ? nNewWidth
+                                : data_base_XP->pField[nIField].BytesPerField));
                     retorn_fwrite = fwrite_function(whites, nNewWidth, 1,
                                                     data_base_XP->pfDataBase);
 
@@ -2058,9 +2055,9 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
                     {
                         if (canvi_amplada >= 0)
                         {
-                            if (1 != fwrite_function(
-                                         whites, canvi_amplada, 1,
-                                         data_base_XP->pfDataBase) ||
+                            if (1 !=
+                                    fwrite_function(whites, canvi_amplada, 1,
+                                                    data_base_XP->pfDataBase) ||
                                 1 != fwrite_function(
                                          record + l_glop1,
                                          data_base_XP->pField[nIField]
@@ -2121,8 +2118,8 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
 
                         if ((sz_valor = calloc_function(
                                  max_function(nNewWidth,
-                                        data_base_XP->pField[nIField]
-                                            .BytesPerField) +
+                                              data_base_XP->pField[nIField]
+                                                  .BytesPerField) +
                                  1)) ==
                             nullptr)  // Sumo 1 per poder posar-hi el \0
                         {
@@ -2139,10 +2136,11 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
                         if (!MM_EmptyString_function(sz_valor))
                         {
                             if (sscanf(sz_valor, "%lf", &valor) != 1)
-                                memset(sz_valor, *MM_BlankString,
-                                       max_function(nNewWidth,
-                                              data_base_XP->pField[nIField]
-                                                  .BytesPerField));
+                                memset(
+                                    sz_valor, *MM_BlankString,
+                                    max_function(nNewWidth,
+                                                 data_base_XP->pField[nIField]
+                                                     .BytesPerField));
                             else
                             {
                                 MM_SprintfDoubleWidth(
@@ -2277,7 +2275,7 @@ int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt,
     MM_N_HEIGHT_TYPE n_alcada, n_h_total;
     int tipus;
     double *alcada = nullptr, *palcada, *palcada_i;
-#define MM_N_ALCADA_LOCAL 50 // Nr of local heights
+#define MM_N_ALCADA_LOCAL 50  // Nr of local heights
     double local_CinquantaAlcades[MM_N_ALCADA_LOCAL];
 
     for (i_vrt = 0; i_vrt < n_vrt; i_vrt++)

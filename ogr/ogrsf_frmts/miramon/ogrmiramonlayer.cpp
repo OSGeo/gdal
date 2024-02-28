@@ -499,7 +499,8 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         MMCloseLayer(&hMiraMonLayerPOL);
         if (hMiraMonLayerPOL.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", printf_UINT64" polygons written in file %s.pol",
+            CPLDebug("MiraMon",
+                     printf_UINT64 " polygons written in file %s.pol",
                      // The polygon 0 is not imported
                      hMiraMonLayerPOL.TopHeader.nElemCount - 1,
                      hMiraMonLayerPOL.pszSrcLayerName);
@@ -515,7 +516,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         MMCloseLayer(&hMiraMonLayerARC);
         if (hMiraMonLayerARC.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", printf_UINT64" arcs written in file %s.arc",
+            CPLDebug("MiraMon", printf_UINT64 " arcs written in file %s.arc",
                      hMiraMonLayerARC.TopHeader.nElemCount,
                      hMiraMonLayerARC.pszSrcLayerName);
         }
@@ -531,7 +532,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         MMCloseLayer(&hMiraMonLayerPNT);
         if (hMiraMonLayerPNT.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", printf_UINT64" points written in file %s.pnt",
+            CPLDebug("MiraMon", printf_UINT64 " points written in file %s.pnt",
                      hMiraMonLayerPNT.TopHeader.nElemCount,
                      hMiraMonLayerPNT.pszSrcLayerName);
         }
