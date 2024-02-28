@@ -6,7 +6,7 @@ gdal_rasterize
 
 .. only:: html
 
-    Burns vector geometries into a raster.
+    Burns vector geometries into a raster
 
 .. Index:: gdal_rasterize
 
@@ -202,7 +202,7 @@ raster data is only supported since GDAL 2.1.0.
     The GDAL supported output file.  Must support update mode access.
     This file will be created (or overwritten if it already exists).
 
-The program create a new target raster image when any of the :option:`-of`,
+The program creates a new target raster image when any of the :option:`-of`,
 :option:`-a_nodata`, :option:`-init`, :option:`-a_srs`, :option:`-co`, :option:`-te`,
 :option:`-tr`, :option:`-tap`, :option:`-ts`, or :option:`-ot` options are used.
 The resolution or size must be specified using the :option:`-tr` or :option:`-ts` option for all new
@@ -216,13 +216,13 @@ This utility is also callable from C with :cpp:func:`GDALRasterize`.
 
 .. versionadded:: 2.1
 
-Example
--------
+Examples
+--------
 
 The following would burn all polygons from mask.shp into the RGB TIFF
 file work.tif with the color red (RGB = 255,0,0).
 
-::
+.. code-block::
 
     gdal_rasterize -b 1 -b 2 -b 3 -burn 255 -burn 0 -burn 0 -l mask mask.shp work.tif
 
@@ -230,7 +230,7 @@ file work.tif with the color red (RGB = 255,0,0).
 The following would burn all "class A" buildings into the output elevation
 file, pulling the top elevation from the ROOF_H attribute.
 
-::
+.. code-block::
 
     gdal_rasterize -a ROOF_H -where "class='A'" -l footprints footprints.shp city_dem.tif
 
@@ -238,6 +238,6 @@ The following would burn all polygons from footprint.shp into a new 1000x1000
 rgb TIFF as the color red.  Note that :option:`-b` is not used; the order of the :option:`-burn`
 options determines the bands of the output raster.
 
-::
+.. code-block::
 
     gdal_rasterize -burn 255 -burn 0 -burn 0 -ot Byte -ts 1000 1000 -l footprints footprints.shp mask.tif
