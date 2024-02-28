@@ -54,7 +54,7 @@ def get_connection_str():
     if oci_dsname is None:
         # TODO: Spelling - informe?
         return "<error: informe ORACLE connection>"
-    return "geor:" + oci_dsname[oci_dsname.index(':') + 1:]
+    return "geor:" + oci_dsname[oci_dsname.index(":") + 1 :]
 
 
 ###############################################################################
