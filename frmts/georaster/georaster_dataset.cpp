@@ -1267,7 +1267,12 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         poGRD->poGeoRaster->nPyramidLevels = atoi(pszFetched);
     }
 
-    poGRD->poGeoRaster->bGenStats = CPLFetchBool(papszOptions, "GENSTATS", FALSE);
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS");
+
+    if (pszFetched != nullptr)
+    {
+        poGRD->poGeoRaster->bGenStats = EQUAL(pszFetched, "TRUE");
+    }
 
     bool bGenStatsOptionsUsed = false;
 
@@ -1301,7 +1306,13 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         poGRD->poGeoRaster->bGenStatsUseSamplingWindow = true;
     }
 
-    poGRD->poGeoRaster->bGenStatsHistogram = CPLFetchBool(papszOptions, "GENSTATS_HISTOGRAM", FALSE);
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_HISTOGRAM");
+
+    if (pszFetched != nullptr)
+    {
+        bGenStatsOptionsUsed = true;
+        poGRD->poGeoRaster->bGenStatsHistogram = EQUAL(pszFetched, "TRUE");
+    }
 
     pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_LAYERNUMBERS");
 
@@ -1311,7 +1322,13 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         poGRD->poGeoRaster->sGenStatsLayerNumbers = pszFetched;
     }
 
-    poGRD->poGeoRaster->bGenStatsUseBin = CPLFetchBool(papszOptions, "GENSTATS_USEBIN", FALSE);
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_USEBIN");
+
+    if (pszFetched != nullptr)
+    {
+        bGenStatsOptionsUsed = true;
+        poGRD->poGeoRaster->bGenStatsUseBin = EQUAL(pszFetched, "TRUE");
+    }
 
     pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_BINFUNCTION");
 
@@ -1330,7 +1347,13 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         }
     }
 
-    poGRD->poGeoRaster->bGenStatsNodata = CPLFetchBool(papszOptions, "GENSTATS_NODATA", FALSE);
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_NODATA");
+
+    if (pszFetched != nullptr)
+    {
+        bGenStatsOptionsUsed = true;
+        poGRD->poGeoRaster->bGenStatsNodata = EQUAL(pszFetched, "TRUE");
+    }
 
     if (bGenStatsOptionsUsed && !poGRD->poGeoRaster->bGenStats)
     {

@@ -118,7 +118,7 @@ void GEORDriverSetCommonMetadata(GDALDriver *poDriver)
         "the statistics' />"
         " <Option name='GENSTATS_USEBIN' type='boolean' "
         "description='Specifies if the statistics should use the bin function "
-        "provided by GENSTATS_USEBIN "
+        "provided by GENSTATS_BINFUNCTION "
         "to compute the statistics' default='TRUE' />"
         " <Option name='GENSTATS_BINFUNCTION' type='string' "
         "description='Array to specify the bin function (type, total number of "
