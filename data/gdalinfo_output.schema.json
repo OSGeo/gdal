@@ -176,6 +176,7 @@
           }
         },
         "size": {
+          "$comment": "note that the order of items in side is width,height",
           "$ref": "#/definitions/arrayOfTwoIntegers"
         },
         "coordinateSystem": {
@@ -306,6 +307,7 @@
         },
 
         "proj:shape": {
+          "$comment": "note that the order of items in proj:shape is height,width starting with GDAL 3.8.5 (previous versions ordered it wrongly as width,height)",
           "title": "Shape",
           "type": "array",
           "minItems": 2,
