@@ -204,7 +204,10 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
     else
     {
         if (m_fp == nullptr)
+        {
+            bValidFile = false;
             return;
+        }
 
         /* ------------------------------------------------------------------*/
         /*      Read the header.                                             */
@@ -607,7 +610,26 @@ void OGRMiraMonLayer::ResetReading()
         return;
 
     iNextFID = 0;
-    VSIFSeekL(m_fp, 0, SEEK_SET);
+
+    //VSIFSeekL(m_fp, 0, SEEK_SET);
+    if (!phMiraMonLayer)
+        return;
+
+    if (phMiraMonLayer->bIsPoint)
+    {
+        VSIFSeekL(phMiraMonLayer->MMPoint.pF, 0, SEEK_SET);
+        return;
+    }
+    if (phMiraMonLayer->bIsArc && !phMiraMonLayer->bIsPolygon)
+    {
+        VSIFSeekL(phMiraMonLayer->MMArc.pF, 0, SEEK_SET);
+        return;
+    }
+    if (phMiraMonLayer->bIsPolygon)
+    {
+        VSIFSeekL(phMiraMonLayer->MMPolygon.pF, 0, SEEK_SET);
+        return;
+    }
 }
 
 /****************************************************************************/

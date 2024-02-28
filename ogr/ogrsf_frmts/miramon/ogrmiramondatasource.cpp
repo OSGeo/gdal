@@ -109,7 +109,8 @@ int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
     else
         *MMMap.pszMapName = '\0';
 
-    CPLFree(pszDSName);
+    if (pszDSName)
+        CPLFree(pszDSName);
     pszDSName = CPLStrdup(pszFilename);
 
     return TRUE;
