@@ -4,7 +4,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  GML Reading Driver testing.
+# Purpose:  GML driver testing.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
 #
 ###############################################################################
