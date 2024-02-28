@@ -70,24 +70,23 @@ struct CPL_DLL OGRWktOptions
 {
   public:
     /// Type of WKT output to produce.
-    OGRwkbVariant variant;
-    /// Precision of output.  Interpretation depends on \c format.
-    int precision;
+    OGRwkbVariant variant = wkbVariantOldOgc;
+    /// Precision of output for X,Y coordinates.  Interpretation depends on \c format.
+    int xyPrecision;
+    /// Precision of output for Z coordinates.  Interpretation depends on \c format.
+    int zPrecision;
+    /// Precision of output for M coordinates.  Interpretation depends on \c format.
+    int mPrecision;
     /// Whether GDAL-special rounding should be applied.
-    bool round;
+    bool round = getDefaultRound();
     /// Formatting type.
-    OGRWktFormat format;
+    OGRWktFormat format = OGRWktFormat::Default;
 
     /// Constructor.
     OGRWktOptions()
-        : variant(wkbVariantOldOgc), precision(15), round(true),
-          format(OGRWktFormat::Default)
+        : xyPrecision(getDefaultPrecision()), zPrecision(xyPrecision),
+          mPrecision(zPrecision)
     {
-        static int defPrecision = getDefaultPrecision();
-        static bool defRound = getDefaultRound();
-
-        precision = defPrecision;
-        round = defRound;
     }
 
     /// Copy constructor

@@ -86,12 +86,12 @@ OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
 
 void CPL_DLL OGRMakeWktCoordinate(char *, double, double, double, int);
 std::string CPL_DLL OGRMakeWktCoordinate(double, double, double, int,
-                                         OGRWktOptions opts);
+                                         const OGRWktOptions &opts);
 void CPL_DLL OGRMakeWktCoordinateM(char *, double, double, double, double,
                                    OGRBoolean, OGRBoolean);
 std::string CPL_DLL OGRMakeWktCoordinateM(double, double, double, double,
                                           OGRBoolean, OGRBoolean,
-                                          OGRWktOptions opts);
+                                          const OGRWktOptions &opts);
 
 #endif
 
@@ -100,7 +100,8 @@ void CPL_DLL OGRFormatDouble(char *pszBuffer, int nBufferLen, double dfVal,
                              char chConversionSpecifier = 'f');
 
 #ifdef OGR_GEOMETRY_H_INCLUDED
-std::string CPL_DLL OGRFormatDouble(double val, const OGRWktOptions &opts);
+std::string CPL_DLL OGRFormatDouble(double val, const OGRWktOptions &opts,
+                                    int nDimIdx);
 #endif
 
 int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal, int nPrecision,

@@ -204,12 +204,14 @@ void OGRFormatDouble(char *pszBuffer, int nBufferLen, double dfVal,
 {
     OGRWktOptions opts;
 
-    opts.precision = nPrecision;
+    opts.xyPrecision = nPrecision;
+    opts.zPrecision = nPrecision;
+    opts.mPrecision = nPrecision;
     opts.format = (chConversionSpecifier == 'g' || chConversionSpecifier == 'G')
                       ? OGRWktFormat::G
                       : OGRWktFormat::F;
 
-    std::string s = OGRFormatDouble(dfVal, opts);
+    std::string s = OGRFormatDouble(dfVal, opts, 1);
     if (chDecimalSep != '\0' && chDecimalSep != '.')
     {
         auto pos = s.find('.');
@@ -229,7 +231,7 @@ void OGRFormatDouble(char *pszBuffer, int nBufferLen, double dfVal,
 
 /// Simplified OGRFormatDouble that can be made to adhere to provided
 /// options.
-std::string OGRFormatDouble(double val, const OGRWktOptions &opts)
+std::string OGRFormatDouble(double val, const OGRWktOptions &opts, int nDimIdx)
 {
     // So to have identical cross platform representation.
     if (std::isinf(val))
@@ -249,7 +251,9 @@ std::string OGRFormatDouble(double val, const OGRWktOptions &opts)
         oss << std::uppercase;
         l_round = false;
     }
-    oss << std::setprecision(opts.precision);
+    oss << std::setprecision(nDimIdx < 3    ? opts.xyPrecision
+                             : nDimIdx == 3 ? opts.zPrecision
+                                            : opts.mPrecision);
     oss << val;
 
     std::string sval = oss.str();
@@ -285,7 +289,7 @@ static bool isInteger(const std::string &s)
 }
 
 std::string OGRMakeWktCoordinate(double x, double y, double z, int nDimension,
-                                 OGRWktOptions opts)
+                                 const OGRWktOptions &opts)
 {
     std::string wkt;
 
@@ -300,19 +304,18 @@ std::string OGRMakeWktCoordinate(double x, double y, double z, int nDimension,
     }
     else
     {
-        wkt = OGRFormatDouble(x, opts);
+        wkt = OGRFormatDouble(x, opts, 1);
         // ABELL - Why do we do special formatting?
         if (isInteger(wkt))
             wkt += ".0";
         wkt += ' ';
 
-        std::string yval = OGRFormatDouble(y, opts);
+        std::string yval = OGRFormatDouble(y, opts, 2);
         if (isInteger(yval))
             yval += ".0";
         wkt += yval;
     }
 
-    // Why do we always format Z with type G.
     if (nDimension == 3)
     {
         wkt += ' ';
@@ -320,8 +323,7 @@ std::string OGRMakeWktCoordinate(double x, double y, double z, int nDimension,
             wkt += std::to_string(static_cast<int>(z));
         else
         {
-            opts.format = OGRWktFormat::G;
-            wkt += OGRFormatDouble(z, opts);
+            wkt += OGRFormatDouble(z, opts, 3);
         }
     }
     return wkt;
@@ -349,7 +351,7 @@ void OGRMakeWktCoordinateM(char *pszTarget, double x, double y, double z,
 
 std::string OGRMakeWktCoordinateM(double x, double y, double z, double m,
                                   OGRBoolean hasZ, OGRBoolean hasM,
-                                  OGRWktOptions opts)
+                                  const OGRWktOptions &opts)
 {
     std::string wkt;
     if (opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(x) &&
@@ -361,35 +363,33 @@ std::string OGRMakeWktCoordinateM(double x, double y, double z, double m,
     }
     else
     {
-        wkt = OGRFormatDouble(x, opts);
+        wkt = OGRFormatDouble(x, opts, 1);
         if (isInteger(wkt))
             wkt += ".0";
         wkt += ' ';
 
-        std::string yval = OGRFormatDouble(y, opts);
+        std::string yval = OGRFormatDouble(y, opts, 2);
         if (isInteger(yval))
             yval += ".0";
         wkt += yval;
     }
 
-    // For some reason we always format Z and M as G-type
-    opts.format = OGRWktFormat::G;
     if (hasZ)
     {
-        /*if( opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(z) )
-            wkt += " " + std::to_string(static_cast<int>(z));
-        else*/
         wkt += ' ';
-        wkt += OGRFormatDouble(z, opts);
+        if (opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(z))
+            wkt += std::to_string(static_cast<int>(z));
+        else
+            wkt += OGRFormatDouble(z, opts, 3);
     }
 
     if (hasM)
     {
-        /*if( opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(m) )
-            wkt += " " + std::to_string(static_cast<int>(m));
-        else*/
         wkt += ' ';
-        wkt += OGRFormatDouble(m, opts);
+        if (opts.format == OGRWktFormat::Default && CPLIsDoubleAnInt(m))
+            wkt += std::to_string(static_cast<int>(m));
+        else
+            wkt += OGRFormatDouble(m, opts, 4);
     }
     return wkt;
 }

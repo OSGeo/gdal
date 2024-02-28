@@ -1024,7 +1024,9 @@ inline OGRErr OGRArrowWriterLayer::BuildGeometry(OGRGeometry *poGeom,
         if (m_nWKTCoordinatePrecision >= 0)
         {
             options.format = OGRWktFormat::F;
-            options.precision = m_nWKTCoordinatePrecision;
+            options.xyPrecision = m_nWKTCoordinatePrecision;
+            options.zPrecision = m_nWKTCoordinatePrecision;
+            options.mPrecision = m_nWKTCoordinatePrecision;
         }
         OGR_ARROW_RETURN_OGRERR_NOT_OK(
             static_cast<arrow::StringBuilder *>(poBuilder)->Append(
