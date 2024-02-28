@@ -209,7 +209,6 @@ void RegisterOGRMiraMon()
         "    <Value>ENG</Value>"
         "    <Value>CAT</Value>"
         "    <Value>SPA</Value>"
-        "    <Default>ENG</Default>"
         "  </Option>"
         "</OpenOptionList>");
 
@@ -256,7 +255,6 @@ void RegisterOGRMiraMon()
         "    <Value>ENG</Value>"
         "    <Value>CAT</Value>"
         "    <Value>SPA</Value>"
-        "    <Default>ENG</Default>"
         "  </Option>"
         "</LayerCreationOptionList>");
 
