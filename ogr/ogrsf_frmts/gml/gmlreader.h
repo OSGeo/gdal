@@ -186,15 +186,19 @@ class CPL_DLL GMLGeometryPropertyDefn
 {
     char *m_pszName;
     char *m_pszSrcElement;
-    int m_nGeometryType;
+    OGRwkbGeometryType m_nGeometryType = wkbUnknown;
     int m_nAttributeIndex;
     bool m_bNullable;
     bool m_bSRSNameConsistent = true;
     std::string m_osSRSName{};
+    OGRGeomCoordinatePrecision m_oCoordPrecision{};
 
   public:
     GMLGeometryPropertyDefn(const char *pszName, const char *pszSrcElement,
-                            int nType, int nAttributeIndex, bool bNullable);
+                            OGRwkbGeometryType nType, int nAttributeIndex,
+                            bool bNullable,
+                            const OGRGeomCoordinatePrecision &oCoordPrec =
+                                OGRGeomCoordinatePrecision());
     ~GMLGeometryPropertyDefn();
 
     const char *GetName() const
@@ -202,11 +206,11 @@ class CPL_DLL GMLGeometryPropertyDefn
         return m_pszName;
     }
 
-    int GetType() const
+    OGRwkbGeometryType GetType() const
     {
         return m_nGeometryType;
     }
-    void SetType(int nType)
+    void SetType(OGRwkbGeometryType nType)
     {
         m_nGeometryType = nType;
     }
@@ -223,6 +227,11 @@ class CPL_DLL GMLGeometryPropertyDefn
     bool IsNullable() const
     {
         return m_bNullable;
+    }
+
+    const OGRGeomCoordinatePrecision &GetCoordinatePrecision() const
+    {
+        return m_oCoordPrecision;
     }
 
     void SetSRSName(const std::string &srsName)

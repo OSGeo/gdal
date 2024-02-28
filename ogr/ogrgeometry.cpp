@@ -2953,21 +2953,60 @@ void OGR_G_FlattenTo2D(OGRGeometryH hGeom)
  * types assuming the this is available in the gml namespace.  The returned
  * string should be freed with CPLFree() when no longer required.
  *
- * The supported options in OGR 1.8.0 are :
+ * The supported options are :
  * <ul>
- * <li> FORMAT=GML3. Otherwise it will default to GML 2.1.2 output.
- * <li> GML3_LINESTRING_ELEMENT=curve. (Only valid for FORMAT=GML3) To
- *     use gml:Curve element for linestrings.  Otherwise
- *     gml:LineString will be used .
- * <li> GML3_LONGSRS=YES/NO. (Only valid for FORMAT=GML3) Default to
- *      YES. If YES, SRS with EPSG authority will be written with the
- *      "urn:ogc:def:crs:EPSG::" prefix.  In the case, if the SRS is a
- *      geographic SRS without explicit AXIS order, but that the same
- *      SRS authority code imported with ImportFromEPSGA() should be
- *      treated as lat/long, then the function will take care of
- *      coordinate order swapping.  If set to NO, SRS with EPSG
- *      authority will be written with the "EPSG:" prefix, even if
- *      they are in lat/long order.
+ * <li> FORMAT=GML2/GML3/GML32 (GML2 or GML32 added in GDAL 2.1).
+ *      If not set, it will default to GML 2.1.2 output.
+ * </li>
+ * <li> GML3_LINESTRING_ELEMENT=curve. (Only valid for FORMAT=GML3)
+ *      To use gml:Curve element for linestrings.
+ *      Otherwise gml:LineString will be used .
+ * </li>
+ * <li> GML3_LONGSRS=YES/NO. (Only valid for FORMAT=GML3, deprecated by
+ *      SRSNAME_FORMAT in GDAL &gt;=2.2). Defaults to YES.
+ *      If YES, SRS with EPSG authority will be written with the
+ *      "urn:ogc:def:crs:EPSG::" prefix.
+ *      In the case the SRS should be treated as lat/long or
+ *      northing/easting, then the function will take care of coordinate order
+ *      swapping if the data axis to CRS axis mapping indicates it.
+ *      If set to NO, SRS with EPSG authority will be written with the "EPSG:"
+ *      prefix, even if they are in lat/long order.
+ * </li>
+ * <li> SRSNAME_FORMAT=SHORT/OGC_URN/OGC_URL (Only valid for FORMAT=GML3, added
+ *      in GDAL 2.2). Defaults to OGC_URN.  If SHORT, then srsName will be in
+ *      the form AUTHORITY_NAME:AUTHORITY_CODE. If OGC_URN, then srsName will be
+ *      in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE. If OGC_URL,
+ *      then srsName will be in the form
+ *      http://www.opengis.net/def/crs/AUTHORITY_NAME/0/AUTHORITY_CODE. For
+ *      OGC_URN and OGC_URL, in the case the SRS should be treated as lat/long
+ *      or northing/easting, then the function will take care of coordinate
+ *      order swapping if the data axis to CRS axis mapping indicates it.
+ * </li>
+ * <li> GMLID=astring. If specified, a gml:id attribute will be written in the
+ *      top-level geometry element with the provided value.
+ *      Required for GML 3.2 compatibility.
+ * </li>
+ * <li> SRSDIMENSION_LOC=POSLIST/GEOMETRY/GEOMETRY,POSLIST. (Only valid for
+ *      FORMAT=GML3/GML32, GDAL >= 2.0) Default to POSLIST.
+ *      For 2.5D geometries, define the location where to attach the
+ *      srsDimension attribute.
+ *      There are diverging implementations. Some put in on the
+ *      &lt;gml:posList&gt; element, other on the top geometry element.
+ * </li>
+ * <li> NAMESPACE_DECL=YES/NO. If set to YES,
+ *      xmlns:gml="http://www.opengis.net/gml" will be added to the root node
+ *      for GML < 3.2 or xmlns:gml="http://www.opengis.net/gml/3.2" for GML 3.2
+ * </li>
+ * <li> XY_COORD_RESOLUTION=double (added in GDAL 3.9):
+ *      Resolution for the coordinate precision of the X and Y coordinates.
+ *      Expressed in the units of the X and Y axis of the SRS. eg 1e-5 for up
+ *      to 5 decimal digits. 0 for the default behaviour.
+ * </li>
+ * <li> Z_COORD_RESOLUTION=double (added in GDAL 3.9):
+ *      Resolution for the coordinate precision of the Z coordinates.
+ *      Expressed in the units of the Z axis of the SRS.
+ *      0 for the default behaviour.
+ * </li>
  * </ul>
  *
  * This method is the same as the C function OGR_G_ExportToGMLEx().

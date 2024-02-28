@@ -217,15 +217,16 @@ void GMLPropertyDefn::AnalysePropertyValue(const GMLProperty *psGMLProperty,
 /*                       GMLGeometryPropertyDefn                        */
 /************************************************************************/
 
-GMLGeometryPropertyDefn::GMLGeometryPropertyDefn(const char *pszName,
-                                                 const char *pszSrcElement,
-                                                 int nType, int nAttributeIndex,
-                                                 bool bNullable)
+GMLGeometryPropertyDefn::GMLGeometryPropertyDefn(
+    const char *pszName, const char *pszSrcElement, OGRwkbGeometryType nType,
+    int nAttributeIndex, bool bNullable,
+    const OGRGeomCoordinatePrecision &oCoordPrec)
     : m_pszName((pszName == nullptr || pszName[0] == '\0')
                     ? CPLStrdup(pszSrcElement)
                     : CPLStrdup(pszName)),
       m_pszSrcElement(CPLStrdup(pszSrcElement)), m_nGeometryType(nType),
-      m_nAttributeIndex(nAttributeIndex), m_bNullable(bNullable)
+      m_nAttributeIndex(nAttributeIndex), m_bNullable(bNullable),
+      m_oCoordPrecision(oCoordPrec)
 {
 }
 

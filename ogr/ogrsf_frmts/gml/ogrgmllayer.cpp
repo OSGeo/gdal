@@ -781,7 +781,7 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
     for (int iGeomField = 0; iGeomField < poFeatureDefn->GetGeomFieldCount();
          iGeomField++)
     {
-        OGRGeomFieldDefn *poFieldDefn =
+        const OGRGeomFieldDefn *poFieldDefn =
             poFeatureDefn->GetGeomFieldDefn(iGeomField);
 
         // Write out Geometry - for now it isn't indented properly.
@@ -801,6 +801,8 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
                 poFieldDefn->GetSpatialRef() != nullptr)
                 poGeom->assignSpatialReference(poFieldDefn->GetSpatialRef());
 
+            const auto &oCoordPrec = poFieldDefn->GetCoordinatePrecision();
+
             if (bIsGML3Output && poDS->WriteFeatureBoundedBy())
             {
                 bool bCoordSwap = false;
@@ -810,23 +812,50 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
                                    poDS->GetSRSNameFormat(), &bCoordSwap);
                 char szLowerCorner[75] = {};
                 char szUpperCorner[75] = {};
+
+                OGRWktOptions coordOpts;
+
+                if (oCoordPrec.dfXYResolution !=
+                    OGRGeomCoordinatePrecision::UNKNOWN)
+                {
+                    coordOpts.format = OGRWktFormat::F;
+                    coordOpts.xyPrecision =
+                        OGRGeomCoordinatePrecision::ResolutionToPrecision(
+                            oCoordPrec.dfXYResolution);
+                }
+                if (oCoordPrec.dfZResolution !=
+                    OGRGeomCoordinatePrecision::UNKNOWN)
+                {
+                    coordOpts.format = OGRWktFormat::F;
+                    coordOpts.zPrecision =
+                        OGRGeomCoordinatePrecision::ResolutionToPrecision(
+                            oCoordPrec.dfZResolution);
+                }
+
+                std::string wkt;
                 if (bCoordSwap)
                 {
-                    OGRMakeWktCoordinate(szLowerCorner, sGeomBounds.MinY,
-                                         sGeomBounds.MinX, sGeomBounds.MinZ,
-                                         nCoordDimension);
-                    OGRMakeWktCoordinate(szUpperCorner, sGeomBounds.MaxY,
-                                         sGeomBounds.MaxX, sGeomBounds.MaxZ,
-                                         nCoordDimension);
+                    wkt = OGRMakeWktCoordinate(
+                        sGeomBounds.MinY, sGeomBounds.MinX, sGeomBounds.MinZ,
+                        nCoordDimension, coordOpts);
+                    memcpy(szLowerCorner, wkt.data(), wkt.size() + 1);
+
+                    wkt = OGRMakeWktCoordinate(
+                        sGeomBounds.MaxY, sGeomBounds.MaxX, sGeomBounds.MaxZ,
+                        nCoordDimension, coordOpts);
+                    memcpy(szUpperCorner, wkt.data(), wkt.size() + 1);
                 }
                 else
                 {
-                    OGRMakeWktCoordinate(szLowerCorner, sGeomBounds.MinX,
-                                         sGeomBounds.MinY, sGeomBounds.MinZ,
-                                         nCoordDimension);
-                    OGRMakeWktCoordinate(szUpperCorner, sGeomBounds.MaxX,
-                                         sGeomBounds.MaxY, sGeomBounds.MaxZ,
-                                         nCoordDimension);
+                    wkt = OGRMakeWktCoordinate(
+                        sGeomBounds.MinX, sGeomBounds.MinY, sGeomBounds.MinZ,
+                        nCoordDimension, coordOpts);
+                    memcpy(szLowerCorner, wkt.data(), wkt.size() + 1);
+
+                    wkt = OGRMakeWktCoordinate(
+                        sGeomBounds.MaxX, sGeomBounds.MaxY, sGeomBounds.MaxZ,
+                        nCoordDimension, coordOpts);
+                    memcpy(szUpperCorner, wkt.data(), wkt.size() + 1);
                 }
                 if (bWriteSpaceIndentation)
                     VSIFPrintfL(fp, "      ");
@@ -871,6 +900,20 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
                         papszOptions, CPLSPrintf("GMLID=%s.geom." CPL_FRMT_GIB,
                                                  poFeatureDefn->GetName(),
                                                  poFeature->GetFID()));
+            }
+
+            if (oCoordPrec.dfXYResolution !=
+                OGRGeomCoordinatePrecision::UNKNOWN)
+            {
+                papszOptions = CSLAddString(
+                    papszOptions, CPLSPrintf("XY_COORD_RESOLUTION=%g",
+                                             oCoordPrec.dfXYResolution));
+            }
+            if (oCoordPrec.dfZResolution != OGRGeomCoordinatePrecision::UNKNOWN)
+            {
+                papszOptions = CSLAddString(
+                    papszOptions, CPLSPrintf("Z_COORD_RESOLUTION=%g",
+                                             oCoordPrec.dfZResolution));
             }
 
             char *pszGeometry = nullptr;
