@@ -396,8 +396,10 @@ static int GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
  * @param pnLines int in which the suggest pixel height of output is returned.
  * @param padfExtent Four entry array to return extents as (xmin, ymin, xmax,
  * ymax).
- * @param nOptions Options. Zero or GDAL_SWO_ROUND_UP_SIZE to ask *pnPixels
- * and *pnLines to be rounded up instead of being rounded to the closes integer.
+ * @param nOptions Options flags. Zero or GDAL_SWO_ROUND_UP_SIZE  to ask *pnPixels
+ * and *pnLines to be rounded up instead of being rounded to the closes integer, or
+ * GDAL_SWO_SIZE_CHANGE to indicate that changes in the destination resolution or
+ * extent are expected.
  *
  * @return CE_None if successful or CE_Failure otherwise.
  */
