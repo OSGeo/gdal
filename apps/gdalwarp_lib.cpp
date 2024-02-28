@@ -3977,9 +3977,13 @@ static GDALDatasetH GDALWarpCreateOutput(
 
             // For sum, round-up dimension, to be sure that the output extent
             // includes all source pixels, to have the sum preserving property.
-            const int nOptions = (psOptions->eResampleAlg == GRA_Sum)
-                                     ? GDAL_SWO_ROUND_UP_SIZE
-                                     : 0;
+            int nOptions = (psOptions->eResampleAlg == GRA_Sum)
+                               ? GDAL_SWO_ROUND_UP_SIZE
+                               : 0;
+            if (psOptions->bCreateOutput)
+            {
+                nOptions |= GDAL_SWO_SIZE_CHANGE;
+            }
             if (GDALSuggestedWarpOutput2(hSrcDS, psInfo->pfnTransform,
                                          hTransformArg, adfThisGeoTransform,
                                          &nThisPixels, &nThisLines, adfExtent,

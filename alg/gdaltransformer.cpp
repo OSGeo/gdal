@@ -431,14 +431,13 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
     /* ------------------------------------------------------------- */
     /* Special case for warping on the same (or null) CRS.           */
     /* ------------------------------------------------------------- */
-    if (pTransformArg && pfnTransformer == GDALGenImgProjTransform)
+    if ((!nOptions || (nOptions & GDAL_SWO_SIZE_CHANGE) == 0) &&
+        pTransformArg && pfnTransformer == GDALGenImgProjTransform)
     {
         double adfGeoTransform[6];
 
         if (GDALGetGeoTransform(hSrcDS, adfGeoTransform) == CE_None &&
-            !(adfGeoTransform[0] == 1.0 && adfGeoTransform[1] == 1.0 &&
-              adfGeoTransform[2] == 0.0 && adfGeoTransform[3] == 1.0 &&
-              adfGeoTransform[4] == 0.0 && adfGeoTransform[5] == 1.0))
+            adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0)
         {
             GDALGenImgProjTransformInfo *psInfo{
                 static_cast<GDALGenImgProjTransformInfo *>(pTransformArg)};
