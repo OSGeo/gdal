@@ -217,7 +217,7 @@ This utility is also callable from C with :cpp:func:`GDALRasterize`.
 .. versionadded:: 2.1
 
 Examples
--------
+--------
 
 The following would burn all polygons from mask.shp into the RGB TIFF
 file work.tif with the color red (RGB = 255,0,0).
