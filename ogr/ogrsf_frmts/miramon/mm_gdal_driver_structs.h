@@ -58,12 +58,12 @@ CPL_C_START  // Necessary for compiling in GDAL project
 
 // MiraMon feature table descriptors
 #define szInternalGraphicIdentifierEng "Internal Graphic identifier"
-#define szInternalGraphicIdentifierCat "Identificador Gr√†fic intern"
-#define szInternalGraphicIdentifierEsp "Identificador Gr√°fico interno"
+#define szInternalGraphicIdentifierCat "Identificador Gr‡fic intern"
+#define szInternalGraphicIdentifierEsp "Identificador Gr·fico interno"
 
 #define szNumberOfVerticesEng "Number of vertices"
-#define szNumberOfVerticesCat "Nombre de v√®rtexs"
-#define szNumberOfVerticesEsp "N√∫mero de v√©rtices"
+#define szNumberOfVerticesCat "Nombre de vËrtexs"
+#define szNumberOfVerticesEsp "N˙mero de vÈrtices"
 
 #define szLenghtOfAarcEng "Lenght of arc"
 #define szLenghtOfAarcCat "Longitud de l'arc"
@@ -79,27 +79,27 @@ CPL_C_START  // Necessary for compiling in GDAL project
 
 #define szNumberOfArcsToNodeEng "Number of arcs to node"
 #define szNumberOfArcsToNodeCat "Nombre d'arcs al node"
-#define szNumberOfArcsToNodeEsp "N√∫mero de arcos al nodo"
+#define szNumberOfArcsToNodeEsp "N˙mero de arcos al nodo"
 
 #define szNodeTypeEng "Node type"
 #define szNodeTypeCat "Tipus de node"
 #define szNodeTypeEsp "Tipo de nodo"
 
 #define szPerimeterOfThePolygonEng "Perimeter of the polygon"
-#define szPerimeterOfThePolygonCat "Per√≠metre del pol√≠gon"
-#define szPerimeterOfThePolygonEsp "Per√≠metro del pol√≠gono"
+#define szPerimeterOfThePolygonCat "PerÌmetre del polÌgon"
+#define szPerimeterOfThePolygonEsp "PerÌmetro del polÌgono"
 
 #define szAreaOfThePolygonEng "Area of the polygon"
-#define szAreaOfThePolygonCat "√Ärea del pol√≠gon"
-#define szAreaOfThePolygonEsp "√Årea del pol√≠gono"
+#define szAreaOfThePolygonCat "¿rea del polÌgon"
+#define szAreaOfThePolygonEsp "¡rea del polÌgono"
 
 #define szNumberOfArcsEng "Number of arcs"
 #define szNumberOfArcsCat "Nombre d'arcs"
-#define szNumberOfArcsEsp "N√∫mero de arcos"
+#define szNumberOfArcsEsp "N˙mero de arcos"
 
 #define szNumberOfElementaryPolygonsEng "Number of elementary polygons"
-#define szNumberOfElementaryPolygonsCat "Nombre de pol√≠gons elementals"
-#define szNumberOfElementaryPolygonsEsp "N√∫mero de pol√≠gonos elementales"
+#define szNumberOfElementaryPolygonsCat "Nombre de polÌgons elementals"
+#define szNumberOfElementaryPolygonsEsp "N˙mero de polÌgonos elementales"
 
 // MiraMon feature field names
 #define szMMNomCampIdGraficDefecte "ID_GRAFIC"

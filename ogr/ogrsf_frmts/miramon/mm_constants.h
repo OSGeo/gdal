@@ -134,18 +134,7 @@ CPL_C_START  // Necessary for compiling C in GDAL project
 #define MM_JOC_CARAC_UTF8_DBF 0xFF
 #define MM_JOC_CARAC_UTF8_MM 8
 
-    enum MM_TipusNomCamp {
-        NM_CLASSICAL_DBF_AND_VALID_NAME = 0,
-        MM_DBF_NAME_LOWERCASE_AND_VALID,
-        MM_VALID_EXTENDED_DBF_NAME,
-        MM_DBF_NAME_NO_VALID
-    };
-#define MM_OFFSET_RESERVED2_EXTENDED_NAME_SIZE 11
-
-typedef unsigned char MM_BYTE;
-
-#define MM_DonaBytesNomEstesCamp(camp)                                         \
-    ((MM_BYTE)((camp)->reserved_2[MM_OFFSET_RESERVED2_EXTENDED_NAME_SIZE]))
+    typedef unsigned char MM_BYTE;
 
 #define MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA 8
 #define MM_SEGON_OFFSET_a_OFFSET_1a_FITXA 30

@@ -73,6 +73,17 @@ typedef GInt32 MM_N_HEIGHT_TYPE;
                MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES,                           \
            &(offset_nom_camp), 4)
 
+enum MM_TipusNomCamp
+{
+    NM_CLASSICAL_DBF_AND_VALID_NAME = 0,
+    MM_DBF_NAME_LOWERCASE_AND_VALID,
+    MM_VALID_EXTENDED_DBF_NAME,
+    MM_DBF_NAME_NO_VALID
+};
+
+#define MM_DonaBytesNomEstesCamp(camp)                                         \
+    ((MM_BYTE)((camp)->reserved_2[MM_OFFSET_RESERVED2_EXTENDED_NAME_SIZE]))
+
 #ifdef GDAL_COMPILATION
 CPL_C_END  // Necessary for compiling in GDAL project
 #endif
