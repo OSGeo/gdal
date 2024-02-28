@@ -56,8 +56,67 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define KEY_characterSet "characterSet"
 #define KEY_Value_characterSet "006"
 
+
+// MiraMon feature table descriptors
+#define szInternalGraphicIdentifierEng "Internal Graphic identifier"
+#define szInternalGraphicIdentifierCat "Identificador Gràfic intern"
+#define szInternalGraphicIdentifierEsp "Identificador Gráfico interno"
+
+#define szNumberOfVerticesEng "Number of vertices"
+#define szNumberOfVerticesCat "Nombre de vèrtexs"
+#define szNumberOfVerticesEsp "Número de vértices"
+
+#define szLenghtOfAarcEng "Lenght of arc"
+#define szLenghtOfAarcCat "Longitud de l'arc"
+#define szLenghtOfAarcEsp "Longitud del arco"
+
+#define szInitialNodeEng "Initial node"
+#define szInitialNodeCat "Node inicial" 
+#define szInitialNodeEsp "Nodo inicial"
+
+#define szFinalNodeEng "Final node"
+#define szFinalNodeCat "Node final" 
+#define szFinalNodeEsp "Nodo final"
+
+#define szNumberOfArcsToNodeEng "Number of arcs to node"
+#define szNumberOfArcsToNodeCat "Nombre d'arcs al node"
+#define szNumberOfArcsToNodeEsp "Número de arcos al nodo"
+
+#define szNodeTypeEng  "Node type"
+#define szNodeTypeCat  "Tipus de node"
+#define szNodeTypeEsp  "Tipo de nodo"
+
+#define szPerimeterOfThePolygonEng "Perimeter of the polygon"
+#define szPerimeterOfThePolygonCat "Perímetre del polígon"
+#define szPerimeterOfThePolygonEsp "Perímetro del polígono"
+
+#define szAreaOfThePolygonEng  "Area of the polygon"
+#define szAreaOfThePolygonCat  "Àrea del polígon"
+#define szAreaOfThePolygonEsp  "Área del polígono"
+
+#define szNumberOfArcsEng   "Number of arcs"
+#define szNumberOfArcsCat   "Nombre d'arcs"
+#define szNumberOfArcsEsp   "Número de arcos"
+
+#define szNumberOfElementaryPolygonsEng "Number of elementary polygons"
+#define szNumberOfElementaryPolygonsCat "Nombre de polígons elementals"
+#define szNumberOfElementaryPolygonsEsp "Número de polígonos elementales"
+
+// MiraMon feature field names
+#define szMMNomCampIdGraficDefecte "ID_GRAFIC"
+#define szMMNomCampPerimetreDefecte "PERIMETRE"
+#define szMMNomCampAreaDefecte "AREA"
+#define szMMNomCampLongitudArcDefecte "LONG_ARC"
+#define szMMNomCampNodeIniDefecte "NODE_INI"
+#define szMMNomCampNodeFiDefecte "NODE_FI"
+#define szMMNomCampArcsANodeDefecte "ARCS_A_NOD"
+#define szMMNomCampTipusNodeDefecte "TIPUS_NODE"
+#define szMMNomCampNVertexsDefecte "N_VERTEXS"
+#define szMMNomCampNArcsDefecte "N_ARCS"
+#define szMMNomCampNPoligonsDefecte "N_POLIG"
+
 // Types of layers in MiraMon
-#define MM_LayerType_Unknown 0  // Unknown type or only DBF
+#define MM_LayerType_Unknown 0  // Unknown type, or DBF alone
 #define MM_LayerType_Point 1    // Layer of Points
 #define MM_LayerType_Point3d 2  // Layer of 3D Points
 #define MM_LayerType_Arc 3      // Layer of Arcs
@@ -109,14 +168,14 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define MAXIMUM_OBJECT_INDEX_IN_2GB_VECTORS UINT32_MAX  //_UI32_MAX
 #define MAXIMUM_OFFSET_IN_2GB_VECTORS UINT32_MAX        //_UI32_MAX
 
-// Number of rings a polygon could have (it's just an aproximation)
+// Number of rings a polygon could have (it is just an initial aproximation)
 #define MM_MEAN_NUMBER_OF_RINGS 10
 
-// Number of coordinates a feature could have (it's just an aproximation)
+// Number of coordinates a feature could have (it is just an initial aproximation)
 #define MM_MEAN_NUMBER_OF_NCOORDS 100
 #define MM_MEAN_NUMBER_OF_COORDS 1000
 
-// Number of fields that the suppose to have.
+// Initial and increment number of records and fields.
 #define MM_INIT_NUMBER_OF_RECORDS 1
 #define MM_INC_NUMBER_OF_RECORDS 5
 #define MM_INIT_NUMBER_OF_FIELDS 20
@@ -133,7 +192,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
             3
     };
 
-// Size of disk parts of the MiraMon vectorial format
+// Size of disk parts of the MiraMon vector format
 // Common header
 #define MM_HEADER_SIZE_32_BITS 48
 #define MM_HEADER_SIZE_64_BITS 64
@@ -172,10 +231,10 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define MM_RECODE_UTF8 0
 #define MM_RECODE_ANSI 1
 
-// Language in REL's:
-// It's the language of the MiraMon generated descriptors.
+// Language in REL files:
+// It is the language of the MiraMon generated descriptors.
 // Metadata will not be translated but these descriptors are
-// generated from scratch and it's good to use a custom language.
+// generated from scratch and it is good to use a custom language.
 #define MM_ENG_LANGUAGE 0
 #define MM_CAT_LANGUAGE 1
 #define MM_SPA_LANGUAGE 2
@@ -201,7 +260,7 @@ struct MM_POINT_2D
 struct ARC_VRT_STRUCTURE
 {
     struct MM_POINT_2D vertice;
-    MM_BOOLEAN bIniFi;      // boolean:  0=inicial, 1=final
+    MM_BOOLEAN bIniFi;      // boolean:  0=initial, 1=final
     MM_INTERNAL_FID nIArc;  // Internal arc index
     MM_INTERNAL_FID nINod;  // Internal node index, empty at the beginning */
 };
@@ -234,9 +293,9 @@ struct MM_FLUSH_INFO
 
     // Block where to save the pBlockToBeSaved or read from
     void *pBlockWhereToSaveOrRead;
-    // Number of full bytes: flushed every time it's needed
+    // Number of full bytes: flushed every time it is needed
     GUInt64 nNumBytes;
-    // Number of bytes allocated: flushed every time it's needed
+    // Number of bytes allocated: flushed every time it is needed
     GUInt64 nBlockSize;
 
     // Internal Use
@@ -251,7 +310,7 @@ struct MiraMonVectorMetaData
     char *aArcFile;  // Polygon's arc name
     int ePlainLT;    // Plain layer type (no 3D specified): MM_LayerType_Point,
                      // MM_LayerType_Arc, MM_LayerType_Node, MM_LayerType_Pol
-    char *pSRS;      // EPSG code of the coordinate system information.
+    char *pSRS;      // EPSG code of the spatial reference system.
     char *pXUnit;    // X units if pszSRS is empty.
     char *pYUnit;    // Y units if pszSRS is empty. If Y units is empty,
                      // X unit will be assigned as Y unit by default.
@@ -261,10 +320,10 @@ struct MiraMonVectorMetaData
     // Pointer to a Layer DataBase, used to create MiraMon DBF (extended) file.
     struct MiraMonDataBase *pLayerDB;
 
-    // Language in REL's:
-    // It's the language of the MiraMon generated descriptors.
+    // Language in REL files:
+    // It is the language of the MiraMon generated descriptors.
     // Metadata will not be translated but these descriptors are
-    // generated from scratch and it's good to use a custom language.
+    // generated from scratch and it is good to use a custom language.
     char nMMLanguage;
 };
 
@@ -292,7 +351,7 @@ struct MiraMonFieldValue
 #define MM_INIT_STRING_FIELD_VALUE 50000  // Never less than 10
     MM_EXT_DBF_N_FIELDS nNumDinValue;     // Size of the reserved string value
     char *pDinValue;  // Used if MM_MAX_STRING_FIELD_VALUE is not enough
-    double dValue;    // For double and 32 bit integer numeric values and
+    double dValue;    // For double and 32 bit integer numeric values
     GInt64 iValue;    // For 64 bit integer values.
     //MM_BOOLEAN kbValue;    // For binary values.
 };
@@ -322,13 +381,13 @@ struct MiraMonDataBase
 
 struct MMAdmDatabase
 {
-    // MiraMon Database (extended DBF)
+    // MiraMon table (extended DBF)
     // Name of the extended DBF file
     char pszExtDBFLayerName[MM_CPL_PATH_BUF_SIZE];
     // Pointer to the extended DBF file
     FILE_TYPE *pFExtDBF;
-    // Pointer to a MiraMon database (auxiliar)
-    struct MM_BASE_DADES_XP *pMMBDXP;
+    // Pointer to a MiraMon table (auxiliar)
+    struct MM_DATA_BASE_XP *pMMBDXP;
     // How to write all it to disk
     struct MM_FLUSH_INFO FlushRecList;
     char *pRecList;  // Records list  // (II mode)
@@ -356,8 +415,8 @@ struct MM_TH
 
     char aFileType[3];  // (PNT, ARC, NOD, POL)
 
-    int bIs3d;
-    int bIsMultipolygon;  // Only apply to polygons
+    unsigned short int bIs3d;
+    unsigned short int bIsMultipolygon;  // Only apply to polygons
 
     unsigned char Flag;  // 1 byte: defined at DefTopMM.H
     struct MMBoundingBox hBB;
@@ -380,13 +439,13 @@ struct MM_ZD
     double dfBBminz;  // 8 bytes Minimum Z
     double dfBBmaxz;  // 8 bytes Maximum Z
     GInt32 nZCount;   // 4 bytes (signed)
-    // 4 bytes reserved (Only in version 2.0)
+    // 4 bytes reserved (only in version 2.0)
     MM_FILE_OFFSET nOffsetZ;  // 4 or 8 bytes depending on the version
 };
 
 struct MM_ZSection
 {
-    // Offset where the section begins in disk. It's a precalculated value
+    // Offset where the section begins in disk. It is a precalculated value
     // using nElemCount from LayerInfo. TH+n*CL
     MM_FILE_OFFSET ZSectionOffset;
     struct MM_ZH ZHeader;  // (I mode)
@@ -446,16 +505,16 @@ struct MM_PAL_MEM
 /*  Every MiraMon file is composed as is specified in documentation.
     Here are the structures to every file where we can find two ways
     of keeping the information in memory (to be, finally, flushed to the disk)
-        * (I mode)Pointers to structs that keep information that changes every time
-          a feature is added. They will be written at the end on disk.
-        * (II mode)Memory blocs that are used as buffer blocs to store information that
-          is going to be flushed (as are) at the disc periodically instead 
-          of writing them to the disc every time a Feature is added (not 
-          eficient). The place where they are going to be flushed depends
-          on one variable: the number of elements of the layer.
-*/
+        * (I mode) Pointers to structs that keep information that changes every
+          time a feature is added. They will be written at the end to the disk.
+        * (II mode) Memory blocks that are used as buffer blocks to store
+          information that is going to be flushed (as are) to the disk
+          periodically instead of writing them to the disk every time a Feature
+          is added (not efficient). The place where they are going to be flushed
+          depends on one variable: the number of elements of the layer.
+*/                          
 
-// MiraMon Point Layer: TH, List of CL (coordiantes), ZH, ZD, ZL
+// MiraMon Point Layer: TH, List of CL (coordinates), ZH, ZD, ZL
 struct MiraMonPointLayer
 {
     // Name of the layer with extension
@@ -469,13 +528,13 @@ struct MiraMonPointLayer
     FILE_TYPE *pFTL;  // Pointer to temporary file where to flush
 
     // Z section
-    // Temporal file where the Z coordinates are stored
+    // Temporary file where the Z coordinates are stored
     // if necessary
     char psz3DLayerName[MM_CPL_PATH_BUF_SIZE];
     FILE_TYPE *pF3d;
     struct MM_ZSection pZSection;
 
-    // MiraMon Database (extended DBF)
+    // MiraMon table (extended DBF)
     struct MMAdmDatabase MMAdmDB;
 
     // Metadata name
@@ -523,7 +582,7 @@ struct MiraMonArcLayer
 
     // AL Section
     struct MM_FLUSH_INFO FlushAL;
-    int nALElementSize;                    //    16 // Two double coordinates
+    unsigned short int nALElementSize;     // 16 bytes: 2 doubles (coordinates)
     char *pAL;                             // Arc List  // (II mode)
     char pszALName[MM_CPL_PATH_BUF_SIZE];  // Temporary file where to flush
     FILE_TYPE *pFAL;  // Pointer to temporary file where to flush
@@ -538,7 +597,7 @@ struct MiraMonArcLayer
     // Private data
     GUInt64 nMaxArcVrt;  // Number of allocated
     struct ARC_VRT_STRUCTURE *pArcVrt;
-    MM_FILE_OFFSET nOffsetArc;  // It's an auxiliary offset
+    MM_FILE_OFFSET nOffsetArc;  // It is an auxiliary offset
 
     struct MMAdmDatabase MMAdmDB;
 
@@ -554,19 +613,19 @@ struct MiraMonPolygonLayer
 
     // PS part
     struct MM_FLUSH_INFO FlushPS;
-    int nPSElementSize;
+    unsigned short int nPSElementSize;
     char *pPS;                             // Polygon side (II mode)
     char pszPSName[MM_CPL_PATH_BUF_SIZE];  // Temporary file where to flush
     FILE_TYPE *pFPS;  // Pointer to temporary file where to flush
 
     // Header of every polygon
     MM_INTERNAL_FID nMaxPolHeader;  // Number of pPolHeader allocated
-    int nPHElementSize;
+    unsigned short int nPHElementSize;
     struct MM_PH *pPolHeader;  // (I mode)
 
     // PAL
     struct MM_FLUSH_INFO FlushPAL;
-    int nPALElementSize;
+    unsigned short int nPALElementSize;
     char *pPAL;                             // Polygon Arc List  // (II mode)
     char pszPALName[MM_CPL_PATH_BUF_SIZE];  // Temporary file where to flush
     FILE_TYPE *pFPAL;  // Pointer to temporary file where to flush
@@ -614,9 +673,11 @@ struct MiraMonFeature
     // Number of reserved elements in *flag_VFG
     MM_INTERNAL_FID nMaxVFG;
     char *flag_VFG;  // In case of multipolygons, for each ring:
-        // if flag_VFG[i]|MM_EXTERIOR_ARC_SIDE: outer ring if actived
-        // if flag_VFG[i]|MM_END_ARC_IN_RING: always actived (every ring has only one arc)
-        // if flag_VFG[i]|MM_ROTATE_ARC: coordinates are in the order inverse than readed
+        // if flag_VFG[i]|MM_EXTERIOR_ARC_SIDE: outer ring if set
+        // if flag_VFG[i]|MM_END_ARC_IN_RING: always set (every ring has only
+        //                                    one arc)
+        // if flag_VFG[i]|MM_ROTATE_ARC: coordinates are in the inverse order
+        //                               of the read ones
 
     // List of the Z-coordinates (as many as pCoord)
     // Number of reserved elements in *pZCoord
@@ -648,8 +709,8 @@ struct MiraMonVectLayerInfo
     //GUInt32 Version;
 
     // Version of the layer
-    // MM_32BITS_LAYER_VERSION: less than 2 Gb files
-    // MM_64BITS_LAYER_VERSION: more than 2 Gb files
+    // MM_32BITS_LAYER_VERSION: less than 2 Gbyte files
+    // MM_64BITS_LAYER_VERSION: more than 2 Gbyte files
     char LayerVersion;
 
     // Layer name
@@ -667,14 +728,14 @@ struct MiraMonVectLayerInfo
     MM_BOOLEAN ReadOrWrite;
 
     char pszFlags[10];  // To Open the file
-    int bIsPolygon;
-    int bIsArc;   // Also 1 in a polygon layer
-    int bIsNode;  // Not used in GDAL
-    int bIsPoint;
+    unsigned short int bIsPolygon;
+    unsigned short int bIsArc;   // Also 1 in a polygon layer
+    unsigned short int bIsNode;  // Not used in GDAL
+    unsigned short int bIsPoint;
 
-    // In writting mode when one of the features is 3D, the MM layer will be 3D,
+    // In writing mode when one of the features is 3D, the MM layer will be 3D,
     // but if none of the features are 3D, then the layer will not be 3D.
-    int bIsReal3d;
+    unsigned short int bIsReal3d;
 
     // Final number of elements of the layer.
     MM_INTERNAL_FID nFinalElemCount;  // Real element count after conversion
@@ -693,11 +754,9 @@ struct MiraMonVectLayerInfo
     size_t nHeaderDiskSize;
     struct MM_TH TopHeader;
 
-    int eLT;          // Type of layer: Point, line or polygon (3d or not)
+    int eLT;          // Type of layer: Point, line or polygon (3D or not)
     int bIsBeenInit;  // 1 if layer has already been initialized
 
-    // A Layer can have objects of all kinds and in MiraMon
-    // they are all translate to one of them of descarted
     // Point layer
     struct MiraMonPointLayer MMPoint;
 
@@ -710,27 +769,27 @@ struct MiraMonVectLayerInfo
     // Offset used to write features.
     MM_FILE_OFFSET OffsetCheck;
 
-    // EPSG code of the coordinate system information.
+    // EPSG code of the spatial reference system.
     char *pSRS;
     int nSRS_EPSG;  // Ref. system if has EPSG code.
 
     // In GDAL->MiraMon sense:
-    // Transformed database from origin file to a MiraMon database.
-    // This database has to be merged with private MiraMon fields to obtain
+    // Transformed table from input layer to a MiraMon table.
+    // This table has to be merged with private MiraMon fields to obtain
     // a MiraMon extended DBF
     struct MiraMonDataBase *pLayerDB;
 
     // In MiraMon->GDAL sense:
     // MiraMon extended DBF header
     // In GDAL->MiraMon, used when there is no geometry
-    struct MM_BASE_DADES_XP *pMMBDXP;
+    struct MM_DATA_BASE_XP *pMMBDXP;
 
     // In GDAL->MiraMon, used when there is no geometry
     struct MMAdmDatabase MMAdmDBWriting;
 
-    // Offset of every FID in the database
+    // Offset of every FID in the table
     MM_BOOLEAN
-    isListField;  // It determines if fiels ar List or simple (multirecord).
+    isListField;  // It determines if fields are list or simple (multirecord).
     MM_EXT_DBF_N_RECORDS
     nMaxN;  // Max number of elements in a field features list
     struct MM_ID_GRAFIC_MULTIPLE_RECORD *pMultRecordIndex;
@@ -744,17 +803,17 @@ struct MiraMonVectLayerInfo
     //  MM_JOC_CARAC_ANSI_DBASE;
     MM_BYTE nCharSet;
 
-    // Language in REL's:
-    // It's the language of the MiraMon generated descriptors.
+    // Language in REL files:
+    // It is the language of the MiraMon generated descriptors.
     // Metadata will not be translated but these descriptors are
-    // generated from scratch and it's good to use a custom language.
+    // generated from scratch and it is good to use a custom language.
     char nMMLanguage;
 
     // This is used only to write temporary stuff
     char szNFieldAux[MM_MAX_AMPLADA_CAMP_N_DBF];
     // Dinamic string that is used as temporary buffer
     // with variable size as needed. Its value is
-    // very temporary. Copy in a safe place to save its value.
+    // highly temporary. Copy in a safe place to save its value.
     GUInt64 nNumStringToOperate;
     char *szStringToOperate;
 
@@ -765,7 +824,7 @@ struct MiraMonVectLayerInfo
                                          // MM_SELECT_HIGHEST_COORDZ
                                          // MM_SELECT_LOWEST_COORDZ
 
-    // For polygon layer this is an efficient space to read
+    // For polygon layers this is an efficient space to read
     // the PAL section
     MM_POLYGON_ARCS_COUNT nMaxArcs;
     MM_POLYGON_ARCS_COUNT nNumArcs;
@@ -773,7 +832,7 @@ struct MiraMonVectLayerInfo
 
     struct MM_FLUSH_INFO FlushPAL;
 
-    struct MiraMonVectMapInfo *MMMap;  // Don't free
+    struct MiraMonVectMapInfo *MMMap;  // Do not free
 };
 
 enum DataType

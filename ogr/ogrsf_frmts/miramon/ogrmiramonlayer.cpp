@@ -115,7 +115,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
         {
             if (EQUAL(pszLanguage, "CAT"))
                 nMMLanguage = MM_CAT_LANGUAGE;
-            else if (EQUAL(pszLanguage, "ESP"))
+            else if (EQUAL(pszLanguage, "SPA"))
                 nMMLanguage = MM_SPA_LANGUAGE;
             else
                 nMMLanguage = MM_ENG_LANGUAGE;
@@ -310,7 +310,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             {
                 if (EQUAL(pszLanguage, "CAT"))
                     phMiraMonLayer->nMMLanguage = MM_CAT_LANGUAGE;
-                else if (EQUAL(pszLanguage, "ESP"))
+                else if (EQUAL(pszLanguage, "SPA"))
                     phMiraMonLayer->nMMLanguage = MM_SPA_LANGUAGE;
                 else
                     phMiraMonLayer->nMMLanguage = MM_ENG_LANGUAGE;
@@ -499,7 +499,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         MMCloseLayer(&hMiraMonLayerPOL);
         if (hMiraMonLayerPOL.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", "%llu polygons written in the file %s.pol",
+            CPLDebug("MiraMon", printf_UINT64" polygons written in file %s.pol",
                      // The polygon 0 is not imported
                      hMiraMonLayerPOL.TopHeader.nElemCount - 1,
                      hMiraMonLayerPOL.pszSrcLayerName);
@@ -515,7 +515,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         MMCloseLayer(&hMiraMonLayerARC);
         if (hMiraMonLayerARC.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", "%llu arcs written in the file %s.arc",
+            CPLDebug("MiraMon", printf_UINT64" arcs written in file %s.arc",
                      hMiraMonLayerARC.TopHeader.nElemCount,
                      hMiraMonLayerARC.pszSrcLayerName);
         }
@@ -531,7 +531,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         MMCloseLayer(&hMiraMonLayerPNT);
         if (hMiraMonLayerPNT.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", "%llu points written in the file %s.pnt",
+            CPLDebug("MiraMon", printf_UINT64" points written in file %s.pnt",
                      hMiraMonLayerPNT.TopHeader.nElemCount,
                      hMiraMonLayerPNT.pszSrcLayerName);
         }
@@ -820,7 +820,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 poGeom = new OGRPolygon();
                 poP = poGeom->toPolygon();
 
-                // Get X,Y (Z) n times MiraMon has no multilines
+                // Get X,Y (Z) n times because MiraMon has no multilinetrings
                 if (MMGetGeoFeatureFromVector(phMiraMonLayer, nIElem))
                 {
                     delete poGeom;
@@ -1400,7 +1400,7 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
             {
                 MMCPLWarning(CE_Warning, CPLE_NotSupported,
                              "MiraMon "
-                             "doesn't support %d geometry type",
+                             "does not support %d geometry type",
                              eLT);
                 return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
             }
@@ -1432,7 +1432,7 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
         eErr = TranslateFieldsValuesToMM(poFeature);
         if (eErr != OGRERR_NONE)
         {
-            CPLDebug("MiraMon", "Error in TranslateFieldsValuesToMM()");
+            CPLDebug("MiraMon", "Error in MMProcessGeometry()");
             return eErr;
         }
     }
@@ -1457,7 +1457,7 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
     if (eErr == OGRERR_NONE)
         return MMWriteGeometry();
 
-    CPLDebug("MiraMon", "Error in MMLoadGeometry()");
+    CPLDebug("MiraMon", "Error in MMProcessGeometry()");
     return eErr;
 }
 
@@ -1473,7 +1473,7 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     if (!bUpdate)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "\nCannot create features on read-only dataset.");
+                 "\nCannot create features on a read-only dataset.");
         return OGRERR_FAILURE;
     }
 
@@ -1486,7 +1486,7 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     if (poGeom == nullptr)
         return MMProcessGeometry(nullptr, poFeature, TRUE);
 
-    // At this point MiraMon doesn't support unkwnon type geometry
+    // At this point MiraMon does not support unkwnon type geometry
     if (poGeom->getGeometryType() == wkbUnknown)
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
@@ -1768,7 +1768,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
                     MMCPLWarning(
                         CE_Warning, CPLE_NotSupported,
                         "MiraMon "
-                        "doesn't support %d field type. It will be conserved "
+                        "does not support %d field type. It will be kept "
                         "as string field type",
                         poFeatureDefn->GetFieldDefn(iField)->GetType());
                     phMiraMonLayer->pLayerDB->pFields[iField].eFieldType =
@@ -2297,7 +2297,7 @@ OGRErr OGRMiraMonLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
     if (!bUpdate)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "\nCannot create fields on read-only dataset.");
+                 "\nCannot create fields on a read-only dataset.");
         return OGRERR_FAILURE;
     }
 
@@ -2318,7 +2318,7 @@ OGRErr OGRMiraMonLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
             if (!bApproxOK)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "\nField %s is of unsupported type %s.",
+                         "\nField %s is of an unsupported type: %s.",
                          poField->GetNameRef(),
                          poField->GetFieldTypeName(poField->GetType()));
                 return OGRERR_FAILURE;

@@ -120,7 +120,7 @@ static GDALDataset *OGRMiraMonDriverOpen(GDALOpenInfo *poOpenInfo)
     if (poDS != nullptr && poOpenInfo->eAccess == GA_Update)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "MiraMonVector Driver doesn't support update.");
+                 "MiraMonVector driver does not support update.");
         delete poDS;
         poDS = nullptr;
     }
@@ -208,7 +208,7 @@ void RegisterOGRMiraMon()
         "   to be read.'>"
         "    <Value>ENG</Value>"
         "    <Value>CAT</Value>"
-        "    <Value>ESP</Value>"
+        "    <Value>SPA</Value>"
         "    <Default>ENG</Default>"
         "  </Option>"
         "</OpenOptionList>");
@@ -219,7 +219,8 @@ void RegisterOGRMiraMon()
         "  <Option name='Version' type='string' description='Version of the "
         "file."
         "V1.1 is a limited 32 bits for FID and for internal offsets. "
-        "V2.0 is the 64 bits version for FID and for internal offsets.' "
+        "V2.0 is the 64 bits version, with pratically no limits for FID nor for"
+        " internal offsets.' "
         "default='last_version'>"
         "<Value>V1.1</Value>"
         "<Value>V2.0</Value>"
@@ -229,8 +230,7 @@ void RegisterOGRMiraMon()
         "  <Option name='DBFEncoding' type='string' description='Encoding of "
         "the "
         ".dbf files."
-        "MiraMon can write *.dbf* files in these two charsets. "
-        "V2.0 is the 64 bits version for FID and internal offsets.' "
+        "MiraMon can write *.dbf* files in these two charsets.' "
         "default='ANSI'>"
         "<Value>UTF8</Value>"
         "<Value>ANSI</Value>"
@@ -255,7 +255,7 @@ void RegisterOGRMiraMon()
         "    to be read.'>"
         "    <Value>ENG</Value>"
         "    <Value>CAT</Value>"
-        "    <Value>ESP</Value>"
+        "    <Value>SPA</Value>"
         "    <Default>ENG</Default>"
         "  </Option>"
         "</LayerCreationOptionList>");

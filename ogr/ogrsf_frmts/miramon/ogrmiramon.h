@@ -48,7 +48,7 @@ class OGRMiraMonLayer final
     GUIntBig iNextFID;
 
     // Pointer to one of three possible MiraMon layers: points,
-    // arcs or polygons. Every time a feature is readed this pointer
+    // arcs or polygons. Every time a feature is read this pointer
     // points to the appropiate layer
     struct MiraMonVectLayerInfo *phMiraMonLayer;
 
@@ -57,7 +57,7 @@ class OGRMiraMonLayer final
     struct MiraMonVectLayerInfo hMiraMonLayerARC;  // MiraMon arcs layer
     struct MiraMonVectLayerInfo hMiraMonLayerPOL;  // MiraMon polygons layer
 
-    // When reading a layer or the result of writting is only a DBF
+    // When reading a layer or the result of writing is only a DBF
     struct MiraMonVectLayerInfo hMiraMonLayerReadOrNonGeom;
 
     struct MiraMonFeature hMMFeature;  // Feature reading/writing
@@ -168,4 +168,4 @@ class OGRMiraMonDataSource final : public OGRDataSource
     int TestCapability(const char *) override;
 };
 
-#endif /* ndef OGRMIRAMON_H_INCLUDED */
+#endif /* OGRMIRAMON_H_INCLUDED */

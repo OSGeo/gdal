@@ -2,10 +2,10 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  C API to read a MiraMon layer
- * Author:   Abel Pau, a.pau@creaf.uab.cat, based on the MiraMon codes, 
- *           mainly written by Xavier Pons, Joan MasÃ³, Abel Pau, NÃºria JuliÃ ,
- *           Xavier Calaf, LluÃ­s Pesquer and Alaitz Zabala, from CREAF and
- *           Universitat AutÃ²noma de Barcelona. For a complete list of
+ * Author:   Abel Pau, a.pau@creaf.uab.cat, based on the MiraMon codes,
+ *           mainly written by Xavier Pons, Joan Masó, Abel Pau, Núria Julià,
+ *           Xavier Calaf, Lluís Pesquer and Alaitz Zabala, from CREAF and
+ *           Universitat Autònoma de Barcelona. For a complete list of
  *           contributors: https://www.miramon.cat/USA/QuiSom.htm
  ******************************************************************************
  * Copyright (c) 2024, Xavier Pons
@@ -36,7 +36,7 @@
 #include "mm_gdal_functions.h"
 #include "mm_gdal_constants.h"
 #else
-#include "CmptCmp.h"                    // Compatibility between compilators
+#include "CmptCmp.h"                    // Compatibility between compilers
 #include "mm_gdal\mm_wrlayr.h"          // For MMReadHeader()
 #include "mm_gdal\mm_gdal_functions.h"  // For int MM_GetArcHeights()
 #include "mm_constants.h"
@@ -65,7 +65,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
     if (MMReadHeader(m_fp, &hMiraMonLayer->TopHeader))
     {
         MMCPLError(CE_Failure, CPLE_NoWriteAccess,
-                   "Error reading header of the file %s", pszFilename);
+                   "Error reading header of file %s", pszFilename);
         return 1;
     }
     hMiraMonLayer->nMemoryRatio = 1.0;
@@ -613,7 +613,7 @@ int MMGetGeoFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer,
 int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
     const char *pszRelFile = nullptr;
-    struct MM_BASE_DADES_XP *pMMBDXP;
+    struct MM_DATA_BASE_XP *pMMBDXP;
     const char *szDBFFileName = nullptr;
 
     // If readed don't read again. It happens when Polygon reads
@@ -645,7 +645,7 @@ int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
     if (MM_ReadExtendedDBFHeaderFromFile(szDBFFileName, pMMBDXP, pszRelFile))
     {
         MMCPLError(CE_Failure, CPLE_NotSupported,
-                   "Erorr reading the format in the DBF file %s.",
+                   "Error reading the format in the DBF file %s.",
                    szDBFFileName);
         return 1;
     }

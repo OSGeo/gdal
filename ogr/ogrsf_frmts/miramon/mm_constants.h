@@ -16,7 +16,7 @@ CPL_C_START  // Necessary for compiling C in GDAL project
 #define MM_MAX_LON_RESERVAT_1_CAMP_BD_XP 4
 #define MM_OFFSET_RESERVAT2_BYTESxCAMP_CAMP_ESPECIAL 3
 #define MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES 7
-#define MM_OFFSET_RESERVAT2_MIDA_NOM_ESTES 11
+#define MM_OFFSET_RESERVED2_EXTENDED_NAME_SIZE 11
 #define MM_MAX_LON_RESERVAT_2_CAMP_BD_XP 13
 
 #define MM_ES_DBF_ESTESA(dbf_version)                                          \
@@ -30,7 +30,7 @@ CPL_C_START  // Necessary for compiling C in GDAL project
 // BIT 3
 #define MM_BIT_3_ON 0x08  // Multipolygon
 // BIT 4
-#define MM_BIT_4_ON 0x10  // 3d
+#define MM_BIT_4_ON 0x10  // 3D
 // BIT 5
 #define MM_BIT_5_ON                                                            \
     0x20  // Explicital polygons (every polygon has only one arc)
@@ -97,9 +97,9 @@ CPL_C_START  // Necessary for compiling C in GDAL project
 #define MM_CAMP_QUE_MOSTRA_TAULA_BDXP_O_BDODBC 3
 
 #define MM_CAMP_INDETERMINAT 0
-#define MM_CAMP_CATEGORIC 1
+#define MM_CATEGORICAL_FIELD 1
 #define MM_CAMP_ORDINAL 2
-#define MM_CAMP_QUANTITATIU_CONTINU 3
+#define MM_QUANTITATIVE_CONTINUOUS_FIELD 3
 
 #define MM_CAMP_NO_SIMBOLITZABLE 0
 #define MM_CAMP_SIMBOLITZABLE 1
@@ -135,17 +135,17 @@ CPL_C_START  // Necessary for compiling C in GDAL project
 #define MM_JOC_CARAC_UTF8_MM 8
 
     enum MM_TipusNomCamp {
-        MM_NOM_DBF_CLASSICA_I_VALID = 0,
-        MM_NOM_DBF_MINUSCULES_I_VALID,
-        MM_NOM_DBF_ESTES_I_VALID,
-        MM_NOM_DBF_NO_VALID
+        NM_CLASSICAL_DBF_AND_VALID_NAME = 0,
+        MM_DBF_NAME_LOWERCASE_AND_VALID,
+        MM_VALID_EXTENDED_DBF_NAME,
+        MM_DBF_NAME_NO_VALID
     };
-#define MM_OFFSET_RESERVAT2_MIDA_NOM_ESTES 11
+#define MM_OFFSET_RESERVED2_EXTENDED_NAME_SIZE 11
 
 typedef unsigned char MM_BYTE;
 
 #define MM_DonaBytesNomEstesCamp(camp)                                         \
-    ((MM_BYTE)((camp)->reserved_2[MM_OFFSET_RESERVAT2_MIDA_NOM_ESTES]))
+    ((MM_BYTE)((camp)->reserved_2[MM_OFFSET_RESERVED2_EXTENDED_NAME_SIZE]))
 
 #define MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA 8
 #define MM_SEGON_OFFSET_a_OFFSET_1a_FITXA 30
@@ -153,12 +153,12 @@ typedef unsigned char MM_BYTE;
 #define MM_FIRST_OFFSET_to_N_RECORDS 4
 #define MM_SECOND_OFFSET_to_N_RECORDS 16
 
-#define MM_NOM_CAMP_MASSA_LLARG 0x01
-#define MM_NOM_CAMP_CARACTER_INVALID 0x02
-#define MM_NOM_CAMP_PRIMER_CARACTER_ 0x04
+#define MM_FIELD_NAME_TOO_LONG 0x01
+#define MM_FIELD_NAME_CHARACTER_INVALID 0x02
+#define MM_FIELD_NAME_FIRST_CHARACTER_ 0x04
 
 #define MM_MAX_AMPLADA_CAMP_N_DBF 21
-#define MM_MAX_AMPLADA_CAMP_C_DBF 3  //500  // But it can be modified on the fly
+#define MM_MAX_AMPLADA_CAMP_C_DBF 254
 #define MM_MAX_AMPLADA_CAMP_D_DBF 10
 
 #define MM_PRIVATE_POINT_DB_FIELDS 1

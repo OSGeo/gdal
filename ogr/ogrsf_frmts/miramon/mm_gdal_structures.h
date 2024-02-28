@@ -23,34 +23,36 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define FILE_TYPE FILE_64
 #endif
 
-    /* Internal field of a extended DBF. It's a copy of MiraMon internal 
-    structure but translated to be understood by anyone who wants to 
-    review the code of the driver
+/* Internal field of an extended DBF. It is a copy of a MiraMon internal
+structure but translated to be understood by anyone who wants to
+review the code of the driver.
 */
 
-    struct MM_FIELD  // In MiraMon code: MM_CAMP
+struct MM_FIELD  // In MiraMon code: MM_CAMP
 {
     // Name of the field
     char FieldName[MM_MAX_LON_FIELD_NAME_DBF];  // In MiraMon code: NomCamp
 
     // Name of the field in dBASEIII
     char ClassicalDBFFieldName
-        [MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF];  // In MiraMon code: NomCampDBFClassica
+        [MM_MAX_LON_CLASSICAL_FIELD_NAME_DBF];  // In MiraMon code:
+        										// NomCampDBFClassica
 
     // Type of the field C, N, D, L, M, F, G and B
     char FieldType;   // In MiraMon code: TipusDeCamp
     MM_BOOLEAN Is64;  // Is an signed 64 bit integer
 
-    // Number of decimals if it's a float
+    // Number of decimal places if it is a float
     MM_BYTE DecimalsIfFloat;  // In MiraMon code: DecimalsSiEsFloat
 
     // Number of bytes of a field
     MM_BYTES_PER_FIELD_TYPE_DBF
     BytesPerField;  // In MiraMon code: MM_TIPUS_BYTES_PER_CAMP_DBF BytesPerCamp
 
-    // Acumulated bytes before a field
+    // Acumulated bytes before a field starts
     MM_ACUMULATED_BYTES_TYPE_DBF
-    AcumulatedBytes;  // In MiraMon code: MM_TIPUS_BYTES_ACUMULATS_DBF BytesAcumulats
+    AcumulatedBytes;  // In MiraMon code:
+                      // MM_TIPUS_BYTES_ACUMULATS_DBF BytesAcumulats
 
     // Not used in GDAL
     char
@@ -73,7 +75,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
     MM_BYTE GeoTopoTypeField;  // In MiraMon code: TipusCampGeoTopo
 };
 
-struct MM_BASE_DADES_XP  // MiraMon Database Structure
+struct MM_DATA_BASE_XP  // MiraMon table Structure
 {
     // Extended DBF file name
     char szFileName[MM_CPL_PATH_BUF_SIZE];  // In MiraMon code: szNomFitxer

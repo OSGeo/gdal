@@ -1,6 +1,6 @@
 .. _vector.miramon:
 
-MiraMon Vectors
+MiraMon Vector
 ====================
 
 .. shortname:: MiraMonVector
@@ -8,17 +8,18 @@ MiraMon Vectors
 .. built_in_by_default::
 
 This driver is capable of translating (reading and writing) structured vectors
-of point, arc (*linestrings*), and polygon types from MiraMon. Structured vectors is
+of point, arc (*linestrings*), and polygon types from MiraMon formats. Structured vectors is
 the binary format of MiraMon for vector layer data, linked to one or more database tables,
 with or without topology and with reach metadata. More information about the structured MiraMon
-vector format is available `on the public specifications <https://www.miramon.cat/new_note/usa/notes/FormatFitxersTopologicsMiraMon.pdf>`__.
+vector format is available `on the public specification <https://www.miramon.cat/new_note/usa/notes/FormatFitxersTopologicsMiraMon.pdf>`__.
 
-It's important to keep in mind that a MiraMon vector layer is composed by several files as follows:
+It is important to keep in mind that a MiraMon vector layer is composed by several files as follows:
 
 Previous note: *FileName* is, in the following explanations, the first part of the name
 of the layer file.   
 
-- **Point layers**: These layers contain *point* type features. Each layer is composed by 3 files:
+- **Point layers**: These layers contain *point* type features ) which are described by a single
+  coordinate (x,y) or (x, y, z). Each layer is composed by 3 files:
 
     - *FileName.pnt* file: Contains the graphic database with the coordinates that define the
       point vector features.
@@ -26,7 +27,7 @@ of the layer file.
     - *FileNameT.dbf* file (note the 'T' before the '.'): Contains the main table of the database
       in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__
       if necessary. It contains the information (usually alphanumeric, but also file or web links, etc)
-      of the every feature. The Feature Identifier (FID) field is a field called *ID_GRAFIC* and relates
+      of every feature. The Feature Identifier (FID) field is a field called *ID_GRAFIC* and relates
       every graphical feature to one or more records in the main table.
 
     - *FileNameT.rel* file (note the 'T' before the '.'): Contains the layer metadata,
@@ -36,7 +37,9 @@ of the layer file.
       only some aspects are documented: the spatial reference system, the language of the
       metadata (English), the extension and a description of the fields.
 
-- **Arc layers**: These layers contain *linestring* type features. Each layer is composed by 6 files:
+- **Arc layers**: These layers contain *linestring* type features which are lines
+  described by a series of segments, each one defined by coordinates (x, y) or (x, y, z).
+  Both extreme vertices of each *linestring* are called nodes. Each layer is composed by 6 files:
 
     - *FileName.arc* file: Contains the graphic database with the coordinates that define the
       linestring (arc) vector features.
@@ -44,7 +47,7 @@ of the layer file.
     - *FileNameA.dbf* file (note the 'A' before the '.'): Contains the main table of the database
       in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__
       if necessary. It contains the information (usually alphanumeric, but also file or web links, etc)
-      of the every feature. The Feature Identifier (FID) field is a field called *ID_GRAFIC* and relates
+      of every feature. The Feature Identifier (FID) field is a field called *ID_GRAFIC* and relates
       every graphical feature to one or more records in the main table.
 
     - *FileNameA.rel* file (note the 'A' before the '.'): Contains the layer metadata,
@@ -54,35 +57,37 @@ of the layer file.
       only some aspects are documented: the spatial reference system, the language of the
       metadata (English), the extension and a description of the fields.
 
-    - *FileName.nod* file: Contains the graphic database with the coordinates that define the
-      vector features. It is necessary in the MiraMon vector format but not read by
-      the GDAL MiraMon driver because nodes contain topological information that is not
+    - *FileName.nod* file: Contains the graphic database with information about the
+      linestring needed to define each node. It is necessary in the MiraMon vector format but not read by
+      the GDAL MiraMon vector driver because nodes contain topological information that is not
       transferred to other formats.
 
     - *FileNameN.dbf* file (note the 'N' before the '.'): Contains the main table of the database
       in dBASE (DBF) format, or in extended DBF if necessary. This table contains information about
       the relationships between arcs and nodes, and other attributes of the nodes, if needed.
-      It is necessary in the MiraMon vector format but not read by the GDAL MiraMon driver because
+      It is necessary in the MiraMon vector format but not read by the GDAL MiraMon vector driver because
       nodes contain topological information that is not transferred to other formats.
 
     - *FileNameN.rel* file (note the 'N' before the '.'): Contains the layer metadata,
       the relational structure of the database (links between the main table and other
       tables [thesauruses, etc] if needed, and the cardinality of the link) and the default
       symbolization description. It is necessary in the MiraMon vector format but not read by
-      the GDAL MiraMon driver because nodes contain topological information that is not
+      the GDAL MiraMon vector driver because nodes contain topological information that is not
       transferred to other formats.
 
-- **Polygon layers**: These layers contain *polygons* or *multipolygons* type features. 
+- **Polygon layers**: These layers contain *polygons* or *multipolygons* type features.
+  In MiraMon vector format a polygon is a closed shape described by one or more arcs.
+  A polygon can have holes inside it. A polygon can also be linked to other polygons;
+  in this case, it is termed a group (*multipolygon*). 
   Each layer is composed by 9 files:
 
-    - *FileName.pol* file: Contains the graphic database with the coordinates that define the
-      polygonal (or multipolygonal) vector features. In fact, this file contains the list of arcs
-      that compose every polygon (or polypolygon). 
+    - *FileName.pol* file: Contains the graphic database with information about the linestring
+      vector features needed to define the polygonal (or multipolygonal) vector features.  
 
     - *FileNameP.dbf* file (note the 'P' before the '.'): Contains the main table of the database
       in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__
       if necessary. It contains the information (usually alphanumeric, but also file or web links, etc)
-      of the every feature. The Feature Identifier (FID) field is a field called *ID_GRAFIC* and relates
+      of every feature. The Feature Identifier (FID) field is a field called *ID_GRAFIC* and relates
       every graphical feature to one or more records in the main table.
 
     - *FileNameP.rel* file (note the 'P' before the '.'): Contains the layer metadata,
@@ -97,41 +102,43 @@ of the layer file.
 
     - *FileNameA.dbf* file (note the 'A' before the '.'): Contains the main table of the database
       in dBASE (DBF) format, or in extended DBF if necessary. This table contains information about
-      the relationship between arcs and polygons, not the main features information. It's necessary in
-      MiraMon but not read directly by the GDAL MiraMon driver because
+      the relationship between arcs and polygons, not the main features information. It is necessary in
+      MiraMon but not read directly by the GDAL MiraMon vector driver because
       it is redundant to the information on the linestring part.
 
     - *FileNameA.rel* file (note the 'A' before the '.'): Contains additional data about the data,
-      the relations of the database and the symbolization description. It's necessary in
-      MiraMon but not read directly by the GDAL MiraMon driver.
+      the relations of the database and the symbolization description. It is necessary in
+      MiraMon but not read directly by the GDAL MiraMon vector driver.
 
-    - *FileName.nod* file: Contains the graphic database with the coordinates that define the
-      vector features. It is necessary in the MiraMon vector format but not read by
-      the GDAL MiraMon driver because nodes contain topological information that is not
-      transferred to other formats.  
+    - *FileName.nod* file: Contains the graphic database with information about the
+      linestring needed to define each node. It is necessary in the MiraMon vector format but not read by
+      the GDAL MiraMon vector driver because nodes contain topological information that is not
+      transferred to other formats. 
 
     - *FileNameN.dbf* file (note the 'N' before the '.'): Contains the main table of the database
       in dBASE (DBF) format, or in extended DBF if necessary. This table contains information about
       the relationships between arcs and nodes, and other attributes of the nodes, if needed.
-      It is necessary in the MiraMon vector format but not read by the GDAL MiraMon driver because
+      It is necessary in the MiraMon vector format but not read by the GDAL MiraMon vector driver because
       nodes contain topological information that is not transferred to other formats.
 
     - *FileNameN.rel* file (note the 'N' before the '.'): Contains additional data about the data,
-      the relations of the database and the symbolization description. It's necessary in
-      MiraMon but not read directly by the GDAL MiraMon driver.
+      the relations of the database and the symbolization description. It is necessary in
+      MiraMon but not read directly by the GDAL MiraMon vector driver.
 
-In MiraMon the concepts of multipoints and multistrings are not supported but the driver translates a
-multipoint into N points and a multistring into N arcs. So, when reading a MiraMon file of type *.pol*, the corresponding
+In MiraMon the concepts of OGRMultiPoints and OGRMultiLineStrings are not supported,
+but the driver translates a multipoint into N points and a multistring into N arcs.
+So, when reading a MiraMon file of type *.pol*, the corresponding
 layer will be reported as of type wkbPolygon, but depending on the
 number of parts of each geometry, the actual type of the geometry for
-each feature can be either OGRPolygon or OGRMultiPolygon. This does not 
-apply for *.arc* and *.pnt* MiraMon files because the concept of 
-OGRMultiLineString or OGRMultiPoint does not exist.
+each feature can be either OGRPolygon or OGRMultiPolygon.
 
 The reading driver verifies if multipart polygons adhere to the 
 specification (that is to say, the vertices of outer rings should be
 oriented clockwise on the X/Y plane, and those of inner rings
-counterclockwise) otherwise, the driver corrects the orientation.
+counterclockwise). Otherwise, the driver corrects the orientation
+(in the original format this specification is not the case as polygon
+files are based on topological arc files, where the order of the vertices
+may be relevant).
 
 Measures (M coordinate) are not supported.
 Symbolization is neither read nor generated by this driver.
@@ -155,7 +162,11 @@ Driver capabilities
 Encoding
 --------
 
-When writing, the codepage of *.dbf* files can be ANSI or UTF8
+When reading MiraMon files, the code page setting in the header of the .dbf file
+is read and used to translate string fields to UTF-8 (regardless of whether they
+are in ANSI, OEM or UTF-8).
+
+When writing MiraMon files, the codepage of *.dbf* files can be ANSI or UTF8
 depending on the layer creation option DBFEncoding.
 
 Creation Issues
@@ -169,10 +180,10 @@ accommodate each of the three possible types of geometries.
 For instance, if a layer or a dataset contains points and arcs,
 a set of point files and a set of arc files will be created.
 
-Consequently, during creation the MiraMon driver output can be a
-folder or a file with the appropriate extension (*.pnt*, etc):
+Consequently, during creation the MiraMon vector driver output can be a
+folder or a set of files with the appropriate extension (*.pnt*, etc):
 
-- If the output is a **folder** it will contain all the translated layers with the original name in the origin dataset.
+- If the output is a **folder**, it will contain all the translated layers with the original name in the origin dataset.
 
   - In this case a *.mmm* file will be created referencing all layers in the origin dataset to make an
     easy open of the dataset using the MiraMon software.
@@ -181,7 +192,7 @@ folder or a file with the appropriate extension (*.pnt*, etc):
 - If it the output is a **file** with extension all the translated layers in the origin dataset will be created with the specified name.
   Use this option only when you know that there is only one layer with one feature type in the origin dataset.
 
-When translating from a MiraMon format, the MiraMon driver input needs a file with one of the
+When translating from a MiraMon format, the MiraMon vector driver input needs a file with one of the
 described extensions: *.pnt*, *.arc* or *.pol*. The extension *.nod* is not valid for translation.
 
 The attributes of the MiraMon feature are stored in an associated *.dbf*.
@@ -227,7 +238,7 @@ The following open options are available.
 -  .. oo:: iMultiRecord
       :choices: 1, 2, ..., Last, JSON
 
-      In case of fields of type List, if the output driver can not support them,
+      In case of fields of type List, if the output driver cannot support them,
       user can select which one wants to keep: *iMultiRecord=1* for first, *iMultiRecord=2* for second, etc
       and *iMultiRecord=last* for the last element of the list.
       *iMultiRecord=JSON* option converts the list in a single value in JSON format.
@@ -247,7 +258,7 @@ The following open options are available.
       but there will be fewer read/write operations to the (network and) disk.
 
 -  .. oo:: OpenLanguage
-      :choices: ENG, CAT, ESP
+      :choices: ENG, CAT, SPA
       :default: ENG
 
       If the layer to be opened is multilingual (in fact the *.rel* file), this
@@ -270,7 +281,7 @@ Layer creation options
       Version of the file.
       Version 1.1 is limited to an unsigned 32-bit integer for FID, for internal
       offsets and for the number of entities the layer can handle. 
-      It's the default option.
+      It is the default option.
       Version 2.0 is the 64-bit version. It is practically unlimited
       (unsigned 64-bit integer for FID and internal offsets).      
       last_version selects to the last existing version ever.
@@ -281,11 +292,11 @@ Layer creation options
       :since: 3.9
 
       Encoding of the *.dbf* files.
-      The MiraMon driver can write *.dbf* files in UTF-8 or ANSI charsets.
+      The MiraMon vector driver can write *.dbf* files in UTF-8 or ANSI charsets.
 
-      As at the moment of this release UTF-8 tables are not editable in the
-      `MiraD application <https://www.miramon.cat/USA/Prod-MiraD.htm>`__, it is recommended
-      to use ANSI instead, if there are no coding problems.
+      As at the moment of this release, UTF-8 tables are not editable in the
+      `MiraD application <https://www.miramon.cat/USA/Prod-MiraD.htm>`__, so it
+      is recommended to use ANSI instead, if there are no coding problems.
 
 -  .. oo:: CreationMemoryRatio
       :choices: 0.5, 1, 2, ...
@@ -301,7 +312,7 @@ Layer creation options
       but there will be fewer read/write operations to the (network and) disk.
 
 -  .. oo:: CreationLanguage
-      :choices: ENG, CAT, ESP
+      :choices: ENG, CAT, SPA
       :default: ENG
 
       It is the language used in the metadata file (*.rel*) for the descriptors of
@@ -310,23 +321,23 @@ Layer creation options
 Examples
 --------
 
--  A translation from an *Example.dxf* file with one layer but some different geometric types in the layer,
-   will result 'file1.dxf' into into a new MiraMon set of layers in the 'output_folder'.
+-  A translation from an *Example_1.dxf* file with one layer but some different geometric types
+   in the layer, will result 'file1.dxf' into a new MiraMon set of layers in the 'output_folder'.
 
    ::
 
-      ogr2ogr output_folder Example.dxf -f MiraMonVector -lco Version=V1.1
+      ogr2ogr output_folder Example_1.dxf -f MiraMonVector -lco Version=V1.1
 
 
--  A translation from a *Example2.dxf* file with one polygon type layer 'file1.dxf' into a new MiraMon layer
+-  A translation from a *Example_2.dxf* file with one polygon type layer 'file1.dxf' into a new MiraMon layer
    'territories.pol' (with UTF-8 encoding at the *.dbf* files) is performed like this:
 
    ::
 
-      ogr2ogr territories.pol Example2.dxf -lco DBFEncoding=UTF8 (no needed to include **-f MiraMonVector** because the output layer is not a directory)
+      ogr2ogr territories.pol Example_2.dxf -lco DBFEncoding=UTF8 (no needed to include **-f MiraMonVector** because the output layer is not a directory)
 
 
--  A translation from an arc's MiraMon layer 'rivers.arc' into a new *.gml* file (taking only the first element of
+-  A translation from a MiraMon layer of arcs, 'rivers.arc', into a new *.gml* file (taking only the first element of
    the multirecords in the attributes table) is performed like this:
 
    ::
@@ -341,8 +352,8 @@ Examples
       ogr2ogr tracks.gml tracks.arc -oo Height=First
 
 -  A translation from a MiraMon layer 'tracks.arc' into a new *.gml* file taking the last height of
-   every point and documenting the attribute descriptors in catalan (if the layer is multilingual
-   and it have this language available) is performed like this:
+   every point and documenting the attribute descriptors in Catalan (if the layer is multilingual
+   and it has this language available) is performed like this:
 
    ::
 
