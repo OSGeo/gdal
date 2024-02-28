@@ -442,12 +442,12 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
             GDALGenImgProjTransformInfo *psInfo{
                 static_cast<GDALGenImgProjTransformInfo *>(pTransformArg)};
 
-            if (!psInfo->pSrcTransformer)
+            if (psInfo && !psInfo->pSrcTransformer)
             {
                 const OGRSpatialReference *poSourceCRS = nullptr;
                 const OGRSpatialReference *poTargetCRS = nullptr;
 
-                if (psInfo && psInfo->pReprojectArg)
+                if (psInfo->pReprojectArg)
                 {
                     const GDALReprojectionTransformInfo *psRTI =
                         static_cast<const GDALReprojectionTransformInfo *>(
