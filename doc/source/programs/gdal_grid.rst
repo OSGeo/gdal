@@ -447,15 +447,27 @@ content:
         </OGRVRTLayer>
     </OGRVRTDataSource>
 
-This description specifies so called 2.5D geometry with three coordinates X, Y
-and Z. Z value will be used for interpolation. Now you can use *dem.vrt*
-with all OGR programs (start with :ref:`ogrinfo` to test that everything works
-fine). The datasource will contain a single layer called *"dem"* filled
-with point features constructed from values in CSV file. Using this technique
-you can handle CSV files with more than three columns, switch columns, etc.
+This description specifies so called 2.5D geometry with  three  coordinates
+X,  Y and Z. The Z value will be used for interpolation. Now you can
+use *dem.vrt* with all OGR programs (start  with  :ref:`ogrinfo`  to  test  that
+everything works fine). The datasource will contain a single layer called
+*"dem"*  filled  with point features constructed from values in the CSV file.
+Using this technique you can handle CSV  files  with  more  than  three
+columns, switch columns, etc. OK, now the final step:
 
-If your CSV file does not contain column headers then it can be handled in the
-following way:
+.. code-block::
+
+    gdal_grid dem.vrt demv.tif
+
+Or, if we do not wish to use a VRT file:
+
+.. code-block::
+
+    gdal_grid -l dem -oo X_POSSIBLE_NAMES=Easting \
+    -oo Y_POSSIBLE_NAMES=Northing -zfield Elevation dem.csv dem.tif
+
+If your CSV file does not contain column headers then it can be handled
+in the VRT file in the following way:
 
 .. code-block:: xml
 
