@@ -888,7 +888,7 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                 oLayer.Add("geometryFields", oGeometryFields);
             for (int iGeom = 0; iGeom < nGeomFieldCount; iGeom++)
             {
-                OGRGeomFieldDefn *poGFldDefn =
+                const OGRGeomFieldDefn *poGFldDefn =
                     poLayer->GetLayerDefn()->GetGeomFieldDefn(iGeom);
                 if (bJson)
                 {
@@ -1033,6 +1033,72 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                         }
                         oGeometryField.Add("supportedSRSList",
                                            oSupportedSRSList);
+                    }
+
+                    const auto &oCoordPrec =
+                        poGFldDefn->GetCoordinatePrecision();
+                    if (oCoordPrec.dfXYResolution !=
+                        OGRGeomCoordinatePrecision::UNKNOWN)
+                    {
+                        oGeometryField.Add("xyCoordinateResolution",
+                                           oCoordPrec.dfXYResolution);
+                    }
+                    if (oCoordPrec.dfZResolution !=
+                        OGRGeomCoordinatePrecision::UNKNOWN)
+                    {
+                        oGeometryField.Add("zCoordinateResolution",
+                                           oCoordPrec.dfZResolution);
+                    }
+                    if (oCoordPrec.dfMResolution !=
+                        OGRGeomCoordinatePrecision::UNKNOWN)
+                    {
+                        oGeometryField.Add("mCoordinateResolution",
+                                           oCoordPrec.dfMResolution);
+                    }
+
+                    // For example set by OpenFileGDB driver
+                    if (!oCoordPrec.oFormatSpecificOptions.empty())
+                    {
+                        CPLJSONObject oFormatSpecificOptions;
+                        for (const auto &formatOptionsPair :
+                             oCoordPrec.oFormatSpecificOptions)
+                        {
+                            CPLJSONObject oThisFormatSpecificOptions;
+                            for (int i = 0; i < formatOptionsPair.second.size();
+                                 ++i)
+                            {
+                                char *pszKey = nullptr;
+                                const char *pszValue = CPLParseNameValue(
+                                    formatOptionsPair.second[i], &pszKey);
+                                if (pszKey && pszValue)
+                                {
+                                    const auto eValueType =
+                                        CPLGetValueType(pszValue);
+                                    if (eValueType == CPL_VALUE_INTEGER)
+                                    {
+                                        oThisFormatSpecificOptions.Add(
+                                            pszKey, CPLAtoGIntBig(pszValue));
+                                    }
+                                    else if (eValueType == CPL_VALUE_REAL)
+                                    {
+                                        oThisFormatSpecificOptions.Add(
+                                            pszKey, CPLAtof(pszValue));
+                                    }
+                                    else
+                                    {
+                                        oThisFormatSpecificOptions.Add(
+                                            pszKey, pszValue);
+                                    }
+                                }
+                                CPLFree(pszKey);
+                            }
+                            oFormatSpecificOptions.Add(
+                                formatOptionsPair.first,
+                                oThisFormatSpecificOptions);
+                        }
+                        oGeometryField.Add(
+                            "coordinatePrecisionFormatSpecificOptions",
+                            oFormatSpecificOptions);
                     }
                 }
                 else
