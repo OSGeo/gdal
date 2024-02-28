@@ -89,6 +89,10 @@ The following creations options are supported:
 A `XML schema of the GDAL VRT format <https://raw.githubusercontent.com/OSGeo/gdal/master/frmts/vrt/data/gdalvrt.xsd>`_
 is available.
 
+Note, .vrt files starting with
+- <OGRVRTDataSource> open with ogrinfo, etc.
+- <VRTDataset> open with gdalinfo, etc.
+
 Virtual files stored on disk are kept in an XML format with the following
 elements.
 
