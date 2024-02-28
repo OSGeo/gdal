@@ -106,6 +106,9 @@ typedef struct
     // GDALRefreshGenImgProjTransformer() must do something or not.
     bool bCheckWithInvertPROJ;
 
+    // Set to TRUE when the transformation pipline is a custom one.
+    bool bHasCustomTransformationPipeline;
+
 } GDALGenImgProjTransformInfo;
 
 /************************************************************************/
@@ -398,8 +401,7 @@ static int GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
  * ymax).
  * @param nOptions Options flags. Zero or GDAL_SWO_ROUND_UP_SIZE  to ask *pnPixels
  * and *pnLines to be rounded up instead of being rounded to the closes integer, or
- * GDAL_SWO_SIZE_CHANGE to indicate that changes in the destination resolution or
- * extent are expected.
+ * GDAL_SWO_FORCE_SQUARE_PIXEL to indicate that the generated pixel size is a square.
  *
  * @return CE_None if successful or CE_Failure otherwise.
  */
@@ -433,7 +435,7 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
     /* ------------------------------------------------------------- */
     /* Special case for warping on the same (or null) CRS.           */
     /* ------------------------------------------------------------- */
-    if ((!nOptions || (nOptions & GDAL_SWO_SIZE_CHANGE) == 0) &&
+    if ((!nOptions || (nOptions & GDAL_SWO_FORCE_SQUARE_PIXEL) == 0) &&
         pTransformArg && pfnTransformer == GDALGenImgProjTransform)
     {
         double adfGeoTransform[6];
@@ -444,7 +446,15 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
             GDALGenImgProjTransformInfo *psInfo{
                 static_cast<GDALGenImgProjTransformInfo *>(pTransformArg)};
 
-            if (psInfo && !psInfo->pSrcTransformer)
+            if (psInfo && !psInfo->pSrcTransformer &&
+                !psInfo->bHasCustomTransformationPipeline &&
+                !psInfo->pDstTransformer &&
+                psInfo->adfDstGeoTransform[0] == 0 &&
+                psInfo->adfDstGeoTransform[1] == 1 &&
+                psInfo->adfDstGeoTransform[2] == 0 &&
+                psInfo->adfDstGeoTransform[3] == 0 &&
+                psInfo->adfDstGeoTransform[4] == 0 &&
+                psInfo->adfDstGeoTransform[5] == 1)
             {
                 const OGRSpatialReference *poSourceCRS = nullptr;
                 const OGRSpatialReference *poTargetCRS = nullptr;
@@ -1327,6 +1337,7 @@ static GDALGenImgProjTransformInfo *GDALCreateGenImgProjTransformerInternal()
     psInfo->sTI.pfnCreateSimilar = GDALCreateSimilarGenImgProjTransformer;
 
     psInfo->bCheckWithInvertPROJ = GetCurrentCheckWithInvertPROJ();
+    psInfo->bHasCustomTransformationPipeline = false;
 
     return psInfo;
 }
@@ -2541,6 +2552,11 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             !oDstSRS.IsEmpty() ? OGRSpatialReference::ToHandle(&oDstSRS)
                                : nullptr,
             aosOptions.List());
+
+        if (pszCO)
+        {
+            psInfo->bHasCustomTransformationPipeline = true;
+        }
 
         if (psInfo->pReprojectArg == nullptr)
         {

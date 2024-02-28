@@ -2798,12 +2798,10 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                  * would be for this */
                 /* input dataset */
                 double adfSuggestedGeoTransform[6];
-                double adfExtent[4];
                 int nPixels, nLines;
-                if (GDALSuggestedWarpOutput2(
+                if (GDALSuggestedWarpOutput(
                         hSrcDS, pfnTransformer, hTransformArg,
-                        adfSuggestedGeoTransform, &nPixels, &nLines, adfExtent,
-                        GDAL_SWO_SIZE_CHANGE) == CE_None)
+                        adfSuggestedGeoTransform, &nPixels, &nLines) == CE_None)
                 {
                     dfTargetRatio = 1.0 / adfSuggestedGeoTransform[1];
                 }
@@ -3980,9 +3978,9 @@ static GDALDatasetH GDALWarpCreateOutput(
             int nOptions = (psOptions->eResampleAlg == GRA_Sum)
                                ? GDAL_SWO_ROUND_UP_SIZE
                                : 0;
-            if (psOptions->bCreateOutput)
+            if (psOptions->bSquarePixels)
             {
-                nOptions |= GDAL_SWO_SIZE_CHANGE;
+                nOptions |= GDAL_SWO_FORCE_SQUARE_PIXEL;
             }
             if (GDALSuggestedWarpOutput2(hSrcDS, psInfo->pfnTransform,
                                          hTransformArg, adfThisGeoTransform,
