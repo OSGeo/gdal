@@ -146,6 +146,9 @@ def gdal_polygonize(
         if not quiet:
             print("Creating output %s of format %s." % (dst_filename, driver_name))
         dst_ds = drv.CreateDataSource(dst_filename)
+        if dst_ds is None:
+            print('Cannot create datasource "%s"' % dst_filename)
+            return 1
 
     # =============================================================================
     #       Find or create destination layer.
