@@ -10,6 +10,7 @@ add_library(
   ogrpolygon.cpp
   ogrtriangle.cpp
   ogrutils.cpp
+  ogrgeomcoordinateprecision.cpp
   ogrgeometry.cpp
   ogrgeometrycollection.cpp
   ogrmultipolygon.cpp
@@ -156,6 +157,7 @@ target_public_header(
   ogr_featurestyle.h
   ogr_geocoding.h
   ogr_geometry.h
+  ogr_geomcoordinateprecision.h
   ogr_p.h
   ogr_spatialref.h
   ogr_swq.h

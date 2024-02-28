@@ -88,6 +88,39 @@ typedef void *OGRCoordinateTransformationH;
 
 struct _CPLXMLNode;
 
+/* OGRGeomCoordinatePrecisionH */
+
+/** Value for a unknown coordinate precision. */
+#define OGR_GEOM_COORD_PRECISION_UNKNOWN 0
+
+/** Opaque type for OGRGeomCoordinatePrecision */
+typedef struct OGRGeomCoordinatePrecision *OGRGeomCoordinatePrecisionH;
+
+OGRGeomCoordinatePrecisionH CPL_DLL OGRGeomCoordinatePrecisionCreate(void);
+void CPL_DLL OGRGeomCoordinatePrecisionDestroy(OGRGeomCoordinatePrecisionH);
+double CPL_DLL
+    OGRGeomCoordinatePrecisionGetXYResolution(OGRGeomCoordinatePrecisionH);
+double CPL_DLL
+    OGRGeomCoordinatePrecisionGetZResolution(OGRGeomCoordinatePrecisionH);
+double CPL_DLL
+    OGRGeomCoordinatePrecisionGetMResolution(OGRGeomCoordinatePrecisionH);
+char CPL_DLL **
+    OGRGeomCoordinatePrecisionGetFormats(OGRGeomCoordinatePrecisionH);
+CSLConstList CPL_DLL OGRGeomCoordinatePrecisionGetFormatSpecificOptions(
+    OGRGeomCoordinatePrecisionH, const char *pszFormatName);
+void CPL_DLL OGRGeomCoordinatePrecisionSet(OGRGeomCoordinatePrecisionH,
+                                           double dfXYResolution,
+                                           double dfZResolution,
+                                           double dfMResolution);
+void CPL_DLL OGRGeomCoordinatePrecisionSetFromMetre(OGRGeomCoordinatePrecisionH,
+                                                    OGRSpatialReferenceH hSRS,
+                                                    double dfXYMetreResolution,
+                                                    double dfZMetreResolution,
+                                                    double dfMResolution);
+void CPL_DLL OGRGeomCoordinatePrecisionSetFormatSpecificOptions(
+    OGRGeomCoordinatePrecisionH, const char *pszFormatName,
+    CSLConstList papszOptions);
+
 /* From base OGRGeometry class */
 
 OGRErr CPL_DLL OGR_G_CreateFromWkb(const void *, OGRSpatialReferenceH,

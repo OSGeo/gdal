@@ -303,6 +303,7 @@ typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 typedef struct OGRGeomTransformer OGRGeomTransformerShadow;
 typedef struct _OGRPreparedGeometry OGRPreparedGeometryShadow;
 typedef struct OGRFieldDomainHS OGRFieldDomainShadow;
+typedef struct OGRGeomCoordinatePrecision OGRGeomCoordinatePrecisionShadow;
 %}
 
 #ifdef SWIGJAVA
@@ -4240,6 +4241,77 @@ OGRFieldDomainShadow* CreateGlobFieldDomain( const char *name,
 %}
 %clear const char* name;
 %clear const char* glob;
+
+/************************************************************************/
+/*                      OGRGeomCoordinatePrecision                      */
+/************************************************************************/
+
+%rename (GeomCoordinatePrecision) OGRGeomCoordinatePrecisionShadow;
+
+class OGRGeomCoordinatePrecisionShadow {
+  OGRGeomCoordinatePrecisionShadow();
+public:
+%extend {
+
+  ~OGRGeomCoordinatePrecisionShadow() {
+    OGRGeomCoordinatePrecisionDestroy(self);
+  }
+
+  void Set(double xyResolution, double zResolution, double mResolution) {
+      OGRGeomCoordinatePrecisionSet(self, xyResolution, zResolution, mResolution);
+  }
+
+  %apply Pointer NONNULL {OSRSpatialReferenceShadow* srs};
+  void SetFromMetre(OSRSpatialReferenceShadow* srs, double xyResolutionMetre, double zResolutionMetre, double mResolution) {
+      OGRGeomCoordinatePrecisionSetFromMetre(self, srs, xyResolutionMetre, zResolutionMetre, mResolution);
+  }
+  %clear OSRSpatialReferenceShadow* srs;
+
+  double GetXYResolution() {
+    return OGRGeomCoordinatePrecisionGetXYResolution(self);
+  }
+
+  double GetZResolution() {
+    return OGRGeomCoordinatePrecisionGetZResolution(self);
+  }
+
+  double GetMResolution() {
+    return OGRGeomCoordinatePrecisionGetMResolution(self);
+  }
+
+%apply (char **CSL) {(char **)};
+  char **GetFormats() {
+    return OGRGeomCoordinatePrecisionGetFormats(self);
+  }
+%clear char **;
+
+%apply (char **dict) {char **};
+%apply Pointer NONNULL {const char* formatName};
+  char ** GetFormatSpecificOptions(const char* formatName) {
+    return OGRGeomCoordinatePrecisionGetFormatSpecificOptions(self, formatName);
+  }
+%clear char **;
+%clear const char* formatName;
+
+%apply Pointer NONNULL {const char* formatName};
+%apply (char **dict) { char ** formatSpecificOptions };
+  void SetFormatSpecificOptions(const char* formatName, char **formatSpecificOptions) {
+    OGRGeomCoordinatePrecisionSetFormatSpecificOptions(self, formatName, formatSpecificOptions);
+  }
+%clear const char* formatName;
+%clear char **formatSpecificOptions;
+
+} /* %extend */
+
+}; /* class OGRGeomCoordinatePrecisionShadow */
+
+%newobject CreateGeomCoordinatePrecision;
+%inline %{
+static
+OGRGeomCoordinatePrecisionShadow* CreateGeomCoordinatePrecision() {
+  return OGRGeomCoordinatePrecisionCreate();
+}
+%}
 
 /************************************************************************/
 /*                        Other misc functions.                         */
