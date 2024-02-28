@@ -432,7 +432,7 @@ static char *MM_SetSubIndexFieldNam(char *nom_camp, MM_EXT_DBF_N_FIELDS index,
 
     strcpy(NomCamp_SubIndex, nom_camp);
 
-    sprintf(subindex, printf_UINT64, (GUInt64)index);
+    sprintf(subindex, sprintf_UINT64, (GUInt64)index);
 
     _subindex = MM_GiveNewStringWithCharacterInFront(subindex, '_');
     sizet_subindex = strlen(_subindex);

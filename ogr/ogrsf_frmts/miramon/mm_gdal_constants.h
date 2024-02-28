@@ -14,7 +14,7 @@ CPL_C_START  // Necessary for compiling C in GDAL project
 #endif
 
 // Common types
-#define printf_UINT64 "%llu"
+#define sprintf_UINT64 "%llu"
 
     // Type of the Feature ID: determines the maximum number of features in a layer.
     typedef GUInt64 MM_INTERNAL_FID;

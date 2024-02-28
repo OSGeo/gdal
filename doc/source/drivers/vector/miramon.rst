@@ -25,7 +25,7 @@ of the layer file.
       point vector features.
 
     - *FileNameT.dbf* file (note the 'T' before the '.'): Contains the main table of the database
-      in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__
+      in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__,
       if necessary. It contains the information (usually alphanumeric, but also file or web links, etc)
       of every feature. The Feature Identifier (FID) field is a field called *ID_GRAFIC* and relates
       every graphical feature to one or more records in the main table.
@@ -45,7 +45,7 @@ of the layer file.
       linestring (arc) vector features.
 
     - *FileNameA.dbf* file (note the 'A' before the '.'): Contains the main table of the database
-      in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__
+      in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__,
       if necessary. It contains the information (usually alphanumeric, but also file or web links, etc)
       of every feature. The Feature Identifier (FID) field is a field called *ID_GRAFIC* and relates
       every graphical feature to one or more records in the main table.
@@ -85,7 +85,7 @@ of the layer file.
       vector features needed to define the polygonal (or multipolygonal) vector features.  
 
     - *FileNameP.dbf* file (note the 'P' before the '.'): Contains the main table of the database
-      in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__
+      in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__,
       if necessary. It contains the information (usually alphanumeric, but also file or web links, etc)
       of every feature. The Feature Identifier (FID) field is a field called *ID_GRAFIC* and relates
       every graphical feature to one or more records in the main table.
@@ -261,7 +261,7 @@ The following open options are available.
       :choices: ENG, CAT, SPA
       :default: ENG
 
-      If the layer to be opened is multilingual (in fact the *.rel* file), this
+      If the layer to be opened is multilingual (in fact, the *.rel* file), this
       parameter sets the language to be read.
 
 
