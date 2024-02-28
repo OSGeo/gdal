@@ -10,7 +10,7 @@ USGSDEM -- USGS ASCII DEM (and CDED)
 
 GDAL includes support for reading USGS ASCII DEM files. This is the
 traditional format used by USGS before being replaced by SDTS, and is
-the format used for CDED DEM data products from the Canada. Most popular
+the format used for CDED DEM data products from Canada. Most popular
 variations on USGS DEM files should be supported, including correct
 recognition of coordinate system, and georeferenced positioning.
 
