@@ -7,6 +7,7 @@
 
 %feature("autodoc");
 
+%include "gdal_docs.i"
 %include "gdal_band_docs.i"
 %include "gdal_dataset_docs.i"
 
