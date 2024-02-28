@@ -66,6 +66,7 @@ EPSG:3003;TransverseMercator-Monte_Mario-Italy_Z1;;;
 EPSG:3021;TransverseMercator-Sweden-RT90;;;
 EPSG:26710;UTM-10N-NAD27-CW;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
 EPSG:32610;UTM-10N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26910;UTM-10N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
 EPSG:26711;UTM-11N-NAD27-CW;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
 EPSG:26912;UTM-12N-NAD83;;;
 EPSG:4486;UTM-13N-ITRF92;;;
