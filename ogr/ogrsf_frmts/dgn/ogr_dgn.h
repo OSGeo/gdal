@@ -115,10 +115,9 @@ class OGRDGNDataSource final : public OGRDataSource
     int Open(const char *, int bTestOpen, int bUpdate);
     bool PreCreate(const char *, char **);
 
-    OGRLayer *ICreateLayer(const char *, const OGRSpatialReference * = nullptr,
-                           OGRwkbGeometryType = wkbUnknown,
-                           char ** = nullptr) override;
-
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList) override;
     const char *GetName() override
     {
         return pszName;

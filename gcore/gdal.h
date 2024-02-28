@@ -1249,6 +1249,10 @@ OGRErr CPL_DLL GDALDatasetDeleteLayer(GDALDatasetH, int);
 OGRLayerH CPL_DLL GDALDatasetCreateLayer(GDALDatasetH, const char *,
                                          OGRSpatialReferenceH,
                                          OGRwkbGeometryType, CSLConstList);
+OGRLayerH CPL_DLL GDALDatasetCreateLayerFromGeomFieldDefn(GDALDatasetH,
+                                                          const char *,
+                                                          OGRGeomFieldDefnH,
+                                                          CSLConstList);
 OGRLayerH CPL_DLL GDALDatasetCopyLayer(GDALDatasetH, OGRLayerH, const char *,
                                        CSLConstList);
 void CPL_DLL GDALDatasetResetReading(GDALDatasetH);

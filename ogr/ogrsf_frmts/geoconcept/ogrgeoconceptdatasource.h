@@ -72,9 +72,8 @@ class OGRGeoconceptDataSource : public OGRDataSource
     int TestCapability(const char *pszCap) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
-                           const OGRSpatialReference *poSpatialRef = nullptr,
-                           OGRwkbGeometryType eGType = wkbUnknown,
-                           char **papszOptions = nullptr) override;
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 
   private:
     int LoadFile(const char *);

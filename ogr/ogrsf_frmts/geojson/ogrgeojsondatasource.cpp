@@ -254,10 +254,10 @@ OGRLayer *OGRGeoJSONDataSource::GetLayer(int nLayer)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRGeoJSONDataSource::ICreateLayer(const char *pszNameIn,
-                                             const OGRSpatialReference *poSRS,
-                                             OGRwkbGeometryType eGType,
-                                             char **papszOptions)
+OGRLayer *
+OGRGeoJSONDataSource::ICreateLayer(const char *pszNameIn,
+                                   const OGRGeomFieldDefn *poGeomFieldDefn,
+                                   CSLConstList papszOptions)
 {
     if (nullptr == fpOut_)
     {
@@ -273,6 +273,10 @@ OGRLayer *OGRGeoJSONDataSource::ICreateLayer(const char *pszNameIn,
                  "GeoJSON driver doesn't support creating more than one layer");
         return nullptr;
     }
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     const char *pszForeignMembersCollection =
         CSLFetchNameValue(papszOptions, "FOREIGN_MEMBERS_COLLECTION");

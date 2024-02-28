@@ -6576,13 +6576,16 @@ OGRLayer *netCDFDataset::GetLayer(int nIdx)
 /************************************************************************/
 
 OGRLayer *netCDFDataset::ICreateLayer(const char *pszName,
-                                      const OGRSpatialReference *poSpatialRef,
-                                      OGRwkbGeometryType eGType,
-                                      char **papszOptions)
+                                      const OGRGeomFieldDefn *poGeomFieldDefn,
+                                      CSLConstList papszOptions)
 {
     int nLayerCDFId = cdfid;
     if (!TestCapability(ODsCCreateLayer))
         return nullptr;
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSpatialRef =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     CPLString osNetCDFLayerName(pszName);
     const netCDFWriterConfigLayer *poLayerConfig = nullptr;

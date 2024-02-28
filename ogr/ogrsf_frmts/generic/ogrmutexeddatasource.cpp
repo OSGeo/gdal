@@ -127,13 +127,14 @@ int OGRMutexedDataSource::TestCapability(const char *pszCap)
     return m_poBaseDataSource->TestCapability(pszCap);
 }
 
-OGRLayer *OGRMutexedDataSource::ICreateLayer(
-    const char *pszName, const OGRSpatialReference *poSpatialRef,
-    OGRwkbGeometryType eGType, char **papszOptions)
+OGRLayer *
+OGRMutexedDataSource::ICreateLayer(const char *pszName,
+                                   const OGRGeomFieldDefn *poGeomFieldDefn,
+                                   CSLConstList papszOptions)
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
     return WrapLayerIfNecessary(m_poBaseDataSource->CreateLayer(
-        pszName, poSpatialRef, eGType, papszOptions));
+        pszName, poGeomFieldDefn, papszOptions));
 }
 
 OGRLayer *OGRMutexedDataSource::CopyLayer(OGRLayer *poSrcLayer,

@@ -1968,10 +1968,10 @@ void OGRGMLDataSource::WriteTopElements()
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
-                                         const OGRSpatialReference *poSRS,
-                                         OGRwkbGeometryType eType,
-                                         CPL_UNUSED char **papszOptions)
+OGRLayer *
+OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
+                               const OGRGeomFieldDefn *poGeomFieldDefn,
+                               CSLConstList /*papszOptions*/)
 {
     // Verify we are in update mode.
     if (fpOutput == nullptr)
@@ -1983,6 +1983,10 @@ OGRLayer *OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
 
         return nullptr;
     }
+
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     // Ensure name is safe as an element name.
     char *pszCleanLayerName = CPLStrdup(pszLayerName);

@@ -1801,10 +1801,10 @@ void OGRXLSXDataSource::AnalyseStyles(VSILFILE *fpStyles)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRXLSXDataSource::ICreateLayer(const char *pszLayerName,
-                                          const OGRSpatialReference * /*poSRS*/,
-                                          OGRwkbGeometryType /*eType*/,
-                                          char **papszOptions)
+OGRLayer *
+OGRXLSXDataSource::ICreateLayer(const char *pszLayerName,
+                                const OGRGeomFieldDefn * /*poGeomFieldDefn*/,
+                                CSLConstList papszOptions)
 
 {
     /* -------------------------------------------------------------------- */

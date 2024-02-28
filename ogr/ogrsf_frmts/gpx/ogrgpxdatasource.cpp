@@ -124,10 +124,11 @@ OGRLayer *OGRGPXDataSource::GetLayer(int iLayer)
 
 OGRLayer *
 OGRGPXDataSource::ICreateLayer(const char *pszLayerName,
-                               const OGRSpatialReference * /* poSRS */,
-                               OGRwkbGeometryType eType, char **papszOptions)
+                               const OGRGeomFieldDefn *poGeomFieldDefn,
+                               CSLConstList papszOptions)
 {
     GPXGeometryType gpxGeomType;
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
     if (eType == wkbPoint || eType == wkbPoint25D)
     {
         if (EQUAL(pszLayerName, "track_points"))

@@ -166,11 +166,11 @@ class FGdbLayer final : public FGdbBaseLayer
                     const std::wstring &wstrType);
     bool Create(FGdbDataSource *pParentDataSource, const char *pszLayerName,
                 const OGRSpatialReference *poSRS, OGRwkbGeometryType eType,
-                char **papszOptions);
+                CSLConstList papszOptions);
     static bool CreateFeatureDataset(FGdbDataSource *pParentDataSource,
                                      const std::string &feature_dataset_name,
                                      const OGRSpatialReference *poSRS,
-                                     char **papszOptions);
+                                     CSLConstList papszOptions);
 
     // virtual const char *GetName();
     virtual const char *GetFIDColumn() override
@@ -347,10 +347,9 @@ class FGdbDataSource final : public OGRDataSource
 
     OGRLayer *GetLayer(int) override;
 
-    virtual OGRLayer *ICreateLayer(const char *,
-                                   const OGRSpatialReference * = nullptr,
-                                   OGRwkbGeometryType = wkbUnknown,
-                                   char ** = nullptr) override;
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 
     virtual OGRErr DeleteLayer(int) override;
 

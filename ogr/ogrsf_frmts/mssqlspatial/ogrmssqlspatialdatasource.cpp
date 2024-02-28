@@ -314,9 +314,10 @@ OGRErr OGRMSSQLSpatialDataSource::DeleteLayer(int iLayer)
 /*                            CreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRMSSQLSpatialDataSource::ICreateLayer(
-    const char *pszLayerName, const OGRSpatialReference *poSRS,
-    OGRwkbGeometryType eType, char **papszOptions)
+OGRLayer *
+OGRMSSQLSpatialDataSource::ICreateLayer(const char *pszLayerName,
+                                        const OGRGeomFieldDefn *poGeomFieldDefn,
+                                        CSLConstList papszOptions)
 
 {
     char *pszTableName = nullptr;
@@ -325,6 +326,10 @@ OGRLayer *OGRMSSQLSpatialDataSource::ICreateLayer(
     const char *pszGeomColumn = nullptr;
     int nCoordDimension = 3;
     char *pszFIDColumnName = nullptr;
+
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     EndCopy();
 

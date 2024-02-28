@@ -370,9 +370,10 @@ int OGRAmigoCloudDataSource::FetchSRSId(OGRSpatialReference *poSRS)
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRAmigoCloudDataSource::ICreateLayer(
-    const char *pszNameIn, const OGRSpatialReference *poSpatialRef,
-    OGRwkbGeometryType eGType, char **papszOptions)
+OGRLayer *
+OGRAmigoCloudDataSource::ICreateLayer(const char *pszNameIn,
+                                      const OGRGeomFieldDefn *poGeomFieldDefn,
+                                      CSLConstList papszOptions)
 {
     if (!bReadWrite)
     {
@@ -380,6 +381,10 @@ OGRLayer *OGRAmigoCloudDataSource::ICreateLayer(
                  "Operation not available in read-only mode");
         return nullptr;
     }
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSpatialRef =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     CPLString osName(pszNameIn);
     OGRAmigoCloudTableLayer *poLayer =

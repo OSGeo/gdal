@@ -587,10 +587,16 @@ int OGRSelafinDataSource::OpenTable(const char *pszFilename)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRSelafinDataSource::ICreateLayer(
-    const char *pszLayerName, const OGRSpatialReference *poSpatialRefP,
-    OGRwkbGeometryType eGType, char **papszOptions)
+OGRLayer *
+OGRSelafinDataSource::ICreateLayer(const char *pszLayerName,
+                                   const OGRGeomFieldDefn *poGeomFieldDefn,
+                                   CSLConstList papszOptions)
+
 {
+    auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSpatialRefP =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
+
     CPLDebug("Selafin", "CreateLayer(%s,%s)", pszLayerName,
              (eGType == wkbPoint) ? "wkbPoint" : "wkbPolygon");
     // Verify we are in update mode.
@@ -602,6 +608,7 @@ OGRLayer *OGRSelafinDataSource::ICreateLayer(
                  pszName, pszLayerName);
         return nullptr;
     }
+
     // Check that new layer is a point or polygon layer
     if (eGType != wkbPoint)
     {

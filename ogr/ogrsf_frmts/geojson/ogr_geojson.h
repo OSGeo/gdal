@@ -139,7 +139,7 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
 {
   public:
     OGRGeoJSONWriteLayer(const char *pszName, OGRwkbGeometryType eGType,
-                         char **papszOptions, bool bWriteFC_BBOXIn,
+                         CSLConstList papszOptions, bool bWriteFC_BBOXIn,
                          OGRCoordinateTransformation *poCT,
                          OGRGeoJSONDataSource *poDS);
     ~OGRGeoJSONWriteLayer();
@@ -224,9 +224,8 @@ class OGRGeoJSONDataSource final : public OGRDataSource
     int GetLayerCount() override;
     OGRLayer *GetLayer(int nLayer) override;
     OGRLayer *ICreateLayer(const char *pszName,
-                           const OGRSpatialReference *poSRS = nullptr,
-                           OGRwkbGeometryType eGType = wkbUnknown,
-                           char **papszOptions = nullptr) override;
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
     int TestCapability(const char *pszCap) override;
 
     void AddLayer(OGRGeoJSONLayer *poLayer);

@@ -166,10 +166,10 @@ char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
-                                            const OGRSpatialReference *poSRS,
-                                            OGRwkbGeometryType eType,
-                                            char **papszOptions)
+OGRLayer *
+OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
+                                  const OGRGeomFieldDefn *poGeomFieldDefn,
+                                  CSLConstList papszOptions)
 
 {
     if (STARTS_WITH(pszLayerName, "pg"))
@@ -179,6 +179,10 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
                  "prefix");
     }
 
+    auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
+
     const bool bCreateTable = CPLFetchBool(papszOptions, "CREATE_TABLE", true);
     const bool bCreateSchema =
         CPLFetchBool(papszOptions, "CREATE_SCHEMA", true);
@@ -186,9 +190,9 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
         CSLFetchNameValueDef(papszOptions, "DROP_TABLE", "IF_EXISTS");
     int nGeometryTypeFlags = 0;
 
-    if (OGR_GT_HasZ((OGRwkbGeometryType)eType))
+    if (OGR_GT_HasZ(eType))
         nGeometryTypeFlags |= OGRGeometry::OGR_G_3D;
-    if (OGR_GT_HasM((OGRwkbGeometryType)eType))
+    if (OGR_GT_HasM(eType))
         nGeometryTypeFlags |= OGRGeometry::OGR_G_MEASURED;
 
     int nForcedGeometryTypeFlags = -1;

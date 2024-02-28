@@ -170,10 +170,10 @@ bool OGRDGNDataSource::PreCreate(const char *pszFilename, char **papszOptionsIn)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRDGNDataSource::ICreateLayer(const char *pszLayerName,
-                                         const OGRSpatialReference *poSRS,
-                                         OGRwkbGeometryType eGeomType,
-                                         char **papszExtraOptions)
+OGRLayer *
+OGRDGNDataSource::ICreateLayer(const char *pszLayerName,
+                               const OGRGeomFieldDefn *poGeomFieldDefn,
+                               CSLConstList papszExtraOptions)
 
 {
     /* -------------------------------------------------------------------- */
@@ -186,6 +186,11 @@ OGRLayer *OGRDGNDataSource::ICreateLayer(const char *pszLayerName,
                  "in it.");
         return nullptr;
     }
+
+    const auto eGeomType =
+        poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      If the coordinate system is geographic, we should use a         */

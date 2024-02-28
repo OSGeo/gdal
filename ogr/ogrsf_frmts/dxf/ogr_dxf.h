@@ -946,9 +946,8 @@ class OGRDXFWriterDS final : public OGRDataSource
     int TestCapability(const char *) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
-                           const OGRSpatialReference *poSpatialRef = nullptr,
-                           OGRwkbGeometryType eGType = wkbUnknown,
-                           char **papszOptions = nullptr) override;
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 
     bool CheckEntityID(const char *pszEntityID);
     bool WriteEntityID(VSILFILE *fp, long &nAssignedFID,

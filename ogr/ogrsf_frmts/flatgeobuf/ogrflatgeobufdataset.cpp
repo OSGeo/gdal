@@ -405,9 +405,10 @@ static CPLString LaunderLayerName(const char *pszLayerName)
     return osRet;
 }
 
-OGRLayer *OGRFlatGeobufDataset::ICreateLayer(
-    const char *pszLayerName, const OGRSpatialReference *poSpatialRef,
-    OGRwkbGeometryType eGType, char **papszOptions)
+OGRLayer *
+OGRFlatGeobufDataset::ICreateLayer(const char *pszLayerName,
+                                   const OGRGeomFieldDefn *poGeomFieldDefn,
+                                   CSLConstList papszOptions)
 {
     // Verify we are in update mode.
     if (!m_bCreate)
@@ -427,6 +428,10 @@ OGRLayer *OGRFlatGeobufDataset::ICreateLayer(
 
         return nullptr;
     }
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSpatialRef =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     // Verify that the datasource is a directory.
     VSIStatBufL sStatBuf;

@@ -108,9 +108,8 @@ class OGRMongoDBv3Dataset final : public GDALDataset
     void ReleaseResultSet(OGRLayer *poLayer) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
-                           const OGRSpatialReference *poSpatialRef,
-                           OGRwkbGeometryType eGType,
-                           char **papszOptions) override;
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
     OGRErr DeleteLayer(int iLayer) override;
     int TestCapability(const char *pszCap) override;
 
@@ -2512,9 +2511,10 @@ bool OGRMongoDBv3Dataset::Open(GDALOpenInfo *poOpenInfo)
 /*                            ICreateLayer()                            */
 /************************************************************************/
 
-OGRLayer *OGRMongoDBv3Dataset::ICreateLayer(
-    const char *pszName, const OGRSpatialReference *poSpatialRef,
-    OGRwkbGeometryType eGType, char **papszOptions)
+OGRLayer *
+OGRMongoDBv3Dataset::ICreateLayer(const char *pszName,
+                                  const OGRGeomFieldDefn *poGeomFieldDefn,
+                                  CSLConstList papszOptions)
 {
     if (m_osDatabase.empty())
     {
@@ -2577,17 +2577,12 @@ OGRLayer *OGRMongoDBv3Dataset::ICreateLayer(
     poLayer->m_bCreateSpatialIndex =
         CPLFetchBool(papszOptions, "SPATIAL_INDEX", true);
 
-    if (eGType != wkbNone)
+    if (poGeomFieldDefn && poGeomFieldDefn->GetType() != wkbNone)
     {
         const char *pszGeometryName =
             CSLFetchNameValueDef(papszOptions, "GEOMETRY_NAME", "geometry");
-        OGRGeomFieldDefn oFieldDefn(pszGeometryName, eGType);
-        OGRSpatialReference *poSRSClone = nullptr;
-        if (poSpatialRef)
-            poSRSClone = poSpatialRef->Clone();
-        oFieldDefn.SetSpatialRef(poSRSClone);
-        if (poSRSClone)
-            poSRSClone->Release();
+        OGRGeomFieldDefn oFieldDefn(poGeomFieldDefn);
+        oFieldDefn.SetName(pszGeometryName);
         poLayer->CreateGeomField(&oFieldDefn, FALSE);
     }
 

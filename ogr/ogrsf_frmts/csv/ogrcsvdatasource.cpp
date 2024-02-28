@@ -919,8 +919,8 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
 
 OGRLayer *
 OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
-                               const OGRSpatialReference *poSpatialRef,
-                               OGRwkbGeometryType eGType, char **papszOptions)
+                               const OGRGeomFieldDefn *poGeomFieldDefn,
+                               CSLConstList papszOptions)
 {
     // Verify we are in update mode.
     if (!bUpdate)
@@ -932,6 +932,10 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
 
         return nullptr;
     }
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSpatialRef =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     // Verify that the datasource is a directory.
     VSIStatBufL sStatBuf;

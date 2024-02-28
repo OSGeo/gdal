@@ -6602,9 +6602,10 @@ OGRLayer *GDALGeoPackageDataset::GetLayer(int iLayer)
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer *GDALGeoPackageDataset::ICreateLayer(
-    const char *pszLayerName, const OGRSpatialReference *poSpatialRef,
-    OGRwkbGeometryType eGType, char **papszOptions)
+OGRLayer *
+GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
+                                    const OGRGeomFieldDefn *poGeomFieldDefn,
+                                    CSLConstList papszOptions)
 {
     /* -------------------------------------------------------------------- */
     /*      Verify we are in update mode.                                   */
@@ -6618,6 +6619,10 @@ OGRLayer *GDALGeoPackageDataset::ICreateLayer(
 
         return nullptr;
     }
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSpatialRef =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     if (!m_bHasGPKGGeometryColumns)
     {

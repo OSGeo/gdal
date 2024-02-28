@@ -292,10 +292,10 @@ int OGRGeoconceptDataSource::Create(const char *pszName, char **papszOptions)
 /*   FEATURETYPE : TYPE.SUBTYPE                                         */
 /************************************************************************/
 
-OGRLayer *OGRGeoconceptDataSource::ICreateLayer(
-    const char *pszLayerName, const OGRSpatialReference *poSRS /* = NULL */,
-    OGRwkbGeometryType eType /* = wkbUnknown */,
-    char **papszOptions /* = NULL */)
+OGRLayer *
+OGRGeoconceptDataSource::ICreateLayer(const char *pszLayerName,
+                                      const OGRGeomFieldDefn *poGeomFieldDefn,
+                                      CSLConstList papszOptions)
 
 {
     if (_hGXT == nullptr)
@@ -305,7 +305,8 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer(
         return nullptr;
     }
 
-    if (poSRS == nullptr && !_bUpdate)
+    if ((!poGeomFieldDefn || poGeomFieldDefn->GetSpatialRef() == nullptr) &&
+        !_bUpdate)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "SRS is mandatory of creating a Geoconcept Layer.");
@@ -349,6 +350,7 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer(
     GCTypeKind gcioFeaType;
     GCDim gcioDim = v2D_GCIO;
 
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
     if (eType == wkbUnknown)
         gcioFeaType = vUnknownItemType_GCIO;
     else if (eType == wkbPoint)
@@ -516,6 +518,8 @@ OGRLayer *OGRGeoconceptDataSource::ICreateLayer(
     /* -------------------------------------------------------------------- */
     /*      Assign the coordinate system (if provided)                      */
     /* -------------------------------------------------------------------- */
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
     if (poSRS != nullptr)
     {
         auto poSRSClone = poSRS->Clone();

@@ -155,6 +155,22 @@ import org.gdal.osr.SpatialReference;
   }
 %}
 
+%typemap(javabody) OGRGeomFieldDefnShadow %{
+  private boolean swigCMemOwn;
+  private long swigCPtr;
+
+  public $javaclassname(long cPtr, boolean cMemoryOwn) {
+    if (cPtr == 0)
+        throw new RuntimeException();
+    swigCMemOwn = cMemoryOwn;
+    swigCPtr = cPtr;
+  }
+
+  public static long getCPtr($javaclassname obj) {
+    return (obj == null) ? 0 : obj.swigCPtr;
+  }
+%}
+
 %typemap(javacode) OGRLayerShadow %{
   private Object parentReference;
 

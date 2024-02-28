@@ -107,8 +107,9 @@ class PCIDSK2Dataset final : public GDALPamDataset
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRLayer *ICreateLayer(const char *, const OGRSpatialReference *,
-                                   OGRwkbGeometryType, char **) override;
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 };
 
 /************************************************************************/

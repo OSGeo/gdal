@@ -1406,7 +1406,7 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
     ASSERT_EQ(nCountLayers, 0);
 
     poDS->CreateLayer("foo");
-    poDS->CreateLayer("bar");
+    poDS->CreateLayer("bar", nullptr);
     for (auto poLayer : poDS->GetLayers())
     {
         if (nCountLayers == 0)

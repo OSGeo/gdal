@@ -1618,7 +1618,7 @@ void OGRVDVWriterLayer::StopAsCurrentLayer()
 /*                         OGRVDVWriteHeader()                          */
 /************************************************************************/
 
-static bool OGRVDVWriteHeader(VSILFILE *fpL, char **papszOptions)
+static bool OGRVDVWriteHeader(VSILFILE *fpL, CSLConstList papszOptions)
 {
     bool bRet = true;
     const bool bStandardHeader =
@@ -1673,7 +1673,7 @@ static bool OGRVDVWriteHeader(VSILFILE *fpL, char **papszOptions)
                             OGRVDVEscapeString(pszFft).c_str()) > 0;
     }
 
-    for (char **papszIter = papszOptions;
+    for (CSLConstList papszIter = papszOptions;
          papszIter != nullptr && *papszIter != nullptr; papszIter++)
     {
         if (STARTS_WITH_CI(*papszIter, "HEADER_") &&
@@ -1758,8 +1758,8 @@ static bool OGRVDVLoadVDV452Tables(OGRVDV452Tables &oTables)
 
 OGRLayer *
 OGRVDVDataSource::ICreateLayer(const char *pszLayerName,
-                               const OGRSpatialReference * /*poSpatialRef*/,
-                               OGRwkbGeometryType eGType, char **papszOptions)
+                               const OGRGeomFieldDefn *poGeomFieldDefn,
+                               CSLConstList papszOptions)
 {
     if (!m_bUpdate)
         return nullptr;
@@ -1925,6 +1925,7 @@ OGRVDVDataSource::ICreateLayer(const char *pszLayerName,
     m_papoLayers[m_nLayerCount] = poLayer;
     m_nLayerCount++;
 
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
     if (eGType == wkbPoint && poVDV452Table != nullptr &&
         (EQUAL(pszLayerName, "STOP") || EQUAL(pszLayerName, "REC_ORT")))
     {

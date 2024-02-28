@@ -332,10 +332,9 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
                GDALDataType eDT, char **papszOptions);
     OGRLayer *GetLayer(int iLayer) override;
     OGRErr DeleteLayer(int iLayer) override;
-    OGRLayer *ICreateLayer(const char *pszLayerName,
-                           const OGRSpatialReference *poSpatialRef,
-                           OGRwkbGeometryType eGType,
-                           char **papszOptions) override;
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
     int TestCapability(const char *) override;
 
     std::vector<std::string>

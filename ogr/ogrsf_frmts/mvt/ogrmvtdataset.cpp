@@ -3366,9 +3366,9 @@ class OGRMVTWriterDataset final : public GDALDataset
 
     CPLErr Close() override;
 
-    OGRLayer *ICreateLayer(const char *, const OGRSpatialReference * = nullptr,
-                           OGRwkbGeometryType = wkbUnknown,
-                           char ** = nullptr) override;
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 
     int TestCapability(const char *) override;
 
@@ -5824,12 +5824,14 @@ static bool ValidateMinMaxZoom(int nMinZoom, int nMaxZoom)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRMVTWriterDataset::ICreateLayer(const char *pszLayerName,
-                                            const OGRSpatialReference *poSRS,
-                                            OGRwkbGeometryType,
-                                            char **papszOptions)
+OGRLayer *
+OGRMVTWriterDataset::ICreateLayer(const char *pszLayerName,
+                                  const OGRGeomFieldDefn *poGeomFieldDefn,
+                                  CSLConstList papszOptions)
 {
     OGRSpatialReference *poSRSClone = nullptr;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
     if (poSRS)
     {
         poSRSClone = poSRS->Clone();

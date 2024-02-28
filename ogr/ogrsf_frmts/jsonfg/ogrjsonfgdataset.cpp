@@ -508,10 +508,10 @@ bool OGRJSONFGDataset::EmitStartFeaturesIfNeededAndReturnIfFirstFeature()
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
-                                         const OGRSpatialReference *poSRS,
-                                         OGRwkbGeometryType eGType,
-                                         char **papszOptions)
+OGRLayer *
+OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
+                               const OGRGeomFieldDefn *poGeomFieldDefn,
+                               CSLConstList papszOptions)
 {
     if (nullptr == fpOut_)
     {
@@ -528,6 +528,10 @@ OGRLayer *OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
                  "creation option has been used");
         return nullptr;
     }
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     std::string osCoordRefSys;
     std::unique_ptr<OGRCoordinateTransformation> poCTToWGS84;

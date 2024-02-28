@@ -363,10 +363,10 @@ int OGRKMLDataSource::Create(const char *pszName, char **papszOptions)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRKMLDataSource::ICreateLayer(const char *pszLayerName,
-                                         const OGRSpatialReference *poSRS,
-                                         OGRwkbGeometryType eType,
-                                         char ** /* papszOptions */)
+OGRLayer *
+OGRKMLDataSource::ICreateLayer(const char *pszLayerName,
+                               const OGRGeomFieldDefn *poGeomFieldDefn,
+                               CSLConstList /* papszOptions*/)
 {
     CPLAssert(nullptr != pszLayerName);
 
@@ -382,6 +382,10 @@ OGRLayer *OGRKMLDataSource::ICreateLayer(const char *pszLayerName,
 
         return nullptr;
     }
+
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Close the previous layer (if there is one open)                 */

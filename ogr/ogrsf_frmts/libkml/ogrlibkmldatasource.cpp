@@ -1563,7 +1563,7 @@ static bool IsValidPhoneNumber(const char *pszPhoneNumber)
 /************************************************************************/
 
 void OGRLIBKMLDataSource::SetCommonOptions(ContainerPtr poKmlContainer,
-                                           char **papszOptions)
+                                           CSLConstList papszOptions)
 {
     const char *l_pszName = CSLFetchNameValue(papszOptions, "NAME");
     if (l_pszName != nullptr)
@@ -2121,7 +2121,7 @@ OGRErr OGRLIBKMLDataSource::DeleteLayer(int iLayer)
 
 OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(
     const char *pszLayerName, const OGRSpatialReference *poSRS,
-    OGRwkbGeometryType eGType, char **papszOptions)
+    OGRwkbGeometryType eGType, CSLConstList papszOptions)
 {
     ContainerPtr poKmlLayerContainer = nullptr;
 
@@ -2167,7 +2167,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(
 
 OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz(
     const char *pszLayerName, const OGRSpatialReference *poSRS,
-    OGRwkbGeometryType eGType, char ** /* papszOptions */)
+    OGRwkbGeometryType eGType, CSLConstList /* papszOptions */)
 {
     DocumentPtr poKmlDocument = nullptr;
 
@@ -2227,10 +2227,10 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz(
 
 ******************************************************************************/
 
-OGRLayer *OGRLIBKMLDataSource::ICreateLayer(const char *pszLayerName,
-                                            const OGRSpatialReference *poOgrSRS,
-                                            OGRwkbGeometryType eGType,
-                                            char **papszOptions)
+OGRLayer *
+OGRLIBKMLDataSource::ICreateLayer(const char *pszLayerName,
+                                  const OGRGeomFieldDefn *poGeomFieldDefn,
+                                  CSLConstList papszOptions)
 {
     if (!bUpdate)
         return nullptr;
@@ -2241,6 +2241,10 @@ OGRLayer *OGRLIBKMLDataSource::ICreateLayer(const char *pszLayerName,
                  "'doc' is an invalid layer name in a KMZ file");
         return nullptr;
     }
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poOgrSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     OGRLIBKMLLayer *poOgrLayer = nullptr;
 

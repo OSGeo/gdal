@@ -127,14 +127,16 @@ OGRLayer *OGRGeoRSSDataSource::GetLayer(int iLayer)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRGeoRSSDataSource::ICreateLayer(const char *pszLayerName,
-                                            const OGRSpatialReference *poSRS,
-                                            OGRwkbGeometryType /* eType */,
-                                            char ** /* papszOptions */)
+OGRLayer *
+OGRGeoRSSDataSource::ICreateLayer(const char *pszLayerName,
+                                  const OGRGeomFieldDefn *poGeomFieldDefn,
+                                  CSLConstList /*papszOptions*/)
 {
     if (fpOutput == nullptr)
         return nullptr;
 
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
     if (poSRS != nullptr && eGeomDialect != GEORSS_GML)
     {
         OGRSpatialReference oSRS;

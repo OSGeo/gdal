@@ -2486,7 +2486,7 @@ VSILFILE *OGRFlatGeobufLayer::CreateOutputFile(const CPLString &osFilename,
 OGRFlatGeobufLayer *OGRFlatGeobufLayer::Create(
     GDALDataset *poDS, const char *pszLayerName, const char *pszFilename,
     const OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType,
-    bool bCreateSpatialIndexAtClose, char **papszOptions)
+    bool bCreateSpatialIndexAtClose, CSLConstList papszOptions)
 {
     std::string osTempFile = GetTempFilePath(pszFilename, papszOptions);
     VSILFILE *poFpWrite =

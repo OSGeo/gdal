@@ -2094,9 +2094,8 @@ OGRLayer *PCIDSK2Dataset::GetLayer(int iLayer)
 /************************************************************************/
 
 OGRLayer *PCIDSK2Dataset::ICreateLayer(const char *pszLayerName,
-                                       const OGRSpatialReference *poSRS,
-                                       OGRwkbGeometryType eType,
-                                       CPL_UNUSED char **papszOptions)
+                                       const OGRGeomFieldDefn *poGeomFieldDefn,
+                                       CSLConstList /*papszOptions*/)
 {
     /* -------------------------------------------------------------------- */
     /*      Verify we are in update mode.                                   */
@@ -2109,6 +2108,10 @@ OGRLayer *PCIDSK2Dataset::ICreateLayer(const char *pszLayerName,
                  GetDescription(), pszLayerName);
         return nullptr;
     }
+
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Figure out what type of layer we need.                          */

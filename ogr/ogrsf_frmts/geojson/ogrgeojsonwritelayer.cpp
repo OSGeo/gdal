@@ -40,7 +40,7 @@
 
 OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer(const char *pszName,
                                            OGRwkbGeometryType eGType,
-                                           char **papszOptions,
+                                           CSLConstList papszOptions,
                                            bool bWriteFC_BBOXIn,
                                            OGRCoordinateTransformation *poCT,
                                            OGRGeoJSONDataSource *poDS)

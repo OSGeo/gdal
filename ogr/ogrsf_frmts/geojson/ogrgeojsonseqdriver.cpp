@@ -65,9 +65,8 @@ class OGRGeoJSONSeqDataSource final : public GDALDataset
     }
     OGRLayer *GetLayer(int) override;
     OGRLayer *ICreateLayer(const char *pszName,
-                           const OGRSpatialReference *poSRS = nullptr,
-                           OGRwkbGeometryType eGType = wkbUnknown,
-                           char **papszOptions = nullptr) override;
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
     int TestCapability(const char *pszCap) override;
 
     bool Open(GDALOpenInfo *poOpenInfo, GeoJSONSourceType nSrcType);
@@ -174,12 +173,16 @@ OGRLayer *OGRGeoJSONSeqDataSource::GetLayer(int nIndex)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRGeoJSONSeqDataSource::ICreateLayer(
-    const char *pszNameIn, const OGRSpatialReference *poSRS,
-    OGRwkbGeometryType /*eGType*/, char **papszOptions)
+OGRLayer *
+OGRGeoJSONSeqDataSource::ICreateLayer(const char *pszNameIn,
+                                      const OGRGeomFieldDefn *poGeomFieldDefn,
+                                      CSLConstList papszOptions)
 {
     if (!TestCapability(ODsCCreateLayer))
         return nullptr;
+
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     std::unique_ptr<OGRCoordinateTransformation> poCT;
     if (poSRS == nullptr)
