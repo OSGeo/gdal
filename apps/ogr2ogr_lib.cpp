@@ -4235,27 +4235,10 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             eGCreateLayerType = wkbNone;
         }
 
-        // If the source feature first geometry column is not nullable
-        // and that GEOMETRY_NULLABLE creation option is available, use it
-        // so as to be able to set the not null constraint (if the driver
-        // supports it)
-        if (eGType != wkbNone && anRequestedGeomFields.empty() &&
-            nSrcGeomFieldCount >= 1 &&
-            !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
-            pszDestCreationOptions != nullptr &&
-            strstr(pszDestCreationOptions, "GEOMETRY_NULLABLE") != nullptr &&
-            CSLFetchNameValue(m_papszLCO, "GEOMETRY_NULLABLE") == nullptr &&
-            !m_bForceNullable)
-        {
-            papszLCOTemp =
-                CSLSetNameValue(papszLCOTemp, "GEOMETRY_NULLABLE", "NO");
-            CPLDebug("GDALVectorTranslate", "Using GEOMETRY_NULLABLE=NO");
-        }
+        OGRGeomCoordinatePrecision oCoordPrec;
+        std::string osGeomFieldName;
+        bool bGeomFieldNullable = true;
 
-        // Use source geometry field name as much as possible
-        if (eGType != wkbNone && pszDestCreationOptions &&
-            strstr(pszDestCreationOptions, "GEOMETRY_NAME") != nullptr &&
-            CSLFetchNameValue(m_papszLCO, "GEOMETRY_NAME") == nullptr)
         {
             int iSrcGeomField = -1;
             if (anRequestedGeomFields.empty() &&
@@ -4273,15 +4256,49 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
 
             if (iSrcGeomField >= 0)
             {
-                const char *pszGFldName =
-                    poSrcFDefn->GetGeomFieldDefn(iSrcGeomField)->GetNameRef();
+                const auto poSrcGeomFieldDefn =
+                    poSrcFDefn->GetGeomFieldDefn(iSrcGeomField);
+                oCoordPrec = poSrcGeomFieldDefn->GetCoordinatePrecision();
+
+                bGeomFieldNullable =
+                    CPL_TO_BOOL(poSrcGeomFieldDefn->IsNullable());
+
+                const char *pszGFldName = poSrcGeomFieldDefn->GetNameRef();
                 if (pszGFldName != nullptr && !EQUAL(pszGFldName, "") &&
                     poSrcFDefn->GetFieldIndex(pszGFldName) < 0)
                 {
-                    papszLCOTemp = CSLSetNameValue(
-                        papszLCOTemp, "GEOMETRY_NAME", pszGFldName);
+                    osGeomFieldName = pszGFldName;
+
+                    // Use source geometry field name as much as possible
+                    if (eGType != wkbNone && pszDestCreationOptions &&
+                        strstr(pszDestCreationOptions, "GEOMETRY_NAME") !=
+                            nullptr &&
+                        CSLFetchNameValue(m_papszLCO, "GEOMETRY_NAME") ==
+                            nullptr)
+                    {
+                        papszLCOTemp = CSLSetNameValue(
+                            papszLCOTemp, "GEOMETRY_NAME", pszGFldName);
+                    }
                 }
             }
+        }
+
+        // If the source feature first geometry column is not nullable
+        // and that GEOMETRY_NULLABLE creation option is available, use it
+        // so as to be able to set the not null constraint (if the driver
+        // supports it)
+        if (eGType != wkbNone && anRequestedGeomFields.empty() &&
+            nSrcGeomFieldCount >= 1 &&
+            !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
+            pszDestCreationOptions != nullptr &&
+            strstr(pszDestCreationOptions, "GEOMETRY_NULLABLE") != nullptr &&
+            CSLFetchNameValue(m_papszLCO, "GEOMETRY_NULLABLE") == nullptr &&
+            !m_bForceNullable)
+        {
+            bGeomFieldNullable = false;
+            papszLCOTemp =
+                CSLSetNameValue(papszLCOTemp, "GEOMETRY_NULLABLE", "NO");
+            CPLDebug("GDALVectorTranslate", "Using GEOMETRY_NULLABLE=NO");
         }
 
         // Force FID column as 64 bit if the source feature has a 64 bit FID,
@@ -4420,20 +4437,15 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             }
         }
 
-        OGRSpatialReference *poOutputSRSClone = nullptr;
-        if (poOutputSRS != nullptr)
-        {
-            poOutputSRSClone = poOutputSRS->Clone();
-        }
-        poDstLayer = m_poDstDS->CreateLayer(
-            pszNewLayerName, poOutputSRSClone,
-            static_cast<OGRwkbGeometryType>(eGCreateLayerType), papszLCOTemp);
+        OGRGeomFieldDefn oGeomFieldDefn(
+            osGeomFieldName.c_str(),
+            static_cast<OGRwkbGeometryType>(eGCreateLayerType));
+        oGeomFieldDefn.SetSpatialRef(poOutputSRS);
+        oGeomFieldDefn.SetCoordinatePrecision(oCoordPrec);
+        oGeomFieldDefn.SetNullable(bGeomFieldNullable);
+        poDstLayer = m_poDstDS->CreateLayer(pszNewLayerName, &oGeomFieldDefn,
+                                            papszLCOTemp);
         CSLDestroy(papszLCOTemp);
-
-        if (poOutputSRSClone != nullptr)
-        {
-            poOutputSRSClone->Release();
-        }
 
         if (poDstLayer == nullptr)
         {
@@ -4504,7 +4516,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                     poSrcFDefn->GetGeomFieldDefn(iSrcGeomField));
                 if (m_poOutputSRS != nullptr)
                 {
-                    poOutputSRSClone = m_poOutputSRS->Clone();
+                    auto poOutputSRSClone = m_poOutputSRS->Clone();
                     oGFldDefn.SetSpatialRef(poOutputSRSClone);
                     poOutputSRSClone->Release();
                 }
