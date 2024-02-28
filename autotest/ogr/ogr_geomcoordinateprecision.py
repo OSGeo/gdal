@@ -75,3 +75,33 @@ def test_ogr_geomcoordinate_precision():
     prec.SetFormatSpecificOptions("my_format", {"key": "value"})
     assert prec.GetFormats() == ["my_format"]
     assert prec.GetFormatSpecificOptions("my_format") == {"key": "value"}
+
+
+def test_ogr_geomcoordinate_precision_geom_field():
+
+    geom_fld = ogr.GeomFieldDefn("foo")
+    assert geom_fld.GetCoordinatePrecision().GetXYResolution() == 0
+
+    prec = ogr.CreateGeomCoordinatePrecision()
+    prec.Set(1e-9, 1e-3, 1e-2)
+    geom_fld.SetCoordinatePrecision(prec)
+    assert geom_fld.GetCoordinatePrecision().GetXYResolution() == 1e-9
+    assert geom_fld.GetCoordinatePrecision().GetZResolution() == 1e-3
+    assert geom_fld.GetCoordinatePrecision().GetMResolution() == 1e-2
+
+    feature_defn = ogr.FeatureDefn("test")
+    feature_defn.AddGeomFieldDefn(geom_fld)
+    assert feature_defn.IsSame(feature_defn)
+
+    for (xy, z, m) in [
+        (1e-9 * 10, 1e-3, 1e-2),
+        (1e-9, 1e-3 * 10, 1e-2),
+        (1e-9, 1e-3, 1e-2 * 10),
+    ]:
+        geom_fld2 = ogr.GeomFieldDefn("foo")
+        prec = ogr.CreateGeomCoordinatePrecision()
+        prec.Set(xy, z, m)
+        geom_fld2.SetCoordinatePrecision(prec)
+        feature_defn2 = ogr.FeatureDefn("test")
+        feature_defn2.AddGeomFieldDefn(geom_fld2)
+        assert not feature_defn.IsSame(feature_defn2)

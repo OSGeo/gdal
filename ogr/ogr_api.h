@@ -468,6 +468,11 @@ void CPL_DLL OGR_GFld_SetNullable(OGRGeomFieldDefnH hDefn, int);
 int CPL_DLL OGR_GFld_IsIgnored(OGRGeomFieldDefnH hDefn);
 void CPL_DLL OGR_GFld_SetIgnored(OGRGeomFieldDefnH hDefn, int);
 
+OGRGeomCoordinatePrecisionH
+    CPL_DLL OGR_GFld_GetCoordinatePrecision(OGRGeomFieldDefnH);
+void CPL_DLL OGR_GFld_SetCoordinatePrecision(OGRGeomFieldDefnH,
+                                             OGRGeomCoordinatePrecisionH);
+
 /* OGRFeatureDefn */
 
 OGRFeatureDefnH CPL_DLL OGR_FD_Create(const char *) CPL_WARN_UNUSED_RESULT;

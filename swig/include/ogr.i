@@ -2987,6 +2987,17 @@ public:
   void SetNullable(int bNullable ) {
     return OGR_GFld_SetNullable( self, bNullable );
   }
+
+  OGRGeomCoordinatePrecisionShadow* GetCoordinatePrecision() {
+    return OGR_GFld_GetCoordinatePrecision(self);
+  }
+
+  %apply Pointer NONNULL {OGRGeomCoordinatePrecisionShadow* srs};
+  void SetCoordinatePrecision(OGRGeomCoordinatePrecisionShadow* coordPrec) {
+    OGR_GFld_SetCoordinatePrecision(self, coordPrec);
+  }
+  %clear OGRGeomCoordinatePrecisionShadow* srs;
+
 } /* %extend */
 
 
