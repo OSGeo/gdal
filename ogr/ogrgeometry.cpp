@@ -201,6 +201,10 @@ void OGRGeometry::dumpReadable(FILE *fp, const char *pszPrefix,
  * <li>DISPLAY_GEOMETRY=NO : to hide the dump of the geometry</li>
  * <li>DISPLAY_GEOMETRY=WKT or YES (default) : dump the geometry as a WKT</li>
  * <li>DISPLAY_GEOMETRY=SUMMARY : to get only a summary of the geometry</li>
+ * <li>XY_COORD_PRECISION=integer: number of decimal figures for X,Y coordinates
+ * in WKT (added in GDAL 3.9)</li>
+ * <li>Z_COORD_PRECISION=integer: number of decimal figures for Z coordinates in
+ * WKT (added in GDAL 3.9)</li>
  * </ul>
  *
  * @param pszPrefix the prefix to put on each line of output.
@@ -217,6 +221,35 @@ std::string OGRGeometry::dumpReadable(const char *pszPrefix,
         pszPrefix = "";
 
     std::string osRet;
+
+    const auto exportToWktWithOpts =
+        [this, pszPrefix, papszOptions, &osRet](bool bIso)
+    {
+        OGRErr err(OGRERR_NONE);
+        OGRWktOptions opts;
+        if (const char *pszXYPrecision =
+                CSLFetchNameValue(papszOptions, "XY_COORD_PRECISION"))
+        {
+            opts.format = OGRWktFormat::F;
+            opts.xyPrecision = atoi(pszXYPrecision);
+        }
+        if (const char *pszZPrecision =
+                CSLFetchNameValue(papszOptions, "Z_COORD_PRECISION"))
+        {
+            opts.format = OGRWktFormat::F;
+            opts.zPrecision = atoi(pszZPrecision);
+        }
+        if (bIso)
+            opts.variant = wkbVariantIso;
+        std::string wkt = exportToWkt(opts, &err);
+        if (err == OGRERR_NONE)
+        {
+            osRet = pszPrefix;
+            osRet += wkt.data();
+            osRet += '\n';
+        }
+    };
+
     const char *pszDisplayGeometry =
         CSLFetchNameValue(papszOptions, "DISPLAY_GEOMETRY");
     if (pszDisplayGeometry != nullptr && EQUAL(pszDisplayGeometry, "SUMMARY"))
@@ -392,30 +425,14 @@ std::string OGRGeometry::dumpReadable(const char *pszPrefix,
     }
     else if (pszDisplayGeometry != nullptr && EQUAL(pszDisplayGeometry, "WKT"))
     {
-        OGRErr err(OGRERR_NONE);
-        std::string wkt = exportToWkt(OGRWktOptions(), &err);
-        if (err == OGRERR_NONE)
-        {
-            osRet += pszPrefix;
-            osRet += wkt.data();
-            osRet += '\n';
-        }
+        exportToWktWithOpts(/* bIso=*/false);
     }
     else if (pszDisplayGeometry == nullptr || CPLTestBool(pszDisplayGeometry) ||
              EQUAL(pszDisplayGeometry, "ISO_WKT"))
     {
-        OGRErr err(OGRERR_NONE);
-        OGRWktOptions opts;
-
-        opts.variant = wkbVariantIso;
-        std::string wkt = exportToWkt(opts, &err);
-        if (err == OGRERR_NONE)
-        {
-            osRet += pszPrefix;
-            osRet += wkt.data();
-            osRet += '\n';
-        }
+        exportToWktWithOpts(/* bIso=*/true);
     }
+
     return osRet;
 }
 
@@ -3000,12 +3017,12 @@ void OGR_G_FlattenTo2D(OGRGeometryH hGeom)
  * <li> XY_COORD_RESOLUTION=double (added in GDAL 3.9):
  *      Resolution for the coordinate precision of the X and Y coordinates.
  *      Expressed in the units of the X and Y axis of the SRS. eg 1e-5 for up
- *      to 5 decimal digits. 0 for the default behaviour.
+ *      to 5 decimal digits. 0 for the default behavior.
  * </li>
  * <li> Z_COORD_RESOLUTION=double (added in GDAL 3.9):
  *      Resolution for the coordinate precision of the Z coordinates.
  *      Expressed in the units of the Z axis of the SRS.
- *      0 for the default behaviour.
+ *      0 for the default behavior.
  * </li>
  * </ul>
  *

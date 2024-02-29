@@ -5648,16 +5648,42 @@ std::string OGRFeature::DumpReadableAsString(CSLConstList papszOptions) const
         {
             for (int iField = 0; iField < nGeomFieldCount; iField++)
             {
-                OGRGeomFieldDefn *poFDefn = poDefn->GetGeomFieldDefn(iField);
+                const OGRGeomFieldDefn *poFDefn =
+                    poDefn->GetGeomFieldDefn(iField);
 
                 if (papoGeometries[iField] != nullptr)
                 {
+                    CPLStringList aosGeomOptions(papszOptions);
+
+                    const auto &oCoordPrec = poFDefn->GetCoordinatePrecision();
+
+                    if (oCoordPrec.dfXYResolution !=
+                        OGRGeomCoordinatePrecision::UNKNOWN)
+                    {
+                        aosGeomOptions.SetNameValue(
+                            "XY_COORD_PRECISION",
+                            CPLSPrintf("%d",
+                                       OGRGeomCoordinatePrecision::
+                                           ResolutionToPrecision(
+                                               oCoordPrec.dfXYResolution)));
+                    }
+                    if (oCoordPrec.dfZResolution !=
+                        OGRGeomCoordinatePrecision::UNKNOWN)
+                    {
+                        aosGeomOptions.SetNameValue(
+                            "Z_COORD_PRECISION",
+                            CPLSPrintf("%d",
+                                       OGRGeomCoordinatePrecision::
+                                           ResolutionToPrecision(
+                                               oCoordPrec.dfZResolution)));
+                    }
+
                     osRet += "  ";
                     if (strlen(poFDefn->GetNameRef()) > 0 &&
                         GetGeomFieldCount() > 1)
                         osRet += CPLOPrintf("%s = ", poFDefn->GetNameRef());
-                    osRet += papoGeometries[iField]->dumpReadable(nullptr,
-                                                                  papszOptions);
+                    osRet += papoGeometries[iField]->dumpReadable(
+                        nullptr, aosGeomOptions.List());
                 }
             }
         }
