@@ -1811,20 +1811,27 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
                         MM_Character;
                     break;
             }
-            if (poFeatureDefn->GetFieldDefn(iField)->GetPrecision() == 0)
-            {
-                phMiraMonLayer->pLayerDB->pFields[iField].nFieldSize =
-                    poFeatureDefn->GetFieldDefn(iField)->GetWidth();
-                if (phMiraMonLayer->pLayerDB->pFields[iField].nFieldSize == 0)
-                    phMiraMonLayer->pLayerDB->pFields[iField].nFieldSize = 1;
-            }
+            if (poFeatureDefn->GetFieldDefn(iField)->GetType() == OFTDate)
+                phMiraMonLayer->pLayerDB->pFields[iField].nFieldSize = 8;
             else
             {
-                // One more space for the "."
-                phMiraMonLayer->pLayerDB->pFields[iField].nFieldSize =
-                    (unsigned int)(poFeatureDefn->GetFieldDefn(iField)
-                                       ->GetWidth() +
-                                   1);
+                if (poFeatureDefn->GetFieldDefn(iField)->GetPrecision() == 0)
+                {
+                    phMiraMonLayer->pLayerDB->pFields[iField].nFieldSize =
+                        poFeatureDefn->GetFieldDefn(iField)->GetWidth();
+                    if (phMiraMonLayer->pLayerDB->pFields[iField].nFieldSize ==
+                        0)
+                        phMiraMonLayer->pLayerDB->pFields[iField].nFieldSize =
+                            1;
+                }
+                else
+                {
+                    // One more space for the "."
+                    phMiraMonLayer->pLayerDB->pFields[iField].nFieldSize =
+                        (unsigned int)(poFeatureDefn->GetFieldDefn(iField)
+                                           ->GetWidth() +
+                                       1);
+                }
             }
 
             if (poFeatureDefn->GetFieldDefn(iField)->GetNameRef())

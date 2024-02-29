@@ -6354,7 +6354,7 @@ int MMAddPolygonRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
     memset(pszRecordOnCourse, 0, pBD_XP->BytesPerRecord);
     if (MMWriteValueToRecordDBXP(hMiraMonLayer, pszRecordOnCourse,
                                  pBD_XP->pField, &nElemCount, TRUE))
-        return 1;
+        return MM_FATAL_ERROR_WRITING_FEATURES;
 
     if (!hMMFeature)
     {
