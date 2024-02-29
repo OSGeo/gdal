@@ -499,7 +499,8 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
     if (hMiraMonLayerPOL.bIsPolygon)
     {
         CPLDebug("MiraMon", "Closing MiraMon polygons layer...");
-        MMCloseLayer(&hMiraMonLayerPOL);
+        if (MMCloseLayer(&hMiraMonLayerPOL))
+            CPLDebug("MiraMon", "Error closing polygons layer");
         if (hMiraMonLayerPOL.TopHeader.nElemCount)
         {
             CPLDebug("MiraMon",
@@ -516,7 +517,8 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
     if (hMiraMonLayerARC.bIsArc)
     {
         CPLDebug("MiraMon", "Closing MiraMon arcs layer...");
-        MMCloseLayer(&hMiraMonLayerARC);
+        if (MMCloseLayer(&hMiraMonLayerARC))
+            CPLDebug("MiraMon", "Error closing arcs layer");
         if (hMiraMonLayerARC.TopHeader.nElemCount)
         {
             CPLDebug("MiraMon", sprintf_UINT64 " arcs written in file %s.arc",
@@ -532,7 +534,8 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
     if (hMiraMonLayerPNT.bIsPoint)
     {
         CPLDebug("MiraMon", "Closing MiraMon points layer...");
-        MMCloseLayer(&hMiraMonLayerPNT);
+        if (MMCloseLayer(&hMiraMonLayerPNT))
+            CPLDebug("MiraMon", "Error closing points layer");
         if (hMiraMonLayerPNT.TopHeader.nElemCount)
         {
             CPLDebug("MiraMon", sprintf_UINT64 " points written in file %s.pnt",

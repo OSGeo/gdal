@@ -2011,7 +2011,8 @@ static int MMCloseArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
     if (pMMArcLayer->pF)
         fclose_function(pMMArcLayer->pF);
 
-    MMCloseNodeLayer(hMiraMonLayer);
+    if (MMCloseNodeLayer(hMiraMonLayer))
+        return 1;
 
     return 0;
 }
@@ -2365,6 +2366,8 @@ int MMInitFlush(struct MM_FLUSH_INFO *pFlush, FILE_TYPE *pF, GUInt64 nBlockSize,
                 GInt32 nMyDiskSize)
 {
     memset(pFlush, 0, sizeof(*pFlush));
+    *pBuffer = nullptr;
+
     pFlush->nMyDiskSize = nMyDiskSize;
     pFlush->pF = pF;
     pFlush->nBlockSize = nBlockSize;
