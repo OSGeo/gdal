@@ -60,14 +60,18 @@ OGRJSONFGWriteLayer::OGRJSONFGWriteLayer(
                    osCoordRefSys_.find("[EPSG:4326]") != std::string::npos ||
                    osCoordRefSys_.find("[EPSG:4979]") != std::string::npos;
 
-    oWriteOptions_.nCoordPrecision = atoi(CSLFetchNameValueDef(
+    oWriteOptions_.nXYCoordPrecision = atoi(CSLFetchNameValueDef(
+        papszOptions, "COORDINATE_PRECISION_GEOMETRY", "-1"));
+    oWriteOptions_.nZCoordPrecision = atoi(CSLFetchNameValueDef(
         papszOptions, "COORDINATE_PRECISION_GEOMETRY", "-1"));
     oWriteOptions_.nSignificantFigures =
         atoi(CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1"));
     oWriteOptions_.SetRFC7946Settings();
     oWriteOptions_.SetIDOptions(papszOptions);
 
-    oWriteOptionsPlace_.nCoordPrecision = atoi(
+    oWriteOptionsPlace_.nXYCoordPrecision = atoi(
+        CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION_PLACE", "-1"));
+    oWriteOptionsPlace_.nZCoordPrecision = atoi(
         CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION_PLACE", "-1"));
     oWriteOptionsPlace_.nSignificantFigures =
         atoi(CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1"));

@@ -48,8 +48,6 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer(const char *pszName,
       bWriteBBOX(CPLTestBool(
           CSLFetchNameValueDef(papszOptions, "WRITE_BBOX", "FALSE"))),
       bBBOX3D(false), bWriteFC_BBOX(bWriteFC_BBOXIn),
-      nCoordPrecision_(atoi(
-          CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"))),
       nSignificantFigures_(atoi(
           CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1"))),
       bRFC7946_(
@@ -71,10 +69,21 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer(const char *pszName,
     poFeatureDefn_->Reference();
     poFeatureDefn_->SetGeomType(eGType);
     SetDescription(poFeatureDefn_->GetName());
-    if (bRFC7946_ && nCoordPrecision_ < 0)
-        nCoordPrecision_ = 7;
+    const char *pszCoordPrecision =
+        CSLFetchNameValue(papszOptions, "COORDINATE_PRECISION");
+    if (pszCoordPrecision)
+    {
+        oWriteOptions_.nXYCoordPrecision = atoi(pszCoordPrecision);
+        oWriteOptions_.nZCoordPrecision = atoi(pszCoordPrecision);
+    }
+    else
+    {
+        oWriteOptions_.nXYCoordPrecision = atoi(CSLFetchNameValueDef(
+            papszOptions, "XY_COORD_PRECISION", bRFC7946_ ? "7" : "-1"));
+        oWriteOptions_.nZCoordPrecision = atoi(CSLFetchNameValueDef(
+            papszOptions, "Z_COORD_PRECISION", bRFC7946_ ? "3" : "-1"));
+    }
     oWriteOptions_.bWriteBBOX = bWriteBBOX;
-    oWriteOptions_.nCoordPrecision = nCoordPrecision_;
     oWriteOptions_.nSignificantFigures = nSignificantFigures_;
     if (bRFC7946_)
     {
@@ -121,9 +130,9 @@ void OGRGeoJSONWriteLayer::FinishWriting()
         {
             CPLString osBBOX = "[ ";
             char szFormat[32];
-            if (nCoordPrecision_ >= 0)
+            if (oWriteOptions_.nXYCoordPrecision >= 0)
                 snprintf(szFormat, sizeof(szFormat), "%%.%df",
-                         nCoordPrecision_);
+                         oWriteOptions_.nXYCoordPrecision);
             else
                 snprintf(szFormat, sizeof(szFormat), "%s", "%.15g");
 
@@ -235,7 +244,8 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
     // Special processing to detect and repair invalid geometries due to
     // coordinate precision.
     OGRGeometry *poOrigGeom = poFeature->GetGeometryRef();
-    if (OGRGeometryFactory::haveGEOS() && nCoordPrecision_ >= 0 && poOrigGeom &&
+    if (OGRGeometryFactory::haveGEOS() &&
+        oWriteOptions_.nXYCoordPrecision >= 0 && poOrigGeom &&
         wkbFlatten(poOrigGeom->getGeometryType()) != wkbPoint &&
         IsValid(poOrigGeom))
     {
@@ -258,7 +268,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
             }
         };
 
-        CoordinateRoundingVisitor oVisitor(nCoordPrecision_);
+        CoordinateRoundingVisitor oVisitor(oWriteOptions_.nXYCoordPrecision);
         auto poNewGeom = poFeature == poFeatureToWrite
                              ? poOrigGeom->clone()
                              : poFeatureToWrite->GetGeometryRef();

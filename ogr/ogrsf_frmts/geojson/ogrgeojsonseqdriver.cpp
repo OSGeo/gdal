@@ -281,8 +281,10 @@ OGRGeoJSONSeqLayer::OGRGeoJSONSeqLayer(
 
     m_oWriteOptions.SetRFC7946Settings();
     m_oWriteOptions.SetIDOptions(papszOptions);
-    m_oWriteOptions.nCoordPrecision =
+    m_oWriteOptions.nXYCoordPrecision =
         atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "7"));
+    m_oWriteOptions.nZCoordPrecision =
+        atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "3"));
     m_oWriteOptions.nSignificantFigures =
         atoi(CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1"));
     m_oWriteOptions.bAllowNonFiniteValues = CPLTestBool(

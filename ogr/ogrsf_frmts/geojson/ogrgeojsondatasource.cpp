@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "ogr_geojson.h"
 
+#include <cmath>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -256,7 +257,7 @@ OGRLayer *OGRGeoJSONDataSource::GetLayer(int nLayer)
 
 OGRLayer *
 OGRGeoJSONDataSource::ICreateLayer(const char *pszNameIn,
-                                   const OGRGeomFieldDefn *poGeomFieldDefn,
+                                   const OGRGeomFieldDefn *poSrcGeomFieldDefn,
                                    CSLConstList papszOptions)
 {
     if (nullptr == fpOut_)
@@ -274,9 +275,10 @@ OGRGeoJSONDataSource::ICreateLayer(const char *pszNameIn,
         return nullptr;
     }
 
-    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto eGType =
+        poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetType() : wkbNone;
     const auto poSRS =
-        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
+        poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetSpatialRef() : nullptr;
 
     const char *pszForeignMembersCollection =
         CSLFetchNameValue(papszOptions, "FOREIGN_MEMBERS_COLLECTION");
@@ -411,6 +413,12 @@ OGRGeoJSONDataSource::ICreateLayer(const char *pszNameIn,
                     continue;
                 }
 
+                if (strcmp(it.key, "xy_coordinate_resolution") == 0 ||
+                    strcmp(it.key, "z_coordinate_resolution") == 0)
+                {
+                    continue;
+                }
+
                 json_object *poKey = json_object_new_string(it.key);
                 VSIFPrintfL(fpOut_, "%s: ", json_object_to_json_string(poKey));
                 json_object_put(poKey);
@@ -532,6 +540,60 @@ OGRGeoJSONDataSource::ICreateLayer(const char *pszNameIn,
         CPLFree(pszOGCURN);
     }
 
+    CPLStringList aosOptions(papszOptions);
+
+    double dfXYResolution = OGRGeomCoordinatePrecision::UNKNOWN;
+    double dfZResolution = OGRGeomCoordinatePrecision::UNKNOWN;
+
+    if (const char *pszCoordPrecision =
+            CSLFetchNameValue(papszOptions, "COORDINATE_PRECISION"))
+    {
+        dfXYResolution = std::pow(10.0, -CPLAtof(pszCoordPrecision));
+        dfZResolution = dfXYResolution;
+        VSIFPrintfL(fpOut_, "\"xy_coordinate_resolution\": %g,\n",
+                    dfXYResolution);
+        if (poSRS && poSRS->GetAxesCount() == 3)
+        {
+            VSIFPrintfL(fpOut_, "\"z_coordinate_resolution\": %g,\n",
+                        dfZResolution);
+        }
+    }
+    else if (poSrcGeomFieldDefn)
+    {
+        const auto &oCoordPrec = poSrcGeomFieldDefn->GetCoordinatePrecision();
+        OGRSpatialReference oSRSWGS84;
+        oSRSWGS84.SetWellKnownGeogCS("WGS84");
+        const auto oCoordPrecWGS84 =
+            oCoordPrec.ConvertToOtherSRS(poSRS, &oSRSWGS84);
+
+        if (oCoordPrec.dfXYResolution != OGRGeomCoordinatePrecision::UNKNOWN)
+        {
+            dfXYResolution = poSRS && bRFC7946 ? oCoordPrecWGS84.dfXYResolution
+                                               : oCoordPrec.dfXYResolution;
+
+            aosOptions.SetNameValue(
+                "XY_COORD_PRECISION",
+                CPLSPrintf("%d",
+                           OGRGeomCoordinatePrecision::ResolutionToPrecision(
+                               dfXYResolution)));
+            VSIFPrintfL(fpOut_, "\"xy_coordinate_resolution\": %g,\n",
+                        dfXYResolution);
+        }
+        if (oCoordPrec.dfZResolution != OGRGeomCoordinatePrecision::UNKNOWN)
+        {
+            dfZResolution = poSRS && bRFC7946 ? oCoordPrecWGS84.dfZResolution
+                                              : oCoordPrec.dfZResolution;
+
+            aosOptions.SetNameValue(
+                "Z_COORD_PRECISION",
+                CPLSPrintf("%d",
+                           OGRGeomCoordinatePrecision::ResolutionToPrecision(
+                               dfZResolution)));
+            VSIFPrintfL(fpOut_, "\"z_coordinate_resolution\": %g,\n",
+                        dfZResolution);
+        }
+    }
+
     if (bFpOutputIsSeekable_ && bWriteFC_BBOX)
     {
         nBBOXInsertLocation_ = static_cast<int>(VSIFTellL(fpOut_));
@@ -543,7 +605,27 @@ OGRGeoJSONDataSource::ICreateLayer(const char *pszNameIn,
     VSIFPrintfL(fpOut_, "\"features\": [\n");
 
     OGRGeoJSONWriteLayer *poLayer = new OGRGeoJSONWriteLayer(
-        pszNameIn, eGType, papszOptions, bWriteFC_BBOX, poCT, this);
+        pszNameIn, eGType, aosOptions.List(), bWriteFC_BBOX, poCT, this);
+
+    if (eGType != wkbNone &&
+        dfXYResolution != OGRGeomCoordinatePrecision::UNKNOWN)
+    {
+        auto poGeomFieldDefn = poLayer->GetLayerDefn()->GetGeomFieldDefn(0);
+        OGRGeomCoordinatePrecision oCoordPrec(
+            poGeomFieldDefn->GetCoordinatePrecision());
+        oCoordPrec.dfXYResolution = dfXYResolution;
+        poGeomFieldDefn->SetCoordinatePrecision(oCoordPrec);
+    }
+
+    if (eGType != wkbNone &&
+        dfZResolution != OGRGeomCoordinatePrecision::UNKNOWN)
+    {
+        auto poGeomFieldDefn = poLayer->GetLayerDefn()->GetGeomFieldDefn(0);
+        OGRGeomCoordinatePrecision oCoordPrec(
+            poGeomFieldDefn->GetCoordinatePrecision());
+        oCoordPrec.dfZResolution = dfZResolution;
+        poGeomFieldDefn->SetCoordinatePrecision(oCoordPrec);
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Add layer to data source layer list.                            */

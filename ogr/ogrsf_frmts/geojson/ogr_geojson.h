@@ -116,6 +116,11 @@ class OGRGeoJSONLayer final : public OGRMemLayer
         nTotalFeatureCount_ = -1;
     }
 
+    void SetWriteOptions(const OGRGeoJSONWriteOptions &options)
+    {
+        oWriteOptions_ = options;
+    }
+
   private:
     OGRGeoJSONDataSource *poDS_;
     OGRGeoJSONReader *poReader_;
@@ -124,6 +129,9 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     bool bOriginalIdModified_;
     GIntBig nTotalFeatureCount_;
     GIntBig nFeatureReadSinceReset_ = 0;
+
+    //! Write options used by ICreateFeature() in append scenarios
+    OGRGeoJSONWriteOptions oWriteOptions_;
 
     bool IngestAll();
     void TerminateAppendSession();
@@ -190,7 +198,6 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
     bool bWriteFC_BBOX;
     OGREnvelope3D sEnvelopeLayer;
 
-    int nCoordPrecision_;
     int nSignificantFigures_;
 
     bool bRFC7946_;
