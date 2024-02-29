@@ -350,8 +350,12 @@ CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
             pszSourceFilename = pszAbs;
         }
         osSourceFilename = pszSourceFilename;
-        poPanDataset =
-            GDALDataset::FromHandle(GDALOpen(osSourceFilename, GA_ReadOnly));
+
+        const CPLStringList aosOpenOptions(
+            GDALDeserializeOpenOptionsFromXML(psPanchroBand));
+
+        poPanDataset = GDALDataset::Open(osSourceFilename, GDAL_OF_RASTER,
+                                         nullptr, aosOpenOptions.List());
         if (poPanDataset == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s not a valid dataset",
@@ -551,8 +555,11 @@ CPLErr VRTPansharpenedDataset::XMLInit(CPLXMLNode *psTree,
             poDataset = oMapNamesToDataset[osSourceFilename];
             if (poDataset == nullptr)
             {
-                poDataset = GDALDataset::FromHandle(
-                    GDALOpen(osSourceFilename, GA_ReadOnly));
+                const CPLStringList aosOpenOptions(
+                    GDALDeserializeOpenOptionsFromXML(psIter));
+
+                poDataset = GDALDataset::Open(osSourceFilename, GDAL_OF_RASTER,
+                                              nullptr, aosOpenOptions.List());
                 if (poDataset == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -1336,14 +1343,13 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML(const char *pszVRTPathIn)
             GDALRasterBand::FromHandle(psOptions->hPanchroBand);
         if (poBand->GetDataset())
         {
+            auto poPanchoDS = poBand->GetDataset();
             std::map<CPLString, CPLString>::iterator oIter =
-                m_oMapToRelativeFilenames.find(
-                    poBand->GetDataset()->GetDescription());
+                m_oMapToRelativeFilenames.find(poPanchoDS->GetDescription());
             if (oIter == m_oMapToRelativeFilenames.end())
             {
-                CPLCreateXMLElementAndValue(
-                    psBand, "SourceFilename",
-                    poBand->GetDataset()->GetDescription());
+                CPLCreateXMLElementAndValue(psBand, "SourceFilename",
+                                            poPanchoDS->GetDescription());
             }
             else
             {
@@ -1354,6 +1360,9 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML(const char *pszVRTPathIn)
                                                   "relativeToVRT"),
                                  CXT_Text, "1");
             }
+
+            GDALSerializeOpenOptionsToXML(psBand, poPanchoDS->GetOpenOptions());
+
             CPLCreateXMLElementAndValue(psBand, "SourceBand",
                                         CPLSPrintf("%d", poBand->GetBand()));
         }
@@ -1392,14 +1401,13 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML(const char *pszVRTPathIn)
             GDALRasterBand::FromHandle(psOptions->pahInputSpectralBands[i]);
         if (poBand->GetDataset())
         {
+            auto poSpectralDS = poBand->GetDataset();
             std::map<CPLString, CPLString>::iterator oIter =
-                m_oMapToRelativeFilenames.find(
-                    poBand->GetDataset()->GetDescription());
+                m_oMapToRelativeFilenames.find(poSpectralDS->GetDescription());
             if (oIter == m_oMapToRelativeFilenames.end())
             {
-                CPLCreateXMLElementAndValue(
-                    psBand, "SourceFilename",
-                    poBand->GetDataset()->GetDescription());
+                CPLCreateXMLElementAndValue(psBand, "SourceFilename",
+                                            poSpectralDS->GetDescription());
             }
             else
             {
@@ -1410,6 +1418,10 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML(const char *pszVRTPathIn)
                                                   "relativeToVRT"),
                                  CXT_Text, "1");
             }
+
+            GDALSerializeOpenOptionsToXML(psBand,
+                                          poSpectralDS->GetOpenOptions());
+
             CPLCreateXMLElementAndValue(psBand, "SourceBand",
                                         CPLSPrintf("%d", poBand->GetBand()));
         }
