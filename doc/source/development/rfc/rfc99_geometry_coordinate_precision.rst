@@ -75,7 +75,11 @@ If only a 1 metre precision is wished, this increases to 26 useless least-signif
 C and C++ API extensions and changes
 ------------------------------------
 
-A new ``OGRGeomCoordinatePrecision`` class is introduced:
+OGRGeomCoordinatePrecision class
+++++++++++++++++++++++++++++++++
+
+A new ``OGRGeomCoordinatePrecision`` class is introduced in the
+``ogr_geomcoordinateprecision.h`` file:
 
 .. code-block:: c++
 
@@ -122,18 +126,86 @@ A new ``OGRGeomCoordinatePrecision`` class is introduced:
          */
         std::map<std::string, CPLStringList> oFormatSpecificOptions{};
 
-        /** Helper to specify X,Y,Z precision in metre.
-         * Note: the stored values in the structure will be converted from their
-         * specified values in metre to the equivalent values expressed in the
-         * SRS units.
+        /**
+         * \brief Set the resolution of the geometry coordinate components.
+         *
+         * For the X, Y and Z ordinates, the precision should be expressed in metre,
+         * e.g 1e-3 for millimetric precision.
+         *
+         * Resolution should be stricty positive, or set to
+         * OGRGeomCoordinatePrecision::UNKNOWN when unknown.
+         *
+         * @param poSRS Spatial reference system, used for metric to SRS unit conversion
+         *              (must not be null)
+         * @param dfXYMetreResolution Resolution for for X and Y coordinates, in metre.
+         * @param dfZMetreResolution Resolution for for Z coordinates, in metre.
+         * @param dfMResolutionIn Resolution for for M coordinates.
          */
-        void SetFromMetres(const OGRSpatialReference *poSRS,
-                           double dfXYMetreResolution,
-                           double dfZMetreResolution, double dfMResolution);
+        void SetFromMetre(const OGRSpatialReference *poSRS,
+                          double dfXYMetreResolution,
+                          double dfZMetreResolution, double dfMResolution);
+
+        /**
+         * \brief Return equivalent coordinate precision setting taking into account
+         * a change of SRS.
+         *
+         * @param poSRSSrc Spatial reference system of the current instance
+         *                 (if null, metre unit is assumed)
+         * @param poSRSDst Spatial reference system of the returned instance
+         *                 (if null, metre unit is assumed)
+         * @return a new OGRGeomCoordinatePrecision instance, with a poSRSDst SRS.
+         */
+        OGRGeomCoordinatePrecision
+        ConvertToOtherSRS(const OGRSpatialReference *poSRSSrc,
+                          const OGRSpatialReference *poSRSDst) const;
+
+        /**
+         * \brief Return the number of decimal digits after the decimal point to
+         * get the specified resolution.
+         */
+        static int ResolutionToPrecision(double dfResolution);
     }
 
 
-The existing :cpp:class:`OGRGeomFieldDefn` is extented with a new
+Corresponding additions at the C API level:
+
+.. code-block:: c
+
+    /** Value for a unknown coordinate precision. */
+    #define OGR_GEOM_COORD_PRECISION_UNKNOWN 0
+
+    /** Opaque type for OGRGeomCoordinatePrecision */
+    typedef struct OGRGeomCoordinatePrecision *OGRGeomCoordinatePrecisionH;
+
+    OGRGeomCoordinatePrecisionH CPL_DLL OGRGeomCoordinatePrecisionCreate(void);
+    void CPL_DLL OGRGeomCoordinatePrecisionDestroy(OGRGeomCoordinatePrecisionH);
+    double CPL_DLL
+        OGRGeomCoordinatePrecisionGetXYResolution(OGRGeomCoordinatePrecisionH);
+    double CPL_DLL
+        OGRGeomCoordinatePrecisionGetZResolution(OGRGeomCoordinatePrecisionH);
+    double CPL_DLL
+        OGRGeomCoordinatePrecisionGetMResolution(OGRGeomCoordinatePrecisionH);
+    char CPL_DLL **
+        OGRGeomCoordinatePrecisionGetFormats(OGRGeomCoordinatePrecisionH);
+    CSLConstList CPL_DLL OGRGeomCoordinatePrecisionGetFormatSpecificOptions(
+        OGRGeomCoordinatePrecisionH, const char *pszFormatName);
+    void CPL_DLL OGRGeomCoordinatePrecisionSet(OGRGeomCoordinatePrecisionH,
+                                               double dfXYResolution,
+                                               double dfZResolution,
+                                               double dfMResolution);
+    void CPL_DLL OGRGeomCoordinatePrecisionSetFromMetre(OGRGeomCoordinatePrecisionH,
+                                                        OGRSpatialReferenceH hSRS,
+                                                        double dfXYMetreResolution,
+                                                        double dfZMetreResolution,
+                                                        double dfMResolution);
+    void CPL_DLL OGRGeomCoordinatePrecisionSetFormatSpecificOptions(
+        OGRGeomCoordinatePrecisionH, const char *pszFormatName,
+        CSLConstList papszOptions);
+
+OGRGeomFieldDefn class
+++++++++++++++++++++++
+
+The existing :cpp:class:`OGRGeomFieldDefn` is extended with a new
 OGRGeomCoordinatePrecision member, and associated getter and setter methods.
 
 .. code-block:: c++
@@ -149,37 +221,87 @@ OGRGeomCoordinatePrecision member, and associated getter and setter methods.
             OGRGeomCoordinatePrecision m_oCoordPrecision{};
     };
 
-
-Corresponding additions at the C API level:
+New corresponding C API:
 
 .. code-block:: c
 
-    typedef struct OGRGeomCoordinatePrecision *OGRGeomCoordinatePrecisionH;
+    OGRGeomCoordinatePrecisionH
+        CPL_DLL OGR_GFld_GetCoordinatePrecision(OGRGeomFieldDefnH);
+    void CPL_DLL OGR_GFld_SetCoordinatePrecision(OGRGeomFieldDefnH,
+                                                 OGRGeomCoordinatePrecisionH);
 
-    OGRGeomCoordinatePrecisionH CPL_DLL OGRGeomCoordinatePrecisionCreate(void);
-    void CPL_DLL OGRGeomCoordinatePrecisionDestroy(OGRGeomCoordinatePrecisionH);
-    double CPL_DLL OGRGeomCoordinatePrecisionGetXYResolution(OGRGeomCoordinatePrecisionH);
-    double CPL_DLL OGRGeomCoordinatePrecisionGetZResolution(OGRGeomCoordinatePrecisionH);
-    double CPL_DLL OGRGeomCoordinatePrecisionGetMResolution(OGRGeomCoordinatePrecisionH);
-    void CPL_DLL OGRGeomCoordinatePrecisionSet(OGRGeomCoordinatePrecisionH,
-                                               double dfXYResolution,
-                                               double dfZResolution,
-                                               double dfMResolution);
-    void CPL_DLL OGRGeomCoordinatePrecisionSetFromMetric(OGRGeomCoordinatePrecisionH,
-                                                       OGRSpatialReferenceH hSRS,
-                                                       double dfXYMetricResolution,
-                                                       double dfZMetricResolution,
-                                                       double dfMResolution);
-
-    const OGRGeomCoordinatePrecisionH CPL_DLL OGR_GFld_GetCoordinatePrecision(OGRGeomFieldDefnH);
-    void CPL_DLL OGR_GFld_SetCoordinatePrecision(OGRGeomFieldDefnH, const OGRGeomCoordinatePrecisionH);
-
+WKB export
+++++++++++
 
 WKB export methods will be modified in a similar way as in the prototype
 https://github.com/OSGeo/gdal/pull/6974 to nullify least significant bits from
 the precision specifications.
 
-The signature of the current :cpp:func:`OGRFieldDefn::ICreateLayer()` protected
+More specifically the following 2 new classes are added:
+
+.. code-block:: c++
+
+    /** Geometry coordinate precision for a binary representation.
+     */
+    struct CPL_DLL OGRGeomCoordinateBinaryPrecision
+    {
+        int nXYBitPrecision =
+            INT_MIN; /**< Number of bits needed to achieved XY precision. Typically
+                        computed with SetFromResolution() */
+        int nZBitPrecision =
+            INT_MIN; /**< Number of bits needed to achieved Z precision. Typically
+                        computed with SetFromResolution() */
+        int nMBitPrecision =
+            INT_MIN; /**< Number of bits needed to achieved M precision. Typically
+                        computed with SetFromResolution() */
+
+        void SetFrom(const OGRGeomCoordinatePrecision &);
+    };
+
+    /** WKB export options.
+     */
+    struct CPL_DLL OGRwkbExportOptions
+    {
+        OGRwkbByteOrder eByteOrder = wkbNDR;           /**< Byte order */
+        OGRwkbVariant eWkbVariant = wkbVariantOldOgc;  /**< WKB variant. */
+        OGRGeomCoordinateBinaryPrecision sPrecision{}; /**< Binary precision. */
+    };
+
+And the C++ OGRGeometry ``exportToWkb`` virtual method is modified to have the
+following prototype:
+
+.. code-block:: c++
+
+    virtual OGRErr exportToWkb(unsigned char *,
+                               const OGRwkbExportOptions * = nullptr) const = 0;
+
+
+The existing method with signature ``OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *, OGRwkbVariant = wkbVariantOldOgc) const``
+is kept and call the new virtual method.
+
+New corresponding C API:
+
+.. code-block:: c
+
+
+    /** Opaque type for WKB export options */
+    typedef struct OGRwkbExportOptions OGRwkbExportOptions;
+
+    OGRwkbExportOptions CPL_DLL *OGRwkbExportOptionsCreate(void);
+    void CPL_DLL OGRwkbExportOptionsDestroy(OGRwkbExportOptions *);
+    void CPL_DLL OGRwkbExportOptionsSetByteOrder(OGRwkbExportOptions *,
+                                                 OGRwkbByteOrder);
+    void CPL_DLL OGRwkbExportOptionsSetVariant(OGRwkbExportOptions *,
+                                               OGRwkbVariant);
+    void CPL_DLL OGRwkbExportOptionsSetPrecision(OGRwkbExportOptions *,
+                                                 OGRGeomCoordinatePrecisionH);
+    OGRErr CPL_DLL OGR_G_ExportToWkbEx(OGRGeometryH, unsigned char *,
+                                       const OGRwkbExportOptions *);
+
+OGRLayer CreateLayer()/ICreateLayer() changes
++++++++++++++++++++++++++++++++++++++++++++++
+
+The signature of the current :cpp:func:`OGRLayer::ICreateLayer()` protected
 method (implemented by drivers) will be changed from
 
 .. code-block:: c++
@@ -205,7 +327,7 @@ A corresponding non-virtual public method will also be added:
 
     OGRLayer *CreateLayer(
             const char *pszName,
-            const OGRGeomFieldDefn* poGeomFieldDefn = nullptr,
+            const OGRGeomFieldDefn* poGeomFieldDefn,
             CSLConstList papszOptions = nullptr);
 
 And the current CreateLayer() signature will be adapted to call the modified
@@ -215,16 +337,20 @@ And for the C API:
 
 .. code-block:: c
 
-    OGRLayerH CPL_DLL GDALDatasetCreateLayerEx(GDALDatasetH, const char *,
+    OGRLayerH CPL_DLL GDALDatasetCreateLayerFromGeomFieldDefn(
+                                               GDALDatasetH, const char *,
                                                OGRGeomFieldDefnH hGeomFieldDefn,
                                                CSLConstList);
 
 
 A new ``GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION`` driver capability will be added
-to advertize that a driver honours OGRGeomFieldDefn::GetCoordinatePrecision()
+to advertise that a driver honours OGRGeomFieldDefn::GetCoordinatePrecision()
 when writing geometries. This may be useul for user interfaces that could offer
 an option to the user to specify the coordinate precision. Note however that
 the driver may not be able to store that precision in the dataset metadata.
+
+There will be *no* provision to modify the coordinate precision of an
+existing layer geometry field with :cpp:func:`OGRLayer::AlterFieldDefn`.
 
 Driver changes
 --------------
@@ -235,7 +361,7 @@ GeoJSON
 +++++++
 
 The driver will compute the number of decimal digits after the decimal point
-to write as ``ceil(1. / resolution)``
+to write as ``ceil(1. / log10(resolution))``
 
 The driver will be able to store and retrieve the coordinate precision metadata
 in the files it generates, by adding ``xy_coordinate_resolution`` and
@@ -248,7 +374,7 @@ GeoJSONSeq
 ++++++++++
 
 The driver will compute the number of decimal digits after the decimal point
-to write as ``ceil(1. / resolution)``
+to write as ``ceil(1. / log10(resolution))``
 
 It will *not* be able to store it in its metadata.
 
@@ -278,12 +404,12 @@ GML
 +++
 
 The driver will compute the number of decimal digits after the decimal point
-to write as ``ceil(1. / resolution)``
+to write as ``ceil(1. / log10(resolution))``
 
 The driver will be able to store the coordinate precision metadata in the XML
 schema it generates by adding a ``xs:annotation/xs:appinfo`` element in the
-declaration of the geometry property, and with ``ogr:xy_coordinate_resolution``,
-``ogr:z_coordinate_resolution`` and ``ogr:m_coordinate_resolution`` sub-elements.
+declaration of the geometry property, and with ``ogr:xy_coordinate_resolution``
+and ``ogr:z_coordinate_resolution`` sub-elements.
 This should hopefully be ignored by readers that don't recognize
 that metadata (this will be the case of GDAL < 3.9)
 
@@ -294,7 +420,6 @@ that metadata (this will be the case of GDAL < 3.9)
               <xs:appinfo source="http://ogr.maptools.org/">
                 <ogr:xy_coordinate_resolution>8.9e-9</ogr:xy_coordinate_resolution>
                 <ogr:z_coordinate_resolution>1e-3</ogr:z_coordinate_resolution>
-                <ogr:m_coordinate_resolution>1e-3</ogr:m_coordinate_resolution>
               </xs:appinfo>
             </xs:annotation>
         </xs:element>
@@ -303,7 +428,7 @@ CSV
 +++
 
 The driver will compute the number of decimal digits after the decimal point
-to write as ``ceil(1. / resolution)``
+to write as ``ceil(1. / log10(resolution))``
 
 It will *not* be able to store it in its metadata. The possibility of storing
 the coordinate metadata in the .csvt side-car file has been considered, but it
@@ -316,15 +441,15 @@ The driver will use the resolution to nullify useless least-significant bits
 in its binary-based geometry (WKB-based) binary encoding.
 
 And it will be able to store and retrieve the coordinate precision metadata in
-the files it generates, by adding a ``<CoordinatePrecision>`` sub-element to the
-``<GDALMultiDomainMetadata>`` metadata.
-That ``<CoordinatePrecision>`` sub-element will be ignored by GDAL < 3.9.
+the files it generates, by adding a ``<CoordinatePrecision>`` new metadata
+record in the ``gpkg_metadata`` and ``gpkg_metadata_reference`` tables.
+That ``<CoordinatePrecision>`` record will be ignored by GDAL < 3.9.
 
 .. code-block:: sql
 
     INSERT INTO gpkg_metadata VALUES(1,'dataset','http://gdal.org','text/xml',
-        '<GDALMultiDomainMetadata><CoordinatePrecision geometry_column="geom" xy_resolution="8.9e-9" z_resolution="1e-3" m_resolution="1e-3"></CoordinatePrecision></GDALMultiDomainMetadata>');
-    INSERT INTO gpkg_metadata_reference VALUES('table','poly',NULL,NULL,'2023-10-22T21:13:43.282Z',1,NULL);
+        '<CoordinatePrecision xy_resolution="8.9e-9" z_resolution="1e-3" m_resolution="1e-3"></CoordinatePrecision>');
+    INSERT INTO gpkg_metadata_reference VALUES('column','poly','geom',NULL,'2023-10-22T21:13:43.282Z',1,NULL);
 
 OpenFileGDB
 +++++++++++
@@ -338,13 +463,31 @@ Consequently the OpenFileGDB driver can be modified in reading and writing to
 fully honour OGRGeomCoordinatePrecision.
 
 The driver will also get and set other coordinate grid precision options, such
-as the origin and tolerance, values in the
+as the origin and tolerance, values in the ``FileGeodatabase`` key of the
 ``OGRGeomCoordinatePrecision::oFormatSpecificOptions`` member.
 
 The existing ``XYSCALE``, ``ZSCALE`` and ``MSCALE`` layer creation options,
 if specified, will take precedence over the settings coming from
 OGRGeomFieldDefn::GetCoordinatePrecision().
 
+FileGDB
++++++++
+
+Modified to have exactly the same behavior as OpenFileGDB.
+
+OGR VRT
++++++++
+
+The driver will read the geometry coordinate precision from the source geometry
+field, or possibly overridden with the following elements in the XML VRT:
+
+.. code-block:: xml
+
+    <GeometryField>
+        <XYResolution>{xy_resolution}</XYResolution>
+        <ZResolution>{z_resolution}</ZResolution>
+        <MResolution>{m_resolution}</MResolution>
+    </GeometryField>
 
 Utilities
 ---------
@@ -352,7 +495,7 @@ Utilities
 ogrinfo
 +++++++
 
-ogrinfo will be modified to honour OGRGeomCoordinatePrecision when outputing
+ogrinfo will be modified to honour OGRGeomCoordinatePrecision when outputting
 WKT geometries (or GeoJSON geometries for the -json output)
 
 ogr2ogr
@@ -371,7 +514,7 @@ The following options will be added:
   Y SRS axis.
   Appending a ``m``, ``mm`` or ``deg`` suffix will be also supported.
   A warning will be emitted if the user specifies this option when creating a
-  new layer for a driver that does not advertize
+  new layer for a driver that does not advertise
   ``GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION``.
 
 - ``-zRes <val>``: Z coordinate resolution. Nominally in the unit of the Z SRS
@@ -395,6 +538,38 @@ related methods.
 
 Quantization of raster pixel values (e.g. the ``DISCARD_LSB`` creation option
 of the GeoTIFF driver) is also slightly connected.
+
+SWIG bindings
+-------------
+
+The new C functions are bound to SWIG.
+
+.. code-block::
+
+    class ogr.GeomCoordinatePrecision:
+
+      void Set(double xyResolution, double zResolution, double mResolution);
+      void SetFromMetre(osr.SpatialReference srs, double xyResolutionMetre, double zResolutionMetre, double mResolution);
+      double GetXYResolution();
+      double GetZResolution();
+      double GetMResolution();
+      char **GetFormats();  // as a list
+      char ** GetFormatSpecificOptions(const char* formatName); // as a dictionary
+      void SetFormatSpecificOptions(const char* formatName, char **formatSpecificOptions) // formatSpecificOptions as a dictionary
+
+    ogr.GeomCoordinatePrecision ogr.CreateGeomCoordinatePrecision();
+
+    class ogr.GeomFieldDefn:
+        ogr.GeomCoordinatePrecision GetCoordinatePrecision();
+        void SetCoordinatePrecision(ogr.GeomCoordinatePrecision coordPrec);
+
+    class gdal.Dataset:
+        Layer CreateLayerFromGeomFieldDefn(const char* name, ogr.GeomFieldDefn geom_field, char** options=0);
+
+Testing
+-------
+
+Tests will be added for the new API and the modified drivers.
 
 Backward compatibility
 ----------------------
@@ -436,12 +611,15 @@ process.
 Related issues and PRs
 ----------------------
 
+- Candidate implementation: https://github.com/OSGeo/gdal/pull/9378
+
 - A prior implementation with a different and reduced scope was done last year
   in https://github.com/OSGeo/gdal/pull/6974.
-  Tthe GeoPackage driver specific creation options of this pull request will no
+  The GeoPackage driver specific creation options of this pull request will no
   longer be needed in the implementation of this RFC.
 
-- https://github.com/qgis/QGIS/issues/56335
+- Related QGIS issue about coordinate precision not being preserved when appending
+  to GeoJSON: https://github.com/qgis/QGIS/issues/56335
 
 Voting history
 --------------
