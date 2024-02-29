@@ -58,6 +58,12 @@
 
 #include "cpl_json_header.h"
 
+// Too many false positives from gcc 13.2.1 in that file...
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+
 /************************************************************************/
 /*                             OGRFeature()                             */
 /************************************************************************/
@@ -7814,3 +7820,7 @@ OGRFeature::FieldValue::operator CSLConstList() const
         const_cast<OGRFeature *>(m_poPrivate->m_poSelf)
             ->GetFieldAsStringList(GetIndex()));
 }
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
