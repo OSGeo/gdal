@@ -36,6 +36,8 @@
 #include "gdal_utils.h"
 
 #include <algorithm>
+#include <cmath>
+#include <set>
 #include <typeinfo>
 #include "gdal_proxy.h"
 
@@ -2436,6 +2438,7 @@ void VRTDataset::UnsetPreservedRelativeFilenames()
 
 static bool CheckBandForOverview(GDALRasterBand *poBand,
                                  GDALRasterBand *&poFirstBand, int &nOverviews,
+                                 std::set<std::pair<int, int>> &oSetOvrSizes,
                                  std::vector<GDALDataset *> &apoOverviewsBak)
 {
     if (!cpl::down_cast<VRTRasterBand *>(poBand)->IsSourcedRasterBand())
@@ -2462,6 +2465,17 @@ static bool CheckBandForOverview(GDALRasterBand *poBand,
     // To prevent recursion
     apoOverviewsBak.push_back(nullptr);
     const int nOvrCount = poSrcBand->GetOverviewCount();
+    oSetOvrSizes.insert(
+        std::pair<int, int>(poSrcBand->GetXSize(), poSrcBand->GetYSize()));
+    for (int i = 0; i < nOvrCount; ++i)
+    {
+        auto poSrcOvrBand = poSrcBand->GetOverview(i);
+        if (poSrcOvrBand)
+        {
+            oSetOvrSizes.insert(std::pair<int, int>(poSrcOvrBand->GetXSize(),
+                                                    poSrcOvrBand->GetYSize()));
+        }
+    }
     apoOverviewsBak.resize(0);
 
     if (nOvrCount == 0)
@@ -2488,18 +2502,19 @@ void VRTDataset::BuildVirtualOverviews()
 
     int nOverviews = 0;
     GDALRasterBand *poFirstBand = nullptr;
+    std::set<std::pair<int, int>> oSetOvrSizes;
 
     for (int iBand = 0; iBand < nBands; iBand++)
     {
         if (!CheckBandForOverview(papoBands[iBand], poFirstBand, nOverviews,
-                                  m_apoOverviewsBak))
+                                  oSetOvrSizes, m_apoOverviewsBak))
             return;
     }
 
     if (m_poMaskBand)
     {
         if (!CheckBandForOverview(m_poMaskBand, poFirstBand, nOverviews,
-                                  m_apoOverviewsBak))
+                                  oSetOvrSizes, m_apoOverviewsBak))
             return;
     }
     if (poFirstBand == nullptr)
@@ -2531,10 +2546,24 @@ void VRTDataset::BuildVirtualOverviews()
         {
             continue;
         }
-        const int nOvrXSize = static_cast<int>(0.5 + nRasterXSize * dfXRatio);
-        const int nOvrYSize = static_cast<int>(0.5 + nRasterYSize * dfYRatio);
+        int nOvrXSize = static_cast<int>(0.5 + nRasterXSize * dfXRatio);
+        int nOvrYSize = static_cast<int>(0.5 + nRasterYSize * dfYRatio);
         if (nOvrXSize < 128 || nOvrYSize < 128)
             break;
+
+        // Look for a source overview whose size is very close to the
+        // theoretical computed one.
+        for (const auto &ovrSize : oSetOvrSizes)
+        {
+            if (std::abs(ovrSize.first - nOvrXSize) <= 1 &&
+                std::abs(ovrSize.second - nOvrYSize) <= 1)
+            {
+                nOvrXSize = ovrSize.first;
+                nOvrYSize = ovrSize.second;
+                break;
+            }
+        }
+
         VRTDataset *poOvrVDS = new VRTDataset(nOvrXSize, nOvrYSize);
         m_apoOverviews.push_back(poOvrVDS);
 
