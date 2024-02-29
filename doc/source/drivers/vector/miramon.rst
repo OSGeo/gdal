@@ -8,24 +8,24 @@ MiraMon Vector
 .. built_in_by_default::
 
 This driver is capable of translating (reading and writing) structured vectors
-of point, arc (*linestrings*), and polygon types from MiraMon formats. Structured vectors is
+of point, arc (*linestrings*), and polygon types from MiraMon vector format. Structured vectors is
 the binary format of MiraMon for vector layer data, linked to one or more database tables,
 with or without topology and with reach metadata. More information about the structured MiraMon
-vector format is available `on the public specification <https://www.miramon.cat/new_note/usa/notes/FormatFitxersTopologicsMiraMon.pdf>`__.
+vector format is available `on the public specification <https://www.miramon.cat/new_note/eng/notes/FormatFitxersTopologicsMiraMon.pdf>`__.
 
 It is important to keep in mind that a MiraMon vector layer is composed by several files as follows:
 
 Previous note: *FileName* is, in the following explanations, the first part of the name
 of the layer file.   
 
-- **Point layers**: These layers contain *point* type features ) which are described by a single
+- **Point layers**: These layers contain *point* type features which are described by a single
   coordinate (x,y) or (x, y, z). Each layer is composed by 3 files:
 
     - *FileName.pnt* file: Contains the graphic database with the coordinates that define the
       point vector features.
 
     - *FileNameT.dbf* file (note the 'T' before the '.'): Contains the main table of the database
-      in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__,
+      in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/eng/notes/DBF_estesa.pdf>`__,
       if necessary. It contains the information (usually alphanumeric, but also file or web links, etc)
       of every feature. The Feature Identifier (FID) field is a field called *ID_GRAFIC* and relates
       every graphical feature to one or more records in the main table.
@@ -45,7 +45,7 @@ of the layer file.
       linestring (arc) vector features.
 
     - *FileNameA.dbf* file (note the 'A' before the '.'): Contains the main table of the database
-      in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__,
+      in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/eng/notes/DBF_estesa.pdf>`__,
       if necessary. It contains the information (usually alphanumeric, but also file or web links, etc)
       of every feature. The Feature Identifier (FID) field is a field called *ID_GRAFIC* and relates
       every graphical feature to one or more records in the main table.
@@ -85,7 +85,7 @@ of the layer file.
       vector features needed to define the polygonal (or multipolygonal) vector features.  
 
     - *FileNameP.dbf* file (note the 'P' before the '.'): Contains the main table of the database
-      in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__,
+      in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/eng/notes/DBF_estesa.pdf>`__,
       if necessary. It contains the information (usually alphanumeric, but also file or web links, etc)
       of every feature. The Feature Identifier (FID) field is a field called *ID_GRAFIC* and relates
       every graphical feature to one or more records in the main table.
@@ -192,14 +192,14 @@ folder or a set of files with the appropriate extension (*.pnt*, etc):
 - If it the output is a **file** with extension all the translated layers in the origin dataset will be created with the specified name.
   Use this option only when you know that there is only one layer with one feature type in the origin dataset.
 
-When translating from a MiraMon format, the MiraMon vector driver input needs a file with one of the
+When translating from a MiraMon vector format, the MiraMon vector driver input needs a file with one of the
 described extensions: *.pnt*, *.arc* or *.pol*. The extension *.nod* is not valid for translation.
 
 The attributes of the MiraMon feature are stored in an associated *.dbf*.
 If a classical DBF IV table could not be used (too many fields or records,
 large text fields, etc) a file type called extended DBF is used.
 This is an improvement of dBASE IV DBF files. The specification of this format can be found in `this file
-<https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__.
+<https://www.miramon.cat/new_note/eng/notes/DBF_estesa.pdf>`__.
 
 Note that extended *.dbf* files cannot be opened with Excel or
 other typical programs. If the complete MiraMon Professional software
@@ -303,9 +303,8 @@ Layer creation options
       :default: 1
 
       It is a ratio used to enhance certain aspects of memory.
-      In some memory allocations a block of either 256 or 512 bytes is used.
-      This parameter can be adjusted to achieve
-      nMemoryRatio*256 or nMemoryRatio*512.
+      In some memory allocations a block of 256 bytes is used.
+      This parameter can be adjusted to achieve nMemoryRatio*256.
       By way of example, please use nMemoryRatio=2 in powerful computers and
       nMemoryRatio=0.5 in less powerful computers.
       By increasing this parameter, more memory will be required,
@@ -363,9 +362,9 @@ Examples
 See Also
 --------
 
--  `MiraMon page <https://www.miramon.cat/Index_usa.htm>`__
--  `MiraMon's vector format specifications <https://www.miramon.cat/new_note/usa/notes/FormatFitxersTopologicsMiraMon.pdf>`__
--  `MiraMon Extended DBF format <https://www.miramon.cat/new_note/usa/notes/DBF_estesa.pdf>`__
+-  `MiraMon's vector format specifications <https://www.miramon.cat/new_note/eng/notes/FormatFitxersTopologicsMiraMon.pdf>`__
+-  `MiraMon Extended DBF format <https://www.miramon.cat/new_note/eng/notes/DBF_estesa.pdf>`__
 -  `MiraMon vector layer concepts <https://www.miramon.cat/help/eng/mm32/ap2.htm#structured_vector>`__.
+-  `MiraMon page <https://www.miramon.cat/Index_usa.htm>`__
 -  `MiraMon help guide <https://www.miramon.cat/help/eng>`__
 -  `Grumets research group, the people behind MiraMon <https://www.grumets.cat/index_eng.htm>`__

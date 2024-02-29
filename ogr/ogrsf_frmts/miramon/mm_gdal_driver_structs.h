@@ -137,7 +137,6 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define MM_INCR_NUMBER_OF_VERTICES 1000
 
 #define MM_250MB 262144000
-#define MM_500MB 524288000
 
 // Version asked for user
 #define MM_UNKNOWN_VERSION 0

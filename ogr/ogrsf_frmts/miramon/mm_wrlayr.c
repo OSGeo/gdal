@@ -725,8 +725,8 @@ MMWriteZDescriptionHeaders(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     if (MMInitFlush(&FlushTMP, pF,
                     (hMiraMonLayer->nMemoryRatio != 1)
-                        ? (GUInt64)(hMiraMonLayer->nMemoryRatio * MM_500MB)
-                        : MM_500MB,
+                        ? (GUInt64)(hMiraMonLayer->nMemoryRatio * MM_250MB)
+                        : MM_250MB,
                     &pBuffer, pZSection->ZSectionOffset, 0))
     {
         if (pBuffer)
@@ -1258,8 +1258,8 @@ static int MMInitArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 
         if (MMInitFlush(&pMMArcLayer->FlushAL, pMMArcLayer->pFAL,
                         (hMiraMonLayer->nMemoryRatio != 1)
-                            ? (GUInt64)(hMiraMonLayer->nMemoryRatio * MM_500MB)
-                            : MM_500MB,
+                            ? (GUInt64)(hMiraMonLayer->nMemoryRatio * MM_250MB)
+                            : MM_250MB,
                         &pMMArcLayer->pAL, 0, 0))
             return 1;
     }
@@ -1444,8 +1444,8 @@ static int MMInitPolygonLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 
         if (MMInitFlush(&pMMPolygonLayer->FlushPS, pMMPolygonLayer->pFPS,
                         (hMiraMonLayer->nMemoryRatio != 1)
-                            ? (GUInt64)(hMiraMonLayer->nMemoryRatio * MM_500MB)
-                            : MM_500MB,
+                            ? (GUInt64)(hMiraMonLayer->nMemoryRatio * MM_250MB)
+                            : MM_250MB,
                         &pMMPolygonLayer->pPS, 0,
                         pMMPolygonLayer->nPSElementSize))
             return 1;
@@ -1505,8 +1505,8 @@ static int MMInitPolygonLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 
         if (MMInitFlush(&pMMPolygonLayer->FlushPAL, pMMPolygonLayer->pFPAL,
                         (hMiraMonLayer->nMemoryRatio != 1)
-                            ? (GUInt64)(hMiraMonLayer->nMemoryRatio * MM_500MB)
-                            : MM_500MB,
+                            ? (GUInt64)(hMiraMonLayer->nMemoryRatio * MM_250MB)
+                            : MM_250MB,
                         &pMMPolygonLayer->pPAL, 0, 0))
             return 1;
     }
@@ -2785,8 +2785,8 @@ int MMWriteAHArcSection(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     if (MMInitFlush(&FlushTMP, pMMArcLayer->pF,
                     (hMiraMonLayer->nMemoryRatio != 1)
-                        ? (GUInt64)(hMiraMonLayer->nMemoryRatio * MM_500MB)
-                        : MM_500MB,
+                        ? (GUInt64)(hMiraMonLayer->nMemoryRatio * MM_250MB)
+                        : MM_250MB,
                     &pBuffer, DiskOffset, 0))
     {
         if (pBuffer)
@@ -3005,8 +3005,8 @@ int MMWriteNHNodeSection(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     if (MMInitFlush(&FlushTMP, pMMArcLayer->MMNode.pF,
                     (hMiraMonLayer->nMemoryRatio != 1)
-                        ? (GUInt64)(hMiraMonLayer->nMemoryRatio * MM_500MB)
-                        : MM_500MB,
+                        ? (GUInt64)(hMiraMonLayer->nMemoryRatio * MM_250MB)
+                        : MM_250MB,
                     &pBuffer, DiskOffset, 0))
     {
         if (pBuffer)
@@ -3235,8 +3235,8 @@ int MMWritePHPolygonSection(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     if (MMInitFlush(&FlushTMP, pMMPolygonLayer->pF,
                     (hMiraMonLayer->nMemoryRatio != 1)
-                        ? (GUInt64)(hMiraMonLayer->nMemoryRatio * MM_500MB)
-                        : MM_500MB,
+                        ? (GUInt64)(hMiraMonLayer->nMemoryRatio * MM_250MB)
+                        : MM_250MB,
                     &pBuffer, DiskOffset, 0))
     {
         if (pBuffer)
