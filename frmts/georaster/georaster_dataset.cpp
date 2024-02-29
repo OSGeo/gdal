@@ -789,6 +789,21 @@ char **GeoRasterDataset::GetFileList()
     return papszFileList;
 }
 
+static bool ParseCommaSeparatedString(const char *str, double pfValues[],
+                                      int nMaxValues)
+{
+    int nValues = 0;
+    char **papszTokens = CSLTokenizeString2(str, ",", 0);
+
+    for (int i = 0; papszTokens && papszTokens[i] && nValues < nMaxValues; i++)
+    {
+        pfValues[nValues++] = CPLAtof(papszTokens[i]);
+    }
+
+    CSLDestroy(papszTokens);
+    return nValues == nMaxValues;
+}
+
 //  ---------------------------------------------------------------------------
 //                                                                     Create()
 //  ---------------------------------------------------------------------------
@@ -1250,6 +1265,103 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
     {
         poGRD->poGeoRaster->bGenPyramid = true;
         poGRD->poGeoRaster->nPyramidLevels = atoi(pszFetched);
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS");
+
+    if (pszFetched != nullptr)
+    {
+        poGRD->poGeoRaster->bGenStats = EQUAL(pszFetched, "TRUE");
+    }
+
+    bool bGenStatsOptionsUsed = false;
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_SAMPLINGFACTOR");
+
+    if (pszFetched != nullptr)
+    {
+        bGenStatsOptionsUsed = true;
+        poGRD->poGeoRaster->nGenStatsSamplingFactor = atoi(pszFetched);
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_SAMPLINGWINDOW");
+
+    if (pszFetched != nullptr)
+    {
+        bGenStatsOptionsUsed = true;
+
+        // Sampling window contains 4 double values
+        const int nSize = 4;
+        if (!ParseCommaSeparatedString(
+                pszFetched, poGRD->poGeoRaster->dfGenStatsSamplingWindow,
+                nSize))
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Wrong comma separated string for sampling window (%s)",
+                     pszFetched);
+            delete poGRD;
+            return nullptr;
+        }
+
+        poGRD->poGeoRaster->bGenStatsUseSamplingWindow = true;
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_HISTOGRAM");
+
+    if (pszFetched != nullptr)
+    {
+        bGenStatsOptionsUsed = true;
+        poGRD->poGeoRaster->bGenStatsHistogram = EQUAL(pszFetched, "TRUE");
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_LAYERNUMBERS");
+
+    if (pszFetched != nullptr)
+    {
+        bGenStatsOptionsUsed = true;
+        poGRD->poGeoRaster->sGenStatsLayerNumbers = pszFetched;
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_USEBIN");
+
+    if (pszFetched != nullptr)
+    {
+        bGenStatsOptionsUsed = true;
+        poGRD->poGeoRaster->bGenStatsUseBin = EQUAL(pszFetched, "TRUE");
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_BINFUNCTION");
+
+    if (pszFetched != nullptr)
+    {
+        bGenStatsOptionsUsed = true;
+        const int nSize = 5;
+        if (!ParseCommaSeparatedString(
+                pszFetched, poGRD->poGeoRaster->dfGenStatsBinFunction, nSize))
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Wrong comma separated string for bin function (%s)",
+                     pszFetched);
+            delete poGRD;
+            return nullptr;
+        }
+    }
+
+    pszFetched = CSLFetchNameValue(papszOptions, "GENSTATS_NODATA");
+
+    if (pszFetched != nullptr)
+    {
+        bGenStatsOptionsUsed = true;
+        poGRD->poGeoRaster->bGenStatsNodata = EQUAL(pszFetched, "TRUE");
+    }
+
+    if (bGenStatsOptionsUsed && !poGRD->poGeoRaster->bGenStats)
+    {
+        CPLError(
+            CE_Warning, CPLE_AppDefined,
+            "Some GENSTATS* options were used but GENSTATS is not set. "
+            "Statistics won't be computed, please set GENSTATS option to true "
+            "if you want to generate statistics");
     }
 
     //  -------------------------------------------------------------------
@@ -2421,7 +2533,7 @@ void GeoRasterDataset::SetSubdatasets(GeoRasterWrapper *poGRW)
 
                 papszSubdatasets = CSLSetNameValue(
                     papszSubdatasets, CPLSPrintf("SUBDATASET_%d_DESC", nCount),
-                    CPLSPrintf("%s.Table=%s", szOwner, szTable));
+                    CPLSPrintf("Table=%s.%s", szOwner, szTable));
 
                 nCount++;
             } while (poStmt->Fetch());
