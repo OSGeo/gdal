@@ -465,7 +465,7 @@ class CPL_DLL OGRGeometry
     virtual void flattenTo2D() = 0;
     virtual char *exportToGML(const char *const *papszOptions = nullptr) const;
     virtual char *exportToKML() const;
-    virtual char *exportToJson() const;
+    virtual char *exportToJson(CSLConstList papszOptions = nullptr) const;
 
     /** Accept a visitor. */
     virtual void accept(IOGRGeometryVisitor *visitor) = 0;

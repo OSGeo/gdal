@@ -3072,15 +3072,25 @@ char *OGRGeometry::exportToKML() const
  *
  * The returned string should be freed with CPLFree() when no longer required.
  *
+ * The following options are supported :
+ * <ul>
+ * <li>XY_COORD_PRECISION=integer: number of decimal figures for X,Y coordinates
+ * (added in GDAL 3.9)</li>
+ * <li>Z_COORD_PRECISION=integer: number of decimal figures for Z coordinates
+ * (added in GDAL 3.9)</li>
+ * </ul>
+ *
  * This method is the same as the C function OGR_G_ExportToJson().
  *
+ * @param papszOptions Null terminated list of options, or null (added in 3.9)
  * @return A GeoJSON fragment or NULL in case of error.
  */
 
-char *OGRGeometry::exportToJson() const
+char *OGRGeometry::exportToJson(CSLConstList papszOptions) const
 {
     OGRGeometry *poGeometry = const_cast<OGRGeometry *>(this);
-    return OGR_G_ExportToJson(OGRGeometry::ToHandle(poGeometry));
+    return OGR_G_ExportToJsonEx(OGRGeometry::ToHandle(poGeometry),
+                                const_cast<char **>(papszOptions));
 }
 
 /************************************************************************/
