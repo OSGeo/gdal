@@ -283,7 +283,7 @@ LEVELS."
 Create support
 --------------
 
-While the driver advertizes the Create() capability, contrary to most other
+While the driver advertises the Create() capability, contrary to most other
 drivers that implement it, the implementation of RasterIO() and WriteBlock()
 in the JP2ECW driver does not support arbitrary random writing.
 Data must be written in the dataset from top to bottom, whole line(s) at a

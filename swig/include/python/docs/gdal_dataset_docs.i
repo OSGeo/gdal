@@ -490,7 +490,7 @@ Get a list of the names of all relationships stored in the dataset.
 Parameters
 ----------
 options : dict/list, optional
-    driver-specific options determining how the relationships shoudl be retrieved
+    driver-specific options determining how the relationships should be retrieved
 
 ";
 

@@ -4314,8 +4314,8 @@ void PDFDataset::MapOCGsToPages()
     {
         return;
     }
-    const int nKidsArrayLenght = poKidsArray->GetLength();
-    for (int iPage = 0; iPage < nKidsArrayLenght; ++iPage)
+    const int nKidsArrayLength = poKidsArray->GetLength();
+    for (int iPage = 0; iPage < nKidsArrayLength; ++iPage)
     {
         const auto poPage = poKidsArray->Get(iPage);
         if (poPage && poPage->GetType() == PDFObjectType_Dictionary)
