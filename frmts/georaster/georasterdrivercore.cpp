@@ -101,7 +101,7 @@ void GEORDriverSetCommonMetadata(GDALDriver *poDriver)
         "  <Option name='GENPYRLEVELS'  type='int'  description='Number of "
         "pyramid level to generate'/>"
         " <Option name='GENSTATS' type='boolean' "
-        "description='Generate statistics from the given rasters'"
+        "description='Generate statistics from the given rasters' "
         "default='FALSE' />"
         " <Option name='GENSTATS_SAMPLINGFACTOR' type='int' "
         "description='Number of cells skipped in both row and column "
