@@ -71,7 +71,7 @@ with control information.
     Blue, Green, Red, NearInfraRed in an output dataset with bands ordered as
     Red, Green, Blue.
 
-    ::
+    .. code-block:: bash
 
         gdalwarp in_bgrn.tif out_rgb.tif -b 3 -b 2 -b 1 -overwrite
 
@@ -84,7 +84,7 @@ with control information.
     is only useful when updating an existing dataset, e.g to warp one band at
     at time.
 
-    ::
+    .. code-block:: bash
 
         gdal_create -if in_red.tif -bands 3 out_rgb.tif
         gdalwarp in_red.tif out_rgb.tif -srcband 1 -dstband 1
@@ -579,13 +579,13 @@ less than 100% then you know things are IO bound. Otherwise they are CPU bound.
 The ``--debug`` option may also provide useful information. For instance, after
 running the following:
 
-.. code-block::
+.. code-block:: bash
 
    gdalwarp --debug on abc.tif def.tif
 
 a message like the following will be output:
 
-::
+.. code-block::
 
   GDAL: 224 block reads on 32 block band 1 of utm.tif
 
@@ -594,7 +594,7 @@ that 224 block reads were done, implying that lots of data was having to be
 re-read, presumably because of a limited IO cache. You will also see messages
 like:
 
-::
+.. code-block::
 
    GDAL: GDALWarpKernel()::GWKNearestNoMasksByte()
    Src=0,0,512x512 Dst=0,0,512x512
@@ -648,7 +648,7 @@ Examples
 
 - Basic transformation:
 
-::
+.. code-block:: bash
 
   gdalwarp -t_srs EPSG:4326 input.tif output.tif
 
@@ -657,7 +657,7 @@ Examples
   control points mapping the corners to lat/long could be warped to a UTM
   projection with a command like this:
 
-::
+.. code-block:: bash
 
     gdalwarp -t_srs '+proj=utm +zone=11 +datum=WGS84' -overwrite raw_spot.tif utm11.tif
 
@@ -667,19 +667,21 @@ Examples
 
     .. versionadded:: 2.2
 
-::
+.. code-block:: bash
 
-    gdalwarp -overwrite HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 pg-PR1B0000-2002031402_100_001_2.tif
+    gdalwarp -overwrite HDF4_SDS:ASTER_L1B:"pg-PR1B0000-2002031402_100_001":2 \
+        pg-PR1B0000-2002031402_100_001_2.tif
 
 - To apply a cutline on a un-georeferenced image and clip from pixel (220,60) to pixel (1160,690):
 
-::
+.. code-block:: bash
 
-    gdalwarp -overwrite -to SRC_METHOD=NO_GEOTRANSFORM -to DST_METHOD=NO_GEOTRANSFORM -te 220 60 1160 690 -cutline cutline.csv in.png out.tif
+    gdalwarp -overwrite -to SRC_METHOD=NO_GEOTRANSFORM -to DST_METHOD=NO_GEOTRANSFORM \
+        -te 220 60 1160 690 -cutline cutline.csv in.png out.tif
 
 where cutline.csv content is like:
 
-::
+.. code-block::
 
     id,WKT
     1,"POLYGON((....))"
@@ -688,7 +690,7 @@ where cutline.csv content is like:
 
     .. versionadded:: 2.2
 
-::
+.. code-block:: bash
 
     gdalwarp -overwrite in_dem.tif out_dem.tif -s_srs EPSG:4326+5773 -t_srs EPSG:4979
 

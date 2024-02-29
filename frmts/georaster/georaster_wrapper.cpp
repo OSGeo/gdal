@@ -43,7 +43,8 @@
 //  ---------------------------------------------------------------------------
 
 GeoRasterWrapper::GeoRasterWrapper()
-    : sPyramidResampling("NN"), sCompressionType("NONE"), sInterleaving("BSQ")
+    : sPyramidResampling("NN"), sCompressionType("NONE"), sInterleaving("BSQ"),
+      bGenStatsUseSamplingWindow(false), sGenStatsLayerNumbers("")
 {
     nRasterId = -1;
     phMetadata = nullptr;
@@ -115,6 +116,20 @@ GeoRasterWrapper::GeoRasterWrapper()
     pasGCPList = nullptr;
     nGCPCount = 0;
     bFlushGCP = false;
+    bGenStats = false;
+    nGenStatsSamplingFactor = 1;
+    bGenStatsHistogram = false;
+    bGenStatsUseBin = true;
+    bGenStatsNodata = false;
+    dfGenStatsBinFunction[0] = 0.0;
+    dfGenStatsBinFunction[1] = 0.0;
+    dfGenStatsBinFunction[2] = 0.0;
+    dfGenStatsBinFunction[3] = 0.0;
+    dfGenStatsBinFunction[4] = 0.0;
+    dfGenStatsSamplingWindow[0] = 0.0;
+    dfGenStatsSamplingWindow[1] = 0.0;
+    dfGenStatsSamplingWindow[2] = 0.0;
+    dfGenStatsSamplingWindow[3] = 0.0;
 }
 
 //  ---------------------------------------------------------------------------
@@ -543,6 +558,75 @@ GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate)
     return poGRW;
 }
 
+static bool ValidateInsertExpression(const CPLString &sInsertStatement)
+{
+    bool bInQuotes = false;
+    const size_t nStrLength = sInsertStatement.length();
+
+    for (size_t nPos = 0; nPos < nStrLength; ++nPos)
+    {
+        const char cCurrentChar = sInsertStatement[nPos];
+
+        if (cCurrentChar == '\'')
+        {
+            if (bInQuotes)
+            {
+                if (nPos + 1 < nStrLength && sInsertStatement[nPos + 1] == '\'')
+                {
+                    ++nPos;
+                }
+                else
+                {
+                    bInQuotes = false;
+                }
+            }
+            else
+            {
+                bInQuotes = true;
+            }
+        }
+        else if (!bInQuotes)
+        {
+            if (cCurrentChar == ';')
+            {
+                return false;
+            }
+            else if (nPos < nStrLength - 1)
+            {
+                const char cNextChar = sInsertStatement[nPos + 1];
+                const bool bIsInvalid =
+                    (cCurrentChar == '-' && cNextChar == '-') ||
+                    (cCurrentChar == '/' && cNextChar == '/') ||
+                    (cCurrentChar == '/' && cNextChar == '*') ||
+                    (cCurrentChar == '*' && cNextChar == '/');
+
+                if (bIsInvalid)
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    // Quotes must be properly closed, if not, this variable will be true
+    // thus having an unclosed string
+    return !bInQuotes;
+}
+
+static bool ValidateDescriptionExpression(const CPLString &sInsertStatement)
+{
+    const char *rgpszInvalidChars[] = {";", "--", "/*", "*/", "//"};
+
+    for (const char *pszInvalidChar : rgpszInvalidChars)
+    {
+        if (sInsertStatement.find(pszInvalidChar) != std::string::npos)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 //  ---------------------------------------------------------------------------
 //                                                                     Create()
 //  ---------------------------------------------------------------------------
@@ -601,6 +685,12 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
 
         if (pszDescription)
         {
+            if (!ValidateDescriptionExpression(pszDescription))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "DESCRIPTION expression contains invalid values.");
+                return false;
+            }
             snprintf(szDescription, sizeof(szDescription), "%s",
                      pszDescription);
         }
@@ -617,6 +707,14 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
         if (pszInsert)
         {
             sValues = pszInsert;
+            sValues.Trim();  // Remove spaces on the left and on the right
+
+            if (!ValidateInsertExpression(sValues))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "INSERT expression contains invalid values.");
+                return false;
+            }
 
             if (pszInsert[0] == '(' &&
                 sValues.ifind("VALUES") == std::string::npos)
@@ -3618,6 +3716,22 @@ bool GeoRasterWrapper::FlushMetadata()
         }
     }
 
+    if (bGenStats)
+    {
+        if (GenerateStatistics(nGenStatsSamplingFactor,
+                               dfGenStatsSamplingWindow, bGenStatsHistogram,
+                               sGenStatsLayerNumbers.c_str(), bGenStatsUseBin,
+                               dfGenStatsBinFunction, bGenStatsNodata))
+        {
+            CPLDebug("GEOR", "Generated statistics successfully.");
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Error generating statistics!");
+        }
+    }
+
     return true;
 }
 
@@ -3773,6 +3887,89 @@ void GeoRasterWrapper::DeletePyramid()
     CPL_IGNORE_RET_VAL(poStmt->Execute());
 
     delete poStmt;
+}
+
+//  ---------------------------------------------------------------------------
+//                                                         GenerateStatistics()
+//  ---------------------------------------------------------------------------
+bool GeoRasterWrapper::GenerateStatistics(int nSamplingFactor,
+                                          double *pdfSamplingWindow,
+                                          bool bHistogram,
+                                          const char *pszLayerNumbers,
+                                          bool bUseBin, double *pdfBinFunction,
+                                          bool bNodata)
+{
+    // Length is 6 because it's the length of string FALSE.
+    char szHistogram[] = "FALSE";
+    char szNodata[] = "FALSE";
+    char szUseBin[] = "FALSE";
+    char szUseWin[] = "FALSE";
+    if (bHistogram)
+    {
+        strncpy(szHistogram, "TRUE", 5);
+    }
+    if (bNodata)
+    {
+        strncpy(szNodata, "TRUE", 5);
+    }
+    if (bUseBin)
+    {
+        strncpy(szUseBin, "TRUE", 5);
+    }
+    if (bGenStatsUseSamplingWindow)
+    {
+        strncpy(szUseWin, "TRUE", 5);
+    }
+
+    char szLayerNumbers[OWTEXT];
+    snprintf(szLayerNumbers, sizeof(szLayerNumbers), "%s", pszLayerNumbers);
+
+    OWStatement *poStmt = poConnection->CreateStatement(
+        CPLSPrintf("DECLARE\n"
+                   "  gr sdo_georaster;\n"
+                   "  swin SDO_NUMBER_ARRAY := SDO_NUMBER_ARRAY(:1, :2, :3,"
+                   "  :4);\n"
+                   "  binfunc SDO_NUMBER_ARRAY := SDO_NUMBER_ARRAY(:5, :6, :7,"
+                   "  :8, :9);\n"
+                   "  res VARCHAR2(5);\n"
+                   "BEGIN\n"
+                   "  IF :usewin = 'FALSE' THEN\n"
+                   "    swin := NULL;\n"
+                   "  END IF;"
+                   "  IF :usebin = 'FALSE' THEN\n"
+                   "    binfunc := NULL;\n"
+                   "  END IF;"
+                   "  SELECT t.%s INTO gr FROM %s t WHERE %s FOR UPDATE;\n"
+                   "  res := sdo_geor.generateStatistics(gr, "
+                   "'samplingFactor='||:samplingfactor, swin,\n"
+                   "  :histogram, :layernums, :usebin, binfunc, :nodata);\n"
+                   "  UPDATE %s t SET t.%s = gr WHERE %s;\n"
+                   "  COMMIT;\n"
+                   "END;\n",
+                   sColumn.c_str(), sTable.c_str(), sWhere.c_str(),
+                   sTable.c_str(), sColumn.c_str(), sWhere.c_str()));
+
+    // Bind sampling window
+    for (int i = 0; i < 4; i++)
+    {
+        poStmt->Bind(&pdfSamplingWindow[i]);
+    }
+    // Bind bin function
+    for (int i = 0; i < 5; i++)
+    {
+        poStmt->Bind(&pdfBinFunction[i]);
+    }
+    poStmt->BindName(":samplingfactor", &nSamplingFactor);
+    poStmt->BindName(":layernums", szLayerNumbers);
+    poStmt->BindName(":histogram", szHistogram);
+    poStmt->BindName(":nodata", szNodata);
+    poStmt->BindName(":usebin", szUseBin);
+    poStmt->BindName(":usewin", szUseWin);
+
+    bool bResult = poStmt->Execute();
+    delete poStmt;
+
+    return bResult;
 }
 
 //  ---------------------------------------------------------------------------

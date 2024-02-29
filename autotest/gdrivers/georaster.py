@@ -54,7 +54,7 @@ def get_connection_str():
     if oci_dsname is None:
         # TODO: Spelling - informe?
         return "<error: informe ORACLE connection>"
-    return "geor:" + oci_dsname.split(":")[1]
+    return "geor:" + oci_dsname[oci_dsname.index(":") + 1 :]
 
 
 ###############################################################################
@@ -472,6 +472,37 @@ def test_georaster_4bit():
             "DESCRIPTION=(id number, raster sdo_georaster)",
             "INSERT=(1013, sdo_geor.init('GDAL_TEST_RDT',1013))",
             "NBITS=4",
+        ],
+    )
+
+    ds_name = ds.GetDescription()
+
+    ds = None
+
+    tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 2578, filename_absolute=1)
+
+    tst.testOpen()
+
+
+###############################################################################
+#
+
+
+def test_georaster_genstats():
+    if gdaltest.oci_ds is None:
+        pytest.skip()
+
+    ds_src = gdal.Open("data/byte.tif")
+
+    ds = gdaltest.georasterDriver.CreateCopy(
+        get_connection_str() + ",GDAL_TEST,RASTER",
+        ds_src,
+        1,
+        [
+            "DESCRIPTION=(id number, raster sdo_georaster)",
+            "INSERT=(1014, sdo_geor.init('GDAL_TEST_RDT',1014))",
+            "NBITS=4",
+            "GENSTATS=TRUE",
         ],
     )
 

@@ -544,3 +544,7 @@ Other Notes
    that is possible. For instance if the source is an RDBMS. You can
    turn off that feature by setting the *useSpatialSubquery* attribute
    of the GeometryField element to FALSE.
+-  .vrt files starting with
+   - <OGRVRTDataSource> open with ogrinfo, etc.
+   - <VRTDataset> open with gdalinfo, etc.
+

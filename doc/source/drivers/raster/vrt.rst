@@ -17,6 +17,11 @@ potentially applied as well as various kinds of metadata altered or added.
 VRT descriptions of datasets can be saved in an XML format normally given the
 extension .vrt.
 
+Note .vrt files starting with
+
+- <OGRVRTDataSource> open with :ref:`ogrinfo`, etc.
+- <VRTDataset> open with :ref:`gdalinfo`, etc.
+
 The VRT format can also describe :ref:`gdal_vrttut_warped`
 and :ref:`gdal_vrttut_pansharpen`
 
@@ -81,8 +86,12 @@ The following creations options are supported:
 .vrt Format
 -----------
 
-A `XML schema of the GDAL VRT format <https://raw.githubusercontent.com/OSGeo/gdal/master/data/gdalvrt.xsd>`_
+A `XML schema of the GDAL VRT format <https://raw.githubusercontent.com/OSGeo/gdal/master/frmts/vrt/data/gdalvrt.xsd>`_
 is available.
+
+Note, .vrt files starting with
+- <OGRVRTDataSource> open with ogrinfo, etc.
+- <VRTDataset> open with gdalinfo, etc.
 
 Virtual files stored on disk are kept in an XML format with the following
 elements.
@@ -747,13 +756,13 @@ Except if (from top priority to lesser priority) :
 -------------------------------
 
 So far we have described how to derive new virtual datasets from existing
-files supports by GDAL.  However, it is also common to need to utilize
+files supported by GDAL.  However, it is also common to need to utilize
 raw binary raster files for which the regular layout of the data is known
 but for which no format specific driver exists.  This can be accomplished
 by writing a .vrt file describing the raw file.
 
 For example, the following .vrt describes a raw raster file containing
-floating point complex pixels in a file called <i>l2p3hhsso.img</i>.  The
+floating point complex pixels in a file called *l2p3hhsso.img*.  The
 image data starts from the first byte (ImageOffset=0).  The byte offset
 between pixels is 8 (PixelOffset=8), the size of a CFloat32.  The byte offset
 from the start of one line to the start of the next is 9376 bytes

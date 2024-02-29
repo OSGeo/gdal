@@ -557,6 +557,22 @@ OGRErr OGRGeometryCollection::importFromWkbInternal(
             eErr = OGRGeometryFactory::createFromWkb(
                 pabySubData, nullptr, &poSubGeom, nSize, eWkbVariant,
                 nSubGeomBytesConsumed);
+
+            if (eErr == OGRERR_NONE)
+            {
+                // if this is a Z or M geom make sure the sub geoms are as well
+                if (Is3D() && !poSubGeom->Is3D())
+                {
+                    CPLDebug("OGR", "Promoting sub-geometry to 3D");
+                    poSubGeom->set3D(TRUE);
+                }
+
+                if (IsMeasured() && !poSubGeom->IsMeasured())
+                {
+                    CPLDebug("OGR", "Promoting sub-geometry to Measured");
+                    poSubGeom->setMeasured(TRUE);
+                }
+            }
         }
 
         if (eErr != OGRERR_NONE)
