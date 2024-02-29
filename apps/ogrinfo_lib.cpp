@@ -1560,6 +1560,36 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                         }
                     }
 
+                    const auto GetGeoJSONOptions = [poLayer](int iGeomField)
+                    {
+                        CPLStringList aosGeoJSONOptions;
+                        const auto &oCoordPrec =
+                            poLayer->GetLayerDefn()
+                                ->GetGeomFieldDefn(iGeomField)
+                                ->GetCoordinatePrecision();
+                        if (oCoordPrec.dfXYResolution !=
+                            OGRGeomCoordinatePrecision::UNKNOWN)
+                        {
+                            aosGeoJSONOptions.SetNameValue(
+                                "XY_COORD_PRECISION",
+                                CPLSPrintf("%d",
+                                           OGRGeomCoordinatePrecision::
+                                               ResolutionToPrecision(
+                                                   oCoordPrec.dfXYResolution)));
+                        }
+                        if (oCoordPrec.dfZResolution !=
+                            OGRGeomCoordinatePrecision::UNKNOWN)
+                        {
+                            aosGeoJSONOptions.SetNameValue(
+                                "Z_COORD_PRECISION",
+                                CPLSPrintf("%d",
+                                           OGRGeomCoordinatePrecision::
+                                               ResolutionToPrecision(
+                                                   oCoordPrec.dfZResolution)));
+                        }
+                        return aosGeoJSONOptions;
+                    };
+
                     if (nGeomFields == 0)
                         oFeature.SetNull("geometry");
                     else
@@ -1569,7 +1599,8 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                             char *pszSerialized =
                                 wkbFlatten(poGeom->getGeometryType()) <=
                                         wkbGeometryCollection
-                                    ? poGeom->exportToJson()
+                                    ? poGeom->exportToJson(
+                                          GetGeoJSONOptions(0).List())
                                     : nullptr;
                             if (pszSerialized)
                             {
@@ -1601,7 +1632,8 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                                     char *pszSerialized =
                                         wkbFlatten(poGeom->getGeometryType()) <=
                                                 wkbGeometryCollection
-                                            ? poGeom->exportToJson()
+                                            ? poGeom->exportToJson(
+                                                  GetGeoJSONOptions(i).List())
                                             : nullptr;
                                     if (pszSerialized)
                                     {
