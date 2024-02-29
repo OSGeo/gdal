@@ -1,0 +1,4 @@
+﻿  Building Custom Rule D:/GitHub-repository/GDAL/apps/CMakeLists.txt
+  ogr2ogr_bin.cpp
+     Creating library D:/GitHub-repository/GDAL/buildVS/apps/Debug/ogr2ogr.lib and object D:/GitHub-repository/GDAL/buildVS/apps/Debug/ogr2ogr.exp
+  ogr2ogr.vcxproj -> D:\GitHub-repository\GDAL\buildVS\apps\Debug\ogr2ogr.exe

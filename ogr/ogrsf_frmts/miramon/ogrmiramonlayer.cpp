@@ -615,17 +615,18 @@ void OGRMiraMonLayer::ResetReading()
     if (!phMiraMonLayer)
         return;
 
-    if (phMiraMonLayer->bIsPoint)
+    if (phMiraMonLayer->bIsPoint && phMiraMonLayer->MMPoint.pF)
     {
         VSIFSeekL(phMiraMonLayer->MMPoint.pF, 0, SEEK_SET);
         return;
     }
-    if (phMiraMonLayer->bIsArc && !phMiraMonLayer->bIsPolygon)
+    if (phMiraMonLayer->bIsArc && !phMiraMonLayer->bIsPolygon &&
+        phMiraMonLayer->MMArc.pF)
     {
         VSIFSeekL(phMiraMonLayer->MMArc.pF, 0, SEEK_SET);
         return;
     }
-    if (phMiraMonLayer->bIsPolygon)
+    if (phMiraMonLayer->bIsPolygon && phMiraMonLayer->MMPolygon.pF)
     {
         VSIFSeekL(phMiraMonLayer->MMPolygon.pF, 0, SEEK_SET);
         return;
@@ -657,6 +658,8 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
 {
     MM_INTERNAL_FID iMMFeature;
 
+    if (!phMiraMonLayer)
+        return nullptr;
     if (phMiraMonLayer->bIsPolygon)
     {
         // First polygon is not returned because it's the universal polygon
@@ -672,6 +675,9 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
     }
 
     OGRFeature *poFeature = GetFeature((GIntBig)iMMFeature);
+
+    if (!poFeature)
+        return nullptr;
 
     // In polygons, if MiraMon is asked to give the 0-th element,
     // in fact is the first one, because the 0-th one is the called
