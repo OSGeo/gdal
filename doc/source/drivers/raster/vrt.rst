@@ -1757,6 +1757,7 @@ PanchroBand and SpectralBand elements must have at least a **SourceFilename** ch
 element to specify the name of the dataset. They may also have a **SourceBand** child
 element to specify the number of the band in the dataset (starting with 1). If not
 specify, the first band will be assumed.
+**OpenOptions** can also be specified
 
 The SpectralBand element must generally have a **dstBand** attribute to specify the
 number of the output band (starting with 1) to which the input spectral band must be mapped.
@@ -1778,18 +1779,30 @@ with panchromatic.tif.
         <PansharpeningOptions>
             <PanchroBand>
                 <SourceFilename relativeToVRT="1">panchromatic.tif</SourceFilename>
+                <OpenOptions>
+                    <OOI key="NUM_THREADS">ALL_CPUS</OOI>
+                </OpenOptions>
                 <SourceBand>1</SourceBand>
             </PanchroBand>
             <SpectralBand dstBand="1">
                 <SourceFilename relativeToVRT="1">multispectral.tif</SourceFilename>
+                <OpenOptions>
+                    <OOI key="NUM_THREADS">ALL_CPUS</OOI>
+                </OpenOptions>
                 <SourceBand>1</SourceBand>
             </SpectralBand>
             <SpectralBand dstBand="2">
                 <SourceFilename relativeToVRT="1">multispectral.tif</SourceFilename>
+                <OpenOptions>
+                    <OOI key="NUM_THREADS">ALL_CPUS</OOI>
+                </OpenOptions>
                 <SourceBand>2</SourceBand>
             </SpectralBand>
             <SpectralBand dstBand="3">
                 <SourceFilename relativeToVRT="1">multispectral.tif</SourceFilename>
+                <OpenOptions>
+                    <OOI key="NUM_THREADS">ALL_CPUS</OOI>
+                </OpenOptions>
                 <SourceBand>3</SourceBand>
             </SpectralBand>
         </PansharpeningOptions>

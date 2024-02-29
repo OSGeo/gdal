@@ -2304,3 +2304,72 @@ def test_vrtpansharpen_out_of_order_input_bands_and_nodata():
     cs2 = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
 
     assert cs2 == cs[::-1]
+
+
+###############################################################################
+# Test open options for input bands
+
+
+def test_vrtpansharpen_open_options_input_bands():
+    def my_handler(typ, errno, msg):
+        msgs.append(msg)
+
+    msgs = []
+    with gdaltest.error_handler(my_handler):
+        gdal.Open(
+            """<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <OpenOptions>
+                       <OOI key="NUM_THREADS">foo</OOI>
+                     </OpenOptions>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
+        # Not the prettiest way to check that open options are used, but that does the job...
+        assert "small_world_pan.tif: Invalid value for NUM_THREADS: foo" in msgs
+
+    msgs = []
+    with gdaltest.error_handler(my_handler):
+        gdal.Open(
+            """<VRTDataset subClass="VRTPansharpenedDataset">
+        <PansharpeningOptions>
+            <PanchroBand>
+                    <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
+                    <SourceBand>1</SourceBand>
+            </PanchroBand>
+            <SpectralBand dstBand="1">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <OpenOptions>
+                       <OOI key="NUM_THREADS">foo</OOI>
+                     </OpenOptions>
+                     <SourceBand>1</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="2">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>2</SourceBand>
+            </SpectralBand>
+            <SpectralBand dstBand="3">
+                    <SourceFilename relativeToVRT="1">data/small_world.tif</SourceFilename>
+                    <SourceBand>3</SourceBand>
+            </SpectralBand>
+        </PansharpeningOptions>
+    </VRTDataset>"""
+        )
+        # Not the prettiest way to check that open options are used, but that does the job...
+        assert "small_world.tif: Invalid value for NUM_THREADS: foo" in msgs
