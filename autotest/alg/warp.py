@@ -1675,6 +1675,7 @@ def test_warp_average_oversampling():
 # Test bug fix for https://github.com/qgis/QGIS/issues/56288
 
 
+@pytest.mark.require_driver("XYZ")
 def test_non_square():
 
     # bottom up
