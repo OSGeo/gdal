@@ -1515,6 +1515,8 @@ int DIMAPDataset::ReadImageInformation2()
         "",
         "Processing_Information.Product_Settings.Geometric_Settings",
         "GEOMETRIC_",
+        "Processing_Information.Product_Settings.Radiometric_Settings",
+        "RADIOMETRIC_",
         "Quality_Assessment.Imaging_Quality_Measurement",
         "CLOUDCOVER_",
         nullptr,
