@@ -307,7 +307,7 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Dimensions of input spectral band %d different from "
                      "first spectral band",
-                     i+1);
+                     i + 1);
             return CE_Failure;
         }
 
@@ -318,7 +318,7 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot retrieve dataset associated with "
                      "input spectral band %d",
-                     i+1);
+                     i + 1);
             return CE_Failure;
         }
         // Make sure that the band is really a first level child of the owning dataset
@@ -335,7 +335,7 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
             CPLError(
                 CE_Failure, CPLE_AppDefined,
                 "input spectral band %d band has no associated geotransform",
-                i+1);
+                i + 1);
             return CE_Failure;
         }
         if (adfMSGT != adfRefMSGT)
@@ -343,7 +343,7 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
             CPLError(CE_Failure, CPLE_AppDefined,
                      "input spectral band %d has a different "
                      "geotransform than the first spectral band",
-                     i+1);
+                     i + 1);
             return CE_Failure;
         }
 
