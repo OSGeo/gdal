@@ -9985,7 +9985,7 @@ bool GDALGeoPackageDataset::AddRelationship(
          *
          * However, if we don't insert the mapping table into gpkg_contents then it is no longer
          * visible to some clients (eg ESRI software only allows opening tables that are present
-         * in gpkg_contents). So we'll do this anyway, for maximum compatiblity and flexibility.
+         * in gpkg_contents). So we'll do this anyway, for maximum compatibility and flexibility.
          *
          * More related discussion is at https://github.com/OSGeo/gdal/pull/9258
          */

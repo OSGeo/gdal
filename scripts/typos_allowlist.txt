@@ -30,7 +30,6 @@
     VSIFPrintfL(fp, "     UN=Metres,SD=HHWLT,DX=2.500000,DY=2.500000\n");
         pszUnitsPer = CPLGetXMLValue( psSrcXML, "metresPerUnit", NULL );
     {"kilometre", /* 15 */ 12, 13, 1000.0},
-                    oSRS.SetLinearUnits( "kilometre", 1000.0 );
 { "kilometre", SRS_UL_KILOMETER_CONV, "km" }, // Leave as 'kilometre' instead of SRS_UL_KILOMETER due to historical usage
             passport.stMapDescription.eUnitInPlan = SXF_COORD_MU_CENTIMETRE;
             passport.stMapDescription.eUnitInPlan = SXF_COORD_MU_MILLIMETRE;
@@ -305,3 +304,4 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
      FAIL_REGEX "[Uu]nknown option"                         # HP
      FAIL_REGEX "[Uu]nknown switch"                         # PGI
 * Esben Mose Hansen, Ange Optimization ApS
+            SetLinearUnits("kilometre", 1000.0);

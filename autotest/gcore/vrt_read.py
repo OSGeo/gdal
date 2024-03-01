@@ -2586,3 +2586,43 @@ def test_vrt_read_compute_statistics_approximate(tmp_vsimem):
     assert "STATISTICS_MEAN" in md
     assert "STATISTICS_STDDEV" in md
     assert md["STATISTICS_VALID_PERCENT"] == "100"
+
+
+###############################################################################
+# Test that when generating virtual overviews we select them as close as
+# possible to source ones
+
+
+def test_vrt_read_virtual_overviews_match_src_overviews(tmp_vsimem):
+
+    gtiff_filename = str(tmp_vsimem / "tmp.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        gtiff_filename, 4095, 2047, options=["SPARSE_OK=YES"]
+    )
+    ds.BuildOverviews("NONE", [2, 4, 8])
+    band = ds.GetRasterBand(1)
+    # The below assert is a pre-condition to test the behavior of the
+    # "vrt://{gtiff_filename}?outsize=200%,200%". If we decided to round
+    # differently overview dataset sizes in the GTiff driver, we'd need to
+    # change this source dataset
+    assert band.GetOverview(0).XSize == 2048
+    assert band.GetOverview(0).YSize == 1024
+    assert band.GetOverview(1).XSize == 1024
+    assert band.GetOverview(1).YSize == 512
+    ds = None
+
+    vrt_ds = gdal.Open(f"vrt://{gtiff_filename}?outsize=200%,200%")
+    assert vrt_ds.RasterXSize == 4095 * 2
+    assert vrt_ds.RasterYSize == 2047 * 2
+    vrt_band = vrt_ds.GetRasterBand(1)
+    assert vrt_band.XSize == 4095 * 2
+    assert vrt_band.YSize == 2047 * 2
+    assert vrt_band.GetOverviewCount() == 3
+    # We reuse the dimension of the source dataset
+    assert vrt_band.GetOverview(0).XSize == 4095
+    assert vrt_band.GetOverview(0).YSize == 2047
+    # We reuse the dimension of the overviews of the source dataset
+    assert vrt_band.GetOverview(1).XSize == 2048
+    assert vrt_band.GetOverview(1).YSize == 1024
+    assert vrt_band.GetOverview(2).XSize == 1024
+    assert vrt_band.GetOverview(2).YSize == 512
