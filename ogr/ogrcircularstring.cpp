@@ -168,9 +168,9 @@ OGRErr OGRCircularString::importFromWkb(const unsigned char *pabyData,
 /*      Build a well known binary representation of this object.        */
 /************************************************************************/
 
-OGRErr OGRCircularString::exportToWkb(OGRwkbByteOrder eByteOrder,
-                                      unsigned char *pabyData,
-                                      OGRwkbVariant eWkbVariant) const
+OGRErr
+OGRCircularString::exportToWkb(unsigned char *pabyData,
+                               const OGRwkbExportOptions *psOptions) const
 
 {
     if (!IsValidFast())
@@ -178,10 +178,13 @@ OGRErr OGRCircularString::exportToWkb(OGRwkbByteOrder eByteOrder,
         return OGRERR_FAILURE;
     }
 
+    OGRwkbExportOptions sOptions(psOptions ? *psOptions
+                                           : OGRwkbExportOptions());
+
     // Does not make sense for new geometries, so patch it.
-    if (eWkbVariant == wkbVariantOldOgc)
-        eWkbVariant = wkbVariantIso;
-    return OGRSimpleCurve::exportToWkb(eByteOrder, pabyData, eWkbVariant);
+    if (sOptions.eWkbVariant == wkbVariantOldOgc)
+        sOptions.eWkbVariant = wkbVariantIso;
+    return OGRSimpleCurve::exportToWkb(pabyData, &sOptions);
 }
 
 /************************************************************************/

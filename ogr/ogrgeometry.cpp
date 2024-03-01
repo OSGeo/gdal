@@ -1544,12 +1544,12 @@ OGRErr OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void *pabyData, int nSize)
         static_cast<const GByte *>(pabyData), nSize);
 }
 
+/************************************************************************/
+/*                       OGRGeometry::exportToWkb()                     */
+/************************************************************************/
+
 /* clang-format off */
 /**
- * \fn OGRErr OGRGeometry::exportToWkb( OGRwkbByteOrder eByteOrder,
-                                        unsigned char * pabyData,
-                                        OGRwkbVariant eWkbVariant=wkbVariantOldOgc ) const
- *
  * \brief Convert a geometry into well known binary format.
  *
  * This method relates to the SFCOM IWks::ExportToWKB() method.
@@ -1572,6 +1572,15 @@ OGRErr OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void *pabyData, int nSize)
  * @return Currently OGRERR_NONE is always returned.
  */
 /* clang-format on */
+OGRErr OGRGeometry::exportToWkb(OGRwkbByteOrder eByteOrder,
+                                unsigned char *pabyData,
+                                OGRwkbVariant eWkbVariant) const
+{
+    OGRwkbExportOptions sOptions;
+    sOptions.eByteOrder = eByteOrder;
+    sOptions.eWkbVariant = eWkbVariant;
+    return exportToWkb(pabyData, &sOptions);
+}
 
 /************************************************************************/
 /*                         OGR_G_ExportToWkb()                          */
@@ -1646,6 +1655,60 @@ OGRErr OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
 
     return OGRGeometry::FromHandle(hGeom)->exportToWkb(eOrder, pabyDstBuffer,
                                                        wkbVariantIso);
+}
+
+/************************************************************************/
+/*                        OGR_G_ExportToWkbEx()                         */
+/************************************************************************/
+
+/* clang-format off */
+/**
+ * \fn OGRErr OGRGeometry::exportToWkb(unsigned char *pabyDstBuffer, const OGRwkbExportOptions *psOptions=nullptr) const
+ *
+ * \brief Convert a geometry into well known binary format
+ *
+ * This function relates to the SFCOM IWks::ExportToWKB() method.
+ *
+ * This function is the same as the C function OGR_G_ExportToWkbEx().
+ *
+ * @param pabyDstBuffer a buffer into which the binary representation is
+ *                      written.  This buffer must be at least
+ *                      OGR_G_WkbSize() byte in size.
+ * @param psOptions WKB export options.
+
+ * @return Currently OGRERR_NONE is always returned.
+ *
+ * @since GDAL 3.9
+ */
+/* clang-format on */
+
+/**
+ * \brief Convert a geometry into well known binary format
+ *
+ * This function relates to the SFCOM IWks::ExportToWKB() method.
+ *
+ * This function is the same as the CPP method
+ * OGRGeometry::exportToWkb(unsigned char *, const OGRwkbExportOptions*)
+ *
+ * @param hGeom handle on the geometry to convert to a well know binary
+ * data from.
+ * @param pabyDstBuffer a buffer into which the binary representation is
+ *                      written.  This buffer must be at least
+ *                      OGR_G_WkbSize() byte in size.
+ * @param psOptions WKB export options.
+
+ * @return Currently OGRERR_NONE is always returned.
+ *
+ * @since GDAL 3.9
+ */
+
+OGRErr OGR_G_ExportToWkbEx(OGRGeometryH hGeom, unsigned char *pabyDstBuffer,
+                           const OGRwkbExportOptions *psOptions)
+{
+    VALIDATE_POINTER1(hGeom, "OGR_G_ExportToWkbEx", OGRERR_FAILURE);
+
+    return OGRGeometry::FromHandle(hGeom)->exportToWkb(pabyDstBuffer,
+                                                       psOptions);
 }
 
 /**
@@ -7557,6 +7620,77 @@ OGRBoolean OGRGeometry::IsSFCGALCompatible() const
 //! @endcond
 
 /************************************************************************/
+/*                    roundCoordinatesIEEE754()                         */
+/************************************************************************/
+
+/** Round coordinates of a geometry, exploiting characteristics of the IEEE-754
+ * double-precision binary representation.
+ *
+ * Determines the number of bits (N) required to represent a coordinate value
+ * with a specified number of digits after the decimal point, and then sets all
+ * but the N most significant bits to zero. The resulting coordinate value will
+ * still round to the original value, but will have improved compressiblity.
+ *
+ * @param options Contains the precision requirements.
+ * @since GDAL 3.9
+ */
+void OGRGeometry::roundCoordinatesIEEE754(
+    const OGRGeomCoordinateBinaryPrecision &options)
+{
+    struct Quantizer : public OGRDefaultGeometryVisitor
+    {
+        const OGRGeomCoordinateBinaryPrecision &m_options;
+        explicit Quantizer(const OGRGeomCoordinateBinaryPrecision &optionsIn)
+            : m_options(optionsIn)
+        {
+        }
+
+        using OGRDefaultGeometryVisitor::visit;
+        void visit(OGRPoint *poPoint) override
+        {
+            if (m_options.nXYBitPrecision != INT_MIN)
+            {
+                uint64_t i;
+                double d;
+                d = poPoint->getX();
+                memcpy(&i, &d, sizeof(i));
+                i = OGRRoundValueIEEE754(i, m_options.nXYBitPrecision);
+                memcpy(&d, &i, sizeof(i));
+                poPoint->setX(d);
+                d = poPoint->getY();
+                memcpy(&i, &d, sizeof(i));
+                i = OGRRoundValueIEEE754(i, m_options.nXYBitPrecision);
+                memcpy(&d, &i, sizeof(i));
+                poPoint->setY(d);
+            }
+            if (m_options.nZBitPrecision != INT_MIN && poPoint->Is3D())
+            {
+                uint64_t i;
+                double d;
+                d = poPoint->getZ();
+                memcpy(&i, &d, sizeof(i));
+                i = OGRRoundValueIEEE754(i, m_options.nZBitPrecision);
+                memcpy(&d, &i, sizeof(i));
+                poPoint->setZ(d);
+            }
+            if (m_options.nMBitPrecision != INT_MIN && poPoint->IsMeasured())
+            {
+                uint64_t i;
+                double d;
+                d = poPoint->getM();
+                memcpy(&i, &d, sizeof(i));
+                i = OGRRoundValueIEEE754(i, m_options.nMBitPrecision);
+                memcpy(&d, &i, sizeof(i));
+                poPoint->setM(d);
+            }
+        }
+    };
+
+    Quantizer quantizer(options);
+    accept(&quantizer);
+}
+
+/************************************************************************/
 /*                             visit()                                  */
 /************************************************************************/
 
@@ -7777,3 +7911,120 @@ void OGRGeometry::HomogenizeDimensionalityWith(OGRGeometry *poOtherGeom)
         poOtherGeom->setMeasured(TRUE);
 }
 //! @endcond
+
+/************************************************************************/
+/*                  OGRGeomCoordinateBinaryPrecision::SetFrom()         */
+/************************************************************************/
+
+/** Set binary precision options from resolution.
+ *
+ * @since GDAL 3.9
+ */
+void OGRGeomCoordinateBinaryPrecision::SetFrom(
+    const OGRGeomCoordinatePrecision &prec)
+{
+    if (prec.dfXYResolution != 0)
+    {
+        nXYBitPrecision =
+            static_cast<int>(ceil(log2(1. / prec.dfXYResolution)));
+    }
+    if (prec.dfZResolution != 0)
+    {
+        nZBitPrecision = static_cast<int>(ceil(log2(1. / prec.dfZResolution)));
+    }
+    if (prec.dfMResolution != 0)
+    {
+        nMBitPrecision = static_cast<int>(ceil(log2(1. / prec.dfMResolution)));
+    }
+}
+/************************************************************************/
+/*                        OGRwkbExportOptionsCreate()                   */
+/************************************************************************/
+
+/**
+ * \brief Create geometry WKB export options.
+ *
+ * The default is Intel order, old-OGC wkb variant and 0 discarded lsb bits.
+ *
+ * @return object to be freed with OGRwkbExportOptionsDestroy().
+ * @since GDAL 3.9
+ */
+OGRwkbExportOptions *OGRwkbExportOptionsCreate()
+{
+    return new OGRwkbExportOptions;
+}
+
+/************************************************************************/
+/*                        OGRwkbExportOptionsDestroy()                  */
+/************************************************************************/
+
+/**
+ * \brief Destroy object returned by OGRwkbExportOptionsCreate()
+ *
+ * @param psOptions WKB export options
+ * @since GDAL 3.9
+ */
+
+void OGRwkbExportOptionsDestroy(OGRwkbExportOptions *psOptions)
+{
+    delete psOptions;
+}
+
+/************************************************************************/
+/*                   OGRwkbExportOptionsSetByteOrder()                  */
+/************************************************************************/
+
+/**
+ * \brief Set the WKB byte order.
+ *
+ * @param psOptions WKB export options
+ * @param eByteOrder Byte order: wkbXDR (big-endian) or wkbNDR (little-endian,
+ * Intel)
+ * @since GDAL 3.9
+ */
+
+void OGRwkbExportOptionsSetByteOrder(OGRwkbExportOptions *psOptions,
+                                     OGRwkbByteOrder eByteOrder)
+{
+    psOptions->eByteOrder = eByteOrder;
+}
+
+/************************************************************************/
+/*                   OGRwkbExportOptionsSetVariant()                    */
+/************************************************************************/
+
+/**
+ * \brief Set the WKB variant
+ *
+ * @param psOptions WKB export options
+ * @param eWkbVariant variant: wkbVariantOldOgc, wkbVariantIso,
+ * wkbVariantPostGIS1
+ * @since GDAL 3.9
+ */
+
+void OGRwkbExportOptionsSetVariant(OGRwkbExportOptions *psOptions,
+                                   OGRwkbVariant eWkbVariant)
+{
+    psOptions->eWkbVariant = eWkbVariant;
+}
+
+/************************************************************************/
+/*                   OGRwkbExportOptionsSetPrecision()                  */
+/************************************************************************/
+
+/**
+ * \brief Set precision options
+ *
+ * @param psOptions WKB export options
+ * @param hPrecisionOptions Precision options (might be null to reset them)
+ * @since GDAL 3.9
+ */
+
+void OGRwkbExportOptionsSetPrecision(
+    OGRwkbExportOptions *psOptions,
+    OGRGeomCoordinatePrecisionH hPrecisionOptions)
+{
+    psOptions->sPrecision = OGRGeomCoordinateBinaryPrecision();
+    if (hPrecisionOptions)
+        psOptions->sPrecision.SetFrom(*hPrecisionOptions);
+}

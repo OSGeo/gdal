@@ -170,6 +170,21 @@ OGRErr CPL_DLL OGR_G_ExportToWkb(OGRGeometryH, OGRwkbByteOrder,
                                  unsigned char *);
 OGRErr CPL_DLL OGR_G_ExportToIsoWkb(OGRGeometryH, OGRwkbByteOrder,
                                     unsigned char *);
+
+/** Opaque type for WKB export options */
+typedef struct OGRwkbExportOptions OGRwkbExportOptions;
+
+OGRwkbExportOptions CPL_DLL *OGRwkbExportOptionsCreate(void);
+void CPL_DLL OGRwkbExportOptionsDestroy(OGRwkbExportOptions *);
+void CPL_DLL OGRwkbExportOptionsSetByteOrder(OGRwkbExportOptions *,
+                                             OGRwkbByteOrder);
+void CPL_DLL OGRwkbExportOptionsSetVariant(OGRwkbExportOptions *,
+                                           OGRwkbVariant);
+void CPL_DLL OGRwkbExportOptionsSetPrecision(OGRwkbExportOptions *,
+                                             OGRGeomCoordinatePrecisionH);
+OGRErr CPL_DLL OGR_G_ExportToWkbEx(OGRGeometryH, unsigned char *,
+                                   const OGRwkbExportOptions *);
+
 int CPL_DLL OGR_G_WkbSize(OGRGeometryH hGeom);
 size_t CPL_DLL OGR_G_WkbSizeEx(OGRGeometryH hGeom);
 OGRErr CPL_DLL OGR_G_ImportFromWkt(OGRGeometryH, char **);

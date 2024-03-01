@@ -380,16 +380,21 @@ OGRErr OGRPoint::importFromWkb(const unsigned char *pabyData, size_t nSize,
 /*      Build a well known binary representation of this object.        */
 /************************************************************************/
 
-OGRErr OGRPoint::exportToWkb(OGRwkbByteOrder eByteOrder,
-                             unsigned char *pabyData,
-                             OGRwkbVariant eWkbVariant) const
+OGRErr OGRPoint::exportToWkb(unsigned char *pabyData,
+                             const OGRwkbExportOptions *psOptions) const
 
 {
+    if (!psOptions)
+    {
+        static const OGRwkbExportOptions defaultOptions;
+        psOptions = &defaultOptions;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Set the byte order.                                             */
     /* -------------------------------------------------------------------- */
-    pabyData[0] =
-        DB2_V72_UNFIX_BYTE_ORDER(static_cast<unsigned char>(eByteOrder));
+    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER(
+        static_cast<unsigned char>(psOptions->eByteOrder));
     pabyData += 1;
 
     /* -------------------------------------------------------------------- */
@@ -398,7 +403,7 @@ OGRErr OGRPoint::exportToWkb(OGRwkbByteOrder eByteOrder,
 
     GUInt32 nGType = getGeometryType();
 
-    if (eWkbVariant == wkbVariantPostGIS1)
+    if (psOptions->eWkbVariant == wkbVariantPostGIS1)
     {
         nGType = wkbFlatten(nGType);
         if (Is3D())
@@ -408,12 +413,12 @@ OGRErr OGRPoint::exportToWkb(OGRwkbByteOrder eByteOrder,
         if (IsMeasured())
             nGType = static_cast<OGRwkbGeometryType>(nGType | 0x40000000);
     }
-    else if (eWkbVariant == wkbVariantIso)
+    else if (psOptions->eWkbVariant == wkbVariantIso)
     {
         nGType = getIsoGeometryType();
     }
 
-    if (eByteOrder == wkbNDR)
+    if (psOptions->eByteOrder == wkbNDR)
     {
         CPL_LSBPTR32(&nGType);
     }
@@ -429,52 +434,58 @@ OGRErr OGRPoint::exportToWkb(OGRwkbByteOrder eByteOrder,
     /*      Copy in the raw data. Swap if needed.                           */
     /* -------------------------------------------------------------------- */
 
-    if (IsEmpty() && eWkbVariant == wkbVariantIso)
+    if (IsEmpty() && psOptions->eWkbVariant == wkbVariantIso)
     {
         const double dNan = std::numeric_limits<double>::quiet_NaN();
         memcpy(pabyData, &dNan, 8);
-        if (OGR_SWAP(eByteOrder))
+        if (OGR_SWAP(psOptions->eByteOrder))
             CPL_SWAPDOUBLE(pabyData);
         pabyData += 8;
         memcpy(pabyData, &dNan, 8);
-        if (OGR_SWAP(eByteOrder))
+        if (OGR_SWAP(psOptions->eByteOrder))
             CPL_SWAPDOUBLE(pabyData);
         pabyData += 8;
         if (flags & OGR_G_3D)
         {
             memcpy(pabyData, &dNan, 8);
-            if (OGR_SWAP(eByteOrder))
+            if (OGR_SWAP(psOptions->eByteOrder))
                 CPL_SWAPDOUBLE(pabyData);
             pabyData += 8;
         }
         if (flags & OGR_G_MEASURED)
         {
             memcpy(pabyData, &dNan, 8);
-            if (OGR_SWAP(eByteOrder))
+            if (OGR_SWAP(psOptions->eByteOrder))
                 CPL_SWAPDOUBLE(pabyData);
         }
     }
     else
     {
         memcpy(pabyData, &x, 8);
-        if (OGR_SWAP(eByteOrder))
+        memcpy(pabyData + 8, &y, 8);
+        OGRRoundCoordinatesIEEE754XYValues<0>(
+            psOptions->sPrecision.nXYBitPrecision, pabyData, 1);
+        if (OGR_SWAP(psOptions->eByteOrder))
+        {
             CPL_SWAPDOUBLE(pabyData);
-        pabyData += 8;
-        memcpy(pabyData, &y, 8);
-        if (OGR_SWAP(eByteOrder))
-            CPL_SWAPDOUBLE(pabyData);
-        pabyData += 8;
+            CPL_SWAPDOUBLE(pabyData + 8);
+        }
+        pabyData += 16;
         if (flags & OGR_G_3D)
         {
             memcpy(pabyData, &z, 8);
-            if (OGR_SWAP(eByteOrder))
+            OGRRoundCoordinatesIEEE754<0>(psOptions->sPrecision.nZBitPrecision,
+                                          pabyData, 1);
+            if (OGR_SWAP(psOptions->eByteOrder))
                 CPL_SWAPDOUBLE(pabyData);
             pabyData += 8;
         }
         if (flags & OGR_G_MEASURED)
         {
             memcpy(pabyData, &m, 8);
-            if (OGR_SWAP(eByteOrder))
+            OGRRoundCoordinatesIEEE754<0>(psOptions->sPrecision.nMBitPrecision,
+                                          pabyData, 1);
+            if (OGR_SWAP(psOptions->eByteOrder))
                 CPL_SWAPDOUBLE(pabyData);
         }
     }
