@@ -138,6 +138,7 @@
     <xs:complexType name="PanchroBandType">
         <xs:sequence>
             <xs:element name="SourceFilename" type="SourceFilenameType"/>
+            <xs:element name="OpenOptions" type="OpenOptionsType"/>
             <xs:element name="SourceBand" type="xs:string"/>  <!-- should be refined into xs:nonNegativeInteger or mask,xs:nonNegativeInteger -->
         </xs:sequence>
     </xs:complexType>
@@ -145,6 +146,7 @@
     <xs:complexType name="SpectralBandType">
         <xs:sequence>
             <xs:element name="SourceFilename" type="SourceFilenameType"/>
+            <xs:element name="OpenOptions" type="OpenOptionsType"/>
             <xs:element name="SourceBand" type="xs:string"/>  <!-- should be refined into xs:nonNegativeInteger or mask,xs:nonNegativeInteger -->
         </xs:sequence>
         <xs:attribute name="dstBand" type="xs:nonNegativeInteger"/>
