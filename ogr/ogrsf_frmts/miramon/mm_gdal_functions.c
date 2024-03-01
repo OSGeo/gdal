@@ -475,7 +475,7 @@ int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
 
         if (fwrite_function(&MMAdmDB->pMMBDXP->nRecords, 4, 1,
                             MMAdmDB->pFExtDBF) != 1)
-            return FALSE;
+            return 1;
     }
     else
     {
@@ -483,7 +483,7 @@ int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
 
         nRecords = (GUInt32)MMAdmDB->pMMBDXP->nRecords;
         if (fwrite_function(&nRecords, 4, 1, MMAdmDB->pFExtDBF) != 1)
-            return FALSE;
+            return 1;
     }
 
     fseek_function(MMAdmDB->pFExtDBF, MM_SECOND_OFFSET_to_N_RECORDS, SEEK_SET);
@@ -492,18 +492,18 @@ int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
         /* from 16 to 19, position MM_SECOND_OFFSET_to_N_RECORDS */
         if (fwrite_function(((char *)(&MMAdmDB->pMMBDXP->nRecords)) + 4, 4, 1,
                             MMAdmDB->pFExtDBF) != 1)
-            return FALSE;
+            return 1;
 
         /* from 20 to 27 */
         if (fwrite_function(&(MMAdmDB->pMMBDXP->dbf_on_a_LAN), 8, 1,
                             MMAdmDB->pFExtDBF) != 1)
-            return FALSE;
+            return 1;
     }
     else
     {
         if (fwrite_function(&(MMAdmDB->pMMBDXP->dbf_on_a_LAN), 12, 1,
                             MMAdmDB->pFExtDBF) != 1)
-            return FALSE;
+            return 1;
     }
 
     return 0;

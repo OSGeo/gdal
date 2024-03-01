@@ -5624,10 +5624,12 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer)
                 MM_PRIVATE_POINT_DB_FIELDS + hMiraMonLayer->pLayerDB->nNFields;
         else
             nNFields = MM_PRIVATE_POINT_DB_FIELDS;
-        hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP =
+        pBD_XP = hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP =
             MM_CreateDBFHeader(nNFields, hMiraMonLayer->nCharSet);
 
-        pBD_XP = hMiraMonLayer->MMPoint.MMAdmDB.pMMBDXP;
+        if (!pBD_XP)
+            return 1;
+
         if (0 == (nIField = (MM_EXT_DBF_N_FIELDS)MM_DefineFirstPointFieldsDB_XP(
                       pBD_XP)))
             return 1;
@@ -5643,12 +5645,19 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer)
         pBD_XP = hMiraMonLayer->MMArc.MMAdmDB.pMMBDXP =
             MM_CreateDBFHeader(nNFields, hMiraMonLayer->nCharSet);
 
+        if (!pBD_XP)
+            return 1;
+
         if (0 == (nIField = (MM_EXT_DBF_N_FIELDS)MM_DefineFirstArcFieldsDB_XP(
                       pBD_XP, 0)))
             return 1;
 
         pBD_XP_Aux = hMiraMonLayer->MMArc.MMNode.MMAdmDB.pMMBDXP =
             MM_CreateDBFHeader(3, hMiraMonLayer->nCharSet);
+
+        if (!pBD_XP_Aux)
+            return 1;
+
         if (0 == MM_DefineFirstNodeFieldsDB_XP(pBD_XP_Aux))
             return 1;
     }
@@ -5660,21 +5669,31 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer)
         else
             nNFields = MM_PRIVATE_POLYGON_DB_FIELDS;
 
-        hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP =
+        pBD_XP = hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP =
             MM_CreateDBFHeader(nNFields, hMiraMonLayer->nCharSet);
 
-        pBD_XP = hMiraMonLayer->MMPolygon.MMAdmDB.pMMBDXP;
+        if (!pBD_XP)
+            return 1;
+
         if (0 == (nIField = (MM_EXT_DBF_N_FIELDS)
                       MM_DefineFirstPolygonFieldsDB_XP(pBD_XP, 6)))
             return 1;
 
         pBD_XP_Aux = hMiraMonLayer->MMPolygon.MMArc.MMAdmDB.pMMBDXP =
             MM_CreateDBFHeader(5, hMiraMonLayer->nCharSet);
+
+        if (!pBD_XP_Aux)
+            return 1;
+
         if (0 == MM_DefineFirstArcFieldsDB_XP(pBD_XP_Aux, 6))
             return 1;
 
         pBD_XP_Aux = hMiraMonLayer->MMPolygon.MMArc.MMNode.MMAdmDB.pMMBDXP =
             MM_CreateDBFHeader(3, hMiraMonLayer->nCharSet);
+
+        if (!pBD_XP_Aux)
+            return 1;
+
         if (0 == MM_DefineFirstNodeFieldsDB_XP(pBD_XP_Aux))
             return 1;
     }
@@ -6407,7 +6426,12 @@ static int MMCloseMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
             if (hMiraMonLayer->TopHeader.nElemCount <= 1)
             {
                 if (MMCreateMMDB(hMiraMonLayer))
+                {
+                    MMCPLError(CE_Failure, CPLE_OutOfMemory,
+                               "Memory error in MiraMon "
+                               "driver (MMCreateMMDB())");
                     return 1;
+                }
             }
         }
         else if (hMiraMonLayer->bIsPoint || hMiraMonLayer->bIsArc)
@@ -6415,7 +6439,12 @@ static int MMCloseMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
             if (hMiraMonLayer->TopHeader.nElemCount == 0)
             {
                 if (MMCreateMMDB(hMiraMonLayer))
+                {
+                    MMCPLError(CE_Failure, CPLE_OutOfMemory,
+                               "Memory error in MiraMon "
+                               "driver (MMCreateMMDB())");
                     return 1;
+                }
             }
         }
     }
