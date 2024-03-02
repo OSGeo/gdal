@@ -1564,3 +1564,24 @@ def test_ogr_flatgeobuf_sql_arrow(tmp_vsimem):
             assert f["bar"] == "baz"
             assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
             f = tmp_lyr.GetNextFeature()
+
+
+def test_ogr_flatgeobuf_write_empty_geometries_no_spatial_index(tmp_vsimem):
+    # Verify empty geom handling without spatial index
+    out_filename = str(tmp_vsimem / "out.fgb")
+    with ogr.GetDriverByName("FlatGeobuf").CreateDataSource(out_filename) as ds:
+        lyr = ds.CreateLayer(
+            "test", geom_type=ogr.wkbPolygon, options=["SPATIAL_INDEX=NO"]
+        )
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON EMPTY"))
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+
+    with gdal.OpenEx(out_filename) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        g = f.GetGeometryRef()
+        assert g is None
