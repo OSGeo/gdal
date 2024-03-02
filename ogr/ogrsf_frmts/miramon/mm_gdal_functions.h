@@ -15,8 +15,15 @@ CPL_C_START                          // Necessary for compiling in GDAL project
 #include "mm_gdal\mm_gdal_driver_structs.h"  // struct MMAdmDatabase
 #endif
 
-    char *
-    MM_strnzcpy(char *dest, const char *src, size_t maxlen);
+    // Log. It should be temporal
+    extern const char *MM_pszLogFilename;
+
+#define LOG_STR(str) (Log((str), __LINE__))
+#define LOG_ACTION(action) ((void)Log(#action, __LINE__), (action))
+
+const char *Log(const char *pszMsg, int nLineNumber);
+
+char *MM_strnzcpy(char *dest, const char *src, size_t maxlen);
 char *MM_oemansi(char *szcadena);
 char *MM_oemansi_n(char *szcadena, size_t n_bytes);
 void MM_InitializeField(struct MM_FIELD *camp);

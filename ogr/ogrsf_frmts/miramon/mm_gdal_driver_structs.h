@@ -136,7 +136,8 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define MM_FIRST_NUMBER_OF_VERTICES 10000
 #define MM_INCR_NUMBER_OF_VERTICES 1000
 
-#define MM_250MB 262144000
+//#define MM_250MB 262144000
+#define MM_25MB 2621440
 
 // Version asked for user
 #define MM_UNKNOWN_VERSION 0
@@ -689,6 +690,9 @@ struct MiraMonFeature
     // Number of reserved elements in *pRecords
     MM_EXT_DBF_N_MULTIPLE_RECORDS nMaxMRecords;
     struct MiraMonRecord *pRecords;
+
+    // Number of features just processed (for writing)
+    MM_INTERNAL_FID nReadFeatures;
 };
 
 // There is the possibility of creating a map with all layers

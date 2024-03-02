@@ -504,7 +504,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         if (hMiraMonLayerPOL.TopHeader.nElemCount)
         {
             CPLDebug("MiraMon",
-                     sprintf_UINT64 " polygons written in file %s.pol",
+                     sprintf_UINT64 " polygon(s) written in file %s.pol",
                      // The polygon 0 is not imported
                      hMiraMonLayerPOL.TopHeader.nElemCount - 1,
                      hMiraMonLayerPOL.pszSrcLayerName);
@@ -521,7 +521,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
             CPLDebug("MiraMon", "Error closing arcs layer");
         if (hMiraMonLayerARC.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", sprintf_UINT64 " arcs written in file %s.arc",
+            CPLDebug("MiraMon", sprintf_UINT64 " arc(s) written in file %s.arc",
                      hMiraMonLayerARC.TopHeader.nElemCount,
                      hMiraMonLayerARC.pszSrcLayerName);
         }
@@ -538,7 +538,8 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
             CPLDebug("MiraMon", "Error closing points layer");
         if (hMiraMonLayerPNT.TopHeader.nElemCount)
         {
-            CPLDebug("MiraMon", sprintf_UINT64 " points written in file %s.pnt",
+            CPLDebug("MiraMon",
+                     sprintf_UINT64 " point(s) written in file %s.pnt",
                      hMiraMonLayerPNT.TopHeader.nElemCount,
                      hMiraMonLayerPNT.pszSrcLayerName);
         }
@@ -1336,18 +1337,18 @@ OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
 
 {
     OGRErr eErr = OGRERR_NONE;
-    OGRGeometry *poGeom = OGRGeometry::FromHandle(hGeom);
+    OGRGeometry *poGeom = LOG_ACTION(OGRGeometry::FromHandle(hGeom));
 
     if (poGeom == nullptr)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
             "\nFeatures without geometry not supported by MiraMon writer.");
-        return OGRERR_FAILURE;
+        return LOG_ACTION(OGRERR_FAILURE);
     }
 
     if (poGeom->getGeometryType() == wkbUnknown)
-        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+        return LOG_ACTION(OGRERR_UNSUPPORTED_GEOMETRY_TYPE);
 
     // MUltigeometry field processing (just in case of a MG inside a MG)
     if (wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection)
@@ -1380,7 +1381,8 @@ OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
     }
 
     // Processing a simple geometry
-    return MMProcessGeometry(OGRGeometry::ToHandle(poGeom), poFeature, TRUE);
+    return LOG_ACTION(
+        MMProcessGeometry(OGRGeometry::ToHandle(poGeom), poFeature, TRUE));
 }
 
 /****************************************************************************/
@@ -1393,24 +1395,23 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
 {
     OGRErr eErr = OGRERR_NONE;
     OGRGeometry *poGeom = nullptr;
-
     if (hGeom)
     {
         poGeom = OGRGeometry::FromHandle(hGeom);
 
         // Translating types from GDAL to MiraMon
-        int eLT = poGeom->getGeometryType();
+        int eLT = LOG_ACTION(poGeom->getGeometryType());
         switch (wkbFlatten(eLT))
         {
             case wkbPoint:
-                phMiraMonLayer = &hMiraMonLayerPNT;
+                phMiraMonLayer = LOG_ACTION(&hMiraMonLayerPNT);
                 if (OGR_G_Is3D(hGeom))
                     phMiraMonLayer->eLT = MM_LayerType_Point3d;
                 else
                     phMiraMonLayer->eLT = MM_LayerType_Point;
                 break;
             case wkbLineString:
-                phMiraMonLayer = &hMiraMonLayerARC;
+                phMiraMonLayer = LOG_ACTION(&hMiraMonLayerARC);
                 if (OGR_G_Is3D(hGeom))
                     phMiraMonLayer->eLT = MM_LayerType_Arc3d;
                 else
@@ -1421,7 +1422,7 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
             case wkbPolyhedralSurface:
             case wkbTIN:
             case wkbTriangle:
-                phMiraMonLayer = &hMiraMonLayerPOL;
+                phMiraMonLayer = LOG_ACTION(&hMiraMonLayerPOL);
                 if (OGR_G_Is3D(hGeom))
                     phMiraMonLayer->eLT = MM_LayerType_Pol3d;
                 else
@@ -1441,7 +1442,7 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
     else
     {
         // Processing only the table. A DBF will be generated
-        phMiraMonLayer = &hMiraMonLayerReadOrNonGeom;
+        phMiraMonLayer = LOG_ACTION(&hMiraMonLayerReadOrNonGeom);
         phMiraMonLayer->eLT = MM_LayerType_Unknown;
     }
 
@@ -1449,7 +1450,6 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
     /*      Field translation from GDAL to MiraMon                          */
     /* -------------------------------------------------------------------- */
     // Reset the object where readed coordinates are going to be stored
-
     MMResetFeatureGeometry(&hMMFeature);
     if (bcalculateRecord)
     {
@@ -1475,7 +1475,9 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
 
     // Reads objects with coordinates and transform them to MiraMon
     if (poGeom)
+    {
         eErr = MMLoadGeometry(OGRGeometry::ToHandle(poGeom));
+    }
     else
     {
         if (!phMiraMonLayer->bIsBeenInit)
@@ -1488,7 +1490,6 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
     // Writes coordinates to the disk
     if (eErr == OGRERR_NONE)
         return MMWriteGeometry();
-
     CPLDebug("MiraMon", "Error in MMProcessGeometry()");
     return eErr;
 }
@@ -1512,25 +1513,26 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     /* -------------------------------------------------------------------- */
     /*      Write out the feature                                           */
     /* -------------------------------------------------------------------- */
-    OGRGeometry *poGeom = poFeature->GetGeometryRef();
+    OGRGeometry *poGeom = LOG_ACTION(poFeature->GetGeometryRef());
 
     // Processing a feature without geometry.
     if (poGeom == nullptr)
-        return MMProcessGeometry(nullptr, poFeature, TRUE);
+        return LOG_ACTION(MMProcessGeometry(nullptr, poFeature, TRUE));
 
     // At this point MiraMon does not support unkwnon type geometry
     if (poGeom->getGeometryType() == wkbUnknown)
-        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+        return LOG_ACTION(OGRERR_UNSUPPORTED_GEOMETRY_TYPE);
 
     // Converting to simple geometries
     if (wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection)
     {
-        int nGeom = OGR_G_GetGeometryCount(OGRGeometry::ToHandle(poGeom));
+        int nGeom =
+            LOG_ACTION(OGR_G_GetGeometryCount(OGRGeometry::ToHandle(poGeom)));
         for (int iGeom = 0; iGeom < nGeom; iGeom++)
         {
-            OGRGeometryH poNewGeometry =
-                OGR_G_GetGeometryRef(OGRGeometry::ToHandle(poGeom), iGeom);
-            eErr = MMProcessMultiGeometry(poNewGeometry, poFeature);
+            OGRGeometryH poNewGeometry = LOG_ACTION(
+                OGR_G_GetGeometryRef(OGRGeometry::ToHandle(poGeom), iGeom));
+            eErr = LOG_ACTION(MMProcessMultiGeometry(poNewGeometry, poFeature));
             if (eErr != OGRERR_NONE)
                 return eErr;
         }
@@ -1539,7 +1541,11 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     }
 
     // Processing the geometry
-    return MMProcessMultiGeometry(OGRGeometry::ToHandle(poGeom), poFeature);
+    eErr = LOG_ACTION(
+        MMProcessMultiGeometry(OGRGeometry::ToHandle(poGeom), poFeature));
+
+    poFeature->SetFID((GIntBig)hMMFeature.nReadFeatures);
+    return eErr;
 }
 
 /****************************************************************************/
@@ -1557,7 +1563,6 @@ OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
         MMInitLayerByType(phMiraMonLayer);
         phMiraMonLayer->bIsBeenInit = 1;
     }
-
     if (MMResize_MM_N_VERTICES_TYPE_Pointer(
             &hMMFeature.pNCoordRing, &hMMFeature.nMaxpNCoordRing,
             (MM_N_VERTICES_TYPE)hMMFeature.nNRings + 1, MM_MEAN_NUMBER_OF_RINGS,
@@ -1634,7 +1639,7 @@ OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom)
     /* -------------------------------------------------------------------- */
     int nGeom = OGR_G_GetGeometryCount(hGeom);
 
-    int eLT = wkbFlatten(OGR_G_GetGeometryType(hGeom));
+    int eLT = LOG_ACTION(wkbFlatten(OGR_G_GetGeometryType(hGeom)));
 
     if (eLT == wkbMultiPolygon || eLT == wkbPolyhedralSurface ||
         eLT == wkbTIN || eLT == wkbTriangle)
@@ -1669,6 +1674,7 @@ OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom)
     {
         // Reads all coordinates
         eErr = MMDumpVertices(hGeom, true, FALSE);
+
         if (eErr != OGRERR_NONE)
             return eErr;
     }

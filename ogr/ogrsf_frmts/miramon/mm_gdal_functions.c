@@ -47,7 +47,22 @@ CPL_C_START  // Necessary for compiling in GDAL project
 
 #define nullptr NULL
 
-    static const char MM_EmptyString[] = {""};
+    const char *MM_pszLogFilename = nullptr;
+
+// Loging
+const char *Log(const char *pszMsg, int nLineNumber)
+{
+    if (MM_pszLogFilename == nullptr)
+        return pszMsg;
+    FILE *f = fopen(MM_pszLogFilename, "at");
+    if (f == nullptr)
+        return pszMsg;
+    fprintf(f, "%d: %s\n", nLineNumber, pszMsg);
+    fclose(f);
+    return pszMsg;
+}
+
+static const char MM_EmptyString[] = {""};
 #define MM_SetEndOfString (*MM_EmptyString)
 static const char MM_BlankString[] = {" "};
 
