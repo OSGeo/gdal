@@ -108,7 +108,7 @@ Open options
 Dataset creation options
 ------------------------
 
--  .. lco:: SINGLE_LAYER
+-  .. dsco:: SINGLE_LAYER
       :choices: YES, NO
       :default: NO
 
