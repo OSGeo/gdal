@@ -2295,7 +2295,7 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         // the size of the FlatBuffer, but WKB might be a good approximation.
         // Takes an extra security margin of 10%
         flatbuffers::Offset<FlatGeobuf::Geometry> geometryOffset = 0;
-        if (ogrGeometry != nullptr)
+        if (ogrGeometry && !ogrGeometry->IsEmpty())
         {
             const auto nWKBSize = ogrGeometry->WkbSize();
             if (nWKBSize > feature_max_buffer_size - nWKBSize / 10)
