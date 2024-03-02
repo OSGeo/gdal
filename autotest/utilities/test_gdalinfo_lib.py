@@ -263,3 +263,16 @@ def test_gdalinfo_lib_json_projjson_no_epsg():
     ret = gdal.Info(ds, options="-json")
     assert ret["stac"]["proj:epsg"] is None
     assert ret["stac"]["proj:wkt2"] is not None
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/9337
+
+
+def test_gdalinfo_lib_json_proj_shape():
+
+    width = 2
+    height = 1
+    ds = gdal.GetDriverByName("MEM").Create("", width, height)
+    ret = gdal.Info(ds, options="-json")
+    assert ret["stac"]["proj:shape"] == [height, width]
