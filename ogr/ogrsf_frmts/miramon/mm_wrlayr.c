@@ -4139,6 +4139,9 @@ static int MMCreateFeaturePoint(struct MiraMonVectLayerInfo *hMiraMonLayer,
     MM_INTERNAL_FID nElemCount;
     int result;
 
+    if (!hMMFeature)
+        return MM_STOP_WRITING_FEATURES;
+
     if (hMiraMonLayer->TopHeader.bIs3d)
         pZ = hMMFeature->pZCoord;
 
@@ -5990,6 +5993,9 @@ static int MMAddFeatureRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
     MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord;
     MM_EXT_DBF_N_FIELDS nIField;
     struct MM_DATA_BASE_XP *pBD_XP = nullptr;
+
+    if (!hMMFeature)
+        return 1;
 
     pBD_XP = pMMAdmDB->pMMBDXP;
     for (nIRecord = 0; nIRecord < hMMFeature->nNumMRecords; nIRecord++)
