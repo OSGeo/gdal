@@ -3017,6 +3017,45 @@ def test_ogr_csv_read_header_with_line_break():
 
 
 ###############################################################################
+# Test geometry coordinate precision support
+
+
+@pytest.mark.parametrize("geometry_format", ["AS_WKT", "AS_XYZ"])
+def test_ogr_csv_geom_coord_precision(tmp_vsimem, geometry_format):
+
+    filename = str(tmp_vsimem / "test.csv")
+    ds = gdal.GetDriverByName("CSV").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    geom_fld = ogr.GeomFieldDefn("geometry", ogr.wkbUnknown)
+    prec = ogr.CreateGeomCoordinatePrecision()
+    prec.Set(1e-5, 1e-3, 1e-2)
+    geom_fld.SetCoordinatePrecision(prec)
+    lyr = ds.CreateLayerFromGeomFieldDefn(
+        "test", geom_fld, ["GEOMETRY=" + geometry_format]
+    )
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    assert prec.GetMResolution() == 1e-2
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt("POINT(1.23456789 2.34567891 9.87654321 -1.23456789)")
+    )
+    lyr.CreateFeature(f)
+    ds.Close()
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+
+    if geometry_format == "AS_WKT":
+        assert b"POINT ZM (1.23457 2.34568 9.877 -1.23)" in data
+    else:
+        assert b"1.23457,2.34568,9.877" in data
+
+
+###############################################################################
 
 
 if __name__ == "__main__":
