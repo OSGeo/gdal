@@ -34,6 +34,7 @@ from osgeo import gdal, ogr
 
 pytestmark = [
     pytest.mark.require_driver("Interlis 1"),
+    pytest.mark.require_driver("Interlis 2"),
     pytest.mark.random_order(disabled=True),
 ]
 
@@ -1197,3 +1198,22 @@ def test_ogr_interlis_arc2():
     for i in range(feat.GetGeomFieldCount()):
         geom = feat.GetGeomFieldRef(i)
         ogrtest.check_feature_geometry(geom, geom_field_values[i])
+
+
+###############################################################################
+# Test failure in creation of ILI2 dataset
+
+
+def test_ogr_interlis2_create_file_error():
+
+    with pytest.raises(
+        Exception, match="model file not specified in destination filename"
+    ):
+        ogr.GetDriverByName("Interlis 2").CreateDataSource("tmp/out.xtf")
+
+    with pytest.raises(
+        Exception, match="Failed to create XTF file /i_do/not/exist/out.xtf"
+    ):
+        ogr.GetDriverByName("Interlis 2").CreateDataSource(
+            "/i_do/not/exist/out.xtf,data/ili/ch.bazl.sicherheitszonenplan.oereb_20131118.imd"
+        )
