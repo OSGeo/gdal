@@ -115,6 +115,9 @@ typedef struct
 #ifdef STRIPBYTECOUNTSORTED_UNUSED
     int td_stripbytecountsorted; /* is the bytecount array sorted ascending? */
 #endif
+    /* Be aware that the parameters of td_stripoffset_entry and
+     * td_stripbytecount_entry are swapped but tdir_offset is not
+     * and has to be swapped when used. */
     TIFFDirEntry td_stripoffset_entry;    /* for deferred loading */
     TIFFDirEntry td_stripbytecount_entry; /* for deferred loading */
     uint16_t td_nsubifd;

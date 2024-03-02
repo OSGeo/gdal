@@ -159,14 +159,20 @@ struct tiff
         TIFFHeaderClassic classic;
         TIFFHeaderBig big;
     } tif_header;
-    uint16_t tif_header_size;  /* file's header block and its length */
-    uint32_t tif_row;          /* current scanline */
-    tdir_t tif_curdir;         /* current directory (index) */
-    uint32_t tif_curstrip;     /* current strip for read/write */
-    uint64_t tif_curoff;       /* current offset for read/write */
-    uint64_t tif_lastvalidoff; /* last valid offset allowed for rewrite in
-                                  place. Used only by TIFFAppendToStrip() */
-    uint64_t tif_dataoff;      /* current offset for writing dir */
+    uint16_t tif_header_size;       /* file's header block and its length */
+    uint32_t tif_row;               /* current scanline */
+    tdir_t tif_curdir;              /* current directory (index) */
+    uint32_t tif_curstrip;          /* current strip for read/write */
+    uint64_t tif_curoff;            /* current offset for read/write */
+    uint64_t tif_lastvalidoff;      /* last valid offset allowed for rewrite in
+                                       place. Used only by TIFFAppendToStrip() */
+    uint64_t tif_dataoff;           /* current offset for writing dir */
+    uint64_t tif_dirdatasize_write; /* auxiliary for evaluating size of IFD data
+                                       to be written */
+    uint64_t tif_dirdatasize_read;  /* auxiliary for evaluating size of IFD data
+                                       read from file */
+    uint64_t tif_dirdatasize_Nread; /* auxiliary for counting IFD entries read
+                                       from file */
     /* SubIFD support */
     uint16_t tif_nsubifd;   /* remaining subifds to write */
     uint64_t tif_subifdoff; /* offset for patching SubIFD link */
