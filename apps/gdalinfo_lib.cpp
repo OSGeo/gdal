@@ -342,19 +342,33 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
 
     if (bJson)
     {
-        json_object *poSize = json_object_new_array();
-        json_object *poSizeX =
-            json_object_new_int(GDALGetRasterXSize(hDataset));
-        json_object *poSizeY =
-            json_object_new_int(GDALGetRasterYSize(hDataset));
+        {
+            json_object *poSize = json_object_new_array();
+            json_object *poSizeX =
+                json_object_new_int(GDALGetRasterXSize(hDataset));
+            json_object *poSizeY =
+                json_object_new_int(GDALGetRasterYSize(hDataset));
 
-        json_object_array_add(poSize, poSizeX);
-        json_object_array_add(poSize, poSizeY);
+            // size is X, Y ordered
+            json_object_array_add(poSize, poSizeX);
+            json_object_array_add(poSize, poSizeY);
 
-        json_object *poStacSize = nullptr;
-        json_object_deep_copy(poSize, &poStacSize, nullptr);
-        json_object_object_add(poJsonObject, "size", poSize);
-        json_object_object_add(poStac, "proj:shape", poStacSize);
+            json_object_object_add(poJsonObject, "size", poSize);
+        }
+
+        {
+            json_object *poStacSize = json_object_new_array();
+            json_object *poSizeX =
+                json_object_new_int(GDALGetRasterXSize(hDataset));
+            json_object *poSizeY =
+                json_object_new_int(GDALGetRasterYSize(hDataset));
+
+            // ... but ... proj:shape is Y, X ordered.
+            json_object_array_add(poStacSize, poSizeY);
+            json_object_array_add(poStacSize, poSizeX);
+
+            json_object_object_add(poStac, "proj:shape", poStacSize);
+        }
     }
     else
     {
