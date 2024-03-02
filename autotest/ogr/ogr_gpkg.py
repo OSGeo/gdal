@@ -10140,3 +10140,101 @@ def test_ogr_gpkg_creation_with_foreign_key_constraint_enabled(tmp_vsimem):
     with gdaltest.config_option("OGR_SQLITE_PRAGMA", "FOREIGN_KEYS=1"):
         out_filename = str(tmp_vsimem / "out.gpkg")
         gdal.VectorTranslate(out_filename, "data/poly.shp")
+
+
+###############################################################################
+# Test geometry coordinate precision support
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("with_metadata", [True, False])
+def test_ogr_gpkg_geom_coord_precision(tmp_vsimem, with_metadata):
+
+    filename = str(tmp_vsimem / "test.gpkg")
+    ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    geom_fld = ogr.GeomFieldDefn("my_geom", ogr.wkbUnknown)
+    prec = ogr.CreateGeomCoordinatePrecision()
+    prec.Set(1e-5, 1e-3, 1e-2)
+    geom_fld.SetCoordinatePrecision(prec)
+    lyr = ds.CreateLayerFromGeomFieldDefn("test", geom_fld)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    assert prec.GetMResolution() == 1e-2
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POINT ZM (1.23456789 2.34567891 9.87654321 -1.23456789)"
+        )
+    )
+    lyr.CreateFeature(f)
+    if with_metadata:
+        lyr.SetMetadataItem("FOO", "BAR")
+    ds.Close()
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    assert prec.GetMResolution() == 1e-2
+    assert ds.GetMetadata() == {}
+    assert lyr.GetMetadata() == ({"FOO": "BAR"} if with_metadata else {})
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetX(0) == pytest.approx(1.23456789, abs=1e-5)
+    assert g.GetX(0) != pytest.approx(1.23456789, abs=1e-8)
+    assert g.GetY(0) == pytest.approx(2.34567891, abs=1e-5)
+    assert g.GetZ(0) == pytest.approx(9.87654321, abs=1e-3)
+    assert g.GetZ(0) != pytest.approx(9.87654321, abs=1e-8)
+    assert g.GetM(0) == pytest.approx(-1.23456789, abs=1e-2)
+    assert g.GetM(0) != pytest.approx(-1.23456789, abs=1e-8)
+
+    # Update geometry to check existing precision settings are used
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POINT ZM (-1.23456789 -2.34567891 -9.87654321 1.23456789)"
+        )
+    )
+    lyr.SetFeature(f)
+
+    lyr.SetMetadataItem("FOO", "BAZ")
+
+    new_geom_field_defn = ogr.GeomFieldDefn("new_geom_name", ogr.wkbNone)
+    assert (
+        lyr.AlterGeomFieldDefn(
+            0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_NAME_FLAG
+        )
+        == ogr.OGRERR_NONE
+    )
+
+    assert lyr.Rename("test_renamed") == ogr.OGRERR_NONE
+
+    ds.Close()
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    assert prec.GetMResolution() == 1e-2
+    assert lyr.GetMetadata() == {"FOO": "BAZ"}
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetX(0) == pytest.approx(-1.23456789, abs=1e-5)
+    assert g.GetX(0) != pytest.approx(-1.23456789, abs=1e-8)
+    assert g.GetY(0) == pytest.approx(-2.34567891, abs=1e-5)
+    assert g.GetZ(0) == pytest.approx(-9.87654321, abs=1e-3)
+    assert g.GetZ(0) != pytest.approx(-9.87654321, abs=1e-8)
+    assert g.GetM(0) == pytest.approx(1.23456789, abs=1e-2)
+    assert g.GetM(0) != pytest.approx(1.23456789, abs=1e-8)
+
+    ds.DeleteLayer(0)
+
+    with ds.ExecuteSQL("SELECT * FROM gpkg_metadata") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    ds.Close()

@@ -745,6 +745,8 @@ void RegisterOGRGeoPackage()
         GDAL_DMD_RELATIONSHIP_RELATED_TABLE_TYPES,
         "features media simple_attributes attributes tiles");
 
+    poDriver->SetMetadataItem(GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION, "YES");
+
 #ifdef ENABLE_SQL_GPKG_FORMAT
     poDriver->SetMetadataItem("ENABLE_SQL_GPKG_FORMAT", "YES");
 #endif

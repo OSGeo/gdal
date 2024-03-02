@@ -632,6 +632,34 @@ Update of an existing file is not supported.
 Creation involves the creation of a temporary file. Sufficiently large files
 will be automatically compressed using the SOZip optimization.
 
+Geometry coordinate precision
+-----------------------------
+
+.. versionadded:: GDAL 3.9
+
+The GeoPackage driver supports reading and writing the geometry coordinate
+precision, using the :cpp:class:`OGRGeomCoordinatePrecision` settings of the
+:cpp:class:`OGRGeomFieldDefn`, as well as setting to zero the less-significant
+bits which are not relevant for the requested precision. This can improve
+further lossless compression stages, for example when putting a GeoPackage in
+an archive.
+
+Implementation details: the coordinate precision is stored in a record in each
+of the ``gpkg_metadata`` and ``gpkg_metadata_reference`` table, with the
+following additional constraints on top of the ones imposed by the GeoPackage
+specification:
+
+- gpkg_metadata.md_standard_uri = 'http://gdal.org'
+- gpkg_metadata.mime_type = 'text/xml'
+- gpkg_metadata.metadata = '<CoordinatePrecision xy_resolution="{xy_resolution}" z_resolution="{z_resolution}" m_resolution="{m_resolution}" />'
+- gpkg_metadata_reference.reference_scope = 'column'
+- gpkg_metadata_reference.table_name = '{table_name}'
+- gpkg_metadata_reference.column_name = '{geometry_column_name}'
+
+Note that the xy_resolution, z_resolution or m_resolution attributes of the
+XML CoordinatePrecision element are optional. Their numeric value is expressed
+in the units of the SRS for xy_resolution and z_resolution.
+
 .. _target_drivers_vector_gpkg_performance_hints:
 
 Performance hints

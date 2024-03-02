@@ -646,6 +646,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     int m_iSrs = 0;
     int m_nZFlag = 0;
     int m_nMFlag = 0;
+    OGRGeomCoordinateBinaryPrecision m_sBinaryPrecision{};
     OGREnvelope *m_poExtent = nullptr;
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     GIntBig m_nTotalFeatureCount = -1;
@@ -886,6 +887,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     void SetCreationParameters(OGRwkbGeometryType eGType,
                                const char *pszGeomColumnName, int bGeomNullable,
                                OGRSpatialReference *poSRS,
+                               const OGRGeomCoordinatePrecision &oCoordPrec,
                                const char *pszFIDColumnName,
                                const char *pszIdentifier,
                                const char *pszDescription);
