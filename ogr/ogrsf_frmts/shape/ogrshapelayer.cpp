@@ -3458,7 +3458,7 @@ OGRErr OGRShapeLayer::ResizeDBF()
             }
             else
             {
-                poFieldDefn->SetWidth(panBestWidth[j]);
+                whileUnsealing(poFieldDefn)->SetWidth(panBestWidth[j]);
             }
         }
     }
