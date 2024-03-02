@@ -1169,7 +1169,8 @@ static bool DBFIsValueNULL(char chType, const char *pszValue)
 /*      Contributed by Jim Matthews.                                    */
 /************************************************************************/
 
-int SHPAPI_CALL DBFIsAttributeNULL(DBFHandle psDBF, int iRecord, int iField)
+int SHPAPI_CALL DBFIsAttributeNULL(const DBFHandle psDBF, int iRecord,
+                                   int iField)
 {
     const char *pszValue = DBFReadStringAttribute(psDBF, iRecord, iField);
 
@@ -1185,7 +1186,7 @@ int SHPAPI_CALL DBFIsAttributeNULL(DBFHandle psDBF, int iRecord, int iField)
 /*      Return the number of fields in this table.                      */
 /************************************************************************/
 
-int SHPAPI_CALL DBFGetFieldCount(DBFHandle psDBF)
+int SHPAPI_CALL DBFGetFieldCount(const DBFHandle psDBF)
 {
     return (psDBF->nFields);
 }
@@ -1196,7 +1197,7 @@ int SHPAPI_CALL DBFGetFieldCount(DBFHandle psDBF)
 /*      Return the number of records in this table.                     */
 /************************************************************************/
 
-int SHPAPI_CALL DBFGetRecordCount(DBFHandle psDBF)
+int SHPAPI_CALL DBFGetRecordCount(const DBFHandle psDBF)
 {
     return (psDBF->nRecords);
 }
@@ -1209,7 +1210,7 @@ int SHPAPI_CALL DBFGetRecordCount(DBFHandle psDBF)
 /*      bytes long.                                                     */
 /************************************************************************/
 
-DBFFieldType SHPAPI_CALL DBFGetFieldInfo(DBFHandle psDBF, int iField,
+DBFFieldType SHPAPI_CALL DBFGetFieldInfo(const DBFHandle psDBF, int iField,
                                          char *pszFieldName, int *pnWidth,
                                          int *pnDecimals)
 {
@@ -1621,7 +1622,8 @@ const char SHPAPI_CALL1(*) DBFReadTuple(DBFHandle psDBF, int hEntity)
 /*      Read one of the attribute fields of a record.                   */
 /************************************************************************/
 
-DBFHandle SHPAPI_CALL DBFCloneEmpty(DBFHandle psDBF, const char *pszFilename)
+DBFHandle SHPAPI_CALL DBFCloneEmpty(const DBFHandle psDBF,
+                                    const char *pszFilename)
 {
     DBFHandle newDBF = DBFCreateEx(pszFilename, psDBF->pszCodePage);
     if (newDBF == SHPLIB_NULLPTR)
@@ -1680,7 +1682,7 @@ DBFHandle SHPAPI_CALL DBFCloneEmpty(DBFHandle psDBF, const char *pszFilename)
 /*                           'M' (Memo: 10 digits .DBT block ptr)       */
 /************************************************************************/
 
-char SHPAPI_CALL DBFGetNativeFieldType(DBFHandle psDBF, int iField)
+char SHPAPI_CALL DBFGetNativeFieldType(const DBFHandle psDBF, int iField)
 {
     if (iField >= 0 && iField < psDBF->nFields)
         return psDBF->pachFieldType[iField];
@@ -1696,7 +1698,8 @@ char SHPAPI_CALL DBFGetNativeFieldType(DBFHandle psDBF, int iField)
 /*      Contributed by Jim Matthews.                                    */
 /************************************************************************/
 
-int SHPAPI_CALL DBFGetFieldIndex(DBFHandle psDBF, const char *pszFieldName)
+int SHPAPI_CALL DBFGetFieldIndex(const DBFHandle psDBF,
+                                 const char *pszFieldName)
 {
     char name[XBASE_FLDNAME_LEN_READ + 1];
 
@@ -1716,7 +1719,7 @@ int SHPAPI_CALL DBFGetFieldIndex(DBFHandle psDBF, const char *pszFieldName)
 /*      it returns FALSE.                                               */
 /************************************************************************/
 
-int SHPAPI_CALL DBFIsRecordDeleted(DBFHandle psDBF, int iShape)
+int SHPAPI_CALL DBFIsRecordDeleted(const DBFHandle psDBF, int iShape)
 {
     /* -------------------------------------------------------------------- */
     /*      Verify selection.                                               */
@@ -1779,7 +1782,7 @@ int SHPAPI_CALL DBFMarkRecordDeleted(DBFHandle psDBF, int iShape,
 /*                            DBFGetCodePage                            */
 /************************************************************************/
 
-const char SHPAPI_CALL1(*) DBFGetCodePage(DBFHandle psDBF)
+const char SHPAPI_CALL1(*) DBFGetCodePage(const DBFHandle psDBF)
 {
     if (psDBF == SHPLIB_NULLPTR)
         return SHPLIB_NULLPTR;
