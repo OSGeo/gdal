@@ -400,7 +400,6 @@ def test_ogr_rfc41_6():
     geomfield = ogr.GeomFieldDefn("geomfield", ogr.wkbPolygon)
     geomfield.SetSpatialRef(sr)
     lyr.CreateGeomField(geomfield)
-    lyr.GetLayerDefn().GetGeomFieldDefn(0).SetName("geomfield")
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("wkt", ogr.OFTString))
     feat = ogr.Feature(lyr.GetLayerDefn())

@@ -181,9 +181,8 @@ void OGRGeomFieldDefn::SetName(const char *pszNameIn)
 {
     if (m_bSealed)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "OGRGeomFieldDefn::SetComment() not allowed on a sealed object");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRGeomFieldDefn::SetName() not allowed on a sealed object");
         return;
     }
     if (pszName != pszNameIn)
