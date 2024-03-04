@@ -513,6 +513,34 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
     poProps->bNullable =
         CPLTestBool(CPLGetXMLValue(psNode, "nullable", "TRUE"));
 
+    if (GetSrcLayerDefn()->GetGeomFieldCount() == 1)
+    {
+        poProps->sCoordinatePrecision =
+            GetSrcLayerDefn()->GetGeomFieldDefn(0)->GetCoordinatePrecision();
+    }
+    else if (poProps->eGeometryStyle == VGS_Direct && poProps->iGeomField >= 0)
+    {
+        poProps->sCoordinatePrecision =
+            GetSrcLayerDefn()
+                ->GetGeomFieldDefn(poProps->iGeomField)
+                ->GetCoordinatePrecision();
+    }
+    if (const char *pszXYResolution =
+            CPLGetXMLValue(psNode, "XYResolution", nullptr))
+    {
+        poProps->sCoordinatePrecision.dfXYResolution = CPLAtof(pszXYResolution);
+    }
+    if (const char *pszZResolution =
+            CPLGetXMLValue(psNode, "ZResolution", nullptr))
+    {
+        poProps->sCoordinatePrecision.dfZResolution = CPLAtof(pszZResolution);
+    }
+    if (const char *pszMResolution =
+            CPLGetXMLValue(psNode, "MResolution", nullptr))
+    {
+        poProps->sCoordinatePrecision.dfMResolution = CPLAtof(pszMResolution);
+    }
+
     return true;
 }
 
@@ -811,6 +839,8 @@ try_again:
                                     apoGeomFieldProps[i]->eGeomType);
         oFieldDefn.SetSpatialRef(apoGeomFieldProps[i]->poSRS);
         oFieldDefn.SetNullable(apoGeomFieldProps[i]->bNullable);
+        oFieldDefn.SetCoordinatePrecision(
+            apoGeomFieldProps[i]->sCoordinatePrecision);
         poFeatureDefn->AddGeomFieldDefn(&oFieldDefn);
     }
 

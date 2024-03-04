@@ -3330,3 +3330,31 @@ def test_ogr_vrt_field_names_same_case():
     f = lyr.GetNextFeature()
     assert f["id"] == "foo"
     assert f["id_from_uc"] == "bar"
+
+
+###############################################################################
+# Test geometry coordinate precision support
+
+
+def test_ogr_vrt_geom_coordinate_precision():
+
+    ds = ogr.Open(
+        """<OGRVRTDataSource>
+  <OGRVRTLayer name="poly">
+    <SrcDataSource>data/poly.shp</SrcDataSource>
+    <GeometryField>
+        <GeometryType>wkbPolygon</GeometryType>
+        <XYResolution>1e-5</XYResolution>
+        <ZResolution>1e-3</ZResolution>
+        <MResolution>1e-2</MResolution>
+    </GeometryField>
+  </OGRVRTLayer>
+</OGRVRTDataSource>
+"""
+    )
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    assert prec.GetMResolution() == 1e-2
