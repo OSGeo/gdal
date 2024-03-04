@@ -2075,7 +2075,11 @@ OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
     if (eType != wkbNone)
     {
         auto poGeomFieldDefn = poLayer->GetLayerDefn()->GetGeomFieldDefn(0);
-        poGeomFieldDefn->SetName("geometryProperty");
+        const char *pszGeomFieldName = poSrcGeomFieldDefn->GetNameRef();
+        if (!pszGeomFieldName || pszGeomFieldName[0] == 0)
+            pszGeomFieldName = "geometryProperty";
+        poGeomFieldDefn->SetName(pszGeomFieldName);
+        poGeomFieldDefn->SetNullable(poSrcGeomFieldDefn->IsNullable());
         if (poSRS != nullptr)
         {
             auto poSRSClone = poSRS->Clone();

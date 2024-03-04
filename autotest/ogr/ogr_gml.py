@@ -4252,10 +4252,11 @@ def test_ogr_gml_geom_coord_precision(tmp_vsimem):
 
     filename = str(tmp_vsimem / "test.gml")
     ds = gdal.GetDriverByName("GML").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
-    geom_fld = ogr.GeomFieldDefn("geometry", ogr.wkbUnknown)
+    geom_fld = ogr.GeomFieldDefn("my_geom_field", ogr.wkbUnknown)
     prec = ogr.CreateGeomCoordinatePrecision()
     prec.Set(1e-5, 1e-3, 0)
     geom_fld.SetCoordinatePrecision(prec)
+    geom_fld.SetNullable(False)
     lyr = ds.CreateLayerFromGeomFieldDefn("test", geom_fld)
     geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
     prec = geom_fld.GetCoordinatePrecision()
@@ -4306,6 +4307,8 @@ def test_ogr_gml_geom_coord_precision(tmp_vsimem):
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
     geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    assert geom_fld.GetName() == "my_geom_field"
+    assert not geom_fld.IsNullable()
     prec = geom_fld.GetCoordinatePrecision()
     assert prec.GetXYResolution() == 1e-5
     assert prec.GetZResolution() == 1e-3
