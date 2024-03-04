@@ -3893,6 +3893,7 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
         !m_bUnsetFieldWidth && !m_bExplodeCollections && !m_pszZField &&
         m_bExactFieldNameMatch && !m_bForceNullable && !m_bResolveDomains &&
         !m_bUnsetDefault && psOptions->nFIDToFetch == OGRNullFID &&
+        psOptions->dfXYRes == OGRGeomCoordinatePrecision::UNKNOWN &&
         !psOptions->bMakeValid)
     {
         struct ArrowArrayStream streamSrc;
@@ -4328,11 +4329,13 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         if (psOptions->dfXYRes != OGRGeomCoordinatePrecision::UNKNOWN)
         {
             if (m_poDstDS->GetDriver()->GetMetadataItem(
-                    GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION) == nullptr)
+                    GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION) == nullptr &&
+                !OGRGeometryFactory::haveGEOS())
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "-xyRes specified, but driver does not expose the "
-                         "DCAP_HONOR_GEOM_COORDINATE_PRECISION capability");
+                         "DCAP_HONOR_GEOM_COORDINATE_PRECISION capability, "
+                         "and this build has no GEOS support");
             }
 
             oCoordPrec.dfXYResolution = psOptions->dfXYRes;
@@ -5789,6 +5792,8 @@ bool LayerTranslator::Translate(
     int nFeaturesInTransaction = 0;
     GIntBig nCount = 0; /* written + failed */
     GIntBig nFeaturesWritten = 0;
+    bool bRunSetPrecisionEvaluated = false;
+    bool bRunSetPrecision = false;
 
     bool bRet = true;
     CPLErrorReset();
@@ -6376,6 +6381,34 @@ bool LayerTranslator::Translate(
 
                         delete poDstGeometry;
                         poDstGeometry = poClipped.release();
+                    }
+
+                    if (psOptions->dfXYRes !=
+                            OGRGeomCoordinatePrecision::UNKNOWN &&
+                        OGRGeometryFactory::haveGEOS() &&
+                        !poDstGeometry->hasCurveGeometry())
+                    {
+                        // OGR_APPLY_GEOM_SET_PRECISION default value for
+                        // OGRLayer::CreateFeature() purposes, but here in the
+                        // ogr2ogr -xyRes context, we force calling SetPrecision(),
+                        // unless the user explicitly asks not to do it by
+                        // setting the config option to NO.
+                        if (!bRunSetPrecisionEvaluated)
+                        {
+                            bRunSetPrecisionEvaluated = true;
+                            bRunSetPrecision = CPLTestBool(CPLGetConfigOption(
+                                "OGR_APPLY_GEOM_SET_PRECISION", "YES"));
+                        }
+                        if (bRunSetPrecision)
+                        {
+                            OGRGeometry *poRoundedGeom =
+                                poDstGeometry->SetPrecision(psOptions->dfXYRes,
+                                                            /* nFlags = */ 0);
+                            delete poDstGeometry;
+                            poDstGeometry = poRoundedGeom;
+                            if (!poDstGeometry)
+                                goto end_loop;
+                        }
                     }
 
                     if (m_bMakeValid)

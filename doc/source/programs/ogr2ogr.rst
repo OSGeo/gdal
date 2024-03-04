@@ -265,6 +265,13 @@ output coordinate system or even reprojecting the features during translation.
     is specified, it is assumed to be expressed in the units of the target SRS.
     The m, mm or deg suffixes can be specified to indicate that the value must be
     interpreted as being in metre, millimeter or degree.
+
+    When specifying this option, the :cpp:func:`OGRGeometry::SetPrecision`
+    method is run on geometries (that are not curves) before passing them to the
+    output driver, to avoid generating invalid geometries due to the potentially
+    reduced precision (unless the :config:`OGR_APPLY_GEOM_SET_PRECISION`
+    configuration option is set to ``NO``)
+
     If neither this option nor :option:`-unsetCoordPrecision` are specified, the
     coordinate resolution of the source layer, if available, is used.
 

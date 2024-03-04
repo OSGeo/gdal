@@ -2619,3 +2619,23 @@ def test_ogr2ogr_lib_coordinate_precision(tmp_vsimem):
     assert prec.GetZResolution() == 0
     assert prec.GetMResolution() == 0
     ds.Close()
+
+
+###############################################################################
+
+
+def test_ogr2ogr_lib_coordinate_precision_with_geom():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (1 1,9 9)"))
+    src_lyr.CreateFeature(f)
+
+    out_ds = gdal.VectorTranslate("", src_ds, format="Memory", xyRes=10)
+    out_lyr = out_ds.GetLayer(0)
+    f = out_lyr.GetNextFeature()
+    if ogr.GetGEOSVersionMajor() > 0:
+        assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (0 0,10 10)"
+    else:
+        assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,9 9)"
