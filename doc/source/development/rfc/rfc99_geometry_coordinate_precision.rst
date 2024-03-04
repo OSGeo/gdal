@@ -230,6 +230,53 @@ New corresponding C API:
     void CPL_DLL OGR_GFld_SetCoordinatePrecision(OGRGeomFieldDefnH,
                                                  OGRGeomCoordinatePrecisionH);
 
+OGRGeometry class
++++++++++++++++++
+
+The existing :cpp:class:`OGRGeometry` is extended with the following new
+method which is a wrapper of the ``GEOSGeom_setPrecision_r`` function:
+
+.. code-block:: c++
+
+    /** Set the geometry's precision, rounding all its coordinates to the precision
+     * grid.
+     *
+     * This function is built on the GEOS library, check it for the definition
+     * of the geometry operation.
+     * If OGR is built without the GEOS library, this function will always fail,
+     * issuing a CPLE_NotSupported error.
+     *
+     * @param dfGridSize size of the precision grid, or 0 for FLOATING
+     *                 precision.
+     * @param nFlags The bitwise OR of zero, one or several of OGR_GEOS_PREC_NO_TOPO
+     *               and OGR_GEOS_PREC_KEEP_COLLAPSED
+     *
+     * @return a new geometry or NULL if an error occurs.
+     */
+
+    OGRGeometry *OGRGeometry::SetPrecision(double dfGridSize, int nFlags) const;
+
+New corresponding C API:
+
+.. code-block:: c
+
+    /** This option causes OGR_G_SetPrecision()
+      * to not attempt at preserving the topology */
+    #define OGR_GEOS_PREC_NO_TOPO (1 << 0)
+
+    /** This option causes OGR_G_SetPrecision()
+      * to retain collapsed elements */
+    #define OGR_GEOS_PREC_KEEP_COLLAPSED (1 << 1)
+
+    OGRGeometryH OGR_G_SetPrecision(OGRGeometryH, double dfGridSize, int nFlags);
+
+
+Note that this method is not automatically run by the writing side of drivers,
+which assume that the passed geometries are valid once rounded with the specified
+coordinate precision metadata.
+
+However it is invoked when the `-xyRes` switch of ogr2ogr is passed.
+
 WKB export
 ++++++++++
 
