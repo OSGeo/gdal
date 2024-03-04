@@ -3530,6 +3530,12 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
     MM_BOOLEAN bReverseArc;
     int prevCoord = -1;
 
+    if (!hMMFeature)
+        return MM_FATAL_ERROR_WRITING_FEATURES;
+
+    if (!hMMFeature->pCoord)
+        return MM_FATAL_ERROR_WRITING_FEATURES;
+
     // Setting pointer to 3D structure (if exists).
     if (hMiraMonLayer->TopHeader.bIs3d)
         pZ = hMMFeature->pZCoord;
@@ -5524,50 +5530,90 @@ int MMCheck_REL_FILE(char *szREL_file)
     // Vers>=4?
     pszLine =
         MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO, KEY_Vers);
-    if (*pszLine == '\0' || atoi(pszLine) < (int)MM_VERS)
+    if (pszLine)
+    {
+        if (*pszLine == '\0' || atoi(pszLine) < (int)MM_VERS)
+        {
+            MMCPLError(CE_Failure, CPLE_OpenFailed,
+                       "The file \"%s\" must have %s>=%d.", szREL_file,
+                       KEY_Vers, MM_VERS);
+            return 1;
+        }
+        free_function(pszLine);
+    }
+    else
     {
         MMCPLError(CE_Failure, CPLE_OpenFailed,
                    "The file \"%s\" must have %s>=%d.", szREL_file, KEY_Vers,
                    MM_VERS);
         return 1;
     }
-    free_function(pszLine);
 
     // SubVers>=3?
     pszLine = MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO,
                                               KEY_SubVers);
-    if (*pszLine == '\0' || atoi(pszLine) < (int)MM_SUBVERS)
+    if (pszLine)
+    {
+        if (*pszLine == '\0' || atoi(pszLine) < (int)MM_SUBVERS)
+        {
+            MMCPLError(CE_Failure, CPLE_OpenFailed,
+                       "The file \"%s\" must have %s>=%d.", szREL_file,
+                       KEY_SubVers, MM_SUBVERS);
+            return 1;
+        }
+        free_function(pszLine);
+    }
+    else
     {
         MMCPLError(CE_Failure, CPLE_OpenFailed,
                    "The file \"%s\" must have %s>=%d.", szREL_file, KEY_SubVers,
                    MM_SUBVERS);
         return 1;
     }
-    free_function(pszLine);
 
     // VersMetaDades>=5?
     pszLine = MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO,
                                               KEY_VersMetaDades);
-    if (*pszLine == '\0' || atoi(pszLine) < (int)MM_VERS_METADADES)
+    if (pszLine)
+    {
+        if (*pszLine == '\0' || atoi(pszLine) < (int)MM_VERS_METADADES)
+        {
+            MMCPLError(CE_Failure, CPLE_OpenFailed,
+                       "The file \"%s\" must have %s>=%d.", szREL_file,
+                       KEY_VersMetaDades, MM_VERS_METADADES);
+            return 1;
+        }
+        free_function(pszLine);
+    }
+    else
     {
         MMCPLError(CE_Failure, CPLE_OpenFailed,
                    "The file \"%s\" must have %s>=%d.", szREL_file,
                    KEY_VersMetaDades, MM_VERS_METADADES);
         return 1;
     }
-    free_function(pszLine);
 
     // SubVersMetaDades>=0?
     pszLine = MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO,
                                               KEY_SubVersMetaDades);
-    if (*pszLine == '\0' || atoi(pszLine) < (int)MM_SUBVERS_METADADES)
+    if (pszLine)
+    {
+        if (*pszLine == '\0' || atoi(pszLine) < (int)MM_SUBVERS_METADADES)
+        {
+            MMCPLError(CE_Failure, CPLE_OpenFailed,
+                       "The file \"%s\" must have %s>=%d.", szREL_file,
+                       KEY_SubVersMetaDades, MM_SUBVERS_METADADES);
+            return 1;
+        }
+        free_function(pszLine);
+    }
+    else
     {
         MMCPLError(CE_Failure, CPLE_OpenFailed,
                    "The file \"%s\" must have %s>=%d.", szREL_file,
                    KEY_SubVersMetaDades, MM_SUBVERS_METADADES);
         return 1;
     }
-    free_function(pszLine);
     return 0;
 }
 
