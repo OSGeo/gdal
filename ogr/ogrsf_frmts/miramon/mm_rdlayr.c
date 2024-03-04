@@ -60,6 +60,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
                       FILE_TYPE *m_fp, const char *pszFilename)
 {
     char szResult[MM_MAX_ID_SNY + 10];
+    char *pszSRS;
 
     memset(hMiraMonLayer, 0, sizeof(*hMiraMonLayer));
     if (MMReadHeader(m_fp, &hMiraMonLayer->TopHeader))
@@ -143,17 +144,26 @@ CPL_C_START  // Necessary for compiling in GDAL project
     hMiraMonLayer->bIsBeenInit = 1;
 
     // Get the basic metadata
-    hMiraMonLayer->pSRS = strdup(MMReturnValueFromSectionINIFile(
+    pszSRS = MMReturnValueFromSectionINIFile(
         hMiraMonLayer->pszMainREL_LayerName,
-        "SPATIAL_REFERENCE_SYSTEM:HORIZONTAL", "HorizontalSystemIdentifier"));
+        "SPATIAL_REFERENCE_SYSTEM:HORIZONTAL", "HorizontalSystemIdentifier");
+    if (pszSRS)
+        hMiraMonLayer->pSRS = strdup_function(pszSRS);
+    else
+        hMiraMonLayer->pSRS = nullptr;
 
     if (!hMiraMonLayer->pSRS && hMiraMonLayer->bIsPolygon)
     {
-        hMiraMonLayer->pSRS = strdup(MMReturnValueFromSectionINIFile(
+        pszSRS = MMReturnValueFromSectionINIFile(
             hMiraMonLayer->MMPolygon.MMArc.pszREL_LayerName,
             "SPATIAL_REFERENCE_SYSTEM:HORIZONTAL",
-            "HorizontalSystemIdentifier"));
+            "HorizontalSystemIdentifier");
+
+        hMiraMonLayer->pSRS = strdup_function(pszSRS);
     }
+    else
+        hMiraMonLayer->pSRS = nullptr;
+
     if (!ReturnEPSGCodeSRSFromMMIDSRS(hMiraMonLayer->pSRS, szResult))
     {
         if (MMIsEmptyString(szResult))
