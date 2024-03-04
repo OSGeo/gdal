@@ -695,19 +695,16 @@ OGRLayer *FGdbDataSource::GetLayer(int iLayer)
 /* See FGdbLayer::Create for creation options                           */
 /************************************************************************/
 
-OGRLayer *FGdbDataSource::ICreateLayer(const char *pszLayerName,
-                                       const OGRGeomFieldDefn *poGeomFieldDefn,
-                                       CSLConstList papszOptions)
+OGRLayer *
+FGdbDataSource::ICreateLayer(const char *pszLayerName,
+                             const OGRGeomFieldDefn *poSrcGeomFieldDefn,
+                             CSLConstList papszOptions)
 {
     if (!m_bUpdate || m_pGeodatabase == nullptr)
         return nullptr;
 
-    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
-    const auto poSRS =
-        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
-
     FGdbLayer *pLayer = new FGdbLayer();
-    if (!pLayer->Create(this, pszLayerName, poSRS, eType, papszOptions))
+    if (!pLayer->Create(this, pszLayerName, poSrcGeomFieldDefn, papszOptions))
     {
         delete pLayer;
         return nullptr;

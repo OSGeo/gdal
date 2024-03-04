@@ -165,11 +165,11 @@ class FGdbLayer final : public FGdbBaseLayer
                     const std::wstring &wstrTablePath,
                     const std::wstring &wstrType);
     bool Create(FGdbDataSource *pParentDataSource, const char *pszLayerName,
-                const OGRSpatialReference *poSRS, OGRwkbGeometryType eType,
+                const OGRGeomFieldDefn *poSrcGeomFieldDefn,
                 CSLConstList papszOptions);
     static bool CreateFeatureDataset(FGdbDataSource *pParentDataSource,
                                      const std::string &feature_dataset_name,
-                                     const OGRSpatialReference *poSRS,
+                                     const OGRGeomFieldDefn *poSrcGeomFieldDefn,
                                      CSLConstList papszOptions);
 
     // virtual const char *GetName();
@@ -252,9 +252,9 @@ class FGdbLayer final : public FGdbBaseLayer
 
   protected:
     bool GDBToOGRFields(CPLXMLNode *psFields);
-    bool ParseGeometryDef(CPLXMLNode *psGeometryDef);
+    bool ParseGeometryDef(const CPLXMLNode *psGeometryDef);
 
-    static bool ParseSpatialReference(CPLXMLNode *psSpatialRefNode,
+    static bool ParseSpatialReference(const CPLXMLNode *psSpatialRefNode,
                                       std::string *pOutWkt,
                                       std::string *pOutWKID,
                                       std::string *pOutLatestWKID);
