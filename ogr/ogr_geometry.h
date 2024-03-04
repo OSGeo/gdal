@@ -594,6 +594,8 @@ class CPL_DLL OGRGeometry
 
     virtual double Distance3D(const OGRGeometry *poOtherGeom) const;
 
+    OGRGeometry *SetPrecision(double dfGridSize, int nFlags) const;
+
     //! @cond Doxygen_Suppress
     // backward compatibility to non-standard method names.
     OGRBoolean Intersect(OGRGeometry *) const

@@ -295,6 +295,17 @@ OGRGeometryH CPL_DLL OGR_G_Normalize(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL OGR_G_IsSimple(OGRGeometryH);
 int CPL_DLL OGR_G_IsRing(OGRGeometryH);
 
+/** This option causes OGR_G_SetPrecision()
+  * to not attempt at preserving the topology */
+#define OGR_GEOS_PREC_NO_TOPO (1 << 0)
+
+/** This option causes OGR_G_SetPrecision()
+  * to retain collapsed elements */
+#define OGR_GEOS_PREC_KEEP_COLLAPSED (1 << 1)
+
+OGRGeometryH CPL_DLL OGR_G_SetPrecision(OGRGeometryH, double dfGridSize,
+                                        int nFlags) CPL_WARN_UNUSED_RESULT;
+
 OGRGeometryH CPL_DLL OGR_G_Polygonize(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
 
 /*! @cond Doxygen_Suppress */

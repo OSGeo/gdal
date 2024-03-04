@@ -6145,6 +6145,98 @@ OGRGeometryH OGR_G_SimplifyPreserveTopology(OGRGeometryH hThis,
 }
 
 /************************************************************************/
+/*                           SetPrecision()                             */
+/************************************************************************/
+
+/** Set the geometry's precision, rounding all its coordinates to the precision
+ * grid.
+ *
+ * Note that at time of writing GEOS does no supported curve geometries. So
+ * currently if this function is called on such a geometry, OGR will first call
+ * getLinearGeometry() on the input and getCurveGeometry() on the output, but
+ * that it is unlikely to yield to the expected result.
+ *
+ * This function is the same as the C function OGR_G_SetPrecision().
+ *
+ * This function is built on the GEOSGeom_setPrecision_r() function of the
+ * GEOS library. Check it for the definition of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param dfGridSize size of the precision grid, or 0 for FLOATING
+ *                 precision.
+ * @param nFlags The bitwise OR of zero, one or several of OGR_GEOS_PREC_NO_TOPO
+ *               and OGR_GEOS_PREC_KEEP_COLLAPSED
+ *
+ * @return a new geometry or NULL if an error occurs.
+ *
+ * @since GDAL 3.9
+ */
+
+OGRGeometry *OGRGeometry::SetPrecision(UNUSED_IF_NO_GEOS double dfGridSize,
+                                       UNUSED_IF_NO_GEOS int nFlags) const
+{
+#ifndef HAVE_GEOS
+    CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
+    return nullptr;
+
+#else
+    OGRGeometry *poOGRProduct = nullptr;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    if (hThisGeosGeom != nullptr)
+    {
+        GEOSGeom hGeosProduct = GEOSGeom_setPrecision_r(
+            hGEOSCtxt, hThisGeosGeom, dfGridSize, nFlags);
+        GEOSGeom_destroy_r(hGEOSCtxt, hThisGeosGeom);
+        poOGRProduct =
+            BuildGeometryFromGEOS(hGEOSCtxt, hGeosProduct, this, nullptr);
+    }
+    freeGEOSContext(hGEOSCtxt);
+    return poOGRProduct;
+
+#endif  // HAVE_GEOS
+}
+
+/************************************************************************/
+/*                         OGR_G_SetPrecision()                         */
+/************************************************************************/
+
+/** Set the geometry's precision, rounding all its coordinates to the precision
+ * grid.
+ *
+ * Note that at time of writing GEOS does no supported curve geometries. So
+ * currently if this function is called on such a geometry, OGR will first call
+ * getLinearGeometry() on the input and getCurveGeometry() on the output, but
+ * that it is unlikely to yield to the expected result.
+ *
+ * This function is the same as the C++ method OGRGeometry::SetPrecision().
+ *
+ * This function is built on the GEOSGeom_setPrecision_r() function of the
+ * GEOS library. Check it for the definition of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param hThis the geometry.
+ * @param dfGridSize size of the precision grid, or 0 for FLOATING
+ *                 precision.
+ * @param nFlags The bitwise OR of zero, one or several of OGR_GEOS_PREC_NO_TOPO
+ *               and OGR_GEOS_PREC_KEEP_COLLAPSED
+ *
+ * @return a new geometry or NULL if an error occurs.
+ *
+ * @since GDAL 3.9
+ */
+OGRGeometryH OGR_G_SetPrecision(OGRGeometryH hThis, double dfGridSize,
+                                int nFlags)
+{
+    VALIDATE_POINTER1(hThis, "OGR_G_SetPrecision", nullptr);
+    return OGRGeometry::ToHandle(
+        OGRGeometry::FromHandle(hThis)->SetPrecision(dfGridSize, nFlags));
+}
+
+/************************************************************************/
 /*                         DelaunayTriangulation()                      */
 /************************************************************************/
 

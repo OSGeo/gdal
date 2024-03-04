@@ -532,6 +532,9 @@ typedef void retGetPoints;
 
 %constant char *OLMD_FID64             = "OLMD_FID64";
 
+%constant int GEOS_PREC_NO_TOPO = 1;
+%constant int GEOS_PREC_KEEP_COLLAPSED = 2;
+
 #else
 typedef int OGRErr;
 
@@ -582,6 +585,9 @@ typedef int OGRErr;
 #define ODrCDeleteDataSource   "DeleteDataSource"
 
 #define OLMD_FID64             "OLMD_FID64"
+
+#define GEOS_PREC_NO_TOPO          1
+#define GEOS_PREC_KEEP_COLLAPSED   2
 
 #endif
 
@@ -3652,6 +3658,11 @@ public:
   %newobject MakeValid;
   OGRGeometryShadow* MakeValid( char** options = NULL ) {
     return (OGRGeometryShadow*) OGR_G_MakeValidEx(self, options);
+  }
+
+  %newobject SetPrecision;
+  OGRGeometryShadow* SetPrecision(double gridSize, int flags = 0) {
+    return (OGRGeometryShadow*) OGR_G_SetPrecision(self, gridSize, flags);
   }
 
   %newobject Normalize;

@@ -624,3 +624,13 @@ def test_ogr_geos_prepared_geom():
     # Test workaround for https://github.com/libgeos/geos/pull/423
     assert not pg.Intersects(ogr.CreateGeometryFromWkt("POINT EMPTY"))
     assert not pg.Contains(ogr.CreateGeometryFromWkt("POINT EMPTY"))
+
+
+###############################################################################
+
+
+def test_ogr_geos_set_precision():
+
+    g = ogr.CreateGeometryFromWkt("LINESTRING (1 1,9 9)")
+    g = g.SetPrecision(10)
+    assert g.ExportToWkt() == "LINESTRING (0 0,10 10)"
