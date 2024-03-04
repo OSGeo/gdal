@@ -3047,11 +3047,6 @@ bool FGdbLayer::ParseGeometryDef(const CPLXMLNode *psRoot)
                      "Failed Mapping ESRI Spatial Reference");
         }
     }
-    else
-    {
-        // report error, but be passive about it
-        CPLError(CE_Warning, CPLE_AppDefined, "Empty Spatial Reference");
-    }
 
     return true;
 }
