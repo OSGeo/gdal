@@ -4705,19 +4705,17 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                 /*      Write GEOLOB TRE */
                 /* --------------------------------------------------------------------
                  */
-                char szGEOLOB[48 + 1];
+                // Extra (useless) bytes to avoid CLang 18 erroneous -Wformat-truncation
+                constexpr int MARGIN_FOR_CLANG_18 = 2;
+                char szGEOLOB[48 + 1 + MARGIN_FOR_CLANG_18];
                 const double dfARV = 360.0 / adfGeoTransform[1];
                 const double dfBRV = 360.0 / -adfGeoTransform[5];
                 const double dfLSO = adfGeoTransform[0];
                 const double dfPSO = adfGeoTransform[3];
-                snprintf(szGEOLOB, sizeof(szGEOLOB), "%09d",
-                         static_cast<int>(dfARV + 0.5));
-                snprintf(szGEOLOB + 9, sizeof(szGEOLOB) - (9), "%09d",
-                         static_cast<int>(dfBRV + 0.5));
-                snprintf(szGEOLOB + 9 + 9, sizeof(szGEOLOB) - (9 + 9),
-                         "%#+015.10f", dfLSO);
-                snprintf(szGEOLOB + 9 + 9 + 15, sizeof(szGEOLOB) - (9 + 9 + 15),
-                         "%#+015.10f", dfPSO);
+                CPLsnprintf(szGEOLOB, sizeof(szGEOLOB),
+                            "%09d%09d%#+015.10f%#+015.10f",
+                            static_cast<int>(dfARV + 0.5),
+                            static_cast<int>(dfBRV + 0.5), dfLSO, dfPSO);
 
                 CPLString osGEOLOB("TRE=GEOLOB=");
                 osGEOLOB += szGEOLOB;
