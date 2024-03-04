@@ -1544,7 +1544,17 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     eErr = LOG_ACTION(
         MMProcessMultiGeometry(OGRGeometry::ToHandle(poGeom), poFeature));
 
-    poFeature->SetFID((GIntBig)hMMFeature.nReadFeatures);
+    // Set the FID from 0 index
+    if (phMiraMonLayer)
+    {
+        if (phMiraMonLayer->bIsPolygon &&
+            phMiraMonLayer->TopHeader.nElemCount > 1)
+            poFeature->SetFID((GIntBig)phMiraMonLayer->TopHeader.nElemCount -
+                              2);
+        else if (phMiraMonLayer->TopHeader.nElemCount > 0)
+            poFeature->SetFID((GIntBig)phMiraMonLayer->TopHeader.nElemCount -
+                              1);
+    }
     return eErr;
 }
 

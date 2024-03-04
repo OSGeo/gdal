@@ -946,7 +946,7 @@ static int MMInitPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         // TL
         strcpy(hMiraMonLayer->MMPoint.pszTLName,
                hMiraMonLayer->pszSrcLayerName);
-        strcat(hMiraMonLayer->MMPoint.pszTLName, ".~TL");
+        strcat(hMiraMonLayer->MMPoint.pszTLName, "T.~xy");
 
         if (nullptr == (hMiraMonLayer->MMPoint.pFTL =
                             fopen_function(hMiraMonLayer->MMPoint.pszTLName,
@@ -971,7 +971,7 @@ static int MMInitPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         {
             strcpy(hMiraMonLayer->MMPoint.psz3DLayerName,
                    hMiraMonLayer->pszSrcLayerName);
-            strcat(hMiraMonLayer->MMPoint.psz3DLayerName, ".~z");
+            strcat(hMiraMonLayer->MMPoint.psz3DLayerName, "T.~z");
 
             if (nullptr == (hMiraMonLayer->MMPoint.pF3d = fopen_function(
                                 hMiraMonLayer->MMPoint.psz3DLayerName,
@@ -1105,8 +1105,7 @@ static int MMInitNodeLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 
         // NL Section
         strcpy(pMMArcLayer->MMNode.pszNLName, pMMArcLayer->MMNode.pszLayerName);
-        strcpy(pMMArcLayer->MMNode.pszNLName,
-               reset_extension(pMMArcLayer->MMNode.pszNLName, "~NL"));
+        MMChangeMMSingularExtension(pMMArcLayer->MMNode.pszNLName, "N.~idx");
 
         if (nullptr == (pMMArcLayer->MMNode.pFNL =
                             fopen_function(pMMArcLayer->MMNode.pszNLName,
@@ -1242,9 +1241,9 @@ static int MMInitArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 
         strcpy(pMMArcLayer->pszALName, hMiraMonLayer->pszSrcLayerName);
         if (hMiraMonLayer->bIsPolygon)
-            strcat(pMMArcLayer->pszALName, "_bound.~AL");
+            strcat(pMMArcLayer->pszALName, "_boundA.~xy");
         else
-            strcat(pMMArcLayer->pszALName, ".~AL");
+            strcat(pMMArcLayer->pszALName, "A.~xy");
 
         if (nullptr == (pMMArcLayer->pFAL = fopen_function(
                             pMMArcLayer->pszALName, hMiraMonLayer->pszFlags)))
@@ -1270,9 +1269,9 @@ static int MMInitArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         {
             strcpy(pMMArcLayer->psz3DLayerName, hMiraMonLayer->pszSrcLayerName);
             if (hMiraMonLayer->bIsPolygon)
-                strcat(pMMArcLayer->psz3DLayerName, "_bound.~Az");
+                strcat(pMMArcLayer->psz3DLayerName, "_boundA.~z");
             else
-                strcat(pMMArcLayer->psz3DLayerName, ".~Az");
+                strcat(pMMArcLayer->psz3DLayerName, "A.~z");
 
             if (nullptr ==
                 (pMMArcLayer->pF3d = fopen_function(pMMArcLayer->psz3DLayerName,
@@ -1317,8 +1316,7 @@ static int MMInitArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         }
     }
     // MiraMon metadata
-    if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
-        strcpy(pMMArcLayer->pszREL_LayerName, hMiraMonLayer->pszSrcLayerName);
+    strcpy(pMMArcLayer->pszREL_LayerName, hMiraMonLayer->pszSrcLayerName);
     if (hMiraMonLayer->bIsPolygon)
     {
         if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
@@ -1349,9 +1347,8 @@ static int MMInitArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 
     // MIRAMON DATA BASE
     // Creating the DBF file name
-    if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
-        strcpy(pMMArcLayer->MMAdmDB.pszExtDBFLayerName,
-               hMiraMonLayer->pszSrcLayerName);
+    strcpy(pMMArcLayer->MMAdmDB.pszExtDBFLayerName,
+           hMiraMonLayer->pszSrcLayerName);
     if (hMiraMonLayer->bIsPolygon)
     {
         if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
@@ -1428,7 +1425,7 @@ static int MMInitPolygonLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
     if (hMiraMonLayer->ReadOrWrite == MM_WRITTING_MODE)
     {
         strcpy(pMMPolygonLayer->pszPSName, hMiraMonLayer->pszSrcLayerName);
-        strcat(pMMPolygonLayer->pszPSName, ".~PS");
+        strcat(pMMPolygonLayer->pszPSName, "P.~PS");
 
         if (nullptr ==
             (pMMPolygonLayer->pFPS = fopen_function(pMMPolygonLayer->pszPSName,
@@ -1489,7 +1486,7 @@ static int MMInitPolygonLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 
         // PAL
         strcpy(pMMPolygonLayer->pszPALName, hMiraMonLayer->pszSrcLayerName);
-        strcat(pMMPolygonLayer->pszPALName, ".~PL");
+        strcat(pMMPolygonLayer->pszPALName, "P.~idx");
 
         if (nullptr == (pMMPolygonLayer->pFPAL =
                             fopen_function(pMMPolygonLayer->pszPALName,

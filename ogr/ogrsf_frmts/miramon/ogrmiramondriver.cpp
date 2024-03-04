@@ -81,26 +81,6 @@ static GDALDataset *OGRMiraMonDriverOpen(GDALOpenInfo *poOpenInfo)
 {
     if (!poOpenInfo->bStatOK)
         return nullptr;
-    char **papszSiblingFiles = poOpenInfo->GetSiblingFiles();
-    if (papszSiblingFiles != nullptr)
-    {
-        bool bFoundCompatibleFile = false;
-        for (int i = 0; papszSiblingFiles[i] != nullptr; i++)
-        {
-            int nLen = (int)strlen(papszSiblingFiles[i]);
-            if (nLen > 4 && papszSiblingFiles[i][nLen - 4] == '.' &&
-                papszSiblingFiles[i][nLen - 1] == '1')
-            {
-                bFoundCompatibleFile = true;
-                break;
-            }
-        }
-        if (!bFoundCompatibleFile)
-            return nullptr;
-    }
-
-    //if (!OGRMiraMonDriverIdentify(poOpenInfo))
-    //    return nullptr;
 
     OGRMiraMonDataSource *poDS = new OGRMiraMonDataSource();
 
