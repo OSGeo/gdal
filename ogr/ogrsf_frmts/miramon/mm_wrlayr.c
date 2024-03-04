@@ -4739,6 +4739,8 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
                 if (section_end != nullptr)
                 {
                     *section_end = '\0';  // Terminate the string at ']'
+                    if (section_header)
+                        free_function(section_header);
                     section_header =
                         strdup_function(start + 1);  // Skip the '['
                 }
@@ -4767,6 +4769,7 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
                                 '\0';  // Terminate the string at newline character if found
                         value = strdup_function(value_start);
                         fclose_function(file);
+                        free_function(section_header);  // Free allocated memory
                         return value;
                     }
                 }
@@ -4785,7 +4788,7 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
         }
     }
 
-    free(section_header);  // Free allocated memory
+    free_function(section_header);  // Free allocated memory
     fclose_function(file);
     return value;
 }

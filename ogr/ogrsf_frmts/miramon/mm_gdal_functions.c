@@ -983,7 +983,7 @@ int MM_ReadExtendedDBFHeaderFromFile(const char *szFileName,
     MM_BYTE n_queixes_estructura_incorrecta = 0;
     MM_FILE_OFFSET offset_reintent = 0;  // For retrying
     char cpg_file[MM_CPL_PATH_BUF_SIZE];
-    const char *pszDesc;
+    char *pszDesc;
     char section[MM_MAX_LON_FIELD_NAME_DBF + 25];  // TAULA_PRINCIPAL:field_name
     GUInt32 nRecords;
     char *pszString;
@@ -1247,8 +1247,11 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
                 pszDesc = MMReturnValueFromSectionINIFile(pszRelFile, section,
                                                           "descriptor_eng");
                 if (pszDesc)
+                {
                     MM_strnzcpy(pMMBDXP->pField[nIField].FieldDescription[j],
                                 pszDesc, MM_MAX_LON_DESCRIPCIO_CAMP_DBF);
+                    free_function(pszDesc);
+                }
                 else
                 {
                     sprintf(section, "TAULA_PRINCIPAL:%s",
@@ -1260,6 +1263,7 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
                             pMMBDXP->pField[nIField].FieldDescription[j],
                             pszDesc, MM_MAX_LON_DESCRIPCIO_CAMP_DBF);
                     pMMBDXP->pField[nIField].FieldDescription[j][0] = 0;
+                    free_function(pszDesc);
                 }
             }
         }
