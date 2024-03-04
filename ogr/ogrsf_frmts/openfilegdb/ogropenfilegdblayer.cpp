@@ -53,6 +53,7 @@
 #include "ogrsf_frmts.h"
 #include "filegdbtable.h"
 #include "ogr_swq.h"
+#include "filegdb_coordprec_read.h"
 
 /************************************************************************/
 /*                      OGROpenFileGDBLayer()                           */
@@ -156,7 +157,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(
 
     CPLStripXMLNamespace(psTree, nullptr, TRUE);
     /* CPLSerializeXMLTreeToFile( psTree, "/dev/stderr" ); */
-    CPLXMLNode *psInfo = CPLSearchXMLNode(psTree, "=DEFeatureClassInfo");
+    const CPLXMLNode *psInfo = CPLSearchXMLNode(psTree, "=DEFeatureClassInfo");
     if (psInfo == nullptr)
         psInfo = CPLSearchXMLNode(psTree, "=DETableInfo");
     if (psInfo == nullptr)
@@ -222,11 +223,12 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(
         auto poGeomFieldDefn = std::make_unique<OGROpenFileGDBGeomFieldDefn>(
             nullptr, pszShapeFieldName, m_eGeomType);
 
-        CPLXMLNode *psGPFieldInfoExs = CPLGetXMLNode(psInfo, "GPFieldInfoExs");
+        const CPLXMLNode *psGPFieldInfoExs =
+            CPLGetXMLNode(psInfo, "GPFieldInfoExs");
         if (psGPFieldInfoExs)
         {
-            for (CPLXMLNode *psChild = psGPFieldInfoExs->psChild;
-                 psChild != nullptr; psChild = psChild->psNext)
+            for (const CPLXMLNode *psChild = psGPFieldInfoExs->psChild; psChild;
+                 psChild = psChild->psNext)
             {
                 if (psChild->eType != CXT_Element)
                     continue;
@@ -239,6 +241,14 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(
                     break;
                 }
             }
+        }
+
+        const CPLXMLNode *psSpatialReference =
+            CPLGetXMLNode(psInfo, "SpatialReference");
+        if (psSpatialReference)
+        {
+            poGeomFieldDefn->SetCoordinatePrecision(
+                GDBGridSettingsToOGR(psSpatialReference));
         }
 
         OGRSpatialReference *poParentSRS = nullptr;

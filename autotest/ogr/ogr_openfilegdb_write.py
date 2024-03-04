@@ -4530,3 +4530,130 @@ def test_ogr_openfilegdb_write_update_feature_larger(tmp_vsimem):
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().GetGeometryRef(0).GetPointCount() == 1000
+
+
+###############################################################################
+# Test geometry coordinate precision support
+
+
+def test_ogr_openfilegdb_write_geom_coord_precision(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.gdb")
+    ds = gdal.GetDriverByName("OpenFileGDB").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    geom_fld = ogr.GeomFieldDefn("geometry", ogr.wkbPointZM)
+    prec = ogr.CreateGeomCoordinatePrecision()
+    prec.Set(1e-5, 1e-3, 1e-2)
+    geom_fld.SetCoordinatePrecision(prec)
+    lyr = ds.CreateLayerFromGeomFieldDefn("test", geom_fld)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    assert prec.GetMResolution() == 1e-2
+    assert prec.GetFormats() == ["FileGeodatabase"]
+    opts = prec.GetFormatSpecificOptions("FileGeodatabase")
+    for key in opts:
+        opts[key] = float(opts[key])
+    assert opts == {
+        "MOrigin": -100000.0,
+        "MScale": 100.0,
+        "MTolerance": 0.001,
+        "XOrigin": -2147483647.0,
+        "XYScale": 100000.0,
+        "XYTolerance": 1e-06,
+        "YOrigin": -2147483647.0,
+        "ZOrigin": -100000.0,
+        "ZScale": 1000.0,
+        "ZTolerance": 0.0001,
+    }
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt("POINT(1.23456789 2.34567891 9.87654321 -9.87654321)")
+    )
+    lyr.CreateFeature(f)
+    ds.Close()
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    assert prec.GetMResolution() == 1e-2
+    assert prec.GetFormats() == ["FileGeodatabase"]
+    opts = prec.GetFormatSpecificOptions("FileGeodatabase")
+    for key in opts:
+        try:
+            opts[key] = float(opts[key])
+        except ValueError:
+            pass
+    assert opts == {
+        "MOrigin": -100000.0,
+        "MScale": 100.0,
+        "MTolerance": 0.001,
+        "XOrigin": -2147483647.0,
+        "XYScale": 100000.0,
+        "XYTolerance": 1e-06,
+        "YOrigin": -2147483647.0,
+        "ZOrigin": -100000.0,
+        "ZScale": 1000.0,
+        "ZTolerance": 0.0001,
+        "HighPrecision": "true",
+    }
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetX(0) == pytest.approx(1.23456789, abs=1e-5)
+    assert g.GetX(0) != pytest.approx(1.23456789, abs=1e-8)
+    assert g.GetY(0) == pytest.approx(2.34567891, abs=1e-5)
+    assert g.GetZ(0) == pytest.approx(9.87654321, abs=1e-3)
+    assert g.GetZ(0) != pytest.approx(9.87654321, abs=1e-8)
+    assert g.GetM(0) == pytest.approx(-9.87654321, abs=1e-2)
+    assert g.GetM(0) != pytest.approx(-9.87654321, abs=1e-8)
+    ds.Close()
+
+    j = gdal.VectorInfo(filename, format="json")
+    j_geom_field = j["layers"][0]["geometryFields"][0]
+    assert j_geom_field["xyCoordinateResolution"] == 1e-5
+    assert j_geom_field["zCoordinateResolution"] == 1e-3
+    assert j_geom_field["mCoordinateResolution"] == 1e-2
+    assert j_geom_field["coordinatePrecisionFormatSpecificOptions"] == {
+        "FileGeodatabase": {
+            "XOrigin": -2147483647,
+            "YOrigin": -2147483647,
+            "XYScale": 100000,
+            "ZOrigin": -100000,
+            "ZScale": 1000,
+            "MOrigin": -100000,
+            "MScale": 100,
+            "XYTolerance": 1e-06,
+            "ZTolerance": 0.0001,
+            "MTolerance": 0.001,
+            "HighPrecision": "true",
+        }
+    }
+
+    filename2 = str(tmp_vsimem / "test2.gdb")
+    gdal.VectorTranslate(filename2, filename, format="OpenFileGDB")
+
+    ds = ogr.Open(filename2)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    opts = prec.GetFormatSpecificOptions("FileGeodatabase")
+    for key in opts:
+        try:
+            opts[key] = float(opts[key])
+        except ValueError:
+            pass
+    assert opts == {
+        "MOrigin": -100000.0,
+        "MScale": 100.0,
+        "MTolerance": 0.001,
+        "XOrigin": -2147483647.0,
+        "XYScale": 100000.0,
+        "XYTolerance": 1e-06,
+        "YOrigin": -2147483647.0,
+        "ZOrigin": -100000.0,
+        "ZScale": 1000.0,
+        "ZTolerance": 0.0001,
+        "HighPrecision": "true",
+    }

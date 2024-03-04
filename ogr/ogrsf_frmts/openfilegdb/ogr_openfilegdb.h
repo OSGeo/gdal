@@ -210,7 +210,7 @@ class OGROpenFileGDBLayer final : public OGRLayer
 
     virtual ~OGROpenFileGDBLayer();
 
-    bool Create(const OGRSpatialReference *poSRS);
+    bool Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn);
     void Close();
 
     const std::string &GetFilename() const

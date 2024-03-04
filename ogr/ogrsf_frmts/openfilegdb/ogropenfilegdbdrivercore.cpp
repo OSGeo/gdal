@@ -206,6 +206,7 @@ void OGROpenFileGDBDriverSetCommonMetadata(GDALDriver *poDriver)
                               "Coded Range");
 
     poDriver->SetMetadataItem(GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS, "Name SRS");
+    poDriver->SetMetadataItem(GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION, "YES");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,

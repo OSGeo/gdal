@@ -1260,8 +1260,6 @@ OGROpenFileGDBDataSource::ICreateLayer(const char *pszLayerName,
     }
 
     auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
-    const auto poSRS =
-        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     FileGDBTable oTable;
     if (!oTable.Open(m_osGDBSystemCatalogFilename.c_str(), false))
@@ -1281,7 +1279,7 @@ OGROpenFileGDBDataSource::ICreateLayer(const char *pszLayerName,
 
     auto poLayer = std::make_unique<OGROpenFileGDBLayer>(
         this, osFilename.c_str(), pszLayerName, eType, papszOptions);
-    if (!poLayer->Create(poSRS))
+    if (!poLayer->Create(poGeomFieldDefn))
         return nullptr;
     if (m_bInTransaction)
     {
