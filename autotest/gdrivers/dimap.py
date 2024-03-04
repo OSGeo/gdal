@@ -145,6 +145,14 @@ def test_dimap_2_single_component():
             "GSD_ALONG_TRACK": "CENTER_GSD_ALONG_TRACK",
             "IMAGE_ORIENTATION": "CENTER_IMAGE_ORIENTATION",
             "AZIMUTH_ANGLE": "CENTER_AZIMUTH_ANGLE",
+            "RADIOMETRIC_RADIOMETRIC_PROCESSING": "BASIC",
+            "RADIOMETRIC_INTER_DETECTOR_NORMALIZATION": "false",
+            "RADIOMETRIC_DETECTORS_INTERPOLATION": "true",
+            "RADIOMETRIC_STRAYLIGHT_CORRECTION": "false",
+            "RADIOMETRIC_VCTI_CORRECTION": "false",
+            "RADIOMETRIC_INTER_ARRAY_RECONSTRUCTION": "true",
+            "RADIOMETRIC_RADIOMETRIC_STRETCH": "false",
+            "RADIOMETRIC_OUT_OF_ORDER_THRESHOLD": "0.5",
         }
         assert md == expected_md, "metadata wrong."
 

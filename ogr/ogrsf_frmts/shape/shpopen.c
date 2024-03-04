@@ -924,8 +924,9 @@ void SHPAPI_CALL SHPSetFastModeReadObject(SHPHandle hSHP, int bFastMode)
 /*      Fetch general information about the shape file.                 */
 /************************************************************************/
 
-void SHPAPI_CALL SHPGetInfo(SHPHandle psSHP, int *pnEntities, int *pnShapeType,
-                            double *padfMinBound, double *padfMaxBound)
+void SHPAPI_CALL SHPGetInfo(const SHPHandle psSHP, int *pnEntities,
+                            int *pnShapeType, double *padfMinBound,
+                            double *padfMaxBound)
 {
     if (psSHP == SHPLIB_NULLPTR)
         return;
@@ -1310,7 +1311,7 @@ SHPObject SHPAPI_CALL1(*)
 /************************************************************************/
 
 int SHPAPI_CALL SHPWriteObject(SHPHandle psSHP, int nShapeId,
-                               SHPObject *psObject)
+                               const SHPObject *psObject)
 {
     psSHP->bUpdated = TRUE;
 
@@ -1882,7 +1883,7 @@ static unsigned char *SHPReallocObjectBufIfNecessary(SHPHandle psSHP,
 /*      for one shape.                                                  */
 /************************************************************************/
 
-SHPObject SHPAPI_CALL1(*) SHPReadObject(SHPHandle psSHP, int hEntity)
+SHPObject SHPAPI_CALL1(*) SHPReadObject(const SHPHandle psSHP, int hEntity)
 {
     /* -------------------------------------------------------------------- */
     /*      Validate the record/entity number.                              */
@@ -2913,7 +2914,7 @@ static int SHPRewindIsInnerRing(const SHPObject *psObject, int iOpRing,
 /*      specification.                                                  */
 /************************************************************************/
 
-int SHPAPI_CALL SHPRewindObject(SHPHandle hSHP, SHPObject *psObject)
+int SHPAPI_CALL SHPRewindObject(const SHPHandle hSHP, SHPObject *psObject)
 {
     (void)hSHP;
     /* -------------------------------------------------------------------- */

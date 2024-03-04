@@ -501,7 +501,8 @@ int SHPAPI_CALL SHPTreeAddShapeId(SHPTree *psTree, SHPObject *psObject)
 /*      tree node by tree node basis.                                   */
 /************************************************************************/
 
-static void SHPTreeCollectShapeIds(SHPTree *hTree, SHPTreeNode *psTreeNode,
+static void SHPTreeCollectShapeIds(const SHPTree *hTree,
+                                   const SHPTreeNode *psTreeNode,
                                    double *padfBoundsMin, double *padfBoundsMax,
                                    int *pnShapeCount, int *pnMaxShapes,
                                    int **ppanShapeList)
@@ -566,7 +567,7 @@ static int SHPTreeCompareInts(const void *a, const void *b)
 }
 
 int SHPAPI_CALL1(*)
-    SHPTreeFindLikelyShapes(SHPTree *hTree, double *padfBoundsMin,
+    SHPTreeFindLikelyShapes(const SHPTree *hTree, double *padfBoundsMin,
                             double *padfBoundsMax, int *pnShapeCount)
 
 {
@@ -598,7 +599,6 @@ int SHPAPI_CALL1(*)
 /************************************************************************/
 
 static int SHPTreeNodeTrim(SHPTreeNode *psTreeNode)
-
 {
     int i;
 
@@ -657,7 +657,6 @@ static int SHPTreeNodeTrim(SHPTreeNode *psTreeNode)
 /************************************************************************/
 
 void SHPAPI_CALL SHPTreeTrimExtraNodes(SHPTree *hTree)
-
 {
     SHPTreeNodeTrim(hTree->psRoot);
 }
@@ -713,7 +712,7 @@ void SHPCloseDiskTree(SHPTreeDiskHandle hDiskTree)
 /*                       SHPSearchDiskTreeNode()                        */
 /************************************************************************/
 
-static bool SHPSearchDiskTreeNode(SHPTreeDiskHandle hDiskTree,
+static bool SHPSearchDiskTreeNode(const SHPTreeDiskHandle hDiskTree,
                                   double *padfBoundsMin, double *padfBoundsMax,
                                   int **ppanResultBuffer, int *pnBufferMax,
                                   int *pnResultCount, int bNeedSwap,
@@ -907,8 +906,9 @@ int SHPAPI_CALL1(*) SHPSearchDiskTree(FILE *fp, double *padfBoundsMin,
 /************************************************************************/
 
 int SHPAPI_CALL1(*)
-    SHPSearchDiskTreeEx(SHPTreeDiskHandle hDiskTree, double *padfBoundsMin,
-                        double *padfBoundsMax, int *pnShapeCount)
+    SHPSearchDiskTreeEx(const SHPTreeDiskHandle hDiskTree,
+                        double *padfBoundsMin, double *padfBoundsMax,
+                        int *pnShapeCount)
 
 {
     int nBufferMax = 0;

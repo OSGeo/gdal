@@ -62,13 +62,15 @@
 #include "wmsdriver.h"
 #include "minidriver_tiled_wms.h"
 
+#include <set>
+
 static const char SIG[] = "GDAL_WMS TiledWMS: ";
 
 /*
  *\brief Read a number from an xml element
  */
 
-static double getXMLNum(CPLXMLNode *poRoot, const char *pszPath,
+static double getXMLNum(const CPLXMLNode *poRoot, const char *pszPath,
                         const char *pszDefault)
 {  // Sets errno
     return CPLAtof(CPLGetXMLValue(poRoot, pszPath, pszDefault));
@@ -79,7 +81,7 @@ static double getXMLNum(CPLXMLNode *poRoot, const char *pszPath,
  *
  */
 
-static GDALColorEntry GetXMLColorEntry(CPLXMLNode *p)
+static GDALColorEntry GetXMLColorEntry(const CPLXMLNode *p)
 {
     GDALColorEntry ce;
     ce.c1 = static_cast<short>(getXMLNum(p, "c1", "0"));
@@ -109,7 +111,8 @@ static GDALColorEntry GetXMLColorEntry(CPLXMLNode *p)
  * @return The first matching node or NULL on failure.
  */
 
-static CPLXMLNode *SearchXMLSiblings(CPLXMLNode *psRoot, const char *pszElement)
+static const CPLXMLNode *SearchXMLSiblings(const CPLXMLNode *psRoot,
+                                           const char *pszElement)
 
 {
     if (psRoot == nullptr || pszElement == nullptr)
@@ -235,25 +238,24 @@ static int FindBbox(CPLString in)
  * @param ret The return value, a matching request or an empty string
  */
 
-static void FindChangePattern(char *cdata, char **substs, char **keys,
-                              CPLString &ret)
+static void FindChangePattern(const char *cdata, const char *const *substs,
+                              const char *const *keys, CPLString &ret)
 {
-    char **papszTokens = CSLTokenizeString2(
-        cdata, " \t\n\r", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+    const CPLStringList aosTokens(CSLTokenizeString2(
+        cdata, " \t\n\r", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
     ret.clear();
 
     int matchcount = CSLCount(substs);
     int keycount = CSLCount(keys);
     if (keycount < matchcount)
     {
-        CSLDestroy(papszTokens);
         return;
     }
 
     // A valid string has only the keys in the substs list and none other
-    for (int j = 0; j < CSLCount(papszTokens); j++)
+    for (int j = 0; j < aosTokens.size(); j++)
     {
-        ret = papszTokens[j];  // The target string
+        ret = aosTokens[j];  // The target string
         bool matches = true;
 
         for (int k = 0; k < keycount && keys != nullptr; k++)
@@ -288,24 +290,16 @@ static void FindChangePattern(char *cdata, char **substs, char **keys,
         }  // Key loop
         if (matches)
         {
-            CSLDestroy(papszTokens);
             return;  // We got the string ready, all keys accounted for and
                      // substs applied
         }
     }
     ret.clear();
-    CSLDestroy(papszTokens);
 }
 
-WMSMiniDriver_TiledWMS::WMSMiniDriver_TiledWMS()
-    : m_requests(nullptr), m_bsx(0), m_bsy(0)
-{
-}
+WMSMiniDriver_TiledWMS::WMSMiniDriver_TiledWMS() = default;
 
-WMSMiniDriver_TiledWMS::~WMSMiniDriver_TiledWMS()
-{
-    CSLDestroy(m_requests);
-}
+WMSMiniDriver_TiledWMS::~WMSMiniDriver_TiledWMS() = default;
 
 // Returns the scale of a WMS request as compared to the base resolution
 double WMSMiniDriver_TiledWMS::Scale(const char *request) const
@@ -321,7 +315,8 @@ double WMSMiniDriver_TiledWMS::Scale(const char *request) const
 
 // Finds, extracts, and returns the highest resolution request string from a
 // list, starting at item i
-CPLString WMSMiniDriver_TiledWMS::GetLowestScale(char **&list, int i) const
+CPLString WMSMiniDriver_TiledWMS::GetLowestScale(CPLStringList &list,
+                                                 int i) const
 {
     CPLString req;
     double scale = -1;
@@ -339,7 +334,8 @@ CPLString WMSMiniDriver_TiledWMS::GetLowestScale(char **&list, int i) const
     if (position > -1)
     {
         req = list[position];
-        list = CSLRemoveStrings(list, position, 1, nullptr);
+        list.Assign(CSLRemoveStrings(list.StealList(), position, 1, nullptr),
+                    true);
     }
     return req;
 }
@@ -352,13 +348,13 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
                                           CPL_UNUSED char **OpenOptions)
 {
     CPLErr ret = CE_None;
-    CPLXMLNode *tileServiceConfig = nullptr;
-    CPLXMLNode *TG = nullptr;
+    CPLXMLTreeCloser tileServiceConfig(nullptr);
+    const CPLXMLNode *TG = nullptr;
 
-    char **requests = nullptr;
-    char **substs = nullptr;
-    char **keys = nullptr;
-    char **changes = nullptr;
+    CPLStringList requests;
+    CPLStringList substs;
+    CPLStringList keys;
+    CPLStringList changes;
 
     try
     {  // Parse info from the WMS Service node
@@ -387,13 +383,12 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
             const char *value = CPLParseNameValue(changes[i], &key);
             // Add the ${} around the key
             if (value != nullptr && key != nullptr)
-                substs =
-                    CSLSetNameValue(substs, CPLOPrintf("${%s}", key), value);
+                substs.SetNameValue(CPLOPrintf("${%s}", key), value);
             CPLFree(key);
         }
 
         // Then process the configuration file itself
-        CPLXMLNode *nodeChange = CPLSearchXMLNode(config, "Change");
+        const CPLXMLNode *nodeChange = CPLSearchXMLNode(config, "Change");
         while (nodeChange != nullptr)
         {
             CPLString key = CPLGetXMLValue(nodeChange, "key", "");
@@ -401,8 +396,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
                 throw CPLOPrintf(
                     "%s Change element needs a non-empty \"key\" attribute",
                     SIG);
-            substs = CSLSetNameValue(substs, key,
-                                     CPLGetXMLValue(nodeChange, "", ""));
+            substs.SetNameValue(key, CPLGetXMLValue(nodeChange, "", ""));
             nodeChange = SearchXMLSiblings(nodeChange, "Change");
         }
 
@@ -437,26 +431,28 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
         }
 
         // decodedGTS contains the GetTileService return now
-        if (nullptr == (tileServiceConfig = CPLParseXMLString(decodedGTS)))
+        tileServiceConfig.reset(CPLParseXMLString(decodedGTS));
+        if (!tileServiceConfig)
             throw CPLOPrintf("%s Error parsing the GetTileService response",
                              SIG);
 
         if (nullptr ==
-            (TG = CPLSearchXMLNode(tileServiceConfig, "TiledPatterns")))
+            (TG = CPLSearchXMLNode(tileServiceConfig.get(), "TiledPatterns")))
             throw CPLOPrintf(
                 "%s Can't locate TiledPatterns in server response.", SIG);
 
         // Get the global base_url and bounding box, these can be overwritten at
         // the tileGroup level They are just pointers into existing structures,
         // cleanup is not required
-        const char *global_base_url = CPLGetXMLValue(
-            tileServiceConfig, "TiledPatterns.OnlineResource.xlink:href", "");
-        CPLXMLNode *global_latlonbbox =
-            CPLGetXMLNode(tileServiceConfig, "TiledPatterns.LatLonBoundingBox");
-        CPLXMLNode *global_bbox =
-            CPLGetXMLNode(tileServiceConfig, "TiledPatterns.BoundingBox");
-        const char *pszProjection =
-            CPLGetXMLValue(tileServiceConfig, "TiledPatterns.Projection", "");
+        const char *global_base_url =
+            CPLGetXMLValue(tileServiceConfig.get(),
+                           "TiledPatterns.OnlineResource.xlink:href", "");
+        const CPLXMLNode *global_latlonbbox = CPLGetXMLNode(
+            tileServiceConfig.get(), "TiledPatterns.LatLonBoundingBox");
+        const CPLXMLNode *global_bbox =
+            CPLGetXMLNode(tileServiceConfig.get(), "TiledPatterns.BoundingBox");
+        const char *pszProjection = CPLGetXMLValue(
+            tileServiceConfig.get(), "TiledPatterns.Projection", "");
         if (pszProjection[0] != 0)
             m_oSRS.SetFromUserInput(
                 pszProjection,
@@ -476,12 +472,12 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
 
         if (nullptr != CPLGetXMLNode(TG, "Key"))
         {  // Collect all keys defined by this tileset
-            CPLXMLNode *node = CPLGetXMLNode(TG, "Key");
+            const CPLXMLNode *node = CPLGetXMLNode(TG, "Key");
             while (nullptr != node)
             {  // the TEXT of the Key node
                 const char *val = CPLGetXMLValue(node, nullptr, nullptr);
                 if (nullptr != val)
-                    keys = CSLAddString(keys, val);
+                    keys.AddString(val);
                 node = SearchXMLSiblings(node, "Key");
             }
         }
@@ -523,7 +519,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
 
         // Bounding box, local, global, local lat-lon, global lat-lon, in this
         // order
-        CPLXMLNode *bbox = CPLGetXMLNode(TG, "BoundingBox");
+        const CPLXMLNode *bbox = CPLGetXMLNode(TG, "BoundingBox");
         if (nullptr == bbox)
             bbox = global_bbox;
         if (nullptr == bbox)
@@ -569,11 +565,11 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
         // order The palette starts initialized with zeros
         //
 
-        GDALColorTable *poColorTable = nullptr;
+        bool bHasColorTable = false;
 
         if ((band_count == 1) && CPLGetXMLNode(TG, "Palette"))
         {
-            CPLXMLNode *node = CPLGetXMLNode(TG, "Palette");
+            const CPLXMLNode *node = CPLGetXMLNode(TG, "Palette");
 
             int entries = static_cast<int>(getXMLNum(node, "Size", "255"));
             GDALPaletteInterp eInterp = GPI_RGB;  // RGB and RGBA are the same
@@ -588,58 +584,50 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
                 throw CPLOPrintf("%s Palette definition error", SIG);
 
             // Create it and initialize it to nothing
-            try
-            {
-                int start_idx;
-                int end_idx;
-                GDALColorEntry ce_start = {0, 0, 0, 255};
-                GDALColorEntry ce_end = {0, 0, 0, 255};
+            int start_idx;
+            int end_idx;
+            GDALColorEntry ce_start = {0, 0, 0, 255};
+            GDALColorEntry ce_end = {0, 0, 0, 255};
 
-                poColorTable = new GDALColorTable(eInterp);
-                poColorTable->CreateColorRamp(0, &ce_start, entries - 1,
-                                              &ce_end);
-                // Read the values
-                CPLXMLNode *p = CPLGetXMLNode(node, "Entry");
-                if (p)
+            auto poColorTable = std::make_unique<GDALColorTable>(eInterp);
+            poColorTable->CreateColorRamp(0, &ce_start, entries - 1, &ce_end);
+            // Read the values
+            const CPLXMLNode *p = CPLGetXMLNode(node, "Entry");
+            if (p)
+            {
+                // Initialize the first entry
+                start_idx = static_cast<int>(getXMLNum(p, "idx", "0"));
+                ce_start = GetXMLColorEntry(p);
+
+                if (start_idx < 0)
+                    throw CPLOPrintf("%s Palette index %d not allowed", SIG,
+                                     start_idx);
+
+                poColorTable->SetColorEntry(start_idx, &ce_start);
+                while (nullptr != (p = SearchXMLSiblings(p, "Entry")))
                 {
-                    // Initialize the first entry
-                    start_idx = static_cast<int>(getXMLNum(p, "idx", "0"));
-                    ce_start = GetXMLColorEntry(p);
+                    // For every entry, create a ramp
+                    ce_end = GetXMLColorEntry(p);
+                    end_idx = static_cast<int>(
+                        getXMLNum(p, "idx", CPLOPrintf("%d", start_idx + 1)));
+                    if ((end_idx <= start_idx) || (start_idx >= entries))
+                        throw CPLOPrintf("%s Index Error at index %d", SIG,
+                                         end_idx);
 
-                    if (start_idx < 0)
-                        throw CPLOPrintf("%s Palette index %d not allowed", SIG,
-                                         start_idx);
-
-                    poColorTable->SetColorEntry(start_idx, &ce_start);
-                    while (nullptr != (p = SearchXMLSiblings(p, "Entry")))
-                    {
-                        // For every entry, create a ramp
-                        ce_end = GetXMLColorEntry(p);
-                        end_idx = static_cast<int>(getXMLNum(
-                            p, "idx", CPLOPrintf("%d", start_idx + 1)));
-                        if ((end_idx <= start_idx) || (start_idx >= entries))
-                            throw CPLOPrintf("%s Index Error at index %d", SIG,
-                                             end_idx);
-
-                        poColorTable->CreateColorRamp(start_idx, &ce_start,
-                                                      end_idx, &ce_end);
-                        ce_start = ce_end;
-                        start_idx = end_idx;
-                    }
+                    poColorTable->CreateColorRamp(start_idx, &ce_start, end_idx,
+                                                  &ce_end);
+                    ce_start = ce_end;
+                    start_idx = end_idx;
                 }
+            }
 
-                // Dataset has ownership
-                m_parent_dataset->SetColorTable(poColorTable);
-            }
-            catch (const CPLString &)
-            {
-                delete poColorTable;
-                throw;
-            }
+            // Dataset has ownership
+            m_parent_dataset->SetColorTable(poColorTable.release());
+            bHasColorTable = true;
         }  // If palette
 
         int overview_count = 0;
-        CPLXMLNode *Pattern = TG->psChild;
+        const CPLXMLNode *Pattern = TG->psChild;
 
         m_bsx = -1;
         m_bsy = -1;
@@ -659,62 +647,47 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
             if (request.empty())
                 break;  // No point to drag, this level doesn't match the keys
 
-            char **papszTokens = CSLTokenizeString2(request, "&", 0);
+            const CPLStringList aosTokens(CSLTokenizeString2(request, "&", 0));
 
-            try
+            const char *pszWIDTH = aosTokens.FetchNameValue("WIDTH");
+            const char *pszHEIGHT = aosTokens.FetchNameValue("HEIGHT");
+            if (pszWIDTH == nullptr || pszHEIGHT == nullptr)
+                throw CPLOPrintf(
+                    "%s Cannot find width or height parameters in %s", SIG,
+                    request.c_str());
+
+            mbsx = atoi(pszWIDTH);
+            mbsy = atoi(pszHEIGHT);
+            // If unset until now, try to get the projection from the
+            // pattern
+            if (m_oSRS.IsEmpty())
             {
-                const char *pszWIDTH = CSLFetchNameValue(papszTokens, "WIDTH");
-                const char *pszHEIGHT =
-                    CSLFetchNameValue(papszTokens, "HEIGHT");
-                if (pszWIDTH == nullptr || pszHEIGHT == nullptr)
-                    throw CPLOPrintf(
-                        "%s Cannot find width or height parameters in %s", SIG,
-                        request.c_str());
-
-                mbsx = atoi(pszWIDTH);
-                mbsy = atoi(pszHEIGHT);
-                // If unset until now, try to get the projection from the
-                // pattern
-                if (m_oSRS.IsEmpty())
-                {
-                    const char *pszSRS =
-                        CSLFetchNameValueDef(papszTokens, "SRS", "");
-                    if (pszSRS[0] != 0)
-                        m_oSRS = ProjToSRS(pszSRS);
-                }
-
-                if (-1 == m_bsx)
-                    m_bsx = mbsx;
-                if (-1 == m_bsy)
-                    m_bsy = mbsy;
-                if ((m_bsx != mbsx) || (m_bsy != mbsy))
-                    throw CPLOPrintf("%s Tileset uses different block sizes",
-                                     SIG);
-
-                if (CPLsscanf(CSLFetchNameValueDef(papszTokens, "BBOX", ""),
-                              "%lf,%lf,%lf,%lf", &x, &y, &X, &Y) != 4)
-                    throw CPLOPrintf("%s Error parsing BBOX, pattern %d\n", SIG,
-                                     overview_count + 1);
-
-                // Pick the largest size
-                sx =
-                    static_cast<int>((m_data_window.m_x1 - m_data_window.m_x0) /
-                                     (X - x) * m_bsx);
-                sy = static_cast<int>(
-                    fabs((m_data_window.m_y1 - m_data_window.m_y0) / (Y - y) *
-                         m_bsy));
-                if (sx > m_data_window.m_sx)
-                    m_data_window.m_sx = sx;
-                if (sy > m_data_window.m_sy)
-                    m_data_window.m_sy = sy;
-            }
-            catch (const CPLString &)
-            {
-                CSLDestroy(papszTokens);
-                throw;
+                const char *pszSRS = aosTokens.FetchNameValueDef("SRS", "");
+                if (pszSRS[0] != 0)
+                    m_oSRS = ProjToSRS(pszSRS);
             }
 
-            CSLDestroy(papszTokens);
+            if (-1 == m_bsx)
+                m_bsx = mbsx;
+            if (-1 == m_bsy)
+                m_bsy = mbsy;
+            if ((m_bsx != mbsx) || (m_bsy != mbsy))
+                throw CPLOPrintf("%s Tileset uses different block sizes", SIG);
+
+            if (CPLsscanf(aosTokens.FetchNameValueDef("BBOX", ""),
+                          "%lf,%lf,%lf,%lf", &x, &y, &X, &Y) != 4)
+                throw CPLOPrintf("%s Error parsing BBOX, pattern %d\n", SIG,
+                                 overview_count + 1);
+
+            // Pick the largest size
+            sx = static_cast<int>((m_data_window.m_x1 - m_data_window.m_x0) /
+                                  (X - x) * m_bsx);
+            sy = static_cast<int>(fabs(
+                (m_data_window.m_y1 - m_data_window.m_y0) / (Y - y) * m_bsy));
+            if (sx > m_data_window.m_sx)
+                m_data_window.m_sx = sx;
+            if (sy > m_data_window.m_sy)
+                m_data_window.m_sy = sy;
 
             // Only use overlays where the top coordinate is within a pixel from
             // the top of coverage
@@ -723,7 +696,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
                 m_bsy * modf(fabs((Y - m_data_window.m_y0) / (Y - y)), &temp);
             if ((pix_off < 1) || ((m_bsy - pix_off) < 1))
             {
-                requests = CSLAddString(requests, request);
+                requests.AddString(request);
                 overview_count++;
             }
             else
@@ -737,7 +710,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
         }  // Search for matching TilePattern
 
         // Did we find anything
-        if (CSLCount(requests) == 0)
+        if (requests.empty())
             throw CPLOPrintf("Can't find any usable TilePattern, maybe the "
                              "Changes are not correct?");
 
@@ -772,7 +745,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
             if (endBbox == std::string::npos)
                 endBbox = request.size();
             request.replace(startBbox, endBbox - startBbox, "${GDAL_BBOX}");
-            requests = CSLInsertString(requests, i, request);
+            requests.InsertString(i, request);
 
             // Create the Rasterband or overview
             for (int j = 1; j <= band_count; j++)
@@ -785,7 +758,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
                 {  // Base resolution
                     GDALWMSRasterBand *band =
                         new GDALWMSRasterBand(m_parent_dataset, j, 1);
-                    if (poColorTable != nullptr)
+                    if (bHasColorTable)
                         band->SetColorInterpretation(GCI_PaletteIndex);
                     else
                         band->SetColorInterpretation(BandInterp(band_count, j));
@@ -801,18 +774,19 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
         if (0 != CSLCount(OpenOptions))
         {
             // Get the proposed XML, it will exist at this point
-            CPLXMLNode *cfg_root = CPLParseXMLString(
-                m_parent_dataset->GetMetadataItem("XML", "WMS"));
+            CPLXMLTreeCloser cfg_root(CPLParseXMLString(
+                m_parent_dataset->GetMetadataItem("XML", "WMS")));
             char *pszXML = nullptr;
 
-            if (cfg_root != nullptr)
+            if (cfg_root)
             {
                 bool modified = false;
 
                 // Set openoption StoreConfiguration to Yes to save the server
                 // GTS in the output XML
                 if (CSLFetchBoolean(OpenOptions, "StoreConfiguration", 0) &&
-                    nullptr == CPLGetXMLNode(cfg_root, "Service.Configuration"))
+                    nullptr ==
+                        CPLGetXMLNode(cfg_root.get(), "Service.Configuration"))
                 {
                     char *xmlencodedGTS = CPLEscapeString(
                         decodedGTS, static_cast<int>(decodedGTS.size()),
@@ -821,8 +795,8 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
                     // It doesn't have a Service.Configuration element, safe to
                     // add one
                     CPLXMLNode *scfg = CPLCreateXMLElementAndValue(
-                        CPLGetXMLNode(cfg_root, "Service"), "Configuration",
-                        xmlencodedGTS);
+                        CPLGetXMLNode(cfg_root.get(), "Service"),
+                        "Configuration", xmlencodedGTS);
                     CPLAddXMLAttributeAndValue(scfg, "encoding", "XMLencoded");
                     modified = true;
                     CPLFree(xmlencodedGTS);
@@ -830,30 +804,32 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
 
                 // Set the TiledGroupName if it's not already there and we have
                 // it as an open option
-                if (!CPLGetXMLNode(cfg_root, "Service.TiledGroupName") &&
+                if (!CPLGetXMLNode(cfg_root.get(), "Service.TiledGroupName") &&
                     nullptr != CSLFetchNameValue(OpenOptions, "TiledGroupName"))
                 {
                     CPLCreateXMLElementAndValue(
-                        CPLGetXMLNode(cfg_root, "Service"), "TiledGroupName",
+                        CPLGetXMLNode(cfg_root.get(), "Service"),
+                        "TiledGroupName",
                         CSLFetchNameValue(OpenOptions, "TiledGroupName"));
                     modified = true;
                 }
 
-                if (0 != CSLCount(substs))
+                if (!substs.empty())
                 {
                     // Get all the existing Change elements
-                    char **existing_keys = nullptr;
-                    auto nodechange = CPLGetXMLNode(cfg_root, "Service.Change");
+                    std::set<std::string> oExistingKeys;
+                    auto nodechange =
+                        CPLGetXMLNode(cfg_root.get(), "Service.Change");
                     while (nodechange)
                     {
                         const char *key =
                             CPLGetXMLValue(nodechange, "Key", nullptr);
                         if (key)
-                            existing_keys = CSLAddString(existing_keys, key);
+                            oExistingKeys.insert(key);
                         nodechange = nodechange->psNext;
                     }
 
-                    for (int i = 0, n = CSLCount(substs); i < n && substs; i++)
+                    for (int i = 0, n = substs.size(); i < n && substs; i++)
                     {
                         CPLString kv(substs[i]);
                         auto sep_pos =
@@ -864,11 +840,11 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
                         CPLString val(kv.substr(sep_pos + 1));
                         // Add to the cfg_root if this change is not already
                         // there
-                        if (-1 == CSLFindString(existing_keys, key))
+                        if (oExistingKeys.find(key) == oExistingKeys.end())
                         {
                             auto cnode = CPLCreateXMLElementAndValue(
-                                CPLGetXMLNode(cfg_root, "Service"), "Change",
-                                val);
+                                CPLGetXMLNode(cfg_root.get(), "Service"),
+                                "Change", val);
                             CPLAddXMLAttributeAndValue(cnode, "Key", key);
                             modified = true;
                         }
@@ -877,13 +853,12 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
 
                 if (modified)
                 {
-                    pszXML = CPLSerializeXMLTree(cfg_root);
+                    pszXML = CPLSerializeXMLTree(cfg_root.get());
                     m_parent_dataset->SetXML(pszXML);
                 }
             }
 
             CPLFree(pszXML);
-            CPLDestroyXMLNode(cfg_root);
         }
     }
     catch (const CPLString &msg)
@@ -892,13 +867,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config,
         CPLError(ret, CPLE_AppDefined, "%s", msg.c_str());
     }
 
-    CSLDestroy(keys);
-    CSLDestroy(substs);
-    CSLDestroy(changes);
-    if (tileServiceConfig)
-        CPLDestroyXMLNode(tileServiceConfig);
-
-    m_requests = requests;
+    m_requests = std::move(requests);
     return ret;
 }
 
@@ -909,7 +878,7 @@ CPLErr WMSMiniDriver_TiledWMS::TiledImageRequest(
     CPLString &url = request.URL;
     url = m_base_url;
     URLPrepare(url);
-    url += CSLGetField(m_requests, -tiri.m_level);
+    url += CSLGetField(m_requests.List(), -tiri.m_level);
     URLSearchAndReplace(&url, "${GDAL_BBOX}", "%013.8f,%013.8f,%013.8f,%013.8f",
                         iri.m_x0, iri.m_y1, iri.m_x1, iri.m_y0);
     return CE_None;

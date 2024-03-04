@@ -386,10 +386,9 @@ MAIN_START(nArgc, papszArgv)
     {
         GDALDriverManager *poDM = GetGDALDriverManager();
 
-        fprintf(stderr,
-                "FAILURE:\n"
-                "Unable to open datasource `%s' with the following drivers.\n",
-                psOptionsForBinary->osDataSource.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unable to open datasource `%s' with the following drivers.",
+                 psOptionsForBinary->osDataSource.c_str());
 
         for (int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++)
         {

@@ -696,9 +696,15 @@ def test_ogr_sql_28():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
-    lyr.GetLayerDefn().GetGeomFieldDefn(0).SetName(
-        "geom"
-    )  # a bit border line but OK for Memory driver...
+
+    new_geom_field_defn = ogr.GeomFieldDefn("geom", ogr.wkbUnknown)
+    assert (
+        lyr.AlterGeomFieldDefn(
+            0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_NAME_FLAG
+        )
+        == ogr.OGRERR_NONE
+    )
+
     field_defn = ogr.FieldDefn("strfield", ogr.OFTString)
     lyr.CreateField(field_defn)
     field_defn = ogr.FieldDefn("intfield", ogr.OFTInteger)
