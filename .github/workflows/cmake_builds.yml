@@ -33,7 +33,7 @@ jobs:
     - name: Checkout GDAL
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     - name: Setup cache
-      uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+      uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
       id: cache
       with:
           path: ${{ github.workspace }}/.ccache
@@ -325,7 +325,7 @@ jobs:
             mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libpng mingw-w64-x86_64-libtiff mingw-w64-x86_64-openjpeg2
             mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools mingw-w64-x86_64-python-lxml mingw-w64-x86_64-swig mingw-w64-x86_64-python-psutil
       - name: Setup cache
-        uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
         id: cache
         with:
           path: ${{ github.workspace }}\.ccache
@@ -409,7 +409,7 @@ jobs:
       shell: pwsh
       run: |
         echo "JAVA_HOME=$env:JAVA_HOME_11_X64" >> %GITHUB_ENV%
-    - uses: conda-incubator/setup-miniconda@392cf345b1784333caa1a1185081c71e6ffd61bc # v3.0.2
+    - uses: conda-incubator/setup-miniconda@030178870c779d9e5e1b4e563269f3aa69b04081 # v3.0.3
       with:
         activate-environment: gdalenv
         miniforge-variant: Mambaforge
@@ -506,7 +506,7 @@ jobs:
         git config --global core.autocrlf false
     - name: Checkout GDAL
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    - uses: conda-incubator/setup-miniconda@392cf345b1784333caa1a1185081c71e6ffd61bc # v3.0.2
+    - uses: conda-incubator/setup-miniconda@030178870c779d9e5e1b4e563269f3aa69b04081 # v3.0.3
       with:
         activate-environment: gdalenv
         miniforge-variant: Mambaforge
@@ -574,7 +574,7 @@ jobs:
     - name: Checkout GDAL
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     - name: Setup cache
-      uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+      uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
       id: cache
       with:
           path: ${{ github.workspace }}/.ccache
@@ -653,7 +653,7 @@ jobs:
         git config --global core.autocrlf false
     - name: Checkout GDAL
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    - uses: conda-incubator/setup-miniconda@392cf345b1784333caa1a1185081c71e6ffd61bc # v3.0.2
+    - uses: conda-incubator/setup-miniconda@030178870c779d9e5e1b4e563269f3aa69b04081 # v3.0.3
       with:
         activate-environment: gdalenv
         python-version: 3.9
