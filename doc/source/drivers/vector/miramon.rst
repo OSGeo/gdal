@@ -11,7 +11,7 @@ This driver is capable of translating (reading and writing) structured vectors
 of point, arc (*linestrings*), and polygon types from MiraMon vector format. Structured vectors is
 the binary format of MiraMon for vector layer data, linked to one or more database tables,
 with or without topology and with reach metadata. More information about the structured MiraMon
-vector format is available `on the public specification <https://www.miramon.cat/new_note/eng/notes/FormatFitxersTopologicsMiraMon.pdf>`__.
+vector format is available `on the public specification <https://www.miramon.cat/new_note/eng/notes/MiraMon_structured_vectors_file_format.pdf>`__.
 
 It is important to keep in mind that a MiraMon vector layer is composed by several files as follows:
 
@@ -362,7 +362,7 @@ Examples
 See Also
 --------
 
--  `MiraMon's vector format specifications <https://www.miramon.cat/new_note/eng/notes/FormatFitxersTopologicsMiraMon.pdf>`__
+-  `MiraMon's vector format specifications <https://www.miramon.cat/new_note/eng/notes/MiraMon_structured_vectors_file_format.pdf>`__
 -  `MiraMon Extended DBF format <https://www.miramon.cat/new_note/eng/notes/DBF_estesa.pdf>`__
 -  `MiraMon vector layer concepts <https://www.miramon.cat/help/eng/mm32/ap2.htm#structured_vector>`__.
 -  `MiraMon page <https://www.miramon.cat/Index_usa.htm>`__
