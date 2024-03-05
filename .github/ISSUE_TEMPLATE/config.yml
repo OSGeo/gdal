@@ -1,0 +1,10 @@
+blank_issues_enabled: false
+
+contact_links:
+
+  - name: Question
+    url: https://gis.stackexchange.com/
+    about: >
+      Questions should go to the gdal-dev mailing list at https://lists.osgeo.org/mailman/listinfo/gdal-dev
+      or other support forums such as https://gis.stackexchange.com/.
+      GitHub issues are for bug reports and suggestions for new features.
