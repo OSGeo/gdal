@@ -75,6 +75,18 @@ static void *GDALCreateApproxTransformer2(GDALTransformerFunc pfnRawTransformer,
                                           double dfMaxErrorForward,
                                           double dfMaxErrorReverse);
 
+static bool IsTransformer(void *hTransformerArg, const char *pszClassName)
+{
+    if (!hTransformerArg)
+        return false;
+    // All transformers should have a GDALTransformerInfo member as their first members
+    GDALTransformerInfo *psInfo =
+        static_cast<GDALTransformerInfo *>(hTransformerArg);
+    return memcmp(psInfo->abySignature, GDAL_GTI2_SIGNATURE,
+                  strlen(GDAL_GTI2_SIGNATURE)) == 0 &&
+           strcmp(psInfo->pszClassName, pszClassName) == 0;
+}
+
 /************************************************************************/
 /* ==================================================================== */
 /*                       GDALGenImgProjTransformer                      */
@@ -415,15 +427,19 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
 {
     VALIDATE_POINTER1(hSrcDS, "GDALSuggestedWarpOutput2", CE_Failure);
 
+    const bool bIsGDALGenImgProjTransform{
+        pTransformArg &&
+        IsTransformer(pTransformArg, "GDALGenImgProjTransformer")};
+
     /* -------------------------------------------------------------------- */
     /*      Setup sample points all around the edge of the input raster.    */
     /* -------------------------------------------------------------------- */
-    if (pfnTransformer == GDALGenImgProjTransform)
+    if (bIsGDALGenImgProjTransform)
     {
         // In case CHECK_WITH_INVERT_PROJ has been modified.
         GDALRefreshGenImgProjTransformer(pTransformArg);
     }
-    else if (pfnTransformer == GDALApproxTransform)
+    else if (IsTransformer(pTransformArg, "GDALApproxTransformer"))
     {
         // In case CHECK_WITH_INVERT_PROJ has been modified.
         GDALRefreshApproxTransformer(pTransformArg);
@@ -436,7 +452,7 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
     /* Special case for warping on the same (or null) CRS.           */
     /* ------------------------------------------------------------- */
     if ((!nOptions || (nOptions & GDAL_SWO_FORCE_SQUARE_PIXEL) == 0) &&
-        pTransformArg && pfnTransformer == GDALGenImgProjTransform)
+        pTransformArg && bIsGDALGenImgProjTransform)
     {
         double adfGeoTransform[6];
 
