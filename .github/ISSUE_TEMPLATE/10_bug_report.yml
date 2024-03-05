@@ -1,0 +1,46 @@
+name: Bug report
+description: Create a bug report.
+labels:
+  - 'Bug'
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report correctly. Do NOT use GitHub to post any questions or support requests! They will be closed immediately and ignored.
+
+        The GDAL project is made of contributions from various individuals and organizations, each with their own focus. The issue you are facing is not necessarily in the priority list of those contributors and consequently there is no guarantee that it will be addressed in a timely manner. If this bug report or feature request is high-priority for you, and you cannot address it yourself, we suggest engaging a GDAL developer or support organisation and financially sponsoring a fix.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What is the bug?
+      description: |
+        If you think there is an issue with coordinate order in GDAL 3.0, then it is likely an intended behavior. See https://github.com/OSGeo/gdal/issues/1974 for more explanations.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce the issue
+      description: |
+        Steps, code extract and/or sample datasets to reproduce the behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: about-info
+    attributes:
+      label: Versions and provenance
+      description: |
+        Please indicate the operating system (e.g "Windows 11", or "Linux Ubuntu 22.04") and the GDAL version, for example by pasting the output of ``gdalinfo --version``. Please also indicate how you got the GDAL binary. For example: self-built, package coming from the Linux distribution, from OSGeo4W, from Conda-Forge, from vcpkg, etc.
+        Note that the GDAL project supports only the current version https://gdal.org/download.html#current-release so it should be used for testing. Or at least the newest easily available version for your platform.
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: |
+        Add any other context about the problem here.

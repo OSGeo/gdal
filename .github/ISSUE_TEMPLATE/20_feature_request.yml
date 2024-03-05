@@ -1,0 +1,25 @@
+name: Feature request
+description: Suggest a feature idea.
+labels:
+  - 'enhancement'
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this feature request correctly.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: Feature description
+      description: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: Additional
+    attributes:
+      label: Additional context
+      description: |
+        Add any other context  about the feature request here. Open source is community driven, please consider a way to support this work either by hiring developers, supporting the GDAL project, find someone to submit a pull request.
+        If the change required is important, you should consider writing a [GDAL RFC](https://gdal.org/development/rfc/index.html) or hiring someone to, and announce your work on the maiing list.
