@@ -1280,6 +1280,8 @@ struct GDALWarpAppOptions {
 
 /* Note: we must use 2 distinct names due to different ownership of the result */
 
+
+%apply Pointer NONNULL { GDALDatasetShadow* dstDS };
 %inline %{
 
 int wrapper_GDALWarpDestDS( GDALDatasetShadow* dstDS,
@@ -1318,6 +1320,7 @@ int wrapper_GDALWarpDestDS( GDALDatasetShadow* dstDS,
     return bRet;
 }
 %}
+%clear GDALDatasetShadow* dstDS;
 
 #ifdef SWIGJAVA
 %rename (Warp) wrapper_GDALWarpDestName;
