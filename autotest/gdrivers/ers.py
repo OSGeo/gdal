@@ -320,6 +320,16 @@ def test_ers_recursive_opening():
 
 
 ###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/9352
+
+
+@pytest.mark.require_driver("ECW")
+def test_ers_open_data_file_ecw():
+
+    assert gdal.Open("data/ers/references_ecw.ers")
+
+
+###############################################################################
 # Cleanup
 
 
