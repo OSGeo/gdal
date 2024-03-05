@@ -257,6 +257,8 @@ GDALSuggestedWarpOutput(GDALDatasetH hSrcDS, GDALTransformerFunc pfnTransformer,
 
 /** Flag for GDALSuggestedWarpOutput2() to ask to round-up output size */
 #define GDAL_SWO_ROUND_UP_SIZE 0x1
+/** Flag for GDALSuggestedWarpOutput2() to ask to force square pixels  */
+#define GDAL_SWO_FORCE_SQUARE_PIXEL 0x2
 
 CPLErr CPL_DLL CPL_STDCALL GDALSuggestedWarpOutput2(
     GDALDatasetH hSrcDS, GDALTransformerFunc pfnTransformer,
