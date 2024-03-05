@@ -146,7 +146,8 @@ OGRErr OGRCompoundCurve::addCurveDirectlyFromWkb(OGRGeometry *poSelf,
                                                  OGRCurve *poCurve)
 {
     OGRCompoundCurve *poCC = poSelf->toCompoundCurve();
-    return poCC->addCurveDirectlyInternal(poCurve, 1e-14, FALSE);
+    return poCC->addCurveDirectlyInternal(poCurve, DEFAULT_TOLERANCE_EPSILON,
+                                          FALSE);
 }
 
 /************************************************************************/
@@ -500,7 +501,7 @@ OGRCurve *OGRCompoundCurve::stealCurve(int iCurve)
  * @param poCurve geometry to add to the container.
  * @param dfToleranceEps relative tolerance when checking that the first point
  * of a segment matches then end point of the previous one. Default value:
- * 1e-14.
+ * OGRCompoundCurve::DEFAULT_TOLERANCE_EPSILON.
  *
  * @return OGRERR_NONE if successful, or OGRERR_FAILURE in case of error
  * (for example if curves are not contiguous)
@@ -534,7 +535,7 @@ OGRErr OGRCompoundCurve::addCurve(const OGRCurve *poCurve,
  * @param poCurve geometry to add to the container.
  * @param dfToleranceEps relative tolerance when checking that the first point
  * of a segment matches then end point of the previous one. Default value:
- * 1e-14.
+ * OGRCompoundCurve::DEFAULT_TOLERANCE_EPSILON.
  *
  * @return OGRERR_NONE if successful, or OGRERR_FAILURE in case of error
  * (for example if curves are not contiguous)
@@ -626,7 +627,7 @@ OGRErr OGRCompoundCurve::addCurveDirectlyInternal(OGRCurve *poCurve,
  * @param poCurve geometry to add to the container.
  * @param dfToleranceEps relative tolerance when checking that the first point
  * of a segment matches then end point of the previous one. Default value:
- * 1e-14.
+ * OGRCompoundCurve::DEFAULT_TOLERANCE_EPSILON.
  *
  * @return OGRERR_NONE if successful, or OGRERR_FAILURE in case of error
  * (for example if curves are not contiguous)

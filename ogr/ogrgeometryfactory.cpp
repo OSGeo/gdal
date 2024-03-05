@@ -5821,12 +5821,12 @@ static int OGRGF_DetectArc(const OGRLineString *poLS, int i,
         dfScale2 = std::max(dfScale2, fabs(p0.getY()));
         // Not strictly necessary, but helps having 'clean' lines without
         // duplicated points.
-        if (fabs(poLSNew->getX(poLSNew->getNumPoints() - 1) - p0.getX()) /
-                    dfScale2 >
-                1.0e-8 ||
-            fabs(poLSNew->getY(poLSNew->getNumPoints() - 1) - p0.getY()) /
-                    dfScale2 >
-                1.0e-8)
+        constexpr double dfToleranceEps =
+            OGRCompoundCurve::DEFAULT_TOLERANCE_EPSILON;
+        if (fabs(poLSNew->getX(poLSNew->getNumPoints() - 1) - p0.getX()) >
+                dfToleranceEps * dfScale2 ||
+            fabs(poLSNew->getY(poLSNew->getNumPoints() - 1) - p0.getY()) >
+                dfToleranceEps * dfScale2)
             poLSNew->addPoint(&p0);
         if (poLSNew->getNumPoints() >= 2)
         {
@@ -6137,10 +6137,12 @@ OGRCurve *OGRGeometryFactory::curveFromLineString(
             dfScale = std::max(dfScale, fabs(p.getY()));
             if (bIsClosed && i == nLSNumPoints - 1)
                 dfScale = 0;
+            constexpr double dfToleranceEps =
+                OGRCompoundCurve::DEFAULT_TOLERANCE_EPSILON;
             if (fabs(poLSNew->getX(poLSNew->getNumPoints() - 1) - p.getX()) >
-                    1e-8 * dfScale ||
+                    dfToleranceEps * dfScale ||
                 fabs(poLSNew->getY(poLSNew->getNumPoints() - 1) - p.getY()) >
-                    1e-8 * dfScale)
+                    dfToleranceEps * dfScale)
             {
                 poLSNew->addPoint(&p);
             }
