@@ -1,0 +1,14 @@
+DatasetHeader Begin
+	Version		= "6.2"
+	Name		= "references_ecw.ers"
+	DataFile	= "references_ecw.ecw"
+	DataSetType	= Translated
+	DataType	= Raster
+	ByteOrder	= LSBFirst
+	RasterInfo Begin
+		CellType	= Unsigned8BitInteger
+		NrOfLines	= 512
+		NrOfCellsPerLine	= 519
+		NrOfBands	= 1
+	RasterInfo End
+DatasetHeader End

@@ -881,16 +881,17 @@ int ERSProxyRasterBand::GetOverviewCount()
 GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
+    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
+        return nullptr;
+
+    int &nRecLevel = GetRecLevel();
     // cppcheck-suppress knownConditionTrueFalse
-    if (GetRecLevel())
+    if (nRecLevel)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt at recursively opening ERS dataset");
         return nullptr;
     }
-
-    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
-        return nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Ingest the file as a tree of header nodes.                      */
@@ -1020,7 +1021,6 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (EQUAL(poHeader->Find("DataSetType", ""), "Translated"))
     {
-        int &nRecLevel = GetRecLevel();
         nRecLevel++;
         poDS->poDepFile = GDALDataset::FromHandle(
             GDALOpen(osDataFilePath, poOpenInfo->eAccess));
