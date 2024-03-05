@@ -1907,6 +1907,22 @@ See the dedicated :ref:`vrt_multidimensional` page.
 
    vrt_multidimensional
 
+Processed dataset VRT
+---------------------
+
+.. versionadded:: 3.9
+
+A VRT processed dataset is a specific variant of the :ref:`raster.vrt` format,
+to apply chained processing steps that may apply to several bands at the same time.
+
+See the dedicated :ref:`vrt_processed_dataset` page.
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   vrt_processed_dataset
+
 vrt:// connection string
 ------------------------
 

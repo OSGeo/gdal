@@ -285,11 +285,6 @@ void VRTSimpleSource::GetDstWindow(double &dfDstXOff, double &dfDstYOff,
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
-static const char *const apszSpecialSyntax[] = {
-    "NITF_IM:{ANY}:{FILENAME}", "PDF:{ANY}:{FILENAME}",
-    "RASTERLITE:{FILENAME},{ANY}", "TILEDB:\"{FILENAME}\":{ANY}",
-    "TILEDB:{FILENAME}:{ANY}"};
-
 static bool IsSlowSource(const char *pszSrcName)
 {
     return strstr(pszSrcName, "/vsicurl/http") != nullptr ||
@@ -350,11 +345,8 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML(const char *pszVRTPath)
         }
         else
         {
-            for (size_t i = 0;
-                 i < sizeof(apszSpecialSyntax) / sizeof(apszSpecialSyntax[0]);
-                 ++i)
+            for (const char *pszSyntax : VRTDataset::apszSpecialSyntax)
             {
-                const char *const pszSyntax = apszSpecialSyntax[i];
                 CPLString osPrefix(pszSyntax);
                 osPrefix.resize(strchr(pszSyntax, ':') - pszSyntax + 1);
                 if (pszSyntax[osPrefix.size()] == '"')
@@ -552,86 +544,8 @@ VRTSimpleSource::XMLInit(const CPLXMLNode *psSrc, const char *pszVRTPath,
         m_nExplicitSharedStatus = CPLTestBool(pszShared);
     }
 
-    if (pszVRTPath != nullptr && m_bRelativeToVRTOri)
-    {
-        // Try subdatasetinfo API first
-        // Note: this will become the only branch when subdatasetinfo will become
-        //       available for NITF_IM, RASTERLITE and TILEDB
-        const auto oSubDSInfo{GDALGetSubdatasetInfo(pszFilename)};
-        if (oSubDSInfo && !oSubDSInfo->GetPathComponent().empty())
-        {
-            auto path{oSubDSInfo->GetPathComponent()};
-            m_osSrcDSName = oSubDSInfo->ModifyPathComponent(
-                CPLProjectRelativeFilename(pszVRTPath, path.c_str()));
-            GDALDestroySubdatasetInfo(oSubDSInfo);
-        }
-        else
-        {
-            bool bDone = false;
-            for (size_t i = 0;
-                 i < sizeof(apszSpecialSyntax) / sizeof(apszSpecialSyntax[0]);
-                 ++i)
-            {
-                const char *pszSyntax = apszSpecialSyntax[i];
-                CPLString osPrefix(pszSyntax);
-                osPrefix.resize(strchr(pszSyntax, ':') - pszSyntax + 1);
-                if (pszSyntax[osPrefix.size()] == '"')
-                    osPrefix += '"';
-                if (EQUALN(pszFilename, osPrefix, osPrefix.size()))
-                {
-                    if (STARTS_WITH_CI(pszSyntax + osPrefix.size(), "{ANY}"))
-                    {
-                        const char *pszLastPart = strrchr(pszFilename, ':') + 1;
-                        // CSV:z:/foo.xyz
-                        if ((pszLastPart[0] == '/' || pszLastPart[0] == '\\') &&
-                            pszLastPart - pszFilename >= 3 &&
-                            pszLastPart[-3] == ':')
-                        {
-                            pszLastPart -= 2;
-                        }
-                        CPLString osPrefixFilename = pszFilename;
-                        osPrefixFilename.resize(pszLastPart - pszFilename);
-                        m_osSrcDSName =
-                            osPrefixFilename +
-                            CPLProjectRelativeFilename(pszVRTPath, pszLastPart);
-                        bDone = true;
-                    }
-                    else if (STARTS_WITH_CI(pszSyntax + osPrefix.size(),
-                                            "{FILENAME}"))
-                    {
-                        CPLString osFilename(pszFilename + osPrefix.size());
-                        size_t nPos = 0;
-                        if (osFilename.size() >= 3 && osFilename[1] == ':' &&
-                            (osFilename[2] == '\\' || osFilename[2] == '/'))
-                            nPos = 2;
-                        nPos = osFilename.find(
-                            pszSyntax[osPrefix.size() + strlen("{FILENAME}")],
-                            nPos);
-                        if (nPos != std::string::npos)
-                        {
-                            const CPLString osSuffix = osFilename.substr(nPos);
-                            osFilename.resize(nPos);
-                            m_osSrcDSName = osPrefix +
-                                            CPLProjectRelativeFilename(
-                                                pszVRTPath, osFilename) +
-                                            osSuffix;
-                            bDone = true;
-                        }
-                    }
-                    break;
-                }
-            }
-            if (!bDone)
-            {
-                m_osSrcDSName =
-                    CPLProjectRelativeFilename(pszVRTPath, pszFilename);
-            }
-        }
-    }
-    else
-    {
-        m_osSrcDSName = pszFilename;
-    }
+    m_osSrcDSName = VRTDataset::BuildSourceFilename(
+        pszFilename, pszVRTPath, CPL_TO_BOOL(m_bRelativeToVRTOri));
 
     const char *pszSourceBand = CPLGetXMLValue(psSrc, "SourceBand", "1");
     m_bGetMaskBand = false;
