@@ -1477,7 +1477,16 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                         }
                         m_poFeatureDefn->GetGeomFieldDefn(iGeomCol)
                             ->SetCoordinatePrecision(sCoordPrec);
-                        m_sBinaryPrecision.SetFrom(sCoordPrec);
+                        if (CPLTestBool(CPLGetXMLValue(
+                                psXMLNode.get(), "discard_coord_lsb", "false")))
+                        {
+                            m_sBinaryPrecision.SetFrom(sCoordPrec);
+                            m_bUndoDiscardCoordLSBOnReading =
+                                CPLTestBool(CPLGetXMLValue(
+                                    psXMLNode.get(),
+                                    "undo_discard_coord_lsb_on_reading",
+                                    "false"));
+                        }
                     }
                 }
             }
@@ -5594,6 +5603,7 @@ void OGRGeoPackageTableLayer::SetOpeningParameters(
 void OGRGeoPackageTableLayer::SetCreationParameters(
     OGRwkbGeometryType eGType, const char *pszGeomColumnName, int bGeomNullable,
     OGRSpatialReference *poSRS, const OGRGeomCoordinatePrecision &oCoordPrec,
+    bool bDiscardCoordLSB, bool bUndoDiscardCoordLSBOnReading,
     const char *pszFIDColumnName, const char *pszIdentifier,
     const char *pszDescription)
 {
@@ -5606,6 +5616,7 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
     m_bTableCreatedInTransaction = m_poDS->IsInTransaction();
     m_bHasTriedDetectingFID64 = true;
     m_pszFidColumn = CPLStrdup(pszFIDColumnName);
+    m_bUndoDiscardCoordLSBOnReading = bUndoDiscardCoordLSBOnReading;
 
     if (eGType != wkbNone)
     {
@@ -5617,7 +5628,9 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
         oGeomFieldDefn.SetSpatialRef(poSRS);
         oGeomFieldDefn.SetNullable(bGeomNullable);
         oGeomFieldDefn.SetCoordinatePrecision(oCoordPrec);
-        m_sBinaryPrecision.SetFrom(oCoordPrec);
+
+        if (bDiscardCoordLSB)
+            m_sBinaryPrecision.SetFrom(oCoordPrec);
 
         // Save coordinate precision in gpkg_metadata/gpkg_metadata_reference
         if ((oCoordPrec.dfXYResolution != OGRGeomCoordinatePrecision::UNKNOWN ||
@@ -5636,6 +5649,11 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
             if (oCoordPrec.dfMResolution != OGRGeomCoordinatePrecision::UNKNOWN)
                 osCoordPrecision += CPLSPrintf(" m_resolution=\"%g\"",
                                                oCoordPrec.dfMResolution);
+            osCoordPrecision += CPLSPrintf(" discard_coord_lsb=\"%s\"",
+                                           bDiscardCoordLSB ? "true" : "false");
+            osCoordPrecision +=
+                CPLSPrintf(" undo_discard_coord_lsb_on_reading=\"%s\"",
+                           m_bUndoDiscardCoordLSBOnReading ? "true" : "false");
             osCoordPrecision += " />";
 
             char *pszSQL = sqlite3_mprintf(
@@ -7742,13 +7760,41 @@ begin:
             if (nBlobSize >= 8 && pabyBlob && pabyBlob[0] == 'G' &&
                 pabyBlob[1] == 'P')
             {
-                /* Read header */
-                OGRErr err = GPkgHeaderFromWKB(pabyBlob, nBlobSize, &oHeader);
-                if (err == OGRERR_NONE)
+                if (psFillArrowArray->poLayer->m_bUndoDiscardCoordLSBOnReading)
                 {
-                    /* WKB pointer */
-                    pabyWkb = pabyBlob + oHeader.nHeaderLen;
-                    nWKBSize = nBlobSize - oHeader.nHeaderLen;
+                    OGRGeometry *poGeomPtr =
+                        GPkgGeometryToOGR(pabyBlob, nBlobSize, nullptr);
+                    if (poGeomPtr)
+                    {
+                        poGeomPtr->roundCoordinates(
+                            psFillArrowArray->poFeatureDefn->GetGeomFieldDefn(0)
+                                ->GetCoordinatePrecision());
+                        nWKBSize = poGeomPtr->WkbSize();
+                        abyWkb.resize(nWKBSize);
+                        if (poGeomPtr->exportToWkb(wkbNDR, abyWkb.data(),
+                                                   wkbVariantIso) !=
+                            OGRERR_NONE)
+                        {
+                            nWKBSize = 0;
+                        }
+                        else
+                        {
+                            pabyWkb = abyWkb.data();
+                        }
+                        delete poGeomPtr;
+                    }
+                }
+                else
+                {
+                    /* Read header */
+                    OGRErr err =
+                        GPkgHeaderFromWKB(pabyBlob, nBlobSize, &oHeader);
+                    if (err == OGRERR_NONE)
+                    {
+                        /* WKB pointer */
+                        pabyWkb = pabyBlob + oHeader.nHeaderLen;
+                        nWKBSize = nBlobSize - oHeader.nHeaderLen;
+                    }
                 }
             }
             else if (nBlobSize > 0 && pabyBlob)

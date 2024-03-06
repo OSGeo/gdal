@@ -397,8 +397,16 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature(sqlite3_stmt *hStmt)
                              "Unable to read geometry");
                 }
             }
-            if (poGeom != nullptr)
+            if (poGeom)
+            {
+                if (m_bUndoDiscardCoordLSBOnReading)
+                {
+                    poGeom->roundCoordinates(
+                        poGeomFieldDefn->GetCoordinatePrecision());
+                }
                 poGeom->assignSpatialReference(poSrs);
+            }
+
             poFeature->SetGeometryDirectly(poGeom);
         }
     }
@@ -633,7 +641,8 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                 const GByte *pabyGpkg = static_cast<const GByte *>(
                     sqlite3_column_blob(hStmt, m_iGeomCol));
                 if (m_poFilterGeom == nullptr && iGpkgSize >= 8 && pabyGpkg &&
-                    pabyGpkg[0] == 'G' && pabyGpkg[1] == 'P')
+                    pabyGpkg[0] == 'G' && pabyGpkg[1] == 'P' &&
+                    !m_bUndoDiscardCoordLSBOnReading)
                 {
                     GPkgHeader oHeader;
 
@@ -662,6 +671,12 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                      "Unable to read geometry");
                         }
                         poGeom.reset(poGeomPtr);
+                    }
+                    else if (m_bUndoDiscardCoordLSBOnReading)
+                    {
+                        poGeom->roundCoordinates(
+                            m_poFeatureDefn->GetGeomFieldDefn(0)
+                                ->GetCoordinatePrecision());
                     }
                     if (poGeom != nullptr)
                     {

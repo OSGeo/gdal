@@ -574,6 +574,9 @@ class OGRGeoPackageLayer CPL_NON_FINAL : public OGRLayer,
     int m_iGeomCol = -1;
     std::vector<int> m_anFieldOrdinals{};
 
+    //! Whether to call OGRGeometry::SetPrecision() when reading back geometries from the database
+    bool m_bUndoDiscardCoordLSBOnReading = false;
+
     void ClearStatement();
     virtual OGRErr ResetStatement() = 0;
 
@@ -884,13 +887,12 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
                               const char *pszObjectType, bool bIsInGpkgContents,
                               bool bIsSpatial, const char *pszGeomColName,
                               const char *pszGeomType, bool bHasZ, bool bHasM);
-    void SetCreationParameters(OGRwkbGeometryType eGType,
-                               const char *pszGeomColumnName, int bGeomNullable,
-                               OGRSpatialReference *poSRS,
-                               const OGRGeomCoordinatePrecision &oCoordPrec,
-                               const char *pszFIDColumnName,
-                               const char *pszIdentifier,
-                               const char *pszDescription);
+    void SetCreationParameters(
+        OGRwkbGeometryType eGType, const char *pszGeomColumnName,
+        int bGeomNullable, OGRSpatialReference *poSRS,
+        const OGRGeomCoordinatePrecision &oCoordPrec, bool bDiscardCoordLSB,
+        bool bUndoDiscardCoordLSBOnReading, const char *pszFIDColumnName,
+        const char *pszIdentifier, const char *pszDescription);
     void SetDeferredSpatialIndexCreation(bool bFlag);
     void SetASpatialVariant(GPKGASpatialVariant eASpatialVariant)
     {

@@ -6774,6 +6774,10 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
         eGType, pszGeomColumnName, bGeomNullable, poSRS,
         poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetCoordinatePrecision()
                            : OGRGeomCoordinatePrecision(),
+        CPLTestBool(
+            CSLFetchNameValueDef(papszOptions, "DISCARD_COORD_LSB", "NO")),
+        CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "UNDO_DISCARD_COORD_LSB_ON_READING", "NO")),
         pszFIDColumnName, pszIdentifier,
         CSLFetchNameValue(papszOptions, "DESCRIPTION"));
     if (poSRS)
