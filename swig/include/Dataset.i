@@ -881,19 +881,19 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     return layer;
   }
 
-OGRLayerShadow *GetLayerByName(const char* layer_name) {
-  OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetGetLayerByName(self, layer_name);
-  return layer;
-}
+  OGRLayerShadow *GetLayerByName(const char* layer_name) {
+    OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetGetLayerByName(self, layer_name);
+    return layer;
+  }
 
-void ResetReading()
-{
-  GDALDatasetResetReading(self);
-}
+  void ResetReading()
+  {
+    GDALDatasetResetReading(self);
+  }
 
-int GetLayerCount() {
-  return GDALDatasetGetLayerCount(self);
-}
+  int GetLayerCount() {
+    return GDALDatasetGetLayerCount(self);
+  }
 
 #ifdef SWIGCSHARP
   
