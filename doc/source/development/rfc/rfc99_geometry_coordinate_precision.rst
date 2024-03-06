@@ -234,17 +234,19 @@ OGRGeometry class
 +++++++++++++++++
 
 The existing :cpp:class:`OGRGeometry` is extended with the following new
-method which is a wrapper of the ``GEOSGeom_setPrecision_r`` function:
+``SetPrecision`` method which is a wrapper of the ``GEOSGeom_setPrecision_r`` function:
 
 .. code-block:: c++
 
     /** Set the geometry's precision, rounding all its coordinates to the precision
-     * grid.
+     * grid, and making sure the geometry is still valid.
      *
-     * This function is built on the GEOS library, check it for the definition
-     * of the geometry operation.
-     * If OGR is built without the GEOS library, this function will always fail,
-     * issuing a CPLE_NotSupported error.
+     * This is a stronger version of roundCoordinates().
+     *
+     * Note that at time of writing GEOS does no supported curve geometries. So
+     * currently if this function is called on such a geometry, OGR will first call
+     * getLinearGeometry() on the input and getCurveGeometry() on the output, but
+     * that it is unlikely to yield to the expected result.
      *
      * @param dfGridSize size of the precision grid, or 0 for FLOATING
      *                 precision.
@@ -276,6 +278,33 @@ which assume that the passed geometries are valid once rounded with the specifie
 coordinate precision metadata.
 
 However it is invoked when the `-xyRes` switch of ogr2ogr is passed.
+
+It may also be triggered by setting the new ``OGR_APPLY_GEOM_SET_PRECISION``
+configuration option to ``YES``, for geometries passed to
+:cpp:func:`OGRLayer::CreateFeature` and :cpp:func:`OGRLayer::SetFeature` before
+they are passed to the driver.
+
+
+A closely related ``roundCoordinates`` method is also introduced:
+
+.. code-block:: c++
+
+    /** Round coordinates of the geometry to the specified precision.
+     *
+     * Note that this is not the same as OGRGeometry::SetPrecision(). The later
+     * will return valid geometries, whereas roundCoordinates() does not make
+     * such guarantee and may return geometries with invalidities, if they are
+     * not compatible of the specified precision. roundCoordinates() supports
+     * curve geometries, whereas SetPrecision() does not currently.
+     *
+     * One use case for roundCoordinates() is to undo the effect of
+     * quantizeCoordinates().
+     *
+     * @param sPrecision Contains the precision requirements.
+     * @since GDAL 3.9
+     */
+     void roundCoordinates(const OGRGeomCoordinatePrecision &sPrecision);
+
 
 WKB export
 ++++++++++
@@ -484,18 +513,55 @@ would not be backwards-compatible.
 GeoPackage
 ++++++++++
 
-The driver will use the resolution to nullify useless least-significant bits
-in its binary-based geometry (WKB-based) binary encoding.
+The GeoPackage driver will support reading and writing the geometry coordinate
+precision. By default, the geometry coordinate precision
+will only noted in metadata, and does not cause geometries that are written to
+be modified to comply with this precision.
 
-And it will be able to store and retrieve the coordinate precision metadata in
-the files it generates, by adding a ``<CoordinatePrecision>`` new metadata
-record in the ``gpkg_metadata`` and ``gpkg_metadata_reference`` tables.
-That ``<CoordinatePrecision>`` record will be ignored by GDAL < 3.9.
+Several settings may be combined to apply further processing:
+
+* the ``OGR_APPLY_GEOM_SET_PRECISION`` configuration option as described
+  previously.
+
+* if the new ``DISCARD_COORD_LSB`` layer creation option is set to YES, the
+  less-significant bits of the WKB geometry encoding which are not relevant for
+  the requested precision are set to zero. This can improve further lossless
+  compression stages, for example when putting a GeoPackage in an archive.
+  Note however that when reading back such geometries and displaying them
+  to the maximum precision, they will not "exactly" match the original
+  OGRGeomCoordinatePrecision settings. However, they will round
+  back to it.
+  The value of the ``DISCARD_COORD_LSB`` layer creation option is written in
+  the dataset metadata, and will be re-used for later edition sessions.
+
+* if the new ``UNDO_DISCARD_COORD_LSB_ON_READING`` layer creation option is set to
+  YES (only makes sense if the ``DISCARD_COORD_LSB`` layer creation option is
+  also set to YES), when *reading* back geometries from a dataset, the
+  ``OGRGeometry::roundCoordinates`` method will be applied so that
+  the geometry coordinates exactly match the original specified coordinate
+  precision. That option will only be honored by GDAL 3.9 or later.
+
+
+Implementation details: the coordinate precision is stored in a record in each
+of the ``gpkg_metadata`` and ``gpkg_metadata_reference`` table, with the
+following additional constraints on top of the ones imposed by the GeoPackage
+specification:
+
+- gpkg_metadata.md_standard_uri = 'http://gdal.org'
+- gpkg_metadata.mime_type = 'text/xml'
+- gpkg_metadata.metadata = '<CoordinatePrecision xy_resolution="{xy_resolution}" z_resolution="{z_resolution}" m_resolution="{m_resolution}" discard_coord_lsb={true or false} undo_discard_coord_lsb_on_reading={true or false} />'
+- gpkg_metadata_reference.reference_scope = 'column'
+- gpkg_metadata_reference.table_name = '{table_name}'
+- gpkg_metadata_reference.column_name = '{geometry_column_name}'
+
+Note that the xy_resolution, z_resolution or m_resolution attributes of the
+XML CoordinatePrecision element are optional. Their numeric value is expressed
+in the units of the SRS for xy_resolution and z_resolution.
 
 .. code-block:: sql
 
     INSERT INTO gpkg_metadata VALUES(1,'dataset','http://gdal.org','text/xml',
-        '<CoordinatePrecision xy_resolution="8.9e-9" z_resolution="1e-3" m_resolution="1e-3"></CoordinatePrecision>');
+        '<CoordinatePrecision xy_resolution="8.9e-9" z_resolution="1e-3" m_resolution="1e-3" discard_coord_lsb="false" undo_discard_coord_lsb_on_reading="false"></CoordinatePrecision>');
     INSERT INTO gpkg_metadata_reference VALUES('column','poly','geom',NULL,'2023-10-22T21:13:43.282Z',1,NULL);
 
 OpenFileGDB
