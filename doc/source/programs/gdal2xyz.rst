@@ -104,3 +104,18 @@ To create a text file in `xyz` format from the input file `input.tif`.
 The first columns, x and y, are the coordinates of the centers of each cell.
 The remaining columns represent the first and second bands.
 We also replace the dataset nodata values with zeros.
+
+
+Caveats
+-------
+
+Use gdal_translate if more precision is desired.
+
+. code-block:: bash
+
+    gdal2xyz.py b.tif gx.xyz
+    head gx.xyz
+    -33.5 24.5 42.0529
+    gdal_translate b.tif gt.xyz
+    head gt.xyz
+    -33.5 24.5 42.0529441833496094
