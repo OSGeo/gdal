@@ -142,6 +142,8 @@ by the relevant driver, causing a error.
     times, but at least one layer name or a :option:`-sql` option must be
     specified.
 
+    If a layer is not found a (non-fatal) error message is printed and it is skipped.
+
 .. option:: -where <expression>
 
     An optional SQL WHERE style query expression to be applied to select features
