@@ -1669,3 +1669,74 @@ def test_warp_average_oversampling():
             assert math.isnan(got_data[(y + 4) * 14 + (14 - 1 - x)])
         for x in range(6):
             assert got_data[(y + 4) * 14 + (x + 4)] == 3.0
+
+
+###############################################################################
+# Test bug fix for https://github.com/qgis/QGIS/issues/56288
+
+
+@pytest.mark.require_driver("XYZ")
+def test_non_square():
+
+    # bottom up
+    content = """y x z
+30.0 10.0 1
+30.0 10.2 2
+30.0 10.4 3
+30.1 10.0 4
+30.1 10.2 5
+30.1 10.4 6
+30.2 10.0 7
+30.2 10.2 8
+30.2 10.4 9
+"""
+
+    with gdaltest.tempfile("/vsimem/grid.xyz", content):
+        ds = gdal.Open("/vsimem/grid.xyz")
+        assert ds.RasterXSize == 3 and ds.RasterYSize == 3
+        assert ds.GetGeoTransform() == pytest.approx((9.9, 0.2, 0.0, 29.95, 0.0, 0.1))
+        ulx, xres, xskew, uly, yskew, yres = ds.GetGeoTransform()
+        lrx = ulx + (ds.RasterXSize * xres)
+        lry = uly + (ds.RasterYSize * yres)
+        assert lrx == pytest.approx(10.5)
+        assert lry == pytest.approx(30.25)
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+        assert struct.unpack("b" * (3 * 3), ds.ReadRaster()) == (
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+        )
+
+        warped = gdal.AutoCreateWarpedVRT(ds)
+        assert warped.GetRasterBand(1).DataType == gdal.GDT_Byte
+        assert (
+            warped.RasterXSize == ds.RasterXSize
+            and warped.RasterYSize == ds.RasterYSize
+        )
+        assert warped.GetGeoTransform() == pytest.approx(
+            (9.9, 0.2, 0.0, 30.25, 0.0, -0.1)
+        )
+        assert struct.unpack("b" * (3 * 3), warped.ReadRaster()) == (
+            7,
+            8,
+            9,
+            4,
+            5,
+            6,
+            1,
+            2,
+            3,
+        )
+
+        # Test extent calculation
+        res = gdal.SuggestedWarpOutput(ds, [])
+        assert res.ymin == pytest.approx(29.95)
+        assert res.ymax == pytest.approx(30.25)
+        assert res.xmin == pytest.approx(9.9)
+        assert res.xmax == pytest.approx(10.5)
