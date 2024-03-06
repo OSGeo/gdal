@@ -415,7 +415,7 @@ CURL
 
 .. option:: CURL_LIBRARY_RELEASE
 
-    Path to a shared or static library file, such as ``libcurl.dll``,
+    Path to a shared or static library file, such as
     ``libcurl.so``, ``libcurl.lib``, or other name.
 
 .. option:: CURL_USE_STATIC_LIBS=ON/OFF
@@ -632,7 +632,7 @@ If not found, an internal copy of libgeotiff can be used.
 
 .. option:: GEOTIFF_LIBRARY_RELEASE
 
-    Path to a shared or static library file, such as ``geotiff.dll``,
+    Path to a shared or static library file, such as
     ``libgeotiff.so``, ``geotiff.lib``, or other name. A similar variable
     ``GEOTIFF_LIBRARY_DEBUG`` can also be specified to a similar library for
     building Debug releases.
@@ -1680,7 +1680,7 @@ PROJ
 
 .. option:: PROJ_LIBRARY_RELEASE
 
-    Path to a shared or static library file, such as ``proj.dll``,
+    Path to a shared or static library file, such as
     ``libproj.so``, ``proj.lib``, or other name. A similar variable
     ``PROJ_LIBRARY_DEBUG`` can also be specified to a similar library for
     building Debug releases.
@@ -1778,7 +1778,7 @@ and the :ref:`sql_sqlite_dialect`.
 
 .. option:: SQLite3_LIBRARY
 
-    Path to a shared or static library file, such as ``sqlite3.dll``,
+    Path to a shared or static library file, such as
     ``libsqlite3.so``, ``sqlite3.lib`` or other name.
 
 .. option:: GDAL_USE_SQLITE3=ON/OFF
@@ -1866,7 +1866,7 @@ If not found, an internal copy of libtiff can be used.
 
 .. option:: TIFF_LIBRARY_RELEASE
 
-    Path to a shared or static library file, such as ``tiff.dll``,
+    Path to a shared or static library file, such as
     ``libtiff.so``, ``tiff.lib``, or other name. A similar variable
     ``TIFF_LIBRARY_DEBUG`` can also be specified to a similar library for
     building Debug releases.
