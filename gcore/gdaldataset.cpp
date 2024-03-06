@@ -4963,6 +4963,22 @@ OGRLayer *GDALDataset::CreateLayer(const char *pszName,
 \brief This method attempts to create a new layer on the dataset with the
 indicated name and geometry field definition.
 
+When poGeomFieldDefn is not null, most drivers should honor
+poGeomFieldDefn->GetType() and poGeomFieldDefn->GetSpatialRef().
+Drivers that honor poGeomFieldDefn->GetCoordinatePrecision() will declare the
+GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION capability. Drivers may honor
+poGeomFieldDefn->GetNameRef() and poGeomFieldDefn->IsNullable(), but there are
+very few currently.
+
+Note that even if a geometry coordinate precision is set and a driver honors the
+GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION capability, geometries passed to
+OGRLayer::CreateFeature() and OGRLayer::SetFeature() are assumed to be compatible
+with the coordinate precision. That is they are assumed to be valid once their
+coordinates are rounded to it. If it might not be the case, the user may set
+the OGR_APPLY_GEOM_SET_PRECISION configuration option before calling CreateFeature()
+or SetFeature() to force the OGRGeometry::SetPrecision() method to be called on
+the passed geometries.
+
 The papszOptions argument
 can be used to control driver specific creation options. These options are
 normally documented in the format specific documentation.
@@ -4980,12 +4996,7 @@ This method is the same as the C function GDALDatasetCreateLayerFromGeomFieldDef
 @param pszName the name for the new layer.  This should ideally not
 match any existing layer on the datasource.
 @param poGeomFieldDefn the geometry field definition to use for the new layer,
-or NULL if there is no geometry field. Most drivers should honor
-poGeomFieldDefn->GetType() and poGeomFieldDefn->GetSpatialRef().
-Drivers that honor poGeomFieldDefn->GetCoordinatePrecision() will declare the
-GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION capability. Drivers may honor
-poGeomFieldDefn->GetNameRef() and poGeomFieldDefn->IsNullable(), but there are
-very few currently.
+or NULL if there is no geometry field.
 @param papszOptions a StringList of name=value options.  Options are driver
 specific.
 
@@ -5147,6 +5158,22 @@ OGRLayerH GDALDatasetCreateLayer(GDALDatasetH hDS, const char *pszName,
 /**
 \brief This function attempts to create a new layer on the dataset with the
 indicated name and geometry field.
+
+When poGeomFieldDefn is not null, most drivers should honor
+poGeomFieldDefn->GetType() and poGeomFieldDefn->GetSpatialRef().
+Drivers that honor poGeomFieldDefn->GetCoordinatePrecision() will declare the
+GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION capability. Drivers may honor
+poGeomFieldDefn->GetNameRef() and poGeomFieldDefn->IsNullable(), but there are
+very few currently.
+
+Note that even if a geometry coordinate precision is set and a driver honors the
+GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION capability, geometries passed to
+OGRLayer::CreateFeature() and OGRLayer::SetFeature() are assumed to be compatible
+with the coordinate precision. That is they are assumed to be valid once their
+coordinates are rounded to it. If it might not be the case, the user may set
+the OGR_APPLY_GEOM_SET_PRECISION configuration option before calling CreateFeature()
+or SetFeature() to force the OGRGeometry::SetPrecision() method to be called on
+the passed geometries.
 
 The papszOptions argument can be used to control driver specific creation
 options.  These options are normally documented in the format specific
