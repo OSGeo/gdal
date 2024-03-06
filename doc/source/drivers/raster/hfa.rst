@@ -16,10 +16,10 @@ and c128.
 Compressed and missing tiles in Erdas files should be handled properly
 on read. Files between 2GiB and 4GiB in size should work on Windows NT,
 and may work on some Unix platforms. Files with external spill files
-(needed for datasets larger than 2GiB) are also support for reading and
+(needed for datasets larger than 2GiB) are also supported for reading and
 writing.
 
-Metadata reading and writing is supported at the dataset level, and for
+Metadata reading and writing are supported at the dataset level, and for
 bands, but this is GDAL specific metadata - not metadata in an Imagine
 recognized form. The metadata is stored in a table called GDAL_MetaData
 with each column being a metadata item. The title is the key and the row
@@ -120,7 +120,7 @@ Creation Options:
       :since: 3.7
 
       Disable use of ArcGIS PE String in
-      file. Default is NO (that is ArcGIS PE String may be written if needed).
+      file. The default value is NO, allowing ArcGIS PE String to be written if needed.
 
 Erdas Imagine supports external creation of overviews (with gdaladdo for
 instance). To force them to be created in an .rrd file (rather than
@@ -180,7 +180,7 @@ by the HFA driver:
 
       The block size (tile width/height) used for overviews
       can be specified by setting this
-      configuration option to a power- of-two value between 32 and 2048.
+      configuration option to a power-of-two value between 32 and 2048.
 
 -  .. config:: USE_SPILL
       :choices: YES, NO
