@@ -1532,6 +1532,30 @@ int FileGDBTable::SelectRow(int iRow)
                     m_nRowBlobLength > INT_MAX - ZEROES_AFTER_END_OF_BUFFER,
                 m_nCurRow = -1);
 
+            if (m_nRowBlobLength > m_nHeaderBufferMaxSize)
+            {
+                if (CPLTestBool(CPLGetConfigOption(
+                        "OGR_OPENFILEGDB_ERROR_ON_INCONSISTENT_BUFFER_MAX_SIZE",
+                        "NO")))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Invalid row length (%u) on feature %u compared "
+                             "to the maximum size in the header (%u)",
+                             m_nRowBlobLength, iRow + 1,
+                             m_nHeaderBufferMaxSize);
+                    m_nCurRow = -1;
+                    return errorRetValue;
+                }
+                else
+                {
+                    CPLDebug("OpenFileGDB",
+                             "Invalid row length (%u) on feature %u compared "
+                             "to the maximum size in the header (%u)",
+                             m_nRowBlobLength, iRow + 1,
+                             m_nHeaderBufferMaxSize);
+                }
+            }
+
             if (m_nRowBlobLength > m_nRowBufferMaxSize)
             {
                 /* For suspicious row blob length, check if we don't go beyond
