@@ -526,7 +526,9 @@ class CPL_DLL OGRGeometry
         double dfMaxAngleStepSizeDegrees = 0,
         const char *const *papszOptions = nullptr) const CPL_WARN_UNUSED_RESULT;
 
-    void roundCoordinatesIEEE754(const OGRGeomCoordinateBinaryPrecision &options);
+    void roundCoordinates(const OGRGeomCoordinatePrecision &sPrecision);
+    void
+    roundCoordinatesIEEE754(const OGRGeomCoordinateBinaryPrecision &options);
 
     // SFCGAL interfacing methods.
     //! @cond Doxygen_Suppress

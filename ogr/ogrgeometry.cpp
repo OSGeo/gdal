@@ -6145,11 +6145,88 @@ OGRGeometryH OGR_G_SimplifyPreserveTopology(OGRGeometryH hThis,
 }
 
 /************************************************************************/
+/*                           roundCoordinates()                         */
+/************************************************************************/
+
+/** Round coordinates of the geometry to the specified precision.
+ *
+ * Note that this is not the same as OGRGeometry::SetPrecision(). The later
+ * will return valid geometries, whereas roundCoordinates() does not make
+ * such guarantee and may return geometries with invalidities, if they are
+ * not compatible of the specified precision. roundCoordinates() supports
+ * curve geometries, whereas SetPrecision() does not currently.
+ *
+ * One use case for roundCoordinates() is to undo the effect of
+ * quantizeCoordinates().
+ *
+ * @param sPrecision Contains the precision requirements.
+ * @since GDAL 3.9
+ */
+void OGRGeometry::roundCoordinates(const OGRGeomCoordinatePrecision &sPrecision)
+{
+    struct Rounder : public OGRDefaultGeometryVisitor
+    {
+        const OGRGeomCoordinatePrecision &m_precision;
+        const double m_invXYResolution;
+        const double m_invZResolution;
+        const double m_invMResolution;
+        explicit Rounder(const OGRGeomCoordinatePrecision &sPrecisionIn)
+            : m_precision(sPrecisionIn),
+              m_invXYResolution(m_precision.dfXYResolution !=
+                                        OGRGeomCoordinatePrecision::UNKNOWN
+                                    ? 1.0 / m_precision.dfXYResolution
+                                    : 0.0),
+              m_invZResolution(m_precision.dfZResolution !=
+                                       OGRGeomCoordinatePrecision::UNKNOWN
+                                   ? 1.0 / m_precision.dfZResolution
+                                   : 0.0),
+              m_invMResolution(m_precision.dfMResolution !=
+                                       OGRGeomCoordinatePrecision::UNKNOWN
+                                   ? 1.0 / m_precision.dfMResolution
+                                   : 0.0)
+        {
+        }
+
+        using OGRDefaultGeometryVisitor::visit;
+        void visit(OGRPoint *poPoint) override
+        {
+            if (m_precision.dfXYResolution !=
+                OGRGeomCoordinatePrecision::UNKNOWN)
+            {
+                poPoint->setX(std::round(poPoint->getX() * m_invXYResolution) *
+                              m_precision.dfXYResolution);
+                poPoint->setY(std::round(poPoint->getY() * m_invXYResolution) *
+                              m_precision.dfXYResolution);
+            }
+            if (m_precision.dfZResolution !=
+                    OGRGeomCoordinatePrecision::UNKNOWN &&
+                poPoint->Is3D())
+            {
+                poPoint->setZ(std::round(poPoint->getZ() * m_invZResolution) *
+                              m_precision.dfZResolution);
+            }
+            if (m_precision.dfMResolution !=
+                    OGRGeomCoordinatePrecision::UNKNOWN &&
+                poPoint->IsMeasured())
+            {
+                poPoint->setM(std::round(poPoint->getM() * m_invMResolution) *
+                              m_precision.dfMResolution);
+            }
+        }
+    };
+
+    Rounder rounder(sPrecision);
+    accept(&rounder);
+}
+
+/************************************************************************/
 /*                           SetPrecision()                             */
 /************************************************************************/
 
 /** Set the geometry's precision, rounding all its coordinates to the precision
- * grid.
+ * grid, and making sure the geometry is still valid.
+ *
+ * This is a stronger version of roundCoordinates().
  *
  * Note that at time of writing GEOS does no supported curve geometries. So
  * currently if this function is called on such a geometry, OGR will first call
@@ -6204,7 +6281,9 @@ OGRGeometry *OGRGeometry::SetPrecision(UNUSED_IF_NO_GEOS double dfGridSize,
 /************************************************************************/
 
 /** Set the geometry's precision, rounding all its coordinates to the precision
- * grid.
+ * grid, and making sure the geometry is still valid.
+ *
+ * This is a stronger version of roundCoordinates().
  *
  * Note that at time of writing GEOS does no supported curve geometries. So
  * currently if this function is called on such a geometry, OGR will first call
@@ -7721,7 +7800,8 @@ OGRBoolean OGRGeometry::IsSFCGALCompatible() const
  * Determines the number of bits (N) required to represent a coordinate value
  * with a specified number of digits after the decimal point, and then sets all
  * but the N most significant bits to zero. The resulting coordinate value will
- * still round to the original value, but will have improved compressiblity.
+ * still round to the original value (e.g. after roundCoordinates()), but wil
+ * have improved compressiblity.
  *
  * @param options Contains the precision requirements.
  * @since GDAL 3.9
