@@ -111,7 +111,7 @@ Creation Options:
       :choices: YES, NO
       :default: NO
 
-      Force use of ArcGIS PE String in file
+      Force the use of ESRI Projection Engine (PE) String in file
       instead of Imagine coordinate system format. In some cases this
       improves ArcGIS coordinate system compatibility.
 
@@ -120,8 +120,9 @@ Creation Options:
       :default: NO
       :since: 3.7
 
-      Disable use of ArcGIS PE String in
-      file. The default value is NO, allowing ArcGIS PE String to be written if needed.
+      Disable use of ESRI Projection Engine (PE) String in file.
+      The default value is NO, allowing the ESRI PE String
+      to be written if needed.
 
 Erdas Imagine supports external creation of overviews (with gdaladdo for
 instance). To force them to be created in an .rrd file (rather than
