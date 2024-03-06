@@ -19,11 +19,12 @@ and may work on some Unix platforms. Files with external spill files
 (needed for datasets larger than 2GiB) are also supported for reading and
 writing.
 
-Metadata reading and writing are supported at the dataset level, and for
-bands, but this is GDAL specific metadata - not metadata in an Imagine
-recognized form. The metadata is stored in a table called GDAL_MetaData
-with each column being a metadata item. The title is the key and the row
-1 value is the value.
+Metadata reading and writing is supported at the dataset and band level.
+But this is GDAL specific metadata, not metadata in an Imagine recognized form.
+The metadata is stored in a table called GDAL_MetaData which as many 
+columns as metadata items. 
+The title of the column is the {key} of the {key}={value} metadata item pair
+and the value of row 1 is {value}.
 
 Driver capabilities
 -------------------
@@ -43,7 +44,7 @@ Erdas Imagine files can be created with any GDAL defined band type,
 including the complex types. Created files may have any number of bands.
 Pseudo-Color tables will be written if using the
 GDALDriver::CreateCopy() methodology. Most projections should be
-supported though translation of unusual datums (other than WGS84, WGS72,
+supported, though translation of unusual datums (other than WGS84, WGS72,
 NAD83, and NAD27) may be problematic.
 
 Creation Options:
