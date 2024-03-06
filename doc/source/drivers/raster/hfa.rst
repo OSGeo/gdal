@@ -23,8 +23,8 @@ Metadata reading and writing is supported at the dataset and band level.
 But this is GDAL specific metadata, not metadata in an Imagine recognized form.
 The metadata is stored in a table called GDAL_MetaData which as many 
 columns as metadata items. 
-The title of the column is the {key} of the {key}={value} metadata item pair
-and the value of row 1 is {value}.
+The title of the column is the ``key`` of the ``key``=``value`` metadata item pair
+and the value of row 1 is ``value``.
 
 Driver capabilities
 -------------------
