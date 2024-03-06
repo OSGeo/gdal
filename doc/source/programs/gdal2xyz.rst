@@ -109,13 +109,4 @@ We also replace the dataset nodata values with zeros.
 Caveats
 -------
 
-Use gdal_translate if more precision is desired.
-
-. code-block:: bash
-
-    gdal2xyz.py b.tif gx.xyz
-    head gx.xyz
-    -33.5 24.5 42.0529
-    gdal_translate b.tif gt.xyz
-    head gt.xyz
-    -33.5 24.5 42.0529441833496094
+gdal2xyz output values with a limited precision. Use ``gdal_translate -of XYZ`` if more precision is desired.
