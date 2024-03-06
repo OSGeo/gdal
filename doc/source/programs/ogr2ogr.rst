@@ -132,6 +132,10 @@ output coordinate system or even reprojecting the features during translation.
     output. Starting with GDAL 2.1, the ``@filename`` syntax can be used to
     indicate that the content is in the pointed filename.
 
+    Currently only a single SQL statement is allowed. -sql statement1 -sql
+    statement2: only the last is used. -sql "statement1; statement2;" is
+    an error.
+
 .. option:: -dialect <dialect>
 
     SQL dialect. In some cases can be used to use (unoptimized) :ref:`ogr_sql_dialect` instead
