@@ -33,7 +33,7 @@ Raster programs
    gdal_contour
    gdal_create
    gdal_edit
-   gdal_fillnodata   gdalinfo
+   gdal_fillnodata
    gdal_footprint
    gdal_grid
    gdal_merge
@@ -50,6 +50,7 @@ Raster programs
    gdalbuildvrt
    gdalcompare
    gdaldem
+   gdalinfo
    gdallocationinfo
    gdalmanage
    gdalmove
