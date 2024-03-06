@@ -363,6 +363,13 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                             .BytesPerField,
                         &phMiraMonLayer->isListField, &phMiraMonLayer->nMaxN);
 
+                    if (!phMiraMonLayer->pMultRecordIndex)
+                    {
+                        CPLDebug("MiraMon", "File '%s' cannot be read.",
+                                 phMiraMonLayer->pMMBDXP->szFileName);
+                        bValidFile = false;
+                        return;
+                    }
                     // Creation of maximum number needed for processing
                     // multiple records
                     papszValues = static_cast<char **>(
@@ -1071,7 +1078,8 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                          ->GetFieldDefn(nIField)
                          ->GetType() == OFTString)
             {
-                if (phMiraMonLayer->pMultRecordIndex[nIElem].nMR == 0)
+                if (!phMiraMonLayer->pMultRecordIndex ||
+                    phMiraMonLayer->pMultRecordIndex[nIElem].nMR == 0)
                 {
                     memset(
                         phMiraMonLayer->szStringToOperate, 0,
@@ -1181,7 +1189,8 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                              ->GetFieldDefn(nIField)
                              ->GetType() == OFTReal)
             {
-                if (phMiraMonLayer->pMultRecordIndex[nIElem].nMR == 0)
+                if (!phMiraMonLayer->pMultRecordIndex ||
+                    phMiraMonLayer->pMultRecordIndex[nIElem].nMR == 0)
                 {
                     memset(
                         phMiraMonLayer->szStringToOperate, 0,

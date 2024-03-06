@@ -1062,12 +1062,6 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
     else
         pMMBDXP->nRecords = nRecords;
 
-    if (1 != fread_function(&(pMMBDXP->dbf_on_a_LAN), 8, 1, pf))
-    {
-        fclose_function(pf);
-        return 1;
-    }
-
     if (1 != fread_function(&(pMMBDXP->MDX_flag), 1, 1, pf) ||
         1 != fread_function(&(pMMBDXP->CharSet), 1, 1, pf) ||
         1 != fread_function(&(pMMBDXP->reserved_2), 2, 1, pf))
