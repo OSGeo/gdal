@@ -89,5 +89,5 @@ NomCampNPoligons=N_POLIG
 [TAULA_PRINCIPAL:ATT1]
 descriptor=atribute1
 
-[TAULA_PRINCIPAL:ATTRIBUTE_2]
+[TAULA_PRINCIPAL:ATT2]
 descriptor=atribute2

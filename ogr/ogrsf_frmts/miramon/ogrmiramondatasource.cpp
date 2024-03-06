@@ -215,8 +215,9 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 
     /* -------------------------------------------------------------------- */
     /*      Let's create the folder if it's not already created.            */
+    /*      (only the las level of the folder)                              */
     /* -------------------------------------------------------------------- */
-    if (VSIMkdirRecursive(osPath, 0777) != 0)
+    if (VSIMkdir(osPath, 0777) != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Unable to create directory %s.",
                  pszRootName);

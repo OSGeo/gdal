@@ -88,5 +88,5 @@ NomCampNodeFi=NODE_FI
 [TAULA_PRINCIPAL:ATT1]
 descriptor=Atributte1
 
-[TAULA_PRINCIPAL:ATTRIBUTE_2]
+[TAULA_PRINCIPAL:ATT2]
 descriptor=Attribute2

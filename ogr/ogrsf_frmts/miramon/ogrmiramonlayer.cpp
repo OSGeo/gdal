@@ -302,6 +302,14 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             else
                 phMiraMonLayer->nMemoryRatio = 1;  // Default
 
+            if (phMiraMonLayer->nMemoryRatio < 0)
+                phMiraMonLayer->nMemoryRatio =
+                    fabs(phMiraMonLayer->nMemoryRatio);
+
+            // It has no sense try to work with less ratio than 0.25.
+            if (phMiraMonLayer->nMemoryRatio < 0.25)
+                phMiraMonLayer->nMemoryRatio = 0.25;
+
             /* ------------------------------------------------------------ */
             /*   Establish the descriptors language when                    */
             /*   opening .rel files                                        */
@@ -690,20 +698,8 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
     if (!poFeature)
         return nullptr;
 
-    // In polygons, if MiraMon is asked to give the 0-th element,
-    // in fact is the first one, because the 0-th one is the called
-    // universal polygon (you can find the description of that in
-    // the format description).
-    if (phMiraMonLayer->bIsPolygon)
-    {
-        iNextFID++;
-        poFeature->SetFID(iNextFID);
-    }
-    else
-    {
-        poFeature->SetFID(iNextFID);
-        iNextFID++;
-    }
+    iNextFID++;
+
     return poFeature;
 }
 /****************************************************************************/
@@ -924,6 +920,14 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
     OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
     poGeom->assignSpatialReference(m_poSRS);
     poFeature->SetGeometryDirectly(poGeom);
+    // In polygons, if MiraMon is asked to give the 0-th element,
+    // in fact is the first one, because the 0-th one is the called
+    // universal polygon (you can find the description of that in
+    // the format description).
+    if (phMiraMonLayer->bIsPolygon)
+        poFeature->SetFID(iNextFID + 1);
+    else
+        poFeature->SetFID(iNextFID);
 
     /* -------------------------------------------------------------------- */
     /*      Process field values.                                           */
@@ -1110,9 +1114,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     }
                 }
                 else
-                    GoToFieldOfMultipleRecord(
-                        nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR,
-                        nIField);
+                    GoToFieldOfMultipleRecord(nIElem, 0, nIField);
 
                 memset(phMiraMonLayer->szStringToOperate, 0,
                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
@@ -1221,9 +1223,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     }
                 }
                 else
-                    GoToFieldOfMultipleRecord(
-                        nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR,
-                        nIField);
+                    GoToFieldOfMultipleRecord(nIElem, 0, nIField);
 
                 memset(phMiraMonLayer->szStringToOperate, 0,
                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
@@ -1274,9 +1274,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     }
                 }
                 else
-                    GoToFieldOfMultipleRecord(
-                        nIElem, phMiraMonLayer->pMultRecordIndex[nIElem].nMR,
-                        nIField);
+                    GoToFieldOfMultipleRecord(nIElem, 0, nIField);
 
                 memset(phMiraMonLayer->szStringToOperate, 0,
                        phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
