@@ -2193,9 +2193,17 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     virtual void
     assignSpatialReference(const OGRSpatialReference *poSR) override;
 
-    OGRErr addCurve(const OGRCurve *, double dfToleranceEps = 1e-14);
-    OGRErr addCurveDirectly(OGRCurve *, double dfToleranceEps = 1e-14);
-    OGRErr addCurve(std::unique_ptr<OGRCurve>, double dfToleranceEps = 1e-14);
+    /** Default relative tolerance to assume that the end of the previous curve
+     * is equal to the start of the next one.
+     */
+    static constexpr double DEFAULT_TOLERANCE_EPSILON = 1e-14;
+
+    OGRErr addCurve(const OGRCurve *,
+                    double dfToleranceEps = DEFAULT_TOLERANCE_EPSILON);
+    OGRErr addCurveDirectly(OGRCurve *,
+                            double dfToleranceEps = DEFAULT_TOLERANCE_EPSILON);
+    OGRErr addCurve(std::unique_ptr<OGRCurve>,
+                    double dfToleranceEps = DEFAULT_TOLERANCE_EPSILON);
     OGRCurve *stealCurve(int);
     virtual OGRPointIterator *getPointIterator() const override;
 
