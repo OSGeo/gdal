@@ -1249,3 +1249,34 @@ def test_gdal_translate_ovr_rpc():
     assert float(ovr_rpc["SAMP_SCALE"]) == pytest.approx(
         0.5 * float(src_rpc["SAMP_SCALE"])
     )
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/9402
+
+
+def test_gdal_translate_lib_raster_uint16_ct_0_255_range():
+
+    for (r, g, b, a) in [
+        (255 + 1, 255, 255, 255),
+        (255, 255 + 1, 255, 255),
+        (255, 255, 255 + 1, 255),
+        (255, 255, 255, 255 + 1),
+    ]:
+        src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_UInt16)
+        ct = gdal.ColorTable()
+        ct.SetColorEntry(0, (r, g, b, a))
+        src_ds.GetRasterBand(1).SetRasterColorTable(ct)
+        out_ds = gdal.Translate("", src_ds, format="MEM", rgbExpand="rgb")
+        assert out_ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
+        assert out_ds.GetRasterBand(2).DataType == gdal.GDT_UInt16
+        assert out_ds.GetRasterBand(3).DataType == gdal.GDT_UInt16
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_UInt16)
+    ct = gdal.ColorTable()
+    ct.SetColorEntry(0, (255, 255, 255, 255))
+    src_ds.GetRasterBand(1).SetRasterColorTable(ct)
+    out_ds = gdal.Translate("", src_ds, format="MEM", rgbExpand="rgb")
+    assert out_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert out_ds.GetRasterBand(2).DataType == gdal.GDT_Byte
+    assert out_ds.GetRasterBand(3).DataType == gdal.GDT_Byte
