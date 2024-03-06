@@ -805,32 +805,12 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     return GDALDatasetDeleteLayer(self, index);
   }
 
-  int GetLayerCount() {
-    return GDALDatasetGetLayerCount(self);
-  }
-
   bool IsLayerPrivate( int index ) {
     return GDALDatasetIsLayerPrivate(self, index);
   }
 
-#ifdef SWIGJAVA
-  OGRLayerShadow *GetLayerByIndex( int index ) {
-#else
-  OGRLayerShadow *GetLayerByIndex( int index=0) {
-#endif
-    OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetGetLayer(self, index);
-    return layer;
-  }
 
-  OGRLayerShadow *GetLayerByName( const char* layer_name) {
-    OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetGetLayerByName(self, layer_name);
-    return layer;
-  }
 
-  void ResetReading()
-  {
-    GDALDatasetResetReading( self );
-  }
 
 #ifdef SWIGPYTHON
 %newobject GetNextFeature;
@@ -889,6 +869,32 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
 
 #endif /* defined(SWIGPYTHON) || defined(SWIGJAVA) */
 
+
+#ifdef SWIGJAVA
+  OGRLayerShadow *GetLayerByIndex( int index ) {
+#elif SWIGPYTHON
+  OGRLayerShadow *GetLayerByIndex( int index=0) {
+#else
+  OGRLayerShadow *GetLayer( int index ) {
+#endif
+    OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetGetLayer(self, index);
+    return layer;
+  }
+
+OGRLayerShadow *GetLayerByName(const char* layer_name) {
+  OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetGetLayerByName(self, layer_name);
+  return layer;
+}
+
+void ResetReading()
+{
+  GDALDatasetResetReading(self);
+}
+
+int GetLayerCount() {
+  return GDALDatasetGetLayerCount(self);
+}
+
 #ifdef SWIGCSHARP
   
   %newobject GetNextFeature;
@@ -901,24 +907,6 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
                                       callback, callback_data );
   }
 
-  int GetLayerCount() {
-    return GDALDatasetGetLayerCount(self);
-  }
-
-  OGRLayerShadow *GetLayer(int index ) {
-    OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetGetLayer(self, index);
-    return layer;
-  }
-
-  OGRLayerShadow *GetLayerByName(const char* layerName) {
-    OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetGetLayerByName(self, layerName);
-    return layer;
-  }
-
-  void ResetReading()
-  {
-    GDALDatasetResetReading(self);
-  }
 
 #endif
 

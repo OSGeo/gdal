@@ -614,4 +614,4 @@ OPTIONAL_POD(int, int);
 /******************************************************************************
  * GDALGetLayerByName typemaps                                                *
  *****************************************************************************/
-%apply ( const char *utf8_path ) { const char* layerName };
+%apply ( const char *utf8_path ) { const char* layer_name };
