@@ -54,7 +54,10 @@ def setup_driver():
     if filegdb_driver is not None:
         filegdb_driver.Deregister()
 
-    yield
+    with gdaltest.config_option(
+        "OGR_OPENFILEGDB_ERROR_ON_INCONSISTENT_BUFFER_MAX_SIZE", "YES"
+    ):
+        yield
 
     if filegdb_driver is not None:
         print("Reregistering FileGDB driver")
@@ -4493,3 +4496,37 @@ def test_ogr_openfilegdb_write_new_datetime_types(tmp_vsimem):
         f = sql_lyr.GetNextFeature()
         assert f["MIN_timestamp_offset"] == "1900/12/31 14:01:01"
         assert f["MAX_timestamp_offset"] == "2023/12/30 14:01:01"
+
+
+###############################################################################
+# Test updating an existing feature with one whose m_nRowBlobLength is
+# larger than m_nHeaderBufferMaxSize
+
+
+def test_ogr_openfilegdb_write_update_feature_larger(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "out.gdb")
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer("test", srs, ogr.wkbLineString)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    g = ogr.Geometry(ogr.wkbLineString)
+    g.SetPoint_2D(10, 0, 0)
+    f.SetGeometry(g)
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    g = ogr.Geometry(ogr.wkbLineString)
+    g.SetPoint_2D(999, 0, 0)
+    f.SetGeometry(g)
+    lyr.SetFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().GetGeometryRef(0).GetPointCount() == 1000
