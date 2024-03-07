@@ -114,7 +114,7 @@ projection,including GCP-based transformations.
 
     Restrict output to "x y" instead of "x y z"
 
-.. option:: <srcfile>
+.. option:: srcfile
 
     Raster dataset with source projection definition or GCPs. If
     not given, source projection/GCPs are read from the command-line :option:`-s_srs`
@@ -122,7 +122,7 @@ projection,including GCP-based transformations.
 
     Note that only the SRS and/or GCPs of this input file is taken into account, and not its pixel content.
 
-.. option:: <dstfile>
+.. option:: dstfile
 
     Raster dataset with destination projection definition.
 
