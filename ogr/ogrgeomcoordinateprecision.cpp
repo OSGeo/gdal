@@ -215,7 +215,7 @@ void OGRGeomCoordinatePrecisionSetFormatSpecificOptions(
  * For the X, Y and Z ordinates, the precision should be expressed in the units
  * of the CRS of the geometry. So typically degrees for geographic CRS, or
  * meters/feet/US-feet for projected CRS.
- * Users might use OGRGeomCoordinatePrecisionSetFromMetre() for an even more
+ * Users might use OGRGeomCoordinatePrecisionSetFromMeter() for an even more
  * convenient interface.
  *
  * For a projected CRS with meters as linear unit, 1e-3 corresponds to a
@@ -244,13 +244,13 @@ void OGRGeomCoordinatePrecisionSet(OGRGeomCoordinatePrecisionH hGeomCoordPrec,
 }
 
 /************************************************************************/
-/*                  OGRGeomCoordinatePrecisionSetFromMetre()            */
+/*                  OGRGeomCoordinatePrecisionSetFromMeter()            */
 /************************************************************************/
 
 /**
  * \brief Set the resolution of the geometry coordinate components.
  *
- * For the X, Y and Z ordinates, the precision should be expressed in metre,
+ * For the X, Y and Z ordinates, the precision should be expressed in meter,
  * e.g 1e-3 for millimetric precision.
  *
  * Resolution should be stricty positive, or set to
@@ -259,19 +259,19 @@ void OGRGeomCoordinatePrecisionSet(OGRGeomCoordinatePrecisionH hGeomCoordPrec,
  * @param hGeomCoordPrec OGRGeomCoordinatePrecision instance (must not be null)
  * @param hSRS Spatial reference system, used for metric to SRS unit conversion
  *             (must not be null)
- * @param dfXYMetreResolution Resolution for for X and Y coordinates, in metre.
- * @param dfZMetreResolution Resolution for for Z coordinates, in metre.
+ * @param dfXYMeterResolution Resolution for for X and Y coordinates, in meter.
+ * @param dfZMeterResolution Resolution for for Z coordinates, in meter.
  * @param dfMResolution Resolution for for M coordinates.
  * @since GDAL 3.9
  */
-void OGRGeomCoordinatePrecisionSetFromMetre(
+void OGRGeomCoordinatePrecisionSetFromMeter(
     OGRGeomCoordinatePrecisionH hGeomCoordPrec, OGRSpatialReferenceH hSRS,
-    double dfXYMetreResolution, double dfZMetreResolution, double dfMResolution)
+    double dfXYMeterResolution, double dfZMeterResolution, double dfMResolution)
 {
     VALIDATE_POINTER0(hGeomCoordPrec, "OGRGeomCoordinatePrecisionSet");
     VALIDATE_POINTER0(hSRS, "OGRGeomCoordinatePrecisionSet");
-    return hGeomCoordPrec->SetFromMetre(OGRSpatialReference::FromHandle(hSRS),
-                                        dfXYMetreResolution, dfZMetreResolution,
+    return hGeomCoordPrec->SetFromMeter(OGRSpatialReference::FromHandle(hSRS),
+                                        dfXYMeterResolution, dfZMeterResolution,
                                         dfMResolution);
 }
 
@@ -304,13 +304,13 @@ static void GetConversionFactors(const OGRSpatialReference *poSRS,
 }
 
 /************************************************************************/
-/*                OGRGeomCoordinatePrecision::SetFromMetre()            */
+/*                OGRGeomCoordinatePrecision::SetFromMeter()            */
 /************************************************************************/
 
 /**
  * \brief Set the resolution of the geometry coordinate components.
  *
- * For the X, Y and Z coordinates, the precision should be expressed in metre,
+ * For the X, Y and Z coordinates, the precision should be expressed in meter,
  * e.g 1e-3 for millimetric precision.
  *
  * Resolution should be stricty positive, or set to
@@ -318,22 +318,22 @@ static void GetConversionFactors(const OGRSpatialReference *poSRS,
  *
  * @param poSRS Spatial reference system, used for metric to SRS unit conversion
  *              (must not be null)
- * @param dfXYMetreResolution Resolution for for X and Y coordinates, in metre.
- * @param dfZMetreResolution Resolution for for Z coordinates, in metre.
+ * @param dfXYMeterResolution Resolution for for X and Y coordinates, in meter.
+ * @param dfZMeterResolution Resolution for for Z coordinates, in meter.
  * @param dfMResolutionIn Resolution for for M coordinates.
  * @since GDAL 3.9
  */
-void OGRGeomCoordinatePrecision::SetFromMetre(const OGRSpatialReference *poSRS,
-                                              double dfXYMetreResolution,
-                                              double dfZMetreResolution,
+void OGRGeomCoordinatePrecision::SetFromMeter(const OGRSpatialReference *poSRS,
+                                              double dfXYMeterResolution,
+                                              double dfZMeterResolution,
                                               double dfMResolutionIn)
 {
     double dfXYFactor = 1;
     double dfZFactor = 1;
     GetConversionFactors(poSRS, dfXYFactor, dfZFactor);
 
-    dfXYResolution = dfXYMetreResolution / dfXYFactor;
-    dfZResolution = dfZMetreResolution / dfZFactor;
+    dfXYResolution = dfXYMeterResolution / dfXYFactor;
+    dfZResolution = dfZMeterResolution / dfZFactor;
     dfMResolution = dfMResolutionIn;
 }
 
@@ -346,9 +346,9 @@ void OGRGeomCoordinatePrecision::SetFromMetre(const OGRSpatialReference *poSRS,
  * a change of SRS.
  *
  * @param poSRSSrc Spatial reference system of the current instance
- *                 (if null, metre unit is assumed)
+ *                 (if null, meter unit is assumed)
  * @param poSRSDst Spatial reference system of the returned instance
- *                 (if null, metre unit is assumed)
+ *                 (if null, meter unit is assumed)
  * @return a new OGRGeomCoordinatePrecision instance, with a poSRSDst SRS.
  * @since GDAL 3.9
  */

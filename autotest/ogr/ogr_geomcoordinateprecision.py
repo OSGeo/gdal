@@ -45,25 +45,25 @@ def test_ogr_geomcoordinate_precision():
     assert prec.GetMResolution() == 1e-2
 
     with pytest.raises(Exception, match="Received a NULL pointer"):
-        prec.SetFromMetre(None, 0, 0, 0)
+        prec.SetFromMeter(None, 0, 0, 0)
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
-    prec.SetFromMetre(srs, 1e-3, 1e-3, 1e-1)
+    prec.SetFromMeter(srs, 1e-3, 1e-3, 1e-1)
     assert prec.GetXYResolution() == pytest.approx(8.983152841195213e-09)
     assert prec.GetZResolution() == 1e-3
     assert prec.GetMResolution() == 1e-1
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4979)
-    prec.SetFromMetre(srs, 1e-3, 1e-3, 1e-1)
+    prec.SetFromMeter(srs, 1e-3, 1e-3, 1e-1)
     assert prec.GetXYResolution() == pytest.approx(8.983152841195213e-09)
     assert prec.GetZResolution() == 1e-3
     assert prec.GetMResolution() == 1e-1
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("EPSG:4269+8228")  # "NAD83 + NAVD88 height (ft)"
-    prec.SetFromMetre(srs, 1e-3, 1e-3, 1e-1)
+    prec.SetFromMeter(srs, 1e-3, 1e-3, 1e-1)
     assert prec.GetXYResolution() == pytest.approx(8.983152841195213e-09)
     assert prec.GetZResolution() == pytest.approx(0.0032808398950131233)
     assert prec.GetMResolution() == 1e-1

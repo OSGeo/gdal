@@ -4284,8 +4284,8 @@ public:
   }
 
   %apply Pointer NONNULL {OSRSpatialReferenceShadow* srs};
-  void SetFromMetre(OSRSpatialReferenceShadow* srs, double xyResolutionMetre, double zResolutionMetre, double mResolution) {
-      OGRGeomCoordinatePrecisionSetFromMetre(self, srs, xyResolutionMetre, zResolutionMetre, mResolution);
+  void SetFromMeter(OSRSpatialReferenceShadow* srs, double xyMeterResolution, double zMeterResolution, double mResolution) {
+      OGRGeomCoordinatePrecisionSetFromMeter(self, srs, xyMeterResolution, zMeterResolution, mResolution);
   }
   %clear OSRSpatialReferenceShadow* srs;
 

@@ -53,7 +53,7 @@ struct CPL_DLL OGRGeomCoordinatePrecision
 
     /** Resolution for the coordinate precision of the X and Y coordinates.
      * Expressed in the units of the X and Y axis of the SRS.
-     * For example for a projected SRS with X,Y axis unit in metre, a value
+     * For example for a projected SRS with X,Y axis unit in meter, a value
      * of 1e-3 corresponds to a 1 mm precision.
      * For a geographic SRS (on Earth) with axis unit in degree, a value
      * of 8.9e-9 (degree) also corresponds to a 1 mm precision.
@@ -81,8 +81,8 @@ struct CPL_DLL OGRGeomCoordinatePrecision
      */
     std::map<std::string, CPLStringList> oFormatSpecificOptions{};
 
-    void SetFromMetre(const OGRSpatialReference *poSRS,
-                      double dfXYMetreResolution, double dfZMetreResolution,
+    void SetFromMeter(const OGRSpatialReference *poSRS,
+                      double dfXYMeterResolution, double dfZMeterResolution,
                       double dfMResolution);
 
     OGRGeomCoordinatePrecision

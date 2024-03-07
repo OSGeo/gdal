@@ -112,10 +112,10 @@ void CPL_DLL OGRGeomCoordinatePrecisionSet(OGRGeomCoordinatePrecisionH,
                                            double dfXYResolution,
                                            double dfZResolution,
                                            double dfMResolution);
-void CPL_DLL OGRGeomCoordinatePrecisionSetFromMetre(OGRGeomCoordinatePrecisionH,
+void CPL_DLL OGRGeomCoordinatePrecisionSetFromMeter(OGRGeomCoordinatePrecisionH,
                                                     OGRSpatialReferenceH hSRS,
-                                                    double dfXYMetreResolution,
-                                                    double dfZMetreResolution,
+                                                    double dfXYMeterResolution,
+                                                    double dfZMeterResolution,
                                                     double dfMResolution);
 void CPL_DLL OGRGeomCoordinatePrecisionSetFormatSpecificOptions(
     OGRGeomCoordinatePrecisionH, const char *pszFormatName,

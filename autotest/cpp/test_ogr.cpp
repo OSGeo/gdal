@@ -3644,7 +3644,7 @@ TEST_F(test_ogr, wkb_polygon_3d_discard_lsb_bits)
     oSRS.importFromEPSG(4326);
     OGRwkbExportOptions sOptions;
     OGRGeomCoordinatePrecision sPrecision;
-    sPrecision.SetFromMetre(&oSRS, 1e-3, 1e-3, 0);
+    sPrecision.SetFromMeter(&oSRS, 1e-3, 1e-3, 0);
     sOptions.sPrecision.SetFrom(sPrecision);
     std::vector<GByte> abyWKB(oPoly.WkbSize());
     oPoly.exportToWkb(&abyWKB[0], &sOptions);
@@ -3686,7 +3686,7 @@ TEST_F(test_ogr, wkb_polygon_xym_discard_lsb_bits)
     oSRS.importFromEPSG(4326);
     OGRwkbExportOptions sOptions;
     OGRGeomCoordinatePrecision sPrecision;
-    sPrecision.SetFromMetre(&oSRS, 1e-3, 0, 1e-3);
+    sPrecision.SetFromMeter(&oSRS, 1e-3, 0, 1e-3);
     sOptions.sPrecision.SetFrom(sPrecision);
     std::vector<GByte> abyWKB(oPoly.WkbSize());
     oPoly.exportToWkb(&abyWKB[0], &sOptions);
@@ -3728,7 +3728,7 @@ TEST_F(test_ogr, wkb_polygon_xyzm_discard_lsb_bits)
     oSRS.importFromEPSG(4326);
     OGRwkbExportOptions sOptions;
     OGRGeomCoordinatePrecision sPrecision;
-    sPrecision.SetFromMetre(&oSRS, 1e-3, 1e-3, 1e-4);
+    sPrecision.SetFromMeter(&oSRS, 1e-3, 1e-3, 1e-4);
     sOptions.sPrecision.SetFrom(sPrecision);
     std::vector<GByte> abyWKB(oPoly.WkbSize());
     oPoly.exportToWkb(&abyWKB[0], &sOptions);

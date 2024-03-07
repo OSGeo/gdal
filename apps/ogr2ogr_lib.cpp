@@ -4356,9 +4356,9 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                 }
                 else if (psOptions->osXYResUnit == "deg")
                 {
-                    double dfFactorDegToMetre =
+                    double dfFactorDegToMeter =
                         poOutputSRS->GetSemiMajor(nullptr) * M_PI / 180;
-                    oCoordPrec.dfXYResolution *= dfFactorDegToMetre;
+                    oCoordPrec.dfXYResolution *= dfFactorDegToMeter;
                 }
                 else
                 {
@@ -4367,7 +4367,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                 }
 
                 OGRGeomCoordinatePrecision tmp;
-                tmp.SetFromMetre(poOutputSRS, oCoordPrec.dfXYResolution, 0, 0);
+                tmp.SetFromMeter(poOutputSRS, oCoordPrec.dfXYResolution, 0, 0);
                 oCoordPrec.dfXYResolution = tmp.dfXYResolution;
             }
         }
@@ -4405,7 +4405,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                 }
 
                 OGRGeomCoordinatePrecision tmp;
-                tmp.SetFromMetre(poOutputSRS, 0, oCoordPrec.dfZResolution, 0);
+                tmp.SetFromMeter(poOutputSRS, 0, oCoordPrec.dfZResolution, 0);
                 oCoordPrec.dfZResolution = tmp.dfZResolution;
             }
         }
