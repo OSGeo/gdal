@@ -285,3 +285,60 @@ def test_gdaltransform_s_t_coord_epoch(gdaltransform_path):
     assert len(values) == 3, ret
     assert abs(values[0] - -79.499999630188) < 1e-8, ret
     assert abs(values[1] - 60.4999999378478) < 1e-8, ret
+
+
+###############################################################################
+# Test extra input
+
+
+def test_gdaltransform_extra_input(gdaltransform_path):
+
+    strin = (
+        "2 49 1 my first point\n" + "3 50 second point\n" + "4 51 10 2 third point\n"
+    )
+    ret = gdaltest.runexternal(
+        gdaltransform_path + " -field_sep ,",
+        strin,
+    )
+
+    assert "2,49,1,my first point" in ret
+    assert "3,50,0,second point" in ret
+    assert "4,51,10,third point" in ret
+
+
+###############################################################################
+# Test ignoring extra input
+
+
+def test_gdaltransform_extra_input_ignored(gdaltransform_path):
+
+    strin = "2 49 1 my first point\n"
+    ret = gdaltest.runexternal(
+        gdaltransform_path + " -ignore_extra_input",
+        strin,
+    )
+
+    assert "my first point" not in ret
+
+
+###############################################################################
+# Test echo mode
+
+
+def test_gdaltransform_echo(gdaltransform_path):
+
+    strin = "0 0 1 my first point\n"
+
+    ret = gdaltest.runexternal(
+        gdaltransform_path + " -s_srs EPSG:4326 -t_srs EPSG:4978 -E -field_sep ,",
+        strin,
+    )
+
+    assert "0,0,1,6378138,0,0,my first point" in ret
+
+    ret = gdaltest.runexternal(
+        gdaltransform_path + " -s_srs EPSG:4326 -t_srs EPSG:4978 -E -output_xy",
+        strin,
+    )
+
+    assert "0 0 6378138 0 my first point" in ret
