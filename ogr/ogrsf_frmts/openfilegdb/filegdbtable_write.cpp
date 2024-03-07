@@ -1880,6 +1880,10 @@ bool FileGDBTable::CreateFeature(const std::vector<OGRField> &asRawFields,
         *pnFID = nObjectID;
 
     m_nRowBlobLength = static_cast<uint32_t>(m_abyBuffer.size());
+    if (m_nRowBlobLength > m_nHeaderBufferMaxSize)
+    {
+        m_nHeaderBufferMaxSize = m_nRowBlobLength;
+    }
     m_nRowBufferMaxSize = std::max(m_nRowBufferMaxSize, m_nRowBlobLength);
     if (nFreeOffset == OFFSET_MINUS_ONE)
     {
@@ -2012,6 +2016,11 @@ bool FileGDBTable::UpdateFeature(int nFID,
             return false;
 
         m_nRowBlobLength = static_cast<uint32_t>(m_abyBuffer.size());
+        if (m_nRowBlobLength > m_nHeaderBufferMaxSize)
+        {
+            m_bDirtyHeader = true;
+            m_nHeaderBufferMaxSize = m_nRowBlobLength;
+        }
         m_nRowBufferMaxSize = std::max(m_nRowBufferMaxSize, m_nRowBlobLength);
         if (nFreeOffset == OFFSET_MINUS_ONE)
         {
