@@ -482,7 +482,7 @@ Creating multiband files
 Creating multiband files is not directly possible with gdal_grid.
 One might use gdal_grid multiple times to create one band per file,
 and then use :ref:`gdalbuildvrt` -separate and then :ref:`gdal_translate`,
-or just :ref:`gdal_merge.py`, to combine the one-band files into a single one:
+or just :ref:`gdal_merge`, to combine the one-band files into a single one:
 
 .. code-block:: bash
 
