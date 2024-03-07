@@ -704,4 +704,4 @@ This utility is also callable from C with :cpp:func:`GDALWarp`.
 See also
 --------
 
-`Wiki page discussing options and behaviours of gdalwarp <http://trac.osgeo.org/gdal/wiki/UserDocs/GdalWarp>`_
+https://trac.osgeo.org/gdal/wiki/UserDocs/GdalWarp
