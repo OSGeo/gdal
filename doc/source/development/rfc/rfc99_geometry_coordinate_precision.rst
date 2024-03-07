@@ -41,7 +41,7 @@ The aim is multiple:
 
 For example, currently, when exporting a file to GML, 15 significant decimal
 digits (ie the total of digits for the integral and decimal parts) are used,
-which corresponds to a 0.1 micrometre precision for geography coordinates.
+which corresponds to a 0.1 micrometer precision for geography coordinates.
 The same holds for regular GeoJSON export, unless the RFC 7946 variant is
 selected, in which case only 7 decimal digits after decimal separators are used.
 However this is a layer creation option, which means that it is no longer
@@ -54,14 +54,14 @@ one can show that at least the last 16 least-significants bits (ie the last
 (which corresponds to about 8.9e-9 degree).
 On a test dataset, setting a 1 mm precision reduced the size of the .zip of the
 .gpkg file from 766 MB to 667 MB (13% size decrease).
-If only a 1 metre precision is wished, this increases to 26 useless least-significant bits.
+If only a 1 meter precision is wished, this increases to 26 useless least-significant bits.
 
 .. code-block:: python
 
     >>> import math
-    >>> earth_radius_in_metre = 6378137
-    >>> one_degree_in_metre = earth_radius_in_metre * math.pi / 180.0
-    >>> mm_prec_in_degree = 1e-3 / one_degree_in_metre
+    >>> earth_radius_in_meter = 6378137
+    >>> one_degree_in_meter = earth_radius_in_meter * math.pi / 180.0
+    >>> mm_prec_in_degree = 1e-3 / one_degree_in_meter
     >>> print(mm_prec_in_degree)
     8.983152841195215e-09
     >>> max_integer_part = 180  # for coordinates in range [-180,180]
@@ -98,7 +98,7 @@ A new ``OGRGeomCoordinatePrecision`` class is introduced in the
 
         /** Resolution for the coordinate precision of the X and Y coordinates.
          * Expressed in the units of the X and Y axis of the SRS.
-         * For example for a projected SRS with X,Y axis unit in metre, a value
+         * For example for a projected SRS with X,Y axis unit in meter, a value
          * of 1e-3 corresponds to a 1 mm precision.
          * For a geographic SRS (on Earth) with axis unit in degree, a value
          * of 8.9e-9 (degree) also corresponds to a 1 mm precision.
@@ -129,7 +129,7 @@ A new ``OGRGeomCoordinatePrecision`` class is introduced in the
         /**
          * \brief Set the resolution of the geometry coordinate components.
          *
-         * For the X, Y and Z ordinates, the precision should be expressed in metre,
+         * For the X, Y and Z ordinates, the precision should be expressed in meter,
          * e.g 1e-3 for millimetric precision.
          *
          * Resolution should be stricty positive, or set to
@@ -137,22 +137,22 @@ A new ``OGRGeomCoordinatePrecision`` class is introduced in the
          *
          * @param poSRS Spatial reference system, used for metric to SRS unit conversion
          *              (must not be null)
-         * @param dfXYMetreResolution Resolution for for X and Y coordinates, in metre.
-         * @param dfZMetreResolution Resolution for for Z coordinates, in metre.
+         * @param dfXYMeterResolution Resolution for for X and Y coordinates, in meter.
+         * @param dfZMeterResolution Resolution for for Z coordinates, in meter.
          * @param dfMResolutionIn Resolution for for M coordinates.
          */
-        void SetFromMetre(const OGRSpatialReference *poSRS,
-                          double dfXYMetreResolution,
-                          double dfZMetreResolution, double dfMResolution);
+        void SetFromMeter(const OGRSpatialReference *poSRS,
+                          double dfXYMeterResolution,
+                          double dfZMeterResolution, double dfMResolution);
 
         /**
          * \brief Return equivalent coordinate precision setting taking into account
          * a change of SRS.
          *
          * @param poSRSSrc Spatial reference system of the current instance
-         *                 (if null, metre unit is assumed)
+         *                 (if null, meter unit is assumed)
          * @param poSRSDst Spatial reference system of the returned instance
-         *                 (if null, metre unit is assumed)
+         *                 (if null, meter unit is assumed)
          * @return a new OGRGeomCoordinatePrecision instance, with a poSRSDst SRS.
          */
         OGRGeomCoordinatePrecision
@@ -193,10 +193,10 @@ Corresponding additions at the C API level:
                                                double dfXYResolution,
                                                double dfZResolution,
                                                double dfMResolution);
-    void CPL_DLL OGRGeomCoordinatePrecisionSetFromMetre(OGRGeomCoordinatePrecisionH,
+    void CPL_DLL OGRGeomCoordinatePrecisionSetFromMeter(OGRGeomCoordinatePrecisionH,
                                                         OGRSpatialReferenceH hSRS,
-                                                        double dfXYMetreResolution,
-                                                        double dfZMetreResolution,
+                                                        double dfXYMeterResolution,
+                                                        double dfZMeterResolution,
                                                         double dfMResolution);
     void CPL_DLL OGRGeomCoordinatePrecisionSetFormatSpecificOptions(
         OGRGeomCoordinatePrecisionH, const char *pszFormatName,
@@ -662,7 +662,7 @@ The new C functions are bound to SWIG.
     class ogr.GeomCoordinatePrecision:
 
       void Set(double xyResolution, double zResolution, double mResolution);
-      void SetFromMetre(osr.SpatialReference srs, double xyResolutionMetre, double zResolutionMetre, double mResolution);
+      void SetFromMeter(osr.SpatialReference srs, double xyMeterResolution, double zMeterResolution, double mResolution);
       double GetXYResolution();
       double GetZResolution();
       double GetMResolution();
