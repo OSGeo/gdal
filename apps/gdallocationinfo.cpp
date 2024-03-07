@@ -35,6 +35,8 @@
 #include "ogr_spatialref.h"
 #include <vector>
 
+#include <cctype>
+
 #ifdef _WIN32
 #include <io.h>
 #else
@@ -52,6 +54,8 @@ static void Usage(bool bIsError)
         bIsError ? stderr : stdout,
         "Usage: gdallocationinfo [--help] [--help-general]\n"
         "                        [-xml] [-lifonly] [-valonly]\n"
+        "                        [-E] [-field_sep <sep>] "
+        "[-ignore_extra_input]\n"
         "                        [-b <band>]... [-overview <overview_level>]\n"
         "                        [-l_srs <srs_def>] [-geoloc] [-wgs84]\n"
         "                        [-oo <NAME>=<VALUE>]... <srcfile> [<x> <y>]\n"
@@ -100,6 +104,9 @@ MAIN_START(argc, argv)
     bool bQuiet = false, bValOnly = false;
     int nOverview = -1;
     char **papszOpenOptions = nullptr;
+    std::string osFieldSep;
+    bool bIgnoreExtraInput = false;
+    bool bEcho = false;
 
     GDALAllRegister();
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
@@ -162,6 +169,21 @@ MAIN_START(argc, argv)
             bValOnly = true;
             bQuiet = true;
         }
+        else if (i < argc - 1 && EQUAL(argv[i], "-field_sep"))
+        {
+            osFieldSep = CPLString(argv[++i])
+                             .replaceAll("\\t", '\t')
+                             .replaceAll("\\r", '\r')
+                             .replaceAll("\\n", '\n');
+        }
+        else if (EQUAL(argv[i], "-ignore_extra_input"))
+        {
+            bIgnoreExtraInput = true;
+        }
+        else if (EQUAL(argv[i], "-E"))
+        {
+            bEcho = true;
+        }
         else if (i < argc - 1 && EQUAL(argv[i], "-oo"))
         {
             papszOpenOptions = CSLAddString(papszOpenOptions, argv[++i]);
@@ -185,6 +207,28 @@ MAIN_START(argc, argv)
 
     if (pszSrcFilename == nullptr || (pszLocX != nullptr && pszLocY == nullptr))
         Usage(true);
+
+    if (bEcho && !bValOnly)
+    {
+        fprintf(stderr, "-E can only be used with -valonly\n");
+        exit(1);
+    }
+    if (bEcho && osFieldSep.empty())
+    {
+        fprintf(stderr, "-E can only be used if -field_sep is specified (to a "
+                        "non-newline value)\n");
+        exit(1);
+    }
+
+    if (osFieldSep.empty())
+    {
+        osFieldSep = "\n";
+    }
+    else if (!bValOnly)
+    {
+        fprintf(stderr, "-field_sep can only be used with -valonly\n");
+        exit(1);
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Open source file.                                               */
@@ -226,10 +270,13 @@ MAIN_START(argc, argv)
     /* -------------------------------------------------------------------- */
     /*      Turn the location into a pixel and line location.               */
     /* -------------------------------------------------------------------- */
-    int inputAvailable = 1;
-    double dfGeoX;
-    double dfGeoY;
+    bool inputAvailable = true;
+    double dfGeoX = 0;
+    double dfGeoY = 0;
     CPLString osXML;
+    char szLine[1024];
+    int nLine = 0;
+    std::string osExtraContent;
 
     if (pszLocX == nullptr && pszLocY == nullptr)
     {
@@ -249,9 +296,40 @@ MAIN_START(argc, argv)
             }
         }
 
-        if (fscanf(stdin, "%lf %lf", &dfGeoX, &dfGeoY) != 2)
+        if (fgets(szLine, sizeof(szLine) - 1, stdin))
         {
-            inputAvailable = 0;
+            const CPLStringList aosTokens(CSLTokenizeString(szLine));
+            const int nCount = aosTokens.size();
+
+            ++nLine;
+            if (nCount < 2)
+            {
+                fprintf(stderr, "Not enough values at line %d\n", nLine);
+                inputAvailable = false;
+            }
+            else
+            {
+                dfGeoX = CPLAtof(aosTokens[0]);
+                dfGeoY = CPLAtof(aosTokens[1]);
+                if (!bIgnoreExtraInput)
+                {
+                    for (int i = 2; i < nCount; ++i)
+                    {
+                        if (!osExtraContent.empty())
+                            osExtraContent += ' ';
+                        osExtraContent += aosTokens[i];
+                    }
+                    while (!osExtraContent.empty() &&
+                           isspace(static_cast<int>(osExtraContent.back())))
+                    {
+                        osExtraContent.pop_back();
+                    }
+                }
+            }
+        }
+        else
+        {
+            inputAvailable = false;
         }
     }
     else
@@ -313,11 +391,28 @@ MAIN_START(argc, argv)
         {
             osLine.Printf("<Report pixel=\"%d\" line=\"%d\">", iPixel, iLine);
             osXML += osLine;
+            if (!osExtraContent.empty())
+            {
+                char *pszEscaped =
+                    CPLEscapeString(osExtraContent.c_str(), -1, CPLES_XML);
+                osXML += CPLString().Printf("  <ExtraInput>%s</ExtraInput>",
+                                            pszEscaped);
+                CPLFree(pszEscaped);
+            }
         }
         else if (!bQuiet)
         {
             printf("Report:\n");
             printf("  Location: (%dP,%dL)\n", iPixel, iLine);
+            if (!osExtraContent.empty())
+            {
+                printf("  Extra input: %s\n", osExtraContent.c_str());
+            }
+        }
+        else if (bEcho)
+        {
+            printf("%d%s%d%s", iPixel, osFieldSep.c_str(), iLine,
+                   osFieldSep.c_str());
         }
 
         bool bPixelReport = true;
@@ -468,7 +563,11 @@ MAIN_START(argc, argv)
                 else if (!bQuiet)
                     printf("    Value: %s\n", osValue.c_str());
                 else if (bValOnly)
-                    printf("%s\n", osValue.c_str());
+                {
+                    if (i > 0)
+                        printf("%s", osFieldSep.c_str());
+                    printf("%s", osValue.c_str());
+                }
 
                 // Report unscaled if we have scale/offset values.
                 int bSuccess;
@@ -522,10 +621,51 @@ MAIN_START(argc, argv)
 
         osXML += "</Report>";
 
-        if ((pszLocX != nullptr && pszLocY != nullptr) ||
-            (fscanf(stdin, "%lf %lf", &dfGeoX, &dfGeoY) != 2))
+        if (bValOnly)
         {
-            inputAvailable = 0;
+            if (!osExtraContent.empty() && osFieldSep != "\n")
+                printf("%s%s", osFieldSep.c_str(), osExtraContent.c_str());
+            printf("\n");
+        }
+
+        if (pszLocX != nullptr && pszLocY != nullptr)
+            break;
+
+        osExtraContent.clear();
+        if (fgets(szLine, sizeof(szLine) - 1, stdin))
+        {
+            const CPLStringList aosTokens(CSLTokenizeString(szLine));
+            const int nCount = aosTokens.size();
+
+            ++nLine;
+            if (nCount < 2)
+            {
+                fprintf(stderr, "Not enough values at line %d\n", nLine);
+                continue;
+            }
+            else
+            {
+                dfGeoX = CPLAtof(aosTokens[0]);
+                dfGeoY = CPLAtof(aosTokens[1]);
+                if (!bIgnoreExtraInput)
+                {
+                    for (int i = 2; i < nCount; ++i)
+                    {
+                        if (!osExtraContent.empty())
+                            osExtraContent += ' ';
+                        osExtraContent += aosTokens[i];
+                    }
+                    while (!osExtraContent.empty() &&
+                           isspace(static_cast<int>(osExtraContent.back())))
+                    {
+                        osExtraContent.pop_back();
+                    }
+                }
+            }
+        }
+        else
+        {
+            break;
         }
     }
 
