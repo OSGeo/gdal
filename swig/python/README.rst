@@ -54,10 +54,11 @@ It will be necessary to have libgdal and its development headers installed
 if pip is expected to do a source build because no wheel is available
 for your specified platform and Python version.
 
-To install with numpy support, you need to require the optional numpy component:
+To install with numpy support, you need to require the optional numpy component as well as the Python packaging tools wheel and setuptools:
 
 ::
 
+    pip install wheel setuptools>=67
     pip install gdal[numpy]
 
 To install the version of the Python bindings matching your native GDAL library:
