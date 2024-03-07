@@ -2918,6 +2918,7 @@ void GDALRegister_OGCAPI()
         "       <Value>PNG_PREFERRED</Value>"
         "       <Value>JPEG</Value>"
         "       <Value>JPEG_PREFERRED</Value>"
+        "       <Value>GEOTIFF</Value>"
         "  </Option>"
         "  <Option name='VECTOR_FORMAT' scope='vector' type='string-select' "
         "description='Which format to use for vector data acquisition' "
