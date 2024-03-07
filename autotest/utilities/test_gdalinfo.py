@@ -32,6 +32,7 @@
 import json
 import os
 import shutil
+import stat
 
 import gdaltest
 import pytest
@@ -1018,3 +1019,28 @@ def test_gdalinfo_stac_eo_bands(gdalinfo_path, tmp_path):
     data = json.loads(ret)
 
     assert data["stac"]["eo:cloud_cover"] == 2
+
+
+def test_gdalinfo_access_to_file_without_permission(gdalinfo_path, tmp_path):
+
+    tmpfilename = str(tmp_path / "test.bin")
+    with open(tmpfilename, "wb") as f:
+        f.write(b"\x00" * 1024)
+    os.chmod(tmpfilename, 0)
+
+    # Test that file is not accessible
+    try:
+        f = open(tmpfilename, "rb")
+        f.close()
+        pytest.skip("could not set non accessible permission")
+    except IOError:
+        pass
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdalinfo_path + " " + tmpfilename,
+        encoding="UTF-8",
+    )
+    lines = list(filter(lambda x: len(x) > 0, err.split("\n")))
+    assert (len(lines)) == 3
+
+    os.chmod(tmpfilename, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)

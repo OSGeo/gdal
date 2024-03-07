@@ -57,6 +57,11 @@ static int OGRSelafinDriverIdentify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
 
+    // We can stat() the file but it is not a regular file or we did not
+    // get access to its content
+    if (poOpenInfo->bStatOK)
+        return FALSE;
+
     return -1;
 }
 
