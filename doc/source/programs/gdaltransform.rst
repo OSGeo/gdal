@@ -20,7 +20,7 @@ Synopsis
         [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>]
         [-ct <proj_string>] [-order <n>] [-tps] [-rpc] [-geoloc]
         [-gcp <pixel> <line> <easting> <northing> [elevation]]... [-output_xy]
-        [srcfile [dstfile]]
+        [<srcfile> [<dstfile>]]
 
 
 Description
