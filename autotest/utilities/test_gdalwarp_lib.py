@@ -2726,7 +2726,7 @@ def test_gdalwarp_lib_to_cog(tmp_vsimem):
     ds = gdal.Warp(
         tmpfilename,
         "../gcore/data/byte.tif",
-        options="-f COG -t_srs EPSG:3857 -ts 20 20",
+        options="-f COG -t_srs EPSG:3857 -ts 20 20 -r near",
     )
     assert ds.RasterCount == 1
     assert ds.GetRasterBand(1).Checksum() == 4672
