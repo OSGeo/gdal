@@ -3501,7 +3501,7 @@ def test_gdalwarp_lib_sum_preserving_multiband():
 ###############################################################################
 
 
-def test_gdalwarp_lib_sum_preserving_accross_antimeridian():
+def test_gdalwarp_lib_sum_preserving_across_antimeridian():
 
     src_ds = gdal.Translate(
         "",
