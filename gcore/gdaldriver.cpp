@@ -1049,7 +1049,8 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
                                      : nullptr,
                 nullptr};
             auto poSrcDSTmp = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-                poSrcDS->GetDescription(), GDAL_OF_RASTER, apszAllowedDrivers));
+                poSrcDS->GetDescription(), GDAL_OF_RASTER, apszAllowedDrivers,
+                poSrcDS->papszOpenOptions));
             if (poSrcDSTmp)
             {
                 char **papszFileList = poSrcDSTmp->GetFileList();

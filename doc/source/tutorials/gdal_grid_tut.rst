@@ -34,7 +34,8 @@ That is what GDAL Grid API is about. It helps you to interpolate your data
 
 There are two ways of using this interface. Programmatically it is available
 through the :cpp:func:`GDALGridCreate` C function; for end users there is a
-:ref:`gdal_grid` utility. The rest of this document discusses details on algorithms
+:ref:`gdal_grid` utility (which see for an up-to-date list of all current features).
+The rest of this document discusses details on algorithms
 and their parameters implemented in GDAL Grid API.
 
 Interpolation of the Scattered Data
