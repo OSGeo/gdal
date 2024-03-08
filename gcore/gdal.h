@@ -1521,6 +1521,8 @@ CPLErr CPL_DLL CPL_STDCALL GDALSetRasterNoDataValueAsInt64(GDALRasterBandH,
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterNoDataValueAsUInt64(GDALRasterBandH,
                                                             uint64_t);
 CPLErr CPL_DLL CPL_STDCALL GDALDeleteRasterNoDataValue(GDALRasterBandH);
+double CPL_DLL CPL_STDCALL GDALGetRasterNoDataReplacementValue(GDALDataType,
+                                                               double);
 char CPL_DLL **CPL_STDCALL GDALGetRasterCategoryNames(GDALRasterBandH);
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterCategoryNames(GDALRasterBandH,
                                                       CSLConstList);

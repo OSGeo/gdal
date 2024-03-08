@@ -2462,6 +2462,61 @@ TEST_F(test_gdal, GDALBufferHasOnlyNoData)
                                          GSF_FLOATING_POINT));
 }
 
+// Test GetRasterNoDataReplacementValue()
+TEST_F(test_gdal, GetRasterNoDataReplacementValue)
+{
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_Byte, std::numeric_limits<double>::lowest()),
+              std::numeric_limits<uint8_t>::lowest() + 1);
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_Byte, std::numeric_limits<double>::max()),
+              std::numeric_limits<uint8_t>::max() - 1);
+
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_UInt16, std::numeric_limits<double>::lowest()),
+              std::numeric_limits<uint16_t>::lowest() + 1);
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_UInt16, std::numeric_limits<double>::max()),
+              std::numeric_limits<uint16_t>::max() - 1);
+
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_Int16, std::numeric_limits<double>::lowest()),
+              std::numeric_limits<int16_t>::lowest() + 1);
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_Int16, std::numeric_limits<double>::max()),
+              std::numeric_limits<int16_t>::max() - 1);
+
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_UInt32, std::numeric_limits<double>::lowest()),
+              std::numeric_limits<uint32_t>::lowest() + 1);
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_UInt32, std::numeric_limits<double>::max()),
+              std::numeric_limits<uint32_t>::max() - 1);
+
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_Int32, std::numeric_limits<double>::lowest()),
+              std::numeric_limits<int32_t>::lowest() + 1);
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_Int32, std::numeric_limits<double>::max()),
+              std::numeric_limits<int32_t>::max() - 1);
+
+    // Test floating point types
+
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_Float32, std::numeric_limits<double>::lowest()),
+              std::nextafter(std::numeric_limits<float>::lowest(), 0.0));
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_Float32, std::numeric_limits<double>::max()),
+              std::nextafter(std::numeric_limits<float>::max(), 0.0));
+
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_Float64, std::numeric_limits<double>::lowest()),
+              std::nextafter(std::numeric_limits<double>::lowest(), 0.0));
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_Float64, std::numeric_limits<double>::max()),
+              std::nextafter(std::numeric_limits<double>::max(), 0.0));
+}
+
 // Test GDALRasterBand::GetIndexColorTranslationTo()
 TEST_F(test_gdal, GetIndexColorTranslationTo)
 {

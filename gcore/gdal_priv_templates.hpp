@@ -103,6 +103,26 @@ inline T GDALClampValue(const T tValue, const T tMax, const T tMin)
 }
 
 /************************************************************************/
+/*                          GDALClampDoubleValue()                            */
+/************************************************************************/
+/**
+ * Clamp double values to a specified range, this uses the same
+ * argument ordering as std::clamp
+ *
+ * @param tValue the value
+ * @param tMin the min value
+ * @param tMax the max value
+ */
+template <class T2, class T3>
+inline double GDALClampDoubleValue(const double tValue, const T2 tMin,
+                                   const T3 tMax)
+{
+    const double tMin2{static_cast<double>(tMin)};
+    const double tMax2{static_cast<double>(tMax)};
+    return tValue > tMax2 ? tMax2 : tValue < tMin2 ? tMin2 : tValue;
+}
+
+/************************************************************************/
 /*                         GDALIsValueInRange()                         */
 /************************************************************************/
 /**
@@ -114,7 +134,7 @@ inline T GDALClampValue(const T tValue, const T tMax, const T tMin)
  */
 template <class T> inline bool GDALIsValueInRange(double dfValue)
 {
-    return dfValue >= static_cast<double>(std::numeric_limits<T>::min()) &&
+    return dfValue >= static_cast<double>(std::numeric_limits<T>::lowest()) &&
            dfValue <= static_cast<double>(std::numeric_limits<T>::max());
 }
 
