@@ -481,8 +481,15 @@ Creating multiband files
 
 Creating multiband files is not directly possible with gdal_grid.
 One might use gdal_grid multiple times to create one band per file,
-and then use :ref:`gdalbuildvrt` -separate and then :ref:`gdal_translate`,
-or just :ref:`gdal_merge`, to combine the one-band files into a single one:
+and then use :ref:`gdalbuildvrt` -separate and then :ref:`gdal_translate`:
+
+.. code-block:: bash
+
+    gdal_grid ... 1.tif; gdal_grid ... 2.tif; gdal_grid ... 3.tif
+    gdalbuildvrt -separate 123.vrt 1.tif 2.tif 3.tif
+    gdal_translate 123.vrt 123.tif
+
+Or just :ref:`gdal_merge`, to combine the one-band files into a single one:
 
 .. code-block:: bash
 
