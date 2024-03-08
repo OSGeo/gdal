@@ -18,6 +18,8 @@
 
 %include "python_exceptions.i"
 %include "python_strings.i"
+%include "python_type_hints.i"
+
 #endif
 
 %include typemaps_python.i
