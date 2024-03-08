@@ -63,7 +63,7 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
                            MM_BYTE que_fer_amb_reformatat_decimals);
 
 int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt,
-                     struct MM_ZD *pZDescription, unsigned long int flag);
+                     struct MM_ZD *pZDescription, uint32_t flag);
 
 // Strings
 char *MM_RemoveInitial_and_FinalQuotationMarks(char *cadena);

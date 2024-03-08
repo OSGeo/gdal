@@ -2255,8 +2255,7 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
     return 0;
 } /* End of MMChangeCFieldWidthDBF() */
 
-static void MM_AdoptHeight(double *desti, const double *proposta,
-                           unsigned long int flag)
+static void MM_AdoptHeight(double *desti, const double *proposta, uint32_t flag)
 {
     if (*proposta == MM_NODATA_COORD_Z)
         return;
@@ -2280,7 +2279,7 @@ static void MM_AdoptHeight(double *desti, const double *proposta,
 }
 
 int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt,
-                     struct MM_ZD *pZDescription, unsigned long int flag)
+                     struct MM_ZD *pZDescription, uint32_t flag)
 {
     MM_N_HEIGHT_TYPE i;
     MM_N_VERTICES_TYPE i_vrt;

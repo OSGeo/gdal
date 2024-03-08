@@ -67,7 +67,7 @@ int MMWritePHPolygonSection(struct MiraMonVectLayerInfo *hMiraMonLayer,
                             MM_FILE_OFFSET DiskOffset);
 int MMAppendIntegerDependingOnVersion(
     struct MiraMonVectLayerInfo *hMiraMonLayer, struct MM_FLUSH_INFO *FlushInfo,
-    unsigned long *nUL32, GUInt64 nUI64);
+    uint32_t *nUL32, GUInt64 nUI64);
 int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
                          MM_FILE_OFFSET *nOffset);
 int MMResizeZSectionDescrPointer(struct MM_ZD **pZDescription, GUInt64 *nMax,
@@ -234,7 +234,7 @@ static void MMSet2_0Version(struct MM_TH *pTopHeader)
 int MMReadHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader)
 {
     char dot;
-    unsigned long NCount;
+    uint32_t NCount;
     long reservat4 = 0L;
 
     pMMHeader->Flag = 0x0;
@@ -298,7 +298,7 @@ int MMReadHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader)
 static int MMWriteHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader)
 {
     char dot = '.';
-    unsigned long NCount;
+    uint32_t NCount;
     long reservat4 = 0L;
     MM_INTERNAL_FID nNumber1 = 1, nNumber0 = 0;
 
@@ -343,7 +343,7 @@ static int MMWriteHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader)
     if (pMMHeader->aLayerVersion[0] == ' ' &&
         pMMHeader->aLayerVersion[1] == '1')
     {
-        NCount = (unsigned long)pMMHeader->nElemCount;
+        NCount = (uint32_t)pMMHeader->nElemCount;
         if (fwrite_function(&NCount, sizeof(NCount), 1, pF) != 1)
             return 1;
 
@@ -709,7 +709,7 @@ MMWriteZDescriptionHeaders(struct MiraMonVectLayerInfo *hMiraMonLayer,
 {
     struct MM_FLUSH_INFO FlushTMP;
     char *pBuffer = nullptr;
-    unsigned long nUL32;
+    uint32_t nUL32;
     MM_INTERNAL_FID nIndex = 0;
     MM_FILE_OFFSET nOffsetDiff;
     struct MM_ZD *pZDescription = pZSection->pZDescription;
@@ -2537,7 +2537,7 @@ int MMReadGUInt64DependingOnVersion(struct MiraMonVectLayerInfo *hMiraMonLayer,
                                     struct MM_FLUSH_INFO *FlushInfo,
                                     GUInt64 *nUI64)
 {
-    unsigned long nUL32;
+    uint32_t nUL32;
 
     if (hMiraMonLayer->LayerVersion == MM_32BITS_VERSION)
     {
@@ -2569,7 +2569,7 @@ int MMReadOffsetDependingOnVersion(struct MiraMonVectLayerInfo *hMiraMonLayer,
                                    struct MM_FLUSH_INFO *FlushInfo,
                                    MM_FILE_OFFSET *nUI64)
 {
-    unsigned long nUL32;
+    uint32_t nUL32;
 
     if (hMiraMonLayer->LayerVersion == MM_32BITS_VERSION)
     {
@@ -2599,13 +2599,13 @@ int MMReadOffsetDependingOnVersion(struct MiraMonVectLayerInfo *hMiraMonLayer,
 // Appending integers depending on the version.
 int MMAppendIntegerDependingOnVersion(
     struct MiraMonVectLayerInfo *hMiraMonLayer, struct MM_FLUSH_INFO *FlushInfo,
-    unsigned long *nUL32, GUInt64 nUI64)
+    uint32_t *nUL32, GUInt64 nUI64)
 {
     int result;
 
     if (hMiraMonLayer->LayerVersion == MM_32BITS_VERSION)
     {
-        *nUL32 = (unsigned long)nUI64;
+        *nUL32 = (uint32_t)nUI64;
         FlushInfo->SizeOfBlockToBeSaved = sizeof(*nUL32);
         hMiraMonLayer->OffsetCheck += FlushInfo->SizeOfBlockToBeSaved;
         FlushInfo->pBlockToBeSaved = (void *)nUL32;
@@ -2770,7 +2770,7 @@ int MMWriteAHArcSection(struct MiraMonVectLayerInfo *hMiraMonLayer,
     MM_INTERNAL_FID iElem;
     struct MM_FLUSH_INFO FlushTMP;
     char *pBuffer = nullptr;
-    unsigned long nUL32;
+    uint32_t nUL32;
     MM_FILE_OFFSET nOffsetDiff;
     struct MiraMonArcLayer *pMMArcLayer;
 
@@ -2990,7 +2990,7 @@ int MMWriteNHNodeSection(struct MiraMonVectLayerInfo *hMiraMonLayer,
     MM_INTERNAL_FID iElem;
     struct MM_FLUSH_INFO FlushTMP;
     char *pBuffer = nullptr;
-    unsigned long nUL32;
+    uint32_t nUL32;
     MM_FILE_OFFSET nOffsetDiff;
     struct MiraMonArcLayer *pMMArcLayer;
 
@@ -3223,7 +3223,7 @@ int MMWritePHPolygonSection(struct MiraMonVectLayerInfo *hMiraMonLayer,
     MM_INTERNAL_FID iElem;
     struct MM_FLUSH_INFO FlushTMP;
     char *pBuffer = nullptr;
-    unsigned long nUL32;
+    uint32_t nUL32;
     MM_FILE_OFFSET nOffsetDiff;
     struct MiraMonPolygonLayer *pMMPolygonLayer = &hMiraMonLayer->MMPolygon;
 
@@ -3517,7 +3517,7 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
     struct MM_PH *pCurrentPolHeader = nullptr;
     struct MM_AH *pCurrentArcHeader;
     struct MM_NH *pCurrentNodeHeader, *pCurrentNodeHeaderPlus1 = nullptr;
-    unsigned long UnsignedLongNumber;
+    uint32_t UnsignedLongNumber;
     struct MiraMonArcLayer *pMMArc;
     struct MiraMonNodeLayer *pMMNode;
     struct MM_TH *pArcTopHeader;

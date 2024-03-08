@@ -195,7 +195,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
 // Reads stringline coordinates and puts them in a buffer
 static int
 MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
-                           MM_INTERNAL_FID i_elem, unsigned long int flag_z,
+                           MM_INTERNAL_FID i_elem, uint32_t flag_z,
                            MM_N_VERTICES_TYPE nStartVertice,
                            MM_BOOLEAN bAvoidFirst, unsigned char VFG)
 {
@@ -337,7 +337,7 @@ MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
 // Reads Polygon coordinates and puts them in a buffer
 static int
 MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
-                             MM_INTERNAL_FID i_pol, unsigned long int flag_z)
+                             MM_INTERNAL_FID i_pol, uint32_t flag_z)
 {
     struct MM_PH *pPolHeader;
     struct MM_AH *pArcHeader;
@@ -502,7 +502,7 @@ int MMGetGeoFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer,
 {
     FILE_TYPE *pF;
     struct MM_ZD *pZDescription;
-    unsigned long int flag_z;
+    uint32_t flag_z;
     int num;
     double cz;
 
