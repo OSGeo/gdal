@@ -2581,6 +2581,7 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
     EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
                   GDT_Float32, -std::numeric_limits<double>::infinity()),
               0.0);
+
     // in range for float 32
     EXPECT_EQ(static_cast<float>(
                   GDALGetRasterNoDataReplacementValue(GDT_Float32, -1.0)),
@@ -2588,8 +2589,23 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
     EXPECT_EQ(static_cast<float>(
                   GDALGetRasterNoDataReplacementValue(GDT_Float32, 1.1)),
               std::nextafter(float(1.1), 2.0f));
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_Float32, std::numeric_limits<float>::lowest()),
+              std::nextafter(std::numeric_limits<float>::lowest(), 0.0f));
+
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_Float32, std::numeric_limits<float>::max()),
+              static_cast<double>(
+                  std::nextafter(std::numeric_limits<float>::max(), 0.0f)));
 
     // in range for float64
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_Float64, std::numeric_limits<double>::lowest()),
+              std::nextafter(std::numeric_limits<double>::lowest(), 0.0));
+    EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
+                  GDT_Float64, std::numeric_limits<double>::max()),
+              std::nextafter(std::numeric_limits<double>::max(), 0.0));
+
     EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
                   GDT_Float64, std::numeric_limits<double>::lowest()),
               std::nextafter(std::numeric_limits<double>::lowest(), 0.0));
