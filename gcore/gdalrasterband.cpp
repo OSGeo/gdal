@@ -2082,20 +2082,6 @@ double GDALGetRasterNoDataReplacementValue(GDALDataType dt,
             return 0;
         }
 
-        // Here we test whether narrowing the double nodata value to a float
-        // would result in a value that is out of range for a float. If it is,
-        // we set the value to the value clamped to the float range.
-        const float fNoDataValue{static_cast<float>(dfNoDataValue)};
-
-        if (fNoDataValue == std::numeric_limits<float>::infinity())
-        {
-            dfNoDataValue = std::numeric_limits<float>::max();
-        }
-        else if (fNoDataValue == -std::numeric_limits<float>::infinity())
-        {
-            dfNoDataValue = std::numeric_limits<float>::lowest();
-        }
-
         if (dfNoDataValue == std::numeric_limits<float>::max())
         {
             dfReplacementVal =
