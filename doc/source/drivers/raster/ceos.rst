@@ -24,6 +24,4 @@ NOTE: Implemented as :source_file:`frmts/ceos/ceosdataset.cpp`.
 Driver capabilities
 -------------------
 
-.. supports_createcopy::
-
 .. supports_virtualio::

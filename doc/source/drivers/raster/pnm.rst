@@ -28,6 +28,8 @@ NOTE: Implemented as :source_file:`frmts/raw/pnmdataset.cpp`.
 Driver capabilities
 -------------------
 
+.. supports_create::
+
 .. supports_createcopy::
 
 .. supports_virtualio::

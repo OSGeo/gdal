@@ -20,8 +20,6 @@ The virtual files are currently normally prepared by hand.
 Driver capabilities
 -------------------
 
-.. supports_create::
-
 .. supports_georeferencing::
 
 .. supports_virtualio::
