@@ -37,7 +37,7 @@ SGeometry_Feature::SGeometry_Feature(OGRFeature &ft)
 
     if (geom == nullptr)
     {
-        throw SGWriter_Exception_EmptyGeometry();
+        throw SGWriter_Exception_NullGeometry();
     }
 
     OGRwkbGeometryType ogwkt = geom->getGeometryType();
@@ -114,12 +114,8 @@ SGeometry_Feature::SGeometry_Feature(OGRFeature &ft)
         // Get node count
         // First count exterior ring
         const auto exterior_ring = poly->getExteriorRing();
-        if (exterior_ring == nullptr)
-        {
-            throw SGWriter_Exception_EmptyGeometry();
-        }
-
-        size_t outer_ring_ct = exterior_ring->getNumPoints();
+        const size_t outer_ring_ct =
+            exterior_ring ? exterior_ring->getNumPoints() : 0;
 
         this->total_point_count += outer_ring_ct;
         this->ppart_node_count.push_back(outer_ring_ct);
@@ -134,14 +130,12 @@ SGeometry_Feature::SGeometry_Feature(OGRFeature &ft)
         {
             this->hasInteriorRing = true;
             const auto iring = poly->getInteriorRing(iRingCt);
-            if (iring == nullptr)
+            if (iring)
             {
-                throw SGWriter_Exception_RingOOB();
+                this->total_point_count += iring->getNumPoints();
+                this->ppart_node_count.push_back(iring->getNumPoints());
+                this->total_part_count++;
             }
-
-            this->total_point_count += iring->getNumPoints();
-            this->ppart_node_count.push_back(iring->getNumPoints());
-            this->total_part_count++;
         }
     }
 
@@ -155,12 +149,8 @@ SGeometry_Feature::SGeometry_Feature(OGRFeature &ft)
         for (const auto poly : *poMP)
         {
             const auto exterior_ring = poly->getExteriorRing();
-            if (exterior_ring == nullptr)
-            {
-                throw SGWriter_Exception_EmptyGeometry();
-            }
-
-            size_t outer_ring_ct = exterior_ring->getNumPoints();
+            const size_t outer_ring_ct =
+                exterior_ring ? exterior_ring->getNumPoints() : 0;
 
             this->total_point_count += outer_ring_ct;
             this->ppart_node_count.push_back(outer_ring_ct);
@@ -176,16 +166,14 @@ SGeometry_Feature::SGeometry_Feature(OGRFeature &ft)
                  iRingCt++)
             {
                 const auto iring = poly->getInteriorRing(iRingCt);
-                if (iring == nullptr)
+                if (iring)
                 {
-                    throw SGWriter_Exception_RingOOB();
+                    this->hasInteriorRing = true;
+                    this->total_point_count += iring->getNumPoints();
+                    this->ppart_node_count.push_back(iring->getNumPoints());
+                    this->total_part_count++;
+                    this->part_at_ind_interior.push_back(true);
                 }
-
-                this->hasInteriorRing = true;
-                this->total_point_count += iring->getNumPoints();
-                this->ppart_node_count.push_back(iring->getNumPoints());
-                this->total_part_count++;
-                this->part_at_ind_interior.push_back(true);
             }
         }
     }
