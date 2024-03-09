@@ -1937,6 +1937,14 @@ uint64_t GDALRasterBand::GetNoDataValueAsUInt64(int *pbSuccess)
  *        as a double, in particular the maximum absolute value for those types
  *        is 2^53.
  *
+ * The replacement value is a value that can be used in a computation
+ * whose result would match by accident the nodata value, whereas it is
+ * meant to be valid. For example, for a dataset with a nodata value of 0,
+ * when averaging -1 and 1, one would get normally a value of 0. The
+ * replacement nodata value can then be substitued to that 0 value to still
+ * get a valid value, as close as practical to the true value, while being
+ * different from the nodata value.
+ *
  * @param dt Data type
  * @param dfNoDataValue The no data value
 
