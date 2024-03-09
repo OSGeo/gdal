@@ -9,10 +9,10 @@ target_include_directories(ogr_Shape PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOU
 # shapelib
 if (GDAL_USE_SHAPELIB_INTERNAL)
   # ogrshape.h shapefil.h dbfopen.c sbnsearch.c shpopen.c shptree.c
-  add_library(shapelib OBJECT sbnsearch_wrapper.c shpopen_wrapper.c shptree_wrapper.c dbfopen_wrapper.c)
+  add_library(shapelib OBJECT sbnsearch_wrapper.cpp shpopen_wrapper.cpp shptree_wrapper.cpp dbfopen_wrapper.cpp)
   gdal_standard_includes(shapelib)
   target_compile_definitions(shapelib PUBLIC -DSAOffset=vsi_l_offset)
-  target_compile_options(shapelib PRIVATE ${GDAL_C_WARNING_FLAGS})
+  target_compile_options(shapelib PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX})
   if (RENAME_INTERNAL_SHAPELIB_SYMBOLS)
     target_compile_definitions(shapelib PUBLIC -DRENAME_INTERNAL_SHAPELIB_SYMBOLS -DSHPAPI_CALL=)
   endif ()
