@@ -2465,7 +2465,7 @@ TEST_F(test_gdal, GDALBufferHasOnlyNoData)
 // Test GetRasterNoDataReplacementValue()
 TEST_F(test_gdal, GetRasterNoDataReplacementValue)
 {
-
+    // Test GDT_Byte
     EXPECT_EQ(GDALGetNoDataReplacementValue(
                   GDT_Byte, std::numeric_limits<double>::lowest()),
               0);
@@ -2479,6 +2479,21 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
                   GDT_Byte, std::numeric_limits<uint8_t>::max()),
               std::numeric_limits<uint8_t>::max() - 1);
 
+    // Test GDT_Int8
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Int8, std::numeric_limits<double>::lowest()),
+              0);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Int8,
+                                            std::numeric_limits<double>::max()),
+              0);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(
+                  GDT_Int8, std::numeric_limits<int8_t>::lowest()),
+              std::numeric_limits<int8_t>::lowest() + 1);
+    EXPECT_EQ(GDALGetNoDataReplacementValue(GDT_Int8,
+                                            std::numeric_limits<int8_t>::max()),
+              std::numeric_limits<int8_t>::max() - 1);
+
+    // Test GDT_UInt16
     EXPECT_EQ(GDALGetNoDataReplacementValue(
                   GDT_UInt16, std::numeric_limits<double>::lowest()),
               0);
@@ -2492,6 +2507,7 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
                   GDT_UInt16, std::numeric_limits<uint16_t>::max()),
               std::numeric_limits<uint16_t>::max() - 1);
 
+    // Test GDT_Int16
     EXPECT_EQ(GDALGetNoDataReplacementValue(
                   GDT_Int16, std::numeric_limits<double>::lowest()),
               0);
@@ -2505,6 +2521,7 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
                   GDT_Int16, std::numeric_limits<int16_t>::max()),
               std::numeric_limits<int16_t>::max() - 1);
 
+    // Test GDT_UInt32
     EXPECT_EQ(GDALGetNoDataReplacementValue(
                   GDT_UInt32, std::numeric_limits<double>::lowest()),
               0);
@@ -2518,6 +2535,7 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
                   GDT_UInt32, std::numeric_limits<uint32_t>::max()),
               std::numeric_limits<uint32_t>::max() - 1);
 
+    // Test GDT_Int32
     EXPECT_EQ(GDALGetNoDataReplacementValue(
                   GDT_Int32, std::numeric_limits<double>::lowest()),
               0);
@@ -2531,6 +2549,7 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
                   GDT_Int32, std::numeric_limits<int32_t>::max()),
               std::numeric_limits<int32_t>::max() - 1);
 
+    // Test GDT_UInt64
     EXPECT_EQ(GDALGetNoDataReplacementValue(
                   GDT_UInt64, std::numeric_limits<double>::lowest()),
               0);
@@ -2550,6 +2569,7 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
             static_cast<double>(std::numeric_limits<uint64_t>::max()), 0) -
             1);
 
+    // Test GDT_Int64
     EXPECT_EQ(GDALGetNoDataReplacementValue(
                   GDT_Int64, std::numeric_limits<double>::lowest()),
               0);
