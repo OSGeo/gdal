@@ -988,7 +988,7 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
         psHooks->Error(szErrorMsg);
 
         free(pszFullname);
-        return NULL;
+        return SHPLIB_NULLPTR;
     }
 
     memcpy(pszFullname + nLenWithoutExtension, ".shx", 5);
@@ -1002,7 +1002,7 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
 
         free(pszFullname);
         psHooks->FClose(fpSHP);
-        return NULL;
+        return SHPLIB_NULLPTR;
     }
 
     free(pszFullname);
@@ -1056,7 +1056,7 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
         free(pszFullname);
         psHooks->FClose(fpSHP);
         psHooks->FClose(fpSHX);
-        return NULL;
+        return SHPLIB_NULLPTR;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1080,7 +1080,7 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
         free(pszFullname);
         psHooks->FClose(fpSHP);
         psHooks->FClose(fpSHX);
-        return NULL;
+        return SHPLIB_NULLPTR;
     }
 
     SHPHandle psSHP = STATIC_CAST(SHPHandle, calloc(sizeof(SHPInfo), 1));
