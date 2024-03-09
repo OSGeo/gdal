@@ -4846,7 +4846,7 @@ std::string GDALGetCompressionFormatForJPEG(const void *pBuffer,
  * whose result would match by accident the nodata value, whereas it is
  * meant to be valid. For example, for a dataset with a nodata value of 0,
  * when averaging -1 and 1, one would get normally a value of 0. The
- * replacement nodata value can then be substitued to that 0 value to still
+ * replacement nodata value can then be substituted to that 0 value to still
  * get a valid value, as close as practical to the true value, while being
  * different from the nodata value.
  *
