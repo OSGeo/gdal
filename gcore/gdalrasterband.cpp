@@ -2028,7 +2028,7 @@ double GDALGetRasterNoDataReplacementValue(GDALDataType dt,
         else
         {
             dfReplacementVal = std::nextafter(
-                dfNoDataValue, std::numeric_limits<float>::max());
+                static_cast<float>(dfNoDataValue), std::numeric_limits<float>::max());
         }
     }
     else if (dt == GDT_Float64)
