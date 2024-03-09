@@ -1940,7 +1940,7 @@ uint64_t GDALRasterBand::GetNoDataValueAsUInt64(int *pbSuccess)
  * @param dt Data type
  * @param dfNoDataValue The no data value
 
- * @since GDAL 3.10
+ * @since GDAL 3.9
  */
 double GDALGetRasterNoDataReplacementValue(GDALDataType dt,
                                            double dfNoDataValue)
