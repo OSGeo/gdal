@@ -1521,7 +1521,6 @@ CPLErr CPL_DLL CPL_STDCALL GDALSetRasterNoDataValueAsInt64(GDALRasterBandH,
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterNoDataValueAsUInt64(GDALRasterBandH,
                                                             uint64_t);
 CPLErr CPL_DLL CPL_STDCALL GDALDeleteRasterNoDataValue(GDALRasterBandH);
-double CPL_DLL GDALGetRasterNoDataReplacementValue(GDALDataType, double);
 char CPL_DLL **CPL_STDCALL GDALGetRasterCategoryNames(GDALRasterBandH);
 CPLErr CPL_DLL CPL_STDCALL GDALSetRasterCategoryNames(GDALRasterBandH,
                                                       CSLConstList);
@@ -1705,6 +1704,8 @@ void CPL_DLL GDALCopyBits(const GByte *pabySrcData, int nSrcOffset,
 void CPL_DLL GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
                               int nComponents, void **ppDestBuffer,
                               GDALDataType eDestDT, size_t nIters);
+
+double CPL_DLL GDALGetNoDataReplacementValue(GDALDataType, double);
 
 int CPL_DLL CPL_STDCALL GDALLoadWorldFile(const char *, double *);
 int CPL_DLL CPL_STDCALL GDALReadWorldFile(const char *, const char *, double *);

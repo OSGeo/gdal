@@ -1132,7 +1132,7 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
     else
         tNoDataValue = static_cast<T>(dfNoDataValue);
     const T tReplacementVal = static_cast<T>(
-        bHasNoData ? GDALGetRasterNoDataReplacementValue(
+        bHasNoData ? GDALGetNoDataReplacementValue(
                          poOverview->GetRasterDataType(), dfNoDataValue)
                    : dfNoDataValue);
 
@@ -2998,9 +2998,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
     const auto dstDataType = poDstBand->GetRasterDataType();
     const int nDstDataTypeSize = GDALGetDataTypeSizeBytes(dstDataType);
     const double dfReplacementVal =
-        bHasNoData
-            ? GDALGetRasterNoDataReplacementValue(dstDataType, dfNoDataValue)
-            : dfNoDataValue;
+        bHasNoData ? GDALGetNoDataReplacementValue(dstDataType, dfNoDataValue)
+                   : dfNoDataValue;
     // cppcheck-suppress unreadVariable
     const int isIntegerDT = GDALDataTypeIsInteger(dstDataType);
     const auto nNodataValueInt64 = static_cast<GInt64>(dfNoDataValue);
