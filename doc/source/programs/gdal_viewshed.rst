@@ -162,14 +162,12 @@ Compute the visibility of an elevation raster data source with defaults
 
 .. figure:: ../../images/gdal_viewshed.png
 
-   A computed visibility for two separate `-ox` and `-oy` points on a DEM.
 
-.. code-block::
+Create a viewshed raster with a radius of 500 for a person standing at location (-10147017, 5108065).
+
+.. code-block:: bash
 
     gdal_viewshed -md 500 -ox -10147017 -oy 5108065 source.tif destination.tif
-
-
-
 
 .. [Wang2000] Generating Viewsheds without Using Sightlines. Wang, Jianjun,
    Robinson, Gary J., and White, Kevin. Photogrammetric Engineering and Remote
