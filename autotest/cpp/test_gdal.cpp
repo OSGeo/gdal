@@ -2538,8 +2538,9 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
                   GDT_UInt64, std::numeric_limits<double>::max()),
               0);
     EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
-                  GDT_UInt64, std::numeric_limits<uint64_t>::lowest()),
-              std::numeric_limits<uint64_t>::lowest() + 1);
+                  GDT_UInt64,
+                  static_cast<double>(std::numeric_limits<uint64_t>::lowest())),
+              static_cast<double>(std::numeric_limits<uint64_t>::lowest()) + 1);
     // uin64_t max is not representable in double so we expect the next value to be returned
     EXPECT_EQ(
         GDALGetRasterNoDataReplacementValue(
@@ -2557,8 +2558,9 @@ TEST_F(test_gdal, GetRasterNoDataReplacementValue)
               0);
     // in64_t max is not representable in double so we expect the next value to be returned
     EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
-                  GDT_Int64, std::numeric_limits<int64_t>::lowest()),
-              std::numeric_limits<int64_t>::lowest() + 1);
+                  GDT_Int64,
+                  static_cast<double>(std::numeric_limits<int64_t>::lowest())),
+              static_cast<double>(std::numeric_limits<int64_t>::lowest()) + 1);
     EXPECT_EQ(GDALGetRasterNoDataReplacementValue(
                   GDT_Int64,
                   static_cast<double>(std::numeric_limits<int64_t>::max())),
