@@ -1930,7 +1930,8 @@ uint64_t GDALRasterBand::GetNoDataValueAsUInt64(int *pbSuccess)
 }
 
 /**
- * \brief Returns a replacement value for a nodata value.
+ * \brief Returns a replacement value for a nodata value or 0 if dfNoDataValue
+ *        is out of range for the specified data type (dt).
  *
  * @param dt Data type
  * @param dfNoDataValue The no data value
@@ -1941,12 +1942,18 @@ double GDALGetRasterNoDataReplacementValue(GDALDataType dt,
                                            double dfNoDataValue)
 {
 
+    // The logic here is to check if the value is out of range for the
+    // specified data type and return a replacement value if it is, return
+    // 0 otherwise.
     double dfReplacementVal = dfNoDataValue;
     if (dt == GDT_Byte)
     {
-        dfNoDataValue = GDALClampDoubleValue(
-            dfNoDataValue, std::numeric_limits<uint8_t>::lowest(),
-            std::numeric_limits<uint8_t>::max());
+        if (GDALClampDoubleValue(dfNoDataValue,
+                                 std::numeric_limits<uint8_t>::lowest(),
+                                 std::numeric_limits<uint8_t>::max()))
+        {
+            return 0;
+        }
         if (dfNoDataValue == std::numeric_limits<unsigned char>::max())
             dfReplacementVal = std::numeric_limits<unsigned char>::max() - 1;
         else
@@ -1954,9 +1961,12 @@ double GDALGetRasterNoDataReplacementValue(GDALDataType dt,
     }
     else if (dt == GDT_Int8)
     {
-        dfNoDataValue = GDALClampDoubleValue(
-            dfNoDataValue, std::numeric_limits<int8_t>::lowest(),
-            std::numeric_limits<int8_t>::max());
+        if (GDALClampDoubleValue(dfNoDataValue,
+                                 std::numeric_limits<int8_t>::lowest(),
+                                 std::numeric_limits<int8_t>::max()))
+        {
+            return 0;
+        }
         if (dfNoDataValue == std::numeric_limits<GInt8>::max())
             dfReplacementVal = std::numeric_limits<GInt8>::max() - 1;
         else
@@ -1964,9 +1974,12 @@ double GDALGetRasterNoDataReplacementValue(GDALDataType dt,
     }
     else if (dt == GDT_UInt16)
     {
-        dfNoDataValue = GDALClampDoubleValue(
-            dfNoDataValue, std::numeric_limits<uint16_t>::lowest(),
-            std::numeric_limits<uint16_t>::max());
+        if (GDALClampDoubleValue(dfNoDataValue,
+                                 std::numeric_limits<uint16_t>::lowest(),
+                                 std::numeric_limits<uint16_t>::max()))
+        {
+            return 0;
+        }
         if (dfNoDataValue == std::numeric_limits<GUInt16>::max())
             dfReplacementVal = std::numeric_limits<GUInt16>::max() - 1;
         else
@@ -1974,9 +1987,12 @@ double GDALGetRasterNoDataReplacementValue(GDALDataType dt,
     }
     else if (dt == GDT_Int16)
     {
-        dfNoDataValue = GDALClampDoubleValue(
-            dfNoDataValue, std::numeric_limits<int16_t>::lowest(),
-            std::numeric_limits<int16_t>::max());
+        if (GDALClampDoubleValue(dfNoDataValue,
+                                 std::numeric_limits<int16_t>::lowest(),
+                                 std::numeric_limits<int16_t>::max()))
+        {
+            return 0;
+        }
         if (dfNoDataValue == std::numeric_limits<GInt16>::max())
             dfReplacementVal = std::numeric_limits<GInt16>::max() - 1;
         else
@@ -1984,9 +2000,12 @@ double GDALGetRasterNoDataReplacementValue(GDALDataType dt,
     }
     else if (dt == GDT_UInt32)
     {
-        dfNoDataValue = GDALClampDoubleValue(
-            dfNoDataValue, std::numeric_limits<uint32_t>::lowest(),
-            std::numeric_limits<uint32_t>::max());
+        if (GDALClampDoubleValue(dfNoDataValue,
+                                 std::numeric_limits<uint32_t>::lowest(),
+                                 std::numeric_limits<uint32_t>::max()))
+        {
+            return 0;
+        }
         if (dfNoDataValue == std::numeric_limits<GUInt32>::max())
             dfReplacementVal = std::numeric_limits<GUInt32>::max() - 1;
         else
@@ -1994,20 +2013,70 @@ double GDALGetRasterNoDataReplacementValue(GDALDataType dt,
     }
     else if (dt == GDT_Int32)
     {
-        dfNoDataValue = GDALClampDoubleValue(
-            dfNoDataValue, std::numeric_limits<int32_t>::lowest(),
-            std::numeric_limits<int32_t>::max());
-        if (dfNoDataValue == std::numeric_limits<GInt32>::max())
-            dfReplacementVal = std::numeric_limits<GInt32>::max() - 1;
+        if (GDALClampDoubleValue(dfNoDataValue,
+                                 std::numeric_limits<int32_t>::lowest(),
+                                 std::numeric_limits<int32_t>::max()))
+        {
+            return 0;
+        }
+        if (dfNoDataValue == std::numeric_limits<int32_t>::max())
+            dfReplacementVal = std::numeric_limits<int32_t>::max() - 1;
+        else
+            dfReplacementVal = dfNoDataValue + 1;
+    }
+    else if (dt == GDT_UInt64)
+    {
+        // Implicit conversion from 'unsigned long' to 'double' changes value from 18446744073709551615 to 18446744073709551616
+        // so we take the next lower value representable as a double 18446744073709549567
+        static const double dfMaxUInt64Value{
+            std::nextafter(
+                static_cast<double>(std::numeric_limits<uint64_t>::max()), 0) -
+            1};
+
+        if (GDALClampDoubleValue(dfNoDataValue,
+                                 std::numeric_limits<uint64_t>::lowest(),
+                                 std::numeric_limits<uint64_t>::max()))
+        {
+            return 0;
+        }
+
+        if (dfNoDataValue >=
+            static_cast<double>(std::numeric_limits<uint64_t>::max()))
+            dfReplacementVal = dfMaxUInt64Value;
+        else
+            dfReplacementVal = dfNoDataValue + 1;
+    }
+    else if (dt == GDT_Int64)
+    {
+        // Implicit conversion from 'long' to 'double' changes value from 9223372036854775807 to 9223372036854775808
+        // so we take the next lower value representable as a double 9223372036854774784
+        static const double dfMaxInt64Value{
+            std::nextafter(
+                static_cast<double>(std::numeric_limits<int64_t>::max()), 0) -
+            1};
+
+        if (GDALClampDoubleValue(dfNoDataValue,
+                                 std::numeric_limits<int64_t>::lowest(),
+                                 std::numeric_limits<int64_t>::max()))
+        {
+            return 0;
+        }
+
+        if (dfNoDataValue >=
+            static_cast<double>(std::numeric_limits<int64_t>::max()))
+            dfReplacementVal = dfMaxInt64Value;
         else
             dfReplacementVal = dfNoDataValue + 1;
     }
     else if (dt == GDT_Float32)
     {
 
-        dfNoDataValue = GDALClampDoubleValue(
-            dfNoDataValue, std::numeric_limits<float>::lowest(),
-            std::numeric_limits<float>::max());
+        if (GDALClampDoubleValue(dfNoDataValue,
+                                 std::numeric_limits<float>::lowest(),
+                                 std::numeric_limits<float>::max()))
+        {
+            return 0;
+        }
 
         const float fNoDataValue{static_cast<float>(dfNoDataValue)};
 
@@ -2022,24 +2091,28 @@ double GDALGetRasterNoDataReplacementValue(GDALDataType dt,
 
         if (dfNoDataValue == std::numeric_limits<float>::max())
         {
-            dfReplacementVal = std::nextafter(
-                dfNoDataValue, std::numeric_limits<float>::lowest());
+            dfReplacementVal =
+                std::nextafter(static_cast<float>(dfNoDataValue), 0.0f);
         }
         else
         {
-            dfReplacementVal = std::nextafter(
-                static_cast<float>(dfNoDataValue), std::numeric_limits<float>::max());
+            dfReplacementVal =
+                std::nextafter(static_cast<float>(dfNoDataValue),
+                               std::numeric_limits<float>::max());
         }
     }
     else if (dt == GDT_Float64)
     {
-        dfNoDataValue = GDALClampDoubleValue(
-            dfNoDataValue, std::numeric_limits<double>::lowest(),
-            std::numeric_limits<double>::max());
+        if (GDALClampDoubleValue(dfNoDataValue,
+                                 std::numeric_limits<double>::lowest(),
+                                 std::numeric_limits<double>::max()))
+        {
+            return 0;
+        }
+
         if (dfNoDataValue == std::numeric_limits<double>::max())
         {
-            dfReplacementVal = std::nextafter(
-                dfNoDataValue, std::numeric_limits<double>::lowest());
+            dfReplacementVal = std::nextafter(dfNoDataValue, 0.0f);
         }
         else
         {
