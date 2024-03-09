@@ -1932,6 +1932,10 @@ uint64_t GDALRasterBand::GetNoDataValueAsUInt64(int *pbSuccess)
 /**
  * \brief Returns a replacement value for a nodata value or 0 if dfNoDataValue
  *        is out of range for the specified data type (dt).
+ *        For UInt64 and Int64 data type this function cannot reliably trusted
+ *        because their nodata values might not always be representable exactly
+ *        as a double, in particular the maximum absolute value for those types
+ *        is 2^53.
  *
  * @param dt Data type
  * @param dfNoDataValue The no data value
@@ -2078,6 +2082,9 @@ double GDALGetRasterNoDataReplacementValue(GDALDataType dt,
             return 0;
         }
 
+        // Here we test whether narrowing the double nodata value to a float
+        // would result in a value that is out of range for a float. If it is,
+        // we set the value to the value clamped to the float range.
         const float fNoDataValue{static_cast<float>(dfNoDataValue)};
 
         if (fNoDataValue == std::numeric_limits<float>::infinity())
