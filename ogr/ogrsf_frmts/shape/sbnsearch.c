@@ -422,12 +422,11 @@ SBNSearchHandle SBNOpenDiskTree(const char *pszSBNFilename,
         nExpectedBinId++;
 
         const int nBinId = READ_MSB_INT(abyBinHeader);
-        int nBinSize = READ_MSB_INT(abyBinHeader + 4);
-        nBinSize *= 2; /* 16-bit words */
+        const int nBinSize = READ_MSB_INT(abyBinHeader + 4); /* 16-bit words */
 
 #ifdef DEBUG_SBN
         fprintf(stderr, "bin id=%d, bin size (in features) = %d\n", nBinId,
-                nBinSize / 8);
+                nBinSize / 4);
 #endif
 
         if (nBinId != nExpectedBinId)
@@ -446,7 +445,7 @@ SBNSearchHandle SBNOpenDiskTree(const char *pszSBNFilename,
 
         /* Bins are always limited to 100 features */
         /* If there are more, then they are located in continuous bins */
-        if ((nBinSize % 8) != 0 || nBinSize <= 0 || nBinSize > 100 * 8)
+        if ((nBinSize % 4) != 0 || nBinSize <= 0 || nBinSize > 100 * 4)
         {
             char szMessage[128];
             snprintf(szMessage, sizeof(szMessage),
@@ -471,7 +470,7 @@ SBNSearchHandle SBNOpenDiskTree(const char *pszSBNFilename,
         pasNodeDescriptor[nCurNode].nBinCount++;
 
         /* Skip shape description */
-        hSBN->sHooks.FSeek(hSBN->fpSBN, nBinSize, SEEK_CUR);
+        hSBN->sHooks.FSeek(hSBN->fpSBN, nBinSize * sizeof(uint16_t), SEEK_CUR);
     }
 
     if (nIdxInNodeBinPair + 1 != nEntriesInNodeIdBinStartPairs)
@@ -652,13 +651,12 @@ static bool SBNSearchDiskInternal(SearchStruct *psSearch, int nDepth,
                 return false;
             }
 
-            int nBinSize = READ_MSB_INT(abyBinHeader + 4);
-            nBinSize *= 2; /* 16-bit words */
-
-            int nShapes = nBinSize / 8;
+            /* 16-bit words */
+            const int nBinSize = READ_MSB_INT(abyBinHeader + 4);
+            const int nShapes = nBinSize / 4;
 
             /* Bins are always limited to 100 features */
-            if ((nBinSize % 8) != 0 || nShapes <= 0 || nShapes > 100)
+            if ((nBinSize % 4) != 0 || nShapes <= 0 || nShapes > 100)
             {
                 hSBN->sHooks.Error("Unexpected bin size");
                 free(psNode->pabyShapeDesc);
@@ -692,9 +690,10 @@ static bool SBNSearchDiskInternal(SearchStruct *psSearch, int nDepth,
             }
 
 #ifdef DEBUG_IO
-            psSearch->nBytesRead += nBinSize;
+            psSearch->nBytesRead += nBinSize * sizeof(uint16_t);
 #endif
-            if (hSBN->sHooks.FRead(pabyBinShape, nBinSize, 1, hSBN->fpSBN) != 1)
+            if (hSBN->sHooks.FRead(pabyBinShape, nBinSize * sizeof(uint16_t), 1,
+                                   hSBN->fpSBN) != 1)
             {
                 hSBN->sHooks.Error("I/O error");
                 free(psNode->pabyShapeDesc);
