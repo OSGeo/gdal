@@ -142,3 +142,22 @@ def test_ogr_shape_sbn_2():
     ds = ogr.Open("data/shp/CoHI_GCS12.shp")
     lyr = ds.GetLayer(0)
     return search_all_features(lyr)
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/9430
+
+
+@pytest.mark.require_curl()
+def test_ogr_shape_sbn_out_of_order_bin_start():
+
+    srv = "https://github.com/OSGeo/gdal-test-datasets/raw/master/shapefile/65sv5l285i_GLWD_level2/README.TXT"
+    if gdaltest.gdalurlopen(srv, timeout=5) is None:
+        pytest.skip(reason=f"{srv} is down")
+
+    ds = ogr.Open(
+        "/vsizip//vsicurl/https://github.com/OSGeo/gdal-test-datasets/raw/master/shapefile/65sv5l285i_GLWD_level2/65sv5l285i_GLWD_level2_sozip.zip"
+    )
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(5, 5, 6, 6)
+    assert lyr.GetFeatureCount() == 13
