@@ -171,3 +171,4 @@ gdal/share
 CMakeSettings.json
 out/
 autotest/build/
+/buildVS
