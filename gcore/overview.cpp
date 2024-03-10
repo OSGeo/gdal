@@ -246,104 +246,6 @@ std::vector<GDALColorEntry> ReadColorTable(const GDALColorTable &table,
 }  // unnamed  namespace
 
 /************************************************************************/
-/*                    GetReplacementValueIfNoData()                     */
-/************************************************************************/
-
-static double GetReplacementValueIfNoData(GDALDataType dt, bool bHasNoData,
-                                          double dfNoDataValue)
-{
-    double dfReplacementVal = 0.0f;
-    if (bHasNoData)
-    {
-        if (dt == GDT_Byte)
-        {
-            if (dfNoDataValue == std::numeric_limits<unsigned char>::max())
-                dfReplacementVal =
-                    std::numeric_limits<unsigned char>::max() - 1;
-            else
-                dfReplacementVal = dfNoDataValue + 1;
-        }
-        else if (dt == GDT_Int8)
-        {
-            if (dfNoDataValue == std::numeric_limits<GInt8>::max())
-                dfReplacementVal = std::numeric_limits<GInt8>::max() - 1;
-            else
-                dfReplacementVal = dfNoDataValue + 1;
-        }
-        else if (dt == GDT_UInt16)
-        {
-            if (dfNoDataValue == std::numeric_limits<GUInt16>::max())
-                dfReplacementVal = std::numeric_limits<GUInt16>::max() - 1;
-            else
-                dfReplacementVal = dfNoDataValue + 1;
-        }
-        else if (dt == GDT_Int16)
-        {
-            if (dfNoDataValue == std::numeric_limits<GInt16>::max())
-                dfReplacementVal = std::numeric_limits<GInt16>::max() - 1;
-            else
-                dfReplacementVal = dfNoDataValue + 1;
-        }
-        else if (dt == GDT_UInt32)
-        {
-            // Be careful to limited precision of float
-            dfReplacementVal = dfNoDataValue + 1;
-            double dfVal = dfNoDataValue;
-            if (dfReplacementVal >= std::numeric_limits<GUInt32>::max() - 128)
-            {
-                while (dfReplacementVal == dfNoDataValue)
-                {
-                    dfVal -= 1.0;
-                    dfReplacementVal = dfVal;
-                }
-            }
-            else
-            {
-                while (dfReplacementVal == dfNoDataValue)
-                {
-                    dfVal += 1.0;
-                    dfReplacementVal = dfVal;
-                }
-            }
-        }
-        else if (dt == GDT_Int32)
-        {
-            // Be careful to limited precision of float
-            dfReplacementVal = dfNoDataValue + 1;
-            double dfVal = dfNoDataValue;
-            if (dfReplacementVal >= std::numeric_limits<GInt32>::max() - 64)
-            {
-                while (dfReplacementVal == dfNoDataValue)
-                {
-                    dfVal -= 1.0;
-                    dfReplacementVal = dfVal;
-                }
-            }
-            else
-            {
-                while (dfReplacementVal == dfNoDataValue)
-                {
-                    dfVal += 1.0;
-                    dfReplacementVal = dfVal;
-                }
-            }
-        }
-        else if (dt == GDT_Float32 || dt == GDT_Float64)
-        {
-            if (dfNoDataValue == 0)
-            {
-                dfReplacementVal = std::numeric_limits<float>::min();
-            }
-            else
-            {
-                dfReplacementVal = dfNoDataValue + 1e-7 * dfNoDataValue;
-            }
-        }
-    }
-    return dfReplacementVal;
-}
-
-/************************************************************************/
 /*                             SQUARE()                                 */
 /************************************************************************/
 
@@ -1229,8 +1131,10 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
         tNoDataValue = 0;
     else
         tNoDataValue = static_cast<T>(dfNoDataValue);
-    const T tReplacementVal = static_cast<T>(GetReplacementValueIfNoData(
-        poOverview->GetRasterDataType(), bHasNoData, dfNoDataValue));
+    const T tReplacementVal = static_cast<T>(
+        bHasNoData ? GDALGetNoDataReplacementValue(
+                         poOverview->GetRasterDataType(), dfNoDataValue)
+                   : dfNoDataValue);
 
     int nChunkRightXOff = nChunkXOff + nChunkXSize;
     int nChunkBottomYOff = nChunkYOff + nChunkYSize;
@@ -3094,7 +2998,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
     const auto dstDataType = poDstBand->GetRasterDataType();
     const int nDstDataTypeSize = GDALGetDataTypeSizeBytes(dstDataType);
     const double dfReplacementVal =
-        GetReplacementValueIfNoData(dstDataType, bHasNoData, dfNoDataValue);
+        bHasNoData ? GDALGetNoDataReplacementValue(dstDataType, dfNoDataValue)
+                   : dfNoDataValue;
     // cppcheck-suppress unreadVariable
     const int isIntegerDT = GDALDataTypeIsInteger(dstDataType);
     const auto nNodataValueInt64 = static_cast<GInt64>(dfNoDataValue);
