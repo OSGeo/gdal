@@ -157,7 +157,9 @@ Functionality of this utility can be done from C with :cpp:func:`GDALViewshedGen
 Example
 -------
 
-Compute the visibility of an elevation raster data source with defaults
+Screenshot of 2 combined viewshed analysis, with the yellow pixels showing the area that is
+visible from the both observation locations (the green dots), while the small green area is
+only visible from one location.
 
 
 .. figure:: ../../images/gdal_viewshed.png
@@ -168,6 +170,9 @@ Create a viewshed raster with a radius of 500 for a person standing at location 
 .. code-block:: bash
 
     gdal_viewshed -md 500 -ox -10147017 -oy 5108065 source.tif destination.tif
+
+Reference
+---------
 
 .. [Wang2000] Generating Viewsheds without Using Sightlines. Wang, Jianjun,
    Robinson, Gary J., and White, Kevin. Photogrammetric Engineering and Remote
