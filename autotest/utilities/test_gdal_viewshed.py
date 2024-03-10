@@ -29,6 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import struct
+
 import gdaltest
 import pytest
 import test_cli_utilities
@@ -304,3 +306,119 @@ def test_gdal_viewshed_invalid_output_filename(gdal_viewshed_path):
         + " -ox -79.5 -oy 43.5 ../gdrivers/data/n43.tif i/do_not/exist.tif"
     )
     assert "Cannot create dataset" in err
+
+
+###############################################################################
+# Test bug fix for https://github.com/OSGeo/gdal/issues/9432
+
+
+def test_gdal_viewshed_south_up(gdal_viewshed_path, tmp_path, viewshed_input):
+
+    width = 7
+    height = 5
+    res = 1
+    left_x = 1000
+    top_y = 2000
+
+    # "Reference" case with north-up dataset
+    src_ds_north_up_filename = str(tmp_path / "test_gdal_viewshed_src_ds_north_up.tif")
+    src_ds_north_up = gdal.GetDriverByName("GTiff").Create(
+        src_ds_north_up_filename, width, height
+    )
+    src_ds_north_up.SetGeoTransform([left_x, res, 0, top_y, 0, -res])
+    expected_gt = src_ds_north_up.GetGeoTransform()
+    src_ds_north_up.GetRasterBand(1).WriteRaster(width // 2, height // 2, 1, 1, b"\x80")
+    src_ds_north_up.Close()
+
+    viewshed_out = str(tmp_path / "test_gdal_viewshed_north_up_out.tif")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_viewshed_path
+        + " -oz {} -ox {} -oy {} {} {}".format(
+            130,
+            left_x + float(width) / 2 * res,
+            top_y - float(height) / 2 * res,
+            src_ds_north_up_filename,
+            viewshed_out,
+        )
+    )
+    assert err is None or err == ""
+    ds = gdal.Open(viewshed_out)
+    assert ds
+    assert ds.RasterXSize == width
+    assert ds.RasterYSize == height
+    assert ds.GetGeoTransform() == pytest.approx(expected_gt)
+    expected_data = (
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,  # end of line
+        255,
+        255,
+        0,
+        0,
+        0,
+        255,
+        255,  # end of line
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,  # end of line
+        255,
+        255,
+        0,
+        0,
+        0,
+        255,
+        255,  # end of line
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+    )
+    assert (
+        struct.unpack("B" * (width * height), ds.GetRasterBand(1).ReadRaster())
+        == expected_data
+    )
+
+    # Tested case with south-up dataset
+    src_ds_south_up_filename = str(tmp_path / "test_gdal_viewshed_src_ds_south_up.tif")
+    src_ds_south_up = gdal.GetDriverByName("GTiff").Create(
+        src_ds_south_up_filename, width, height
+    )
+    src_ds_south_up.SetGeoTransform([left_x, res, 0, top_y - res * height, 0, res])
+    expected_gt = src_ds_south_up.GetGeoTransform()
+    src_ds_south_up.GetRasterBand(1).WriteRaster(width // 2, height // 2, 1, 1, b"\x80")
+    src_ds_south_up.Close()
+
+    viewshed_out = str(tmp_path / "test_gdal_viewshed_south_up_out.tif")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_viewshed_path
+        + " -oz {} -ox {} -oy {} {} {}".format(
+            130,
+            left_x + float(width) / 2 * res,
+            top_y - float(height) / 2 * res,
+            src_ds_south_up_filename,
+            viewshed_out,
+        )
+    )
+    assert err is None or err == ""
+    ds = gdal.Open(viewshed_out)
+    assert ds
+    assert ds.RasterXSize == width
+    assert ds.RasterYSize == height
+    assert ds.GetGeoTransform() == pytest.approx(expected_gt)
+    assert (
+        struct.unpack("B" * (width * height), ds.GetRasterBand(1).ReadRaster())
+        == expected_data
+    )

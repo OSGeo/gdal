@@ -282,29 +282,39 @@ GDALDatasetH GDALViewshedGenerate(
     }
 
     /* calculate the area of interest */
+    constexpr double EPSILON = 1e-8;
     int nXStart =
         dfMaxDistance > 0
-            ? (std::max)(0, static_cast<int>(std::floor(
-                                nX - adfInvGeoTransform[1] * dfMaxDistance)))
+            ? (std::max)(
+                  0, static_cast<int>(std::floor(
+                         nX - adfInvGeoTransform[1] * dfMaxDistance + EPSILON)))
             : 0;
     int nXStop =
         dfMaxDistance > 0
-            ? (std::min)(nXSize,
-                         static_cast<int>(std::ceil(nX + adfInvGeoTransform[1] *
-                                                             dfMaxDistance) +
-                                          1))
+            ? (std::min)(
+                  nXSize,
+                  static_cast<int>(
+                      std::ceil(nX + adfInvGeoTransform[1] * dfMaxDistance -
+                                EPSILON) +
+                      1))
             : nXSize;
     int nYStart =
         dfMaxDistance > 0
-            ? (std::max)(0, static_cast<int>(std::floor(
-                                nY + adfInvGeoTransform[5] * dfMaxDistance)))
+            ? (std::max)(
+                  0, static_cast<int>(std::floor(
+                         nY - std::fabs(adfInvGeoTransform[5]) * dfMaxDistance +
+                         EPSILON)) -
+                         (adfInvGeoTransform[5] > 0 ? 1 : 0))
             : 0;
     int nYStop =
         dfMaxDistance > 0
-            ? (std::min)(nYSize,
-                         static_cast<int>(std::ceil(nY - adfInvGeoTransform[5] *
-                                                             dfMaxDistance) +
-                                          1))
+            ? (std::min)(
+                  nYSize,
+                  static_cast<int>(std::ceil(nY +
+                                             std::fabs(adfInvGeoTransform[5]) *
+                                                 dfMaxDistance -
+                                             EPSILON) +
+                                   (adfInvGeoTransform[5] < 0 ? 1 : 0)))
             : nYSize;
 
     /* normalize horizontal index (0 - nXSize) */
