@@ -702,7 +702,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteSRS_ISO32000(GDALDataset *poSrcDS,
     double dfLRPixel = nWidth;
     double dfLRLine = nHeight;
 
-    GDAL_GCP asNeatLineGCPs[4];
+    std::vector<gdal::GCP> asNeatLineGCPs(4);
     if (pszNEATLINE == nullptr)
         pszNEATLINE = poSrcDS->GetMetadataItem("NEATLINE");
     if (bHasGT && pszNEATLINE != nullptr && pszNEATLINE[0] != '\0')
@@ -721,32 +721,33 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteSRS_ISO32000(GDALDataset *poSrcDS,
                 {
                     const double X = poLS->getX(i);
                     const double Y = poLS->getY(i);
-                    asNeatLineGCPs[i].dfGCPX = X;
-                    asNeatLineGCPs[i].dfGCPY = Y;
+                    asNeatLineGCPs[i].X() = X;
+                    asNeatLineGCPs[i].Y() = Y;
                     const double x = adfGeoTransformInv[0] +
                                      X * adfGeoTransformInv[1] +
                                      Y * adfGeoTransformInv[2];
                     const double y = adfGeoTransformInv[3] +
                                      X * adfGeoTransformInv[4] +
                                      Y * adfGeoTransformInv[5];
-                    asNeatLineGCPs[i].dfGCPPixel = x;
-                    asNeatLineGCPs[i].dfGCPLine = y;
+                    asNeatLineGCPs[i].Pixel() = x;
+                    asNeatLineGCPs[i].Line() = y;
                 }
 
                 int iUL = 0;
                 int iUR = 0;
                 int iLR = 0;
                 int iLL = 0;
-                GDALPDFFind4Corners(asNeatLineGCPs, iUL, iUR, iLR, iLL);
+                GDALPDFFind4Corners(gdal::GCP::c_ptr(asNeatLineGCPs), iUL, iUR,
+                                    iLR, iLL);
 
-                if (fabs(asNeatLineGCPs[iUL].dfGCPPixel -
-                         asNeatLineGCPs[iLL].dfGCPPixel) > .5 ||
-                    fabs(asNeatLineGCPs[iUR].dfGCPPixel -
-                         asNeatLineGCPs[iLR].dfGCPPixel) > .5 ||
-                    fabs(asNeatLineGCPs[iUL].dfGCPLine -
-                         asNeatLineGCPs[iUR].dfGCPLine) > .5 ||
-                    fabs(asNeatLineGCPs[iLL].dfGCPLine -
-                         asNeatLineGCPs[iLR].dfGCPLine) > .5)
+                if (fabs(asNeatLineGCPs[iUL].Pixel() -
+                         asNeatLineGCPs[iLL].Pixel()) > .5 ||
+                    fabs(asNeatLineGCPs[iUR].Pixel() -
+                         asNeatLineGCPs[iLR].Pixel()) > .5 ||
+                    fabs(asNeatLineGCPs[iUL].Line() -
+                         asNeatLineGCPs[iUR].Line()) > .5 ||
+                    fabs(asNeatLineGCPs[iLL].Line() -
+                         asNeatLineGCPs[iLR].Line()) > .5)
                 {
                     CPLError(CE_Warning, CPLE_NotSupported,
                              "Neatline coordinates should form a rectangle in "
@@ -754,13 +755,13 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteSRS_ISO32000(GDALDataset *poSrcDS,
                     for (int i = 0; i < 4; i++)
                     {
                         CPLDebug("PDF", "pixel[%d] = %.1f, line[%d] = %.1f", i,
-                                 asNeatLineGCPs[i].dfGCPPixel, i,
-                                 asNeatLineGCPs[i].dfGCPLine);
+                                 asNeatLineGCPs[i].Pixel(), i,
+                                 asNeatLineGCPs[i].Line());
                     }
                 }
                 else
                 {
-                    pasGCPList = asNeatLineGCPs;
+                    pasGCPList = gdal::GCP::c_ptr(asNeatLineGCPs);
                 }
             }
         }

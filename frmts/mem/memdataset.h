@@ -63,8 +63,7 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
 
     OGRSpatialReference m_oSRS{};
 
-    int m_nGCPCount;
-    GDAL_GCP *m_pasGCPs;
+    std::vector<gdal::GCP> m_aoGCPs{};
     OGRSpatialReference m_oGCPSRS{};
 
     int m_nOverviewDSCount;

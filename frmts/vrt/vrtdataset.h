@@ -214,8 +214,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     int m_bGeoTransformSet = false;
     double m_adfGeoTransform[6];
 
-    int m_nGCPCount = 0;
-    GDAL_GCP *m_pasGCPList = nullptr;
+    std::vector<gdal::GCP> m_asGCPs{};
     OGRSpatialReference *m_poGCP_SRS = nullptr;
 
     bool m_bNeedsFlush = false;

@@ -173,8 +173,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     OGRSpatialReference m_oSRS{};
     bool bGeoTransformValid;
     double adfGeoTransform[6];
-    int nGCPCount;
-    GDAL_GCP *pasGCPList;
+    std::vector<gdal::GCP> m_aoGCPs{};
 
     VSILFILE *m_fpImage;
     GUIntBig nSubfileOffset;

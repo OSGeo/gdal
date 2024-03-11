@@ -367,13 +367,7 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
         m_fpToWrite = nullptr;
     }
 
-    if (m_nGCPCount > 0)
-    {
-        GDALDeinitGCPs(m_nGCPCount, m_pasGCPList);
-        CPLFree(m_pasGCPList);
-        m_pasGCPList = nullptr;
-        m_nGCPCount = 0;
-    }
+    m_aoGCPs.clear();
 
     CSLDestroy(m_papszCreationOptions);
     m_papszCreationOptions = nullptr;
