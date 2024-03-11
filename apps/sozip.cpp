@@ -32,35 +32,9 @@
 #include "gdal_version.h"
 #include "gdal_priv.h"
 #include "commonutils.h"
+#include "gdalargumentparser.h"
 
 #include <limits>
-
-/************************************************************************/
-/*                               Usage()                                */
-/************************************************************************/
-
-static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
-
-{
-    fprintf(bIsError ? stderr : stdout,
-            "Usage: sozip [--help] [--help-general] [--quiet|--verbose]\n"
-            "             [[-g|--grow] | [--overwrite]]\n"
-            "             [-r|--recurse-paths]\n"
-            "             [-j|--junk]\n"
-            "             [-l|--list]\n"
-            "             [--validate]\n"
-            "             [--optimize-from=input.zip]\n"
-            "             [--enable-sozip={auto|yes|no}]\n"
-            "             [--sozip-chunk-size=<value>]\n"
-            "             [--sozip-min-file-size=<value>]\n"
-            "             [--content-type=<value>]\n"
-            "             <zip_filename> [<filename>]...\n");
-
-    if (pszErrorMsg)
-        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
-
-    exit(bIsError ? 1 : 0);
-}
 
 /************************************************************************/
 /*                          Validate()                                  */
@@ -367,173 +341,142 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
 
 MAIN_START(nArgc, papszArgv)
 {
-    bool bOverwrite = false;
-    bool bRecurse = false;
-    bool bVerbose = false;
-    bool bQuiet = false;
-    bool bList = false;
-    bool bJunkPaths = false;
-    bool bValidate = false;
-    const char *pszZipFilename = nullptr;
-    const char *pszOptimizeFrom = nullptr;
-    CPLStringList aosFiles;
-    CPLStringList aosOptions;
-
     EarlySetConfigOptions(nArgc, papszArgv);
     nArgc = GDALGeneralCmdLineProcessor(nArgc, &papszArgv, 0);
-    CPLStringList aosArgv(papszArgv, /* bTakeOwnership= */ true);
+    CPLStringList aosArgv;
+    aosArgv.Assign(papszArgv, /* bTakeOwnership= */ true);
     if (nArgc < 1)
-        exit(-nArgc);
+        std::exit(-nArgc);
 
-    /* -------------------------------------------------------------------- */
-    /*      Parse command line.                                             */
-    /* -------------------------------------------------------------------- */
-    for (int iArg = 1; iArg < nArgc; iArg++)
+    GDALArgumentParser argParser(aosArgv[0], /* bForBinary=*/true);
+
+    argParser.add_description(_("Generate a seek-optimized ZIP (SOZip) file."));
+
+    argParser.add_epilog(
+        _("For more details, consult https://gdal.org/programs/sozip.html"));
+
+    std::string osZipFilename;
+    argParser.add_argument("zip_filename")
+        .metavar("<zip_filename>")
+        .store_into(osZipFilename)
+        .help(_("ZIP filename."));
+
+    bool bRecurse = false;
+    argParser.add_argument("-r", "--recurse-paths")
+        .store_into(bRecurse)
+        .help(_("Travels the directory structure of the specified directories "
+                "recursively."));
+
+    bool bOverwrite = false;
     {
-        if (strcmp(papszArgv[iArg], "--utility_version") == 0)
-        {
-            printf("%s was compiled against GDAL %s and "
-                   "is running against GDAL %s\n",
-                   papszArgv[0], GDAL_RELEASE_NAME,
-                   GDALVersionInfo("RELEASE_NAME"));
-            return 0;
-        }
-        else if (strcmp(papszArgv[iArg], "--help") == 0)
-        {
-            Usage(false);
-        }
-        else if (strcmp(papszArgv[iArg], "--quiet") == 0)
-        {
-            bQuiet = true;
-        }
-        else if (strcmp(papszArgv[iArg], "--verbose") == 0)
-        {
-            bVerbose = true;
-        }
-        else if (strcmp(papszArgv[iArg], "-r") == 0 ||
-                 strcmp(papszArgv[iArg], "--recurse-paths") == 0)
-        {
-            bRecurse = true;
-        }
-        else if (strcmp(papszArgv[iArg], "-j") == 0 ||
-                 strcmp(papszArgv[iArg], "--junk-paths") == 0)
-        {
-            bJunkPaths = true;
-        }
-        else if (strcmp(papszArgv[iArg], "-g") == 0 ||
-                 strcmp(papszArgv[iArg], "--grow") == 0)
-        {
-            // Default mode. Nothing to do
-        }
-        else if (strcmp(papszArgv[iArg], "--overwrite") == 0)
-        {
-            bOverwrite = true;
-        }
-        else if (strcmp(papszArgv[iArg], "-l") == 0 ||
-                 strcmp(papszArgv[iArg], "--list") == 0)
-        {
-            bList = true;
-        }
-        else if (strcmp(papszArgv[iArg], "--validate") == 0)
-        {
-            bValidate = true;
-        }
-        else if (strcmp(papszArgv[iArg], "--optimize-from") == 0 &&
-                 iArg + 1 < nArgc)
-        {
-            ++iArg;
-            pszOptimizeFrom = papszArgv[iArg];
-        }
-        else if (STARTS_WITH(papszArgv[iArg], "--optimize-from="))
-        {
-            pszOptimizeFrom = papszArgv[iArg] + strlen("--optimize-from=");
-        }
-        else if (strcmp(papszArgv[iArg], "--enable-sozip") == 0 &&
-                 iArg + 1 < nArgc)
-        {
-            ++iArg;
-            aosOptions.SetNameValue("SOZIP_ENABLED", papszArgv[iArg]);
-        }
-        else if (STARTS_WITH(papszArgv[iArg], "--enable-sozip="))
-        {
-            aosOptions.SetNameValue(
-                "SOZIP_ENABLED", papszArgv[iArg] + strlen("--enable-sozip="));
-        }
-        else if (strcmp(papszArgv[iArg], "--sozip-chunk-size") == 0 &&
-                 iArg + 1 < nArgc)
-        {
-            ++iArg;
-            aosOptions.SetNameValue("SOZIP_CHUNK_SIZE", papszArgv[iArg]);
-        }
-        else if (STARTS_WITH(papszArgv[iArg], "--sozip-chunk-size="))
-        {
-            aosOptions.SetNameValue("SOZIP_CHUNK_SIZE",
-                                    papszArgv[iArg] +
-                                        strlen("--sozip-chunk-size="));
-        }
-        else if (strcmp(papszArgv[iArg], "--sozip-min-file-size") == 0 &&
-                 iArg + 1 < nArgc)
-        {
-            ++iArg;
-            aosOptions.SetNameValue("SOZIP_MIN_FILE_SIZE", papszArgv[iArg]);
-        }
-        else if (STARTS_WITH(papszArgv[iArg], "--sozip-min-file-size="))
-        {
-            aosOptions.SetNameValue("SOZIP_MIN_FILE_SIZE",
-                                    papszArgv[iArg] +
-                                        strlen("--sozip-min-file-size="));
-        }
-        else if (strcmp(papszArgv[iArg], "--content-type") == 0 &&
-                 iArg + 1 < nArgc)
-        {
-            ++iArg;
-            aosOptions.SetNameValue("CONTENT_TYPE", papszArgv[iArg]);
-        }
-        else if (STARTS_WITH(papszArgv[iArg], "--content-type="))
-        {
-            aosOptions.SetNameValue(
-                "CONTENT_TYPE", papszArgv[iArg] + strlen("--content-type="));
-        }
-        else if (papszArgv[iArg][0] == '-')
-        {
-            Usage(true, CPLSPrintf("Unhandled option %s", papszArgv[iArg]));
-        }
-        else if (pszZipFilename == nullptr)
-        {
-            pszZipFilename = papszArgv[iArg];
-        }
-        else
-        {
-            aosFiles.AddString(papszArgv[iArg]);
-        }
+        auto &group = argParser.add_mutually_exclusive_group();
+        group.add_argument("-g", "--grow")
+            .flag()  // Default mode. Nothing to do
+            .help(
+                _("Grow an existing zip file with the content of the specified "
+                  "filename(s). Default mode."));
+        group.add_argument("--overwrite")
+            .store_into(bOverwrite)
+            .help(_("Overwrite the target zip file if it already exists."));
     }
 
-    if (!pszZipFilename)
+    bool bList = false;
+    bool bValidate = false;
+    std::string osOptimizeFrom;
+    std::vector<std::string> aosFiles;
     {
-        Usage(true, "Missing zip filename");
-        return 1;
+        auto &group = argParser.add_mutually_exclusive_group();
+        group.add_argument("-l", "--list")
+            .store_into(bList)
+            .help(_("List the files contained in the zip file."));
+        group.add_argument("--validate")
+            .store_into(bValidate)
+            .help(_("Validates a ZIP/SOZip file."));
+        group.add_argument("--optimize-from")
+            .metavar("<input.zip>")
+            .store_into(osOptimizeFrom)
+            .help(
+                _("Re-process {input.zip} to generate a SOZip-optimized .zip"));
+        group.add_argument("input_files")
+            .metavar("<input_files>")
+            .store_into(aosFiles)
+            .help(_("Filename of the file to add."))
+            .nargs(argparse::nargs_pattern::any);
     }
 
-    if ((bValidate ? 1 : 0) + (bList ? 1 : 0) + (!aosFiles.empty() ? 1 : 0) +
-            (pszOptimizeFrom != nullptr ? 1 : 0) >
-        1)
+    bool bQuiet = false;
+    bool bVerbose = false;
+    argParser.add_group("Advanced options");
     {
-        Usage(true,
-              "--validate, --list, --optimize-from and create/append modes are "
-              "mutually exclusive");
-        return 1;
+        auto &group = argParser.add_mutually_exclusive_group();
+        group.add_argument("--quiet").store_into(bQuiet).help(
+            _("Quiet mode. No progress message is emitted on the standard "
+              "output."));
+        group.add_argument("--verbose")
+            .store_into(bVerbose)
+            .help(_("Verbose mode."));
+    }
+    bool bJunkPaths = false;
+    argParser.add_argument("-j", "--junk-paths")
+        .store_into(bJunkPaths)
+        .help(
+            _("Store just the name of a saved file (junk the path), and do not "
+              "store directory names."));
+
+    CPLStringList aosOptions;
+    argParser.add_argument("--enable-sozip")
+        .choices("auto", "yes", "no")
+        .metavar("auto|yes|no")
+        .action([&aosOptions](const std::string &s)
+                { aosOptions.SetNameValue("SOZIP_ENABLED", s.c_str()); })
+        .help(_("In auto mode, a file is seek-optimized only if its size is "
+                "above the value of\n"
+                "--sozip-chunk-size. In yes mode, all input files will be "
+                "seek-optimized.\n"
+                "In no mode, no input files will be seek-optimized."));
+    argParser.add_argument("--sozip-chunk-size")
+        .metavar("<value in bytes or with K/M suffix>")
+        .action([&aosOptions](const std::string &s)
+                { aosOptions.SetNameValue("SOZIP_CHUNK_SIZE", s.c_str()); })
+        .help(_(
+            "Chunk size for a seek-optimized file. Defaults to 32768 bytes."));
+    argParser.add_argument("--sozip-min-file-size")
+        .metavar("<value in bytes or with K/M/G suffix>")
+        .action([&aosOptions](const std::string &s)
+                { aosOptions.SetNameValue("SOZIP_MIN_FILE_SIZE", s.c_str()); })
+        .help(
+            _("Minimum file size to decide if a file should be seek-optimized. "
+              "Defaults to 1 MB byte."));
+    argParser.add_argument("--content-type")
+        .metavar("<string>")
+        .action([&aosOptions](const std::string &s)
+                { aosOptions.SetNameValue("CONTENT_TYPE", s.c_str()); })
+        .help(_("Store the Content-Type for the file being added."));
+
+    try
+    {
+        argParser.parse_args(aosArgv);
+    }
+    catch (const std::exception &err)
+    {
+        argParser.display_error_and_usage(err);
+        std::exit(1);
     }
 
-    if (!bList && !bValidate && pszOptimizeFrom == nullptr && aosFiles.empty())
+    if (!bList && !bValidate && osOptimizeFrom.empty() && aosFiles.empty())
     {
-        Usage(true, "Missing source filename(s)");
-        return 1;
+        std::cerr << _("Missing source filename(s)") << std::endl << std::endl;
+        std::cerr << argParser << std::endl;
+        std::exit(1);
     }
 
+    const char *pszZipFilename = osZipFilename.c_str();
     if (!EQUAL(CPLGetExtension(pszZipFilename), "zip"))
     {
-        Usage(true, "Extension of zip filename should be .zip");
-        return 1;
+        std::cerr << _("Extension of zip filename should be .zip") << std::endl
+                  << std::endl;
+        std::cerr << argParser << std::endl;
+        std::exit(1);
     }
 
     if (bValidate)
@@ -604,7 +547,7 @@ MAIN_START(nArgc, papszArgv)
     {
         if (VSIStatExL(pszZipFilename, &sBuf, VSI_STAT_EXISTS_FLAG) == 0)
         {
-            if (pszOptimizeFrom)
+            if (!osOptimizeFrom.empty())
             {
                 fprintf(
                     stderr,
@@ -620,47 +563,49 @@ MAIN_START(nArgc, papszArgv)
     std::vector<uint64_t> anFileSizes;
 
     std::string osRemovePrefix;
-    if (pszOptimizeFrom)
+    if (!osOptimizeFrom.empty())
     {
         VSIDIR *psDir = VSIOpenDir(
-            (std::string("/vsizip/") + pszOptimizeFrom).c_str(), -1, nullptr);
+            (std::string("/vsizip/") + osOptimizeFrom).c_str(), -1, nullptr);
         if (psDir == nullptr)
         {
-            fprintf(stderr, "%s is not a valid .zip file\n", pszOptimizeFrom);
+            fprintf(stderr, "%s is not a valid .zip file\n",
+                    osOptimizeFrom.c_str());
             return 1;
         }
 
-        osRemovePrefix = std::string("/vsizip/{") + pszOptimizeFrom + "}/";
+        osRemovePrefix =
+            std::string("/vsizip/{").append(osOptimizeFrom).append("}/");
         while (auto psEntry = VSIGetNextDirEntry(psDir))
         {
             if (!VSI_ISDIR(psEntry->nMode))
             {
                 const std::string osFilenameInZip =
                     osRemovePrefix + psEntry->pszName;
-                aosFiles.AddString(osFilenameInZip.c_str());
+                aosFiles.push_back(osFilenameInZip);
             }
         }
         VSICloseDir(psDir);
     }
     else if (bRecurse)
     {
-        CPLStringList aosNewFiles;
-        for (int i = 0; i < aosFiles.size(); ++i)
+        std::vector<std::string> aosNewFiles;
+        for (const std::string &osFile : aosFiles)
         {
-            if (VSIStatL(aosFiles[i], &sBuf) == 0 && VSI_ISDIR(sBuf.st_mode))
+            if (VSIStatL(osFile.c_str(), &sBuf) == 0 && VSI_ISDIR(sBuf.st_mode))
             {
-                VSIDIR *psDir = VSIOpenDir(aosFiles[i], -1, nullptr);
+                VSIDIR *psDir = VSIOpenDir(osFile.c_str(), -1, nullptr);
                 if (psDir == nullptr)
                     return 1;
                 while (auto psEntry = VSIGetNextDirEntry(psDir))
                 {
                     if (!VSI_ISDIR(psEntry->nMode))
                     {
-                        std::string osName(aosFiles[i]);
+                        std::string osName(osFile);
                         if (osName.back() != '/')
                             osName += '/';
                         osName += psEntry->pszName;
-                        aosNewFiles.AddString(osName.c_str());
+                        aosNewFiles.push_back(osName);
                         if (aosNewFiles.size() > 10 * 1000 * 1000)
                         {
                             CPLError(CE_Failure, CPLE_NotSupported,
@@ -679,9 +624,9 @@ MAIN_START(nArgc, papszArgv)
     if (!bVerbose && !bQuiet)
     {
         anFileSizes.resize(aosFiles.size());
-        for (int i = 0; i < aosFiles.size(); ++i)
+        for (size_t i = 0; i < aosFiles.size(); ++i)
         {
-            if (VSIStatL(aosFiles[i], &sBuf) == 0)
+            if (VSIStatL(aosFiles[i].c_str(), &sBuf) == 0)
             {
                 anFileSizes[i] = sBuf.st_size;
                 nTotalSize += sBuf.st_size;
@@ -689,7 +634,7 @@ MAIN_START(nArgc, papszArgv)
             else
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Cannot find %s\n",
-                         aosFiles[i]);
+                         aosFiles[i].c_str());
                 return 1;
             }
         }
@@ -701,11 +646,11 @@ MAIN_START(nArgc, papszArgv)
         return 1;
 
     uint64_t nCurSize = 0;
-    for (int i = 0; i < aosFiles.size(); ++i)
+    for (size_t i = 0; i < aosFiles.size(); ++i)
     {
         if (bVerbose)
-            printf("Adding %s... (%d/%d)\n", aosFiles[i], i + 1,
-                   aosFiles.size());
+            printf("Adding %s... (%d/%d)\n", aosFiles[i].c_str(), int(i + 1),
+                   static_cast<int>(aosFiles.size()));
         void *pScaledProgress = nullptr;
         if (!bVerbose && !bQuiet && nTotalSize != 0)
         {
@@ -718,10 +663,11 @@ MAIN_START(nArgc, papszArgv)
         {
             GDALTermProgress(0, nullptr, nullptr);
         }
-        if (VSIStatL(aosFiles[i], &sBuf) != 0 || VSI_ISDIR(sBuf.st_mode))
+        if (VSIStatL(aosFiles[i].c_str(), &sBuf) != 0 ||
+            VSI_ISDIR(sBuf.st_mode))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s is not a regular file",
-                     aosFiles[i]);
+                     aosFiles[i].c_str());
             CPLCloseZip(hZIP);
             return 1;
         }
@@ -729,7 +675,7 @@ MAIN_START(nArgc, papszArgv)
         std::string osArchiveFilename(aosFiles[i]);
         if (bJunkPaths)
         {
-            osArchiveFilename = CPLGetFilename(aosFiles[i]);
+            osArchiveFilename = CPLGetFilename(aosFiles[i].c_str());
         }
         else if (!osRemovePrefix.empty() &&
                  STARTS_WITH(osArchiveFilename.c_str(), osRemovePrefix.c_str()))
@@ -747,8 +693,8 @@ MAIN_START(nArgc, papszArgv)
         }
 
         CPLErr eErr =
-            CPLAddFileInZip(hZIP, osArchiveFilename.c_str(), aosFiles[i],
-                            nullptr, aosOptions.List(),
+            CPLAddFileInZip(hZIP, osArchiveFilename.c_str(),
+                            aosFiles[i].c_str(), nullptr, aosOptions.List(),
                             pScaledProgress ? GDALScaledProgress
                             : bQuiet        ? nullptr
                                             : GDALTermProgress,
@@ -761,7 +707,7 @@ MAIN_START(nArgc, papszArgv)
         if (eErr != CE_None)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Failed adding %s",
-                     aosFiles[i]);
+                     aosFiles[i].c_str());
             CPLCloseZip(hZIP);
             return 1;
         }
