@@ -227,26 +227,27 @@ SBNSearchHandle SBNOpenDiskTree(const char *pszSBNFilename,
     /*      There are at most (2^nMaxDepth) - 1, but all are not necessary  */
     /*      described. Non described nodes are empty.                       */
     /* -------------------------------------------------------------------- */
-    int nNodeDescSize = READ_MSB_INT(abyHeader + 104);
-    nNodeDescSize *= 2; /* 16-bit words */
+    const int nNodeDescSize = READ_MSB_INT(abyHeader + 104); /* 16-bit words */
 
     /* each bin descriptor is made of 2 ints */
-    const int nNodeDescCount = nNodeDescSize / 8;
+    const int nNodeDescCount = nNodeDescSize / 4;
 
-    if ((nNodeDescSize % 8) != 0 || nNodeDescCount < 0 ||
+    if ((nNodeDescSize % 4) != 0 || nNodeDescCount < 0 ||
         nNodeDescCount > nMaxNodes)
     {
         char szErrorMsg[64];
         snprintf(szErrorMsg, sizeof(szErrorMsg),
-                 "Invalid node descriptor size in .sbn : %d", nNodeDescSize);
+                 "Invalid node descriptor size in .sbn : %d",
+                 nNodeDescSize * STATIC_CAST(int, sizeof(uint16_t)));
         hSBN->sHooks.Error(szErrorMsg);
         SBNCloseDiskTree(hSBN);
         return SHPLIB_NULLPTR;
     }
 
+    const int nNodeDescSizeBytes = nNodeDescCount * 2 * 4;
     /* coverity[tainted_data] */
     unsigned char *pabyData =
-        STATIC_CAST(unsigned char *, malloc(nNodeDescSize));
+        STATIC_CAST(unsigned char *, malloc(nNodeDescSizeBytes));
     SBNNodeDescriptor *pasNodeDescriptor = STATIC_CAST(
         SBNNodeDescriptor *, calloc(nMaxNodes, sizeof(SBNNodeDescriptor)));
     if (pabyData == SHPLIB_NULLPTR || pasNodeDescriptor == SHPLIB_NULLPTR)
@@ -261,7 +262,7 @@ SBNSearchHandle SBNOpenDiskTree(const char *pszSBNFilename,
     /* -------------------------------------------------------------------- */
     /*      Read node descriptors.                                          */
     /* -------------------------------------------------------------------- */
-    if (hSBN->sHooks.FRead(pabyData, nNodeDescSize, 1, hSBN->fpSBN) != 1)
+    if (hSBN->sHooks.FRead(pabyData, nNodeDescSizeBytes, 1, hSBN->fpSBN) != 1)
     {
         free(pabyData);
         free(pasNodeDescriptor);
