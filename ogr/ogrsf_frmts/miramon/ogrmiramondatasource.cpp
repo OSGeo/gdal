@@ -144,7 +144,6 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 {
     CPLAssert(nullptr != pszLayerName);
 
-    const char *osPath;
     char *pszMMLayerName;
     const char *pszFullMMLayerName;
 
@@ -204,24 +203,25 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
         pszMMLayerName[strlen(pszMMLayerName) - 1] = '\0';
 
         pszFullMMLayerName = (const char *)pszMMLayerName;
-        osPath = CPLGetPath(pszRootName);
     }
     else
     {
+        const char *osPath;
+
         pszMMLayerName = CPLStrdup(pszLayerName);
         osPath = pszRootName;
         pszFullMMLayerName = CPLFormFilename(pszRootName, pszLayerName, "");
-    }
 
-    /* -------------------------------------------------------------------- */
-    /*      Let's create the folder if it's not already created.            */
-    /*      (only the las level of the folder)                              */
-    /* -------------------------------------------------------------------- */
-    if (VSIMkdir(osPath, 0777) != 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Unable to create directory %s.",
-                 pszRootName);
-        return nullptr;
+        /* -------------------------------------------------------------------- */
+        /*      Let's create the folder if it's not already created.            */
+        /*      (only the las level of the folder)                              */
+        /* -------------------------------------------------------------------- */
+        if (VSIMkdir(osPath, 0777) != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unable to create directory %s.", pszRootName);
+            return nullptr;
+        }
     }
 
     /* -------------------------------------------------------------------- */

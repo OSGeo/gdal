@@ -235,7 +235,7 @@ int MMReadHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader)
 {
     char dot;
     uint32_t NCount;
-    long reservat4 = 0L;
+    int32_t reservat4 = 0L;
 
     pMMHeader->Flag = 0x0;
     if (fseek_function(pF, 0, SEEK_SET))
@@ -299,7 +299,7 @@ static int MMWriteHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader)
 {
     char dot = '.';
     uint32_t NCount;
-    long reservat4 = 0L;
+    int32_t reservat4 = 0L;
     MM_INTERNAL_FID nNumber1 = 1, nNumber0 = 0;
 
     if (!pF)
@@ -519,7 +519,7 @@ int MMWriteEmptyHeader(FILE_TYPE *pF, int layerType, int nVersion)
 int MMReadZSection(struct MiraMonVectLayerInfo *hMiraMonLayer, FILE_TYPE *pF,
                    struct MM_ZSection *pZSection)
 {
-    long reservat4 = 0L;
+    int32_t reservat4 = 0L;
 
     if (hMiraMonLayer->bIsPoint)
     {
@@ -589,7 +589,7 @@ int MMReadZSection(struct MiraMonVectLayerInfo *hMiraMonLayer, FILE_TYPE *pF,
 
 static int MMWriteZSection(FILE_TYPE *pF, struct MM_ZSection *pZSection)
 {
-    long reservat4 = 0L;
+    int32_t reservat4 = 0L;
 
     if (fseek_function(pF, pZSection->ZSectionOffset, SEEK_SET))
         return 1;
