@@ -1,0 +1,41 @@
+[VERSIO]
+VersMetaDades=5
+SubVersMetaDades=0
+Vers=4
+SubVers=3
+
+[SPATIAL_REFERENCE_SYSTEM:HORIZONTAL]
+HorizontalSystemIdentifier=UTM-31N-ETRS89
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_N_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+visible=0
+descriptor=Identificador Gràfic intern
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:N_VERTEXS]
+visible=0
+MostrarUnitats=0
+descriptor=Nombre de vèrtexs
+
+[TAULA_PRINCIPAL:LONG_ARC]
+descriptor=Longitud de l'arc
+
+[TAULA_PRINCIPAL:NODE_INI]
+visible=0
+MostrarUnitats=0
+descriptor=Node inicial
+
+[TAULA_PRINCIPAL:NODE_FI]
+visible=0
+MostrarUnitats=0
+descriptor=Node final
+
+[GEOMETRIA_I_TOPOLOGIA]
+NomCampNVertexs=N_VERTEXS
+NomCampLongitudArc=LONG_ARC
+NomCampNodeIni=NODE_INI
+NomCampNodeFi=NODE_FI
