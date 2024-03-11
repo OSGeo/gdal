@@ -39,6 +39,7 @@ repos:
                 third_party/|
                 autotest/ogr/data/|
                 alg/internal_libqhull/|
+                apps/argparse/|
                 frmts/gtiff/libtiff/|
                 frmts/gtiff/libgeotiff/|
                 frmts/hdf4/hdf-eos/|
