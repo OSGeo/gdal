@@ -820,20 +820,24 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
     {
         OGRLayer *poLayer = poSrcDS->ExecuteSQL(
             psOptions->pszSQL, psOptions->poSpatialFilter, nullptr);
-        if (poLayer != nullptr)
+        if (poLayer == nullptr)
         {
-            // Custom layer will be rasterized in the first band.
-            eErr = ProcessLayer(
-                OGRLayer::ToHandle(poLayer), hDstDS, psOptions->poSpatialFilter,
-                nXSize, nYSize, 1, bIsXExtentSet, bIsYExtentSet, dfXMin, dfXMax,
-                dfYMin, dfYMax, psOptions->pszBurnAttribute,
-                psOptions->dfIncreaseBurnValue, psOptions->dfMultiplyBurnValue,
-                psOptions->eOutputType, psOptions->eAlgorithm,
-                psOptions->pOptions, psOptions->bQuiet, psOptions->pfnProgress,
-                psOptions->pProgressData);
-
-            poSrcDS->ReleaseResultSet(poLayer);
+            GDALGridOptionsFree(psOptionsToFree);
+            GDALClose(hDstDS);
+            return nullptr;
         }
+
+        // Custom layer will be rasterized in the first band.
+        eErr = ProcessLayer(
+            OGRLayer::ToHandle(poLayer), hDstDS, psOptions->poSpatialFilter,
+            nXSize, nYSize, 1, bIsXExtentSet, bIsYExtentSet, dfXMin, dfXMax,
+            dfYMin, dfYMax, psOptions->pszBurnAttribute,
+            psOptions->dfIncreaseBurnValue, psOptions->dfMultiplyBurnValue,
+            psOptions->eOutputType, psOptions->eAlgorithm, psOptions->pOptions,
+            psOptions->bQuiet, psOptions->pfnProgress,
+            psOptions->pProgressData);
+
+        poSrcDS->ReleaseResultSet(poLayer);
     }
 
     /* -------------------------------------------------------------------- */
@@ -850,18 +854,22 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
         if (hLayer == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unable to find layer \"%s\", skipping.",
+                     "Unable to find layer \"%s\".",
                      psOptions->papszLayers && psOptions->papszLayers[i]
                          ? psOptions->papszLayers[i]
                          : "null");
-            continue;
+            eErr = CE_Failure;
+            break;
         }
 
         if (psOptions->pszWHERE)
         {
             if (OGR_L_SetAttributeFilter(hLayer, psOptions->pszWHERE) !=
                 OGRERR_NONE)
+            {
+                eErr = CE_Failure;
                 break;
+            }
         }
 
         if (psOptions->poSpatialFilter != nullptr)

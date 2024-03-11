@@ -97,6 +97,8 @@ def test_gdal_grid_lib_1(n43_tif, n43_shp):
         outputType=gdal.GDT_Int16,
         algorithm="nearest:radius1=0.0:radius2=0.0:angle=0.0",
         spatFilter=spatFilter,
+        layers=[n43_shp.GetLayer(0).GetName()],
+        where="1=1",
     )
 
     # We should get the same values as in n43.td0
@@ -147,6 +149,7 @@ def test_gdal_grid_lib_2(tmp_vsimem, env):
             width=1,
             height=1,
             outputType=gdal.GDT_Byte,
+            SQLStatement="select * from test_gdal_grid_lib_2",
         )
 
         ds2 = gdal.Grid(
@@ -1050,3 +1053,51 @@ def test_gdal_grid_lib_dict_arguments():
     ind = opt.index("-co")
 
     assert opt[ind : ind + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]
+
+
+###############################################################################
+# Test various error conditions
+
+
+def test_gdal_grid_lib_errors():
+
+    mem_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    mem_ds.CreateLayer("test")
+
+    with pytest.raises(Exception, match='Unable to find layer "invalid"'):
+        gdal.Grid(
+            "",
+            mem_ds,
+            width=3,
+            height=3,
+            outputBounds=[-0.25, -0.25, 1.25, 1.25],
+            format="MEM",
+            algorithm="invdist",
+            layers=["invalid"],
+        )
+
+    with pytest.raises(
+        Exception, match='"invalid" not recognised as an available field'
+    ):
+        gdal.Grid(
+            "",
+            mem_ds,
+            width=3,
+            height=3,
+            outputBounds=[-0.25, -0.25, 1.25, 1.25],
+            format="MEM",
+            algorithm="invdist",
+            where="invalid",
+        )
+
+    with pytest.raises(Exception, match="SQL Expression Parsing Error"):
+        gdal.Grid(
+            "",
+            mem_ds,
+            width=3,
+            height=3,
+            outputBounds=[-0.25, -0.25, 1.25, 1.25],
+            format="MEM",
+            algorithm="invdist",
+            SQLStatement="invalid",
+        )
