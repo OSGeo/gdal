@@ -135,11 +135,11 @@ def test_ogr_miramon_simple_arc():
 # basic polygon test
 
 
-#def test_ogr_miramon_simple_polygon():
+# def test_ogr_miramon_simple_polygon():
 #    try:
 #        ds = gdal.OpenEx("data/miramon/Polygons/SimplePolygons/SimplePolFile.pol")
 #        assert ds is not None, "Failed to get dataset"
-        
+
 #        lyr = ds.GetLayer(0)
 
 #        assert lyr is not None, "Failed to get layer"
