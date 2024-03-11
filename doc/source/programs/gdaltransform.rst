@@ -20,7 +20,7 @@ Synopsis
         [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>]
         [-ct <proj_string>] [-order <n>] [-tps] [-rpc] [-geoloc]
         [-gcp <pixel> <line> <easting> <northing> [elevation]]... [-output_xy]
-        [srcfile [dstfile]]
+        [<srcfile> [<dstfile>]]
 
 
 Description
@@ -194,8 +194,23 @@ for a coordinate at epoch 2000.0
     +proj=unitconvert +xy_in=rad +xy_out=deg"
     2 49 0 2000
 
-Produces this output measured in longitude degrees, latitude degrees and ellipsoid height in metre:
+Produces this output measured in longitude degrees, latitude degrees and ellipsoid height in metres:
 
 .. code-block:: bash
 
     2.0000005420366 49.0000003766711 -0.0222802283242345
+
+Ground control points
++++++++++++++++++++++
+
+Where is the address "370 S. 300 E." in Salt Lake City, given we know
+some nearby corners' coordinates?
+
+.. code-block:: bash
+
+    echo 300 -370 | gdaltransform \
+    -gcp 0   -500 -111.89114803 40.75846686 \
+    -gcp 0   0    -111.89114717 40.76932606 \
+    -gcp 500 0    -111.87685039 40.76940631
+
+    -111.8825697384 40.761338402 0

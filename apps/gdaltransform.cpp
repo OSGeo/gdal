@@ -67,7 +67,7 @@ static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
             "    [-ct <proj_string>] [-order <n>] [-tps] [-rpc] [-geoloc] \n"
             "    [-gcp <pixel> <line> <easting> <northing> [elevation]]... "
             "[-output_xy]\n"
-            "    [srcfile [dstfile]]\n"
+            "    [<srcfile> [<dstfile>]]\n"
             "\n");
 
     if (pszErrorMsg != nullptr)

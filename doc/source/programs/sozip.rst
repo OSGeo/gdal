@@ -81,6 +81,11 @@ The :program:`sozip` utility can be used to:
     ZIP reader used by GDAL. But validation of the SOZip-specific aspects is
     done in a more thoroughful way.
 
+.. option:: -r
+.. option:: --recurse-paths
+
+    Travels the directory structure of the specified directory/directories recursively.
+
 .. option:: -j
 .. option:: --junk-paths
 

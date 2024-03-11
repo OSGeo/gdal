@@ -476,9 +476,26 @@ in the VRT file in the following way:
 The :ref:`vector.csv` description page contains
 details on CSV format supported by GDAL/OGR.
 
-Creating multiband files: not directly possible with gdal_grid.
+Creating multiband files
+------------------------
+
+Creating multiband files is not directly possible with gdal_grid.
 One might use gdal_grid multiple times to create one band per file,
-and then use gdalbuildvrt -separate + gdal_translate to combine the one-band-files into a single one.
+and then use :ref:`gdalbuildvrt` -separate and then :ref:`gdal_translate`:
+
+.. code-block:: bash
+
+    gdal_grid ... 1.tif; gdal_grid ... 2.tif; gdal_grid ... 3.tif
+    gdalbuildvrt -separate 123.vrt 1.tif 2.tif 3.tif
+    gdal_translate 123.vrt 123.tif
+
+Or just :ref:`gdal_merge`, to combine the one-band files into a single one:
+
+.. code-block:: bash
+
+    gdal_grid ... a.tif; gdal_grid ... b.tif; gdal_grid ... c.tif
+    gdal_merge.py -separate a.tif b.tif c.tif -o d.tif
+
 
 C API
 -----

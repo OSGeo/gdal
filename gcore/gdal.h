@@ -1705,6 +1705,8 @@ void CPL_DLL GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
                               int nComponents, void **ppDestBuffer,
                               GDALDataType eDestDT, size_t nIters);
 
+double CPL_DLL GDALGetNoDataReplacementValue(GDALDataType, double);
+
 int CPL_DLL CPL_STDCALL GDALLoadWorldFile(const char *, double *);
 int CPL_DLL CPL_STDCALL GDALReadWorldFile(const char *, const char *, double *);
 int CPL_DLL CPL_STDCALL GDALWriteWorldFile(const char *, const char *,

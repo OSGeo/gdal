@@ -87,10 +87,12 @@
 
 /* in-place uint32_t* swap */
 #define SHP_SWAP32(p)                                                          \
-    *STATIC_CAST(uint32_t *, p) = _SHP_SWAP32(*STATIC_CAST(uint32_t *, p))
+    *REINTERPRET_CAST(uint32_t *, p) =                                         \
+        _SHP_SWAP32(*REINTERPRET_CAST(uint32_t *, p))
 /* in-place uint64_t* swap */
 #define SHP_SWAP64(p)                                                          \
-    *STATIC_CAST(uint64_t *, p) = _SHP_SWAP64(*STATIC_CAST(uint64_t *, p))
+    *REINTERPRET_CAST(uint64_t *, p) =                                         \
+        _SHP_SWAP64(*REINTERPRET_CAST(uint64_t *, p))
 /* in-place double* swap */
 #define SHP_SWAPDOUBLE(x)                                                      \
     do                                                                         \
