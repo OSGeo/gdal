@@ -33,7 +33,7 @@ VTP.
 Driver capabilities
 -------------------
 
-.. supports_create::
+.. supports_createcopy::
 
 .. supports_georeferencing::
 

@@ -214,6 +214,7 @@ jobs:
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
         $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/python3/dist-packages python3 $GITHUB_WORKSPACE/scripts/check_doc.py
     - name: CMake with rpath
       run: |
         export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
