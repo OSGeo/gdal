@@ -31,6 +31,7 @@
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 #include "commonutils.h"
+#include "gdalargumentparser.h"
 
 #include <cassert>
 #include <cstdlib>
@@ -746,7 +747,151 @@ static bool IsInt(const char *pszArg)
 }
 
 /************************************************************************/
-/*                           GDALNearblackOptionsNew()              */
+/*                    GDALNearblackOptionsGetParser()                   */
+/************************************************************************/
+
+static std::unique_ptr<GDALArgumentParser>
+GDALNearblackOptionsGetParser(GDALNearblackOptions *psOptions,
+                              GDALNearblackOptionsForBinary *psOptionsForBinary)
+{
+    auto argParser = std::make_unique<GDALArgumentParser>(
+        "nearblack", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    argParser->add_description(
+        _("Convert nearly black/white borders to black."));
+
+    argParser->add_epilog(_(
+        "For more details, consult https://gdal.org/programs/nearblack.html"));
+
+    argParser->add_output_format_argument(psOptions->osFormat);
+
+    // Written that way so that in library mode, users can still use the -q
+    // switch, even if it has no effect
+    argParser->add_quiet_argument(
+        psOptionsForBinary ? &(psOptionsForBinary->bQuiet) : nullptr);
+
+    argParser->add_creation_options_argument(psOptions->aosCreationOptions);
+
+    auto &oOutputFileArg =
+        argParser->add_argument("-o")
+            .metavar("<output_file>")
+            .help(_("The name of the output file to be created."));
+    if (psOptionsForBinary)
+        oOutputFileArg.store_into(psOptionsForBinary->osOutFile);
+
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+        group.add_argument("-white")
+            .store_into(psOptions->bNearWhite)
+            .help(_("Search for nearly white (255) pixels instead of nearly "
+                    "black pixels."));
+
+        group.add_argument("-color")
+            .append()
+            .metavar("<c1,c2,c3...cn>")
+            .action(
+                [psOptions](const std::string &s)
+                {
+                    Color oColor;
+
+                    /***** tokenize the arg on , *****/
+
+                    const CPLStringList aosTokens(
+                        CSLTokenizeString2(s.c_str(), ",", 0));
+
+                    /***** loop over the tokens *****/
+
+                    for (int iToken = 0; iToken < aosTokens.size(); iToken++)
+                    {
+
+                        /***** ensure the token is an int and add it to the color *****/
+
+                        if (IsInt(aosTokens[iToken]))
+                        {
+                            oColor.push_back(atoi(aosTokens[iToken]));
+                        }
+                        else
+                        {
+                            throw std::invalid_argument(
+                                "Colors must be valid integers.");
+                        }
+                    }
+
+                    /***** check if the number of bands is consistent *****/
+
+                    if (!psOptions->oColors.empty() &&
+                        psOptions->oColors.front().size() != oColor.size())
+                    {
+                        throw std::invalid_argument(
+                            "all -color args must have the same number of "
+                            "values.\n");
+                    }
+
+                    /***** add the color to the colors *****/
+
+                    psOptions->oColors.push_back(oColor);
+                })
+            .help(_("Search for pixels near the specified color."));
+    }
+
+    argParser->add_argument("-nb")
+        .store_into(psOptions->nMaxNonBlack)
+        .metavar("<non_black_pixels>")
+        .default_value(psOptions->nMaxNonBlack)
+        .nargs(1)
+        .help(_("Number of consecutive non-black pixels."));
+
+    argParser->add_argument("-near")
+        .store_into(psOptions->nNearDist)
+        .metavar("<dist>")
+        .default_value(psOptions->nNearDist)
+        .nargs(1)
+        .help(_("Select how far from black, white or custom colors the pixel "
+                "values can be and still considered."));
+
+    argParser->add_argument("-setalpha")
+        .store_into(psOptions->bSetAlpha)
+        .help(_("Adds an alpha band if needed."));
+
+    argParser->add_argument("-setmask")
+        .store_into(psOptions->bSetMask)
+        .help(_("Adds a mask band to the output file if -o is used, or to the "
+                "input file otherwise."));
+
+    argParser->add_argument("-alg")
+        .choices("floodfill", "twopasses")
+        .metavar("floodfill|twopasses")
+        .action([psOptions](const std::string &s)
+                { psOptions->bFloodFill = EQUAL(s.c_str(), "floodfill"); })
+        .help(_("Selects the algorithm to apply."));
+
+    if (psOptionsForBinary)
+    {
+        argParser->add_argument("input_file")
+            .metavar("<input_file>")
+            .store_into(psOptionsForBinary->osInFile)
+            .help(_("The input file. Any GDAL supported format, any number of "
+                    "bands, normally 8bit Byte bands."));
+    }
+
+    return argParser;
+}
+
+/************************************************************************/
+/*                      GDALNearblackGetParserUsage()                   */
+/************************************************************************/
+
+std::string GDALNearblackGetParserUsage()
+{
+    GDALNearblackOptions sOptions;
+    GDALNearblackOptionsForBinary sOptionsForBinary;
+    auto argParser =
+        GDALNearblackOptionsGetParser(&sOptions, &sOptionsForBinary);
+    return argParser->usage();
+}
+
+/************************************************************************/
+/*                           GDALNearblackOptionsNew()                  */
 /************************************************************************/
 
 /**
@@ -771,133 +916,17 @@ GDALNearblackOptionsNew(char **papszArgv,
 {
     auto psOptions = std::make_unique<GDALNearblackOptions>();
 
-    /* -------------------------------------------------------------------- */
-    /*      Handle command line arguments.                                  */
-    /* -------------------------------------------------------------------- */
-    const int argc = CSLCount(papszArgv);
-    for (int i = 0; papszArgv != nullptr && i < argc; i++)
+    auto argParser =
+        GDALNearblackOptionsGetParser(psOptions.get(), psOptionsForBinary);
+
+    try
     {
-        if (i < argc - 1 &&
-            (EQUAL(papszArgv[i], "-of") || EQUAL(papszArgv[i], "-f")))
-        {
-            ++i;
-            psOptions->osFormat = papszArgv[i];
-        }
-
-        else if (EQUAL(papszArgv[i], "-q") || EQUAL(papszArgv[i], "-quiet"))
-        {
-            if (psOptionsForBinary)
-                psOptionsForBinary->bQuiet = TRUE;
-        }
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-co"))
-        {
-            psOptions->aosCreationOptions.AddString(papszArgv[++i]);
-        }
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-o"))
-        {
-            i++;
-            if (psOptionsForBinary)
-            {
-                CPLFree(psOptionsForBinary->pszOutFile);
-                psOptionsForBinary->pszOutFile = CPLStrdup(papszArgv[i]);
-            }
-        }
-        else if (EQUAL(papszArgv[i], "-white"))
-        {
-            psOptions->bNearWhite = true;
-        }
-
-        /***** -color c1,c2,c3...cn *****/
-
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-color"))
-        {
-            Color oColor;
-
-            /***** tokenize the arg on , *****/
-
-            const CPLStringList aosTokens(
-                CSLTokenizeString2(papszArgv[++i], ",", 0));
-
-            /***** loop over the tokens *****/
-
-            for (int iToken = 0; iToken < aosTokens.size(); iToken++)
-            {
-
-                /***** ensure the token is an int and add it to the color *****/
-
-                if (IsInt(aosTokens[iToken]))
-                {
-                    oColor.push_back(atoi(aosTokens[iToken]));
-                }
-                else
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Colors must be valid integers.");
-                    return nullptr;
-                }
-            }
-
-            /***** check if the number of bands is consistent *****/
-
-            if (!psOptions->oColors.empty() &&
-                psOptions->oColors.front().size() != oColor.size())
-            {
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
-                    "all -color args must have the same number of values.\n");
-                return nullptr;
-            }
-
-            /***** add the color to the colors *****/
-
-            psOptions->oColors.push_back(oColor);
-        }
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-nb"))
-        {
-            psOptions->nMaxNonBlack = atoi(papszArgv[++i]);
-        }
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-near"))
-        {
-            psOptions->nNearDist = atoi(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-setalpha"))
-        {
-            psOptions->bSetAlpha = true;
-        }
-        else if (EQUAL(papszArgv[i], "-setmask"))
-        {
-            psOptions->bSetMask = true;
-        }
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-alg"))
-        {
-            const char *pszAlg = papszArgv[++i];
-            if (EQUAL(pszAlg, "floodfill"))
-                psOptions->bFloodFill = true;
-            else if (EQUAL(pszAlg, "twopasses"))
-                psOptions->bFloodFill = false;
-            else
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "Unsupported algorithm '%s'", papszArgv[i]);
-                return nullptr;
-            }
-        }
-        else if (papszArgv[i][0] == '-')
-        {
-            CPLError(CE_Failure, CPLE_NotSupported, "Unknown option name '%s'",
-                     papszArgv[i]);
-            return nullptr;
-        }
-        else if (psOptionsForBinary && psOptionsForBinary->pszInFile == nullptr)
-        {
-            psOptionsForBinary->pszInFile = CPLStrdup(papszArgv[i]);
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Too many command options '%s'", papszArgv[i]);
-            return nullptr;
-        }
+        argParser->parse_args_without_binary_name(papszArgv);
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", err.what());
+        return nullptr;
     }
 
     return psOptions.release();

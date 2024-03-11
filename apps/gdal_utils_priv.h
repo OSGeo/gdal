@@ -97,13 +97,6 @@ struct GDALDEMProcessingOptionsForBinary
     int bQuiet;
 };
 
-struct GDALNearblackOptionsForBinary
-{
-    char *pszInFile;
-    char *pszOutFile;
-    int bQuiet;
-};
-
 struct GDALBuildVRTOptionsForBinary
 {
     int nSrcFiles;
@@ -229,6 +222,15 @@ struct GDALTileIndexOptionsForBinary
     std::string osDest{};
     bool bQuiet = false;
 };
+
+struct GDALNearblackOptionsForBinary
+{
+    std::string osInFile{};
+    std::string osOutFile{};
+    bool bQuiet = false;
+};
+
+std::string CPL_DLL GDALNearblackGetParserUsage();
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
