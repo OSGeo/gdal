@@ -35,215 +35,172 @@
 #include "ogr_srs_api.h"
 #include "ogr_spatialref.h"
 #include "commonutils.h"
-
-/************************************************************************/
-/*                               Usage()                                */
-/************************************************************************/
-
-static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
-
-{
-    fprintf(
-        bIsError ? stderr : stdout,
-        "Usage: gdal_viewshed [--help] [--help-general]\n"
-        "                     [-b <band>]\n"
-        "                     [-a_nodata <value>] [-f <formatname>]\n"
-        "                     [-oz <observer_height>] [-tz <target_height>] "
-        "[-md <max_distance>]\n"
-        "                     -ox <observer_x> -oy <observer_y>\n"
-        "                     [-vv <visibility>] [-iv <invisibility>]\n"
-        "                     [-ov <out_of_range>] [-cc <curvature_coef>]\n"
-        "                     [-co <NAME>=<VALUE>]...\n"
-        "                     [-q] [-om <output mode>]\n"
-        "                     <src_filename> <dst_filename>\n");
-
-    if (pszErrorMsg != nullptr)
-        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
-
-    exit(bIsError ? 1 : 0);
-}
-
-static double CPLAtofTaintedSuppressed(const char *pszVal)
-{
-    // coverity[tainted_data]
-    return CPLAtof(pszVal);
-}
+#include "gdalargumentparser.h"
 
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
-#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg)                            \
-    do                                                                         \
-    {                                                                          \
-        if (i + nExtraArg >= argc)                                             \
-            Usage(true, CPLSPrintf("%s option requires %d argument(s)",        \
-                                   argv[i], nExtraArg));                       \
-    } while (false)
-
 MAIN_START(argc, argv)
 
 {
-    int nBandIn = 1;
-    double dfObserverHeight = 2.0;
-    double dfTargetHeight = 0.0;
-    double dfMaxDistance = 0.0;
-    bool bObserverXSpecified = false;
-    double dfObserverX = 0.0;
-    bool bObserverYSpecified = false;
-    double dfObserverY = 0.0;
-    double dfVisibleVal = 255.0;
-    double dfInvisibleVal = 0.0;
-    double dfOutOfRangeVal = 0.0;
-    double dfNoDataVal = -1.0;
-    // Value for standard atmospheric refraction. See
-    // doc/source/programs/gdal_viewshed.rst
-    bool bCurvCoeffSpecified = false;
-    double dfCurvCoeff = 0.85714;
-    const char *pszDriverName = nullptr;
-    const char *pszSrcFilename = nullptr;
-    const char *pszDstFilename = nullptr;
-    bool bQuiet = false;
-    GDALProgressFunc pfnProgress = nullptr;
-    char **papszCreateOptions = nullptr;
-    const char *pszOutputMode = nullptr;
+    EarlySetConfigOptions(argc, argv);
 
     GDALAllRegister();
 
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
+    CPLStringList aosArgv;
+    aosArgv.Assign(argv, /* bTakeOwnership= */ true);
+    if (argc < 1)
+        std::exit(-argc);
 
-    /* -------------------------------------------------------------------- */
-    /*      Parse arguments.                                                */
-    /* -------------------------------------------------------------------- */
-    for (int i = 1; i < argc; i++)
+    GDALArgumentParser argParser(aosArgv[0], /* bForBinary=*/true);
+
+    argParser.add_description(
+        _("Calculates a viewshed raster from an input raster DEM."));
+
+    argParser.add_epilog(_("For more details, consult "
+                           "https://gdal.org/programs/gdal_viewshed.html"));
+
+    std::string osFormat;
+    argParser.add_output_format_argument(osFormat);
+
+    double dfObserverX = 0;
+    argParser.add_argument("-ox")
+        .store_into(dfObserverX)
+        .required()
+        .metavar("<value>")
+        .help(_("The X position of the observer (in SRS units)."));
+
+    double dfObserverY = 0;
+    argParser.add_argument("-oy")
+        .store_into(dfObserverY)
+        .required()
+        .metavar("<value>")
+        .help(_("The Y position of the observer (in SRS units)."));
+
+    double dfObserverHeight = 2;
+    argParser.add_argument("-oz")
+        .store_into(dfObserverHeight)
+        .default_value(dfObserverHeight)
+        .metavar("<value>")
+        .nargs(1)
+        .help(_("The height of the observer above the DEM surface in the "
+                "height unit of the DEM."));
+
+    double dfVisibleVal = 255;
+    argParser.add_argument("-vv")
+        .store_into(dfVisibleVal)
+        .default_value(dfVisibleVal)
+        .metavar("<value>")
+        .nargs(1)
+        .help(_("Pixel value to set for visible areas."));
+
+    double dfInvisibleVal = 0.0;
+    argParser.add_argument("-iv")
+        .store_into(dfInvisibleVal)
+        .default_value(dfInvisibleVal)
+        .metavar("<value>")
+        .nargs(1)
+        .help(_("Pixel value to set for invisible areas."));
+
+    double dfOutOfRangeVal = 0.0;
+    argParser.add_argument("-ov")
+        .store_into(dfOutOfRangeVal)
+        .default_value(dfOutOfRangeVal)
+        .metavar("<value>")
+        .nargs(1)
+        .help(
+            _("Pixel value to set for the cells that fall outside of the range "
+              "specified by the observer location and the maximum distance."));
+
+    CPLStringList aosCreationOptions;
+    argParser.add_creation_options_argument(aosCreationOptions);
+
+    double dfNoDataVal = -1.0;
+    argParser.add_argument("-a_nodata")
+        .store_into(dfNoDataVal)
+        .default_value(dfNoDataVal)
+        .metavar("<value>")
+        .nargs(1)
+        .help(_("The value to be set for the cells in the output raster that "
+                "have no data."));
+
+    double dfTargetHeight = 0.0;
+    argParser.add_argument("-tz")
+        .store_into(dfTargetHeight)
+        .default_value(dfTargetHeight)
+        .metavar("<value>")
+        .nargs(1)
+        .help(_("The height of the target above the DEM surface in the height "
+                "unit of the DEM."));
+
+    double dfMaxDistance = 0.0;
+    argParser.add_argument("-md")
+        .store_into(dfMaxDistance)
+        .default_value(dfMaxDistance)
+        .metavar("<value>")
+        .nargs(1)
+        .help(_("Maximum distance from observer to compute visibility."));
+
+    // Value for standard atmospheric refraction. See
+    // doc/source/programs/gdal_viewshed.rst
+    double dfCurvCoeff = 0.85714;
+    argParser.add_argument("-cc")
+        .store_into(dfCurvCoeff)
+        .default_value(dfCurvCoeff)
+        .metavar("<value>")
+        .nargs(1)
+        .help(_("Coefficient to consider the effect of the curvature and "
+                "refraction."));
+
+    int nBandIn = 1;
+    argParser.add_argument("-b")
+        .store_into(nBandIn)
+        .default_value(nBandIn)
+        .metavar("<value>")
+        .nargs(1)
+        .help(_("Select an input band band containing the DEM data."));
+
+    std::string osOutputMode;
+    argParser.add_argument("-om")
+        .store_into(osOutputMode)
+        .choices("NORMAL", "DEM", "GROUND")
+        .metavar("NORMAL|DEM|GROUND")
+        .default_value("NORMAL")
+        .nargs(1)
+        .help(_("Sets what information the output contains."));
+
+    bool bQuiet = false;
+    argParser.add_quiet_argument(&bQuiet);
+
+    std::string osSrcFilename;
+    argParser.add_argument("src_filename")
+        .store_into(osSrcFilename)
+        .metavar("<src_filename>");
+
+    std::string osDstFilename;
+    argParser.add_argument("dst_filename")
+        .store_into(osDstFilename)
+        .metavar("<dst_filename>");
+
+    try
     {
-        if (EQUAL(argv[i], "--utility_version"))
-        {
-            printf("%s was compiled against GDAL %s and "
-                   "is running against GDAL %s\n",
-                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy(argv);
-            return 0;
-        }
-        else if (EQUAL(argv[i], "--help"))
-            Usage(false);
-        else if (EQUAL(argv[i], "-f") || EQUAL(argv[i], "-of"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszDriverName = argv[++i];
-        }
-        else if (EQUAL(argv[i], "-ox"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            bObserverXSpecified = true;
-            dfObserverX = CPLAtofTaintedSuppressed(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-oy"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            bObserverYSpecified = true;
-            dfObserverY = CPLAtofTaintedSuppressed(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-oz"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfObserverHeight = CPLAtofTaintedSuppressed(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-vv"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfVisibleVal = CPLAtofTaintedSuppressed(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-iv"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfInvisibleVal = CPLAtofTaintedSuppressed(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-ov"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfOutOfRangeVal = CPLAtofTaintedSuppressed(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-co"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            papszCreateOptions = CSLAddString(papszCreateOptions, argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-a_nodata"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfNoDataVal = CPLAtofM(argv[++i]);
-            ;
-        }
-        else if (EQUAL(argv[i], "-tz"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfTargetHeight = CPLAtofTaintedSuppressed(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-md"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            dfMaxDistance = CPLAtofTaintedSuppressed(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-cc"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            bCurvCoeffSpecified = true;
-            dfCurvCoeff = CPLAtofTaintedSuppressed(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-b"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            nBandIn = atoi(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-om"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            pszOutputMode = argv[++i];
-        }
-        else if (EQUAL(argv[i], "-q") || EQUAL(argv[i], "-quiet"))
-        {
-            bQuiet = TRUE;
-        }
-        else if (pszSrcFilename == nullptr)
-        {
-            pszSrcFilename = argv[i];
-        }
-        else if (pszDstFilename == nullptr)
-        {
-            pszDstFilename = argv[i];
-        }
-        else
-            Usage(true, "Too many command options.");
+        argParser.parse_args(aosArgv);
+    }
+    catch (const std::exception &err)
+    {
+        argParser.display_error_and_usage(err);
+        std::exit(1);
     }
 
-    if (pszSrcFilename == nullptr)
-    {
-        Usage(true, "Missing source filename.");
-    }
-
-    if (pszDstFilename == nullptr)
-    {
-        Usage(true, "Missing destination filename.");
-    }
-
-    if (!bObserverXSpecified)
-    {
-        Usage(true, "Missing -ox.");
-    }
-
-    if (!bObserverYSpecified)
-    {
-        Usage(true, "Missing -oy.");
-    }
-
+    GDALProgressFunc pfnProgress = nullptr;
     if (!bQuiet)
         pfnProgress = GDALTermProgress;
 
-    CPLString osFormat;
-    if (pszDriverName == nullptr)
+    if (osFormat.empty())
     {
-        osFormat = GetOutputDriverForRaster(pszDstFilename);
+        osFormat = GetOutputDriverForRaster(osDstFilename.c_str());
         if (osFormat.empty())
         {
             exit(2);
@@ -251,29 +208,19 @@ MAIN_START(argc, argv)
     }
 
     GDALViewshedOutputType outputMode = GVOT_NORMAL;
-    if (pszOutputMode != nullptr)
+    if (EQUAL(osOutputMode.c_str(), "DEM"))
     {
-        if (EQUAL(pszOutputMode, "NORMAL"))
-        {
-        }
-        else if (EQUAL(pszOutputMode, "DEM"))
-        {
-            outputMode = GVOT_MIN_TARGET_HEIGHT_FROM_DEM;
-        }
-        else if (EQUAL(pszOutputMode, "GROUND"))
-        {
-            outputMode = GVOT_MIN_TARGET_HEIGHT_FROM_GROUND;
-        }
-        else
-        {
-            Usage(true, "-om must be either NORMAL, DEM or GROUND");
-        }
+        outputMode = GVOT_MIN_TARGET_HEIGHT_FROM_DEM;
+    }
+    else if (EQUAL(osOutputMode.c_str(), "GROUND"))
+    {
+        outputMode = GVOT_MIN_TARGET_HEIGHT_FROM_GROUND;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Open source raster file.                                        */
     /* -------------------------------------------------------------------- */
-    GDALDatasetH hSrcDS = GDALOpen(pszSrcFilename, GA_ReadOnly);
+    GDALDatasetH hSrcDS = GDALOpen(osSrcFilename.c_str(), GA_ReadOnly);
     if (hSrcDS == nullptr)
         exit(2);
 
@@ -285,6 +232,7 @@ MAIN_START(argc, argv)
         exit(2);
     }
 
+    const bool bCurvCoeffSpecified = argParser.is_used("-cc");
     if (!bCurvCoeffSpecified)
     {
         const OGRSpatialReference *poSRS =
@@ -308,8 +256,8 @@ MAIN_START(argc, argv)
     /*      Invoke.                                                         */
     /* -------------------------------------------------------------------- */
     GDALDatasetH hDstDS = GDALViewshedGenerate(
-        hBand, pszDriverName ? pszDriverName : osFormat.c_str(), pszDstFilename,
-        papszCreateOptions, dfObserverX, dfObserverY, dfObserverHeight,
+        hBand, osFormat.c_str(), osDstFilename.c_str(),
+        aosCreationOptions.List(), dfObserverX, dfObserverY, dfObserverHeight,
         dfTargetHeight, dfVisibleVal, dfInvisibleVal, dfOutOfRangeVal,
         dfNoDataVal, dfCurvCoeff, GVM_Edge, dfMaxDistance, pfnProgress, nullptr,
         outputMode, nullptr);
@@ -318,8 +266,6 @@ MAIN_START(argc, argv)
     if (GDALClose(hDstDS) != CE_None)
         bSuccess = false;
 
-    CSLDestroy(argv);
-    CSLDestroy(papszCreateOptions);
     GDALDestroyDriverManager();
     OGRCleanupAll();
 
