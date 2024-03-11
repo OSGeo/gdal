@@ -113,6 +113,7 @@ const char CPL_DLL *CPLReadLine3L(VSILFILE *, int, int *, CSLConstList);
 double CPL_DLL CPLAtof(const char *);
 double CPL_DLL CPLAtofDelim(const char *, char);
 double CPL_DLL CPLStrtod(const char *, char **);
+double CPL_DLL CPLStrtodM(const char *, char **);
 double CPL_DLL CPLStrtodDelim(const char *, char **, char);
 float CPL_DLL CPLStrtof(const char *, char **);
 float CPL_DLL CPLStrtofDelim(const char *, char **, char);
