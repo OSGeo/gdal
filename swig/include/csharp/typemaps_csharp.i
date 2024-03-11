@@ -599,3 +599,19 @@ OPTIONAL_POD(int, int);
 %typemap(imtype) (void* callback_data) "string"
 %typemap(cstype) (void* callback_data) "string"
 %typemap(csin) (void* callback_data) "$csinput"
+
+
+/******************************************************************************
+ * GDALGetNextFeature typemaps                                                *
+ *****************************************************************************/
+
+%apply (double *defaultval) {double* pdfProgressPct};
+
+%typemap(imtype) (OGRLayerShadow **ppoBelongingLayer)  "ref IntPtr"
+%typemap(cstype) (OGRLayerShadow **ppoBelongingLayer) "ref IntPtr"
+%typemap(csin) (OGRLayerShadow **ppoBelongingLayer)  "ref $csinput"
+
+/******************************************************************************
+ * GDALGetLayerByName typemaps                                                *
+ *****************************************************************************/
+%apply ( const char *utf8_path ) { const char* layer_name };
