@@ -110,9 +110,9 @@ inline static double CalcHeight(double dfZ, double dfZ2, GDALViewshedMode eMode)
     if (eMode == GVM_Edge)
         return dfZ2;
     else if (eMode == GVM_Max)
-        return (std::max)(dfZ, dfZ2);
+        return std::max(dfZ, dfZ2);
     else if (eMode == GVM_Min)
-        return (std::min)(dfZ, dfZ2);
+        return std::min(dfZ, dfZ2);
     else
         return dfZ;
 }
@@ -285,13 +285,13 @@ GDALDatasetH GDALViewshedGenerate(
     constexpr double EPSILON = 1e-8;
     int nXStart =
         dfMaxDistance > 0
-            ? (std::max)(
+            ? std::max(
                   0, static_cast<int>(std::floor(
                          nX - adfInvGeoTransform[1] * dfMaxDistance + EPSILON)))
             : 0;
     int nXStop =
         dfMaxDistance > 0
-            ? (std::min)(
+            ? std::min(
                   nXSize,
                   static_cast<int>(
                       std::ceil(nX + adfInvGeoTransform[1] * dfMaxDistance -
@@ -300,7 +300,7 @@ GDALDatasetH GDALViewshedGenerate(
             : nXSize;
     int nYStart =
         dfMaxDistance > 0
-            ? (std::max)(
+            ? std::max(
                   0, static_cast<int>(std::floor(
                          nY - std::fabs(adfInvGeoTransform[5]) * dfMaxDistance +
                          EPSILON)) -
@@ -308,9 +308,8 @@ GDALDatasetH GDALViewshedGenerate(
             : 0;
     int nYStop =
         dfMaxDistance > 0
-            ? (std::min)(
-                  nYSize,
-                  static_cast<int>(std::ceil(nY +
+            ? std::min(nYSize, static_cast<int>(
+                                   std::ceil(nY +
                                              std::fabs(adfInvGeoTransform[5]) *
                                                  dfMaxDistance -
                                              EPSILON) +
