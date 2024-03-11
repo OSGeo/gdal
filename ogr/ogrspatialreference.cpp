@@ -3699,7 +3699,8 @@ OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition)
  * possible applications should call the specific method appropriate if the
  * input is known to be in a particular format.
  *
- * This method does the same thing as the OSRSetFromUserInput() function.
+ * This method does the same thing as the OSRSetFromUserInput() and
+ * OSRSetFromUserInputEx() functions.
  *
  * @param pszDefinition text definition to try to deduce SRS from.
  *
@@ -3709,7 +3710,7 @@ OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition)
  *      Whether http:// or https:// access is allowed. Defaults to YES.
  * <li> ALLOW_FILE_ACCESS=YES/NO.
  *      Whether reading a file using the Virtual File System layer is allowed
- * (can also involve network access). Defaults to YES.
+ *      (can also involve network access). Defaults to YES.
  * </ol>
  *
  * @return OGRERR_NONE on success, or an error code if the name isn't
@@ -4034,6 +4035,8 @@ OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition,
  * \brief Set spatial reference from various text formats.
  *
  * This function is the same as OGRSpatialReference::SetFromUserInput()
+ *
+ * \see OSRSetFromUserInputEx() for a variant allowing to pass options.
  */
 OGRErr CPL_STDCALL OSRSetFromUserInput(OGRSpatialReferenceH hSRS,
                                        const char *pszDef)
@@ -4042,6 +4045,26 @@ OGRErr CPL_STDCALL OSRSetFromUserInput(OGRSpatialReferenceH hSRS,
     VALIDATE_POINTER1(hSRS, "OSRSetFromUserInput", OGRERR_FAILURE);
 
     return ToPointer(hSRS)->SetFromUserInput(pszDef);
+}
+
+/************************************************************************/
+/*                       OSRSetFromUserInputEx()                        */
+/************************************************************************/
+
+/**
+ * \brief Set spatial reference from various text formats.
+ *
+ * This function is the same as OGRSpatialReference::SetFromUserInput().
+ *
+ * @since GDAL 3.9
+ */
+OGRErr OSRSetFromUserInputEx(OGRSpatialReferenceH hSRS, const char *pszDef,
+                             CSLConstList papszOptions)
+
+{
+    VALIDATE_POINTER1(hSRS, "OSRSetFromUserInputEx", OGRERR_FAILURE);
+
+    return ToPointer(hSRS)->SetFromUserInput(pszDef, papszOptions);
 }
 
 /************************************************************************/
