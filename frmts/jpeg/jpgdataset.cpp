@@ -1643,9 +1643,9 @@ int JPGRasterBand::GetOverviewCount()
 JPGDatasetCommon::JPGDatasetCommon()
     : nScaleFactor(1), bHasInitInternalOverviews(false),
       nInternalOverviewsCurrent(0), nInternalOverviewsToFree(0),
-      papoInternalOverviews(nullptr), bGeoTransformValid(false), nGCPCount(0),
-      pasGCPList(nullptr), m_fpImage(nullptr), nSubfileOffset(0),
-      nLoadedScanline(-1), m_pabyScanline(nullptr), bHasReadEXIFMetadata(false),
+      papoInternalOverviews(nullptr), bGeoTransformValid(false),
+      m_fpImage(nullptr), nSubfileOffset(0), nLoadedScanline(-1),
+      m_pabyScanline(nullptr), bHasReadEXIFMetadata(false),
       bHasReadXMPMetadata(false), bHasReadICCMetadata(false),
       papszMetadata(nullptr), nExifOffset(-1), nInterOffset(-1), nGPSOffset(-1),
       bSwabflag(false), nTiffDirStart(-1), nTIFFHEADER(-1),
@@ -1677,12 +1677,6 @@ JPGDatasetCommon::~JPGDatasetCommon()
         CPLFree(m_pabyScanline);
     if (papszMetadata != nullptr)
         CSLDestroy(papszMetadata);
-
-    if (nGCPCount > 0)
-    {
-        GDALDeinitGCPs(nGCPCount, pasGCPList);
-        CPLFree(pasGCPList);
-    }
 
     CPLFree(pabyBitMask);
     CPLFree(pabyCMask);
@@ -2499,7 +2493,7 @@ int JPGDatasetCommon::GetGCPCount()
 
     LoadWorldFileOrTab();
 
-    return nGCPCount;
+    return static_cast<int>(m_aoGCPs.size());
 }
 
 /************************************************************************/
@@ -2516,7 +2510,7 @@ const OGRSpatialReference *JPGDatasetCommon::GetGCPSpatialRef() const
 
     const_cast<JPGDatasetCommon *>(this)->LoadWorldFileOrTab();
 
-    if (!m_oSRS.IsEmpty() && nGCPCount > 0)
+    if (!m_oSRS.IsEmpty() && !m_aoGCPs.empty())
         return &m_oSRS;
 
     return nullptr;
@@ -2535,7 +2529,7 @@ const GDAL_GCP *JPGDatasetCommon::GetGCPs()
 
     LoadWorldFileOrTab();
 
-    return pasGCPList;
+    return gdal::GCP::c_ptr(m_aoGCPs);
 }
 
 /************************************************************************/
@@ -3151,12 +3145,17 @@ void JPGDatasetCommon::LoadWorldFileOrTab()
     if (!bGeoTransformValid)
     {
         char *pszProjection = nullptr;
+        int nGCPCount = 0;
+        GDAL_GCP *pasGCPList = nullptr;
         const bool bTabFileOK = CPL_TO_BOOL(GDALReadTabFile2(
             GetDescription(), adfGeoTransform, &pszProjection, &nGCPCount,
             &pasGCPList, oOvManager.GetSiblingFiles(), &pszWldFilename));
         if (pszProjection)
             m_oSRS.importFromWkt(pszProjection);
         CPLFree(pszProjection);
+        m_aoGCPs = gdal::GCP::fromC(pasGCPList, nGCPCount);
+        GDALDeinitGCPs(nGCPCount, pasGCPList);
+        CPLFree(pasGCPList);
 
         if (bTabFileOK && nGCPCount == 0)
             bGeoTransformValid = true;

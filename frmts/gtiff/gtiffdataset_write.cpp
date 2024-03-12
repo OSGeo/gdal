@@ -3577,15 +3577,15 @@ void GTiffDataset::WriteGeoTIFFInfo()
         double *padfTiePoints = static_cast<double *>(
             CPLMalloc(6 * sizeof(double) * GetGCPCount()));
 
-        for (int iGCP = 0; iGCP < GetGCPCount(); ++iGCP)
+        for (size_t iGCP = 0; iGCP < m_aoGCPs.size(); ++iGCP)
         {
 
-            padfTiePoints[iGCP * 6 + 0] = m_pasGCPList[iGCP].dfGCPPixel;
-            padfTiePoints[iGCP * 6 + 1] = m_pasGCPList[iGCP].dfGCPLine;
+            padfTiePoints[iGCP * 6 + 0] = m_aoGCPs[iGCP].Pixel();
+            padfTiePoints[iGCP * 6 + 1] = m_aoGCPs[iGCP].Line();
             padfTiePoints[iGCP * 6 + 2] = 0;
-            padfTiePoints[iGCP * 6 + 3] = m_pasGCPList[iGCP].dfGCPX;
-            padfTiePoints[iGCP * 6 + 4] = m_pasGCPList[iGCP].dfGCPY;
-            padfTiePoints[iGCP * 6 + 5] = m_pasGCPList[iGCP].dfGCPZ;
+            padfTiePoints[iGCP * 6 + 3] = m_aoGCPs[iGCP].X();
+            padfTiePoints[iGCP * 6 + 4] = m_aoGCPs[iGCP].Y();
+            padfTiePoints[iGCP * 6 + 5] = m_aoGCPs[iGCP].Z();
 
             if (bPixelIsPoint && !bPointGeoIgnore)
             {
@@ -8252,16 +8252,13 @@ CPLErr GTiffDataset::SetGeoTransform(double *padfTransform)
     CPLErr eErr = CE_None;
     if (eAccess == GA_Update)
     {
-        if (m_nGCPCount > 0)
+        if (!m_aoGCPs.empty())
         {
             ReportError(CE_Warning, CPLE_AppDefined,
                         "GCPs previously set are going to be cleared "
                         "due to the setting of a geotransform.");
             m_bForceUnsetGTOrGCPs = true;
-            GDALDeinitGCPs(m_nGCPCount, m_pasGCPList);
-            CPLFree(m_pasGCPList);
-            m_nGCPCount = 0;
-            m_pasGCPList = nullptr;
+            m_aoGCPs.clear();
         }
         else if (padfTransform[0] == 0.0 && padfTransform[1] == 0.0 &&
                  padfTransform[2] == 0.0 && padfTransform[3] == 0.0 &&
@@ -8319,7 +8316,7 @@ CPLErr GTiffDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 
     if (eAccess == GA_Update)
     {
-        if (m_nGCPCount > 0 && nGCPCountIn == 0)
+        if (!m_aoGCPs.empty() && nGCPCountIn == 0)
         {
             m_bForceUnsetGTOrGCPs = true;
         }
@@ -8377,14 +8374,7 @@ CPLErr GTiffDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
             m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
 
-        if (m_nGCPCount > 0)
-        {
-            GDALDeinitGCPs(m_nGCPCount, m_pasGCPList);
-            CPLFree(m_pasGCPList);
-        }
-
-        m_nGCPCount = nGCPCountIn;
-        m_pasGCPList = GDALDuplicateGCPs(m_nGCPCount, pasGCPListIn);
+        m_aoGCPs = gdal::GCP::fromC(pasGCPListIn, nGCPCountIn);
     }
 
     return eErr;

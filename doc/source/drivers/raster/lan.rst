@@ -31,3 +31,5 @@ Driver capabilities
 .. supports_georeferencing::
 
 .. supports_virtualio::
+
+.. supports_create::

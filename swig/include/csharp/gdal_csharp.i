@@ -86,6 +86,8 @@ typedef struct
 } GDALRasterIOExtraArg;
 
 DEFINE_EXTERNAL_CLASS(OGRLayerShadow, OSGeo.OGR.Layer)
+DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
+
 
 %define %rasterio_functions(GDALTYPE,CSTYPE)
  public CPLErr ReadRaster(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer, int buf_xSize, int buf_ySize, int pixelSpace, int lineSpace) {

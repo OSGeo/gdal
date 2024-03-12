@@ -33,6 +33,8 @@ the application therefore includes all the updates.
 Driver capabilities
 -------------------
 
+.. supports_create::
+
 .. supports_georeferencing::
 
 .. supports_virtualio::

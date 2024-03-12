@@ -52,24 +52,22 @@ CPLXMLNode *GDALSerializeTPSTransformer(void *pTransformArg);
 void *GDALDeserializeTPSTransformer(CPLXMLNode *psTree);
 CPL_C_END
 
-typedef struct
+struct TPSTransformInfo
 {
-    GDALTransformerInfo sTI;
+    GDALTransformerInfo sTI{};
 
-    VizGeorefSpline2D *poForward;
-    VizGeorefSpline2D *poReverse;
-    bool bForwardSolved;
-    bool bReverseSolved;
-    double dfSrcApproxErrorReverse;
+    VizGeorefSpline2D *poForward{};
+    VizGeorefSpline2D *poReverse{};
+    bool bForwardSolved{};
+    bool bReverseSolved{};
+    double dfSrcApproxErrorReverse{};
 
-    bool bReversed;
+    bool bReversed{};
 
-    int nGCPCount;
-    GDAL_GCP *pasGCPList;
+    std::vector<gdal::GCP> asGCPs{};
 
-    volatile int nRefCount;
-
-} TPSTransformInfo;
+    volatile int nRefCount{};
+};
 
 /************************************************************************/
 /*                   GDALCreateSimilarTPSTransformer()                  */
@@ -91,17 +89,15 @@ static void *GDALCreateSimilarTPSTransformer(void *hTransformArg,
     }
     else
     {
-        GDAL_GCP *pasGCPList =
-            GDALDuplicateGCPs(psInfo->nGCPCount, psInfo->pasGCPList);
-        for (int i = 0; i < psInfo->nGCPCount; i++)
+        auto newGCPs = psInfo->asGCPs;
+        for (auto &gcp : newGCPs)
         {
-            pasGCPList[i].dfGCPPixel /= dfRatioX;
-            pasGCPList[i].dfGCPLine /= dfRatioY;
+            gcp.Pixel() /= dfRatioX;
+            gcp.Line() /= dfRatioY;
         }
         psInfo = static_cast<TPSTransformInfo *>(GDALCreateTPSTransformer(
-            psInfo->nGCPCount, pasGCPList, psInfo->bReversed));
-        GDALDeinitGCPs(psInfo->nGCPCount, pasGCPList);
-        CPLFree(pasGCPList);
+            static_cast<int>(newGCPs.size()), gdal::GCP::c_ptr(newGCPs),
+            psInfo->bReversed));
     }
 
     return psInfo;
@@ -160,11 +156,9 @@ void *GDALCreateTPSTransformerInt(int nGCPCount, const GDAL_GCP *pasGCPList,
     /* -------------------------------------------------------------------- */
     /*      Allocate transform info.                                        */
     /* -------------------------------------------------------------------- */
-    TPSTransformInfo *psInfo =
-        static_cast<TPSTransformInfo *>(CPLCalloc(sizeof(TPSTransformInfo), 1));
+    TPSTransformInfo *psInfo = new TPSTransformInfo();
 
-    psInfo->pasGCPList = GDALDuplicateGCPs(nGCPCount, pasGCPList);
-    psInfo->nGCPCount = nGCPCount;
+    psInfo->asGCPs = gdal::GCP::fromC(pasGCPList, nGCPCount);
 
     psInfo->bReversed = CPL_TO_BOOL(bReversed);
     psInfo->poForward = new VizGeorefSpline2D(2);
@@ -320,10 +314,7 @@ void GDALDestroyTPSTransformer(void *pTransformArg)
         delete psInfo->poForward;
         delete psInfo->poReverse;
 
-        GDALDeinitGCPs(psInfo->nGCPCount, psInfo->pasGCPList);
-        CPLFree(psInfo->pasGCPList);
-
-        CPLFree(pTransformArg);
+        delete psInfo;
     }
 }
 
@@ -428,10 +419,9 @@ CPLXMLNode *GDALSerializeTPSTransformer(void *pTransformArg)
     /* -------------------------------------------------------------------- */
     /*      Attach GCP List.                                                */
     /* -------------------------------------------------------------------- */
-    if (psInfo->nGCPCount > 0)
+    if (!psInfo->asGCPs.empty())
     {
-        GDALSerializeGCPListToXML(psTree, psInfo->pasGCPList, psInfo->nGCPCount,
-                                  nullptr);
+        GDALSerializeGCPListToXML(psTree, psInfo->asGCPs, nullptr);
     }
 
     if (psInfo->dfSrcApproxErrorReverse > 0)
@@ -455,13 +445,11 @@ void *GDALDeserializeTPSTransformer(CPLXMLNode *psTree)
     /*      Check for GCPs.                                                 */
     /* -------------------------------------------------------------------- */
     CPLXMLNode *psGCPList = CPLGetXMLNode(psTree, "GCPList");
-    GDAL_GCP *pasGCPList = nullptr;
-    int nGCPCount = 0;
 
+    std::vector<gdal::GCP> asGCPs;
     if (psGCPList != nullptr)
     {
-        GDALDeserializeGCPListFromXML(psGCPList, &pasGCPList, &nGCPCount,
-                                      nullptr);
+        GDALDeserializeGCPListFromXML(psGCPList, asGCPs, nullptr);
     }
 
     /* -------------------------------------------------------------------- */
@@ -477,14 +465,9 @@ void *GDALDeserializeTPSTransformer(CPLXMLNode *psTree)
     /* -------------------------------------------------------------------- */
     /*      Generate transformation.                                        */
     /* -------------------------------------------------------------------- */
-    void *pResult = GDALCreateTPSTransformerInt(nGCPCount, pasGCPList,
+    void *pResult = GDALCreateTPSTransformerInt(static_cast<int>(asGCPs.size()),
+                                                gdal::GCP::c_ptr(asGCPs),
                                                 bReversed, aosOptions.List());
-
-    /* -------------------------------------------------------------------- */
-    /*      Cleanup GCP copy.                                               */
-    /* -------------------------------------------------------------------- */
-    GDALDeinitGCPs(nGCPCount, pasGCPList);
-    CPLFree(pasGCPList);
 
     return pResult;
 }

@@ -575,6 +575,8 @@ OGRErr CPL_DLL OSRSetWellKnownGeogCS(OGRSpatialReferenceH hSRS,
                                      const char *pszName);
 OGRErr CPL_DLL CPL_STDCALL OSRSetFromUserInput(OGRSpatialReferenceH hSRS,
                                                const char *);
+OGRErr CPL_DLL OSRSetFromUserInputEx(OGRSpatialReferenceH hSRS, const char *,
+                                     CSLConstList papszOptions);
 OGRErr CPL_DLL OSRCopyGeogCSFrom(OGRSpatialReferenceH hSRS,
                                  const OGRSpatialReferenceH hSrcSRS);
 OGRErr CPL_DLL OSRSetTOWGS84(OGRSpatialReferenceH hSRS, double, double, double,

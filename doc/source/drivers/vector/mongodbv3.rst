@@ -20,8 +20,6 @@ This driver requires the MongoDB C++ v3.4.0 client library.
 Driver capabilities
 -------------------
 
-.. supports_create::
-
 .. supports_georeferencing::
 
 .. supports_virtualio::

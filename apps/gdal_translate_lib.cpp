@@ -1917,6 +1917,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* ==================================================================== */
     /*      Process all bands.                                              */
     /* ==================================================================== */
+    GDALDataType eOutputType = psOptions->eOutputType;
+
     for (int i = 0; i < psOptions->nBandCount; i++)
     {
         int nComponent = 0;
@@ -1947,13 +1949,44 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         GDALRasterBand *poRealSrcBand =
             (nSrcBand < 0) ? poSrcBand->GetMaskBand() : poSrcBand;
         GDALDataType eBandType;
-        if (psOptions->eOutputType == GDT_Unknown)
+        if (eOutputType == GDT_Unknown)
         {
             eBandType = poRealSrcBand->GetRasterDataType();
+            if (eBandType != GDT_Byte && psOptions->nRGBExpand != 0)
+            {
+                // Use case of https://github.com/OSGeo/gdal/issues/9402
+                if (const auto poColorTable = poRealSrcBand->GetColorTable())
+                {
+                    bool bIn0To255Range = true;
+                    const int nColorCount = poColorTable->GetColorEntryCount();
+                    for (int nColor = 0; nColor < nColorCount; nColor++)
+                    {
+                        const GDALColorEntry *poEntry =
+                            poColorTable->GetColorEntry(nColor);
+                        if (poEntry->c1 > 255 || poEntry->c2 > 255 ||
+                            poEntry->c3 > 255 || poEntry->c4 > 255)
+                        {
+                            bIn0To255Range = false;
+                            break;
+                        }
+                    }
+                    if (bIn0To255Range)
+                    {
+                        if (!psOptions->bQuiet)
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Using Byte output data type due to range "
+                                     "of values in color table");
+                        }
+                        eBandType = GDT_Byte;
+                    }
+                }
+                eOutputType = eBandType;
+            }
         }
         else
         {
-            eBandType = psOptions->eOutputType;
+            eBandType = eOutputType;
 
             // Check that we can copy existing statistics
             GDALDataType eSrcBandType = poRealSrcBand->GetRasterDataType();

@@ -298,10 +298,9 @@ CPLXMLNode *GDALPamDataset::SerializeToXML(const char *pszUnused)
     /* -------------------------------------------------------------------- */
     /*      GCPs                                                            */
     /* -------------------------------------------------------------------- */
-    if (psPam->nGCPCount > 0)
+    if (!psPam->asGCPs.empty())
     {
-        GDALSerializeGCPListToXML(psDSTree, psPam->pasGCPList, psPam->nGCPCount,
-                                  psPam->poGCP_SRS);
+        GDALSerializeGCPListToXML(psDSTree, psPam->asGCPs, psPam->poGCP_SRS);
     }
 
     /* -------------------------------------------------------------------- */
@@ -405,11 +404,6 @@ void GDALPamDataset::PamClear()
             psPam->poSRS->Release();
         if (psPam->poGCP_SRS)
             psPam->poGCP_SRS->Release();
-        if (psPam->nGCPCount > 0)
-        {
-            GDALDeinitGCPs(psPam->nGCPCount, psPam->pasGCPList);
-            CPLFree(psPam->pasGCPList);
-        }
 
         delete psPam;
         psPam = nullptr;
@@ -491,16 +485,9 @@ CPLErr GDALPamDataset::XMLInit(const CPLXMLNode *psTree, const char *pszUnused)
 
         // Make sure any previous GCPs, perhaps from an .aux file, are cleared
         // if we have new ones.
-        if (psPam->nGCPCount > 0)
-        {
-            GDALDeinitGCPs(psPam->nGCPCount, psPam->pasGCPList);
-            CPLFree(psPam->pasGCPList);
-            psPam->nGCPCount = 0;
-            psPam->pasGCPList = nullptr;
-        }
-
-        GDALDeserializeGCPListFromXML(psGCPList, &(psPam->pasGCPList),
-                                      &(psPam->nGCPCount), &(psPam->poGCP_SRS));
+        psPam->asGCPs.clear();
+        GDALDeserializeGCPListFromXML(psGCPList, psPam->asGCPs,
+                                      &(psPam->poGCP_SRS));
     }
 
     /* -------------------------------------------------------------------- */
@@ -602,23 +589,21 @@ CPLErr GDALPamDataset::XMLInit(const CPLXMLNode *psTree, const char *pszUnused)
                     adfSource.size() == adfTarget.size() &&
                     (adfSource.size() % 2) == 0)
                 {
-                    std::vector<GDAL_GCP> asGCPs;
-                    asGCPs.resize(adfSource.size() / 2);
-                    char szEmptyString[] = {0};
+                    std::vector<gdal::GCP> asGCPs;
                     for (size_t i = 0; i + 1 < adfSource.size(); i += 2)
                     {
-                        asGCPs[i / 2].pszId = szEmptyString;
-                        asGCPs[i / 2].pszInfo = szEmptyString;
-                        asGCPs[i / 2].dfGCPPixel = adfSource[i];
-                        asGCPs[i / 2].dfGCPLine = ySourceAllNegative
-                                                      ? -adfSource[i + 1]
-                                                      : adfSource[i + 1];
-                        asGCPs[i / 2].dfGCPX = adfTarget[i];
-                        asGCPs[i / 2].dfGCPY = adfTarget[i + 1];
-                        asGCPs[i / 2].dfGCPZ = 0;
+                        asGCPs.emplace_back("", "",
+                                            /* pixel = */ adfSource[i],
+                                            /* line = */
+                                            ySourceAllNegative
+                                                ? -adfSource[i + 1]
+                                                : adfSource[i + 1],
+                                            /* X = */ adfTarget[i],
+                                            /* Y = */ adfTarget[i + 1]);
                     }
                     GDALPamDataset::SetGCPs(static_cast<int>(asGCPs.size()),
-                                            &asGCPs[0], psPam->poSRS);
+                                            gdal::GCP::c_ptr(asGCPs),
+                                            psPam->poSRS);
                     delete psPam->poSRS;
                     psPam->poSRS = nullptr;
                 }
@@ -1471,8 +1456,8 @@ void GDALPamDataset::DeleteGeoTransform()
 int GDALPamDataset::GetGCPCount()
 
 {
-    if (psPam && psPam->nGCPCount > 0)
-        return psPam->nGCPCount;
+    if (psPam && !psPam->asGCPs.empty())
+        return static_cast<int>(psPam->asGCPs.size());
 
     return GDALDataset::GetGCPCount();
 }
@@ -1497,8 +1482,8 @@ const OGRSpatialReference *GDALPamDataset::GetGCPSpatialRef() const
 const GDAL_GCP *GDALPamDataset::GetGCPs()
 
 {
-    if (psPam && psPam->nGCPCount > 0)
-        return psPam->pasGCPList;
+    if (psPam && !psPam->asGCPs.empty())
+        return gdal::GCP::c_ptr(psPam->asGCPs);
 
     return GDALDataset::GetGCPs();
 }
@@ -1517,16 +1502,8 @@ CPLErr GDALPamDataset::SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList,
     {
         if (psPam->poGCP_SRS)
             psPam->poGCP_SRS->Release();
-        if (psPam->nGCPCount > 0)
-        {
-            GDALDeinitGCPs(psPam->nGCPCount, psPam->pasGCPList);
-            CPLFree(psPam->pasGCPList);
-        }
-
         psPam->poGCP_SRS = poGCP_SRS ? poGCP_SRS->Clone() : nullptr;
-        psPam->nGCPCount = nGCPCount;
-        psPam->pasGCPList = GDALDuplicateGCPs(nGCPCount, pasGCPList);
-
+        psPam->asGCPs = gdal::GCP::fromC(pasGCPList, nGCPCount);
         MarkPamDirty();
 
         return CE_None;
@@ -1719,9 +1696,8 @@ CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
     /* -------------------------------------------------------------------- */
     if (poAuxDS->GetGCPCount() > 0)
     {
-        psPam->nGCPCount = poAuxDS->GetGCPCount();
-        psPam->pasGCPList =
-            GDALDuplicateGCPs(psPam->nGCPCount, poAuxDS->GetGCPs());
+        psPam->asGCPs =
+            gdal::GCP::fromC(poAuxDS->GetGCPs(), poAuxDS->GetGCPCount());
     }
 
     /* -------------------------------------------------------------------- */

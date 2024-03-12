@@ -108,3 +108,12 @@ def test_osr_opengis_https_4326():
     srs = osr.SpatialReference()
     assert srs.SetFromUserInput("https://opengis.net/def/crs/EPSG/0/4326") == 0
     assert gdaltest.equal_srs_from_wkt(expected_wkt, srs.ExportToWkt())
+
+
+def test_osr_SetFromUserInput_http_disabled():
+    srs = osr.SpatialReference()
+    with pytest.raises(Exception, match="due to ALLOW_NETWORK_ACCESS=NO"):
+        srs.SetFromUserInput(
+            "https://spatialreference.org/ref/epsg/4326/",
+            options=["ALLOW_NETWORK_ACCESS=NO"],
+        )

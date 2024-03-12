@@ -3784,4 +3784,141 @@ TEST_F(test_gdal, drop_cache)
     }
 }
 
+// Test gdal::gcp class
+TEST_F(test_gdal, gdal_gcp_class)
+{
+    {
+        gdal::GCP gcp;
+        EXPECT_STREQ(gcp.Id(), "");
+        EXPECT_STREQ(gcp.Info(), "");
+        EXPECT_EQ(gcp.Pixel(), 0.0);
+        EXPECT_EQ(gcp.Line(), 0.0);
+        EXPECT_EQ(gcp.X(), 0.0);
+        EXPECT_EQ(gcp.Y(), 0.0);
+        EXPECT_EQ(gcp.Z(), 0.0);
+    }
+    {
+        gdal::GCP gcp("id", "info", 1.5, 2.5, 3.5, 4.5, 5.5);
+        EXPECT_STREQ(gcp.Id(), "id");
+        EXPECT_STREQ(gcp.Info(), "info");
+        EXPECT_EQ(gcp.Pixel(), 1.5);
+        EXPECT_EQ(gcp.Line(), 2.5);
+        EXPECT_EQ(gcp.X(), 3.5);
+        EXPECT_EQ(gcp.Y(), 4.5);
+        EXPECT_EQ(gcp.Z(), 5.5);
+
+        gcp.SetId("id2");
+        gcp.SetInfo("info2");
+        gcp.Pixel() = -1.5;
+        gcp.Line() = -2.5;
+        gcp.X() = -3.5;
+        gcp.Y() = -4.5;
+        gcp.Z() = -5.5;
+        EXPECT_STREQ(gcp.Id(), "id2");
+        EXPECT_STREQ(gcp.Info(), "info2");
+        EXPECT_EQ(gcp.Pixel(), -1.5);
+        EXPECT_EQ(gcp.Line(), -2.5);
+        EXPECT_EQ(gcp.X(), -3.5);
+        EXPECT_EQ(gcp.Y(), -4.5);
+        EXPECT_EQ(gcp.Z(), -5.5);
+
+        {
+            gdal::GCP gcp_copy(gcp);
+            EXPECT_STREQ(gcp_copy.Id(), "id2");
+            EXPECT_STREQ(gcp_copy.Info(), "info2");
+            EXPECT_EQ(gcp_copy.Pixel(), -1.5);
+            EXPECT_EQ(gcp_copy.Line(), -2.5);
+            EXPECT_EQ(gcp_copy.X(), -3.5);
+            EXPECT_EQ(gcp_copy.Y(), -4.5);
+            EXPECT_EQ(gcp_copy.Z(), -5.5);
+        }
+
+        {
+            gdal::GCP gcp_copy;
+            gcp_copy = gcp;
+            EXPECT_STREQ(gcp_copy.Id(), "id2");
+            EXPECT_STREQ(gcp_copy.Info(), "info2");
+            EXPECT_EQ(gcp_copy.Pixel(), -1.5);
+            EXPECT_EQ(gcp_copy.Line(), -2.5);
+            EXPECT_EQ(gcp_copy.X(), -3.5);
+            EXPECT_EQ(gcp_copy.Y(), -4.5);
+            EXPECT_EQ(gcp_copy.Z(), -5.5);
+        }
+
+        {
+            gdal::GCP gcp_copy(gcp);
+            gdal::GCP gcp_from_moved(std::move(gcp_copy));
+            EXPECT_STREQ(gcp_from_moved.Id(), "id2");
+            EXPECT_STREQ(gcp_from_moved.Info(), "info2");
+            EXPECT_EQ(gcp_from_moved.Pixel(), -1.5);
+            EXPECT_EQ(gcp_from_moved.Line(), -2.5);
+            EXPECT_EQ(gcp_from_moved.X(), -3.5);
+            EXPECT_EQ(gcp_from_moved.Y(), -4.5);
+            EXPECT_EQ(gcp_from_moved.Z(), -5.5);
+        }
+
+        {
+            gdal::GCP gcp_copy(gcp);
+            gdal::GCP gcp_from_moved;
+            gcp_from_moved = std::move(gcp_copy);
+            EXPECT_STREQ(gcp_from_moved.Id(), "id2");
+            EXPECT_STREQ(gcp_from_moved.Info(), "info2");
+            EXPECT_EQ(gcp_from_moved.Pixel(), -1.5);
+            EXPECT_EQ(gcp_from_moved.Line(), -2.5);
+            EXPECT_EQ(gcp_from_moved.X(), -3.5);
+            EXPECT_EQ(gcp_from_moved.Y(), -4.5);
+            EXPECT_EQ(gcp_from_moved.Z(), -5.5);
+        }
+
+        {
+            const GDAL_GCP *c_gcp = gcp.c_ptr();
+            EXPECT_STREQ(c_gcp->pszId, "id2");
+            EXPECT_STREQ(c_gcp->pszInfo, "info2");
+            EXPECT_EQ(c_gcp->dfGCPPixel, -1.5);
+            EXPECT_EQ(c_gcp->dfGCPLine, -2.5);
+            EXPECT_EQ(c_gcp->dfGCPX, -3.5);
+            EXPECT_EQ(c_gcp->dfGCPY, -4.5);
+            EXPECT_EQ(c_gcp->dfGCPZ, -5.5);
+
+            const gdal::GCP gcp_from_c(*c_gcp);
+            EXPECT_STREQ(gcp_from_c.Id(), "id2");
+            EXPECT_STREQ(gcp_from_c.Info(), "info2");
+            EXPECT_EQ(gcp_from_c.Pixel(), -1.5);
+            EXPECT_EQ(gcp_from_c.Line(), -2.5);
+            EXPECT_EQ(gcp_from_c.X(), -3.5);
+            EXPECT_EQ(gcp_from_c.Y(), -4.5);
+            EXPECT_EQ(gcp_from_c.Z(), -5.5);
+        }
+    }
+
+    {
+        const std::vector<gdal::GCP> gcps{
+            gdal::GCP{nullptr, nullptr, 0, 0, 0, 0, 0},
+            gdal::GCP{"id", "info", 1.5, 2.5, 3.5, 4.5, 5.5}};
+
+        const GDAL_GCP *c_gcps = gdal::GCP::c_ptr(gcps);
+        EXPECT_STREQ(c_gcps[1].pszId, "id");
+        EXPECT_STREQ(c_gcps[1].pszInfo, "info");
+        EXPECT_EQ(c_gcps[1].dfGCPPixel, 1.5);
+        EXPECT_EQ(c_gcps[1].dfGCPLine, 2.5);
+        EXPECT_EQ(c_gcps[1].dfGCPX, 3.5);
+        EXPECT_EQ(c_gcps[1].dfGCPY, 4.5);
+        EXPECT_EQ(c_gcps[1].dfGCPZ, 5.5);
+
+        const auto gcps_from_c =
+            gdal::GCP::fromC(c_gcps, static_cast<int>(gcps.size()));
+        ASSERT_EQ(gcps_from_c.size(), gcps.size());
+        for (size_t i = 0; i < gcps.size(); ++i)
+        {
+            EXPECT_STREQ(gcps_from_c[i].Id(), gcps[i].Id());
+            EXPECT_STREQ(gcps_from_c[i].Info(), gcps[i].Info());
+            EXPECT_EQ(gcps_from_c[i].Pixel(), gcps[i].Pixel());
+            EXPECT_EQ(gcps_from_c[i].Line(), gcps[i].Line());
+            EXPECT_EQ(gcps_from_c[i].X(), gcps[i].X());
+            EXPECT_EQ(gcps_from_c[i].Y(), gcps[i].Y());
+            EXPECT_EQ(gcps_from_c[i].Z(), gcps[i].Z());
+        }
+    }
+}
+
 }  // namespace

@@ -717,15 +717,20 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
     {
         OGRSpatialReferenceH hLatLong = nullptr;
 
-        OGRErr eErr = OGRERR_NONE;
-        // Check that it looks like Earth before trying to reproject to wgs84...
-        if (bJson &&
-            fabs(OSRGetSemiMajor(hProj, &eErr) - 6378137.0) < 10000.0 &&
-            eErr == OGRERR_NONE)
+        if (bJson)
         {
-            bTransformToWGS84 = true;
-            hLatLong = OSRNewSpatialReference(nullptr);
-            OSRSetWellKnownGeogCS(hLatLong, "WGS84");
+            // Check that it looks like Earth before trying to reproject to wgs84...
+            // OSRGetSemiMajor() may raise an error on CRS like Engineering CRS
+            CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oCPLErrorHandlerPusher;
+            OGRErr eErr = OGRERR_NONE;
+            if (fabs(OSRGetSemiMajor(hProj, &eErr) - 6378137.0) < 10000.0 &&
+                eErr == OGRERR_NONE)
+            {
+                bTransformToWGS84 = true;
+                hLatLong = OSRNewSpatialReference(nullptr);
+                OSRSetWellKnownGeogCS(hLatLong, "WGS84");
+            }
         }
         else
         {
