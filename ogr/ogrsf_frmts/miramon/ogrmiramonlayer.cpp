@@ -733,10 +733,10 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 return nullptr;
             }
 
-            poPoint->setX(phMiraMonLayer->ReadedFeature.pCoord[0].dfX);
-            poPoint->setY(phMiraMonLayer->ReadedFeature.pCoord[0].dfY);
+            poPoint->setX(phMiraMonLayer->ReadFeature.pCoord[0].dfX);
+            poPoint->setY(phMiraMonLayer->ReadFeature.pCoord[0].dfY);
             if (phMiraMonLayer->TopHeader.bIs3d)
-                poPoint->setZ(phMiraMonLayer->ReadedFeature.pZCoord[0]);
+                poPoint->setZ(phMiraMonLayer->ReadFeature.pZCoord[0]);
             break;
 
         case MM_LayerType_Arc:
@@ -752,17 +752,17 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
             }
 
             for (MM_N_VERTICES_TYPE nIVrt = 0;
-                 nIVrt < phMiraMonLayer->ReadedFeature.pNCoordRing[0]; nIVrt++)
+                 nIVrt < phMiraMonLayer->ReadFeature.pNCoordRing[0]; nIVrt++)
             {
                 if (phMiraMonLayer->TopHeader.bIs3d)
                     poLS->addPoint(
-                        phMiraMonLayer->ReadedFeature.pCoord[nIVrt].dfX,
-                        phMiraMonLayer->ReadedFeature.pCoord[nIVrt].dfY,
-                        phMiraMonLayer->ReadedFeature.pZCoord[nIVrt]);
+                        phMiraMonLayer->ReadFeature.pCoord[nIVrt].dfX,
+                        phMiraMonLayer->ReadFeature.pCoord[nIVrt].dfY,
+                        phMiraMonLayer->ReadFeature.pZCoord[nIVrt]);
                 else
                     poLS->addPoint(
-                        phMiraMonLayer->ReadedFeature.pCoord[nIVrt].dfX,
-                        phMiraMonLayer->ReadedFeature.pCoord[nIVrt].dfY);
+                        phMiraMonLayer->ReadFeature.pCoord[nIVrt].dfX,
+                        phMiraMonLayer->ReadFeature.pCoord[nIVrt].dfY);
             }
             break;
 
@@ -788,7 +788,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 }
 
                 nIVrtAcum = 0;
-                if (!(phMiraMonLayer->ReadedFeature.flag_VFG[0] |
+                if (!(phMiraMonLayer->ReadFeature.flag_VFG[0] |
                       MM_EXTERIOR_ARC_SIDE))
                 {
                     CPLError(CE_Failure, CPLE_NoWriteAccess,
@@ -798,36 +798,35 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 }
                 MM_BOOLEAN IAmExternal;
 
-                for (nIRing = 0; nIRing < phMiraMonLayer->ReadedFeature.nNRings;
+                for (nIRing = 0; nIRing < phMiraMonLayer->ReadFeature.nNRings;
                      nIRing++)
                 {
                     OGRLinearRing poRing;
 
-                    IAmExternal = (MM_BOOLEAN)(phMiraMonLayer->ReadedFeature
+                    IAmExternal = (MM_BOOLEAN)(phMiraMonLayer->ReadFeature
                                                    .flag_VFG[nIRing] |
                                                MM_EXTERIOR_ARC_SIDE);
 
                     for (MM_N_VERTICES_TYPE nIVrt = 0;
                          nIVrt <
-                         phMiraMonLayer->ReadedFeature.pNCoordRing[nIRing];
+                         phMiraMonLayer->ReadFeature.pNCoordRing[nIRing];
                          nIVrt++)
                     {
                         if (phMiraMonLayer->TopHeader.bIs3d)
                         {
                             poRing.addPoint(
-                                phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum]
+                                phMiraMonLayer->ReadFeature.pCoord[nIVrtAcum]
                                     .dfX,
-                                phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum]
+                                phMiraMonLayer->ReadFeature.pCoord[nIVrtAcum]
                                     .dfY,
-                                phMiraMonLayer->ReadedFeature
-                                    .pZCoord[nIVrtAcum]);
+                                phMiraMonLayer->ReadFeature.pZCoord[nIVrtAcum]);
                         }
                         else
                         {
                             poRing.addPoint(
-                                phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum]
+                                phMiraMonLayer->ReadFeature.pCoord[nIVrtAcum]
                                     .dfX,
-                                phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum]
+                                phMiraMonLayer->ReadFeature.pCoord[nIVrtAcum]
                                     .dfY);
                         }
 
@@ -836,10 +835,10 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
                     // If I'm going to start a new polygon...
                     if ((IAmExternal &&
-                         nIRing + 1 < phMiraMonLayer->ReadedFeature.nNRings &&
-                         ((phMiraMonLayer->ReadedFeature.flag_VFG[nIRing + 1]) &
+                         nIRing + 1 < phMiraMonLayer->ReadFeature.nNRings &&
+                         ((phMiraMonLayer->ReadFeature.flag_VFG[nIRing + 1]) &
                           MM_EXTERIOR_ARC_SIDE)) ||
-                        nIRing + 1 >= phMiraMonLayer->ReadedFeature.nNRings)
+                        nIRing + 1 >= phMiraMonLayer->ReadFeature.nNRings)
                     {
                         poPoly.addRing(&poRing);
                         poMP->addGeometry(&poPoly);
@@ -864,7 +863,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 }
 
                 nIVrtAcum = 0;
-                if (!(phMiraMonLayer->ReadedFeature.flag_VFG[0] |
+                if (!(phMiraMonLayer->ReadFeature.flag_VFG[0] |
                       MM_EXTERIOR_ARC_SIDE))
                 {
                     CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -873,32 +872,31 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     return nullptr;
                 }
 
-                for (nIRing = 0; nIRing < phMiraMonLayer->ReadedFeature.nNRings;
+                for (nIRing = 0; nIRing < phMiraMonLayer->ReadFeature.nNRings;
                      nIRing++)
                 {
                     OGRLinearRing poRing;
 
                     for (MM_N_VERTICES_TYPE nIVrt = 0;
                          nIVrt <
-                         phMiraMonLayer->ReadedFeature.pNCoordRing[nIRing];
+                         phMiraMonLayer->ReadFeature.pNCoordRing[nIRing];
                          nIVrt++)
                     {
                         if (phMiraMonLayer->TopHeader.bIs3d)
                         {
                             poRing.addPoint(
-                                phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum]
+                                phMiraMonLayer->ReadFeature.pCoord[nIVrtAcum]
                                     .dfX,
-                                phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum]
+                                phMiraMonLayer->ReadFeature.pCoord[nIVrtAcum]
                                     .dfY,
-                                phMiraMonLayer->ReadedFeature
-                                    .pZCoord[nIVrtAcum]);
+                                phMiraMonLayer->ReadFeature.pZCoord[nIVrtAcum]);
                         }
                         else
                         {
                             poRing.addPoint(
-                                phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum]
+                                phMiraMonLayer->ReadFeature.pCoord[nIVrtAcum]
                                     .dfX,
-                                phMiraMonLayer->ReadedFeature.pCoord[nIVrtAcum]
+                                phMiraMonLayer->ReadFeature.pCoord[nIVrtAcum]
                                     .dfY);
                         }
 

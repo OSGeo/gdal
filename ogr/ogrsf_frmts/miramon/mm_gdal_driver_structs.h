@@ -820,7 +820,7 @@ struct MiraMonVectLayerInfo
     char *szStringToOperate;
 
     // Temporary elements when reading features from MiraMon files
-    struct MiraMonFeature ReadedFeature;
+    struct MiraMonFeature ReadFeature;
 
     MM_SELEC_COORDZ_TYPE nSelectCoordz;  // MM_SELECT_FIRST_COORDZ
                                          // MM_SELECT_HIGHEST_COORDZ
