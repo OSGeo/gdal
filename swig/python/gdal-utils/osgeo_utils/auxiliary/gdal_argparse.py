@@ -62,6 +62,9 @@ class GDALArgumentParser(argparse.ArgumentParser):
                     formatter_class = argparse.RawDescriptionHelpFormatter
                 description = f'{title}\n{"-"*(2+len(title))}\n{description}'
 
+        if formatter_class is None:
+            formatter_class = argparse.HelpFormatter
+
         super().__init__(
             fromfile_prefix_chars=fromfile_prefix_chars,
             description=description,
