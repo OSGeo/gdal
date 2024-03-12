@@ -143,7 +143,7 @@ def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials)
     bucket = "noaa-goes16"
     obj = "ABI-L1b-RadC/2022/001/00/OR_ABI-L1b-RadC-M6C01_G16_s20220010001173_e20220010003546_c20220010003587.nc"
     vsis3_path = "/vsis3/" + bucket + "/" + obj
-    url = "https://" + bucket + ".s3.amazonaws.com/" + obj
+    url = "https://" + bucket + ".s3.us-east-1.amazonaws.com/" + obj
 
     with gdaltest.config_options(
         options, thread_local=False
