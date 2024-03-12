@@ -232,6 +232,8 @@ struct GDALNearblackOptionsForBinary
 
 std::string CPL_DLL GDALNearblackGetParserUsage();
 
+std::string CPL_DLL GDALVectorInfoGetParserUsage();
+
 #endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* GDAL_UTILS_PRIV_H_INCLUDED */
