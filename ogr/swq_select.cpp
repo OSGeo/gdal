@@ -866,13 +866,14 @@ CPLErr swq_select::expand_wildcard(swq_field_list *field_list,
         column_defs.insert(pos, expanded_columns.begin(),
                            expanded_columns.end());
 
-        columns_added += static_cast<int>(expanded_columns.size() - 1);
+        columns_added += static_cast<int>(expanded_columns.size()) - 1;
 
-        auto it = m_exclude_fields.find(isrc);
+        const auto it = m_exclude_fields.find(isrc);
         if (it != m_exclude_fields.end())
         {
-            for (const auto &field : it->second)
+            if (!it->second.empty())
             {
+                const auto &field = it->second.front();
                 CPLError(
                     CE_Failure, CPLE_AppDefined,
                     "Field %s specified in EXCEPT/EXCLUDE expression not found",
