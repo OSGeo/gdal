@@ -5037,6 +5037,15 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
                                 *value_end =
                                     '\0';  // Terminate the string at newline character if found
                             }
+                            else
+                            {
+                                value_end = strstr(value_start, "\r");
+                                if (value_end != nullptr)
+                                {
+                                    *value_end =
+                                        '\0';  // Terminate the string at newline character if found
+                                }
+                            }
                         }
 
                         value = strdup_function(value_start);
