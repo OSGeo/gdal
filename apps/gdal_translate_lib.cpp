@@ -3241,8 +3241,7 @@ GDALTranslateOptionsNew(char **papszArgv,
             i++;
             if (psOptionsForBinary)
             {
-                psOptionsForBinary->papszOpenOptions = CSLAddString(
-                    psOptionsForBinary->papszOpenOptions, papszArgv[i]);
+                psOptionsForBinary->aosOpenOptions.AddString(papszArgv[i]);
             }
         }
         else if (i + 1 < argc && EQUAL(papszArgv[i], "-r"))
@@ -3299,8 +3298,8 @@ GDALTranslateOptionsNew(char **papszArgv,
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "%s is not a recognized driver", papszArgv[i]);
                 }
-                psOptionsForBinary->papszAllowInputDrivers = CSLAddString(
-                    psOptionsForBinary->papszAllowInputDrivers, papszArgv[i]);
+                psOptionsForBinary->aosAllowedInputDrivers.AddString(
+                    papszArgv[i]);
             }
         }
 
@@ -3341,13 +3340,13 @@ GDALTranslateOptionsNew(char **papszArgv,
         {
             bGotSourceFilename = true;
             if (psOptionsForBinary)
-                psOptionsForBinary->pszSource = CPLStrdup(papszArgv[i]);
+                psOptionsForBinary->osSource = papszArgv[i];
         }
         else if (!bGotDestFilename)
         {
             bGotDestFilename = true;
             if (psOptionsForBinary)
-                psOptionsForBinary->pszDest = CPLStrdup(papszArgv[i]);
+                psOptionsForBinary->osDest = papszArgv[i];
         }
         else
         {
@@ -3387,8 +3386,7 @@ GDALTranslateOptionsNew(char **papszArgv,
     if (psOptionsForBinary)
     {
         if (!psOptions->osFormat.empty())
-            psOptionsForBinary->pszFormat =
-                CPLStrdup(psOptions->osFormat.c_str());
+            psOptionsForBinary->osFormat = psOptions->osFormat;
     }
 
     return psOptions;

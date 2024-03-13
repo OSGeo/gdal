@@ -56,19 +56,6 @@ struct GDALInfoOptionsForBinary
     char **papszAllowInputDrivers;
 };
 
-struct GDALTranslateOptionsForBinary
-{
-    char *pszSource;
-    char *pszDest;
-    int bQuiet;
-    int bCopySubDatasets;
-    char **papszOpenOptions;
-    char *pszFormat;
-
-    /* Allowed input drivers. */
-    char **papszAllowInputDrivers;
-};
-
 struct GDALWarpAppOptionsForBinary
 {
     char **papszSrcFiles;
@@ -228,6 +215,19 @@ struct GDALNearblackOptionsForBinary
     std::string osInFile{};
     std::string osOutFile{};
     bool bQuiet = false;
+};
+
+struct GDALTranslateOptionsForBinary
+{
+    std::string osSource{};
+    std::string osDest{};
+    bool bQuiet = false;
+    bool bCopySubDatasets = false;
+    CPLStringList aosOpenOptions{};
+    std::string osFormat{};
+
+    /* Allowed input drivers. */
+    CPLStringList aosAllowedInputDrivers{};
 };
 
 std::string CPL_DLL GDALNearblackGetParserUsage();
