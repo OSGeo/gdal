@@ -968,12 +968,12 @@ def test_gdal_translate_34(gdal_translate_path, tmp_path):
 def test_gdal_translate_35(gdal_translate_path, tmp_vsimem):
 
     (_, err) = gdaltest.runexternal_out_and_err(gdal_translate_path)
-    assert "No source dataset specified" in err
+    assert "input_file: 1 argument(s) expected. 0 provided." in err
 
     (_, err) = gdaltest.runexternal_out_and_err(
         gdal_translate_path + " ../gcore/data/byte.tif"
     )
-    assert "No target dataset specified" in err
+    assert "output_file: 1 argument(s) expected. 0 provided." in err
 
     (_, err) = gdaltest.runexternal_out_and_err(
         f"{gdal_translate_path} /non_existing_path/non_existing.tif {tmp_vsimem}/out.tif"
