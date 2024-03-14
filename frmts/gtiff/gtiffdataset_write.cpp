@@ -7314,8 +7314,11 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         GTiffFillStreamableOffsetAndCount(l_hTIFF, nSize);
         TIFFWriteDirectory(l_hTIFF);
     }
-    TIFFSetDirectory(l_hTIFF,
-                     static_cast<tdir_t>(TIFFNumberOfDirectories(l_hTIFF) - 1));
+    const auto nDirCount = TIFFNumberOfDirectories(l_hTIFF);
+    if (nDirCount >= 1)
+    {
+        TIFFSetDirectory(l_hTIFF, static_cast<tdir_t>(nDirCount - 1));
+    }
     const toff_t l_nDirOffset = TIFFCurrentDirOffset(l_hTIFF);
     TIFFFlush(l_hTIFF);
     XTIFFClose(l_hTIFF);
