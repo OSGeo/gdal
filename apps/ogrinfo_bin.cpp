@@ -138,6 +138,10 @@ MAIN_START(argc, argv)
         else if (psOptionsForBinary->osSQLStatement.empty())
         {
             nFlags |= GDAL_OF_READONLY;
+            // GDALIdentifyDriverEx() might emit an error message, e.g.
+            // when opening "/vsizip/foo.zip/" and the zip has more than one
+            // file. Cf https://github.com/OSGeo/gdal/issues/9459
+            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
             if (GDALIdentifyDriverEx(
                     psOptionsForBinary->osFilename.c_str(), GDAL_OF_VECTOR,
                     psOptionsForBinary->aosAllowInputDrivers.List(), nullptr))
