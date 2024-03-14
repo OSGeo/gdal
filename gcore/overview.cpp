@@ -1131,10 +1131,10 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
         tNoDataValue = 0;
     else
         tNoDataValue = static_cast<T>(dfNoDataValue);
-    const T tReplacementVal = static_cast<T>(
-        bHasNoData ? GDALGetNoDataReplacementValue(
-                         poOverview->GetRasterDataType(), dfNoDataValue)
-                   : dfNoDataValue);
+    const T tReplacementVal =
+        bHasNoData ? static_cast<T>(GDALGetNoDataReplacementValue(
+                         poOverview->GetRasterDataType(), dfNoDataValue))
+                   : 0;
 
     int nChunkRightXOff = nChunkXOff + nChunkXSize;
     int nChunkBottomYOff = nChunkYOff + nChunkYSize;
