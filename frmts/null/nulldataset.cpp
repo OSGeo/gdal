@@ -51,10 +51,9 @@ class GDALNullDataset final : public GDALDataset
     }
     virtual OGRLayer *GetLayer(int) override;
 
-    virtual OGRLayer *ICreateLayer(const char *pszLayerName,
-                                   const OGRSpatialReference *poSRS,
-                                   OGRwkbGeometryType eType,
-                                   char **papszOptions) override;
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 
     virtual int TestCapability(const char *) override;
 
@@ -222,9 +221,13 @@ GDALNullDataset::~GDALNullDataset()
 /************************************************************************/
 
 OGRLayer *GDALNullDataset::ICreateLayer(const char *pszLayerName,
-                                        const OGRSpatialReference *poSRS,
-                                        OGRwkbGeometryType eType, char **)
+                                        const OGRGeomFieldDefn *poGeomFieldDefn,
+                                        CSLConstList /*papszOptions */)
 {
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
+
     m_papoLayers = static_cast<OGRLayer **>(
         CPLRealloc(m_papoLayers, sizeof(OGRLayer *) * (m_nLayers + 1)));
     m_papoLayers[m_nLayers] = new GDALNullLayer(pszLayerName, poSRS, eType);

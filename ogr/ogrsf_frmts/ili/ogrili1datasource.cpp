@@ -257,11 +257,13 @@ static char *ExtractTopic(const char *pszLayerName)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRILI1DataSource::ICreateLayer(const char *pszLayerName,
-                                          const OGRSpatialReference * /*poSRS*/,
-                                          OGRwkbGeometryType eType,
-                                          char ** /* papszOptions */)
+OGRLayer *
+OGRILI1DataSource::ICreateLayer(const char *pszLayerName,
+                                const OGRGeomFieldDefn *poGeomFieldDefn,
+                                CSLConstList /*papszOptions*/)
 {
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+
     FeatureDefnInfo featureDefnInfo =
         poImdReader->GetFeatureDefnInfo(pszLayerName);
     const char *table = pszLayerName;

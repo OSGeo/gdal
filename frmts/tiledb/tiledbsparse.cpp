@@ -337,8 +337,8 @@ OGRLayer *OGRTileDBDataset::ExecuteSQL(const char *pszSQLCommand,
 /***********************************************************************/
 OGRLayer *
 OGRTileDBDataset::ICreateLayer(const char *pszName,
-                               const OGRSpatialReference *poSpatialRef,
-                               OGRwkbGeometryType eGType, char **papszOptions)
+                               const OGRGeomFieldDefn *poGeomFieldDefn,
+                               CSLConstList papszOptions)
 {
     if (eAccess != GA_Update)
     {
@@ -346,6 +346,10 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
                  "CreateLayer() failed: dataset in read-only mode");
         return nullptr;
     }
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSpatialRef =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     if (m_osGroupName.empty() && !m_apoLayers.empty())
     {

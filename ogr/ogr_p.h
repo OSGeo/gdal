@@ -42,6 +42,8 @@
 
 #include "ogr_core.h"
 
+#include <limits>
+
 class OGRGeometry;
 class OGRFieldDefn;
 
@@ -86,12 +88,12 @@ OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
 
 void CPL_DLL OGRMakeWktCoordinate(char *, double, double, double, int);
 std::string CPL_DLL OGRMakeWktCoordinate(double, double, double, int,
-                                         OGRWktOptions opts);
+                                         const OGRWktOptions &opts);
 void CPL_DLL OGRMakeWktCoordinateM(char *, double, double, double, double,
                                    OGRBoolean, OGRBoolean);
 std::string CPL_DLL OGRMakeWktCoordinateM(double, double, double, double,
                                           OGRBoolean, OGRBoolean,
-                                          OGRWktOptions opts);
+                                          const OGRWktOptions &opts);
 
 #endif
 
@@ -100,7 +102,8 @@ void CPL_DLL OGRFormatDouble(char *pszBuffer, int nBufferLen, double dfVal,
                              char chConversionSpecifier = 'f');
 
 #ifdef OGR_GEOMETRY_H_INCLUDED
-std::string CPL_DLL OGRFormatDouble(double val, const OGRWktOptions &opts);
+std::string CPL_DLL OGRFormatDouble(double val, const OGRWktOptions &opts,
+                                    int nDimIdx);
 #endif
 
 int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal, int nPrecision,
@@ -236,5 +239,103 @@ OGRErr CPL_DLL OGRReadWKTGeometryType(const char *pszWKT,
 
 void CPL_DLL OGRUpdateFieldType(OGRFieldDefn *poFDefn, OGRFieldType eNewType,
                                 OGRFieldSubType eNewSubType);
+
+/************************************************************************/
+/*                         OGRRoundValueIEEE754()                       */
+/************************************************************************/
+
+/** Set to zero least significants bits of a double precision floating-point
+ * number (passed as an integer), taking into account a desired bit precision.
+ *
+ * @param nVal Integer representation of a IEEE754 double-precision number.
+ * @param nBitsPrecision Desired precision (number of bits after integral part)
+ * @return quantized nVal.
+ * @since GDAL 3.9
+ */
+inline uint64_t OGRRoundValueIEEE754(uint64_t nVal,
+                                     int nBitsPrecision) CPL_WARN_UNUSED_RESULT;
+
+inline uint64_t OGRRoundValueIEEE754(uint64_t nVal, int nBitsPrecision)
+{
+    constexpr int MANTISSA_SIZE = std::numeric_limits<double>::digits - 1;
+    constexpr int MAX_EXPONENT = std::numeric_limits<double>::max_exponent;
+#if __cplusplus >= 201703L
+    static_assert(MANTISSA_SIZE == 52);
+    static_assert(MAX_EXPONENT == 1024);
+#endif
+    // Extract the binary exponent from the IEEE754 representation
+    const int nExponent =
+        ((nVal >> MANTISSA_SIZE) & (2 * MAX_EXPONENT - 1)) - (MAX_EXPONENT - 1);
+    // Add 1 to round-up and the desired precision
+    const int nBitsRequired = 1 + nExponent + nBitsPrecision;
+    // Compute number of nullified bits
+    int nNullifiedBits = MANTISSA_SIZE - nBitsRequired;
+    // this will also capture NaN and Inf since nExponent = 1023,
+    // and thus nNullifiedBits < 0
+    if (nNullifiedBits <= 0)
+        return nVal;
+    if (nNullifiedBits >= MANTISSA_SIZE)
+        nNullifiedBits = MANTISSA_SIZE;
+    nVal &= std::numeric_limits<uint64_t>::max() << nNullifiedBits;
+    return nVal;
+}
+
+/************************************************************************/
+/*                   OGRRoundCoordinatesIEEE754XYValues()               */
+/************************************************************************/
+
+/** Quantize XY values.
+ *
+ * @since GDAL 3.9
+ */
+template <int SPACING>
+inline void OGRRoundCoordinatesIEEE754XYValues(int nBitsPrecision,
+                                               GByte *pabyBase, size_t nPoints)
+{
+    // Note: we use SPACING as template for improved code generation.
+
+    if (nBitsPrecision != INT_MIN)
+    {
+        for (size_t i = 0; i < nPoints; i++)
+        {
+            uint64_t nVal;
+
+            memcpy(&nVal, pabyBase + SPACING * i, sizeof(uint64_t));
+            nVal = OGRRoundValueIEEE754(nVal, nBitsPrecision);
+            memcpy(pabyBase + SPACING * i, &nVal, sizeof(uint64_t));
+
+            memcpy(&nVal, pabyBase + sizeof(uint64_t) + SPACING * i,
+                   sizeof(uint64_t));
+            nVal = OGRRoundValueIEEE754(nVal, nBitsPrecision);
+            memcpy(pabyBase + sizeof(uint64_t) + SPACING * i, &nVal,
+                   sizeof(uint64_t));
+        }
+    }
+}
+
+/************************************************************************/
+/*                     OGRRoundCoordinatesIEEE754()                     */
+/************************************************************************/
+
+/** Quantize Z or M values.
+ *
+ * @since GDAL 3.9
+ */
+template <int SPACING>
+inline void OGRRoundCoordinatesIEEE754(int nBitsPrecision, GByte *pabyBase,
+                                       size_t nPoints)
+{
+    if (nBitsPrecision != INT_MIN)
+    {
+        for (size_t i = 0; i < nPoints; i++)
+        {
+            uint64_t nVal;
+
+            memcpy(&nVal, pabyBase + SPACING * i, sizeof(uint64_t));
+            nVal = OGRRoundValueIEEE754(nVal, nBitsPrecision);
+            memcpy(pabyBase + SPACING * i, &nVal, sizeof(uint64_t));
+        }
+    }
+}
 
 #endif /* ndef OGR_P_H_INCLUDED */

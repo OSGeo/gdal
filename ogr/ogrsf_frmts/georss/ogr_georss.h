@@ -210,11 +210,9 @@ class OGRGeoRSSDataSource final : public OGRDataSource
     }
     OGRLayer *GetLayer(int) override;
 
-    OGRLayer *ICreateLayer(const char *pszLayerName,
-                           const OGRSpatialReference *poSRS,
-                           OGRwkbGeometryType eType,
-                           char **papszOptions) override;
-
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
     int TestCapability(const char *) override;
 
     VSILFILE *GetOutputFP()

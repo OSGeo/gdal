@@ -168,7 +168,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     static OGRFlatGeobufLayer *
     Create(GDALDataset *poDS, const char *pszLayerName, const char *pszFilename,
            const OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType,
-           bool bCreateSpatialIndexAtClose, char **papszOptions);
+           bool bCreateSpatialIndexAtClose, CSLConstList papszOptions);
 
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
     virtual OGRFeature *GetNextFeature() override;
@@ -271,11 +271,10 @@ class OGRFlatGeobufDataset final : public GDALDataset
                                char **papszOptions);
     virtual OGRLayer *GetLayer(int) override;
     int TestCapability(const char *pszCap) override;
-    virtual OGRLayer *
-    ICreateLayer(const char *pszName,
-                 const OGRSpatialReference *poSpatialRef = nullptr,
-                 OGRwkbGeometryType eGType = wkbUnknown,
-                 char **papszOptions = nullptr) override;
+
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 
     virtual int GetLayerCount() override
     {

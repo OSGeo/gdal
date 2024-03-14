@@ -177,9 +177,8 @@ GDALDataset *OGRJMLDataset::Create(const char *pszFilename, int /* nXSize */,
 /************************************************************************/
 
 OGRLayer *OGRJMLDataset::ICreateLayer(const char *pszLayerName,
-                                      const OGRSpatialReference *poSRS,
-                                      OGRwkbGeometryType /* eType */,
-                                      char **papszOptions)
+                                      const OGRGeomFieldDefn *poGeomFieldDefn,
+                                      CSLConstList papszOptions)
 {
     if (!bWriteMode || poLayer != nullptr)
         return nullptr;
@@ -191,6 +190,8 @@ OGRLayer *OGRJMLDataset::ICreateLayer(const char *pszLayerName,
     bool bClassicGML =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "CLASSIC_GML", "NO"));
     OGRSpatialReference *poSRSClone = nullptr;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
     if (poSRS)
     {
         poSRSClone = poSRS->Clone();

@@ -248,7 +248,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
         if (poGeom)
         {
             size_t szWkb = 0;
-            GByte *pabyWkb = GPkgGeometryFromOGR(poGeom, m_iSrs, &szWkb);
+            GByte *pabyWkb = GPkgGeometryFromOGR(poGeom, m_iSrs,
+                                                 &m_sBinaryPrecision, &szWkb);
             if (!pabyWkb)
                 return OGRERR_FAILURE;
             int err = sqlite3_bind_blob(poStmt, nColCount++, pabyWkb,
@@ -1420,6 +1421,72 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                     {
                         m_poFeatureDefn->GetFieldDefn(iIdx)->SetDomainName(
                             pszConstraintName);
+                    }
+                }
+            }
+        }
+    }
+
+    // Look for geometry column coordinate precision in gpkg_metadata
+    if (m_poDS->HasMetadataTables() && m_poFeatureDefn->GetGeomFieldCount() > 0)
+    {
+        pszSQL = sqlite3_mprintf(
+            "SELECT md.metadata, mdr.column_name "
+            "FROM gpkg_metadata md "
+            "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id) "
+            "WHERE lower(mdr.table_name) = lower('%q') "
+            "AND md.md_standard_uri = 'http://gdal.org' "
+            "AND md.mime_type = 'text/xml' "
+            "AND mdr.reference_scope = 'column' "
+            "AND md.metadata LIKE '<CoordinatePrecision%%' "
+            "ORDER BY md.id LIMIT 1000",  // to avoid denial of service
+            m_pszTableName);
+
+        auto oResult = SQLQuery(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+
+        for (int i = 0; oResult && i < oResult->RowCount(); i++)
+        {
+            const char *pszMetadata = oResult->GetValue(0, i);
+            const char *pszColumn = oResult->GetValue(1, i);
+            if (pszMetadata && pszColumn)
+            {
+                const int iGeomCol =
+                    m_poFeatureDefn->GetGeomFieldIndex(pszColumn);
+                if (iGeomCol >= 0)
+                {
+                    auto psXMLNode =
+                        CPLXMLTreeCloser(CPLParseXMLString(pszMetadata));
+                    if (psXMLNode)
+                    {
+                        OGRGeomCoordinatePrecision sCoordPrec;
+                        if (const char *pszVal = CPLGetXMLValue(
+                                psXMLNode.get(), "xy_resolution", nullptr))
+                        {
+                            sCoordPrec.dfXYResolution = CPLAtof(pszVal);
+                        }
+                        if (const char *pszVal = CPLGetXMLValue(
+                                psXMLNode.get(), "z_resolution", nullptr))
+                        {
+                            sCoordPrec.dfZResolution = CPLAtof(pszVal);
+                        }
+                        if (const char *pszVal = CPLGetXMLValue(
+                                psXMLNode.get(), "m_resolution", nullptr))
+                        {
+                            sCoordPrec.dfMResolution = CPLAtof(pszVal);
+                        }
+                        m_poFeatureDefn->GetGeomFieldDefn(iGeomCol)
+                            ->SetCoordinatePrecision(sCoordPrec);
+                        if (CPLTestBool(CPLGetXMLValue(
+                                psXMLNode.get(), "discard_coord_lsb", "false")))
+                        {
+                            m_sBinaryPrecision.SetFrom(sCoordPrec);
+                            m_bUndoDiscardCoordLSBOnReading =
+                                CPLTestBool(CPLGetXMLValue(
+                                    psXMLNode.get(),
+                                    "undo_discard_coord_lsb_on_reading",
+                                    "false"));
+                        }
                     }
                 }
             }
@@ -5535,8 +5602,10 @@ void OGRGeoPackageTableLayer::SetOpeningParameters(
 
 void OGRGeoPackageTableLayer::SetCreationParameters(
     OGRwkbGeometryType eGType, const char *pszGeomColumnName, int bGeomNullable,
-    OGRSpatialReference *poSRS, const char *pszFIDColumnName,
-    const char *pszIdentifier, const char *pszDescription)
+    OGRSpatialReference *poSRS, const OGRGeomCoordinatePrecision &oCoordPrec,
+    bool bDiscardCoordLSB, bool bUndoDiscardCoordLSBOnReading,
+    const char *pszFIDColumnName, const char *pszIdentifier,
+    const char *pszDescription)
 {
     m_bIsSpatial = eGType != wkbNone;
     m_bIsInGpkgContents =
@@ -5547,6 +5616,7 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
     m_bTableCreatedInTransaction = m_poDS->IsInTransaction();
     m_bHasTriedDetectingFID64 = true;
     m_pszFidColumn = CPLStrdup(pszFIDColumnName);
+    m_bUndoDiscardCoordLSBOnReading = bUndoDiscardCoordLSBOnReading;
 
     if (eGType != wkbNone)
     {
@@ -5557,6 +5627,56 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
             m_iSrs = m_poDS->GetSrsId(*poSRS);
         oGeomFieldDefn.SetSpatialRef(poSRS);
         oGeomFieldDefn.SetNullable(bGeomNullable);
+        oGeomFieldDefn.SetCoordinatePrecision(oCoordPrec);
+
+        if (bDiscardCoordLSB)
+            m_sBinaryPrecision.SetFrom(oCoordPrec);
+
+        // Save coordinate precision in gpkg_metadata/gpkg_metadata_reference
+        if ((oCoordPrec.dfXYResolution != OGRGeomCoordinatePrecision::UNKNOWN ||
+             oCoordPrec.dfZResolution != OGRGeomCoordinatePrecision::UNKNOWN ||
+             oCoordPrec.dfMResolution != OGRGeomCoordinatePrecision::UNKNOWN) &&
+            (m_poDS->HasMetadataTables() || m_poDS->CreateMetadataTables()))
+        {
+            std::string osCoordPrecision = "<CoordinatePrecision ";
+            if (oCoordPrec.dfXYResolution !=
+                OGRGeomCoordinatePrecision::UNKNOWN)
+                osCoordPrecision += CPLSPrintf(" xy_resolution=\"%g\"",
+                                               oCoordPrec.dfXYResolution);
+            if (oCoordPrec.dfZResolution != OGRGeomCoordinatePrecision::UNKNOWN)
+                osCoordPrecision += CPLSPrintf(" z_resolution=\"%g\"",
+                                               oCoordPrec.dfZResolution);
+            if (oCoordPrec.dfMResolution != OGRGeomCoordinatePrecision::UNKNOWN)
+                osCoordPrecision += CPLSPrintf(" m_resolution=\"%g\"",
+                                               oCoordPrec.dfMResolution);
+            osCoordPrecision += CPLSPrintf(" discard_coord_lsb=\"%s\"",
+                                           bDiscardCoordLSB ? "true" : "false");
+            osCoordPrecision +=
+                CPLSPrintf(" undo_discard_coord_lsb_on_reading=\"%s\"",
+                           m_bUndoDiscardCoordLSBOnReading ? "true" : "false");
+            osCoordPrecision += " />";
+
+            char *pszSQL = sqlite3_mprintf(
+                "INSERT INTO gpkg_metadata "
+                "(md_scope, md_standard_uri, mime_type, metadata) VALUES "
+                "('dataset','http://gdal.org','text/xml','%q')",
+                osCoordPrecision.c_str());
+            CPL_IGNORE_RET_VAL(SQLCommand(m_poDS->GetDB(), pszSQL));
+            sqlite3_free(pszSQL);
+
+            const sqlite_int64 nFID =
+                sqlite3_last_insert_rowid(m_poDS->GetDB());
+            pszSQL = sqlite3_mprintf(
+                "INSERT INTO gpkg_metadata_reference (reference_scope, "
+                "table_name, column_name, timestamp, md_file_id) VALUES "
+                "('column', '%q', '%q', %s, %d)",
+                m_pszTableName, pszGeomColumnName,
+                m_poDS->GetCurrentDateEscapedSQL().c_str(),
+                static_cast<int>(nFID));
+            CPL_IGNORE_RET_VAL(SQLCommand(m_poDS->GetDB(), pszSQL));
+            sqlite3_free(pszSQL);
+        }
+
         m_poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
     }
     if (pszIdentifier)
@@ -5881,7 +6001,8 @@ char **OGRGeoPackageTableLayer::GetMetadata(const char *pszDomain)
         return OGRLayer::GetMetadata(pszDomain);
 
     char *pszSQL = sqlite3_mprintf(
-        "SELECT md.metadata, md.md_standard_uri, md.mime_type "
+        "SELECT md.metadata, md.md_standard_uri, md.mime_type, "
+        "mdr.reference_scope "
         "FROM gpkg_metadata md "
         "JOIN gpkg_metadata_reference mdr ON (md.id = mdr.md_file_id ) "
         "WHERE lower(mdr.table_name) = lower('%q') ORDER BY md.id "
@@ -5903,9 +6024,10 @@ char **OGRGeoPackageTableLayer::GetMetadata(const char *pszDomain)
         const char *pszMetadata = oResult->GetValue(0, i);
         const char *pszMDStandardURI = oResult->GetValue(1, i);
         const char *pszMimeType = oResult->GetValue(2, i);
+        const char *pszReferenceScope = oResult->GetValue(3, i);
         if (pszMetadata && pszMDStandardURI && pszMimeType &&
-            EQUAL(pszMDStandardURI, "http://gdal.org") &&
-            EQUAL(pszMimeType, "text/xml"))
+            pszReferenceScope && EQUAL(pszMDStandardURI, "http://gdal.org") &&
+            EQUAL(pszMimeType, "text/xml") && EQUAL(pszReferenceScope, "table"))
         {
             CPLXMLNode *psXMLNode = CPLParseXMLString(pszMetadata);
             if (psXMLNode)
@@ -7638,13 +7760,41 @@ begin:
             if (nBlobSize >= 8 && pabyBlob && pabyBlob[0] == 'G' &&
                 pabyBlob[1] == 'P')
             {
-                /* Read header */
-                OGRErr err = GPkgHeaderFromWKB(pabyBlob, nBlobSize, &oHeader);
-                if (err == OGRERR_NONE)
+                if (psFillArrowArray->poLayer->m_bUndoDiscardCoordLSBOnReading)
                 {
-                    /* WKB pointer */
-                    pabyWkb = pabyBlob + oHeader.nHeaderLen;
-                    nWKBSize = nBlobSize - oHeader.nHeaderLen;
+                    OGRGeometry *poGeomPtr =
+                        GPkgGeometryToOGR(pabyBlob, nBlobSize, nullptr);
+                    if (poGeomPtr)
+                    {
+                        poGeomPtr->roundCoordinates(
+                            psFillArrowArray->poFeatureDefn->GetGeomFieldDefn(0)
+                                ->GetCoordinatePrecision());
+                        nWKBSize = poGeomPtr->WkbSize();
+                        abyWkb.resize(nWKBSize);
+                        if (poGeomPtr->exportToWkb(wkbNDR, abyWkb.data(),
+                                                   wkbVariantIso) !=
+                            OGRERR_NONE)
+                        {
+                            nWKBSize = 0;
+                        }
+                        else
+                        {
+                            pabyWkb = abyWkb.data();
+                        }
+                        delete poGeomPtr;
+                    }
+                }
+                else
+                {
+                    /* Read header */
+                    OGRErr err =
+                        GPkgHeaderFromWKB(pabyBlob, nBlobSize, &oHeader);
+                    if (err == OGRERR_NONE)
+                    {
+                        /* WKB pointer */
+                        pabyWkb = pabyBlob + oHeader.nHeaderLen;
+                        nWKBSize = nBlobSize - oHeader.nHeaderLen;
+                    }
                 }
             }
             else if (nBlobSize > 0 && pabyBlob)

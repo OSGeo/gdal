@@ -119,6 +119,9 @@ static void Usage(bool bIsError, const char *pszAdditionalMsg = nullptr,
         "               [-explodecollections] [-zfield <field_name>]\n"
         "               [-gcp <ungeoref_x> <ungeoref_y> <georef_x> <georef_y> "
         "[<elevation>]]... [[-order <n>]|[-tps]]\n"
+        "               [-xyRes \"<val>[ m|mm|deg]\"] [-zRes \"<val>[ m|mm]\"] "
+        "[-mRes <val>]\n"
+        "               [-unsetCoordPrecision]\n"
         "               [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>] "
         "[-a_coord_epoch <epoch>]\n"
         "               [-nomd] [-mo <META-TAG>=<VALUE>]... [-noNativeData]\n");

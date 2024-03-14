@@ -655,28 +655,80 @@ OGRFeatureH OGR_L_GetNextFeature(OGRLayerH hLayer)
 
 void OGRLayer::ConvertGeomsIfNecessary(OGRFeature *poFeature)
 {
-    const bool bSupportsCurve = CPL_TO_BOOL(TestCapability(OLCCurveGeometries));
-    const bool bSupportsM = CPL_TO_BOOL(TestCapability(OLCMeasuredGeometries));
-    if (!bSupportsCurve || !bSupportsM)
+    if (!m_poPrivate->m_bConvertGeomsIfNecessaryAlreadyCalled)
     {
-        int nGeomFieldCount = GetLayerDefn()->GetGeomFieldCount();
+        // One time initialization
+        m_poPrivate->m_bConvertGeomsIfNecessaryAlreadyCalled = true;
+        m_poPrivate->m_bSupportsCurve =
+            CPL_TO_BOOL(TestCapability(OLCCurveGeometries));
+        m_poPrivate->m_bSupportsM =
+            CPL_TO_BOOL(TestCapability(OLCMeasuredGeometries));
+        if (CPLTestBool(
+                CPLGetConfigOption("OGR_APPLY_GEOM_SET_PRECISION", "FALSE")))
+        {
+            const auto poFeatureDefn = GetLayerDefn();
+            const int nGeomFieldCount = poFeatureDefn->GetGeomFieldCount();
+            for (int i = 0; i < nGeomFieldCount; i++)
+            {
+                const double dfXYResolution = poFeatureDefn->GetGeomFieldDefn(i)
+                                                  ->GetCoordinatePrecision()
+                                                  .dfXYResolution;
+                if (dfXYResolution != OGRGeomCoordinatePrecision::UNKNOWN &&
+                    OGRGeometryFactory::haveGEOS())
+                {
+                    m_poPrivate->m_bApplyGeomSetPrecision = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!m_poPrivate->m_bSupportsCurve || !m_poPrivate->m_bSupportsM ||
+        m_poPrivate->m_bApplyGeomSetPrecision)
+    {
+        const auto poFeatureDefn = GetLayerDefn();
+        const int nGeomFieldCount = poFeatureDefn->GetGeomFieldCount();
         for (int i = 0; i < nGeomFieldCount; i++)
         {
             OGRGeometry *poGeom = poFeature->GetGeomFieldRef(i);
-            if (poGeom != nullptr &&
-                (!bSupportsM && OGR_GT_HasM(poGeom->getGeometryType())))
+            if (poGeom)
             {
-                poGeom->setMeasured(FALSE);
-            }
-            if (poGeom != nullptr &&
-                (!bSupportsCurve &&
-                 OGR_GT_IsNonLinear(poGeom->getGeometryType())))
-            {
-                OGRwkbGeometryType eTargetType =
-                    OGR_GT_GetLinear(poGeom->getGeometryType());
-                poFeature->SetGeomFieldDirectly(
-                    i, OGRGeometryFactory::forceTo(poFeature->StealGeometry(i),
-                                                   eTargetType));
+                if (!m_poPrivate->m_bSupportsM &&
+                    OGR_GT_HasM(poGeom->getGeometryType()))
+                {
+                    poGeom->setMeasured(FALSE);
+                }
+
+                if (!m_poPrivate->m_bSupportsCurve &&
+                    OGR_GT_IsNonLinear(poGeom->getGeometryType()))
+                {
+                    OGRwkbGeometryType eTargetType =
+                        OGR_GT_GetLinear(poGeom->getGeometryType());
+                    poGeom = OGRGeometryFactory::forceTo(
+                        poFeature->StealGeometry(i), eTargetType);
+                    poFeature->SetGeomFieldDirectly(i, poGeom);
+                }
+
+                if (m_poPrivate->m_bApplyGeomSetPrecision)
+                {
+                    const double dfXYResolution =
+                        poFeatureDefn->GetGeomFieldDefn(i)
+                            ->GetCoordinatePrecision()
+                            .dfXYResolution;
+                    if (dfXYResolution != OGRGeomCoordinatePrecision::UNKNOWN &&
+                        !poGeom->hasCurveGeometry())
+                    {
+                        auto poNewGeom = poGeom->SetPrecision(dfXYResolution,
+                                                              /* nFlags = */ 0);
+                        if (poNewGeom)
+                        {
+                            poFeature->SetGeomFieldDirectly(i, poNewGeom);
+                            poGeom = poNewGeom;
+                        }
+                    }
+                }
+
+                CPL_IGNORE_RET_VAL(poGeom);
             }
         }
     }

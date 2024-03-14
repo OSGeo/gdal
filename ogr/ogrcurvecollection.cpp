@@ -351,23 +351,29 @@ std::string OGRCurveCollection::exportToWkt(const OGRGeometry *baseGeom,
 /*                            exportToWkb()                             */
 /************************************************************************/
 
-OGRErr OGRCurveCollection::exportToWkb(const OGRGeometry *poGeom,
-                                       OGRwkbByteOrder eByteOrder,
-                                       unsigned char *pabyData,
-                                       OGRwkbVariant eWkbVariant) const
+OGRErr
+OGRCurveCollection::exportToWkb(const OGRGeometry *poGeom,
+                                unsigned char *pabyData,
+                                const OGRwkbExportOptions *psOptions) const
 {
+    if (psOptions == nullptr)
+    {
+        static const OGRwkbExportOptions defaultOptions;
+        psOptions = &defaultOptions;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Set the byte order.                                             */
     /* -------------------------------------------------------------------- */
-    pabyData[0] =
-        DB2_V72_UNFIX_BYTE_ORDER(static_cast<unsigned char>(eByteOrder));
+    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER(
+        static_cast<unsigned char>(psOptions->eByteOrder));
 
     /* -------------------------------------------------------------------- */
     /*      Set the geometry feature type, ensuring that 3D flag is         */
     /*      preserved.                                                      */
     /* -------------------------------------------------------------------- */
     GUInt32 nGType = poGeom->getIsoGeometryType();
-    if (eWkbVariant == wkbVariantPostGIS1)
+    if (psOptions->eWkbVariant == wkbVariantPostGIS1)
     {
         const bool bIs3D = wkbHasZ(static_cast<OGRwkbGeometryType>(nGType));
         nGType = wkbFlatten(nGType);
@@ -379,7 +385,7 @@ OGRErr OGRCurveCollection::exportToWkb(const OGRGeometry *poGeom,
                 static_cast<OGRwkbGeometryType>(nGType | wkb25DBitInternalUse);
     }
 
-    if (OGR_SWAP(eByteOrder))
+    if (OGR_SWAP(psOptions->eByteOrder))
     {
         nGType = CPL_SWAP32(nGType);
     }
@@ -389,7 +395,7 @@ OGRErr OGRCurveCollection::exportToWkb(const OGRGeometry *poGeom,
     /* -------------------------------------------------------------------- */
     /*      Copy in the raw data.                                           */
     /* -------------------------------------------------------------------- */
-    if (OGR_SWAP(eByteOrder))
+    if (OGR_SWAP(psOptions->eByteOrder))
     {
         const int nCount = CPL_SWAP32(nCurveCount);
         memcpy(pabyData + 5, &nCount, 4);
@@ -407,7 +413,7 @@ OGRErr OGRCurveCollection::exportToWkb(const OGRGeometry *poGeom,
     /* ==================================================================== */
     for (auto &&poSubGeom : *this)
     {
-        poSubGeom->exportToWkb(eByteOrder, pabyData + nOffset, eWkbVariant);
+        poSubGeom->exportToWkb(pabyData + nOffset, psOptions);
 
         nOffset += poSubGeom->WkbSize();
     }

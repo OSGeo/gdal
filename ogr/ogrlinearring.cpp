@@ -163,9 +163,8 @@ OGRErr OGRLinearRing::importFromWkb(const unsigned char * /*pabyData*/,
 /*      Disable method for this class.                                  */
 /************************************************************************/
 
-OGRErr OGRLinearRing::exportToWkb(CPL_UNUSED OGRwkbByteOrder eByteOrder,
-                                  CPL_UNUSED unsigned char *pabyData,
-                                  CPL_UNUSED OGRwkbVariant eWkbVariant) const
+OGRErr OGRLinearRing::exportToWkb(CPL_UNUSED unsigned char *pabyData,
+                                  CPL_UNUSED const OGRwkbExportOptions *) const
 
 {
     return OGRERR_UNSUPPORTED_OPERATION;
@@ -307,8 +306,8 @@ OGRErr OGRLinearRing::_importFromWkb(OGRwkbByteOrder eByteOrder, int _flags,
 /*      exportToWkb() METHOD.                                           */
 /************************************************************************/
 
-OGRErr OGRLinearRing::_exportToWkb(OGRwkbByteOrder eByteOrder, int _flags,
-                                   unsigned char *pabyData) const
+OGRErr OGRLinearRing::_exportToWkb(int _flags, unsigned char *pabyData,
+                                   const OGRwkbExportOptions *psOptions) const
 
 {
 
@@ -337,6 +336,14 @@ OGRErr OGRLinearRing::_exportToWkb(OGRwkbByteOrder eByteOrder, int _flags,
             else
                 memcpy(pabyData + 4 + i * 32 + 24, padfM + i, 8);
         }
+        OGRRoundCoordinatesIEEE754XYValues<32>(
+            psOptions->sPrecision.nXYBitPrecision, pabyData + 4, nPointCount);
+        OGRRoundCoordinatesIEEE754<32>(psOptions->sPrecision.nZBitPrecision,
+                                       pabyData + 4 + 2 * sizeof(uint64_t),
+                                       nPointCount);
+        OGRRoundCoordinatesIEEE754<32>(psOptions->sPrecision.nMBitPrecision,
+                                       pabyData + 4 + 3 * sizeof(uint64_t),
+                                       nPointCount);
     }
     else if (_flags & OGR_G_MEASURED)
     {
@@ -350,6 +357,11 @@ OGRErr OGRLinearRing::_exportToWkb(OGRwkbByteOrder eByteOrder, int _flags,
             else
                 memcpy(pabyData + 4 + i * 24 + 16, padfM + i, 8);
         }
+        OGRRoundCoordinatesIEEE754XYValues<24>(
+            psOptions->sPrecision.nXYBitPrecision, pabyData + 4, nPointCount);
+        OGRRoundCoordinatesIEEE754<24>(psOptions->sPrecision.nMBitPrecision,
+                                       pabyData + 4 + 2 * sizeof(uint64_t),
+                                       nPointCount);
     }
     else if (_flags & OGR_G_3D)
     {
@@ -363,17 +375,24 @@ OGRErr OGRLinearRing::_exportToWkb(OGRwkbByteOrder eByteOrder, int _flags,
             else
                 memcpy(pabyData + 4 + i * 24 + 16, padfZ + i, 8);
         }
+        OGRRoundCoordinatesIEEE754XYValues<24>(
+            psOptions->sPrecision.nXYBitPrecision, pabyData + 4, nPointCount);
+        OGRRoundCoordinatesIEEE754<24>(psOptions->sPrecision.nZBitPrecision,
+                                       pabyData + 4 + 2 * sizeof(uint64_t),
+                                       nPointCount);
     }
     else
     {
         nWords = 2 * static_cast<size_t>(nPointCount);
         memcpy(pabyData + 4, paoPoints, 16 * static_cast<size_t>(nPointCount));
+        OGRRoundCoordinatesIEEE754XYValues<16>(
+            psOptions->sPrecision.nXYBitPrecision, pabyData + 4, nPointCount);
     }
 
     /* -------------------------------------------------------------------- */
     /*      Swap if needed.                                                 */
     /* -------------------------------------------------------------------- */
-    if (OGR_SWAP(eByteOrder))
+    if (OGR_SWAP(psOptions->eByteOrder))
     {
         const int nCount = CPL_SWAP32(nPointCount);
         memcpy(pabyData, &nCount, 4);

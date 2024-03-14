@@ -348,7 +348,7 @@ OGRErr OGRGeoJSONLayer::ICreateFeature(OGRFeature *poFeature)
                     VSIFPrintfL(fp, ",\n");
                 }
                 json_object *poObj =
-                    OGRGeoJSONWriteFeature(poFeature, OGRGeoJSONWriteOptions());
+                    OGRGeoJSONWriteFeature(poFeature, oWriteOptions_);
                 VSIFPrintfL(fp, "%s", json_object_to_json_string(poObj));
                 json_object_put(poObj);
 

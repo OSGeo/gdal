@@ -521,10 +521,9 @@ OGRErr GNMFileNetwork::DeleteLayer(int nIndex)
     return GNMGenericNetwork::DeleteLayer(nIndex);
 }
 
-OGRLayer *
-GNMFileNetwork::ICreateLayer(const char *pszName,
-                             const OGRSpatialReference * /* poSpatialRef */,
-                             OGRwkbGeometryType eGType, char **papszOptions)
+OGRLayer *GNMFileNetwork::ICreateLayer(const char *pszName,
+                                       const OGRGeomFieldDefn *poGeomFieldDefn,
+                                       CSLConstList papszOptions)
 {
     if (nullptr == m_poLayerDriver)
     {
@@ -532,6 +531,8 @@ GNMFileNetwork::ICreateLayer(const char *pszName,
                  "The network storage format driver is not defined.");
         return nullptr;
     }
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
 
     // check if layer with such name exist
     for (int i = 0; i < GetLayerCount(); ++i)

@@ -113,6 +113,25 @@ Layer creation options
       if they start and end with brackets and braces, even if they do
       not have their subtype set to JSON.
 
+Geometry coordinate precision
+-----------------------------
+
+.. versionadded:: GDAL 3.9
+
+On creation, the GeoJSONSeq driver supports using the geometry coordinate
+precision, from th :cpp:class:`OGRGeomCoordinatePrecision` settings of the
+:cpp:class:`OGRGeomFieldDefn`. Those settings are used to round the coordinates
+of the geometry of the features to an appropriate decimal precision.
+
+.. note::
+
+    The :lco:`COORDINATE_PRECISION` layer creation option has precedence over
+    the values set on the :cpp:class:`OGRGeomFieldDefn`.
+
+The value of those geometry coordinate precision is *not* serialized in the
+generated file, hence on reading, the driver will not advertise a geometry
+coordinate precision.
+
 See Also
 --------
 
@@ -124,4 +143,4 @@ See Also
 -  `GeoJSONL <https://www.interline.io/blog/geojsonl-extracts/>`__: An
    optimized format for large geographic datasets
 -  `JSON streaming on Wikipedia <https://en.wikipedia.org/wiki/JSON_streaming>`__: An
-   overview over formats for concatenated JSON in a single file 
+   overview over formats for concatenated JSON in a single file

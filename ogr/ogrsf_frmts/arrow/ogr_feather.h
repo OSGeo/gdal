@@ -234,9 +234,8 @@ class OGRFeatherWriterDataset final : public GDALPamDataset
 
   protected:
     OGRLayer *ICreateLayer(const char *pszName,
-                           const OGRSpatialReference *poSpatialRef = nullptr,
-                           OGRwkbGeometryType eGType = wkbUnknown,
-                           char **papszOptions = nullptr) override;
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 };
 
 #endif  // OGR_FEATHER_H

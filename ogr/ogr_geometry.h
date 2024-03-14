@@ -35,8 +35,10 @@
 #include "cpl_conv.h"
 #include "cpl_json.h"
 #include "ogr_core.h"
+#include "ogr_geomcoordinateprecision.h"
 #include "ogr_spatialref.h"
 
+#include <climits>
 #include <cmath>
 #include <memory>
 
@@ -70,24 +72,23 @@ struct CPL_DLL OGRWktOptions
 {
   public:
     /// Type of WKT output to produce.
-    OGRwkbVariant variant;
-    /// Precision of output.  Interpretation depends on \c format.
-    int precision;
+    OGRwkbVariant variant = wkbVariantOldOgc;
+    /// Precision of output for X,Y coordinates.  Interpretation depends on \c format.
+    int xyPrecision;
+    /// Precision of output for Z coordinates.  Interpretation depends on \c format.
+    int zPrecision;
+    /// Precision of output for M coordinates.  Interpretation depends on \c format.
+    int mPrecision;
     /// Whether GDAL-special rounding should be applied.
-    bool round;
+    bool round = getDefaultRound();
     /// Formatting type.
-    OGRWktFormat format;
+    OGRWktFormat format = OGRWktFormat::Default;
 
     /// Constructor.
     OGRWktOptions()
-        : variant(wkbVariantOldOgc), precision(15), round(true),
-          format(OGRWktFormat::Default)
+        : xyPrecision(getDefaultPrecision()), zPrecision(xyPrecision),
+          mPrecision(zPrecision)
     {
-        static int defPrecision = getDefaultPrecision();
-        static bool defRound = getDefaultRound();
-
-        precision = defPrecision;
-        round = defRound;
     }
 
     /// Copy constructor
@@ -308,6 +309,44 @@ class CPL_DLL OGRDefaultConstGeometryVisitor : public IOGRConstGeometryVisitor
 };
 
 /************************************************************************/
+/*                  OGRGeomCoordinateBinaryPrecision                    */
+/************************************************************************/
+
+/** Geometry coordinate precision for a binary representation.
+ *
+ * @since GDAL 3.9
+ */
+struct CPL_DLL OGRGeomCoordinateBinaryPrecision
+{
+    int nXYBitPrecision =
+        INT_MIN; /**< Number of bits needed to achieved XY precision. Typically
+                    computed with SetFromResolution() */
+    int nZBitPrecision =
+        INT_MIN; /**< Number of bits needed to achieved Z precision. Typically
+                    computed with SetFromResolution() */
+    int nMBitPrecision =
+        INT_MIN; /**< Number of bits needed to achieved M precision. Typically
+                    computed with SetFromResolution() */
+
+    void SetFrom(const OGRGeomCoordinatePrecision &);
+};
+
+/************************************************************************/
+/*                           OGRwkbExportOptions                        */
+/************************************************************************/
+
+/** WKB export options.
+ *
+ * @since GDAL 3.9
+ */
+struct CPL_DLL OGRwkbExportOptions
+{
+    OGRwkbByteOrder eByteOrder = wkbNDR;           /**< Byte order */
+    OGRwkbVariant eWkbVariant = wkbVariantOldOgc;  /**< WKB variant. */
+    OGRGeomCoordinateBinaryPrecision sPrecision{}; /**< Binary precision. */
+};
+
+/************************************************************************/
 /*                             OGRGeometry                              */
 /************************************************************************/
 
@@ -428,8 +467,10 @@ class CPL_DLL OGRGeometry
                          OGRwkbVariant = wkbVariantOldOgc);
     virtual OGRErr importFromWkb(const unsigned char *, size_t, OGRwkbVariant,
                                  size_t &nBytesConsumedOut) = 0;
-    virtual OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *,
-                               OGRwkbVariant = wkbVariantOldOgc) const = 0;
+    OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *,
+                       OGRwkbVariant = wkbVariantOldOgc) const;
+    virtual OGRErr exportToWkb(unsigned char *,
+                               const OGRwkbExportOptions * = nullptr) const = 0;
     virtual OGRErr importFromWkt(const char **ppszInput) = 0;
 
 #ifndef DOXYGEN_XML
@@ -466,7 +507,7 @@ class CPL_DLL OGRGeometry
     virtual void flattenTo2D() = 0;
     virtual char *exportToGML(const char *const *papszOptions = nullptr) const;
     virtual char *exportToKML() const;
-    virtual char *exportToJson() const;
+    virtual char *exportToJson(CSLConstList papszOptions = nullptr) const;
 
     /** Accept a visitor. */
     virtual void accept(IOGRGeometryVisitor *visitor) = 0;
@@ -484,6 +525,10 @@ class CPL_DLL OGRGeometry
     virtual OGRGeometry *getLinearGeometry(
         double dfMaxAngleStepSizeDegrees = 0,
         const char *const *papszOptions = nullptr) const CPL_WARN_UNUSED_RESULT;
+
+    void roundCoordinates(const OGRGeomCoordinatePrecision &sPrecision);
+    void
+    roundCoordinatesIEEE754(const OGRGeomCoordinateBinaryPrecision &options);
 
     // SFCGAL interfacing methods.
     //! @cond Doxygen_Suppress
@@ -550,6 +595,8 @@ class CPL_DLL OGRGeometry
     virtual OGRGeometry *Polygonize() const CPL_WARN_UNUSED_RESULT;
 
     virtual double Distance3D(const OGRGeometry *poOtherGeom) const;
+
+    OGRGeometry *SetPrecision(double dfGridSize, int nFlags) const;
 
     //! @cond Doxygen_Suppress
     // backward compatibility to non-standard method names.
@@ -1102,8 +1149,8 @@ class CPL_DLL OGRPoint : public OGRGeometry
     size_t WkbSize() const override;
     OGRErr importFromWkb(const unsigned char *, size_t, OGRwkbVariant,
                          size_t &nBytesConsumedOut) override;
-    OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *,
-                       OGRwkbVariant = wkbVariantOldOgc) const override;
+    OGRErr exportToWkb(unsigned char *,
+                       const OGRwkbExportOptions * = nullptr) const override;
 
 #ifndef DOXYGEN_XML
     using OGRGeometry::importFromWkt; /** deprecated */
@@ -1539,8 +1586,9 @@ class CPL_DLL OGRSimpleCurve : public OGRCurve
     virtual size_t WkbSize() const override;
     virtual OGRErr importFromWkb(const unsigned char *, size_t, OGRwkbVariant,
                                  size_t &nBytesConsumedOut) override;
-    virtual OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *,
-                               OGRwkbVariant = wkbVariantOldOgc) const override;
+    virtual OGRErr
+    exportToWkb(unsigned char *,
+                const OGRwkbExportOptions * = nullptr) const override;
 
 #ifndef DOXYGEN_XML
     using OGRGeometry::importFromWkt; /** deprecated */
@@ -1775,8 +1823,8 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     virtual size_t WkbSize() const override;
     virtual OGRErr importFromWkb(const unsigned char *, size_t, OGRwkbVariant,
                                  size_t &nBytesConsumedOut) override;
-    virtual OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *,
-                               OGRwkbVariant = wkbVariantOldOgc) const override;
+    OGRErr exportToWkb(unsigned char *,
+                       const OGRwkbExportOptions * = nullptr) const override;
 
   protected:
     //! @cond Doxygen_Suppress
@@ -1788,8 +1836,8 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     virtual OGRErr _importFromWkb(OGRwkbByteOrder, int _flags,
                                   const unsigned char *, size_t,
                                   size_t &nBytesConsumedOut);
-    virtual OGRErr _exportToWkb(OGRwkbByteOrder, int _flags,
-                                unsigned char *) const;
+    virtual OGRErr _exportToWkb(int _flags, unsigned char *,
+                                const OGRwkbExportOptions *) const;
 
     virtual OGRCurveCasterToLineString GetCasterToLineString() const override;
     virtual OGRCurveCasterToLinearRing GetCasterToLinearRing() const override;
@@ -1882,8 +1930,8 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
     // IWks Interface.
     virtual OGRErr importFromWkb(const unsigned char *, size_t, OGRwkbVariant,
                                  size_t &nBytesConsumedOut) override;
-    virtual OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *,
-                               OGRwkbVariant = wkbVariantOldOgc) const override;
+    OGRErr exportToWkb(unsigned char *,
+                       const OGRwkbExportOptions * = nullptr) const override;
 
 #ifndef DOXYGEN_XML
     using OGRGeometry::importFromWkt; /** deprecated */
@@ -2033,8 +2081,8 @@ class CPL_DLL OGRCurveCollection
                       OGRwkbVariant eWkbVariant, size_t &nBytesConsumedOut);
     std::string exportToWkt(const OGRGeometry *geom, const OGRWktOptions &opts,
                             OGRErr *err) const;
-    OGRErr exportToWkb(const OGRGeometry *poGeom, OGRwkbByteOrder,
-                       unsigned char *, OGRwkbVariant eWkbVariant) const;
+    OGRErr exportToWkb(const OGRGeometry *poGeom, unsigned char *,
+                       const OGRwkbExportOptions * = nullptr) const;
     OGRBoolean Equals(const OGRCurveCollection *poOCC) const;
     void setCoordinateDimension(OGRGeometry *poGeom, int nNewDimension);
     void set3D(OGRGeometry *poGeom, OGRBoolean bIs3D);
@@ -2137,8 +2185,8 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     virtual size_t WkbSize() const override;
     virtual OGRErr importFromWkb(const unsigned char *, size_t, OGRwkbVariant,
                                  size_t &nBytesConsumedOut) override;
-    virtual OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *,
-                               OGRwkbVariant = wkbVariantOldOgc) const override;
+    OGRErr exportToWkb(unsigned char *,
+                       const OGRwkbExportOptions * = nullptr) const override;
 
 #ifndef DOXYGEN_XML
     using OGRGeometry::importFromWkt; /** deprecated */
@@ -2397,8 +2445,8 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     virtual size_t WkbSize() const override;
     virtual OGRErr importFromWkb(const unsigned char *, size_t, OGRwkbVariant,
                                  size_t &nBytesConsumedOut) override;
-    virtual OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *,
-                               OGRwkbVariant = wkbVariantOldOgc) const override;
+    OGRErr exportToWkb(unsigned char *,
+                       const OGRwkbExportOptions * = nullptr) const override;
 
 #ifndef DOXYGEN_XML
     using OGRGeometry::importFromWkt; /** deprecated */
@@ -2580,8 +2628,8 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     virtual size_t WkbSize() const override;
     virtual OGRErr importFromWkb(const unsigned char *, size_t, OGRwkbVariant,
                                  size_t &nBytesConsumedOut) override;
-    virtual OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *,
-                               OGRwkbVariant = wkbVariantOldOgc) const override;
+    OGRErr exportToWkb(unsigned char *,
+                       const OGRwkbExportOptions * = nullptr) const override;
 
 #ifndef DOXYGEN_XML
     using OGRGeometry::importFromWkt; /** deprecated */
@@ -2826,8 +2874,8 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual size_t WkbSize() const override;
     virtual OGRErr importFromWkb(const unsigned char *, size_t, OGRwkbVariant,
                                  size_t &nBytesConsumedOut) override;
-    virtual OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *,
-                               OGRwkbVariant = wkbVariantOldOgc) const override;
+    OGRErr exportToWkb(unsigned char *,
+                       const OGRwkbExportOptions * = nullptr) const override;
 
 #ifndef DOXYGEN_XML
     using OGRGeometry::importFromWkt; /** deprecated */
@@ -3288,8 +3336,8 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual OGRwkbGeometryType getGeometryType() const override;
     virtual OGRErr importFromWkb(const unsigned char *, size_t, OGRwkbVariant,
                                  size_t &nBytesConsumedOut) override;
-    virtual OGRErr exportToWkb(OGRwkbByteOrder, unsigned char *,
-                               OGRwkbVariant = wkbVariantOldOgc) const override;
+    OGRErr exportToWkb(unsigned char *,
+                       const OGRwkbExportOptions * = nullptr) const override;
 
 #ifndef DOXYGEN_XML
     using OGRGeometry::importFromWkt; /** deprecated */

@@ -4,7 +4,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  GML Reading Driver testing.
+# Purpose:  GML driver testing.
 # Author:   Frank Warmerdam <warmerdam@pobox.com>
 #
 ###############################################################################
@@ -4242,3 +4242,73 @@ def test_ogr_gml_ignore_old_gfs(tmp_path):
         width = defn.GetFieldDefn(1).GetWidth()
 
         assert width == 10
+
+
+###############################################################################
+# Test geometry coordinate precision support
+
+
+def test_ogr_gml_geom_coord_precision(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.gml")
+    ds = gdal.GetDriverByName("GML").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    geom_fld = ogr.GeomFieldDefn("my_geom_field", ogr.wkbUnknown)
+    prec = ogr.CreateGeomCoordinatePrecision()
+    prec.Set(1e-5, 1e-3, 0)
+    geom_fld.SetCoordinatePrecision(prec)
+    geom_fld.SetNullable(False)
+    lyr = ds.CreateLayerFromGeomFieldDefn("test", geom_fld)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1.23456789 2.34567891)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1.23456789 2.34567891 9.87654321)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "LINESTRING(1.23456789 2.34567891 9.87654321,1.23456789 2.34567891 9.87654321)"
+        )
+    )
+    lyr.CreateFeature(f)
+    ds.Close()
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+
+    assert (
+        b"""\n  <gml:boundedBy><gml:Envelope srsDimension="3"><gml:lowerCorner>1.23457 2.34568 0.0</gml:lowerCorner><gml:upperCorner>1.23457 2.34568 9.877</gml:upperCorner></gml:Envelope></gml:boundedBy>"""
+        in data
+    )
+    assert (
+        b"""\n      <gml:boundedBy><gml:Envelope srsDimension="3"><gml:lowerCorner>1.23457 2.34568 9.877</gml:lowerCorner><gml:upperCorner>1.23457 2.34568 9.877</gml:upperCorner></gml:Envelope></gml:boundedBy>"""
+        in data
+    )
+    assert b"""<gml:pos>1.23457 2.34568</gml:pos>""" in data
+    assert b"""<gml:pos>1.23457 2.34568 9.877</gml:pos>""" in data
+    assert (
+        b"""<gml:posList srsDimension="3">1.23457 2.34568 9.877 1.23457 2.34568 9.877</gml:posList>"""
+        in data
+    )
+
+    f = gdal.VSIFOpenL(filename[0:-3] + "xsd", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    assert b"<ogr:xy_coordinate_resolution>" in data
+    assert b"<ogr:z_coordinate_resolution>" in data
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    assert geom_fld.GetName() == "my_geom_field"
+    assert not geom_fld.IsNullable()
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3

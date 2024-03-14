@@ -62,6 +62,9 @@ import org.gdal.osr.SpatialReference;
 %typemap(javaimports) OGRGeomTransformerShadow %{
 import org.gdal.osr.CoordinateTransformation;
 %}
+%typemap(javaimports) OGRGeomCoordinatePrecisionShadow %{
+import org.gdal.osr.SpatialReference;
+%}
 
 %typemap(javacode) OGRDataSourceShadow %{
 
@@ -137,6 +140,22 @@ import org.gdal.osr.CoordinateTransformation;
 %}
 
 %typemap(javabody) OGRFieldDomainShadow %{
+  private boolean swigCMemOwn;
+  private long swigCPtr;
+
+  public $javaclassname(long cPtr, boolean cMemoryOwn) {
+    if (cPtr == 0)
+        throw new RuntimeException();
+    swigCMemOwn = cMemoryOwn;
+    swigCPtr = cPtr;
+  }
+
+  public static long getCPtr($javaclassname obj) {
+    return (obj == null) ? 0 : obj.swigCPtr;
+  }
+%}
+
+%typemap(javabody) OGRGeomFieldDefnShadow %{
   private boolean swigCMemOwn;
   private long swigCPtr;
 

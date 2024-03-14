@@ -2849,6 +2849,10 @@ def VectorTranslateOptions(options=None, format=None,
          resolveDomains=False,
          skipFailures=False,
          limit=None,
+         xyRes=None,
+         zRes=None,
+         mRes=None,
+         setCoordPrecision=True,
          callback=None, callback_data=None):
     """
     Create a VectorTranslateOptions() object that can be passed to
@@ -2969,6 +2973,14 @@ def VectorTranslateOptions(options=None, format=None,
         whether to skip failures
     limit:
         maximum number of features to read per layer
+    xyRes:
+        Geometry X,Y coordinate resolution. Numeric value, or numeric value suffixed with " m", " mm" or "deg".
+    zRes:
+        Geometry Z coordinate resolution. Numeric value, or numeric value suffixed with " m" or " mm".
+    mRes:
+        Geometry M coordinate resolution. Numeric value.
+    setCoordPrecision:
+        Set to False to unset the geometry coordinate precision.
     callback:
         callback method
     callback_data:
@@ -3149,6 +3161,15 @@ def VectorTranslateOptions(options=None, format=None,
             new_options += ['-skip']
         if limit is not None:
             new_options += ['-limit', str(limit)]
+        if xyRes is not None:
+            new_options += ['-xyRes', str(xyRes)]
+        if zRes is not None:
+            new_options += ['-zRes', str(zRes)]
+        if mRes is not None:
+            new_options += ['-mRes', str(mRes)]
+        if setCoordPrecision is False:
+            new_options += ["-unsetCoordPrecision"]
+
     if callback is not None:
         new_options += ['-progress']
 

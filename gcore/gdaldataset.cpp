@@ -4944,7 +4944,70 @@ specific.
 OGRLayer *GDALDataset::CreateLayer(const char *pszName,
                                    const OGRSpatialReference *poSpatialRef,
                                    OGRwkbGeometryType eGType,
-                                   char **papszOptions)
+                                   CSLConstList papszOptions)
+
+{
+    if (eGType == wkbNone)
+    {
+        return CreateLayer(pszName, nullptr, papszOptions);
+    }
+    else
+    {
+        OGRGeomFieldDefn oGeomFieldDefn("", eGType);
+        oGeomFieldDefn.SetSpatialRef(poSpatialRef);
+        return CreateLayer(pszName, &oGeomFieldDefn, papszOptions);
+    }
+}
+
+/**
+\brief This method attempts to create a new layer on the dataset with the
+indicated name and geometry field definition.
+
+When poGeomFieldDefn is not null, most drivers should honor
+poGeomFieldDefn->GetType() and poGeomFieldDefn->GetSpatialRef().
+Drivers that honor poGeomFieldDefn->GetCoordinatePrecision() will declare the
+GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION capability. Drivers may honor
+poGeomFieldDefn->GetNameRef() and poGeomFieldDefn->IsNullable(), but there are
+very few currently.
+
+Note that even if a geometry coordinate precision is set and a driver honors the
+GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION capability, geometries passed to
+OGRLayer::CreateFeature() and OGRLayer::SetFeature() are assumed to be compatible
+with the coordinate precision. That is they are assumed to be valid once their
+coordinates are rounded to it. If it might not be the case, the user may set
+the OGR_APPLY_GEOM_SET_PRECISION configuration option before calling CreateFeature()
+or SetFeature() to force the OGRGeometry::SetPrecision() method to be called on
+the passed geometries.
+
+The papszOptions argument
+can be used to control driver specific creation options. These options are
+normally documented in the format specific documentation.
+This function will try to validate the creation option list passed to the
+driver with the GDALValidateCreationOptions() method. This check can be
+disabled by defining the configuration option GDAL_VALIDATE_CREATION_OPTIONS set
+to NO.
+
+Drivers should extend the ICreateLayer() method and not
+CreateLayer(). CreateLayer() adds validation of layer creation options, before
+delegating the actual work to ICreateLayer().
+
+This method is the same as the C function GDALDatasetCreateLayerFromGeomFieldDefn().
+
+@param pszName the name for the new layer.  This should ideally not
+match any existing layer on the datasource.
+@param poGeomFieldDefn the geometry field definition to use for the new layer,
+or NULL if there is no geometry field.
+@param papszOptions a StringList of name=value options.  Options are driver
+specific.
+
+@return NULL is returned on failure, or a new OGRLayer handle on success.
+@since 3.9
+
+*/
+
+OGRLayer *GDALDataset::CreateLayer(const char *pszName,
+                                   const OGRGeomFieldDefn *poGeomFieldDefn,
+                                   CSLConstList papszOptions)
 
 {
     if (CPLTestBool(
@@ -4953,13 +5016,23 @@ OGRLayer *GDALDataset::CreateLayer(const char *pszName,
         ValidateLayerCreationOptions(papszOptions);
     }
 
-    if (OGR_GT_IsNonLinear(eGType) && !TestCapability(ODsCCurveGeometries))
+    OGRLayer *poLayer;
+    if (poGeomFieldDefn)
     {
-        eGType = OGR_GT_GetLinear(eGType);
-    }
+        OGRGeomFieldDefn oGeomFieldDefn(poGeomFieldDefn);
+        if (OGR_GT_IsNonLinear(poGeomFieldDefn->GetType()) &&
+            !TestCapability(ODsCCurveGeometries))
+        {
+            oGeomFieldDefn.SetType(
+                OGR_GT_GetLinear(poGeomFieldDefn->GetType()));
+        }
 
-    OGRLayer *poLayer =
-        ICreateLayer(pszName, poSpatialRef, eGType, papszOptions);
+        poLayer = ICreateLayer(pszName, &oGeomFieldDefn, papszOptions);
+    }
+    else
+    {
+        poLayer = ICreateLayer(pszName, nullptr, papszOptions);
+    }
 #ifdef DEBUG
     if (poLayer != nullptr && OGR_GT_IsNonLinear(poLayer->GetGeomType()) &&
         !poLayer->TestCapability(OLCCurveGeometries))
@@ -4972,6 +5045,25 @@ OGRLayer *GDALDataset::CreateLayer(const char *pszName,
 
     return poLayer;
 }
+
+//! @cond Doxygen_Suppress
+
+// Technical override to avoid ambiguous choice between the old and new
+// new CreateLayer() signatures.
+OGRLayer *GDALDataset::CreateLayer(const char *pszName)
+{
+    OGRGeomFieldDefn oGeomFieldDefn("", wkbUnknown);
+    return CreateLayer(pszName, &oGeomFieldDefn, nullptr);
+}
+
+// Technical override to avoid ambiguous choice between the old and new
+// new CreateLayer() signatures.
+OGRLayer *GDALDataset::CreateLayer(const char *pszName, std::nullptr_t)
+{
+    OGRGeomFieldDefn oGeomFieldDefn("", wkbUnknown);
+    return CreateLayer(pszName, &oGeomFieldDefn, nullptr);
+}
+//!@endcond
 
 /************************************************************************/
 /*                         GDALDatasetCreateLayer()                     */
@@ -5056,6 +5148,73 @@ OGRLayerH GDALDatasetCreateLayer(GDALDatasetH hDS, const char *pszName,
                                  const_cast<char **>(papszOptions), hLayer);
 #endif
 
+    return hLayer;
+}
+
+/************************************************************************/
+/*                 GDALDatasetCreateLayerFromGeomFieldDefn()            */
+/************************************************************************/
+
+/**
+\brief This function attempts to create a new layer on the dataset with the
+indicated name and geometry field.
+
+When poGeomFieldDefn is not null, most drivers should honor
+poGeomFieldDefn->GetType() and poGeomFieldDefn->GetSpatialRef().
+Drivers that honor poGeomFieldDefn->GetCoordinatePrecision() will declare the
+GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION capability. Drivers may honor
+poGeomFieldDefn->GetNameRef() and poGeomFieldDefn->IsNullable(), but there are
+very few currently.
+
+Note that even if a geometry coordinate precision is set and a driver honors the
+GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION capability, geometries passed to
+OGRLayer::CreateFeature() and OGRLayer::SetFeature() are assumed to be compatible
+with the coordinate precision. That is they are assumed to be valid once their
+coordinates are rounded to it. If it might not be the case, the user may set
+the OGR_APPLY_GEOM_SET_PRECISION configuration option before calling CreateFeature()
+or SetFeature() to force the OGRGeometry::SetPrecision() method to be called on
+the passed geometries.
+
+The papszOptions argument can be used to control driver specific creation
+options.  These options are normally documented in the format specific
+documentation.
+
+This method is the same as the C++ method GDALDataset::CreateLayer().
+
+@param hDS the dataset handle
+@param pszName the name for the new layer.  This should ideally not
+match any existing layer on the datasource.
+@param hGeomFieldDefn the geometry field definition. May be NULL to indicate
+a non-spatial file (or if adding geometry fields later with OGR_L_CreateGeomField()
+for drivers supporting that interface).
+@param papszOptions a StringList of name=value options.  Options are driver
+specific.
+
+@return NULL is returned on failure, or a new OGRLayer handle on success.
+
+@since GDAL 3.9
+
+*/
+
+OGRLayerH
+GDALDatasetCreateLayerFromGeomFieldDefn(GDALDatasetH hDS, const char *pszName,
+                                        OGRGeomFieldDefnH hGeomFieldDefn,
+                                        CSLConstList papszOptions)
+
+{
+    VALIDATE_POINTER1(hDS, "GDALDatasetCreateLayerFromGeomFieldDefn", nullptr);
+
+    if (!pszName)
+    {
+        CPLError(CE_Failure, CPLE_ObjectNull,
+                 "Name was NULL in GDALDatasetCreateLayerFromGeomFieldDefn");
+        return nullptr;
+    }
+
+    OGRLayerH hLayer =
+        OGRLayer::ToHandle(GDALDataset::FromHandle(hDS)->CreateLayer(
+            pszName, OGRGeomFieldDefn::FromHandle(hGeomFieldDefn),
+            papszOptions));
     return hLayer;
 }
 
@@ -5383,23 +5542,20 @@ int GDALDataset::GetSummaryRefCount() const
 
  @param pszName the name for the new layer.  This should ideally not
  match any existing layer on the datasource.
- @param poSpatialRef the coordinate system to use for the new layer, or NULL if
- no coordinate system is available.
- @param eGType the geometry type for the layer.  Use wkbUnknown if there
- are no constraints on the types geometry to be written.
+ @param poGeomFieldDefn the geometry field definition to use for the new layer,
+ or NULL if there is no geometry field.
  @param papszOptions a StringList of name=value options.  Options are driver
  specific.
 
  @return NULL is returned on failure, or a new OGRLayer handle on success.
 
- @since GDAL 2.0
+ @since GDAL 2.0 (prototype modified in 3.9)
 */
 
 OGRLayer *
 GDALDataset::ICreateLayer(CPL_UNUSED const char *pszName,
-                          CPL_UNUSED const OGRSpatialReference *poSpatialRef,
-                          CPL_UNUSED OGRwkbGeometryType eGType,
-                          CPL_UNUSED char **papszOptions)
+                          CPL_UNUSED const OGRGeomFieldDefn *poGeomFieldDefn,
+                          CPL_UNUSED CSLConstList papszOptions)
 
 {
     CPLError(CE_Failure, CPLE_NotSupported,
@@ -5464,17 +5620,19 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
     aosCleanedUpOptions.SetNameValue("COPY_MD", nullptr);
 
     CPLErrorReset();
-    if (poSrcDefn->GetGeomFieldCount() > 1 &&
-        TestCapability(ODsCCreateGeomFieldAfterCreateLayer))
+    const int nSrcGeomFieldCount = poSrcDefn->GetGeomFieldCount();
+    if (nSrcGeomFieldCount == 1)
     {
-        poDstLayer = ICreateLayer(pszNewName, nullptr, wkbNone,
+        OGRGeomFieldDefn oGeomFieldDefn(poSrcDefn->GetGeomFieldDefn(0));
+        if (pszSRSWKT)
+            oGeomFieldDefn.SetSpatialRef(&oDstSpaRef);
+        poDstLayer = ICreateLayer(pszNewName, &oGeomFieldDefn,
                                   aosCleanedUpOptions.List());
     }
     else
     {
-        poDstLayer = ICreateLayer(
-            pszNewName, pszSRSWKT ? &oDstSpaRef : poSrcLayer->GetSpatialRef(),
-            poSrcDefn->GetGeomType(), aosCleanedUpOptions.List());
+        poDstLayer =
+            ICreateLayer(pszNewName, nullptr, aosCleanedUpOptions.List());
     }
 
     if (poDstLayer == nullptr)
@@ -5555,7 +5713,6 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
     /* -------------------------------------------------------------------- */
     /*      Create geometry fields.                                         */
     /* -------------------------------------------------------------------- */
-    const int nSrcGeomFieldCount = poSrcDefn->GetGeomFieldCount();
     if (nSrcGeomFieldCount > 1 &&
         TestCapability(ODsCCreateGeomFieldAfterCreateLayer))
     {

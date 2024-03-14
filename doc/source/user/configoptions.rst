@@ -406,83 +406,6 @@ General options
       Sets the resampling algorithm to be used when reading from a raster
       into a buffer with different dimensions from the source region.
 
--  .. config:: OGR_ARC_STEPSIZE
-      :choices: <degrees>
-      :default: 4
-      :since: 1.8.0
-
-      Used by :cpp:func:`OGR_G_CreateFromGML` (for gml:Arc and gml:Circle) and
-      :cpp:func:`OGRGeometryFactory::approximateArcAngles` to stroke arc to linestrings.
-
-      The approximation of arcs as linestrings is done by splitting the arcs into
-      subarcs of no more than the angle specified by this option.
-
--  .. config:: OGR_ARC_MAX_GAP
-      :default: 0
-
-      Arcs will be approximated while enforcing a maximum distance
-      between adjacent points on the interpolated curve. Setting this option
-      to 0 (the default) means no maximum distance applies.
-
--  .. config:: OGR_STROKE_CURVE
-      :choices: TRUE, FALSE
-      :default: FALSE
-
-      Controls whether curved geometries should be approximated by linear geometries.
-
-- .. config:: OGR_ORGANIZE_POLYGONS
-     :choices: DEFAULT, SKIP, ONLY_CCW, CCW_INNER_JUST_AFTER_CW_OUTER
-
-     Defines the method used to classify polygon rings as holes or shells.
-     Although one of the options is named ``DEFAULT``, some drivers may default
-     to a different method to reduce processing by taking advantage of a
-     format's constraints. The following methods are available, in order of
-     decreasing expected runtime:
-
-     - ``DEFAULT``: perform a full analysis of the topological relationships
-       between all rings, classifying them as shells or holes and associating
-       them according to the OGC Simple Features convention. If the topological
-       analysis determines that a valid geometry cannot be constructed, the
-       result will be the same as with :config:`OGR_ORGANIZE_POLYGONS=SKIP`.
-
-     - ``ONLY_CCW``: assume that rings with clockwise orientation represent
-       shells and rings with counterclockwise orientation represent holes.
-       Perform a limited topological analysis to determine which shell contains
-       each hole. The Shapefile driver defaults to this method.
-
-     - ``CCW_INNER_JUST_AFTER_CW_OUTER``: assume that rings with clockwise
-       orientation represent shells and rings with counterclockwise orientation
-       represent holes and immediately follow the outer ring with which they are
-       associated.
-
-     - ``SKIP``: avoid attempting to classify rings as shells or holes. A
-       single geometry (Polygon/MultiPolygon/CurvePolygon/MultiSurface) will be
-       returned with all polygons as top-level polygons. If non-polygonal elements
-       are present, a GeometryCollection will be returned.
-
-
-
--  .. config:: OGR_SQL_LIKE_AS_ILIKE
-      :choices: YES, NO
-      :default: NO
-      :since: 3.1
-
-      If ``YES``, the LIKE operator in the OGR SQL dialect will be case-insensitive (ILIKE), as was the case for GDAL versions prior to 3.1.
-
--  .. config:: OGR_FORCE_ASCII
-      :choices: YES, NO
-      :default: YES
-
-      Used by :cpp:func:`OGRGetXML_UTF8_EscapedString` function and by GPX, KML,
-      GeoRSS and GML drivers.
-
-      Those XML based drivers should write UTF8 content. If they are provided with non
-      UTF8 content, they will replace each non-ASCII character by '?' when
-      OGR_FORCE_ASCII=YES.
-
-      Set to NO to preserve the content, but beware that the resulting XML file will
-      not be valid and will require manual edition of the encoding in the XML header.
-
 -  .. config:: CPL_VSIL_ZIP_ALLOWED_EXTENSIONS
       :choices: <comma-separated list>
 
@@ -560,6 +483,100 @@ General options
 -  .. config:: PYTHONSO
 
       Location of Python shared library file, e.g. ``pythonX.Y[...].so/.dll``.
+
+
+Vector related options
+^^^^^^^^^^^^^^^^^^^^^^
+
+-  .. config:: OGR_ARC_STEPSIZE
+      :choices: <degrees>
+      :default: 4
+      :since: 1.8.0
+
+      Used by :cpp:func:`OGR_G_CreateFromGML` (for gml:Arc and gml:Circle) and
+      :cpp:func:`OGRGeometryFactory::approximateArcAngles` to stroke arc to linestrings.
+
+      The approximation of arcs as linestrings is done by splitting the arcs into
+      subarcs of no more than the angle specified by this option.
+
+-  .. config:: OGR_ARC_MAX_GAP
+      :default: 0
+
+      Arcs will be approximated while enforcing a maximum distance
+      between adjacent points on the interpolated curve. Setting this option
+      to 0 (the default) means no maximum distance applies.
+
+-  .. config:: OGR_STROKE_CURVE
+      :choices: TRUE, FALSE
+      :default: FALSE
+
+      Controls whether curved geometries should be approximated by linear geometries.
+
+- .. config:: OGR_ORGANIZE_POLYGONS
+     :choices: DEFAULT, SKIP, ONLY_CCW, CCW_INNER_JUST_AFTER_CW_OUTER
+
+     Defines the method used to classify polygon rings as holes or shells.
+     Although one of the options is named ``DEFAULT``, some drivers may default
+     to a different method to reduce processing by taking advantage of a
+     format's constraints. The following methods are available, in order of
+     decreasing expected runtime:
+
+     - ``DEFAULT``: perform a full analysis of the topological relationships
+       between all rings, classifying them as shells or holes and associating
+       them according to the OGC Simple Features convention. If the topological
+       analysis determines that a valid geometry cannot be constructed, the
+       result will be the same as with :config:`OGR_ORGANIZE_POLYGONS=SKIP`.
+
+     - ``ONLY_CCW``: assume that rings with clockwise orientation represent
+       shells and rings with counterclockwise orientation represent holes.
+       Perform a limited topological analysis to determine which shell contains
+       each hole. The Shapefile driver defaults to this method.
+
+     - ``CCW_INNER_JUST_AFTER_CW_OUTER``: assume that rings with clockwise
+       orientation represent shells and rings with counterclockwise orientation
+       represent holes and immediately follow the outer ring with which they are
+       associated.
+
+     - ``SKIP``: avoid attempting to classify rings as shells or holes. A
+       single geometry (Polygon/MultiPolygon/CurvePolygon/MultiSurface) will be
+       returned with all polygons as top-level polygons. If non-polygonal elements
+       are present, a GeometryCollection will be returned.
+
+
+-  .. config:: OGR_SQL_LIKE_AS_ILIKE
+      :choices: YES, NO
+      :default: NO
+      :since: 3.1
+
+      If ``YES``, the LIKE operator in the OGR SQL dialect will be case-insensitive (ILIKE), as was the case for GDAL versions prior to 3.1.
+
+-  .. config:: OGR_FORCE_ASCII
+      :choices: YES, NO
+      :default: YES
+
+      Used by :cpp:func:`OGRGetXML_UTF8_EscapedString` function and by GPX, KML,
+      GeoRSS and GML drivers.
+
+      Those XML based drivers should write UTF8 content. If they are provided with non
+      UTF8 content, they will replace each non-ASCII character by '?' when
+      OGR_FORCE_ASCII=YES.
+
+      Set to NO to preserve the content, but beware that the resulting XML file will
+      not be valid and will require manual edition of the encoding in the XML header.
+
+-  .. config:: OGR_APPLY_GEOM_SET_PRECISION
+      :choices: YES, NO
+      :default: NO
+      :since: 3.9
+
+      By default, when a geometry coordinate precision is set on a geometry field
+      definition and a driver honors the GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION
+      capability, geometries passed to :cpp:func:`OGRLayer::CreateFeature` and
+      :cpp:func:`OGRLayer::SetFeature` are assumed to be compatible of the
+      coordinate precision. That is they are assumed to be valid once their
+      coordinates are rounded to it. If it might not be the case, set this
+      configuration option to YES before calling CreateFeature() or SetFeature()
+      to force :cpp:func:`OGRGeometry::SetPrecision` to be called on the passed geometries.
 
 
 Networking options

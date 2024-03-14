@@ -1507,15 +1507,18 @@ OGRErr OGRPGDataSource::DeleteLayer(int iLayer)
 /************************************************************************/
 
 OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
-                                        const OGRSpatialReference *poSRS,
-                                        OGRwkbGeometryType eType,
-                                        char **papszOptions)
+                                        const OGRGeomFieldDefn *poGeomFieldDefn,
+                                        CSLConstList papszOptions)
 
 {
     const char *pszGeomType = nullptr;
     char *pszTableName = nullptr;
     char *pszSchemaName = nullptr;
     int GeometryTypeFlags = 0;
+
+    auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     if (pszLayerName == nullptr)
         return nullptr;

@@ -570,14 +570,18 @@ static CPLString LaunderLayerName(const char *pszLayerName)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
-                                           const OGRSpatialReference *poSRS,
-                                           OGRwkbGeometryType eType,
-                                           char **papszOptions)
+OGRLayer *
+OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
+                                 const OGRGeomFieldDefn *poGeomFieldDefn,
+                                 CSLConstList papszOptions)
 
 {
     // To ensure that existing layers are created.
     GetLayerCount();
+
+    auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Check that the layer doesn't already exist.                     */

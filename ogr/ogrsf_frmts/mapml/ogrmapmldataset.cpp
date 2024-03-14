@@ -141,9 +141,9 @@ class OGRMapMLWriterDataset final : public GDALPamDataset
     }
     OGRLayer *GetLayer(int idx) override;
 
-    OGRLayer *ICreateLayer(const char *, const OGRSpatialReference * = nullptr,
-                           OGRwkbGeometryType = wkbUnknown,
-                           char ** = nullptr) override;
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 
     int TestCapability(const char *) override;
 
@@ -977,11 +977,14 @@ int OGRMapMLWriterDataset::TestCapability(const char *pszCap)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRMapMLWriterDataset::ICreateLayer(
-    const char *pszLayerName, const OGRSpatialReference *poSRSIn,
-    OGRwkbGeometryType, char ** /* papszOptions */)
+OGRLayer *
+OGRMapMLWriterDataset::ICreateLayer(const char *pszLayerName,
+                                    const OGRGeomFieldDefn *poGeomFieldDefn,
+                                    CSLConstList /*papszOptions*/)
 {
     OGRSpatialReference oSRS_WGS84;
+    const auto poSRSIn =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
     const OGRSpatialReference *poSRS = poSRSIn;
     if (poSRS == nullptr)
     {

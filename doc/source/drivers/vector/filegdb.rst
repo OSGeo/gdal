@@ -254,21 +254,29 @@ available:
      datasource is closed or when a read operation is done. Bulk load is
      enabled by default for newly created layers (unless otherwise specified).
 
-Examples
---------
+Geometry coordinate precision
+-----------------------------
 
--  Read layer from FileGDB and load into PostGIS:
--  Get detailed info for FileGDB:
+.. versionadded:: GDAL 3.9
 
-Building Notes
---------------
+The driver supports reading and writing the geometry coordinate
+precision, using the XYResolution, ZResolution and MResolution members of
+the :cpp:class:`OGRGeomCoordinatePrecision` settings of the
+:cpp:class:`OGRGeomFieldDefn`. ``XYScale`` is computed as 1.0 / ``XYResolution``
+(and similarly for the Z and M components). The tolerance setting is computed
+as being one tenth of the resolution
 
-Read the `GDAL Windows Building example for
-Plugins <http://trac.osgeo.org/gdal/wiki/BuildingOnWindows>`__. You will
-find a similar section in nmake.opt for FileGDB. After you are done, go
-to the *$gdal_source_root\ogr\ogrsf_frmts\filegdb* folder and execute:
+On reading, the coordinate precision grid parameters are returned as format
+specific options of :cpp:class:`OGRGeomCoordinatePrecision` with the
+``FileGeodatabase`` format key, with the following option key names:
+``XYScale``, ``XYTolerance``, ``XYOrigin``,
+``ZScale``, ``ZTolerance``, ``ZOrigin``,
+``MScale``, ``MTolerance``, ``MOrigin``. On writing, they are also honored
+(they will have precedence over XYResolution, ZResolution and MResolution).
 
-``nmake /f makefile.vc plugin         nmake /f makefile.vc plugin-install``
+On layer creation, the XORIGIN, YORIGIN, ZORIGIN, MORIGIN, XYSCALE, ZSCALE,
+ZORIGIN, XYTOLERANCE, ZTOLERANCE, MTOLERANCE layer creation options will be
+used in priority over the settings of :cpp:class:`OGRGeomCoordinatePrecision`.
 
 Known Issues
 ------------
@@ -296,7 +304,7 @@ Known Issues
 Other limitations
 -----------------
 
-- The FileGeodatabase format (and thus the driver) does not support 64-bit integers.
+- The driver does not support 64-bit integers.
 
 Links
 -----

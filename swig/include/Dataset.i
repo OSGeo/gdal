@@ -787,6 +787,20 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     return layer;
   }
 
+  /* Note that datasources own their layers */
+#ifndef SWIGJAVA
+  %feature( "kwargs" ) CreateLayer;
+#endif
+  OGRLayerShadow *CreateLayerFromGeomFieldDefn(const char* name,
+              OGRGeomFieldDefnShadow* geom_field,
+              char** options=0) {
+    OGRLayerShadow* layer = (OGRLayerShadow*) GDALDatasetCreateLayerFromGeomFieldDefn( self,
+                                  name,
+                                  geom_field,
+                                  options);
+    return layer;
+  }
+
 #ifndef SWIGJAVA
   %feature( "kwargs" ) CopyLayer;
 #endif

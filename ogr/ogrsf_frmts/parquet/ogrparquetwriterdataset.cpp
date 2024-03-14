@@ -76,9 +76,10 @@ int OGRParquetWriterDataset::TestCapability(const char *pszCap)
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRParquetWriterDataset::ICreateLayer(
-    const char *pszName, const OGRSpatialReference *poSpatialRef,
-    OGRwkbGeometryType eGType, char **papszOptions)
+OGRLayer *
+OGRParquetWriterDataset::ICreateLayer(const char *pszName,
+                                      const OGRGeomFieldDefn *poGeomFieldDefn,
+                                      CSLConstList papszOptions)
 {
     if (m_poLayer)
     {
@@ -86,6 +87,11 @@ OGRLayer *OGRParquetWriterDataset::ICreateLayer(
                  "Can write only one layer in a Parquet file");
         return nullptr;
     }
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSpatialRef =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
+
     m_poLayer = std::make_unique<OGRParquetWriterLayer>(
         this, m_poMemoryPool.get(), m_poOutputStream, pszName);
     if (!m_poLayer->SetOptions(papszOptions, poSpatialRef, eGType))

@@ -443,6 +443,24 @@ struct GDALVectorTranslateOptions
 
     /*! Wished offset w.r.t UTC of dateTime */
     int nTZOffsetInSec = TZ_OFFSET_INVALID;
+
+    /*! Geometry X,Y coordinate resolution */
+    double dfXYRes = OGRGeomCoordinatePrecision::UNKNOWN;
+
+    /*! Unit of dXYRes. empty string, "m", "mm" or "deg" */
+    std::string osXYResUnit{};
+
+    /*! Geometry Z coordinate resolution */
+    double dfZRes = OGRGeomCoordinatePrecision::UNKNOWN;
+
+    /*! Unit of dfZRes. empty string, "m" or "mm" */
+    std::string osZResUnit{};
+
+    /*! Geometry M coordinate resolution */
+    double dfMRes = OGRGeomCoordinatePrecision::UNKNOWN;
+
+    /*! Whether to unset geometry coordinate precision */
+    bool bUnsetCoordPrecision = false;
 };
 
 struct TargetLayerInfo
@@ -3875,6 +3893,7 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
         !m_bUnsetFieldWidth && !m_bExplodeCollections && !m_pszZField &&
         m_bExactFieldNameMatch && !m_bForceNullable && !m_bResolveDomains &&
         !m_bUnsetDefault && psOptions->nFIDToFetch == OGRNullFID &&
+        psOptions->dfXYRes == OGRGeomCoordinatePrecision::UNKNOWN &&
         !psOptions->bMakeValid)
     {
         struct ArrowArrayStream streamSrc;
@@ -4235,27 +4254,10 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             eGCreateLayerType = wkbNone;
         }
 
-        // If the source feature first geometry column is not nullable
-        // and that GEOMETRY_NULLABLE creation option is available, use it
-        // so as to be able to set the not null constraint (if the driver
-        // supports it)
-        if (eGType != wkbNone && anRequestedGeomFields.empty() &&
-            nSrcGeomFieldCount >= 1 &&
-            !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
-            pszDestCreationOptions != nullptr &&
-            strstr(pszDestCreationOptions, "GEOMETRY_NULLABLE") != nullptr &&
-            CSLFetchNameValue(m_papszLCO, "GEOMETRY_NULLABLE") == nullptr &&
-            !m_bForceNullable)
-        {
-            papszLCOTemp =
-                CSLSetNameValue(papszLCOTemp, "GEOMETRY_NULLABLE", "NO");
-            CPLDebug("GDALVectorTranslate", "Using GEOMETRY_NULLABLE=NO");
-        }
+        OGRGeomCoordinatePrecision oCoordPrec;
+        std::string osGeomFieldName;
+        bool bGeomFieldNullable = true;
 
-        // Use source geometry field name as much as possible
-        if (eGType != wkbNone && pszDestCreationOptions &&
-            strstr(pszDestCreationOptions, "GEOMETRY_NAME") != nullptr &&
-            CSLFetchNameValue(m_papszLCO, "GEOMETRY_NAME") == nullptr)
         {
             int iSrcGeomField = -1;
             if (anRequestedGeomFields.empty() &&
@@ -4273,15 +4275,152 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
 
             if (iSrcGeomField >= 0)
             {
-                const char *pszGFldName =
-                    poSrcFDefn->GetGeomFieldDefn(iSrcGeomField)->GetNameRef();
+                const auto poSrcGeomFieldDefn =
+                    poSrcFDefn->GetGeomFieldDefn(iSrcGeomField);
+                if (!psOptions->bUnsetCoordPrecision)
+                {
+                    oCoordPrec = poSrcGeomFieldDefn->GetCoordinatePrecision()
+                                     .ConvertToOtherSRS(
+                                         poSrcGeomFieldDefn->GetSpatialRef(),
+                                         poOutputSRS);
+                }
+
+                bGeomFieldNullable =
+                    CPL_TO_BOOL(poSrcGeomFieldDefn->IsNullable());
+
+                const char *pszGFldName = poSrcGeomFieldDefn->GetNameRef();
                 if (pszGFldName != nullptr && !EQUAL(pszGFldName, "") &&
                     poSrcFDefn->GetFieldIndex(pszGFldName) < 0)
                 {
-                    papszLCOTemp = CSLSetNameValue(
-                        papszLCOTemp, "GEOMETRY_NAME", pszGFldName);
+                    osGeomFieldName = pszGFldName;
+
+                    // Use source geometry field name as much as possible
+                    if (eGType != wkbNone && pszDestCreationOptions &&
+                        strstr(pszDestCreationOptions, "GEOMETRY_NAME") !=
+                            nullptr &&
+                        CSLFetchNameValue(m_papszLCO, "GEOMETRY_NAME") ==
+                            nullptr)
+                    {
+                        papszLCOTemp = CSLSetNameValue(
+                            papszLCOTemp, "GEOMETRY_NAME", pszGFldName);
+                    }
                 }
             }
+        }
+
+        // If the source feature first geometry column is not nullable
+        // and that GEOMETRY_NULLABLE creation option is available, use it
+        // so as to be able to set the not null constraint (if the driver
+        // supports it)
+        if (eGType != wkbNone && anRequestedGeomFields.empty() &&
+            nSrcGeomFieldCount >= 1 &&
+            !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
+            pszDestCreationOptions != nullptr &&
+            strstr(pszDestCreationOptions, "GEOMETRY_NULLABLE") != nullptr &&
+            CSLFetchNameValue(m_papszLCO, "GEOMETRY_NULLABLE") == nullptr &&
+            !m_bForceNullable)
+        {
+            bGeomFieldNullable = false;
+            papszLCOTemp =
+                CSLSetNameValue(papszLCOTemp, "GEOMETRY_NULLABLE", "NO");
+            CPLDebug("GDALVectorTranslate", "Using GEOMETRY_NULLABLE=NO");
+        }
+
+        if (psOptions->dfXYRes != OGRGeomCoordinatePrecision::UNKNOWN)
+        {
+            if (m_poDstDS->GetDriver()->GetMetadataItem(
+                    GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION) == nullptr &&
+                !OGRGeometryFactory::haveGEOS())
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "-xyRes specified, but driver does not expose the "
+                         "DCAP_HONOR_GEOM_COORDINATE_PRECISION capability, "
+                         "and this build has no GEOS support");
+            }
+
+            oCoordPrec.dfXYResolution = psOptions->dfXYRes;
+            if (!psOptions->osXYResUnit.empty())
+            {
+                if (!poOutputSRS)
+                {
+                    CSLDestroy(papszLCOTemp);
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unit suffix for -xyRes cannot be used with an "
+                             "unknown destination SRS");
+                    return nullptr;
+                }
+
+                if (psOptions->osXYResUnit == "mm")
+                {
+                    oCoordPrec.dfXYResolution *= 1e-3;
+                }
+                else if (psOptions->osXYResUnit == "deg")
+                {
+                    double dfFactorDegToMeter =
+                        poOutputSRS->GetSemiMajor(nullptr) * M_PI / 180;
+                    oCoordPrec.dfXYResolution *= dfFactorDegToMeter;
+                }
+                else
+                {
+                    // Checked at argument parsing time
+                    CPLAssert(psOptions->osXYResUnit == "m");
+                }
+
+                OGRGeomCoordinatePrecision tmp;
+                tmp.SetFromMeter(poOutputSRS, oCoordPrec.dfXYResolution, 0, 0);
+                oCoordPrec.dfXYResolution = tmp.dfXYResolution;
+            }
+        }
+
+        if (psOptions->dfZRes != OGRGeomCoordinatePrecision::UNKNOWN)
+        {
+            if (m_poDstDS->GetDriver()->GetMetadataItem(
+                    GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION) == nullptr)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "-zRes specified, but driver does not expose the "
+                         "DCAP_HONOR_GEOM_COORDINATE_PRECISION capability");
+            }
+
+            oCoordPrec.dfZResolution = psOptions->dfZRes;
+            if (!psOptions->osZResUnit.empty())
+            {
+                if (!poOutputSRS)
+                {
+                    CSLDestroy(papszLCOTemp);
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unit suffix for -zRes cannot be used with an "
+                             "unknown destination SRS");
+                    return nullptr;
+                }
+
+                if (psOptions->osZResUnit == "mm")
+                {
+                    oCoordPrec.dfZResolution *= 1e-3;
+                }
+                else
+                {
+                    // Checked at argument parsing time
+                    CPLAssert(psOptions->osZResUnit == "m");
+                }
+
+                OGRGeomCoordinatePrecision tmp;
+                tmp.SetFromMeter(poOutputSRS, 0, oCoordPrec.dfZResolution, 0);
+                oCoordPrec.dfZResolution = tmp.dfZResolution;
+            }
+        }
+
+        if (psOptions->dfMRes != OGRGeomCoordinatePrecision::UNKNOWN)
+        {
+            if (m_poDstDS->GetDriver()->GetMetadataItem(
+                    GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION) == nullptr)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "-mRes specified, but driver does not expose the "
+                         "DCAP_HONOR_GEOM_COORDINATE_PRECISION capability");
+            }
+
+            oCoordPrec.dfMResolution = psOptions->dfMRes;
         }
 
         // Force FID column as 64 bit if the source feature has a 64 bit FID,
@@ -4420,20 +4559,15 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             }
         }
 
-        OGRSpatialReference *poOutputSRSClone = nullptr;
-        if (poOutputSRS != nullptr)
-        {
-            poOutputSRSClone = poOutputSRS->Clone();
-        }
-        poDstLayer = m_poDstDS->CreateLayer(
-            pszNewLayerName, poOutputSRSClone,
-            static_cast<OGRwkbGeometryType>(eGCreateLayerType), papszLCOTemp);
+        OGRGeomFieldDefn oGeomFieldDefn(
+            osGeomFieldName.c_str(),
+            static_cast<OGRwkbGeometryType>(eGCreateLayerType));
+        oGeomFieldDefn.SetSpatialRef(poOutputSRS);
+        oGeomFieldDefn.SetCoordinatePrecision(oCoordPrec);
+        oGeomFieldDefn.SetNullable(bGeomFieldNullable);
+        poDstLayer = m_poDstDS->CreateLayer(pszNewLayerName, &oGeomFieldDefn,
+                                            papszLCOTemp);
         CSLDestroy(papszLCOTemp);
-
-        if (poOutputSRSClone != nullptr)
-        {
-            poOutputSRSClone->Release();
-        }
 
         if (poDstLayer == nullptr)
         {
@@ -4504,7 +4638,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                     poSrcFDefn->GetGeomFieldDefn(iSrcGeomField));
                 if (m_poOutputSRS != nullptr)
                 {
-                    poOutputSRSClone = m_poOutputSRS->Clone();
+                    auto poOutputSRSClone = m_poOutputSRS->Clone();
                     oGFldDefn.SetSpatialRef(poOutputSRSClone);
                     poOutputSRSClone->Release();
                 }
@@ -5658,6 +5792,8 @@ bool LayerTranslator::Translate(
     int nFeaturesInTransaction = 0;
     GIntBig nCount = 0; /* written + failed */
     GIntBig nFeaturesWritten = 0;
+    bool bRunSetPrecisionEvaluated = false;
+    bool bRunSetPrecision = false;
 
     bool bRet = true;
     CPLErrorReset();
@@ -6245,6 +6381,34 @@ bool LayerTranslator::Translate(
 
                         delete poDstGeometry;
                         poDstGeometry = poClipped.release();
+                    }
+
+                    if (psOptions->dfXYRes !=
+                            OGRGeomCoordinatePrecision::UNKNOWN &&
+                        OGRGeometryFactory::haveGEOS() &&
+                        !poDstGeometry->hasCurveGeometry())
+                    {
+                        // OGR_APPLY_GEOM_SET_PRECISION default value for
+                        // OGRLayer::CreateFeature() purposes, but here in the
+                        // ogr2ogr -xyRes context, we force calling SetPrecision(),
+                        // unless the user explicitly asks not to do it by
+                        // setting the config option to NO.
+                        if (!bRunSetPrecisionEvaluated)
+                        {
+                            bRunSetPrecisionEvaluated = true;
+                            bRunSetPrecision = CPLTestBool(CPLGetConfigOption(
+                                "OGR_APPLY_GEOM_SET_PRECISION", "YES"));
+                        }
+                        if (bRunSetPrecision)
+                        {
+                            OGRGeometry *poRoundedGeom =
+                                poDstGeometry->SetPrecision(psOptions->dfXYRes,
+                                                            /* nFlags = */ 0);
+                            delete poDstGeometry;
+                            poDstGeometry = poRoundedGeom;
+                            if (!poDstGeometry)
+                                goto end_loop;
+                        }
                     }
 
                     if (m_bMakeValid)
@@ -7296,6 +7460,76 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                          "UTC(+|-)HH:MM with HH in [0,14] and MM=00,15,30,45");
                 return nullptr;
             }
+        }
+        else if (EQUAL(papszArgv[i], "-xyRes"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            const char *pszVal = papszArgv[++i];
+
+            char *endptr = nullptr;
+            psOptions->dfXYRes = CPLStrtod(pszVal, &endptr);
+            if (!endptr)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for -xyRes. Must be of the form "
+                         "{numeric_value}[ ]?[m|mm|deg]?");
+                return nullptr;
+            }
+            if (*endptr == ' ')
+                ++endptr;
+            if (*endptr != 0 && strcmp(endptr, "m") != 0 &&
+                strcmp(endptr, "mm") != 0 && strcmp(endptr, "deg") != 0)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for -xyRes. Must be of the form "
+                         "{numeric_value}[ ]?[m|mm|deg]?");
+                return nullptr;
+            }
+            psOptions->osXYResUnit = endptr;
+        }
+        else if (EQUAL(papszArgv[i], "-zRes"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            const char *pszVal = papszArgv[++i];
+
+            char *endptr = nullptr;
+            psOptions->dfZRes = CPLStrtod(pszVal, &endptr);
+            if (!endptr)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for -zRes. Must be of the form "
+                         "{numeric_value}[ ]?[m|mm]?");
+                return nullptr;
+            }
+            if (*endptr == ' ')
+                ++endptr;
+            if (*endptr != 0 && strcmp(endptr, "m") != 0 &&
+                strcmp(endptr, "mm") != 0 && strcmp(endptr, "deg") != 0)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for -zRes. Must be of the form "
+                         "{numeric_value}[ ]?[m|mm]?");
+                return nullptr;
+            }
+            psOptions->osZResUnit = endptr;
+        }
+        else if (EQUAL(papszArgv[i], "-mRes"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            const char *pszVal = papszArgv[++i];
+
+            char *endptr = nullptr;
+            psOptions->dfMRes = CPLStrtod(pszVal, &endptr);
+            if (!endptr || endptr != pszVal + strlen(pszVal))
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for -mRes");
+                return nullptr;
+            }
+        }
+        else if (EQUAL(papszArgv[i], "-unsetCoordPrecision"))
+        {
+            psOptions->bUnsetCoordPrecision = true;
         }
         else if (papszArgv[i][0] == '-')
         {

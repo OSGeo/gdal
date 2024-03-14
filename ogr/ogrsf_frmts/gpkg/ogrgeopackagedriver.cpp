@@ -675,6 +675,13 @@ void RegisterOGRGeoPackage()
         "  <Option name='GEOMETRY_NULLABLE' type='boolean' "
         "description='Whether the values of the geometry column can be NULL' "
         "default='YES'/>"
+        "  <Option name='DISCARD_COORD_LSB' type='boolean' "
+        "description='Whether the geometry coordinate precision should be used "
+        "to set to zero non-significant least-significant bits of geometries. "
+        "Helps when further compression is used' default='NO'/>"
+        "  <Option name='UNDO_DISCARD_COORD_LSB_ON_READING' type='boolean' "
+        "description='Whether to ask GDAL to take into coordinate precision to "
+        "undo the effects of DISCARD_COORD_LSB' default='NO'/>"
         "  <Option name='FID' type='string' description='Name of the FID "
         "column to create' default='fid'/>"
         "  <Option name='OVERWRITE' type='boolean' description='Whether to "
@@ -744,6 +751,8 @@ void RegisterOGRGeoPackage()
     poDriver->SetMetadataItem(
         GDAL_DMD_RELATIONSHIP_RELATED_TABLE_TYPES,
         "features media simple_attributes attributes tiles");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION, "YES");
 
 #ifdef ENABLE_SQL_GPKG_FORMAT
     poDriver->SetMetadataItem("ENABLE_SQL_GPKG_FORMAT", "YES");

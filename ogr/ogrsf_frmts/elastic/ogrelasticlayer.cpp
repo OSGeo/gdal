@@ -84,7 +84,8 @@ OGRElasticLayer::OGRElasticLayer(const char *pszLayerName,
                                  const char *pszIndexName,
                                  const char *pszMappingName,
                                  OGRElasticDataSource *poDS,
-                                 char **papszOptions, const char *pszESSearch)
+                                 CSLConstList papszOptions,
+                                 const char *pszESSearch)
     :
 
       m_poDS(poDS), m_osIndexName(pszIndexName ? pszIndexName : ""),

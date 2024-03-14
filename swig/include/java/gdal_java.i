@@ -43,6 +43,7 @@ import org.gdal.ogr.StyleTable;
 import org.gdal.ogr.Layer;
 import org.gdal.ogr.Feature;
 import org.gdal.ogr.FieldDomain;
+import org.gdal.ogr.GeomFieldDefn;
 %}
 
 %pragma(java) moduleimports=%{
@@ -61,6 +62,7 @@ import org.gdal.ogr.StyleTable;
 import org.gdal.ogr.Layer;
 import org.gdal.ogr.Feature;
 import org.gdal.ogr.FieldDomain;
+import org.gdal.ogr.GeomFieldDefn;
 %}
 
 %typemap(javaimports) GDALDimensionHS %{

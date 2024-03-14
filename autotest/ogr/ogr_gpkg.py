@@ -10140,3 +10140,172 @@ def test_ogr_gpkg_creation_with_foreign_key_constraint_enabled(tmp_vsimem):
     with gdaltest.config_option("OGR_SQLITE_PRAGMA", "FOREIGN_KEYS=1"):
         out_filename = str(tmp_vsimem / "out.gpkg")
         gdal.VectorTranslate(out_filename, "data/poly.shp")
+
+
+###############################################################################
+# Test geometry coordinate precision support
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "with_metadata,DISCARD_COORD_LSB,UNDO_DISCARD_COORD_LSB_ON_READING",
+    [(True, "YES", "YES"), (False, "YES", "NO"), (False, "NO", "NO")],
+)
+def test_ogr_gpkg_geom_coord_precision(
+    tmp_vsimem, with_metadata, DISCARD_COORD_LSB, UNDO_DISCARD_COORD_LSB_ON_READING
+):
+
+    filename = str(tmp_vsimem / "test.gpkg")
+    ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    geom_fld = ogr.GeomFieldDefn("my_geom", ogr.wkbUnknown)
+    prec = ogr.CreateGeomCoordinatePrecision()
+    prec.Set(1e-5, 1e-3, 1e-2)
+    geom_fld.SetCoordinatePrecision(prec)
+    lyr = ds.CreateLayerFromGeomFieldDefn(
+        "test",
+        geom_fld,
+        [
+            "DISCARD_COORD_LSB=" + DISCARD_COORD_LSB,
+            "UNDO_DISCARD_COORD_LSB_ON_READING=" + UNDO_DISCARD_COORD_LSB_ON_READING,
+        ],
+    )
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    assert prec.GetMResolution() == 1e-2
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POINT ZM (1.23456789 2.34567891 9.87654321 -1.23456789)"
+        )
+    )
+    lyr.CreateFeature(f)
+    if with_metadata:
+        lyr.SetMetadataItem("FOO", "BAR")
+    ds.Close()
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    assert prec.GetMResolution() == 1e-2
+    assert ds.GetMetadata() == {}
+    assert lyr.GetMetadata() == ({"FOO": "BAR"} if with_metadata else {})
+    f = lyr.GetNextFeature()
+
+    g = f.GetGeometryRef()
+    assert g.GetX(0) == pytest.approx(1.23456789, abs=1e-5)
+    if DISCARD_COORD_LSB == "YES":
+        assert g.GetX(0) != pytest.approx(1.23456789, abs=1e-8)
+    if UNDO_DISCARD_COORD_LSB_ON_READING == "YES":
+        assert g.GetX(0) == pytest.approx(1.23457, abs=1e-8)
+    else:
+        assert g.GetX(0) != pytest.approx(1.23457, abs=1e-8)
+
+    assert g.GetY(0) == pytest.approx(2.34567891, abs=1e-5)
+    if DISCARD_COORD_LSB == "YES":
+        assert g.GetY(0) != pytest.approx(2.34567891, abs=1e-8)
+    if UNDO_DISCARD_COORD_LSB_ON_READING == "YES":
+        assert g.GetY(0) == pytest.approx(2.34568, abs=1e-8)
+
+    assert g.GetZ(0) == pytest.approx(9.87654321, abs=1e-3)
+    if DISCARD_COORD_LSB == "YES":
+        assert g.GetZ(0) != pytest.approx(9.87654321, abs=1e-8)
+    if UNDO_DISCARD_COORD_LSB_ON_READING == "YES":
+        assert g.GetZ(0) == pytest.approx(9.876, abs=1e-8)
+
+    assert g.GetM(0) == pytest.approx(-1.23456789, abs=1e-2)
+    if DISCARD_COORD_LSB == "YES":
+        assert g.GetM(0) != pytest.approx(-1.23456789, abs=1e-8)
+    if UNDO_DISCARD_COORD_LSB_ON_READING == "YES":
+        assert g.GetM(0) == pytest.approx(-1.23, abs=1e-8)
+
+    # Test Arrow interface
+    lyr.ResetReading()
+    mem_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    mem_lyr = mem_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    mem_lyr.CreateGeomField(ogr.GeomFieldDefn("my_geom"))
+    mem_lyr.WriteArrow(lyr)
+    f = mem_lyr.GetNextFeature()
+
+    g = f.GetGeometryRef()
+    assert g.GetX(0) == pytest.approx(1.23456789, abs=1e-5)
+    if DISCARD_COORD_LSB == "YES":
+        assert g.GetX(0) != pytest.approx(1.23456789, abs=1e-8)
+    if UNDO_DISCARD_COORD_LSB_ON_READING == "YES":
+        assert g.GetX(0) == pytest.approx(1.23457, abs=1e-8)
+    else:
+        assert g.GetX(0) != pytest.approx(1.23457, abs=1e-8)
+
+    assert g.GetY(0) == pytest.approx(2.34567891, abs=1e-5)
+    if DISCARD_COORD_LSB == "YES":
+        assert g.GetY(0) != pytest.approx(2.34567891, abs=1e-8)
+    if UNDO_DISCARD_COORD_LSB_ON_READING == "YES":
+        assert g.GetY(0) == pytest.approx(2.34568, abs=1e-8)
+
+    assert g.GetZ(0) == pytest.approx(9.87654321, abs=1e-3)
+    if DISCARD_COORD_LSB == "YES":
+        assert g.GetZ(0) != pytest.approx(9.87654321, abs=1e-8)
+    if UNDO_DISCARD_COORD_LSB_ON_READING == "YES":
+        assert g.GetZ(0) == pytest.approx(9.876, abs=1e-8)
+
+    assert g.GetM(0) == pytest.approx(-1.23456789, abs=1e-2)
+    if DISCARD_COORD_LSB == "YES":
+        assert g.GetM(0) != pytest.approx(-1.23456789, abs=1e-8)
+    if UNDO_DISCARD_COORD_LSB_ON_READING == "YES":
+        assert g.GetM(0) == pytest.approx(-1.23, abs=1e-8)
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    # Update geometry to check existing precision settings are used
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POINT ZM (-1.23456789 -2.34567891 -9.87654321 1.23456789)"
+        )
+    )
+    lyr.SetFeature(f)
+
+    lyr.SetMetadataItem("FOO", "BAZ")
+
+    new_geom_field_defn = ogr.GeomFieldDefn("new_geom_name", ogr.wkbNone)
+    assert (
+        lyr.AlterGeomFieldDefn(
+            0, new_geom_field_defn, ogr.ALTER_GEOM_FIELD_DEFN_NAME_FLAG
+        )
+        == ogr.OGRERR_NONE
+    )
+
+    assert lyr.Rename("test_renamed") == ogr.OGRERR_NONE
+
+    ds.Close()
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    assert prec.GetMResolution() == 1e-2
+    assert lyr.GetMetadata() == {"FOO": "BAZ"}
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetX(0) == pytest.approx(-1.23456789, abs=1e-5)
+    if DISCARD_COORD_LSB == "YES":
+        assert g.GetX(0) != pytest.approx(-1.23456789, abs=1e-8)
+    assert g.GetY(0) == pytest.approx(-2.34567891, abs=1e-5)
+    assert g.GetZ(0) == pytest.approx(-9.87654321, abs=1e-3)
+    if DISCARD_COORD_LSB == "YES":
+        assert g.GetZ(0) != pytest.approx(-9.87654321, abs=1e-8)
+    assert g.GetM(0) == pytest.approx(1.23456789, abs=1e-2)
+    if DISCARD_COORD_LSB == "YES":
+        assert g.GetM(0) != pytest.approx(1.23456789, abs=1e-8)
+
+    ds.DeleteLayer(0)
+
+    with ds.ExecuteSQL("SELECT * FROM gpkg_metadata") as sql_lyr:
+        assert sql_lyr.GetFeatureCount() == 0
+
+    ds.Close()

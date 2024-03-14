@@ -281,6 +281,30 @@ Note that this emulation has an unspecified behavior in case of
 concurrent updates (with different connections in the same or another
 process).
 
+Geometry coordinate precision
+-----------------------------
+
+.. versionadded:: GDAL 3.9
+
+The driver supports reading and writing the geometry coordinate
+precision, using the XYResolution, ZResolution and MResolution members of
+the :cpp:class:`OGRGeomCoordinatePrecision` settings of the
+:cpp:class:`OGRGeomFieldDefn`. ``XYScale`` is computed as 1.0 / ``XYResolution``
+(and similarly for the Z and M components). The tolerance setting is computed
+as being one tenth of the resolution
+
+On reading, the coordinate precision grid parameters are returned as format
+specific options of :cpp:class:`OGRGeomCoordinatePrecision` with the
+``FileGeodatabase`` format key, with the following option key names:
+``XYScale``, ``XYTolerance``, ``XYOrigin``,
+``ZScale``, ``ZTolerance``, ``ZOrigin``,
+``MScale``, ``MTolerance``, ``MOrigin``. On writing, they are also honored
+(they will have precedence over XYResolution, ZResolution and MResolution).
+
+On layer creation, the XORIGIN, YORIGIN, ZORIGIN, MORIGIN, XYSCALE, ZSCALE,
+ZORIGIN, XYTOLERANCE, ZTOLERANCE, MTOLERANCE layer creation options will be
+used in priority over the settings of :cpp:class:`OGRGeomCoordinatePrecision`.
+
 Comparison with the FileGDB driver
 ----------------------------------
 

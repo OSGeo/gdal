@@ -412,10 +412,10 @@ OGRErr OGRElasticDataSource::DeleteLayer(int iLayer)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRElasticDataSource::ICreateLayer(const char *pszLayerName,
-                                             const OGRSpatialReference *poSRS,
-                                             OGRwkbGeometryType eGType,
-                                             char **papszOptions)
+OGRLayer *
+OGRElasticDataSource::ICreateLayer(const char *pszLayerName,
+                                   const OGRGeomFieldDefn *poGeomFieldDefn,
+                                   CSLConstList papszOptions)
 {
     if (eAccess != GA_Update)
     {
@@ -423,6 +423,10 @@ OGRLayer *OGRElasticDataSource::ICreateLayer(const char *pszLayerName,
                  "Dataset opened in read-only mode");
         return nullptr;
     }
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     CPLString osLaunderedName(pszLayerName);
 

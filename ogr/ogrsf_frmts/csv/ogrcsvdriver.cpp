@@ -441,6 +441,7 @@ void RegisterOGRCSV()
                               "StringList");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
                               "Boolean Int16 Float32");
+    poDriver->SetMetadataItem(GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION, "YES");
 
     poDriver->pfnOpen = OGRCSVDriverOpen;
     poDriver->pfnIdentify = OGRCSVDriverIdentify;

@@ -38,6 +38,8 @@
 #include "cpl_minixml.h"  // the only way right now to extract schema information
 #include "filegdb_gdbtoogrfieldtype.h"
 #include "filegdb_fielddomain.h"
+#include "filegdb_coordprec_read.h"
+#include "filegdb_coordprec_write.h"
 
 // See https://github.com/Esri/file-geodatabase-api/issues/46
 // On certain FileGDB datasets with binary fields, iterating over a result set
@@ -2070,12 +2072,17 @@ OGRErr FGdbLayer::AlterFieldDefn(int iFieldToAlter,
 /*                      XMLSpatialReference()                           */
 /*  Build up an XML representation of an OGRSpatialReference.           */
 /*  Used in layer creation.                                             */
-/*                                                                      */
+/*  Fill oCoordPrec.                                                    */
 /************************************************************************/
 
-static CPLXMLNode *XMLSpatialReference(const OGRSpatialReference *poSRS,
-                                       char **papszOptions)
+static CPLXMLNode *
+XMLSpatialReference(const OGRGeomFieldDefn *poSrcGeomFieldDefn,
+                    CSLConstList papszOptions,
+                    OGRGeomCoordinatePrecision &oCoordPrec)
 {
+    const auto poSRS =
+        poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetSpatialRef() : nullptr;
+
     /* We always need a SpatialReference */
     CPLXMLNode *srs_xml =
         CPLCreateXMLNode(nullptr, CXT_Element, "SpatialReference");
@@ -2249,77 +2256,19 @@ static CPLXMLNode *XMLSpatialReference(const OGRSpatialReference *poSRS,
     }
 
     /* Handle Origin/Scale/Tolerance */
-    const char *grid[10] = {"XOrigin",    "YOrigin",   "XYScale", "ZOrigin",
-                            "ZScale",     "MOrigin",   "MScale",  "XYTolerance",
-                            "ZTolerance", "MTolerance"};
-    const char *gridvalues[10];
 
-    /*
-    Need different default parameters for geographic and projected coordinate
-    systems. Try and use ArcGIS 10 default values.
-    */
-    // default tolerance is 1mm in the units of the coordinate system
-    double ztol =
-        0.001 * (poSRS ? poSRS->GetTargetLinearUnits("VERT_CS") : 1.0);
-    // default scale is 10x the tolerance
-    long zscale = (long)(1 / ztol * 10);
-
-    double mtol = 0.001;
-    long mscale = (long)(1 / mtol * 10);
-
-    char s_xyscale[50], s_xytol[50], s_zscale[50], s_ztol[50], s_mscale[50],
-        s_mtol[50];
-    CPLsnprintf(s_ztol, 50, "%f", ztol);
-    snprintf(s_zscale, 50, "%ld", zscale);
-
-    CPLsnprintf(s_mtol, 50, "%f", mtol);
-    snprintf(s_mscale, 50, "%ld", mscale);
-
-    if (poSRS == nullptr || poSRS->IsProjected())
+    oCoordPrec = GDBGridSettingsFromOGR(poSrcGeomFieldDefn, papszOptions);
+    const auto &oGridsOptions =
+        oCoordPrec.oFormatSpecificOptions.find("FileGeodatabase")->second;
+    for (int i = 0; i < oGridsOptions.size(); ++i)
     {
-        // default tolerance is 1mm in the units of the coordinate system
-        double xytol =
-            0.001 * (poSRS ? poSRS->GetTargetLinearUnits("PROJCS") : 1.0);
-        // default scale is 10x the tolerance
-        long xyscale = (long)(1 / xytol * 10);
-
-        CPLsnprintf(s_xytol, 50, "%f", xytol);
-        snprintf(s_xyscale, 50, "%ld", xyscale);
-
-        // Ideally we would use the same X/Y origins as ArcGIS, but we need the
-        // algorithm they use.
-        gridvalues[0] = "-2147483647";
-        gridvalues[1] = "-2147483647";
-        gridvalues[2] = s_xyscale;
-        gridvalues[3] = "-100000";
-        gridvalues[4] = s_zscale;
-        gridvalues[5] = "-100000";
-        gridvalues[6] = s_mscale;
-        gridvalues[7] = s_xytol;
-        gridvalues[8] = s_ztol;
-        gridvalues[9] = s_mtol;
-    }
-    else
-    {
-        gridvalues[0] = "-400";
-        gridvalues[1] = "-400";
-        gridvalues[2] = "1000000000";
-        gridvalues[3] = "-100000";
-        gridvalues[4] = s_zscale;
-        gridvalues[5] = "-100000";
-        gridvalues[6] = s_mscale;
-        gridvalues[7] = "0.000000008983153";
-        gridvalues[8] = s_ztol;
-        gridvalues[9] = s_mtol;
-    }
-
-    /* Convert any layer creation options available, use defaults otherwise */
-    for (int i = 0; i < 10; i++)
-    {
-        if (CSLFetchNameValue(papszOptions, grid[i]) != nullptr)
-            gridvalues[i] = CSLFetchNameValue(papszOptions, grid[i]);
-
-        CPLCreateXMLElementAndValue(srs_xml, grid[i], gridvalues[i]);
+        char *pszKey = nullptr;
+        const char *pszValue = CPLParseNameValue(oGridsOptions[i], &pszKey);
+        if (pszKey && pszValue)
+        {
+            CPLCreateXMLElementAndValue(srs_xml, pszKey, pszValue);
+        }
+        CPLFree(pszKey);
     }
 
     /* FGDB is always High Precision */
@@ -2343,8 +2292,8 @@ static CPLXMLNode *XMLSpatialReference(const OGRSpatialReference *poSRS,
 
 bool FGdbLayer::CreateFeatureDataset(FGdbDataSource *pParentDataSource,
                                      const std::string &feature_dataset_name,
-                                     const OGRSpatialReference *poSRS,
-                                     char **papszOptions)
+                                     const OGRGeomFieldDefn *poSrcGeomFieldDefn,
+                                     CSLConstList papszOptions)
 {
     /* XML node */
     CPLXMLNode *xml_xml = CPLCreateXMLNode(nullptr, CXT_Element, "?xml");
@@ -2383,12 +2332,11 @@ bool FGdbLayer::CreateFeatureDataset(FGdbDataSource *pParentDataSource,
     CPLAddXMLChild(defn_xml, extent_xml);
 
     /* Add the SRS */
-    if (true)  // TODO: conditional on existence of SRS
-    {
-        CPLXMLNode *srs_xml = XMLSpatialReference(poSRS, papszOptions);
-        if (srs_xml)
-            CPLAddXMLChild(defn_xml, srs_xml);
-    }
+    OGRGeomCoordinatePrecision oCoordPrec;
+    CPLXMLNode *srs_xml =
+        XMLSpatialReference(poSrcGeomFieldDefn, papszOptions, oCoordPrec);
+    if (srs_xml)
+        CPLAddXMLChild(defn_xml, srs_xml);
 
     /* Convert our XML tree into a string for FGDB */
     char *defn_str = CPLSerializeXMLTree(xml_xml);
@@ -2431,8 +2379,8 @@ bool FGdbLayer::CreateFeatureDataset(FGdbDataSource *pParentDataSource,
 
 bool FGdbLayer::Create(FGdbDataSource *pParentDataSource,
                        const char *pszLayerNameIn,
-                       const OGRSpatialReference *poSRS,
-                       OGRwkbGeometryType eType, char **papszOptions)
+                       const OGRGeomFieldDefn *poSrcGeomFieldDefn,
+                       CSLConstList papszOptions)
 {
     std::string parent_path = "";
     std::wstring wtable_path, wparent_path;
@@ -2441,6 +2389,9 @@ bool FGdbLayer::Create(FGdbDataSource *pParentDataSource,
     std::string esri_type;
     bool has_z = false;
     bool has_m = false;
+
+    const auto eType =
+        poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetType() : wkbNone;
 
 #ifdef EXTENT_WORKAROUND
     m_bLayerJustCreated = true;
@@ -2522,7 +2473,7 @@ bool FGdbLayer::Create(FGdbDataSource *pParentDataSource,
         if (!bFeatureDataSetExists)
         {
             bool rv = CreateFeatureDataset(pParentDataSource, feature_dataset,
-                                           poSRS, papszOptions);
+                                           poSrcGeomFieldDefn, papszOptions);
             if (!rv)
                 return rv;
         }
@@ -2657,6 +2608,7 @@ bool FGdbLayer::Create(FGdbDataSource *pParentDataSource,
     /* Feature Classes have an implicit geometry column, so we'll add it at
      * creation time */
     CPLXMLNode *srs_xml = nullptr;
+    OGRGeomCoordinatePrecision oCoordPrec;
     if (eType != wkbNone)
     {
         CPLXMLNode *shape_xml =
@@ -2684,7 +2636,8 @@ bool FGdbLayer::Create(FGdbDataSource *pParentDataSource,
                                     (has_z ? "true" : "false"));
 
         /* Add the SRS if we have one */
-        srs_xml = XMLSpatialReference(poSRS, papszOptions);
+        srs_xml =
+            XMLSpatialReference(poSrcGeomFieldDefn, papszOptions, oCoordPrec);
         if (srs_xml)
             CPLAddXMLChild(geom_xml, srs_xml);
     }
@@ -2816,6 +2769,10 @@ bool FGdbLayer::Create(FGdbDataSource *pParentDataSource,
         FGdbLayer::Initialize(pParentDataSource, table, wtable_path, L"Table");
     if (bRet)
     {
+        if (m_pFeatureDefn->GetGeomFieldCount() != 0)
+            m_pFeatureDefn->GetGeomFieldDefn(0)->SetCoordinatePrecision(
+                oCoordPrec);
+
         if (bCreateShapeArea)
         {
             OGRFieldDefn oField(pszAreaFieldName, OFTReal);
@@ -2986,16 +2943,15 @@ bool FGdbLayer::Initialize(FGdbDataSource *pParentDataSource, Table *pTable,
 /*                          ParseGeometryDef()                          */
 /************************************************************************/
 
-bool FGdbLayer::ParseGeometryDef(CPLXMLNode *psRoot)
+bool FGdbLayer::ParseGeometryDef(const CPLXMLNode *psRoot)
 {
-    CPLXMLNode *psGeometryDefItem;
-
     string geometryType;
     bool hasZ = false, hasM = false;
     string wkt, wkid, latestwkid;
 
-    for (psGeometryDefItem = psRoot->psChild; psGeometryDefItem != nullptr;
-         psGeometryDefItem = psGeometryDefItem->psNext)
+    OGRGeomCoordinatePrecision oCoordPrec;
+    for (const CPLXMLNode *psGeometryDefItem = psRoot->psChild;
+         psGeometryDefItem; psGeometryDefItem = psGeometryDefItem->psNext)
     {
         // loop through all "GeometryDef" elements
         //
@@ -3013,6 +2969,7 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode *psRoot)
                     psGeometryDefItem, &wkt, &wkid,
                     &latestwkid);  // we don't check for success because it
                                    // may not be there
+                oCoordPrec = GDBGridSettingsToOGR(psGeometryDefItem);
             }
             else if (EQUAL(psGeometryDefItem->pszValue, "HasM"))
             {
@@ -3034,6 +2991,9 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode *psRoot)
         return false;
 
     m_pFeatureDefn->SetGeomType(ogrGeoType);
+
+    if (m_pFeatureDefn->GetGeomFieldCount() != 0)
+        m_pFeatureDefn->GetGeomFieldDefn(0)->SetCoordinatePrecision(oCoordPrec);
 
     if (wkbFlatten(ogrGeoType) == wkbMultiLineString ||
         wkbFlatten(ogrGeoType) == wkbMultiPoint)
@@ -3087,11 +3047,6 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode *psRoot)
                      "Failed Mapping ESRI Spatial Reference");
         }
     }
-    else
-    {
-        // report error, but be passive about it
-        CPLError(CE_Warning, CPLE_AppDefined, "Empty Spatial Reference");
-    }
 
     return true;
 }
@@ -3100,7 +3055,7 @@ bool FGdbLayer::ParseGeometryDef(CPLXMLNode *psRoot)
 /*                        ParseSpatialReference()                       */
 /************************************************************************/
 
-bool FGdbLayer::ParseSpatialReference(CPLXMLNode *psSpatialRefNode,
+bool FGdbLayer::ParseSpatialReference(const CPLXMLNode *psSpatialRefNode,
                                       string *pOutWkt, string *pOutWKID,
                                       string *pOutLatestWKID)
 {
@@ -3108,11 +3063,9 @@ bool FGdbLayer::ParseSpatialReference(CPLXMLNode *psSpatialRefNode,
     *pOutWKID = "";
     *pOutLatestWKID = "";
 
-    CPLXMLNode *psSRItemNode;
-
     /* Loop through all the SRS elements we want to store */
-    for (psSRItemNode = psSpatialRefNode->psChild; psSRItemNode != nullptr;
-         psSRItemNode = psSRItemNode->psNext)
+    for (const CPLXMLNode *psSRItemNode = psSpatialRefNode->psChild;
+         psSRItemNode; psSRItemNode = psSRItemNode->psNext)
     {
         /* The WKID maps (mostly) to an EPSG code */
         if (psSRItemNode->eType == CXT_Element &&

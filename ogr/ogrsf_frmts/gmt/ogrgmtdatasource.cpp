@@ -99,13 +99,17 @@ int OGRGmtDataSource::Create(const char *pszDSName, char ** /* papszOptions */)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRGmtDataSource::ICreateLayer(const char *pszLayerName,
-                                         const OGRSpatialReference *poSRS,
-                                         OGRwkbGeometryType eType,
-                                         CPL_UNUSED char **papszOptions)
+OGRLayer *
+OGRGmtDataSource::ICreateLayer(const char *pszLayerName,
+                               const OGRGeomFieldDefn *poGeomFieldDefn,
+                               CSLConstList /*papszOptions*/)
 {
     if (nLayers != 0)
         return nullptr;
+
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Establish the geometry type.  Note this logic                   */

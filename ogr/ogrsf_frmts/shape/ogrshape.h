@@ -360,9 +360,9 @@ class OGRShapeDataSource final : public OGRDataSource
     OGRLayer *GetLayer(int) override;
     OGRLayer *GetLayerByName(const char *) override;
 
-    OGRLayer *ICreateLayer(const char *, const OGRSpatialReference * = nullptr,
-                           OGRwkbGeometryType = wkbUnknown,
-                           char ** = nullptr) override;
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 
     OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
                          const char *pszDialect) override;

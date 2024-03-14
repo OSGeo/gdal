@@ -265,6 +265,18 @@
               }
             ]
           }
+        },
+        "xyCoordinateResolution": {
+          "type": "number"
+        },
+        "zCoordinateResolution": {
+          "type": "number"
+        },
+        "mCoordinateResolution": {
+          "type": "number"
+        },
+        "coordinatePrecisionFormatSpecificOptions": {
+          "type": "object"
         }
       },
       "required": [

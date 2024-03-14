@@ -598,9 +598,8 @@ void OGRNGWDataset::AddRaster(const CPLJSONObject &oRasterJsonObj,
  * ICreateLayer
  */
 OGRLayer *OGRNGWDataset::ICreateLayer(const char *pszNameIn,
-                                      const OGRSpatialReference *poSpatialRef,
-                                      OGRwkbGeometryType eGType,
-                                      char **papszOptions)
+                                      const OGRGeomFieldDefn *poGeomFieldDefn,
+                                      CSLConstList papszOptions)
 {
     if (!IsUpdateMode())
     {
@@ -608,6 +607,10 @@ OGRLayer *OGRNGWDataset::ICreateLayer(const char *pszNameIn,
                  "Operation not available in read-only mode");
         return nullptr;
     }
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSpatialRef =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     // Check permissions as we create new layer in memory and will create in
     // during SyncToDisk.

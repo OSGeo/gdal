@@ -494,10 +494,11 @@ class OGRTileDBDataset final : public TileDBDataset
                                                    : nullptr;
     }
     int TestCapability(const char *) override;
+
     OGRLayer *ICreateLayer(const char *pszName,
-                           const OGRSpatialReference *poSpatialRef = nullptr,
-                           OGRwkbGeometryType eGType = wkbUnknown,
-                           char **papszOptions = nullptr) override;
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
+
     static GDALDataset *Open(GDALOpenInfo *, tiledb::Object::Type objectType);
     static GDALDataset *Create(const char *pszFilename,
                                CSLConstList papszOptions);

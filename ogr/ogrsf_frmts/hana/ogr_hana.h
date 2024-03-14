@@ -402,10 +402,9 @@ class OGRHanaDataSource final : public GDALDataset
     }
     OGRLayer *GetLayer(int index) override;
     OGRLayer *GetLayerByName(const char *) override;
-    OGRLayer *ICreateLayer(const char *layerName,
-                           const OGRSpatialReference *srs = nullptr,
-                           OGRwkbGeometryType geomType = wkbUnknown,
-                           char **options = nullptr) override;
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
     int TestCapability(const char *capabilities) override;
 
     OGRLayer *ExecuteSQL(const char *sqlCommand, OGRGeometry *spatialFilter,

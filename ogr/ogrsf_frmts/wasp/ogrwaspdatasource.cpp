@@ -187,10 +187,13 @@ OGRLayer *OGRWAsPDataSource::GetLayer(int iLayer)
 
 OGRLayer *
 OGRWAsPDataSource::ICreateLayer(const char *pszName,
-                                const OGRSpatialReference *poSpatialRef,
-                                OGRwkbGeometryType eGType, char **papszOptions)
+                                const OGRGeomFieldDefn *poGeomFieldDefn,
+                                CSLConstList papszOptions)
 
 {
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSpatialRef =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     if (eGType != wkbLineString && eGType != wkbLineString25D &&
         eGType != wkbMultiLineString && eGType != wkbMultiLineString25D &&

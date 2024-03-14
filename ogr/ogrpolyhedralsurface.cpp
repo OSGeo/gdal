@@ -279,16 +279,22 @@ OGRErr OGRPolyhedralSurface::importFromWkb(const unsigned char *pabyData,
 /*                            exportToWkb()                             */
 /************************************************************************/
 
-OGRErr OGRPolyhedralSurface::exportToWkb(OGRwkbByteOrder eByteOrder,
-                                         unsigned char *pabyData,
-                                         OGRwkbVariant /*eWkbVariant*/) const
+OGRErr
+OGRPolyhedralSurface::exportToWkb(unsigned char *pabyData,
+                                  const OGRwkbExportOptions *psOptions) const
 
 {
+    if (!psOptions)
+    {
+        static const OGRwkbExportOptions defaultOptions;
+        psOptions = &defaultOptions;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Set the byte order.                                             */
     /* -------------------------------------------------------------------- */
-    pabyData[0] =
-        DB2_V72_UNFIX_BYTE_ORDER(static_cast<unsigned char>(eByteOrder));
+    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER(
+        static_cast<unsigned char>(psOptions->eByteOrder));
 
     /* -------------------------------------------------------------------- */
     /*      Set the geometry feature type, ensuring that 3D flag is         */
@@ -296,7 +302,7 @@ OGRErr OGRPolyhedralSurface::exportToWkb(OGRwkbByteOrder eByteOrder,
     /* -------------------------------------------------------------------- */
     GUInt32 nGType = getIsoGeometryType();
 
-    if (OGR_SWAP(eByteOrder))
+    if (OGR_SWAP(psOptions->eByteOrder))
     {
         nGType = CPL_SWAP32(nGType);
     }
@@ -304,7 +310,7 @@ OGRErr OGRPolyhedralSurface::exportToWkb(OGRwkbByteOrder eByteOrder,
     memcpy(pabyData + 1, &nGType, 4);
 
     // Copy the raw data
-    if (OGR_SWAP(eByteOrder))
+    if (OGR_SWAP(psOptions->eByteOrder))
     {
         int nCount = CPL_SWAP32(oMP.nGeomCount);
         memcpy(pabyData + 5, &nCount, 4);
@@ -317,7 +323,7 @@ OGRErr OGRPolyhedralSurface::exportToWkb(OGRwkbByteOrder eByteOrder,
     // serialize each of the geometries
     for (auto &&poSubGeom : *this)
     {
-        poSubGeom->exportToWkb(eByteOrder, pabyData + nOffset, wkbVariantIso);
+        poSubGeom->exportToWkb(pabyData + nOffset, psOptions);
         nOffset += poSubGeom->WkbSize();
     }
 
