@@ -85,7 +85,7 @@
 #endif
 
 #if KDU_MAJOR_VERSION > 7 || (KDU_MAJOR_VERSION == 7 && KDU_MINOR_VERSION >= 8)
-// Before Kakdu 7.8, kdu_roi_rect was missing from libkdu_aXY
+// Before Kakadu 7.8, kdu_roi_rect was missing from libkdu_aXY
 #define KDU_HAS_ROI_RECT
 #endif
 
