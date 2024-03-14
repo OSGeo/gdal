@@ -8,7 +8,7 @@ RFC 99: Geometry coordinate precision
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2024-Feb-24
-Status:        In development
+Status:        Adopted, implemented in GDAL 3.9
 Target:        GDAL 3.9
 ============== =============================================
 
@@ -737,4 +737,4 @@ Related issues and PRs
 Voting history
 --------------
 
-TBD
++1 from PSC members EvenR and HowardB. +0 from KurtS
