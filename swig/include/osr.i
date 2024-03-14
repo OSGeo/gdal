@@ -1130,7 +1130,12 @@ public:
     return OSRExportToMICoordSys( self, argout );
   }
 
-%apply (char **dict) { char ** };
+#if defined(SWIGPYTHON) || defined(SWIGJAVA)
+%apply (char **dictAndCSLDestroy) { char ** };
+#else
+// We'd also need a dictAndCSLDestroy for other languages!
+%apply (char **) { char ** };
+#endif
 %apply (char **options) { char **options };
   char** ExportToCF1( char **options = NULL ) {
     char** ret = NULL;

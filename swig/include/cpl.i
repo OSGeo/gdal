@@ -507,7 +507,7 @@ const char *wrapper_CPLGetThreadLocalConfigOption( const char * pszKey, const ch
 
 
 %rename(GetConfigOptions) wrapper_GetConfigOptions;
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA)
 %apply (char **dictAndCSLDestroy) { char ** };
 #else
 %apply (char **) { char ** };
