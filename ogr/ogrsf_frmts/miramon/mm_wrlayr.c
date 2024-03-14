@@ -2699,7 +2699,7 @@ int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
         return 0;
 
     if (size_of_dst_file < bufferSize)
-        bufferSize = size_of_dst_file;
+        bufferSize = (size_t)size_of_dst_file;
 
     buffer = (unsigned char *)calloc_function(bufferSize);
 

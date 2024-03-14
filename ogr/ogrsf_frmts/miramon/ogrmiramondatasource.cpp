@@ -203,6 +203,15 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
         pszMMLayerName[strlen(pszMMLayerName) - 1] = '\0';
 
         pszFullMMLayerName = (const char *)pszMMLayerName;
+
+        // Checking that the folder where to write exists
+        const char *szDestFolder = CPLGetDirname(pszFullMMLayerName);
+        if (!VSIReadDir(szDestFolder))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "The folder %s does not exist.", szDestFolder);
+            return nullptr;
+        }
     }
     else
     {
@@ -219,7 +228,7 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
         if (VSIMkdir(osPath, 0777) != 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unable to create directory %s.", pszRootName);
+                     "Unable to create the folder %s.", pszRootName);
             return nullptr;
         }
     }
