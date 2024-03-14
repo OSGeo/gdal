@@ -40,17 +40,16 @@ Once you have Anaconda or Miniconda installed, you should be able to install GDA
 pip
 ~~~
 
-GDAL can be installed from the `Python Package Index <https://pypi.org/project/GDAL>`__.
-Due to the complex nature of GDAL and its components, different bindings may require additional packages installation steps.
-The base GDAL package contains support for OGR, OSR, and GDAL vectors:
+Due to the complex nature of GDAL and its components, different bindings may require additional packages and installation steps.
+GDAL can be installed from the `Python Package Index <https://pypi.org/project/GDAL>`__:
 
 ::
 
     pip install gdal
 
 
-In order to enable raster support, libgdal and its development headers must be installed as well as the Python packages numpy, setuptools, and wheel.
-To install the Python dependencies and build raster support:
+In order to enable numpy-based raster support, libgdal and its development headers must be installed as well as the Python packages numpy, setuptools, and wheel.
+To install the Python dependencies and build numpy-based raster support:
 
 
 ::
@@ -59,14 +58,14 @@ To install the Python dependencies and build raster support:
     pip install gdal[numpy]=="$(gdal-config --version).*"
 
 
-Users can verify that reaster support has been installed with:
+Users can verify that numpy-based raster support has been installed with:
 
 ::
     
     python3 -c 'from osgeo import gdal_array'
 
 
-If this command raises an ImportError, raster support has not been properly installed:
+If this command raises an ImportError, numpy-based raster support has not been properly installed:
 
 ::
     
