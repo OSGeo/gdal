@@ -2287,6 +2287,7 @@ OGCAPITiledLayer::OGCAPITiledLayer(
 
 OGCAPITiledLayer::~OGCAPITiledLayer()
 {
+    m_poFeatureDefn->InvalidateLayer();
     m_poFeatureDefn->Release();
 }
 
