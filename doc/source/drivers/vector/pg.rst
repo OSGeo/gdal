@@ -137,6 +137,19 @@ SQL command with ExecuteSQL() : "SET client_encoding TO encoding_name"
 where encoding_name is LATIN1, etc. Errors can be caught by enclosing
 this command with a CPLPushErrorHandler()/CPLPopErrorHandler() pair.
 
+Updating existing tables
+------------------------
+When data is appended to an existing table (for example, using the
+``-append`` option in ``ogr2ogr``) the driver will, by default,
+emit an INSERT statement for each row of data to be added. This may
+be significantly slower than the COPY-based approach taken when creating
+a new table, but ensures consistency of unique identifiers if multiple
+connections are accessing the table simultaneously.
+
+If only one connection is accessing the table when data is appended, the
+COPY-based approach can be chosen by setting the config option
+``PG_USE_COPY`` to ``YES``, which may significantly speed up the operation.
+
 Dataset open options
 ~~~~~~~~~~~~~~~~~~~~
 
