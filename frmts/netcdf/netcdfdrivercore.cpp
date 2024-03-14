@@ -297,11 +297,11 @@ struct NCDFDriverSubdatasetInfo : public GDALSubdatasetInfo
             {
                 m_subdatasetComponent = m_subdatasetComponent.substr(1);
             }
-            if (m_subdatasetComponent.rfind('"') ==
-                m_subdatasetComponent.length() - 1)
+            if (!m_subdatasetComponent.empty() &&
+                m_subdatasetComponent.rfind('"') ==
+                    m_subdatasetComponent.length() - 1)
             {
-                m_subdatasetComponent = m_subdatasetComponent.substr(
-                    0, m_subdatasetComponent.length() - 1);
+                m_subdatasetComponent.pop_back();
             }
         }
     }
