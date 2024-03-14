@@ -40,6 +40,14 @@ time to affect behavior.
 
     gdal_translate --config GDAL_CACHEMAX 64 in.tif out.tif
 
+Since GDAL 3.9, it is also possible to set a config option in a more conventional
+way by using a single ``<NAME>``=``<VALUE>`` command line string instead of having ``<NAME>``
+and ``<VALUE>`` as two space-separated strings.
+
+::
+
+    gdal_translate --config GDAL_CACHEMAX=64 in.tif out.tif
+
 In C/C++ configuration switches can be set programmatically with
 :cpp:func:`CPLSetConfigOption`:
 

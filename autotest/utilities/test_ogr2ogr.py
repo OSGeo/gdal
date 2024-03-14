@@ -1850,7 +1850,7 @@ def test_ogr2ogr_56(ogr2ogr_path, tmp_path):
     f.close()
 
     gdaltest.runexternal(
-        f"{ogr2ogr_path} -f PGDump {dst_sql} {src_csv} -lco FID=myid --config PGDUMP_DEBUG_ALLOW_CREATION_FIELD_WITH_FID_NAME NO"
+        f"{ogr2ogr_path} -f PGDump {dst_sql} {src_csv} -lco FID=myid --config PGDUMP_DEBUG_ALLOW_CREATION_FIELD_WITH_FID_NAME=NO"
     )
 
     f = open(dst_sql, "rt")
