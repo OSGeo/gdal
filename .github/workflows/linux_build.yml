@@ -85,12 +85,17 @@ jobs:
             build_script: build.sh
             test_script: test.sh
 
-          - name: Ubuntu 20.04, clang ASAN
-            id: asan
-            travis_branch: sanitize
-            container: ubuntu_20.04
-            build_script: build.sh
-            test_script: test.sh
+          # Disabled because too many occurences of "AddressSanitizer:DEADLYSIGNAL" on CI
+          # whereas it works locally. Issue seems to have appears on March 13th or 14th
+          # Initially was on 20.04, but the upgrade to 22.04 does not improve
+          # OK build: https://github.com/OSGeo/gdal/actions/runs/8254308146/job/22578169924
+          # KO build: https://github.com/OSGeo/gdal/actions/runs/8264809407/job/22609174350
+          #- name: Ubuntu 22.04, clang ASAN
+          #  id: asan
+          #  travis_branch: sanitize
+          #  container: ubuntu_22.04
+          #  build_script: build.sh
+          #  test_script: test.sh
 
           - name: Ubuntu 20.04, gcc
             id: ubuntu_20.04

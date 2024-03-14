@@ -548,37 +548,51 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
 
         if (!oMetadata.empty())
         {
-            size_t nLen = sizeof(int32_t);
+            uint64_t nLen64 = sizeof(int32_t);
             for (const auto &oPair : oMetadata)
             {
-                nLen += sizeof(int32_t) + oPair.first.size() + sizeof(int32_t) +
-                        oPair.second.size();
+                nLen64 += sizeof(int32_t);
+                nLen64 += oPair.first.size();
+                nLen64 += sizeof(int32_t);
+                nLen64 += oPair.second.size();
             }
-            char *pszMetadata = static_cast<char *>(CPLMalloc(nLen));
-            psChild->metadata = pszMetadata;
-            size_t offsetMD = 0;
-            *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
-                static_cast<int>(oMetadata.size());
-            offsetMD += sizeof(int32_t);
-            for (const auto &oPair : oMetadata)
+            if (nLen64 <
+                static_cast<uint64_t>(std::numeric_limits<int32_t>::max()))
             {
-                *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
-                    static_cast<int32_t>(oPair.first.size());
+                const size_t nLen = static_cast<size_t>(nLen64);
+                char *pszMetadata = static_cast<char *>(CPLMalloc(nLen));
+                psChild->metadata = pszMetadata;
+                size_t offsetMD = 0;
+                int32_t nSize = static_cast<int>(oMetadata.size());
+                memcpy(pszMetadata + offsetMD, &nSize, sizeof(nSize));
                 offsetMD += sizeof(int32_t);
-                memcpy(pszMetadata + offsetMD, oPair.first.data(),
-                       oPair.first.size());
-                offsetMD += oPair.first.size();
+                for (const auto &oPair : oMetadata)
+                {
+                    nSize = static_cast<int32_t>(oPair.first.size());
+                    memcpy(pszMetadata + offsetMD, &nSize, sizeof(nSize));
+                    offsetMD += sizeof(int32_t);
+                    memcpy(pszMetadata + offsetMD, oPair.first.data(),
+                           oPair.first.size());
+                    offsetMD += oPair.first.size();
 
-                *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
-                    static_cast<int32_t>(oPair.second.size());
-                offsetMD += sizeof(int32_t);
-                memcpy(pszMetadata + offsetMD, oPair.second.data(),
-                       oPair.second.size());
-                offsetMD += oPair.second.size();
+                    nSize = static_cast<int32_t>(oPair.second.size());
+                    memcpy(pszMetadata + offsetMD, &nSize, sizeof(nSize));
+                    offsetMD += sizeof(int32_t);
+                    memcpy(pszMetadata + offsetMD, oPair.second.data(),
+                           oPair.second.size());
+                    offsetMD += oPair.second.size();
+                }
+
+                CPLAssert(offsetMD == nLen);
+                CPL_IGNORE_RET_VAL(offsetMD);
             }
-
-            CPLAssert(offsetMD == nLen);
-            CPL_IGNORE_RET_VAL(offsetMD);
+            else
+            {
+                // Extremely unlikely !
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot write ArrowSchema::metadata due to "
+                         "too large content");
+            }
         }
     }
 
