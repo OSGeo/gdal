@@ -11,3 +11,4 @@ leak:/usr/lib/python3/dist-packages/numpy/core/_multiarray_umath.cpython-38-x86_
 leak:PyDataMem_NEW
 leak:PyArray_NewFromDescr_int
 leak:/usr/bin/python3.8
+leak:/usr/bin/python3.10

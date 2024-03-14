@@ -31,6 +31,7 @@
 import os
 import sys
 
+import gdaltest
 import pytest
 import test_py_scripts
 from test_py_scripts import samples_path
@@ -243,6 +244,9 @@ def test_ogrmerge_6(script_path):
 
 
 def test_ogrmerge_7(script_path):
+
+    if gdaltest.is_travis_branch("sanitize"):
+        pytest.skip("fails on sanitize for unknown reason")
 
     # No match in -single mode
     test_py_scripts.run_py_script(

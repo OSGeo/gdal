@@ -9,6 +9,7 @@ RUN apt-get update && \
     bash \
     ccache \
     cmake \
+    clang \
     curl \
     doxygen \
     fossil \
