@@ -507,10 +507,6 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
                  static_cast<int>(m_nFeaturesRead), poFeatureDefn->GetName());
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      Write out the region bounds if we know where they go, and we    */
-    /*      are in update mode.                                             */
-    /* -------------------------------------------------------------------- */
     if (hMiraMonLayerPOL.bIsPolygon)
     {
         CPLDebug("MiraMon", "Closing MiraMon polygons layer...");
@@ -563,39 +559,66 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
     else if (hMiraMonLayerPNT.ReadOrWrite == MM_WRITTING_MODE)
         CPLDebug("MiraMon", "No MiraMon points layer created.");
 
-    if (hMiraMonLayerPNT.ReadOrWrite == MM_WRITTING_MODE)
-        CPLDebug("MiraMon", "Closing MiraMon DBF table layer...");
-    MMCloseLayer(&hMiraMonLayerReadOrNonGeom);
-    if (hMiraMonLayerPNT.ReadOrWrite == MM_WRITTING_MODE)
-        CPLDebug("MiraMon", "MiraMon DBF table layer closed");
+    if (hMiraMonLayerARC.ReadOrWrite == MM_WRITTING_MODE)
+    {
+        if (hMiraMonLayerReadOrNonGeom.bIsDBF)
+        {
+            if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITTING_MODE)
+                CPLDebug("MiraMon", "Closing MiraMon DBF table ...");
+            MMCloseLayer(&hMiraMonLayerReadOrNonGeom);
+            if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITTING_MODE)
+                CPLDebug("MiraMon", "MiraMon DBF table closed");
+        }
+        else if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITTING_MODE)
+            CPLDebug("MiraMon", "No MiraMon DBF table created.");
+    }
+    else
+    {
+        if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITTING_MODE)
+            CPLDebug("MiraMon", "Closing MiraMon layer ...");
+        MMCloseLayer(&hMiraMonLayerReadOrNonGeom);
+        if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITTING_MODE)
+            CPLDebug("MiraMon", "MiraMon layer closed");
+    }
 
     if (hMiraMonLayerPOL.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "Destroying MiraMon polygons layer memory");
     MMDestroyLayer(&hMiraMonLayerPOL);
     if (hMiraMonLayerPOL.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "MiraMon polygons layer memory destroyed");
+
     if (hMiraMonLayerARC.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "Destroying MiraMon arcs layer memory");
     MMDestroyLayer(&hMiraMonLayerARC);
     if (hMiraMonLayerARC.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "MiraMon arcs layer memory destroyed");
+
     if (hMiraMonLayerPNT.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "Destroying MiraMon points layer memory");
     MMDestroyLayer(&hMiraMonLayerPNT);
     if (hMiraMonLayerPNT.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "MiraMon points layer memory destroyed");
+
     if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "Destroying MiraMon DBF table layer memory");
     else
         MMCPLDebug("MiraMon", "Destroying MiraMon layer memory");
+
     MMDestroyLayer(&hMiraMonLayerReadOrNonGeom);
     if (hMiraMonLayerReadOrNonGeom.ReadOrWrite == MM_WRITTING_MODE)
         MMCPLDebug("MiraMon", "MiraMon DBF table layer memory destroyed");
     else
         MMCPLDebug("MiraMon", "MiraMon layer memory destroyed");
+
+    memset(&hMiraMonLayerReadOrNonGeom, 0, sizeof(hMiraMonLayerReadOrNonGeom));
+    memset(&hMiraMonLayerPNT, 0, sizeof(hMiraMonLayerPNT));
+    memset(&hMiraMonLayerARC, 0, sizeof(hMiraMonLayerARC));
+    memset(&hMiraMonLayerPOL, 0, sizeof(hMiraMonLayerPOL));
+
     MMCPLDebug("MiraMon", "Destroying MiraMon temporary feature memory");
     MMDestroyFeature(&hMMFeature);
     MMCPLDebug("MiraMon", "MiraMon temporary feature memory");
+    memset(&hMMFeature, 0, sizeof(hMMFeature));
 
     /* -------------------------------------------------------------------- */
     /*      Clean up.                                                       */
@@ -1487,6 +1510,7 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
     {
         if (!phMiraMonLayer->bIsBeenInit)
         {
+            phMiraMonLayer->bIsDBF = TRUE;
             MMInitLayerByType(phMiraMonLayer);
             phMiraMonLayer->bIsBeenInit = 1;
         }
@@ -1522,7 +1546,12 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
 
     // Processing a feature without geometry.
     if (poGeom == nullptr)
-        return LOG_ACTION(MMProcessGeometry(nullptr, poFeature, TRUE));
+    {
+        eErr = LOG_ACTION(MMProcessGeometry(nullptr, poFeature, TRUE));
+        if (phMiraMonLayer->bIsDBF)
+            poFeature->SetFID(phMiraMonLayer->TopHeader.nElemCount - 1);
+        return eErr;
+    }
 
     // At this point MiraMon does not support unkwnon type geometry
     if (poGeom->getGeometryType() == wkbUnknown)
@@ -1575,7 +1604,8 @@ OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
     // here is the moment to do that.
     if (!phMiraMonLayer->bIsBeenInit)
     {
-        MMInitLayerByType(phMiraMonLayer);
+        if (MMInitLayerByType(phMiraMonLayer))
+            return OGRERR_FAILURE;
         phMiraMonLayer->bIsBeenInit = 1;
     }
     if (MMResize_MM_N_VERTICES_TYPE_Pointer(

@@ -734,6 +734,7 @@ struct MiraMonVectLayerInfo
     unsigned short int bIsArc;   // Also 1 in a polygon layer
     unsigned short int bIsNode;  // Not used in GDAL
     unsigned short int bIsPoint;
+    unsigned short int bIsDBF;  // When there is no geometry
 
     // In writing mode when one of the features is 3D, the MM layer will be 3D,
     // but if none of the features are 3D, then the layer will not be 3D.

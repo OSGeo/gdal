@@ -478,7 +478,7 @@ MM_GiveOffsetExtendedFieldName(const struct MM_FIELD *camp)
 int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
 {
     GUInt32 nRecords;
-    if (!MMAdmDB->pMMBDXP)
+    if (!MMAdmDB->pMMBDXP || !MMAdmDB->pFExtDBF)
         return 0;
 
     // Updating number of features in features table
@@ -930,6 +930,8 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
 MM_BOOLEAN MM_CreateDBFFile(struct MM_DATA_BASE_XP *bd_xp,
                             const char *NomFitxer)
 {
+    if (MMIsEmptyString(NomFitxer))
+        return TRUE;  // No file no error. Just continue
     MM_CheckDBFHeader(bd_xp);
     if (NomFitxer)
         strcpy(bd_xp->szFileName, NomFitxer);

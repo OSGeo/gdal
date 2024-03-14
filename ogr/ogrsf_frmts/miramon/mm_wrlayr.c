@@ -1990,7 +1990,7 @@ static int MMClose3DSectionLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     if (pF3d)
         fclose_function(pF3d);
-    if (pszF3d)
+    if (pszF3d && *pszF3d != '\0')
         remove_function(pszF3d);
 
     return 0;
@@ -2035,7 +2035,8 @@ static int MMClosePointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         }
 
         fclose_function(hMiraMonLayer->MMPoint.pFTL);
-        remove_function(hMiraMonLayer->MMPoint.pszTLName);
+        if (*hMiraMonLayer->MMPoint.pszTLName != '\0')
+            remove_function(hMiraMonLayer->MMPoint.pszTLName);
 
         if (MMClose3DSectionLayer(
                 hMiraMonLayer, hMiraMonLayer->TopHeader.nElemCount,
@@ -2288,7 +2289,7 @@ int MMCloseLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         if (MMClosePolygonLayer(hMiraMonLayer))
             return 1;
     }
-    else
+    else if (hMiraMonLayer->bIsDBF)
     {
         // If no geometry, remove all created files
         if (hMiraMonLayer->pszSrcLayerName)
@@ -2683,12 +2684,22 @@ int MMAppendBlockToBuffer(struct MM_FLUSH_INFO *FlushInfo)
 int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
                          MM_FILE_OFFSET *nOffset)
 {
-    size_t bufferSize = 100 * 1024 * 1024;  // 100 MB buffer
+    size_t bufferSize = 100 * 1024 * 1024;  // 100 MB buffer;
     unsigned char *buffer;
     size_t bytesRead, bytesWritten;
+    MM_FILE_OFFSET size_of_dst_file;
 
     if (!pSrcFile || !pDestFile || !nOffset)
         return 0;
+
+    fseek_function(pDestFile, 0, SEEK_END);
+    size_of_dst_file = ftell_function(pDestFile);
+
+    if (!size_of_dst_file)
+        return 0;
+
+    if (size_of_dst_file < bufferSize)
+        bufferSize = size_of_dst_file;
 
     buffer = (unsigned char *)calloc_function(bufferSize);
 
@@ -2702,7 +2713,10 @@ int MMMoveFromFileToFile(FILE_TYPE *pSrcFile, FILE_TYPE *pDestFile,
         bytesWritten = fwrite_function(buffer, sizeof(unsigned char), bytesRead,
                                        pDestFile);
         if (bytesWritten != bytesRead)
+        {
+            free_function(buffer);
             return 1;
+        }
         if (nOffset)
             (*nOffset) += bytesWritten;
     }
@@ -3450,6 +3464,9 @@ int MMWritePHPolygonSection(struct MiraMonVectLayerInfo *hMiraMonLayer,
     pMMPolygonLayer = &hMiraMonLayer->MMPolygon;
 
     if (!pMMPolygonLayer->pF)
+        return 0;
+
+    if (!hMiraMonLayer->nFinalElemCount)
         return 0;
 
     nOffsetDiff = DiskOffset + hMiraMonLayer->TopHeader.nElemCount *
@@ -4592,22 +4609,39 @@ int MMAddFeature(struct MiraMonVectLayerInfo *hMiraMonLayer,
         previusFID = hMiraMonLayer->TopHeader.nElemCount;
 
     if (hMiraMonLayer->bIsPoint)
+    {
         re = LOG_ACTION(MMCreateFeaturePoint(hMiraMonLayer, hMiraMonFeature));
-    else if (hMiraMonLayer->bIsArc || hMiraMonLayer->bIsPolygon)
+        if (hMiraMonFeature)
+        {
+            hMiraMonFeature->nReadFeatures =
+                hMiraMonLayer->TopHeader.nElemCount - previusFID;
+        }
+        return re;
+    }
+    if (hMiraMonLayer->bIsArc || hMiraMonLayer->bIsPolygon)
+    {
         re =
             LOG_ACTION(MMCreateFeaturePolOrArc(hMiraMonLayer, hMiraMonFeature));
-    else
+        if (hMiraMonFeature)
+        {
+            hMiraMonFeature->nReadFeatures =
+                hMiraMonLayer->TopHeader.nElemCount - previusFID;
+        }
+        return re;
+    }
+    if (hMiraMonLayer->bIsDBF)
     {
         // Adding a record to DBF file
         re = LOG_ACTION(MMCreateRecordDBF(hMiraMonLayer, hMiraMonFeature));
-    }
-    if (hMiraMonFeature)
-    {
-        hMiraMonFeature->nReadFeatures =
-            hMiraMonLayer->TopHeader.nElemCount - previusFID;
+        if (hMiraMonFeature)
+        {
+            hMiraMonFeature->nReadFeatures =
+                hMiraMonLayer->TopHeader.nElemCount - previusFID;
+        }
+        return re;
     }
 
-    return re;
+    return MM_CONTINUE_WRITING_FEATURES;
 }
 
 /* -------------------------------------------------------------------- */
@@ -5672,7 +5706,7 @@ static int MMWriteVectorMetadataFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
     {
         hMMMD.aLayerName = hMiraMonLayer->MMPoint.pszREL_LayerName;
         if (MMIsEmptyString(hMMMD.aLayerName))
-            return 1;
+            return 0;  // If no file, no error. Just continue.
         memcpy(&hMMMD.hBB, &hMiraMonLayer->TopHeader.hBB, sizeof(hMMMD.hBB));
         hMMMD.pLayerDB = hMiraMonLayer->pLayerDB;
         return MMWriteMetadataFile(&hMMMD);
@@ -5684,7 +5718,7 @@ static int MMWriteVectorMetadataFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
         {
             hMMMD.aLayerName = hMiraMonLayer->MMArc.pszREL_LayerName;
             if (MMIsEmptyString(hMMMD.aLayerName))
-                return 1;
+                return 0;  // If no file, no error. Just continue.
             memcpy(&hMMMD.hBB, &hMiraMonLayer->TopHeader.hBB,
                    sizeof(hMMMD.hBB));
             hMMMD.pLayerDB = hMiraMonLayer->pLayerDB;
@@ -5695,7 +5729,7 @@ static int MMWriteVectorMetadataFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
             // Arc from polygon
             hMMMD.aLayerName = hMiraMonLayer->MMPolygon.MMArc.pszREL_LayerName;
             if (MMIsEmptyString(hMMMD.aLayerName))
-                return 1;
+                return 0;  // If no file, no error. Just continue.
 
             memcpy(&hMMMD.hBB, &hMiraMonLayer->MMPolygon.TopArcHeader.hBB,
                    sizeof(hMMMD.hBB));
@@ -5710,7 +5744,7 @@ static int MMWriteVectorMetadataFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
         hMMMD.aLayerName = hMiraMonLayer->MMPolygon.pszREL_LayerName;
 
         if (MMIsEmptyString(hMMMD.aLayerName))
-            return 1;
+            return 0;  // If no file, no error. Just continue.
 
         memcpy(&hMMMD.hBB, &hMiraMonLayer->TopHeader.hBB, sizeof(hMMMD.hBB));
         hMMMD.pLayerDB = hMiraMonLayer->pLayerDB;
@@ -5727,7 +5761,7 @@ static int MMWriteVectorMetadataFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
         {
             hMMMD.aLayerName = hMiraMonLayer->MMArc.MMNode.pszREL_LayerName;
             if (MMIsEmptyString(hMMMD.aLayerName))
-                return 1;
+                return 0;  // If no file, no error. Just continue.
             memcpy(&hMMMD.hBB, &hMiraMonLayer->MMArc.TopNodeHeader.hBB,
                    sizeof(hMMMD.hBB));
         }
@@ -5736,7 +5770,7 @@ static int MMWriteVectorMetadataFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
             hMMMD.aLayerName =
                 hMiraMonLayer->MMPolygon.MMArc.MMNode.pszREL_LayerName;
             if (MMIsEmptyString(hMMMD.aLayerName))
-                return 1;
+                return 0;  // If no file, no error. Just continue.
             memcpy(&hMMMD.hBB,
                    &hMiraMonLayer->MMPolygon.MMArc.TopNodeHeader.hBB,
                    sizeof(hMMMD.hBB));
@@ -5774,8 +5808,12 @@ int MMWriteVectorMetadata(struct MiraMonVectLayerInfo *hMiraMonLayer)
         return MMWriteVectorMetadataFile(hMiraMonLayer, MM_LayerType_Pol,
                                          MM_LayerType_Pol);
     }
-    return MMWriteVectorMetadataFile(hMiraMonLayer, MM_LayerType_Unknown,
-                                     MM_LayerType_Unknown);
+    if (hMiraMonLayer->bIsDBF)
+    {
+        return MMWriteVectorMetadataFile(hMiraMonLayer, MM_LayerType_Unknown,
+                                         MM_LayerType_Unknown);
+    }
+    return 0;
 }
 
 // Verifies the version of a MiraMon REL 4 file.
@@ -5911,6 +5949,12 @@ static int MMInitMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
 {
     if (!hMiraMonLayer)
         return 1;
+
+    if (!pMMAdmDB)
+        return 1;
+
+    if (MMIsEmptyString(pMMAdmDB->pszExtDBFLayerName))
+        return 0;  // No file, no error. Just continue
 
     strcpy(pMMAdmDB->pMMBDXP->ReadingMode, "wb+");
     if (FALSE ==
@@ -6056,7 +6100,7 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer)
         if (0 == MM_DefineFirstNodeFieldsDB_XP(pBD_XP_Aux))
             return 1;
     }
-    else
+    else if (hMiraMonLayer->bIsDBF)
     {
         // Creating only a DBF
         if (hMiraMonLayer->pLayerDB)
@@ -6070,6 +6114,8 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer)
         if (!pBD_XP)
             return 1;
     }
+    else
+        return 0;
 
     // After private MiraMon fields, other fields are added.
     // If names are no compatible, some changes are done.
@@ -6158,7 +6204,7 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer)
                        &hMiraMonLayer->MMPolygon.MMArc.MMNode.MMAdmDB))
             return 1;
     }
-    else
+    else if (hMiraMonLayer->bIsDBF)
     {
         if (MMInitMMDB(hMiraMonLayer, &hMiraMonLayer->MMAdmDBWriting))
             return 1;
@@ -6595,6 +6641,9 @@ int MMAddArcRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
     else
         pMMArcLayer = &hMiraMonLayer->MMArc;
 
+    if (!pMMArcLayer)
+        return 1;
+
     // In V1.1 only _UI32_MAX records number is allowed
     if (hMiraMonLayer->bIsPolygon)
     {
@@ -6902,7 +6951,11 @@ int MMCloseMMBD_XP(struct MiraMonVectLayerInfo *hMiraMonLayer)
         return MMCloseMMBD_XPFile(
             hMiraMonLayer, &hMiraMonLayer->MMPolygon.MMArc.MMNode.MMAdmDB);
     }
-    return MMCloseMMBD_XPFile(hMiraMonLayer, &hMiraMonLayer->MMAdmDBWriting);
+    if (hMiraMonLayer->bIsDBF)
+        return MMCloseMMBD_XPFile(hMiraMonLayer,
+                                  &hMiraMonLayer->MMAdmDBWriting);
+
+    return 0;
 }
 
 // Destroys the memory used to create a MiraMon table associated
@@ -6961,7 +7014,8 @@ void MMDestroyMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer)
         MMDestroyMMDBFile(hMiraMonLayer,
                           &hMiraMonLayer->MMPolygon.MMArc.MMNode.MMAdmDB);
     }
-    MMDestroyMMDBFile(hMiraMonLayer, &hMiraMonLayer->MMAdmDBWriting);
+    if (hMiraMonLayer->bIsDBF)
+        MMDestroyMMDBFile(hMiraMonLayer, &hMiraMonLayer->MMAdmDBWriting);
 }
 #ifdef GDAL_COMPILATION
 CPL_C_END  // Necessary for compiling in GDAL project
