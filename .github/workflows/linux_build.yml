@@ -63,6 +63,7 @@ jobs:
             id: alpine
             container: alpine
             build_script: build.sh
+            os: ubuntu-22.04
 
           - name: Alpine, gcc 32-bit
             id: alpine_32bit
@@ -70,12 +71,14 @@ jobs:
             build_script: build.sh
             test_script: test.sh
             travis_branch: alpine_32bit
+            os: ubuntu-22.04
 
           - name: Fedora Rawhide, clang++
             id: fedora_rawhide
             travis_branch: sanitize
             container: fedora_rawhide
             build_script: build.sh
+            os: ubuntu-22.04
 
           - name: Ubuntu 22.04, gcc
             id: ubuntu_22.04
@@ -84,6 +87,7 @@ jobs:
             before_test_script: services.sh
             build_script: build.sh
             test_script: test.sh
+            os: ubuntu-22.04
 
           - name: Ubuntu 22.04, clang ASAN
             id: asan
@@ -91,6 +95,8 @@ jobs:
             container: ubuntu_22.04
             build_script: build.sh
             test_script: test.sh
+            # We force the host OS to be 20.04 to avoid "AddressSanitizer:DEADLYSIGNAL"
+            os: ubuntu-20.04
 
           - name: Ubuntu 20.04, gcc
             id: ubuntu_20.04
@@ -99,6 +105,7 @@ jobs:
             use_avx2: true
             build_script: build.sh
             test_script: test.sh
+            os: ubuntu-22.04
 
           - name: Ubuntu 20.04, coverage
             id: coverage
@@ -107,6 +114,7 @@ jobs:
             before_test_script: services.sh
             build_script: build.sh
             test_script: test.sh
+            os: ubuntu-22.04
 
           - name: Ubuntu 20.04, benchmarks
             id: benchmarks
@@ -114,15 +122,17 @@ jobs:
             container: ubuntu_20.04
             build_script: build.sh
             test_script: test.sh
+            os: ubuntu-22.04
 
           - name: Ubuntu 20.04, Intel compiler
             id: icc
             container: icc
             build_script: build.sh
+            os: ubuntu-22.04
 
     name: ${{ matrix.name }}
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     defaults:
       run:
