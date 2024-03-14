@@ -371,7 +371,7 @@ bool GDALSubsetArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
             if (arrayStep[0] > 0)
                 arrayIdx += arrayStep[0];
             else
-                arrayIdx -= -arrayStep[0];
+                arrayIdx -= static_cast<GUInt64>(-arrayStep[0]);
             pabyDstBuffer += bufferStride[0] * nBufferDTSize;
         }
         return true;
