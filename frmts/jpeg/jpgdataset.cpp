@@ -328,12 +328,14 @@ void JPGDatasetCommon::ReadXMPMetadata()
             break;
 
         nChunkLoc += 2 + abyChunkHeader[2] * 256 + abyChunkHeader[3];
-        // COM marker.
-        if (abyChunkHeader[0] == 0xFF && abyChunkHeader[1] == 0xFE)
+
+        // Not a marker
+        if (abyChunkHeader[0] != 0xFF)
             continue;
 
-        if (abyChunkHeader[0] != 0xFF || (abyChunkHeader[1] & 0xf0) != 0xe0)
-            break;  // Not an APP chunk.
+        // Stop on Start of Scan
+        if (abyChunkHeader[1] == 0xDA)
+            break;
 
         if (abyChunkHeader[1] == APP1_BYTE &&
             memcmp(reinterpret_cast<char *>(abyChunkHeader) + JFIF_MARKER_SIZE,
