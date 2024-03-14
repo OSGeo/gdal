@@ -1259,46 +1259,18 @@ void GDALWarpOperation::WipeChunkList()
 }
 
 /************************************************************************/
-/*                       CollectChunkListInternal()                     */
+/*                       GetWorkingMemoryForWindow()                    */
 /************************************************************************/
 
-CPLErr GDALWarpOperation::CollectChunkListInternal(int nDstXOff, int nDstYOff,
-                                                   int nDstXSize, int nDstYSize)
-
+/** Retrurns the amount of working memory, in bytes, required to process
+ * a warped window of source dimensions nSrcXSize x nSrcYSize and target
+ * dimensions nDstXSize x nDstYSize.
+ */
+double GDALWarpOperation::GetWorkingMemoryForWindow(int nSrcXSize,
+                                                    int nSrcYSize,
+                                                    int nDstXSize,
+                                                    int nDstYSize) const
 {
-    /* -------------------------------------------------------------------- */
-    /*      Compute the bounds of the input area corresponding to the       */
-    /*      output area.                                                    */
-    /* -------------------------------------------------------------------- */
-    int nSrcXOff = 0;
-    int nSrcYOff = 0;
-    int nSrcXSize = 0;
-    int nSrcYSize = 0;
-    double dfSrcXExtraSize = 0.0;
-    double dfSrcYExtraSize = 0.0;
-    double dfSrcFillRatio = 0.0;
-    CPLErr eErr =
-        ComputeSourceWindow(nDstXOff, nDstYOff, nDstXSize, nDstYSize, &nSrcXOff,
-                            &nSrcYOff, &nSrcXSize, &nSrcYSize, &dfSrcXExtraSize,
-                            &dfSrcYExtraSize, &dfSrcFillRatio);
-
-    if (eErr != CE_None)
-    {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "Unable to compute source region for "
-                 "output window %d,%d,%d,%d, skipping.",
-                 nDstXOff, nDstYOff, nDstXSize, nDstYSize);
-        return eErr;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      If we are allowed to drop no-source regions, do so now if       */
-    /*      appropriate.                                                    */
-    /* -------------------------------------------------------------------- */
-    if ((nSrcXSize == 0 || nSrcYSize == 0) &&
-        CPLFetchBool(psOptions->papszWarpOptions, "SKIP_NOSOURCE", false))
-        return CE_None;
-
     /* -------------------------------------------------------------------- */
     /*      Based on the types of masks in use, how many bits will each     */
     /*      source pixel cost us?                                           */
@@ -1343,23 +1315,61 @@ CPLErr GDALWarpOperation::CollectChunkListInternal(int nDstXOff, int nDstYOff,
     if (psOptions->nDstAlphaBand > 0)
         nDstPixelCostInBits += 32;  // DstDensity float mask.
 
+    const double dfTotalMemoryUse =
+        (static_cast<double>(nSrcPixelCostInBits) * nSrcXSize * nSrcYSize +
+         static_cast<double>(nDstPixelCostInBits) * nDstXSize * nDstYSize) /
+        8.0;
+    return dfTotalMemoryUse;
+}
+
+/************************************************************************/
+/*                       CollectChunkListInternal()                     */
+/************************************************************************/
+
+CPLErr GDALWarpOperation::CollectChunkListInternal(int nDstXOff, int nDstYOff,
+                                                   int nDstXSize, int nDstYSize)
+
+{
+    /* -------------------------------------------------------------------- */
+    /*      Compute the bounds of the input area corresponding to the       */
+    /*      output area.                                                    */
+    /* -------------------------------------------------------------------- */
+    int nSrcXOff = 0;
+    int nSrcYOff = 0;
+    int nSrcXSize = 0;
+    int nSrcYSize = 0;
+    double dfSrcXExtraSize = 0.0;
+    double dfSrcYExtraSize = 0.0;
+    double dfSrcFillRatio = 0.0;
+    CPLErr eErr =
+        ComputeSourceWindow(nDstXOff, nDstYOff, nDstXSize, nDstYSize, &nSrcXOff,
+                            &nSrcYOff, &nSrcXSize, &nSrcYSize, &dfSrcXExtraSize,
+                            &dfSrcYExtraSize, &dfSrcFillRatio);
+
+    if (eErr != CE_None)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Unable to compute source region for "
+                 "output window %d,%d,%d,%d, skipping.",
+                 nDstXOff, nDstYOff, nDstXSize, nDstYSize);
+        return eErr;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      If we are allowed to drop no-source regions, do so now if       */
+    /*      appropriate.                                                    */
+    /* -------------------------------------------------------------------- */
+    if ((nSrcXSize == 0 || nSrcYSize == 0) &&
+        CPLFetchBool(psOptions->papszWarpOptions, "SKIP_NOSOURCE", false))
+        return CE_None;
+
     /* -------------------------------------------------------------------- */
     /*      Does the cost of the current rectangle exceed our memory        */
     /*      limit? If so, split the destination along the longest           */
     /*      dimension and recurse.                                          */
     /* -------------------------------------------------------------------- */
-    double dfTotalMemoryUse =
-        (static_cast<double>(nSrcPixelCostInBits) * nSrcXSize * nSrcYSize +
-         static_cast<double>(nDstPixelCostInBits) * nDstXSize * nDstYSize) /
-        8.0;
-
-    int nBlockXSize = 1;
-    int nBlockYSize = 1;
-    if (psOptions->hDstDS)
-    {
-        GDALGetBlockSize(GDALGetRasterBand(psOptions->hDstDS, 1), &nBlockXSize,
-                         &nBlockYSize);
-    }
+    const double dfTotalMemoryUse =
+        GetWorkingMemoryForWindow(nSrcXSize, nSrcYSize, nDstXSize, nDstYSize);
 
     // If size of working buffers need exceed the allow limit, then divide
     // the target area
@@ -1382,6 +1392,14 @@ CPLErr GDALWarpOperation::CollectChunkListInternal(int nDstXOff, int nDstYOff,
          CPLFetchBool(psOptions->papszWarpOptions, "SRC_FILL_RATIO_HEURISTICS",
                       true)))
     {
+        int nBlockXSize = 1;
+        int nBlockYSize = 1;
+        if (psOptions->hDstDS)
+        {
+            GDALGetBlockSize(GDALGetRasterBand(psOptions->hDstDS, 1),
+                             &nBlockXSize, &nBlockYSize);
+        }
+
         int bStreamableOutput = CPLFetchBool(psOptions->papszWarpOptions,
                                              "STREAMABLE_OUTPUT", false);
         const char *pszOptimizeSize =
@@ -2838,6 +2856,20 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
 /*                        ComputeSourceWindow()                         */
 /************************************************************************/
 
+/** Given a target window starting at pixel (nDstOff, nDstYOff) and of
+ * dimension (nDstXSize, nDstYSize), compute the corresponding window in
+ * the source raster, and return the source position in (*pnSrcXOff, *pnSrcYOff),
+ * the source dimension in (*pnSrcXSize, *pnSrcYSize).
+ * If pdfSrcXExtraSize is not null, its pointed value will be filled with the
+ * number of extra source pixels in X dimension to acquire to take into account
+ * the size of the resampling kernel. Similarly for pdfSrcYExtraSize for the
+ * Y dimension.
+ * If pdfSrcFillRatio is not null, its pointed value will be filled with the
+ * the ratio of the clamped source raster window size over the unclamped source
+ * raster window size. When this ratio is too low, this might be an indication
+ * that it might be beneficial to split the target window to avoid requesting
+ * too many source pixels.
+ */
 CPLErr GDALWarpOperation::ComputeSourceWindow(
     int nDstXOff, int nDstYOff, int nDstXSize, int nDstYSize, int *pnSrcXOff,
     int *pnSrcYOff, int *pnSrcXSize, int *pnSrcYSize, double *pdfSrcXExtraSize,

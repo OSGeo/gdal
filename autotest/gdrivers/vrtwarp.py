@@ -670,3 +670,65 @@ def test_vrtwarp_float32_max_nodata(nodata):
     finally:
         gdal.Unlink(in_filename)
         gdal.Unlink(out_filename)
+
+
+###############################################################################
+# Test VRTWarpedDataset::IRasterIO() code path
+
+
+def test_vrtwarp_irasterio_optim_single_band():
+
+    src_ds = gdal.Translate("", "data/byte.tif", format="MEM", width=1000)
+    warped_vrt_ds = gdal.Warp("", src_ds, format="VRT")
+
+    with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
+        expected_data = warped_vrt_ds.ReadRaster()
+
+    assert warped_vrt_ds.ReadRaster() == expected_data
+    assert warped_vrt_ds.GetRasterBand(1).ReadRaster() == expected_data
+
+
+###############################################################################
+# Test VRTWarpedDataset::IRasterIO() code path
+
+
+def test_vrtwarp_irasterio_optim_three_band():
+
+    src_ds = gdal.Translate("", "data/rgbsmall.tif", format="MEM", width=1000)
+    warped_vrt_ds = gdal.Warp("", src_ds, format="VRT")
+
+    with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
+        expected_data = warped_vrt_ds.ReadRaster()
+    assert warped_vrt_ds.ReadRaster() == expected_data
+
+    with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
+        expected_data = warped_vrt_ds.ReadRaster(band_list=[3, 2, 1])
+    assert warped_vrt_ds.ReadRaster(band_list=[3, 2, 1]) == expected_data
+
+    with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
+        expected_data = warped_vrt_ds.ReadRaster(band_list=[1, 2, 1])
+    assert warped_vrt_ds.ReadRaster(band_list=[1, 2, 1]) == expected_data
+
+    with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
+        expected_data = warped_vrt_ds.ReadRaster(buf_type=gdal.GDT_UInt16)
+    assert warped_vrt_ds.ReadRaster(buf_type=gdal.GDT_UInt16) == expected_data
+
+    with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
+        expected_data = warped_vrt_ds.ReadRaster(buf_xsize=20, buf_ysize=20)
+    assert warped_vrt_ds.ReadRaster(buf_xsize=20, buf_ysize=20) == expected_data
+
+
+###############################################################################
+# Test VRTWarpedDataset::IRasterIO() code path
+
+
+def test_vrtwarp_irasterio_optim_window_splitting():
+
+    src_ds = gdal.Translate(
+        "", "data/rgbsmall.tif", format="MEM", width=1000, height=2000
+    )
+    warped_vrt_ds = gdal.Warp("", src_ds, format="VRT", warpMemoryLimit=1)  # 1 MB
+
+    with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
+        expected_data = warped_vrt_ds.ReadRaster()
+    assert warped_vrt_ds.ReadRaster() == expected_data

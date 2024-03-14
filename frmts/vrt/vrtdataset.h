@@ -425,6 +425,14 @@ class CPL_DLL VRTWarpedDataset final : public VRTDataset
 
     virtual char **GetFileList() override;
 
+    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                             int nXSize, int nYSize, void *pData, int nBufXSize,
+                             int nBufYSize, GDALDataType eBufType,
+                             int nBandCount, int *panBandMap,
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GSpacing nBandSpace,
+                             GDALRasterIOExtraArg *psExtraArg) override;
+
     CPLErr ProcessBlock(int iBlockX, int iBlockY);
 
     void GetBlockSize(int *, int *) const;
@@ -818,8 +826,18 @@ class CPL_DLL VRTWarpedRasterBand final : public VRTRasterBand
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;
 
+    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                             int nXSize, int nYSize, void *pData, int nBufXSize,
+                             int nBufYSize, GDALDataType eBufType,
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GDALRasterIOExtraArg *psExtraArg) override;
+
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview(int) override;
+
+  private:
+    int m_nIRasterIOCounter =
+        0;  //! Protects against infinite recursion inside IRasterIO()
 };
 /************************************************************************/
 /*                        VRTPansharpenedRasterBand                     */
