@@ -46,6 +46,7 @@ find -L \
         ! -name "__init__.py" \
         ! -path 'ogr/data/*' \
         ! -name test_gdal_merge.py \
+        ! -name test_gdal_retile.py \
     -print \
     -exec ./pytest_wrapper.sh {} \; \
     | tee ./test-output.txt
