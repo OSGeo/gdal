@@ -56,51 +56,6 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define KEY_characterSet "characterSet"
 #define KEY_Value_characterSet "006"
 
-// MiraMon feature table descriptors
-#define szInternalGraphicIdentifierEng "Internal Graphic identifier"
-#define szInternalGraphicIdentifierCat "Identificador Gràfic intern"
-#define szInternalGraphicIdentifierEsp "Identificador Gráfico interno"
-
-#define szNumberOfVerticesEng "Number of vertices"
-#define szNumberOfVerticesCat "Nombre de vèrtexs"
-#define szNumberOfVerticesEsp "Número de vértices"
-
-#define szLenghtOfAarcEng "Lenght of arc"
-#define szLenghtOfAarcCat "Longitud de l'arc"
-#define szLenghtOfAarcEsp "Longitud del arco"
-
-#define szInitialNodeEng "Initial node"
-#define szInitialNodeCat "Node inicial"
-#define szInitialNodeEsp "Nodo inicial"
-
-#define szFinalNodeEng "Final node"
-#define szFinalNodeCat "Node final"
-#define szFinalNodeEsp "Nodo final"
-
-#define szNumberOfArcsToNodeEng "Number of arcs to node"
-#define szNumberOfArcsToNodeCat "Nombre d'arcs al node"
-#define szNumberOfArcsToNodeEsp "Número de arcos al nodo"
-
-#define szNodeTypeEng "Node type"
-#define szNodeTypeCat "Tipus de node"
-#define szNodeTypeEsp "Tipo de nodo"
-
-#define szPerimeterOfThePolygonEng "Perimeter of the polygon"
-#define szPerimeterOfThePolygonCat "Perímetre del polígon"
-#define szPerimeterOfThePolygonEsp "Perímetro del polígono"
-
-#define szAreaOfThePolygonEng "Area of the polygon"
-#define szAreaOfThePolygonCat "Àrea del polígon"
-#define szAreaOfThePolygonEsp "Área del polígono"
-
-#define szNumberOfArcsEng "Number of arcs"
-#define szNumberOfArcsCat "Nombre d'arcs"
-#define szNumberOfArcsEsp "Número de arcos"
-
-#define szNumberOfElementaryPolygonsEng "Number of elementary polygons"
-#define szNumberOfElementaryPolygonsCat "Nombre de polígons elementals"
-#define szNumberOfElementaryPolygonsEsp "Número de polígonos elementales"
-
 // MiraMon feature field names
 #define szMMNomCampIdGraficDefecte "ID_GRAFIC"
 #define szMMNomCampPerimetreDefecte "PERIMETRE"

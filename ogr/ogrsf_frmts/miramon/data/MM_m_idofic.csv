@@ -66,9 +66,30 @@ EPSG:3003;TransverseMercator-Monte_Mario-Italy_Z1;;;
 EPSG:3021;TransverseMercator-Sweden-RT90;;;
 EPSG:26710;UTM-10N-NAD27-CW;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
 EPSG:32610;UTM-10N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26901;UTM-1N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26902;UTM-2N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26903;UTM-3N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26904;UTM-4N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26905;UTM-5N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26906;UTM-6N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26906;UTM-7N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26908;UTM-8N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26909;UTM-9N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
 EPSG:26910;UTM-10N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26911;UTM-11N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26912;UTM-12N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26913;UTM-13N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26914;UTM-14N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26915;UTM-15N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26916;UTM-16N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26917;UTM-17N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26918;UTM-18N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26919;UTM-19N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26920;UTM-20N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26921;UTM-21N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26922;UTM-22N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26923;UTM-23N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
 EPSG:26711;UTM-11N-NAD27-CW;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
-EPSG:26912;UTM-12N-NAD83;;;
 EPSG:4486;UTM-13N-ITRF92;;;
 EPSG:26713;UTM-13N-NAD27-MX;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
 EPSG:4487;UTM-14N-ITRF92;;;

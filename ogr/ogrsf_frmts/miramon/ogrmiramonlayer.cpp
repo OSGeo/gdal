@@ -228,8 +228,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             nMMLayerVersion = MMGetVectorVersion(&phMiraMonLayer->TopHeader);
             if (nMMLayerVersion == MM_UNKNOWN_VERSION)
             {
-                MMCPLError(CE_Failure, CPLE_NotSupported,
-                           "MiraMon version file unknown.");
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "MiraMon version file unknown.");
                 bValidFile = false;
                 return;
             }
@@ -267,8 +267,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
             }
             else
             {
-                MMCPLError(CE_Failure, CPLE_NotSupported,
-                           "MiraMon file type not supported.");
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "MiraMon file type not supported.");
                 bValidFile = false;
                 return;
             }
@@ -1459,10 +1459,10 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
             case wkbUnknown:
             default:
             {
-                MMCPLWarning(CE_Warning, CPLE_NotSupported,
-                             "MiraMon "
-                             "does not support %d geometry type",
-                             eLT);
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "MiraMon "
+                         "does not support geometry type '%d'",
+                         eLT);
                 return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
             }
         }
@@ -1725,7 +1725,7 @@ OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom)
     }
     else if (eLT == wkbGeometryCollection)
     {
-        MMCPLError(
+        CPLError(
             CE_Failure, CPLE_NotSupported,
             "MiraMon: wkbGeometryCollection inside a wkbGeometryCollection?");
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
@@ -1848,12 +1848,6 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
 
                 case OFTTime:
                 case OFTDateTime:
-                    MMCPLWarning(
-                        CE_Warning, CPLE_NotSupported,
-                        "MiraMon "
-                        "does not support %d field type. It will be kept "
-                        "as string field type",
-                        poFeatureDefn->GetFieldDefn(iField)->GetType());
                     phMiraMonLayer->pLayerDB->pFields[iField].eFieldType =
                         MM_Character;
                     break;
@@ -2297,9 +2291,9 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else
         {
-            MMCPLError(CE_Failure, CPLE_NotSupported,
-                       "MiraMon: Field type %d not processed by MiraMon\n",
-                       eFType);
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "MiraMon: Field type %d not processed by MiraMon\n",
+                     eFType);
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
     }

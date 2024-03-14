@@ -144,9 +144,6 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
 {
     CPLAssert(nullptr != pszLayerName);
 
-    char *pszMMLayerName;
-    const char *pszFullMMLayerName;
-
     switch (eType)
     {
         case wkbPointM:
@@ -196,41 +193,58 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     /*       dataset name (without extension).                              */
     /* -------------------------------------------------------------------- */
     const char *pszExtension = CPLGetExtension(pszRootName);
+    char *pszFullMMLayerName;
     if (EQUAL(pszExtension, "pol") || EQUAL(pszExtension, "arc") ||
         EQUAL(pszExtension, "pnt"))
     {
+        char *pszMMLayerName;
         pszMMLayerName = CPLStrdup(CPLResetExtension(pszRootName, ""));
         pszMMLayerName[strlen(pszMMLayerName) - 1] = '\0';
 
-        pszFullMMLayerName = (const char *)pszMMLayerName;
+        pszFullMMLayerName = CPLStrdup((const char *)pszMMLayerName);
 
         // Checking that the folder where to write exists
         const char *szDestFolder = CPLGetDirname(pszFullMMLayerName);
-        if (!VSIReadDir(szDestFolder))
+        char **papszDirContent = nullptr;
+        papszDirContent = VSIReadDir(szDestFolder);
+        if (!papszDirContent)
         {
+            CPLFree(pszMMLayerName);
+            CPLFree(pszFullMMLayerName);
             CPLError(CE_Failure, CPLE_AppDefined,
                      "The folder %s does not exist.", szDestFolder);
             return nullptr;
         }
+        else
+            CSLDestroy(papszDirContent);
+        CPLFree(pszMMLayerName);
     }
     else
     {
         const char *osPath;
 
-        pszMMLayerName = CPLStrdup(pszLayerName);
         osPath = pszRootName;
-        pszFullMMLayerName = CPLFormFilename(pszRootName, pszLayerName, "");
+        pszFullMMLayerName =
+            CPLStrdup(CPLFormFilename(pszRootName, pszLayerName, ""));
 
         /* -------------------------------------------------------------------- */
         /*      Let's create the folder if it's not already created.            */
         /*      (only the las level of the folder)                              */
         /* -------------------------------------------------------------------- */
-        if (VSIMkdir(osPath, 0777) != 0)
+        char **papszDirContent = nullptr;
+        papszDirContent = VSIReadDir(osPath);
+        if (!papszDirContent)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unable to create the folder %s.", pszRootName);
-            return nullptr;
+            if (VSIMkdir(osPath, 0755) != 0)
+            {
+                CPLFree(pszFullMMLayerName);
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unable to create the folder %s.", pszRootName);
+                return nullptr;
+            }
         }
+        else
+            CSLDestroy(papszDirContent);
     }
 
     /* -------------------------------------------------------------------- */
@@ -238,12 +252,12 @@ OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     if (Open(pszFullMMLayerName, nullptr, poSRS, TRUE, papszOptions))
     {
-        CPLFree(pszMMLayerName);
+        CPLFree(pszFullMMLayerName);
         auto poLayer = papoLayers[nLayers - 1];
         return poLayer;
     }
 
-    CPLFree(pszMMLayerName);
+    CPLFree(pszFullMMLayerName);
     return nullptr;
 }
 

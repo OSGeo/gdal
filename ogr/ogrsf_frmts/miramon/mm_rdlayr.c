@@ -3,10 +3,12 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  C API to read a MiraMon layer
  * Author:   Abel Pau, a.pau@creaf.uab.cat, based on the MiraMon codes,
- *           mainly written by Xavier Pons, Joan Masó, Abel Pau, Núria Julià,
- *           Xavier Calaf, Lluís Pesquer and Alaitz Zabala, from CREAF and
- *           Universitat Autònoma de Barcelona. For a complete list of
- *           contributors: https://www.miramon.cat/USA/QuiSom.htm
+ *           mainly written by Xavier Pons, Joan Maso (correctly written
+ *           "Mas0xF3"), Abel Pau, Nuria Julia (N0xFAria Juli0xE0),
+ *           Xavier Calaf, Lluis (Llu0xEDs) Pesquer and Alaitz Zabala, from
+ *           CREAF and Universitat Autonoma (Aut0xF2noma) de Barcelona.
+ *           For a complete list of contributors:
+ *           https://www.miramon.cat/eng/QuiSom.htm
  ******************************************************************************
  * Copyright (c) 2024, Xavier Pons
  *
@@ -48,15 +50,14 @@
 CPL_C_START  // Necessary for compiling in GDAL project
 #endif
 
-#define nullptr NULL
+    static char local_message[MAX_LOCAL_MESSAGE];
 
-    /* -------------------------------------------------------------------- */
-    /*      Reading MiraMon format file functions                           */
-    /* -------------------------------------------------------------------- */
+/* -------------------------------------------------------------------- */
+/*      Reading MiraMon format file functions                           */
+/* -------------------------------------------------------------------- */
 
-    // Initializes a MiraMon vector layer for reading
-    int
-    MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer,
+// Initializes a MiraMon vector layer for reading
+int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer,
                       FILE_TYPE *m_fp, const char *pszFilename)
 {
     char szResult[MM_MAX_ID_SNY + 10];
@@ -65,8 +66,8 @@ CPL_C_START  // Necessary for compiling in GDAL project
     memset(hMiraMonLayer, 0, sizeof(*hMiraMonLayer));
     if (MMReadHeader(m_fp, &hMiraMonLayer->TopHeader))
     {
-        MMCPLError(CE_Failure, CPLE_NoWriteAccess,
-                   "Error reading header of file %s", pszFilename);
+        sprintf(local_message, "Error reading header of file %s", pszFilename);
+        MMCPLError(CE_Failure, CPLE_NoWriteAccess, local_message);
         return 1;
     }
     hMiraMonLayer->nMemoryRatio = 1.0;
@@ -161,8 +162,6 @@ CPL_C_START  // Necessary for compiling in GDAL project
 
         hMiraMonLayer->pSRS = pszSRS;
     }
-    else
-        hMiraMonLayer->pSRS = nullptr;
 
     if (!ReturnEPSGCodeSRSFromMMIDSRS(hMiraMonLayer->pSRS, szResult))
     {
@@ -653,9 +652,9 @@ int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
 
     if (MM_ReadExtendedDBFHeaderFromFile(szDBFFileName, pMMBDXP, pszRelFile))
     {
-        MMCPLError(CE_Failure, CPLE_NotSupported,
-                   "Error reading the format in the DBF file %s.",
-                   szDBFFileName);
+        sprintf(local_message, "Error reading the format in the DBF file %s.",
+                szDBFFileName);
+        MMCPLError(CE_Failure, CPLE_NotSupported, local_message);
         return 1;
     }
 

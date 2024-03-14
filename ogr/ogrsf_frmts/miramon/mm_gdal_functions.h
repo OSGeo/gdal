@@ -15,6 +15,8 @@ CPL_C_START                          // Necessary for compiling in GDAL project
 #include "mm_gdal\mm_gdal_driver_structs.h"  // struct MMAdmDatabase
 #endif
 
+#define nullptr NULL
+
     // Log. It should be temporal
     extern const char *MM_pszLogFilename;
 
@@ -22,6 +24,77 @@ CPL_C_START                          // Necessary for compiling in GDAL project
 #define LOG_ACTION(action) ((void)Log(#action, __LINE__), (action))
 
 const char *Log(const char *pszMsg, int nLineNumber);
+
+// MiraMon feature table descriptors
+#define MM_MAX_IDENTIFIER_SIZE 50
+#define MM_a_WITH_GRAVE (-32)
+#define MM_a_WITH_ACUTE (-31)
+#define MM_e_WITH_GRAVE (-24)
+#define MM_e_WITH_ACUTE (-23)
+#define MM_i_WITH_ACUTE (-19)
+#define MM_o_WITH_GRAVE (-14)
+#define MM_o_WITH_ACUTE (-13)
+#define MM_u_WITH_ACUTE (-6)
+
+#define MM_A_WITH_GRAVE (-64)
+#define MM_A_WITH_ACUTE (-63)
+#define MM_E_WITH_GRAVE (-56)
+#define MM_E_WITH_ACUTE (-55)
+#define MM_I_WITH_ACUTE (-51)
+#define MM_O_WITH_GRAVE (-46)
+#define MM_O_WITH_ACUTE (-45)
+#define MM_U_WITH_ACUTE (-38)
+
+// In case of diaeresis use "_WITH_DIAERESIS"
+// In case of cedilla use "_WITH_CEDILLA"
+// In case of tilde use "_WITH_TILDE"
+// In case of middle dot use "_MIDDLE_DOT"
+
+void MM_FillFieldDescriptorByLanguage(void);
+
+extern char szInternalGraphicIdentifierEng[];
+extern char szInternalGraphicIdentifierCat[];
+extern char szInternalGraphicIdentifierEsp[];
+
+extern char szNumberOfVerticesEng[];
+extern char szNumberOfVerticesCat[];
+extern char szNumberOfVerticesEsp[];
+
+extern char szLenghtOfAarcEng[];
+extern char szLenghtOfAarcCat[];
+extern char szLenghtOfAarcEsp[];
+
+extern char szInitialNodeEng[];
+extern char szInitialNodeCat[];
+extern char szInitialNodeEsp[];
+
+extern char szFinalNodeEng[];
+extern char szFinalNodeCat[];
+extern char szFinalNodeEsp[];
+
+extern char szNumberOfArcsToNodeEng[];
+extern char szNumberOfArcsToNodeCat[];
+extern char szNumberOfArcsToNodeEsp[];
+
+extern char szNodeTypeEng[];
+extern char szNodeTypeCat[];
+extern char szNodeTypeEsp[];
+
+extern char szPerimeterOfThePolygonEng[];
+extern char szPerimeterOfThePolygonCat[];
+extern char szPerimeterOfThePolygonEsp[];
+
+extern char szAreaOfThePolygonEng[];
+extern char szAreaOfThePolygonCat[];
+extern char szAreaOfThePolygonEsp[];
+
+extern char szNumberOfArcsEng[];
+extern char szNumberOfArcsCat[];
+extern char szNumberOfArcsEsp[];
+
+extern char szNumberOfElementaryPolygonsEng[];
+extern char szNumberOfElementaryPolygonsCat[];
+extern char szNumberOfElementaryPolygonsEsp[];
 
 char *MM_strnzcpy(char *dest, const char *src, size_t maxlen);
 char *MM_oemansi(char *szcadena);
