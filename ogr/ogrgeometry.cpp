@@ -3318,7 +3318,10 @@ OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
     else if (eType == wkbPolyhedralSurface || eType == wkbTIN)
     {
         OGRGeometry *poGC = OGRGeometryFactory::forceTo(
-            poLinearGeom->clone(), wkbGeometryCollection, nullptr);
+            poLinearGeom->clone(),
+            OGR_GT_SetModifier(wkbGeometryCollection, poLinearGeom->Is3D(),
+                               poLinearGeom->IsMeasured()),
+            nullptr);
         hGeom = convertToGEOSGeom(hGEOSCtxt, poGC);
         delete poGC;
     }
@@ -3326,10 +3329,11 @@ OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
     {
         bool bCanConvertToMultiPoly = true;
         // bool bMustConvertToMultiPoly = true;
-        OGRGeometryCollection *poGC = poLinearGeom->toGeometryCollection();
+        const OGRGeometryCollection *poGC =
+            poLinearGeom->toGeometryCollection();
         for (int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++)
         {
-            OGRwkbGeometryType eSubGeomType =
+            const OGRwkbGeometryType eSubGeomType =
                 wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
             if (eSubGeomType == wkbPolyhedralSurface || eSubGeomType == wkbTIN)
             {
@@ -3345,9 +3349,15 @@ OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
         if (bCanConvertToMultiPoly /* && bMustConvertToMultiPoly */)
         {
             OGRGeometry *poMultiPolygon = OGRGeometryFactory::forceTo(
-                poLinearGeom->clone(), wkbMultiPolygon, nullptr);
+                poLinearGeom->clone(),
+                OGR_GT_SetModifier(wkbMultiPolygon, poLinearGeom->Is3D(),
+                                   poLinearGeom->IsMeasured()),
+                nullptr);
             OGRGeometry *poGCDest = OGRGeometryFactory::forceTo(
-                poMultiPolygon, wkbGeometryCollection, nullptr);
+                poMultiPolygon,
+                OGR_GT_SetModifier(wkbGeometryCollection, poLinearGeom->Is3D(),
+                                   poLinearGeom->IsMeasured()),
+                nullptr);
             hGeom = convertToGEOSGeom(hGEOSCtxt, poGCDest);
             delete poGCDest;
         }
