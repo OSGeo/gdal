@@ -3003,7 +3003,6 @@ OGRPolygon *OGRGeoJSONReadPolygon(json_object *poObj, bool bRaw)
             if (poObjPoints == nullptr)
             {
                 poPolygon = new OGRPolygon();
-                poPolygon->addRingDirectly(new OGRLinearRing());
             }
             else
             {
@@ -3019,11 +3018,7 @@ OGRPolygon *OGRGeoJSONReadPolygon(json_object *poObj, bool bRaw)
                  i < nRings && nullptr != poPolygon; ++i)
             {
                 poObjPoints = json_object_array_get_idx(poObjRings, i);
-                if (poObjPoints == nullptr)
-                {
-                    poPolygon->addRingDirectly(new OGRLinearRing());
-                }
-                else
+                if (poObjPoints != nullptr)
                 {
                     OGRLinearRing *poRing =
                         OGRGeoJSONReadLinearRing(poObjPoints);
@@ -3033,6 +3028,10 @@ OGRPolygon *OGRGeoJSONReadPolygon(json_object *poObj, bool bRaw)
                     }
                 }
             }
+        }
+        else
+        {
+            poPolygon = new OGRPolygon();
         }
     }
 

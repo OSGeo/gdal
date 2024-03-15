@@ -639,7 +639,7 @@ class SGWriter_Exception_NCDefFailure : public SGWriter_Exception
                                     const char *failure_type);
 };
 
-class SGWriter_Exception_EmptyGeometry : public SGWriter_Exception
+class SGWriter_Exception_NullGeometry : public SGWriter_Exception
 {
     std::string msg;
 
@@ -648,24 +648,9 @@ class SGWriter_Exception_EmptyGeometry : public SGWriter_Exception
     {
         return this->msg.c_str();
     }
-    SGWriter_Exception_EmptyGeometry()
-        : msg("An empty geometry was detected when writing a netCDF file. "
+    SGWriter_Exception_NullGeometry()
+        : msg("A null  geometry was detected when writing a netCDF file. "
               "Empty geometries are not allowed.")
-    {
-    }
-};
-
-class SGWriter_Exception_RingOOB : public SGWriter_Exception
-{
-    std::string msg;
-
-  public:
-    const char *get_err_msg() override
-    {
-        return this->msg.c_str();
-    }
-    SGWriter_Exception_RingOOB()
-        : msg("An attempt was made to read a polygon ring that does not exist.")
     {
     }
 };
