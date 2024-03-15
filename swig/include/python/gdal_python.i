@@ -10,6 +10,7 @@
 %include "gdal_docs.i"
 %include "gdal_band_docs.i"
 %include "gdal_dataset_docs.i"
+%include "gdal_driver_docs.i"
 
 %init %{
   /* gdal_python.i %init code */
