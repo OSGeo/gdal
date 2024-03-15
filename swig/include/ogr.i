@@ -3699,6 +3699,11 @@ public:
     return (OGRGeometryShadow*) OGR_G_UnionCascaded( self );
   }
 
+  %newobject UnaryUnion;
+  OGRGeometryShadow* UnaryUnion() {
+    return (OGRGeometryShadow*) OGR_G_UnaryUnion( self );
+  }
+
   %newobject Difference;
   OGRGeometryShadow* Difference( OGRGeometryShadow* other ) {
     return (OGRGeometryShadow*) OGR_G_Difference( self, other );
