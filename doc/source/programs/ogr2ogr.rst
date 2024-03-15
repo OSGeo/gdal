@@ -15,47 +15,37 @@ Synopsis
 
 .. code-block::
 
-    ogr2ogr [--help] [--help-general] [--long-usage]
-            [-skipfailures] [-append | -upsert] [-update]
-            [-select <field_list>] [-where <restricted_where>|@<filename>]
-            [-progress] [-sql <sql statement>|@<filename>] [-dialect <dialect>]
-            [-preserve_fid] [-fid <FID>] [-limit <nb_features>]
-            [-spat <xmin> <ymin> <xmax> <ymax>] [-spat_srs <srs_def>] [-geomfield <field>]
-            [-a_srs <srs_def>] [-t_srs <srs_def>] [-s_srs <srs_def>] [-ct <string>]
-            [-if <input_drv_name>] [-f <format_name>] [-overwrite] [-dsco <NAME>=<VALUE>]...
-            [-lco <NAME>=<VALUE>]... [-nln <name>]
-            [-nlt <type>|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR|CONVERT_TO_CURVE]
-            [-dim XY|XYZ|XYM|XYZM|<layer_dim>]
-            <dst_datasource_name> <src_datasource_name>
-            [<layer> [<layer>...]]
+    ogr2ogr [--help] [--long-usage] [--help-general]
+            [-of <output_format>] [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...
+            [[-append]|[-upsert]|[-overwrite]]
+            [-update] [-sql <statement>|@<filename>] [-dialect <dialect>] [-spat <xmin> <ymin> <xmax> <ymax>]
+            [-where <restricted_where>|@<filename>] [-select <field_list>] [-nln <name>] [-nlt <type>]...
+            [-s_srs <srs_def>]
+            [[-a_srs <srs_def>]|[-t_srs <srs_def>]]
+            <dst_dataset_name> <src_dataset_name> [<layer_name>]...
 
-            # Advanced options
-            [-gt n] [-ds_transaction]
-            [-oo <NAME>=<VALUE>]... [-doo <NAME>=<VALUE>]...
-            [-clipsrc {[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>|spat_extent}]
-            [-clipsrcsql <sql_statement>] [-clipsrclayer <layer>]
-            [-clipsrcwhere <expression>]
-            [-clipdst {[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>}]
-            [-clipdstsql <sql_statement>] [-clipdstlayer <layer>]
-            [-clipdstwhere <expression>]
-            [-wrapdateline][-datelineoffset <val>]
-            [[-simplify <tolerance>] | [-segmentize <max_dist>]]
-            [-makevalid]
-            [-addfields] [-unsetFid] [-emptyStrAsNull]
-            [-relaxedFieldNameMatch] [-forceNullable] [-unsetDefault]
-            [-fieldTypeToString {All|{<type1>[,<type2>]}...}] [-unsetFieldWidth]
-            [-mapFieldType {<srctype>|All=<dsttype>[,<srctype2>=<dsttype2>]...}]
-            [-dateTimeTo {UTC|UTC(+|-)<HH>|UTC(+|-)<HH>:<MM>}]
-            [-fieldmap {identity|{<index1>[,<index2>]...}]
-            [-splitlistfields] [-maxsubfields <val>]
-            [-resolveDomains]
-            [-explodecollections] [-zfield <field_name>]
-            [-gcp <ungeoref_x> <ungeoref_y> <georef_x> <georef_y> [<elevation>]]... [-order <n> | -tps]
-            [-xyRes "<val>[ m|mm|deg]"] [-zRes "<val>[ m|mm]"] [-mRes <val>]
-            [-unsetCoordPrecision]
-            [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>] [-a_coord_epoch <epoch>]
-            [-nomd] [-mo <META-TAG>=<VALUE>]... [-noNativeData]
+    Field related options:
+           [-addfields] [-relaxedFieldNameMatch] [-fieldTypeToString All|<type1>[,<type2>]...]
+           [-mapFieldType <srctype>|All=<dsttype>[,<srctype2>=<dsttype2>]...] [-fieldmap <field_1>[,<field_2>]...]
+           [-splitlistfields] [-maxsubfields <n>] [-emptyStrAsNull] [-forceNullable] [-unsetFieldWidth]
+           [-unsetDefault] [-resolveDomains] [-dateTimeTo UTC|UTC(+|-)<HH>|UTC(+|-)<HH>:<MM>] [-noNativeData]
 
+    Advanced geometry and SRS related options:
+           [-dim layer_dim|2|XY|3|XYZ|XYM|XYZM] [-s_coord_epoch <epoch>] [-a_coord_epoch <epoch>]
+           [-t_coord_epoch <epoch>] [-ct <pipeline_def>] [-spat_srs <srs_def>] [-geomfield <name>]
+           [-segmentize <max_dist>] [-simplify <tolerance>] [-makevalid] [-wrapdateline]
+           [-datelineoffset <val_in_degree>] [-clipsrc [<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>|spat_extent]
+           [-clipsrcsql <sql_statement>] [-clipsrclayer <layername>] [-clipsrcwhere <expression>]
+           [-clipdst [<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>] [-clipdstsql <sql_statement>]
+           [-clipdstlayer <layername>] [-clipdstwhere <expression>] [-explodecollections] [-zfield <name>]
+           [-gcp <ungeoref_x> <ungeoref_y> <georef_x> <georef_y> [<elevation>]]... [-tps] [-order 1|2|3]
+           [-xyRes <val>[ m|mm|deg]] [-zRes <val>[ m|mm]] [-mRes <val>] [-unsetCoordPrecision]
+
+    Other options:
+           [--quiet] [-progress] [-if <format>]... [-oo <NAME>=<VALUE>]... [-doo <NAME>=<VALUE>]...
+           [-fid <FID>] [-preserve_fid] [-unsetFid]
+           [[-skipfailures]|[-gt <n>|unlimited]]
+           [-limit <nb_features>] [-ds_transaction] [-mo <NAME>=<VALUE>]... [-nomd]
 
 Description
 -----------
@@ -71,7 +61,7 @@ output coordinate system or even reprojecting the features during translation.
 
 .. include:: options/if.rst
 
-.. option:: -f <format_name>
+.. option:: -of <format_name>, -f <format_name>
 
     Output file format name, e.g. ``ESRI Shapefile``, ``MapInfo File``,
     ``PostgreSQL``.  Starting with GDAL 2.3, if not specified, the format is
@@ -587,6 +577,20 @@ output coordinate system or even reprojecting the features during translation.
     (like GeoJSON) when converting to same format.
 
     .. versionadded:: 2.1
+
+.. option:: <dst_dataset_name>
+
+    Output dataset name.
+
+.. option:: <src_dataset_name>
+
+    Source dataset name.
+
+.. option:: <layer_name>
+
+    One or more source layer names to copy to the output dataset. If no layer
+    names are passed, then all source layers are copied.
+
 
 Performance Hints
 -----------------

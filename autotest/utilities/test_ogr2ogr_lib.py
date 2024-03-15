@@ -2516,13 +2516,13 @@ def test_ogr2ogr_lib_coordinate_precision(tmp_vsimem):
 
     with pytest.raises(
         Exception,
-        match="Invalid value for -mRes",
+        match="Failed to parse 'invalid' as number",
     ):
         gdal.VectorTranslate(out_filename, src_ds, mRes="invalid")
 
     with pytest.raises(
         Exception,
-        match="Invalid value for -mRes",
+        match="Failed to parse '1 invalid' as number",
     ):
         gdal.VectorTranslate(out_filename, src_ds, mRes="1 invalid")
 

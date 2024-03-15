@@ -108,7 +108,6 @@ typedef enum
 struct GDALVectorTranslateOptionsForBinary
 {
     std::string osDataSource{};
-    bool bDestSpecified = false;
     std::string osDestDataSource{};
     bool bQuiet = false;
     CPLStringList aosOpenOptions{};
@@ -235,6 +234,8 @@ std::string CPL_DLL GDALNearblackGetParserUsage();
 std::string CPL_DLL GDALVectorInfoGetParserUsage();
 
 std::string CPL_DLL GDALTranslateGetParserUsage();
+
+std::string CPL_DLL GDALVectorTranslateGetParserUsage();
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
