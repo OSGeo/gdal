@@ -231,26 +231,6 @@ static void Usage(bool bIsError, const char *pszAdditionalMsg = nullptr,
 }
 
 /************************************************************************/
-/*                 GDALVectorTranslateOptionsForBinaryNew()             */
-/************************************************************************/
-
-static GDALVectorTranslateOptionsForBinary *
-GDALVectorTranslateOptionsForBinaryNew()
-{
-    return new GDALVectorTranslateOptionsForBinary;
-}
-
-/************************************************************************/
-/*                  GDALVectorTranslateOptionsForBinaryFree()           */
-/************************************************************************/
-
-static void GDALVectorTranslateOptionsForBinaryFree(
-    GDALVectorTranslateOptionsForBinary *psOptionsForBinary)
-{
-    delete psOptionsForBinary;
-}
-
-/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -275,8 +255,8 @@ MAIN_START(nArgc, papszArgv)
     bool bCloseODS = true;
     GDALDatasetH hDstDS = nullptr;
     int nRetCode = 1;
-    GDALVectorTranslateOptionsForBinary *psOptionsForBinary = nullptr;
     GDALVectorTranslateOptions *psOptions = nullptr;
+    GDALVectorTranslateOptionsForBinary sOptionsForBinary;
 
     nArgc = OGRGeneralCmdLineProcessor(nArgc, &papszArgv, 0);
 
@@ -312,31 +292,28 @@ MAIN_START(nArgc, papszArgv)
         }
     }
 
-    psOptionsForBinary = GDALVectorTranslateOptionsForBinaryNew();
     psOptions =
-        GDALVectorTranslateOptionsNew(papszArgv + 1, psOptionsForBinary);
+        GDALVectorTranslateOptionsNew(papszArgv + 1, &sOptionsForBinary);
 
     if (psOptions == nullptr)
     {
         Usage(true);
-        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
         goto exit;
     }
 
-    if (psOptionsForBinary->osDataSource.empty() ||
-        !psOptionsForBinary->bDestSpecified)
+    if (sOptionsForBinary.osDataSource.empty() ||
+        !sOptionsForBinary.bDestSpecified)
     {
-        if (!psOptionsForBinary->bDestSpecified)
+        if (!sOptionsForBinary.bDestSpecified)
             Usage(true, "no target datasource provided");
         else
             Usage(true, "no source datasource provided");
         GDALVectorTranslateOptionsFree(psOptions);
-        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
         goto exit;
     }
 
-    if (psOptionsForBinary->osDestDataSource == "/vsistdout/")
-        psOptionsForBinary->bQuiet = true;
+    if (sOptionsForBinary.osDestDataSource == "/vsistdout/")
+        sOptionsForBinary.bQuiet = true;
 
     /* -------------------------------------------------------------------- */
     /*      Open data source.                                               */
@@ -345,14 +322,13 @@ MAIN_START(nArgc, papszArgv)
     // Avoid opening twice the same datasource if it is both the input and
     // output Known to cause problems with at least FGdb, SQlite and GPKG
     // drivers. See #4270
-    if (psOptionsForBinary->eAccessMode != ACCESS_CREATION &&
-        psOptionsForBinary->osDestDataSource ==
-            psOptionsForBinary->osDataSource)
+    if (sOptionsForBinary.eAccessMode != ACCESS_CREATION &&
+        sOptionsForBinary.osDestDataSource == sOptionsForBinary.osDataSource)
     {
-        hODS = GDALOpenEx(psOptionsForBinary->osDataSource.c_str(),
+        hODS = GDALOpenEx(sOptionsForBinary.osDataSource.c_str(),
                           GDAL_OF_UPDATE | GDAL_OF_VECTOR,
-                          psOptionsForBinary->aosAllowInputDrivers.List(),
-                          psOptionsForBinary->aosOpenOptions.List(), nullptr);
+                          sOptionsForBinary.aosAllowInputDrivers.List(),
+                          sOptionsForBinary.aosOpenOptions.List(), nullptr);
 
         GDALDriverH hDriver =
             hODS != nullptr ? GDALGetDatasetDriver(hODS) : nullptr;
@@ -363,10 +339,10 @@ MAIN_START(nArgc, papszArgv)
                          EQUAL(GDALGetDescription(hDriver), "SQLite") ||
                          EQUAL(GDALGetDescription(hDriver), "GPKG")))
         {
-            hDS = GDALOpenEx(
-                psOptionsForBinary->osDataSource.c_str(), GDAL_OF_VECTOR,
-                psOptionsForBinary->aosAllowInputDrivers.List(),
-                psOptionsForBinary->aosOpenOptions.List(), nullptr);
+            hDS = GDALOpenEx(sOptionsForBinary.osDataSource.c_str(),
+                             GDAL_OF_VECTOR,
+                             sOptionsForBinary.aosAllowInputDrivers.List(),
+                             sOptionsForBinary.aosOpenOptions.List(), nullptr);
         }
         else
         {
@@ -376,10 +352,9 @@ MAIN_START(nArgc, papszArgv)
     }
     else
     {
-        hDS =
-            GDALOpenEx(psOptionsForBinary->osDataSource.c_str(), GDAL_OF_VECTOR,
-                       psOptionsForBinary->aosAllowInputDrivers.List(),
-                       psOptionsForBinary->aosOpenOptions.List(), nullptr);
+        hDS = GDALOpenEx(sOptionsForBinary.osDataSource.c_str(), GDAL_OF_VECTOR,
+                         sOptionsForBinary.aosAllowInputDrivers.List(),
+                         sOptionsForBinary.aosOpenOptions.List(), nullptr);
     }
 
     /* -------------------------------------------------------------------- */
@@ -391,7 +366,7 @@ MAIN_START(nArgc, papszArgv)
 
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to open datasource `%s' with the following drivers.",
-                 psOptionsForBinary->osDataSource.c_str());
+                 sOptionsForBinary.osDataSource.c_str());
 
         for (int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++)
         {
@@ -405,20 +380,19 @@ MAIN_START(nArgc, papszArgv)
         }
 
         GDALVectorTranslateOptionsFree(psOptions);
-        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
         goto exit;
     }
 
-    if (hODS != nullptr && !psOptionsForBinary->osFormat.empty())
+    if (hODS != nullptr && !sOptionsForBinary.osFormat.empty())
     {
         GDALDriverManager *poDM = GetGDALDriverManager();
 
         GDALDriver *poDriver =
-            poDM->GetDriverByName(psOptionsForBinary->osFormat.c_str());
+            poDM->GetDriverByName(sOptionsForBinary.osFormat.c_str());
         if (poDriver == nullptr)
         {
             fprintf(stderr, "Unable to find driver `%s'.\n",
-                    psOptionsForBinary->osFormat.c_str());
+                    sOptionsForBinary.osFormat.c_str());
             fprintf(stderr, "The following drivers are available:\n");
 
             for (int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++)
@@ -436,12 +410,11 @@ MAIN_START(nArgc, papszArgv)
                 }
             }
             GDALVectorTranslateOptionsFree(psOptions);
-            GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
             goto exit;
         }
     }
 
-    if (!(psOptionsForBinary->bQuiet))
+    if (!(sOptionsForBinary.bQuiet))
     {
         GDALVectorTranslateOptionsSetProgress(psOptions, GDALTermProgress,
                                               nullptr);
@@ -450,9 +423,8 @@ MAIN_START(nArgc, papszArgv)
     {
         // TODO(schwehr): Remove scope after removing gotos
         int bUsageError = FALSE;
-        hDstDS =
-            GDALVectorTranslate(psOptionsForBinary->osDestDataSource.c_str(),
-                                hODS, 1, &hDS, psOptions, &bUsageError);
+        hDstDS = GDALVectorTranslate(sOptionsForBinary.osDestDataSource.c_str(),
+                                     hODS, 1, &hDS, psOptions, &bUsageError);
         if (bUsageError)
             Usage(true);
         else
@@ -460,7 +432,6 @@ MAIN_START(nArgc, papszArgv)
     }
 
     GDALVectorTranslateOptionsFree(psOptions);
-    GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
 
     if (hDS)
         GDALClose(hDS);
