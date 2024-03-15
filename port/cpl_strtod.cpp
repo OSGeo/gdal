@@ -381,7 +381,7 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
         }
         else
         {
-            errno = answer.ptr == nptr ? EINVAL : ERANGE;
+            errno = answer.ptr == nptr ? 0 : ERANGE;
         }
     }
     if (endptr)
