@@ -142,10 +142,6 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,
                                    CSLConstList papszOptions)
 {
-    //OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
-    //                                             const OGRSpatialReference *poSRS,
-    //                                             OGRwkbGeometryType eType,
-    //                                             char **papszOptions)
     CPLAssert(nullptr != pszLayerName);
 
     const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;

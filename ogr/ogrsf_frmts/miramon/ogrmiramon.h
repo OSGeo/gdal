@@ -159,10 +159,9 @@ class OGRMiraMonDataSource final : public OGRDataSource
     }
     OGRLayer *GetLayer(int) override;
 
-    virtual OGRLayer *
-    OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
-                                       const OGRGeomFieldDefn *poGeomFieldDefn,
-                                       CSLConstList papszOptions) override;
+    OGRLayer *ICreateLayer(const char *pszLayerName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 
     int TestCapability(const char *) override;
 };
