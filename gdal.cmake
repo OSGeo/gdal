@@ -40,6 +40,13 @@ option(GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE "Set ON to produce -fPIC 
 # Option to set preferred C# compiler
 option(CSHARP_MONO "Whether to force the C# compiler to be Mono" OFF)
 
+if (SSE2NEON_COMPILES)
+  option(GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS "Set ON to use ARM Neon FPU optimizations" ON)
+  if (GDAL_ENABLE_ARM_NEON_OPTIMIZATIONS)
+      message(STATUS "Using ARM Neon optimizations")
+  endif()
+endif()
+
 # This line must be kept early in the CMake instructions. At time of writing,
 # this file is populated only be scripts/install_bash_completions.cmake.in
 install(CODE "file(REMOVE \"${PROJECT_BINARY_DIR}/install_manifest_extra.txt\")")
