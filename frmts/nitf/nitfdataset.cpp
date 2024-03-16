@@ -5612,10 +5612,11 @@ static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
 
                 // We emit in Vxyz or Nxyz format with an implicit decimal place
                 // between yz and z as per spec.
-                snprintf(szCOMRAT, sizeof(szCOMRAT), "%c%03d",
+                snprintf(szCOMRAT, sizeof(szCOMRAT), "%c%03u",
                          EQUAL(pszProfile, "NPJE_VISUALLY_LOSSLESS") ? 'V'
                                                                      : 'N',
-                         static_cast<int>(dfRate * 10));
+                         // % 1000 to please -Wformat-truncation
+                         static_cast<unsigned>(dfRate * 10) % 1000);
             }
             else
             {
@@ -5625,8 +5626,9 @@ static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
                 // between wx and yz as per spec for lossy compression.
                 // We really should have a special case for lossless
                 // compression.
-                snprintf(szCOMRAT, sizeof(szCOMRAT), "%04d",
-                         static_cast<int>(dfRate * 100));
+                snprintf(szCOMRAT, sizeof(szCOMRAT), "%04u",
+                         // % 10000 to please -Wformat-truncation
+                         static_cast<unsigned>(dfRate * 100) % 10000);
             }
         }
         else if (EQUAL(pszIC, "C3") || EQUAL(pszIC, "M3")) /* jpeg */
