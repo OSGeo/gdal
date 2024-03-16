@@ -35,15 +35,14 @@
 /****************************************************************************/
 OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                                  const OGRSpatialReference *poSRS,
-                                 int bUpdateIn, char **papszOpenOptions,
+                                 int bUpdateIn, CSLConstList papszOpenOptions,
                                  struct MiraMonVectMapInfo *MMMap)
     : poFeatureDefn(nullptr), iNextFID(0), phMiraMonLayer(nullptr),
       hMiraMonLayerPNT(), hMiraMonLayerARC(), hMiraMonLayerPOL(),
       hMiraMonLayerReadOrNonGeom(), hMMFeature(),
       bUpdate(CPL_TO_BOOL(bUpdateIn)), nMMMemoryRatio(1.0),
       m_fp(fp ? fp : VSIFOpenL(pszFilename, (bUpdateIn ? "r+" : "r"))),
-      papszKeyedValues(nullptr), papszValues(nullptr), padfValues(nullptr),
-      bValidFile(false)
+      papszValues(nullptr), padfValues(nullptr), bValidFile(false)
 {
 
     CPLDebug("MiraMon", "Creating/Opening MiraMon layer...");
@@ -623,7 +622,6 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
     /* -------------------------------------------------------------------- */
     /*      Clean up.                                                       */
     /* -------------------------------------------------------------------- */
-    CSLDestroy(papszKeyedValues);
 
     if (poFeatureDefn)
         poFeatureDefn->Release();

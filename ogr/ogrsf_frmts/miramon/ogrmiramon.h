@@ -76,8 +76,6 @@ class OGRMiraMonLayer final
 
     VSILFILE *m_fp = nullptr;
 
-    char **papszKeyedValues;
-
     // Array of string or doubles used in the field features processing
     char **papszValues;
     double *padfValues;
@@ -102,7 +100,8 @@ class OGRMiraMonLayer final
 
     OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                     const OGRSpatialReference *poSRS, int bUpdate,
-                    char **papszOpenOptions, struct MiraMonVectMapInfo *MMMap);
+                    CSLConstList papszOpenOptions,
+                    struct MiraMonVectMapInfo *MMMap);
     virtual ~OGRMiraMonLayer();
 
     void ResetReading() override;
@@ -147,7 +146,7 @@ class OGRMiraMonDataSource final : public OGRDataSource
 
     int Open(const char *pszFilename, VSILFILE *fp,
              const OGRSpatialReference *poSRS, int bUpdate,
-             char **papszOpenOptions);
+             CSLConstList papszOpenOptions);
     int Create(const char *pszFilename, char **papszOptions);
 
     const char *GetName() override
@@ -160,10 +159,10 @@ class OGRMiraMonDataSource final : public OGRDataSource
     }
     OGRLayer *GetLayer(int) override;
 
-    virtual OGRLayer *ICreateLayer(const char *,
-                                   const OGRSpatialReference * = nullptr,
-                                   OGRwkbGeometryType = wkbUnknown,
-                                   char ** = nullptr) override;
+    virtual OGRLayer *
+    OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
+                                       const OGRGeomFieldDefn *poGeomFieldDefn,
+                                       CSLConstList papszOptions) override;
 
     int TestCapability(const char *) override;
 };

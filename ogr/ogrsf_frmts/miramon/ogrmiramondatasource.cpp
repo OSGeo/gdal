@@ -62,7 +62,7 @@ OGRMiraMonDataSource::~OGRMiraMonDataSource()
 
 int OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
                                const OGRSpatialReference *poSRS, int bUpdateIn,
-                               char **papszOpenOptionsUsr)
+                               CSLConstList papszOpenOptionsUsr)
 
 {
     bUpdate = CPL_TO_BOOL(bUpdateIn);
@@ -137,12 +137,20 @@ int OGRMiraMonDataSource::Create(const char *pszDataSetName,
 /*                           ICreateLayer()                                 */
 /****************************************************************************/
 
-OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
-                                             const OGRSpatialReference *poSRS,
-                                             OGRwkbGeometryType eType,
-                                             char **papszOptions)
+OGRLayer *
+OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
+                                   const OGRGeomFieldDefn *poGeomFieldDefn,
+                                   CSLConstList papszOptions)
 {
+    //OGRLayer *OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
+    //                                             const OGRSpatialReference *poSRS,
+    //                                             OGRwkbGeometryType eType,
+    //                                             char **papszOptions)
     CPLAssert(nullptr != pszLayerName);
+
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     switch (eType)
     {
