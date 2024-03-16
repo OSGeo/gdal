@@ -56,6 +56,7 @@ repos:
                 frmts/pcidsk/sdk|
                 frmts/grib/degrib/degrib|
                 frmts/grib/degrib/g2clib|
+                gcore/sse2neon.h|
                 port/utf8.h|
                 ogr/ogrsf_frmts/adbc/ogr_adbc_internal.h|
                 ogr/ogrsf_frmts/cad/libopencad/|

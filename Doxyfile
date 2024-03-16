@@ -415,7 +415,9 @@ RECURSIVE              = NO
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
 EXCLUDE                = gcore/rawdataset.cpp \
-			 gcore/rawdataset.h
+                         gcore/rawdataset.h \
+                         gcore/include_sse2neon.h \
+                         gcore/sse2neon.h
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or
 # directories that are symbolic links (a Unix filesystem feature) are excluded
