@@ -1542,13 +1542,18 @@ OGRLayer *OGRHanaDataSource::GetLayerByName(const char *name)
 /*                              ICreateLayer()                          */
 /************************************************************************/
 
-OGRLayer *OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
-                                          const OGRSpatialReference *srs,
-                                          OGRwkbGeometryType geomType,
-                                          char **options)
+OGRLayer *
+OGRHanaDataSource::ICreateLayer(const char *layerNameIn,
+                                const OGRGeomFieldDefn *poGeomFieldDefn,
+                                CSLConstList options)
 {
     if (layerNameIn == nullptr)
         return nullptr;
+
+    const auto geomType =
+        poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto srs =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     // Check if we are allowed to create new objects in the database
     odbc::DatabaseMetaDataRef dmd = conn_->getDatabaseMetaData();

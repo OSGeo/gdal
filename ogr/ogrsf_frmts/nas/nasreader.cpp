@@ -917,7 +917,7 @@ bool NASReader::PrescanForSchema(bool bGetExtents, bool /*bOnlyDetectSRS*/)
                     eGType = wkbNone;
 
                 poClass->GetGeometryProperty(0)->SetType(
-                    (int)OGRMergeGeometryTypesEx(
+                    OGRMergeGeometryTypesEx(
                         eGType, poGeometry->getGeometryType(), TRUE));
 
                 // merge extents.

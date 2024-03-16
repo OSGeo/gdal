@@ -36,6 +36,7 @@
 #include <string>
 #include <algorithm>
 #include <fstream>
+#include <limits>
 
 #ifdef HAVE_SQLITE3
 #include <sqlite3.h>
@@ -1406,7 +1407,7 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
     ASSERT_EQ(nCountLayers, 0);
 
     poDS->CreateLayer("foo");
-    poDS->CreateLayer("bar");
+    poDS->CreateLayer("bar", nullptr);
     for (auto poLayer : poDS->GetLayers())
     {
         if (nCountLayers == 0)
@@ -3360,6 +3361,404 @@ TEST_F(test_ogr, OGRFeatureDefn_sealing)
         whileUnsealing(&oFDefn)->SetName("new_name");
         EXPECT_EQ(CPLGetLastErrorType(), CE_None);
     }
+}
+
+// Test wkbExportOptions
+TEST_F(test_ogr, wkbExportOptions_default)
+{
+    OGRwkbExportOptions *psOptions = OGRwkbExportOptionsCreate();
+    ASSERT_TRUE(psOptions != nullptr);
+    OGRPoint p(1.23456789012345678, 2.23456789012345678, 3);
+    std::vector<GByte> abyWKB(p.WkbSize());
+    OGR_G_ExportToWkbEx(OGRGeometry::ToHandle(&p), &abyWKB[0], psOptions);
+    OGRwkbExportOptionsDestroy(psOptions);
+
+    std::vector<GByte> abyRegularWKB(p.WkbSize());
+    OGR_G_ExportToWkb(OGRGeometry::ToHandle(&p), wkbNDR, &abyRegularWKB[0]);
+
+    EXPECT_TRUE(abyWKB == abyRegularWKB);
+}
+
+// Test wkbExportOptions
+TEST_F(test_ogr, wkbExportOptions)
+{
+    OGRwkbExportOptions *psOptions = OGRwkbExportOptionsCreate();
+    ASSERT_TRUE(psOptions != nullptr);
+    OGRwkbExportOptionsSetByteOrder(psOptions, wkbXDR);
+    OGRwkbExportOptionsSetVariant(psOptions, wkbVariantIso);
+
+    auto hPrec = OGRGeomCoordinatePrecisionCreate();
+    OGRGeomCoordinatePrecisionSet(hPrec, 1e-1, 1e-2, 1e-4);
+    OGRwkbExportOptionsSetPrecision(psOptions, hPrec);
+    OGRGeomCoordinatePrecisionDestroy(hPrec);
+
+    OGRPoint p(1.23456789012345678, -1.23456789012345678, 1.23456789012345678,
+               1.23456789012345678);
+    std::vector<GByte> abyWKB(p.WkbSize());
+    OGR_G_ExportToWkbEx(OGRGeometry::ToHandle(&p), &abyWKB[0], psOptions);
+    OGRwkbExportOptionsDestroy(psOptions);
+
+    const std::vector<GByte> expectedWKB{
+        0x00, 0x00, 0x00, 0x0B, 0xB9, 0x3F, 0xF3, 0x80, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0xBF, 0xF3, 0x80, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x3F, 0xF3, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3F,
+        0xF3, 0xC0, 0xC0, 0x00, 0x00, 0x00, 0x00};
+    EXPECT_TRUE(abyWKB == expectedWKB);
+
+    OGRGeometry *poGeom = nullptr;
+    OGRGeometryFactory::createFromWkb(abyWKB.data(), nullptr, &poGeom);
+    ASSERT_NE(poGeom, nullptr);
+    EXPECT_NEAR(poGeom->toPoint()->getX(), 1.2, 1e-1);
+    EXPECT_NEAR(poGeom->toPoint()->getY(), -1.2, 1e-1);
+    EXPECT_NEAR(poGeom->toPoint()->getZ(), 1.23, 1e-2);
+    EXPECT_NEAR(poGeom->toPoint()->getM(), 1.2346, 1e-4);
+    delete poGeom;
+}
+
+// Test OGRGeometry::roundCoordinatesIEEE754()
+TEST_F(test_ogr, roundCoordinatesIEEE754)
+{
+    OGRLineString oLS;
+    oLS.addPoint(1.2345678901234, -1.2345678901234, -1.2345678901234, 0.012345);
+    oLS.addPoint(-1.2345678901234, 1.2345678901234, 1.2345678901234, -0.012345);
+    oLS.addPoint(std::numeric_limits<double>::infinity(),
+                 std::numeric_limits<double>::quiet_NaN());
+    OGRGeomCoordinateBinaryPrecision sBinaryPrecision;
+    OGRGeomCoordinatePrecision sPrecision;
+    sPrecision.dfXYResolution = 1e-10;
+    sPrecision.dfZResolution = 1e-3;
+    sPrecision.dfMResolution = 1e-5;
+    sBinaryPrecision.SetFrom(sPrecision);
+    OGRLineString oLSOri(oLS);
+    oLS.roundCoordinatesIEEE754(sBinaryPrecision);
+    EXPECT_NE(oLS.getX(0), oLSOri.getX(0));
+    EXPECT_NE(oLS.getY(0), oLSOri.getY(0));
+    EXPECT_NE(oLS.getZ(0), oLSOri.getZ(0));
+    EXPECT_NE(oLS.getM(0), oLSOri.getM(0));
+    EXPECT_NEAR(oLS.getX(0), oLSOri.getX(0), sPrecision.dfXYResolution);
+    EXPECT_NEAR(oLS.getY(0), oLSOri.getY(0), sPrecision.dfXYResolution);
+    EXPECT_NEAR(oLS.getZ(0), oLSOri.getZ(0), sPrecision.dfZResolution);
+    EXPECT_NEAR(oLS.getM(0), oLSOri.getM(0), sPrecision.dfMResolution);
+    EXPECT_NEAR(oLS.getX(1), oLSOri.getX(1), sPrecision.dfXYResolution);
+    EXPECT_NEAR(oLS.getY(1), oLSOri.getY(1), sPrecision.dfXYResolution);
+    EXPECT_NEAR(oLS.getZ(1), oLSOri.getZ(1), sPrecision.dfZResolution);
+    EXPECT_NEAR(oLS.getM(1), oLSOri.getM(1), sPrecision.dfMResolution);
+    EXPECT_EQ(oLS.getX(2), std::numeric_limits<double>::infinity());
+    EXPECT_TRUE(std::isnan(oLS.getY(2)));
+}
+
+// Test discarding of bits in WKB export
+TEST_F(test_ogr, wkb_linestring_2d_xy_precision)
+{
+    OGRLineString oLS;
+    oLS.addPoint(1.2345678901234, -1.2345678901234);
+    oLS.addPoint(-1.2345678901234, 1.2345678901234);
+    OGRwkbExportOptions sOptions;
+    OGRGeomCoordinatePrecision sPrecision;
+    sPrecision.dfXYResolution = 1e-10;
+    sOptions.sPrecision.SetFrom(sPrecision);
+    std::vector<GByte> abyWKB(oLS.WkbSize());
+    oLS.exportToWkb(&abyWKB[0], &sOptions);
+    for (int i = 0; i < oLS.getDimension() * oLS.getNumPoints(); ++i)
+    {
+        EXPECT_EQ(abyWKB[5 + 4 + 0 + 8 * i], 0);
+    }
+    OGRGeometry *poGeom = nullptr;
+    OGRGeometryFactory::createFromWkb(abyWKB.data(), nullptr, &poGeom);
+    EXPECT_NE(poGeom->toLineString()->getX(0), oLS.getX(0));
+    EXPECT_NE(poGeom->toLineString()->getY(0), oLS.getY(0));
+    EXPECT_NEAR(poGeom->toLineString()->getX(0), oLS.getX(0),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getY(0), oLS.getY(0),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getX(1), oLS.getX(1),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getY(1), oLS.getY(1),
+                sPrecision.dfXYResolution);
+    delete poGeom;
+}
+
+// Test discarding of bits in WKB export
+TEST_F(test_ogr, wkb_linestring_3d_discard_lsb_bits)
+{
+    OGRLineString oLS;
+    oLS.addPoint(1.2345678901234, -1.2345678901234, -1.2345678901234);
+    oLS.addPoint(-1.2345678901234, 1.2345678901234, 1.2345678901234);
+    OGRwkbExportOptions sOptions;
+    OGRGeomCoordinatePrecision sPrecision;
+    sPrecision.dfXYResolution = 1e-10;
+    sPrecision.dfZResolution = 1e-3;
+    sOptions.sPrecision.SetFrom(sPrecision);
+    std::vector<GByte> abyWKB(oLS.WkbSize());
+    oLS.exportToWkb(&abyWKB[0], &sOptions);
+    for (int i = 0; i < oLS.getDimension() * oLS.getNumPoints(); ++i)
+    {
+        EXPECT_EQ(abyWKB[5 + 4 + 0 + 8 * i], 0);
+    }
+    OGRGeometry *poGeom = nullptr;
+    OGRGeometryFactory::createFromWkb(abyWKB.data(), nullptr, &poGeom);
+    EXPECT_NE(poGeom->toLineString()->getX(0), oLS.getX(0));
+    EXPECT_NE(poGeom->toLineString()->getY(0), oLS.getY(0));
+    EXPECT_NE(poGeom->toLineString()->getZ(0), oLS.getZ(0));
+    EXPECT_NEAR(poGeom->toLineString()->getX(0), oLS.getX(0),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getY(0), oLS.getY(0),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getZ(0), oLS.getZ(0),
+                sPrecision.dfZResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getX(1), oLS.getX(1),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getY(1), oLS.getY(1),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getZ(1), oLS.getZ(1),
+                sPrecision.dfZResolution);
+    delete poGeom;
+}
+
+// Test discarding of bits in WKB export
+TEST_F(test_ogr, wkb_linestring_xym_discard_lsb_bits)
+{
+    OGRLineString oLS;
+    oLS.addPointM(1.2345678901234, -1.2345678901234, -1.2345678901234);
+    oLS.addPointM(-1.2345678901234, 1.2345678901234, 1.2345678901234);
+    OGRwkbExportOptions sOptions;
+    OGRGeomCoordinatePrecision sPrecision;
+    sPrecision.dfXYResolution = 1e-10;
+    sPrecision.dfMResolution = 1e-3;
+    sOptions.sPrecision.SetFrom(sPrecision);
+    std::vector<GByte> abyWKB(oLS.WkbSize());
+    oLS.exportToWkb(&abyWKB[0], &sOptions);
+    for (int i = 0; i < oLS.getDimension() * oLS.getNumPoints(); ++i)
+    {
+        EXPECT_EQ(abyWKB[5 + 4 + 0 + 8 * i], 0);
+    }
+    OGRGeometry *poGeom = nullptr;
+    OGRGeometryFactory::createFromWkb(abyWKB.data(), nullptr, &poGeom);
+    EXPECT_NE(poGeom->toLineString()->getX(0), oLS.getX(0));
+    EXPECT_NE(poGeom->toLineString()->getY(0), oLS.getY(0));
+    EXPECT_NE(poGeom->toLineString()->getM(0), oLS.getM(0));
+    EXPECT_NEAR(poGeom->toLineString()->getX(0), oLS.getX(0),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getY(0), oLS.getY(0),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getM(0), oLS.getM(0),
+                sPrecision.dfMResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getX(1), oLS.getX(1),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getY(1), oLS.getY(1),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getM(1), oLS.getM(1),
+                sPrecision.dfMResolution);
+    delete poGeom;
+}
+
+// Test discarding of bits in WKB export
+TEST_F(test_ogr, wkb_linestring_xyzm_discard_lsb_bits)
+{
+    OGRLineString oLS;
+    oLS.addPoint(1.2345678901234, -1.2345678901234, -1.2345678901234, 0.012345);
+    oLS.addPoint(-1.2345678901234, 1.2345678901234, 1.2345678901234, 0.012345);
+    OGRwkbExportOptions sOptions;
+    OGRGeomCoordinatePrecision sPrecision;
+    sPrecision.dfXYResolution = 1e-10;
+    sPrecision.dfZResolution = 1e-3;
+    sPrecision.dfMResolution = 1e-5;
+    sOptions.sPrecision.SetFrom(sPrecision);
+    std::vector<GByte> abyWKB(oLS.WkbSize());
+    oLS.exportToWkb(&abyWKB[0], &sOptions);
+    for (int i = 0; i < oLS.getDimension() * oLS.getNumPoints(); ++i)
+    {
+        EXPECT_EQ(abyWKB[5 + 4 + 0 + 8 * i], 0);
+    }
+    OGRGeometry *poGeom = nullptr;
+    OGRGeometryFactory::createFromWkb(abyWKB.data(), nullptr, &poGeom);
+    EXPECT_NE(poGeom->toLineString()->getX(0), oLS.getX(0));
+    EXPECT_NE(poGeom->toLineString()->getY(0), oLS.getY(0));
+    EXPECT_NE(poGeom->toLineString()->getZ(0), oLS.getZ(0));
+    EXPECT_NE(poGeom->toLineString()->getM(0), oLS.getM(0));
+    EXPECT_NEAR(poGeom->toLineString()->getX(0), oLS.getX(0),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getY(0), oLS.getY(0),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getZ(0), oLS.getZ(0),
+                sPrecision.dfZResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getM(0), oLS.getM(0),
+                sPrecision.dfMResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getX(1), oLS.getX(1),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getY(1), oLS.getY(1),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getZ(1), oLS.getZ(1),
+                sPrecision.dfZResolution);
+    EXPECT_NEAR(poGeom->toLineString()->getM(1), oLS.getM(1),
+                sPrecision.dfMResolution);
+    delete poGeom;
+}
+
+// Test discarding of bits in WKB export
+TEST_F(test_ogr, wkb_polygon_2d_xy_precision)
+{
+    OGRLinearRing oLS;
+    oLS.addPoint(1.2345678901234, -1.2345678901234);
+    oLS.addPoint(-1.2345678901234, -1.2345678901234);
+    oLS.addPoint(-2.2345678901234, 1.2345678901234);
+    oLS.addPoint(1.2345678901234, -1.2345678901234);
+    OGRPolygon oPoly;
+    oPoly.addRing(&oLS);
+    OGRwkbExportOptions sOptions;
+    OGRGeomCoordinatePrecision sPrecision;
+    sPrecision.dfXYResolution = 1e-10;
+    sOptions.sPrecision.SetFrom(sPrecision);
+    std::vector<GByte> abyWKB(oPoly.WkbSize());
+    oPoly.exportToWkb(&abyWKB[0], &sOptions);
+    for (int i = 0; i < oLS.getDimension() * oLS.getNumPoints(); ++i)
+    {
+        EXPECT_EQ(abyWKB[5 + 4 + 4 + 0 + 8 * i], 0);
+    }
+    OGRGeometry *poGeom = nullptr;
+    OGRGeometryFactory::createFromWkb(abyWKB.data(), nullptr, &poGeom);
+    EXPECT_NE(poGeom->toPolygon()->getExteriorRing()->getX(0), oLS.getX(0));
+    EXPECT_NE(poGeom->toPolygon()->getExteriorRing()->getY(0), oLS.getY(0));
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getX(0), oLS.getX(0),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getY(0), oLS.getY(0),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getX(1), oLS.getX(1),
+                sPrecision.dfXYResolution);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getY(1), oLS.getY(1),
+                sPrecision.dfXYResolution);
+    delete poGeom;
+}
+
+// Test discarding of bits in WKB export
+TEST_F(test_ogr, wkb_polygon_3d_discard_lsb_bits)
+{
+    OGRLinearRing oLS;
+    oLS.addPoint(1.2345678901234, -1.2345678901234, 1.2345678901234);
+    oLS.addPoint(-1.2345678901234, -1.2345678901234, -1.2345678901234);
+    oLS.addPoint(-2.2345678901234, 1.2345678901234, -1.2345678901234);
+    oLS.addPoint(1.2345678901234, -1.2345678901234, 1.2345678901234);
+    OGRPolygon oPoly;
+    oPoly.addRing(&oLS);
+    OGRSpatialReference oSRS;
+    oSRS.importFromEPSG(4326);
+    OGRwkbExportOptions sOptions;
+    OGRGeomCoordinatePrecision sPrecision;
+    sPrecision.SetFromMeter(&oSRS, 1e-3, 1e-3, 0);
+    sOptions.sPrecision.SetFrom(sPrecision);
+    std::vector<GByte> abyWKB(oPoly.WkbSize());
+    oPoly.exportToWkb(&abyWKB[0], &sOptions);
+    for (int i = 0; i < oLS.getDimension() * oLS.getNumPoints(); ++i)
+    {
+        EXPECT_EQ(abyWKB[5 + 4 + 4 + 0 + 8 * i], 0);
+    }
+    OGRGeometry *poGeom = nullptr;
+    OGRGeometryFactory::createFromWkb(abyWKB.data(), nullptr, &poGeom);
+    EXPECT_NE(poGeom->toPolygon()->getExteriorRing()->getX(0), oLS.getX(0));
+    EXPECT_NE(poGeom->toPolygon()->getExteriorRing()->getY(0), oLS.getY(0));
+    EXPECT_NE(poGeom->toPolygon()->getExteriorRing()->getZ(0), oLS.getZ(0));
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getX(0), oLS.getX(0),
+                8.9e-9);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getY(0), oLS.getY(0),
+                8.9e-9);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getZ(0), oLS.getZ(0),
+                1e-3);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getX(1), oLS.getX(1),
+                8.9e-9);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getY(1), oLS.getY(1),
+                8.9e-9);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getZ(1), oLS.getZ(1),
+                1e-3);
+    delete poGeom;
+}
+
+// Test discarding of bits in WKB export
+TEST_F(test_ogr, wkb_polygon_xym_discard_lsb_bits)
+{
+    OGRLinearRing oLS;
+    oLS.addPointM(1.2345678901234, -1.2345678901234, 1.2345678901234);
+    oLS.addPointM(-1.2345678901234, -1.2345678901234, -1.2345678901234);
+    oLS.addPointM(-2.2345678901234, 1.2345678901234, -1.2345678901234);
+    oLS.addPointM(1.2345678901234, -1.2345678901234, 1.2345678901234);
+    OGRPolygon oPoly;
+    oPoly.addRing(&oLS);
+    OGRSpatialReference oSRS;
+    oSRS.importFromEPSG(4326);
+    OGRwkbExportOptions sOptions;
+    OGRGeomCoordinatePrecision sPrecision;
+    sPrecision.SetFromMeter(&oSRS, 1e-3, 0, 1e-3);
+    sOptions.sPrecision.SetFrom(sPrecision);
+    std::vector<GByte> abyWKB(oPoly.WkbSize());
+    oPoly.exportToWkb(&abyWKB[0], &sOptions);
+    for (int i = 0; i < oLS.getDimension() * oLS.getNumPoints(); ++i)
+    {
+        EXPECT_EQ(abyWKB[5 + 4 + 4 + 0 + 8 * i], 0);
+    }
+    OGRGeometry *poGeom = nullptr;
+    OGRGeometryFactory::createFromWkb(abyWKB.data(), nullptr, &poGeom);
+    EXPECT_NE(poGeom->toPolygon()->getExteriorRing()->getX(0), oLS.getX(0));
+    EXPECT_NE(poGeom->toPolygon()->getExteriorRing()->getY(0), oLS.getY(0));
+    EXPECT_NE(poGeom->toPolygon()->getExteriorRing()->getM(0), oLS.getM(0));
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getX(0), oLS.getX(0),
+                8.9e-9);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getY(0), oLS.getY(0),
+                8.9e-9);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getM(0), oLS.getM(0),
+                1e-3);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getX(1), oLS.getX(1),
+                8.9e-9);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getY(1), oLS.getY(1),
+                8.9e-9);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getM(1), oLS.getM(1),
+                1e-3);
+    delete poGeom;
+}
+
+// Test discarding of bits in WKB export
+TEST_F(test_ogr, wkb_polygon_xyzm_discard_lsb_bits)
+{
+    OGRLinearRing oLS;
+    oLS.addPoint(1.2345678901234, -1.2345678901234, 1.2345678901234, 0.012345);
+    oLS.addPoint(-1.2345678901234, -1.2345678901234, -1.2345678901234, 12345);
+    oLS.addPoint(-2.2345678901234, 1.2345678901234, -1.2345678901234, 0.012345);
+    oLS.addPoint(1.2345678901234, -1.2345678901234, 1.2345678901234, 0.012345);
+    OGRPolygon oPoly;
+    oPoly.addRing(&oLS);
+    OGRSpatialReference oSRS;
+    oSRS.importFromEPSG(4326);
+    OGRwkbExportOptions sOptions;
+    OGRGeomCoordinatePrecision sPrecision;
+    sPrecision.SetFromMeter(&oSRS, 1e-3, 1e-3, 1e-4);
+    sOptions.sPrecision.SetFrom(sPrecision);
+    std::vector<GByte> abyWKB(oPoly.WkbSize());
+    oPoly.exportToWkb(&abyWKB[0], &sOptions);
+    for (int i = 0; i < oLS.getDimension() * oLS.getNumPoints(); ++i)
+    {
+        EXPECT_EQ(abyWKB[5 + 4 + 4 + 0 + 8 * i], 0);
+    }
+    OGRGeometry *poGeom = nullptr;
+    OGRGeometryFactory::createFromWkb(abyWKB.data(), nullptr, &poGeom);
+    EXPECT_NE(poGeom->toPolygon()->getExteriorRing()->getX(0), oLS.getX(0));
+    EXPECT_NE(poGeom->toPolygon()->getExteriorRing()->getY(0), oLS.getY(0));
+    EXPECT_NE(poGeom->toPolygon()->getExteriorRing()->getZ(0), oLS.getZ(0));
+    EXPECT_NE(poGeom->toPolygon()->getExteriorRing()->getM(0), oLS.getM(0));
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getX(0), oLS.getX(0),
+                8.9e-9);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getY(0), oLS.getY(0),
+                8.9e-9);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getZ(0), oLS.getZ(0),
+                1e-3);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getM(0), oLS.getM(0),
+                1e-4);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getX(1), oLS.getX(1),
+                8.9e-9);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getY(1), oLS.getY(1),
+                8.9e-9);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getZ(1), oLS.getZ(1),
+                1e-3);
+    EXPECT_NEAR(poGeom->toPolygon()->getExteriorRing()->getM(1), oLS.getM(1),
+                1e-4);
+    delete poGeom;
 }
 
 }  // namespace

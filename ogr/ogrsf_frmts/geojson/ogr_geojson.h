@@ -116,6 +116,11 @@ class OGRGeoJSONLayer final : public OGRMemLayer
         nTotalFeatureCount_ = -1;
     }
 
+    void SetWriteOptions(const OGRGeoJSONWriteOptions &options)
+    {
+        oWriteOptions_ = options;
+    }
+
   private:
     OGRGeoJSONDataSource *poDS_;
     OGRGeoJSONReader *poReader_;
@@ -124,6 +129,9 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     bool bOriginalIdModified_;
     GIntBig nTotalFeatureCount_;
     GIntBig nFeatureReadSinceReset_ = 0;
+
+    //! Write options used by ICreateFeature() in append scenarios
+    OGRGeoJSONWriteOptions oWriteOptions_;
 
     bool IngestAll();
     void TerminateAppendSession();
@@ -139,7 +147,7 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
 {
   public:
     OGRGeoJSONWriteLayer(const char *pszName, OGRwkbGeometryType eGType,
-                         char **papszOptions, bool bWriteFC_BBOXIn,
+                         CSLConstList papszOptions, bool bWriteFC_BBOXIn,
                          OGRCoordinateTransformation *poCT,
                          OGRGeoJSONDataSource *poDS);
     ~OGRGeoJSONWriteLayer();
@@ -190,7 +198,6 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
     bool bWriteFC_BBOX;
     OGREnvelope3D sEnvelopeLayer;
 
-    int nCoordPrecision_;
     int nSignificantFigures_;
 
     bool bRFC7946_;
@@ -224,9 +231,8 @@ class OGRGeoJSONDataSource final : public OGRDataSource
     int GetLayerCount() override;
     OGRLayer *GetLayer(int nLayer) override;
     OGRLayer *ICreateLayer(const char *pszName,
-                           const OGRSpatialReference *poSRS = nullptr,
-                           OGRwkbGeometryType eGType = wkbUnknown,
-                           char **papszOptions = nullptr) override;
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
     int TestCapability(const char *pszCap) override;
 
     void AddLayer(OGRGeoJSONLayer *poLayer);

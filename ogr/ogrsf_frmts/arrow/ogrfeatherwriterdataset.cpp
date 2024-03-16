@@ -78,9 +78,10 @@ int OGRFeatherWriterDataset::TestCapability(const char *pszCap)
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRFeatherWriterDataset::ICreateLayer(
-    const char *pszName, const OGRSpatialReference *poSpatialRef,
-    OGRwkbGeometryType eGType, char **papszOptions)
+OGRLayer *
+OGRFeatherWriterDataset::ICreateLayer(const char *pszName,
+                                      const OGRGeomFieldDefn *poGeomFieldDefn,
+                                      CSLConstList papszOptions)
 {
     if (m_poLayer)
     {
@@ -88,6 +89,11 @@ OGRLayer *OGRFeatherWriterDataset::ICreateLayer(
                  "Can write only one layer in a Feather file");
         return nullptr;
     }
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSpatialRef =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
+
     m_poLayer = std::make_unique<OGRFeatherWriterLayer>(
         m_poMemoryPool.get(), m_poOutputStream, pszName);
     if (!m_poLayer->SetOptions(m_osFilename, papszOptions, poSpatialRef,

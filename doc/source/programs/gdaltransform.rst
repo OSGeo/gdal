@@ -19,7 +19,8 @@ Synopsis
         [-i] [-s_srs <srs_def>] [-t_srs <srs_def>] [-to <NAME>=<VALUE>]...
         [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>]
         [-ct <proj_string>] [-order <n>] [-tps] [-rpc] [-geoloc]
-        [-gcp <pixel> <line> <easting> <northing> [elevation]]... [-output_xy]
+        [-gcp <pixel> <line> <easting> <northing> [elevation]]...
+        [-output_xy] [-E] [-field_sep <sep>] [-ignore_extra_input]
         [<srcfile> [<dstfile>]]
 
 
@@ -114,6 +115,26 @@ projection,including GCP-based transformations.
 
     Restrict output to "x y" instead of "x y z"
 
+.. option:: -ignore_extra_input
+
+    .. versionadded:: 3.9
+
+    Set this flag to avoid extra non-numeric content at end of input lines to be
+    appended to the output lines.
+
+.. option:: -E
+
+    .. versionadded:: 3.9
+
+    Enable Echo mode, where input coordinates are prepended to the output lines.
+
+.. option:: -field_sep <sep>
+
+    .. versionadded:: 3.9
+
+    Defines the field separator, to separate different values.
+    It defaults to the space character.
+
 .. option:: <srcfile>
 
     Raster dataset with source projection definition or GCPs. If
@@ -130,6 +151,10 @@ Coordinates are read as pairs, triples (for 3D,) or (since GDAL 3.0.0,) quadrupl
 (for X,Y,Z,time) of numbers per line from standard
 input, transformed, and written out to standard output in the same way. All
 transformations offered by gdalwarp are handled, including gcp-based ones.
+
+Starting with GDAL 3.9, additional non-numeric content (typically point name)
+at the end of an input line will also be appended to the output line, unless
+the :option:`-ignore_extra_input` is added.
 
 Note that input and output must always be in decimal form.  There is currently
 no support for DMS input or output.
@@ -194,7 +219,7 @@ for a coordinate at epoch 2000.0
     +proj=unitconvert +xy_in=rad +xy_out=deg"
     2 49 0 2000
 
-Produces this output measured in longitude degrees, latitude degrees and ellipsoid height in metres:
+Produces this output measured in longitude degrees, latitude degrees and ellipsoid height in meters:
 
 .. code-block:: bash
 
@@ -208,9 +233,9 @@ some nearby corners' coordinates?
 
 .. code-block:: bash
 
-    echo 300 -370 | gdaltransform \
+    echo 300 -370 my address | gdaltransform \
     -gcp 0   -500 -111.89114803 40.75846686 \
     -gcp 0   0    -111.89114717 40.76932606 \
     -gcp 500 0    -111.87685039 40.76940631
 
-    -111.8825697384 40.761338402 0
+    -111.8825697384 40.761338402 0 my address

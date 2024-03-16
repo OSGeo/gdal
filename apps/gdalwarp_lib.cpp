@@ -1244,8 +1244,11 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
     CPLStringList aosCreateOptions(psOptions->aosCreateOptions);
     psOptions->aosCreateOptions.Clear();
 
-    if (nSrcCount == 1 && !(EQUAL(psOptions->osFormat.c_str(), "COG") &&
-                            COGHasWarpingOptions(aosCreateOptions.List())))
+    // Do not use a warped VRT input for COG output, because that would cause
+    // warping to be done both during overview computation and creation of
+    // full resolution image. Better materialize a temporary GTiff a bit later
+    // in that method.
+    if (nSrcCount == 1 && !EQUAL(psOptions->osFormat.c_str(), "COG"))
     {
         psOptions->osFormat = "VRT";
         auto pfnProgress = psOptions->pfnProgress;

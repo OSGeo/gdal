@@ -100,9 +100,13 @@ GDALDataset *PDFWritableVectorDataset::Create(const char *pszName, int nXSize,
 
 OGRLayer *
 PDFWritableVectorDataset::ICreateLayer(const char *pszLayerName,
-                                       const OGRSpatialReference *poSRS,
-                                       OGRwkbGeometryType eType, char **)
+                                       const OGRGeomFieldDefn *poGeomFieldDefn,
+                                       CSLConstList /*papszOptions*/)
 {
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
+
     /* -------------------------------------------------------------------- */
     /*      Create the layer object.                                        */
     /* -------------------------------------------------------------------- */

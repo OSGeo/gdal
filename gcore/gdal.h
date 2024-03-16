@@ -744,6 +744,17 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  */
 #define GDAL_DCAP_FLUSHCACHE_CONSISTENT_STATE "DCAP_FLUSHCACHE_CONSISTENT_STATE"
 
+/** Capability set by drivers which honor the OGRCoordinatePrecision settings
+ * of geometry fields at layer creation and/or for OGRLayer::CreateGeomField().
+ * Note that while those drivers honor the settings at feature writing time,
+ * they might not be able to store the precision settings in layer metadata,
+ * hence on reading it might not be possible to recover the precision with
+ * which coordinates have been written.
+ * @since GDAL 3.9
+ */
+#define GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION                              \
+    "DCAP_HONOR_GEOM_COORDINATE_PRECISION"
+
 /** List of (space separated) flags indicating the features of relationships are
  * supported by the driver.
  *
@@ -1238,6 +1249,10 @@ OGRErr CPL_DLL GDALDatasetDeleteLayer(GDALDatasetH, int);
 OGRLayerH CPL_DLL GDALDatasetCreateLayer(GDALDatasetH, const char *,
                                          OGRSpatialReferenceH,
                                          OGRwkbGeometryType, CSLConstList);
+OGRLayerH CPL_DLL GDALDatasetCreateLayerFromGeomFieldDefn(GDALDatasetH,
+                                                          const char *,
+                                                          OGRGeomFieldDefnH,
+                                                          CSLConstList);
 OGRLayerH CPL_DLL GDALDatasetCopyLayer(GDALDatasetH, OGRLayerH, const char *,
                                        CSLConstList);
 void CPL_DLL GDALDatasetResetReading(GDALDatasetH);

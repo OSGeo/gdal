@@ -121,9 +121,8 @@ class OGRKMLDataSource final : public OGRDataSource
     }
     OGRLayer *GetLayer(int nLayer) override;
     OGRLayer *ICreateLayer(const char *pszName,
-                           const OGRSpatialReference *poSRS = nullptr,
-                           OGRwkbGeometryType eGType = wkbUnknown,
-                           char **papszOptions = nullptr) override;
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
     int TestCapability(const char *pszCap) override;
 
     //

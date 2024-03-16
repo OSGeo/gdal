@@ -298,11 +298,9 @@ class OGRCSVDataSource final : public OGRDataSource
 
     char **GetFileList() override;
 
-    virtual OGRLayer *
-    ICreateLayer(const char *pszName,
-                 const OGRSpatialReference *poSpatialRef = nullptr,
-                 OGRwkbGeometryType eGType = wkbUnknown,
-                 char **papszOptions = nullptr) override;
+    virtual OGRLayer *ICreateLayer(const char *pszName,
+                                   const OGRGeomFieldDefn *poGeomFieldDefn,
+                                   CSLConstList papszOptions) override;
 
     virtual OGRErr DeleteLayer(int) override;
 

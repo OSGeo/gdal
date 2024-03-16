@@ -3603,8 +3603,10 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 /*ok*/ printf(
                     "  Supports: Creating geometry fields with NOT NULL "
                     "constraint.\n");
-            if (CPLFetchBool(papszMD, GDAL_DCAP_NONSPATIAL, false))
-                printf("  No support for geometries.\n"); /*ok*/
+            if (CPLFetchBool(papszMD, GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION,
+                             false))
+                /*ok*/ printf("  Supports: Writing geometries with given "
+                              "coordinate precision\n");
             if (CPLFetchBool(papszMD, GDAL_DCAP_FEATURE_STYLES_READ, false))
                 printf("  Supports: Reading feature styles.\n"); /*ok*/
             if (CPLFetchBool(papszMD, GDAL_DCAP_FEATURE_STYLES_WRITE, false))

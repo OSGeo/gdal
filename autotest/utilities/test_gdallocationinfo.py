@@ -161,3 +161,96 @@ def test_gdallocationinfo_wgs84(gdallocationinfo_path):
 
     expected_ret = """115"""
     assert expected_ret in ret
+
+
+###############################################################################
+
+
+def test_gdallocationinfo_field_sep(gdallocationinfo_path):
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + ' -valonly -field_sep "," ../gcore/data/byte.tif',
+        strin="0 0",
+    )
+
+    assert "107" in ret
+    assert "," not in ret
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + ' -valonly -field_sep "," ../gcore/data/rgbsmall.tif',
+        strin="15 16",
+    )
+
+    assert "72,102,16" in ret
+
+
+###############################################################################
+
+
+def test_gdallocationinfo_extra_input(gdallocationinfo_path):
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + " ../gcore/data/byte.tif", strin="0 0 foo bar"
+    )
+
+    assert "Extra input: foo bar" in ret
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + " -valonly ../gcore/data/byte.tif", strin="0 0 foo bar"
+    )
+
+    assert "107" in ret
+    assert "foo bar" not in ret
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + ' -valonly -field_sep "," ../gcore/data/byte.tif',
+        strin="0 0 foo bar",
+    )
+
+    assert "107,foo bar" in ret
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + " -xml ../gcore/data/byte.tif", strin="0 0 foo bar"
+    )
+
+    assert "<ExtraInput>foo bar</ExtraInput>" in ret
+
+
+###############################################################################
+
+
+def test_gdallocationinfo_extra_input_ignored(gdallocationinfo_path):
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path
+        + ' -valonly -field_sep "," -ignore_extra_input ../gcore/data/byte.tif',
+        strin="0 0 foo bar",
+    )
+
+    assert "107" in ret
+    assert "foo bar" not in ret
+
+
+###############################################################################
+# Test echo mode
+
+
+def test_gdallocationinfo_echo(gdallocationinfo_path):
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdallocationinfo_path + " -E ../gcore/data/byte.tif 1 2"
+    )
+    assert "-E can only be used with -valonly" in err
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdallocationinfo_path + " -E -valonly ../gcore/data/byte.tif 1 2"
+    )
+    assert (
+        "-E can only be used if -field_sep is specified (to a non-newline value)" in err
+    )
+
+    ret = gdaltest.runexternal(
+        gdallocationinfo_path + ' -E -valonly -field_sep "," ../gcore/data/byte.tif',
+        strin="1 2",
+    )
+    assert "1,2,132" in ret

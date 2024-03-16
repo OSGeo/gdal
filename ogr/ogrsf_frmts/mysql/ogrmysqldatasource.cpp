@@ -1156,10 +1156,10 @@ OGRErr OGRMySQLDataSource::DeleteLayer(int iLayer)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRMySQLDataSource::ICreateLayer(const char *pszLayerNameIn,
-                                           const OGRSpatialReference *poSRS,
-                                           OGRwkbGeometryType eType,
-                                           char **papszOptions)
+OGRLayer *
+OGRMySQLDataSource::ICreateLayer(const char *pszLayerNameIn,
+                                 const OGRGeomFieldDefn *poGeomFieldDefn,
+                                 CSLConstList papszOptions)
 
 {
     MYSQL_RES *hResult = nullptr;
@@ -1173,6 +1173,10 @@ OGRLayer *OGRMySQLDataSource::ICreateLayer(const char *pszLayerNameIn,
     /*      Make sure there isn't an active transaction already.            */
     /* -------------------------------------------------------------------- */
     InterruptLongResult();
+
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     if (CPLFetchBool(papszOptions, "LAUNDER", true))
         pszLayerName = LaunderName(pszLayerNameIn);

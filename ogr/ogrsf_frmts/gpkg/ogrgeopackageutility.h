@@ -59,6 +59,7 @@ OGRwkbGeometryType GPkgGeometryTypeToWKB(const char *pszGpkgType, bool bHasZ,
                                          bool bHasM);
 
 GByte *GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
+                           const OGRGeomCoordinateBinaryPrecision *psPrecision,
                            size_t *pnWkbLen);
 OGRGeometry *GPkgGeometryToOGR(const GByte *pabyGpkg, size_t nGpkgLen,
                                OGRSpatialReference *poSrs);

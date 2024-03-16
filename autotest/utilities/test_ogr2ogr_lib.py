@@ -1248,10 +1248,10 @@ def test_ogr2ogr_lib_clipsrc_3d_polygon(tmp_vsimem):
     assert lyr.GetFeatureCount() == 2
 
     feat = lyr.GetNextFeature()
-    ogrtest.check_feature_geometry(feat, "LINESTRING (0 0, 5 5)")
+    ogrtest.check_feature_geometry(feat, "LINESTRING Z (0 0 0, 5 5 5)")
 
     feat = lyr.GetNextFeature()
-    ogrtest.check_feature_geometry(feat, "LINESTRING (5 5, 10 0)")
+    ogrtest.check_feature_geometry(feat, "LINESTRING Z (5 5 5, 10 0 10)")
 
     ds = None
 
@@ -2464,3 +2464,178 @@ def test_ogr2ogr_lib_gpkg_to_shp_truncated_field_names(tmp_vsimem):
     f = out_lyr.GetNextFeature()
     assert f["shortname"] == "foo"
     assert f["too_long_f"] == "bar"
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_coordinate_precision(tmp_vsimem):
+
+    # Source layer without SRS
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds.CreateLayer("test")
+
+    out_filename = str(tmp_vsimem / "test_ogr2ogr_lib_coordinate_precision.gpkg")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value for -xyRes",
+    ):
+        gdal.VectorTranslate(out_filename, src_ds, xyRes="invalid")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value for -xyRes",
+    ):
+        gdal.VectorTranslate(out_filename, src_ds, xyRes="1 invalid")
+
+    with pytest.raises(
+        Exception,
+        match="Unit suffix for -xyRes cannot be used with an unknown destination SRS",
+    ):
+        gdal.VectorTranslate(out_filename, src_ds, xyRes="1e-2 m")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value for -zRes",
+    ):
+        gdal.VectorTranslate(out_filename, src_ds, zRes="invalid")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value for -zRes",
+    ):
+        gdal.VectorTranslate(out_filename, src_ds, zRes="1 invalid")
+
+    with pytest.raises(
+        Exception,
+        match="Unit suffix for -zRes cannot be used with an unknown destination SRS",
+    ):
+        gdal.VectorTranslate(out_filename, src_ds, zRes="1e-2 m")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value for -mRes",
+    ):
+        gdal.VectorTranslate(out_filename, src_ds, mRes="invalid")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value for -mRes",
+    ):
+        gdal.VectorTranslate(out_filename, src_ds, mRes="1 invalid")
+
+    gdal.VectorTranslate(out_filename, src_ds, xyRes=1e-2, zRes=1e-3, mRes=1e-4)
+    ds = ogr.Open(out_filename)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-2
+    assert prec.GetZResolution() == 1e-3
+    assert prec.GetMResolution() == 1e-4
+    ds.Close()
+
+    out_filename2 = str(
+        tmp_vsimem / "test_ogr2ogr_lib_coordinate_precision2.gpkg",
+    )
+    gdal.VectorTranslate(out_filename2, out_filename)
+    ds = ogr.Open(out_filename2)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-2
+    assert prec.GetZResolution() == 1e-3
+    assert prec.GetMResolution() == 1e-4
+    ds.Close()
+
+    gdal.VectorTranslate(out_filename2, out_filename, setCoordPrecision=False)
+    ds = ogr.Open(out_filename2)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 0
+    ds.Close()
+
+    # Source layer with a geographic SRS
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    src_ds.CreateLayer("test", srs=srs)
+
+    gdal.VectorTranslate(out_filename, src_ds, xyRes="1e-2 m", zRes="1e-3 m", mRes=1e-4)
+    ds = ogr.Open(out_filename)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == pytest.approx(8.98315e-08)
+    assert prec.GetZResolution() == 1e-3
+    assert prec.GetMResolution() == 1e-4
+    ds.Close()
+
+    gdal.VectorTranslate(out_filename, src_ds, xyRes="10 mm", zRes="1 mm", mRes=1e-4)
+    ds = ogr.Open(out_filename)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == pytest.approx(8.98315e-08)
+    assert prec.GetZResolution() == 1e-3
+    assert prec.GetMResolution() == 1e-4
+    ds.Close()
+
+    gdal.VectorTranslate(out_filename, src_ds, xyRes="1e-7 deg")
+    ds = ogr.Open(out_filename)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-7
+    assert prec.GetZResolution() == 0
+    assert prec.GetMResolution() == 0
+    ds.Close()
+
+    # Source layer with a projected SRS
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    src_ds.CreateLayer("test", srs=srs)
+
+    gdal.VectorTranslate(out_filename, src_ds, xyRes="1e-7 deg")
+    ds = ogr.Open(out_filename)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == pytest.approx(0.0111319)
+    assert prec.GetZResolution() == 0
+    assert prec.GetMResolution() == 0
+    ds.Close()
+
+    # Test conversion of coordinate precision while reprojecting
+    gdal.VectorTranslate(out_filename2, out_filename, dstSRS="EPSG:4326")
+    ds = ogr.Open(out_filename2)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == pytest.approx(1e-7)
+    assert prec.GetZResolution() == 0
+    assert prec.GetMResolution() == 0
+    ds.Close()
+
+
+###############################################################################
+
+
+def test_ogr2ogr_lib_coordinate_precision_with_geom():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (1 1,9 9)"))
+    src_lyr.CreateFeature(f)
+
+    out_ds = gdal.VectorTranslate("", src_ds, format="Memory", xyRes=10)
+    out_lyr = out_ds.GetLayer(0)
+    f = out_lyr.GetNextFeature()
+    if ogr.GetGEOSVersionMajor() > 0:
+        assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (0 0,10 10)"
+    else:
+        assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,9 9)"

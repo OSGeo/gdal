@@ -477,6 +477,37 @@ recalled here for what matters to the driver:
 -  The default coordinate precision is 7 decimal digits after decimal
    separator.
 
+Geometry coordinate precision
+-----------------------------
+
+.. versionadded:: GDAL 3.9
+
+The GeoJSON driver supports reading and writing the geometry coordinate
+precision, using the :cpp:class:`OGRGeomCoordinatePrecision` settings of the
+:cpp:class:`OGRGeomFieldDefn` Those settings are used to round the coordinates
+of the geometry of the features to an appropriate decimal precision.
+
+.. note::
+
+    The :lco:`COORDINATE_PRECISION` layer creation option has precedence over
+    the values set on the :cpp:class:`OGRGeomFieldDefn`.
+
+Implementation details: the coordinate precision is stored as
+``xy_coordinate_resolution`` and ``z_coordinate_resolution`` members at the
+FeatureCollection level. Their numeric value is expressed in the units of the
+SRS.
+
+Example:
+
+.. code-block:: JSON
+
+    {
+        "type": "FeatureCollection",
+        "xy_coordinate_resolution": 8.9e-6,
+        "z_coordinate_resolution": 1e-1,
+        "features": []
+    }
+
 Examples
 --------
 

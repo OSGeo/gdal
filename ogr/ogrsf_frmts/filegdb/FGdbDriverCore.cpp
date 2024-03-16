@@ -207,6 +207,7 @@ void OGRFileGDBDriverSetCommonMetadata(GDALDriver *poDriver)
                               "NATIVE OGRSQL SQLITE");
     poDriver->SetMetadataItem(GDAL_DMD_RELATIONSHIP_RELATED_TABLE_TYPES,
                               "features media");
+    poDriver->SetMetadataItem(GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION, "YES");
 
     poDriver->pfnIdentify = OGRFileGDBDriverIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");

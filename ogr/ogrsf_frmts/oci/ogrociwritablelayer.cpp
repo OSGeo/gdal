@@ -231,7 +231,7 @@ void OGROCIWritableLayer::ReportTruncation(OGRFieldDefn *psFldDefn)
 /*      Set layer creation or other options.                            */
 /************************************************************************/
 
-void OGROCIWritableLayer::SetOptions(char **papszOptionsIn)
+void OGROCIWritableLayer::SetOptions(CSLConstList papszOptionsIn)
 
 {
     CSLDestroy(papszOptions);

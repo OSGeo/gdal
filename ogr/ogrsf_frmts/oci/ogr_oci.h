@@ -347,7 +347,7 @@ class OGROCIWritableLayer CPL_NON_FINAL : public OGROCILayer
                                int bExactMatch) override;
 
     // following methods are not base class overrides
-    void SetOptions(char **);
+    void SetOptions(CSLConstList);
 
     void SetDimension(int);
     void SetLaunderFlag(int bFlag)
@@ -596,10 +596,10 @@ class OGROCIDataSource final : public OGRDataSource
     OGRLayer *GetLayerByName(const char *pszName) override;
 
     virtual OGRErr DeleteLayer(int) override;
-    virtual OGRLayer *ICreateLayer(const char *,
-                                   const OGRSpatialReference * = nullptr,
-                                   OGRwkbGeometryType = wkbUnknown,
-                                   char ** = nullptr) override;
+
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 
     int TestCapability(const char *) override;
 

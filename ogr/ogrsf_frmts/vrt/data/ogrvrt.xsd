@@ -393,6 +393,9 @@
                 <xs:element name="SrcRegion" type="SrcRegionType"/>
                 <xs:element name="SRS" type="nonEmptyStringType"/>
                 <xs:group ref="ExtentType"/>
+                <xs:element name="XYResolution" type="xs:double" minOccurs="0" maxOccurs="1"/>
+                <xs:element name="ZResolution" type="xs:double" minOccurs="0" maxOccurs="1"/>
+                <xs:element name="MResolution" type="xs:double" minOccurs="0" maxOccurs="1"/>
             </xs:choice>
         </xs:sequence>
         <xs:attributeGroup ref="GeometryFieldTypeAttrGroupWithoutSrc"/>

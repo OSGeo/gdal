@@ -210,7 +210,7 @@ class OGROpenFileGDBLayer final : public OGRLayer
 
     virtual ~OGROpenFileGDBLayer();
 
-    bool Create(const OGRSpatialReference *poSRS);
+    bool Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn);
     void Close();
 
     const std::string &GetFilename() const
@@ -552,10 +552,10 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
 
     virtual int TestCapability(const char *) override;
 
-    virtual OGRLayer *ICreateLayer(const char *,
-                                   const OGRSpatialReference * = nullptr,
-                                   OGRwkbGeometryType = wkbUnknown,
-                                   char ** = nullptr) override;
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
+
     virtual OGRErr DeleteLayer(int) override;
 
     virtual char **GetFileList() override;

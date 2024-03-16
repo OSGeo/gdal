@@ -53,6 +53,7 @@
 #include "ogrsf_frmts.h"
 #include "filegdbtable.h"
 #include "filegdbtable_priv.h"
+#include "filegdb_coordprec_write.h"
 
 /*************************************************************************/
 /*                            StringToWString()                          */
@@ -400,7 +401,7 @@ OGROpenFileGDBLayer::GetLaunderedLayerName(const std::string &osNameOri) const
 /*                            Create()                                 */
 /***********************************************************************/
 
-bool OGROpenFileGDBLayer::Create(const OGRSpatialReference *poSRS)
+bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
 {
     FileGDBTableGeometryType eTableGeomType = FGTGT_NONE;
     const auto eFlattenType = wkbFlatten(OGR_GT_GetLinear(m_eGeomType));
@@ -511,41 +512,6 @@ bool OGROpenFileGDBLayer::Create(const OGRSpatialReference *poSRS)
     SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
-    if (m_eGeomType != wkbNone)
-    {
-        auto poGeomFieldDefn = std::make_unique<OGROpenFileGDBGeomFieldDefn>(
-            this,
-            m_aosCreationOptions.FetchNameValueDef("GEOMETRY_NAME", "SHAPE"),
-            m_eGeomType);
-        poGeomFieldDefn->SetNullable(
-            CPLTestBool(m_aosCreationOptions.FetchNameValueDef(
-                "GEOMETRY_NULLABLE", "YES")));
-
-        if (poSRS)
-        {
-            const char *const apszOptions[] = {
-                "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr};
-            if (poFeatureDatasetSRS &&
-                !poSRS->IsSame(poFeatureDatasetSRS.get(), apszOptions))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Layer CRS does not match feature dataset CRS");
-                return false;
-            }
-
-            auto poSRSClone = poSRS->Clone();
-            poGeomFieldDefn->SetSpatialRef(poSRSClone);
-            poSRSClone->Release();
-        }
-        else if (poFeatureDatasetSRS)
-        {
-            auto poSRSClone = poFeatureDatasetSRS->Clone();
-            poGeomFieldDefn->SetSpatialRef(poSRSClone);
-            poSRSClone->Release();
-        }
-
-        m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
-    }
 
     m_osThisGUID = OFGDBGenerateUUID();
 
@@ -623,8 +589,41 @@ bool OGROpenFileGDBLayer::Create(const OGRSpatialReference *poSRS)
         m_poFeatureDefn->AddFieldDefn(&oField);
     }
 
-    if (m_eGeomType != wkbNone)
+    if (m_eGeomType != wkbNone && poSrcGeomFieldDefn)
     {
+        const auto poSRS = poSrcGeomFieldDefn->GetSpatialRef();
+
+        auto poGeomFieldDefn = std::make_unique<OGROpenFileGDBGeomFieldDefn>(
+            this,
+            m_aosCreationOptions.FetchNameValueDef("GEOMETRY_NAME", "SHAPE"),
+            m_eGeomType);
+        poGeomFieldDefn->SetNullable(
+            CPLTestBool(m_aosCreationOptions.FetchNameValueDef(
+                "GEOMETRY_NULLABLE", "YES")));
+
+        if (poSRS)
+        {
+            const char *const apszOptions[] = {
+                "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES", nullptr};
+            if (poFeatureDatasetSRS &&
+                !poSRS->IsSame(poFeatureDatasetSRS.get(), apszOptions))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Layer CRS does not match feature dataset CRS");
+                return false;
+            }
+
+            auto poSRSClone = poSRS->Clone();
+            poGeomFieldDefn->SetSpatialRef(poSRSClone);
+            poSRSClone->Release();
+        }
+        else if (poFeatureDatasetSRS)
+        {
+            auto poSRSClone = poFeatureDatasetSRS->Clone();
+            poGeomFieldDefn->SetSpatialRef(poSRSClone);
+            poSRSClone->Release();
+        }
+
         std::string osWKT;
         if (poSRS)
         {
@@ -639,60 +638,29 @@ bool OGROpenFileGDBLayer::Create(const OGRSpatialReference *poSRS)
             osWKT = "{B286C06B-0879-11D2-AACA-00C04FA33C20}";
         }
 
-        double dfXOrigin;
-        double dfYOrigin;
-        double dfXYScale;
-        double dfZOrigin = -100000;
-        double dfMOrigin = -100000;
-        double dfMScale = 10000;
-        double dfXYTolerance;
-        // default tolerance is 1mm in the units of the coordinate system
-        double dfZTolerance =
-            0.001 * (poSRS ? poSRS->GetTargetLinearUnits("VERT_CS") : 1.0);
-        double dfZScale = 1 / dfZTolerance * 10;
-        double dfMTolerance = 0.001;
-
-        if (poSRS == nullptr || poSRS->IsProjected())
-        {
-            // default tolerance is 1mm in the units of the coordinate system
-            dfXYTolerance =
-                0.001 * (poSRS ? poSRS->GetTargetLinearUnits("PROJCS") : 1.0);
-            // default scale is 10x the tolerance
-            dfXYScale = 1 / dfXYTolerance * 10;
-
-            // Ideally we would use the same X/Y origins as ArcGIS, but we need
-            // the algorithm they use.
-            dfXOrigin = -2147483647;
-            dfYOrigin = -2147483647;
-        }
-        else
-        {
-            dfXOrigin = -400;
-            dfYOrigin = -400;
-            dfXYScale = 1000000000;
-            dfXYTolerance = 0.000000008983153;
-        }
-
-        const char *const paramNames[] = {
-            "XOrigin", "YOrigin", "XYScale",     "ZOrigin",    "ZScale",
-            "MOrigin", "MScale",  "XYTolerance", "ZTolerance", "MTolerance"};
-        double *pGridValues[] = {&dfXOrigin,   &dfYOrigin,     &dfXYScale,
-                                 &dfZOrigin,   &dfZScale,      &dfMOrigin,
-                                 &dfMScale,    &dfXYTolerance, &dfZTolerance,
-                                 &dfMTolerance};
-        static_assert(
-            CPL_ARRAYSIZE(paramNames) == CPL_ARRAYSIZE(pGridValues),
-            "CPL_ARRAYSIZE(paramNames) == CPL_ARRAYSIZE(pGridValues)");
-
-        /* Convert any layer creation options available, use defaults otherwise
-         */
-        for (size_t i = 0; i < CPL_ARRAYSIZE(paramNames); i++)
-        {
-            const char *pszVal =
-                m_aosCreationOptions.FetchNameValue(paramNames[i]);
-            if (pszVal)
-                *(pGridValues[i]) = CPLAtof(pszVal);
-        }
+        const auto oCoordPrec = GDBGridSettingsFromOGR(
+            poSrcGeomFieldDefn, m_aosCreationOptions.List());
+        poGeomFieldDefn->SetCoordinatePrecision(oCoordPrec);
+        const auto &oGridsOptions =
+            oCoordPrec.oFormatSpecificOptions.find("FileGeodatabase")->second;
+        const double dfXOrigin =
+            CPLAtof(oGridsOptions.FetchNameValue("XOrigin"));
+        const double dfYOrigin =
+            CPLAtof(oGridsOptions.FetchNameValue("YOrigin"));
+        const double dfXYScale =
+            CPLAtof(oGridsOptions.FetchNameValue("XYScale"));
+        const double dfXYTolerance =
+            CPLAtof(oGridsOptions.FetchNameValue("XYTolerance"));
+        const double dfZOrigin =
+            CPLAtof(oGridsOptions.FetchNameValue("ZOrigin"));
+        const double dfZScale = CPLAtof(oGridsOptions.FetchNameValue("ZScale"));
+        const double dfZTolerance =
+            CPLAtof(oGridsOptions.FetchNameValue("ZTolerance"));
+        const double dfMOrigin =
+            CPLAtof(oGridsOptions.FetchNameValue("MOrigin"));
+        const double dfMScale = CPLAtof(oGridsOptions.FetchNameValue("MScale"));
+        const double dfMTolerance =
+            CPLAtof(oGridsOptions.FetchNameValue("MTolerance"));
 
         if (!m_poDS->GetExistingSpatialRef(
                 osWKT, dfXOrigin, dfYOrigin, dfXYScale, dfZOrigin, dfZScale,
@@ -702,21 +670,21 @@ bool OGROpenFileGDBLayer::Create(const OGRSpatialReference *poSRS)
                                      dfZOrigin, dfZScale, dfMOrigin, dfMScale,
                                      dfXYTolerance, dfZTolerance, dfMTolerance);
         }
+
         // Will be patched later
         constexpr double dfSpatialGridResolution = 0;
-        auto poGeomField =
-            std::unique_ptr<FileGDBGeomField>(new FileGDBGeomField(
-                m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef(),
-                std::string(),  // alias
-                CPL_TO_BOOL(m_poFeatureDefn->GetGeomFieldDefn(0)->IsNullable()),
-                osWKT, dfXOrigin, dfYOrigin, dfXYScale, dfXYTolerance,
-                {dfSpatialGridResolution}));
-        poGeomField->SetZOriginScaleTolerance(dfZOrigin, dfZScale,
-                                              dfZTolerance);
-        poGeomField->SetMOriginScaleTolerance(dfMOrigin, dfMScale,
-                                              dfMTolerance);
+        auto poTableGeomField = std::make_unique<FileGDBGeomField>(
+            poGeomFieldDefn->GetNameRef(),
+            std::string(),  // alias
+            CPL_TO_BOOL(poGeomFieldDefn->IsNullable()), osWKT, dfXOrigin,
+            dfYOrigin, dfXYScale, dfXYTolerance,
+            std::vector<double>{dfSpatialGridResolution});
+        poTableGeomField->SetZOriginScaleTolerance(dfZOrigin, dfZScale,
+                                                   dfZTolerance);
+        poTableGeomField->SetMOriginScaleTolerance(dfMOrigin, dfMScale,
+                                                   dfMTolerance);
 
-        if (!m_poLyrTable->CreateField(std::move(poGeomField)))
+        if (!m_poLyrTable->CreateField(std::move(poTableGeomField)))
         {
             Close();
             return false;
@@ -725,6 +693,8 @@ bool OGROpenFileGDBLayer::Create(const OGRSpatialReference *poSRS)
         m_iGeomFieldIdx = m_poLyrTable->GetGeomFieldIdx();
         m_poGeomConverter.reset(FileGDBOGRGeometryConverter::BuildConverter(
             m_poLyrTable->GetGeomField()));
+
+        m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
     }
 
     const std::string osFIDName =

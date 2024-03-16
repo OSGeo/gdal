@@ -474,12 +474,16 @@ void OGROCIDataSource::TruncateLayer(const char *pszLayerName)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGROCIDataSource::ICreateLayer(const char *pszLayerName,
-                                         const OGRSpatialReference *poSRS,
-                                         OGRwkbGeometryType eType,
-                                         char **papszOptions)
+OGRLayer *
+OGROCIDataSource::ICreateLayer(const char *pszLayerName,
+                               const OGRGeomFieldDefn *poGeomFieldDefn,
+                               CSLConstList papszOptions)
 
 {
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
+
     char *pszSafeLayerName = CPLStrdup(pszLayerName);
 
     poSession->CleanName(pszSafeLayerName);

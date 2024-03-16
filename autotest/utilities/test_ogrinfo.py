@@ -29,7 +29,9 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
 import pathlib
+import stat
 
 import gdaltest
 import ogrtest
@@ -749,3 +751,29 @@ def test_ogrinfo_if_ko(ogrinfo_path):
         ogrinfo_path + " -if GeoJSON ../ogr/data/gpkg/2d_envelope.gpkg"
     )
     assert "not recognized as being in a supported file format" in err
+
+
+###############################################################################
+def test_ogrinfo_access_to_file_without_permission(ogrinfo_path, tmp_path):
+
+    tmpfilename = str(tmp_path / "test.bin")
+    with open(tmpfilename, "wb") as f:
+        f.write(b"\x00" * 1024)
+    os.chmod(tmpfilename, 0)
+
+    # Test that file is not accessible
+    try:
+        f = open(tmpfilename, "rb")
+        f.close()
+        pytest.skip("could not set non accessible permission")
+    except IOError:
+        pass
+
+    _, err = gdaltest.runexternal_out_and_err(
+        ogrinfo_path + " " + tmpfilename,
+        encoding="UTF-8",
+    )
+    lines = list(filter(lambda x: len(x) > 0, err.split("\n")))
+    assert (len(lines)) == 3
+
+    os.chmod(tmpfilename, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)

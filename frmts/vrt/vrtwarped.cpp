@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <algorithm>
+#include <map>
 
 // Suppress deprecation warning for GDALOpenVerticalShiftGrid and
 // GDALApplyVerticalShiftGrid
@@ -1810,6 +1811,208 @@ CPLErr VRTWarpedDataset::ProcessBlock(int iBlockX, int iBlockY)
 }
 
 /************************************************************************/
+/*                              IRasterIO()                             */
+/************************************************************************/
+
+// Specialized implementation of IRasterIO() that will be faster than
+// using the VRTWarpedRasterBand::IReadBlock() method in situations where
+// - a large enough chunk of data is requested at once
+// - and multi-threaded warping is enabled (it only kicks in if the warped
+//   chunk is large enough) and/or when reading the source dataset is
+//   multi-threaded (e.g JP2KAK or JP2OpenJPEG driver).
+CPLErr VRTWarpedDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                   int nXSize, int nYSize, void *pData,
+                                   int nBufXSize, int nBufYSize,
+                                   GDALDataType eBufType, int nBandCount,
+                                   int *panBandMap, GSpacing nPixelSpace,
+                                   GSpacing nLineSpace, GSpacing nBandSpace,
+                                   GDALRasterIOExtraArg *psExtraArg)
+{
+    if (eRWFlag == GF_Write ||
+        // For too small request fall back to the block-based approach to
+        // benefit from caching
+        nBufXSize <= m_nBlockXSize || nBufYSize <= m_nBlockYSize ||
+        // Or if we don't request all bands at once
+        nBandCount < nBands ||
+        !CPLTestBool(
+            CPLGetConfigOption("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "YES")))
+    {
+        return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                      pData, nBufXSize, nBufYSize, eBufType,
+                                      nBandCount, panBandMap, nPixelSpace,
+                                      nLineSpace, nBandSpace, psExtraArg);
+    }
+
+    // Try overviews for sub-sampled requests
+    if (nBufXSize < nXSize || nBufYSize < nYSize)
+    {
+        int bTried = FALSE;
+        const CPLErr eErr = TryOverviewRasterIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+            eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace,
+            nBandSpace, psExtraArg, &bTried);
+
+        if (bTried)
+        {
+            return eErr;
+        }
+    }
+
+    // Fallback to default block-based implementation when not requesting at
+    // the nominal resolution (in theory we could construct a warper taking
+    // into account that, like we do for virtual warped overviews, but that
+    // would be a complication).
+    if (nBufXSize != nXSize || nBufYSize != nYSize)
+    {
+        return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                      pData, nBufXSize, nBufYSize, eBufType,
+                                      nBandCount, panBandMap, nPixelSpace,
+                                      nLineSpace, nBandSpace, psExtraArg);
+    }
+
+    if (m_poWarper == nullptr)
+        return CE_Failure;
+
+    const GDALWarpOptions *psWO = m_poWarper->GetOptions();
+
+    // Build a map from warped output bands to their index
+    std::map<int, int> oMapBandToWarpingBandIndex;
+    for (int i = 0; i < psWO->nBandCount; ++i)
+        oMapBandToWarpingBandIndex[psWO->panDstBands[i]] = i;
+
+    // Check that all requested bands are actually warped output bands.
+    for (int i = 0; i < nBandCount; ++i)
+    {
+        const int nRasterIOBand = panBandMap[i];
+        if (oMapBandToWarpingBandIndex.find(nRasterIOBand) ==
+            oMapBandToWarpingBandIndex.end())
+        {
+            // Not sure if that can happen...
+            // but if that does, that will likely later fail in ProcessBlock()
+            return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                          pData, nBufXSize, nBufYSize, eBufType,
+                                          nBandCount, panBandMap, nPixelSpace,
+                                          nLineSpace, nBandSpace, psExtraArg);
+        }
+    }
+
+    int nSrcXOff = 0;
+    int nSrcYOff = 0;
+    int nSrcXSize = 0;
+    int nSrcYSize = 0;
+    double dfSrcXExtraSize = 0;
+    double dfSrcYExtraSize = 0;
+    double dfSrcFillRatio = 0;
+    // Find the source window that corresponds to our target window
+    if (m_poWarper->ComputeSourceWindow(nXOff, nYOff, nXSize, nYSize, &nSrcXOff,
+                                        &nSrcYOff, &nSrcXSize, &nSrcYSize,
+                                        &dfSrcXExtraSize, &dfSrcYExtraSize,
+                                        &dfSrcFillRatio) != CE_None)
+    {
+        return CE_Failure;
+    }
+
+    GByte *const pabyDst = static_cast<GByte *>(pData);
+    const int nWarpDTSize = GDALGetDataTypeSizeBytes(psWO->eWorkingDataType);
+
+    const double dfMemRequired = m_poWarper->GetWorkingMemoryForWindow(
+        nSrcXSize, nSrcYSize, nXSize, nYSize);
+    // If we need more warp working memory than allowed, we have to use a
+    // splitting strategy until we get below the limit.
+    if (dfMemRequired > psWO->dfWarpMemoryLimit && nXSize >= 2 && nYSize >= 2)
+    {
+        CPLDebugOnly("VRT", "VRTWarpedDataset::IRasterIO(): exceeding warp "
+                            "memory. Splitting region");
+
+        GDALRasterIOExtraArg sExtraArg;
+        INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+
+        bool bOK;
+        // Split along the longest dimension
+        if (nXSize >= nYSize)
+        {
+            const int nHalfXSize = nXSize / 2;
+            bOK = IRasterIO(GF_Read, nXOff, nYOff, nHalfXSize, nYSize, pabyDst,
+                            nHalfXSize, nYSize, eBufType, nBandCount,
+                            panBandMap, nPixelSpace, nLineSpace, nBandSpace,
+                            &sExtraArg) == CE_None &&
+                  IRasterIO(GF_Read, nXOff + nHalfXSize, nYOff,
+                            nXSize - nHalfXSize, nYSize,
+                            pabyDst + nHalfXSize * nPixelSpace,
+                            nXSize - nHalfXSize, nYSize, eBufType, nBandCount,
+                            panBandMap, nPixelSpace, nLineSpace, nBandSpace,
+                            &sExtraArg) == CE_None;
+        }
+        else
+        {
+            const int nHalfYSize = nYSize / 2;
+            bOK = IRasterIO(GF_Read, nXOff, nYOff, nXSize, nHalfYSize, pabyDst,
+                            nXSize, nHalfYSize, eBufType, nBandCount,
+                            panBandMap, nPixelSpace, nLineSpace, nBandSpace,
+                            &sExtraArg) == CE_None &&
+                  IRasterIO(GF_Read, nXOff, nYOff + nHalfYSize, nXSize,
+                            nYSize - nHalfYSize,
+                            pabyDst + nHalfYSize * nLineSpace, nXSize,
+                            nYSize - nHalfYSize, eBufType, nBandCount,
+                            panBandMap, nPixelSpace, nLineSpace, nBandSpace,
+                            &sExtraArg) == CE_None;
+        }
+        return bOK ? CE_None : CE_Failure;
+    }
+
+    CPLDebugOnly("VRT",
+                 "Using optimized VRTWarpedDataset::IRasterIO() code path");
+
+    // Allocate a warping destination buffer
+    // Note: we could potentially use the pData target buffer argument of this
+    // function in some circumstances... but probably not worth the complication
+    GByte *pabyWarpBuffer = static_cast<GByte *>(
+        m_poWarper->CreateDestinationBuffer(nXSize, nYSize));
+
+    if (pabyWarpBuffer == nullptr)
+    {
+        return CE_Failure;
+    }
+
+    const CPLErr eErr = m_poWarper->WarpRegionToBuffer(
+        nXOff, nYOff, nXSize, nYSize, pabyWarpBuffer, psWO->eWorkingDataType,
+        nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize, dfSrcXExtraSize,
+        dfSrcYExtraSize);
+    if (eErr == CE_None)
+    {
+        // Copy warping buffer into user destination buffer
+        for (int i = 0; i < nBandCount; i++)
+        {
+            const int nRasterIOBand = panBandMap[i];
+            const auto oIterToWarpingBandIndex =
+                oMapBandToWarpingBandIndex.find(nRasterIOBand);
+            // cannot happen due to earlier check
+            CPLAssert(oIterToWarpingBandIndex !=
+                      oMapBandToWarpingBandIndex.end());
+
+            const GByte *const pabyWarpBandBuffer =
+                pabyWarpBuffer +
+                static_cast<GPtrDiff_t>(oIterToWarpingBandIndex->second) *
+                    nXSize * nYSize * nWarpDTSize;
+            GByte *const pabyDstBand = pabyDst + i * nBandSpace;
+
+            for (int iY = 0; iY < nYSize; iY++)
+            {
+                GDALCopyWords(pabyWarpBandBuffer + static_cast<GPtrDiff_t>(iY) *
+                                                       nXSize * nWarpDTSize,
+                              psWO->eWorkingDataType, nWarpDTSize,
+                              pabyDstBand + iY * nLineSpace, eBufType,
+                              static_cast<int>(nPixelSpace), nXSize);
+            }
+        }
+    }
+
+    m_poWarper->DestroyDestinationBuffer(pabyWarpBuffer);
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                              AddBand()                               */
 /************************************************************************/
 
@@ -1927,6 +2130,34 @@ CPLErr VRTWarpedRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                              IRasterIO()                             */
+/************************************************************************/
+
+CPLErr VRTWarpedRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                      int nXSize, int nYSize, void *pData,
+                                      int nBufXSize, int nBufYSize,
+                                      GDALDataType eBufType,
+                                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                                      GDALRasterIOExtraArg *psExtraArg)
+{
+    VRTWarpedDataset *poWDS = static_cast<VRTWarpedDataset *>(poDS);
+    if (m_nIRasterIOCounter == 0 && poWDS->GetRasterCount() == 1)
+    {
+        int anBandMap[] = {nBand};
+        ++m_nIRasterIOCounter;
+        const CPLErr eErr = poWDS->IRasterIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+            eBufType, 1, anBandMap, nPixelSpace, nLineSpace, 0, psExtraArg);
+        --m_nIRasterIOCounter;
+        return eErr;
+    }
+
+    return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                     pData, nBufXSize, nBufYSize, eBufType,
+                                     nPixelSpace, nLineSpace, psExtraArg);
 }
 
 /************************************************************************/

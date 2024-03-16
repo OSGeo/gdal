@@ -1906,7 +1906,7 @@ def test_ogr_geojson_50():
 
 
 ###############################################################################
-# Test writing empty geometries
+# Test writing and reading empty geometries
 
 
 def test_ogr_geojson_51():
@@ -1949,8 +1949,6 @@ def test_ogr_geojson_51():
     data = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
     gdal.VSIFCloseL(fp)
 
-    gdal.Unlink("/vsimem/ogr_geojson_51.json")
-
     assert '{ "id": 1 }, "geometry": null' in data
 
     assert (
@@ -1981,6 +1979,14 @@ def test_ogr_geojson_51():
         '{ "id": 7 }, "geometry": { "type": "GeometryCollection", "geometries": [ ] } }'
         in data
     )
+
+    ds = ogr.Open("/vsimem/ogr_geojson_51.json")
+    lyr = ds.GetLayer(0)
+    for f in lyr:
+        if f.GetFID() >= 2:
+            assert f.GetGeometryRef().IsEmpty()
+
+    gdal.Unlink("/vsimem/ogr_geojson_51.json")
 
 
 ###############################################################################
@@ -4349,11 +4355,17 @@ def test_ogr_geojson_coordinate_precision():
     data = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
     gdal.VSIFCloseL(fp)
 
-    gdal.Unlink(filename)
-
     assert '"bbox": [ 1.2, 2.3, 1.2, 2.3 ]' in data
     assert '"coordinates": [ 1.2, 2.3 ]' in data
     assert "3456" not in data
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-1
+
+    gdal.Unlink(filename)
 
 
 ###############################################################################
@@ -5056,3 +5068,115 @@ def test_ogr_json_getextent3d(tmp_vsimem):
 
     assert lyr.GetExtent() == (3.0, 6.0, 4.0, 7.0)
     assert lyr.GetExtent3D() == (3.0, 6.0, 4.0, 7.0, 2.0, 5.0)
+
+
+###############################################################################
+# Test geometry coordinate precision support
+
+
+def test_ogr_geojson_geom_coord_precision(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.geojson")
+    ds = gdal.GetDriverByName("GeoJSON").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    geom_fld = ogr.GeomFieldDefn("geometry", ogr.wkbUnknown)
+    prec = ogr.CreateGeomCoordinatePrecision()
+    prec.Set(1e-5, 1e-3, 0)
+    geom_fld.SetCoordinatePrecision(prec)
+    lyr = ds.CreateLayerFromGeomFieldDefn("test", geom_fld)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1.23456789 2.34567891 9.87654321)"))
+    lyr.CreateFeature(f)
+    ds.Close()
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+
+    assert b'"xy_coordinate_resolution"' in data
+    assert b'"z_coordinate_resolution"' in data
+    assert b'"coordinates": [ 1.23457, 2.34568, 9.877 ]' in data
+
+    # Test appending feature
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2.23456789 3.34567891 8.87654321)"))
+    lyr.CreateFeature(f)
+    ds.Close()
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+
+    assert b'"coordinates": [ 1.23457, 2.34568, 9.877 ]' in data
+    assert b'"coordinates": [ 2.23457, 3.34568, 8.877 ]' in data
+
+    # Test modifying existing feature
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    f = lyr.GetNextFeature()
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt("POINT(-2.23456789 -3.34567891 -8.87654321)")
+    )
+    lyr.SetFeature(f)
+    ds.Close()
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+
+    assert b'"coordinates": [ -2.23457, -3.34568, -8.877 ]' in data
+    assert b'"coordinates": [ 2.23457, 3.34568, 8.877 ]' in data
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == 1e-5
+    assert prec.GetZResolution() == 1e-3
+    ds = None
+
+
+###############################################################################
+# Test geometry coordinate precision support
+
+
+def test_ogr_geojson_geom_coord_precision_RFC7946(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.geojson")
+    ds = gdal.GetDriverByName("GeoJSON").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+    geom_fld = ogr.GeomFieldDefn("geometry", ogr.wkbUnknown)
+    prec = ogr.CreateGeomCoordinatePrecision()
+    prec.Set(1e-3, 1e-3, 0)
+    geom_fld.SetCoordinatePrecision(prec)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("EPSG:32631+3855")
+    geom_fld.SetSpatialRef(srs)
+    lyr = ds.CreateLayerFromGeomFieldDefn("test", geom_fld, ["RFC7946=YES"])
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == pytest.approx(8.983152841195214e-09)
+    assert prec.GetZResolution() == 1e-3
+    ds.Close()
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    geom_fld = lyr.GetLayerDefn().GetGeomFieldDefn(0)
+    prec = geom_fld.GetCoordinatePrecision()
+    assert prec.GetXYResolution() == pytest.approx(8.983152841195214e-09)
+    assert prec.GetZResolution() == 1e-3

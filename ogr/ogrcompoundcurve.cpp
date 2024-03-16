@@ -178,14 +178,17 @@ OGRErr OGRCompoundCurve::importFromWkb(const unsigned char *pabyData,
 /************************************************************************/
 /*                            exportToWkb()                             */
 /************************************************************************/
-OGRErr OGRCompoundCurve::exportToWkb(OGRwkbByteOrder eByteOrder,
-                                     unsigned char *pabyData,
-                                     OGRwkbVariant eWkbVariant) const
+
+OGRErr OGRCompoundCurve::exportToWkb(unsigned char *pabyData,
+                                     const OGRwkbExportOptions *psOptions) const
 {
+    OGRwkbExportOptions sOptions(psOptions ? *psOptions
+                                           : OGRwkbExportOptions());
+
     // Does not make sense for new geometries, so patch it.
-    if (eWkbVariant == wkbVariantOldOgc)
-        eWkbVariant = wkbVariantIso;
-    return oCC.exportToWkb(this, eByteOrder, pabyData, eWkbVariant);
+    if (sOptions.eWkbVariant == wkbVariantOldOgc)
+        sOptions.eWkbVariant = wkbVariantIso;
+    return oCC.exportToWkb(this, pabyData, &sOptions);
 }
 
 /************************************************************************/

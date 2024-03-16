@@ -83,6 +83,8 @@ class OGRVRTGeomFieldProps
 
     OGREnvelope sStaticEnvelope;
 
+    OGRGeomCoordinatePrecision sCoordinatePrecision{};
+
     OGRVRTGeomFieldProps();
     ~OGRVRTGeomFieldProps();
 };

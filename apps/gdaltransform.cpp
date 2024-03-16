@@ -31,6 +31,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <cctype>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -65,8 +66,8 @@ static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
             ">NAME>=<VALUE>]...\n"
             "    [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>]\n"
             "    [-ct <proj_string>] [-order <n>] [-tps] [-rpc] [-geoloc] \n"
-            "    [-gcp <pixel> <line> <easting> <northing> [elevation]]... "
-            "[-output_xy]\n"
+            "    [-gcp <pixel> <line> <easting> <northing> [elevation]]...\n"
+            "    [-output_xy] [-E] [-field_sep <sep>] [-ignore_extra_input]\n"
             "    [<srcfile> [<dstfile>]]\n"
             "\n");
 
@@ -147,6 +148,9 @@ MAIN_START(argc, argv)
     double dfZ = 0.0;
     double dfT = 0.0;
     bool bCoordOnCommandLine = false;
+    bool bIgnoreExtraInput = false;
+    bool bEchoInput = false;
+    std::string osFieldSep = " ";
 
     /* -------------------------------------------------------------------- */
     /*      Parse arguments.                                                */
@@ -266,6 +270,21 @@ MAIN_START(argc, argv)
         {
             bOutputXY = TRUE;
         }
+        else if (EQUAL(argv[i], "-ignore_extra_input"))
+        {
+            bIgnoreExtraInput = true;
+        }
+        else if (EQUAL(argv[i], "-E"))
+        {
+            bEchoInput = true;
+        }
+        else if (i < argc - 1 && EQUAL(argv[i], "-field_sep"))
+        {
+            osFieldSep = CPLString(argv[++i])
+                             .replaceAll("\\t", '\t')
+                             .replaceAll("\\r", '\r')
+                             .replaceAll("\\n", '\n');
+        }
         else if (EQUAL(argv[i], "-coord") && i + 2 < argc)
         {
             bCoordOnCommandLine = true;
@@ -372,8 +391,10 @@ MAIN_START(argc, argv)
         }
     }
 
+    int nLine = 0;
     while (bCoordOnCommandLine || !feof(stdin))
     {
+        std::string osExtraContent;
         if (!bCoordOnCommandLine)
         {
             char szLine[1024];
@@ -381,26 +402,62 @@ MAIN_START(argc, argv)
             if (fgets(szLine, sizeof(szLine) - 1, stdin) == nullptr)
                 break;
 
-            char **papszTokens = CSLTokenizeString(szLine);
-            const int nCount = CSLCount(papszTokens);
+            const CPLStringList aosTokens(CSLTokenizeString(szLine));
+            const int nCount = aosTokens.size();
 
+            ++nLine;
             if (nCount < 2)
             {
-                CSLDestroy(papszTokens);
+                fprintf(stderr, "Not enough values at line %d\n", nLine);
                 continue;
             }
 
-            dfX = CPLAtof(papszTokens[0]);
-            dfY = CPLAtof(papszTokens[1]);
+            dfX = CPLAtof(aosTokens[0]);
+            dfY = CPLAtof(aosTokens[1]);
+            dfZ = 0.0;
+            dfT = 0.0;
+            int iStartExtraContent = nCount;
             if (nCount >= 3)
-                dfZ = CPLAtof(papszTokens[2]);
-            else
-                dfZ = 0.0;
-            if (nCount == 4)
-                dfT = CPLAtof(papszTokens[3]);
-            else
-                dfT = 0.0;
-            CSLDestroy(papszTokens);
+            {
+                if (CPLGetValueType(aosTokens[2]) == CPL_VALUE_STRING)
+                {
+                    iStartExtraContent = 2;
+                }
+                else
+                {
+                    dfZ = CPLAtof(aosTokens[2]);
+
+                    if (nCount >= 4)
+                    {
+                        if (CPLGetValueType(aosTokens[3]) == CPL_VALUE_STRING)
+                        {
+                            iStartExtraContent = 3;
+                        }
+                        else
+                        {
+                            dfT = CPLAtof(aosTokens[3]);
+                            iStartExtraContent = 4;
+                        }
+                    }
+                }
+            }
+
+            if (!bIgnoreExtraInput)
+            {
+                for (int i = iStartExtraContent; i < nCount; ++i)
+                {
+                    if (!osExtraContent.empty())
+                        osExtraContent += ' ';
+                    osExtraContent += aosTokens[i];
+                }
+                while (!osExtraContent.empty() &&
+                       isspace(static_cast<int>(osExtraContent.back())))
+                {
+                    osExtraContent.pop_back();
+                }
+                if (!osExtraContent.empty())
+                    osExtraContent = osFieldSep + osExtraContent;
+            }
         }
         if (dfT != dfLastT && nGCPCount == 0)
         {
@@ -418,14 +475,29 @@ MAIN_START(argc, argv)
         }
 
         int bSuccess = TRUE;
+        const double dfXBefore = dfX;
+        const double dfYBefore = dfY;
+        const double dfZBefore = dfZ;
         if (pfnTransformer(hTransformArg, bInverse, 1, &dfX, &dfY, &dfZ,
                            &bSuccess) &&
             bSuccess)
         {
+            if (bEchoInput)
+            {
+                if (bOutputXY)
+                    CPLprintf("%.15g%s%.15g%s", dfXBefore, osFieldSep.c_str(),
+                              dfYBefore, osFieldSep.c_str());
+                else
+                    CPLprintf("%.15g%s%.15g%s%.15g%s", dfXBefore,
+                              osFieldSep.c_str(), dfYBefore, osFieldSep.c_str(),
+                              dfZBefore, osFieldSep.c_str());
+            }
             if (bOutputXY)
-                CPLprintf("%.15g %.15g\n", dfX, dfY);
+                CPLprintf("%.15g%s%.15g%s\n", dfX, osFieldSep.c_str(), dfY,
+                          osExtraContent.c_str());
             else
-                CPLprintf("%.15g %.15g %.15g\n", dfX, dfY, dfZ);
+                CPLprintf("%.15g%s%.15g%s%.15g%s\n", dfX, osFieldSep.c_str(),
+                          dfY, osFieldSep.c_str(), dfZ, osExtraContent.c_str());
         }
         else
         {

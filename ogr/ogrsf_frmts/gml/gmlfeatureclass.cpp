@@ -480,7 +480,7 @@ bool GMLFeatureClass::InitializeFromXML(CPLXMLNode *psRoot)
     bool bHasFoundGeomElements = false;
     const char *pszGName = "";
     const char *pszGPath = "";
-    int nGeomType = wkbUnknown;
+    OGRwkbGeometryType nGeomType = wkbUnknown;
 
     const auto FlattenGeomTypeFromInt = [](int eType)
     {
@@ -509,19 +509,23 @@ bool GMLFeatureClass::InitializeFromXML(CPLXMLNode *psRoot)
             nGeomType = wkbUnknown;
             if (pszType != nullptr && !EQUAL(pszType, "0"))
             {
-                nGeomType = atoi(pszType);
-                const int nFlattenGeomType = FlattenGeomTypeFromInt(nGeomType);
-                if (nGeomType != 0 &&
-                    !(nFlattenGeomType >= static_cast<int>(wkbPoint) &&
-                      nFlattenGeomType <= static_cast<int>(wkbTIN)))
+                int nGeomTypeInt = atoi(pszType);
+                const int nFlattenGeomTypeInt =
+                    FlattenGeomTypeFromInt(nGeomTypeInt);
+                if (nGeomTypeInt != 0 &&
+                    !(nFlattenGeomTypeInt >= static_cast<int>(wkbPoint) &&
+                      nFlattenGeomTypeInt <= static_cast<int>(wkbTIN)))
                 {
-                    nGeomType = wkbUnknown;
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Unrecognized geometry type : %s", pszType);
                 }
-                else if (nGeomType == 0)
+                else if (nGeomTypeInt == 0)
                 {
                     nGeomType = OGRFromOGCGeomType(pszType);
+                }
+                else
+                {
+                    nGeomType = static_cast<OGRwkbGeometryType>(nGeomTypeInt);
                 }
             }
             bHasFoundGeomElements = true;
@@ -595,26 +599,30 @@ bool GMLFeatureClass::InitializeFromXML(CPLXMLNode *psRoot)
             nGeomType = wkbUnknown;
             if (pszGeometryType != nullptr && !EQUAL(pszGeometryType, "0"))
             {
-                nGeomType = atoi(pszGeometryType);
-                const int nFlattenGeomType = FlattenGeomTypeFromInt(nGeomType);
-                if (nGeomType == 100 || EQUAL(pszGeometryType, "NONE"))
+                const int nGeomTypeInt = atoi(pszGeometryType);
+                const int nFlattenGeomTypeInt =
+                    FlattenGeomTypeFromInt(nGeomTypeInt);
+                if (nGeomTypeInt == 100 || EQUAL(pszGeometryType, "NONE"))
                 {
                     bHasValidGeometryElementPath = false;
                     bHasFoundGeomType = false;
                     break;
                 }
-                else if (nGeomType != 0 &&
-                         !(nFlattenGeomType >= static_cast<int>(wkbPoint) &&
-                           nFlattenGeomType <= static_cast<int>(wkbTIN)))
+                else if (nGeomTypeInt != 0 &&
+                         !(nFlattenGeomTypeInt >= static_cast<int>(wkbPoint) &&
+                           nFlattenGeomTypeInt <= static_cast<int>(wkbTIN)))
                 {
-                    nGeomType = wkbUnknown;
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Unrecognized geometry type : %s",
                              pszGeometryType);
                 }
-                else if (nGeomType == 0)
+                else if (nGeomTypeInt == 0)
                 {
                     nGeomType = OGRFromOGCGeomType(pszGeometryType);
+                }
+                else
+                {
+                    nGeomType = static_cast<OGRwkbGeometryType>(nGeomTypeInt);
                 }
             }
             bHasFoundGeomType = true;

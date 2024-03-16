@@ -1666,10 +1666,11 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
                 std::vector<GByte> abyTmp(nPageSize);
                 uint64_t nOffset =
                     TABLX_HEADER_SIZE +
-                    static_cast<uint64_t>(m_n1024BlocksPresent - 1) * nPageSize;
+                    static_cast<uint64_t>(m_n1024BlocksPresent) * nPageSize;
                 for (int i = m_n1024BlocksPresent - 1;
                      i >= static_cast<int>(nCountBlocksBefore); --i)
                 {
+                    nOffset -= nPageSize;
                     VSIFSeekL(m_fpTableX, nOffset, SEEK_SET);
                     if (VSIFReadL(abyTmp.data(), nPageSize, 1, m_fpTableX) != 1)
                     {
@@ -1687,7 +1688,6 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
                                  static_cast<uint32_t>(nOffset));
                         return false;
                     }
-                    nOffset -= nPageSize;
                 }
                 abyTmp.clear();
                 abyTmp.resize(nPageSize);

@@ -242,13 +242,17 @@ const char *GPkgFieldFromOGR(OGRFieldType eType, OGRFieldSubType eSubType,
  */
 
 GByte *GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
+                           const OGRGeomCoordinateBinaryPrecision *psPrecision,
                            size_t *pnWkbLen)
 {
     CPLAssert(poGeometry != nullptr);
 
     GByte byFlags = 0;
     GByte byEnv = 1;
-    OGRwkbByteOrder eByteOrder = static_cast<OGRwkbByteOrder>(CPL_IS_LSB);
+    OGRwkbExportOptions wkbExportOptions;
+    if (psPrecision)
+        wkbExportOptions.sPrecision = *psPrecision;
+    wkbExportOptions.eByteOrder = static_cast<OGRwkbByteOrder>(CPL_IS_LSB);
     OGRErr err;
     OGRBoolean bPoint = (wkbFlatten(poGeometry->getGeometryType()) == wkbPoint);
     OGRBoolean bEmpty = poGeometry->IsEmpty();
@@ -313,7 +317,7 @@ GByte *GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
 
     /* Byte order of header? */
     /* Use native endianness */
-    byFlags |= eByteOrder;
+    byFlags |= wkbExportOptions.eByteOrder;
 
     /* Write flags byte */
     pabyWkb[3] = byFlags;
@@ -350,7 +354,8 @@ GByte *GPkgGeometryFromOGR(const OGRGeometry *poGeometry, int iSrsId,
     GByte *pabyPtr = pabyWkb + nHeaderLen;
 
     /* Use the wkbVariantIso for ISO SQL/MM output (differs for 3d geometry) */
-    err = poGeometry->exportToWkb(eByteOrder, pabyPtr, wkbVariantIso);
+    wkbExportOptions.eWkbVariant = wkbVariantIso;
+    err = poGeometry->exportToWkb(pabyPtr, &wkbExportOptions);
     if (err != OGRERR_NONE)
     {
         CPLFree(pabyWkb);

@@ -494,6 +494,35 @@ void OGRJSONFGReader::FinalizeBuildContext(LayerDefnBuildContext &oBuildContext,
     OGRFeatureDefn *poLayerDefn = poLayer->GetLayerDefn();
     auto oTemporaryUnsealer(poLayerDefn->GetTemporaryUnsealer());
 
+    if (poLayer->GetLayerDefn()->GetGeomType() != wkbNone)
+    {
+        OGRGeoJSONWriteOptions options;
+
+        json_object *poXYRes = CPL_json_object_object_get(
+            poObject_, "xy_coordinate_resolution_place");
+        if (poXYRes && (json_object_get_type(poXYRes) == json_type_double ||
+                        json_object_get_type(poXYRes) == json_type_int))
+        {
+            auto poGeomFieldDefn = poLayerDefn->GetGeomFieldDefn(0);
+            OGRGeomCoordinatePrecision oCoordPrec(
+                poGeomFieldDefn->GetCoordinatePrecision());
+            oCoordPrec.dfXYResolution = json_object_get_double(poXYRes);
+            poGeomFieldDefn->SetCoordinatePrecision(oCoordPrec);
+        }
+
+        json_object *poZRes = CPL_json_object_object_get(
+            poObject_, "z_coordinate_resolution_place");
+        if (poZRes && (json_object_get_type(poZRes) == json_type_double ||
+                       json_object_get_type(poZRes) == json_type_int))
+        {
+            auto poGeomFieldDefn = poLayerDefn->GetGeomFieldDefn(0);
+            OGRGeomCoordinatePrecision oCoordPrec(
+                poGeomFieldDefn->GetCoordinatePrecision());
+            oCoordPrec.dfZResolution = json_object_get_double(poZRes);
+            poGeomFieldDefn->SetCoordinatePrecision(oCoordPrec);
+        }
+    }
+
     std::set<std::string> oSetFieldNames;
     for (const auto &poFieldDefn : oBuildContext.apoFieldDefn)
         oSetFieldNames.insert(poFieldDefn->GetNameRef());

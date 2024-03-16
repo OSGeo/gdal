@@ -369,6 +369,53 @@ void OGRGeoJSONReaderStreamingParser::TooComplex()
 }
 
 /************************************************************************/
+/*                       SetCoordinatePrecision()                       */
+/************************************************************************/
+
+static void SetCoordinatePrecision(json_object *poRootObj,
+                                   OGRGeoJSONLayer *poLayer)
+{
+    if (poLayer->GetLayerDefn()->GetGeomType() != wkbNone)
+    {
+        OGRGeoJSONWriteOptions options;
+
+        json_object *poXYRes =
+            CPL_json_object_object_get(poRootObj, "xy_coordinate_resolution");
+        if (poXYRes && (json_object_get_type(poXYRes) == json_type_double ||
+                        json_object_get_type(poXYRes) == json_type_int))
+        {
+            auto poGeomFieldDefn = poLayer->GetLayerDefn()->GetGeomFieldDefn(0);
+            OGRGeomCoordinatePrecision oCoordPrec(
+                poGeomFieldDefn->GetCoordinatePrecision());
+            oCoordPrec.dfXYResolution = json_object_get_double(poXYRes);
+            whileUnsealing(poGeomFieldDefn)->SetCoordinatePrecision(oCoordPrec);
+
+            options.nXYCoordPrecision =
+                OGRGeomCoordinatePrecision::ResolutionToPrecision(
+                    oCoordPrec.dfXYResolution);
+        }
+
+        json_object *poZRes =
+            CPL_json_object_object_get(poRootObj, "z_coordinate_resolution");
+        if (poZRes && (json_object_get_type(poZRes) == json_type_double ||
+                       json_object_get_type(poZRes) == json_type_int))
+        {
+            auto poGeomFieldDefn = poLayer->GetLayerDefn()->GetGeomFieldDefn(0);
+            OGRGeomCoordinatePrecision oCoordPrec(
+                poGeomFieldDefn->GetCoordinatePrecision());
+            oCoordPrec.dfZResolution = json_object_get_double(poZRes);
+            whileUnsealing(poGeomFieldDefn)->SetCoordinatePrecision(oCoordPrec);
+
+            options.nZCoordPrecision =
+                OGRGeomCoordinatePrecision::ResolutionToPrecision(
+                    oCoordPrec.dfZResolution);
+        }
+
+        poLayer->SetWriteOptions(options);
+    }
+}
+
+/************************************************************************/
 /*                       FirstPassReadLayer()                           */
 /************************************************************************/
 
@@ -555,6 +602,8 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
         }
         if (poSRS)
             poSRS->Release();
+
+        SetCoordinatePrecision(poRootObj, poLayer);
 
         if (bStoreNativeData_)
         {
@@ -934,6 +983,8 @@ void OGRGeoJSONReader::ReadLayer(OGRGeoJSONDataSource *poDS,
             poLayer->SetMetadataItem("DESCRIPTION",
                                      json_object_get_string(poDescription));
         }
+
+        SetCoordinatePrecision(poObj, poLayer);
     }
 
     /* -------------------------------------------------------------------- */
@@ -2952,7 +3003,6 @@ OGRPolygon *OGRGeoJSONReadPolygon(json_object *poObj, bool bRaw)
             if (poObjPoints == nullptr)
             {
                 poPolygon = new OGRPolygon();
-                poPolygon->addRingDirectly(new OGRLinearRing());
             }
             else
             {
@@ -2968,11 +3018,7 @@ OGRPolygon *OGRGeoJSONReadPolygon(json_object *poObj, bool bRaw)
                  i < nRings && nullptr != poPolygon; ++i)
             {
                 poObjPoints = json_object_array_get_idx(poObjRings, i);
-                if (poObjPoints == nullptr)
-                {
-                    poPolygon->addRingDirectly(new OGRLinearRing());
-                }
-                else
+                if (poObjPoints != nullptr)
                 {
                     OGRLinearRing *poRing =
                         OGRGeoJSONReadLinearRing(poObjPoints);
@@ -2982,6 +3028,10 @@ OGRPolygon *OGRGeoJSONReadPolygon(json_object *poObj, bool bRaw)
                     }
                 }
             }
+        }
+        else
+        {
+            poPolygon = new OGRPolygon();
         }
     }
 

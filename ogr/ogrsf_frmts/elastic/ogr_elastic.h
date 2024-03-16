@@ -176,7 +176,8 @@ class OGRElasticLayer final : public OGRLayer
   public:
     OGRElasticLayer(const char *pszLayerName, const char *pszIndexName,
                     const char *pszMappingName, OGRElasticDataSource *poDS,
-                    char **papszOptions, const char *pszESSearch = nullptr);
+                    CSLConstList papszOptions,
+                    const char *pszESSearch = nullptr);
     OGRElasticLayer(const char *pszLayerName,
                     OGRElasticLayer *poReferenceLayer);
     virtual ~OGRElasticLayer();
@@ -376,10 +377,9 @@ class OGRElasticDataSource final : public GDALDataset
     virtual OGRLayer *GetLayer(int) override;
     virtual OGRLayer *GetLayerByName(const char *pszName) override;
 
-    virtual OGRLayer *ICreateLayer(const char *pszLayerName,
-                                   const OGRSpatialReference *poSRS,
-                                   OGRwkbGeometryType eType,
-                                   char **papszOptions) override;
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
     virtual OGRErr DeleteLayer(int iLayer) override;
 
     virtual OGRLayer *ExecuteSQL(const char *pszSQLCommand,

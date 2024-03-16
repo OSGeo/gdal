@@ -34,6 +34,7 @@ set(GDAL_PYTHON_CSOURCES
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/gdal_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/gdal_band_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/gdal_dataset_docs.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/gdal_driver_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_datasource_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_driver_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_featuredef_docs.i

@@ -59,8 +59,10 @@ json_object_new_float_with_significant_figures(float fVal,
 void OGRGeoJSONWriteOptions::SetRFC7946Settings()
 {
     bBBOXRFC7946 = true;
-    if (nCoordPrecision < 0)
-        nCoordPrecision = 7;
+    if (nXYCoordPrecision < 0)
+        nXYCoordPrecision = 7;
+    if (nZCoordPrecision < 0)
+        nZCoordPrecision = 3;
     bPolygonRightHandRule = true;
     bCanPatchCoordinatesWithNativeData = false;
     bHonourReservedRFC7946Members = true;
@@ -95,13 +97,23 @@ void OGRGeoJSONWriteOptions::SetIDOptions(CSLConstList papszOptions)
 /************************************************************************/
 
 static json_object *
-json_object_new_coord(double dfVal, const OGRGeoJSONWriteOptions &oOptions)
+json_object_new_coord(double dfVal, int nDimIdx,
+                      const OGRGeoJSONWriteOptions &oOptions)
 {
     // If coordinate precision is specified, or significant figures is not
     // then use the '%f' formatting.
-    if (oOptions.nCoordPrecision >= 0 || oOptions.nSignificantFigures < 0)
-        return json_object_new_double_with_precision(dfVal,
-                                                     oOptions.nCoordPrecision);
+    if (nDimIdx <= 2)
+    {
+        if (oOptions.nXYCoordPrecision >= 0 || oOptions.nSignificantFigures < 0)
+            return json_object_new_double_with_precision(
+                dfVal, oOptions.nXYCoordPrecision);
+    }
+    else
+    {
+        if (oOptions.nZCoordPrecision >= 0 || oOptions.nSignificantFigures < 0)
+            return json_object_new_double_with_precision(
+                dfVal, oOptions.nZCoordPrecision);
+    }
 
     return json_object_new_double_with_significant_figures(
         dfVal, oOptions.nSignificantFigures);
@@ -734,19 +746,21 @@ json_object *OGRGeoJSONWriteFeature(OGRFeature *poFeature,
 
             json_object *poObjBBOX = json_object_new_array();
             json_object_array_add(
-                poObjBBOX, json_object_new_coord(sEnvelope.MinX, oOptions));
+                poObjBBOX, json_object_new_coord(sEnvelope.MinX, 1, oOptions));
             json_object_array_add(
-                poObjBBOX, json_object_new_coord(sEnvelope.MinY, oOptions));
+                poObjBBOX, json_object_new_coord(sEnvelope.MinY, 2, oOptions));
             if (wkbHasZ(poGeometry->getGeometryType()))
                 json_object_array_add(
-                    poObjBBOX, json_object_new_coord(sEnvelope.MinZ, oOptions));
+                    poObjBBOX,
+                    json_object_new_coord(sEnvelope.MinZ, 3, oOptions));
             json_object_array_add(
-                poObjBBOX, json_object_new_coord(sEnvelope.MaxX, oOptions));
+                poObjBBOX, json_object_new_coord(sEnvelope.MaxX, 1, oOptions));
             json_object_array_add(
-                poObjBBOX, json_object_new_coord(sEnvelope.MaxY, oOptions));
+                poObjBBOX, json_object_new_coord(sEnvelope.MaxY, 2, oOptions));
             if (wkbHasZ(poGeometry->getGeometryType()))
                 json_object_array_add(
-                    poObjBBOX, json_object_new_coord(sEnvelope.MaxZ, oOptions));
+                    poObjBBOX,
+                    json_object_new_coord(sEnvelope.MaxZ, 3, oOptions));
 
             json_object_object_add(poObj, "bbox", poObjBBOX);
         }
@@ -1086,16 +1100,6 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
 /************************************************************************/
 
 json_object *OGRGeoJSONWriteGeometry(const OGRGeometry *poGeometry,
-                                     int nCoordPrecision,
-                                     int nSignificantFigures)
-{
-    OGRGeoJSONWriteOptions oOptions;
-    oOptions.nCoordPrecision = nCoordPrecision;
-    oOptions.nSignificantFigures = nSignificantFigures;
-    return OGRGeoJSONWriteGeometry(poGeometry, oOptions);
-}
-
-json_object *OGRGeoJSONWriteGeometry(const OGRGeometry *poGeometry,
                                      const OGRGeoJSONWriteOptions &oOptions)
 {
     if (poGeometry == nullptr)
@@ -1402,8 +1406,8 @@ json_object *OGRGeoJSONWriteCoords(double const &fX, double const &fY,
         return nullptr;
     }
     poObjCoords = json_object_new_array();
-    json_object_array_add(poObjCoords, json_object_new_coord(fX, oOptions));
-    json_object_array_add(poObjCoords, json_object_new_coord(fY, oOptions));
+    json_object_array_add(poObjCoords, json_object_new_coord(fX, 1, oOptions));
+    json_object_array_add(poObjCoords, json_object_new_coord(fY, 2, oOptions));
 
     return poObjCoords;
 }
@@ -1420,9 +1424,9 @@ json_object *OGRGeoJSONWriteCoords(double const &fX, double const &fY,
         return nullptr;
     }
     json_object *poObjCoords = json_object_new_array();
-    json_object_array_add(poObjCoords, json_object_new_coord(fX, oOptions));
-    json_object_array_add(poObjCoords, json_object_new_coord(fY, oOptions));
-    json_object_array_add(poObjCoords, json_object_new_coord(fZ, oOptions));
+    json_object_array_add(poObjCoords, json_object_new_coord(fX, 1, oOptions));
+    json_object_array_add(poObjCoords, json_object_new_coord(fY, 2, oOptions));
+    json_object_array_add(poObjCoords, json_object_new_coord(fZ, 3, oOptions));
 
     return poObjCoords;
 }
@@ -1528,10 +1532,17 @@ char *OGR_G_ExportToJson(OGRGeometryH hGeometry)
  * The following options are supported :
  * <ul>
  * <li>COORDINATE_PRECISION=number: maximum number of figures after decimal
- * separator to write in coordinates.</li> <li>SIGNIFICANT_FIGURES=number:
+ * separator to write in coordinates.</li>
+ * <li>XY_COORD_PRECISION=integer: number of decimal figures for X,Y coordinates
+ * (added in GDAL 3.9)</li>
+ * <li>Z_COORD_PRECISION=integer: number of decimal figures for Z coordinates
+ * (added in GDAL 3.9)</li>
+ * <li>SIGNIFICANT_FIGURES=number:
  * maximum number of significant figures (GDAL &gt;= 2.1).</li>
  * </ul>
  *
+ * If XY_COORD_PRECISION or Z_COORD_PRECISION is specified, COORDINATE_PRECISION
+ * or SIGNIFICANT_FIGURES will be ignored if specified.
  * If COORDINATE_PRECISION is defined, SIGNIFICANT_FIGURES will be ignored if
  * specified.
  * When none are defined, the default is COORDINATE_PRECISION=15.
@@ -1551,14 +1562,17 @@ char *OGR_G_ExportToJsonEx(OGRGeometryH hGeometry, char **papszOptions)
 
     OGRGeometry *poGeometry = OGRGeometry::FromHandle(hGeometry);
 
-    const int nCoordPrecision =
-        atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1"));
+    const char *pszCoordPrecision =
+        CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "-1");
 
     const int nSignificantFigures =
         atoi(CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1"));
 
     OGRGeoJSONWriteOptions oOptions;
-    oOptions.nCoordPrecision = nCoordPrecision;
+    oOptions.nXYCoordPrecision = atoi(CSLFetchNameValueDef(
+        papszOptions, "XY_COORD_PRECISION", pszCoordPrecision));
+    oOptions.nZCoordPrecision = atoi(CSLFetchNameValueDef(
+        papszOptions, "Z_COORD_PRECISION", pszCoordPrecision));
     oOptions.nSignificantFigures = nSignificantFigures;
 
     // If the CRS has latitude, longitude (or northing, easting) axis order,

@@ -86,6 +86,7 @@ OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn *poPrototype)
         l_poSRS->Release();
     }
     SetNullable(poPrototype->IsNullable());
+    SetCoordinatePrecision(poPrototype->GetCoordinatePrecision());
 }
 
 /************************************************************************/
@@ -598,7 +599,13 @@ int OGRGeomFieldDefn::IsSame(const OGRGeomFieldDefn *poOtherFieldDefn) const
 {
     if (!(strcmp(GetNameRef(), poOtherFieldDefn->GetNameRef()) == 0 &&
           GetType() == poOtherFieldDefn->GetType() &&
-          IsNullable() == poOtherFieldDefn->IsNullable()))
+          IsNullable() == poOtherFieldDefn->IsNullable() &&
+          m_oCoordPrecision.dfXYResolution ==
+              poOtherFieldDefn->m_oCoordPrecision.dfXYResolution &&
+          m_oCoordPrecision.dfZResolution ==
+              poOtherFieldDefn->m_oCoordPrecision.dfZResolution &&
+          m_oCoordPrecision.dfMResolution ==
+              poOtherFieldDefn->m_oCoordPrecision.dfMResolution))
         return FALSE;
     const OGRSpatialReference *poMySRS = GetSpatialRef();
     const OGRSpatialReference *poOtherSRS = poOtherFieldDefn->GetSpatialRef();
@@ -726,6 +733,96 @@ void OGRGeomFieldDefn::SetNullable(int bNullableIn)
 void OGR_GFld_SetNullable(OGRGeomFieldDefnH hDefn, int bNullableIn)
 {
     OGRGeomFieldDefn::FromHandle(hDefn)->SetNullable(bNullableIn);
+}
+
+/************************************************************************/
+/*                        GetCoordinatePrecision()                      */
+/************************************************************************/
+
+/**
+ * \fn int OGRGeomFieldDefn::GetCoordinatePrecision() const
+ *
+ * \brief Return the coordinate precision associated to this geometry field.
+ *
+ * This method is the same as the C function OGR_GFld_GetCoordinatePrecision().
+ *
+ * @return the coordinate precision
+ * @since GDAL 3.9
+ */
+
+/************************************************************************/
+/*                     OGR_GFld_GetCoordinatePrecision()                */
+/************************************************************************/
+
+/**
+ * \brief Return the coordinate precision associated to this geometry field.
+ *
+ * This method is the same as the C++ method OGRGeomFieldDefn::GetCoordinatePrecision()
+ *
+ * @param hDefn handle to the field definition
+ * @return the coordinate precision
+ * @since GDAL 3.9
+ */
+
+OGRGeomCoordinatePrecisionH
+OGR_GFld_GetCoordinatePrecision(OGRGeomFieldDefnH hDefn)
+{
+    return const_cast<OGRGeomCoordinatePrecision *>(
+        &(OGRGeomFieldDefn::FromHandle(hDefn)->GetCoordinatePrecision()));
+}
+
+/************************************************************************/
+/*                        SetCoordinatePrecision()                      */
+/************************************************************************/
+
+/**
+ * \brief Set coordinate precision associated to this geometry field.
+ *
+ * This method is the same as the C function OGR_GFld_SetCoordinatePrecision().
+ *
+ * Note that once a OGRGeomFieldDefn has been added to a layer definition with
+ * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn().
+ *
+ * @param prec Coordinate precision
+ * @since GDAL 3.9
+ */
+void OGRGeomFieldDefn::SetCoordinatePrecision(
+    const OGRGeomCoordinatePrecision &prec)
+{
+    if (m_bSealed)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGRGeomFieldDefn::SetCoordinatePrecision() not allowed on a "
+                 "sealed object");
+        return;
+    }
+    m_oCoordPrecision = prec;
+}
+
+/************************************************************************/
+/*                     OGR_GFld_SetCoordinatePrecision()                */
+/************************************************************************/
+
+/**
+ * \brief Set coordinate precision associated to this geometry field.
+ *
+ * This method is the same as the C++ method OGRGeomFieldDefn::SetCoordinatePrecision()
+ *
+ * Note that once a OGRGeomFieldDefn has been added to a layer definition with
+ * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn()->GetGeomFieldDefn().
+ *
+ * @param hDefn handle to the field definition.  Must not be NULL.
+ * @param hGeomCoordPrec Coordinate precision. Must not be NULL.
+ * @since GDAL 3.9
+ */
+void OGR_GFld_SetCoordinatePrecision(OGRGeomFieldDefnH hDefn,
+                                     OGRGeomCoordinatePrecisionH hGeomCoordPrec)
+{
+    VALIDATE_POINTER0(hGeomCoordPrec, "OGR_GFld_SetCoordinatePrecision");
+    OGRGeomFieldDefn::FromHandle(hDefn)->SetCoordinatePrecision(
+        *hGeomCoordPrec);
 }
 
 /************************************************************************/

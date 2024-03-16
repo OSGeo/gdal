@@ -1242,9 +1242,10 @@ bool OGROpenFileGDBDataSource::Create(const char *pszName)
 /*                             ICreateLayer()                           */
 /************************************************************************/
 
-OGRLayer *OGROpenFileGDBDataSource::ICreateLayer(
-    const char *pszLayerName, const OGRSpatialReference *poSRS,
-    OGRwkbGeometryType eType, char **papszOptions)
+OGRLayer *
+OGROpenFileGDBDataSource::ICreateLayer(const char *pszLayerName,
+                                       const OGRGeomFieldDefn *poGeomFieldDefn,
+                                       CSLConstList papszOptions)
 {
     if (eAccess != GA_Update)
         return nullptr;
@@ -1257,6 +1258,8 @@ OGRLayer *OGROpenFileGDBDataSource::ICreateLayer(
         CPLError(CE_Failure, CPLE_AppDefined, "Root UUID missing");
         return nullptr;
     }
+
+    auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
 
     FileGDBTable oTable;
     if (!oTable.Open(m_osGDBSystemCatalogFilename.c_str(), false))
@@ -1276,7 +1279,7 @@ OGRLayer *OGROpenFileGDBDataSource::ICreateLayer(
 
     auto poLayer = std::make_unique<OGROpenFileGDBLayer>(
         this, osFilename.c_str(), pszLayerName, eType, papszOptions);
-    if (!poLayer->Create(poSRS))
+    if (!poLayer->Create(poGeomFieldDefn))
         return nullptr;
     if (m_bInTransaction)
     {
@@ -1841,7 +1844,7 @@ bool OGROpenFileGDBDataSource::AddRelationship(
             CPLStringList aosOptions;
             aosOptions.SetNameValue("FID", "RID");
             OGRLayer *poMappingTable = ICreateLayer(
-                relationship->GetName().c_str(), nullptr, wkbNone, aosOptions);
+                relationship->GetName().c_str(), nullptr, aosOptions.List());
             if (!poMappingTable)
             {
                 failureReason = "Could not create mapping table " +

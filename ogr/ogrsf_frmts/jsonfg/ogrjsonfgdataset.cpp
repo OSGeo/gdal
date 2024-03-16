@@ -33,6 +33,8 @@
 #include "cpl_vsi_error.h"
 #include "cpl_vsi_virtual.h"
 
+#include <cmath>
+
 /************************************************************************/
 /*                  OGRJSONFGDataset::~OGRJSONFGDataset()               */
 /************************************************************************/
@@ -60,7 +62,77 @@ void OGRJSONFGDataset::FinishWriting()
 
         if (!EmitStartFeaturesIfNeededAndReturnIfFirstFeature())
             VSIFPrintfL(fpOut_, "\n");
-        VSIFPrintfL(fpOut_, "]\n}\n");
+        VSIFPrintfL(fpOut_, "]");
+
+        // When we didn't know if there was a single layer, we omitted writing
+        // the coordinate precision at ICreateLayer() time.
+        // Now we can check if there was a single layer, or several layers with
+        // same precision setting, and write it when possible.
+        if (!bSingleOutputLayer_ && !apoLayers_.empty() &&
+            apoLayers_.front()->GetLayerDefn()->GetGeomFieldCount() > 0)
+        {
+            const auto &oCoordPrec = apoLayers_.front()
+                                         ->GetLayerDefn()
+                                         ->GetGeomFieldDefn(0)
+                                         ->GetCoordinatePrecision();
+            bool bSameGeomCoordPrec =
+                (oCoordPrec.dfXYResolution !=
+                     OGRGeomCoordinatePrecision::UNKNOWN ||
+                 oCoordPrec.dfZResolution !=
+                     OGRGeomCoordinatePrecision::UNKNOWN);
+            for (size_t i = 1; i < apoLayers_.size(); ++i)
+            {
+                if (apoLayers_[i]->GetLayerDefn()->GetGeomFieldCount() > 0)
+                {
+                    const auto &oOtherCoordPrec =
+                        apoLayers_[i]
+                            ->GetLayerDefn()
+                            ->GetGeomFieldDefn(0)
+                            ->GetCoordinatePrecision();
+                    bSameGeomCoordPrec &= (oOtherCoordPrec.dfXYResolution ==
+                                               oCoordPrec.dfXYResolution &&
+                                           oOtherCoordPrec.dfZResolution ==
+                                               oCoordPrec.dfZResolution);
+                }
+            }
+            if (bSameGeomCoordPrec)
+            {
+                if (oCoordPrec.dfXYResolution !=
+                    OGRGeomCoordinatePrecision::UNKNOWN)
+                {
+                    VSIFPrintfL(fpOut_,
+                                ",\n\"xy_coordinate_resolution_place\":%g",
+                                oCoordPrec.dfXYResolution);
+                }
+                if (oCoordPrec.dfZResolution !=
+                    OGRGeomCoordinatePrecision::UNKNOWN)
+                {
+                    VSIFPrintfL(fpOut_,
+                                ",\n\"z_coordinate_resolution_place\":%g",
+                                oCoordPrec.dfZResolution);
+                }
+
+                OGRSpatialReference oSRSWGS84;
+                oSRSWGS84.SetWellKnownGeogCS("WGS84");
+                const auto oCoordPrecWGS84 = oCoordPrec.ConvertToOtherSRS(
+                    apoLayers_.front()->GetSpatialRef(), &oSRSWGS84);
+
+                if (oCoordPrecWGS84.dfXYResolution !=
+                    OGRGeomCoordinatePrecision::UNKNOWN)
+                {
+                    VSIFPrintfL(fpOut_, ",\n\"xy_coordinate_resolution\":%g",
+                                oCoordPrecWGS84.dfXYResolution);
+                }
+                if (oCoordPrecWGS84.dfZResolution !=
+                    OGRGeomCoordinatePrecision::UNKNOWN)
+                {
+                    VSIFPrintfL(fpOut_, ",\n\"z_coordinate_resolution\":%g",
+                                oCoordPrecWGS84.dfZResolution);
+                }
+            }
+        }
+
+        VSIFPrintfL(fpOut_, "\n}\n");
         fpOut_->Flush();
     }
 }
@@ -508,10 +580,10 @@ bool OGRJSONFGDataset::EmitStartFeaturesIfNeededAndReturnIfFirstFeature()
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
-                                         const OGRSpatialReference *poSRS,
-                                         OGRwkbGeometryType eGType,
-                                         char **papszOptions)
+OGRLayer *
+OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
+                               const OGRGeomFieldDefn *poSrcGeomFieldDefn,
+                               CSLConstList papszOptions)
 {
     if (nullptr == fpOut_)
     {
@@ -528,6 +600,11 @@ OGRLayer *OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
                  "creation option has been used");
         return nullptr;
     }
+
+    const auto eGType =
+        poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetSpatialRef() : nullptr;
 
     std::string osCoordRefSys;
     std::unique_ptr<OGRCoordinateTransformation> poCTToWGS84;
@@ -633,12 +710,176 @@ OGRLayer *OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
                  "ellipsoid");
     }
 
+    CPLStringList aosOptions(papszOptions);
+
+    if (const char *pszCoordPrecisionGeom =
+            CSLFetchNameValue(papszOptions, "COORDINATE_PRECISION_GEOMETRY"))
+    {
+        double dfXYResolutionGeometry =
+            std::pow(10.0, -CPLAtof(pszCoordPrecisionGeom));
+        double dfZResolutionGeometry = dfXYResolutionGeometry;
+        aosOptions.SetNameValue("XY_COORD_PRECISION_GEOMETRY",
+                                pszCoordPrecisionGeom);
+        aosOptions.SetNameValue("Z_COORD_PRECISION_GEOMETRY",
+                                pszCoordPrecisionGeom);
+        if (IsSingleOutputLayer())
+        {
+            VSIFPrintfL(fpOut_, "\"xy_coordinate_resolution\": %g,\n",
+                        dfXYResolutionGeometry);
+            if (poSRS && poSRS->GetAxesCount() == 3)
+            {
+                VSIFPrintfL(fpOut_, "\"z_coordinate_resolution\": %g,\n",
+                            dfZResolutionGeometry);
+            }
+        }
+    }
+    else if (!poSrcGeomFieldDefn &&
+             CSLFetchNameValue(papszOptions, "SIGNIFICANT_FIGURES") == nullptr)
+    {
+        const int nXYPrecisionGeometry = 7;
+        const int nZPrecisionGeometry = 3;
+        aosOptions.SetNameValue("XY_COORD_PRECISION_GEOMETRY",
+                                CPLSPrintf("%d", nXYPrecisionGeometry));
+        aosOptions.SetNameValue("Z_COORD_PRECISION_GEOMETRY",
+                                CPLSPrintf("%d", nZPrecisionGeometry));
+        if (IsSingleOutputLayer())
+        {
+            VSIFPrintfL(fpOut_, "\"xy_coordinate_resolution\": %g,\n",
+                        std::pow(10.0, -double(nXYPrecisionGeometry)));
+            if (poSRS && poSRS->GetAxesCount() == 3)
+            {
+                VSIFPrintfL(fpOut_, "\"z_coordinate_resolution\": %g,\n",
+                            std::pow(10.0, -double(nZPrecisionGeometry)));
+            }
+        }
+    }
+
+    double dfXYResolution = OGRGeomCoordinatePrecision::UNKNOWN;
+    double dfZResolution = OGRGeomCoordinatePrecision::UNKNOWN;
+
+    if (const char *pszCoordPrecisionPlace =
+            CSLFetchNameValue(papszOptions, "COORDINATE_PRECISION_PLACE"))
+    {
+        dfXYResolution = std::pow(10.0, -CPLAtof(pszCoordPrecisionPlace));
+        dfZResolution = dfXYResolution;
+        if (IsSingleOutputLayer())
+        {
+            VSIFPrintfL(fpOut_, "\"xy_coordinate_resolution_place\": %g,\n",
+                        dfXYResolution);
+            if (poSRS && poSRS->GetAxesCount() == 3)
+            {
+                VSIFPrintfL(fpOut_, "\"z_coordinate_resolution_place\": %g,\n",
+                            dfZResolution);
+            }
+        }
+    }
+    else if (poSrcGeomFieldDefn &&
+             CSLFetchNameValue(papszOptions, "COORDINATE_PRECISION_PLACE") ==
+                 nullptr &&
+             CSLFetchNameValue(papszOptions, "SIGNIFICANT_FIGURES") == nullptr)
+    {
+        const auto &oCoordPrec = poSrcGeomFieldDefn->GetCoordinatePrecision();
+        OGRSpatialReference oSRSWGS84;
+        oSRSWGS84.SetWellKnownGeogCS("WGS84");
+        const auto oCoordPrecWGS84 =
+            oCoordPrec.ConvertToOtherSRS(poSRS, &oSRSWGS84);
+
+        if (oCoordPrec.dfXYResolution != OGRGeomCoordinatePrecision::UNKNOWN)
+        {
+            dfXYResolution = oCoordPrec.dfXYResolution;
+            aosOptions.SetNameValue(
+                "XY_COORD_PRECISION_PLACE",
+                CPLSPrintf("%d",
+                           OGRGeomCoordinatePrecision::ResolutionToPrecision(
+                               oCoordPrec.dfXYResolution)));
+            if (IsSingleOutputLayer())
+            {
+                VSIFPrintfL(fpOut_, "\"xy_coordinate_resolution_place\": %g,\n",
+                            oCoordPrec.dfXYResolution);
+            }
+
+            if (CSLFetchNameValue(papszOptions,
+                                  "COORDINATE_PRECISION_GEOMETRY") == nullptr)
+            {
+                const double dfXYResolutionGeometry =
+                    oCoordPrecWGS84.dfXYResolution;
+
+                aosOptions.SetNameValue(
+                    "XY_COORD_PRECISION_GEOMETRY",
+                    CPLSPrintf(
+                        "%d", OGRGeomCoordinatePrecision::ResolutionToPrecision(
+                                  dfXYResolutionGeometry)));
+                if (IsSingleOutputLayer())
+                {
+                    VSIFPrintfL(fpOut_, "\"xy_coordinate_resolution\": %g,\n",
+                                dfXYResolutionGeometry);
+                }
+            }
+        }
+
+        if (oCoordPrec.dfZResolution != OGRGeomCoordinatePrecision::UNKNOWN)
+        {
+            dfZResolution = oCoordPrec.dfZResolution;
+            aosOptions.SetNameValue(
+                "Z_COORD_PRECISION_PLACE",
+                CPLSPrintf("%d",
+                           OGRGeomCoordinatePrecision::ResolutionToPrecision(
+                               dfZResolution)));
+            if (IsSingleOutputLayer())
+            {
+                VSIFPrintfL(fpOut_, "\"z_coordinate_resolution_place\": %g,\n",
+                            dfZResolution);
+            }
+
+            if (CSLFetchNameValue(papszOptions,
+                                  "COORDINATE_PRECISION_GEOMETRY") == nullptr)
+            {
+                const double dfZResolutionGeometry =
+                    oCoordPrecWGS84.dfZResolution;
+
+                aosOptions.SetNameValue(
+                    "Z_COORD_PRECISION_GEOMETRY",
+                    CPLSPrintf(
+                        "%d", OGRGeomCoordinatePrecision::ResolutionToPrecision(
+                                  dfZResolutionGeometry)));
+                if (IsSingleOutputLayer())
+                {
+                    VSIFPrintfL(fpOut_, "\"z_coordinate_resolution\": %g,\n",
+                                dfZResolutionGeometry);
+                }
+            }
+        }
+    }
+
     auto poLayer = std::make_unique<OGRJSONFGWriteLayer>(
         pszNameIn, poSRS, std::move(poCTToWGS84), osCoordRefSys, eGType,
-        papszOptions, this);
+        aosOptions.List(), this);
     apoLayers_.emplace_back(std::move(poLayer));
 
-    return apoLayers_.back().get();
+    auto poLayerAdded = apoLayers_.back().get();
+    if (eGType != wkbNone &&
+        dfXYResolution != OGRGeomCoordinatePrecision::UNKNOWN)
+    {
+        auto poGeomFieldDefn =
+            poLayerAdded->GetLayerDefn()->GetGeomFieldDefn(0);
+        OGRGeomCoordinatePrecision oCoordPrec(
+            poGeomFieldDefn->GetCoordinatePrecision());
+        oCoordPrec.dfXYResolution = dfXYResolution;
+        poGeomFieldDefn->SetCoordinatePrecision(oCoordPrec);
+    }
+
+    if (eGType != wkbNone &&
+        dfZResolution != OGRGeomCoordinatePrecision::UNKNOWN)
+    {
+        auto poGeomFieldDefn =
+            poLayerAdded->GetLayerDefn()->GetGeomFieldDefn(0);
+        OGRGeomCoordinatePrecision oCoordPrec(
+            poGeomFieldDefn->GetCoordinatePrecision());
+        oCoordPrec.dfZResolution = dfZResolution;
+        poGeomFieldDefn->SetCoordinatePrecision(oCoordPrec);
+    }
+
+    return poLayerAdded;
 }
 
 /************************************************************************/

@@ -161,11 +161,11 @@ class OGRSelafinDataSource final : public OGRDataSource
         return nLayers;
     }
     OGRLayer *GetLayer(int) override;
-    virtual OGRLayer *
-    ICreateLayer(const char *pszName,
-                 const OGRSpatialReference *poSpatialRefP = nullptr,
-                 OGRwkbGeometryType eGType = wkbUnknown,
-                 char **papszOptions = nullptr) override;
+
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
+
     virtual OGRErr DeleteLayer(int) override;
     int TestCapability(const char *) override;
     void SetDefaultSelafinName(const char *pszNameIn)

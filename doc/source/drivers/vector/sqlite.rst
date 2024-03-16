@@ -504,10 +504,8 @@ OGR_L_StartTransaction() / OGR_L_CommitTransaction()) in order to get
 optimal performance. By default, if no transaction is explicitly
 started, SQLite will autocommit on every statement, which will be slow.
 If using ogr2ogr, its default behavior is to COMMIT a transaction every
-20000 inserted rows. The **-gt** argument allows explicitly setting the
-number of rows for each transaction. Increasing to **-gt 65536** or more
-ensures optimal performance while populating some table containing many
-hundredth thousand or million rows.
+100000 inserted rows. The **-gt** argument allows explicitly setting the
+number of rows for each transaction.
 
 SQLite usually has a very minimal memory foot-print; just about 20MB of
 RAM are reserved to store the internal Page Cache [merely 2000 pages].

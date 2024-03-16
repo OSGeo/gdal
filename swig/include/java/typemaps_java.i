@@ -1035,16 +1035,16 @@
   }
 }
 
-%typemap(out) char **dict
-{
-  /* %typemap(out) char **dict */
-  /* Convert a char array to a Hashtable */
-  char **stringarray = $1;
+%fragment("GetCSLStringAsHashTable","header")
+%{
+/* Convert a char array to a Hashtable */
+static jobject
+GetCSLStringAsHashTable(JNIEnv *jenv, char **stringarray, bool bFreeCSL ) {
   const jclass hashtable = jenv->FindClass("java/util/Hashtable");
   const jmethodID constructor = jenv->GetMethodID(hashtable, "<init>", "()V");
   const jmethodID put = jenv->GetMethodID(hashtable, "put",
     "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-  $result = jenv->NewObject(hashtable, constructor);
+  jobject jHashtable = jenv->NewObject(hashtable, constructor);
   if ( stringarray != NULL ) {
     while (*stringarray != NULL ) {
       char const *valptr;
@@ -1056,7 +1056,7 @@
         valptr = pszSep + 1;
         jstring name = jenv->NewStringUTF(keyptr);
         jstring value = jenv->NewStringUTF(valptr);
-        jenv->CallObjectMethod($result, put, name, value);
+        jenv->CallObjectMethod(jHashtable, put, name, value);
         jenv->DeleteLocalRef(name);
         jenv->DeleteLocalRef(value);
         CPLFree(keyptr);
@@ -1064,6 +1064,16 @@
       stringarray++;
     }
   }
+  if( bFreeCSL )
+    CSLDestroy(stringarray);
+  return jHashtable;
+}
+%}
+
+%typemap(out,fragment="GetCSLStringAsHashTable") char **dict
+{
+  /* %typemap(out) char **dict */
+  $result = GetCSLStringAsHashTable(jenv, $1, false);
 }
 
 %typemap(freearg) char **dict
@@ -1077,6 +1087,22 @@
 %typemap(jstype) (char **dict) "java.util.Hashtable"
 %typemap(javain) (char **dict) "$javainput"
 %typemap(javaout) (char **dict) {
+    return $jnicall;
+  }
+
+
+/*
+ * Typemap char ** -> dict and CSLDestroy()
+ */
+%typemap(out,fragment="GetCSLStringAsHashTable") char **dictAndCSLDestroy
+{
+  /* %typemap(out) char **dictAndCSLDestroy */
+  $result = GetCSLStringAsHashTable(jenv, $1, true);
+}
+%typemap(jni) (char **dictAndCSLDestroy) "jobject"
+%typemap(jtype) (char **dictAndCSLDestroy) "java.util.Hashtable"
+%typemap(jstype) (char **dictAndCSLDestroy) "java.util.Hashtable"
+%typemap(javaout) (char **dictAndCSLDestroy) {
     return $jnicall;
   }
 

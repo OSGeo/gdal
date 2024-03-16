@@ -36,35 +36,53 @@ Once you have Anaconda or Miniconda installed, you should be able to install GDA
 
 ``conda install -c conda-forge gdal``
 
-Unix
-~~~~
-
-The GDAL Python bindings requires setuptools.
 
 pip
 ~~~
 
+Due to the complex nature of GDAL and its components, different bindings may require additional packages and installation steps.
 GDAL can be installed from the `Python Package Index <https://pypi.org/project/GDAL>`__:
 
 ::
 
     pip install gdal
 
-It will be necessary to have libgdal and its development headers installed
-if pip is expected to do a source build because no wheel is available
-for your specified platform and Python version.
 
-To install with numpy support, you need to require the optional numpy component:
+In order to enable numpy-based raster support, libgdal and its development headers must be installed as well as the Python packages numpy, setuptools, and wheel.
+To install the Python dependencies and build numpy-based raster support:
 
-::
-
-    pip install gdal[numpy]
-
-To install the version of the Python bindings matching your native GDAL library:
 
 ::
 
-    pip install gdal=="$(gdal-config --version).*"
+    pip install numpy>1.0.0 wheel setuptools>=67
+    pip install gdal[numpy]=="$(gdal-config --version).*"
+
+
+Users can verify that numpy-based raster support has been installed with:
+
+::
+    
+    python3 -c 'from osgeo import gdal_array'
+
+
+If this command raises an ImportError, numpy-based raster support has not been properly installed:
+
+::
+    
+    Traceback (most recent call last):
+    File "<string>", line 1, in <module>
+    File "/usr/local/lib/python3.12/dist-packages/osgeo/gdal_array.py", line 10, in <module>
+      from . import _gdal_array
+    ImportError: cannot import name '_gdal_array' from 'osgeo' (/usr/local/lib/python3.12/dist-packages/osgeo/__init__.py)
+
+
+This is most often due to pip reusing a cached GDAL installation.
+Verify that the necessary dependencies have been installed and then run the following to force a clean build:
+
+::
+    pip install --no-cache --force-reinstall gdal[numpy]=="$(gdal-config --version).*"
+
+
 
 Building as part of the GDAL library source tree
 ------------------------------------------------

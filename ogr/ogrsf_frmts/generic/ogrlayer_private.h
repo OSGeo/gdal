@@ -44,6 +44,18 @@ struct OGRLayer::Private
     // We should probably have CreateFieldFromArrowSchema() and
     // WriteArrowBatch() explicitly returning and accepting that mapping.
     std::map<std::string, std::string> m_oMapArrowFieldNameToOGRFieldName{};
+
+    //! Whether OGRLayer::ConvertGeomsIfNecessary() has already been called
+    bool m_bConvertGeomsIfNecessaryAlreadyCalled = false;
+
+    //! Value of TestCapability(OLCCurveGeometries). Only valid after ConvertGeomsIfNecessary() has been called.
+    bool m_bSupportsCurve = false;
+
+    //! Value of TestCapability(OLCMeasuredGeometries). Only valid after ConvertGeomsIfNecessary() has been called.
+    bool m_bSupportsM = false;
+
+    //! Whether OGRGeometry::SetPrecision() should be applied. Only valid after ConvertGeomsIfNecessary() has been called.
+    bool m_bApplyGeomSetPrecision = false;
 };
 //! @endcond
 

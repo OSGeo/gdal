@@ -1632,23 +1632,28 @@ OGRErr OGRSimpleCurve::importFromWkb(const unsigned char *pabyData,
 /*      Build a well known binary representation of this object.        */
 /************************************************************************/
 
-OGRErr OGRSimpleCurve::exportToWkb(OGRwkbByteOrder eByteOrder,
-                                   unsigned char *pabyData,
-                                   OGRwkbVariant eWkbVariant) const
+OGRErr OGRSimpleCurve::exportToWkb(unsigned char *pabyData,
+                                   const OGRwkbExportOptions *psOptions) const
 
 {
+    if (psOptions == nullptr)
+    {
+        static const OGRwkbExportOptions defaultOptions;
+        psOptions = &defaultOptions;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Set the byte order.                                             */
     /* -------------------------------------------------------------------- */
-    pabyData[0] =
-        DB2_V72_UNFIX_BYTE_ORDER(static_cast<unsigned char>(eByteOrder));
+    pabyData[0] = DB2_V72_UNFIX_BYTE_ORDER(
+        static_cast<unsigned char>(psOptions->eByteOrder));
 
     /* -------------------------------------------------------------------- */
     /*      Set the geometry feature type.                                  */
     /* -------------------------------------------------------------------- */
     GUInt32 nGType = getGeometryType();
 
-    if (eWkbVariant == wkbVariantPostGIS1)
+    if (psOptions->eWkbVariant == wkbVariantPostGIS1)
     {
         nGType = wkbFlatten(nGType);
         if (Is3D())
@@ -1658,10 +1663,10 @@ OGRErr OGRSimpleCurve::exportToWkb(OGRwkbByteOrder eByteOrder,
         if (IsMeasured())
             nGType = static_cast<OGRwkbGeometryType>(nGType | 0x40000000);
     }
-    else if (eWkbVariant == wkbVariantIso)
+    else if (psOptions->eWkbVariant == wkbVariantIso)
         nGType = getIsoGeometryType();
 
-    if (eByteOrder == wkbNDR)
+    if (psOptions->eByteOrder == wkbNDR)
     {
         CPL_LSBPTR32(&nGType);
     }
@@ -1688,6 +1693,14 @@ OGRErr OGRSimpleCurve::exportToWkb(OGRwkbByteOrder eByteOrder,
             memcpy(pabyData + 9 + 16 + 32 * i, padfZ + i, 8);
             memcpy(pabyData + 9 + 24 + 32 * i, padfM + i, 8);
         }
+        OGRRoundCoordinatesIEEE754XYValues<32>(
+            psOptions->sPrecision.nXYBitPrecision, pabyData + 9, nPointCount);
+        OGRRoundCoordinatesIEEE754<32>(psOptions->sPrecision.nZBitPrecision,
+                                       pabyData + 9 + 2 * sizeof(uint64_t),
+                                       nPointCount);
+        OGRRoundCoordinatesIEEE754<32>(psOptions->sPrecision.nMBitPrecision,
+                                       pabyData + 9 + 3 * sizeof(uint64_t),
+                                       nPointCount);
     }
     else if (flags & OGR_G_MEASURED)
     {
@@ -1696,6 +1709,11 @@ OGRErr OGRSimpleCurve::exportToWkb(OGRwkbByteOrder eByteOrder,
             memcpy(pabyData + 9 + 24 * i, paoPoints + i, 16);
             memcpy(pabyData + 9 + 16 + 24 * i, padfM + i, 8);
         }
+        OGRRoundCoordinatesIEEE754XYValues<24>(
+            psOptions->sPrecision.nXYBitPrecision, pabyData + 9, nPointCount);
+        OGRRoundCoordinatesIEEE754<24>(psOptions->sPrecision.nMBitPrecision,
+                                       pabyData + 9 + 2 * sizeof(uint64_t),
+                                       nPointCount);
     }
     else if (flags & OGR_G_3D)
     {
@@ -1704,14 +1722,23 @@ OGRErr OGRSimpleCurve::exportToWkb(OGRwkbByteOrder eByteOrder,
             memcpy(pabyData + 9 + 24 * i, paoPoints + i, 16);
             memcpy(pabyData + 9 + 16 + 24 * i, padfZ + i, 8);
         }
+        OGRRoundCoordinatesIEEE754XYValues<24>(
+            psOptions->sPrecision.nXYBitPrecision, pabyData + 9, nPointCount);
+        OGRRoundCoordinatesIEEE754<24>(psOptions->sPrecision.nZBitPrecision,
+                                       pabyData + 9 + 2 * sizeof(uint64_t),
+                                       nPointCount);
     }
     else if (nPointCount)
+    {
         memcpy(pabyData + 9, paoPoints, 16 * static_cast<size_t>(nPointCount));
+        OGRRoundCoordinatesIEEE754XYValues<16>(
+            psOptions->sPrecision.nXYBitPrecision, pabyData + 9, nPointCount);
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Swap if needed.                                                 */
     /* -------------------------------------------------------------------- */
-    if (OGR_SWAP(eByteOrder))
+    if (OGR_SWAP(psOptions->eByteOrder))
     {
         const int nCount = CPL_SWAP32(nPointCount);
         memcpy(pabyData + 5, &nCount, 4);

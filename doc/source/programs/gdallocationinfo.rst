@@ -17,6 +17,7 @@ Synopsis
 
     Usage: gdallocationinfo [--help] [--help-general]
                             [-xml] [-lifonly] [-valonly]
+                            [-E] [-field_sep <sep>] [-ignore_extra_input]
                             [-b <band>]... [-overview <overview_level>]
                             [-l_srs <srs_def>] [-geoloc] [-wgs84]
                             [-oo <NAME>=<VALUE>]... <srcfile> [<x> <y>]
@@ -45,7 +46,8 @@ reporting options are provided.
 .. option:: -valonly
 
     The only output is the pixel values of the selected pixel on each of
-    the selected bands.
+    the selected bands. By default, the value of each band is output on a
+    separate line, unless :option:`-field_sep` is specified.
 
 .. option:: -b <band>
 
@@ -73,6 +75,32 @@ reporting options are provided.
 .. option:: -oo <NAME>=<VALUE>
 
     Dataset open option (format specific)
+
+.. option:: -ignore_extra_input
+
+    .. versionadded:: 3.9
+
+    Set this flag to avoid extra non-numeric content at end of input lines to be
+    appended to the output lines in -valonly mode (requires :option:`-field_sep`
+    to be also defined), or as a dedicated field in default or :option:`-xml` modes.
+
+.. option:: -E
+
+    .. versionadded:: 3.9
+
+    Enable Echo mode, where input coordinates are prepended to the output lines
+    in :option:`-valonly` mode.
+
+.. option:: -field_sep <sep>
+
+    .. versionadded:: 3.9
+
+    Defines the field separator, used in :option:`-valonly` mode, to separate different values.
+    It defaults to the new-line character, which means that when querying
+    a raster with several bands, the output will contain one value per line, which
+    may make it hard to recognize which value belongs to which set of input x,y
+    points when several ones are provided. Defining the field separator is also
+    needed
 
 .. option:: <srcfile>
 
@@ -165,3 +193,8 @@ Reading location from stdin.
       Location: (52P,59L)
       Band 1:
         Value: 148
+
+    $ cat coordinates.txt | gdallocationinfo -geoloc -valonly -E -field_sep , utmsmall.tif
+    443020,3748359,214
+    441197,3749005,107
+    443852,3747743,148

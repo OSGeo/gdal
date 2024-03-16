@@ -118,9 +118,9 @@ class FITSDataset final : public GDALPamDataset
     OGRLayer *GetLayer(int) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
-                           const OGRSpatialReference *poSRS,
-                           OGRwkbGeometryType eGType,
-                           char **papszOptions) override;
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
+
     int TestCapability(const char *pszCap) override;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
@@ -2301,12 +2301,13 @@ OGRLayer *FITSDataset::GetLayer(int idx)
 /************************************************************************/
 
 OGRLayer *FITSDataset::ICreateLayer(const char *pszName,
-                                    const OGRSpatialReference * /* poSRS */,
-                                    OGRwkbGeometryType eGType,
-                                    char **papszOptions)
+                                    const OGRGeomFieldDefn *poGeomFieldDefn,
+                                    CSLConstList papszOptions)
 {
     if (!TestCapability(ODsCCreateLayer))
         return nullptr;
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
     if (eGType != wkbNone)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Spatial tables not supported");

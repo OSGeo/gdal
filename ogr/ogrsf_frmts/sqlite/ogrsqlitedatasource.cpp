@@ -3471,10 +3471,10 @@ void OGRSQLiteDataSource::ReleaseResultSet(OGRLayer *poLayer)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRSQLiteDataSource::ICreateLayer(const char *pszLayerNameIn,
-                                            const OGRSpatialReference *poSRS,
-                                            OGRwkbGeometryType eType,
-                                            char **papszOptions)
+OGRLayer *
+OGRSQLiteDataSource::ICreateLayer(const char *pszLayerNameIn,
+                                  const OGRGeomFieldDefn *poGeomFieldDefn,
+                                  CSLConstList papszOptions)
 
 {
     /* -------------------------------------------------------------------- */
@@ -3490,6 +3490,10 @@ OGRLayer *OGRSQLiteDataSource::ICreateLayer(const char *pszLayerNameIn,
 
         return nullptr;
     }
+
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     if (m_bIsSpatiaLiteDB && eType != wkbNone)
     {

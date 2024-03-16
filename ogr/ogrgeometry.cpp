@@ -201,6 +201,10 @@ void OGRGeometry::dumpReadable(FILE *fp, const char *pszPrefix,
  * <li>DISPLAY_GEOMETRY=NO : to hide the dump of the geometry</li>
  * <li>DISPLAY_GEOMETRY=WKT or YES (default) : dump the geometry as a WKT</li>
  * <li>DISPLAY_GEOMETRY=SUMMARY : to get only a summary of the geometry</li>
+ * <li>XY_COORD_PRECISION=integer: number of decimal figures for X,Y coordinates
+ * in WKT (added in GDAL 3.9)</li>
+ * <li>Z_COORD_PRECISION=integer: number of decimal figures for Z coordinates in
+ * WKT (added in GDAL 3.9)</li>
  * </ul>
  *
  * @param pszPrefix the prefix to put on each line of output.
@@ -217,6 +221,35 @@ std::string OGRGeometry::dumpReadable(const char *pszPrefix,
         pszPrefix = "";
 
     std::string osRet;
+
+    const auto exportToWktWithOpts =
+        [this, pszPrefix, papszOptions, &osRet](bool bIso)
+    {
+        OGRErr err(OGRERR_NONE);
+        OGRWktOptions opts;
+        if (const char *pszXYPrecision =
+                CSLFetchNameValue(papszOptions, "XY_COORD_PRECISION"))
+        {
+            opts.format = OGRWktFormat::F;
+            opts.xyPrecision = atoi(pszXYPrecision);
+        }
+        if (const char *pszZPrecision =
+                CSLFetchNameValue(papszOptions, "Z_COORD_PRECISION"))
+        {
+            opts.format = OGRWktFormat::F;
+            opts.zPrecision = atoi(pszZPrecision);
+        }
+        if (bIso)
+            opts.variant = wkbVariantIso;
+        std::string wkt = exportToWkt(opts, &err);
+        if (err == OGRERR_NONE)
+        {
+            osRet = pszPrefix;
+            osRet += wkt.data();
+            osRet += '\n';
+        }
+    };
+
     const char *pszDisplayGeometry =
         CSLFetchNameValue(papszOptions, "DISPLAY_GEOMETRY");
     if (pszDisplayGeometry != nullptr && EQUAL(pszDisplayGeometry, "SUMMARY"))
@@ -392,30 +425,14 @@ std::string OGRGeometry::dumpReadable(const char *pszPrefix,
     }
     else if (pszDisplayGeometry != nullptr && EQUAL(pszDisplayGeometry, "WKT"))
     {
-        OGRErr err(OGRERR_NONE);
-        std::string wkt = exportToWkt(OGRWktOptions(), &err);
-        if (err == OGRERR_NONE)
-        {
-            osRet += pszPrefix;
-            osRet += wkt.data();
-            osRet += '\n';
-        }
+        exportToWktWithOpts(/* bIso=*/false);
     }
     else if (pszDisplayGeometry == nullptr || CPLTestBool(pszDisplayGeometry) ||
              EQUAL(pszDisplayGeometry, "ISO_WKT"))
     {
-        OGRErr err(OGRERR_NONE);
-        OGRWktOptions opts;
-
-        opts.variant = wkbVariantIso;
-        std::string wkt = exportToWkt(opts, &err);
-        if (err == OGRERR_NONE)
-        {
-            osRet += pszPrefix;
-            osRet += wkt.data();
-            osRet += '\n';
-        }
+        exportToWktWithOpts(/* bIso=*/true);
     }
+
     return osRet;
 }
 
@@ -1527,12 +1544,12 @@ OGRErr OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void *pabyData, int nSize)
         static_cast<const GByte *>(pabyData), nSize);
 }
 
+/************************************************************************/
+/*                       OGRGeometry::exportToWkb()                     */
+/************************************************************************/
+
 /* clang-format off */
 /**
- * \fn OGRErr OGRGeometry::exportToWkb( OGRwkbByteOrder eByteOrder,
-                                        unsigned char * pabyData,
-                                        OGRwkbVariant eWkbVariant=wkbVariantOldOgc ) const
- *
  * \brief Convert a geometry into well known binary format.
  *
  * This method relates to the SFCOM IWks::ExportToWKB() method.
@@ -1555,6 +1572,15 @@ OGRErr OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void *pabyData, int nSize)
  * @return Currently OGRERR_NONE is always returned.
  */
 /* clang-format on */
+OGRErr OGRGeometry::exportToWkb(OGRwkbByteOrder eByteOrder,
+                                unsigned char *pabyData,
+                                OGRwkbVariant eWkbVariant) const
+{
+    OGRwkbExportOptions sOptions;
+    sOptions.eByteOrder = eByteOrder;
+    sOptions.eWkbVariant = eWkbVariant;
+    return exportToWkb(pabyData, &sOptions);
+}
 
 /************************************************************************/
 /*                         OGR_G_ExportToWkb()                          */
@@ -1629,6 +1655,60 @@ OGRErr OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
 
     return OGRGeometry::FromHandle(hGeom)->exportToWkb(eOrder, pabyDstBuffer,
                                                        wkbVariantIso);
+}
+
+/************************************************************************/
+/*                        OGR_G_ExportToWkbEx()                         */
+/************************************************************************/
+
+/* clang-format off */
+/**
+ * \fn OGRErr OGRGeometry::exportToWkb(unsigned char *pabyDstBuffer, const OGRwkbExportOptions *psOptions=nullptr) const
+ *
+ * \brief Convert a geometry into well known binary format
+ *
+ * This function relates to the SFCOM IWks::ExportToWKB() method.
+ *
+ * This function is the same as the C function OGR_G_ExportToWkbEx().
+ *
+ * @param pabyDstBuffer a buffer into which the binary representation is
+ *                      written.  This buffer must be at least
+ *                      OGR_G_WkbSize() byte in size.
+ * @param psOptions WKB export options.
+
+ * @return Currently OGRERR_NONE is always returned.
+ *
+ * @since GDAL 3.9
+ */
+/* clang-format on */
+
+/**
+ * \brief Convert a geometry into well known binary format
+ *
+ * This function relates to the SFCOM IWks::ExportToWKB() method.
+ *
+ * This function is the same as the CPP method
+ * OGRGeometry::exportToWkb(unsigned char *, const OGRwkbExportOptions*)
+ *
+ * @param hGeom handle on the geometry to convert to a well know binary
+ * data from.
+ * @param pabyDstBuffer a buffer into which the binary representation is
+ *                      written.  This buffer must be at least
+ *                      OGR_G_WkbSize() byte in size.
+ * @param psOptions WKB export options.
+
+ * @return Currently OGRERR_NONE is always returned.
+ *
+ * @since GDAL 3.9
+ */
+
+OGRErr OGR_G_ExportToWkbEx(OGRGeometryH hGeom, unsigned char *pabyDstBuffer,
+                           const OGRwkbExportOptions *psOptions)
+{
+    VALIDATE_POINTER1(hGeom, "OGR_G_ExportToWkbEx", OGRERR_FAILURE);
+
+    return OGRGeometry::FromHandle(hGeom)->exportToWkb(pabyDstBuffer,
+                                                       psOptions);
 }
 
 /**
@@ -2953,21 +3033,60 @@ void OGR_G_FlattenTo2D(OGRGeometryH hGeom)
  * types assuming the this is available in the gml namespace.  The returned
  * string should be freed with CPLFree() when no longer required.
  *
- * The supported options in OGR 1.8.0 are :
+ * The supported options are :
  * <ul>
- * <li> FORMAT=GML3. Otherwise it will default to GML 2.1.2 output.
- * <li> GML3_LINESTRING_ELEMENT=curve. (Only valid for FORMAT=GML3) To
- *     use gml:Curve element for linestrings.  Otherwise
- *     gml:LineString will be used .
- * <li> GML3_LONGSRS=YES/NO. (Only valid for FORMAT=GML3) Default to
- *      YES. If YES, SRS with EPSG authority will be written with the
- *      "urn:ogc:def:crs:EPSG::" prefix.  In the case, if the SRS is a
- *      geographic SRS without explicit AXIS order, but that the same
- *      SRS authority code imported with ImportFromEPSGA() should be
- *      treated as lat/long, then the function will take care of
- *      coordinate order swapping.  If set to NO, SRS with EPSG
- *      authority will be written with the "EPSG:" prefix, even if
- *      they are in lat/long order.
+ * <li> FORMAT=GML2/GML3/GML32 (GML2 or GML32 added in GDAL 2.1).
+ *      If not set, it will default to GML 2.1.2 output.
+ * </li>
+ * <li> GML3_LINESTRING_ELEMENT=curve. (Only valid for FORMAT=GML3)
+ *      To use gml:Curve element for linestrings.
+ *      Otherwise gml:LineString will be used .
+ * </li>
+ * <li> GML3_LONGSRS=YES/NO. (Only valid for FORMAT=GML3, deprecated by
+ *      SRSNAME_FORMAT in GDAL &gt;=2.2). Defaults to YES.
+ *      If YES, SRS with EPSG authority will be written with the
+ *      "urn:ogc:def:crs:EPSG::" prefix.
+ *      In the case the SRS should be treated as lat/long or
+ *      northing/easting, then the function will take care of coordinate order
+ *      swapping if the data axis to CRS axis mapping indicates it.
+ *      If set to NO, SRS with EPSG authority will be written with the "EPSG:"
+ *      prefix, even if they are in lat/long order.
+ * </li>
+ * <li> SRSNAME_FORMAT=SHORT/OGC_URN/OGC_URL (Only valid for FORMAT=GML3, added
+ *      in GDAL 2.2). Defaults to OGC_URN.  If SHORT, then srsName will be in
+ *      the form AUTHORITY_NAME:AUTHORITY_CODE. If OGC_URN, then srsName will be
+ *      in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE. If OGC_URL,
+ *      then srsName will be in the form
+ *      http://www.opengis.net/def/crs/AUTHORITY_NAME/0/AUTHORITY_CODE. For
+ *      OGC_URN and OGC_URL, in the case the SRS should be treated as lat/long
+ *      or northing/easting, then the function will take care of coordinate
+ *      order swapping if the data axis to CRS axis mapping indicates it.
+ * </li>
+ * <li> GMLID=astring. If specified, a gml:id attribute will be written in the
+ *      top-level geometry element with the provided value.
+ *      Required for GML 3.2 compatibility.
+ * </li>
+ * <li> SRSDIMENSION_LOC=POSLIST/GEOMETRY/GEOMETRY,POSLIST. (Only valid for
+ *      FORMAT=GML3/GML32, GDAL >= 2.0) Default to POSLIST.
+ *      For 2.5D geometries, define the location where to attach the
+ *      srsDimension attribute.
+ *      There are diverging implementations. Some put in on the
+ *      &lt;gml:posList&gt; element, other on the top geometry element.
+ * </li>
+ * <li> NAMESPACE_DECL=YES/NO. If set to YES,
+ *      xmlns:gml="http://www.opengis.net/gml" will be added to the root node
+ *      for GML < 3.2 or xmlns:gml="http://www.opengis.net/gml/3.2" for GML 3.2
+ * </li>
+ * <li> XY_COORD_RESOLUTION=double (added in GDAL 3.9):
+ *      Resolution for the coordinate precision of the X and Y coordinates.
+ *      Expressed in the units of the X and Y axis of the SRS. eg 1e-5 for up
+ *      to 5 decimal digits. 0 for the default behavior.
+ * </li>
+ * <li> Z_COORD_RESOLUTION=double (added in GDAL 3.9):
+ *      Resolution for the coordinate precision of the Z coordinates.
+ *      Expressed in the units of the Z axis of the SRS.
+ *      0 for the default behavior.
+ * </li>
  * </ul>
  *
  * This method is the same as the C function OGR_G_ExportToGMLEx().
@@ -3016,15 +3135,25 @@ char *OGRGeometry::exportToKML() const
  *
  * The returned string should be freed with CPLFree() when no longer required.
  *
+ * The following options are supported :
+ * <ul>
+ * <li>XY_COORD_PRECISION=integer: number of decimal figures for X,Y coordinates
+ * (added in GDAL 3.9)</li>
+ * <li>Z_COORD_PRECISION=integer: number of decimal figures for Z coordinates
+ * (added in GDAL 3.9)</li>
+ * </ul>
+ *
  * This method is the same as the C function OGR_G_ExportToJson().
  *
+ * @param papszOptions Null terminated list of options, or null (added in 3.9)
  * @return A GeoJSON fragment or NULL in case of error.
  */
 
-char *OGRGeometry::exportToJson() const
+char *OGRGeometry::exportToJson(CSLConstList papszOptions) const
 {
     OGRGeometry *poGeometry = const_cast<OGRGeometry *>(this);
-    return OGR_G_ExportToJson(OGRGeometry::ToHandle(poGeometry));
+    return OGR_G_ExportToJsonEx(OGRGeometry::ToHandle(poGeometry),
+                                const_cast<char **>(papszOptions));
 }
 
 /************************************************************************/
@@ -3189,7 +3318,10 @@ OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
     else if (eType == wkbPolyhedralSurface || eType == wkbTIN)
     {
         OGRGeometry *poGC = OGRGeometryFactory::forceTo(
-            poLinearGeom->clone(), wkbGeometryCollection, nullptr);
+            poLinearGeom->clone(),
+            OGR_GT_SetModifier(wkbGeometryCollection, poLinearGeom->Is3D(),
+                               poLinearGeom->IsMeasured()),
+            nullptr);
         hGeom = convertToGEOSGeom(hGEOSCtxt, poGC);
         delete poGC;
     }
@@ -3197,10 +3329,11 @@ OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
     {
         bool bCanConvertToMultiPoly = true;
         // bool bMustConvertToMultiPoly = true;
-        OGRGeometryCollection *poGC = poLinearGeom->toGeometryCollection();
+        const OGRGeometryCollection *poGC =
+            poLinearGeom->toGeometryCollection();
         for (int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++)
         {
-            OGRwkbGeometryType eSubGeomType =
+            const OGRwkbGeometryType eSubGeomType =
                 wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
             if (eSubGeomType == wkbPolyhedralSurface || eSubGeomType == wkbTIN)
             {
@@ -3216,9 +3349,15 @@ OGRGeometry::exportToGEOS(UNUSED_IF_NO_GEOS GEOSContextHandle_t hGEOSCtxt) const
         if (bCanConvertToMultiPoly /* && bMustConvertToMultiPoly */)
         {
             OGRGeometry *poMultiPolygon = OGRGeometryFactory::forceTo(
-                poLinearGeom->clone(), wkbMultiPolygon, nullptr);
+                poLinearGeom->clone(),
+                OGR_GT_SetModifier(wkbMultiPolygon, poLinearGeom->Is3D(),
+                                   poLinearGeom->IsMeasured()),
+                nullptr);
             OGRGeometry *poGCDest = OGRGeometryFactory::forceTo(
-                poMultiPolygon, wkbGeometryCollection, nullptr);
+                poMultiPolygon,
+                OGR_GT_SetModifier(wkbGeometryCollection, poLinearGeom->Is3D(),
+                                   poLinearGeom->IsMeasured()),
+                nullptr);
             hGeom = convertToGEOSGeom(hGEOSCtxt, poGCDest);
             delete poGCDest;
         }
@@ -6016,6 +6155,177 @@ OGRGeometryH OGR_G_SimplifyPreserveTopology(OGRGeometryH hThis,
 }
 
 /************************************************************************/
+/*                           roundCoordinates()                         */
+/************************************************************************/
+
+/** Round coordinates of the geometry to the specified precision.
+ *
+ * Note that this is not the same as OGRGeometry::SetPrecision(). The later
+ * will return valid geometries, whereas roundCoordinates() does not make
+ * such guarantee and may return geometries with invalidities, if they are
+ * not compatible of the specified precision. roundCoordinates() supports
+ * curve geometries, whereas SetPrecision() does not currently.
+ *
+ * One use case for roundCoordinates() is to undo the effect of
+ * quantizeCoordinates().
+ *
+ * @param sPrecision Contains the precision requirements.
+ * @since GDAL 3.9
+ */
+void OGRGeometry::roundCoordinates(const OGRGeomCoordinatePrecision &sPrecision)
+{
+    struct Rounder : public OGRDefaultGeometryVisitor
+    {
+        const OGRGeomCoordinatePrecision &m_precision;
+        const double m_invXYResolution;
+        const double m_invZResolution;
+        const double m_invMResolution;
+        explicit Rounder(const OGRGeomCoordinatePrecision &sPrecisionIn)
+            : m_precision(sPrecisionIn),
+              m_invXYResolution(m_precision.dfXYResolution !=
+                                        OGRGeomCoordinatePrecision::UNKNOWN
+                                    ? 1.0 / m_precision.dfXYResolution
+                                    : 0.0),
+              m_invZResolution(m_precision.dfZResolution !=
+                                       OGRGeomCoordinatePrecision::UNKNOWN
+                                   ? 1.0 / m_precision.dfZResolution
+                                   : 0.0),
+              m_invMResolution(m_precision.dfMResolution !=
+                                       OGRGeomCoordinatePrecision::UNKNOWN
+                                   ? 1.0 / m_precision.dfMResolution
+                                   : 0.0)
+        {
+        }
+
+        using OGRDefaultGeometryVisitor::visit;
+        void visit(OGRPoint *poPoint) override
+        {
+            if (m_precision.dfXYResolution !=
+                OGRGeomCoordinatePrecision::UNKNOWN)
+            {
+                poPoint->setX(std::round(poPoint->getX() * m_invXYResolution) *
+                              m_precision.dfXYResolution);
+                poPoint->setY(std::round(poPoint->getY() * m_invXYResolution) *
+                              m_precision.dfXYResolution);
+            }
+            if (m_precision.dfZResolution !=
+                    OGRGeomCoordinatePrecision::UNKNOWN &&
+                poPoint->Is3D())
+            {
+                poPoint->setZ(std::round(poPoint->getZ() * m_invZResolution) *
+                              m_precision.dfZResolution);
+            }
+            if (m_precision.dfMResolution !=
+                    OGRGeomCoordinatePrecision::UNKNOWN &&
+                poPoint->IsMeasured())
+            {
+                poPoint->setM(std::round(poPoint->getM() * m_invMResolution) *
+                              m_precision.dfMResolution);
+            }
+        }
+    };
+
+    Rounder rounder(sPrecision);
+    accept(&rounder);
+}
+
+/************************************************************************/
+/*                           SetPrecision()                             */
+/************************************************************************/
+
+/** Set the geometry's precision, rounding all its coordinates to the precision
+ * grid, and making sure the geometry is still valid.
+ *
+ * This is a stronger version of roundCoordinates().
+ *
+ * Note that at time of writing GEOS does no supported curve geometries. So
+ * currently if this function is called on such a geometry, OGR will first call
+ * getLinearGeometry() on the input and getCurveGeometry() on the output, but
+ * that it is unlikely to yield to the expected result.
+ *
+ * This function is the same as the C function OGR_G_SetPrecision().
+ *
+ * This function is built on the GEOSGeom_setPrecision_r() function of the
+ * GEOS library. Check it for the definition of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param dfGridSize size of the precision grid, or 0 for FLOATING
+ *                 precision.
+ * @param nFlags The bitwise OR of zero, one or several of OGR_GEOS_PREC_NO_TOPO
+ *               and OGR_GEOS_PREC_KEEP_COLLAPSED
+ *
+ * @return a new geometry or NULL if an error occurs.
+ *
+ * @since GDAL 3.9
+ */
+
+OGRGeometry *OGRGeometry::SetPrecision(UNUSED_IF_NO_GEOS double dfGridSize,
+                                       UNUSED_IF_NO_GEOS int nFlags) const
+{
+#ifndef HAVE_GEOS
+    CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
+    return nullptr;
+
+#else
+    OGRGeometry *poOGRProduct = nullptr;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    if (hThisGeosGeom != nullptr)
+    {
+        GEOSGeom hGeosProduct = GEOSGeom_setPrecision_r(
+            hGEOSCtxt, hThisGeosGeom, dfGridSize, nFlags);
+        GEOSGeom_destroy_r(hGEOSCtxt, hThisGeosGeom);
+        poOGRProduct =
+            BuildGeometryFromGEOS(hGEOSCtxt, hGeosProduct, this, nullptr);
+    }
+    freeGEOSContext(hGEOSCtxt);
+    return poOGRProduct;
+
+#endif  // HAVE_GEOS
+}
+
+/************************************************************************/
+/*                         OGR_G_SetPrecision()                         */
+/************************************************************************/
+
+/** Set the geometry's precision, rounding all its coordinates to the precision
+ * grid, and making sure the geometry is still valid.
+ *
+ * This is a stronger version of roundCoordinates().
+ *
+ * Note that at time of writing GEOS does no supported curve geometries. So
+ * currently if this function is called on such a geometry, OGR will first call
+ * getLinearGeometry() on the input and getCurveGeometry() on the output, but
+ * that it is unlikely to yield to the expected result.
+ *
+ * This function is the same as the C++ method OGRGeometry::SetPrecision().
+ *
+ * This function is built on the GEOSGeom_setPrecision_r() function of the
+ * GEOS library. Check it for the definition of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * @param hThis the geometry.
+ * @param dfGridSize size of the precision grid, or 0 for FLOATING
+ *                 precision.
+ * @param nFlags The bitwise OR of zero, one or several of OGR_GEOS_PREC_NO_TOPO
+ *               and OGR_GEOS_PREC_KEEP_COLLAPSED
+ *
+ * @return a new geometry or NULL if an error occurs.
+ *
+ * @since GDAL 3.9
+ */
+OGRGeometryH OGR_G_SetPrecision(OGRGeometryH hThis, double dfGridSize,
+                                int nFlags)
+{
+    VALIDATE_POINTER1(hThis, "OGR_G_SetPrecision", nullptr);
+    return OGRGeometry::ToHandle(
+        OGRGeometry::FromHandle(hThis)->SetPrecision(dfGridSize, nFlags));
+}
+
+/************************************************************************/
 /*                         DelaunayTriangulation()                      */
 /************************************************************************/
 
@@ -7491,6 +7801,78 @@ OGRBoolean OGRGeometry::IsSFCGALCompatible() const
 //! @endcond
 
 /************************************************************************/
+/*                    roundCoordinatesIEEE754()                         */
+/************************************************************************/
+
+/** Round coordinates of a geometry, exploiting characteristics of the IEEE-754
+ * double-precision binary representation.
+ *
+ * Determines the number of bits (N) required to represent a coordinate value
+ * with a specified number of digits after the decimal point, and then sets all
+ * but the N most significant bits to zero. The resulting coordinate value will
+ * still round to the original value (e.g. after roundCoordinates()), but wil
+ * have improved compressiblity.
+ *
+ * @param options Contains the precision requirements.
+ * @since GDAL 3.9
+ */
+void OGRGeometry::roundCoordinatesIEEE754(
+    const OGRGeomCoordinateBinaryPrecision &options)
+{
+    struct Quantizer : public OGRDefaultGeometryVisitor
+    {
+        const OGRGeomCoordinateBinaryPrecision &m_options;
+        explicit Quantizer(const OGRGeomCoordinateBinaryPrecision &optionsIn)
+            : m_options(optionsIn)
+        {
+        }
+
+        using OGRDefaultGeometryVisitor::visit;
+        void visit(OGRPoint *poPoint) override
+        {
+            if (m_options.nXYBitPrecision != INT_MIN)
+            {
+                uint64_t i;
+                double d;
+                d = poPoint->getX();
+                memcpy(&i, &d, sizeof(i));
+                i = OGRRoundValueIEEE754(i, m_options.nXYBitPrecision);
+                memcpy(&d, &i, sizeof(i));
+                poPoint->setX(d);
+                d = poPoint->getY();
+                memcpy(&i, &d, sizeof(i));
+                i = OGRRoundValueIEEE754(i, m_options.nXYBitPrecision);
+                memcpy(&d, &i, sizeof(i));
+                poPoint->setY(d);
+            }
+            if (m_options.nZBitPrecision != INT_MIN && poPoint->Is3D())
+            {
+                uint64_t i;
+                double d;
+                d = poPoint->getZ();
+                memcpy(&i, &d, sizeof(i));
+                i = OGRRoundValueIEEE754(i, m_options.nZBitPrecision);
+                memcpy(&d, &i, sizeof(i));
+                poPoint->setZ(d);
+            }
+            if (m_options.nMBitPrecision != INT_MIN && poPoint->IsMeasured())
+            {
+                uint64_t i;
+                double d;
+                d = poPoint->getM();
+                memcpy(&i, &d, sizeof(i));
+                i = OGRRoundValueIEEE754(i, m_options.nMBitPrecision);
+                memcpy(&d, &i, sizeof(i));
+                poPoint->setM(d);
+            }
+        }
+    };
+
+    Quantizer quantizer(options);
+    accept(&quantizer);
+}
+
+/************************************************************************/
 /*                             visit()                                  */
 /************************************************************************/
 
@@ -7711,3 +8093,120 @@ void OGRGeometry::HomogenizeDimensionalityWith(OGRGeometry *poOtherGeom)
         poOtherGeom->setMeasured(TRUE);
 }
 //! @endcond
+
+/************************************************************************/
+/*                  OGRGeomCoordinateBinaryPrecision::SetFrom()         */
+/************************************************************************/
+
+/** Set binary precision options from resolution.
+ *
+ * @since GDAL 3.9
+ */
+void OGRGeomCoordinateBinaryPrecision::SetFrom(
+    const OGRGeomCoordinatePrecision &prec)
+{
+    if (prec.dfXYResolution != 0)
+    {
+        nXYBitPrecision =
+            static_cast<int>(ceil(log2(1. / prec.dfXYResolution)));
+    }
+    if (prec.dfZResolution != 0)
+    {
+        nZBitPrecision = static_cast<int>(ceil(log2(1. / prec.dfZResolution)));
+    }
+    if (prec.dfMResolution != 0)
+    {
+        nMBitPrecision = static_cast<int>(ceil(log2(1. / prec.dfMResolution)));
+    }
+}
+/************************************************************************/
+/*                        OGRwkbExportOptionsCreate()                   */
+/************************************************************************/
+
+/**
+ * \brief Create geometry WKB export options.
+ *
+ * The default is Intel order, old-OGC wkb variant and 0 discarded lsb bits.
+ *
+ * @return object to be freed with OGRwkbExportOptionsDestroy().
+ * @since GDAL 3.9
+ */
+OGRwkbExportOptions *OGRwkbExportOptionsCreate()
+{
+    return new OGRwkbExportOptions;
+}
+
+/************************************************************************/
+/*                        OGRwkbExportOptionsDestroy()                  */
+/************************************************************************/
+
+/**
+ * \brief Destroy object returned by OGRwkbExportOptionsCreate()
+ *
+ * @param psOptions WKB export options
+ * @since GDAL 3.9
+ */
+
+void OGRwkbExportOptionsDestroy(OGRwkbExportOptions *psOptions)
+{
+    delete psOptions;
+}
+
+/************************************************************************/
+/*                   OGRwkbExportOptionsSetByteOrder()                  */
+/************************************************************************/
+
+/**
+ * \brief Set the WKB byte order.
+ *
+ * @param psOptions WKB export options
+ * @param eByteOrder Byte order: wkbXDR (big-endian) or wkbNDR (little-endian,
+ * Intel)
+ * @since GDAL 3.9
+ */
+
+void OGRwkbExportOptionsSetByteOrder(OGRwkbExportOptions *psOptions,
+                                     OGRwkbByteOrder eByteOrder)
+{
+    psOptions->eByteOrder = eByteOrder;
+}
+
+/************************************************************************/
+/*                   OGRwkbExportOptionsSetVariant()                    */
+/************************************************************************/
+
+/**
+ * \brief Set the WKB variant
+ *
+ * @param psOptions WKB export options
+ * @param eWkbVariant variant: wkbVariantOldOgc, wkbVariantIso,
+ * wkbVariantPostGIS1
+ * @since GDAL 3.9
+ */
+
+void OGRwkbExportOptionsSetVariant(OGRwkbExportOptions *psOptions,
+                                   OGRwkbVariant eWkbVariant)
+{
+    psOptions->eWkbVariant = eWkbVariant;
+}
+
+/************************************************************************/
+/*                   OGRwkbExportOptionsSetPrecision()                  */
+/************************************************************************/
+
+/**
+ * \brief Set precision options
+ *
+ * @param psOptions WKB export options
+ * @param hPrecisionOptions Precision options (might be null to reset them)
+ * @since GDAL 3.9
+ */
+
+void OGRwkbExportOptionsSetPrecision(
+    OGRwkbExportOptions *psOptions,
+    OGRGeomCoordinatePrecisionH hPrecisionOptions)
+{
+    psOptions->sPrecision = OGRGeomCoordinateBinaryPrecision();
+    if (hPrecisionOptions)
+        psOptions->sPrecision.SetFrom(*hPrecisionOptions);
+}

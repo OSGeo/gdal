@@ -64,12 +64,17 @@ OGRMemDataSource::~OGRMemDataSource()
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRMemDataSource::ICreateLayer(const char *pszLayerName,
-                                         const OGRSpatialReference *poSRSIn,
-                                         OGRwkbGeometryType eType,
-                                         char **papszOptions)
+OGRLayer *
+OGRMemDataSource::ICreateLayer(const char *pszLayerName,
+                               const OGRGeomFieldDefn *poGeomFieldDefn,
+                               CSLConstList papszOptions)
 {
     // Create the layer object.
+
+    const auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSRSIn =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
+
     OGRSpatialReference *poSRS = nullptr;
     if (poSRSIn)
     {

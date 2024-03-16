@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "parsexsd.h"
 
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <set>
@@ -481,8 +482,8 @@ static GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                         std::string osSRSName;
 
                         // Look if there's a comment restricting to subclasses.
-                        const CPLXMLNode *psIter2 = psAttrDef->psNext;
-                        while (psIter2 != nullptr)
+                        for (const CPLXMLNode *psIter2 = psAttrDef->psNext;
+                             psIter2 != nullptr; psIter2 = psIter2->psNext)
                         {
                             if (psIter2->eType == CXT_Comment)
                             {
@@ -515,14 +516,64 @@ static GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                                     }
                                 }
                             }
+                        }
 
-                            psIter2 = psIter2->psNext;
+                        // Try to get coordinate precision from a construct like:
+                        /*
+                            <xs:element name="wkb_geometry" type="gml:SurfacePropertyType" nillable="true" minOccurs="0" maxOccurs="1">
+                                <xs:annotation>
+                                  <xs:appinfo source="http://ogr.maptools.org/">
+                                    <ogr:xy_coordinate_resolution>8.9e-9</ogr:xy_coordinate_resolution>
+                                    <ogr:z_coordinate_resolution>1e-3</ogr:z_coordinate_resolution>
+                                    <ogr:m_coordinate_resolution>1e-3</ogr:m_coordinate_resolution>
+                                  </xs:appinfo>
+                                </xs:annotation>
+                            </xs:element>
+                        */
+                        OGRGeomCoordinatePrecision oGeomCoordPrec;
+                        const auto psAnnotation =
+                            CPLGetXMLNode(psAttrDef, "annotation");
+                        if (psAnnotation)
+                        {
+                            for (const CPLXMLNode *psIterAppinfo =
+                                     psAnnotation->psChild;
+                                 psIterAppinfo;
+                                 psIterAppinfo = psIterAppinfo->psNext)
+                            {
+                                if (psIterAppinfo->eType == CXT_Element &&
+                                    strcmp(psIterAppinfo->pszValue,
+                                           "appinfo") == 0 &&
+                                    strcmp(CPLGetXMLValue(psIterAppinfo,
+                                                          "source", ""),
+                                           "http://ogr.maptools.org/") == 0)
+                                {
+                                    if (const char *pszXYRes = CPLGetXMLValue(
+                                            psIterAppinfo,
+                                            "xy_coordinate_resolution",
+                                            nullptr))
+                                    {
+                                        const double dfVal = CPLAtof(pszXYRes);
+                                        if (dfVal > 0 && std::isfinite(dfVal))
+                                            oGeomCoordPrec.dfXYResolution =
+                                                dfVal;
+                                    }
+                                    if (const char *pszZRes = CPLGetXMLValue(
+                                            psIterAppinfo,
+                                            "z_coordinate_resolution", nullptr))
+                                    {
+                                        const double dfVal = CPLAtof(pszZRes);
+                                        if (dfVal > 0 && std::isfinite(dfVal))
+                                            oGeomCoordPrec.dfZResolution =
+                                                dfVal;
+                                    }
+                                }
+                            }
                         }
 
                         GMLGeometryPropertyDefn *poDefn =
                             new GMLGeometryPropertyDefn(
                                 pszElementName, pszElementName, eType,
-                                nAttributeIndex, bNullable);
+                                nAttributeIndex, bNullable, oGeomCoordPrec);
                         poDefn->SetSRSName(osSRSName);
 
                         if (poClass->AddGeometryProperty(poDefn) < 0)

@@ -332,10 +332,9 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
                GDALDataType eDT, char **papszOptions);
     OGRLayer *GetLayer(int iLayer) override;
     OGRErr DeleteLayer(int iLayer) override;
-    OGRLayer *ICreateLayer(const char *pszLayerName,
-                           const OGRSpatialReference *poSpatialRef,
-                           OGRwkbGeometryType eGType,
-                           char **papszOptions) override;
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
     int TestCapability(const char *) override;
 
     std::vector<std::string>
@@ -575,6 +574,9 @@ class OGRGeoPackageLayer CPL_NON_FINAL : public OGRLayer,
     int m_iGeomCol = -1;
     std::vector<int> m_anFieldOrdinals{};
 
+    //! Whether to call OGRGeometry::SetPrecision() when reading back geometries from the database
+    bool m_bUndoDiscardCoordLSBOnReading = false;
+
     void ClearStatement();
     virtual OGRErr ResetStatement() = 0;
 
@@ -647,6 +649,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     int m_iSrs = 0;
     int m_nZFlag = 0;
     int m_nMFlag = 0;
+    OGRGeomCoordinateBinaryPrecision m_sBinaryPrecision{};
     OGREnvelope *m_poExtent = nullptr;
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     GIntBig m_nTotalFeatureCount = -1;
@@ -884,12 +887,12 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
                               const char *pszObjectType, bool bIsInGpkgContents,
                               bool bIsSpatial, const char *pszGeomColName,
                               const char *pszGeomType, bool bHasZ, bool bHasM);
-    void SetCreationParameters(OGRwkbGeometryType eGType,
-                               const char *pszGeomColumnName, int bGeomNullable,
-                               OGRSpatialReference *poSRS,
-                               const char *pszFIDColumnName,
-                               const char *pszIdentifier,
-                               const char *pszDescription);
+    void SetCreationParameters(
+        OGRwkbGeometryType eGType, const char *pszGeomColumnName,
+        int bGeomNullable, OGRSpatialReference *poSRS,
+        const OGRGeomCoordinatePrecision &oCoordPrec, bool bDiscardCoordLSB,
+        bool bUndoDiscardCoordLSBOnReading, const char *pszFIDColumnName,
+        const char *pszIdentifier, const char *pszDescription);
     void SetDeferredSpatialIndexCreation(bool bFlag);
     void SetASpatialVariant(GPKGASpatialVariant eASpatialVariant)
     {

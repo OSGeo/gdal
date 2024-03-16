@@ -287,10 +287,10 @@ OGRLayer *OGRTABDataSource::GetLayer(int iLayer)
 /*                           ICreateLayer()                             */
 /************************************************************************/
 
-OGRLayer *OGRTABDataSource::ICreateLayer(const char *pszLayerName,
-                                         const OGRSpatialReference *poSRSIn,
-                                         OGRwkbGeometryType /* eGeomTypeIn */,
-                                         char **papszOptions)
+OGRLayer *
+OGRTABDataSource::ICreateLayer(const char *pszLayerName,
+                               const OGRGeomFieldDefn *poGeomFieldDefnIn,
+                               CSLConstList papszOptions)
 
 {
     if (!GetUpdate())
@@ -299,6 +299,9 @@ OGRLayer *OGRTABDataSource::ICreateLayer(const char *pszLayerName,
                  "Cannot create layer on read-only dataset.");
         return nullptr;
     }
+
+    const auto poSRSIn =
+        poGeomFieldDefnIn ? poGeomFieldDefnIn->GetSpatialRef() : nullptr;
 
     // If it is a single file mode file, then we may have already
     // instantiated the low level layer.   We would just need to

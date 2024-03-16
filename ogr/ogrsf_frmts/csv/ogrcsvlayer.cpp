@@ -2221,33 +2221,67 @@ OGRErr OGRCSVLayer::ICreateFeature(OGRFeature *poNewFeature)
     bool bNeedDelimiter = false;
     bool bEmptyLine = true;
 
+    const auto GetWktOptions = [](const OGRGeomFieldDefn *poGeomFieldDefn)
+    {
+        const auto &sCoordPrec = poGeomFieldDefn->GetCoordinatePrecision();
+
+        OGRWktOptions wktOptions;
+        wktOptions.variant = wkbVariantIso;
+        if (sCoordPrec.dfXYResolution != OGRGeomCoordinatePrecision::UNKNOWN)
+        {
+            wktOptions.format = OGRWktFormat::F;
+            wktOptions.xyPrecision =
+                OGRGeomCoordinatePrecision::ResolutionToPrecision(
+                    sCoordPrec.dfXYResolution);
+        }
+        if (sCoordPrec.dfZResolution != OGRGeomCoordinatePrecision::UNKNOWN)
+        {
+            wktOptions.format = OGRWktFormat::F;
+            wktOptions.zPrecision =
+                OGRGeomCoordinatePrecision::ResolutionToPrecision(
+                    sCoordPrec.dfZResolution);
+        }
+        if (sCoordPrec.dfMResolution != OGRGeomCoordinatePrecision::UNKNOWN)
+        {
+            wktOptions.format = OGRWktFormat::F;
+            wktOptions.mPrecision =
+                OGRGeomCoordinatePrecision::ResolutionToPrecision(
+                    sCoordPrec.dfMResolution);
+        }
+
+        return wktOptions;
+    };
+
     // Write out the geometry.
     if (eGeometryFormat == OGR_CSV_GEOM_AS_XYZ ||
         eGeometryFormat == OGR_CSV_GEOM_AS_XY ||
         eGeometryFormat == OGR_CSV_GEOM_AS_YX)
     {
-        OGRGeometry *poGeom = poNewFeature->GetGeometryRef();
+        const OGRGeometry *poGeom = poNewFeature->GetGeometryRef();
         if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         {
-            OGRPoint *poPoint = poGeom->toPoint();
-            char szBuffer[75] = {};
+            const auto poGeomFieldDefn = poFeatureDefn->GetGeomFieldDefn(0);
+            const OGRPoint *poPoint = poGeom->toPoint();
+            std::string osCoord;
             if (eGeometryFormat == OGR_CSV_GEOM_AS_XYZ)
-                OGRMakeWktCoordinate(szBuffer, poPoint->getX(), poPoint->getY(),
-                                     poPoint->getZ(), 3);
+                osCoord = OGRMakeWktCoordinate(poPoint->getX(), poPoint->getY(),
+                                               poPoint->getZ(), 3,
+                                               GetWktOptions(poGeomFieldDefn));
             else if (eGeometryFormat == OGR_CSV_GEOM_AS_XY)
-                OGRMakeWktCoordinate(szBuffer, poPoint->getX(), poPoint->getY(),
-                                     0, 2);
+                osCoord =
+                    OGRMakeWktCoordinate(poPoint->getX(), poPoint->getY(), 0, 2,
+                                         GetWktOptions(poGeomFieldDefn));
             else
-                OGRMakeWktCoordinate(szBuffer, poPoint->getY(), poPoint->getX(),
-                                     0, 2);
-            char *pc = szBuffer;
-            while (*pc != '\0')
+                osCoord =
+                    OGRMakeWktCoordinate(poPoint->getY(), poPoint->getX(), 0, 2,
+                                         GetWktOptions(poGeomFieldDefn));
+
+            for (char &ch : osCoord)
             {
-                if (*pc == ' ')
-                    *pc = szDelimiter[0];
-                pc++;
+                if (ch == ' ')
+                    ch = szDelimiter[0];
             }
-            bRet &= VSIFPrintfL(fpCSV, "%s", szBuffer) > 0;
+            bRet &= VSIFPrintfL(fpCSV, "%s", osCoord.c_str()) > 0;
         }
         else
         {
@@ -2260,17 +2294,20 @@ OGRErr OGRCSVLayer::ICreateFeature(OGRFeature *poNewFeature)
     }
     else if (bHiddenWKTColumn)
     {
-        char *pszWKT = nullptr;
-        OGRGeometry *poGeom = poNewFeature->GetGeomFieldRef(0);
-        if (poGeom &&
-            poGeom->exportToWkt(&pszWKT, wkbVariantIso) == OGRERR_NONE)
+        const OGRGeometry *poGeom = poNewFeature->GetGeomFieldRef(0);
+        if (poGeom)
         {
-            bRet &= VSIFWriteL("\"", 1, 1, fpCSV) > 0;
-            bRet &= VSIFWriteL(pszWKT, strlen(pszWKT), 1, fpCSV) > 0;
-            bRet &= VSIFWriteL("\"", 1, 1, fpCSV) > 0;
-            bEmptyLine = false;
+            const auto poGeomFieldDefn = poFeatureDefn->GetGeomFieldDefn(0);
+            const std::string wkt =
+                poGeom->exportToWkt(GetWktOptions(poGeomFieldDefn));
+            if (!wkt.empty())
+            {
+                bRet &= VSIFWriteL("\"", 1, 1, fpCSV) > 0;
+                bRet &= VSIFWriteL(wkt.c_str(), wkt.size(), 1, fpCSV) > 0;
+                bRet &= VSIFWriteL("\"", 1, 1, fpCSV) > 0;
+                bEmptyLine = false;
+            }
         }
-        CPLFree(pszWKT);
         bNeedDelimiter = true;
     }
 
@@ -2290,19 +2327,29 @@ OGRErr OGRCSVLayer::ICreateFeature(OGRFeature *poNewFeature)
             panGeomFieldIndex[iField] >= 0)
         {
             const int iGeom = panGeomFieldIndex[iField];
-            OGRGeometry *poGeom = poNewFeature->GetGeomFieldRef(iGeom);
-            if (poGeom &&
-                poGeom->exportToWkt(&pszEscaped, wkbVariantIso) == OGRERR_NONE)
+            const OGRGeometry *poGeom = poNewFeature->GetGeomFieldRef(iGeom);
+            if (poGeom)
             {
-                const int nLenWKT = static_cast<int>(strlen(pszEscaped));
-                char *pszNew =
-                    static_cast<char *>(CPLMalloc(1 + nLenWKT + 1 + 1));
-                pszNew[0] = '"';
-                memcpy(pszNew + 1, pszEscaped, nLenWKT);
-                pszNew[1 + nLenWKT] = '"';
-                pszNew[1 + nLenWKT + 1] = '\0';
-                CPLFree(pszEscaped);
-                pszEscaped = pszNew;
+                const auto poGeomFieldDefn =
+                    poFeatureDefn->GetGeomFieldDefn(iGeom);
+                const std::string wkt =
+                    poGeom->exportToWkt(GetWktOptions(poGeomFieldDefn));
+                if (!wkt.empty())
+                {
+                    char *pszNew =
+                        static_cast<char *>(CPLMalloc(1 + wkt.size() + 1 + 1));
+                    pszNew[0] = '"';
+                    memcpy(pszNew + 1, wkt.c_str(), wkt.size());
+                    pszNew[1 + wkt.size()] = '"';
+                    pszNew[1 + wkt.size() + 1] = '\0';
+                    CPLFree(pszEscaped);
+                    pszEscaped = pszNew;
+                }
+                else
+                {
+                    CPLFree(pszEscaped);
+                    pszEscaped = CPLStrdup("");
+                }
             }
             else
             {

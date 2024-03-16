@@ -543,10 +543,9 @@ class netCDFDataset final : public GDALPamDataset
   protected:
     CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
 
-    virtual OGRLayer *ICreateLayer(const char *pszName,
-                                   const OGRSpatialReference *poSpatialRef,
-                                   OGRwkbGeometryType eGType,
-                                   char **papszOptions) override;
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 
     CPLErr Close() override;
 

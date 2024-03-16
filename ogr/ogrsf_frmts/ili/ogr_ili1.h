@@ -140,10 +140,9 @@ class OGRILI1DataSource final : public OGRDataSource
         return fpTransfer;
     }
 
-    virtual OGRLayer *ICreateLayer(const char *,
-                                   const OGRSpatialReference * = nullptr,
-                                   OGRwkbGeometryType = wkbUnknown,
-                                   char ** = nullptr) override;
+    OGRLayer *ICreateLayer(const char *pszName,
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 
     int TestCapability(const char *) override;
 };

@@ -294,6 +294,7 @@ void RegisterOGRGML()
     poDriver->SetMetadataItem(GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION, "YES");
 
     poDriver->pfnOpen = OGRGMLDriverOpen;
     poDriver->pfnIdentify = OGRGMLDriverIdentify;

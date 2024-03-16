@@ -108,7 +108,7 @@ Open options
 Dataset creation options
 ------------------------
 
--  .. lco:: SINGLE_LAYER
+-  .. dsco:: SINGLE_LAYER
       :choices: YES, NO
       :default: NO
 
@@ -178,6 +178,44 @@ File System API, which includes "regular" files, as well as files in the
 domains.
 
 Writing to /dev/stdout or /vsistdout/ is also supported.
+
+Geometry coordinate precision
+-----------------------------
+
+.. versionadded:: GDAL 3.9
+
+The GeoJSON driver supports reading and writing the geometry coordinate
+precision, using the :cpp:class:`OGRGeomCoordinatePrecision` settings of the
+:cpp:class:`OGRGeomFieldDefn` Those settings are used to round the coordinates
+of the geometry of the features to an appropriate decimal precision.
+
+.. note::
+
+    The :lco:`COORDINATE_PRECISION_GEOMETRY` or :lco:`COORDINATE_PRECISION_PLACE` layer
+    creation option has precedence over the values set on the :cpp:class:`OGRGeomFieldDefn`.
+
+Implementation details: the coordinate precision is stored as
+``xy_coordinate_resolution_place`` and ``z_coordinate_resolution_place`` members at the
+FeatureCollection level, for the geometries written in the ``place`` element.
+Their numeric value is expressed in the units of the SRS.
+
+For the ``geometry`` standard GeoJSON element, the coordinate precision is stored as
+``xy_coordinate_resolution`` and ``z_coordinate_resolution`` members, and their
+numeric value is expressed in the units of the OGC:CRS84 SRS (hence decimal degrees
+for ``xy_coordinate_resolution``)
+
+Example:
+
+.. code-block:: JSON
+
+    {
+        "type": "FeatureCollection",
+        "xy_coordinate_resolution_place": 1.0,
+        "z_coordinate_resolution_place": 1.0,
+        "xy_coordinate_resolution": 8.9e-6,
+        "z_coordinate_resolution": 1e-1,
+        "features": []
+    }
 
 See Also
 --------

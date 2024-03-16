@@ -4116,9 +4116,8 @@ void PDS4Dataset::WriteHeader()
 /************************************************************************/
 
 OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
-                                    const OGRSpatialReference *poSpatialRef,
-                                    OGRwkbGeometryType eGType,
-                                    char **papszOptions)
+                                    const OGRGeomFieldDefn *poGeomFieldDefn,
+                                    CSLConstList papszOptions)
 {
     const char *pszTableType =
         CSLFetchNameValueDef(papszOptions, "TABLE_TYPE", "DELIMITED");
@@ -4127,6 +4126,10 @@ OGRLayer *PDS4Dataset::ICreateLayer(const char *pszName,
     {
         return nullptr;
     }
+
+    const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
+    const auto poSpatialRef =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     const char *pszExt = EQUAL(pszTableType, "CHARACTER") ? "dat"
                          : EQUAL(pszTableType, "BINARY")  ? "bin"

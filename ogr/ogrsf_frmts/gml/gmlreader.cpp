@@ -1429,9 +1429,8 @@ bool GMLReader::PrescanForSchema(bool bGetExtents, bool bOnlyDetectSRS)
                 }
                 else
                 {
-                    poGeomProperty->SetType(
-                        static_cast<int>(OGRMergeGeometryTypesEx(
-                            eGType, poGeometry->getGeometryType(), true)));
+                    poGeomProperty->SetType(OGRMergeGeometryTypesEx(
+                        eGType, poGeometry->getGeometryType(), true));
                 }
 
                 // Merge extents.

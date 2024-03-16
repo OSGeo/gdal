@@ -375,14 +375,23 @@ if (GDAL_USE_CRYPTOPP)
   option(CRYPTOPP_USE_ONLY_CRYPTODLL_ALG "Use Only cryptoDLL alg. only work on dynamic DLL" OFF)
 endif ()
 
-# First check with CMake config files, and then fallback to the FindPROJ module.
-find_package(PROJ CONFIG)
-if (PROJ_FOUND)
-  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ ${PROJ_VERSION_MAJOR} CONFIG)\n")
+set(GDAL_FIND_PACKAGE_PROJ_METHOD "CONFIG" CACHE STRING "Method to use for find_package(PROJ): CONFIG or MODULE")
+set_property(CACHE GDAL_FIND_PACKAGE_PROJ_METHOD PROPERTY STRINGS "CONFIG" "MODULE")
+mark_as_advanced(GDAL_FIND_PACKAGE_PROJ_METHOD)
+if(GDAL_FIND_PACKAGE_PROJ_METHOD STREQUAL "MODULE")
+    find_package(PROJ MODULE REQUIRED)
+    string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ MODULE REQUIRED)\n")
 else()
-  find_package(PROJ 6.3 REQUIRED)
-  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ 6.3)\n")
-endif ()
+    # First check with CMake config files, and then fallback to the FindPROJ module.
+    find_package(PROJ CONFIG)
+    if (PROJ_FOUND)
+      string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ ${PROJ_VERSION_MAJOR} CONFIG)\n")
+    else()
+      find_package(PROJ 6.3 REQUIRED)
+      string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ 6.3)\n")
+    endif ()
+endif()
+
 
 gdal_check_package(TIFF "Support for the Tag Image File Format (TIFF)." VERSION 4.1 CAN_DISABLE)
 set_package_properties(

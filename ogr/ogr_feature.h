@@ -34,6 +34,7 @@
 #include "cpl_atomic_ops.h"
 #include "ogr_featurestyle.h"
 #include "ogr_geometry.h"
+#include "ogr_geomcoordinateprecision.h"
 
 #include <cstddef>
 
@@ -339,6 +340,7 @@ class CPL_DLL OGRGeomFieldDefn
     int bIgnore = false;
     mutable int bNullable = true;
     bool m_bSealed = false;
+    OGRGeomCoordinatePrecision m_oCoordPrecision{};
 
     void Initialize(const char *, OGRwkbGeometryType);
     //! @endcond
@@ -377,6 +379,13 @@ class CPL_DLL OGRGeomFieldDefn
         return bNullable;
     }
     void SetNullable(int bNullableIn);
+
+    const OGRGeomCoordinatePrecision &GetCoordinatePrecision() const
+    {
+        return m_oCoordPrecision;
+    }
+
+    void SetCoordinatePrecision(const OGRGeomCoordinatePrecision &prec);
 
     int IsSame(const OGRGeomFieldDefn *) const;
 

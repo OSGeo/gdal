@@ -88,6 +88,39 @@ typedef void *OGRCoordinateTransformationH;
 
 struct _CPLXMLNode;
 
+/* OGRGeomCoordinatePrecisionH */
+
+/** Value for a unknown coordinate precision. */
+#define OGR_GEOM_COORD_PRECISION_UNKNOWN 0
+
+/** Opaque type for OGRGeomCoordinatePrecision */
+typedef struct OGRGeomCoordinatePrecision *OGRGeomCoordinatePrecisionH;
+
+OGRGeomCoordinatePrecisionH CPL_DLL OGRGeomCoordinatePrecisionCreate(void);
+void CPL_DLL OGRGeomCoordinatePrecisionDestroy(OGRGeomCoordinatePrecisionH);
+double CPL_DLL
+    OGRGeomCoordinatePrecisionGetXYResolution(OGRGeomCoordinatePrecisionH);
+double CPL_DLL
+    OGRGeomCoordinatePrecisionGetZResolution(OGRGeomCoordinatePrecisionH);
+double CPL_DLL
+    OGRGeomCoordinatePrecisionGetMResolution(OGRGeomCoordinatePrecisionH);
+char CPL_DLL **
+    OGRGeomCoordinatePrecisionGetFormats(OGRGeomCoordinatePrecisionH);
+CSLConstList CPL_DLL OGRGeomCoordinatePrecisionGetFormatSpecificOptions(
+    OGRGeomCoordinatePrecisionH, const char *pszFormatName);
+void CPL_DLL OGRGeomCoordinatePrecisionSet(OGRGeomCoordinatePrecisionH,
+                                           double dfXYResolution,
+                                           double dfZResolution,
+                                           double dfMResolution);
+void CPL_DLL OGRGeomCoordinatePrecisionSetFromMeter(OGRGeomCoordinatePrecisionH,
+                                                    OGRSpatialReferenceH hSRS,
+                                                    double dfXYMeterResolution,
+                                                    double dfZMeterResolution,
+                                                    double dfMResolution);
+void CPL_DLL OGRGeomCoordinatePrecisionSetFormatSpecificOptions(
+    OGRGeomCoordinatePrecisionH, const char *pszFormatName,
+    CSLConstList papszOptions);
+
 /* From base OGRGeometry class */
 
 OGRErr CPL_DLL OGR_G_CreateFromWkb(const void *, OGRSpatialReferenceH,
@@ -137,6 +170,21 @@ OGRErr CPL_DLL OGR_G_ExportToWkb(OGRGeometryH, OGRwkbByteOrder,
                                  unsigned char *);
 OGRErr CPL_DLL OGR_G_ExportToIsoWkb(OGRGeometryH, OGRwkbByteOrder,
                                     unsigned char *);
+
+/** Opaque type for WKB export options */
+typedef struct OGRwkbExportOptions OGRwkbExportOptions;
+
+OGRwkbExportOptions CPL_DLL *OGRwkbExportOptionsCreate(void);
+void CPL_DLL OGRwkbExportOptionsDestroy(OGRwkbExportOptions *);
+void CPL_DLL OGRwkbExportOptionsSetByteOrder(OGRwkbExportOptions *,
+                                             OGRwkbByteOrder);
+void CPL_DLL OGRwkbExportOptionsSetVariant(OGRwkbExportOptions *,
+                                           OGRwkbVariant);
+void CPL_DLL OGRwkbExportOptionsSetPrecision(OGRwkbExportOptions *,
+                                             OGRGeomCoordinatePrecisionH);
+OGRErr CPL_DLL OGR_G_ExportToWkbEx(OGRGeometryH, unsigned char *,
+                                   const OGRwkbExportOptions *);
+
 int CPL_DLL OGR_G_WkbSize(OGRGeometryH hGeom);
 size_t CPL_DLL OGR_G_WkbSizeEx(OGRGeometryH hGeom);
 OGRErr CPL_DLL OGR_G_ImportFromWkt(OGRGeometryH, char **);
@@ -246,6 +294,17 @@ OGRGeometryH CPL_DLL OGR_G_MakeValidEx(OGRGeometryH,
 OGRGeometryH CPL_DLL OGR_G_Normalize(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL OGR_G_IsSimple(OGRGeometryH);
 int CPL_DLL OGR_G_IsRing(OGRGeometryH);
+
+/** This option causes OGR_G_SetPrecision()
+  * to not attempt at preserving the topology */
+#define OGR_GEOS_PREC_NO_TOPO (1 << 0)
+
+/** This option causes OGR_G_SetPrecision()
+  * to retain collapsed elements */
+#define OGR_GEOS_PREC_KEEP_COLLAPSED (1 << 1)
+
+OGRGeometryH CPL_DLL OGR_G_SetPrecision(OGRGeometryH, double dfGridSize,
+                                        int nFlags) CPL_WARN_UNUSED_RESULT;
 
 OGRGeometryH CPL_DLL OGR_G_Polygonize(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
 
@@ -434,6 +493,11 @@ void CPL_DLL OGR_GFld_SetNullable(OGRGeomFieldDefnH hDefn, int);
 
 int CPL_DLL OGR_GFld_IsIgnored(OGRGeomFieldDefnH hDefn);
 void CPL_DLL OGR_GFld_SetIgnored(OGRGeomFieldDefnH hDefn, int);
+
+OGRGeomCoordinatePrecisionH
+    CPL_DLL OGR_GFld_GetCoordinatePrecision(OGRGeomFieldDefnH);
+void CPL_DLL OGR_GFld_SetCoordinatePrecision(OGRGeomFieldDefnH,
+                                             OGRGeomCoordinatePrecisionH);
 
 /* OGRFeatureDefn */
 

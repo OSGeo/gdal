@@ -231,7 +231,7 @@ class OGRLIBKMLDataSource final : public OGRDataSource
 
     /***** style table pointer *****/
     void SetCommonOptions(kmldom::ContainerPtr poKmlContainer,
-                          char **papszOptions);
+                          CSLConstList papszOptions);
 
     void ParseDocumentOptions(kmldom::KmlPtr poKml,
                               kmldom::DocumentPtr poKmlDocument);
@@ -254,9 +254,8 @@ class OGRLIBKMLDataSource final : public OGRDataSource
     OGRErr DeleteLayer(int) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
-                           const OGRSpatialReference *poSpatialRef = nullptr,
-                           OGRwkbGeometryType eGType = wkbUnknown,
-                           char **papszOptions = nullptr) override;
+                           const OGRGeomFieldDefn *poGeomFieldDefn,
+                           CSLConstList papszOptions) override;
 
     OGRStyleTable *GetStyleTable() override;
     void SetStyleTableDirectly(OGRStyleTable *poStyleTable) override;
@@ -332,11 +331,11 @@ class OGRLIBKMLDataSource final : public OGRDataSource
     OGRLIBKMLLayer *CreateLayerKml(const char *pszLayerName,
                                    const OGRSpatialReference *poOgrSRS,
                                    OGRwkbGeometryType eGType,
-                                   char **papszOptions);
+                                   CSLConstList papszOptions);
     OGRLIBKMLLayer *CreateLayerKmz(const char *pszLayerName,
                                    const OGRSpatialReference *poOgrSRS,
                                    OGRwkbGeometryType eGType,
-                                   char **papszOptions);
+                                   CSLConstList papszOptions);
 
     /***** methods to delete layers on various datasource types *****/
     OGRErr DeleteLayerKml(int);
