@@ -634,3 +634,25 @@ def test_ogr_geos_set_precision():
     g = ogr.CreateGeometryFromWkt("LINESTRING (1 1,9 9)")
     g = g.SetPrecision(10)
     assert g.ExportToWkt() == "LINESTRING (0 0,10 10)"
+
+
+###############################################################################
+
+
+def test_ogr_geos_set_unary_union_TINZ():
+
+    g = ogr.CreateGeometryFromWkt("TIN Z (((0 0 10,0 1 10,1 1 10,0 0 10)))")
+    g = g.UnaryUnion()
+    assert g.ExportToIsoWkt() == "POLYGON Z ((0 0 10,0 1 10,1 1 10,0 0 10))"
+
+
+###############################################################################
+
+
+def test_ogr_geos_set_unary_union_GEOMETRYCOLLECTIONZ_POLYGONZ():
+
+    g = ogr.CreateGeometryFromWkt(
+        "GEOMETRYCOLLECTION Z (POLYGON Z ((0 0 10,0 1 10,1 1 10,0 0 10)))"
+    )
+    g = g.UnaryUnion()
+    assert g.ExportToIsoWkt() == "POLYGON Z ((0 0 10,0 1 10,1 1 10,0 0 10))"
