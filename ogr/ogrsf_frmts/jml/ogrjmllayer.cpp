@@ -29,9 +29,9 @@
 #include "ogr_jml.h"
 #include "ogr_p.h"
 
-constexpr int PARSER_BUF_SIZE = 8192;
-
 #ifdef HAVE_EXPAT
+
+constexpr int PARSER_BUF_SIZE = 8192;
 
 /************************************************************************/
 /*                              OGRJMLLayer()                           */
