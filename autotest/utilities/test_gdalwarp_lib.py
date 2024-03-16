@@ -3920,3 +3920,10 @@ def test_gdalwarp_lib_dict_arguments():
     )
 
     assert opt == ["-wo", "SKIP_NOSOURCE=YES", "-wo", "NUM_THREADS=2"]
+
+
+def test_gdalwarp_lib_no_crash_on_none_dst():
+
+    ds1 = gdal.Open("../gcore/data/byte.tif")
+    with pytest.raises(ValueError):
+        gdal.Warp(None, ds1)
