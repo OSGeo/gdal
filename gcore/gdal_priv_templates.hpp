@@ -585,9 +585,14 @@ inline void GDALCopy8Words(const Tin *pValueIn, Tout *const pValueOut)
 }
 
 // Needs SSE2
-#if defined(__x86_64) || defined(_M_X64) || defined(USE_SSE2)
+#if defined(__x86_64) || defined(_M_X64) || defined(USE_SSE2) ||               \
+    defined(USE_NEON_OPTIMIZATIONS)
 
+#ifdef USE_NEON_OPTIMIZATIONS
+#include "include_sse2neon.h"
+#else
 #include <emmintrin.h>
+#endif
 
 static inline void GDALCopyXMMToInt32(const __m128i xmm, void *pDest)
 {
