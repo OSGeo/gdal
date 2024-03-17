@@ -7810,7 +7810,7 @@ OGRBoolean OGRGeometry::IsSFCGALCompatible() const
  * Determines the number of bits (N) required to represent a coordinate value
  * with a specified number of digits after the decimal point, and then sets all
  * but the N most significant bits to zero. The resulting coordinate value will
- * still round to the original value (e.g. after roundCoordinates()), but wil
+ * still round to the original value (e.g. after roundCoordinates()), but will
  * have improved compressiblity.
  *
  * @param options Contains the precision requirements.
