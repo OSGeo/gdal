@@ -25,4 +25,8 @@
 
 #include "sse2neon.h"
 
+#ifndef _MM_SHUFFLE2
+#define _MM_SHUFFLE2(fp1, fp0) (((fp1) << 1) | (fp0))
+#endif
+
 #endif /* INCLUDE_SSE2NEON_H */
