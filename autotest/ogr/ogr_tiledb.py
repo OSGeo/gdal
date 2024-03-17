@@ -1281,7 +1281,9 @@ def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
                         got_val = (
                             got_val - numpy.datetime64("1970-01-01T00:00:00")
                         ) / numpy.timedelta64(1, "s")
-                        got_val = datetime.datetime.utcfromtimestamp(got_val)
+                        got_val = datetime.datetime.fromtimestamp(
+                            got_val, tz=datetime.timezone.utc
+                        )
                         assert [
                             got_val.year,
                             got_val.month,
