@@ -2258,17 +2258,22 @@ XMLSpatialReference(const OGRGeomFieldDefn *poSrcGeomFieldDefn,
     /* Handle Origin/Scale/Tolerance */
 
     oCoordPrec = GDBGridSettingsFromOGR(poSrcGeomFieldDefn, papszOptions);
-    const auto &oGridsOptions =
-        oCoordPrec.oFormatSpecificOptions.find("FileGeodatabase")->second;
-    for (int i = 0; i < oGridsOptions.size(); ++i)
+    const auto oIter =
+        oCoordPrec.oFormatSpecificOptions.find("FileGeodatabase");
+    // Note: test is true
+    if (oIter != oCoordPrec.oFormatSpecificOptions.end())
     {
-        char *pszKey = nullptr;
-        const char *pszValue = CPLParseNameValue(oGridsOptions[i], &pszKey);
-        if (pszKey && pszValue)
+        const auto &oGridsOptions = oIter->second;
+        for (int i = 0; i < oGridsOptions.size(); ++i)
         {
-            CPLCreateXMLElementAndValue(srs_xml, pszKey, pszValue);
+            char *pszKey = nullptr;
+            const char *pszValue = CPLParseNameValue(oGridsOptions[i], &pszKey);
+            if (pszKey && pszValue)
+            {
+                CPLCreateXMLElementAndValue(srs_xml, pszKey, pszValue);
+            }
+            CPLFree(pszKey);
         }
-        CPLFree(pszKey);
     }
 
     /* FGDB is always High Precision */
