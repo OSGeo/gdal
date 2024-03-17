@@ -11868,3 +11868,23 @@ def test_tiff_write_band_IMAGERY(tmp_vsimem):
         )
     with gdal.Open(filename2) as ds:
         assert ds.GetRasterBand(1).GetMetadata_Dict("IMAGERY") == {"foo": "bar"}
+
+
+###############################################################################
+#
+
+
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 7, 1),
+    reason="libtiff internal or >= 4.7.1 needed",
+)
+def test_tiff_write_float32_predictor_3_endianness(tmp_path):
+
+    out_filename = str(tmp_path / "out.tif")
+    gdal.GetDriverByName("GTiff").CreateCopy(
+        out_filename,
+        gdal.Open("data/float32.tif"),
+        options=["COMPRESS=LZW", "ENDIANNESS=INVERTED", "PREDICTOR=3"],
+    )
+    with gdal.Open(out_filename) as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
