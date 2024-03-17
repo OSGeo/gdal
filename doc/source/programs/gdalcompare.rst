@@ -113,7 +113,7 @@ subdatasets.
 Examples
 --------
 
-..code-block:: bash
+.. code-block:: bash
 
     gdalcompare.py -dumpdiffs N.tiff S.tiff; echo $?
     Files differ at the binary level.
