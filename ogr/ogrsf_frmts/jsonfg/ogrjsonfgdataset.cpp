@@ -733,7 +733,9 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
             }
         }
     }
-    else if (!poSrcGeomFieldDefn &&
+    else if (poSrcGeomFieldDefn &&
+             poSrcGeomFieldDefn->GetCoordinatePrecision().dfXYResolution ==
+                 OGRGeomCoordinatePrecision::UNKNOWN &&
              CSLFetchNameValue(papszOptions, "SIGNIFICANT_FIGURES") == nullptr)
     {
         const int nXYPrecisionGeometry = 7;
@@ -742,16 +744,6 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
                                 CPLSPrintf("%d", nXYPrecisionGeometry));
         aosOptions.SetNameValue("Z_COORD_PRECISION_GEOMETRY",
                                 CPLSPrintf("%d", nZPrecisionGeometry));
-        if (IsSingleOutputLayer())
-        {
-            VSIFPrintfL(fpOut_, "\"xy_coordinate_resolution\": %g,\n",
-                        std::pow(10.0, -double(nXYPrecisionGeometry)));
-            if (poSRS && poSRS->GetAxesCount() == 3)
-            {
-                VSIFPrintfL(fpOut_, "\"z_coordinate_resolution\": %g,\n",
-                            std::pow(10.0, -double(nZPrecisionGeometry)));
-            }
-        }
     }
 
     double dfXYResolution = OGRGeomCoordinatePrecision::UNKNOWN;

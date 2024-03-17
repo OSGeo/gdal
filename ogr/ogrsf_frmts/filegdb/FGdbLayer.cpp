@@ -2080,8 +2080,7 @@ XMLSpatialReference(const OGRGeomFieldDefn *poSrcGeomFieldDefn,
                     CSLConstList papszOptions,
                     OGRGeomCoordinatePrecision &oCoordPrec)
 {
-    const auto poSRS =
-        poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetSpatialRef() : nullptr;
+    const auto poSRS = poSrcGeomFieldDefn->GetSpatialRef();
 
     /* We always need a SpatialReference */
     CPLXMLNode *srs_xml =
@@ -2258,17 +2257,22 @@ XMLSpatialReference(const OGRGeomFieldDefn *poSrcGeomFieldDefn,
     /* Handle Origin/Scale/Tolerance */
 
     oCoordPrec = GDBGridSettingsFromOGR(poSrcGeomFieldDefn, papszOptions);
-    const auto &oGridsOptions =
-        oCoordPrec.oFormatSpecificOptions.find("FileGeodatabase")->second;
-    for (int i = 0; i < oGridsOptions.size(); ++i)
+    const auto oIter =
+        oCoordPrec.oFormatSpecificOptions.find("FileGeodatabase");
+    // Note: test is true
+    if (oIter != oCoordPrec.oFormatSpecificOptions.end())
     {
-        char *pszKey = nullptr;
-        const char *pszValue = CPLParseNameValue(oGridsOptions[i], &pszKey);
-        if (pszKey && pszValue)
+        const auto &oGridsOptions = oIter->second;
+        for (int i = 0; i < oGridsOptions.size(); ++i)
         {
-            CPLCreateXMLElementAndValue(srs_xml, pszKey, pszValue);
+            char *pszKey = nullptr;
+            const char *pszValue = CPLParseNameValue(oGridsOptions[i], &pszKey);
+            if (pszKey && pszValue)
+            {
+                CPLCreateXMLElementAndValue(srs_xml, pszKey, pszValue);
+            }
+            CPLFree(pszKey);
         }
-        CPLFree(pszKey);
     }
 
     /* FGDB is always High Precision */
@@ -2332,11 +2336,14 @@ bool FGdbLayer::CreateFeatureDataset(FGdbDataSource *pParentDataSource,
     CPLAddXMLChild(defn_xml, extent_xml);
 
     /* Add the SRS */
-    OGRGeomCoordinatePrecision oCoordPrec;
-    CPLXMLNode *srs_xml =
-        XMLSpatialReference(poSrcGeomFieldDefn, papszOptions, oCoordPrec);
-    if (srs_xml)
-        CPLAddXMLChild(defn_xml, srs_xml);
+    if (poSrcGeomFieldDefn)
+    {
+        OGRGeomCoordinatePrecision oCoordPrec;
+        CPLXMLNode *srs_xml =
+            XMLSpatialReference(poSrcGeomFieldDefn, papszOptions, oCoordPrec);
+        if (srs_xml)
+            CPLAddXMLChild(defn_xml, srs_xml);
+    }
 
     /* Convert our XML tree into a string for FGDB */
     char *defn_str = CPLSerializeXMLTree(xml_xml);
@@ -2609,7 +2616,7 @@ bool FGdbLayer::Create(FGdbDataSource *pParentDataSource,
      * creation time */
     CPLXMLNode *srs_xml = nullptr;
     OGRGeomCoordinatePrecision oCoordPrec;
-    if (eType != wkbNone)
+    if (poSrcGeomFieldDefn)
     {
         CPLXMLNode *shape_xml =
             CPLCreateXMLNode(fieldarray_xml, CXT_Element, "Field");

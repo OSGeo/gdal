@@ -45,8 +45,7 @@ static OGRGeomCoordinatePrecision
 GDBGridSettingsFromOGR(const OGRGeomFieldDefn *poSrcGeomFieldDefn,
                        CSLConstList aosLayerCreationOptions)
 {
-    const auto poSRS =
-        poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetSpatialRef() : nullptr;
+    const auto poSRS = poSrcGeomFieldDefn->GetSpatialRef();
 
     double dfXOrigin;
     double dfYOrigin;

@@ -707,9 +707,10 @@ void OGRLayer::ConvertGeomsIfNecessary(OGRFeature *poFeature)
                     poGeom = OGRGeometryFactory::forceTo(
                         poFeature->StealGeometry(i), eTargetType);
                     poFeature->SetGeomFieldDirectly(i, poGeom);
+                    poGeom = poFeature->GetGeomFieldRef(i);
                 }
 
-                if (m_poPrivate->m_bApplyGeomSetPrecision)
+                if (poGeom && m_poPrivate->m_bApplyGeomSetPrecision)
                 {
                     const double dfXYResolution =
                         poFeatureDefn->GetGeomFieldDefn(i)
@@ -723,12 +724,11 @@ void OGRLayer::ConvertGeomsIfNecessary(OGRFeature *poFeature)
                         if (poNewGeom)
                         {
                             poFeature->SetGeomFieldDirectly(i, poNewGeom);
-                            poGeom = poNewGeom;
+                            // If there was potential futher processing...
+                            // poGeom = poFeature->GetGeomFieldRef(i);
                         }
                     }
                 }
-
-                CPL_IGNORE_RET_VAL(poGeom);
             }
         }
     }

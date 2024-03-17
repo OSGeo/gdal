@@ -305,8 +305,9 @@ OGRGeoconceptDataSource::ICreateLayer(const char *pszLayerName,
         return nullptr;
     }
 
-    if ((!poGeomFieldDefn || poGeomFieldDefn->GetSpatialRef() == nullptr) &&
-        !_bUpdate)
+    const auto poSRS =
+        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
+    if (poSRS == nullptr && !_bUpdate)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "SRS is mandatory of creating a Geoconcept Layer.");
@@ -518,8 +519,6 @@ OGRGeoconceptDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Assign the coordinate system (if provided)                      */
     /* -------------------------------------------------------------------- */
-    const auto poSRS =
-        poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
     if (poSRS != nullptr)
     {
         auto poSRSClone = poSRS->Clone();
