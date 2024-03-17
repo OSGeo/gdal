@@ -44,7 +44,6 @@ pytestmark = pytest.mark.require_driver("MBTILES")
 #
 
 
-@pytest.mark.require_curl()
 @pytest.fixture(scope="module")
 def server():
 
