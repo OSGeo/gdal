@@ -17,7 +17,9 @@ Synopsis
 
     gdaldem [--help] [--help-general] <mode> <input> <output> <options>
 
-Generate a shaded relief map from any GDAL-supported elevation raster:
+From any GDAL-supported elevation raster:
+
+Generate a shaded relief map:
 
 .. code-block::
 
@@ -27,7 +29,7 @@ Generate a shaded relief map from any GDAL-supported elevation raster:
                  [-alg ZevenbergenThorne] [-combined | -multidirectional | -igor]
                  [-compute_edges] [-b <Band>] [-of <format>] [-co <NAME>=<VALUE>]... [-q]
 
-Generate a slope map from any GDAL-supported elevation raster:
+Generate a slope map:
 
 .. code-block::
 
@@ -36,7 +38,7 @@ Generate a slope map from any GDAL-supported elevation raster:
                  [-alg ZevenbergenThorne]
                  [-compute_edges] [-b <band>] [-of <format>] [-co <NAME>=<VALUE>]... [-q]
 
-Generate an aspect map from any GDAL-supported elevation raster,
+Generate an aspect map,
 outputs a 32-bit float raster with pixel values from 0-360 indicating azimuth:
 
 .. code-block::
@@ -46,7 +48,7 @@ outputs a 32-bit float raster with pixel values from 0-360 indicating azimuth:
                  [-alg ZevenbergenThorne]
                  [-compute_edges] [-b <band>] [-of format] [-co <NAME>=<VALUE>]... [-q]
 
-Generate a color relief map from any GDAL-supported elevation raster:
+Generate a color relief map:
 
 .. code-block::
 
@@ -56,7 +58,7 @@ Generate a color relief map from any GDAL-supported elevation raster:
 
     where color_text_file contains lines of the format "elevation_value red green blue"
 
-Generate a Terrain Ruggedness Index (TRI) map from any GDAL-supported elevation raster:
+Generate a Terrain Ruggedness Index (TRI) map:
 
 .. code-block::
 
@@ -64,14 +66,14 @@ Generate a Terrain Ruggedness Index (TRI) map from any GDAL-supported elevation 
                 [-alg Wilson|Riley]
                 [-compute_edges] [-b Band (default=1)] [-of format] [-q]
 
-Generate a Topographic Position Index (TPI) map from any GDAL-supported elevation raster:
+Generate a Topographic Position Index (TPI) map:
 
 .. code-block::
 
      gdaldem TPI <input_dem> <output_TPI_map>
                  [-compute_edges] [-b <band>] [-of <format>] [-co <NAME>=<VALUE>]... [-q]
 
-Generate a roughness map from any GDAL-supported elevation raster:
+Generate a roughness map:
 
 .. code-block::
 
