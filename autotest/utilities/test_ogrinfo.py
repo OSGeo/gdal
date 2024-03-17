@@ -199,12 +199,24 @@ def test_ogrinfo_12(ogrinfo_path):
 # Test erroneous use of --config
 
 
-def test_ogrinfo_13(ogrinfo_path):
+def test_ogrinfo_erroneous_config(ogrinfo_path):
 
     (_, err) = gdaltest.runexternal_out_and_err(
         ogrinfo_path + " --config", check_memleak=False
     )
-    assert "--config option given without a key and value argument" in err
+    assert "--config option given without" in err
+
+
+###############################################################################
+# Test erroneous use of --config
+
+
+def test_ogrinfo_erroneous_config_2(ogrinfo_path):
+
+    (_, err) = gdaltest.runexternal_out_and_err(
+        ogrinfo_path + " --config foo", check_memleak=False
+    )
+    assert "--config option given without" in err
 
 
 ###############################################################################

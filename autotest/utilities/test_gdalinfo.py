@@ -255,7 +255,7 @@ def test_gdalinfo_14(gdalinfo_path):
     (_, err) = gdaltest.runexternal_out_and_err(
         gdalinfo_path + " --config", check_memleak=False
     )
-    assert "--config option given without a key and value argument" in err
+    assert "--config option given without" in err
 
 
 ###############################################################################

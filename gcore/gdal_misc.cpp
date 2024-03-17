@@ -3147,6 +3147,7 @@ static void StripIrrelevantOptions(CPLXMLNode *psCOL, int nOptions)
  *  --format [format]: report details of one format driver.
  *  --optfile filename: expand an option file into the argument list.
  *  --config key value: set system configuration option.
+ *  --config key=value: set system configuration option (since GDAL 3.9)
  *  --debug [on/off/value]: set debug level.
  *  --mempreload dir: preload directory contents into /vsimem
  *  --pause: Pause for user input (allows time to attach debugger)
@@ -3235,17 +3236,39 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
          */
         else if (EQUAL(papszArgv[iArg], "--config"))
         {
-            if (iArg + 2 >= nArgc)
+            if (iArg + 1 >= nArgc)
             {
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
-                    "--config option given without a key and value argument.");
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "--config option given without a key=value argument.");
                 return -1;
             }
 
-            CPLSetConfigOption(papszArgv[iArg + 1], papszArgv[iArg + 2]);
+            const char *pszArg = papszArgv[iArg + 1];
+            if (strchr(pszArg, '=') != nullptr)
+            {
+                char *pszKey = nullptr;
+                const char *pszValue = CPLParseNameValue(pszArg, &pszKey);
+                if (pszKey && pszValue)
+                {
+                    CPLSetConfigOption(pszKey, pszValue);
+                }
+                CPLFree(pszKey);
+                ++iArg;
+            }
+            else
+            {
+                if (iArg + 2 >= nArgc)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "--config option given without a key and value "
+                             "argument.");
+                    return -1;
+                }
 
-            iArg += 2;
+                CPLSetConfigOption(papszArgv[iArg + 1], papszArgv[iArg + 2]);
+
+                iArg += 2;
+            }
         }
 
         /* --------------------------------------------------------------------
@@ -3702,17 +3725,18 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             printf("  --license: report GDAL license info.\n"); /*ok*/
             printf(                                             /*ok*/
                    "  --formats: report all configured format drivers.\n"); /*ok*/
-            printf("  --format [format]: details of one format.\n"); /*ok*/
+            printf("  --format [<format>]: details of one format.\n"); /*ok*/
             /*ok*/ printf(
                 "  --optfile filename: expand an option file into the "
                 "argument list.\n");
             printf(/*ok*/
-                   "  --config key value: set system configuration option.\n"); /*ok*/
+                   "  --config <key> <value> or --config <key>=<value>: set "
+                   "system configuration option.\n");               /*ok*/
             printf("  --debug [on/off/value]: set debug level.\n"); /*ok*/
             /*ok*/ printf(                                          /*ok*/
                           "  --pause: wait for user input, time to attach "
                           "debugger\n");
-            printf("  --locale [locale]: install locale for debugging " /*ok*/
+            printf("  --locale [<locale>]: install locale for debugging " /*ok*/
                    "(i.e. en_US.UTF-8)\n");
             printf("  --help-general: report detailed help on general " /*ok*/
                    "options.\n");
