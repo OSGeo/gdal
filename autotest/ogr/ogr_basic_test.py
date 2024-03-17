@@ -662,6 +662,21 @@ def test_ogr_basic_16():
     assert list(ogr_basic_16_gen_list(2)) == [0, 1]
 
 
+def test_ogr_basic_getfielddefn():
+
+    defn = ogr.FeatureDefn()
+    defn.AddFieldDefn(ogr.FieldDefn("intfield", ogr.OFTInteger))
+
+    by_index = defn.GetFieldDefn(0)
+    by_name = defn.GetFieldDefn("intfield")
+
+    assert by_index.this == by_name.this
+
+    with gdaltest.enable_exceptions():
+        with pytest.raises(Exception, match="Invalid"):
+            defn.GetFieldDefn("does_not_exist")
+
+
 def test_ogr_basic_invalid_unicode():
 
     val = "\udcfc"

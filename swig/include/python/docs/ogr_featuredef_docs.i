@@ -87,26 +87,24 @@ int:
     count of fields.
 ";
 
-%feature("docstring")  GetFieldDefn "OGRFieldDefnH
-OGR_FD_GetFieldDefn(OGRFeatureDefnH hDefn, int iField)
+%feature("docstring")  GetFieldDefn "
 
 Fetch field definition of the passed feature definition.
 
-This function is the same as the C++ method
-OGRFeatureDefn::GetFieldDefn().
+See :cpp:func:`OGRFeatureDefn::GetFieldDefn`.
 
 Parameters
 -----------
-hDefn:
-    handle to the feature definition to get the field definition from.
-iField:
-    the field to fetch, between 0 and GetFieldCount()-1.
+i : int / str
+    Field name or 0-based numeric index. For repeated
+    access, use of the numeric index avoids a lookup
+    step.
 
 Returns
 --------
-OGRFieldDefnH:
-    a handle to an internal field definition object or NULL if invalid
-    index. This object should not be modified or freed by the application.
+FieldDefn:
+    internal field definition object or ``None`` if the field does not
+    exist. This object should not be modified by the application.
 ";
 
 %feature("docstring")  AddFieldDefn "void
