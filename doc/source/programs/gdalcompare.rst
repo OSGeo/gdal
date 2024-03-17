@@ -109,3 +109,24 @@ The primary entry point is `gdalcompare.compare_db()` which takes a golden
 difference count (excluding the binary comparison). The
 `gdalcompare.compare_sds()` entry point can be used to compare
 subdatasets.
+
+Examples
+--------
+
+.. code-block:: bash
+
+    gdalcompare.py -dumpdiffs N.tiff S.tiff; echo $?
+    Files differ at the binary level.
+    Band 1 checksum difference:
+      Golden: 36694
+      New:    40645
+      Pixels Differing: 1509
+      Maximum Pixel Difference: 255.0
+      Wrote Diffs to: 1.tif
+    Differences Found: 2
+    2
+
+    gdalcompare.py N.tiff N.tiff; echo $?
+    Differences Found: 0
+    0
+
