@@ -1156,6 +1156,11 @@ def ReleaseResultSet(self, sql_lyr):
     self.thisown = 0
 
 }
+
+%feature("pythonprepend") GetFieldDefn %{
+    if type(args[0]) is str:
+        args = (self.GetFieldIndex(args[0]), )
+%}
 }
 
 %extend OGRFieldDefnShadow {
