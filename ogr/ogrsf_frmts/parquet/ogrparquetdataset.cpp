@@ -137,19 +137,21 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
 
                             if (col_func == SWQCF_MIN)
                             {
-                                CPL_IGNORE_RET_VAL(poLayer->GetMinMaxForField(
-                                    /* iRowGroup=*/-1,  // -1 for all
-                                    iOGRField, true, sField, bFound, false,
-                                    sFieldDummy, bFoundDummy, eType, eSubType,
-                                    sVal, sValDummy));
+                                CPL_IGNORE_RET_VAL(
+                                    poLayer->GetMinMaxForOGRField(
+                                        /* iRowGroup=*/-1,  // -1 for all
+                                        iOGRField, true, sField, bFound, false,
+                                        sFieldDummy, bFoundDummy, eType,
+                                        eSubType, sVal, sValDummy));
                             }
                             else if (col_func == SWQCF_MAX)
                             {
-                                CPL_IGNORE_RET_VAL(poLayer->GetMinMaxForField(
-                                    /* iRowGroup=*/-1,  // -1 for all
-                                    iOGRField, false, sFieldDummy, bFoundDummy,
-                                    true, sField, bFound, eType, eSubType,
-                                    sValDummy, sVal));
+                                CPL_IGNORE_RET_VAL(
+                                    poLayer->GetMinMaxForOGRField(
+                                        /* iRowGroup=*/-1,  // -1 for all
+                                        iOGRField, false, sFieldDummy,
+                                        bFoundDummy, true, sField, bFound,
+                                        eType, eSubType, sValDummy, sVal));
                             }
                             else if (col_func == SWQCF_COUNT)
                             {

@@ -3761,4 +3761,200 @@ TEST_F(test_ogr, wkb_polygon_xyzm_discard_lsb_bits)
     delete poGeom;
 }
 
+// Test OGRFeature::SerializeToBinary() and DeserializeFromBinary();
+TEST_F(test_ogr, OGRFeature_SerializeToBinary)
+{
+    {
+        OGRFeatureDefn oFDefn;
+        oFDefn.SetGeomType(wkbNone);
+        oFDefn.Reference();
+
+        {
+            OGRFeature oFeatSrc(&oFDefn);
+            oFeatSrc.SetFID(1);
+            std::vector<GByte> abyBuffer;
+
+            EXPECT_TRUE(oFeatSrc.SerializeToBinary(abyBuffer));
+            EXPECT_EQ(abyBuffer.size(), 1);
+            EXPECT_EQ(abyBuffer[0], 1);
+
+            OGRFeature oFeatDst(&oFDefn);
+            EXPECT_FALSE(oFeatDst.DeserializeFromBinary(abyBuffer.data(), 0));
+            EXPECT_TRUE(oFeatDst.DeserializeFromBinary(abyBuffer.data(),
+                                                       abyBuffer.size()));
+            EXPECT_EQ(oFeatDst.GetFID(), 1);
+        }
+
+        {
+            OGRFeature oFeatSrc(&oFDefn);
+            oFeatSrc.SetFID(static_cast<GIntBig>(-12345678901234));
+            std::vector<GByte> abyBuffer;
+
+            EXPECT_TRUE(oFeatSrc.SerializeToBinary(abyBuffer));
+
+            OGRFeature oFeatDst(&oFDefn);
+            // Try truncated buffers
+            for (size_t i = 0; i < abyBuffer.size(); ++i)
+            {
+                EXPECT_FALSE(
+                    oFeatDst.DeserializeFromBinary(abyBuffer.data(), i));
+            }
+            EXPECT_TRUE(oFeatDst.DeserializeFromBinary(abyBuffer.data(),
+                                                       abyBuffer.size()));
+            EXPECT_EQ(oFeatDst.GetFID(), static_cast<GIntBig>(-12345678901234));
+        }
+    }
+
+    {
+        OGRFeatureDefn oFDefn;
+        oFDefn.Reference();
+        {
+            OGRFieldDefn oFieldDefn("int", OFTInteger);
+            oFDefn.AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("int64", OFTInteger64);
+            oFDefn.AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("real", OFTReal);
+            oFDefn.AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("str", OFTString);
+            oFDefn.AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("binary", OFTBinary);
+            oFDefn.AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("intlist", OFTIntegerList);
+            oFDefn.AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("int64list", OFTInteger64List);
+            oFDefn.AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("reallist", OFTRealList);
+            oFDefn.AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("strlist", OFTStringList);
+            oFDefn.AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("date", OFTDate);
+            oFDefn.AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("time", OFTTime);
+            oFDefn.AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("datetime", OFTDateTime);
+            oFDefn.AddFieldDefn(&oFieldDefn);
+        }
+
+        {
+            OGRFeature oFeatSrc(&oFDefn);
+            std::vector<GByte> abyBuffer;
+
+            EXPECT_TRUE(oFeatSrc.SerializeToBinary(abyBuffer));
+            EXPECT_EQ(abyBuffer.size(), 5);
+
+            OGRFeature oFeatDst(&oFDefn);
+            for (size_t i = 0; i < abyBuffer.size(); ++i)
+            {
+                EXPECT_FALSE(
+                    oFeatDst.DeserializeFromBinary(abyBuffer.data(), i));
+            }
+            EXPECT_TRUE(oFeatDst.DeserializeFromBinary(abyBuffer.data(),
+                                                       abyBuffer.size()));
+            EXPECT_TRUE(oFeatDst.Equal(&oFeatSrc));
+        }
+
+        {
+            OGRFeature oFeatSrc(&oFDefn);
+            std::vector<GByte> abyBuffer;
+
+            oFeatSrc.SetFieldNull(oFDefn.GetFieldIndex("int"));
+            EXPECT_TRUE(oFeatSrc.SerializeToBinary(abyBuffer));
+            EXPECT_EQ(abyBuffer.size(), 5);
+
+            OGRFeature oFeatDst(&oFDefn);
+
+            // Try truncated buffers
+            for (size_t i = 0; i < abyBuffer.size(); ++i)
+            {
+                EXPECT_FALSE(
+                    oFeatDst.DeserializeFromBinary(abyBuffer.data(), i));
+            }
+
+            EXPECT_TRUE(oFeatDst.DeserializeFromBinary(abyBuffer.data(),
+                                                       abyBuffer.size()));
+            EXPECT_TRUE(oFeatDst.Equal(&oFeatSrc));
+        }
+
+        {
+            OGRFeature oFeatSrc(&oFDefn);
+            oFeatSrc.SetFID(1);
+            oFeatSrc.SetField("int", -123);
+            oFeatSrc.SetField("int64", static_cast<GIntBig>(-12345678901234));
+            oFeatSrc.SetField("real", 1.25);
+            oFeatSrc.SetField("str", "foo");
+            oFeatSrc.SetField(oFDefn.GetFieldIndex("binary"), 3,
+                              static_cast<const void *>("abc"));
+            oFeatSrc.SetField("intlist", 2,
+                              std::vector<int>{1, -123456}.data());
+            oFeatSrc.SetField("int64list", 2,
+                              std::vector<GIntBig>{1, -12345678901234}.data());
+            oFeatSrc.SetField("reallist", 2,
+                              std::vector<double>{1.5, -2.5}.data());
+            CPLStringList aosList;
+            aosList.AddString("foo");
+            aosList.AddString("barbaz");
+            oFeatSrc.SetField("strlist", aosList.List());
+            oFeatSrc.SetField("date", 2023, 1, 3);
+            oFeatSrc.SetField("time", 0, 0, 0, 12, 34, 56.789f);
+            oFeatSrc.SetField("datetime", 2023, 1, 3, 12, 34, 56.789f);
+            OGRPoint p(1, 2);
+            oFeatSrc.SetGeometry(&p);
+            std::vector<GByte> abyBuffer;
+
+            EXPECT_TRUE(oFeatSrc.SerializeToBinary(abyBuffer));
+
+            OGRFeature oFeatDst(&oFDefn);
+
+            // Try truncated buffers
+            for (size_t i = 0; i < abyBuffer.size(); ++i)
+            {
+                EXPECT_FALSE(
+                    oFeatDst.DeserializeFromBinary(abyBuffer.data(), i));
+            }
+
+            // Try corrupted buffers
+            {
+                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                for (size_t i = 0; i < abyBuffer.size(); ++i)
+                {
+                    // Might succeed or fail, but shouldn't crash..
+                    const GByte backup = abyBuffer[i];
+                    abyBuffer[i] = static_cast<GByte>(~abyBuffer[i]);
+                    (void)oFeatDst.DeserializeFromBinary(abyBuffer.data(),
+                                                         abyBuffer.size());
+                    abyBuffer[i] = backup;
+                }
+            }
+
+            EXPECT_TRUE(oFeatDst.DeserializeFromBinary(abyBuffer.data(),
+                                                       abyBuffer.size()));
+            // oFeatSrc.DumpReadable(stdout);
+            // oFeatDst.DumpReadable(stdout);
+            EXPECT_TRUE(oFeatDst.Equal(&oFeatSrc));
+        }
+    }
+}
+
 }  // namespace

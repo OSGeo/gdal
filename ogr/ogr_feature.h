@@ -1412,6 +1412,9 @@ class CPL_DLL OGRFeature
     int Validate(int nValidateFlags, int bEmitError) const;
     void FillUnsetWithDefault(int bNotNullableOnly, char **papszOptions);
 
+    bool SerializeToBinary(std::vector<GByte> &abyBuffer) const;
+    bool DeserializeFromBinary(const GByte *pabyBuffer, size_t nSize);
+
     virtual const char *GetStyleString() const;
     virtual void SetStyleString(const char *);
     virtual void SetStyleStringDirectly(char *);

@@ -31,6 +31,10 @@
 
 #include "cpl_error.h"
 
+#ifndef _WIN32
+#include <unistd.h>  // isatty()
+#endif
+
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
@@ -80,19 +84,22 @@ typedef struct
     CPLErrorHandlerNode *psHandlerStack;
     int nLastErrMsgMax;
     int nFailureIntoWarning;
+    bool bProgressMode;
+    bool bEmitNewlineBeforeNextDbgMsg;
     GUInt32 nErrorCounter;
     char szLastErrMsg[DEFAULT_LAST_ERR_MSG_SIZE];
     // Do not add anything here. szLastErrMsg must be the last field.
     // See CPLRealloc() below.
 } CPLErrorContext;
 
-constexpr CPLErrorContext sNoErrorContext = {0, CE_None, nullptr, 0, 0, 0, ""};
+constexpr CPLErrorContext sNoErrorContext = {0,     CE_None, nullptr, 0, 0,
+                                             false, false,   0,       ""};
 
 constexpr CPLErrorContext sWarningContext = {
-    0, CE_Warning, nullptr, 0, 0, 0, "A warning was emitted"};
+    0, CE_Warning, nullptr, 0, 0, false, false, 0, "A warning was emitted"};
 
 constexpr CPLErrorContext sFailureContext = {
-    0, CE_Warning, nullptr, 0, 0, 0, "A failure was emitted"};
+    0, CE_Warning, nullptr, 0, 0, false, false, 0, "A failure was emitted"};
 
 #define IS_PREFEFINED_ERROR_CTX(psCtxt)                                        \
     (psCtx == &sNoErrorContext || psCtx == &sWarningContext ||                 \
@@ -586,37 +593,14 @@ static int CPLGettimeofday(struct CPLTimeVal *tp, void * /* timezonep*/)
 #define CPLGettimeofday(t, u) gettimeofday(t, u)
 #endif
 
+#ifndef WITHOUT_CPLDEBUG
+
 /************************************************************************/
-/*                              CPLDebug()                              */
+/*                             CPLvDebug()                              */
 /************************************************************************/
 
-/**
- * Display a debugging message.
- *
- * The category argument is used in conjunction with the CPL_DEBUG
- * environment variable to establish if the message should be displayed.
- * If the CPL_DEBUG environment variable is not set, no debug messages
- * are emitted (use CPLError(CE_Warning, ...) to ensure messages are displayed).
- * If CPL_DEBUG is set, but is an empty string or the word "ON" then all
- * debug messages are shown.  Otherwise only messages whose category appears
- * somewhere within the CPL_DEBUG value are displayed (as determined by
- * strstr()).
- *
- * Categories are usually an identifier for the subsystem producing the
- * error.  For instance "GDAL" might be used for the GDAL core, and "TIFF"
- * for messages from the TIFF translator.
- *
- * @param pszCategory name of the debugging message category.
- * @param pszFormat printf() style format string for message to display.
- *        Remaining arguments are assumed to be for format.
- */
-
-#ifdef WITHOUT_CPLDEBUG
-// Do not include CPLDebug.  Only available in custom builds.
-#else
-void CPLDebug(const char *pszCategory, CPL_FORMAT_STRING(const char *pszFormat),
-              ...)
-
+static void CPLvDebug(const char *pszCategory,
+                      CPL_FORMAT_STRING(const char *pszFormat), va_list args)
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();
     if (psCtx == nullptr || IS_PREFEFINED_ERROR_CTX(psCtx))
@@ -703,13 +687,8 @@ void CPLDebug(const char *pszCategory, CPL_FORMAT_STRING(const char *pszFormat),
     /* -------------------------------------------------------------------- */
     /*      Format the application provided portion of the debug message.   */
     /* -------------------------------------------------------------------- */
-    va_list args;
-    va_start(args, pszFormat);
-
     CPLvsnprintf(pszMessage + strlen(pszMessage),
                  ERROR_MAX - strlen(pszMessage), pszFormat, args);
-
-    va_end(args);
 
     /* -------------------------------------------------------------------- */
     /*      Obfuscate any password in error message                         */
@@ -732,6 +711,100 @@ void CPLDebug(const char *pszCategory, CPL_FORMAT_STRING(const char *pszFormat),
     ApplyErrorHandler(psCtx, CE_Debug, CPLE_None, pszMessage);
 
     VSIFree(pszMessage);
+}
+
+#endif  // !WITHOUT_CPLDEBUG
+
+/************************************************************************/
+/*                              CPLDebug()                              */
+/************************************************************************/
+
+/**
+ * Display a debugging message.
+ *
+ * The category argument is used in conjunction with the CPL_DEBUG
+ * environment variable to establish if the message should be displayed.
+ * If the CPL_DEBUG environment variable is not set, no debug messages
+ * are emitted (use CPLError(CE_Warning, ...) to ensure messages are displayed).
+ * If CPL_DEBUG is set, but is an empty string or the word "ON" then all
+ * debug messages are shown.  Otherwise only messages whose category appears
+ * somewhere within the CPL_DEBUG value are displayed (as determined by
+ * strstr()).
+ *
+ * Categories are usually an identifier for the subsystem producing the
+ * error.  For instance "GDAL" might be used for the GDAL core, and "TIFF"
+ * for messages from the TIFF translator.
+ *
+ * @param pszCategory name of the debugging message category.
+ * @param pszFormat printf() style format string for message to display.
+ *        Remaining arguments are assumed to be for format.
+ */
+
+#ifdef WITHOUT_CPLDEBUG
+// Do not include CPLDebug.  Only available in custom builds.
+#else
+
+void CPLDebug(const char *pszCategory, CPL_FORMAT_STRING(const char *pszFormat),
+              ...)
+
+{
+    va_list args;
+    va_start(args, pszFormat);
+    CPLvDebug(pszCategory, pszFormat, args);
+    va_end(args);
+}
+
+#endif  // WITHOUT_CPLDEBUG
+
+/************************************************************************/
+/*                         CPLDebugProgress()                           */
+/************************************************************************/
+
+/**
+ * Display a debugging message indicating a progression.
+ *
+ * This is the same as CPLDebug(), except that when displaying on the terminal,
+ * it will erase the previous debug progress message. This is for example
+ * appropriate to display increasing percentages for a task.
+ *
+ * The category argument is used in conjunction with the CPL_DEBUG
+ * environment variable to establish if the message should be displayed.
+ * If the CPL_DEBUG environment variable is not set, no debug messages
+ * are emitted (use CPLError(CE_Warning, ...) to ensure messages are displayed).
+ * If CPL_DEBUG is set, but is an empty string or the word "ON" then all
+ * debug messages are shown.  Otherwise only messages whose category appears
+ * somewhere within the CPL_DEBUG value are displayed (as determined by
+ * strstr()).
+ *
+ * Categories are usually an identifier for the subsystem producing the
+ * error.  For instance "GDAL" might be used for the GDAL core, and "TIFF"
+ * for messages from the TIFF translator.
+ *
+ * @param pszCategory name of the debugging message category.
+ * @param pszFormat printf() style format string for message to display.
+ *        Remaining arguments are assumed to be for format.
+ * @since 3.9
+ */
+
+#ifdef WITHOUT_CPLDEBUG
+// Do not include CPLDebugProgress. Only available in custom builds.
+#else
+void CPLDebugProgress(const char *pszCategory,
+                      CPL_FORMAT_STRING(const char *pszFormat), ...)
+
+{
+    CPLErrorContext *psCtx = CPLGetErrorContext();
+    if (psCtx == nullptr || IS_PREFEFINED_ERROR_CTX(psCtx))
+        return;
+
+    psCtx->bProgressMode = true;
+
+    va_list args;
+    va_start(args, pszFormat);
+    CPLvDebug(pszCategory, pszFormat, args);
+    va_end(args);
+
+    psCtx->bProgressMode = false;
 }
 #endif  // !WITHOUT_CPLDEBUG
 
@@ -983,7 +1056,36 @@ void CPL_STDCALL CPLDefaultErrorHandler(CPLErr eErrClass, CPLErrorNum nError,
     }
 
     if (eErrClass == CE_Debug)
-        fprintf(fpLog, "%s\n", pszErrorMsg);
+    {
+#ifndef _WIN32
+        CPLErrorContext *psCtx = CPLGetErrorContext();
+        if (psCtx != nullptr && !IS_PREFEFINED_ERROR_CTX(psCtx) &&
+            fpLog == stderr && isatty(static_cast<int>(fileno(stderr))))
+        {
+            if (psCtx->bProgressMode)
+            {
+                // Erase the content of the current line
+                fprintf(stderr, "\r");
+                fprintf(stderr, "%s", pszErrorMsg);
+                fflush(stderr);
+                psCtx->bEmitNewlineBeforeNextDbgMsg = true;
+            }
+            else
+            {
+                if (psCtx->bEmitNewlineBeforeNextDbgMsg)
+                {
+                    psCtx->bEmitNewlineBeforeNextDbgMsg = false;
+                    fprintf(fpLog, "\n");
+                }
+                fprintf(fpLog, "%s\n", pszErrorMsg);
+            }
+        }
+        else
+#endif
+        {
+            fprintf(fpLog, "%s\n", pszErrorMsg);
+        }
+    }
     else if (eErrClass == CE_Warning)
         fprintf(fpLog, "Warning %d: %s\n", nError, pszErrorMsg);
     else

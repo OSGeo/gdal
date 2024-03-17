@@ -201,7 +201,7 @@ bool OGRFeatherWriterLayer::SetOptions(const std::string &osFilename,
 /*                         CloseFileWriter()                            */
 /************************************************************************/
 
-void OGRFeatherWriterLayer::CloseFileWriter()
+bool OGRFeatherWriterLayer::CloseFileWriter()
 {
     auto status = m_poFileWriter->Close();
     if (!status.ok())
@@ -210,6 +210,7 @@ void OGRFeatherWriterLayer::CloseFileWriter()
                  "FileWriter::Close() failed with %s",
                  status.message().c_str());
     }
+    return status.ok();
 }
 
 /************************************************************************/
@@ -457,7 +458,7 @@ bool OGRFeatherWriterLayer::FlushGroup()
         }
     }
 
-    m_apoBuilders.clear();
+    ClearArrayBuilers();
     return ret;
 }
 
