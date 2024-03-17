@@ -876,6 +876,25 @@ def test_band_use_after_dataset_close_2():
         band.Checksum()
 
 
+def test_layer_use_after_dataset_close_1():
+    with gdal.OpenEx("../ogr/data/poly.shp") as ds:
+        lyr = ds.GetLayer(0)
+
+    # Make sure ds.__exit__() has invalidated "lyr" so we don't crash here
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()
+
+
+def test_layer_use_after_dataset_close_2():
+    ds = gdal.OpenEx("../ogr/data/poly.shp")
+    lyr = ds.GetLayerByName("poly")
+
+    del ds
+    # Make sure ds.__del__() has invalidated "lyr" so we don't crash here
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()
+
+
 def test_mask_band_use_after_dataset_close():
     with gdal.Open("data/byte.tif") as ds:
         m1 = ds.GetRasterBand(1).GetMaskBand()
