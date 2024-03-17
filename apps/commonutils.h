@@ -93,8 +93,8 @@ CPL_C_END
 #include "cpl_string.h"
 #include <vector>
 
-std::vector<CPLString> CPL_DLL GetOutputDriversFor(const char *pszDestFilename,
-                                                   int nFlagRasterVector);
+std::vector<std::string> CPL_DLL
+GetOutputDriversFor(const char *pszDestFilename, int nFlagRasterVector);
 CPLString CPL_DLL GetOutputDriverForRaster(const char *pszDestFilename);
 void GDALRemoveBOM(GByte *pabyData);
 std::string GDALRemoveSQLComments(const std::string &osInput);

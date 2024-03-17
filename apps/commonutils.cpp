@@ -41,17 +41,12 @@
 /*                         GetOutputDriversFor()                        */
 /* -------------------------------------------------------------------- */
 
-std::vector<CPLString> GetOutputDriversFor(const char *pszDestFilename,
-                                           int nFlagRasterVector)
+std::vector<std::string> GetOutputDriversFor(const char *pszDestFilename,
+                                             int nFlagRasterVector)
 {
-    std::vector<CPLString> aoDriverList;
-    char **papszList = GDALGetOutputDriversForDatasetName(
+    return CPLStringList(GDALGetOutputDriversForDatasetName(
         pszDestFilename, nFlagRasterVector, /* bSingleMatch = */ false,
-        /* bEmitWarning = */ false);
-    for (char **papszIter = papszList; papszIter && *papszIter; ++papszIter)
-        aoDriverList.push_back(*papszIter);
-    CSLDestroy(papszList);
-    return aoDriverList;
+        /* bEmitWarning = */ false));
 }
 
 /* -------------------------------------------------------------------- */
@@ -60,15 +55,13 @@ std::vector<CPLString> GetOutputDriversFor(const char *pszDestFilename,
 
 CPLString GetOutputDriverForRaster(const char *pszDestFilename)
 {
-    char **papszList = GDALGetOutputDriversForDatasetName(
+    const CPLStringList aosList(GDALGetOutputDriversForDatasetName(
         pszDestFilename, GDAL_OF_RASTER, /* bSingleMatch = */ true,
-        /* bEmitWarning = */ true);
-    if (papszList)
+        /* bEmitWarning = */ true));
+    if (!aosList.empty())
     {
-        CPLDebug("GDAL", "Using %s driver", papszList[0]);
-        const std::string osRet = papszList[0];
-        CSLDestroy(papszList);
-        return osRet;
+        CPLDebug("GDAL", "Using %s driver", aosList[0]);
+        return aosList[0];
     }
     return CPLString();
 }
@@ -119,12 +112,11 @@ void GDALRemoveBOM(GByte *pabyData)
 
 std::string GDALRemoveSQLComments(const std::string &osInput)
 {
-    char **papszLines =
-        CSLTokenizeStringComplex(osInput.c_str(), "\r\n", FALSE, FALSE);
+    const CPLStringList aosLines(
+        CSLTokenizeStringComplex(osInput.c_str(), "\r\n", FALSE, FALSE));
     std::string osSQL;
-    for (char **papszIter = papszLines; papszIter && *papszIter; ++papszIter)
+    for (const char *pszLine : aosLines)
     {
-        const char *pszLine = *papszIter;
         char chQuote = 0;
         int i = 0;
         for (; pszLine[i] != '\0'; ++i)
@@ -158,7 +150,6 @@ std::string GDALRemoveSQLComments(const std::string &osInput)
         }
         osSQL += ' ';
     }
-    CSLDestroy(papszLines);
     return osSQL;
 }
 

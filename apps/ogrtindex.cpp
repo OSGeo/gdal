@@ -278,7 +278,7 @@ MAIN_START(nArgc, papszArgv)
         CPLString osFormat;
         if (pszFormat == nullptr)
         {
-            const std::vector<CPLString> aoDrivers =
+            const auto aoDrivers =
                 GetOutputDriversFor(pszOutputName, GDAL_OF_VECTOR);
             if (aoDrivers.empty())
             {

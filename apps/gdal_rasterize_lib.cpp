@@ -1067,14 +1067,12 @@ GDALRasterizeOptionsNew(char **papszArgv,
         {
             if (strchr(papszArgv[i + 1], ' '))
             {
-                char **papszTokens = CSLTokenizeString(papszArgv[i + 1]);
-                char **papszIter = papszTokens;
-                while (papszIter && *papszIter)
+                const CPLStringList aosTokens(
+                    CSLTokenizeString(papszArgv[i + 1]));
+                for (const char *pszToken : aosTokens)
                 {
-                    psOptions->anBandList.push_back(atoi(*papszIter));
-                    papszIter++;
+                    psOptions->anBandList.push_back(atoi(pszToken));
                 }
-                CSLDestroy(papszTokens);
                 i += 1;
             }
             else
@@ -1120,14 +1118,12 @@ GDALRasterizeOptionsNew(char **papszArgv,
         {
             if (strchr(papszArgv[i + 1], ' '))
             {
-                char **papszTokens = CSLTokenizeString(papszArgv[i + 1]);
-                char **papszIter = papszTokens;
-                while (papszIter && *papszIter)
+                const CPLStringList aosTokens(
+                    CSLTokenizeString(papszArgv[i + 1]));
+                for (const char *pszToken : aosTokens)
                 {
-                    psOptions->adfBurnValues.push_back(CPLAtof(*papszIter));
-                    papszIter++;
+                    psOptions->adfBurnValues.push_back(CPLAtof(pszToken));
                 }
-                CSLDestroy(papszTokens);
                 i += 1;
             }
             else
@@ -1179,14 +1175,12 @@ GDALRasterizeOptionsNew(char **papszArgv,
         {
             if (strchr(papszArgv[i + 1], ' '))
             {
-                char **papszTokens = CSLTokenizeString(papszArgv[i + 1]);
-                char **papszIter = papszTokens;
-                while (papszIter && *papszIter)
+                const CPLStringList aosTokens(
+                    CSLTokenizeString(papszArgv[i + 1]));
+                for (const char *pszToken : aosTokens)
                 {
-                    psOptions->adfInitVals.push_back(CPLAtof(*papszIter));
-                    papszIter++;
+                    psOptions->adfInitVals.push_back(CPLAtof(pszToken));
                 }
-                CSLDestroy(papszTokens);
                 i += 1;
             }
             else
