@@ -2050,6 +2050,7 @@ double OGRSimpleCurve::Project(const OGRPoint *poPoint) const
 {
     double dfResult = -1;
 #ifndef HAVE_GEOS
+    CPL_IGNORE_RET_VAL(poPoint);
     CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
     return dfResult;
 #else
