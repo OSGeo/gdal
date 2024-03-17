@@ -233,7 +233,7 @@ Examples
 
 Fetch :py:const:`OFTDateTime` field value as a ISO8601 representation.
 
-Returnn a string like 'YYYY-MM-DDTHH:MM:SS(.sss)?(Z|([+|-]HH:MM))?'
+Return a string like 'YYYY-MM-DDTHH:MM:SS(.sss)?(Z|([+|-]HH:MM))?'
 Milliseconds are omitted if equal to zero.
 Other field types, or errors will result in a return of an empty string.
 
@@ -870,7 +870,7 @@ Parameters
 other : Feature
     handle to the feature from which geometry, and field
     values will be copied.
-forgiving : bool, default = True
+forgiving : bool
     ``True`` if the operation should continue despite lacking
     output fields matching some of the source fields.
 nList : list
