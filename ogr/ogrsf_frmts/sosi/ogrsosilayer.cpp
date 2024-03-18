@@ -242,7 +242,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
         }
 
         /* get Feature from fyba, according to feature definition */
-        OGRGeometry *poGeom = nullptr;
+        std::unique_ptr<OGRGeometry> poGeom;
         OGRwkbGeometryType oGType = wkbUnknown;
 
         switch (nName)
@@ -384,7 +384,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
                         nRefCount = LC_GetRefFlate(&oGrfStat, GRF_INDRE,
                                                    &nRefNr, &nRefStatus, 1);
                     }
-                    poGeom = poLy.release();
+                    poGeom = std::move(poLy);
                 }
                 break;
             }
@@ -404,10 +404,10 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
                     // return NULL;
                     break;
                 }
-                OGRLineString *poCurve =
+                const OGRLineString *poCurve =
                     poParent->papoBuiltGeometries[oNextSerial.lNr]
                         ->toLineString();
-                poGeom = poCurve->clone();
+                poGeom.reset(poCurve->clone());
                 break;
             }
             case L_TEKST:
@@ -424,10 +424,10 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
                     // return NULL;
                     break;
                 }
-                OGRMultiPoint *poMP =
+                const OGRMultiPoint *poMP =
                     poParent->papoBuiltGeometries[oNextSerial.lNr]
                         ->toMultiPoint();
-                poGeom = poMP->clone();
+                poGeom.reset(poMP->clone());
                 break;
             }
             case L_SYMBOL:
@@ -450,9 +450,9 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
                     // return NULL;
                     break;
                 }
-                OGRPoint *poPoint =
+                const OGRPoint *poPoint =
                     poParent->papoBuiltGeometries[oNextSerial.lNr]->toPoint();
-                poGeom = poPoint->clone();
+                poGeom.reset(poPoint->clone());
                 break;
             }
             case L_DEF: /* skip user definitions and headers here */
@@ -472,7 +472,6 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
             continue; /* skipping L_HODE and unrecognized groups */
         if (oGType != poFeatureDefn->GetGeomType())
         {
-            delete poGeom;
             continue; /* skipping features that are not the correct geometry */
         }
 
@@ -562,7 +561,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
 
         poGeom->assignSpatialReference(poParent->poSRS);
 
-        poFeature->SetGeometryDirectly(poGeom);
+        poFeature->SetGeometryDirectly(poGeom.release());
         poFeature->SetFID(nNextFID++);
 
         /* Loop until we have a feature that matches the definition */
