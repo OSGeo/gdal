@@ -65,6 +65,8 @@ class OGRParquetLayerBase CPL_NON_FINAL : public OGRArrowLayer
 
   public:
     int TestCapability(const char *) override;
+
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/
@@ -152,7 +154,6 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     char **GetMetadata(const char *pszDomain = "") override;
     OGRErr SetNextByIndex(GIntBig nIndex) override;
 
-    GDALDataset *GetDataset() override;
     bool GetArrowStream(struct ArrowArrayStream *out_stream,
                         CSLConstList papszOptions = nullptr) override;
 

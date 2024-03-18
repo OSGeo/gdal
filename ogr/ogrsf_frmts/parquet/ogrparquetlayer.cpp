@@ -65,7 +65,7 @@ OGRParquetLayerBase::OGRParquetLayerBase(OGRParquetDataset *poDS,
 /*                           GetDataset()                               */
 /************************************************************************/
 
-GDALDataset *OGRParquetLayer::GetDataset()
+GDALDataset *OGRParquetLayerBase::GetDataset()
 {
     return m_poDS;
 }
