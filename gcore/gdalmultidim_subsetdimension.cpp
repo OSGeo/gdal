@@ -360,6 +360,14 @@ bool GDALSubsetArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 #endif
         for (size_t i = 0; i < count[0]; ++i)
         {
+            if (i > 0)
+            {
+                if (arrayStep[0] > 0)
+                    arrayIdx += arrayStep[0];
+                else
+                    arrayIdx -= static_cast<GUInt64>(-arrayStep[0]);
+                pabyDstBuffer += bufferStride[0] * nBufferDTSize;
+            }
             newArrayStartIdx[0] =
                 m_poShared->m_anMapNewDimToOldDim[static_cast<int>(arrayIdx)];
             if (!m_poParent->Read(newArrayStartIdx.data(), newCount.data(),
@@ -368,11 +376,6 @@ bool GDALSubsetArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
             {
                 return false;
             }
-            if (arrayStep[0] > 0)
-                arrayIdx += arrayStep[0];
-            else
-                arrayIdx -= static_cast<GUInt64>(-arrayStep[0]);
-            pabyDstBuffer += bufferStride[0] * nBufferDTSize;
         }
         return true;
     }
