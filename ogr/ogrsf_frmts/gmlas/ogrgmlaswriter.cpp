@@ -964,12 +964,8 @@ bool GMLASWriter::CollectFields()
     m_poFieldsMDLayer->SetAttributeFilter(
         (CPLString(szFIELD_CATEGORY) + " != '" + szSWE_FIELD + "'").c_str());
     m_poFieldsMDLayer->ResetReading();
-    while (true)
+    for (auto &&poFeature : m_poFieldsMDLayer)
     {
-        OGRFeature *poFeature = m_poFieldsMDLayer->GetNextFeature();
-        if (poFeature == nullptr)
-            break;
-
         GMLASField oField;
 
         oField.SetName(poFeature->GetFieldAsString(szFIELD_NAME));
@@ -984,12 +980,10 @@ bool GMLASWriter::CollectFields()
                      "referenced in %s by field %s",
                      szOGR_LAYERS_METADATA, osLayerName.c_str(),
                      szOGR_FIELDS_METADATA, oField.GetName().c_str());
-            delete poFeature;
             continue;
         }
         if (m_aoLayerDesc[oIterToIdx->second].bIsJunction)
         {
-            delete poFeature;
             continue;
         }
 
@@ -1042,7 +1036,6 @@ bool GMLASWriter::CollectFields()
                          "Missing value for %s for field (%s,%s)",
                          szFIELD_JUNCTION_LAYER, osLayerName.c_str(),
                          oField.GetName().c_str());
-                delete poFeature;
                 continue;
             }
             oField.SetJunctionLayer(osJunctionLayer);
@@ -1058,7 +1051,6 @@ bool GMLASWriter::CollectFields()
                      "Unknown category = %s for field (%s,%s)",
                      osCategory.c_str(), osLayerName.c_str(),
                      oField.GetName().c_str());
-            delete poFeature;
             continue;
         }
 
@@ -1083,7 +1075,6 @@ bool GMLASWriter::CollectFields()
             poFeature->GetFieldAsString(szFIELD_DEFAULT_VALUE));
 
         const int nIdx = poFeature->GetFieldAsInteger(szFIELD_INDEX);
-        delete poFeature;
 
         const int nLayerIdx = m_oMapLayerNameToIdx[osLayerName];
         LayerDescription &oLayerDesc = m_aoLayerDesc[nLayerIdx];
@@ -1160,12 +1151,8 @@ bool GMLASWriter::CollectRelationships()
     m_poLayerRelationshipsLayer->SetAttributeFilter(nullptr);
     m_poLayerRelationshipsLayer->ResetReading();
 
-    while (true)
+    for (auto &&poFeature : m_poLayerRelationshipsLayer)
     {
-        OGRFeature *poFeature = m_poLayerRelationshipsLayer->GetNextFeature();
-        if (poFeature == nullptr)
-            break;
-
         const CPLString osParentLayer(
             poFeature->GetFieldAsString(szPARENT_LAYER));
         if (m_oMapLayerNameToIdx.find(osParentLayer) ==
@@ -1176,7 +1163,6 @@ bool GMLASWriter::CollectRelationships()
                      "Cannot find in %s layer %s, referenced in %s",
                      szOGR_LAYERS_METADATA, osParentLayer.c_str(),
                      szOGR_LAYER_RELATIONSHIPS);
-            delete poFeature;
             continue;
         }
 
@@ -1190,7 +1176,6 @@ bool GMLASWriter::CollectRelationships()
                      "Cannot find in %s layer %s, referenced in %s",
                      szOGR_LAYERS_METADATA, osChildLayer.c_str(),
                      szOGR_LAYER_RELATIONSHIPS);
-            delete poFeature;
             continue;
         }
 
@@ -1203,8 +1188,6 @@ bool GMLASWriter::CollectRelationships()
             m_aoLayerDesc[nChildLayerIdx].aoReferencingLayers.push_back(
                 PairLayerNameColName(osParentLayer, osReferencingField));
         }
-
-        delete poFeature;
     }
     m_poLayerRelationshipsLayer->ResetReading();
 

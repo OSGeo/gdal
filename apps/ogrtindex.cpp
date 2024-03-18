@@ -735,13 +735,13 @@ MAIN_START(nArgc, papszArgv)
             // If set target srs, do the forward transformation of all points.
             if (bSetTargetSRS && spatialRef != nullptr)
             {
-                OGRCoordinateTransformation *poCT = nullptr;
                 if (!spatialRef->IsSame(poTargetSRS))
                 {
-                    poCT = OGRCreateCoordinateTransformation(spatialRef,
-                                                             poTargetSRS);
+                    auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+                        OGRCreateCoordinateTransformation(spatialRef,
+                                                          poTargetSRS));
                     if (poCT == nullptr ||
-                        oRegion.transform(poCT) == OGRERR_FAILURE)
+                        oRegion.transform(poCT.get()) == OGRERR_FAILURE)
                     {
                         char *pszSourceWKT = nullptr;
                         spatialRef->exportToWkt(&pszSourceWKT);
@@ -753,10 +753,8 @@ MAIN_START(nArgc, papszArgv)
                             pszSourceWKT, pszTargetSRS,
                             papszArgv[nFirstSourceDataset]);
                         CPLFree(pszSourceWKT);
-                        delete poCT;
                         continue;
                     }
-                    delete poCT;
                 }
             }
 
