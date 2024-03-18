@@ -5658,7 +5658,8 @@ bool LayerTranslator::TranslateArrow(
         }
 
         // Limit number of features in batch if needed
-        if (psOptions->nLimit >= 0 && nCount + array.length > psOptions->nLimit)
+        if (psOptions->nLimit >= 0 &&
+            nCount + array.length >= psOptions->nLimit)
         {
             const auto nAdjustedLength = psOptions->nLimit - nCount;
             for (int i = 0; i < array.n_children; ++i)
