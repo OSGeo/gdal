@@ -6072,32 +6072,29 @@ bool LayerTranslator::Translate(
 
             for (int iGeom = 0; iGeom < nDstGeomFieldCount; iGeom++)
             {
-                OGRGeometry *poDstGeometry;
+                std::unique_ptr<OGRGeometry> poDstGeometry;
 
                 if (poCollToExplode && iGeom == iGeomCollToExplode)
                 {
                     OGRGeometry *poPart = poCollToExplode->getGeometryRef(0);
                     poCollToExplode->removeGeometry(0, FALSE);
-                    poDstGeometry = poPart;
-                    assert(poDstGeometry);
+                    poDstGeometry.reset(poPart);
                 }
                 else
                 {
-                    poDstGeometry = poDstFeature->StealGeometry(iGeom);
-                    if (poDstGeometry == nullptr)
-                        continue;
+                    poDstGeometry.reset(poDstFeature->StealGeometry(iGeom));
                 }
+                if (poDstGeometry == nullptr)
+                    continue;
 
                 // poFeature hasn't been moved if iSrcZField != -1
                 // cppcheck-suppress accessMoved
                 if (iSrcZField != -1 && poFeature != nullptr)
                 {
-                    SetZ(poDstGeometry,
+                    SetZ(poDstGeometry.get(),
                          poFeature->GetFieldAsDouble(iSrcZField));
                     /* This will correct the coordinate dimension to 3 */
-                    OGRGeometry *poDupGeometry = poDstGeometry->clone();
-                    delete poDstGeometry;
-                    poDstGeometry = poDupGeometry;
+                    poDstGeometry.reset(poDstGeometry->clone());
                 }
 
                 if (m_nCoordDim == 2 || m_nCoordDim == 3)
@@ -6133,13 +6130,12 @@ bool LayerTranslator::Translate(
                 {
                     if (m_dfGeomOpParam > 0)
                     {
-                        OGRGeometry *poNewGeom =
+                        auto poNewGeom = std::unique_ptr<OGRGeometry>(
                             poDstGeometry->SimplifyPreserveTopology(
-                                m_dfGeomOpParam);
+                                m_dfGeomOpParam));
                         if (poNewGeom)
                         {
-                            delete poDstGeometry;
-                            poDstGeometry = poNewGeom;
+                            poDstGeometry = std::move(poNewGeom);
                         }
                     }
                 }
@@ -6162,13 +6158,12 @@ bool LayerTranslator::Translate(
                         if (oClipEnv.Intersects(oDstEnv))
                         {
                             poClipped.reset(
-                                poClipGeom->Intersection(poDstGeometry));
+                                poClipGeom->Intersection(poDstGeometry.get()));
                         }
                     }
 
                     if (poClipped == nullptr || poClipped->IsEmpty())
                     {
-                        delete poDstGeometry;
                         goto end_loop;
                     }
 
@@ -6186,12 +6181,10 @@ bool LayerTranslator::Translate(
                             nSrcFID, poSrcLayer->GetName(),
                             OGRToOGCGeomType(poClipped->getGeometryType()),
                             OGRToOGCGeomType(poDstGeometry->getGeometryType()));
-                        delete poDstGeometry;
                         goto end_loop;
                     }
 
-                    delete poDstGeometry;
-                    poDstGeometry = poClipped.release();
+                    poDstGeometry = std::move(poClipped);
                 }
 
                 OGRCoordinateTransformation *const poCT =
@@ -6220,8 +6213,8 @@ bool LayerTranslator::Translate(
                         {
                             OGRwkbGeometryType eTargetType = OGR_GT_GetLinear(
                                 poDstGeometry->getGeometryType());
-                            poDstGeometry = OGRGeometryFactory::forceTo(
-                                poDstGeometry, eTargetType);
+                            poDstGeometry.reset(OGRGeometryFactory::forceTo(
+                                poDstGeometry.release(), eTargetType));
                         }
                     }
                     else if (bReprojCanInvalidateValidity &&
@@ -6230,16 +6223,17 @@ bool LayerTranslator::Translate(
                                  static_cast<OGRwkbGeometryType>(eGType)) &&
                              poDstGeometry->hasCurveGeometry(TRUE))
                     {
-                        poDstGeometry = OGRGeometryFactory::forceTo(
-                            poDstGeometry,
-                            static_cast<OGRwkbGeometryType>(eGType));
+                        poDstGeometry.reset(OGRGeometryFactory::forceTo(
+                            poDstGeometry.release(),
+                            static_cast<OGRwkbGeometryType>(eGType)));
                     }
 
                     for (int iIter = 0; iIter < 2; ++iIter)
                     {
                         auto poReprojectedGeom = std::unique_ptr<OGRGeometry>(
                             OGRGeometryFactory::transformWithOptions(
-                                poDstGeometry, poCT, papszTransformOptions,
+                                poDstGeometry.get(), poCT,
+                                papszTransformOptions,
                                 m_transformWithOptionsCache));
                         if (poReprojectedGeom == nullptr)
                         {
@@ -6251,7 +6245,6 @@ bool LayerTranslator::Translate(
                                             OGRERR_NONE &&
                                         !psOptions->bSkipFailures)
                                     {
-                                        delete poDstGeometry;
                                         return false;
                                     }
                                 }
@@ -6264,7 +6257,6 @@ bool LayerTranslator::Translate(
                                      nSrcFID);
                             if (!psOptions->bSkipFailures)
                             {
-                                delete poDstGeometry;
                                 return false;
                             }
                         }
@@ -6288,7 +6280,7 @@ bool LayerTranslator::Translate(
                              eFlatType == wkbMultiCurve ||
                              eFlatType == wkbMultiSurface) &&
                             poDstGeometry->hasCurveGeometry(TRUE) &&
-                            IsValid(poDstGeometry))
+                            IsValid(poDstGeometry.get()))
                         {
                             OGRwkbGeometryType eTargetType = OGR_GT_GetLinear(
                                 poDstGeometry->getGeometryType());
@@ -6303,22 +6295,20 @@ bool LayerTranslator::Translate(
                                          "Curve geometry no longer valid after "
                                          "reprojection: transforming it into "
                                          "linear one before reprojecting");
-                                poDstGeometry = OGRGeometryFactory::forceTo(
-                                    poDstGeometry, eTargetType);
-                                poDstGeometry = OGRGeometryFactory::forceTo(
-                                    poDstGeometry, eType);
+                                poDstGeometry.reset(OGRGeometryFactory::forceTo(
+                                    poDstGeometry.release(), eTargetType));
+                                poDstGeometry.reset(OGRGeometryFactory::forceTo(
+                                    poDstGeometry.release(), eType));
                             }
                             else
                             {
-                                delete poDstGeometry;
-                                poDstGeometry = poReprojectedGeom.release();
+                                poDstGeometry = std::move(poReprojectedGeom);
                                 break;
                             }
                         }
                         else
                         {
-                            delete poDstGeometry;
-                            poDstGeometry = poReprojectedGeom.release();
+                            poDstGeometry = std::move(poReprojectedGeom);
                             break;
                         }
                     }
@@ -6336,7 +6326,6 @@ bool LayerTranslator::Translate(
                             poDstGeometry->getSpatialReference());
                         if (poClipGeom == nullptr)
                         {
-                            delete poDstGeometry;
                             goto end_loop;
                         }
 
@@ -6351,12 +6340,11 @@ bool LayerTranslator::Translate(
                         if (oClipEnv.Intersects(oDstEnv))
                         {
                             poClipped.reset(
-                                poClipGeom->Intersection(poDstGeometry));
+                                poClipGeom->Intersection(poDstGeometry.get()));
                         }
 
                         if (poClipped == nullptr || poClipped->IsEmpty())
                         {
-                            delete poDstGeometry;
                             goto end_loop;
                         }
 
@@ -6375,12 +6363,10 @@ bool LayerTranslator::Translate(
                                 OGRToOGCGeomType(poClipped->getGeometryType()),
                                 OGRToOGCGeomType(
                                     poDstGeometry->getGeometryType()));
-                            delete poDstGeometry;
                             goto end_loop;
                         }
 
-                        delete poDstGeometry;
-                        poDstGeometry = poClipped.release();
+                        poDstGeometry = std::move(poClipped);
                     }
 
                     if (psOptions->dfXYRes !=
@@ -6401,13 +6387,12 @@ bool LayerTranslator::Translate(
                         }
                         if (bRunSetPrecision)
                         {
-                            OGRGeometry *poRoundedGeom =
+                            auto poNewGeom = std::unique_ptr<OGRGeometry>(
                                 poDstGeometry->SetPrecision(psOptions->dfXYRes,
-                                                            /* nFlags = */ 0);
-                            delete poDstGeometry;
-                            poDstGeometry = poRoundedGeom;
-                            if (!poDstGeometry)
+                                                            /* nFlags = */ 0));
+                            if (!poNewGeom)
                                 goto end_loop;
+                            poDstGeometry = std::move(poNewGeom);
                         }
                     }
 
@@ -6416,17 +6401,17 @@ bool LayerTranslator::Translate(
                         const bool bIsGeomCollection =
                             wkbFlatten(poDstGeometry->getGeometryType()) ==
                             wkbGeometryCollection;
-                        OGRGeometry *poValidGeom = poDstGeometry->MakeValid();
-                        delete poDstGeometry;
-                        poDstGeometry = poValidGeom;
-                        if (poDstGeometry == nullptr)
+                        auto poNewGeom = std::unique_ptr<OGRGeometry>(
+                            poDstGeometry->MakeValid());
+                        if (!poNewGeom)
                             goto end_loop;
+                        poDstGeometry = std::move(poNewGeom);
                         if (!bIsGeomCollection)
                         {
-                            OGRGeometry *poCleanedGeom = OGRGeometryFactory::
-                                removeLowerDimensionSubGeoms(poDstGeometry);
-                            delete poDstGeometry;
-                            poDstGeometry = poCleanedGeom;
+                            poDstGeometry.reset(
+                                OGRGeometryFactory::
+                                    removeLowerDimensionSubGeoms(
+                                        poDstGeometry.get()));
                         }
                     }
 
@@ -6436,18 +6421,19 @@ bool LayerTranslator::Translate(
                             poDstGeometry->getGeometryType();
                         eTargetType =
                             ConvertType(m_eGeomTypeConversion, eTargetType);
-                        poDstGeometry = OGRGeometryFactory::forceTo(
-                            poDstGeometry, eTargetType);
+                        poDstGeometry.reset(OGRGeometryFactory::forceTo(
+                            poDstGeometry.release(), eTargetType));
                     }
                     else if (eGType != GEOMTYPE_UNCHANGED)
                     {
-                        poDstGeometry = OGRGeometryFactory::forceTo(
-                            poDstGeometry,
-                            static_cast<OGRwkbGeometryType>(eGType));
+                        poDstGeometry.reset(OGRGeometryFactory::forceTo(
+                            poDstGeometry.release(),
+                            static_cast<OGRwkbGeometryType>(eGType)));
                     }
                 }
 
-                poDstFeature->SetGeomFieldDirectly(iGeom, poDstGeometry);
+                poDstFeature->SetGeomFieldDirectly(iGeom,
+                                                   poDstGeometry.release());
             }
 
             CPLErrorReset();
