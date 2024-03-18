@@ -3,7 +3,7 @@
 # ******************************************************************************
 #
 #  Project:  GDAL
-#  Purpose:  Command line a 2-level hierarchy of VRTs for very large collections
+#  Purpose:  Create a 2-level hierarchy of VRTs for very large collections
 #  Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 # ******************************************************************************

@@ -81,7 +81,7 @@ def test_gdalbuildvrtofvrt_basic(script_path, tmp_path):
 # Test
 
 
-def test_gdalbuildvrtofvrt_intermediata_vrt_path(script_path, tmp_path):
+def test_gdalbuildvrtofvrt_intermediate_vrt_path(script_path, tmp_path):
 
     out_filename = str(tmp_path / "out.vrt")
     intermediate_vrt_path = tmp_path / "intermediate_vrt_path"
