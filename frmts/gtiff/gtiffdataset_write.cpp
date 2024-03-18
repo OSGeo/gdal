@@ -3712,7 +3712,7 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
     /* ==================================================================== */
     /*      Process each domain.                                            */
     /* ==================================================================== */
-    char **papszDomainList = poMDMD->GetDomainList();
+    CSLConstList papszDomainList = poMDMD->GetDomainList();
     for (int iDomain = 0; papszDomainList && papszDomainList[iDomain];
          ++iDomain)
     {
@@ -4306,7 +4306,7 @@ void GTiffDataset::PushMetadataToPam()
         /*      Loop over the available domains. */
         /* --------------------------------------------------------------------
          */
-        char **papszDomainList = poSrcMDMD->GetDomainList();
+        CSLConstList papszDomainList = poSrcMDMD->GetDomainList();
         for (int iDomain = 0; papszDomainList && papszDomainList[iDomain];
              ++iDomain)
         {

@@ -2023,10 +2023,9 @@ GDALVectorTranslateCreateCopy(GDALDriver *poDriver, const char *pszDest,
             }
             else
             {
-                CSLConstList papszIter = psOptions->aosLayers.List();
-                for (; *papszIter != nullptr; ++papszIter)
+                for (const char *pszLayer : psOptions->aosLayers)
                 {
-                    OGRLayer *poSrcLayer = poDS->GetLayerByName(*papszIter);
+                    OGRLayer *poSrcLayer = poDS->GetLayerByName(pszLayer);
                     if (poSrcLayer != nullptr)
                     {
                         poSrcLayer->SetAttributeFilter(
@@ -2085,12 +2084,11 @@ GDALVectorTranslateCreateCopy(GDALDriver *poDriver, const char *pszDest,
         if (EQUAL(poDriver->GetDescription(), "GMLAS"))
         {
             CPLString osLayers;
-            CSLConstList papszIter = psOptions->aosLayers.List();
-            for (; *papszIter != nullptr; ++papszIter)
+            for (const char *pszLayer : psOptions->aosLayers)
             {
                 if (!osLayers.empty())
                     osLayers += ",";
-                osLayers += *papszIter;
+                osLayers += pszLayer;
             }
             aosDSCO.SetNameValue("LAYERS", osLayers);
         }
@@ -2399,13 +2397,13 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     /* -------------------------------------------------------------------- */
     /*      Try opening the output datasource as an existing, writable      */
     /* -------------------------------------------------------------------- */
-    std::vector<CPLString> aoDrivers;
+    std::vector<std::string> aoDrivers;
     if (poODS == nullptr && psOptions->osFormat.empty())
     {
         aoDrivers = GetOutputDriversFor(pszDest, GDAL_OF_VECTOR);
         if (!bUpdate && aoDrivers.size() == 1)
         {
-            GDALDriverH hDriver = GDALGetDriverByName(aoDrivers[0]);
+            GDALDriverH hDriver = GDALGetDriverByName(aoDrivers[0].c_str());
             const char *pszPrefix = GDALGetMetadataItem(
                 hDriver, GDAL_DMD_CONNECTION_PREFIX, nullptr);
             if (pszPrefix && STARTS_WITH_CI(pszDest, pszPrefix))
@@ -2624,26 +2622,17 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
 
         if (psOptions->bCopyMD)
         {
-            char **papszDomains = poDS->GetMetadataDomainList();
-            for (char **papszIter = papszDomains; papszIter && *papszIter;
-                 ++papszIter)
+            const CPLStringList aosDomains(poDS->GetMetadataDomainList());
+            for (const char *pszMD : aosDomains)
             {
-                char **papszMD = poDS->GetMetadata(*papszIter);
-                if (papszMD)
-                    poODS->SetMetadata(papszMD, *papszIter);
+                if (char **papszMD = poDS->GetMetadata(pszMD))
+                    poODS->SetMetadata(papszMD, pszMD);
             }
-            CSLDestroy(papszDomains);
         }
-        for (char **papszIter = psOptions->aosMetadataOptions.List();
-             papszIter && *papszIter; ++papszIter)
+        for (const auto &[pszKey, pszValue] :
+             cpl::IterateNameValue(psOptions->aosMetadataOptions))
         {
-            char *pszKey = nullptr;
-            const char *pszValue = CPLParseNameValue(*papszIter, &pszKey);
-            if (pszKey)
-            {
-                poODS->SetMetadataItem(pszKey, pszValue);
-                CPLFree(pszKey);
-            }
+            poODS->SetMetadataItem(pszKey, pszValue);
         }
 
         // When writing to GeoJSON and using -nln, set the @NAME layer
@@ -3000,15 +2989,14 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         }
 
         // Make sure to probe all layers in case some are by default invisible
-        for (char **papszIter = psOptions->aosLayers.List();
-             papszIter && *papszIter; ++papszIter)
+        for (const char *pszLayer : psOptions->aosLayers)
         {
-            OGRLayer *poLayer = poDS->GetLayerByName(*papszIter);
+            OGRLayer *poLayer = poDS->GetLayerByName(pszLayer);
 
             if (poLayer == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Couldn't fetch requested layer %s!", *papszIter);
+                         "Couldn't fetch requested layer %s!", pszLayer);
                 if (hDstDS == nullptr)
                     GDALClose(poODS);
                 delete poGCPCoordTrans;
@@ -4602,19 +4590,16 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
 
         if (m_bCopyMD)
         {
-            char **papszDomains = poSrcLayer->GetMetadataDomainList();
-            for (char **papszIter = papszDomains; papszIter && *papszIter;
-                 ++papszIter)
+            const CPLStringList aosDomains(poSrcLayer->GetMetadataDomainList());
+            for (const char *pszMD : aosDomains)
             {
-                if (!EQUAL(*papszIter, "IMAGE_STRUCTURE") &&
-                    !EQUAL(*papszIter, "SUBDATASETS"))
+                if (!EQUAL(pszMD, "IMAGE_STRUCTURE") &&
+                    !EQUAL(pszMD, "SUBDATASETS"))
                 {
-                    char **papszMD = poSrcLayer->GetMetadata(*papszIter);
-                    if (papszMD)
-                        poDstLayer->SetMetadata(papszMD, *papszIter);
+                    if (char **papszMD = poSrcLayer->GetMetadata(pszMD))
+                        poDstLayer->SetMetadata(papszMD, pszMD);
                 }
             }
-            CSLDestroy(papszDomains);
         }
 
         if (anRequestedGeomFields.empty() && nSrcGeomFieldCount > 1 &&

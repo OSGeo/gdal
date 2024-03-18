@@ -913,12 +913,11 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
             CPLStringList aosArrayCO;
             bool bAutoScale = false;
             GDALDataType eAutoScaleType = GDT_UInt16;
-            for (CSLConstList papszIter = papszOptions; papszIter && *papszIter;
-                 ++papszIter)
+            for (const char *pszItem : cpl::Iterate(papszOptions))
             {
-                if (STARTS_WITH_CI(*papszIter, "ARRAY:"))
+                if (STARTS_WITH_CI(pszItem, "ARRAY:"))
                 {
-                    const char *pszOption = *papszIter + strlen("ARRAY:");
+                    const char *pszOption = pszItem + strlen("ARRAY:");
                     if (STARTS_WITH_CI(pszOption, "IF(DIM="))
                     {
                         const char *pszNext = strchr(pszOption, ':');

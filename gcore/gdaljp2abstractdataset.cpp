@@ -113,28 +113,27 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo *poOpenInfo,
         osGeorefSources.replace(nInternalIdx, strlen("INTERNAL"),
                                 "GEOJP2,GMLJP2,MSIG");
     }
-    char **papszTokens = CSLTokenizeString2(osGeorefSources, ",", 0);
+    const CPLStringList aosTokens(CSLTokenizeString2(osGeorefSources, ",", 0));
     m_bGotPAMGeorefSrcIndex = true;
-    m_nPAMGeorefSrcIndex = CSLFindString(papszTokens, "PAM");
-    const int nGEOJP2Index = CSLFindString(papszTokens, "GEOJP2");
-    const int nGMLJP2Index = CSLFindString(papszTokens, "GMLJP2");
-    const int nMSIGIndex = CSLFindString(papszTokens, "MSIG");
-    m_nWORLDFILEIndex = CSLFindString(papszTokens, "WORLDFILE");
+    m_nPAMGeorefSrcIndex = aosTokens.FindString("PAM");
+    const int nGEOJP2Index = aosTokens.FindString("GEOJP2");
+    const int nGMLJP2Index = aosTokens.FindString("GMLJP2");
+    const int nMSIGIndex = aosTokens.FindString("MSIG");
+    m_nWORLDFILEIndex = aosTokens.FindString("WORLDFILE");
 
     if (bGeorefSourcesConfigOption)
     {
-        for (char **papszIter = papszTokens; *papszIter; ++papszIter)
+        for (const char *pszToken : aosTokens)
         {
-            if (!EQUAL(*papszIter, "PAM") && !EQUAL(*papszIter, "GEOJP2") &&
-                !EQUAL(*papszIter, "GMLJP2") && !EQUAL(*papszIter, "MSIG") &&
-                !EQUAL(*papszIter, "WORLDFILE") && !EQUAL(*papszIter, "NONE"))
+            if (!EQUAL(pszToken, "PAM") && !EQUAL(pszToken, "GEOJP2") &&
+                !EQUAL(pszToken, "GMLJP2") && !EQUAL(pszToken, "MSIG") &&
+                !EQUAL(pszToken, "WORLDFILE") && !EQUAL(pszToken, "NONE"))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Unhandled value %s in GEOREF_SOURCES", *papszIter);
+                         "Unhandled value %s in GEOREF_SOURCES", pszToken);
             }
         }
     }
-    CSLDestroy(papszTokens);
 
     /* -------------------------------------------------------------------- */
     /*      Check for georeferencing information.                           */
@@ -224,26 +223,24 @@ void GDALJP2AbstractDataset::LoadJP2Metadata(GDALOpenInfo *poOpenInfo,
         {
             GDALMultiDomainMetadata oLocalMDMD;
             oLocalMDMD.XMLInit(psXMLNode, FALSE);
-            char **papszDomainList = oLocalMDMD.GetDomainList();
-            char **papszIter = papszDomainList;
             GDALDataset::SetMetadata(oLocalMDMD.GetMetadata());
-            while (papszIter && *papszIter)
+            for (const char *pszDomain :
+                 cpl::Iterate(CSLConstList(oLocalMDMD.GetDomainList())))
             {
-                if (!EQUAL(*papszIter, "") &&
-                    !EQUAL(*papszIter, "IMAGE_STRUCTURE"))
+                if (!EQUAL(pszDomain, "") &&
+                    !EQUAL(pszDomain, "IMAGE_STRUCTURE"))
                 {
-                    if (GDALDataset::GetMetadata(*papszIter) != nullptr)
+                    if (GDALDataset::GetMetadata(pszDomain) != nullptr)
                     {
                         CPLDebug(
                             "GDALJP2",
                             "GDAL metadata overrides metadata in %s domain "
                             "over metadata read from other boxes",
-                            *papszIter);
+                            pszDomain);
                     }
-                    GDALDataset::SetMetadata(oLocalMDMD.GetMetadata(*papszIter),
-                                             *papszIter);
+                    GDALDataset::SetMetadata(oLocalMDMD.GetMetadata(pszDomain),
+                                             pszDomain);
                 }
-                ++papszIter;
             }
             CPLDestroyXMLNode(psXMLNode);
         }

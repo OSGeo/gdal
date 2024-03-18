@@ -262,9 +262,9 @@ TEST_F(test_cpl, CSLTokenizeString2)
         CPLStringList aosStringList(
             CSLTokenizeString2("one two three", " ", 0));
         ASSERT_EQ(aosStringList.size(), 3);
-        ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(aosStringList[2], "three"));
+        EXPECT_STREQ(aosStringList[0], "one");
+        EXPECT_STREQ(aosStringList[1], "two");
+        EXPECT_STREQ(aosStringList[2], "three");
 
         // Test range-based for loop
         int i = 0;
@@ -290,48 +290,48 @@ TEST_F(test_cpl, CSLTokenizeString2)
         CPLStringList aosStringList(
             CSLTokenizeString2("one two, three;four,five; six", " ;,", 0));
         ASSERT_EQ(aosStringList.size(), 6);
-        ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(aosStringList[2], "three"));
-        ASSERT_TRUE(EQUAL(aosStringList[3], "four"));
-        ASSERT_TRUE(EQUAL(aosStringList[4], "five"));
-        ASSERT_TRUE(EQUAL(aosStringList[5], "six"));
+        EXPECT_STREQ(aosStringList[0], "one");
+        EXPECT_STREQ(aosStringList[1], "two");
+        EXPECT_STREQ(aosStringList[2], "three");
+        EXPECT_STREQ(aosStringList[3], "four");
+        EXPECT_STREQ(aosStringList[4], "five");
+        EXPECT_STREQ(aosStringList[5], "six");
     }
 
     {
         CPLStringList aosStringList(CSLTokenizeString2(
             "one two,,,five,six", " ,", CSLT_ALLOWEMPTYTOKENS));
         ASSERT_EQ(aosStringList.size(), 6);
-        ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(aosStringList[2], ""));
-        ASSERT_TRUE(EQUAL(aosStringList[3], ""));
-        ASSERT_TRUE(EQUAL(aosStringList[4], "five"));
-        ASSERT_TRUE(EQUAL(aosStringList[5], "six"));
+        EXPECT_STREQ(aosStringList[0], "one");
+        EXPECT_STREQ(aosStringList[1], "two");
+        EXPECT_STREQ(aosStringList[2], "");
+        EXPECT_STREQ(aosStringList[3], "");
+        EXPECT_STREQ(aosStringList[4], "five");
+        EXPECT_STREQ(aosStringList[5], "six");
     }
 
     {
         CPLStringList aosStringList(CSLTokenizeString2(
             "one two,\"three,four ,\",five,six", " ,", CSLT_HONOURSTRINGS));
         ASSERT_EQ(aosStringList.size(), 5);
-        ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(aosStringList[2], "three,four ,"));
-        ASSERT_TRUE(EQUAL(aosStringList[3], "five"));
-        ASSERT_TRUE(EQUAL(aosStringList[4], "six"));
+        EXPECT_STREQ(aosStringList[0], "one");
+        EXPECT_STREQ(aosStringList[1], "two");
+        EXPECT_STREQ(aosStringList[2], "three,four ,");
+        EXPECT_STREQ(aosStringList[3], "five");
+        EXPECT_STREQ(aosStringList[4], "six");
     }
 
     {
         CPLStringList aosStringList(CSLTokenizeString2(
             "one two,\"three,four ,\",five,six", " ,", CSLT_PRESERVEQUOTES));
         ASSERT_EQ(aosStringList.size(), 7);
-        ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(aosStringList[2], "\"three"));
-        ASSERT_TRUE(EQUAL(aosStringList[3], "four"));
-        ASSERT_TRUE(EQUAL(aosStringList[4], "\""));
-        ASSERT_TRUE(EQUAL(aosStringList[5], "five"));
-        ASSERT_TRUE(EQUAL(aosStringList[6], "six"));
+        EXPECT_STREQ(aosStringList[0], "one");
+        EXPECT_STREQ(aosStringList[1], "two");
+        EXPECT_STREQ(aosStringList[2], "\"three");
+        EXPECT_STREQ(aosStringList[3], "four");
+        EXPECT_STREQ(aosStringList[4], "\"");
+        EXPECT_STREQ(aosStringList[5], "five");
+        EXPECT_STREQ(aosStringList[6], "six");
     }
 
     {
@@ -339,11 +339,11 @@ TEST_F(test_cpl, CSLTokenizeString2)
             CSLTokenizeString2("one two,\"three,four ,\",five,six", " ,",
                                CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES));
         ASSERT_EQ(aosStringList.size(), 5);
-        ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(aosStringList[2], "\"three,four ,\""));
-        ASSERT_TRUE(EQUAL(aosStringList[3], "five"));
-        ASSERT_TRUE(EQUAL(aosStringList[4], "six"));
+        EXPECT_STREQ(aosStringList[0], "one");
+        EXPECT_STREQ(aosStringList[1], "two");
+        EXPECT_STREQ(aosStringList[2], "\"three,four ,\"");
+        EXPECT_STREQ(aosStringList[3], "five");
+        EXPECT_STREQ(aosStringList[4], "six");
     }
 
     {
@@ -351,13 +351,13 @@ TEST_F(test_cpl, CSLTokenizeString2)
             CSLTokenizeString2("one \\two,\"three,\\four ,\",five,six", " ,",
                                CSLT_PRESERVEESCAPES));
         ASSERT_EQ(aosStringList.size(), 7);
-        ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(aosStringList[1], "\\two"));
-        ASSERT_TRUE(EQUAL(aosStringList[2], "\"three"));
-        ASSERT_TRUE(EQUAL(aosStringList[3], "\\four"));
-        ASSERT_TRUE(EQUAL(aosStringList[4], "\""));
-        ASSERT_TRUE(EQUAL(aosStringList[5], "five"));
-        ASSERT_TRUE(EQUAL(aosStringList[6], "six"));
+        EXPECT_STREQ(aosStringList[0], "one");
+        EXPECT_STREQ(aosStringList[1], "\\two");
+        EXPECT_STREQ(aosStringList[2], "\"three");
+        EXPECT_STREQ(aosStringList[3], "\\four");
+        EXPECT_STREQ(aosStringList[4], "\"");
+        EXPECT_STREQ(aosStringList[5], "five");
+        EXPECT_STREQ(aosStringList[6], "six");
     }
 
     {
@@ -365,46 +365,46 @@ TEST_F(test_cpl, CSLTokenizeString2)
             CSLTokenizeString2("one \\two,\"three,\\four ,\",five,six", " ,",
                                CSLT_PRESERVEQUOTES | CSLT_PRESERVEESCAPES));
         ASSERT_EQ(aosStringList.size(), 7);
-        ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(aosStringList[1], "\\two"));
-        ASSERT_TRUE(EQUAL(aosStringList[2], "\"three"));
-        ASSERT_TRUE(EQUAL(aosStringList[3], "\\four"));
-        ASSERT_TRUE(EQUAL(aosStringList[4], "\""));
-        ASSERT_TRUE(EQUAL(aosStringList[5], "five"));
-        ASSERT_TRUE(EQUAL(aosStringList[6], "six"));
+        EXPECT_STREQ(aosStringList[0], "one");
+        EXPECT_STREQ(aosStringList[1], "\\two");
+        EXPECT_STREQ(aosStringList[2], "\"three");
+        EXPECT_STREQ(aosStringList[3], "\\four");
+        EXPECT_STREQ(aosStringList[4], "\"");
+        EXPECT_STREQ(aosStringList[5], "five");
+        EXPECT_STREQ(aosStringList[6], "six");
     }
 
     {
         CPLStringList aosStringList(
             CSLTokenizeString2("one ,two, three, four ,five  ", ",", 0));
         ASSERT_EQ(aosStringList.size(), 5);
-        ASSERT_TRUE(EQUAL(aosStringList[0], "one "));
-        ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(aosStringList[2], " three"));
-        ASSERT_TRUE(EQUAL(aosStringList[3], " four "));
-        ASSERT_TRUE(EQUAL(aosStringList[4], "five  "));
+        EXPECT_STREQ(aosStringList[0], "one ");
+        EXPECT_STREQ(aosStringList[1], "two");
+        EXPECT_STREQ(aosStringList[2], " three");
+        EXPECT_STREQ(aosStringList[3], " four ");
+        EXPECT_STREQ(aosStringList[4], "five  ");
     }
 
     {
         CPLStringList aosStringList(CSLTokenizeString2(
             "one ,two, three, four ,five  ", ",", CSLT_STRIPLEADSPACES));
         ASSERT_EQ(aosStringList.size(), 5);
-        ASSERT_TRUE(EQUAL(aosStringList[0], "one "));
-        ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(aosStringList[2], "three"));
-        ASSERT_TRUE(EQUAL(aosStringList[3], "four "));
-        ASSERT_TRUE(EQUAL(aosStringList[4], "five  "));
+        EXPECT_STREQ(aosStringList[0], "one ");
+        EXPECT_STREQ(aosStringList[1], "two");
+        EXPECT_STREQ(aosStringList[2], "three");
+        EXPECT_STREQ(aosStringList[3], "four ");
+        EXPECT_STREQ(aosStringList[4], "five  ");
     }
 
     {
         CPLStringList aosStringList(CSLTokenizeString2(
             "one ,two, three, four ,five  ", ",", CSLT_STRIPENDSPACES));
         ASSERT_EQ(aosStringList.size(), 5);
-        ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(aosStringList[2], " three"));
-        ASSERT_TRUE(EQUAL(aosStringList[3], " four"));
-        ASSERT_TRUE(EQUAL(aosStringList[4], "five"));
+        EXPECT_STREQ(aosStringList[0], "one");
+        EXPECT_STREQ(aosStringList[1], "two");
+        EXPECT_STREQ(aosStringList[2], " three");
+        EXPECT_STREQ(aosStringList[3], " four");
+        EXPECT_STREQ(aosStringList[4], "five");
     }
 
     {
@@ -412,11 +412,89 @@ TEST_F(test_cpl, CSLTokenizeString2)
             CSLTokenizeString2("one ,two, three, four ,five  ", ",",
                                CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
         ASSERT_EQ(aosStringList.size(), 5);
-        ASSERT_TRUE(EQUAL(aosStringList[0], "one"));
-        ASSERT_TRUE(EQUAL(aosStringList[1], "two"));
-        ASSERT_TRUE(EQUAL(aosStringList[2], "three"));
-        ASSERT_TRUE(EQUAL(aosStringList[3], "four"));
-        ASSERT_TRUE(EQUAL(aosStringList[4], "five"));
+        EXPECT_STREQ(aosStringList[0], "one");
+        EXPECT_STREQ(aosStringList[1], "two");
+        EXPECT_STREQ(aosStringList[2], "three");
+        EXPECT_STREQ(aosStringList[3], "four");
+        EXPECT_STREQ(aosStringList[4], "five");
+    }
+
+    {
+        const std::vector<std::string> oVector{"a", "bc"};
+        // Test CPLStringList(const std::vector<std::string>&) constructor
+        const CPLStringList aosList(oVector);
+        ASSERT_EQ(aosList.size(), 2);
+        EXPECT_STREQ(aosList[0], "a");
+        EXPECT_STREQ(aosList[1], "bc");
+        EXPECT_EQ(aosList[2], nullptr);
+
+        // Test CPLStringList::operator std::vector<std::string>(void) const
+        const std::vector<std::string> oVector2(aosList);
+        EXPECT_EQ(oVector, oVector2);
+
+        EXPECT_EQ(oVector, cpl::ToVector(aosList.List()));
+    }
+
+    {
+        const CPLStringList aosList(std::vector<std::string>{});
+        EXPECT_EQ(aosList.List(), nullptr);
+    }
+
+    {
+        // Test CPLStringList(std::initializer_list<const char*>) constructor
+        const CPLStringList aosList{"a", "bc"};
+        ASSERT_EQ(aosList.size(), 2);
+        EXPECT_STREQ(aosList[0], "a");
+        EXPECT_STREQ(aosList[1], "bc");
+        EXPECT_EQ(aosList[2], nullptr);
+
+        // Test cpl::Iterate(CSLConstList)
+        CSLConstList papszList = aosList.List();
+        CPLStringList aosList2;
+        for (const char *pszStr : cpl::Iterate(papszList))
+        {
+            aosList2.AddString(pszStr);
+        }
+        ASSERT_EQ(aosList2.size(), 2);
+        EXPECT_STREQ(aosList2[0], "a");
+        EXPECT_STREQ(aosList2[1], "bc");
+        EXPECT_EQ(aosList2[2], nullptr);
+    }
+
+    {
+        // Test cpl::Iterate() on a null list
+        CSLConstList papszList = nullptr;
+        auto oIteratorWrapper = cpl::Iterate(papszList);
+        EXPECT_TRUE(oIteratorWrapper.begin() == oIteratorWrapper.end());
+    }
+
+    {
+        // Test cpl::IterateNameValue()
+        const CPLStringList aosList{"foo=bar", "illegal", "bar=baz"};
+        CSLConstList papszList = aosList.List();
+        std::map<std::string, std::string> oMap;
+        for (const auto &[name, value] : cpl::IterateNameValue(papszList))
+        {
+            oMap[name] = value;
+        }
+        ASSERT_EQ(oMap.size(), 2);
+        EXPECT_EQ(oMap["foo"], "bar");
+        EXPECT_EQ(oMap["bar"], "baz");
+    }
+
+    {
+        // Test cpl::IterateNameValue() on a list wth only invalid values
+        const CPLStringList aosList{"illegal"};
+        CSLConstList papszList = aosList.List();
+        auto oIteratorWrapper = cpl::IterateNameValue(papszList);
+        EXPECT_TRUE(oIteratorWrapper.begin() == oIteratorWrapper.end());
+    }
+
+    {
+        // Test cpl::IterateNameValue() on a null list
+        CSLConstList papszList = nullptr;
+        auto oIteratorWrapper = cpl::IterateNameValue(papszList);
+        EXPECT_TRUE(oIteratorWrapper.begin() == oIteratorWrapper.end());
     }
 }
 

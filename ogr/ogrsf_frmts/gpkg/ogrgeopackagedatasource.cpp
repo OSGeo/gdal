@@ -4228,8 +4228,8 @@ char **GDALGeoPackageDataset::GetMetadata(const char *pszDomain)
                 {
                     papszMetadata =
                         CSLMerge(papszMetadata, oLocalMDMD.GetMetadata());
-                    char **papszDomainList = oLocalMDMD.GetDomainList();
-                    char **papszIter = papszDomainList;
+                    CSLConstList papszDomainList = oLocalMDMD.GetDomainList();
+                    CSLConstList papszIter = papszDomainList;
                     while (papszIter && *papszIter)
                     {
                         if (EQUAL(*papszIter, "IMAGE_STRUCTURE"))
@@ -4780,8 +4780,8 @@ void GDALGeoPackageDataset::FlushMetadata()
     CPLXMLNode *psXMLNode = nullptr;
     {
         GDALMultiDomainMetadata oLocalMDMD;
-        char **papszDomainList = oMDMD.GetDomainList();
-        char **papszIter = papszDomainList;
+        CSLConstList papszDomainList = oMDMD.GetDomainList();
+        CSLConstList papszIter = papszDomainList;
         oLocalMDMD.SetMetadata(papszMDDup);
         while (papszIter && *papszIter)
         {

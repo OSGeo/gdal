@@ -6037,8 +6037,8 @@ char **OGRGeoPackageTableLayer::GetMetadata(const char *pszDomain)
 
                 papszMetadata =
                     CSLMerge(papszMetadata, oLocalMDMD.GetMetadata());
-                char **papszDomainList = oLocalMDMD.GetDomainList();
-                char **papszIter = papszDomainList;
+                CSLConstList papszDomainList = oLocalMDMD.GetDomainList();
+                CSLConstList papszIter = papszDomainList;
                 while (papszIter && *papszIter)
                 {
                     if (!EQUAL(*papszIter, ""))

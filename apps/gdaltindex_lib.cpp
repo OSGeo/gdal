@@ -394,8 +394,7 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
     {
         if (psOptions->osFormat.empty())
         {
-            std::vector<CPLString> aoDrivers =
-                GetOutputDriversFor(pszDest, GDAL_OF_VECTOR);
+            const auto aoDrivers = GetOutputDriversFor(pszDest, GDAL_OF_VECTOR);
             if (aoDrivers.empty())
             {
                 CPLError(CE_Failure, CPLE_AppDefined,

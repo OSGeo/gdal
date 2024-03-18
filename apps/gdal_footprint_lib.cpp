@@ -404,8 +404,7 @@ GetOutputLayerAndUpdateDstDS(const char *pszDest, GDALDatasetH &hDstDS,
         std::string osFormat(psOptions->osFormat);
         if (osFormat.empty())
         {
-            std::vector<CPLString> aoDrivers =
-                GetOutputDriversFor(pszDest, GDAL_OF_VECTOR);
+            const auto aoDrivers = GetOutputDriversFor(pszDest, GDAL_OF_VECTOR);
             if (aoDrivers.empty())
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
