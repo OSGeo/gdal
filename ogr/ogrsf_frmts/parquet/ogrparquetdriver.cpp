@@ -29,6 +29,7 @@
 #include "gdal_pam.h"
 #include "ogrsf_frmts.h"
 
+#include <algorithm>
 #include <map>
 
 #include "ogr_parquet.h"
@@ -254,8 +255,50 @@ static GDALDataset *OpenFromDatasetFactory(
     const bool bIsVSI = STARTS_WITH(osBasePath.c_str(), "/vsi");
     if (bIsVSI)
     {
-        PARQUET_THROW_NOT_OK(scannerBuilder->FragmentReadahead(2));
-        // scannerBuilder->BatchSize(10);
+        const int nFragmentReadAhead =
+            atoi(CPLGetConfigOption("OGR_PARQUET_FRAGMENT_READ_AHEAD", "2"));
+        PARQUET_THROW_NOT_OK(
+            scannerBuilder->FragmentReadahead(nFragmentReadAhead));
+
+        const char *pszBatchSize =
+            CPLGetConfigOption("OGR_PARQUET_BATCH_SIZE", nullptr);
+        if (pszBatchSize)
+        {
+            PARQUET_THROW_NOT_OK(
+                scannerBuilder->BatchSize(CPLAtoGIntBig(pszBatchSize)));
+        }
+
+        const char *pszUseThreads =
+            CPLGetConfigOption("OGR_PARQUET_USE_THREADS", nullptr);
+        if (pszUseThreads)
+        {
+            PARQUET_THROW_NOT_OK(
+                scannerBuilder->UseThreads(CPLTestBool(pszUseThreads)));
+        }
+
+        const char *pszNumThreads =
+            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+        int nNumThreads = 0;
+        if (pszNumThreads == nullptr)
+            nNumThreads = std::min(4, CPLGetNumCPUs());
+        else
+            nNumThreads = EQUAL(pszNumThreads, "ALL_CPUS")
+                              ? CPLGetNumCPUs()
+                              : atoi(pszNumThreads);
+        if (nNumThreads > 1)
+        {
+            CPL_IGNORE_RET_VAL(arrow::SetCpuThreadPoolCapacity(nNumThreads));
+        }
+
+#if PARQUET_VERSION_MAJOR >= 10
+        const char *pszBatchReadAhead =
+            CPLGetConfigOption("OGR_PARQUET_BATCH_READ_AHEAD", nullptr);
+        if (pszBatchReadAhead)
+        {
+            PARQUET_THROW_NOT_OK(
+                scannerBuilder->BatchReadahead(atoi(pszBatchReadAhead)));
+        }
+#endif
     }
 
     std::shared_ptr<arrow::dataset::Scanner> scanner;
@@ -279,10 +322,10 @@ GetFileSystem(std::string &osBasePathInOut,
 {
     // Instantiate file system:
     // - VSIArrowFileSystem implementation for /vsi files
-    // - base implementation for local files
+    // - base implementation for local files (if OGR_PARQUET_USE_VSI set to NO)
     std::shared_ptr<arrow::fs::FileSystem> fs;
     const bool bIsVSI = STARTS_WITH(osBasePathInOut.c_str(), "/vsi");
-    if (bIsVSI || CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_VSI", "NO")))
+    if (bIsVSI || CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_VSI", "YES")))
     {
         fs = std::make_shared<VSIArrowFileSystem>(osQueryParameters);
     }
