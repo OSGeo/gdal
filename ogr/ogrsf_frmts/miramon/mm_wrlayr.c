@@ -4981,6 +4981,8 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
     size_t key_len = 0;
     size_t bytes_read;
     char *pszString;
+    char *start;
+    char *end;
 
     FILE_TYPE *file = fopen_function(filename, "rb");
     if (file == nullptr)
@@ -5002,9 +5004,7 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
         CPLFree_function(pszString);
 
         // Iterate through the read buffer
-        char *start = line;
-        char *end;
-
+        start = line;
         end = line + bytes_read;
         while (start < end)
         {

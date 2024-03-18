@@ -76,6 +76,11 @@ CPL_C_START  // Necessary for compiling C in GDAL project
 
 #define MM_MAX_ID_SNY 41
 
+#ifndef GDAL_COMPILATION
+    typedef unsigned long int uint32_t;
+typedef long int int32_t;
+#endif
+
 // Extended DBF
 // Type of the number of records of an extended DBF
 #define MM_MAX_N_CAMPS_DBF_CLASSICA 255
@@ -134,7 +139,7 @@ CPL_C_START  // Necessary for compiling C in GDAL project
 #define MM_JOC_CARAC_UTF8_DBF 0xFF
 #define MM_JOC_CARAC_UTF8_MM 8
 
-    typedef unsigned char MM_BYTE;
+typedef unsigned char MM_BYTE;
 
 #define MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA 8
 #define MM_SEGON_OFFSET_a_OFFSET_1a_FITXA 30

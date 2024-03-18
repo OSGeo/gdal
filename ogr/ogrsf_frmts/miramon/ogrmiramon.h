@@ -142,7 +142,7 @@ class OGRMiraMonDataSource final : public OGRDataSource
 
   public:
     OGRMiraMonDataSource();
-    virtual ~OGRMiraMonDataSource();
+    ~OGRMiraMonDataSource();
 
     int Open(const char *pszFilename, VSILFILE *fp,
              const OGRSpatialReference *poSRS, int bUpdate,

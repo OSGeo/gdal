@@ -15,15 +15,10 @@ CPL_C_START  // Necessary for compiling C in GDAL project
 
 #define MAX_LOCAL_MESSAGE 5000
 
-// Common types
-#ifndef GDAL_COMPILATION
-    typedef unsigned long int uint32_t;
-#endif
-
 #define sprintf_UINT64 "%llu"
 
-// Type of the Feature ID: determines the maximum number of features in a layer.
-typedef GUInt64 MM_INTERNAL_FID;
+    // Type of the Feature ID: determines the maximum number of features in a layer.
+    typedef GUInt64 MM_INTERNAL_FID;
 // Offset to the coordinates of the Features.
 typedef GUInt64 MM_FILE_OFFSET;
 
