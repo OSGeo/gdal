@@ -233,3 +233,56 @@ def test_ogr_miramon_simple_polygon():
     assert f.GetFieldAsString("ATT2") == "D"
 
     ds = None
+
+
+def test_ogr_miramon_empty_point_layers():
+
+    ds = gdal.OpenEx("data/miramon/Points/EmptyPoints/Empty_PNT.pnt", gdal.OF_VECTOR)
+    assert ds is not None, "Failed to get dataset"
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr is not None, "Failed to get layer"
+
+    assert lyr.GetFeatureCount() == 0
+
+    f = lyr.GetNextFeature()
+    assert f is None, "Failed to get empty feature"
+
+    ds = None
+
+
+def test_ogr_miramon_empty_arc_layers():
+
+    ds = gdal.OpenEx("data/miramon/Arcs/EmptyArcs/Empty_ARC.arc", gdal.OF_VECTOR)
+    assert ds is not None, "Failed to get dataset"
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr is not None, "Failed to get layer"
+
+    assert lyr.GetFeatureCount() == 0
+
+    f = lyr.GetNextFeature()
+    assert f is None, "Failed to get empty feature"
+
+    ds = None
+
+
+def test_ogr_miramon_empty_pol_layers():
+
+    ds = gdal.OpenEx(
+        "data/miramon/Polygons/EmptyPolygons/Empty_POL.pol", gdal.OF_VECTOR
+    )
+    assert ds is not None, "Failed to get dataset"
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr is not None, "Failed to get layer"
+
+    assert lyr.GetFeatureCount() == 0
+
+    f = lyr.GetNextFeature()
+    assert f is None, "Failed to get empty feature"
+
+    ds = None

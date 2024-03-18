@@ -2578,8 +2578,7 @@ char *MM_RemoveWhitespacesFromEndOfString(char *str)
 }
 
 struct MM_ID_GRAFIC_MULTIPLE_RECORD *
-MMCreateExtendedDBFIndex(FILE_TYPE *f, MM_EXT_DBF_N_RECORDS n,
-                         MM_EXT_DBF_N_RECORDS n_dbf,
+MMCreateExtendedDBFIndex(FILE_TYPE *f, MM_EXT_DBF_N_RECORDS nNumberOfRecords,
                          MM_FIRST_RECORD_OFFSET_TYPE offset_1era,
                          MM_ACUMULATED_BYTES_TYPE_DBF bytes_per_fitxa,
                          MM_ACUMULATED_BYTES_TYPE_DBF bytes_acumulats_id_grafic,
@@ -2594,10 +2593,14 @@ MMCreateExtendedDBFIndex(FILE_TYPE *f, MM_EXT_DBF_N_RECORDS n,
         bytes_per_fitxa - bytes_id_grafic;
 
     *isListField = FALSE;
-    if (MMCheckSize_t(n * sizeof(*id), 1))
+    *nMaxN = 0;
+    if (!nNumberOfRecords)
+        return nullptr;  // No elements to read
+
+    if (MMCheckSize_t(nNumberOfRecords * sizeof(*id), 1))
         return nullptr;
     if (nullptr == (id = (struct MM_ID_GRAFIC_MULTIPLE_RECORD *)calloc_function(
-                        (size_t)n * sizeof(*id))))
+                        (size_t)nNumberOfRecords * sizeof(*id))))
         return nullptr;
 
     if (MMCheckSize_t(bytes_id_grafic + 1, 1))
@@ -2618,8 +2621,9 @@ MMCreateExtendedDBFIndex(FILE_TYPE *f, MM_EXT_DBF_N_RECORDS n,
     i_dbf = 0;
     do
     {
-        if (i_dbf == n_dbf || fread_function(fitxa, 1, bytes_id_grafic, f) !=
-                                  (size_t)bytes_id_grafic)
+        if (i_dbf == nNumberOfRecords ||
+            fread_function(fitxa, 1, bytes_id_grafic, f) !=
+                (size_t)bytes_id_grafic)
         {
             free_function(id);
             free_function(fitxa);
@@ -2646,7 +2650,7 @@ MMCreateExtendedDBFIndex(FILE_TYPE *f, MM_EXT_DBF_N_RECORDS n,
             return nullptr;
         }
         i = id_grafic;
-        if (i >= (MM_EXT_DBF_SIGNED_N_RECORDS)n)
+        if (i >= (MM_EXT_DBF_SIGNED_N_RECORDS)nNumberOfRecords)
         {
             free_function(fitxa);
             return id;
@@ -2661,7 +2665,7 @@ MMCreateExtendedDBFIndex(FILE_TYPE *f, MM_EXT_DBF_N_RECORDS n,
             if (*nMaxN < id[(size_t)i].nMR)
                 *nMaxN = id[(size_t)i].nMR;
 
-            if (i_dbf == n_dbf)
+            if (i_dbf == nNumberOfRecords)
             {
                 free_function(fitxa);
                 return id;
@@ -2676,7 +2680,7 @@ MMCreateExtendedDBFIndex(FILE_TYPE *f, MM_EXT_DBF_N_RECORDS n,
             }
             if (1 != sscanf(fitxa, scanf_MM_EXT_DBF_SIGNED_N_RECORDS,
                             &id_grafic) ||
-                id_grafic >= (MM_EXT_DBF_SIGNED_N_RECORDS)n)
+                id_grafic >= (MM_EXT_DBF_SIGNED_N_RECORDS)nNumberOfRecords)
             {
                 free_function(fitxa);
                 return id;

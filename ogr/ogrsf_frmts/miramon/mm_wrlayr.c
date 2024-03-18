@@ -630,6 +630,9 @@ int MMReadZDescriptionHeaders(struct MiraMonVectLayerInfo *hMiraMonLayer,
     if (!pZSection)
         return 1;
 
+    if (!nElements)
+        return 0;  // No elements to read
+
     pZDescription = pZSection->pZDescription;
 
     nBlockSize = nElements * pZSection->nZDDiskSize;

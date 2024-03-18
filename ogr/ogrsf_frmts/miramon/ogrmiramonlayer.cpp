@@ -340,7 +340,8 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                 }
             }
 
-            if (phMiraMonLayer->pMMBDXP)
+            // If there is associated information
+            if (phMiraMonLayer->pMMBDXP && phMiraMonLayer->pMMBDXP->nRecords)
             {
                 if (!phMiraMonLayer->pMMBDXP->pfDataBase)
                 {
@@ -358,7 +359,6 @@ OGRMiraMonLayer::OGRMiraMonLayer(const char *pszFilename, VSILFILE *fp,
                     // to fastly find all non geometrical features.
                     phMiraMonLayer->pMultRecordIndex = MMCreateExtendedDBFIndex(
                         phMiraMonLayer->pMMBDXP->pfDataBase,
-                        phMiraMonLayer->pMMBDXP->nRecords,
                         phMiraMonLayer->pMMBDXP->nRecords,
                         phMiraMonLayer->pMMBDXP->FirstRecordOffset,
                         phMiraMonLayer->pMMBDXP->BytesPerRecord,

@@ -39,14 +39,16 @@ descriptor=Node final
 [METADADES]
 language=cat
 MDIdiom=cat
-dateStamp=20231113 11502159+0100
+dateStamp=20240311 09500830
 characterSet=006
-nOrganismes=1
+nOrganismes=2
 FileIdentifier=linies_3d_29042
 
 [METADADES:ORGANISME_1]
 role=009
-OrganisationName=Students and educational institutions
+OrganisationName=CREAF
+IndividualName=Abel Pau
+PositionName=Tècnic en SIG
 
 [IDENTIFICATION]
 code=linies_3d_29042
@@ -64,18 +66,15 @@ MaxY=41.6776900669325
 toler_env=0
 
 [OVERVIEW]
-CreationDate=20231113 11502153+0100
-
-[GEOMETRIA_I_TOPOLOGIA]
-NomCampNVertexs=N_VERTEXS
-NomCampLongitudArc=LONG_ARC
-NomCampLongitudArcEllipsoidal=LONG_ARCE
-NomCampNodeIni=NODE_INI
-NomCampNodeFi=NODE_FI
+CreationDate=20240311 09500477
 
 [OVERVIEW:ASPECTES_TECNICS]
 comment1=Nombre d'arcs: 6
 comment2=El fitxer era anteriorment en la projecció UTM-31N-ETRS89
+
+[METADADES:ORGANISME_2]
+role=009
+OrganisationName=Students and educational institutions
 
 [QUALITY:LINEAGE:PROCESS1]
 nOrganismes=1
@@ -153,3 +152,10 @@ ResultUnits=
 
 [QUALITY:LINEAGE]
 processes=1,2,3
+
+[GEOMETRIA_I_TOPOLOGIA]
+NomCampNVertexs=N_VERTEXS
+NomCampLongitudArc=LONG_ARC
+NomCampLongitudArcEllipsoidal=LONG_ARCE
+NomCampNodeIni=NODE_INI
+NomCampNodeFi=NODE_FI

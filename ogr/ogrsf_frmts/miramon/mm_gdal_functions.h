@@ -145,8 +145,7 @@ char *MM_RemoveLeadingWhitespaceOfString(char *cadena);
 
 // DBF
 struct MM_ID_GRAFIC_MULTIPLE_RECORD *
-MMCreateExtendedDBFIndex(FILE_TYPE *f, MM_EXT_DBF_N_RECORDS n,
-                         MM_EXT_DBF_N_RECORDS n_dbf,
+MMCreateExtendedDBFIndex(FILE_TYPE *f, MM_EXT_DBF_N_RECORDS n_dbf,
                          MM_FIRST_RECORD_OFFSET_TYPE offset_1era,
                          MM_ACUMULATED_BYTES_TYPE_DBF bytes_per_fitxa,
                          MM_ACUMULATED_BYTES_TYPE_DBF bytes_acumulats_id_grafic,

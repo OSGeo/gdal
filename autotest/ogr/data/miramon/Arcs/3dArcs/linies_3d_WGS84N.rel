@@ -9,33 +9,31 @@ IdGrafic=ID_GRAFIC
 TipusRelacio=RELACIO_1_N_DICC
 
 [TAULA_PRINCIPAL:ID_GRAFIC]
-descriptor=Identificador Gràfic intern
 visible=0
 MostrarUnitats=0
+descriptor=Identificador Gràfic intern
 
 [TAULA_PRINCIPAL:ARCS_A_NOD]
-descriptor=Nombre d'arcs al node
 MostrarUnitats=0
+descriptor=Nombre d'arcs al node
 
 [TAULA_PRINCIPAL:TIPUS_NODE]
-descriptor=Tipus de node
 MostrarUnitats=0
-
-[GEOMETRIA_I_TOPOLOGIA]
-NomCampArcsANode=ARCS_A_NOD
-NomCampTipusNode=TIPUS_NODE
+descriptor=Tipus de node
 
 [METADADES]
 language=cat
 MDIdiom=cat
-dateStamp=20231113 11502173+0100
+dateStamp=20240311 09500993
 characterSet=006
-nOrganismes=1
+nOrganismes=2
 FileIdentifier=linies_3d_29042
 
 [METADADES:ORGANISME_1]
 role=009
-OrganisationName=Students and educational institutions
+OrganisationName=CREAF
+IndividualName=Abel Pau
+PositionName=Tècnic en SIG
 
 [IDENTIFICATION]
 code=linies_3d_29042
@@ -45,6 +43,20 @@ DatasetTitle=Linies
 [OVERVIEW:ASPECTES_TECNICS]
 comment1=Nombre d'arcs: 6
 comment2=El fitxer era anteriorment en la projecció UTM-31N-ETRS89
+
+[EXTENT]
+MinX=1.28287097369422
+MaxX=1.98292118178235
+MinY=41.1902658152019
+MaxY=41.6776900669325
+toler_env=0
+
+[OVERVIEW]
+CreationDate=20240311 09500616
+
+[METADADES:ORGANISME_2]
+role=009
+OrganisationName=Students and educational institutions
 
 [QUALITY:LINEAGE:PROCESS1]
 nOrganismes=1
@@ -66,12 +78,6 @@ OrganisationName=Students and educational institutions
 [QUALITY:LINEAGE]
 processes=1,2
 
-[EXTENT]
-MinX=1.28287097369422
-MaxX=1.98292118178235
-MinY=41.1902658152019
-MaxY=41.6776900669325
-toler_env=0
-
-[OVERVIEW]
-CreationDate=20231113 11502153+0100
+[GEOMETRIA_I_TOPOLOGIA]
+NomCampArcsANode=ARCS_A_NOD
+NomCampTipusNode=TIPUS_NODE
