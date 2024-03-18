@@ -99,29 +99,40 @@ class GDALRelationship;
 class CPL_DLL GDALMultiDomainMetadata
 {
   private:
-    char **papszDomainList;
-    CPLStringList **papoMetadataLists;
+    CPLStringList aosDomainList{};
+    struct Comparator
+    {
+        bool operator()(const char *a, const char *b) const
+        {
+            return STRCASECMP(a, b) < 0;
+        }
+    };
+    std::map<const char *, CPLStringList, Comparator> oMetadata{};
 
   public:
     GDALMultiDomainMetadata();
     ~GDALMultiDomainMetadata();
 
     int XMLInit(const CPLXMLNode *psMetadata, int bMerge);
-    CPLXMLNode *Serialize();
+    CPLXMLNode *Serialize() const;
 
-    char **GetDomainList()
+    CSLConstList GetDomainList() const
     {
-        return papszDomainList;
+        return aosDomainList.List();
     }
 
     char **GetMetadata(const char *pszDomain = "");
-    CPLErr SetMetadata(char **papszMetadata, const char *pszDomain = "");
+    CPLErr SetMetadata(CSLConstList papszMetadata, const char *pszDomain = "");
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "");
     CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                            const char *pszDomain = "");
 
     void Clear();
+    inline void clear()
+    {
+        Clear();
+    }
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALMultiDomainMetadata)
