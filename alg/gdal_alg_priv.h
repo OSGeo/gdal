@@ -167,6 +167,13 @@ struct IntEqualityTest
 typedef GDALRasterPolygonEnumeratorT<std::int64_t, IntEqualityTest>
     GDALRasterPolygonEnumerator;
 
+constexpr const char *GDAL_APPROX_TRANSFORMER_CLASS_NAME =
+    "GDALApproxTransformer";
+constexpr const char *GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME =
+    "GDALGenImgProjTransformer";
+
+bool GDALIsTransformer(void *hTransformerArg, const char *pszClassName);
+
 typedef void *(*GDALTransformDeserializeFunc)(CPLXMLNode *psTree);
 
 void CPL_DLL *GDALRegisterTransformDeserializer(
