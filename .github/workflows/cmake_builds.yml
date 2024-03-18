@@ -31,7 +31,7 @@ jobs:
       cache-name: cmake-ubuntu-focal
     steps:
     - name: Checkout GDAL
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
     - name: Setup cache
       uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
       id: cache
@@ -311,7 +311,7 @@ jobs:
         run: |
           git config --global core.autocrlf false
       - name: Checkout GDAL
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
       - name: Install development packages
         uses: msys2/setup-msys2@cc11e9188b693c2b100158c3322424c4cc1dadea # v2.22.0
         with:
@@ -404,7 +404,7 @@ jobs:
       run: |
         git config --global core.autocrlf false
     - name: Checkout GDAL
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
     - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
     - name: populate JAVA_HOME
       shell: pwsh
@@ -506,7 +506,7 @@ jobs:
       run: |
         git config --global core.autocrlf false
     - name: Checkout GDAL
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
     - uses: conda-incubator/setup-miniconda@030178870c779d9e5e1b4e563269f3aa69b04081 # v3.0.3
       with:
         activate-environment: gdalenv
@@ -573,7 +573,7 @@ jobs:
       with:
         xcode-version: 14.3
     - name: Checkout GDAL
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
     - name: Setup cache
       uses: actions/cache@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
       id: cache
@@ -653,7 +653,7 @@ jobs:
       run: |
         git config --global core.autocrlf false
     - name: Checkout GDAL
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
     - uses: conda-incubator/setup-miniconda@030178870c779d9e5e1b4e563269f3aa69b04081 # v3.0.3
       with:
         activate-environment: gdalenv
