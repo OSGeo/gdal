@@ -463,6 +463,12 @@ extern "C++"
 
         CPLStringList &Clear();
 
+        /** Clear the list */
+        inline void clear()
+        {
+            Clear();
+        }
+
         /** Return size of list */
         int size() const
         {
@@ -543,6 +549,18 @@ extern "C++"
         const char *operator[](const char *pszKey) const
         {
             return FetchNameValue(pszKey);
+        }
+
+        /** Return first element */
+        inline const char *front() const
+        {
+            return papszList[0];
+        }
+
+        /** Return last element */
+        inline const char *back() const
+        {
+            return papszList[size() - 1];
         }
 
         /** begin() implementation */
