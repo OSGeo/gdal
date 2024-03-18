@@ -32,6 +32,7 @@
 #include "ogr_p.h"
 
 #include <memory>
+#include <string_view>
 
 #define UNSUPPORTED_OP_READ_ONLY                                               \
     "%s : unsupported operation on a read-only datasource."
@@ -467,6 +468,26 @@ void OGRMSSQLSpatialTableLayer::DropSpatialIndex()
 }
 
 /************************************************************************/
+/*                     GetBracketEscapedIdentifier()                    */
+/************************************************************************/
+
+static std::string GetBracketEscapedIdentifier(const std::string_view &osStr)
+{
+    std::string osRet("[");
+    osRet.reserve(osStr.size());
+    for (char ch : osStr)
+    {
+        if (ch == ']')
+        {
+            osRet += ch;
+        }
+        osRet += ch;
+    }
+    osRet += ']';
+    return osRet;
+}
+
+/************************************************************************/
 /*                            BuildFields()                             */
 /*                                                                      */
 /*      Build list of fields to fetch, performing any required          */
@@ -484,9 +505,7 @@ CPLString OGRMSSQLSpatialTableLayer::BuildFields()
     if (pszFIDColumn && poFeatureDefn->GetFieldIndex(pszFIDColumn) == -1)
     {
         /* Always get the FID column */
-        osFieldList += "[";
-        osFieldList += pszFIDColumn;
-        osFieldList += "]";
+        osFieldList += GetBracketEscapedIdentifier(pszFIDColumn);
         ++nColumn;
     }
 
@@ -495,29 +514,27 @@ CPLString OGRMSSQLSpatialTableLayer::BuildFields()
         if (nColumn > 0)
             osFieldList += ", ";
 
-        osFieldList += "[";
-        osFieldList += pszGeomColumn;
+        osFieldList += GetBracketEscapedIdentifier(pszGeomColumn);
         if (nGeomColumnType == MSSQLCOLTYPE_GEOMETRY ||
             nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
         {
             if (poDS->GetGeometryFormat() == MSSQLGEOMETRY_WKB)
             {
-                osFieldList += "].STAsBinary() as [";
-                osFieldList += pszGeomColumn;
+                osFieldList += ".STAsBinary() as ";
+                osFieldList += GetBracketEscapedIdentifier(pszGeomColumn);
             }
             else if (poDS->GetGeometryFormat() == MSSQLGEOMETRY_WKT)
             {
-                osFieldList += "].AsTextZM() as [";
-                osFieldList += pszGeomColumn;
+                osFieldList += ".AsTextZM() as ";
+                osFieldList += GetBracketEscapedIdentifier(pszGeomColumn);
             }
             else if (poDS->GetGeometryFormat() == MSSQLGEOMETRY_WKBZM)
             {
                 /* SQL Server 2012 */
-                osFieldList += "].AsBinaryZM() as [";
-                osFieldList += pszGeomColumn;
+                osFieldList += ".AsBinaryZM() as ";
+                osFieldList += GetBracketEscapedIdentifier(pszGeomColumn);
             }
         }
-        osFieldList += "]";
 
         ++nColumn;
     }
@@ -539,9 +556,7 @@ CPLString OGRMSSQLSpatialTableLayer::BuildFields()
             if (nColumn > 0)
                 osFieldList += ", ";
 
-            osFieldList += "[";
-            osFieldList += pszName;
-            osFieldList += "]";
+            osFieldList += GetBracketEscapedIdentifier(pszName);
 
             panFieldOrdinals[i] = nColumn;
 
@@ -578,11 +593,10 @@ OGRMSSQLSpatialTableLayer::BuildStatement(const char *pszColumns)
     CPLODBCStatement *poStatement = new CPLODBCStatement(poDS->GetSession());
     poStatement->Append("select ");
     poStatement->Append(pszColumns);
-    poStatement->Append(" from [");
-    poStatement->Append(pszSchemaName);
-    poStatement->Append("].[");
-    poStatement->Append(pszTableName);
-    poStatement->Append("]");
+    poStatement->Append(" from ");
+    poStatement->Append(GetBracketEscapedIdentifier(pszSchemaName));
+    poStatement->Append(".");
+    poStatement->Append(GetBracketEscapedIdentifier(pszTableName));
 
     /* Append attribute query if we have it */
     if (pszQuery != nullptr)
@@ -600,11 +614,12 @@ OGRMSSQLSpatialTableLayer::BuildStatement(const char *pszColumns)
                 !CPLIsInf(m_sFilterEnvelope.MaxY))
             {
                 if (pszQuery == nullptr)
-                    poStatement->Append(" where");
+                    poStatement->Append(" where ");
                 else
-                    poStatement->Append(" and");
+                    poStatement->Append(" and ");
 
-                poStatement->Appendf(" [%s].STIntersects(", pszGeomColumn);
+                poStatement->Append(GetBracketEscapedIdentifier(pszGeomColumn));
+                poStatement->Append(".STIntersects(");
 
                 if (nGeomColumnType == MSSQLCOLTYPE_GEOGRAPHY)
                     poStatement->Append("geography::");
