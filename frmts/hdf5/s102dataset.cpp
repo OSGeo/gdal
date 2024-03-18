@@ -167,6 +167,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     std::string osFilename(poOpenInfo->pszFilename);
+    bool bIsSubdataset = false;
     bool bIsQualityOfSurvey = false;
     if (STARTS_WITH(poOpenInfo->pszFilename, "S102:"))
     {
@@ -180,8 +181,13 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else if (aosTokens.size() == 3)
         {
+            bIsSubdataset = true;
             osFilename = aosTokens[1];
-            if (EQUAL(aosTokens[2], "QualityOfSurvey"))
+            if (EQUAL(aosTokens[2], "BathymetryCoverage"))
+            {
+                // Default dataset
+            }
+            else if (EQUAL(aosTokens[2], "QualityOfSurvey"))
             {
                 bIsQualityOfSurvey = true;
             }
@@ -370,7 +376,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->GDALDataset::SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
 
     auto poGroupQualityOfSurvey = poRootGroup->OpenGroup("QualityOfSurvey");
-    if (poGroupQualityOfSurvey)
+    if (!bIsSubdataset && poGroupQualityOfSurvey)
     {
         auto poGroupQualityOfSurvey01 =
             poGroupQualityOfSurvey->OpenGroup("QualityOfSurvey.01");
@@ -378,10 +384,18 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
         {
             poDS->GDALDataset::SetMetadataItem(
                 "SUBDATASET_1_NAME",
+                CPLSPrintf("S102:\"%s\":BathymetryCoverage",
+                           osFilename.c_str()),
+                "SUBDATASETS");
+            poDS->GDALDataset::SetMetadataItem(
+                "SUBDATASET_1_DESC", "Bathymetric gridded data", "SUBDATASETS");
+
+            poDS->GDALDataset::SetMetadataItem(
+                "SUBDATASET_2_NAME",
                 CPLSPrintf("S102:\"%s\":QualityOfSurvey", osFilename.c_str()),
                 "SUBDATASETS");
             poDS->GDALDataset::SetMetadataItem(
-                "SUBDATASET_1_DESC", "Georeferenced metadata QualityOfSurvey",
+                "SUBDATASET_2_DESC", "Georeferenced metadata QualityOfSurvey",
                 "SUBDATASETS");
         }
     }
