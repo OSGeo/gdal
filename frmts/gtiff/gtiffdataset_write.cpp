@@ -5132,7 +5132,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                 {
                     ReportError(
                         pszFilename, CE_Failure, CPLE_AppDefined,
-                        "PREDICTOR=2 is only supported with 64 bit samples "
+                        "PREDICTOR=2 is supported on 64 bit samples "
                         "starting with libtiff > 4.3.0.");
                 }
                 else
