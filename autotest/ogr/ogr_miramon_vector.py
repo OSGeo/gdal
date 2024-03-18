@@ -235,6 +235,10 @@ def test_ogr_miramon_simple_polygon():
     ds = None
 
 
+###############################################################################
+# testing empty layers
+
+
 def test_ogr_miramon_empty_point_layers():
 
     ds = gdal.OpenEx("data/miramon/Points/EmptyPoints/Empty_PNT.pnt", gdal.OF_VECTOR)
@@ -284,5 +288,78 @@ def test_ogr_miramon_empty_pol_layers():
 
     f = lyr.GetNextFeature()
     assert f is None, "Failed to get empty feature"
+
+    ds = None
+
+
+###############################################################################
+# testing 3d part
+
+
+def test_ogr_miramon_3d_point():
+
+    ds = gdal.OpenEx("data/miramon/Points/3dpoints/Some3dPoints.pnt", gdal.OF_VECTOR)
+    assert ds is not None, "Failed to get dataset"
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr is not None, "Failed to get layer"
+
+    assert lyr.GetFeatureCount() == 31
+    assert lyr.GetGeomType() == ogr.wkbPoint25D
+
+    f = lyr.GetNextFeature()
+    assert f is not None, "Failed to get feature"
+    assert f.GetFID() == 0
+
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (440551.66 4635315.3 619.96)"
+
+    g = f.GetGeometryRef()
+    assert g.GetZ() == 619.96
+
+    f = lyr.GetFeature(30)
+    assert f is not None, "Failed to get feature"
+    g = f.GetGeometryRef()
+    assert g is not None, "Failed to get geometry"
+    assert g.GetZ() == 619.77
+
+    ds = None
+
+
+def test_ogr_miramon_3d_arc():
+
+    ds = gdal.OpenEx("data/miramon/Arcs/3dArcs/linies_3d_WGS84.arc", gdal.OF_VECTOR)
+    assert ds is not None, "Failed to get dataset"
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr is not None, "Failed to get layer"
+
+    assert lyr.GetFeatureCount() == 6
+    assert lyr.GetGeomType() == ogr.wkbLineString25D
+
+    f = lyr.GetFeature(0)
+    assert f is not None, "Failed to get feature"
+    g = f.GetGeometryRef()
+    assert g is not None, "Failed to get geometry"
+    assert g.GetPointCount() == 4
+    p = g.GetPoint(0)
+    assert p[2] == 595.1063842773438
+    p = g.GetPoint(1)
+    assert p[2] == 326.656005859375
+    p = g.GetPoint(2)
+    assert p[2] == 389.99432373046875
+    p = g.GetPoint(3)
+    assert p[2] == 716.6224975585938
+
+    f = lyr.GetFeature(5)
+    assert f is not None, "Failed to get feature"
+    g = f.GetGeometryRef()
+    assert g is not None, "Failed to get geometry"
+    assert g.GetPointCount() == 2
+    p = g.GetPoint(0)
+    assert p[2] == 233.82064819335938
+    p = g.GetPoint(1)
+    assert p[2] == 794.5372314453125
 
     ds = None
