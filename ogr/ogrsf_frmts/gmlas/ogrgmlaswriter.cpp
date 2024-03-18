@@ -1151,12 +1151,8 @@ bool GMLASWriter::CollectRelationships()
     m_poLayerRelationshipsLayer->SetAttributeFilter(nullptr);
     m_poLayerRelationshipsLayer->ResetReading();
 
-    while (true)
+    for (auto &&poFeature : m_poLayerRelationshipsLayer)
     {
-        OGRFeature *poFeature = m_poLayerRelationshipsLayer->GetNextFeature();
-        if (poFeature == nullptr)
-            break;
-
         const CPLString osParentLayer(
             poFeature->GetFieldAsString(szPARENT_LAYER));
         if (m_oMapLayerNameToIdx.find(osParentLayer) ==
@@ -1167,7 +1163,6 @@ bool GMLASWriter::CollectRelationships()
                      "Cannot find in %s layer %s, referenced in %s",
                      szOGR_LAYERS_METADATA, osParentLayer.c_str(),
                      szOGR_LAYER_RELATIONSHIPS);
-            delete poFeature;
             continue;
         }
 
@@ -1181,7 +1176,6 @@ bool GMLASWriter::CollectRelationships()
                      "Cannot find in %s layer %s, referenced in %s",
                      szOGR_LAYERS_METADATA, osChildLayer.c_str(),
                      szOGR_LAYER_RELATIONSHIPS);
-            delete poFeature;
             continue;
         }
 
@@ -1194,8 +1188,6 @@ bool GMLASWriter::CollectRelationships()
             m_aoLayerDesc[nChildLayerIdx].aoReferencingLayers.push_back(
                 PairLayerNameColName(osParentLayer, osReferencingField));
         }
-
-        delete poFeature;
     }
     m_poLayerRelationshipsLayer->ResetReading();
 
