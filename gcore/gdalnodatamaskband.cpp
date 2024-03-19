@@ -479,4 +479,5 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     VSIFree(pabyBuf);
     return CE_None;
 }
+
 //! @endcond

@@ -75,6 +75,7 @@ class OGRSQLiteExtensionData
     {
         return hGeocodingSession;
     }
+
     void SetGeocodingSession(OGRGeocodingSessionH hGeocodingSessionIn)
     {
         hGeocodingSession = hGeocodingSessionIn;

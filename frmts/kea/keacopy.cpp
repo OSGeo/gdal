@@ -129,6 +129,7 @@ static bool KEACopyRasterData(GDALRasterBand *pBand,
 }
 
 constexpr int RAT_CHUNKSIZE = 1000;
+
 // copies the raster attribute table
 static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO,
                        int nBand)

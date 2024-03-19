@@ -317,6 +317,7 @@ int OGRPolygon::checkRing(OGRCurve *poNewRing) const
 
     return TRUE;
 }
+
 /*! @endcond */
 
 /************************************************************************/
@@ -678,6 +679,7 @@ OGRErr OGRPolygon::importFromWKTListOnly(const char **ppszInput, int bHasZ,
     *ppszInput = pszInput;
     return OGRERR_NONE;
 }
+
 /*! @endcond */
 
 /************************************************************************/
@@ -915,4 +917,5 @@ OGRSurfaceCasterToCurvePolygon OGRPolygon::GetCasterToCurvePolygon() const
 {
     return OGRPolygon::CasterToCurvePolygon;
 }
+
 /*! @endcond */

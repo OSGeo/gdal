@@ -73,11 +73,13 @@ class VSIWin32FilesystemHandler final : public VSIFilesystemHandler
     virtual int Mkdir(const char *pszDirname, long nMode) override;
     virtual int Rmdir(const char *pszDirname) override;
     virtual char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
+
     virtual int IsCaseSensitive(const char *pszFilename) override
     {
         (void)pszFilename;
         return FALSE;
     }
+
     virtual GIntBig GetDiskFreeSpace(const char *pszDirname) override;
     virtual int SupportsSparseFiles(const char *pszPath) override;
     virtual bool IsLocal(const char *pszPath) override;
@@ -119,10 +121,12 @@ class VSIWin32Handle final : public VSIVirtualHandle
     virtual int Flush() override;
     virtual int Close() override;
     virtual int Truncate(vsi_l_offset nNewSize) override;
+
     virtual void *GetNativeFileDescriptor() override
     {
         return static_cast<void *>(hFile);
     }
+
     virtual VSIRangeStatus GetRangeStatus(vsi_l_offset nOffset,
                                           vsi_l_offset nLength) override;
 };

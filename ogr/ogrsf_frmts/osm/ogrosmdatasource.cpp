@@ -83,6 +83,7 @@ static int DBL_TO_INT(double x)
 {
     return static_cast<int>(floor(x * 1.0e7 + 0.5));
 }
+
 static double INT_TO_DBL(int x)
 {
     return x / 1.0e7;
@@ -130,6 +131,7 @@ template <typename T> static T ROUND_COMPRESS_SIZE(T nCompressSize)
 {
     return ((nCompressSize + 1) / 2) * 2;
 }
+
 static int COMPRESS_SIZE_FROM_BYTE(GByte byte_on_size)
 {
     return static_cast<int>(byte_on_size) * 2 + 8;
@@ -4270,11 +4272,14 @@ class OGROSMSingleFeatureLayer final : public OGRLayer
     {
         iNextShapeId = 0;
     }
+
     virtual OGRFeature *GetNextFeature() override;
+
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
     }
+
     virtual int TestCapability(const char *) override
     {
         return FALSE;

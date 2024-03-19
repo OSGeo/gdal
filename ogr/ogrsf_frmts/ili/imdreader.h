@@ -45,11 +45,13 @@ class GeomFieldInfo
     GeomFieldInfo() : geomTable(nullptr)
     {
     }
+
     ~GeomFieldInfo()
     {
         if (geomTable)
             geomTable->Release();
     }
+
     GeomFieldInfo(const GeomFieldInfo &other)
     {
         geomTable = other.geomTable;
@@ -76,6 +78,7 @@ class GeomFieldInfo
     {
         return geomTable;
     }
+
     void SetGeomTableDefn(OGRFeatureDefn *geomTableIn)
     {
         CPLAssert(geomTable == nullptr);
@@ -101,11 +104,13 @@ class FeatureDefnInfo
     FeatureDefnInfo() : poTableDefn(nullptr)
     {
     }
+
     ~FeatureDefnInfo()
     {
         if (poTableDefn)
             poTableDefn->Release();
     }
+
     FeatureDefnInfo(const FeatureDefnInfo &other)
     {
         poTableDefn = other.poTableDefn;
@@ -134,6 +139,7 @@ class FeatureDefnInfo
     {
         return poTableDefn;
     }
+
     void SetTableDefn(OGRFeatureDefn *poTableDefnIn)
     {
         CPLAssert(poTableDefn == nullptr);
@@ -142,6 +148,7 @@ class FeatureDefnInfo
             poTableDefn->Reference();
     }
 };
+
 typedef std::list<FeatureDefnInfo> FeatureDefnInfos;
 
 class IliModelInfo
@@ -151,6 +158,7 @@ class IliModelInfo
     CPLString version;
     CPLString uri;
 };
+
 typedef std::list<IliModelInfo> IliModelInfos;
 
 class ImdReader

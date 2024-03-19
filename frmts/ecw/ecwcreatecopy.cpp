@@ -593,6 +593,7 @@ CPLErr GDALECWCompressor::ourWriteLineBIL(UINT16 nBands, void **ppOutputLine,
     }
     return CE_None;
 }
+
 /************************************************************************/
 /*                             Initialize()                             */
 /*                                                                      */
@@ -1727,6 +1728,7 @@ class IRasterIORequest
                           nDataTypeSize, nBufXSize);
         }
     }
+
     ~IRasterIORequest()
     {
         CPLFree(pabyData);
@@ -1814,6 +1816,7 @@ class ECWWriteRasterBand final : public GDALRasterBand
             SetDescription(ECWGetColorInterpretationName(eInterp, nBand - 1));
         return CE_None;
     }
+
     virtual GDALColorInterp GetColorInterpretation() override
     {
         return eInterp;

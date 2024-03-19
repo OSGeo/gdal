@@ -104,6 +104,7 @@ static inline bool CPLDetectSSSE3()
 #if defined(__GNUC__) && !defined(DEBUG)
 bool bCPLHasSSSE3 = false;
 static void CPLHaveRuntimeSSSE3Initialize() __attribute__((constructor));
+
 static void CPLHaveRuntimeSSSE3Initialize()
 {
     bCPLHasSSSE3 = CPLDetectSSSE3();
@@ -162,6 +163,7 @@ static bool CPLDetectRuntimeAVX()
 
 bool bCPLHasAVX = false;
 static void CPLHaveRuntimeAVXInitialize() __attribute__((constructor));
+
 static void CPLHaveRuntimeAVXInitialize()
 {
     bCPLHasAVX = CPLDetectRuntimeAVX();

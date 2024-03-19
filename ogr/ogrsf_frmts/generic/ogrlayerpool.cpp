@@ -252,6 +252,7 @@ void OGRProxiedLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeom)
         return;
     poUnderlyingLayer->SetSpatialFilter(iGeomField, poGeom);
 }
+
 /************************************************************************/
 /*                          SetAttributeFilter()                        */
 /************************************************************************/

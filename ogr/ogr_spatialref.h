@@ -92,6 +92,7 @@ class CPL_DLL OGR_SRSNode
     {
         return nChildren;
     }
+
     OGR_SRSNode *GetChild(int);
     const OGR_SRSNode *GetChild(int) const;
 
@@ -109,6 +110,7 @@ class CPL_DLL OGR_SRSNode
     {
         return pszValue;
     }
+
     void SetValue(const char *);
 
     void MakeValueSafe();
@@ -321,11 +323,13 @@ class CPL_DLL OGRSpatialReference
         /*! @endcond */
         ;
     double GetLinearUnits(const char ** = nullptr) const;
+
     /*! @cond Doxygen_Suppress */
     double GetLinearUnits(std::nullptr_t) const
     {
         return GetLinearUnits(static_cast<const char **>(nullptr));
     }
+
     /*! @endcond */
 
     double GetTargetLinearUnits(const char *pszTargetKey,
@@ -337,12 +341,14 @@ class CPL_DLL OGRSpatialReference
         ;
     double GetTargetLinearUnits(const char *pszTargetKey,
                                 const char **ppszRetName = nullptr) const;
+
     /*! @cond Doxygen_Suppress */
     double GetTargetLinearUnits(const char *pszTargetKey, std::nullptr_t) const
     {
         return GetTargetLinearUnits(pszTargetKey,
                                     static_cast<const char **>(nullptr));
     }
+
     /*! @endcond */
 
     OGRErr SetAngularUnits(const char *pszName, double dfInRadians);
@@ -352,11 +358,13 @@ class CPL_DLL OGRSpatialReference
         /*! @endcond */
         ;
     double GetAngularUnits(const char ** = nullptr) const;
+
     /*! @cond Doxygen_Suppress */
     double GetAngularUnits(std::nullptr_t) const
     {
         return GetAngularUnits(static_cast<const char **>(nullptr));
     }
+
     /*! @endcond */
 
     double GetPrimeMeridian(char **) const
@@ -365,11 +373,13 @@ class CPL_DLL OGRSpatialReference
         /*! @endcond */
         ;
     double GetPrimeMeridian(const char ** = nullptr) const;
+
     /*! @cond Doxygen_Suppress */
     double GetPrimeMeridian(std::nullptr_t) const
     {
         return GetPrimeMeridian(static_cast<const char **>(nullptr));
     }
+
     /*! @endcond */
 
     bool IsEmpty() const;
@@ -752,6 +762,7 @@ struct CPL_DLL OGRSpatialReferenceReleaser
             poSRS->Release();
     }
 };
+
 /*! @endcond */
 
 /************************************************************************/

@@ -155,6 +155,7 @@ class OGRPGDumpLayer final : public OGRLayer
     {
         return m_poFeatureDefn;
     }
+
     virtual const char *GetFIDColumn() override
     {
         return m_pszFIDColumn ? m_pszFIDColumn : "";
@@ -163,6 +164,7 @@ class OGRPGDumpLayer final : public OGRLayer
     virtual void ResetReading() override
     {
     }
+
     virtual int TestCapability(const char *) override;
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
@@ -186,54 +188,66 @@ class OGRPGDumpLayer final : public OGRLayer
     {
         m_bLaunderColumnNames = bFlag;
     }
+
     void SetPrecisionFlag(bool bFlag)
     {
         m_bPreservePrecision = bFlag;
     }
 
     void SetOverrideColumnTypes(const char *pszOverrideColumnTypes);
+
     void SetUnknownSRSId(int nUnknownSRSIdIn)
     {
         m_nUnknownSRSId = nUnknownSRSIdIn;
     }
+
     void SetForcedSRSId(int nForcedSRSIdIn)
     {
         m_nForcedSRSId = nForcedSRSIdIn;
     }
+
     void SetForcedGeometryTypeFlags(int GeometryTypeFlagsIn)
     {
         m_nForcedGeometryTypeFlags = GeometryTypeFlagsIn;
     }
+
     void SetCreateSpatialIndex(bool bFlag, const char *pszSpatialIndexType)
     {
         m_bCreateSpatialIndexFlag = bFlag;
         m_osSpatialIndexType = pszSpatialIndexType;
     }
+
     void SetPostGISVersion(int nPostGISMajorIn, int nPostGISMinorIn)
     {
         m_nPostGISMajor = nPostGISMajorIn;
         m_nPostGISMinor = nPostGISMinorIn;
     }
+
     void SetGeometryFieldName(const char *pszGeomFieldName)
     {
         m_osFirstGeometryFieldName = pszGeomFieldName;
     }
+
     void SetForcedDescription(const char *pszDescriptionIn);
+
     void SetGeomColumnPositionImmediate(bool bGeomColumnPositionImmediate)
     {
         m_bGeomColumnPositionImmediate = bGeomColumnPositionImmediate;
     }
+
     void SetDeferredGeomFieldCreationCommands(
         const std::vector<std::string> &aosDeferredGeomFieldCreationCommands)
     {
         m_aosDeferredGeomFieldCreationCommands =
             aosDeferredGeomFieldCreationCommands;
     }
+
     void SetSpatialIndexCreationCommands(
         const std::vector<std::string> &aosSpatialIndexCreationCommands)
     {
         m_aosSpatialIndexCreationCommands = aosSpatialIndexCreationCommands;
     }
+
     OGRErr EndCopy();
 };
 
@@ -261,6 +275,7 @@ class OGRPGDumpDataSource final : public GDALDataset
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     virtual OGRLayer *GetLayer(int) override;
 
     virtual OGRLayer *ICreateLayer(const char *pszName,

@@ -1795,6 +1795,7 @@ typedef struct
     double dfMAX_LONG; /*!< Maximum longitude */
     double dfMAX_LAT;  /*!< Maximum latitude */
 } GDALRPCInfoV1;
+
 /*! @endcond */
 
 /** Structure to store Rational Polynomial Coefficients / Rigorous Projection

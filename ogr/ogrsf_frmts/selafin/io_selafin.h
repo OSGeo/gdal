@@ -221,7 +221,8 @@ class TimeStepList
     TimeStepList(TimeStep *poStepP, TimeStepList *poNextP)
         : poStep(poStepP), poNext(poNextP)
     {
-    }                 //!< Standard constructor
+    }  //!< Standard constructor
+
     ~TimeStepList();  //!< Standard destructor
 };
 #endif

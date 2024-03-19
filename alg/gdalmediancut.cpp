@@ -61,6 +61,7 @@ template <typename T> static T *HISTOGRAM(T *h, int n, int r, int g, int b)
 
 #ifndef MAKE_COLOR_CODE_defined
 #define MAKE_COLOR_CODE_defined
+
 static int MAKE_COLOR_CODE(int r, int g, int b)
 {
     return r | (g << 8) | (b << 16);
@@ -172,6 +173,7 @@ extern "C" int CPL_STDCALL GDALComputeMedianCutPCT(
 
 #ifndef IsColorCodeSet_defined
 #define IsColorCodeSet_defined
+
 static inline bool IsColorCodeSet(GUInt32 nColorCode)
 {
     return (nColorCode >> 31) == 0;
@@ -786,6 +788,7 @@ static void splitbox(Colorbox *ptr, const T *histogram,
     T hist2[256] = {};
     int first = 0;
     int last = 0;
+
     enum
     {
         RED,

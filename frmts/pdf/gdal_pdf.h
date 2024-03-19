@@ -324,6 +324,7 @@ class PDFDataset final : public GDALPamDataset
         int nInsertIdx = 0;
         int iPage = 0;
     };
+
     std::vector<LayerStruct> m_oLayerNameSet{};
     CPLStringList m_aosLayerNames{};
 
@@ -339,6 +340,7 @@ class PDFDataset final : public GDALPamDataset
         {
         }
     };
+
     std::vector<LayerWithRef> m_aoLayerWithRef{};
 
     CPLString FindLayerOCG(GDALPDFDictionary *poPageDict,
@@ -444,16 +446,19 @@ class PDFDataset final : public GDALPamDataset
     {
         return m_poPageObj;
     }
+
     double GetPageWidth() const
     {
         return m_dfPageWidth;
     }
+
     double GetPageHeight() const
     {
         return m_dfPageHeight;
     }
 
     static PDFDataset *Open(GDALOpenInfo *);
+
     static GDALDataset *OpenWrapper(GDALOpenInfo *poOpenInfo)
     {
         return Open(poOpenInfo);

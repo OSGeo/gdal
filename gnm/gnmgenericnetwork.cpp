@@ -1542,4 +1542,5 @@ CPLErr CPL_STDCALL GNMChangeAllBlockState(GNMGenericNetworkH hNet, int bIsBlock)
 
     return ((GNMGenericNetwork *)hNet)->ChangeAllBlockState(bIsBlock == TRUE);
 }
+
 //! @endcond

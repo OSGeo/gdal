@@ -454,6 +454,7 @@ class SENTINEL2_CPLXMLNodeHolder
     explicit SENTINEL2_CPLXMLNodeHolder(CPLXMLNode *psNode) : m_psNode(psNode)
     {
     }
+
     ~SENTINEL2_CPLXMLNodeHolder()
     {
         if (m_psNode)

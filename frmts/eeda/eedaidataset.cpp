@@ -138,11 +138,13 @@ class GDALEEDAIRasterBand final : public GDALRasterBand
     virtual CPLErr IReadBlock(int, int, void *) CPL_OVERRIDE;
     virtual int GetOverviewCount() CPL_OVERRIDE;
     virtual GDALRasterBand *GetOverview(int) CPL_OVERRIDE;
+
     virtual CPLErr SetColorInterpretation(GDALColorInterp eInterp) CPL_OVERRIDE
     {
         m_eInterp = eInterp;
         return CE_None;
     }
+
     virtual GDALColorInterp GetColorInterpretation() CPL_OVERRIDE
     {
         return m_eInterp;
@@ -417,6 +419,7 @@ bool GDALEEDAIRasterBand::DecodeNPYArray(const GByte *pabyData, int nDataLen,
     }
     return true;
 }
+
 /************************************************************************/
 /*                            DecodeGDALDataset()                         */
 /************************************************************************/

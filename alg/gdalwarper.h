@@ -143,6 +143,7 @@ CPLErr CPL_DLL GDALWarpCutlineMaskerEx(void *pMaskFuncArg, int nBandCount,
                                        GByte ** /* ppImageData */,
                                        int bMaskIsFloat, void *pValidityMask,
                                        int *pnValidityFlag);
+
 /*! @endcond */
 
 /************************************************************************/
@@ -488,6 +489,7 @@ void GWKThreadsEnd(void *psThreadDataIn);
 
 /*! @cond Doxygen_Suppress */
 typedef struct _GDALWarpChunk GDALWarpChunk;
+
 /*! @endcond */
 
 class CPL_DLL GDALWarpOperation

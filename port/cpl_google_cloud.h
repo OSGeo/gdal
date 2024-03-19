@@ -98,6 +98,7 @@ class VSIGSHandleHelper final : public IVSIS3LikeHandleHelper
     {
         return "x-goog-copy-source";
     }
+
     const char *GetMetadataDirectiveREPLACE() const override
     {
         return "x-goog-metadata-directive: REPLACE";

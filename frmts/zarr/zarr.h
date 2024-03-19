@@ -718,28 +718,34 @@ class ZarrByteVectorQuickResize
     {
         return m_nSize == 0;
     }
+
     inline size_t size() const
     {
         return m_nSize;
     }
+
     inline size_t capacity() const
     {
         // Not a typo: the capacity of this object is the size
         // of the underlying std::vector
         return m_oVec.size();
     }
+
     inline GByte *data()
     {
         return m_oVec.data();
     }
+
     inline const GByte *data() const
     {
         return m_oVec.data();
     }
+
     inline GByte operator[](size_t idx) const
     {
         return m_oVec[idx];
     }
+
     inline GByte &operator[](size_t idx)
     {
         return m_oVec[idx];
@@ -791,10 +797,12 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     mutable bool m_bHasTriedCacheTilePresenceArray = false;
     mutable std::shared_ptr<GDALMDArray> m_poCacheTilePresenceArray{};
     mutable std::mutex m_oMutex{};
+
     struct CachedTile
     {
         ZarrByteVectorQuickResize abyDecoded{};
     };
+
     mutable std::map<uint64_t, CachedTile> m_oMapTileIndexToCachedTile{};
 
     static uint64_t
@@ -1207,6 +1215,7 @@ class ZarrV3Codec CPL_NON_FINAL
     {
         return m_osName;
     }
+
     const CPLJSONObject &GetConfiguration() const
     {
         return m_oConfiguration;
@@ -1237,6 +1246,7 @@ class ZarrV3CodecGZip final : public ZarrV3Codec
     {
         return IOType::BYTES;
     }
+
     IOType GetOutputType() const override
     {
         return IOType::BYTES;
@@ -1281,6 +1291,7 @@ class ZarrV3CodecBlosc final : public ZarrV3Codec
     {
         return IOType::BYTES;
     }
+
     IOType GetOutputType() const override
     {
         return IOType::BYTES;
@@ -1322,6 +1333,7 @@ class ZarrV3CodecEndian final : public ZarrV3Codec
     {
         return IOType::ARRAY;
     }
+
     IOType GetOutputType() const override
     {
         return IOType::BYTES;
@@ -1384,6 +1396,7 @@ class ZarrV3CodecTranspose final : public ZarrV3Codec
     {
         return IOType::ARRAY;
     }
+
     IOType GetOutputType() const override
     {
         return IOType::ARRAY;

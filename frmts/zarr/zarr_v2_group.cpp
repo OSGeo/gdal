@@ -341,6 +341,7 @@ void ZarrV2Group::InitFromZMetadata(const CPLJSONObject &obj)
         const CPLJSONObject *poArray = nullptr;
         const CPLJSONObject *poAttrs = nullptr;
     };
+
     std::vector<ArrayDesc> aoRegularArrays;
 
     // Second pass to read attributes and create arrays that are indexing

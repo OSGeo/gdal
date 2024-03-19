@@ -73,10 +73,12 @@ class Point
               new double[dim]))
     {
     }
+
     double &operator[](size_t i)
     {
         return this->values.get()[i];
     }
+
     int getOrder()
     {
         return this->size;
@@ -240,10 +242,12 @@ class SGeometry_PropertyScanner
     {
         return this->v_headers;
     }
+
     std::vector<int> &ids()
     {
         return this->v_ids;
     }
+
     SGeometry_PropertyScanner(int ncid, int cid) : nc(ncid)
     {
         this->open(cid);
@@ -415,6 +419,7 @@ class SG_Exception_Value_Violation : public SG_Exception
     {
         return err_msg.c_str();
     }
+
     SG_Exception_Value_Violation(const char *containername, const char *type,
                                  const char *badvalue)
         : err_msg(std::string("[") + std::string(containername) +
@@ -434,6 +439,7 @@ class SG_Exception_Value_Required : public SG_Exception
     {
         return err_msg.c_str();
     }
+
     SG_Exception_Value_Required(const char *containername, const char *type,
                                 const char *expvalue)
         : err_msg(std::string("[") + std::string(containername) +

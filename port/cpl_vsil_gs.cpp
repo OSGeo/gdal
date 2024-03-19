@@ -72,6 +72,7 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
 
   protected:
     VSICurlHandle *CreateFileHandle(const char *pszFilename) override;
+
     const char *GetDebugKey() const override
     {
         return "GS";
@@ -81,6 +82,7 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
     {
         return m_osPrefix;
     }
+
     std::string GetURLFromFilename(const std::string &osFilename) override;
 
     IVSIS3LikeHandleHelper *CreateHandleHelper(const char *pszURI,
@@ -101,6 +103,7 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
     explicit VSIGSFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
     {
     }
+
     ~VSIGSFSHandler() override;
 
     const char *GetOptions() override;

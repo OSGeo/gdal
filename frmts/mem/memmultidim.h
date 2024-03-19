@@ -303,6 +303,7 @@ class CPL_DLL MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
         array->SetSelf(array);
         return array;
     }
+
     ~MEMMDArray();
 
     void Invalidate()
@@ -476,6 +477,7 @@ class MEMDimension CPL_NON_FINAL : public GDALDimensionWeakIndexingVar
 
     void RegisterUsingArray(MEMMDArray *poArray);
     void UnRegisterUsingArray(MEMMDArray *poArray);
+
     const std::set<MEMMDArray *> &GetUsingArrays() const
     {
         return m_oSetArrays;

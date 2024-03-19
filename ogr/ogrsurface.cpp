@@ -97,4 +97,5 @@ OGRCurvePolygon *OGRSurface::CastToCurvePolygon(OGRSurface *poSurface)
     OGRSurfaceCasterToCurvePolygon pfn = poSurface->GetCasterToCurvePolygon();
     return pfn(poSurface);
 }
+
 /*! @endcond */

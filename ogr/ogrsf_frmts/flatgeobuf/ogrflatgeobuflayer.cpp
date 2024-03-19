@@ -669,11 +669,13 @@ bool OGRFlatGeobufLayer::CreateFinalFile()
         if (ensureFeatureBuf(nMaxBufferSize) != OGRERR_NONE)
             return false;
         uint32_t offsetInBuffer = 0;
+
         struct BatchItem
         {
             size_t featureIdx;  // index of m_featureItems[]
             uint32_t offsetInBuffer;
         };
+
         std::vector<BatchItem> batch;
 
         const auto flushBatch = [this, &batch, &offsetInBuffer]()

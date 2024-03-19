@@ -66,6 +66,7 @@ class OGRS57Layer final : public OGRLayer
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
@@ -122,10 +123,12 @@ class OGRS57DataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     int GetLayerCount() override
     {
         return nLayers;
     }
+
     OGRLayer *GetLayer(int) override;
     void AddLayer(OGRS57Layer *);
     int TestCapability(const char *) override;
@@ -139,7 +142,9 @@ class OGRS57DataSource final : public OGRDataSource
     {
         return nModules;
     }
+
     S57Reader *GetModule(int);
+
     S57Writer *GetWriter()
     {
         return poWriter;

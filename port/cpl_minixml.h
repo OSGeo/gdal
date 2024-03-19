@@ -52,6 +52,7 @@ typedef enum
 
 /*! @cond Doxygen_Suppress */
 typedef struct CPLXMLNode CPLXMLNode;
+
 /*! @endcond */
 
 /**
@@ -197,6 +198,7 @@ extern "C++"
             CPLDestroyXMLNode(psNode);
         }
     };
+
     /*! @endcond */
 
     /** Manage a tree of XML nodes so that all nodes are freed when the instance

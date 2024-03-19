@@ -116,6 +116,7 @@ class GDALEXRRasterBand final : public GDALPamRasterBand
     {
         return m_eInterp;
     }
+
     int GetOverviewCount() override;
     GDALRasterBand *GetOverview(int) override;
 };
@@ -226,6 +227,7 @@ class GDALEXRPreviewRasterBand final : public GDALPamRasterBand
 
   protected:
     CPLErr IReadBlock(int, int, void *) override;
+
     GDALColorInterp GetColorInterpretation() override
     {
         return static_cast<GDALColorInterp>(GCI_RedBand + nBand - 1);
@@ -286,6 +288,7 @@ class GDALEXRRGBARasterBand final : public GDALPamRasterBand
 
   protected:
     CPLErr IReadBlock(int, int, void *) override;
+
     GDALColorInterp GetColorInterpretation() override
     {
         return static_cast<GDALColorInterp>(GCI_RedBand + nBand - 1);
@@ -424,6 +427,7 @@ class GDALEXRIOStreamException final : public std::exception
     explicit GDALEXRIOStreamException(const std::string &msg) : m_msg(msg)
     {
     }
+
     const char *what() const noexcept override
     {
         return m_msg.c_str();
@@ -443,6 +447,7 @@ class GDALEXRIOStream final : public IStream, public OStream
         : IStream(filename), OStream(filename), m_fp(fp)
     {
     }
+
     ~GDALEXRIOStream()
     {
         VSIFCloseL(m_fp);
@@ -451,11 +456,14 @@ class GDALEXRIOStream final : public IStream, public OStream
     virtual bool read(char c[/*n*/], int n) override;
     virtual void write(const char c[/*n*/], int n) override;
     virtual IoInt64Type tellg() override;
+
     virtual IoInt64Type tellp() override
     {
         return tellg();
     }
+
     virtual void seekg(IoInt64Type pos) override;
+
     virtual void seekp(IoInt64Type pos) override
     {
         return seekg(pos);
@@ -1455,6 +1463,7 @@ class GDALEXRWritableDataset final : public GDALPamDataset
         nRasterXSize = nXSize;
         nRasterYSize = nYSize;
     }
+
     ~GDALEXRWritableDataset() override;
 
     CPLErr SetGeoTransform(double *adfGT) override;
@@ -1726,6 +1735,7 @@ class GDALEXRWritableRasterBand final : public GDALPamRasterBand
         m_eInterp = eInterp;
         return CE_None;
     }
+
     GDALColorInterp GetColorInterpretation() override
     {
         return m_eInterp;

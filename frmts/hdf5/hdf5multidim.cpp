@@ -264,6 +264,7 @@ GetDataTypesInGroup(hid_t hHDF5, const std::string &osGroupFullName,
             return 0;
         }
     };
+
     H5Giterate(hHDF5, osGroupFullName.c_str(), nullptr, &(Callback::f),
                &oTypes);
 }

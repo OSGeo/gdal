@@ -88,6 +88,7 @@ OGRMSSQLSpatialDataSource::~OGRMSSQLSpatialDataSource()
 
     CPLFree(pszConnection);
 }
+
 /************************************************************************/
 /*                      OGRMSSQLDecodeVersionString()                   */
 /************************************************************************/

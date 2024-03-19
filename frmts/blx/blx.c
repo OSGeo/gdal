@@ -592,6 +592,7 @@ static int is_big_endian(void)
     char *byte = (char *)&word;
     return (byte[0] ? 0 : 1);
 }
+
 static double doubleSWAP(double df)
 {
     CPL_SWAP64PTR(&df);

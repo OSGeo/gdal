@@ -110,6 +110,7 @@ class EHdrDataset final : public RawDataset
     {
         return m_oSRS.IsEmpty() ? RawDataset::GetSpatialRef() : &m_oSRS;
     }
+
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     char **GetFileList() override;

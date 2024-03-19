@@ -79,10 +79,12 @@ class OGRCSWLayer final : public OGRLayer
     }
 
     virtual void SetSpatialFilter(OGRGeometry *) override;
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
     }
+
     virtual OGRErr SetAttributeFilter(const char *) override;
 };
 
@@ -119,6 +121,7 @@ class OGRCSWDataSource final : public OGRDataSource
     {
         return poLayer != nullptr;
     }
+
     virtual OGRLayer *GetLayer(int) override;
 
     virtual int TestCapability(const char *) override
@@ -132,22 +135,27 @@ class OGRCSWDataSource final : public OGRDataSource
     {
         return osBaseURL;
     }
+
     const CPLString &GetVersion()
     {
         return osVersion;
     }
+
     const CPLString &GetElementSetName()
     {
         return osElementSetName;
     }
+
     const CPLString &GetOutputSchema()
     {
         return osOutputSchema;
     }
+
     bool FullExtentRecordsAsNonSpatial()
     {
         return bFullExtentRecordsAsNonSpatial;
     }
+
     int GetMaxRecords()
     {
         return nMaxRecords;

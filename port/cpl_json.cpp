@@ -596,6 +596,7 @@ CPLJSONObject &CPLJSONObject::operator=(CPLJSONObject &&other)
     other.m_poJsonObject = nullptr;
     return *this;
 }
+
 /*! @endcond */
 
 /**
@@ -1348,6 +1349,7 @@ CPLJSONObject CPLJSONObject::GetObjectByPath(const std::string &osPath,
     osName = pathPortions[portionsCount - 1];
     return object;
 }
+
 /*! @endcond */
 
 /**
@@ -1441,6 +1443,7 @@ CPLJSONArray::CPLJSONArray(const std::string &osName, JSONObjectH poJsonObject)
 CPLJSONArray::CPLJSONArray(const CPLJSONObject &other) : CPLJSONObject(other)
 {
 }
+
 /*! @endcond */
 
 /**

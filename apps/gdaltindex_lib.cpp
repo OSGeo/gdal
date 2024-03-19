@@ -1097,6 +1097,7 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
 
 #ifndef CheckHasEnoughAdditionalArgs_defined
 #define CheckHasEnoughAdditionalArgs_defined
+
 static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
                                          int nExtraArg, int nArgc)
 {

@@ -604,6 +604,7 @@ std::unique_ptr<CPLJobQueue> CPLWorkerThreadPool::CreateJobQueue()
 CPLJobQueue::CPLJobQueue(CPLWorkerThreadPool *poPool) : m_poPool(poPool)
 {
 }
+
 //! @endcond
 
 /************************************************************************/

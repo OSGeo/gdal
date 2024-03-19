@@ -351,4 +351,5 @@ CPLXMLNode *GDALMultiDomainMetadata::Serialize() const
 
     return psFirst;
 }
+
 //! @endcond

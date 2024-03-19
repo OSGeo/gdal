@@ -178,12 +178,14 @@ class OGRMVTLayer final : public OGRMVTLayerBase
     bool m_bError = false;
     unsigned int m_nExtent = knDEFAULT_EXTENT;
     std::vector<CPLString> m_aosKeys;
+
     typedef struct
     {
         OGRFieldType eType;
         OGRFieldSubType eSubType;
         OGRField sValue;
     } Value;
+
     std::vector<Value> m_asValues;
     GIntBig m_nFID = 0;
     GIntBig m_nFeatureCount = -1;
@@ -263,6 +265,7 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
 
     virtual GIntBig GetFeatureCount(int bForce) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
@@ -270,6 +273,7 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
     }
 
     virtual void SetSpatialFilter(OGRGeometry *) override;
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
@@ -314,6 +318,7 @@ class OGRMVTDataset final : public GDALDataset
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     virtual OGRLayer *GetLayer(int) override;
 
     virtual int TestCapability(const char *) override
@@ -327,14 +332,17 @@ class OGRMVTDataset final : public GDALDataset
     {
         return m_poSRS;
     }
+
     double GetTileDim0() const
     {
         return m_dfTileDim0;
     }
+
     double GetTopXOrigin() const
     {
         return m_dfTopXOrigin;
     }
+
     double GetTopYOrigin() const
     {
         return m_dfTopYOrigin;
@@ -3409,14 +3417,17 @@ class OGRMVTWriterLayer final : public OGRLayer
     void ResetReading() override
     {
     }
+
     OGRFeature *GetNextFeature() override
     {
         return nullptr;
     }
+
     OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
     }
+
     int TestCapability(const char *) override;
     OGRErr ICreateFeature(OGRFeature *) override;
     OGRErr CreateField(const OGRFieldDefn *, int) override;

@@ -91,6 +91,7 @@ class GenBinBitRasterBand final : public GDALPamRasterBand
 
   public:
     GenBinBitRasterBand(GenBinDataset *poDS, int nBits);
+
     ~GenBinBitRasterBand() override
     {
     }

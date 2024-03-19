@@ -31,6 +31,7 @@
 
 #include "cpl_port.h"
 #include <string>
+
 /**
  * The GDALSubdatasetInfo abstract class provides methods to extract and
  * manipulate subdataset information from a file name that contains subdataset

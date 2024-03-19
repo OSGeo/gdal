@@ -281,6 +281,7 @@ static inline double VizGeorefSpline2DBase_func(const double x1,
  */
 
 typedef double V2DF __attribute__((__vector_size__(16)));
+
 typedef union
 {
     V2DF v2;

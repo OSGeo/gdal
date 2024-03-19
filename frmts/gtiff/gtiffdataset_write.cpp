@@ -1477,6 +1477,7 @@ uint64_t RoundValueDiscardLsb<uint64_t, uint64_t>(const void *ptr,
 {
     return RoundValueDiscardLsbUnsigned<uint64_t>(ptr, nMask, nRoundUpBitTest);
 }
+
 template <>
 int8_t RoundValueDiscardLsb<int8_t, int8_t>(const void *ptr, uint64_t nMask,
                                             uint64_t nRoundUpBitTest)
@@ -5078,6 +5079,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                         GDALGetDataTypeName(eType));
             return nullptr;
         }
+
         const struct
         {
             GDALDataType eDT;
@@ -5087,6 +5089,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
             {GDT_UInt16, 16},
             {GDT_Float32, 32},
         };
+
         for (const auto &sSupportedDTBitsPerSample : asSupportedDTBitsPerSample)
         {
             if (eType == sSupportedDTBitsPerSample.eDT &&

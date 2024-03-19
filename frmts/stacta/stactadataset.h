@@ -122,23 +122,28 @@ class STACTARasterBand final : public GDALRasterBand
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                      GDALDataType, GSpacing, GSpacing,
                      GDALRasterIOExtraArg *psExtraArg) override;
+
     GDALColorInterp GetColorInterpretation() override
     {
         return m_eColorInterp;
     }
+
     int GetOverviewCount() override;
     GDALRasterBand *GetOverview(int nIdx) override;
     double GetNoDataValue(int *pbHasNoData = nullptr) override;
+
     const char *GetUnitType() override
     {
         return m_osUnit.c_str();
     }
+
     double GetScale(int *pbHasValue = nullptr) override
     {
         if (pbHasValue)
             *pbHasValue = m_dfScale != 1.0;
         return m_dfScale;
     }
+
     double GetOffset(int *pbHasValue = nullptr) override
     {
         if (pbHasValue)
@@ -181,6 +186,7 @@ class STACTARawDataset final : public GDALDataset
     {
         return &m_oSRS;
     }
+
     CPLErr GetGeoTransform(double *padfGeoTransform) override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
@@ -215,10 +221,12 @@ class STACTARawRasterBand final : public GDALRasterBand
                      GDALDataType eBufType, GSpacing nPixelSpace,
                      GSpacing nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
+
     GDALColorInterp GetColorInterpretation() override
     {
         return m_eColorInterp;
     }
+
     double GetNoDataValue(int *pbHasNoData = nullptr) override;
 };
 

@@ -46,6 +46,7 @@ class Sentinel3_SRAL_MWR_Layer final : public OGRLayer
     size_t m_nCurIdx = 0;
     size_t m_nFeatureCount = 0;
     CPLStringList m_aosMetadata{};
+
     struct VariableInfo
     {
         int varid;
@@ -54,6 +55,7 @@ class Sentinel3_SRAL_MWR_Layer final : public OGRLayer
         double offset;
         double nodata;
     };
+
     std::vector<VariableInfo> m_asVarInfo{};
     int m_iLongitude = -1;
     int m_iLatitude = -1;
@@ -73,6 +75,7 @@ class Sentinel3_SRAL_MWR_Layer final : public OGRLayer
     {
         return m_poFDefn;
     }
+
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig nFID) override;

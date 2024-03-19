@@ -29,6 +29,7 @@
 
 #ifndef timedelta_hpp
 #define timedelta_hpp
+
 /*
  * TimeDelta class represents the time difference. It is used to
  * hold the Envisat MJD (Modified Julian Date - which is time

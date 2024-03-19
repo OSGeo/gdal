@@ -259,10 +259,12 @@ class LevellerDataset final : public GDALPamDataset
 
     static bool locate_data(vsi_l_offset &, size_t &, VSILFILE *, const char *);
     static bool get(int &, VSILFILE *, const char *);
+
     static bool get(size_t &n, VSILFILE *fp, const char *psz)
     {
         return get((int &)n, fp, psz);
     }
+
     static bool get(double &, VSILFILE *, const char *);
     static bool get(char *, size_t, VSILFILE *, const char *);
 

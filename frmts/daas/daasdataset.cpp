@@ -707,6 +707,7 @@ GetGDALDataTypeFromDAASPixelType(const CPLString &osPixelType)
         {"Int32", GDT_Int32},     {"Float32", GDT_Float32},
         {"Float64", GDT_Float64},
     };
+
     for (size_t i = 0; i < CPL_ARRAYSIZE(asDataTypes); ++i)
     {
         if (osPixelType == asDataTypes[i].pszName)
@@ -1053,6 +1054,7 @@ void GDALDAASDataset::ReadRPCs(const CPLJSONObject &oProperties)
     {
         bool bRPCError = false;
         CPLStringList aoRPC;
+
         const struct
         {
             const char *pszJsonName;
@@ -1065,6 +1067,7 @@ void GDALDAASDataset::ReadRPCs(const CPLJSONObject &oProperties)
             {"sampScale", RPC_SAMP_SCALE}, {"latScale", RPC_LAT_SCALE},
             {"longScale", RPC_LONG_SCALE}, {"heightScale", RPC_HEIGHT_SCALE},
         };
+
         for (size_t i = 0; i < CPL_ARRAYSIZE(asRPCSingleValues); ++i)
         {
             bool bRPCErrorTmp = false;
@@ -1095,6 +1098,7 @@ void GDALDAASDataset::ReadRPCs(const CPLJSONObject &oProperties)
             {"sampNumCoeff", RPC_SAMP_NUM_COEFF},
             {"sampDenCoeff", RPC_SAMP_DEN_COEFF},
         };
+
         for (size_t i = 0; i < CPL_ARRAYSIZE(asRPCArrayValues); ++i)
         {
             CPLJSONArray oRPCArray =
@@ -1375,6 +1379,7 @@ GDALDAASRasterBand::GDALDAASRasterBand(GDALDAASDataset *poDSIn, int nBandIn,
         {"BLUE", GCI_BlueBand},   {"GRAY", GCI_GrayIndex},
         {"ALPHA", GCI_AlphaBand}, {"UNDEFINED", GCI_Undefined},
     };
+
     for (size_t i = 0; i < CPL_ARRAYSIZE(asColorInterpretations); ++i)
     {
         if (EQUAL(oBandDesc.osColorInterp, asColorInterpretations[i].pszName))

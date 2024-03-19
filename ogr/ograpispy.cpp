@@ -62,6 +62,7 @@ class LayerDescription
     int iLayer = -1;
 
     LayerDescription() = default;
+
     explicit LayerDescription(int iLayerIn) : iLayer(iLayerIn)
     {
     }
@@ -74,9 +75,11 @@ class DatasetDescription
     std::map<OGRLayerH, LayerDescription> oMapLayer{};
 
     DatasetDescription() = default;
+
     explicit DatasetDescription(int iDSIn) : iDS(iDSIn)
     {
     }
+
     DatasetDescription &operator=(DatasetDescription &&) = default;
     ~DatasetDescription();
 };
@@ -90,6 +93,7 @@ class FeatureDefnDescription
     std::map<OGRGeomFieldDefnH, int> oMapGeomFieldDefn{};
 
     FeatureDefnDescription() = default;
+
     FeatureDefnDescription(OGRFeatureDefnH hFDefnIn, int iUniqueNumberIn)
         : hFDefn(hFDefnIn), iUniqueNumber(iUniqueNumberIn)
     {
@@ -1046,10 +1050,12 @@ void OGRAPISpy_L_StartTransaction(OGRLayerH hLayer)
 {
     OGRAPISpy_L_Op(hLayer, "StartTransaction");
 }
+
 void OGRAPISpy_L_CommitTransaction(OGRLayerH hLayer)
 {
     OGRAPISpy_L_Op(hLayer, "CommitTransaction");
 }
+
 void OGRAPISpy_L_RollbackTransaction(OGRLayerH hLayer)
 {
     OGRAPISpy_L_Op(hLayer, "RollbackTransaction");
@@ -1069,30 +1075,37 @@ void OGRAPISpy_L_GetSpatialRef(OGRLayerH hLayer)
 {
     OGRAPISpy_L_Op(hLayer, "GetSpatialRef");
 }
+
 void OGRAPISpy_L_GetSpatialFilter(OGRLayerH hLayer)
 {
     OGRAPISpy_L_Op(hLayer, "GetSpatialFilter");
 }
+
 void OGRAPISpy_L_ResetReading(OGRLayerH hLayer)
 {
     OGRAPISpy_L_Op(hLayer, "ResetReading");
 }
+
 void OGRAPISpy_L_SyncToDisk(OGRLayerH hLayer)
 {
     OGRAPISpy_L_Op(hLayer, "SyncToDisk");
 }
+
 void OGRAPISpy_L_GetFIDColumn(OGRLayerH hLayer)
 {
     OGRAPISpy_L_Op(hLayer, "GetFIDColumn");
 }
+
 void OGRAPISpy_L_GetGeometryColumn(OGRLayerH hLayer)
 {
     OGRAPISpy_L_Op(hLayer, "GetGeometryColumn");
 }
+
 void OGRAPISpy_L_GetName(OGRLayerH hLayer)
 {
     OGRAPISpy_L_Op(hLayer, "GetName");
 }
+
 void OGRAPISpy_L_GetGeomType(OGRLayerH hLayer)
 {
     OGRAPISpy_L_Op(hLayer, "GetGeomType");

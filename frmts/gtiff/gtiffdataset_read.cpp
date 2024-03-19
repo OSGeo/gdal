@@ -536,6 +536,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
             : m_apoBlocks(apoBlocksIn)
         {
         }
+
         ~FreeBlocks()
         {
             for (auto *poBlock : m_apoBlocks)
@@ -545,6 +546,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
             }
         }
     };
+
     FreeBlocks oFreeBlocks(apoBlocks);
 
     const auto LoadBlocks = [&]()

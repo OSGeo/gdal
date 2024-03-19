@@ -47,6 +47,7 @@ template <typename LineWriter, typename LevelGenerator> struct SegmentMerger
         LineString ls = LineString();
         bool isMerged = false;
     };
+
     // a collection of unmerged linestrings
     typedef std::list<LineStringEx> Lines;
 

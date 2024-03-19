@@ -1415,6 +1415,7 @@ kealib::KEALayerType KEARasterBand::getLayerType() const
 {
     return m_pImageIO->getImageBandLayerType(nBand);
 }
+
 void KEARasterBand::setLayerType(kealib::KEALayerType eLayerType)
 {
     m_pImageIO->setImageBandLayerType(nBand, eLayerType);

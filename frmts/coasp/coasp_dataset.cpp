@@ -68,6 +68,7 @@ class COASPMetadataReader
     COASPMetadataItem *GetNextItem();
     COASPMetadataItem *GetItem(int nItem);
     int GotoMetadataItem(const char *pszName);
+
     int GetCurrentItem() const
     {
         return nCurrentItem;
@@ -85,11 +86,13 @@ class COASPMetadataItem
     COASPMetadataItem() : pszItemName(nullptr), pszItemValue(nullptr)
     {
     }
+
     COASPMetadataItem(char *pszItemName, char *pszItemValue);
     ~COASPMetadataItem();
 
     char *GetItemName();
     char *GetItemValue();
+
     static int GetType()
     {
         return TYPE_GENERIC;
@@ -112,11 +115,14 @@ class COASPMetadataGeorefGridItem : public COASPMetadataItem
   public:
     COASPMetadataGeorefGridItem(int nId, int nPixels, int nLines, double ndLat,
                                 double ndLong);
+
     static const char *GetItemName()
     {
         return "georef_grid";
     }
+
     static GDAL_GCP *GetItemValue();
+
     static int GetType()
     {
         return TYPE_GEOREF;
@@ -273,6 +279,7 @@ class COASPDataset final : public GDALDataset
           fpBinVV(nullptr), pszFileName(nullptr)
     {
     }
+
     ~COASPDataset();
 
     static GDALDataset *Open(GDALOpenInfo *);

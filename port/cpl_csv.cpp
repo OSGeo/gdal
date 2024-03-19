@@ -1523,4 +1523,5 @@ void SetCSVFilenameHook(const char *(*pfnNewHook)(const char *))
 {
     pfnCSVFilenameHook = pfnNewHook;
 }
+
 CPL_C_END

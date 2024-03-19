@@ -51,6 +51,7 @@ class XPMDataset final : public GDALPamDataset
     XPMDataset()
     {
     }
+
     ~XPMDataset();
 
     static GDALDataset *Open(GDALOpenInfo *);

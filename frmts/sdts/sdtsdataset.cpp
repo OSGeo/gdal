@@ -65,6 +65,7 @@ class SDTSDataset final : public GDALPamDataset
     {
         return &m_oSRS;
     }
+
     virtual CPLErr GetGeoTransform(double *) override;
 };
 

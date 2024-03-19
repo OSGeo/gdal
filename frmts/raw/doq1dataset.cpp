@@ -134,6 +134,7 @@ class DOQ1Dataset final : public RawDataset
     ~DOQ1Dataset();
 
     CPLErr GetGeoTransform(double *padfTransform) override;
+
     const OGRSpatialReference *GetSpatialRef() const override
     {
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;

@@ -766,6 +766,7 @@ void CheckPacked<GUInt16, GByte>(GDALDataType eIn, GDALDataType eOut)
                   arrayOut[i]);
     }
 }
+
 template <>
 void CheckPacked<GUInt16, GInt16>(GDALDataType eIn, GDALDataType eOut)
 {

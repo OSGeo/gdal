@@ -529,15 +529,18 @@ void JPGDatasetCommon::ReadFLIRMetadata()
     {
         int &m_nPamFlagsRef;
         int m_nOldPamFlags;
+
         explicit PamFlagKeeper(int &nPamFlagsRef)
             : m_nPamFlagsRef(nPamFlagsRef), m_nOldPamFlags(nPamFlagsRef)
         {
         }
+
         ~PamFlagKeeper()
         {
             m_nPamFlagsRef = m_nOldPamFlags;
         }
     };
+
     PamFlagKeeper oKeeper(nPamFlags);
 
     const auto SetStringIfNotEmpty =
@@ -854,6 +857,7 @@ void JPGDatasetCommon::ReadFLIRMetadata()
     };
 
     size_t nOffsetDirEntry = nOffsetRecordDirectory;
+
     enum FLIRRecordType
     {
         FLIR_REC_FREE = 0,
@@ -862,6 +866,7 @@ void JPGDatasetCommon::ReadFLIRMetadata()
         FLIR_REC_PALETTE_INFO = 34,
         FLIR_REC_GPS_INFO = 43,
     };
+
     // Iterate over records
     for (std::uint32_t iRec = 0; iRec < nEntryCountRecordDirectory; iRec++)
     {
@@ -2744,10 +2749,12 @@ GDALDataset *JPGDatasetCommon::OpenFLIRRawThermalImage()
                 nRasterXSize = nXSizeIn;
                 nRasterYSize = nYSizeIn;
             }
+
             CPLErr Close() override
             {
                 return GDALPamDataset::Close();
             }
+
             ~JPEGRawDataset() = default;
 
             void SetBand(int nBand, std::unique_ptr<GDALRasterBand> &&poBand)

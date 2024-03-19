@@ -1264,6 +1264,7 @@ static swq_expr_node *GetConstantSubNode(swq_expr_node *poNode)
     }
     return nullptr;
 }
+
 /***********************************************************************/
 /*                     BuildIteratorFromExprNode()                     */
 /***********************************************************************/

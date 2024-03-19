@@ -187,6 +187,7 @@ typedef struct NumericVar
 #define NUMERIC_NAN 0xC000
 
 #define DEC_DIGITS 4
+
 /*
  * get_str_from_var() -
  *
@@ -1409,6 +1410,7 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
 static const char *const apszKnownGeomFuncPrefixes[] = {
     "ST_AsBinary", "ST_AsEWKT", "ST_AsEWKB", "EWKBBase64", "ST_AsText",
     "AsBinary",    "asEWKT",    "asEWKB",    "asText"};
+
 static int OGRPGIsKnownGeomFuncPrefix(const char *pszFieldName)
 {
     for (size_t i = 0; i < sizeof(apszKnownGeomFuncPrefixes) / sizeof(char *);

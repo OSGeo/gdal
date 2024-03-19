@@ -123,6 +123,7 @@ void OGRGeomFieldDefn::Initialize(const char *pszNameIn,
     pszName = CPLStrdup(pszNameIn);
     eGeomType = eTypeIn;
 }
+
 //! @endcond
 
 /************************************************************************/

@@ -1204,6 +1204,7 @@ class vector_safe_bool
   public:
     // cppcheck-suppress uninitMemberVar
     vector_safe_bool() = default;
+
     // cppcheck-suppress noExplicitConstructor
     vector_safe_bool(bool b) : value{b}
     {
@@ -1213,6 +1214,7 @@ class vector_safe_bool
     {
         return &value;
     }
+
     const bool *operator&() const noexcept
     {
         return &value;
@@ -1222,6 +1224,7 @@ class vector_safe_bool
     {
         return value;
     }
+
     operator bool &() noexcept
     {
         return value;

@@ -62,6 +62,7 @@ template <class Accessors> struct GDALGeoLoc
                          double *padfX, double *padfY, double * /* padfZ */,
                          int *panSuccess);
 };
+
 /*! @endcond */
 
 bool GDALGeoLocExtractSquare(const GDALGeoLocTransformInfo *psTransform, int nX,

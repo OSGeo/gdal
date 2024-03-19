@@ -55,6 +55,7 @@
 #include "ogrgeojsonutils.h"
 #include "ogrgeojsonwriter.h"
 #include "ogrsf_frmts.h"
+
 // #include "symbol_renames.h"
 
 /************************************************************************/

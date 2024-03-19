@@ -63,6 +63,7 @@ class GSBGDataset final : public GDALPamDataset
     GSBGDataset() : fp(nullptr)
     {
     }
+
     ~GSBGDataset();
 
     static int Identify(GDALOpenInfo *);

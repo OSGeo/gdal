@@ -226,17 +226,20 @@ double OGR_G_GetX(OGRGeometryH hGeom, int i)
 
 {
     VALIDATE_POINTER1(hGeom, "OGR_G_GetX", 0);
+
     struct Getter
     {
         static double get(const OGRPoint *poPoint)
         {
             return poPoint->getX();
         }
+
         static double get(const OGRSimpleCurve *poSC, int l_i)
         {
             return poSC->getX(l_i);
         }
     };
+
     return OGR_G_Get_Component<Getter>(hGeom, i);
 }
 
@@ -256,17 +259,20 @@ double OGR_G_GetY(OGRGeometryH hGeom, int i)
 
 {
     VALIDATE_POINTER1(hGeom, "OGR_G_GetY", 0);
+
     struct Getter
     {
         static double get(const OGRPoint *poPoint)
         {
             return poPoint->getY();
         }
+
         static double get(const OGRSimpleCurve *poSC, int l_i)
         {
             return poSC->getY(l_i);
         }
     };
+
     return OGR_G_Get_Component<Getter>(hGeom, i);
 }
 
@@ -286,17 +292,20 @@ double OGR_G_GetZ(OGRGeometryH hGeom, int i)
 
 {
     VALIDATE_POINTER1(hGeom, "OGR_G_GetZ", 0);
+
     struct Getter
     {
         static double get(const OGRPoint *poPoint)
         {
             return poPoint->getZ();
         }
+
         static double get(const OGRSimpleCurve *poSC, int l_i)
         {
             return poSC->getZ(l_i);
         }
     };
+
     return OGR_G_Get_Component<Getter>(hGeom, i);
 }
 
@@ -315,17 +324,20 @@ double OGR_G_GetM(OGRGeometryH hGeom, int i)
 
 {
     VALIDATE_POINTER1(hGeom, "OGR_G_GetM", 0);
+
     struct Getter
     {
         static double get(const OGRPoint *poPoint)
         {
             return poPoint->getM();
         }
+
         static double get(const OGRSimpleCurve *poSC, int l_i)
         {
             return poSC->getM(l_i);
         }
     };
+
     return OGR_G_Get_Component<Getter>(hGeom, i);
 }
 

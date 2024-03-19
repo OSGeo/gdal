@@ -186,10 +186,12 @@ class OGRGeoJSONReader : public OGRGeoJSONBaseReader
     {
         return fp_;
     }
+
     bool CanEasilyAppend() const
     {
         return bCanEasilyAppend_;
     }
+
     bool FCHasBBOX() const
     {
         return bFCHasBBOX_;

@@ -75,14 +75,17 @@ class GFSTemplateList
     GFSTemplateList();
     ~GFSTemplateList();
     void Update(const char *pszName, int bHasGeom);
+
     GFSTemplateItem *GetFirst()
     {
         return pFirst;
     }
+
     bool HaveSequentialLayers()
     {
         return m_bSequentialLayers;
     }
+
     int GetClassCount();
 };
 
@@ -445,6 +448,7 @@ class GMLReader final : public IGMLReader
     {
         return m_bClassListLocked;
     }
+
     void SetClassListLocked(bool bFlag) override
     {
         m_bClassListLocked = bFlag;
@@ -458,6 +462,7 @@ class GMLReader final : public IGMLReader
     {
         return m_nClassCount;
     }
+
     GMLFeatureClass *GetClass(int i) const override;
     GMLFeatureClass *GetClass(const char *pszName) const override;
 
@@ -488,6 +493,7 @@ class GMLReader final : public IGMLReader
     {
         return m_poState;
     }
+
     void PopState();
     void PushState(GMLReadState *);
 
@@ -525,6 +531,7 @@ class GMLReader final : public IGMLReader
     }
 
     void SetGlobalSRSName(const char *pszGlobalSRSName) override;
+
     const char *GetGlobalSRSName() override
     {
         return m_pszGlobalSRSName;
@@ -536,10 +543,12 @@ class GMLReader final : public IGMLReader
     }
 
     bool SetFilteredClassName(const char *pszClassName) override;
+
     const char *GetFilteredClassName() override
     {
         return m_pszFilteredClassName;
     }
+
     int GetFilteredClassIndex()
     {
         return m_nFilteredClassIndex;
@@ -554,6 +563,7 @@ class GMLReader final : public IGMLReader
     {
         m_bReportAllAttributes = bFlag;
     }
+
     bool ReportAllAttributes() const
     {
         return m_bReportAllAttributes;
@@ -563,6 +573,7 @@ class GMLReader final : public IGMLReader
     {
         m_bIsWFSJointLayer = bFlag;
     }
+
     bool IsWFSJointLayer() const
     {
         return m_bIsWFSJointLayer;
@@ -572,6 +583,7 @@ class GMLReader final : public IGMLReader
     {
         m_bEmptyAsNull = bFlag;
     }
+
     bool IsEmptyAsNull() const
     {
         return m_bEmptyAsNull;
@@ -581,6 +593,7 @@ class GMLReader final : public IGMLReader
     {
         m_bUseBBOX = bFlag;
     }
+
     bool UseBBOX() const
     {
         return m_bUseBBOX;

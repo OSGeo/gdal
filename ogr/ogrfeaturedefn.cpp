@@ -397,6 +397,7 @@ void OGRFeatureDefn::ReserveSpaceForFields(int nFieldCountIn)
 {
     apoFieldDefn.reserve(nFieldCountIn);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -704,6 +705,7 @@ const OGRGeomFieldDefn *OGRFeatureDefn::GetGeomFieldDefn(int iGeomField) const
 
     return apoGeomFieldDefn[iGeomField].get();
 }
+
 /************************************************************************/
 /*                      OGR_FD_GetGeomFieldDefn()                       */
 /************************************************************************/

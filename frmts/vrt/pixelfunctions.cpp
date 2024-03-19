@@ -1605,6 +1605,7 @@ static CPLErr MinPixelFunc(void **papoSources, int nSources, void *pData,
             return !(x >= resVal);
         }
     };
+
     return MinOrMaxPixelFunc<Comparator>(papoSources, nSources, pData, nXSize,
                                          nYSize, eSrcType, eBufType,
                                          nPixelSpace, nLineSpace, papszArgs);
@@ -1623,6 +1624,7 @@ static CPLErr MaxPixelFunc(void **papoSources, int nSources, void *pData,
             return !(x <= resVal);
         }
     };
+
     return MinOrMaxPixelFunc<Comparator>(papoSources, nSources, pData, nXSize,
                                          nYSize, eSrcType, eBufType,
                                          nPixelSpace, nLineSpace, papszArgs);

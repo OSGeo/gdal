@@ -233,11 +233,13 @@ static std::string AzureCSGetParameter(const std::string &osStr,
 /************************************************************************/
 
 std::mutex gMutex;
+
 struct CPLAzureCachedToken
 {
     std::string osAccessToken{};
     GIntBig nExpiresOn = 0;
 };
+
 static std::map<std::string, CPLAzureCachedToken> goMapIMDSURLToCachedToken;
 
 /************************************************************************/

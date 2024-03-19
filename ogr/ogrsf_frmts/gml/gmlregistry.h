@@ -72,6 +72,7 @@ class GMLRegistry
         : osRegistryPath(osRegistryPathIn)
     {
     }
+
     bool Parse();
 };
 

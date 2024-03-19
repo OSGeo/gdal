@@ -2474,6 +2474,7 @@ void JP2LuraDataset::WriteGDALMetadataBox(VSILFILE *fp, GDALDataset *poSrcDS,
         WriteBox(fp, poBox);
     delete poBox;
 }
+
 /************************************************************************/
 /*                           WriteXMPBox()                              */
 /************************************************************************/
@@ -2486,6 +2487,7 @@ void JP2LuraDataset::WriteXMPBox(VSILFILE *fp, GDALDataset *poSrcDS,
         WriteBox(fp, poBox);
     delete poBox;
 }
+
 /************************************************************************/
 /*                         WriteXMLBoxes()                              */
 /************************************************************************/
@@ -2502,6 +2504,7 @@ void JP2LuraDataset::WriteXMLBoxes(VSILFILE *fp, GDALDataset *poSrcDS,
     }
     CPLFree(papoBoxes);
 }
+
 /************************************************************************/
 /*                       GDALRegister_JP2Lura()                         */
 /************************************************************************/

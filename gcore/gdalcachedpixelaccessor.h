@@ -320,22 +320,27 @@ template <> struct GDALCachedPixelAccessorGetDataType<GByte>
 {
     static constexpr GDALDataType DataType = GDT_Byte;
 };
+
 template <> struct GDALCachedPixelAccessorGetDataType<GInt8>
 {
     static constexpr GDALDataType DataType = GDT_Int8;
 };
+
 template <> struct GDALCachedPixelAccessorGetDataType<GUInt16>
 {
     static constexpr GDALDataType DataType = GDT_UInt16;
 };
+
 template <> struct GDALCachedPixelAccessorGetDataType<GInt16>
 {
     static constexpr GDALDataType DataType = GDT_Int16;
 };
+
 template <> struct GDALCachedPixelAccessorGetDataType<GUInt32>
 {
     static constexpr GDALDataType DataType = GDT_UInt32;
 };
+
 template <> struct GDALCachedPixelAccessorGetDataType<GInt32>
 {
     static constexpr GDALDataType DataType = GDT_Int32;
@@ -346,6 +351,7 @@ template <> struct GDALCachedPixelAccessorGetDataType<unsigned long>
 {
     static constexpr GDALDataType DataType = GDT_UInt64;
 };
+
 template <> struct GDALCachedPixelAccessorGetDataType<long>
 {
     static constexpr GDALDataType DataType = GDT_Int64;
@@ -355,18 +361,22 @@ template <> struct GDALCachedPixelAccessorGetDataType<GUInt64>
 {
     static constexpr GDALDataType DataType = GDT_UInt64;
 };
+
 template <> struct GDALCachedPixelAccessorGetDataType<GInt64>
 {
     static constexpr GDALDataType DataType = GDT_Int64;
 };
+
 template <> struct GDALCachedPixelAccessorGetDataType<float>
 {
     static constexpr GDALDataType DataType = GDT_Float32;
 };
+
 template <> struct GDALCachedPixelAccessorGetDataType<double>
 {
     static constexpr GDALDataType DataType = GDT_Float64;
 };
+
 /*! @endcond */
 
 /************************************************************************/

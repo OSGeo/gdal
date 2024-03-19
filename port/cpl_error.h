@@ -243,6 +243,7 @@ CPL_C_END
 extern "C++"
 {
     template <class T> T *CPLAssertNotNull(T *x) CPL_RETURNS_NONNULL;
+
     template <class T> T *CPLAssertNotNull(T *x)
     {
         CPLAssert(x);

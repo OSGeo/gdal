@@ -50,6 +50,7 @@
 /************************************************************************/
 
 class PLLinkedDataset;
+
 class PLLinkedDataset
 {
   public:

@@ -140,6 +140,7 @@ class MBTilesDataset final : public GDALPamDataset,
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     virtual OGRLayer *GetLayer(int) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
@@ -203,29 +204,36 @@ class MBTilesDataset final : public GDALPamDataset,
     // Coming from GDALGPKGMBTilesLikePseudoDataset
 
     virtual CPLErr IFlushCacheWithErrCode(bool bAtClosing) override;
+
     virtual int IGetRasterCount() override
     {
         return nBands;
     }
+
     virtual GDALRasterBand *IGetRasterBand(int nBand) override
     {
         return GetRasterBand(nBand);
     }
+
     virtual sqlite3 *IGetDB() override
     {
         return hDB;
     }
+
     virtual bool IGetUpdate() override
     {
         return eAccess == GA_Update;
     }
+
     virtual bool ICanIWriteBlock() override;
     virtual OGRErr IStartTransaction() override;
     virtual OGRErr ICommitTransaction() override;
+
     virtual const char *IGetFilename() override
     {
         return GetDescription();
     }
+
     virtual int GetRowFromIntoTopConvention(int nRow) override;
 };
 
@@ -271,14 +279,17 @@ class MBTilesVectorLayer final : public OGRLayer
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
+
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
     }
+
     virtual GIntBig GetFeatureCount(int bForce) override;
     virtual int TestCapability(const char *) override;
 
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
@@ -286,10 +297,12 @@ class MBTilesVectorLayer final : public OGRLayer
     }
 
     virtual void SetSpatialFilter(OGRGeometry *) override;
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
     }
+
     virtual OGRFeature *GetFeature(GIntBig nFID) override;
 };
 

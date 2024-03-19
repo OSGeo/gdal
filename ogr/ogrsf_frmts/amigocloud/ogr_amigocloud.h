@@ -168,14 +168,17 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
     {
         return osName.c_str();
     }
+
     const char *GetTableName()
     {
         return osTableName.c_str();
     }
+
     const char *GetDatasetId()
     {
         return osDatasetId.c_str();
     }
+
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) override;
     virtual json_object *FetchNewFeatures(GIntBig iNext) override;
 
@@ -197,6 +200,7 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
     {
         SetSpatialFilter(0, poGeom);
     }
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
     virtual OGRErr SetAttributeFilter(const char *) override;
 
@@ -204,6 +208,7 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
     {
         return GetExtent(0, psExtent, bForce);
     }
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override;
 
@@ -213,10 +218,12 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
     static CPLString GetAmigoCloudType(const OGRFieldDefn &oField);
 
     OGRErr RunDeferredCreationIfNecessary();
+
     int GetDeferredCreation() const
     {
         return bDeferredCreation;
     }
+
     void CancelDeferredCreation()
     {
         bDeferredCreation = FALSE;
@@ -285,6 +292,7 @@ class OGRAmigoCloudDataSource final : public OGRDataSource
     {
         return nLayers;
     }
+
     virtual OGRLayer *GetLayer(int) override;
     virtual OGRLayer *GetLayerByName(const char *) override;
 
@@ -301,14 +309,17 @@ class OGRAmigoCloudDataSource final : public OGRDataSource
     virtual void ReleaseResultSet(OGRLayer *poLayer) override;
 
     const char *GetAPIURL() const;
+
     bool IsReadWrite() const
     {
         return bReadWrite;
     }
+
     const char *GetProjectId()
     {
         return pszProjectId;
     }
+
     char **AddHTTPOptions();
     json_object *
     RunPOST(const char *pszURL, const char *pszPostData,
@@ -316,10 +327,12 @@ class OGRAmigoCloudDataSource final : public OGRDataSource
     json_object *RunGET(const char *pszURL);
     bool RunDELETE(const char *pszURL);
     json_object *RunSQL(const char *pszUnescapedSQL);
+
     const CPLString &GetCurrentSchema()
     {
         return osCurrentSchema;
     }
+
     static int FetchSRSId(OGRSpatialReference *poSRS);
 
     static std::string GetUserAgentOption();
@@ -328,10 +341,12 @@ class OGRAmigoCloudDataSource final : public OGRDataSource
     {
         return !osAPIKey.empty();
     }
+
     int HasOGRMetadataFunction()
     {
         return bHasOGRMetadataFunction;
     }
+
     void SetOGRMetadataFunction(int bFlag)
     {
         bHasOGRMetadataFunction = bFlag;

@@ -447,6 +447,7 @@ CPLErr GDALDriver::DefaultCreateCopyMultiDimensional(
                ? CE_None
                : CE_Failure;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1776,6 +1777,7 @@ CPLErr GDALDriver::DefaultRename(const char *pszNewName, const char *pszOldName)
 
     return eErr;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1906,6 +1908,7 @@ CPLErr GDALDriver::DefaultCopyFiles(const char *pszNewName,
 
     return eErr;
 }
+
 //! @endcond
 
 /************************************************************************/

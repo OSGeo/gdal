@@ -166,6 +166,7 @@ enum SXFTextEncoding /* Flag of text encoding (Note 6) */
     SXF_ENC_DOS = 0,
     SXF_ENC_WIN = 1,
     SXF_ENC_KOI_8 = 2
+
 #define SXF_ENC_LAST SXF_ENC_KOI_8
 };
 
@@ -176,6 +177,7 @@ enum SXFCoordinatesAccuracy /* Flag of coordinate storing accuracy (Note 7) */
     SXF_COORD_ACC_CM = 2,    // cantimeters
     SXF_COORD_ACC_MM = 3,    // millimeters
     SXF_COORD_ACC_DM = 4     // decimeters
+
 #define SXF_COORD_ACC_LAST SXF_COORD_ACC_DM
 };
 

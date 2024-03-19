@@ -124,6 +124,7 @@ OGRFeature *OGRMySQLLayer::GetNextFeature()
         delete poFeature;
     }
 }
+
 /************************************************************************/
 /*                          RecordToFeature()                           */
 /*                                                                      */

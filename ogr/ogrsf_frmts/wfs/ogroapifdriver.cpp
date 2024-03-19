@@ -127,6 +127,7 @@ class OGROAPIFDataset final : public GDALDataset
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     OGRLayer *GetLayer(int idx) override;
 
     bool Open(GDALOpenInfo *);
@@ -207,6 +208,7 @@ class OGROAPIFLayer final : public OGRLayer
     {
         return GetDescription();
     }
+
     OGRFeatureDefn *GetLayerDefn() override;
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
@@ -214,16 +216,19 @@ class OGROAPIFLayer final : public OGRLayer
     int TestCapability(const char *) override;
     GIntBig GetFeatureCount(int bForce = FALSE) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
     {
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
     }
 
     void SetSpatialFilter(OGRGeometry *poGeom) override;
+
     void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
     }
+
     OGRErr SetAttributeFilter(const char *pszQuery) override;
 
     const OGRLayer::GetSupportedSRSListRetType &

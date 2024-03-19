@@ -113,10 +113,12 @@ class GMLASWriter
     {
         ++m_nIndentLevel;
     }
+
     void DecIndent()
     {
         --m_nIndentLevel;
     }
+
     void PrintIndent(VSILFILE *fp);
 
     void PrintLine(VSILFILE *fp, const char *fmt, ...)

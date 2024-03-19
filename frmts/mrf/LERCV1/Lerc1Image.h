@@ -46,10 +46,12 @@ class BitMaskV1
     BitMaskV1() : m_nRows(0), m_nCols(0)
     {
     }
+
     int size() const
     {
         return 1 + (m_nCols * m_nRows - 1) / 8;
     }
+
     void Set(int k, bool v)
     {
         if (v)
@@ -57,16 +59,19 @@ class BitMaskV1
         else
             SetInvalid(k);
     }
+
     Byte IsValid(int k) const
     {
         return (bits[k >> 3] & Bit(k)) != 0;
     }
+
     void resize(int nCols, int nRows)
     {
         m_nRows = nRows;
         m_nCols = nCols;
         bits.resize(size());
     }
+
     // max RLE compressed size is n + 4 + 2 * (n - 1) / 32767
     // Returns encoded size
     int RLEcompress(Byte *aRLE) const;
@@ -79,14 +84,17 @@ class BitMaskV1
   private:
     int m_nRows, m_nCols;
     std::vector<Byte> bits;
+
     static Byte Bit(int k)
     {
         return static_cast<Byte>(0x80 >> (k & 7));
     }
+
     void SetValid(int k)
     {
         bits[k >> 3] |= Bit(k);
     }
+
     void SetInvalid(int k)
     {
         bits[k >> 3] &= ~Bit(k);
@@ -99,6 +107,7 @@ template <typename T> class TImage
     TImage() : width_(0), height_(0)
     {
     }
+
     ~TImage()
     {
     }
@@ -115,10 +124,12 @@ template <typename T> class TImage
     {
         return width_;
     }
+
     int getHeight() const
     {
         return height_;
     }
+
     int getSize() const
     {
         return width_ * height_;
@@ -128,10 +139,12 @@ template <typename T> class TImage
     {
         return values[row * width_ + col];
     }
+
     T &operator()(int row, int col)
     {
         return values[row * width_ + col];
     }
+
     const T *data() const
     {
         return values.data();
@@ -156,6 +169,7 @@ class Lerc1Image : public TImage<float>
         int numTilesHoriZ;
         int numBytesZ;
         float maxZInImg;
+
         InfoFromComputeNumBytes()
         {
             std::memset(this, 0, sizeof(*this));
@@ -204,6 +218,7 @@ class Lerc1Image : public TImage<float>
     Lerc1Image()
     {
     }
+
     ~Lerc1Image()
     {
     }

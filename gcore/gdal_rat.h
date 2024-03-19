@@ -333,6 +333,7 @@ class GDALRasterAttributeField
     std::vector<double> adfValues{};
     std::vector<CPLString> aosValues{};
 };
+
 //! @endcond
 
 /************************************************************************/

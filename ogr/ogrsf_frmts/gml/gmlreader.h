@@ -105,37 +105,46 @@ class CPL_DLL GMLPropertyDefn
     {
         return m_eType;
     }
+
     void SetType(GMLPropertyType eType)
     {
         m_eType = eType;
     }
+
     void SetWidth(int nWidth)
     {
         m_nWidth = nWidth;
     }
+
     int GetWidth() const
     {
         return m_nWidth;
     }
+
     void SetPrecision(int nPrecision)
     {
         m_nPrecision = nPrecision;
     }
+
     int GetPrecision() const
     {
         return m_nPrecision;
     }
+
     void SetSrcElement(const char *pszSrcElement);
+
     const char *GetSrcElement() const
     {
         return m_pszSrcElement;
     }
+
     size_t GetSrcElementLen() const
     {
         return m_nSrcElementLen;
     }
 
     void SetCondition(const char *pszCondition);
+
     const char *GetCondition() const
     {
         return m_pszCondition;
@@ -145,6 +154,7 @@ class CPL_DLL GMLPropertyDefn
     {
         m_bNullable = bNullable;
     }
+
     bool IsNullable() const
     {
         return m_bNullable;
@@ -154,6 +164,7 @@ class CPL_DLL GMLPropertyDefn
     {
         m_bUnique = bUnique;
     }
+
     bool IsUnique() const
     {
         return m_bUnique;
@@ -163,6 +174,7 @@ class CPL_DLL GMLPropertyDefn
     {
         m_osDocumentation = osDocumentation;
     }
+
     const std::string &GetDocumentation() const
     {
         return m_osDocumentation;
@@ -210,10 +222,12 @@ class CPL_DLL GMLGeometryPropertyDefn
     {
         return m_nGeometryType;
     }
+
     void SetType(OGRwkbGeometryType nType)
     {
         m_nGeometryType = nType;
     }
+
     const char *GetSrcElement() const
     {
         return m_pszSrcElement;
@@ -239,7 +253,9 @@ class CPL_DLL GMLGeometryPropertyDefn
         m_bSRSNameConsistent = true;
         m_osSRSName = srsName;
     }
+
     void MergeSRSName(const std::string &osSRSName);
+
     const std::string &GetSRSName() const
     {
         return m_osSRSName;
@@ -293,17 +309,22 @@ class CPL_DLL GMLFeatureClass
     {
         return m_pszName;
     }
+
     void SetName(const char *pszNewName);
+
     int GetPropertyCount() const
     {
         return m_nPropertyCount;
     }
+
     GMLPropertyDefn *GetProperty(int iIndex) const;
     int GetPropertyIndex(const char *pszName) const;
+
     GMLPropertyDefn *GetProperty(const char *pszName) const
     {
         return GetProperty(GetPropertyIndex(pszName));
     }
+
     int GetPropertyIndexBySrcElement(const char *pszElement, int nLen) const;
     void StealProperties();
 
@@ -311,6 +332,7 @@ class CPL_DLL GMLFeatureClass
     {
         return m_nGeometryPropertyCount;
     }
+
     GMLGeometryPropertyDefn *GetGeometryProperty(int iIndex) const;
     int GetGeometryPropertyIndexBySrcElement(const char *pszElement) const;
     void StealGeometryProperties();
@@ -325,14 +347,17 @@ class CPL_DLL GMLFeatureClass
     {
         m_bIsConsistentSingleGeomElemPath = b;
     }
+
     bool IsConsistentSingleGeomElemPath() const
     {
         return m_bIsConsistentSingleGeomElemPath;
     }
+
     void SetSingleGeomElemPath(const std::string &s)
     {
         m_osSingleGeomElemPath = s;
     }
+
     const std::string &GetSingleGeomElemPath() const
     {
         return m_osSingleGeomElemPath;
@@ -342,6 +367,7 @@ class CPL_DLL GMLFeatureClass
     {
         return m_bSchemaLocked;
     }
+
     void SetSchemaLocked(bool bLock)
     {
         m_bSchemaLocked = bLock;
@@ -357,12 +383,14 @@ class CPL_DLL GMLFeatureClass
     {
         return m_bHaveExtents;
     }
+
     void SetExtents(double dfXMin, double dfXMax, double dFYMin, double dfYMax);
     bool GetExtents(double *pdfXMin, double *pdfXMax, double *pdFYMin,
                     double *pdfYMax);
 
     void SetSRSName(const char *pszSRSName);
     void MergeSRSName(const char *pszSRSName);
+
     const char *GetSRSName()
     {
         return m_pszSRSName;
@@ -403,17 +431,21 @@ class CPL_DLL GMLFeature
     void SetGeometryDirectly(CPLXMLNode *psGeom);
     void SetGeometryDirectly(int nIdx, CPLXMLNode *psGeom);
     void AddGeometry(CPLXMLNode *psGeom);
+
     int GetGeometryCount() const
     {
         return m_nGeometryCount;
     }
+
     const CPLXMLNode *const *GetGeometryList() const
     {
         return m_papsGeometry;
     }
+
     const CPLXMLNode *GetGeometryRef(int nIdx) const;
 
     void SetBoundedByGeometry(CPLXMLNode *psGeom);
+
     const CPLXMLNode *GetBoundedByGeometry() const
     {
         return m_psBoundedByGeometry;
@@ -430,6 +462,7 @@ class CPL_DLL GMLFeature
     {
         return m_pszFID;
     }
+
     void SetFID(const char *pszFID);
 
     void Dump(FILE *fp);
@@ -447,9 +480,11 @@ class CPL_DLL IGMLReader
     virtual void SetClassListLocked(bool bFlag) = 0;
 
     virtual void SetSourceFile(const char *pszFilename) = 0;
+
     virtual void SetFP(CPL_UNUSED VSILFILE *fp)
     {
     }
+
     virtual const char *GetSourceFileName() = 0;
 
     virtual int GetClassCount() const = 0;
@@ -481,6 +516,7 @@ class CPL_DLL IGMLReader
     virtual void SetGlobalSRSName(CPL_UNUSED const char *pszGlobalSRSName)
     {
     }
+
     virtual const char *GetGlobalSRSName() = 0;
     virtual bool CanUseGlobalSRSName() = 0;
 

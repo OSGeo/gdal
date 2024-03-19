@@ -49,6 +49,7 @@ void OGRDataSource::DestroyDataSource(OGRDataSource *poDS)
 {
     delete poDS;
 }
+
 //! @endcond
 
 /************************************************************************/

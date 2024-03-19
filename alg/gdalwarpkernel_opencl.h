@@ -89,6 +89,7 @@ extern "C"
 
         cl_channel_type imageFormat;
         cl_mem *realWorkCL;
+
         union
         {
             void **v;
@@ -100,6 +101,7 @@ extern "C"
         } realWork;
 
         cl_mem *imagWorkCL;
+
         union
         {
             void **v;
@@ -111,6 +113,7 @@ extern "C"
         } imagWork;
 
         cl_mem *dstRealWorkCL;
+
         union
         {
             void **v;
@@ -122,6 +125,7 @@ extern "C"
         } dstRealWork;
 
         cl_mem *dstImagWorkCL;
+
         union
         {
             void **v;

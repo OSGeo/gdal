@@ -551,12 +551,14 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     explicit VSIAzureFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
     {
     }
+
     ~VSIAzureFSHandler() override = default;
 
     std::string GetFSPrefix() const override
     {
         return m_osPrefix;
     }
+
     const char *GetDebugKey() const override
     {
         return "AZURE";

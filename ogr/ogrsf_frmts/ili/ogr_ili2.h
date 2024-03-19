@@ -115,10 +115,12 @@ class OGRILI2DataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     int GetLayerCount() override
     {
         return static_cast<int>(listLayer.size());
     }
+
     OGRLayer *GetLayer(int) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
@@ -129,6 +131,7 @@ class OGRILI2DataSource final : public OGRDataSource
     {
         return fpOutput;
     }
+
     int TestCapability(const char *) override;
 };
 

@@ -46,6 +46,7 @@ class vsil_target : public kdu_compressed_target
     {
         file = nullptr;
     }
+
     ~vsil_target()
     {
         vsil_target::close();

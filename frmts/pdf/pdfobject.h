@@ -77,8 +77,10 @@ class GDALPDFObjectNum
     explicit GDALPDFObjectNum(int nId = 0) : m_nId(nId)
     {
     }
+
     GDALPDFObjectNum(const GDALPDFObjectNum &other) = default;
     GDALPDFObjectNum &operator=(const GDALPDFObjectNum &) = default;
+
     GDALPDFObjectNum &operator=(int nId)
     {
         m_nId = nId;
@@ -89,14 +91,17 @@ class GDALPDFObjectNum
     {
         return m_nId;
     }
+
     bool toBool() const
     {
         return m_nId > 0;
     }
+
     bool operator==(const GDALPDFObjectNum &other) const
     {
         return m_nId == other.m_nId;
     }
+
     bool operator<(const GDALPDFObjectNum &other) const
     {
         return m_nId < other.m_nId;
@@ -116,10 +121,12 @@ class GDALPDFObject
     virtual int GetBool() = 0;
     virtual int GetInt() = 0;
     virtual double GetReal() = 0;
+
     virtual int CanRepresentRealAsString()
     {
         return FALSE;
     }
+
     virtual const std::string &GetString() = 0;
     virtual const std::string &GetName() = 0;
     virtual GDALPDFDictionary *GetDictionary() = 0;
@@ -127,6 +134,7 @@ class GDALPDFObject
     virtual GDALPDFStream *GetStream() = 0;
     virtual GDALPDFObjectNum GetRefNum() = 0;
     virtual int GetRefGen() = 0;
+
     virtual int GetPrecision() const
     {
         return 16;
@@ -135,12 +143,14 @@ class GDALPDFObject
     GDALPDFObject *LookupObject(const char *pszPath);
 
     void Serialize(CPLString &osStr, bool bEmitRef = true);
+
     CPLString Serialize()
     {
         CPLString osStr;
         Serialize(osStr);
         return osStr;
     }
+
     GDALPDFObjectRW *Clone();
 };
 
@@ -155,12 +165,14 @@ class GDALPDFDictionary
     GDALPDFObject *LookupObject(const char *pszPath);
 
     void Serialize(CPLString &osStr);
+
     CPLString Serialize()
     {
         CPLString osStr;
         Serialize(osStr);
         return osStr;
     }
+
     GDALPDFDictionaryRW *Clone();
 };
 
@@ -173,12 +185,14 @@ class GDALPDFArray
     virtual GDALPDFObject *Get(int nIndex) = 0;
 
     void Serialize(CPLString &osStr);
+
     CPLString Serialize()
     {
         CPLString osStr;
         Serialize(osStr);
         return osStr;
     }
+
     GDALPDFArrayRW *Clone();
 };
 
@@ -236,10 +250,12 @@ class GDALPDFObjectRW : public GDALPDFObject
     virtual int GetBool() override;
     virtual int GetInt() override;
     virtual double GetReal() override;
+
     virtual int CanRepresentRealAsString() override
     {
         return m_bCanRepresentRealAsString;
     }
+
     virtual const CPLString &GetString() override;
     virtual const CPLString &GetName() override;
     virtual GDALPDFDictionary *GetDictionary() override;
@@ -247,6 +263,7 @@ class GDALPDFObjectRW : public GDALPDFObject
     virtual GDALPDFStream *GetStream() override;
     virtual GDALPDFObjectNum GetRefNum() override;
     virtual int GetRefGen() override;
+
     virtual int GetPrecision() const override
     {
         return m_nPrecision;
@@ -272,24 +289,29 @@ class GDALPDFDictionaryRW : public GDALPDFDictionary
     {
         return Add(pszKey, GDALPDFObjectRW::CreateArray(poArray));
     }
+
     GDALPDFDictionaryRW &Add(const char *pszKey, GDALPDFDictionaryRW *poDict)
     {
         return Add(pszKey, GDALPDFObjectRW::CreateDictionary(poDict));
     }
+
     GDALPDFDictionaryRW &Add(const char *pszKey, const char *pszVal)
     {
         return Add(pszKey, GDALPDFObjectRW::CreateString(pszVal));
     }
+
     GDALPDFDictionaryRW &Add(const char *pszKey, int nVal)
     {
         return Add(pszKey, GDALPDFObjectRW::CreateInt(nVal));
     }
+
     GDALPDFDictionaryRW &Add(const char *pszKey, double dfVal,
                              int bCanRepresentRealAsString = FALSE)
     {
         return Add(pszKey, GDALPDFObjectRW::CreateReal(
                                dfVal, bCanRepresentRealAsString));
     }
+
     GDALPDFDictionaryRW &Add(const char *pszKey, const GDALPDFObjectNum &nNum,
                              int nGen)
     {
@@ -315,29 +337,36 @@ class GDALPDFArrayRW : public GDALPDFArray
     {
         return Add(GDALPDFObjectRW::CreateArray(poArray));
     }
+
     GDALPDFArrayRW &Add(GDALPDFDictionaryRW *poDict)
     {
         return Add(GDALPDFObjectRW::CreateDictionary(poDict));
     }
+
     GDALPDFArrayRW &Add(const char *pszVal)
     {
         return Add(GDALPDFObjectRW::CreateString(pszVal));
     }
+
     GDALPDFArrayRW &Add(int nVal)
     {
         return Add(GDALPDFObjectRW::CreateInt(nVal));
     }
+
     GDALPDFArrayRW &Add(double dfVal, int bCanRepresentRealAsString = FALSE)
     {
         return Add(
             GDALPDFObjectRW::CreateReal(dfVal, bCanRepresentRealAsString));
     }
+
     GDALPDFArrayRW &AddWithPrecision(double dfVal, int nPrecision)
     {
         return Add(GDALPDFObjectRW::CreateRealWithPrecision(dfVal, nPrecision));
     }
+
     GDALPDFArrayRW &Add(double *padfVal, int nCount,
                         int bCanRepresentRealAsString = FALSE);
+
     GDALPDFArrayRW &Add(const GDALPDFObjectNum &nNum, int nGen)
     {
         return Add(GDALPDFObjectRW::CreateIndirect(nNum, nGen));

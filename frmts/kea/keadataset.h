@@ -140,6 +140,7 @@ class LockedRefCount
         m_hMutex = CPLCreateMutex();
         CPLReleaseMutex(m_hMutex);
     }
+
     ~LockedRefCount()
     {
         CPLDestroyMutex(m_hMutex);

@@ -149,6 +149,7 @@ class SDTS_CATD
     {
         return nEntries;
     }
+
     const char *GetEntryModule(int) const;
     const char *GetEntryTypeDesc(int) const;
     const char *GetEntryFilePath(int) const;
@@ -610,6 +611,7 @@ class SDTSRasterReader
     {
         return nXSize;
     }
+
     /**
       Fetch the raster height.
 
@@ -625,6 +627,7 @@ class SDTSRasterReader
     {
         return nXBlockSize;
     }
+
     /** Fetch the height of a source block (usually one). */
     int GetBlockYSize() const
     {
@@ -656,10 +659,12 @@ class SDTSTransfer
     void Close();
 
     int FindLayer(const char *);
+
     int GetLayerCount() const
     {
         return nLayers;
     }
+
     SDTSLayerType GetLayerType(int) const;
     int GetLayerCATDEntry(int) const;
 

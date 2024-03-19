@@ -2433,6 +2433,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->SetPamFlags(poDS->GetPamFlags() & ~GPF_DIRTY);
     return poDS;
 }
+
 /************************************************************************/
 /*                             CreateCopy()                             */
 /************************************************************************/

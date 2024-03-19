@@ -635,4 +635,5 @@ void GNMGraph::TraceTargets(std::queue<GNMGFID> &vertexQueue,
     if (!neighbours_queue.empty())
         TraceTargets(neighbours_queue, markedVertIds, connectedIds);
 }
+
 //! @endcond

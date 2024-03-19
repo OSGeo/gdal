@@ -2594,6 +2594,7 @@ template <> float MyAbs(float x)
 {
     return fabsf(x);
 }
+
 template <> int MyAbs(int x)
 {
     return x >= 0 ? x : -x;

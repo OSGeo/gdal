@@ -56,6 +56,7 @@ class OGRJMLColumn
     CPLString osAttributeName;
     CPLString osAttributeValue;
     bool bIsBody; /* if false: attribute */
+
     OGRJMLColumn() : bIsBody(false)
     {
     }
@@ -170,6 +171,7 @@ class OGRJMLWriterLayer final : public OGRLayer
     void ResetReading() override
     {
     }
+
     OGRFeature *GetNextFeature() override
     {
         return nullptr;
@@ -205,6 +207,7 @@ class OGRJMLDataset final : public GDALDataset
     {
         return poLayer != nullptr ? 1 : 0;
     }
+
     OGRLayer *GetLayer(int) override;
 
     OGRLayer *ICreateLayer(const char *pszName,

@@ -106,6 +106,7 @@ class OGRSVGLayer final : public OGRLayer
     {
         return osLayerName.c_str();
     }
+
     virtual OGRwkbGeometryType GetGeomType() override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
@@ -165,6 +166,7 @@ class OGRSVGDataSource final : public OGRDataSource
     {
         return nLayers;
     }
+
     virtual OGRLayer *GetLayer(int) override;
 
     virtual int TestCapability(const char *) override;

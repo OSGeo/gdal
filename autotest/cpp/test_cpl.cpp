@@ -65,6 +65,7 @@
 #include "gtest_include.h"
 
 static bool gbGotError = false;
+
 static void CPL_STDCALL myErrorHandler(CPLErr, CPLErrorNum, const char *)
 {
     gbGotError = true;
@@ -1814,6 +1815,7 @@ class CPLJSonStreamingParserDump : public CPLJSonStreamingParser
     {
         return m_osSerialized;
     }
+
     const CPLString &GetException() const
     {
         return m_osException;
@@ -1825,6 +1827,7 @@ void CPLJSonStreamingParserDump::StartObject()
     m_osSerialized += "{";
     m_abFirstMember.push_back(true);
 }
+
 void CPLJSonStreamingParserDump::EndObject()
 {
     m_osSerialized += "}";
@@ -2497,14 +2500,17 @@ TEST_F(test_cpl, cpl_mem_cache)
         struct MyObj
         {
             int m_v;
+
             MyObj(int v) : m_v(v)
             {
             }
+
             MyObj(const MyObj &) = delete;
             MyObj &operator=(const MyObj &) = delete;
             MyObj(MyObj &&) = default;
             MyObj &operator=(MyObj &&) = default;
         };
+
         lru11::Cache<int, MyObj> cacheMyObj(2, 0);
         ASSERT_EQ(cacheMyObj.insert(0, MyObj(0)).m_v, 0);
         cacheMyObj.getPtr(0);
@@ -2520,25 +2526,31 @@ TEST_F(test_cpl, cpl_mem_cache)
         struct MyObj
         {
             int m_v;
+
             MyObj(int v) : m_v(v)
             {
             }
+
             static void should_not_happen()
             {
                 ASSERT_TRUE(false);
             }
+
             MyObj(const MyObj &) : m_v(-1)
             {
                 should_not_happen();
             }
+
             MyObj &operator=(const MyObj &)
             {
                 should_not_happen();
                 return *this;
             }
+
             MyObj(MyObj &&) = default;
             MyObj &operator=(MyObj &&) = default;
         };
+
         lru11::Cache<int, MyObj> cacheMyObj(2, 0);
         ASSERT_EQ(cacheMyObj.insert(0, MyObj(0)).m_v, 0);
         cacheMyObj.getPtr(0);
@@ -3123,9 +3135,11 @@ TEST_F(test_cpl, down_cast)
         {
         }
     };
+
     struct Derived : public Base
     {
     };
+
     Base b;
     Derived d;
     Base *p_b_d = &d;
@@ -3134,6 +3148,7 @@ TEST_F(test_cpl, down_cast)
     struct OtherBase
     {
     };
+
     OtherBase ob;
     ASSERT_EQ(cpl::down_cast<OtherBase *>(p_b_d), &ob);
 #endif
@@ -3169,6 +3184,7 @@ TEST_F(test_cpl, CPLPrintTime_RFC822)
 TEST_F(test_cpl, CPLAutoClose)
 {
     static int counter = 0;
+
     class AutoCloseTest
     {
       public:
@@ -3176,19 +3192,23 @@ TEST_F(test_cpl, CPLAutoClose)
         {
             counter += 222;
         }
+
         virtual ~AutoCloseTest()
         {
             counter -= 22;
         }
+
         static AutoCloseTest *Create()
         {
             return new AutoCloseTest;
         }
+
         static void Destroy(AutoCloseTest *p)
         {
             delete p;
         }
     };
+
     {
         AutoCloseTest *p1 = AutoCloseTest::Create();
         CPL_AUTO_CLOSE_WARP(p1, AutoCloseTest::Destroy);
@@ -3238,6 +3258,7 @@ TEST_F(test_cpl, CPLJSonStreamingWriter)
     }
     {
         std::string res;
+
         struct MyCallback
         {
             static void f(const char *pszText, void *user_data)
@@ -3245,6 +3266,7 @@ TEST_F(test_cpl, CPLJSonStreamingWriter)
                 *static_cast<std::string *>(user_data) += pszText;
             }
         };
+
         CPLJSonStreamingWriter x(&MyCallback::f, &res);
         x.Add(true);
         ASSERT_EQ(x.GetString(), std::string());
@@ -4302,6 +4324,7 @@ TEST_F(test_cpl, VSI_plugin_advise_read)
         const vsi_l_offset *panOffsets = nullptr;
         const size_t *panSizes = nullptr;
     };
+
     UserData userData;
 
     psCallbacks->pUserData = &userData;
@@ -4505,6 +4528,7 @@ TEST_F(test_cpl, CPLWorkerThreadPool_recursion)
         bool you_can_leave = false;
         int threadStarted = 0;
     };
+
     Context ctxt;
     ctxt.oThreadPool.Setup(2, nullptr, nullptr, /* waitAllStarted = */ true);
 
@@ -4517,8 +4541,10 @@ TEST_F(test_cpl, CPLWorkerThreadPool_recursion)
         Data(Context *psCtxtIn, int iJobIn) : psCtxt(psCtxtIn), iJob(iJobIn)
         {
         }
+
         Data(const Data &) = default;
     };
+
     const auto lambda = [](void *pData)
     {
         auto psData = static_cast<Data *>(pData);
@@ -4859,6 +4885,7 @@ TEST_F(test_cpl, CPLSubscribeToSetConfigOption)
         std::string osValue;
         bool bThreadLocal;
     };
+
     std::vector<Event> events;
     const auto cbk = +[](const char *pszKey, const char *pszValue,
                          bool bThreadLocal, void *pUserData)

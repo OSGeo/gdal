@@ -48,6 +48,7 @@ extern int swqdebug;
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
 #define YYTOKENTYPE
+
 enum yytokentype
 {
     YYEMPTY = -2,

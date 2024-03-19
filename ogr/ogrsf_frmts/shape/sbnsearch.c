@@ -38,6 +38,7 @@
                       ((ptr)[1] << 16) | ((ptr)[2] << 8) | (ptr)[3]))
 
 typedef int coord;
+
 /*typedef unsigned char coord;*/
 
 typedef struct

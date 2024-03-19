@@ -2654,6 +2654,7 @@ const char *GDALMBTilesGetTileFormatName(GPKGTileFormat eTF)
              "Unsuppoted value for TILE_FORMAT: %d", static_cast<int>(eTF));
     return nullptr;
 }
+
 /************************************************************************/
 /*                         OpenRaster()                                 */
 /************************************************************************/
@@ -6023,6 +6024,7 @@ static GDALDataset *GetUnderlyingDataset(GDALDataset *poSrcDS)
 
     return poSrcDS;
 }
+
 /************************************************************************/
 /*                            CreateCopy()                              */
 /************************************************************************/

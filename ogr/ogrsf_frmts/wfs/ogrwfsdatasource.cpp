@@ -111,6 +111,7 @@ class OGRWFSWrappedResultLayer final : public OGRLayer
         : poDS(poDSIn), poLayer(poLayerIn)
     {
     }
+
     ~OGRWFSWrappedResultLayer()
     {
         delete poDS;
@@ -120,26 +121,32 @@ class OGRWFSWrappedResultLayer final : public OGRLayer
     {
         poLayer->ResetReading();
     }
+
     virtual OGRFeature *GetNextFeature() override
     {
         return poLayer->GetNextFeature();
     }
+
     virtual OGRErr SetNextByIndex(GIntBig nIndex) override
     {
         return poLayer->SetNextByIndex(nIndex);
     }
+
     virtual OGRFeature *GetFeature(GIntBig nFID) override
     {
         return poLayer->GetFeature(nFID);
     }
+
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return poLayer->GetLayerDefn();
     }
+
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override
     {
         return poLayer->GetFeatureCount(bForce);
     }
+
     virtual int TestCapability(const char *pszCap) override
     {
         return poLayer->TestCapability(pszCap);

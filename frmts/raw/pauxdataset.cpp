@@ -75,14 +75,17 @@ class PAuxDataset final : public RawDataset
     {
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
+
     CPLErr GetGeoTransform(double *) override;
     CPLErr SetGeoTransform(double *) override;
 
     int GetGCPCount() override;
+
     const OGRSpatialReference *GetGCPSpatialRef() const override
     {
         return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS;
     }
+
     const GDAL_GCP *GetGCPs() override;
 
     char **GetFileList() override;

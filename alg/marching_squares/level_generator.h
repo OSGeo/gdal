@@ -44,10 +44,12 @@ template <class Iterator> class Range
     Range(Iterator b, Iterator e) : begin_(b), end_(e)
     {
     }
+
     Iterator begin() const
     {
         return begin_;
     }
+
     Iterator end() const
     {
         return end_;
@@ -65,16 +67,19 @@ template <typename LevelIterator> class RangeIterator
         : parent_(parent), idx_(idx)
     {
     }
+
     // Warning: this is a "pseudo" iterator, since operator* returns a value,
     // not a reference. This means we cannot have operator->
     std::pair<int, double> operator*() const
     {
         return std::make_pair(idx_, parent_.level(idx_));
     }
+
     bool operator!=(const RangeIterator &other) const
     {
         return idx_ != other.idx_;
     }
+
     const RangeIterator &operator++()
     {
         idx_++;
@@ -90,6 +95,7 @@ class FixedLevelRangeIterator
 {
   public:
     typedef RangeIterator<FixedLevelRangeIterator> Iterator;
+
     FixedLevelRangeIterator(const double *levels, size_t count,
                             double maxLevel = Inf)
         : levels_(levels), count_(count), maxLevel_(maxLevel)
@@ -209,6 +215,7 @@ class ExponentialLevelRangeIterator
 {
   public:
     typedef RangeIterator<ExponentialLevelRangeIterator> Iterator;
+
     ExponentialLevelRangeIterator(double base)
         : base_(base), base_ln_(std::log(base_))
     {
@@ -259,6 +266,7 @@ class ExponentialLevelRangeIterator
             throw TooManyLevelsException();
         return static_cast<int>(dfVal);
     }
+
     int index2(double plevel) const
     {
         if (plevel < 1.0)

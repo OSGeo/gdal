@@ -36,6 +36,7 @@ Obviously not thread safe while any bit gets modified
 #endif
 
 NAMESPACE_MRF_START
+
 // integer sqrt at compile time
 // N is the number, M is the number of refining iterations
 template <int N, int M = 4> struct Sqrt
@@ -102,6 +103,7 @@ template <typename T = unsigned long long> class BitMap2D
     {
         return _w;
     }
+
     int getHeight() const
     {
         return _h;

@@ -1872,6 +1872,7 @@ OGRErr OGRSimpleCurve::importFromWKTListOnly(const char **ppszInput, int bHasZ,
 
     return OGRERR_NONE;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2883,6 +2884,7 @@ OGRLineString *OGRLineString::TransferMembersAndDestroy(OGRLineString *poSrc,
     delete poSrc;
     return poDst;
 }
+
 //! @endcond
 /************************************************************************/
 /*                         CastToLinearRing()                           */

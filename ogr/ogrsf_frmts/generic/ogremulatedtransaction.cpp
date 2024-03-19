@@ -52,6 +52,7 @@ class OGRLayerWithTransaction final : public OGRLayerDecorator
     {
         return GetDescription();
     }
+
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
@@ -707,6 +708,7 @@ OGRErr OGRLayerWithTransaction::AlterGeomFieldDefn(
     }
     return eErr;
 }
+
 OGRFeature *OGRLayerWithTransaction::GetNextFeature()
 {
     if (!m_poDecoratedLayer)

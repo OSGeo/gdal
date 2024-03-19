@@ -67,6 +67,7 @@ class Msg_reader_core
   public:
     explicit Msg_reader_core(const char *fname);
     explicit Msg_reader_core(VSILFILE *fp);
+
     virtual ~Msg_reader_core()
     {
     }
@@ -87,6 +88,7 @@ class Msg_reader_core
     {
         return _lines;
     }
+
     unsigned int get_columns() const
     {
         return _columns;
@@ -107,18 +109,22 @@ class Msg_reader_core
     {
         return _year;
     }
+
     unsigned int get_month() const
     {
         return _month;
     }
+
     unsigned int get_day() const
     {
         return _day;
     }
+
     unsigned int get_hour() const
     {
         return _hour;
     }
+
     unsigned int get_minute() const
     {
         return _minute;
@@ -128,6 +134,7 @@ class Msg_reader_core
     {
         return _line_start;
     }
+
     unsigned int get_col_start() const
     {
         return _col_start;
@@ -137,14 +144,17 @@ class Msg_reader_core
     {
         return _col_dir_step;
     }
+
     float get_line_dir_step() const
     {
         return _line_dir_step;
     }
+
     float get_hrv_col_dir_step() const
     {
         return _hrv_col_dir_step;
     }
+
     float get_hrv_line_dir_step() const
     {
         return _hrv_line_dir_step;
@@ -154,22 +164,27 @@ class Msg_reader_core
     {
         return _f_data_offset;
     }
+
     unsigned int get_visir_bytes_per_line() const
     {
         return _visir_bytes_per_line;
     }
+
     unsigned int get_visir_packet_size() const
     {
         return _visir_packet_size;
     }
+
     unsigned int get_hrv_bytes_per_line() const
     {
         return _hrv_bytes_per_line;
     }
+
     unsigned int get_hrv_packet_size() const
     {
         return _hrv_packet_size;
     }
+
     unsigned int get_interline_spacing() const
     {
         return _interline_spacing;
@@ -184,6 +199,7 @@ class Msg_reader_core
     {
         return _calibration;
     }
+
     const IMAGE_DESCRIPTION_RECORD &get_image_description_record() const
     {
         return _img_desc_record;

@@ -65,6 +65,7 @@ typedef struct _curve_data
 {
     OGRLineString *pPart;
     double dfBeg, dfEnd, dfFactor;
+
     bool IsInside(const double &dfDist) const
     {
         return (dfDist + DELTA >= dfBeg) && (dfDist - DELTA <= dfEnd);
@@ -1969,4 +1970,5 @@ MAIN_START(nArgc, papszArgv)
 
     return eErr == OGRERR_NONE ? 0 : 1;
 }
+
 MAIN_END

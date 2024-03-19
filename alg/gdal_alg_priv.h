@@ -68,11 +68,13 @@ typedef struct
     GSpacing nLineSpace;
     GSpacing nBandSpace;
     GDALDataType eBurnValueType;
+
     union
     {
         const std::int64_t *int64_values;
         const double *double_values;
     } burnValues;
+
     GDALBurnValueSrc eBurnValueSource;
     GDALRasterMergeAlg eMergeAlg;
     bool bFillSetVisitedPoints;

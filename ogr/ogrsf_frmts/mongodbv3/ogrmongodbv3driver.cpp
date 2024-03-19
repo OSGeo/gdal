@@ -62,6 +62,7 @@ struct _IntOrMap
 {
     // cppcheck-suppress unusedStructMember
     int bIsMap;
+
     union
     {
         // cppcheck-suppress unusedStructMember
@@ -99,6 +100,7 @@ class OGRMongoDBv3Dataset final : public GDALDataset
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     OGRLayer *GetLayer(int) override;
     OGRLayer *GetLayerByName(const char *pszLayerName) override;
 
@@ -194,10 +196,12 @@ class OGRMongoDBv3Layer final : public OGRLayer
     OGRErr DeleteFeature(GIntBig nFID) override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr SetAttributeFilter(const char *pszFilter) override;
+
     void SetSpatialFilter(OGRGeometry *poGeom) override
     {
         SetSpatialFilter(0, poGeom);
     }
+
     void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
     int TestCapability(const char *pszCap) override;
     OGRFeatureDefn *GetLayerDefn() override;
@@ -2663,19 +2667,24 @@ class OGRMongoDBv3SingleFeatureLayer final : public OGRLayer
 
   public:
     explicit OGRMongoDBv3SingleFeatureLayer(const char *pszVal);
+
     ~OGRMongoDBv3SingleFeatureLayer()
     {
         m_poFeatureDefn->Release();
     }
+
     void ResetReading() override
     {
         iNextShapeId = 0;
     }
+
     OGRFeature *GetNextFeature() override;
+
     OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
     }
+
     int TestCapability(const char *) override
     {
         return FALSE;
@@ -2890,6 +2899,7 @@ static void OGRMongoDBv3DriverUnload(GDALDriver *)
         g_bCanInstantiateMongo = false;
     }
 }
+
 /************************************************************************/
 /*                       RegisterOGRMongoDBv3()                         */
 /************************************************************************/

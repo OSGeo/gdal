@@ -75,6 +75,7 @@ static void GDALNearblackOptionsForBinaryFree(
         CPLFree(psOptionsForBinary);
     }
 }
+
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -180,4 +181,5 @@ MAIN_START(argc, argv)
 
     return nRetCode;
 }
+
 MAIN_END

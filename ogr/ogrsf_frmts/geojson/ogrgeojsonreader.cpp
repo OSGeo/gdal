@@ -79,6 +79,7 @@ class OGRGeoJSONReaderStreamingParser final
     {
         return m_bOriginalIdModifiedEmitted;
     }
+
     inline void SetOriginalIdModifiedEmitted(bool b)
     {
         m_bOriginalIdModifiedEmitted = b;

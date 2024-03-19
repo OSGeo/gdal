@@ -49,6 +49,7 @@ class GDALNullDataset final : public GDALDataset
     {
         return m_nLayers;
     }
+
     virtual OGRLayer *GetLayer(int) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
@@ -103,6 +104,7 @@ class GDALNullLayer final : public OGRLayer
     {
         return poFeatureDefn;
     }
+
     virtual OGRSpatialReference *GetSpatialRef() override
     {
         return poSRS;
@@ -111,6 +113,7 @@ class GDALNullLayer final : public OGRLayer
     virtual void ResetReading() override
     {
     }
+
     virtual int TestCapability(const char *) override;
 
     virtual OGRFeature *GetNextFeature() override

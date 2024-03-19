@@ -96,6 +96,7 @@ class OGRWAsPLayer final : public OGRLayer,
         READ_ONLY,
         WRITE_ONLY
     };
+
     OpenMode eMode;
 
     std::unique_ptr<double> pdfTolerance;
@@ -165,6 +166,7 @@ class OGRWAsPLayer final : public OGRLayer,
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRWAsPLayer)
+
     virtual const char *GetName() override
     {
         return sName.c_str();
@@ -193,10 +195,12 @@ class OGRWAsPDataSource final : public OGRDataSource
     {
         return sFilename.c_str();
     }
+
     virtual int GetLayerCount() override
     {
         return oLayer.get() ? 1 : 0;
     }
+
     virtual OGRLayer *GetLayer(int) override;
     virtual OGRLayer *GetLayerByName(const char *) override;
 
@@ -224,6 +228,7 @@ class OGRWAsPDriver final : public OGRSFDriver
     {
         return "WAsP";
     }
+
     virtual OGRDataSource *Open(const char *, int) override;
 
     virtual OGRDataSource *CreateDataSource(const char *pszName,

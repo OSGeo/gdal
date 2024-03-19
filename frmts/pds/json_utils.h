@@ -2,6 +2,7 @@
 #define JSON_UTILS_H_INCLUDED
 
 #include "cpl_json.h"
+
 /**
  * Get or create CPLJSONObject.
  * @param  oParent Parent CPLJSONObject.

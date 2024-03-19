@@ -4258,6 +4258,7 @@ OGRErr OGRGeoPackageTableLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
     return OGRERR_FAILURE;
 }
+
 /************************************************************************/
 /*                     UpdateContentsToNullExtent()                     */
 /************************************************************************/
@@ -4506,6 +4507,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
         /* Populate the RTree */
         const size_t nMaxRAMUsageAllowed = GetMaxRAMUsageAllowedForRTree();
         char *pszErrMsg = nullptr;
+
         struct ProgressCbk
         {
             static bool progressCbk(const char *pszMessage, void *)
@@ -5535,6 +5537,7 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int m_iGeomColIn,
 
     return osSpatialWHERE;
 }
+
 /************************************************************************/
 /*                             BuildWhere()                             */
 /*                                                                      */
@@ -7454,6 +7457,7 @@ struct GeometryTypeAggregateContext
         : m_hDB(hDB), m_nFlags(nFlags)
     {
     }
+
     GeometryTypeAggregateContext(const GeometryTypeAggregateContext &) = delete;
     GeometryTypeAggregateContext &
     operator=(const GeometryTypeAggregateContext &) = delete;
@@ -8881,6 +8885,7 @@ struct GeometryExtent3DAggregateContext
         : m_hDB(hDB), m_oExtent3D()
     {
     }
+
     GeometryExtent3DAggregateContext(const GeometryExtent3DAggregateContext &) =
         delete;
     GeometryExtent3DAggregateContext &

@@ -118,6 +118,7 @@ virtual CNCSError UnParse(class CNCSJP2File &JP2File,
     {
         return nDataLength;
     }
+
     unsigned char *GetData()
     {
         return pabyData;
@@ -164,6 +165,7 @@ class VSIIOStream final : public CNCSJPCIOStream
         abyCOMType[0] = 0;
         abyCOMType[1] = 0;
     }
+
     virtual ~VSIIOStream()
     {
         VSIIOStream::Close();
@@ -683,14 +685,17 @@ class ECWRasterBand final : public GDALPamRasterBand
     ~ECWRasterBand();
 
     virtual CPLErr IReadBlock(int, int, void *) override;
+
     virtual int HasArbitraryOverviews() override
     {
         return apoOverviews.empty();
     }
+
     virtual int GetOverviewCount() override
     {
         return (int)apoOverviews.size();
     }
+
     virtual GDALRasterBand *GetOverview(int) override;
 
     virtual GDALColorInterp GetColorInterpretation() override;

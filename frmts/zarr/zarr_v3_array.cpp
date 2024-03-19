@@ -602,6 +602,7 @@ bool ZarrV3Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
         size_t nFirstIdx = 0;
         size_t nLastIdxNotIncluded = 0;
     };
+
     std::vector<JobStruct> asJobStructs;
 
     bool bGlobalStatus = true;

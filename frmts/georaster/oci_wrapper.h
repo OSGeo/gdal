@@ -326,22 +326,27 @@ class OWConnection
     {
         return pszUser;
     }
+
     const char *GetSessionUser() const
     {
         return (pszSessionUser == nullptr) ? pszUser : pszSessionUser;
     }
+
     const char *GetPassword() const
     {
         return pszPassword;
     }
+
     const char *GetServer() const
     {
         return pszServer;
     }
+
     int GetVersion() const
     {
         return nVersion;
     }
+
     sb4 GetCharSize() const
     {
         return nCharSize;
@@ -351,14 +356,17 @@ class OWConnection
     {
         return hGeometryTDO;
     }
+
     OCIType *GetGeoRasterType()
     {
         return hGeoRasterTDO;
     }
+
     OCIType *GetElemInfoType()
     {
         return hElemArrayTDO;
     }
+
     OCIType *GetOrdinateType()
     {
         return hOrdnArrayTDO;
@@ -366,6 +374,7 @@ class OWConnection
 
     bool Commit();            // OCITransCommit()
     bool StartTransaction();  //  //OCITransStart()
+
     bool EndTransaction()
     {
         return Commit();
@@ -375,10 +384,12 @@ class OWConnection
     {
         return bExtProc;
     }
+
     const char *GetExtProcUser() const
     {
         return pszExtProcUser;
     }
+
     const char *GetExtProcSchema() const
     {
         return pszExtProcSchema;

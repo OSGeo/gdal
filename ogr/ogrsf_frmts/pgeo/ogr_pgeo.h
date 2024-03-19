@@ -135,15 +135,18 @@ class OGRPGeoTableLayer final : public OGRPGeoLayer
     virtual int TestCapability(const char *) override;
 
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
     }
+
     const std::string &GetXMLDefinition()
     {
         return m_osDefinition;
     }
+
     const std::string &GetXMLDocumentation()
     {
         return m_osDocumentation;
@@ -217,10 +220,12 @@ class OGRPGeoDataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     int GetLayerCount() override
     {
         return nLayers;
     }
+
     OGRLayer *GetLayer(int) override;
     OGRLayer *GetLayerByName(const char *) override;
     bool IsLayerPrivate(int) const override;

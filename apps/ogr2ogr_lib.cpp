@@ -477,14 +477,17 @@ struct TargetLayerInfo
         CPLStringList m_aosTransformOptions{};
         bool m_bCanInvalidateValidity = true;
     };
+
     std::vector<ReprojectionInfo> m_aoReprojectionInfo{};
 
     std::vector<int> m_anMap{};
+
     struct ResolvedInfo
     {
         int nSrcField;
         const OGRFieldDomain *poDomain;
     };
+
     std::map<int, ResolvedInfo> m_oMapResolved{};
     std::map<const OGRFieldDomain *, std::map<std::string, std::string>>
         m_oMapDomainToKV{};
@@ -724,6 +727,7 @@ class OGRSplitListFieldLayer : public OGRLayer
     {
         poSrcLayer->ResetReading();
     }
+
     virtual int TestCapability(const char *) override
     {
         return FALSE;
@@ -1141,6 +1145,7 @@ class GCPCoordTransformation : public OGRCoordinateTransformation
     {
         return poSRS;
     }
+
     virtual const OGRSpatialReference *GetTargetCS() const override
     {
         return poSRS;
@@ -1476,6 +1481,7 @@ class GDALVectorTranslateWrappedDataset : public GDALDataset
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     virtual OGRLayer *GetLayer(int nIdx) override;
     virtual OGRLayer *GetLayerByName(const char *pszName) override;
 
@@ -1498,10 +1504,12 @@ class GDALVectorTranslateWrappedLayer : public OGRLayerDecorator
 
   public:
     virtual ~GDALVectorTranslateWrappedLayer();
+
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFDefn;
     }
+
     virtual OGRFeature *GetNextFeature() override;
     virtual OGRFeature *GetFeature(GIntBig nFID) override;
 
@@ -1753,6 +1761,7 @@ class OGR2OGRSpatialReferenceHolder
     OGR2OGRSpatialReferenceHolder() : m_poSRS(nullptr)
     {
     }
+
     ~OGR2OGRSpatialReferenceHolder()
     {
         if (m_poSRS)
@@ -1764,6 +1773,7 @@ class OGR2OGRSpatialReferenceHolder
         CPLAssert(m_poSRS == nullptr);
         m_poSRS = poSRS;
     }
+
     OGRSpatialReference *get()
     {
         return m_poSRS;
@@ -6646,6 +6656,7 @@ LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
 
 #ifndef CheckHasEnoughAdditionalArgs_defined
 #define CheckHasEnoughAdditionalArgs_defined
+
 static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
                                          int nExtraArg, int nArgc)
 {

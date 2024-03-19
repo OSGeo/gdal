@@ -36,6 +36,7 @@
 
 #ifdef ENABLE_MEMORY_REGISTRAR
 #include <map>
+
 class JP2LuraMemoryRegistrar
 {
     std::map<void *, size_t> oMap;

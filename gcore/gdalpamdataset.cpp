@@ -207,6 +207,7 @@ void GDALPamDataset::MarkPamDirty()
         nPamFlags |= GPF_DIRTY;
     }
 }
+
 // @endcond
 
 /************************************************************************/
@@ -1265,6 +1266,7 @@ CPLErr GDALPamDataset::CloneInfo(GDALDataset *poSrcDS, int nCloneFlags)
 
     return CE_None;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1358,6 +1360,7 @@ CPLErr GDALPamDataset::IBuildOverviews(
         pszResampling, nOverviews, panOverviewList, nListBands, panBandList,
         pfnProgress, pProgressData, papszOptions);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1785,6 +1788,7 @@ CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
 
     return CE_Failure;
 }
+
 //! @endcond
 
 /************************************************************************/

@@ -2975,9 +2975,11 @@ template <class T, class U> struct Compare
 template <class T> struct Compare<T, T> : public CompareGeneric<T, T>
 {
 };
+
 template <> struct Compare<int, GIntBig> : public CompareGeneric<int, GIntBig>
 {
 };
+
 template <> struct Compare<double, GIntBig>
 {
     static inline bool get(int op, double val1, GIntBig val2)
@@ -2986,9 +2988,11 @@ template <> struct Compare<double, GIntBig>
                                                    static_cast<double>(val2));
     }
 };
+
 template <> struct Compare<GIntBig, int> : public CompareGeneric<GIntBig, int>
 {
 };
+
 template <> struct Compare<double, int> : public CompareGeneric<double, int>
 {
 };
@@ -4303,6 +4307,7 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
             false;  // true = attribute field, false = geometry field
         int nIdx = -1;
     };
+
     // cppcheck-suppress unreadVariable
     std::vector<FieldDesc> fieldDesc(out_schema->n_children);
     for (size_t i = 0; i < m_anMapFieldIndexToArrowColumn.size(); i++)

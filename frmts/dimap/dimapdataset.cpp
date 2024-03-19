@@ -270,6 +270,7 @@ class DIMAPRasterBand final : public GDALPamRasterBand
 
   public:
     DIMAPRasterBand(DIMAPDataset *, int, VRTSourcedRasterBand *);
+
     ~DIMAPRasterBand() override
     {
     }
@@ -1129,6 +1130,7 @@ int DIMAPDataset::ReadImageInformation2()
 
     CPLXMLNode *psDataFiles =
         CPLGetXMLNode(psDoc, "Raster_Data.Data_Access.Data_Files");
+
     /*  <Data_Files>
             <Data_File tile_R="1" tile_C="1">
                <DATA_FILE_PATH href="IMG_foo_R1C1.TIF"/>

@@ -63,6 +63,7 @@ class OGRGeoJSONSeqDataSource final : public GDALDataset
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     OGRLayer *GetLayer(int) override;
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
@@ -121,13 +122,16 @@ class OGRGeoJSONSeqLayer final : public OGRLayer
     {
         return GetDescription();
     }
+
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     OGRFeatureDefn *GetLayerDefn() override;
+
     const char *GetFIDColumn() override
     {
         return m_osFIDColumn.c_str();
     }
+
     GIntBig GetFeatureCount(int) override;
     int TestCapability(const char *) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;

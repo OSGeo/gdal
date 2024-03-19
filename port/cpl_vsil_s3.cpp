@@ -94,9 +94,11 @@ struct VSIDIRS3 : public VSIDIRWithMissingDirSynthesis
         : poFS(poFSIn), poS3FS(poFSIn)
     {
     }
+
     explicit VSIDIRS3(VSICurlFilesystemHandlerBase *poFSIn) : poFS(poFSIn)
     {
     }
+
     ~VSIDIRS3()
     {
         delete poS3HandleHelper;
@@ -668,6 +670,7 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
     explicit VSIS3FSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
     {
     }
+
     ~VSIS3FSHandler() override;
 
     const char *GetOptions() override;
@@ -714,6 +717,7 @@ class VSIS3Handle final : public IVSIS3LikeHandle
     GetCurlHeaders(const std::string &osVerb,
                    const struct curl_slist *psExistingHeaders) override;
     bool CanRestartOnError(const char *, const char *, bool) override;
+
     bool AllowAutomaticRedirection() override
     {
         return m_poS3HandleHelper->AllowAutomaticRedirection();
@@ -3971,6 +3975,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         vsi_l_offset nStartOffset = 0;
         vsi_l_offset nSize = 0;
     };
+
     std::vector<ChunkToCopy> aoChunksToCopy;
     std::set<std::string> aoSetDirsToCreate;
     const char *pszChunkSize = CSLFetchNameValue(papszOptions, "CHUNK_SIZE");
@@ -4033,6 +4038,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         std::vector<std::string> aosEtags{};
         vsi_l_offset nTotalSize = 0;
     };
+
     std::map<std::string, MultiPartDef> oMapMultiPartDefs;
 
     // Cleanup pending uploads in case of early exit
@@ -4073,6 +4079,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         CleanupPendingUploads &
         operator=(const CleanupPendingUploads &) = delete;
     };
+
     const CleanupPendingUploads cleanupPendingUploads(this, oMapMultiPartDefs,
                                                       nMaxRetry, dfRetryDelay);
 
@@ -4606,6 +4613,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         JobQueue(const JobQueue &) = delete;
         JobQueue &operator=(const JobQueue &) = delete;
     };
+
     const auto threadFunc = [](void *pDataIn)
     {
         struct ProgressData

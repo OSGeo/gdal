@@ -115,6 +115,7 @@ class FITSDataset final : public GDALPamDataset
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     OGRLayer *GetLayer(int) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
@@ -217,6 +218,7 @@ class FITSLayer final : public OGRLayer,
     {
         return m_poFeatureDefn;
     }
+
     void ResetReading() override;
     int TestCapability(const char *) override;
     OGRFeature *GetFeature(GIntBig) override;
@@ -1849,6 +1851,7 @@ static const char *const ignorableFITSHeaders[] = {
     "XTENSION", "PCOUNT", "GCOUNT", "EXTEND", "CONTINUE", "COMMENT", "",
     "LONGSTRN", "BZERO",  "BSCALE", "BLANK",  "CHECKSUM", "DATASUM",
 };
+
 static bool isIgnorableFITSHeader(const char *name)
 {
     for (const char *keyword : ignorableFITSHeaders)

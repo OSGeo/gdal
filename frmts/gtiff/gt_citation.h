@@ -43,6 +43,7 @@ char *ImagineCitationTranslation(char *psCitation, geokey_t keyID);
 char **CitationStringParse(char *psCitation, geokey_t keyID);
 
 #define nCitationNameTypes 9
+
 typedef enum
 {
     CitCsName = 0,

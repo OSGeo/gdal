@@ -59,6 +59,7 @@ class VICARDataset final : public RawDataset
         COMPRESS_BASIC,
         COMPRESS_BASIC2,
     };
+
     CompressMethod m_eCompress = COMPRESS_NONE;
 
     int m_nRecordSize = 0;
@@ -127,6 +128,7 @@ class VICARDataset final : public RawDataset
     {
         return m_poLayer ? 1 : 0;
     }
+
     OGRLayer *GetLayer(int i) override
     {
         return (m_poLayer && i == 0) ? m_poLayer.get() : nullptr;

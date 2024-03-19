@@ -63,6 +63,7 @@ static CPLMutex *hRBLock = nullptr;
 static CPLLock *hRBLock = nullptr;
 static bool bDebugContention = false;
 static bool bSleepsForBockCacheDebug = false;
+
 static CPLLockType GetLockType()
 {
     static int nLockType = -1;
@@ -1170,6 +1171,7 @@ void GDALRasterBlock::DestroyRBMutex()
         DESTROY_LOCK;
     hRBLock = nullptr;
 }
+
 /*! @endcond */
 
 /************************************************************************/

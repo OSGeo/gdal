@@ -130,10 +130,12 @@ class OGRGenSQLResultsLayer final : public OGRLayer
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override
     {
         return GetExtent(0, psExtent, bForce);
     }
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce = TRUE) override;
 
@@ -143,6 +145,7 @@ class OGRGenSQLResultsLayer final : public OGRLayer
     {
         SetSpatialFilter(0, poGeom);
     }
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
     virtual OGRErr SetAttributeFilter(const char *) override;
 };

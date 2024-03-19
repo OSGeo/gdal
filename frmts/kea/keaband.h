@@ -117,6 +117,7 @@ class KEARasterBand CPL_NON_FINAL : public GDALPamRasterBand
     void readExistingOverviews();
     void deleteOverviewObjects();
     void CreateOverviews(int nOverviews, const int *panOverviewList);
+
     KEAOverview **GetOverviewList()
     {
         return m_panOverviewBands;

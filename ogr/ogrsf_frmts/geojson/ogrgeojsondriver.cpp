@@ -74,12 +74,15 @@ class OGRESRIFeatureServiceLayer final : public OGRLayer
     OGRFeature *GetNextFeature() override;
     GIntBig GetFeatureCount(int bForce = TRUE) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
     }
+
     int TestCapability(const char *pszCap) override;
+
     OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
@@ -109,6 +112,7 @@ class OGRESRIFeatureServiceDataset final : public GDALDataset
     {
         return 1;
     }
+
     OGRLayer *GetLayer(int nLayer) override
     {
         return (nLayer == 0) ? poLayer : nullptr;

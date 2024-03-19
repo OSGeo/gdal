@@ -145,6 +145,7 @@
 #endif
 
 #include "swq_parser.hpp"
+
 /* Symbol kind.  */
 enum yysymbol_kind_t
 {
@@ -1198,6 +1199,7 @@ static int yysyntax_error(YYPTRDIFF_T *yymsg_alloc, char **yymsg,
     {
         YYARGS_MAX = 5
     };
+
     /* Internationalized format string. */
     const char *yyformat = YY_NULLPTR;
     /* Arguments of yyformat: reported tokens (one for the "unexpected",

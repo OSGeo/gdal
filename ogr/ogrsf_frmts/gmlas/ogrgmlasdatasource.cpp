@@ -316,10 +316,12 @@ class GMLASTopElementParser : public DefaultHandler
     {
         return m_aoFilenames;
     }
+
     bool GetSWE() const
     {
         return m_bFoundSWE;
     }
+
     const std::map<CPLString, CPLString> &GetMapDocNSURIToPrefix() const
     {
         return m_oMapDocNSURIToPrefix;

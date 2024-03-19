@@ -51,9 +51,11 @@ class TestPolygonWriter
     {
         currentPolygon_ = &polygons_[level];
     }
+
     void endPolygon()
     {
     }
+
     void addPart(const std::list<marching_squares::Point> &ring)
     {
         PolygonPart part;
@@ -61,6 +63,7 @@ class TestPolygonWriter
         currentPolygon_->emplace_back(part);
         currentPart_ = &currentPolygon_->back();
     }
+
     void addInteriorRing(const std::list<marching_squares::Point> &ring)
     {
         currentPart_->push_back(ring);

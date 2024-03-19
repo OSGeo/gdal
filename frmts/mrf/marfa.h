@@ -138,6 +138,7 @@ enum ILOrder
     IL_Sequential,
     IL_ERR_ORD
 };
+
 extern char const *const *ILComp_Name;
 extern char const *const *ILComp_Ext;
 extern char const *const *ILOrder_Name;
@@ -163,6 +164,7 @@ struct ILSize
 {
     GInt32 x, y, z, c;
     GIntBig l;  // Dual use, sometimes it holds the number of pages
+
     explicit ILSize(const int x_ = -1, const int y_ = -1, const int z_ = -1,
                     const int c_ = -1, const int l_ = -1)
         : x(x_), y(y_), z(z_), c(c_), l(l_)
@@ -249,11 +251,13 @@ static inline unsigned long long int swab64(const unsigned long long int val)
 
 #ifdef CPL_MSB
 #define NET_ORDER true
+
 // These could be macros, but for the side effects related to type
 static inline unsigned short net16(const unsigned short x)
 {
     return (x);
 }
+
 static inline unsigned int net32(const unsigned int x)
 {
     return (x);
@@ -398,6 +402,7 @@ class MRFDataset final : public GDALPamDataset
     {
         return photometric;
     }
+
     virtual CPLErr SetPhotometricInterpretation(const char *photo)
     {
         photometric = photo;
@@ -413,10 +418,12 @@ class MRFDataset final : public GDALPamDataset
     {
         poColorTable = pct;
     }
+
     const GDALColorTable *GetColorTable()
     {
         return poColorTable;
     }
+
     void SetNoDataValue(const char *);
     void SetMinValue(const char *);
     void SetMaxValue(const char *);
@@ -442,6 +449,7 @@ class MRFDataset final : public GDALPamDataset
     {
         pbsize = sz;
     }
+
     unsigned int GetPBufferSize()
     {
         return pbsize;
@@ -478,6 +486,7 @@ class MRFDataset final : public GDALPamDataset
 
     // Late allocation buffer
     bool SetPBuffer(unsigned int sz);
+
     void *GetPBuffer()
     {
         if (!pbuffer && pbsize)
@@ -512,18 +521,21 @@ class MRFDataset final : public GDALPamDataset
 
     VSILFILE *IdxFP();
     VSILFILE *DataFP();
+
     GDALRWFlag IdxMode()
     {
         if (!ifp.FP)
             IdxFP();
         return ifp.acc;
     }
+
     GDALRWFlag DataMode()
     {
         if (!dfp.FP)
             DataFP();
         return dfp.acc;
     }
+
     GDALDataset *GetSrcDS();
 
     /*
@@ -609,6 +621,7 @@ class MRFDataset final : public GDALPamDataset
             pzscctx = ZSTD_createCCtx();
         return static_cast<ZSTD_CCtx *>(pzscctx);
     }
+
     ZSTD_DCtx *getzsd()
     {
         if (!pzsdctx)
@@ -643,6 +656,7 @@ class MRFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
         img.ci = ci;
         return CE_None;
     }
+
     virtual GDALColorInterp GetColorInterpretation() override
     {
         return img.ci;
@@ -671,14 +685,17 @@ class MRFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     CPLErr ReadInterleavedBlock(int xblk, int yblk, void *buffer);
 
     const char *GetOptionValue(const char *opt, const char *def) const;
+
     void SetAccess(GDALAccess eA)
     {
         eAccess = eA;
     }
+
     void SetDeflate(int v)
     {
         dodeflate = (v != 0);
     }
+
     void SetZstd(int v)
     {
         dozstd = (v != 0);
@@ -702,14 +719,17 @@ class MRFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     {
         return poMRFDS->IdxFP();
     }
+
     GDALRWFlag IdxMode()
     {
         return poMRFDS->IdxMode();
     }
+
     VSILFILE *DataFP()
     {
         return poMRFDS->DataFP();
     }
+
     GDALRWFlag DataMode()
     {
         return poMRFDS->DataMode();
@@ -739,10 +759,12 @@ class MRFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     {
         return ((GIntBig)1) << b;
     }
+
     GIntBig bandbit()
     {
         return bandbit(nBand - 1);
     }
+
     GIntBig AllBandMask()
     {
         return bandbit(poMRFDS->nBands) - 1;
@@ -753,6 +775,7 @@ class MRFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     // These are called only in the base level RasterBand
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview(int n) override;
+
     void AddOverview(MRFRasterBand *b)
     {
         overviews.push_back(b);
@@ -854,6 +877,7 @@ class JPEG_Band final : public MRFRasterBand
 
   public:
     JPEG_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
+
     virtual ~JPEG_Band()
     {
     }
@@ -892,6 +916,7 @@ class Raw_Band final : public MRFRasterBand
         : MRFRasterBand(pDS, image, b, int(level))
     {
     }
+
     virtual ~Raw_Band()
     {
     }
@@ -905,6 +930,7 @@ class Raw_Band final : public MRFRasterBand
         dst.size = src.size;
         return CE_None;
     }
+
     virtual CPLErr Compress(buf_mgr &dst, buf_mgr &src) override
     {
         return Decompress(dst, src);
@@ -953,6 +979,7 @@ class LERC_Band final : public MRFRasterBand
         static const char L1sig[] = "CntZImage ";
         return !strncmp(s, L1sig, sizeof(L1sig) - 1);
     }
+
     static bool IsLerc2(const char *s)
     {
         static const char L2sig[] = "Lerc2 ";
@@ -968,6 +995,7 @@ class QB3_Band final : public MRFRasterBand
 
   public:
     QB3_Band(MRFDataset *pDS, const ILImage &image, int b, int level);
+
     virtual ~QB3_Band()
     {
     }
@@ -996,30 +1024,37 @@ class MRFLRasterBand final : public GDALPamRasterBand
         nRasterXSize = b->GetXSize();
         nRasterYSize = b->GetYSize();
     }
+
     virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override
     {
         return pBand->IReadBlock(xblk, yblk, buffer);
     }
+
     virtual CPLErr IWriteBlock(int xblk, int yblk, void *buffer) override
     {
         return pBand->IWriteBlock(xblk, yblk, buffer);
     }
+
     virtual GDALColorTable *GetColorTable() override
     {
         return pBand->GetColorTable();
     }
+
     virtual GDALColorInterp GetColorInterpretation() override
     {
         return pBand->GetColorInterpretation();
     }
+
     virtual double GetNoDataValue(int *pbSuccess) override
     {
         return pBand->GetNoDataValue(pbSuccess);
     }
+
     virtual double GetMinimum(int *b) override
     {
         return pBand->GetMinimum(b);
     }
+
     virtual double GetMaximum(int *b) override
     {
         return pBand->GetMaximum(b);
@@ -1030,6 +1065,7 @@ class MRFLRasterBand final : public GDALPamRasterBand
     {
         return 0;
     }
+
     virtual GDALRasterBand *GetOverview(int) override
     {
         return nullptr;

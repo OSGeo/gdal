@@ -72,6 +72,7 @@ class OGRXLSLayer final : public OGRLayer,
     {
         return pszName;
     }
+
     virtual OGRwkbGeometryType GetGeomType() override
     {
         return wkbNone;
@@ -117,6 +118,7 @@ class OGRXLSDataSource final : public OGRDataSource
     {
         return nLayers;
     }
+
     virtual OGRLayer *GetLayer(int) override;
 
     virtual int TestCapability(const char *) override;

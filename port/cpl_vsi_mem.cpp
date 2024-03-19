@@ -154,6 +154,7 @@ class VSIMemHandle final : public VSIVirtualHandle
     {
         return true;
     }
+
     size_t PRead(void * /*pBuffer*/, size_t /* nSize */,
                  vsi_l_offset /*nOffset*/) const override;
 };
@@ -177,6 +178,7 @@ class VSIMemFilesystemHandler final : public VSIFilesystemHandler
         : m_osPrefix(pszPrefix)
     {
     }
+
     ~VSIMemFilesystemHandler() override;
 
     // TODO(schwehr): Fix VSIFileFromMemBuffer so that using is not needed.

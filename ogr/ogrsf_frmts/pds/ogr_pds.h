@@ -143,6 +143,7 @@ class OGRPDSDataSource final : public OGRDataSource
     {
         return nLayers;
     }
+
     virtual OGRLayer *GetLayer(int) override;
 
     virtual int TestCapability(const char *) override;

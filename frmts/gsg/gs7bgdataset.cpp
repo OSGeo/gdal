@@ -70,6 +70,7 @@ class GS7BGDataset final : public GDALPamDataset
           dfNoData_Value(dfDefaultNoDataValue), nData_Position(0), fp(nullptr)
     {
     }
+
     ~GS7BGDataset();
 
     static int Identify(GDALOpenInfo *);

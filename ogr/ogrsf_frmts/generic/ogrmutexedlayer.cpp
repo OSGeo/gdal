@@ -335,6 +335,7 @@ OGRErr OGRMutexedLayer::Rename(const char *pszNewName)
 // Horrible hack: for some reason MSVC doesn't export the class
 // if it is not referenced from the DLL itself
 void OGRRegisterMutexedLayer();
+
 void OGRRegisterMutexedLayer()
 {
     CPLAssert(false);  // Never call this function: it will segfault

@@ -498,6 +498,7 @@ std::string OGRPolyhedralSurface::exportToWktInternal(const OGRWktOptions &opts,
         return std::string();
     }
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -538,6 +539,7 @@ OGRSurfaceCasterToPolygon OGRPolyhedralSurface::GetCasterToPolygon() const
 {
     return ::CasterToPolygon;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -558,6 +560,7 @@ OGRPolyhedralSurface::GetCasterToCurvePolygon() const
 {
     return ::CasterToCurvePolygon;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -570,6 +573,7 @@ OGRPolyhedralSurface::isCompatibleSubType(OGRwkbGeometryType eSubType) const
 {
     return wkbFlatten(eSubType) == wkbPolygon;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -581,6 +585,7 @@ const char *OGRPolyhedralSurface::getSubGeometryName() const
 {
     return "POLYGON";
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -592,6 +597,7 @@ OGRwkbGeometryType OGRPolyhedralSurface::getSubGeometryType() const
 {
     return wkbPolygon;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -693,6 +699,7 @@ OGRPolyhedralSurface::CastToMultiPolygonImpl(OGRPolyhedralSurface *poPS)
     delete poPS;
     return poMultiPolygon;
 }
+
 //! @endcond
 
 /************************************************************************/

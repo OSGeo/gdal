@@ -49,6 +49,7 @@ const char* OGRHanaLayerCreationOptionsConstants::GetList()
            "  <Option name='BATCH_SIZE' type='int' description='Specifies the number of bytes to be written per one batch' default='4194304'/>"
            "</LayerCreationOptionList>";
 }
+
 // clang-format on
 
 // clang-format off
@@ -77,6 +78,7 @@ const char* OGRHanaOpenOptionsConstants::GetList()
            "  <Option name='DETECT_GEOMETRY_TYPE' type='boolean' description='Specifies whether to detect the type of geometry columns. Note, the detection may take a significant amount of time for large tables' default='YES'/>"
            "</OpenOptionList>";
 }
+
 // clang-format on
 
 /************************************************************************/

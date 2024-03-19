@@ -93,6 +93,7 @@ class LOSLASDataset final : public RawDataset
     ~LOSLASDataset() override;
 
     CPLErr GetGeoTransform(double *padfTransform) override;
+
     const OGRSpatialReference *GetSpatialRef() const override
     {
         return &m_oSRS;

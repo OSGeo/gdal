@@ -342,6 +342,7 @@ class OGRXercesBinInputStream final : public BinInputStream
     XMLFilePos curPos() const override;
     XMLSize_t readBytes(XMLByte *const toFill,
                         const XMLSize_t maxToRead) override;
+
     const XMLCh *getContentType() const override
     {
         return &emptyString;
@@ -359,6 +360,7 @@ class OGRXercesNetAccessor final : public XMLNetAccessor
 
     BinInputStream *makeNew(const XMLURL &urlSource,
                             const XMLNetHTTPInfo *httpInfo) override;
+
     const XMLCh *getId() const override
     {
         return fgMyName;

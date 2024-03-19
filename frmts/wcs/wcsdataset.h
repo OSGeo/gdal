@@ -106,6 +106,7 @@ class WCSDataset CPL_NON_FINAL : public GDALPamDataset
     {
         return "";
     }
+
     virtual CPLXMLNode *CoverageOffering(CPLXMLNode *psDC) = 0;
 
     int DescribeCoverage();

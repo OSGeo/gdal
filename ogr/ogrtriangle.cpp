@@ -237,6 +237,7 @@ OGRErr OGRTriangle::importFromWKTListOnly(const char **ppszInput, int bHasZ,
 
     return eErr;
 }
+
 /*! @endcond */
 
 /************************************************************************/
@@ -279,4 +280,5 @@ OGRGeometry *OGRTriangle::CastToPolygon(OGRGeometry *poGeom)
     delete poGeom;
     return poRet;
 }
+
 //! @endcond

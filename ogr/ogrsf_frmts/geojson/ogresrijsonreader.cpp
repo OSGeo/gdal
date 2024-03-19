@@ -49,6 +49,7 @@
 #include "ogr_geojson.h"
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonutils.h"
+
 // #include "symbol_renames.h"
 
 /************************************************************************/

@@ -63,6 +63,7 @@ class DTEDDataset final : public GDALPamDataset
     {
         return pszFilename;
     }
+
     void SetFileName(const char *pszFilename);
 
     static GDALDataset *Open(GDALOpenInfo *);

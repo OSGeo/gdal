@@ -208,6 +208,7 @@ class PNGRasterBand final : public GDALPamRasterBand
 
   public:
     PNGRasterBand(PNGDataset *, int);
+
     virtual ~PNGRasterBand()
     {
     }
@@ -238,6 +239,7 @@ class PNGRasterBand final : public GDALPamRasterBand
 
   protected:
     int m_bBandProvided[5];
+
     void reset_band_provision_flags()
     {
         PNGDataset &ds = *reinterpret_cast<PNGDataset *>(poDS);

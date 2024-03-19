@@ -90,6 +90,7 @@ class FileGDBTrivialIterator final : public FileGDBIterator
 
   public:
     explicit FileGDBTrivialIterator(FileGDBIterator *poParentIter);
+
     virtual ~FileGDBTrivialIterator()
     {
         delete poParentIter;
@@ -99,12 +100,15 @@ class FileGDBTrivialIterator final : public FileGDBIterator
     {
         return poTable;
     }
+
     virtual void Reset() override
     {
         iRow = 0;
         poParentIter->Reset();
     }
+
     virtual int GetNextRowSortedByFID() override;
+
     virtual int GetRowCount() override
     {
         return poTable->GetTotalRecordCount();
@@ -119,10 +123,12 @@ class FileGDBTrivialIterator final : public FileGDBIterator
     {
         return poParentIter->GetMinValue(eOutType);
     }
+
     virtual const OGRField *GetMaxValue(int &eOutType) override
     {
         return poParentIter->GetMaxValue(eOutType);
     }
+
     virtual int GetMinMaxSumCount(double &dfMin, double &dfMax, double &dfSum,
                                   int &nCount) override
     {
@@ -153,6 +159,7 @@ class FileGDBNotIterator final : public FileGDBIterator
     {
         return poTable;
     }
+
     virtual void Reset() override;
     virtual int GetNextRowSortedByFID() override;
     virtual int GetRowCount() override;
@@ -182,6 +189,7 @@ class FileGDBAndIterator final : public FileGDBIterator
     {
         return poIter1->GetTable();
     }
+
     virtual void Reset() override;
     virtual int GetNextRowSortedByFID() override;
 };
@@ -211,6 +219,7 @@ class FileGDBOrIterator final : public FileGDBIterator
     {
         return poIter1->GetTable();
     }
+
     virtual void Reset() override;
     virtual int GetNextRowSortedByFID() override;
     virtual int GetRowCount() override;
@@ -272,10 +281,12 @@ class FileGDBIndexIteratorBase : virtual public FileGDBIterator
 
   public:
     virtual ~FileGDBIndexIteratorBase();
+
     virtual FileGDBTable *GetTable() override
     {
         return poParent;
     }
+
     virtual void Reset() override;
 };
 
@@ -2240,6 +2251,7 @@ class FileGDBSpatialIndexIteratorImpl final : public FileGDBIndexIteratorBase,
     {
         return poParent;
     }  // avoid MSVC C4250 inherits via dominance warning
+
     virtual int GetNextRowSortedByFID() override;
     virtual void Reset() override;
 

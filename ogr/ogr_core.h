@@ -964,6 +964,7 @@ typedef union
         float Second; /* with millisecond accuracy. at the end of the structure,
                          so as to keep it 12 bytes on 32 bit */
     } Date;
+
     /*! @endcond */
 } OGRField;
 

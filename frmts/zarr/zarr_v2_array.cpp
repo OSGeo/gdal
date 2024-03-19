@@ -684,6 +684,7 @@ bool ZarrV2Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
         size_t nFirstIdx = 0;
         size_t nLastIdxNotIncluded = 0;
     };
+
     std::vector<JobStruct> asJobStructs;
 
     bool bGlobalStatus = true;
@@ -1638,6 +1639,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
                 m_oType.FreeDynamicMemory(&m_abyNodata[0]);
         }
     };
+
     NoDataFreer NoDataFreer(abyNoData, oType);
 
     auto oFillValue = oRoot["fill_value"];

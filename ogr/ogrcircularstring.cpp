@@ -768,6 +768,7 @@ OGRCurveCasterToLinearRing OGRCircularString::GetCasterToLinearRing() const
 {
     return ::CasterToLinearRing;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -858,6 +859,7 @@ double OGRCircularString::get_AreaOfCurveSegments() const
     }
     return dfArea;
 }
+
 //! @endcond
 
 /************************************************************************/

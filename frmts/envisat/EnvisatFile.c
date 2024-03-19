@@ -43,6 +43,7 @@
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused)
 {
 }
+
 CPL_INLINE static void CPL_IGNORE_RET_VAL_SIZET(CPL_UNUSED size_t unused)
 {
 }

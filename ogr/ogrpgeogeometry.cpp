@@ -76,6 +76,7 @@ struct CurveSegment
 {
     int nStartPointIdx;
     CurveType eType;
+
     union
     {
         // Arc defined by an intermediate point.

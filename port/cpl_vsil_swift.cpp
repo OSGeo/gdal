@@ -240,6 +240,7 @@ class VSISwiftFSHandler final : public IVSIS3LikeFSHandler
     explicit VSISwiftFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
     {
     }
+
     ~VSISwiftFSHandler() override;
 
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,

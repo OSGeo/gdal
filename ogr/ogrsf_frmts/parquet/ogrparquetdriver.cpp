@@ -62,6 +62,7 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
     }
 
     using arrow::fs::FileSystem::Equals;
+
     bool Equals(const arrow::fs::FileSystem &other) const override
     {
         const auto poOther = dynamic_cast<const VSIArrowFileSystem *>(&other);
@@ -70,6 +71,7 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
     }
 
     using arrow::fs::FileSystem::GetFileInfo;
+
     arrow::Result<arrow::fs::FileInfo>
     GetFileInfo(const std::string &path) override
     {
@@ -191,6 +193,7 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
     }
 
     using arrow::fs::FileSystem::OpenInputStream;
+
     arrow::Result<std::shared_ptr<arrow::io::InputStream>>
     OpenInputStream(const std::string &path) override
     {
@@ -198,6 +201,7 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
     }
 
     using arrow::fs::FileSystem::OpenInputFile;
+
     arrow::Result<std::shared_ptr<arrow::io::RandomAccessFile>>
     OpenInputFile(const std::string &path) override
     {
@@ -212,6 +216,7 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
     }
 
     using arrow::fs::FileSystem::OpenOutputStream;
+
     arrow::Result<std::shared_ptr<arrow::io::OutputStream>>
     OpenOutputStream(const std::string & /*path*/,
                      const std::shared_ptr<const arrow::KeyValueMetadata>

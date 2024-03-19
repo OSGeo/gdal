@@ -245,10 +245,12 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
     int Flush() override;
     int Close() override;
     int Truncate(vsi_l_offset nNewSize) override;
+
     void *GetNativeFileDescriptor() override
     {
         return reinterpret_cast<void *>(static_cast<uintptr_t>(fileno(fp)));
     }
+
     VSIRangeStatus GetRangeStatus(vsi_l_offset nOffset,
                                   vsi_l_offset nLength) override;
 #if defined(HAVE_PREAD64) || (defined(HAVE_PREAD_BSD) && SIZEOF_OFF_T == 8)
@@ -1021,6 +1023,7 @@ struct VSIDIRUnixStdio final : public VSIDIR
         : poFS(poFSIn)
     {
     }
+
     ~VSIDIRUnixStdio();
 
     const VSIDIREntry *NextDirEntry() override;

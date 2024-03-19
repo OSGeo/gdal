@@ -602,6 +602,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal(
 
     return OGRERR_NONE;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -918,6 +919,7 @@ std::string OGRGeometryCollection::exportToWktInternal(
         return std::string();
     }
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1323,6 +1325,7 @@ OGRGeometryCollection::TransferMembersAndDestroy(OGRGeometryCollection *poSrc,
     delete poSrc;
     return poDst;
 }
+
 //! @endcond
 
 /************************************************************************/

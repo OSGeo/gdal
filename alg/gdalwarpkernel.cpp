@@ -7677,6 +7677,7 @@ static void GWKSumPreservingThread(void *pData)
         // and split)
         double dfArea;
     };
+
     std::vector<SourcePixel> sourcePixels;
 
     XYPoly discontinuityLeft(5);

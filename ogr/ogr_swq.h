@@ -211,6 +211,7 @@ class CPL_UNSTABLE_API swq_custom_func_registrar
     virtual ~swq_custom_func_registrar()
     {
     }
+
     virtual const swq_operation *GetOperator(const char *) = 0;
 };
 
