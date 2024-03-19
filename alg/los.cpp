@@ -49,8 +49,9 @@
 // The callback is run at every point along the line,
 // which should return True if the point is above terrain.
 // Bresenham2D will return true if all points have LOS between the start and end.
-static bool Bresenham2D(int x1, int y1, int x2, int y2,
-                        std::function<auto(int, int)->bool> OnBresenhamPoint)
+static bool
+Bresenham2D(const int x1, const int y1, const int x2, const int y2,
+            std::function<auto(const int, const int)->bool> OnBresenhamPoint)
 {
     bool isAboveTerrain = true;
     int dx, dy;
