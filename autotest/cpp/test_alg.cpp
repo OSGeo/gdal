@@ -358,7 +358,10 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
                              "SRTM1/ap_srtm1.zip/ap_srtm1.vrt";
     const auto poDS = GDALDatasetUniquePtr(
         GDALDataset::FromHandle(GDALOpen(path.c_str(), GA_ReadOnly)));
-    ASSERT_TRUE(poDS != nullptr);
+    if (!poDS )
+    {
+        GTEST_SKIP() << "Cannot open << path;
+    }
 
     auto pBand = poDS->GetRasterBand(1);
     ASSERT_TRUE(pBand != nullptr);
