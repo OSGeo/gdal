@@ -217,7 +217,7 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
     auto GetZValue = [&](const int x) -> double
     {
         const auto xDiff = xB - xA;
-        const auto xPercent = x / xDiff;
+        const float xPercent = static_cast<float>(x) / xDiff;
         return lerp(static_cast<int>(zA), static_cast<int>(zB), xPercent);
     };
 
