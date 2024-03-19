@@ -278,7 +278,8 @@ TEST_F(test_alg, GDALAutoCreateWarpedVRT_alpha_band)
 // Test GDALIsLineOfSightVisible() reject null dataset
 TEST_F(test_alg, GDALIsLineOfSightVisible_null_dataset)
 {
-    EXPECT_FALSE(GDALIsLineOfSightVisible(nullptr, 0, 0, 0.0, 0, 0, 0.0, nullptr));
+    EXPECT_FALSE(
+        GDALIsLineOfSightVisible(nullptr, 0, 0, 0.0, 0, 0, 0.0, nullptr));
 }
 
 // Test GDALIsLineOfSightVisible() with single point dataset
@@ -287,20 +288,25 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_single_point_dataset)
     auto const sizeX = 1;
     auto const sizeY = 1;
     auto const numBands = 1;
-    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
-        ->Create("", sizeX, sizeY, numBands, GDT_Int8, nullptr));
+    GDALDatasetUniquePtr poDS(
+        GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
+            ->Create("", sizeX, sizeY, numBands, GDT_Int8, nullptr));
     ASSERT_TRUE(poDS != nullptr);
 
     uint8_t val = 42;
     auto pBand = poDS->GetRasterBand(1);
     ASSERT_TRUE(pBand != nullptr);
-    ASSERT_TRUE(poDS->RasterIO(GF_Write, 0, 0, 1, 1, &val, 1, 1, GDT_Int8, 1, nullptr, 0, 0, 0, nullptr) == CE_None);
+    ASSERT_TRUE(poDS->RasterIO(GF_Write, 0, 0, 1, 1, &val, 1, 1, GDT_Int8, 1,
+                               nullptr, 0, 0, 0, nullptr) == CE_None);
     // Both points below terrain
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 0, 0.0, 0, 0, 0.0, nullptr));
+    EXPECT_FALSE(
+        GDALIsLineOfSightVisible(pBand, 0, 0, 0.0, 0, 0, 0.0, nullptr));
     // One point below terrain
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 0, 0.0, 0, 0, 43.0, nullptr));
+    EXPECT_FALSE(
+        GDALIsLineOfSightVisible(pBand, 0, 0, 0.0, 0, 0, 43.0, nullptr));
     // Both points above terrain
-    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 0, 0, 44.0, 0, 0, 43.0, nullptr));
+    EXPECT_TRUE(
+        GDALIsLineOfSightVisible(pBand, 0, 0, 44.0, 0, 0, 43.0, nullptr));
 }
 
 // Test GDALIsLineOfSightVisible() with 10x10 default dataset
@@ -309,8 +315,9 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_default_square_dataset)
     auto const sizeX = 10;
     auto const sizeY = 10;
     auto const numBands = 1;
-    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
-        ->Create("", sizeX, sizeY, numBands, GDT_Int8, nullptr));
+    GDALDatasetUniquePtr poDS(
+        GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
+            ->Create("", sizeX, sizeY, numBands, GDT_Int8, nullptr));
     ASSERT_TRUE(poDS != nullptr);
 
     auto pBand = poDS->GetRasterBand(1);
@@ -320,29 +327,37 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_default_square_dataset)
     const double y1 = 1;
     const double x2 = 2;
     const double y2 = 2;
-    
+
     // Both points are above terrain.
-    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, x1, y1, 1.0, x2, y2, 1.0, nullptr));
+    EXPECT_TRUE(
+        GDALIsLineOfSightVisible(pBand, x1, y1, 1.0, x2, y2, 1.0, nullptr));
     // Flip the order, same result.
-    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, x2, y2, 1.0, x1, y1, 1.0, nullptr));
+    EXPECT_TRUE(
+        GDALIsLineOfSightVisible(pBand, x2, y2, 1.0, x1, y1, 1.0, nullptr));
 
     // One point is below terrain.
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, x1, y1, -1.0, x2, y2, 1.0, nullptr));
+    EXPECT_FALSE(
+        GDALIsLineOfSightVisible(pBand, x1, y1, -1.0, x2, y2, 1.0, nullptr));
     // Flip the order, same result.
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, x2, y2, -1.0, x1, y1, 1.0, nullptr));
+    EXPECT_FALSE(
+        GDALIsLineOfSightVisible(pBand, x2, y2, -1.0, x1, y1, 1.0, nullptr));
 
     // Both points are below terrain.
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, x1, y1, -1.0, x2, y2, -1.0, nullptr));
+    EXPECT_FALSE(
+        GDALIsLineOfSightVisible(pBand, x1, y1, -1.0, x2, y2, -1.0, nullptr));
     // Flip the order, same result.
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, x2, y2, -1.0, x1, y1, -1.0, nullptr));
+    EXPECT_FALSE(
+        GDALIsLineOfSightVisible(pBand, x2, y2, -1.0, x1, y1, -1.0, nullptr));
 }
 
 // Test GDALIsLineOfSightVisible() through a mountain (not a unit test)
 TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
 {
     GDALAllRegister();
-    const std::string path = "/vsizip/vsicurl/https://terrain.ardupilot.org/SRTM1/ap_srtm1.zip/ap_srtm1.vrt";
-    const auto poDS = GDALDatasetUniquePtr(GDALDataset::FromHandle(GDALOpen(path.c_str(), GA_ReadOnly)));
+    const std::string path = "/vsizip/vsicurl/https://terrain.ardupilot.org/"
+                             "SRTM1/ap_srtm1.zip/ap_srtm1.vrt";
+    const auto poDS = GDALDatasetUniquePtr(
+        GDALDataset::FromHandle(GDALOpen(path.c_str(), GA_ReadOnly)));
     ASSERT_TRUE(poDS != nullptr);
 
     auto pBand = poDS->GetRasterBand(1);
@@ -350,7 +365,8 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
     std::array<double, 6> geoFwdTransform;
     ASSERT_TRUE(poDS->GetGeoTransform(geoFwdTransform.data()) == CE_None);
     std::array<double, 6> geoInvTransform;
-    ASSERT_TRUE(GDALInvGeoTransform(geoFwdTransform.data(), geoInvTransform.data()));
+    ASSERT_TRUE(
+        GDALInvGeoTransform(geoFwdTransform.data(), geoInvTransform.data()));
 
     // Check both sides of the continental divide in Colorado at Eisenhower tunnel.
     const double eisLatE = 39.679000;
@@ -359,16 +375,25 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
     const double eisLngW = -105.935403;
 
     double eisEx, eisEy, eisWx, eisWy;
-    GDALApplyGeoTransform(geoInvTransform.data(), eisLngE, eisLatE, &eisEx, &eisEy);
-    GDALApplyGeoTransform(geoInvTransform.data(), eisLngW, eisLatW, &eisWx, &eisWy);
-    
+    GDALApplyGeoTransform(geoInvTransform.data(), eisLngE, eisLatE, &eisEx,
+                          &eisEy);
+    GDALApplyGeoTransform(geoInvTransform.data(), eisLngW, eisLatW, &eisWx,
+                          &eisWy);
+    const int iEisEx = static_cast<int>(eisEx);
+    const int iEisEy = static_cast<int>(eisEy);
+    const int iEisWx = static_cast<int>(eisWx);
+    const int iEisWy = static_cast<int>(eisWy);
+
     // Both points are just above terrain, with terrain between.
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, eisEx, eisEy, 3380.0, eisWx, eisWy, 3450.0, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, iEisEx, iEisEy, 3380.0, iEisWx,
+                                          iEisWy, 3450.0, nullptr));
     // Flip the order, same result.
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, eisWx, eisWy, 3450.0, eisEx, eisEy, 3380.0, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, iEisWx, iEisWy, 3450.0, iEisEx,
+                                          iEisEy, 3380.0, nullptr));
 
     // Both points above terrain.
-    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, eisEx, eisEy, 3900.0, eisWx, eisWy, 3900.0, nullptr));
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, iEisEx, iEisEy, 3900.0, iEisWx,
+                                         iEisWy, 3900.0, nullptr));
 }
 
 }  // namespace
