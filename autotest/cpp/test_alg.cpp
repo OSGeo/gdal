@@ -293,7 +293,7 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_single_point_dataset)
             ->Create("", sizeX, sizeY, numBands, GDT_Int8, nullptr));
     ASSERT_TRUE(poDS != nullptr);
 
-    uint8_t val = 42;
+    int8_t val = 42;
     auto pBand = poDS->GetRasterBand(1);
     ASSERT_TRUE(pBand != nullptr);
     ASSERT_TRUE(poDS->RasterIO(GF_Write, 0, 0, 1, 1, &val, 1, 1, GDT_Int8, 1,
