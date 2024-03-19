@@ -25,14 +25,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-// Test instructions:
-// * cmake -S . -B build -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Debug
-// * cmake --build build --target gdal_unit_test -j `nproc`
-// * ./build/autotest/cpp/gdal_unit_test --gtest_filter="test_alg.GDALIsLineOfSightVisible*"
-// Or, with GDB
-// *  gdb ./build/autotest/cpp/gdal_unit_test
-// * >>> r --gtest_filter="test_alg.GDALIsLineOfSightVisible*"
-
 #include <functional>
 #include <cmath>
 
