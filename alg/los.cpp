@@ -210,15 +210,15 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
     // Use an interpolated Z height with 2D bresenham for the remaining cases.
 
     // Lambda for Linear interpolate like C++20 std::lerp.
-    auto lerp = [](const int a, const int b, const float t)
+    auto lerp = [](const double a, const double b, const double t)
     { return a + t * (b - a); };
 
     // Lambda for getting Z test height given x input along the bresenham line.
     auto GetZValue = [&](const int x) -> double
     {
         const auto xDiff = xB - xA;
-        const float xPercent = static_cast<float>(x) / xDiff;
-        return lerp(static_cast<int>(zA), static_cast<int>(zB), xPercent);
+        const double xPercent = static_cast<double>(x) / xDiff;
+        return lerp(zA, zB, xPercent);
     };
 
     // Lambda to get elevation at a bresenham-computed location.
