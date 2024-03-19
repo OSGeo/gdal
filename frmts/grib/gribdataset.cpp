@@ -1738,13 +1738,15 @@ void GRIBArray::Init(GRIBGroup *poGroup, GRIBDataset *poDS,
         {
             bool bOK = true;
             auto poVar = oIterX->second->GetIndexingVariable();
+            constexpr double EPSILON = 1e-10;
             if (poVar)
             {
                 GUInt64 nStart = 0;
                 size_t nCount = 1;
                 double dfVal = 0;
                 poVar->Read(&nStart, &nCount, nullptr, nullptr, m_dt, &dfVal);
-                if (dfVal != adfGT[0] + 0.5 * adfGT[1])
+                if (std::fabs(dfVal - (adfGT[0] + 0.5 * adfGT[1])) >
+                    EPSILON * std::fabs(dfVal))
                 {
                     bOK = false;
                 }
@@ -1759,8 +1761,10 @@ void GRIBArray::Init(GRIBGroup *poGroup, GRIBDataset *poDS,
                     double dfVal = 0;
                     poVar->Read(&nStart, &nCount, nullptr, nullptr, m_dt,
                                 &dfVal);
-                    if (dfVal != adfGT[3] + poDS->nRasterYSize * adfGT[5] -
-                                     0.5 * adfGT[5])
+                    if (std::fabs(dfVal -
+                                  (adfGT[3] + poDS->nRasterYSize * adfGT[5] -
+                                   0.5 * adfGT[5])) >
+                        EPSILON * std::fabs(dfVal))
                     {
                         bOK = false;
                     }
