@@ -165,11 +165,9 @@ bool IsAboveTerrain(const GDALRasterBandH hBand, const int x, const int y, const
  */
 
 bool GDALIsLineOfSightVisible(
-    const GDALRasterBandH hBand, const int xA, const int yA, const double zA, const int xB, const int yB, const double zB, const char** papszOptions)
+    const GDALRasterBandH hBand, const int xA, const int yA, const double zA, const int xB, const int yB, const double zB, CPL_UNUSED CSLConstList papszOptions)
 {
-    if(hBand == nullptr) {
-        return false;
-    }
+    VALIDATE_POINTER1(hBand, "GDALIsLineOfSightVisible", false);
 
     // Perform a preliminary check of the start and end points.
     if (!IsAboveTerrain(hBand, xA, yA, zA)) {
