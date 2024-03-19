@@ -316,10 +316,10 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_default_square_dataset)
     auto pBand = poDS->GetRasterBand(1);
     ASSERT_TRUE(pBand != nullptr);
 
-    const double x1 = 1;
-    const double y1 = 1;
-    const double x2 = 2;
-    const double y2 = 2;
+    const int x1 = 1;
+    const int y1 = 1;
+    const int x2 = 2;
+    const int y2 = 2;
 
     // Both points are above terrain.
     EXPECT_TRUE(
