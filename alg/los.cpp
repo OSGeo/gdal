@@ -159,8 +159,20 @@ static bool IsAboveTerrain(const GDALRasterBandH hBand, const int x,
  *
  * @param hBand The band to read the DEM data from. This must NOT be null.
  * 
- * @param xA The X location (raster column) to check on the raster to read the DEM data from.
+ * @param xA The X location (raster column) of the first point to check on the raster.
  *
+ * @param yA The Y location (raster row) of the first point to check on the raster.
+ * 
+ * @param zA The Z location (height) of the first point to check.
+ * 
+ * @param xB The X location (raster column) of the second point to check on the raster.
+ *
+ * @param yB The Y location (raster row) of the second point to check on the raster.
+ * 
+ * @param zB The Z location (height) of the second point to check.
+ * 
+ * @param papszOptions Options for the line of sight algorithm (currently ignored).
+ * 
  * @return True if the two points are within Line of Sight.
  *
  * @since GDAL 3.9
