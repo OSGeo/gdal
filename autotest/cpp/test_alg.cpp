@@ -275,13 +275,6 @@ TEST_F(test_alg, GDALAutoCreateWarpedVRT_alpha_band)
     GDALClose(hWarpedVRT);
 }
 
-// Test GDALIsLineOfSightVisible() reject null dataset
-TEST_F(test_alg, GDALIsLineOfSightVisible_null_dataset)
-{
-    EXPECT_FALSE(
-        GDALIsLineOfSightVisible(nullptr, 0, 0, 0.0, 0, 0, 0.0, nullptr));
-}
-
 // Test GDALIsLineOfSightVisible() with single point dataset
 TEST_F(test_alg, GDALIsLineOfSightVisible_single_point_dataset)
 {
@@ -358,9 +351,9 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
                              "SRTM1/ap_srtm1.zip/ap_srtm1.vrt";
     const auto poDS = GDALDatasetUniquePtr(
         GDALDataset::FromHandle(GDALOpen(path.c_str(), GA_ReadOnly)));
-    if (!poDS )
+    if (!poDS)
     {
-        GTEST_SKIP() << "Cannot open << path;
+        GTEST_SKIP() << "Cannot open " << path;
     }
 
     auto pBand = poDS->GetRasterBand(1);
