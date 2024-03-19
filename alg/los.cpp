@@ -126,12 +126,14 @@ bool Bresenham2D(int x1, int y1, int x2, int y2, std::function< auto(int, int) -
 
 
 // Get the elevation of a single point.
+static
 bool GetElevation(const GDALRasterBandH hBand, const int x, const int y, double& val)
 {
     return GDALRasterIO(hBand, GF_Read, x, y, 1, 1, &val, 1, 1, GDT_Float64, 0, 0) == CE_None;
 }
 
 // Check a single location is above terrain.
+static
 bool IsAboveTerrain(const GDALRasterBandH hBand, const int x, const int y, const double z)
 {
     double terrainHeight;
