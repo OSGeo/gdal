@@ -1750,7 +1750,8 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
                 }
                 if (nTZFlag > OGR_TZFLAG_MIXED_TZ)
                 {
-                    nVal -= (nTZFlag - OGR_TZFLAG_UTC) * 15 * 60;
+                    const int nOffsetSec = (nTZFlag - OGR_TZFLAG_UTC) * 15 * 60;
+                    nVal -= nOffsetSec;
                 }
                 OGR_ARROW_RETURN_OGRERR_NOT_OK(
                     static_cast<arrow::TimestampBuilder *>(poBuilder)->Append(
