@@ -157,7 +157,7 @@ bool IsAboveTerrain(const GDALRasterBandH hBand, const int x, const int y, const
  *
  * @param hBand The band to read the DEM data from.
  * 
- * @param xA The X location to check on the raster to read the DEM data from.
+ * @param xA The X location (raster column) to check on the raster to read the DEM data from.
  *
  * @return True if the two points are within Line of Sight.
  *
