@@ -161,7 +161,7 @@ bool IsAboveTerrain(const GDALRasterBandH hBand, const int x, const int y, const
  *
  * @return True if the two points are within Line of Sight.
  *
- * @since GDAL 3.X
+ * @since GDAL 3.9
  */
 
 bool GDALIsLineOfSightVisible(
