@@ -763,6 +763,7 @@ extern "C++"
         using reference = value_type &;
 
         CSLConstList m_papszList = nullptr;
+        bool m_bReturnNullKeyIfNotNameValue = false;
         std::string m_osKey{};
 
         value_type operator*();
@@ -802,15 +803,17 @@ extern "C++"
     {
       public:
         /** Constructor */
-        inline explicit CSLNameValueIteratorWrapper(CSLConstList papszList)
-            : m_papszList(papszList)
+        inline explicit CSLNameValueIteratorWrapper(
+            CSLConstList papszList, bool bReturnNullKeyIfNotNameValue)
+            : m_papszList(papszList),
+              m_bReturnNullKeyIfNotNameValue(bReturnNullKeyIfNotNameValue)
         {
         }
 
         /** Get the begin of the list */
         inline CSLNameValueIterator begin() const
         {
-            return {m_papszList};
+            return {m_papszList, m_bReturnNullKeyIfNotNameValue};
         }
 
         /** Get the end of the list */
@@ -818,6 +821,7 @@ extern "C++"
 
       private:
         CSLConstList m_papszList;
+        const bool m_bReturnNullKeyIfNotNameValue;
     };
 
     /** Wraps a CSLConstList in a structure that can be used with C++ iterators
@@ -829,24 +833,33 @@ extern "C++"
      * Note that a (name, value) pair returned by dereferencing an iterator
      * is invalidated by the next iteration on the iterator.
      *
+     * @param papszList List to iterate over.
+     * @param bReturnNullKeyIfNotNameValue When this is set to true, if a string
+     * contained in the list if not of the form name=value, then the value of
+     * the iterator will be (nullptr, string).
+     *
      * @since GDAL 3.9
      */
-    inline CSLNameValueIteratorWrapper IterateNameValue(CSLConstList papszList)
+    inline CSLNameValueIteratorWrapper
+    IterateNameValue(CSLConstList papszList,
+                     bool bReturnNullKeyIfNotNameValue = false)
     {
-        return CSLNameValueIteratorWrapper{papszList};
+        return CSLNameValueIteratorWrapper{papszList,
+                                           bReturnNullKeyIfNotNameValue};
     }
 
     /*! @cond Doxygen_Suppress */
     inline CSLNameValueIteratorWrapper
-    IterateNameValue(const CPLStringList &aosList)
+    IterateNameValue(const CPLStringList &aosList,
+                     bool bReturnNullKeyIfNotNameValue = false)
     {
-        return IterateNameValue(aosList.List());
+        return IterateNameValue(aosList.List(), bReturnNullKeyIfNotNameValue);
     }
 
     /*! @endcond */
 
     /*! @cond Doxygen_Suppress */
-    inline CSLIteratorWrapper IterateNameValue(char **) = delete;
+    inline CSLIteratorWrapper IterateNameValue(char **, bool = false) = delete;
 
     /*! @endcond */
 

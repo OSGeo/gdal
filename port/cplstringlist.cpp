@@ -1036,6 +1036,10 @@ CSLNameValueIterator::value_type CSLNameValueIterator::operator*()
                 CPLFree(pszKey);
                 return {m_osKey.c_str(), pszValue};
             }
+            else if (m_bReturnNullKeyIfNotNameValue)
+            {
+                return {nullptr, *m_papszList};
+            }
             // Skip entries that are not name=value pairs.
             ++m_papszList;
         }
@@ -1055,9 +1059,13 @@ CSLNameValueIterator::value_type CSLNameValueIterator::operator*()
 CSLNameValueIterator CSLNameValueIteratorWrapper::end() const
 {
     int nCount = CSLCount(m_papszList);
-    while (nCount > 0 && strchr(m_papszList[nCount - 1], '=') == nullptr)
-        --nCount;
-    return CSLNameValueIterator{m_papszList + nCount};
+    if (!m_bReturnNullKeyIfNotNameValue)
+    {
+        while (nCount > 0 && strchr(m_papszList[nCount - 1], '=') == nullptr)
+            --nCount;
+    }
+    return CSLNameValueIterator{m_papszList + nCount,
+                                m_bReturnNullKeyIfNotNameValue};
 }
 
 /*! @endcond */
