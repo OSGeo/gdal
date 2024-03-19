@@ -125,10 +125,12 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
     void SetSourceLayerFieldName(const char *pszSourceLayerFieldName);
     void SetPreserveSrcFID(int bPreserveSrcFID);
     void SetFeatureCount(int nFeatureCount);
+
     virtual const char *GetName() override
     {
         return osName.c_str();
     }
+
     virtual OGRwkbGeometryType GetGeomType() override;
 
     virtual void ResetReading() override;

@@ -466,6 +466,7 @@ static bool PartialRefreshFromSourceExtent(
         int nXSize;
         int nYSize;
     };
+
     std::vector<Region> regions;
 
     double dfTotalPixels = 0;
@@ -966,4 +967,5 @@ MAIN_START(nArgc, papszArgv)
 
     return nResultStatus;
 }
+
 MAIN_END

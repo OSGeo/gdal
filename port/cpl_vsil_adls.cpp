@@ -137,6 +137,7 @@ struct VSIDIRADLS : public VSIDIR
     bool m_bCacheEntries = true;
     std::string
         m_osFilterPrefix{};  // client-side only. No server-side option in
+
     // https://docs.microsoft.com/en-us/rest/api/storageservices/datalakestoragegen2/path/list
 
     explicit VSIDIRADLS(VSIADLSFSHandler *poFSIn) : m_poFS(poFSIn)
@@ -195,6 +196,7 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
     {
         return "/vsiadls/";
     }
+
     const char *GetDebugKey() const override
     {
         return "ADLS";

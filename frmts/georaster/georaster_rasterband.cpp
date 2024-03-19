@@ -282,6 +282,7 @@ CPLErr GeoRasterRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 }
+
 //  ---------------------------------------------------------------------------
 //                                                     GetColorInterpretation()
 //  ---------------------------------------------------------------------------

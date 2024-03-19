@@ -969,6 +969,7 @@ CPLErr ECWRasterBand::OldIRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     return eErr;
 }
+
 // #endif !defined(SDK_CAN_DO_SUPERSAMPLING)
 
 /************************************************************************/
@@ -3644,6 +3645,7 @@ const char *ECWGetColorSpaceName(NCSFileColorSpace colorSpace)
             return "unrecognized";
     }
 }
+
 /************************************************************************/
 /*                     ECWTranslateFromCellSizeUnits()                  */
 /************************************************************************/

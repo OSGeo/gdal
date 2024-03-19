@@ -92,6 +92,7 @@ extern "C"
     {
         int unused;
     } zipFile__;
+
     typedef zipFile__ *zipFile;
 #else
 typedef voidp zipFile;

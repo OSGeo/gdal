@@ -68,11 +68,13 @@ typedef struct
     GSpacing nLineSpace;
     GSpacing nBandSpace;
     GDALDataType eBurnValueType;
+
     union
     {
         const std::int64_t *int64_values;
         const double *double_values;
     } burnValues;
+
     GDALBurnValueSrc eBurnValueSource;
     GDALRasterMergeAlg eMergeAlg;
     bool bFillSetVisitedPoints;
@@ -166,6 +168,13 @@ struct IntEqualityTest
 
 typedef GDALRasterPolygonEnumeratorT<std::int64_t, IntEqualityTest>
     GDALRasterPolygonEnumerator;
+
+constexpr const char *GDAL_APPROX_TRANSFORMER_CLASS_NAME =
+    "GDALApproxTransformer";
+constexpr const char *GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME =
+    "GDALGenImgProjTransformer";
+
+bool GDALIsTransformer(void *hTransformerArg, const char *pszClassName);
 
 typedef void *(*GDALTransformDeserializeFunc)(CPLXMLNode *psTree);
 

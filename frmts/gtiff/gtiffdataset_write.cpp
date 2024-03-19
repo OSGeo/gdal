@@ -1477,6 +1477,7 @@ uint64_t RoundValueDiscardLsb<uint64_t, uint64_t>(const void *ptr,
 {
     return RoundValueDiscardLsbUnsigned<uint64_t>(ptr, nMask, nRoundUpBitTest);
 }
+
 template <>
 int8_t RoundValueDiscardLsb<int8_t, int8_t>(const void *ptr, uint64_t nMask,
                                             uint64_t nRoundUpBitTest)
@@ -3712,7 +3713,7 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
     /* ==================================================================== */
     /*      Process each domain.                                            */
     /* ==================================================================== */
-    char **papszDomainList = poMDMD->GetDomainList();
+    CSLConstList papszDomainList = poMDMD->GetDomainList();
     for (int iDomain = 0; papszDomainList && papszDomainList[iDomain];
          ++iDomain)
     {
@@ -4306,7 +4307,7 @@ void GTiffDataset::PushMetadataToPam()
         /*      Loop over the available domains. */
         /* --------------------------------------------------------------------
          */
-        char **papszDomainList = poSrcMDMD->GetDomainList();
+        CSLConstList papszDomainList = poSrcMDMD->GetDomainList();
         for (int iDomain = 0; papszDomainList && papszDomainList[iDomain];
              ++iDomain)
         {
@@ -5078,6 +5079,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                         GDALGetDataTypeName(eType));
             return nullptr;
         }
+
         const struct
         {
             GDALDataType eDT;
@@ -5087,6 +5089,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
             {GDT_UInt16, 16},
             {GDT_Float32, 32},
         };
+
         for (const auto &sSupportedDTBitsPerSample : asSupportedDTBitsPerSample)
         {
             if (eType == sSupportedDTBitsPerSample.eDT &&
@@ -5130,10 +5133,9 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
 #if !defined(HAVE_PREDICTOR_2_FOR_64BIT)
                 if (l_nBitsPerSample == 64)
                 {
-                    ReportError(
-                        pszFilename, CE_Failure, CPLE_AppDefined,
-                        "PREDICTOR=2 is only supported with 64 bit samples "
-                        "starting with libtiff > 4.3.0.");
+                    ReportError(pszFilename, CE_Failure, CPLE_AppDefined,
+                                "PREDICTOR=2 is supported on 64 bit samples "
+                                "starting with libtiff > 4.3.0.");
                 }
                 else
 #endif

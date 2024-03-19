@@ -173,6 +173,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
             return filename_ == other.filename_ && offset_ == other.offset_;
         }
     };
+
     struct FilenameOffsetPairHasher
     {
         std::size_t operator()(const FilenameOffsetPair &k) const
@@ -219,6 +220,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
         int nWaiters = 0;
         std::string osData{};
     };
+
     std::mutex m_oMutex{};
     std::map<std::string, std::unique_ptr<RegionInDownload>>
         m_oMapRegionInDownload{};
@@ -291,12 +293,14 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     {
         return false;
     }
+
     virtual bool
     SupportsSequentialWrite(const char * /* pszPath */,
                             bool /* bAllowLocalTempFile */) override
     {
         return false;
     }
+
     virtual bool SupportsRandomWrite(const char * /* pszPath */,
                                      bool /* bAllowLocalTempFile */) override
     {
@@ -431,6 +435,7 @@ class VSICurlHandle : public VSIVirtualHandle
         size_t nSize = 0;
         std::vector<GByte> abyData{};
     };
+
     std::vector<std::unique_ptr<AdviseReadRange>> m_aoAdviseReadRanges{};
     std::thread m_oThreadAdviseRead{};
 
@@ -441,27 +446,34 @@ class VSICurlHandle : public VSIVirtualHandle
     {
         return nullptr;
     }
+
     virtual bool AllowAutomaticRedirection()
     {
         return true;
     }
+
     virtual bool CanRestartOnError(const char *, const char *, bool)
     {
         return false;
     }
+
     virtual bool UseLimitRangeGetInsteadOfHead()
     {
         return false;
     }
+
     virtual bool IsDirectoryFromExists(const char * /*pszVerb*/,
                                        int /*response_code*/)
     {
         return false;
     }
+
     virtual void ProcessGetFileSizeResult(const char * /* pszContent */)
     {
     }
+
     void SetURL(const char *pszURL);
+
     virtual bool Authenticate(const char * /* pszFilename */)
     {
         return false;
@@ -487,6 +499,7 @@ class VSICurlHandle : public VSIVirtualHandle
     {
         return true;
     }
+
     size_t PRead(void *pBuffer, size_t nSize,
                  vsi_l_offset nOffset) const override;
 
@@ -497,24 +510,31 @@ class VSICurlHandle : public VSIVirtualHandle
     {
         return oFileProp.bHasComputedFileSize;
     }
+
     vsi_l_offset GetFileSizeOrHeaders(bool bSetError, bool bGetHeaders);
+
     virtual vsi_l_offset GetFileSize(bool bSetError)
     {
         return GetFileSizeOrHeaders(bSetError, false);
     }
+
     bool Exists(bool bSetError);
+
     bool IsDirectory() const
     {
         return oFileProp.bIsDirectory;
     }
+
     int GetMode() const
     {
         return oFileProp.nMode;
     }
+
     time_t GetMTime() const
     {
         return oFileProp.mTime;
     }
+
     const CPLStringList &GetHeaders()
     {
         return m_aosHeaders;
@@ -553,6 +573,7 @@ class VSICurlFilesystemHandlerBaseWritable : public VSICurlFilesystemHandlerBase
     {
         return true;
     }
+
     bool SupportsRandomWrite(const char * /* pszPath */,
                              bool /* bAllowLocalTempFile */) override;
 };
@@ -653,12 +674,14 @@ class IVSIS3LikeHandle : public VSICurlHandle
     {
         return true;
     }
+
     bool IsDirectoryFromExists(const char *pszVerb, int response_code) override
     {
         // A bit dirty, but on S3, a GET on a existing directory returns a 416
         return response_code == 416 && EQUAL(pszVerb, "GET") &&
                std::string(m_pszURL).back() == '/';
     }
+
     void ProcessGetFileSizeResult(const char *pszContent) override
     {
         oFileProp.bIsDirectory =
@@ -671,6 +694,7 @@ class IVSIS3LikeHandle : public VSICurlHandle
         : VSICurlHandle(poFSIn, pszFilename, pszURLIn)
     {
     }
+
     ~IVSIS3LikeHandle() override
     {
     }

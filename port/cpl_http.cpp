@@ -649,6 +649,7 @@ class CPLHTTPPostFields
     CPLHTTPPostFields() = default;
     CPLHTTPPostFields &operator=(const CPLHTTPPostFields &) = delete;
     CPLHTTPPostFields(const CPLHTTPPostFields &) = delete;
+
     CPLErr Fill(CURL *http_handle, CSLConstList papszOptions)
     {
         // Fill POST form if present

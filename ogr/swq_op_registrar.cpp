@@ -126,4 +126,5 @@ SWQColumnFuncChecker(swq_expr_node *poNode,
              poOp != nullptr ? poOp->pszName : "");
     return SWQ_ERROR;
 }
+
 //! @endcond

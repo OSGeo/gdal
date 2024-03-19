@@ -65,7 +65,9 @@ SpacesInSquareBrackets: false
 Standard:        Cpp11
 TabWidth:        4
 UseTab:          Never
-
+# Add line breaks
+SeparateDefinitionBlocks: Always
+EmptyLineBeforeAccessModifier: LogicalBlock
 ---
 Language: Json
 BasedOnStyle: llvm

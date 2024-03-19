@@ -900,4 +900,5 @@ OGRSurfaceCasterToCurvePolygon OGRCurvePolygon::GetCasterToCurvePolygon() const
 {
     return ::CasterToCurvePolygon;
 }
+
 //! @endcond

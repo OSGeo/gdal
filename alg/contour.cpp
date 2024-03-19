@@ -128,6 +128,7 @@ struct PolygonContourWriter
         currentGeometry_.reset(new OGRMultiPolygon());
         currentLevel_ = level;
     }
+
     void endPolygon()
     {
         if (currentPart_)
@@ -160,6 +161,7 @@ struct PolygonContourWriter
         currentPart_ = new OGRPolygon();
         currentPart_->addRingDirectly(poNewRing);
     }
+
     void addInteriorRing(const marching_squares::LineString &ring)
     {
         OGRLinearRing *poNewRing = new OGRLinearRing();

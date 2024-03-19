@@ -62,11 +62,13 @@ template <class T, class V = std::string> class DirectedAcyclicGraph
         outgoingNodes.clear();
         names.clear();
     }
+
     void addNode(const T &i, const V &s)
     {
         nodes.insert(i);
         names[i] = s;
     }
+
     void removeNode(const T &i);
     const char *addEdge(const T &i, const T &j);
     const char *removeEdge(const T &i, const T &j);

@@ -32,7 +32,8 @@ Description
 
 This program burns vector geometries (points, lines, and polygons) into the
 raster band(s) of a raster image.  Vectors are read from OGR supported vector
-formats.
+formats. If the output raster already exists, the affected pixels are updated
+in-place.
 
 Note that on the fly reprojection of vector data to the coordinate system of the
 raster data is only supported since GDAL 2.1.0.
@@ -200,7 +201,8 @@ raster data is only supported since GDAL 2.1.0.
 .. option:: <dst_filename>
 
     The GDAL supported output file.  Must support update mode access.
-    This file will be created (or overwritten if it already exists).
+    This file will be created if it does not already exist
+    If the output raster already exists, the affected pixels are updated in-place.
 
 The program creates a new target raster image when any of the :option:`-of`,
 :option:`-a_nodata`, :option:`-init`, :option:`-a_srs`, :option:`-co`, :option:`-te`,

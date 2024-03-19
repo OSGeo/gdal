@@ -52,6 +52,7 @@ class NGWWrapperRasterBand : public GDALProxyRasterBand
         eDataType = poBaseBand->GetRasterDataType();
         poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
+
     virtual ~NGWWrapperRasterBand()
     {
     }

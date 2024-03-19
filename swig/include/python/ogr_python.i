@@ -830,6 +830,36 @@ def ReleaseResultSet(self, sql_lyr):
             return self._SetField2(fld_index, value)
 
     def GetField(self, fld_index):
+        """
+        Get the value of a field in its native type.
+
+        Alternatively, the ``[]`` operator may be used.
+
+        Parameters
+        ----------
+        fld_index : int / str
+            Field name or 0-based numeric index. For repeated
+            access, use of the numeric index avoids a lookup
+            step.
+
+        Examples
+        --------
+        >>> with gdal.OpenEx("data/poly.shp") as ds:
+        ...     lyr = ds.GetLayer(0)
+        ...     feature = lyr.GetNextFeature()
+        ...     # name-based access
+        ...     feature.GetField("EAS_ID")
+        ...     feature["EAS_ID"]
+        ...     # index-based access
+        ...     index = feature.GetFieldIndex("EAS_ID")
+        ...     feature.GetField(index)
+        ...     feature[index]
+        ...
+        168
+        168
+        168
+        168
+        """
         if isinstance(fld_index, str):
             fld_index = self._getfieldindex(fld_index)
         if (fld_index < 0) or (fld_index > self.GetFieldCount()):
@@ -870,8 +900,8 @@ def ReleaseResultSet(self, sql_lyr):
         SetFieldBinary(Feature self, field_index_or_name: int | str, value: bytes)
 
         Set field to binary data.
-        This function currently only has an effect on OFTBinary fields.
-        This function is the same as the C++ method OGRFeature::SetField().
+        This function currently only has an effect on :py:const:`OFTBinary` fields.
+        This function is the same as the C++ method :cpp:func:`OGRFeature::SetField`.
 
         Parameters
         -----------
@@ -965,11 +995,20 @@ def ReleaseResultSet(self, sql_lyr):
 
 
     def ExportToJson(self, as_object=False, options=None):
-        """Exports a GeoJSON object which represents the Feature. The
-           as_object parameter determines whether the returned value
-           should be a Python object instead of a string. Defaults to False.
-           The options parameter is passed to Geometry.ExportToJson()"""
+        """
+        Export a GeoJSON object which represents the Feature.
 
+        Parameters
+        ----------
+        as_object : bool, default = False
+            determines whether the returned value should be a Python object instead of a string.
+        options : dict/str
+            Options to pass to :py:func:`Geometry.ExportToJson`
+
+        Returns
+        -------
+        str / dict
+        """
         try:
             import simplejson
         except ImportError:
@@ -1030,6 +1069,33 @@ def ReleaseResultSet(self, sql_lyr):
 
 %feature("shadow") SetGeometryDirectly %{
     def SetGeometryDirectly(self, geom):
+        """
+        Set feature geometry.
+
+        This function updates the features geometry, and operates exactly as
+        :py:meth:`SetGeometry`, except that this function assumes ownership of the
+        passed geometry (even in case of failure of that function).
+
+        See :cpp:func:`OGRFeature::SetGeometryDirectly`.
+
+        This method has only an effect on the in-memory feature object. If
+        this object comes from a layer and the modifications must be
+        serialized back to the datasource, :py:meth:`Layer.SetFeature` must be used
+        afterwards. Or if this is a new feature, :py:meth:`Layer.CreateFeature` must be
+        used afterwards.
+
+        Parameters
+        -----------
+        geom : Geometry
+            geometry to apply to feature.
+
+        Returns
+        --------
+        int:
+            :py:const:`OGRERR_NONE` if successful, or
+            :py:const:`OGR_UNSUPPORTED_GEOMETRY_TYPE` if the geometry type is illegal for
+            the :py:class:`FeatureDefn` (checking not yet implemented).
+        """
         ret = $action(self, geom)
         if ret == OGRERR_NONE:
             self._add_geom_ref(geom)
@@ -1038,6 +1104,31 @@ def ReleaseResultSet(self, sql_lyr):
 
 %feature("shadow") SetGeomFieldDirectly %{
     def SetGeomFieldDirectly(self, field, geom):
+        """
+        Set feature geometry of a specified geometry field.
+
+        This function updates the features geometry, and operates exactly as
+        :py:meth:`SetGeomField`, except that this function assumes ownership of the
+        passed geometry (even in case of failure of that function).
+
+        See :cpp:func:`OGRFeature::SetGeomFieldDirectly`.
+
+        Parameters
+        -----------
+        fld_index : int / str
+            Geometry field name or 0-based numeric index. For repeated
+            access, use of the numeric index avoids a lookup
+            step.
+        geom : Geometry
+            handle to the new geometry to apply to feature.
+
+        Returns
+        --------
+        int:
+            :py:const:`OGRERR_NONE` if successful, or
+            :py:const:`OGR_UNSUPPORTED_GEOMETRY_TYPE` if the geometry type is illegal for
+            the :py:class:`FeatureDefn` (checking not yet implemented).
+        """
         ret = $action(self, field, geom)
         if ret == OGRERR_NONE:
             self._add_geom_ref(geom)
@@ -1156,6 +1247,11 @@ def ReleaseResultSet(self, sql_lyr):
     self.thisown = 0
 
 }
+
+%feature("pythonprepend") GetFieldDefn %{
+    if type(args[0]) is str:
+        args = (self.GetFieldIndex(args[0]), )
+%}
 }
 
 %extend OGRFieldDefnShadow {

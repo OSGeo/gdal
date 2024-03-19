@@ -570,17 +570,6 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
         }
         oField.SetSubType(eSubType);
         oField.SetNullable(field->nullable());
-        if (type->id() == arrow::Type::DOUBLE)
-        {
-            if (field->name() == "bbox.minx")
-                m_iBBOXMinXField = m_poFeatureDefn->GetFieldCount();
-            else if (field->name() == "bbox.miny")
-                m_iBBOXMinYField = m_poFeatureDefn->GetFieldCount();
-            else if (field->name() == "bbox.maxx")
-                m_iBBOXMaxXField = m_poFeatureDefn->GetFieldCount();
-            else if (field->name() == "bbox.maxy")
-                m_iBBOXMaxYField = m_poFeatureDefn->GetFieldCount();
-        }
         m_poFeatureDefn->AddFieldDefn(&oField);
         m_anMapFieldIndexToArrowColumn.push_back(path);
     }
@@ -2986,9 +2975,11 @@ template <class T, class U> struct Compare
 template <class T> struct Compare<T, T> : public CompareGeneric<T, T>
 {
 };
+
 template <> struct Compare<int, GIntBig> : public CompareGeneric<int, GIntBig>
 {
 };
+
 template <> struct Compare<double, GIntBig>
 {
     static inline bool get(int op, double val1, GIntBig val2)
@@ -2997,9 +2988,11 @@ template <> struct Compare<double, GIntBig>
                                                    static_cast<double>(val2));
     }
 };
+
 template <> struct Compare<GIntBig, int> : public CompareGeneric<GIntBig, int>
 {
 };
+
 template <> struct Compare<double, int> : public CompareGeneric<double, int>
 {
 };
@@ -3335,10 +3328,14 @@ OGRArrowLayer::SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch)
     m_poArrayWKB = nullptr;
     m_poArrayWKBLarge = nullptr;
     m_poArrayBBOX = nullptr;
-    m_poArrayMinX = nullptr;
-    m_poArrayMinY = nullptr;
-    m_poArrayMaxX = nullptr;
-    m_poArrayMaxY = nullptr;
+    m_poArrayXMinDouble = nullptr;
+    m_poArrayYMinDouble = nullptr;
+    m_poArrayXMaxDouble = nullptr;
+    m_poArrayYMaxDouble = nullptr;
+    m_poArrayXMinFloat = nullptr;
+    m_poArrayYMinFloat = nullptr;
+    m_poArrayXMaxFloat = nullptr;
+    m_poArrayYMaxFloat = nullptr;
 
     if (m_poBatch)
         m_poBatchColumns = m_poBatch->columns();
@@ -3367,83 +3364,74 @@ OGRArrowLayer::SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch)
                 m_poArrayWKBLarge =
                     static_cast<const arrow::LargeBinaryArray *>(poArrayWKB);
             }
+        }
 
-            if (m_iBBOXMinXField >= 0 && m_iBBOXMinYField >= 0 &&
-                m_iBBOXMaxXField >= 0 && m_iBBOXMaxYField >= 0 &&
-                CPLTestBool(CPLGetConfigOption(
-                    ("OGR_" + GetDriverUCName() + "_USE_BBOX").c_str(), "YES")))
+        if (iCol >= 0 &&
+            CPLTestBool(CPLGetConfigOption(
+                ("OGR_" + GetDriverUCName() + "_USE_BBOX").c_str(), "YES")))
+        {
+            const auto oIter =
+                m_oMapGeomFieldIndexToGeomColBBOX.find(m_iGeomFieldFilter);
+            if (oIter != m_oMapGeomFieldIndexToGeomColBBOX.end())
             {
-                const auto GetArray =
-                    [this](int idx, const arrow::Array *&poStructArray)
+                const int idx = m_bIgnoredFields ? oIter->second.iArrayIdx
+                                                 : oIter->second.iArrowCol;
+                CPLAssert(idx >= 0);
+                CPLAssert(static_cast<size_t>(idx) < m_poBatchColumns.size());
+                m_poArrayBBOX = m_poBatchColumns[idx].get();
+                CPLAssert(m_poArrayBBOX->type_id() == arrow::Type::STRUCT);
+                const auto castArray =
+                    static_cast<const arrow::StructArray *>(m_poArrayBBOX);
+                const auto &subArrays = castArray->fields();
+                CPLAssert(
+                    static_cast<size_t>(oIter->second.iArrowSubfieldXMin) <
+                    subArrays.size());
+                const auto xminArray =
+                    subArrays[oIter->second.iArrowSubfieldXMin].get();
+                CPLAssert(
+                    static_cast<size_t>(oIter->second.iArrowSubfieldYMin) <
+                    subArrays.size());
+                const auto yminArray =
+                    subArrays[oIter->second.iArrowSubfieldYMin].get();
+                CPLAssert(
+                    static_cast<size_t>(oIter->second.iArrowSubfieldXMax) <
+                    subArrays.size());
+                const auto xmaxArray =
+                    subArrays[oIter->second.iArrowSubfieldXMax].get();
+                CPLAssert(
+                    static_cast<size_t>(oIter->second.iArrowSubfieldYMax) <
+                    subArrays.size());
+                const auto ymaxArray =
+                    subArrays[oIter->second.iArrowSubfieldYMax].get();
+                if (oIter->second.bIsFloat)
                 {
-                    if (m_bIgnoredFields)
-                    {
-                        const int arrayIdx = m_anMapFieldIndexToArrayIndex[idx];
-                        if (arrayIdx < 0)
-                            return static_cast<const arrow::DoubleArray *>(
-                                nullptr);
-                        auto array = m_poBatchColumns[arrayIdx].get();
-                        CPLAssert(array->type_id() == arrow::Type::DOUBLE);
-                        return static_cast<const arrow::DoubleArray *>(array);
-                    }
-                    else
-                    {
-                        auto array =
-                            m_poBatchColumns[m_anMapFieldIndexToArrowColumn[idx]
-                                                                           [0]]
-                                .get();
-                        ;
-                        int j = 1;
-                        while (array->type_id() == arrow::Type::STRUCT)
-                        {
-                            if (j == 1)
-                                poStructArray = array;
-                            const auto castArray =
-                                static_cast<const arrow::StructArray *>(array);
-                            const auto &subArrays = castArray->fields();
-                            CPLAssert(j <
-                                      static_cast<int>(
-                                          m_anMapFieldIndexToArrowColumn[idx]
-                                              .size()));
-                            const int iArrowSubcol =
-                                m_anMapFieldIndexToArrowColumn[idx][j];
-                            j++;
-                            CPLAssert(iArrowSubcol <
-                                      static_cast<int>(subArrays.size()));
-                            array = subArrays[iArrowSubcol].get();
-                        }
-                        CPLAssert(array->type_id() == arrow::Type::DOUBLE);
-                        return static_cast<const arrow::DoubleArray *>(array);
-                    }
-                };
-
-                const arrow::Array *poStructArrayMinX = nullptr;
-                const arrow::Array *poStructArrayMinY = nullptr;
-                const arrow::Array *poStructArrayMaxX = nullptr;
-                const arrow::Array *poStructArrayMaxY = nullptr;
-                m_poArrayMinX = GetArray(m_iBBOXMinXField, poStructArrayMinX);
-                m_poArrayMinY = GetArray(m_iBBOXMinYField, poStructArrayMinY);
-                m_poArrayMaxX = GetArray(m_iBBOXMaxXField, poStructArrayMaxX);
-                m_poArrayMaxY = GetArray(m_iBBOXMaxYField, poStructArrayMaxY);
-
-                if (poStructArrayMinX != poStructArrayMinY ||
-                    poStructArrayMinX != poStructArrayMaxX ||
-                    poStructArrayMinX != poStructArrayMaxY)
-                {
-                    m_poArrayBBOX = nullptr;
+                    CPLAssert(xminArray->type_id() == arrow::Type::FLOAT);
+                    m_poArrayXMinFloat =
+                        static_cast<const arrow::FloatArray *>(xminArray);
+                    CPLAssert(yminArray->type_id() == arrow::Type::FLOAT);
+                    m_poArrayYMinFloat =
+                        static_cast<const arrow::FloatArray *>(yminArray);
+                    CPLAssert(xmaxArray->type_id() == arrow::Type::FLOAT);
+                    m_poArrayXMaxFloat =
+                        static_cast<const arrow::FloatArray *>(xmaxArray);
+                    CPLAssert(ymaxArray->type_id() == arrow::Type::FLOAT);
+                    m_poArrayYMaxFloat =
+                        static_cast<const arrow::FloatArray *>(ymaxArray);
                 }
                 else
                 {
-                    m_poArrayBBOX = poStructArrayMinX;
-                }
-                if (!m_poArrayMinX || !m_poArrayMinY || !m_poArrayMaxX ||
-                    !m_poArrayMaxY)
-                {
-                    m_poArrayBBOX = nullptr;
-                    m_poArrayMinX = nullptr;
-                    m_poArrayMinY = nullptr;
-                    m_poArrayMaxX = nullptr;
-                    m_poArrayMaxY = nullptr;
+                    CPLAssert(xminArray->type_id() == arrow::Type::DOUBLE);
+                    m_poArrayXMinDouble =
+                        static_cast<const arrow::DoubleArray *>(xminArray);
+                    CPLAssert(yminArray->type_id() == arrow::Type::DOUBLE);
+                    m_poArrayYMinDouble =
+                        static_cast<const arrow::DoubleArray *>(yminArray);
+                    CPLAssert(xmaxArray->type_id() == arrow::Type::DOUBLE);
+                    m_poArrayXMaxDouble =
+                        static_cast<const arrow::DoubleArray *>(xmaxArray);
+                    CPLAssert(ymaxArray->type_id() == arrow::Type::DOUBLE);
+                    m_poArrayYMaxDouble =
+                        static_cast<const arrow::DoubleArray *>(ymaxArray);
                 }
             }
         }
@@ -3479,6 +3467,51 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
         {
             iCol = m_anMapGeomFieldIndexToArrowColumn[m_iGeomFieldFilter];
         }
+
+        OGREnvelope sEnvelopeSkipToNextFeatureDueToBBOX;
+        const auto SkipToNextFeatureDueToBBOX =
+            [this, &sEnvelopeSkipToNextFeatureDueToBBOX]()
+        {
+            if (!m_poArrayBBOX || !m_poArrayBBOX->IsNull(m_nIdxInBatch))
+            {
+                if (m_poArrayXMinFloat &&
+                    !m_poArrayXMinFloat->IsNull(m_nIdxInBatch))
+                {
+                    sEnvelopeSkipToNextFeatureDueToBBOX.MinX =
+                        m_poArrayXMinFloat->Value(m_nIdxInBatch);
+                    sEnvelopeSkipToNextFeatureDueToBBOX.MinY =
+                        m_poArrayYMinFloat->Value(m_nIdxInBatch);
+                    sEnvelopeSkipToNextFeatureDueToBBOX.MaxX =
+                        m_poArrayXMaxFloat->Value(m_nIdxInBatch);
+                    sEnvelopeSkipToNextFeatureDueToBBOX.MaxY =
+                        m_poArrayYMaxFloat->Value(m_nIdxInBatch);
+                    if (!m_sFilterEnvelope.Intersects(
+                            sEnvelopeSkipToNextFeatureDueToBBOX))
+                    {
+                        return true;
+                    }
+                }
+                else if (m_poArrayXMinDouble &&
+                         !m_poArrayXMinDouble->IsNull(m_nIdxInBatch))
+                {
+                    sEnvelopeSkipToNextFeatureDueToBBOX.MinX =
+                        m_poArrayXMinDouble->Value(m_nIdxInBatch);
+                    sEnvelopeSkipToNextFeatureDueToBBOX.MinY =
+                        m_poArrayYMinDouble->Value(m_nIdxInBatch);
+                    sEnvelopeSkipToNextFeatureDueToBBOX.MaxX =
+                        m_poArrayXMaxDouble->Value(m_nIdxInBatch);
+                    sEnvelopeSkipToNextFeatureDueToBBOX.MaxY =
+                        m_poArrayYMaxDouble->Value(m_nIdxInBatch);
+                    if (!m_sFilterEnvelope.Intersects(
+                            sEnvelopeSkipToNextFeatureDueToBBOX))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
+
         if (iCol >= 0 &&
             m_aeGeomEncoding[m_iGeomFieldFilter] == OGRArrowGeomEncoding::WKB)
         {
@@ -3496,19 +3529,9 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                 }
                 else
                 {
-                    if (m_poArrayMinX &&
-                        (!m_poArrayBBOX ||
-                         !m_poArrayBBOX->IsNull(m_nIdxInBatch)) &&
-                        !m_poArrayMinX->IsNull(m_nIdxInBatch))
+                    if (m_poArrayXMinFloat || m_poArrayXMinDouble)
                     {
-                        sEnvelope.MinX = m_poArrayMinX->Value(m_nIdxInBatch);
-                        sEnvelope.MinY = m_poArrayMinY->Value(m_nIdxInBatch);
-                        sEnvelope.MaxX = m_poArrayMaxX->Value(m_nIdxInBatch);
-                        sEnvelope.MaxY = m_poArrayMaxY->Value(m_nIdxInBatch);
-                        if (!m_sFilterEnvelope.Intersects(sEnvelope))
-                        {
-                            bSkipToNextFeature = true;
-                        }
+                        bSkipToNextFeature = SkipToNextFeatureDueToBBOX();
                     }
                     else if (m_poArrayWKB)
                     {
@@ -3592,7 +3615,12 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
 
             while (true)
             {
-                if (!listOfPartsArray->IsNull(m_nIdxInBatch))
+                bool bSkipToNextFeature = false;
+                if (m_poArrayXMinFloat || m_poArrayXMinDouble)
+                {
+                    bSkipToNextFeature = SkipToNextFeatureDueToBBOX();
+                }
+                else if (!listOfPartsArray->IsNull(m_nIdxInBatch))
                 {
                     OGREnvelope sEnvelope;
                     const auto nParts =
@@ -3626,8 +3654,12 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
 
                     if (nParts != 0 && m_sFilterEnvelope.Intersects(sEnvelope))
                     {
-                        break;
+                        bSkipToNextFeature = true;
                     }
+                }
+                if (!bSkipToNextFeature)
+                {
+                    break;
                 }
                 if (!m_asAttributeFilterConstraints.empty() &&
                     !SkipToNextFeatureDueToAttributeFilter())
@@ -3649,22 +3681,29 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
         else if (iCol >= 0)
         {
             auto array = m_poBatchColumns[iCol].get();
-            OGREnvelope sEnvelope;
             while (true)
             {
                 bool bSkipToNextFeature = false;
-                auto poGeometry = std::unique_ptr<OGRGeometry>(
-                    ReadGeometry(m_iGeomFieldFilter, array, m_nIdxInBatch));
-                if (poGeometry == nullptr || poGeometry->IsEmpty())
+                if (m_poArrayXMinFloat || m_poArrayXMinDouble)
                 {
-                    bSkipToNextFeature = true;
+                    bSkipToNextFeature = SkipToNextFeatureDueToBBOX();
                 }
                 else
                 {
-                    poGeometry->getEnvelope(&sEnvelope);
-                    if (!m_sFilterEnvelope.Intersects(sEnvelope))
+                    auto poGeometry = std::unique_ptr<OGRGeometry>(
+                        ReadGeometry(m_iGeomFieldFilter, array, m_nIdxInBatch));
+                    if (poGeometry == nullptr || poGeometry->IsEmpty())
                     {
                         bSkipToNextFeature = true;
+                    }
+                    else
+                    {
+                        OGREnvelope sEnvelope;
+                        poGeometry->getEnvelope(&sEnvelope);
+                        if (!m_sFilterEnvelope.Intersects(sEnvelope))
+                        {
+                            bSkipToNextFeature = true;
+                        }
                     }
                 }
                 if (!bSkipToNextFeature)
@@ -4268,6 +4307,7 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
             false;  // true = attribute field, false = geometry field
         int nIdx = -1;
     };
+
     // cppcheck-suppress unreadVariable
     std::vector<FieldDesc> fieldDesc(out_schema->n_children);
     for (size_t i = 0; i < m_anMapFieldIndexToArrowColumn.size(); i++)
@@ -4316,7 +4356,15 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
         {
             if (m_iFIDArrowColumn == i)
             {
-                j++;
+                out_schema->children[j] = out_schema->children[i];
+                ++j;
+            }
+            else if (m_oSetBBoxArrowColumns.find(i) !=
+                     m_oSetBBoxArrowColumns.end())
+            {
+                // Remove bounding box columns from exported schema
+                out_schema->children[i]->release(out_schema->children[i]);
+                out_schema->children[i] = nullptr;
             }
             else
             {
@@ -4453,6 +4501,47 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                      "ExportRecordBatch() failed with %s",
                      status.message().c_str());
             return EIO;
+        }
+
+        // Remove bounding box columns from exported array
+        const auto RemoveBBoxColumns =
+            [out_array, &schema](const std::set<int> &oSetBBoxArrayIndex)
+        {
+            int j = 0;
+            for (int i = 0; i < static_cast<int>(schema.n_children); ++i)
+            {
+                if (oSetBBoxArrayIndex.find(i) != oSetBBoxArrayIndex.end())
+                {
+                    out_array->children[i]->release(out_array->children[i]);
+                    out_array->children[i] = nullptr;
+
+                    schema.children[i]->release(schema.children[i]);
+                    schema.children[i] = nullptr;
+                }
+                else
+                {
+                    out_array->children[j] = out_array->children[i];
+                    schema.children[j] = schema.children[i];
+                    ++j;
+                }
+            }
+            out_array->n_children = j;
+            schema.n_children = j;
+        };
+
+        if (m_bIgnoredFields)
+        {
+            std::set<int> oSetBBoxArrayIndex;
+            for (const auto &iter : m_oMapGeomFieldIndexToGeomColBBOX)
+            {
+                if (iter.second.iArrayIdx >= 0)
+                    oSetBBoxArrayIndex.insert(iter.second.iArrayIdx);
+            }
+            RemoveBBoxColumns(oSetBBoxArrayIndex);
+        }
+        else
+        {
+            RemoveBBoxColumns(m_oSetBBoxArrowColumns);
         }
 
         if (EQUAL(m_aosArrowArrayStreamOptions.FetchNameValueDef(

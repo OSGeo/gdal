@@ -112,6 +112,7 @@ class OGRVICARBinaryPrefixesLayer final : public OGRLayer
         FIELD_FLOAT,
         FIELD_DOUBLE,
     };
+
     static Type GetTypeFromString(const char *pszStr);
 
     struct Field
@@ -119,6 +120,7 @@ class OGRVICARBinaryPrefixesLayer final : public OGRLayer
         int nOffset;
         Type eType;
     };
+
     std::vector<Field> m_aoFields;
     std::vector<GByte> m_abyRecord;
 
@@ -141,11 +143,14 @@ class OGRVICARBinaryPrefixesLayer final : public OGRLayer
     {
         m_iRecord = 0;
     }
+
     OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
     }
+
     OGRFeature *GetNextFeature() override;
+
     int TestCapability(const char *) override
     {
         return false;

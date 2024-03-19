@@ -50,6 +50,7 @@ namespace polygonizer
 using IndexType = std::uint32_t;
 using Point = std::array<IndexType, 2>;
 using Arc = std::vector<Point>;
+
 struct IndexedArc
 {
     Arc *poArc;

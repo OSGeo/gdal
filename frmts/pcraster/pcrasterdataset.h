@@ -127,6 +127,7 @@ class PCRasterDataset final : public GDALPamDataset
     double defaultNoDataValue() const;
     bool location_changed() const;
 };
+
 // } // namespace
 
 #endif

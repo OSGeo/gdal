@@ -72,6 +72,7 @@ class ROIPACDataset final : public RawDataset
     {
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
+
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     char **GetFileList() override;
@@ -266,12 +267,14 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     GDALDataType eDataType = GDT_Unknown;
     int nBands = 0;
+
     enum Interleave
     {
         UNKNOWN,
         LINE,
         PIXEL
     } eInterleave = UNKNOWN;
+
     const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
     if (strcmp(pszExtension, "raw") == 0)
     {

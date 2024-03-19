@@ -52,6 +52,7 @@ class CPL_DLL CPLErrorHandlerAccumulatorStruct
     CPLErrorHandlerAccumulatorStruct() : type(CE_None), no(CPLE_None)
     {
     }
+
     CPLErrorHandlerAccumulatorStruct(CPLErr eErrIn, CPLErrorNum noIn,
                                      const char *msgIn)
         : type(eErrIn), no(noIn), msg(msgIn)

@@ -68,16 +68,19 @@ class OGRPMTilesDataset final : public GDALDataset
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     OGRLayer *GetLayer(int) override;
 
     inline int GetMinZoomLevel() const
     {
         return m_nMinZoomLevel;
     }
+
     inline int GetMaxZoomLevel() const
     {
         return m_nMaxZoomLevel;
     }
+
     inline const pmtiles::headerv3 &GetHeader() const
     {
         return m_sHeader;
@@ -91,10 +94,12 @@ class OGRPMTilesDataset final : public GDALDataset
     {
         return m_osMetadata;
     }
+
     inline const std::string &GetMetadataFilename() const
     {
         return m_osMetadataFilename;
     }
+
     inline const std::string &GetClipOpenOption() const
     {
         return m_osClipOpenOption;
@@ -263,15 +268,18 @@ class OGRPMTilesVectorLayer final
     {
         return m_poFeatureDefn;
     }
+
     int TestCapability(const char *) override;
 
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
     {
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
     }
 
     void SetSpatialFilter(OGRGeometry *) override;
+
     void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);

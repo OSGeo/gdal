@@ -197,6 +197,7 @@ int BitMaskV1::RLEsize() const
 // Lookup tables for number of bytes in float and int, forward and reverse
 static const Byte bits67[4] = {0x80, 0x40, 0xc0, 0};  // shifted left 6 bits
 static const Byte stib67[4] = {4, 2, 1, 0};           // Last one is not used
+
 static int numBytesUInt(unsigned int k)
 {
     return (k <= 0xff) ? 1 : (k <= 0xffff) ? 2 : 4;

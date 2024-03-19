@@ -82,6 +82,7 @@ class GDALGeoLocDatasetAccessors
 
     GDALDataset *GetBackmapDataset();
     void FlushBackmapCaches();
+
     static void ReleaseBackmapDataset(GDALDataset *)
     {
     }

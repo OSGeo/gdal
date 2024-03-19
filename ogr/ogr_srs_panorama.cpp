@@ -45,6 +45,7 @@ static int GetZoneNumberGK(double dfCenterLong)
 {
     return static_cast<int>((dfCenterLong + 363.0) / 6.0 + 0.5) % 60;
 }
+
 static int GetZoneNumberUTM(double dfCenterLong)
 {
     return static_cast<int>((dfCenterLong + 186.0) / 6.0);
@@ -799,6 +800,7 @@ OGRErr OGRSpatialReference::exportVertCSToPanorama(int *piVert) const
              "Vertical coordinate system not supported by Panorama");
     return OGRERR_UNSUPPORTED_SRS;
 }
+
 /************************************************************************/
 /*                      OSRExportToPanorama()                           */
 /************************************************************************/

@@ -225,6 +225,7 @@ class VSIGZipHandle final : public VSIVirtualHandle
     {
         return m_nLastReadOffset;
     }
+
     const char *GetBaseFileName()
     {
         return m_pszBaseFileName;
@@ -234,12 +235,14 @@ class VSIGZipHandle final : public VSIVirtualHandle
     {
         m_uncompressed_size = nUncompressedSize;
     }
+
     vsi_l_offset GetUncompressedSize()
     {
         return m_uncompressed_size;
     }
 
     void SaveInfo_unlocked();
+
     void UnsetCanSaveInfo()
     {
         m_bCanSaveInfo = false;
@@ -334,6 +337,7 @@ class VSIDeflate64Handle final : public VSIVirtualHandle
     {
         m_uncompressed_size = nUncompressedSize;
     }
+
     vsi_l_offset GetUncompressedSize()
     {
         return m_uncompressed_size;
@@ -370,6 +374,7 @@ class VSIGZipFilesystemHandler final : public VSIFilesystemHandler
 
     virtual bool SupportsSequentialWrite(const char *pszPath,
                                          bool bAllowLocalTempFile) override;
+
     virtual bool SupportsRandomWrite(const char * /* pszPath */,
                                      bool /* bAllowLocalTempFile */) override
     {
@@ -1811,6 +1816,7 @@ size_t VSIDeflate64Handle::Read(void *const buf, size_t const nSize,
                 return 0;
             }
         };
+
         InOutCallback cbkData;
         cbkData.pOut = &out;
         cbkData.pExtraOutput = &extraOutput;
@@ -1962,6 +1968,7 @@ class VSIGZipWriteHandleMT final : public VSIVirtualHandle
         std::string sCompressedData_{};
         uLong nCRC_ = 0;
     };
+
     std::list<Job *> apoFinishedJobs_{};
     std::list<Job *> apoCRCFinishedJobs_{};
     std::list<Job *> apoFreeJobs_{};
@@ -3212,6 +3219,7 @@ int VSIGZipFilesystemHandler::Mkdir(const char * /* pszDirname */,
 {
     return -1;
 }
+
 /************************************************************************/
 /*                               Rmdir()                                */
 /************************************************************************/
@@ -3272,6 +3280,7 @@ void VSIInstallGZipFileHandler()
 {
     VSIFileManager::InstallHandler("/vsigzip/", new VSIGZipFilesystemHandler);
 }
+
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
@@ -3327,22 +3336,27 @@ class VSIZipReader final : public VSIArchiveReader
 
     int GotoFirstFile() override;
     int GotoNextFile() override;
+
     VSIArchiveEntryFileOffset *GetFileOffset() override
     {
         return new VSIZipEntryFileOffset(file_pos);
     }
+
     GUIntBig GetFileSize() override
     {
         return nNextFileSize;
     }
+
     CPLString GetFileName() override
     {
         return osNextFileName;
     }
+
     GIntBig GetModifiedTime() override
     {
         return nModifiedTime;
     }
+
     int GotoFileOffset(VSIArchiveEntryFileOffset *pOffset) override;
 };
 
@@ -3494,6 +3508,7 @@ class VSIZipFilesystemHandler final : public VSIArchiveFilesystemHandler
     {
         return "/vsizip";
     }
+
     std::vector<CPLString> GetExtensions() override;
     VSIArchiveReader *CreateReader(const char *pszZipFileName) override;
 
@@ -3555,14 +3570,17 @@ class VSIZipWriteHandle final : public VSIVirtualHandle
 
     void StartNewFile(VSIZipWriteHandle *poSubFile);
     void StopCurrentFile();
+
     void *GetHandle()
     {
         return m_hZIP;
     }
+
     VSIZipWriteHandle *GetChildInWriting()
     {
         return poChildInWriting;
     }
+
     void SetAutoDeleteParent()
     {
         bAutoDeleteParent = true;
@@ -3674,19 +3692,24 @@ class VSISOZipHandle final : public VSIVirtualHandle
     ~VSISOZipHandle() override;
 
     virtual int Seek(vsi_l_offset nOffset, int nWhence) override;
+
     virtual vsi_l_offset Tell() override
     {
         return nCurPos_;
     }
+
     virtual size_t Read(void *pBuffer, size_t nSize, size_t nCount) override;
+
     virtual size_t Write(const void *, size_t, size_t) override
     {
         return 0;
     }
+
     virtual int Eof() override
     {
         return bEOF_;
     }
+
     virtual int Close() override;
 
     bool IsOK() const

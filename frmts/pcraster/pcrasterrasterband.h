@@ -89,6 +89,7 @@ class PCRasterRasterBand final : public GDALPamRasterBand
 
     CPLErr IReadBlock(int nBlockXoff, int nBlockYoff, void *buffer) override;
 };
+
 // } // namespace
 
 #endif

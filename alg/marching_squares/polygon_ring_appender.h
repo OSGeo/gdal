@@ -51,6 +51,7 @@ template <typename PolygonWriter> class PolygonRingAppender
         Ring() : points(), interiorRings()
         {
         }
+
         Ring(const Ring &other) = default;
         Ring &operator=(const Ring &other) = default;
 

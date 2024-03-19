@@ -441,11 +441,14 @@ class OGRPGeoSingleFeatureLayer final : public OGRLayer
     {
         iNextShapeId = 0;
     }
+
     virtual OGRFeature *GetNextFeature() override;
+
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
     }
+
     virtual int TestCapability(const char *) override
     {
         return FALSE;

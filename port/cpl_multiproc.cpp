@@ -73,6 +73,7 @@ typedef struct _CPLSpinLock CPLSpinLock;
 struct _CPLLock
 {
     CPLLockType eType;
+
     union
     {
         CPLMutex *hMutex;
@@ -1531,6 +1532,7 @@ const char *CPLGetThreadingModel()
 /************************************************************************/
 
 typedef struct _MutexLinkedElt MutexLinkedElt;
+
 struct _MutexLinkedElt
 {
     pthread_mutex_t sMutex;
@@ -1538,6 +1540,7 @@ struct _MutexLinkedElt
     _MutexLinkedElt *psPrev;
     _MutexLinkedElt *psNext;
 };
+
 static MutexLinkedElt *psMutexList = nullptr;
 
 static void CPLInitMutex(MutexLinkedElt *psItem)
@@ -1710,6 +1713,7 @@ void CPLDestroyMutex(CPLMutex *hMutexIn)
 // Used by gdalclientserver.cpp just after forking, to avoid
 // deadlocks while mixing threads with fork.
 void CPLReinitAllMutex();  // TODO(schwehr): Put this in a header.
+
 void CPLReinitAllMutex()
 {
     MutexLinkedElt *psItem = psMutexList;

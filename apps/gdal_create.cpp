@@ -503,4 +503,5 @@ MAIN_START(argc, argv)
     CSLDestroy(argv);
     return bHasGotErr ? 1 : 0;
 }
+
 MAIN_END

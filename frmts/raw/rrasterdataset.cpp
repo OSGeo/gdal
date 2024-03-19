@@ -104,7 +104,9 @@ class RRASTERDataset final : public RawDataset
     {
         m_bHeaderDirty = true;
     }
+
     void InitImageIfNeeded();
+
     inline bool IsSignedByte() const
     {
         return m_bSignedByte;

@@ -37,6 +37,7 @@
 #include "ogrlayerarrow.h"
 #include "ogr_wkb.h"
 
+#include <array>
 #include <cinttypes>
 #include <limits>
 
@@ -93,8 +94,10 @@ inline OGRArrowWriterLayer::~OGRArrowWriterLayer()
 /*                         FinalizeWriting()                            */
 /************************************************************************/
 
-inline void OGRArrowWriterLayer::FinalizeWriting()
+inline bool OGRArrowWriterLayer::FinalizeWriting()
 {
+    bool ret = true;
+
     if (!IsFileWriterCreated())
     {
         CreateWriter();
@@ -104,10 +107,13 @@ inline void OGRArrowWriterLayer::FinalizeWriting()
         PerformStepsBeforeFinalFlushGroup();
 
         if (!m_apoBuilders.empty() && m_apoFieldsFromArrowSchema.empty())
-            FlushGroup();
+            ret = FlushGroup();
 
-        CloseFileWriter();
+        if (!CloseFileWriter())
+            ret = false;
     }
+
+    return ret;
 }
 
 /************************************************************************/
@@ -343,6 +349,25 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
         fields.emplace_back(std::move(field));
     }
 
+    if (m_bWriteBBoxStruct)
+    {
+        for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
+        {
+            const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
+            auto bbox_field_xmin(arrow::field("xmin", arrow::float32(), false));
+            auto bbox_field_ymin(arrow::field("ymin", arrow::float32(), false));
+            auto bbox_field_xmax(arrow::field("xmax", arrow::float32(), false));
+            auto bbox_field_ymax(arrow::field("ymax", arrow::float32(), false));
+            auto bbox_field(arrow::field(
+                std::string(poGeomFieldDefn->GetNameRef()).append("_bbox"),
+                arrow::struct_({bbox_field_xmin, bbox_field_ymin,
+                                bbox_field_xmax, bbox_field_ymax}),
+                poGeomFieldDefn->IsNullable()));
+            fields.emplace_back(bbox_field);
+            m_apoFieldsBBOX.emplace_back(bbox_field);
+        }
+    }
+
     m_aoEnvelopes.resize(m_poFeatureDefn->GetGeomFieldCount());
     m_oSetWrittenGeometryTypes.resize(m_poFeatureDefn->GetGeomFieldCount());
 
@@ -391,6 +416,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
         CPLAssert(m_poSchema);
     }
 }
+
 /************************************************************************/
 /*                         FinalizeSchema()                             */
 /************************************************************************/
@@ -744,6 +770,20 @@ MakeGeoArrowBuilder(arrow::MemoryPool *poMemoryPool, int nDim, int nDepth)
 }
 
 /************************************************************************/
+/*                         ClearArrayBuilers()                          */
+/************************************************************************/
+
+inline void OGRArrowWriterLayer::ClearArrayBuilers()
+{
+    m_apoBuilders.clear();
+    m_apoBuildersBBOXStruct.clear();
+    m_apoBuildersBBOXXMin.clear();
+    m_apoBuildersBBOXYMin.clear();
+    m_apoBuildersBBOXXMax.clear();
+    m_apoBuildersBBOXYMax.clear();
+}
+
+/************************************************************************/
 /*                        CreateArrayBuilders()                         */
 /************************************************************************/
 
@@ -922,7 +962,62 @@ inline void OGRArrowWriterLayer::CreateArrayBuilders()
             CPLAssert(false);
         }
         m_apoBuilders.emplace_back(builder);
+
+        if (m_bWriteBBoxStruct)
+        {
+            m_apoBuildersBBOXXMin.emplace_back(
+                std::make_shared<arrow::FloatBuilder>(m_poMemoryPool));
+            m_apoBuildersBBOXYMin.emplace_back(
+                std::make_shared<arrow::FloatBuilder>(m_poMemoryPool));
+            m_apoBuildersBBOXXMax.emplace_back(
+                std::make_shared<arrow::FloatBuilder>(m_poMemoryPool));
+            m_apoBuildersBBOXYMax.emplace_back(
+                std::make_shared<arrow::FloatBuilder>(m_poMemoryPool));
+            m_apoBuildersBBOXStruct.emplace_back(
+                std::make_shared<arrow::StructBuilder>(
+                    m_apoFieldsBBOX[i]->type(), m_poMemoryPool,
+                    std::vector<std::shared_ptr<arrow::ArrayBuilder>>{
+                        m_apoBuildersBBOXXMin.back(),
+                        m_apoBuildersBBOXYMin.back(),
+                        m_apoBuildersBBOXXMax.back(),
+                        m_apoBuildersBBOXYMax.back()}));
+        }
     }
+}
+
+/************************************************************************/
+/*                          castToFloatDown()                            */
+/************************************************************************/
+
+// Cf https://github.com/sqlite/sqlite/blob/90e4a3b7fcdf63035d6f35eb44d11ff58ff4b068/ext/rtree/rtree.c#L2993C1-L2995C3
+/*
+** Rounding constants for float->double conversion.
+*/
+#define RNDTOWARDS (1.0 - 1.0 / 8388608.0) /* Round towards zero */
+#define RNDAWAY (1.0 + 1.0 / 8388608.0)    /* Round away from zero */
+
+/*
+** Convert an sqlite3_value into an RtreeValue (presumably a float)
+** while taking care to round toward negative or positive, respectively.
+*/
+static float castToFloatDown(double d)
+{
+    float f = static_cast<float>(d);
+    if (f > d)
+    {
+        f = static_cast<float>(d * (d < 0 ? RNDAWAY : RNDTOWARDS));
+    }
+    return f;
+}
+
+static float castToFloatUp(double d)
+{
+    float f = static_cast<float>(d);
+    if (f < d)
+    {
+        f = static_cast<float>(d * (d < 0 ? RNDTOWARDS : RNDAWAY));
+    }
+    return f;
 }
 
 /************************************************************************/
@@ -937,21 +1032,46 @@ inline OGRErr OGRArrowWriterLayer::BuildGeometry(OGRGeometry *poGeom,
     const auto eColumnGType =
         m_poFeatureDefn->GetGeomFieldDefn(iGeomField)->GetType();
     const bool bIsEmpty = poGeom != nullptr && poGeom->IsEmpty();
+    OGREnvelope3D oEnvelope;
     if (poGeom != nullptr && !bIsEmpty)
     {
         if (poGeom->Is3D())
         {
-            OGREnvelope3D oEnvelope;
             poGeom->getEnvelope(&oEnvelope);
             m_aoEnvelopes[iGeomField].Merge(oEnvelope);
         }
         else
         {
-            OGREnvelope oEnvelope;
-            poGeom->getEnvelope(&oEnvelope);
+            poGeom->getEnvelope(static_cast<OGREnvelope *>(&oEnvelope));
             m_aoEnvelopes[iGeomField].Merge(oEnvelope);
         }
         m_oSetWrittenGeometryTypes[iGeomField].insert(eGType);
+    }
+
+    if (m_bWriteBBoxStruct)
+    {
+        if (poGeom && !bIsEmpty)
+        {
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                m_apoBuildersBBOXXMin[iGeomField]->Append(
+                    castToFloatDown(oEnvelope.MinX)));
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                m_apoBuildersBBOXYMin[iGeomField]->Append(
+                    castToFloatDown(oEnvelope.MinY)));
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                m_apoBuildersBBOXXMax[iGeomField]->Append(
+                    castToFloatUp(oEnvelope.MaxX)));
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                m_apoBuildersBBOXYMax[iGeomField]->Append(
+                    castToFloatUp(oEnvelope.MaxY)));
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                m_apoBuildersBBOXStruct[iGeomField]->Append());
+        }
+        else
+        {
+            OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                m_apoBuildersBBOXStruct[iGeomField]->AppendNull());
+        }
     }
 
     if (poGeom == nullptr)
@@ -1654,18 +1774,30 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
     // Flush the current row group if reaching the limit of rows per group.
     if (!m_apoBuilders.empty() && m_apoBuilders[0]->length() == m_nRowGroupSize)
     {
-        if (!IsFileWriterCreated())
-        {
-            CreateWriter();
-            if (!IsFileWriterCreated())
-                return OGRERR_FAILURE;
-        }
-
-        if (!FlushGroup())
+        if (!FlushFeatures())
             return OGRERR_FAILURE;
     }
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         FlushFeatures()                              */
+/************************************************************************/
+
+inline bool OGRArrowWriterLayer::FlushFeatures()
+{
+    if (m_apoBuilders.empty() || m_apoBuilders[0]->length() == 0)
+        return true;
+
+    if (!IsFileWriterCreated())
+    {
+        CreateWriter();
+        if (!IsFileWriterCreated())
+            return false;
+    }
+
+    return FlushGroup();
 }
 
 /************************************************************************/
@@ -1767,6 +1899,30 @@ inline bool OGRArrowWriterLayer::WriteArrays(
 
         nArrowIdx++;
     }
+
+    if (m_bWriteBBoxStruct)
+    {
+        const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
+        for (int i = 0; i < nGeomFieldCount; ++i)
+        {
+            const auto &field = m_apoFieldsBBOX[i];
+            std::shared_ptr<arrow::Array> array;
+            auto status = m_apoBuildersBBOXStruct[i]->Finish(&array);
+            if (!status.ok())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "builder::Finish() for field %s failed with %s",
+                         field->name().c_str(), status.message().c_str());
+                return false;
+            }
+
+            if (!postProcessArray(field, array))
+            {
+                return false;
+            }
+        }
+    }
+
     return true;
 }
 
@@ -1804,6 +1960,10 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     {
         CreateArrayBuilders();
     }
+
+    const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
+    const int nGeomFieldCountBBoxFields =
+        m_bWriteBBoxStruct ? nGeomFieldCount : 0;
 
     const char *pszFIDName = CSLFetchNameValueDef(
         papszOptions, "FID", OGRLayer::DEFAULT_ARROW_FID_NAME);
@@ -1847,15 +2007,17 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     struct ArrowSchema fidSchema;
     memset(&fidArray, 0, sizeof(fidArray));
     memset(&fidSchema, 0, sizeof(fidSchema));
-    std::vector<void *> apBuffers;
+    std::vector<void *> apBuffersFid;
     std::vector<int64_t> fids;
+
     std::set<int> oSetReferencedFieldsInArraySchema;
     const auto DummyFreeArray = [](struct ArrowArray *ptrArray)
     { ptrArray->release = nullptr; };
     const auto DummyFreeSchema = [](struct ArrowSchema *ptrSchema)
     { ptrSchema->release = nullptr; };
     bool bRebuildBatch = false;
-    for (int i = 0; i < m_poSchema->num_fields(); ++i)
+    for (int i = 0; i < m_poSchema->num_fields() - nGeomFieldCountBBoxFields;
+         ++i)
     {
         auto oIter =
             oMapSchemaChildrenNameToIdx.find(m_poSchema->field(i)->name());
@@ -1870,9 +2032,9 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
                     // the output file requires it, creates a default FID column
                     fidArray.release = DummyFreeArray;
                     fidArray.n_buffers = 2;
-                    apBuffers.resize(2);
+                    apBuffersFid.resize(2);
                     fidArray.buffers =
-                        const_cast<const void **>(apBuffers.data());
+                        const_cast<const void **>(apBuffersFid.data());
                     fids.reserve(static_cast<size_t>(array->length));
                     for (size_t iRow = 0;
                          iRow < static_cast<size_t>(array->length); ++iRow)
@@ -1885,7 +2047,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
                     continue;
                 }
             }
-            else if (m_poFeatureDefn->GetGeomFieldCount() == 1 &&
+            else if (nGeomFieldCount == 1 &&
                      m_poFeatureDefn->GetGeomFieldIndex(
                          m_poSchema->field(i)->name().c_str()) == 0)
             {
@@ -1907,23 +2069,173 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
         oSetReferencedFieldsInArraySchema.insert(oIter->second);
     }
 
-    std::vector<struct ArrowSchema *> newSchemaChildren(
-        m_poSchema->num_fields());
-    std::vector<struct ArrowArray *> newArrayChildren(m_poSchema->num_fields());
-    for (int i = 0; i < m_poSchema->num_fields(); ++i)
+    std::vector<struct ArrowSchema *> newSchemaChildren;
+    std::vector<struct ArrowArray *> newArrayChildren;
+    newSchemaChildren.reserve(m_poSchema->num_fields());
+    newArrayChildren.reserve(m_poSchema->num_fields());
+    for (int i = 0; i < m_poSchema->num_fields() - nGeomFieldCountBBoxFields;
+         ++i)
     {
         if (anMapLayerSchemaToArraySchema[i] < 0)
         {
             CPLAssert(m_poSchema->field(i)->name() == m_osFIDColumn);
-            newSchemaChildren[i] = &fidSchema;
-            newArrayChildren[i] = &fidArray;
+            newSchemaChildren.emplace_back(&fidSchema);
+            newArrayChildren.emplace_back(&fidArray);
         }
         else
         {
-            newSchemaChildren[i] =
-                schema->children[anMapLayerSchemaToArraySchema[i]];
-            newArrayChildren[i] =
-                array->children[anMapLayerSchemaToArraySchema[i]];
+            newSchemaChildren.emplace_back(
+                schema->children[anMapLayerSchemaToArraySchema[i]]);
+            newArrayChildren.emplace_back(
+                array->children[anMapLayerSchemaToArraySchema[i]]);
+        }
+    }
+
+    // Temporary arrays to hold the geometry bounding boxes.
+    std::vector<struct ArrowArray> bboxStructArray;
+    std::vector<struct ArrowSchema> bboxStructSchema;
+    // Note: we cheat a bit by declaring a single instance of the minx/miny/
+    // maxx/maxy sub-field ArrowSchema*, and make all struct ArrowSchema point
+    // to them. That's OK because we use DummyFreeSchema to release, which does
+    // nothing.
+    struct ArrowSchema bboxStructSchemaXMin;
+    struct ArrowSchema bboxStructSchemaYMin;
+    struct ArrowSchema bboxStructSchemaXMax;
+    struct ArrowSchema bboxStructSchemaYMax;
+    constexpr int BBOX_SUBFIELD_COUNT = 4;
+    std::array<struct ArrowSchema *, BBOX_SUBFIELD_COUNT>
+        bboxStructSchemaChildren;
+    constexpr int BBOX_STRUCT_BUFFER_COUNT = 1;  // validity bitmap array
+    // cppcheck-suppress constStatement
+    std::vector<std::array<const void *, BBOX_STRUCT_BUFFER_COUNT>>
+        bboxStructBuffersPtr;
+    std::vector<std::vector<GByte>> aabyBboxStructValidity;
+    std::vector<std::vector<float>> aadfMinX, aadfMinY, aadfMaxX, aadfMaxY;
+    // cppcheck-suppress constStatement
+    std::vector<std::array<struct ArrowArray, BBOX_SUBFIELD_COUNT>> bboxArrays;
+    // cppcheck-suppress constStatement
+    std::vector<std::array<struct ArrowArray *, BBOX_SUBFIELD_COUNT>>
+        bboxArraysPtr;
+    constexpr int BBOX_SUBFIELD_BUFFER_COUNT =
+        2;  // validity bitmap array and float array
+    std::vector<std::array<std::array<const void *, BBOX_SUBFIELD_BUFFER_COUNT>,
+                           BBOX_SUBFIELD_COUNT>>
+        bboxBuffersPtr;
+    if (m_bWriteBBoxStruct)
+    {
+        memset(&bboxStructSchemaXMin, 0, sizeof(bboxStructSchemaXMin));
+        memset(&bboxStructSchemaYMin, 0, sizeof(bboxStructSchemaYMin));
+        memset(&bboxStructSchemaXMax, 0, sizeof(bboxStructSchemaXMax));
+        memset(&bboxStructSchemaYMax, 0, sizeof(bboxStructSchemaYMax));
+
+        bboxStructSchemaXMin.release = DummyFreeSchema;
+        bboxStructSchemaXMin.name = "xmin";
+        bboxStructSchemaXMin.format = "f";  // float32
+
+        bboxStructSchemaYMin.release = DummyFreeSchema;
+        bboxStructSchemaYMin.name = "ymin";
+        bboxStructSchemaYMin.format = "f";  // float32
+
+        bboxStructSchemaXMax.release = DummyFreeSchema;
+        bboxStructSchemaXMax.name = "xmax";
+        bboxStructSchemaXMax.format = "f";  // float32
+
+        bboxStructSchemaYMax.release = DummyFreeSchema;
+        bboxStructSchemaYMax.name = "ymax";
+        bboxStructSchemaYMax.format = "f";  // float32
+
+        try
+        {
+            constexpr int XMIN_IDX = 0;
+            constexpr int YMIN_IDX = 1;
+            constexpr int XMAX_IDX = 2;
+            constexpr int YMAX_IDX = 3;
+            bboxStructSchemaChildren[XMIN_IDX] = &bboxStructSchemaXMin;
+            // cppcheck-suppress objectIndex
+            bboxStructSchemaChildren[YMIN_IDX] = &bboxStructSchemaYMin;
+            // cppcheck-suppress objectIndex
+            bboxStructSchemaChildren[XMAX_IDX] = &bboxStructSchemaXMax;
+            // cppcheck-suppress objectIndex
+            bboxStructSchemaChildren[YMAX_IDX] = &bboxStructSchemaYMax;
+
+            bboxStructArray.resize(nGeomFieldCount);
+            bboxStructSchema.resize(nGeomFieldCount);
+            bboxArrays.resize(nGeomFieldCount);
+            bboxArraysPtr.resize(nGeomFieldCount);
+            bboxBuffersPtr.resize(nGeomFieldCount);
+            bboxStructBuffersPtr.resize(nGeomFieldCount);
+            aabyBboxStructValidity.resize(nGeomFieldCount);
+            memset(bboxStructArray.data(), 0,
+                   nGeomFieldCount * sizeof(bboxStructArray[0]));
+            memset(bboxStructSchema.data(), 0,
+                   nGeomFieldCount * sizeof(bboxStructSchema[0]));
+            memset(bboxArrays.data(), 0,
+                   nGeomFieldCount * sizeof(bboxArrays[0]));
+            aadfMinX.resize(nGeomFieldCount);
+            aadfMinY.resize(nGeomFieldCount);
+            aadfMaxX.resize(nGeomFieldCount);
+            aadfMaxY.resize(nGeomFieldCount);
+            for (int i = 0; i < nGeomFieldCount; ++i)
+            {
+                const bool bIsNullable = CPL_TO_BOOL(
+                    m_poFeatureDefn->GetGeomFieldDefn(i)->IsNullable());
+                aadfMinX[i].reserve(static_cast<size_t>(array->length));
+                aadfMinY[i].reserve(static_cast<size_t>(array->length));
+                aadfMaxX[i].reserve(static_cast<size_t>(array->length));
+                aadfMaxY[i].reserve(static_cast<size_t>(array->length));
+                aabyBboxStructValidity[i].resize(
+                    static_cast<size_t>(array->length + 7) / 8, 0xFF);
+
+                bboxStructSchema[i].release = DummyFreeSchema;
+                bboxStructSchema[i].name = m_apoFieldsBBOX[i]->name().c_str();
+                bboxStructSchema[i].format = "+s";  // structure
+                bboxStructSchema[i].flags =
+                    bIsNullable ? ARROW_FLAG_NULLABLE : 0;
+                bboxStructSchema[i].n_children = BBOX_SUBFIELD_COUNT;
+                bboxStructSchema[i].children = bboxStructSchemaChildren.data();
+
+                constexpr int VALIDITY_ARRAY_IDX = 0;
+                constexpr int BBOX_SUBFIELD_FLOAT_VALUE_IDX = 1;
+                bboxBuffersPtr[i][XMIN_IDX][BBOX_SUBFIELD_FLOAT_VALUE_IDX] =
+                    aadfMinX[i].data();
+                bboxBuffersPtr[i][YMIN_IDX][BBOX_SUBFIELD_FLOAT_VALUE_IDX] =
+                    aadfMinY[i].data();
+                bboxBuffersPtr[i][XMAX_IDX][BBOX_SUBFIELD_FLOAT_VALUE_IDX] =
+                    aadfMaxX[i].data();
+                bboxBuffersPtr[i][YMAX_IDX][BBOX_SUBFIELD_FLOAT_VALUE_IDX] =
+                    aadfMaxY[i].data();
+
+                for (int j = 0; j < BBOX_SUBFIELD_COUNT; ++j)
+                {
+                    bboxBuffersPtr[i][j][VALIDITY_ARRAY_IDX] = nullptr;
+
+                    bboxArrays[i][j].release = DummyFreeArray;
+                    bboxArrays[i][j].length = array->length;
+                    bboxArrays[i][j].n_buffers = BBOX_SUBFIELD_BUFFER_COUNT;
+                    bboxArrays[i][j].buffers = bboxBuffersPtr[i][j].data();
+
+                    bboxArraysPtr[i][j] = &bboxArrays[i][j];
+                }
+
+                bboxStructArray[i].release = DummyFreeArray;
+                bboxStructArray[i].n_children = BBOX_SUBFIELD_COUNT;
+                bboxStructArray[i].children = bboxArraysPtr[i].data();
+                bboxStructArray[i].length = array->length;
+                bboxStructArray[i].n_buffers = BBOX_STRUCT_BUFFER_COUNT;
+                bboxStructBuffersPtr[i][VALIDITY_ARRAY_IDX] =
+                    bIsNullable ? aabyBboxStructValidity[i].data() : nullptr;
+                bboxStructArray[i].buffers = bboxStructBuffersPtr[i].data();
+
+                newSchemaChildren.emplace_back(&bboxStructSchema[i]);
+                newArrayChildren.emplace_back(&bboxStructArray[i]);
+            }
+        }
+        catch (const std::bad_alloc &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Out of memory in "
+                     "OGRArrowWriterLayer::WriteArrowBatchInternal()");
+            return false;
         }
     }
 
@@ -2018,15 +2330,14 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     }
     std::map<std::string, std::shared_ptr<arrow::Array>>
         oMapGeomFieldNameToArray;
-    for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount();
-         ++i, ++nBuilderIdx)
+    for (int i = 0; i < nGeomFieldCount; ++i, ++nBuilderIdx)
     {
         const char *pszThisGeomFieldName =
             m_poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef();
         int nIdx = poSchema->GetFieldIndex(pszThisGeomFieldName);
         if (nIdx < 0)
         {
-            if (m_poFeatureDefn->GetGeomFieldCount() == 1)
+            if (nGeomFieldCount == 1)
                 nIdx = poSchema->GetFieldIndex(pszSingleGeomFieldName);
             if (nIdx < 0)
             {
@@ -2067,6 +2378,8 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
         for (size_t iRow = 0; iRow < static_cast<size_t>(psGeomArray->length);
              ++iRow)
         {
+            bool bValidGeom = false;
+
             if (!pabyValidity ||
                 TestBit(pabyValidity, iRow + psGeomArray->offset))
             {
@@ -2091,7 +2404,20 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
                             static_cast<OGRwkbGeometryType>(nType));
                         if (OGRWKBGetBoundingBox(pabyWkb, nLen, sEnvelope))
                         {
+                            bValidGeom = true;
                             m_aoEnvelopes[i].Merge(sEnvelope);
+
+                            if (m_bWriteBBoxStruct)
+                            {
+                                aadfMinX[i].push_back(
+                                    castToFloatDown(sEnvelope.MinX));
+                                aadfMinY[i].push_back(
+                                    castToFloatDown(sEnvelope.MinY));
+                                aadfMaxX[i].push_back(
+                                    castToFloatUp(sEnvelope.MaxX));
+                                aadfMaxY[i].push_back(
+                                    castToFloatUp(sEnvelope.MaxY));
+                            }
                         }
                     }
                 }
@@ -2107,13 +2433,39 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
                         delete poGeometry;
                         return false;
                     }
+                    bValidGeom = true;
+                    if (m_bWriteBBoxStruct)
+                    {
+                        poGeometry->getEnvelope(&sEnvelope);
+                        aadfMinX[i].push_back(castToFloatDown(sEnvelope.MinX));
+                        aadfMinY[i].push_back(castToFloatDown(sEnvelope.MinY));
+                        aadfMaxX[i].push_back(castToFloatUp(sEnvelope.MaxX));
+                        aadfMaxY[i].push_back(castToFloatUp(sEnvelope.MaxY));
+                    }
                     delete poGeometry;
                 }
             }
-            else if (m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKB)
+            else
             {
-                if (BuildGeometry(nullptr, i, poBuilder) != OGRERR_NONE)
-                    return false;
+                if (m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKB)
+                {
+                    if (BuildGeometry(nullptr, i, poBuilder) != OGRERR_NONE)
+                        return false;
+                }
+            }
+
+            if (!bValidGeom && m_bWriteBBoxStruct)
+            {
+                if ((bboxStructSchema[i].flags & ARROW_FLAG_NULLABLE))
+                {
+                    bboxStructArray[i].null_count++;
+                    aabyBboxStructValidity[i][iRow / 8] &=
+                        ~(1 << static_cast<int>(iRow % 8));
+                }
+                aadfMinX[i].push_back(0.0f);
+                aadfMinY[i].push_back(0.0f);
+                aadfMaxX[i].push_back(0.0f);
+                aadfMaxY[i].push_back(0.0f);
             }
         }
 

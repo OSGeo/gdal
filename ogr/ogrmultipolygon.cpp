@@ -235,6 +235,7 @@ OGRErr OGRMultiPolygon::_addGeometryWithExpectedSubGeometryType(
 
     return eErr;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -263,4 +264,5 @@ OGRErr OGRMultiPolygon::_addGeometryDirectlyWithExpectedSubGeometryType(
 
     return OGRERR_NONE;
 }
+
 //! @endcond

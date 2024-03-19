@@ -199,9 +199,10 @@ def test_vsioss_2(server):
     signed_url = gdal.GetSignedURL(
         "/vsioss/oss_fake_bucket/resource", ["START_DATE=20180212T123456Z"]
     )
-    assert signed_url in (
-        "http://127.0.0.1:8080/oss_fake_bucket/resource?Expires=1518442496&OSSAccessKeyId=OSS_ACCESS_KEY_ID&Signature=bpFqur6tQMNN7Xe7UHVFFrugmgs%3D",
-        "http://127.0.0.1:8081/oss_fake_bucket/resource?Expires=1518442496&OSSAccessKeyId=OSS_ACCESS_KEY_ID&Signature=bpFqur6tQMNN7Xe7UHVFFrugmgs%3D",
+    port = server.port
+    assert (
+        signed_url
+        == f"http://127.0.0.1:{port}/oss_fake_bucket/resource?Expires=1518442496&OSSAccessKeyId=OSS_ACCESS_KEY_ID&Signature=bpFqur6tQMNN7Xe7UHVFFrugmgs%3D"
     )
 
     handler = webserver.SequentialHandler()

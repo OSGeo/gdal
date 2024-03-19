@@ -51,6 +51,7 @@ class CPL_DLL TileMatrixSet
     {
         return mIdentifier;
     }
+
     const std::string &title() const
     {
         return mTitle;
@@ -70,14 +71,17 @@ class CPL_DLL TileMatrixSet
         double mUpperCornerX{NaN};
         double mUpperCornerY{NaN};
     };
+
     const BoundingBox &bbox() const
     {
         return mBbox;
     }
+
     const std::string &crs() const
     {
         return mCrs;
     }
+
     const std::string &wellKnownScaleSet() const
     {
         return mWellKnownScaleSet;
@@ -104,8 +108,10 @@ class CPL_DLL TileMatrixSet
             int mMinTileRow{};
             int mMaxTileRow{};
         };
+
         std::vector<VariableMatrixWidth> mVariableMatrixWidthList{};
     };
+
     const std::vector<TileMatrix> &tileMatrixList() const
     {
         return mTileMatrixList;

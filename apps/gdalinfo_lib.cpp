@@ -1975,25 +1975,24 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
     /* -------------------------------------------------------------------- */
     if (psOptions->bListMDD)
     {
-        char **papszMDDList = GDALGetMetadataDomainList(hObject);
-        char **papszIter = papszMDDList;
+        const CPLStringList aosDomainList(GDALGetMetadataDomainList(hObject));
         json_object *poMDD = nullptr;
         json_object *const poListMDD =
             bJson ? json_object_new_array() : nullptr;
 
-        if (papszMDDList != nullptr)
+        if (!aosDomainList.empty())
         {
             if (!bJson)
                 Concat(osStr, psOptions->bStdoutOutput, "%sMetadata domains:\n",
                        pszIndent);
         }
 
-        while (papszIter != nullptr && *papszIter != nullptr)
+        for (const char *pszDomain : aosDomainList)
         {
-            if (EQUAL(*papszIter, ""))
+            if (EQUAL(pszDomain, ""))
             {
                 if (bJson)
-                    poMDD = json_object_new_string(*papszIter);
+                    poMDD = json_object_new_string(pszDomain);
                 else
                     Concat(osStr, psOptions->bStdoutOutput, "%s  (default)\n",
                            pszIndent);
@@ -2001,18 +2000,16 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
             else
             {
                 if (bJson)
-                    poMDD = json_object_new_string(*papszIter);
+                    poMDD = json_object_new_string(pszDomain);
                 else
                     Concat(osStr, psOptions->bStdoutOutput, "%s  %s\n",
-                           pszIndent, *papszIter);
+                           pszIndent, pszDomain);
             }
             if (bJson)
                 json_object_array_add(poListMDD, poMDD);
-            papszIter++;
         }
         if (bJson)
             json_object_object_add(poMetadata, "metadataDomains", poListMDD);
-        CSLDestroy(papszMDDList);
     }
 
     if (!psOptions->bShowMetadata)
@@ -2029,61 +2026,48 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
     /* -------------------------------------------------------------------- */
     if (psOptions->papszExtraMDDomains != nullptr)
     {
-        char **papszExtraMDDomainsExpanded = nullptr;
+        CPLStringList aosExtraMDDomainsExpanded;
 
         if (EQUAL(psOptions->papszExtraMDDomains[0], "all") &&
             psOptions->papszExtraMDDomains[1] == nullptr)
         {
-            char **papszMDDList = GDALGetMetadataDomainList(hObject);
-            char *const *papszIter = papszMDDList;
-
-            while (papszIter != nullptr && *papszIter != nullptr)
+            const CPLStringList aosMDDList(GDALGetMetadataDomainList(hObject));
+            for (const char *pszDomain : aosMDDList)
             {
-                if (!EQUAL(*papszIter, "") &&
-                    !EQUAL(*papszIter, "IMAGE_STRUCTURE") &&
-                    !EQUAL(*papszIter, "TILING_SCHEME") &&
-                    !EQUAL(*papszIter, "SUBDATASETS") &&
-                    !EQUAL(*papszIter, "GEOLOCATION") &&
-                    !EQUAL(*papszIter, "RPC"))
+                if (!EQUAL(pszDomain, "") &&
+                    !EQUAL(pszDomain, "IMAGE_STRUCTURE") &&
+                    !EQUAL(pszDomain, "TILING_SCHEME") &&
+                    !EQUAL(pszDomain, "SUBDATASETS") &&
+                    !EQUAL(pszDomain, "GEOLOCATION") &&
+                    !EQUAL(pszDomain, "RPC"))
                 {
-                    papszExtraMDDomainsExpanded =
-                        CSLAddString(papszExtraMDDomainsExpanded, *papszIter);
+                    aosExtraMDDomainsExpanded.AddString(pszDomain);
                 }
-                papszIter++;
             }
-            CSLDestroy(papszMDDList);
         }
         else
         {
-            papszExtraMDDomainsExpanded =
+            aosExtraMDDomainsExpanded =
                 CSLDuplicate(psOptions->papszExtraMDDomains);
         }
 
-        for (int iMDD = 0; papszExtraMDDomainsExpanded != nullptr &&
-                           papszExtraMDDomainsExpanded[iMDD] != nullptr;
-             iMDD++)
+        for (const char *pszDomain : aosExtraMDDomainsExpanded)
         {
             if (bJson)
             {
-                GDALInfoPrintMetadata(psOptions, hObject,
-                                      papszExtraMDDomainsExpanded[iMDD],
-                                      papszExtraMDDomainsExpanded[iMDD],
+                GDALInfoPrintMetadata(psOptions, hObject, pszDomain, pszDomain,
                                       pszIndent, bJson, poMetadata, osStr);
             }
             else
             {
-                CPLString osDisplayedname =
-                    "Metadata (" +
-                    CPLString(papszExtraMDDomainsExpanded[iMDD]) + ")";
+                const std::string osDisplayedName =
+                    std::string("Metadata (").append(pszDomain).append(")");
 
-                GDALInfoPrintMetadata(psOptions, hObject,
-                                      papszExtraMDDomainsExpanded[iMDD],
-                                      osDisplayedname.c_str(), pszIndent, bJson,
+                GDALInfoPrintMetadata(psOptions, hObject, pszDomain,
+                                      osDisplayedName.c_str(), pszIndent, bJson,
                                       poMetadata, osStr);
             }
         }
-
-        CSLDestroy(papszExtraMDDomainsExpanded);
     }
 
     /* -------------------------------------------------------------------- */

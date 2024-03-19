@@ -72,6 +72,7 @@ class GDALVirtualMem
     {
         return bIsCompact;
     }
+
     bool IsBandSequential() const
     {
         return bIsBandSequential;

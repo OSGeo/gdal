@@ -188,6 +188,7 @@ class OGRMySQLTableLayer final : public OGRMySQLLayer
     virtual GIntBig GetFeatureCount(int) override;
 
     void SetSpatialFilter(OGRGeometry *) override;
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
@@ -205,6 +206,7 @@ class OGRMySQLTableLayer final : public OGRMySQLLayer
     {
         bLaunderColumnNames = bFlag;
     }
+
     void SetPrecisionFlag(int bFlag)
     {
         bPreservePrecision = bFlag;
@@ -212,6 +214,7 @@ class OGRMySQLTableLayer final : public OGRMySQLLayer
 
     virtual int TestCapability(const char *) override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
@@ -297,10 +300,12 @@ class OGRMySQLDataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     int GetLayerCount() override
     {
         return nLayers;
     }
+
     OGRLayer *GetLayer(int) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
@@ -327,10 +332,12 @@ class OGRMySQLDataSource final : public OGRDataSource
     {
         return m_bIsMariaDB;
     }
+
     int GetMajorVersion() const
     {
         return m_nMajor;
     }
+
     int GetUnknownSRID() const;
 };
 

@@ -191,6 +191,7 @@ OGRDGNV8Layer::~OGRDGNV8Layer()
     CleanPendingFeatures();
     m_poFeatureDefn->Release();
 }
+
 /************************************************************************/
 /*                       CleanPendingFeatures()                         */
 /************************************************************************/

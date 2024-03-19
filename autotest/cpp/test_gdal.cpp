@@ -447,6 +447,7 @@ class FakeBand : public GDALRasterBand
     {
         return CE_None;
     }
+
     virtual CPLErr IWriteBlock(int, int, void *) override
     {
         return CE_None;
@@ -468,10 +469,12 @@ class DatasetWithErrorInFlushCache : public GDALDataset
     DatasetWithErrorInFlushCache() : bHasFlushCache(false)
     {
     }
+
     ~DatasetWithErrorInFlushCache()
     {
         FlushCache(true);
     }
+
     virtual CPLErr FlushCache(bool bAtClosing) override
     {
         CPLErr eErr = CE_None;
@@ -485,10 +488,12 @@ class DatasetWithErrorInFlushCache : public GDALDataset
         bHasFlushCache = true;
         return eErr;
     }
+
     CPLErr SetSpatialRef(const OGRSpatialReference *) override
     {
         return CE_None;
     }
+
     virtual CPLErr SetGeoTransform(double *) override
     {
         return CE_None;
@@ -2873,6 +2878,7 @@ TEST_F(test_gdal, VRTCachingOpenOptions)
 
     static int nCountZeroOpenOptions = 0;
     static int nCountWithOneOpenOptions = 0;
+
     class TestDataset : public GDALDataset
     {
       public:

@@ -233,6 +233,7 @@ class OGRGPXDataSource final : public GDALDataset
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     OGRLayer *GetLayer(int) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
@@ -245,10 +246,12 @@ class OGRGPXDataSource final : public GDALDataset
     {
         return m_fpOutput.get();
     }
+
     void SetLastGPXGeomTypeWritten(GPXGeometryType gpxGeomType)
     {
         m_lastGPXGeomTypeWritten = gpxGeomType;
     }
+
     GPXGeometryType GetLastGPXGeomTypeWritten() const
     {
         return m_lastGPXGeomTypeWritten;
@@ -258,6 +261,7 @@ class OGRGPXDataSource final : public GDALDataset
     {
         return m_bUseExtensions;
     }
+
     const std::string &GetExtensionsNS() const
     {
         return m_osExtensionsNS;
@@ -267,6 +271,7 @@ class OGRGPXDataSource final : public GDALDataset
     void startElementValidateCbk(const char *pszName, const char **ppszAttr);
     void endElementValidateCbk(const char *pszName);
     void dataHandlerValidateCbk(const char *data, int nLen);
+
     const char *GetVersion() const
     {
         return m_osVersion.c_str();

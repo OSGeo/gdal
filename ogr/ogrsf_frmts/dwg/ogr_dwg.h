@@ -55,6 +55,7 @@ class DWGBlockDefinition
     DWGBlockDefinition() : poGeometry(nullptr)
     {
     }
+
     ~DWGBlockDefinition();
 
     OGRGeometry *poGeometry;
@@ -208,6 +209,7 @@ class OGRDWGDataSource final : public OGRDataSource
     {
         return static_cast<int>(apoLayers.size());
     }
+
     OGRLayer *GetLayer(int) override;
 
     int TestCapability(const char *) override;
@@ -218,14 +220,17 @@ class OGRDWGDataSource final : public OGRDataSource
     {
         return bInlineBlocks;
     }
+
     int Attributes()
     {
         return bAttributes;
     }
+
     int AllAttributes()
     {
         return bAllAttributes;
     }
+
     void AddStandardFields(OGRFeatureDefn *poDef);
 
     // Implemented in ogrdxf_blockmap.cpp
@@ -233,6 +238,7 @@ class OGRDWGDataSource final : public OGRDataSource
     void ReadAttDefinitions();
     static OGRGeometry *SimplifyBlockGeometry(OGRGeometryCollection *);
     DWGBlockDefinition *LookupBlock(const char *pszName);
+
     std::map<CPLString, DWGBlockDefinition> &GetBlockMap()
     {
         return oBlockMap;
@@ -242,6 +248,7 @@ class OGRDWGDataSource final : public OGRDataSource
     {
         return attributeFields;
     }
+
     // Layer and other Table Handling (ogrdatasource.cpp)
     void ReadLayerDefinitions();
     void ReadLineTypeDefinitions();

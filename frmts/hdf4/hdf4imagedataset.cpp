@@ -193,6 +193,7 @@ class HDF4ImageRasterBand final : public GDALPamRasterBand
 
   public:
     HDF4ImageRasterBand(HDF4ImageDataset *, int, GDALDataType);
+
     virtual ~HDF4ImageRasterBand()
     {
     }

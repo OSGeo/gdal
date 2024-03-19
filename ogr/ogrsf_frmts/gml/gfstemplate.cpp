@@ -58,23 +58,29 @@ class GFSTemplateItem
   public:
     explicit GFSTemplateItem(const char *pszName);
     ~GFSTemplateItem();
+
     const char *GetName()
     {
         return m_pszName;
     }
+
     void Update(int b_has_geom);
+
     int GetCount()
     {
         return n_nItemCount;
     }
+
     int GetGeomCount()
     {
         return n_nGeomCount;
     }
+
     void SetNext(GFSTemplateItem *pN)
     {
         pNext = pN;
     }
+
     GFSTemplateItem *GetNext()
     {
         return pNext;

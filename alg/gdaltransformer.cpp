@@ -75,7 +75,11 @@ static void *GDALCreateApproxTransformer2(GDALTransformerFunc pfnRawTransformer,
                                           double dfMaxErrorForward,
                                           double dfMaxErrorReverse);
 
-static bool IsTransformer(void *hTransformerArg, const char *pszClassName)
+/************************************************************************/
+/*                            GDALIsTransformer()                       */
+/************************************************************************/
+
+bool GDALIsTransformer(void *hTransformerArg, const char *pszClassName)
 {
     if (!hTransformerArg)
         return false;
@@ -429,7 +433,7 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
 
     const bool bIsGDALGenImgProjTransform{
         pTransformArg &&
-        IsTransformer(pTransformArg, "GDALGenImgProjTransformer")};
+        GDALIsTransformer(pTransformArg, GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME)};
 
     /* -------------------------------------------------------------------- */
     /*      Setup sample points all around the edge of the input raster.    */
@@ -439,7 +443,8 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
         // In case CHECK_WITH_INVERT_PROJ has been modified.
         GDALRefreshGenImgProjTransformer(pTransformArg);
     }
-    else if (IsTransformer(pTransformArg, "GDALApproxTransformer"))
+    else if (GDALIsTransformer(pTransformArg,
+                               GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
         // In case CHECK_WITH_INVERT_PROJ has been modified.
         GDALRefreshApproxTransformer(pTransformArg);
@@ -949,7 +954,7 @@ retry:
                  nFailedCount, nSamplePoints);
 
     bool bIsGeographicCoords = false;
-    if (pfnTransformer == GDALGenImgProjTransform)
+    if (bIsGDALGenImgProjTransform)
     {
         const GDALGenImgProjTransformInfo *pGIPTI =
             static_cast<const GDALGenImgProjTransformInfo *>(pTransformArg);
@@ -1346,7 +1351,7 @@ static GDALGenImgProjTransformInfo *GDALCreateGenImgProjTransformerInternal()
 
     memcpy(psInfo->sTI.abySignature, GDAL_GTI2_SIGNATURE,
            strlen(GDAL_GTI2_SIGNATURE));
-    psInfo->sTI.pszClassName = "GDALGenImgProjTransformer";
+    psInfo->sTI.pszClassName = GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME;
     psInfo->sTI.pfnTransform = GDALGenImgProjTransform;
     psInfo->sTI.pfnCleanup = GDALDestroyGenImgProjTransformer;
     psInfo->sTI.pfnSerialize = GDALSerializeGenImgProjTransformer;
@@ -3914,7 +3919,7 @@ GDALCreateApproxTransformer2(GDALTransformerFunc pfnBaseTransformer,
 
     memcpy(psATInfo->sTI.abySignature, GDAL_GTI2_SIGNATURE,
            strlen(GDAL_GTI2_SIGNATURE));
-    psATInfo->sTI.pszClassName = "GDALApproxTransformer";
+    psATInfo->sTI.pszClassName = GDAL_APPROX_TRANSFORMER_CLASS_NAME;
     psATInfo->sTI.pfnTransform = GDALApproxTransform;
     psATInfo->sTI.pfnCleanup = GDALDestroyApproxTransformer;
     psATInfo->sTI.pfnSerialize = GDALSerializeApproxTransformer;
@@ -3972,7 +3977,8 @@ void GDALRefreshApproxTransformer(void *hTransformArg)
     ApproxTransformInfo *psInfo =
         static_cast<ApproxTransformInfo *>(hTransformArg);
 
-    if (psInfo->pfnBaseTransformer == GDALGenImgProjTransform)
+    if (GDALIsTransformer(psInfo->pBaseCBData,
+                          GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
     {
         GDALRefreshGenImgProjTransformer(psInfo->pBaseCBData);
     }
@@ -4369,7 +4375,8 @@ int GDALTransformLonLatToDestApproxTransformer(void *hTransformArg,
     ApproxTransformInfo *psInfo =
         static_cast<ApproxTransformInfo *>(hTransformArg);
 
-    if (psInfo->pfnBaseTransformer == GDALGenImgProjTransform)
+    if (GDALIsTransformer(psInfo->pBaseCBData,
+                          GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
     {
         return GDALTransformLonLatToDestGenImgProjTransformer(
             psInfo->pBaseCBData, pdfX, pdfY);
@@ -4807,7 +4814,7 @@ static GDALTransformerInfo *GetGenImgProjTransformInfo(const char *pszFunc,
         return nullptr;
     }
 
-    if (EQUAL(psInfo->pszClassName, "GDALApproxTransformer"))
+    if (EQUAL(psInfo->pszClassName, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
         ApproxTransformInfo *psATInfo =
             static_cast<ApproxTransformInfo *>(pTransformArg);
@@ -4825,7 +4832,7 @@ static GDALTransformerInfo *GetGenImgProjTransformInfo(const char *pszFunc,
         }
     }
 
-    if (EQUAL(psInfo->pszClassName, "GDALGenImgProjTransformer"))
+    if (EQUAL(psInfo->pszClassName, GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
     {
         return psInfo;
     }
@@ -4902,17 +4909,16 @@ void GDALGetTransformerDstGeoTransform(void *pTransformArg,
 /*            GDALTransformIsTranslationOnPixelBoundaries()             */
 /************************************************************************/
 
-bool GDALTransformIsTranslationOnPixelBoundaries(
-    GDALTransformerFunc pfnTransformer, void *pTransformerArg)
+bool GDALTransformIsTranslationOnPixelBoundaries(GDALTransformerFunc,
+                                                 void *pTransformerArg)
 {
-    if (pfnTransformer == GDALApproxTransform)
+    if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
         const auto *pApproxInfo =
             static_cast<const ApproxTransformInfo *>(pTransformerArg);
-        pfnTransformer = pApproxInfo->pfnBaseTransformer;
         pTransformerArg = pApproxInfo->pBaseCBData;
     }
-    if (pfnTransformer == GDALGenImgProjTransform)
+    if (GDALIsTransformer(pTransformerArg, GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
     {
         const auto *pGenImgpProjInfo =
             static_cast<GDALGenImgProjTransformInfo *>(pTransformerArg);
@@ -4951,17 +4957,15 @@ bool GDALTransformIsTranslationOnPixelBoundaries(
 /*                   GDALTransformIsAffineNoRotation()                  */
 /************************************************************************/
 
-bool GDALTransformIsAffineNoRotation(GDALTransformerFunc pfnTransformer,
-                                     void *pTransformerArg)
+bool GDALTransformIsAffineNoRotation(GDALTransformerFunc, void *pTransformerArg)
 {
-    if (pfnTransformer == GDALApproxTransform)
+    if (GDALIsTransformer(pTransformerArg, GDAL_APPROX_TRANSFORMER_CLASS_NAME))
     {
         const auto *pApproxInfo =
             static_cast<const ApproxTransformInfo *>(pTransformerArg);
-        pfnTransformer = pApproxInfo->pfnBaseTransformer;
         pTransformerArg = pApproxInfo->pBaseCBData;
     }
-    if (pfnTransformer == GDALGenImgProjTransform)
+    if (GDALIsTransformer(pTransformerArg, GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
     {
         const auto *pGenImgpProjInfo =
             static_cast<GDALGenImgProjTransformInfo *>(pTransformerArg);

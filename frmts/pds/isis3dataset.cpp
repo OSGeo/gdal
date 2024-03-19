@@ -251,6 +251,7 @@ class ISISTiledBand final : public GDALPamRasterBand
                   GDALDataType eDT, int nTileXSize, int nTileYSize,
                   GIntBig nFirstTileOffset, GIntBig nXTileOffset,
                   GIntBig nYTileOffset, int bNativeOrder);
+
     virtual ~ISISTiledBand()
     {
     }
@@ -294,6 +295,7 @@ class ISIS3RawRasterBand final : public RawRasterBand
                        vsi_l_offset l_nImgOffset, int l_nPixelOffset,
                        int l_nLineOffset, GDALDataType l_eDataType,
                        int l_bNativeOrder);
+
     virtual ~ISIS3RawRasterBand()
     {
     }
@@ -343,6 +345,7 @@ class ISIS3WrapperRasterBand final : public GDALProxyRasterBand
 
   public:
     explicit ISIS3WrapperRasterBand(GDALRasterBand *poBaseBandIn);
+
     ~ISIS3WrapperRasterBand()
     {
     }
@@ -369,10 +372,12 @@ class ISIS3WrapperRasterBand final : public GDALProxyRasterBand
     {
         return nMaskFlags;
     }
+
     GDALRasterBand *GetMaskBand() override
     {
         return poMask;
     }
+
     void SetMaskBand(GDALRasterBand *poMaskBand);
 };
 

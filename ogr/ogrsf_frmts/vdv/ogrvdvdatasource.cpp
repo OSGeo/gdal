@@ -246,16 +246,19 @@ void OGRIDFDataSource::Parse()
     m_poTmpDS->StartTransaction();
 
     OGRLayer *poCurLayer = nullptr;
+
     struct Point
     {
         double x;
         double y;
         double z;
+
         explicit Point(double xIn = 0, double yIn = 0, double zIn = 0)
             : x(xIn), y(yIn), z(zIn)
         {
         }
     };
+
     std::map<GIntBig, Point> oMapNode;  // map from NODE_ID to Point
     std::map<GIntBig, OGRLineString *>
         oMapLinkCoordinate;  // map from LINK_ID to OGRLineString*

@@ -44,9 +44,11 @@ struct Point
     Point() : x(NaN), y(NaN)
     {
     }  // just to be able to make an uninitialized list
+
     Point(double x_, double y_) : x(x_), y(y_)
     {
     }
+
     double x;
     double y;
 };
@@ -91,6 +93,7 @@ struct ValuedPoint
         : x(x_), y(y_), value(value_)
     {
     }
+
     const double x;
     const double y;
     const double value;

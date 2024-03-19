@@ -66,24 +66,30 @@ class SGeometry_Feature
     {
         return this->type;
     }
+
     size_t getTotalNodeCount()
     {
         return this->total_point_count;
     }
+
     size_t getTotalPartCount()
     {
         return this->total_part_count;
     }
+
     std::vector<size_t> &getPerPartNodeCount()
     {
         return this->ppart_node_count;
     }
+
     const OGRPoint &getPoint(size_t part_no, int point_index) const;
     explicit SGeometry_Feature(OGRFeature &);
+
     bool getHasInteriorRing()
     {
         return this->hasInteriorRing;
     }
+
     bool IsPartAtIndInteriorRing(size_t ind)
     {
         return this->part_at_ind_interior[ind];
@@ -107,6 +113,7 @@ class WBuffer
      * Directly subtracts the specified size from used_mem
      */
     void subCount(unsigned long long memfree);
+
     unsigned long long &getUsage()
     {
         return used_mem;
@@ -234,15 +241,19 @@ class OGR_SGFS_NC_Char_Transaction : public OGR_SGFS_Transaction
         n.nc_put_vvar1_text(OGR_SGFS_Transaction::getVarId(), &write_loc,
                             char_rep.c_str());
     }
+
     unsigned long long count() override
     {
         return char_rep.size() + sizeof(*this);
     }  // account for actual character representation, this class
+
     void appendToLog(VSILFILE *f) override;
+
     nc_type getType() override
     {
         return NC_CHAR;
     }
+
     OGR_SGFS_NC_Char_Transaction(int i_varId, const char *pszVal)
         : char_rep(pszVal)
     {
@@ -266,15 +277,19 @@ class OGR_SGFS_NC_CharA_Transaction : public OGR_SGFS_Transaction
         n.nc_put_vvara_text(OGR_SGFS_Transaction::getVarId(), ind, counts,
                             char_rep.c_str());
     }
+
     unsigned long long count() override
     {
         return char_rep.size() + sizeof(*this);
     }  // account for actual character representation, this class
+
     void appendToLog(VSILFILE *f) override;
+
     nc_type getType() override
     {
         return NC_CHAR;
     }
+
     OGR_SGFS_NC_CharA_Transaction(int i_varId, const char *pszVal)
         : char_rep(pszVal), counts{1, char_rep.length()}
     {
@@ -298,6 +313,7 @@ class OGR_SGFS_NC_Transaction_Generic : public OGR_SGFS_Transaction
     {
         return sizeof(*this);
     }
+
     void appendToLog(VSILFILE *f) override
     {
         genericLogAppend<VClass, ntype>(rep, OGR_SGFS_Transaction::getVarId(),
@@ -395,6 +411,7 @@ class WTransactionLog
     {
         return log == nullptr;
     }
+
     void startLog();   // always call this first to open the file
     void startRead();  // then call this before reading it
     void push(MTPtr);
@@ -506,55 +523,69 @@ class ncLayer_SG_Metadata
     {
         return this->writableType;
     }
+
     void writeSGeometryFeature(SGeometry_Feature &ft);
+
     int get_containerRealID()
     {
         return this->containerVar_realID;
     }
+
     std::string get_containerName()
     {
         return this->containerVarName;
     }
+
     int get_node_count_dimID()
     {
         return this->node_count_dimID;
     }
+
     int get_node_coord_dimID()
     {
         return this->node_coordinates_dimID;
     }
+
     int get_pnc_dimID()
     {
         return this->pnc_dimID;
     }
+
     int get_pnc_varID()
     {
         return this->pnc_varID;
     }
+
     int get_intring_varID()
     {
         return this->intring_varID;
     }
+
     std::vector<int> &get_nodeCoordVarIDs()
     {
         return this->node_coordinates_varIDs;
     }
+
     size_t get_next_write_pos_node_coord()
     {
         return this->next_write_pos_node_coord;
     }
+
     size_t get_next_write_pos_node_count()
     {
         return this->next_write_pos_node_count;
     }
+
     size_t get_next_write_pos_pnc()
     {
         return this->next_write_pos_pnc;
     }
+
     bool getInteriorRingDetected()
     {
         return this->interiorRingDetected;
     }
+
     void initializeNewContainer(int containerVID);
     ncLayer_SG_Metadata(int &i_ncID, geom_t geo, netCDFVID &ncdf,
                         OGR_NCScribe &scribe);
@@ -574,14 +605,17 @@ class WBufferManager
 
   public:
     bool isOverQuota();
+
     void adjustLimit(unsigned long long lim)
     {
         this->buffer_soft_limit = lim;
     }
+
     void addBuffer(WBuffer *b)
     {
         this->bufs.push_back(b);
     }
+
     explicit WBufferManager(unsigned long long lim) : buffer_soft_limit(lim)
     {
     }
@@ -606,6 +640,7 @@ class SGWriter_Exception_NCWriteFailure : public SGWriter_Exception
     {
         return this->msg.c_str();
     }
+
     SGWriter_Exception_NCWriteFailure(const char *layer_name,
                                       const char *failure_name,
                                       const char *failure_type);
@@ -620,6 +655,7 @@ class SGWriter_Exception_NCInqFailure : public SGWriter_Exception
     {
         return this->msg.c_str();
     }
+
     SGWriter_Exception_NCInqFailure(const char *layer_name,
                                     const char *failure_name,
                                     const char *failure_type);
@@ -634,6 +670,7 @@ class SGWriter_Exception_NCDefFailure : public SGWriter_Exception
     {
         return this->msg.c_str();
     }
+
     SGWriter_Exception_NCDefFailure(const char *layer_name,
                                     const char *failure_name,
                                     const char *failure_type);
@@ -648,6 +685,7 @@ class SGWriter_Exception_NullGeometry : public SGWriter_Exception
     {
         return this->msg.c_str();
     }
+
     SGWriter_Exception_NullGeometry()
         : msg("A null  geometry was detected when writing a netCDF file. "
               "Empty geometries are not allowed.")
@@ -664,6 +702,7 @@ class SGWriter_Exception_NCDelFailure : public SGWriter_Exception
     {
         return this->msg.c_str();
     }
+
     SGWriter_Exception_NCDelFailure(const char *layer, const char *what)
         : msg("[" + std::string(layer) +
               "] Failed to delete: " + std::string(what))

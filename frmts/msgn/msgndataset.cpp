@@ -125,6 +125,7 @@ class MSGNRasterBand final : public GDALRasterBand
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual double GetMinimum(int *pbSuccess = nullptr) override;
     virtual double GetMaximum(int *pbSuccess = nullptr) override;
+
     virtual const char *GetDescription() const override
     {
         return band_description;

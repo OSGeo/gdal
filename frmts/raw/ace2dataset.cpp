@@ -97,6 +97,7 @@ class ACE2Dataset final : public GDALPamDataset
     {
         return &m_oSRS;
     }
+
     CPLErr GetGeoTransform(double *) override;
 
     static GDALDataset *Open(GDALOpenInfo *);

@@ -55,6 +55,7 @@ class ContourGenerator
         previousLine_.resize(width_);
         std::fill(previousLine_.begin(), previousLine_.end(), NaN);
     }
+
     CPLErr feedLine(const double *line)
     {
         if (lineIdx_ <= height_)
@@ -110,6 +111,7 @@ class ContourGenerator
         bool hasNoData_;
         double noDataValue_;
     };
+
     void feedLine_(const double *line)
     {
         writer_.beginningOfLine();

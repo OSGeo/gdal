@@ -447,6 +447,7 @@ CPLErr GDALDriver::DefaultCreateCopyMultiDimensional(
                ? CE_None
                : CE_Failure;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -575,11 +576,10 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
     if (poSrcGroup != nullptr && GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER))
     {
         CPLStringList aosDatasetCO;
-        for (CSLConstList papszIter = papszOptions; papszIter && *papszIter;
-             ++papszIter)
+        for (const char *pszOption : cpl::Iterate(papszOptions))
         {
-            if (!STARTS_WITH_CI(*papszIter, "ARRAY:"))
-                aosDatasetCO.AddString(*papszIter);
+            if (!STARTS_WITH_CI(pszOption, "ARRAY:"))
+                aosDatasetCO.AddString(pszOption);
         }
         auto poDstDS = std::unique_ptr<GDALDataset>(
             CreateMultiDimensional(pszFilename, nullptr, aosDatasetCO.List()));
@@ -932,13 +932,9 @@ void GDALDriver::DefaultCopyMetadata(GDALDataset *poSrcDS, GDALDataset *poDstDS,
         if ((!EQUAL(pszCopySrcMDD, "AUTO") && CPLTestBool(pszCopySrcMDD)) ||
             papszSrcMDD)
         {
-            char **papszDomainList = poSrcDS->GetMetadataDomainList();
-            constexpr const char *apszReservedDomains[] = {
-                "IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"};
-            for (char **papszIter = papszDomainList; papszIter && *papszIter;
-                 ++papszIter)
+            for (const char *pszDomain :
+                 CPLStringList(poSrcDS->GetMetadataDomainList()))
             {
-                const char *pszDomain = *papszIter;
                 if (pszDomain[0] != 0 &&
                     (!papszSrcMDD ||
                      CSLFindString(papszSrcMDD, pszDomain) >= 0))
@@ -960,6 +956,8 @@ void GDALDriver::DefaultCopyMetadata(GDALDataset *poSrcDS, GDALDataset *poDstDS,
                         }
                         if (!papszSrcMDD)
                         {
+                            constexpr const char *const apszReservedDomains[] =
+                                {"IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"};
                             for (const char *pszOtherDomain :
                                  apszReservedDomains)
                             {
@@ -978,7 +976,6 @@ void GDALDriver::DefaultCopyMetadata(GDALDataset *poSrcDS, GDALDataset *poDstDS,
                     }
                 }
             }
-            CSLDestroy(papszDomainList);
         }
     }
     CSLDestroy(papszSrcMDD);
@@ -1018,14 +1015,12 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
                     pszFilename, GDAL_OF_RASTER, apszAllowedDrivers));
             if (poExistingOutputDS)
             {
-                char **papszFileList = poExistingOutputDS->GetFileList();
-                for (char **papszIter = papszFileList; papszIter && *papszIter;
-                     ++papszIter)
+                for (const char *pszFileInList :
+                     CPLStringList(poExistingOutputDS->GetFileList()))
                 {
                     oSetExistingDestFiles.insert(
-                        CPLString(*papszIter).replaceAll('\\', '/'));
+                        CPLString(pszFileInList).replaceAll('\\', '/'));
                 }
-                CSLDestroy(papszFileList);
             }
             CPLPopErrorHandler();
         }
@@ -1053,11 +1048,10 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
                 poSrcDS->papszOpenOptions));
             if (poSrcDSTmp)
             {
-                char **papszFileList = poSrcDSTmp->GetFileList();
-                for (char **papszIter = papszFileList; papszIter && *papszIter;
-                     ++papszIter)
+                for (const char *pszFileInList :
+                     CPLStringList(poSrcDSTmp->GetFileList()))
                 {
-                    CPLString osFilename(*papszIter);
+                    CPLString osFilename(pszFileInList);
                     osFilename.replaceAll('\\', '/');
                     if (oSetExistingDestFiles.find(osFilename) !=
                         oSetExistingDestFiles.end())
@@ -1065,7 +1059,6 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
                         oSetExistingDestFilesFoundInSource.insert(osFilename);
                     }
                 }
-                CSLDestroy(papszFileList);
             }
             CPLPopErrorHandler();
         }
@@ -1323,11 +1316,10 @@ GDALDataset *GDALDriver::CreateCopy(const char *pszFilename,
         if (poSrcGroup != nullptr && GetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER))
         {
             CPLStringList aosDatasetCO;
-            for (CSLConstList papszIter = papszOptions; papszIter && *papszIter;
-                 ++papszIter)
+            for (const char *pszOption : cpl::Iterate(papszOptions))
             {
-                if (!STARTS_WITH_CI(*papszIter, "ARRAY:"))
-                    aosDatasetCO.AddString(*papszIter);
+                if (!STARTS_WITH_CI(pszOption, "ARRAY:"))
+                    aosDatasetCO.AddString(pszOption);
             }
             GDALValidateCreationOptions(this, aosDatasetCO.List());
         }
@@ -1462,10 +1454,10 @@ bool GDALDriver::CanVectorTranslateFrom(
         ppapszFailureReasons ? ppapszFailureReasons : &papszFailureReasons);
     if (!ppapszFailureReasons)
     {
-        for (CSLConstList papszIter = papszFailureReasons;
-             papszIter && *papszIter; ++papszIter)
+        for (const char *pszReason :
+             cpl::Iterate(CSLConstList(papszFailureReasons)))
         {
-            CPLDebug("GDAL", "%s", *papszIter);
+            CPLDebug("GDAL", "%s", pszReason);
         }
         CSLDestroy(papszFailureReasons);
     }
@@ -1560,11 +1552,10 @@ CPLErr GDALDriver::QuietDelete(const char *pszName,
     if (papszAllowedDrivers)
     {
         GDALOpenInfo oOpenInfo(pszName, GDAL_OF_ALL);
-        for (CSLConstList papszIter = papszAllowedDrivers; *papszIter;
-             ++papszIter)
+        for (const char *pszDriverName : cpl::Iterate(papszAllowedDrivers))
         {
             GDALDriver *poTmpDriver =
-                GDALDriver::FromHandle(GDALGetDriverByName(*papszIter));
+                GDALDriver::FromHandle(GDALGetDriverByName(pszDriverName));
             if (poTmpDriver)
             {
                 const bool bIdentifyRes =
@@ -1786,6 +1777,7 @@ CPLErr GDALDriver::DefaultRename(const char *pszNewName, const char *pszOldName)
 
     return eErr;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1916,6 +1908,7 @@ CPLErr GDALDriver::DefaultCopyFiles(const char *pszNewName,
 
     return eErr;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2118,14 +2111,13 @@ int CPL_STDCALL GDALValidateCreationOptions(GDALDriverH hDriver,
     osDriver.Printf("driver %s",
                     GDALDriver::FromHandle(hDriver)->GetDescription());
     bool bFoundOptionToRemove = false;
-    for (CSLConstList papszIter = papszCreationOptions; papszIter && *papszIter;
-         ++papszIter)
+    for (const char *pszCO : cpl::Iterate(papszCreationOptions))
     {
         for (const char *pszExcludedOptions :
              {"APPEND_SUBDATASET", "COPY_SRC_MDD", "SRC_MDD"})
         {
-            if (STARTS_WITH_CI(*papszIter, pszExcludedOptions) &&
-                (*papszIter)[strlen(pszExcludedOptions)] == '=')
+            if (STARTS_WITH_CI(pszCO, pszExcludedOptions) &&
+                pszCO[strlen(pszExcludedOptions)] == '=')
             {
                 bFoundOptionToRemove = true;
                 break;
@@ -2138,23 +2130,21 @@ int CPL_STDCALL GDALValidateCreationOptions(GDALDriverH hDriver,
     char **papszOptionsToFree = nullptr;
     if (bFoundOptionToRemove)
     {
-        for (CSLConstList papszIter = papszCreationOptions;
-             papszIter && *papszIter; ++papszIter)
+        for (const char *pszCO : cpl::Iterate(papszCreationOptions))
         {
             bool bMatch = false;
             for (const char *pszExcludedOptions :
                  {"APPEND_SUBDATASET", "COPY_SRC_MDD", "SRC_MDD"})
             {
-                if (STARTS_WITH_CI(*papszIter, pszExcludedOptions) &&
-                    (*papszIter)[strlen(pszExcludedOptions)] == '=')
+                if (STARTS_WITH_CI(pszCO, pszExcludedOptions) &&
+                    pszCO[strlen(pszExcludedOptions)] == '=')
                 {
                     bMatch = true;
                     break;
                 }
             }
             if (!bMatch)
-                papszOptionsToFree =
-                    CSLAddString(papszOptionsToFree, *papszIter);
+                papszOptionsToFree = CSLAddString(papszOptionsToFree, pszCO);
         }
         papszOptionsToValidate = papszOptionsToFree;
     }

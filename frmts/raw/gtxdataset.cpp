@@ -90,6 +90,7 @@ class GTXDataset final : public RawDataset
         adfGeoTransform[4] = 0.0;
         adfGeoTransform[5] = 1.0;
     }
+
     ~GTXDataset() override;
 
     CPLErr GetGeoTransform(double *padfTransform) override;

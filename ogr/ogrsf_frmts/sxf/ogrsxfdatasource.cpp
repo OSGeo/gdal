@@ -683,6 +683,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE *fpSXFIn,
         }
 
         VSIFSeekL(fpSXFIn, 212, SEEK_SET);
+
         struct _buff
         {
             GUInt32 nRes;
@@ -690,6 +691,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE *fpSXFIn,
             // cppcheck-suppress unusedStructMember
             GUInt32 nFrameCode;
         } buff;
+
         if (VSIFReadL(&buff, 20, 1, fpSXFIn) != 1)
             return OGRERR_FAILURE;
         CPL_LSBPTR32(&buff.nRes);
@@ -1163,6 +1165,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE *fpRSC,
     CPL_LSBPTR32(&(stRSCFileHeader.nColorsInPalette));
 
     GByte szLayersID[4];
+
     struct _layer
     {
         GUInt32 nLength;
@@ -1233,6 +1236,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE *fpRSC,
         oSXFPassport.version, oSXFPassport.stMapDescription));
 
     char szObjectsID[4];
+
     struct _object
     {
         unsigned nLength;

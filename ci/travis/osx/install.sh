@@ -2,7 +2,7 @@
 
 set -e
 
-CONDA_PREFIX=/usr/local/miniconda/envs/test
+CONDA_PREFIX=/Users/runner/miniconda3/envs/test
 
 # Few tricks from https://github.com/conda-forge/gdal-feedstock/blob/master/recipe/build.sh
 
@@ -16,27 +16,24 @@ cd build
 # to have an environment where we test this...
 export GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY=YES
 
-# Disable Arrow/Parquet because the VM provides libraries in /usr/local/lib/
-# that cause Illegal instruction error when running tests. I suspect the
-# Arrow/Parquet libraries to be built with AVX2 support but the VM worker
-# doesn't support it.
 CFLAGS="-Wextra -Werror" CXXFLAGS="-Wextra -Werror" cmake .. \
-         -DCMAKE_INSTALL_PREFIX=$HOME/install-gdal \
+         -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
          -DCMAKE_PREFIX_PATH=${CONDA_PREFIX} \
-         -DCMAKE_BUILD_TYPE=Debug \
+         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
          -DGDAL_USE_GEOTIFF_INTERNAL=ON \
          -DGDAL_USE_PNG_INTERNAL=ON \
          -DGDAL_USE_POSTGRESQL=OFF \
          -DGDAL_USE_WEBP=OFF \
-         -DGDAL_USE_ARROW=OFF \
-         -DGDAL_USE_PARQUET=OFF \
          -DBUILD_CSHARP_BINDINGS=OFF \
          -DCMAKE_UNITY_BUILD=ON
-make -j3
+
+NPROC=$(sysctl -n hw.ncpu)
+echo "NPROC=${NPROC}"
+make -j${NPROC}
+
 echo "Show which shared libs got used:"
 otool -L apps/ogrinfo
-make install
-cd ..
 
-# Post-install testing
-# ../autotest/postinstall/test_pkg-config.sh $HOME/install-gdal
+make install
+
+cd ..

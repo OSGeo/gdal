@@ -78,6 +78,7 @@ template <class T> class LTIDLLPixel : public T
         : T(colorSpace, numBands, dataType)
     {
     }
+
     virtual ~LTIDLLPixel()
     {
     }
@@ -90,15 +91,18 @@ template <class T> class LTIDLLReader : public T
         : T(fileSpec, useWorldFile)
     {
     }
+
     explicit LTIDLLReader(LTIOStreamInf &oStream, bool useWorldFile = false)
         : T(oStream, useWorldFile)
     {
     }
+
     explicit LTIDLLReader(LTIOStreamInf *poStream,
                           LTIOStreamInf *poWorldFile = nullptr)
         : T(poStream, poWorldFile)
     {
     }
+
     virtual ~LTIDLLReader()
     {
     }
@@ -110,6 +114,7 @@ template <class T> class LTIDLLNavigator : public T
     explicit LTIDLLNavigator(const LTIImage &image) : T(image)
     {
     }
+
     virtual ~LTIDLLNavigator()
     {
     }
@@ -123,6 +128,7 @@ template <class T> class LTIDLLBuffer : public T
         : T(pixelProps, totalNumCols, totalNumRows, data)
     {
     }
+
     virtual ~LTIDLLBuffer()
     {
     }
@@ -134,6 +140,7 @@ template <class T> class LTIDLLCopy : public T
     explicit LTIDLLCopy(const T &original) : T(original)
     {
     }
+
     virtual ~LTIDLLCopy()
     {
     }
@@ -145,6 +152,7 @@ template <class T> class LTIDLLWriter : public T
     explicit LTIDLLWriter(LTIImageStage *image) : T(image)
     {
     }
+
     virtual ~LTIDLLWriter()
     {
     }
@@ -156,6 +164,7 @@ template <class T> class LTIDLLDefault : public T
     LTIDLLDefault() : T()
     {
     }
+
     virtual ~LTIDLLDefault()
     {
     }
@@ -171,9 +180,11 @@ class MrSIDProgress : public LTIProgressDelegate
     MrSIDProgress(GDALProgressFunc f, void *arg) : m_f(f), m_arg(arg)
     {
     }
+
     virtual ~MrSIDProgress()
     {
     }
+
     virtual LT_STATUS setProgressStatus(float fraction) override
     {
         if (!m_f)
@@ -2974,6 +2985,7 @@ class MrSIDDummyImageReader : public LTIImageReader
     MrSIDDummyImageReader(GDALDataset *poSrcDS);
     ~MrSIDDummyImageReader();
     LT_STATUS initialize();
+
     lt_int64 getPhysicalFileSize(void) const
     {
         return 0;
@@ -2989,10 +3001,12 @@ class MrSIDDummyImageReader : public LTIImageReader
 
     virtual LT_STATUS decodeStrip(LTISceneBuffer &stripBuffer,
                                   const LTIScene &stripScene);
+
     virtual LT_STATUS decodeBegin(const LTIScene &)
     {
         return LT_STS_Success;
     };
+
     virtual LT_STATUS decodeEnd()
     {
         return LT_STS_Success;
@@ -3605,12 +3619,15 @@ extern "C"
     void TIFFClientOpen()
     {
     }
+
     void TIFFError()
     {
     }
+
     void TIFFGetField()
     {
     }
+
     void TIFFSetField()
     {
     }

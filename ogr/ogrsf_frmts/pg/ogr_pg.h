@@ -257,6 +257,7 @@ class OGRPGLayer CPL_NON_FINAL : public OGRLayer
     {
         return GetExtent(0, psExtent, bForce);
     }
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override;
 
@@ -392,6 +393,7 @@ class OGRPGTableLayer final : public OGRPGLayer
     {
         SetSpatialFilter(0, poGeom);
     }
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
@@ -423,6 +425,7 @@ class OGRPGTableLayer final : public OGRPGLayer
     {
         return GetExtent(0, psExtent, bForce);
     }
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override;
 
@@ -430,6 +433,7 @@ class OGRPGTableLayer final : public OGRPGLayer
     {
         return pszTableName;
     }
+
     const char *GetSchemaName()
     {
         return pszSchemaName;
@@ -458,6 +462,7 @@ class OGRPGTableLayer final : public OGRPGLayer
     {
         bLaunderColumnNames = bFlag;
     }
+
     void SetPrecisionFlag(int bFlag)
     {
         bPreservePrecision = bFlag;
@@ -469,10 +474,12 @@ class OGRPGTableLayer final : public OGRPGLayer
     OGRErr EndCopy();
 
     int ReadTableDefinition();
+
     int HasGeometryInformation()
     {
         return bGeometryInformationSet;
     }
+
     void SetTableDefinition(const char *pszFIDColumnName,
                             const char *pszGFldName, OGRwkbGeometryType eType,
                             const char *pszGeomType, int nSRSId,
@@ -482,20 +489,25 @@ class OGRPGTableLayer final : public OGRPGLayer
     {
         nForcedSRSId = nForcedSRSIdIn;
     }
+
     void SetForcedGeometryTypeFlags(int GeometryTypeFlagsIn)
     {
         nForcedGeometryTypeFlags = GeometryTypeFlagsIn;
     }
+
     void SetCreateSpatialIndex(bool bFlag, const char *pszSpatialIndexType)
     {
         bCreateSpatialIndexFlag = bFlag;
         osSpatialIndexType = pszSpatialIndexType;
     }
+
     void SetForcedDescription(const char *pszDescriptionIn);
+
     void AllowAutoFIDOnCreateViaCopy()
     {
         bAutoFIDOnCreateViaCopy = TRUE;
     }
+
     void SetUseCopy()
     {
         bUseCopy = TRUE;
@@ -547,6 +559,7 @@ class OGRPGResultLayer final : public OGRPGLayer
     {
         SetSpatialFilter(0, poGeom);
     }
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
 
     virtual int TestCapability(const char *) override;
@@ -647,6 +660,7 @@ class OGRPGDataSource final : public OGRDataSource
     {
         return nUndefinedSRID;
     }
+
     bool IsUTF8ClientEncoding() const
     {
         return m_bUTF8ClientEncoding;
@@ -675,6 +689,7 @@ class OGRPGDataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;
     OGRLayer *GetLayerByName(const char *pszName) override;
@@ -699,6 +714,7 @@ class OGRPGDataSource final : public OGRDataSource
     {
         return nGeometryOID;
     }
+
     Oid GetGeographyOID()
     {
         return nGeographyOID;

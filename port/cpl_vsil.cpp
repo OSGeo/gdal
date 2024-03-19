@@ -1632,6 +1632,7 @@ struct VSIDIRGeneric : public VSIDIR
     explicit VSIDIRGeneric(VSIFilesystemHandler *poFSIn) : poFS(poFSIn)
     {
     }
+
     ~VSIDIRGeneric();
 
     const VSIDIREntry *NextDirEntry() override;

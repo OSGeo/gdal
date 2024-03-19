@@ -1654,8 +1654,10 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                         oWGS84.SetFromUserInput(SRS_WKT_WGS84_LAT_LONG);
                         oWGS84.SetAxisMappingStrategy(
                             OAMS_TRADITIONAL_GIS_ORDER);
-                        OGRCoordinateTransformation *poCT =
-                            OGRCreateCoordinateTransformation(&oSRS, &oWGS84);
+                        auto poCT =
+                            std::unique_ptr<OGRCoordinateTransformation>(
+                                OGRCreateCoordinateTransformation(&oSRS,
+                                                                  &oWGS84));
                         double dfX1 = oIter->second.MinX;
                         double dfY1 = oIter->second.MinY;
                         double dfX2 = oIter->second.MaxX;
@@ -1664,7 +1666,6 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                             poCT->Transform(1, &dfX1, &dfY1) &&
                             poCT->Transform(1, &dfX2, &dfY2) && dfX2 < dfX1)
                         {
-                            delete poCT;
                             dfX2 += 360;
                             OGRSpatialReference oWGS84_with_over;
                             oWGS84_with_over.SetFromUserInput(
@@ -1674,8 +1675,8 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                             oSRS.SetFromUserInput(
                                 CPLSPrintf("%s +over +wktext", pszProj4));
                             CPLFree(pszProj4);
-                            poCT = OGRCreateCoordinateTransformation(
-                                &oWGS84_with_over, &oSRS);
+                            poCT.reset(OGRCreateCoordinateTransformation(
+                                &oWGS84_with_over, &oSRS));
                             if (poCT && poCT->Transform(1, &dfX1, &dfY1) &&
                                 poCT->Transform(1, &dfX2, &dfY2))
                             {
@@ -1689,10 +1690,8 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
                                          "bounding box",
                                          oIter->first.c_str());
                             }
-                            delete poCT;
                             break;
                         }
-                        delete poCT;
                     }
                 }
             }
@@ -2434,6 +2433,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->SetPamFlags(poDS->GetPamFlags() & ~GPF_DIRTY);
     return poDS;
 }
+
 /************************************************************************/
 /*                             CreateCopy()                             */
 /************************************************************************/

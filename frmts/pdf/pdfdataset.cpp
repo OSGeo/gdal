@@ -117,10 +117,12 @@ class GDALPDFOutputDev : public SplashOutputDev
     {
         bEnableVector = bFlag;
     }
+
     void SetEnableText(int bFlag)
     {
         bEnableText = bFlag;
     }
+
     void SetEnableBitmap(int bFlag)
     {
         bEnableBitmap = bFlag;
@@ -1273,6 +1275,7 @@ static int LoadPdfiumDocumentPage(const char *pszFilename,
 
     return TRUE;
 }
+
 // ~ static int LoadPdfiumDocumentPage()
 
 static int UnloadPdfiumDocumentPage(TPdfiumDocumentStruct **doc,
@@ -1355,6 +1358,7 @@ static int UnloadPdfiumDocumentPage(TPdfiumDocumentStruct **doc,
 
     return TRUE;
 }
+
 // ~ static int UnloadPdfiumDocumentPage()
 
 #endif  // ~ HAVE_PDFIUM
@@ -1463,16 +1467,19 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
           bTemporaryEnableVectorForTextStroking(FALSE)
     {
     }
+
     virtual ~GDALPDFiumRenderDeviceDriver() = default;
 
     void SetEnableVector(int bFlag)
     {
         bEnableVector = bFlag;
     }
+
     void SetEnableText(int bFlag)
     {
         bEnableText = bFlag;
     }
+
     void SetEnableBitmap(int bFlag)
     {
         bEnableBitmap = bFlag;
@@ -1482,6 +1489,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
     {
         return m_poParent->GetDeviceType();
     }
+
     virtual int GetDeviceCaps(int caps_id) const override
     {
         return m_poParent->GetDeviceCaps(caps_id);
@@ -1491,6 +1499,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
     {
         m_poParent->SaveState();
     }
+
     virtual void RestoreState(bool bKeepSaved) override
     {
         m_poParent->RestoreState(bKeepSaved);
@@ -1669,6 +1678,7 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
         return m_poParent->SetBitsWithMask(bitmap, mask, left, top, alpha,
                                            blend_type);
     }
+
     virtual void SetGroupKnockout(bool group_knockout) override
     {
         m_poParent->SetGroupKnockout(group_knockout);

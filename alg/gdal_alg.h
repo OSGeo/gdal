@@ -109,6 +109,7 @@ typedef struct
     void *(*pfnCreateSimilar)(void *pTransformerArg, double dfSrcRatioX,
                               double dfSrcRatioY);
 } GDALTransformerInfo;
+
 /*! @endcond */
 
 /*! @cond Doxygen_Suppress */

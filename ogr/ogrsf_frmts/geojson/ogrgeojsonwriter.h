@@ -91,6 +91,7 @@ class OGRGeoJSONWriteOptions
     void SetRFC7946Settings();
     void SetIDOptions(CSLConstList papszOptions);
 };
+
 /*! @endcond */
 
 OGREnvelope3D OGRGeoJSONGetBBox(const OGRGeometry *poGeometry,

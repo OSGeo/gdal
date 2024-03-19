@@ -137,12 +137,14 @@ class CPL_DLL OGRFieldDefn
     ~OGRFieldDefn();
 
     void SetName(const char *);
+
     const char *GetNameRef() const
     {
         return pszName;
     }
 
     void SetAlternativeName(const char *);
+
     const char *GetAlternativeNameRef() const
     {
         return pszAlternativeName;
@@ -152,6 +154,7 @@ class CPL_DLL OGRFieldDefn
     {
         return eType;
     }
+
     void SetType(OGRFieldType eTypeIn);
     static const char *GetFieldTypeName(OGRFieldType);
 
@@ -159,6 +162,7 @@ class CPL_DLL OGRFieldDefn
     {
         return eSubType;
     }
+
     void SetSubType(OGRFieldSubType eSubTypeIn);
     static const char *GetFieldSubTypeName(OGRFieldSubType);
 
@@ -166,6 +170,7 @@ class CPL_DLL OGRFieldDefn
     {
         return eJustify;
     }
+
     void SetJustify(OGRJustification eJustifyIn)
     {
         eJustify = eJustifyIn;
@@ -175,18 +180,21 @@ class CPL_DLL OGRFieldDefn
     {
         return nWidth;
     }
+
     void SetWidth(int nWidthIn);
 
     int GetPrecision() const
     {
         return nPrecision;
     }
+
     void SetPrecision(int nPrecisionIn);
 
     int GetTZFlag() const
     {
         return m_nTZFlag;
     }
+
     void SetTZFlag(int nTZFlag);
 
     void Set(const char *, OGRFieldType, int = 0, int = 0,
@@ -200,6 +208,7 @@ class CPL_DLL OGRFieldDefn
     {
         return bIgnore;
     }
+
     void SetIgnored(int bIgnoreIn)
     {
         bIgnore = bIgnoreIn;
@@ -209,24 +218,28 @@ class CPL_DLL OGRFieldDefn
     {
         return bNullable;
     }
+
     void SetNullable(int bNullableIn);
 
     int IsUnique() const
     {
         return bUnique;
     }
+
     void SetUnique(int bUniqueIn);
 
     const std::string &GetDomainName() const
     {
         return m_osDomainName;
     }
+
     void SetDomainName(const std::string &osDomainName);
 
     const std::string &GetComment() const
     {
         return m_osComment;
     }
+
     void SetComment(const std::string &osComment);
 
     int IsSame(const OGRFieldDefn *) const;
@@ -277,6 +290,7 @@ class CPL_DLL OGRFieldDefn
             return m_poFieldDefn;
         }
     };
+
     /*! @endcond */
 
     TemporaryUnsealer GetTemporaryUnsealer();
@@ -351,6 +365,7 @@ class CPL_DLL OGRGeomFieldDefn
     virtual ~OGRGeomFieldDefn();
 
     void SetName(const char *);
+
     const char *GetNameRef() const
     {
         return pszName;
@@ -360,6 +375,7 @@ class CPL_DLL OGRGeomFieldDefn
     {
         return eGeomType;
     }
+
     void SetType(OGRwkbGeometryType eTypeIn);
 
     virtual const OGRSpatialReference *GetSpatialRef() const;
@@ -369,6 +385,7 @@ class CPL_DLL OGRGeomFieldDefn
     {
         return bIgnore;
     }
+
     void SetIgnored(int bIgnoreIn)
     {
         bIgnore = bIgnoreIn;
@@ -378,6 +395,7 @@ class CPL_DLL OGRGeomFieldDefn
     {
         return bNullable;
     }
+
     void SetNullable(int bNullableIn);
 
     const OGRGeomCoordinatePrecision &GetCoordinatePrecision() const
@@ -435,6 +453,7 @@ class CPL_DLL OGRGeomFieldDefn
             return m_poFieldDefn;
         }
     };
+
     /*! @endcond */
 
     TemporaryUnsealer GetTemporaryUnsealer();
@@ -556,11 +575,13 @@ class CPL_DLL OGRFeatureDefn
             {
                 return m_poFDefn->GetFieldDefn(m_nIdx);
             }
+
             inline ConstIterator &operator++()
             {
                 m_nIdx++;
                 return *this;
             }
+
             inline bool operator!=(const ConstIterator &it) const
             {
                 return m_nIdx != it.m_nIdx;
@@ -571,6 +592,7 @@ class CPL_DLL OGRFeatureDefn
         {
             return ConstIterator(m_poFDefn, 0);
         }
+
         inline ConstIterator end()
         {
             return ConstIterator(m_poFDefn, m_poFDefn->GetFieldCount());
@@ -580,15 +602,18 @@ class CPL_DLL OGRFeatureDefn
         {
             return static_cast<std::size_t>(m_poFDefn->GetFieldCount());
         }
+
         inline OGRFieldDefn *operator[](size_t i)
         {
             return m_poFDefn->GetFieldDefn(static_cast<int>(i));
         }
+
         inline const OGRFieldDefn *operator[](size_t i) const
         {
             return m_poFDefn->GetFieldDefn(static_cast<int>(i));
         }
     };
+
     //! @endcond
 
     /** Return an object that can be used to iterate over non-geometry fields.
@@ -621,12 +646,14 @@ class CPL_DLL OGRFeatureDefn
             GetFieldDefn(i);
         return apoFieldDefn[static_cast<std::size_t>(i)].get();
     }
+
     const OGRFieldDefn *GetFieldDefnUnsafe(int i) const
     {
         if (apoFieldDefn.empty())
             GetFieldDefn(i);
         return apoFieldDefn[static_cast<std::size_t>(i)].get();
     }
+
     //! @endcond
 
     virtual void AddFieldDefn(const OGRFieldDefn *);
@@ -669,11 +696,13 @@ class CPL_DLL OGRFeatureDefn
             {
                 return m_poFDefn->GetGeomFieldDefn(m_nIdx);
             }
+
             inline ConstIterator &operator++()
             {
                 m_nIdx++;
                 return *this;
             }
+
             inline bool operator!=(const ConstIterator &it) const
             {
                 return m_nIdx != it.m_nIdx;
@@ -684,6 +713,7 @@ class CPL_DLL OGRFeatureDefn
         {
             return ConstIterator(m_poFDefn, 0);
         }
+
         inline ConstIterator end()
         {
             return ConstIterator(m_poFDefn, m_poFDefn->GetGeomFieldCount());
@@ -693,15 +723,18 @@ class CPL_DLL OGRFeatureDefn
         {
             return static_cast<std::size_t>(m_poFDefn->GetGeomFieldCount());
         }
+
         inline OGRGeomFieldDefn *operator[](size_t i)
         {
             return m_poFDefn->GetGeomFieldDefn(static_cast<int>(i));
         }
+
         inline const OGRGeomFieldDefn *operator[](size_t i) const
         {
             return m_poFDefn->GetGeomFieldDefn(static_cast<int>(i));
         }
     };
+
     //! @endcond
 
     /** Return an object that can be used to iterate over geometry fields.
@@ -732,22 +765,27 @@ class CPL_DLL OGRFeatureDefn
     {
         return CPLAtomicInc(&nRefCount);
     }
+
     int Dereference()
     {
         return CPLAtomicDec(&nRefCount);
     }
+
     int GetReferenceCount() const
     {
         return nRefCount;
     }
+
     void Release();
 
     virtual int IsGeometryIgnored() const;
     virtual void SetGeometryIgnored(int bIgnore);
+
     virtual bool IsStyleIgnored() const
     {
         return bIgnoreStyle;
     }
+
     virtual void SetStyleIgnored(bool bIgnore)
     {
         bIgnoreStyle = bIgnore;
@@ -806,6 +844,7 @@ class CPL_DLL OGRFeatureDefn
             return m_poFeatureDefn;
         }
     };
+
     /*! @endcond */
 
     TemporaryUnsealer GetTemporaryUnsealer(bool bSealFields = true);
@@ -920,11 +959,13 @@ class CPL_DLL OGRFeature
         void SetNull();
         /** Unset the field. */
         void clear();
+
         /** Unset the field. */
         void Unset()
         {
             clear();
         }
+
         /** Set date time value/ */
         void SetDateTime(int nYear, int nMonth, int nDay, int nHour = 0,
                          int nMinute = 0, float fSecond = 0.f, int nTZFlag = 0);
@@ -933,16 +974,19 @@ class CPL_DLL OGRFeature
         int GetIndex() const;
         /** Return field definition. */
         const OGRFieldDefn *GetDefn() const;
+
         /** Return field name. */
         const char *GetName() const
         {
             return GetDefn()->GetNameRef();
         }
+
         /** Return field type. */
         OGRFieldType GetType() const
         {
             return GetDefn()->GetType();
         }
+
         /** Return field subtype. */
         OGRFieldSubType GetSubType() const
         {
@@ -1012,43 +1056,51 @@ class CPL_DLL OGRFeature
         {
             return GetAsInteger();
         }
+
         /** Return the field value as 64-bit integer, with potential conversion
          */
         operator GIntBig() const
         {
             return GetAsInteger64();
         }
+
         /** Return the field value as double, with potential conversion */
         operator double() const
         {
             return GetAsDouble();
         }
+
         /** Return the field value as string, with potential conversion */
         operator const char *() const
         {
             return GetAsString();
         }
+
         /** Return the field value as integer list, with potential conversion */
         operator const std::vector<int> &() const
         {
             return GetAsIntegerList();
         }
+
         /** Return the field value as 64-bit integer list, with potential
          * conversion */
         operator const std::vector<GIntBig> &() const
         {
             return GetAsInteger64List();
         }
+
         /** Return the field value as double list, with potential conversion */
         operator const std::vector<double> &() const
         {
             return GetAsDoubleList();
         }
+
         /** Return the field value as string list, with potential conversion */
         operator const std::vector<std::string> &() const
         {
             return GetAsStringList();
         }
+
         /** Return the field value as string list, with potential conversion */
         operator CSLConstList() const;
 
@@ -1130,6 +1182,7 @@ class CPL_DLL OGRFeature
     {
         return poDefn;
     }
+
     const OGRFeatureDefn *GetDefnRef() const
     {
         return poDefn;
@@ -1149,14 +1202,17 @@ class CPL_DLL OGRFeature
     {
         return poDefn->GetGeomFieldCount();
     }
+
     OGRGeomFieldDefn *GetGeomFieldDefnRef(int iField)
     {
         return poDefn->GetGeomFieldDefn(iField);
     }
+
     const OGRGeomFieldDefn *GetGeomFieldDefnRef(int iField) const
     {
         return poDefn->GetGeomFieldDefn(iField);
     }
+
     int GetGeomFieldIndex(const char *pszName) const
     {
         return poDefn->GetGeomFieldIndex(pszName);
@@ -1179,14 +1235,17 @@ class CPL_DLL OGRFeature
     {
         return poDefn->GetFieldCount();
     }
+
     const OGRFieldDefn *GetFieldDefnRef(int iField) const
     {
         return poDefn->GetFieldDefn(iField);
     }
+
     OGRFieldDefn *GetFieldDefnRef(int iField)
     {
         return poDefn->GetFieldDefn(iField);
     }
+
     int GetFieldIndex(const char *pszName) const
     {
         return poDefn->GetFieldIndex(pszName);
@@ -1206,6 +1265,7 @@ class CPL_DLL OGRFeature
     {
         return pauFields + i;
     }
+
     const OGRField *GetRawFieldRef(int i) const
     {
         return pauFields + i;
@@ -1237,70 +1297,85 @@ class CPL_DLL OGRFeature
                  pauFields[i].Set.nMarker2 == OGRUnsetMarker &&
                  pauFields[i].Set.nMarker3 == OGRUnsetMarker);
     }
+
     bool IsFieldNullUnsafe(int i) const
     {
         return (pauFields[i].Set.nMarker1 == OGRNullMarker &&
                 pauFields[i].Set.nMarker2 == OGRNullMarker &&
                 pauFields[i].Set.nMarker3 == OGRNullMarker);
     }
+
     bool IsFieldSetAndNotNullUnsafe(int i) const
     {
         return IsFieldSetUnsafe(i) && !IsFieldNullUnsafe(i);
     }
+
     // Those methods should only be called on a field that is of the type
     // consistent with the value, and that is set.
     int GetFieldAsIntegerUnsafe(int i) const
     {
         return pauFields[i].Integer;
     }
+
     GIntBig GetFieldAsInteger64Unsafe(int i) const
     {
         return pauFields[i].Integer64;
     }
+
     double GetFieldAsDoubleUnsafe(int i) const
     {
         return pauFields[i].Real;
     }
+
     const char *GetFieldAsStringUnsafe(int i) const
     {
         return pauFields[i].String;
     }
+
     //! @endcond
 
     int GetFieldAsInteger(const char *pszFName) const
     {
         return GetFieldAsInteger(GetFieldIndex(pszFName));
     }
+
     GIntBig GetFieldAsInteger64(const char *pszFName) const
     {
         return GetFieldAsInteger64(GetFieldIndex(pszFName));
     }
+
     double GetFieldAsDouble(const char *pszFName) const
     {
         return GetFieldAsDouble(GetFieldIndex(pszFName));
     }
+
     const char *GetFieldAsString(const char *pszFName) const
     {
         return GetFieldAsString(GetFieldIndex(pszFName));
     }
+
     const char *GetFieldAsISO8601DateTime(const char *pszFName,
                                           CSLConstList papszOptions) const
     {
         return GetFieldAsISO8601DateTime(GetFieldIndex(pszFName), papszOptions);
     }
+
     const int *GetFieldAsIntegerList(const char *pszFName, int *pnCount) const
     {
         return GetFieldAsIntegerList(GetFieldIndex(pszFName), pnCount);
     }
+
     const GIntBig *GetFieldAsInteger64List(const char *pszFName,
                                            int *pnCount) const
     {
         return GetFieldAsInteger64List(GetFieldIndex(pszFName), pnCount);
     }
+
     const double *GetFieldAsDoubleList(const char *pszFName, int *pnCount) const
     {
         return GetFieldAsDoubleList(GetFieldIndex(pszFName), pnCount);
     }
+
     char **GetFieldAsStringList(const char *pszFName) const
     {
         return GetFieldAsStringList(GetFieldIndex(pszFName));
@@ -1328,56 +1403,69 @@ class CPL_DLL OGRFeature
         pauFields[i].Set.nMarker2 = 0;
         pauFields[i].Set.nMarker3 = 0;
     }
+
     void SetFieldSameTypeUnsafe(int i, GIntBig nValue)
     {
         pauFields[i].Integer64 = nValue;
     }
+
     void SetFieldSameTypeUnsafe(int i, double dfValue)
     {
         pauFields[i].Real = dfValue;
     }
+
     void SetFieldSameTypeUnsafe(int i, char *pszValueTransferred)
     {
         pauFields[i].String = pszValueTransferred;
     }
+
     //! @endcond
 
     void SetField(const char *pszFName, int nValue)
     {
         SetField(GetFieldIndex(pszFName), nValue);
     }
+
     void SetField(const char *pszFName, GIntBig nValue)
     {
         SetField(GetFieldIndex(pszFName), nValue);
     }
+
     void SetField(const char *pszFName, double dfValue)
     {
         SetField(GetFieldIndex(pszFName), dfValue);
     }
+
     void SetField(const char *pszFName, const char *pszValue)
     {
         SetField(GetFieldIndex(pszFName), pszValue);
     }
+
     void SetField(const char *pszFName, int nCount, const int *panValues)
     {
         SetField(GetFieldIndex(pszFName), nCount, panValues);
     }
+
     void SetField(const char *pszFName, int nCount, const GIntBig *panValues)
     {
         SetField(GetFieldIndex(pszFName), nCount, panValues);
     }
+
     void SetField(const char *pszFName, int nCount, const double *padfValues)
     {
         SetField(GetFieldIndex(pszFName), nCount, padfValues);
     }
+
     void SetField(const char *pszFName, const char *const *papszValues)
     {
         SetField(GetFieldIndex(pszFName), papszValues);
     }
+
     void SetField(const char *pszFName, const OGRField *puValue)
     {
         SetField(GetFieldIndex(pszFName), puValue);
     }
+
     void SetField(const char *pszFName, int nYear, int nMonth, int nDay,
                   int nHour = 0, int nMinute = 0, float fSecond = 0.f,
                   int nTZFlag = 0)
@@ -1390,6 +1478,7 @@ class CPL_DLL OGRFeature
     {
         return nFID;
     }
+
     virtual OGRErr SetFID(GIntBig nFIDIn);
 
     void DumpReadable(FILE *, CSLConstList papszOptions = nullptr) const;
@@ -1412,6 +1501,9 @@ class CPL_DLL OGRFeature
     int Validate(int nValidateFlags, int bEmitError) const;
     void FillUnsetWithDefault(int bNotNullableOnly, char **papszOptions);
 
+    bool SerializeToBinary(std::vector<GByte> &abyBuffer) const;
+    bool DeserializeFromBinary(const GByte *pabyBuffer, size_t nSize);
+
     virtual const char *GetStyleString() const;
     virtual void SetStyleString(const char *);
     virtual void SetStyleStringDirectly(char *);
@@ -1423,6 +1515,7 @@ class CPL_DLL OGRFeature
     {
         return m_poStyleTable;
     } /* f.i.x.m.e: add a const qualifier for return type */
+
     virtual void SetStyleTable(OGRStyleTable *poStyleTable);
     virtual void SetStyleTableDirectly(OGRStyleTable *poStyleTable);
 
@@ -1430,10 +1523,12 @@ class CPL_DLL OGRFeature
     {
         return m_pszNativeData;
     }
+
     const char *GetNativeMediaType() const
     {
         return m_pszNativeMediaType;
     }
+
     void SetNativeData(const char *pszNativeData);
     void SetNativeMediaType(const char *pszNativeMediaType);
 
@@ -1465,6 +1560,7 @@ struct CPL_DLL OGRFeatureUniquePtrDeleter
 {
     void operator()(OGRFeature *) const;
 };
+
 //! @endcond
 
 /** Unique pointer type for OGRFeature.
@@ -1479,6 +1575,7 @@ inline OGRFeature::ConstFieldIterator begin(const OGRFeature *poFeature)
 {
     return poFeature->begin();
 }
+
 /** @see OGRFeature::end() const */
 inline OGRFeature::ConstFieldIterator end(const OGRFeature *poFeature)
 {
@@ -1491,6 +1588,7 @@ begin(const OGRFeatureUniquePtr &poFeature)
 {
     return poFeature->begin();
 }
+
 /** @see OGRFeature::end() const */
 inline OGRFeature::ConstFieldIterator end(const OGRFeatureUniquePtr &poFeature)
 {
@@ -1893,6 +1991,7 @@ class CPL_DLL OGRFeatureQuery
         return pSWQExpr;
     }
 };
+
 //! @endcond
 
 #endif /* ndef OGR_FEATURE_H_INCLUDED */

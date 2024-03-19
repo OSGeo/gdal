@@ -44,6 +44,7 @@ lst = [
     ["GIF", "data/gif/byte_with_xmp.gif", True],
     ["BIGGIF", "data/gif/fakebig.gif", False],
     ["JPEG", "data/jpeg/byte_with_xmp.jpg", True],
+    ["JPEG", "data/jpeg/byte_with_xmp_before_soc.jpg", True],
     ["JPEG", "data/jpeg/rgbsmall_rgb.jpg", False],
     ["PNG", "data/png/byte_with_xmp.png", True],
     ["PNG", "data/png/test.png", False],

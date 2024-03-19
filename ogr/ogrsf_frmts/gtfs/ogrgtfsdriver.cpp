@@ -49,6 +49,7 @@ class OGRGTFSDataset final : public GDALDataset
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     OGRLayer *GetLayer(int nIdx) override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
@@ -96,6 +97,7 @@ class OGRGTFSLayer final : public OGRLayer
     int TestCapability(const char *) override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr SetAttributeFilter(const char *) override;
+
     OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
@@ -407,10 +409,12 @@ class OGRGTFSShapesGeomLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     int TestCapability(const char *) override;
+
     OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
     }
+
     GIntBig GetFeatureCount(int bForce) override;
 };
 

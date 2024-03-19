@@ -170,6 +170,7 @@ void IniFile::Load()
         return;
 
     std::string section, key, value;
+
     enum ParseState
     {
         FindSection,
@@ -178,6 +179,7 @@ void IniFile::Load()
         StoreKey,
         None
     } state = FindSection;
+
     std::string s;
     while (!VSIFEofL(filIni) || !s.empty())
     {
@@ -683,6 +685,7 @@ static bool CheckASCII(unsigned char *buf, int size)
 
     return true;
 }
+
 /************************************************************************/
 /*                       Open()                                         */
 /************************************************************************/

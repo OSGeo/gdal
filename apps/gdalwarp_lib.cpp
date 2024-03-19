@@ -3616,14 +3616,12 @@ static GDALDatasetH GDALWarpCreateOutput(
             GDALDataset::Open(pszFilename, GDAL_OF_RASTER, apszAllowedDrivers));
         if (poExistingOutputDS)
         {
-            char **papszFileList = poExistingOutputDS->GetFileList();
-            for (char **papszIter = papszFileList; papszIter && *papszIter;
-                 ++papszIter)
+            for (const char *pszFilenameInList :
+                 CPLStringList(poExistingOutputDS->GetFileList()))
             {
                 oSetExistingDestFiles.insert(
-                    CPLString(*papszIter).replaceAll('\\', '/'));
+                    CPLString(pszFilenameInList).replaceAll('\\', '/'));
             }
-            CSLDestroy(papszFileList);
         }
         CPLPopErrorHandler();
     }
@@ -3668,11 +3666,10 @@ static GDALDatasetH GDALWarpCreateOutput(
                 poSrcDS->GetDescription(), GDAL_OF_RASTER, apszAllowedDrivers));
             if (poSrcDSTmp)
             {
-                char **papszFileList = poSrcDSTmp->GetFileList();
-                for (char **papszIter = papszFileList; papszIter && *papszIter;
-                     ++papszIter)
+                for (const char *pszFilenameInList :
+                     CPLStringList(poSrcDSTmp->GetFileList()))
                 {
-                    CPLString osFilename(*papszIter);
+                    CPLString osFilename(pszFilenameInList);
                     osFilename.replaceAll('\\', '/');
                     if (oSetExistingDestFiles.find(osFilename) !=
                         oSetExistingDestFiles.end())
@@ -3680,7 +3677,6 @@ static GDALDatasetH GDALWarpCreateOutput(
                         oSetExistingDestFilesFoundInSource.insert(osFilename);
                     }
                 }
-                CSLDestroy(papszFileList);
             }
         }
 
@@ -4727,6 +4723,7 @@ class CutlineTransformer : public OGRCoordinateTransformation
     {
         return nullptr;
     }
+
     virtual const OGRSpatialReference *GetTargetCS() const override
     {
         return nullptr;
@@ -5337,6 +5334,7 @@ static bool IsValidSRS(const char *pszUserInput)
 
 #ifndef CheckHasEnoughAdditionalArgs_defined
 #define CheckHasEnoughAdditionalArgs_defined
+
 static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
                                          int nExtraArg, int nArgc)
 {

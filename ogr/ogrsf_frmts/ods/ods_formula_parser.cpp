@@ -167,6 +167,7 @@ extern int ods_formuladebug;
 /* Token type.  */
 #ifndef YYTOKENTYPE
 #define YYTOKENTYPE
+
 enum yytokentype
 {
     ODST_NUMBER = 258,
@@ -977,6 +978,7 @@ static int yysyntax_error(YYPTRDIFF_T *yymsg_alloc, char **yymsg,
     {
         YYERROR_VERBOSE_ARGS_MAXIMUM = 5
     };
+
     /* Internationalized format string. */
     const char *yyformat = YY_NULLPTR;
     /* Arguments of yyformat: reported tokens (one for the "unexpected",

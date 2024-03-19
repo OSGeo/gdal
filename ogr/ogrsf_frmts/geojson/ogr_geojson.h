@@ -103,14 +103,17 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     void SetFIDColumn(const char *pszFIDColumn);
     void AddFeature(OGRFeature *poFeature);
     void DetectGeometryType();
+
     void IncFeatureCount()
     {
         nTotalFeatureCount_++;
     }
+
     void UnsetReader()
     {
         poReader_ = nullptr;
     }
+
     void InvalidateFeatureCount()
     {
         nTotalFeatureCount_ = -1;
@@ -159,6 +162,7 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
     {
         return poFeatureDefn_;
     }
+
     OGRSpatialReference *GetSpatialRef() override
     {
         return nullptr;
@@ -167,14 +171,17 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
     void ResetReading() override
     {
     }
+
     OGRFeature *GetNextFeature() override
     {
         return nullptr;
     }
+
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
     int TestCapability(const char *pszCap) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
     {
         return iGeomField == 0
@@ -241,6 +248,7 @@ class OGRGeoJSONDataSource final : public OGRDataSource
     // OGRGeoJSONDataSource Interface
     //
     int Create(const char *pszName, char **papszOptions);
+
     VSILFILE *GetOutputFile() const
     {
         return fpOut_;
@@ -266,18 +274,22 @@ class OGRGeoJSONDataSource final : public OGRDataSource
     {
         return bFpOutputIsSeekable_;
     }
+
     int GetBBOXInsertLocation() const
     {
         return nBBOXInsertLocation_;
     }
+
     int HasOtherPages() const
     {
         return bOtherPages_;
     }
+
     bool IsUpdatable() const
     {
         return bUpdatable_;
     }
+
     const CPLString &GetJSonFlavor() const
     {
         return osJSonFlavor_;

@@ -903,16 +903,24 @@ def test_bag_read_georef_metadata():
     ds = gdal.Open("data/bag/test_georef_metadata.bag")
     assert ds is not None
     sub_ds = ds.GetSubDatasets()
-    assert len(sub_ds) == 2
+    assert len(sub_ds) == 3
 
+    assert sub_ds[0][0] == 'BAG:"data/bag/test_georef_metadata.bag":bathymetry_coverage'
     assert (
-        sub_ds[0][0]
+        sub_ds[1][0]
         == 'BAG:"data/bag/test_georef_metadata.bag":georef_metadata:layer_with_keys_values'
     )
     assert (
-        sub_ds[1][0]
+        sub_ds[2][0]
         == 'BAG:"data/bag/test_georef_metadata.bag":georef_metadata:layer_with_values_only'
     )
+
+    ds = gdal.Open('BAG:"data/bag/test_georef_metadata.bag":bathymetry_coverage')
+    assert ds is not None
+    assert len(ds.GetSubDatasets()) == 0
+    assert ds.RasterXSize == 6
+    assert ds.RasterYSize == 4
+    assert ds.RasterCount == 2
 
     ds = gdal.OpenEx(
         "data/bag/test_georef_metadata.bag", open_options=["MODE=LIST_SUPERGRIDS"]
@@ -937,6 +945,7 @@ def test_bag_read_georef_metadata():
         'BAG:"data/bag/test_georef_metadata.bag":georef_metadata:layer_with_keys_values'
     )
     assert ds is not None
+    assert len(ds.GetSubDatasets()) == 0
     assert ds.RasterXSize == 6
     assert ds.RasterYSize == 4
     assert ds.RasterCount == 1

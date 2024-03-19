@@ -609,6 +609,7 @@ inline void GDALCopy4Words(const float *pValueIn, GUInt16 *const pValueOut)
 #ifdef __AVX2__
 
 #include <immintrin.h>
+
 template <>
 inline void GDALCopy8Words(const float *pValueIn, GByte *const pValueOut)
 {

@@ -942,6 +942,7 @@ int GDALGeoLoc<Accessors>::Transform(void *pTransformArg, int bDstToSrc,
 
     return TRUE;
 }
+
 /*! @endcond */
 
 /************************************************************************/
@@ -1507,6 +1508,7 @@ bool GDALGeoLoc<Accessors>::GenerateBackMap(
         int iX = -1;
         float bmX = 0;
     };
+
     std::vector<LastValidStruct> lastValid(TILE_SIZE);
     const auto reinitLine = [&lastValid]()
     {

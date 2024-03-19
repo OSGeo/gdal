@@ -84,6 +84,7 @@ extern "C"
     {
         int unused;
     } unzFile__;
+
     typedef unzFile__ *unzFile;
 #else
 typedef voidp unzFile;
@@ -212,6 +213,7 @@ typedef voidp unzFile;
 
     extern int ZEXPORT cpl_unzLocateFile(unzFile file, const char *szFileName,
                                          int iCaseSensitivity);
+
     /*
       Try locate the file szFileName in the zipfile.
       For the iCaseSensitivity signification, see unzStringFileNameCompare

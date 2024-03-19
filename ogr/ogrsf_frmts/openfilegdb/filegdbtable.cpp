@@ -2816,6 +2816,7 @@ static OGRField GetUnsetField()
     OGR_RawField_SetUnset(&sUnsetField);
     return sUnsetField;
 }
+
 const OGRField FileGDBField::UNSET_FIELD = GetUnsetField();
 
 /************************************************************************/

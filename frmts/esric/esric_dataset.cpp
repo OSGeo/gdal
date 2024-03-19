@@ -111,12 +111,14 @@ struct Bundle
     Bundle() : fh(nullptr), isV2(true), isTpkx(false)
     {
     }
+
     ~Bundle()
     {
         if (fh)
             VSIFCloseL(fh);
         fh = nullptr;
     }
+
     void Init(const char *filename)
     {
         if (fh)
@@ -146,6 +148,7 @@ struct Bundle
         return;
 #endif
     }
+
     std::vector<GUInt64> index;
     VSILFILE *fh;
     bool isV2;
@@ -160,6 +163,7 @@ class ECDataset final : public GDALDataset
 
   public:
     ECDataset();
+
     virtual ~ECDataset()
     {
     }
@@ -206,14 +210,17 @@ class ECBand final : public GDALRasterBand
     virtual ~ECBand();
 
     virtual CPLErr IReadBlock(int xblk, int yblk, void *buffer) override;
+
     virtual GDALColorInterp GetColorInterpretation() override
     {
         return ci;
     }
+
     virtual int GetOverviewCount() override
     {
         return static_cast<int>(overviews.size());
     }
+
     virtual GDALRasterBand *GetOverview(int n) override
     {
         return (n >= 0 && n < GetOverviewCount()) ? overviews[n] : nullptr;
@@ -564,6 +571,7 @@ Bundle &ECDataset::GetBundle(const char *fname)
     bundle.Init(fname);
     return bundle;
 }
+
 ECBand::~ECBand()
 {
     for (auto ovr : overviews)

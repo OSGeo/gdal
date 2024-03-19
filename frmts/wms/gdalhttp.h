@@ -41,6 +41,7 @@ struct WMSHTTPRequest
           nDataAlloc(0), m_curl_handle(nullptr), m_headers(nullptr), x(0), y(0)
     {
     }
+
     ~WMSHTTPRequest();
 
     /* Input */

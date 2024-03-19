@@ -2173,6 +2173,7 @@ bool ZarrArray::CacheTilePresence()
         explicit DirCloser(VSIDIR *psDir) : m_psDir(psDir)
         {
         }
+
         ~DirCloser()
         {
             VSICloseDir(m_psDir);

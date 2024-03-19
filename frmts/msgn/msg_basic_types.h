@@ -322,6 +322,7 @@ typedef struct
     IMAGE_PRODUCTION_STATS_RECORD imageProductionStats;
     // skip the rest - only after actual line/col values
 } TRAILER;
+
 // disable byte-packing
 #pragma pack()
 

@@ -215,17 +215,30 @@ def test_s102_QualityOfSurvey():
     ds = gdal.Open("data/s102/test_s102_v2.2_with_QualityOfSurvey.h5")
     assert ds.GetSubDatasets() == [
         (
+            'S102:"data/s102/test_s102_v2.2_with_QualityOfSurvey.h5":BathymetryCoverage',
+            "Bathymetric gridded data",
+        ),
+        (
             'S102:"data/s102/test_s102_v2.2_with_QualityOfSurvey.h5":QualityOfSurvey',
             "Georeferenced metadata QualityOfSurvey",
-        )
+        ),
     ]
 
     with pytest.raises(Exception, match="Unsupported subdataset component"):
         gdal.Open('S102:"data/s102/test_s102_v2.2_with_QualityOfSurvey.h5":invalid')
 
     ds = gdal.Open(
+        'S102:"data/s102/test_s102_v2.2_with_QualityOfSurvey.h5":BathymetryCoverage'
+    )
+    assert len(ds.GetSubDatasets()) == 0
+    assert ds.RasterCount == 2
+    assert ds.RasterXSize == 3
+    assert ds.RasterYSize == 2
+
+    ds = gdal.Open(
         'S102:"data/s102/test_s102_v2.2_with_QualityOfSurvey.h5":QualityOfSurvey'
     )
+    assert len(ds.GetSubDatasets()) == 0
     assert ds.RasterCount == 1
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 2

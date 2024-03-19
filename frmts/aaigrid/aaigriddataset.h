@@ -142,6 +142,7 @@ class GRASSASCIIDataset final : public AAIGDataset
     GRASSASCIIDataset() : AAIGDataset()
     {
     }
+
     ~GRASSASCIIDataset() override
     {
     }

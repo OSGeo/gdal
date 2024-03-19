@@ -390,6 +390,7 @@ VSIDIR CPL_DLL *VSIOpenDir(const char *pszPath, int nRecurseDepth,
 
 /*! @cond Doxygen_Suppress */
 typedef struct VSIDIREntry VSIDIREntry;
+
 /*! @endcond */
 
 /** Directory entry. */

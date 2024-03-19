@@ -82,6 +82,7 @@ int GDALFeaturePoint::GetX() const
 {
     return nX;
 }
+
 void GDALFeaturePoint::SetX(int nXIn)
 {
     nX = nXIn;
@@ -91,6 +92,7 @@ int GDALFeaturePoint::GetY() const
 {
     return nY;
 }
+
 void GDALFeaturePoint::SetY(int nYIn)
 {
     nY = nYIn;
@@ -100,6 +102,7 @@ int GDALFeaturePoint::GetScale() const
 {
     return nScale;
 }
+
 void GDALFeaturePoint::SetScale(int nScaleIn)
 {
     nScale = nScaleIn;
@@ -109,6 +112,7 @@ int GDALFeaturePoint::GetRadius() const
 {
     return nRadius;
 }
+
 void GDALFeaturePoint::SetRadius(int nRadiusIn)
 {
     nRadius = nRadiusIn;
@@ -118,6 +122,7 @@ int GDALFeaturePoint::GetSign() const
 {
     return nSign;
 }
+
 void GDALFeaturePoint::SetSign(int nSignIn)
 {
     nSign = nSignIn;

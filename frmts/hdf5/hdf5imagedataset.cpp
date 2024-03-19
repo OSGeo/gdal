@@ -110,6 +110,7 @@ class HDF5ImageDataset final : public HDF5Dataset
     {
         return iSubdatasetType;
     }
+
     HDF5CSKProductEnum GetCSKProductType() const
     {
         return iCSKProductType;
@@ -120,10 +121,12 @@ class HDF5ImageDataset final : public HDF5Dataset
         return GetSubdatasetType() == CSK_PRODUCT &&
                GetCSKProductType() == PROD_CSK_L1A && ndims == 3;
     }
+
     int GetYIndex() const
     {
         return m_nYIndex;
     }
+
     int GetXIndex() const
     {
         return m_nXIndex;
@@ -908,6 +911,7 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                 {"fwhm", "fwhm"},
                 {"bad_band_list", "bad_band"},
             };
+
             for (const auto &sItem : asItems)
             {
                 const char *pszVal =

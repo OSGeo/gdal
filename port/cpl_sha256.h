@@ -47,6 +47,7 @@ struct _CPL_SHA256Context
     GUInt64 totalLength;
     GUInt32 hash[CPL_SHA256_HASH_WORDS];
     GUInt32 bufferLength;
+
     union
     {
         GUInt32 words[16];

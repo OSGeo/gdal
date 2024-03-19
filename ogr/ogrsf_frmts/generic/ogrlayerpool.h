@@ -90,6 +90,7 @@ class CPL_DLL OGRLayerPool
     {
         return nMaxSimultaneouslyOpened;
     }
+
     int GetSize() const
     {
         return nMRUListSize;

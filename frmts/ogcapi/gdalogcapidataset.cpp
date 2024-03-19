@@ -153,6 +153,7 @@ class OGCAPIDataset final : public GDALDataset
         return m_poOAPIFDS ? m_poOAPIFDS->GetLayerCount()
                            : static_cast<int>(m_apoLayers.size());
     }
+
     OGRLayer *GetLayer(int idx) override
     {
         return m_poOAPIFDS                         ? m_poOAPIFDS->GetLayer(idx)
@@ -227,7 +228,9 @@ class OGCAPITiledLayerFeatureDefn final : public OGRFeatureDefn
         : OGRFeatureDefn(pszName), m_poLayer(poLayer)
     {
     }
+
     int GetFieldCount() const override;
+
     void InvalidateLayer()
     {
         m_poLayer = nullptr;
@@ -290,33 +293,42 @@ class OGCAPITiledLayer final
     void SetMinMaxXY(int minCol, int minRow, int maxCol, int maxRow);
 
     void ResetReading() override;
+
     OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
     }
+
     const char *GetName() override
     {
         return m_poFeatureDefn->GetName();
     }
+
     OGRwkbGeometryType GetGeomType() override
     {
         return m_poFeatureDefn->GetGeomType();
     }
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGCAPITiledLayer)
+
     GIntBig GetFeatureCount(int /* bForce */) override
     {
         return -1;
     }
+
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
     {
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
     }
+
     void SetSpatialFilter(OGRGeometry *) override;
+
     void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
     }
+
     OGRFeature *GetFeature(GIntBig nFID) override;
     int TestCapability(const char *) override;
 };
@@ -1829,6 +1841,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
     // Parse tile matrix set limits.
     const auto oTileMatrixSetLimits =
         oDoc.GetRoot().GetArray("tileMatrixSetLimits");
+
     struct Limits
     {
         int minTileRow;
@@ -1836,6 +1849,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
         int minTileCol;
         int maxTileCol;
     };
+
     std::map<CPLString, Limits> oMapTileMatrixSetLimits;
     if (CPLTestBool(
             CPLGetConfigOption("GDAL_OGCAPI_TILEMATRIXSET_LIMITS", "YES")))

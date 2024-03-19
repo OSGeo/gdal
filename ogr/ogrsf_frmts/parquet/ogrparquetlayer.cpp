@@ -65,7 +65,7 @@ OGRParquetLayerBase::OGRParquetLayerBase(OGRParquetDataset *poDS,
 /*                           GetDataset()                               */
 /************************************************************************/
 
-GDALDataset *OGRParquetLayer::GetDataset()
+GDALDataset *OGRParquetLayerBase::GetDataset()
 {
     return m_poDS;
 }
@@ -115,6 +115,67 @@ void OGRParquetLayerBase::LoadGeoMetadata(
             }
         }
     }
+}
+
+/************************************************************************/
+/*                   ParseGeometryColumnCovering()                      */
+/************************************************************************/
+
+//! Parse bounding box column definition
+static bool ParseGeometryColumnCovering(const CPLJSONObject &oJSONDef,
+                                        std::string &osBBOXColumn,
+                                        std::string &osXMin,
+                                        std::string &osYMin,
+                                        std::string &osXMax,
+                                        std::string &osYMax)
+{
+    const auto oCovering = oJSONDef["covering"];
+    if (oCovering.IsValid() &&
+        oCovering.GetType() == CPLJSONObject::Type::Object)
+    {
+        const auto oBBOX = oCovering["bbox"];
+        if (oBBOX.IsValid() && oBBOX.GetType() == CPLJSONObject::Type::Object)
+        {
+            const auto oXMin = oBBOX["xmin"];
+            const auto oYMin = oBBOX["ymin"];
+            const auto oXMax = oBBOX["xmax"];
+            const auto oYMax = oBBOX["ymax"];
+            if (oXMin.IsValid() && oYMin.IsValid() && oXMax.IsValid() &&
+                oYMax.IsValid() &&
+                oXMin.GetType() == CPLJSONObject::Type::Array &&
+                oYMin.GetType() == CPLJSONObject::Type::Array &&
+                oXMax.GetType() == CPLJSONObject::Type::Array &&
+                oYMax.GetType() == CPLJSONObject::Type::Array)
+            {
+                const auto osXMinArray = oXMin.ToArray();
+                const auto osYMinArray = oYMin.ToArray();
+                const auto osXMaxArray = oXMax.ToArray();
+                const auto osYMaxArray = oYMax.ToArray();
+                if (osXMinArray.Size() == 2 && osYMinArray.Size() == 2 &&
+                    osXMaxArray.Size() == 2 && osYMaxArray.Size() == 2 &&
+                    osXMinArray[0].GetType() == CPLJSONObject::Type::String &&
+                    osXMinArray[1].GetType() == CPLJSONObject::Type::String &&
+                    osYMinArray[0].GetType() == CPLJSONObject::Type::String &&
+                    osYMinArray[1].GetType() == CPLJSONObject::Type::String &&
+                    osXMaxArray[0].GetType() == CPLJSONObject::Type::String &&
+                    osXMaxArray[1].GetType() == CPLJSONObject::Type::String &&
+                    osYMaxArray[0].GetType() == CPLJSONObject::Type::String &&
+                    osYMaxArray[1].GetType() == CPLJSONObject::Type::String &&
+                    osXMinArray[0].ToString() == osYMinArray[0].ToString() &&
+                    osXMinArray[0].ToString() == osXMaxArray[0].ToString() &&
+                    osXMinArray[0].ToString() == osYMaxArray[0].ToString())
+                {
+                    osBBOXColumn = osXMinArray[0].ToString();
+                    osXMin = osXMinArray[1].ToString();
+                    osYMin = osYMinArray[1].ToString();
+                    osXMax = osXMaxArray[1].ToString();
+                    osYMax = osYMaxArray[1].ToString();
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 /************************************************************************/
@@ -457,8 +518,87 @@ void OGRParquetLayer::EstablishFeatureDefn()
         return;
     }
 
+    const bool bUseBBOX = CPLTestBool(CPLGetConfigOption(
+        ("OGR_" + GetDriverUCName() + "_USE_BBOX").c_str(), "YES"));
+
+    // Keep track of declared bounding box columns in GeoParquet JSON metadata,
+    // in order not to expose them as regular fields.
+    std::set<std::string> oSetBBOXColumns;
+    if (bUseBBOX)
+    {
+        for (const auto &iter : m_oMapGeometryColumns)
+        {
+            std::string osBBOXColumn;
+            std::string osXMin, osYMin, osXMax, osYMax;
+            if (ParseGeometryColumnCovering(iter.second, osBBOXColumn, osXMin,
+                                            osYMin, osXMax, osYMax))
+            {
+                oSetBBOXColumns.insert(osBBOXColumn);
+            }
+        }
+    }
+
     const auto &fields = m_poSchema->fields();
     const auto poParquetSchema = metadata->schema();
+
+    // Map from Parquet column name (with dot separator) to Parquet index
+    std::map<std::string, int> oMapParquetColumnNameToIdx;
+    const int nParquetColumns = poParquetSchema->num_columns();
+    for (int iParquetCol = 0; iParquetCol < nParquetColumns; ++iParquetCol)
+    {
+        const auto parquetColumn = poParquetSchema->Column(iParquetCol);
+        const auto parquetColumnName = parquetColumn->path()->ToDotString();
+        oMapParquetColumnNameToIdx[parquetColumnName] = iParquetCol;
+    }
+
+    // Synthetize a GeoParquet bounding box column definition when detecting
+    // a Overture Map dataset
+    if (m_oMapGeometryColumns.empty() && bUseBBOX &&
+        oMapParquetColumnNameToIdx.find("geometry") !=
+            oMapParquetColumnNameToIdx.end() &&
+        oMapParquetColumnNameToIdx.find("bbox.minx") !=
+            oMapParquetColumnNameToIdx.end() &&
+        oMapParquetColumnNameToIdx.find("bbox.miny") !=
+            oMapParquetColumnNameToIdx.end() &&
+        oMapParquetColumnNameToIdx.find("bbox.maxx") !=
+            oMapParquetColumnNameToIdx.end() &&
+        oMapParquetColumnNameToIdx.find("bbox.maxy") !=
+            oMapParquetColumnNameToIdx.end())
+    {
+        CPLJSONObject oDef;
+        CPLJSONObject oCovering;
+        oDef.Add("covering", oCovering);
+        CPLJSONObject oBBOX;
+        oCovering.Add("bbox", oBBOX);
+        {
+            CPLJSONArray oArray;
+            oArray.Add("bbox");
+            oArray.Add("minx");
+            oBBOX.Add("xmin", oArray);
+        }
+        {
+            CPLJSONArray oArray;
+            oArray.Add("bbox");
+            oArray.Add("miny");
+            oBBOX.Add("ymin", oArray);
+        }
+        {
+            CPLJSONArray oArray;
+            oArray.Add("bbox");
+            oArray.Add("maxx");
+            oBBOX.Add("xmax", oArray);
+        }
+        {
+            CPLJSONArray oArray;
+            oArray.Add("bbox");
+            oArray.Add("maxy");
+            oBBOX.Add("ymax", oArray);
+        }
+        oSetBBOXColumns.insert("bbox");
+        oDef.Add("encoding", "WKB");
+        m_oMapGeometryColumns["geometry"] = oDef;
+    }
+
     int iParquetCol = 0;
     for (int i = 0; i < m_poSchema->num_fields(); ++i)
     {
@@ -483,6 +623,14 @@ void OGRParquetLayer::EstablishFeatureDefn()
             continue;
         }
 
+        if (oSetBBOXColumns.find(field->name()) != oSetBBOXColumns.end())
+        {
+            m_oSetBBoxArrowColumns.insert(i);
+            if (bParquetColValid)
+                iParquetCol++;
+            continue;
+        }
+
         const auto ComputeGeometryColumnTypeLambda =
             [this, bParquetColValid, iParquetCol, &poParquetSchema]()
         {
@@ -501,6 +649,13 @@ void OGRParquetLayer::EstablishFeatureDefn()
             DealWithGeometryColumn(i, field, ComputeGeometryColumnTypeLambda);
         if (bGeometryField)
         {
+            const auto oIter = m_oMapGeometryColumns.find(field->name());
+            if (bUseBBOX && oIter != m_oMapGeometryColumns.end())
+            {
+                ProcessGeometryColumnCovering(field, oIter->second,
+                                              oMapParquetColumnNameToIdx);
+            }
+
             m_anMapGeomFieldIndexToParquetColumn.push_back(
                 bParquetColValid ? iParquetCol : -1);
             if (bParquetColValid)
@@ -538,6 +693,100 @@ void OGRParquetLayer::EstablishFeatureDefn()
         }
         catch (const std::exception &)
         {
+        }
+    }
+}
+
+/************************************************************************/
+/*                  ProcessGeometryColumnCovering()                     */
+/************************************************************************/
+
+/** Process GeoParquet JSON geometry field object to extract information about
+ * its bounding box column, and appropriately fill m_oMapGeomFieldIndexToGeomColBBOX
+ * and m_oMapGeomFieldIndexToGeomColBBOXParquet members with information on that
+ * bounding box column.
+ */
+void OGRParquetLayer::ProcessGeometryColumnCovering(
+    const std::shared_ptr<arrow::Field> &field,
+    const CPLJSONObject &oJSONGeometryColumn,
+    const std::map<std::string, int> &oMapParquetColumnNameToIdx)
+{
+    std::string osBBOXColumn;
+    std::string osXMin, osYMin, osXMax, osYMax;
+    if (ParseGeometryColumnCovering(oJSONGeometryColumn, osBBOXColumn, osXMin,
+                                    osYMin, osXMax, osYMax))
+    {
+        OGRArrowLayer::GeomColBBOX sDesc;
+        sDesc.iArrowCol = m_poSchema->GetFieldIndex(osBBOXColumn);
+        const auto fieldBBOX = m_poSchema->GetFieldByName(osBBOXColumn);
+        if (sDesc.iArrowCol >= 0 && fieldBBOX &&
+            fieldBBOX->type()->id() == arrow::Type::STRUCT)
+        {
+            const auto fieldBBOXStruct =
+                std::static_pointer_cast<arrow::StructType>(fieldBBOX->type());
+            const auto fieldXMin = fieldBBOXStruct->GetFieldByName(osXMin);
+            const auto fieldYMin = fieldBBOXStruct->GetFieldByName(osYMin);
+            const auto fieldXMax = fieldBBOXStruct->GetFieldByName(osXMax);
+            const auto fieldYMax = fieldBBOXStruct->GetFieldByName(osYMax);
+            const int nXMinIdx = fieldBBOXStruct->GetFieldIndex(osXMin);
+            const int nYMinIdx = fieldBBOXStruct->GetFieldIndex(osYMin);
+            const int nXMaxIdx = fieldBBOXStruct->GetFieldIndex(osXMax);
+            const int nYMaxIdx = fieldBBOXStruct->GetFieldIndex(osYMax);
+            const auto oIterParquetIdxXMin = oMapParquetColumnNameToIdx.find(
+                std::string(osBBOXColumn).append(".").append(osXMin));
+            const auto oIterParquetIdxYMin = oMapParquetColumnNameToIdx.find(
+                std::string(osBBOXColumn).append(".").append(osYMin));
+            const auto oIterParquetIdxXMax = oMapParquetColumnNameToIdx.find(
+                std::string(osBBOXColumn).append(".").append(osXMax));
+            const auto oIterParquetIdxYMax = oMapParquetColumnNameToIdx.find(
+                std::string(osBBOXColumn).append(".").append(osYMax));
+            if (nXMinIdx >= 0 && nYMinIdx >= 0 && nXMaxIdx >= 0 &&
+                nYMaxIdx >= 0 && fieldXMin && fieldYMin && fieldXMax &&
+                fieldYMax &&
+                oIterParquetIdxXMin != oMapParquetColumnNameToIdx.end() &&
+                oIterParquetIdxYMin != oMapParquetColumnNameToIdx.end() &&
+                oIterParquetIdxXMax != oMapParquetColumnNameToIdx.end() &&
+                oIterParquetIdxYMax != oMapParquetColumnNameToIdx.end() &&
+                (fieldXMin->type()->id() == arrow::Type::FLOAT ||
+                 fieldXMin->type()->id() == arrow::Type::DOUBLE) &&
+                fieldXMin->type()->id() == fieldYMin->type()->id() &&
+                fieldXMin->type()->id() == fieldXMax->type()->id() &&
+                fieldXMin->type()->id() == fieldYMax->type()->id())
+            {
+                CPLDebug("PARQUET",
+                         "Bounding box column '%s' detected for "
+                         "geometry column '%s'",
+                         osBBOXColumn.c_str(), field->name().c_str());
+                sDesc.iArrowSubfieldXMin = nXMinIdx;
+                sDesc.iArrowSubfieldYMin = nYMinIdx;
+                sDesc.iArrowSubfieldXMax = nXMaxIdx;
+                sDesc.iArrowSubfieldYMax = nYMaxIdx;
+                sDesc.bIsFloat =
+                    (fieldXMin->type()->id() == arrow::Type::FLOAT);
+
+                m_oMapGeomFieldIndexToGeomColBBOX
+                    [m_poFeatureDefn->GetGeomFieldCount() - 1] =
+                        std::move(sDesc);
+
+                GeomColBBOXParquet sDescParquet;
+                sDescParquet.iParquetXMin = oIterParquetIdxXMin->second;
+                sDescParquet.iParquetYMin = oIterParquetIdxYMin->second;
+                sDescParquet.iParquetXMax = oIterParquetIdxXMax->second;
+                sDescParquet.iParquetYMax = oIterParquetIdxYMax->second;
+                for (const auto &iterParquetCols : oMapParquetColumnNameToIdx)
+                {
+                    if (STARTS_WITH(
+                            iterParquetCols.first.c_str(),
+                            std::string(osBBOXColumn).append(".").c_str()))
+                    {
+                        sDescParquet.anParquetCols.push_back(
+                            iterParquetCols.second);
+                    }
+                }
+                m_oMapGeomFieldIndexToGeomColBBOXParquet
+                    [m_poFeatureDefn->GetGeomFieldCount() - 1] =
+                        std::move(sDescParquet);
+            }
         }
     }
 }
@@ -1054,9 +1303,12 @@ bool OGRParquetLayer::ReadNextBatch()
 
         bool bIterateEverything = false;
         std::vector<int> anSelectedGroups;
+        const auto oIterToGeomColBBOX =
+            m_oMapGeomFieldIndexToGeomColBBOXParquet.find(m_iGeomFieldFilter);
         const bool bUSEBBOXFields =
-            (m_poFilterGeom && m_iBBOXMinXField >= 0 && m_iBBOXMinYField >= 0 &&
-             m_iBBOXMaxXField >= 0 && m_iBBOXMaxYField >= 0 &&
+            (m_poFilterGeom &&
+             oIterToGeomColBBOX !=
+                 m_oMapGeomFieldIndexToGeomColBBOXParquet.end() &&
              CPLTestBool(CPLGetConfigOption(
                  ("OGR_" + GetDriverUCName() + "_USE_BBOX").c_str(), "YES")));
 
@@ -1087,10 +1339,10 @@ bool OGRParquetLayer::ReadNextBatch()
 
                 if (bUSEBBOXFields)
                 {
-                    if (GetMinMaxForField(iRowGroup, m_iBBOXMinXField, true,
-                                          sMin, bFoundMin, false, sMax,
-                                          bFoundMax, eType, eSubType, osMinTmp,
-                                          osMaxTmp) &&
+                    if (GetMinMaxForParquetCol(
+                            iRowGroup, oIterToGeomColBBOX->second.iParquetXMin,
+                            nullptr, true, sMin, bFoundMin, false, sMax,
+                            bFoundMax, eType, eSubType, osMinTmp, osMaxTmp) &&
                         bFoundMin && eType == OFTReal)
                     {
                         const double dfGroupMinX = sMin.Real;
@@ -1098,10 +1350,12 @@ bool OGRParquetLayer::ReadNextBatch()
                         {
                             bSelectGroup = false;
                         }
-                        else if (GetMinMaxForField(
-                                     iRowGroup, m_iBBOXMinYField, true, sMin,
-                                     bFoundMin, false, sMax, bFoundMax, eType,
-                                     eSubType, osMinTmp, osMaxTmp) &&
+                        else if (GetMinMaxForParquetCol(
+                                     iRowGroup,
+                                     oIterToGeomColBBOX->second.iParquetYMin,
+                                     nullptr, true, sMin, bFoundMin, false,
+                                     sMax, bFoundMax, eType, eSubType, osMinTmp,
+                                     osMaxTmp) &&
                                  bFoundMin && eType == OFTReal)
                         {
                             const double dfGroupMinY = sMin.Real;
@@ -1109,10 +1363,13 @@ bool OGRParquetLayer::ReadNextBatch()
                             {
                                 bSelectGroup = false;
                             }
-                            else if (GetMinMaxForField(
-                                         iRowGroup, m_iBBOXMaxXField, false,
-                                         sMin, bFoundMin, true, sMax, bFoundMax,
-                                         eType, eSubType, osMinTmp, osMaxTmp) &&
+                            else if (GetMinMaxForParquetCol(
+                                         iRowGroup,
+                                         oIterToGeomColBBOX->second
+                                             .iParquetXMax,
+                                         nullptr, false, sMin, bFoundMin, true,
+                                         sMax, bFoundMax, eType, eSubType,
+                                         osMinTmp, osMaxTmp) &&
                                      bFoundMax && eType == OFTReal)
                             {
                                 const double dfGroupMaxX = sMax.Real;
@@ -1120,11 +1377,13 @@ bool OGRParquetLayer::ReadNextBatch()
                                 {
                                     bSelectGroup = false;
                                 }
-                                else if (GetMinMaxForField(
-                                             iRowGroup, m_iBBOXMaxYField, false,
-                                             sMin, bFoundMin, true, sMax,
-                                             bFoundMax, eType, eSubType,
-                                             osMinTmp, osMaxTmp) &&
+                                else if (GetMinMaxForParquetCol(
+                                             iRowGroup,
+                                             oIterToGeomColBBOX->second
+                                                 .iParquetYMax,
+                                             nullptr, false, sMin, bFoundMin,
+                                             true, sMax, bFoundMax, eType,
+                                             eSubType, osMinTmp, osMaxTmp) &&
                                          bFoundMax && eType == OFTReal)
                                 {
                                     const double dfGroupMaxY = sMax.Real;
@@ -1160,7 +1419,7 @@ bool OGRParquetLayer::ReadNextBatch()
                                     poRowGroup->metadata()->num_rows() - 1;
                                 eType = OFTInteger64;
                             }
-                            else if (!GetMinMaxForField(
+                            else if (!GetMinMaxForOGRField(
                                          iRowGroup, iOGRField, true, sMin,
                                          bFoundMin, true, sMax, bFoundMax,
                                          eType, eSubType, osMinTmp, osMaxTmp) ||
@@ -1355,7 +1614,8 @@ bool OGRParquetLayer::ReadNextBatch()
         }
         if (poNextBatch == nullptr)
         {
-            if (m_iRecordBatch == 1)
+            if (m_iRecordBatch == 1 && m_poBatch && m_poAttrQuery == nullptr &&
+                m_poFilterGeom == nullptr)
             {
                 m_iRecordBatch = 0;
                 m_bSingleBatch = true;
@@ -1560,6 +1820,20 @@ OGRErr OGRParquetLayer::SetIgnoredFields(const char **papszFields)
                     m_anMapGeomFieldIndexToArrayIndex.push_back(nBatchColumns);
                     nBatchColumns++;
                     m_anRequestedParquetColumns.push_back(iParquetCol);
+
+                    auto oIter = m_oMapGeomFieldIndexToGeomColBBOX.find(i);
+                    const auto oIterParquet =
+                        m_oMapGeomFieldIndexToGeomColBBOXParquet.find(i);
+                    if (oIter != m_oMapGeomFieldIndexToGeomColBBOX.end() &&
+                        oIterParquet !=
+                            m_oMapGeomFieldIndexToGeomColBBOXParquet.end())
+                    {
+                        oIter->second.iArrayIdx = nBatchColumns++;
+                        m_anRequestedParquetColumns.insert(
+                            m_anRequestedParquetColumns.end(),
+                            oIterParquet->second.anParquetCols.begin(),
+                            oIterParquet->second.anParquetCols.end());
+                    }
                 }
                 else
                 {
@@ -1608,61 +1882,57 @@ bool OGRParquetLayer::FastGetExtent(int iGeomField, OGREnvelope *psExtent) const
     if (OGRParquetLayerBase::FastGetExtent(iGeomField, psExtent))
         return true;
 
-    if (iGeomField == 0 && m_poFeatureDefn->GetGeomFieldCount() == 1)
+    const auto oIterToGeomColBBOX =
+        m_oMapGeomFieldIndexToGeomColBBOXParquet.find(iGeomField);
+    if (oIterToGeomColBBOX != m_oMapGeomFieldIndexToGeomColBBOXParquet.end() &&
+        CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_BBOX", "YES")))
     {
-        // OuvertureMaps dataset have double bbox.minx, bbox.miny, bbox.maxx,
-        // bboxy.maxy fields with statistics. Use that to quickly compute
-        // extent.
-        if (m_iBBOXMinXField >= 0 && m_iBBOXMinYField >= 0 &&
-            m_iBBOXMaxXField >= 0 && m_iBBOXMaxYField >= 0 &&
-            CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_BBOX", "YES")))
+        OGREnvelope sExtent;
+        OGRField sMin, sMax;
+        OGR_RawField_SetNull(&sMin);
+        OGR_RawField_SetNull(&sMax);
+        bool bFoundMin, bFoundMax;
+        OGRFieldType eType = OFTMaxType;
+        OGRFieldSubType eSubType = OFSTNone;
+        std::string osMinTmp, osMaxTmp;
+        if (GetMinMaxForParquetCol(-1, oIterToGeomColBBOX->second.iParquetXMin,
+                                   nullptr, true, sMin, bFoundMin, false, sMax,
+                                   bFoundMax, eType, eSubType, osMinTmp,
+                                   osMaxTmp) &&
+            eType == OFTReal)
         {
-            OGREnvelope sExtent;
-            OGRField sMin, sMax;
-            OGR_RawField_SetNull(&sMin);
-            OGR_RawField_SetNull(&sMax);
-            bool bFoundMin, bFoundMax;
-            OGRFieldType eType = OFTMaxType;
-            OGRFieldSubType eSubType = OFSTNone;
-            std::string osMinTmp, osMaxTmp;
-            if (GetMinMaxForField(-1, m_iBBOXMinXField, true, sMin, bFoundMin,
-                                  false, sMax, bFoundMax, eType, eSubType,
-                                  osMinTmp, osMaxTmp) &&
+            sExtent.MinX = sMin.Real;
+
+            if (GetMinMaxForParquetCol(
+                    -1, oIterToGeomColBBOX->second.iParquetYMin, nullptr, true,
+                    sMin, bFoundMin, false, sMax, bFoundMax, eType, eSubType,
+                    osMinTmp, osMaxTmp) &&
                 eType == OFTReal)
             {
-                sExtent.MinX = sMin.Real;
+                sExtent.MinY = sMin.Real;
 
-                if (GetMinMaxForField(-1, m_iBBOXMinYField, true, sMin,
-                                      bFoundMin, false, sMax, bFoundMax, eType,
-                                      eSubType, osMinTmp, osMaxTmp) &&
+                if (GetMinMaxForParquetCol(
+                        -1, oIterToGeomColBBOX->second.iParquetXMax, nullptr,
+                        false, sMin, bFoundMin, true, sMax, bFoundMax, eType,
+                        eSubType, osMinTmp, osMaxTmp) &&
                     eType == OFTReal)
                 {
-                    sExtent.MinY = sMin.Real;
+                    sExtent.MaxX = sMax.Real;
 
-                    if (GetMinMaxForField(-1, m_iBBOXMaxXField, false, sMin,
-                                          bFoundMin, true, sMax, bFoundMax,
-                                          eType, eSubType, osMinTmp,
-                                          osMaxTmp) &&
+                    if (GetMinMaxForParquetCol(
+                            -1, oIterToGeomColBBOX->second.iParquetYMax,
+                            nullptr, false, sMin, bFoundMin, true, sMax,
+                            bFoundMax, eType, eSubType, osMinTmp, osMaxTmp) &&
                         eType == OFTReal)
                     {
-                        sExtent.MaxX = sMax.Real;
+                        sExtent.MaxY = sMax.Real;
 
-                        if (GetMinMaxForField(-1, m_iBBOXMaxYField, false, sMin,
-                                              bFoundMin, true, sMax, bFoundMax,
-                                              eType, eSubType, osMinTmp,
-                                              osMaxTmp) &&
-                            eType == OFTReal)
-                        {
-                            sExtent.MaxY = sMax.Real;
-
-                            CPLDebug(
-                                "PARQUET",
-                                "Using statistics of bbox.minx, bbox.miny, "
-                                "bbox.maxx, bbox.maxy columns to get extent");
-                            m_oMapExtents[iGeomField] = sExtent;
-                            *psExtent = sExtent;
-                            return true;
-                        }
+                        CPLDebug("PARQUET",
+                                 "Using statistics of bbox.minx, bbox.miny, "
+                                 "bbox.maxx, bbox.maxy columns to get extent");
+                        m_oMapExtents[iGeomField] = sExtent;
+                        *psExtent = sExtent;
+                        return true;
                     }
                 }
             }
@@ -1918,6 +2188,11 @@ template <class STAT_TYPE> struct GetStats
                     v = rowGroupVal;
                 }
             }
+            else if (columnChunk->num_values() > 0)
+            {
+                bFound = false;
+                break;
+            }
         }
         return v;
     }
@@ -1945,7 +2220,7 @@ template <class STAT_TYPE> struct GetStats
                     v = rowGroupVal;
                 }
             }
-            else
+            else if (columnChunk->num_values() > 0)
             {
                 bFound = false;
                 break;
@@ -2028,25 +2303,18 @@ template <> struct GetStats<parquet::ByteArrayStatistics>
 };
 
 /************************************************************************/
-/*                        GetMinMaxForField()                           */
+/*                        GetMinMaxForOGRField()                        */
 /************************************************************************/
 
-bool OGRParquetLayer::GetMinMaxForField(int iRowGroup,  // -1 for all
-                                        int iOGRField, bool bComputeMin,
-                                        OGRField &sMin, bool &bFoundMin,
-                                        bool bComputeMax, OGRField &sMax,
-                                        bool &bFoundMax, OGRFieldType &eType,
-                                        OGRFieldSubType &eSubType,
-                                        std::string &osMinTmp,
-                                        std::string &osMaxTmp) const
+bool OGRParquetLayer::GetMinMaxForOGRField(int iRowGroup,  // -1 for all
+                                           int iOGRField, bool bComputeMin,
+                                           OGRField &sMin, bool &bFoundMin,
+                                           bool bComputeMax, OGRField &sMax,
+                                           bool &bFoundMax, OGRFieldType &eType,
+                                           OGRFieldSubType &eSubType,
+                                           std::string &osMinTmp,
+                                           std::string &osMaxTmp) const
 {
-    const OGRFieldDefn oDummyFIDFieldDefn(m_osFIDColumn.c_str(), OFTInteger64);
-    const OGRFieldDefn *poFieldDefn =
-        iOGRField == OGR_FID_INDEX
-            ? &oDummyFIDFieldDefn
-            : const_cast<OGRParquetLayer *>(this)->GetLayerDefn()->GetFieldDefn(
-                  iOGRField);
-
     OGR_RawField_SetNull(&sMin);
     OGR_RawField_SetNull(&sMax);
     eType = OFTReal;
@@ -2059,21 +2327,85 @@ bool OGRParquetLayer::GetMinMaxForField(int iRowGroup,  // -1 for all
                          : GetMapFieldIndexToParquetColumn()[iOGRField];
     if (iCol < 0)
         return false;
-    const auto metadata = GetReader()->parquet_reader()->metadata();
-    const auto numRowGroups = metadata->num_row_groups();
     const auto &arrowType = iOGRField == OGR_FID_INDEX
                                 ? m_poFIDType
                                 : GetArrowFieldTypes()[iOGRField];
 
+    const bool bRet = GetMinMaxForParquetCol(
+        iRowGroup, iCol, arrowType, bComputeMin, sMin, bFoundMin, bComputeMax,
+        sMax, bFoundMax, eType, eSubType, osMinTmp, osMaxTmp);
+
+    if (eType == OFTInteger64 && arrowType->id() == arrow::Type::TIMESTAMP)
+    {
+        const OGRFieldDefn oDummyFIDFieldDefn(m_osFIDColumn.c_str(),
+                                              OFTInteger64);
+        const OGRFieldDefn *poFieldDefn =
+            iOGRField == OGR_FID_INDEX ? &oDummyFIDFieldDefn
+                                       : const_cast<OGRParquetLayer *>(this)
+                                             ->GetLayerDefn()
+                                             ->GetFieldDefn(iOGRField);
+        if (poFieldDefn->GetType() == OFTDateTime)
+        {
+            const auto timestampType =
+                static_cast<arrow::TimestampType *>(arrowType.get());
+            if (bFoundMin)
+            {
+                const int64_t timestamp = sMin.Integer64;
+                OGRArrowLayer::TimestampToOGR(timestamp, timestampType,
+                                              poFieldDefn->GetTZFlag(), &sMin);
+            }
+            if (bFoundMax)
+            {
+                const int64_t timestamp = sMax.Integer64;
+                OGRArrowLayer::TimestampToOGR(timestamp, timestampType,
+                                              poFieldDefn->GetTZFlag(), &sMax);
+            }
+            eType = OFTDateTime;
+        }
+    }
+
+    return bRet;
+}
+
+/************************************************************************/
+/*                        GetMinMaxForParquetCol()                      */
+/************************************************************************/
+
+bool OGRParquetLayer::GetMinMaxForParquetCol(
+    int iRowGroup,  // -1 for all
+    int iCol,
+    const std::shared_ptr<arrow::DataType> &arrowType,  // potentially nullptr
+    bool bComputeMin, OGRField &sMin, bool &bFoundMin, bool bComputeMax,
+    OGRField &sMax, bool &bFoundMax, OGRFieldType &eType,
+    OGRFieldSubType &eSubType, std::string &osMinTmp,
+    std::string &osMaxTmp) const
+{
+    OGR_RawField_SetNull(&sMin);
+    OGR_RawField_SetNull(&sMax);
+    eType = OFTReal;
+    eSubType = OFSTNone;
+    bFoundMin = false;
+    bFoundMax = false;
+
+    const auto metadata = GetReader()->parquet_reader()->metadata();
+    const auto numRowGroups = metadata->num_row_groups();
+
     if (numRowGroups == 0)
         return false;
 
-    const auto rowGroup0columnChunk = metadata->RowGroup(0)->ColumnChunk(iCol);
+    const auto rowGroup0 = metadata->RowGroup(0);
+    if (iCol < 0 || iCol >= rowGroup0->num_columns())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GetMinMaxForParquetCol(): invalid iCol=%d", iCol);
+        return false;
+    }
+    const auto rowGroup0columnChunk = rowGroup0->ColumnChunk(iCol);
     const auto rowGroup0Stats = rowGroup0columnChunk->statistics();
     if (!(rowGroup0columnChunk->is_stats_set() && rowGroup0Stats))
     {
         CPLDebug("PARQUET", "Statistics not available for field %s",
-                 poFieldDefn->GetNameRef());
+                 rowGroup0columnChunk->path_in_schema()->ToDotString().c_str());
         return false;
     }
 
@@ -2090,7 +2422,7 @@ bool OGRParquetLayer::GetMinMaxForField(int iRowGroup,  // -1 for all
         }
         else if (physicalType == parquet::Type::INT32)
         {
-            if (arrowType->id() == arrow::Type::UINT32)
+            if (arrowType && arrowType->id() == arrow::Type::UINT32)
             {
                 // With parquet file version 2.0,
                 // statistics of uint32 fields are
@@ -2106,7 +2438,7 @@ bool OGRParquetLayer::GetMinMaxForField(int iRowGroup,  // -1 for all
             else
             {
                 eType = OFTInteger;
-                if (poFieldDefn->GetSubType() == OFSTInt16)
+                if (arrowType && arrowType->id() == arrow::Type::INT16)
                     eSubType = OFSTInt16;
                 sMin.Integer = GetStats<parquet::Int32Statistics>::min(
                     metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
@@ -2131,7 +2463,9 @@ bool OGRParquetLayer::GetMinMaxForField(int iRowGroup,  // -1 for all
             sMin.Real = GetStats<parquet::DoubleStatistics>::min(
                 metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
         }
-        else if (poFieldDefn->GetType() == OFTString &&
+        else if (arrowType &&
+                 (arrowType->id() == arrow::Type::STRING ||
+                  arrowType->id() == arrow::Type::LARGE_STRING) &&
                  physicalType == parquet::Type::BYTE_ARRAY)
         {
             osMinTmp = GetStats<parquet::ByteArrayStatistics>::min(
@@ -2155,7 +2489,7 @@ bool OGRParquetLayer::GetMinMaxForField(int iRowGroup,  // -1 for all
         }
         else if (physicalType == parquet::Type::INT32)
         {
-            if (arrowType->id() == arrow::Type::UINT32)
+            if (arrowType && arrowType->id() == arrow::Type::UINT32)
             {
                 // With parquet file version 2.0,
                 // statistics of uint32 fields are
@@ -2171,7 +2505,7 @@ bool OGRParquetLayer::GetMinMaxForField(int iRowGroup,  // -1 for all
             else
             {
                 eType = OFTInteger;
-                if (poFieldDefn->GetSubType() == OFSTInt16)
+                if (arrowType && arrowType->id() == arrow::Type::INT16)
                     eSubType = OFSTInt16;
                 sMax.Integer = GetStats<parquet::Int32Statistics>::max(
                     metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
@@ -2196,7 +2530,9 @@ bool OGRParquetLayer::GetMinMaxForField(int iRowGroup,  // -1 for all
             sMax.Real = GetStats<parquet::DoubleStatistics>::max(
                 metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
         }
-        else if (poFieldDefn->GetType() == OFTString &&
+        else if (arrowType &&
+                 (arrowType->id() == arrow::Type::STRING ||
+                  arrowType->id() == arrow::Type::LARGE_STRING) &&
                  physicalType == parquet::Type::BYTE_ARRAY)
         {
             osMaxTmp = GetStats<parquet::ByteArrayStatistics>::max(
@@ -2209,25 +2545,30 @@ bool OGRParquetLayer::GetMinMaxForField(int iRowGroup,  // -1 for all
         }
     }
 
-    if (eType == OFTInteger64 && poFieldDefn->GetType() == OFTDateTime &&
-        arrowType->id() == arrow::Type::TIMESTAMP)
-    {
-        const auto timestampType =
-            static_cast<arrow::TimestampType *>(arrowType.get());
-        if (bFoundMin)
-        {
-            const int64_t timestamp = sMin.Integer64;
-            OGRArrowLayer::TimestampToOGR(timestamp, timestampType,
-                                          poFieldDefn->GetTZFlag(), &sMin);
-        }
-        if (bFoundMax)
-        {
-            const int64_t timestamp = sMax.Integer64;
-            OGRArrowLayer::TimestampToOGR(timestamp, timestampType,
-                                          poFieldDefn->GetTZFlag(), &sMax);
-        }
-        eType = OFTDateTime;
-    }
-
     return bFoundMin || bFoundMax;
+}
+
+/************************************************************************/
+/*                        GeomColsBBOXParquet()                         */
+/************************************************************************/
+
+/** Return for a given geometry column (iGeom: in [0, GetGeomFieldCount()-1] range),
+ * the Parquet column number of the corresponding xmin,ymin,xmax,ymax bounding
+ * box columns, if existing.
+ */
+bool OGRParquetLayer::GeomColsBBOXParquet(int iGeom, int &iParquetXMin,
+                                          int &iParquetYMin, int &iParquetXMax,
+                                          int &iParquetYMax) const
+{
+    const auto oIter = m_oMapGeomFieldIndexToGeomColBBOXParquet.find(iGeom);
+    const bool bFound =
+        (oIter != m_oMapGeomFieldIndexToGeomColBBOXParquet.end());
+    if (bFound)
+    {
+        iParquetXMin = oIter->second.iParquetXMin;
+        iParquetYMin = oIter->second.iParquetYMin;
+        iParquetXMax = oIter->second.iParquetXMax;
+        iParquetYMax = oIter->second.iParquetYMax;
+    }
+    return bFound;
 }

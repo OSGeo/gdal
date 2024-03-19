@@ -47,6 +47,7 @@ extern int ods_formuladebug;
 /* Token type.  */
 #ifndef YYTOKENTYPE
 #define YYTOKENTYPE
+
 enum yytokentype
 {
     ODST_NUMBER = 258,

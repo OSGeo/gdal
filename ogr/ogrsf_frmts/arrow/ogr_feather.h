@@ -164,8 +164,9 @@ class OGRFeatherWriterLayer final : public OGRArrowWriterLayer
     {
         return m_poFileWriter != nullptr;
     }
+
     virtual void CreateWriter() override;
-    virtual void CloseFileWriter() override;
+    virtual bool CloseFileWriter() override;
 
     virtual void CreateSchema() override;
     virtual void PerformStepsBeforeFinalFlushGroup() override;
@@ -179,6 +180,7 @@ class OGRFeatherWriterLayer final : public OGRArrowWriterLayer
 
     virtual bool
     IsSupportedGeometryType(OGRwkbGeometryType eGType) const override;
+
     virtual bool IsSRSRequired() const override
     {
         return true;

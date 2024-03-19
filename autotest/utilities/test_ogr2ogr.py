@@ -1850,7 +1850,7 @@ def test_ogr2ogr_56(ogr2ogr_path, tmp_path):
     f.close()
 
     gdaltest.runexternal(
-        f"{ogr2ogr_path} -f PGDump {dst_sql} {src_csv} -lco FID=myid --config PGDUMP_DEBUG_ALLOW_CREATION_FIELD_WITH_FID_NAME NO"
+        f"{ogr2ogr_path} -f PGDump {dst_sql} {src_csv} -lco FID=myid --config PGDUMP_DEBUG_ALLOW_CREATION_FIELD_WITH_FID_NAME=NO"
     )
 
     f = open(dst_sql, "rt")
@@ -2269,3 +2269,23 @@ def test_ogr2ogr_if_ko(ogr2ogr_path):
         ogr2ogr_path + " -if GeoJSON /vsimem/out.gpkg ../ogr/data/gpkg/2d_envelope.gpkg"
     )
     assert "Unable to open datasource" in err
+
+
+###############################################################################
+# Test https://github.com/OSGeo/gdal/issues/9497
+
+
+@pytest.mark.require_driver("GPKG")
+@pytest.mark.require_driver("Parquet")
+def test_ogr2ogr_parquet_dataset_limit(ogr2ogr_path, tmp_path):
+
+    if gdal.GetDriverByName("PARQUET").GetMetadataItem("ARROW_DATASET") is None:
+        pytest.skip("GDAL built without ARROW_DATASET support")
+
+    out_filename = str(tmp_path / "out.gpkg")
+    gdaltest.runexternal(
+        ogr2ogr_path + f" -limit 1 {out_filename} ../ogr/data/parquet/partitioned_hive"
+    )
+
+    ds = ogr.Open(out_filename)
+    assert ds.GetLayer(0).GetFeatureCount() == 1

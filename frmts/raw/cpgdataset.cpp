@@ -91,16 +91,19 @@ class CPGDataset final : public RawDataset
     ~CPGDataset() override;
 
     int GetGCPCount() override;
+
     const OGRSpatialReference *GetGCPSpatialRef() const override
     {
         return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS;
     }
+
     const GDAL_GCP *GetGCPs() override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
+
     CPLErr GetGeoTransform(double *) override;
 
     char **GetFileList() override;
@@ -193,6 +196,7 @@ class SIRC_QSLCRasterBand final : public GDALRasterBand
 
   public:
     SIRC_QSLCRasterBand(CPGDataset *, int, GDALDataType);
+
     ~SIRC_QSLCRasterBand() override
     {
     }
@@ -232,6 +236,7 @@ class CPG_STOKESRasterBand final : public GDALRasterBand
   public:
     CPG_STOKESRasterBand(GDALDataset *poDS, GDALDataType eType,
                          int bNativeOrder);
+
     ~CPG_STOKESRasterBand() override
     {
     }

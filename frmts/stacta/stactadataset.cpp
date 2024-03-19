@@ -922,6 +922,7 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
         else
         {
             nExpectedBandCount = oRasterBands.Size();
+
             const struct
             {
                 const char *pszStacDataType;
@@ -943,6 +944,7 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
                 {"cfloat32", GDT_CFloat32},
                 {"cfloat64", GDT_CFloat64},
             };
+
             for (int i = 0; i < nExpectedBandCount; ++i)
             {
                 if (oRasterBands[i].GetType() != CPLJSONObject::Type::Object)

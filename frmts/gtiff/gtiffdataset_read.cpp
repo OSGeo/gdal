@@ -536,6 +536,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
             : m_apoBlocks(apoBlocksIn)
         {
         }
+
         ~FreeBlocks()
         {
             for (auto *poBlock : m_apoBlocks)
@@ -545,6 +546,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
             }
         }
     };
+
     FreeBlocks oFreeBlocks(apoBlocks);
 
     const auto LoadBlocks = [&]()
@@ -4421,7 +4423,7 @@ void GTiffDataset::ApplyPamInfo()
     /*      Copy any PAM metadata into our GeoTIFF context, and with        */
     /*      the PAM info overriding the GeoTIFF context.                    */
     /* -------------------------------------------------------------------- */
-    char **papszPamDomains = oMDMD.GetDomainList();
+    CSLConstList papszPamDomains = oMDMD.GetDomainList();
 
     for (int iDomain = 0;
          papszPamDomains && papszPamDomains[iDomain] != nullptr; ++iDomain)

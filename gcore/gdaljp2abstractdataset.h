@@ -47,6 +47,7 @@ class CPL_DLL GDALJP2AbstractDataset : public GDALGeorefPamDataset
 
   protected:
     int CloseDependentDatasets() override;
+
     virtual VSILFILE *GetFileHandle()
     {
         return nullptr;
@@ -70,6 +71,7 @@ class CPL_DLL GDALJP2AbstractDataset : public GDALGeorefPamDataset
     int GetLayerCount() override;
     OGRLayer *GetLayer(int i) override;
 };
+
 //! @endcond
 
 #endif /* GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED */

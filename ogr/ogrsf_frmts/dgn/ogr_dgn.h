@@ -67,6 +67,7 @@ class OGRDGNLayer final : public OGRLayer
     virtual ~OGRDGNLayer();
 
     void SetSpatialFilter(OGRGeometry *) override;
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
@@ -78,6 +79,7 @@ class OGRDGNLayer final : public OGRLayer
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
@@ -118,14 +120,17 @@ class OGRDGNDataSource final : public OGRDataSource
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList) override;
+
     const char *GetName() override
     {
         return pszName;
     }
+
     int GetLayerCount() override
     {
         return nLayers;
     }
+
     OGRLayer *GetLayer(int) override;
 
     int TestCapability(const char *) override;

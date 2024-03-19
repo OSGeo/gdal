@@ -76,6 +76,7 @@ class TILRasterBand final : public GDALPamRasterBand
 
   public:
     TILRasterBand(TILDataset *, int, VRTSourcedRasterBand *);
+
     virtual ~TILRasterBand()
     {
     }

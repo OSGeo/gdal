@@ -134,10 +134,12 @@ class VSISparseFileFilesystemHandler : public VSIFilesystemHandler
     {
         return oRecOpenCount[CPLGetPID()];
     }
+
     void IncRecCounter()
     {
         oRecOpenCount[CPLGetPID()]++;
     }
+
     void DecRecCounter()
     {
         oRecOpenCount[CPLGetPID()]--;

@@ -65,6 +65,7 @@ class CPL_DLL CPLKeywordParser
 
     const char *GetKeyword(const char *pszPath,
                            const char *pszDefault = nullptr);
+
     char **GetAllKeywords()
     {
         return papszKeywordList;

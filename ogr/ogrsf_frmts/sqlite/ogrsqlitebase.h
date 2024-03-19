@@ -175,14 +175,17 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
     {
         return hDB;
     }
+
     sqlite3_vfs *GetVFS()
     {
         return pMyVFS;
     }
+
     inline bool GetUpdate() const
     {
         return eAccess == GA_Update;
     }
+
     VSILFILE *GetVSILFILE() const
     {
         return fpMainFile;
@@ -225,10 +228,12 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
     GetRelationship(const std::string &name) const override;
 
     bool IsSpatialiteLoaded();
+
     static int MakeSpatialiteVersionNumber(int x, int y, int z)
     {
         return x * 10000 + y * 100 + z;
     }
+
     int GetSpatialiteVersionNumber();
 
     bool SpatialiteRequiresTrustedSchemaOn();

@@ -516,6 +516,7 @@ int OGRLayer::AttributeFilterEvaluationNeedsGeometry()
 
     return ContainGeomSpecialField(expr, nLayerFieldCount);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -707,9 +708,10 @@ void OGRLayer::ConvertGeomsIfNecessary(OGRFeature *poFeature)
                     poGeom = OGRGeometryFactory::forceTo(
                         poFeature->StealGeometry(i), eTargetType);
                     poFeature->SetGeomFieldDirectly(i, poGeom);
+                    poGeom = poFeature->GetGeomFieldRef(i);
                 }
 
-                if (m_poPrivate->m_bApplyGeomSetPrecision)
+                if (poGeom && m_poPrivate->m_bApplyGeomSetPrecision)
                 {
                     const double dfXYResolution =
                         poFeatureDefn->GetGeomFieldDefn(i)
@@ -723,12 +725,11 @@ void OGRLayer::ConvertGeomsIfNecessary(OGRFeature *poFeature)
                         if (poNewGeom)
                         {
                             poFeature->SetGeomFieldDirectly(i, poNewGeom);
-                            poGeom = poNewGeom;
+                            // If there was potential futher processing...
+                            // poGeom = poFeature->GetGeomFieldRef(i);
                         }
                     }
                 }
-
-                CPL_IGNORE_RET_VAL(poGeom);
             }
         }
     }
@@ -1509,6 +1510,7 @@ void OGR_L_SetSpatialFilterEx(OGRLayerH hLayer, int iGeomField,
     OGRLayer::FromHandle(hLayer)->SetSpatialFilter(
         iGeomField, OGRGeometry::FromHandle(hGeom));
 }
+
 /************************************************************************/
 /*                        SetSpatialFilterRect()                        */
 /************************************************************************/
@@ -1672,6 +1674,7 @@ int OGRLayer::InstallFilter(OGRGeometry *poFilter)
 
     return TRUE;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1925,6 +1928,7 @@ OGRErr OGRLayer::InitializeIndexSupport(const char *pszFilename)
 
     return eErr;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1990,6 +1994,7 @@ GIntBig OGRLayer::GetFeaturesRead()
 {
     return m_nFeaturesRead;
 }
+
 //! @endcond
 
 /************************************************************************/

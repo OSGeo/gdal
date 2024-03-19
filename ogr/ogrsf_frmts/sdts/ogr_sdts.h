@@ -91,10 +91,12 @@ class OGRSDTSDataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     int GetLayerCount() override
     {
         return nLayers;
     }
+
     OGRLayer *GetLayer(int) override;
     int TestCapability(const char *) override;
 

@@ -46,6 +46,7 @@ using namespace marching_squares;
 struct Writer
 {
     typedef std::pair<Point, Point> Segment;
+
     static bool coordEquals(double a, double b)
     {
         return (a - b) * (a - b) < 0.001;
@@ -86,6 +87,7 @@ struct Writer
         }
         return false;
     }
+
     // check if a segment is in a set of contours
     bool segmentInContours(int levelIdx, const Segment &segmentToTest) const
     {
@@ -115,6 +117,7 @@ struct Writer
     void beginningOfLine()
     {
     }
+
     void endOfLine()
     {
     }

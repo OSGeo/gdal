@@ -183,7 +183,7 @@ class BAGDataset final : public GDALPamDataset
     bool WriteMetadataIfNeeded();
 
     bool OpenRaster(GDALOpenInfo *poOpenInfo, const CPLString &osFilename,
-                    bool bOpenSuperGrid, int nX, int nY,
+                    bool bOpenSuperGrid, int nX, int nY, bool bIsSubdataset,
                     const CPLString &osGeorefMetadataLayer,
                     CPLString &outOsSubDsName);
     bool OpenVector();
@@ -212,6 +212,7 @@ class BAGDataset final : public GDALPamDataset
     {
         return m_poTrackingListLayer ? 1 : 0;
     }
+
     OGRLayer *GetLayer(int idx) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
@@ -2204,6 +2205,7 @@ class BAGGeorefMDBandBase CPL_NON_FINAL : public GDALPamRasterBand
     {
         return m_poRAT.get();
     }
+
     double GetNoDataValue(int *pbSuccess) override;
 };
 
@@ -2640,14 +2642,21 @@ GDALDataset *BAGDataset::Open(GDALOpenInfo *poOpenInfo)
     int nY = -1;
     CPLString osFilename(poOpenInfo->pszFilename);
     CPLString osGeorefMetadataLayer;
+    bool bIsSubdataset = false;
     if (STARTS_WITH(poOpenInfo->pszFilename, "BAG:"))
     {
+        bIsSubdataset = true;
         char **papszTokens =
             CSLTokenizeString2(poOpenInfo->pszFilename, ":",
                                CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES);
 
-        if (CSLCount(papszTokens) == 4 &&
-            EQUAL(papszTokens[2], "georef_metadata"))
+        if (CSLCount(papszTokens) == 3 &&
+            EQUAL(papszTokens[2], "bathymetry_coverage"))
+        {
+            osFilename = papszTokens[1];
+        }
+        else if (CSLCount(papszTokens) == 4 &&
+                 EQUAL(papszTokens[2], "georef_metadata"))
         {
             osFilename = papszTokens[1];
             osGeorefMetadataLayer = papszTokens[3];
@@ -2748,7 +2757,7 @@ GDALDataset *BAGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nOpenFlags & GDAL_OF_RASTER)
     {
         if (poDS->OpenRaster(poOpenInfo, osFilename, bOpenSuperGrid, nX, nY,
-                             osGeorefMetadataLayer, osSubDsName))
+                             bIsSubdataset, osGeorefMetadataLayer, osSubDsName))
         {
             if (!osSubDsName.empty())
             {
@@ -2784,7 +2793,7 @@ GDALDataset *BAGDataset::Open(GDALOpenInfo *poOpenInfo)
 
 bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
                             const CPLString &osFilename, bool bOpenSuperGrid,
-                            int nX, int nY,
+                            int nX, int nY, bool bIsSubdataset,
                             const CPLString &osGeorefMetadataLayer,
                             CPLString &outOsSubDsName)
 {
@@ -3028,23 +3037,38 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
         m_aosSubdatasets.Clear();
     }
 
-    if (osGeorefMetadataLayer.empty())
+    if (!bIsSubdataset && osGeorefMetadataLayer.empty())
     {
         auto poGeoref_metadata = m_poRootGroup->OpenGroupFromFullname(
             "/BAG_root/georef_metadata", nullptr);
         if (poGeoref_metadata)
         {
             const auto groupNames = poGeoref_metadata->GetGroupNames(nullptr);
-            for (const auto &groupName : groupNames)
+            if (!groupNames.empty())
             {
-                const int nIdx = m_aosSubdatasets.size() / 2 + 1;
-                m_aosSubdatasets.AddNameValue(
-                    CPLSPrintf("SUBDATASET_%d_NAME", nIdx),
-                    CPLSPrintf("BAG:\"%s\":georef_metadata:%s",
-                               GetDescription(), groupName.c_str()));
-                m_aosSubdatasets.AddNameValue(
-                    CPLSPrintf("SUBDATASET_%d_DESC", nIdx),
-                    CPLSPrintf("Georeferenced metadata %s", groupName.c_str()));
+                if (m_aosSubdatasets.empty())
+                {
+                    const int nIdx = 1;
+                    m_aosSubdatasets.AddNameValue(
+                        CPLSPrintf("SUBDATASET_%d_NAME", nIdx),
+                        CPLSPrintf("BAG:\"%s\":bathymetry_coverage",
+                                   GetDescription()));
+                    m_aosSubdatasets.AddNameValue(
+                        CPLSPrintf("SUBDATASET_%d_DESC", nIdx),
+                        "Bathymetry gridded data");
+                }
+                for (const auto &groupName : groupNames)
+                {
+                    const int nIdx = m_aosSubdatasets.size() / 2 + 1;
+                    m_aosSubdatasets.AddNameValue(
+                        CPLSPrintf("SUBDATASET_%d_NAME", nIdx),
+                        CPLSPrintf("BAG:\"%s\":georef_metadata:%s",
+                                   GetDescription(), groupName.c_str()));
+                    m_aosSubdatasets.AddNameValue(
+                        CPLSPrintf("SUBDATASET_%d_DESC", nIdx),
+                        CPLSPrintf("Georeferenced metadata %s",
+                                   groupName.c_str()));
+                }
             }
         }
     }
@@ -3517,8 +3541,10 @@ class BAGTrackingListLayer final
     {
         return m_poFeatureDefn;
     }
+
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(BAGTrackingListLayer)
+
     int TestCapability(const char *) override
     {
         return false;
@@ -4129,18 +4155,22 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
 
     const char *pszSUPERGRIDS =
         CSLFetchNameValue(l_papszOpenOptions, "SUPERGRIDS_INDICES");
+
     struct yx
     {
         int y;
         int x;
+
         yx(int yin, int xin) : y(yin), x(xin)
         {
         }
+
         bool operator<(const yx &other) const
         {
             return y < other.y || (y == other.y && x < other.x);
         }
     };
+
     std::set<yx> oSupergrids;
     int nMinX = 0;
     int nMinY = 0;

@@ -149,6 +149,7 @@ Link_t *AddLink(Link_t *psList, Link_t *psLink);
 typedef union
 {
     int32 Int32Code;
+
     struct
     {
         uchar Subtype1;
@@ -215,10 +216,12 @@ typedef struct
     int ImageDescValue;
     int Override;
     int FileId;
+
     struct
     {
         unsigned char Subtype1, Type, Subtype2, Subtype3;
     } TypeCode;
+
     int Offset;
     int Length;
     int Type;

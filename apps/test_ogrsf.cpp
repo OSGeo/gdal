@@ -263,6 +263,7 @@ MAIN_START(nArgc, papszArgv)
 
     return (bRet) ? 0 : 1;
 }
+
 MAIN_END
 
 /************************************************************************/
@@ -4537,22 +4538,21 @@ static int TestVirtualIO(GDALDataset *poDS)
         return TRUE;
     }
 
-    char **papszFileList = LOG_ACTION(poDS->GetFileList());
-    char **papszIter = papszFileList;
+    const CPLStringList aosFileList(LOG_ACTION(poDS->GetFileList()));
     CPLString osPath;
     int bAllPathIdentical = TRUE;
-    for (; *papszIter != nullptr; papszIter++)
+    for (const char *pszFilename : aosFileList)
     {
-        if (papszIter == papszFileList)
-            osPath = CPLGetPath(*papszIter);
-        else if (strcmp(osPath, CPLGetPath(*papszIter)) != 0)
+        if (pszFilename == aosFileList[0])
+            osPath = CPLGetPath(pszFilename);
+        else if (strcmp(osPath, CPLGetPath(pszFilename)) != 0)
         {
             bAllPathIdentical = FALSE;
             break;
         }
     }
     CPLString osVirtPath;
-    if (bAllPathIdentical && CSLCount(papszFileList) > 1)
+    if (bAllPathIdentical && aosFileList.size() > 1)
     {
         osVirtPath =
             CPLFormFilename("/vsimem", CPLGetFilename(osPath), nullptr);
@@ -4560,14 +4560,14 @@ static int TestVirtualIO(GDALDataset *poDS)
     }
     else
         osVirtPath = "/vsimem";
-    papszIter = papszFileList;
-    for (; *papszIter != nullptr; papszIter++)
+
+    for (const char *pszFilename : aosFileList)
     {
         const char *pszDestFile =
-            CPLFormFilename(osVirtPath, CPLGetFilename(*papszIter), nullptr);
-        /* CPLDebug("test_ogrsf", "Copying %s to %s", *papszIter, pszDestFile);
+            CPLFormFilename(osVirtPath, CPLGetFilename(pszFilename), nullptr);
+        /* CPLDebug("test_ogrsf", "Copying %s to %s", pszFilename, pszDestFile);
          */
-        CPLCopyFile(pszDestFile, *papszIter);
+        CPLCopyFile(pszDestFile, pszFilename);
     }
 
     const char *pszVirtFile;
@@ -4611,13 +4611,11 @@ static int TestVirtualIO(GDALDataset *poDS)
         }
     }
 
-    papszIter = papszFileList;
-    for (; *papszIter != nullptr; papszIter++)
+    for (const char *pszFilename : aosFileList)
     {
         VSIUnlink(
-            CPLFormFilename(osVirtPath, CPLGetFilename(*papszIter), nullptr));
+            CPLFormFilename(osVirtPath, CPLGetFilename(pszFilename), nullptr));
     }
-    CSLDestroy(papszFileList);
 
     return bRet;
 }

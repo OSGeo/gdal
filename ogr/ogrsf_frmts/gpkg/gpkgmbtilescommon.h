@@ -191,12 +191,14 @@ class GDALGPKGMBTilesLikeRasterBand : public GDALPamRasterBand
     virtual CPLErr SetColorInterpretation(GDALColorInterp) override;
 
     virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
+
     virtual const char *GetUnitType() override
     {
         return m_osUom.c_str();
     }
 
     void SetNoDataValueInternal(double dfNoDataValue);
+
     void SetUnitTypeInternal(const CPLString &osUom)
     {
         m_osUom = osUom;

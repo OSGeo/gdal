@@ -315,6 +315,7 @@ GDALDataset *NOAA_B_Dataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Guess CRS from filename.                                        */
     /* -------------------------------------------------------------------- */
     const std::string osFilename(CPLGetFilename(poOpenInfo->pszFilename));
+
     static const struct
     {
         const char *pszPrefix;
@@ -343,6 +344,7 @@ GDALDataset *NOAA_B_Dataset::Open(GDALOpenInfo *poOpenInfo)
          8860},  // NAD83(2002) for Alaska, PRVI and Guam is NAD83(FBN) in EPSG
         {"nadcon5.nad83_2007.", 4759},  // NAD83(NSRS2007)
     };
+
     for (const auto &sPair : asFilenameToCRS)
     {
         if (STARTS_WITH_CI(osFilename.c_str(), sPair.pszPrefix))

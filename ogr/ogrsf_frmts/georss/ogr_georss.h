@@ -208,6 +208,7 @@ class OGRGeoRSSDataSource final : public OGRDataSource
     {
         return nLayers;
     }
+
     OGRLayer *GetLayer(int) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
@@ -219,14 +220,17 @@ class OGRGeoRSSDataSource final : public OGRDataSource
     {
         return fpOutput;
     }
+
     OGRGeoRSSFormat GetFormat()
     {
         return eFormat;
     }
+
     OGRGeoRSSGeomDialect GetGeomDialect()
     {
         return eGeomDialect;
     }
+
     bool GetUseExtensions()
     {
         return bUseExtensions;

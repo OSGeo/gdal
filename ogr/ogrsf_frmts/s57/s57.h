@@ -138,20 +138,24 @@ class CPL_DLL S57ClassRegistrar
     // attribute table methods.
     // int         GetMaxAttrIndex() { return nAttrMax; }
     const S57AttrInfo *GetAttrInfo(int i);
+
     const char *GetAttrName(int i)
     {
         return GetAttrInfo(i) == nullptr ? nullptr
                                          : aoAttrInfos[i]->osName.c_str();
     }
+
     const char *GetAttrAcronym(int i)
     {
         return GetAttrInfo(i) == nullptr ? nullptr
                                          : aoAttrInfos[i]->osAcronym.c_str();
     }
+
     char GetAttrType(int i)
     {
         return GetAttrInfo(i) == nullptr ? '\0' : aoAttrInfos[i]->chType;
     }
+
 #define SAT_ENUM 'E'
 #define SAT_LIST 'L'
 #define SAT_FLOAT 'F'
@@ -163,6 +167,7 @@ class CPL_DLL S57ClassRegistrar
     {
         return GetAttrInfo(i) == nullptr ? '\0' : aoAttrInfos[i]->chClass;
     }
+
     int FindAttrByAcronym(const char *);
 };
 
@@ -194,6 +199,7 @@ class S57ClassContentExplorer
     {
         return SelectClassByIndex(0);
     }
+
     bool NextClass()
     {
         return SelectClassByIndex(iCurrentClass + 1);
@@ -347,6 +353,7 @@ class CPL_DLL S57Reader
 
     void SetClassBased(S57ClassRegistrar *, S57ClassContentExplorer *);
     bool SetOptions(char **);
+
     int GetOptionFlags()
     {
         return nOptionFlags;
@@ -354,10 +361,12 @@ class CPL_DLL S57Reader
 
     int Open(int bTestOpen);
     void Close();
+
     DDFModule *GetModule()
     {
         return poModule;
     }
+
     const char *GetDSNM()
     {
         return pszDSNM;

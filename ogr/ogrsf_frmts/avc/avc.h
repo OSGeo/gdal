@@ -514,6 +514,7 @@ struct AVCE00ParseInfo
     {
         AVCTableDef *psTableDef = nullptr;
     } hdr;
+
     GBool bTableHdrComplete = 0; /* FALSE until table header is */
                                  /* finished parsing */
     int nTableE00RecLength = 0;
@@ -532,6 +533,7 @@ struct AVCE00ParseInfo
         AVCRxp *psRxp;
         AVCField *pasFields;
     } cur;
+
     CPLStringList aosPrj;
 
     char *pszBuf = nullptr; /* Buffer used only for TABLEs  */

@@ -115,6 +115,40 @@ Layer creation options
 
      Name of creating application.
 
+- .. lco:: WRITE_COVERING_BBOX
+     :choices: YES, NO
+     :default: YES
+     :since: 3.9
+
+     Whether to write xmin/ymin/xmax/ymax columns with the bounding box of
+     geometries.
+
+- .. lco:: SORT_BY_BBOX
+     :choices: YES, NO
+     :default: NO
+     :since: 3.9
+
+     Whether features should be sorted based on the bounding box of their
+     geometries, before being written in the final file. Sorting them enables
+     faster spatial filtering on reading, by grouping together spatially close
+     features in the same group of rows.
+
+     Note however that enabling this option involves creating a temporary
+     GeoPackage file (in the same directory as the final Parquet file),
+     and thus requires temporary storage (possibly up to several times the size
+     of the final Parquet file, depending on Parquet compression) and additional
+     processing time.
+
+     The efficiency of spatial filtering depends on the ROW_GROUP_SIZE. If it
+     is too large, too many features that are not spatially close will be grouped
+     together. If it is too small, the file size will increase, and extra
+     processing time will be necessary to browse through the row groups.
+
+     Note also that when this option is enabled, the Arrow writing API (which
+     is for example triggered when using ogr2ogr to convert from Parquet to Parquet),
+     fallbacks to the generic implementation, which does not support advanced
+     Arrow types (lists, maps, etc.).
+
 SQL support
 -----------
 

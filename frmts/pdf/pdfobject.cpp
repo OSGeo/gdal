@@ -978,6 +978,7 @@ class GDALPDFDictionaryPoppler : public GDALPDFDictionary
     GDALPDFDictionaryPoppler(Dict *poDict) : m_poDict(poDict)
     {
     }
+
     virtual ~GDALPDFDictionaryPoppler();
 
     virtual GDALPDFObject *Get(const char *pszKey) override;
@@ -1022,6 +1023,7 @@ class GDALPDFStreamPoppler : public GDALPDFStream
     GDALPDFStreamPoppler(Stream *poStream) : m_poStream(poStream)
     {
     }
+
     virtual ~GDALPDFStreamPoppler()
     {
     }
@@ -1542,6 +1544,7 @@ class GDALPDFDictionaryPodofo : public GDALPDFDictionary
         : m_poDict(poDict), m_poObjects(poObjects)
     {
     }
+
     virtual ~GDALPDFDictionaryPodofo();
 
     virtual GDALPDFObject *Get(const char *pszKey) override;
@@ -1600,6 +1603,7 @@ class GDALPDFStreamPodofo : public GDALPDFStream
         : m_pStream(pStream)
     {
     }
+
     virtual ~GDALPDFStreamPodofo()
     {
     }
@@ -2206,6 +2210,7 @@ class GDALPDFDictionaryPdfium : public GDALPDFDictionary
         : m_poDict(std::move(poDict))
     {
     }
+
     virtual ~GDALPDFDictionaryPdfium();
 
     virtual GDALPDFObject *Get(const char *pszKey) override;
@@ -2256,6 +2261,7 @@ class GDALPDFStreamPdfium : public GDALPDFStream
         : m_pStream(std::move(pStream))
     {
     }
+
     virtual ~GDALPDFStreamPdfium()
     {
     }

@@ -47,16 +47,20 @@ class TestRingAppender
         Point(double xx, double yy) : x(xx), y(yy)
         {
         }
+
         double x;
         double y;
+
         bool operator<(const Point &b) const
         {
             return x == b.x ? y < b.y : x < b.x;
         }
+
         bool operator==(const Point &b) const
         {
             return std::fabs(x - b.x) < 0.001 && std::fabs(y - b.y) < 0.001;
         }
+
         bool operator!=(const Point &b) const
         {
             return !(*this == b);
@@ -193,6 +197,7 @@ TEST_F(test_ms_contour, dummy)
                                      {0.0, 0.5}}));
     }
 }
+
 TEST_F(test_ms_contour, two_pixels)
 {
     // two pixels

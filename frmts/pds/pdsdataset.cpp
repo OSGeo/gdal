@@ -1329,6 +1329,7 @@ class PDSWrapperRasterBand final : public GDALProxyRasterBand
         eDataType = poBaseBand->GetRasterDataType();
         poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
+
     ~PDSWrapperRasterBand()
     {
     }

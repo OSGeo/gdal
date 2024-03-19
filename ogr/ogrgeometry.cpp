@@ -601,6 +601,7 @@ OGRBoolean OGRGeometry::Intersect(OGRGeometry *poOtherGeom) const
 {
     return Intersects(poOtherGeom);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -641,6 +642,7 @@ int OGR_G_Intersect(OGRGeometryH hGeom, OGRGeometryH hOtherGeom)
     return OGRGeometry::FromHandle(hGeom)->Intersects(
         OGRGeometry::FromHandle(hOtherGeom));
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1241,6 +1243,7 @@ int OGRGeometry::Equal(OGRGeometry *poOtherGeom) const
 {
     return Equals(poOtherGeom);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1302,6 +1305,7 @@ int OGR_G_Equal(OGRGeometryH hGeom, OGRGeometryH hOther)
     return OGRGeometry::FromHandle(hGeom)->Equals(
         OGRGeometry::FromHandle(hOther));
 }
+
 //! @endcond
 
 /**
@@ -1891,6 +1895,7 @@ OGRErr OGRGeometry::importPreambleFromWkt(const char **ppszInput, int *pbHasZ,
 
     return OGRERR_NONE;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1918,6 +1923,7 @@ std::string OGRGeometry::wktTypeString(OGRwkbVariant variant) const
         s += " ";
     return s;
 }
+
 //! @endcond
 
 /**
@@ -3181,6 +3187,7 @@ OGRErr OGRSetGenerate_DB2_V72_BYTE_ORDER(int bGenerate_DB2_V72_BYTE_ORDER)
         return OGRERR_NONE;
 #endif
 }
+
 /************************************************************************/
 /*                 OGRGetGenerate_DB2_V72_BYTE_ORDER()                  */
 /*                                                                      */
@@ -4369,6 +4376,7 @@ OGRGeometry *OGRGeometry::getBoundary() const
 {
     return Boundary();
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -5162,6 +5170,7 @@ OGRGeometry::SymmetricDifference(const OGRGeometry *poOtherGeom) const
 {
     return SymDifference(poOtherGeom);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -5993,6 +6002,7 @@ OGRErr OGRGeometry::PointOnSurfaceInternal(OGRPoint *poPoint) const
 
     return OGRERR_NONE;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -6180,6 +6190,7 @@ void OGRGeometry::roundCoordinates(const OGRGeomCoordinatePrecision &sPrecision)
         const double m_invXYResolution;
         const double m_invZResolution;
         const double m_invMResolution;
+
         explicit Rounder(const OGRGeomCoordinatePrecision &sPrecisionIn)
             : m_precision(sPrecisionIn),
               m_invXYResolution(m_precision.dfXYResolution !=
@@ -6198,6 +6209,7 @@ void OGRGeometry::roundCoordinates(const OGRGeomCoordinatePrecision &sPrecision)
         }
 
         using OGRDefaultGeometryVisitor::visit;
+
         void visit(OGRPoint *poPoint) override
         {
             if (m_precision.dfXYResolution !=
@@ -7136,6 +7148,7 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt(
     *ppszInput = pszInput;
     return OGRERR_NONE;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -7583,6 +7596,7 @@ OGRGeometry *OGRGeometry::CastToError(OGRGeometry *poGeom)
     delete poGeom;
     return nullptr;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -7675,6 +7689,7 @@ OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL const OGRGeometry *poGeom)
     return nullptr;
 #endif
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -7765,6 +7780,7 @@ OGRGeometry *OGRGeometry::SFCGALexportToOGR(
     return nullptr;
 #endif
 }
+
 //! @endcond
 
 //! @cond Doxygen_Suppress
@@ -7798,6 +7814,7 @@ OGRBoolean OGRGeometry::IsSFCGALCompatible() const
     }
     return FALSE;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -7810,7 +7827,7 @@ OGRBoolean OGRGeometry::IsSFCGALCompatible() const
  * Determines the number of bits (N) required to represent a coordinate value
  * with a specified number of digits after the decimal point, and then sets all
  * but the N most significant bits to zero. The resulting coordinate value will
- * still round to the original value (e.g. after roundCoordinates()), but wil
+ * still round to the original value (e.g. after roundCoordinates()), but will
  * have improved compressiblity.
  *
  * @param options Contains the precision requirements.
@@ -7822,12 +7839,14 @@ void OGRGeometry::roundCoordinatesIEEE754(
     struct Quantizer : public OGRDefaultGeometryVisitor
     {
         const OGRGeomCoordinateBinaryPrecision &m_options;
+
         explicit Quantizer(const OGRGeomCoordinateBinaryPrecision &optionsIn)
             : m_options(optionsIn)
         {
         }
 
         using OGRDefaultGeometryVisitor::visit;
+
         void visit(OGRPoint *poPoint) override
         {
             if (m_options.nXYBitPrecision != INT_MIN)
@@ -8059,6 +8078,7 @@ void OGRGeometryUniquePtrDeleter::operator()(OGRGeometry *poGeom) const
 {
     delete poGeom;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -8071,6 +8091,7 @@ void OGRPreparedGeometryUniquePtrDeleter::operator()(
 {
     OGRDestroyPreparedGeometry(poPreparedGeom);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -8092,6 +8113,7 @@ void OGRGeometry::HomogenizeDimensionalityWith(OGRGeometry *poOtherGeom)
     if (!poOtherGeom->IsMeasured() && IsMeasured())
         poOtherGeom->setMeasured(TRUE);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -8119,6 +8141,7 @@ void OGRGeomCoordinateBinaryPrecision::SetFrom(
         nMBitPrecision = static_cast<int>(ceil(log2(1. / prec.dfMResolution)));
     }
 }
+
 /************************************************************************/
 /*                        OGRwkbExportOptionsCreate()                   */
 /************************************************************************/

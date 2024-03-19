@@ -173,38 +173,47 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
     {
         return szDelimiter[0];
     }
+
     bool GetCRLF() const
     {
         return bUseCRLF;
     }
+
     bool GetCreateCSVT() const
     {
         return bCreateCSVT;
     }
+
     bool GetWriteBOM() const
     {
         return bWriteBOM;
     }
+
     OGRCSVGeometryFormat GetGeometryFormat() const
     {
         return eGeometryFormat;
     }
+
     bool HasHiddenWKTColumn() const
     {
         return bHiddenWKTColumn;
     }
+
     GIntBig GetTotalFeatureCount() const
     {
         return nTotalFeatures;
     }
+
     const CPLString &GetXField() const
     {
         return osXField;
     }
+
     const CPLString &GetYField() const
     {
         return osYField;
     }
+
     const CPLString &GetZField() const
     {
         return osZField;
@@ -248,6 +257,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
     {
         m_eStringQuoting = eVal;
     }
+
     StringQuoting GetStringQuoting() const
     {
         return m_eStringQuoting;
@@ -294,6 +304,7 @@ class OGRCSVDataSource final : public OGRDataSource
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     OGRLayer *GetLayer(int) override;
 
     char **GetFileList() override;

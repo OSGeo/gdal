@@ -786,6 +786,9 @@ def test_jsonfg_write_basic():
         f["doublelistfield"] = [1.5]
         f["boolfield"] = True
         f["jsonfield"] = json.dumps({"a": [1, 2]})
+        f.SetGeometry(
+            ogr.CreateGeometryFromWkt("POINT(1.23456789 2.23456789 3.23456789)")
+        )
         lyr.CreateFeature(f)
         f = None
         ds = None
@@ -809,6 +812,11 @@ def test_jsonfg_write_basic():
             "boolfield": True,
             "jsonfield": {"a": [1, 2]},
         }
+        assert "xy_coordinate_resolution" not in j
+        assert "z_coordinate_resolution" not in j
+        assert "xy_coordinate_resolution_place" not in j
+        assert "z_coordinate_resolution_place" not in j
+        assert j["features"][0]["geometry"]["coordinates"][2] == 3.235
 
         ds = ogr.Open(filename)
         lyr = ds.GetLayer(0)
@@ -823,6 +831,10 @@ def test_jsonfg_write_basic():
         assert f["doublelistfield"] == [1.5]
         assert f["boolfield"] == True
         assert json.loads(f["jsonfield"]) == {"a": [1, 2]}
+        assert (
+            f.GetGeometryRef().ExportToIsoWkt()
+            == "POINT Z (1.23456789 2.23456789 3.23456789)"
+        )
         ds = None
 
     finally:

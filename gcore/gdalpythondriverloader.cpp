@@ -355,6 +355,7 @@ class PythonPluginLayer final : public OGRLayer
     void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
 
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
     {
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);

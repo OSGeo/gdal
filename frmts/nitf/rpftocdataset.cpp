@@ -321,6 +321,7 @@ class RPFTOCProxyRasterBandRGBA final : public GDALPamRasterBand
         blockByteSize = nBlockXSize * nBlockYSize;
         memset(colorTable, 0, sizeof(colorTable));
     }
+
     virtual ~RPFTOCProxyRasterBandRGBA()
     {
     }

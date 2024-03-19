@@ -1730,8 +1730,12 @@ VSIS3HandleHelper *VSIS3HandleHelper::BuildFromURI(const char *pszURI,
         osRegion = osDefaultRegion;
     }
 
-    const std::string osEndpoint = VSIGetPathSpecificOption(
+    std::string osEndpoint = VSIGetPathSpecificOption(
         osPathForOption.c_str(), "AWS_S3_ENDPOINT", "s3.amazonaws.com");
+    if (!osRegion.empty() && osEndpoint == "s3.amazonaws.com")
+    {
+        osEndpoint = "s3." + osRegion + ".amazonaws.com";
+    }
     const std::string osRequestPayer = VSIGetPathSpecificOption(
         osPathForOption.c_str(), "AWS_REQUEST_PAYER", "");
     std::string osBucket;

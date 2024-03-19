@@ -739,6 +739,7 @@ class OGRCompoundCurvePointIterator final : public OGRPointIterator
         : poCC(poCCIn)
     {
     }
+
     ~OGRCompoundCurvePointIterator() override
     {
         delete poCurveIter;
@@ -886,6 +887,7 @@ OGRCurveCasterToLinearRing OGRCompoundCurve::GetCasterToLinearRing() const
 {
     return OGRCompoundCurve::CasterToLinearRing;
 }
+
 //! @endcond
 
 /************************************************************************/

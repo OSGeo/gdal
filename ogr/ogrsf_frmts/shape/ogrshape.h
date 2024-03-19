@@ -94,6 +94,7 @@ class OGRShapeGeomFieldDefn final : public OGRGeomFieldDefn
     }
 
     const OGRSpatialReference *GetSpatialRef() const override;
+
     void SetSRSSet()
     {
         bSRSSet = true;
@@ -103,6 +104,7 @@ class OGRShapeGeomFieldDefn final : public OGRGeomFieldDefn
     {
         return osPrjFile;
     }
+
     void SetPrjFilename(const std::string &osFilename)
     {
         osPrjFile = osFilename;
@@ -165,6 +167,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
 
     bool bHSHPWasNonNULL;  // Must try to reopen a .shp?
     bool bHDBFWasNonNULL;  // Must try to reopen a .dbf
+
     // Current state of opening of file descriptor to .shp and .dbf.
 
     typedef enum
@@ -173,6 +176,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
         FD_CLOSED,
         FD_CANNOT_REOPEN
     } FileDescriptorState;
+
     FileDescriptorState eFileDescriptorsState;
 
     bool TouchLayer();
@@ -188,6 +192,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
     bool m_bLastGetNextArrowArrayUsedOptimizedCodePath = false;
 
     bool m_bAutoRepack;
+
     typedef enum
     {
         YES,
@@ -195,6 +200,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
         MAYBE
     } NormandyState; /* French joke. "Peut'et' ben que oui, peut'et' ben que
                         non." Sorry :-) */
+
     NormandyState m_eNeedRepack;
 
     // Set of field names (in upper case). Built and invalidated when convenient
@@ -224,6 +230,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
     {
         return pszFullName;
     }
+
     void UpdateFollowingDeOrRecompression();
 
     OGRFeature *FetchShape(int iShapeId);
@@ -261,6 +268,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
 
     GIntBig GetFeatureCount(int) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
     {
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
@@ -281,6 +289,7 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
 
     int TestCapability(const char *) override;
     void SetSpatialFilter(OGRGeometry *) override;
+
     void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
@@ -291,15 +300,19 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
     OGRErr Rename(const char *pszNewName) override;
 
     void AddToFileList(CPLStringList &oFileList);
+
     void CreateSpatialIndexAtClose(int bFlag)
     {
         bCreateSpatialIndexAtClose = CPL_TO_BOOL(bFlag);
     }
+
     void SetModificationDate(const char *pszStr);
+
     void SetAutoRepack(bool b)
     {
         m_bAutoRepack = b;
     }
+
     void SetWriteDBFEOFChar(bool b);
 };
 
@@ -379,20 +392,24 @@ class OGRShapeDataSource final : public OGRDataSource
 
     SHPHandle DS_SHPOpen(const char *pszShapeFile, const char *pszAccess);
     DBFHandle DS_DBFOpen(const char *pszDBFFile, const char *pszAccess);
+
     char **GetOpenOptions()
     {
         return papszOpenOptions;
     }
 
     static const char *const *GetExtensionsForDeletion();
+
     bool IsZip() const
     {
         return m_bIsZip;
     }
+
     CPLString GetVSIZipPrefixeDir() const
     {
         return CPLString("/vsizip/{") + pszName + '}';
     }
+
     const CPLString &GetTemporaryUnzipDir() const
     {
         return m_osTemporaryUnzipDir;

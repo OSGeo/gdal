@@ -562,22 +562,21 @@ MAIN_START(nArgc, papszArgv)
                                                pszZipFilename + "}/" +
                                                psEntry->pszName;
                 std::string osProperties;
-                char **papszMDGeneric =
-                    VSIGetFileMetadata(osFilename.c_str(), nullptr, nullptr);
-                for (char **papszIter = papszMDGeneric;
-                     papszIter && papszIter[0]; ++papszIter)
+                const CPLStringList aosMDGeneric(
+                    VSIGetFileMetadata(osFilename.c_str(), nullptr, nullptr));
+                for (const char *pszMDGeneric : aosMDGeneric)
                 {
                     if (!osProperties.empty())
                         osProperties += ',';
-                    osProperties += *papszIter;
+                    osProperties += pszMDGeneric;
                 }
-                CSLDestroy(papszMDGeneric);
-                char **papszMD =
-                    VSIGetFileMetadata(osFilename.c_str(), "ZIP", nullptr);
-                bool bSeekOptimized =
-                    CSLFetchNameValue(papszMD, "SOZIP_VALID") != nullptr;
+
+                const CPLStringList aosMD(
+                    VSIGetFileMetadata(osFilename.c_str(), "ZIP", nullptr));
+                const bool bSeekOptimized =
+                    aosMD.FetchNameValue("SOZIP_VALID") != nullptr;
                 const char *pszChunkSize =
-                    CSLFetchNameValue(papszMD, "SOZIP_CHUNK_SIZE");
+                    aosMD.FetchNameValue("SOZIP_CHUNK_SIZE");
                 printf("%11" CPL_FRMT_GB_WITHOUT_PREFIX
                        "u  %04d-%02d-%02d %02d:%02d:%02d  %s  %s               "
                        "%s\n",
@@ -589,7 +588,6 @@ MAIN_START(nArgc, papszArgv)
                            ? CPLSPrintf("   yes (%9s bytes)   ", pszChunkSize)
                            : "                           ",
                        psEntry->pszName, osProperties.c_str());
-                CSLDestroy(papszMD);
             }
         }
         VSICloseDir(psDir);
@@ -771,4 +769,5 @@ MAIN_START(nArgc, papszArgv)
     CPLCloseZip(hZIP);
     return 0;
 }
+
 MAIN_END

@@ -424,6 +424,7 @@ static int OGRSQLiteVFSSleep(sqlite3_vfs *pVFS, int microseconds)
 // winCurrentTime64
 #ifdef _WIN32
 #include <windows.h>
+
 static int OGRSQLiteVFSCurrentTimeInt64(sqlite3_vfs * /*pVFS*/,
                                         sqlite3_int64 *piNow)
 {
@@ -453,6 +454,7 @@ static int OGRSQLiteVFSCurrentTimeInt64(sqlite3_vfs * /*pVFS*/,
 }
 #else
 #include <sys/time.h>
+
 static int OGRSQLiteVFSCurrentTimeInt64(sqlite3_vfs * /*pVFS*/,
                                         sqlite3_int64 *piNow)
 {

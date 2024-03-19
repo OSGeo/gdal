@@ -123,6 +123,7 @@ class huge_helper
           pLastHref(nullptr), pFirstParent(nullptr), pLastParent(nullptr)
     {
     }
+
     sqlite3 *hDB;
     sqlite3_stmt *hNodes;
     sqlite3_stmt *hEdges;

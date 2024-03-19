@@ -180,10 +180,13 @@ void CPL_DLL CPL_STDCALL CPLSetCurrentErrorHandlerCatchDebug(int bCatchDebug);
 void CPL_DLL CPL_STDCALL CPLPopErrorHandler(void);
 
 #ifdef WITHOUT_CPLDEBUG
-#define CPLDebug(...) /* Eat all CPLDebug calls. */
+#define CPLDebug(...)         /* Eat all CPLDebug calls. */
+#define CPLDebugProgress(...) /* Eat all CPLDebugProgress calls. */
 #else
 void CPL_DLL CPLDebug(const char *, CPL_FORMAT_STRING(const char *), ...)
     CPL_PRINT_FUNC_FORMAT(2, 3);
+void CPL_DLL CPLDebugProgress(const char *, CPL_FORMAT_STRING(const char *),
+                              ...) CPL_PRINT_FUNC_FORMAT(2, 3);
 #endif
 
 #ifdef DEBUG
@@ -240,6 +243,7 @@ CPL_C_END
 extern "C++"
 {
     template <class T> T *CPLAssertNotNull(T *x) CPL_RETURNS_NONNULL;
+
     template <class T> T *CPLAssertNotNull(T *x)
     {
         CPLAssert(x);

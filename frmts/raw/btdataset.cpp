@@ -68,6 +68,7 @@ class BTDataset final : public GDALPamDataset
     {
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
+
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
     CPLErr GetGeoTransform(double *) override;
     CPLErr SetGeoTransform(double *) override;
@@ -94,6 +95,7 @@ class BTRasterBand final : public GDALPamRasterBand
 
   public:
     BTRasterBand(GDALDataset *poDS, VSILFILE *fp, GDALDataType eType);
+
     ~BTRasterBand() override
     {
     }

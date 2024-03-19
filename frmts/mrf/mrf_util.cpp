@@ -694,6 +694,7 @@ void GDALRegister_mrf()
 }
 
 extern "C" void CPL_DLL GDALRegister_MRF(void);
+
 void GDALRegister_MRF()
 {
     GDALRegister_mrf();

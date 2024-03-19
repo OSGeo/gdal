@@ -93,22 +93,27 @@ struct CPL_DLL VSIVirtualHandle
         CPL_PRINT_FUNC_FORMAT(2, 3);
 
     virtual int Eof() = 0;
+
     virtual int Flush()
     {
         return 0;
     }
+
     virtual int Close() = 0;
     // Base implementation that only supports file extension.
     virtual int Truncate(vsi_l_offset nNewSize);
+
     virtual void *GetNativeFileDescriptor()
     {
         return nullptr;
     }
+
     virtual VSIRangeStatus GetRangeStatus(CPL_UNUSED vsi_l_offset nOffset,
                                           CPL_UNUSED vsi_l_offset nLength)
     {
         return VSI_RANGE_STATUS_UNKNOWN;
     }
+
     virtual bool HasPRead() const;
     virtual size_t PRead(void *pBuffer, size_t nSize,
                          vsi_l_offset nOffset) const;
@@ -164,13 +169,16 @@ class CPL_DLL VSIFilesystemHandler
                                    CSLConstList papszOptions) = 0;
     virtual int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
                      int nFlags) = 0;
+
     virtual int Unlink(const char *pszFilename)
     {
         (void)pszFilename;
         errno = ENOENT;
         return -1;
     }
+
     virtual int *UnlinkBatch(CSLConstList papszFiles);
+
     virtual int Mkdir(const char *pszDirname, long nMode)
     {
         (void)pszDirname;
@@ -178,25 +186,31 @@ class CPL_DLL VSIFilesystemHandler
         errno = ENOENT;
         return -1;
     }
+
     virtual int Rmdir(const char *pszDirname)
     {
         (void)pszDirname;
         errno = ENOENT;
         return -1;
     }
+
     virtual int RmdirRecursive(const char *pszDirname);
+
     char **ReadDir(const char *pszDirname)
     {
         return ReadDirEx(pszDirname, 0);
     }
+
     virtual char **ReadDirEx(const char * /*pszDirname*/, int /* nMaxFiles */)
     {
         return nullptr;
     }
+
     virtual char **SiblingFiles(const char * /*pszFilename*/)
     {
         return nullptr;
     }
+
     virtual int Rename(const char *oldpath, const char *newpath)
     {
         (void)oldpath;
@@ -204,36 +218,44 @@ class CPL_DLL VSIFilesystemHandler
         errno = ENOENT;
         return -1;
     }
+
     virtual int IsCaseSensitive(const char *pszFilename)
     {
         (void)pszFilename;
         return TRUE;
     }
+
     virtual GIntBig GetDiskFreeSpace(const char * /* pszDirname */)
     {
         return -1;
     }
+
     virtual int SupportsSparseFiles(const char * /* pszPath */)
     {
         return FALSE;
     }
+
     virtual int HasOptimizedReadMultiRange(const char * /* pszPath */)
     {
         return FALSE;
     }
+
     virtual const char *GetActualURL(const char * /*pszFilename*/)
     {
         return nullptr;
     }
+
     virtual const char *GetOptions()
     {
         return nullptr;
     }
+
     virtual char *GetSignedURL(const char * /*pszFilename*/,
                                CSLConstList /* papszOptions */)
     {
         return nullptr;
     }
+
     virtual bool Sync(const char *pszSource, const char *pszTarget,
                       const char *const *papszOptions,
                       GDALProgressFunc pProgressFunc, void *pProgressData,
@@ -284,16 +306,19 @@ class CPL_DLL VSIFilesystemHandler
     {
         return true;
     }
+
     virtual bool SupportsSequentialWrite(const char * /* pszPath */,
                                          bool /* bAllowLocalTempFile */)
     {
         return true;
     }
+
     virtual bool SupportsRandomWrite(const char * /* pszPath */,
                                      bool /* bAllowLocalTempFile */)
     {
         return true;
     }
+
     virtual bool SupportsRead(const char * /* pszPath */)
     {
         return true;
@@ -438,12 +463,14 @@ class VSIArchiveFilesystemHandler : public VSIFilesystemHandler
                                   const VSIArchiveEntry **archiveEntry);
 
     virtual bool IsLocal(const char *pszPath) override;
+
     virtual bool
     SupportsSequentialWrite(const char * /* pszPath */,
                             bool /* bAllowLocalTempFile */) override
     {
         return false;
     }
+
     virtual bool SupportsRandomWrite(const char * /* pszPath */,
                                      bool /* bAllowLocalTempFile */) override
     {

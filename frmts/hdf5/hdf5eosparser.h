@@ -129,6 +129,7 @@ class HDF5EOSParser
     {
         return m_eDataModel;
     }
+
     bool GetGridMetadata(const std::string &osGridName,
                          GridMetadata &gridMetadataOut) const;
     bool GetGridDataFieldMetadata(

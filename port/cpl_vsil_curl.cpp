@@ -201,6 +201,7 @@ static void VSICURLReadGlobalEnvVariables()
                                     DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY));
         }
     };
+
     static Initializer initializer;
 }
 
@@ -2401,6 +2402,7 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
     {
         std::array<char, CURL_ERROR_SIZE + 1> szCurlErrBuf;
     };
+
     std::vector<CurlErrBuffer> asCurlErrors(nRanges);
 
     const bool bMergeConsecutiveRanges = CPLTestBool(
@@ -3572,6 +3574,7 @@ GetConnectionCache()
 #else
 static thread_local std::map<VSICurlFilesystemHandlerBase *, CachedConnection>
     g_tls_connectionCache;
+
 static std::map<VSICurlFilesystemHandlerBase *, CachedConnection> &
 GetConnectionCache()
 {

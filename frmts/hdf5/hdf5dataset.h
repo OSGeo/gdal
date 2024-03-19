@@ -151,6 +151,7 @@ class HDF5SharedResources
     {
         return m_hHDF5;
     }
+
     inline bool IsReadOnly() const
     {
         return m_bReadOnly;

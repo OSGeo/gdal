@@ -111,6 +111,7 @@ class ENVIDataset final : public RawDataset
         BIL,
         BIP
     } interleave;
+
     static int GetEnviType(GDALDataType eType);
 
     CPL_DISALLOW_COPY_ASSIGN(ENVIDataset)

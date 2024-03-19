@@ -102,6 +102,7 @@ static int GetJXLDataType(TIFF *tif)
                   "Unsupported combination of SampleFormat and BitsPerSample");
     return -1;
 }
+
 static int GetJXLDataTypeSize(JxlDataType dtype)
 {
     switch (dtype)

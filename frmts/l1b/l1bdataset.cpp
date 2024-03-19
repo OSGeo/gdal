@@ -203,6 +203,7 @@ static const char *const apszBandDesc[] = {
 /************************************************************************/
 
 #define L1B_TIMECODE_LENGTH 100
+
 class TimeCode
 {
     long lYear;
@@ -220,26 +221,32 @@ class TimeCode
     {
         lYear = year;
     }
+
     void SetDay(long day)
     {
         lDay = day;
     }
+
     void SetMillisecond(long millisecond)
     {
         lMillisecond = millisecond;
     }
+
     long GetYear() const
     {
         return lYear;
     }
+
     long GetDay() const
     {
         return lDay;
     }
+
     long GetMillisecond() const
     {
         return lMillisecond;
     }
+
     char *PrintTime()
     {
         snprintf(szString, L1B_TIMECODE_LENGTH,
@@ -248,6 +255,7 @@ class TimeCode
         return szString;
     }
 };
+
 #undef L1B_TIMECODE_LENGTH
 
 /************************************************************************/
@@ -758,6 +766,7 @@ void L1BDataset::FetchNOAA15TimeCode(TimeCode *psTime,
                                                                : DESCEND;
     }
 }
+
 /************************************************************************/
 /*                          FetchTimeCode()                             */
 /************************************************************************/

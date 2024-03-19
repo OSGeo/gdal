@@ -131,10 +131,12 @@ class OGRSOSIDataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     int GetLayerCount() override
     {
         return nLayers;
     }
+
     OGRLayer *GetLayer(int) override;
 #ifdef WRITE_SUPPORT
     OGRLayer *ICreateLayer(const char *pszName,
@@ -162,10 +164,12 @@ class OGRSOSISimpleDataType
     ~OGRSOSISimpleDataType();
 
     void setType(const char *pszName, OGRFieldType nType);
+
     const char *GetName() const
     {
         return osName.c_str();
     }
+
     OGRFieldType GetType() const
     {
         return nType;
@@ -200,10 +204,12 @@ class OGRSOSIDataType
     ~OGRSOSIDataType();
 
     void setElement(int nIndex, const char *name, OGRFieldType type);
+
     OGRSOSISimpleDataType *getElements()
     {
         return poElements;
     }
+
     int getElementCount()
     {
         return nElementCount;

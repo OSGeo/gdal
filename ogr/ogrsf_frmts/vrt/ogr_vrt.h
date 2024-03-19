@@ -156,6 +156,7 @@ class OGRVRTLayer final : public OGRLayer
     {
         return osName.c_str();
     }
+
     virtual OGRwkbGeometryType GetGeomType() override;
 
     /* -------------------------------------------------------------------- */
@@ -261,10 +262,12 @@ class OGRVRTDataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     int GetLayerCount() override
     {
         return nLayers;
     }
+
     OGRLayer *GetLayer(int) override;
 
     int TestCapability(const char *) override;
@@ -276,6 +279,7 @@ class OGRVRTDataSource final : public OGRDataSource
     {
         nCallLevel = nCallLevelIn;
     }
+
     int GetCallLevel()
     {
         return nCallLevel;
@@ -285,6 +289,7 @@ class OGRVRTDataSource final : public OGRDataSource
     {
         poParentDS = poParentDSIn;
     }
+
     OGRVRTDataSource *GetParentDS()
     {
         return poParentDS;
@@ -294,6 +299,7 @@ class OGRVRTDataSource final : public OGRDataSource
     {
         bRecursionDetected = true;
     }
+
     bool GetRecursionDetected() const
     {
         return bRecursionDetected;

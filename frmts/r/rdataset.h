@@ -100,6 +100,7 @@ class RRasterBand final : public GDALPamRasterBand
 
   public:
     RRasterBand(RDataset *, int, const double *);
+
     virtual ~RRasterBand()
     {
     }

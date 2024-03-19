@@ -340,6 +340,7 @@ static bool WriteValue(VSILFILE *fp, int nCode, double dfValue)
 
     return true;
 }
+
 /************************************************************************/
 /*                        TransferUpdateHeader()                        */
 /************************************************************************/

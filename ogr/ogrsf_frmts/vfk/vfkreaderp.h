@@ -86,22 +86,27 @@ class VFKReader : public IVFKReader
     {
         return m_pszEncoding;
     }
+
     bool IsSpatial() const override
     {
         return false;
     }
+
     bool IsPreProcessed() const override
     {
         return false;
     }
+
     bool IsValid() const override
     {
         return true;
     }
+
     bool HasFileField() const override
     {
         return m_bFileField;
     }
+
     int ReadDataBlocks(bool = false) override;
     int ReadDataRecords(IVFKDataBlock * = nullptr) override;
     int LoadGeometry() override;
@@ -110,6 +115,7 @@ class VFKReader : public IVFKReader
     {
         return m_nDataBlockCount;
     }
+
     IVFKDataBlock *GetDataBlock(int) const override;
     IVFKDataBlock *GetDataBlock(const char *) const override;
 
@@ -148,14 +154,17 @@ class VFKReaderSQLite : public VFKReader
     {
         return m_bSpatial;
     }
+
     bool IsPreProcessed() const override
     {
         return !m_bNewDb;
     }
+
     bool IsValid() const override
     {
         return m_poDB != nullptr;
     }
+
     int ReadDataBlocks(bool = false) override;
     int ReadDataRecords(IVFKDataBlock * = nullptr) override;
 

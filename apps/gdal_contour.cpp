@@ -320,7 +320,7 @@ MAIN_START(argc, argv)
     CPLString osFormat;
     if (pszFormat == nullptr)
     {
-        std::vector<CPLString> aoDrivers =
+        const auto aoDrivers =
             GetOutputDriversFor(pszDstFilename, GDAL_OF_VECTOR);
         if (aoDrivers.empty())
         {
@@ -503,4 +503,5 @@ MAIN_START(argc, argv)
 
     return (eErr == CE_None) ? 0 : 1;
 }
+
 MAIN_END

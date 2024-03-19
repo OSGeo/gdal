@@ -207,6 +207,7 @@ void GDALPamDataset::MarkPamDirty()
         nPamFlags |= GPF_DIRTY;
     }
 }
+
 // @endcond
 
 /************************************************************************/
@@ -1265,6 +1266,7 @@ CPLErr GDALPamDataset::CloneInfo(GDALDataset *poSrcDS, int nCloneFlags)
 
     return CE_None;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1358,6 +1360,7 @@ CPLErr GDALPamDataset::IBuildOverviews(
         pszResampling, nOverviews, panOverviewList, nListBands, panBandList,
         pfnProgress, pProgressData, papszOptions);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1785,6 +1788,7 @@ CPLErr GDALPamDataset::TryLoadAux(char **papszSiblingFiles)
 
     return CE_Failure;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1800,26 +1804,24 @@ void GDALPamDataset::ClearStatistics()
     {
         bool bChanged = false;
         GDALRasterBand *poBand = GetRasterBand(i);
-        char **papszOldMD = poBand->GetMetadata();
-        char **papszNewMD = nullptr;
-        for (char **papszIter = papszOldMD; papszIter && papszIter[0];
-             ++papszIter)
+        CPLStringList aosNewMD;
+        for (const char *pszStr :
+             cpl::Iterate(CSLConstList(poBand->GetMetadata())))
         {
-            if (STARTS_WITH_CI(*papszIter, "STATISTICS_"))
+            if (STARTS_WITH_CI(pszStr, "STATISTICS_"))
             {
                 MarkPamDirty();
                 bChanged = true;
             }
             else
             {
-                papszNewMD = CSLAddString(papszNewMD, *papszIter);
+                aosNewMD.AddString(pszStr);
             }
         }
         if (bChanged)
         {
-            poBand->SetMetadata(papszNewMD);
+            poBand->SetMetadata(aosNewMD.List());
         }
-        CSLDestroy(papszNewMD);
     }
 
     GDALDataset::ClearStatistics();

@@ -157,6 +157,7 @@ OGRTriangulatedSurface::isCompatibleSubType(OGRwkbGeometryType eSubType) const
 {
     return wkbFlatten(eSubType) == wkbTriangle;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -168,6 +169,7 @@ const char *OGRTriangulatedSurface::getSubGeometryName() const
 {
     return "TRIANGLE";
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -179,6 +181,7 @@ OGRwkbGeometryType OGRTriangulatedSurface::getSubGeometryType() const
 {
     return wkbTriangle;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -243,6 +246,7 @@ OGRTriangulatedSurface::CastToMultiPolygonImpl(OGRPolyhedralSurface *poTS)
 
     return poMultiPolygon;
 }
+
 //! @endcond
 
 /************************************************************************/

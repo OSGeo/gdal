@@ -637,10 +637,12 @@ CPLErr GDALWarpOperation::Initialize(const GDALWarpOptions *psNewOptions)
         for (double dfY : {-89.9999, 89.9999})
         {
             double dfX = 0;
-            if ((psOptions->pfnTransformer == GDALApproxTransform &&
+            if ((GDALIsTransformer(psOptions->pTransformerArg,
+                                   GDAL_APPROX_TRANSFORMER_CLASS_NAME) &&
                  GDALTransformLonLatToDestApproxTransformer(
                      psOptions->pTransformerArg, &dfX, &dfY)) ||
-                (psOptions->pfnTransformer == GDALGenImgProjTransform &&
+                (GDALIsTransformer(psOptions->pTransformerArg,
+                                   GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME) &&
                  GDALTransformLonLatToDestGenImgProjTransformer(
                      psOptions->pTransformerArg, &dfX, &dfY)))
             {
@@ -2775,17 +2777,25 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
     /* -------------------------------------------------------------------- */
     /*      Transform them to the input pixel coordinate space              */
     /* -------------------------------------------------------------------- */
-    if (bTryWithCheckWithInvertProj)
+
+    const auto RefreshTransformer = [this]()
     {
-        CPLSetThreadLocalConfigOption("CHECK_WITH_INVERT_PROJ", "YES");
-        if (psOptions->pfnTransformer == GDALGenImgProjTransform)
+        if (GDALIsTransformer(psOptions->pTransformerArg,
+                              GDAL_GEN_IMG_TRANSFORMER_CLASS_NAME))
         {
             GDALRefreshGenImgProjTransformer(psOptions->pTransformerArg);
         }
-        else if (psOptions->pfnTransformer == GDALApproxTransform)
+        else if (GDALIsTransformer(psOptions->pTransformerArg,
+                                   GDAL_APPROX_TRANSFORMER_CLASS_NAME))
         {
             GDALRefreshApproxTransformer(psOptions->pTransformerArg);
         }
+    };
+
+    if (bTryWithCheckWithInvertProj)
+    {
+        CPLSetThreadLocalConfigOption("CHECK_WITH_INVERT_PROJ", "YES");
+        RefreshTransformer();
     }
     int ret = psOptions->pfnTransformer(psOptions->pTransformerArg, TRUE,
                                         nSamplePoints, padfX, padfY, padfZ,
@@ -2793,14 +2803,7 @@ bool GDALWarpOperation::ComputeSourceWindowTransformPoints(
     if (bTryWithCheckWithInvertProj)
     {
         CPLSetThreadLocalConfigOption("CHECK_WITH_INVERT_PROJ", nullptr);
-        if (psOptions->pfnTransformer == GDALGenImgProjTransform)
-        {
-            GDALRefreshGenImgProjTransformer(psOptions->pTransformerArg);
-        }
-        else if (psOptions->pfnTransformer == GDALApproxTransform)
-        {
-            GDALRefreshApproxTransformer(psOptions->pTransformerArg);
-        }
+        RefreshTransformer();
     }
 
     if (!ret)

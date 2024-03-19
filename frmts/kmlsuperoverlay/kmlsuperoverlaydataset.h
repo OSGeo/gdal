@@ -44,6 +44,7 @@ class KmlSuperOverlayRasterBand;
 class KmlSuperOverlayReadDataset;
 
 class LinkedDataset;
+
 class LinkedDataset
 {
   public:

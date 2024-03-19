@@ -80,6 +80,7 @@ class OGRILI1Layer final : public OGRLayer
     {
         return poFeatureDefn;
     }
+
     GeomFieldInfos GetGeomFieldInfos()
     {
         return oGeomFieldInfos;
@@ -128,10 +129,12 @@ class OGRILI1DataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     int GetLayerCount() override
     {
         return poReader ? poReader->GetLayerCount() : 0;
     }
+
     OGRLayer *GetLayer(int) override;
     OGRILI1Layer *GetLayerByName(const char *) override;
 

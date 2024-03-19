@@ -19,6 +19,7 @@ Contributors:  Lucian Plesea
 #include "Packer.h"
 
 NAMESPACE_MRF_START
+
 // A RLE codec based on use of 0xC3 as marker code
 class RLEC3Packer : public Packer
 {
@@ -26,6 +27,7 @@ class RLEC3Packer : public Packer
     virtual int load(storage_manager *src, storage_manager *dst) override;
     virtual int store(storage_manager *src, storage_manager *dst) override;
 };
+
 NAMESPACE_MRF_END
 
 #endif /* PACKER_RLE_H_INCLUDED */

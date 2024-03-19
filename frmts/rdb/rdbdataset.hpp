@@ -40,6 +40,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+
 namespace rdb
 {
 class RDBRasterBand;
@@ -146,6 +147,7 @@ class RDBRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     virtual const char *GetDescription() const override;
 };
 }  // namespace rdb
+
 void GDALRegister_RDB();
 
 #endif  // RDB_DATASET_INCLUDED

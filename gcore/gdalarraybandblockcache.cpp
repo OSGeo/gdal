@@ -55,6 +55,7 @@ class GDALArrayBandBlockCache final : public GDALAbstractBandBlockCache
     bool bSubBlockingActive = false;
     int nSubBlocksPerRow = 0;
     int nSubBlocksPerColumn = 0;
+
     union u
     {
         GDALRasterBlock **papoBlocks;

@@ -126,10 +126,12 @@ class FASTDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
 
     CPLErr GetGeoTransform(double *) override;
+
     const OGRSpatialReference *GetSpatialRef() const override
     {
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
+
     VSILFILE *FOpenChannel(const char *, int iBand, int iFASTBand);
     void TryEuromap_IRS_1C_1D_ChannelNameConvention(int &l_nBands);
 

@@ -348,6 +348,7 @@ extern "C++"
     // setlocale(LC_NUMERIC, NULL) returning "C", such as current proj.4
     // versions, will not work depending on the actual implementation
     class CPLThreadLocaleCPrivate;
+
     class CPL_DLL CPLThreadLocaleC
     {
         CPL_DISALLOW_COPY_ASSIGN(CPLThreadLocaleC)

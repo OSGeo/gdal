@@ -83,6 +83,7 @@ class OGRGmtLayer final : public OGRLayer,
     }
 
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
@@ -122,10 +123,12 @@ class OGRGmtDataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     int GetLayerCount() override
     {
         return nLayers;
     }
+
     OGRLayer *GetLayer(int) override;
 
     OGRLayer *ICreateLayer(const char *pszName,

@@ -128,6 +128,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     //! @cond Doxygen_Suppress
     CPLStringList m_aosArrowArrayStreamOptions{};
+
     struct ArrowArrayStreamPrivateData
     {
         bool m_bArrowArrayStreamInProgress = false;
@@ -137,8 +138,10 @@ class CPL_DLL OGRLayer : public GDALMajorObject
         size_t m_iQueriedFIDS = 0;
         std::deque<std::unique_ptr<OGRFeature>> m_oFeatureQueue{};
     };
+
     std::shared_ptr<ArrowArrayStreamPrivateData>
         m_poSharedArrowArrayStreamPrivateData{};
+
     struct ArrowArrayStreamPrivateDataSharedDataWrapper
     {
         std::shared_ptr<ArrowArrayStreamPrivateData> poShared{};
@@ -342,18 +345,22 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     /* consider these private */
     OGRErr InitializeIndexSupport(const char *);
+
     OGRLayerAttrIndex *GetIndex()
     {
         return m_poAttrIndex;
     }
+
     int GetGeomFieldFilter() const
     {
         return m_iGeomFieldFilter;
     }
+
     const char *GetAttrQueryString() const
     {
         return m_pszAttrQueryString;
     }
+
     //! @endcond
 
     /** Convert a OGRLayer* to a OGRLayerH.

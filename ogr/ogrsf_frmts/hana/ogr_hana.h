@@ -179,6 +179,7 @@ class OGRHanaLayer : public OGRLayer
     {
         return GetExtent(0, extent, force);
     }
+
     OGRErr GetExtent(int geomField, OGREnvelope *extent, int force) override;
     GIntBig GetFeatureCount(int force) override;
     OGRFeature *GetNextFeature() override;
@@ -192,6 +193,7 @@ class OGRHanaLayer : public OGRLayer
     {
         SetSpatialFilter(0, poGeom);
     }
+
     void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
 };
 
@@ -252,16 +254,20 @@ class OGRHanaTableLayer final : public OGRHanaLayer
     OGRErr DropTable();
 
     void ResetReading() override;
+
     OGRErr GetExtent(OGREnvelope *extent, int force = TRUE) override
     {
         return GetExtent(0, extent, force);
     }
+
     OGRErr GetExtent(int geomField, OGREnvelope *extent, int force) override;
     GIntBig GetFeatureCount(int force) override;
+
     const char *GetName() override
     {
         return tableName_.c_str();
     }
+
     int TestCapability(const char *capabilities) override;
 
     OGRErr ICreateFeature(OGRFeature *feature) override;
@@ -279,15 +285,19 @@ class OGRHanaTableLayer final : public OGRHanaLayer
     {
         batchSize_ = size;
     }
+
     void SetDefaultStringSize(std::size_t size)
     {
         defaultStringSize_ = size;
     }
+
     void SetLaunderFlag(bool flag)
     {
         launderColumnNames_ = flag;
     }
+
     void SetCustomColumnTypes(const char *columnTypes);
+
     void SetPrecisionFlag(bool flag)
     {
         preservePrecision_ = flag;
@@ -395,11 +405,14 @@ class OGRHanaDataSource final : public GDALDataset
     {
         return majorVersion_;
     }
+
     OGRErr DeleteLayer(int index) override;
+
     int GetLayerCount() override
     {
         return static_cast<int>(layers_.size());
     }
+
     OGRLayer *GetLayer(int index) override;
     OGRLayer *GetLayerByName(const char *) override;
     OGRLayer *ICreateLayer(const char *pszName,

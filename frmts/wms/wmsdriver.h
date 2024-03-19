@@ -92,6 +92,7 @@ class GDALWMSDataWindow
     double m_x1, m_y1;
     int m_sx, m_sy;
     int m_tx, m_ty, m_tlevel;
+
     enum
     {
         BOTTOM = -1,
@@ -124,6 +125,7 @@ class GDALWMSRasterIOHint
         : m_x0(0), m_y0(0), m_sx(0), m_sy(0), m_overview(0), m_valid(false)
     {
     }
+
     int m_x0;
     int m_y0;
     int m_sx;
@@ -171,6 +173,7 @@ class WMSMiniDriver
     {
         m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
+
     virtual ~WMSMiniDriver()
     {
     }
@@ -230,6 +233,7 @@ class WMSMiniDriverFactory
     WMSMiniDriverFactory()
     {
     }
+
     virtual ~WMSMiniDriverFactory()
     {
     }
@@ -264,9 +268,11 @@ class GDALWMSCacheImpl
         : m_soPath(soPath)
     {
     }
+
     virtual ~GDALWMSCacheImpl()
     {
     }
+
     virtual CPLErr Insert(const char *pszKey, const CPLString &osFileName) = 0;
     virtual enum GDALWMSCacheItemStatus
     GetItemStatus(const char *pszKey) const = 0;
@@ -344,6 +350,7 @@ class GDALWMSDataset final : public GDALPamDataset
     {
         SetBand(i, band);
     }
+
     GDALWMSRasterBand *mGetBand(int i)
     {
         return reinterpret_cast<GDALWMSRasterBand *>(GetRasterBand(i));

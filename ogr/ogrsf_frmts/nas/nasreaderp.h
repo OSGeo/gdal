@@ -124,10 +124,12 @@ class GMLReadState
     void PopPath();
 
     int MatchPath(const char *pszPathInput);
+
     const char *GetPath() const
     {
         return m_pszPath;
     }
+
     const char *GetLastComponent() const;
 
     GMLFeature *m_poFeature;
@@ -180,6 +182,7 @@ class NASReader final : public IGMLReader
     {
         return m_bClassListLocked;
     }
+
     void SetClassListLocked(bool bFlag) override
     {
         m_bClassListLocked = bFlag;
@@ -192,6 +195,7 @@ class NASReader final : public IGMLReader
     {
         return m_nClassCount;
     }
+
     GMLFeatureClass *GetClass(int i) const override;
     GMLFeatureClass *GetClass(const char *pszName) const override;
 
@@ -226,6 +230,7 @@ class NASReader final : public IGMLReader
     {
         return m_poState;
     }
+
     void PopState();
     void PushState(GMLReadState *);
 
@@ -240,6 +245,7 @@ class NASReader final : public IGMLReader
     {
         m_bStopParsing = true;
     }
+
     bool HasStoppedParsing() override
     {
         return m_bStopParsing;
@@ -261,6 +267,7 @@ class NASReader final : public IGMLReader
     }
 
     bool SetFilteredClassName(const char *pszClassName) override;
+
     const char *GetFilteredClassName() override
     {
         return m_pszFilteredClassName;

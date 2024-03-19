@@ -79,6 +79,7 @@ class NGSGEOIDRasterBand final : public GDALPamRasterBand
     explicit NGSGEOIDRasterBand(NGSGEOIDDataset *);
 
     virtual CPLErr IReadBlock(int, int, void *) override;
+
     virtual const char *GetUnitType() override
     {
         return "m";

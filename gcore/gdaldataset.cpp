@@ -190,9 +190,8 @@ static std::string
 GDALSharedDatasetConcatenateOpenOptions(CSLConstList papszOpenOptions)
 {
     std::string osStr;
-    for (CSLConstList papszIter = papszOpenOptions; papszIter && *papszIter;
-         ++papszIter)
-        osStr += *papszIter;
+    for (const char *pszOption : cpl::Iterate(papszOpenOptions))
+        osStr += pszOption;
     return osStr;
 }
 
@@ -264,6 +263,7 @@ GDALDataset::GDALDataset(int bForceCachedIOIn)
       m_poPrivate(new(std::nothrow) GDALDataset::Private)
 {
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -771,6 +771,7 @@ void GDALDataset::RasterInitialize(int nXSize, int nYSize)
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -894,6 +895,7 @@ void GDALDataset::SetBand(int nNewBand, GDALRasterBand *poBand)
     poBand->nRasterYSize = nRasterYSize;
     poBand->eAccess = eAccess;  // Default access to be same as dataset.
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -912,6 +914,7 @@ void GDALDataset::SetBand(int nNewBand, std::unique_ptr<GDALRasterBand> poBand)
 {
     SetBand(nNewBand, poBand.release());
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2105,18 +2108,10 @@ CPLErr GDALDataset::BuildOverviews(const char *pszResampling, int nOverviews,
     // At time of writing, all overview generation options are actually
     // expected to be passed as configuration options.
     std::vector<std::unique_ptr<CPLConfigOptionSetter>> apoConfigOptionSetter;
-    for (CSLConstList papszIter = papszOptions; papszIter && *papszIter;
-         ++papszIter)
+    for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(papszOptions))
     {
-        char *pszKey = nullptr;
-        const char *pszValue = CPLParseNameValue(*papszIter, &pszKey);
-        if (pszKey && pszValue)
-        {
-            apoConfigOptionSetter.emplace_back(
-                std::make_unique<CPLConfigOptionSetter>(pszKey, pszValue,
-                                                        false));
-        }
-        CPLFree(pszKey);
+        apoConfigOptionSetter.emplace_back(
+            std::make_unique<CPLConfigOptionSetter>(pszKey, pszValue, false));
     }
 
     const CPLErr eErr =
@@ -2206,6 +2201,7 @@ CPLErr GDALDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
         return CE_Failure;
     }
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2394,6 +2390,7 @@ CPLErr GDALDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              panBandMap, nPixelSpace, nLineSpace, nBandSpace,
                              psExtraArg);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2457,6 +2454,7 @@ CPLErr GDALDataset::BandBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     return eErr;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2534,6 +2532,7 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
 
     return eErr;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2860,6 +2859,7 @@ CPLErr CPL_STDCALL GDALDatasetRasterIOEx(
                           panBandMap, nPixelSpace, nLineSpace, nBandSpace,
                           psExtraArg);
 }
+
 /************************************************************************/
 /*                          GetOpenDatasets()                           */
 /************************************************************************/
@@ -3133,6 +3133,7 @@ static GDALAntiRecursionStruct &GetAntiRecursionOpen()
 }
 #else
 static thread_local GDALAntiRecursionStruct g_tls_antiRecursion;
+
 static GDALAntiRecursionStruct &GetAntiRecursionOpen()
 {
     return g_tls_antiRecursion;
@@ -3167,6 +3168,7 @@ GDALAntiRecursionGuard::~GDALAntiRecursionGuard()
         --m_psAntiRecursionStruct->m_oMapDepth[m_osIdentifier];
     }
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -3244,15 +3246,12 @@ char **GDALDataset::GetFileList()
     if (oOvManager.HaveMaskFile())
     {
         auto iter = aosDatasetList.insert(datasetCtxt).first;
-        char **papszMskList = oOvManager.poMaskDS->GetFileList();
-        char **papszIter = papszMskList;
-        while (papszIter && *papszIter)
+        for (const char *pszFile :
+             CPLStringList(oOvManager.poMaskDS->GetFileList()))
         {
-            if (CSLFindString(papszList, *papszIter) < 0)
-                papszList = CSLAddString(papszList, *papszIter);
-            ++papszIter;
+            if (CSLFindString(papszList, pszFile) < 0)
+                papszList = CSLAddString(papszList, pszFile);
         }
-        CSLDestroy(papszMskList);
         aosDatasetList.erase(iter);
     }
 
@@ -3594,9 +3593,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
     }
 
     std::string osAllowedDrivers;
-    for (CSLConstList papszIter = papszAllowedDrivers; papszIter && *papszIter;
-         ++papszIter)
-        osAllowedDrivers += *papszIter;
+    for (const char *pszDriverName : cpl::Iterate(papszAllowedDrivers))
+        osAllowedDrivers += pszDriverName;
     auto dsCtxt = GDALAntiRecursionStruct::DatasetContext(
         std::string(pszFilename), nOpenFlags, osAllowedDrivers);
     if (sAntiRecursion.aosDatasetNamesWithFlags.find(dsCtxt) !=
@@ -5063,6 +5061,7 @@ OGRLayer *GDALDataset::CreateLayer(const char *pszName, std::nullptr_t)
     OGRGeomFieldDefn oGeomFieldDefn("", wkbUnknown);
     return CreateLayer(pszName, &oGeomFieldDefn, nullptr);
 }
+
 //!@endcond
 
 /************************************************************************/
@@ -5454,6 +5453,7 @@ int GDALDataset::ValidateLayerCreationOptions(const char *const *papszLCO)
     return GDALValidateOptions(pszOptionList, papszLCO, "layer creation option",
                                osDataset);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -6239,6 +6239,7 @@ OGRErr GDALDataset::ProcessSQLDropTable(const char *pszSQLCommand)
 
     return DeleteLayer(i);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -6678,6 +6679,7 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn(const char *pszSQLCommand)
 
     return poLayer->AlterFieldDefn(nFieldIndex, &oNewFieldDefn, l_nFlags);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -6923,6 +6925,7 @@ GDALDataset::ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
 
     return new OGRUnionLayer("SELECT", nSrcLayers, papoSrcLayers, TRUE);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -7286,6 +7289,7 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
 
     return psParseInfo;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -7396,6 +7400,7 @@ int GDALDataset::IsGenericSQLDialect(const char *pszDialect)
     return pszDialect != nullptr &&
            (EQUAL(pszDialect, "OGRSQL") || EQUAL(pszDialect, "SQLITE"));
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -8365,6 +8370,7 @@ void GDALDataset::ReleaseMutex()
         CPLReleaseMutex(m_poPrivate->hMutex);
     }
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -8918,6 +8924,7 @@ bool GDALDataset::GetRawBinaryLayout(RawBinaryLayout &sLayout)
     CPL_IGNORE_RET_VAL(sLayout);
     return false;
 }
+
 //! @endcond
 
 /************************************************************************/

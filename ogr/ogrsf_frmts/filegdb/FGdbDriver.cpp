@@ -60,6 +60,7 @@ static void OGRFileGDBDriverUnload(GDALDriver *)
     delete poMapConnections;
     poMapConnections = nullptr;
 }
+
 /************************************************************************/
 /*                      OGRFileGDBDriverOpen()                          */
 /************************************************************************/

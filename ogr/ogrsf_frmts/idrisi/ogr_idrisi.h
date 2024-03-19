@@ -81,6 +81,7 @@ class OGRIdrisiLayer final : public OGRLayer,
 
     void SetExtent(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY);
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
@@ -116,6 +117,7 @@ class OGRIdrisiDataSource final : public OGRDataSource
     {
         return nLayers;
     }
+
     virtual OGRLayer *GetLayer(int) override;
 
     virtual int TestCapability(const char *) override;

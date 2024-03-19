@@ -77,6 +77,7 @@ class OGRTABDataSource : public OGRDataSource
     {
         return m_pszName;
     }
+
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;
     int TestCapability(const char *) override;

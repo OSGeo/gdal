@@ -76,6 +76,7 @@ class OGROpenFileGDBGroup final : public GDALGroup
     {
         m_osDefinition = osDefinition;
     }
+
     const std::string &GetDefinition() const
     {
         return m_osDefinition;
@@ -1321,24 +1322,30 @@ class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
     }
+
     virtual int TestCapability(const char *) override;
+
     virtual const char *GetFIDColumn() override
     {
         return poBaseLayer->GetFIDColumn();
     }
+
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override
     {
         return poBaseLayer->GetExtent(psExtent, bForce);
     }
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
     }
+
     virtual GIntBig GetFeatureCount(int bForce) override;
 };
 

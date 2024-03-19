@@ -2969,6 +2969,7 @@ class OGRGMLSingleFeatureLayer final : public OGRLayer
 
   public:
     explicit OGRGMLSingleFeatureLayer(int nVal);
+
     virtual ~OGRGMLSingleFeatureLayer()
     {
         poFeatureDefn->Release();
@@ -2978,11 +2979,14 @@ class OGRGMLSingleFeatureLayer final : public OGRLayer
     {
         iNextShapeId = 0;
     }
+
     virtual OGRFeature *GetNextFeature() override;
+
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
     }
+
     virtual int TestCapability(const char *) override
     {
         return FALSE;

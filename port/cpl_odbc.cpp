@@ -1606,6 +1606,7 @@ int CPLODBCStatement::Failed(int nResultCode)
 
     return TRUE;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1642,6 +1643,24 @@ void CPLODBCStatement::Append(const char *pszText)
 
     strcpy(m_pszStatement + m_nStatementLen, pszText);
     m_nStatementLen += nTextLen;
+}
+
+/************************************************************************/
+/*                      Append(const std::string &)                     */
+/************************************************************************/
+
+/**
+ * Append text to internal command.
+ *
+ * The passed text is appended to the internal SQL command text.
+ *
+ * @param s text to append.
+ */
+
+void CPLODBCStatement::Append(const std::string &s)
+
+{
+    Append(s.c_str());
 }
 
 /************************************************************************/
