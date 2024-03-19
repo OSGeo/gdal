@@ -7,7 +7,7 @@
 
 #include "mm_gdal_driver_structs.h"
 #ifndef GDAL_COMPILATION
-#include "gdalmm.h"  // For PTR_MM_OGR_F_GetFieldAsString()
+#include "gdalmmf.h"  // For PTR_MM_CPLRecode, ptr_MM_CPLRecode(), ...
 #else
 #include "ogr_api.h"  // For OGRLayerH
 CPL_C_START // Necessary for compiling in GDAL project

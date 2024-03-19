@@ -7,7 +7,7 @@ SubVers=3
 [METADADES]
 language=cat
 MDIdiom=cat
-dateStamp=20240318 15230780+0100
+dateStamp=20240319 11074377+0100
 characterSet=006
 nOrganismes=2
 FileIdentifier=out_ID_B_tin_3d_14172
@@ -32,6 +32,56 @@ ArcSource=tin_3d.arc
 comment1=S'ha transformat el fitxer 'MARC0000.vec'
 comment2=S'ha donat una estructura topològica a l'original
 comment3=Ciclat totalment a partir del fitxer F:\dades\20220909_Thiessen\AltEmporda\+\sel2\+\out_ID_B_tin_3d.arc.
+
+[EXTENT]
+MinX=510886.760465633
+MaxX=511161.917984244
+MinY=4660885.499725
+MaxY=4661425.355
+toler_env=0
+
+[OVERVIEW]
+CreationDate=20240319 11074377+0100
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_1_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+visible=0
+MostrarUnitats=0
+descriptor=Identificador Gràfic intern
+
+[TAULA_PRINCIPAL:N_VERTEXS]
+visible=0
+MostrarUnitats=0
+descriptor=Nombre de vèrtexs
+
+[TAULA_PRINCIPAL:PERIMETRE]
+descriptor=Perímetre del polígon (projecció)
+
+[TAULA_PRINCIPAL:PERIMETREE]
+visible=0
+unitats=m
+descriptor=Perímetre del polígon (el·lipsoide)
+
+[TAULA_PRINCIPAL:AREA]
+descriptor=Àrea del polígon (projecció)
+
+[TAULA_PRINCIPAL:AREAE]
+visible=0
+unitats=m²
+descriptor=Àrea del polígon (el·lipsoide)
+
+[TAULA_PRINCIPAL:N_ARCS]
+visible=0
+MostrarUnitats=0
+descriptor=Nombre d'arcs
+
+[TAULA_PRINCIPAL:N_POLIG]
+visible=0
+MostrarUnitats=0
+descriptor=Nombre de polígons elementals
 
 [QUALITY:LINEAGE:PROCESS1]
 nOrganismes=1
@@ -119,56 +169,6 @@ NomFitxer=tin_3d
 
 [QUALITY:LINEAGE]
 processes=1,2
-
-[EXTENT]
-MinX=510886.760465633
-MaxX=511162.152402218
-MinY=4660885.499725
-MaxY=4661443.008
-toler_env=0
-
-[OVERVIEW]
-CreationDate=20240318 15230742+0100
-
-[TAULA_PRINCIPAL]
-IdGrafic=ID_GRAFIC
-TipusRelacio=RELACIO_1_1_DICC
-
-[TAULA_PRINCIPAL:ID_GRAFIC]
-descriptor=Identificador Gràfic intern
-visible=0
-MostrarUnitats=0
-
-[TAULA_PRINCIPAL:N_VERTEXS]
-descriptor=Nombre de vèrtexs
-visible=0
-MostrarUnitats=0
-
-[TAULA_PRINCIPAL:PERIMETRE]
-descriptor=Perímetre del polígon (projecció)
-
-[TAULA_PRINCIPAL:PERIMETREE]
-descriptor=Perímetre del polígon (el·lipsoide)
-visible=0
-unitats=m
-
-[TAULA_PRINCIPAL:AREA]
-descriptor=Àrea del polígon (projecció)
-
-[TAULA_PRINCIPAL:AREAE]
-descriptor=Àrea del polígon (el·lipsoide)
-visible=0
-unitats=m²
-
-[TAULA_PRINCIPAL:N_ARCS]
-descriptor=Nombre d'arcs
-visible=0
-MostrarUnitats=0
-
-[TAULA_PRINCIPAL:N_POLIG]
-descriptor=Nombre de polígons elementals
-visible=0
-MostrarUnitats=0
 
 [GEOMETRIA_I_TOPOLOGIA]
 NomCampNVertexs=N_VERTEXS

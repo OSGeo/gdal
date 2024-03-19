@@ -7,7 +7,7 @@ SubVers=3
 [METADADES]
 language=cat
 MDIdiom=cat
-dateStamp=20240318 15230789+0100
+dateStamp=20240319 11074377+0100
 characterSet=006
 nOrganismes=2
 FileIdentifier=MARC0000_10835
@@ -25,10 +25,38 @@ OrganisationName=Students and educational institutions
 [IDENTIFICATION]
 code=MARC0000_07743
 codeSpace=
-DatasetTitle=Triangulació de Delaunay - Selecció de -> Selecció de -> Retall de->D:\dades\20220909_Thiessen\AltEmporda\centroides_02.pnt
+DatasetTitle=Triangulació de Delaunay - Selecció de -> Selecció de -> Retall de->D:\dades\20220909_Thiessen\AltEmporda\centroides_02.pnt [Plantill]
 
 [OVERVIEW:ASPECTES_TECNICS]
 comment1=Nodes del fitxer d'arcs 'D:\dades\20220909_Thiessen\AltEmporda\sel2\out_ID_B_tin.arc'
+
+[EXTENT]
+MinX=510886.760465633
+MaxX=511161.917984244
+MinY=4660885.499725
+MaxY=4661425.355
+toler_env=0
+
+[OVERVIEW]
+CreationDate=20240319 11074377+0100
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_N_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+visible=0
+simbolitzable=0
+MostrarUnitats=0
+descriptor=Identificador Gràfic intern
+
+[TAULA_PRINCIPAL:ARCS_A_NOD]
+MostrarUnitats=0
+descriptor=Nombre d'arcs al node
+
+[TAULA_PRINCIPAL:TIPUS_NODE]
+MostrarUnitats=0
+descriptor=Tipus de node
 
 [QUALITY:LINEAGE:PROCESS1]
 nOrganismes=1
@@ -74,34 +102,6 @@ NomFitxer=tin_3d
 
 [QUALITY:LINEAGE]
 processes=1
-
-[EXTENT]
-MinX=510886.760465633
-MaxX=511162.152402218
-MinY=4660885.499725
-MaxY=4661443.008
-toler_env=0
-
-[OVERVIEW]
-CreationDate=20240318 15230754+0100
-
-[TAULA_PRINCIPAL]
-IdGrafic=ID_GRAFIC
-TipusRelacio=RELACIO_1_N_DICC
-
-[TAULA_PRINCIPAL:ID_GRAFIC]
-descriptor=Identificador Gràfic intern
-visible=0
-simbolitzable=0
-MostrarUnitats=0
-
-[TAULA_PRINCIPAL:ARCS_A_NOD]
-descriptor=Nombre d'arcs al node
-MostrarUnitats=0
-
-[TAULA_PRINCIPAL:TIPUS_NODE]
-descriptor=Tipus de node
-MostrarUnitats=0
 
 [GEOMETRIA_I_TOPOLOGIA]
 NomCampArcsANode=ARCS_A_NOD

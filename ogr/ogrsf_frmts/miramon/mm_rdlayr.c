@@ -215,8 +215,8 @@ MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     fseek_function(pF, pArcHeader[i_elem].nOffset, SEEK_SET);
 
-    if (hMiraMonLayer->bIsPolygon && (VFG & MM_POL_REVERSE_ARC) &&
-        nStartVertice > 0)
+    if (hMiraMonLayer->bIsPolygon && (VFG & MM_POL_REVERSE_ARC))  // &&
+        //nStartVertice > 0)
     {
         MM_N_VERTICES_TYPE nIVertice;
 
@@ -604,12 +604,7 @@ int MMGetGeoFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer,
     }
 
     // Polygons or multipolygons
-    if (hMiraMonLayer->TopHeader.bIs3d && hMiraMonLayer->ReadFeature.pZCoord)
-    {
-        if (MMGetMultiPolygonCoordinates(hMiraMonLayer, i_elem, flag_z))
-            return 1;
-    }
-    else if (MMGetMultiPolygonCoordinates(hMiraMonLayer, i_elem, flag_z))
+    if (MMGetMultiPolygonCoordinates(hMiraMonLayer, i_elem, flag_z))
         return 1;
 
     return 0;

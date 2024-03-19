@@ -38,7 +38,6 @@
 #include "mm_rdlayr.h"    // For MM_ReadExtendedDBFHeader()
 #include "gdal.h"         // For GDALDatasetH
 #include "ogr_srs_api.h"  // For OSRGetAuthorityCode
-#include "cpl_string.h"   // For CPL_ENC_UTF8
 #else
 #include "CmptCmp.h"                    // Compatibility between compilers
 #include "PrjMMVGl.h"                   // For a DirectoriPrograma
@@ -46,12 +45,9 @@
 #include "mm_gdal\mm_gdal_functions.h"  // For MM_strnzcpy()
 #include "mm_gdal\mm_rdlayr.h"          // For MM_ReadExtendedDBFHeader()
 #include "msg.h"                        // For ErrorMsg()
-#ifdef _WIN64
-#include "gdal\release-1911-x64\cpl_string.h"  // Per a CPL_ENC_UTF8
-#else
-#include "gdal\release-1911-32\cpl_string.h"  // Per a CPL_ENC_UTF8
 #endif
-#endif
+
+#include "cpl_string.h"  // For CPL_ENC_UTF8
 
 static char local_message[MAX_LOCAL_MESSAGE];
 

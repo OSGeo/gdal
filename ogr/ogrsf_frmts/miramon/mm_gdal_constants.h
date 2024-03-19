@@ -3,7 +3,13 @@
 /* -------------------------------------------------------------------- */
 /*      Constants used in GDAL and in MiraMon                           */
 /* -------------------------------------------------------------------- */
-#include "cpl_port.h"  // For GUInt64
+#ifndef GDAL_COMPILATION
+#ifdef _WIN64
+#include "gdal\release-1911-x64\cpl_port.h"  // For GUInt64
+#else
+#include "gdal\release-1911-32\cpl_port.h"  // For GUInt64
+#endif
+#endif
 
 #ifdef GDAL_COMPILATION
 CPL_C_START  // Necessary for compiling C in GDAL project
