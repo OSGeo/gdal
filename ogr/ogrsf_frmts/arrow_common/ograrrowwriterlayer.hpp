@@ -360,8 +360,9 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
             auto bbox_field_ymax(arrow::field("ymax", arrow::float32(), false));
             auto bbox_field(arrow::field(
                 std::string(poGeomFieldDefn->GetNameRef()).append("_bbox"),
-                arrow::struct_({bbox_field_xmin, bbox_field_ymin,
-                                bbox_field_xmax, bbox_field_ymax}),
+                arrow::struct_(
+                    {std::move(bbox_field_xmin), std::move(bbox_field_ymin),
+                     std::move(bbox_field_xmax), std::move(bbox_field_ymax)}),
                 poGeomFieldDefn->IsNullable()));
             fields.emplace_back(bbox_field);
             m_apoFieldsBBOX.emplace_back(bbox_field);
