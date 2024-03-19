@@ -218,6 +218,9 @@ bool OGRParquetWriterLayer::CopyTmpGpkgLayerToFinalFile()
                 }
             }
 
+            // nCellCount shouldn't be over 51 normally, but even 65535
+            // would be fine...
+            // coverity[tainted_data]
             for (int i = 0; i < nCellCount; ++i)
             {
                 int64_t nFID;
@@ -267,6 +270,10 @@ bool OGRParquetWriterLayer::CopyTmpGpkgLayerToFinalFile()
         else
         {
             // Non-leaf node: it references child nodes.
+
+            // nCellCount shouldn't be over 51 normally, but even 65535
+            // would be fine...
+            // coverity[tainted_data]
             for (int i = 0; i < nCellCount; ++i)
             {
                 int64_t nNode;
