@@ -127,6 +127,7 @@ static bool Bresenham2D(int x1, int y1, int x2, int y2,
 static bool GetElevation(const GDALRasterBandH hBand, const int x, const int y,
                          double &val)
 {
+    /// @todo GDALCachedPixelAccessor may give increased performance.
     return GDALRasterIO(hBand, GF_Read, x, y, 1, 1, &val, 1, 1, GDT_Float64, 0,
                         0) == CE_None;
 }
