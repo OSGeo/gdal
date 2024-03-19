@@ -212,6 +212,7 @@ class BAGDataset final : public GDALPamDataset
     {
         return m_poTrackingListLayer ? 1 : 0;
     }
+
     OGRLayer *GetLayer(int idx) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
@@ -2204,6 +2205,7 @@ class BAGGeorefMDBandBase CPL_NON_FINAL : public GDALPamRasterBand
     {
         return m_poRAT.get();
     }
+
     double GetNoDataValue(int *pbSuccess) override;
 };
 
@@ -3517,8 +3519,10 @@ class BAGTrackingListLayer final
     {
         return m_poFeatureDefn;
     }
+
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(BAGTrackingListLayer)
+
     int TestCapability(const char *) override
     {
         return false;
@@ -4129,18 +4133,22 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
 
     const char *pszSUPERGRIDS =
         CSLFetchNameValue(l_papszOpenOptions, "SUPERGRIDS_INDICES");
+
     struct yx
     {
         int y;
         int x;
+
         yx(int yin, int xin) : y(yin), x(xin)
         {
         }
+
         bool operator<(const yx &other) const
         {
             return y < other.y || (y == other.y && x < other.x);
         }
     };
+
     std::set<yx> oSupergrids;
     int nMinX = 0;
     int nMinY = 0;

@@ -103,6 +103,7 @@ class PCIDSK2Dataset final : public GDALPamDataset
     {
         return (int)apoLayers.size();
     }
+
     virtual OGRLayer *GetLayer(int) override;
 
     virtual int TestCapability(const char *) override;
@@ -214,6 +215,7 @@ class OGRPCIDSKLayer final : public OGRLayer,
 
     GIntBig GetFeatureCount(int) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {

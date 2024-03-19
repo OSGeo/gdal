@@ -71,6 +71,7 @@ class OGROSMComputedAttribute
         : nIndex(-1), eType(OFTString), hStmt(nullptr), bHardcodedZOrder(false)
     {
     }
+
     explicit OGROSMComputedAttribute(const char *pszName)
         : osName(pszName), nIndex(-1), eType(OFTString), hStmt(nullptr),
           bHardcodedZOrder(false)
@@ -166,6 +167,7 @@ class OGROSMLayer final : public OGRLayer
     virtual OGRErr SetAttributeFilter(const char *pszAttrQuery) override;
 
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
@@ -187,6 +189,7 @@ class OGROSMLayer final : public OGRLayer
     {
         return m_bHasOSMId;
     }
+
     void SetHasOSMId(bool bIn)
     {
         m_bHasOSMId = bIn;
@@ -196,6 +199,7 @@ class OGROSMLayer final : public OGRLayer
     {
         return m_bHasVersion;
     }
+
     void SetHasVersion(bool bIn)
     {
         m_bHasVersion = bIn;
@@ -205,6 +209,7 @@ class OGROSMLayer final : public OGRLayer
     {
         return m_bHasTimestamp;
     }
+
     void SetHasTimestamp(bool bIn)
     {
         m_bHasTimestamp = bIn;
@@ -214,6 +219,7 @@ class OGROSMLayer final : public OGRLayer
     {
         return m_bHasUID;
     }
+
     void SetHasUID(bool bIn)
     {
         m_bHasUID = bIn;
@@ -223,6 +229,7 @@ class OGROSMLayer final : public OGRLayer
     {
         return m_bHasUser;
     }
+
     void SetHasUser(bool bIn)
     {
         m_bHasUser = bIn;
@@ -232,6 +239,7 @@ class OGROSMLayer final : public OGRLayer
     {
         return m_bHasChangeset;
     }
+
     void SetHasChangeset(bool bIn)
     {
         m_bHasChangeset = bIn;
@@ -241,6 +249,7 @@ class OGROSMLayer final : public OGRLayer
     {
         return m_bHasOtherTags;
     }
+
     void SetHasOtherTags(bool bIn)
     {
         m_bHasOtherTags = bIn;
@@ -250,6 +259,7 @@ class OGROSMLayer final : public OGRLayer
     {
         return m_bHasAllTags;
     }
+
     void SetHasAllTags(bool bIn)
     {
         m_bHasAllTags = bIn;
@@ -263,6 +273,7 @@ class OGROSMLayer final : public OGRLayer
     {
         m_bUserInterested = bIn;
     }
+
     bool IsUserInterested() const
     {
         return m_bUserInterested;
@@ -272,9 +283,11 @@ class OGROSMLayer final : public OGRLayer
     {
         return m_poAttrQuery != nullptr;
     }
+
     int EvaluateAttributeFilter(OGRFeature *poFeature);
 
     void AddInsignificantKey(const char *pszK);
+
     int IsSignificantKey(const char *pszK) const
     {
         return aoSetInsignificantKeys.find(pszK) ==
@@ -308,6 +321,7 @@ typedef struct
                         nOffsetInpabyNonRedundantKeys */
     short bVIsIndex; /* whether we should use nValueIndex or
                         nOffsetInpabyNonRedundantValues */
+
     union
     {
         int nKeyIndex; /* index of OGROSMDataSource.asKeys */
@@ -315,6 +329,7 @@ typedef struct
                                               OGROSMDataSource.pabyNonRedundantKeys
                                             */
     } uKey;
+
     union
     {
         int nValueIndex;                     /* index of KeyDesc.asValues */
@@ -327,6 +342,7 @@ typedef struct
 typedef struct
 {
     GIntBig nOff;
+
     /* Note: only one of nth bucket pabyBitmap or panSectorSize must be free'd
      */
     union
@@ -567,10 +583,12 @@ class OGROSMDataSource final : public OGRDataSource
     {
         return m_pszName;
     }
+
     virtual int GetLayerCount() override
     {
         return m_nLayers;
     }
+
     virtual OGRLayer *GetLayer(int) override;
 
     virtual int TestCapability(const char *) override;
@@ -604,6 +622,7 @@ class OGROSMDataSource final : public OGRDataSource
     {
         return m_poCurrentLayer;
     }
+
     void SetCurrentLayer(OGROSMLayer *poLyr)
     {
         m_poCurrentLayer = poLyr;

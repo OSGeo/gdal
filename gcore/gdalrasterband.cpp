@@ -487,6 +487,7 @@ CPLErr CPL_STDCALL GDALRasterIOEx(GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                              nBufXSize, nBufYSize, eBufType, nPixelSpace,
                              nLineSpace, psExtraArg));
 }
+
 /************************************************************************/
 /*                             ReadBlock()                              */
 /************************************************************************/
@@ -1097,6 +1098,7 @@ int GDALRasterBand::InitBlockInfo()
         return FALSE;
     return poBandBlockCache->Init();
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1270,6 +1272,7 @@ void GDALRasterBand::AddBlockToFreeList(GDALRasterBlock *poBlock)
     CPLAssert(poBandBlockCache && poBandBlockCache->IsInitOK());
     return poBandBlockCache->AddBlockToFreeList(poBlock);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -4249,6 +4252,7 @@ GDALGetDefaultHistogramEx(GDALRasterBandH hBand, double *pdfMin, double *pdfMax,
     return poBand->GetDefaultHistogram(pdfMin, pdfMax, pnBuckets, ppanHistogram,
                                        bForce, pfnProgress, pProgressData);
 }
+
 /************************************************************************/
 /*                             AdviseRead()                             */
 /************************************************************************/
@@ -5653,6 +5657,7 @@ void GDALRasterBand::SetValidPercent(GUIntBig nSampleCount,
         }
     }
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -7497,6 +7502,7 @@ void GDALRasterBand::InvalidateMaskBand()
     poMask.reset();
     nMaskFlags = 0;
 }
+
 //! @endcond
 
 /************************************************************************/

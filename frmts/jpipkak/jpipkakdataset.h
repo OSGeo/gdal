@@ -71,34 +71,42 @@ class JPIPDataSegment
     {
         return nId;
     }
+
     long GetAux() const
     {
         return nAux;
     }
+
     long GetClassId() const
     {
         return nClassId;
     }
+
     long GetCodestreamIdx() const
     {
         return nCodestream;
     }
+
     long GetOffset() const
     {
         return nOffset;
     }
+
     long GetLen() const
     {
         return nLen;
     }
+
     GByte *GetData()
     {
         return pabyData;
     }
+
     int IsFinal() const
     {
         return bIsFinal;
     }
+
     int IsEOR() const
     {
         return bIsEOR;
@@ -108,38 +116,47 @@ class JPIPDataSegment
     {
         this->nId = nIdIn;
     }
+
     void SetAux(long nAuxIn)
     {
         this->nAux = nAuxIn;
     }
+
     void SetClassId(long nClassIdIn)
     {
         this->nClassId = nClassIdIn;
     }
+
     void SetCodestreamIdx(long nCodestreamIn)
     {
         this->nCodestream = nCodestreamIn;
     }
+
     void SetOffset(long nOffsetIn)
     {
         this->nOffset = nOffsetIn;
     }
+
     void SetLen(long nLenIn)
     {
         this->nLen = nLenIn;
     }
+
     void SetData(GByte *pabyDataIn)
     {
         this->pabyData = pabyDataIn;
     }
+
     void SetFinal(int bIsFinalIn)
     {
         this->bIsFinal = bIsFinalIn;
     }
+
     void SetEOR(int bIsEORIn)
     {
         this->bIsEOR = bIsEORIn;
     }
+
     JPIPDataSegment();
     ~JPIPDataSegment();
 };
@@ -220,14 +237,17 @@ class JPIPKAKDataset final : public GDALPamDataset
                      char **papszOptions) override;
 
     virtual void EndAsyncReader(GDALAsyncReader *) override;
+
     int GetNQualityLayers() const
     {
         return nQualityLayers;
     }
+
     int GetNResolutionLevels() const
     {
         return nResLevels;
     }
+
     int GetNComponents() const
     {
         return nComps;
@@ -337,6 +357,7 @@ class JPIPKAKAsyncReader final : public GDALAsyncReader
     virtual GDALAsyncStatusType
     GetNextUpdatedRegion(double timeout, int *pnxbufoff, int *pnybufoff,
                          int *pnxbufsize, int *pnybufsize) override;
+
     void SetComplete(int bFinished)
     {
         this->bComplete = bFinished;

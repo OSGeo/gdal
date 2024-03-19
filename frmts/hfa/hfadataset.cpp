@@ -370,6 +370,7 @@ int HFARasterAttributeTable::GetColOfUsage(GDALRATFieldUsage eUsage) const
 
     return -1;
 }
+
 /************************************************************************/
 /*                          GetRowCount()                               */
 /************************************************************************/
@@ -1402,6 +1403,7 @@ int HFARasterAttributeTable::GetRowOfValue(double dfValue) const
     }
     return -1;
 }
+
 /************************************************************************/
 /*                          GetRowOfValue()                             */
 /*                                                                      */

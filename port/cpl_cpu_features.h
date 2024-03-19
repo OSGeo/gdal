@@ -37,6 +37,7 @@
 #ifdef HAVE_SSE_AT_COMPILE_TIME
 #if (defined(_M_X64) || defined(__x86_64))
 #define HAVE_INLINE_SSE
+
 static bool inline CPLHaveRuntimeSSE()
 {
     return true;
@@ -49,6 +50,7 @@ bool CPLHaveRuntimeSSE();
 #ifdef HAVE_SSSE3_AT_COMPILE_TIME
 #if __SSSE3__
 #define HAVE_INLINE_SSSE3
+
 static bool inline CPLHaveRuntimeSSSE3()
 {
 #ifdef DEBUG
@@ -60,6 +62,7 @@ static bool inline CPLHaveRuntimeSSSE3()
 #else
 #if defined(__GNUC__) && !defined(DEBUG)
 extern bool bCPLHasSSSE3;
+
 static bool inline CPLHaveRuntimeSSSE3()
 {
     return bCPLHasSSSE3;
@@ -73,12 +76,14 @@ bool CPLHaveRuntimeSSSE3();
 #ifdef HAVE_AVX_AT_COMPILE_TIME
 #if __AVX__
 #define HAVE_INLINE_AVX
+
 static bool inline CPLHaveRuntimeAVX()
 {
     return true;
 }
 #elif defined(__GNUC__)
 extern bool bCPLHasAVX;
+
 static bool inline CPLHaveRuntimeAVX()
 {
     return bCPLHasAVX;

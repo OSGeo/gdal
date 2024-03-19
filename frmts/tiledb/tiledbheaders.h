@@ -50,10 +50,12 @@ struct gdal_tiledb_vector_of_bool
     bool *m_v = nullptr;
 
     gdal_tiledb_vector_of_bool() = default;
+
     ~gdal_tiledb_vector_of_bool()
     {
         std::free(m_v);
     }
+
     gdal_tiledb_vector_of_bool(gdal_tiledb_vector_of_bool &&other)
         : m_size(other.m_size), m_capacity(other.m_capacity),
           m_v(std::move(other.m_v))
@@ -62,6 +64,7 @@ struct gdal_tiledb_vector_of_bool
         other.m_capacity = 0;
         other.m_v = nullptr;
     }
+
     gdal_tiledb_vector_of_bool(const gdal_tiledb_vector_of_bool &) = delete;
     gdal_tiledb_vector_of_bool &
     operator=(const gdal_tiledb_vector_of_bool &) = delete;
@@ -72,22 +75,27 @@ struct gdal_tiledb_vector_of_bool
     {
         return m_size;
     }
+
     const bool *data() const
     {
         return m_v;
     }
+
     bool *data()
     {
         return m_v;
     }
+
     bool &operator[](size_t idx)
     {
         return m_v[idx];
     }
+
     bool operator[](size_t idx) const
     {
         return m_v[idx];
     }
+
     void resize(size_t new_size)
     {
         if (new_size > m_capacity)
@@ -107,20 +115,24 @@ struct gdal_tiledb_vector_of_bool
             memset(m_v + m_size, 0, (new_size - m_size) * sizeof(bool));
         m_size = new_size;
     }
+
     void clear()
     {
         resize(0);
     }
+
     size_t capacity() const
     {
         return m_capacity;
     }
+
     void push_back(uint8_t v)
     {
         resize(size() + 1);
         m_v[size() - 1] = static_cast<bool>(v);
     }
 };
+
 #define VECTOR_OF_BOOL gdal_tiledb_vector_of_bool
 #define VECTOR_OF_BOOL_IS_NOT_UINT8_T
 #else
@@ -448,6 +460,7 @@ class OGRTileDBLayer final : public OGRLayer,
     int TestCapability(const char *) override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
     {
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
@@ -457,6 +470,7 @@ class OGRTileDBLayer final : public OGRLayer,
     {
         return m_osFIDColumn.c_str();
     }
+
     OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
@@ -484,15 +498,18 @@ class OGRTileDBDataset final : public TileDBDataset
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,
                          const char *pszDialect) override;
+
     int GetLayerCount() override
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     OGRLayer *GetLayer(int nIdx) override
     {
         return nIdx >= 0 && nIdx < GetLayerCount() ? m_apoLayers[nIdx].get()
                                                    : nullptr;
     }
+
     int TestCapability(const char *) override;
 
     OGRLayer *ICreateLayer(const char *pszName,

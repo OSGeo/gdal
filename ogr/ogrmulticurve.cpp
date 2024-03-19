@@ -156,6 +156,7 @@ OGRErr OGRMultiCurve::addCurveDirectlyFromWkt(OGRGeometry *poSelf,
 {
     return poSelf->toMultiCurve()->addGeometryDirectly(poCurve);
 }
+
 /*! @endcond */
 
 /************************************************************************/

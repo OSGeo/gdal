@@ -371,6 +371,7 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
                 int nOffset = 0;
                 int nIncrement = 1;
             };
+
             std::vector<DimensionMap> aoDimensionMaps;
             std::map<std::string, std::string> oMapDataDimensionToGeoDimension;
 

@@ -3299,6 +3299,7 @@ CPLThreadLocaleC::~CPLThreadLocaleC()
 {
     delete m_private;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -3506,4 +3507,5 @@ CPLConfigOptionSetter::~CPLConfigOptionSetter()
     }
     CPLFree(m_pszKey);
 }
+
 //! @endcond

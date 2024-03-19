@@ -191,6 +191,7 @@ class FGdbLayer final : public FGdbBaseLayer
     {
         return m_wstrTablePath;
     }
+
     std::wstring GetType() const
     {
         return m_wstrType;
@@ -209,6 +210,7 @@ class FGdbLayer final : public FGdbBaseLayer
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
 
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
@@ -219,6 +221,7 @@ class FGdbLayer final : public FGdbBaseLayer
     virtual OGRErr SetAttributeFilter(const char *pszQuery) override;
 
     virtual void SetSpatialFilter(OGRGeometry *) override;
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
@@ -335,6 +338,7 @@ class FGdbDataSource final : public OGRDataSource
     {
         return m_osPublicName.c_str();
     }
+
     const char *GetFSName()
     {
         return m_osFSName.c_str();
@@ -389,10 +393,12 @@ class FGdbDataSource final : public OGRDataSource
     {
         return m_pGeodatabase;
     }
+
     bool GetUpdate()
     {
         return m_bUpdate;
     }
+
     FGdbDatabaseConnection *GetConnection()
     {
         return m_pConnection;
@@ -402,6 +408,7 @@ class FGdbDataSource final : public OGRDataSource
     {
         return m_poOpenFileGDBDrv;
     }
+
     int HasSelectLayers()
     {
         return !m_oSetSelectLayers.empty();
@@ -411,10 +418,12 @@ class FGdbDataSource final : public OGRDataSource
     int ReOpen();
 
     int HasPerLayerCopyingForTransaction();
+
     void SetPerLayerCopyingForTransaction(int bFlag)
     {
         bPerLayerCopyingForTransaction = bFlag;
     }
+
     void SetSymlinkFlagOnAllLayers();
 
     bool UseOpenFileGDB() const
@@ -466,14 +475,17 @@ class FGdbDatabaseConnection
     {
         return m_pGeodatabase;
     }
+
     void SetLocked(int bLockedIn)
     {
         m_bLocked = bLockedIn;
     }
+
     int GetRefCount() const
     {
         return m_nRefCount;
     }
+
     int IsLocked() const
     {
         return m_bLocked;
@@ -483,10 +495,12 @@ class FGdbDatabaseConnection
     {
         return m_bFIDHackInProgress;
     }
+
     void SetFIDHackInProgress(int bFlag)
     {
         m_bFIDHackInProgress = bFlag;
     }
+
     int OpenGeodatabase(const char *pszOverriddenName);
     void CloseGeodatabase();
 };

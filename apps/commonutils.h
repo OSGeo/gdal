@@ -51,6 +51,7 @@ class ARGVDestroyer
     explicit ARGVDestroyer(char **papszList) : m_papszList(papszList)
     {
     }
+
     ~ARGVDestroyer()
     {
         CSLDestroy(m_papszList);

@@ -156,6 +156,7 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
     {
         return osName.c_str();
     }
+
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) override;
     virtual json_object *FetchNewFeatures() override;
 
@@ -182,6 +183,7 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
     {
         SetSpatialFilter(0, poGeom);
     }
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
     virtual OGRErr SetAttributeFilter(const char *) override;
 
@@ -189,6 +191,7 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
     {
         return GetExtent(0, psExtent, bForce);
     }
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override;
 
@@ -196,14 +199,17 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
     {
         bLaunderColumnNames = bFlag;
     }
+
     void SetDeferredCreation(OGRwkbGeometryType eGType,
                              OGRSpatialReference *poSRS, bool bGeomNullable,
                              bool bCartodbfy);
     OGRErr RunDeferredCreationIfNecessary();
+
     bool GetDeferredCreation() const
     {
         return bDeferredCreation;
     }
+
     void CancelDeferredCreation()
     {
         bDeferredCreation = false;
@@ -227,6 +233,7 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
     {
         bDropOnCreation = bFlag;
     }
+
     bool GetDropOnCreation() const
     {
         return bDropOnCreation;
@@ -297,6 +304,7 @@ class OGRCARTODataSource final : public OGRDataSource
     {
         return nLayers;
     }
+
     virtual OGRLayer *GetLayer(int) override;
     virtual OGRLayer *GetLayerByName(const char *) override;
 
@@ -313,35 +321,43 @@ class OGRCARTODataSource final : public OGRDataSource
     virtual void ReleaseResultSet(OGRLayer *poLayer) override;
 
     const char *GetAPIURL() const;
+
     bool IsReadWrite() const
     {
         return bReadWrite;
     }
+
     bool DoBatchInsert() const
     {
         return bBatchInsert;
     }
+
     bool DoCopyMode() const
     {
         return bCopyMode;
     }
+
     char **AddHTTPOptions();
     json_object *RunSQL(const char *pszUnescapedSQL);
     json_object *RunCopyFrom(const char *pszSQL, const char *pszCopyFile);
+
     const CPLString &GetCurrentSchema()
     {
         return osCurrentSchema;
     }
+
     static int FetchSRSId(const OGRSpatialReference *poSRS);
 
     int IsAuthenticatedConnection()
     {
         return !osAPIKey.empty();
     }
+
     int HasOGRMetadataFunction()
     {
         return bHasOGRMetadataFunction;
     }
+
     void SetOGRMetadataFunction(int bFlag)
     {
         bHasOGRMetadataFunction = bFlag;
@@ -356,6 +372,7 @@ class OGRCARTODataSource final : public OGRDataSource
     {
         return nPostGISMajor;
     }
+
     int GetPostGISMinor() const
     {
         return nPostGISMinor;

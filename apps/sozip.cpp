@@ -769,4 +769,5 @@ MAIN_START(nArgc, papszArgv)
     CPLCloseZip(hZIP);
     return 0;
 }
+
 MAIN_END

@@ -63,30 +63,37 @@ class ValueRange
     ValueRange(double min, double max, double step);
     explicit ValueRange(const std::string &str);
     std::string ToString() const;
+
     ilwisStoreType get_NeededStoreType() const
     {
         return st;
     }
+
     double get_rLo() const
     {
         return _rLo;
     }
+
     double get_rHi() const
     {
         return _rHi;
     }
+
     double get_rStep() const
     {
         return _rStep;
     }
+
     double get_rRaw0() const
     {
         return _r0;
     }
+
     int get_iDec() const
     {
         return _iDec;
     }
+
     double rValue(int raw) const;
     int iRaw(double value) const;
 
@@ -111,6 +118,7 @@ struct ILWISInfo
     ILWISInfo() : bUseValueRange(false), vr(0, 0), stStoreType(stByte)
     {
     }
+
     bool bUseValueRange;
     ValueRange vr;
     ilwisStoreType stStoreType;

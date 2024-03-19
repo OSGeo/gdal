@@ -129,6 +129,7 @@ class NITFDataset final : public GDALPamDataset
     CPLString m_osRPCTXTFilename;
 
     int bExposeUnderlyingJPEGDatasetOverviews;
+
     int ExposeUnderlyingJPEGDatasetOverviews() const
     {
         return bExposeUnderlyingJPEGDatasetOverviews;

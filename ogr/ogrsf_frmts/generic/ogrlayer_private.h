@@ -57,6 +57,7 @@ struct OGRLayer::Private
     //! Whether OGRGeometry::SetPrecision() should be applied. Only valid after ConvertGeomsIfNecessary() has been called.
     bool m_bApplyGeomSetPrecision = false;
 };
+
 //! @endcond
 
 #endif /* OGRLAYER_PRIVATE_H_INCLUDED */

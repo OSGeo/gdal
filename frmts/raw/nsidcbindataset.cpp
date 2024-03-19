@@ -43,6 +43,7 @@
 class NSIDCbinDataset final : public GDALPamDataset
 {
     friend class NSIDCbinRasterBand;
+
     struct NSIDCbinHeader
     {
 

@@ -163,6 +163,7 @@ class TigerFileBase CPL_NON_FINAL
     {
         return nVersion;
     }
+
     int GetVersionCode()
     {
         return nVersionCode;
@@ -172,6 +173,7 @@ class TigerFileBase CPL_NON_FINAL
     {
         return pszShortModule;
     }
+
     virtual const char *GetModule()
     {
         return pszModule;
@@ -290,6 +292,7 @@ class TigerPoint CPL_NON_FINAL : public TigerFileBase
     {
         return TigerFileBase::GetFeature(nFID);
     } /* to avoid -Woverloaded-virtual warnings */
+
     OGRFeature *GetFeature(int nRecordId, int nX0, int nX1, int nY0, int nY1);
 };
 
@@ -529,6 +532,7 @@ class OGRTigerDataSource final : public OGRDataSource
     {
         return nVersion;
     }
+
     int GetVersionCode() const
     {
         return nVersionCode;
@@ -543,6 +547,7 @@ class OGRTigerDataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;
     OGRLayer *GetLayer(const char *pszLayerName);
@@ -559,12 +564,14 @@ class OGRTigerDataSource final : public OGRDataSource
     {
         return pszPath;
     }
+
     char *BuildFilename(const char *pszModule, const char *pszExtension);
 
     int GetModuleCount() const
     {
         return nModules;
     }
+
     const char *GetModule(int);
     bool CheckModule(const char *pszModule);
     void AddModule(const char *pszModule);

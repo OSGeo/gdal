@@ -40,6 +40,7 @@ class WMSMiniDriverManager
     WMSMiniDriverManager()
     {
     }
+
     ~WMSMiniDriverManager()
     {
         erase();

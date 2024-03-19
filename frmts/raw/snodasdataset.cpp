@@ -63,6 +63,7 @@ class SNODASDataset final : public RawDataset
     ~SNODASDataset() override;
 
     CPLErr GetGeoTransform(double *padfTransform) override;
+
     const OGRSpatialReference *GetSpatialRef() const override
     {
         return &m_oSRS;
@@ -86,6 +87,7 @@ class SNODASRasterBand final : public RawRasterBand
 
   public:
     SNODASRasterBand(VSILFILE *fpRaw, int nXSize, int nYSize);
+
     ~SNODASRasterBand() override
     {
     }

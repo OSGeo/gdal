@@ -692,6 +692,7 @@ template <class T> class GMLASUniquePtr
     explicit GMLASUniquePtr(T *p) : m_p(p)
     {
     }
+
     ~GMLASUniquePtr()
     {
         delete m_p;
@@ -707,6 +708,7 @@ template <class T> class GMLASUniquePtr
     {
         return m_p;
     }
+
     T *release()
     {
         T *ret = m_p;

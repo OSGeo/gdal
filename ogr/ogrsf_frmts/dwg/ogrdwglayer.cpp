@@ -1089,6 +1089,7 @@ class GeometryInsertTransformer : public OGRCoordinateTransformation
     {
         return nullptr;
     }
+
     const OGRSpatialReference *GetTargetCS() const override
     {
         return nullptr;

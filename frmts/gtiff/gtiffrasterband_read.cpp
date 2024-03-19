@@ -670,12 +670,14 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
         nBlockYSize;
 
     const int nBlockCount = nBlocksPerRow * nBlocksPerColumn;
+
     struct StrileData
     {
         vsi_l_offset nOffset;
         vsi_l_offset nByteCount;
         bool bTryMask;
     };
+
     std::map<int, StrileData> oMapStrileToOffsetByteCount;
 
     // Dedicated method to retrieved the offset and size in an efficient way

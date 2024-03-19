@@ -336,4 +336,5 @@ int GDALGeorefPamDataset::GetPAMGeorefSrcIndex() const
     }
     return m_nPAMGeorefSrcIndex;
 }
+
 //! @endcond

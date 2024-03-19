@@ -68,6 +68,7 @@ extern "C"
         // Opaque producer-specific data
         void *private_data;
     };
+
     // EXPERIMENTAL: C stream interface
 
     struct ArrowArrayStream

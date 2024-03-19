@@ -124,6 +124,7 @@ class CTGDataset final : public GDALPamDataset
     ~CTGDataset() override;
 
     CPLErr GetGeoTransform(double *) override;
+
     const OGRSpatialReference *GetSpatialRef() const override
     {
         return &m_oSRS;
@@ -179,6 +180,7 @@ CTGRasterBand::~CTGRasterBand()
 {
     CSLDestroy(papszCategories);
 }
+
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/

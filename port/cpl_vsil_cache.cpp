@@ -64,6 +64,7 @@ class VSICachedFile final : public VSIVirtualHandle
   public:
     VSICachedFile(VSIVirtualHandle *poBaseHandle, size_t nChunkSize,
                   size_t nCacheSize);
+
     ~VSICachedFile() override
     {
         VSICachedFile::Close();
@@ -100,6 +101,7 @@ class VSICachedFile final : public VSIVirtualHandle
     int Eof() override;
     int Flush() override;
     int Close() override;
+
     void *GetNativeFileDescriptor() override
     {
         return m_poBase->GetNativeFileDescriptor();
@@ -109,6 +111,7 @@ class VSICachedFile final : public VSIVirtualHandle
     {
         return m_poBase->HasPRead();
     }
+
     size_t PRead(void *pBuffer, size_t nSize,
                  vsi_l_offset nOffset) const override
     {

@@ -1974,6 +1974,7 @@ bool JP2OPJLikeDataset<CODEC, BASE>::WriteIPRBox(VSILFILE *fp,
     delete poBox;
     return bRet;
 }
+
 /************************************************************************/
 /*                         FloorPowerOfTwo()                            */
 /************************************************************************/

@@ -65,10 +65,12 @@ class HDF4SharedResources
     {
         return m_hSD;
     }
+
     const std::string &GetFilename() const
     {
         return m_osFilename;
     }
+
     const char *FetchOpenOption(const char *pszName,
                                 const char *pszDefault) const
     {
@@ -173,6 +175,7 @@ struct HDF4SwathsHandle
     explicit HDF4SwathsHandle(int32 handle) : m_handle(handle)
     {
     }
+
     ~HDF4SwathsHandle()
     {
         CPLMutexHolderD(&hHDF4Mutex);
@@ -194,6 +197,7 @@ struct HDF4SwathHandle
         : m_poSwathsHandle(poSwathsHandle), m_handle(handle)
     {
     }
+
     ~HDF4SwathHandle()
     {
         CPLMutexHolderD(&hHDF4Mutex);
@@ -393,6 +397,7 @@ struct HDF4GDsHandle
     explicit HDF4GDsHandle(int32 handle) : m_handle(handle)
     {
     }
+
     ~HDF4GDsHandle()
     {
         CPLMutexHolderD(&hHDF4Mutex);
@@ -414,6 +419,7 @@ struct HDF4GDHandle
         : m_poGDsHandle(poGDsHandle), m_handle(handle)
     {
     }
+
     ~HDF4GDHandle()
     {
         CPLMutexHolderD(&hHDF4Mutex);
@@ -466,6 +472,7 @@ class HDF4EOSGridGroup final : public GDALGroup
           m_poGDHandle(poGDHandle)
     {
     }
+
     std::vector<std::shared_ptr<GDALDimension>>
     GetDimensions(CSLConstList papszOptions = nullptr) const override;
 
@@ -652,6 +659,7 @@ class HDF4SDSGroup final : public GDALGroup
     {
         m_bIsGDALDataset = true;
     }
+
     void SetGlobalAttributes(
         const std::vector<std::shared_ptr<GDALAttribute>> &attrs)
     {
@@ -774,6 +782,7 @@ struct HDF4GRsHandle
         : m_hHandle(hHandle), m_grHandle(grHandle)
     {
     }
+
     ~HDF4GRsHandle()
     {
         CPLMutexHolderD(&hHDF4Mutex);
@@ -796,6 +805,7 @@ struct HDF4GRHandle
         : m_poGRsHandle(poGRsHandle), m_iGR(iGR)
     {
     }
+
     ~HDF4GRHandle()
     {
         CPLMutexHolderD(&hHDF4Mutex);

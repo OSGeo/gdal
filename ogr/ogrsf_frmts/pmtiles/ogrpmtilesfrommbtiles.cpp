@@ -376,6 +376,7 @@ bool OGRPMTilesConvertFromMBTiles(const char *pszDestName,
             VSIUnlink(m_osFilename.c_str());
         }
     };
+
     ResetAndUnlinkTmpFile oReseer(poTmpFile, osTmpFile);
 
     std::vector<pmtiles::entryv3> asPMTilesEntries;
@@ -467,6 +468,7 @@ bool OGRPMTilesConvertFromMBTiles(const char *pszDestName,
     const CPLCompressor *psCompressor = CPLGetCompressor("gzip");
     assert(psCompressor);
     std::string osCompressed;
+
     struct compression_exception : std::exception
     {
         const char *what() const noexcept override

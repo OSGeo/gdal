@@ -91,6 +91,7 @@ class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandlerBaseWritable
     explicit VSIWebHDFSFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
     {
     }
+
     ~VSIWebHDFSFSHandler() override = default;
 
     int Unlink(const char *pszFilename) override;
@@ -571,6 +572,7 @@ VSIWebHDFSFSHandler::GetURLFromFilename(const std::string &osFilename)
 {
     return osFilename.substr(GetFSPrefix().size());
 }
+
 /************************************************************************/
 /*                           GetFileList()                              */
 /************************************************************************/

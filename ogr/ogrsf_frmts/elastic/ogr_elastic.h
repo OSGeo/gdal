@@ -197,6 +197,7 @@ class OGRElasticLayer final : public OGRLayer
     {
         return m_poFeatureDefn->GetName();
     }
+
     virtual OGRFeatureDefn *GetLayerDefn() override;
     virtual const char *GetFIDColumn() override;
 
@@ -208,6 +209,7 @@ class OGRElasticLayer final : public OGRLayer
     {
         SetSpatialFilter(0, poGeom);
     }
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
     virtual OGRErr SetAttributeFilter(const char *pszFilter) override;
 
@@ -215,6 +217,7 @@ class OGRElasticLayer final : public OGRLayer
     {
         return GetExtent(0, psExtent, bForce);
     }
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce = TRUE) override;
 
@@ -229,6 +232,7 @@ class OGRElasticLayer final : public OGRLayer
     {
         return m_osIndexName;
     }
+
     const CPLString &GetMappingName() const
     {
         return m_osMappingName;
@@ -238,24 +242,29 @@ class OGRElasticLayer final : public OGRLayer
     {
         m_bIgnoreSourceID = bFlag;
     }
+
     void SetManualMapping()
     {
         m_bManualMapping = true;
     }
+
     void SetDotAsNestedField(bool bFlag)
     {
         m_bDotAsNestedField = bFlag;
     }
+
     void SetFID(const CPLString &m_osFIDIn)
     {
         m_osFID = m_osFIDIn;
     }
+
     void SetNextFID(GIntBig nNextFID)
     {
         m_nNextFID = nNextFID;
     }
 
     OGRElasticLayer *Clone();
+
     void SetOrderBy(const std::vector<OGRESSortDesc> &v)
     {
         m_aoSortColumns = v;
@@ -265,6 +274,7 @@ class OGRElasticLayer final : public OGRLayer
     {
         m_bFeatureDefnFinalized = true;
     }
+
     void GetGeomFieldProperties(int iGeomField, std::vector<CPLString> &aosPath,
                                 bool &bIsGeoPoint);
 
@@ -305,6 +315,7 @@ class OGRElasticAggregationLayer final
     {
         return m_poFeatureDefn;
     }
+
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRElasticAggregationLayer)
     GIntBig GetFeatureCount(int bForce) override;
@@ -396,6 +407,7 @@ class OGRElasticDataSource final : public GDALDataset
     json_object *RunRequest(
         const char *pszURL, const char *pszPostContent = nullptr,
         const std::vector<int> &anSilentedHTTPErrors = std::vector<int>());
+
     const CPLString &GetFID() const
     {
         return m_osFID;

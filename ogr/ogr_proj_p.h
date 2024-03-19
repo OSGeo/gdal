@@ -51,6 +51,7 @@ class OSRProjTLSCache
             proj_destroy(pj);
         }
     };
+
     typedef std::unique_ptr<PJ, OSRPJDeleter> UniquePtrPJ;
 
     struct EPSGCacheKey
@@ -72,6 +73,7 @@ class OSRProjTLSCache
                    bAddTOWGS84_ == other.bAddTOWGS84_;
         }
     };
+
     struct EPSGCacheKeyHasher
     {
         std::size_t operator()(const EPSGCacheKey &k) const

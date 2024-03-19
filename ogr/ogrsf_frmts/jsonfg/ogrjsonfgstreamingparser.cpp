@@ -38,6 +38,7 @@ static size_t OGRJSONFGStreamingParserGetMaxObjectSize()
         CPLAtof(CPLGetConfigOption("OGR_JSONFG_MAX_OBJ_SIZE", "200"));
     return dfTmp > 0 ? static_cast<size_t>(dfTmp * 1024 * 1024) : 0;
 }
+
 /************************************************************************/
 /*                     OGRJSONFGStreamingParser()                       */
 /************************************************************************/

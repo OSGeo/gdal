@@ -57,10 +57,12 @@ class NDFDataset final : public RawDataset
     ~NDFDataset() override;
 
     CPLErr GetGeoTransform(double *padfTransform) override;
+
     const OGRSpatialReference *GetSpatialRef() const override
     {
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
+
     char **GetFileList(void) override;
 
     static GDALDataset *Open(GDALOpenInfo *);

@@ -77,6 +77,7 @@ static unsigned g_projNetworkEnabledGenerationCounter = 0;
 
 #if !defined(_WIN32) && defined(HAVE_PTHREAD_ATFORK)
 static bool g_bForkOccurred = false;
+
 static void ForkOccurred(void)
 {
     g_bForkOccurred = true;
@@ -246,6 +247,7 @@ static OSRPJContextHolder &GetProjTLSContextHolder()
 }
 #else
 static thread_local OSRPJContextHolder g_tls_projContext;
+
 static OSRPJContextHolder &GetProjTLSContextHolder()
 {
     OSRPJContextHolder &l_projContext = g_tls_projContext;

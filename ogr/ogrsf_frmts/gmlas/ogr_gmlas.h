@@ -97,10 +97,12 @@ class GMLASResourceCache
     virtual ~GMLASResourceCache();
 
     void SetCacheDirectory(const std::string &osCacheDirectory);
+
     void SetRefreshMode(bool bRefresh)
     {
         m_bRefresh = bRefresh;
     }
+
     void SetAllowDownload(bool bVal)
     {
         m_bAllowDownload = bVal;
@@ -144,10 +146,12 @@ class GMLASBaseEntityResolver : public EntityResolver,
     virtual ~GMLASBaseEntityResolver();
 
     void SetBasePath(const CPLString &osBasePath);
+
     const CPLString &GetGMLVersionFound() const
     {
         return m_osGMLVersionFound;
     }
+
     const std::set<CPLString> &GetSchemaURLS() const
     {
         return m_oSetSchemaURLs;
@@ -157,6 +161,7 @@ class GMLASBaseEntityResolver : public EntityResolver,
     {
         m_bSubstituteWithOGCSchemaLocation = b;
     }
+
     bool GetFoundNonOfficialGMLSchemaLocation() const
     {
         return m_bFoundNonOfficialGMLSchemaLocation;
@@ -496,6 +501,7 @@ class GMLASXLinkResolver final : public GMLASResourceCache
     GMLASXLinkResolver();
 
     void SetConf(const GMLASXLinkResolutionConf &oConf);
+
     const GMLASXLinkResolutionConf &GetConf() const
     {
         return m_oConf;
@@ -690,63 +696,79 @@ class GMLASField
     {
         m_osName = osName;
     }
+
     void SetType(GMLASFieldType eType, const char *pszTypeName);
+
     void SetGeomType(OGRwkbGeometryType eGeomType)
     {
         m_eGeomType = eGeomType;
     }
+
     void SetWidth(int nWidth)
     {
         m_nWidth = nWidth;
     }
+
     void SetNotNullable(bool bNotNullable)
     {
         m_bNotNullable = bNotNullable;
     }
+
     void SetArray(bool bArray)
     {
         m_bArray = bArray;
     }
+
     void SetList(bool bList)
     {
         m_bList = bList;
     }
+
     void SetXPath(const CPLString &osXPath)
     {
         m_osXPath = osXPath;
     }
+
     void AddAlternateXPath(const CPLString &osXPath)
     {
         m_aosXPath.push_back(osXPath);
     }
+
     void SetFixedValue(const CPLString &osFixedValue)
     {
         m_osFixedValue = osFixedValue;
     }
+
     void SetDefaultValue(const CPLString &osDefaultValue)
     {
         m_osDefaultValue = osDefaultValue;
     }
+
     void SetCategory(Category eCategory)
     {
         m_eCategory = eCategory;
     }
+
     void SetMinOccurs(int nMinOccurs)
     {
         m_nMinOccurs = nMinOccurs;
     }
+
     void SetMaxOccurs(int nMaxOccurs)
     {
         m_nMaxOccurs = nMaxOccurs;
     }
+
     void SetRepetitionOnSequence(bool b)
     {
         m_bRepetitionOnSequence = b;
     }
+
     void SetIncludeThisEltInBlob(bool b)
     {
         m_bIncludeThisEltInBlob = b;
     }
+
     void SetAbstractElementXPath(const CPLString &osName)
     {
         m_osAbstractElementXPath = osName;
@@ -756,6 +778,7 @@ class GMLASField
     {
         m_osRelatedClassXPath = osName;
     }
+
     void SetJunctionLayer(const CPLString &osName)
     {
         m_osJunctionLayer = osName;
@@ -765,10 +788,12 @@ class GMLASField
     {
         m_bIgnored = true;
     }
+
     void SetDocumentation(const CPLString &osDoc)
     {
         m_osDoc = osDoc;
     }
+
     void SetMayAppearOutOfOrder(bool b)
     {
         m_bMayAppearOutOfOrder = b;
@@ -797,90 +822,112 @@ class GMLASField
     {
         return m_osName;
     }
+
     const CPLString &GetXPath() const
     {
         return m_osXPath;
     }
+
     const std::vector<CPLString> &GetAlternateXPaths() const
     {
         return m_aosXPath;
     }
+
     GMLASFieldType GetType() const
     {
         return m_eType;
     }
+
     OGRwkbGeometryType GetGeomType() const
     {
         return m_eGeomType;
     }
+
     const CPLString &GetTypeName() const
     {
         return m_osTypeName;
     }
+
     int GetWidth() const
     {
         return m_nWidth;
     }
+
     bool IsNotNullable() const
     {
         return m_bNotNullable;
     }
+
     bool IsArray() const
     {
         return m_bArray;
     }
+
     bool IsList() const
     {
         return m_bList;
     }
+
     const CPLString &GetFixedValue() const
     {
         return m_osFixedValue;
     }
+
     const CPLString &GetDefaultValue() const
     {
         return m_osDefaultValue;
     }
+
     Category GetCategory() const
     {
         return m_eCategory;
     }
+
     int GetMinOccurs() const
     {
         return m_nMinOccurs;
     }
+
     int GetMaxOccurs() const
     {
         return m_nMaxOccurs;
     }
+
     bool GetRepetitionOnSequence() const
     {
         return m_bRepetitionOnSequence;
     }
+
     bool GetIncludeThisEltInBlob() const
     {
         return m_bIncludeThisEltInBlob;
     }
+
     const CPLString &GetAbstractElementXPath() const
     {
         return m_osAbstractElementXPath;
     }
+
     const CPLString &GetJunctionLayer() const
     {
         return m_osJunctionLayer;
     }
+
     const CPLString &GetRelatedClassXPath() const
     {
         return m_osRelatedClassXPath;
     }
+
     bool IsIgnored() const
     {
         return m_bIgnored;
     }
+
     const CPLString &GetDocumentation() const
     {
         return m_osDoc;
     }
+
     bool MayAppearOutOfOrder() const
     {
         return m_bMayAppearOutOfOrder;
@@ -936,26 +983,32 @@ class GMLASFeatureClass
     void PrependFields(const std::vector<GMLASField> &aoFields);
     void AppendFields(const std::vector<GMLASField> &aoFields);
     void AddNestedClass(const GMLASFeatureClass &oNestedClass);
+
     void SetIsRepeatedSequence(bool bIsRepeatedSequence)
     {
         m_bIsRepeatedSequence = bIsRepeatedSequence;
     }
+
     void SetIsGroup(bool bIsGroup)
     {
         m_bIsGroup = bIsGroup;
     }
+
     void SetParentXPath(const CPLString &osXPath)
     {
         m_osParentXPath = osXPath;
     }
+
     void SetChildXPath(const CPLString &osXPath)
     {
         m_osChildXPath = osXPath;
     }
+
     void SetIsTopLevelElt(bool bIsTopLevelElt)
     {
         m_bIsTopLevelElt = bIsTopLevelElt;
     }
+
     void SetDocumentation(const CPLString &osDoc)
     {
         m_osDoc = osDoc;
@@ -965,46 +1018,57 @@ class GMLASFeatureClass
     {
         return m_osName;
     }
+
     const CPLString &GetXPath() const
     {
         return m_osXPath;
     }
+
     const std::vector<GMLASField> &GetFields() const
     {
         return m_aoFields;
     }
+
     std::vector<GMLASField> &GetFields()
     {
         return m_aoFields;
     }
+
     const std::vector<GMLASFeatureClass> &GetNestedClasses() const
     {
         return m_aoNestedClasses;
     }
+
     std::vector<GMLASFeatureClass> &GetNestedClasses()
     {
         return m_aoNestedClasses;
     }
+
     bool IsRepeatedSequence() const
     {
         return m_bIsRepeatedSequence;
     }
+
     bool IsGroup() const
     {
         return m_bIsGroup;
     }
+
     const CPLString &GetParentXPath() const
     {
         return m_osParentXPath;
     }
+
     const CPLString &GetChildXPath() const
     {
         return m_osChildXPath;
     }
+
     bool IsTopLevelElt() const
     {
         return m_bIsTopLevelElt;
     }
+
     const CPLString &GetDocumentation() const
     {
         return m_osDoc;
@@ -1175,34 +1239,42 @@ class GMLASSchemaAnalyzer
     {
         m_bUseArrays = b;
     }
+
     void SetUseNullState(bool b)
     {
         m_bUseNullState = b;
     }
+
     void SetInstantiateGMLFeaturesOnly(bool b)
     {
         m_bInstantiateGMLFeaturesOnly = b;
     }
+
     void SetIdentifierMaxLength(int nLength)
     {
         m_nIdentifierMaxLength = nLength;
     }
+
     void SetCaseInsensitiveIdentifier(bool b)
     {
         m_bCaseInsensitiveIdentifier = b;
     }
+
     void SetPGIdentifierLaundering(bool b)
     {
         m_bPGIdentifierLaundering = b;
     }
+
     void SetMaximumFieldsForFlattening(int n)
     {
         m_nMaximumFieldsForFlattening = n;
     }
+
     void SetMapDocNSURIToPrefix(const std::map<CPLString, CPLString> &oMap)
     {
         m_oMapDocNSURIToPrefix = oMap;
     }
+
     void SetAlwaysGenerateOGRId(bool b)
     {
         m_bAlwaysGenerateOGRId = b;
@@ -1211,6 +1283,7 @@ class GMLASSchemaAnalyzer
     bool Analyze(GMLASXSDCache &oCache, const CPLString &osBaseDirname,
                  std::vector<PairURIFilename> &aoXSDs, bool bSchemaFullChecking,
                  bool bHandleMultipleImports);
+
     const std::vector<GMLASFeatureClass> &GetClasses() const
     {
         return m_aoClasses;
@@ -1225,6 +1298,7 @@ class GMLASSchemaAnalyzer
     {
         return m_osGMLVersionFound;
     }
+
     const std::set<CPLString> &GetSchemaURLS() const
     {
         return m_oSetSchemaURLs;
@@ -1354,14 +1428,17 @@ class OGRGMLASDataSource final : public GDALDataset
     {
         return &m_apoLayers;
     }
+
     const std::map<CPLString, CPLString> &GetMapURIToPrefix() const
     {
         return m_oMapURIToPrefix;
     }
+
     const CPLString &GetGMLFilename() const
     {
         return m_osGMLFilename;
     }
+
     const CPLString &GetGMLVersionFound() const
     {
         return m_osGMLVersionFound;
@@ -1371,14 +1448,17 @@ class OGRGMLASDataSource final : public GDALDataset
     {
         return m_poFieldsMetadataLayer;
     }
+
     OGRLayer *GetLayersMetadataLayer()
     {
         return m_poLayersMetadataLayer;
     }
+
     OGRLayer *GetRelationshipsLayer()
     {
         return m_poRelationshipsLayer;
     }
+
     OGRGMLASLayer *GetLayerByXPath(const CPLString &osXPath);
 
     GMLASReader *CreateReader(VSILFILE *&fpGML,
@@ -1392,10 +1472,12 @@ class OGRGMLASDataSource final : public GDALDataset
 
     void PushUnusedGMLFilePointer(VSILFILE *fpGML);
     VSILFILE *PopUnusedGMLFilePointer();
+
     bool IsLayerInitFinished() const
     {
         return m_bLayerInitFinished;
     }
+
     GMLASSwapCoordinatesEnum GetSwapCoordinates() const
     {
         return m_eSwapCoordinates;
@@ -1405,6 +1487,7 @@ class OGRGMLASDataSource final : public GDALDataset
     {
         return m_oConf.m_oMapIgnoredXPathToWarn;
     }
+
     const GMLASXPathMatcher &GetIgnoredXPathMatcher() const
     {
         return m_oIgnoredXPathMatcher;
@@ -1414,6 +1497,7 @@ class OGRGMLASDataSource final : public GDALDataset
     {
         return m_oConf;
     }
+
     const std::vector<PairURIFilename> &GetXSDsManuallyPassed() const
     {
         return m_aoXSDsManuallyPassed;
@@ -1487,9 +1571,11 @@ class OGRGMLASLayer final : public OGRLayer
     {
         return GetDescription();
     }
+
     virtual OGRFeatureDefn *GetLayerDefn() override;
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
+
     virtual int TestCapability(const char *) override
     {
         return FALSE;
@@ -1517,24 +1603,30 @@ class OGRGMLASLayer final : public OGRLayer
     {
         return m_oFC;
     }
+
     int GetOGRFieldIndexFromXPath(const CPLString &osXPath) const;
     int GetOGRGeomFieldIndexFromXPath(const CPLString &osXPath) const;
+
     int GetIDFieldIdx() const
     {
         return m_nIDFieldIdx;
     }
+
     bool IsGeneratedIDField() const
     {
         return m_bIDFieldIsGenerated;
     }
+
     OGRGMLASLayer *GetParent()
     {
         return m_poParentLayer;
     }
+
     int GetParentIDFieldIdx() const
     {
         return m_nParentIDFieldIdx;
     }
+
     int GetFCFieldIndexFromOGRFieldIdx(int iOGRFieldIdx) const;
     int GetFCFieldIndexFromOGRGeomFieldIdx(int iOGRGeomFieldIdx) const;
     int GetFCFieldIndexFromXPath(const CPLString &osXPath) const;
@@ -1874,6 +1966,7 @@ class GMLASReader final : public DefaultHandler
     {
         return m_oMapSRSNameToInvertedAxis;
     }
+
     void SetMapSRSNameToInvertedAxis(const std::map<CPLString, bool> &oMap)
     {
         m_oMapSRSNameToInvertedAxis = oMap;
@@ -1884,6 +1977,7 @@ class GMLASReader final : public DefaultHandler
     {
         return m_oMapGeomFieldDefnToSRSName;
     }
+
     void SetMapGeomFieldDefnToSRSName(
         const std::map<OGRGeomFieldDefn *, CPLString> &oMap)
     {
@@ -1894,6 +1988,7 @@ class GMLASReader final : public DefaultHandler
     {
         return m_oMapElementIdToLayer;
     }
+
     void
     SetMapElementIdToLayer(const std::map<CPLString, OGRGMLASLayer *> &oMap)
     {
@@ -1904,6 +1999,7 @@ class GMLASReader final : public DefaultHandler
     {
         return m_oMapElementIdToPKID;
     }
+
     void SetMapElementIdToPKID(const std::map<CPLString, CPLString> &oMap)
     {
         m_oMapElementIdToPKID = oMap;
@@ -1913,6 +2009,7 @@ class GMLASReader final : public DefaultHandler
     {
         return m_nDefaultSrsDimension;
     }
+
     void SetDefaultSrsDimension(int nDim)
     {
         m_nDefaultSrsDimension = nDim;
@@ -1959,10 +2056,12 @@ class GMLASReader final : public DefaultHandler
                                 bool bHandleMultipleImports);
 
     void SetSWEDataArrayLayers(const std::vector<OGRGMLASLayer *> &ar);
+
     void SetProcessDataRecord(bool b)
     {
         m_bProcessSWEDataRecord = b;
     }
+
     const std::vector<OGRGMLASLayer *> &GetSWEDataArrayLayers() const
     {
         return m_apoSWEDataArrayLayers;

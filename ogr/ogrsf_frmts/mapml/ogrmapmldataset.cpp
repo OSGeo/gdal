@@ -70,6 +70,7 @@ class OGRMapMLReaderDataset final : public GDALPamDataset
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     OGRLayer *GetLayer(int idx) override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
@@ -103,6 +104,7 @@ class OGRMapMLReaderLayer final
     {
         return m_poFeatureDefn;
     }
+
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRMapMLReaderLayer)
     int TestCapability(const char *pszCap) override;
@@ -139,6 +141,7 @@ class OGRMapMLWriterDataset final : public GDALPamDataset
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     OGRLayer *GetLayer(int idx) override;
 
     OGRLayer *ICreateLayer(const char *pszName,
@@ -180,13 +183,16 @@ class OGRMapMLWriterLayer final : public OGRLayer
     {
         return m_poFeatureDefn;
     }
+
     void ResetReading() override
     {
     }
+
     OGRFeature *GetNextFeature() override
     {
         return nullptr;
     }
+
     OGRErr CreateField(const OGRFieldDefn *poFieldDefn, int) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     int TestCapability(const char *) override;

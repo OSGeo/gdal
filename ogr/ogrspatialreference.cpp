@@ -83,6 +83,7 @@ struct OGRSpatialReference::Private
         explicit Listener(OGRSpatialReference::Private *poObj) : m_poObj(poObj)
         {
         }
+
         Listener(const Listener &) = delete;
         Listener &operator=(const Listener &) = delete;
 
@@ -2034,6 +2035,7 @@ OGRErr OGRSpatialReference::importFromWkt(const char **ppszInput,
     }
 #endif
 }
+
 /*! @endcond */
 
 /**

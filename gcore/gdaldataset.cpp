@@ -263,6 +263,7 @@ GDALDataset::GDALDataset(int bForceCachedIOIn)
       m_poPrivate(new(std::nothrow) GDALDataset::Private)
 {
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -770,6 +771,7 @@ void GDALDataset::RasterInitialize(int nXSize, int nYSize)
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -893,6 +895,7 @@ void GDALDataset::SetBand(int nNewBand, GDALRasterBand *poBand)
     poBand->nRasterYSize = nRasterYSize;
     poBand->eAccess = eAccess;  // Default access to be same as dataset.
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -911,6 +914,7 @@ void GDALDataset::SetBand(int nNewBand, std::unique_ptr<GDALRasterBand> poBand)
 {
     SetBand(nNewBand, poBand.release());
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2197,6 +2201,7 @@ CPLErr GDALDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
         return CE_Failure;
     }
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2385,6 +2390,7 @@ CPLErr GDALDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              panBandMap, nPixelSpace, nLineSpace, nBandSpace,
                              psExtraArg);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2448,6 +2454,7 @@ CPLErr GDALDataset::BandBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     return eErr;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2525,6 +2532,7 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
 
     return eErr;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2851,6 +2859,7 @@ CPLErr CPL_STDCALL GDALDatasetRasterIOEx(
                           panBandMap, nPixelSpace, nLineSpace, nBandSpace,
                           psExtraArg);
 }
+
 /************************************************************************/
 /*                          GetOpenDatasets()                           */
 /************************************************************************/
@@ -3124,6 +3133,7 @@ static GDALAntiRecursionStruct &GetAntiRecursionOpen()
 }
 #else
 static thread_local GDALAntiRecursionStruct g_tls_antiRecursion;
+
 static GDALAntiRecursionStruct &GetAntiRecursionOpen()
 {
     return g_tls_antiRecursion;
@@ -3158,6 +3168,7 @@ GDALAntiRecursionGuard::~GDALAntiRecursionGuard()
         --m_psAntiRecursionStruct->m_oMapDepth[m_osIdentifier];
     }
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -5050,6 +5061,7 @@ OGRLayer *GDALDataset::CreateLayer(const char *pszName, std::nullptr_t)
     OGRGeomFieldDefn oGeomFieldDefn("", wkbUnknown);
     return CreateLayer(pszName, &oGeomFieldDefn, nullptr);
 }
+
 //!@endcond
 
 /************************************************************************/
@@ -5441,6 +5453,7 @@ int GDALDataset::ValidateLayerCreationOptions(const char *const *papszLCO)
     return GDALValidateOptions(pszOptionList, papszLCO, "layer creation option",
                                osDataset);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -6226,6 +6239,7 @@ OGRErr GDALDataset::ProcessSQLDropTable(const char *pszSQLCommand)
 
     return DeleteLayer(i);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -6665,6 +6679,7 @@ OGRErr GDALDataset::ProcessSQLAlterTableAlterColumn(const char *pszSQLCommand)
 
     return poLayer->AlterFieldDefn(nFieldIndex, &oNewFieldDefn, l_nFlags);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -6910,6 +6925,7 @@ GDALDataset::ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
 
     return new OGRUnionLayer("SELECT", nSrcLayers, papoSrcLayers, TRUE);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -7273,6 +7289,7 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
 
     return psParseInfo;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -7383,6 +7400,7 @@ int GDALDataset::IsGenericSQLDialect(const char *pszDialect)
     return pszDialect != nullptr &&
            (EQUAL(pszDialect, "OGRSQL") || EQUAL(pszDialect, "SQLITE"));
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -8352,6 +8370,7 @@ void GDALDataset::ReleaseMutex()
         CPLReleaseMutex(m_poPrivate->hMutex);
     }
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -8905,6 +8924,7 @@ bool GDALDataset::GetRawBinaryLayout(RawBinaryLayout &sLayout)
     CPL_IGNORE_RET_VAL(sLayout);
     return false;
 }
+
 //! @endcond
 
 /************************************************************************/

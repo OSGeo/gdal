@@ -131,10 +131,12 @@ class NTFRecord
     {
         return nType;
     }
+
     int GetLength()
     {
         return nLength;
     }
+
     const char *GetData()
     {
         return pszData;
@@ -298,10 +300,12 @@ class NTFFileReader
 
     int Open(const char *pszFilename = nullptr);
     void Close();
+
     VSILFILE *GetFP()
     {
         return fp;
     }
+
     void GetFPPos(vsi_l_offset *pnPos, long *pnFeatureId);
     int SetFPPos(vsi_l_offset nPos, long nFeatureId);
     void Reset();
@@ -335,50 +339,62 @@ class NTFFileReader
     {
         return nCoordWidth;
     }
+
     double GetXYMult()
     {
         return dfXYMult;
     }
+
     double GetXOrigin()
     {
         return dfXOrigin;
     }
+
     double GetYOrigin()
     {
         return dfYOrigin;
     }
+
     double GetZMult()
     {
         return dfZMult;
     }
+
     const char *GetTileName()
     {
         return pszTileName;
     }
+
     const char *GetFilename()
     {
         return pszFilename;
     }
+
     int GetNTFLevel()
     {
         return nNTFLevel;
     }
+
     const char *GetProduct()
     {
         return pszProduct;
     }
+
     const char *GetPVName()
     {
         return pszPVName;
     }
+
     int GetProductId()
     {
         return nProduct;
     }
+
     double GetScale()
     {
         return dfScale;
     }
+
     double GetPaperToGround()
     {
         return dfPaperToGround;
@@ -388,6 +404,7 @@ class NTFFileReader
     {
         return nFCCount;
     }
+
     int GetFeatureClass(int, char **, char **);
 
     void OverrideTileName(const char *);
@@ -413,22 +430,27 @@ class NTFFileReader
 
     // Raster related
     int IsRasterProduct();
+
     int GetRasterXSize()
     {
         return nRasterXSize;
     }
+
     int GetRasterYSize()
     {
         return nRasterYSize;
     }
+
     int GetRasterDataType()
     {
         return nRasterDataType;
     }
+
     double *GetGeoTransform()
     {
         return adfGeoTransform;
     }
+
     CPLErr ReadRasterColumn(int, float *);
 };
 
@@ -498,7 +520,9 @@ class OGRNTFFeatureClassLayer final : public OGRLayer
     {
         return poFilterGeom;
     }
+
     void SetSpatialFilter(OGRGeometry *) override;
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
@@ -546,7 +570,9 @@ class OGRNTFRasterLayer final : public OGRLayer
     {
         return poFilterGeom;
     }
+
     void SetSpatialFilter(OGRGeometry *) override;
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
@@ -616,6 +642,7 @@ class OGRNTFDataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     int GetLayerCount() override;
     OGRLayer *GetLayer(int) override;
     int TestCapability(const char *) override;
@@ -638,6 +665,7 @@ class OGRNTFDataSource final : public OGRDataSource
     {
         return nNTFFileCount;
     }
+
     NTFFileReader *GetFileReader(int i)
     {
         return papoNTFFileReader[i];
@@ -647,6 +675,7 @@ class OGRNTFDataSource final : public OGRDataSource
     {
         return nFCCount;
     }
+
     int GetFeatureClass(int, char **, char **);
 
     OGRSpatialReference *DSGetSpatialRef()
@@ -658,6 +687,7 @@ class OGRNTFDataSource final : public OGRDataSource
     {
         return aoGenericClass + i;
     }
+
     void WorkupGeneric(NTFFileReader *);
     void EstablishGenericLayers();
 };

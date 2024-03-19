@@ -94,18 +94,22 @@ class VSIOSSHandleHelper final : public IVSIS3LikeHandleHelper
     {
         return m_osURL;
     }
+
     const std::string &GetBucket() const
     {
         return m_osBucket;
     }
+
     const std::string &GetObjectKey() const
     {
         return m_osObjectKey;
     }
+
     const std::string &GetEndpoint() const
     {
         return m_osEndpoint;
     }
+
     bool GetVirtualHosting() const
     {
         return m_bUseVirtualHosting;

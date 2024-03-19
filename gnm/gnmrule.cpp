@@ -180,4 +180,5 @@ bool GNMRule::ParseRuleString()
 
     return true;
 }
+
 /*! @endcond */

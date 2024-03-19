@@ -255,6 +255,7 @@ class netCDFRasterBand final : public GDALPamRasterBand
     struct CONSTRUCTOR_OPEN
     {
     };
+
     struct CONSTRUCTOR_CREATE
     {
     };

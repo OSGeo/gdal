@@ -55,6 +55,7 @@ class CALSDataset final : public GDALPamDataset
     CALSDataset() : poUnderlyingDS(nullptr)
     {
     }
+
     ~CALSDataset();
 
     static int Identify(GDALOpenInfo *poOpenInfo);

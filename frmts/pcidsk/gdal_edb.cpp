@@ -59,6 +59,7 @@ class GDAL_EDBFile final : public EDBFile
     {
         poDS = poDSIn;
     }
+
     ~GDAL_EDBFile()
     {
         if (poDS)

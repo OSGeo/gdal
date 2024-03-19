@@ -277,6 +277,7 @@ class GDALGridGeometryVisitor final : public OGRDefaultConstGeometryVisitor
     std::vector<double> adfZ{};
 
     using OGRDefaultConstGeometryVisitor::visit;
+
     void visit(const OGRPoint *p) override
     {
         if (poClipSrc && !p->Within(poClipSrc))

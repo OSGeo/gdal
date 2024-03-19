@@ -403,4 +403,5 @@ OGRSFDriverH OGRGetDriverByName(const char *pszName)
     return reinterpret_cast<OGRSFDriverH>(
         OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName(pszName));
 }
+
 //! @endcond

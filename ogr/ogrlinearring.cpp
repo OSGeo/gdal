@@ -422,6 +422,7 @@ size_t OGRLinearRing::_WkbSize(int _flags) const
     else
         return 4 + 16 * static_cast<size_t>(nPointCount);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -723,4 +724,5 @@ OGRCurveCasterToLinearRing OGRLinearRing::GetCasterToLinearRing() const
 {
     return ::CasterToLinearRing;
 }
+
 //! @endcond

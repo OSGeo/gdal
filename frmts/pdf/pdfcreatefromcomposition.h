@@ -43,12 +43,14 @@
 class GDALPDFComposerWriter final : public GDALPDFBaseWriter
 {
     CPLString m_osJPEG2000Driver{};
+
     struct TreeOfOCG
     {
         GDALPDFObjectNum m_nNum{};
         bool m_bInitiallyVisible{true};
         std::vector<std::unique_ptr<TreeOfOCG>> m_children{};
     };
+
     bool m_bDisplayLayersOnlyOnVisiblePages = false;
     TreeOfOCG m_oTreeOfOGC{};
     std::map<CPLString, std::vector<GDALPDFObjectNum>>
@@ -60,6 +62,7 @@ class GDALPDFComposerWriter final : public GDALPDFBaseWriter
     {
         double x = 0;
         double y = 0;
+
         explicit xyPair(double xin = 0.0, double yin = 0.0) : x(xin), y(yin)
         {
         }
@@ -79,6 +82,7 @@ class GDALPDFComposerWriter final : public GDALPDFBaseWriter
     std::vector<GDALPDFObjectNum> m_anParentElements;
     std::vector<GDALPDFObjectNum> m_anFeatureLayerId;
     std::map<CPLString, GDALPDFObjectNum> m_oMapPageIdToObjectNum;
+
     struct PageContext
     {
         double m_dfWidthInUserUnit = 0;
@@ -138,6 +142,7 @@ class GDALPDFComposerWriter final : public GDALPDFBaseWriter
         std::vector<std::unique_ptr<OutlineItem>> m_aoKids{};
         int m_nKidsRecCount = 0;
     };
+
     GDALPDFObjectNum m_nOutlinesId{};
 
     bool CreateOutlineFirstPass(const CPLXMLNode *psNode,

@@ -43,6 +43,7 @@ static int BSBReadHeaderLine(BSBInfo *psInfo, char *pszLine, int nLineMaxLen,
                              int bNO1);
 static int BSBSeekAndCheckScanlineNumber(BSBInfo *psInfo, unsigned nScanline,
                                          int bVerboseIfError);
+
 /************************************************************************
 
 Background:

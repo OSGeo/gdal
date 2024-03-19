@@ -268,6 +268,7 @@ class OGRNGWDataset final : public GDALDataset
     {
         return nLayers;
     }
+
     virtual OGRLayer *GetLayer(int) override;
     virtual int TestCapability(const char *) override;
     virtual OGRLayer *ICreateLayer(const char *pszName,
@@ -295,14 +296,17 @@ class OGRNGWDataset final : public GDALDataset
 
   private:
     char **GetHeaders() const;
+
     std::string GetUrl() const
     {
         return osUrl;
     }
+
     std::string GetResourceId() const
     {
         return osResourceId;
     }
+
     void FillMetadata(const CPLJSONObject &oRootObject);
     bool FillResources(char **papszOptions, int nOpenFlagsIn);
     void AddLayer(const CPLJSONObject &oResourceJsonObject, char **papszOptions,
@@ -311,30 +315,37 @@ class OGRNGWDataset final : public GDALDataset
                    char **papszOptions);
     bool Init(int nOpenFlagsIn);
     bool FlushMetadata(char **papszMetadata);
+
     inline bool IsUpdateMode() const
     {
         return eAccess == GA_Update;
     }
+
     bool IsBatchMode() const
     {
         return nBatchSize >= 0;
     }
+
     bool HasFeaturePaging() const
     {
         return bHasFeaturePaging;
     }
+
     int GetPageSize() const
     {
         return bHasFeaturePaging ? nPageSize : -1;
     }
+
     int GetBatchSize() const
     {
         return nBatchSize;
     }
+
     bool IsExtInNativeData() const
     {
         return bExtInNativeData;
     }
+
     void FetchPermissions();
     void FillCapabilities(char **papszOptions);
 

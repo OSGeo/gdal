@@ -57,6 +57,7 @@ class MyRasterBand : public GDALRasterBand
         CPLAssert(FALSE);
         return CE_Failure;
     }
+
     CPLErr IWriteBlock(int nXBlock, int nYBlock, void *) CPL_OVERRIDE
     {
         printf("Entering IWriteBlock(%d, %d)\n", nXBlock, nYBlock);

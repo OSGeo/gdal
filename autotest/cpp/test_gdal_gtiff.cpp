@@ -49,11 +49,13 @@ struct test_gdal_gtiff : public ::testing::Test
         std::string file_;
         int band_;
         int checksum_;
+
         raster_t(std::string const &f, int b, int c)
             : file_(f), band_(b), checksum_(c)
         {
         }
     };
+
     typedef std::vector<raster_t> rasters_t;
 
     GDALDriverH drv_;

@@ -220,22 +220,27 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
     {
         return nImgOffset;
     }
+
     int GetPixelOffset() const
     {
         return nPixelOffset;
     }
+
     int GetLineOffset() const
     {
         return nLineOffset;
     }
+
     ByteOrder GetByteOrder() const
     {
         return eByteOrder;
     }
+
     VSILFILE *GetFPL() const
     {
         return fpRawL;
     }
+
     int GetOwnsFP() const
     {
         return bOwnsFP;

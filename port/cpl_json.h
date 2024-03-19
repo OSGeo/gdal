@@ -47,6 +47,7 @@ typedef void *JSONObjectH;
 CPL_C_START
 
 class CPLJSONArray;
+
 /*! @endcond */
 
 /**
@@ -138,6 +139,7 @@ class CPL_DLL CPLJSONObject
     {
         return m_poJsonObject;
     }
+
     /*! @endcond */
 
     // getters
@@ -162,11 +164,13 @@ class CPL_DLL CPLJSONObject
     CPLJSONObject GetObj(const std::string &osName) const;
     CPLJSONObject operator[](const std::string &osName) const;
     Type GetType() const;
+
     /*! @cond Doxygen_Suppress */
     std::string GetName() const
     {
         return m_osKey;
     }
+
     /*! @endcond */
 
     std::vector<CPLJSONObject> GetChildren() const;
@@ -212,21 +216,26 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
             : m_oSelf(oSelf), m_nIdx(bStart ? 0 : oSelf.Size())
         {
         }
+
         ~ConstIterator() = default;
+
         CPLJSONObject &operator*() const
         {
             m_oObj = m_oSelf[m_nIdx];
             return m_oObj;
         }
+
         ConstIterator &operator++()
         {
             m_nIdx++;
             return *this;
         }
+
         bool operator==(const ConstIterator &it) const
         {
             return m_nIdx == it.m_nIdx;
         }
+
         bool operator!=(const ConstIterator &it) const
         {
             return m_nIdx != it.m_nIdx;
@@ -253,6 +262,7 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
     {
         return ConstIterator(*this, true);
     }
+
     /** Iterator to after last element */
     ConstIterator end() const
     {

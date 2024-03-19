@@ -477,6 +477,7 @@ void OGRCoordinateTransformationOptions::SetSourceCenterLong(
     d->dfSourceCenterLong = dfCenterLong;
     d->bHasSourceCenterLong = true;
 }
+
 /*! @endcond */
 
 /************************************************************************/
@@ -490,6 +491,7 @@ void OGRCoordinateTransformationOptions::SetTargetCenterLong(
     d->dfTargetCenterLong = dfCenterLong;
     d->bHasTargetCenterLong = true;
 }
+
 /*! @endcond */
 
 /************************************************************************/
@@ -660,6 +662,7 @@ class OGRProjCT : public OGRCoordinateTransformation
     class PjPtr
     {
         PJ *m_pj = nullptr;
+
         void reset()
         {
             if (m_pj)
@@ -673,23 +676,28 @@ class OGRProjCT : public OGRCoordinateTransformation
         PjPtr() : m_pj(nullptr)
         {
         }
+
         explicit PjPtr(PJ *pjIn) : m_pj(pjIn)
         {
         }
+
         ~PjPtr()
         {
             reset();
         }
+
         PjPtr(const PjPtr &other)
             : m_pj((other.m_pj != nullptr)
                        ? (proj_clone(OSRGetProjTLSContext(), other.m_pj))
                        : (nullptr))
         {
         }
+
         PjPtr(PjPtr &&other) : m_pj(other.m_pj)
         {
             other.m_pj = nullptr;
         }
+
         PjPtr &operator=(const PjPtr &other)
         {
             if (this != &other)
@@ -701,6 +709,7 @@ class OGRProjCT : public OGRCoordinateTransformation
             }
             return *this;
         }
+
         PjPtr &operator=(PJ *pjIn)
         {
             if (m_pj != pjIn)
@@ -710,10 +719,12 @@ class OGRProjCT : public OGRCoordinateTransformation
             }
             return *this;
         }
+
         operator PJ *()
         {
             return m_pj;
         }
+
         operator const PJ *() const
         {
             return m_pj;
@@ -762,6 +773,7 @@ class OGRProjCT : public OGRCoordinateTransformation
     bool
     ListCoordinateOperations(const char *pszSrcSRS, const char *pszTargetSRS,
                              const OGRCoordinateTransformationOptions &options);
+
     struct Transformation
     {
         double minx = 0.0;
@@ -782,6 +794,7 @@ class OGRProjCT : public OGRCoordinateTransformation
         {
         }
     };
+
     std::vector<Transformation> m_oTransformations{};
     int m_iCurTransformation = -1;
     OGRCoordinateTransformationOptions m_options{};
@@ -830,6 +843,7 @@ class OGRProjCT : public OGRCoordinateTransformation
     {
         return m_bEmitErrors;
     }
+
     void SetEmitErrors(bool bEmitErrors) override
     {
         m_bEmitErrors = bEmitErrors;
@@ -846,6 +860,7 @@ class OGRProjCT : public OGRCoordinateTransformation
                   const OGRSpatialReference *poTarget, const char *pszTargetSRS,
                   const OGRCoordinateTransformationOptions &options);
 };
+
 //! @endcond
 
 /************************************************************************/

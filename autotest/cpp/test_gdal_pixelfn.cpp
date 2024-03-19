@@ -163,6 +163,7 @@ const char pszFuncMetadata[] =
 struct test_gdal_pixelfn : public ::testing::Test
 {
     std::string src_;
+
     test_gdal_pixelfn()
     {
         src_ = tut::common::data_basedir;

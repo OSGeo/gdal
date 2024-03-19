@@ -33,6 +33,7 @@ class DerivedDataset final : public VRTDataset
 {
   public:
     DerivedDataset(int nXSize, int nYSize);
+
     ~DerivedDataset()
     {
     }

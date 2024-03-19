@@ -386,6 +386,7 @@ void OGRFeature::SetFDefnUnsafe(OGRFeatureDefn *poNewFDefn)
     poDefn->Release();
     poDefn = poNewFDefn;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -6846,6 +6847,7 @@ OGRErr OGRFeature::RemapGeomFields(OGRFeatureDefn *poNewDefn,
 
     return OGRERR_NONE;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -7473,6 +7475,7 @@ void OGRFeatureUniquePtrDeleter::operator()(OGRFeature *poFeature) const
 {
     delete poFeature;
 }
+
 //! @endcond
 
 namespace
@@ -8228,6 +8231,7 @@ struct OGRFeature::FieldValue::Private
         : m_poSelf(const_cast<OGRFeature *>(poSelf)), m_nPos(iFieldIndex)
     {
     }
+
     Private(OGRFeature *poSelf, int iFieldIndex)
         : m_poSelf(poSelf), m_nPos(iFieldIndex)
     {
@@ -8274,6 +8278,7 @@ bool OGRFeature::ConstFieldIterator::operator!=(
 {
     return m_poPrivate->m_nPos != it.m_poPrivate->m_nPos;
 }
+
 //! @endcond
 
 OGRFeature::ConstFieldIterator OGRFeature::begin() const
@@ -8373,6 +8378,7 @@ OGRFeature::FieldValue &OGRFeature::FieldValue::operator=(FieldValue &&oOther)
 {
     return Assign(oOther);
 }
+
 //! @endcond
 
 OGRFeature::FieldValue &OGRFeature::FieldValue::operator=(int nVal)

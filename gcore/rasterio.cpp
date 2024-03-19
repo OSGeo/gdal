@@ -1956,6 +1956,7 @@ CPLErr GDALDataset::RasterIOResampled(GDALRWFlag /* eRWFlag */, int nXOff,
 
     return eErr;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -4288,6 +4289,7 @@ CleanupAndReturn:
 
     return eErr;
 }
+
 //! @endcond
 
 /************************************************************************/

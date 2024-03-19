@@ -219,6 +219,7 @@ class VSILibArchiveReader final : public VSIArchiveReader
           m_osPrefix(osPrefix)
     {
     }
+
     ~VSILibArchiveReader() override;
 
     struct archive *GetArchiveHandler()
@@ -231,18 +232,22 @@ class VSILibArchiveReader final : public VSIArchiveReader
     virtual int GotoFirstFile() override;
     virtual int GotoNextFile() override;
     virtual VSIArchiveEntryFileOffset *GetFileOffset() override;
+
     virtual GUIntBig GetFileSize() override
     {
         return m_nFilesize;
     }
+
     virtual CPLString GetFileName() override
     {
         return m_osFilename;
     }
+
     virtual GIntBig GetModifiedTime() override
     {
         return m_nMTime;
     }
+
     virtual int GotoFileOffset(VSIArchiveEntryFileOffset *pOffset) override;
 
     int GotoFileOffsetForced(VSIArchiveEntryFileOffset *pOffset);
@@ -308,6 +313,7 @@ int VSILibArchiveReader::GotoNextFile()
 struct VSILibArchiveEntryFileOffset : public VSIArchiveEntryFileOffset
 {
     const std::string m_osFilename;
+
     VSILibArchiveEntryFileOffset(const std::string &osFilename)
         : m_osFilename(osFilename)
     {
@@ -377,18 +383,22 @@ class VSILibArchiveHandler final : public VSIVirtualHandle
 
     virtual size_t Read(void *pBuffer, size_t nSize, size_t nCount) override;
     virtual int Seek(vsi_l_offset nOffset, int nWhence) override;
+
     virtual vsi_l_offset Tell() override
     {
         return m_nOffset;
     }
+
     virtual size_t Write(const void *, size_t, size_t) override
     {
         return 0;
     }
+
     virtual int Eof() override
     {
         return m_bEOF ? 1 : 0;
     }
+
     virtual int Close() override
     {
         return 0;
@@ -475,10 +485,12 @@ class VSILibArchiveFilesystemHandler final : public VSIArchiveFilesystemHandler
     CPL_DISALLOW_COPY_ASSIGN(VSILibArchiveFilesystemHandler)
 
     const std::string m_osPrefix;
+
     virtual const char *GetPrefix() override
     {
         return m_osPrefix.c_str();
     }
+
     virtual std::vector<CPLString> GetExtensions() override
     {
         if (m_osPrefix == "/vsi7z")
@@ -490,6 +502,7 @@ class VSILibArchiveFilesystemHandler final : public VSIArchiveFilesystemHandler
             return {".rar"};
         }
     }
+
     virtual VSIArchiveReader *
     CreateReader(const char *pszArchiveFileName) override;
 

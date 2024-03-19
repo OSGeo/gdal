@@ -522,6 +522,7 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
 
     return nullptr;
 }
+
 /************************************************************************/
 /*                      sort comparison functions.                      */
 /************************************************************************/

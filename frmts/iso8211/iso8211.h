@@ -108,6 +108,7 @@ class CPL_ODLL DDFModule
     {
         return nFieldDefnCount;
     }
+
     DDFFieldDefn *GetField(int);
     void AddField(DDFFieldDefn *poNewFDefn);
 
@@ -116,6 +117,7 @@ class CPL_ODLL DDFModule
     {
         return _fieldControlLength;
     }
+
     void AddCloneRecord(DDFRecord *);
     void RemoveCloneRecord(DDFRecord *);
 
@@ -124,6 +126,7 @@ class CPL_ODLL DDFModule
     {
         return fpDDF;
     }
+
     int GetSizeFieldTag() const
     {
         return (int)_sizeFieldTag;
@@ -134,34 +137,42 @@ class CPL_ODLL DDFModule
     {
         return _sizeFieldPos;
     }
+
     int GetSizeFieldLength() const
     {
         return _sizeFieldLength;
     }
+
     char GetInterchangeLevel() const
     {
         return _interchangeLevel;
     }
+
     char GetLeaderIden() const
     {
         return _leaderIden;
     }
+
     char GetCodeExtensionIndicator() const
     {
         return _inlineCodeExtensionIndicator;
     }
+
     char GetVersionNumber() const
     {
         return _versionNumber;
     }
+
     char GetAppIndicator() const
     {
         return _appIndicator;
     }
+
     const char *GetExtendedCharSet() const
     {
         return _extendedCharSet;
     }
+
     void SetFieldControlLength(int nVal)
     {
         _fieldControlLength = nVal;
@@ -208,6 +219,7 @@ typedef enum
     dsc_array,
     dsc_concatenated
 } DDF_data_struct_code;
+
 typedef enum
 {
     dtc_char_string,
@@ -307,14 +319,17 @@ class CPL_ODLL DDFFieldDefn
     {
         return _arrayDescr;
     }
+
     const char *GetFormatControls() const
     {
         return _formatControls;
     }
+
     DDF_data_struct_code GetDataStructCode() const
     {
         return _data_struct_code;
     }
+
     DDF_data_type_code GetDataTypeCode() const
     {
         return _data_type_code;
@@ -379,6 +394,7 @@ class CPL_ODLL DDFSubfieldDefn
     {
         return pszFormatString;
     }
+
     int SetFormat(const char *pszFormat);
 
     /**
@@ -558,27 +574,33 @@ class CPL_ODLL DDFRecord
     {
         return nReuseHeader;
     }
+
     int GetSizeFieldTag() const
     {
         return _sizeFieldTag;
     }
+
     int GetSizeFieldPos() const
     {
         return _sizeFieldPos;
     }
+
     int GetSizeFieldLength() const
     {
         return _sizeFieldLength;
     }
+
     // void        SetReuseHeader(int bFlag) { nReuseHeader = bFlag; }
     void SetSizeFieldTag(int nVal)
     {
         _sizeFieldTag = nVal;
     }
+
     void SetSizeFieldPos(int nVal)
     {
         _sizeFieldPos = nVal;
     }
+
     void SetSizeFieldLength(int nVal)
     {
         _sizeFieldLength = nVal;
@@ -588,6 +610,7 @@ class CPL_ODLL DDFRecord
     int Read();
     void Clear();
     void ResetDirectory();
+
     void RemoveIsCloneFlag()
     {
         bIsClone = FALSE;

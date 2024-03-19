@@ -88,6 +88,7 @@ struct JP2DatasetBase
             nThreads = 1;
         return nThreads;
     }
+
     std::string m_osFilename;
     VSILFILE *fp_ = nullptr; /* Large FILE API */
     vsi_l_offset nCodeStreamStart = 0;

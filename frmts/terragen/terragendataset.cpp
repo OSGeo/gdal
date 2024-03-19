@@ -180,10 +180,12 @@ class TerragenDataset final : public GDALPamDataset
     bool get(float &);
     bool put(GInt16);
     bool put(float);
+
     bool skip(size_t n)
     {
         return 0 == VSIFSeekL(m_fp, n, SEEK_CUR);
     }
+
     bool pad(size_t n)
     {
         return skip(n);
@@ -211,6 +213,7 @@ class TerragenRasterBand final : public GDALPamRasterBand
 
   public:
     explicit TerragenRasterBand(TerragenDataset *);
+
     virtual ~TerragenRasterBand()
     {
         if (m_pvLine != nullptr)

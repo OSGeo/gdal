@@ -206,6 +206,7 @@ class IODSCellEvaluator
   public:
     virtual int EvaluateRange(int nRow1, int nCol1, int nRow2, int nCol2,
                               std::vector<ods_formula_node> &aoOutValues) = 0;
+
     virtual ~IODSCellEvaluator()
     {
     }

@@ -42,6 +42,7 @@
 #include <vector>
 
 class OGRPLScenesDataV1Layer;
+
 class OGRPLScenesDataV1Dataset final : public GDALDataset
 {
     bool m_bLayerListInitialized;
@@ -81,10 +82,12 @@ class OGRPLScenesDataV1Dataset final : public GDALDataset
     {
         return m_bFollowLinks;
     }
+
     const CPLString &GetFilter() const
     {
         return m_osFilter;
     }
+
     const CPLString &GetBaseURL() const
     {
         return m_osBaseURL;
@@ -103,6 +106,7 @@ class OGRPLScenesDataV1FeatureDefn final : public OGRFeatureDefn
         : OGRFeatureDefn(pszName), m_poLayer(poLayer)
     {
     }
+
     ~OGRPLScenesDataV1FeatureDefn()
     {
     }
@@ -175,6 +179,7 @@ class OGRPLScenesDataV1Layer final : public OGRLayer
                                         const char *pszDomain = "") override;
 
     virtual void SetSpatialFilter(OGRGeometry *poGeom) override;
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
@@ -183,6 +188,7 @@ class OGRPLScenesDataV1Layer final : public OGRLayer
     virtual OGRErr SetAttributeFilter(const char *) override;
 
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {

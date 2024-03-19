@@ -364,6 +364,7 @@ int GDALDriverManager::GetDriverCount(bool bIncludeHidden) const
         return nDrivers;
     return nDrivers + static_cast<int>(m_aoHiddenDrivers.size());
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -415,6 +416,7 @@ GDALDriver *GDALDriverManager::GetDriver(int iDriver, bool bIncludeHidden)
         return m_aoHiddenDrivers[iDriver - nDrivers].get();
     return nullptr;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -823,6 +825,7 @@ char **GDALDriverManager::GetSearchPaths(const char *pszGDAL_DRIVER_PATH)
 #endif  // GDAL_NO_AUTOLOAD
     return papszSearchPaths;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1251,6 +1254,7 @@ DEFINE_DRIVER_METHOD_GET_CALLBACK(GetCreateCopyCallback, CreateCopyCallback)
 DEFINE_DRIVER_METHOD_GET_CALLBACK(GetDeleteCallback, DeleteCallback)
 DEFINE_DRIVER_METHOD_GET_CALLBACK(GetRenameCallback, RenameCallback)
 DEFINE_DRIVER_METHOD_GET_CALLBACK(GetCopyFilesCallback, CopyFilesCallback)
+
 //! @endcond
 
 char **GDALPluginDriverProxy::GetMetadata(const char *pszDomain)

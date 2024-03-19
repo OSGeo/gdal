@@ -67,6 +67,7 @@ struct CPL_DLL OGRExpatUniquePtrDeleter
         XML_ParserFree(oParser);
     }
 };
+
 //! @endcond
 
 /** Unique pointer type for XML_Parser.

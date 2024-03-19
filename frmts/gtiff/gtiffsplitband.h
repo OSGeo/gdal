@@ -44,6 +44,7 @@ class GTiffSplitBand final : public GTiffRasterBand
 
   public:
     GTiffSplitBand(GTiffDataset *, int);
+
     virtual ~GTiffSplitBand()
     {
     }

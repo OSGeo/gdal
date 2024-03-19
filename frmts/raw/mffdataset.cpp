@@ -81,16 +81,19 @@ class MFFDataset final : public RawDataset
     char **GetFileList() override;
 
     int GetGCPCount() override;
+
     const OGRSpatialReference *GetGCPSpatialRef() const override
     {
         return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS;
     }
+
     const GDAL_GCP *GetGCPs() override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
+
     CPLErr GetGeoTransform(double *) override;
 
     static GDALDataset *Open(GDALOpenInfo *);
@@ -208,6 +211,7 @@ class MFFSpheroidList : public SpheroidList
 {
   public:
     MFFSpheroidList();
+
     ~MFFSpheroidList()
     {
     }

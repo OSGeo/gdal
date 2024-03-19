@@ -98,6 +98,7 @@ class XMMReg2Double
     XMMReg2Double(double val) : xmm(_mm_load_sd(&val))
     {
     }
+
     XMMReg2Double(const XMMReg2Double &other) : xmm(other.xmm)
     {
     }
@@ -435,11 +436,13 @@ class XMMReg2Double
     XMMReg2Double()
     {
     }
+
     XMMReg2Double(double val)
     {
         low = val;
         high = 0.0;
     }
+
     XMMReg2Double(const XMMReg2Double &other) : low(other.low), high(other.high)
     {
     }
@@ -797,6 +800,7 @@ class XMMReg4Double
     XMMReg4Double() : ymm(_mm256_setzero_pd())
     {
     }
+
     XMMReg4Double(const XMMReg4Double &other) : ymm(other.ymm)
     {
     }

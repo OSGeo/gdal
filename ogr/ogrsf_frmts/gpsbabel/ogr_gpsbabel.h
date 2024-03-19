@@ -59,10 +59,12 @@ class OGRGPSBabelDataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     virtual int GetLayerCount() override
     {
         return nLayers;
     }
+
     virtual OGRLayer *GetLayer(int) override;
 
     virtual int TestCapability(const char *) override;
@@ -96,6 +98,7 @@ class OGRGPSBabelWriteDataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     virtual int GetLayerCount() override;
     virtual OGRLayer *GetLayer(int) override;
 

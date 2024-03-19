@@ -74,104 +74,129 @@ constexpr char ARROW_LETTER_LARGE_BINARY = 'Z';
 constexpr char ARROW_LETTER_DECIMAL = 'd';
 constexpr char ARROW_2ND_LETTER_LIST = 'l';
 constexpr char ARROW_2ND_LETTER_LARGE_LIST = 'L';
+
 static inline bool IsStructure(const char *format)
 {
     return format[0] == '+' && format[1] == 's' && format[2] == 0;
 }
+
 static inline bool IsMap(const char *format)
 {
     return format[0] == '+' && format[1] == 'm' && format[2] == 0;
 }
+
 static inline bool IsFixedWidthBinary(const char *format)
 {
     return format[0] == 'w' && format[1] == ':';
 }
+
 static inline int GetFixedWithBinary(const char *format)
 {
     return atoi(format + strlen("w:"));
 }
+
 static inline bool IsList(const char *format)
 {
     return format[0] == '+' && format[1] == ARROW_2ND_LETTER_LIST &&
            format[2] == 0;
 }
+
 static inline bool IsLargeList(const char *format)
 {
     return format[0] == '+' && format[1] == ARROW_2ND_LETTER_LARGE_LIST &&
            format[2] == 0;
 }
+
 static inline bool IsFixedSizeList(const char *format)
 {
     return format[0] == '+' && format[1] == 'w' && format[2] == ':';
 }
+
 static inline int GetFixedSizeList(const char *format)
 {
     return atoi(format + strlen("+w:"));
 }
+
 static inline bool IsDecimal(const char *format)
 {
     return format[0] == ARROW_LETTER_DECIMAL && format[1] == ':';
 }
+
 static inline bool IsBoolean(const char *format)
 {
     return format[0] == ARROW_LETTER_BOOLEAN && format[1] == 0;
 }
+
 static inline bool IsInt8(const char *format)
 {
     return format[0] == ARROW_LETTER_INT8 && format[1] == 0;
 }
+
 static inline bool IsUInt8(const char *format)
 {
     return format[0] == ARROW_LETTER_UINT8 && format[1] == 0;
 }
+
 static inline bool IsInt16(const char *format)
 {
     return format[0] == ARROW_LETTER_INT16 && format[1] == 0;
 }
+
 static inline bool IsUInt16(const char *format)
 {
     return format[0] == ARROW_LETTER_UINT16 && format[1] == 0;
 }
+
 static inline bool IsInt32(const char *format)
 {
     return format[0] == ARROW_LETTER_INT32 && format[1] == 0;
 }
+
 static inline bool IsUInt32(const char *format)
 {
     return format[0] == ARROW_LETTER_UINT32 && format[1] == 0;
 }
+
 static inline bool IsInt64(const char *format)
 {
     return format[0] == ARROW_LETTER_INT64 && format[1] == 0;
 }
+
 static inline bool IsUInt64(const char *format)
 {
     return format[0] == ARROW_LETTER_UINT64 && format[1] == 0;
 }
+
 static inline bool IsFloat16(const char *format)
 {
     return format[0] == ARROW_LETTER_FLOAT16 && format[1] == 0;
 }
+
 static inline bool IsFloat32(const char *format)
 {
     return format[0] == ARROW_LETTER_FLOAT32 && format[1] == 0;
 }
+
 static inline bool IsFloat64(const char *format)
 {
     return format[0] == ARROW_LETTER_FLOAT64 && format[1] == 0;
 }
+
 static inline bool IsString(const char *format)
 {
     return format[0] == ARROW_LETTER_STRING && format[1] == 0;
 }
+
 static inline bool IsLargeString(const char *format)
 {
     return format[0] == ARROW_LETTER_LARGE_STRING && format[1] == 0;
 }
+
 static inline bool IsBinary(const char *format)
 {
     return format[0] == ARROW_LETTER_BINARY && format[1] == 0;
 }
+
 static inline bool IsLargeBinary(const char *format)
 {
     return format[0] == ARROW_LETTER_LARGE_BINARY && format[1] == 0;
@@ -4675,6 +4700,7 @@ static size_t FillValidityArrayFromAttrQuery(
         int iOGRFieldIndex{};
         std::vector<int> anArrowPath{};
     };
+
     std::vector<UsedFieldsInfo> aoUsedFieldsInfo;
 
     bool bNeedsFID = false;
@@ -6070,6 +6096,7 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
                  .c_str());
     return false;
 }
+
 //! @endcond
 
 /** Creates a field from an ArrowSchema.
@@ -6734,6 +6761,7 @@ inline static void FillField(const struct ArrowArray *array, int iOGRFieldIdx,
         iOGRFieldIdx,
         static_cast<OGRType>(panValues[iFeature + array->offset]));
 }
+
 /************************************************************************/
 /*                          FillFieldString()                           */
 /************************************************************************/
@@ -7333,6 +7361,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
     }
 
     OGRFeatureDefn oLayerDefnTmp(poLayerDefn->GetName());
+
     struct LayerDefnTmpRefReleaser
     {
         OGRFeatureDefn &m_oDefn;
@@ -7347,6 +7376,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
             m_oDefn.Dereference();
         }
     };
+
     LayerDefnTmpRefReleaser oLayerDefnTmpRefReleaser(oLayerDefnTmp);
 
     std::vector<int> anIdentityFieldMap;

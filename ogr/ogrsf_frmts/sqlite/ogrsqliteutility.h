@@ -49,10 +49,12 @@ class SQLResult
     {
         return nRowCount;
     }
+
     int ColCount() const
     {
         return nColCount;
     }
+
     void LimitRowCount(int nLimit);
 
     const char *GetValue(int iColumnNum, int iRowNum) const;

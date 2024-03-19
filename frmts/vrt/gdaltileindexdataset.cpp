@@ -157,6 +157,7 @@ static inline bool ENDS_WITH_CI(const char *a, const char *b)
 /************************************************************************/
 
 class GDALTileIndexBand;
+
 class GDALTileIndexDataset final : public GDALPamDataset
 {
   public:
@@ -308,6 +309,7 @@ class GDALTileIndexDataset final : public GDALPamDataset
         //! Mask band of the source.
         GDALRasterBand *poMaskBand = nullptr;
     };
+
     //! Array of sources participating to the current pixel query.
     std::vector<SourceDesc> m_aoSourceDesc{};
 

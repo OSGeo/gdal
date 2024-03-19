@@ -886,4 +886,5 @@ MAIN_START(nArgc, papszArgv)
 
     return nRetCode;
 }
+
 MAIN_END

@@ -303,6 +303,7 @@ std::shared_ptr<GDALGroup> OGRMutexedDataSource::GetRootGroup() const
 // Horrible hack: for some reason MSVC doesn't export the class
 // if it is not referenced from the DLL itself
 void OGRRegisterMutexedDataSource();
+
 void OGRRegisterMutexedDataSource()
 {
     delete new OGRMutexedDataSource(NULL, FALSE, NULL, FALSE);

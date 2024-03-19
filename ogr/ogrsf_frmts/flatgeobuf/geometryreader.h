@@ -67,6 +67,7 @@ class GeometryReader
     {
         return GeometryReader(part, m_hasZ, m_hasM).read();
     }
+
     OGRGeometry *readPart(const FlatGeobuf::Geometry *part,
                           const FlatGeobuf::GeometryType geometryType)
     {
@@ -94,12 +95,14 @@ class GeometryReader
           m_hasM(hasM)
     {
     }
+
     GeometryReader(const FlatGeobuf::Geometry *geometry, const bool hasZ,
                    const bool hasM)
         : m_geometry(geometry), m_geometryType(geometry->type()), m_hasZ(hasZ),
           m_hasM(hasM)
     {
     }
+
     OGRGeometry *read();
 };
 

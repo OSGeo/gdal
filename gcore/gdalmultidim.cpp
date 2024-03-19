@@ -355,6 +355,7 @@ GDALGroup::GDALGroup(const std::string &osParentName, const std::string &osName,
       m_osContext(osContext)
 {
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1230,6 +1231,7 @@ GDALGroup::GetInnerMostGroup(const std::string &osPathOrArrayOrDim,
     osLastPart = aosTokens[aosTokens.size() - 1];
     return poCurGroup;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1474,6 +1476,7 @@ void GDALGroup::BaseRename(const std::string &osNewName)
 
     NotifyChildrenOfRenaming();
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1489,6 +1492,7 @@ void GDALGroup::ParentRenamed(const std::string &osNewParentFullName)
 
     NotifyChildrenOfRenaming();
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1502,6 +1506,7 @@ void GDALGroup::Deleted()
 
     NotifyChildrenOfDeletion();
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1513,6 +1518,7 @@ void GDALGroup::ParentDeleted()
 {
     Deleted();
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1529,6 +1535,7 @@ bool GDALGroup::CheckValidAndErrorOutIfNot() const
     }
     return m_bValid;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1551,6 +1558,7 @@ GDALAbstractMDArray::GDALAbstractMDArray(const std::string &osParentName,
               : osName)
 {
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2066,6 +2074,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
 
     return true;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2169,6 +2178,7 @@ bool GDALAbstractMDArray::IWrite(const GUInt64 *, const size_t *,
     CPLError(CE_Failure, CPLE_AppDefined, "IWrite() not implemented");
     return false;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2443,6 +2453,7 @@ void GDALAbstractMDArray::BaseRename(const std::string &osNewName)
 
     NotifyChildrenOfRenaming();
 }
+
 //! @endcond
 
 //! @cond Doxygen_Suppress
@@ -2458,6 +2469,7 @@ void GDALAbstractMDArray::ParentRenamed(const std::string &osNewParentFullName)
 
     NotifyChildrenOfRenaming();
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2471,6 +2483,7 @@ void GDALAbstractMDArray::Deleted()
 
     NotifyChildrenOfDeletion();
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2482,6 +2495,7 @@ void GDALAbstractMDArray::ParentDeleted()
 {
     Deleted();
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -2498,6 +2512,7 @@ bool GDALAbstractMDArray::CheckValidAndErrorOutIfNot() const
     }
     return m_bValid;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -3028,6 +3043,7 @@ bool GDALAbstractMDArray::ProcessPerChunk(const GUInt64 *arrayStartIdx,
     size_t dimIdx = 0;
     std::vector<GUInt64> chunkArrayStartIdx(dims.size());
     std::vector<size_t> chunkCount(dims.size());
+
     struct Stack
     {
         GUInt64 nBlockCounter = 0;
@@ -3035,6 +3051,7 @@ bool GDALAbstractMDArray::ProcessPerChunk(const GUInt64 *arrayStartIdx,
         size_t first_count = 0;  // only used if nBlocks > 1
         Caller return_point = Caller::CALLER_END_OF_LOOP;
     };
+
     std::vector<Stack> stack(dims.size());
     GUInt64 iCurChunk = 0;
     GUInt64 nChunkCount = 1;
@@ -3124,6 +3141,7 @@ GDALAttribute::GDALAttribute(CPL_UNUSED const std::string &osParentName,
 #endif
 {
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -3157,6 +3175,7 @@ GDALRawResult::GDALRawResult(GByte *raw, const GDALExtendedDataType &dt,
       m_raw(raw)
 {
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -3236,6 +3255,7 @@ GByte *GDALRawResult::StealData()
     m_nSize = 0;
     return ret;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -3643,6 +3663,7 @@ GDALMDArray::GDALMDArray(CPL_UNUSED const std::string &osParentName,
       m_osContext(osContext)
 {
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -4035,6 +4056,7 @@ bool GDALMDArray::IAdviseRead(const GUInt64 *, const size_t *,
 {
     return true;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -4054,6 +4076,7 @@ bool GDALMDArray::IAdviseRead(const GUInt64 *, const size_t *,
     }
     return ret;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -4135,6 +4158,7 @@ GDALMDArray::GetCacheRootGroup(bool bCanCreate,
 
     return nullptr;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -5341,6 +5365,7 @@ class GDALExtractFieldMDArray final : public GDALPamMDArray
         newAr->SetSelf(newAr);
         return newAr;
     }
+
     ~GDALExtractFieldMDArray()
     {
         m_dt.FreeDynamicMemory(&m_pabyNoData[0]);
@@ -5646,6 +5671,7 @@ GDALMDArray::GetView(const std::string &viewExpr, bool bRenameDimensions,
         curExpr = curExpr.substr(endExpr + 1);
     }
 }
+
 //! @endcond
 
 std::shared_ptr<GDALMDArray>
@@ -6120,6 +6146,7 @@ bool GDALMDArrayUnscaled::IRead(const GUInt64 *arrayStartIdx,
         GPtrDiff_t src_inc_offset = 0;
         GPtrDiff_t dst_inc_offset = 0;
     };
+
     std::vector<Stack> stack(nDims);
     const size_t nBufferDTSize = bufferDataType.GetSize();
     for (size_t i = 0; i < nDims; i++)
@@ -6279,6 +6306,7 @@ bool GDALMDArrayUnscaled::IWrite(const GUInt64 *arrayStartIdx,
         GPtrDiff_t src_inc_offset = 0;
         GPtrDiff_t dst_inc_offset = 0;
     };
+
     std::vector<Stack> stack(nDims);
     const size_t nBufferDTSize = bufferDataType.GetSize();
     for (size_t i = 0; i < nDims; i++)
@@ -6816,6 +6844,7 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
             GByte *dst_ptr = nullptr;
             GPtrDiff_t dst_inc_offset = 0;
         };
+
         std::vector<Stack> stack(std::max(static_cast<size_t>(1), nDims));
         const size_t nBufferDTSize = bufferDataType.GetSize();
         for (size_t i = 0; i < nDims; i++)
@@ -7127,6 +7156,7 @@ void GDALMDArrayMask::ReadInternal(
     }
 
     const size_t nTmpBufferDTSize = oTmpBufferDT.GetSize();
+
     struct Stack
     {
         size_t nIters = 0;
@@ -7135,6 +7165,7 @@ void GDALMDArrayMask::ReadInternal(
         GPtrDiff_t src_inc_offset = 0;
         GPtrDiff_t dst_inc_offset = 0;
     };
+
     std::vector<Stack> stack(std::max(static_cast<size_t>(1), nDims));
     const size_t nBufferDTSize = bufferDataType.GetSize();
     for (size_t i = 0; i < nDims; i++)
@@ -8179,6 +8210,7 @@ bool GDALMDArrayResampled::IRead(const GUInt64 *arrayStartIdx,
         GByte *dst_ptr = nullptr;
         GPtrDiff_t dst_inc_offset = 0;
     };
+
     const auto nDims = GetDimensionCount();
     std::vector<Stack> stack(nDims + 1);  // +1 to avoid -Wnull-dereference
     const size_t nBufferDTSize = bufferDataType.GetSize();
@@ -9686,6 +9718,7 @@ bool GDALMDArray::SetStatistics(bool /* bApproxStats */, double /* dfMin */,
     CPLDebug("GDAL", "Cannot save statistics on a non-PAM MDArray");
     return false;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -10155,6 +10188,7 @@ GDALDimension::GDALDimension(const std::string &osParentName,
       m_osType(osType), m_osDirection(osDirection), m_nSize(nSize)
 {
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -10229,6 +10263,7 @@ void GDALDimension::BaseRename(const std::string &osNewName)
     m_osFullName += osNewName;
     m_osName = osNewName;
 }
+
 //! @endcond
 
 //! @cond Doxygen_Suppress
@@ -12362,6 +12397,7 @@ int GDALMDArrayComputeStatisticsEx(GDALMDArrayH hArray, GDALDatasetH /* hDS */,
         CPL_TO_BOOL(bApproxOK), pdfMin, pdfMax, pdfMean, pdfStdDev,
         pnValidCount, pfnProgress, pProgressData, papszOptions);
 }
+
 /************************************************************************/
 /*                 GDALMDArrayGetCoordinateVariables()                  */
 /************************************************************************/

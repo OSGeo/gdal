@@ -49,6 +49,7 @@ void RDBOverview::addRDBNode(RDBNode &oRDBNode, double dfXMin, double dfYMin,
 
     aoRDBNodes.push_back(oRDBNode);
 }
+
 void RDBOverview::setTileSize(double dfTileSizeIn)
 {
     dfTileSize = dfTileSizeIn;
@@ -58,10 +59,12 @@ void RDBOverview::setTileSize(double dfTileSizeIn)
 template <typename T> struct CPLMallocGuard
 {
     T *const pData = nullptr;
+
     explicit CPLMallocGuard(std::size_t count)
         : pData(static_cast<T *>(CPLMalloc(sizeof(T) * count)))
     {
     }
+
     ~CPLMallocGuard()
     {
         CPLFree(pData);
@@ -103,6 +106,7 @@ template <typename T> class RDBRasterBandInternal final : public RDBRasterBand
     ~RDBRasterBandInternal()
     {
     }
+
     RDBRasterBandInternal(
         RDBDataset *poDSIn, const std::string &osAttributeNameIn,
         const riegl::rdb::pointcloud::PointAttribute &oPointAttributeIn,
@@ -210,6 +214,7 @@ template <typename T> class RDBRasterBandInternal final : public RDBRasterBand
             return 0.0;
         }
     }
+
     virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
                               void *pImageIn) override
     {
@@ -333,6 +338,7 @@ template <typename T> class RDBRasterBandInternal final : public RDBRasterBand
         }
         return static_cast<int>(aoVRTRasterBand.size());
     }
+
     virtual GDALRasterBand *GetOverview(int i) override
     {
         return aoVRTRasterBand[i];
@@ -637,6 +643,7 @@ GDALDataset *RDBDataset::Open(GDALOpenInfo *poOpenInfo)
 
     return nullptr;
 }
+
 int RDBDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     const char *psHeader = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
@@ -776,6 +783,7 @@ const char *RDBRasterBand::GetDescription() const
 }
 
 }  // namespace rdb
+
 void GDALRegister_RDB()
 {
     if (!GDAL_CHECK_VERSION("RDB"))

@@ -484,6 +484,7 @@ class netCDFDataset final : public GDALPamDataset
     {
         return bDefineMode;
     }
+
     bool SetDefineMode(bool bNewDefineMode);
 
     CPLErr ReadAttributes(int, int);
@@ -576,6 +577,7 @@ class netCDFDataset final : public GDALPamDataset
     {
         return static_cast<int>(this->papoLayers.size());
     }
+
     virtual OGRLayer *GetLayer(int nIdx) override;
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
@@ -718,25 +720,30 @@ class netCDFLayer final : public OGRLayer
     void SetWKTGeometryField(const char *pszWKTVarName);
     void SetGridMapping(const char *pszGridMapping);
     void SetProfile(int nProfileDimID, int nParentIndexVarID);
+
     void EnableSGBypass()
     {
         this->m_bLegacyCreateMode = false;
     }
+
     bool AddField(int nVarId);
 
     int GetCDFID() const
     {
         return m_nLayerCDFId;
     }
+
     void SetCDFID(int nId)
     {
         m_nLayerCDFId = nId;
     }
+
     void SetSGeometryRepresentation(
         const std::shared_ptr<nccfdriver::SGeometry_Reader> &sg)
     {
         m_simpleGeometryReader = sg;
     }
+
     nccfdriver::ncLayer_SG_Metadata &getLayerSGMetadata()
     {
         return m_layerSGDefn;

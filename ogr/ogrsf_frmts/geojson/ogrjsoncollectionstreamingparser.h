@@ -102,14 +102,17 @@ class OGRJSONCollectionStreamingParser CPL_NON_FINAL
     virtual void Exception(const char * /*pszMessage*/) override;
 
     json_object *StealRootObject();
+
     inline bool IsTypeKnown() const
     {
         return m_bIsTypeKnown;
     }
+
     inline bool IsFeatureCollection() const
     {
         return m_bIsFeatureCollection;
     }
+
     inline GUIntBig GetTotalOGRFeatureMemEstimate() const
     {
         return m_nTotalOGRFeatureMemEstimate;
@@ -125,10 +128,12 @@ class OGRJSONCollectionStreamingParser CPL_NON_FINAL
         m_bStartFeature = false;
         m_bEndFeature = false;
     }
+
     inline bool IsStartFeature() const
     {
         return m_bStartFeature;
     }
+
     inline bool IsEndFeature() const
     {
         return m_bEndFeature;

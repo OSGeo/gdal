@@ -849,6 +849,7 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
     SAFECalibratedRasterBand::CalibrationType eCalibrationType =
         SAFECalibratedRasterBand::SIGMA_NOUGHT;
     bool bCalibrated = false;
+
     // 0 for amplitude, 1 for complex (2 band : I , Q) and 2 for INTENSITY
     typedef enum
     {
@@ -857,6 +858,7 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
         COMPLEX,
         INTENSITY
     } RequestDataType;
+
     RequestDataType eRequestType = UNKNOWN;
     // Calibration Information selection
     CPLString osSubdatasetName;

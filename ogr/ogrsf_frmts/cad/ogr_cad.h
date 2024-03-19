@@ -56,14 +56,17 @@ class OGRCADLayer final : public OGRLayer
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig nFID) override;
     GIntBig GetFeatureCount(int /* bForce */) override;
+
     OGRSpatialReference *GetSpatialRef() override
     {
         return poSpatialRef;
     }
+
     OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
     }
+
     std::set<CPLString> asFeaturesAttributes;
     int TestCapability(const char *) override;
 };
@@ -86,10 +89,12 @@ class GDALCADDataset final : public GDALDataset
 
     int Open(GDALOpenInfo *poOpenInfo, CADFileIO *pFileIO,
              long nSubRasterLayer = -1, long nSubRasterFID = -1);
+
     int GetLayerCount() override
     {
         return nLayers;
     }
+
     OGRLayer *GetLayer(int) override;
     int TestCapability(const char *) override;
     virtual char **GetFileList() override;

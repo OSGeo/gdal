@@ -4723,6 +4723,7 @@ class CutlineTransformer : public OGRCoordinateTransformation
     {
         return nullptr;
     }
+
     virtual const OGRSpatialReference *GetTargetCS() const override
     {
         return nullptr;
@@ -5333,6 +5334,7 @@ static bool IsValidSRS(const char *pszUserInput)
 
 #ifndef CheckHasEnoughAdditionalArgs_defined
 #define CheckHasEnoughAdditionalArgs_defined
+
 static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
                                          int nExtraArg, int nArgc)
 {

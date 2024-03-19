@@ -1014,6 +1014,7 @@ bool CSLIterator::operator==(const CSLIterator &other) const
     }
     return false;
 }
+
 /*! @endcond */
 
 /************************************************************************/
@@ -1043,6 +1044,7 @@ CSLNameValueIterator::value_type CSLNameValueIterator::operator*()
     CPLAssert(false);
     return {"", ""};
 }
+
 /*! @endcond */
 
 /************************************************************************/
@@ -1057,6 +1059,7 @@ CSLNameValueIterator CSLNameValueIteratorWrapper::end() const
         --nCount;
     return CSLNameValueIterator{m_papszList + nCount};
 }
+
 /*! @endcond */
 
 }  // namespace cpl

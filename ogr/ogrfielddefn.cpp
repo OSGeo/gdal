@@ -2158,6 +2158,7 @@ OGRFieldDomain::OGRFieldDomain(const std::string &osName,
       m_eFieldSubType(eFieldSubType)
 {
 }
+
 /*! @endcond */
 
 /************************************************************************/

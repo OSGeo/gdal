@@ -101,6 +101,7 @@ class IVSIS3LikeHandleHelper
     {
         return true;
     }
+
     virtual bool CanRestartOnError(const char *, const char * /* pszHeaders*/,
                                    bool /*bSetError*/)
     {
@@ -114,6 +115,7 @@ class IVSIS3LikeHandleHelper
     {
         return std::string();
     }
+
     virtual const char *GetMetadataDirectiveREPLACE() const
     {
         return "";
@@ -234,6 +236,7 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
     {
         return false;
     }
+
     bool CanRestartOnError(const char *, const char *pszHeaders,
                            bool bSetError) override;
 
@@ -241,30 +244,37 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
     {
         return m_osURL;
     }
+
     const std::string &GetBucket() const
     {
         return m_osBucket;
     }
+
     const std::string &GetObjectKey() const
     {
         return m_osObjectKey;
     }
+
     const std::string &GetEndpoint() const
     {
         return m_osEndpoint;
     }
+
     const std::string &GetRegion() const
     {
         return m_osRegion;
     }
+
     const std::string &GetRequestPayer() const
     {
         return m_osRequestPayer;
     }
+
     bool GetVirtualHosting() const
     {
         return m_bUseVirtualHosting;
     }
+
     void SetEndpoint(const std::string &osStr);
     void SetRegion(const std::string &osStr);
     void SetRequestPayer(const std::string &osStr);
@@ -274,6 +284,7 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
     {
         return "x-amz-copy-source";
     }
+
     const char *GetMetadataDirectiveREPLACE() const override
     {
         return "x-amz-metadata-directive: REPLACE";

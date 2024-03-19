@@ -107,6 +107,7 @@ class GDALDatasetPamInfo
 
     int bHasMetadata = false;
 };
+
 //! @endcond
 
 /* ******************************************************************** */
@@ -190,18 +191,22 @@ class CPL_DLL GDALPamDataset : public GDALDataset
 
     // "semi private" methods.
     void MarkPamDirty();
+
     GDALDatasetPamInfo *GetPamInfo()
     {
         return psPam;
     }
+
     int GetPamFlags()
     {
         return nPamFlags;
     }
+
     void SetPamFlags(int nValue)
     {
         nPamFlags = nValue;
     }
+
     //! @endcond
 
   private:
@@ -264,6 +269,7 @@ struct GDALRasterBandPamInfo
     bool bOffsetSet = false;
     bool bScaleSet = false;
 };
+
 //! @endcond
 /* ******************************************************************** */
 /*                          GDALPamRasterBand                           */
@@ -350,6 +356,7 @@ class CPL_DLL GDALPamRasterBand : public GDALRasterBand
     {
         return psPam;
     }
+
     //! @endcond
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALPamRasterBand)

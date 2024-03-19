@@ -100,11 +100,13 @@ class VSIStdinFilesystemHandler final : public VSIFilesystemHandler
                            CSLConstList /* papszOptions */) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
              int nFlags) override;
+
     bool SupportsSequentialWrite(const char * /* pszPath */,
                                  bool /* bAllowLocalTempFile */) override
     {
         return false;
     }
+
     bool SupportsRandomWrite(const char * /* pszPath */,
                              bool /* bAllowLocalTempFile */) override
     {
@@ -129,6 +131,7 @@ class VSIStdinHandle final : public VSIVirtualHandle
 
   public:
     VSIStdinHandle() = default;
+
     ~VSIStdinHandle() override
     {
         VSIStdinHandle::Close();

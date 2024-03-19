@@ -96,10 +96,12 @@ class GDALEEDADataset final : public GDALEEDABaseDataset
     {
         return m_poLayer ? 1 : 0;
     }
+
     virtual OGRLayer *GetLayer(int idx) CPL_OVERRIDE;
 
     bool Open(GDALOpenInfo *poOpenInfo);
     json_object *RunRequest(const CPLString &osURL);
+
     const CPLString &GetBaseURL() const
     {
         return m_osBaseURL;
@@ -142,16 +144,19 @@ class GDALEEDALayer final : public OGRLayer
     virtual void ResetReading() CPL_OVERRIDE;
     virtual OGRFeature *GetNextFeature() CPL_OVERRIDE;
     virtual int TestCapability(const char *) CPL_OVERRIDE;
+
     virtual OGRFeatureDefn *GetLayerDefn() CPL_OVERRIDE
     {
         return m_poFeatureDefn;
     }
+
     virtual GIntBig GetFeatureCount(int) CPL_OVERRIDE
     {
         return -1;
     }
 
     virtual void SetSpatialFilter(OGRGeometry *poGeom) CPL_OVERRIDE;
+
     virtual void SetSpatialFilter(int iGeomField,
                                   OGRGeometry *poGeom) CPL_OVERRIDE
     {
@@ -161,6 +166,7 @@ class GDALEEDALayer final : public OGRLayer
     virtual OGRErr SetAttributeFilter(const char *) CPL_OVERRIDE;
 
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) CPL_OVERRIDE;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) CPL_OVERRIDE
     {

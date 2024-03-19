@@ -55,6 +55,7 @@ class HKVRasterBand final : public RawRasterBand
     HKVRasterBand(HKVDataset *poDS, int nBand, VSILFILE *fpRaw,
                   unsigned int nImgOffset, int nPixelOffset, int nLineOffset,
                   GDALDataType eDataType, int bNativeOrder);
+
     ~HKVRasterBand() override
     {
     }
@@ -70,6 +71,7 @@ class HKVSpheroidList : public SpheroidList
 {
   public:
     HKVSpheroidList();
+
     ~HKVSpheroidList()
     {
     }
@@ -222,6 +224,7 @@ class HKVDataset final : public RawDataset
 
     void ProcessGeoref(const char *);
     void ProcessGeorefGCP(char **, const char *, double, double);
+
     void SetVersion(float version_number)
     {
         // Update stored info.
@@ -264,16 +267,19 @@ class HKVDataset final : public RawDataset
     {
         return nGCPCount;
     }
+
     const OGRSpatialReference *GetGCPSpatialRef() const override
     {
         return m_oGCPSRS.IsEmpty() ? nullptr : &m_oGCPSRS;
     }
+
     const GDAL_GCP *GetGCPs() override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;
     }
+
     CPLErr GetGeoTransform(double *) override;
 
     CPLErr SetGeoTransform(double *) override;

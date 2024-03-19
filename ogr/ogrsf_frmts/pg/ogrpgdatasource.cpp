@@ -2851,6 +2851,7 @@ class OGRPGNoResetResultLayer final : public OGRPGLayer
         CPLAssert(false);
         return "";
     }
+
     virtual void ResolveSRID(const OGRPGGeomFieldDefn *poGFldDefn) override
     {
         poGFldDefn->nSRSId = -1;
@@ -2937,14 +2938,17 @@ class OGRPGMemLayerWrapper final : public OGRLayer
     {
         poMemLayer->ResetReading();
     }
+
     virtual OGRFeature *GetNextFeature() override
     {
         return poMemLayer->GetNextFeature();
     }
+
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return poMemLayer->GetLayerDefn();
     }
+
     virtual int TestCapability(const char *) override
     {
         return FALSE;

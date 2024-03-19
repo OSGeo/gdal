@@ -142,6 +142,7 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
 
     virtual const char *GetGeometryColumn() override;
 };
+
 //! @endcond
 
 #endif  // OGREDITABLELAYER_H_INCLUDED

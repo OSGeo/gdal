@@ -200,6 +200,7 @@ struct OPJCodecWrapper
           pasBandParams(nullptr), psJP2File(nullptr)
     {
     }
+
     explicit OPJCodecWrapper(OPJCodecWrapper *rhs)
         : pCodec(rhs->pCodec), pStream(rhs->pStream), psImage(rhs->psImage),
           pasBandParams(rhs->pasBandParams), psJP2File(rhs->psJP2File)
@@ -210,6 +211,7 @@ struct OPJCodecWrapper
         rhs->pasBandParams = nullptr;
         rhs->psJP2File = nullptr;
     }
+
     ~OPJCodecWrapper(void)
     {
         free();
@@ -221,6 +223,7 @@ struct OPJCodecWrapper
         psJP2File->fp_ = fp;
         psJP2File->nBaseOffset = offset;
     }
+
     void open(VSILFILE *fp)
     {
         psJP2File = static_cast<JP2File *>(CPLMalloc(sizeof(JP2File)));
@@ -273,6 +276,7 @@ struct OPJCodecWrapper
 
         return osComment + opj_version();
     }
+
     void updateStrict(CPL_UNUSED bool strict)
     {
         // prevent linter from treating this as potential static method

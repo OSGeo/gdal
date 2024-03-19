@@ -3694,4 +3694,5 @@ VRTParseCoreSources(const CPLXMLNode *psChild, const char *pszVRTPath,
     delete poSource;
     return nullptr;
 }
+
 /*! @endcond */

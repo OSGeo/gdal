@@ -416,6 +416,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
         CPLAssert(m_poSchema);
     }
 }
+
 /************************************************************************/
 /*                         FinalizeSchema()                             */
 /************************************************************************/
@@ -1008,6 +1009,7 @@ static float castToFloatDown(double d)
     }
     return f;
 }
+
 static float castToFloatUp(double d)
 {
     float f = static_cast<float>(d);

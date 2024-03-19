@@ -83,6 +83,7 @@ class DOQ2Dataset final : public RawDataset
     ~DOQ2Dataset();
 
     CPLErr GetGeoTransform(double *padfTransform) override;
+
     const OGRSpatialReference *GetSpatialRef() const override
     {
         return m_oSRS.IsEmpty() ? nullptr : &m_oSRS;

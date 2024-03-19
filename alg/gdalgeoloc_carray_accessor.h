@@ -101,9 +101,11 @@ class GDALGeoLocCArrayAccessors
     bool AllocateBackMap();
 
     GDALDataset *GetBackmapDataset();
+
     static void FlushBackmapCaches()
     {
     }
+
     static void ReleaseBackmapDataset(GDALDataset *poDS)
     {
         delete poDS;

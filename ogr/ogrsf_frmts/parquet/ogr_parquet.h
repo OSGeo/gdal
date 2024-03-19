@@ -103,6 +103,7 @@ class OGRParquetLayer final : public OGRParquetLayerBase
         int iParquetYMax = -1;
         std::vector<int> anParquetCols{};
     };
+
     //! Map from OGR geometry field index to GeomColBBOXParquet
     std::map<int, GeomColBBOXParquet>
         m_oMapGeomFieldIndexToGeomColBBOXParquet{};
@@ -163,10 +164,12 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     {
         return m_poArrowReader.get();
     }
+
     const std::vector<int> &GetMapFieldIndexToParquetColumn() const
     {
         return m_anMapFieldIndexToParquetColumn;
     }
+
     const std::vector<std::shared_ptr<arrow::DataType>> &
     GetArrowFieldTypes() const
     {
@@ -219,6 +222,7 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
     {
         return "PARQUET";
     }
+
     bool ReadNextBatch() override;
 
     void InvalidateCachedBatches() override;
@@ -296,6 +300,7 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
     {
         return m_poFileWriter != nullptr;
     }
+
     virtual void CreateWriter() override;
     virtual bool CloseFileWriter() override;
 
@@ -315,6 +320,7 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
     virtual void FixupWKBGeometryBeforeWriting(GByte *pabyWKB,
                                                size_t nLen) override;
     virtual void FixupGeometryBeforeWriting(OGRGeometry *poGeom) override;
+
     virtual bool IsSRSRequired() const override
     {
         return false;
@@ -350,12 +356,14 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
         return OGRLayer::IsArrowSchemaSupported(schema, papszOptions,
                                                 osErrorMsg);
     }
+
     bool
     CreateFieldFromArrowSchema(const struct ArrowSchema *schema,
                                CSLConstList papszOptions = nullptr) override
     {
         return OGRLayer::CreateFieldFromArrowSchema(schema, papszOptions);
     }
+
     bool WriteArrowBatch(const struct ArrowSchema *schema,
                          struct ArrowArray *array,
                          CSLConstList papszOptions = nullptr) override

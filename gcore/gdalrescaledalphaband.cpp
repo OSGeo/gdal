@@ -141,4 +141,5 @@ CPLErr GDALRescaledAlphaBand::IRasterIO(
                                      pData, nBufXSize, nBufYSize, eBufType,
                                      nPixelSpace, nLineSpace, psExtraArg);
 }
+
 //! @endcond

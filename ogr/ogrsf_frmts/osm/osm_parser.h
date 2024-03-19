@@ -48,6 +48,7 @@ typedef struct
         GIntBig nTimeStamp;
         const char *pszTimeStamp;
     } ts;
+
     GIntBig nChangeset;
     int nVersion;
     int nUID;

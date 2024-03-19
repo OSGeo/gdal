@@ -121,6 +121,7 @@ class OGRArrowLayer CPL_NON_FINAL
         int iArrowSubfieldXMax = -1;
         int iArrowSubfieldYMax = -1;
     };
+
     //! Map from OGR geometry field index to GeomColBBOX
     std::map<int, GeomColBBOX> m_oMapGeomFieldIndexToGeomColBBOX{};
 
@@ -241,7 +242,9 @@ class OGRArrowLayer CPL_NON_FINAL
     {
         return m_poFeatureDefn;
     }
+
     void ResetReading() override;
+
     const char *GetFIDColumn() override
     {
         return m_osFIDColumn.c_str();
@@ -258,6 +261,7 @@ class OGRArrowLayer CPL_NON_FINAL
     {
         SetSpatialFilter(0, poGeom);
     }
+
     void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
 
     int TestCapability(const char *pszCap) override;
@@ -292,10 +296,12 @@ class OGRArrowDataset CPL_NON_FINAL : public GDALPamDataset
     {
         return m_poMemoryPool.get();
     }
+
     inline const std::shared_ptr<arrow::MemoryPool> &GetSharedMemoryPool() const
     {
         return m_poMemoryPool;
     }
+
     void SetLayer(std::unique_ptr<OGRArrowLayer> &&poLayer);
 
     void RegisterDomainName(const std::string &osDomainName, int iFieldIndex);
@@ -386,6 +392,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     void CreateSchemaCommon();
     void FinalizeSchema();
     virtual void CreateSchema() = 0;
+
     virtual void PerformStepsBeforeFinalFlushGroup()
     {
     }
@@ -405,9 +412,11 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
                                                size_t /*nLen*/)
     {
     }
+
     virtual void FixupGeometryBeforeWriting(OGRGeometry * /* poGeom */)
     {
     }
+
     virtual bool IsSRSRequired() const = 0;
     bool WriteArrowBatchInternal(
         const struct ArrowSchema *schema, struct ArrowArray *array,
@@ -435,17 +444,21 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     {
         return m_osFIDColumn.c_str();
     }
+
     OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
     }
+
     void ResetReading() override
     {
     }
+
     OGRFeature *GetNextFeature() override
     {
         return nullptr;
     }
+
     int TestCapability(const char *pszCap) override;
     OGRErr CreateField(const OGRFieldDefn *poField,
                        int bApproxOK = TRUE) override;
@@ -459,6 +472,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     {
         return true;
     }
+
     bool
     CreateFieldFromArrowSchema(const struct ArrowSchema *schema,
                                CSLConstList papszOptions = nullptr) override;

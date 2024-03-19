@@ -1160,6 +1160,7 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
         double dfRightWeight;
         double dfTotalWeightFullLine;
     };
+
     PrecomputedXValue *pasSrcX = static_cast<PrecomputedXValue *>(
         VSI_MALLOC_VERBOSE(nDstXWidth * sizeof(PrecomputedXValue)));
 
@@ -4114,10 +4115,12 @@ struct PointerHolder
     explicit PointerHolder(void *ptrIn) : ptr(ptrIn)
     {
     }
+
     ~PointerHolder()
     {
         CPLFree(ptr);
     }
+
     PointerHolder(const PointerHolder &) = delete;
     PointerHolder &operator=(const PointerHolder &) = delete;
 };
@@ -4465,6 +4468,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         {
             oSrcMaskBufferHolder = oSrcMaskBufferHolderIn;
         }
+
         void SetSrcBufferHolder(
             const std::shared_ptr<PointerHolder> &oSrcBufferHolderIn)
         {

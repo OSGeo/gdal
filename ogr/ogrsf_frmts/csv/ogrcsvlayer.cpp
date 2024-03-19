@@ -318,6 +318,7 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                 {"POPULATION", OFTReal},  {"ELEVATION", OFTInteger},
                 {"GTOPO30", OFTInteger},  {"TIMEZONE", OFTString},
                 {"MODDATE", OFTString}};
+
             for (int iField = 0; iField < nFieldCount; iField++)
             {
                 OGRFieldDefn oFieldDefn(asGeonamesFieldDesc[iField].pszName,

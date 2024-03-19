@@ -49,6 +49,7 @@ enum Scheme
     BIP = 1,
     BSQ = 2
 };
+
 static const char *const apszSchemeNames[] = {"BIL", "BIP", "BSQ", nullptr};
 
 /************************************************************************/

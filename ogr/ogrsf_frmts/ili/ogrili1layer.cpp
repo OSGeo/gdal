@@ -173,6 +173,7 @@ GIntBig OGRILI1Layer::GetFeatureCount(int bForce)
 
 #ifndef d2str_defined
 #define d2str_defined
+
 static const char *d2str(double val)
 {
     if (val == (int)val)

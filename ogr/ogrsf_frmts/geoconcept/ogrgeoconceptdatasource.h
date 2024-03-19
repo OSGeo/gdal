@@ -63,10 +63,12 @@ class OGRGeoconceptDataSource : public OGRDataSource
     {
         return _pszName;
     }
+
     int GetLayerCount() override
     {
         return _nLayers;
     }
+
     OGRLayer *GetLayer(int iLayer) override;
     //    OGRErr         DeleteLayer( int iLayer );
     int TestCapability(const char *pszCap) override;

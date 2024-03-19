@@ -69,6 +69,7 @@ template <typename _Ty, typename _Dx> class CPLAutoClose
         : m_ResourcePtr(ptr), m_CloseFunc(dt)
     {
     }
+
     /**
      * @brief Destructor.
      */

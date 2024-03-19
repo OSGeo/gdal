@@ -209,6 +209,7 @@ class CPL_DLL CPLODBCSession
     int BeginTransaction();
     int CommitTransaction();
     int RollbackTransaction();
+
     /** Returns whether a transaction is active */
     int IsInTransaction()
     {
@@ -220,11 +221,13 @@ class CPL_DLL CPLODBCSession
     int CloseSession();
 
     int Failed(int, HSTMT = nullptr);
+
     /** Return connection handle */
     HDBC GetConnection()
     {
         return m_hDBC;
     }
+
     /** Return GetEnvironment handle */
     HENV GetEnvironment()
     {
@@ -326,6 +329,7 @@ class CPL_DLL CPLODBCStatement
     void Append(double);
     int Appendf(CPL_FORMAT_STRING(const char *), ...)
         CPL_PRINT_FUNC_FORMAT(2, 3);
+
     /** Return statement string */
     const char *GetCommand()
     {

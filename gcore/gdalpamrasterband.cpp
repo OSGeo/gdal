@@ -70,6 +70,7 @@ GDALPamRasterBand::GDALPamRasterBand(int bForceCachedIOIn)
 {
     SetMOFlags(GetMOFlags() | GMO_PAM_CLASS);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -766,6 +767,7 @@ CPLErr GDALPamRasterBand::CloneInfo(GDALRasterBand *poSrcBand, int nCloneFlags)
 
     return CE_None;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1377,6 +1379,7 @@ CPLXMLNode *PamHistogramToXMLTree(double dfMin, double dfMax, int nBuckets,
 
     return psXMLHist;
 }
+
 //! @endcond
 
 /************************************************************************/

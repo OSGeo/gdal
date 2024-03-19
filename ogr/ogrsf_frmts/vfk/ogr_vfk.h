@@ -116,6 +116,7 @@ class OGRVFKDataSource : public OGRDataSource
     {
         return nLayers;
     }
+
     OGRLayer *GetLayer(int) override;
 
     int TestCapability(const char *) override;

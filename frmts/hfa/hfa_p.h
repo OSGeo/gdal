@@ -296,12 +296,14 @@ class HFAEntry
     {
         return szName;
     }
+
     void SetName(const char *pszNodeName);
 
     const char *GetType() const CPL_WARN_UNUSED_RESULT
     {
         return szType;
     }
+
     HFAType *GetTypeObject() CPL_WARN_UNUSED_RESULT;
 
     GByte *GetData() CPL_WARN_UNUSED_RESULT
@@ -309,10 +311,12 @@ class HFAEntry
         LoadData();
         return pabyData;
     }
+
     GUInt32 GetDataPos() const CPL_WARN_UNUSED_RESULT
     {
         return nDataPos;
     }
+
     GUInt32 GetDataSize() const CPL_WARN_UNUSED_RESULT
     {
         return nDataSize;
@@ -490,26 +494,32 @@ class HFACompress
     {
         return m_pCounts;
     }
+
     GUInt32 getCountSize() const
     {
         return m_nSizeCounts;
     }
+
     GByte *getValues() const
     {
         return m_pValues;
     }
+
     GUInt32 getValueSize() const
     {
         return m_nSizeValues;
     }
+
     GUInt32 getMin() const
     {
         return m_nMin;
     }
+
     GUInt32 getNumRuns() const
     {
         return m_nNumRuns;
     }
+
     GByte getNumBits() const
     {
         return m_nNumBits;

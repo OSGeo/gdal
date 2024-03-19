@@ -57,6 +57,7 @@ class OGRFlatGeobufEditableLayerSynchronizer final
           m_papszOpenOptions(CSLDuplicate(papszOpenOptions))
     {
     }
+
     virtual ~OGRFlatGeobufEditableLayerSynchronizer() override;
 
     virtual OGRErr EditableSyncToDisk(OGRLayer *poEditableLayer,

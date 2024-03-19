@@ -292,6 +292,7 @@ class PostGISRasterDataset final : public VRTDataset
     {
         return oMapPKIDToRTDS[pszPKID];
     }
+
     PostGISRasterTileDataset *GetMatchingSourceRef(double dfUpperLeftX,
                                                    double dfUpperLeftY);
 
@@ -409,6 +410,7 @@ class PostGISRasterTileDataset final : public GDALDataset
     CPLErr GetGeoTransform(double *) override;
     void GetExtent(double *pdfMinX, double *pdfMinY, double *pdfMaxX,
                    double *pdfMaxY) const;
+
     const char *GetPKID() const
     {
         return pszPKID;

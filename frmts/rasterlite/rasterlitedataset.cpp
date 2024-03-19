@@ -71,6 +71,7 @@ CPLString RasterliteGetPixelSizeCond(double dfPixelXSize, double dfPixelYSize,
                   CPLString().FormatC(dfPixelYSize + 1e-15, "%.15f").c_str());
     return osCond;
 }
+
 /************************************************************************/
 /*                     RasterliteGetSpatialFilterCond()                 */
 /************************************************************************/

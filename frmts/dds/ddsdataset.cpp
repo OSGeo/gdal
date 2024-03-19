@@ -84,6 +84,7 @@ class DDSRasterBand final : public GDALPamRasterBand
 {
   protected:
     CPLErr IReadBlock(int, int, void *) override;
+
     GDALColorInterp GetColorInterpretation() override
     {
         return static_cast<GDALColorInterp>(GCI_RedBand + nBand - 1);
@@ -123,6 +124,7 @@ class DDSRasterBandAllDecoded final : public GDALPamRasterBand
 {
   protected:
     CPLErr IReadBlock(int, int, void *) override;
+
     GDALColorInterp GetColorInterpretation() override
     {
         return static_cast<GDALColorInterp>(GCI_RedBand + nBand - 1);

@@ -1606,6 +1606,7 @@ int CPLODBCStatement::Failed(int nResultCode)
 
     return TRUE;
 }
+
 //! @endcond
 
 /************************************************************************/

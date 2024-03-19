@@ -397,6 +397,7 @@ CPLXMLNode *CPL_STDCALL VRTSerializeToXML(VRTDatasetH hDataset,
     return static_cast<VRTDataset *>(GDALDataset::FromHandle(hDataset))
         ->SerializeToXML(pszVRTPath);
 }
+
 /*! @cond Doxygen_Suppress */
 
 /************************************************************************/
@@ -1843,6 +1844,7 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
         return CE_None;
     }
 }
+
 /*! @endcond */
 /************************************************************************/
 /*                              VRTAddBand()                            */
@@ -1864,6 +1866,7 @@ int CPL_STDCALL VRTAddBand(VRTDatasetH hDataset, GDALDataType eType,
     return static_cast<VRTDataset *>(GDALDataset::FromHandle(hDataset))
         ->AddBand(eType, papszOptions);
 }
+
 /*! @cond Doxygen_Suppress */
 /************************************************************************/
 /*                               Create()                               */

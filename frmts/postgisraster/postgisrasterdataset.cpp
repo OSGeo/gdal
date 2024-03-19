@@ -918,6 +918,7 @@ void PostGISRasterDataset::CacheTile(const char *pszMetadata,
     const int nExpectedBands = bAllBandCaching ? GetRasterCount() : 1;
 
     int nWKBLength = 0;
+
     struct CPLFreer
     {
         void operator()(GByte *x) const
@@ -925,6 +926,7 @@ void PostGISRasterDataset::CacheTile(const char *pszMetadata,
             CPLFree(x);
         }
     };
+
     std::unique_ptr<GByte, CPLFreer> pbyDataAutoFreed(
         CPLHexToBinary(pszRaster, &nWKBLength));
     GByte *pbyData = pbyDataAutoFreed.get();

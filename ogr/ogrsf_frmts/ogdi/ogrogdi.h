@@ -70,10 +70,12 @@ class OGROGDILayer final : public OGRLayer
     virtual ~OGROGDILayer();
 
     virtual void SetSpatialFilter(OGRGeometry *) override;
+
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
     }
+
     virtual OGRErr SetAttributeFilter(const char *pszQuery) override;
 
     void ResetReading() override;
@@ -126,10 +128,12 @@ class OGROGDIDataSource final : public OGRDataSource
     {
         return m_pszFullName;
     }
+
     int GetLayerCount() override
     {
         return m_nLayers;
     }
+
     OGRLayer *GetLayer(int) override;
 
     int TestCapability(const char *) override;
@@ -138,10 +142,12 @@ class OGROGDIDataSource final : public OGRDataSource
     {
         return &m_sGlobalBounds;
     }
+
     OGRSpatialReference *DSGetSpatialRef()
     {
         return m_poSpatialRef;
     }
+
     int GetClientID()
     {
         return m_nClientID;
@@ -151,6 +157,7 @@ class OGROGDIDataSource final : public OGRDataSource
     {
         return m_poCurrentLayer;
     }
+
     void SetCurrentLayer(OGROGDILayer *poLayer)
     {
         m_poCurrentLayer = poLayer;

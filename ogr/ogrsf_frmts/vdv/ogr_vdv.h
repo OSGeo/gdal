@@ -85,10 +85,12 @@ class OGRVDVLayer final : public OGRLayer
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
     virtual GIntBig GetFeatureCount(int bForce) override;
+
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
     }
+
     virtual int TestCapability(const char *pszCap) override;
 
     void SetFeatureCount(GIntBig nTotalFeatureCount)
@@ -128,6 +130,7 @@ class OGRVDV452Tables
     OGRVDV452Tables()
     {
     }
+
     ~OGRVDV452Tables()
     {
         for (size_t i = 0; i < aosTables.size(); i++)
@@ -165,10 +168,12 @@ class OGRVDVWriterLayer final : public OGRLayer
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
+
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
     }
+
     virtual int TestCapability(const char *pszCap) override;
     virtual OGRErr CreateField(const OGRFieldDefn *poFieldDefn,
                                int bApproxOK = TRUE) override;

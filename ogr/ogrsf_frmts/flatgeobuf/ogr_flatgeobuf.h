@@ -178,12 +178,15 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     virtual int TestCapability(const char *) override;
 
     virtual void ResetReading() override;
+
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return m_poFeatureDefn;
     }
+
     virtual GIntBig GetFeatureCount(int bForce) override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
@@ -204,6 +207,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     {
         return m_osFilename;
     }
+
     OGRLayer *GetLayer() override
     {
         return this;
@@ -218,6 +222,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     {
         return m_indexNodeSize;
     }
+
     OGRwkbGeometryType getOGRwkbGeometryType();
 };
 
@@ -235,10 +240,12 @@ class OGRFlatGeobufEditableLayer final : public OGREditableLayer,
         return static_cast<OGRFlatGeobufLayer *>(m_poDecoratedLayer)
             ->GetFilename();
     }
+
     OGRLayer *GetLayer() override
     {
         return this;
     }
+
     int TestCapability(const char *pszCap) override;
 
     CPLErr Close() override
@@ -280,6 +287,7 @@ class OGRFlatGeobufDataset final : public GDALDataset
     {
         return static_cast<int>(m_apoLayers.size());
     }
+
     char **GetFileList() override;
 };
 

@@ -318,16 +318,19 @@ extern "C++"
         CPLString(void)
         {
         }
+
         /** Constructor */
         // cppcheck-suppress noExplicitConstructor
         CPLString(const std::string &oStr) : std::string(oStr)
         {
         }
+
         /** Constructor */
         // cppcheck-suppress noExplicitConstructor
         CPLString(const char *pszStr) : std::string(pszStr)
         {
         }
+
         /** Constructor */
         CPLString(const char *pszStr, size_t n) : std::string(pszStr, n)
         {
@@ -474,6 +477,7 @@ extern "C++"
         {
             return Count();
         }
+
         int Count() const;
 
         /** Return whether the list is empty. */
@@ -489,6 +493,7 @@ extern "C++"
         {
             return InsertStringDirectly(nInsertAtLineNo, CPLStrdup(pszNewLine));
         }
+
         CPLStringList &InsertStringDirectly(int nInsertAtLineNo,
                                             char *pszNewLine);
 
@@ -501,6 +506,7 @@ extern "C++"
         {
             return CSLFindString(papszList, pszTarget);
         }
+
         /** Return index of pszTarget in the list (using partial search), or -1
          */
         int PartialFindString(const char *pszNeedle) const
@@ -519,11 +525,13 @@ extern "C++"
         CPLStringList &SetNameValue(const char *pszKey, const char *pszValue);
 
         CPLStringList &Assign(char **papszListIn, int bTakeOwnership = TRUE);
+
         /** Assignment operator */
         CPLStringList &operator=(char **papszListIn)
         {
             return Assign(papszListIn, TRUE);
         }
+
         /** Assignment operator */
         CPLStringList &operator=(const CPLStringList &oOther);
         /** Assignment operator */
@@ -533,18 +541,22 @@ extern "C++"
 
         /** Return string at specified index */
         char *operator[](int i);
+
         /** Return string at specified index */
         char *operator[](size_t i)
         {
             return (*this)[static_cast<int>(i)];
         }
+
         /** Return string at specified index */
         const char *operator[](int i) const;
+
         /** Return string at specified index */
         const char *operator[](size_t i) const
         {
             return (*this)[static_cast<int>(i)];
         }
+
         /** Return value corresponding to pszKey, or nullptr */
         const char *operator[](const char *pszKey) const
         {
@@ -580,14 +592,17 @@ extern "C++"
         {
             return papszList;
         }
+
         /** Return list. Ownership remains to the object */
         CSLConstList List() const
         {
             return papszList;
         }
+
         char **StealList();
 
         CPLStringList &Sort();
+
         /** Returns whether the list is sorted */
         int IsSorted() const
         {
@@ -627,6 +642,7 @@ extern "C++"
             CSLDestroy(papszStr);
         }
     };
+
     /*! @endcond */
 
     /** Unique pointer type to use with CSL functions returning a char** */
@@ -640,6 +656,7 @@ extern "C++"
             CPLFree(p);
         }
     };
+
     /*! @endcond */
 
     /** Unique pointer type to use with functions returning a char* to release
@@ -666,18 +683,22 @@ extern "C++"
         {
             return *m_papszList;
         }
+
         inline CSLIterator &operator++()
         {
             if (m_papszList)
                 ++m_papszList;
             return *this;
         }
+
         bool operator==(const CSLIterator &other) const;
+
         inline bool operator!=(const CSLIterator &other) const
         {
             return !(operator==(other));
         }
     };
+
     /*! @endcond */
 
     /** Wrapper for a CSLConstList that can be used with C++ iterators.
@@ -723,10 +744,12 @@ extern "C++"
     {
         return Iterate(aosList.List());
     }
+
     /*! @endcond */
 
     /*! @cond Doxygen_Suppress */
     inline CSLIteratorWrapper Iterate(char **) = delete;
+
     /*! @endcond */
 
     /*! @cond Doxygen_Suppress */
@@ -743,21 +766,25 @@ extern "C++"
         std::string m_osKey{};
 
         value_type operator*();
+
         inline CSLNameValueIterator &operator++()
         {
             if (m_papszList)
                 ++m_papszList;
             return *this;
         }
+
         inline bool operator==(const CSLNameValueIterator &other) const
         {
             return m_papszList == other.m_papszList;
         }
+
         inline bool operator!=(const CSLNameValueIterator &other) const
         {
             return !(operator==(other));
         }
     };
+
     /*! @endcond */
 
     /** Wrapper for a CSLConstList that can be used with C++ iterators
@@ -815,10 +842,12 @@ extern "C++"
     {
         return IterateNameValue(aosList.List());
     }
+
     /*! @endcond */
 
     /*! @cond Doxygen_Suppress */
     inline CSLIteratorWrapper IterateNameValue(char **) = delete;
+
     /*! @endcond */
 
     /** Converts a CSLConstList to a std::vector<std::string> */

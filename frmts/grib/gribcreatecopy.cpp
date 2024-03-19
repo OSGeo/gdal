@@ -187,6 +187,7 @@ class GRIB2Section3Writer
 
   public:
     GRIB2Section3Writer(VSILFILE *fpIn, GDALDataset *poSrcDSIn);
+
     inline int SplitAndSwap() const
     {
         return nSplitAndSwapColumn;

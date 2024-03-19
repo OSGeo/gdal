@@ -70,12 +70,14 @@ class OGRXLSXLayer final : public OGRMemLayer
     {
         return bUpdated;
     }
+
     void SetUpdated(bool bUpdatedIn = true);
 
     bool GetHasHeaderLine() const
     {
         return bHasHeaderLine;
     }
+
     void SetHasHeaderLine(bool bIn)
     {
         bHasHeaderLine = bIn;
@@ -85,10 +87,12 @@ class OGRXLSXLayer final : public OGRMemLayer
     {
         return OGRMemLayer::GetLayerDefn()->GetName();
     }
+
     OGRwkbGeometryType GetGeomType() override
     {
         return wkbNone;
     }
+
     virtual OGRSpatialReference *GetSpatialRef() override
     {
         return nullptr;
@@ -206,6 +210,7 @@ class XLSXFieldTypeExtended
     XLSXFieldTypeExtended() : eType(OFTMaxType), bHasMS(false)
     {
     }
+
     explicit XLSXFieldTypeExtended(OGRFieldType eTypeIn, bool bHasMSIn = false)
         : eType(eTypeIn), bHasMS(bHasMSIn)
     {
@@ -324,6 +329,7 @@ class OGRXLSXDataSource final : public GDALDataset
     {
         return bUpdatable;
     }
+
     void SetUpdated()
     {
         bUpdated = true;

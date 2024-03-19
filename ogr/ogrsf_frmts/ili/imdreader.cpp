@@ -80,10 +80,12 @@ class IliClass
     {
         return poTableDefn->GetName();
     }
+
     const char *GetIliName()
     {
         return CPLGetXMLValue(node, "TID", nullptr);
     }
+
     char *LayerName()
     {
         const char *psClassTID = GetIliName();
@@ -107,6 +109,7 @@ class IliClass
 
         return CPLStrdup(psClassTID);
     }
+
     void AddFieldNode(CPLXMLNode *nodeIn, int iOrderPos)
     {
         if (iOrderPos < 0 || iOrderPos > 100000)
@@ -123,11 +126,13 @@ class IliClass
 #endif
         oFields[iOrderPos] = nodeIn;
     }
+
     void AddRoleNode(CPLXMLNode *nodeIn, int iOrderPos)
     {
         isAssocClass = true;
         AddFieldNode(nodeIn, iOrderPos);
     }
+
     bool isEmbedded()
     {
         if (isAssocClass)
@@ -142,6 +147,7 @@ class IliClass
             }
         return false;
     }
+
     // Add additional Geometry table for Interlis 1
     void AddGeomTable(const CPLString &layerName, const char *psFieldName,
                       OGRwkbGeometryType eType, bool bRefTIDField = false)
@@ -161,12 +167,14 @@ class IliClass
                  poGeomTableDefn->GetName(), psFieldName);
         poGeomFieldInfos[psFieldName].SetGeomTableDefn(poGeomTableDefn);
     }
+
     void AddField(const char *psName, OGRFieldType fieldType) const
     {
         OGRFieldDefn fieldDef(psName, fieldType);
         poTableDefn->AddFieldDefn(&fieldDef);
         CPLDebug("OGR_ILI", "Adding field '%s' to Class %s", psName, GetName());
     }
+
     void AddGeomField(const char *psName, OGRwkbGeometryType geomType) const
     {
         OGRGeomFieldDefn fieldDef(psName, geomType);
@@ -175,6 +183,7 @@ class IliClass
         CPLDebug("OGR_ILI", "Adding geometry field '%s' to Class %s", psName,
                  GetName());
     }
+
     void AddCoord(const char *psName, const CPLXMLNode *psTypeNode) const
     {
         auto oIter = oAxisCount.find(psTypeNode);
@@ -191,6 +200,7 @@ class IliClass
         OGRwkbGeometryType geomType = (dim > 2) ? wkbPoint25D : wkbPoint;
         AddGeomField(psName, geomType);
     }
+
     OGRFieldType GetFormattedType(CPLXMLNode *nodeIn)
     {
         const char *psRefSuper = CPLGetXMLValue(nodeIn, "Super.REF", nullptr);
@@ -199,6 +209,7 @@ class IliClass
 
         return OFTString;  // TODO: Time, Date, etc. if possible
     }
+
     void InitFieldDefinitions()
     {
         // Delete default geometry field
@@ -385,6 +396,7 @@ class IliClass
             }
         }
     }
+
     FeatureDefnInfo tableDefs()
     {
         FeatureDefnInfo poLayerInfo;

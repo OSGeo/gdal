@@ -68,15 +68,18 @@ struct Square
         Segments() : sz_(0)
         {
         }
+
         Segments(const Segment &first) : sz_(1), segs_()
         {
             segs_[0] = first;
         }
+
         Segments(const Segment &first, const Segment &second) : sz_(2), segs_()
         {
             segs_[0] = first;
             segs_[1] = second;
         }
+
         Segments(const Segment &first, const Segment &second,
                  const Segment &third)
             : sz_(3), segs_()

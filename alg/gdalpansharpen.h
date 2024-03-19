@@ -181,6 +181,7 @@ typedef struct
 } GDALPansharpenResampleJob;
 
 class CPLWorkerThreadPool;
+
 //! @endcond
 
 /** Pansharpening operation class.

@@ -73,6 +73,7 @@ typedef struct ogr_style_value
     GBool bValid;
     OGRSTUnitId eUnit;
 } OGRStyleValue;
+
 //! @endcond
 
 // Every time a pszStyleString given in parameter is NULL,
@@ -195,6 +196,7 @@ class CPL_DLL OGRStyleTool
           m_pszStyleString(nullptr)
     {
     }
+
     explicit OGRStyleTool(OGRSTClassId eClassId);
     virtual ~OGRStyleTool();
 
@@ -207,6 +209,7 @@ class CPL_DLL OGRStyleTool
     {
         return m_bModified;
     }
+
     void StyleModified()
     {
         m_bModified = TRUE;
@@ -216,6 +219,7 @@ class CPL_DLL OGRStyleTool
     {
         return m_bParsed;
     }
+
     void StyleParsed()
     {
         m_bParsed = TRUE;
@@ -297,62 +301,77 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     {
         return GetParamStr(OGRSTPenColor, bDefault);
     }
+
     void SetColor(const char *pszColor)
     {
         SetParamStr(OGRSTPenColor, pszColor);
     }
+
     double Width(GBool &bDefault)
     {
         return GetParamDbl(OGRSTPenWidth, bDefault);
     }
+
     void SetWidth(double dfWidth)
     {
         SetParamDbl(OGRSTPenWidth, dfWidth);
     }
+
     const char *Pattern(GBool &bDefault)
     {
         return GetParamStr(OGRSTPenPattern, bDefault);
     }
+
     void SetPattern(const char *pszPattern)
     {
         SetParamStr(OGRSTPenPattern, pszPattern);
     }
+
     const char *Id(GBool &bDefault)
     {
         return GetParamStr(OGRSTPenId, bDefault);
     }
+
     void SetId(const char *pszId)
     {
         SetParamStr(OGRSTPenId, pszId);
     }
+
     double PerpendicularOffset(GBool &bDefault)
     {
         return GetParamDbl(OGRSTPenPerOffset, bDefault);
     }
+
     void SetPerpendicularOffset(double dfPerp)
     {
         SetParamDbl(OGRSTPenPerOffset, dfPerp);
     }
+
     const char *Cap(GBool &bDefault)
     {
         return GetParamStr(OGRSTPenCap, bDefault);
     }
+
     void SetCap(const char *pszCap)
     {
         SetParamStr(OGRSTPenCap, pszCap);
     }
+
     const char *Join(GBool &bDefault)
     {
         return GetParamStr(OGRSTPenJoin, bDefault);
     }
+
     void SetJoin(const char *pszJoin)
     {
         SetParamStr(OGRSTPenJoin, pszJoin);
     }
+
     int Priority(GBool &bDefault)
     {
         return GetParamNum(OGRSTPenPriority, bDefault);
     }
+
     void SetPriority(int nPriority)
     {
         SetParamNum(OGRSTPenPriority, nPriority);
@@ -391,62 +410,77 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
     {
         return GetParamStr(OGRSTBrushFColor, bDefault);
     }
+
     void SetForeColor(const char *pszColor)
     {
         SetParamStr(OGRSTBrushFColor, pszColor);
     }
+
     const char *BackColor(GBool &bDefault)
     {
         return GetParamStr(OGRSTBrushBColor, bDefault);
     }
+
     void SetBackColor(const char *pszColor)
     {
         SetParamStr(OGRSTBrushBColor, pszColor);
     }
+
     const char *Id(GBool &bDefault)
     {
         return GetParamStr(OGRSTBrushId, bDefault);
     }
+
     void SetId(const char *pszId)
     {
         SetParamStr(OGRSTBrushId, pszId);
     }
+
     double Angle(GBool &bDefault)
     {
         return GetParamDbl(OGRSTBrushAngle, bDefault);
     }
+
     void SetAngle(double dfAngle)
     {
         SetParamDbl(OGRSTBrushAngle, dfAngle);
     }
+
     double Size(GBool &bDefault)
     {
         return GetParamDbl(OGRSTBrushSize, bDefault);
     }
+
     void SetSize(double dfSize)
     {
         SetParamDbl(OGRSTBrushSize, dfSize);
     }
+
     double SpacingX(GBool &bDefault)
     {
         return GetParamDbl(OGRSTBrushDx, bDefault);
     }
+
     void SetSpacingX(double dfX)
     {
         SetParamDbl(OGRSTBrushDx, dfX);
     }
+
     double SpacingY(GBool &bDefault)
     {
         return GetParamDbl(OGRSTBrushDy, bDefault);
     }
+
     void SetSpacingY(double dfY)
     {
         SetParamDbl(OGRSTBrushDy, dfY);
     }
+
     int Priority(GBool &bDefault)
     {
         return GetParamNum(OGRSTBrushPriority, bDefault);
     }
+
     void SetPriority(int nPriority)
     {
         SetParamNum(OGRSTBrushPriority, nPriority);
@@ -487,94 +521,117 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     {
         return GetParamStr(OGRSTSymbolId, bDefault);
     }
+
     void SetId(const char *pszId)
     {
         SetParamStr(OGRSTSymbolId, pszId);
     }
+
     double Angle(GBool &bDefault)
     {
         return GetParamDbl(OGRSTSymbolAngle, bDefault);
     }
+
     void SetAngle(double dfAngle)
     {
         SetParamDbl(OGRSTSymbolAngle, dfAngle);
     }
+
     const char *Color(GBool &bDefault)
     {
         return GetParamStr(OGRSTSymbolColor, bDefault);
     }
+
     void SetColor(const char *pszColor)
     {
         SetParamStr(OGRSTSymbolColor, pszColor);
     }
+
     double Size(GBool &bDefault)
     {
         return GetParamDbl(OGRSTSymbolSize, bDefault);
     }
+
     void SetSize(double dfSize)
     {
         SetParamDbl(OGRSTSymbolSize, dfSize);
     }
+
     double SpacingX(GBool &bDefault)
     {
         return GetParamDbl(OGRSTSymbolDx, bDefault);
     }
+
     void SetSpacingX(double dfX)
     {
         SetParamDbl(OGRSTSymbolDx, dfX);
     }
+
     double SpacingY(GBool &bDefault)
     {
         return GetParamDbl(OGRSTSymbolDy, bDefault);
     }
+
     void SetSpacingY(double dfY)
     {
         SetParamDbl(OGRSTSymbolDy, dfY);
     }
+
     double Step(GBool &bDefault)
     {
         return GetParamDbl(OGRSTSymbolStep, bDefault);
     }
+
     void SetStep(double dfStep)
     {
         SetParamDbl(OGRSTSymbolStep, dfStep);
     }
+
     double Offset(GBool &bDefault)
     {
         return GetParamDbl(OGRSTSymbolOffset, bDefault);
     }
+
     void SetOffset(double dfOffset)
     {
         SetParamDbl(OGRSTSymbolOffset, dfOffset);
     }
+
     double Perp(GBool &bDefault)
     {
         return GetParamDbl(OGRSTSymbolPerp, bDefault);
     }
+
     void SetPerp(double dfPerp)
     {
         SetParamDbl(OGRSTSymbolPerp, dfPerp);
     }
+
     int Priority(GBool &bDefault)
     {
         return GetParamNum(OGRSTSymbolPriority, bDefault);
     }
+
     void SetPriority(int nPriority)
     {
         SetParamNum(OGRSTSymbolPriority, nPriority);
     }
+
     const char *FontName(GBool &bDefault)
     {
         return GetParamStr(OGRSTSymbolFontName, bDefault);
     }
+
     void SetFontName(const char *pszFontName)
     {
         SetParamStr(OGRSTSymbolFontName, pszFontName);
     }
+
     const char *OColor(GBool &bDefault)
     {
         return GetParamStr(OGRSTSymbolOColor, bDefault);
     }
+
     void SetOColor(const char *pszColor)
     {
         SetParamStr(OGRSTSymbolOColor, pszColor);
@@ -615,150 +672,187 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         return GetParamStr(OGRSTLabelFontName, bDefault);
     }
+
     void SetFontName(const char *pszFontName)
     {
         SetParamStr(OGRSTLabelFontName, pszFontName);
     }
+
     double Size(GBool &bDefault)
     {
         return GetParamDbl(OGRSTLabelSize, bDefault);
     }
+
     void SetSize(double dfSize)
     {
         SetParamDbl(OGRSTLabelSize, dfSize);
     }
+
     const char *TextString(GBool &bDefault)
     {
         return GetParamStr(OGRSTLabelTextString, bDefault);
     }
+
     void SetTextString(const char *pszTextString)
     {
         SetParamStr(OGRSTLabelTextString, pszTextString);
     }
+
     double Angle(GBool &bDefault)
     {
         return GetParamDbl(OGRSTLabelAngle, bDefault);
     }
+
     void SetAngle(double dfAngle)
     {
         SetParamDbl(OGRSTLabelAngle, dfAngle);
     }
+
     const char *ForeColor(GBool &bDefault)
     {
         return GetParamStr(OGRSTLabelFColor, bDefault);
     }
+
     void SetForColor(const char *pszForColor)
     {
         SetParamStr(OGRSTLabelFColor, pszForColor);
     }
+
     const char *BackColor(GBool &bDefault)
     {
         return GetParamStr(OGRSTLabelBColor, bDefault);
     }
+
     void SetBackColor(const char *pszBackColor)
     {
         SetParamStr(OGRSTLabelBColor, pszBackColor);
     }
+
     const char *Placement(GBool &bDefault)
     {
         return GetParamStr(OGRSTLabelPlacement, bDefault);
     }
+
     void SetPlacement(const char *pszPlacement)
     {
         SetParamStr(OGRSTLabelPlacement, pszPlacement);
     }
+
     int Anchor(GBool &bDefault)
     {
         return GetParamNum(OGRSTLabelAnchor, bDefault);
     }
+
     void SetAnchor(int nAnchor)
     {
         SetParamNum(OGRSTLabelAnchor, nAnchor);
     }
+
     double SpacingX(GBool &bDefault)
     {
         return GetParamDbl(OGRSTLabelDx, bDefault);
     }
+
     void SetSpacingX(double dfX)
     {
         SetParamDbl(OGRSTLabelDx, dfX);
     }
+
     double SpacingY(GBool &bDefault)
     {
         return GetParamDbl(OGRSTLabelDy, bDefault);
     }
+
     void SetSpacingY(double dfY)
     {
         SetParamDbl(OGRSTLabelDy, dfY);
     }
+
     double Perp(GBool &bDefault)
     {
         return GetParamDbl(OGRSTLabelPerp, bDefault);
     }
+
     void SetPerp(double dfPerp)
     {
         SetParamDbl(OGRSTLabelPerp, dfPerp);
     }
+
     GBool Bold(GBool &bDefault)
     {
         return GetParamNum(OGRSTLabelBold, bDefault);
     }
+
     void SetBold(GBool bBold)
     {
         SetParamNum(OGRSTLabelBold, bBold);
     }
+
     GBool Italic(GBool &bDefault)
     {
         return GetParamNum(OGRSTLabelItalic, bDefault);
     }
+
     void SetItalic(GBool bItalic)
     {
         SetParamNum(OGRSTLabelItalic, bItalic);
     }
+
     GBool Underline(GBool &bDefault)
     {
         return GetParamNum(OGRSTLabelUnderline, bDefault);
     }
+
     void SetUnderline(GBool bUnderline)
     {
         SetParamNum(OGRSTLabelUnderline, bUnderline);
     }
+
     int Priority(GBool &bDefault)
     {
         return GetParamNum(OGRSTLabelPriority, bDefault);
     }
+
     void SetPriority(int nPriority)
     {
         SetParamNum(OGRSTLabelPriority, nPriority);
     }
+
     GBool Strikeout(GBool &bDefault)
     {
         return GetParamNum(OGRSTLabelStrikeout, bDefault);
     }
+
     void SetStrikeout(GBool bStrikeout)
     {
         SetParamNum(OGRSTLabelStrikeout, bStrikeout);
     }
+
     double Stretch(GBool &bDefault)
     {
         return GetParamDbl(OGRSTLabelStretch, bDefault);
     }
+
     void SetStretch(double dfStretch)
     {
         SetParamDbl(OGRSTLabelStretch, dfStretch);
     }
+
     const char *ShadowColor(GBool &bDefault)
     {
         return GetParamStr(OGRSTLabelHColor, bDefault);
     }
+
     void SetShadowColor(const char *pszShadowColor)
     {
         SetParamStr(OGRSTLabelHColor, pszShadowColor);
     }
+
     const char *OutlineColor(GBool &bDefault)
     {
         return GetParamStr(OGRSTLabelOColor, bDefault);
     }
+
     void SetOutlineColor(const char *pszOutlineColor)
     {
         SetParamStr(OGRSTLabelOColor, pszOutlineColor);

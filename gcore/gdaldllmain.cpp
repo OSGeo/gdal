@@ -71,6 +71,7 @@ void CPLFinalizeTLS();
  */
 
 static bool bGDALDestroyAlreadyCalled = FALSE;
+
 void GDALDestroy(void)
 {
     if (bGDALDestroyAlreadyCalled)

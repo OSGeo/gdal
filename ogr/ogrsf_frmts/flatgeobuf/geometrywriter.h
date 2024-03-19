@@ -72,6 +72,7 @@ class GeometryWriter
     {
         return GeometryWriter(m_fbb, part, m_hasZ, m_hasM).write(depth);
     }
+
     const flatbuffers::Offset<FlatGeobuf::Geometry>
     writePart(const OGRGeometry *part,
               const FlatGeobuf::GeometryType geometryType, int depth)
@@ -89,6 +90,7 @@ class GeometryWriter
           m_hasZ(hasZ), m_hasM(hasM)
     {
     }
+
     GeometryWriter(flatbuffers::FlatBufferBuilder &fbb,
                    const OGRGeometry *ogrGeometry, const bool hasZ,
                    const bool hasM)
@@ -98,6 +100,7 @@ class GeometryWriter
           m_hasZ(hasZ), m_hasM(hasM)
     {
     }
+
     const flatbuffers::Offset<FlatGeobuf::Geometry> write(int depth);
     static FlatGeobuf::GeometryType
     translateOGRwkbGeometryType(const OGRwkbGeometryType eGType);

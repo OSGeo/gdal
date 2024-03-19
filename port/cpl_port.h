@@ -599,22 +599,27 @@ extern "C++"
     {
         return std::isnan(f);
     }
+
     static inline int CPLIsNan(double f)
     {
         return std::isnan(f);
     }
+
     static inline int CPLIsInf(float f)
     {
         return std::isinf(f);
     }
+
     static inline int CPLIsInf(double f)
     {
         return std::isinf(f);
     }
+
     static inline int CPLIsFinite(float f)
     {
         return std::isfinite(f);
     }
+
     static inline int CPLIsFinite(double f)
     {
         return std::isfinite(f);
@@ -632,22 +637,27 @@ extern "C++"
     {
         return __isnanf(f);
     }
+
     static inline int CPLIsNan(double f)
     {
         return __isnan(f);
     }
+
     static inline int CPLIsInf(float f)
     {
         return __isinff(f);
     }
+
     static inline int CPLIsInf(double f)
     {
         return __isinf(f);
     }
+
     static inline int CPLIsFinite(float f)
     {
         return !__isnanf(f) && !__isinff(f);
     }
+
     static inline int CPLIsFinite(double f)
     {
         return !__isnan(f) && !__isinf(f);
@@ -703,6 +713,7 @@ extern "C++"
     template <bool b> struct CPLStaticAssert
     {
     };
+
     template <> struct CPLStaticAssert<true>
     {
         static void my_function()
@@ -1082,6 +1093,7 @@ extern "C++"
     template <class T> static void CPL_IGNORE_RET_VAL(const T &)
     {
     }
+
     inline static bool CPL_TO_BOOL(int x)
     {
         return x != 0;

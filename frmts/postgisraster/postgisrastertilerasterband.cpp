@@ -182,6 +182,7 @@ CPLErr PostGISRasterTileRasterBand::IReadBlock(int /*nBlockXOff*/,
             CPLFree(x);
         }
     };
+
     std::unique_ptr<GByte, CPLFreer> pbyDataAutoFreed(
         CPLHexToBinary(PQgetvalue(poResult, 0, 0), &nWKBLength));
     GByte *pbyData = pbyDataAutoFreed.get();

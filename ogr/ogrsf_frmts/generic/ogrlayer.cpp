@@ -516,6 +516,7 @@ int OGRLayer::AttributeFilterEvaluationNeedsGeometry()
 
     return ContainGeomSpecialField(expr, nLayerFieldCount);
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1509,6 +1510,7 @@ void OGR_L_SetSpatialFilterEx(OGRLayerH hLayer, int iGeomField,
     OGRLayer::FromHandle(hLayer)->SetSpatialFilter(
         iGeomField, OGRGeometry::FromHandle(hGeom));
 }
+
 /************************************************************************/
 /*                        SetSpatialFilterRect()                        */
 /************************************************************************/
@@ -1672,6 +1674,7 @@ int OGRLayer::InstallFilter(OGRGeometry *poFilter)
 
     return TRUE;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1925,6 +1928,7 @@ OGRErr OGRLayer::InitializeIndexSupport(const char *pszFilename)
 
     return eErr;
 }
+
 //! @endcond
 
 /************************************************************************/
@@ -1990,6 +1994,7 @@ GIntBig OGRLayer::GetFeaturesRead()
 {
     return m_nFeaturesRead;
 }
+
 //! @endcond
 
 /************************************************************************/

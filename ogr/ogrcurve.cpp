@@ -61,6 +61,7 @@ OGRCurve &OGRCurve::operator=(const OGRCurve &other)
     }
     return *this;
 }
+
 //! @endcond
 
 /************************************************************************/

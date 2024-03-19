@@ -312,6 +312,7 @@ TEST_F(test_osr_ct, Clone_with_ct)
 
     test_clone(poCT.get(), nullptr, nullptr, 90, 200);
 }
+
 // Test OGRCoordinateTransformation::Clone() with WebMercator->WGS84 special
 // case
 TEST_F(test_osr_ct, Clone_WebMercator_to_WGS84)

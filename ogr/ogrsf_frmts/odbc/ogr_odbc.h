@@ -140,6 +140,7 @@ class OGRODBCTableLayer final : public OGRODBCLayer
     {
         bLaunderColumnNames = bFlag;
     }
+
     void SetPrecisionFlag(int bFlag)
     {
         bPreservePrecision = bFlag;
@@ -170,6 +171,7 @@ class OGRODBCSelectLayer final : public OGRODBCLayer
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
     {
@@ -222,10 +224,12 @@ class OGRODBCDataSource final : public OGRDataSource
     {
         return pszName;
     }
+
     int GetLayerCount() override
     {
         return nLayers;
     }
+
     OGRLayer *GetLayer(int) override;
     OGRLayer *GetLayerByName(const char *) override;
     bool IsLayerPrivate(int) const override;

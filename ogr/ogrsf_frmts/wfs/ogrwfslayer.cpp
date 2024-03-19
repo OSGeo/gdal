@@ -343,6 +343,7 @@ OGRFeatureDefn *OGRWFSLayer::ParseSchema(const CPLXMLNode *psSchema)
 
     return nullptr;
 }
+
 /************************************************************************/
 /*                   BuildLayerDefnFromFeatureClass()                   */
 /************************************************************************/
@@ -1746,6 +1747,7 @@ GIntBig OGRWFSLayer::ExecuteGetFeatureResultTypeHits()
 
     return l_nFeatures;
 }
+
 /************************************************************************/
 /*              CanRunGetFeatureCountAndGetExtentTogether()             */
 /************************************************************************/
@@ -2412,6 +2414,7 @@ OGRErr OGRWFSLayer::ISetFeature(OGRFeature *poFeature)
 
     return OGRERR_NONE;
 }
+
 /************************************************************************/
 /*                               GetFeature()                           */
 /************************************************************************/

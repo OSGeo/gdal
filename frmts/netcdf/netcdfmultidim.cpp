@@ -68,16 +68,20 @@ class netCDFSharedResources
     {
         return m_cdfid;
     }
+
     inline bool IsReadOnly() const
     {
         return m_bReadOnly;
     }
+
     inline bool IsNC4() const
     {
         return m_bIsNC4;
     }
+
     bool SetDefineMode(bool bNewDefineMode);
     int GetBelongingGroupOfDim(int startgid, int dimid);
+
     inline bool GetImappIsInElements() const
     {
         return m_bImappIsInElements;
@@ -87,6 +91,7 @@ class netCDFSharedResources
     {
         m_bIsInIndexingVariable = b;
     }
+
     bool GetIsInIndexingVariable() const
     {
         return m_bIsInIndexingVariable;
@@ -210,6 +215,7 @@ class netCDFAttributeHolder CPL_NON_FINAL
     {
         m_oMapAttributes[poAttr->GetName()] = poAttr;
     }
+
     void UnRegisterAttribute(GDALAttribute *poAttr)
     {
         m_oMapAttributes.erase(poAttr->GetName());
@@ -242,6 +248,7 @@ class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
     {
         m_oSetGroups.insert(poSubGroup);
     }
+
     void UnRegisterSubGroup(GDALGroup *poSubGroup)
     {
         m_oSetGroups.erase(poSubGroup);
@@ -249,20 +256,24 @@ class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
 
   protected:
     friend class netCDFDimension;
+
     void RegisterDimension(GDALDimension *poDim)
     {
         m_oSetDimensions.insert(poDim);
     }
+
     void UnRegisterDimension(GDALDimension *poDim)
     {
         m_oSetDimensions.erase(poDim);
     }
 
     friend class netCDFVariable;
+
     void RegisterArray(GDALMDArray *poArray)
     {
         m_oSetArrays.insert(poArray);
     }
+
     void UnRegisterArray(GDALMDArray *poArray)
     {
         m_oSetArrays.erase(poArray);
@@ -675,6 +686,7 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
     {
         return m_gid;
     }
+
     int GetVarId() const
     {
         return m_varid;
@@ -2916,10 +2928,12 @@ namespace
 template <typename T> struct GetGByteType
 {
 };
+
 template <> struct GetGByteType<void *>
 {
     typedef GByte *type;
 };
+
 template <> struct GetGByteType<const void *>
 {
     typedef const GByte *type;

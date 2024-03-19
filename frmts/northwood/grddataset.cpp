@@ -46,6 +46,7 @@ constexpr double SCALE16BIT = 65534.0;
 constexpr double SCALE32BIT = 4294967294.0;
 
 void replaceExt(std::string &s, const std::string &newExt);
+
 /************************************************************************/
 /* Replace the extension on a filepath with an alternative extension    */
 /************************************************************************/
