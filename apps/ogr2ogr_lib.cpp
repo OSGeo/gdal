@@ -5658,7 +5658,8 @@ bool LayerTranslator::TranslateArrow(
         }
 
         // Limit number of features in batch if needed
-        if (psOptions->nLimit >= 0 && nCount + array.length > psOptions->nLimit)
+        if (psOptions->nLimit >= 0 &&
+            nCount + array.length >= psOptions->nLimit)
         {
             const auto nAdjustedLength = psOptions->nLimit - nCount;
             for (int i = 0; i < array.n_children; ++i)
@@ -5707,6 +5708,47 @@ bool LayerTranslator::TranslateArrow(
     }
 
     schema.release(&schema);
+
+    // Ugly hack to work around https://github.com/OSGeo/gdal/issues/9497
+    // Deleting a RecordBatchReader obtained from arrow::dataset::Scanner.ToRecordBatchReader()
+    // is a lengthy operation since all batches are read in its destructors.
+    // Here we ask to our custom I/O layer to return in error to short circuit
+    // that lengthy operation.
+    if (auto poDS = psInfo->m_poSrcLayer->GetDataset())
+    {
+        if (poDS->GetLayerCount() == 1 && poDS->GetDriver() &&
+            EQUAL(poDS->GetDriver()->GetDescription(), "PARQUET"))
+        {
+            bool bStopIO = false;
+            const char *pszArrowStopIO =
+                CPLGetConfigOption("OGR_ARROW_STOP_IO", nullptr);
+            if (pszArrowStopIO && CPLTestBool(pszArrowStopIO))
+            {
+                bStopIO = true;
+            }
+            else if (!pszArrowStopIO)
+            {
+                std::string osExePath;
+                osExePath.resize(1024);
+                if (CPLGetExecPath(osExePath.data(),
+                                   static_cast<int>(osExePath.size())))
+                {
+                    osExePath.resize(strlen(osExePath.data()));
+                    if (strcmp(CPLGetBasename(osExePath.data()), "ogr2ogr") ==
+                        0)
+                    {
+                        bStopIO = true;
+                    }
+                }
+            }
+            if (bStopIO)
+            {
+                CPLSetConfigOption("OGR_ARROW_STOP_IO", "YES");
+                CPLDebug("OGR2OGR", "Forcing interruption of Parquet I/O");
+            }
+        }
+    }
+
     stream.release(&stream);
     return bRet;
 }
