@@ -266,7 +266,7 @@ static GDALDatasetH GDALWarpCreateOutput(
     GDALWarpAppOptions *psOptions);
 
 static void RemoveConflictingMetadata(GDALMajorObjectH hObj,
-                                      char **papszMetadata,
+                                      CSLConstList papszMetadata,
                                       const char *pszValueConflict);
 
 static bool GetResampleAlg(const char *pszResampling,
@@ -5267,40 +5267,25 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
 }
 
 static void RemoveConflictingMetadata(GDALMajorObjectH hObj,
-                                      char **papszMetadata,
+                                      CSLConstList papszSrcMetadata,
                                       const char *pszValueConflict)
 {
     if (hObj == nullptr)
         return;
 
-    char **papszMetadataRef = CSLDuplicate(papszMetadata);
-    int nCount = CSLCount(papszMetadataRef);
-
-    for (int i = 0; i < nCount; i++)
+    for (const auto &[pszKey, pszValue] :
+         cpl::IterateNameValue(papszSrcMetadata))
     {
-        char *pszKey = nullptr;
-        const char *pszValueRef =
-            CPLParseNameValue(papszMetadataRef[i], &pszKey);
-        if (pszKey != nullptr)
+        const char *pszValueComp = GDALGetMetadataItem(hObj, pszKey, nullptr);
+        if (pszValueComp == nullptr || (!EQUAL(pszValue, pszValueComp) &&
+                                        !EQUAL(pszValueComp, pszValueConflict)))
         {
-            const char *pszValueComp =
-                GDALGetMetadataItem(hObj, pszKey, nullptr);
-            if ((pszValueRef == nullptr || pszValueComp == nullptr ||
-                 !EQUAL(pszValueRef, pszValueComp)) &&
-                (pszValueComp == nullptr ||
-                 !EQUAL(pszValueComp, pszValueConflict)))
-            {
-                if (STARTS_WITH(pszKey, "STATISTICS_"))
-                    GDALSetMetadataItem(hObj, pszKey, nullptr, nullptr);
-                else
-                    GDALSetMetadataItem(hObj, pszKey, pszValueConflict,
-                                        nullptr);
-            }
-            CPLFree(pszKey);
+            if (STARTS_WITH(pszKey, "STATISTICS_"))
+                GDALSetMetadataItem(hObj, pszKey, nullptr, nullptr);
+            else
+                GDALSetMetadataItem(hObj, pszKey, pszValueConflict, nullptr);
         }
     }
-
-    CSLDestroy(papszMetadataRef);
 }
 
 /************************************************************************/

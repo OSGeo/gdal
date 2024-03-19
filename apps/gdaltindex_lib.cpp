@@ -699,14 +699,11 @@ GDALDatasetH GDALTileIndex(const char *pszDest, int nSrcCount,
         {
             poLayer->SetMetadataItem("MASK_BAND", "YES");
         }
-        for (const auto &osNameValue : psOptions->aosMetadata)
+        const CPLStringList aosMetadata(psOptions->aosMetadata);
+        for (const auto &[pszKey, pszValue] :
+             cpl::IterateNameValue(aosMetadata))
         {
-            char *pszKey = nullptr;
-            const char *pszValue =
-                CPLParseNameValue(osNameValue.c_str(), &pszKey);
-            if (pszKey && pszValue)
-                poLayer->SetMetadataItem(pszKey, pszValue);
-            CPLFree(pszKey);
+            poLayer->SetMetadataItem(pszKey, pszValue);
         }
     }
 

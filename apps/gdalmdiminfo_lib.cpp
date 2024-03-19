@@ -715,21 +715,20 @@ static void DumpStructuralInfo(CSLConstList papszStructuralInfo,
                                CPLJSonStreamingWriter &serializer)
 {
     auto objectContext(serializer.MakeObjectContext());
-    for (int i = 0; papszStructuralInfo && papszStructuralInfo[i]; ++i)
+    int i = 1;
+    for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(
+             papszStructuralInfo, /* bReturnNullKeyIfNotNameValue = */ true))
     {
-        char *pszKey = nullptr;
-        const char *pszValue =
-            CPLParseNameValue(papszStructuralInfo[i], &pszKey);
         if (pszKey)
         {
             serializer.AddObjKey(pszKey);
         }
         else
         {
-            serializer.AddObjKey(CPLSPrintf("metadata_%d", i + 1));
+            serializer.AddObjKey(CPLSPrintf("metadata_%d", i));
+            ++i;
         }
         serializer.Add(pszValue);
-        CPLFree(pszKey);
     }
 }
 
