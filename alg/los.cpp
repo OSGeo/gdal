@@ -155,8 +155,10 @@ static bool IsAboveTerrain(const GDALRasterBandH hBand, const int x,
  * Check Line of Sight between two points.
  * Both input coordinates must be within the raster coordinate bounds.
  *
- * This algorithm will check line of sight using a 3D Bresenham algorithm.
+ * This algorithm will check line of sight using a Bresenham algorithm.
  * https://www.researchgate.net/publication/2411280_Efficient_Line-of-Sight_Algorithms_for_Real_Terrain_Data
+ * Line of sight is computed in raster coordinate space, and thus may not be appropriate.
+ * For example, datasets referenced against geographic coordinate at high latitudes may have issues.
  *
  * @param hBand The band to read the DEM data from. This must NOT be null.
  * 
