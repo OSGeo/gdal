@@ -357,7 +357,7 @@ GDALDatasetH CPL_DLL GDALViewshedGenerate(
     CSLConstList papszExtraOptions);
 
 bool CPL_DLL GDALIsLineOfSightVisible(
-    const GDALRasterBandH, const double xA, const double yA, const double zA, const double xB, const double yB, const double zB, const char** papszOptions);
+    const GDALRasterBandH, const int xA, const int yA, const double zA, const int xB, const int yB, const double zB, const char** papszOptions);
 
 /************************************************************************/
 /*      Rasterizer API - geometries burned into GDAL raster.            */

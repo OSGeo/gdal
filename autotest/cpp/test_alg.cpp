@@ -278,7 +278,7 @@ TEST_F(test_alg, GDALAutoCreateWarpedVRT_alpha_band)
 // Test GDALIsLineOfSightVisible() reject null dataset
 TEST_F(test_alg, GDALIsLineOfSightVisible_null_dataset)
 {
-    EXPECT_FALSE(GDALIsLineOfSightVisible(nullptr, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(nullptr, 0, 0, 0.0, 0, 0, 0.0, nullptr));
 }
 
 // Test GDALIsLineOfSightVisible() with single point dataset
@@ -296,11 +296,11 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_single_point_dataset)
     ASSERT_TRUE(pBand != nullptr);
     ASSERT_TRUE(poDS->RasterIO(GF_Write, 0, 0, 1, 1, &val, 1, 1, GDT_Int8, 1, nullptr, 0, 0, 0, nullptr) == CE_None);
     // Both points below terrain
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 0, 0.0, 0, 0, 0.0, nullptr));
     // One point below terrain
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0.0, 0.0, 0.0, 0.0, 0.0, 43.0, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 0, 0.0, 0, 0, 43.0, nullptr));
     // Both points above terrain
-    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 0.0, 0.0, 44.0, 0.0, 0.0, 43.0, nullptr));
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 0, 0, 44.0, 0, 0, 43.0, nullptr));
 }
 
 // Test GDALIsLineOfSightVisible() with 10x10 default dataset
@@ -316,10 +316,10 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_default_square_dataset)
     auto pBand = poDS->GetRasterBand(1);
     ASSERT_TRUE(pBand != nullptr);
 
-    const double x1 = 1.0;
-    const double y1 = 1.0;
-    const double x2 = 2.0;
-    const double y2 = 2.0;
+    const double x1 = 1;
+    const double y1 = 1;
+    const double x2 = 2;
+    const double y2 = 2;
     
     // Both points are above terrain.
     EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, x1, y1, 1.0, x2, y2, 1.0, nullptr));

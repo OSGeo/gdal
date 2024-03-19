@@ -154,14 +154,6 @@ bool IsAboveTerrain(const GDALRasterBandH hBand, const int x, const int y, const
     }
 }
 
-bool IsAboveTerrain(const GDALRasterBandH hBand, const double x, const double y, const double z)
-{
-    const int iX = static_cast<int>(x);
-    const int iY = static_cast<int>(y);
-    return IsAboveTerrain(hBand, iX, iY, z);
-}
-
-
 /************************************************************************/
 /*                        GDALIsLineOfSightVisible()                    */
 /************************************************************************/
@@ -183,7 +175,7 @@ bool IsAboveTerrain(const GDALRasterBandH hBand, const double x, const double y,
  */
 
 bool GDALIsLineOfSightVisible(
-    const GDALRasterBandH hBand, const double xA, const double yA, const double zA, const double xB, const double yB, const double zB, const char** papszOptions)
+    const GDALRasterBandH hBand, const int xA, const int yA, const double zA, const int xB, const int yB, const double zB, const char** papszOptions)
 {
     if(hBand == nullptr) {
         return false;
@@ -198,13 +190,8 @@ bool GDALIsLineOfSightVisible(
         return false;
     }
 
-    const auto xAi = static_cast<int>(xA);
-    const auto yAi = static_cast<int>(yA);
-    const auto xBi = static_cast<int>(xB);
-    const auto yBi = static_cast<int>(yB);
-
     // If both X and Y are the same, no further checks are needed.
-    if(xAi == xBi && yAi == yBi) {
+    if(xA == xB && yA == yB) {
         return true;
     }
 
@@ -231,10 +218,7 @@ bool GDALIsLineOfSightVisible(
         return IsAboveTerrain(hBand, x, y, z);
     };
 
-    return Bresenham2D(
-        static_cast<int>(xA),
-        static_cast<int>(yA),
-        static_cast<int>(xB),
-        static_cast<int>(yB),
-        OnBresenhamPoint);
+    return Bresenham2D(xA, yA, xB, yB, OnBresenhamPoint);
 }
+
+
