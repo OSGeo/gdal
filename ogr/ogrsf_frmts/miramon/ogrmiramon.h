@@ -153,10 +153,12 @@ class OGRMiraMonDataSource final : public OGRDataSource
     {
         return pszDSName;
     }
+
     int GetLayerCount() override
     {
         return nLayers;
     }
+
     OGRLayer *GetLayer(int) override;
 
     OGRLayer *ICreateLayer(const char *pszLayerName,

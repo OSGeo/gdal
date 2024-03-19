@@ -2342,6 +2342,7 @@ static void MMDestroyMMAdmDB(struct MMAdmDatabase *pMMAdmDB)
         pMMAdmDB->nNumRecordOnCourse = 0;
     }
 }
+
 static int MMDestroyPointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 {
     if (!hMiraMonLayer)

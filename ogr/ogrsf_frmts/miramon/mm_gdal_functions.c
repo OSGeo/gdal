@@ -481,6 +481,7 @@ MM_InitializeOffsetExtendedFieldNameFields(struct MM_DATA_BASE_XP *bd_xp,
                MM_OFFSET_RESERVAT2_OFFSET_NOM_ESTES,
            0, 4);
 }
+
 static void
 MM_InitializeBytesExtendedFieldNameFields(struct MM_DATA_BASE_XP *bd_xp,
                                           MM_EXT_DBF_N_FIELDS i_camp)
@@ -1695,6 +1696,7 @@ char *MM_strnzcpy(char *dest, const char *src, size_t maxlen)
 
     return dest;
 }
+
 /*
 char *MM_strnzcpy(char *dest, const char *src, size_t maxlen)
 {
