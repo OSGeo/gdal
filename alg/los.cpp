@@ -128,11 +128,6 @@ bool Bresenham2D(int x1, int y1, int x2, int y2, std::function< auto(int, int) -
 // Get the elevation of a single point.
 bool GetElevation(const GDALRasterBandH hBand, const int x, const int y, double& val)
 {
-    CPLAssert(x >= 0);
-    CPLAssert(x <= GDALGetRasterBandXSize(hBand));
-    CPLAssert(y >= 0);
-    CPLAssert(y <= GDALGetRasterBandYSize(hBand));
-
     return GDALRasterIO(hBand, GF_Read, x, y, 1, 1, &val, 1, 1, GDT_Float64, 0, 0) == CE_None;
 }
 
