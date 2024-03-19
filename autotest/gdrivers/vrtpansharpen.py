@@ -916,7 +916,12 @@ def test_vrtpansharpen_2():
     assert vrt_ds.GetFileList() == ["tmp/small_world_pan.tif", "data/small_world.tif"]
     assert vrt_ds.GetRasterBand(1).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") is None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
-    assert cs in ([4735, 10000, 9742], [4731, 9991, 9734])
+    expected_cs = (
+        [4735, 10000, 9742],
+        [4731, 9991, 9734],
+        [4726, 10004, 9727],  # ICC 2004.0.2 in -O3
+    )
+    assert cs in expected_cs
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
     assert vrt_ds.GetRasterBand(1).GetOverview(-1) is None
     assert vrt_ds.GetRasterBand(1).GetOverview(0) is None
@@ -926,7 +931,7 @@ def test_vrtpansharpen_2():
     tmp_ds = gdal.GetDriverByName("MEM").Create("", 800, 400, 3)
     tmp_ds.WriteRaster(0, 0, 800, 400, data)
     cs = [tmp_ds.GetRasterBand(i + 1).Checksum() for i in range(tmp_ds.RasterCount)]
-    assert cs in ([4735, 10000, 9742], [4731, 9991, 9734])
+    assert cs in expected_cs
 
     # Check VRTPansharpenedDataset::IRasterIO() in resampling case
     data = vrt_ds.ReadRaster(0, 0, 800, 400, 400, 200)
@@ -958,7 +963,7 @@ def test_vrtpansharpen_2():
     )
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
-    assert cs in ([4735, 10000, 9742], [4731, 9991, 9734])
+    assert cs in expected_cs
 
     # Expose pan band too
     vrt_ds = gdal.Open(
@@ -1010,7 +1015,11 @@ def test_vrtpansharpen_2():
     assert vrt_ds is not None
     # gdal.GetDriverByName('GTiff').CreateCopy('out1.tif', vrt_ds)
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
-    assert cs in ([50261, 4735, 10000, 9742], [50261, 4731, 9991, 9734])
+    assert cs in (
+        [50261, 4735, 10000, 9742],
+        [50261, 4731, 9991, 9734],
+        [50261, 4726, 10004, 9727],  # ICC 2004.0.2 in -O3
+    )
 
     # Same, but everything scrambled, and with spectral bands not in
     # the same dataset
@@ -1063,7 +1072,11 @@ def test_vrtpansharpen_2():
     assert vrt_ds is not None
     # gdal.GetDriverByName('GTiff').CreateCopy('out2.tif', vrt_ds)
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
-    assert cs in ([50261, 4735, 10000, 9742], [50261, 4727, 9998, 9732])
+    assert cs in (
+        [50261, 4735, 10000, 9742],
+        [50261, 4727, 9998, 9732],
+        [50261, 4729, 10004, 9727],  # ICC 2004.0.2 in -O3
+    )
 
 
 ###############################################################################
@@ -1117,7 +1130,11 @@ def test_vrtpansharpen_3():
         vrt_ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
         for i in range(vrt_ds.RasterCount)
     ]
-    assert cs in ([18033, 18395, 16824], [18033, 18395, 16822])
+    assert cs in (
+        [18033, 18395, 16824],
+        [18033, 18395, 16822],
+        [18032, 18399, 16825],  # ICC 2004.0.2 in -O3
+    )
 
     vrt_ds = None
 
@@ -1202,9 +1219,9 @@ def test_vrtpansharpen_4():
         tmp_ds.WriteRaster(0, 0, 800, 400, data)
         cs = tmp_ds.GetRasterBand(1).Checksum()
         if dt == gdal.GDT_CFloat64:
-            expected_cs = [4724, 4720]
+            expected_cs = [4724, 4720, 4756]  # ICC 2004.0.2 in -O3
         else:
-            expected_cs = [4735, 4731]
+            expected_cs = [4735, 4731, 4726]  # ICC 2004.0.2 in -O3
         assert cs in expected_cs, gdal.GetDataTypeName(dt)
 
 
@@ -1295,7 +1312,11 @@ def test_vrtpansharpen_5():
         tmp_ds.WriteRaster(0, 0, 800, 400, data)
         cs = tmp_ds.GetRasterBand(1).Checksum()
         if dt == gdal.GDT_UInt16:
-            assert cs in (4553, 4549), gdal.GetDataTypeName(dt)
+            assert cs in (
+                4553,
+                4549,
+                4544,  # ICC 2004.0.2 in -O3
+            ), gdal.GetDataTypeName(dt)
         else:
             assert cs == 4450, gdal.GetDataTypeName(dt)
 
@@ -2069,7 +2090,12 @@ def test_vrtpansharpen_11():
     )
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
-    assert cs in ([4735, 10000, 9742], [4731, 9991, 9734])
+    expected_cs = (
+        [4735, 10000, 9742],
+        [4731, 9991, 9734],
+        [4726, 10004, 9727],  # ICC 2004.0.2 in -O3
+    )
+    assert cs in expected_cs
 
     # Also test with completely anonymous datasets
     pan_mem_ds = gdal.GetDriverByName("MEM").CreateCopy("", pan_ds)
@@ -2093,7 +2119,7 @@ def test_vrtpansharpen_11():
     )
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
-    assert cs in ([4735, 10000, 9742], [4731, 9991, 9734])
+    assert cs in expected_cs
     vrt_ds = None
 
     # Check that wrapping with VRT works (when gt are not compatible)
