@@ -356,6 +356,9 @@ GDALDatasetH CPL_DLL GDALViewshedGenerate(
     void *pProgressArg, GDALViewshedOutputType heightMode,
     CSLConstList papszExtraOptions);
 
+bool CPL_DLL GDALIsLineOfSightVisible(GDALRasterBandH, double xA, double yA, double zA, double xB, double yB, double zB, char** papszOptions);
+
+
 /************************************************************************/
 /*      Rasterizer API - geometries burned into GDAL raster.            */
 /************************************************************************/

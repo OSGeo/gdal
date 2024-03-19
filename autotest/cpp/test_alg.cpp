@@ -273,4 +273,32 @@ TEST_F(test_alg, GDALAutoCreateWarpedVRT_alpha_band)
     GDALClose(hWarpedVRT);
 }
 
+// Test GDALIsLineOfSightVisible() reject null dataset
+TEST_F(test_alg, GDALIsLineOfSightVisible_null_dataset)
+{
+    EXPECT_FALSE(GDALIsLineOfSightVisible(nullptr, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, nullptr));
+}
+
+// Test GDALIsLineOfSightVisible() with single point dataset
+TEST_F(test_alg, GDALIsLineOfSightVisible_single_point_dataset)
+{
+    auto const sizeX = 1;
+    auto const sizeY = 1;
+    auto const numBands = 1;
+    GDALDatasetUniquePtr poDS(GDALDriver::FromHandle(GDALGetDriverByName("MEM"))
+        ->Create("", sizeX, sizeY, numBands, GDT_Byte, nullptr));
+    ASSERT_TRUE(poDS != nullptr);
+
+    uint8_t val = 42;
+    auto pBand = poDS->GetRasterBand(1);
+    ASSERT_TRUE(pBand != nullptr);
+    ASSERT_TRUE(poDS->RasterIO(GF_Write, 0, 0, 1, 1, &val, 1, 1, GDT_Byte, 1, nullptr, 0, 0, 0, nullptr) == CE_None);
+    // Both points below terrain
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, nullptr));
+    // One point below terrain
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0.0, 0.0, 0.0, 0.0, 0.0, 43.0, nullptr));
+    // // Both points above terrain
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 0.0, 0.0, 44.0, 0.0, 0.0, 43.0, nullptr));
+}
+
 }  // namespace
