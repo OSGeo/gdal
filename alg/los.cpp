@@ -86,7 +86,7 @@ bool Bresenham2D(int x1, int y1, int x2, int y2, std::function< auto(int, int) -
 	{
 		dy <<= 1;
 		balance = dy - dx;
-		dx <<= 1;
+		dx *= 2;
 
 		while (x != x2 && isAboveTerrain)
 		{
@@ -104,9 +104,9 @@ bool Bresenham2D(int x1, int y1, int x2, int y2, std::function< auto(int, int) -
 	}
 	else
 	{
-		dx <<= 1;
+		dx *= 2;
 		balance = dx - dy;
-		dy <<= 1;
+		dy *= 2;
 
 		while (y != y2  && isAboveTerrain)
 		{
