@@ -2615,25 +2615,21 @@ CPLErr VRTSourcedRasterBand::SetMetadata(char **papszNewMD,
             nSources = 0;
         }
 
-        for (int i = 0; i < CSLCount(papszNewMD); i++)
+        for (const char *const pszMDItem :
+             cpl::Iterate(CSLConstList(papszNewMD)))
         {
-            const char *const pszXML =
-                CPLParseNameValue(papszNewMD[i], nullptr);
-
-            CPLXMLNode *const psTree = CPLParseXMLString(pszXML);
-            if (psTree == nullptr)
+            const char *const pszXML = CPLParseNameValue(pszMDItem, nullptr);
+            CPLXMLTreeCloser psTree(CPLParseXMLString(pszXML));
+            if (!psTree)
                 return CE_Failure;
 
             auto l_poDS = dynamic_cast<VRTDataset *>(GetDataset());
             if (l_poDS == nullptr)
             {
-                CPLDestroyXMLNode(psTree);
                 return CE_Failure;
             }
             VRTSource *const poSource = poDriver->ParseSource(
-                psTree, nullptr, l_poDS->m_oMapSharedSources);
-            CPLDestroyXMLNode(psTree);
-
+                psTree.get(), nullptr, l_poDS->m_oMapSharedSources);
             if (poSource == nullptr)
                 return CE_Failure;
 

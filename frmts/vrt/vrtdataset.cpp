@@ -975,59 +975,49 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
     }
 
     // Parse query string, get args required for initial Open()
-    CPLStringList aosTokens(CSLTokenizeString2(osQueryString, "&", 0));
+    const CPLStringList aosTokens(CSLTokenizeString2(osQueryString, "&", 0));
     CPLStringList aosAllowedDrivers;
     CPLStringList aosOpenOptions;
 
-    for (int i = 0; i < aosTokens.size(); i++)
+    for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(
+             aosTokens, /* bReturnNullKeyIfNotNameValue = */ true))
     {
-        char *pszKey = nullptr;
-        const char *pszValue = CPLParseNameValue(aosTokens[i], &pszKey);
-        if (pszKey && pszValue)
-        {
-            if (EQUAL(pszKey, "if"))
-            {
-                if (aosAllowedDrivers.size() > 0)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "'if' option should be specified once, use commas "
-                             "to input multiple values.");
-                    CPLFree(pszKey);
-                    return nullptr;
-                }
-                aosAllowedDrivers = CSLTokenizeString2(pszValue, ",", 0);
-            }
-            if (EQUAL(pszKey, "oo"))
-            {
-                if (aosOpenOptions.size() > 0)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "'oo' option should be specified once, use commas "
-                             "to input multiple values.");
-                    CPLFree(pszKey);
-                    return nullptr;
-                }
-                aosOpenOptions = CSLTokenizeString2(pszValue, ",", 0);
-            }
-        }
         if (!pszKey)
         {
-
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Invalid option specification: %s\n"
                      "must be in the form 'key=value'",
-                     aosTokens[i]);
+                     pszValue);
             return nullptr;
         }
-        CPLFree(pszKey);
+        else if (EQUAL(pszKey, "if"))
+        {
+            if (!aosAllowedDrivers.empty())
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "'if' option should be specified once, use commas "
+                         "to input multiple values.");
+            }
+            aosAllowedDrivers = CSLTokenizeString2(pszValue, ",", 0);
+        }
+        else if (EQUAL(pszKey, "oo"))
+        {
+            if (!aosOpenOptions.empty())
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "'oo' option should be specified once, use commas "
+                         "to input multiple values.");
+            }
+            aosOpenOptions = CSLTokenizeString2(pszValue, ",", 0);
+        }
     }
 
     // We don't open in GDAL_OF_SHARED mode to avoid issues when we open a
     // http://.jp2 file with the JP2OpenJPEG driver through the HTTP driver,
     // which returns a /vsimem/ file
-    auto poSrcDS =
+    auto poSrcDS = std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>(
         GDALDataset::Open(osFilename, GDAL_OF_RASTER, aosAllowedDrivers.List(),
-                          aosOpenOptions.List(), nullptr);
+                          aosOpenOptions.List(), nullptr));
     if (poSrcDS == nullptr)
     {
         return nullptr;
@@ -1035,149 +1025,111 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
 
     // scan for sd_name/sd in tokens, close the source dataset and reopen if found/valid
     bool bFound_subdataset = false;
-    for (int i = 0; i < aosTokens.size(); i++)
+    for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(aosTokens))
     {
-        char *pszKey = nullptr;
-        const char *pszValue = CPLParseNameValue(aosTokens[i], &pszKey);
-
-        if (pszKey && pszValue)
+        if (EQUAL(pszKey, "sd_name"))
         {
-
-            if (EQUAL(pszKey, "sd_name"))
+            if (bFound_subdataset)
             {
-                if (bFound_subdataset)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "'sd_name' is mutually exclusive with option "
-                             "'sd'");
-                    poSrcDS->ReleaseRef();
-
-                    CPLFree(pszKey);
-                    return nullptr;
-                }
-                char **papszSubdatasets = poSrcDS->GetMetadata("SUBDATASETS");
-                int nSubdatasets = CSLCount(papszSubdatasets);
-
-                if (nSubdatasets > 0)
-                {
-                    bool bFound = false;
-                    for (int j = 0; j < nSubdatasets; j += 2)
-                    {
-                        const std::string osSubdatasetSource(
-                            strstr(papszSubdatasets[j], "=") + 1);
-                        if (osSubdatasetSource.empty())
-                        {
-                            CPLError(CE_Failure, CPLE_IllegalArg,
-                                     "'sd_name:' failed to obtain "
-                                     "subdataset string ");
-                            poSrcDS->ReleaseRef();
-
-                            CPLFree(pszKey);
-                            return nullptr;
-                        }
-                        GDALSubdatasetInfoH info =
-                            GDALGetSubdatasetInfo(osSubdatasetSource.c_str());
-                        char *component =
-                            info
-                                ? GDALSubdatasetInfoGetSubdatasetComponent(info)
-                                : nullptr;
-
-                        bFound = component && EQUAL(pszValue, component);
-                        bFound_subdataset = true;
-                        CPLFree(component);
-                        GDALDestroySubdatasetInfo(info);
-                        if (bFound)
-                        {
-                            poSrcDS->ReleaseRef();
-                            poSrcDS = GDALDataset::Open(
-                                osSubdatasetSource.c_str(), GDAL_OF_RASTER,
-                                aosAllowedDrivers.List(), aosOpenOptions.List(),
-                                nullptr);
-                            if (poSrcDS == nullptr)
-                            {
-
-                                CPLFree(pszKey);
-                                return nullptr;
-                            }
-
-                            break;
-                        }
-                        else
-                        {
-                        }
-                    }
-
-                    if (!bFound)
-                    {
-                        CPLError(CE_Failure, CPLE_IllegalArg,
-                                 "'sd_name' option should be be a valid "
-                                 "subdataset component name");
-                        poSrcDS->ReleaseRef();
-
-                        CPLFree(pszKey);
-                        return nullptr;
-                    }
-                }
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "'sd_name' is mutually exclusive with option "
+                         "'sd'");
+                return nullptr;
             }
+            char **papszSubdatasets = poSrcDS->GetMetadata("SUBDATASETS");
+            int nSubdatasets = CSLCount(papszSubdatasets);
 
-            if (EQUAL(pszKey, "sd"))
+            if (nSubdatasets > 0)
             {
-                if (bFound_subdataset)
+                bool bFound = false;
+                for (int j = 0; j < nSubdatasets; j += 2)
                 {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "'sd' is mutually exclusive with option "
-                             "'sd_name'");
-                    poSrcDS->ReleaseRef();
-
-                    CPLFree(pszKey);
-                    return nullptr;
-                }
-                char **papszSubdatasets = poSrcDS->GetMetadata("SUBDATASETS");
-                int nSubdatasets = CSLCount(papszSubdatasets);
-
-                if (nSubdatasets > 0)
-                {
-                    int iSubdataset = atoi(pszValue);
-                    if (iSubdataset < 1 || iSubdataset > (nSubdatasets) / 2)
-                    {
-                        CPLError(
-                            CE_Failure, CPLE_IllegalArg,
-                            "'sd' option should indicate a valid "
-                            "subdataset component number (starting with 1)");
-                        CPLFree(pszKey);
-                        poSrcDS->ReleaseRef();
-                        return nullptr;
-                    }
                     const std::string osSubdatasetSource(
-                        strstr(papszSubdatasets[(iSubdataset - 1) * 2], "=") +
-                        1);
+                        strstr(papszSubdatasets[j], "=") + 1);
                     if (osSubdatasetSource.empty())
                     {
                         CPLError(CE_Failure, CPLE_IllegalArg,
-                                 "'sd:' failed to obtain subdataset "
-                                 "string ");
-                        poSrcDS->ReleaseRef();
-
-                        CPLFree(pszKey);
+                                 "'sd_name:' failed to obtain "
+                                 "subdataset string ");
                         return nullptr;
                     }
-                    poSrcDS->ReleaseRef();
-                    poSrcDS = GDALDataset::Open(osSubdatasetSource.c_str(),
-                                                GDAL_OF_RASTER,
-                                                aosAllowedDrivers.List(),
-                                                aosOpenOptions.List(), nullptr);
-                    if (poSrcDS == nullptr)
-                    {
+                    GDALSubdatasetInfoH info =
+                        GDALGetSubdatasetInfo(osSubdatasetSource.c_str());
+                    char *component =
+                        info ? GDALSubdatasetInfoGetSubdatasetComponent(info)
+                             : nullptr;
 
-                        CPLFree(pszKey);
-                        return nullptr;
-                    }
+                    bFound = component && EQUAL(pszValue, component);
                     bFound_subdataset = true;
+                    CPLFree(component);
+                    GDALDestroySubdatasetInfo(info);
+                    if (bFound)
+                    {
+                        poSrcDS.reset(GDALDataset::Open(
+                            osSubdatasetSource.c_str(), GDAL_OF_RASTER,
+                            aosAllowedDrivers.List(), aosOpenOptions.List(),
+                            nullptr));
+                        if (poSrcDS == nullptr)
+                        {
+                            return nullptr;
+                        }
+
+                        break;
+                    }
+                }
+
+                if (!bFound)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "'sd_name' option should be be a valid "
+                             "subdataset component name");
+                    return nullptr;
                 }
             }
         }
 
-        CPLFree(pszKey);
+        if (EQUAL(pszKey, "sd"))
+        {
+            if (bFound_subdataset)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "'sd' is mutually exclusive with option "
+                         "'sd_name'");
+                return nullptr;
+            }
+            CSLConstList papszSubdatasets = poSrcDS->GetMetadata("SUBDATASETS");
+            int nSubdatasets = CSLCount(papszSubdatasets);
+
+            if (nSubdatasets > 0)
+            {
+                int iSubdataset = atoi(pszValue);
+                if (iSubdataset < 1 || iSubdataset > (nSubdatasets) / 2)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "'sd' option should indicate a valid "
+                             "subdataset component number (starting with 1)");
+                    return nullptr;
+                }
+                const std::string osSubdatasetSource(
+                    strstr(papszSubdatasets[(iSubdataset - 1) * 2], "=") + 1);
+                if (osSubdatasetSource.empty())
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "'sd:' failed to obtain subdataset "
+                             "string ");
+                    return nullptr;
+                }
+
+                poSrcDS.reset(GDALDataset::Open(
+                    osSubdatasetSource.c_str(), GDAL_OF_RASTER,
+                    aosAllowedDrivers.List(), aosOpenOptions.List(), nullptr));
+                if (poSrcDS == nullptr)
+                {
+                    return nullptr;
+                }
+                bFound_subdataset = true;
+            }
+        }
     }
 
     std::vector<int> anBands;
@@ -1186,350 +1138,319 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
     argv.AddString("-of");
     argv.AddString("VRT");
 
-    for (int i = 0; i < aosTokens.size(); i++)
+    for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(aosTokens))
     {
-        char *pszKey = nullptr;
-        const char *pszValue = CPLParseNameValue(aosTokens[i], &pszKey);
-        if (pszKey && pszValue)
+        if (EQUAL(pszKey, "bands"))
         {
-            if (EQUAL(pszKey, "bands"))
+            const CPLStringList aosBands(CSLTokenizeString2(pszValue, ",", 0));
+            for (int j = 0; j < aosBands.size(); j++)
             {
-                CPLStringList aosBands(CSLTokenizeString2(pszValue, ",", 0));
-                for (int j = 0; j < aosBands.size(); j++)
+                if (EQUAL(aosBands[j], "mask"))
                 {
-                    if (EQUAL(aosBands[j], "mask"))
+                    anBands.push_back(0);
+                }
+                else
+                {
+                    const int nBand = atoi(aosBands[j]);
+                    if (nBand <= 0 || nBand > poSrcDS->GetRasterCount())
                     {
-                        anBands.push_back(0);
+                        CPLError(CE_Failure, CPLE_IllegalArg,
+                                 "Invalid band number: %s", aosBands[j]);
+                        return nullptr;
                     }
-                    else
-                    {
-                        const int nBand = atoi(aosBands[j]);
-                        if (nBand <= 0 || nBand > poSrcDS->GetRasterCount())
-                        {
-                            CPLError(CE_Failure, CPLE_IllegalArg,
-                                     "Invalid band number: %s", aosBands[j]);
-                            poSrcDS->ReleaseRef();
-                            CPLFree(pszKey);
-                            return nullptr;
-                        }
-                        anBands.push_back(nBand);
-                    }
-                }
-
-                for (const int nBand : anBands)
-                {
-                    argv.AddString("-b");
-                    argv.AddString(nBand == 0 ? "mask"
-                                              : CPLSPrintf("%d", nBand));
+                    anBands.push_back(nBand);
                 }
             }
 
-            else if (EQUAL(pszKey, "a_nodata"))
+            for (const int nBand : anBands)
             {
-                argv.AddString("-a_nodata");
-                argv.AddString(pszValue);
-            }
-
-            else if (EQUAL(pszKey, "a_srs"))
-            {
-                argv.AddString("-a_srs");
-                argv.AddString(pszValue);
-            }
-
-            else if (EQUAL(pszKey, "a_ullr"))
-            {
-
-                // Parse the limits
-                CPLStringList aosUllr(CSLTokenizeString2(pszValue, ",", 0));
-                // fail if not four values
-                if (aosUllr.size() != 4)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid a_ullr option: %s", pszValue);
-                    poSrcDS->ReleaseRef();
-                    CPLFree(pszKey);
-                    return nullptr;
-                }
-
-                argv.AddString("-a_ullr");
-                argv.AddString(aosUllr[0]);
-                argv.AddString(aosUllr[1]);
-                argv.AddString(aosUllr[2]);
-                argv.AddString(aosUllr[3]);
-            }
-
-            else if (EQUAL(pszKey, "ovr"))
-            {
-                argv.AddString("-ovr");
-                argv.AddString(pszValue);
-            }
-            else if (EQUAL(pszKey, "expand"))
-            {
-                argv.AddString("-expand");
-                argv.AddString(pszValue);
-            }
-            else if (EQUAL(pszKey, "a_scale"))
-            {
-                argv.AddString("-a_scale");
-                argv.AddString(pszValue);
-            }
-            else if (EQUAL(pszKey, "a_offset"))
-            {
-                argv.AddString("-a_offset");
-                argv.AddString(pszValue);
-            }
-            else if (EQUAL(pszKey, "ot"))
-            {
-                argv.AddString("-ot");
-                argv.AddString(pszValue);
-            }
-            else if (EQUAL(pszKey, "gcp"))
-            {
-                CPLStringList aosGCP(CSLTokenizeString2(pszValue, ",", 0));
-
-                if (aosGCP.size() < 4 || aosGCP.size() > 5)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid value for GCP: %s\n  need 4, or 5 "
-                             "numbers, comma separated: "
-                             "'gcp=<pixel>,<line>,<easting>,<northing>[,<"
-                             "elevation>]'",
-                             pszValue);
-                    poSrcDS->ReleaseRef();
-                    CPLFree(pszKey);
-                    return nullptr;
-                }
-                argv.AddString("-gcp");
-                for (int j = 0; j < aosGCP.size(); j++)
-                {
-                    argv.AddString(aosGCP[j]);
-                }
-            }
-            else if (EQUAL(pszKey, "scale") || STARTS_WITH_CI(pszKey, "scale_"))
-            {
-                CPLStringList aosScaleParams(
-                    CSLTokenizeString2(pszValue, ",", 0));
-
-                if (!(aosScaleParams.size() == 2) &&
-                    !(aosScaleParams.size() == 4) &&
-                    !(aosScaleParams.size() == 1))
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid value for scale, (or scale_bn): "
-                             "%s\n  need 'scale=true', or 2 or 4 "
-                             "numbers, comma separated: "
-                             "'scale=src_min,src_max[,dst_min,dst_max]' or "
-                             "'scale_bn=src_min,src_max[,dst_min,dst_max]'",
-                             pszValue);
-                    poSrcDS->ReleaseRef();
-                    CPLFree(pszKey);
-                    return nullptr;
-                }
-
-                // -scale because scale=true or scale=min,max or scale=min,max,dstmin,dstmax
-                if (aosScaleParams.size() == 1 &&
-                    CPLTestBool(aosScaleParams[0]))
-                {
-                    argv.AddString(CPLSPrintf("-%s", pszKey));
-                }
-                // add remaining params (length 2 or 4)
-                if (aosScaleParams.size() > 1)
-                {
-                    argv.AddString(CPLSPrintf("-%s", pszKey));
-                    for (int j = 0; j < aosScaleParams.size(); j++)
-                    {
-                        argv.AddString(aosScaleParams[j]);
-                    }
-                }
-            }
-            else if (EQUAL(pszKey, "exponent") ||
-                     STARTS_WITH_CI(pszKey, "exponent_"))
-            {
-                argv.AddString(CPLSPrintf("-%s", pszKey));
-                argv.AddString(pszValue);
-            }
-            else if (EQUAL(pszKey, "outsize"))
-            {
-                CPLStringList aosOutSize(CSLTokenizeString2(pszValue, ",", 0));
-                if (aosOutSize.size() != 2)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid outsize option: %s, must be two"
-                             "values separated by comma pixel,line or two "
-                             "fraction values with percent symbol",
-                             pszValue);
-                    poSrcDS->ReleaseRef();
-                    CPLFree(pszKey);
-                    return nullptr;
-                }
-                argv.AddString("-outsize");
-                argv.AddString(aosOutSize[0]);
-                argv.AddString(aosOutSize[1]);
-            }
-            else if (EQUAL(pszKey, "projwin"))
-            {
-
-                // Parse the limits
-                CPLStringList aosProjWin(CSLTokenizeString2(pszValue, ",", 0));
-                // fail if not four values
-                if (aosProjWin.size() != 4)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid projwin option: %s", pszValue);
-                    poSrcDS->ReleaseRef();
-                    CPLFree(pszKey);
-                    return nullptr;
-                }
-
-                argv.AddString("-projwin");
-                argv.AddString(aosProjWin[0]);
-                argv.AddString(aosProjWin[1]);
-                argv.AddString(aosProjWin[2]);
-                argv.AddString(aosProjWin[3]);
-            }
-            else if (EQUAL(pszKey, "projwin_srs"))
-            {
-                argv.AddString("-projwin_srs");
-                argv.AddString(pszValue);
-            }
-            else if (EQUAL(pszKey, "tr"))
-            {
-                CPLStringList aosTargetResolution(
-                    CSLTokenizeString2(pszValue, ",", 0));
-                if (aosTargetResolution.size() != 2)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid tr option: %s, must be two "
-                             "values separated by comma xres,yres",
-                             pszValue);
-                    poSrcDS->ReleaseRef();
-                    CPLFree(pszKey);
-                    return nullptr;
-                }
-                argv.AddString("-tr");
-                argv.AddString(aosTargetResolution[0]);
-                argv.AddString(aosTargetResolution[1]);
-            }
-            else if (EQUAL(pszKey, "r"))
-            {
-                argv.AddString("-r");
-                argv.AddString(pszValue);
-            }
-
-            else if (EQUAL(pszKey, "srcwin"))
-            {
-
-                // Parse the limits
-                CPLStringList aosSrcWin(CSLTokenizeString2(pszValue, ",", 0));
-                // fail if not four values
-                if (aosSrcWin.size() != 4)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid srcwin option: %s, must be four "
-                             "values separated by comma xoff,yoff,xsize,ysize",
-                             pszValue);
-                    poSrcDS->ReleaseRef();
-                    CPLFree(pszKey);
-                    return nullptr;
-                }
-
-                argv.AddString("-srcwin");
-                argv.AddString(aosSrcWin[0]);
-                argv.AddString(aosSrcWin[1]);
-                argv.AddString(aosSrcWin[2]);
-                argv.AddString(aosSrcWin[3]);
-            }
-
-            else if (EQUAL(pszKey, "a_gt"))
-            {
-
-                // Parse the limits
-                CPLStringList aosAGeoTransform(
-                    CSLTokenizeString2(pszValue, ",", 0));
-                // fail if not six values
-                if (aosAGeoTransform.size() != 6)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid a_gt option: %s", pszValue);
-                    poSrcDS->ReleaseRef();
-                    CPLFree(pszKey);
-                    return nullptr;
-                }
-
-                argv.AddString("-a_gt");
-                argv.AddString(aosAGeoTransform[0]);
-                argv.AddString(aosAGeoTransform[1]);
-                argv.AddString(aosAGeoTransform[2]);
-                argv.AddString(aosAGeoTransform[3]);
-                argv.AddString(aosAGeoTransform[4]);
-                argv.AddString(aosAGeoTransform[5]);
-            }
-            else if (EQUAL(pszKey, "oo"))
-            {
-                // do nothing, we passed this in earlier
-            }
-            else if (EQUAL(pszKey, "if"))
-            {
-                // do nothing, we passed this in earlier
-            }
-            else if (EQUAL(pszKey, "sd_name"))
-            {
-                // do nothing, we passed this in earlier
-            }
-            else if (EQUAL(pszKey, "sd"))
-            {
-                // do nothing, we passed this in earlier
-            }
-            else if (EQUAL(pszKey, "unscale"))
-            {
-                if (CPLTestBool(pszValue))
-                {
-                    argv.AddString("-unscale");
-                }
-            }
-            else if (EQUAL(pszKey, "a_coord_epoch"))
-            {
-                argv.AddString("-a_coord_epoch");
-                argv.AddString(pszValue);
-            }
-            else if (EQUAL(pszKey, "nogcp"))
-            {
-                if (CPLTestBool(pszValue))
-                {
-                    argv.AddString("-nogcp");
-                }
-            }
-            else if (EQUAL(pszKey, "epo"))
-            {
-                if (CPLTestBool(pszValue))
-                {
-                    argv.AddString("-epo");
-                }
-            }
-            else if (EQUAL(pszKey, "eco"))
-            {
-                if (CPLTestBool(pszValue))
-                {
-                    argv.AddString("-eco");
-                }
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",
-                         pszKey);
-                poSrcDS->ReleaseRef();
-                CPLFree(pszKey);
-                return nullptr;
+                argv.AddString("-b");
+                argv.AddString(nBand == 0 ? "mask" : CPLSPrintf("%d", nBand));
             }
         }
-        CPLFree(pszKey);
+
+        else if (EQUAL(pszKey, "a_nodata"))
+        {
+            argv.AddString("-a_nodata");
+            argv.AddString(pszValue);
+        }
+
+        else if (EQUAL(pszKey, "a_srs"))
+        {
+            argv.AddString("-a_srs");
+            argv.AddString(pszValue);
+        }
+
+        else if (EQUAL(pszKey, "a_ullr"))
+        {
+            // Parse the limits
+            const CPLStringList aosUllr(CSLTokenizeString2(pszValue, ",", 0));
+            // fail if not four values
+            if (aosUllr.size() != 4)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid a_ullr option: %s", pszValue);
+                return nullptr;
+            }
+
+            argv.AddString("-a_ullr");
+            argv.AddString(aosUllr[0]);
+            argv.AddString(aosUllr[1]);
+            argv.AddString(aosUllr[2]);
+            argv.AddString(aosUllr[3]);
+        }
+
+        else if (EQUAL(pszKey, "ovr"))
+        {
+            argv.AddString("-ovr");
+            argv.AddString(pszValue);
+        }
+        else if (EQUAL(pszKey, "expand"))
+        {
+            argv.AddString("-expand");
+            argv.AddString(pszValue);
+        }
+        else if (EQUAL(pszKey, "a_scale"))
+        {
+            argv.AddString("-a_scale");
+            argv.AddString(pszValue);
+        }
+        else if (EQUAL(pszKey, "a_offset"))
+        {
+            argv.AddString("-a_offset");
+            argv.AddString(pszValue);
+        }
+        else if (EQUAL(pszKey, "ot"))
+        {
+            argv.AddString("-ot");
+            argv.AddString(pszValue);
+        }
+        else if (EQUAL(pszKey, "gcp"))
+        {
+            const CPLStringList aosGCP(CSLTokenizeString2(pszValue, ",", 0));
+
+            if (aosGCP.size() < 4 || aosGCP.size() > 5)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for GCP: %s\n  need 4, or 5 "
+                         "numbers, comma separated: "
+                         "'gcp=<pixel>,<line>,<easting>,<northing>[,<"
+                         "elevation>]'",
+                         pszValue);
+                return nullptr;
+            }
+            argv.AddString("-gcp");
+            for (int j = 0; j < aosGCP.size(); j++)
+            {
+                argv.AddString(aosGCP[j]);
+            }
+        }
+        else if (EQUAL(pszKey, "scale") || STARTS_WITH_CI(pszKey, "scale_"))
+        {
+            const CPLStringList aosScaleParams(
+                CSLTokenizeString2(pszValue, ",", 0));
+
+            if (!(aosScaleParams.size() == 2) &&
+                !(aosScaleParams.size() == 4) && !(aosScaleParams.size() == 1))
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for scale, (or scale_bn): "
+                         "%s\n  need 'scale=true', or 2 or 4 "
+                         "numbers, comma separated: "
+                         "'scale=src_min,src_max[,dst_min,dst_max]' or "
+                         "'scale_bn=src_min,src_max[,dst_min,dst_max]'",
+                         pszValue);
+                return nullptr;
+            }
+
+            // -scale because scale=true or scale=min,max or scale=min,max,dstmin,dstmax
+            if (aosScaleParams.size() == 1 && CPLTestBool(aosScaleParams[0]))
+            {
+                argv.AddString(CPLSPrintf("-%s", pszKey));
+            }
+            // add remaining params (length 2 or 4)
+            if (aosScaleParams.size() > 1)
+            {
+                argv.AddString(CPLSPrintf("-%s", pszKey));
+                for (int j = 0; j < aosScaleParams.size(); j++)
+                {
+                    argv.AddString(aosScaleParams[j]);
+                }
+            }
+        }
+        else if (EQUAL(pszKey, "exponent") ||
+                 STARTS_WITH_CI(pszKey, "exponent_"))
+        {
+            argv.AddString(CPLSPrintf("-%s", pszKey));
+            argv.AddString(pszValue);
+        }
+        else if (EQUAL(pszKey, "outsize"))
+        {
+            const CPLStringList aosOutSize(
+                CSLTokenizeString2(pszValue, ",", 0));
+            if (aosOutSize.size() != 2)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid outsize option: %s, must be two"
+                         "values separated by comma pixel,line or two "
+                         "fraction values with percent symbol",
+                         pszValue);
+                return nullptr;
+            }
+            argv.AddString("-outsize");
+            argv.AddString(aosOutSize[0]);
+            argv.AddString(aosOutSize[1]);
+        }
+        else if (EQUAL(pszKey, "projwin"))
+        {
+            // Parse the limits
+            const CPLStringList aosProjWin(
+                CSLTokenizeString2(pszValue, ",", 0));
+            // fail if not four values
+            if (aosProjWin.size() != 4)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid projwin option: %s", pszValue);
+                return nullptr;
+            }
+
+            argv.AddString("-projwin");
+            argv.AddString(aosProjWin[0]);
+            argv.AddString(aosProjWin[1]);
+            argv.AddString(aosProjWin[2]);
+            argv.AddString(aosProjWin[3]);
+        }
+        else if (EQUAL(pszKey, "projwin_srs"))
+        {
+            argv.AddString("-projwin_srs");
+            argv.AddString(pszValue);
+        }
+        else if (EQUAL(pszKey, "tr"))
+        {
+            const CPLStringList aosTargetResolution(
+                CSLTokenizeString2(pszValue, ",", 0));
+            if (aosTargetResolution.size() != 2)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid tr option: %s, must be two "
+                         "values separated by comma xres,yres",
+                         pszValue);
+                return nullptr;
+            }
+            argv.AddString("-tr");
+            argv.AddString(aosTargetResolution[0]);
+            argv.AddString(aosTargetResolution[1]);
+        }
+        else if (EQUAL(pszKey, "r"))
+        {
+            argv.AddString("-r");
+            argv.AddString(pszValue);
+        }
+
+        else if (EQUAL(pszKey, "srcwin"))
+        {
+            // Parse the limits
+            const CPLStringList aosSrcWin(CSLTokenizeString2(pszValue, ",", 0));
+            // fail if not four values
+            if (aosSrcWin.size() != 4)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid srcwin option: %s, must be four "
+                         "values separated by comma xoff,yoff,xsize,ysize",
+                         pszValue);
+                return nullptr;
+            }
+
+            argv.AddString("-srcwin");
+            argv.AddString(aosSrcWin[0]);
+            argv.AddString(aosSrcWin[1]);
+            argv.AddString(aosSrcWin[2]);
+            argv.AddString(aosSrcWin[3]);
+        }
+
+        else if (EQUAL(pszKey, "a_gt"))
+        {
+            // Parse the limits
+            const CPLStringList aosAGeoTransform(
+                CSLTokenizeString2(pszValue, ",", 0));
+            // fail if not six values
+            if (aosAGeoTransform.size() != 6)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg, "Invalid a_gt option: %s",
+                         pszValue);
+                return nullptr;
+            }
+
+            argv.AddString("-a_gt");
+            argv.AddString(aosAGeoTransform[0]);
+            argv.AddString(aosAGeoTransform[1]);
+            argv.AddString(aosAGeoTransform[2]);
+            argv.AddString(aosAGeoTransform[3]);
+            argv.AddString(aosAGeoTransform[4]);
+            argv.AddString(aosAGeoTransform[5]);
+        }
+        else if (EQUAL(pszKey, "oo"))
+        {
+            // do nothing, we passed this in earlier
+        }
+        else if (EQUAL(pszKey, "if"))
+        {
+            // do nothing, we passed this in earlier
+        }
+        else if (EQUAL(pszKey, "sd_name"))
+        {
+            // do nothing, we passed this in earlier
+        }
+        else if (EQUAL(pszKey, "sd"))
+        {
+            // do nothing, we passed this in earlier
+        }
+        else if (EQUAL(pszKey, "unscale"))
+        {
+            if (CPLTestBool(pszValue))
+            {
+                argv.AddString("-unscale");
+            }
+        }
+        else if (EQUAL(pszKey, "a_coord_epoch"))
+        {
+            argv.AddString("-a_coord_epoch");
+            argv.AddString(pszValue);
+        }
+        else if (EQUAL(pszKey, "nogcp"))
+        {
+            if (CPLTestBool(pszValue))
+            {
+                argv.AddString("-nogcp");
+            }
+        }
+        else if (EQUAL(pszKey, "epo"))
+        {
+            if (CPLTestBool(pszValue))
+            {
+                argv.AddString("-epo");
+            }
+        }
+        else if (EQUAL(pszKey, "eco"))
+        {
+            if (CPLTestBool(pszValue))
+            {
+                argv.AddString("-eco");
+            }
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",
+                     pszKey);
+            return nullptr;
+        }
     }
 
     GDALTranslateOptions *psOptions =
         GDALTranslateOptionsNew(argv.List(), nullptr);
 
-    auto hRet =
-        GDALTranslate("", GDALDataset::ToHandle(poSrcDS), psOptions, nullptr);
+    auto hRet = GDALTranslate("", GDALDataset::ToHandle(poSrcDS.get()),
+                              psOptions, nullptr);
 
     GDALTranslateOptionsFree(psOptions);
 
@@ -1540,7 +1461,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
          STARTS_WITH(osFilename.c_str(), "https://")) &&
         osFilename != poSrcDS->GetDescription();
 
-    poSrcDS->ReleaseRef();
+    poSrcDS.reset();
 
     auto poDS = dynamic_cast<VRTDataset *>(GDALDataset::FromHandle(hRet));
     if (poDS)
@@ -2838,25 +2759,23 @@ void VRTDataset::ClearStatistics()
     {
         bool bChanged = false;
         GDALRasterBand *poBand = GetRasterBand(i);
-        char **papszOldMD = poBand->GetMetadata();
-        char **papszNewMD = nullptr;
-        for (char **papszIter = papszOldMD; papszIter && papszIter[0];
-             ++papszIter)
+        CSLConstList papszOldMD = poBand->GetMetadata();
+        CPLStringList aosNewMD;
+        for (const char *pszMDItem : cpl::Iterate(papszOldMD))
         {
-            if (STARTS_WITH_CI(*papszIter, "STATISTICS_"))
+            if (STARTS_WITH_CI(pszMDItem, "STATISTICS_"))
             {
                 bChanged = true;
             }
             else
             {
-                papszNewMD = CSLAddString(papszNewMD, *papszIter);
+                aosNewMD.AddString(pszMDItem);
             }
         }
         if (bChanged)
         {
-            poBand->SetMetadata(papszNewMD);
+            poBand->SetMetadata(aosNewMD.List());
         }
-        CSLDestroy(papszNewMD);
     }
 
     GDALDataset::ClearStatistics();
