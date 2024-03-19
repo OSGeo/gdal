@@ -3,7 +3,6 @@
 /* -------------------------------------------------------------------- */
 /*      Constants used in GDAL and in MiraMon                           */
 /* -------------------------------------------------------------------- */
-#include "cpl_port.h"  // For GUInt64
 #ifndef GDAL_COMPILATION
 #ifdef _WIN64
 #include "gdal\release-1911-x64\cpl_port.h"  // For GUInt64
@@ -11,8 +10,9 @@
 #include "gdal\release-1911-32\cpl_port.h"  // For GUInt64
 #endif
 #else
+#include "cpl_port.h"  // For GUInt64
 CPL_C_START  // Necessary for compiling C in GDAL project
-#endif  // GDAL_COMPILATION
+#endif                 // GDAL_COMPILATION
 
 #if defined(_WIN32) && !defined(strcasecmp)
 #define strcasecmp stricmp
