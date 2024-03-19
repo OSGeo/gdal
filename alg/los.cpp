@@ -33,8 +33,133 @@
 // *  gdb ./build/autotest/cpp/gdal_unit_test
 // * >>> r --gtest_filter="test_alg.GDALIsLineOfSightVisible*"
 
+#include <functional>
+#include <cmath>
+
+
 #include "cpl_port.h"
 #include "gdal_alg.h"
+
+// There's a plethora of bresenham implementations, all questionable production quality.
+// Bresenham optimizes for integer math, which makes sense for raster datasets in 2D.
+// For 3D, a 3D bresenham could be used if the altitude is also integer resolution.
+// 2D:
+// https://codereview.stackexchange.com/questions/77460/bresenhams-line-algorithm-optimization
+// https://gist.github.com/ssavi-ict/092501c69e2ffec65e96a8865470ad2f
+// https://blog.demofox.org/2015/01/17/bresenhams-drawing-algorithms/
+// https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+// https://www.cs.helsinki.fi/group/goa/mallinnus/lines/bresenh.html
+// https://stackoverflow.com/questions/10060046/drawing-lines-with-bresenhams-line-algorithm
+// http://www.edepot.com/linebresenham.html
+// 3D:
+// https://gist.github.com/yamamushi/5823518
+
+// Run bresenham terrain checking from (x1, y1) to (x2, y2).
+// The callback is run at every point along the line,
+// which should return True if the point is above terrain.
+// Bresenham2D will return true if all points have LOS between the start and end.
+bool Bresenham2D(int x1, int y1, int x2, int y2, std::function< auto(int, int) -> bool> OnBresenhamPoint) {
+    bool isAboveTerrain = true;
+	int	dx, dy;
+	int	incx, incy;
+
+	if (x2 >= x1)
+	{
+		dx = x2 - x1;
+		incx = 1;
+	}
+	else
+	{
+		dx = x1 - x2;
+		incx = -1;
+	}
+
+	if (y2 >= y1)
+	{
+		dy = y2 - y1;
+		incy = 1;
+	}
+	else
+	{
+		dy = y1 - y2;
+		incy = -1;
+	}
+
+	auto x = x1;
+	auto y = y1;
+    int	balance;
+
+	if (dx >= dy)
+	{
+		dy <<= 1;
+		balance = dy - dx;
+		dx <<= 1;
+
+		while (x != x2 && isAboveTerrain)
+		{
+			isAboveTerrain &= OnBresenhamPoint(x, y);
+			if (balance >= 0)
+			{
+				y += incy;
+				balance -= dx;
+			}
+			balance += dy;
+			x += incx;
+		} 
+        isAboveTerrain &= OnBresenhamPoint(x, y);
+
+	}
+	else
+	{
+		dx <<= 1;
+		balance = dx - dy;
+		dy <<= 1;
+
+		while (y != y2  && isAboveTerrain)
+		{
+			isAboveTerrain &= OnBresenhamPoint(x, y);
+			if (balance >= 0)
+			{
+				x += incx;
+				balance -= dy;
+			}
+			balance += dx;
+			y += incy;
+		}
+        isAboveTerrain &= OnBresenhamPoint(x, y);
+	}
+    return isAboveTerrain;
+}
+
+
+// Get the elevation of a single point.
+bool GetElevation(const GDALRasterBandH hBand, const int x, const int y, double& val)
+{
+    CPLAssert(x >= 0);
+    CPLAssert(x <= GDALGetRasterBandXSize(hBand));
+    CPLAssert(y >= 0);
+    CPLAssert(y <= GDALGetRasterBandYSize(hBand));
+
+    return GDALRasterIO(hBand, GF_Read, x, y, 1, 1, &val, 1, 1, GDT_Float64, 0, 0) == CE_None;
+}
+
+// Check a single location is above terrain.
+bool IsAboveTerrain(const GDALRasterBandH hBand, const int x, const int y, const double z)
+{
+    double terrainHeight;
+    if(GetElevation(hBand, x, y, terrainHeight)) {
+        return z > terrainHeight;
+    } else {
+        return false;
+    }
+}
+
+bool IsAboveTerrain(const GDALRasterBandH hBand, const double x, const double y, const double z)
+{
+    const int iX = static_cast<int>(x);
+    const int iY = static_cast<int>(y);
+    return IsAboveTerrain(hBand, iX, iY, z);
+}
 
 
 /************************************************************************/
@@ -43,13 +168,14 @@
 
 /**
  * Check Line of Sight between two points.
+ * Both input coordinates must be within the raster coordinate bounds.
  *
  * This algorithm will check line of sight using a 3D bresenham algorithm.
- * Sightlines" published at
  * https://www.researchgate.net/publication/2411280_Efficient_Line-of-Sight_Algorithms_for_Real_Terrain_Data
  *
- *
  * @param hBand The band to read the DEM data from.
+ * 
+ * @param xA The X location to check on the raster to read the DEM data from.
  *
  * @return True if the two points are within Line of Sight.
  *
@@ -57,38 +183,58 @@
  */
 
 bool GDALIsLineOfSightVisible(
-    GDALRasterBandH hBand, double xA, double yA, double zA, double xB, double yB, double zB, char** papszOptions)
+    const GDALRasterBandH hBand, const double xA, const double yA, const double zA, const double xB, const double yB, const double zB, const char** papszOptions)
 {
     if(hBand == nullptr) {
         return false;
     }
 
-
-    // Always process as a double regardless of the input type.
-    double val;
-    const int iXa = static_cast<int>(xA);
-    const int iYa = static_cast<int>(yA);
-
-    if(GDALRasterIO(hBand, GF_Read, iXa, iYa, 1, 1, &val, 1, 1, GDT_Float64, 0, 0) != CE_None) {
+    // Perform a preliminary check of the start and end points.
+    if (!IsAboveTerrain(hBand, xA, yA, zA)) {
         return false;
+    
     }
-    if (zA < val) {
+    if (!IsAboveTerrain(hBand, xB, yB, zB)) {
         return false;
     }
 
-    const int iXb = static_cast<int>(xB);
-    const int iYb = static_cast<int>(yB);
+    const auto xAi = static_cast<int>(xA);
+    const auto yAi = static_cast<int>(yA);
+    const auto xBi = static_cast<int>(xB);
+    const auto yBi = static_cast<int>(yB);
 
-    if(GDALRasterIO(hBand, GF_Read, iXb, iYb, 1, 1, &val, 1, 1, GDT_Float64, 0, 0) != CE_None) {
-        return false;
+    // If both X and Y are the same, no further checks are needed.
+    if(xAi == xBi && yAi == yBi) {
+        return true;
     }
-    if (zB < val) {
-        return false;
-    }
+
+    // TODO if both X's or Y's are the same, it could be optimized for vertical/horizontal lines.
 
 
-    // Perform a preliminary check of the start and end points first to check they are in LOS.
-    // ASSERT_TRUE(hBand->RasterIO(GF_Write, 0, 0, 1, 1, &val, 1, 1, GDT_Byte, 1, nullptr, 0, 0, 0, nullptr) == CE_None);
+    // Use an interpolated Z height with 2D bresenham for the remaining cases.
 
-    return true;
+    // Lambda for Linear interpolate like C++20 std::lerp.
+    auto lerp = [](const int a, const int b, const float t) {
+        return a + t * (b - a);
+    };
+
+    // Lambda for getting Z test height given x input along the bresenham line.
+    auto GetZValue = [&](const int x) -> double {
+        const auto xDiff = xB - xA;
+        const auto xPercent = x / xDiff;
+        return lerp(zA, zB, xPercent);
+    };
+
+    // Lambda to get elevation at a bresenham-computed location.
+    auto OnBresenhamPoint = [&](const int x, const int y) -> bool {
+        const auto z = GetZValue(x);
+        return IsAboveTerrain(hBand, x, y, z);
+    };
+
+    return Bresenham2D(
+        static_cast<int>(xA),
+        static_cast<int>(yA),
+        static_cast<int>(xB),
+        static_cast<int>(yB),
+        OnBresenhamPoint);
 }
