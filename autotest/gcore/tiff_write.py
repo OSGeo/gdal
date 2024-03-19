@@ -8036,17 +8036,20 @@ def test_tiff_write_165():
 # Test reading & writing Z dimension for ModelTiepointTag and ModelPixelScaleTag (#7093)
 
 
-def test_tiff_write_166():
+def test_tiff_write_166(tmp_path):
 
     with gdaltest.config_option("GTIFF_REPORT_COMPD_CS", "YES"):
         ds = gdal.Open("data/tiff_vertcs_scale_offset.tif")
         assert ds.GetRasterBand(1).GetScale() == 2.0
         assert ds.GetRasterBand(1).GetOffset() == 10.0
 
+    tmp_srcfilename = str(tmp_path / "byte.tif")
+    shutil.copy("data/byte.tif", tmp_srcfilename)
+
     # Scale + offset through CreateCopy()
     gdal.Translate(
         "/vsimem/tiff_write_166.tif",
-        "data/byte.tif",
+        tmp_srcfilename,
         options="-a_srs EPSG:26711+5773 -a_scale 2.0 -a_offset 10 -co PROFILE=GEOTIFF",
     )
     s = gdal.VSIStatL("/vsimem/tiff_write_166.tif.aux.xml")
@@ -8072,7 +8075,7 @@ def test_tiff_write_166():
     # Offset only through CreateCopy()
     gdal.Translate(
         "/vsimem/tiff_write_166.tif",
-        "data/byte.tif",
+        tmp_srcfilename,
         options="-a_srs EPSG:26711+5773 -a_offset 10 -co PROFILE=GEOTIFF",
     )
     assert gdal.VSIStatL("/vsimem/tiff_write_166.tif.aux.xml") is None
