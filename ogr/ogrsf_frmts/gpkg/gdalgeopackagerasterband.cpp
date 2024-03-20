@@ -508,19 +508,20 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
             for (size_t i = 0;
                  i < static_cast<size_t>(nBlockXSize) * nBlockYSize; i++)
             {
-                const GUInt16 nVal = *reinterpret_cast<GUInt16 *>(
-                    pabyTileData + i * sizeof(GUInt16));
+                GUInt16 usVal;
+                memcpy(&usVal, pabyTileData + i * sizeof(GUInt16),
+                       sizeof(usVal));
                 double dfVal =
-                    floor((nVal * dfTileScale + dfTileOffset) * m_dfScale +
+                    floor((usVal * dfTileScale + dfTileOffset) * m_dfScale +
                           m_dfOffset + 0.5);
-                if (bHasNoData && nVal == m_usGPKGNull)
+                if (bHasNoData && usVal == m_usGPKGNull)
                     dfVal = dfNoDataValue;
                 if (dfVal > 32767)
                     dfVal = 32767;
                 else if (dfVal < -32768)
                     dfVal = -32768;
-                *reinterpret_cast<GInt16 *>(pabyTileData + i * sizeof(GInt16)) =
-                    static_cast<GInt16>(dfVal);
+                GInt16 sVal = static_cast<GInt16>(dfVal);
+                memcpy(pabyTileData + i * sizeof(GUInt16), &sVal, sizeof(sVal));
             }
         }
         else if (m_eDT == GDT_UInt16 &&
@@ -528,11 +529,11 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
                   dfTileOffset != 0.0 || dfTileScale != 1.0))
         {
             CPLAssert(eRequestDT == GDT_UInt16);
+            GUInt16 *psVal = reinterpret_cast<GUInt16 *>(pabyTileData);
             for (size_t i = 0;
                  i < static_cast<size_t>(nBlockXSize) * nBlockYSize; i++)
             {
-                const GUInt16 nVal = *reinterpret_cast<GUInt16 *>(
-                    pabyTileData + i * sizeof(GUInt16));
+                const GUInt16 nVal = psVal[i];
                 double dfVal =
                     floor((nVal * dfTileScale + dfTileOffset) * m_dfScale +
                           m_dfOffset + 0.5);
@@ -542,9 +543,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
                     dfVal = 65535;
                 else if (dfVal < 0)
                     dfVal = 0;
-                *reinterpret_cast<GUInt16 *>(pabyTileData +
-                                             i * sizeof(GUInt16)) =
-                    static_cast<GUInt16>(dfVal);
+                psVal[i] = static_cast<GUInt16>(dfVal);
             }
         }
         else if (m_eDT == GDT_Float32 && eRequestDT == GDT_UInt16)
@@ -555,16 +554,21 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
                      static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize - 1;
                  i >= 0; i--)
             {
-                const GUInt16 nVal = *reinterpret_cast<GUInt16 *>(
-                    pabyTileData + i * sizeof(GUInt16));
-                double dfVal = (nVal * dfTileScale + dfTileOffset) * m_dfScale +
-                               m_dfOffset;
+                // Use memcpy() and not reinterpret_cast<GUInt16*> and
+                // reinterpret_cast<float*>, otherwise compilers such as ICC
+                // may (ab)use rules about aliasing to generate wrong code!
+                GUInt16 usVal;
+                memcpy(&usVal, pabyTileData + i * sizeof(GUInt16),
+                       sizeof(usVal));
+                double dfVal =
+                    (usVal * dfTileScale + dfTileOffset) * m_dfScale +
+                    m_dfOffset;
                 if (m_dfPrecision == 1.0)
                     dfVal = floor(dfVal + 0.5);
-                if (bHasNoData && nVal == m_usGPKGNull)
+                if (bHasNoData && usVal == m_usGPKGNull)
                     dfVal = dfNoDataValue;
-                *reinterpret_cast<float *>(pabyTileData + i * sizeof(float)) =
-                    static_cast<float>(dfVal);
+                const float fVal = static_cast<float>(dfVal);
+                memcpy(pabyTileData + i * sizeof(float), &fVal, sizeof(fVal));
             }
         }
 
