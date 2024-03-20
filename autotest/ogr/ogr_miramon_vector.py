@@ -181,9 +181,12 @@ def test_ogr_miramon_simple_polygon():
 
     assert lyr is not None, "Failed to get layer"
 
-    assert lyr.GetFeatureCount() == 3
+    assert lyr.GetFeatureCount() == 4
     assert lyr.GetGeomType() == ogr.wkbPolygon
 
+    # ignoring the polygon 0
+    f = lyr.GetNextFeature()
+    # going to the polygon 1
     f = lyr.GetNextFeature()
     assert f is not None, "Failed to get feature"
     assert f.GetFID() == 1
@@ -284,8 +287,10 @@ def test_ogr_miramon_empty_pol_layers():
 
     assert lyr is not None, "Failed to get layer"
 
-    assert lyr.GetFeatureCount() == 0
+    # polygon 0 is counted but has no information
+    assert lyr.GetFeatureCount() == 1
 
+    f = lyr.GetNextFeature()
     f = lyr.GetNextFeature()
     assert f is None, "Failed to get empty feature"
 
@@ -378,7 +383,7 @@ def test_ogr_miramon_3d_pol():
 
     assert lyr is not None, "Failed to get layer"
 
-    assert lyr.GetFeatureCount() == 5
+    assert lyr.GetFeatureCount() == 6
     assert lyr.GetGeomType() == ogr.wkbPolygon25D
 
     f = lyr.GetFeature(1)

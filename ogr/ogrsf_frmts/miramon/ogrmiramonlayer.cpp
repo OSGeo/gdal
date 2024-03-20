@@ -2526,8 +2526,7 @@ void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
         MM_RemoveInitial_and_FinalQuotationMarks(szArcFileName);
 
         // If extension is not specified ".arc" will be used
-        if (!pszArcLayerName ||
-            MMIsEmptyString(CPLGetExtension(pszArcLayerName)))
+        if (MMIsEmptyString(CPLGetExtension(pszArcLayerName)))
             CPLStrlcat(szArcFileName, (pszMMExt[0] == 'p') ? ".arc" : ".ARC",
                        MM_CPL_PATH_BUF_SIZE);
 
