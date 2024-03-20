@@ -428,6 +428,14 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
     // Both heights are 1m above in the corners, but middle terrain violates LOS.
     EXPECT_FALSE(
         GDALIsLineOfSightVisible(pBand, 0, 120, 203, 120, 0, 247, nullptr));
+
+    // Vertical line test with hill between two points.
+    EXPECT_FALSE(
+        GDALIsLineOfSightVisible(pBand, 83, 111, 154, 83, 117, 198, nullptr));
+
+    // Horizonal line test with hill between two points.
+    EXPECT_FALSE(
+        GDALIsLineOfSightVisible(pBand, 75, 115, 192, 89, 115, 191, nullptr));
 }
 
 }  // namespace
