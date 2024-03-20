@@ -209,22 +209,27 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
 
     // Use an interpolated Z height with 2D bresenham for the remaining cases.
 
+    // Lambda for computing the square of a number
+    auto SQUARE = [](const int n) -> int { return std::pow(n, 2); };
+
     // Lambda for Linear interpolate like C++20 std::lerp.
     auto lerp = [](const double a, const double b, const double t)
     { return a + t * (b - a); };
 
-    // Lambda for getting Z test height given x input along the bresenham line.
-    auto GetZValue = [&](const int x) -> double
+    // Lambda for getting Z test height given x-y input along the bresenham line.
+    auto GetZValue = [&](const int x, const int y) -> double
     {
-        const auto xDiff = xB - xA;
-        const double xPercent = static_cast<double>(x) / xDiff;
-        return lerp(zA, zB, xPercent);
+        const auto rNum = SQUARE(x - xA) + SQUARE(y - yA);
+        const auto rDenom = SQUARE(xB - xA) + SQUARE(yB - yA);
+        const double ratio =
+            sqrt(static_cast<double>(rNum) / static_cast<double>(rDenom));
+        return lerp(zA, zB, ratio);
     };
 
     // Lambda to get elevation at a bresenham-computed location.
     auto OnBresenhamPoint = [&](const int x, const int y) -> bool
     {
-        const auto z = GetZValue(x);
+        const auto z = GetZValue(x, y);
         return IsAboveTerrain(hBand, x, y, z);
     };
 
