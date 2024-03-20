@@ -39,11 +39,20 @@
 
 #include "gtest_include.h"
 
+#include "test_data.h"
+
 namespace
 {
 // Common fixture with test data
 struct test_alg : public ::testing::Test
 {
+    std::string data_;
+
+    test_alg()
+    {
+        // Compose data path for test group
+        data_ = tut::common::data_basedir;
+    }
 };
 
 typedef struct
@@ -347,8 +356,8 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_default_square_dataset)
 TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
 {
     GDALAllRegister();
-    const std::string path = "/vsizip/vsicurl/https://terrain.ardupilot.org/"
-                             "SRTM1/ap_srtm1.zip/ap_srtm1.vrt";
+
+    const std::string path = data_ + SEP + "n43.dt0";
     const auto poDS = GDALDatasetUniquePtr(
         GDALDataset::FromHandle(GDALOpen(path.c_str(), GA_ReadOnly)));
     if (!poDS)
@@ -364,32 +373,61 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
     ASSERT_TRUE(
         GDALInvGeoTransform(geoFwdTransform.data(), geoInvTransform.data()));
 
-    // Check both sides of the continental divide in Colorado at Eisenhower tunnel.
-    const double eisLatE = 39.679000;
-    const double eisLngE = -105.903062;
-    const double eisLatW = 39.678664;
-    const double eisLngW = -105.935403;
+    // Check both sides of a mesa (north and south ends).
+    // Top mesa at (x=8,y=58,alt=221)
+    const double mesaLatTop = 43.5159;
+    const double mesaLngTop = -79.9327;
 
-    double eisEx, eisEy, eisWx, eisWy;
-    GDALApplyGeoTransform(geoInvTransform.data(), eisLngE, eisLatE, &eisEx,
-                          &eisEy);
-    GDALApplyGeoTransform(geoInvTransform.data(), eisLngW, eisLatW, &eisWx,
-                          &eisWy);
-    const int iEisEx = static_cast<int>(eisEx);
-    const int iEisEy = static_cast<int>(eisEy);
-    const int iEisWx = static_cast<int>(eisWx);
-    const int iEisWy = static_cast<int>(eisWy);
+    // Bottom is at (x=12,y=64,alt=199)
+    const double mesaLatBottom = 43.4645;
+    const double mesaLngBottom = -79.8985;
+
+    // In between the two locations, the mesa reaches a local max altiude of 321.
+
+    double dMesaTopX, dMesaTopY, dMesaBottomX, dMesaBottomY;
+    GDALApplyGeoTransform(geoInvTransform.data(), mesaLngTop, mesaLatTop,
+                          &dMesaTopX, &dMesaTopY);
+    GDALApplyGeoTransform(geoInvTransform.data(), mesaLngBottom, mesaLatBottom,
+                          &dMesaBottomX, &dMesaBottomY);
+    const int iMesaTopX = static_cast<int>(dMesaTopX);
+    const int iMesaTopY = static_cast<int>(dMesaTopY);
+    const int iMesaBottomX = static_cast<int>(dMesaBottomX);
+    const int iMesaBottomY = static_cast<int>(dMesaBottomY);
 
     // Both points are just above terrain, with terrain between.
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, iEisEx, iEisEy, 3380.0, iEisWx,
-                                          iEisWy, 3450.0, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, iMesaTopX, iMesaTopY, 222,
+                                          iMesaBottomX, iMesaBottomY, 199,
+                                          nullptr));
     // Flip the order, same result.
-    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, iEisWx, iEisWy, 3450.0, iEisEx,
-                                          iEisEy, 3380.0, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, iMesaBottomX, iMesaBottomY,
+                                          199, iMesaTopX, iMesaTopY, 222,
+                                          nullptr));
 
     // Both points above terrain.
-    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, iEisEx, iEisEy, 3900.0, iEisWx,
-                                         iEisWy, 3900.0, nullptr));
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, iMesaTopX, iMesaTopY, 322,
+                                         iMesaBottomX, iMesaBottomY, 322,
+                                         nullptr));
+
+    // Both points below terrain.
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, iMesaTopX, iMesaTopY, 0,
+                                          iMesaBottomX, iMesaBottomY, 0,
+                                          nullptr));
+
+    // Test negative slope bresenham diagonals across the whole raster.
+    // Both high above terrain.
+    EXPECT_TRUE(
+        GDALIsLineOfSightVisible(pBand, 0, 0, 460, 120, 120, 460, nullptr));
+    // Both heights are 1m above in the corners, but middle terrain violates LOS.
+    EXPECT_FALSE(
+        GDALIsLineOfSightVisible(pBand, 0, 0, 295, 120, 120, 183, nullptr));
+
+    // Test positive slope bresenham diagnoals across the whole raster.
+    // Both high above terrain.
+    EXPECT_TRUE(
+        GDALIsLineOfSightVisible(pBand, 0, 120, 460, 120, 0, 460, nullptr));
+    // Both heights are 1m above in the corners, but middle terrain violates LOS.
+    EXPECT_FALSE(
+        GDALIsLineOfSightVisible(pBand, 0, 120, 203, 120, 0, 247, nullptr));
 }
 
 }  // namespace
