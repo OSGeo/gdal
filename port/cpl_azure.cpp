@@ -41,6 +41,18 @@
 #ifdef HAVE_CURL
 
 /************************************************************************/
+/*                      RemoveTrailingSlash()                           */
+/************************************************************************/
+
+static std::string RemoveTrailingSlash(const std::string &osStr)
+{
+    std::string osRet(osStr);
+    if (!osRet.empty() && osRet.back() == '/')
+        osRet.pop_back();
+    return osRet;
+}
+
+/************************************************************************/
 /*                            GetSignature()                            */
 /************************************************************************/
 
@@ -508,8 +520,9 @@ static bool ParseStorageConnectionString(
         osStorageAccount.clear();
         osStorageKey.clear();
 
-        const CPLString osBlobEndpoint = AzureCSGetParameter(
-            osStorageConnectionString, "BlobEndpoint", false);
+        const std::string osBlobEndpoint =
+            RemoveTrailingSlash(AzureCSGetParameter(osStorageConnectionString,
+                                                    "BlobEndpoint", false));
         osSAS = AzureCSGetParameter(osStorageConnectionString,
                                     "SharedAccessSignature", false);
         if (!osBlobEndpoint.empty() && !osSAS.empty())
@@ -525,7 +538,7 @@ static bool ParseStorageConnectionString(
         AzureCSGetParameter(osStorageConnectionString, "BlobEndpoint", false);
     if (!osBlobEndpoint.empty())
     {
-        osEndpoint = osBlobEndpoint;
+        osEndpoint = RemoveTrailingSlash(osBlobEndpoint);
     }
     else
     {
@@ -534,7 +547,7 @@ static bool ParseStorageConnectionString(
         if (!osEndpointSuffix.empty())
             osEndpoint = (bUseHTTPS ? "https://" : "http://") +
                          osStorageAccount + "." + osServicePrefix + "." +
-                         osEndpointSuffix;
+                         RemoveTrailingSlash(osEndpointSuffix);
     }
 
     return true;
@@ -687,8 +700,8 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(
                                                                       : "dfs");
     bUseHTTPS = CPLTestBool(VSIGetPathSpecificOption(
         osPathForOption.c_str(), "CPL_AZURE_USE_HTTPS", "YES"));
-    osEndpoint = VSIGetPathSpecificOption(osPathForOption.c_str(),
-                                          "CPL_AZURE_ENDPOINT", "");
+    osEndpoint = RemoveTrailingSlash(VSIGetPathSpecificOption(
+        osPathForOption.c_str(), "CPL_AZURE_ENDPOINT", ""));
 
     const CPLString osStorageConnectionString(CSLFetchNameValueDef(
         papszOptions, "AZURE_STORAGE_CONNECTION_STRING",
