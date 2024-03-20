@@ -229,7 +229,7 @@ MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 0, 0))
             return 1;
 
-        // Get the vertices far away from their place
+        // Get the vertices far away from their place to be inverted later
         if (pArcHeader[i_elem].nElemCount !=
             fread_function(hMiraMonLayer->ReadFeature.pCoord + nStartVertice +
                                pArcHeader[i_elem].nElemCount,
@@ -264,12 +264,12 @@ MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
             */
         }
 
-        // Reverse the vertices
+        // Reverse the vertices while putting on their place
         for (nIVertice = 0; nIVertice < pArcHeader[i_elem].nElemCount;
              nIVertice++)
         {
             memcpy(hMiraMonLayer->ReadFeature.pCoord + nStartVertice -
-                       (bAvoidFirst ? 1 : 0) + nIVertice,
+                       ((nStartVertice > 0 && bAvoidFirst) ? 1 : 0) + nIVertice,
                    hMiraMonLayer->ReadFeature.pCoord + nStartVertice +
                        2 * pArcHeader[i_elem].nElemCount - nIVertice - 1,
                    sizeof(*hMiraMonLayer->ReadFeature.pCoord));
@@ -277,7 +277,8 @@ MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
             if (hMiraMonLayer->TopHeader.bIs3d)
             {
                 memcpy(hMiraMonLayer->ReadFeature.pZCoord + nStartVertice -
-                           (bAvoidFirst ? 1 : 0) + nIVertice,
+                           ((nStartVertice > 0 && bAvoidFirst) ? 1 : 0) +
+                           nIVertice,
                        hMiraMonLayer->ReadFeature.pZCoord + nStartVertice +
                            2 * pArcHeader[i_elem].nElemCount - nIVertice - 1,
                        sizeof(*hMiraMonLayer->ReadFeature.pZCoord));

@@ -7,6 +7,7 @@
 #ifdef GDAL_COMPILATION
 #include "mm_gdal_constants.h"
 #include "mm_gdal_structures.h"
+
 CPL_C_START  // Necessary for compiling in GDAL project
 #else
 #include <stdio.h>  // For FILE
@@ -803,6 +804,7 @@ enum DataType
     MMDTDouble,
     MMDT4bits
 };
+
 enum TreatmentVariable
 {
     MMTVQuantitativeContinuous,
