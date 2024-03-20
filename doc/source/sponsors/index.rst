@@ -121,6 +121,10 @@ the health of the project:
 
     .. container:: horizontal-logo
 
+        `Dynamic Graphics, Inc. <https://www.dgi.com/>`__
+
+    .. container:: horizontal-logo
+
         `Kaplan Open Source Consulting <https://kaplanopensource.co.il/>`__
 
     .. container:: horizontal-logo
