@@ -1775,33 +1775,45 @@ int MMInitLayerByType(struct MiraMonVectLayerInfo *hMiraMonLayer)
             pszArcLayerName = MMReturnValueFromSectionINIFile(
                 pMMPolygonLayer->pszREL_LayerName,
                 SECTION_OVVW_ASPECTES_TECNICS, KEY_ArcSource);
-            MM_RemoveInitial_and_FinalQuotationMarks(pszArcLayerName);
-
-            // If extension is not specified ".arc" will be used
-            pszExt = get_extension_function(pszArcLayerName);
-            if (MMIsEmptyString(pszExt))
+            if (pszArcLayerName)
             {
-                char *pszArcLayerNameAux =
-                    calloc_function(strlen(pszArcLayerName) + 5);
-                if (!pszArcLayerNameAux)
+                MM_RemoveInitial_and_FinalQuotationMarks(pszArcLayerName);
+
+                // If extension is not specified ".arc" will be used
+                pszExt = get_extension_function(pszArcLayerName);
+                if (MMIsEmptyString(pszExt))
                 {
-                    MMCPLError(CE_Failure, CPLE_OutOfMemory,
-                               "Memory error in MiraMon "
-                               "driver (MMInitLayerByType())");
-                    return 1;
+                    char *pszArcLayerNameAux =
+                        calloc_function(strlen(pszArcLayerName) + 5);
+                    if (!pszArcLayerNameAux)
+                    {
+                        MMCPLError(CE_Failure, CPLE_OutOfMemory,
+                                   "Memory error in MiraMon "
+                                   "driver (MMInitLayerByType())");
+                        return 1;
+                    }
+                    strcpy(pszArcLayerNameAux, pszArcLayerName);
+                    strcat(pszArcLayerNameAux, ".arc");
+                    free_function(pszArcLayerName);
+                    pszArcLayerName = pszArcLayerNameAux;
                 }
-                strcpy(pszArcLayerNameAux, pszArcLayerName);
-                strcat(pszArcLayerNameAux, ".arc");
+
+                strcpy(pMMPolygonLayer->MMArc.pszLayerName,
+                       form_filename_function(
+                           get_path_function(hMiraMonLayer->pszSrcLayerName),
+                           pszArcLayerName));
+
                 free_function(pszArcLayerName);
-                pszArcLayerName = pszArcLayerNameAux;
             }
-
-            strcpy(pMMPolygonLayer->MMArc.pszLayerName,
-                   form_filename_function(
-                       get_path_function(hMiraMonLayer->pszSrcLayerName),
-                       pszArcLayerName));
-
-            free_function(pszArcLayerName);
+            else
+            {
+                // There is no arc layer on the metada file
+                sprintf(local_message,
+                        "Error reading the ARC file in the metadata file %s.",
+                        pMMPolygonLayer->pszREL_LayerName);
+                MMCPLError(CE_Failure, CPLE_OpenFailed, local_message);
+                return 1;
+            }
 
             if (nullptr == (hMiraMonLayer->MMPolygon.MMArc.pF = fopen_function(
                                 pMMPolygonLayer->MMArc.pszLayerName,

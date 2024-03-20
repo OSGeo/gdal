@@ -125,6 +125,7 @@ class OGRMiraMonLayer final
                                int bApproxOK = TRUE) override;
 
     int TestCapability(const char *) override;
+    void AddToFileList(CPLStringList &oFileList);
 };
 
 /************************************************************************/
@@ -160,6 +161,7 @@ class OGRMiraMonDataSource final : public OGRDataSource
     }
 
     OGRLayer *GetLayer(int) override;
+    char **GetFileList() override;
 
     OGRLayer *ICreateLayer(const char *pszLayerName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

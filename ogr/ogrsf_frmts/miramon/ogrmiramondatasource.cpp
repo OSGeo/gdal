@@ -292,3 +292,19 @@ OGRLayer *OGRMiraMonDataSource::GetLayer(int iLayer)
 
     return papoLayers[iLayer];
 }
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **OGRMiraMonDataSource::GetFileList()
+{
+    CPLStringList oFileList;
+    GetLayerCount();
+    for (int i = 0; i < nLayers; i++)
+    {
+        OGRMiraMonLayer *poLayer = papoLayers[i];
+        poLayer->AddToFileList(oFileList);
+    }
+    return oFileList.StealList();
+}

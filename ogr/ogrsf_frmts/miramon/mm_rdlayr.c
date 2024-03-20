@@ -350,6 +350,15 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
     MMResetFeatureRecord(&hMiraMonLayer->ReadFeature);
     pPolHeader = hMiraMonLayer->MMPolygon.pPolHeader + i_pol;
 
+    // It's accepted not having arcs in the universal polygon
+    if (!pPolHeader->nArcsCount)
+    {
+        if (i_pol == 0)
+            return 0;
+        else
+            return 1;
+    }
+
     if (MMResizeMiraMonPolygonArcs(&hMiraMonLayer->pArcs,
                                    &hMiraMonLayer->nMaxArcs,
                                    pPolHeader->nArcsCount, 0, 0))

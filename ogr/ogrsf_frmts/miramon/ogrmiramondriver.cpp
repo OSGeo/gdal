@@ -84,22 +84,23 @@ static GDALDataset *OGRMiraMonDriverOpen(GDALOpenInfo *poOpenInfo)
 
     OGRMiraMonDataSource *poDS = new OGRMiraMonDataSource();
 
-    if (!poDS->Open(poOpenInfo->pszFilename, nullptr, nullptr,
-                    poOpenInfo->eAccess == GA_Update,
-                    poOpenInfo->papszOpenOptions))
-    {
-        delete poDS;
-        return nullptr;
-    }
-
-    /* Not sure when use that
     if (poDS != nullptr && poOpenInfo->eAccess == GA_Update)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "MiraMonVector driver does not support update.");
         delete poDS;
         poDS = nullptr;
-    }*/
+    }
+    else
+    {
+        if (!poDS->Open(poOpenInfo->pszFilename, nullptr, nullptr,
+                        poOpenInfo->eAccess == GA_Update,
+                        poOpenInfo->papszOpenOptions))
+        {
+            delete poDS;
+            poDS = nullptr;
+        }
+    }
 
     return poDS;
 }

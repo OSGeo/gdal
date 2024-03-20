@@ -515,8 +515,7 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         {
             CPLDebug("MiraMon",
                      sprintf_UINT64 " polygon(s) written in file %s.pol",
-                     // The polygon 0 is not imported
-                     hMiraMonLayerPOL.TopHeader.nElemCount - 1,
+                     hMiraMonLayerPOL.TopHeader.nElemCount,
                      hMiraMonLayerPOL.pszSrcLayerName);
         }
         CPLDebug("MiraMon", "MiraMon polygons layer closed");
@@ -696,31 +695,18 @@ void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
 
 OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
 {
-    MM_INTERNAL_FID iMMFeature;
-
     if (!phMiraMonLayer)
         return nullptr;
-    if (phMiraMonLayer->bIsPolygon)
-    {
-        // First polygon is not returned because it's the universal polygon
-        if (iNextFID + 1 >= (GUInt64)phMiraMonLayer->TopHeader.nElemCount)
-            return nullptr;
-        iMMFeature = (MM_INTERNAL_FID)iNextFID + 1;
-    }
-    else
-    {
-        if (iNextFID >= (GUInt64)phMiraMonLayer->TopHeader.nElemCount)
-            return nullptr;
-        iMMFeature = (MM_INTERNAL_FID)iNextFID;
-    }
 
-    OGRFeature *poFeature = GetFeature((GIntBig)iMMFeature);
+    if (iNextFID >= (GUInt64)phMiraMonLayer->TopHeader.nElemCount)
+        return nullptr;
+
+    OGRFeature *poFeature = GetFeature(iNextFID);
 
     if (!poFeature)
         return nullptr;
 
     iNextFID++;
-
     return poFeature;
 }
 
@@ -736,6 +722,15 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
     OGRLineString *poLS = nullptr;
     MM_INTERNAL_FID nIElem = (MM_INTERNAL_FID)nFeatureId;
     MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord = 0;
+
+    if (!phMiraMonLayer)
+        return nullptr;
+
+    if (nFeatureId < 0)
+        return nullptr;
+
+    if (nIElem > phMiraMonLayer->TopHeader.nElemCount)
+        return nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Read nFeatureId feature directly from the file.                 */
@@ -884,47 +879,54 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     return nullptr;
                 }
 
-                nIVrtAcum = 0;
-                if (!(phMiraMonLayer->ReadFeature.flag_VFG[0] |
-                      MM_EXTERIOR_ARC_SIDE))
+                if (phMiraMonLayer->ReadFeature.nNRings &&
+                    phMiraMonLayer->ReadFeature.nNumpCoord)
                 {
-                    CPLError(CE_Failure, CPLE_AssertionFailed,
-                             "\nWrong polygon format.");
-                    delete poGeom;
-                    return nullptr;
-                }
-
-                for (nIRing = 0; nIRing < phMiraMonLayer->ReadFeature.nNRings;
-                     nIRing++)
-                {
-                    OGRLinearRing poRing;
-
-                    for (MM_N_VERTICES_TYPE nIVrt = 0;
-                         nIVrt <
-                         phMiraMonLayer->ReadFeature.pNCoordRing[nIRing];
-                         nIVrt++)
+                    nIVrtAcum = 0;
+                    if (!(phMiraMonLayer->ReadFeature.flag_VFG[0] |
+                          MM_EXTERIOR_ARC_SIDE))
                     {
-                        if (phMiraMonLayer->TopHeader.bIs3d)
-                        {
-                            poRing.addPoint(
-                                phMiraMonLayer->ReadFeature.pCoord[nIVrtAcum]
-                                    .dfX,
-                                phMiraMonLayer->ReadFeature.pCoord[nIVrtAcum]
-                                    .dfY,
-                                phMiraMonLayer->ReadFeature.pZCoord[nIVrtAcum]);
-                        }
-                        else
-                        {
-                            poRing.addPoint(
-                                phMiraMonLayer->ReadFeature.pCoord[nIVrtAcum]
-                                    .dfX,
-                                phMiraMonLayer->ReadFeature.pCoord[nIVrtAcum]
-                                    .dfY);
-                        }
-
-                        nIVrtAcum++;
+                        CPLError(CE_Failure, CPLE_AssertionFailed,
+                                 "\nWrong polygon format.");
+                        delete poGeom;
+                        return nullptr;
                     }
-                    poP->addRing(&poRing);
+
+                    for (nIRing = 0;
+                         nIRing < phMiraMonLayer->ReadFeature.nNRings; nIRing++)
+                    {
+                        OGRLinearRing poRing;
+
+                        for (MM_N_VERTICES_TYPE nIVrt = 0;
+                             nIVrt <
+                             phMiraMonLayer->ReadFeature.pNCoordRing[nIRing];
+                             nIVrt++)
+                        {
+                            if (phMiraMonLayer->TopHeader.bIs3d)
+                            {
+                                poRing.addPoint(phMiraMonLayer->ReadFeature
+                                                    .pCoord[nIVrtAcum]
+                                                    .dfX,
+                                                phMiraMonLayer->ReadFeature
+                                                    .pCoord[nIVrtAcum]
+                                                    .dfY,
+                                                phMiraMonLayer->ReadFeature
+                                                    .pZCoord[nIVrtAcum]);
+                            }
+                            else
+                            {
+                                poRing.addPoint(phMiraMonLayer->ReadFeature
+                                                    .pCoord[nIVrtAcum]
+                                                    .dfX,
+                                                phMiraMonLayer->ReadFeature
+                                                    .pCoord[nIVrtAcum]
+                                                    .dfY);
+                            }
+
+                            nIVrtAcum++;
+                        }
+                        poP->addRing(&poRing);
+                    }
                 }
             }
 
@@ -940,14 +942,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
     OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
     poGeom->assignSpatialReference(m_poSRS);
     poFeature->SetGeometryDirectly(poGeom);
-    // In polygons, if MiraMon is asked to give the 0-th element,
-    // in fact is the first one, because the 0-th one is the called
-    // universal polygon (you can find the description of that in
-    // the format description).
-    if (phMiraMonLayer->bIsPolygon)
-        poFeature->SetFID(iNextFID + 1);
-    else
-        poFeature->SetFID(iNextFID);
+    poFeature->SetFID(nFeatureId);
 
     /* -------------------------------------------------------------------- */
     /*      Process field values.                                           */
@@ -1347,13 +1342,11 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 /****************************************************************************/
 GIntBig OGRMiraMonLayer::GetFeatureCount(int bForce)
 {
-    if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
+    if (!phMiraMonLayer || m_poFilterGeom != nullptr ||
+        m_poAttrQuery != nullptr)
         return OGRLayer::GetFeatureCount(bForce);
 
-    if (phMiraMonLayer->bIsPolygon)
-        return (GIntBig)phMiraMonLayer->TopHeader.nElemCount - 1;
-    else
-        return (GIntBig)phMiraMonLayer->TopHeader.nElemCount;
+    return (GIntBig)phMiraMonLayer->TopHeader.nElemCount;
 }
 
 /****************************************************************************/
@@ -2414,4 +2407,184 @@ OGRErr OGRMiraMonLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
                 return OGRERR_NONE;
             }
     }
+}
+
+/************************************************************************/
+/*                            AddToFileList()                           */
+/************************************************************************/
+
+void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)
+{
+    if (!phMiraMonLayer)
+        return;
+
+    char szAuxFile[MM_CPL_PATH_BUF_SIZE];
+
+    oFileList.AddString(
+        VSIGetCanonicalFilename(phMiraMonLayer->pszSrcLayerName));
+    char *pszMMExt =
+        CPLStrdup(CPLGetExtension(phMiraMonLayer->pszSrcLayerName));
+
+    if (phMiraMonLayer->bIsPoint)
+    {
+        // As it's explicit on documentation a point has also two more files:
+
+        // FILE_NAME_WITHOUT_EXTENSION.pnt --> FILE_NAME_WITHOUT_EXTENSION + T.rel
+        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+                   MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "T.rel" : "T.REL",
+                   MM_CPL_PATH_BUF_SIZE);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
+                            szAuxFile, nullptr)));
+
+        // FILE_NAME_WITHOUT_EXTENSION.pnt --> FILE_NAME_WITHOUT_EXTENSION + T.dbf
+        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+                   MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "T.dbf" : "T.DBF",
+                   MM_CPL_PATH_BUF_SIZE);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
+                            szAuxFile, nullptr)));
+    }
+    else if (phMiraMonLayer->bIsArc && !phMiraMonLayer->bIsPolygon)
+    {
+        // As it's explicit on documentation a point has also five more files:
+
+        // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + A.rel
+        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+                   MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? "A.rel" : "A.REL",
+                   MM_CPL_PATH_BUF_SIZE);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
+                            szAuxFile, nullptr)));
+
+        // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + A.dbf
+        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+                   MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? "A.dbf" : "A.DBF",
+                   MM_CPL_PATH_BUF_SIZE);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
+                            szAuxFile, nullptr)));
+
+        // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + .nod
+        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+                   MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? ".nod" : ".NOD",
+                   MM_CPL_PATH_BUF_SIZE);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
+                            szAuxFile, nullptr)));
+
+        // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + N.rel
+        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+                   MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? "N.rel" : "N.REL",
+                   MM_CPL_PATH_BUF_SIZE);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
+                            szAuxFile, nullptr)));
+
+        // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + N.dbf
+        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+                   MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcat(szAuxFile, (pszMMExt[0] == 'a') ? "N.dbf" : "N.DBF",
+                   MM_CPL_PATH_BUF_SIZE);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
+                            szAuxFile, nullptr)));
+    }
+    else if (phMiraMonLayer->bIsPolygon)
+    {
+        // As it's explicit on documentation a point has also eight more files:
+        const char *szCompleteArcFileName;
+        char szArcFileName[MM_CPL_PATH_BUF_SIZE];
+
+        // FILE_NAME_WITHOUT_EXTENSION.pol --> FILE_NAME_WITHOUT_EXTENSION + P.rel
+        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+                   MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "P.rel" : "P.REL",
+                   MM_CPL_PATH_BUF_SIZE);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
+                            szAuxFile, nullptr)));
+
+        // The name of the arc is in THIS metadata file
+        char *pszArcLayerName = MMReturnValueFromSectionINIFile(
+            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
+                            szAuxFile, nullptr),
+            SECTION_OVVW_ASPECTES_TECNICS, KEY_ArcSource);
+        if (!pszArcLayerName)
+        {
+            CPLFree(pszMMExt);
+            return;  //Some files are missing
+        }
+        CPLStrlcpy(szArcFileName, pszArcLayerName, MM_CPL_PATH_BUF_SIZE);
+
+        MM_RemoveInitial_and_FinalQuotationMarks(szArcFileName);
+
+        // If extension is not specified ".arc" will be used
+        if (!pszArcLayerName ||
+            MMIsEmptyString(CPLGetExtension(pszArcLayerName)))
+            CPLStrlcat(szArcFileName, (pszMMExt[0] == 'p') ? ".arc" : ".ARC",
+                       MM_CPL_PATH_BUF_SIZE);
+
+        CPLFree(pszArcLayerName);
+
+        szCompleteArcFileName =
+            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
+                            szArcFileName, nullptr);
+
+        // The arc that has the coordinates of the polygon
+        oFileList.AddStringDirectly(
+            VSIGetCanonicalFilename(szCompleteArcFileName));
+
+        // FILE_NAME_WITHOUT_EXTENSION.pol --> FILE_NAME_WITHOUT_EXTENSION + P.dbf
+        CPLStrlcpy(szAuxFile, CPLGetBasename(phMiraMonLayer->pszSrcLayerName),
+                   MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "P.dbf" : "P.DBF",
+                   MM_CPL_PATH_BUF_SIZE);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(
+            CPLFormFilename(CPLGetDirname(phMiraMonLayer->pszSrcLayerName),
+                            szAuxFile, nullptr)));
+
+        // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + A.rel
+        const char *pszBaseArcName = CPLGetBasename(szCompleteArcFileName);
+        CPLStrlcpy(szAuxFile, pszBaseArcName, MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "A.rel" : "A.REL",
+                   MM_CPL_PATH_BUF_SIZE);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
+            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+
+        // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + A.dbf
+        CPLStrlcpy(szAuxFile, pszBaseArcName, MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "A.dbf" : "A.DBF",
+                   MM_CPL_PATH_BUF_SIZE);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
+            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+
+        // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + .nod
+        CPLStrlcpy(szAuxFile, pszBaseArcName, MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? ".nod" : ".NOD",
+                   MM_CPL_PATH_BUF_SIZE);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
+            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+
+        // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + N.rel
+        CPLStrlcpy(szAuxFile, pszBaseArcName, MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "N.rel" : "N.REL",
+                   MM_CPL_PATH_BUF_SIZE);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
+            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+
+        // FILE_NAME_WITHOUT_EXTENSION.arc --> FILE_NAME_WITHOUT_EXTENSION + N.dbf
+        CPLStrlcpy(szAuxFile, pszBaseArcName, MM_CPL_PATH_BUF_SIZE);
+        CPLStrlcat(szAuxFile, (pszMMExt[0] == 'p') ? "N.dbf" : "N.DBF",
+                   MM_CPL_PATH_BUF_SIZE);
+        oFileList.AddStringDirectly(VSIGetCanonicalFilename(CPLFormFilename(
+            CPLGetDirname(szCompleteArcFileName), szAuxFile, nullptr)));
+    }
+    CPLFree(pszMMExt);
 }

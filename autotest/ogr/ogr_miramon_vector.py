@@ -32,12 +32,14 @@
 # import os
 # import pdb
 
-# import gdaltest
-# import ogrtest
-# import pytest
+import gdaltest
 
 # from osgeo import gdal, ogr, osr
 from osgeo import gdal, ogr
+
+# import ogrtest
+# import pytest
+
 
 ###############################################################################
 # basic point test
@@ -313,6 +315,8 @@ def test_ogr_miramon_3d_point():
     assert f.GetGeometryRef().ExportToWkt() == "POINT (440551.66 4635315.3 619.96)"
 
     g = f.GetGeometryRef()
+    assert g is not None, "Failed to get geometry"
+    assert g.GetCoordinateDimension() == 3
     assert g.GetZ() == 619.96
 
     f = lyr.GetFeature(30)
@@ -340,6 +344,7 @@ def test_ogr_miramon_3d_arc():
     assert f is not None, "Failed to get feature"
     g = f.GetGeometryRef()
     assert g is not None, "Failed to get geometry"
+    assert g.GetCoordinateDimension() == 3
     assert g.GetPointCount() == 4
     p = g.GetPoint(0)
     assert p[2] == 595.1063842773438
@@ -354,6 +359,7 @@ def test_ogr_miramon_3d_arc():
     assert f is not None, "Failed to get feature"
     g = f.GetGeometryRef()
     assert g is not None, "Failed to get geometry"
+    assert g.GetCoordinateDimension() == 3
     assert g.GetPointCount() == 2
     p = g.GetPoint(0)
     assert p[2] == 233.82064819335938
@@ -379,6 +385,7 @@ def test_ogr_miramon_3d_pol():
     assert f is not None, "Failed to get feature"
     g = f.GetGeometryRef()
     assert g is not None, "Failed to get geometry"
+    assert g.GetCoordinateDimension() == 3
     r = g.GetGeometryRef(0)
     assert r is not None, "Failed to get geometry"
     assert r.GetPointCount() == 4
@@ -395,6 +402,7 @@ def test_ogr_miramon_3d_pol():
     assert f is not None, "Failed to get feature"
     g = f.GetGeometryRef()
     assert g is not None, "Failed to get geometry"
+    assert g.GetCoordinateDimension() == 3
     r = g.GetGeometryRef(0)
     assert r is not None, "Failed to get geometry"
     assert r.GetPointCount() == 4
@@ -408,3 +416,19 @@ def test_ogr_miramon_3d_pol():
     assert p[2] == 18.207277297973633
 
     ds = None
+
+
+###############################################################################
+
+
+def test_ogr_miramon_test_ogrsf():
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is not None:
+        ret = gdaltest.runexternal(
+            test_cli_utilities.get_test_ogrsf_path()
+            + " data/miramon/Points/3dpoints/Some3dPoints.pnt"
+        )
+
+        assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
