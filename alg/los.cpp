@@ -221,6 +221,10 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
     {
         const auto rNum = SQUARE(x - xA) + SQUARE(y - yA);
         const auto rDenom = SQUARE(xB - xA) + SQUARE(yB - yA);
+        /// @todo In order to reduce CPU cost and avoid a sqrt operation, consider
+        /// the approach to just the ratio along x or y depending on whether
+        /// the line is steep or shallow.
+        /// See https://github.com/OSGeo/gdal/pull/9506#discussion_r1532459689.
         const double ratio =
             sqrt(static_cast<double>(rNum) / static_cast<double>(rDenom));
         return lerp(zA, zB, ratio);
