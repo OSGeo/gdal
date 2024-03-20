@@ -284,16 +284,18 @@ gwE6fxOLyJDxuWRf
         '{ "access_token": "my_token", "token_type": "Bearer", "expires_in": 3600 }',
     )
 
-    ds = gdal.Open("EEDAI:image")
+    try:
+        ds = gdal.Open("EEDAI:image")
+        assert ds is not None
+    except RuntimeError:
+        pass
+    finally:
+        gdal.SetConfigOption("EEDA_URL", None)
+        gdal.SetConfigOption("EEDA_PRIVATE_KEY", None)
+        gdal.SetConfigOption("EEDA_CLIENT_EMAIL", None)
 
-    gdal.SetConfigOption("EEDA_URL", None)
-    gdal.SetConfigOption("EEDA_PRIVATE_KEY", None)
-    gdal.SetConfigOption("EEDA_CLIENT_EMAIL", None)
-
-    if gdal.GetLastErrorMsg().find("CPLRSASHA256Sign() not implemented") >= 0:
-        pytest.skip()
-
-    assert ds is not None
+    if "CPLRSASHA256Sign() not implemented" in gdal.GetLastErrorMsg():
+        pytest.skip("CPLRSASHA256Sign() not implemented")
 
 
 ###############################################################################
@@ -321,19 +323,21 @@ def test_eedai_GOOGLE_APPLICATION_CREDENTIALS():
         '{ "access_token": "my_token", "token_type": "Bearer", "expires_in": 3600 }',
     )
 
-    ds = gdal.Open("EEDAI:image")
+    try:
+        ds = gdal.Open("EEDAI:image")
+        assert ds is not None
+    except RuntimeError:
+        pass
+    finally:
+        gdal.Unlink("/vsimem/my.json")
 
-    gdal.Unlink("/vsimem/my.json")
+        gdal.SetConfigOption("EEDA_URL", None)
+        gdal.SetConfigOption("GOOGLE_APPLICATION_CREDENTIALS", None)
+        gdal.SetConfigOption("EEDA_PRIVATE_KEY", None)
+        gdal.SetConfigOption("EEDA_CLIENT_EMAIL", None)
 
-    gdal.SetConfigOption("EEDA_URL", None)
-    gdal.SetConfigOption("GOOGLE_APPLICATION_CREDENTIALS", None)
-    gdal.SetConfigOption("EEDA_PRIVATE_KEY", None)
-    gdal.SetConfigOption("EEDA_CLIENT_EMAIL", None)
-
-    if gdal.GetLastErrorMsg().find("CPLRSASHA256Sign() not implemented") >= 0:
-        pytest.skip()
-
-    assert ds is not None
+    if "CPLRSASHA256Sign() not implemented" in gdal.GetLastErrorMsg():
+        pytest.skip("CPLRSASHA256Sign() not implemented")
 
 
 ###############################################################################

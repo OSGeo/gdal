@@ -1,12 +1,12 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y \
- && apt-get install -y cmake ccache libproj-dev wget python3-dev python3-numpy python3-pip swig
+ && apt-get install -y cmake gcc ccache libproj-dev wget python3-dev python3-numpy python3-pip swig
 
-RUN wget https://registrationcenter-download.intel.com/akdlm/irc_nas/18717/l_dpcpp-cpp-compiler_p_2022.1.0.137_offline.sh \
-    && sh l_dpcpp-cpp-compiler_p_2022.1.0.137_offline.sh -a -s --eula accept
+RUN wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/bb99984f-370f-413d-bbec-38928d2458f2/l_dpcpp-cpp-compiler_p_2024.0.2.29_offline.sh \
+    && sh l_dpcpp-cpp-compiler_p_2024.0.2.29_offline.sh -a -s --eula accept
 
 # It appears to be necessary to install python dependencies _before_
 # setting up the Intel environment below. Otherwise we get the following
@@ -25,23 +25,24 @@ RUN python3 -m pip install -U -r /tmp/requirements.txt
 # RUN . /opt/intel/oneapi/setvars.sh && env | sort
 
 ENV ACL_BOARD_VENDOR_PATH=/opt/Intel/OpenCLFPGA/oneAPI/Boards
-ENV CMAKE_PREFIX_PATH=/opt/intel/oneapi/tbb/2021.6.0/env/..:/opt/intel/oneapi/compiler/2022.1.0/linux/IntelDPCPP
-ENV CMPLR_ROOT=/opt/intel/oneapi/compiler/2022.1.0
-ENV CPATH=/opt/intel/oneapi/tbb/2021.6.0/env/../include:/opt/intel/oneapi/dev-utilities/2021.6.0/include
-ENV DIAGUTIL_PATH=/opt/intel/oneapi/debugger/2021.6.0/sys_check/debugger_sys_check.py:/opt/intel/oneapi/compiler/2022.1.0/sys_check/sys_check.sh
+ENV CMAKE_PREFIX_PATH=/opt/intel/oneapi/tbb/2021.11/env/..:/opt/intel/oneapi/dpl/2022.3/lib/cmake/oneDPL:/opt/intel/oneapi/compiler/2024.0
+ENV CMPLR_ROOT=/opt/intel/oneapi/compiler/2024.0
+ENV CPATH=/opt/intel/oneapi/tbb/2021.11/env/../include:/opt/intel/oneapi/dpl/2022.3/include:/opt/intel/oneapi/dev-utilities/2024.0/include:/opt/intel/oneapi/compiler/2024.0/opt/oclfpga/include
+ENV DIAGUTIL_PATH=/opt/intel/oneapi/debugger/2024.0/etc/debugger/sys_check/sys_check.py:/opt/intel/oneapi/compiler/2024.0/etc/compiler/sys_check/sys_check.sh
+ENV DPL_ROOT=/opt/intel/oneapi/dpl/2022.3
 ENV FPGA_VARS_ARGS=
-ENV FPGA_VARS_DIR=/opt/intel/oneapi/compiler/2022.1.0/linux/lib/oclfpga
-ENV GDB_INFO=/opt/intel/oneapi/debugger/2021.6.0/documentation/info/
-ENV INFOPATH=/opt/intel/oneapi/debugger/2021.6.0/gdb/intel64/lib
-ENV INTELFPGAOCLSDKROOT=/opt/intel/oneapi/compiler/2022.1.0/linux/lib/oclfpga
-ENV INTEL_PYTHONHOME=/opt/intel/oneapi/debugger/2021.6.0/dep
-ENV LD_LIBRARY_PATH=/opt/intel/oneapi/tbb/2021.6.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/debugger/2021.6.0/gdb/intel64/lib:/opt/intel/oneapi/debugger/2021.6.0/libipt/intel64/lib:/opt/intel/oneapi/debugger/2021.6.0/dep/lib:/opt/intel/oneapi/compiler/2022.1.0/linux/lib:/opt/intel/oneapi/compiler/2022.1.0/linux/lib/x64:/opt/intel/oneapi/compiler/2022.1.0/linux/lib/oclfpga/host/linux64/lib:/opt/intel/oneapi/compiler/2022.1.0/linux/compiler/lib/intel64_lin
-ENV LIBRARY_PATH=/opt/intel/oneapi/tbb/2021.6.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/compiler/2022.1.0/linux/compiler/lib/intel64_lin:/opt/intel/oneapi/compiler/2022.1.0/linux/lib
-ENV MANPATH=/opt/intel/oneapi/debugger/2021.6.0/documentation/man:/opt/intel/oneapi/compiler/2022.1.0/documentation/en/man/common:
-ENV NLSPATH=/opt/intel/oneapi/compiler/2022.1.0/linux/compiler/lib/intel64_lin/locale/%l_%t/%N
-ENV OCL_ICD_FILENAMES=libintelocl_emu.so:libalteracl.so:/opt/intel/oneapi/compiler/2022.1.0/linux/lib/x64/libintelocl.so
+ENV FPGA_VARS_DIR=/opt/intel/oneapi/compiler/2024.0/opt/oclfpga
+ENV GDB_INFO=/opt/intel/oneapi/debugger/2024.0/share/info/
+ENV INFOPATH=/opt/intel/oneapi/debugger/2024.0/opt/debugger/lib
+ENV INTELFPGAOCLSDKROOT=/opt/intel/oneapi/compiler/2024.0/opt/oclfpga
+ENV INTEL_PYTHONHOME=/opt/intel/oneapi/debugger/2024.0/opt/debugger
+ENV LD_LIBRARY_PATH=/opt/intel/oneapi/tbb/2021.11/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/dpl/2022.3/lib:/opt/intel/oneapi/debugger/2024.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2024.0/opt/oclfpga/host/linux64/lib:/opt/intel/oneapi/compiler/2024.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2024.0/lib
+ENV LIBRARY_PATH=/opt/intel/oneapi/tbb/2021.11/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/dpl/2022.3/lib:/opt/intel/oneapi/compiler/2024.0/lib
+ENV MANPATH=/opt/intel/oneapi/debugger/2024.0/share/man:/opt/intel/oneapi/compiler/2024.0/documentation/en/man/common:
+ENV NLSPATH=/opt/intel/oneapi/compiler/2024.0/lib/locale/%l_%t/%N
+ENV OCL_ICD_FILENAMES=libintelocl_emu.so:libalteracl.so:/opt/intel/oneapi/compiler/2024.0/lib/libintelocl.so
 ENV ONEAPI_ROOT=/opt/intel/oneapi
-ENV PATH=/opt/intel/oneapi/dev-utilities/2021.6.0/bin:/opt/intel/oneapi/debugger/2021.6.0/gdb/intel64/bin:/opt/intel/oneapi/compiler/2022.1.0/linux/lib/oclfpga/bin:/opt/intel/oneapi/compiler/2022.1.0/linux/bin/intel64:/opt/intel/oneapi/compiler/2022.1.0/linux/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV PKG_CONFIG_PATH=/opt/intel/oneapi/tbb/2021.6.0/env/../lib/pkgconfig:/opt/intel/oneapi/compiler/2022.1.0/lib/pkgconfig
+ENV PATH=/opt/intel/oneapi/dev-utilities/2024.0/bin:/opt/intel/oneapi/debugger/2024.0/opt/debugger/bin:/opt/intel/oneapi/compiler/2024.0/opt/oclfpga/bin:/opt/intel/oneapi/compiler/2024.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV PKG_CONFIG_PATH=/opt/intel/oneapi/tbb/2021.11/env/../lib/pkgconfig:/opt/intel/oneapi/dpl/2022.3/lib/pkgconfig:/opt/intel/oneapi/compiler/2024.0/lib/pkgconfig
 ENV SETVARS_COMPLETED=1
-ENV TBBROOT=/opt/intel/oneapi/tbb/2021.6.0/env/..
+ENV TBBROOT=/opt/intel/oneapi/tbb/2021.11/env/..

@@ -144,4 +144,8 @@ def test_gdal_pansharpen_2(script_path, tmp_path, small_world_pan_tif):
     with gdal.Open(out_vrt) as ds:
         cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
 
-    assert cs in ([9742, 4735], [9734, 4731])  # s390x or graviton2
+    assert cs in (
+        [9742, 4735],
+        [9734, 4731],  # s390x or graviton2
+        [9727, 4726],  # ICC 2004.0.2 in -O3
+    )

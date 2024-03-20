@@ -2383,6 +2383,10 @@ GDALResampleConvolutionHorizontal(const T *pChunk, const double *padfWeights,
     double dfVal1 = 0.0;
     double dfVal2 = 0.0;
     int i = 0;  // Used after for.
+    // Intel Compiler 2024.0.2.29 (maybe other versions?) crashes on this
+    // manually (untypical) unrolled loop in -O2 and -O3:
+    // https://github.com/OSGeo/gdal/issues/9508
+#if !defined(__INTEL_CLANG_COMPILER)
     for (; i + 3 < nSrcPixelCount; i += 4)
     {
         dfVal1 += pChunk[i] * padfWeights[i];
@@ -2390,6 +2394,7 @@ GDALResampleConvolutionHorizontal(const T *pChunk, const double *padfWeights,
         dfVal2 += pChunk[i + 2] * padfWeights[i + 2];
         dfVal2 += pChunk[i + 3] * padfWeights[i + 3];
     }
+#endif
     for (; i < nSrcPixelCount; ++i)
     {
         dfVal1 += pChunk[i] * padfWeights[i];
