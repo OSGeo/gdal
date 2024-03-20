@@ -19,8 +19,8 @@
 
 find_program(GEOS_CONFIG geos-config)
 if(GEOS_CONFIG)
-    exec_program(${GEOS_CONFIG} ARGS --version OUTPUT_VARIABLE GEOS_VERSION)
-    exec_program(${GEOS_CONFIG} ARGS --prefix OUTPUT_VARIABLE GEOS_PREFIX)
+    execute_process(COMMAND "${GEOS_CONFIG}" --version OUTPUT_VARIABLE GEOS_VERSION)
+    execute_process(COMMAND "${GEOS_CONFIG}" --prefix OUTPUT_VARIABLE GEOS_PREFIX)
 endif()
 
 find_path(GEOS_INCLUDE_DIR NAMES geos_c.h
