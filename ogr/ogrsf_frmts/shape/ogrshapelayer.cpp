@@ -2042,10 +2042,18 @@ OGRErr OGRShapeLayer::CreateField(const OGRFieldDefn *poFieldDefn,
     switch (oModFieldDefn.GetType())
     {
         case OFTInteger:
-            chType = 'N';
-            nWidth = oModFieldDefn.GetWidth();
-            if (nWidth == 0)
-                nWidth = 9;
+            if (oModFieldDefn.GetSubType() == OFSTBoolean)
+            {
+                chType = 'L';
+                nWidth = 1;
+            }
+            else
+            {
+                chType = 'N';
+                nWidth = oModFieldDefn.GetWidth();
+                if (nWidth == 0)
+                    nWidth = 9;
+            }
             break;
 
         case OFTInteger64:

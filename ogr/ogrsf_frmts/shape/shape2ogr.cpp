@@ -1172,6 +1172,11 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP,
         }
         else if (eDBFType == FTInteger)
             oField.SetType(OFTInteger);
+        else if (eDBFType == FTLogical)
+        {
+            oField.SetType(OFTInteger);
+            oField.SetSubType(OFSTBoolean);
+        }
         else
             oField.SetType(OFTString);
 
@@ -1431,8 +1436,22 @@ OGRFeature *SHPReadOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                 }
                 else
                 {
-                    poFeature->SetField(
-                        iField, DBFReadStringAttribute(hDBF, iShape, iField));
+                    if (poFieldDefn->GetSubType() == OFSTBoolean)
+                    {
+                        const char *pszVal =
+                            DBFReadLogicalAttribute(hDBF, iShape, iField);
+                        poFeature->SetField(
+                            iField, pszVal[0] == 'T' || pszVal[0] == 't' ||
+                                            pszVal[0] == 'Y' || pszVal[0] == 'y'
+                                        ? 1
+                                        : 0);
+                    }
+                    else
+                    {
+                        const char *pszVal =
+                            DBFReadStringAttribute(hDBF, iShape, iField);
+                        poFeature->SetField(iField, pszVal);
+                    }
                 }
                 break;
             }
@@ -1682,27 +1701,36 @@ OGRErr SHPWriteOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
             case OFTInteger:
             case OFTInteger64:
             {
-                char szValue[32] = {};
-                const int nFieldWidth = poFieldDefn->GetWidth();
-                snprintf(szValue, sizeof(szValue),
-                         "%*" CPL_FRMT_GB_WITHOUT_PREFIX "d",
-                         std::min(nFieldWidth,
-                                  static_cast<int>(sizeof(szValue)) - 1),
-                         poFeature->GetFieldAsInteger64(iField));
-
-                const int nStrLen = static_cast<int>(strlen(szValue));
-                if (nStrLen > nFieldWidth)
+                if (poFieldDefn->GetSubType() == OFSTBoolean)
                 {
-                    if (GrowField(hDBF, iField, poFieldDefn, nStrLen) !=
-                        OGRERR_NONE)
-                    {
-                        return OGRERR_FAILURE;
-                    }
+                    DBFWriteAttributeDirectly(
+                        hDBF, static_cast<int>(poFeature->GetFID()), iField,
+                        poFeature->GetFieldAsInteger(iField) ? "T" : "F");
                 }
+                else
+                {
+                    char szValue[32] = {};
+                    const int nFieldWidth = poFieldDefn->GetWidth();
+                    snprintf(szValue, sizeof(szValue),
+                             "%*" CPL_FRMT_GB_WITHOUT_PREFIX "d",
+                             std::min(nFieldWidth,
+                                      static_cast<int>(sizeof(szValue)) - 1),
+                             poFeature->GetFieldAsInteger64(iField));
 
-                DBFWriteAttributeDirectly(hDBF,
-                                          static_cast<int>(poFeature->GetFID()),
-                                          iField, szValue);
+                    const int nStrLen = static_cast<int>(strlen(szValue));
+                    if (nStrLen > nFieldWidth)
+                    {
+                        if (GrowField(hDBF, iField, poFieldDefn, nStrLen) !=
+                            OGRERR_NONE)
+                        {
+                            return OGRERR_FAILURE;
+                        }
+                    }
+
+                    DBFWriteAttributeDirectly(
+                        hDBF, static_cast<int>(poFeature->GetFID()), iField,
+                        szValue);
+                }
 
                 break;
             }
