@@ -174,6 +174,16 @@ set_package_properties(
   URL "http://swig.org/"
   TYPE RECOMMENDED)
 
+# Workaround Intel MKL library outputting a message in stdout, which cause
+# incorrect detection of numpy.get_include() and numpy.__version__
+# See https://github.com/numpy/numpy/issues/23775
+# Fix also proposed to upstream CMake FindPython per
+# https://gitlab.kitware.com/cmake/cmake/-/merge_requests/9359/
+if(DEFINED ENV{MKL_ENABLE_INSTRUCTIONS})
+  set(BACKUP_ENV_VAR_MKL_ENABLE_INSTRUCTIONS ENV{MKL_ENABLE_INSTRUCTIONS})
+endif()
+set(ENV{MKL_ENABLE_INSTRUCTIONS} "SSE4_2")
+
 if (Python_LOOKUP_VERSION)
     set(Python_FIND_STRATEGY VERSION)
     find_package(Python ${Python_LOOKUP_VERSION} EXACT COMPONENTS Interpreter Development NumPy)
@@ -202,6 +212,14 @@ if (Python_Interpreter_FOUND)
     endif ()
   endif()
 endif()
+
+# Restore previous value of MKL_ENABLE_INSTRUCTIONS
+if(DEFINED BACKUP_ENV_VAR_MKL_ENABLE_INSTRUCTIONS)
+  set(ENV{MKL_ENABLE_INSTRUCTIONS} ${BACKUP_ENV_VAR_MKL_ENABLE_INSTRUCTIONS})
+else()
+  unset(ENV{MKL_ENABLE_INSTRUCTIONS})
+endif()
+
 
 if (SWIG_FOUND AND (Python_Interpreter_FOUND OR Python_FOUND))
   option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
