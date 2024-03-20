@@ -210,7 +210,7 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
     // Use an interpolated Z height with 2D bresenham for the remaining cases.
 
     // Lambda for computing the square of a number
-    auto SQUARE = [](const int n) -> int { return std::pow(n, 2); };
+    auto SQUARE = [](const double d) -> double { return d * d; };
 
     // Lambda for Linear interpolate like C++20 std::lerp.
     auto lerp = [](const double a, const double b, const double t)
@@ -219,8 +219,10 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
     // Lambda for getting Z test height given x-y input along the bresenham line.
     auto GetZValue = [&](const int x, const int y) -> double
     {
-        const auto rNum = SQUARE(x - xA) + SQUARE(y - yA);
-        const auto rDenom = SQUARE(xB - xA) + SQUARE(yB - yA);
+        const auto rNum = SQUARE(static_cast<double>(x - xA)) +
+                          SQUARE(static_cast<double>(y - yA));
+        const auto rDenom = SQUARE(static_cast<double>(xB - xA)) +
+                            SQUARE(static_cast<double>(yB - yA));
         /// @todo In order to reduce CPU cost and avoid a sqrt operation, consider
         /// the approach to just the ratio along x or y depending on whether
         /// the line is steep or shallow.
