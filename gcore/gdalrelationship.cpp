@@ -240,7 +240,7 @@ char **GDALRelationshipGetLeftTableFields(GDALRelationshipH hRelationship)
     VALIDATE_POINTER1(hRelationship, "GDALRelationshipGetLeftTableFields",
                       nullptr);
 
-    auto fields =
+    const auto &fields =
         GDALRelationship::FromHandle(hRelationship)->GetLeftTableFields();
     return CPLStringList(fields).StealList();
 }
@@ -266,7 +266,7 @@ char **GDALRelationshipGetRightTableFields(GDALRelationshipH hRelationship)
     VALIDATE_POINTER1(hRelationship, "GDALRelationshipGetRightTableFields",
                       nullptr);
 
-    auto fields =
+    const auto &fields =
         GDALRelationship::FromHandle(hRelationship)->GetRightTableFields();
     return CPLStringList(fields).StealList();
 }
@@ -343,8 +343,8 @@ GDALRelationshipGetLeftMappingTableFields(GDALRelationshipH hRelationship)
     VALIDATE_POINTER1(hRelationship,
                       "GDALRelationshipGetLeftMappingTableFields", nullptr);
 
-    auto fields = GDALRelationship::FromHandle(hRelationship)
-                      ->GetLeftMappingTableFields();
+    const auto &fields = GDALRelationship::FromHandle(hRelationship)
+                             ->GetLeftMappingTableFields();
     return CPLStringList(fields).StealList();
 }
 
@@ -370,8 +370,8 @@ GDALRelationshipGetRightMappingTableFields(GDALRelationshipH hRelationship)
     VALIDATE_POINTER1(hRelationship,
                       "GDALRelationshipGetRightMappingTableFields", nullptr);
 
-    auto fields = GDALRelationship::FromHandle(hRelationship)
-                      ->GetRightMappingTableFields();
+    const auto &fields = GDALRelationship::FromHandle(hRelationship)
+                             ->GetRightMappingTableFields();
     return CPLStringList(fields).StealList();
 }
 

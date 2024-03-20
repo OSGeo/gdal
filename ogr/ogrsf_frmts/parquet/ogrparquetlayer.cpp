@@ -596,7 +596,7 @@ void OGRParquetLayer::EstablishFeatureDefn()
         }
         oSetBBOXColumns.insert("bbox");
         oDef.Add("encoding", "WKB");
-        m_oMapGeometryColumns["geometry"] = oDef;
+        m_oMapGeometryColumns["geometry"] = std::move(oDef);
     }
 
     int iParquetCol = 0;

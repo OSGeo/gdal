@@ -360,8 +360,9 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
             auto bbox_field_ymax(arrow::field("ymax", arrow::float32(), false));
             auto bbox_field(arrow::field(
                 std::string(poGeomFieldDefn->GetNameRef()).append("_bbox"),
-                arrow::struct_({bbox_field_xmin, bbox_field_ymin,
-                                bbox_field_xmax, bbox_field_ymax}),
+                arrow::struct_(
+                    {std::move(bbox_field_xmin), std::move(bbox_field_ymin),
+                     std::move(bbox_field_xmax), std::move(bbox_field_ymax)}),
                 poGeomFieldDefn->IsNullable()));
             fields.emplace_back(bbox_field);
             m_apoFieldsBBOX.emplace_back(bbox_field);
@@ -1749,7 +1750,8 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
                 }
                 if (nTZFlag > OGR_TZFLAG_MIXED_TZ)
                 {
-                    nVal -= (nTZFlag - OGR_TZFLAG_UTC) * 15 * 60;
+                    const int nOffsetSec = (nTZFlag - OGR_TZFLAG_UTC) * 15 * 60;
+                    nVal -= nOffsetSec;
                 }
                 OGR_ARROW_RETURN_OGRERR_NOT_OK(
                     static_cast<arrow::TimestampBuilder *>(poBuilder)->Append(
@@ -2069,31 +2071,6 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
         oSetReferencedFieldsInArraySchema.insert(oIter->second);
     }
 
-    std::vector<struct ArrowSchema *> newSchemaChildren;
-    std::vector<struct ArrowArray *> newArrayChildren;
-    newSchemaChildren.reserve(m_poSchema->num_fields());
-    newArrayChildren.reserve(m_poSchema->num_fields());
-    for (int i = 0; i < m_poSchema->num_fields() - nGeomFieldCountBBoxFields;
-         ++i)
-    {
-        if (anMapLayerSchemaToArraySchema[i] < 0)
-        {
-            CPLAssert(m_poSchema->field(i)->name() == m_osFIDColumn);
-            newSchemaChildren.emplace_back(&fidSchema);
-            newArrayChildren.emplace_back(&fidArray);
-        }
-        else
-        {
-            newSchemaChildren.emplace_back(
-                schema->children[anMapLayerSchemaToArraySchema[i]]);
-            newArrayChildren.emplace_back(
-                array->children[anMapLayerSchemaToArraySchema[i]]);
-        }
-    }
-
-    // Temporary arrays to hold the geometry bounding boxes.
-    std::vector<struct ArrowArray> bboxStructArray;
-    std::vector<struct ArrowSchema> bboxStructSchema;
     // Note: we cheat a bit by declaring a single instance of the minx/miny/
     // maxx/maxy sub-field ArrowSchema*, and make all struct ArrowSchema point
     // to them. That's OK because we use DummyFreeSchema to release, which does
@@ -2121,6 +2098,33 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     std::vector<std::array<std::array<const void *, BBOX_SUBFIELD_BUFFER_COUNT>,
                            BBOX_SUBFIELD_COUNT>>
         bboxBuffersPtr;
+
+    // Temporary arrays to hold the geometry bounding boxes.
+    std::vector<struct ArrowArray> bboxStructArray;
+    std::vector<struct ArrowSchema> bboxStructSchema;
+
+    std::vector<struct ArrowSchema *> newSchemaChildren;
+    std::vector<struct ArrowArray *> newArrayChildren;
+    newSchemaChildren.reserve(m_poSchema->num_fields());
+    newArrayChildren.reserve(m_poSchema->num_fields());
+    for (int i = 0; i < m_poSchema->num_fields() - nGeomFieldCountBBoxFields;
+         ++i)
+    {
+        if (anMapLayerSchemaToArraySchema[i] < 0)
+        {
+            CPLAssert(m_poSchema->field(i)->name() == m_osFIDColumn);
+            newSchemaChildren.emplace_back(&fidSchema);
+            newArrayChildren.emplace_back(&fidArray);
+        }
+        else
+        {
+            newSchemaChildren.emplace_back(
+                schema->children[anMapLayerSchemaToArraySchema[i]]);
+            newArrayChildren.emplace_back(
+                array->children[anMapLayerSchemaToArraySchema[i]]);
+        }
+    }
+
     if (m_bWriteBBoxStruct)
     {
         memset(&bboxStructSchemaXMin, 0, sizeof(bboxStructSchemaXMin));
@@ -2219,11 +2223,13 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
 
                 bboxStructArray[i].release = DummyFreeArray;
                 bboxStructArray[i].n_children = BBOX_SUBFIELD_COUNT;
+                // coverity[escape]
                 bboxStructArray[i].children = bboxArraysPtr[i].data();
                 bboxStructArray[i].length = array->length;
                 bboxStructArray[i].n_buffers = BBOX_STRUCT_BUFFER_COUNT;
                 bboxStructBuffersPtr[i][VALIDITY_ARRAY_IDX] =
                     bIsNullable ? aabyBboxStructValidity[i].data() : nullptr;
+                // coverity[escape]
                 bboxStructArray[i].buffers = bboxStructBuffersPtr[i].data();
 
                 newSchemaChildren.emplace_back(&bboxStructSchema[i]);

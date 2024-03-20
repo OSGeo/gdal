@@ -5317,7 +5317,7 @@ bool OGRFeature::SetFieldInternal(int iField, const OGRField *puValue)
 
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
-    if (poFDefn == nullptr)
+    if (iField < 0 || poFDefn == nullptr)
         return false;
 
     if (poFDefn->GetType() == OFTInteger)
