@@ -30,6 +30,7 @@ add_library(
   gdalwarpkernel.cpp
   gdalwarpoperation.cpp
   llrasterize.cpp
+  los.cpp
   polygonize.cpp
   polygonize_polygonizer_impl.cpp
   rasterfill.cpp
