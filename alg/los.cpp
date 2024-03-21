@@ -205,19 +205,113 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
         return true;
     }
 
-    // TODO if both X's or Y's are the same, it could be optimized for vertical/horizontal lines.
+    // Lambda for Linear interpolate like C++20 std::lerp.
+    auto lerp = [](const double a, const double b, const double t)
+    { return a + t * (b - a); };
+
+    // Lambda for getting Z test height given y input along the LOS line.
+    // Only to be used for vertical line checks.
+    auto GetZValueFromY = [&](const int y) -> double
+    {
+        // A ratio of 0.0 corresponds to being at yA.
+        const auto ratio =
+            static_cast<double>(y - yA) / static_cast<double>(yB - yA);
+        return lerp(zA, zB, ratio);
+    };
+
+    // Lambda for getting Z test height given x input along the LOS line.
+    // Only to be used for horizontal line checks.
+    auto GetZValueFromX = [&](const int x) -> double
+    {
+        // A ratio of 0.0 corresponds to being at xA.
+        const auto ratio =
+            static_cast<double>(x - xA) / static_cast<double>(xB - xA);
+        return lerp(zA, zB, ratio);
+    };
+
+    // Lambda for checking path safety of a vertical line.
+    // Returns true if the path has clear LOS.
+    auto CheckVerticalLine = [&]() -> bool
+    {
+        CPLAssert(xA == xB);
+        CPLAssert(yA != yB);
+
+        if (yA < yB)
+        {
+            for (int y = yA; y <= yB; ++y)
+            {
+                const auto zTest = GetZValueFromY(y);
+                if (!IsAboveTerrain(hBand, xA, y, zTest))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        else
+        {
+            for (int y = yA; y >= yB; --y)
+            {
+                const auto zTest = GetZValueFromY(y);
+                if (!IsAboveTerrain(hBand, xA, y, zTest))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+    };
+
+    // Lambda for checking path safety of a horizontal line.
+    // Returns true if the path has clear LOS.
+    auto CheckHorizontalLine = [&]() -> bool
+    {
+        CPLAssert(yA == yB);
+        CPLAssert(xA != xB);
+
+        if (xA < xB)
+        {
+            for (int x = xA; x <= xB; ++x)
+            {
+                const auto zTest = GetZValueFromX(x);
+                if (!IsAboveTerrain(hBand, x, yA, zTest))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        else
+        {
+            for (int x = xA; x >= xB; --x)
+            {
+                const auto zTest = GetZValueFromX(x);
+                if (!IsAboveTerrain(hBand, x, yA, zTest))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+    };
+
+    // Handle special cases if it's a vertical or horizontal line (don't use bresenham).
+    if (xA == xB)
+    {
+        return CheckVerticalLine();
+    }
+    if (yA == yB)
+    {
+        return CheckHorizontalLine();
+    }
 
     // Use an interpolated Z height with 2D bresenham for the remaining cases.
 
     // Lambda for computing the square of a number
     auto SQUARE = [](const double d) -> double { return d * d; };
 
-    // Lambda for Linear interpolate like C++20 std::lerp.
-    auto lerp = [](const double a, const double b, const double t)
-    { return a + t * (b - a); };
-
     // Lambda for getting Z test height given x-y input along the bresenham line.
-    auto GetZValue = [&](const int x, const int y) -> double
+    auto GetZValueFromXY = [&](const int x, const int y) -> double
     {
         const auto rNum = SQUARE(static_cast<double>(x - xA)) +
                           SQUARE(static_cast<double>(y - yA));
@@ -235,7 +329,7 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
     // Lambda to get elevation at a bresenham-computed location.
     auto OnBresenhamPoint = [&](const int x, const int y) -> bool
     {
-        const auto z = GetZValue(x, y);
+        const auto z = GetZValueFromXY(x, y);
         return IsAboveTerrain(hBand, x, y, z);
     };
 
