@@ -233,39 +233,9 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
     // Returns true if the path has clear LOS.
     auto CheckVerticalLine = [&]() -> bool
     {
-        if (xA < xB)
-        {
-            for (int x = xA; x <= xB; ++x)
-            {
-                const auto zTest = GetZValueFromX(x);
-                if (!IsAboveTerrain(hBand, x, yA, zTest))
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-        if (xA > xB)
-        {
-            for (int x = xA; x >= xB; --x)
-            {
-                const auto zTest = GetZValueFromX(x);
-                if (!IsAboveTerrain(hBand, x, yA, zTest))
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
+        CPLAssert(xA == xB);
+        CPLAssert(yA != yB);
 
-        // If we get here, it's a coding error.
-        return false;
-    };
-
-    // Lambda for checking path safety of a horizontal line.
-    // Returns true if the path has clear LOS.
-    auto CheckHorizontalLine = [&]() -> bool
-    {
         if (yA < yB)
         {
             for (int y = yA; y <= yB; ++y)
@@ -278,11 +248,11 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
             }
             return true;
         }
-        if (yA > yB)
+        else
         {
             for (int y = yA; y >= yB; --y)
             {
-                const auto zTest = GetZValueFromX(y);
+                const auto zTest = GetZValueFromY(y);
                 if (!IsAboveTerrain(hBand, xA, y, zTest))
                 {
                     return false;
@@ -290,9 +260,39 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
             }
             return true;
         }
+    };
 
-        // If we get here, it's a coding error.
-        return false;
+    // Lambda for checking path safety of a horizontal line.
+    // Returns true if the path has clear LOS.
+    auto CheckHorizontalLine = [&]() -> bool
+    {
+        CPLAssert(yA == yB);
+        CPLAssert(xA != xB);
+
+        if (xA < xB)
+        {
+            for (int x = xA; x <= xB; ++x)
+            {
+                const auto zTest = GetZValueFromX(x);
+                if (!IsAboveTerrain(hBand, x, yA, zTest))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+        else
+        {
+            for (int x = xA; x >= xB; --x)
+            {
+                const auto zTest = GetZValueFromX(x);
+                if (!IsAboveTerrain(hBand, x, yA, zTest))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
     };
 
     // Handle special cases if it's a vertical or horizontal line (don't use bresenham).
