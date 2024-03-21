@@ -186,7 +186,7 @@ struct ILSize
 std::ostream &operator<<(std::ostream &out, const ILSize &sz);
 std::ostream &operator<<(std::ostream &out, const ILIdx &t);
 
-bool is_Endianess_Dependent(GDALDataType dt, ILCompression comp);
+bool is_Endianness_Dependent(GDALDataType dt, ILCompression comp);
 
 // Debugging support
 // #define PPMW

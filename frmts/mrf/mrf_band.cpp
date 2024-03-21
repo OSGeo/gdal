@@ -1198,7 +1198,7 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
         img.pageSizeBytes;  // In case the decompress failed, force it back
 
     // Swap whatever we decompressed if we need to
-    if (is_Endianess_Dependent(img.dt, img.comp) && (img.nbo != NET_ORDER))
+    if (is_Endianness_Dependent(img.dt, img.comp) && (img.nbo != NET_ORDER))
         swab_buff(dst, img);
 
     CPLFree(data);
@@ -1265,7 +1265,7 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
                        poMRFDS->GetPBufferSize()};
 
         // Swab the source before encoding if we need to
-        if (is_Endianess_Dependent(img.dt, img.comp) && (img.nbo != NET_ORDER))
+        if (is_Endianness_Dependent(img.dt, img.comp) && (img.nbo != NET_ORDER))
             swab_buff(src, img);
 
         auto start_time = steady_clock::now();
