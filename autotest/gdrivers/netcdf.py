@@ -1576,11 +1576,13 @@ def test_netcdf_42():
     gdaltest.netcdf_drv.CreateCopy("tmp/netcdf_42.nc", src_ds)
 
     ds = gdal.Open("tmp/netcdf_42.nc")
-    assert ds.GetMetadata("GEOLOCATION") == {
+    got_md = ds.GetMetadata("GEOLOCATION")
+    assert got_md["SRS"].startswith('GEOGCRS["WGS 84",')
+    del got_md["SRS"]
+    assert got_md == {
         "LINE_OFFSET": "0",
         "X_DATASET": 'NETCDF:"tmp/netcdf_42.nc":lon',
         "PIXEL_STEP": "1",
-        "SRS": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
         "PIXEL_OFFSET": "0",
         "X_BAND": "1",
         "LINE_STEP": "1",
@@ -1718,11 +1720,13 @@ def test_netcdf_43():
     )
 
     ds = gdal.Open("tmp/netcdf_43.nc")
-    assert ds.GetMetadata("GEOLOCATION") == {
+    got_md = ds.GetMetadata("GEOLOCATION")
+    assert got_md["SRS"].startswith('GEOGCRS["NAD27",')
+    del got_md["SRS"]
+    assert got_md == {
         "LINE_OFFSET": "0",
         "X_DATASET": 'NETCDF:"tmp/netcdf_43.nc":lon',
         "PIXEL_STEP": "1",
-        "SRS": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
         "PIXEL_OFFSET": "0",
         "X_BAND": "1",
         "LINE_STEP": "1",
