@@ -93,6 +93,13 @@ class GDALBuildVRTOfVRT(GDALScript):
             help="resampling algorithm",
         )
 
+        parser.add_argument(
+            "--stop-on-error",
+            dest="stop_on_error",
+            action="store_true",
+            help="whether an error when opening a source file should stop the whole process (by default processing continues skipping it)",
+        )
+
         return parser
 
     def doit(self, **kwargs):
@@ -120,17 +127,29 @@ class GDALBuildVRTOfVRT(GDALScript):
                 source_files += glob.glob(in_file)
             else:
                 source_files.append(in_file)
+
         for in_file in source_files:
-            ds = gdal.Open(in_file)
+
+            def deal_with_error(msg):
+                if kwargs["stop_on_error"]:
+                    raise Exception(f"Error on {in_file}: {msg}")
+                else:
+                    print(f"Skipping {in_file}. {msg}")
+
+            try:
+                ds = gdal.Open(in_file)
+            except Exception as e:
+                deal_with_error(f"{e}")
+                continue
             gt = ds.GetGeoTransform(can_return_null=True)
             if gt is None:
-                print(f"Skipping {in_file}. No geotransform.")
+                deal_with_error("No geotransform.")
                 continue
             if gt[5] > 0:
-                print(f"Skipping {in_file}. South-up rasters are not supported.")
+                deal_with_error("South-up rasters are not supported.")
                 continue
             if gt[2] != 0 or gt[4] != 0:
-                print(f"Skipping {in_file}. Rotated rasters are not supported.")
+                deal_with_error("Rotated rasters are not supported.")
                 continue
 
             srs = ds.GetSpatialRef()
