@@ -1375,6 +1375,9 @@ def create_base_tile(tile_job_info: "TileJobInfo", tile_detail: "TileDetail") ->
             wysize,
             band_list=list(range(1, dataBandsCount + 1)),
         )
+    elif tile_job_info.exclude_transparent:
+        # If there are no pixels to copy, the tile will be fully transparent
+        return
 
     # The tile in memory is a transparent file by default. Write pixel values into it if
     # any
