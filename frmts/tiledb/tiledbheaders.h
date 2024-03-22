@@ -170,6 +170,11 @@ struct gdal_tiledb_vector_of_bool
 #define HAS_TILEDB_MULTIDIM
 #endif
 
+#if TILEDB_VERSION_MAJOR > 2 ||                                                \
+    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 21)
+#define HAS_TILEDB_GEOM_WKB_WKT
+#endif
+
 typedef enum
 {
     BAND = 0,

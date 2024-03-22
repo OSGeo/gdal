@@ -167,6 +167,10 @@ TileDBArray::TileDBDataTypeToGDALDataType(tiledb_datatype_t tiledb_dt)
         case TILEDB_TIME_AS:
         case TILEDB_BLOB:
         case TILEDB_BOOL:
+#ifdef HAS_TILEDB_GEOM_WKB_WKT
+        case TILEDB_GEOM_WKB:
+        case TILEDB_GEOM_WKT:
+#endif
         {
             break;
         }
