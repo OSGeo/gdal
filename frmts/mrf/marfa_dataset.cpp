@@ -953,7 +953,7 @@ static CPLErr Init_Raster(ILImage &image, MRFDataset *ds, CPLXMLNode *defimage)
     }
 
     // Check the endianness if needed, assume host order
-    if (is_Endianess_Dependent(image.dt, image.comp))
+    if (is_Endianness_Dependent(image.dt, image.comp))
         image.nbo = on(CPLGetXMLValue(defimage, "NetByteOrder", "No"));
 
     CPLXMLNode *DataValues = CPLGetXMLNode(defimage, "DataValues");
@@ -1323,7 +1323,7 @@ CPLXMLNode *MRFDataset::BuildConfig()
         }
     }
 
-    if (is_Endianess_Dependent(full.dt, full.comp))  // Need to set the order
+    if (is_Endianness_Dependent(full.dt, full.comp))  // Need to set the order
         CPLCreateXMLElementAndValue(raster, "NetByteOrder",
                                     (full.nbo || NET_ORDER) ? "TRUE" : "FALSE");
 
@@ -1462,7 +1462,7 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
     SetMetadataItem("INTERLEAVE", OrderName(current.order), "IMAGE_STRUCTURE");
     SetMetadataItem("COMPRESSION", CompName(current.comp), "IMAGE_STRUCTURE");
 
-    if (is_Endianess_Dependent(current.dt, current.comp))
+    if (is_Endianness_Dependent(current.dt, current.comp))
         SetMetadataItem("NETBYTEORDER", current.nbo ? "TRUE" : "FALSE",
                         "IMAGE_STRUCTURE");
 

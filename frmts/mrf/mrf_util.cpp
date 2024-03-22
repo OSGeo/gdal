@@ -339,7 +339,7 @@ GIntBig IdxOffset(const ILSize &pos, const ILImage &img)
 }
 
 // Is compression type endianness dependent?
-bool is_Endianess_Dependent(GDALDataType dt, ILCompression comp)
+bool is_Endianness_Dependent(GDALDataType dt, ILCompression comp)
 {
     // Add here all endianness dependent compressions
     if (IL_ZLIB == comp || IL_NONE == comp)
