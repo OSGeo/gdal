@@ -549,6 +549,35 @@ The error threshold (in pixels) can be controlled with the gdalwarp
 :option:`-et` switch. If you want to compare a true pixel-by-pixel reprojection
 use :option:`-et 0` which disables this approximator entirely.
 
+Vertical transformation
+-----------------------
+
+While gdalwarp can essentially perform coordinate transformations in the 2D
+space, it can perform as well vertical transformations. This is automatically
+enabled when the 2 following conditions are met:
+
+- at least one of the source or target CRS has an explicit vertical CRS
+  (as part of a compound CRS) or is a 3D (generally geographic) CRS,
+- and the raster has a single band.
+
+This mode can also be forced by using the :option:`-vshift` (this is
+essentially useful when the CRS involved are not explicitly 3D, but a
+transformation pipeline is specified with :option:`-ct`), or disabled with
+:option:`-novshift`.
+
+When a vertical transformation is involved, typically a shift value read in a
+geoid grid will be applied. This may require such grid(s) to be installed, or
+PROJ networking capabilities to be enabled. Consult `PROJ <https://proj.org>`__
+documentation for more details. In addition to a shift, the raster values may
+be multiplied by a factor to take into account vertical unit changes.
+In priority, the value returned by :cpp:func:`GDALRasterBand::GetUnitType` is
+used. The following values are currently recognized: ``m``, ``metre``, ``metre``,
+``ft``, ``foot``, ``US survey foot``. If there is no defined unit type at the
+band level, the vertical unit of the source CRS is used. The vertical unit of
+the target CRS is also used to determine that conversion factor. The conversion
+factor may be overridden by setting the ``MULT_FACTOR_VERTICAL_SHIFT`` warping
+option with :option:`-wo`. For example ``-wo MULT_FACTOR_VERTICAL_SHIFT=1`` to
+disable any vertical unit change.
 
 Memory usage
 ------------
