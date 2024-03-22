@@ -347,6 +347,18 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
         return nullptr;
     }
 
+#ifdef HAS_TILEDB_GROUP
+    if (!m_osGroupName.empty() && strchr(pszName, '/'))
+    {
+        // Otherwise a layer name wit ha slash when groups are enabled causes
+        // a "[TileDB::Array] Error: FragmentID: input URI is invalid. Provided URI does not contain a fragment name."
+        // exception on re-opening starting with TileDB 2.21
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Slash is not supported in layer name");
+        return nullptr;
+    }
+#endif
+
     const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
     const auto poSpatialRef =
         poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
@@ -832,6 +844,10 @@ bool OGRTileDBLayer::InitFromStorage(tiledb::Context *poCtx,
             case TILEDB_TIME_FS:
             case TILEDB_TIME_AS:
             case TILEDB_ANY:
+#ifdef HAS_TILEDB_GEOM_WKB_WKT
+            case TILEDB_GEOM_WKB:  // TODO: take that into account
+            case TILEDB_GEOM_WKT:
+#endif
             {
                 // TODO ?
                 const char *pszTypeName = "";
