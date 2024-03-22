@@ -381,7 +381,7 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
         }
         else
         {
-            errno = answer.ptr == nptr ? EINVAL : ERANGE;
+            errno = answer.ptr == nptr ? 0 : ERANGE;
         }
     }
     if (endptr)
@@ -436,6 +436,44 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
  */
 double CPLStrtod(const char *nptr, char **endptr)
 {
+    return CPLStrtodDelim(nptr, endptr, '.');
+}
+
+/************************************************************************/
+/*                            CPLStrtodM()                              */
+/************************************************************************/
+
+/**
+ * Converts ASCII string to floating point number.
+ *
+ * This function converts the initial portion of the string pointed to
+ * by nptr to double floating point representation. This function does the
+ * same as standard strtod(3), but does not take locale in account.
+ *
+ * That function accepts '.' (decimal point) or ',' (comma) as decimal
+ * delimiter.
+ *
+ * @param nptr Pointer to string to convert.
+ * @param endptr If is not NULL, a pointer to the character after the last
+ * character used in the conversion is stored in the location referenced
+ * by endptr.
+ *
+ * @return Converted value, if any.
+ * @since GDAL 3.9
+ */
+double CPLStrtodM(const char *nptr, char **endptr)
+
+{
+    const int nMaxSearch = 50;
+
+    for (int i = 0; i < nMaxSearch; i++)
+    {
+        if (nptr[i] == ',')
+            return CPLStrtodDelim(nptr, endptr, ',');
+        if (nptr[i] == '.' || nptr[i] == '\0')
+            return CPLStrtodDelim(nptr, endptr, '.');
+    }
+
     return CPLStrtodDelim(nptr, endptr, '.');
 }
 

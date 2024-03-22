@@ -57,197 +57,9 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static bool StringCISortFunction(const CPLString &a, const CPLString &b)
+static void Usage()
 {
-    return STRCASECMP(a.c_str(), b.c_str()) < 0;
-}
-
-static void Usage(bool bIsError, const char *pszAdditionalMsg = nullptr,
-                  bool bShort = true)
-{
-    fprintf(
-        bIsError ? stderr : stdout,
-        "Usage: ogr2ogr [--help] [--help-general] [--long-usage]\n"
-        "               [-skipfailures] [-append | -upsert] [-update]\n"
-        "               [-select <field_list>] [-where "
-        "<restricted_where>|@<filename>]\n"
-        "               [-progress] [-sql <sql statement>|@<filename>] "
-        "[-dialect "
-        "<dialect>]\n"
-        "               [-preserve_fid] [-fid <FID>] [-limit <nb_features>]\n"
-        "               [-spat <xmin> <ymin> <xmax> <ymax>] [-spat_srs "
-        "<srs_def>] "
-        "[-geomfield <field>]\n"
-        "               [-a_srs <srs_def>] [-t_srs <srs_def>] [-s_srs "
-        "<srs_def>] "
-        "[-ct <string>]\n"
-        "               [-if <input_drv_name>] [-f <output_drv_name>] "
-        "[-overwrite] "
-        "[-dsco <NAME>=<VALUE>]...\n"
-        "               [-lco <NAME>=<VALUE>]... [-nln <name>] \n"
-        "               [-nlt "
-        "<type>|PROMOTE_TO_MULTI|CONVERT_TO_LINEAR|CONVERT_TO_CURVE]\n"
-        "               [-dim XY|XYZ|XYM|XYZM|<layer_dim>]\n"
-        "               <dst_datasource_name> <src_datasource_name>\n"
-        "               [<layer> [<layer>...]]\n"
-        "\n"
-        "Advanced options :\n"
-        "               [-gt n] [-ds_transaction]\n"
-        "               [-oo <NAME>=<VALUE>]... [-doo <NAME>=<VALUE>]...\n"
-        "               [-clipsrc {[<xmin> <ymin> <xmax> <ymax>]|<WKT>|"
-        "<datasource>|spat_extent}]\n"
-        "               [-clipsrcsql <sql_statement>] [-clipsrclayer <layer>]\n"
-        "               [-clipsrcwhere <expression>]\n"
-        "               [-clipdst {[<xmin> <ymin> <xmax> "
-        "<ymax>]|<WKT>|<datasource>}]\n"
-        "               [-clipdstsql <sql_statement>] [-clipdstlayer <layer>]\n"
-        "               [-clipdstwhere <expression>]\n"
-        "               [-wrapdateline][-datelineoffset <val>]\n"
-        "               [[-simplify <tolerance>] | [-segmentize <max_dist>]]\n"
-        "               [-makevalid]\n"
-        "               [-addfields] [-unsetFid] [-emptyStrAsNull]\n"
-        "               [-relaxedFieldNameMatch] [-forceNullable] "
-        "[-unsetDefault]\n"
-        "               [-fieldTypeToString {All|{<type1>[,<type2>]}...}] "
-        "[-unsetFieldWidth]\n"
-        "               [-mapFieldType "
-        "{<srctype>|All=<dsttype>[,<srctype2>=<dsttype2>]...}]\n"
-        "               [-dateTimeTo {UTC|UTC(+|-)<HH>|UTC(+|-)<HH>:<MM>}]\n"
-        "               [-fieldmap {identity|{<index1>[,<index2>]...}]\n"
-        "               [-splitlistfields] [-maxsubfields <val>]\n"
-        "               [-resolveDomains]\n"
-        "               [-explodecollections] [-zfield <field_name>]\n"
-        "               [-gcp <ungeoref_x> <ungeoref_y> <georef_x> <georef_y> "
-        "[<elevation>]]... [[-order <n>]|[-tps]]\n"
-        "               [-xyRes \"<val>[ m|mm|deg]\"] [-zRes \"<val>[ m|mm]\"] "
-        "[-mRes <val>]\n"
-        "               [-unsetCoordPrecision]\n"
-        "               [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>] "
-        "[-a_coord_epoch <epoch>]\n"
-        "               [-nomd] [-mo <META-TAG>=<VALUE>]... [-noNativeData]\n");
-
-    if (bShort)
-    {
-        printf("\nNote: ogr2ogr --long-usage for full help.\n");
-        if (pszAdditionalMsg)
-            fprintf(stderr, "\nFAILURE: %s\n", pszAdditionalMsg);
-        exit(1);
-    }
-
-    printf(
-        "\n -f format_name: output file format name, possible values are:\n");
-
-    std::vector<CPLString> aoSetDrivers;
-    OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
-    for (int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++)
-    {
-        GDALDriver *poDriver = poR->GetDriver(iDriver);
-
-        if (CPLTestBool(CSLFetchNameValueDef(poDriver->GetMetadata(),
-                                             GDAL_DCAP_CREATE, "FALSE")))
-            aoSetDrivers.push_back(poDriver->GetDescription());
-    }
-    std::sort(aoSetDrivers.begin(), aoSetDrivers.end(), StringCISortFunction);
-    for (const auto &oDriver : aoSetDrivers)
-    {
-        printf("     -f \"%s\"\n", oDriver.c_str());
-    }
-
-    printf(
-        " -append: Append to existing layer instead of creating new if it "
-        "exists\n"
-        " -overwrite: delete the output layer and recreate it empty\n"
-        " -update: Open existing output datasource in update mode\n"
-        " -progress: Display progress on terminal. Only works if input layers "
-        "have the \n"
-        "                                          \"fast feature count\" "
-        "capability\n"
-        " -select field_list: Comma-delimited list of fields from input layer "
-        "to\n"
-        "                     copy to the new layer (defaults to all)\n"
-        " -where restricted_where: Attribute query (like SQL WHERE)\n"
-        " -wrapdateline: split geometries crossing the dateline meridian\n"
-        "                (long. = +/- 180deg)\n"
-        " -datelineoffset: offset from dateline in degrees\n"
-        "                (default long. = +/- 10deg,\n"
-        "                geometries within 170deg to -170deg will be split)\n"
-        " -sql statement: Execute given SQL statement and save result.\n"
-        " -dialect value: select a dialect, usually OGRSQL to avoid native "
-        "sql.\n"
-        " -skipfailures: skip features or layers that fail to convert\n"
-        " -gt n: group n features per transaction (default 20000). n can be "
-        "set to unlimited\n"
-        " -spat xmin ymin xmax ymax: spatial query extents\n"
-        " -simplify tolerance: distance tolerance for simplification.\n"
-        " -segmentize max_dist: maximum distance between 2 nodes.\n"
-        "                       Used to create intermediate points\n"
-        " -dsco NAME=VALUE: Dataset creation option (format specific)\n"
-        " -lco  NAME=VALUE: Layer creation option (format specific)\n"
-        " -oo   NAME=VALUE: Input dataset open option (format specific)\n"
-        " -doo  NAME=VALUE: Destination dataset open option (format specific)\n"
-        " -nln name: Assign an alternate name to the new layer\n"
-        " -nlt type: Force a geometry type for new layer.  One of NONE, "
-        "GEOMETRY,\n"
-        "      POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION, MULTIPOINT,\n"
-        "      MULTIPOLYGON, or MULTILINESTRING, or PROMOTE_TO_MULTI or "
-        "CONVERT_TO_LINEAR.  Add \"25D\" for 3D layers.\n"
-        "      Default is type of source layer.\n"
-        " -dim dimension: Force the coordinate dimension to the specified "
-        "value.\n"
-        " -fieldTypeToString type1,...: Converts fields of specified types to\n"
-        "      fields of type string in the new layer. Valid types are : "
-        "Integer,\n"
-        "      Integer64, Real, String, Date, Time, DateTime, Binary, "
-        "IntegerList, Integer64List, RealList,\n"
-        "      StringList. Special value All will convert all fields to "
-        "strings.\n"
-        " -fieldmap index1,index2,...: Specifies the list of field indexes to "
-        "be\n"
-        "      copied from the source to the destination. The (n)th value "
-        "specified\n"
-        "      in the list is the index of the field in the target layer "
-        "definition\n"
-        "      in which the n(th) field of the source layer must be copied. "
-        "Index count\n"
-        "      starts at zero. There must be exactly as many values in the "
-        "list as\n"
-        "      the count of the fields in the source layer. We can use the "
-        "'identity'\n"
-        "      setting to specify that the fields should be transferred by "
-        "using the\n"
-        "      same order. This setting should be used along with the append "
-        "setting.\n");
-
-    printf(" -a_srs srs_def: Assign an output SRS\n"
-           " -t_srs srs_def: Reproject/transform to this SRS on output\n"
-           " -s_srs srs_def: Override source SRS\n"
-           "\n"
-           " Srs_def can be a full WKT definition (hard to escape properly),\n"
-           " or a well known definition (i.e. EPSG:4326) or a file with a WKT\n"
-           " definition.\n");
-
-    if (pszAdditionalMsg)
-        fprintf(stderr, "\nFAILURE: %s\n", pszAdditionalMsg);
-}
-
-/************************************************************************/
-/*                 GDALVectorTranslateOptionsForBinaryNew()             */
-/************************************************************************/
-
-static GDALVectorTranslateOptionsForBinary *
-GDALVectorTranslateOptionsForBinaryNew()
-{
-    return new GDALVectorTranslateOptionsForBinary;
-}
-
-/************************************************************************/
-/*                  GDALVectorTranslateOptionsForBinaryFree()           */
-/************************************************************************/
-
-static void GDALVectorTranslateOptionsForBinaryFree(
-    GDALVectorTranslateOptionsForBinary *psOptionsForBinary)
-{
-    delete psOptionsForBinary;
+    fprintf(stderr, "%s\n", GDALVectorTranslateGetParserUsage().c_str());
 }
 
 /************************************************************************/
@@ -275,8 +87,8 @@ MAIN_START(nArgc, papszArgv)
     bool bCloseODS = true;
     GDALDatasetH hDstDS = nullptr;
     int nRetCode = 1;
-    GDALVectorTranslateOptionsForBinary *psOptionsForBinary = nullptr;
     GDALVectorTranslateOptions *psOptions = nullptr;
+    GDALVectorTranslateOptionsForBinary sOptionsForBinary;
 
     nArgc = OGRGeneralCmdLineProcessor(nArgc, &papszArgv, 0);
 
@@ -287,56 +99,17 @@ MAIN_START(nArgc, papszArgv)
         goto exit;
     }
 
-    for (int iArg = 1; iArg < nArgc; iArg++)
-    {
-        if (EQUAL(papszArgv[iArg], "--utility_version"))
-        {
-            printf("%s was compiled against GDAL %s and "
-                   "is running against GDAL %s\n",
-                   papszArgv[0], GDAL_RELEASE_NAME,
-                   GDALVersionInfo("RELEASE_NAME"));
-            nRetCode = 0;
-            goto exit;
-        }
-        else if (EQUAL(papszArgv[iArg], "--help"))
-        {
-            Usage(false);
-            nRetCode = 0;
-            goto exit;
-        }
-        else if (EQUAL(papszArgv[iArg], "--long-usage"))
-        {
-            Usage(false, nullptr, false);
-            nRetCode = 0;
-            goto exit;
-        }
-    }
-
-    psOptionsForBinary = GDALVectorTranslateOptionsForBinaryNew();
     psOptions =
-        GDALVectorTranslateOptionsNew(papszArgv + 1, psOptionsForBinary);
+        GDALVectorTranslateOptionsNew(papszArgv + 1, &sOptionsForBinary);
 
     if (psOptions == nullptr)
     {
-        Usage(true);
-        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
+        Usage();
         goto exit;
     }
 
-    if (psOptionsForBinary->osDataSource.empty() ||
-        !psOptionsForBinary->bDestSpecified)
-    {
-        if (!psOptionsForBinary->bDestSpecified)
-            Usage(true, "no target datasource provided");
-        else
-            Usage(true, "no source datasource provided");
-        GDALVectorTranslateOptionsFree(psOptions);
-        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
-        goto exit;
-    }
-
-    if (psOptionsForBinary->osDestDataSource == "/vsistdout/")
-        psOptionsForBinary->bQuiet = true;
+    if (sOptionsForBinary.osDestDataSource == "/vsistdout/")
+        sOptionsForBinary.bQuiet = true;
 
     /* -------------------------------------------------------------------- */
     /*      Open data source.                                               */
@@ -345,14 +118,13 @@ MAIN_START(nArgc, papszArgv)
     // Avoid opening twice the same datasource if it is both the input and
     // output Known to cause problems with at least FGdb, SQlite and GPKG
     // drivers. See #4270
-    if (psOptionsForBinary->eAccessMode != ACCESS_CREATION &&
-        psOptionsForBinary->osDestDataSource ==
-            psOptionsForBinary->osDataSource)
+    if (sOptionsForBinary.eAccessMode != ACCESS_CREATION &&
+        sOptionsForBinary.osDestDataSource == sOptionsForBinary.osDataSource)
     {
-        hODS = GDALOpenEx(psOptionsForBinary->osDataSource.c_str(),
+        hODS = GDALOpenEx(sOptionsForBinary.osDataSource.c_str(),
                           GDAL_OF_UPDATE | GDAL_OF_VECTOR,
-                          psOptionsForBinary->aosAllowInputDrivers.List(),
-                          psOptionsForBinary->aosOpenOptions.List(), nullptr);
+                          sOptionsForBinary.aosAllowInputDrivers.List(),
+                          sOptionsForBinary.aosOpenOptions.List(), nullptr);
 
         GDALDriverH hDriver =
             hODS != nullptr ? GDALGetDatasetDriver(hODS) : nullptr;
@@ -363,10 +135,10 @@ MAIN_START(nArgc, papszArgv)
                          EQUAL(GDALGetDescription(hDriver), "SQLite") ||
                          EQUAL(GDALGetDescription(hDriver), "GPKG")))
         {
-            hDS = GDALOpenEx(
-                psOptionsForBinary->osDataSource.c_str(), GDAL_OF_VECTOR,
-                psOptionsForBinary->aosAllowInputDrivers.List(),
-                psOptionsForBinary->aosOpenOptions.List(), nullptr);
+            hDS = GDALOpenEx(sOptionsForBinary.osDataSource.c_str(),
+                             GDAL_OF_VECTOR,
+                             sOptionsForBinary.aosAllowInputDrivers.List(),
+                             sOptionsForBinary.aosOpenOptions.List(), nullptr);
         }
         else
         {
@@ -376,10 +148,9 @@ MAIN_START(nArgc, papszArgv)
     }
     else
     {
-        hDS =
-            GDALOpenEx(psOptionsForBinary->osDataSource.c_str(), GDAL_OF_VECTOR,
-                       psOptionsForBinary->aosAllowInputDrivers.List(),
-                       psOptionsForBinary->aosOpenOptions.List(), nullptr);
+        hDS = GDALOpenEx(sOptionsForBinary.osDataSource.c_str(), GDAL_OF_VECTOR,
+                         sOptionsForBinary.aosAllowInputDrivers.List(),
+                         sOptionsForBinary.aosOpenOptions.List(), nullptr);
     }
 
     /* -------------------------------------------------------------------- */
@@ -391,7 +162,7 @@ MAIN_START(nArgc, papszArgv)
 
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to open datasource `%s' with the following drivers.",
-                 psOptionsForBinary->osDataSource.c_str());
+                 sOptionsForBinary.osDataSource.c_str());
 
         for (int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++)
         {
@@ -405,20 +176,19 @@ MAIN_START(nArgc, papszArgv)
         }
 
         GDALVectorTranslateOptionsFree(psOptions);
-        GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
         goto exit;
     }
 
-    if (hODS != nullptr && !psOptionsForBinary->osFormat.empty())
+    if (hODS != nullptr && !sOptionsForBinary.osFormat.empty())
     {
         GDALDriverManager *poDM = GetGDALDriverManager();
 
         GDALDriver *poDriver =
-            poDM->GetDriverByName(psOptionsForBinary->osFormat.c_str());
+            poDM->GetDriverByName(sOptionsForBinary.osFormat.c_str());
         if (poDriver == nullptr)
         {
             fprintf(stderr, "Unable to find driver `%s'.\n",
-                    psOptionsForBinary->osFormat.c_str());
+                    sOptionsForBinary.osFormat.c_str());
             fprintf(stderr, "The following drivers are available:\n");
 
             for (int iDriver = 0; iDriver < poDM->GetDriverCount(); iDriver++)
@@ -436,12 +206,11 @@ MAIN_START(nArgc, papszArgv)
                 }
             }
             GDALVectorTranslateOptionsFree(psOptions);
-            GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
             goto exit;
         }
     }
 
-    if (!(psOptionsForBinary->bQuiet))
+    if (!(sOptionsForBinary.bQuiet))
     {
         GDALVectorTranslateOptionsSetProgress(psOptions, GDALTermProgress,
                                               nullptr);
@@ -450,17 +219,15 @@ MAIN_START(nArgc, papszArgv)
     {
         // TODO(schwehr): Remove scope after removing gotos
         int bUsageError = FALSE;
-        hDstDS =
-            GDALVectorTranslate(psOptionsForBinary->osDestDataSource.c_str(),
-                                hODS, 1, &hDS, psOptions, &bUsageError);
+        hDstDS = GDALVectorTranslate(sOptionsForBinary.osDestDataSource.c_str(),
+                                     hODS, 1, &hDS, psOptions, &bUsageError);
         if (bUsageError)
-            Usage(true);
+            Usage();
         else
             nRetCode = hDstDS ? 0 : 1;
     }
 
     GDALVectorTranslateOptionsFree(psOptions);
-    GDALVectorTranslateOptionsForBinaryFree(psOptionsForBinary);
 
     if (hDS)
         GDALClose(hDS);

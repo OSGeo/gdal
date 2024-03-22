@@ -547,10 +547,9 @@ def test_wcs_6(wcs_server, tmp_path, server, version):
     projwin = [
         int(x) for x in setup[server]["Projwin"].replace("-projwin ", "").split()
     ]
-    options = [cache]
 
     tmpfile = tmp_path / f"{server}{version}.tiff"
-    gdal.Translate(str(tmpfile), ds, projWin=projwin, width=size, options=options)
+    gdal.Translate(str(tmpfile), ds, projWin=projwin, width=size)
 
     assert tmpfile.exists()
 
@@ -565,10 +564,7 @@ def test_wcs_6(wcs_server, tmp_path, server, version):
 
         assert ds is not None, f"OpenEx failed: WCS:{url}/?{query}"
 
-        options = [cache]
-        gdal.Translate(
-            str(tmpfile_non_scaled), ds, srcWin=[0, 0, 2, 2], options=options
-        )
+        gdal.Translate(str(tmpfile_non_scaled), ds, srcWin=[0, 0, 2, 2])
 
         assert tmpfile_non_scaled.exists()
     else:

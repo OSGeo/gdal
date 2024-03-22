@@ -56,19 +56,6 @@ struct GDALInfoOptionsForBinary
     char **papszAllowInputDrivers;
 };
 
-struct GDALTranslateOptionsForBinary
-{
-    char *pszSource;
-    char *pszDest;
-    int bQuiet;
-    int bCopySubDatasets;
-    char **papszOpenOptions;
-    char *pszFormat;
-
-    /* Allowed input drivers. */
-    char **papszAllowInputDrivers;
-};
-
 struct GDALWarpAppOptionsForBinary
 {
     char **papszSrcFiles;
@@ -97,13 +84,6 @@ struct GDALDEMProcessingOptionsForBinary
     int bQuiet;
 };
 
-struct GDALNearblackOptionsForBinary
-{
-    char *pszInFile;
-    char *pszOutFile;
-    int bQuiet;
-};
-
 struct GDALBuildVRTOptionsForBinary
 {
     int nSrcFiles;
@@ -128,7 +108,6 @@ typedef enum
 struct GDALVectorTranslateOptionsForBinary
 {
     std::string osDataSource{};
-    bool bDestSpecified = false;
     std::string osDestDataSource{};
     bool bQuiet = false;
     CPLStringList aosOpenOptions{};
@@ -229,6 +208,34 @@ struct GDALTileIndexOptionsForBinary
     std::string osDest{};
     bool bQuiet = false;
 };
+
+struct GDALNearblackOptionsForBinary
+{
+    std::string osInFile{};
+    std::string osOutFile{};
+    bool bQuiet = false;
+};
+
+struct GDALTranslateOptionsForBinary
+{
+    std::string osSource{};
+    std::string osDest{};
+    bool bQuiet = false;
+    bool bCopySubDatasets = false;
+    CPLStringList aosOpenOptions{};
+    std::string osFormat{};
+
+    /* Allowed input drivers. */
+    CPLStringList aosAllowedInputDrivers{};
+};
+
+std::string CPL_DLL GDALNearblackGetParserUsage();
+
+std::string CPL_DLL GDALVectorInfoGetParserUsage();
+
+std::string CPL_DLL GDALTranslateGetParserUsage();
+
+std::string CPL_DLL GDALVectorTranslateGetParserUsage();
 
 #endif /* #ifndef DOXYGEN_SKIP */
 

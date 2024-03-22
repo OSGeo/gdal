@@ -31,6 +31,7 @@
 #include "cpl_port.h"
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
+#include "gdalargumentparser.h"
 
 #include <cassert>
 #include <climits>
@@ -1436,19 +1437,6 @@ static int GetFieldType(const char *pszArg, int *pnSubFieldType)
         }
     }
     return -1;
-}
-
-/************************************************************************/
-/*                            IsNumber()                               */
-/************************************************************************/
-
-static bool IsNumber(const char *pszStr)
-{
-    if (*pszStr == '-' || *pszStr == '+')
-        pszStr++;
-    if (*pszStr == '.')
-        pszStr++;
-    return (*pszStr >= '0' && *pszStr <= '9');
 }
 
 /************************************************************************/
@@ -6651,6 +6639,895 @@ LayerTranslator::GetSrcClipGeom(const OGRSpatialReference *poGeomSRS)
 }
 
 /************************************************************************/
+/*                   GDALVectorTranslateOptionsGetParser()              */
+/************************************************************************/
+
+static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
+    GDALVectorTranslateOptions *psOptions,
+    GDALVectorTranslateOptionsForBinary *psOptionsForBinary, int nCountClipSrc,
+    int nCountClipDst)
+{
+    auto argParser = std::make_unique<GDALArgumentParser>(
+        "ogr2ogr", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    argParser->add_description(
+        _("Converts simple features data between file formats."));
+
+    argParser->add_epilog(_("https://gdal.org/programs/ogr2ogr.html"));
+
+    argParser->add_output_format_argument(psOptions->osFormat);
+
+    argParser->add_argument("-dsco")
+        .metavar("<NAME>=<VALUE>")
+        .append()
+        .action([psOptions](const std::string &s)
+                { psOptions->aosDSCO.AddString(s.c_str()); })
+        .help(_("Dataset creation option (format specific)."));
+
+    argParser->add_argument("-lco")
+        .metavar("<NAME>=<VALUE>")
+        .append()
+        .action([psOptions](const std::string &s)
+                { psOptions->aosLCO.AddString(s.c_str()); })
+        .help(_("Layer creation option (format specific)."));
+
+    argParser->add_usage_newline();
+
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+        group.add_argument("-append")
+            .flag()
+            .action([psOptions](const std::string &)
+                    { psOptions->eAccessMode = ACCESS_APPEND; })
+            .help(_("Append to existing layer instead of creating new."));
+
+        group.add_argument("-upsert")
+            .flag()
+            .action(
+                [psOptions](const std::string &)
+                {
+                    psOptions->eAccessMode = ACCESS_APPEND;
+                    psOptions->bUpsert = true;
+                })
+            .help(_("Variant of -append where the UpsertFeature() operation is "
+                    "used to insert or update features."));
+
+        group.add_argument("-overwrite")
+            .flag()
+            .action([psOptions](const std::string &)
+                    { psOptions->eAccessMode = ACCESS_OVERWRITE; })
+            .help(_("Delete the output layer and recreate it empty."));
+    }
+
+    argParser->add_argument("-update")
+        .flag()
+        .action(
+            [psOptions](const std::string &)
+            {
+                /* Don't reset -append or -overwrite */
+                if (psOptions->eAccessMode != ACCESS_APPEND &&
+                    psOptions->eAccessMode != ACCESS_OVERWRITE)
+                    psOptions->eAccessMode = ACCESS_UPDATE;
+            })
+        .help(_("Open existing output datasource in update mode rather than "
+                "trying to create a new one."));
+
+    argParser->add_argument("-sql")
+        .metavar("<statement>|@<filename>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                GByte *pabyRet = nullptr;
+                if (!s.empty() && s.front() == '@' &&
+                    VSIIngestFile(nullptr, s.c_str() + 1, &pabyRet, nullptr,
+                                  1024 * 1024))
+                {
+                    GDALRemoveBOM(pabyRet);
+                    char *pszSQLStatement = reinterpret_cast<char *>(pabyRet);
+                    psOptions->osSQLStatement =
+                        GDALRemoveSQLComments(pszSQLStatement);
+                    VSIFree(pszSQLStatement);
+                }
+                else
+                {
+                    psOptions->osSQLStatement = s;
+                }
+            })
+        .help(_("SQL statement to execute."));
+
+    argParser->add_argument("-dialect")
+        .metavar("<dialect>")
+        .store_into(psOptions->osDialect)
+        .help(_("SQL dialect."));
+
+    argParser->add_argument("-spat")
+        .metavar("<xmin> <ymin> <xmax> <ymax>")
+        .nargs(4)
+        .scan<'g', double>()
+        .help(_("Spatial query extents, in the SRS of the source layer(s) (or "
+                "the one specified with -spat_srs."));
+
+    argParser->add_argument("-where")
+        .metavar("<restricted_where>|@<filename>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                GByte *pabyRet = nullptr;
+                if (!s.empty() && s.front() == '@' &&
+                    VSIIngestFile(nullptr, s.c_str() + 1, &pabyRet, nullptr,
+                                  1024 * 1024))
+                {
+                    GDALRemoveBOM(pabyRet);
+                    char *pszWHERE = reinterpret_cast<char *>(pabyRet);
+                    psOptions->osWHERE = pszWHERE;
+                    VSIFree(pszWHERE);
+                }
+                else
+                {
+                    psOptions->osWHERE = s;
+                }
+            })
+        .help(_("Attribute query (like SQL WHERE)."));
+
+    argParser->add_argument("-select")
+        .metavar("<field_list>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->bSelFieldsSet = true;
+                psOptions->aosSelFields =
+                    CSLTokenizeStringComplex(s.c_str(), " ,", FALSE, FALSE);
+            })
+        .help(_("Comma-delimited list of fields from input layer to copy to "
+                "the new layer."));
+
+    argParser->add_argument("-nln")
+        .metavar("<name>")
+        .store_into(psOptions->osNewLayerName)
+        .help(_("Assign an alternate name to the new layer."));
+
+    argParser->add_argument("-nlt")
+        .metavar("<type>")
+        .append()
+        .action(
+            [psOptions](const std::string &osGeomNameIn)
+            {
+                bool bIs3D = false;
+                std::string osGeomName(osGeomNameIn);
+                if (osGeomName.size() > 3 &&
+                    STARTS_WITH_CI(osGeomName.c_str() + osGeomName.size() - 3,
+                                   "25D"))
+                {
+                    bIs3D = true;
+                    osGeomName.resize(osGeomName.size() - 3);
+                }
+                else if (osGeomName.size() > 1 &&
+                         STARTS_WITH_CI(
+                             osGeomName.c_str() + osGeomName.size() - 1, "Z"))
+                {
+                    bIs3D = true;
+                    osGeomName.resize(osGeomName.size() - 1);
+                }
+                if (EQUAL(osGeomName.c_str(), "NONE"))
+                {
+                    if (psOptions->eGType != GEOMTYPE_UNCHANGED)
+                    {
+                        throw std::invalid_argument(
+                            "Unsupported combination of -nlt arguments.");
+                    }
+                    psOptions->eGType = wkbNone;
+                }
+                else if (EQUAL(osGeomName.c_str(), "GEOMETRY"))
+                {
+                    if (psOptions->eGType != GEOMTYPE_UNCHANGED)
+                    {
+                        throw std::invalid_argument(
+                            "Unsupported combination of -nlt arguments.");
+                    }
+                    psOptions->eGType = wkbUnknown;
+                }
+                else if (EQUAL(osGeomName.c_str(), "PROMOTE_TO_MULTI"))
+                {
+                    if (psOptions->eGeomTypeConversion == GTC_CONVERT_TO_LINEAR)
+                        psOptions->eGeomTypeConversion =
+                            GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR;
+                    else if (psOptions->eGeomTypeConversion == GTC_DEFAULT)
+                        psOptions->eGeomTypeConversion = GTC_PROMOTE_TO_MULTI;
+                    else
+                    {
+                        throw std::invalid_argument(
+                            "Unsupported combination of -nlt arguments.");
+                    }
+                }
+                else if (EQUAL(osGeomName.c_str(), "CONVERT_TO_LINEAR"))
+                {
+                    if (psOptions->eGeomTypeConversion == GTC_PROMOTE_TO_MULTI)
+                        psOptions->eGeomTypeConversion =
+                            GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR;
+                    else if (psOptions->eGeomTypeConversion == GTC_DEFAULT)
+                        psOptions->eGeomTypeConversion = GTC_CONVERT_TO_LINEAR;
+                    else
+                    {
+                        throw std::invalid_argument(
+                            "Unsupported combination of -nlt arguments.");
+                    }
+                }
+                else if (EQUAL(osGeomName.c_str(), "CONVERT_TO_CURVE"))
+                {
+                    if (psOptions->eGeomTypeConversion == GTC_DEFAULT)
+                        psOptions->eGeomTypeConversion = GTC_CONVERT_TO_CURVE;
+                    else
+                    {
+                        throw std::invalid_argument(
+                            "Unsupported combination of -nlt arguments.");
+                    }
+                }
+                else
+                {
+                    if (psOptions->eGType != GEOMTYPE_UNCHANGED)
+                    {
+                        throw std::invalid_argument(
+                            "Unsupported combination of -nlt arguments.");
+                    }
+                    psOptions->eGType = OGRFromOGCGeomType(osGeomName.c_str());
+                    if (psOptions->eGType == wkbUnknown)
+                    {
+                        throw std::invalid_argument(
+                            CPLSPrintf("-nlt %s: type not recognised.",
+                                       osGeomName.c_str()));
+                    }
+                }
+                if (psOptions->eGType != GEOMTYPE_UNCHANGED &&
+                    psOptions->eGType != wkbNone && bIs3D)
+                    psOptions->eGType = wkbSetZ(
+                        static_cast<OGRwkbGeometryType>(psOptions->eGType));
+            })
+        .help(_("Define the geometry type for the created layer."));
+
+    argParser->add_argument("-s_srs")
+        .metavar("<srs_def>")
+        .store_into(psOptions->osSourceSRSDef)
+        .help(_("Set/override source SRS."));
+
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+        group.add_argument("-a_srs")
+            .metavar("<srs_def>")
+            .action(
+                [psOptions](const std::string &osOutputSRSDef)
+                {
+                    psOptions->osOutputSRSDef = osOutputSRSDef;
+                    if (EQUAL(psOptions->osOutputSRSDef.c_str(), "NULL") ||
+                        EQUAL(psOptions->osOutputSRSDef.c_str(), "NONE"))
+                    {
+                        psOptions->osOutputSRSDef.clear();
+                        psOptions->bNullifyOutputSRS = true;
+                    }
+                })
+            .help(_("Assign an output SRS, but without reprojecting."));
+
+        group.add_argument("-t_srs")
+            .metavar("<srs_def>")
+            .action(
+                [psOptions](const std::string &osOutputSRSDef)
+                {
+                    psOptions->osOutputSRSDef = osOutputSRSDef;
+                    psOptions->bTransform = true;
+                })
+            .help(_("Reproject/transform to this SRS on output, and assign it "
+                    "as output SRS."));
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    argParser->add_group("Field related options");
+
+    argParser->add_argument("-addfields")
+        .flag()
+        .action(
+            [psOptions](const std::string &)
+            {
+                psOptions->bAddMissingFields = true;
+                psOptions->eAccessMode = ACCESS_APPEND;
+            })
+        .help(_("Same as append, but add also any new fields."));
+
+    argParser->add_argument("-relaxedFieldNameMatch")
+        .flag()
+        .action([psOptions](const std::string &)
+                { psOptions->bExactFieldNameMatch = false; })
+        .help(_("Do field name matching between source and existing target "
+                "layer in a more relaxed way."));
+
+    argParser->add_argument("-fieldTypeToString")
+        .metavar("All|<type1>[,<type2>]...")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->aosFieldTypesToString =
+                    CSLTokenizeStringComplex(s.c_str(), " ,", FALSE, FALSE);
+                CSLConstList iter = psOptions->aosFieldTypesToString.List();
+                while (*iter)
+                {
+                    if (IsFieldType(*iter))
+                    {
+                        /* Do nothing */
+                    }
+                    else if (EQUAL(*iter, "All"))
+                    {
+                        psOptions->aosFieldTypesToString.Clear();
+                        psOptions->aosFieldTypesToString.AddString("All");
+                        break;
+                    }
+                    else
+                    {
+                        throw std::invalid_argument(CPLSPrintf(
+                            "Unhandled type for fieldTypeToString option : %s",
+                            *iter));
+                    }
+                    iter++;
+                }
+            })
+        .help(_("Converts any field of the specified type to a field of type "
+                "string in the destination layer."));
+
+    argParser->add_argument("-mapFieldType")
+        .metavar("<srctype>|All=<dsttype>[,<srctype2>=<dsttype2>]...")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->aosMapFieldType =
+                    CSLTokenizeStringComplex(s.c_str(), " ,", FALSE, FALSE);
+                CSLConstList iter = psOptions->aosMapFieldType.List();
+                while (*iter)
+                {
+                    char *pszKey = nullptr;
+                    const char *pszValue = CPLParseNameValue(*iter, &pszKey);
+                    if (pszKey && pszValue)
+                    {
+                        if (!((IsFieldType(pszKey) || EQUAL(pszKey, "All")) &&
+                              IsFieldType(pszValue)))
+                        {
+                            CPLFree(pszKey);
+                            throw std::invalid_argument(CPLSPrintf(
+                                "Invalid value for -mapFieldType : %s", *iter));
+                        }
+                    }
+                    CPLFree(pszKey);
+                    iter++;
+                }
+            })
+        .help(_("Converts any field of the specified type to another type."));
+
+    argParser->add_argument("-fieldmap")
+        .metavar("<field_1>[,<field_2>]...")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->aosFieldMap =
+                    CSLTokenizeStringComplex(s.c_str(), ",", FALSE, FALSE);
+            })
+        .help(_("Specifies the list of field indexes to be copied from the "
+                "source to the destination."));
+
+    argParser->add_argument("-splitlistfields")
+        .store_into(psOptions->bSplitListFields)
+        .help(_("Split fields of type list type into as many fields of scalar "
+                "type as necessary."));
+
+    argParser->add_argument("-maxsubfields")
+        .metavar("<n>")
+        .scan<'i', int>()
+        .action(
+            [psOptions](const std::string &s)
+            {
+                const int nVal = atoi(s.c_str());
+                if (nVal > 0)
+                {
+                    psOptions->nMaxSplitListSubFields = nVal;
+                }
+            })
+        .help(_("To be combined with -splitlistfields to limit the number of "
+                "subfields created for each split field."));
+
+    argParser->add_argument("-emptyStrAsNull")
+        .store_into(psOptions->bEmptyStrAsNull)
+        .help(_("Treat empty string values as null."));
+
+    argParser->add_argument("-forceNullable")
+        .store_into(psOptions->bForceNullable)
+        .help(_("Do not propagate not-nullable constraints to target layer if "
+                "they exist in source layer."));
+
+    argParser->add_argument("-unsetFieldWidth")
+        .store_into(psOptions->bUnsetFieldWidth)
+        .help(_("Set field width and precision to 0."));
+
+    argParser->add_argument("-unsetDefault")
+        .store_into(psOptions->bUnsetDefault)
+        .help(_("Do not propagate default field values to target layer if they "
+                "exist in source layer."));
+
+    argParser->add_argument("-resolveDomains")
+        .store_into(psOptions->bResolveDomains)
+        .help(_("Cause any selected field that is linked to a coded field "
+                "domain will be accompanied by an additional field."));
+
+    argParser->add_argument("-dateTimeTo")
+        .metavar("UTC|UTC(+|-)<HH>|UTC(+|-)<HH>:<MM>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                const char *pszFormat = s.c_str();
+                if (EQUAL(pszFormat, "UTC"))
+                {
+                    psOptions->nTZOffsetInSec = 0;
+                }
+                else if (STARTS_WITH_CI(pszFormat, "UTC") &&
+                         (strlen(pszFormat) == strlen("UTC+HH") ||
+                          strlen(pszFormat) == strlen("UTC+HH:MM")) &&
+                         (pszFormat[3] == '+' || pszFormat[3] == '-'))
+                {
+                    const int nHour = atoi(pszFormat + strlen("UTC+"));
+                    if (nHour < 0 || nHour > 14)
+                    {
+                        throw std::invalid_argument("Invalid UTC hour offset.");
+                    }
+                    else if (strlen(pszFormat) == strlen("UTC+HH"))
+                    {
+                        psOptions->nTZOffsetInSec = nHour * 3600;
+                        if (pszFormat[3] == '-')
+                            psOptions->nTZOffsetInSec =
+                                -psOptions->nTZOffsetInSec;
+                    }
+                    else  // if( strlen(pszFormat) == strlen("UTC+HH:MM") )
+                    {
+                        const int nMin = atoi(pszFormat + strlen("UTC+HH:"));
+                        if (nMin == 0 || nMin == 15 || nMin == 30 || nMin == 45)
+                        {
+                            psOptions->nTZOffsetInSec =
+                                nHour * 3600 + nMin * 60;
+                            if (pszFormat[3] == '-')
+                                psOptions->nTZOffsetInSec =
+                                    -psOptions->nTZOffsetInSec;
+                        }
+                    }
+                }
+                if (psOptions->nTZOffsetInSec == TZ_OFFSET_INVALID)
+                {
+                    throw std::invalid_argument(
+                        "Value of -dateTimeTo should be UTC, UTC(+|-)HH or "
+                        "UTC(+|-)HH:MM with HH in [0,14] and MM=00,15,30,45");
+                }
+            })
+        .help(_("Converts date time values from the timezone specified in the "
+                "source value to the target timezone."));
+
+    argParser->add_argument("-noNativeData")
+        .flag()
+        .action([psOptions](const std::string &)
+                { psOptions->bNativeData = false; })
+        .help(_("Disable copying of native data."));
+
+    ///////////////////////////////////////////////////////////////////////
+    argParser->add_group("Advanced geometry and SRS related options");
+
+    argParser->add_argument("-dim")
+        .metavar("layer_dim|2|XY|3|XYZ|XYM|XYZM")
+        .action(
+            [psOptions](const std::string &osDim)
+            {
+                if (EQUAL(osDim.c_str(), "layer_dim"))
+                    psOptions->nCoordDim = COORD_DIM_LAYER_DIM;
+                else if (EQUAL(osDim.c_str(), "XY") ||
+                         EQUAL(osDim.c_str(), "2"))
+                    psOptions->nCoordDim = 2;
+                else if (EQUAL(osDim.c_str(), "XYZ") ||
+                         EQUAL(osDim.c_str(), "3"))
+                    psOptions->nCoordDim = 3;
+                else if (EQUAL(osDim.c_str(), "XYM"))
+                    psOptions->nCoordDim = COORD_DIM_XYM;
+                else if (EQUAL(osDim.c_str(), "XYZM"))
+                    psOptions->nCoordDim = 4;
+                else
+                {
+                    throw std::invalid_argument(CPLSPrintf(
+                        "-dim %s: value not handled.", osDim.c_str()));
+                }
+            })
+        .help(_("Force the coordinate dimension."));
+
+    argParser->add_argument("-s_coord_epoch")
+        .metavar("<epoch>")
+        .store_into(psOptions->dfSourceCoordinateEpoch)
+        .help(_("Assign a coordinate epoch, linked with the source SRS."));
+
+    argParser->add_argument("-a_coord_epoch")
+        .metavar("<epoch>")
+        .store_into(psOptions->dfOutputCoordinateEpoch)
+        .help(_("Assign a coordinate epoch, linked with the output SRS when "
+                "-a_srs is used."));
+
+    argParser->add_argument("-t_coord_epoch")
+        .metavar("<epoch>")
+        .store_into(psOptions->dfOutputCoordinateEpoch)
+        .help(_("Assign a coordinate epoch, linked with the output SRS when "
+                "-t_srs is used."));
+
+    argParser->add_argument("-ct")
+        .metavar("<pipeline_def>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->osCTPipeline = s;
+                psOptions->bTransform = true;
+            })
+        .help(_("Override the default transformation from the source to the "
+                "target CRS."));
+
+    argParser->add_argument("-spat_srs")
+        .metavar("<srs_def>")
+        .store_into(psOptions->osSpatSRSDef)
+        .help(_("Override spatial filter SRS."));
+
+    argParser->add_argument("-geomfield")
+        .metavar("<name>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->osGeomField = s;
+                psOptions->bGeomFieldSet = true;
+            })
+        .help(_("Name of the geometry field on which the spatial filter "
+                "operates on."));
+
+    argParser->add_argument("-segmentize")
+        .metavar("<max_dist>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->eGeomOp = GEOMOP_SEGMENTIZE;
+                psOptions->dfGeomOpParam = CPLAtofM(s.c_str());
+            })
+        .help(_("Maximum distance between 2 nodes."));
+
+    argParser->add_argument("-simplify")
+        .metavar("<tolerance>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->eGeomOp = GEOMOP_SIMPLIFY_PRESERVE_TOPOLOGY;
+                psOptions->dfGeomOpParam = CPLAtofM(s.c_str());
+            })
+        .help(_("Distance tolerance for simplification."));
+
+    argParser->add_argument("-makevalid")
+        .flag()
+        .action(
+            [psOptions](const std::string &)
+            {
+                if (!OGRGeometryFactory::haveGEOS())
+                {
+                    throw std::invalid_argument(
+                        "-makevalid only supported for builds against GEOS");
+                }
+                psOptions->bMakeValid = true;
+            })
+        .help(_("Fix geometries to be valid regarding the rules of the Simple "
+                "Features specification."));
+
+    argParser->add_argument("-wrapdateline")
+        .store_into(psOptions->bWrapDateline)
+        .help(_("Split geometries crossing the dateline meridian."));
+
+    argParser->add_argument("-datelineoffset")
+        .metavar("<val_in_degree>")
+        .store_into(psOptions->dfDateLineOffset)
+        .default_value(psOptions->dfDateLineOffset)
+        .help(_("Offset from dateline in degrees."));
+
+    argParser->add_argument("-clipsrc")
+        .nargs(nCountClipSrc)
+        .metavar("[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>|spat_extent")
+        .help(_("Clip geometries (in source SRS)."));
+
+    argParser->add_argument("-clipsrcsql")
+        .metavar("<sql_statement>")
+        .store_into(psOptions->osClipSrcSQL)
+        .help(_("Select desired geometries from the source clip datasource "
+                "using an SQL query."));
+
+    argParser->add_argument("-clipsrclayer")
+        .metavar("<layername>")
+        .store_into(psOptions->osClipSrcLayer)
+        .help(_("Select the named layer from the source clip datasource."));
+
+    argParser->add_argument("-clipsrcwhere")
+        .metavar("<expression>")
+        .store_into(psOptions->osClipSrcWhere)
+        .help(_("Restrict desired geometries from the source clip layer based "
+                "on an attribute query."));
+
+    argParser->add_argument("-clipdst")
+        .nargs(nCountClipDst)
+        .metavar("[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>")
+        .help(_("Clip geometries (in target SRS)."));
+
+    argParser->add_argument("-clipdstsql")
+        .metavar("<sql_statement>")
+        .store_into(psOptions->osClipDstSQL)
+        .help(_("Select desired geometries from the destination clip "
+                "datasource using an SQL query."));
+
+    argParser->add_argument("-clipdstlayer")
+        .metavar("<layername>")
+        .store_into(psOptions->osClipDstLayer)
+        .help(
+            _("Select the named layer from the destination clip datasource."));
+
+    argParser->add_argument("-clipdstwhere")
+        .metavar("<expression>")
+        .store_into(psOptions->osClipDstWhere)
+        .help(_("Restrict desired geometries from the destination clip layer "
+                "based on an attribute query."));
+
+    argParser->add_argument("-explodecollections")
+        .store_into(psOptions->bExplodeCollections)
+        .help(_("Produce one feature for each geometry in any kind of geometry "
+                "collection in the source file."));
+
+    argParser->add_argument("-zfield")
+        .metavar("<name>")
+        .store_into(psOptions->osZField)
+        .help(_("Uses the specified field to fill the Z coordinate of "
+                "geometries."));
+
+    argParser->add_argument("-gcp")
+        .metavar(
+            "<ungeoref_x> <ungeoref_y> <georef_x> <georef_y> [<elevation>]")
+        .nargs(4, 5)
+        .append()
+        .scan<'g', double>()
+        .help(_("Add the indicated ground control point."));
+
+    argParser->add_argument("-tps")
+        .flag()
+        .action([psOptions](const std::string &)
+                { psOptions->nTransformOrder = -1; })
+        .help(_("Force use of thin plate spline transformer based on available "
+                "GCPs."));
+
+    argParser->add_argument("-order")
+        .metavar("1|2|3")
+        .store_into(psOptions->nTransformOrder)
+        .help(_("Order of polynomial used for warping."));
+
+    argParser->add_argument("-xyRes")
+        .metavar("<val>[ m|mm|deg]")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                const char *pszVal = s.c_str();
+
+                char *endptr = nullptr;
+                psOptions->dfXYRes = CPLStrtodM(pszVal, &endptr);
+                if (!endptr)
+                {
+                    throw std::invalid_argument(
+                        "Invalid value for -xyRes. Must be of the form "
+                        "{numeric_value}[ ]?[m|mm|deg]?");
+                }
+                if (*endptr == ' ')
+                    ++endptr;
+                if (*endptr != 0 && strcmp(endptr, "m") != 0 &&
+                    strcmp(endptr, "mm") != 0 && strcmp(endptr, "deg") != 0)
+                {
+                    throw std::invalid_argument(
+                        "Invalid value for -xyRes. Must be of the form "
+                        "{numeric_value}[ ]?[m|mm|deg]?");
+                }
+                psOptions->osXYResUnit = endptr;
+            })
+        .help(_("Set/override the geometry X/Y coordinate resolution."));
+
+    argParser->add_argument("-zRes")
+        .metavar("<val>[ m|mm]")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                const char *pszVal = s.c_str();
+
+                char *endptr = nullptr;
+                psOptions->dfZRes = CPLStrtodM(pszVal, &endptr);
+                if (!endptr)
+                {
+                    throw std::invalid_argument(
+                        "Invalid value for -zRes. Must be of the form "
+                        "{numeric_value}[ ]?[m|mm]?");
+                }
+                if (*endptr == ' ')
+                    ++endptr;
+                if (*endptr != 0 && strcmp(endptr, "m") != 0 &&
+                    strcmp(endptr, "mm") != 0 && strcmp(endptr, "deg") != 0)
+                {
+                    throw std::invalid_argument(
+                        "Invalid value for -zRes. Must be of the form "
+                        "{numeric_value}[ ]?[m|mm]?");
+                }
+                psOptions->osZResUnit = endptr;
+            })
+        .help(_("Set/override the geometry Z coordinate resolution."));
+
+    argParser->add_argument("-mRes")
+        .metavar("<val>")
+        .store_into(psOptions->dfMRes)
+        .help(_("Set/override the geometry M coordinate resolution."));
+
+    argParser->add_argument("-unsetCoordPrecision")
+        .store_into(psOptions->bUnsetCoordPrecision)
+        .help(_("Prevent the geometry coordinate resolution from being set on "
+                "target layer(s)."));
+
+    ///////////////////////////////////////////////////////////////////////
+    argParser->add_group("Other options");
+
+    argParser->add_quiet_argument(&psOptions->bQuiet);
+
+    argParser->add_argument("-progress")
+        .store_into(psOptions->bDisplayProgress)
+        .help(_("Display progress on terminal. Only works if input layers have "
+                "the 'fast feature count' capability."));
+
+    argParser->add_argument("-if")
+        .append()
+        .metavar("<format>")
+        .action(
+            [psOptionsForBinary](const std::string &s)
+            {
+                if (psOptionsForBinary)
+                {
+                    if (GDALGetDriverByName(s.c_str()) == nullptr)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "%s is not a recognized driver", s.c_str());
+                    }
+                    psOptionsForBinary->aosAllowInputDrivers.AddString(
+                        s.c_str());
+                }
+            })
+        .help(
+            _("Format/driver name(s) to be attempted to open the input file."));
+
+    argParser->add_open_options_argument(
+        psOptionsForBinary ? &(psOptionsForBinary->aosOpenOptions) : nullptr);
+
+    argParser->add_argument("-doo")
+        .metavar("<NAME>=<VALUE>")
+        .append()
+        .action([psOptions](const std::string &s)
+                { psOptions->aosDestOpenOptions.AddString(s.c_str()); })
+        .help(_("Open option(s) for output dataset."));
+
+    argParser->add_usage_newline();
+
+    argParser->add_argument("-fid")
+        .metavar("<FID>")
+        .action([psOptions](const std::string &s)
+                { psOptions->nFIDToFetch = CPLAtoGIntBig(s.c_str()); })
+        .help(_("If provided, only the feature with the specified feature id "
+                "will be processed."));
+
+    argParser->add_argument("-preserve_fid")
+        .store_into(psOptions->bPreserveFID)
+        .help(_("Use the FID of the source features instead of letting the "
+                "output driver automatically assign a new one."));
+
+    argParser->add_argument("-unsetFid")
+        .store_into(psOptions->bUnsetFid)
+        .help(_("Pevent the name of the source FID column and source feature "
+                "IDs from being re-used."));
+
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+        group.add_argument("-skip", "-skipfailures")
+            .flag()
+            .action(
+                [psOptions](const std::string &)
+                {
+                    psOptions->bSkipFailures = true;
+                    psOptions->nGroupTransactions = 1; /* #2409 */
+                })
+            .help(_("Continue after a failure, skipping the failed feature."));
+
+        auto &arg = group.add_argument("-gt")
+                        .metavar("<n>|unlimited")
+                        .action(
+                            [psOptions](const std::string &s)
+                            {
+                                /* If skipfailures is already set we should not
+               modify nGroupTransactions = 1  #2409 */
+                                if (!psOptions->bSkipFailures)
+                                {
+                                    if (EQUAL(s.c_str(), "unlimited"))
+                                        psOptions->nGroupTransactions = -1;
+                                    else
+                                        psOptions->nGroupTransactions =
+                                            atoi(s.c_str());
+                                }
+                            })
+                        .help(_("Group <n> features per transaction "));
+
+        argParser->add_hidden_alias_for(arg, "tg");
+    }
+
+    argParser->add_argument("-limit")
+        .metavar("<nb_features>")
+        .action([psOptions](const std::string &s)
+                { psOptions->nLimit = CPLAtoGIntBig(s.c_str()); })
+        .help(_("Limit the number of features per layer."));
+
+    argParser->add_argument("-ds_transaction")
+        .flag()
+        .action(
+            [psOptions](const std::string &)
+            {
+                psOptions->nLayerTransaction = FALSE;
+                psOptions->bForceTransaction = true;
+            })
+        .help(_("Force the use of a dataset level transaction."));
+
+    /* Undocumented. Just a provision. Default behavior should be OK */
+    argParser->add_argument("-lyr_transaction")
+        .flag()
+        .hidden()
+        .action([psOptions](const std::string &)
+                { psOptions->nLayerTransaction = TRUE; })
+        .help(_("Force the use of a layer level transaction."));
+
+    argParser->add_metadata_item_options_argument(
+        psOptions->aosMetadataOptions);
+
+    argParser->add_argument("-nomd")
+        .flag()
+        .action([psOptions](const std::string &)
+                { psOptions->bCopyMD = false; })
+        .help(_("Disable copying of metadata from source dataset and layers "
+                "into target dataset and layers."));
+
+    if (psOptionsForBinary)
+    {
+        argParser->add_argument("dst_dataset_name")
+            .metavar("<dst_dataset_name>")
+            .store_into(psOptionsForBinary->osDestDataSource)
+            .help(_("Output dataset."));
+
+        argParser->add_argument("src_dataset_name")
+            .metavar("<src_dataset_name>")
+            .store_into(psOptionsForBinary->osDataSource)
+            .help(_("Input dataset."));
+    }
+
+    argParser->add_argument("layer")
+        .remaining()
+        .metavar("<layer_name>")
+        .help(_("Layer name"));
+
+    return argParser;
+}
+
+/************************************************************************/
+/*                    GDALVectorTranslateGetParserUsage()               */
+/************************************************************************/
+
+std::string GDALVectorTranslateGetParserUsage()
+{
+    GDALVectorTranslateOptions sOptions;
+    GDALVectorTranslateOptionsForBinary sOptionsForBinary;
+    auto argParser = GDALVectorTranslateOptionsGetParser(
+        &sOptions, &sOptionsForBinary, 1, 1);
+    return argParser->usage();
+}
+
+/************************************************************************/
 /*                   CHECK_HAS_ENOUGH_ADDITIONAL_ARGS()                 */
 /************************************************************************/
 
@@ -6702,659 +7579,22 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
 {
     auto psOptions = std::make_unique<GDALVectorTranslateOptions>();
 
-    int nArgc = CSLCount(papszArgv);
-    for (int i = 0; papszArgv != nullptr && i < nArgc; i++)
+    /* -------------------------------------------------------------------- */
+    /*      Pre-processing for custom syntax that ArgumentParser does not   */
+    /*      support.                                                        */
+    /* -------------------------------------------------------------------- */
+
+    CPLStringList aosArgv;
+    const int nArgc = CSLCount(papszArgv);
+    int nCountClipSrc = 1;
+    int nCountClipDst = 1;
+    for (int i = 0;
+         i < nArgc && papszArgv != nullptr && papszArgv[i] != nullptr; i++)
     {
-        int iArgStart = i;
+        if (EQUAL(papszArgv[i], "-gcp"))
+        {
+            // repeated argument of varying size: not handled by argparse.
 
-        if (EQUAL(papszArgv[i], "-q") || EQUAL(papszArgv[i], "-quiet"))
-        {
-            psOptions->bQuiet = true;
-            if (psOptionsForBinary)
-                psOptionsForBinary->bQuiet = true;
-        }
-        else if (EQUAL(papszArgv[i], "-if"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            i++;
-            if (psOptionsForBinary)
-            {
-                if (GDALGetDriverByName(papszArgv[i]) == nullptr)
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "%s is not a recognized driver", papszArgv[i]);
-                }
-                psOptionsForBinary->aosAllowInputDrivers.AddString(
-                    papszArgv[i]);
-            }
-        }
-        else if (EQUAL(papszArgv[i], "-f") || EQUAL(papszArgv[i], "-of"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszFormatArg = papszArgv[++i];
-            psOptions->osFormat = pszFormatArg;
-        }
-        else if (EQUAL(papszArgv[i], "-dsco"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->aosDSCO.AddString(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-lco"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->aosLCO.AddString(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-oo"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            ++i;
-            if (psOptionsForBinary)
-            {
-                psOptionsForBinary->aosOpenOptions.AddString(papszArgv[i]);
-            }
-        }
-        else if (EQUAL(papszArgv[i], "-doo"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            ++i;
-            psOptions->aosDestOpenOptions.AddString(papszArgv[i]);
-        }
-        else if (EQUAL(papszArgv[i], "-preserve_fid"))
-        {
-            psOptions->bPreserveFID = true;
-        }
-        else if (STARTS_WITH_CI(papszArgv[i], "-skip"))
-        {
-            psOptions->bSkipFailures = true;
-            psOptions->nGroupTransactions = 1; /* #2409 */
-        }
-        else if (EQUAL(papszArgv[i], "-append"))
-        {
-            psOptions->eAccessMode = ACCESS_APPEND;
-        }
-        else if (EQUAL(papszArgv[i], "-upsert"))
-        {
-            psOptions->eAccessMode = ACCESS_APPEND;
-            psOptions->bUpsert = true;
-        }
-        else if (EQUAL(papszArgv[i], "-overwrite"))
-        {
-            psOptions->eAccessMode = ACCESS_OVERWRITE;
-        }
-        else if (EQUAL(papszArgv[i], "-addfields"))
-        {
-            psOptions->bAddMissingFields = true;
-            psOptions->eAccessMode = ACCESS_APPEND;
-        }
-        else if (EQUAL(papszArgv[i], "-update"))
-        {
-            /* Don't reset -append or -overwrite */
-            if (psOptions->eAccessMode != ACCESS_APPEND &&
-                psOptions->eAccessMode != ACCESS_OVERWRITE)
-                psOptions->eAccessMode = ACCESS_UPDATE;
-        }
-        else if (EQUAL(papszArgv[i], "-relaxedFieldNameMatch"))
-        {
-            psOptions->bExactFieldNameMatch = false;
-        }
-        else if (EQUAL(papszArgv[i], "-fid"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->nFIDToFetch = CPLAtoGIntBig(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-sql"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            i++;
-            GByte *pabyRet = nullptr;
-            if (papszArgv[i][0] == '@' &&
-                VSIIngestFile(nullptr, papszArgv[i] + 1, &pabyRet, nullptr,
-                              1024 * 1024))
-            {
-                GDALRemoveBOM(pabyRet);
-                char *pszSQLStatement = reinterpret_cast<char *>(pabyRet);
-                psOptions->osSQLStatement =
-                    GDALRemoveSQLComments(pszSQLStatement);
-                VSIFree(pszSQLStatement);
-            }
-            else
-            {
-                psOptions->osSQLStatement = papszArgv[i];
-            }
-        }
-        else if (EQUAL(papszArgv[i], "-dialect"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osDialect = papszArgv[++i];
-        }
-        else if (EQUAL(papszArgv[i], "-nln"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osNewLayerName = papszArgv[++i];
-        }
-        else if (EQUAL(papszArgv[i], "-nlt"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            bool bIs3D = false;
-            CPLString osGeomName = papszArgv[i + 1];
-            if (strlen(papszArgv[i + 1]) > 3 &&
-                STARTS_WITH_CI(papszArgv[i + 1] + strlen(papszArgv[i + 1]) - 3,
-                               "25D"))
-            {
-                bIs3D = true;
-                osGeomName.resize(osGeomName.size() - 3);
-            }
-            else if (strlen(papszArgv[i + 1]) > 1 &&
-                     STARTS_WITH_CI(
-                         papszArgv[i + 1] + strlen(papszArgv[i + 1]) - 1, "Z"))
-            {
-                bIs3D = true;
-                osGeomName.resize(osGeomName.size() - 1);
-            }
-            if (EQUAL(osGeomName, "NONE"))
-            {
-                if (psOptions->eGType != GEOMTYPE_UNCHANGED)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Unsupported combination of -nlt arguments");
-                    return nullptr;
-                }
-                psOptions->eGType = wkbNone;
-            }
-            else if (EQUAL(osGeomName, "GEOMETRY"))
-            {
-                if (psOptions->eGType != GEOMTYPE_UNCHANGED)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Unsupported combination of -nlt arguments");
-                    return nullptr;
-                }
-                psOptions->eGType = wkbUnknown;
-            }
-            else if (EQUAL(osGeomName, "PROMOTE_TO_MULTI"))
-            {
-                if (psOptions->eGeomTypeConversion == GTC_CONVERT_TO_LINEAR)
-                    psOptions->eGeomTypeConversion =
-                        GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR;
-                else if (psOptions->eGeomTypeConversion == GTC_DEFAULT)
-                    psOptions->eGeomTypeConversion = GTC_PROMOTE_TO_MULTI;
-                else
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Unsupported combination of -nlt arguments");
-                    return nullptr;
-                }
-            }
-            else if (EQUAL(osGeomName, "CONVERT_TO_LINEAR"))
-            {
-                if (psOptions->eGeomTypeConversion == GTC_PROMOTE_TO_MULTI)
-                    psOptions->eGeomTypeConversion =
-                        GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR;
-                else if (psOptions->eGeomTypeConversion == GTC_DEFAULT)
-                    psOptions->eGeomTypeConversion = GTC_CONVERT_TO_LINEAR;
-                else
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Unsupported combination of -nlt arguments");
-                    return nullptr;
-                }
-            }
-            else if (EQUAL(osGeomName, "CONVERT_TO_CURVE"))
-            {
-                if (psOptions->eGeomTypeConversion == GTC_DEFAULT)
-                    psOptions->eGeomTypeConversion = GTC_CONVERT_TO_CURVE;
-                else
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Unsupported combination of -nlt arguments");
-                    return nullptr;
-                }
-            }
-            else
-            {
-                if (psOptions->eGType != GEOMTYPE_UNCHANGED)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Unsupported combination of -nlt arguments");
-                    return nullptr;
-                }
-                psOptions->eGType = OGRFromOGCGeomType(osGeomName);
-                if (psOptions->eGType == wkbUnknown)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "-nlt %s: type not recognised.", papszArgv[i + 1]);
-                    return nullptr;
-                }
-            }
-            if (psOptions->eGType != GEOMTYPE_UNCHANGED &&
-                psOptions->eGType != wkbNone && bIs3D)
-                psOptions->eGType =
-                    wkbSetZ(static_cast<OGRwkbGeometryType>(psOptions->eGType));
-
-            i++;
-        }
-        else if (EQUAL(papszArgv[i], "-dim"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            if (EQUAL(papszArgv[i + 1], "layer_dim"))
-                psOptions->nCoordDim = COORD_DIM_LAYER_DIM;
-            else if (EQUAL(papszArgv[i + 1], "XY") ||
-                     EQUAL(papszArgv[i + 1], "2"))
-                psOptions->nCoordDim = 2;
-            else if (EQUAL(papszArgv[i + 1], "XYZ") ||
-                     EQUAL(papszArgv[i + 1], "3"))
-                psOptions->nCoordDim = 3;
-            else if (EQUAL(papszArgv[i + 1], "XYM"))
-                psOptions->nCoordDim = COORD_DIM_XYM;
-            else if (EQUAL(papszArgv[i + 1], "XYZM"))
-                psOptions->nCoordDim = 4;
-            else
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "-dim %s: value not handled.", papszArgv[i + 1]);
-                return nullptr;
-            }
-            i++;
-        }
-        else if (EQUAL(papszArgv[i], "-tg") || EQUAL(papszArgv[i], "-gt"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            ++i;
-            /* If skipfailures is already set we should not
-               modify nGroupTransactions = 1  #2409 */
-            if (!psOptions->bSkipFailures)
-            {
-                if (EQUAL(papszArgv[i], "unlimited"))
-                    psOptions->nGroupTransactions = -1;
-                else
-                    psOptions->nGroupTransactions = atoi(papszArgv[i]);
-            }
-        }
-        else if (EQUAL(papszArgv[i], "-ds_transaction"))
-        {
-            psOptions->nLayerTransaction = FALSE;
-            psOptions->bForceTransaction = true;
-        }
-        /* Undocumented. Just a provision. Default behavior should be OK */
-        else if (EQUAL(papszArgv[i], "-lyr_transaction"))
-        {
-            psOptions->nLayerTransaction = TRUE;
-        }
-        else if (EQUAL(papszArgv[i], "-s_srs"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osSourceSRSDef = papszArgv[++i];
-        }
-        else if (EQUAL(papszArgv[i], "-s_coord_epoch"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->dfSourceCoordinateEpoch = CPLAtof(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-a_srs"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osOutputSRSDef = papszArgv[++i];
-            if (EQUAL(psOptions->osOutputSRSDef.c_str(), "NULL") ||
-                EQUAL(psOptions->osOutputSRSDef.c_str(), "NONE"))
-            {
-                psOptions->osOutputSRSDef.clear();
-                psOptions->bNullifyOutputSRS = true;
-            }
-        }
-        else if (EQUAL(papszArgv[i], "-a_coord_epoch") ||
-                 EQUAL(papszArgv[i], "-t_coord_epoch"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->dfOutputCoordinateEpoch = CPLAtof(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-t_srs"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osOutputSRSDef = papszArgv[++i];
-            psOptions->bTransform = true;
-        }
-        else if (EQUAL(papszArgv[i], "-ct"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osCTPipeline = papszArgv[++i];
-            psOptions->bTransform = true;
-        }
-        else if (EQUAL(papszArgv[i], "-spat"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
-            OGRLinearRing oRing;
-
-            oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                           CPLAtof(papszArgv[i + 2]));
-            oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                           CPLAtof(papszArgv[i + 4]));
-            oRing.addPoint(CPLAtof(papszArgv[i + 3]),
-                           CPLAtof(papszArgv[i + 4]));
-            oRing.addPoint(CPLAtof(papszArgv[i + 3]),
-                           CPLAtof(papszArgv[i + 2]));
-            oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                           CPLAtof(papszArgv[i + 2]));
-
-            auto poSpatialFilter = std::make_shared<OGRPolygon>();
-            poSpatialFilter->addRing(&oRing);
-            psOptions->poSpatialFilter = poSpatialFilter;
-            i += 4;
-        }
-        else if (EQUAL(papszArgv[i], "-spat_srs"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osSpatSRSDef = papszArgv[++i];
-        }
-        else if (EQUAL(papszArgv[i], "-geomfield"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osGeomField = papszArgv[++i];
-            psOptions->bGeomFieldSet = true;
-        }
-        else if (EQUAL(papszArgv[i], "-where"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            i++;
-            GByte *pabyRet = nullptr;
-            if (papszArgv[i][0] == '@' &&
-                VSIIngestFile(nullptr, papszArgv[i] + 1, &pabyRet, nullptr,
-                              1024 * 1024))
-            {
-                GDALRemoveBOM(pabyRet);
-                char *pszWHERE = reinterpret_cast<char *>(pabyRet);
-                psOptions->osWHERE = pszWHERE;
-                VSIFree(pszWHERE);
-            }
-            else
-            {
-                psOptions->osWHERE = papszArgv[i];
-            }
-        }
-        else if (EQUAL(papszArgv[i], "-select"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszSelect = papszArgv[++i];
-            psOptions->bSelFieldsSet = true;
-            psOptions->aosSelFields =
-                CSLTokenizeStringComplex(pszSelect, " ,", FALSE, FALSE);
-        }
-        else if (EQUAL(papszArgv[i], "-segmentize"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->eGeomOp = GEOMOP_SEGMENTIZE;
-            psOptions->dfGeomOpParam = CPLAtof(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-simplify"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->eGeomOp = GEOMOP_SIMPLIFY_PRESERVE_TOPOLOGY;
-            psOptions->dfGeomOpParam = CPLAtof(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-makevalid"))
-        {
-            if (!OGRGeometryFactory::haveGEOS())
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "-makevalid only supported for builds against GEOS");
-                return nullptr;
-            }
-            psOptions->bMakeValid = true;
-        }
-        else if (EQUAL(papszArgv[i], "-fieldTypeToString"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->aosFieldTypesToString =
-                CSLTokenizeStringComplex(papszArgv[++i], " ,", FALSE, FALSE);
-            char **iter = psOptions->aosFieldTypesToString.List();
-            while (*iter)
-            {
-                if (IsFieldType(*iter))
-                {
-                    /* Do nothing */
-                }
-                else if (EQUAL(*iter, "All"))
-                {
-                    psOptions->aosFieldTypesToString.Clear();
-                    psOptions->aosFieldTypesToString.AddString("All");
-                    break;
-                }
-                else
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Unhandled type for fieldTypeToString option : %s",
-                             *iter);
-                    return nullptr;
-                }
-                iter++;
-            }
-        }
-        else if (EQUAL(papszArgv[i], "-mapFieldType"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->aosMapFieldType =
-                CSLTokenizeStringComplex(papszArgv[++i], " ,", FALSE, FALSE);
-            char **iter = psOptions->aosMapFieldType.List();
-            while (*iter)
-            {
-                char *pszKey = nullptr;
-                const char *pszValue = CPLParseNameValue(*iter, &pszKey);
-                if (pszKey && pszValue)
-                {
-                    if (!((IsFieldType(pszKey) || EQUAL(pszKey, "All")) &&
-                          IsFieldType(pszValue)))
-                    {
-                        CPLError(CE_Failure, CPLE_IllegalArg,
-                                 "Invalid value for -mapFieldType : %s", *iter);
-                        CPLFree(pszKey);
-                        return nullptr;
-                    }
-                }
-                CPLFree(pszKey);
-                iter++;
-            }
-        }
-        else if (EQUAL(papszArgv[i], "-unsetFieldWidth"))
-        {
-            psOptions->bUnsetFieldWidth = true;
-        }
-        else if (EQUAL(papszArgv[i], "-progress"))
-        {
-            psOptions->bDisplayProgress = true;
-        }
-        else if (EQUAL(papszArgv[i], "-wrapdateline"))
-        {
-            psOptions->bWrapDateline = true;
-        }
-        else if (EQUAL(papszArgv[i], "-datelineoffset"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->dfDateLineOffset = CPLAtof(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-clipsrc"))
-        {
-            if (i + 1 >= nArgc)
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "%s option requires 1 or 4 arguments", papszArgv[i]);
-                return nullptr;
-            }
-
-            psOptions->poClipSrc.reset();
-            psOptions->osClipSrcDS.clear();
-
-            VSIStatBufL sStat;
-            psOptions->bClipSrc = true;
-            if (IsNumber(papszArgv[i + 1]) && papszArgv[i + 2] != nullptr &&
-                papszArgv[i + 3] != nullptr && papszArgv[i + 4] != nullptr)
-            {
-                OGRLinearRing oRing;
-
-                oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                               CPLAtof(papszArgv[i + 2]));
-                oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                               CPLAtof(papszArgv[i + 4]));
-                oRing.addPoint(CPLAtof(papszArgv[i + 3]),
-                               CPLAtof(papszArgv[i + 4]));
-                oRing.addPoint(CPLAtof(papszArgv[i + 3]),
-                               CPLAtof(papszArgv[i + 2]));
-                oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                               CPLAtof(papszArgv[i + 2]));
-
-                auto poPoly = std::make_shared<OGRPolygon>();
-                psOptions->poClipSrc = poPoly;
-                poPoly->addRing(&oRing);
-                i += 4;
-            }
-            else if ((STARTS_WITH_CI(papszArgv[i + 1], "POLYGON") ||
-                      STARTS_WITH_CI(papszArgv[i + 1], "MULTIPOLYGON")) &&
-                     VSIStatL(papszArgv[i + 1], &sStat) != 0)
-            {
-                OGRGeometry *poGeom = nullptr;
-                OGRGeometryFactory::createFromWkt(papszArgv[i + 1], nullptr,
-                                                  &poGeom);
-                psOptions->poClipSrc.reset(poGeom);
-                if (psOptions->poClipSrc == nullptr)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid geometry. Must be a valid POLYGON or "
-                             "MULTIPOLYGON WKT");
-                    return nullptr;
-                }
-                i++;
-            }
-            else if (EQUAL(papszArgv[i + 1], "spat_extent"))
-            {
-                i++;
-            }
-            else
-            {
-                psOptions->osClipSrcDS = papszArgv[i + 1];
-                i++;
-            }
-        }
-        else if (EQUAL(papszArgv[i], "-clipsrcsql"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osClipSrcSQL = papszArgv[i + 1];
-            i++;
-        }
-        else if (EQUAL(papszArgv[i], "-clipsrclayer"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osClipSrcLayer = papszArgv[i + 1];
-            i++;
-        }
-        else if (EQUAL(papszArgv[i], "-clipsrcwhere"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osClipSrcWhere = papszArgv[i + 1];
-            i++;
-        }
-        else if (EQUAL(papszArgv[i], "-clipdst"))
-        {
-            if (i + 1 >= nArgc)
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "%s option requires 1 or 4 arguments", papszArgv[i]);
-                return nullptr;
-            }
-
-            psOptions->poClipDst.reset();
-            psOptions->osClipDstDS.clear();
-
-            VSIStatBufL sStat;
-            if (IsNumber(papszArgv[i + 1]) && papszArgv[i + 2] != nullptr &&
-                papszArgv[i + 3] != nullptr && papszArgv[i + 4] != nullptr)
-            {
-                OGRLinearRing oRing;
-
-                oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                               CPLAtof(papszArgv[i + 2]));
-                oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                               CPLAtof(papszArgv[i + 4]));
-                oRing.addPoint(CPLAtof(papszArgv[i + 3]),
-                               CPLAtof(papszArgv[i + 4]));
-                oRing.addPoint(CPLAtof(papszArgv[i + 3]),
-                               CPLAtof(papszArgv[i + 2]));
-                oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                               CPLAtof(papszArgv[i + 2]));
-
-                auto poPoly = std::make_shared<OGRPolygon>();
-                psOptions->poClipDst = poPoly;
-                poPoly->addRing(&oRing);
-                i += 4;
-            }
-            else if ((STARTS_WITH_CI(papszArgv[i + 1], "POLYGON") ||
-                      STARTS_WITH_CI(papszArgv[i + 1], "MULTIPOLYGON")) &&
-                     VSIStatL(papszArgv[i + 1], &sStat) != 0)
-            {
-                OGRGeometry *poGeom = nullptr;
-                OGRGeometryFactory::createFromWkt(papszArgv[i + 1], nullptr,
-                                                  &poGeom);
-                psOptions->poClipDst.reset(poGeom);
-                if (psOptions->poClipDst == nullptr)
-                {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid geometry. Must be a valid POLYGON or "
-                             "MULTIPOLYGON WKT");
-                    return nullptr;
-                }
-                i++;
-            }
-            else
-            {
-                psOptions->osClipDstDS = papszArgv[i + 1];
-                i++;
-            }
-        }
-        else if (EQUAL(papszArgv[i], "-clipdstsql"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osClipDstSQL = papszArgv[i + 1];
-            i++;
-        }
-        else if (EQUAL(papszArgv[i], "-clipdstlayer"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osClipDstLayer = papszArgv[i + 1];
-            i++;
-        }
-        else if (EQUAL(papszArgv[i], "-clipdstwhere"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osClipDstWhere = papszArgv[i + 1];
-            i++;
-        }
-        else if (EQUAL(papszArgv[i], "-splitlistfields"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->bSplitListFields = true;
-        }
-        else if (EQUAL(papszArgv[i], "-maxsubfields"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            if (IsNumber(papszArgv[i + 1]))
-            {
-                int nTemp = atoi(papszArgv[i + 1]);
-                if (nTemp > 0)
-                {
-                    psOptions->nMaxSplitListSubFields = nTemp;
-                    i++;
-                }
-            }
-        }
-        else if (EQUAL(papszArgv[i], "-explodecollections"))
-        {
-            psOptions->bExplodeCollections = true;
-        }
-        else if (EQUAL(papszArgv[i], "-zfield"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osZField = papszArgv[i + 1];
-            i++;
-        }
-        else if (EQUAL(papszArgv[i], "-gcp"))
-        {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
             char *endptr = nullptr;
             /* -gcp pixel line easting northing [elev] */
@@ -7388,205 +7628,203 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
 
             /* should set id and info? */
         }
-        else if (EQUAL(papszArgv[i], "-tps"))
-        {
-            psOptions->nTransformOrder = -1;
-        }
-        else if (EQUAL(papszArgv[i], "-order"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->nTransformOrder = atoi(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-fieldmap"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->aosFieldMap =
-                CSLTokenizeStringComplex(papszArgv[++i], ",", FALSE, FALSE);
-        }
-        else if (EQUAL(papszArgv[i], "-emptyStrAsNull"))
-        {
-            psOptions->bEmptyStrAsNull = true;
-        }
-        else if (EQUAL(papszArgv[i], "-forceNullable"))
-        {
-            psOptions->bForceNullable = true;
-        }
-        else if (EQUAL(papszArgv[i], "-resolveDomains"))
-        {
-            psOptions->bResolveDomains = true;
-        }
-        else if (EQUAL(papszArgv[i], "-unsetDefault"))
-        {
-            psOptions->bUnsetDefault = true;
-        }
-        else if (EQUAL(papszArgv[i], "-unsetFid"))
-        {
-            psOptions->bUnsetFid = true;
-        }
-        else if (EQUAL(papszArgv[i], "-nomd"))
-        {
-            psOptions->bCopyMD = false;
-        }
-        else if (EQUAL(papszArgv[i], "-noNativeData"))
-        {
-            psOptions->bNativeData = false;
-        }
-        else if (EQUAL(papszArgv[i], "-mo"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->aosMetadataOptions.AddString(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-limit"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->nLimit = CPLAtoGIntBig(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-dateTimeTo"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszFormat = papszArgv[++i];
-            if (EQUAL(pszFormat, "UTC"))
-            {
-                psOptions->nTZOffsetInSec = 0;
-            }
-            else if (STARTS_WITH_CI(pszFormat, "UTC") &&
-                     (strlen(pszFormat) == strlen("UTC+HH") ||
-                      strlen(pszFormat) == strlen("UTC+HH:MM")) &&
-                     (pszFormat[3] == '+' || pszFormat[3] == '-'))
-            {
-                const int nHour = atoi(pszFormat + strlen("UTC+"));
-                if (nHour < 0 || nHour > 14)
-                {
-                    // invalid
-                }
-                else if (strlen(pszFormat) == strlen("UTC+HH"))
-                {
-                    psOptions->nTZOffsetInSec = nHour * 3600;
-                    if (pszFormat[3] == '-')
-                        psOptions->nTZOffsetInSec = -psOptions->nTZOffsetInSec;
-                }
-                else  // if( strlen(pszFormat) == strlen("UTC+HH:MM") )
-                {
-                    const int nMin = atoi(pszFormat + strlen("UTC+HH:"));
-                    if (nMin == 0 || nMin == 15 || nMin == 30 || nMin == 45)
-                    {
-                        psOptions->nTZOffsetInSec = nHour * 3600 + nMin * 60;
-                        if (pszFormat[3] == '-')
-                            psOptions->nTZOffsetInSec =
-                                -psOptions->nTZOffsetInSec;
-                    }
-                }
-            }
-            if (psOptions->nTZOffsetInSec == TZ_OFFSET_INVALID)
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "Value of -dateTimeTo should be UTC, UTC(+|-)HH or "
-                         "UTC(+|-)HH:MM with HH in [0,14] and MM=00,15,30,45");
-                return nullptr;
-            }
-        }
-        else if (EQUAL(papszArgv[i], "-xyRes"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszVal = papszArgv[++i];
 
-            char *endptr = nullptr;
-            psOptions->dfXYRes = CPLStrtod(pszVal, &endptr);
-            if (!endptr)
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Invalid value for -xyRes. Must be of the form "
-                         "{numeric_value}[ ]?[m|mm|deg]?");
-                return nullptr;
-            }
-            if (*endptr == ' ')
-                ++endptr;
-            if (*endptr != 0 && strcmp(endptr, "m") != 0 &&
-                strcmp(endptr, "mm") != 0 && strcmp(endptr, "deg") != 0)
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Invalid value for -xyRes. Must be of the form "
-                         "{numeric_value}[ ]?[m|mm|deg]?");
-                return nullptr;
-            }
-            psOptions->osXYResUnit = endptr;
-        }
-        else if (EQUAL(papszArgv[i], "-zRes"))
+        else if (EQUAL(papszArgv[i], "-clipsrc"))
         {
+            // argparse doesn't handle well variable number of values
+            // just before the positional arguments, so we have to detect
+            // it manually and set the correct number.
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszVal = papszArgv[++i];
+            if (CPLGetValueType(papszArgv[i + 1]) != CPL_VALUE_STRING &&
+                i + 4 < nArgc)
+            {
+                nCountClipSrc = 4;
+            }
 
-            char *endptr = nullptr;
-            psOptions->dfZRes = CPLStrtod(pszVal, &endptr);
-            if (!endptr)
+            for (int j = 0; j < 1 + nCountClipSrc; ++j)
             {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Invalid value for -zRes. Must be of the form "
-                         "{numeric_value}[ ]?[m|mm]?");
-                return nullptr;
+                aosArgv.AddString(papszArgv[i]);
+                ++i;
             }
-            if (*endptr == ' ')
-                ++endptr;
-            if (*endptr != 0 && strcmp(endptr, "m") != 0 &&
-                strcmp(endptr, "mm") != 0 && strcmp(endptr, "deg") != 0)
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Invalid value for -zRes. Must be of the form "
-                         "{numeric_value}[ ]?[m|mm]?");
-                return nullptr;
-            }
-            psOptions->osZResUnit = endptr;
+            --i;
         }
-        else if (EQUAL(papszArgv[i], "-mRes"))
+
+        else if (EQUAL(papszArgv[i], "-clipdst"))
         {
+            // argparse doesn't handle well variable number of values
+            // just before the positional arguments, so we have to detect
+            // it manually and set the correct number.
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszVal = papszArgv[++i];
-
-            char *endptr = nullptr;
-            psOptions->dfMRes = CPLStrtod(pszVal, &endptr);
-            if (!endptr || endptr != pszVal + strlen(pszVal))
+            if (CPLGetValueType(papszArgv[i + 1]) != CPL_VALUE_STRING &&
+                i + 4 < nArgc)
             {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Invalid value for -mRes");
-                return nullptr;
+                nCountClipDst = 4;
             }
+
+            for (int j = 0; j < 1 + nCountClipDst; ++j)
+            {
+                aosArgv.AddString(papszArgv[i]);
+                ++i;
+            }
+            --i;
         }
-        else if (EQUAL(papszArgv[i], "-unsetCoordPrecision"))
-        {
-            psOptions->bUnsetCoordPrecision = true;
-        }
-        else if (papszArgv[i][0] == '-')
-        {
-            CPLError(CE_Failure, CPLE_NotSupported, "Unknown option name '%s'",
-                     papszArgv[i]);
-            return nullptr;
-        }
-        else if (psOptionsForBinary && !psOptionsForBinary->bDestSpecified)
-        {
-            iArgStart = -1;
-            psOptionsForBinary->bDestSpecified = true;
-            psOptionsForBinary->osDestDataSource = papszArgv[i];
-        }
-        else if (psOptionsForBinary && psOptionsForBinary->osDataSource.empty())
-        {
-            iArgStart = -1;
-            psOptionsForBinary->osDataSource = papszArgv[i];
-        }
+
         else
         {
-            iArgStart = -1;
-            psOptions->aosLayers.AddString(papszArgv[i]);
-        }
-
-        if (iArgStart >= 0)
-        {
-            for (int j = iArgStart; j <= i; ++j)
-            {
-                psOptions->aosArguments.AddString(papszArgv[j]);
-            }
+            aosArgv.AddString(papszArgv[i]);
         }
     }
 
+    auto argParser = GDALVectorTranslateOptionsGetParser(
+        psOptions.get(), psOptionsForBinary, nCountClipSrc, nCountClipDst);
+
+    try
+    {
+        // Collect non-positional arguments for VectorTranslateFrom() case
+        psOptions->aosArguments =
+            argParser->get_non_positional_arguments(aosArgv);
+
+        argParser->parse_args_without_binary_name(aosArgv.List());
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", err.what());
+        return nullptr;
+    }
+
+    if (psOptionsForBinary)
+        psOptionsForBinary->bQuiet = psOptions->bQuiet;
+
+    if (auto oSpat = argParser->present<std::vector<double>>("-spat"))
+    {
+        OGRLinearRing oRing;
+        const double dfMinX = (*oSpat)[0];
+        const double dfMinY = (*oSpat)[1];
+        const double dfMaxX = (*oSpat)[2];
+        const double dfMaxY = (*oSpat)[3];
+
+        oRing.addPoint(dfMinX, dfMinY);
+        oRing.addPoint(dfMinX, dfMaxY);
+        oRing.addPoint(dfMaxX, dfMaxY);
+        oRing.addPoint(dfMaxX, dfMinY);
+        oRing.addPoint(dfMinX, dfMinY);
+
+        auto poSpatialFilter = std::make_shared<OGRPolygon>();
+        poSpatialFilter->addRing(&oRing);
+        psOptions->poSpatialFilter = poSpatialFilter;
+    }
+
+    if (auto oClipSrc =
+            argParser->present<std::vector<std::string>>("-clipsrc"))
+    {
+        const std::string &osVal = (*oClipSrc)[0];
+
+        psOptions->poClipSrc.reset();
+        psOptions->osClipSrcDS.clear();
+
+        VSIStatBufL sStat;
+        psOptions->bClipSrc = true;
+        if (oClipSrc->size() == 4)
+        {
+            const double dfMinX = CPLAtofM((*oClipSrc)[0].c_str());
+            const double dfMinY = CPLAtofM((*oClipSrc)[1].c_str());
+            const double dfMaxX = CPLAtofM((*oClipSrc)[2].c_str());
+            const double dfMaxY = CPLAtofM((*oClipSrc)[3].c_str());
+
+            OGRLinearRing oRing;
+
+            oRing.addPoint(dfMinX, dfMinY);
+            oRing.addPoint(dfMinX, dfMaxY);
+            oRing.addPoint(dfMaxX, dfMaxY);
+            oRing.addPoint(dfMaxX, dfMinY);
+            oRing.addPoint(dfMinX, dfMinY);
+
+            auto poPoly = std::make_shared<OGRPolygon>();
+            psOptions->poClipSrc = poPoly;
+            poPoly->addRing(&oRing);
+        }
+        else if ((STARTS_WITH_CI(osVal.c_str(), "POLYGON") ||
+                  STARTS_WITH_CI(osVal.c_str(), "MULTIPOLYGON")) &&
+                 VSIStatL(osVal.c_str(), &sStat) != 0)
+        {
+            OGRGeometry *poGeom = nullptr;
+            OGRGeometryFactory::createFromWkt(osVal.c_str(), nullptr, &poGeom);
+            psOptions->poClipSrc.reset(poGeom);
+            if (psOptions->poClipSrc == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid geometry. Must be a valid POLYGON or "
+                         "MULTIPOLYGON WKT");
+                return nullptr;
+            }
+        }
+        else if (EQUAL(osVal.c_str(), "spat_extent"))
+        {
+            // Nothing to do
+        }
+        else
+        {
+            psOptions->osClipSrcDS = osVal;
+        }
+    }
+
+    if (auto oClipDst =
+            argParser->present<std::vector<std::string>>("-clipdst"))
+    {
+        const std::string &osVal = (*oClipDst)[0];
+
+        psOptions->poClipDst.reset();
+        psOptions->osClipDstDS.clear();
+
+        VSIStatBufL sStat;
+        if (oClipDst->size() == 4)
+        {
+            const double dfMinX = CPLAtofM((*oClipDst)[0].c_str());
+            const double dfMinY = CPLAtofM((*oClipDst)[1].c_str());
+            const double dfMaxX = CPLAtofM((*oClipDst)[2].c_str());
+            const double dfMaxY = CPLAtofM((*oClipDst)[3].c_str());
+
+            OGRLinearRing oRing;
+
+            oRing.addPoint(dfMinX, dfMinY);
+            oRing.addPoint(dfMinX, dfMaxY);
+            oRing.addPoint(dfMaxX, dfMaxY);
+            oRing.addPoint(dfMaxX, dfMinY);
+            oRing.addPoint(dfMinX, dfMinY);
+
+            auto poPoly = std::make_shared<OGRPolygon>();
+            psOptions->poClipDst = poPoly;
+            poPoly->addRing(&oRing);
+        }
+        else if ((STARTS_WITH_CI(osVal.c_str(), "POLYGON") ||
+                  STARTS_WITH_CI(osVal.c_str(), "MULTIPOLYGON")) &&
+                 VSIStatL(osVal.c_str(), &sStat) != 0)
+        {
+            OGRGeometry *poGeom = nullptr;
+            OGRGeometryFactory::createFromWkt(osVal.c_str(), nullptr, &poGeom);
+            psOptions->poClipDst.reset(poGeom);
+            if (psOptions->poClipDst == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid geometry. Must be a valid POLYGON or "
+                         "MULTIPOLYGON WKT");
+                return nullptr;
+            }
+        }
+        else
+        {
+            psOptions->osClipDstDS = osVal;
+        }
+    }
+
+    auto layers = argParser->present<std::vector<std::string>>("layer");
+    if (layers)
+    {
+        for (const auto &layer : *layers)
+        {
+            psOptions->aosLayers.AddString(layer.c_str());
+        }
+    }
     if (psOptionsForBinary)
     {
         psOptionsForBinary->eAccessMode = psOptions->eAccessMode;

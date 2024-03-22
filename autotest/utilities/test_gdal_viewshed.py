@@ -217,8 +217,8 @@ def test_gdal_viewshed_all_options(gdal_viewshed_path, tmp_path, viewshed_input)
 
 def test_gdal_viewshed_missing_source(gdal_viewshed_path):
 
-    _, err = gdaltest.runexternal_out_and_err(gdal_viewshed_path)
-    assert "Missing source filename" in err
+    _, err = gdaltest.runexternal_out_and_err(gdal_viewshed_path + " -ox 0 -oy 0")
+    assert "dst_filename: 1 argument(s) expected. 0 provided" in err
 
 
 ###############################################################################
@@ -226,8 +226,10 @@ def test_gdal_viewshed_missing_source(gdal_viewshed_path):
 
 def test_gdal_viewshed_missing_destination(gdal_viewshed_path):
 
-    _, err = gdaltest.runexternal_out_and_err(gdal_viewshed_path + " /dev/null")
-    assert "Missing destination filename" in err
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_viewshed_path + " -ox 0 -oy 0 /dev/null"
+    )
+    assert "Error: dst_filename: 1 argument(s) expected. 0 provided" in err
 
 
 ###############################################################################
@@ -238,7 +240,7 @@ def test_gdal_viewshed_missing_ox(gdal_viewshed_path):
     _, err = gdaltest.runexternal_out_and_err(
         gdal_viewshed_path + " /dev/null /dev/null"
     )
-    assert "Missing -ox" in err
+    assert "-ox: required" in err
 
 
 ###############################################################################
@@ -249,7 +251,7 @@ def test_gdal_viewshed_missing_oy(gdal_viewshed_path):
     _, err = gdaltest.runexternal_out_and_err(
         gdal_viewshed_path + " -ox 0 /dev/null /dev/null"
     )
-    assert "Missing -oy" in err
+    assert "-oy: required" in err
 
 
 ###############################################################################

@@ -31,6 +31,7 @@
 #include "cpl_port.h"
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
+#include "gdalargumentparser.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -125,6 +126,9 @@ struct GDALTranslateOptions
 
     /*! for the output bands to be of the indicated data type */
     GDALDataType eOutputType = GDT_Unknown;
+
+    /*! Used only by parser logic */
+    bool bParsedMaskArgument = false;
 
     MaskMode eMaskMode = MASK_AUTO;
 
@@ -2752,6 +2756,441 @@ static int GetColorInterp(const char *pszStr)
 }
 
 /************************************************************************/
+/*                     GDALTranslateOptionsGetParser()                  */
+/************************************************************************/
+
+static std::unique_ptr<GDALArgumentParser>
+GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
+                              GDALTranslateOptionsForBinary *psOptionsForBinary)
+{
+    auto argParser = std::make_unique<GDALArgumentParser>(
+        "gdal_translate", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    argParser->add_description(
+        _("Convert raster data between different formats, with potential "
+          "subsetting, resampling, and rescaling pixels in the process."));
+
+    argParser->add_epilog(_("https://gdal.org/programs/gdal_translate.html"));
+
+    argParser->add_output_type_argument(psOptions->eOutputType);
+
+    argParser->add_argument("-if")
+        .append()
+        .metavar("<format>")
+        .action(
+            [psOptionsForBinary](const std::string &s)
+            {
+                if (psOptionsForBinary)
+                {
+                    if (GDALGetDriverByName(s.c_str()) == nullptr)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "%s is not a recognized driver", s.c_str());
+                    }
+                    psOptionsForBinary->aosAllowedInputDrivers.AddString(
+                        s.c_str());
+                }
+            })
+        .help(_("Format/driver name(s) to try when opening the input file."));
+
+    argParser->add_output_format_argument(psOptions->osFormat);
+
+    // Written that way so that in library mode, users can still use the -q
+    // switch, even if it has no effect
+    argParser->add_quiet_argument(
+        psOptionsForBinary ? &(psOptionsForBinary->bQuiet) : nullptr);
+
+    argParser->add_argument("-b")
+        .append()
+        .metavar("<band>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                const char *pszBand = s.c_str();
+                bool bMask = false;
+                if (EQUAL(pszBand, "mask"))
+                    pszBand = "mask,1";
+                if (STARTS_WITH_CI(pszBand, "mask,"))
+                {
+                    bMask = true;
+                    pszBand += 5;
+                    /* If we use the source mask band as a regular band */
+                    /* don't create a target mask band by default */
+                    if (!psOptions->bParsedMaskArgument)
+                        psOptions->eMaskMode = MASK_DISABLED;
+                }
+                const int nBand = atoi(pszBand);
+                if (nBand < 1)
+                {
+                    throw std::invalid_argument(CPLSPrintf(
+                        "Unrecognizable band number (%s).", s.c_str()));
+                }
+
+                psOptions->nBandCount++;
+                psOptions->anBandList.emplace_back(nBand * (bMask ? -1 : 1));
+            })
+        .help(_("Select input band(s)"));
+
+    argParser->add_argument("-mask")
+        .metavar("<mask>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->bParsedMaskArgument = true;
+                const char *pszBand = s.c_str();
+                if (EQUAL(pszBand, "none"))
+                {
+                    psOptions->eMaskMode = MASK_DISABLED;
+                }
+                else if (EQUAL(pszBand, "auto"))
+                {
+                    psOptions->eMaskMode = MASK_AUTO;
+                }
+                else
+                {
+                    bool bMask = false;
+
+                    if (EQUAL(pszBand, "mask"))
+                        pszBand = "mask,1";
+                    if (STARTS_WITH_CI(pszBand, "mask,"))
+                    {
+                        bMask = true;
+                        pszBand += 5;
+                    }
+                    const int nBand = atoi(pszBand);
+                    if (nBand < 1)
+                    {
+                        throw std::invalid_argument(CPLSPrintf(
+                            "Unrecognizable band number (%s).", s.c_str()));
+                    }
+
+                    psOptions->eMaskMode = MASK_USER;
+                    psOptions->nMaskBand = nBand;
+                    if (bMask)
+                        psOptions->nMaskBand *= -1;
+                }
+            })
+        .help(_("Select an input band to create output dataset mask band"));
+
+    argParser->add_argument("-expand")
+        .metavar("gray|rgb|rgba")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                if (EQUAL(s.c_str(), "gray"))
+                    psOptions->nRGBExpand = 1;
+                else if (EQUAL(s.c_str(), "rgb"))
+                    psOptions->nRGBExpand = 3;
+                else if (EQUAL(s.c_str(), "rgba"))
+                    psOptions->nRGBExpand = 4;
+                else
+                {
+                    throw std::invalid_argument(CPLSPrintf(
+                        "Value %s unsupported. Only gray, rgb or rgba are "
+                        "supported.",
+                        s.c_str()));
+                }
+            })
+        .help(_("To expose a dataset with 1 band with a color table as a "
+                "dataset with 3 (RGB) or 4 (RGBA) bands."));
+
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+        group.add_argument("-strict")
+            .store_into(psOptions->bStrict)
+            .help(_("Enable strict mode"));
+
+        group.add_argument("-not_strict")
+            .flag()
+            .action([psOptions](const std::string &)
+                    { psOptions->bStrict = false; })
+            .help(_("Disable strict mode"));
+    }
+
+    argParser->add_argument("-outsize")
+        .metavar("<xsize[%]|0> <ysize[%]|0>")
+        .nargs(2)
+        .help(_("Set the size of the output file."));
+
+    argParser->add_argument("-tr")
+        .metavar("<xres> <yes>")
+        .nargs(2)
+        .scan<'g', double>()
+        .help(_("Set target resolution."));
+
+    argParser->add_argument("-ovr")
+        .metavar("<level>|AUTO|AUTO-<n>|NONE")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                const char *pszOvLevel = s.c_str();
+                if (EQUAL(pszOvLevel, "AUTO"))
+                    psOptions->nOvLevel = OVR_LEVEL_AUTO;
+                else if (STARTS_WITH_CI(pszOvLevel, "AUTO-"))
+                    psOptions->nOvLevel =
+                        OVR_LEVEL_AUTO - atoi(pszOvLevel + strlen("AUTO-"));
+                else if (EQUAL(pszOvLevel, "NONE"))
+                    psOptions->nOvLevel = OVR_LEVEL_NONE;
+                else if (CPLGetValueType(pszOvLevel) == CPL_VALUE_INTEGER)
+                    psOptions->nOvLevel = atoi(pszOvLevel);
+                else
+                {
+                    throw std::invalid_argument(CPLSPrintf(
+                        "Invalid value '%s' for -ovr option", pszOvLevel));
+                }
+            })
+        .help(_("Specify which overview level of source file must be used"));
+
+    if (psOptionsForBinary)
+    {
+        argParser->add_argument("-sds")
+            .store_into(psOptionsForBinary->bCopySubDatasets)
+            .help(_("Copy subdatasets"));
+    }
+
+    argParser->add_argument("-r")
+        .metavar("nearest,bilinear,cubic,cubicspline,lanczos,average,mode")
+        .store_into(psOptions->osResampling)
+        .help(_("Resampling algorithm."));
+
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+        group.add_argument("-scale")
+            .metavar("[<src_min> <src_max> [<dst_min> <dst_max>]]")
+            //.nargs(0, 4)
+            .append()
+            .scan<'g', double>()
+            .help(_("Rescale the input pixels values from the range src_min to "
+                    "src_max to the range dst_min to dst_max."));
+
+        group.add_argument("-scale_X")
+            .metavar("[<src_min> <src_max> [<dst_min> <dst_max>]]")
+            //.nargs(0, 4)
+            .append()
+            .scan<'g', double>()
+            .help(_("Rescale the input pixels values for band X."));
+
+        group.add_argument("-unscale")
+            .store_into(psOptions->bUnscale)
+            .help(_("Apply the scale/offset metadata for the bands to convert "
+                    "scaled values to unscaled values."));
+    }
+
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+        group.add_argument("-exponent")
+            .metavar("<value>")
+            .scan<'g', double>()
+            .help(_(
+                "Exponent to apply non-linear scaling with a power function"));
+
+        group.add_argument("-exponent_X")
+            .append()
+            .metavar("<value>")
+            .scan<'g', double>()
+            .help(
+                _("Exponent to apply non-linear scaling with a power function, "
+                  "for band X"));
+    }
+
+    argParser->add_argument("-srcwin")
+        .metavar("<xoff> <yoff> <xsize> <ysize>")
+        .nargs(4)
+        .scan<'g', double>()
+        .help(_("Selects a subwindow from the source image based on pixel/line "
+                "location."));
+
+    argParser->add_argument("-projwin")
+        .metavar("<ulx> <uly> <lrx> <lry>")
+        .nargs(4)
+        .scan<'g', double>()
+        .help(_("Selects a subwindow from the source image based on "
+                "georeferenced coordinates."));
+
+    argParser->add_argument("-projwin_srs")
+        .metavar("<srs_def>")
+        .store_into(psOptions->osProjSRS)
+        .help(_("Specifies the SRS in which to interpret the coordinates given "
+                "with -projwin."));
+
+    argParser->add_argument("-epo")
+        .flag()
+        .action(
+            [psOptions](const std::string &)
+            {
+                psOptions->bErrorOnPartiallyOutside = true;
+                psOptions->bErrorOnCompletelyOutside = true;
+            })
+        .help(_("Error when Partially Outside."));
+
+    argParser->add_argument("-eco")
+        .store_into(psOptions->bErrorOnCompletelyOutside)
+        .help(_("Error when Completely Outside."));
+
+    argParser->add_argument("-a_srs")
+        .metavar("<srs_def>")
+        .store_into(psOptions->osOutputSRS)
+        .help(_("Override the projection for the output file."));
+
+    argParser->add_argument("-a_coord_epoch")
+        .metavar("<epoch>")
+        .store_into(psOptions->dfOutputCoordinateEpoch)
+        .help(_("Assign a coordinate epoch."));
+
+    argParser->add_argument("-a_ullr")
+        .metavar("<ulx> <uly> <lrx> <lry>")
+        .nargs(4)
+        .scan<'g', double>()
+        .help(
+            _("Assign/override the georeferenced bounds of the output file."));
+
+    argParser->add_argument("-a_nodata")
+        .metavar("<value>|none")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                if (EQUAL(s.c_str(), "none"))
+                {
+                    psOptions->bUnsetNoData = true;
+                }
+                else
+                {
+                    psOptions->bSetNoData = true;
+                    psOptions->osNoData = s;
+                }
+            })
+        .help(_("Assign a specified nodata value to output bands."));
+
+    argParser->add_argument("-a_gt")
+        .metavar("<gt(0)> <gt(1)> <gt(2)> <gt(3)> <gt(4)> <gt(5)>")
+        .nargs(6)
+        .scan<'g', double>()
+        .help(_("Assign/override the geotransform of the output file."));
+
+    argParser->add_argument("-a_scale")
+        .metavar("<value>")
+        .store_into(psOptions->dfScale)
+        .help(_("Set band scaling value."));
+
+    argParser->add_argument("-a_offset")
+        .metavar("<value>")
+        .store_into(psOptions->dfOffset)
+        .help(_("Set band offset value."));
+
+    argParser->add_argument("-nogcp")
+        .store_into(psOptions->bNoGCP)
+        .help(_("Do not copy the GCPs in the source dataset to the output "
+                "dataset."));
+
+    argParser->add_argument("-gcp")
+        .metavar("<pixel> <line> <easting> <northing> [<elevation>]")
+        .nargs(4, 5)
+        .append()
+        .scan<'g', double>()
+        .help(
+            _("Add the indicated ground control point to the output dataset."));
+
+    argParser->add_argument("-colorinterp")
+        .metavar("{red|green|blue|alpha|gray|undefined},...")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                CPLStringList aosList(CSLTokenizeString2(s.c_str(), ",", 0));
+                psOptions->anColorInterp.resize(aosList.size());
+                for (int j = 0; j < aosList.size(); j++)
+                {
+                    psOptions->anColorInterp[j] = GetColorInterp(aosList[j]);
+                }
+            })
+        .help(_("Override the color interpretation of all specified bands."));
+
+    argParser->add_argument("-colorinterp_X")
+        .append()
+        .metavar("{red|green|blue|alpha|gray|undefined}")
+        .help(_("Override the color interpretation of band X."));
+
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+        group.add_argument("-stats")
+            .flag()
+            .action(
+                [psOptions](const std::string &)
+                {
+                    psOptions->bStats = true;
+                    psOptions->bApproxStats = false;
+                })
+            .help(_("Force (re)computation of statistics."));
+
+        group.add_argument("-approx_stats")
+            .flag()
+            .action(
+                [psOptions](const std::string &)
+                {
+                    psOptions->bStats = true;
+                    psOptions->bApproxStats = true;
+                })
+            .help(_("Force (re)computation of approximate statistics."));
+    }
+
+    argParser->add_argument("-norat")
+        .store_into(psOptions->bNoRAT)
+        .help(_("Do not copy source RAT into destination dataset."));
+
+    argParser->add_argument("-noxmp")
+        .store_into(psOptions->bNoXMP)
+        .help(_("Do not copy the XMP metadata into destination dataset."));
+
+    argParser->add_creation_options_argument(psOptions->aosCreateOptions);
+
+    argParser->add_metadata_item_options_argument(
+        psOptions->aosMetadataOptions);
+
+    argParser->add_argument("-dmo")
+        .metavar("<DOMAIN>:<KEY>=<VALUE>")
+        .append()
+        .action([psOptions](const std::string &s)
+                { psOptions->aosDomainMetadataOptions.AddString(s.c_str()); })
+        .help(_("Passes a metadata key and value in specified domain to set on "
+                "the output dataset if possible."));
+
+    argParser->add_open_options_argument(
+        psOptionsForBinary ? &(psOptionsForBinary->aosOpenOptions) : nullptr);
+
+    // Undocumented option used by gdal_translate_fuzzer
+    argParser->add_argument("-limit_outsize")
+        .hidden()
+        .store_into(psOptions->nLimitOutSize);
+
+    if (psOptionsForBinary)
+    {
+        argParser->add_argument("input_file")
+            .metavar("<input_file>")
+            .store_into(psOptionsForBinary->osSource)
+            .help(_("Input file."));
+
+        argParser->add_argument("output_file")
+            .metavar("<output_file>")
+            .store_into(psOptionsForBinary->osDest)
+            .help(_("Output file."));
+    }
+
+    return argParser;
+}
+
+/************************************************************************/
+/*                      GDALTranslateGetParserUsage()                   */
+/************************************************************************/
+
+std::string GDALTranslateGetParserUsage()
+{
+    GDALTranslateOptions sOptions;
+    GDALTranslateOptionsForBinary sOptionsForBinary;
+    auto argParser =
+        GDALTranslateOptionsGetParser(&sOptions, &sOptionsForBinary);
+    return argParser->usage();
+}
+
+/************************************************************************/
 /*                             GDALTranslateOptionsNew()                */
 /************************************************************************/
 
@@ -2775,140 +3214,19 @@ GDALTranslateOptions *
 GDALTranslateOptionsNew(char **papszArgv,
                         GDALTranslateOptionsForBinary *psOptionsForBinary)
 {
-    GDALTranslateOptions *psOptions = new GDALTranslateOptions;
-
-    bool bParsedMaskArgument = false;
-    bool bOutsizeExplicitlySet = false;
-    bool bGotSourceFilename = false;
-    bool bGotDestFilename = false;
+    auto psOptions = std::make_unique<GDALTranslateOptions>();
 
     /* -------------------------------------------------------------------- */
-    /*      Handle command line arguments.                                  */
+    /*      Pre-processing for custom syntax that ArgumentParser does not   */
+    /*      support.                                                        */
     /* -------------------------------------------------------------------- */
+
+    CPLStringList aosArgv;
     const int argc = CSLCount(papszArgv);
     for (int i = 0; i < argc && papszArgv != nullptr && papszArgv[i] != nullptr;
          i++)
     {
-        if (i < argc - 1 &&
-            (EQUAL(papszArgv[i], "-of") || EQUAL(papszArgv[i], "-f")))
-        {
-            ++i;
-            psOptions->osFormat = papszArgv[i];
-        }
-
-        else if (EQUAL(papszArgv[i], "-q") || EQUAL(papszArgv[i], "-quiet"))
-        {
-            if (psOptionsForBinary)
-                psOptionsForBinary->bQuiet = true;
-        }
-
-        else if (EQUAL(papszArgv[i], "-ot") && papszArgv[i + 1])
-        {
-            for (int iType = 1; iType < GDT_TypeCount; iType++)
-            {
-                if (GDALGetDataTypeName(static_cast<GDALDataType>(iType)) !=
-                        nullptr &&
-                    EQUAL(GDALGetDataTypeName(static_cast<GDALDataType>(iType)),
-                          papszArgv[i + 1]))
-                {
-                    psOptions->eOutputType = static_cast<GDALDataType>(iType);
-                }
-            }
-
-            if (psOptions->eOutputType == GDT_Unknown)
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "Unknown output pixel type: %s.", papszArgv[i + 1]);
-                GDALTranslateOptionsFree(psOptions);
-                return nullptr;
-            }
-            i++;
-        }
-        else if (EQUAL(papszArgv[i], "-b") && papszArgv[i + 1])
-        {
-            const char *pszBand = papszArgv[i + 1];
-            bool bMask = false;
-            if (EQUAL(pszBand, "mask"))
-                pszBand = "mask,1";
-            if (STARTS_WITH_CI(pszBand, "mask,"))
-            {
-                bMask = true;
-                pszBand += 5;
-                /* If we use the source mask band as a regular band */
-                /* don't create a target mask band by default */
-                if (!bParsedMaskArgument)
-                    psOptions->eMaskMode = MASK_DISABLED;
-            }
-            const int nBand = atoi(pszBand);
-            if (nBand < 1)
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "Unrecognizable band number (%s).", papszArgv[i + 1]);
-                GDALTranslateOptionsFree(psOptions);
-                return nullptr;
-            }
-            i++;
-
-            psOptions->nBandCount++;
-            psOptions->anBandList.emplace_back(nBand * (bMask ? -1 : 1));
-        }
-        else if (EQUAL(papszArgv[i], "-mask") && papszArgv[i + 1])
-        {
-            bParsedMaskArgument = true;
-            const char *pszBand = papszArgv[i + 1];
-            if (EQUAL(pszBand, "none"))
-            {
-                psOptions->eMaskMode = MASK_DISABLED;
-            }
-            else if (EQUAL(pszBand, "auto"))
-            {
-                psOptions->eMaskMode = MASK_AUTO;
-            }
-            else
-            {
-                bool bMask = false;
-                if (EQUAL(pszBand, "mask"))
-                    pszBand = "mask,1";
-                if (STARTS_WITH_CI(pszBand, "mask,"))
-                {
-                    bMask = true;
-                    pszBand += 5;
-                }
-                const int nBand = atoi(pszBand);
-                if (nBand < 1)
-                {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "Unrecognizable band number (%s).",
-                             papszArgv[i + 1]);
-                    GDALTranslateOptionsFree(psOptions);
-                    return nullptr;
-                }
-
-                psOptions->eMaskMode = MASK_USER;
-                psOptions->nMaskBand = nBand;
-                if (bMask)
-                    psOptions->nMaskBand *= -1;
-            }
-            i++;
-        }
-        else if (EQUAL(papszArgv[i], "-not_strict"))
-        {
-            psOptions->bStrict = false;
-        }
-        else if (EQUAL(papszArgv[i], "-strict"))
-        {
-            psOptions->bStrict = true;
-        }
-        else if (EQUAL(papszArgv[i], "-sds"))
-        {
-            if (psOptionsForBinary)
-                psOptionsForBinary->bCopySubDatasets = TRUE;
-        }
-        else if (EQUAL(papszArgv[i], "-nogcp"))
-        {
-            psOptions->bNoGCP = true;
-        }
-        else if (i + 4 < argc && EQUAL(papszArgv[i], "-gcp"))
+        if (i + 4 < argc && EQUAL(papszArgv[i], "-gcp"))
         {
             /* -gcp pixel line easting northing [elev] */
             psOptions->nGCPCount++;
@@ -2941,61 +3259,6 @@ GDALTranslateOptionsNew(char **papszArgv,
             /* should set id and info? */
         }
 
-        else if (EQUAL(papszArgv[i], "-a_nodata") && papszArgv[i + 1])
-        {
-            if (EQUAL(papszArgv[i + 1], "none"))
-            {
-                psOptions->bUnsetNoData = true;
-            }
-            else
-            {
-                psOptions->bSetNoData = true;
-                psOptions->osNoData = papszArgv[i + 1];
-            }
-            i += 1;
-        }
-
-        else if (EQUAL(papszArgv[i], "-a_scale") && papszArgv[i + 1])
-        {
-            psOptions->bSetScale = true;
-            psOptions->dfScale = CPLAtofM(papszArgv[i + 1]);
-            i += 1;
-        }
-
-        else if (EQUAL(papszArgv[i], "-a_offset") && papszArgv[i + 1])
-        {
-            psOptions->bSetOffset = true;
-            psOptions->dfOffset = CPLAtofM(papszArgv[i + 1]);
-            i += 1;
-        }
-
-        else if (i + 4 < argc && EQUAL(papszArgv[i], "-a_ullr"))
-        {
-            psOptions->adfULLR[0] = CPLAtofM(papszArgv[i + 1]);
-            psOptions->adfULLR[1] = CPLAtofM(papszArgv[i + 2]);
-            psOptions->adfULLR[2] = CPLAtofM(papszArgv[i + 3]);
-            psOptions->adfULLR[3] = CPLAtofM(papszArgv[i + 4]);
-
-            i += 4;
-        }
-
-        else if (i + 6 < argc && EQUAL(papszArgv[i], "-a_gt"))
-        {
-            psOptions->adfGT[0] = CPLAtofM(papszArgv[i + 1]);
-            psOptions->adfGT[1] = CPLAtofM(papszArgv[i + 2]);
-            psOptions->adfGT[2] = CPLAtofM(papszArgv[i + 3]);
-            psOptions->adfGT[3] = CPLAtofM(papszArgv[i + 4]);
-            psOptions->adfGT[4] = CPLAtofM(papszArgv[i + 5]);
-            psOptions->adfGT[5] = CPLAtofM(papszArgv[i + 6]);
-
-            i += 6;
-        }
-
-        else if (EQUAL(papszArgv[i], "-co") && papszArgv[i + 1])
-        {
-            psOptions->aosCreateOptions.AddString(papszArgv[++i]);
-        }
-
         else if (EQUAL(papszArgv[i], "-scale") ||
                  STARTS_WITH_CI(papszArgv[i], "-scale_"))
         {
@@ -3007,7 +3270,6 @@ GDALTranslateOptionsNew(char **papszArgv,
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Cannot mix -scale and -scale_XX syntax");
-                    GDALTranslateOptionsFree(psOptions);
                     return nullptr;
                 }
                 psOptions->bHasUsedExplicitScaleBand = true;
@@ -3016,7 +3278,6 @@ GDALTranslateOptionsNew(char **papszArgv,
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Invalid parameter name: %s", papszArgv[i]);
-                    GDALTranslateOptionsFree(psOptions);
                     return nullptr;
                 }
                 nIndex--;
@@ -3027,7 +3288,6 @@ GDALTranslateOptionsNew(char **papszArgv,
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Cannot mix -scale and -scale_XX syntax");
-                    GDALTranslateOptionsFree(psOptions);
                     return nullptr;
                 }
                 nIndex = static_cast<int>(psOptions->asScaleParams.size());
@@ -3077,7 +3337,6 @@ GDALTranslateOptionsNew(char **papszArgv,
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Cannot mix -exponent and -exponent_XX syntax");
-                    GDALTranslateOptionsFree(psOptions);
                     return nullptr;
                 }
                 psOptions->bHasUsedExplicitExponentBand = true;
@@ -3086,7 +3345,6 @@ GDALTranslateOptionsNew(char **papszArgv,
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Invalid parameter name: %s", papszArgv[i]);
-                    GDALTranslateOptionsFree(psOptions);
                     return nullptr;
                 }
                 nIndex--;
@@ -3097,7 +3355,6 @@ GDALTranslateOptionsNew(char **papszArgv,
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Cannot mix -exponent and -exponent_XX syntax");
-                    GDALTranslateOptionsFree(psOptions);
                     return nullptr;
                 }
                 nIndex = static_cast<int>(psOptions->adfExponent.size());
@@ -3111,156 +3368,6 @@ GDALTranslateOptionsNew(char **papszArgv,
             psOptions->adfExponent[nIndex] = dfExponent;
         }
 
-        else if (EQUAL(papszArgv[i], "-unscale"))
-        {
-            psOptions->bUnscale = true;
-        }
-
-        else if (EQUAL(papszArgv[i], "-mo") && papszArgv[i + 1])
-        {
-            psOptions->aosMetadataOptions.AddString(papszArgv[++i]);
-        }
-
-        else if (EQUAL(papszArgv[i], "-dmo") && papszArgv[i + 1])
-        {
-            psOptions->aosDomainMetadataOptions.AddString(papszArgv[++i]);
-        }
-        else if (i + 2 < argc && EQUAL(papszArgv[i], "-outsize") &&
-                 papszArgv[i + 1] != nullptr)
-        {
-            ++i;
-            if (papszArgv[i][0] != '\0' &&
-                papszArgv[i][strlen(papszArgv[i]) - 1] == '%')
-                psOptions->dfOXSizePct = CPLAtofM(papszArgv[i]);
-            else
-                psOptions->nOXSizePixel = atoi(papszArgv[i]);
-            ++i;
-            if (papszArgv[i][0] != '\0' &&
-                papszArgv[i][strlen(papszArgv[i]) - 1] == '%')
-                psOptions->dfOYSizePct = CPLAtofM(papszArgv[i]);
-            else
-                psOptions->nOYSizePixel = atoi(papszArgv[i]);
-            bOutsizeExplicitlySet = true;
-        }
-
-        else if (i + 2 < argc && EQUAL(papszArgv[i], "-tr"))
-        {
-            psOptions->dfXRes = CPLAtofM(papszArgv[++i]);
-            psOptions->dfYRes = fabs(CPLAtofM(papszArgv[++i]));
-            if (psOptions->dfXRes == 0 || psOptions->dfYRes == 0)
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Wrong value for -tr parameters.");
-                GDALTranslateOptionsFree(psOptions);
-                return nullptr;
-            }
-        }
-
-        else if (i + 4 < argc && EQUAL(papszArgv[i], "-srcwin"))
-        {
-            psOptions->adfSrcWin[0] = CPLAtof(papszArgv[++i]);
-            psOptions->adfSrcWin[1] = CPLAtof(papszArgv[++i]);
-            psOptions->adfSrcWin[2] = CPLAtof(papszArgv[++i]);
-            psOptions->adfSrcWin[3] = CPLAtof(papszArgv[++i]);
-        }
-
-        else if (i + 4 < argc && EQUAL(papszArgv[i], "-projwin"))
-        {
-            psOptions->dfULX = CPLAtofM(papszArgv[++i]);
-            psOptions->dfULY = CPLAtofM(papszArgv[++i]);
-            psOptions->dfLRX = CPLAtofM(papszArgv[++i]);
-            psOptions->dfLRY = CPLAtofM(papszArgv[++i]);
-        }
-
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-projwin_srs"))
-        {
-            psOptions->osProjSRS = papszArgv[i + 1];
-            i++;
-        }
-
-        else if (EQUAL(papszArgv[i], "-epo"))
-        {
-            psOptions->bErrorOnPartiallyOutside = true;
-            psOptions->bErrorOnCompletelyOutside = true;
-        }
-
-        else if (EQUAL(papszArgv[i], "-eco"))
-        {
-            psOptions->bErrorOnCompletelyOutside = true;
-        }
-
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-a_srs"))
-        {
-            psOptions->osOutputSRS = papszArgv[i + 1];
-            i++;
-        }
-
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-a_coord_epoch"))
-        {
-            psOptions->dfOutputCoordinateEpoch = CPLAtofM(papszArgv[i + 1]);
-            i++;
-        }
-
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-expand") &&
-                 papszArgv[i + 1] != nullptr)
-        {
-            i++;
-            if (EQUAL(papszArgv[i], "gray"))
-                psOptions->nRGBExpand = 1;
-            else if (EQUAL(papszArgv[i], "rgb"))
-                psOptions->nRGBExpand = 3;
-            else if (EQUAL(papszArgv[i], "rgba"))
-                psOptions->nRGBExpand = 4;
-            else
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Value %s unsupported. Only gray, rgb or rgba are "
-                         "supported.",
-                         papszArgv[i]);
-                GDALTranslateOptionsFree(psOptions);
-                return nullptr;
-            }
-        }
-
-        else if (EQUAL(papszArgv[i], "-stats"))
-        {
-            psOptions->bStats = true;
-            psOptions->bApproxStats = false;
-        }
-        else if (EQUAL(papszArgv[i], "-approx_stats"))
-        {
-            psOptions->bStats = true;
-            psOptions->bApproxStats = true;
-        }
-        else if (EQUAL(papszArgv[i], "-norat"))
-        {
-            psOptions->bNoRAT = true;
-        }
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-oo"))
-        {
-            i++;
-            if (psOptionsForBinary)
-            {
-                psOptionsForBinary->papszOpenOptions = CSLAddString(
-                    psOptionsForBinary->papszOpenOptions, papszArgv[i]);
-            }
-        }
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-r"))
-        {
-            psOptions->osResampling = papszArgv[++i];
-        }
-
-        else if (EQUAL(papszArgv[i], "-colorinterp") && papszArgv[i + 1])
-        {
-            ++i;
-            CPLStringList aosList(CSLTokenizeString2(papszArgv[i], ",", 0));
-            psOptions->anColorInterp.resize(aosList.size());
-            for (int j = 0; j < aosList.size(); j++)
-            {
-                psOptions->anColorInterp[j] = GetColorInterp(aosList[j]);
-            }
-        }
-
         else if (STARTS_WITH_CI(papszArgv[i], "-colorinterp_") &&
                  papszArgv[i + 1])
         {
@@ -3269,7 +3376,6 @@ GDALTranslateOptionsNew(char **papszArgv,
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Invalid parameter name: %s", papszArgv[i]);
-                GDALTranslateOptionsFree(psOptions);
                 return nullptr;
             }
             nIndex--;
@@ -3282,87 +3388,88 @@ GDALTranslateOptionsNew(char **papszArgv,
             psOptions->anColorInterp[nIndex] = GetColorInterp(papszArgv[i]);
         }
 
-        // Undocumented option used by gdal_translate_fuzzer
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-limit_outsize"))
-        {
-            psOptions->nLimitOutSize = atoi(papszArgv[i + 1]);
-            i++;
-        }
-
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-if"))
-        {
-            i++;
-            if (psOptionsForBinary)
-            {
-                if (GDALGetDriverByName(papszArgv[i]) == nullptr)
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "%s is not a recognized driver", papszArgv[i]);
-                }
-                psOptionsForBinary->papszAllowInputDrivers = CSLAddString(
-                    psOptionsForBinary->papszAllowInputDrivers, papszArgv[i]);
-            }
-        }
-
-        else if (EQUAL(papszArgv[i], "-noxmp"))
-        {
-            psOptions->bNoXMP = true;
-        }
-
-        else if (EQUAL(papszArgv[i], "-ovr") && i + 1 < argc)
-        {
-            const char *pszOvLevel = papszArgv[++i];
-            if (EQUAL(pszOvLevel, "AUTO"))
-                psOptions->nOvLevel = OVR_LEVEL_AUTO;
-            else if (STARTS_WITH_CI(pszOvLevel, "AUTO-"))
-                psOptions->nOvLevel =
-                    OVR_LEVEL_AUTO - atoi(pszOvLevel + strlen("AUTO-"));
-            else if (EQUAL(pszOvLevel, "NONE"))
-                psOptions->nOvLevel = OVR_LEVEL_NONE;
-            else if (CPLGetValueType(pszOvLevel) == CPL_VALUE_INTEGER)
-                psOptions->nOvLevel = atoi(pszOvLevel);
-            else
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Invalid value '%s' for -ovr option", pszOvLevel);
-                GDALTranslateOptionsFree(psOptions);
-                return nullptr;
-            }
-        }
-
-        else if (papszArgv[i][0] == '-')
-        {
-            CPLError(CE_Failure, CPLE_NotSupported, "Unknown option name '%s'",
-                     papszArgv[i]);
-            GDALTranslateOptionsFree(psOptions);
-            return nullptr;
-        }
-        else if (!bGotSourceFilename)
-        {
-            bGotSourceFilename = true;
-            if (psOptionsForBinary)
-                psOptionsForBinary->pszSource = CPLStrdup(papszArgv[i]);
-        }
-        else if (!bGotDestFilename)
-        {
-            bGotDestFilename = true;
-            if (psOptionsForBinary)
-                psOptionsForBinary->pszDest = CPLStrdup(papszArgv[i]);
-        }
         else
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Too many command options '%s'", papszArgv[i]);
-            GDALTranslateOptionsFree(psOptions);
+            aosArgv.AddString(papszArgv[i]);
+        }
+    }
+
+    auto argParser =
+        GDALTranslateOptionsGetParser(psOptions.get(), psOptionsForBinary);
+
+    try
+    {
+        argParser->parse_args_without_binary_name(aosArgv.List());
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", err.what());
+        return nullptr;
+    }
+
+    psOptions->bSetScale = argParser->is_used("-a_scale");
+    psOptions->bSetOffset = argParser->is_used("-a_offset");
+
+    if (auto adfULLR = argParser->present<std::vector<double>>("-a_ullr"))
+    {
+        CPLAssert(psOptions->adfULLR.size() == adfULLR->size());
+        for (size_t i = 0; i < adfULLR->size(); ++i)
+            psOptions->adfULLR[i] = (*adfULLR)[i];
+    }
+
+    if (auto adfGT = argParser->present<std::vector<double>>("-a_gt"))
+    {
+        CPLAssert(psOptions->adfGT.size() == adfGT->size());
+        for (size_t i = 0; i < adfGT->size(); ++i)
+            psOptions->adfGT[i] = (*adfGT)[i];
+    }
+
+    bool bOutsizeExplicitlySet = false;
+    if (auto aosOutSize =
+            argParser->present<std::vector<std::string>>("-outsize"))
+    {
+        if ((*aosOutSize)[0].back() == '%')
+            psOptions->dfOXSizePct = CPLAtofM((*aosOutSize)[0].c_str());
+        else
+            psOptions->nOXSizePixel = atoi((*aosOutSize)[0].c_str());
+
+        if ((*aosOutSize)[1].back() == '%')
+            psOptions->dfOYSizePct = CPLAtofM((*aosOutSize)[1].c_str());
+        else
+            psOptions->nOYSizePixel = atoi((*aosOutSize)[1].c_str());
+        bOutsizeExplicitlySet = true;
+    }
+
+    if (auto adfTargetRes = argParser->present<std::vector<double>>("-tr"))
+    {
+        psOptions->dfXRes = (*adfTargetRes)[0];
+        psOptions->dfYRes = fabs((*adfTargetRes)[1]);
+        if (psOptions->dfXRes == 0 || psOptions->dfYRes == 0)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Wrong value for -tr parameters.");
             return nullptr;
         }
+    }
+
+    if (auto adfSrcWin = argParser->present<std::vector<double>>("-srcwin"))
+    {
+        for (int i = 0; i < 4; ++i)
+            psOptions->adfSrcWin[i] = (*adfSrcWin)[i];
+    }
+
+    if (auto adfProjWin = argParser->present<std::vector<double>>("-projwin"))
+    {
+        psOptions->dfULX = (*adfProjWin)[0];
+        psOptions->dfULY = (*adfProjWin)[1];
+        psOptions->dfLRX = (*adfProjWin)[2];
+        psOptions->dfLRY = (*adfProjWin)[3];
     }
 
     if (psOptions->nGCPCount > 0 && psOptions->bNoGCP)
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "-nogcp and -gcp cannot be used as the same time");
-        GDALTranslateOptionsFree(psOptions);
         return nullptr;
     }
 
@@ -3372,7 +3479,6 @@ GDALTranslateOptionsNew(char **papszArgv,
     {
         CPLError(CE_Failure, CPLE_NotSupported, "-outsize %d %d invalid.",
                  psOptions->nOXSizePixel, psOptions->nOYSizePixel);
-        GDALTranslateOptionsFree(psOptions);
         return nullptr;
     }
 
@@ -3380,18 +3486,16 @@ GDALTranslateOptionsNew(char **papszArgv,
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "-scale and -unscale cannot be used as the same time");
-        GDALTranslateOptionsFree(psOptions);
         return nullptr;
     }
 
     if (psOptionsForBinary)
     {
         if (!psOptions->osFormat.empty())
-            psOptionsForBinary->pszFormat =
-                CPLStrdup(psOptions->osFormat.c_str());
+            psOptionsForBinary->osFormat = psOptions->osFormat;
     }
 
-    return psOptions;
+    return psOptions.release();
 }
 
 /************************************************************************/

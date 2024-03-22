@@ -140,6 +140,10 @@ mv ${LOG_FILE}.tmp ${LOG_FILE}
 grep -v -e "ogr/ogrsf_frmts/pmtiles/pmtiles/" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
+# Ignore apps/argparse/ header
+grep -v -e "apps/argparse/" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
 # Ignore third_party/fast_float
 grep -v -e "third_party/fast_float" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}

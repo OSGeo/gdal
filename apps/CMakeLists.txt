@@ -5,6 +5,7 @@ add_library(
   appslib OBJECT
   commonutils.h
   gdal_utils.h
+  gdalargumentparser.cpp
   gdalinfo_lib.cpp
   gdalbuildvrt_lib.cpp
   gdal_grid_lib.cpp
@@ -78,6 +79,11 @@ if (BUILD_APPS)
 
   add_executable(sozip sozip.cpp)
 
+  add_library(utils_common OBJECT gdalargumentparser.cpp)
+  gdal_standard_includes(utils_common)
+  target_compile_options(utils_common PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST})
+  add_dependencies(utils_common generate_gdal_version_h)
+
   set(APPS_TARGETS
       gdalinfo
       gdalbuildvrt
@@ -140,7 +146,7 @@ if (BUILD_APPS)
     if (MSVC OR MINGW)
       target_compile_definitions(${UTILCMD} PRIVATE -DSUPPORTS_WMAIN)
     endif ()
-    target_link_libraries(${UTILCMD} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
+    target_link_libraries(${UTILCMD} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> utils_common)
   endforeach ()
   install(TARGETS ${APPS_TARGETS} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
