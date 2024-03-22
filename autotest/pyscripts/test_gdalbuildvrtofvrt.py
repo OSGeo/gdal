@@ -87,14 +87,50 @@ def test_gdalbuildvrtofvrt_intermediate_vrt_path(script_path, tmp_path):
     intermediate_vrt_path = tmp_path / "intermediate_vrt_path"
     os.mkdir(intermediate_vrt_path, 0o755)
 
+    src_filename = str(tmp_path / "src.tif")
+    gdal.Translate(src_filename, "../gcore/data/byte.tif", width=1024)
+
     test_py_scripts.run_py_script(
         script_path,
         "gdalbuildvrtofvrt",
-        f" --intermediate-vrt-path {intermediate_vrt_path} {out_filename} ../gcore/data/byte.tif",
+        f" --intermediate-vrt-path {intermediate_vrt_path} -r average --intermediate-vrt-add-overviews --overview-compression DEFLATE {out_filename} {src_filename}",
     )
 
     assert os.path.exists(str(intermediate_vrt_path / "out_0_0.vrt"))
+    assert os.path.exists(str(intermediate_vrt_path / "out_0_0.vrt.ovr"))
 
     ds = gdal.Open(out_filename)
-    assert ds.RasterXSize == 20
-    assert ds.RasterYSize == 20
+    assert ds.RasterXSize == 1024
+    assert ds.RasterYSize == 1024
+
+    ds = gdal.Open(intermediate_vrt_path / "out_0_0.vrt.ovr")
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert ds.GetRasterBand(1).GetMetadataItem("RESAMPLING") == "AVERAGE"
+    assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "DEFLATE"
+
+
+###############################################################################
+# Test
+
+
+def test_gdalbuildvrtofvrt_intermediate_vrt_path_specified_ovr_factors(
+    script_path, tmp_path
+):
+
+    out_filename = str(tmp_path / "out.vrt")
+
+    src_filename = str(tmp_path / "src.tif")
+    gdal.Translate(src_filename, "../gcore/data/byte.tif", width=1024)
+
+    test_py_scripts.run_py_script(
+        script_path,
+        "gdalbuildvrtofvrt",
+        f" --intermediate-vrt-overview-factors 2,4,8 {out_filename} {src_filename}",
+    )
+
+    ds = gdal.Open(out_filename)
+    assert ds.RasterXSize == 1024
+    assert ds.RasterYSize == 1024
+
+    ds = gdal.Open(tmp_path / "out_0_0.vrt.ovr")
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2

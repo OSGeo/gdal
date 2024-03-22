@@ -100,6 +100,36 @@ class GDALBuildVRTOfVRT(GDALScript):
             help="whether an error when opening a source file should stop the whole process (by default processing continues skipping it)",
         )
 
+        parser.add_argument(
+            "--intermediate-vrt-add-overviews",
+            dest="intermediate_vrt_add_overviews",
+            action="store_true",
+            help="whether overviews should be generated on intermediate VRTs (overview factors automatically determined)",
+        )
+
+        def list_of_ints(arg):
+            return list(map(int, arg.split(",")))
+
+        parser.add_argument(
+            "--intermediate-vrt-overview-factors",
+            dest="intermediate_vrt_overview_factors",
+            type=list_of_ints,
+            metavar="<factor1>[,<factor2>]...",
+            help="Ask for overviews to be generated on intermediated VRTs and specify overview factor(s)",
+        )
+
+        def list_of_ints(arg):
+            return list(map(int, arg.split(",")))
+
+        parser.add_argument(
+            "--overview-compression",
+            dest="overview_compression",
+            type=str,
+            choices=("NONE", "LZW", "DEFLATE", "ZSTD", "JPEG", "LERC", "JXL"),
+            default="LZW",
+            help="overview compression algorithm",
+        )
+
         return parser
 
     def doit(self, **kwargs):
@@ -248,6 +278,32 @@ class GDALBuildVRTOfVRT(GDALScript):
                     print(f"Building {vrt_filename} (%.02f %%)..." % pct)
                     vrt_files.append(vrt_filename)
                     gdal.BuildVRT(vrt_filename, subvrt_files, options=vrt_options)
+
+                    if kwargs["intermediate_vrt_overview_factors"]:
+                        print(f"Building {vrt_filename}.ovr (%.02f %%)..." % pct)
+                        ds = gdal.Open(vrt_filename)
+                        with gdal.config_option(
+                            "COMPRESS_OVERVIEW", kwargs["overview_compression"]
+                        ):
+                            ds.BuildOverviews(
+                                kwargs["resampling_alg"],
+                                kwargs["intermediate_vrt_overview_factors"],
+                            )
+                    elif kwargs["intermediate_vrt_add_overviews"]:
+                        ds = gdal.Open(vrt_filename)
+                        factors = []
+                        max_dim = max(ds.RasterXSize, ds.RasterYSize)
+                        factor = 2
+                        while max_dim > 256:
+                            factors.append(factor)
+                            max_dim = max_dim // 2
+                            factor *= 2
+                        if factors:
+                            print(f"Building {vrt_filename}.ovr (%.02f %%)..." % pct)
+                            with gdal.config_option(
+                                "COMPRESS_OVERVIEW", kwargs["overview_compression"]
+                            ):
+                                ds.BuildOverviews(kwargs["resampling_alg"], factors)
 
         print(f"Building {out_vrtfile} (100 %)...")
         gdal.BuildVRT(out_vrtfile, vrt_files, options=vrt_options)
