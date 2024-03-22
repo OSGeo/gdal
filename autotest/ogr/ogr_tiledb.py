@@ -1069,15 +1069,15 @@ def test_ogr_tiledb_create_group():
 
     ds = ogr.Open("tmp/test.tiledb", update=1)
     assert ds.TestCapability(ogr.ODsCCreateLayer)
-    lyr = ds.CreateLayer("test/3", options=["BOUNDS=-1e4,-1e4,1e4,1e4"])
+    lyr = ds.CreateLayer("test3", options=["BOUNDS=-1e4,-1e4,1e4,1e4"])
     assert lyr
     ds = None
 
-    assert os.path.exists("tmp/test.tiledb/layers/test/3")
+    assert os.path.exists("tmp/test.tiledb/layers/test3")
 
     ds = ogr.Open("tmp/test.tiledb")
     assert ds.GetLayerCount() == 3
-    lyr = ds.GetLayerByName("test/3")
+    lyr = ds.GetLayerByName("test3")
     assert lyr
     ds = None
 
