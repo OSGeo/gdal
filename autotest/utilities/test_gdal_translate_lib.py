@@ -65,6 +65,20 @@ def test_gdal_translate_lib_1(tmp_path):
 
 
 ###############################################################################
+# Test error case of argument parser
+
+
+def test_gdal_translate_lib_error_case_arg_parser(tmp_vsimem):
+
+    dst_tif = tmp_vsimem / "test_gdal_translate_lib_error_case_arg_parser.tif"
+
+    with pytest.raises(Exception, match="Zero positional arguments expected"):
+        gdal.Translate(
+            dst_tif, "../gcore/data/byte.tif", options="unexpected_positional"
+        )
+
+
+###############################################################################
 # Test format option and callback
 
 

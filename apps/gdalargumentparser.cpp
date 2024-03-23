@@ -263,10 +263,29 @@ GDALArgumentParser::get_non_positional_arguments(const CPLStringList &aosArgs)
         const auto &current_argument = *it;
         if (Argument::is_positional(current_argument, m_prefix_chars))
         {
-            auto argument = positional_argument_it++;
-            auto next_it = argument->consume(it, end, "", /* dry_run = */ true);
-            it = next_it;
-            continue;
+            if (positional_argument_it != std::end(m_positional_arguments))
+            {
+                auto argument = positional_argument_it++;
+                auto next_it =
+                    argument->consume(it, end, "", /* dry_run = */ true);
+                it = next_it;
+                continue;
+            }
+            else
+            {
+                if (m_positional_arguments.empty())
+                {
+                    throw std::runtime_error(
+                        "Zero positional arguments expected");
+                }
+                else
+                {
+                    throw std::runtime_error(
+                        "Maximum number of positional arguments "
+                        "exceeded, failed to parse '" +
+                        current_argument + "'");
+                }
+            }
         }
 
         auto arg_map_it = find_argument(current_argument);
@@ -325,19 +344,38 @@ void GDALArgumentParser::parse_args(const CPLStringList &aosArgs)
         const auto &current_argument = *it;
         if (Argument::is_positional(current_argument, m_prefix_chars))
         {
-            auto argument = positional_argument_it++;
-            auto next_it = argument->consume(it, end, "", /* dry_run = */ true);
-            for (; it != next_it; ++it)
+            if (positional_argument_it != std::end(m_positional_arguments))
             {
-                if ((*it)[0] == '-')
+                auto argument = positional_argument_it++;
+                auto next_it =
+                    argument->consume(it, end, "", /* dry_run = */ true);
+                for (; it != next_it; ++it)
                 {
-                    next_it = it;
-                    break;
+                    if ((*it)[0] == '-')
+                    {
+                        next_it = it;
+                        break;
+                    }
+                    positionalArgs.push_back(*it);
                 }
-                positionalArgs.push_back(*it);
+                it = next_it;
+                continue;
             }
-            it = next_it;
-            continue;
+            else
+            {
+                if (m_positional_arguments.empty())
+                {
+                    throw std::runtime_error(
+                        "Zero positional arguments expected");
+                }
+                else
+                {
+                    throw std::runtime_error(
+                        "Maximum number of positional arguments "
+                        "exceeded, failed to parse '" +
+                        current_argument + "'");
+                }
+            }
         }
 
         auto arg_map_it = find_argument(current_argument);
