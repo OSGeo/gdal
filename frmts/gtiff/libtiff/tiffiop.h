@@ -102,6 +102,13 @@ struct TIFFOffsetAndDirNumber
 };
 typedef struct TIFFOffsetAndDirNumber TIFFOffsetAndDirNumber;
 
+typedef union
+{
+    TIFFHeaderCommon common;
+    TIFFHeaderClassic classic;
+    TIFFHeaderBig big;
+} TIFFHeaderUnion;
+
 struct tiff
 {
     char *tif_name; /* name of open file */
@@ -153,20 +160,15 @@ struct tiff
     TIFFDirectory tif_dir;               /* internal rep of current directory */
     TIFFDirectory
         tif_customdir; /* custom IFDs are separated from the main ones */
-    union
-    {
-        TIFFHeaderCommon common;
-        TIFFHeaderClassic classic;
-        TIFFHeaderBig big;
-    } tif_header;
-    uint16_t tif_header_size;  /* file's header block and its length */
-    uint32_t tif_row;          /* current scanline */
-    tdir_t tif_curdir;         /* current directory (index) */
-    uint32_t tif_curstrip;     /* current strip for read/write */
-    uint64_t tif_curoff;       /* current offset for read/write */
-    uint64_t tif_lastvalidoff; /* last valid offset allowed for rewrite in
-                                  place. Used only by TIFFAppendToStrip() */
-    uint64_t tif_dataoff;      /* current offset for writing dir */
+    TIFFHeaderUnion tif_header; /* file's header block Classic/BigTIFF union */
+    uint16_t tif_header_size;   /* file's header block and its length */
+    uint32_t tif_row;           /* current scanline */
+    tdir_t tif_curdir;          /* current directory (index) */
+    uint32_t tif_curstrip;      /* current strip for read/write */
+    uint64_t tif_curoff;        /* current offset for read/write */
+    uint64_t tif_lastvalidoff;  /* last valid offset allowed for rewrite in
+                                   place. Used only by TIFFAppendToStrip() */
+    uint64_t tif_dataoff;       /* current offset for writing dir */
     /* SubIFD support */
     uint16_t tif_nsubifd;   /* remaining subifds to write */
     uint64_t tif_subifdoff; /* offset for patching SubIFD link */

@@ -547,9 +547,9 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
             TIFFErrorExtR(tif, name, "Cannot read TIFF header");
             goto bad;
         }
-/*
- * Setup header and write.
- */
+        /*
+         * Setup header and write.
+         */
 #ifdef WORDS_BIGENDIAN
         tif->tif_header.common.tiff_magic =
             (tif->tif_flags & TIFF_SWAB) ? TIFF_LITTLEENDIAN : TIFF_BIGENDIAN;
@@ -557,13 +557,17 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
         tif->tif_header.common.tiff_magic =
             (tif->tif_flags & TIFF_SWAB) ? TIFF_BIGENDIAN : TIFF_LITTLEENDIAN;
 #endif
+        TIFFHeaderUnion tif_header_swapped;
         if (!(tif->tif_flags & TIFF_BIGTIFF))
         {
             tif->tif_header.common.tiff_version = TIFF_VERSION_CLASSIC;
             tif->tif_header.classic.tiff_diroff = 0;
-            if (tif->tif_flags & TIFF_SWAB)
-                TIFFSwabShort(&tif->tif_header.common.tiff_version);
             tif->tif_header_size = sizeof(TIFFHeaderClassic);
+            /* Swapped copy for writing */
+            _TIFFmemcpy(&tif_header_swapped, &tif->tif_header,
+                        sizeof(TIFFHeaderUnion));
+            if (tif->tif_flags & TIFF_SWAB)
+                TIFFSwabShort(&tif_header_swapped.common.tiff_version);
         }
         else
         {
@@ -571,12 +575,15 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
             tif->tif_header.big.tiff_offsetsize = 8;
             tif->tif_header.big.tiff_unused = 0;
             tif->tif_header.big.tiff_diroff = 0;
+            tif->tif_header_size = sizeof(TIFFHeaderBig);
+            /* Swapped copy for writing */
+            _TIFFmemcpy(&tif_header_swapped, &tif->tif_header,
+                        sizeof(TIFFHeaderUnion));
             if (tif->tif_flags & TIFF_SWAB)
             {
-                TIFFSwabShort(&tif->tif_header.common.tiff_version);
-                TIFFSwabShort(&tif->tif_header.big.tiff_offsetsize);
+                TIFFSwabShort(&tif_header_swapped.common.tiff_version);
+                TIFFSwabShort(&tif_header_swapped.big.tiff_offsetsize);
             }
-            tif->tif_header_size = sizeof(TIFFHeaderBig);
         }
         /*
          * The doc for "fopen" for some STD_C_LIBs says that if you
@@ -586,25 +593,11 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
          * on Solaris.
          */
         TIFFSeekFile(tif, 0, SEEK_SET);
-        if (!WriteOK(tif, &tif->tif_header, (tmsize_t)(tif->tif_header_size)))
+        if (!WriteOK(tif, &tif_header_swapped,
+                     (tmsize_t)(tif->tif_header_size)))
         {
             TIFFErrorExtR(tif, name, "Error writing TIFF header");
             goto bad;
-        }
-        /*
-         * Setup the byte order handling.
-         */
-        if (tif->tif_header.common.tiff_magic == TIFF_BIGENDIAN)
-        {
-#ifndef WORDS_BIGENDIAN
-            tif->tif_flags |= TIFF_SWAB;
-#endif
-        }
-        else
-        {
-#ifdef WORDS_BIGENDIAN
-            tif->tif_flags |= TIFF_SWAB;
-#endif
         }
         /*
          * Setup default directory.
@@ -616,8 +609,9 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
         tif->tif_setdirectory_force_absolute = FALSE;
         return (tif);
     }
+
     /*
-     * Setup the byte order handling.
+     * Setup the byte order handling according to the opened file for reading.
      */
     if (tif->tif_header.common.tiff_magic != TIFF_BIGENDIAN &&
         tif->tif_header.common.tiff_magic != TIFF_LITTLEENDIAN
