@@ -31,6 +31,8 @@
 #include "ogr_geos.h"
 #include "ogr_p.h"
 
+#include "geodesic.h"  // from PROJ
+
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
@@ -2960,6 +2962,93 @@ OGRCurveCasterToLinearRing OGRLineString::GetCasterToLinearRing() const
 double OGRLineString::get_Area() const
 {
     return get_LinearArea();
+}
+
+/************************************************************************/
+/*                        get_GeodesicArea()                            */
+/************************************************************************/
+
+double
+OGRLineString::get_GeodesicArea(const OGRSpatialReference *poSRSOverride) const
+{
+    if (!poSRSOverride)
+        poSRSOverride = getSpatialReference();
+
+    if (!poSRSOverride)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot compute area on ellipsoid due to missing SRS");
+        return -1;
+    }
+
+    OGRErr eErr = OGRERR_NONE;
+    double dfSemiMajor = poSRSOverride->GetSemiMajor(&eErr);
+    if (eErr != OGRERR_NONE)
+        return -1;
+    const double dfInvFlattening = poSRSOverride->GetInvFlattening(&eErr);
+    if (eErr != OGRERR_NONE)
+        return -1;
+
+    geod_geodesic g;
+    geod_init(&g, dfSemiMajor,
+              dfInvFlattening != 0 ? 1.0 / dfInvFlattening : 0.0);
+    double dfArea = -1;
+    std::vector<double> adfLat;
+    std::vector<double> adfLon;
+    adfLat.reserve(nPointCount);
+    adfLon.reserve(nPointCount);
+
+    OGRSpatialReference oGeogCRS;
+    if (oGeogCRS.CopyGeogCSFrom(poSRSOverride) != OGRERR_NONE)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot reproject geometry to geographic CRS");
+        return -1;
+    }
+    oGeogCRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+        OGRCreateCoordinateTransformation(poSRSOverride, &oGeogCRS));
+    if (!poCT)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot reproject geometry to geographic CRS");
+        return -1;
+    }
+    for (int i = 0; i < nPointCount; ++i)
+    {
+        adfLon.push_back(paoPoints[i].x);
+        adfLat.push_back(paoPoints[i].y);
+    }
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+    std::vector<int> anSuccess;
+    anSuccess.resize(adfLon.size());
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+    poCT->Transform(adfLon.size(), adfLon.data(), adfLat.data(), nullptr,
+                    anSuccess.data());
+    double dfToDegrees =
+        oGeogCRS.GetAngularUnits(nullptr) / CPLAtof(SRS_UA_DEGREE_CONV);
+    if (std::fabs(dfToDegrees - 1) <= 1e-10)
+        dfToDegrees = 1.0;
+    for (int i = 0; i < nPointCount; ++i)
+    {
+        if (!anSuccess[i])
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot reproject geometry to geographic CRS");
+            return -1;
+        }
+        adfLon[i] *= dfToDegrees;
+        adfLat[i] *= dfToDegrees;
+    }
+
+    geod_polygonarea(&g, adfLat.data(), adfLon.data(),
+                     static_cast<int>(adfLat.size()), &dfArea, nullptr);
+    return std::fabs(dfArea);
 }
 
 /************************************************************************/

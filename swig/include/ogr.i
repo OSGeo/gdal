@@ -3448,6 +3448,10 @@ public:
     return OGR_G_Area(self);
   }
 
+  double GeodesicArea() {
+    return OGR_G_GeodesicArea(self);
+  }
+
   bool IsClockwise() {
     return OGR_G_IsClockwise(self);
   }

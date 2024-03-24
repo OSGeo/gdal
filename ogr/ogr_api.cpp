@@ -1650,14 +1650,21 @@ double OGR_G_Length(OGRGeometryH hGeom)
 /**
  * \brief Compute geometry area.
  *
- * Computes the area for an OGRLinearRing, OGRPolygon or OGRMultiPolygon.
- * Undefined for all other geometry types (returns zero).
+ * The returned area is a 2D Cartesian (planar) area in square units of the
+ * spatial reference system in use, so potentially "square degrees" for a
+ * geometry expressed in a geographic SRS.
  *
- * This function utilizes the C++ get_Area() methods such as
- * OGRPolygon::get_Area().
+ * Computes the area for surfaces or closed curves.
+ * Undefined for all other geometry types (returns 0.0).
+ *
+ * This function utilizes the C++ OGRSurface::get_Area() method.
  *
  * @param hGeom the geometry to operate on.
- * @return the area or 0.0 for unsupported geometry types.
+ * @return the area of the geometry in square units of the spatial reference
+ * system in use, or 0.0 for unsupported geometry types.
+
+ * @see OGR_G_GeodesicArea() for an alternative function returning areas
+ * computed on the ellipsoid, an in square meters.
  *
  * @since OGR 1.8.0
  */
@@ -1705,6 +1712,72 @@ double OGR_G_GetArea(OGRGeometryH hGeom)
 
 {
     return OGR_G_Area(hGeom);
+}
+
+/************************************************************************/
+/*                         OGR_G_GeodesicArea()                         */
+/************************************************************************/
+
+/**
+ * \brief Compute geometry area, considered as a surface on the underlying
+ * ellipsoid of the SRS attached to the geometry.
+ *
+ * The returned area will always be in square meters, and assumes that
+ * polygon edges describe geodesic lines on the ellipsoid.
+ *
+ * If the geometry' SRS is not a geographic one, geometries are reprojected to
+ * the underlying geographic SRS of the geometry' SRS.
+ * OGRSpatialReference::GetDataAxisToSRSAxisMapping() is honored.
+ *
+ * Computes the area for surfaces or closed curves.
+ * Undefined for all other geometry types (returns a negative value).
+ *
+ * Note that geometries with circular arcs will be linearized in their original
+ * coordinate space first, so the resulting geodesic area will be an
+ * approximation.
+ *
+ * This function utilizes the C++ OGRSurface::get_GeodesicArea() method.
+ *
+ * @param hGeom the geometry to operate on.
+ * @return the area, or a negative value in case of error (unsupported geometry
+ * type, no SRS attached, etc.)
+ *
+ * @see OGR_G_Area() for an alternative method returning areas computed in
+ * 2D Cartesian space.
+ *
+ * @since OGR 3.9.0
+ */
+
+double OGR_G_GeodesicArea(OGRGeometryH hGeom)
+
+{
+    VALIDATE_POINTER1(hGeom, "OGR_G_GeodesicArea", -1);
+
+    double dfArea = -1;
+
+    const auto poGeom = ToPointer(hGeom);
+    const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+    if (OGR_GT_IsSurface(eType))
+    {
+        dfArea = poGeom->toSurface()->get_GeodesicArea();
+    }
+    else if (OGR_GT_IsCurve(eType))
+    {
+        dfArea = poGeom->toCurve()->get_GeodesicArea();
+    }
+    else if (OGR_GT_IsSubClassOf(eType, wkbMultiSurface) ||
+             eType == wkbGeometryCollection)
+    {
+        dfArea = poGeom->toGeometryCollection()->get_GeodesicArea();
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OGR_G_GeodesicArea() called against non-surface geometry "
+                 "type.");
+    }
+
+    return dfArea;
 }
 
 /************************************************************************/

@@ -704,6 +704,33 @@ double OGRCurvePolygon::get_Area() const
 }
 
 /************************************************************************/
+/*                        get_GeodesicArea()                            */
+/************************************************************************/
+
+double OGRCurvePolygon::get_GeodesicArea(
+    const OGRSpatialReference *poSRSOverride) const
+
+{
+    if (getExteriorRingCurve() == nullptr)
+        return 0.0;
+
+    if (!poSRSOverride)
+        poSRSOverride = getSpatialReference();
+
+    double dfArea = getExteriorRingCurve()->get_GeodesicArea(poSRSOverride);
+    if (dfArea > 0)
+    {
+        for (int iRing = 0; iRing < getNumInteriorRings(); iRing++)
+        {
+            dfArea -=
+                getInteriorRingCurve(iRing)->get_GeodesicArea(poSRSOverride);
+        }
+    }
+
+    return dfArea;
+}
+
+/************************************************************************/
 /*                       setCoordinateDimension()                       */
 /************************************************************************/
 

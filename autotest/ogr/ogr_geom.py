@@ -4276,3 +4276,187 @@ def test_ogr_geom_CreateGeometry(geom_type):
     geom = ogr.Geometry(geom_type)
     assert geom.GetGeometryType() == geom_type
     assert geom.IsEmpty()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_geom_GeodesicArea():
+
+    # Lat, lon order
+    g = ogr.CreateGeometryFromWkt("POLYGON((49 2,49 3,48 3,49 2))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicArea() == pytest.approx(4068384291.8911743)
+
+    # Lon, lat order
+    g = ogr.CreateGeometryFromWkt("POLYGON((2 49,3 49,3 48,2 49))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicArea() == pytest.approx(4068384291.8911743)
+
+    # Lon, lat order
+    g = ogr.CreateGeometryFromWkt("POLYGON((12 49,13 49,13 48,12 49))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicArea() == pytest.approx(4068384291.8911743)
+
+    # Lon, lat order
+    g = ogr.CreateGeometryFromWkt("POLYGON((2 89,3 89,3 88,2 89))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicArea() == pytest.approx(108860488.12023926)
+
+    # easting, northing
+    g = ogr.CreateGeometryFromWkt("POLYGON((49 2,49 3,48 3,49 2))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    other_srs = osr.SpatialReference()
+    other_srs.ImportFromEPSG(32631)
+    g.TransformTo(other_srs)
+    assert g.GeodesicArea() == pytest.approx(4068384291.8911743)
+    # For comparison: cartesian area in UTM.
+    assert g.Area() == pytest.approx(4065070548.465351)
+
+    # POLYGON with hole
+    g = ogr.CreateGeometryFromWkt(
+        "POLYGON((49 2,49 3,48 3,49 2),(49 2,49 3,48 3,49 2))"
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicArea() == 0
+
+    # MULTIPOLYGON
+    g = ogr.CreateGeometryFromWkt(
+        "MULTIPOLYGON(((49 2,49 3,48 3,49 2)),((89 2,89 3,88 3,89 2)))"
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicArea() == pytest.approx(4068384291.8911743 + 108860488.12023926)
+
+    # POLYGON EMPTY
+    g = ogr.CreateGeometryFromWkt("POLYGON EMPTY")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicArea() == 0
+
+    # GEOMETRYCOLLECTION
+    g = ogr.CreateGeometryFromWkt(
+        "GEOMETRYCOLLECTION(GEOMETRYCOLLECTION(POLYGON((49 2,49 3,48 3,49 2))),LINESTRING(89 2,89 3,88 3,89 2))))"
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicArea() == pytest.approx(4068384291.8911743 + 108860488.12023926)
+
+    # CIRCULARSTRING
+    g = ogr.CreateGeometryFromWkt("CIRCULARSTRING(0 0,1 1,2 0,1 -1,0 0)")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicArea() == ogr.ForceToLineString(g).GeodesicArea()
+
+    # CIRCULARSTRING EMPTY
+    g = ogr.CreateGeometryFromWkt("CIRCULARSTRING EMPTY")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicArea() == 0
+
+    # CIRCULARSTRING not closed
+    g = ogr.CreateGeometryFromWkt("CIRCULARSTRING(0 0,1 1,2 0)")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    with pytest.raises(Exception, match="Non-closed geometry"):
+        assert g.GeodesicArea() < 0
+
+    # GEOMETRYCOLLECTION of CIRCULARSTRING not closed
+    g = ogr.CreateGeometryFromWkt("GEOMETRYCOLLECTION(CIRCULARSTRING(0 0,1 1,2 0))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    with pytest.raises(Exception, match="Non-closed geometry"):
+        assert g.GeodesicArea() < 0
+
+    # COMPOUNDCURVE
+    g = ogr.CreateGeometryFromWkt("COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0,1 -1,0 0))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicArea() == ogr.ForceToLineString(g).GeodesicArea()
+
+    # COMPOUNDCURVE EMPTY
+    g = ogr.CreateGeometryFromWkt("COMPOUNDCURVE EMPTY")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicArea() == 0
+
+    # COMPOUNDCURVE not closed
+    g = ogr.CreateGeometryFromWkt("COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    with pytest.raises(Exception, match="Non-closed geometry"):
+        assert g.GeodesicArea() < 0
+
+    # POLYHEDRALSURFACE EMPTY
+    g = ogr.CreateGeometryFromWkt("POLYHEDRALSURFACE EMPTY")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    assert g.GeodesicArea() == 0
+
+    # POLYHEDRALSURFACE
+    g = ogr.CreateGeometryFromWkt("POLYHEDRALSURFACE(((0 0 0,0 1 0,1 1 0,0 0 0)))")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    with pytest.raises(Exception, match="not implemented for PolyhedralSurface"):
+        assert g.GeodesicArea() < 0
+
+    # GEOMETRYCOLLECTION of POLYHEDRALSURFACE
+    g = ogr.CreateGeometryFromWkt(
+        "GEOMETRYCOLLECTION(GEOMETRYCOLLECTION(POLYHEDRALSURFACE(((0 0 0,0 1 0,1 1 0,0 0 0)))))"
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    with pytest.raises(Exception, match="not implemented for PolyhedralSurface"):
+        assert g.GeodesicArea() < 0
+
+    # Incompatible geometry type
+    g = ogr.CreateGeometryFromWkt("POINT(0 1)")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    g.AssignSpatialReference(srs)
+    with pytest.raises(Exception, match="non-surface geometry type"):
+        assert g.GeodesicArea() < 0
+
+    # No SRS
+    g = ogr.CreateGeometryFromWkt("POLYGON((49 2,49 3,48 3,49 2))")
+    with pytest.raises(
+        Exception, match="Cannot compute area on ellipsoid due to missing SRS"
+    ):
+        assert g.GeodesicArea() < 0
+
+    # Engineering SRS
+    g = ogr.CreateGeometryFromWkt("POLYGON((49 2,49 3,48 3,49 2))")
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput('LOCAL_CS["dummy"]')
+    g.AssignSpatialReference(srs)
+    with pytest.raises(Exception, match="CRS has no geodetic CRS"):
+        assert g.GeodesicArea() < 0

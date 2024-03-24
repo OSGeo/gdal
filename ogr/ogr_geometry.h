@@ -1396,6 +1396,8 @@ class CPL_DLL OGRCurve : public OGRGeometry
     virtual OGRPointIterator *getPointIterator() const = 0;
     virtual OGRBoolean IsConvex() const;
     virtual double get_Area() const = 0;
+    virtual double get_GeodesicArea(
+        const OGRSpatialReference *poSRSOverride = nullptr) const = 0;
     virtual int isClockwise() const;
 
     /** Down-cast to OGRSimpleCurve*.
@@ -1789,6 +1791,8 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
     virtual OGRGeometry *
     getCurveGeometry(const char *const *papszOptions = nullptr) const override;
     virtual double get_Area() const override;
+    virtual double get_GeodesicArea(
+        const OGRSpatialReference *poSRSOverride = nullptr) const override;
 
     // Non-standard from OGRGeometry.
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -1997,6 +2001,8 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
                 const char *const *papszOptions = nullptr) const override;
     virtual void Value(double, OGRPoint *) const override;
     virtual double get_Area() const override;
+    virtual double get_GeodesicArea(
+        const OGRSpatialReference *poSRSOverride = nullptr) const override;
 
     // Non-standard from OGRGeometry.
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -2267,6 +2273,8 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     virtual int getNumPoints() const override;
     virtual double get_AreaOfCurveSegments() const override;
     virtual double get_Area() const override;
+    virtual double get_GeodesicArea(
+        const OGRSpatialReference *poSRSOverride = nullptr) const override;
 
     // ISpatialRelation.
     virtual OGRBoolean Equals(const OGRGeometry *) const override;
@@ -2374,6 +2382,8 @@ class CPL_DLL OGRSurface : public OGRGeometry
 
   public:
     virtual double get_Area() const = 0;
+    virtual double get_GeodesicArea(
+        const OGRSpatialReference *poSRSOverride = nullptr) const = 0;
 
     virtual OGRErr PointOnSurface(OGRPoint *poPoint) const
     {
@@ -2490,6 +2500,8 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     virtual OGRGeometry *
     getLinearGeometry(double dfMaxAngleStepSizeDegrees = 0,
                       const char *const *papszOptions = nullptr) const override;
+    virtual double get_GeodesicArea(
+        const OGRSpatialReference *poSRSOverride = nullptr) const override;
 
     // ISurface Interface
     virtual double get_Area() const override;
@@ -2940,6 +2952,8 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRGeometry *
     getLinearGeometry(double dfMaxAngleStepSizeDegrees = 0,
                       const char *const *papszOptions = nullptr) const override;
+    virtual double
+    get_GeodesicArea(const OGRSpatialReference *poSRSOverride = nullptr) const;
 
     // IWks Interface
     virtual size_t WkbSize() const override;
@@ -3465,6 +3479,8 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual OGRErr transform(OGRCoordinateTransformation *) override;
     virtual OGRBoolean Equals(const OGRGeometry *) const override;
     virtual double get_Area() const override;
+    virtual double get_GeodesicArea(
+        const OGRSpatialReference *poSRSOverride = nullptr) const override;
     virtual OGRErr PointOnSurface(OGRPoint *) const override;
 
     static OGRMultiPolygon *CastToMultiPolygon(OGRPolyhedralSurface *poPS);
