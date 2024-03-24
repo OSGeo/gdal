@@ -883,11 +883,20 @@ GDALNearblackOptionsGetParser(GDALNearblackOptions *psOptions,
 
 std::string GDALNearblackGetParserUsage()
 {
-    GDALNearblackOptions sOptions;
-    GDALNearblackOptionsForBinary sOptionsForBinary;
-    auto argParser =
-        GDALNearblackOptionsGetParser(&sOptions, &sOptionsForBinary);
-    return argParser->usage();
+    try
+    {
+        GDALNearblackOptions sOptions;
+        GDALNearblackOptionsForBinary sOptionsForBinary;
+        auto argParser =
+            GDALNearblackOptionsGetParser(&sOptions, &sOptionsForBinary);
+        return argParser->usage();
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                 err.what());
+        return std::string();
+    }
 }
 
 /************************************************************************/
@@ -916,20 +925,21 @@ GDALNearblackOptionsNew(char **papszArgv,
 {
     auto psOptions = std::make_unique<GDALNearblackOptions>();
 
-    auto argParser =
-        GDALNearblackOptionsGetParser(psOptions.get(), psOptionsForBinary);
-
     try
     {
+
+        auto argParser =
+            GDALNearblackOptionsGetParser(psOptions.get(), psOptionsForBinary);
+
         argParser->parse_args_without_binary_name(papszArgv);
+
+        return psOptions.release();
     }
     catch (const std::exception &err)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", err.what());
         return nullptr;
     }
-
-    return psOptions.release();
 }
 
 /************************************************************************/
