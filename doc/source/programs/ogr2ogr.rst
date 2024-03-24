@@ -356,7 +356,7 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -clipsrc [<xmin> <ymin> <xmax> <ymax>]|WKT|<datasource>|spat_extent
 
-    Clip geometries to one of the following:
+    Clip geometries (before potential reprojection) to one of the following:
 
     * the specified bounding box (expressed in source SRS)
     * a WKT geometry (POLYGON or MULTIPOLYGON expressed in source SRS)
@@ -380,7 +380,7 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -clipdst [<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>
 
-    Clip geometries to one of the following:
+    Clip geometries (after potential reprojection) to one of the following:
 
     * the specified bounding box (expressed in destination SRS)
     * a WKT geometry (POLYGON or MULTIPOLYGON expressed in destination SRS)
