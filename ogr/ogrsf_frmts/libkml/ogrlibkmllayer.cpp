@@ -71,16 +71,24 @@ using kmlengine::Bbox;
 
 CPLString OGRLIBKMLGetSanitizedNCName(const char *pszName)
 {
-    CPLString osName(pszName);
+    CPLString osName;
     // (Approximate) validation rules for a valid NCName.
+
+    // If the first character is illegal as a first character, but allowed in
+    // later positions, preprend an initial underscore
+    // (cf https://github.com/OSGeo/gdal/issues/9538)
+    if (pszName[0] == '-' || pszName[0] == '.' ||
+        (pszName[0] >= '0' && pszName[0] <= '9'))
+    {
+        osName = "_";
+    }
+    osName += pszName;
+
     for (size_t i = 0; i < osName.size(); i++)
     {
         char ch = osName[i];
-        if ((ch >= 'A' && ch <= 'Z') || ch == '_' || (ch >= 'a' && ch <= 'z'))
-        {
-            /* ok */
-        }
-        else if (i > 0 && (ch == '-' || ch == '.' || (ch >= '0' && ch <= '9')))
+        if ((ch >= 'A' && ch <= 'Z') || ch == '_' || (ch >= 'a' && ch <= 'z') ||
+            (ch == '-' || ch == '.' || (ch >= '0' && ch <= '9')))
         {
             /* ok */
         }
