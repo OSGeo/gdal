@@ -8330,6 +8330,69 @@ static void OGRGeoPackageSTArea(sqlite3_context *pContext, int /*argc*/,
 }
 
 /************************************************************************/
+/*                     OGRGeoPackageGeodesicArea()                      */
+/************************************************************************/
+
+static void OGRGeoPackageGeodesicArea(sqlite3_context *pContext, int argc,
+                                      sqlite3_value **argv)
+{
+    if (sqlite3_value_type(argv[0]) != SQLITE_BLOB)
+    {
+        sqlite3_result_null(pContext);
+        return;
+    }
+    if (sqlite3_value_int(argv[1]) != 1)
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "ST_Area(geom, use_ellipsoid) is only supported for "
+                 "use_ellipsoid = 1");
+    }
+
+    const int nBLOBLen = sqlite3_value_bytes(argv[0]);
+    const GByte *pabyBLOB =
+        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
+    GPkgHeader sHeader;
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, false, false))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid geometry");
+        sqlite3_result_blob(pContext, nullptr, 0, nullptr);
+        return;
+    }
+
+    GDALGeoPackageDataset *poDS =
+        static_cast<GDALGeoPackageDataset *>(sqlite3_user_data(pContext));
+
+    OGRSpatialReference *poSrcSRS = poDS->GetSpatialRef(sHeader.iSrsId, true);
+    if (poSrcSRS == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "SRID set on geometry (%d) is invalid", sHeader.iSrsId);
+        sqlite3_result_blob(pContext, nullptr, 0, nullptr);
+        return;
+    }
+
+    auto poGeom = std::unique_ptr<OGRGeometry>(
+        GPkgGeometryToOGR(pabyBLOB, nBLOBLen, nullptr));
+    if (poGeom == nullptr)
+    {
+        // Try also spatialite geometry blobs
+        OGRGeometry *poGeomSpatialite = nullptr;
+        if (OGRSQLiteImportSpatiaLiteGeometry(pabyBLOB, nBLOBLen,
+                                              &poGeomSpatialite) != OGRERR_NONE)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid geometry");
+            sqlite3_result_blob(pContext, nullptr, 0, nullptr);
+            return;
+        }
+        poGeom.reset(poGeomSpatialite);
+    }
+
+    poGeom->assignSpatialReference(poSrcSRS);
+    sqlite3_result_double(
+        pContext, OGR_G_GeodesicArea(OGRGeometry::ToHandle(poGeom.get())));
+}
+
+/************************************************************************/
 /*                      OGRGeoPackageTransform()                        */
 /************************************************************************/
 
@@ -9108,6 +9171,8 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
 
     sqlite3_create_function(hDB, "ST_Area", 1, UTF8_INNOCUOUS, nullptr,
                             OGRGeoPackageSTArea, nullptr, nullptr);
+    sqlite3_create_function(hDB, "ST_Area", 2, UTF8_INNOCUOUS, this,
+                            OGRGeoPackageGeodesicArea, nullptr, nullptr);
 
     // Debug functions
     if (CPLTestBool(CPLGetConfigOption("GPKG_DEBUG", "FALSE")))
