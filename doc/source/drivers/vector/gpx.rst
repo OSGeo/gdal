@@ -33,7 +33,7 @@ can be used by OGR.
   *track_seg_point_id*. All coordinates are relative to the WGS84 datum
   (EPSG:4326).
 
-The OGR/GPX reads and writes the GPX attributes for the waypoints,
+The OGR GPX driver reads and writes the GPX attributes for the waypoints,
 routes and tracks.
 
 Starting with GDAL 3.7, metadata from the top <metadata> element is reported
