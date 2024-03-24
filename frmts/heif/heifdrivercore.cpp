@@ -33,8 +33,11 @@
 /*                    HEIFDriverIdentifySimplified()                    */
 /************************************************************************/
 
-int HEIFDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
+constexpr const char *FTYP_BOX_SIGNATURE = "ftyp";
+constexpr const char *MAJOR_BRANDS[] = {"heic", "heix", "avif", "jpeg", "j2ki"};
+constexpr const char *MAJOR_BRANDS_MAYBE[] = {"mif1", "mif2"};
 
+int HEIFDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
 {
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "HEIF:"))
         return true;
@@ -42,33 +45,25 @@ int HEIFDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 12 || poOpenInfo->fpL == nullptr)
         return false;
 
-    // Simplistic test...
-    const unsigned char abySig1[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x20"
-                                    "ftypheic";
-    const unsigned char abySig2[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x18"
-                                    "ftypheic";
-    const unsigned char abySig3[] = "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x18"
-                                    "ftypmif1"
-                                    "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "\x00"
-                                    "mif1heic";
-    return (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig1)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig1, sizeof(abySig1)) == 0) ||
-           (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig2)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig2, sizeof(abySig2)) == 0) ||
-           (poOpenInfo->nHeaderBytes >= static_cast<int>(sizeof(abySig3)) &&
-            memcmp(poOpenInfo->pabyHeader, abySig3, sizeof(abySig3)) == 0);
+    if (memcmp(poOpenInfo->pabyHeader + 4, FTYP_BOX_SIGNATURE, 4) != 0)
+    {
+        return GDAL_IDENTIFY_FALSE;
+    }
+    for (const char *brand : MAJOR_BRANDS)
+    {
+        if (memcmp(poOpenInfo->pabyHeader + 8, brand, 4) == 0)
+        {
+            return GDAL_IDENTIFY_TRUE;
+        }
+    }
+    for (const char *brand : MAJOR_BRANDS_MAYBE)
+    {
+        if (memcmp(poOpenInfo->pabyHeader + 8, brand, 4) == 0)
+        {
+            return GDAL_IDENTIFY_UNKNOWN;
+        }
+    }
+    return GDAL_IDENTIFY_FALSE;
 }
 
 /************************************************************************/
@@ -81,7 +76,7 @@ void HEIFDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(
         GDAL_DMD_LONGNAME,
-        "ISO/IEC 23008-12:2017 High Efficiency Image File Format");
+        "ISO/IEC 23008-12 High Efficiency Image File Format");
     poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/heic");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/heif.html");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "heic");
@@ -93,6 +88,9 @@ void HEIFDriverSetCommonMetadata(GDALDriver *poDriver)
 
     poDriver->pfnIdentify = HEIFDriverIdentifySimplified;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
+#ifdef HAS_CUSTOM_FILE_WRITER
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
+#endif
 }
 
 /************************************************************************/
