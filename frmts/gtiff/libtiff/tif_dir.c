@@ -2262,9 +2262,11 @@ int TIFFUnlinkDirectory(TIFF *tif, tdir_t dirn)
     }
     else
     {
+        /* Need local swap because nextdir has to be used unswapped below. */
+        uint64_t nextdir64 = nextdir;
         if (tif->tif_flags & TIFF_SWAB)
-            TIFFSwabLong8(&nextdir);
-        if (!WriteOK(tif, &nextdir, sizeof(uint64_t)))
+            TIFFSwabLong8(&nextdir64);
+        if (!WriteOK(tif, &nextdir64, sizeof(uint64_t)))
         {
             TIFFErrorExtR(tif, module, "Error writing directory link");
             return (0);
