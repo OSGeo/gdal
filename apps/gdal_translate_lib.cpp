@@ -3183,11 +3183,20 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
 
 std::string GDALTranslateGetParserUsage()
 {
-    GDALTranslateOptions sOptions;
-    GDALTranslateOptionsForBinary sOptionsForBinary;
-    auto argParser =
-        GDALTranslateOptionsGetParser(&sOptions, &sOptionsForBinary);
-    return argParser->usage();
+    try
+    {
+        GDALTranslateOptions sOptions;
+        GDALTranslateOptionsForBinary sOptionsForBinary;
+        auto argParser =
+            GDALTranslateOptionsGetParser(&sOptions, &sOptionsForBinary);
+        return argParser->usage();
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                 err.what());
+        return std::string();
+    }
 }
 
 /************************************************************************/
@@ -3394,108 +3403,110 @@ GDALTranslateOptionsNew(char **papszArgv,
         }
     }
 
-    auto argParser =
-        GDALTranslateOptionsGetParser(psOptions.get(), psOptionsForBinary);
-
     try
     {
+
+        auto argParser =
+            GDALTranslateOptionsGetParser(psOptions.get(), psOptionsForBinary);
+
         argParser->parse_args_without_binary_name(aosArgv.List());
+
+        psOptions->bSetScale = argParser->is_used("-a_scale");
+        psOptions->bSetOffset = argParser->is_used("-a_offset");
+
+        if (auto adfULLR = argParser->present<std::vector<double>>("-a_ullr"))
+        {
+            CPLAssert(psOptions->adfULLR.size() == adfULLR->size());
+            for (size_t i = 0; i < adfULLR->size(); ++i)
+                psOptions->adfULLR[i] = (*adfULLR)[i];
+        }
+
+        if (auto adfGT = argParser->present<std::vector<double>>("-a_gt"))
+        {
+            CPLAssert(psOptions->adfGT.size() == adfGT->size());
+            for (size_t i = 0; i < adfGT->size(); ++i)
+                psOptions->adfGT[i] = (*adfGT)[i];
+        }
+
+        bool bOutsizeExplicitlySet = false;
+        if (auto aosOutSize =
+                argParser->present<std::vector<std::string>>("-outsize"))
+        {
+            if ((*aosOutSize)[0].back() == '%')
+                psOptions->dfOXSizePct = CPLAtofM((*aosOutSize)[0].c_str());
+            else
+                psOptions->nOXSizePixel = atoi((*aosOutSize)[0].c_str());
+
+            if ((*aosOutSize)[1].back() == '%')
+                psOptions->dfOYSizePct = CPLAtofM((*aosOutSize)[1].c_str());
+            else
+                psOptions->nOYSizePixel = atoi((*aosOutSize)[1].c_str());
+            bOutsizeExplicitlySet = true;
+        }
+
+        if (auto adfTargetRes = argParser->present<std::vector<double>>("-tr"))
+        {
+            psOptions->dfXRes = (*adfTargetRes)[0];
+            psOptions->dfYRes = fabs((*adfTargetRes)[1]);
+            if (psOptions->dfXRes == 0 || psOptions->dfYRes == 0)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Wrong value for -tr parameters.");
+                return nullptr;
+            }
+        }
+
+        if (auto adfSrcWin = argParser->present<std::vector<double>>("-srcwin"))
+        {
+            for (int i = 0; i < 4; ++i)
+                psOptions->adfSrcWin[i] = (*adfSrcWin)[i];
+        }
+
+        if (auto adfProjWin =
+                argParser->present<std::vector<double>>("-projwin"))
+        {
+            psOptions->dfULX = (*adfProjWin)[0];
+            psOptions->dfULY = (*adfProjWin)[1];
+            psOptions->dfLRX = (*adfProjWin)[2];
+            psOptions->dfLRY = (*adfProjWin)[3];
+        }
+
+        if (psOptions->nGCPCount > 0 && psOptions->bNoGCP)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "-nogcp and -gcp cannot be used as the same time");
+            return nullptr;
+        }
+
+        if (bOutsizeExplicitlySet && psOptions->nOXSizePixel == 0 &&
+            psOptions->dfOXSizePct == 0.0 && psOptions->nOYSizePixel == 0 &&
+            psOptions->dfOYSizePct == 0.0)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "-outsize %d %d invalid.",
+                     psOptions->nOXSizePixel, psOptions->nOYSizePixel);
+            return nullptr;
+        }
+
+        if (!psOptions->asScaleParams.empty() && psOptions->bUnscale)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "-scale and -unscale cannot be used as the same time");
+            return nullptr;
+        }
+
+        if (psOptionsForBinary)
+        {
+            if (!psOptions->osFormat.empty())
+                psOptionsForBinary->osFormat = psOptions->osFormat;
+        }
+
+        return psOptions.release();
     }
     catch (const std::exception &err)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", err.what());
         return nullptr;
     }
-
-    psOptions->bSetScale = argParser->is_used("-a_scale");
-    psOptions->bSetOffset = argParser->is_used("-a_offset");
-
-    if (auto adfULLR = argParser->present<std::vector<double>>("-a_ullr"))
-    {
-        CPLAssert(psOptions->adfULLR.size() == adfULLR->size());
-        for (size_t i = 0; i < adfULLR->size(); ++i)
-            psOptions->adfULLR[i] = (*adfULLR)[i];
-    }
-
-    if (auto adfGT = argParser->present<std::vector<double>>("-a_gt"))
-    {
-        CPLAssert(psOptions->adfGT.size() == adfGT->size());
-        for (size_t i = 0; i < adfGT->size(); ++i)
-            psOptions->adfGT[i] = (*adfGT)[i];
-    }
-
-    bool bOutsizeExplicitlySet = false;
-    if (auto aosOutSize =
-            argParser->present<std::vector<std::string>>("-outsize"))
-    {
-        if ((*aosOutSize)[0].back() == '%')
-            psOptions->dfOXSizePct = CPLAtofM((*aosOutSize)[0].c_str());
-        else
-            psOptions->nOXSizePixel = atoi((*aosOutSize)[0].c_str());
-
-        if ((*aosOutSize)[1].back() == '%')
-            psOptions->dfOYSizePct = CPLAtofM((*aosOutSize)[1].c_str());
-        else
-            psOptions->nOYSizePixel = atoi((*aosOutSize)[1].c_str());
-        bOutsizeExplicitlySet = true;
-    }
-
-    if (auto adfTargetRes = argParser->present<std::vector<double>>("-tr"))
-    {
-        psOptions->dfXRes = (*adfTargetRes)[0];
-        psOptions->dfYRes = fabs((*adfTargetRes)[1]);
-        if (psOptions->dfXRes == 0 || psOptions->dfYRes == 0)
-        {
-            CPLError(CE_Failure, CPLE_IllegalArg,
-                     "Wrong value for -tr parameters.");
-            return nullptr;
-        }
-    }
-
-    if (auto adfSrcWin = argParser->present<std::vector<double>>("-srcwin"))
-    {
-        for (int i = 0; i < 4; ++i)
-            psOptions->adfSrcWin[i] = (*adfSrcWin)[i];
-    }
-
-    if (auto adfProjWin = argParser->present<std::vector<double>>("-projwin"))
-    {
-        psOptions->dfULX = (*adfProjWin)[0];
-        psOptions->dfULY = (*adfProjWin)[1];
-        psOptions->dfLRX = (*adfProjWin)[2];
-        psOptions->dfLRY = (*adfProjWin)[3];
-    }
-
-    if (psOptions->nGCPCount > 0 && psOptions->bNoGCP)
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "-nogcp and -gcp cannot be used as the same time");
-        return nullptr;
-    }
-
-    if (bOutsizeExplicitlySet && psOptions->nOXSizePixel == 0 &&
-        psOptions->dfOXSizePct == 0.0 && psOptions->nOYSizePixel == 0 &&
-        psOptions->dfOYSizePct == 0.0)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "-outsize %d %d invalid.",
-                 psOptions->nOXSizePixel, psOptions->nOYSizePixel);
-        return nullptr;
-    }
-
-    if (!psOptions->asScaleParams.empty() && psOptions->bUnscale)
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "-scale and -unscale cannot be used as the same time");
-        return nullptr;
-    }
-
-    if (psOptionsForBinary)
-    {
-        if (!psOptions->osFormat.empty())
-            psOptionsForBinary->osFormat = psOptions->osFormat;
-    }
-
-    return psOptions.release();
 }
 
 /************************************************************************/

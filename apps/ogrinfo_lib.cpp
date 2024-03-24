@@ -2438,11 +2438,20 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
 
 std::string GDALVectorInfoGetParserUsage()
 {
-    GDALVectorInfoOptions sOptions;
-    GDALVectorInfoOptionsForBinary sOptionsForBinary;
-    auto argParser =
-        GDALVectorInfoOptionsGetParser(&sOptions, &sOptionsForBinary);
-    return argParser->usage();
+    try
+    {
+        GDALVectorInfoOptions sOptions;
+        GDALVectorInfoOptionsForBinary sOptionsForBinary;
+        auto argParser =
+            GDALVectorInfoOptionsGetParser(&sOptions, &sOptionsForBinary);
+        return argParser->usage();
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                 err.what());
+        return std::string();
+    }
 }
 
 /************************************************************************/
@@ -2472,135 +2481,137 @@ GDALVectorInfoOptionsNew(char **papszArgv,
 {
     auto psOptions = std::make_unique<GDALVectorInfoOptions>();
 
-    auto argParser =
-        GDALVectorInfoOptionsGetParser(psOptions.get(), psOptionsForBinary);
-
-    /* Special pre-processing to rewrite -fields=foo as "-fields" "FOO", and
-     * same for -geom=foo. */
-    CPLStringList aosArgv;
-    for (CSLConstList papszIter = papszArgv; papszIter && *papszIter;
-         ++papszIter)
-    {
-        if (STARTS_WITH(*papszIter, "-fields="))
-        {
-            aosArgv.AddString("-fields");
-            aosArgv.AddString(
-                CPLString(*papszIter + strlen("-fields=")).toupper());
-        }
-        else if (STARTS_WITH(*papszIter, "-geom="))
-        {
-            aosArgv.AddString("-geom");
-            aosArgv.AddString(
-                CPLString(*papszIter + strlen("-geom=")).toupper());
-        }
-        else
-        {
-            aosArgv.AddString(*papszIter);
-        }
-    }
-
     try
     {
+        auto argParser =
+            GDALVectorInfoOptionsGetParser(psOptions.get(), psOptionsForBinary);
+
+        /* Special pre-processing to rewrite -fields=foo as "-fields" "FOO", and
+     * same for -geom=foo. */
+        CPLStringList aosArgv;
+        for (CSLConstList papszIter = papszArgv; papszIter && *papszIter;
+             ++papszIter)
+        {
+            if (STARTS_WITH(*papszIter, "-fields="))
+            {
+                aosArgv.AddString("-fields");
+                aosArgv.AddString(
+                    CPLString(*papszIter + strlen("-fields=")).toupper());
+            }
+            else if (STARTS_WITH(*papszIter, "-geom="))
+            {
+                aosArgv.AddString("-geom");
+                aosArgv.AddString(
+                    CPLString(*papszIter + strlen("-geom=")).toupper());
+            }
+            else
+            {
+                aosArgv.AddString(*papszIter);
+            }
+        }
+
         argParser->parse_args_without_binary_name(aosArgv.List());
+
+        auto layers = argParser->present<std::vector<std::string>>("layer");
+        if (layers)
+        {
+            for (const auto &layer : *layers)
+            {
+                psOptions->aosLayers.AddString(layer.c_str());
+                psOptions->bAllLayers = false;
+            }
+        }
+
+        if (auto oSpat = argParser->present<std::vector<double>>("-spat"))
+        {
+            OGRLinearRing oRing;
+            const double dfMinX = (*oSpat)[0];
+            const double dfMinY = (*oSpat)[1];
+            const double dfMaxX = (*oSpat)[2];
+            const double dfMaxY = (*oSpat)[3];
+
+            oRing.addPoint(dfMinX, dfMinY);
+            oRing.addPoint(dfMinX, dfMaxY);
+            oRing.addPoint(dfMaxX, dfMaxY);
+            oRing.addPoint(dfMaxX, dfMinY);
+            oRing.addPoint(dfMinX, dfMinY);
+
+            auto poPolygon = std::make_unique<OGRPolygon>();
+            poPolygon->addRing(&oRing);
+            psOptions->poSpatialFilter.reset(poPolygon.release());
+        }
+
+        if (!psOptions->osWHERE.empty() && psOptions->osWHERE[0] == '@')
+        {
+            GByte *pabyRet = nullptr;
+            if (VSIIngestFile(nullptr, psOptions->osWHERE.substr(1).c_str(),
+                              &pabyRet, nullptr, 1024 * 1024))
+            {
+                GDALRemoveBOM(pabyRet);
+                psOptions->osWHERE = reinterpret_cast<const char *>(pabyRet);
+                VSIFree(pabyRet);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s",
+                         psOptions->osWHERE.substr(1).c_str());
+                return nullptr;
+            }
+        }
+
+        if (!psOptions->osSQLStatement.empty() &&
+            psOptions->osSQLStatement[0] == '@')
+        {
+            GByte *pabyRet = nullptr;
+            if (VSIIngestFile(nullptr,
+                              psOptions->osSQLStatement.substr(1).c_str(),
+                              &pabyRet, nullptr, 1024 * 1024))
+            {
+                GDALRemoveBOM(pabyRet);
+                char *pszSQLStatement = reinterpret_cast<char *>(pabyRet);
+                psOptions->osSQLStatement =
+                    GDALRemoveSQLComments(pszSQLStatement);
+                VSIFree(pabyRet);
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s",
+                         psOptions->osSQLStatement.substr(1).c_str());
+                return nullptr;
+            }
+        }
+
+        if (psOptionsForBinary)
+        {
+            psOptions->bStdoutOutput = true;
+            psOptionsForBinary->osFilename = psOptions->osFilename;
+            psOptionsForBinary->osSQLStatement = psOptions->osSQLStatement;
+        }
+
+        if (psOptions->bSummaryParser)
+            psOptions->bSummaryOnly = true;
+        else if (psOptions->bFeaturesParser)
+            psOptions->bSummaryOnly = false;
+
+        if (!psOptions->osDialect.empty() && !psOptions->osWHERE.empty() &&
+            psOptions->osSQLStatement.empty())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "-dialect is ignored with -where. Use -sql instead");
+        }
+
+        if (psOptions->eFormat == FORMAT_JSON)
+        {
+            if (psOptions->aosExtraMDDomains.empty())
+                psOptions->aosExtraMDDomains.AddString("all");
+            psOptions->bStdoutOutput = false;
+        }
+
+        return psOptions.release();
     }
     catch (const std::exception &err)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", err.what());
         return nullptr;
     }
-
-    auto layers = argParser->present<std::vector<std::string>>("layer");
-    if (layers)
-    {
-        for (const auto &layer : *layers)
-        {
-            psOptions->aosLayers.AddString(layer.c_str());
-            psOptions->bAllLayers = false;
-        }
-    }
-
-    if (auto oSpat = argParser->present<std::vector<double>>("-spat"))
-    {
-        OGRLinearRing oRing;
-        const double dfMinX = (*oSpat)[0];
-        const double dfMinY = (*oSpat)[1];
-        const double dfMaxX = (*oSpat)[2];
-        const double dfMaxY = (*oSpat)[3];
-
-        oRing.addPoint(dfMinX, dfMinY);
-        oRing.addPoint(dfMinX, dfMaxY);
-        oRing.addPoint(dfMaxX, dfMaxY);
-        oRing.addPoint(dfMaxX, dfMinY);
-        oRing.addPoint(dfMinX, dfMinY);
-
-        auto poPolygon = std::make_unique<OGRPolygon>();
-        poPolygon->addRing(&oRing);
-        psOptions->poSpatialFilter.reset(poPolygon.release());
-    }
-
-    if (!psOptions->osWHERE.empty() && psOptions->osWHERE[0] == '@')
-    {
-        GByte *pabyRet = nullptr;
-        if (VSIIngestFile(nullptr, psOptions->osWHERE.substr(1).c_str(),
-                          &pabyRet, nullptr, 1024 * 1024))
-        {
-            GDALRemoveBOM(pabyRet);
-            psOptions->osWHERE = reinterpret_cast<const char *>(pabyRet);
-            VSIFree(pabyRet);
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s",
-                     psOptions->osWHERE.substr(1).c_str());
-            return nullptr;
-        }
-    }
-
-    if (!psOptions->osSQLStatement.empty() &&
-        psOptions->osSQLStatement[0] == '@')
-    {
-        GByte *pabyRet = nullptr;
-        if (VSIIngestFile(nullptr, psOptions->osSQLStatement.substr(1).c_str(),
-                          &pabyRet, nullptr, 1024 * 1024))
-        {
-            GDALRemoveBOM(pabyRet);
-            char *pszSQLStatement = reinterpret_cast<char *>(pabyRet);
-            psOptions->osSQLStatement = GDALRemoveSQLComments(pszSQLStatement);
-            VSIFree(pabyRet);
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s",
-                     psOptions->osSQLStatement.substr(1).c_str());
-            return nullptr;
-        }
-    }
-
-    if (psOptionsForBinary)
-    {
-        psOptions->bStdoutOutput = true;
-        psOptionsForBinary->osFilename = psOptions->osFilename;
-        psOptionsForBinary->osSQLStatement = psOptions->osSQLStatement;
-    }
-
-    if (psOptions->bSummaryParser)
-        psOptions->bSummaryOnly = true;
-    else if (psOptions->bFeaturesParser)
-        psOptions->bSummaryOnly = false;
-
-    if (!psOptions->osDialect.empty() && !psOptions->osWHERE.empty() &&
-        psOptions->osSQLStatement.empty())
-    {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "-dialect is ignored with -where. Use -sql instead");
-    }
-
-    if (psOptions->eFormat == FORMAT_JSON)
-    {
-        if (psOptions->aosExtraMDDomains.empty())
-            psOptions->aosExtraMDDomains.AddString("all");
-        psOptions->bStdoutOutput = false;
-    }
-
-    return psOptions.release();
 }

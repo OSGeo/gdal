@@ -70,17 +70,29 @@ extern "C" int wmain(int argc, wchar_t **argv_w, wchar_t ** /* envp */);
             argv[i] =                                                          \
                 CPLRecodeFromWChar(argv_w[i], CPL_ENC_UCS2, CPL_ENC_UTF8);     \
         }                                                                      \
-        ARGVDestroyer argvDestroyer(argv);
-
-#define MAIN_END }
+        ARGVDestroyer argvDestroyer(argv);                                     \
+        try                                                                    \
+        {
 
 #else  // defined(_WIN32)
 
-#define MAIN_START(argc, argv) int main(int argc, char **argv)
-
-#define MAIN_END
+#define MAIN_START(argc, argv)                                                 \
+    int main(int argc, char **argv)                                            \
+    {                                                                          \
+        try                                                                    \
+        {
 
 #endif  // defined(_WIN32)
+
+#define MAIN_END                                                               \
+    }                                                                          \
+    catch (const std::exception &e)                                            \
+    {                                                                          \
+        fprintf(stderr, "Unexpected exception: %s", e.what());                 \
+        return -1;                                                             \
+    }                                                                          \
+    }
+
 #endif  // defined(__cplusplus)
 
 CPL_C_START

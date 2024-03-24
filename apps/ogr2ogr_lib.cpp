@@ -7510,7 +7510,6 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
         .remaining()
         .metavar("<layer_name>")
         .help(_("Layer name"));
-
     return argParser;
 }
 
@@ -7520,11 +7519,20 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
 
 std::string GDALVectorTranslateGetParserUsage()
 {
-    GDALVectorTranslateOptions sOptions;
-    GDALVectorTranslateOptionsForBinary sOptionsForBinary;
-    auto argParser = GDALVectorTranslateOptionsGetParser(
-        &sOptions, &sOptionsForBinary, 1, 1);
-    return argParser->usage();
+    try
+    {
+        GDALVectorTranslateOptions sOptions;
+        GDALVectorTranslateOptionsForBinary sOptionsForBinary;
+        auto argParser = GDALVectorTranslateOptionsGetParser(
+            &sOptions, &sOptionsForBinary, 1, 1);
+        return argParser->usage();
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                 err.what());
+        return std::string();
+    }
 }
 
 /************************************************************************/
@@ -7675,180 +7683,184 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
         }
     }
 
-    auto argParser = GDALVectorTranslateOptionsGetParser(
-        psOptions.get(), psOptionsForBinary, nCountClipSrc, nCountClipDst);
-
     try
     {
+        auto argParser = GDALVectorTranslateOptionsGetParser(
+            psOptions.get(), psOptionsForBinary, nCountClipSrc, nCountClipDst);
+
         // Collect non-positional arguments for VectorTranslateFrom() case
         psOptions->aosArguments =
             argParser->get_non_positional_arguments(aosArgv);
 
         argParser->parse_args_without_binary_name(aosArgv.List());
+
+        if (psOptionsForBinary)
+            psOptionsForBinary->bQuiet = psOptions->bQuiet;
+
+        if (auto oSpat = argParser->present<std::vector<double>>("-spat"))
+        {
+            OGRLinearRing oRing;
+            const double dfMinX = (*oSpat)[0];
+            const double dfMinY = (*oSpat)[1];
+            const double dfMaxX = (*oSpat)[2];
+            const double dfMaxY = (*oSpat)[3];
+
+            oRing.addPoint(dfMinX, dfMinY);
+            oRing.addPoint(dfMinX, dfMaxY);
+            oRing.addPoint(dfMaxX, dfMaxY);
+            oRing.addPoint(dfMaxX, dfMinY);
+            oRing.addPoint(dfMinX, dfMinY);
+
+            auto poSpatialFilter = std::make_shared<OGRPolygon>();
+            poSpatialFilter->addRing(&oRing);
+            psOptions->poSpatialFilter = poSpatialFilter;
+        }
+
+        if (auto oClipSrc =
+                argParser->present<std::vector<std::string>>("-clipsrc"))
+        {
+            const std::string &osVal = (*oClipSrc)[0];
+
+            psOptions->poClipSrc.reset();
+            psOptions->osClipSrcDS.clear();
+
+            VSIStatBufL sStat;
+            psOptions->bClipSrc = true;
+            if (oClipSrc->size() == 4)
+            {
+                const double dfMinX = CPLAtofM((*oClipSrc)[0].c_str());
+                const double dfMinY = CPLAtofM((*oClipSrc)[1].c_str());
+                const double dfMaxX = CPLAtofM((*oClipSrc)[2].c_str());
+                const double dfMaxY = CPLAtofM((*oClipSrc)[3].c_str());
+
+                OGRLinearRing oRing;
+
+                oRing.addPoint(dfMinX, dfMinY);
+                oRing.addPoint(dfMinX, dfMaxY);
+                oRing.addPoint(dfMaxX, dfMaxY);
+                oRing.addPoint(dfMaxX, dfMinY);
+                oRing.addPoint(dfMinX, dfMinY);
+
+                auto poPoly = std::make_shared<OGRPolygon>();
+                psOptions->poClipSrc = poPoly;
+                poPoly->addRing(&oRing);
+            }
+            else if ((STARTS_WITH_CI(osVal.c_str(), "POLYGON") ||
+                      STARTS_WITH_CI(osVal.c_str(), "MULTIPOLYGON")) &&
+                     VSIStatL(osVal.c_str(), &sStat) != 0)
+            {
+                OGRGeometry *poGeom = nullptr;
+                OGRGeometryFactory::createFromWkt(osVal.c_str(), nullptr,
+                                                  &poGeom);
+                psOptions->poClipSrc.reset(poGeom);
+                if (psOptions->poClipSrc == nullptr)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid geometry. Must be a valid POLYGON or "
+                             "MULTIPOLYGON WKT");
+                    return nullptr;
+                }
+            }
+            else if (EQUAL(osVal.c_str(), "spat_extent"))
+            {
+                // Nothing to do
+            }
+            else
+            {
+                psOptions->osClipSrcDS = osVal;
+            }
+        }
+
+        if (auto oClipDst =
+                argParser->present<std::vector<std::string>>("-clipdst"))
+        {
+            const std::string &osVal = (*oClipDst)[0];
+
+            psOptions->poClipDst.reset();
+            psOptions->osClipDstDS.clear();
+
+            VSIStatBufL sStat;
+            if (oClipDst->size() == 4)
+            {
+                const double dfMinX = CPLAtofM((*oClipDst)[0].c_str());
+                const double dfMinY = CPLAtofM((*oClipDst)[1].c_str());
+                const double dfMaxX = CPLAtofM((*oClipDst)[2].c_str());
+                const double dfMaxY = CPLAtofM((*oClipDst)[3].c_str());
+
+                OGRLinearRing oRing;
+
+                oRing.addPoint(dfMinX, dfMinY);
+                oRing.addPoint(dfMinX, dfMaxY);
+                oRing.addPoint(dfMaxX, dfMaxY);
+                oRing.addPoint(dfMaxX, dfMinY);
+                oRing.addPoint(dfMinX, dfMinY);
+
+                auto poPoly = std::make_shared<OGRPolygon>();
+                psOptions->poClipDst = poPoly;
+                poPoly->addRing(&oRing);
+            }
+            else if ((STARTS_WITH_CI(osVal.c_str(), "POLYGON") ||
+                      STARTS_WITH_CI(osVal.c_str(), "MULTIPOLYGON")) &&
+                     VSIStatL(osVal.c_str(), &sStat) != 0)
+            {
+                OGRGeometry *poGeom = nullptr;
+                OGRGeometryFactory::createFromWkt(osVal.c_str(), nullptr,
+                                                  &poGeom);
+                psOptions->poClipDst.reset(poGeom);
+                if (psOptions->poClipDst == nullptr)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid geometry. Must be a valid POLYGON or "
+                             "MULTIPOLYGON WKT");
+                    return nullptr;
+                }
+            }
+            else
+            {
+                psOptions->osClipDstDS = osVal;
+            }
+        }
+
+        auto layers = argParser->present<std::vector<std::string>>("layer");
+        if (layers)
+        {
+            for (const auto &layer : *layers)
+            {
+                psOptions->aosLayers.AddString(layer.c_str());
+            }
+        }
+        if (psOptionsForBinary)
+        {
+            psOptionsForBinary->eAccessMode = psOptions->eAccessMode;
+            psOptionsForBinary->osFormat = psOptions->osFormat;
+
+            if (!(CPLTestBool(
+                    psOptionsForBinary->aosOpenOptions.FetchNameValueDef(
+                        "NATIVE_DATA",
+                        psOptionsForBinary->aosOpenOptions.FetchNameValueDef(
+                            "@NATIVE_DATA", "TRUE")))))
+            {
+                psOptions->bNativeData = false;
+            }
+
+            if (psOptions->bNativeData &&
+                psOptionsForBinary->aosOpenOptions.FetchNameValue(
+                    "NATIVE_DATA") == nullptr &&
+                psOptionsForBinary->aosOpenOptions.FetchNameValue(
+                    "@NATIVE_DATA") == nullptr)
+            {
+                psOptionsForBinary->aosOpenOptions.AddString(
+                    "@NATIVE_DATA=YES");
+            }
+        }
+
+        return psOptions.release();
     }
     catch (const std::exception &err)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", err.what());
         return nullptr;
     }
-
-    if (psOptionsForBinary)
-        psOptionsForBinary->bQuiet = psOptions->bQuiet;
-
-    if (auto oSpat = argParser->present<std::vector<double>>("-spat"))
-    {
-        OGRLinearRing oRing;
-        const double dfMinX = (*oSpat)[0];
-        const double dfMinY = (*oSpat)[1];
-        const double dfMaxX = (*oSpat)[2];
-        const double dfMaxY = (*oSpat)[3];
-
-        oRing.addPoint(dfMinX, dfMinY);
-        oRing.addPoint(dfMinX, dfMaxY);
-        oRing.addPoint(dfMaxX, dfMaxY);
-        oRing.addPoint(dfMaxX, dfMinY);
-        oRing.addPoint(dfMinX, dfMinY);
-
-        auto poSpatialFilter = std::make_shared<OGRPolygon>();
-        poSpatialFilter->addRing(&oRing);
-        psOptions->poSpatialFilter = poSpatialFilter;
-    }
-
-    if (auto oClipSrc =
-            argParser->present<std::vector<std::string>>("-clipsrc"))
-    {
-        const std::string &osVal = (*oClipSrc)[0];
-
-        psOptions->poClipSrc.reset();
-        psOptions->osClipSrcDS.clear();
-
-        VSIStatBufL sStat;
-        psOptions->bClipSrc = true;
-        if (oClipSrc->size() == 4)
-        {
-            const double dfMinX = CPLAtofM((*oClipSrc)[0].c_str());
-            const double dfMinY = CPLAtofM((*oClipSrc)[1].c_str());
-            const double dfMaxX = CPLAtofM((*oClipSrc)[2].c_str());
-            const double dfMaxY = CPLAtofM((*oClipSrc)[3].c_str());
-
-            OGRLinearRing oRing;
-
-            oRing.addPoint(dfMinX, dfMinY);
-            oRing.addPoint(dfMinX, dfMaxY);
-            oRing.addPoint(dfMaxX, dfMaxY);
-            oRing.addPoint(dfMaxX, dfMinY);
-            oRing.addPoint(dfMinX, dfMinY);
-
-            auto poPoly = std::make_shared<OGRPolygon>();
-            psOptions->poClipSrc = poPoly;
-            poPoly->addRing(&oRing);
-        }
-        else if ((STARTS_WITH_CI(osVal.c_str(), "POLYGON") ||
-                  STARTS_WITH_CI(osVal.c_str(), "MULTIPOLYGON")) &&
-                 VSIStatL(osVal.c_str(), &sStat) != 0)
-        {
-            OGRGeometry *poGeom = nullptr;
-            OGRGeometryFactory::createFromWkt(osVal.c_str(), nullptr, &poGeom);
-            psOptions->poClipSrc.reset(poGeom);
-            if (psOptions->poClipSrc == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Invalid geometry. Must be a valid POLYGON or "
-                         "MULTIPOLYGON WKT");
-                return nullptr;
-            }
-        }
-        else if (EQUAL(osVal.c_str(), "spat_extent"))
-        {
-            // Nothing to do
-        }
-        else
-        {
-            psOptions->osClipSrcDS = osVal;
-        }
-    }
-
-    if (auto oClipDst =
-            argParser->present<std::vector<std::string>>("-clipdst"))
-    {
-        const std::string &osVal = (*oClipDst)[0];
-
-        psOptions->poClipDst.reset();
-        psOptions->osClipDstDS.clear();
-
-        VSIStatBufL sStat;
-        if (oClipDst->size() == 4)
-        {
-            const double dfMinX = CPLAtofM((*oClipDst)[0].c_str());
-            const double dfMinY = CPLAtofM((*oClipDst)[1].c_str());
-            const double dfMaxX = CPLAtofM((*oClipDst)[2].c_str());
-            const double dfMaxY = CPLAtofM((*oClipDst)[3].c_str());
-
-            OGRLinearRing oRing;
-
-            oRing.addPoint(dfMinX, dfMinY);
-            oRing.addPoint(dfMinX, dfMaxY);
-            oRing.addPoint(dfMaxX, dfMaxY);
-            oRing.addPoint(dfMaxX, dfMinY);
-            oRing.addPoint(dfMinX, dfMinY);
-
-            auto poPoly = std::make_shared<OGRPolygon>();
-            psOptions->poClipDst = poPoly;
-            poPoly->addRing(&oRing);
-        }
-        else if ((STARTS_WITH_CI(osVal.c_str(), "POLYGON") ||
-                  STARTS_WITH_CI(osVal.c_str(), "MULTIPOLYGON")) &&
-                 VSIStatL(osVal.c_str(), &sStat) != 0)
-        {
-            OGRGeometry *poGeom = nullptr;
-            OGRGeometryFactory::createFromWkt(osVal.c_str(), nullptr, &poGeom);
-            psOptions->poClipDst.reset(poGeom);
-            if (psOptions->poClipDst == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Invalid geometry. Must be a valid POLYGON or "
-                         "MULTIPOLYGON WKT");
-                return nullptr;
-            }
-        }
-        else
-        {
-            psOptions->osClipDstDS = osVal;
-        }
-    }
-
-    auto layers = argParser->present<std::vector<std::string>>("layer");
-    if (layers)
-    {
-        for (const auto &layer : *layers)
-        {
-            psOptions->aosLayers.AddString(layer.c_str());
-        }
-    }
-    if (psOptionsForBinary)
-    {
-        psOptionsForBinary->eAccessMode = psOptions->eAccessMode;
-        psOptionsForBinary->osFormat = psOptions->osFormat;
-
-        if (!(CPLTestBool(psOptionsForBinary->aosOpenOptions.FetchNameValueDef(
-                "NATIVE_DATA",
-                psOptionsForBinary->aosOpenOptions.FetchNameValueDef(
-                    "@NATIVE_DATA", "TRUE")))))
-        {
-            psOptions->bNativeData = false;
-        }
-
-        if (psOptions->bNativeData &&
-            psOptionsForBinary->aosOpenOptions.FetchNameValue("NATIVE_DATA") ==
-                nullptr &&
-            psOptionsForBinary->aosOpenOptions.FetchNameValue("@NATIVE_DATA") ==
-                nullptr)
-        {
-            psOptionsForBinary->aosOpenOptions.AddString("@NATIVE_DATA=YES");
-        }
-    }
-
-    return psOptions.release();
 }
 
 /************************************************************************/
