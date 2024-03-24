@@ -643,7 +643,7 @@ MAIN_START(nArgc, papszArgv)
 
     bool bClean = false;
     bool bPartialRefreshFromSourceTimestamp = false;
-    std::string osPartialRefeshFromSourceExtent;
+    std::string osPartialRefreshFromSourceExtent;
 
     {
         auto &group = argParser.add_mutually_exclusive_group();
@@ -665,7 +665,7 @@ MAIN_START(nArgc, papszArgv)
 
         group.add_argument("--partial-refresh-from-source-extent")
             .metavar("<filename1>[,<filenameN>]...")
-            .store_into(osPartialRefeshFromSourceExtent)
+            .store_into(osPartialRefreshFromSourceExtent)
             .help(
                 _("Performs a partial refresh of existing overviews, in the "
                   "region of interest specified by one or several filename."));
@@ -712,10 +712,10 @@ MAIN_START(nArgc, papszArgv)
     const bool bMinSizeSpecified = argParser.is_used("-minsize");
 
     CPLStringList aosSources;
-    if (!osPartialRefeshFromSourceExtent.empty())
+    if (!osPartialRefreshFromSourceExtent.empty())
     {
-        aosSources =
-            CSLTokenizeString2(osPartialRefeshFromSourceExtent.c_str(), ",", 0);
+        aosSources = CSLTokenizeString2(
+            osPartialRefreshFromSourceExtent.c_str(), ",", 0);
     }
 
     bool bPartialRefreshFromProjWin = false;

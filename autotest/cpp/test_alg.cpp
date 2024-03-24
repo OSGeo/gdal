@@ -439,7 +439,7 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
     EXPECT_TRUE(
         GDALIsLineOfSightVisible(pBand, 83, 117, 460, 83, 111, 460, nullptr));
 
-    // Horizonal line tests with hill between two points, in both directions.
+    // Horizontal line tests with hill between two points, in both directions.
     EXPECT_FALSE(
         GDALIsLineOfSightVisible(pBand, 75, 115, 192, 89, 115, 191, nullptr));
     EXPECT_FALSE(

@@ -725,7 +725,7 @@ void OGRLayer::ConvertGeomsIfNecessary(OGRFeature *poFeature)
                         if (poNewGeom)
                         {
                             poFeature->SetGeomFieldDirectly(i, poNewGeom);
-                            // If there was potential futher processing...
+                            // If there was potential further processing...
                             // poGeom = poFeature->GetGeomFieldRef(i);
                         }
                     }

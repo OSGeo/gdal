@@ -484,7 +484,7 @@ TEST_F(test_cpl, CSLTokenizeString2)
     }
 
     {
-        // Test cpl::IterateNameValue() on a list wth only invalid values
+        // Test cpl::IterateNameValue() on a list with only invalid values
         const CPLStringList aosList{"illegal"};
         CSLConstList papszList = aosList.List();
         auto oIteratorWrapper = cpl::IterateNameValue(papszList);
