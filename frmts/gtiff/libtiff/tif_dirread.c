@@ -7445,7 +7445,7 @@ static void ChopUpSingleUncompressedStrip(TIFF *tif)
     /*
      * never increase the number of rows per strip
      */
-    if (rowsperstrip >= td->td_rowsperstrip)
+    if (rowsperstrip >= td->td_rowsperstrip || rowsperstrip == 0)
         return;
     nstrips = TIFFhowmany_32(td->td_imagelength, rowsperstrip);
     if (nstrips == 0)
@@ -7541,6 +7541,8 @@ static void TryChopUpUncompressedBigTiff(TIFF *tif)
     stripbytes = rowblocksperstrip * rowblockbytes;
     assert(stripbytes <= 0x7FFFFFFFUL);
 
+    if (rowsperstrip == 0)
+        return;
     nstrips = TIFFhowmany_32(td->td_imagelength, rowsperstrip);
     if (nstrips == 0)
         return;

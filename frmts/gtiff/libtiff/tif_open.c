@@ -882,10 +882,7 @@ int TIFFIsBigEndian(TIFF *tif)
 /*
  * Return nonzero if given file is BigTIFF style.
  */
-int TIFFIsBigTIFF(TIFF *tif)
-{
-    return (tif->tif_header.common.tiff_version == TIFF_VERSION_BIG);
-}
+int TIFFIsBigTIFF(TIFF *tif) { return ((tif->tif_flags & TIFF_BIGTIFF) != 0); }
 
 /*
  * Return pointer to file read method.

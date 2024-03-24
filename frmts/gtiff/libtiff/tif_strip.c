@@ -61,6 +61,11 @@ uint32_t TIFFNumberOfStrips(TIFF *tif)
     TIFFDirectory *td = &tif->tif_dir;
     uint32_t nstrips;
 
+    if (td->td_rowsperstrip == 0)
+    {
+        TIFFWarningExtR(tif, "TIFFNumberOfStrips", "RowsPerStrip is zero");
+        return 0;
+    }
     nstrips = (td->td_rowsperstrip == (uint32_t)-1
                    ? 1
                    : TIFFhowmany_32(td->td_imagelength, td->td_rowsperstrip));
@@ -107,7 +112,8 @@ uint64_t TIFFVStripSize64(TIFF *tif, uint32_t nrows)
         if ((ycbcrsubsampling[0] != 1 && ycbcrsubsampling[0] != 2 &&
              ycbcrsubsampling[0] != 4) ||
             (ycbcrsubsampling[1] != 1 && ycbcrsubsampling[1] != 2 &&
-             ycbcrsubsampling[1] != 4))
+             ycbcrsubsampling[1] != 4) ||
+            (ycbcrsubsampling[0] == 0 || ycbcrsubsampling[1] == 0))
         {
             TIFFErrorExtR(tif, module, "Invalid YCbCr subsampling (%dx%d)",
                           ycbcrsubsampling[0], ycbcrsubsampling[1]);
@@ -267,7 +273,8 @@ uint64_t TIFFScanlineSize64(TIFF *tif)
             if (((ycbcrsubsampling[0] != 1) && (ycbcrsubsampling[0] != 2) &&
                  (ycbcrsubsampling[0] != 4)) ||
                 ((ycbcrsubsampling[1] != 1) && (ycbcrsubsampling[1] != 2) &&
-                 (ycbcrsubsampling[1] != 4)))
+                 (ycbcrsubsampling[1] != 4)) ||
+                ((ycbcrsubsampling[0] == 0) || (ycbcrsubsampling[1] == 0)))
             {
                 TIFFErrorExtR(tif, module, "Invalid YCbCr subsampling");
                 return 0;

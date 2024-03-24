@@ -1215,6 +1215,12 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif)
          * For PC 2, scale down the expected strip/tile size
          * to match a downsampled component
          */
+        if (sp->h_sampling == 0 || sp->v_sampling == 0)
+        {
+            TIFFErrorExtR(tif, module,
+                          "JPEG horizontal or vertical sampling is zero");
+            return (0);
+        }
         segment_width = TIFFhowmany_32(segment_width, sp->h_sampling);
         segment_height = TIFFhowmany_32(segment_height, sp->v_sampling);
     }
@@ -2164,6 +2170,12 @@ static int JPEGPreEncode(TIFF *tif, uint16_t s)
         /* for PC 2, scale down the strip/tile size
          * to match a downsampled component
          */
+        if (sp->h_sampling == 0 || sp->v_sampling == 0)
+        {
+            TIFFErrorExtR(tif, module,
+                          "JPEG horizontal or vertical sampling is zero");
+            return (0);
+        }
         segment_width = TIFFhowmany_32(segment_width, sp->h_sampling);
         segment_height = TIFFhowmany_32(segment_height, sp->v_sampling);
     }
