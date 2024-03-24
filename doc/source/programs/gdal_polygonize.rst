@@ -16,9 +16,10 @@ Synopsis
 .. code-block::
 
     gdal_polygonize.py [--help] [--help-general]
-                       [-8] [-o <name>=<value>]... [-nomask] [-mask <filename>] <raster_file> [-b <band>]
-                       [-q] [-f <ogr_format>] [-lco <name>=<value>]... [-overwrite]
-                       <out_file> [<layer>] [<fieldname>]
+                       [-8] [-o <name>=<value>]... [-nomask] 
+                       [-mask <filename>] <raster_file> [-b <band>]
+                       [-q] [-f <ogr_format>] [-lco <name>=<value>]...
+                       [-overwrite] <out_file> [<layer>] [<fieldname>]
 
 Description
 -----------
