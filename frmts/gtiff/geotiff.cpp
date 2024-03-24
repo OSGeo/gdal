@@ -46,6 +46,10 @@
 #include "webp/encode.h"
 #endif
 
+#ifdef LERC_SUPPORT
+#include "Lerc_c_api.h"
+#endif
+
 #define STRINGIFY(x) #x
 #define XSTRINGIFY(x) STRINGIFY(x)
 
@@ -1585,6 +1589,15 @@ void GDALRegister_GTiff()
 #endif
 
     poDriver->SetMetadataItem("LIBGEOTIFF", XSTRINGIFY(LIBGEOTIFF_VERSION));
+
+#if defined(LERC_SUPPORT) && defined(LERC_VERSION_MAJOR)
+    poDriver->SetMetadataItem("LERC_VERSION_MAJOR",
+                              XSTRINGIFY(LERC_VERSION_MAJOR), "LERC");
+    poDriver->SetMetadataItem("LERC_VERSION_MINOR",
+                              XSTRINGIFY(LERC_VERSION_MINOR), "LERC");
+    poDriver->SetMetadataItem("LERC_VERSION_PATCH",
+                              XSTRINGIFY(LERC_VERSION_PATCH), "LERC");
+#endif
 
     poDriver->SetMetadataItem(GDAL_DCAP_COORDINATE_EPOCH, "YES");
 
