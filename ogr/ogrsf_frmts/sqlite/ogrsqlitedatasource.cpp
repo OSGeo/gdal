@@ -1691,6 +1691,10 @@ bool OGRSQLiteDataSource::OpenOrCreateDB(int flagsIn,
         // that will do it with other datasets.
         CPLTestBool(CPLGetConfigOption("OGR_SQLITE_STATIC_VIRTUAL_OGR", "YES")))
     {
+        // Make sure this is done before registering our custom functions
+        // to allow overriding Spatialite.
+        InitSpatialite();
+
         m_poSQLiteModule = OGR2SQLITE_Setup(this, this);
     }
     // We need to do LoadExtensions() after OGR2SQLITE_Setup(), otherwise

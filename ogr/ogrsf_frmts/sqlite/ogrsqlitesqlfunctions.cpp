@@ -629,6 +629,53 @@ static void OGR2SQLITE_SetGeom_AndDestroy(sqlite3_context *pContext,
     delete poGeom;
 }
 
+/************************************************************************/
+/*                     OGR2SQLITE_ST_GeodesicArea()                     */
+/************************************************************************/
+
+static void OGR2SQLITE_ST_GeodesicArea(sqlite3_context *pContext, int argc,
+                                          sqlite3_value **argv)
+{
+    if (sqlite3_value_int(argv[1]) != 1)
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "ST_Area(geom, use_ellipsoid) is only supported for "
+                 "use_ellipsoid = 1");
+    }
+
+    int nSRSId = -1;
+    auto poGeom = std::unique_ptr<OGRGeometry>(
+        OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId));
+    if (poGeom != nullptr)
+    {
+        OGRSpatialReference oSRS;
+        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (nSRSId > 0)
+        {
+            if (oSRS.importFromEPSG(nSRSId) != OGRERR_NONE)
+            {
+                sqlite3_result_null(pContext);
+                return;
+            }
+        }
+        else
+        {
+            CPLDebug("OGR_SQLITE",
+                     "Assuming EPSG:4326 for GeodesicArea() computation");
+            oSRS.importFromEPSG(4326);
+        }
+        poGeom->assignSpatialReference(&oSRS);
+        sqlite3_result_double(
+            pContext,
+            OGR_G_GeodesicArea(OGRGeometry::ToHandle(poGeom.get())));
+        poGeom->assignSpatialReference(nullptr);
+    }
+    else
+    {
+        sqlite3_result_null(pContext);
+    }
+}
+
 #ifdef MINIMAL_SPATIAL_FUNCTIONS
 
 /************************************************************************/
@@ -802,12 +849,16 @@ static int CheckSTFunctions(sqlite3_context *pContext, int argc,
         delete poGeom2;                                                        \
     }
 
-OGR2SQLITE_ST_int_geomgeom_op(Intersects) OGR2SQLITE_ST_int_geomgeom_op(Equals)
-    OGR2SQLITE_ST_int_geomgeom_op(Disjoint) OGR2SQLITE_ST_int_geomgeom_op(
-        Touches) OGR2SQLITE_ST_int_geomgeom_op(Crosses)
-        OGR2SQLITE_ST_int_geomgeom_op(Within)
-            OGR2SQLITE_ST_int_geomgeom_op(Contains)
-                OGR2SQLITE_ST_int_geomgeom_op(Overlaps)
+// clang-format off
+OGR2SQLITE_ST_int_geomgeom_op(Intersects)
+OGR2SQLITE_ST_int_geomgeom_op(Equals)
+OGR2SQLITE_ST_int_geomgeom_op(Disjoint)
+OGR2SQLITE_ST_int_geomgeom_op(Touches)
+OGR2SQLITE_ST_int_geomgeom_op(Crosses)
+OGR2SQLITE_ST_int_geomgeom_op(Within)
+OGR2SQLITE_ST_int_geomgeom_op(Contains)
+OGR2SQLITE_ST_int_geomgeom_op(Overlaps)
+// clang-format on
 
 /************************************************************************/
 /*                   OGR2SQLITE_ST_int_geom_op()                        */
@@ -827,9 +878,11 @@ OGR2SQLITE_ST_int_geomgeom_op(Intersects) OGR2SQLITE_ST_int_geomgeom_op(Equals)
         delete poGeom;                                                         \
     }
 
-                    OGR2SQLITE_ST_int_geom_op(IsEmpty)
-                        OGR2SQLITE_ST_int_geom_op(IsSimple)
-                            OGR2SQLITE_ST_int_geom_op(IsValid)
+    // clang-format off
+OGR2SQLITE_ST_int_geom_op(IsEmpty)
+OGR2SQLITE_ST_int_geom_op(IsSimple)
+OGR2SQLITE_ST_int_geom_op(IsValid)
+// clang-format on
 
 /************************************************************************/
 /*                  OGR2SQLITE_ST_geom_geomgeom_op()                    */
@@ -855,11 +908,12 @@ OGR2SQLITE_ST_int_geomgeom_op(Intersects) OGR2SQLITE_ST_int_geomgeom_op(Equals)
         delete poGeom2;                                                        \
     }
 
-                                OGR2SQLITE_ST_geom_geomgeom_op(Intersection)
-                                    OGR2SQLITE_ST_geom_geomgeom_op(Difference)
-                                        OGR2SQLITE_ST_geom_geomgeom_op(Union)
-                                            OGR2SQLITE_ST_geom_geomgeom_op(
-                                                SymDifference)
+    // clang-format off
+OGR2SQLITE_ST_geom_geomgeom_op(Intersection)
+OGR2SQLITE_ST_geom_geomgeom_op(Difference)
+OGR2SQLITE_ST_geom_geomgeom_op(Union)
+OGR2SQLITE_ST_geom_geomgeom_op(SymDifference)
+    // clang-format on
 
     /************************************************************************/
     /*                      OGR2SQLITE_ST_SRID()                            */
@@ -888,11 +942,13 @@ OGR2SQLITE_ST_int_geomgeom_op(Intersects) OGR2SQLITE_ST_int_geomgeom_op(Equals)
 static void OGR2SQLITE_ST_Area(sqlite3_context *pContext, int argc,
                                sqlite3_value **argv)
 {
-    OGRGeometry *poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr);
+    int nSRSId = -1;
+    OGRGeometry *poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
     if (poGeom != nullptr)
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        sqlite3_result_double(pContext, OGR_G_Area((OGRGeometryH)poGeom));
+        sqlite3_result_double(pContext,
+                              OGR_G_Area(OGRGeometry::ToHandle(poGeom)));
         CPLPopErrorHandler();
     }
     else
@@ -1132,6 +1188,15 @@ static void *OGRSQLiteRegisterSQLFunctions(sqlite3 *hDB)
 
     if (bAllowOGRSQLiteSpatialFunctions)
     {
+        // We add a ST_Area() method with 2 arguments even when Spatialite
+        // is there to indicate we want to use the ellipsoid version
+        sqlite3_create_function(hDB, "Area", 2, UTF8_INNOCUOUS, nullptr,
+                                OGR2SQLITE_ST_GeodesicArea, nullptr,
+                                nullptr);
+        sqlite3_create_function(hDB, "ST_Area", 2, UTF8_INNOCUOUS, nullptr,
+                                OGR2SQLITE_ST_GeodesicArea, nullptr,
+                                nullptr);
+
         static bool gbRegisterMakeValid = [bSpatialiteAvailable, hDB]()
         {
             bool bRegisterMakeValid = false;
