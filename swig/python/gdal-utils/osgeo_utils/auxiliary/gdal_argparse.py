@@ -228,6 +228,9 @@ class GDALScript(ABC):
         try:
             self.doit(**kwargs)
             return 0
+        except IOError as e:
+            print(str(e), file=sys.stderr)
+            return 1
         except Exception:
             import traceback
 

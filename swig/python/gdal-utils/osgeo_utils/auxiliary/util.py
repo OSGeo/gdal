@@ -241,9 +241,18 @@ class OpenDS:
     def __enter__(self) -> gdal.Dataset:
 
         if self.ds is None:
-            self.ds = self._open_ds(self.filename, *self.args, **self.kwargs)
+            try:
+                self.ds = self._open_ds(self.filename, *self.args, **self.kwargs)
+            except Exception as e:
+                if self.silent_fail:
+                    return None
+                msg = str(e)
+                prefix = f"{self.filename}: "
+                if msg.startswith(prefix):
+                    msg = msg[len(prefix) :]
+                raise IOError(f'Could not open file "{self.filename}": {msg}')
             if self.ds is None and not self.silent_fail:
-                raise IOError('could not open file "{}"'.format(self.filename))
+                raise IOError(f'Could not open file "{self.filename}"')
             self.own = True
         return self.ds
 
