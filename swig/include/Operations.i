@@ -636,6 +636,25 @@ GDALDatasetShadow *ViewshedGenerate( GDALRasterBandShadow *srcBand,
 %clear (char **creationOptions);
 
 /************************************************************************/
+/*                         IsLineOfSightVisible()                       */
+/************************************************************************/
+
+#ifndef SWIGJAVA
+%feature( "kwargs" ) IsLineOfSightVisible;
+#endif
+%apply Pointer NONNULL {GDALRasterBandShadow *band};
+%inline %{
+bool IsLineOfSightVisible(GDALRasterBandShadow *band,
+                          int xA, int yA, double zA,
+                          int xB, int yB, double zB,
+                          char** options = NULL)
+{
+    return GDALIsLineOfSightVisible(band, xA, yA, zA, xB, yB, zB, options);
+}
+%}
+%clear GDALRasterBandShadow *band;
+
+/************************************************************************/
 /*                        AutoCreateWarpedVRT()                         */
 /************************************************************************/
 
@@ -1027,4 +1046,5 @@ GDALDatasetShadow* ApplyVerticalShiftGrid( GDALDatasetShadow *src_ds,
 }
 %}
 %clear GDALDatasetShadow *src_ds, GDALDatasetShadow *grid_ds;
+
 
