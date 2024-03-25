@@ -366,9 +366,9 @@ static double OGR2SQLITE_GetValAsDouble(sqlite3_value *val, int *pbGotVal)
 /*                      OGR2SQLITE_GetGeom()                            */
 /************************************************************************/
 
-static OGRGeometry *OGR2SQLITE_GetGeom(CPL_UNUSED sqlite3_context *pContext,
-                                       CPL_UNUSED int argc,
-                                       sqlite3_value **argv, int *pnSRSId)
+static std::unique_ptr<OGRGeometry>
+OGR2SQLITE_GetGeom(sqlite3_context * /*pContext*/, int /* argc */,
+                   sqlite3_value **argv, int *pnSRSId)
 {
     if (sqlite3_value_type(argv[0]) != SQLITE_BLOB)
     {
@@ -381,12 +381,11 @@ static OGRGeometry *OGR2SQLITE_GetGeom(CPL_UNUSED sqlite3_context *pContext,
     if (OGRSQLiteLayer::ImportSpatiaLiteGeometry(pabySLBLOB, nBLOBLen, &poGeom,
                                                  pnSRSId) != OGRERR_NONE)
     {
-        if (poGeom != nullptr)
-            delete poGeom;
+        delete poGeom;
         return nullptr;
     }
 
-    return poGeom;
+    return std::unique_ptr<OGRGeometry>(poGeom);
 }
 
 /************************************************************************/
@@ -419,18 +418,16 @@ static void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context *pContext, int argc,
     else if (argc >= 2 && sqlite3_value_type(argv[0]) == SQLITE_BLOB &&
              sqlite3_value_type(argv[1]) == SQLITE_TEXT)
     {
-        OGRGeometry *poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr);
+        auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr);
         if (poGeom != nullptr &&
             wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         {
-            OGRPoint *poPoint = poGeom->toPoint();
+            const OGRPoint *poPoint = poGeom->toPoint();
             dfLon = poPoint->getX();
             dfLat = poPoint->getY();
-            delete poGeom;
         }
         else
         {
-            delete poGeom;
             sqlite3_result_null(pContext);
             return;
         }
@@ -634,7 +631,7 @@ static void OGR2SQLITE_SetGeom_AndDestroy(sqlite3_context *pContext,
 /************************************************************************/
 
 static void OGR2SQLITE_ST_GeodesicArea(sqlite3_context *pContext, int argc,
-                                          sqlite3_value **argv)
+                                       sqlite3_value **argv)
 {
     if (sqlite3_value_int(argv[1]) != 1)
     {
@@ -644,8 +641,7 @@ static void OGR2SQLITE_ST_GeodesicArea(sqlite3_context *pContext, int argc,
     }
 
     int nSRSId = -1;
-    auto poGeom = std::unique_ptr<OGRGeometry>(
-        OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId));
+    auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
     if (poGeom != nullptr)
     {
         OGRSpatialReference oSRS;
@@ -666,8 +662,7 @@ static void OGR2SQLITE_ST_GeodesicArea(sqlite3_context *pContext, int argc,
         }
         poGeom->assignSpatialReference(&oSRS);
         sqlite3_result_double(
-            pContext,
-            OGR_G_GeodesicArea(OGRGeometry::ToHandle(poGeom.get())));
+            pContext, OGR_G_GeodesicArea(OGRGeometry::ToHandle(poGeom.get())));
         poGeom->assignSpatialReference(nullptr);
     }
     else
@@ -685,7 +680,7 @@ static void OGR2SQLITE_ST_GeodesicArea(sqlite3_context *pContext, int argc,
 static void OGR2SQLITE_ST_AsText(sqlite3_context *pContext, int argc,
                                  sqlite3_value **argv)
 {
-    OGRGeometry *poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr);
+    auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr);
     if (poGeom != nullptr)
     {
         char *pszWKT = nullptr;
@@ -693,7 +688,6 @@ static void OGR2SQLITE_ST_AsText(sqlite3_context *pContext, int argc,
             sqlite3_result_text(pContext, pszWKT, -1, CPLFree);
         else
             sqlite3_result_null(pContext);
-        delete poGeom;
     }
     else
         sqlite3_result_null(pContext);
@@ -706,8 +700,7 @@ static void OGR2SQLITE_ST_AsText(sqlite3_context *pContext, int argc,
 static void OGR2SQLITE_ST_AsBinary(sqlite3_context *pContext, int argc,
                                    sqlite3_value **argv)
 {
-    OGRGeometry *poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr);
-    if (poGeom != nullptr)
+    if (auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr))
     {
         const size_t nBLOBLen = poGeom->WkbSize();
         if (nBLOBLen > static_cast<size_t>(std::numeric_limits<int>::max()))
@@ -730,7 +723,6 @@ static void OGR2SQLITE_ST_AsBinary(sqlite3_context *pContext, int argc,
         }
         else
             sqlite3_result_null(pContext);
-        delete poGeom;
     }
     else
         sqlite3_result_null(pContext);
@@ -799,31 +791,20 @@ static void OGR2SQLITE_ST_GeomFromWKB(sqlite3_context *pContext, int argc,
 /*                         CheckSTFunctions()                           */
 /************************************************************************/
 
-static int CheckSTFunctions(sqlite3_context *pContext, int argc,
-                            sqlite3_value **argv, OGRGeometry **ppoGeom1,
-                            OGRGeometry **ppoGeom2, int *pnSRSId)
+static bool CheckSTFunctions(sqlite3_context *pContext, int argc,
+                             sqlite3_value **argv,
+                             std::unique_ptr<OGRGeometry> &poGeom1,
+                             std::unique_ptr<OGRGeometry> &poGeom2,
+                             int *pnSRSId)
 {
-    *ppoGeom1 = nullptr;
-    *ppoGeom2 = nullptr;
-
     if (argc != 2)
     {
-        return FALSE;
+        return false;
     }
 
-    *ppoGeom1 = OGR2SQLITE_GetGeom(pContext, argc, argv, pnSRSId);
-    if (*ppoGeom1 == nullptr)
-        return FALSE;
-
-    *ppoGeom2 = OGR2SQLITE_GetGeom(pContext, argc - 1, argv + 1, nullptr);
-    if (*ppoGeom2 == nullptr)
-    {
-        delete *ppoGeom1;
-        *ppoGeom1 = nullptr;
-        return FALSE;
-    }
-
-    return TRUE;
+    poGeom1 = OGR2SQLITE_GetGeom(pContext, argc, argv, pnSRSId);
+    poGeom2 = OGR2SQLITE_GetGeom(pContext, argc - 1, argv + 1, nullptr);
+    return poGeom1 && poGeom2;
 }
 
 /************************************************************************/
@@ -834,19 +815,16 @@ static int CheckSTFunctions(sqlite3_context *pContext, int argc,
     static void OGR2SQLITE_ST_##op(sqlite3_context *pContext, int argc,        \
                                    sqlite3_value **argv)                       \
     {                                                                          \
-        OGRGeometry *poGeom1 = nullptr;                                        \
-        OGRGeometry *poGeom2 = nullptr;                                        \
-        if (!CheckSTFunctions(pContext, argc, argv, &poGeom1, &poGeom2,        \
+        std::unique_ptr<OGRGeometry> poGeom1;                                  \
+        std::unique_ptr<OGRGeometry> poGeom2;                                  \
+        if (!CheckSTFunctions(pContext, argc, argv, poGeom1, poGeom2,          \
                               nullptr))                                        \
         {                                                                      \
             sqlite3_result_int(pContext, 0);                                   \
             return;                                                            \
         }                                                                      \
                                                                                \
-        sqlite3_result_int(pContext, poGeom1->op(poGeom2));                    \
-                                                                               \
-        delete poGeom1;                                                        \
-        delete poGeom2;                                                        \
+        sqlite3_result_int(pContext, poGeom1->op(poGeom2.get()));              \
     }
 
 // clang-format off
@@ -868,14 +846,11 @@ OGR2SQLITE_ST_int_geomgeom_op(Overlaps)
     static void OGR2SQLITE_ST_##op(sqlite3_context *pContext, int argc,        \
                                    sqlite3_value **argv)                       \
     {                                                                          \
-        OGRGeometry *poGeom =                                                  \
-            OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr);                 \
+        auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr);       \
         if (poGeom != nullptr)                                                 \
             sqlite3_result_int(pContext, poGeom->op());                        \
         else                                                                   \
             sqlite3_result_int(pContext, 0);                                   \
-                                                                               \
-        delete poGeom;                                                         \
     }
 
     // clang-format off
@@ -892,20 +867,18 @@ OGR2SQLITE_ST_int_geom_op(IsValid)
     static void OGR2SQLITE_ST_##op(sqlite3_context *pContext, int argc,        \
                                    sqlite3_value **argv)                       \
     {                                                                          \
-        OGRGeometry *poGeom1 = nullptr;                                        \
-        OGRGeometry *poGeom2 = nullptr;                                        \
+        std::unique_ptr<OGRGeometry> poGeom1;                                  \
+        std::unique_ptr<OGRGeometry> poGeom2;                                  \
         int nSRSId = -1;                                                       \
-        if (!CheckSTFunctions(pContext, argc, argv, &poGeom1, &poGeom2,        \
+        if (!CheckSTFunctions(pContext, argc, argv, poGeom1, poGeom2,          \
                               &nSRSId))                                        \
         {                                                                      \
             sqlite3_result_null(pContext);                                     \
             return;                                                            \
         }                                                                      \
                                                                                \
-        OGR2SQLITE_SetGeom_AndDestroy(pContext, poGeom1->op(poGeom2), nSRSId); \
-                                                                               \
-        delete poGeom1;                                                        \
-        delete poGeom2;                                                        \
+        OGR2SQLITE_SetGeom_AndDestroy(pContext, poGeom1->op(poGeom2.get()),    \
+                                      nSRSId);                                 \
     }
 
     // clang-format off
@@ -923,7 +896,7 @@ OGR2SQLITE_ST_geom_geomgeom_op(SymDifference)
                                    sqlite3_value **argv)
 {
     int nSRSId = -1;
-    OGRGeometry *poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
+    auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
     if (poGeom != nullptr)
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -932,7 +905,6 @@ OGR2SQLITE_ST_geom_geomgeom_op(SymDifference)
     }
     else
         sqlite3_result_null(pContext);
-    delete poGeom;
 }
 
 /************************************************************************/
@@ -942,18 +914,16 @@ OGR2SQLITE_ST_geom_geomgeom_op(SymDifference)
 static void OGR2SQLITE_ST_Area(sqlite3_context *pContext, int argc,
                                sqlite3_value **argv)
 {
-    int nSRSId = -1;
-    OGRGeometry *poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
+    auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr);
     if (poGeom != nullptr)
     {
         CPLPushErrorHandler(CPLQuietErrorHandler);
         sqlite3_result_double(pContext,
-                              OGR_G_Area(OGRGeometry::ToHandle(poGeom)));
+                              OGR_G_Area(OGRGeometry::ToHandle(poGeom.get())));
         CPLPopErrorHandler();
     }
     else
         sqlite3_result_null(pContext);
-    delete poGeom;
 }
 
 /************************************************************************/
@@ -964,14 +934,13 @@ static void OGR2SQLITE_ST_Buffer(sqlite3_context *pContext, int argc,
                                  sqlite3_value **argv)
 {
     int nSRSId = -1;
-    OGRGeometry *poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
+    auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
     int bGotVal = FALSE;
     double dfDist = OGR2SQLITE_GetValAsDouble(argv[1], &bGotVal);
     if (poGeom != nullptr && bGotVal)
         OGR2SQLITE_SetGeom_AndDestroy(pContext, poGeom->Buffer(dfDist), nSRSId);
     else
         sqlite3_result_null(pContext);
-    delete poGeom;
 }
 
 /************************************************************************/
@@ -1022,12 +991,11 @@ static void OGR2SQLITE_ST_MakeValid(sqlite3_context *pContext, int argc,
                                     sqlite3_value **argv)
 {
     int nSRSId = -1;
-    OGRGeometry *poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
+    auto poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, &nSRSId);
     if (poGeom != nullptr)
         OGR2SQLITE_SetGeom_AndDestroy(pContext, poGeom->MakeValid(), nSRSId);
     else
         sqlite3_result_null(pContext);
-    delete poGeom;
 }
 
 /************************************************************************/
@@ -1191,11 +1159,9 @@ static void *OGRSQLiteRegisterSQLFunctions(sqlite3 *hDB)
         // We add a ST_Area() method with 2 arguments even when Spatialite
         // is there to indicate we want to use the ellipsoid version
         sqlite3_create_function(hDB, "Area", 2, UTF8_INNOCUOUS, nullptr,
-                                OGR2SQLITE_ST_GeodesicArea, nullptr,
-                                nullptr);
+                                OGR2SQLITE_ST_GeodesicArea, nullptr, nullptr);
         sqlite3_create_function(hDB, "ST_Area", 2, UTF8_INNOCUOUS, nullptr,
-                                OGR2SQLITE_ST_GeodesicArea, nullptr,
-                                nullptr);
+                                OGR2SQLITE_ST_GeodesicArea, nullptr, nullptr);
 
         static bool gbRegisterMakeValid = [bSpatialiteAvailable, hDB]()
         {
