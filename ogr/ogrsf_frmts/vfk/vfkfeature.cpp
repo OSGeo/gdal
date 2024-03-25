@@ -84,6 +84,118 @@ void IVFKFeature::SetFID(GIntBig nFID)
 }
 
 /*!
+  \brief Compute determinant of matrix with columns x,y and z
+
+  Simple formula requires reasonable numbers
+
+  \param x first column array
+  \param y second column array
+  \param z third column array
+
+  \return double determinant value
+*/
+double IVFKFeature::GetDeterminatOfMatrixDim3(double x[3], double y[3],
+                                              double z[3])
+{
+    return x[0] * y[1] * z[2] - x[0] * z[1] * y[2] - y[0] * x[1] * z[2] +
+           y[0] * x[2] * z[1] + z[0] * x[1] * y[2] - z[0] * y[1] * x[2];
+}
+
+/*!
+  \brief Find circle center determined by three point
+
+  \param c_xy circle center coordinates array
+  \param x array of three x coordinates
+  \param y array of three x coordinates
+*/
+void IVFKFeature::GetCircleCenterFrom3Points(double c_xy[2], double x[3],
+                                             double y[3])
+{
+    /* reduce coordinates by avarage coordinate */
+    int n = 3;
+    double sum_x = 0.0f, sum_y = 0.0f;
+    for (int i = 0; i < n; i++)
+    {
+        sum_x += x[i];
+        sum_y += y[i];
+    }
+
+    const double x_t = sum_x / 3;
+    const double y_t = sum_y / 3;
+
+    double x_r[3], y_r[3];
+
+    for (int i = 0; i < n; i++)
+    {
+        x_r[i] = x[i] - x_t;
+        y_r[i] = y[i] - y_t;
+    }
+
+    /* limits to test reasonable value of determinant */
+    const double epsilon_min = 0.0001;
+    const double epsilon_max = 10000e6;
+
+    /* solve three linear equations */
+    double z[3] = {1.0, 1.0, 1.0};
+    double c[3] = {-(pow(x_r[0], 2) + pow(y_r[0], 2)),
+                   -(pow(x_r[1], 2) + pow(y_r[1], 2)),
+                   -(pow(x_r[2], 2) + pow(y_r[2], 2))};
+    const double det_A = GetDeterminatOfMatrixDim3(x_r, y_r, z);
+
+    if (epsilon_min <= std::fabs(det_A) && std::fabs(det_A) <= epsilon_max)
+    {
+        const double det_a = GetDeterminatOfMatrixDim3(c, y_r, z);
+        const double det_b = GetDeterminatOfMatrixDim3(x_r, c, z);
+        c_xy[0] = -det_a / det_A / 2 + x_t;
+        c_xy[1] = -det_b / det_A / 2 + y_t;
+    }
+    else
+    {
+        c_xy[0] = -1.0;
+        c_xy[1] = -1.0;
+    }
+}
+
+/*!
+  \brief Add points to circle geometry
+
+  \param poGeomString pointer to OGRCircularString
+  \param c_x circle center x coordinate
+  \param c_y circle center y coordinate
+  \param r circle radius
+*/
+void IVFKFeature::AddCirclePointsToGeomString(OGRCircularString &poGeomString,
+                                              double c_x, double c_y, double r)
+{
+    OGRPoint pt;
+
+    /* define first point on a circle */
+    pt.setX(c_x + r);
+    pt.setY(c_y);
+    poGeomString.addPoint(&pt);
+
+    /* define second point on a circle */
+    pt.setX(c_x);
+    pt.setY(c_y + r);
+    poGeomString.addPoint(&pt);
+
+    /* define third point on a circle */
+    pt.setX(c_x - r);
+    pt.setY(c_y);
+    poGeomString.addPoint(&pt);
+
+    /* define fourth point on a circle */
+    pt.setX(c_x);
+    pt.setY(c_y - r);
+    poGeomString.addPoint(&pt);
+
+    /* define last point (=first) on a circle */
+    pt.setX(c_x + r);
+    pt.setY(c_y);
+    poGeomString.addPoint(&pt);
+}
+
+/*!
   \brief Set feature geometry
 
   Also checks if given geometry is valid
@@ -152,10 +264,13 @@ bool IVFKFeature::SetGeometry(const OGRGeometry *poGeom, const char *ftype)
             { /* -> circle or arc */
                 auto poLS = poGeom->toLineString();
                 const int npoints = poLS->getNumPoints();
-                for (int i = 0; i < npoints; i++)
+                if (!EQUAL(ftype, "15"))
                 {
-                    poLS->getPoint(i, &pt);
-                    poGeomString.addPoint(&pt);
+                    for (int i = 0; i < npoints; i++)
+                    {
+                        poLS->getPoint(i, &pt);
+                        poGeomString.addPoint(&pt);
+                    }
                 }
                 if (EQUAL(ftype, "15"))
                 {
@@ -185,31 +300,31 @@ bool IVFKFeature::SetGeometry(const OGRGeometry *poGeom, const char *ftype)
                         y[i] = pt.getY();
                     }
 
-                    const double m1 = (x[0] + x[1]) / 2.0;
-                    const double n1 = (y[0] + y[1]) / 2.0;
+                    /* solve as 3 linear equation x^2+y^2+2ax+2by+c=0 */
+                    double c_xy[2];
+                    double r = 0.0f;
+                    GetCircleCenterFrom3Points(c_xy, x, y);
 
-                    const double m2 = (x[0] + x[2]) / 2.0;
-                    const double n2 = (y[0] + y[2]) / 2.0;
+                    /* TODO (seidlmic) how to correctly handle invalid configuration */
+                    if (c_xy[0] == -1.0f && c_xy[1] == -1.0f)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Invalid 3 points circle configuration. Can "
+                                 "not find circle center");
+                        m_bValid = false;
+                        return false;
+                    }
 
-                    const double c1 = (x[1] - x[0]) * m1 + (y[1] - y[0]) * n1;
-                    const double c2 = (x[2] - x[0]) * m2 + (y[2] - y[0]) * n2;
+                    r = pow(pow((c_xy[0] - x[0]), 2) + pow((c_xy[1] - y[0]), 2),
+                            0.5);
 
-                    const double mx = (x[1] - x[0]) * (y[2] - y[0]) +
-                                      (y[1] - y[0]) * (x[0] - x[2]);
+                    CPLDebug(
+                        "OGR-VFK",
+                        "Circle center point (ftype 15) X: %f, Y: %f, r: %f",
+                        c_xy[0], c_xy[1], r);
 
-                    const double c_x =
-                        (c1 * (y[2] - y[0]) + c2 * (y[0] - y[1])) / mx;
-                    const double c_y =
-                        (c1 * (x[0] - x[2]) + c2 * (x[1] - x[0])) / mx;
-
-                    /* compute a new intermediate point */
-                    pt.setX(c_x - (x[1] - c_x));
-                    pt.setY(c_y - (y[1] - c_y));
-                    poGeomString.addPoint(&pt);
-
-                    /* add last point */
-                    poLS->getPoint(0, &pt);
-                    poGeomString.addPoint(&pt);
+                    AddCirclePointsToGeomString(poGeomString, c_xy[0], c_xy[1],
+                                                r);
                 }
             }
             else if (strlen(ftype) > 2 && STARTS_WITH_CI(ftype, "15"))
@@ -232,30 +347,7 @@ bool IVFKFeature::SetGeometry(const OGRGeometry *poGeom, const char *ftype)
                     const double c_x = pt.getX();
                     const double c_y = pt.getY();
 
-                    /* define first point on a circle */
-                    pt.setX(c_x + r);
-                    pt.setY(c_y);
-                    poGeomString.addPoint(&pt);
-
-                    /* define second point on a circle */
-                    pt.setX(c_x);
-                    pt.setY(c_y + r);
-                    poGeomString.addPoint(&pt);
-
-                    /* define third point on a circle */
-                    pt.setX(c_x - r);
-                    pt.setY(c_y);
-                    poGeomString.addPoint(&pt);
-
-                    /* define fourth point on a circle */
-                    pt.setX(c_x);
-                    pt.setY(c_y - r);
-                    poGeomString.addPoint(&pt);
-
-                    /* define last point (=first) on a circle */
-                    pt.setX(c_x + r);
-                    pt.setY(c_y);
-                    poGeomString.addPoint(&pt);
+                    AddCirclePointsToGeomString(poGeomString, c_x, c_y, r);
                 }
             }
             else if (EQUAL(ftype, "11"))
