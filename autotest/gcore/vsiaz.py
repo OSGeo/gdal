@@ -1277,9 +1277,10 @@ def test_vsiaz_fake_test_BlobEndpointInConnectionString():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
+    # Add a trailing slash to BlobEndpoint to test bugfix for https://github.com/OSGeo/gdal/issues/9519
     with gdaltest.config_option(
         "AZURE_STORAGE_CONNECTION_STRING",
-        "DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;BlobEndpoint=http://127.0.0.1:%d/myaccount"
+        "DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;BlobEndpoint=http://127.0.0.1:%d/myaccount/"
         % gdaltest.webserver_port,
         thread_local=False,
     ):
