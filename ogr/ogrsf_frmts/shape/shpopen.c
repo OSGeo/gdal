@@ -1244,8 +1244,7 @@ SHPObject SHPAPI_CALL1(*)
                 psObject->panPartType[i] = SHPP_RING;
         }
 
-        if (psObject->panPartStart[0] != 0)
-            psObject->panPartStart[0] = 0;
+        psObject->panPartStart[0] = 0;
     }
 
     /* -------------------------------------------------------------------- */
