@@ -4266,9 +4266,25 @@ void netCDFDataset::SetProjectionFromVar(
     if (bReadSRSOnly)
         return;
 
+    // Determines the SRS to be used by the geolocation array, if any
+    std::string osGeolocWKT = SRS_WKT_WGS84_LAT_LONG;
+    if (!m_oSRS.IsEmpty())
+    {
+        OGRSpatialReference oGeogCRS;
+        oGeogCRS.CopyGeogCSFrom(&m_oSRS);
+        char *pszWKTTmp = nullptr;
+        const char *const apszOptions[] = {"FORMAT=WKT2_2019", nullptr};
+        if (oGeogCRS.exportToWkt(&pszWKTTmp, apszOptions) == OGRERR_NONE)
+        {
+            osGeolocWKT = pszWKTTmp;
+        }
+        CPLFree(pszWKTTmp);
+    }
+
     // Process geolocation arrays from CF "coordinates" attribute.
     std::string osGeolocXName, osGeolocYName;
-    if (ProcessCFGeolocation(nGroupId, nVarId, osGeolocXName, osGeolocYName))
+    if (ProcessCFGeolocation(nGroupId, nVarId, osGeolocWKT, osGeolocXName,
+                             osGeolocYName))
     {
         bool bCanCancelGT = true;
         if ((nVarDimXID != -1) && (nVarDimYID != -1))
@@ -4311,7 +4327,7 @@ void netCDFDataset::SetProjectionFromVar(
         CPLDebug("GDAL_netCDF", "using variables %s and %s for GEOLOCATION",
                  pszGeolocXFullName, pszGeolocYFullName);
 
-        GDALPamDataset::SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG,
+        GDALPamDataset::SetMetadataItem("SRS", osGeolocWKT.c_str(),
                                         "GEOLOCATION");
 
         CPLString osTMP;
@@ -4729,6 +4745,7 @@ bool netCDFDataset::ProcessNASAEMITGeoLocation(int nGroupId, int nVarId)
 }
 
 int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
+                                        const std::string &osGeolocWKT,
                                         std::string &osGeolocXNameOut,
                                         std::string &osGeolocYNameOut)
 {
@@ -4801,8 +4818,8 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
                              "using variables %s and %s for GEOLOCATION",
                              pszGeolocXFullName, pszGeolocYFullName);
 
-                    GDALPamDataset::SetMetadataItem(
-                        "SRS", SRS_WKT_WGS84_LAT_LONG, "GEOLOCATION");
+                    GDALPamDataset::SetMetadataItem("SRS", osGeolocWKT.c_str(),
+                                                    "GEOLOCATION");
 
                     CPLString osTMP;
                     osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(),

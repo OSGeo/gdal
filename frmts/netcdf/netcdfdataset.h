@@ -502,6 +502,7 @@ class netCDFDataset final : public GDALPamDataset
     bool ProcessNASAEMITGeoLocation(int nGroupId, int nVarId);
 
     int ProcessCFGeolocation(int nGroupId, int nVarId,
+                             const std::string &osGeolocWKT,
                              std::string &osGeolocXNameOut,
                              std::string &osGeolocYNameOut);
     CPLErr Set1DGeolocation(int nGroupId, int nVarId, const char *szDimName);
