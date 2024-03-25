@@ -2114,7 +2114,7 @@ Example of minimal build with the JP2OpenJPEG and SVG drivers enabled::
 
     cmake .. -UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_* \
              -DGDAL_BUILD_OPTIONAL_DRIVERS:BOOL=OFF -DOGR_BUILD_OPTIONAL_DRIVERS:BOOL=OFF \
-             -DGDAL_ENABLE_DRIVER_JP2OPENPEG:BOOL=ON \
+             -DGDAL_ENABLE_DRIVER_JP2OPENJPEG:BOOL=ON \
              -DOGR_ENABLE_DRIVER_SVG:BOOL=ON
 
 Build drivers as plugins
@@ -2161,7 +2161,7 @@ Example of build with all potential drivers as plugins, except the JP2OpenJPEG o
 
     cmake .. -UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_* \
              -DGDAL_ENABLE_PLUGINS:BOOL=ON \
-             -DGDAL_ENABLE_DRIVER_JP2OPENPEG_PLUGIN:BOOL=OFF
+             -DGDAL_ENABLE_DRIVER_JP2OPENJPEG_PLUGIN:BOOL=OFF
 
 There is a subtelty regarding ``GDAL_ENABLE_PLUGINS:BOOL=ON``. It only controls
 the plugin status of plugin-capable drivers that have external dependencies,
