@@ -2586,18 +2586,10 @@ static void AttachMetadata(GDALDatasetH hDS,
                            const CPLStringList &aosMetadataOptions)
 
 {
-    const int nCount = aosMetadataOptions.size();
-
-    for (int i = 0; i < nCount; i++)
+    for (const auto &[pszKey, pszValue] :
+         cpl::IterateNameValue(aosMetadataOptions))
     {
-        char *pszKey = nullptr;
-        const char *pszValue =
-            CPLParseNameValue(aosMetadataOptions[i], &pszKey);
-        if (pszKey && pszValue)
-        {
-            GDALSetMetadataItem(hDS, pszKey, pszValue, nullptr);
-        }
-        CPLFree(pszKey);
+        GDALSetMetadataItem(hDS, pszKey, pszValue, nullptr);
     }
 }
 
@@ -2609,9 +2601,7 @@ static void AttachDomainMetadata(GDALDatasetH hDS,
                                  const CPLStringList &aosDomainMetadataOptions)
 
 {
-    const int nCount = aosDomainMetadataOptions.size();
-
-    for (int i = 0; i < nCount; i++)
+    for (const char *pszStr : aosDomainMetadataOptions)
     {
 
         char *pszKey = nullptr;
@@ -2619,7 +2609,7 @@ static void AttachDomainMetadata(GDALDatasetH hDS,
 
         // parse the DOMAIN:KEY=value, Remainder is KEY=value
         const char *pszRemainder =
-            CPLParseNameValueSep(aosDomainMetadataOptions[i], &pszDomain, ':');
+            CPLParseNameValueSep(pszStr, &pszDomain, ':');
 
         if (pszDomain && pszRemainder)
         {

@@ -4034,3 +4034,25 @@ def test_gdalwarp_lib_no_crash_on_none_dst():
     ds1 = gdal.Open("../gcore/data/byte.tif")
     with pytest.raises(ValueError):
         gdal.Warp(None, ds1)
+
+
+###############################################################################
+# Test conflicting source metadata
+
+
+def test_gdalwarp_lib_conflicting_source_metadata(tmp_vsimem):
+
+    src_ds1 = gdal.Translate(
+        "", "../gcore/data/byte.tif", options="-of MEM -mo FOO=BAR -mo BAR=BAZ"
+    )
+    src_ds2 = gdal.Translate(
+        "", "../gcore/data/byte.tif", options="-of MEM -mo FOO=BAZ -mo BAR=BAZ"
+    )
+
+    out_ds = gdal.Warp("", [src_ds1, src_ds2], format="MEM")
+    assert out_ds.GetMetadataItem("FOO") == "*"
+    assert out_ds.GetMetadataItem("BAR") == "BAZ"
+
+    out_ds = gdal.Warp("", [src_ds1, src_ds2], options="-of MEM -cvmd conflicting")
+    assert out_ds.GetMetadataItem("FOO") == "conflicting"
+    assert out_ds.GetMetadataItem("BAR") == "BAZ"

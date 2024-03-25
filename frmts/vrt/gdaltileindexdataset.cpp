@@ -1769,11 +1769,11 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         // Set on the dataset all metadata items from the index layer which are
         // not "reserved" keywords.
-        char **papszLayerMD = m_poLayer->GetMetadata();
-        for (CSLConstList papszIter = papszLayerMD; papszIter && *papszIter;
-             ++papszIter)
+        CSLConstList papszLayerMD = m_poLayer->GetMetadata();
+        for (const auto &[pszKey, pszValue] :
+             cpl::IterateNameValue(papszLayerMD))
         {
-            if (STARTS_WITH_CI(*papszIter, "OVERVIEW_"))
+            if (STARTS_WITH_CI(pszKey, "OVERVIEW_"))
             {
                 continue;
             }
@@ -1781,8 +1781,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             bool bIsVRTItem = false;
             for (const char *pszTest : apszTIOptions)
             {
-                if (STARTS_WITH(*papszIter, pszTest) &&
-                    (*papszIter)[strlen(pszTest)] == '=')
+                if (EQUAL(pszKey, pszTest))
                 {
                     bIsVRTItem = true;
                     break;
@@ -1790,47 +1789,34 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             }
             if (!bIsVRTItem)
             {
-                if (STARTS_WITH_CI(*papszIter, "BAND_"))
+                if (STARTS_WITH_CI(pszKey, "BAND_"))
                 {
-                    const int nBandNr = atoi(*papszIter + strlen("BAND_"));
+                    const int nBandNr = atoi(pszKey + strlen("BAND_"));
                     const char *pszNextUnderscore =
-                        strchr(*papszIter + strlen("BAND_"), '_');
+                        strchr(pszKey + strlen("BAND_"), '_');
                     if (pszNextUnderscore && nBandNr >= 1 && nBandNr <= nBands)
                     {
-                        char *pszKey = nullptr;
-                        const char *pszValue =
-                            CPLParseNameValue(pszNextUnderscore + 1, &pszKey);
-                        if (pszKey && pszValue)
+                        const char *pszKeyWithoutBand = pszNextUnderscore + 1;
+                        bool bIsReservedBandItem = false;
+                        for (const char *pszItem : apszReservedBandItems)
                         {
-                            bool bIsReservedBandItem = false;
-                            for (const char *pszItem : apszReservedBandItems)
+                            if (EQUAL(pszKeyWithoutBand, pszItem))
                             {
-                                if (EQUAL(pszKey, pszItem))
-                                {
-                                    bIsReservedBandItem = true;
-                                    break;
-                                }
-                            }
-                            if (!bIsReservedBandItem)
-                            {
-                                GetRasterBand(nBandNr)
-                                    ->GDALRasterBand::SetMetadataItem(pszKey,
-                                                                      pszValue);
+                                bIsReservedBandItem = true;
+                                break;
                             }
                         }
-                        CPLFree(pszKey);
+                        if (!bIsReservedBandItem)
+                        {
+                            GetRasterBand(nBandNr)
+                                ->GDALRasterBand::SetMetadataItem(
+                                    pszKeyWithoutBand, pszValue);
+                        }
                     }
                 }
                 else
                 {
-                    char *pszKey = nullptr;
-                    const char *pszValue =
-                        CPLParseNameValue(*papszIter, &pszKey);
-                    if (pszKey && pszValue)
-                    {
-                        GDALDataset::SetMetadataItem(pszKey, pszValue);
-                    }
-                    CPLFree(pszKey);
+                    GDALDataset::SetMetadataItem(pszKey, pszValue);
                 }
             }
         }

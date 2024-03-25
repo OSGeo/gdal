@@ -650,7 +650,7 @@ GDALVectorInfoPrintMetadata(CPLString &osRet, CPLJSONObject &oMetadata,
     else if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "json:"))
         bMDIsJson = true;
 
-    char **papszMetadata = GDALGetMetadata(hObject, pszDomain);
+    CSLConstList papszMetadata = GDALGetMetadata(hObject, pszDomain);
     if (CSLCount(papszMetadata) > 0)
     {
         CPLJSONObject oMetadataDomain;
@@ -1056,33 +1056,27 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                              oCoordPrec.oFormatSpecificOptions)
                         {
                             CPLJSONObject oThisFormatSpecificOptions;
-                            for (int i = 0; i < formatOptionsPair.second.size();
-                                 ++i)
+                            for (const auto &[pszKey, pszValue] :
+                                 cpl::IterateNameValue(
+                                     formatOptionsPair.second))
                             {
-                                char *pszKey = nullptr;
-                                const char *pszValue = CPLParseNameValue(
-                                    formatOptionsPair.second[i], &pszKey);
-                                if (pszKey && pszValue)
+                                const auto eValueType =
+                                    CPLGetValueType(pszValue);
+                                if (eValueType == CPL_VALUE_INTEGER)
                                 {
-                                    const auto eValueType =
-                                        CPLGetValueType(pszValue);
-                                    if (eValueType == CPL_VALUE_INTEGER)
-                                    {
-                                        oThisFormatSpecificOptions.Add(
-                                            pszKey, CPLAtoGIntBig(pszValue));
-                                    }
-                                    else if (eValueType == CPL_VALUE_REAL)
-                                    {
-                                        oThisFormatSpecificOptions.Add(
-                                            pszKey, CPLAtof(pszValue));
-                                    }
-                                    else
-                                    {
-                                        oThisFormatSpecificOptions.Add(
-                                            pszKey, pszValue);
-                                    }
+                                    oThisFormatSpecificOptions.Add(
+                                        pszKey, CPLAtoGIntBig(pszValue));
                                 }
-                                CPLFree(pszKey);
+                                else if (eValueType == CPL_VALUE_REAL)
+                                {
+                                    oThisFormatSpecificOptions.Add(
+                                        pszKey, CPLAtof(pszValue));
+                                }
+                                else
+                                {
+                                    oThisFormatSpecificOptions.Add(pszKey,
+                                                                   pszValue);
+                                }
                             }
                             oFormatSpecificOptions.Add(
                                 formatOptionsPair.first,
