@@ -1681,7 +1681,7 @@ the :ref:`vector.pg` and :ref:`raster.postgisraster` drivers.
 PROJ
 ****
 
-`PROJ <https://github.com/OSGeo/PROJ/>`_ >= 6 is a *required* dependency for GDAL.
+`PROJ <https://github.com/OSGeo/PROJ/>`_ >= 6.3 is a *required* dependency for GDAL.
 
 .. option:: PROJ_INCLUDE_DIR
 
@@ -1693,6 +1693,17 @@ PROJ
     ``libproj.so``, ``proj.lib``, or other name. A similar variable
     ``PROJ_LIBRARY_DEBUG`` can also be specified to a similar library for
     building Debug releases.
+
+.. option:: GDAL_FIND_PACKAGE_PROJ_MODE=CUSTOM/MODULE/CONFIG/empty string
+
+    .. versionadded:: 3.9
+
+    Control the mode used for find_package(PROJ).
+    Alters how the default CMake seach logic
+    (https://cmake.org/cmake/help/latest/command/find_package.html) applies.
+    Defaults to CUSTOM, where the CONFIG mode is applied for PROJ >= 8, and
+    fallbacks to default MODULE mode otherwise.
+    Other values are passed directly to find_package()
 
 QHULL
 *****
