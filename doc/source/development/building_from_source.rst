@@ -1510,6 +1510,15 @@ JPEG-2000 codec written in C language. It is required for the
 
     Control whether to use OpenJPEG. Defaults to ON when OpenJPEG is found.
 
+.. option:: GDAL_FIND_PACKAGE_OpenJPEG_MODE=MODULE/CONFIG/empty string
+
+    .. versionadded:: 3.9
+
+    Control the mode used for find_package(OpenJPEG). Defaults to MODULE
+    for compatibility with OpenJPEG < 2.5.1. If set to CONFIG, only Config mode
+    search is attempted. If set to empty string, default CMake logic
+    (https://cmake.org/cmake/help/latest/command/find_package.html) applies.
+
 
 OpenSSL
 *******
