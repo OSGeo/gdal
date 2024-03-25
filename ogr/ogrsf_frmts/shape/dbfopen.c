@@ -1355,8 +1355,14 @@ static bool DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
             if (psDBF->panFieldSize[iField] >= 1 &&
                 (*STATIC_CAST(char *, pValue) == 'F' ||
                  *STATIC_CAST(char *, pValue) == 'T'))
+            {
                 *(pabyRec + psDBF->panFieldOffset[iField]) =
                     *STATIC_CAST(char *, pValue);
+            }
+            else
+            {
+                nRetResult = false;
+            }
             break;
 
         default:
@@ -1473,7 +1479,7 @@ int SHPAPI_CALL DBFWriteDoubleAttribute(DBFHandle psDBF, int iRecord,
 /************************************************************************/
 /*                      DBFWriteIntegerAttribute()                      */
 /*                                                                      */
-/*      Write a integer attribute.                                      */
+/*      Write an integer attribute.                                     */
 /************************************************************************/
 
 int SHPAPI_CALL DBFWriteIntegerAttribute(DBFHandle psDBF, int iRecord,
@@ -1502,7 +1508,7 @@ int SHPAPI_CALL DBFWriteStringAttribute(DBFHandle psDBF, int iRecord,
 /************************************************************************/
 /*                      DBFWriteNULLAttribute()                         */
 /*                                                                      */
-/*      Write a string attribute.                                       */
+/*      Write a NULL attribute.                                         */
 /************************************************************************/
 
 int SHPAPI_CALL DBFWriteNULLAttribute(DBFHandle psDBF, int iRecord, int iField)
@@ -1620,13 +1626,15 @@ const char SHPAPI_CALL1(*) DBFReadTuple(DBFHandle psDBF, int hEntity)
 /************************************************************************/
 /*                          DBFCloneEmpty()                             */
 /*                                                                      */
-/*      Read one of the attribute fields of a record.                   */
+/*      Create a new .dbf file with same code page and field            */
+/*      definitions as the given handle.                                */
 /************************************************************************/
 
 DBFHandle SHPAPI_CALL DBFCloneEmpty(const DBFHandle psDBF,
                                     const char *pszFilename)
 {
-    DBFHandle newDBF = DBFCreateEx(pszFilename, psDBF->pszCodePage);
+    DBFHandle newDBF =
+        DBFCreateLL(pszFilename, psDBF->pszCodePage, &psDBF->sHooks);
     if (newDBF == SHPLIB_NULLPTR)
         return SHPLIB_NULLPTR;
 
@@ -2138,7 +2146,6 @@ int SHPAPI_CALL DBFAlterFieldDefn(DBFHandle psDBF, int iField,
         char *pszOldField =
             STATIC_CAST(char *, malloc(sizeof(char) * (nOldWidth + 1)));
 
-        /* cppcheck-suppress uninitdata */
         pszOldField[nOldWidth] = 0;
 
         /* move records to their new positions */
@@ -2216,7 +2223,6 @@ int SHPAPI_CALL DBFAlterFieldDefn(DBFHandle psDBF, int iField,
         char *pszOldField =
             STATIC_CAST(char *, malloc(sizeof(char) * (nOldWidth + 1)));
 
-        /* cppcheck-suppress uninitdata */
         pszOldField[nOldWidth] = 0;
 
         /* move records to their new positions */
