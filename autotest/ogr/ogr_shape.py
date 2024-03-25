@@ -6066,3 +6066,49 @@ def test_ogr_shape_arrow_stream_fid_optim(tmp_vsimem):
         == "YES"
     )
     assert len(batches) == 0
+
+
+###############################################################################
+# Test DBF Logical field type
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_shape_logical_field(tmp_vsimem):
+
+    filename = tmp_vsimem / "test_ogr_shape_logical_field.shp"
+    ds = gdal.GetDriverByName("ESRI Shapefile").Create(
+        filename, 0, 0, 0, gdal.GDT_Unknown
+    )
+    lyr = ds.CreateLayer("test")
+    fld_defn = ogr.FieldDefn("bool_field", ogr.OFTInteger)
+    fld_defn.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(fld_defn)
+    lyr.CreateField(ogr.FieldDefn("int_field", ogr.OFTInteger))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["bool_field"] = True
+    f["int_field"] = 1234
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["bool_field"] = False
+    f["int_field"] = -1234
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["bool_field"] = None
+    lyr.CreateFeature(f)
+    f = None
+    ds.Close()
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fld_defn.GetType() == ogr.OFTInteger
+    assert fld_defn.GetSubType() == ogr.OFSTBoolean
+    assert fld_defn.GetWidth() == 1
+    f = lyr.GetNextFeature()
+    assert f["bool_field"] == True
+    assert f["int_field"] == 1234
+    f = lyr.GetNextFeature()
+    assert f["bool_field"] == False
+    assert f["int_field"] == -1234
+    f = lyr.GetNextFeature()
+    assert f["bool_field"] is None
