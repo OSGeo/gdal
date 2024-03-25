@@ -112,7 +112,7 @@ jobs:
     - name: Restore build cache
       if: matrix.language == 'c-cpp'
       id: restore-cache
-      uses: actions/cache/restore@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
+      uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
       with:
         path: ${{ github.workspace }}/.ccache
         key: ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-${{ github.run_id }}
@@ -143,7 +143,7 @@ jobs:
 
     - name: Save build cache
       if: matrix.language == 'c-cpp'
-      uses: actions/cache/save@ab5e6d0c87105b4c9c2047343972218f562e4319 # v4.0.1
+      uses: actions/cache/save@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
       with:
         path: ${{ github.workspace }}/.ccache
         key: ${{ steps.restore-cache.outputs.cache-primary-key }}
