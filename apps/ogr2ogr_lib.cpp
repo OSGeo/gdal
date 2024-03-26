@@ -7594,8 +7594,8 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
 
     CPLStringList aosArgv;
     const int nArgc = CSLCount(papszArgv);
-    int nCountClipSrc = 1;
-    int nCountClipDst = 1;
+    int nCountClipSrc = 0;
+    int nCountClipDst = 0;
     for (int i = 0;
          i < nArgc && papszArgv != nullptr && papszArgv[i] != nullptr; i++)
     {
@@ -7639,9 +7639,16 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
 
         else if (EQUAL(papszArgv[i], "-clipsrc"))
         {
+            if (nCountClipSrc)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Duplicate argument %s",
+                         papszArgv[i]);
+                return nullptr;
+            }
             // argparse doesn't handle well variable number of values
             // just before the positional arguments, so we have to detect
             // it manually and set the correct number.
+            nCountClipSrc = 1;
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             if (CPLGetValueType(papszArgv[i + 1]) != CPL_VALUE_STRING &&
                 i + 4 < nArgc)
@@ -7659,9 +7666,16 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
 
         else if (EQUAL(papszArgv[i], "-clipdst"))
         {
+            if (nCountClipDst)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Duplicate argument %s",
+                         papszArgv[i]);
+                return nullptr;
+            }
             // argparse doesn't handle well variable number of values
             // just before the positional arguments, so we have to detect
             // it manually and set the correct number.
+            nCountClipDst = 1;
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             if (CPLGetValueType(papszArgv[i + 1]) != CPL_VALUE_STRING &&
                 i + 4 < nArgc)
