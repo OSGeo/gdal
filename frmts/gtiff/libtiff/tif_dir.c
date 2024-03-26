@@ -1652,6 +1652,16 @@ void TIFFFreeDirectory(TIFF *tif)
 
     _TIFFmemset(&(td->td_stripoffset_entry), 0, sizeof(TIFFDirEntry));
     _TIFFmemset(&(td->td_stripbytecount_entry), 0, sizeof(TIFFDirEntry));
+
+    /* Reset some internal parameters for IFD data size checking. */
+    tif->tif_dir.td_dirdatasize_read = 0;
+    tif->tif_dir.td_dirdatasize_write = 0;
+    if (tif->tif_dir.td_dirdatasize_offsets != NULL)
+    {
+        _TIFFfreeExt(tif, tif->tif_dir.td_dirdatasize_offsets);
+        tif->tif_dir.td_dirdatasize_offsets = NULL;
+        tif->tif_dir.td_dirdatasize_Noffsets = 0;
+    }
 }
 #undef CleanupField
 

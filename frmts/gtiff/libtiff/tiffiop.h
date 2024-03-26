@@ -168,7 +168,7 @@ struct tiff
     uint64_t tif_curoff;        /* current offset for read/write */
     uint64_t tif_lastvalidoff;  /* last valid offset allowed for rewrite in
                                    place. Used only by TIFFAppendToStrip() */
-    uint64_t tif_dataoff;       /* current offset for writing dir */
+    uint64_t tif_dataoff;       /* current offset for writing dir (IFD) */
     /* SubIFD support */
     uint16_t tif_nsubifd;   /* remaining subifds to write */
     uint64_t tif_subifdoff; /* offset for patching SubIFD link */
