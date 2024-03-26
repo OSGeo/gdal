@@ -288,7 +288,32 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
     }
 
-    void *pBufferedData = nullptr;
+    // Cleanup data cached by below CacheMultiRange() call.
+    struct BufferedDataFreer
+    {
+        void *m_pBufferedData = nullptr;
+        TIFF *m_hTIFF = nullptr;
+
+        void Init(void *pBufferedData, TIFF *hTIFF)
+        {
+            m_pBufferedData = pBufferedData;
+            m_hTIFF = hTIFF;
+        }
+
+        ~BufferedDataFreer()
+        {
+            if (m_pBufferedData)
+            {
+                VSIFree(m_pBufferedData);
+                VSI_TIFFSetCachedRanges(TIFFClientdata(m_hTIFF), 0, nullptr,
+                                        nullptr, nullptr);
+            }
+        }
+    };
+
+    // bufferedDataFreer must be left in this scope !
+    BufferedDataFreer bufferedDataFreer;
+
     if (m_poGDS->eAccess == GA_ReadOnly && eRWFlag == GF_Read &&
         m_poGDS->HasOptimizedReadMultiRange())
     {
@@ -302,7 +327,6 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         {
             bCanUseMultiThreadedRead = false;
             GTiffRasterBand *poBandForCache = this;
-
             if (!m_poGDS->m_bStreamingIn && m_poGDS->m_bBlockOrderRowMajor &&
                 m_poGDS->m_bLeaderSizeAsUInt4 &&
                 m_poGDS->m_bMaskInterleavedWithImagery &&
@@ -311,8 +335,10 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 poBandForCache = cpl::down_cast<GTiffRasterBand *>(
                     m_poGDS->m_poImageryDS->GetRasterBand(1));
             }
-            pBufferedData = poBandForCache->CacheMultiRange(
-                nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, psExtraArg);
+            bufferedDataFreer.Init(poBandForCache->CacheMultiRange(
+                                       nXOff, nYOff, nXSize, nYSize, nBufXSize,
+                                       nBufYSize, psExtraArg),
+                                   poBandForCache->m_poGDS->m_hTIFF);
         }
     }
 
@@ -455,13 +481,6 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         --m_poGDS->m_nJPEGOverviewVisibilityCounter;
 
     m_poGDS->m_bLoadingOtherBands = false;
-
-    if (pBufferedData)
-    {
-        VSIFree(pBufferedData);
-        VSI_TIFFSetCachedRanges(TIFFClientdata(m_poGDS->m_hTIFF), 0, nullptr,
-                                nullptr, nullptr);
-    }
 
     return eErr;
 }
