@@ -133,7 +133,13 @@ jobs:
       run: |
           mkdir build
           cd build
+          # LD_PRELOAD is initially set to something like /opt/hostedtoolcache/CodeQL/2.16.5/x64/codeql/tools/linux64/lib64trace.so
+          # To avoid CodeQL to trigger during CMake time, in particular during HDF5 detection which is terribly slow (https://github.com/OSGeo/gdal/issues/9549), we temporarily rename that file
+          export LD_PRELOAD_RESOLVED=$(env | grep LD_PRELOAD | sed "s/LD_PRELOAD=//")
+          echo "$LD_PRELOAD_RESOLVED"
+          sudo mv "$LD_PRELOAD_RESOLVED" "$LD_PRELOAD_RESOLVED.disabled"
           cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_CCACHE=YES -DGDAL_USE_LERC_INTERNAL=OFF
+          sudo mv "$LD_PRELOAD_RESOLVED.disabled" "$LD_PRELOAD_RESOLVED"
           make -j$(nproc)
 
     - name: Summarize ccache
