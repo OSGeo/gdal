@@ -5101,3 +5101,41 @@ def test_tiff_read_webp_lossless_rgba_alpha_fully_opaque():
         4672,
         4873,
     ]
+
+
+###############################################################################
+# Test complex scenario of https://github.com/OSGeo/gdal/issues/9563
+
+
+@pytest.mark.require_creation_option("GTiff", "JPEG")
+def test_tiff_read_jpeg_cached_multi_range_issue_9563(tmp_vsimem):
+
+    blank = str(tmp_vsimem / "blank.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        blank, 128, 128, 3, options=["SPARSE_OK=YES"]
+    )
+    ds.SetGeoTransform(
+        [
+            -91.42822265625,
+            (-91.40625 - -91.42822265625) / 128,
+            0,
+            15.205078125,
+            0,
+            (15.18310546875 - 15.205078125) / 128,
+        ]
+    )
+    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
+        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    ds = None
+
+    cog = str(tmp_vsimem / "cog.tif")
+    gdal.Translate(cog, blank, options="-f COG -co COMPRESS=JPEG")
+
+    vrt = str(tmp_vsimem / "vrt.vrt")
+    gdal.BuildVRT(
+        vrt, [cog], options="-te -91.494140625 15.1171875 -91.40625 15.205078125"
+    )
+
+    out = str(tmp_vsimem / "out.tif")
+    with gdal.config_option("GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE", "YES"):
+        gdal.Translate(out, vrt, options="-tr 0.000071806 0.000071806 -f COG")
