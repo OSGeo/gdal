@@ -111,39 +111,47 @@ def doit(
         print("No color table on file ", pct_filename)
         return None, 1
 
-    # =============================================================================
-    # Create a MEM clone of the source file.
-    # =============================================================================
-
-    src_ds = open_ds(src_filename)
-
-    mem_ds = gdal.GetDriverByName("MEM").CreateCopy("mem", src_ds)
-
-    # =============================================================================
-    # Assign the color table in memory.
-    # =============================================================================
-
-    mem_ds.GetRasterBand(1).SetRasterColorTable(ct)
-    mem_ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
-
-    # =============================================================================
-    # Write the dataset to the output file.
-    # =============================================================================
-
+    # Figure out destination driver
     if not driver_name:
         driver_name = GetOutputDriverFor(dst_filename)
 
     dst_driver = gdal.GetDriverByName(driver_name)
     if dst_driver is None:
-        print('"%s" driver not registered.' % driver_name)
+        print(f'"{driver_name}" driver not registered.')
         return None, 1
 
-    if driver_name.upper() == "MEM":
-        out_ds = mem_ds
-    else:
-        out_ds = dst_driver.CreateCopy(dst_filename or "", mem_ds)
+    src_ds = open_ds(src_filename)
+    if src_ds is None:
+        print(f"Cannot open {src_filename}")
+        return None, 1
 
-    mem_ds = None
+    if driver_name.upper() == "VRT":
+        # For VRT, create the VRT first from the source dataset, so it
+        # correctly referes to it
+        out_ds = dst_driver.CreateCopy(dst_filename or "", src_ds)
+        if out_ds is None:
+            print(f"Cannot create {dst_filename}")
+            return None, 1
+
+        # And now assign the color table to the VRT
+        out_ds.GetRasterBand(1).SetRasterColorTable(ct)
+        out_ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
+    else:
+        # Create a MEM clone of the source file.
+        mem_ds = gdal.GetDriverByName("MEM").CreateCopy("mem", src_ds)
+
+        # Assign the color table in memory.
+        mem_ds.GetRasterBand(1).SetRasterColorTable(ct)
+        mem_ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
+
+        # Write the dataset to the output file.
+        if driver_name.upper() == "MEM":
+            out_ds = mem_ds
+        else:
+            out_ds = dst_driver.CreateCopy(dst_filename or "", mem_ds)
+
+        mem_ds = None
+
     src_ds = None
 
     return out_ds, 0
