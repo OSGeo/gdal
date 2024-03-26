@@ -56,20 +56,6 @@ def open_for_read(uri):
 @pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
 
-    # Unset all env vars that could influence the tests
-    az_vars = {}
-    for var, reset_val in (
-        ("AZURE_STORAGE_CONNECTION_STRING", None),
-        ("AZURE_STORAGE_ACCOUNT", None),
-        ("AZURE_STORAGE_ACCESS_KEY", None),
-        ("AZURE_STORAGE_SAS_TOKEN", None),
-        ("AZURE_NO_SIGN_REQUEST", None),
-        ("AZURE_CONFIG_DIR", ""),
-        ("AZURE_STORAGE_ACCESS_TOKEN", ""),
-    ):
-        az_vars[var] = gdal.GetConfigOption(var)
-        gdal.SetConfigOption(var, reset_val)
-
     with gdaltest.config_option("CPL_AZURE_VM_API_ROOT_URL", "disabled"):
         assert gdal.GetSignedURL("/vsiadls/foo/bar") is None
 
@@ -82,25 +68,26 @@ def startup_and_cleanup():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
-    gdal.SetConfigOption(
-        "AZURE_STORAGE_CONNECTION_STRING",
-        "DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;BlobEndpoint=http://127.0.0.1:%d/azure/blob/myaccount"
-        % gdaltest.webserver_port,
-    )
-    gdal.SetConfigOption("AZURE_STORAGE_ACCOUNT", "")
-    gdal.SetConfigOption("AZURE_STORAGE_ACCESS_KEY", "")
-    gdal.SetConfigOption("CPL_AZURE_TIMESTAMP", "my_timestamp")
-
-    yield
+    with gdal.config_options(
+        {
+            "AZURE_CONFIG_DIR": "",
+            "AZURE_NO_SIGN_REQUEST": None,
+            "AZURE_STORAGE_ACCOUNT": None,
+            "AZURE_STORAGE_ACCESS_KEY": None,
+            "AZURE_STORAGE_CONNECTION_STRING": "DefaultEndpointsProtocol=http;AccountName=myaccount;AccountKey=MY_ACCOUNT_KEY;BlobEndpoint=http://127.0.0.1:%d/azure/blob/myaccount"
+            % gdaltest.webserver_port,
+            "AZURE_STORAGE_SAS_TOKEN": None,
+            "CPL_AZURE_TIMESTAMP": "my_timestamp",
+        },
+        thread_local=False,
+    ):
+        yield
 
     # Clearcache needed to close all connections, since the Python server
     # can only handle one connection at a time
     gdal.VSICurlClearCache()
 
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
-
-    for var in az_vars:
-        gdal.SetConfigOption(var, az_vars[var])
 
 
 ###############################################################################
