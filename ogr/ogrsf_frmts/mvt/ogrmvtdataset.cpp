@@ -219,6 +219,8 @@ class OGRMVTLayer final : public OGRMVTLayerBase
     virtual void ResetReading() override;
 
     virtual GIntBig GetFeatureCount(int bForce) override;
+
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/
@@ -282,6 +284,8 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
     virtual OGRFeature *GetFeature(GIntBig nFID) override;
 
     virtual int TestCapability(const char *) override;
+
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/
@@ -1429,6 +1433,15 @@ OGRFeature *OGRMVTLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRMVTLayer::GetDataset()
+{
+    return m_poDS;
+}
+
+/************************************************************************/
 /*                         StripDummyEntries()                           */
 /************************************************************************/
 
@@ -1880,6 +1893,15 @@ OGRFeature *OGRMVTDirectoryLayer::GetFeature(GIntBig nFID)
     }
     delete poTile;
     return poFeature;
+}
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRMVTDirectoryLayer::GetDataset()
+{
+    return m_poDS;
 }
 
 /************************************************************************/
@@ -3431,6 +3453,11 @@ class OGRMVTWriterLayer final : public OGRLayer
     int TestCapability(const char *) override;
     OGRErr ICreateFeature(OGRFeature *) override;
     OGRErr CreateField(const OGRFieldDefn *, int) override;
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
+    }
 };
 
 /************************************************************************/

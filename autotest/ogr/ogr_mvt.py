@@ -54,6 +54,7 @@ def test_ogr_mvt_datatypes():
     # With metadata.json
     ds = ogr.Open("data/mvt/datatypes/0/0/0.pbf")
     lyr = ds.GetLayer(0)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     f = lyr.GetNextFeature()
     if (
         f["bool_false"] != 0
@@ -378,6 +379,7 @@ def test_ogr_mvt_tileset_json_field():
         open_options=["METADATA_FILE=", "JSON_FIELD=YES", "CLIP=NO"],
     )
     lyr = ds.GetLayer(0)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     assert lyr.GetLayerDefn().GetFieldCount() == 2
     f = lyr.GetNextFeature()
     d = json.loads(f.GetFieldAsString("json"))
@@ -1648,6 +1650,7 @@ def test_ogr_mvt_write_errors():
     ds = ogr.GetDriverByName("MVT").CreateDataSource("tmp/tmpmvt")
     gdal.RmdirRecursive("tmp/tmpmvt")
     lyr = ds.CreateLayer("test")
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0)"))
     lyr.CreateFeature(f)
