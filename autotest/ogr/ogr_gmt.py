@@ -56,6 +56,7 @@ def test_ogr_gmt_2():
     #######################################################
     # Create gmtory Layer
     gmt_lyr = gmt_ds.CreateLayer("tpoly")
+    assert gmt_lyr.GetDataset().GetDescription() == gmt_ds.GetDescription()
 
     #######################################################
     # Setup Schema

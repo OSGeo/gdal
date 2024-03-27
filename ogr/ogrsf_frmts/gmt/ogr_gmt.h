@@ -41,6 +41,7 @@
 class OGRGmtLayer final : public OGRLayer,
                           public OGRGetNextFeatureThroughRaw<OGRGmtLayer>
 {
+    GDALDataset *m_poDS = nullptr;
     OGRSpatialReference *m_poSRS = nullptr;
     OGRFeatureDefn *poFeatureDefn;
 
@@ -70,7 +71,7 @@ class OGRGmtLayer final : public OGRLayer,
   public:
     bool bValidFile;
 
-    OGRGmtLayer(const char *pszFilename, VSILFILE *fp,
+    OGRGmtLayer(GDALDataset *poDS, const char *pszFilename, VSILFILE *fp,
                 const OGRSpatialReference *poSRS, int bUpdate);
     virtual ~OGRGmtLayer();
 
@@ -96,6 +97,11 @@ class OGRGmtLayer final : public OGRLayer,
                                int bApproxOK = TRUE) override;
 
     int TestCapability(const char *) override;
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
+    }
 };
 
 /************************************************************************/

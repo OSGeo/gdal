@@ -36,9 +36,11 @@
 /*                            OGRGmtLayer()                             */
 /************************************************************************/
 
-OGRGmtLayer::OGRGmtLayer(const char *pszFilename, VSILFILE *fp,
-                         const OGRSpatialReference *poSRS, int bUpdateIn)
-    : poFeatureDefn(nullptr), iNextFID(0), bUpdate(CPL_TO_BOOL(bUpdateIn)),
+OGRGmtLayer::OGRGmtLayer(GDALDataset *poDS, const char *pszFilename,
+                         VSILFILE *fp, const OGRSpatialReference *poSRS,
+                         int bUpdateIn)
+    : m_poDS(poDS), poFeatureDefn(nullptr), iNextFID(0),
+      bUpdate(CPL_TO_BOOL(bUpdateIn)),
       // Assume header complete in readonly mode.
       bHeaderComplete(CPL_TO_BOOL(!bUpdate)), bRegionComplete(false),
       nRegionOffset(0),
