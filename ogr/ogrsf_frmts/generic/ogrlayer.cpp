@@ -5644,8 +5644,9 @@ OGRErr OGR_L_SetActiveSRS(OGRLayerH hLayer, int iGeomField,
 
 /** Return the dataset associated with this layer.
  *
- * NOTE: that method is implemented in very few drivers, and cannot generally
- * be relied on.
+ * As of GDAL 3.9, GetDataset() is implemented on all in-tree drivers that
+ * have CreateLayer() capability. It may not be implemented in read-only
+ * drivers or out-of-tree drivers.
  *
  * It is currently only used by the GetRecordBatchSchema()
  * method to retrieve the field domain associated with a field, to fill the
@@ -5670,8 +5671,9 @@ GDALDataset *OGRLayer::GetDataset()
 
 /** Return the dataset associated with this layer.
  *
- * NOTE: that method is implemented in very few drivers, and cannot generally
- * be relied on.
+ * As of GDAL 3.9, GetDataset() is implemented on all in-tree drivers that
+ * have CreateLayer() capability. It may not be implemented in read-only
+ * drivers or out-of-tree drivers.
  *
  * It is currently only used by the GetRecordBatchSchema()
  * method to retrieve the field domain associated with a field, to fill the
