@@ -193,6 +193,15 @@ int OGRPDFLayer::TestCapability(const char *pszCap)
         return OGRMemLayer::TestCapability(pszCap);
 }
 
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRPDFLayer::GetDataset()
+{
+    return poDS;
+}
+
 #endif /* HAVE_PDF_READ_SUPPORT */
 
 /************************************************************************/
@@ -228,4 +237,13 @@ int OGRPDFWritableLayer::TestCapability(const char *pszCap)
         return TRUE;
     else
         return OGRMemLayer::TestCapability(pszCap);
+}
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRPDFWritableLayer::GetDataset()
+{
+    return poDS;
 }
