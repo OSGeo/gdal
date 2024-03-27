@@ -66,21 +66,23 @@
 /*      file pointer.                                                   */
 /************************************************************************/
 
-OGRCSVLayer::OGRCSVLayer(const char *pszLayerNameIn, VSILFILE *fp,
-                         int nMaxLineSize, const char *pszFilenameIn,
-                         int bNewIn, int bInWriteModeIn, char chDelimiterIn)
-    : poFeatureDefn(nullptr), fpCSV(fp), m_nMaxLineSize(nMaxLineSize),
-      nNextFID(1), bHasFieldNames(false), bNew(CPL_TO_BOOL(bNewIn)),
-      bInWriteMode(CPL_TO_BOOL(bInWriteModeIn)), bUseCRLF(false),
-      bNeedRewindBeforeRead(false), eGeometryFormat(OGR_CSV_GEOM_NONE),
-      pszFilename(CPLStrdup(pszFilenameIn)), bCreateCSVT(false),
-      bWriteBOM(false), nCSVFieldCount(0), panGeomFieldIndex(nullptr),
-      bFirstFeatureAppendedDuringSession(true), bHiddenWKTColumn(false),
-      iNfdcLongitudeS(-1), iNfdcLatitudeS(-1), bHonourStrings(true),
-      iLongitudeField(-1), iLatitudeField(-1), iZField(-1),
-      bIsEurostatTSV(false), nEurostatDims(0), nTotalFeatures(bNewIn ? 0 : -1),
-      bWarningBadTypeOrWidth(false), bKeepSourceColumns(false),
-      bKeepGeomColumns(true), bMergeDelimiter(false), bEmptyStringNull(false)
+OGRCSVLayer::OGRCSVLayer(GDALDataset *poDS, const char *pszLayerNameIn,
+                         VSILFILE *fp, int nMaxLineSize,
+                         const char *pszFilenameIn, int bNewIn,
+                         int bInWriteModeIn, char chDelimiterIn)
+    : m_poDS(poDS), poFeatureDefn(nullptr), fpCSV(fp),
+      m_nMaxLineSize(nMaxLineSize), nNextFID(1), bHasFieldNames(false),
+      bNew(CPL_TO_BOOL(bNewIn)), bInWriteMode(CPL_TO_BOOL(bInWriteModeIn)),
+      bUseCRLF(false), bNeedRewindBeforeRead(false),
+      eGeometryFormat(OGR_CSV_GEOM_NONE), pszFilename(CPLStrdup(pszFilenameIn)),
+      bCreateCSVT(false), bWriteBOM(false), nCSVFieldCount(0),
+      panGeomFieldIndex(nullptr), bFirstFeatureAppendedDuringSession(true),
+      bHiddenWKTColumn(false), iNfdcLongitudeS(-1), iNfdcLatitudeS(-1),
+      bHonourStrings(true), iLongitudeField(-1), iLatitudeField(-1),
+      iZField(-1), bIsEurostatTSV(false), nEurostatDims(0),
+      nTotalFeatures(bNewIn ? 0 : -1), bWarningBadTypeOrWidth(false),
+      bKeepSourceColumns(false), bKeepGeomColumns(true), bMergeDelimiter(false),
+      bEmptyStringNull(false)
 {
     szDelimiter[0] = chDelimiterIn;
     szDelimiter[1] = 0;

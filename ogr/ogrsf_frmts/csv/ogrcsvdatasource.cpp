@@ -94,6 +94,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
 {
     CPLAssert(m_poCSVLayer == *ppoDecoratedLayer);
 
+    GDALDataset *poDS = m_poCSVLayer->GetDataset();
     const CPLString osLayerName(m_poCSVLayer->GetName());
     const CPLString osFilename(m_poCSVLayer->GetFilename());
     const bool bCreateCSVT = m_poCSVLayer->GetCreateCSVT();
@@ -109,7 +110,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
     }
     const char chDelimiter = m_poCSVLayer->GetDelimiter();
     OGRCSVLayer *poCSVTmpLayer = new OGRCSVLayer(
-        osLayerName, nullptr, -1, osTmpFilename, true, true, chDelimiter);
+        poDS, osLayerName, nullptr, -1, osTmpFilename, true, true, chDelimiter);
     poCSVTmpLayer->BuildFeatureDefn(nullptr, nullptr, m_papszOpenOptions);
     poCSVTmpLayer->SetCRLF(m_poCSVLayer->GetCRLF());
     poCSVTmpLayer->SetCreateCSVT(bCreateCSVT || bHasCSVT);
@@ -298,8 +299,8 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
     }
 
     m_poCSVLayer =
-        new OGRCSVLayer(osLayerName, fp, -1, osFilename, false, /* new */
-                        true,                                   /* update */
+        new OGRCSVLayer(poDS, osLayerName, fp, -1, osFilename, false, /* new */
+                        true, /* update */
                         chDelimiter);
     m_poCSVLayer->BuildFeatureDefn(nullptr, nullptr, m_papszOpenOptions);
     *ppoDecoratedLayer = m_poCSVLayer;
@@ -896,7 +897,7 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
         osLayerName = "layer";
 
     auto poCSVLayer =
-        std::make_unique<OGRCSVLayer>(osLayerName, fp, nMaxLineSize,
+        std::make_unique<OGRCSVLayer>(this, osLayerName, fp, nMaxLineSize,
                                       pszFilename, FALSE, bUpdate, chDelimiter);
     poCSVLayer->BuildFeatureDefn(pszNfdcRunwaysGeomField,
                                  pszGeonamesGeomFieldPrefix,
@@ -1017,7 +1018,7 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
     // Create a layer.
 
     auto poCSVLayer = std::make_unique<OGRCSVLayer>(
-        pszLayerName, nullptr, -1, osFilename, true, true, chDelimiter);
+        this, pszLayerName, nullptr, -1, osFilename, true, true, chDelimiter);
 
     poCSVLayer->BuildFeatureDefn();
 

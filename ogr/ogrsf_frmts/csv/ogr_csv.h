@@ -86,6 +86,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
     };
 
   private:
+    GDALDataset *m_poDS = nullptr;
     OGRFeatureDefn *poFeatureDefn;
     std::set<CPLString> m_oSetFields;
 
@@ -152,9 +153,9 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
     static bool Matches(const char *pszFieldName, char **papszPossibleNames);
 
   public:
-    OGRCSVLayer(const char *pszName, VSILFILE *fp, int nMaxLineSize,
-                const char *pszFilename, int bNew, int bInWriteMode,
-                char chDelimiter);
+    OGRCSVLayer(GDALDataset *poDS, const char *pszName, VSILFILE *fp,
+                int nMaxLineSize, const char *pszFilename, int bNew,
+                int bInWriteMode, char chDelimiter);
     virtual ~OGRCSVLayer() override;
 
     OGRLayer *GetLayer() override
@@ -265,6 +266,11 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
 
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr SyncToDisk() override;
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
+    }
 
     OGRErr WriteHeader();
 };
