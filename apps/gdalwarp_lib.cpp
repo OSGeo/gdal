@@ -3900,7 +3900,6 @@ static GDALDatasetH GDALWarpCreateOutput(
                         psRTI->poReverseTransform->Transform(
                             1, &dfMinX, &dfMinY, nullptr, nullptr);
                         adfGeoTransform[0] = dfMinX;
-                        // TODO: check if we need to consider the case of north up images
                         adfGeoTransform[3] = dfMinY;
 
                         // Reproject to source image CRS
@@ -3913,8 +3912,9 @@ static GDALDatasetH GDALWarpCreateOutput(
                         {
                             padfX[i] = (padfX[i] - adfGeoTransform[0]) /
                                        adfGeoTransform[1];
-                            padfY[i] = (padfY[i] - adfGeoTransform[3]) /
-                                       adfGeoTransform[5];
+                            padfY[i] =
+                                std::abs((padfY[i] - adfGeoTransform[3]) /
+                                         adfGeoTransform[5]);
                         }
 
                         transformedToSrcCRS = true;
