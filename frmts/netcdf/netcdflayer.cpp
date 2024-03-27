@@ -2818,3 +2818,12 @@ int netCDFLayer::TestCapability(const char *pszCap)
         return true;
     return false;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *netCDFLayer::GetDataset()
+{
+    return m_poDS;
+}
