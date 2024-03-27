@@ -41,6 +41,7 @@ def _ogr_geojsonseq_create(filename, lco, expect_rs):
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
     lyr = ds.CreateLayer("test", srs=sr, options=lco)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     assert lyr.CreateField(ogr.FieldDefn("foo")) == ogr.OGRERR_NONE
 
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -67,6 +68,7 @@ def _ogr_geojsonseq_create(filename, lco, expect_rs):
 
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     assert not ds.TestCapability(ogr.ODsCCreateLayer)
     assert ds.CreateLayer("foo") is None
     assert not lyr.TestCapability(ogr.OLCCreateField)
