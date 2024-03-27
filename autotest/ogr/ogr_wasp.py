@@ -71,6 +71,7 @@ def test_ogr_wasp_elevation_from_linestring_z():
     layer = gdaltest.wasp_ds.CreateLayer("mylayer", ref, geom_type=ogr.wkbLineString25D)
 
     assert layer is not None, "unable to create layer"
+    assert layer.GetDataset().GetDescription() == gdaltest.wasp_ds.GetDescription()
 
     dfn = ogr.FeatureDefn()
 
