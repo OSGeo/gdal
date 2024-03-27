@@ -696,6 +696,9 @@ typedef void *OGRSFDriverH;
 const char CPL_DLL *OGR_L_GetName(OGRLayerH);
 OGRwkbGeometryType CPL_DLL OGR_L_GetGeomType(OGRLayerH);
 
+/* Defined in gdal.h to avoid circular dependency with ogr_api.h */
+/* GDALDatasetH CPL_DLL OGR_L_GetDataset(OGRLayerH hLayer); */
+
 /** Result item of OGR_L_GetGeometryTypes */
 typedef struct
 {
