@@ -247,6 +247,7 @@ def test_ogr_mongodbv3_2():
         srs=srs,
         options=["GEOMETRY_NAME=location.mygeom", "FID="],
     )
+    assert lyr.GetDataset().GetDescription() == ogrtest.mongodbv3_ds.GetDescription()
 
     with gdal.quiet_errors():
         ret = lyr.CreateGeomField(ogr.GeomFieldDefn("location.mygeom", ogr.wkbPoint))

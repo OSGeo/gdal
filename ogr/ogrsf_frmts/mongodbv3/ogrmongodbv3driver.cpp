@@ -217,6 +217,11 @@ class OGRMongoDBv3Layer final : public OGRLayer
                           bool bUpdateStyleString) override;
 
     OGRErr SyncToDisk() override;
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
+    }
 };
 
 /************************************************************************/
