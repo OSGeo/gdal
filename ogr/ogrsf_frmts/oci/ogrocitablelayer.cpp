@@ -45,9 +45,9 @@ OGROCITableLayer::OGROCITableLayer(OGROCIDataSource *poDSIn,
                                    const char *pszTableName,
                                    OGRwkbGeometryType eGType, int nSRIDIn,
                                    int bUpdate, int bNewLayerIn)
+    : OGROCIWritableLayer(poDSIn)
 
 {
-    poDS = poDSIn;
     bExtentUpdated = false;
 
     pszQuery = nullptr;

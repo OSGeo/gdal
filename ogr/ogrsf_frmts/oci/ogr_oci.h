@@ -239,11 +239,11 @@ class OGROCIDataSource;
 class OGROCILayer CPL_NON_FINAL : public OGRLayer
 {
   protected:
+    OGROCIDataSource *poDS;
+
     OGRFeatureDefn *poFeatureDefn;
 
     int iNextShapeId;
-
-    OGROCIDataSource *poDS;
 
     char *pszQueryStatement;
 
@@ -274,7 +274,7 @@ class OGROCILayer CPL_NON_FINAL : public OGRLayer
                         double *pdfY, double *pdfZ);
 
   public:
-    OGROCILayer();
+    explicit OGROCILayer(OGROCIDataSource *poDSIn);
     virtual ~OGROCILayer();
 
     virtual int FindFieldIndex(const char *pszFieldName,
@@ -296,6 +296,8 @@ class OGROCILayer CPL_NON_FINAL : public OGRLayer
 
     virtual const char *GetFIDColumn() override;
     virtual const char *GetGeometryColumn() override;
+
+    GDALDataset *GetDataset() override;
 
     int LookupTableSRID();
 };
@@ -337,7 +339,7 @@ class OGROCIWritableLayer CPL_NON_FINAL : public OGROCILayer
 
     void ParseDIMINFO(const char *, double *, double *, double *);
 
-    OGROCIWritableLayer();
+    explicit OGROCIWritableLayer(OGROCIDataSource *poDSIn);
     virtual ~OGROCIWritableLayer();
 
   public:

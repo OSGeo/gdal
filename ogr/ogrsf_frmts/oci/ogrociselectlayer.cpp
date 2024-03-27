@@ -38,10 +38,9 @@
 OGROCISelectLayer::OGROCISelectLayer(OGROCIDataSource *poDSIn,
                                      const char *pszQuery,
                                      OGROCIStatement *poDescribedCommand)
+    : OGROCILayer(poDSIn)
 
 {
-    poDS = poDSIn;
-
     iNextShapeId = 0;
 
     poFeatureDefn = ReadTableDefinition(poDescribedCommand);
