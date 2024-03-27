@@ -440,3 +440,12 @@ int OGRJMLWriterLayer::TestCapability(const char *pszCap)
 
     return FALSE;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRJMLWriterLayer::GetDataset()
+{
+    return poDS;
+}

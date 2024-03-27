@@ -68,6 +68,7 @@ class OGRJMLColumn
 
 class OGRJMLLayer final : public OGRLayer
 {
+    GDALDataset *m_poDS = nullptr;
     OGRFeatureDefn *poFeatureDefn;
 
     int nNextFID;
@@ -132,6 +133,11 @@ class OGRJMLLayer final : public OGRLayer
 
     int TestCapability(const char *) override;
 
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
+    }
+
     void startElementCbk(const char *pszName, const char **ppszAttr);
     void endElementCbk(const char *pszName);
     void dataHandlerCbk(const char *data, int nLen);
@@ -186,6 +192,8 @@ class OGRJMLWriterLayer final : public OGRLayer
     }
 
     int TestCapability(const char *) override;
+
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/

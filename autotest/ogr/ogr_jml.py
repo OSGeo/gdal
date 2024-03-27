@@ -62,6 +62,7 @@ def test_ogr_jml_1():
     assert ds.TestCapability(ogr.ODsCCreateLayer) == 0
     assert ds.TestCapability(ogr.ODsCDeleteLayer) == 0
     lyr = ds.GetLayer(0)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     fields = [
         ("first_property", ogr.OFTString),
         ("another_property", ogr.OFTString),
@@ -129,6 +130,7 @@ def test_ogr_jml_2(tmp_vsimem):
     # Empty layer
     ds = ogr.GetDriverByName("JML").CreateDataSource(tmp_vsimem / "ogr_jml.jml")
     lyr = ds.CreateLayer("foo")
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     lyr.ResetReading()
     lyr.GetNextFeature()
     ds = None
