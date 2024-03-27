@@ -69,6 +69,7 @@ def test_ogr_dxf_1():
     layer = ds.GetLayer(0)
 
     assert layer.GetName() == "entities", "did not get expected layer name."
+    assert layer.GetDataset().GetDescription() == ds.GetDescription()
 
     defn = layer.GetLayerDefn()
     assert defn.GetFieldCount() == 6, "did not get expected number of fields."
@@ -449,6 +450,7 @@ def test_ogr_dxf_12():
     ds = ogr.GetDriverByName("DXF").CreateDataSource("tmp/dxf_11.dxf")
 
     lyr = ds.CreateLayer("entities")
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
 
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING(10 12, 60 65)"))

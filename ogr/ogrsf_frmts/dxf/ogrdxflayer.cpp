@@ -3560,3 +3560,12 @@ int OGRDXFLayer::TestCapability(const char *pszCap)
         return true;
     return false;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRDXFLayer::GetDataset()
+{
+    return poDS;
+}
