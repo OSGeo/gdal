@@ -1212,3 +1212,12 @@ void OGRLIBKMLLayer::SetListStyle(const char *pszListStyleType,
     osListStyleType = pszListStyleType ? pszListStyleType : "";
     osListStyleIconHref = pszListStyleIconHref ? pszListStyleIconHref : "";
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRLIBKMLLayer::GetDataset()
+{
+    return m_poOgrDS;
+}

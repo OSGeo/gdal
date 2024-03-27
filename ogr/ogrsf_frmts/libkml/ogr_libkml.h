@@ -139,6 +139,8 @@ class OGRLIBKMLLayer final : public OGRLayer,
 
     int TestCapability(const char *) override;
 
+    GDALDataset *GetDataset() override;
+
     kmldom::ContainerPtr GetKmlLayer()
     {
         return m_poKmlLayer;
