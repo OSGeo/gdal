@@ -65,6 +65,7 @@ class OGRIDFDataSource final : public GDALDataset
 
 class OGRVDVLayer final : public OGRLayer
 {
+    GDALDataset *m_poDS = nullptr;
     VSILFILE *m_fpL;
     bool m_bOwnFP;
     bool m_bRecodeFromLatin1;
@@ -78,8 +79,8 @@ class OGRVDVLayer final : public OGRLayer
     int m_iLatitudeVDV452;
 
   public:
-    OGRVDVLayer(const CPLString &osTableName, VSILFILE *fpL, bool bOwnFP,
-                bool bRecodeFromLatin1, vsi_l_offset nStartOffset);
+    OGRVDVLayer(GDALDataset *poDS, const CPLString &osTableName, VSILFILE *fpL,
+                bool bOwnFP, bool bRecodeFromLatin1, vsi_l_offset nStartOffset);
     virtual ~OGRVDVLayer();
 
     virtual void ResetReading() override;
@@ -92,6 +93,11 @@ class OGRVDVLayer final : public OGRLayer
     }
 
     virtual int TestCapability(const char *pszCap) override;
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
+    }
 
     void SetFeatureCount(GIntBig nTotalFeatureCount)
     {
@@ -179,6 +185,8 @@ class OGRVDVWriterLayer final : public OGRLayer
                                int bApproxOK = TRUE) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+
+    GDALDataset *GetDataset() override;
 
     void StopAsCurrentLayer();
 };

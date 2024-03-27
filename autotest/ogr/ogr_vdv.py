@@ -163,6 +163,7 @@ def ogr_create_vdv(filename, dsco=None, lco=None):
     ds = ogr.GetDriverByName("VDV").CreateDataSource(filename, options=dsco)
     ds.CreateLayer("empty", options=lco)
     lyr = ds.CreateLayer("lyr_1", options=lco)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     lyr.CreateField(ogr.FieldDefn("str_field", ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn("int_field", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("int64_field", ogr.OFTInteger64))
@@ -346,6 +347,7 @@ def test_ogr_vdv_7(tmp_vsimem, profile, lyrname, longname, latname):
 
     ds = ogr.Open(out_filename)
     lyr = ds.GetLayer(0)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     f = lyr.GetNextFeature()
     assert f[longname] == -1234556789
     assert f[latname] == -234556789
