@@ -35,10 +35,11 @@
 /************************************************************************/
 
 OGRFeatherWriterLayer::OGRFeatherWriterLayer(
-    arrow::MemoryPool *poMemoryPool,
+    GDALDataset *poDS, arrow::MemoryPool *poMemoryPool,
     const std::shared_ptr<arrow::io::OutputStream> &poOutputStream,
     const char *pszLayerName)
-    : OGRArrowWriterLayer(poMemoryPool, poOutputStream, pszLayerName)
+    : OGRArrowWriterLayer(poMemoryPool, poOutputStream, pszLayerName),
+      m_poDS(poDS)
 {
     m_bWriteFieldArrowExtensionName = true;
 }
