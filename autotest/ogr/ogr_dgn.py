@@ -49,6 +49,7 @@ def test_ogr_dgn_2():
 
     dgn_ds = ogr.Open("data/dgn/smalltest.dgn")
     dgn_lyr = dgn_ds.GetLayer(0)
+    assert dgn_lyr.GetDataset().GetDescription() == dgn_ds.GetDescription()
 
     feat = dgn_lyr.GetNextFeature()
     assert (
@@ -174,6 +175,7 @@ def test_ogr_dgn_7(tmp_path):
     )
 
     dgn2_lyr = dgn2_ds.CreateLayer("elements")
+    assert dgn2_lyr.GetDataset().GetDescription() == dgn2_ds.GetDescription()
 
     dgn_ds = ogr.Open("data/dgn/smalltest.dgn")
     dgn_lyr = dgn_ds.GetLayer(0)

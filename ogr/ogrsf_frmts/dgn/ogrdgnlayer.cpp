@@ -39,9 +39,10 @@
 /*                           OGRDGNLayer()                              */
 /************************************************************************/
 
-OGRDGNLayer::OGRDGNLayer(const char *pszName, DGNHandle hDGNIn, int bUpdateIn)
-    : poFeatureDefn(new OGRFeatureDefn(pszName)), iNextShapeId(0), hDGN(hDGNIn),
-      bUpdate(bUpdateIn)
+OGRDGNLayer::OGRDGNLayer(GDALDataset *poDS, const char *pszName,
+                         DGNHandle hDGNIn, int bUpdateIn)
+    : m_poDS(poDS), poFeatureDefn(new OGRFeatureDefn(pszName)), iNextShapeId(0),
+      hDGN(hDGNIn), bUpdate(bUpdateIn)
 {
 
     /* -------------------------------------------------------------------- */

@@ -39,6 +39,7 @@
 
 class OGRDGNLayer final : public OGRLayer
 {
+    GDALDataset *m_poDS = nullptr;
     OGRFeatureDefn *poFeatureDefn;
 
     int iNextShapeId;
@@ -63,7 +64,8 @@ class OGRDGNLayer final : public OGRLayer
     OGRErr CreateFeatureWithGeom(OGRFeature *, const OGRGeometry *);
 
   public:
-    OGRDGNLayer(const char *pszName, DGNHandle hDGN, int bUpdate);
+    OGRDGNLayer(GDALDataset *poDS, const char *pszName, DGNHandle hDGN,
+                int bUpdate);
     virtual ~OGRDGNLayer();
 
     void SetSpatialFilter(OGRGeometry *) override;
@@ -94,6 +96,11 @@ class OGRDGNLayer final : public OGRLayer
     int TestCapability(const char *) override;
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
+    }
 };
 
 /************************************************************************/
