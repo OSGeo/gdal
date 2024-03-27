@@ -898,3 +898,12 @@ void OGRILI1Layer::PolygonizeAreaLayer(OGRILI1Layer *poAreaLineLayer,
 #endif
     delete polys;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRILI1Layer::GetDataset()
+{
+    return poDS;
+}

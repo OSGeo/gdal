@@ -33,6 +33,8 @@
 #include "imdreader.h"
 #include <list>
 
+class OGRILI2DataSource;
+
 class IILI2Reader
 {
   public:
@@ -40,7 +42,7 @@ class IILI2Reader
 
     virtual void SetSourceFile(const char *pszFilename) = 0;
 
-    virtual int ReadModel(ImdReader *poImdReader,
+    virtual int ReadModel(OGRILI2DataSource *poDS, ImdReader *poImdReader,
                           const char *modelFilename) = 0;
     virtual int SaveClasses(const char *pszFilename) = 0;
 

@@ -58,6 +58,7 @@ def test_ogr_interlis1_2():
         assert ds.GetLayer(i).GetName() in layers, "Did not get right layers"
 
     lyr = ds.GetLayerByName("Bodenbedeckung__BoFlaechen")
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
 
     assert lyr.GetFeatureCount() == 3, "feature count wrong."
 
@@ -894,6 +895,7 @@ def test_ogr_interlis2_2():
 
     lyr = ds.GetLayerByName("RoadsExdm2ien.RoadsExtended.RoadSign")
     assert lyr.GetFeatureCount() == 4, "feature count wrong."
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
 
     feat = lyr.GetNextFeature()
 

@@ -83,6 +83,8 @@ class OGRILI2Layer final : public OGRLayer
                        int bApproxOK = TRUE) override;
 
     int TestCapability(const char *) override;
+
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/
