@@ -2751,3 +2751,14 @@ def test_ogr_mem_write_pyarrow_invalid_dict_index(dict_values):
         match="Feature 4, field dict_invalid_index: invalid dictionary index: 3",
     ):
         assert lyr.WritePyArrow(table)
+
+
+###############################################################################
+# Test Layer.GetDataset()
+
+
+def test_ogr_mem_lyr_get_dataset():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("foo")
+    lyr = ds.CreateLayer("test")
+    assert lyr.GetDataset().GetDescription() == "foo"

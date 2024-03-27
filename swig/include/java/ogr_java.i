@@ -48,6 +48,7 @@ import org.gdal.gdal.MajorObject;
 %typemap(javaimports) OGRLayerShadow %{
 import org.gdal.osr.SpatialReference;
 import org.gdal.gdal.MajorObject;
+import org.gdal.gdal.Dataset;
 %}
 %typemap(javaimports) OGRDataSourceShadow %{
 import org.gdal.osr.SpatialReference;

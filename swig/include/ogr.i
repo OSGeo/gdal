@@ -275,6 +275,7 @@ using namespace std;
 #define FIELD_NAME_ERROR_TMPL "Invalid field name: '%s'"
 
 typedef void GDALMajorObjectShadow;
+typedef void GDALDatasetShadow;
 
 #ifdef DEBUG
 typedef struct OGRSpatialReferenceHS OSRSpatialReferenceShadow;
@@ -641,6 +642,7 @@ typedef int CPLErr;
 #undef FROM_PYTHON_OGR_I
 #else /* defined(SWIGPYTHON) */
 %import MajorObject.i
+%import Dataset_import.i
 #endif /* defined(SWIGPYTHON) */
 #endif /* FROM_GDAL_I */
 
@@ -1250,6 +1252,13 @@ class OGRLayerShadow : public GDALMajorObjectShadow {
   ~OGRLayerShadow();
 public:
 %extend {
+
+#ifndef SWIGCSHARP
+  GDALDatasetShadow* GetDataset()
+  {
+      return OGR_L_GetDataset(self);
+  }
+#endif
 
   %apply Pointer NONNULL {const char * new_name};
   OGRErr Rename(const char* new_name) {
