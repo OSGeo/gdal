@@ -35,9 +35,11 @@
 /*                           OGRPCIDSKLayer()                           */
 /************************************************************************/
 
-OGRPCIDSKLayer::OGRPCIDSKLayer(PCIDSK::PCIDSKSegment *poSegIn,
+OGRPCIDSKLayer::OGRPCIDSKLayer(GDALDataset *poDS,
+                               PCIDSK::PCIDSKSegment *poSegIn,
                                PCIDSK::PCIDSKVectorSegment *poVecSegIn,
                                bool bUpdate)
+    : m_poDS(poDS)
 
 {
     poSRS = nullptr;

@@ -129,6 +129,7 @@ def test_ogr_pcidsk_2(pcidsk_1):
     assert ds.GetLayerCount() == 2 + len(wkts)
 
     lyr = ds.GetLayerByName("nothing")
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     assert lyr.GetGeomType() == ogr.wkbNone
     feat = lyr.GetNextFeature()
     assert feat is not None
