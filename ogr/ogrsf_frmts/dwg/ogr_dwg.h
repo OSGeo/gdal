@@ -92,6 +92,8 @@ class OGRDWGBlocksLayer final : public OGRLayer
     int TestCapability(const char *) override;
 
     OGRFeature *GetNextUnfilteredFeature();
+
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/
@@ -158,6 +160,8 @@ class OGRDWGLayer final : public OGRLayer
     // internal
     void SetBlockTable(OdDbBlockTableRecordPtr);
     static double AngleCorrect(double dfAngle, double dfRatio);
+
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/

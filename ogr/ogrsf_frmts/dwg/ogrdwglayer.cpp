@@ -1526,3 +1526,12 @@ int OGRDWGLayer::TestCapability(const char *pszCap)
     else
         return FALSE;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRDWGLayer::GetDataset()
+{
+    return poDS;
+}

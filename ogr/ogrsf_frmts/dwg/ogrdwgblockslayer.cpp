@@ -179,3 +179,12 @@ int OGRDWGBlocksLayer::TestCapability(const char *pszCap)
     else
         return FALSE;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRDWGBlocksLayer::GetDataset()
+{
+    return poDS;
+}
