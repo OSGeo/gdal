@@ -81,6 +81,7 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
     CPL_DISALLOW_COPY_ASSIGN(IMapInfoFile)
 
   protected:
+    GDALDataset *m_poDS = nullptr;
     GIntBig m_nCurFeatureId;
     TABFeature *m_poCurFeature;
     GBool m_bBoundsSet;
@@ -90,7 +91,7 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
     TABFeature *CreateTABFeature(OGRFeature *poFeature);
 
   public:
-    IMapInfoFile();
+    IMapInfoFile(GDALDataset *poDS);
     virtual ~IMapInfoFile();
 
     virtual TABFileClass GetFileClass()
@@ -118,7 +119,8 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
     ///////////////
     // Static method to detect file type, create an object to read that
     // file and open it.
-    static IMapInfoFile *SmartOpen(const char *pszFname, GBool bUpdate = FALSE,
+    static IMapInfoFile *SmartOpen(GDALDataset *poDS, const char *pszFname,
+                                   GBool bUpdate = FALSE,
                                    GBool bTestOpenNoError = FALSE);
 
     ///////////////
@@ -135,6 +137,11 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
                              int bForce) override
     {
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    }
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
     }
 
     ///////////////
@@ -257,7 +264,7 @@ class TABFile final : public IMapInfoFile
     int WriteTABFile();
 
   public:
-    TABFile();
+    explicit TABFile(GDALDataset *poDS);
     virtual ~TABFile();
 
     virtual TABFileClass GetFileClass() override
@@ -448,7 +455,7 @@ class TABView final : public IMapInfoFile
     int WriteTABFile();
 
   public:
-    TABView();
+    explicit TABView(GDALDataset *poDS);
     virtual ~TABView();
 
     virtual TABFileClass GetFileClass() override
@@ -594,7 +601,7 @@ class TABSeamless final : public IMapInfoFile
     static int ExtractBaseFeatureId(GIntBig nEncodedFeatureId);
 
   public:
-    TABSeamless();
+    explicit TABSeamless(GDALDataset *poDS);
     virtual ~TABSeamless();
 
     virtual TABFileClass GetFileClass() override
@@ -800,7 +807,7 @@ class MIFFile final : public IMapInfoFile
     void UpdateExtents(double dfX, double dfY);
 
   public:
-    MIFFile();
+    explicit MIFFile(GDALDataset *poDS);
     virtual ~MIFFile();
 
     virtual TABFileClass GetFileClass() override

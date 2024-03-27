@@ -74,6 +74,7 @@ def mapinfo_ds(request, tmp_path, poly_feat):
     #######################################################
     # Create memory Layer
     mapinfo_lyr = ds.CreateLayer("tpoly", mapinfo_srs)
+    assert mapinfo_lyr.GetDataset().GetDescription() == ds.GetDescription()
 
     #######################################################
     # Setup Schema

@@ -60,8 +60,9 @@
  *
  * Constructor.
  **********************************************************************/
-MIFFile::MIFFile()
-    : m_pszFname(nullptr), m_eAccessMode(TABRead), m_nVersion(300),
+MIFFile::MIFFile(GDALDataset *poDS)
+    : IMapInfoFile(poDS), m_pszFname(nullptr), m_eAccessMode(TABRead),
+      m_nVersion(300),
       // Tab is default delimiter in MIF spec if not explicitly specified.  Use
       // that by default for read mode. In write mode, we will use "," as
       // delimiter since it is more common than tab (we do this in Open())

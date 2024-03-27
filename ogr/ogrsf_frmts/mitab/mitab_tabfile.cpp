@@ -171,14 +171,14 @@ static std::string GetTabDescription(const char *pszLine)
  *
  * Constructor.
  **********************************************************************/
-TABFile::TABFile()
-    : m_pszFname(nullptr), m_eAccessMode(TABRead), m_papszTABFile(nullptr),
-      m_nVersion(300), m_panIndexNo(nullptr), m_eTableType(TABTableNative),
-      m_poDATFile(nullptr), m_poMAPFile(nullptr), m_poINDFile(nullptr),
-      m_poDefn(nullptr), m_poSpatialRef(nullptr), bUseSpatialTraversal(FALSE),
-      m_nLastFeatureId(0), m_panMatchingFIDs(nullptr), m_iMatchingFID(0),
-      m_bNeedTABRewrite(FALSE), m_bLastOpWasRead(FALSE),
-      m_bLastOpWasWrite(FALSE)
+TABFile::TABFile(GDALDataset *poDS)
+    : IMapInfoFile(poDS), m_pszFname(nullptr), m_eAccessMode(TABRead),
+      m_papszTABFile(nullptr), m_nVersion(300), m_panIndexNo(nullptr),
+      m_eTableType(TABTableNative), m_poDATFile(nullptr), m_poMAPFile(nullptr),
+      m_poINDFile(nullptr), m_poDefn(nullptr), m_poSpatialRef(nullptr),
+      bUseSpatialTraversal(FALSE), m_nLastFeatureId(0),
+      m_panMatchingFIDs(nullptr), m_iMatchingFID(0), m_bNeedTABRewrite(FALSE),
+      m_bLastOpWasRead(FALSE), m_bLastOpWasWrite(FALSE)
 {
     m_poCurFeature = nullptr;
     m_nCurFeatureId = 0;

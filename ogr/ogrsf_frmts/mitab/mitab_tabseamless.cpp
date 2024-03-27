@@ -67,11 +67,11 @@
  *
  * Constructor.
  **********************************************************************/
-TABSeamless::TABSeamless()
-    : m_pszFname(nullptr), m_pszPath(nullptr), m_eAccessMode(TABRead),
-      m_poFeatureDefnRef(nullptr), m_poIndexTable(nullptr),
-      m_nTableNameField(-1), m_nCurBaseTableId(-1), m_poCurBaseTable(nullptr),
-      m_bEOF(FALSE)
+TABSeamless::TABSeamless(GDALDataset *poDS)
+    : IMapInfoFile(poDS), m_pszFname(nullptr), m_pszPath(nullptr),
+      m_eAccessMode(TABRead), m_poFeatureDefnRef(nullptr),
+      m_poIndexTable(nullptr), m_nTableNameField(-1), m_nCurBaseTableId(-1),
+      m_poCurBaseTable(nullptr), m_bEOF(FALSE)
 {
     m_poCurFeature = nullptr;
     m_nCurFeatureId = -1;
@@ -240,7 +240,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
      * Open the main Index table and look for the "Table" field that
      * should contain the path to the base table for each rectangle MBR
      *----------------------------------------------------------------*/
-    m_poIndexTable = new TABFile;
+    m_poIndexTable = new TABFile(m_poDS);
     if (m_poIndexTable->Open(m_pszFname, m_eAccessMode, bTestOpenNoError) != 0)
     {
         // Open Failed... an error has already been reported, just return.
@@ -373,7 +373,7 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
     }
 #endif
 
-    m_poCurBaseTable = new TABFile;
+    m_poCurBaseTable = new TABFile(m_poDS);
     if (m_poCurBaseTable->Open(pszFname, m_eAccessMode, bTestOpenNoError) != 0)
     {
         // Open Failed... an error has already been reported, just return.

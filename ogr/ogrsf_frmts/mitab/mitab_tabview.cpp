@@ -59,12 +59,12 @@
  *
  * Constructor.
  **********************************************************************/
-TABView::TABView()
-    : m_pszFname(nullptr), m_eAccessMode(TABRead), m_papszTABFile(nullptr),
-      m_pszVersion(nullptr), m_papszTABFnames(nullptr), m_papoTABFiles(nullptr),
-      m_numTABFiles(0), m_nMainTableIndex(-1), m_papszFieldNames(nullptr),
-      m_papszWhereClause(nullptr), m_poRelation(nullptr),
-      m_bRelFieldsCreated(FALSE)
+TABView::TABView(GDALDataset *poDS)
+    : IMapInfoFile(poDS), m_pszFname(nullptr), m_eAccessMode(TABRead),
+      m_papszTABFile(nullptr), m_pszVersion(nullptr), m_papszTABFnames(nullptr),
+      m_papoTABFiles(nullptr), m_numTABFiles(0), m_nMainTableIndex(-1),
+      m_papszFieldNames(nullptr), m_papszWhereClause(nullptr),
+      m_poRelation(nullptr), m_bRelFieldsCreated(FALSE)
 {
 }
 
@@ -280,7 +280,7 @@ int TABView::OpenForRead(const char *pszFname,
         TABAdjustFilenameExtension(m_papszTABFnames[iFile]);
 #endif
 
-        m_papoTABFiles[iFile] = new TABFile;
+        m_papoTABFiles[iFile] = new TABFile(m_poDS);
 
         if (m_papoTABFiles[iFile]->Open(m_papszTABFnames[iFile], m_eAccessMode,
                                         bTestOpenNoError) != 0)
@@ -383,7 +383,7 @@ int TABView::OpenForWrite(const char *pszFname)
         TABAdjustFilenameExtension(m_papszTABFnames[iFile]);
 #endif
 
-        m_papoTABFiles[iFile] = new TABFile;
+        m_papoTABFiles[iFile] = new TABFile(m_poDS);
 
         if (m_papoTABFiles[iFile]->Open(m_papszTABFnames[iFile], m_eAccessMode,
                                         FALSE, GetCharset()) != 0)
