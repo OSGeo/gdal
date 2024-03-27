@@ -451,7 +451,7 @@ OGRLayer *OGRFlatGeobufDataset::ICreateLayer(
 
     auto poLayer =
         std::unique_ptr<OGRFlatGeobufLayer>(OGRFlatGeobufLayer::Create(
-            pszLayerName, osFilename, poSpatialRef, eGType,
+            this, pszLayerName, osFilename, poSpatialRef, eGType,
             bCreateSpatialIndexAtClose, papszOptions));
     if (poLayer == nullptr)
         return nullptr;

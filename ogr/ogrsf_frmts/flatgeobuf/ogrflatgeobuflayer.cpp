@@ -168,14 +168,12 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(const Header *poHeader, GByte *headerBuf,
     m_poFeatureDefn->Reference();
 }
 
-OGRFlatGeobufLayer::OGRFlatGeobufLayer(const char *pszLayerName,
-                                       const char *pszFilename,
-                                       const OGRSpatialReference *poSpatialRef,
-                                       OGRwkbGeometryType eGType,
-                                       bool bCreateSpatialIndexAtClose,
-                                       VSILFILE *poFpWrite,
-                                       std::string &osTempFile)
-    : m_eGType(eGType),
+OGRFlatGeobufLayer::OGRFlatGeobufLayer(
+    GDALDataset *poDS, const char *pszLayerName, const char *pszFilename,
+    const OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType,
+    bool bCreateSpatialIndexAtClose, VSILFILE *poFpWrite,
+    std::string &osTempFile)
+    : m_eGType(eGType), m_poDS(poDS),
       m_bCreateSpatialIndexAtClose(bCreateSpatialIndexAtClose),
       m_poFpWrite(poFpWrite), m_osTempFile(osTempFile)
 {
@@ -2409,11 +2407,10 @@ VSILFILE *OGRFlatGeobufLayer::CreateOutputFile(const CPLString &osFilename,
     return poFpWrite;
 }
 
-OGRFlatGeobufLayer *
-OGRFlatGeobufLayer::Create(const char *pszLayerName, const char *pszFilename,
-                           const OGRSpatialReference *poSpatialRef,
-                           OGRwkbGeometryType eGType,
-                           bool bCreateSpatialIndexAtClose, char **papszOptions)
+OGRFlatGeobufLayer *OGRFlatGeobufLayer::Create(
+    GDALDataset *poDS, const char *pszLayerName, const char *pszFilename,
+    const OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType,
+    bool bCreateSpatialIndexAtClose, char **papszOptions)
 {
     std::string osTempFile = GetTempFilePath(pszFilename, papszOptions);
     VSILFILE *poFpWrite =
@@ -2421,7 +2418,7 @@ OGRFlatGeobufLayer::Create(const char *pszLayerName, const char *pszFilename,
     if (poFpWrite == nullptr)
         return nullptr;
     OGRFlatGeobufLayer *layer = new OGRFlatGeobufLayer(
-        pszLayerName, pszFilename, poSpatialRef, eGType,
+        poDS, pszLayerName, pszFilename, poSpatialRef, eGType,
         bCreateSpatialIndexAtClose, poFpWrite, osTempFile);
     return layer;
 }

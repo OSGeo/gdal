@@ -103,6 +103,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     bool m_ignoreAttributeFilter = false;
 
     // creation
+    GDALDataset *m_poDS = nullptr;  // parent dataset to get metadata from it
     bool m_create = false;
     std::deque<FeatureItem> m_featureItems;  // feature item description used to
                                              // create spatial index
@@ -142,7 +143,8 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     OGRFlatGeobufLayer(const FlatGeobuf::Header *, GByte *headerBuf,
                        const char *pszFilename, VSILFILE *poFp,
                        uint64_t offset);
-    OGRFlatGeobufLayer(const char *pszLayerName, const char *pszFilename,
+    OGRFlatGeobufLayer(GDALDataset *poDS, const char *pszLayerName,
+                       const char *pszFilename,
                        const OGRSpatialReference *poSpatialRef,
                        OGRwkbGeometryType eGType,
                        bool bCreateSpatialIndexAtClose, VSILFILE *poFpWrite,
@@ -163,7 +165,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     static OGRFlatGeobufLayer *Open(const char *pszFilename, VSILFILE *fp,
                                     bool bVerifyBuffers);
     static OGRFlatGeobufLayer *
-    Create(const char *pszLayerName, const char *pszFilename,
+    Create(GDALDataset *poDS, const char *pszLayerName, const char *pszFilename,
            const OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType,
            bool bCreateSpatialIndexAtClose, char **papszOptions);
 
@@ -190,6 +192,11 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     void VerifyBuffers(int bFlag)
     {
         m_bVerifyBuffers = CPL_TO_BOOL(bFlag);
+    }
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
     }
 
     const std::string &GetFilename() const override
