@@ -61,6 +61,7 @@ def test_ogr_pgdump_1():
     ######################################################
     # Create Layer
     lyr = ds.CreateLayer("tpoly", options=["DIM=3", "POSTGIS_VERSION=1.5"])
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
 
     ######################################################
     # Setup Schema
