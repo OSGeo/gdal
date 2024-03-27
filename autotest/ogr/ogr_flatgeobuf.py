@@ -1257,3 +1257,147 @@ def test_ogr_flatgeobuf_title_description_metadata(tmp_vsimem):
         "foo": "bar",
         "bar": "baz",
     }
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_flatgeobuf_write_arrow(tmp_vsimem):
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = ds.CreateLayer("src_lyr")
+
+    field_def = ogr.FieldDefn("field_bool", ogr.OFTInteger)
+    field_def.SetSubType(ogr.OFSTBoolean)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_integer", ogr.OFTInteger)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_int16", ogr.OFTInteger)
+    field_def.SetSubType(ogr.OFSTInt16)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_integer64", ogr.OFTInteger64)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_float32", ogr.OFTReal)
+    field_def.SetSubType(ogr.OFSTFloat32)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_real", ogr.OFTReal)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_string", ogr.OFTString)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_binary", ogr.OFTBinary)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_date", ogr.OFTDate)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_time", ogr.OFTTime)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_datetime", ogr.OFTDateTime)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_boollist", ogr.OFTIntegerList)
+    field_def.SetSubType(ogr.OFSTBoolean)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_integerlist", ogr.OFTIntegerList)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_int16list", ogr.OFTIntegerList)
+    field_def.SetSubType(ogr.OFSTInt16)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_integer64list", ogr.OFTInteger64List)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_float32list", ogr.OFTRealList)
+    field_def.SetSubType(ogr.OFSTFloat32)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_reallist", ogr.OFTRealList)
+    src_lyr.CreateField(field_def)
+
+    field_def = ogr.FieldDefn("field_stringlist", ogr.OFTStringList)
+    src_lyr.CreateField(field_def)
+
+    src_feature = ogr.Feature(src_lyr.GetLayerDefn())
+    src_feature.SetField("field_bool", True)
+    src_feature.SetField("field_integer", 17)
+    src_feature.SetField("field_int16", -17)
+    src_feature.SetField("field_integer64", 9876543210)
+    src_feature.SetField("field_float32", 1.5)
+    src_feature.SetField("field_real", 18.4)
+    src_feature.SetField("field_string", "abc def")
+    src_feature.SetFieldBinary("field_binary", b"\x00\x01")
+    src_feature.SetField("field_binary", b"\x01\x23\x46\x57\x89\xAB\xCD\xEF")
+    src_feature.SetField("field_date", "2011/11/11")
+    src_feature.SetField("field_time", "14:10:35")
+    src_feature.SetField("field_datetime", 2011, 11, 11, 14, 10, 35.123, 0)
+    src_feature.field_boollist = [False, True]
+    src_feature.field_integerlist = [10, 20, 30]
+    src_feature.field_int16list = [10, -20, 30]
+    src_feature.field_integer64list = [9876543210]
+    src_feature.field_float32list = [1.5, -1.5]
+    src_feature.field_reallist = [123.5, 567.0]
+    src_feature.field_stringlist = ["abc", "def"]
+    src_feature.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+
+    src_lyr.CreateFeature(src_feature)
+
+    filename = str(tmp_vsimem / "temp.fgb")
+    dst_ds = ogr.GetDriverByName("FlatGeoBuf").CreateDataSource(filename)
+    dst_lyr = dst_ds.CreateLayer("dst_lyr")
+
+    stream = src_lyr.GetArrowStream(["INCLUDE_FID=NO"])
+    schema = stream.GetSchema()
+
+    success, error_msg = dst_lyr.IsArrowSchemaSupported(schema)
+    assert success, error_msg
+
+    for i in range(schema.GetChildrenCount()):
+        if schema.GetChild(i).GetName() != "wkb_geometry":
+            dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+    while True:
+        array = stream.GetNextRecordBatch()
+        if array is None:
+            break
+        assert dst_lyr.WriteArrowBatch(schema, array) == ogr.OGRERR_NONE
+
+    dst_ds.Close()
+    dst_ds = ogr.Open(filename)
+    dst_lyr = dst_ds.GetLayer(0)
+    dst_feature = dst_lyr.GetNextFeature()
+    assert (
+        str(dst_feature)
+        == """OGRFeature(dst_lyr):0
+  field_bool (Integer(Boolean)) = 1
+  field_integer (Integer) = 17
+  field_int16 (Integer(Int16)) = -17
+  field_integer64 (Integer64) = 9876543210
+  field_float32 (Real(Float32)) = 1.5
+  field_real (Real) = 18.4
+  field_string (String) = abc def
+  field_binary (Binary) = 0123465789ABCDEF
+  field_date (DateTime) = 2011/11/11 00:00:00
+  field_time (String) = 14:10:35
+  field_datetime (DateTime) = 2011/11/11 14:10:35.123
+  field_boollist (String) = [ 0, 1 ]
+  field_integerlist (String) = [ 10, 20, 30 ]
+  field_int16list (String) = [ 10, -20, 30 ]
+  field_integer64list (String) = [ 9876543210 ]
+  field_float32list (String) = [ 1.5, -1.5 ]
+  field_reallist (String) = [ 123.5, 567.0 ]
+  field_stringlist (String) = [ "abc", "def" ]
+  POINT (1 2)
+
+"""
+    )
