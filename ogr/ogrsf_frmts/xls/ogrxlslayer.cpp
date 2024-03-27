@@ -338,3 +338,12 @@ int OGRXLSLayer::TestCapability(const char *pszCap)
 
     return FALSE;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRXLSLayer::GetDataset()
+{
+    return poDS;
+}
