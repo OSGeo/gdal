@@ -191,6 +191,7 @@ def test_ogr_mysql_19(mysql_ds):
     layer = mysql_ds.GetLayerByName("tpoly")
     if layer is None:
         pytest.fail("did not get tpoly layer")
+    assert layer.GetDataset().GetDescription() == mysql_ds.GetDescription()
 
     extent = layer.GetExtent()
     expect = (478315.53125, 481645.3125, 4762880.5, 4765610.5)

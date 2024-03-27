@@ -35,12 +35,7 @@
 /*                           OGRMySQLLayer()                            */
 /************************************************************************/
 
-OGRMySQLLayer::OGRMySQLLayer()
-    : poFeatureDefn(nullptr),
-      nSRSId(-2),  // we haven't even queried the database for it yet.
-      iNextShapeId(0), poDS(nullptr), pszQueryStatement(nullptr),
-      nResultOffset(0), pszGeomColumn(nullptr), pszGeomColumnTable(nullptr),
-      nGeomType(0), bHasFid(FALSE), pszFIDColumn(nullptr), hResultSet(nullptr)
+OGRMySQLLayer::OGRMySQLLayer(OGRMySQLDataSource *poDSIn) : poDS(poDSIn)
 {
 }
 
@@ -373,4 +368,13 @@ const OGRSpatialReference *OGRMySQLGeomFieldDefn::GetSpatialRef() const
     }
 
     return poSRS;
+}
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRMySQLLayer::GetDataset()
+{
+    return poDS;
 }
