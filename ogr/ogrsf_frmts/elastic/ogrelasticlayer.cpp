@@ -4000,3 +4000,12 @@ OGRErr OGRElasticLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
 
     return eErr;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRElasticLayer::GetDataset()
+{
+    return m_poDS;
+}

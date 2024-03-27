@@ -223,6 +223,8 @@ class OGRElasticLayer final : public OGRLayer
 
     virtual OGRErr SyncToDisk() override;
 
+    GDALDataset *GetDataset() override;
+
     void FinalizeFeatureDefn(bool bReadFeatures = true);
     void InitFeatureDefnFromMapping(json_object *poSchema,
                                     const char *pszPrefix,
@@ -323,6 +325,8 @@ class OGRElasticAggregationLayer final
 
     using OGRLayer::SetSpatialFilter;
     void SetSpatialFilter(OGRGeometry *poGeom) override;
+
+    GDALDataset *GetDataset() override;
 
     static std::unique_ptr<OGRElasticAggregationLayer>
     Build(OGRElasticDataSource *poDS, const char *pszAggregation);

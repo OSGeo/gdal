@@ -138,6 +138,7 @@ def test_ogr_elasticsearch_1(
     lyr = ds.CreateLayer("foo", srs=ogrtest.srs_wgs84, options=["FID="])
     assert lyr is not None
     assert gdal.GetLastErrorType() == gdal.CE_None
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
 
     handle_post(
         "/fakeelasticsearch/foo/_mapping/FeatureCollection",
@@ -3133,6 +3134,7 @@ def test_ogr_elasticsearch_aggregation_minimum(es_url, handle_get, handle_post):
     )
     assert ds is not None
     lyr = ds.GetLayer(0)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     f = lyr.GetNextFeature()
 
     assert f is not None
