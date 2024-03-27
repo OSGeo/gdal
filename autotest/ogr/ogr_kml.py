@@ -74,6 +74,7 @@ def test_ogr_kml_attributes_1():
     kml_ds = ogr.Open("data/kml/samples.kml")
 
     lyr = kml_ds.GetLayerByName("Placemarks")
+    assert lyr.GetDataset().GetDescription() == kml_ds.GetDescription()
     feat = lyr.GetNextFeature()
 
     assert feat.GetField("Name") == "Simple placemark", "Wrong name field value"
