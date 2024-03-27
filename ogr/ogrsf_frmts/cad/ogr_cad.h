@@ -42,6 +42,7 @@
 
 class OGRCADLayer final : public OGRLayer
 {
+    GDALDataset *m_poDS = nullptr;
     OGRFeatureDefn *poFeatureDefn;
     OGRSpatialReference *poSpatialRef;
     GIntBig nNextFID;
@@ -49,7 +50,8 @@ class OGRCADLayer final : public OGRLayer
     int nDWGEncoding;
 
   public:
-    OGRCADLayer(CADLayer &poCADLayer, OGRSpatialReference *poSR, int nEncoding);
+    OGRCADLayer(GDALDataset *poDS, CADLayer &poCADLayer,
+                OGRSpatialReference *poSR, int nEncoding);
     ~OGRCADLayer();
 
     void ResetReading() override;
@@ -69,6 +71,11 @@ class OGRCADLayer final : public OGRLayer
 
     std::set<CPLString> asFeaturesAttributes;
     int TestCapability(const char *) override;
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
+    }
 };
 
 class GDALCADDataset final : public GDALDataset
