@@ -2397,3 +2397,12 @@ const OGRSpatialReference *OGRPGGeomFieldDefn::GetSpatialRef() const
     }
     return poSRS;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRPGLayer::GetDataset()
+{
+    return poDS;
+}
