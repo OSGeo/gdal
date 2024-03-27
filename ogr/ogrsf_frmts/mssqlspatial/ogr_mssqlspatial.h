@@ -332,7 +332,7 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL : public OGRLayer
     bool bLayerDefnNeedsRefresh = false;
 
   public:
-    OGRMSSQLSpatialLayer();
+    explicit OGRMSSQLSpatialLayer(OGRMSSQLSpatialDataSource *);
     virtual ~OGRMSSQLSpatialLayer();
 
     virtual void ResetReading() override;
@@ -366,6 +366,8 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL : public OGRLayer
     {
         return nLayerStatus;
     }
+
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/

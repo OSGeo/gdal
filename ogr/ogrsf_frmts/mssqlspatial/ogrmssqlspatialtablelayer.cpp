@@ -85,8 +85,8 @@ void OGRMSSQLAppendEscaped(CPLODBCStatement *poStatement,
 
 OGRMSSQLSpatialTableLayer::OGRMSSQLSpatialTableLayer(
     OGRMSSQLSpatialDataSource *poDSIn)
+    : OGRMSSQLSpatialLayer(poDSIn)
 {
-    poDS = poDSIn;
     bUseGeometryValidation = CPLTestBool(
         CPLGetConfigOption("MSSQLSPATIAL_USE_GEOMETRY_VALIDATION", "YES"));
 }

@@ -32,7 +32,8 @@
 /*                        OGRMSSQLSpatialLayer()                        */
 /************************************************************************/
 
-OGRMSSQLSpatialLayer::OGRMSSQLSpatialLayer()
+OGRMSSQLSpatialLayer::OGRMSSQLSpatialLayer(OGRMSSQLSpatialDataSource *poDSIn)
+    : poDS(poDSIn)
 
 {
 }
@@ -703,4 +704,13 @@ char *OGRMSSQLSpatialLayer::GByteArrayToHexString(const GByte *pabyData,
     pszTextBuf[iDst] = 0;
 
     return pszTextBuf;
+}
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRMSSQLSpatialLayer::GetDataset()
+{
+    return poDS;
 }
