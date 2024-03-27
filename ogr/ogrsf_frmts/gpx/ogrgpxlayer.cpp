@@ -2179,3 +2179,12 @@ void OGRGPXLayer::LoadExtensionsSchema()
 {
 }
 #endif
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRGPXLayer::GetDataset()
+{
+    return m_poDS;
+}
