@@ -62,6 +62,11 @@
 #include "tifvsi.h"
 #include "xtiffio.h"
 
+#if LIFFLIB_VERSION > 20230908 || defined(INTERNAL_LIBTIFF)
+/* libtiff < 4.6.1 doesn't generate a LERC mask for multi-band contig configuration */
+#define LIBTIFF_MULTIBAND_LERC_NAN_OK
+#endif
+
 static const int knGTIFFJpegTablesModeDefault = JPEGTABLESMODE_QUANT;
 
 static constexpr const char szPROFILE_BASELINE[] = "BASELINE";
@@ -533,14 +538,84 @@ inline bool GTiffDataset::IsFirstPixelEqualToNoData(const void *pBuffer)
 }
 
 /************************************************************************/
+/*                      WriteDealWithLercAndNan()                       */
+/************************************************************************/
+
+template <typename T>
+void GTiffDataset::WriteDealWithLercAndNan(T *pBuffer, int nActualBlockWidth,
+                                           int nActualBlockHeight,
+                                           int nStrileHeight)
+{
+    // This method does 2 things:
+    // - warn the user if he tries to write NaN values with libtiff < 4.6.1
+    //   and multi-band PlanarConfig=Contig configuration
+    // - and in right-most and bottom-most tiles, replace non accessible
+    //   pixel values by a safe one.
+
+    const auto fPaddingValue =
+#if !defined(LIBTIFF_MULTIBAND_LERC_NAN_OK)
+        m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands > 1
+            ? 0
+            :
+#endif
+            std::numeric_limits<T>::quiet_NaN();
+
+    const int nBandsPerStrile =
+        m_nPlanarConfig == PLANARCONFIG_CONTIG ? nBands : 1;
+    for (int j = 0; j < nActualBlockHeight; ++j)
+    {
+#if !defined(LIBTIFF_MULTIBAND_LERC_NAN_OK)
+        static bool bHasWarned = false;
+        if (m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands > 1 && !bHasWarned)
+        {
+            for (int i = 0; i < nActualBlockWidth * nBandsPerStrile; ++i)
+            {
+                if (std::isnan(
+                        pBuffer[j * m_nBlockXSize * nBandsPerStrile + i]))
+                {
+                    bHasWarned = true;
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "libtiff < 4.6.1 does not handle properly NaN "
+                             "values for multi-band PlanarConfig=Contig "
+                             "configuration. As a workaround, you can set the "
+                             "INTERLEAVE=BAND creation option.");
+                    break;
+                }
+            }
+        }
+#endif
+        for (int i = nActualBlockWidth * nBandsPerStrile;
+             i < m_nBlockXSize * nBandsPerStrile; ++i)
+        {
+            pBuffer[j * m_nBlockXSize * nBandsPerStrile + i] = fPaddingValue;
+        }
+    }
+    for (int j = nActualBlockHeight; j < nStrileHeight; ++j)
+    {
+        for (int i = 0; i < m_nBlockXSize * nBandsPerStrile; ++i)
+        {
+            pBuffer[j * m_nBlockXSize * nBandsPerStrile + i] = fPaddingValue;
+        }
+    }
+}
+
+/************************************************************************/
 /*                        WriteEncodedTile()                            */
 /************************************************************************/
 
 bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
                                     int bPreserveDataBuffer)
 {
-    int iRow = 0;
-    int iColumn = 0;
+
+    const int iColumn = (tile % m_nBlocksPerBand) % m_nBlocksPerRow;
+    const int iRow = (tile % m_nBlocksPerBand) / m_nBlocksPerRow;
+
+    const int nActualBlockWidth = (iColumn == m_nBlocksPerRow - 1)
+                                      ? nRasterXSize - iColumn * m_nBlockXSize
+                                      : m_nBlockXSize;
+    const int nActualBlockHeight = (iRow == m_nBlocksPerColumn - 1)
+                                       ? nRasterYSize - iRow * m_nBlockYSize
+                                       : m_nBlockYSize;
 
     /* -------------------------------------------------------------------- */
     /*      Don't write empty blocks in some cases.                         */
@@ -552,18 +627,6 @@ bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
             const int nComponents =
                 m_nPlanarConfig == PLANARCONFIG_CONTIG ? nBands : 1;
 
-            iColumn = (tile % m_nBlocksPerBand) % m_nBlocksPerRow;
-            iRow = (tile % m_nBlocksPerBand) / m_nBlocksPerRow;
-
-            const int nActualBlockWidth =
-                (iColumn == m_nBlocksPerRow - 1)
-                    ? nRasterXSize - iColumn * m_nBlockXSize
-                    : m_nBlockXSize;
-            const int nActualBlockHeight =
-                (iRow == m_nBlocksPerColumn - 1)
-                    ? nRasterYSize - iRow * m_nBlockYSize
-                    : m_nBlockYSize;
-
             if (HasOnlyNoData(pabyData, nActualBlockWidth, nActualBlockHeight,
                               m_nBlockXSize, nComponents))
             {
@@ -572,23 +635,21 @@ bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
         }
     }
 
+    // Is this a partial right edge or bottom edge tile?
+    const bool bPartialTile = (nActualBlockWidth < m_nBlockXSize) ||
+                              (nActualBlockHeight < m_nBlockYSize);
+
+    const bool bIsLercFloatingPoint =
+        m_nCompression == COMPRESSION_LERC &&
+        (GetRasterBand(1)->GetRasterDataType() == GDT_Float32 ||
+         GetRasterBand(1)->GetRasterDataType() == GDT_Float64);
+
     // Do we need to spread edge values right or down for a partial
     // JPEG encoded tile?  We do this to avoid edge artifacts.
-    bool bNeedTileFill = false;
-    if (m_nCompression == COMPRESSION_JPEG)
-    {
-        iColumn = (tile % m_nBlocksPerBand) % m_nBlocksPerRow;
-        iRow = (tile % m_nBlocksPerBand) / m_nBlocksPerRow;
-
-        // Is this a partial right edge tile?
-        if (iRow == m_nBlocksPerRow - 1 && nRasterXSize % m_nBlockXSize != 0)
-            bNeedTileFill = true;
-
-        // Is this a partial bottom edge tile?
-        if (iColumn == m_nBlocksPerColumn - 1 &&
-            nRasterYSize % m_nBlockYSize != 0)
-            bNeedTileFill = true;
-    }
+    // We also need to be careful with LERC and NaN values
+    const bool bNeedTempBuffer =
+        bPartialTile &&
+        (m_nCompression == COMPRESSION_JPEG || bIsLercFloatingPoint);
 
     // If we need to fill out the tile, or if we want to prevent
     // TIFFWriteEncodedTile from altering the buffer as part of
@@ -597,7 +658,7 @@ bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
     const GPtrDiff_t cc = static_cast<GPtrDiff_t>(TIFFTileSize(m_hTIFF));
 
     if (bPreserveDataBuffer &&
-        (TIFFIsByteSwapped(m_hTIFF) || bNeedTileFill || m_panMaskOffsetLsb))
+        (TIFFIsByteSwapped(m_hTIFF) || bNeedTempBuffer || m_panMaskOffsetLsb))
     {
         if (m_pabyTempWriteBuffer == nullptr)
         {
@@ -611,7 +672,8 @@ bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
     // Perform tile fill if needed.
     // TODO: we should also handle the case of nBitsPerSample == 12
     // but this is more involved.
-    if (bNeedTileFill && m_nBitsPerSample == 8)
+    if (bPartialTile && m_nCompression == COMPRESSION_JPEG &&
+        m_nBitsPerSample == 8)
     {
         const int nComponents =
             m_nPlanarConfig == PLANARCONFIG_CONTIG ? nBands : 1;
@@ -654,6 +716,24 @@ bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
                                   nComponents * iSrcY,
                    static_cast<GPtrDiff_t>(m_nBlockXSize) * nComponents);
         }
+    }
+
+    if (bIsLercFloatingPoint &&
+        (bPartialTile
+#if !defined(LIBTIFF_MULTIBAND_LERC_NAN_OK)
+         /* libtiff < 4.6.1 doesn't generate a LERC mask for multi-band contig configuration */
+         || (m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands > 1)
+#endif
+             ))
+    {
+        if (GetRasterBand(1)->GetRasterDataType() == GDT_Float32)
+            WriteDealWithLercAndNan(reinterpret_cast<float *>(pabyData),
+                                    nActualBlockWidth, nActualBlockHeight,
+                                    m_nBlockYSize);
+        else
+            WriteDealWithLercAndNan(reinterpret_cast<double *>(pabyData),
+                                    nActualBlockWidth, nActualBlockHeight,
+                                    m_nBlockYSize);
     }
 
     if (m_panMaskOffsetLsb)
@@ -756,6 +836,24 @@ bool GTiffDataset::WriteEncodedStrip(uint32_t strip, GByte *pabyData,
         memcpy(m_pabyTempWriteBuffer, pabyData, cc);
         pabyData = static_cast<GByte *>(m_pabyTempWriteBuffer);
     }
+
+#if !defined(LIBTIFF_MULTIBAND_LERC_NAN_OK)
+    const bool bIsLercFloatingPoint =
+        m_nCompression == COMPRESSION_LERC &&
+        (GetRasterBand(1)->GetRasterDataType() == GDT_Float32 ||
+         GetRasterBand(1)->GetRasterDataType() == GDT_Float64);
+    if (bIsLercFloatingPoint &&
+        /* libtiff < 4.6.1 doesn't generate a LERC mask for multi-band contig configuration */
+        m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands > 1)
+    {
+        if (GetRasterBand(1)->GetRasterDataType() == GDT_Float32)
+            WriteDealWithLercAndNan(reinterpret_cast<float *>(pabyData),
+                                    m_nBlockXSize, nStripHeight, nStripHeight);
+        else
+            WriteDealWithLercAndNan(reinterpret_cast<double *>(pabyData),
+                                    m_nBlockXSize, nStripHeight, nStripHeight);
+    }
+#endif
 
     if (m_panMaskOffsetLsb)
     {

@@ -70,6 +70,12 @@ if (GDAL_USE_GEOTIFF_INTERNAL)
   target_compile_definitions(gdal_GTIFF PRIVATE -DINTERNAL_LIBGEOTIFF)
 endif ()
 
+if (GDAL_USE_LERC_INTERNAL)
+  # Just for the sake of reporting the liblerc version in internal metadata
+  target_compile_definitions(gdal_GTIFF PRIVATE -DLERC_SUPPORT)
+  gdal_add_vendored_lib(gdal_GTIFF lerc)
+endif ()
+
 # Now deal with external dependencies
 
 # Include libjpeg first so that if we want to use jpeg-turbo on homebrew
@@ -134,6 +140,11 @@ endif ()
 if (GDAL_USE_WEBP)
   target_compile_definitions(gdal_GTIFF PRIVATE -DWEBP_SUPPORT)
   target_include_directories(gdal_GTIFF PRIVATE $<TARGET_PROPERTY:WEBP::WebP,INTERFACE_INCLUDE_DIRECTORIES>)
+endif ()
+
+if (NOT GDAL_USE_LERC_INTERNAL AND GDAL_USE_LERC)
+  target_compile_definitions(gdal_GTIFF PRIVATE -DLERC_SUPPORT)
+  target_include_directories(gdal_GTIFF PRIVATE $<TARGET_PROPERTY:LERC::LERC,INTERFACE_INCLUDE_DIRECTORIES>)
 endif ()
 
 if(GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL)
