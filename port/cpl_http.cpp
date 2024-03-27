@@ -585,6 +585,7 @@ double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay,
          strstr(pszErrBuf, "RequestTimeout")) ||
         (pszCurlError && (strstr(pszCurlError, "Connection timed out") ||
                           strstr(pszCurlError, "Operation timed out") ||
+                          strstr(pszCurlError, "Connection reset by peer") ||
                           strstr(pszCurlError, "Connection was reset"))))
     {
         // 'Operation tmied out': seen during some long running operation 'hang'
