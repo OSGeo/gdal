@@ -122,6 +122,8 @@ FGdbDataSource::FGdbDataSource(bool bUseDriverMutex,
       m_poOpenFileGDBDrv(nullptr), m_bUseOpenFileGDB(bUseOpenFileGDB)
 {
     bPerLayerCopyingForTransaction = -1;
+    SetDescription(pConnection->m_osName.c_str());
+    poDriver = GDALDriver::FromHandle(GDALGetDriverByName("FileGDB"));
 }
 
 /************************************************************************/

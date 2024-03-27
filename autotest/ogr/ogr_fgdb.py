@@ -277,6 +277,8 @@ def test_ogr_fgdb_1(test_gdb, test_gdb_datalist):
 
     for data in test_gdb_datalist:
         lyr = ds.GetLayerByName(data[0])
+        assert lyr.GetDataset().GetDescription() == ds.GetDescription()
+        assert lyr.GetDataset().GetDriver().GetDescription() == "FileGDB"
         if data[1] != ogr.wkbNone:
             assert (
                 lyr.GetSpatialRef().IsSame(
@@ -341,6 +343,8 @@ def test_ogr_fgdb_DeleteField(test_gdb):
 
     ds = ogr.Open(test_gdb, update=1)
     lyr = ds.GetLayerByIndex(0)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
+    assert lyr.GetDataset().GetDriver().GetDescription() == "FileGDB"
 
     assert (
         lyr.GetLayerDefn()
@@ -566,12 +570,14 @@ def test_ogr_fgdb_6(fgdb_drv, tmp_path):
     srs.SetFromUserInput("WGS84")
 
     with fgdb_drv.CreateDataSource(tmp_path / "test.gdb") as ds:
-        ds.CreateLayer(
+        lyr = ds.CreateLayer(
             "layer1",
             srs=srs,
             geom_type=ogr.wkbPoint,
             options=["FEATURE_DATASET=featuredataset"],
         )
+        assert lyr.GetDataset().GetDescription() == ds.GetDescription()
+        assert lyr.GetDataset().GetDriver().GetDescription() == "FileGDB"
         ds.CreateLayer(
             "layer2",
             srs=srs,

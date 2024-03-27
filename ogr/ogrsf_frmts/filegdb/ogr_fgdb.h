@@ -253,6 +253,8 @@ class FGdbLayer final : public FGdbBaseLayer
 
     virtual OGRErr Rename(const char *pszNewName) override;
 
+    GDALDataset *GetDataset() override;
+
   protected:
     bool GDBToOGRFields(CPLXMLNode *psFields);
     bool ParseGeometryDef(const CPLXMLNode *psGeometryDef);
