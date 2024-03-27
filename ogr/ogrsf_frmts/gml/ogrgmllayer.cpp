@@ -1282,3 +1282,12 @@ OGRErr OGRGMLLayer::CreateGeomField(const OGRGeomFieldDefn *poField,
 
     return OGRERR_NONE;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRGMLLayer::GetDataset()
+{
+    return poDS;
+}
