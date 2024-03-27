@@ -172,6 +172,7 @@ def test_ogr_pds4_read_table_character():
     assert not ds.GetLayer(1)
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == "ele_evt_12hr_orbit_2011-2012_truncated"
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     assert lyr.GetFeatureCount() == 5
 
     f = lyr.GetNextFeature()

@@ -105,6 +105,8 @@ class PDS4TableBaseLayer CPL_NON_FINAL : public OGRLayer
     virtual char **GetFileList() const;
 
     virtual void RefreshFileAreaObservational(CPLXMLNode *psFAO) = 0;
+
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/
