@@ -3830,7 +3830,7 @@ static GDALDatasetH GDALWarpCreateOutput(
 
         if (bKnownTargetExtentButNotResolution)
         {
-            // Sample points along a grid
+            // Sample points along a grid in target CRS
             constexpr int nPointsX = 10;
             constexpr int nPointsY = 10;
             constexpr int nPoints = 3 * nPointsX * nPointsY;
@@ -3873,13 +3873,66 @@ static GDALDatasetH GDALWarpCreateOutput(
                 }
             }
 
-            psInfo->pfnTransform(hTransformArg, TRUE, nPoints, &padfX[0],
-                                 &padfY[0], &padfZ[0], &pabSuccess[0]);
+            bool transformedToSrcCRS{false};
+
+            GDALGenImgProjTransformInfo *psTransformInfo{
+                static_cast<GDALGenImgProjTransformInfo *>(hTransformArg)};
+
+            // If a transformer is available, use an extent that covers the
+            // target extent instead of the real source image extent
+            if (psTransformInfo && psTransformInfo->pReprojectArg)
+            {
+                const GDALReprojectionTransformInfo *psRTI =
+                    static_cast<const GDALReprojectionTransformInfo *>(
+                        psTransformInfo->pReprojectArg);
+                if (psRTI && psRTI->poReverseTransform)
+                {
+
+                    // Compute new geotransform from transformed target extent
+                    double adfGeoTransform[6];
+                    if (GDALGetGeoTransform(hSrcDS, adfGeoTransform) == CE_None)
+                    {
+
+                        // Transform target extent to source CRS
+                        double dfMinX = psOptions->dfMinX;
+                        double dfMinY = psOptions->dfMinY;
+                        double dfMaxX = psOptions->dfMaxX;
+                        double dfMaxY = psOptions->dfMaxY;
+
+                        psRTI->poReverseTransform->Transform(
+                            1, &dfMinX, &dfMinY, nullptr, nullptr);
+                        adfGeoTransform[0] = dfMinX;
+                        // TODO: check if we need to consider the case of north up images
+                        adfGeoTransform[3] = dfMinY;
+
+                        // Reproject to source image CRS
+                        psRTI->poReverseTransform->Transform(
+                            nPoints, &padfX[0], &padfY[0], &padfZ[0],
+                            &pabSuccess[0]);
+
+                        // Transform back to source image coordinate space using geotransform
+                        for (size_t i = 0; i < padfX.size(); i++)
+                        {
+                            padfX[i] = (padfX[i] - adfGeoTransform[0]) /
+                                       adfGeoTransform[1];
+                            padfY[i] = (padfY[i] - adfGeoTransform[3]) /
+                                       adfGeoTransform[5];
+                        }
+
+                        transformedToSrcCRS = true;
+                    }
+                }
+            }
+
+            if (!transformedToSrcCRS)
+            {
+                // Transform to source image coordinate space
+                psInfo->pfnTransform(hTransformArg, TRUE, nPoints, &padfX[0],
+                                     &padfY[0], &padfZ[0], &pabSuccess[0]);
+            }
 
             // Compute the resolution at sampling points
             std::vector<std::pair<double, double>> aoResPairs;
-            const int nSrcXSize = GDALGetRasterXSize(hSrcDS);
-            const int nSrcYSize = GDALGetRasterYSize(hSrcDS);
 
             const auto Distance = [](double x, double y)
             { return sqrt(x * x + y * y); };
@@ -3887,8 +3940,7 @@ static GDALDatasetH GDALWarpCreateOutput(
             for (int i = 0; i < nPoints; i += 3)
             {
                 if (pabSuccess[i] && pabSuccess[i + 1] && pabSuccess[i + 2] &&
-                    padfX[i] >= 0 && padfX[i] <= nSrcXSize && padfY[i] >= 0 &&
-                    padfY[i] <= nSrcYSize)
+                    padfX[i] >= 0 && padfY[i] >= 0)
                 {
                     const double dfRes1 =
                         std::abs(dfEps) / Distance(padfX[i + 1] - padfX[i],
@@ -3912,6 +3964,7 @@ static GDALDatasetH GDALWarpCreateOutput(
                       [](const std::pair<double, double> &oPair1,
                          const std::pair<double, double> &oPair2)
                       { return oPair1.first < oPair2.first; });
+
             if (!aoResPairs.empty())
             {
                 std::vector<std::pair<double, double>> aoResPairsNew;
