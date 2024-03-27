@@ -135,6 +135,7 @@ def test_ogr_dgnv8_5():
     ]
     ds = ogr.GetDriverByName("DGNv8").CreateDataSource(tmp_dgn, options=options)
     lyr = ds.CreateLayer("my_layer")
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
     lyr.CreateFeature(f)

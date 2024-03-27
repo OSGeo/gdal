@@ -119,6 +119,8 @@ class OGRDGNV8Layer final : public OGRLayer
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
+
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/
