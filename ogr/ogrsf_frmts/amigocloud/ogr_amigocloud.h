@@ -131,6 +131,8 @@ class OGRAmigoCloudLayer CPL_NON_FINAL : public OGRLayer
 
     virtual int TestCapability(const char *) override;
 
+    GDALDataset *GetDataset() override;
+
     static int GetFeaturesToFetch()
     {
         return 100;
