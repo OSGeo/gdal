@@ -201,6 +201,7 @@ Error""",
     )
     ds = ogr.Open("CARTO:foo")
     lyr = ds.GetLayer(0)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     lyr_defn = lyr.GetLayerDefn()
     assert lyr_defn.GetFieldCount() == 0
 
