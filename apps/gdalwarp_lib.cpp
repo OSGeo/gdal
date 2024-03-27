@@ -3896,8 +3896,6 @@ static GDALDatasetH GDALWarpCreateOutput(
                         // Transform target extent to source CRS
                         double dfMinX = psOptions->dfMinX;
                         double dfMinY = psOptions->dfMinY;
-                        double dfMaxX = psOptions->dfMaxX;
-                        double dfMaxY = psOptions->dfMaxY;
 
                         psRTI->poReverseTransform->Transform(
                             1, &dfMinX, &dfMinY, nullptr, nullptr);
