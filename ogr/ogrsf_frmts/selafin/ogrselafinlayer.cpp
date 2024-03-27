@@ -59,12 +59,13 @@ static void MoveOverwrite(VSILFILE *fpDest, VSILFILE *fpSource)
 /*       Note that no operation on OGRSelafinLayer is thread-safe       */
 /************************************************************************/
 
-OGRSelafinLayer::OGRSelafinLayer(const char *pszLayerNameP, int bUpdateP,
+OGRSelafinLayer::OGRSelafinLayer(GDALDataset *poDS, const char *pszLayerNameP,
+                                 int bUpdateP,
                                  const OGRSpatialReference *poSpatialRefP,
                                  Selafin::Header *poHeaderP, int nStepNumberP,
                                  SelafinTypeDef eTypeP)
-    : eType(eTypeP), bUpdate(CPL_TO_BOOL(bUpdateP)), nStepNumber(nStepNumberP),
-      poHeader(poHeaderP),
+    : m_poDS(poDS), eType(eTypeP), bUpdate(CPL_TO_BOOL(bUpdateP)),
+      nStepNumber(nStepNumberP), poHeader(poHeaderP),
       poFeatureDefn(new OGRFeatureDefn(CPLGetBasename(pszLayerNameP))),
       poSpatialRef(nullptr), nCurrentId(-1)
 {

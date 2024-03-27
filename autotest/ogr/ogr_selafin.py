@@ -96,6 +96,7 @@ def test_ogr_selafin_create_elements(selafin_dsn):
         if "_p" in name:
             k = i
     layere = selafin_ds.GetLayer(j)
+    assert layere.GetDataset().GetDescription() == selafin_ds.GetDescription()
     dfn = layere.GetLayerDefn()
     for i in range(4):
         for j in range(4):

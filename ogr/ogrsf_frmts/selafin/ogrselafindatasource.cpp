@@ -572,8 +572,9 @@ int OGRSelafinDataSource::OpenTable(const char *pszFilename)
                     osLayerName = osBaseLayerName + "_p" + szTemp;
                 else
                     osLayerName = osBaseLayerName + "_e" + szTemp;
-                papoLayers[nLayers++] = new OGRSelafinLayer(
-                    osLayerName, bUpdate, poSpatialRef, poHeader, i, eType);
+                papoLayers[nLayers++] =
+                    new OGRSelafinLayer(this, osLayerName, bUpdate,
+                                        poSpatialRef, poHeader, i, eType);
                 // poHeader->nRefCount++;
             }
         }
@@ -683,12 +684,12 @@ OGRSelafinDataSource::ICreateLayer(const char *pszLayerName,
     CPLString szName = pszLayerName;
     CPLString szNewLayerName = szName + "_p";
     papoLayers[nLayers - 2] =
-        new OGRSelafinLayer(szNewLayerName, bUpdate, poSpatialRef, poHeader,
-                            poHeader->nSteps - 1, POINTS);
+        new OGRSelafinLayer(this, szNewLayerName, bUpdate, poSpatialRef,
+                            poHeader, poHeader->nSteps - 1, POINTS);
     szNewLayerName = szName + "_e";
     papoLayers[nLayers - 1] =
-        new OGRSelafinLayer(szNewLayerName, bUpdate, poSpatialRef, poHeader,
-                            poHeader->nSteps - 1, ELEMENTS);
+        new OGRSelafinLayer(this, szNewLayerName, bUpdate, poSpatialRef,
+                            poHeader, poHeader->nSteps - 1, ELEMENTS);
     return papoLayers[nLayers - 2];
 }
 
