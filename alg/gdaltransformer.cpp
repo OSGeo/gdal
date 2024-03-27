@@ -92,68 +92,6 @@ bool GDALIsTransformer(void *hTransformerArg, const char *pszClassName)
 }
 
 /************************************************************************/
-/* ==================================================================== */
-/*                       GDALGenImgProjTransformer                      */
-/* ==================================================================== */
-/************************************************************************/
-
-typedef struct
-{
-
-    GDALTransformerInfo sTI;
-
-    double adfSrcGeoTransform[6];
-    double adfSrcInvGeoTransform[6];
-
-    void *pSrcTransformArg;
-    GDALTransformerFunc pSrcTransformer;
-
-    void *pReprojectArg;
-    GDALTransformerFunc pReproject;
-
-    double adfDstGeoTransform[6];
-    double adfDstInvGeoTransform[6];
-
-    void *pDstTransformArg;
-    GDALTransformerFunc pDstTransformer;
-
-    // Memorize the value of the CHECK_WITH_INVERT_PROJ at the time we
-    // instantiated the object, to be able to decide if
-    // GDALRefreshGenImgProjTransformer() must do something or not.
-    bool bCheckWithInvertPROJ;
-
-    // Set to TRUE when the transformation pipline is a custom one.
-    bool bHasCustomTransformationPipeline;
-
-} GDALGenImgProjTransformInfo;
-
-/************************************************************************/
-/* ==================================================================== */
-/*                       GDALReprojectionTransformer                    */
-/* ==================================================================== */
-/************************************************************************/
-
-struct GDALReprojectionTransformInfo
-{
-    GDALTransformerInfo sTI;
-    char **papszOptions = nullptr;
-    double dfTime = 0.0;
-
-    OGRCoordinateTransformation *poForwardTransform = nullptr;
-    OGRCoordinateTransformation *poReverseTransform = nullptr;
-
-    GDALReprojectionTransformInfo() : sTI()
-    {
-        memset(&sTI, 0, sizeof(sTI));
-    }
-
-    GDALReprojectionTransformInfo(const GDALReprojectionTransformInfo &) =
-        delete;
-    GDALReprojectionTransformInfo &
-    operator=(const GDALReprojectionTransformInfo &) = delete;
-};
-
-/************************************************************************/
 /*                          GDALTransformFunc                           */
 /*                                                                      */
 /*      Documentation for GDALTransformFunc typedef.                    */
