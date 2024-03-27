@@ -39,6 +39,8 @@ OGRMutexedDataSource::OGRMutexedDataSource(OGRDataSource *poBaseDataSource,
       m_hGlobalMutex(hMutexIn),
       m_bWrapLayersInMutexedLayer(bWrapLayersInMutexedLayer)
 {
+    SetDescription(poBaseDataSource->GetDescription());
+    poDriver = poBaseDataSource->GetDriver();
 }
 
 OGRMutexedDataSource::~OGRMutexedDataSource()
