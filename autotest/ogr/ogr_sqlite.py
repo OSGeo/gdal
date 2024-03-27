@@ -157,6 +157,8 @@ def tpoly(sqlite_test_db, poly_feat):
     # Create Layer
     sl_lyr = sqlite_test_db.CreateLayer("tpoly")
 
+    assert sl_lyr.GetDataset().GetDescription() == sqlite_test_db.GetDescription()
+
     ######################################################
     # Setup Schema
 

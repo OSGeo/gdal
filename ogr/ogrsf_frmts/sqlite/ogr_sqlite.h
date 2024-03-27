@@ -221,6 +221,8 @@ class OGRSQLiteLayer CPL_NON_FINAL : public OGRLayer,
 
     void Finalize();
 
+    GDALDataset *GetDataset() override;
+
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature() override;
