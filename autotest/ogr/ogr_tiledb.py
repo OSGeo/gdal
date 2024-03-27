@@ -252,6 +252,7 @@ def test_ogr_tiledb_basic(nullable, batch_size):
 
     ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     assert lyr.GetGeomType() == ogr.wkbUnknown
     assert lyr.GetSpatialRef().IsSame(srs)
     assert lyr.GetFeatureCount() == 3
@@ -802,6 +803,7 @@ def test_ogr_tiledb_geometry_types(wkt):
     if g.GetGeometryType() in (ogr.wkbPoint, ogr.wkbPoint25D):
         options += ["GEOMETRY_NAME="]
     lyr = ds.CreateLayer("test", geom_type=g.GetGeometryType(), options=options)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(g)
     assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
