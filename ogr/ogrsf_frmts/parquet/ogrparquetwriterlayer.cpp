@@ -1282,3 +1282,12 @@ CPLErr OGRParquetWriterLayer::SetMetadata(char **papszMetadata,
     }
     return CE_None;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRParquetWriterLayer::GetDataset()
+{
+    return m_poDataset;
+}
