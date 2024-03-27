@@ -145,6 +145,8 @@ class OGRGeoRSSLayer final : public OGRLayer
 
     GIntBig GetFeatureCount(int bForce) override;
 
+    GDALDataset *GetDataset() override;
+
     void LoadSchema();
 
 #ifdef HAVE_EXPAT

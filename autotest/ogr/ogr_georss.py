@@ -99,6 +99,7 @@ def ogr_georss_test_atom(filename):
 
     ds = ogr.Open(filename)
     lyr = ds.GetLayerByName("georss")
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
 
     assert lyr.GetSpatialRef() is None, "No spatial ref expected"
 
