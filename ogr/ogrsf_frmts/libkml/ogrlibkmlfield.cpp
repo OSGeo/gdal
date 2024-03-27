@@ -603,17 +603,21 @@ void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
                 }
 
                 /***** other *****/
+                const char *pszVal =
+                    type == OFTDateTime
+                        ? poOgrFeat->GetFieldAsISO8601DateTime(i, nullptr)
+                        : poOgrFeat->GetFieldAsString(i);
                 if (bUseSimpleField)
                 {
                     poKmlSimpleData = poKmlFactory->CreateSimpleData();
                     poKmlSimpleData->set_name(name);
-                    poKmlSimpleData->set_text(poOgrFeat->GetFieldAsString(i));
+                    poKmlSimpleData->set_text(pszVal);
                 }
                 else
                 {
                     poKmlData = poKmlFactory->CreateData();
                     poKmlData->set_name(name);
-                    poKmlData->set_value(poOgrFeat->GetFieldAsString(i));
+                    poKmlData->set_value(pszVal);
                 }
 
                 break;
@@ -1541,7 +1545,7 @@ void kml2field(OGRFeature *poOgrFeat, FeaturePtr poKmlFeature)
 ******************************************************************************/
 
 SimpleFieldPtr FieldDef2kml(const OGRFieldDefn *poOgrFieldDef,
-                            KmlFactory *poKmlFactory)
+                            KmlFactory *poKmlFactory, bool bApproxOK)
 {
     /***** Get the field config. *****/
     struct fieldconfig oFC;
@@ -1622,6 +1626,11 @@ SimpleFieldPtr FieldDef2kml(const OGRFieldDefn *poOgrFieldDef,
         case OFTDate:
         case OFTTime:
         case OFTDateTime:
+            if (bApproxOK)
+            {
+                poKmlSimpleField->set_type("string");
+                return poKmlSimpleField;
+            }
             break;
 
         default:

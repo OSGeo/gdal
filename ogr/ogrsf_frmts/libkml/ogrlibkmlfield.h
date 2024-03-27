@@ -68,7 +68,8 @@ void kml2field(OGRFeature *poOgrFeat, kmldom::FeaturePtr poKmlFeature);
 ******************************************************************************/
 
 kmldom::SimpleFieldPtr FieldDef2kml(const OGRFieldDefn *poOgrFieldDef,
-                                    kmldom::KmlFactory *poKmlFactory);
+                                    kmldom::KmlFactory *poKmlFactory,
+                                    bool bApproxOK);
 
 /******************************************************************************
  Function to add the simpleFields in a schema to a featuredefn.
