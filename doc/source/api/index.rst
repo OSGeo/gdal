@@ -84,6 +84,12 @@ API
        :maxdepth: 1
 
        python_bindings
+       python/raster_api
+       python/vector_api
+       python/spatial_ref_api
+       python/mdim_api
+       python/utilities
+       python/general
        python/osgeo
        python_gotchas
        python_samples

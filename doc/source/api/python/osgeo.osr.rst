@@ -5,3 +5,4 @@ osgeo.osr module
    :members:
    :undoc-members:
    :show-inheritance:
+   :exclude-members: SpatialReference
