@@ -422,6 +422,7 @@ def test_ogr_openfilegdb_1(gdb_source):
         if lyr_name == "multilinestring25D_multipart" and not version10:
             continue
         lyr = ds.GetLayerByName(lyr_name)
+        assert lyr.GetDataset().GetDescription() == ds.GetDescription()
         expected_geom_type = data[1]
         if expected_geom_type == ogr.wkbLineString:
             expected_geom_type = ogr.wkbMultiLineString
