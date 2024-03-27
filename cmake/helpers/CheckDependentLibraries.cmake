@@ -89,7 +89,7 @@ endfunction()
 # option. User control is done via a cache variable GDAL_USE_{name in upper case}
 # with the default value ON for CAN_DISABLE or OFF for DISABLED_BY_DEFAULT.
 # The RECOMMENDED option is used for the feature summary.
-# The VERSION, CONFIG, COMPONENTS and NAMES parameters are passed to find_package().
+# The VERSION, CONFIG, MODULE, COMPONENTS and NAMES parameters are passed to find_package().
 # Using NAMES with find_package() implies config mode. However, gdal_check_package()
 # attempts another find_package() without NAMES if the config mode attempt was not
 # successful, allowing a fallback to Find modules.
@@ -100,9 +100,9 @@ endfunction()
 # GDAL_CHECK_PACKAGE_${name}_TARGETS cache variables which can be used to
 # overwrite the default config and targets names.
 # The required find_dependency() commands for exported config are appended to
-# the GDAL_IMPORT_DEPENDENCIES string.
+# the GDAL_IMPORT_DEPENDENCIES string (when BUILD_SHARED_LIBS=OFF).
 macro (gdal_check_package name purpose)
-  set(_options CONFIG CAN_DISABLE RECOMMENDED DISABLED_BY_DEFAULT ALWAYS_ON_WHEN_FOUND)
+  set(_options CONFIG MODULE CAN_DISABLE RECOMMENDED DISABLED_BY_DEFAULT ALWAYS_ON_WHEN_FOUND)
   set(_oneValueArgs VERSION NAMES)
   set(_multiValueArgs COMPONENTS TARGETS PATHS)
   cmake_parse_arguments(_GCP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
@@ -119,6 +119,9 @@ macro (gdal_check_package name purpose)
     endif ()
     if (_GCP_CONFIG)
       list(APPEND _find_package_args CONFIG)
+    endif ()
+    if (_GCP_MODULE)
+      list(APPEND _find_package_args MODULE)
     endif ()
     if (_GCP_COMPONENTS)
       list(APPEND _find_package_args COMPONENTS ${_GCP_COMPONENTS})
@@ -375,23 +378,36 @@ if (GDAL_USE_CRYPTOPP)
   option(CRYPTOPP_USE_ONLY_CRYPTODLL_ALG "Use Only cryptoDLL alg. only work on dynamic DLL" OFF)
 endif ()
 
-set(GDAL_FIND_PACKAGE_PROJ_METHOD "CONFIG" CACHE STRING "Method to use for find_package(PROJ): CONFIG or MODULE")
-set_property(CACHE GDAL_FIND_PACKAGE_PROJ_METHOD PROPERTY STRINGS "CONFIG" "MODULE")
-mark_as_advanced(GDAL_FIND_PACKAGE_PROJ_METHOD)
-if(GDAL_FIND_PACKAGE_PROJ_METHOD STREQUAL "MODULE")
-    find_package(PROJ MODULE REQUIRED)
-    string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ MODULE REQUIRED)\n")
+set(GDAL_FIND_PACKAGE_PROJ_MODE "CUSTOM" CACHE STRING "Mode to use for find_package(PROJ): CUSTOM, CONFIG, MODULE or empty string")
+set_property(CACHE GDAL_FIND_PACKAGE_PROJ_MODE PROPERTY STRINGS "CUSTOM" "CONFIG" "MODULE" "")
+if(NOT GDAL_FIND_PACKAGE_PROJ_MODE STREQUAL "CUSTOM")
+    find_package(PROJ ${GDAL_FIND_PACKAGE_PROJ_MODE} REQUIRED)
+    if (NOT BUILD_SHARED_LIBS)
+        string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ ${GDAL_FIND_PACKAGE_PROJ_MODE})\n")
+    endif()
 else()
     # First check with CMake config files, and then fallback to the FindPROJ module.
     find_package(PROJ CONFIG)
+    if (PROJ_FOUND AND PROJ_VERSION VERSION_LESS "8")
+        message(WARNING "PROJ ${PROJ_VERSION} < 8 found with Config file. As it is not trusted, retrying with module mode")
+    endif()
     if (PROJ_FOUND)
-      string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ ${PROJ_VERSION_MAJOR} CONFIG)\n")
+      if (NOT BUILD_SHARED_LIBS)
+        string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ CONFIG)\n")
+      endif()
     else()
-      find_package(PROJ 6.3 REQUIRED)
-      string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ 6.3)\n")
+      find_package(PROJ REQUIRED)
+      if (NOT BUILD_SHARED_LIBS)
+        string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(PROJ)\n")
+      endif()
     endif ()
 endif()
-
+if (DEFINED PROJ_VERSION_STRING AND NOT DEFINED PROJ_VERSION)
+    set(PROJ_VERSION ${PROJ_VERSION_STRING})
+endif()
+if ("${PROJ_VERSION}" VERSION_LESS "6.3")
+    message(FATAL_ERROR "PROJ >= 6.3 required. Version ${PROJ_VERSION} found")
+endif()
 
 gdal_check_package(TIFF "Support for the Tag Image File Format (TIFF)." VERSION 4.1 CAN_DISABLE)
 set_package_properties(
@@ -744,32 +760,15 @@ define_find_package2(HEIF libheif/heif.h heif PKGCONFIG_NAME libheif)
 gdal_check_package(HEIF "HEIF >= 1.1" CAN_DISABLE)
 
 # OpenJPEG's cmake-CONFIG is broken with older OpenJPEG releases, so call module explicitly
-set(GDAL_FIND_PACKAGE_OPENJPEG_METHOD "MODULE" CACHE STRING "Method to use for find_package(OpenJPEG): CONFIG, MODULE or empty string")
-mark_as_advanced(GDAL_FIND_PACKAGE_OPENJPEG_METHOD)
-if(NOT GDAL_FIND_PACKAGE_OPENJPEG_METHOD STREQUAL "")
-    find_package(OpenJPEG ${GDAL_FIND_PACKAGE_OPENJPEG_METHOD})
-else()
-    find_package(OpenJPEG)
-endif()
-if (OPENJPEG_VERSION_STRING AND OPENJPEG_VERSION_STRING VERSION_LESS "2.3.1")
-    message(WARNING "Ignoring OpenJPEG because it is at version ${OPENJPEG_VERSION_STRING}, whereas the minimum version required is 2.3.1")
-    set(HAVE_OPENJPEG OFF)
-    set(OPENJPEG_FOUND OFF)
-endif()
-if (GDAL_USE_OPENJPEG)
-  if (TARGET openjp2 AND NOT TARGET OPENJPEG::OpenJPEG)
-      # Triggered when using CONFIG dection
-      add_library(OPENJPEG::OpenJPEG INTERFACE IMPORTED)
-      set_target_properties(OPENJPEG::OpenJPEG PROPERTIES INTERFACE_LINK_LIBRARIES "openjp2")
-  endif()
-  if (NOT OPENJPEG_FOUND)
-    message(FATAL_ERROR "Configured to use GDAL_USE_OPENJPEG, but not found")
-  endif ()
-endif ()
-cmake_dependent_option(GDAL_USE_OPENJPEG "Set ON to use openjpeg" ${GDAL_USE_EXTERNAL_LIBS} OPENJPEG_FOUND OFF)
-if (GDAL_USE_OPENJPEG)
-  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(OpenJPEG MODULE)\n")
-endif ()
+set(GDAL_FIND_PACKAGE_OpenJPEG_MODE "MODULE" CACHE STRING "Mode to use for find_package(OpenJPEG): CONFIG, MODULE or empty string")
+set_property(CACHE GDAL_FIND_PACKAGE_OpenJPEG_MODE PROPERTY STRINGS "CONFIG" "MODULE" "")
+# "openjp2" target name is for the one coming from the OpenJPEG CMake configuration
+# "OPENJPEG::OpenJPEG" is the one used by cmake/modules/packages/FindOpenJPEG.cmake
+gdal_check_package(OpenJPEG "Enable JPEG2000 support with OpenJPEG library"
+                   ${GDAL_FIND_PACKAGE_OpenJPEG_MODE}
+                   CAN_DISABLE
+                   TARGETS "openjp2;OPENJPEG::OpenJPEG"
+                   VERSION "2.3.1")
 
 gdal_check_package(HDFS "Enable Hadoop File System through native library" CAN_DISABLE)
 

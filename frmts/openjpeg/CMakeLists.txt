@@ -5,8 +5,8 @@ add_gdal_driver(
   DEF FRMT_openjpeg PLUGIN_CAPABLE)
 
 if(TARGET gdal_JP2OpenJPEG_core)
-    target_include_directories(gdal_JP2OpenJPEG_core PRIVATE $<TARGET_PROPERTY:OPENJPEG::OpenJPEG,INTERFACE_INCLUDE_DIRECTORIES>)
-    target_compile_definitions(gdal_JP2OpenJPEG_core PRIVATE $<TARGET_PROPERTY:OPENJPEG::OpenJPEG,INTERFACE_COMPILE_DEFINITIONS>)
+    target_include_directories(gdal_JP2OpenJPEG_core PRIVATE $<TARGET_PROPERTY:${OpenJPEG_TARGET},INTERFACE_INCLUDE_DIRECTORIES>)
+    target_compile_definitions(gdal_JP2OpenJPEG_core PRIVATE $<TARGET_PROPERTY:${OpenJPEG_TARGET},INTERFACE_COMPILE_DEFINITIONS>)
 endif()
 
 if(NOT TARGET gdal_JP2OpenJPEG)
@@ -15,4 +15,4 @@ endif()
 
 gdal_standard_includes(gdal_JP2OpenJPEG)
 target_include_directories(gdal_JP2OpenJPEG PRIVATE ../opjlike)
-gdal_target_link_libraries(gdal_JP2OpenJPEG PRIVATE OPENJPEG::OpenJPEG)
+gdal_target_link_libraries(gdal_JP2OpenJPEG PRIVATE ${OpenJPEG_TARGET})
