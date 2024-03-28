@@ -62,7 +62,7 @@ True
 
 %feature("docstring")  GetEnumeration "
 
-Get the enumeration as mapping of codes to values.
+Get the enumeration as a mapping of codes to values.
 
 See :cpp:func:`OGRCodedFieldDomain::GetEnumeration`.
 
