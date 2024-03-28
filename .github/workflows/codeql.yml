@@ -43,22 +43,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
 
-    # Initializes the CodeQL tools for scanning.
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@1b1aada464948af03b950897e5eb522f92603cc2 # v3.24.9
-      with:
-        languages: ${{ matrix.language }}
-        # If you wish to specify custom queries, you can do so here or in a config file.
-        # By default, queries listed here will override any specified in a config file.
-        # Prefix the list here with "+" to use these queries and those in the config file.
-
-        # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
-        # queries: security-extended,security-and-quality
-        config: |
-          query-filters:
-            - exclude:
-                id: cpp/non-https-url
-
     - name: Install dependencies
       run: |
           sudo apt-get update
@@ -104,55 +88,34 @@ jobs:
             libzstd-dev \
             unixodbc-dev
 
-    # cache the .ccache directory
-    # key it on the runner os, build type, deps, and arch
-    # It's especially important to include arch in the key because we
-    # may get runtime errors with -mavx2 from objects built on a
-    # different architecture.
-    - name: Restore build cache
-      if: matrix.language == 'c-cpp'
-      id: restore-cache
-      uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-      with:
-        path: ${{ github.workspace }}/.ccache
-        key: ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-${{ github.run_id }}
-        restore-keys: |
-          ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}
-          ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}
-
-    - name: Configure ccache
+    - name: Configure
       if: matrix.language == 'c-cpp'
       run: |
-          echo CCACHE_BASEDIR=${{ github.workspace }} >> ${GITHUB_ENV}
-          echo CCACHE_DIR=${{ github.workspace }}/.ccache >> ${GITHUB_ENV}
-          echo CCACHE_MAXSIZE=250M >> ${GITHUB_ENV}
-          ccache -z
+          mkdir build
+          (cd build && cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DGDAL_USE_LERC_INTERNAL=OFF)
+
+    # Initializes the CodeQL tools for scanning.
+    # We do that after running CMake to avoid CodeQL to trigger during CMake time,
+    # in particular during HDF5 detection which is terribly slow (https://github.com/OSGeo/gdal/issues/9549)
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@1b1aada464948af03b950897e5eb522f92603cc2 # v3.24.9
+      with:
+        languages: ${{ matrix.language }}
+        # If you wish to specify custom queries, you can do so here or in a config file.
+        # By default, queries listed here will override any specified in a config file.
+        # Prefix the list here with "+" to use these queries and those in the config file.
+
+        # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
+        # queries: security-extended,security-and-quality
+        config: |
+          query-filters:
+            - exclude:
+                id: cpp/non-https-url
 
     - name: Build
       if: matrix.language == 'c-cpp'
       run: |
-          mkdir build
-          cd build
-          # LD_PRELOAD is initially set to something like /opt/hostedtoolcache/CodeQL/2.16.5/x64/codeql/tools/linux64/lib64trace.so
-          # To avoid CodeQL to trigger during CMake time, in particular during HDF5 detection which is terribly slow (https://github.com/OSGeo/gdal/issues/9549), we temporarily rename that file
-          export LD_PRELOAD_RESOLVED=$(env | grep LD_PRELOAD | sed "s/LD_PRELOAD=//")
-          echo "$LD_PRELOAD_RESOLVED"
-          sudo mv "$LD_PRELOAD_RESOLVED" "$LD_PRELOAD_RESOLVED.disabled"
-          cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_CCACHE=YES -DGDAL_USE_LERC_INTERNAL=OFF
-          sudo mv "$LD_PRELOAD_RESOLVED.disabled" "$LD_PRELOAD_RESOLVED"
-          make -j$(nproc)
-
-    - name: Summarize ccache
-      if: matrix.language == 'c-cpp'
-      run: |
-        ccache -s
-
-    - name: Save build cache
-      if: matrix.language == 'c-cpp'
-      uses: actions/cache/save@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
-      with:
-        path: ${{ github.workspace }}/.ccache
-        key: ${{ steps.restore-cache.outputs.cache-primary-key }}
+          (cd build && make -j$(nproc))
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@1b1aada464948af03b950897e5eb522f92603cc2 # v3.24.9
