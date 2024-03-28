@@ -656,10 +656,33 @@ void OGRParquetLayer::EstablishFeatureDefn()
                                               oMapParquetColumnNameToIdx);
             }
 
-            m_anMapGeomFieldIndexToParquetColumn.push_back(
-                bParquetColValid ? iParquetCol : -1);
-            if (bParquetColValid)
-                iParquetCol++;
+            if (bParquetColValid &&
+                (field->type()->id() == arrow::Type::STRUCT ||
+                 field->type()->id() == arrow::Type::LIST))
+            {
+                // GeoArrow types
+                std::vector<int> anParquetCols;
+                for (const auto &iterParquetCols : oMapParquetColumnNameToIdx)
+                {
+                    if (STARTS_WITH(
+                            iterParquetCols.first.c_str(),
+                            std::string(field->name()).append(".").c_str()))
+                    {
+                        iParquetCol =
+                            std::max(iParquetCol, iterParquetCols.second);
+                        anParquetCols.push_back(iterParquetCols.second);
+                    }
+                }
+                m_anMapGeomFieldIndexToParquetColumns.push_back(anParquetCols);
+                ++iParquetCol;
+            }
+            else
+            {
+                m_anMapGeomFieldIndexToParquetColumns.push_back(
+                    {bParquetColValid ? iParquetCol : -1});
+                if (bParquetColValid)
+                    iParquetCol++;
+            }
         }
         else
         {
@@ -674,7 +697,7 @@ void OGRParquetLayer::EstablishFeatureDefn()
               m_poFeatureDefn->GetFieldCount());
     CPLAssert(static_cast<int>(m_anMapGeomFieldIndexToArrowColumn.size()) ==
               m_poFeatureDefn->GetGeomFieldCount());
-    CPLAssert(static_cast<int>(m_anMapGeomFieldIndexToParquetColumn.size()) ==
+    CPLAssert(static_cast<int>(m_anMapGeomFieldIndexToParquetColumns.size()) ==
               m_poFeatureDefn->GetGeomFieldCount());
 
     if (!fields.empty())
@@ -1814,12 +1837,14 @@ OGRErr OGRParquetLayer::SetIgnoredFields(const char **papszFields)
             {
                 if (!m_poFeatureDefn->GetGeomFieldDefn(i)->IsIgnored())
                 {
-                    const int iParquetCol =
-                        m_anMapGeomFieldIndexToParquetColumn[i];
-                    CPLAssert(iParquetCol >= 0);
+                    const auto &anVals =
+                        m_anMapGeomFieldIndexToParquetColumns[i];
+                    CPLAssert(!anVals.empty() && anVals[0] >= 0);
+                    m_anRequestedParquetColumns.insert(
+                        m_anRequestedParquetColumns.end(), anVals.begin(),
+                        anVals.end());
                     m_anMapGeomFieldIndexToArrayIndex.push_back(nBatchColumns);
                     nBatchColumns++;
-                    m_anRequestedParquetColumns.push_back(iParquetCol);
 
                     auto oIter = m_oMapGeomFieldIndexToGeomColBBOX.find(i);
                     const auto oIterParquet =

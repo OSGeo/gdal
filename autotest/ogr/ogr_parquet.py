@@ -3485,3 +3485,116 @@ def test_ogr_parquet_sort_by_bbox(tmp_vsimem):
         layerCreationOptions=["SORT_BY_BBOX=YES", "ROW_GROUP_SIZE=100"],
     )
     check_file(outfilename2)
+
+
+###############################################################################
+# Check GeoArrow struct encoding
+
+
+@pytest.mark.parametrize(
+    "wkt",
+    [
+        "POINT (1 2)",
+        "POINT Z (1 2 3)",
+        "LINESTRING (1 2,3 4)",
+        "LINESTRING Z (1 2 3,4 5 6)",
+        "POLYGON ((0 1,2 3,10 20,0 1))",
+        "POLYGON ((0 0,0 10,10 10,10 0,0 0),(1 1,1 9,9 9,9 1,1 1))",
+        "POLYGON Z ((0 1 10,2 3 20,10 20 30,0 1 10))",
+        "MULTIPOINT ((1 2),(3 4))",
+        "MULTIPOINT Z ((1 2 3),(4 5 6))",
+        "MULTILINESTRING ((1 2,3 4),(5 6,7 8,9 10))",
+        "MULTILINESTRING Z ((1 2 3,4 5 6),(7 8 9,10 11 12,13 14 15))",
+        "MULTIPOLYGON (((0 1,2 3,10 20,0 1)),((100 110,100 120,120 120,100 110)))",
+        "MULTIPOLYGON (((0 0,0 10,10 10,10 0,0 0),(1 1,1 9,9 9,9 1,1 1)),((100 110,100 120,120 120,100 110)))",
+        "MULTIPOLYGON Z (((0 1 10,2 3 20,10 20 30,0 1 10)))",
+    ],
+)
+@pytest.mark.parametrize("check_with_pyarrow", [True, False])
+@gdaltest.enable_exceptions()
+def test_ogr_parquet_geoarrow(tmp_vsimem, tmp_path, wkt, check_with_pyarrow):
+
+    geom = ogr.CreateGeometryFromWkt(wkt)
+
+    if check_with_pyarrow:
+        pa_parquet = pytest.importorskip("pyarrow.parquet")
+        filename = str(tmp_path / "test_ogr_parquet_geoarrow.parquet")
+    else:
+        filename = str(tmp_vsimem / "test_ogr_parquet_geoarrow.parquet")
+
+    ds = ogr.GetDriverByName("Parquet").CreateDataSource(filename)
+
+    lyr = ds.CreateLayer(
+        "test", geom_type=geom.GetGeometryType(), options=["GEOMETRY_ENCODING=GEOARROW"]
+    )
+    lyr.CreateField(ogr.FieldDefn("foo"))
+
+    # Nominal geometry
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(geom)
+    lyr.CreateFeature(f)
+
+    # Null geometry
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    # Empty geometry
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.Geometry(geom.GetGeometryType()))
+    lyr.CreateFeature(f)
+
+    # Nominal geometry
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(geom)
+    lyr.CreateFeature(f)
+
+    geom2 = None
+    if geom.GetGeometryCount() > 1:
+        geom2 = geom.Clone()
+        geom2.RemoveGeometry(1)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(geom2)
+        lyr.CreateFeature(f)
+
+    ds = None
+
+    # Check we actually use a GeoArrow encoding
+    if check_with_pyarrow:
+        table = pa_parquet.read_table(filename)
+        import pyarrow as pa
+
+        if geom.GetGeometryType() in [ogr.wkbPoint, ogr.wkbPoint25D]:
+            assert pa.types.is_struct(table.schema.field("geometry").type)
+        else:
+            assert pa.types.is_list(table.schema.field("geometry").type)
+
+    _validate(filename)
+
+    def check(lyr):
+        assert lyr.GetGeomType() == geom.GetGeometryType()
+
+        f = lyr.GetNextFeature()
+        ogrtest.check_feature_geometry(f, geom)
+
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef() is None
+
+        f = lyr.GetNextFeature()
+        ogrtest.check_feature_geometry(f, ogr.Geometry(geom.GetGeometryType()))
+
+        f = lyr.GetNextFeature()
+        ogrtest.check_feature_geometry(f, geom)
+
+        if geom2:
+            f = lyr.GetNextFeature()
+            ogrtest.check_feature_geometry(f, geom2)
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    check(lyr)
+
+    # Check that ignoring attribute fields doesn't impact geometry reading
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    lyr.SetIgnoredFields(["foo"])
+    check(lyr)

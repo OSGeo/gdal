@@ -83,7 +83,7 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     std::vector<std::shared_ptr<arrow::DataType>>
         m_apoArrowDataTypes{};  // .size() == field ocunt
     std::vector<int> m_anMapFieldIndexToParquetColumn{};
-    std::vector<int> m_anMapGeomFieldIndexToParquetColumn{};
+    std::vector<std::vector<int>> m_anMapGeomFieldIndexToParquetColumns{};
     bool m_bHasMissingMappingToParquet = false;
 
     std::vector<int64_t> m_anSelectedGroupsStartFeatureIdx{};

@@ -97,7 +97,7 @@ bool OGRFeatherWriterLayer::SetOptions(const std::string &osFilename,
 
     const char *pszGeomEncoding =
         CSLFetchNameValue(papszOptions, "GEOMETRY_ENCODING");
-    m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_GENERIC;
+    m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_FSL_GENERIC;
     if (pszGeomEncoding)
     {
         if (EQUAL(pszGeomEncoding, "WKB"))
@@ -105,7 +105,7 @@ bool OGRFeatherWriterLayer::SetOptions(const std::string &osFilename,
         else if (EQUAL(pszGeomEncoding, "WKT"))
             m_eGeomEncoding = OGRArrowGeomEncoding::WKT;
         else if (EQUAL(pszGeomEncoding, "GEOARROW"))
-            m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_GENERIC;
+            m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_FSL_GENERIC;
         else
         {
             CPLError(CE_Failure, CPLE_NotSupported,
@@ -129,10 +129,11 @@ bool OGRFeatherWriterLayer::SetOptions(const std::string &osFilename,
 
         m_poFeatureDefn->SetGeomType(eGType);
         auto eGeomEncoding = m_eGeomEncoding;
-        if (eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_GENERIC)
+        if (eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_FSL_GENERIC)
         {
-            eGeomEncoding = GetPreciseArrowGeomEncoding(eGType);
-            if (eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_GENERIC)
+            const auto eEncodingType = eGeomEncoding;
+            eGeomEncoding = GetPreciseArrowGeomEncoding(eEncodingType, eGType);
+            if (eGeomEncoding == eEncodingType)
                 return false;
         }
         m_aeGeomEncoding.push_back(eGeomEncoding);
