@@ -2413,7 +2413,7 @@ OGRGlobFieldDomain::OGRGlobFieldDomain(const std::string &osName,
 /*                       OGR_GlobFldDomain_Create()                     */
 /************************************************************************/
 
-/** Creates a new blob field domain.
+/** Creates a new glob field domain.
  *
  * This is the same as the C++ method OGRGlobFieldDomain::OGRGlobFieldDomain()
  *
@@ -2565,12 +2565,12 @@ void OGR_FldDomain_SetSplitPolicy(OGRFieldDomainH hFieldDomain,
 /*                    OGR_FldDomain_GetMergePolicy()                    */
 /************************************************************************/
 
-/** Get the split policy of the field domain.
+/** Get the merge policy of the field domain.
  *
  * This is the same as the C++ method OGRFieldDomain::GetMergePolicy()
  *
  * @param hFieldDomain Field domain handle.
- * @return the split policy of the field domain.
+ * @return the merge policy of the field domain.
  * @since GDAL 3.3
  */
 
@@ -2584,12 +2584,12 @@ OGR_FldDomain_GetMergePolicy(OGRFieldDomainH hFieldDomain)
 /*                    OGR_FldDomain_SetMergePolicy()                    */
 /************************************************************************/
 
-/** Set the split policy of the field domain.
+/** Set the merge policy of the field domain.
  *
  * This is the same as the C++ method OGRFieldDomain::SetMergePolicy()
  *
  * @param hFieldDomain Field domain handle.
- * @param policy the split policy of the field domain.
+ * @param policy the merge policy of the field domain.
  * @since GDAL 3.3
  */
 

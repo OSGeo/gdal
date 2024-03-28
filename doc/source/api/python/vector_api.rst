@@ -105,6 +105,10 @@ FieldDefn
     :undoc-members:
     :exclude-members: thisown
 
+.. autofunction:: osgeo.ogr.GetFieldSubTypeName
+
+.. autofunction:: osgeo.ogr.GetFieldTypeName
+
 GeomFieldDefn
 -------------
 
