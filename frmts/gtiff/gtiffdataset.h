@@ -346,6 +346,10 @@ class GTiffDataset final : public GDALPamDataset
     bool WriteEncodedStrip(uint32_t strip, GByte *pabyData,
                            int bPreserveDataBuffer);
 
+    template <typename T>
+    void WriteDealWithLercAndNan(T *pBuffer, int nActualBlockWidth,
+                                 int nActualBlockHeight, int nStrileHeight);
+
     bool HasOnlyNoData(const void *pBuffer, int nWidth, int nHeight,
                        int nLineStride, int nComponents);
     inline bool IsFirstPixelEqualToNoData(const void *pBuffer);

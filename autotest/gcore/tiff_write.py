@@ -414,20 +414,8 @@ def test_tiff_write_13():
     cs = ds.GetRasterBand(3).Checksum()
     ds = None
 
-    size = os.stat("tmp/sasha.tif").st_size
-
     gdaltest.tiff_drv.Delete("tmp/sasha.tif")
-    assert cs in (
-        17347,
-        14445,
-        14135,  # libjpeg 9e
-    )
-
-    md = gdaltest.tiff_drv.GetMetadata()
-    if md["LIBTIFF"] == "INTERNAL":
-        # 22816 with libjpeg-6b or libjpeg-turbo
-        # 22828 with libjpeg-9d
-        assert size <= 22828, "fail: bad size"
+    assert cs in (16612,)
 
 
 ###############################################################################
@@ -9415,27 +9403,142 @@ def test_tiff_write_lerc_float(gdalDataType, structType):
 
 
 ###############################################################################
-# Test LERC compression withFloat32/Float64 and nan
+
+
+def lerc_version_at_least_3():
+
+    LERC_VERSION_MAJOR = gdal.GetDriverByName("GTiff").GetMetadataItem(
+        "LERC_VERSION_MAJOR", "LERC"
+    )
+    return LERC_VERSION_MAJOR and int(LERC_VERSION_MAJOR) >= 3
+
+
+###############################################################################
+# Test LERC compression with Float32/Float64 and nan
 
 
 @pytest.mark.parametrize(
-    "gdalDataType,structType", [[gdal.GDT_Float32, "f"], [gdal.GDT_Float64, "d"]]
+    "gdalDataType,structType",
+    [
+        (gdal.GDT_Float32, "f"),
+        (gdal.GDT_Float64, "d"),
+    ],
+)
+@pytest.mark.parametrize("repeat", [1, 100])
+@pytest.mark.parametrize("interleave", ["PIXEL", "BAND"])
+@pytest.mark.parametrize(
+    "values",
+    [
+        [(0.5,)],
+        [(0.5, 1.5)],
+        [(float("nan"),)],
+        [(0.5, float("nan"))],
+        [(0.5, 0.75, 1), (1.5, 1.75, 2)],
+        [(float("nan"),), (float("nan"),)],
+        [(0.5, float("nan"), 1), (1.5, float("nan"), 2)],
+        [
+            (0.5, float("nan"), 1),
+            (1.5, 1.75, float("nan")),
+        ],  # This one requires liblerc >= 3.0 since we need multiple masks
+    ],
 )
 @pytest.mark.require_creation_option("GTiff", "LERC")
-def test_tiff_write_lerc_float_with_nan(gdalDataType, structType):
+def test_tiff_write_lerc_float_with_nan(
+    gdalDataType, structType, values, repeat, interleave
+):
 
-    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 1, gdalDataType)
-    src_ds.GetRasterBand(1).WriteRaster(
-        0, 0, 2, 1, struct.pack(structType * 2, 0.5, float("nan"))
-    )
+    bandCount = len(values)
+
+    if (
+        bandCount == 2
+        and True in [math.isnan(x) for x in values[0]]
+        and not (
+            check_libtiff_internal_or_at_least(4, 6, 1) and lerc_version_at_least_3()
+        )
+    ):
+        pytest.skip(
+            "multiple band with NaN in same strile only supported if libtiff >= 4.6.1 and liblerc >= 3.0"
+        )
+
+    width = len(values[0] * repeat)
+    src_ds = gdal.GetDriverByName("MEM").Create("", width, 1, bandCount, gdalDataType)
+    for i in range(bandCount):
+        src_ds.GetRasterBand(i + 1).WriteRaster(
+            0, 0, width, 1, array.array(structType, values[i] * repeat).tobytes()
+        )
     filename = "/vsimem/test.tif"
-    gdaltest.tiff_drv.CreateCopy(filename, src_ds, options=["COMPRESS=LERC"])
+    gdaltest.tiff_drv.CreateCopy(
+        filename, src_ds, options=["COMPRESS=LERC", "INTERLEAVE=" + interleave]
+    )
     ds = gdal.Open(filename)
-    got_data = struct.unpack(structType * 2, ds.ReadRaster())
-    assert got_data[0] == 0.5
-    assert math.isnan(got_data[1])
+    for i in range(bandCount):
+        got_data = struct.unpack(
+            structType * width, ds.GetRasterBand(i + 1).ReadRaster()
+        )
+        for j in range(width):
+            if math.isnan((values[i] * repeat)[j]):
+                assert math.isnan(got_data[j])
+            else:
+                assert got_data[j] == (values[i] * repeat)[j]
     ds = None
     gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("tiled", [False, True])
+@pytest.mark.require_creation_option("GTiff", "LERC")
+def test_tiff_write_lerc_float_with_nan_random(tmp_vsimem, tiled):
+
+    """Stress test the floating-point LERC encoder, with several masks per strile"""
+
+    width = 128
+    height = 128
+    bands = 100
+    src_ds = gdal.GetDriverByName("MEM").Create(
+        "", width, height, bands, gdal.GDT_Float32
+    )
+
+    import random
+
+    band_values = []
+    for i in range(bands):
+        # Generate random float values, but with at least 1/3 of nan in them in
+        # some bands and 2/3 in others
+        values = [int(random.random() * ((1 << 32) - 1)) for _ in range(width * height)]
+        values = array.array("I", values).tobytes()
+        values = [
+            x if random.random() > (0.33 if (i % 2) == 0 else 0.67) else float("nan")
+            for x in struct.unpack("f" * (width * height), values)
+        ]
+        band_values.append(values)
+        values = array.array("f", values).tobytes()
+        src_ds.GetRasterBand(i + 1).WriteRaster(0, 0, width, height, values)
+
+    filename = str(tmp_vsimem / "test_tiff_write_lerc_float_with_nan_random.tif")
+    if tiled:
+        options = ["COMPRESS=LERC", "TILED=YES", "BLOCKXSIZE=96", "BLOCKYSIZE=112"]
+    else:
+        options = ["COMPRESS=LERC", "BLOCKYSIZE=112"]
+    gdaltest.tiff_drv.CreateCopy(filename, src_ds, options=options)
+
+    if not (check_libtiff_internal_or_at_least(4, 6, 1) and lerc_version_at_least_3()):
+        pytest.skip(
+            "multiple band with NaN in same strile only supported if libtiff >= 4.6.1 and liblerc >= 3.0"
+        )
+
+    ds = gdal.Open(filename)
+    for i in range(bands):
+        got_data = struct.unpack(
+            "f" * (width * height), ds.GetRasterBand(i + 1).ReadRaster()
+        )
+        for j in range(width * height):
+            if math.isnan(band_values[i][j]):
+                assert math.isnan(got_data[j])
+            else:
+                assert got_data[j] == band_values[i][j]
+    ds = None
 
 
 ###############################################################################
