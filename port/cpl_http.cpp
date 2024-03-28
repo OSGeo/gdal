@@ -926,7 +926,8 @@ int CPLHTTPPopFetchCallback(void)
  * <li>HEADERS=val, where val is an extra header to use when getting a web page.
  *                  For example "Accept: application/x-ogcwkt"</li>
  * <li>HEADER_FILE=filename: filename of a text file with "key: value" headers.
- *     (GDAL >= 2.2)</li>
+ *     The content of the file is not cached, and thus it is read again before
+ *     issuing each HTTP request. (GDAL >= 2.2)</li>
  * <li>HTTPAUTH=[BASIC/NTLM/NEGOTIATE/ANY/ANYSAFE/BEARER] to specify an
  * authentication scheme to use.</li>
  * <li>USERPWD=userid:password to specify a user and password for

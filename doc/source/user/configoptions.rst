@@ -665,7 +665,8 @@ Networking options
       :choices: <filename>
       :since: 2.3
 
-      Filename of a text file with "key: value" HTTP headers.
+      Filename of a text file with "key: value" HTTP headers. The content of the
+      file is not cached, and thus it is read again before issuing each HTTP request.
 
 -  .. config:: GDAL_HTTP_CONNECTTIMEOUT
       :choices: <seconds>
