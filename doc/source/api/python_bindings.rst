@@ -1,7 +1,7 @@
 .. _python:
 
 ================================================================================
-Python bindings
+General information
 ================================================================================
 
 This Python package and extensions are a number of tools for programming and manipulating the GDAL_ Geospatial Data Abstraction Library.
