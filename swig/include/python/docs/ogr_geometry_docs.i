@@ -1,5 +1,36 @@
 %extend OGRGeometryShadow {
 // File: ogrgeometry_8cpp.xml
+
+%feature("docstring")  Area "
+Compute geometry area.
+
+The returned area is a 2D Cartesian (planar) area in square units of the
+spatial reference system in use, so potentially 'square degrees' for a
+geometry expressed in a geographic SRS.
+
+For more details: :cpp:func:`OGR_G_Area`
+
+Returns
+--------
+float:
+    the area of the geometry in square units of the spatial reference
+    system in use, or 0.0 for unsupported geometry types.
+
+";
+
+%feature("docstring")  GeodesicArea "
+Compute geometry area, considered as a surface on the underlying
+ellipsoid of the SRS attached to the geometry.
+
+For more details: :cpp:func:`OGR_G_GeodesicArea`
+
+Returns
+--------
+float:
+    the area in square meters, or a negative value for unsupported geometry types.
+
+";
+
 %feature("docstring")  DumpReadable "
 Dump geometry in well known text format to indicated output file.
 

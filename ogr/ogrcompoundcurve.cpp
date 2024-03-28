@@ -928,6 +928,32 @@ double OGRCompoundCurve::get_Area() const
 }
 
 /************************************************************************/
+/*                        get_GeodesicArea()                            */
+/************************************************************************/
+
+double OGRCompoundCurve::get_GeodesicArea(
+    const OGRSpatialReference *poSRSOverride) const
+{
+    if (IsEmpty())
+        return 0;
+
+    if (!get_IsClosed())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Non-closed geometry");
+        return -1;
+    }
+
+    if (!poSRSOverride)
+        poSRSOverride = getSpatialReference();
+
+    OGRLineString *poLS = CurveToLine();
+    const double dfArea = poLS->get_GeodesicArea(poSRSOverride);
+    delete poLS;
+
+    return dfArea;
+}
+
+/************************************************************************/
 /*                       get_AreaOfCurveSegments()                      */
 /************************************************************************/
 

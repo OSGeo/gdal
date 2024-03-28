@@ -899,6 +899,32 @@ double OGRCircularString::get_Area() const
     return dfArea;
 }
 
+/************************************************************************/
+/*                        get_GeodesicArea()                            */
+/************************************************************************/
+
+double OGRCircularString::get_GeodesicArea(
+    const OGRSpatialReference *poSRSOverride) const
+{
+    if (IsEmpty())
+        return 0;
+
+    if (!get_IsClosed())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Non-closed geometry");
+        return -1;
+    }
+
+    if (!poSRSOverride)
+        poSRSOverride = getSpatialReference();
+
+    OGRLineString *poLS = CurveToLine();
+    const double dfArea = poLS->get_GeodesicArea(poSRSOverride);
+    delete poLS;
+
+    return dfArea;
+}
+
 //! @cond Doxygen_Suppress
 
 /************************************************************************/

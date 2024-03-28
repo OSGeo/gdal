@@ -10315,3 +10315,51 @@ def test_ogr_gpkg_geom_coord_precision(
         assert sql_lyr.GetFeatureCount() == 0
 
     ds.Close()
+
+
+###############################################################################
+# Test ST_Area(geom, use_ellipsoid=True)
+
+
+def test_ogr_gpkg_ST_Area_on_ellipsoid(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "test_ogr_sql_ST_Area_on_ellipsoid.gpkg"
+
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(tmpfilename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4258)
+    lyr = ds.CreateLayer("my_layer", srs=srs)
+    geom_colname = lyr.GetGeometryColumn()
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt("POLYGON((2 49,3 49,3 48,2 49))")
+    )
+    lyr.CreateFeature(feat)
+    feat = None
+
+    with ds.ExecuteSQL(f"SELECT ST_Area({geom_colname}, 1) FROM my_layer") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] == pytest.approx(4068384291.8911743)
+
+    with gdal.quiet_errors():
+        with ds.ExecuteSQL(
+            f"SELECT ST_Area({geom_colname}, 0) FROM my_layer"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] == pytest.approx(4068384291.8911743)
+
+    with ds.ExecuteSQL("SELECT ST_Area(null, 1) FROM my_layer") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f[0] is None
+
+    with gdal.quiet_errors():
+        with ds.ExecuteSQL("SELECT ST_Area(X'FF', 1) FROM my_layer") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] is None
+
+    with gdal.quiet_errors():
+        with ds.ExecuteSQL(
+            f"SELECT ST_Area(SetSRID({geom_colname}, -10), 0) FROM my_layer"
+        ) as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f[0] is None

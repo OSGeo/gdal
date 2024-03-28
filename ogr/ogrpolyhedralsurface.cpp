@@ -669,6 +669,20 @@ double OGRPolyhedralSurface::get_Area() const
 }
 
 /************************************************************************/
+/*                        get_GeodesicArea()                            */
+/************************************************************************/
+
+double OGRPolyhedralSurface::get_GeodesicArea(const OGRSpatialReference *) const
+{
+    if (IsEmpty())
+        return 0;
+
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "get_GeodesicArea() not implemented for PolyhedralSurface");
+    return -1;
+}
+
+/************************************************************************/
 /*                           PointOnSurface()                           */
 /************************************************************************/
 

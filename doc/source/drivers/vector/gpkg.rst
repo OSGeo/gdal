@@ -119,6 +119,12 @@ Spatialite, are also available :
 -  DisableSpatialIndex(table_name *String*, geom_column_name *String*):
    drops an existing spatial index (RTree) on the specified
    table/geometry column
+-  ST_Area(geom *Geometry*): compute the area in square units of the geometry SRS.
+-  ST_Area(geom *Geometry*, use_ellipsoid *boolean*): (GDAL >= 3.9): compute
+   the area in square meters, considering the geometry on the ellipsoid
+   (use_ellipsoid must be set to true/1).
+-  SetSRID(geom *Geometry*, srs_id *Integer*): overrides the geometry' SRS ID,
+   without reprojection.
 -  ST_Transform(geom *Geometry*, target_srs_id *Integer*): reproject the geometry
    to the SRS of specified srs_id. If no SRS with that given srs_id is not found
    in gpkg_spatial_ref_sys, starting with GDAL 3.2, it will be interpreted as

@@ -1170,6 +1170,78 @@ double OGRGeometryCollection::get_Area() const
 }
 
 /************************************************************************/
+/*                        get_GeodesicArea()                            */
+/************************************************************************/
+
+/**
+ * \brief Compute area of geometry collection, considered as a surface on
+ * the underlying ellipsoid of the SRS attached to the geometry.
+ *
+ * The returned area will always be in square meters, and assumes that
+ * polygon edges describe geodesic lines on the ellipsoid.
+ *
+ * If the geometry' SRS is not a geographic one, geometries are reprojected to
+ * the underlying geographic SRS of the geometry' SRS.
+ * OGRSpatialReference::GetDataAxisToSRSAxisMapping() is honored.
+ *
+ * The area is computed as the sum of the areas of all members
+ * in this collection.
+ *
+ * @note No warning will be issued if a member of the collection does not
+ *       support the get_GeodesicArea method.
+ *
+ * @param poSRSOverride If not null, overrides OGRGeometry::getSpatialReference()
+ * @return the area of the geometry in square meters, or a negative value in case
+ * of error.
+ *
+ * @see get_Area() for an alternative method returning areas computed in
+ * 2D Cartesian space.
+ *
+ * @since GDAL 3.9
+ */
+double OGRGeometryCollection::get_GeodesicArea(
+    const OGRSpatialReference *poSRSOverride) const
+{
+    if (!poSRSOverride)
+        poSRSOverride = getSpatialReference();
+
+    double dfArea = 0.0;
+    for (auto &&poSubGeom : *this)
+    {
+        OGRwkbGeometryType eType = wkbFlatten(poSubGeom->getGeometryType());
+        if (OGR_GT_IsSurface(eType))
+        {
+            const OGRSurface *poSurface = poSubGeom->toSurface();
+            const double dfLocalArea =
+                poSurface->get_GeodesicArea(poSRSOverride);
+            if (dfLocalArea < 0)
+                return dfLocalArea;
+            dfArea += dfLocalArea;
+        }
+        else if (OGR_GT_IsCurve(eType))
+        {
+            const OGRCurve *poCurve = poSubGeom->toCurve();
+            const double dfLocalArea = poCurve->get_GeodesicArea(poSRSOverride);
+            if (dfLocalArea < 0)
+                return dfLocalArea;
+            dfArea += dfLocalArea;
+        }
+        else if (OGR_GT_IsSubClassOf(eType, wkbMultiSurface) ||
+                 eType == wkbGeometryCollection)
+        {
+            const double dfLocalArea =
+                poSubGeom->toGeometryCollection()->get_GeodesicArea(
+                    poSRSOverride);
+            if (dfLocalArea < 0)
+                return dfLocalArea;
+            dfArea += dfLocalArea;
+        }
+    }
+
+    return dfArea;
+}
+
+/************************************************************************/
 /*                               IsEmpty()                              */
 /************************************************************************/
 
