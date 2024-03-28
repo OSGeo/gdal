@@ -93,6 +93,43 @@ class GDALBuildVRTOfVRT(GDALScript):
             help="resampling algorithm",
         )
 
+        parser.add_argument(
+            "--stop-on-error",
+            dest="stop_on_error",
+            action="store_true",
+            help="whether an error when opening a source file should stop the whole process (by default processing continues skipping it)",
+        )
+
+        parser.add_argument(
+            "--intermediate-vrt-add-overviews",
+            dest="intermediate_vrt_add_overviews",
+            action="store_true",
+            help="whether overviews should be generated on intermediate VRTs (overview factors automatically determined)",
+        )
+
+        def list_of_ints(arg):
+            return list(map(int, arg.split(",")))
+
+        parser.add_argument(
+            "--intermediate-vrt-overview-factors",
+            dest="intermediate_vrt_overview_factors",
+            type=list_of_ints,
+            metavar="<factor1>[,<factor2>]...",
+            help="Ask for overviews to be generated on intermediated VRTs and specify overview factor(s)",
+        )
+
+        def list_of_ints(arg):
+            return list(map(int, arg.split(",")))
+
+        parser.add_argument(
+            "--overview-compression",
+            dest="overview_compression",
+            type=str,
+            choices=("NONE", "LZW", "DEFLATE", "ZSTD", "JPEG", "LERC", "JXL"),
+            default="LZW",
+            help="overview compression algorithm",
+        )
+
         return parser
 
     def doit(self, **kwargs):
@@ -120,17 +157,29 @@ class GDALBuildVRTOfVRT(GDALScript):
                 source_files += glob.glob(in_file)
             else:
                 source_files.append(in_file)
+
         for in_file in source_files:
-            ds = gdal.Open(in_file)
+
+            def deal_with_error(msg):
+                if kwargs["stop_on_error"]:
+                    raise Exception(f"Error on {in_file}: {msg}")
+                else:
+                    print(f"Skipping {in_file}. {msg}")
+
+            try:
+                ds = gdal.Open(in_file)
+            except Exception as e:
+                deal_with_error(f"{e}")
+                continue
             gt = ds.GetGeoTransform(can_return_null=True)
             if gt is None:
-                print(f"Skipping {in_file}. No geotransform.")
+                deal_with_error("No geotransform.")
                 continue
             if gt[5] > 0:
-                print(f"Skipping {in_file}. South-up rasters are not supported.")
+                deal_with_error("South-up rasters are not supported.")
                 continue
             if gt[2] != 0 or gt[4] != 0:
-                print(f"Skipping {in_file}. Rotated rasters are not supported.")
+                deal_with_error("Rotated rasters are not supported.")
                 continue
 
             srs = ds.GetSpatialRef()
@@ -229,6 +278,32 @@ class GDALBuildVRTOfVRT(GDALScript):
                     print(f"Building {vrt_filename} (%.02f %%)..." % pct)
                     vrt_files.append(vrt_filename)
                     gdal.BuildVRT(vrt_filename, subvrt_files, options=vrt_options)
+
+                    if kwargs["intermediate_vrt_overview_factors"]:
+                        print(f"Building {vrt_filename}.ovr (%.02f %%)..." % pct)
+                        ds = gdal.Open(vrt_filename)
+                        with gdal.config_option(
+                            "COMPRESS_OVERVIEW", kwargs["overview_compression"]
+                        ):
+                            ds.BuildOverviews(
+                                kwargs["resampling_alg"],
+                                kwargs["intermediate_vrt_overview_factors"],
+                            )
+                    elif kwargs["intermediate_vrt_add_overviews"]:
+                        ds = gdal.Open(vrt_filename)
+                        factors = []
+                        max_dim = max(ds.RasterXSize, ds.RasterYSize)
+                        factor = 2
+                        while max_dim > 256:
+                            factors.append(factor)
+                            max_dim = max_dim // 2
+                            factor *= 2
+                        if factors:
+                            print(f"Building {vrt_filename}.ovr (%.02f %%)..." % pct)
+                            with gdal.config_option(
+                                "COMPRESS_OVERVIEW", kwargs["overview_compression"]
+                            ):
+                                ds.BuildOverviews(kwargs["resampling_alg"], factors)
 
         print(f"Building {out_vrtfile} (100 %)...")
         gdal.BuildVRT(out_vrtfile, vrt_files, options=vrt_options)
