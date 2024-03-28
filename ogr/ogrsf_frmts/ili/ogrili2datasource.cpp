@@ -161,7 +161,7 @@ int OGRILI2DataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
     }
 
     if (!osModelFilename.empty())
-        poReader->ReadModel(poImdReader, osModelFilename);
+        poReader->ReadModel(this, poImdReader, osModelFilename);
 
     poReader->SetSourceFile(pszName);
 

@@ -1370,3 +1370,12 @@ int OGRDXFWriterLayer::ColorStringToDXFColor(const char *pszRGB)
 
     return nBestColor;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRDXFWriterLayer::GetDataset()
+{
+    return poDS;
+}

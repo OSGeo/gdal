@@ -108,7 +108,7 @@ int OGRDGNDataSource::Open(const char *pszNewName, int bTestOpen, int bUpdate)
     /* -------------------------------------------------------------------- */
     /*      Create the layer object.                                        */
     /* -------------------------------------------------------------------- */
-    OGRDGNLayer *poLayer = new OGRDGNLayer("elements", hDGN, bUpdate);
+    OGRDGNLayer *poLayer = new OGRDGNLayer(this, "elements", hDGN, bUpdate);
     pszName = CPLStrdup(pszNewName);
 
     /* -------------------------------------------------------------------- */
@@ -315,7 +315,7 @@ OGRDGNDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Create the layer object.                                        */
     /* -------------------------------------------------------------------- */
-    OGRDGNLayer *poLayer = new OGRDGNLayer(pszLayerName, hDGN, TRUE);
+    OGRDGNLayer *poLayer = new OGRDGNLayer(this, pszLayerName, hDGN, TRUE);
 
     /* -------------------------------------------------------------------- */
     /*      Add layer to data source layer list.                            */

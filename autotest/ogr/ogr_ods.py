@@ -50,6 +50,7 @@ def ogr_ods_check(ds):
 
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == "Feuille1", "bad layer name"
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
 
     assert lyr.GetGeomType() == ogr.wkbNone, "bad layer geometry type"
 
@@ -365,6 +366,7 @@ def test_ogr_ods_8():
     drv = ogr.GetDriverByName("ODS")
     ds = drv.CreateDataSource("/vsimem/ogr_ods_8.ods")
     lyr = ds.CreateLayer("foo")
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
     lyr.CreateField(ogr.FieldDefn("Field1", ogr.OFTInteger64))
     f = ogr.Feature(lyr.GetLayerDefn())

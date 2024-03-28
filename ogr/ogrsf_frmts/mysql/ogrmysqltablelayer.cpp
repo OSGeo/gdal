@@ -39,11 +39,10 @@
 OGRMySQLTableLayer::OGRMySQLTableLayer(OGRMySQLDataSource *poDSIn,
                                        CPL_UNUSED const char *pszTableName,
                                        int bUpdate, int nSRSIdIn)
-    : bUpdateAccess(bUpdate), pszQuery(nullptr), pszWHERE(CPLStrdup("")),
-      bLaunderColumnNames(TRUE), bPreservePrecision(FALSE)
+    : OGRMySQLLayer(poDSIn), bUpdateAccess(bUpdate), pszQuery(nullptr),
+      pszWHERE(CPLStrdup("")), bLaunderColumnNames(TRUE),
+      bPreservePrecision(FALSE)
 {
-    poDS = poDSIn;
-
     pszQueryStatement = nullptr;
 
     iNextShapeId = 0;

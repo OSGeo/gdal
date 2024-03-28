@@ -180,6 +180,7 @@ def test_jsonfg_read_coordRefSys_invalid(coordRefSys):
     assert gdal.GetLastErrorMsg() != ""
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayer(0)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     srs = lyr.GetSpatialRef()
     assert srs is None
 
@@ -303,6 +304,7 @@ def test_jsonfg_read_crs(
     ds = gdal.OpenEx(filename)
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayer(0)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     lyr_srs = lyr.GetSpatialRef()
     if epsg_code_lyr:
         assert lyr_srs
@@ -698,6 +700,7 @@ def test_jsonfg_write_coordRefSys_geometry_place(
             filename, options=["SINGLE_LAYER=YES"]
         )
         lyr = ds.CreateLayer("test", srs=crs, geom_type=ogr.wkbUnknown)
+        assert lyr.GetDataset().GetDescription() == ds.GetDescription()
         f = ogr.Feature(lyr.GetLayerDefn())
         g = ogr.Geometry(ogr.wkbPoint)
         g.AddPoint_2D(input_x, input_y)

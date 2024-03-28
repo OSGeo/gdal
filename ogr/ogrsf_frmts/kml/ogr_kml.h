@@ -64,6 +64,8 @@ class OGRKMLLayer final : public OGRLayer
     GIntBig GetFeatureCount(int bForce = TRUE) override;
     int TestCapability(const char *pszCap) override;
 
+    GDALDataset *GetDataset() override;
+
     //
     // OGRKMLLayer Interface
     //

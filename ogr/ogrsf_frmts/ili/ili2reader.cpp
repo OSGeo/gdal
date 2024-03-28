@@ -487,15 +487,16 @@ OGRGeometry *ILI2Reader::getGeometry(DOMElement *elem, int type)
     return gm;
 }
 
-int ILI2Reader::ReadModel(ImdReader *poImdReader, const char *modelFilename)
+int ILI2Reader::ReadModel(OGRILI2DataSource *poDS, ImdReader *poImdReader,
+                          const char *modelFilename)
 {
     poImdReader->ReadModel(modelFilename);
     for (FeatureDefnInfos::const_iterator it =
              poImdReader->featureDefnInfos.begin();
          it != poImdReader->featureDefnInfos.end(); ++it)
     {
-        OGRLayer *layer = new OGRILI2Layer(it->GetTableDefnRef(),
-                                           it->poGeomFieldInfos, nullptr);
+        OGRLayer *layer =
+            new OGRILI2Layer(it->GetTableDefnRef(), it->poGeomFieldInfos, poDS);
         m_listLayer.push_back(layer);
     }
     return 0;

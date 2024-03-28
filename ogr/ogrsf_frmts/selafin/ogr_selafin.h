@@ -86,6 +86,7 @@ class Range
 class OGRSelafinLayer final : public OGRLayer
 {
   private:
+    GDALDataset *m_poDS = nullptr;
     SelafinTypeDef eType;
     bool bUpdate;
     int nStepNumber;
@@ -95,7 +96,7 @@ class OGRSelafinLayer final : public OGRLayer
     GIntBig nCurrentId;
 
   public:
-    OGRSelafinLayer(const char *pszLayerNameP, int bUpdateP,
+    OGRSelafinLayer(GDALDataset *poDS, const char *pszLayerNameP, int bUpdateP,
                     const OGRSpatialReference *poSpatialRefP,
                     Selafin::Header *poHeaderP, int nStepNumberP,
                     SelafinTypeDef eTypeP);
@@ -140,6 +141,11 @@ class OGRSelafinLayer final : public OGRLayer
     OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
                           int nFlags) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
+    }
 };
 
 /************************************************************************/

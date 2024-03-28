@@ -279,6 +279,8 @@ class OGRPGLayer CPL_NON_FINAL : public OGRLayer
         return poDS;
     }
 
+    GDALDataset *GetDataset() override;
+
     virtual void ResolveSRID(const OGRPGGeomFieldDefn *poGFldDefn) = 0;
 };
 

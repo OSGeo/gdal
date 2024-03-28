@@ -68,6 +68,7 @@ def test_ogr_libkml_attributes_1():
     kml_ds = ogr.Open("data/kml/samples.kml")
 
     lyr = kml_ds.GetLayerByName("Placemarks")
+    assert lyr.GetDataset().GetDescription() == kml_ds.GetDescription()
     feat = lyr.GetNextFeature()
 
     assert feat.GetField("Name") == "Simple placemark", "Wrong name field value"
@@ -305,11 +306,17 @@ def ogr_libkml_write(filename):
     lyr.CreateField(fielddefn)
     fielddefn = ogr.FieldDefn("foo", ogr.OFTString)
     lyr.CreateField(fielddefn)
+    fielddefn = ogr.FieldDefn("time", ogr.OFTTime)
+    lyr.CreateField(fielddefn)
+    fielddefn = ogr.FieldDefn("datetime", ogr.OFTDateTime)
+    lyr.CreateField(fielddefn)
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
     dst_feat.SetField("name", "my_name")
     dst_feat.SetField("description", "my_description")
     dst_feat.SetField("foo", "bar")
+    dst_feat.SetField("time", "12:34:56")
+    dst_feat.SetField("datetime", "2023-03-27T12:34:56Z")
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 49)"))
     assert lyr.CreateFeature(dst_feat) == 0, "CreateFeature failed."
 
@@ -376,6 +383,8 @@ def ogr_libkml_check_write(filename):
     assert feat.GetField("name") == "my_name", "Unexpected name."
     assert feat.GetField("description") == "my_description", "Unexpected description."
     assert feat.GetField("foo") == "bar", "Unexpected foo."
+    assert feat.GetField("time") == "12:34:56"
+    assert feat.GetField("datetime") == "2023-03-27T12:34:56Z"
     assert (
         feat.GetGeometryRef().ExportToWkt() == "POINT (2 49 0)"
     ), "Unexpected geometry."

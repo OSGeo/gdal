@@ -383,6 +383,8 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
                          CSLConstList papszOptions = nullptr) override;
 #endif
 
+    GDALDataset *GetDataset() override;
+
   protected:
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 

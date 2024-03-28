@@ -2238,25 +2238,6 @@ int OGRLayer::StaticGetNextArrowArray(struct ArrowArrayStream *stream,
 }
 
 /************************************************************************/
-/*                          GetDataset()                                */
-/************************************************************************/
-
-/** Return the dataset associated with this layer.
- *
- * NOTE: that method is implemented in very few drivers, and cannot generally
- * be relied on. It is currently only used by the GetRecordBatchSchema()
- * method to retrieve the field domain associated with a field, to fill the
- * dictionary field of a struct ArrowSchema.
- *
- * @return dataset, or nullptr when unknown.
- * @since GDAL 3.6
- */
-GDALDataset *OGRLayer::GetDataset()
-{
-    return nullptr;
-}
-
-/************************************************************************/
 /*                            ReleaseStream()                           */
 /************************************************************************/
 

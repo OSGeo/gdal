@@ -45,6 +45,7 @@ def test_ogr_mapml_basic():
     assert ds.TestCapability(ogr.ODsCCreateLayer)
     assert not ds.TestCapability("foo")
     lyr = ds.CreateLayer("test")
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
     lyr.CreateField(ogr.FieldDefn("realfield", ogr.OFTReal))
@@ -126,6 +127,7 @@ def test_ogr_mapml_basic():
     assert ds.GetLayer(-1) is None
     assert ds.GetLayer(1) is None
     lyr = ds.GetLayer(0)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     srs = lyr.GetSpatialRef()
     assert srs
     assert srs.GetAuthorityCode(None) == "4326"

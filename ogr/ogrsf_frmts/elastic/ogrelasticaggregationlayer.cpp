@@ -594,3 +594,12 @@ int OGRElasticAggregationLayer::TestCapability(const char *pszCap)
 {
     return EQUAL(pszCap, OLCStringsAsUTF8);
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRElasticAggregationLayer::GetDataset()
+{
+    return m_poDS;
+}

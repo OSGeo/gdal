@@ -65,6 +65,7 @@ def test_ogr_gpx_1():
     assert gpx_ds.GetLayerCount() == 5, "wrong number of layers"
 
     lyr = gpx_ds.GetLayerByName("waypoints")
+    assert lyr.GetDataset().GetDescription() == gpx_ds.GetDescription()
 
     expect = [2, None]
 

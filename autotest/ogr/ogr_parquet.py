@@ -566,6 +566,7 @@ def test_ogr_parquet_write_from_another_dataset(use_vsi, row_group_size, fid):
 
         ds = gdal.OpenEx(outfilename)
         lyr = ds.GetLayer(0)
+        assert lyr.GetDataset().GetDescription() == ds.GetDescription()
 
         assert lyr.GetFIDColumn() == (fid if fid else "")
 
@@ -672,6 +673,7 @@ def test_ogr_parquet_write_edge_cases():
         )
     lyr = ds.CreateLayer("out", srs=srs, geom_type=ogr.wkbPoint)
     assert lyr is not None
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     assert ds.GetLayerCount() == 1
     assert ds.GetLayer(0) is not None
     assert ds.TestCapability(ogr.ODsCCreateLayer) == 0

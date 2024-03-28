@@ -173,6 +173,7 @@ class PCIDSK2Band final : public GDALPamRasterBand
 class OGRPCIDSKLayer final : public OGRLayer,
                              public OGRGetNextFeatureThroughRaw<OGRPCIDSKLayer>
 {
+    GDALDataset *m_poDS = nullptr;
     PCIDSK::PCIDSKVectorSegment *poVecSeg;
     PCIDSK::PCIDSKSegment *poSeg;
 
@@ -191,8 +192,8 @@ class OGRPCIDSKLayer final : public OGRLayer,
     bool m_bEOF = false;
 
   public:
-    OGRPCIDSKLayer(PCIDSK::PCIDSKSegment *, PCIDSK::PCIDSKVectorSegment *,
-                   bool bUpdate);
+    OGRPCIDSKLayer(GDALDataset *poDS, PCIDSK::PCIDSKSegment *,
+                   PCIDSK::PCIDSKVectorSegment *, bool bUpdate);
     virtual ~OGRPCIDSKLayer();
 
     void ResetReading() override;
@@ -220,6 +221,11 @@ class OGRPCIDSKLayer final : public OGRLayer,
                              int bForce) override
     {
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    }
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
     }
 };
 

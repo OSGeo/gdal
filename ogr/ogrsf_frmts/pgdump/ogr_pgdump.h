@@ -183,6 +183,8 @@ class OGRPGDumpLayer final : public OGRLayer
     virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                                    const char *pszDomain = "") override;
 
+    GDALDataset *GetDataset() override;
+
     // follow methods are not base class overrides
     void SetLaunderFlag(bool bFlag)
     {

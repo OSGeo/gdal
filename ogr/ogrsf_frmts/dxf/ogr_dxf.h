@@ -573,6 +573,8 @@ class OGRDXFLayer final : public OGRLayer
 
     int TestCapability(const char *) override;
 
+    GDALDataset *GetDataset() override;
+
     OGRDXFFeature *GetNextUnfilteredFeature();
 };
 
@@ -869,6 +871,8 @@ class OGRDXFWriterLayer final : public OGRLayer
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField,
                        int bApproxOK = TRUE) override;
+
+    GDALDataset *GetDataset() override;
 
     void ResetFP(VSILFILE *);
 

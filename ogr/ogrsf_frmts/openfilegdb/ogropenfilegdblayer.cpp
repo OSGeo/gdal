@@ -2443,3 +2443,12 @@ int OGROpenFileGDBLayer::GetMinMaxSumCount(OGRFieldDefn *poFieldDefn,
     }
     return FALSE;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGROpenFileGDBLayer::GetDataset()
+{
+    return m_poDS;
+}

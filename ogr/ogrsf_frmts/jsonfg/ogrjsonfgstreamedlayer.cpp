@@ -32,10 +32,11 @@
 /*             OGRJSONFGStreamedLayer::OGRJSONFGStreamedLayer()         */
 /************************************************************************/
 
-OGRJSONFGStreamedLayer::OGRJSONFGStreamedLayer(const char *pszName,
+OGRJSONFGStreamedLayer::OGRJSONFGStreamedLayer(GDALDataset *poDS,
+                                               const char *pszName,
                                                OGRSpatialReference *poSRS,
                                                OGRwkbGeometryType eGType)
-    : poFeatureDefn_(new OGRFeatureDefn(pszName))
+    : m_poDS(poDS), poFeatureDefn_(new OGRFeatureDefn(pszName))
 {
 
     poFeatureDefn_->Reference();

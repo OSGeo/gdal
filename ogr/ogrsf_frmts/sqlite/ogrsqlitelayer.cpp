@@ -3651,3 +3651,12 @@ OGRErr OGRSQLiteExportSpatiaLiteGeometry(const OGRGeometry *poGeometry,
         poGeometry, nSRID, eByteOrder, bSpatialite2D, bUseComprGeom, ppabyData,
         pnDataLength);
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRSQLiteLayer::GetDataset()
+{
+    return m_poDS;
+}

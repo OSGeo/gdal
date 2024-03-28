@@ -551,6 +551,19 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 %}
 
+%typemap(javabody_derived) GDALDatasetShadow %{
+  private long swigCPtr;
+
+  public Dataset(long cPtr, boolean cMemoryOwn) {
+    super(gdalJNI.Dataset_SWIGUpcast(cPtr), cMemoryOwn);
+    swigCPtr = cPtr;
+  }
+
+  public static long getCPtr(Dataset obj) {
+    return (obj == null) ? 0 : obj.swigCPtr;
+  }
+%}
+
 %typemap(javacode) GDALDatasetShadow %{
 
   // Preferred name to match C++ API

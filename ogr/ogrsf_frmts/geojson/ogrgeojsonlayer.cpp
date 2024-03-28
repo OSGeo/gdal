@@ -608,3 +608,12 @@ void OGRGeoJSONLayer::DetectGeometryType()
 
     ResetReading();
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRGeoJSONLayer::GetDataset()
+{
+    return poDS_;
+}

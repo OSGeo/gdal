@@ -265,6 +265,8 @@ class OGROpenFileGDBLayer final : public OGRLayer
     bool CommitEmulatedTransaction();
     bool RollbackEmulatedTransaction();
 
+    GDALDataset *GetDataset() override;
+
     virtual const char *GetName() override
     {
         return m_osName.c_str();

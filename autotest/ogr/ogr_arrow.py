@@ -261,6 +261,7 @@ def test_ogr_arrow_write_from_another_dataset(
             "ARROW_IPC_STREAM:" + outfilename if open_as_stream else outfilename
         )
         lyr = ds.GetLayer(0)
+        assert lyr.GetDataset().GetDescription() == ds.GetDescription()
 
         assert lyr.GetFIDColumn() == (fid if fid else "")
         f = lyr.GetNextFeature()
@@ -366,6 +367,7 @@ def test_ogr_arrow_write_compression(compression):
     options = ["FID=fid", "COMPRESSION=" + compression]
     lyr = ds.CreateLayer("out", geom_type=ogr.wkbNone, options=options)
     assert lyr is not None
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
     lyr = None

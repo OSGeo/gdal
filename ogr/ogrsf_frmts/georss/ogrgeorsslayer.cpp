@@ -2296,3 +2296,12 @@ GIntBig OGRGeoRSSLayer::GetFeatureCount(int bForce)
 
     return nTotalFeatureCount;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRGeoRSSLayer::GetDataset()
+{
+    return poDS;
+}

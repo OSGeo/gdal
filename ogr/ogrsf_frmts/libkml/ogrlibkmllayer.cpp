@@ -737,8 +737,7 @@ OGRErr OGRLIBKMLLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 ******************************************************************************/
 
-OGRErr OGRLIBKMLLayer::CreateField(const OGRFieldDefn *poField,
-                                   int /* bApproxOK */)
+OGRErr OGRLIBKMLLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 {
     if (!bUpdate)
         return OGRERR_UNSUPPORTED_OPERATION;
@@ -747,8 +746,8 @@ OGRErr OGRLIBKMLLayer::CreateField(const OGRFieldDefn *poField,
     {
         SimpleFieldPtr poKmlSimpleField = nullptr;
 
-        if ((poKmlSimpleField =
-                 FieldDef2kml(poField, m_poOgrDS->GetKmlFactory())))
+        if ((poKmlSimpleField = FieldDef2kml(
+                 poField, m_poOgrDS->GetKmlFactory(), CPL_TO_BOOL(bApproxOK))))
         {
             if (!m_poKmlSchema)
             {
@@ -1211,4 +1210,13 @@ void OGRLIBKMLLayer::SetListStyle(const char *pszListStyleType,
 {
     osListStyleType = pszListStyleType ? pszListStyleType : "";
     osListStyleIconHref = pszListStyleIconHref ? pszListStyleIconHref : "";
+}
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRLIBKMLLayer::GetDataset()
+{
+    return m_poOgrDS;
 }

@@ -78,6 +78,8 @@ class OGRGMLLayer final : public OGRLayer
 
     virtual ~OGRGMLLayer();
 
+    GDALDataset *GetDataset() override;
+
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 

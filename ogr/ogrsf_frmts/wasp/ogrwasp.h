@@ -60,6 +60,7 @@ class OGRWAsPLayer final : public OGRLayer,
         double dfRight;
     };
 
+    GDALDataset *m_poDS = nullptr;
     const bool bMerge;
     std::vector<Zone> oZones;
     std::vector<Boundary> oBoundaries;
@@ -137,7 +138,7 @@ class OGRWAsPLayer final : public OGRLayer,
   public:
     /* For writing */
     /* Takes ownership of poTolerance */
-    OGRWAsPLayer(const char *pszName, VSILFILE *hFile,
+    OGRWAsPLayer(GDALDataset *poDS, const char *pszName, VSILFILE *hFile,
                  OGRSpatialReference *poSpatialRef,
                  const CPLString &sFirstField, const CPLString &sSecondField,
                  const CPLString &sGeomField, bool bMerge, double *pdfTolerance,
@@ -145,7 +146,7 @@ class OGRWAsPLayer final : public OGRLayer,
                  double *pdfPointToCircleRadius);
 
     /* For reading */
-    OGRWAsPLayer(const char *pszName, VSILFILE *hFile,
+    OGRWAsPLayer(GDALDataset *poDS, const char *pszName, VSILFILE *hFile,
                  OGRSpatialReference *poSpatialRef);
 
     virtual ~OGRWAsPLayer();
@@ -170,6 +171,11 @@ class OGRWAsPLayer final : public OGRLayer,
     virtual const char *GetName() override
     {
         return sName.c_str();
+    }
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
     }
 };
 

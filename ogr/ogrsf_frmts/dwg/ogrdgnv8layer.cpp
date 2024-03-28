@@ -2405,3 +2405,12 @@ OGRDGNV8Layer::CreateGraphicsElement(OGRFeature *poFeature, OGRGeometry *poGeom)
 
     return element;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRDGNV8Layer::GetDataset()
+{
+    return m_poDS;
+}

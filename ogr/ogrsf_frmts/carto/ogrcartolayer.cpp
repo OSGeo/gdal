@@ -467,3 +467,12 @@ OGRSpatialReference *OGRCARTOLayer::GetSRS(const char *pszGeomCol, int *pnSRID)
 
     return l_poSRS;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRCARTOLayer::GetDataset()
+{
+    return poDS;
+}

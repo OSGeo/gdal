@@ -2328,6 +2328,7 @@ def test_netcdf_56():
             "WKT_DEFAULT_WIDTH=5",
         ],
     )
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     lyr.CreateField(ogr.FieldDefn("txt"))
     f = ogr.Feature(lyr.GetLayerDefn())
     f["txt"] = "0123456789"
@@ -2339,6 +2340,7 @@ def test_netcdf_56():
 
     ds = gdal.OpenEx("tmp/netcdf_56.nc", gdal.OF_VECTOR)
     lyr = ds.GetLayer(0)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     f = lyr.GetFeature(lyr.GetFeatureCount())
     if f["txt"] != "01234" or f.GetGeometryRef() is not None:
         f.DumpReadable()

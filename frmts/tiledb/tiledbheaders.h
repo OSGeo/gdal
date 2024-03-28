@@ -298,6 +298,7 @@ class OGRTileDBLayer final : public OGRLayer,
 
   private:
     friend OGRTileDBDataset;
+    GDALDataset *m_poDS = nullptr;
     std::string m_osGroupName{};
     std::string m_osFilename{};
     uint64_t m_nTimestamp = 0;
@@ -448,8 +449,8 @@ class OGRTileDBLayer final : public OGRLayer,
                           struct ArrowArray *out_array) override;
 
   public:
-    OGRTileDBLayer(const char *pszFilename, const char *pszLayerName,
-                   const OGRwkbGeometryType eGType,
+    OGRTileDBLayer(GDALDataset *poDS, const char *pszFilename,
+                   const char *pszLayerName, const OGRwkbGeometryType eGType,
                    const OGRSpatialReference *poSRS);
     ~OGRTileDBLayer();
     void ResetReading() override;
@@ -480,6 +481,11 @@ class OGRTileDBLayer final : public OGRLayer,
 
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain) override;
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
+    }
 };
 
 /************************************************************************/

@@ -56,6 +56,7 @@ def test_ogr_xls_1():
 
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == "Feuille1", "bad layer name"
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
 
     assert lyr.GetGeomType() == ogr.wkbNone, "bad layer geometry type"
 

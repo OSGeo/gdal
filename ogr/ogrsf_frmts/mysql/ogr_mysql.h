@@ -109,33 +109,33 @@ class OGRMySQLGeomFieldDefn final : public OGRGeomFieldDefn
 class OGRMySQLLayer CPL_NON_FINAL : public OGRLayer
 {
   protected:
-    OGRFeatureDefn *poFeatureDefn;
-
-    // Layer srid.
-    int nSRSId;
-
-    GIntBig iNextShapeId;
-
     OGRMySQLDataSource *poDS;
 
-    char *pszQueryStatement;
+    OGRFeatureDefn *poFeatureDefn = nullptr;
 
-    int nResultOffset;
+    // Layer srid.
+    int nSRSId = -2;  // we haven't even queried the database for it yet.
 
-    char *pszGeomColumn;
-    char *pszGeomColumnTable;
-    int nGeomType;
+    GIntBig iNextShapeId = 0;
 
-    int bHasFid;
-    char *pszFIDColumn;
+    char *pszQueryStatement = nullptr;
 
-    MYSQL_RES *hResultSet;
+    int nResultOffset = 0;
+
+    char *pszGeomColumn = nullptr;
+    char *pszGeomColumnTable = nullptr;
+    int nGeomType = 0;
+
+    int bHasFid = FALSE;
+    char *pszFIDColumn = nullptr;
+
+    MYSQL_RES *hResultSet = nullptr;
     bool m_bEOF = false;
 
     int FetchSRSId();
 
   public:
-    OGRMySQLLayer();
+    explicit OGRMySQLLayer(OGRMySQLDataSource *poDSIn);
     virtual ~OGRMySQLLayer();
 
     virtual void ResetReading() override;
@@ -154,6 +154,8 @@ class OGRMySQLLayer CPL_NON_FINAL : public OGRLayer
     /* custom methods */
     virtual OGRFeature *RecordToFeature(char **papszRow, unsigned long *);
     virtual OGRFeature *GetNextRawFeature();
+
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/

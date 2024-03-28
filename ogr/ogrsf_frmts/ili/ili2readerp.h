@@ -114,7 +114,8 @@ class ILI2Reader : public IILI2Reader
     ~ILI2Reader();
 
     void SetSourceFile(const char *pszFilename) override;
-    int ReadModel(ImdReader *poImdReader, const char *modelFilename) override;
+    int ReadModel(OGRILI2DataSource *, ImdReader *poImdReader,
+                  const char *modelFilename) override;
     int SaveClasses(const char *pszFile) override;
 
     std::list<OGRLayer *> GetLayers() override;

@@ -39,11 +39,12 @@
 /*                            OGRWAsPLayer()                             */
 /************************************************************************/
 
-OGRWAsPLayer::OGRWAsPLayer(const char *pszName, VSILFILE *hFileHandle,
+OGRWAsPLayer::OGRWAsPLayer(GDALDataset *poDS, const char *pszName,
+                           VSILFILE *hFileHandle,
                            OGRSpatialReference *poSpatialRef)
-    : bMerge(false), iFeatureCount(0), sName(pszName), hFile(hFileHandle),
-      iFirstFieldIdx(0), iSecondFieldIdx(1), iGeomFieldIdx(0),
-      poLayerDefn(new OGRFeatureDefn(pszName)),
+    : m_poDS(poDS), bMerge(false), iFeatureCount(0), sName(pszName),
+      hFile(hFileHandle), iFirstFieldIdx(0), iSecondFieldIdx(1),
+      iGeomFieldIdx(0), poLayerDefn(new OGRFeatureDefn(pszName)),
       poSpatialReference(poSpatialRef), iOffsetFeatureBegin(VSIFTellL(hFile)),
       eMode(READ_ONLY)
 {
@@ -55,17 +56,16 @@ OGRWAsPLayer::OGRWAsPLayer(const char *pszName, VSILFILE *hFileHandle,
         poSpatialReference->Reference();
 }
 
-OGRWAsPLayer::OGRWAsPLayer(const char *pszName, VSILFILE *hFileHandle,
-                           OGRSpatialReference *poSpatialRef,
-                           const CPLString &sFirstFieldParam,
-                           const CPLString &sSecondFieldParam,
-                           const CPLString &sGeomFieldParam, bool bMergeParam,
-                           double *pdfToleranceParam,
-                           double *pdfAdjacentPointToleranceParam,
-                           double *pdfPointToCircleRadiusParam)
-    : bMerge(bMergeParam), iFeatureCount(0), sName(pszName), hFile(hFileHandle),
-      sFirstField(sFirstFieldParam), sSecondField(sSecondFieldParam),
-      sGeomField(sGeomFieldParam), iFirstFieldIdx(-1), iSecondFieldIdx(-1),
+OGRWAsPLayer::OGRWAsPLayer(
+    GDALDataset *poDS, const char *pszName, VSILFILE *hFileHandle,
+    OGRSpatialReference *poSpatialRef, const CPLString &sFirstFieldParam,
+    const CPLString &sSecondFieldParam, const CPLString &sGeomFieldParam,
+    bool bMergeParam, double *pdfToleranceParam,
+    double *pdfAdjacentPointToleranceParam, double *pdfPointToCircleRadiusParam)
+    : m_poDS(poDS), bMerge(bMergeParam), iFeatureCount(0), sName(pszName),
+      hFile(hFileHandle), sFirstField(sFirstFieldParam),
+      sSecondField(sSecondFieldParam), sGeomField(sGeomFieldParam),
+      iFirstFieldIdx(-1), iSecondFieldIdx(-1),
       iGeomFieldIdx(sGeomFieldParam.empty() ? 0 : -1),
       poLayerDefn(new OGRFeatureDefn(pszName)),
       poSpatialReference(poSpatialRef),

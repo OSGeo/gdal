@@ -1898,7 +1898,7 @@ GDALDataset *PCIDSK2Dataset::LLOpen(const char *pszFilename,
                 dynamic_cast<PCIDSK::PCIDSKVectorSegment *>(segobj);
             if (poVecSeg)
                 poDS->apoLayers.push_back(new OGRPCIDSKLayer(
-                    segobj, poVecSeg, eAccessIn == GA_Update));
+                    poDS, segobj, poVecSeg, eAccessIn == GA_Update));
         }
 
         /* --------------------------------------------------------------------
@@ -2208,7 +2208,7 @@ OGRLayer *PCIDSK2Dataset::ICreateLayer(const char *pszLayerName,
     /*      Create the layer object.                                        */
     /* -------------------------------------------------------------------- */
 
-    apoLayers.push_back(new OGRPCIDSKLayer(poSeg, poVecSeg, TRUE));
+    apoLayers.push_back(new OGRPCIDSKLayer(this, poSeg, poVecSeg, TRUE));
 
     return apoLayers.back();
 }

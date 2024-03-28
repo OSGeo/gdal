@@ -96,6 +96,7 @@ def test_ogr_pdf_1(tmp_path, pdf_lib, write_attributes):
     )
 
     lyr = ds.CreateLayer("first_layer", srs=sr)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
 
     lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
@@ -253,6 +254,7 @@ def test_ogr_pdf_5():
     assert ds is not None
 
     lyr = ds.GetLayer(0)
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     assert lyr.GetFeatureCount() == 8
 
 

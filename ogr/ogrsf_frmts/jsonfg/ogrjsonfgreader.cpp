@@ -477,13 +477,13 @@ void OGRJSONFGReader::FinalizeBuildContext(LayerDefnBuildContext &oBuildContext,
     if (bStreamedLayer)
     {
         poStreamedLayer = std::make_unique<OGRJSONFGStreamedLayer>(
-            pszLayerName, poSRSLayer, oBuildContext.eLayerGeomType);
+            poDS_, pszLayerName, poSRSLayer, oBuildContext.eLayerGeomType);
         poLayer = poStreamedLayer.get();
     }
     else
     {
         poMemLayer = std::make_unique<OGRJSONFGMemLayer>(
-            pszLayerName, poSRSLayer, oBuildContext.eLayerGeomType);
+            poDS_, pszLayerName, poSRSLayer, oBuildContext.eLayerGeomType);
         poLayer = poMemLayer.get();
     }
 

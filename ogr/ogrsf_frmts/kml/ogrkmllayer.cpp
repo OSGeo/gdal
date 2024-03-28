@@ -637,3 +637,12 @@ void OGRKMLLayer::SetLayerNumber(int nLayer)
 {
     nLayerNumber_ = nLayer;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRKMLLayer::GetDataset()
+{
+    return poDS_;
+}

@@ -144,6 +144,8 @@ class OGRODSLayer final : public OGRMemLayer
     }
 
     virtual OGRErr SyncToDisk() override;
+
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/

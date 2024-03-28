@@ -4328,3 +4328,12 @@ int FGdbLayer::CreateRealCopy()
         m_bSymlinkFlag = FALSE;
     return bRet;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *FGdbLayer::GetDataset()
+{
+    return m_pDS;
+}

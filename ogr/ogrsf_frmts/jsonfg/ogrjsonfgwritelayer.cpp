@@ -444,3 +444,12 @@ int OGRJSONFGWriteLayer::TestCapability(const char *pszCap)
         return TRUE;
     return FALSE;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRJSONFGWriteLayer::GetDataset()
+{
+    return poDS_;
+}

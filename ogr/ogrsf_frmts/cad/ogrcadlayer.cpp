@@ -44,9 +44,10 @@
 constexpr double DEG2RAD = M_PI / 180.0;
 constexpr double RAD2DEG = 1.0 / DEG2RAD;
 
-OGRCADLayer::OGRCADLayer(CADLayer &poCADLayer_, OGRSpatialReference *poSR,
-                         int nEncoding)
-    : poSpatialRef(poSR), poCADLayer(poCADLayer_), nDWGEncoding(nEncoding)
+OGRCADLayer::OGRCADLayer(GDALDataset *poDS, CADLayer &poCADLayer_,
+                         OGRSpatialReference *poSR, int nEncoding)
+    : m_poDS(poDS), poSpatialRef(poSR), poCADLayer(poCADLayer_),
+      nDWGEncoding(nEncoding)
 {
     nNextFID = 0;
 

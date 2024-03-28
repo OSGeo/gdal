@@ -36,7 +36,8 @@
 /*                        OGROCIWritableLayer()                         */
 /************************************************************************/
 
-OGROCIWritableLayer::OGROCIWritableLayer()
+OGROCIWritableLayer::OGROCIWritableLayer(OGROCIDataSource *poDSIn)
+    : OGROCILayer(poDSIn)
 
 {
     nDimension =

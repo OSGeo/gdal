@@ -90,6 +90,8 @@ class OGRPDFLayer final : public OGRMemLayer
     void Fill(GDALPDFArray *poArray);
 
     virtual int TestCapability(const char *) override;
+
+    GDALDataset *GetDataset() override;
 };
 
 #endif
@@ -111,6 +113,8 @@ class OGRPDFWritableLayer final : public OGRMemLayer
 
     virtual int TestCapability(const char *) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/

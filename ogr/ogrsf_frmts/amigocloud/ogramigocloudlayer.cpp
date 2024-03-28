@@ -463,3 +463,12 @@ OGRSpatialReference *OGRAmigoCloudLayer::GetSRS(const char *pszGeomCol,
 
     return poSRS;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRAmigoCloudLayer::GetDataset()
+{
+    return poDS;
+}

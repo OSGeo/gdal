@@ -91,6 +91,8 @@ class OGRILI1Layer final : public OGRLayer
 
     int TestCapability(const char *) override;
 
+    GDALDataset *GetDataset() override;
+
   private:
     void JoinGeomLayers();
     void JoinSurfaceLayer(OGRILI1Layer *poSurfaceLineLayer,

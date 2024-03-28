@@ -1243,6 +1243,10 @@ CPLErr CPL_DLL GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand,
 
 int CPL_DLL GDALDatasetGetLayerCount(GDALDatasetH);
 OGRLayerH CPL_DLL GDALDatasetGetLayer(GDALDatasetH, int);
+
+/* Defined here to avoid circular dependency with ogr_api.h */
+GDALDatasetH CPL_DLL OGR_L_GetDataset(OGRLayerH hLayer);
+
 OGRLayerH CPL_DLL GDALDatasetGetLayerByName(GDALDatasetH, const char *);
 int CPL_DLL GDALDatasetIsLayerPrivate(GDALDatasetH, int);
 OGRErr CPL_DLL GDALDatasetDeleteLayer(GDALDatasetH, int);

@@ -166,6 +166,7 @@ def tpoly(mssql_ds):
 def test_ogr_mssqlspatial_3(mssql_ds, poly_feat):
 
     mssqlspatial_lyr = mssql_ds.GetLayerByName("tpoly")
+    assert mssqlspatial_lyr.GetDataset().GetDescription() == mssql_ds.GetDescription()
 
     assert mssqlspatial_lyr.GetGeometryColumn() == "ogr_geometry"
 

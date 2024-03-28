@@ -758,7 +758,7 @@ void OGRVDVDataSource::DetectLayers()
                 if (szBuffer[i] == '\r' || szBuffer[i] == '\n')
                 {
                     bInTableName = false;
-                    poLayer = new OGRVDVLayer(osTableName, m_fpL, false,
+                    poLayer = new OGRVDVLayer(this, osTableName, m_fpL, false,
                                               bRecodeFromLatin1, nStartOffset);
                     m_papoLayers = static_cast<OGRLayer **>(
                         CPLRealloc(m_papoLayers,
@@ -860,12 +860,13 @@ void OGRVDVDataSource::DetectLayers()
 /*                           OGRVDVLayer()                              */
 /************************************************************************/
 
-OGRVDVLayer::OGRVDVLayer(const CPLString &osTableName, VSILFILE *fpL,
-                         bool bOwnFP, bool bRecodeFromLatin1,
+OGRVDVLayer::OGRVDVLayer(GDALDataset *poDS, const CPLString &osTableName,
+                         VSILFILE *fpL, bool bOwnFP, bool bRecodeFromLatin1,
                          vsi_l_offset nStartOffset)
-    : m_fpL(fpL), m_bOwnFP(bOwnFP), m_bRecodeFromLatin1(bRecodeFromLatin1),
-      m_nStartOffset(nStartOffset), m_nCurOffset(0), m_nTotalFeatureCount(0),
-      m_nFID(0), m_bEOF(false), m_iLongitudeVDV452(-1), m_iLatitudeVDV452(-1)
+    : m_poDS(poDS), m_fpL(fpL), m_bOwnFP(bOwnFP),
+      m_bRecodeFromLatin1(bRecodeFromLatin1), m_nStartOffset(nStartOffset),
+      m_nCurOffset(0), m_nTotalFeatureCount(0), m_nFID(0), m_bEOF(false),
+      m_iLongitudeVDV452(-1), m_iLatitudeVDV452(-1)
 {
     m_poFeatureDefn = new OGRFeatureDefn(osTableName);
     m_poFeatureDefn->SetGeomType(wkbNone);
@@ -1246,8 +1247,8 @@ GDALDataset *OGRVDVDataSource::Open(GDALOpenInfo *poOpenInfo)
             poDS->m_papoLayers = static_cast<OGRLayer **>(
                 CPLRealloc(poDS->m_papoLayers,
                            sizeof(OGRLayer *) * (poDS->m_nLayerCount + 1)));
-            poDS->m_papoLayers[poDS->m_nLayerCount] =
-                new OGRVDVLayer(CPLGetBasename(*papszIter), fp, true, false, 0);
+            poDS->m_papoLayers[poDS->m_nLayerCount] = new OGRVDVLayer(
+                poDS, CPLGetBasename(*papszIter), fp, true, false, 0);
             poDS->m_nLayerCount++;
         }
         CSLDestroy(papszFiles);
@@ -1615,6 +1616,15 @@ void OGRVDVWriterLayer::StopAsCurrentLayer()
             VSIFPrintfL(m_fpL, "end; " CPL_FRMT_GIB "\n", m_nFeatureCount);
         }
     }
+}
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRVDVWriterLayer::GetDataset()
+{
+    return m_poDS;
 }
 
 /************************************************************************/

@@ -663,6 +663,22 @@ static int TestCreateLayer(GDALDriver *poDriver, OGRwkbGeometryType eGeomType)
             bRet = FALSE;
         }
 
+        auto poLyrDS = LOG_ACTION(poLayer->GetDataset());
+        if (!poLyrDS)
+        {
+            printf("ERROR: %s: GetDataset() returns NUL just after layer "
+                   "creation.\n",
+                   poDriver->GetDescription());
+            bRet = FALSE;
+        }
+        else if (poLyrDS != poDS)
+        {
+            printf("WARNING: %s: GetDataset()->GetDescription() (=%s) != %s"
+                   "creation.\n",
+                   poDriver->GetDescription(), poLyrDS->GetDescription(),
+                   poDS->GetDescription());
+        }
+
         // Create fields of various types
         int bCreateField = LOG_ACTION(poLayer->TestCapability(OLCCreateField));
         int iFieldStr = -1;

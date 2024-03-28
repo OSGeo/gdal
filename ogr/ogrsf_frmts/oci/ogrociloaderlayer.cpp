@@ -39,10 +39,9 @@ OGROCILoaderLayer::OGROCILoaderLayer(OGROCIDataSource *poDSIn,
                                      const char *pszTableName,
                                      const char *pszGeomColIn, int nSRIDIn,
                                      const char *pszLoaderFilenameIn)
+    : OGROCIWritableLayer(poDSIn)
 
 {
-    poDS = poDSIn;
-
     iNextFIDToWrite = 1;
 
     bTruncationReported = FALSE;

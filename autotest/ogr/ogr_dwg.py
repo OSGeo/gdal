@@ -64,6 +64,7 @@ def test_ogr_dwg_1():
     layer = ds.GetLayer(0)
 
     assert layer.GetName() == "entities", "layer name is expected to be entities."
+    assert layer.GetDataset().GetDescription() == ds.GetDescription()
 
     defn = layer.GetLayerDefn()
 
@@ -102,6 +103,7 @@ def test_ogr_dwg_2():
         zero = ds.GetLayer(0)
 
         assert zero.GetName() == "blocks", "layer name is expected to be blocks."
+        assert zero.GetDataset().GetDescription() == ds.GetDescription()
 
         layer = ds.GetLayer("entities")
         defn = layer.GetLayerDefn()

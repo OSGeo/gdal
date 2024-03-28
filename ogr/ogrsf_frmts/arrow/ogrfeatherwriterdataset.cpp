@@ -95,7 +95,7 @@ OGRFeatherWriterDataset::ICreateLayer(const char *pszName,
         poGeomFieldDefn ? poGeomFieldDefn->GetSpatialRef() : nullptr;
 
     m_poLayer = std::make_unique<OGRFeatherWriterLayer>(
-        m_poMemoryPool.get(), m_poOutputStream, pszName);
+        this, m_poMemoryPool.get(), m_poOutputStream, pszName);
     if (!m_poLayer->SetOptions(m_osFilename, papszOptions, poSpatialRef,
                                eGType))
     {

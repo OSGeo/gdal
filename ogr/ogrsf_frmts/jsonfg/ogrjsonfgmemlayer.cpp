@@ -32,10 +32,10 @@
 /*                OGRJSONFGMemLayer::OGRJSONFGMemLayer()                */
 /************************************************************************/
 
-OGRJSONFGMemLayer::OGRJSONFGMemLayer(const char *pszName,
+OGRJSONFGMemLayer::OGRJSONFGMemLayer(GDALDataset *poDS, const char *pszName,
                                      OGRSpatialReference *poSRS,
                                      OGRwkbGeometryType eGType)
-    : OGRMemLayer(pszName, poSRS, eGType)
+    : OGRMemLayer(pszName, poSRS, eGType), m_poDS(poDS)
 {
     SetAdvertizeUTF8(true);
     SetUpdatable(false);

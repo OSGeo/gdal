@@ -142,6 +142,8 @@ def copy_shape_to_geojson(gjname, compress=None):
     if lyr is None:
         return False, dst_name
 
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
+
     ######################################################
     # Setup schema (all test shapefiles use common schema)
     ogrtest.quick_create_layer_def(lyr, [("FID", ogr.OFTReal), ("NAME", ogr.OFTString)])
@@ -189,6 +191,8 @@ def test_ogr_geojson_2():
 
     lyr = ds.GetLayerByName("point")
     assert lyr is not None, "Missing layer called point"
+
+    assert lyr.GetDataset().GetDescription() == ds.GetDescription()
 
     extent = (100.0, 100.0, 0.0, 0.0)
 

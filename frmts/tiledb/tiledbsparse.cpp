@@ -249,7 +249,7 @@ GDALDataset *OGRTileDBDataset::Open(GDALOpenInfo *poOpenInfo,
                                   std::optional<std::string>())
     {
         auto poLayer = std::make_unique<OGRTileDBLayer>(
-            osLayerFilename.c_str(),
+            poDS.get(), osLayerFilename.c_str(),
             osLayerName.has_value() ? (*osLayerName).c_str()
                                     : CPLGetBasename(osLayerFilename.c_str()),
             wkbUnknown, nullptr);
@@ -399,8 +399,8 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
         }
         osFilename = CPLFormFilename(osFilename.c_str(), pszName, nullptr);
     }
-    auto poLayer = std::make_unique<OGRTileDBLayer>(osFilename.c_str(), pszName,
-                                                    eGType, poSpatialRef);
+    auto poLayer = std::make_unique<OGRTileDBLayer>(
+        this, osFilename.c_str(), pszName, eGType, poSpatialRef);
     poLayer->m_bUpdatable = true;
     poLayer->m_ctx.reset(new tiledb::Context(*m_ctx));
     poLayer->m_osGroupName = m_osGroupName;
@@ -594,11 +594,11 @@ GDALDataset *OGRTileDBDataset::Create(const char *pszFilename,
 /*                         OGRTileDBLayer()                             */
 /************************************************************************/
 
-OGRTileDBLayer::OGRTileDBLayer(const char *pszFilename,
+OGRTileDBLayer::OGRTileDBLayer(GDALDataset *poDS, const char *pszFilename,
                                const char *pszLayerName,
                                const OGRwkbGeometryType eGType,
                                const OGRSpatialReference *poSRS)
-    : m_osFilename(pszFilename),
+    : m_poDS(poDS), m_osFilename(pszFilename),
       m_poFeatureDefn(new OGRFeatureDefn(pszLayerName)),
       m_pbLayerStillAlive(std::make_shared<bool>(true)),
       m_anFIDs(std::make_shared<std::vector<int64_t>>()),

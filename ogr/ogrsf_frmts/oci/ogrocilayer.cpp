@@ -35,11 +35,10 @@
 /*                           OGROCILayer()                               */
 /************************************************************************/
 
-OGROCILayer::OGROCILayer()
+OGROCILayer::OGROCILayer(OGROCIDataSource *poDSIn) : poDS(poDSIn)
 
 {
     poFeatureDefn = nullptr;
-    poDS = nullptr;
     poStatement = nullptr;
 
     pszQueryStatement = nullptr;
@@ -963,4 +962,13 @@ const char *OGROCILayer::GetGeometryColumn()
         return pszGeomName;
     else
         return "";
+}
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGROCILayer::GetDataset()
+{
+    return poDS;
 }

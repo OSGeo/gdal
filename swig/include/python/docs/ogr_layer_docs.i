@@ -785,4 +785,15 @@ dict:
     values the corresponding number of geometries of that type in the layer.
 ";
 
+%feature("docstring")  GetDataset "
+Return the dataset associated with this layer.
+
+For more details: :cpp:func:`OGR_L_GetDataset`
+
+Returns
+-------
+Dataset:
+    Dataset or None
+";
+
 }

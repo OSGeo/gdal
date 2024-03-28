@@ -84,6 +84,8 @@ class OGRXLSLayer final : public OGRLayer,
     {
         return nullptr;
     }
+
+    GDALDataset *GetDataset() override;
 };
 
 /************************************************************************/

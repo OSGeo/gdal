@@ -54,6 +54,7 @@ def test_ogr_cad_2():
     layer = ds.GetLayer(0)
 
     assert layer.GetName() == "0", "layer name is expected to be default = 0."
+    assert layer.GetDataset().GetDescription() == ds.GetDescription()
 
     defn = layer.GetLayerDefn()
     assert defn.GetFieldCount() == 5, (

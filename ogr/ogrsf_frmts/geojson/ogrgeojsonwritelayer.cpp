@@ -484,3 +484,12 @@ OGRErr OGRGeoJSONWriteLayer::GetExtent(OGREnvelope *psExtent, int)
     }
     return OGRERR_FAILURE;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRGeoJSONWriteLayer::GetDataset()
+{
+    return poDS_;
+}

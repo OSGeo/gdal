@@ -62,7 +62,8 @@ int OGRGmtDataSource::Open(const char *pszFilename, VSILFILE *fp,
 {
     bUpdate = CPL_TO_BOOL(bUpdateIn);
 
-    OGRGmtLayer *poLayer = new OGRGmtLayer(pszFilename, fp, poSRS, bUpdate);
+    OGRGmtLayer *poLayer =
+        new OGRGmtLayer(this, pszFilename, fp, poSRS, bUpdate);
     if (!poLayer->bValidFile)
     {
         delete poLayer;

@@ -516,6 +516,7 @@ def datatypetest(pg_ds, pg_has_postgis, pg_quote_with_E):
 def test_capabilities(pg_ds, use_postgis):
 
     pg_lyr = pg_ds.GetLayer("tpoly")
+    assert pg_lyr.GetDataset().GetDescription() == pg_ds.GetDescription()
 
     if use_postgis:
         assert pg_lyr.TestCapability(ogr.OLCFastSpatialFilter)

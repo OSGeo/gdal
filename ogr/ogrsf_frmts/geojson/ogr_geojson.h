@@ -97,6 +97,8 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     virtual OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
                                int bForce = TRUE) override;
 
+    GDALDataset *GetDataset() override;
+
     //
     // OGRGeoJSONLayer Interface
     //
@@ -190,6 +192,8 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
     }
 
     OGRErr SyncToDisk() override;
+
+    GDALDataset *GetDataset() override;
 
   private:
     OGRGeoJSONDataSource *poDS_;

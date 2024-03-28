@@ -1960,3 +1960,12 @@ void OGRPGDumpLayer::SetForcedDescription(const char *pszDescriptionIn)
         m_poDS->Log(osCommand);
     }
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRPGDumpLayer::GetDataset()
+{
+    return m_poDS;
+}

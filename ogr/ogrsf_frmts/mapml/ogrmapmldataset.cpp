@@ -108,6 +108,11 @@ class OGRMapMLReaderLayer final
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRMapMLReaderLayer)
     int TestCapability(const char *pszCap) override;
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
+    }
 };
 
 /************************************************************************/
@@ -196,6 +201,11 @@ class OGRMapMLWriterLayer final : public OGRLayer
     OGRErr CreateField(const OGRFieldDefn *poFieldDefn, int) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     int TestCapability(const char *) override;
+
+    GDALDataset *GetDataset() override
+    {
+        return m_poDS;
+    }
 };
 
 /************************************************************************/

@@ -349,3 +349,12 @@ OGRErr OGRILI2Layer::CreateField(const OGRFieldDefn *poField,
     poFeatureDefn->AddFieldDefn(poField);
     return OGRERR_NONE;
 }
+
+/************************************************************************/
+/*                             GetDataset()                             */
+/************************************************************************/
+
+GDALDataset *OGRILI2Layer::GetDataset()
+{
+    return poDS;
+}
