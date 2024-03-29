@@ -370,10 +370,14 @@ void OGRFeatherDriver::InitMetadata()
         CPLAddXMLAttributeAndValue(psOption, "description",
                                    "Encoding of geometry columns");
         CPLAddXMLAttributeAndValue(psOption, "default", "GEOARROW");
-        for (const char *pszEncoding : {"GEOARROW", "WKB", "WKT"})
+        for (const char *pszEncoding :
+             {"GEOARROW", "GEOARROW_INTERLEAVED", "WKB", "WKT"})
         {
             auto poValueNode = CPLCreateXMLNode(psOption, CXT_Element, "Value");
             CPLCreateXMLNode(poValueNode, CXT_Text, pszEncoding);
+            if (EQUAL(pszEncoding, "GEOARROW"))
+                CPLAddXMLAttributeAndValue(poValueNode, "alias",
+                                           "GEOARROW_STRUCT");
         }
     }
 

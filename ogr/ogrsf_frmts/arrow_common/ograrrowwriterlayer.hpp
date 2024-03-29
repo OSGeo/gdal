@@ -759,9 +759,9 @@ OGRArrowWriterLayer::GetGeomEncodingAsString(OGRArrowGeomEncoding eGeomEncoding,
     switch (eGeomEncoding)
     {
         case OGRArrowGeomEncoding::WKB:
-            return bForParquetGeo ? "WKB" : "ogc.wkb";
+            return bForParquetGeo ? "WKB" : "geoarrow.wkb";
         case OGRArrowGeomEncoding::WKT:
-            return bForParquetGeo ? "WKT" : "ogc.wkt";
+            return bForParquetGeo ? "WKT" : "geoarrow.wkt";
         case OGRArrowGeomEncoding::GEOARROW_FSL_GENERIC:
         case OGRArrowGeomEncoding::GEOARROW_STRUCT_GENERIC:
             CPLAssert(false);
