@@ -983,3 +983,35 @@ def test_numpy_rw_band_read_as_array_getlasterrormsg():
     with gdal.quiet_errors():
         assert ds.GetRasterBand(1).ReadAsArray() is None
     assert gdal.GetLastErrorMsg() != ""
+
+
+###############################################################################
+# Test a band read into a masked array
+
+
+def test_numpy_rw_masked_array_1():
+
+    ds = gdal.Open("data/byte.tif")
+
+    band = ds.GetRasterBand(1)
+
+    masked_arr = band.ReadAsMaskedArray()
+
+    assert not numpy.any(masked_arr.mask)
+
+
+def test_numpy_rw_masked_array_2():
+
+    ds = gdal.Open("data/test3_with_mask_8bit.tif")
+
+    band = ds.GetRasterBand(1)
+
+    arr = band.ReadAsArray()
+    mask = band.GetMaskBand().ReadAsArray()
+
+    masked_arr = band.ReadAsMaskedArray()
+
+    assert not numpy.any(masked_arr.mask[mask == 255])
+    assert numpy.all(masked_arr.mask[mask != 255])
+
+    assert masked_arr.sum() == arr[mask == 255].sum()

@@ -552,6 +552,41 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
               buf_string, buf_xsize, buf_ysize, buf_type,
               buf_pixel_space, buf_line_space )
 
+  def ReadAsMaskedArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
+                  buf_xsize=None, buf_ysize=None, buf_type=None,
+                  resample_alg=gdalconst.GRIORA_NearestNeighbour,
+                  callback=None,
+                  callback_data=None):
+      """
+      Read a window of this raster band into a NumPy masked array.
+
+      Values of the mask will be ``True`` where pixels are invalid.
+
+      See :py:meth:`ReadAsArray` for a description of arguments.
+
+      """
+      import numpy
+      array = self.ReadAsArray(xoff=xoff, yoff=yoff,
+                               win_xsize=win_xsize, win_ysize=win_ysize,
+                               buf_xsize=buf_xsize, buf_ysize=buf_ysize,
+                               buf_type=buf_type,
+                               resample_alg=resample_alg,
+                               callback=callback, callback_data=callback_data)
+
+      if self.GetMaskFlags() != GMF_ALL_VALID:
+          mask = self.GetMaskBand()
+          mask_array = ~mask.ReadAsArray(xoff=xoff,
+                                         yoff=yoff,
+                                         win_xsize=win_xsize,
+                                         win_ysize=win_ysize,
+                                         buf_xsize=buf_xsize,
+                                         buf_ysize=buf_ysize,
+                                         resample_alg=resample_alg).astype(bool)
+      else:
+          mask_array = None
+      return numpy.ma.array(array, mask=mask_array)
+
+
   def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                   buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
                   resample_alg=gdalconst.GRIORA_NearestNeighbour,
