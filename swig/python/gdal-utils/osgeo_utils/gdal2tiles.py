@@ -1375,9 +1375,6 @@ def create_base_tile(tile_job_info: "TileJobInfo", tile_detail: "TileDetail") ->
             wysize,
             band_list=list(range(1, dataBandsCount + 1)),
         )
-    elif tile_job_info.exclude_transparent:
-        # If there are no pixels to copy, the tile will be fully transparent
-        return
 
     # The tile in memory is a transparent file by default. Write pixel values into it if
     # any
@@ -2803,6 +2800,13 @@ class GDAL2Tiles(object):
                         ry = ysize - (ty * tsize) - rysize
                         if wysize != self.tile_size:
                             wy = self.tile_size - wysize
+
+                if self.options.exclude_transparent and (
+                    rxsize == 0 or rysize == 0 or wxsize == 0 or wysize == 0
+                ):
+                    if self.options.verbose:
+                        logger.debug("\tExcluding tile with no pixel coverage")
+                    continue
 
                 # Read the source raster if anything is going inside the tile as per the computed
                 # geo_query
