@@ -175,6 +175,12 @@ static bool IsAboveTerrain(const GDALRasterBandH hBand, const int x,
  * 
  * @param zB The Z location (height) of the second point to check.
  * 
+ * @param xTerrainIntersection The X location where the LOS line intersects with terrain,
+ *        or nullptr if it does not intersect terrain. Currently ignored.
+ * 
+ * @param yTerrainIntersection The Y location where the LOS line intersects with terrain,
+ *        or nullptr if it does not intersect terrain. Currently ignored.
+ * 
  * @param papszOptions Options for the line of sight algorithm (currently ignored).
  * 
  * @return True if the two points are within Line of Sight.
@@ -185,6 +191,8 @@ static bool IsAboveTerrain(const GDALRasterBandH hBand, const int x,
 bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
                               const int yA, const double zA, const int xB,
                               const int yB, const double zB,
+                              CPL_UNUSED int *xTerrainIntersection,
+                              CPL_UNUSED int *yTerrainIntersection,
                               CPL_UNUSED CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hBand, "GDALIsLineOfSightVisible", false);

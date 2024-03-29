@@ -24,6 +24,12 @@ yB : int
     The Y location (raster row) of the second point to check on the raster.
 zB : float
     The Z location (height) of the second point to check.
+xTerrainIntersection : int
+    The X location where the LOS line intersects with terrain, or nullptr if it does not
+    intersect terrain. Currently ignored.
+yTerrainIntersection : int
+    The Y location where the LOS line intersects with terrain, or nullptr if it does not
+    intersect terrain. Currently ignored.
 options : dict/list, optional
     A dict or list of name=value of options for the line of sight algorithm (currently ignored).
 

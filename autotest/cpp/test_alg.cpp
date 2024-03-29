@@ -301,14 +301,14 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_single_point_dataset)
     ASSERT_TRUE(poDS->RasterIO(GF_Write, 0, 0, 1, 1, &val, 1, 1, GDT_Int8, 1,
                                nullptr, 0, 0, 0, nullptr) == CE_None);
     // Both points below terrain
-    EXPECT_FALSE(
-        GDALIsLineOfSightVisible(pBand, 0, 0, 0.0, 0, 0, 0.0, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 0, 0.0, 0, 0, 0.0, nullptr,
+                                          nullptr, nullptr));
     // One point below terrain
-    EXPECT_FALSE(
-        GDALIsLineOfSightVisible(pBand, 0, 0, 0.0, 0, 0, 43.0, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 0, 0.0, 0, 0, 43.0, nullptr,
+                                          nullptr, nullptr));
     // Both points above terrain
-    EXPECT_TRUE(
-        GDALIsLineOfSightVisible(pBand, 0, 0, 44.0, 0, 0, 43.0, nullptr));
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 0, 0, 44.0, 0, 0, 43.0, nullptr,
+                                         nullptr, nullptr));
 }
 
 // Test GDALIsLineOfSightVisible() with 10x10 default dataset
@@ -331,25 +331,25 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_default_square_dataset)
     const int y2 = 2;
 
     // Both points are above terrain.
-    EXPECT_TRUE(
-        GDALIsLineOfSightVisible(pBand, x1, y1, 1.0, x2, y2, 1.0, nullptr));
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, x1, y1, 1.0, x2, y2, 1.0,
+                                         nullptr, nullptr, nullptr));
     // Flip the order, same result.
-    EXPECT_TRUE(
-        GDALIsLineOfSightVisible(pBand, x2, y2, 1.0, x1, y1, 1.0, nullptr));
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, x2, y2, 1.0, x1, y1, 1.0,
+                                         nullptr, nullptr, nullptr));
 
     // One point is below terrain.
-    EXPECT_FALSE(
-        GDALIsLineOfSightVisible(pBand, x1, y1, -1.0, x2, y2, 1.0, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, x1, y1, -1.0, x2, y2, 1.0,
+                                          nullptr, nullptr, nullptr));
     // Flip the order, same result.
-    EXPECT_FALSE(
-        GDALIsLineOfSightVisible(pBand, x2, y2, -1.0, x1, y1, 1.0, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, x2, y2, -1.0, x1, y1, 1.0,
+                                          nullptr, nullptr, nullptr));
 
     // Both points are below terrain.
-    EXPECT_FALSE(
-        GDALIsLineOfSightVisible(pBand, x1, y1, -1.0, x2, y2, -1.0, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, x1, y1, -1.0, x2, y2, -1.0,
+                                          nullptr, nullptr, nullptr));
     // Flip the order, same result.
-    EXPECT_FALSE(
-        GDALIsLineOfSightVisible(pBand, x2, y2, -1.0, x1, y1, -1.0, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, x2, y2, -1.0, x1, y1, -1.0,
+                                          nullptr, nullptr, nullptr));
 }
 
 // Test GDALIsLineOfSightVisible() through a mountain (not a unit test)
@@ -397,57 +397,57 @@ TEST_F(test_alg, GDALIsLineOfSightVisible_through_mountain)
     // Both points are just above terrain, with terrain between.
     EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, iMesaTopX, iMesaTopY, 222,
                                           iMesaBottomX, iMesaBottomY, 199,
-                                          nullptr));
+                                          nullptr, nullptr, nullptr));
     // Flip the order, same result.
     EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, iMesaBottomX, iMesaBottomY,
                                           199, iMesaTopX, iMesaTopY, 222,
-                                          nullptr));
+                                          nullptr, nullptr, nullptr));
 
     // Both points above terrain.
     EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, iMesaTopX, iMesaTopY, 322,
                                          iMesaBottomX, iMesaBottomY, 322,
-                                         nullptr));
+                                         nullptr, nullptr, nullptr));
 
     // Both points below terrain.
     EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, iMesaTopX, iMesaTopY, 0,
                                           iMesaBottomX, iMesaBottomY, 0,
-                                          nullptr));
+                                          nullptr, nullptr, nullptr));
 
     // Test negative slope bresenham diagonals across the whole raster.
     // Both high above terrain.
-    EXPECT_TRUE(
-        GDALIsLineOfSightVisible(pBand, 0, 0, 460, 120, 120, 460, nullptr));
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 0, 0, 460, 120, 120, 460,
+                                         nullptr, nullptr, nullptr));
     // Both heights are 1m above in the corners, but middle terrain violates LOS.
-    EXPECT_FALSE(
-        GDALIsLineOfSightVisible(pBand, 0, 0, 295, 120, 120, 183, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 0, 295, 120, 120, 183,
+                                          nullptr, nullptr, nullptr));
 
     // Test positive slope bresenham diagnoals across the whole raster.
     // Both high above terrain.
-    EXPECT_TRUE(
-        GDALIsLineOfSightVisible(pBand, 0, 120, 460, 120, 0, 460, nullptr));
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 0, 120, 460, 120, 0, 460,
+                                         nullptr, nullptr, nullptr));
     // Both heights are 1m above in the corners, but middle terrain violates LOS.
-    EXPECT_FALSE(
-        GDALIsLineOfSightVisible(pBand, 0, 120, 203, 120, 0, 247, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 0, 120, 203, 120, 0, 247,
+                                          nullptr, nullptr, nullptr));
 
     // Vertical line tests with hill between two points, in both directions.
-    EXPECT_FALSE(
-        GDALIsLineOfSightVisible(pBand, 83, 111, 154, 83, 117, 198, nullptr));
-    EXPECT_FALSE(
-        GDALIsLineOfSightVisible(pBand, 83, 117, 198, 83, 111, 154, nullptr));
-    EXPECT_TRUE(
-        GDALIsLineOfSightVisible(pBand, 83, 111, 460, 83, 117, 460, nullptr));
-    EXPECT_TRUE(
-        GDALIsLineOfSightVisible(pBand, 83, 117, 460, 83, 111, 460, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 83, 111, 154, 83, 117, 198,
+                                          nullptr, nullptr, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 83, 117, 198, 83, 111, 154,
+                                          nullptr, nullptr, nullptr));
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 83, 111, 460, 83, 117, 460,
+                                         nullptr, nullptr, nullptr));
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 83, 117, 460, 83, 111, 460,
+                                         nullptr, nullptr, nullptr));
 
     // Horizontal line tests with hill between two points, in both directions.
-    EXPECT_FALSE(
-        GDALIsLineOfSightVisible(pBand, 75, 115, 192, 89, 115, 191, nullptr));
-    EXPECT_FALSE(
-        GDALIsLineOfSightVisible(pBand, 89, 115, 191, 75, 115, 192, nullptr));
-    EXPECT_TRUE(
-        GDALIsLineOfSightVisible(pBand, 75, 115, 460, 89, 115, 460, nullptr));
-    EXPECT_TRUE(
-        GDALIsLineOfSightVisible(pBand, 89, 115, 460, 75, 115, 460, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 75, 115, 192, 89, 115, 191,
+                                          nullptr, nullptr, nullptr));
+    EXPECT_FALSE(GDALIsLineOfSightVisible(pBand, 89, 115, 191, 75, 115, 192,
+                                          nullptr, nullptr, nullptr));
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 75, 115, 460, 89, 115, 460,
+                                         nullptr, nullptr, nullptr));
+    EXPECT_TRUE(GDALIsLineOfSightVisible(pBand, 89, 115, 460, 75, 115, 460,
+                                         nullptr, nullptr, nullptr));
 }
 
 }  // namespace

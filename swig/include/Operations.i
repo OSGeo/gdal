@@ -647,9 +647,10 @@ GDALDatasetShadow *ViewshedGenerate( GDALRasterBandShadow *srcBand,
 bool IsLineOfSightVisible(GDALRasterBandShadow *band,
                           int xA, int yA, double zA,
                           int xB, int yB, double zB,
+                          int *xTerrainIntersection, int *yTerrainIntersection,
                           char** options = NULL)
 {
-    return GDALIsLineOfSightVisible(band, xA, yA, zA, xB, yB, zB, options);
+    return GDALIsLineOfSightVisible(band, xA, yA, zA, xB, yB, zB, xTerrainIntersection, yTerrainIntersection, options);
 }
 %}
 %clear GDALRasterBandShadow *band;
