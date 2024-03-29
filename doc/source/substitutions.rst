@@ -1,5 +1,6 @@
 .. |PDAL| replace:: `PDAL <https://pdal.io/>`__
-.. |Proj.4| replace:: `Proj.4 <http://proj4.org>`__
+.. |Proj.4| replace:: `PROJ <https://proj.org>`__
+.. |PROJ| replace:: `PROJ <http://proj.org>`__
 .. |GeoTIFF| replace:: `GeoTIFF <https://trac.osgeo.org/geotiff/>`__
 .. |QGIS| replace:: `QGIS <http://qgis.org>`__
 .. |GDAL| replace:: `GDAL <https://gdal.org/>`__

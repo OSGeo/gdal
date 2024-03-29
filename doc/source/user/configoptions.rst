@@ -493,6 +493,8 @@ General options
       Location of Python shared library file, e.g. ``pythonX.Y[...].so/.dll``.
 
 
+.. _configoptions_vector:
+
 Vector related options
 ^^^^^^^^^^^^^^^^^^^^^^
 
