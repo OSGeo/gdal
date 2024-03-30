@@ -496,6 +496,8 @@ OGRParquetLayer::OGRParquetLayer(
     EstablishFeatureDefn();
     CPLAssert(static_cast<int>(m_aeGeomEncoding.size()) ==
               m_poFeatureDefn->GetGeomFieldCount());
+
+    m_oFeatureIdxRemappingIter = m_asFeatureIdxRemapping.begin();
 }
 
 /************************************************************************/
@@ -1196,6 +1198,13 @@ void OGRParquetLayer::ResetReading()
         m_poRecordBatchReader.reset();
     }
     OGRParquetLayerBase::ResetReading();
+    m_oFeatureIdxRemappingIter = m_asFeatureIdxRemapping.begin();
+    m_nFeatureIdxSelected = 0;
+    if (!m_asFeatureIdxRemapping.empty())
+    {
+        m_nFeatureIdx = m_oFeatureIdxRemappingIter->second;
+        ++m_oFeatureIdxRemappingIter;
+    }
 }
 
 /************************************************************************/
@@ -1303,6 +1312,25 @@ static IsConstraintPossibleRes IsConstraintPossible(int nOperation, T v, T min,
 }
 
 /************************************************************************/
+/*                           IncrFeatureIdx()                           */
+/************************************************************************/
+
+void OGRParquetLayer::IncrFeatureIdx()
+{
+    ++m_nFeatureIdxSelected;
+    ++m_nFeatureIdx;
+    if (m_iFIDArrowColumn < 0 && !m_asFeatureIdxRemapping.empty() &&
+        m_oFeatureIdxRemappingIter != m_asFeatureIdxRemapping.end())
+    {
+        if (m_nFeatureIdxSelected == m_oFeatureIdxRemappingIter->first)
+        {
+            m_nFeatureIdx = m_oFeatureIdxRemappingIter->second;
+            ++m_oFeatureIdxRemappingIter;
+        }
+    }
+}
+
+/************************************************************************/
 /*                           ReadNextBatch()                            */
 /************************************************************************/
 
@@ -1322,7 +1350,7 @@ bool OGRParquetLayer::ReadNextBatch()
 
     if (m_poRecordBatchReader == nullptr)
     {
-        m_anSelectedGroupsStartFeatureIdx.clear();
+        m_asFeatureIdxRemapping.clear();
 
         bool bIterateEverything = false;
         std::vector<int> anSelectedGroups;
@@ -1351,7 +1379,8 @@ bool OGRParquetLayer::ReadNextBatch()
             OGRFieldType eType = OFTMaxType;
             OGRFieldSubType eSubType = OFSTNone;
             std::string osMinTmp, osMaxTmp;
-            GIntBig nFeatureIdx = 0;
+            int64_t nFeatureIdxSelected = 0;
+            int64_t nFeatureIdxTotal = 0;
 
             for (int iRowGroup = 0;
                  iRowGroup < nNumGroups && !bIterateEverything; ++iRowGroup)
@@ -1436,9 +1465,9 @@ bool OGRParquetLayer::ReadNextBatch()
                             if (iOGRField == OGR_FID_INDEX &&
                                 m_iFIDParquetColumn < 0)
                             {
-                                sMin.Integer64 = nFeatureIdx;
+                                sMin.Integer64 = nFeatureIdxTotal;
                                 sMax.Integer64 =
-                                    nFeatureIdx +
+                                    nFeatureIdxTotal +
                                     poRowGroup->metadata()->num_rows() - 1;
                                 eType = OFTInteger64;
                             }
@@ -1595,26 +1624,32 @@ bool OGRParquetLayer::ReadNextBatch()
                 if (bSelectGroup)
                 {
                     // CPLDebug("PARQUET", "Selecting row group %d", iRowGroup);
-                    m_anSelectedGroupsStartFeatureIdx.push_back(nFeatureIdx);
+                    m_asFeatureIdxRemapping.emplace_back(
+                        std::make_pair(nFeatureIdxSelected, nFeatureIdxTotal));
                     anSelectedGroups.push_back(iRowGroup);
+                    nFeatureIdxSelected += poRowGroup->metadata()->num_rows();
                 }
 
-                nFeatureIdx += poRowGroup->metadata()->num_rows();
+                nFeatureIdxTotal += poRowGroup->metadata()->num_rows();
             }
         }
 
         if (bIterateEverything)
         {
-            m_anSelectedGroupsStartFeatureIdx.clear();
+            m_asFeatureIdxRemapping.clear();
+            m_oFeatureIdxRemappingIter = m_asFeatureIdxRemapping.begin();
             if (!CreateRecordBatchReader(0))
                 return false;
         }
         else
         {
+            m_oFeatureIdxRemappingIter = m_asFeatureIdxRemapping.begin();
             if (anSelectedGroups.empty())
             {
                 return false;
             }
+            m_nFeatureIdx = m_oFeatureIdxRemappingIter->second;
+            ++m_oFeatureIdxRemappingIter;
             if (!CreateRecordBatchReader(anSelectedGroups))
             {
                 return false;
@@ -1646,13 +1681,6 @@ bool OGRParquetLayer::ReadNextBatch()
             else
                 m_poBatch.reset();
             return false;
-        }
-        if (!m_anSelectedGroupsStartFeatureIdx.empty())
-        {
-            CPLAssert(
-                m_iRecordBatch <
-                static_cast<int>(m_anSelectedGroupsStartFeatureIdx.size()));
-            m_nFeatureIdx = m_anSelectedGroupsStartFeatureIdx[m_iRecordBatch];
         }
     } while (poNextBatch->num_rows() == 0);
 
