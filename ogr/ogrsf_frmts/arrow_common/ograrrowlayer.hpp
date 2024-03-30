@@ -3574,7 +3574,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                         }
                     }
 
-                    if (nParts != 0 && m_sFilterEnvelope.Intersects(sEnvelope))
+                    if (nParts != 0 && !m_sFilterEnvelope.Intersects(sEnvelope))
                     {
                         break;
                     }
