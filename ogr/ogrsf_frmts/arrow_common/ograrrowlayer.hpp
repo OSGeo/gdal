@@ -3938,11 +3938,11 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
             iCol = m_anMapGeomFieldIndexToArrowColumn[m_iGeomFieldFilter];
         }
 
-        OGREnvelope sEnvelopeSkipToNextFeatureDueToBBOX;
-        const auto SkipToNextFeatureDueToBBOX =
-            [this, &sEnvelopeSkipToNextFeatureDueToBBOX]()
+        if (m_poArrayXMinFloat || m_poArrayXMinDouble)
         {
-            if (!m_poArrayBBOX || !m_poArrayBBOX->IsNull(m_nIdxInBatch))
+            OGREnvelope sEnvelopeSkipToNextFeatureDueToBBOX;
+            const auto IntersectsBBOX =
+                [this, &sEnvelopeSkipToNextFeatureDueToBBOX]()
             {
                 if (m_poArrayXMinFloat &&
                     !m_poArrayXMinFloat->IsNull(m_nIdxInBatch))
@@ -3955,7 +3955,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                         m_poArrayXMaxFloat->Value(m_nIdxInBatch);
                     sEnvelopeSkipToNextFeatureDueToBBOX.MaxY =
                         m_poArrayYMaxFloat->Value(m_nIdxInBatch);
-                    if (!m_sFilterEnvelope.Intersects(
+                    if (m_sFilterEnvelope.Intersects(
                             sEnvelopeSkipToNextFeatureDueToBBOX))
                     {
                         return true;
@@ -3972,46 +3972,60 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                         m_poArrayXMaxDouble->Value(m_nIdxInBatch);
                     sEnvelopeSkipToNextFeatureDueToBBOX.MaxY =
                         m_poArrayYMaxDouble->Value(m_nIdxInBatch);
-                    if (!m_sFilterEnvelope.Intersects(
+                    if (m_sFilterEnvelope.Intersects(
                             sEnvelopeSkipToNextFeatureDueToBBOX))
                     {
                         return true;
                     }
                 }
-            }
-            return false;
-        };
+                return false;
+            };
 
-        if (iCol >= 0 &&
-            m_aeGeomEncoding[m_iGeomFieldFilter] == OGRArrowGeomEncoding::WKB)
+            while (true)
+            {
+                if (!m_poArrayBBOX->IsNull(m_nIdxInBatch) && IntersectsBBOX() &&
+                    (m_asAttributeFilterConstraints.empty() ||
+                     !SkipToNextFeatureDueToAttributeFilter()))
+                {
+                    break;
+                }
+
+                IncrFeatureIdx();
+                m_nIdxInBatch++;
+                if (m_nIdxInBatch == m_poBatch->num_rows())
+                {
+                    m_bEOF = !ReadNextBatch();
+                    if (m_bEOF)
+                        return nullptr;
+                }
+            }
+        }
+        else if (iCol >= 0 && m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                                  OGRArrowGeomEncoding::WKB)
         {
             CPLAssert(m_poArrayWKB || m_poArrayWKBLarge);
             OGREnvelope sEnvelope;
 
             while (true)
             {
-                bool bSkipToNextFeature = false;
+                bool bMatchBBOX = false;
                 if ((m_poArrayWKB && m_poArrayWKB->IsNull(m_nIdxInBatch)) ||
                     (m_poArrayWKBLarge &&
                      m_poArrayWKBLarge->IsNull(m_nIdxInBatch)))
                 {
-                    bSkipToNextFeature = true;
+                    // nothing to do
                 }
                 else
                 {
-                    if (m_poArrayXMinFloat || m_poArrayXMinDouble)
-                    {
-                        bSkipToNextFeature = SkipToNextFeatureDueToBBOX();
-                    }
-                    else if (m_poArrayWKB)
+                    if (m_poArrayWKB)
                     {
                         int out_length = 0;
                         const uint8_t *data =
                             m_poArrayWKB->GetValue(m_nIdxInBatch, &out_length);
                         if (OGRWKBGetBoundingBox(data, out_length, sEnvelope) &&
-                            !m_sFilterEnvelope.Intersects(sEnvelope))
+                            m_sFilterEnvelope.Intersects(sEnvelope))
                         {
-                            bSkipToNextFeature = true;
+                            bMatchBBOX = true;
                         }
                     }
                     else
@@ -4024,18 +4038,14 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                             OGRWKBGetBoundingBox(data,
                                                  static_cast<int>(out_length64),
                                                  sEnvelope) &&
-                            !m_sFilterEnvelope.Intersects(sEnvelope))
+                            m_sFilterEnvelope.Intersects(sEnvelope))
                         {
-                            bSkipToNextFeature = true;
+                            bMatchBBOX = true;
                         }
                     }
                 }
-                if (!bSkipToNextFeature)
-                {
-                    break;
-                }
-                if (!m_asAttributeFilterConstraints.empty() &&
-                    !SkipToNextFeatureDueToAttributeFilter())
+                if (bMatchBBOX && (m_asAttributeFilterConstraints.empty() ||
+                                   !SkipToNextFeatureDueToAttributeFilter()))
                 {
                     break;
                 }
@@ -4061,128 +4071,598 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
             const bool bHasM = CPL_TO_BOOL(OGR_GT_HasM(eGeomType));
             const int nDim = 2 + (bHasZ ? 1 : 0) + (bHasM ? 1 : 0);
 
-        begin_multipolygon:
-            auto array = m_poBatchColumns[iCol].get();
-            CPLAssert(array->type_id() == arrow::Type::LIST);
-            auto listOfPartsArray =
-                static_cast<const arrow::ListArray *>(array);
-            CPLAssert(listOfPartsArray->values()->type_id() ==
-                      arrow::Type::LIST);
-            auto listOfPartsValues = std::static_pointer_cast<arrow::ListArray>(
-                listOfPartsArray->values());
-            CPLAssert(listOfPartsValues->values()->type_id() ==
-                      arrow::Type::LIST);
-            auto listOfRingsValues = std::static_pointer_cast<arrow::ListArray>(
-                listOfPartsValues->values());
-            CPLAssert(listOfRingsValues->values()->type_id() ==
-                      arrow::Type::FIXED_SIZE_LIST);
-            auto listOfPointsValues =
-                std::static_pointer_cast<arrow::FixedSizeListArray>(
-                    listOfRingsValues->values());
-            CPLAssert(listOfPointsValues->values()->type_id() ==
-                      arrow::Type::DOUBLE);
-            auto pointValues = std::static_pointer_cast<arrow::DoubleArray>(
-                listOfPointsValues->values());
-
-            while (true)
+            bool bReturnFeature;
+            do
             {
-                bool bSkipToNextFeature = false;
-                if (m_poArrayXMinFloat || m_poArrayXMinDouble)
+                bReturnFeature = false;
+                auto array = m_poBatchColumns[iCol].get();
+                CPLAssert(array->type_id() == arrow::Type::LIST);
+                auto listOfPartsArray =
+                    static_cast<const arrow::ListArray *>(array);
+                CPLAssert(listOfPartsArray->values()->type_id() ==
+                          arrow::Type::LIST);
+                auto listOfPartsValues =
+                    std::static_pointer_cast<arrow::ListArray>(
+                        listOfPartsArray->values());
+                CPLAssert(listOfPartsValues->values()->type_id() ==
+                          arrow::Type::LIST);
+                auto listOfRingsValues =
+                    std::static_pointer_cast<arrow::ListArray>(
+                        listOfPartsValues->values());
+                CPLAssert(listOfRingsValues->values()->type_id() ==
+                          arrow::Type::FIXED_SIZE_LIST);
+                auto listOfPointsValues =
+                    std::static_pointer_cast<arrow::FixedSizeListArray>(
+                        listOfRingsValues->values());
+                CPLAssert(listOfPointsValues->values()->type_id() ==
+                          arrow::Type::DOUBLE);
+                auto pointValues = std::static_pointer_cast<arrow::DoubleArray>(
+                    listOfPointsValues->values());
+
+                while (true)
                 {
-                    bSkipToNextFeature = SkipToNextFeatureDueToBBOX();
-                }
-                else if (!listOfPartsArray->IsNull(m_nIdxInBatch))
-                {
-                    OGREnvelope sEnvelope;
-                    const auto nParts =
-                        listOfPartsArray->value_length(m_nIdxInBatch);
-                    const auto nPartOffset =
-                        listOfPartsArray->value_offset(m_nIdxInBatch);
-                    for (auto j = decltype(nParts){0}; j < nParts; j++)
+                    bool bMatchBBOX = false;
+                    if (!listOfPartsArray->IsNull(m_nIdxInBatch))
                     {
+                        OGREnvelope sEnvelope;
+                        const auto nParts =
+                            listOfPartsArray->value_length(m_nIdxInBatch);
+                        const auto nPartOffset =
+                            listOfPartsArray->value_offset(m_nIdxInBatch);
+                        for (auto j = decltype(nParts){0}; j < nParts; j++)
+                        {
+                            const auto nRings = listOfPartsValues->value_length(
+                                nPartOffset + j);
+                            const auto nRingOffset =
+                                listOfPartsValues->value_offset(nPartOffset +
+                                                                j);
+                            if (nRings >= 1)
+                            {
+                                const auto nPoints =
+                                    listOfRingsValues->value_length(
+                                        nRingOffset);
+                                const auto nPointOffset =
+                                    listOfRingsValues->value_offset(
+                                        nRingOffset) *
+                                    nDim;
+                                const double *padfRawValue =
+                                    pointValues->raw_values() + nPointOffset;
+                                for (auto l = decltype(nPoints){0}; l < nPoints;
+                                     ++l)
+                                {
+                                    sEnvelope.Merge(padfRawValue[nDim * l],
+                                                    padfRawValue[nDim * l + 1]);
+                                }
+                                // for bounding box, only the first ring matters
+                            }
+                        }
+
+                        if (nParts != 0 &&
+                            m_sFilterEnvelope.Intersects(sEnvelope))
+                        {
+                            bMatchBBOX = true;
+                        }
+                    }
+                    if (bMatchBBOX &&
+                        (m_asAttributeFilterConstraints.empty() ||
+                         !SkipToNextFeatureDueToAttributeFilter()))
+                    {
+                        bReturnFeature = true;
+                        break;
+                    }
+
+                    IncrFeatureIdx();
+                    m_nIdxInBatch++;
+                    if (m_nIdxInBatch == m_poBatch->num_rows())
+                    {
+                        m_bEOF = !ReadNextBatch();
+                        if (m_bEOF)
+                            return nullptr;
+                        break;
+                    }
+                }
+            } while (!bReturnFeature);
+        }
+        else if (iCol >= 0 && m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                                  OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT)
+        {
+            bool bReturnFeature;
+            do
+            {
+                bReturnFeature = false;
+                auto array = m_poBatchColumns[iCol].get();
+                CPLAssert(array->type_id() == arrow::Type::STRUCT);
+                auto pointValues =
+                    static_cast<const arrow::StructArray *>(array);
+                const auto &fields = pointValues->fields();
+                const auto &fieldX = fields[0];
+                CPLAssert(fieldX->type_id() == arrow::Type::DOUBLE);
+                const auto fieldXDouble =
+                    static_cast<arrow::DoubleArray *>(fieldX.get());
+                const auto &fieldY = fields[1];
+                CPLAssert(fieldY->type_id() == arrow::Type::DOUBLE);
+                const auto fieldYDouble =
+                    static_cast<arrow::DoubleArray *>(fieldY.get());
+
+                while (true)
+                {
+                    bool bMatchBBOX = false;
+                    if (!array->IsNull(m_nIdxInBatch))
+                    {
+                        const double dfX = fieldXDouble->Value(m_nIdxInBatch);
+                        const double dfY = fieldYDouble->Value(m_nIdxInBatch);
+                        if (dfX >= m_sFilterEnvelope.MinX &&
+                            dfY >= m_sFilterEnvelope.MinY &&
+                            dfX <= m_sFilterEnvelope.MaxX &&
+                            dfY <= m_sFilterEnvelope.MaxY)
+                        {
+                            bMatchBBOX = true;
+                        }
+                    }
+                    if (bMatchBBOX &&
+                        (m_asAttributeFilterConstraints.empty() ||
+                         !SkipToNextFeatureDueToAttributeFilter()))
+                    {
+                        bReturnFeature = true;
+                        break;
+                    }
+
+                    IncrFeatureIdx();
+                    m_nIdxInBatch++;
+                    if (m_nIdxInBatch == m_poBatch->num_rows())
+                    {
+                        m_bEOF = !ReadNextBatch();
+                        if (m_bEOF)
+                            return nullptr;
+                        break;
+                    }
+                }
+            } while (!bReturnFeature);
+        }
+        else if (iCol >= 0 &&
+                 m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                     OGRArrowGeomEncoding::GEOARROW_STRUCT_LINESTRING)
+        {
+            bool bReturnFeature;
+            do
+            {
+                bReturnFeature = false;
+                auto array = m_poBatchColumns[iCol].get();
+                CPLAssert(array->type_id() == arrow::Type::LIST);
+                const auto listArray =
+                    static_cast<const arrow::ListArray *>(array);
+                CPLAssert(listArray->values()->type_id() ==
+                          arrow::Type::STRUCT);
+                auto pointValues = std::static_pointer_cast<arrow::StructArray>(
+                    listArray->values());
+                const auto &fields = pointValues->fields();
+                const auto &fieldX = fields[0];
+                CPLAssert(fieldX->type_id() == arrow::Type::DOUBLE);
+                const auto fieldXDouble =
+                    static_cast<arrow::DoubleArray *>(fieldX.get());
+                const auto &fieldY = fields[1];
+                CPLAssert(fieldY->type_id() == arrow::Type::DOUBLE);
+                const auto fieldYDouble =
+                    static_cast<arrow::DoubleArray *>(fieldY.get());
+
+                while (true)
+                {
+                    bool bMatchBBOX = false;
+                    if (!listArray->IsNull(m_nIdxInBatch))
+                    {
+                        OGREnvelope sEnvelope;
+                        const auto nPoints =
+                            listArray->value_length(m_nIdxInBatch);
+                        const auto nPointOffset =
+                            listArray->value_offset(m_nIdxInBatch);
+                        if (nPoints > 0)
+                        {
+                            const double *padfRawXValue =
+                                fieldXDouble->raw_values() + nPointOffset;
+                            const double *padfRawYValue =
+                                fieldYDouble->raw_values() + nPointOffset;
+                            for (auto l = decltype(nPoints){0}; l < nPoints;
+                                 ++l)
+                            {
+                                sEnvelope.Merge(padfRawXValue[l],
+                                                padfRawYValue[l]);
+                            }
+                            if (m_sFilterEnvelope.Intersects(sEnvelope))
+                            {
+                                bMatchBBOX = true;
+                            }
+                        }
+                    }
+                    if (bMatchBBOX &&
+                        (m_asAttributeFilterConstraints.empty() ||
+                         !SkipToNextFeatureDueToAttributeFilter()))
+                    {
+                        bReturnFeature = true;
+                        break;
+                    }
+
+                    IncrFeatureIdx();
+                    m_nIdxInBatch++;
+                    if (m_nIdxInBatch == m_poBatch->num_rows())
+                    {
+                        m_bEOF = !ReadNextBatch();
+                        if (m_bEOF)
+                            return nullptr;
+                        break;
+                    }
+                }
+            } while (!bReturnFeature);
+        }
+        else if (iCol >= 0 && m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                                  OGRArrowGeomEncoding::GEOARROW_STRUCT_POLYGON)
+        {
+            bool bReturnFeature;
+            do
+            {
+                bReturnFeature = false;
+                auto array = m_poBatchColumns[iCol].get();
+                CPLAssert(array->type_id() == arrow::Type::LIST);
+                const auto listOfRingsArray =
+                    static_cast<const arrow::ListArray *>(array);
+                CPLAssert(listOfRingsArray->values()->type_id() ==
+                          arrow::Type::LIST);
+                const auto listOfRingsValues =
+                    std::static_pointer_cast<arrow::ListArray>(
+                        listOfRingsArray->values());
+                CPLAssert(listOfRingsValues->values()->type_id() ==
+                          arrow::Type::STRUCT);
+                auto pointValues = std::static_pointer_cast<arrow::StructArray>(
+                    listOfRingsValues->values());
+                const auto &fields = pointValues->fields();
+                const auto &fieldX = fields[0];
+                CPLAssert(fieldX->type_id() == arrow::Type::DOUBLE);
+                const auto fieldXDouble =
+                    static_cast<arrow::DoubleArray *>(fieldX.get());
+                const auto &fieldY = fields[1];
+                CPLAssert(fieldY->type_id() == arrow::Type::DOUBLE);
+                const auto fieldYDouble =
+                    static_cast<arrow::DoubleArray *>(fieldY.get());
+
+                while (true)
+                {
+                    bool bMatchBBOX = false;
+                    if (!listOfRingsArray->IsNull(m_nIdxInBatch))
+                    {
+                        OGREnvelope sEnvelope;
                         const auto nRings =
-                            listOfPartsValues->value_length(nPartOffset + j);
+                            listOfRingsArray->value_length(m_nIdxInBatch);
                         const auto nRingOffset =
-                            listOfPartsValues->value_offset(nPartOffset + j);
+                            listOfRingsArray->value_offset(m_nIdxInBatch);
                         if (nRings >= 1)
                         {
                             const auto nPoints =
                                 listOfRingsValues->value_length(nRingOffset);
                             const auto nPointOffset =
-                                listOfRingsValues->value_offset(nRingOffset) *
-                                nDim;
-                            const double *padfRawValue =
-                                pointValues->raw_values() + nPointOffset;
+                                listOfRingsValues->value_offset(nRingOffset);
+                            const double *padfRawXValue =
+                                fieldXDouble->raw_values() + nPointOffset;
+                            const double *padfRawYValue =
+                                fieldYDouble->raw_values() + nPointOffset;
                             for (auto l = decltype(nPoints){0}; l < nPoints;
                                  ++l)
                             {
-                                sEnvelope.Merge(padfRawValue[nDim * l],
-                                                padfRawValue[nDim * l + 1]);
+                                sEnvelope.Merge(padfRawXValue[l],
+                                                padfRawYValue[l]);
                             }
                             // for bounding box, only the first ring matters
+
+                            if (m_sFilterEnvelope.Intersects(sEnvelope))
+                            {
+                                bMatchBBOX = true;
+                            }
                         }
                     }
-
-                    if (nParts != 0 && !m_sFilterEnvelope.Intersects(sEnvelope))
+                    if (bMatchBBOX &&
+                        (m_asAttributeFilterConstraints.empty() ||
+                         !SkipToNextFeatureDueToAttributeFilter()))
                     {
-                        bSkipToNextFeature = true;
+                        bReturnFeature = true;
+                        break;
+                    }
+
+                    IncrFeatureIdx();
+                    m_nIdxInBatch++;
+                    if (m_nIdxInBatch == m_poBatch->num_rows())
+                    {
+                        m_bEOF = !ReadNextBatch();
+                        if (m_bEOF)
+                            return nullptr;
+                        break;
                     }
                 }
-                if (!bSkipToNextFeature)
-                {
-                    break;
-                }
-                if (!m_asAttributeFilterConstraints.empty() &&
-                    !SkipToNextFeatureDueToAttributeFilter())
-                {
-                    break;
-                }
+            } while (!bReturnFeature);
+        }
+        else if (iCol >= 0 &&
+                 m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                     OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOINT)
+        {
+            bool bReturnFeature;
+            do
+            {
+                bReturnFeature = false;
+                auto array = m_poBatchColumns[iCol].get();
+                CPLAssert(array->type_id() == arrow::Type::LIST);
+                const auto listArray =
+                    static_cast<const arrow::ListArray *>(array);
+                CPLAssert(listArray->values()->type_id() ==
+                          arrow::Type::STRUCT);
+                auto pointValues = std::static_pointer_cast<arrow::StructArray>(
+                    listArray->values());
+                const auto &fields = pointValues->fields();
+                const auto &fieldX = fields[0];
+                CPLAssert(fieldX->type_id() == arrow::Type::DOUBLE);
+                const auto fieldXDouble =
+                    static_cast<arrow::DoubleArray *>(fieldX.get());
+                const auto &fieldY = fields[1];
+                CPLAssert(fieldY->type_id() == arrow::Type::DOUBLE);
+                const auto fieldYDouble =
+                    static_cast<arrow::DoubleArray *>(fieldY.get());
 
-                IncrFeatureIdx();
-                m_nIdxInBatch++;
-                if (m_nIdxInBatch == m_poBatch->num_rows())
+                while (true)
                 {
-                    m_bEOF = !ReadNextBatch();
-                    if (m_bEOF)
-                        return nullptr;
-                    goto begin_multipolygon;
+                    bool bMatchBBOX = false;
+                    if (!listArray->IsNull(m_nIdxInBatch))
+                    {
+                        const auto nPoints =
+                            listArray->value_length(m_nIdxInBatch);
+                        const auto nPointOffset =
+                            listArray->value_offset(m_nIdxInBatch);
+                        if (nPoints > 0)
+                        {
+                            const double *padfRawXValue =
+                                fieldXDouble->raw_values() + nPointOffset;
+                            const double *padfRawYValue =
+                                fieldYDouble->raw_values() + nPointOffset;
+                            for (auto l = decltype(nPoints){0}; l < nPoints;
+                                 ++l)
+                            {
+                                if (padfRawXValue[l] >=
+                                        m_sFilterEnvelope.MinX &&
+                                    padfRawYValue[l] >=
+                                        m_sFilterEnvelope.MinY &&
+                                    padfRawXValue[l] <=
+                                        m_sFilterEnvelope.MaxX &&
+                                    padfRawYValue[l] <= m_sFilterEnvelope.MaxY)
+                                {
+                                    bMatchBBOX = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (bMatchBBOX &&
+                        (m_asAttributeFilterConstraints.empty() ||
+                         !SkipToNextFeatureDueToAttributeFilter()))
+                    {
+                        bReturnFeature = true;
+                        break;
+                    }
+
+                    IncrFeatureIdx();
+                    m_nIdxInBatch++;
+                    if (m_nIdxInBatch == m_poBatch->num_rows())
+                    {
+                        m_bEOF = !ReadNextBatch();
+                        if (m_bEOF)
+                            return nullptr;
+                        break;
+                    }
                 }
-            }
+            } while (!bReturnFeature);
+        }
+        else if (iCol >= 0 &&
+                 m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                     OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTILINESTRING)
+        {
+            bool bReturnFeature;
+            do
+            {
+                bReturnFeature = false;
+                auto array = m_poBatchColumns[iCol].get();
+                CPLAssert(array->type_id() == arrow::Type::LIST);
+                auto listOfPartsArray =
+                    static_cast<const arrow::ListArray *>(array);
+                CPLAssert(listOfPartsArray->values()->type_id() ==
+                          arrow::Type::LIST);
+                auto listOfPartsValues =
+                    std::static_pointer_cast<arrow::ListArray>(
+                        listOfPartsArray->values());
+                CPLAssert(listOfPartsValues->values()->type_id() ==
+                          arrow::Type::STRUCT);
+                auto pointValues = std::static_pointer_cast<arrow::StructArray>(
+                    listOfPartsValues->values());
+                const auto &fields = pointValues->fields();
+                const auto &fieldX = fields[0];
+                CPLAssert(fieldX->type_id() == arrow::Type::DOUBLE);
+                const auto fieldXDouble =
+                    static_cast<arrow::DoubleArray *>(fieldX.get());
+                const auto &fieldY = fields[1];
+                CPLAssert(fieldY->type_id() == arrow::Type::DOUBLE);
+                const auto fieldYDouble =
+                    static_cast<arrow::DoubleArray *>(fieldY.get());
+
+                while (true)
+                {
+                    bool bMatchBBOX = false;
+                    if (!listOfPartsArray->IsNull(m_nIdxInBatch))
+                    {
+                        const auto nParts =
+                            listOfPartsArray->value_length(m_nIdxInBatch);
+                        const auto nPartOffset =
+                            listOfPartsArray->value_offset(m_nIdxInBatch);
+                        for (auto j = decltype(nParts){0};
+                             j < nParts && !bMatchBBOX; j++)
+                        {
+                            OGREnvelope sEnvelope;
+                            const auto nPoints =
+                                listOfPartsValues->value_length(nPartOffset +
+                                                                j);
+                            const auto nPointOffset =
+                                listOfPartsValues->value_offset(nPartOffset +
+                                                                j);
+                            const double *padfRawXValue =
+                                fieldXDouble->raw_values() + nPointOffset;
+                            const double *padfRawYValue =
+                                fieldYDouble->raw_values() + nPointOffset;
+                            for (auto l = decltype(nPoints){0}; l < nPoints;
+                                 ++l)
+                            {
+                                sEnvelope.Merge(padfRawXValue[l],
+                                                padfRawYValue[l]);
+                            }
+
+                            if (m_sFilterEnvelope.Intersects(sEnvelope))
+                            {
+                                bMatchBBOX = true;
+                            }
+                        }
+                    }
+                    if (bMatchBBOX &&
+                        (m_asAttributeFilterConstraints.empty() ||
+                         !SkipToNextFeatureDueToAttributeFilter()))
+                    {
+                        bReturnFeature = true;
+                        break;
+                    }
+
+                    IncrFeatureIdx();
+                    m_nIdxInBatch++;
+                    if (m_nIdxInBatch == m_poBatch->num_rows())
+                    {
+                        m_bEOF = !ReadNextBatch();
+                        if (m_bEOF)
+                            return nullptr;
+                        break;
+                    }
+                }
+            } while (!bReturnFeature);
+        }
+        else if (iCol >= 0 &&
+                 m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                     OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOLYGON)
+        {
+            bool bReturnFeature;
+            do
+            {
+                bReturnFeature = false;
+                auto array = m_poBatchColumns[iCol].get();
+                CPLAssert(array->type_id() == arrow::Type::LIST);
+                auto listOfPartsArray =
+                    static_cast<const arrow::ListArray *>(array);
+                CPLAssert(listOfPartsArray->values()->type_id() ==
+                          arrow::Type::LIST);
+                auto listOfPartsValues =
+                    std::static_pointer_cast<arrow::ListArray>(
+                        listOfPartsArray->values());
+                CPLAssert(listOfPartsValues->values()->type_id() ==
+                          arrow::Type::LIST);
+                auto listOfRingsValues =
+                    std::static_pointer_cast<arrow::ListArray>(
+                        listOfPartsValues->values());
+                CPLAssert(listOfRingsValues->values()->type_id() ==
+                          arrow::Type::STRUCT);
+                auto pointValues = std::static_pointer_cast<arrow::StructArray>(
+                    listOfRingsValues->values());
+                const auto &fields = pointValues->fields();
+                const auto &fieldX = fields[0];
+                CPLAssert(fieldX->type_id() == arrow::Type::DOUBLE);
+                const auto fieldXDouble =
+                    static_cast<arrow::DoubleArray *>(fieldX.get());
+                const auto &fieldY = fields[1];
+                CPLAssert(fieldY->type_id() == arrow::Type::DOUBLE);
+                const auto fieldYDouble =
+                    static_cast<arrow::DoubleArray *>(fieldY.get());
+
+                while (true)
+                {
+                    bool bMatchBBOX = false;
+                    if (!listOfPartsArray->IsNull(m_nIdxInBatch))
+                    {
+                        const auto nParts =
+                            listOfPartsArray->value_length(m_nIdxInBatch);
+                        const auto nPartOffset =
+                            listOfPartsArray->value_offset(m_nIdxInBatch);
+                        for (auto j = decltype(nParts){0};
+                             j < nParts && !bMatchBBOX; j++)
+                        {
+                            OGREnvelope sEnvelope;
+                            const auto nRings = listOfPartsValues->value_length(
+                                nPartOffset + j);
+                            const auto nRingOffset =
+                                listOfPartsValues->value_offset(nPartOffset +
+                                                                j);
+                            if (nRings >= 1)
+                            {
+                                const auto nPoints =
+                                    listOfRingsValues->value_length(
+                                        nRingOffset);
+                                const auto nPointOffset =
+                                    listOfRingsValues->value_offset(
+                                        nRingOffset);
+                                const double *padfRawXValue =
+                                    fieldXDouble->raw_values() + nPointOffset;
+                                const double *padfRawYValue =
+                                    fieldYDouble->raw_values() + nPointOffset;
+                                for (auto l = decltype(nPoints){0}; l < nPoints;
+                                     ++l)
+                                {
+                                    sEnvelope.Merge(padfRawXValue[l],
+                                                    padfRawYValue[l]);
+                                }
+
+                                if (m_sFilterEnvelope.Intersects(sEnvelope))
+                                {
+                                    bMatchBBOX = true;
+                                }
+                                // for bounding box, only the first ring matters
+                            }
+                        }
+                    }
+                    if (bMatchBBOX &&
+                        (m_asAttributeFilterConstraints.empty() ||
+                         !SkipToNextFeatureDueToAttributeFilter()))
+                    {
+                        bReturnFeature = true;
+                        break;
+                    }
+
+                    IncrFeatureIdx();
+                    m_nIdxInBatch++;
+                    if (m_nIdxInBatch == m_poBatch->num_rows())
+                    {
+                        m_bEOF = !ReadNextBatch();
+                        if (m_bEOF)
+                            return nullptr;
+                        break;
+                    }
+                }
+            } while (!bReturnFeature);
         }
         else if (iCol >= 0)
         {
             auto array = m_poBatchColumns[iCol].get();
             while (true)
             {
-                bool bSkipToNextFeature = false;
-                if (m_poArrayXMinFloat || m_poArrayXMinDouble)
+                bool bMatchBBOX = false;
+
+                auto poGeometry = std::unique_ptr<OGRGeometry>(
+                    ReadGeometry(m_iGeomFieldFilter, array, m_nIdxInBatch));
+                if (poGeometry && !poGeometry->IsEmpty())
                 {
-                    bSkipToNextFeature = SkipToNextFeatureDueToBBOX();
-                }
-                else
-                {
-                    auto poGeometry = std::unique_ptr<OGRGeometry>(
-                        ReadGeometry(m_iGeomFieldFilter, array, m_nIdxInBatch));
-                    if (poGeometry == nullptr || poGeometry->IsEmpty())
+                    OGREnvelope sEnvelope;
+                    poGeometry->getEnvelope(&sEnvelope);
+                    if (m_sFilterEnvelope.Intersects(sEnvelope))
                     {
-                        bSkipToNextFeature = true;
-                    }
-                    else
-                    {
-                        OGREnvelope sEnvelope;
-                        poGeometry->getEnvelope(&sEnvelope);
-                        if (!m_sFilterEnvelope.Intersects(sEnvelope))
-                        {
-                            bSkipToNextFeature = true;
-                        }
+                        bMatchBBOX = true;
                     }
                 }
-                if (!bSkipToNextFeature)
-                {
-                    break;
-                }
-                if (!m_asAttributeFilterConstraints.empty() &&
-                    !SkipToNextFeatureDueToAttributeFilter())
+                if (bMatchBBOX && (m_asAttributeFilterConstraints.empty() ||
+                                   !SkipToNextFeatureDueToAttributeFilter()))
                 {
                     break;
                 }

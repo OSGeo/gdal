@@ -3511,8 +3511,11 @@ def test_ogr_parquet_sort_by_bbox(tmp_vsimem):
     ],
 )
 @pytest.mark.parametrize("check_with_pyarrow", [True, False])
+@pytest.mark.parametrize("covering_bbox", [True, False])
 @gdaltest.enable_exceptions()
-def test_ogr_parquet_geoarrow(tmp_vsimem, tmp_path, wkt, check_with_pyarrow):
+def test_ogr_parquet_geoarrow(
+    tmp_vsimem, tmp_path, wkt, check_with_pyarrow, covering_bbox
+):
 
     geom = ogr.CreateGeometryFromWkt(wkt)
 
@@ -3525,7 +3528,12 @@ def test_ogr_parquet_geoarrow(tmp_vsimem, tmp_path, wkt, check_with_pyarrow):
     ds = ogr.GetDriverByName("Parquet").CreateDataSource(filename)
 
     lyr = ds.CreateLayer(
-        "test", geom_type=geom.GetGeometryType(), options=["GEOMETRY_ENCODING=GEOARROW"]
+        "test",
+        geom_type=geom.GetGeometryType(),
+        options=[
+            "GEOMETRY_ENCODING=GEOARROW",
+            "WRITE_COVERING_BBOX=" + ("YES" if covering_bbox else "NO"),
+        ],
     )
     lyr.CreateField(ogr.FieldDefn("foo"))
 
@@ -3598,3 +3606,29 @@ def test_ogr_parquet_geoarrow(tmp_vsimem, tmp_path, wkt, check_with_pyarrow):
     lyr = ds.GetLayer(0)
     lyr.SetIgnoredFields(["foo"])
     check(lyr)
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    minx, maxx, miny, maxy = geom.GetEnvelope()
+
+    lyr.SetSpatialFilter(geom)
+    assert lyr.GetFeatureCount() == (3 if geom.GetGeometryCount() > 1 else 2)
+
+    lyr.SetSpatialFilterRect(maxx + 1, miny, maxx + 2, maxy)
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetSpatialFilterRect(minx, maxy + 1, maxx, maxy + 2)
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetSpatialFilterRect(minx - 2, miny, minx - 1, maxy)
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetSpatialFilterRect(minx, miny - 2, maxx, miny - 1)
+    assert lyr.GetFeatureCount() == 0
+    if (
+        minx != miny
+        and maxx != maxy
+        and ogr.GT_Flatten(geom.GetGeometryType()) != ogr.wkbMultiPoint
+    ):
+        lyr.SetSpatialFilterRect(minx + 0.1, miny + 0.1, maxx - 0.1, maxy - 0.1)
+        assert lyr.GetFeatureCount() != 0

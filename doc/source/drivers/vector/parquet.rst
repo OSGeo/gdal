@@ -128,7 +128,10 @@ Layer creation options
      :since: 3.9
 
      Whether to write xmin/ymin/xmax/ymax columns with the bounding box of
-     geometries.
+     geometries. Writing the geometry bounding box may help applications to
+     perform faster spatial filtering. Writing a geometry bounding box is less
+     necessary for the GeoArrow geometry encoding than for the default WKB, as
+     implementations may be able to directly use the geometry columns.
 
 - .. lco:: SORT_BY_BBOX
      :choices: YES, NO

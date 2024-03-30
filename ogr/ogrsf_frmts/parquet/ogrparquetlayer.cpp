@@ -1362,8 +1362,29 @@ bool OGRParquetLayer::ReadNextBatch()
                  m_oMapGeomFieldIndexToGeomColBBOXParquet.end() &&
              CPLTestBool(CPLGetConfigOption(
                  ("OGR_" + GetDriverUCName() + "_USE_BBOX").c_str(), "YES")));
+        const bool bIsGeoArrowStruct =
+            (m_iGeomFieldFilter >= 0 &&
+             m_iGeomFieldFilter < static_cast<int>(m_aeGeomEncoding.size()) &&
+             m_iGeomFieldFilter <
+                 static_cast<int>(
+                     m_anMapGeomFieldIndexToParquetColumns.size()) &&
+             m_anMapGeomFieldIndexToParquetColumns[m_iGeomFieldFilter].size() >=
+                 2 &&
+             (m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                  OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT ||
+              m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                  OGRArrowGeomEncoding::GEOARROW_STRUCT_LINESTRING ||
+              m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                  OGRArrowGeomEncoding::GEOARROW_STRUCT_POLYGON ||
+              m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                  OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOINT ||
+              m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                  OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTILINESTRING ||
+              m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                  OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOLYGON));
 
-        if (m_asAttributeFilterConstraints.empty() && !bUSEBBOXFields)
+        if (m_asAttributeFilterConstraints.empty() && !bUSEBBOXFields &&
+            !(bIsGeoArrowStruct && m_poFilterGeom))
         {
             bIterateEverything = true;
         }
@@ -1382,6 +1403,47 @@ bool OGRParquetLayer::ReadNextBatch()
             int64_t nFeatureIdxSelected = 0;
             int64_t nFeatureIdxTotal = 0;
 
+            int iXMinField = -1;
+            int iYMinField = -1;
+            int iXMaxField = -1;
+            int iYMaxField = -1;
+
+            if (bIsGeoArrowStruct)
+            {
+                const auto metadata =
+                    m_poArrowReader->parquet_reader()->metadata();
+                const auto poParquetSchema = metadata->schema();
+                for (int iParquetCol :
+                     m_anMapGeomFieldIndexToParquetColumns[m_iGeomFieldFilter])
+                {
+                    const auto parquetColumn =
+                        poParquetSchema->Column(iParquetCol);
+                    const auto parquetColumnName =
+                        parquetColumn->path()->ToDotString();
+                    if (parquetColumnName.size() > 2 &&
+                        parquetColumnName.find(".x") ==
+                            parquetColumnName.size() - 2)
+                    {
+                        iXMinField = iParquetCol;
+                        iXMaxField = iParquetCol;
+                    }
+                    else if (parquetColumnName.size() > 2 &&
+                             parquetColumnName.find(".y") ==
+                                 parquetColumnName.size() - 2)
+                    {
+                        iYMinField = iParquetCol;
+                        iYMaxField = iParquetCol;
+                    }
+                }
+            }
+            else if (bUSEBBOXFields)
+            {
+                iXMinField = oIterToGeomColBBOX->second.iParquetXMin;
+                iYMinField = oIterToGeomColBBOX->second.iParquetYMin;
+                iXMaxField = oIterToGeomColBBOX->second.iParquetXMax;
+                iYMaxField = oIterToGeomColBBOX->second.iParquetYMax;
+            }
+
             for (int iRowGroup = 0;
                  iRowGroup < nNumGroups && !bIterateEverything; ++iRowGroup)
             {
@@ -1389,12 +1451,13 @@ bool OGRParquetLayer::ReadNextBatch()
                 auto poRowGroup =
                     GetReader()->parquet_reader()->RowGroup(iRowGroup);
 
-                if (bUSEBBOXFields)
+                if (iXMinField >= 0 && iYMinField >= 0 && iXMaxField >= 0 &&
+                    iYMaxField >= 0)
                 {
-                    if (GetMinMaxForParquetCol(
-                            iRowGroup, oIterToGeomColBBOX->second.iParquetXMin,
-                            nullptr, true, sMin, bFoundMin, false, sMax,
-                            bFoundMax, eType, eSubType, osMinTmp, osMaxTmp) &&
+                    if (GetMinMaxForParquetCol(iRowGroup, iXMinField, nullptr,
+                                               true, sMin, bFoundMin, false,
+                                               sMax, bFoundMax, eType, eSubType,
+                                               osMinTmp, osMaxTmp) &&
                         bFoundMin && eType == OFTReal)
                     {
                         const double dfGroupMinX = sMin.Real;
@@ -1403,11 +1466,9 @@ bool OGRParquetLayer::ReadNextBatch()
                             bSelectGroup = false;
                         }
                         else if (GetMinMaxForParquetCol(
-                                     iRowGroup,
-                                     oIterToGeomColBBOX->second.iParquetYMin,
-                                     nullptr, true, sMin, bFoundMin, false,
-                                     sMax, bFoundMax, eType, eSubType, osMinTmp,
-                                     osMaxTmp) &&
+                                     iRowGroup, iYMinField, nullptr, true, sMin,
+                                     bFoundMin, false, sMax, bFoundMax, eType,
+                                     eSubType, osMinTmp, osMaxTmp) &&
                                  bFoundMin && eType == OFTReal)
                         {
                             const double dfGroupMinY = sMin.Real;
@@ -1416,12 +1477,9 @@ bool OGRParquetLayer::ReadNextBatch()
                                 bSelectGroup = false;
                             }
                             else if (GetMinMaxForParquetCol(
-                                         iRowGroup,
-                                         oIterToGeomColBBOX->second
-                                             .iParquetXMax,
-                                         nullptr, false, sMin, bFoundMin, true,
-                                         sMax, bFoundMax, eType, eSubType,
-                                         osMinTmp, osMaxTmp) &&
+                                         iRowGroup, iXMaxField, nullptr, false,
+                                         sMin, bFoundMin, true, sMax, bFoundMax,
+                                         eType, eSubType, osMinTmp, osMaxTmp) &&
                                      bFoundMax && eType == OFTReal)
                             {
                                 const double dfGroupMaxX = sMax.Real;
@@ -1430,12 +1488,10 @@ bool OGRParquetLayer::ReadNextBatch()
                                     bSelectGroup = false;
                                 }
                                 else if (GetMinMaxForParquetCol(
-                                             iRowGroup,
-                                             oIterToGeomColBBOX->second
-                                                 .iParquetYMax,
-                                             nullptr, false, sMin, bFoundMin,
-                                             true, sMax, bFoundMax, eType,
-                                             eSubType, osMinTmp, osMaxTmp) &&
+                                             iRowGroup, iYMaxField, nullptr,
+                                             false, sMin, bFoundMin, true, sMax,
+                                             bFoundMax, eType, eSubType,
+                                             osMinTmp, osMaxTmp) &&
                                          bFoundMax && eType == OFTReal)
                                 {
                                     const double dfGroupMaxY = sMax.Real;
@@ -1648,6 +1704,9 @@ bool OGRParquetLayer::ReadNextBatch()
             {
                 return false;
             }
+            CPLDebug("PARQUET", "%d/%d row groups selected",
+                     int(anSelectedGroups.size()),
+                     m_poArrowReader->num_row_groups());
             m_nFeatureIdx = m_oFeatureIdxRemappingIter->second;
             ++m_oFeatureIdxRemappingIter;
             if (!CreateRecordBatchReader(anSelectedGroups))
@@ -1881,11 +1940,32 @@ OGRErr OGRParquetLayer::SetIgnoredFields(const char **papszFields)
                         oIterParquet !=
                             m_oMapGeomFieldIndexToGeomColBBOXParquet.end())
                     {
-                        oIter->second.iArrayIdx = nBatchColumns++;
-                        m_anRequestedParquetColumns.insert(
-                            m_anRequestedParquetColumns.end(),
-                            oIterParquet->second.anParquetCols.begin(),
-                            oIterParquet->second.anParquetCols.end());
+                        const bool bIsGeoArrowStruct =
+                            (m_aeGeomEncoding[i] ==
+                                 OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT ||
+                             m_aeGeomEncoding[i] ==
+                                 OGRArrowGeomEncoding::
+                                     GEOARROW_STRUCT_LINESTRING ||
+                             m_aeGeomEncoding[i] ==
+                                 OGRArrowGeomEncoding::
+                                     GEOARROW_STRUCT_POLYGON ||
+                             m_aeGeomEncoding[i] ==
+                                 OGRArrowGeomEncoding::
+                                     GEOARROW_STRUCT_MULTIPOINT ||
+                             m_aeGeomEncoding[i] ==
+                                 OGRArrowGeomEncoding::
+                                     GEOARROW_STRUCT_MULTILINESTRING ||
+                             m_aeGeomEncoding[i] ==
+                                 OGRArrowGeomEncoding::
+                                     GEOARROW_STRUCT_MULTIPOLYGON);
+                        if (!bIsGeoArrowStruct)
+                        {
+                            oIter->second.iArrayIdx = nBatchColumns++;
+                            m_anRequestedParquetColumns.insert(
+                                m_anRequestedParquetColumns.end(),
+                                oIterParquet->second.anParquetCols.begin(),
+                                oIterParquet->second.anParquetCols.end());
+                        }
                     }
                 }
                 else
