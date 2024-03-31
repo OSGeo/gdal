@@ -3497,7 +3497,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                     break;
                 }
 
-                m_nFeatureIdx++;
+                IncrFeatureIdx();
                 m_nIdxInBatch++;
                 if (m_nIdxInBatch == m_poBatch->num_rows())
                 {
@@ -3574,7 +3574,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                         }
                     }
 
-                    if (nParts != 0 && m_sFilterEnvelope.Intersects(sEnvelope))
+                    if (nParts != 0 && !m_sFilterEnvelope.Intersects(sEnvelope))
                     {
                         break;
                     }
@@ -3585,7 +3585,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                     break;
                 }
 
-                m_nFeatureIdx++;
+                IncrFeatureIdx();
                 m_nIdxInBatch++;
                 if (m_nIdxInBatch == m_poBatch->num_rows())
                 {
@@ -3627,7 +3627,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                     break;
                 }
 
-                m_nFeatureIdx++;
+                IncrFeatureIdx();
                 m_nIdxInBatch++;
                 if (m_nIdxInBatch == m_poBatch->num_rows())
                 {
@@ -3649,7 +3649,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                 break;
             }
 
-            m_nFeatureIdx++;
+            IncrFeatureIdx();
             m_nIdxInBatch++;
             if (m_nIdxInBatch == m_poBatch->num_rows())
             {
@@ -3665,7 +3665,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
     if (m_iFIDArrowColumn < 0)
         poFeature->SetFID(m_nFeatureIdx);
 
-    m_nFeatureIdx++;
+    IncrFeatureIdx();
     m_nIdxInBatch++;
 
     return poFeature;
@@ -3877,7 +3877,6 @@ inline OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
                 }
             }
 
-            m_nFeatureIdx++;
             m_nIdxInBatch++;
             if (m_nIdxInBatch == m_poBatch->num_rows())
             {
@@ -3977,7 +3976,6 @@ inline OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
                 }
             }
 
-            m_nFeatureIdx++;
             m_nIdxInBatch++;
             if (m_nIdxInBatch == m_poBatch->num_rows())
             {
@@ -4407,7 +4405,11 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         OverrideArrowRelease(m_poArrowDS, out_array);
 
         const auto nFeatureIdxCur = m_nFeatureIdx;
-        m_nFeatureIdx += m_nIdxInBatch;
+        // TODO: We likely have an issue regarding FIDs based on m_nFeatureIdx
+        // when m_iFIDArrowColumn < 0, only a subset of row groups is
+        // selected, and this batch goes accross non consecutive row groups.
+        for (int64_t i = 0; i < m_nIdxInBatch; ++i)
+            IncrFeatureIdx();
 
         if (m_poAttrQuery || m_poFilterGeom)
         {

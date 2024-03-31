@@ -216,6 +216,11 @@ class OGRArrowLayer CPL_NON_FINAL
     int GetNextArrowArray(struct ArrowArrayStream *,
                           struct ArrowArray *out) override;
 
+    virtual void IncrFeatureIdx()
+    {
+        ++m_nFeatureIdx;
+    }
+
   public:
     virtual ~OGRArrowLayer() override;
 
