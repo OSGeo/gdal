@@ -2014,7 +2014,7 @@ static int TIFFWriteDirectoryTagIfdIfd8Array(TIFF *tif, uint32_t *ndir,
 static void EvaluateIFDdatasizeWrite(TIFF *tif, uint32_t count,
                                      uint32_t typesize, uint32_t *ndir)
 {
-    uint64_t datalength = count * typesize;
+    uint64_t datalength = (uint64_t)count * typesize;
     if (datalength > ((tif->tif_flags & TIFF_BIGTIFF) ? 0x8U : 0x4U))
     {
         /* LibTIFF increments write adress to an even offset, thus datalenght

@@ -4310,7 +4310,7 @@ int TIFFReadDirectory(TIFF *tif)
         TIFFErrorExtR(
             tif, module,
             "Failed to allocate memory for counting IFD data size at reading");
-        return 0;
+        goto bad;
     }
     /*
      * Electronic Arts writes gray-scale TIFF files
@@ -5279,6 +5279,8 @@ int TIFFReadCustomDirectory(TIFF *tif, toff_t diroff,
         TIFFErrorExtR(
             tif, module,
             "Failed to allocate memory for counting IFD data size at reading");
+        if (dir)
+            _TIFFfreeExt(tif, dir);
         return 0;
     }
 
