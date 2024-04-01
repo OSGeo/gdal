@@ -1,3 +1,135 @@
+# GDAL/OGR 3.8.5 Release Notes
+
+GDAL 3.8.5 is a bugfix release.
+
+## Build
+
+* Disable my_test_sqlite3_ext in static builds
+* Fix false-positive -Wformat-truncation with clang 18 on fedora:rawhide CI
+* cpl_vsil_unix_stdio_64.cpp: avoid compiler warning related to ftello()
+* Fix compiler crash on gcore/overview.cpp with ICC 2024.0.2.29 (#9508)
+* CMake: Fix FindGEOS to remove use of deprecated exec_program()
+* CMake: fix NumPy detection when Intel MKL library is installed
+* CMake: add modern Apple OS (visionOS|tvOS|watchOS) support (#9550)
+* Minimal support for TileDB 2.21 to avoid build & test issues
+
+## GDAL 3.8.5
+
+### Port
+
+* /vsiaz/: handle properly BlobEndpoint ending with a slash (#9519)
+
+### Core
+
+* QuietDeleteForCreateCopy(): forward source dataset open options (#9424)
+* Overview/RasterIO resampling: fix infinite looping when nodata has a big
+  absolute value (#9427)
+
+### Utilities
+
+* gdalinfo_output.schema.json: add comment about size and proj:shape ordering
+* gdalinfo -json/gdal.Info(format='json'): avoid error/exception on engineering
+  CRS (#9396)
+* gdalwarp: cutline zero-width sliver enhancement: avoid producing invalid
+  polygons
+* gdal2tiles.py: fix exception when -v flag is used and overview tiles are
+  generated (3.7.0 regression) (#9272)
+* gdalattachpct.py: fix it when output file is a VRT (#9513)
+
+### Raster drivers
+
+DIMAP driver:
+ * add radiometric metadata
+
+ERS driver:
+ * avoid 'Attempt at recursively opening ERS dataset' when the .ers file
+   references a .ecw (#9352)
+
+GPKG driver:
+ * avoid invalid use of pointer aliasing that caused ICC 2024.0.2.29 to
+   generate invalid code (#9508)
+
+GRIB driver:
+ * avoid floating-point issues with ICC 2024.0.2.29 (#9508)
+
+GTiff driver:
+ * fix read error/use-after-free when reading COGs with mask from network
+   storage (#9563)
+
+JP2OpenJPEG driver:
+ * CreateCopy(): limit number of resolutions taking into account minimum block
+   width/height (#9236)
+
+OGCAPI driver:
+ * fix potential use-after-free on vector tiled layers
+
+VRT driver:
+ * VRTDerivedRasterBand: Support Int8, (U)Int64 with Python pixel functions
+ * VRT/gdal_translate -of 200% 200%: make sure that the synthetized virtual
+   overviews match the dimension of the source ones when possible
+ * VRTPansharpenedDataset: allow to specify <OpenOptions> for <PanchroBand> and
+   <SpectralBand>
+
+## OGR 3.8.5
+
+### Core
+
+* OGRGeometry::getCurveGeometry(): avoid failures when building some compound
+  curves with inferred circular strings (#9382)
+* OGRLayer::GetArrowSchema(): remove potential unaligned int32_t writes
+* CreateFieldFromArrowSchema(): don't propagate native subtype if we have to
+  use a fallback main type
+
+### Vector drivers
+
+Arrow/Parquet driver:
+ * fix inverted logic regarding spatial filtering of multipolygon with GeoArrow
+   interleaved encoding
+
+FlatGeoBuf driver:
+ * Make sure vendored flatbuffers copy has a unique namespace
+ * implement OGRLayer::GetDataset() (#9568)
+
+GMLAS driver:
+ * fix crash when reading CityGML files (r-spatial/sf#2371)
+
+GPKG driver:
+ * Ensure that mapping tables are inserted into gpkg_contents
+ * Ensure that tables present in gpkgext_relations can be read
+
+ILI2 driver:
+ * emit an error and not just a warning when creating a dataset without a model
+   file
+
+ODS driver:
+ * declare OLCStringsAsUTF8 on newly created layers
+
+OpenFileGDB driver:
+ * Correctly use "features" as related table type (instead of "feature")
+ * writer: fix corrupted maximum blob size header field in some SetFeature()
+   scenarios (#9388)
+ * avoid issue with -fno-sanitize-recover=unsigned-integer-overflow with recent
+   clang
+
+Parquet driver:
+ * avoid potential assertion/out-of-bounds access when a subset of row groups
+   is selected
+
+PMTiles driver:
+ * fix 'Non increasing tile_id' error when opening some files (#9288)
+
+Shapefile driver:
+ * Fix bug when reading some .sbn spatial indices
+
+XLSX driver:
+ * declare OLCStringsAsUTF8 on newly created layers
+
+## Python bindings
+
+* gdal.Translate()/gdal.Warp()/etc.: make sure not to modify provided options[]
+  array (#9259)
+* Fix gdal.Warp segfault with dst=None
+
 # GDAL/OGR 3.8.4 Release Notes
 
 GDAL 3.8.4 is a bugfix release.
