@@ -1485,8 +1485,8 @@ bool OGRGMLASLayer::InitReader()
 {
     CPLAssert(m_poReader == nullptr);
 
-    m_poReader = m_poDS->CreateReader(m_fpGML);
     m_bLayerDefnFinalized = true;
+    m_poReader = m_poDS->CreateReader(m_fpGML);
     if (m_poReader != nullptr)
     {
         m_poReader->SetLayerOfInterest(this);

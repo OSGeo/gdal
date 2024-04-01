@@ -3422,3 +3422,22 @@ def test_ogr_gmlas_read_srsDimension_3_on_top_gml_Envelope():
         f.GetGeometryRef().ExportToIsoWkt()
         == "LINESTRING Z (1 2 3,4 5 6,7 8 9,10 11 12)"
     )
+
+
+###############################################################################
+# Test bugfix for https://github.com/r-spatial/sf/issues/2371
+
+
+@pytest.mark.require_curl()
+def test_ogr_gmlas_bugfix_sf_2371():
+
+    url = (
+        "http://repository.gdi-de.org/schemas/adv/citygml/building/1.0/buildingLoD1.xsd"
+    )
+    conn = gdaltest.gdalurlopen(url, timeout=4)
+    if conn is None:
+        pytest.skip(f"cannot open {url}")
+
+    ds = gdal.OpenEx("GMLAS:data/gmlas/citygml_empty_lod1.gml")
+    lyr = ds.GetLayerByName("address1")
+    assert lyr.GetFeatureCount() == 0
