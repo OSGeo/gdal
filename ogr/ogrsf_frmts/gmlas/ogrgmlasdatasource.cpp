@@ -43,8 +43,6 @@ OGRGMLASDataSource::OGRGMLASDataSource()
 {
     OGRInitializeXerces();
 
-    m_fpGML = nullptr;
-    m_fpGMLParser = nullptr;
     m_bLayerInitFinished = false;
     m_bValidate = false;
     m_bSchemaFullChecking = false;
@@ -54,7 +52,6 @@ OGRGMLASDataSource::OGRGMLASDataSource()
     m_bFirstPassDone = false;
     m_eSwapCoordinates = GMLAS_SWAP_AUTO;
     m_nFileSize = 0;
-    m_poReader = nullptr;
     m_bEndOfReaderLayers = false;
     m_nCurMetadataLayerIdx = -1;
     m_poFieldsMetadataLayer =
@@ -186,6 +183,15 @@ OGRGMLASDataSource::OGRGMLASDataSource()
 }
 
 /************************************************************************/
+/*                     DeinitXerces::~DeinitXerces()                    */
+/************************************************************************/
+
+OGRGMLASDataSource::DeinitXerces::~DeinitXerces()
+{
+    OGRDeinitializeXerces();
+}
+
+/************************************************************************/
 /*                         ~OGRGMLASDataSource()                        */
 /************************************************************************/
 
@@ -197,13 +203,6 @@ OGRGMLASDataSource::~OGRGMLASDataSource()
     delete m_poLayersMetadataLayer;
     delete m_poRelationshipsLayer;
     delete m_poOtherMetadataLayer;
-    if (m_fpGML != nullptr)
-        VSIFCloseL(m_fpGML);
-    if (m_fpGMLParser != nullptr)
-        VSIFCloseL(m_fpGMLParser);
-    delete m_poReader;
-
-    OGRDeinitializeXerces();
 }
 
 /************************************************************************/
@@ -310,7 +309,8 @@ class GMLASTopElementParser : public DefaultHandler
     {
     }
 
-    void Parse(const CPLString &osFilename, VSILFILE *fp);
+    void Parse(const CPLString &osFilename,
+               const std::shared_ptr<VSIVirtualHandle> &fp);
 
     const std::vector<PairURIFilename> &GetXSDs() const
     {
@@ -346,7 +346,8 @@ GMLASTopElementParser::GMLASTopElementParser()
 /*                               Parse()                                */
 /************************************************************************/
 
-void GMLASTopElementParser::Parse(const CPLString &osFilename, VSILFILE *fp)
+void GMLASTopElementParser::Parse(const CPLString &osFilename,
+                                  const std::shared_ptr<VSIVirtualHandle> &fp)
 {
     SAX2XMLReader *poSAXReader = XMLReaderFactory::createXMLReader();
 
@@ -362,7 +363,7 @@ void GMLASTopElementParser::Parse(const CPLString &osFilename, VSILFILE *fp)
     GMLASErrorHandler oErrorHandler;
     poSAXReader->setErrorHandler(&oErrorHandler);
 
-    GMLASInputSource *poIS = new GMLASInputSource(osFilename, fp, false);
+    GMLASInputSource *poIS = new GMLASInputSource(osFilename, fp);
 
     try
     {
@@ -779,10 +780,10 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
     CPLString osXSDFilenames =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, szXSD_OPTION, "");
 
-    VSILFILE *fpGML = nullptr;
+    std::shared_ptr<VSIVirtualHandle> fpGML;
     if (!m_osGMLFilename.empty())
     {
-        fpGML = VSIFOpenL(m_osGMLFilename, "rb");
+        fpGML.reset(VSIFOpenL(m_osGMLFilename, "rb"), VSIVirtualHandleCloser{});
         if (fpGML == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s",
@@ -831,10 +832,10 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
             CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "HASH", "");
         if (m_osHash.empty())
         {
-            VSIFSeekL(fpGML, 0, SEEK_SET);
+            fpGML->Seek(0, SEEK_SET);
             std::string osBuffer;
             osBuffer.resize(8192);
-            size_t nRead = VSIFReadL(&osBuffer[0], 1, 8192, fpGML);
+            size_t nRead = fpGML->Read(&osBuffer[0], 1, 8192);
             osBuffer.resize(nRead);
             size_t nPos = osBuffer.find("timeStamp=\"");
             if (nPos != std::string::npos)
@@ -868,7 +869,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
             CPLFree(pszHash);
         }
 
-        VSIFSeekL(fpGML, 0, SEEK_SET);
+        fpGML->Seek(0, SEEK_SET);
         PushUnusedGMLFilePointer(fpGML);
     }
 
@@ -1013,16 +1014,18 @@ int OGRGMLASDataSource::TestCapability(const char *pszCap)
 /*                           CreateReader()                             */
 /************************************************************************/
 
-GMLASReader *OGRGMLASDataSource::CreateReader(VSILFILE *&fpGML,
-                                              GDALProgressFunc pfnProgress,
-                                              void *pProgressData)
+GMLASReader *
+OGRGMLASDataSource::CreateReader(std::shared_ptr<VSIVirtualHandle> &fpGML,
+                                 GDALProgressFunc pfnProgress,
+                                 void *pProgressData)
 {
     if (fpGML == nullptr)
     {
         // Try recycling an already opened and unused file pointer
         fpGML = PopUnusedGMLFilePointer();
         if (fpGML == nullptr)
-            fpGML = VSIFOpenL(GetGMLFilename(), "rb");
+            fpGML.reset(VSIFOpenL(GetGMLFilename(), "rb"),
+                        VSIVirtualHandleCloser{});
         if (fpGML == nullptr)
             return nullptr;
     }
@@ -1056,8 +1059,7 @@ GMLASReader *OGRGMLASDataSource::CreateReader(VSILFILE *&fpGML,
 
 void OGRGMLASDataSource::ResetReading()
 {
-    delete m_poReader;
-    m_poReader = nullptr;
+    m_poReader.reset();
     for (size_t i = 0; i < m_apoRequestedMetadataLayers.size(); ++i)
         m_apoRequestedMetadataLayers[i]->ResetReading();
     m_bEndOfReaderLayers = false;
@@ -1118,9 +1120,9 @@ OGRFeature *OGRGMLASDataSource::GetNextFeature(OGRLayer **ppoBelongingLayer,
         void *pScaledProgress = GDALCreateScaledProgress(
             0.0, dfInitialScanRatio, pfnProgress, pProgressData);
 
-        m_poReader = CreateReader(
+        m_poReader.reset(CreateReader(
             m_fpGMLParser, pScaledProgress ? GDALScaledProgress : nullptr,
-            pScaledProgress);
+            pScaledProgress));
 
         GDALDestroyScaledProgress(pScaledProgress);
 
@@ -1159,7 +1161,7 @@ OGRFeature *OGRGMLASDataSource::GetNextFeature(OGRLayer **ppoBelongingLayer,
                 *ppoBelongingLayer = poBelongingLayer;
             if (pdfProgressPct != nullptr)
             {
-                const vsi_l_offset nOffset = VSIFTellL(m_fpGMLParser);
+                const vsi_l_offset nOffset = m_fpGMLParser->Tell();
                 if (nOffset == m_nFileSize)
                     *pdfProgressPct = 1.0;
                 else
@@ -1209,13 +1211,16 @@ OGRGMLASLayer *OGRGMLASDataSource::GetLayerByXPath(const CPLString &osXPath)
 /*                       PushUnusedGMLFilePointer()                     */
 /************************************************************************/
 
-void OGRGMLASDataSource::PushUnusedGMLFilePointer(VSILFILE *fpGML)
+void OGRGMLASDataSource::PushUnusedGMLFilePointer(
+    std::shared_ptr<VSIVirtualHandle> &fpGML)
 {
     if (m_fpGML == nullptr)
-        m_fpGML = fpGML;
+    {
+        std::swap(m_fpGML, fpGML);
+    }
     else
     {
-        VSIFCloseL(fpGML);
+        fpGML.reset();
     }
 }
 
@@ -1223,10 +1228,10 @@ void OGRGMLASDataSource::PushUnusedGMLFilePointer(VSILFILE *fpGML)
 /*                        PopUnusedGMLFilePointer()                     */
 /************************************************************************/
 
-VSILFILE *OGRGMLASDataSource::PopUnusedGMLFilePointer()
+std::shared_ptr<VSIVirtualHandle> OGRGMLASDataSource::PopUnusedGMLFilePointer()
 {
-    VSILFILE *fpGML = m_fpGML;
-    m_fpGML = nullptr;
+    std::shared_ptr<VSIVirtualHandle> fpGML;
+    std::swap(fpGML, m_fpGML);
     return fpGML;
 }
 
@@ -1288,12 +1293,13 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded(GMLASReader *poReader,
          (m_oConf.m_bSWEProcessDataRecord || m_oConf.m_bSWEProcessDataArray)))
     {
         bool bJustOpenedFiled = false;
-        VSILFILE *fp = nullptr;
+        std::shared_ptr<VSIVirtualHandle> fp;
         if (poReader)
             fp = poReader->GetFP();
         else
         {
-            fp = VSIFOpenL(GetGMLFilename(), "rb");
+            fp.reset(VSIFOpenL(GetGMLFilename(), "rb"),
+                     VSIVirtualHandleCloser{});
             if (fp == nullptr)
             {
                 return false;
@@ -1414,7 +1420,7 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded(GMLASReader *poReader,
 
         delete poReaderFirstPass;
 
-        VSIFSeekL(fp, 0, SEEK_SET);
+        fp->Seek(0, SEEK_SET);
         if (bJustOpenedFiled)
             PushUnusedGMLFilePointer(fp);
 

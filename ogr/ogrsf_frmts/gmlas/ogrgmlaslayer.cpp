@@ -42,9 +42,8 @@ OGRGMLASLayer::OGRGMLASLayer(OGRGMLASDataSource *poDS,
                              bool bAlwaysGenerateOGRPKId)
     : m_poDS(poDS), m_oFC(oFC), m_bLayerDefnFinalized(false),
       m_nMaxFieldIndex(0), m_poFeatureDefn(new OGRFeatureDefn(oFC.GetName())),
-      m_bEOF(false), m_poReader(nullptr), m_fpGML(nullptr), m_nIDFieldIdx(-1),
-      m_bIDFieldIsGenerated(false), m_poParentLayer(poParentLayer),
-      m_nParentIDFieldIdx(-1)
+      m_bEOF(false), m_nIDFieldIdx(-1), m_bIDFieldIsGenerated(false),
+      m_poParentLayer(poParentLayer), m_nParentIDFieldIdx(-1)
 
 {
     m_poFeatureDefn->SetGeomType(wkbNone);
@@ -154,8 +153,7 @@ OGRGMLASLayer::OGRGMLASLayer(OGRGMLASDataSource *poDS,
 OGRGMLASLayer::OGRGMLASLayer(const char *pszLayerName)
     : m_poDS(nullptr), m_bLayerDefnFinalized(true), m_nMaxFieldIndex(0),
       m_poFeatureDefn(new OGRFeatureDefn(pszLayerName)), m_bEOF(false),
-      m_poReader(nullptr), m_fpGML(nullptr), m_nIDFieldIdx(-1),
-      m_bIDFieldIsGenerated(false), m_poParentLayer(nullptr),
+      m_nIDFieldIdx(-1), m_bIDFieldIsGenerated(false), m_poParentLayer(nullptr),
       m_nParentIDFieldIdx(-1)
 
 {
@@ -1002,9 +1000,6 @@ void OGRGMLASLayer::CreateCompoundFoldedMappings()
 OGRGMLASLayer::~OGRGMLASLayer()
 {
     m_poFeatureDefn->Release();
-    delete m_poReader;
-    if (m_fpGML != nullptr)
-        VSIFCloseL(m_fpGML);
 }
 
 /************************************************************************/
@@ -1460,9 +1455,7 @@ OGRFeatureDefn *OGRGMLASLayer::GetLayerDefn()
                 // Avoid keeping too many file descriptor opened
                 if (m_fpGML != nullptr)
                     m_poDS->PushUnusedGMLFilePointer(m_fpGML);
-                m_fpGML = nullptr;
-                delete m_poReader;
-                m_poReader = nullptr;
+                m_poReader.reset();
             }
         }
     }
@@ -1475,8 +1468,7 @@ OGRFeatureDefn *OGRGMLASLayer::GetLayerDefn()
 
 void OGRGMLASLayer::ResetReading()
 {
-    delete m_poReader;
-    m_poReader = nullptr;
+    m_poReader.reset();
     m_bEOF = false;
 }
 
@@ -1489,7 +1481,7 @@ bool OGRGMLASLayer::InitReader()
     CPLAssert(m_poReader == nullptr);
 
     m_bLayerDefnFinalized = true;
-    m_poReader = m_poDS->CreateReader(m_fpGML);
+    m_poReader.reset(m_poDS->CreateReader(m_fpGML));
     if (m_poReader != nullptr)
     {
         m_poReader->SetLayerOfInterest(this);
@@ -1538,9 +1530,7 @@ OGRFeature *OGRGMLASLayer::GetNextFeature()
             // Avoid keeping too many file descriptor opened
             if (m_fpGML != nullptr)
                 m_poDS->PushUnusedGMLFilePointer(m_fpGML);
-            m_fpGML = nullptr;
-            delete m_poReader;
-            m_poReader = nullptr;
+            m_poReader.reset();
             m_bEOF = true;
             return nullptr;
         }

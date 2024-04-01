@@ -34,6 +34,7 @@
 #include "xercesc_headers.h"
 #include "ogr_xerces.h"
 
+#include "cpl_vsi_virtual.h"
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
 
@@ -171,8 +172,9 @@ class GMLASBaseEntityResolver : public EntityResolver,
     virtual InputSource *resolveEntity(const XMLCh *const publicId,
                                        const XMLCh *const systemId) override;
 
-    virtual void DoExtraSchemaProcessing(const CPLString &osFilename,
-                                         VSILFILE *fp);
+    virtual void
+    DoExtraSchemaProcessing(const CPLString &osFilename,
+                            const std::shared_ptr<VSIVirtualHandle> &fp);
 };
 
 /************************************************************************/
@@ -181,8 +183,7 @@ class GMLASBaseEntityResolver : public EntityResolver,
 
 class GMLASInputSource final : public InputSource
 {
-    VSILFILE *m_fp;
-    bool m_bOwnFP;
+    std::shared_ptr<VSIVirtualHandle> m_fp{};
     int m_nCounter;
     int *m_pnCounter;
     CPLString m_osFilename;
@@ -190,7 +191,7 @@ class GMLASInputSource final : public InputSource
 
   public:
     GMLASInputSource(
-        const char *pszFilename, VSILFILE *fp, bool bOwnFP,
+        const char *pszFilename, const std::shared_ptr<VSIVirtualHandle> &fp,
         MemoryManager *const manager = XMLPlatformUtils::fgMemoryManager);
     virtual ~GMLASInputSource();
 
@@ -1320,6 +1321,15 @@ class GMLASReader;
 
 class OGRGMLASDataSource final : public GDALDataset
 {
+    struct DeinitXerces
+    {
+        ~DeinitXerces();
+    };
+
+    // MUST be first element, to get destroyed last after we have cleaned up
+    // all other Xerces dependent objects.
+    DeinitXerces m_oXercesDeinitialization{};
+
     std::vector<OGRGMLASLayer *> m_apoLayers;
     std::map<CPLString, CPLString> m_oMapURIToPrefix;
     CPLString m_osGMLFilename;
@@ -1328,8 +1338,8 @@ class OGRGMLASDataSource final : public GDALDataset
     OGRLayer *m_poRelationshipsLayer;
     OGRLayer *m_poOtherMetadataLayer;
     std::vector<OGRLayer *> m_apoRequestedMetadataLayers;
-    VSILFILE *m_fpGML;
-    VSILFILE *m_fpGMLParser;
+    std::shared_ptr<VSIVirtualHandle> m_fpGML{};
+    std::shared_ptr<VSIVirtualHandle> m_fpGMLParser{};
     bool m_bLayerInitFinished;
     bool m_bSchemaFullChecking;
     bool m_bHandleMultipleImports;
@@ -1375,7 +1385,7 @@ class OGRGMLASDataSource final : public GDALDataset
 
     vsi_l_offset m_nFileSize;
 
-    GMLASReader *m_poReader;
+    std::unique_ptr<GMLASReader> m_poReader{};
 
     bool m_bEndOfReaderLayers;
 
@@ -1461,7 +1471,7 @@ class OGRGMLASDataSource final : public GDALDataset
 
     OGRGMLASLayer *GetLayerByXPath(const CPLString &osXPath);
 
-    GMLASReader *CreateReader(VSILFILE *&fpGML,
+    GMLASReader *CreateReader(std::shared_ptr<VSIVirtualHandle> &fpGML,
                               GDALProgressFunc pfnProgress = nullptr,
                               void *pProgressData = nullptr);
 
@@ -1470,8 +1480,8 @@ class OGRGMLASDataSource final : public GDALDataset
         return m_oCache;
     }
 
-    void PushUnusedGMLFilePointer(VSILFILE *fpGML);
-    VSILFILE *PopUnusedGMLFilePointer();
+    void PushUnusedGMLFilePointer(std::shared_ptr<VSIVirtualHandle> &fpGML);
+    std::shared_ptr<VSIVirtualHandle> PopUnusedGMLFilePointer();
 
     bool IsLayerInitFinished() const
     {
@@ -1535,8 +1545,8 @@ class OGRGMLASLayer final : public OGRLayer
     std::map<CPLString, int> m_oMapFieldXPathToFCFieldIdx;
 
     bool m_bEOF;
-    GMLASReader *m_poReader;
-    VSILFILE *m_fpGML;
+    std::unique_ptr<GMLASReader> m_poReader{};
+    std::shared_ptr<VSIVirtualHandle> m_fpGML{};
     /** OGR field index of the ID field */
     int m_nIDFieldIdx;
     /** Whether the ID field is generated, or comes from the XML content */
@@ -1669,8 +1679,8 @@ class GMLASReader final : public DefaultHandler
     /** Token for Xerces */
     XMLPScanToken m_oToFill;
 
-    /** File descriptor (not owned by this object) */
-    VSILFILE *m_fp;
+    /** File descriptor */
+    std::shared_ptr<VSIVirtualHandle> m_fp{};
 
     /** Input source */
     GMLASInputSource *m_GMLInputSource;
@@ -1939,7 +1949,8 @@ class GMLASReader final : public DefaultHandler
                 GMLASXLinkResolver &oXLinkResolver);
     ~GMLASReader();
 
-    bool Init(const char *pszFilename, VSILFILE *fp,
+    bool Init(const char *pszFilename,
+              const std::shared_ptr<VSIVirtualHandle> &fp,
               const std::map<CPLString, CPLString> &oMapURIToPrefix,
               std::vector<OGRGMLASLayer *> *papoLayers, bool bValidate,
               const std::vector<PairURIFilename> &aoXSDs,
@@ -1957,7 +1968,7 @@ class GMLASReader final : public DefaultHandler
         m_eSwapCoordinates = eVal;
     }
 
-    VSILFILE *GetFP() const
+    const std::shared_ptr<VSIVirtualHandle> &GetFP() const
     {
         return m_fp;
     }

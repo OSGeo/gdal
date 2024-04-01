@@ -104,12 +104,11 @@ const XMLCh *GMLASBinInputStream::getContentType() const
 /*                          GMLASInputSource()                          */
 /************************************************************************/
 
-GMLASInputSource::GMLASInputSource(const char *pszFilename, VSILFILE *fp,
-                                   bool bOwnFP, MemoryManager *const manager)
-    : InputSource(manager), m_osFilename(pszFilename)
+GMLASInputSource::GMLASInputSource(const char *pszFilename,
+                                   const std::shared_ptr<VSIVirtualHandle> &fp,
+                                   MemoryManager *const manager)
+    : InputSource(manager), m_fp(fp), m_osFilename(pszFilename)
 {
-    m_fp = fp;
-    m_bOwnFP = bOwnFP;
     try
     {
         XMLCh *pFilename = XMLString::transcode(pszFilename);
@@ -144,8 +143,6 @@ GMLASInputSource::~GMLASInputSource()
 {
     if (m_cbk)
         m_cbk->notifyClosing(m_osFilename);
-    if (m_bOwnFP && m_fp)
-        VSIFCloseL(m_fp);
 }
 
 /************************************************************************/
@@ -166,7 +163,7 @@ BinInputStream *GMLASInputSource::makeStream() const
     (*m_pnCounter)++;
     if (m_fp == nullptr)
         return nullptr;
-    return new GMLASBinInputStream(m_fp);
+    return new GMLASBinInputStream(m_fp.get());
 }
 
 /************************************************************************/
@@ -299,7 +296,8 @@ void GMLASBaseEntityResolver::SetBasePath(const CPLString &osBasePath)
 /************************************************************************/
 
 void GMLASBaseEntityResolver::DoExtraSchemaProcessing(
-    const CPLString & /*osFilename*/, VSILFILE * /*fp*/)
+    const CPLString & /*osFilename*/,
+    const std::shared_ptr<VSIVirtualHandle> & /*fp*/)
 {
 }
 
@@ -340,7 +338,9 @@ GMLASBaseEntityResolver::resolveEntity(const XMLCh *const /*publicId*/,
     }
 
     CPLString osNewPath;
-    VSILFILE *fp = m_oCache.Open(osSystemId, m_aosPathStack.back(), osNewPath);
+    auto fp = std::shared_ptr<VSIVirtualHandle>(
+        m_oCache.Open(osSystemId, m_aosPathStack.back(), osNewPath),
+        VSIVirtualHandleCloser{});
 
     if (fp != nullptr)
     {
@@ -351,7 +351,7 @@ GMLASBaseEntityResolver::resolveEntity(const XMLCh *const /*publicId*/,
     }
 
     m_aosPathStack.push_back(CPLGetDirname(osNewPath));
-    GMLASInputSource *poIS = new GMLASInputSource(osNewPath, fp, true);
+    GMLASInputSource *poIS = new GMLASInputSource(osNewPath, fp);
     poIS->SetClosingCallback(this);
     return poIS;
 }
@@ -521,8 +521,9 @@ bool GMLASReader::LoadXSDInParser(
     for (int iPass = 0; iPass <= 1; ++iPass)
     {
         CPLString osResolvedFilename;
-        VSILFILE *fpXSD =
-            oCache.Open(osModifXSDFilename, CPLString(), osResolvedFilename);
+        auto fpXSD = std::shared_ptr<VSIVirtualHandle>(
+            oCache.Open(osModifXSDFilename, CPLString(), osResolvedFilename),
+            VSIVirtualHandleCloser{});
         if (fpXSD == nullptr)
         {
             return false;
@@ -557,7 +558,7 @@ bool GMLASReader::LoadXSDInParser(
         ErrorHandler *poOldErrorHandler = poParser->getErrorHandler();
         poParser->setErrorHandler(&oErrorHandler);
 
-        GMLASInputSource oSource(osResolvedFilename, fpXSD, false);
+        GMLASInputSource oSource(osResolvedFilename, fpXSD);
         const bool bCacheGrammar = true;
         Grammar *poGrammar = nullptr;
         std::string osLoadGrammarErrorMsg("loadGrammar failed");
@@ -615,7 +616,6 @@ bool GMLASReader::LoadXSDInParser(
         // Restore previous handlers
         poParser->setEntityResolver(poOldEntityResolver);
         poParser->setErrorHandler(poOldErrorHandler);
-        VSIFCloseL(fpXSD);
 
         if (poGrammar == nullptr)
         {
@@ -661,7 +661,8 @@ bool GMLASReader::LoadXSDInParser(
 /*                                  Init()                              */
 /************************************************************************/
 
-bool GMLASReader::Init(const char *pszFilename, VSILFILE *fp,
+bool GMLASReader::Init(const char *pszFilename,
+                       const std::shared_ptr<VSIVirtualHandle> &fp,
                        const std::map<CPLString, CPLString> &oMapURIToPrefix,
                        std::vector<OGRGMLASLayer *> *papoLayers, bool bValidate,
                        const std::vector<PairURIFilename> &aoXSDs,
@@ -748,7 +749,7 @@ bool GMLASReader::Init(const char *pszFilename, VSILFILE *fp,
     }
 
     m_fp = fp;
-    m_GMLInputSource = new GMLASInputSource(pszFilename, fp, false);
+    m_GMLInputSource = new GMLASInputSource(pszFilename, m_fp);
 
     return true;
 }
@@ -3310,12 +3311,12 @@ OGRFeature *GMLASReader::GetNextFeature(OGRGMLASLayer **ppoBelongingLayer,
             }
         }
 
-        vsi_l_offset nLastOffset = VSIFTellL(m_fp);
+        vsi_l_offset nLastOffset = m_fp->Tell();
         while (m_poSAXReader->parseNext(m_oToFill))
         {
-            if (pfnProgress && VSIFTellL(m_fp) - nLastOffset > 100 * 1024)
+            if (pfnProgress && m_fp->Tell() - nLastOffset > 100 * 1024)
             {
-                nLastOffset = VSIFTellL(m_fp);
+                nLastOffset = m_fp->Tell();
                 double dfPct = -1;
                 if (m_nFileSize)
                     dfPct = 1.0 * nLastOffset / m_nFileSize;
@@ -3343,7 +3344,7 @@ OGRFeature *GMLASReader::GetNextFeature(OGRGMLASLayer **ppoBelongingLayer,
 
                     if (pfnProgress)
                     {
-                        nLastOffset = VSIFTellL(m_fp);
+                        nLastOffset = m_fp->Tell();
                         double dfPct = -1;
                         if (m_nFileSize)
                             dfPct = 1.0 * nLastOffset / m_nFileSize;
