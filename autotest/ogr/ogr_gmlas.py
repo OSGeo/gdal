@@ -3449,3 +3449,22 @@ def test_ogr_gmlas_get_gml_and_iso_schemas(tmp_path):
         ],
     )
     assert ds
+
+
+###############################################################################
+# Test bugfix for https://github.com/r-spatial/sf/issues/2371
+
+
+@pytest.mark.require_curl()
+def test_ogr_gmlas_bugfix_sf_2371():
+
+    url = (
+        "http://repository.gdi-de.org/schemas/adv/citygml/building/1.0/buildingLoD1.xsd"
+    )
+    conn = gdaltest.gdalurlopen(url, timeout=4)
+    if conn is None:
+        pytest.skip(f"cannot open {url}")
+
+    ds = gdal.OpenEx("GMLAS:data/gmlas/citygml_empty_lod1.gml")
+    lyr = ds.GetLayerByName("address1")
+    assert lyr.GetFeatureCount() == 0
