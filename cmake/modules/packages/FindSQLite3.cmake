@@ -47,19 +47,19 @@ endif()
 
 if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
   set(SQLite3_FIND_QUIETLY TRUE)
-endif()
+else()
+  find_package(PkgConfig QUIET)
+  if(PKG_CONFIG_FOUND)
+      pkg_check_modules(PC_SQLITE3 QUIET sqlite3)
+  endif()
 
-find_package(PkgConfig QUIET)
-if(PKG_CONFIG_FOUND)
-    pkg_check_modules(PC_SQLITE3 QUIET sqlite3)
+  find_path(SQLite3_INCLUDE_DIR
+            NAMES  sqlite3.h
+            HINTS ${PC_SQLITE3_INCLUDE_DIRS})
+  find_library(SQLite3_LIBRARY
+               NAMES sqlite3 sqlite3_i
+               HINTS ${PC_SQLITE3_LIBRARY_DIRS})
 endif()
-
-find_path(SQLite3_INCLUDE_DIR
-          NAMES  sqlite3.h
-          HINTS ${PC_SQLITE3_INCLUDE_DIRS})
-find_library(SQLite3_LIBRARY
-             NAMES sqlite3 sqlite3_i
-             HINTS ${PC_SQLITE3_LIBRARY_DIRS})
 
 # Extract version information from the header file
 if(SQLite3_INCLUDE_DIR)
