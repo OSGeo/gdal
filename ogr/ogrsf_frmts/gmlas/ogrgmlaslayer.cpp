@@ -40,11 +40,9 @@ OGRGMLASLayer::OGRGMLASLayer(OGRGMLASDataSource *poDS,
                              const GMLASFeatureClass &oFC,
                              OGRGMLASLayer *poParentLayer,
                              bool bAlwaysGenerateOGRPKId)
-    : m_poDS(poDS), m_oFC(oFC), m_bLayerDefnFinalized(false),
-      m_nMaxFieldIndex(0), m_poFeatureDefn(new OGRFeatureDefn(oFC.GetName())),
-      m_bEOF(false), m_nIDFieldIdx(-1), m_bIDFieldIsGenerated(false),
-      m_poParentLayer(poParentLayer), m_nParentIDFieldIdx(-1)
-
+    : m_poDS(poDS), m_oFC(oFC),
+      m_poFeatureDefn(new OGRFeatureDefn(oFC.GetName())),
+      m_poParentLayer(poParentLayer)
 {
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
@@ -151,10 +149,8 @@ OGRGMLASLayer::OGRGMLASLayer(OGRGMLASDataSource *poDS,
 /************************************************************************/
 
 OGRGMLASLayer::OGRGMLASLayer(const char *pszLayerName)
-    : m_poDS(nullptr), m_bLayerDefnFinalized(true), m_nMaxFieldIndex(0),
-      m_poFeatureDefn(new OGRFeatureDefn(pszLayerName)), m_bEOF(false),
-      m_nIDFieldIdx(-1), m_bIDFieldIsGenerated(false), m_poParentLayer(nullptr),
-      m_nParentIDFieldIdx(-1)
+    : m_bLayerDefnFinalized(true),
+      m_poFeatureDefn(new OGRFeatureDefn(pszLayerName))
 
 {
     m_poFeatureDefn->SetGeomType(wkbNone);
