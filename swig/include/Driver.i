@@ -126,6 +126,10 @@ public:
     return GDALCopyDatasetFiles( self, newName, oldName );
   }
 
+  const char *GetName() {
+    return GDALGetDescription(self);
+  }
+
   int Register() {
     return GDALRegisterDriver( self );
   }

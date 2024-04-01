@@ -871,6 +871,11 @@ public:
 /*                            OGRDataSource                             */
 /************************************************************************/
 
+#ifdef SWIGPYTHON
+/* In Python, ogr.DataSource and gdal.Dataset are equivalent */
+typedef GDALDatasetShadow OGRDataSourceShadow;
+
+#else
 
 %rename (DataSource) OGRDataSourceShadow;
 
@@ -1032,6 +1037,8 @@ public:
 
 
 }; /* class OGRDataSourceShadow */
+
+#endif /* not SWIGPYTHON */
 
 #endif /* FROM_GDAL_I */
 

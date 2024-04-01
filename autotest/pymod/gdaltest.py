@@ -49,7 +49,7 @@ from threading import Thread
 
 import pytest
 
-from osgeo import gdal, ogr, osr
+from osgeo import gdal, osr
 
 jp2kak_drv = None
 jpeg2000_drv = None
@@ -2072,9 +2072,6 @@ def reopen(ds, update=False, open_options=None):
     ds_drv = ds.GetDriver()
 
     ds.Close()
-
-    if isinstance(ds, ogr.DataSource) and open_options is None:
-        return ogr.Open(ds_loc, update)
 
     flags = 0
     if update:
