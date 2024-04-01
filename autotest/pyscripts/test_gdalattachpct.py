@@ -86,7 +86,7 @@ def test_gdalattachpct_basic(script_path, tmp_path, palette_file):
 
 
 ###############################################################################
-# Test outputing to VRT
+# Test outputting to VRT
 
 
 def test_gdalattachpct_vrt_output(script_path, tmp_path, palette_file):

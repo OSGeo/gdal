@@ -111,7 +111,7 @@ double IVFKFeature::GetDeterminatOfMatrixDim3(double x[3], double y[3],
 void IVFKFeature::GetCircleCenterFrom3Points(double c_xy[2], double x[3],
                                              double y[3])
 {
-    /* reduce coordinates by avarage coordinate */
+    /* reduce coordinates by average coordinate */
     int n = 3;
     double sum_x = 0.0f, sum_y = 0.0f;
     for (int i = 0; i < n; i++)

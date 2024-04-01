@@ -4182,7 +4182,7 @@ static void CalcFinalIFDdatasizeReading(TIFF *tif, uint16_t dircount)
         }
         else
         {
-            /* Further data is no more continously after IFD */
+            /* Further data is no more continuously after IFD */
             break;
         }
     }

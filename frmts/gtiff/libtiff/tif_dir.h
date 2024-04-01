@@ -146,7 +146,7 @@ typedef struct
         td_deferstrilearraywriting; /* see TIFFDeferStrileArrayWriting() */
 
     /* LibTIFF writes all data that does not fit into the IFD entries directly
-     * after the IFD tag enty part. When reading, only the IFD data directly and
+     * after the IFD tag entry part. When reading, only the IFD data directly and
      * continuously behind the IFD tags is taken into account for the IFD data
      * size.*/
     uint64_t td_dirdatasize_write; /* auxiliary for evaluating size of IFD data

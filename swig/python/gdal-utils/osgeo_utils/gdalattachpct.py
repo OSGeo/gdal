@@ -127,7 +127,7 @@ def doit(
 
     if driver_name.upper() == "VRT":
         # For VRT, create the VRT first from the source dataset, so it
-        # correctly referes to it
+        # correctly refers to it
         out_ds = dst_driver.CreateCopy(dst_filename or "", src_ds)
         if out_ds is None:
             print(f"Cannot create {dst_filename}")

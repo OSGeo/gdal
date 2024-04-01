@@ -139,7 +139,7 @@ A :cpp:class:`GDALDataset` may also be aware of relationships between layers (e.
 
 .. note::
 
-   Earlier versions of GDAL represented vector datasets using the :cpp:class:`OGRDataSource` class. This class has been maintained for backwards compatability but is functionally equivalent to a :cpp:class:`GDALDataset` for vector data.
+   Earlier versions of GDAL represented vector datasets using the :cpp:class:`OGRDataSource` class. This class has been maintained for backwards compatibility but is functionally equivalent to a :cpp:class:`GDALDataset` for vector data.
 
 Drivers
 -------
