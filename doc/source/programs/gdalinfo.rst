@@ -196,6 +196,8 @@ Example
     Center      (  456080.000, 3735960.000) (117d28'27.39"W, 33d45'52.46"N)
     Band 1 Block=512x16 Type=Byte, ColorInterp=Gray
 
+For corner coordinates formatted as decimal degree instead of the above degree, minute, second, inspect the ``wgs84Extent`` member of gdalinfo -json:
+
 Example of JSON output with ``gdalinfo -json byte.tif``
 
 .. code-block:: json
