@@ -253,6 +253,13 @@ The following required argument must be specified:
 
 - ``lut_{band}``: List of the form ``[src value 1]:[dest value 1],[src value 2]:[dest value 2],....``. {band} must be replaced by 1 to the number of bands.
 
+The intermediary values are calculated using a linear interpolation
+between the bounding destination values of the corresponding range.
+Source values should be monotonically non-decreasing. Clamping is performed for
+input pixel values outside of the range specified by the LUT. That is, if an
+input pixel value is lower than the minimum source value, then the destination
+value corresponding to that minimum source value is used as the output pixel value.
+And similarly for an input pixel value that is greater than the maximum source value.
 
 The following optional arguments may be specified:
 

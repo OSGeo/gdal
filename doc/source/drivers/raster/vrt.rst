@@ -423,6 +423,11 @@ the following form:
 
 The intermediary values are calculated using a linear interpolation
 between the bounding destination values of the corresponding range.
+Source values should be monotonically non-decreasing. Clamping is performed for
+input pixel values outside of the range specified by the LUT. That is, if an
+input pixel value is lower than the minimum source value, then the destination
+value corresponding to that minimum source value is used as the output pixel value.
+And similarly for an input pixel value that is greater than the maximum source value.
 
 The ComplexSource supports fetching a color component from a source raster
 band that has a color table. The ColorTableComponent value is the index of the
