@@ -978,6 +978,18 @@ def test_misc_get_config_options():
 
 
 ###############################################################################
+# Test GeneralCmdLineProcessor
+
+
+def test_misc_general_cmd_line_processor(capfd, tmp_path):
+
+    processed = gdal.GeneralCmdLineProcessor(
+        ["program", 2, tmp_path / "a_path", "a_string"]
+    )
+    assert processed == ["program", "2", str(tmp_path / "a_path"), "a_string"]
+
+
+###############################################################################
 
 
 def test_misc_cleanup():
