@@ -374,10 +374,13 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
         return nSoftTransactionLevel > 0;
     }
 
-    int GetSrsId(const OGRSpatialReference &oSRS);
+    // At least 100000 to avoid conflicting with EPSG codes
+    static constexpr int FIRST_CUSTOM_SRSID = 100000;
+
+    int GetSrsId(const OGRSpatialReference *poSRS);
     const char *GetSrsName(const OGRSpatialReference &oSRS);
-    OGRSpatialReference *GetSpatialRef(int iSrsId,
-                                       bool bFallbackToEPSG = false);
+    OGRSpatialReference *GetSpatialRef(int iSrsId, bool bFallbackToEPSG = false,
+                                       bool bEmitErrorIfNotFound = true);
     OGRErr CreateExtensionsTableIfNecessary();
     bool HasExtensionsTable();
 
@@ -918,10 +921,11 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
                               const char *pszGeomType, bool bHasZ, bool bHasM);
     void SetCreationParameters(
         OGRwkbGeometryType eGType, const char *pszGeomColumnName,
-        int bGeomNullable, OGRSpatialReference *poSRS,
-        const OGRGeomCoordinatePrecision &oCoordPrec, bool bDiscardCoordLSB,
-        bool bUndoDiscardCoordLSBOnReading, const char *pszFIDColumnName,
-        const char *pszIdentifier, const char *pszDescription);
+        int bGeomNullable, const OGRSpatialReference *poSRS,
+        const char *pszSRID, const OGRGeomCoordinatePrecision &oCoordPrec,
+        bool bDiscardCoordLSB, bool bUndoDiscardCoordLSBOnReading,
+        const char *pszFIDColumnName, const char *pszIdentifier,
+        const char *pszDescription);
     void SetDeferredSpatialIndexCreation(bool bFlag);
 
     void SetASpatialVariant(GPKGASpatialVariant eASpatialVariant)

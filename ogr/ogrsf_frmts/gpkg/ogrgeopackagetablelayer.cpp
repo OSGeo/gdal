@@ -1973,8 +1973,7 @@ OGRGeoPackageTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     }
 
     const OGRSpatialReference *poSRS = oGeomField.GetSpatialRef();
-    if (poSRS != nullptr)
-        m_iSrs = m_poDS->GetSrsId(*poSRS);
+    m_iSrs = m_poDS->GetSrsId(poSRS);
 
     /* -------------------------------------------------------------------- */
     /*      Create the new field.                                           */
@@ -5605,10 +5604,10 @@ void OGRGeoPackageTableLayer::SetOpeningParameters(
 
 void OGRGeoPackageTableLayer::SetCreationParameters(
     OGRwkbGeometryType eGType, const char *pszGeomColumnName, int bGeomNullable,
-    OGRSpatialReference *poSRS, const OGRGeomCoordinatePrecision &oCoordPrec,
-    bool bDiscardCoordLSB, bool bUndoDiscardCoordLSBOnReading,
-    const char *pszFIDColumnName, const char *pszIdentifier,
-    const char *pszDescription)
+    const OGRSpatialReference *poSRS, const char *pszSRID,
+    const OGRGeomCoordinatePrecision &oCoordPrec, bool bDiscardCoordLSB,
+    bool bUndoDiscardCoordLSBOnReading, const char *pszFIDColumnName,
+    const char *pszIdentifier, const char *pszDescription)
 {
     m_bIsSpatial = eGType != wkbNone;
     m_bIsInGpkgContents =
@@ -5626,9 +5625,59 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
         m_nZFlag = wkbHasZ(eGType) ? 1 : 0;
         m_nMFlag = wkbHasM(eGType) ? 1 : 0;
         OGRGeomFieldDefn oGeomFieldDefn(pszGeomColumnName, eGType);
-        if (poSRS)
-            m_iSrs = m_poDS->GetSrsId(*poSRS);
+
         oGeomFieldDefn.SetSpatialRef(poSRS);
+        if (pszSRID)
+        {
+            m_iSrs = atoi(pszSRID);
+            if (m_iSrs == GDALGeoPackageDataset::FIRST_CUSTOM_SRSID - 1)
+            {
+                m_iSrs = m_poDS->GetSrsId(nullptr);
+                oGeomFieldDefn.SetSpatialRef(nullptr);
+            }
+            else
+            {
+                auto poGotSRS =
+                    m_poDS->GetSpatialRef(m_iSrs, /* bFallbackToEPSG = */ false,
+                                          /* bEmitErrorIfNotFound = */ false);
+                if (poGotSRS)
+                {
+                    oGeomFieldDefn.SetSpatialRef(poGotSRS);
+                    poGotSRS->Release();
+                }
+                else
+                {
+                    bool bOK = false;
+                    OGRSpatialReference *poSRSTmp = new OGRSpatialReference();
+                    if (m_iSrs < 32767)
+                    {
+                        CPLErrorHandlerPusher oErrorHandler(
+                            CPLQuietErrorHandler);
+                        CPLErrorStateBackuper oBackuper;
+                        if (poSRSTmp->importFromEPSG(m_iSrs) == OGRERR_NONE)
+                        {
+                            bOK = true;
+                            poSRSTmp->SetAxisMappingStrategy(
+                                OAMS_TRADITIONAL_GIS_ORDER);
+                            m_iSrs = m_poDS->GetSrsId(poSRSTmp);
+                            oGeomFieldDefn.SetSpatialRef(poSRSTmp);
+                        }
+                    }
+                    if (!bOK)
+                    {
+                        CPLError(
+                            CE_Warning, CPLE_AppDefined,
+                            "No entry in gpkg_spatial_ref_sys matching SRID=%s",
+                            pszSRID);
+                    }
+                    poSRSTmp->Release();
+                }
+            }
+        }
+        else
+        {
+            m_iSrs = m_poDS->GetSrsId(poSRS);
+        }
         oGeomFieldDefn.SetNullable(bGeomNullable);
         oGeomFieldDefn.SetCoordinatePrecision(oCoordPrec);
 
@@ -7271,8 +7320,7 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
             if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
                 return OGRERR_FAILURE;
 
-            const int nNewSRID =
-                poNewSRS ? m_poDS->GetSrsId(*(poNewSRS.get())) : 0;
+            const int nNewSRID = m_poDS->GetSrsId(poNewSRS.get());
 
             // Replace the old SRID by the new ones in geometry blobs
             uint32_t nNewSRID_LSB = nNewSRID;
