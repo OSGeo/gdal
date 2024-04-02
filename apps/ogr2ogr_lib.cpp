@@ -6653,7 +6653,8 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
     argParser->add_description(
         _("Converts simple features data between file formats."));
 
-    argParser->add_epilog(_("https://gdal.org/programs/ogr2ogr.html"));
+    argParser->add_epilog(
+        _("For more details, consult https://gdal.org/programs/ogr2ogr.html"));
 
     argParser->add_output_format_argument(psOptions->osFormat);
 
@@ -7377,25 +7378,9 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
         .help(_("Display progress on terminal. Only works if input layers have "
                 "the 'fast feature count' capability."));
 
-    argParser->add_argument("-if")
-        .append()
-        .metavar("<format>")
-        .action(
-            [psOptionsForBinary](const std::string &s)
-            {
-                if (psOptionsForBinary)
-                {
-                    if (GDALGetDriverByName(s.c_str()) == nullptr)
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "%s is not a recognized driver", s.c_str());
-                    }
-                    psOptionsForBinary->aosAllowInputDrivers.AddString(
-                        s.c_str());
-                }
-            })
-        .help(
-            _("Format/driver name(s) to be attempted to open the input file."));
+    argParser->add_input_format_argument(
+        psOptionsForBinary ? &psOptionsForBinary->aosAllowInputDrivers
+                           : nullptr);
 
     argParser->add_open_options_argument(
         psOptionsForBinary ? &(psOptionsForBinary->aosOpenOptions) : nullptr);
