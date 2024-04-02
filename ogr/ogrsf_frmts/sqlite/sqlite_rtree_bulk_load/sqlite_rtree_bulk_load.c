@@ -813,6 +813,16 @@ static bool insert_into_db(const struct rtree_insert_context* ctxt,
     return true;
 }
 
+static bool IsLowercaseAlpha(const char* s)
+{
+    for (; *s != 0; ++s) {
+        if (!(*s >= 'a' && *s <= 'z')) {
+            return false;
+        }
+    }
+    return true;
+}
+
 bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_serialize)(
                                const struct sqlite_rtree_bl *tr,
                                sqlite3* hDB,
@@ -827,10 +837,24 @@ bool SQLITE_RTREE_BL_SYMBOL(sqlite_rtree_bl_serialize)(
         *p_error_msg = NULL;
     }
 
-    char* sql = sqlite3_mprintf(
-        "CREATE VIRTUAL TABLE \"%w\" USING rtree(\"%w\", \"%w\", \"%w\", \"%w\", \"%w\")",
-        rtree_name, rowid_colname, minx_colname, maxx_colname, miny_colname,
-        maxy_colname);
+    char* sql;
+    if (IsLowercaseAlpha(rowid_colname) &&
+        IsLowercaseAlpha(minx_colname) &&
+        IsLowercaseAlpha(maxx_colname) &&
+        IsLowercaseAlpha(miny_colname) &&
+        IsLowercaseAlpha(maxy_colname)) {
+        /* To make OGC GeoPackage compliance test happy... */
+        sql = sqlite3_mprintf(
+            "CREATE VIRTUAL TABLE \"%w\" USING rtree(%s, %s, %s, %s, %s)",
+            rtree_name, rowid_colname, minx_colname, maxx_colname, miny_colname,
+            maxy_colname);
+    }
+    else {
+        sql = sqlite3_mprintf(
+            "CREATE VIRTUAL TABLE \"%w\" USING rtree(\"%w\", \"%w\", \"%w\", \"%w\", \"%w\")",
+            rtree_name, rowid_colname, minx_colname, maxx_colname, miny_colname,
+            maxy_colname);
+    }
     int ret = sqlite3_exec(hDB, sql, NULL, NULL, p_error_msg);
     sqlite3_free(sql);
     if (ret != SQLITE_OK) {
