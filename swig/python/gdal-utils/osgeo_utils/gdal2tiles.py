@@ -2801,9 +2801,7 @@ class GDAL2Tiles(object):
                         if wysize != self.tile_size:
                             wy = self.tile_size - wysize
 
-                if self.options.exclude_transparent and (
-                    rxsize == 0 or rysize == 0 or wxsize == 0 or wysize == 0
-                ):
+                if rxsize == 0 or rysize == 0 or wxsize == 0 or wysize == 0:
                     if self.options.verbose:
                         logger.debug("\tExcluding tile with no pixel coverage")
                     continue
