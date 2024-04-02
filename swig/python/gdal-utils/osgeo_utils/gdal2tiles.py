@@ -2801,6 +2801,11 @@ class GDAL2Tiles(object):
                         if wysize != self.tile_size:
                             wy = self.tile_size - wysize
 
+                if rxsize == 0 or rysize == 0 or wxsize == 0 or wysize == 0:
+                    if self.options.verbose:
+                        logger.debug("\tExcluding tile with no pixel coverage")
+                    continue
+
                 # Read the source raster if anything is going inside the tile as per the computed
                 # geo_query
                 tile_details.append(
