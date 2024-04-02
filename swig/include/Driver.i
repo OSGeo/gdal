@@ -126,9 +126,12 @@ public:
     return GDALCopyDatasetFiles( self, newName, oldName );
   }
 
-  const char *GetName() {
-    return GDALGetDescription(self);
+#ifdef SWIGPYTHON
+  bool TestCapability(const char* cap) {
+    // TODO: should this also check DCAP entries in driver metadata?
+    return (OGR_Dr_TestCapability(self, cap) > 0);
   }
+#endif
 
   int Register() {
     return GDALRegisterDriver( self );

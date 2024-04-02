@@ -2110,6 +2110,27 @@ def _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions():
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 %}
 
+%pythoncode %{
+
+def CreateDataSource(self, utf8_path, options=None):
+    return self.Create(utf8_path, 0, 0, 0, GDT_Unknown, options or [])
+
+def CopyDataSource(self, ds, utf8_path, options=None):
+    return self.CreateCopy(utf8_path, ds, options = options or [])
+
+def DeleteDataSource(self, utf8_path):
+    return self.Delete(utf8_path)
+
+def Open(self, utf8_path, update=False):
+    return OpenEx(utf8_path,
+                  OF_VECTOR | (OF_UPDATE if update else 0),
+                  [self.GetDescription()])
+
+def GetName(self):
+    return self.GetDescription()
+
+%}
+
 }
 
 // End: to be removed in GDAL 4.0

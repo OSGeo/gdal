@@ -1211,3 +1211,25 @@ def test_general_cmd_line_processor(tmp_path):
         ["program", 2, tmp_path / "a_path", "a_string"]
     )
     assert processed == ["program", "2", str(tmp_path / "a_path"), "a_string"]
+
+
+def test_driver_open_throw_1():
+
+    with gdaltest.enable_exceptions():
+        drv = ogr.GetDriverByName("ESRI Shapefile")
+
+        assert isinstance(drv, ogr.Driver)
+
+        with pytest.raises(RuntimeError, match="No such file or directory"):
+            drv.Open("does_not_exist.shp")
+
+
+def test_driver_open_throw_2():
+
+    with gdaltest.enable_exceptions():
+        drv = ogr.GetDriverByName("MapInfo File")
+
+        assert isinstance(drv, ogr.Driver)
+
+        with pytest.raises(RuntimeError, match="not recognized"):
+            drv.Open("data/poly.shp")

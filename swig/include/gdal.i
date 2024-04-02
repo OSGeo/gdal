@@ -2175,6 +2175,7 @@ GDALDatasetShadow* wrapper_GDALMultiDimTranslateDestName( const char* dest,
 // because Dataset is not defined at that point.
 %pythoncode %{
 ogr.DataSource = Dataset
+ogr.Driver = Driver
 %}
 #endif
 

@@ -29,9 +29,6 @@
 
 %include "ogr_docs.i"
 %include "ogr_layer_docs.i"
-#ifndef FROM_GDAL_I
-%include "ogr_driver_docs.i"
-#endif
 %include "ogr_feature_docs.i"
 %include "ogr_featuredef_docs.i"
 %include "ogr_fielddef_docs.i"

@@ -756,6 +756,11 @@ public:
 
 #ifndef FROM_GDAL_I
 
+#ifdef SWIGPYTHON
+/* In Python, gdal.Driver and ogr.Driver are equivalent */
+typedef GDALDriverShadow OGRDriverShadow;
+#else
+
 %rename (Driver) OGRDriverShadow;
 
 #ifdef SWIGCSHARP
@@ -866,6 +871,8 @@ public:
 
 } /* %extend */
 }; /* class OGRDriverShadow */
+
+#endif
 
 /************************************************************************/
 /*                            OGRDataSource                             */
