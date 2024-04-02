@@ -2336,6 +2336,22 @@ protected:
           }
         }
         auto argument = positional_argument_it++;
+
+        // Deal with the situation of <positional_arg1>... <positional_arg2>
+        if (argument->m_num_args_range.get_min() == 1 &&
+            argument->m_num_args_range.get_max() == (std::numeric_limits<std::size_t>::max)() &&
+            positional_argument_it != std::end(m_positional_arguments) &&
+            std::next(positional_argument_it) == std::end(m_positional_arguments) &&
+            positional_argument_it->m_num_args_range.get_min() == 1 &&
+            positional_argument_it->m_num_args_range.get_max() == 1 ) {
+          if (std::next(it) != end) {
+            positional_argument_it->consume(std::prev(end), end);
+            end = std::prev(end);
+          } else {
+            throw std::runtime_error("Missing " + positional_argument_it->m_names.front());
+          }
+        }
+
         it = argument->consume(it, end);
         continue;
       }
