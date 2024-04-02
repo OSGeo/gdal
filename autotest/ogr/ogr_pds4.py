@@ -130,7 +130,7 @@ def validate_xml(filename):
     )
 
     ds = gdal.OpenEx(
-        "GMLAS:" + filename,
+        f"GMLAS:{filename}",
         open_options=[
             "VALIDATE=YES",
             "FAIL_IF_VALIDATION_ERROR=YES",
@@ -219,18 +219,18 @@ def test_ogr_pds4_read_table_character_test_ogrsf():
     assert "INFO" in ret and "ERROR" not in ret
 
 
-def test_ogr_pds4_append_and_modify_table_character():
+def test_ogr_pds4_append_and_modify_table_character(tmp_vsimem):
 
     gdal.FileFromMemBuffer(
-        "/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml",
+        tmp_vsimem / "ele_evt_12hr_orbit_2011-2012_truncated.xml",
         open("data/pds4/ele_evt_12hr_orbit_2011-2012_truncated.xml", "rb").read(),
     )
     gdal.FileFromMemBuffer(
-        "/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.tab",
+        tmp_vsimem / "ele_evt_12hr_orbit_2011-2012_truncated.tab",
         open("data/pds4/ele_evt_12hr_orbit_2011-2012_truncated.tab", "rb").read(),
     )
 
-    ds = ogr.Open("/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml", update=1)
+    ds = ogr.Open(tmp_vsimem / "ele_evt_12hr_orbit_2011-2012_truncated.xml", update=1)
     lyr = ds.GetLayer(0)
     assert lyr.TestCapability(ogr.OLCSequentialWrite)
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -243,10 +243,10 @@ def test_ogr_pds4_append_and_modify_table_character():
     assert not f.IsFieldSet("MET")
     ds = None
 
-    assert validate_xml("/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml")
+    assert validate_xml(tmp_vsimem / "ele_evt_12hr_orbit_2011-2012_truncated.xml")
 
     # Re-open
-    ds = ogr.Open("/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml", update=1)
+    ds = ogr.Open(tmp_vsimem / "ele_evt_12hr_orbit_2011-2012_truncated.xml", update=1)
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 6
     f = lyr.GetFeature(6)
@@ -254,30 +254,26 @@ def test_ogr_pds4_append_and_modify_table_character():
     assert f.GetGeometryRef() is None
     ds = None
 
-    ogr.GetDriverByName("PDS4").DeleteDataSource(
-        "/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml"
-    )
 
-
-def test_ogr_pds4_delete_from_table_character():
+def test_ogr_pds4_delete_from_table_character(tmp_vsimem):
 
     gdal.FileFromMemBuffer(
-        "/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml",
+        tmp_vsimem / "ele_evt_12hr_orbit_2011-2012_truncated.xml",
         open("data/pds4/ele_evt_12hr_orbit_2011-2012_truncated.xml", "rb").read(),
     )
     gdal.FileFromMemBuffer(
-        "/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.tab",
+        tmp_vsimem / "ele_evt_12hr_orbit_2011-2012_truncated.tab",
         open("data/pds4/ele_evt_12hr_orbit_2011-2012_truncated.tab", "rb").read(),
     )
 
-    ds = ogr.Open("/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml", update=1)
+    ds = ogr.Open(tmp_vsimem / "ele_evt_12hr_orbit_2011-2012_truncated.xml", update=1)
     lyr = ds.GetLayer(0)
     assert lyr.TestCapability(ogr.OLCDeleteFeature)
     assert lyr.DeleteFeature(2) == 0
     assert lyr.GetFeatureCount() == 4
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ele_evt_12hr_orbit_2011-2012_truncated.xml", "rb")
     data = gdal.VSIFReadL(1, 100000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
@@ -286,10 +282,10 @@ def test_ogr_pds4_delete_from_table_character():
     assert "<description>EE event number. The value is repeated for" in data
     assert "<Special_Constants>" in data
 
-    assert validate_xml("/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml")
+    assert validate_xml(tmp_vsimem / "ele_evt_12hr_orbit_2011-2012_truncated.xml")
 
     # Re-open
-    ds = ogr.Open("/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml", update=1)
+    ds = ogr.Open(tmp_vsimem / "ele_evt_12hr_orbit_2011-2012_truncated.xml", update=1)
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 4
 
@@ -306,37 +302,31 @@ def test_ogr_pds4_delete_from_table_character():
     assert f["BP_LOW"] == 102.9400024
     ds = None
 
-    ogr.GetDriverByName("PDS4").DeleteDataSource(
-        "/vsimem/ele_evt_12hr_orbit_2011-2012_truncated.xml"
-    )
 
-
-def test_ogr_pds4_read_write_table_character_test_ogrsf():
+def test_ogr_pds4_read_write_table_character_test_ogrsf(tmp_path):
 
     import test_cli_utilities
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    open("tmp/ele_evt_12hr_orbit_2011-2012_truncated.xml", "wb").write(
+    open(tmp_path / "ele_evt_12hr_orbit_2011-2012_truncated.xml", "wb").write(
         open("data/pds4/ele_evt_12hr_orbit_2011-2012_truncated.xml", "rb").read()
     )
-    open("tmp/ele_evt_12hr_orbit_2011-2012_truncated.tab", "wb").write(
+    open(tmp_path / "ele_evt_12hr_orbit_2011-2012_truncated.tab", "wb").write(
         open("data/pds4/ele_evt_12hr_orbit_2011-2012_truncated.tab", "rb").read()
     )
 
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path()
-        + " tmp/ele_evt_12hr_orbit_2011-2012_truncated.xml"
+        + f" {tmp_path}/ele_evt_12hr_orbit_2011-2012_truncated.xml"
     )
 
-    gdal.Unlink("tmp/ele_evt_12hr_orbit_2011-2012_truncated.xml")
-    gdal.Unlink("tmp/ele_evt_12hr_orbit_2011-2012_truncated.tab")
     assert "INFO" in ret and "ERROR" not in ret, ret
 
 
 @pytest.mark.parametrize("line_ending", [None, "CRLF", "LF", "error"])
-def test_ogr_pds4_create_table_character(line_ending):
+def test_ogr_pds4_create_table_character(tmp_vsimem, line_ending):
 
     options = [
         "VAR_LOGICAL_IDENTIFIER=urn:foo:bar:baz:logical_identifier",
@@ -349,7 +339,7 @@ def test_ogr_pds4_create_table_character(line_ending):
     ]
 
     ds = ogr.GetDriverByName("PDS4").CreateDataSource(
-        "/vsimem/test.xml", options=options
+        tmp_vsimem / "test.xml", options=options
     )
 
     layer_creation_options = ["TABLE_TYPE=CHARACTER"]
@@ -382,7 +372,7 @@ def test_ogr_pds4_create_table_character(line_ending):
     lyr.CreateFeature(f)
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/test.xml", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "test.xml", "rb")
     data = gdal.VSIFReadL(1, 100000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
@@ -398,11 +388,11 @@ def test_ogr_pds4_create_table_character(line_ending):
 
     if line_ending is None:
         # Only do that check in that configuration for faster test execution
-        assert validate_xml("/vsimem/test.xml")
+        assert validate_xml(tmp_vsimem / "test.xml")
 
-    assert gdal.VSIStatL("/vsimem/test/0f_oo.dat")
+    assert gdal.VSIStatL(tmp_vsimem / "test/0f_oo.dat")
 
-    f = gdal.VSIFOpenL("/vsimem/test/0f_oo.dat", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "test/0f_oo.dat", "rb")
     data = gdal.VSIFReadL(1, 100000, f).decode("ascii")
     gdal.VSIFCloseL(f)
     if line_ending == "LF":
@@ -411,7 +401,7 @@ def test_ogr_pds4_create_table_character(line_ending):
     else:
         assert "\r\n" in data
 
-    ds = ogr.Open("/vsimem/test.xml")
+    ds = ogr.Open(tmp_vsimem / "test.xml")
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 8
     f = lyr.GetNextFeature()
@@ -429,7 +419,7 @@ def test_ogr_pds4_create_table_character(line_ending):
         # Only do that part in that configuration for faster test execution
 
         # Add new layer
-        ds = ogr.Open("/vsimem/test.xml", update=1)
+        ds = ogr.Open(tmp_vsimem / "test.xml", update=1)
         lyr = ds.CreateLayer("bar", options=["TABLE_TYPE=CHARACTER"])
         lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -437,9 +427,9 @@ def test_ogr_pds4_create_table_character(line_ending):
         lyr.CreateFeature(f)
         ds = None
 
-        assert validate_xml("/vsimem/test.xml")
+        assert validate_xml(tmp_vsimem / "test.xml")
 
-        ds = ogr.Open("/vsimem/test.xml")
+        ds = ogr.Open(tmp_vsimem / "test.xml")
         lyr = ds.GetLayerByName("bar")
         f = lyr.GetNextFeature()
         assert f["int"] == 123
@@ -450,11 +440,10 @@ def test_ogr_pds4_create_table_character(line_ending):
 
         ds = None
 
-    ogr.GetDriverByName("PDS4").DeleteDataSource("/vsimem/test.xml")
-    gdal.Rmdir("/vsimem/test")
+    ogr.GetDriverByName("PDS4").DeleteDataSource(tmp_vsimem / "test.xml")
 
 
-def test_ogr_pds4_create_with_srs():
+def test_ogr_pds4_create_with_srs(tmp_vsimem):
 
     options = [
         "VAR_LOGICAL_IDENTIFIER=urn:foo:bar:baz:logical_identifier",
@@ -462,7 +451,7 @@ def test_ogr_pds4_create_with_srs():
     ]
 
     ds = ogr.GetDriverByName("PDS4").CreateDataSource(
-        "/vsimem/test.xml", options=options
+        tmp_vsimem / "test.xml", options=options
     )
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
@@ -477,17 +466,17 @@ def test_ogr_pds4_create_with_srs():
     lyr.CreateFeature(f)
     ds = None
 
-    assert validate_xml("/vsimem/test.xml")
+    assert validate_xml(tmp_vsimem / "test.xml")
 
-    assert gdal.VSIStatL("/vsimem/bar.dat")
+    assert gdal.VSIStatL(tmp_vsimem / "bar.dat")
 
-    f = gdal.VSIFOpenL("/vsimem/test.xml", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "test.xml", "rb")
     data = gdal.VSIFReadL(1, 100000, f).decode("ascii")
     gdal.VSIFCloseL(f)
     assert "<local_identifier_reference>bar</local_identifier_reference>" in data
     assert "<local_identifier>bar</local_identifier>" in data
 
-    ds = ogr.Open("/vsimem/test.xml")
+    ds = ogr.Open(tmp_vsimem / "test.xml")
     lyr = ds.GetLayerByName("bar")
     assert lyr.GetSpatialRef()
     assert lyr.GetSpatialRef().IsGeographic()
@@ -495,10 +484,8 @@ def test_ogr_pds4_create_with_srs():
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT Z (1 2 3)"
     ds = None
 
-    ogr.GetDriverByName("PDS4").DeleteDataSource("/vsimem/test.xml")
 
-
-def test_ogr_pds4_create_table_binary():
+def test_ogr_pds4_create_table_binary(tmp_vsimem):
 
     options = [
         "VAR_LOGICAL_IDENTIFIER=urn:foo:bar:baz:logical_identifier",
@@ -514,7 +501,7 @@ def test_ogr_pds4_create_table_binary():
         for endianness in ["LSB", "MSB"]:
 
             ds = ogr.GetDriverByName("PDS4").CreateDataSource(
-                "/vsimem/test.xml", options=options
+                tmp_vsimem / "test.xml", options=options
             )
 
             layername = endianness
@@ -565,7 +552,7 @@ def test_ogr_pds4_create_table_binary():
 
             ds = None
 
-            f = gdal.VSIFOpenL("/vsimem/test.xml", "rb")
+            f = gdal.VSIFOpenL(tmp_vsimem / "test.xml", "rb")
             data = gdal.VSIFReadL(1, 100000, f).decode("ascii")
             gdal.VSIFCloseL(f)
 
@@ -587,9 +574,9 @@ def test_ogr_pds4_create_table_binary():
                 assert "Unsigned" in data, data
                 assert "Signed" not in data, data
 
-            assert validate_xml("/vsimem/test.xml")
+            assert validate_xml(tmp_vsimem / "test.xml")
 
-            ds = ogr.Open("/vsimem/test.xml")
+            ds = ogr.Open(tmp_vsimem / "test.xml")
             layername = endianness
             lyr = ds.GetLayerByName(layername)
             assert lyr.GetLayerDefn().GetFieldCount() == 11
@@ -609,7 +596,7 @@ def test_ogr_pds4_create_table_binary():
     ds = None
 
     # Add new layer
-    ds = ogr.Open("/vsimem/test.xml", update=1)
+    ds = ogr.Open(tmp_vsimem / "test.xml", update=1)
     sr = osr.SpatialReference()
     sr.SetFromUserInput("WGS84")
     lyr = ds.CreateLayer(
@@ -620,21 +607,18 @@ def test_ogr_pds4_create_table_binary():
     lyr.CreateFeature(f)
     ds = None
 
-    assert validate_xml("/vsimem/test.xml")
+    assert validate_xml(tmp_vsimem / "test.xml")
 
-    ds = ogr.Open("/vsimem/test.xml")
+    ds = ogr.Open(tmp_vsimem / "test.xml")
     lyr = ds.GetLayerByName("bar")
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT Z (1 2 3)"
     ds = None
 
-    ogr.GetDriverByName("PDS4").DeleteDataSource("/vsimem/test.xml")
-    gdal.Rmdir("/vsimem/test")
-
 
 @pytest.mark.parametrize("line_ending", [None, "CRLF", "LF", "error"])
 @pytest.mark.require_driver("CSV")
-def test_ogr_pds4_create_table_delimited(line_ending):
+def test_ogr_pds4_create_table_delimited(tmp_vsimem, line_ending):
 
     options = [
         "VAR_LOGICAL_IDENTIFIER=urn:foo:bar:baz:logical_identifier",
@@ -647,7 +631,7 @@ def test_ogr_pds4_create_table_delimited(line_ending):
     ]
 
     ds = ogr.GetDriverByName("PDS4").CreateDataSource(
-        "/vsimem/test.xml", options=options
+        tmp_vsimem / "test.xml", options=options
     )
 
     layer_creation_options = []
@@ -682,7 +666,7 @@ def test_ogr_pds4_create_table_delimited(line_ending):
     lyr.CreateFeature(f)
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/test.xml", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "test.xml", "rb")
     data = gdal.VSIFReadL(1, 100000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
@@ -697,9 +681,9 @@ def test_ogr_pds4_create_table_delimited(line_ending):
 
     if line_ending is None:
         # Only do that check in that configuration for faster test execution
-        assert validate_xml("/vsimem/test.xml")
+        assert validate_xml(tmp_vsimem / "test.xml")
 
-    ds = gdal.OpenEx("/vsimem/test.xml")
+    ds = gdal.OpenEx(tmp_vsimem / "test.xml")
     assert ds
     assert ds.GetLayerCount() == 1
     fl = ds.GetFileList()
@@ -709,7 +693,7 @@ def test_ogr_pds4_create_table_delimited(line_ending):
     assert "foo.vrt" in fl[2]
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/test/foo.csv", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "test/foo.csv", "rb")
     data = gdal.VSIFReadL(1, 100000, f).decode("ascii")
     gdal.VSIFCloseL(f)
     if line_ending == "LF":
@@ -718,7 +702,7 @@ def test_ogr_pds4_create_table_delimited(line_ending):
     else:
         assert "\r\n" in data
 
-    for filename in ["/vsimem/test.xml", "/vsimem/test/foo.vrt"]:
+    for filename in [tmp_vsimem / "test.xml", tmp_vsimem / "test/foo.vrt"]:
         ds = ogr.Open(filename)
         lyr = ds.GetLayer(0)
         assert lyr.GetLayerDefn().GetFieldCount() == 8, filename
@@ -738,7 +722,7 @@ def test_ogr_pds4_create_table_delimited(line_ending):
         # Only do that part in that configuration for faster test execution
 
         # Add new layer
-        ds = ogr.Open("/vsimem/test.xml", update=1)
+        ds = ogr.Open(tmp_vsimem / "test.xml", update=1)
         lyr = ds.CreateLayer(
             "no_geom", geom_type=ogr.wkbNone, options=["TABLE_TYPE=DELIMITED"]
         )
@@ -748,9 +732,9 @@ def test_ogr_pds4_create_table_delimited(line_ending):
         lyr.CreateFeature(f)
         ds = None
 
-        assert validate_xml("/vsimem/test.xml")
+        assert validate_xml(tmp_vsimem / "test.xml")
 
-        ds = ogr.Open("/vsimem/test.xml")
+        ds = ogr.Open(tmp_vsimem / "test.xml")
         lyr = ds.GetLayerByName("no_geom")
         f = lyr.GetNextFeature()
         assert f["int"] == 123
@@ -760,9 +744,6 @@ def test_ogr_pds4_create_table_delimited(line_ending):
         assert f["int"] == -123456789
 
         ds = None
-
-    ogr.GetDriverByName("PDS4").DeleteDataSource("/vsimem/test.xml")
-    gdal.Rmdir("/vsimem/test")
 
 
 def test_ogr_pds4_read_table_binary_group_field():
@@ -777,7 +758,7 @@ def test_ogr_pds4_read_table_binary_group_field():
     assert f["solar_mon_spectrum_23_253_5"] == 31259
 
 
-def test_ogr_pds4_create_table_delimited_with_srs_no_vrt():
+def test_ogr_pds4_create_table_delimited_with_srs_no_vrt(tmp_vsimem):
 
     options = [
         "VAR_LOGICAL_IDENTIFIER=urn:foo:bar:baz:logical_identifier",
@@ -790,7 +771,7 @@ def test_ogr_pds4_create_table_delimited_with_srs_no_vrt():
     ]
 
     ds = ogr.GetDriverByName("PDS4").CreateDataSource(
-        "/vsimem/test.xml", options=options
+        tmp_vsimem / "test.xml", options=options
     )
     srs = osr.SpatialReference()
     srs.SetFromUserInput("+proj=tmerc +datum=WGS84")
@@ -800,9 +781,9 @@ def test_ogr_pds4_create_table_delimited_with_srs_no_vrt():
     lyr.CreateFeature(f)
     ds = None
 
-    assert validate_xml("/vsimem/test.xml")
+    assert validate_xml(tmp_vsimem / "test.xml")
 
-    ds = ogr.Open("/vsimem/test.xml")
+    ds = ogr.Open(tmp_vsimem / "test.xml")
     lyr = ds.GetLayerByName("foo")
     wkt = lyr.GetSpatialRef().ExportToWkt()
     assert wkt.replace(
@@ -813,30 +794,24 @@ def test_ogr_pds4_create_table_delimited_with_srs_no_vrt():
 
     ds = None
 
-    ogr.GetDriverByName("PDS4").DeleteDataSource("/vsimem/test.xml")
-    gdal.Rmdir("/vsimem/test")
 
-
-def test_ogr_pds4_read_table_delimited_test_ogrsf():
+def test_ogr_pds4_read_table_delimited_test_ogrsf(tmp_path):
 
     import test_cli_utilities
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
-    open("tmp/poly_delimited.xml", "wb").write(
+    open(tmp_path / "poly_delimited.xml", "wb").write(
         open("data/pds4/poly_delimited.xml", "rb").read()
     )
-    open("tmp/poly_delimited.csv", "wb").write(
+    open(tmp_path / "poly_delimited.csv", "wb").write(
         open("data/pds4/poly_delimited.csv", "rb").read()
     )
 
     ret = gdaltest.runexternal(
-        test_cli_utilities.get_test_ogrsf_path() + " tmp/poly_delimited.xml"
+        test_cli_utilities.get_test_ogrsf_path() + f" {tmp_path}/poly_delimited.xml"
     )
-
-    gdal.Unlink("tmp/poly_delimited.xml")
-    gdal.Unlink("tmp/poly_delimited.csv")
 
     assert "INFO" in ret and "ERROR" not in ret
 
