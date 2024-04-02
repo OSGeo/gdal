@@ -3171,6 +3171,10 @@ def test_gdalwarp_lib_automatic_grid_sampling():
         outputBounds=[-7655830, -6385994, 7152182, 8423302],
         dstSRS="+proj=laea +lat_0=48.514 +lon_0=-145.204 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs",
     )
+
+    assert ds.GetGeoTransform() == pytest.approx(
+        (-7655830.0, 30850.025, 0.0, 8423302.0, 0.0, -30852.7)
+    )
     assert ds.GetRasterBand(1).Checksum() == 35573
 
 
@@ -4096,6 +4100,16 @@ def test_target_extent_consistent_size():
         ),
     )
 
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            -106.40856573808874,
+            9.992480696983594e-05,
+            0.0,
+            35.51543260935861,
+            0.0,
+            -9.99363763876038e-05,
+        )
+    )
     assert ds.RasterXSize == 4793
     assert ds.RasterYSize == 4143
 
@@ -4120,6 +4134,17 @@ def test_target_extent_consistent_size():
             srcNodata=0,
             format="MEM",
         ),
+    )
+
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            -106.40856573808874,
+            9.992480696983594e-05,
+            0.0,
+            35.51543260935861,
+            0.0,
+            -9.99363763876038e-05,
+        )
     )
 
     assert ds.RasterXSize == 4793

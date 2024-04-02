@@ -3880,7 +3880,8 @@ static GDALDatasetH GDALWarpCreateOutput(
 
             // If a transformer is available, use an extent that covers the
             // target extent instead of the real source image extent
-            if (psTransformInfo && psTransformInfo->pReprojectArg)
+            if (psTransformInfo && psTransformInfo->pReprojectArg &&
+                psTransformInfo->pSrcTransformer == nullptr)
             {
                 const GDALReprojectionTransformInfo *psRTI =
                     static_cast<const GDALReprojectionTransformInfo *>(
@@ -3890,7 +3891,9 @@ static GDALDatasetH GDALWarpCreateOutput(
 
                     // Compute new geotransform from transformed target extent
                     double adfGeoTransform[6];
-                    if (GDALGetGeoTransform(hSrcDS, adfGeoTransform) == CE_None)
+                    if (GDALGetGeoTransform(hSrcDS, adfGeoTransform) ==
+                            CE_None &&
+                        adfGeoTransform[2] == 0 && adfGeoTransform[4] == 0)
                     {
 
                         // Transform target extent to source CRS
