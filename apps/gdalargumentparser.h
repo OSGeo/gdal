@@ -66,6 +66,9 @@ class GDALArgumentParser : public ArgumentParser
     //! Add -q/--quiet argument, and store its value in *pVar (if pVar not null)
     void add_quiet_argument(bool *pVar);
 
+    //! Add "-if format_name" argument for input format, and store its value into *pvar.
+    void add_input_format_argument(CPLStringList *pvar);
+
     //! Add "-of format_name" argument for output format, and store its value into var.
     void add_output_format_argument(std::string &var);
 
