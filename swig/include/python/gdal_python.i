@@ -1994,6 +1994,12 @@ def _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions():
     ogr._WarnIfUserHasNotSpecifiedIfUsingExceptions()
 %}
 
+%pythonprepend GeneralCmdLineProcessor %{
+    import os
+    for i in range(len(args[0])):
+        if isinstance(args[0][i], (os.PathLike, int)):
+            args[0][i] = str(args[0][i])
+%}
 
 %pythonprepend Open %{
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()

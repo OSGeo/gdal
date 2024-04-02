@@ -74,15 +74,23 @@ def test_gdal_retile_version(script_path):
 
 def test_gdal_retile_1(script_path, tmp_path):
 
+    from osgeo_utils import gdal_retile
+
     out_dir = tmp_path / "outretile2"
     out_dir.mkdir()
 
-    test_py_scripts.run_py_script(
-        script_path,
-        "gdal_retile",
-        f"-v -levels 2 -r bilinear -targetDir {out_dir} "
-        + test_py_scripts.get_data_path("gcore")
-        + "byte.tif",
+    gdal_retile.main(
+        [
+            gdal_retile.__file__,
+            "-v",
+            "-levels",
+            2,
+            "-r",
+            "bilinear",
+            "-targetDir",
+            out_dir,
+            test_py_scripts.get_data_path("gcore") + "byte.tif",
+        ]
     )
 
     with gdal.Open(f"{out_dir}/byte_1_1.tif") as ds:
