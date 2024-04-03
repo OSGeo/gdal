@@ -2219,6 +2219,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 *pbUsageError = TRUE;
             GDALTranslateOptionsFree(psOptions);
             delete poVDS;
+            poSrcDS->Release();
             return nullptr;
         }
 
@@ -2244,6 +2245,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                          "minimum and maximum being equal");
                 GDALTranslateOptionsFree(psOptions);
                 delete poVDS;
+                poSrcDS->Release();
                 return nullptr;
             }
 
