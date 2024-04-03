@@ -186,7 +186,8 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
         }
         else
         {
-            m_http_timeout = 300;
+            m_http_timeout =
+                atoi(CPLGetConfigOption("GDAL_HTTP_TIMEOUT", "300"));
         }
     }
 

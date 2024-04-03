@@ -76,7 +76,7 @@ other content before the ``<GDAL_WMS>`` element.
 <Unique>True</Unique>                                                      If set to true the path will appended with md5 hash of ServerURL. Default value is true.
 </Cache>
 <MaxConnections>2</MaxConnections>                                         Maximum number of simultaneous connections. (optional, defaults to 2). Can also be set with the :config:`GDAL_MAX_CONNECTIONS` configuration option (GDAL >= 3.2)
-<Timeout>300</Timeout>                                                     Connection timeout in seconds. (optional, defaults to 300)
+<Timeout>300</Timeout>                                                     Connection timeout in seconds. (optional, defaults to 300 or :config:`GDAL_HTTP_TIMEOUT`, if specified)
 <OfflineMode>true</OfflineMode>                                            Do not download any new images, use only what is in cache. Useful only with cache enabled. (optional, defaults to false)
 <AdviseRead>true</AdviseRead>                                              Enable AdviseRead API call - download images into cache. (optional, defaults to false)
 <VerifyAdviseRead>true</VerifyAdviseRead>                                  Open each downloaded image and do some basic checks before writing into cache. Disabling can save some CPU cycles if server is trusted to always return correct images. (optional, defaults to true)
