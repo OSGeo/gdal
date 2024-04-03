@@ -39,7 +39,10 @@ import pytest
 
 from osgeo import gdal, ogr, osr
 
-pytestmark = pytest.mark.require_driver("FileGDB")
+pytestmark = [
+    pytest.mark.require_driver("FileGDB"),
+    pytest.mark.random_order(disabled=True),
+]
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
@@ -1697,7 +1700,7 @@ def test_ogr_fgdb_19bis(openfilegdb_drv, fgdb_drv, test_gdb):
         pytest.skip()
 
     with gdal.config_option("FGDB_PER_LAYER_COPYING_TRANSACTION", "FALSE"):
-        test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv)
+        test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv, test_gdb)
 
 
 ###############################################################################
