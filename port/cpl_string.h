@@ -190,6 +190,9 @@ typedef enum
 
 CPLValueType CPL_DLL CPLGetValueType(const char *pszValue);
 
+int CPL_DLL CPLToupper(int c);
+int CPL_DLL CPLTolower(int c);
+
 size_t CPL_DLL CPLStrlcpy(char *pszDest, const char *pszSrc, size_t nDestSize);
 size_t CPL_DLL CPLStrlcat(char *pszDest, const char *pszSrc, size_t nDestSize);
 size_t CPL_DLL CPLStrnlen(const char *pszStr, size_t nMaxLen);
