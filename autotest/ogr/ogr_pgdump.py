@@ -76,11 +76,8 @@ def test_ogr_pgdump_1(tmp_path):
     shp_ds = ogr.Open("data/poly.shp")
     shp_lyr = shp_ds.GetLayer(0)
     feat = shp_lyr.GetNextFeature()
-    gdaltest.poly_feat = []
 
     while feat is not None:
-
-        gdaltest.poly_feat.append(feat)
 
         dst_feat.SetFrom(feat)
         lyr.CreateFeature(dst_feat)
@@ -166,11 +163,8 @@ def test_ogr_pgdump_2(tmp_path):
         shp_ds = ogr.Open("data/poly.shp")
         shp_lyr = shp_ds.GetLayer(0)
         feat = shp_lyr.GetNextFeature()
-        gdaltest.poly_feat = []
 
         while feat is not None:
-
-            gdaltest.poly_feat.append(feat)
 
             dst_feat.SetFrom(feat)
             lyr.CreateFeature(dst_feat)
@@ -265,13 +259,10 @@ def test_ogr_pgdump_3(tmp_path):
         shp_ds = ogr.Open("data/poly.shp")
         shp_lyr = shp_ds.GetLayer(0)
         feat = shp_lyr.GetNextFeature()
-        gdaltest.poly_feat = []
 
         i = 0
 
         while feat is not None:
-
-            gdaltest.poly_feat.append(feat)
 
             dst_feat.SetFrom(feat)
             if i == 0:
