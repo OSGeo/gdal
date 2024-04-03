@@ -2103,7 +2103,7 @@ def test_gti_ovr_factor_invalid(tmp_vsimem):
 
     vrt_ds = gdal.Open(index_filename)
     with pytest.raises(Exception, match="Wrong overview factor"):
-        assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
+        vrt_ds.GetRasterBand(1).GetOverviewCount()
 
 
 def test_gti_ovr_ds_name(tmp_vsimem):
@@ -2117,7 +2117,7 @@ def test_gti_ovr_ds_name(tmp_vsimem):
 
     vrt_ds = gdal.Open(index_filename)
     with pytest.raises(Exception):
-        assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
+        vrt_ds.GetRasterBand(1).GetOverviewCount()
 
 
 def test_gti_ovr_lyr_name(tmp_vsimem):
@@ -2131,7 +2131,7 @@ def test_gti_ovr_lyr_name(tmp_vsimem):
 
     vrt_ds = gdal.Open(index_filename)
     with pytest.raises(Exception, match="Layer non_existing does not exist"):
-        assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
+        vrt_ds.GetRasterBand(1).GetOverviewCount()
 
 
 def test_gti_external_ovr(tmp_vsimem):
@@ -2531,7 +2531,7 @@ def test_gti_xml(tmp_vsimem):
 </GDALTileIndexDataset>"""
     vrt_ds = gdal.Open(xml_content)
     with pytest.raises(Exception, match="i_do_not_exist"):
-        assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
+        vrt_ds.GetRasterBand(1).GetOverviewCount()
 
     xml_content = f"""<GDALTileIndexDataset>
   <IndexDataset>{index_filename}</IndexDataset>
@@ -2541,7 +2541,7 @@ def test_gti_xml(tmp_vsimem):
 </GDALTileIndexDataset>"""
     vrt_ds = gdal.Open(xml_content)
     with pytest.raises(Exception, match="i_do_not_exist"):
-        assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 0
+        vrt_ds.GetRasterBand(1).GetOverviewCount()
 
 
 def test_gti_open_options(tmp_vsimem):

@@ -4117,7 +4117,7 @@ def test_ogr_isclockwise():
 
     geom = ogr.Geometry(type=ogr.wkbPoint)
     with pytest.raises(Exception, match="Incompatible geometry for operation"):
-        assert not geom.IsClockwise()
+        geom.IsClockwise()
 
     geom = ogr.CreateGeometryFromWkt("POLYGON((10 100,10 101,11 101,10 100))")
     ring = geom.GetGeometryRef(0)
@@ -4381,7 +4381,7 @@ def test_ogr_geom_GeodesicArea():
     srs.ImportFromEPSG(4326)
     g.AssignSpatialReference(srs)
     with pytest.raises(Exception, match="Non-closed geometry"):
-        assert g.GeodesicArea() < 0
+        g.GeodesicArea()
 
     # GEOMETRYCOLLECTION of CIRCULARSTRING not closed
     g = ogr.CreateGeometryFromWkt("GEOMETRYCOLLECTION(CIRCULARSTRING(0 0,1 1,2 0))")
@@ -4389,7 +4389,7 @@ def test_ogr_geom_GeodesicArea():
     srs.ImportFromEPSG(4326)
     g.AssignSpatialReference(srs)
     with pytest.raises(Exception, match="Non-closed geometry"):
-        assert g.GeodesicArea() < 0
+        g.GeodesicArea()
 
     # COMPOUNDCURVE
     g = ogr.CreateGeometryFromWkt("COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1,2 0,1 -1,0 0))")
@@ -4411,7 +4411,7 @@ def test_ogr_geom_GeodesicArea():
     srs.ImportFromEPSG(4326)
     g.AssignSpatialReference(srs)
     with pytest.raises(Exception, match="Non-closed geometry"):
-        assert g.GeodesicArea() < 0
+        g.GeodesicArea()
 
     # POLYHEDRALSURFACE EMPTY
     g = ogr.CreateGeometryFromWkt("POLYHEDRALSURFACE EMPTY")
@@ -4426,7 +4426,7 @@ def test_ogr_geom_GeodesicArea():
     srs.ImportFromEPSG(4326)
     g.AssignSpatialReference(srs)
     with pytest.raises(Exception, match="not implemented for PolyhedralSurface"):
-        assert g.GeodesicArea() < 0
+        g.GeodesicArea()
 
     # GEOMETRYCOLLECTION of POLYHEDRALSURFACE
     g = ogr.CreateGeometryFromWkt(
@@ -4436,7 +4436,7 @@ def test_ogr_geom_GeodesicArea():
     srs.ImportFromEPSG(4326)
     g.AssignSpatialReference(srs)
     with pytest.raises(Exception, match="not implemented for PolyhedralSurface"):
-        assert g.GeodesicArea() < 0
+        g.GeodesicArea()
 
     # Incompatible geometry type
     g = ogr.CreateGeometryFromWkt("POINT(0 1)")
@@ -4444,14 +4444,14 @@ def test_ogr_geom_GeodesicArea():
     srs.ImportFromEPSG(4326)
     g.AssignSpatialReference(srs)
     with pytest.raises(Exception, match="non-surface geometry type"):
-        assert g.GeodesicArea() < 0
+        g.GeodesicArea()
 
     # No SRS
     g = ogr.CreateGeometryFromWkt("POLYGON((49 2,49 3,48 3,49 2))")
     with pytest.raises(
         Exception, match="Cannot compute area on ellipsoid due to missing SRS"
     ):
-        assert g.GeodesicArea() < 0
+        g.GeodesicArea()
 
     # Engineering SRS
     g = ogr.CreateGeometryFromWkt("POLYGON((49 2,49 3,48 3,49 2))")
@@ -4459,4 +4459,4 @@ def test_ogr_geom_GeodesicArea():
     srs.SetFromUserInput('LOCAL_CS["dummy"]')
     g.AssignSpatialReference(srs)
     with pytest.raises(Exception, match="CRS has no geodetic CRS"):
-        assert g.GeodesicArea() < 0
+        g.GeodesicArea()

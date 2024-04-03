@@ -5882,8 +5882,7 @@ def test_ogr_pg_schema_case_createlayer(pg_ds, tmp_schema):
     tmp_schema_uppercase = tmp_schema.upper()
 
     with pytest.raises(Exception, match='Schema "unexisting_schema" does not exist'):
-        lyr = pg_ds.CreateLayer("unexisting_schema.layer")
-        assert lyr is None
+        pg_ds.CreateLayer("unexisting_schema.layer")
 
     lyr = pg_ds.CreateLayer(
         f"{tmp_schema_uppercase}.test_ogr_pg_schema_case_createlayer"
@@ -5909,7 +5908,6 @@ def test_ogr_pg_schema_case_createlayer(pg_ds, tmp_schema):
             + tmp_schema_uppercase[len(tmp_schema) // 2 :]
         )
         with pytest.raises(Exception, match="Several schemas exist whose name matches"):
-            lyr = pg_ds.CreateLayer(f"{tmp_schema_mixedcase}.yet_another_layer")
-            assert lyr is None
+            pg_ds.CreateLayer(f"{tmp_schema_mixedcase}.yet_another_layer")
     finally:
         pg_ds.ExecuteSQL(f'DROP SCHEMA "{tmp_schema_uppercase}" CASCADE')

@@ -608,11 +608,11 @@ Error""",
 
     # Invalid field
     with pytest.raises(Exception):
-        assert lyr.DeleteField(-1) != 0
+        lyr.DeleteField(-1)
 
     # No server answer
     with pytest.raises(Exception):
-        assert lyr.DeleteField(0) != 0
+        lyr.DeleteField(0)
 
     gdal.FileFromMemBuffer(
         """/vsimem/carto&POSTFIELDS=q=ALTER TABLE "my_layer" DROP COLUMN "boolfield"&api_key=foo""",

@@ -4652,37 +4652,31 @@ def test_ogr_geojson_foreign_members_collection(tmp_vsimem):
         Exception,
         match="Value of FOREIGN_MEMBERS_COLLECTION should start with { and end with }",
     ):
-        assert (
-            ds.CreateLayer(
-                "test",
-                geom_type=ogr.wkbNone,
-                options=["FOREIGN_MEMBERS_COLLECTION=invalid"],
-            )
-            is None
+        ds.CreateLayer(
+            "test",
+            geom_type=ogr.wkbNone,
+            options=["FOREIGN_MEMBERS_COLLECTION=invalid"],
         )
+
     with pytest.raises(
         Exception,
         match="Value of FOREIGN_MEMBERS_COLLECTION should start with { and end with }",
     ):
-        assert (
-            ds.CreateLayer(
-                "test",
-                geom_type=ogr.wkbNone,
-                options=["FOREIGN_MEMBERS_COLLECTION={invalid"],
-            )
-            is None
+        ds.CreateLayer(
+            "test",
+            geom_type=ogr.wkbNone,
+            options=["FOREIGN_MEMBERS_COLLECTION={invalid"],
         )
+
     with pytest.raises(
         Exception, match="Value of FOREIGN_MEMBERS_COLLECTION is invalid JSON"
     ):
-        assert (
-            ds.CreateLayer(
-                "test",
-                geom_type=ogr.wkbNone,
-                options=["FOREIGN_MEMBERS_COLLECTION={invalid}"],
-            )
-            is None
+        ds.CreateLayer(
+            "test",
+            geom_type=ogr.wkbNone,
+            options=["FOREIGN_MEMBERS_COLLECTION={invalid}"],
         )
+
     ds.CreateLayer(
         "test",
         geom_type=ogr.wkbNone,
@@ -4708,37 +4702,31 @@ def test_ogr_geojson_foreign_members_feature(tmp_vsimem):
         Exception,
         match="Value of FOREIGN_MEMBERS_FEATURE should start with { and end with }",
     ):
-        assert (
-            ds.CreateLayer(
-                "test",
-                geom_type=ogr.wkbNone,
-                options=["FOREIGN_MEMBERS_FEATURE=invalid"],
-            )
-            is None
+        ds.CreateLayer(
+            "test",
+            geom_type=ogr.wkbNone,
+            options=["FOREIGN_MEMBERS_FEATURE=invalid"],
         )
+
     with pytest.raises(
         Exception,
         match="Value of FOREIGN_MEMBERS_FEATURE should start with { and end with }",
     ):
-        assert (
-            ds.CreateLayer(
-                "test",
-                geom_type=ogr.wkbNone,
-                options=["FOREIGN_MEMBERS_FEATURE={invalid"],
-            )
-            is None
+        ds.CreateLayer(
+            "test",
+            geom_type=ogr.wkbNone,
+            options=["FOREIGN_MEMBERS_FEATURE={invalid"],
         )
+
     with pytest.raises(
         Exception, match="Value of FOREIGN_MEMBERS_FEATURE is invalid JSON"
     ):
-        assert (
-            ds.CreateLayer(
-                "test",
-                geom_type=ogr.wkbNone,
-                options=["FOREIGN_MEMBERS_FEATURE={invalid}"],
-            )
-            is None
+        ds.CreateLayer(
+            "test",
+            geom_type=ogr.wkbNone,
+            options=["FOREIGN_MEMBERS_FEATURE={invalid}"],
         )
+
     lyr = ds.CreateLayer(
         "test", geom_type=ogr.wkbNone, options=['FOREIGN_MEMBERS_FEATURE={"foo":"bar"}']
     )

@@ -192,13 +192,13 @@ def test_ogr_dgn_7(tmp_path):
     # Null geometry
     dst_feat = ogr.Feature(feature_def=dgn2_lyr.GetLayerDefn())
     with pytest.raises(Exception):
-        assert dgn2_lyr.CreateFeature(dst_feat) != 0
+        dgn2_lyr.CreateFeature(dst_feat)
 
     # Empty geometry
     dst_feat = ogr.Feature(feature_def=dgn2_lyr.GetLayerDefn())
     dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT EMPTY"))
     with pytest.raises(Exception):
-        assert dgn2_lyr.CreateFeature(dst_feat) != 0
+        dgn2_lyr.CreateFeature(dst_feat)
 
     # Empty geometry in subpart
     dst_feat = ogr.Feature(feature_def=dgn2_lyr.GetLayerDefn())
@@ -206,7 +206,7 @@ def test_ogr_dgn_7(tmp_path):
         ogr.CreateGeometryFromWkt("GEOMETRYCOLLECTION(POINT (1 2),POLYGON EMPTY)")
     )
     with pytest.raises(Exception):
-        assert dgn2_lyr.CreateFeature(dst_feat) != 0
+        dgn2_lyr.CreateFeature(dst_feat)
 
     ###############################################################################
     # Verify that our copy is pretty similar.

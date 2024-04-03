@@ -3554,15 +3554,12 @@ def test_gdalwarp_lib_srcBands():
     # Error: len(dstBands) != len(srcBands)
     with gdal.quiet_errors():
         with pytest.raises(Exception):
-            assert (
-                gdal.Warp(
-                    "",
-                    "../gcore/data/byte.tif",
-                    format="MEM",
-                    srcBands=[1, 1],
-                    dstBands=[1],
-                )
-                is None
+            gdal.Warp(
+                "",
+                "../gcore/data/byte.tif",
+                format="MEM",
+                srcBands=[1, 1],
+                dstBands=[1],
             )
 
     # Invalid srcBands[0] value

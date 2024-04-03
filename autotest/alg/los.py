@@ -43,7 +43,7 @@ def test_los_basic():
     assert not gdal.IsLineOfSightVisible(mem_ds.GetRasterBand(1), 0, 0, 1, 1, 0, -1)
 
     with pytest.raises(Exception, match="Received a NULL pointer"):
-        assert gdal.IsLineOfSightVisible(None, 0, 0, 0, 0, 0, 0)
+        gdal.IsLineOfSightVisible(None, 0, 0, 0, 0, 0, 0)
 
     with pytest.raises(Exception, match="Access window out of range in RasterIO()"):
-        assert gdal.IsLineOfSightVisible(mem_ds.GetRasterBand(1), 0, 0, 1, 2, 0, 1)
+        gdal.IsLineOfSightVisible(mem_ds.GetRasterBand(1), 0, 0, 1, 2, 0, 1)

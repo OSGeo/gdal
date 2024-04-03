@@ -1634,11 +1634,11 @@ def test_ogr_oapif_crs_and_preferred_crs_open_options():
     # Test changing active SRS
     assert lyr.SetActiveSRS(0, supported_srs_list[1]) == ogr.OGRERR_NONE
     with pytest.raises(Exception):
-        assert lyr.SetActiveSRS(0, None) != ogr.OGRERR_NONE
+        lyr.SetActiveSRS(0, None)
     srs_other = osr.SpatialReference()
     srs_other.ImportFromEPSG(32632)
     with pytest.raises(Exception):
-        assert lyr.SetActiveSRS(0, srs_other) != ogr.OGRERR_NONE
+        lyr.SetActiveSRS(0, srs_other)
     assert lyr.GetSpatialRef().IsGeographic()
     minx, maxx, miny, maxy = lyr.GetExtent()
     assert (minx, miny, maxx, maxy) == pytest.approx(

@@ -915,7 +915,7 @@ def test_ogr_feature_GetFieldAsISO8601DateTime():
     )
 
     with pytest.raises(Exception):
-        assert feature.GetFieldAsISO8601DateTime(-1)
+        feature.GetFieldAsISO8601DateTime(-1)
 
     assert feature.GetFieldAsISO8601DateTime("field_integer") == ""
 

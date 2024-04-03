@@ -103,7 +103,7 @@ def test_vsicached_ok(filename):
 def test_vsicached_wrong_size(filename):
 
     with pytest.raises(Exception, match="Invalid value for"):
-        assert gdal.VSIFOpenL(filename, "rb") is None
+        gdal.VSIFOpenL(filename, "rb")
 
 
 def test_vsicached_update_not_supported():

@@ -550,14 +550,14 @@ def test_ogr_tiledb_basic(nullable, batch_size):
     assert set(f.GetFID() for f in lyr) == set([1])
 
     with pytest.raises(Exception):
-        assert lyr.SetAttributeFilter("datetimefield = 'invalid'") == ogr.OGRERR_FAILURE
+        lyr.SetAttributeFilter("datetimefield = 'invalid'")
 
     lyr.SetAttributeFilter("datefield = '2023-04-07'")
     assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
     assert set(f.GetFID() for f in lyr) == set([1])
 
     with pytest.raises(Exception):
-        assert lyr.SetAttributeFilter("datefield = 'invalid'") == ogr.OGRERR_FAILURE
+        lyr.SetAttributeFilter("datefield = 'invalid'")
 
     lyr.SetAttributeFilter("timefield = '12:34:56.789'")
     # timefield comparison not supported by tiledb currently
@@ -961,10 +961,7 @@ def test_ogr_tiledb_switch_between_read_and_write():
 
     assert lyr.TestCapability(ogr.OLCCreateField) == 0
     with pytest.raises(Exception):
-        assert (
-            lyr.CreateField(ogr.FieldDefn("intfield2", ogr.OFTInteger))
-            == ogr.OGRERR_FAILURE
-        )
+        lyr.CreateField(ogr.FieldDefn("intfield2", ogr.OFTInteger))
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f["intfield"] = 2

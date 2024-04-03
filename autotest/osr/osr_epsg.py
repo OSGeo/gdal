@@ -507,7 +507,7 @@ def test_osr_epsg_auto_identify_epsg_projcrs_with_geogcrs_without_axis_roder():
         == 0
     )
     with pytest.raises(Exception):
-        assert srs.AutoIdentifyEPSG()
+        srs.AutoIdentifyEPSG()
     assert srs.CloneGeogCS().GetAuthorityCode(None) is None
 
 

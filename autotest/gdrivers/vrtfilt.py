@@ -220,7 +220,7 @@ def test_vrtfilt_invalid_kernel_size():
     md["source_0"] = filterSourceXML
 
     with pytest.raises(Exception):
-        assert vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources") != gdal.CE_None
+        vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources")
 
     filterSourceXML = """ <KernelFilteredSource>
       <SourceFilename>data/rgbsmall.tif</SourceFilename>
@@ -237,4 +237,4 @@ def test_vrtfilt_invalid_kernel_size():
     md["source_0"] = filterSourceXML
 
     with pytest.raises(Exception):
-        assert vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources") != gdal.CE_None
+        vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources")

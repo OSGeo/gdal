@@ -602,7 +602,7 @@ def test_osr_basic_16():
     # Limit test : build GEOCCS from an invalid GEOGCS
     srs = osr.SpatialReference()
     with pytest.raises(Exception):
-        assert srs.SetFromUserInput("""GEOGCS["foo"]""") != 0
+        srs.SetFromUserInput("""GEOGCS["foo"]""")
 
 
 ###############################################################################
@@ -1886,7 +1886,7 @@ def test_osr_import_projjson():
 
     broken_projjson = projjson[0:-10]
     with pytest.raises(Exception):
-        assert sr.SetFromUserInput(broken_projjson)
+        sr.SetFromUserInput(broken_projjson)
 
 
 def test_osr_export_projjson():
@@ -2110,7 +2110,7 @@ def test_osr_basic_set_from_user_input_too_long():
         srs.SetFromUserInput("+proj=pipeline " + "+step +proj=longlat " * 100000)
 
     with pytest.raises(Exception):
-        assert srs.SetFromUserInput("AUTO:" + "x" * 100000)
+        srs.SetFromUserInput("AUTO:" + "x" * 100000)
 
     with pytest.raises(Exception):
         srs.SetFromUserInput("http://opengis.net/def/crs/" + "x" * 100000)

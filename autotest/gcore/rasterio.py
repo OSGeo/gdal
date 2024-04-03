@@ -1346,28 +1346,16 @@ def test_rasterio_dataset_invalid_resample_alg(resample_alg):
     mem_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
     with gdal.quiet_errors():
         with pytest.raises(Exception):
-            assert (
-                mem_ds.ReadRaster(buf_xsize=1, buf_ysize=1, resample_alg=resample_alg)
-                is None
+            mem_ds.ReadRaster(buf_xsize=1, buf_ysize=1, resample_alg=resample_alg)
+        with pytest.raises(Exception):
+            mem_ds.GetRasterBand(1).ReadRaster(
+                buf_xsize=1, buf_ysize=1, resample_alg=resample_alg
             )
         with pytest.raises(Exception):
-            assert (
-                mem_ds.GetRasterBand(1).ReadRaster(
-                    buf_xsize=1, buf_ysize=1, resample_alg=resample_alg
-                )
-                is None
-            )
+            mem_ds.ReadAsArray(buf_xsize=1, buf_ysize=1, resample_alg=resample_alg)
         with pytest.raises(Exception):
-            assert (
-                mem_ds.ReadAsArray(buf_xsize=1, buf_ysize=1, resample_alg=resample_alg)
-                is None
-            )
-        with pytest.raises(Exception):
-            assert (
-                mem_ds.GetRasterBand(1).ReadAsArray(
-                    buf_xsize=1, buf_ysize=1, resample_alg=resample_alg
-                )
-                is None
+            mem_ds.GetRasterBand(1).ReadAsArray(
+                buf_xsize=1, buf_ysize=1, resample_alg=resample_alg
             )
 
 
