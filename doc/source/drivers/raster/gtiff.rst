@@ -132,8 +132,7 @@ The following configurations can be encountered depending if overviews
 and nodata masks are internal or not.
 
 -  Internal overviews, internal nodata mask: If a GeoTIFF file has a
-   internal transparency mask (and the :config:`GDAL_TIFF_INTERNAL_MASK`
-   environment variable is not set to NO) and the GeoTIFF file is opened
+   internal transparency mask and the GeoTIFF file is opened
    in update mode, BuildOverviews() will automatically create overviews
    for the internal transparency mask.
 -  External overviews, external nodata mask: When opened in read-only
