@@ -1960,7 +1960,8 @@ def test_gti_overlapping_sources_mask_band(tmp_vsimem):
     ds = gdal.GetDriverByName("GTiff").Create(filename1, 2, 1)
     ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x02")
-    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
+        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\xFF\x00")
     del ds
 
@@ -1968,7 +1969,8 @@ def test_gti_overlapping_sources_mask_band(tmp_vsimem):
     ds = gdal.GetDriverByName("GTiff").Create(filename2, 2, 1)
     ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x03\x04")
-    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
+        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\x00\xFE")
     del ds
 

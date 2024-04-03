@@ -265,16 +265,15 @@ def test_cog_creation_of_overviews():
     filename = directory + "/cog.tif"
     src_ds = gdal.Translate("", "data/byte.tif", options="-of MEM -outsize 2048 300")
 
-    with gdaltest.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
-        check_filename = "/vsimem/tmp.tif"
-        ds = gdal.GetDriverByName("GTiff").CreateCopy(
-            check_filename, src_ds, options=["TILED=YES"]
-        )
-        ds.BuildOverviews("CUBIC", [2, 4])
-        cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        cs2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
-        ds = None
-        gdal.Unlink(check_filename)
+    check_filename = "/vsimem/tmp.tif"
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        check_filename, src_ds, options=["TILED=YES"]
+    )
+    ds.BuildOverviews("CUBIC", [2, 4])
+    cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    cs2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    ds = None
+    gdal.Unlink(check_filename)
 
     ds = gdal.GetDriverByName("COG").CreateCopy(
         filename, src_ds, callback=my_cbk, callback_data=tab
@@ -377,16 +376,15 @@ def test_cog_creation_of_overviews_with_mask():
         0, 0, 1024, 300, b"\xFF", buf_xsize=1, buf_ysize=1
     )
 
-    with gdaltest.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
-        check_filename = "/vsimem/tmp.tif"
-        ds = gdal.GetDriverByName("GTiff").CreateCopy(
-            check_filename, src_ds, options=["TILED=YES"]
-        )
-        ds.BuildOverviews("CUBIC", [2, 4])
-        cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        cs2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
-        ds = None
-        gdal.Unlink(check_filename)
+    check_filename = "/vsimem/tmp.tif"
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        check_filename, src_ds, options=["TILED=YES"]
+    )
+    ds.BuildOverviews("CUBIC", [2, 4])
+    cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    cs2 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+    ds = None
+    gdal.Unlink(check_filename)
 
     ds = gdal.GetDriverByName("COG").CreateCopy(
         filename, src_ds, callback=my_cbk, callback_data=tab

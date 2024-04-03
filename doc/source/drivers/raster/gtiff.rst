@@ -95,7 +95,9 @@ resolutions for the internal transparency mask, the GeoTIFF driver only
 supports internal transparency masks of the same dimensions as the main
 image. Transparency masks of internal overviews are also supported.
 
-When the :config:`GDAL_TIFF_INTERNAL_MASK` configuration option is set to YES and
+When the :config:`GDAL_TIFF_INTERNAL_MASK` configuration option is set to YES
+(which is the case starting with GDAL 3.9 when CreateMaskBand() is invoked on
+the dataset, or when it is invoked on a raster band with the GMF_PER_DATASET flag), and
 the GeoTIFF file is opened in update mode, the CreateMaskBand() method
 on a TIFF dataset or rasterband will create an internal transparency
 mask. Otherwise, the default behavior of nodata mask creation will be
@@ -104,7 +106,7 @@ used, that is to say the creation of a .msk file, as per :ref:`rfc-15`.
 1-bit internal mask band are deflate compressed. When reading them back,
 to make conversion between mask band and alpha band easier, mask bands
 are exposed to the user as being promoted to full 8 bits (i.e. the value
-for unmasked pixels is 255) unless the GDAL_TIFF_INTERNAL_MASK_TO_8BIT
+for unmasked pixels is 255) unless the :config:`GDAL_TIFF_INTERNAL_MASK_TO_8BIT`
 configuration option is set to NO. This does not affect the way the mask
 band is written (it is always 1-bit).
 
@@ -720,7 +722,8 @@ Creation Options
       Cloud Optimized Geotiff (starting with GDAL 3.1, the :ref:`raster.cog` driver
       can be used as a convenient shortcut). If overviews of mask band also exist,
       provided that the :config:`GDAL_TIFF_INTERNAL_MASK` configuration option is set
-      to YES, they will also be copied. Note that this creation option will
+      to YES (which is the case starting with GDAL 3.9), they will also be copied.
+      Note that this creation option will
       have `no effect <http://trac.osgeo.org/gdal/ticket/3917>`__ if
       general options (i.e. options which are not creation options) of
       gdal_translate are used. Creation options related to compression are
@@ -989,7 +992,7 @@ the default behavior of the GTiff driver.
 
 -  .. config:: GDAL_TIFF_INTERNAL_MASK
       :choices: TRUE, FALSE
-      :default: FALSE
+      :default: TRUE (since GDAL 3.9), FALSE (GDAL 3.8 or earlier)
 
       See `Internal nodata masks`_ section
 
