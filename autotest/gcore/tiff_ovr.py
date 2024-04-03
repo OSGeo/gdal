@@ -2569,6 +2569,38 @@ def test_tiff_ovr_clean_with_mask(external_ovr_and_msk):
 
 
 ###############################################################################
+
+
+def test_tiff_ovr_external_mask_update(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test_tiff_ovr_external_mask_update.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 10, 10)
+    ds.GetRasterBand(1).Fill(127)
+    with gdaltest.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
+        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        ds.GetRasterBand(1).GetMaskBand().Fill(255)
+    ds = None
+
+    assert gdal.VSIStatL(filename + ".msk") is not None
+
+    ds = gdal.Open(filename, gdal.GA_Update)
+    ds.BuildOverviews("NEAR", [2])
+    assert ds.GetRasterBand(1).GetOverview(0).ComputeRasterMinMax(0) == (127, 127)
+    assert ds.GetRasterBand(1).GetMaskBand().GetOverview(0).ComputeRasterMinMax(0) == (
+        255,
+        255,
+    )
+    assert ds.GetRasterBand(1).GetOverview(0).GetMaskBand().ComputeRasterMinMax(0) == (
+        255,
+        255,
+    )
+    ds = None
+
+    assert gdal.VSIStatL(filename + ".ovr") is None
+    assert gdal.VSIStatL(filename + ".msk.ovr") is None
+
+
+###############################################################################
 # Test BuildOverviews(NEAR) on a tiled interleave=band raster that is large compared to
 # the allowed chunk size. This will fallbacks to the tiled based approach instead
 # of the default scanlines based one
