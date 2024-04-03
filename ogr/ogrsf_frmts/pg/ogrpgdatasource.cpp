@@ -1525,7 +1525,10 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
 
     EndCopy();
 
-    const bool bLaunder = CPLFetchBool(papszOptions, "LAUNDER", true);
+    const bool bUTF8ToASCII =
+        CPLFetchBool(papszOptions, "LAUNDER_ASCII", false);
+    const bool bLaunder =
+        bUTF8ToASCII || CPLFetchBool(papszOptions, "LAUNDER", true);
 
     const char *pszFIDColumnNameIn = CSLFetchNameValue(papszOptions, "FID");
     CPLString osFIDColumnName;
@@ -1536,7 +1539,7 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
         if (bLaunder)
         {
             char *pszLaunderedFid =
-                OGRPGCommonLaunderName(pszFIDColumnNameIn, "PG");
+                OGRPGCommonLaunderName(pszFIDColumnNameIn, "PG", bUTF8ToASCII);
             osFIDColumnName += pszLaunderedFid;
             CPLFree(pszLaunderedFid);
         }
@@ -1612,8 +1615,8 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
         pszSchemaName[length] = '\0';
 
         if (bLaunder)
-            pszTableName =
-                OGRPGCommonLaunderName(pszDotPos + 1, "PG");  // skip "."
+            pszTableName = OGRPGCommonLaunderName(pszDotPos + 1, "PG",
+                                                  bUTF8ToASCII);  // skip "."
         else
             pszTableName = CPLStrdup(pszDotPos + 1);  // skip "."
     }
@@ -1621,8 +1624,8 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
     {
         pszSchemaName = nullptr;
         if (bLaunder)
-            pszTableName =
-                OGRPGCommonLaunderName(pszLayerName, "PG");  // skip "."
+            pszTableName = OGRPGCommonLaunderName(pszLayerName, "PG",
+                                                  bUTF8ToASCII);  // skip "."
         else
             pszTableName = CPLStrdup(pszLayerName);  // skip "."
     }
@@ -2024,6 +2027,7 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
     poLayer->SetTableDefinition(osFIDColumnName, pszGFldName, eType,
                                 pszGeomType, nSRSId, GeometryTypeFlags);
     poLayer->SetLaunderFlag(bLaunder);
+    poLayer->SetUTF8ToASCIIFlag(bUTF8ToASCII);
     poLayer->SetPrecisionFlag(CPLFetchBool(papszOptions, "PRECISION", true));
     // poLayer->SetForcedSRSId(nForcedSRSId);
     poLayer->SetForcedGeometryTypeFlags(ForcedGeometryTypeFlags);

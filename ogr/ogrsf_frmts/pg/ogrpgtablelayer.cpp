@@ -2371,7 +2371,8 @@ OGRErr OGRPGTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
     /* -------------------------------------------------------------------- */
     if (bLaunderColumnNames)
     {
-        char *pszSafeName = OGRPGCommonLaunderName(oField.GetNameRef(), "PG");
+        char *pszSafeName =
+            OGRPGCommonLaunderName(oField.GetNameRef(), "PG", m_bUTF8ToASCII);
 
         oField.SetName(pszSafeName);
         CPLFree(pszSafeName);
@@ -2635,8 +2636,8 @@ OGRErr OGRPGTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     /* -------------------------------------------------------------------- */
     if (bLaunderColumnNames)
     {
-        char *pszSafeName =
-            OGRPGCommonLaunderName(poGeomField->GetNameRef(), "PG");
+        char *pszSafeName = OGRPGCommonLaunderName(poGeomField->GetNameRef(),
+                                                   "PG", m_bUTF8ToASCII);
 
         poGeomField->SetName(pszSafeName);
         CPLFree(pszSafeName);
@@ -2962,8 +2963,8 @@ OGRErr OGRPGTableLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
     {
         if (bLaunderColumnNames)
         {
-            char *pszSafeName =
-                OGRPGCommonLaunderName(oField.GetNameRef(), "PG");
+            char *pszSafeName = OGRPGCommonLaunderName(oField.GetNameRef(),
+                                                       "PG", m_bUTF8ToASCII);
             oField.SetName(pszSafeName);
             CPLFree(pszSafeName);
         }

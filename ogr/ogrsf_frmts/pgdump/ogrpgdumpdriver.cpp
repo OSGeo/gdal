@@ -99,6 +99,8 @@ void RegisterOGRPGDump()
         "  </Option>"
         "  <Option name='LAUNDER' type='boolean' description='Whether layer "
         "and field names will be laundered' default='YES'/>"
+        "  <Option name='LAUNDER_ASCII' type='boolean' description='Same as "
+        "LAUNDER, but force generation of ASCII identifiers' default='NO'/>"
         "  <Option name='PRECISION' type='boolean' description='Whether fields "
         "created should keep the width and precision' default='YES'/>"
         "  <Option name='DIM' type='string' description='Set to 2 to force the "

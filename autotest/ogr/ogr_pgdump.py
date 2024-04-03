@@ -1581,6 +1581,66 @@ def test_ogr_pgdump_long_identifiers():
 
 
 ###############################################################################
+# Test LAUNDER=YES
+
+
+def test_ogr_pgdump_LAUNDER_YES(tmp_vsimem):
+
+    eacute = b"\xC3\xA9".decode("utf-8")
+    filename = str(tmp_vsimem / "test_ogr_pgdump_LAUNDER_YES.sql")
+    ds = ogr.GetDriverByName("PGDump").CreateDataSource(filename)
+    lyr = ds.CreateLayer("a" + eacute + "#", options=["LAUNDER=YES"])
+    lyr.CreateField(ogr.FieldDefn("b" + eacute + "#"))
+    ds = None
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+    assert '"a' + eacute + '_"' in sql
+    assert '"b' + eacute + '_"' in sql
+
+
+###############################################################################
+# Test LAUNDER=NO
+
+
+def test_ogr_pgdump_LAUNDER_NO(tmp_vsimem):
+
+    eacute = b"\xC3\xA9".decode("utf-8")
+    filename = str(tmp_vsimem / "test_ogr_pgdump_LAUNDER_NO.sql")
+    ds = ogr.GetDriverByName("PGDump").CreateDataSource(filename)
+    lyr = ds.CreateLayer("a" + eacute + "#", options=["LAUNDER=NO"])
+    lyr.CreateField(ogr.FieldDefn("b" + eacute + "#"))
+    ds = None
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+    assert '"a' + eacute + '#"' in sql
+    assert '"b' + eacute + '#"' in sql
+
+
+###############################################################################
+# Test LAUNDER_ASCII
+
+
+def test_ogr_pgdump_LAUNDER_ASCII(tmp_vsimem):
+
+    eacute = b"\xC3\xA9".decode("utf-8")
+    filename = str(tmp_vsimem / "test_ogr_pgdump_LAUNDER_ASCII.sql")
+    ds = ogr.GetDriverByName("PGDump").CreateDataSource(filename)
+    lyr = ds.CreateLayer("a" + eacute, options=["LAUNDER_ASCII=YES"])
+    lyr.CreateField(ogr.FieldDefn("b" + eacute))
+    ds = None
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+    assert '"ae"' in sql
+    assert '"be"' in sql
+
+
+###############################################################################
 # Cleanup
 
 

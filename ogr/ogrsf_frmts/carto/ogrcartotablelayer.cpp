@@ -671,7 +671,7 @@ OGRCARTOTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     if (bLaunderColumnNames)
     {
         char *pszSafeName =
-            OGRPGCommonLaunderName(poGeomField->GetNameRef(), "PG");
+            OGRPGCommonLaunderName(poGeomField->GetNameRef(), "CARTO", false);
         poGeomField->SetName(pszSafeName);
         CPLFree(pszSafeName);
     }
@@ -735,7 +735,8 @@ OGRErr OGRCARTOTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
     OGRFieldDefn oField(poFieldIn);
     if (bLaunderColumnNames)
     {
-        char *pszName = OGRPGCommonLaunderName(oField.GetNameRef());
+        char *pszName =
+            OGRPGCommonLaunderName(oField.GetNameRef(), "CARTO", false);
         oField.SetName(pszName);
         CPLFree(pszName);
     }
