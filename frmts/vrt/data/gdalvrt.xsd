@@ -226,7 +226,7 @@
         <xs:sequence>
             <xs:element name="Algorithm" type="xs:string" minOccurs="1">
                 <xs:annotation>
-                    <xs:documentation>Builtin allowed names are BandAffineCombination, LUT, Dehazing, Trimming. More algorithms can be registered at run-time.</xs:documentation>
+                    <xs:documentation>Builtin allowed names are BandAffineCombination, LUT, LocalScaleOffset, Trimming. More algorithms can be registered at run-time.</xs:documentation>
                 </xs:annotation>
             </xs:element>
             <xs:element name="Argument" type="ArgumentType" maxOccurs="unbounded"/>

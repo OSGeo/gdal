@@ -621,15 +621,15 @@ LUTProcess(const char * /*pszFuncName*/, void * /*pUserData*/,
 }
 
 /************************************************************************/
-/*                           DehazingData                               */
+/*                        LocalScaleOffsetData                          */
 /************************************************************************/
 
 namespace
 {
-/** Working structure for 'Dehazing' builtin function. */
-struct DehazingData
+/** Working structure for 'LocalScaleOffset' builtin function. */
+struct LocalScaleOffsetData
 {
-    static constexpr const char *const EXPECTED_SIGNATURE = "Dehazing";
+    static constexpr const char *const EXPECTED_SIGNATURE = "LocalScaleOffset";
     //! Signature (to make sure callback functions are called with the right argument)
     const std::string m_osSignature = EXPECTED_SIGNATURE;
 
@@ -683,16 +683,16 @@ static bool CheckAllBands(const std::map<int, T> &oMap, int nExpectedBandCount)
 }
 
 /************************************************************************/
-/*                           DehazingInit()                             */
+/*                        LocalScaleOffsetInit()                        */
 /************************************************************************/
 
-/** Init function for 'Dehazing' builtin function. */
-static CPLErr DehazingInit(const char * /*pszFuncName*/, void * /*pUserData*/,
-                           CSLConstList papszFunctionArgs, int nInBands,
-                           GDALDataType eInDT, double *padfInNoData,
-                           int *pnOutBands, GDALDataType *peOutDT,
-                           double **ppadfOutNoData, const char *pszVRTPath,
-                           VRTPDWorkingDataPtr *ppWorkingData)
+/** Init function for 'LocalScaleOffset' builtin function. */
+static CPLErr
+LocalScaleOffsetInit(const char * /*pszFuncName*/, void * /*pUserData*/,
+                     CSLConstList papszFunctionArgs, int nInBands,
+                     GDALDataType eInDT, double *padfInNoData, int *pnOutBands,
+                     GDALDataType *peOutDT, double **ppadfOutNoData,
+                     const char *pszVRTPath, VRTPDWorkingDataPtr *ppWorkingData)
 {
     CPLAssert(eInDT == GDT_Float64);
 
@@ -705,7 +705,7 @@ static CPLErr DehazingInit(const char * /*pszFuncName*/, void * /*pUserData*/,
         *pnOutBands = nInBands;
     }
 
-    auto data = std::make_unique<DehazingData>();
+    auto data = std::make_unique<LocalScaleOffsetData>();
 
     bool bNodataSpecified = false;
     double dfNoData = std::numeric_limits<double>::quiet_NaN();
@@ -901,15 +901,17 @@ static CPLErr DehazingInit(const char * /*pszFuncName*/, void * /*pUserData*/,
 }
 
 /************************************************************************/
-/*                           DehazingFree()                             */
+/*                       LocalScaleOffsetFree()                         */
 /************************************************************************/
 
-/** Free function for 'Dehazing' builtin function. */
-static void DehazingFree(const char * /*pszFuncName*/, void * /*pUserData*/,
-                         VRTPDWorkingDataPtr pWorkingData)
+/** Free function for 'LocalScaleOffset' builtin function. */
+static void LocalScaleOffsetFree(const char * /*pszFuncName*/,
+                                 void * /*pUserData*/,
+                                 VRTPDWorkingDataPtr pWorkingData)
 {
-    DehazingData *data = static_cast<DehazingData *>(pWorkingData);
-    CPLAssert(data->m_osSignature == DehazingData::EXPECTED_SIGNATURE);
+    LocalScaleOffsetData *data =
+        static_cast<LocalScaleOffsetData *>(pWorkingData);
+    CPLAssert(data->m_osSignature == LocalScaleOffsetData::EXPECTED_SIGNATURE);
     CPL_IGNORE_RET_VAL(data->m_osSignature);
     delete data;
 }
@@ -988,11 +990,11 @@ static bool LoadAuxData(double dfULX, double dfULY, double dfLRX, double dfLRY,
 }
 
 /************************************************************************/
-/*                         DehazingProcess()                            */
+/*                      LocalScaleOffsetProcess()                       */
 /************************************************************************/
 
-/** Processing function for 'Dehazing' builtin function. */
-static CPLErr DehazingProcess(
+/** Processing function for 'LocalScaleOffset' builtin function. */
+static CPLErr LocalScaleOffsetProcess(
     const char * /*pszFuncName*/, void * /*pUserData*/,
     VRTPDWorkingDataPtr pWorkingData, CSLConstList /* papszFunctionArgs*/,
     int nBufXSize, int nBufYSize, const void *pInBuffer, size_t nInBufferSize,
@@ -1016,8 +1018,9 @@ static CPLErr DehazingProcess(
     CPLAssert(nInBands == nOutBands);
     CPL_IGNORE_RET_VAL(nOutBands);
 
-    DehazingData *data = static_cast<DehazingData *>(pWorkingData);
-    CPLAssert(data->m_osSignature == DehazingData::EXPECTED_SIGNATURE);
+    LocalScaleOffsetData *data =
+        static_cast<LocalScaleOffsetData *>(pWorkingData);
+    CPLAssert(data->m_osSignature == LocalScaleOffsetData::EXPECTED_SIGNATURE);
     const double *CPL_RESTRICT padfSrc = static_cast<const double *>(pInBuffer);
     double *CPL_RESTRICT padfDst = static_cast<double *>(pOutBuffer);
 
@@ -1076,13 +1079,13 @@ static CPLErr DehazingProcess(
                 }
                 else
                 {
-                    double dfDehazed = dfSrcVal * dfGain - dfOffset;
-                    if (dfDehazed < dfClampMin)
-                        dfDehazed = dfClampMin;
-                    if (dfDehazed > dfClampMax)
-                        dfDehazed = dfClampMax;
+                    double dfUnscaled = dfSrcVal * dfGain - dfOffset;
+                    if (dfUnscaled < dfClampMin)
+                        dfUnscaled = dfClampMin;
+                    if (dfUnscaled > dfClampMax)
+                        dfUnscaled = dfClampMax;
 
-                    *padfDstThisBand = dfDehazed;
+                    *padfDstThisBand = dfUnscaled;
                 }
             }
             padfSrcThisBand += nInBands;
@@ -1518,7 +1521,7 @@ void GDALVRTRegisterDefaultProcessedDatasetFuncs()
         nullptr);
 
     GDALVRTRegisterProcessedDatasetFunc(
-        "Dehazing", nullptr,
+        "LocalScaleOffset", nullptr,
         "<ProcessedDatasetFunctionArgumentsList>"
         "   <Argument name='relativeToVRT' "
         "description='Whether gain and offset filenames are relative to "
@@ -1544,8 +1547,8 @@ void GDALVRTRegisterDefaultProcessedDatasetFuncs()
         "   <Argument name='offset_nodata' type='double' "
         "description='Override offset dataset nodata value'/>"
         "</ProcessedDatasetFunctionArgumentsList>",
-        GDT_Float64, nullptr, 0, nullptr, 0, DehazingInit, DehazingFree,
-        DehazingProcess, nullptr);
+        GDT_Float64, nullptr, 0, nullptr, 0, LocalScaleOffsetInit,
+        LocalScaleOffsetFree, LocalScaleOffsetProcess, nullptr);
 
     GDALVRTRegisterProcessedDatasetFunc(
         "Trimming", nullptr,

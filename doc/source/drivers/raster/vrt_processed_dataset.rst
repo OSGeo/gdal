@@ -12,8 +12,8 @@ to apply chained processing steps that may apply to several bands at the same ti
 The following built-in algorithms are introduced, and may typically be applied
 in the following order:
 
-- Dehazing: remove haze effects by applying (subsampled) gain and offset
-  auxiliary datasets.
+- LocalScaleOffset: apply per-pixel gain and offset coming (typically subsampled)
+  from auxiliary datasets. Can be used for dehazing processing.
 
 - BandAffineCombination: perform an affine transformation combination of bands.
 
@@ -35,7 +35,7 @@ Here's an example of such a file to apply various correction to a R,G,B,NIR data
 
       <ProcessingSteps>
         <Step name="Dehazing">
-          <Algorithm>Dehazing</Algorithm>
+          <Algorithm>LocalScaleOffset</Algorithm>
 
           <Argument name="relativeToVRT">true</Argument>
 
@@ -128,14 +128,15 @@ It must also have the 2 following child elements:
 - ``ProcessingSteps``, with at least one child ``Step`` element.
 
 Each ``Step`` must have a ``Algorithm`` child element, and an optional ``name`` attribute.
-The value of ``Algorithm`` must be a registered VRTProcessedDataset function. At time of writing, the following 4 algorithms are defined: ``Dehazing``, ``BandAffineCombination``, ``Trimming`` and ``LUT``.
+The value of ``Algorithm`` must be a registered VRTProcessedDataset function. At time of writing, the following 4 algorithms are defined: ``LocalScaleOffset``, ``BandAffineCombination``, ``Trimming`` and ``LUT``.
 
 A ``Step`` will generally have one or several ``Argument`` child elements, some of them being required, others optional. Consult the documentation of each algorithm.
 
-Dehazing algorithm
-------------------
+LocalScaleOffset algorithm
+--------------------------
 
-Remove haze effects by applying (subsampled) gain and offset auxiliary datasets.
+Apply per-pixel gain and offset coming (typically subsampled) from auxiliary
+datasets. Can be used for dehazing processing.
 
 The gain and offset auxiliary datasets must have a georeferencing consistent of
 the input dataset, but may have a different resolution.

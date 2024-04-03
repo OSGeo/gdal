@@ -600,7 +600,7 @@ def test_vrtprocesseddataset_lut_errors(tmp_vsimem):
 
 
 ###############################################################################
-# Test nominal case of Dehazing algorithm
+# Test nominal case of LocalScaleOffset algorithm
 
 
 def test_vrtprocesseddataset_dehazing_nominal(tmp_vsimem):
@@ -639,7 +639,7 @@ def test_vrtprocesseddataset_dehazing_nominal(tmp_vsimem):
     </Input>
     <ProcessingSteps>
         <Step>
-            <Algorithm>Dehazing</Algorithm>
+            <Algorithm>LocalScaleOffset</Algorithm>
             <Argument name="gain_dataset_filename_1">{gain_filename}</Argument>
             <Argument name="gain_dataset_band_1">1</Argument>
             <Argument name="gain_dataset_filename_2">{gain_filename}</Argument>
@@ -674,7 +674,7 @@ def test_vrtprocesseddataset_dehazing_nominal(tmp_vsimem):
 
 
 ###############################################################################
-# Test nominal case of Dehazing algorithm where gain and offset have a lower
+# Test nominal case of LocalScaleOffset algorithm where gain and offset have a lower
 # resolution than the input dataset
 
 
@@ -705,7 +705,7 @@ def test_vrtprocesseddataset_dehazing_different_resolution(tmp_vsimem):
     </Input>
     <ProcessingSteps>
         <Step>
-            <Algorithm>Dehazing</Algorithm>
+            <Algorithm>LocalScaleOffset</Algorithm>
             <Argument name="gain_dataset_filename_1">{gain_filename}</Argument>
             <Argument name="gain_dataset_band_1">1</Argument>
             <Argument name="offset_dataset_filename_1">{offset_filename}</Argument>
@@ -732,7 +732,7 @@ def test_vrtprocesseddataset_dehazing_different_resolution(tmp_vsimem):
 
 
 ###############################################################################
-# Test error cases of Dehazing algorithm
+# Test error cases of LocalScaleOffset algorithm
 
 
 def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
@@ -754,7 +754,7 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
         </Input>
         <ProcessingSteps>
             <Step>
-                <Algorithm>Dehazing</Algorithm>
+                <Algorithm>LocalScaleOffset</Algorithm>
                 <Argument name="gain_dataset_filename_1">{src_filename}</Argument>
                 <Argument name="gain_dataset_band_1">1</Argument>
             </Step>
@@ -774,7 +774,7 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
         </Input>
         <ProcessingSteps>
             <Step>
-                <Algorithm>Dehazing</Algorithm>
+                <Algorithm>LocalScaleOffset</Algorithm>
                 <Argument name="gain_dataset_filename_2">{src_filename}</Argument>
                 <Argument name="gain_dataset_band_1">1</Argument>
                 <Argument name="offset_dataset_filename_1">{src_filename}</Argument>
@@ -796,7 +796,7 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
         </Input>
         <ProcessingSteps>
             <Step>
-                <Algorithm>Dehazing</Algorithm>
+                <Algorithm>LocalScaleOffset</Algorithm>
                 <Argument name="gain_dataset_filename_1">{src_filename}</Argument>
                 <Argument name="gain_dataset_band_2">1</Argument>
                 <Argument name="offset_dataset_filename_1">{src_filename}</Argument>
@@ -818,7 +818,7 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
         </Input>
         <ProcessingSteps>
             <Step>
-                <Algorithm>Dehazing</Algorithm>
+                <Algorithm>LocalScaleOffset</Algorithm>
                 <Argument name="gain_dataset_filename_1">{src_filename}</Argument>
                 <Argument name="gain_dataset_band_1">1</Argument>
                 <Argument name="offset_dataset_filename_2">{src_filename}</Argument>
@@ -840,7 +840,7 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
         </Input>
         <ProcessingSteps>
             <Step>
-                <Algorithm>Dehazing</Algorithm>
+                <Algorithm>LocalScaleOffset</Algorithm>
                 <Argument name="gain_dataset_filename_1">{src_filename}</Argument>
                 <Argument name="gain_dataset_band_1">1</Argument>
                 <Argument name="offset_dataset_filename_1">{src_filename}</Argument>
@@ -862,7 +862,7 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
         </Input>
         <ProcessingSteps>
             <Step>
-                <Algorithm>Dehazing</Algorithm>
+                <Algorithm>LocalScaleOffset</Algorithm>
                 <Argument name="gain_dataset_filename_1">{src_filename}</Argument>
                 <Argument name="gain_dataset_band_1">2</Argument>
                 <Argument name="offset_dataset_filename_1">{src_filename}</Argument>
@@ -881,7 +881,7 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
         </Input>
         <ProcessingSteps>
             <Step>
-                <Algorithm>Dehazing</Algorithm>
+                <Algorithm>LocalScaleOffset</Algorithm>
                 <Argument name="gain_dataset_filename_1">invalid</Argument>
                 <Argument name="gain_dataset_band_1">1</Argument>
                 <Argument name="offset_dataset_filename_1">{src_filename}</Argument>
@@ -904,7 +904,7 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
         </Input>
         <ProcessingSteps>
             <Step>
-                <Algorithm>Dehazing</Algorithm>
+                <Algorithm>LocalScaleOffset</Algorithm>
                 <Argument name="gain_dataset_filename_1">{nogt_filename}</Argument>
                 <Argument name="gain_dataset_band_1">1</Argument>
                 <Argument name="offset_dataset_filename_1">{nogt_filename}</Argument>
