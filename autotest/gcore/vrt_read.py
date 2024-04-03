@@ -1442,25 +1442,27 @@ def test_vrt_invalid_source_band():
 @gdaltest.enable_exceptions()
 def test_vrt_protocol():
 
+    files_opened_start = gdaltest.get_opened_files()
+
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://")
+        gdal.Open("vrt://")
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://i_do_not_exist")
+        gdal.Open("vrt://i_do_not_exist")
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://i_do_not_exist?")
+        gdal.Open("vrt://i_do_not_exist?")
 
     ds = gdal.Open("vrt://data/byte.tif")
     assert ds.RasterCount == 1
     assert ds.GetRasterBand(1).Checksum() == 4672
 
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/byte.tif?foo=bar")
+        gdal.Open("vrt://data/byte.tif?foo=bar")
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/byte.tif?bands=foo")
+        gdal.Open("vrt://data/byte.tif?bands=foo")
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/byte.tif?bands=0")
+        gdal.Open("vrt://data/byte.tif?bands=0")
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/byte.tif?bands=2")
+        gdal.Open("vrt://data/byte.tif?bands=2")
 
     ds = gdal.Open("vrt://data/byte.tif?bands=1,mask,1")
     assert ds.RasterCount == 3
@@ -1514,7 +1516,7 @@ def test_vrt_protocol():
 
     ## separated if not allowed
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/float32.tif?if=AAIGrid&if=GTiff")
+        gdal.Open("vrt://data/float32.tif?if=AAIGrid&if=GTiff")
 
     ## check exponent and scale
     ds = gdal.Open("vrt://data/float32.tif?scale=0,255,255,255")
@@ -1527,7 +1529,7 @@ def test_vrt_protocol():
     assert ds.GetRasterBand(1).Checksum() == 4155
 
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/float32.tif?exponent=2.2")
+        gdal.Open("vrt://data/float32.tif?exponent=2.2")
 
     ds = gdal.Open("vrt://data/float32.tif?exponent=2.2&scale=0,100")
     assert ds.GetRasterBand(1).Checksum() == 4901
@@ -1536,7 +1538,7 @@ def test_vrt_protocol():
     assert ds.GetRasterBand(2).Checksum() == 4455
 
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/float32.tif?outsize=10")
+        gdal.Open("vrt://data/float32.tif?outsize=10")
 
     ds = gdal.Open("vrt://data/float32.tif?outsize=10,5")
     assert ds.GetRasterBand(1).XSize == 10
@@ -1547,7 +1549,7 @@ def test_vrt_protocol():
     assert ds.GetRasterBand(1).YSize == 5
 
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/float32.tif?projwin=440840,441920,3750120")
+        gdal.Open("vrt://data/float32.tif?projwin=440840,441920,3750120")
 
     ds = gdal.Open("vrt://data/float32.tif?projwin=440840,3751080,441920,3750120")
     assert ds.GetGeoTransform()[0] == 440840.0
@@ -1569,7 +1571,7 @@ def test_vrt_protocol():
     assert ds.GetRasterBand(1).YSize == 16
 
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/float32.tif?tr=120")
+        gdal.Open("vrt://data/float32.tif?tr=120")
 
     ds = gdal.Open("vrt://data/float32.tif?tr=120,240")
 
@@ -1585,7 +1587,7 @@ def test_vrt_protocol():
     )  ## check values changed via bilinear
 
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/float32.tif?srcwin=0,0,3")
+        gdal.Open("vrt://data/float32.tif?srcwin=0,0,3")
 
     ds = gdal.Open("vrt://data/float32.tif?srcwin=2,3,8,5")
     assert ds.GetRasterBand(1).XSize == 8
@@ -1595,7 +1597,7 @@ def test_vrt_protocol():
     )  ## check value is correct
 
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/float32.tif?a_gt=1,0,0,0,1")
+        gdal.Open("vrt://data/float32.tif?a_gt=1,0,0,0,1")
 
     ds = gdal.Open("vrt://data/float32.tif?a_gt=0,1,0,0,0,1")
     gdaltest.check_geotransform(
@@ -1620,8 +1622,8 @@ def test_vrt_protocol():
     assert ds.GetRasterBand(1).YSize == 10
 
     ## separated oo instances not allowed
-    with pytest.raises(Exception):
-        assert not gdal.Open(
+    with pytest.raises(Exception, match="option should be specified once"):
+        gdal.Open(
             "vrt://data/byte_with_ovr.tif?oo=GEOREF_SOURCES=TABFILE&oo=OVERVIEW_LEVEL=0"
         )
 
@@ -1645,9 +1647,9 @@ def test_vrt_protocol():
 
     # test that 'key=value' form is used
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/minfloat.tif?scale")
+        gdal.Open("vrt://data/minfloat.tif?scale")
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/minfloat.tif?a_ullr=0,1,1,0&unscale&")
+        gdal.Open("vrt://data/minfloat.tif?a_ullr=0,1,1,0&unscale&")
 
     ds = gdal.Open("vrt://data/gcps.vrt?nogcp=true")
     assert ds.GetGCPCount() == 0
@@ -1656,8 +1658,9 @@ def test_vrt_protocol():
     assert gdal.Open("vrt://data/byte.tif?srcwin=0,0,20,21&eco=true")
 
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/byte.tif?srcwin=0,0,20,21&epo=true")
-        assert not gdal.Open("vrt://data/byte.tif?srcwin=20,20,1,1&epo=false&eco=true")
+        gdal.Open("vrt://data/byte.tif?srcwin=0,0,20,21&epo=true")
+    with pytest.raises(Exception):
+        gdal.Open("vrt://data/byte.tif?srcwin=20,20,1,1&epo=false&eco=true")
 
     ds = gdal.Open("vrt://data/tiff_with_subifds.tif?sd=2")
     assert ds.GetRasterBand(1).Checksum() == 0
@@ -1666,9 +1669,17 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/tiff_with_subifds.tif?sd_name=1")
     assert ds.GetRasterBand(1).Checksum() == 35731
     with pytest.raises(Exception):
-        assert not gdal.Open("vrt://data/tiff_with_subifds.tif?sd=2&sd_name=1")
-        assert not gdal.Open("vrt://data/tiff_with_subifds.tif?sd=3")
-        assert not gdal.Open("vrt://data/tiff_with_subifds.tif?sd_name=sds")
+        gdal.Open("vrt://data/tiff_with_subifds.tif?sd=2&sd_name=1")
+    with pytest.raises(Exception):
+        gdal.Open("vrt://data/tiff_with_subifds.tif?sd=3")
+    with pytest.raises(Exception):
+        gdal.Open("vrt://data/tiff_with_subifds.tif?sd_name=sds")
+
+    del ds
+
+    files_opened_end = gdaltest.get_opened_files()
+
+    assert files_opened_start == files_opened_end
 
 
 @pytest.mark.require_driver("NetCDF")
