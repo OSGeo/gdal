@@ -570,13 +570,15 @@ def test_wms_12():
 @gdaltest.disable_exceptions()
 def test_wms_13():
 
-    ds = gdal.Open("data/wms/DNEC_250K.vrt")
-    if ds.ReadRaster(0, 0, 1024, 682) is None:
-        srv = "http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities"
-        if gdaltest.gdalurlopen(srv) is None:
-            pytest.skip(f"Could not read from {srv}")
-        pytest.fail()
-    ds = None
+    with gdal.config_option("GDAL_HTTP_TIMEOUT", "5"):
+
+        ds = gdal.Open("data/wms/DNEC_250K.vrt")
+        if ds.ReadRaster(0, 0, 1024, 682) is None:
+            srv = "http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities"
+            if gdaltest.gdalurlopen(srv) is None:
+                pytest.skip(f"Could not read from {srv}")
+            pytest.fail()
+        ds = None
 
 
 ###############################################################################
