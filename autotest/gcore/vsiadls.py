@@ -53,7 +53,7 @@ def open_for_read(uri):
 
 
 ###############################################################################
-@pytest.fixture(autouse=True, scope="module")
+@pytest.fixture(autouse=True, scope="function")
 def startup_and_cleanup():
 
     with gdaltest.config_option("CPL_AZURE_VM_API_ROOT_URL", "disabled"):
@@ -1009,15 +1009,15 @@ def test_vsiadls_fake_sync_error_case():
 # Test Sync() and multithreaded download of a single file
 
 
-def test_vsiadls_fake_sync_multithreaded_upload_single_file():
+def test_vsiadls_fake_sync_multithreaded_upload_single_file(tmp_vsimem):
 
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
     gdal.VSICurlClearCache()
 
-    gdal.Mkdir("/vsimem/test", 0)
-    gdal.FileFromMemBuffer("/vsimem/test/foo", "foo\n")
+    gdal.Mkdir(tmp_vsimem / "test", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test/foo", "foo\n")
 
     handler = webserver.SequentialHandler()
     handler.add("HEAD", "/azure/blob/myaccount/test_bucket?resource=filesystem", 200)
@@ -1044,12 +1044,10 @@ def test_vsiadls_fake_sync_multithreaded_upload_single_file():
     with gdaltest.config_option("VSIS3_SIMULATE_THREADING", "YES"):
         with webserver.install_http_handler(handler):
             assert gdal.Sync(
-                "/vsimem/test/foo",
+                tmp_vsimem / "test/foo",
                 "/vsiadls/test_bucket",
                 options=["NUM_THREADS=1", "CHUNK_SIZE=3"],
             )
-
-    gdal.RmdirRecursive("/vsimem/test")
 
 
 ###############################################################################
