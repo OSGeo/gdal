@@ -27,7 +27,9 @@
 %}
 */
 
+#ifndef FROM_GDAL_I
 %include "ogr_docs.i"
+#endif
 %include "ogr_layer_docs.i"
 %include "ogr_feature_docs.i"
 %include "ogr_featuredef_docs.i"
@@ -68,8 +70,23 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
             "In GDAL 4.0, exceptions will be enabled by default.", FutureWarning)
 %}
 
+// Need to ensure that gdal module has been loaded
+// when calling an ogr function that returns a gdal type.
 %pythonprepend Open %{
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+    from . import gdal
+%}
+
+%pythonprepend OpenShared %{
+    from . import gdal
+%}
+
+%pythonprepend GetDriverByName %{
+    from . import gdal
+%}
+
+%pythonprepend GetDriver %{
+    from . import gdal
 %}
 
 // End: to be removed in GDAL 4.0
