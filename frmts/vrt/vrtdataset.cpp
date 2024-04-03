@@ -997,6 +997,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 CPLError(CE_Failure, CPLE_IllegalArg,
                          "'if' option should be specified once, use commas "
                          "to input multiple values.");
+                return nullptr;
             }
             aosAllowedDrivers = CSLTokenizeString2(pszValue, ",", 0);
         }
@@ -1007,6 +1008,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 CPLError(CE_Failure, CPLE_IllegalArg,
                          "'oo' option should be specified once, use commas "
                          "to input multiple values.");
+                return nullptr;
             }
             aosOpenOptions = CSLTokenizeString2(pszValue, ",", 0);
         }
