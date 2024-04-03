@@ -342,6 +342,21 @@ Layer creation options
 
 The following layer creation options are available:
 
+-  .. lco:: LAUNDER
+      :choices: YES, NO
+      :default: NO
+      :since: 3.9
+
+      Whether layer and field names will be laundered. Laundering makes sure
+      that the recommendation of https://www.geopackage.org/guidance/getting-started.html
+      is followed: an identifier should start with a lowercase character and
+      only use lowercase characters, numbers 0-9, and underscores (_). UTF-8
+      accented characters in the `Latin-1 Supplement <https://en.wikipedia.org/wiki/Latin-1_Supplement>`__
+      and `Latin Extented-A <https://en.wikipedia.org/wiki/Latin_Extended-A>`__
+      sets are replaced when possible with the closest ASCII letter.
+      Characters that do not match the recommendation are replaced with underscore.
+      Consequently this option is not appropriate for non-Latin languages.
+
 -  .. lco:: GEOMETRY_NAME
       :default: geom
 

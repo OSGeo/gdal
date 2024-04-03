@@ -1740,8 +1740,13 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
         oFieldDefn.SetWidth(0);
     oFieldDefn.SetPrecision(0);
 
+    if (m_bLaunder)
+        oFieldDefn.SetName(
+            GDALGeoPackageDataset::LaunderName(oFieldDefn.GetNameRef())
+                .c_str());
+
     if (m_pszFidColumn != nullptr &&
-        EQUAL(poField->GetNameRef(), m_pszFidColumn) &&
+        EQUAL(oFieldDefn.GetNameRef(), m_pszFidColumn) &&
         poField->GetType() != OFTInteger &&
         poField->GetType() != OFTInteger64 &&
         // typically a GeoPackage exported with QGIS as a shapefile and
@@ -1750,7 +1755,7 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
           poField->GetPrecision() == 0))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for %s",
-                 poField->GetNameRef());
+                 oFieldDefn.GetNameRef());
         return OGRERR_FAILURE;
     }
 
@@ -1763,7 +1768,7 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
 
         osCommand.Printf("ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s",
                          SQLEscapeName(m_pszTableName).c_str(),
-                         SQLEscapeName(poField->GetNameRef()).c_str(),
+                         SQLEscapeName(oFieldDefn.GetNameRef()).c_str(),
                          GPkgFieldFromOGR(poField->GetType(),
                                           poField->GetSubType(), nMaxWidth));
         if (!poField->IsNullable())

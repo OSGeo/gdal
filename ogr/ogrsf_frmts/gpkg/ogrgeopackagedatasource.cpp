@@ -6661,6 +6661,72 @@ OGRLayer *GDALGeoPackageDataset::GetLayer(int iLayer)
 }
 
 /************************************************************************/
+/*                           LaunderName()                              */
+/************************************************************************/
+
+/** Launder identifiers (table, column names) according to guidance at
+ * https://www.geopackage.org/guidance/getting-started.html:
+ * "For maximum interoperability, start your database identifiers (table names,
+ * column names, etc.) with a lowercase character and only use lowercase
+ * characters, numbers 0-9, and underscores (_)."
+ */
+
+/* static */
+std::string GDALGeoPackageDataset::LaunderName(const std::string &osStr)
+{
+    char *pszASCII = CPLUTF8ForceToASCII(osStr.c_str(), '_');
+    const std::string osStrASCII(pszASCII);
+    CPLFree(pszASCII);
+
+    std::string osRet;
+    osRet.reserve(osStrASCII.size());
+
+    for (size_t i = 0; i < osStrASCII.size(); ++i)
+    {
+        if (osRet.empty())
+        {
+            if (osStrASCII[i] >= 'A' && osStrASCII[i] <= 'Z')
+            {
+                osRet += (osStrASCII[i] - 'A' + 'a');
+            }
+            else if (osStrASCII[i] >= 'a' && osStrASCII[i] <= 'z')
+            {
+                osRet += osStrASCII[i];
+            }
+            else
+            {
+                continue;
+            }
+        }
+        else if (osStrASCII[i] >= 'A' && osStrASCII[i] <= 'Z')
+        {
+            osRet += (osStrASCII[i] - 'A' + 'a');
+        }
+        else if ((osStrASCII[i] >= 'a' && osStrASCII[i] <= 'z') ||
+                 (osStrASCII[i] >= '0' && osStrASCII[i] <= '9') ||
+                 osStrASCII[i] == '_')
+        {
+            osRet += osStrASCII[i];
+        }
+        else
+        {
+            osRet += '_';
+        }
+    }
+
+    if (osRet.empty() && !osStrASCII.empty())
+        return LaunderName(std::string("x").append(osStrASCII));
+
+    if (osRet != osStr)
+    {
+        CPLDebug("PG", "LaunderName('%s') -> '%s'", osStr.c_str(),
+                 osRet.c_str());
+    }
+
+    return osRet;
+}
+
+/************************************************************************/
 /*                          ICreateLayer()                              */
 /************************************************************************/
 
@@ -6681,6 +6747,11 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
 
         return nullptr;
     }
+
+    const bool bLaunder =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "LAUNDER", "NO"));
+    const std::string osTableName(bLaunder ? LaunderName(pszLayerName)
+                                           : std::string(pszLayerName));
 
     const auto eGType =
         poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetType() : wkbNone;
@@ -6710,7 +6781,7 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
                 pszOtherIdentifier = m_papoLayers[i]->GetName();
             if (pszOtherIdentifier != nullptr &&
                 EQUAL(pszOtherIdentifier, pszIdentifier) &&
-                !EQUAL(m_papoLayers[i]->GetName(), pszLayerName))
+                !EQUAL(m_papoLayers[i]->GetName(), osTableName.c_str()))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Identifier %s is already used by table %s",
@@ -6729,7 +6800,7 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
         sqlite3_free(pszSQL);
         if (oResult && oResult->RowCount() > 0 &&
             oResult->GetValue(0, 0) != nullptr &&
-            !EQUAL(oResult->GetValue(0, 0), pszLayerName))
+            !EQUAL(oResult->GetValue(0, 0), osTableName.c_str()))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Identifier %s is already used by table %s", pszIdentifier,
@@ -6772,7 +6843,7 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
 
         /* Avoiding gpkg prefixes is not an official requirement, but seems wise
          */
-        if (STARTS_WITH(pszLayerName, "gpkg"))
+        if (STARTS_WITH(osTableName.c_str(), "gpkg"))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "The layer name may not begin with 'gpkg' as it is a "
@@ -6782,7 +6853,8 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
 
         /* Preemptively try and avoid sqlite3 syntax errors due to  */
         /* illegal characters. */
-        if (strspn(pszLayerName, "`~!@#$%^&*()+-={}|[]\\:\";'<>?,./") > 0)
+        if (strspn(osTableName.c_str(), "`~!@#$%^&*()+-={}|[]\\:\";'<>?,./") >
+            0)
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
@@ -6794,7 +6866,7 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
     /* Check for any existing layers that already use this name */
     for (int iLayer = 0; iLayer < m_nLayers; iLayer++)
     {
-        if (EQUAL(pszLayerName, m_papoLayers[iLayer]->GetName()))
+        if (EQUAL(osTableName.c_str(), m_papoLayers[iLayer]->GetName()))
         {
             const char *pszOverwrite =
                 CSLFetchNameValue(papszOptions, "OVERWRITE");
@@ -6808,7 +6880,7 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
                          "Layer %s already exists, CreateLayer failed.\n"
                          "Use the layer creation option OVERWRITE=YES to "
                          "replace it.",
-                         pszLayerName);
+                         osTableName.c_str());
                 return nullptr;
             }
         }
@@ -6824,7 +6896,7 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
 
     /* Create a blank layer. */
     auto poLayer = std::unique_ptr<OGRGeoPackageTableLayer>(
-        new OGRGeoPackageTableLayer(this, pszLayerName));
+        new OGRGeoPackageTableLayer(this, osTableName.c_str()));
 
     OGRSpatialReference *poSRS = nullptr;
     if (poSpatialRef)
@@ -6833,7 +6905,9 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
     poLayer->SetCreationParameters(
-        eGType, pszGeomColumnName, bGeomNullable, poSRS,
+        eGType,
+        bLaunder ? LaunderName(pszGeomColumnName).c_str() : pszGeomColumnName,
+        bGeomNullable, poSRS,
         CSLFetchNameValue(papszOptions, "SRID"),
         poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetCoordinatePrecision()
                            : OGRGeomCoordinatePrecision(),
@@ -6841,12 +6915,14 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
             CSLFetchNameValueDef(papszOptions, "DISCARD_COORD_LSB", "NO")),
         CPLTestBool(CSLFetchNameValueDef(
             papszOptions, "UNDO_DISCARD_COORD_LSB_ON_READING", "NO")),
-        pszFIDColumnName, pszIdentifier,
-        CSLFetchNameValue(papszOptions, "DESCRIPTION"));
+        bLaunder ? LaunderName(pszFIDColumnName).c_str() : pszFIDColumnName,
+        pszIdentifier, CSLFetchNameValue(papszOptions, "DESCRIPTION"));
     if (poSRS)
     {
         poSRS->Release();
     }
+
+    poLayer->SetLaunder(bLaunder);
 
     /* Should we create a spatial index ? */
     const char *pszSI = CSLFetchNameValue(papszOptions, "SPATIAL_INDEX");
