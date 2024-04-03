@@ -93,7 +93,7 @@ def test_isg_approx_georeferencing_rejected_by_default():
     # with delta_lon modified
     filename = "data/isg/approx_georeferencing_rejected_by_default.isg"
     with pytest.raises(Exception, match="ISG_SKIP_GEOREF_CONSISTENCY_CHECK"):
-        assert gdal.Open(filename) is None
+        gdal.Open(filename)
 
     gdal.ErrorReset()
     with gdal.config_option(

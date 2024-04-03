@@ -324,16 +324,12 @@ def test_ogr_arrow_write_from_another_dataset(
         if open_as_stream:
 
             with pytest.raises(Exception):
-                assert lyr.GetFeatureCount(force=0) == -1
+                lyr.GetFeatureCount(force=0)
 
             assert lyr.GetFeatureCount() == 5
 
-            with pytest.raises(Exception):
-                gdal.ErrorReset()
-                assert lyr.GetNextFeature() is None
-                assert (
-                    gdal.GetLastErrorMsg() == "Attempting to rewind non-seekable stream"
-                )
+            with pytest.raises(Exception, match="rewind non-seekable stream"):
+                lyr.GetNextFeature()
 
         elif format == "STREAM" and batch_size:
 
@@ -391,7 +387,7 @@ def test_ogr_arrow_write_compression(compression):
 def test_ogr_arrow_invalid_arrow():
 
     with pytest.raises(Exception):
-        assert ogr.Open("data/arrow/invalid.arrow") is None
+        ogr.Open("data/arrow/invalid.arrow")
 
 
 ###############################################################################
@@ -401,10 +397,10 @@ def test_ogr_arrow_invalid_arrow():
 def test_ogr_arrow_invalid_arrows():
 
     with pytest.raises(Exception):
-        assert ogr.Open("data/arrow/invalid.arrows") is None
+        ogr.Open("data/arrow/invalid.arrows")
 
     with pytest.raises(Exception):
-        ogr.Open("ARROW_IPC_STREAM:/vsimem/i_dont_exist.bin") is None
+        ogr.Open("ARROW_IPC_STREAM:/vsimem/i_dont_exist.bin")
 
 
 ###############################################################################

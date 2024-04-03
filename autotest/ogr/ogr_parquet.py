@@ -705,19 +705,16 @@ def test_ogr_parquet_write_edge_cases():
     f = ogr.Feature(lyr.GetLayerDefn())
     with pytest.raises(Exception):
         # violation of not-null constraint
-        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+        lyr.CreateFeature(f)
     f["foo"] = "bar"
     assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
     assert lyr.GetFeatureCount() == 1
     assert lyr.TestCapability(ogr.OLCCreateField) == 0
     assert lyr.TestCapability(ogr.OLCCreateGeomField) == 0
     with pytest.raises(Exception):
-        assert lyr.CreateField(ogr.FieldDefn("bar")) != ogr.OGRERR_NONE
+        lyr.CreateField(ogr.FieldDefn("bar"))
     with pytest.raises(Exception):
-        assert (
-            lyr.CreateGeomField(ogr.GeomFieldDefn("baz", ogr.wkbPoint))
-            != ogr.OGRERR_NONE
-        )
+        lyr.CreateGeomField(ogr.GeomFieldDefn("baz", ogr.wkbPoint))
     ds = None
     ds = gdal.OpenEx(outfilename)
     assert ds is not None
@@ -1244,9 +1241,9 @@ def test_ogr_parquet_statistics():
 
     # Errors
     with pytest.raises(Exception):
-        assert ds.ExecuteSQL("SELECT MIN(int32) FROM i_dont_exist") is None
+        ds.ExecuteSQL("SELECT MIN(int32) FROM i_dont_exist")
     with pytest.raises(Exception):
-        assert ds.ExecuteSQL("SELECT MIN(i_dont_exist) FROM test") is None
+        ds.ExecuteSQL("SELECT MIN(i_dont_exist) FROM test")
 
     # File without statistics
     outfilename = "/vsimem/out.parquet"

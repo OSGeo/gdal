@@ -121,4 +121,4 @@ def test_safe_WV():
     assert len(ds.GetGCPs()) == 2
 
     with pytest.raises(Exception):
-        assert gdal.Open(subds[0][0] + "xxxx") is None
+        gdal.Open(subds[0][0] + "xxxx")

@@ -4565,7 +4565,7 @@ def test_tiff_read_unhandled_codec_known_name():
 def test_tiff_read_unhandled_codec_unknown_name():
 
     with pytest.raises(Exception):
-        assert gdal.Open("data/gtiff/unsupported_codec_unknown.tif")
+        gdal.Open("data/gtiff/unsupported_codec_unknown.tif")
     assert "missing codec of code 44510" in gdal.GetLastErrorMsg()
 
 

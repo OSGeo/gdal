@@ -457,9 +457,9 @@ def test_ogr_lvbag_read_errors():
 
     lyr = ds.GetLayer(0)
     with pytest.raises(Exception):
-        assert lyr.GetName() == ""
+        lyr.GetName()
     with pytest.raises(Exception):
-        assert lyr.GetFeatureCount() == 0
+        lyr.GetFeatureCount()
 
 
 def test_ogr_lvbag_fix_identificatie():

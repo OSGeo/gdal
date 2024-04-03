@@ -174,10 +174,10 @@ def test_ogr_basic_5():
 def test_ogr_basic_6():
 
     with pytest.raises(Exception):
-        assert ogr.Open("") is None
+        ogr.Open("")
 
     with pytest.raises(Exception):
-        assert ogr.Open("non_existing") is None
+        ogr.Open("non_existing")
 
 
 ###############################################################################

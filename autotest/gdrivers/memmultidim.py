@@ -838,7 +838,7 @@ def test_mem_md_group_attribute_single_numeric():
     with gdal.quiet_errors():
         assert not rg.CreateAttribute("", [1], float64dt)  # unnamed attr not supported
     with pytest.raises(ValueError):
-        assert not rg.CreateAttribute(None, [1], float64dt)
+        rg.CreateAttribute(None, [1], float64dt)
 
     attr = rg.CreateAttribute("attr", [1], float64dt)
     assert attr
@@ -956,7 +956,7 @@ def test_mem_md_array_attribute():
             "", [1], float64dt
         )  # unnamed attr not supported
     with pytest.raises(ValueError):
-        assert not myarray.CreateAttribute(None, [1], float64dt)
+        myarray.CreateAttribute(None, [1], float64dt)
 
     attr = myarray.CreateAttribute("attr", [1], float64dt)
     assert attr

@@ -147,14 +147,14 @@ def test_heif_subdatasets():
     assert ds.RasterXSize == 162
 
     with pytest.raises(Exception):
-        assert gdal.Open("HEIF:0:data/heif/subdatasets.heic") is None
+        gdal.Open("HEIF:0:data/heif/subdatasets.heic")
     with pytest.raises(Exception):
-        assert gdal.Open("HEIF:3:data/heif/subdatasets.heic") is None
+        gdal.Open("HEIF:3:data/heif/subdatasets.heic")
     with pytest.raises(Exception):
-        assert gdal.Open("HEIF:1:non_existing.heic") is None
+        gdal.Open("HEIF:1:non_existing.heic")
     with pytest.raises(Exception):
-        assert gdal.Open("HEIF:") is None
+        gdal.Open("HEIF:")
     with pytest.raises(Exception):
-        assert gdal.Open("HEIF:1") is None
+        gdal.Open("HEIF:1")
     with pytest.raises(Exception):
-        assert gdal.Open("HEIF:1:") is None
+        gdal.Open("HEIF:1:")

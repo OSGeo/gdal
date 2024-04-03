@@ -922,7 +922,7 @@ def test_multidim_SubsetDimensionFromSelection():
 
     assert rg_subset.GetGroupNames() == rg.GetGroupNames()
     with pytest.raises(Exception, match="Group i_do_not_exist does not exist"):
-        assert rg_subset.OpenGroup("i_do_not_exist") is None
+        rg_subset.OpenGroup("i_do_not_exist")
     assert len(rg_subset.GetAttributes()) == 1
     assert rg_subset.GetAttribute("numeric_attr") is not None
 
@@ -935,7 +935,7 @@ def test_multidim_SubsetDimensionFromSelection():
 
     assert rg_subset.GetMDArrayNames() == rg.GetMDArrayNames()
     with pytest.raises(Exception, match="Array i_do_not_exist does not exist"):
-        assert rg_subset.OpenMDArray("i_do_not_exist") is None
+        rg_subset.OpenMDArray("i_do_not_exist")
     ar_subset = rg_subset.OpenMDArray("ar")
     assert ar_subset.GetFullName() == "/ar"
     assert [dim.GetFullName() for dim in ar_subset.GetDimensions()] == [

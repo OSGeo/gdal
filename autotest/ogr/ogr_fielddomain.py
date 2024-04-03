@@ -127,12 +127,11 @@ def test_ogr_fielddomain_range():
     assert "Minimum value: 2023-07-03T12:13:14" in ret
     assert "Maximum value: 2023-07-03T12:13:15" in ret
 
-    with pytest.raises(Exception):
-        with gdal.quiet_errors():
-            domain.GetEnumeration()
+    with pytest.raises(Exception, match="should be called with a coded field domain"):
+        domain.GetEnumeration()
 
-    with pytest.raises(Exception):
-        assert domain.GetGlob() is None
+    with pytest.raises(Exception, match="should be called with a glob field domain"):
+        domain.GetGlob()
 
 
 def test_ogr_fielddomain_coded():
@@ -197,11 +196,11 @@ def test_ogr_fielddomain_mem_driver():
 
     assert ds.GetFieldDomain("name").GetDomainType() == ogr.OFDT_GLOB
 
-    with pytest.raises(Exception):
-        assert ds.GetFieldDomain(None)
+    with pytest.raises(Exception, match="Received a NULL pointer"):
+        ds.GetFieldDomain(None)
 
-    with pytest.raises(Exception):
-        assert ds.AddFieldDomain(None)
+    with pytest.raises(Exception, match="Received a NULL pointer"):
+        ds.AddFieldDomain(None)
 
     # Duplicate domain
     assert not ds.AddFieldDomain(

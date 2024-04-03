@@ -73,7 +73,7 @@ def test_ogr_sql_execute_sql(use_gdal):
 
             # lyr invalidated
             with pytest.raises(Exception):
-                assert lyr.GetName()
+                lyr.GetName()
 
             # lyr invalidated
             with pytest.raises(Exception):
@@ -92,7 +92,7 @@ def test_ogr_sql_execute_sql(use_gdal):
 
             # lyr invalidated
             with pytest.raises(Exception):
-                assert lyr.GetName()
+                lyr.GetName()
 
             ds = None
 
@@ -109,7 +109,7 @@ def test_ogr_sql_execute_sql(use_gdal):
 
         # lyr invalidated
         with pytest.raises(Exception):
-            assert lyr.GetName()
+            lyr.GetName()
 
         assert get_lyr().GetFeatureCount() == 10
 
@@ -718,7 +718,6 @@ def test_ogr_sql_28():
 
     with pytest.raises(Exception):
         sql_lyr = ds.ExecuteSQL(None)
-        pytest.fail("expected exception on NULL query")
 
     queries = [
         "",

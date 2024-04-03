@@ -812,7 +812,7 @@ def test_isis_22():
     # Invalid Json
     js = """invalid"""
     with pytest.raises(Exception):
-        assert ds.SetMetadata([js], "json:ISIS3") != 0
+        ds.SetMetadata([js], "json:ISIS3")
     ds = None
     gdal.Unlink("/vsimem/isis_tmp.lbl")
 

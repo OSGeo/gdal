@@ -2467,7 +2467,7 @@ def test_zarr_read_fill_value_complex_datatype_v3(data_type, fill_value, nodata)
 
         if nodata is None:
             with pytest.raises(Exception):
-                assert gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER) is None
+                gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
         else:
 
             def open_and_modify():
@@ -4616,7 +4616,7 @@ def test_zarr_multidim_rename_array_at_creation(format, create_z_metadata):
         assert set(group.GetMDArrayNames()) == {"ar_renamed", "other_ar"}
 
         with pytest.raises(Exception):
-            assert group.OpenMDArray("ar") is None
+            group.OpenMDArray("ar")
         assert group.OpenMDArray("ar_renamed") is not None
 
         assert attr.GetName() == "attr"

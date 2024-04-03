@@ -169,7 +169,6 @@ def test_ogr_mvt_limit_cases():
 
     with pytest.raises(Exception):
         f = lyr.GetFeature(6)
-        assert f["b"] == 1
 
     lyr = ds.GetLayerByName("layer2")
     assert lyr.GetFeatureCount() == 0
@@ -615,17 +614,17 @@ def test_ogr_mvt_polygon_larger_than_header():
 def test_ogr_mvt_errors():
 
     with pytest.raises(Exception):
-        assert ogr.Open("MVT:/i_do_not/exist") is None
+        ogr.Open("MVT:/i_do_not/exist")
 
     # Cannot detect Z in directory name
     with pytest.raises(Exception):
-        assert ogr.Open("MVT:data") is None
+        ogr.Open("MVT:data")
 
     # Invalid Z
     gdal.Mkdir("/vsimem/33", 0)
 
     with pytest.raises(Exception):
-        assert ogr.Open("MVT:/vsimem/33") is None
+        ogr.Open("MVT:/vsimem/33")
 
     gdal.Rmdir("/vsimem/33")
 

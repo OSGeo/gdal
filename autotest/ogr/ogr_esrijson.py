@@ -654,7 +654,7 @@ def test_ogr_esrijson_read_starting_with_features_geometry():
 def test_ogr_esrijson_create_geometry_from_esri_json():
 
     with pytest.raises(Exception):
-        assert not ogr.CreateGeometryFromEsriJson("error")
+        ogr.CreateGeometryFromEsriJson("error")
 
     g = ogr.CreateGeometryFromEsriJson('{ "x": 2, "y": 49 }')
     assert g.ExportToWkt() == "POINT (2 49)"

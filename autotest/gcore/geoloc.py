@@ -422,11 +422,11 @@ def test_geoloc_GEOLOC_ARRAY_transformer_option():
 
     # Non-existing GEOLOC_ARRAY
     with pytest.raises(Exception):
-        assert gdal.Transformer(ds, None, ["GEOLOC_ARRAY=/vsimem/invalid.tif"]) is None
+        gdal.Transformer(ds, None, ["GEOLOC_ARRAY=/vsimem/invalid.tif"])
 
     # Existing GEOLOC_ARRAY but single band
     with pytest.raises(Exception):
-        assert gdal.Transformer(ds, None, ["GEOLOC_ARRAY=data/byte.tif"]) is None
+        gdal.Transformer(ds, None, ["GEOLOC_ARRAY=data/byte.tif"])
 
     # Test SRC_GEOLOC_ARRAY transformer option
     tr = gdal.Transformer(ds, None, ["SRC_GEOLOC_ARRAY=/vsimem/lonlat.tif"])
@@ -523,10 +523,7 @@ def test_geoloc_DST_GEOLOC_ARRAY_transformer_option():
 
     # Non-existing DST_GEOLOC_ARRAY
     with pytest.raises(Exception):
-        assert (
-            gdal.Transformer(input_ds, ds, ["DST_GEOLOC_ARRAY=/vsimem/invalid.tif"])
-            is None
-        )
+        gdal.Transformer(input_ds, ds, ["DST_GEOLOC_ARRAY=/vsimem/invalid.tif"])
 
     tr = gdal.Transformer(
         input_ds, ds, ["DST_GEOLOC_ARRAY=/vsimem/lonlat_DST_GEOLOC_ARRAY.tif"]

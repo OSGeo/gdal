@@ -355,7 +355,7 @@ def test_openfilegb_raster_rat():
 
     assert rat.GetValueAsString(-1, 0) == ""
     with pytest.raises(Exception):
-        assert rat.GetValueAsString(0, -1) == ""
+        rat.GetValueAsString(0, -1)
     assert rat.GetValueAsString(0, 0) == "-124"
     assert rat.GetValueAsString(1, 0) == "-116"
     assert rat.GetValueAsString(0, 1) == "72"
@@ -364,7 +364,7 @@ def test_openfilegb_raster_rat():
 
     assert rat.GetValueAsInt(-1, 0) == 0
     with pytest.raises(Exception):
-        assert rat.GetValueAsInt(0, -1) == 0
+        rat.GetValueAsInt(0, -1)
     assert rat.GetValueAsInt(0, 0) == -124
     assert rat.GetValueAsInt(1, 0) == -116
     assert rat.GetValueAsInt(0, 1) == 72
@@ -373,7 +373,7 @@ def test_openfilegb_raster_rat():
 
     assert rat.GetValueAsDouble(-1, 0) == 0
     with pytest.raises(Exception):
-        assert rat.GetValueAsDouble(0, -1) == 0
+        rat.GetValueAsDouble(0, -1)
     assert rat.GetValueAsDouble(0, 0) == -124
     assert rat.GetValueAsDouble(1, 0) == -116
     assert rat.GetValueAsDouble(0, 1) == 72

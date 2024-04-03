@@ -36,10 +36,10 @@ from osgeo import gdal
 def test_vsi_path_specific_options():
 
     with pytest.raises(Exception):
-        assert gdal.GetPathSpecificOption(None, "key")
+        gdal.GetPathSpecificOption(None, "key")
 
     with pytest.raises(Exception):
-        assert gdal.GetPathSpecificOption("prefix", None)
+        gdal.GetPathSpecificOption("prefix", None)
 
     assert gdal.GetPathSpecificOption("prefix", "key") is None
 

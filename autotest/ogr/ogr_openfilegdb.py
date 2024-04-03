@@ -408,8 +408,7 @@ def test_ogr_openfilegdb_1(gdb_source):
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
 
-    with pytest.raises(Exception):
-        assert gdal.OpenEx(filename, gdal.OF_RASTER)
+    assert gdal.OpenEx(filename, gdal.OF_RASTER) is None
 
     assert gdal.OpenEx(filename, gdal.OF_RASTER | gdal.OF_VECTOR) is not None
 

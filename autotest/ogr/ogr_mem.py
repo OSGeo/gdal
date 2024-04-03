@@ -1158,8 +1158,7 @@ def test_ogr_mem_arrow_stream_numpy_memlimit(limited_field):
                     Exception,
                     match="Too large feature: not even a single feature can be returned",
                 ):
-                    batches = [batch for batch in stream]
-                    assert len(batches) == 0
+                    [batch for batch in stream]
 
     with gdaltest.config_option("OGR_ARROW_MEM_LIMIT", "1", thread_local=False):
 
@@ -1179,8 +1178,7 @@ def test_ogr_mem_arrow_stream_numpy_memlimit(limited_field):
                 Exception,
                 match="Too large feature: not even a single feature can be returned",
             ):
-                batches = [batch for batch in stream]
-                assert len(batches) == 0
+                [batch for batch in stream]
 
 
 ###############################################################################
@@ -2750,7 +2748,7 @@ def test_ogr_mem_write_pyarrow_invalid_dict_index(dict_values):
         Exception,
         match="Feature 4, field dict_invalid_index: invalid dictionary index: 3",
     ):
-        assert lyr.WritePyArrow(table)
+        lyr.WritePyArrow(table)
 
 
 ###############################################################################
