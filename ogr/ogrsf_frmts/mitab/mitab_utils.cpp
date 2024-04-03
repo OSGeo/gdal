@@ -240,8 +240,8 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     for (int i = static_cast<int>(strlen(pszFname)) - 1;
          i >= 0 && pszFname[i] != '.'; i--)
     {
-        pszFname[i] =
-            static_cast<char>(toupper(static_cast<unsigned char>(pszFname[i])));
+        pszFname[i] = static_cast<char>(
+            CPLToupper(static_cast<unsigned char>(pszFname[i])));
     }
 
     if (VSIStatL(pszFname, &sStatBuf) == 0)
@@ -253,8 +253,8 @@ GBool TABAdjustFilenameExtension(char *pszFname)
     for (int i = static_cast<int>(strlen(pszFname)) - 1;
          i >= 0 && pszFname[i] != '.'; i--)
     {
-        pszFname[i] =
-            static_cast<char>(tolower(static_cast<unsigned char>(pszFname[i])));
+        pszFname[i] = static_cast<char>(
+            CPLTolower(static_cast<unsigned char>(pszFname[i])));
     }
 
     if (VSIStatL(pszFname, &sStatBuf) == 0)

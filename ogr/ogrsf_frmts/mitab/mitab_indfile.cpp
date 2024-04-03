@@ -599,8 +599,8 @@ GByte *TABINDFile::BuildKey(int nIndexNumber, const char *pszStr)
     int i = 0;
     for (i = 0; i < nKeyLength && pszStr[i] != '\0'; i++)
     {
-        m_papbyKeyBuffers[nIndexNumber - 1][i] =
-            static_cast<GByte>(toupper(static_cast<unsigned char>(pszStr[i])));
+        m_papbyKeyBuffers[nIndexNumber - 1][i] = static_cast<GByte>(
+            CPLToupper(static_cast<unsigned char>(pszStr[i])));
     }
 
     /* Pad the end of the buffer with '\0' */

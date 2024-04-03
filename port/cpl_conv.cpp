@@ -327,7 +327,7 @@ char *CPLStrdup(const char *pszString)
  * Convert each characters of the string to lower case.
  *
  * For example, "ABcdE" will be converted to "abcde".
- * This function is locale dependent.
+ * Starting with GDAL 3.9, this function is no longer locale dependent.
  *
  * @param pszString input string to be converted.
  * @return pointer to the same string, pszString.
@@ -344,7 +344,7 @@ char *CPLStrlwr(char *pszString)
     while (*pszTemp)
     {
         *pszTemp =
-            static_cast<char>(tolower(static_cast<unsigned char>(*pszTemp)));
+            static_cast<char>(CPLTolower(static_cast<unsigned char>(*pszTemp)));
         pszTemp++;
     }
 

@@ -3425,14 +3425,14 @@ void netCDFDataset::SetProjectionFromVar(
         for (unsigned int i = 0;
              i < strlen(poDS->papszDimName[poDS->nXDimID]) && i < 3; i++)
         {
-            szDimNameX[i] = (char)tolower(static_cast<unsigned char>(
+            szDimNameX[i] = (char)CPLTolower(static_cast<unsigned char>(
                 (poDS->papszDimName[poDS->nXDimID])[i]));
         }
         szDimNameX[3] = '\0';
         // for( unsigned int i = 0;
         //      (i < strlen(poDS->papszDimName[poDS->nYDimID])
         //                        && i < 3 ); i++ ) {
-        //    szDimNameY[i]=(char)tolower(static_cast<unsigned char>((poDS->papszDimName[poDS->nYDimID])[i]));
+        //    szDimNameY[i]=(char)CPLTolower(static_cast<unsigned char>((poDS->papszDimName[poDS->nYDimID])[i]));
         // }
         // szDimNameY[3] = '\0';
     }

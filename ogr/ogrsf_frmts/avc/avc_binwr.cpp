@@ -1793,7 +1793,8 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
         for (i = 0; *pszPtr != '\0' && *pszPtr != '.' && *pszPtr != ' ';
              i++, pszPtr++)
         {
-            szCoverName[i] = (char)tolower(static_cast<unsigned char>(*pszPtr));
+            szCoverName[i] =
+                (char)CPLTolower(static_cast<unsigned char>(*pszPtr));
         }
         szCoverName[i] = '\0';
 
@@ -1802,13 +1803,14 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
 
         for (i = 0; i < 3 && *pszPtr != '\0' && *pszPtr != ' '; i++, pszPtr++)
         {
-            szExt[i] = (char)tolower(static_cast<unsigned char>(*pszPtr));
+            szExt[i] = (char)CPLTolower(static_cast<unsigned char>(*pszPtr));
         }
         szExt[i] = '\0';
 
         for (i = 0; *pszPtr != '\0' && *pszPtr != ' '; i++, pszPtr++)
         {
-            szSubclass[i] = (char)tolower(static_cast<unsigned char>(*pszPtr));
+            szSubclass[i] =
+                (char)CPLTolower(static_cast<unsigned char>(*pszPtr));
         }
         szSubclass[i] = '\0';
 
@@ -1980,7 +1982,7 @@ AVCBinFile *_AVCBinWriteCreateDBFTable(const char *pszPath,
          i++, pszDBFBasename++)
     {
         psFile->pszFilename[i] =
-            (char)tolower(static_cast<unsigned char>(*pszDBFBasename));
+            (char)CPLTolower(static_cast<unsigned char>(*pszDBFBasename));
     }
 
     strcat(psFile->pszFilename, ".dbf");

@@ -367,8 +367,8 @@ GetGeometryColumnDescription(odbc::Connection &conn, const CPLString &query,
             columnName.end(),
             [](char ch1, char ch2)
             {
-                return std::toupper(static_cast<unsigned char>(ch1)) ==
-                       std::toupper(static_cast<unsigned char>(ch2));
+                return CPLToupper(static_cast<unsigned char>(ch1)) ==
+                       CPLToupper(static_cast<unsigned char>(ch2));
             });
 
         if (it != preparedQuery.end())
@@ -1285,8 +1285,8 @@ std::pair<OGRErr, CPLString> OGRHanaDataSource::LaunderName(const char *name)
             if (c == '-' || c == '#')
                 newName[i] = '_';
             else
-                newName[i] =
-                    static_cast<char>(toupper(static_cast<unsigned char>(c)));
+                newName[i] = static_cast<char>(
+                    CPLToupper(static_cast<unsigned char>(c)));
         }
         else
         {

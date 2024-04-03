@@ -1068,7 +1068,7 @@ char *OGRMySQLDataSource::LaunderName(const char *pszSrcName)
     for (int i = 0; pszSafeName[i] != '\0'; i++)
     {
         pszSafeName[i] =
-            (char)tolower(static_cast<unsigned char>(pszSafeName[i]));
+            (char)CPLTolower(static_cast<unsigned char>(pszSafeName[i]));
         if (pszSafeName[i] == '-' || pszSafeName[i] == '#')
             pszSafeName[i] = '_';
     }
