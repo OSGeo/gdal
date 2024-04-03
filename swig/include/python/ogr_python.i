@@ -77,6 +77,13 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
 // End: to be removed in GDAL 4.0
 
+%pythonprepend GeneralCmdLineProcessor %{
+    import os
+    for i in range(len(args[0])):
+        if isinstance(args[0][i], (os.PathLike, int)):
+            args[0][i] = str(args[0][i])
+%}
+
 %extend OGRDataSourceShadow {
   %pythoncode {
 

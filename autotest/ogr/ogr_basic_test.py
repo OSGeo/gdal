@@ -1167,3 +1167,11 @@ def test_geom_use_after_transfer_to_feature(tmp_vsimem, arg_type):
 
     with pytest.raises(Exception):
         point.ExportToWkt()
+
+
+def test_general_cmd_line_processor(tmp_path):
+
+    processed = ogr.GeneralCmdLineProcessor(
+        ["program", 2, tmp_path / "a_path", "a_string"]
+    )
+    assert processed == ["program", "2", str(tmp_path / "a_path"), "a_string"]
