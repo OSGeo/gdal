@@ -981,7 +981,7 @@ def test_misc_get_config_options():
 # Test GeneralCmdLineProcessor
 
 
-def test_misc_general_cmd_line_processor(capfd, tmp_path):
+def test_misc_general_cmd_line_processor(tmp_path):
 
     processed = gdal.GeneralCmdLineProcessor(
         ["program", 2, tmp_path / "a_path", "a_string"]
