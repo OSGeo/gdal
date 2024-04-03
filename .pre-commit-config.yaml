@@ -52,7 +52,7 @@ repos:
                 frmts/pcidsk/sdk|
                 frmts/grib/degrib/degrib|
                 frmts/grib/degrib/g2clib|
-                ogr/utf8.h|
+                port/utf8.h|
                 ogr/ogrsf_frmts/cad/libopencad/|
                 ogr/ogrsf_frmts/geojson/libjson/|
                 ogr/ogrsf_frmts/flatgeobuf/flatbuffers/|
