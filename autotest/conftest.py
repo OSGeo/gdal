@@ -238,9 +238,35 @@ def pytest_collection_modifyitems(config, items):
                     )
                 )
 
+        # For any tests marked to run sequentially (pytest.mark.random_order(disabled=True)
+        # check to make sure they are also marked with pytest.mark.xdist_group()
+        # so they are sent to the same xdist worker.
+        unmarked_modules = set()
+        xdist = config.pluginmanager.getplugin("xdist")
+        if xdist and xdist.is_xdist_worker(item.session):
+            for mark in item.iter_markers("random_order"):
+                if (
+                    mark.kwargs["disabled"]
+                    and not next(item.iter_markers("xdist_group"), None)
+                    and item.module.__name__ not in unmarked_modules
+                ):
+                    unmarked_modules.add(item.module.__name__)
+                    import warnings
+
+                    warnings.warn(
+                        f"module {item.module.__name__} marked as random_order(disabled=True) but does not have an assigned xdist_group"
+                    )
+
 
 def pytest_addoption(parser):
     parser.addini("gdal_version", "GDAL version for which pytest.ini was generated")
+
+    # our pytest.ini specifies --dist=loadgroup but we don't want to fail if the
+    # user doesn't have this extension installed.
+    try:
+        import xdist  # noqa: F401
+    except ImportError:
+        parser.addoption("--dist")
 
 
 def pytest_configure(config):
