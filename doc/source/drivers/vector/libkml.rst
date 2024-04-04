@@ -572,7 +572,11 @@ except for some special fields as noted below.
   .. config:: LIBKML_USE_SIMPLEFIELD
      :choices: YES, NO
 
-     If ``NO``, export fields as <Data>.
+     If ``NO``, export fields as <Data>. Here's how to set it:
+
+.. code-block:: bash
+
+    --config LIBKML_USE_SIMPLEFIELD NO
 
 A rich set of :ref:`configuration options <configoptions>` are
 available to define how fields in input and output, map to a KML
