@@ -2739,7 +2739,7 @@ def test_netcdf_64():
         "tmp/netcdf_64.nc",
         "data/netcdf/profile.nc",
         format="netCDF",
-        selectFields=["id,station,foo"],
+        selectFields=["id", "station", "foo"],
         layerCreationOptions=[
             "FEATURE_TYPE=PROFILE",
             "PROFILE_DIM_NAME=profile_dim",
