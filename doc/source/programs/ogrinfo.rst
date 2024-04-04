@@ -97,7 +97,7 @@ edit data.
 
     An attribute query in a restricted form of the queries used in the SQL
     `WHERE` statement. Only features matching the attribute query will be
-    reported. Starting with GDAL 2.1, the ``\filename`` syntax can be used to
+    reported. Starting with GDAL 2.1, the ``@<filename>`` syntax can be used to
     indicate that the content is in the pointed filename.
 
     Example of ``-where`` and quoting:
