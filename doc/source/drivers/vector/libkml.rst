@@ -577,9 +577,15 @@ except for some special fields as noted below.
 A rich set of :ref:`configuration options <configoptions>` are
 available to define how fields in input and output, map to a KML
 `<Placemark> <https://developers.google.com/kml/documentation/kmlreference#placemark>`__.
-For example, if you want a field called 'Cities' to map to the
-`<name> <https://developers.google.com/kml/documentation/kmlreference#name>`__;
-tag in KML, you can set a configuration option.
+
+For example, if you want a field called 'Corner Point Identifier' to map to the
+`<name> <https://developers.google.com/kml/documentation/kmlreference#name>`__
+tag in KML, you can set the configuration option:
+
+.. code-block:: bash
+
+    --config LIBKML_NAME_FIELD "Corner Point Identifier"
+
 
 -  .. config:: LIBKML_NAME_FIELD
       :default: name
