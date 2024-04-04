@@ -104,11 +104,28 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -select <field_list>
 
-    Comma-delimited list of fields from input layer to copy to the new layer. A
-    field is skipped if mentioned previously in the list even if the input
-    layer has duplicate field names. (Defaults to ``all``; any field is skipped
-    if a subsequent field with same name is found.) Geometry fields can also be
-    specified in the list.
+    Comma-delimited list of fields from input layer to copy to the new layer.
+
+    Starting with GDAL 3.9, field names with spaces, commas or double-quote
+    should be surrounded with a starting and ending double-quote character, and
+    double-quote characters in a field name should be escaped with backslash.
+
+    Depending on the shell used, this might require further quoting. For example,
+    to select ``regular_field``, ``a_field_with space, and comma`` and
+    ``a field with " double quote`` with a Unix shell:
+
+    .. code-block:: bash
+
+        -select "regular_field,\"a_field_with space, and comma\",\"a field with \\\" double quote\""
+
+    A field is only selected once, even if mentioned several times in the list
+    and if the input layer has duplicate field names.
+
+    Geometry fields can also be specified in the list.
+
+    All fields are selected when -select is not specified. Specifying the
+    empty string can be used to disable selecting any attribute field, and only
+    keep geometries.
 
     Note this setting cannot be used together with ``-append``. To control the
     selection of fields when appending to a layer, use ``-fieldmap`` or ``-sql``.
