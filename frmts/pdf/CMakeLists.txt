@@ -54,7 +54,8 @@ if (GDAL_USE_POPPLER)
   if ("${Poppler_VERSION_MINOR}" MATCHES "0?[0-9]+")
     string(REGEX REPLACE "0?([0-9]+)" "\\1" Poppler_VERSION_MINOR ${Poppler_VERSION_MINOR})
   endif ()
-  if (Poppler_VERSION_STRING VERSION_GREATER_EQUAL "24.05")
+  # POPPLER_24_05_OR_LATER used transiently (by fuzzers/build.sh) until 24.05 is actually released
+  if (Poppler_VERSION_STRING VERSION_GREATER_EQUAL "24.05" OR POPPLER_24_05_OR_LATER)
     target_compile_features(gdal_PDF PRIVATE cxx_std_20)
   endif ()
   target_compile_definitions(gdal_PDF PRIVATE -DHAVE_POPPLER -DPOPPLER_MAJOR_VERSION=${Poppler_VERSION_MAJOR}
