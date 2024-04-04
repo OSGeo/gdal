@@ -100,6 +100,12 @@ edit data.
     reported. Starting with GDAL 2.1, the ``\filename`` syntax can be used to
     indicate that the content is in the pointed filename.
 
+    Example of ``-where`` and quoting:
+
+.. code-block: bash
+
+    -where "\"Corner Point Identifier\" LIKE '%__00_00'"
+
 .. option:: -sql <statement>|@<filename>
 
     Execute the indicated SQL statement and return the result. Starting with
