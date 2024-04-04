@@ -639,6 +639,21 @@ GDALDatasetShadow *ViewshedGenerate( GDALRasterBandShadow *srcBand,
 /*                         IsLineOfSightVisible()                       */
 /************************************************************************/
 
+#ifdef SWIGPYTHON
+%feature( "kwargs" ) IsLineOfSightVisible;
+%apply Pointer NONNULL {GDALRasterBandShadow *band};
+%inline %{
+void IsLineOfSightVisible(GDALRasterBandShadow *band,
+                          int xA, int yA, double zA,
+                          int xB, int yB, double zB,
+                          bool *pbVisible, int *pnXIntersection, int *pnYIntersection,
+                          char** options = NULL)
+{
+    *pbVisible = GDALIsLineOfSightVisible(band, xA, yA, zA, xB, yB, zB, pnXIntersection, pnYIntersection, options);
+}
+%}
+%clear GDALRasterBandShadow *band;
+#else
 #ifndef SWIGJAVA
 %feature( "kwargs" ) IsLineOfSightVisible;
 #endif
@@ -647,13 +662,13 @@ GDALDatasetShadow *ViewshedGenerate( GDALRasterBandShadow *srcBand,
 bool IsLineOfSightVisible(GDALRasterBandShadow *band,
                           int xA, int yA, double zA,
                           int xB, int yB, double zB,
-                          int *xTerrainIntersection, int *yTerrainIntersection,
                           char** options = NULL)
 {
-    return GDALIsLineOfSightVisible(band, xA, yA, zA, xB, yB, zB, xTerrainIntersection, yTerrainIntersection, options);
+    return GDALIsLineOfSightVisible(band, xA, yA, zA, xB, yB, zB, NULL, NULL, options);
 }
 %}
 %clear GDALRasterBandShadow *band;
+#endif
 
 /************************************************************************/
 /*                        AutoCreateWarpedVRT()                         */
