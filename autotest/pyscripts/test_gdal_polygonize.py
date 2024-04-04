@@ -75,9 +75,9 @@ def test_gdal_polygonize_version(script_path):
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_gdal_polygonize_1(script_path):
+def test_gdal_polygonize_1(script_path, tmp_path):
 
-    outfilename = "tmp/poly.shp"
+    outfilename = str(tmp_path / "poly.shp")
     # Create a OGR datasource to put results in.
     shp_drv = ogr.GetDriverByName("ESRI Shapefile")
     if os.path.exists(outfilename):
@@ -96,12 +96,12 @@ def test_gdal_polygonize_1(script_path):
     test_py_scripts.run_py_script(
         script_path,
         "gdal_polygonize",
-        test_py_scripts.get_data_path("alg") + "polygonize_in.grd tmp poly DN",
+        test_py_scripts.get_data_path("alg") + f"polygonize_in.grd {tmp_path} poly DN",
     )
 
     # Confirm we get the set of expected features in the output layer.
 
-    shp_ds = ogr.Open("tmp")
+    shp_ds = ogr.Open(str(tmp_path))
     shp_lyr = shp_ds.GetLayerByName("poly")
 
     expected_feature_number = 13
@@ -119,24 +119,15 @@ def test_gdal_polygonize_1(script_path):
         "POLYGON ((440720 3751200,440900 3751200,440900 3751020,440720 3751020,440720 3751200),(440780 3751140,440780 3751080,440840 3751080,440840 3751140,440780 3751140))",
     )
 
-    feat_read.Destroy()
-
-    shp_ds.Destroy()
-    # Reload drv because of side effects of run_py_script()
-    shp_drv = ogr.GetDriverByName("ESRI Shapefile")
-    shp_drv.DeleteDataSource(outfilename)
-
 
 ###############################################################################
 # Test a simple case without masking.
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_gdal_polygonize_2(script_path):
+def test_gdal_polygonize_2(script_path, tmp_path):
 
-    outfilename = "tmp/out.geojson"
-    if gdal.VSIStatL(outfilename) is not None:
-        gdal.Unlink(outfilename)
+    outfilename = str(tmp_path / "out.geojson")
 
     # run the algorithm.
     test_py_scripts.run_py_script(
@@ -180,16 +171,12 @@ def test_gdal_polygonize_2(script_path):
 
     ds = None
 
-    gdal.Unlink(outfilename)
-
 
 @pytest.mark.require_driver("GPKG")
-def test_gdal_polygonize_3(script_path):
+def test_gdal_polygonize_3(script_path, tmp_path):
 
     drv = ogr.GetDriverByName("GPKG")
-    outfilename = "tmp/out.gpkg"
-    if os.path.exists(outfilename):
-        drv.DeleteDataSource(outfilename)
+    outfilename = str(tmp_path / "out.gpkg")
 
     # run the algorithm.
     test_py_scripts.run_py_script(
@@ -226,9 +213,9 @@ def test_gdal_polygonize_3(script_path):
 
 
 @pytest.mark.require_driver("GML")
-def test_gdal_polygonize_4(script_path):
+def test_gdal_polygonize_4(script_path, tmp_path):
 
-    outfilename = "tmp/out.gml"
+    outfilename = str(tmp_path / "out.gml")
     # Test mask syntax
     test_py_scripts.run_py_script(
         script_path,
@@ -241,13 +228,16 @@ def test_gdal_polygonize_4(script_path):
 
     content = open(outfilename, "rt").read()
 
-    os.unlink(outfilename)
-    os.unlink(outfilename[0:-3] + "xsd")
-
     assert (
         '<gml:Polygon srsName="urn:ogc:def:crs:EPSG::26711" gml:id="out.geom.0"><gml:exterior><gml:LinearRing><gml:posList>440720 3751320 440720 3750120 441920 3750120 441920 3751320 440720 3751320</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>'
         in content
     )
+
+
+@pytest.mark.require_driver("GML")
+def test_gdal_polygonize_4bis(script_path, tmp_path):
+
+    outfilename = str(tmp_path / "out.gml")
 
     # Test mask,1 syntax
     test_py_scripts.run_py_script(
@@ -261,9 +251,6 @@ def test_gdal_polygonize_4(script_path):
 
     content = open(outfilename, "rt").read()
 
-    os.unlink(outfilename)
-    os.unlink(outfilename[0:-3] + "xsd")
-
     assert (
         '<gml:Polygon srsName="urn:ogc:def:crs:EPSG::26711" gml:id="out.geom.0"><gml:exterior><gml:LinearRing><gml:posList>440720 3751320 440720 3750120 441920 3750120 441920 3751320 440720 3751320</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon>'
         in content
@@ -274,9 +261,9 @@ def test_gdal_polygonize_4(script_path):
 # Test -8
 
 
-def test_gdal_polygonize_minus_8(script_path):
+def test_gdal_polygonize_minus_8(script_path, tmp_path):
 
-    outfilename = "tmp/out.geojson"
+    outfilename = str(tmp_path / "out.geojson")
     test_py_scripts.run_py_script(
         script_path,
         "gdal_polygonize",
@@ -288,59 +275,52 @@ def test_gdal_polygonize_minus_8(script_path):
     assert lyr.GetFeatureCount() == 229
     ds = None
 
-    os.unlink(outfilename)
-
 
 ###############################################################################
 # Test --overwrite
 
 
 @pytest.mark.parametrize("format", ["geojson", "gpkg"])
-def test_gdal_polygonize_overwrite(script_path, format):
+def test_gdal_polygonize_overwrite(script_path, tmp_path, format):
 
     if gdal.GetDriverByName(format) is None:
         pytest.skip(f"driver {format} not available")
 
-    try:
-        outfilename = "tmp/out." + format
-        test_py_scripts.run_py_script(
-            script_path,
-            "gdal_polygonize",
-            test_py_scripts.get_data_path("gcore") + "byte.tif " + outfilename,
-        )
+    outfilename = str(tmp_path / f"out.{format}")
+    test_py_scripts.run_py_script(
+        script_path,
+        "gdal_polygonize",
+        test_py_scripts.get_data_path("gcore") + "byte.tif " + outfilename,
+    )
 
-        ds = gdal.OpenEx(outfilename)
-        lyr = ds.GetLayer(0)
-        initial_value = lyr.GetFeatureCount()
-        ds = None
+    ds = gdal.OpenEx(outfilename)
+    lyr = ds.GetLayer(0)
+    initial_value = lyr.GetFeatureCount()
+    ds = None
 
-        # Append behavior by default
-        test_py_scripts.run_py_script(
-            script_path,
-            "gdal_polygonize",
-            test_py_scripts.get_data_path("gcore") + "byte.tif " + outfilename,
-        )
+    # Append behavior by default
+    test_py_scripts.run_py_script(
+        script_path,
+        "gdal_polygonize",
+        test_py_scripts.get_data_path("gcore") + "byte.tif " + outfilename,
+    )
 
-        ds = gdal.OpenEx(outfilename)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == initial_value * 2
-        ds = None
+    ds = gdal.OpenEx(outfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == initial_value * 2
+    ds = None
 
-        # Let's overwrite
-        test_py_scripts.run_py_script(
-            script_path,
-            "gdal_polygonize",
-            " -overwrite "
-            + test_py_scripts.get_data_path("gcore")
-            + "byte.tif "
-            + outfilename,
-        )
+    # Let's overwrite
+    test_py_scripts.run_py_script(
+        script_path,
+        "gdal_polygonize",
+        " -overwrite "
+        + test_py_scripts.get_data_path("gcore")
+        + "byte.tif "
+        + outfilename,
+    )
 
-        ds = gdal.OpenEx(outfilename)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == initial_value
-        ds = None
-
-    finally:
-        if os.path.exists(outfilename):
-            os.unlink(outfilename)
+    ds = gdal.OpenEx(outfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == initial_value
+    ds = None

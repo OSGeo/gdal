@@ -35,7 +35,6 @@ import pytest
 np = pytest.importorskip("numpy")
 pytest.importorskip("osgeo_utils.samples.gdallocationinfo")
 
-import os
 from itertools import product
 
 import test_py_scripts
@@ -57,9 +56,6 @@ pytestmark = pytest.mark.skipif(
 @pytest.fixture()
 def script_path():
     return test_py_scripts.get_py_script("gdallocationinfo")
-
-
-temp_files = []
 
 
 def test_gdallocationinfo_py_1(script_path):
@@ -102,13 +98,13 @@ def test_gdallocationinfo_py_4(script_path):
     assert ret.startswith(expected_ret)
 
 
-def test_gdallocationinfo_py_6(script_path):
+def test_gdallocationinfo_py_6(script_path, tmp_path):
     """Test -overview"""
 
+    test_tif = str(tmp_path / "test_gdallocationinfo_py_6.tif")
+
     src_ds = gdal.Open("../gcore/data/byte.tif")
-    ds = gdal.GetDriverByName("GTiff").CreateCopy(
-        "tmp/test_gdallocationinfo_py_6.tif", src_ds
-    )
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(test_tif, src_ds)
     ds.BuildOverviews("AVERAGE", overviewlist=[2])
     ds = None
     src_ds = None
@@ -116,10 +112,9 @@ def test_gdallocationinfo_py_6(script_path):
     ret = test_py_scripts.run_py_script(
         script_path,
         "gdallocationinfo",
-        " tmp/test_gdallocationinfo_py_6.tif 10 10 -overview 1",
+        f" {test_tif} 10 10 -overview 1",
     )
 
-    gdal.GetDriverByName("GTiff").Delete("tmp/test_gdallocationinfo_py_6.tif")
     expected_ret = """Value: 130"""
     assert expected_ret in ret
 
@@ -136,15 +131,14 @@ def test_gdallocationinfo_py_wgs84(script_path):
     assert expected_ret in ret
 
 
-def test_gdallocationinfo_py_7():
-    filename_template = "tmp/byte{}.tif"
+def test_gdallocationinfo_py_7(tmp_path):
+    filename_template = str(tmp_path / "byte{}.tif")
     overview_list = [2]
     overview_list, file_list = copy_raster_and_add_overviews(
         filename_src="../gcore/data/byte.tif",
         output_filename_template=filename_template,
         overview_list=overview_list,
     )
-    temp_files.extend(file_list)
 
     ds = open_ds(filename_template.format(""))
     ds_srs = ds.GetSpatialRef()
@@ -224,11 +218,3 @@ def test_gdallocationinfo_py_7():
                 outputs = list(zip(x, y, pixels, lines, *results))
                 print(f"ovr: {ovr_idx}, srs: {srs}, x/y/pixel/line/result: {outputs}")
             assert_allclose(expected, actual, rtol=1e-4, atol=1e-3)
-
-
-def test_gdallocationinfo_py_cleanup():
-    for filename in temp_files:
-        try:
-            os.remove(filename)
-        except OSError:
-            pass

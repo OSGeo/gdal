@@ -135,49 +135,52 @@ def test_gdal2xyz_py_1():
 # Test -b at beginning
 
 
-def test_gdal2xyz_py_2(script_path):
+def test_gdal2xyz_py_2(script_path, tmp_path):
+
+    out_xyz = str(tmp_path / "out.xyz")
 
     arguments = "-b 1"
-    arguments += " " + test_py_scripts.get_data_path("gcore") + "byte.tif"
-    arguments += " tmp/out.xyz"
+    arguments += " " + test_py_scripts.get_data_path("gcore") + "byte.tif "
+    arguments += out_xyz
 
     test_py_scripts.run_py_script(script_path, "gdal2xyz", arguments)
 
-    assert os.path.exists("tmp/out.xyz")
-    os.unlink("tmp/out.xyz")
+    assert os.path.exists(out_xyz)
 
 
 ###############################################################################
 # Test -b at end
 
 
-def test_gdal2xyz_py_3(script_path):
+def test_gdal2xyz_py_3(script_path, tmp_path):
 
-    arguments = test_py_scripts.get_data_path("gcore") + "byte.tif"
-    arguments += " tmp/out.xyz"
+    out_xyz = str(tmp_path / "out.xyz")
+
+    arguments = test_py_scripts.get_data_path("gcore") + "byte.tif "
+    arguments += out_xyz
     arguments += " -b 1"
 
     test_py_scripts.run_py_script(script_path, "gdal2xyz", arguments)
 
-    assert os.path.exists("tmp/out.xyz")
-    os.unlink("tmp/out.xyz")
+    assert os.path.exists(out_xyz)
 
 
 ###############################################################################
 # Test -srcnodata and -dstnodata
 
 
-def test_gdal2xyz_py_srcnodata_dstnodata(script_path):
+def test_gdal2xyz_py_srcnodata_dstnodata(script_path, tmp_path):
+
+    out_xyz = str(tmp_path / "out.xyz")
 
     arguments = "-allbands -srcnodata 0 0 0 -dstnodata 1 2 3"
-    arguments += " " + test_py_scripts.get_data_path("gcore") + "rgbsmall.tif"
-    arguments += " tmp/out.xyz"
+    arguments += " " + test_py_scripts.get_data_path("gcore") + "rgbsmall.tif "
+    arguments += out_xyz
 
     test_py_scripts.run_py_script(script_path, "gdal2xyz", arguments)
 
-    assert os.path.exists("tmp/out.xyz")
-    with open("tmp/out.xyz", "rb") as f:
+    assert os.path.exists(out_xyz)
+    with open(out_xyz, "rb") as f:
         l = f.readline()
-    os.unlink("tmp/out.xyz")
 
     assert l.startswith(b"-44.838604 -22.9343 1 2 3")

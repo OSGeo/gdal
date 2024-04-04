@@ -27,8 +27,8 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
+
 import array
-import os
 from numbers import Real
 from pathlib import Path
 from typing import Optional
@@ -48,8 +48,6 @@ from osgeo_utils.auxiliary import array_util, base, color_table, raster_creation
 from osgeo_utils.auxiliary.color_palette import ColorPalette
 from osgeo_utils.auxiliary.color_table import get_color_table
 from osgeo_utils.auxiliary.extent_util import Extent
-
-temp_files = []
 
 
 def test_utils_py_0():
@@ -95,10 +93,9 @@ def test_utils_py_0():
     assert base.num_or_none("42.0") == 42.0
 
 
-def test_utils_py_1():
+def test_utils_py_1(tmp_path):
     """test get_ovr_idx, create_flat_raster"""
-    filename = "tmp/raster.tif"
-    temp_files.append(filename)
+    filename = str(tmp_path / "raster.tif")
     overview_list = [2, 4]
     raster_creation.create_flat_raster(filename, overview_list=overview_list)
     ds = util.open_ds(filename)
@@ -135,8 +132,7 @@ def test_utils_py_1():
         assert (bands[0].XSize, bands[0].XSize) == (ras_size[0] // f, ras_size[1] // f)
 
     # test open_ds with multiple different inputs
-    filename2 = "tmp/raster2.tif"
-    temp_files.append(filename2)
+    filename2 = str(tmp_path / "raster2.tif")
     raster_creation.create_flat_raster(filename2)
     ds_list = util.open_ds([ds, filename2])
     assert tuple(util.get_ovr_count(ds) for ds in ds_list) == (2, 0)
@@ -214,7 +210,7 @@ def test_utils_color_files(name: str, count: int, pal: dict):
         ["color_paletted_red_green_0-1-nv.txt", 0],
     ],
 )
-def test_utils_color_files_nv(name: str, ndv: Optional[Real]):
+def test_utils_color_files_nv(tmp_path, name: str, ndv: Optional[Real]):
     """test color palettes with and without nv"""
     root = Path(test_py_scripts.get_data_path("utilities"))
 
@@ -223,8 +219,7 @@ def test_utils_color_files_nv(name: str, ndv: Optional[Real]):
     cp1.read_file(path)
     assert cp1.ndv == ndv
 
-    tmp_filename = Path("tmp") / name
-    temp_files.append(tmp_filename)
+    tmp_filename = tmp_path / name
     cp1.write_file(tmp_filename)
     cp2 = ColorPalette()
     cp2.read_file(tmp_filename)
@@ -261,10 +256,10 @@ def test_utils_color_table_and_palette():
         assert color_entries[max_k] == ct256.GetColorEntry(i), "fill remaining entries"
 
 
-def test_read_write_color_table_from_raster():
+def test_read_write_color_table_from_raster(tmp_path):
     """test color palettes with and without nv"""
     gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-    ds = gdaltest.tiff_drv.Create("tmp/ct8.tif", 1, 1, 1, gdal.GDT_Byte)
+    ds = gdaltest.tiff_drv.Create(str(tmp_path / "ct8.tif"), 1, 1, 1, gdal.GDT_Byte)
     ct = get_color_table(ds)
     assert ct is None
 
@@ -291,8 +286,6 @@ def test_read_write_color_table_from_raster():
     ct = None
     ct2 = None
     ds = None
-
-    gdaltest.tiff_drv.Delete("tmp/ct8.tif")
 
 
 def test_utils_base_get_extension():
@@ -323,11 +316,3 @@ def test_utils_util_GetOutputDriverFor():
     assert util.GetOutputDriverFor("foo.img") == "HFA"
     assert util.GetOutputDriverFor("foo.nc") == "netCDF"
     assert util.GetOutputDriverFor("foo.geojson", is_raster=False) == "GeoJSON"
-
-
-def test_utils_py_cleanup():
-    for filename in temp_files:
-        try:
-            os.remove(filename)
-        except OSError:
-            pass

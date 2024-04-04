@@ -30,7 +30,6 @@
 ###############################################################################
 
 import json
-import os
 
 import gdaltest
 import pytest
@@ -105,68 +104,65 @@ def test_validate_geoparquet_cannot_download_schema(script_path):
 ###############################################################################
 
 
-def test_validate_geoparquet_ok(script_path):
+def test_validate_geoparquet_ok(script_path, tmp_path):
 
-    ds = ogr.GetDriverByName("Parquet").CreateDataSource("tmp/tmp.parquet")
+    test_dir = str(tmp_path / "tmp.parquet")
+
+    ds = ogr.GetDriverByName("Parquet").CreateDataSource(test_dir)
     ds.CreateLayer("test")
     ds = None
 
-    try:
-        ret = test_py_scripts.run_py_script(
-            script_path,
-            "validate_geoparquet",
-            "tmp/tmp.parquet",
-        )
-        assert ret == ""
-    finally:
-        os.unlink("tmp/tmp.parquet")
+    ret = test_py_scripts.run_py_script(
+        script_path,
+        "validate_geoparquet",
+        test_dir,
+    )
+    assert ret == ""
 
 
 ###############################################################################
 
 
-def test_validate_geoparquet_invalid_json():
+def test_validate_geoparquet_invalid_json(tmp_path):
+
+    test_dir = str(tmp_path / "tmp.parquet")
 
     with gdaltest.config_option("OGR_PARQUET_GEO_METADATA", "wrong"):
-        ds = ogr.GetDriverByName("Parquet").CreateDataSource("tmp/tmp.parquet")
+        ds = ogr.GetDriverByName("Parquet").CreateDataSource(test_dir)
         ds.CreateLayer("test")
         ds = None
 
-    try:
-        with gdal.quiet_errors():
-            ret = _validate("tmp/tmp.parquet")
-        assert ret and """'geo' metadata item is not valid JSON""" in str(ret)
-    finally:
-        os.unlink("tmp/tmp.parquet")
+    with gdal.quiet_errors():
+        ret = _validate(test_dir)
+    assert ret and """'geo' metadata item is not valid JSON""" in str(ret)
 
 
 ###############################################################################
 
 
-def test_validate_geoparquet_does_not_validate_schema():
+def test_validate_geoparquet_does_not_validate_schema(tmp_path):
+
+    test_dir = str(tmp_path / "tmp.parquet")
 
     j = {}
     with gdaltest.config_option("OGR_PARQUET_GEO_METADATA", json.dumps(j)):
-        ds = ogr.GetDriverByName("Parquet").CreateDataSource("tmp/tmp.parquet")
+        ds = ogr.GetDriverByName("Parquet").CreateDataSource(test_dir)
         ds.CreateLayer("test")
         ds = None
 
-    try:
-        ret = _validate("tmp/tmp.parquet")
-        assert ret and """'geo' metadata item lacks a 'version' member""" in str(ret)
-        assert ret and """'geo' metadata item fails to validate its schema""" in str(
-            ret
-        )
-        assert ret and """geo["primary_column"] missing""" in str(ret)
-        assert ret and len(ret) == 3
-    finally:
-        os.unlink("tmp/tmp.parquet")
+    ret = _validate(test_dir)
+    assert ret and """'geo' metadata item lacks a 'version' member""" in str(ret)
+    assert ret and """'geo' metadata item fails to validate its schema""" in str(ret)
+    assert ret and """geo["primary_column"] missing""" in str(ret)
+    assert ret and len(ret) == 3
 
 
 ###############################################################################
 
 
-def test_validate_geoparquet_primary_column_not_in_columns():
+def test_validate_geoparquet_primary_column_not_in_columns(tmp_path):
+
+    test_dir = str(tmp_path / "tmp.parquet")
 
     j = {
         "version": CURRENT_VERSION,
@@ -174,21 +170,20 @@ def test_validate_geoparquet_primary_column_not_in_columns():
         "columns": {"geometry": {"encoding": "WKB", "geometry_types": []}},
     }
     with gdaltest.config_option("OGR_PARQUET_GEO_METADATA", json.dumps(j)):
-        ds = ogr.GetDriverByName("Parquet").CreateDataSource("tmp/tmp.parquet")
+        ds = ogr.GetDriverByName("Parquet").CreateDataSource(test_dir)
         ds.CreateLayer("test")
         ds = None
 
-    try:
-        ret = _validate("tmp/tmp.parquet")
-        assert ret and """invalid is not in listed in geo["columns"']""" in str(ret)
-    finally:
-        os.unlink("tmp/tmp.parquet")
+    ret = _validate(test_dir)
+    assert ret and """invalid is not in listed in geo["columns"']""" in str(ret)
 
 
 ###############################################################################
 
 
-def test_validate_geoparquet_minimum_valid_metadata():
+def test_validate_geoparquet_minimum_valid_metadata(tmp_path):
+
+    test_dir = str(tmp_path / "tmp.parquet")
 
     j = {
         "version": CURRENT_VERSION,
@@ -196,21 +191,20 @@ def test_validate_geoparquet_minimum_valid_metadata():
         "columns": {"geometry": {"encoding": "WKB", "geometry_types": []}},
     }
     with gdaltest.config_option("OGR_PARQUET_GEO_METADATA", json.dumps(j)):
-        ds = ogr.GetDriverByName("Parquet").CreateDataSource("tmp/tmp.parquet")
+        ds = ogr.GetDriverByName("Parquet").CreateDataSource(test_dir)
         ds.CreateLayer("test")
         ds = None
 
-    try:
-        ret = _validate("tmp/tmp.parquet")
-        assert not ret
-    finally:
-        os.unlink("tmp/tmp.parquet")
+    ret = _validate(test_dir)
+    assert not ret
 
 
 ###############################################################################
 
 
-def test_validate_geoparquet_column_name_not_found():
+def test_validate_geoparquet_column_name_not_found(tmp_path):
+
+    test_dir = str(tmp_path / "tmp.parquet")
 
     j = {
         "version": CURRENT_VERSION,
@@ -218,15 +212,12 @@ def test_validate_geoparquet_column_name_not_found():
         "columns": {"invalid": {"encoding": "WKB", "geometry_types": []}},
     }
     with gdaltest.config_option("OGR_PARQUET_GEO_METADATA", json.dumps(j)):
-        ds = ogr.GetDriverByName("Parquet").CreateDataSource("tmp/tmp.parquet")
+        ds = ogr.GetDriverByName("Parquet").CreateDataSource(test_dir)
         ds.CreateLayer("test")
         ds = None
 
-    try:
-        ret = _validate("tmp/tmp.parquet")
-        assert ret and """column which is not found in the Parquet fields""" in str(ret)
-    finally:
-        os.unlink("tmp/tmp.parquet")
+    ret = _validate(test_dir)
+    assert ret and """column which is not found in the Parquet fields""" in str(ret)
 
 
 ###############################################################################
@@ -245,7 +236,9 @@ def test_validate_geoparquet_column_name_not_found():
         ([-180, -90, 10, 180, 90, 0], "bbox[5] < bbox[2]"),
     ],
 )
-def test_validate_geoparquet_invalid_bbox(bbox, error_msg):
+def test_validate_geoparquet_invalid_bbox(tmp_path, bbox, error_msg):
+
+    test_dir = str(tmp_path / "tmp.parquet")
 
     j = {
         "version": CURRENT_VERSION,
@@ -255,26 +248,25 @@ def test_validate_geoparquet_invalid_bbox(bbox, error_msg):
         },
     }
     with gdaltest.config_option("OGR_PARQUET_GEO_METADATA", json.dumps(j)):
-        ds = ogr.GetDriverByName("Parquet").CreateDataSource("tmp/tmp.parquet")
+        ds = ogr.GetDriverByName("Parquet").CreateDataSource(test_dir)
         ds.CreateLayer("test")
         ds = None
 
-    try:
-        ret = _validate("tmp/tmp.parquet")
-        if error_msg:
-            assert ret and error_msg in str(ret)
-        else:
-            assert not ret
-    finally:
-        os.unlink("tmp/tmp.parquet")
+    ret = _validate(test_dir)
+    if error_msg:
+        assert ret and error_msg in str(ret)
+    else:
+        assert not ret
 
 
 ###############################################################################
 
 
-def test_validate_geoparquet_invalid_wkb():
+def test_validate_geoparquet_invalid_wkb(tmp_path):
 
     pytest.importorskip("numpy")
+
+    test_dir = str(tmp_path / "tmp.parquet")
 
     j = {
         "version": CURRENT_VERSION,
@@ -282,7 +274,7 @@ def test_validate_geoparquet_invalid_wkb():
         "columns": {"geometry": {"encoding": "WKB", "geometry_types": []}},
     }
     with gdaltest.config_option("OGR_PARQUET_GEO_METADATA", json.dumps(j)):
-        ds = ogr.GetDriverByName("Parquet").CreateDataSource("tmp/tmp.parquet")
+        ds = ogr.GetDriverByName("Parquet").CreateDataSource(test_dir)
         lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
         lyr.CreateField(ogr.FieldDefn("geometry", ogr.OFTBinary))
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -290,19 +282,18 @@ def test_validate_geoparquet_invalid_wkb():
         lyr.CreateFeature(f)
         ds = None
 
-    try:
-        ret = _validate("tmp/tmp.parquet", check_data=True)
-        assert ret and """Invalid WKB geometry at row 0""" in str(ret)
-    finally:
-        os.unlink("tmp/tmp.parquet")
+    ret = _validate(test_dir, check_data=True)
+    assert ret and """Invalid WKB geometry at row 0""" in str(ret)
 
 
 ###############################################################################
 
 
-def test_validate_geoparquet_geom_type_not_consistent_with_declaration():
+def test_validate_geoparquet_geom_type_not_consistent_with_declaration(tmp_path):
 
     pytest.importorskip("numpy")
+
+    test_dir = str(tmp_path / "tmp.parquet")
 
     j = {
         "version": CURRENT_VERSION,
@@ -310,30 +301,29 @@ def test_validate_geoparquet_geom_type_not_consistent_with_declaration():
         "columns": {"geometry": {"encoding": "WKB", "geometry_types": ["Point"]}},
     }
     with gdaltest.config_option("OGR_PARQUET_GEO_METADATA", json.dumps(j)):
-        ds = ogr.GetDriverByName("Parquet").CreateDataSource("tmp/tmp.parquet")
+        ds = ogr.GetDriverByName("Parquet").CreateDataSource(test_dir)
         lyr = ds.CreateLayer("test")
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometry(ogr.Geometry(ogr.wkbPolygon))
         lyr.CreateFeature(f)
         ds = None
 
-    try:
-        ret = _validate("tmp/tmp.parquet", check_data=True)
-        assert (
-            ret
-            and """Geometry at row 0 is of type Polygon, but not listed in geometry_types[]"""
-            in str(ret)
-        )
-    finally:
-        os.unlink("tmp/tmp.parquet")
+    ret = _validate(test_dir, check_data=True)
+    assert (
+        ret
+        and """Geometry at row 0 is of type Polygon, but not listed in geometry_types[]"""
+        in str(ret)
+    )
 
 
 ###############################################################################
 
 
-def test_validate_geoparquet_invalid_winding_order():
+def test_validate_geoparquet_invalid_winding_order(tmp_path):
 
     pytest.importorskip("numpy")
+
+    test_dir = str(tmp_path / "tmp.parquet")
 
     j = {
         "version": CURRENT_VERSION,
@@ -347,7 +337,7 @@ def test_validate_geoparquet_invalid_winding_order():
         },
     }
     with gdaltest.config_option("OGR_PARQUET_GEO_METADATA", json.dumps(j)):
-        ds = ogr.GetDriverByName("Parquet").CreateDataSource("tmp/tmp.parquet")
+        ds = ogr.GetDriverByName("Parquet").CreateDataSource(test_dir)
         lyr = ds.CreateLayer("test", options=["POLYGON_ORIENTATION=UNMODIFIED"])
         f = ogr.Feature(lyr.GetLayerDefn())
         g = ogr.CreateGeometryFromWkt(
@@ -365,27 +355,20 @@ def test_validate_geoparquet_invalid_winding_order():
         lyr.CreateFeature(f)
         ds = None
 
-    try:
-        ret = _validate("tmp/tmp.parquet", check_data=True)
-        assert (
-            ret
-            and """Exterior ring of geometry at row 0 has invalid orientation"""
-            in str(ret)
-        )
-        assert (
-            ret
-            and """Interior ring of geometry at row 0 has invalid orientation"""
-            in str(ret)
-        )
-        assert (
-            ret
-            and """Exterior ring of geometry at row 1 has invalid orientation"""
-            in str(ret)
-        )
-        assert (
-            ret
-            and """Interior ring of geometry at row 1 has invalid orientation"""
-            in str(ret)
-        )
-    finally:
-        os.unlink("tmp/tmp.parquet")
+    ret = _validate(test_dir, check_data=True)
+    assert (
+        ret
+        and """Exterior ring of geometry at row 0 has invalid orientation""" in str(ret)
+    )
+    assert (
+        ret
+        and """Interior ring of geometry at row 0 has invalid orientation""" in str(ret)
+    )
+    assert (
+        ret
+        and """Exterior ring of geometry at row 1 has invalid orientation""" in str(ret)
+    )
+    assert (
+        ret
+        and """Interior ring of geometry at row 1 has invalid orientation""" in str(ret)
+    )
