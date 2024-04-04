@@ -96,12 +96,24 @@ def aws_test_config():
         yield
 
 
+# Launch a single webserver in a module-scoped fixture.
+# Provide the port in a function-scoped fixture so that we only
+# set AWS_S3_ENDPOINT for tests that are using it.
 @pytest.fixture(scope="module")
-def webserver_port():
+def webserver_launch():
 
-    webserver_process, webserver_port = webserver.launch(
-        handler=webserver.DispatcherHttpHandler
-    )
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
+
+    yield process, port
+
+    webserver.server_stop(process, port)
+
+
+@pytest.fixture(scope="function")
+def webserver_port(webserver_launch):
+
+    webserver_process, webserver_port = webserver_launch
+
     try:
         if webserver_port == 0:
             pytest.skip()
@@ -112,13 +124,12 @@ def webserver_port():
     finally:
         gdal.VSICurlClearCache()
 
-        webserver.server_stop(webserver_process, webserver_port)
-
 
 ###############################################################################
 
 
 def test_vsis3_init(aws_test_config):
+
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
