@@ -935,7 +935,7 @@ int CPLHTTPPopFetchCallback(void)
  * <li>GSSAPI_DELEGATION=[NONE/POLICY/ALWAYS] set allowed
  * GSS-API delegation. Relevant only with HTTPAUTH=NEGOTIATE (GDAL >= 3.3).</li>
  * <li>HTTP_BEARER=val set OAuth 2.0 Bearer Access Token.
- * Relevant only with HTTPAUTH=BEARER (GDAL >= 3.8).</li>
+ * Relevant only with HTTPAUTH=BEARER (GDAL >= 3.9).</li>
  * <li>POSTFIELDS=val, where val is a nul-terminated string to be passed to the
  * server with a POST request.</li>
  * <li>PROXY=val, to make requests go through a
