@@ -4286,6 +4286,12 @@ inline int OGRArrowLayer::GetArrowSchema(struct ArrowArrayStream *stream,
 /*                     GetArrowSchemaInternal()                         */
 /************************************************************************/
 
+static bool IsSilentlyIgnoredFormatForGetArrowSchemaArray(const char *format)
+{
+    // n: null
+    return strcmp(format, "n") == 0;
+}
+
 inline int
 OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
 {
@@ -4366,11 +4372,32 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
                 out_schema->children[i]->release(out_schema->children[i]);
                 out_schema->children[i] = nullptr;
             }
+            else if (IsSilentlyIgnoredFormatForGetArrowSchemaArray(
+                         out_schema->children[i]->format))
+            {
+                // Silently ignore columns with null data type...
+                out_schema->children[i]->release(out_schema->children[i]);
+            }
             else
             {
-                // shouldn't happen
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "fieldDesc[%d].nIdx < 0 not expected", i);
+                // can happen with data types we don't support
+                if (m_aosArrowArrayStreamOptions.FetchBool(
+                        "SILENCE_GET_SCHEMA_ERROR", false))
+                {
+                    CPLDebug(GetDriverUCName().c_str(),
+                             "GetArrowSchema() error: fieldDesc[%d].nIdx < 0 "
+                             "not expected: name=%s, format=%s",
+                             i, out_schema->children[i]->name,
+                             out_schema->children[i]->format);
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "GetArrowSchema() error: fieldDesc[%d].nIdx < 0 "
+                             "not expected: name=%s, format=%s",
+                             i, out_schema->children[i]->name,
+                             out_schema->children[i]->format);
+                }
                 for (; i < out_schema->n_children; ++i, ++j)
                     out_schema->children[j] = out_schema->children[i];
                 out_schema->n_children = j;
@@ -4503,14 +4530,17 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             return EIO;
         }
 
-        // Remove bounding box columns from exported array
-        const auto RemoveBBoxColumns =
+        // Remove bounding box columns from exported array, or columns
+        // of unsupported data types that we voluntarily strip off.
+        const auto RemoveBBoxOrUnsupportedColumns =
             [out_array, &schema](const std::set<int> &oSetBBoxArrayIndex)
         {
             int j = 0;
             for (int i = 0; i < static_cast<int>(schema.n_children); ++i)
             {
-                if (oSetBBoxArrayIndex.find(i) != oSetBBoxArrayIndex.end())
+                if (oSetBBoxArrayIndex.find(i) != oSetBBoxArrayIndex.end() ||
+                    IsSilentlyIgnoredFormatForGetArrowSchemaArray(
+                        schema.children[i]->format))
                 {
                     out_array->children[i]->release(out_array->children[i]);
                     out_array->children[i] = nullptr;
@@ -4537,11 +4567,11 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                 if (iter.second.iArrayIdx >= 0)
                     oSetBBoxArrayIndex.insert(iter.second.iArrayIdx);
             }
-            RemoveBBoxColumns(oSetBBoxArrayIndex);
+            RemoveBBoxOrUnsupportedColumns(oSetBBoxArrayIndex);
         }
         else
         {
-            RemoveBBoxColumns(m_oSetBBoxArrowColumns);
+            RemoveBBoxOrUnsupportedColumns(m_oSetBBoxArrowColumns);
         }
 
         if (EQUAL(m_aosArrowArrayStreamOptions.FetchNameValueDef(

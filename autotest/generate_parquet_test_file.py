@@ -521,8 +521,11 @@ def generate_test_parquet():
         type=pa.binary(),
     )
 
+    null = pa.array([None] * 5, type=pa.null())
+
     names = [
         "boolean",
+        "null",
         "uint8",
         "int8",
         "uint16",
