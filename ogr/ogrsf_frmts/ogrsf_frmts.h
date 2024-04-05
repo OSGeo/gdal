@@ -113,6 +113,10 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     // int          FilterGeometry( OGRGeometry *, OGREnvelope*
     // psGeometryEnvelope);
     int InstallFilter(OGRGeometry *);
+    bool
+    ValidateGeometryFieldIndexForSetSpatialFilter(int iGeomField,
+                                                  const OGRGeometry *poGeomIn,
+                                                  bool bIsSelectLayer = false);
 
     OGRErr GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bForce);
     //! @endcond
