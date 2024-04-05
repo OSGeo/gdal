@@ -1139,7 +1139,8 @@ This file system handler also allows sequential writing of files (no seeks or re
 
 /vsistdin/ is a file handler that allows reading from the standard input stream.
 
-The filename syntax must be only :file:`/vsistdin/`.
+The filename syntax must be only :file:`/vsistdin/`, (not e.g.,
+/vsistdin/path/to/f.csv , but "/vsistdin?buffer_limit=value" is OK.) 
 
 The file operations available are of course limited to Read() and forward Seek().
 Full seek in the first MB of a file is possible, and it is cached so that closing,
