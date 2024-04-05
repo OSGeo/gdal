@@ -3171,7 +3171,11 @@ def test_gdalwarp_lib_automatic_grid_sampling():
         outputBounds=[-7655830, -6385994, 7152182, 8423302],
         dstSRS="+proj=laea +lat_0=48.514 +lon_0=-145.204 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs",
     )
-    assert ds.GetRasterBand(1).Checksum() == 46790
+
+    assert ds.GetGeoTransform() == pytest.approx(
+        (-7655830.0, 30850.025, 0.0, 8423302.0, 0.0, -30852.7)
+    )
+    assert ds.GetRasterBand(1).Checksum() == 35573
 
 
 ###############################################################################
@@ -4053,3 +4057,92 @@ def test_gdalwarp_lib_conflicting_source_metadata(tmp_vsimem):
     out_ds = gdal.Warp("", [src_ds1, src_ds2], options="-of MEM -cvmd conflicting")
     assert out_ds.GetMetadataItem("FOO") == "conflicting"
     assert out_ds.GetMetadataItem("BAR") == "BAZ"
+
+
+###############################################################################
+# Test issue GH #9467
+
+
+def test_target_extent_consistent_size():
+    """Test issue GH #9467 where the output size is not consistent when using target extent
+    with different input datasets having the same resolution and CRS but different extent."""
+
+    # Create a source dataset with CRS 32613
+    src_ds_1 = gdal.GetDriverByName("MEM").Create("", 10980, 10980)
+    src_ds_1.SetProjection("EPSG:32613")
+    src_ds_1.SetGeoTransform((300000.0, 10.0, 0.0, 3900000.0, 0.0, -10.0))
+
+    src_ds_2 = gdal.GetDriverByName("MEM").Create("", 10980, 10980)
+    src_ds_2.SetProjection("EPSG:32613")
+    src_ds_2.SetGeoTransform((300000.0, 10.0, 0.0, 4000020.0, 0.0, -10.0))
+
+    bbox = (
+        -106.40856573808874,
+        35.10139620198477,
+        -105.92962613828232,
+        35.51543260935861,
+    )
+
+    ds = gdal.Warp(
+        "",
+        [src_ds_1, src_ds_2],
+        options=gdal.WarpOptions(
+            multithread=True,
+            dstSRS="EPSG:4326",
+            outputBounds=bbox,
+            resampleAlg="lanczos",
+            dstNodata=0,
+            srcNodata=0,
+            format="MEM",
+        ),
+    )
+
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            -106.40856573808874,
+            9.992480696983594e-05,
+            0.0,
+            35.51543260935861,
+            0.0,
+            -9.99363763876038e-05,
+        )
+    )
+    assert ds.RasterXSize == 4793
+    assert ds.RasterYSize == 4143
+
+    # Create a source dataset with CRS 32613
+    src_ds_1 = gdal.GetDriverByName("MEM").Create("", 10980, 10980)
+    src_ds_1.SetProjection("EPSG:32613")
+    src_ds_1.SetGeoTransform((399960.0, 10.0, 0.0, 4000020.0, 0.0, -10.0))
+
+    src_ds_2 = gdal.GetDriverByName("MEM").Create("", 10980, 10980)
+    src_ds_2.SetProjection("EPSG:32613")
+    src_ds_2.SetGeoTransform((399960.0, 10.0, 0.0, 3900000.0, 0.0, -10.0))
+
+    ds = gdal.Warp(
+        "",
+        [src_ds_1, src_ds_2],
+        options=gdal.WarpOptions(
+            multithread=True,
+            dstSRS="EPSG:4326",
+            outputBounds=bbox,
+            resampleAlg="lanczos",
+            dstNodata=0,
+            srcNodata=0,
+            format="MEM",
+        ),
+    )
+
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            -106.40856573808874,
+            9.992480696983594e-05,
+            0.0,
+            35.51543260935861,
+            0.0,
+            -9.99363763876038e-05,
+        )
+    )
+
+    assert ds.RasterXSize == 4793
+    assert ds.RasterYSize == 4143
