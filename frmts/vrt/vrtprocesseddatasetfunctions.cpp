@@ -947,11 +947,19 @@ static bool LoadAuxData(double dfULX, double dfULY, double dfLRX, double dfLRY,
                  "Unexpected computed %s pixel/line", pszAuxType);
         return false;
     }
-    if (dfULPixel < -1 || dfLRPixel > poAuxBand->GetXSize() || dfULLine < -1 ||
-        dfLRLine > poAuxBand->GetYSize())
+    if (dfULPixel < -1 || dfULLine < -1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unexpected computed %s pixel/line", pszAuxType);
+                 "Unexpected computed %s upper left (pixel,line)=(%f,%f)",
+                 pszAuxType, dfULPixel, dfULLine);
+        return false;
+    }
+    if (dfLRPixel > poAuxBand->GetXSize() + 1 ||
+        dfLRLine > poAuxBand->GetYSize() + 1)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unexpected computed %s lower right (pixel,line)=(%f,%f)",
+                 pszAuxType, dfLRPixel, dfLRLine);
         return false;
     }
 
