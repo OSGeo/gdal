@@ -1407,6 +1407,37 @@ CPLErr GDALWarpKernel::Validate()
         return CE_Failure;
     }
 
+    // Tuples of values (e.g. "<R>,<G>,<B>" or "(<R1>,<G1>,<B1>),(<R2>,<G2>,<B2>)") that must
+    // be ignored as contributing source pixels during resampling. Only taken into account by
+    // Average currently
+    const char *pszExcludedValues =
+        CSLFetchNameValue(papszWarpOptions, "EXCLUDED_VALUES");
+    if (pszExcludedValues)
+    {
+        const CPLStringList aosTokens(
+            CSLTokenizeString2(pszExcludedValues, "(,)", 0));
+        if ((aosTokens.size() % nBands) != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "EXCLUDED_VALUES should contain one or several tuples of "
+                     "%d values formatted like <R>,<G>,<B> or "
+                     "(<R1>,<G1>,<B1>),(<R2>,<G2>,<B2>) if there are multiple "
+                     "tuples",
+                     nBands);
+            return CE_Failure;
+        }
+        std::vector<double> adfTuple;
+        for (int i = 0; i < aosTokens.size(); ++i)
+        {
+            adfTuple.push_back(CPLAtof(aosTokens[i]));
+            if (((i + 1) % nBands) == 0)
+            {
+                m_aadfExcludedValues.push_back(adfTuple);
+                adfTuple.clear();
+            }
+        }
+    }
+
     return CE_None;
 }
 
@@ -6549,6 +6580,11 @@ static void GWKAverageOrModeThread(void *pData)
     const double dfErrorThreshold = CPLAtof(
         CSLFetchNameValueDef(poWK->papszWarpOptions, "ERROR_THRESHOLD", "0"));
 
+    const double dfExcludedValuesThreshold =
+        CPLAtof(CSLFetchNameValueDef(poWK->papszWarpOptions,
+                                     "EXCLUDED_VALUES_PCT_THRESHOLD", "50")) /
+        100.0;
+
     const int nXMargin =
         2 * std::max(1, static_cast<int>(std::ceil(1. / poWK->dfXScale)));
     const int nYMargin =
@@ -6689,13 +6725,161 @@ static void GWKAverageOrModeThread(void *pData)
             if (iSrcYMin == iSrcYMax && iSrcYMax < nSrcYSize)
                 iSrcYMax++;
 
+#define COMPUTE_WEIGHT_Y(iSrcY)                                                \
+    ((iSrcY == iSrcYMin)                                                       \
+         ? ((iSrcYMin + 1 == iSrcYMax) ? 1.0 : 1 - (dfYMin - iSrcYMin))        \
+     : (iSrcY + 1 == iSrcYMax) ? 1 - (iSrcYMax - dfYMax)                       \
+                               : 1.0)
+
+#define COMPUTE_WEIGHT(iSrcX, dfWeightY)                                       \
+    ((iSrcX == iSrcXMin)       ? ((iSrcXMin + 1 == iSrcXMax)                   \
+                                      ? dfWeightY                              \
+                                      : dfWeightY * (1 - (dfXMin - iSrcXMin))) \
+     : (iSrcX + 1 == iSrcXMax) ? dfWeightY * (1 - (iSrcXMax - dfXMax))         \
+                               : dfWeightY)
+
+            bool bDone = false;
+
+            // Special Average mode where we process all bands together,
+            // to avoid averaging tuples that match an entry of m_aadfExcludedValues
+            if (nAlgo == GWKAOM_Average &&
+                !poWK->m_aadfExcludedValues.empty() &&
+                !poWK->bApplyVerticalShift && !bIsComplex)
+            {
+                double dfTotalWeightInvalid = 0.0;
+                double dfTotalWeightExcluded = 0.0;
+                double dfTotalWeightRegular = 0.0;
+                std::vector<double> adfValueReal(poWK->nBands, 0);
+                std::vector<double> adfValueAveraged(poWK->nBands, 0);
+                std::vector<int> anCountExcludedValues(
+                    poWK->m_aadfExcludedValues.size(), 0);
+
+                for (int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++)
+                {
+                    const double dfWeightY = COMPUTE_WEIGHT_Y(iSrcY);
+                    iSrcOffset =
+                        iSrcXMin + static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+                    for (int iSrcX = iSrcXMin; iSrcX < iSrcXMax;
+                         iSrcX++, iSrcOffset++)
+                    {
+                        if (bWrapOverX)
+                            iSrcOffset =
+                                (iSrcX % nSrcXSize) +
+                                static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
+
+                        if (poWK->panUnifiedSrcValid != nullptr &&
+                            !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset))
+                        {
+                            continue;
+                        }
+
+                        const double dfWeight =
+                            COMPUTE_WEIGHT(iSrcX, dfWeightY);
+                        if (dfWeight <= 0)
+                            continue;
+
+                        bool bAllValid = true;
+                        for (int iBand = 0; iBand < poWK->nBands; iBand++)
+                        {
+                            double dfBandDensity = 0;
+                            double dfValueImagTmp = 0;
+                            if (!(GWKGetPixelValue(
+                                      poWK, iBand, iSrcOffset, &dfBandDensity,
+                                      &adfValueReal[iBand], &dfValueImagTmp) &&
+                                  dfBandDensity > BAND_DENSITY_THRESHOLD))
+                            {
+                                bAllValid = false;
+                                break;
+                            }
+                        }
+
+                        if (!bAllValid)
+                        {
+                            dfTotalWeightInvalid += dfWeight;
+                            continue;
+                        }
+
+                        bool bExcludedValueFound = false;
+                        for (size_t i = 0;
+                             i < poWK->m_aadfExcludedValues.size(); ++i)
+                        {
+                            if (poWK->m_aadfExcludedValues[i] == adfValueReal)
+                            {
+                                bExcludedValueFound = true;
+                                ++anCountExcludedValues[i];
+                                dfTotalWeightExcluded += dfWeight;
+                                break;
+                            }
+                        }
+                        if (!bExcludedValueFound)
+                        {
+                            // Weighted incremental algorithm mean
+                            // Cf https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Weighted_incremental_algorithm
+                            dfTotalWeightRegular += dfWeight;
+                            for (int iBand = 0; iBand < poWK->nBands; iBand++)
+                            {
+                                adfValueAveraged[iBand] +=
+                                    (dfWeight / dfTotalWeightRegular) *
+                                    (adfValueReal[iBand] -
+                                     adfValueAveraged[iBand]);
+                            }
+                        }
+                    }
+                }
+
+                const double dfTotalWeight = dfTotalWeightInvalid +
+                                             dfTotalWeightExcluded +
+                                             dfTotalWeightRegular;
+                if (dfTotalWeightExcluded > 0 &&
+                    dfTotalWeightExcluded >=
+                        dfExcludedValuesThreshold * dfTotalWeight)
+                {
+                    // Find the most represented excluded value tuple
+                    size_t iExcludedValue = 0;
+                    int nExcludedValueCount = 0;
+                    for (size_t i = 0; i < poWK->m_aadfExcludedValues.size();
+                         ++i)
+                    {
+                        if (anCountExcludedValues[i] > nExcludedValueCount)
+                        {
+                            iExcludedValue = i;
+                            nExcludedValueCount = anCountExcludedValues[i];
+                        }
+                    }
+
+                    bHasFoundDensity = true;
+
+                    for (int iBand = 0; iBand < poWK->nBands; iBand++)
+                    {
+                        GWKSetPixelValue(
+                            poWK, iBand, iDstOffset, /* dfBandDensity = */ 1.0,
+                            poWK->m_aadfExcludedValues[iExcludedValue][iBand],
+                            0);
+                    }
+                }
+                else if (dfTotalWeightRegular > 0)
+                {
+                    bHasFoundDensity = true;
+
+                    for (int iBand = 0; iBand < poWK->nBands; iBand++)
+                    {
+                        GWKSetPixelValue(poWK, iBand, iDstOffset,
+                                         /* dfBandDensity = */ 1.0,
+                                         adfValueAveraged[iBand], 0);
+                    }
+                }
+
+                // Skip below loop on bands
+                bDone = true;
+            }
+
             /* ====================================================================
              */
             /*      Loop processing each band. */
             /* ====================================================================
              */
 
-            for (int iBand = 0; iBand < poWK->nBands; iBand++)
+            for (int iBand = 0; !bDone && iBand < poWK->nBands; iBand++)
             {
                 double dfBandDensity = 0.0;
                 double dfValueReal = 0.0;
@@ -6710,19 +6894,6 @@ static void GWKAverageOrModeThread(void *pData)
                  */
 
                 // Loop over source lines and pixels - 3 possible algorithms.
-
-#define COMPUTE_WEIGHT_Y(iSrcY)                                                \
-    ((iSrcY == iSrcYMin)                                                       \
-         ? ((iSrcYMin + 1 == iSrcYMax) ? 1.0 : 1 - (dfYMin - iSrcYMin))        \
-     : (iSrcY + 1 == iSrcYMax) ? 1 - (iSrcYMax - dfYMax)                       \
-                               : 1.0)
-
-#define COMPUTE_WEIGHT(iSrcX, dfWeightY)                                       \
-    ((iSrcX == iSrcXMin)       ? ((iSrcXMin + 1 == iSrcXMax)                   \
-                                      ? dfWeightY                              \
-                                      : dfWeightY * (1 - (dfXMin - iSrcXMin))) \
-     : (iSrcX + 1 == iSrcXMax) ? dfWeightY * (1 - (iSrcXMax - dfXMax))         \
-                               : dfWeightY)
 
                 // poWK->eResample == GRA_Average.
                 if (nAlgo == GWKAOM_Average)
