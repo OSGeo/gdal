@@ -29,8 +29,8 @@ options : dict/list, optional
 
 Returns
 -------
-(bool, int, int)
-    First value of tuple is True if the two points are within Line of Sight.
-    Second value is the X location where the LOS line intersects with terrain (will be set in the future, currently set to -1).
-    Third value is the Y location where the LOS line intersects with terrain (will be set in the future, currently set to -1).
+collections.namedtuple(is_visible: bool, col_intersection: int, row_intersection: int)
+    is_visible is True if the two points are within Line of Sight.
+    col_intersection is the raster column index where the LOS line intersects with terrain (will be set in the future, currently set to -1).
+    row_intersection is the raster row index where the LOS line intersects with terrain (will be set in the future, currently set to -1).
 ";
