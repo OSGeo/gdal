@@ -914,7 +914,7 @@ def test_ogr_mem_arrow_stream_numpy():
     f.SetField("float32", 1.25)
     f.SetField("float64", 1.250123)
     f.SetField("str", "abc")
-    f.SetField("date", "2022-05-31")
+    f.SetField("date", "1899-05-31")
     f.SetField("time", "12:34:56.789")
     f.SetField("datetime", "2022-05-31T12:34:56.789Z")
     f.SetField("boollist", "[False,True]")
@@ -958,7 +958,7 @@ def test_ogr_mem_arrow_stream_numpy():
     for fieldname in ("bool", "int16", "int32", "int64", "float32", "float64"):
         assert batch[fieldname][1] == f.GetField(fieldname)
     assert batch["str"][1] == f.GetField("str").encode("utf-8")
-    assert batch["date"][1] == numpy.datetime64("2022-05-31")
+    assert batch["date"][1] == numpy.datetime64("1899-05-31")
     assert batch["time"][1] == datetime.time(12, 34, 56, 789000)
     assert batch["datetime"][1] == numpy.datetime64("2022-05-31T12:34:56.789")
     assert numpy.array_equal(batch["boollist"][1], numpy.array([False, True]))
