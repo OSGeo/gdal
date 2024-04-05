@@ -1516,7 +1516,6 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     self.thisown = 0
     self.this = None
     self._invalidate_children()
-    return val
 %}
 
 %feature("shadow") ExecuteSQL %{
