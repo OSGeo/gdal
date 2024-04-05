@@ -178,7 +178,7 @@ string must be repeated for proper escaping), the name of such column(s)
 can be derived from the :oo:`GEOM_POSSIBLE_NAMES` open option.
 
 For older versions, it is possible to extract spatial information
-(points) from a CSV file which has columns for the X and Y coordinates,
+(e.g., points) from a CSV file which has columns for the X and Y coordinates,
 through the use of the :ref:`VRT <vector.vrt>` driver.
 
 You can write the associated VRT file (test.vrt):
