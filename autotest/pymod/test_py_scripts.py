@@ -96,20 +96,27 @@ def run_py_script(
 ###############################################################################
 # Runs a Python script in a new process
 #
-def run_py_script_as_external_script(
-    script_path, script_name, concatenated_argv, display_live_on_parent_stdout=False
-):
+
+
+def command_for_script(script_path, script_name):
 
     script_file_path = os.path.join(script_path, script_name + ".py")
-
-    # print(script_file_path + ' ' + concatenated_argv)
 
     python_exe = sys.executable
     if sys.platform == "win32":
         python_exe = python_exe.replace("\\", "/")
         script_file_path = script_file_path.replace("\\", "/")
 
+    return python_exe + ' "' + script_file_path + '" '
+
+
+def run_py_script_as_external_script(
+    script_path, script_name, concatenated_argv, display_live_on_parent_stdout=False
+):
+
+    cmd = command_for_script(script_path, script_name)
+
     return gdaltest.runexternal(
-        python_exe + ' "' + script_file_path + '" ' + concatenated_argv,
+        cmd + concatenated_argv,
         display_live_on_parent_stdout=display_live_on_parent_stdout,
     )

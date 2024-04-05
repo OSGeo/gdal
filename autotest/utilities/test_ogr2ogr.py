@@ -30,23 +30,43 @@
 ###############################################################################
 
 import os
+import re
 import shutil
 
 import gdaltest
 import ogrtest
 import pytest
 import test_cli_utilities
+import test_py_scripts
 
 from osgeo import gdal, ogr, osr
 
-pytestmark = pytest.mark.skipif(
-    test_cli_utilities.get_ogr2ogr_path() is None, reason="ogr2ogr not available"
-)
 
+@pytest.fixture(scope="function", params=["cpp", "python"])
+def ogr2ogr_path(request):
 
-@pytest.fixture()
-def ogr2ogr_path():
-    return test_cli_utilities.get_ogr2ogr_path()
+    if request.param == "python":
+        # Only a subset of the test cases in this file are tested against
+        # the Python version of ogr2ogr.
+
+        m = re.match("test_ogr2ogr_(\\d+)", request.node.originalname)
+        if not m:
+            pytest.skip("test does not apply to ogr2ogr.py")
+        test_num = int(m.group(1))
+
+        if test_num > 45 or test_num in {14, 18, 19, 28, 29, 30, 40, 41, 42}:
+            pytest.skip("test does not apply to ogr2ogr.py")
+
+        path = test_py_scripts.get_py_script("ogr2ogr")
+        if path is None:
+            pytest.skip("ogr2ogr.py not available")
+        path = test_py_scripts.command_for_script(path, "ogr2ogr")
+    else:
+        path = test_cli_utilities.get_ogr2ogr_path()
+        if path is None:
+            pytest.skip("ogr2ogr not available")
+
+    return path
 
 
 ###############################################################################
