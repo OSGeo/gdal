@@ -1863,3 +1863,19 @@ def test_ogr_sql_ilike_utf8():
 
     lyr.SetAttributeFilter("'éven' ILIKE '%xen'")
     assert lyr.GetFeatureCount() == 0
+
+
+###############################################################################
+# Test error on setting a spatial filter during ExecuteSQL
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_sql_test_execute_sql_error_on_spatial_filter_mem_layer():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))")
+    with pytest.raises(
+        Exception, match="Cannot set spatial filter: no geometry field present in layer"
+    ):
+        ds.ExecuteSQL("SELECT 1 FROM test", spatialFilter=geom)

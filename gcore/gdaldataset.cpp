@@ -6972,15 +6972,19 @@ OGRLayer *GDALDataset::BuildLayerFromSelectInfo(
     swq_select *psSelectInfo, OGRGeometry *poSpatialFilter,
     const char *pszDialect, swq_select_parse_options *poSelectParseOptions)
 {
-    OGRGenSQLResultsLayer *poResults = nullptr;
+    std::unique_ptr<OGRGenSQLResultsLayer> poResults;
     GDALSQLParseInfo *psParseInfo =
         BuildParseInfo(psSelectInfo, poSelectParseOptions);
 
     if (psParseInfo)
     {
-        poResults =
-            new OGRGenSQLResultsLayer(this, psSelectInfo, poSpatialFilter,
-                                      psParseInfo->pszWHERE, pszDialect);
+        const auto nErrorCounter = CPLGetErrorCounter();
+        poResults = std::make_unique<OGRGenSQLResultsLayer>(
+            this, psSelectInfo, poSpatialFilter, psParseInfo->pszWHERE,
+            pszDialect);
+        if (CPLGetErrorCounter() > nErrorCounter &&
+            CPLGetLastErrorType() != CE_None)
+            poResults.reset();
     }
     else
     {
@@ -6988,7 +6992,7 @@ OGRLayer *GDALDataset::BuildLayerFromSelectInfo(
     }
     DestroyParseInfo(psParseInfo);
 
-    return poResults;
+    return poResults.release();
 }
 
 /************************************************************************/
