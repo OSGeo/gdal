@@ -195,7 +195,6 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
     self.thisown = 0
     self.this = None
     self._invalidate_layers()
-    return val
 %}
 
 %feature("shadow") DeleteLayer %{
