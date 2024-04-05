@@ -4747,3 +4747,14 @@ def quiet_errors():
     finally:
         PopErrorHandler()
 %}
+
+
+%feature("pythonappend") IsLineOfSightVisible %{
+    is_visible, col_intersection, row_intersection = val
+    import collections
+    tuple = collections.namedtuple('IsLineOfSightVisibleResult', ['is_visible', 'col_intersection', 'row_intersection'])
+    tuple.is_visible = is_visible
+    tuple.col_intersection = col_intersection
+    tuple.row_intersection = row_intersection
+    val = tuple
+%}
