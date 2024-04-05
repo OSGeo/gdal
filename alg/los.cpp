@@ -162,21 +162,31 @@ static bool IsAboveTerrain(const GDALRasterBandH hBand, const int x,
  * For example, datasets referenced against geographic coordinate at high latitudes may have issues.
  *
  * @param hBand The band to read the DEM data from. This must NOT be null.
- * 
+ *
  * @param xA The X location (raster column) of the first point to check on the raster.
  *
  * @param yA The Y location (raster row) of the first point to check on the raster.
- * 
+ *
  * @param zA The Z location (height) of the first point to check.
- * 
+ *
  * @param xB The X location (raster column) of the second point to check on the raster.
  *
  * @param yB The Y location (raster row) of the second point to check on the raster.
- * 
+ *
  * @param zB The Z location (height) of the second point to check.
- * 
+ *
+ * @param[out] pnxTerrainIntersection The X location where the LOS line
+ *             intersects with terrain, or nullptr if it does not intersect
+ *             terrain. Not implemented currently (*pnxTerrainIntersection
+ *             is set to -1)
+ *
+ * @param[out] pnyTerrainIntersection The Y location where the LOS line
+ *             intersects with terrain, or nullptr if it does not intersect
+ *             terrain. Not implemented currently (*pnyTerrainIntersection
+ *             is set to -1)
+ *
  * @param papszOptions Options for the line of sight algorithm (currently ignored).
- * 
+ *
  * @return True if the two points are within Line of Sight.
  *
  * @since GDAL 3.9
@@ -185,9 +195,17 @@ static bool IsAboveTerrain(const GDALRasterBandH hBand, const int x,
 bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
                               const int yA, const double zA, const int xB,
                               const int yB, const double zB,
+                              int *pnxTerrainIntersection,
+                              int *pnyTerrainIntersection,
                               CPL_UNUSED CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hBand, "GDALIsLineOfSightVisible", false);
+
+    if (pnxTerrainIntersection)
+        *pnxTerrainIntersection = -1;
+
+    if (pnyTerrainIntersection)
+        *pnyTerrainIntersection = -1;
 
     // Perform a preliminary check of the start and end points.
     if (!IsAboveTerrain(hBand, xA, yA, zA))

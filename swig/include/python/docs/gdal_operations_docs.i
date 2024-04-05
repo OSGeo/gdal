@@ -29,6 +29,8 @@ options : dict/list, optional
 
 Returns
 -------
-bool
-    True if the two points are within Line of Sight.
+(bool, int, int)
+    First value of tuple is True if the two points are within Line of Sight.
+    Second value is the X location where the LOS line intersects with terrain (will be set in the future, currently set to -1).
+    Third value is the Y location where the LOS line intersects with terrain (will be set in the future, currently set to -1).
 ";

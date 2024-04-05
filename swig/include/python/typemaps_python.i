@@ -3449,3 +3449,22 @@ OBJECT_LIST_INPUT(GDALMDArrayHS);
   /* %typemap(freearg) (int nUsages, GDALRATFieldUsage *paeUsages)*/
   CPLFree( $2 );
 }
+
+
+%typemap(in,numinputs=0) (bool *pbVisible, int *pnXIntersection, int *pnYIntersection) ( bool visible = 0, int nxintersection = 0, int nyintersection = 0  )
+{
+  /* %typemap(in) (bool *pbVisible, int *pnXIntersection, int *pnYIntersection) */
+  $1 = &visible;
+  $2 = &nxintersection;
+  $3 = &nyintersection;
+}
+
+%typemap(argout) (bool *pbVisible, int *pnXIntersection, int *pnYIntersection)
+{
+   /* %typemap(argout) (bool *pbVisible, int *pnXIntersection, int *pnYIntersection)  */
+  PyObject *r = PyTuple_New( 3 );
+  PyTuple_SetItem( r, 0, PyBool_FromLong(*$1) );
+  PyTuple_SetItem( r, 1, PyLong_FromLong(*$2) );
+  PyTuple_SetItem( r, 2, PyLong_FromLong(*$3) );
+  $result = t_output_helper($result,r);
+}

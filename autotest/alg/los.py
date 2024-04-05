@@ -37,10 +37,14 @@ def test_los_basic():
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 2, 1)
 
-    assert gdal.IsLineOfSightVisible(mem_ds.GetRasterBand(1), 0, 0, 1, 1, 0, 1)
-    assert gdal.IsLineOfSightVisible(mem_ds.GetRasterBand(1), 0, 0, 1, 0, 0, 1)
-    assert not gdal.IsLineOfSightVisible(mem_ds.GetRasterBand(1), 0, 0, -1, 1, 0, 1)
-    assert not gdal.IsLineOfSightVisible(mem_ds.GetRasterBand(1), 0, 0, 1, 1, 0, -1)
+    success, x, y = gdal.IsLineOfSightVisible(mem_ds.GetRasterBand(1), 0, 0, 1, 1, 0, 1)
+    assert success
+    assert x == -1
+    assert y == -1
+
+    assert gdal.IsLineOfSightVisible(mem_ds.GetRasterBand(1), 0, 0, 1, 0, 0, 1)[0]
+    assert not gdal.IsLineOfSightVisible(mem_ds.GetRasterBand(1), 0, 0, -1, 1, 0, 1)[0]
+    assert not gdal.IsLineOfSightVisible(mem_ds.GetRasterBand(1), 0, 0, 1, 1, 0, -1)[0]
 
     with pytest.raises(Exception, match="Received a NULL pointer"):
         gdal.IsLineOfSightVisible(None, 0, 0, 0, 0, 0, 0)
