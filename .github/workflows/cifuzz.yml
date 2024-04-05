@@ -15,6 +15,8 @@ permissions:
 jobs:
   Fuzzing:
     runs-on: ubuntu-latest
+    if: github.repository == 'OSGeo/gdal'
+
     steps:
     - name: Build Fuzzers
       id: build
