@@ -3,12 +3,6 @@
 if (NOT TARGET ogr_SQLite)
   return()
 endif ()
-if (CMAKE_CROSSCOMPILING OR WIN32)
-  return()
-endif ()
-if (NOT CMAKE_VERSION VERSION_GREATER_EQUAL 3.12)
-  return()
-endif ()
 
 include(GdalStandardIncludes)
 add_library(fuzzingengine EXCLUDE_FROM_ALL OBJECT fuzzingengine.cpp)
@@ -146,12 +140,16 @@ build_fuzzer(
   DEFINITIONS
   -DUSE_FILESYSTEM)
 
-add_custom_command(
-  OUTPUT ${FUZZ_CORPUS}
-  COMMAND env OUT=${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/build_seed_corpus.sh
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  USES_TERMINAL)
-add_custom_target(fuzzers DEPENDS ${FUZZ_TARGETS} ${FUZZ_CORPUS})
+if (UNIX)
+    add_custom_command(
+      OUTPUT ${FUZZ_CORPUS}
+      COMMAND env OUT=${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/build_seed_corpus.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      USES_TERMINAL)
+    add_custom_target(fuzzers DEPENDS ${FUZZ_TARGETS} ${FUZZ_CORPUS})
+else()
+    add_custom_target(fuzzers DEPENDS ${FUZZ_TARGETS})
+endif()
 
 unset(FUZZ_TARGETS)
 unset(FUZZ_CORPUS)
