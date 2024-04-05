@@ -259,7 +259,7 @@ class GDAL2XYZ(GDALScript):
             "-srcwin",
             metavar=("xoff", "yoff", "xsize", "ysize"),
             dest="srcwin",
-            type=float,
+            type=int,
             nargs=4,
             help="Selects a subwindow from the source image for copying based on pixel/line location",
         )
