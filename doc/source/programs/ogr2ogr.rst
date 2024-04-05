@@ -609,6 +609,21 @@ significant insertion performance boost. See the PG driver documentation page.
 More generally, consult the documentation page of the input and output drivers
 for performance hints.
 
+Known issues
+------------
+
+Starting with GDAL 3.8, ogr2ogr uses internally an Arrow array based API
+(cf :ref:`rfc-86`) for some source formats (in particular GeoPackage or FlatGeoBuf),
+and for the most basic types of operations, to improve performance.
+This substantial change in the ogr2ogr internal logic has required a number of
+fixes throughout the GDAL 3.8.x bugfix releases to fully stabilize it, and we believe
+most issues are resolved with GDAL 3.9.
+If you hit errors not met with earlier GDAL versions, you may specify
+``--config OGR2OGR_USE_ARROW_API NO`` on the ogr2ogr command line to opt for the
+classic algorithm using an iterative feature based approach. If that flag is
+needed with GDAL >= 3.9, please file an issue on the
+`GDAL issue tracker <https://github.com/OSGeo/gdal/issues>`__.
+
 C API
 -----
 
