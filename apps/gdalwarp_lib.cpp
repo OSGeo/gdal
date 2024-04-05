@@ -3879,7 +3879,8 @@ static GDALDatasetH GDALWarpCreateOutput(
                 static_cast<GDALGenImgProjTransformInfo *>(hTransformArg)};
 
             // If a transformer is available, use an extent that covers the
-            // target extent instead of the real source image extent
+            // target extent instead of the real source image extent, but also
+            // check for target extent compatibility with source CRS extent
             if (psTransformInfo && psTransformInfo->pReprojectArg &&
                 psTransformInfo->pSrcTransformer == nullptr)
             {
@@ -3900,27 +3901,61 @@ static GDALDatasetH GDALWarpCreateOutput(
                         double dfMinX = psOptions->dfMinX;
                         double dfMinY = psOptions->dfMinY;
 
-                        psRTI->poReverseTransform->Transform(
-                            1, &dfMinX, &dfMinY, nullptr, nullptr);
-                        adfGeoTransform[0] = dfMinX;
-                        adfGeoTransform[3] = dfMinY;
+                        // Need this to check if the target extent is compatible with the source extent
+                        double dfMaxX = psOptions->dfMaxX;
+                        double dfMaxY = psOptions->dfMaxY;
 
-                        // Reproject to source image CRS
-                        psRTI->poReverseTransform->Transform(
-                            nPoints, &padfX[0], &padfY[0], &padfZ[0],
-                            &pabSuccess[0]);
+                        // Clone of psRTI->poReverseTransform with CHECK_WITH_INVERT_PROJ set to TRUE
+                        // to detect out of source CRS bounds destintion extent and fall back to original
+                        // algorithm if needed
+                        CPLConfigOptionSetter oSetter("CHECK_WITH_INVERT_PROJ",
+                                                      "TRUE", false);
+                        OGRCoordinateTransformationOptions options;
+                        auto poReverseTransform =
+                            std::unique_ptr<OGRCoordinateTransformation>(
+                                OGRCreateCoordinateTransformation(
+                                    psRTI->poReverseTransform->GetSourceCS(),
+                                    psRTI->poReverseTransform->GetTargetCS(),
+                                    options));
 
-                        // Transform back to source image coordinate space using geotransform
-                        for (size_t i = 0; i < padfX.size(); i++)
+                        if (poReverseTransform)
                         {
-                            padfX[i] = (padfX[i] - adfGeoTransform[0]) /
-                                       adfGeoTransform[1];
-                            padfY[i] =
-                                std::abs((padfY[i] - adfGeoTransform[3]) /
-                                         adfGeoTransform[5]);
-                        }
 
-                        transformedToSrcCRS = true;
+                            poReverseTransform->Transform(
+                                1, &dfMinX, &dfMinY, nullptr, &pabSuccess[0]);
+
+                            if (pabSuccess[0])
+                            {
+                                adfGeoTransform[0] = dfMinX;
+                                adfGeoTransform[3] = dfMinY;
+
+                                poReverseTransform->Transform(1, &dfMaxX,
+                                                              &dfMaxY, nullptr,
+                                                              &pabSuccess[0]);
+
+                                if (pabSuccess[0])
+                                {
+
+                                    // Reproject to source image CRS
+                                    psRTI->poReverseTransform->Transform(
+                                        nPoints, &padfX[0], &padfY[0],
+                                        &padfZ[0], &pabSuccess[0]);
+
+                                    // Transform back to source image coordinate space using geotransform
+                                    for (size_t i = 0; i < padfX.size(); i++)
+                                    {
+                                        padfX[i] =
+                                            (padfX[i] - adfGeoTransform[0]) /
+                                            adfGeoTransform[1];
+                                        padfY[i] = std::abs(
+                                            (padfY[i] - adfGeoTransform[3]) /
+                                            adfGeoTransform[5]);
+                                    }
+
+                                    transformedToSrcCRS = true;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -3938,10 +3973,15 @@ static GDALDatasetH GDALWarpCreateOutput(
             const auto Distance = [](double x, double y)
             { return sqrt(x * x + y * y); };
 
+            const int nSrcXSize = GDALGetRasterXSize(hSrcDS);
+            const int nSrcYSize = GDALGetRasterYSize(hSrcDS);
+
             for (int i = 0; i < nPoints; i += 3)
             {
                 if (pabSuccess[i] && pabSuccess[i + 1] && pabSuccess[i + 2] &&
-                    padfX[i] >= 0 && padfY[i] >= 0)
+                    padfX[i] >= 0 && padfY[i] >= 0 &&
+                    (transformedToSrcCRS ||
+                     (padfX[i] <= nSrcXSize && padfY[i] < nSrcYSize)))
                 {
                     const double dfRes1 =
                         std::abs(dfEps) / Distance(padfX[i + 1] - padfX[i],
