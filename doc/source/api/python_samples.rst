@@ -78,7 +78,6 @@ Python direct ports of c++ programs
 
     - :ref:`gdalinfo`: A direct port of apps/gdalinfo.c
     - :ref:`ogrinfo`: A direct port of apps/ogrinfo.cpp
-    - :ref:`ogr2ogr`: A direct port of apps/ogr2ogr.cpp
     - :ref:`gdallocationinfo`: A direct port of apps/gdallocationinfo.cpp
 
 Python sample scripts that are now programs
