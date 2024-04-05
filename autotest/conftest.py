@@ -240,6 +240,13 @@ def pytest_collection_modifyitems(config, items):
 def pytest_addoption(parser):
     parser.addini("gdal_version", "GDAL version for which pytest.ini was generated")
 
+    # our pytest.ini specifies --dist=loadgroup but we don't want to fail if the
+    # user doesn't have this extension installed.
+    try:
+        import xdist  # noqa: F401
+    except ImportError:
+        parser.addoption("--dist")
+
 
 def pytest_configure(config):
     test_version = config.getini("gdal_version")
