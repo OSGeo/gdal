@@ -33,12 +33,13 @@ import glob
 import os
 import os.path
 import shutil
+import struct
 import sys
 
 import pytest
 import test_py_scripts  # noqa  # pylint: disable=E0401
 
-from osgeo import gdal  # noqa
+from osgeo import gdal, osr  # noqa
 from osgeo_utils.gdalcompare import compare_db
 
 pytestmark = pytest.mark.skipif(
@@ -581,3 +582,44 @@ def test_gdal2tiles_py_webp(script_path, tmp_path, resampling):
         )
         diff_found = compare_db(gdal.Open(webp_filename), gdal.Open(filename))
         assert not diff_found, (resampling, filename)
+
+
+@pytest.mark.require_driver("PNG")
+def test_gdal2tiles_excluded_values(script_path, tmp_path):
+
+    input_tif = str(tmp_path / "test_gdal2tiles_excluded_values.tif")
+    output_folder = str(tmp_path / "test_gdal2tiles_excluded_values")
+
+    src_ds = gdal.GetDriverByName("GTiff").Create(input_tif, 256, 256, 3, gdal.GDT_Byte)
+    src_ds.GetRasterBand(1).WriteRaster(
+        0, 0, 2, 2, struct.pack("B" * 4, 10, 20, 30, 40)
+    )
+    src_ds.GetRasterBand(2).WriteRaster(
+        0, 0, 2, 2, struct.pack("B" * 4, 11, 21, 31, 41)
+    )
+    src_ds.GetRasterBand(3).WriteRaster(
+        0, 0, 2, 2, struct.pack("B" * 4, 12, 22, 32, 42)
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src_ds.SetSpatialRef(srs)
+    MAX_GM = 20037508.342789244
+    RES_Z0 = 2 * MAX_GM / 256
+    RES_Z1 = RES_Z0 / 2
+    # Spatial extent of tile (0,0) at zoom level 1
+    src_ds.SetGeoTransform([-MAX_GM, RES_Z1, 0, MAX_GM, 0, -RES_Z1])
+    src_ds = None
+
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        "gdal2tiles",
+        f"-q -z 0-1 --excluded-values=30,31,32 --excluded-values-pct-threshold=50 {input_tif} {output_folder}",
+    )
+
+    ds = gdal.Open(f"{output_folder}/0/0/0.png")
+    assert struct.unpack("B" * 4, ds.ReadRaster(0, 0, 1, 1)) == (
+        (10 + 20 + 40) // 3,
+        (11 + 21 + 41) // 3,
+        (12 + 22 + 42) // 3,
+        255,
+    )
