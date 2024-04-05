@@ -3906,7 +3906,7 @@ static GDALDatasetH GDALWarpCreateOutput(
                         double dfMaxY = psOptions->dfMaxY;
 
                         // Clone of psRTI->poReverseTransform with CHECK_WITH_INVERT_PROJ set to TRUE
-                        // to detect out of source CRS bounds destintion extent and fall back to original
+                        // to detect out of source CRS bounds destination extent and fall back to original
                         // algorithm if needed
                         CPLConfigOptionSetter oSetter("CHECK_WITH_INVERT_PROJ",
                                                       "TRUE", false);
@@ -3981,7 +3981,7 @@ static GDALDatasetH GDALWarpCreateOutput(
                 if (pabSuccess[i] && pabSuccess[i + 1] && pabSuccess[i + 2] &&
                     padfX[i] >= 0 && padfY[i] >= 0 &&
                     (transformedToSrcCRS ||
-                     (padfX[i] <= nSrcXSize && padfY[i] < nSrcYSize)))
+                     (padfX[i] <= nSrcXSize && padfY[i] <= nSrcYSize)))
                 {
                     const double dfRes1 =
                         std::abs(dfEps) / Distance(padfX[i + 1] - padfX[i],
