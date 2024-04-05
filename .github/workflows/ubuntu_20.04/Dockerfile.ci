@@ -191,7 +191,7 @@ RUN wget -q https://github.com/rouault/pdfium_build_gdal_3_9/releases/download/p
 
 # HANA: client side
 # Install hdbsql tool
-RUN curl -v -j -k -s -L -H "Cookie: eula_3_1_agreed=tools.hana.ondemand.com/developer-license-3_1.txt" https://tools.hana.ondemand.com/additional/hanaclient-latest-linux-x64.tar.gz --output hanaclient-latest-linux-x64.tar.gz \
+RUN curl -v -j -k -s -L -H "Cookie: eula_3_2_agreed=tools.hana.ondemand.com/developer-license-3_2.txt" https://tools.hana.ondemand.com/additional/hanaclient-latest-linux-x64.tar.gz --output hanaclient-latest-linux-x64.tar.gz \
   && tar -xvf hanaclient-latest-linux-x64.tar.gz \
   && mkdir /usr/sap \
   && ./client/hdbinst -a client --sapmnt=/usr/sap \
