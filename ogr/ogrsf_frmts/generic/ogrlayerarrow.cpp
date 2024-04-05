@@ -1632,8 +1632,8 @@ static bool FillDateArray(struct ArrowArray *psChild,
             brokenDown.tm_year = psRawField->Date.Year - 1900;
             brokenDown.tm_mon = psRawField->Date.Month - 1;
             brokenDown.tm_mday = psRawField->Date.Day;
-            panValues[iFeat] = static_cast<int>(
-                (CPLYMDHMSToUnixTime(&brokenDown) + 36200) / 86400);
+            panValues[iFeat] =
+                static_cast<int>(CPLYMDHMSToUnixTime(&brokenDown) / 86400);
         }
         else if (bIsNullable)
         {
@@ -4247,7 +4247,7 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
     {
         // date32[days]
         // number of days since Epoch
-        int64_t timestamp = static_cast<int64_t>(static_cast<const uint32_t *>(
+        int64_t timestamp = static_cast<int64_t>(static_cast<const int32_t *>(
                                 array->buffers[1])[nOffsettedIndex]) *
                             3600 * 24;
         struct tm dt;
