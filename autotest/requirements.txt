@@ -6,5 +6,3 @@ pytest-benchmark
 lxml
 jsonschema
 filelock
-# importlib 6.2 and 6.3 break pytest with jsonschema. Cf https://github.com/python/importlib_resources/issues/299
-importlib-resources<6.2.0
