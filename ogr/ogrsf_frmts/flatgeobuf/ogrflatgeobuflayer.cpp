@@ -163,8 +163,7 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(const Header *poHeader, GByte *headerBuf,
     if (const auto metadata = poHeader->metadata())
     {
         CPLJSONDocument oDoc;
-        CPLErrorHandlerPusher oQuietError(CPLQuietErrorHandler);
-        CPLErrorStateBackuper oErrorStateBackuper;
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         if (oDoc.LoadMemory(metadata->c_str()) &&
             oDoc.GetRoot().GetType() == CPLJSONObject::Type::Object)
         {

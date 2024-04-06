@@ -365,8 +365,7 @@ static CPLString GetSrcDSProjection(GDALDatasetH hDS, CSLConstList papszTO)
     {
         char *pszWKT = nullptr;
         {
-            CPLErrorStateBackuper oErrorStateBackuper;
-            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             if (OSRExportToWkt(hSRS, &pszWKT) != OGRERR_NONE)
             {
                 CPLFree(pszWKT);
@@ -4195,8 +4194,7 @@ static GDALDatasetH GDALWarpCreateOutput(
             {
                 OGRSpatialReference oSrcSRS;
                 OGRSpatialReference oDstSRS;
-                CPLErrorStateBackuper oErrorStateBackuper;
-                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
                 // DemoteTo2D requires PROJ >= 6.3
                 if (oSrcSRS.SetFromUserInput(osThisSourceSRS.c_str()) ==
                         OGRERR_NONE &&

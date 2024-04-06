@@ -3506,8 +3506,7 @@ static bool IsSRSCompatibleOfGeoTIFF(const OGRSpatialReference *poSRS,
     }
     OGRErr eErr;
     {
-        CPLErrorStateBackuper oErrorStateBackuper;
-        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         if (poSRS->IsDerivedGeographic() ||
             (poSRS->IsProjected() && !poSRS->IsCompound() &&
              poSRS->GetAxesCount() == 3))

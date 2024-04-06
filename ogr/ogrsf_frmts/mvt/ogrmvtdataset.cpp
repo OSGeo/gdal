@@ -3819,7 +3819,7 @@ bool OGRMVTWriterDataset::EncodeRepairedOuterRing(
         oOutPoly.addRingDirectly(poOutLinearRing.release());
         int bIsValid;
         {
-            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             bIsValid = oOutPoly.IsValid();
         }
         if (bIsValid)
@@ -3953,8 +3953,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
         OGRPolygon oPoly;
         oPoly.addRingDirectly(poLR);
 
-        CPLErrorStateBackuper oErrorStateBackuper;
-        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         auto poTmp = poGeom->Intersection(&oPoly);
         poIntersection = poTmp;
         poIntersectionHolder.reset(poTmp);
@@ -4169,8 +4168,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                                     dfAreaOrLength);
             int bIsValid;
             {
-                CPLErrorStateBackuper oErrorStateBackuper;
-                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
                 bIsValid = oOutPoly.IsValid();
             }
             if (!bIsValid)
@@ -4211,8 +4209,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             }
             int bIsValid;
             {
-                CPLErrorStateBackuper oErrorStateBackuper;
-                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
                 bIsValid = oOutMP.IsValid();
             }
             if (!bIsValid)
@@ -4693,8 +4690,7 @@ GetReducedPrecisionGeometry(MVTTileLayerFeature::GeomType eGeomType,
                             poOutOuterRing = std::unique_ptr<OGRLinearRing>(
                                 poOutRing.release());
                             {
-                                CPLErrorStateBackuper oErrorStateBackuper;
-                                CPLErrorHandlerPusher oErrorHandler(
+                                CPLErrorStateBackuper oErrorStateBackuper(
                                     CPLQuietErrorHandler);
                                 bIsValid = oPoly.IsValid();
                             }
@@ -4715,8 +4711,7 @@ GetReducedPrecisionGeometry(MVTTileLayerFeature::GeomType eGeomType,
                         oPoly.addRing(poOutOuterRing.get());
                         oPoly.addRingDirectly(poOutRing.release());
                         {
-                            CPLErrorStateBackuper oErrorStateBackuper;
-                            CPLErrorHandlerPusher oErrorHandler(
+                            CPLErrorStateBackuper oErrorStateBackuper(
                                 CPLQuietErrorHandler);
                             bIsValid = oPoly.IsValid();
                         }

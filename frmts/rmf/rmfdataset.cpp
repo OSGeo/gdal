@@ -1197,8 +1197,7 @@ CPLErr RMFDataset::FlushCache(bool bAtClosing)
         {
             // ComputeRasterMinMax can setup error in case of dataset full
             // from NoData values, but it  makes no sense here.
-            CPLErrorStateBackuper oErrorStateBackuper;
-            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             poBand->ComputeRasterMinMax(FALSE, sHeader.adfElevMinMax);
             bHeaderDirty = true;
         }

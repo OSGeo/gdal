@@ -141,8 +141,8 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer(
                     sqlite3_column_table_name(m_hStmt, poGeomFieldDefn->m_iCol);
                 if (pszTableName != nullptr)
                 {
-                    CPLErrorStateBackuper oErrorStateBackuper;
-                    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                    CPLErrorStateBackuper oErrorStateBackuper(
+                        CPLQuietErrorHandler);
                     OGRSQLiteLayer *m_poLayer =
                         cpl::down_cast<OGRSQLiteLayer *>(
                             m_poDS->GetLayerByName(pszTableName));

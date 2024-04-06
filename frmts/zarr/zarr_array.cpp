@@ -237,8 +237,7 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
         CPLFree(pszWKT);
 
         {
-            CPLErrorHandlerPusher quietError(CPLQuietErrorHandler);
-            CPLErrorStateBackuper errorStateBackuper;
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             char *projjson = nullptr;
             if (m_poSRS->exportToPROJJSON(&projjson, nullptr) == OGRERR_NONE &&
                 projjson != nullptr)

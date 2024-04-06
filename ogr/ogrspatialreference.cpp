@@ -369,8 +369,7 @@ void OGRSpatialReference::Private::refreshRootFromProjObj()
 
         const char *pszWKT;
         {
-            CPLErrorStateBackuper oErrorStateBackuper;
-            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             pszWKT = proj_as_wkt(getPROJContext(), m_pj_crs,
                                  m_bMorphToESRI ? PJ_WKT1_ESRI : PJ_WKT1_GDAL,
                                  aosOptions.List());
