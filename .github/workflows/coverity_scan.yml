@@ -3,8 +3,8 @@ name: coverity-scan
 # Controls when the action will run.
 on:
   # Run this action on a schedule (we're allowed a maximum of two per day)
-  #schedule:
-  #  - cron: '0 18 * * SUN' # Sunday at 18:00 UTC
+  schedule:
+    - cron: '0 18 * * SUN' # Sunday at 18:00 UTC
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
