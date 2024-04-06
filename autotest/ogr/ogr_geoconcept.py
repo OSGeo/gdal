@@ -29,8 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
-
 import ogrtest
 import pytest
 
@@ -44,10 +42,6 @@ pytestmark = pytest.mark.require_driver("Geoconcept")
 @pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
     yield
-    try:
-        os.remove("tmp/tmp.gxt")
-    except OSError:
-        pass
 
 
 ###############################################################################
@@ -142,21 +136,16 @@ def test_ogr_gxt_2():
 # Read a GXT file containing 2 points, duplicate it, and check the newly written file
 
 
-def test_ogr_gxt_3():
+def test_ogr_gxt_3(tmp_path):
 
     ds = None
 
     src_ds = ogr.Open("data/geoconcept/points.gxt")
 
-    try:
-        os.remove("tmp/tmp.gxt")
-    except OSError:
-        pass
-
     # Duplicate all the points from the source GXT
     src_lyr = src_ds.GetLayerByName("points.points")
 
-    ds = ogr.GetDriverByName("Geoconcept").CreateDataSource("tmp/tmp.gxt")
+    ds = ogr.GetDriverByName("Geoconcept").CreateDataSource(tmp_path / "tmp.gxt")
 
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS("WGS84")
@@ -181,7 +170,7 @@ def test_ogr_gxt_3():
     ds = None
 
     # Read the newly written GXT file and check its features and geometries
-    ds = ogr.Open("tmp/tmp.gxt")
+    ds = ogr.Open(tmp_path / "tmp.gxt")
     gxt_lyr = ds.GetLayerByName("points.points")
 
     assert gxt_lyr.GetSpatialRef().IsSame(
