@@ -789,6 +789,13 @@ int OGRGenSQLResultsLayer::TestCapability(const char *pszCap)
         if (EQUAL(pszCap, OLCFastFeatureCount))
             return TRUE;
     }
+
+    if (EQUAL(pszCap, OLCStringsAsUTF8) || EQUAL(pszCap, OLCCurveGeometries) ||
+        EQUAL(pszCap, OLCMeasuredGeometries) || EQUAL(pszCap, OLCZGeometries))
+    {
+        return poSrcLayer->TestCapability(pszCap);
+    }
+
     return FALSE;
 }
 
