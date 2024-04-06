@@ -28,8 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
-
 import ogrtest
 import pytest
 
@@ -48,11 +46,6 @@ def startup_and_cleanup():
             pytest.skip("GDAL build without Expat support")
 
     yield
-
-    try:
-        os.remove("tmp/gpx.gpx")
-    except OSError:
-        pass
 
 
 ###############################################################################
@@ -208,13 +201,8 @@ def test_ogr_gpx_5():
 # Copy our small gpx file to a new gpx file.
 
 
-def test_ogr_gpx_6():
+def test_ogr_gpx_6(tmp_path):
     gpx_ds = ogr.Open("data/gpx/test.gpx")
-    try:
-        with gdal.quiet_errors():
-            ogr.GetDriverByName("CSV").DeleteDataSource("tmp/gpx.gpx")
-    except Exception:
-        pass
 
     co_opts = []
 
@@ -222,7 +210,7 @@ def test_ogr_gpx_6():
     gpx_lyr = gpx_ds.GetLayerByName("waypoints")
 
     gpx2_ds = ogr.GetDriverByName("GPX").CreateDataSource(
-        "tmp/gpx.gpx", options=co_opts
+        tmp_path / "gpx.gpx", options=co_opts
     )
 
     gpx2_lyr = gpx2_ds.CreateLayer("waypoints", geom_type=ogr.wkbPoint)
@@ -275,21 +263,18 @@ def test_ogr_gpx_6():
 # Output extra fields as <extensions>.
 
 
-def test_ogr_gpx_7():
+def test_ogr_gpx_7(tmp_path):
 
     bna_ds = ogr.Open("data/gpx/csv_for_gpx.csv")
-
-    try:
-        os.remove("tmp/gpx.gpx")
-    except OSError:
-        pass
 
     co_opts = ["GPX_USE_EXTENSIONS=yes"]
 
     # Duplicate waypoints
     bna_lyr = bna_ds.GetLayerByName("csv_for_gpx")
 
-    gpx_ds = ogr.GetDriverByName("GPX").CreateDataSource("tmp/gpx.gpx", options=co_opts)
+    gpx_ds = ogr.GetDriverByName("GPX").CreateDataSource(
+        tmp_path / "gpx.gpx", options=co_opts
+    )
 
     gpx_lyr = gpx_ds.CreateLayer("waypoints", geom_type=ogr.wkbPoint)
 
@@ -311,7 +296,7 @@ def test_ogr_gpx_7():
     gpx_ds = None
 
     # Now check that the extensions fields have been well written
-    gpx_ds = ogr.Open("tmp/gpx.gpx")
+    gpx_ds = ogr.Open(tmp_path / "gpx.gpx")
     gpx_lyr = gpx_ds.GetLayerByName("waypoints")
 
     expect = ["PID1", "PID2"]
@@ -335,15 +320,10 @@ def test_ogr_gpx_7():
 # Output extra fields as <extensions>.
 
 
-def test_ogr_gpx_8():
-
-    try:
-        os.remove("tmp/gpx.gpx")
-    except OSError:
-        pass
+def test_ogr_gpx_8(tmp_path):
 
     gpx_ds = ogr.GetDriverByName("GPX").CreateDataSource(
-        "tmp/gpx.gpx", options=["LINEFORMAT=LF"]
+        tmp_path / "gpx.gpx", options=["LINEFORMAT=LF"]
     )
 
     lyr = gpx_ds.CreateLayer("route_points", geom_type=ogr.wkbPoint)
@@ -410,7 +390,7 @@ def test_ogr_gpx_8():
 
     gpx_ds = None
 
-    f = open("tmp/gpx.gpx", "rb")
+    f = open(tmp_path / "gpx.gpx", "rb")
     f_ref = open("data/gpx/ogr_gpx_8_ref.txt", "rb")
     f_content = f.read()
     f_ref_content = f_ref.read()
@@ -469,7 +449,7 @@ def test_ogr_gpx_metadata_read():
 # Test writing metadata
 
 
-def test_ogr_gpx_metadata_write():
+def test_ogr_gpx_metadata_write(tmp_vsimem):
 
     md = {
         "AUTHOR_EMAIL": "foo@example.com",
@@ -497,17 +477,15 @@ def test_ogr_gpx_metadata_write():
         options.append("METADATA_" + key + "=" + md[key])
 
     gpx_ds = ogr.GetDriverByName("GPX").CreateDataSource(
-        "/vsimem/gpx.gpx", options=options
+        tmp_vsimem / "gpx.gpx", options=options
     )
     assert gpx_ds is not None
     gpx_ds = None
 
-    ds = ogr.Open("/vsimem/gpx.gpx")
+    ds = ogr.Open(tmp_vsimem / "gpx.gpx")
     # print(ds.GetMetadata())
     assert ds.GetMetadata() == md
     ds = None
-
-    gdal.Unlink("/vsimem/gpx.gpx")
 
 
 ###############################################################################
