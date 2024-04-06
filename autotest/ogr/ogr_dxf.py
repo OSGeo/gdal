@@ -30,8 +30,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
-
 import gdaltest
 import ogrtest
 import pytest
@@ -445,9 +443,9 @@ def test_ogr_dxf_11():
 # Write a simple file with a polygon and a line, and read back.
 
 
-def test_ogr_dxf_12():
+def test_ogr_dxf_12(tmp_path):
 
-    ds = ogr.GetDriverByName("DXF").CreateDataSource("tmp/dxf_11.dxf")
+    ds = ogr.GetDriverByName("DXF").CreateDataSource(tmp_path / "dxf_11.dxf")
 
     lyr = ds.CreateLayer("entities")
     assert lyr.GetDataset().GetDescription() == ds.GetDescription()
@@ -482,7 +480,7 @@ def test_ogr_dxf_12():
     ds = None
 
     # Read back.
-    ds = ogr.Open("tmp/dxf_11.dxf")
+    ds = ogr.Open(tmp_path / "dxf_11.dxf")
     lyr = ds.GetLayer(0)
 
     # Check first feature
@@ -528,8 +526,6 @@ def test_ogr_dxf_12():
     lyr = None
     ds = None
     ds = None
-
-    os.unlink("tmp/dxf_11.dxf")
 
 
 ###############################################################################
@@ -645,10 +641,10 @@ def test_ogr_dxf_14():
 # layer '0'.
 
 
-def test_ogr_dxf_15():
+def test_ogr_dxf_15(tmp_path):
 
     ds = ogr.GetDriverByName("DXF").CreateDataSource(
-        "tmp/dxf_14.dxf", ["FIRST_ENTITY=80"]
+        tmp_path / "dxf_14.dxf", ["FIRST_ENTITY=80"]
     )
 
     lyr = ds.CreateLayer("entities")
@@ -668,7 +664,7 @@ def test_ogr_dxf_15():
     ds = None
 
     # Read back.
-    ds = ogr.Open("tmp/dxf_14.dxf")
+    ds = ogr.Open(tmp_path / "dxf_14.dxf")
     lyr = ds.GetLayer(0)
 
     # Check first feature
@@ -705,7 +701,7 @@ def test_ogr_dxf_15():
     # that will be different is the layer name is 'abc' instead of '0'
     # and the entity id.
 
-    outdxf = open("tmp/dxf_14.dxf").read()
+    outdxf = open(tmp_path / "dxf_14.dxf").read()
     start_1 = outdxf.find("  0\nLAYER")
     start_2 = outdxf.find("  0\nLAYER", start_1 + 10)
 
@@ -722,8 +718,6 @@ def test_ogr_dxf_15():
     start_seed = outdxf.find("$HANDSEED")
     handseed = outdxf[start_seed + 10 + 4 : start_seed + 10 + 4 + 8]
     assert handseed == "00000053", "Did not get expected HANDSEED, got %s." % handseed
-
-    os.unlink("tmp/dxf_14.dxf")
 
 
 ###############################################################################
@@ -819,10 +813,10 @@ def test_ogr_dxf_16():
 # Write a file with blocks defined from a source blocks layer.
 
 
-def test_ogr_dxf_17():
+def test_ogr_dxf_17(tmp_path):
 
     ds = ogr.GetDriverByName("DXF").CreateDataSource(
-        "tmp/dxf_17.dxf", ["HEADER=data/dxf/header_extended.dxf"]
+        tmp_path / "dxf_17.dxf", ["HEADER=data/dxf/header_extended.dxf"]
     )
 
     blyr = ds.CreateLayer("blocks")
@@ -904,7 +898,7 @@ def test_ogr_dxf_17():
 
     # Reopen and check contents.
 
-    ds = ogr.Open("tmp/dxf_17.dxf")
+    ds = ogr.Open(tmp_path / "dxf_17.dxf")
 
     lyr = ds.GetLayer(0)
 
@@ -966,18 +960,16 @@ def test_ogr_dxf_17():
     lyr = None
     ds = None
 
-    os.unlink("tmp/dxf_17.dxf")
-
 
 ###############################################################################
 # Write a file with line patterns, and make sure corresponding Linetypes are
 # created.
 
 
-def test_ogr_dxf_18():
+def test_ogr_dxf_18(tmp_path):
 
     ds = ogr.GetDriverByName("DXF").CreateDataSource(
-        "tmp/dxf_18.dxf", ["HEADER=data/dxf/header_extended.dxf"]
+        tmp_path / "dxf_18.dxf", ["HEADER=data/dxf/header_extended.dxf"]
     )
 
     lyr = ds.CreateLayer("entities")
@@ -1018,7 +1010,7 @@ def test_ogr_dxf_18():
 
     # Reopen and check contents.
 
-    ds = ogr.Open("tmp/dxf_18.dxf")
+    ds = ogr.Open(tmp_path / "dxf_18.dxf")
 
     lyr = ds.GetLayer(0)
 
@@ -1074,18 +1066,16 @@ def test_ogr_dxf_18():
     lyr = None
     ds = None
 
-    os.unlink("tmp/dxf_18.dxf")
-
 
 ###############################################################################
 # Test writing a file using references to blocks defined entirely in the
 # template - no blocks layer transferred.
 
 
-def test_ogr_dxf_19():
+def test_ogr_dxf_19(tmp_path):
 
     ds = ogr.GetDriverByName("DXF").CreateDataSource(
-        "tmp/dxf_19.dxf", ["HEADER=data/dxf/header_extended.dxf"]
+        tmp_path / "dxf_19.dxf", ["HEADER=data/dxf/header_extended.dxf"]
     )
 
     lyr = ds.CreateLayer("entities")
@@ -1101,7 +1091,7 @@ def test_ogr_dxf_19():
 
     # Reopen and check contents.
 
-    ds = ogr.Open("tmp/dxf_19.dxf")
+    ds = ogr.Open(tmp_path / "dxf_19.dxf")
 
     lyr = ds.GetLayer(0)
 
@@ -1120,8 +1110,6 @@ def test_ogr_dxf_19():
 
     lyr = None
     ds = None
-
-    os.unlink("tmp/dxf_19.dxf")
 
 
 ###############################################################################
@@ -1173,7 +1161,7 @@ def test_ogr_dxf_21():
 # TEXT
 
 
-def test_ogr_dxf_22():
+def test_ogr_dxf_22(tmp_vsimem):
 
     # Read MTEXT feature
     ds = ogr.Open("data/dxf/text.dxf")
@@ -1190,7 +1178,7 @@ def test_ogr_dxf_22():
     ogrtest.check_feature_geometry(feat, "POINT(1 2 3)"), "bad geometry"
 
     # Write text feature
-    out_ds = ogr.GetDriverByName("DXF").CreateDataSource("/vsimem/ogr_dxf_22.dxf")
+    out_ds = ogr.GetDriverByName("DXF").CreateDataSource(tmp_vsimem / "ogr_dxf_22.dxf")
     out_lyr = out_ds.CreateLayer("entities")
     out_feat = ogr.Feature(out_lyr.GetLayerDefn())
     out_feat.SetStyleString(style)
@@ -1203,7 +1191,7 @@ def test_ogr_dxf_22():
     ds = None
 
     # Check written file
-    ds = ogr.Open("/vsimem/ogr_dxf_22.dxf")
+    ds = ogr.Open(tmp_vsimem / "ogr_dxf_22.dxf")
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -1212,8 +1200,6 @@ def test_ogr_dxf_22():
     ogrtest.check_feature_geometry(feat, "POINT(1 2 3)"), "bad geometry"
 
     ds = None
-
-    gdal.Unlink("/vsimem/ogr_dxf_22.dxf")
 
     # Now try reading in the MTEXT feature without translating escape sequences
     with gdal.config_option("DXF_TRANSLATE_ESCAPE_SEQUENCES", "FALSE"):
@@ -1233,10 +1219,10 @@ def test_ogr_dxf_22():
 # POLYGON with hole
 
 
-def test_ogr_dxf_23():
+def test_ogr_dxf_23(tmp_vsimem):
 
     # Write polygon
-    out_ds = ogr.GetDriverByName("DXF").CreateDataSource("/vsimem/ogr_dxf_23.dxf")
+    out_ds = ogr.GetDriverByName("DXF").CreateDataSource(tmp_vsimem / "ogr_dxf_23.dxf")
     out_lyr = out_ds.CreateLayer("entities")
     out_feat = ogr.Feature(out_lyr.GetLayerDefn())
     out_feat.SetStyleString("BRUSH(fc:#ff0000)")
@@ -1250,7 +1236,7 @@ def test_ogr_dxf_23():
     ds = None
 
     # Check written file
-    ds = ogr.Open("/vsimem/ogr_dxf_23.dxf")
+    ds = ogr.Open(tmp_vsimem / "ogr_dxf_23.dxf")
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -1259,8 +1245,6 @@ def test_ogr_dxf_23():
     ogrtest.check_feature_geometry(feat, wkt), "bad geometry"
 
     ds = None
-
-    gdal.Unlink("/vsimem/ogr_dxf_23.dxf")
 
 
 ###############################################################################
@@ -1335,16 +1319,14 @@ def test_ogr_dxf_26():
 # Test reading a DXF file without .dxf extensions (#5994)
 
 
-def test_ogr_dxf_27():
+def test_ogr_dxf_27(tmp_vsimem):
 
     gdal.FileFromMemBuffer(
-        "/vsimem/a_dxf_without_extension", open("data/dxf/solid.dxf").read()
+        tmp_vsimem / "a_dxf_without_extension", open("data/dxf/solid.dxf").read()
     )
 
-    ds = ogr.Open("/vsimem/a_dxf_without_extension")
+    ds = ogr.Open(tmp_vsimem / "a_dxf_without_extension")
     assert ds is not None
-
-    gdal.Unlink("/vsimem/a_dxf_without_extension")
 
 
 ###############################################################################
@@ -2552,8 +2534,8 @@ def test_ogr_dxf_33():
 # Writing Triangle geometry and checking if it is written properly
 
 
-def test_ogr_dxf_34():
-    ds = ogr.GetDriverByName("DXF").CreateDataSource("tmp/triangle_test.dxf")
+def test_ogr_dxf_34(tmp_path):
+    ds = ogr.GetDriverByName("DXF").CreateDataSource(tmp_path / "triangle_test.dxf")
     lyr = ds.CreateLayer("entities")
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
     dst_feat.SetGeometryDirectly(
@@ -2567,7 +2549,7 @@ def test_ogr_dxf_34():
     ds = None
 
     # Read back.
-    ds = ogr.Open("tmp/triangle_test.dxf")
+    ds = ogr.Open(tmp_path / "triangle_test.dxf")
     lyr = ds.GetLayer(0)
 
     # Check first feature
@@ -2580,8 +2562,6 @@ def test_ogr_dxf_34():
         "did not get expected geometry back: got %s" % received_wkt
     )
     ds = None
-
-    gdal.Unlink("tmp/triangle_test.dxf")
 
 
 ###############################################################################
@@ -2806,9 +2786,9 @@ def test_ogr_dxf_36():
 # Create a blocks layer only
 
 
-def test_ogr_dxf_37():
+def test_ogr_dxf_37(tmp_vsimem):
 
-    ds = ogr.GetDriverByName("DXF").CreateDataSource("/vsimem/ogr_dxf_37.dxf")
+    ds = ogr.GetDriverByName("DXF").CreateDataSource(tmp_vsimem / "ogr_dxf_37.dxf")
 
     lyr = ds.CreateLayer("blocks")
 
@@ -2822,15 +2802,13 @@ def test_ogr_dxf_37():
 
     # Read back.
     with gdal.config_option("DXF_INLINE_BLOCKS", "FALSE"):
-        ds = ogr.Open("/vsimem/ogr_dxf_37.dxf")
+        ds = ogr.Open(tmp_vsimem / "ogr_dxf_37.dxf")
     lyr = ds.GetLayerByName("blocks")
 
     # Check first feature
     feat = lyr.GetNextFeature()
     assert feat is not None
     ds = None
-
-    gdal.Unlink("/vsimem/ogr_dxf_37.dxf")
 
 
 ###############################################################################
@@ -3935,9 +3913,9 @@ def test_ogr_dxf_insert_too_many_errors():
 ###############################################################################
 
 
-def test_ogr_dxf_write_geometry_collection_of_unsupported_type():
+def test_ogr_dxf_write_geometry_collection_of_unsupported_type(tmp_vsimem):
 
-    tmpfile = "/vsimem/ogr_dxf_write_geometry_collection_of_unsupported_type.dxf"
+    tmpfile = tmp_vsimem / "ogr_dxf_write_geometry_collection_of_unsupported_type.dxf"
     ds = ogr.GetDriverByName("DXF").CreateDataSource(tmpfile)
     lyr = ds.CreateLayer("test")
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -3946,7 +3924,6 @@ def test_ogr_dxf_write_geometry_collection_of_unsupported_type():
         ret = lyr.CreateFeature(f)
     assert ret != 0
     ds = None
-    gdal.Unlink(tmpfile)
 
 
 ###############################################################################
@@ -3971,9 +3948,9 @@ def test_ogr_dxf_very_close_neg_to_zero_knot():
 ###############################################################################
 
 
-def test_ogr_dxf_polygon_3D():
+def test_ogr_dxf_polygon_3D(tmp_vsimem):
 
-    tmpfile = "/vsimem/test_ogr_dxf_polygon_3D.dxf"
+    tmpfile = tmp_vsimem / "test_ogr_dxf_polygon_3D.dxf"
     ds = ogr.GetDriverByName("DXF").CreateDataSource(tmpfile)
     lyr = ds.CreateLayer("test")
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -3986,7 +3963,6 @@ def test_ogr_dxf_polygon_3D():
     f = lyr.GetNextFeature()
     got_g = f.GetGeometryRef()
     assert got_g.Equals(g)
-    gdal.Unlink(tmpfile)
 
 
 ###############################################################################
