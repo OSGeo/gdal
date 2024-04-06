@@ -828,22 +828,25 @@ def test_ogr_openfilegdb_str_indexed_truncated():
 # Test opening an unzipped dataset
 
 
-def test_ogr_openfilegdb_5():
+@pytest.fixture()
+def testopenfilegdb(tmp_path):
 
     try:
-        shutil.rmtree("tmp/testopenfilegdb.gdb")
-    except OSError:
-        pass
-    try:
-        gdaltest.unzip("tmp/", "data/filegdb/testopenfilegdb.gdb.zip")
-    except OSError:
-        pytest.skip()
-    try:
-        os.stat("tmp/testopenfilegdb.gdb")
+        gdaltest.unzip(tmp_path, "data/filegdb/testopenfilegdb.gdb.zip")
     except OSError:
         pytest.skip()
 
-    ds = ogr.Open("tmp/testopenfilegdb.gdb")
+    try:
+        os.stat(tmp_path / "testopenfilegdb.gdb")
+    except OSError:
+        pytest.skip()
+
+    return tmp_path / "testopenfilegdb.gdb"
+
+
+def test_ogr_openfilegdb_5(testopenfilegdb):
+
+    ds = ogr.Open(testopenfilegdb)
     assert ds is not None
 
 
@@ -1041,16 +1044,11 @@ def test_ogr_openfilegdb_8():
 # Test reading a .gdbtable outside a .gdb
 
 
-def test_ogr_openfilegdb_9():
+def test_ogr_openfilegdb_9(tmp_path, testopenfilegdb):
 
-    try:
-        os.stat("tmp/testopenfilegdb.gdb")
-    except OSError:
-        pytest.skip()
-
-    shutil.copy("tmp/testopenfilegdb.gdb/a00000009.gdbtable", "tmp/a00000009.gdbtable")
-    shutil.copy("tmp/testopenfilegdb.gdb/a00000009.gdbtablx", "tmp/a00000009.gdbtablx")
-    ds = ogr.Open("tmp/a00000009.gdbtable")
+    shutil.copy(testopenfilegdb / "a00000009.gdbtable", tmp_path / "a00000009.gdbtable")
+    shutil.copy(testopenfilegdb / "a00000009.gdbtablx", tmp_path / "a00000009.gdbtablx")
+    ds = ogr.Open(tmp_path / "a00000009.gdbtable")
     assert ds is not None
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -1078,19 +1076,14 @@ def unfuzz(backup):
 
 
 @gdaltest.disable_exceptions()
-def test_ogr_openfilegdb_10():
+def test_ogr_openfilegdb_10(testopenfilegdb, tmp_path):
 
-    try:
-        os.stat("tmp/testopenfilegdb.gdb")
-    except OSError:
-        pytest.skip()
-
-    shutil.copytree("tmp/testopenfilegdb.gdb", "tmp/testopenfilegdb_fuzzed.gdb")
+    shutil.copytree(testopenfilegdb, tmp_path / "testopenfilegdb_fuzzed.gdb")
 
     if False:  # pylint: disable=using-constant-test
         for filename in [
-            "tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtable",
-            "tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtablx",
+            tmp_path / "testopenfilegdb_fuzzed.gdb/a00000001.gdbtable",
+            tmp_path / "testopenfilegdb_fuzzed.gdb/a00000001.gdbtablx",
         ]:
             errors = set()
             offsets = []
@@ -1101,7 +1094,7 @@ def test_ogr_openfilegdb_10():
                 backup = fuzz(filename, offset)
                 gdal.ErrorReset()
                 # print(offset)
-                ds = ogr.Open("tmp/testopenfilegdb_fuzzed.gdb")
+                ds = ogr.Open(tmp_path / "testopenfilegdb_fuzzed.gdb")
                 error_msg = gdal.GetLastErrorMsg()
                 feat = None
                 if ds is not None:
@@ -1128,8 +1121,9 @@ def test_ogr_openfilegdb_10():
             print(offsets)
 
         for filename in [
-            "tmp/testopenfilegdb_fuzzed.gdb/a00000004.gdbindexes",
-            "tmp/testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx",
+            tmp_path / "testopenfilegdb_fuzzed.gdb/a00000004.gdbindexes",
+            tmp_path
+            / "testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx",
         ]:
             errors = set()
             offsets = []
@@ -1140,7 +1134,7 @@ def test_ogr_openfilegdb_10():
                 backup = fuzz(filename, offset)
                 gdal.ErrorReset()
                 # print(offset)
-                ds = ogr.Open("tmp/testopenfilegdb_fuzzed.gdb")
+                ds = ogr.Open(tmp_path / "testopenfilegdb_fuzzed.gdb")
                 error_msg = gdal.GetLastErrorMsg()
                 feat = None
                 if ds is not None:
@@ -1171,7 +1165,7 @@ def test_ogr_openfilegdb_10():
 
         for (filename, offsets) in [
             (
-                "tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtable",
+                tmp_path / "testopenfilegdb_fuzzed.gdb/a00000001.gdbtable",
                 [
                     4,
                     5,
@@ -1202,7 +1196,7 @@ def test_ogr_openfilegdb_10():
                 ],
             ),
             (
-                "tmp/testopenfilegdb_fuzzed.gdb/a00000001.gdbtablx",
+                tmp_path / "testopenfilegdb_fuzzed.gdb/a00000001.gdbtablx",
                 [4, 7, 11, 12, 16, 31, 5136, 5140, 5142, 5144],
             ),
         ]:
@@ -1210,7 +1204,7 @@ def test_ogr_openfilegdb_10():
                 backup = fuzz(filename, offset)
                 with gdal.quiet_errors():
                     gdal.ErrorReset()
-                    ds = ogr.Open("tmp/testopenfilegdb_fuzzed.gdb")
+                    ds = ogr.Open(tmp_path / "testopenfilegdb_fuzzed.gdb")
                     error_msg = gdal.GetLastErrorMsg()
                     feat = None
                     if ds is not None:
@@ -1233,7 +1227,7 @@ def test_ogr_openfilegdb_10():
 
         for (filename, offsets) in [
             (
-                "tmp/testopenfilegdb_fuzzed.gdb/a00000004.gdbindexes",
+                tmp_path / "testopenfilegdb_fuzzed.gdb/a00000004.gdbindexes",
                 [
                     0,
                     4,
@@ -1260,7 +1254,8 @@ def test_ogr_openfilegdb_10():
                 ],
             ),
             (
-                "tmp/testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx",
+                tmp_path
+                / "testopenfilegdb_fuzzed.gdb/a00000004.CatItemsByPhysicalName.atx",
                 [4, 12, 8196, 8300, 8460, 8620, 8780, 8940, 9100, 12290, 12294, 12298],
             ),
         ]:
@@ -1269,7 +1264,7 @@ def test_ogr_openfilegdb_10():
                 backup = fuzz(filename, offset)
                 with gdal.quiet_errors():
                     gdal.ErrorReset()
-                    ds = ogr.Open("tmp/testopenfilegdb_fuzzed.gdb")
+                    ds = ogr.Open(tmp_path / "testopenfilegdb_fuzzed.gdb")
                     error_msg = gdal.GetLastErrorMsg()
                     feat = None
                     if ds is not None:
@@ -1983,13 +1978,9 @@ def test_ogr_openfilegdb_read_domains():
 # Test writing field domains
 
 
-def test_ogr_openfilegdb_write_domains_from_other_gdb():
+def test_ogr_openfilegdb_write_domains_from_other_gdb(tmp_path):
 
-    out_dir = "tmp/test_ogr_fgdb_write_domains.gdb"
-    try:
-        shutil.rmtree(out_dir)
-    except OSError:
-        pass
+    out_dir = tmp_path / "test_ogr_fgdb_write_domains.gdb"
 
     ds = gdal.VectorTranslate(
         out_dir, "data/filegdb/Domains.gdb", options="-f OpenFileGDB"
@@ -2472,28 +2463,28 @@ def test_ogr_openfilegdb_read_relationships():
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
-def test_ogr_openfilegdb_read_readonly_in_update_mode():
+def test_ogr_openfilegdb_read_readonly_in_update_mode(tmp_path):
 
     if os.getuid() == 0:
         pytest.skip("running as root... skipping")
 
-    shutil.copytree("data/filegdb/Domains.gdb", "tmp/testreadonly.gdb")
-    os.chmod("tmp/testreadonly.gdb", 0o555)
-    for f in os.listdir("tmp/testreadonly.gdb"):
-        os.chmod("tmp/testreadonly.gdb/" + f, 0o555)
+    shutil.copytree("data/filegdb/Domains.gdb", tmp_path / "testreadonly.gdb")
+    os.chmod(tmp_path / "testreadonly.gdb", 0o555)
+    for f in os.listdir(tmp_path / "testreadonly.gdb"):
+        os.chmod(f"{tmp_path}/testreadonly.gdb/{f}", 0o555)
 
     try:
         with pytest.raises(Exception):
-            ogr.Open("tmp/testreadonly.gdb", update=1)
+            ogr.Open(tmp_path / "testreadonly.gdb", update=1)
 
-        assert ogr.Open("tmp/testreadonly.gdb")
+        assert ogr.Open(tmp_path / "testreadonly.gdb")
 
         # Only turn on a few system tables in read-write mode, but not the
         # layer of interest
-        for f in os.listdir("tmp/testreadonly.gdb"):
+        for f in os.listdir(tmp_path / "testreadonly.gdb"):
             if f.startswith("a00000001.") or f.startswith("a00000004."):
-                os.chmod("tmp/testreadonly.gdb/" + f, 0o755)
-        ds = ogr.Open("tmp/testreadonly.gdb", update=1)
+                os.chmod(f"{tmp_path}/testreadonly.gdb/{f}", 0o755)
+        ds = ogr.Open(tmp_path / "testreadonly.gdb", update=1)
         lyr = ds.GetLayer(0)
         with pytest.raises(
             Exception, match="Cannot open Roads in update mode, but only in read-only"
@@ -2502,10 +2493,10 @@ def test_ogr_openfilegdb_read_readonly_in_update_mode():
         assert lyr.TestCapability(ogr.OLCSequentialWrite) == 0
 
     finally:
-        os.chmod("tmp/testreadonly.gdb", 0o755)
-        for f in os.listdir("tmp/testreadonly.gdb"):
-            os.chmod("tmp/testreadonly.gdb/" + f, 0o755)
-        shutil.rmtree("tmp/testreadonly.gdb")
+        os.chmod(tmp_path / "testreadonly.gdb", 0o755)
+        for f in os.listdir(tmp_path / "testreadonly.gdb"):
+            os.chmod(f"{tmp_path}/testreadonly.gdb/{f}", 0o755)
+        shutil.rmtree(tmp_path / "testreadonly.gdb")
 
 
 ###############################################################################
@@ -2704,24 +2695,3 @@ def test_ogr_openfilegdb_get_extent_getextent3d():
             0.0,
         )
     )
-
-
-###############################################################################
-# Cleanup
-
-
-def test_ogr_openfilegdb_cleanup():
-
-    try:
-        shutil.rmtree("tmp/testopenfilegdb.gdb")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/a00000009.gdbtable")
-        os.remove("tmp/a00000009.gdbtablx")
-    except OSError:
-        pass
-    try:
-        shutil.rmtree("tmp/testopenfilegdb_fuzzed.gdb")
-    except OSError:
-        pass
