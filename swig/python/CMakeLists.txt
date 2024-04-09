@@ -43,7 +43,10 @@ set(GDAL_PYTHON_CSOURCES
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_fielddef_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_fielddomain_docs.i
        ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_geometry_docs.i
-       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_layer_docs.i)
+       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/ogr_layer_docs.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/osr_docs.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/osr_spatialreference_docs.i
+       ${PROJECT_SOURCE_DIR}/swig/include/python/docs/osr_coordinatetransformation_docs.i)
 
   set(GDAL_PYTHON_PYSOURCES
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal.py ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdalconst.py
