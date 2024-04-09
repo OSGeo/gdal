@@ -1044,3 +1044,24 @@ def test_gdalinfo_access_to_file_without_permission(gdalinfo_path, tmp_path):
     assert (len(lines)) == 3
 
     os.chmod(tmpfilename, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+
+
+###############################################################################
+# Test error messages when file cannot be opened
+
+
+def test_gdalinfo_file_does_not_exist(gdalinfo_path):
+
+    (ret, err) = gdaltest.runexternal_out_and_err(gdalinfo_path + " does_not_exist.tif")
+
+    assert "No such file or directory" in err
+    assert "ogrinfo" not in err
+
+
+def test_gdalinfo_open_vector(gdalinfo_path):
+
+    (ret, err) = gdaltest.runexternal_out_and_err(
+        gdalinfo_path + " ../ogr/data/poly.shp"
+    )
+
+    assert "Did you intend to call ogrinfo" in err
