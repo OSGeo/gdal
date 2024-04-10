@@ -429,6 +429,12 @@ Creation Options
       installations, but NC4 and NC4C are available if NetCDF was compiled
       with NetCDF-4 (and HDF5) support.
 
+-  .. co:: BAND_NAMES
+      :default: Band1,Band2,...
+      :since: 3.9.0
+
+      A comma-separated list of band names.
+
 -  .. co:: COMPRESS
       :choices: NONE, DEFLATE
 

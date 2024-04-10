@@ -9156,7 +9156,6 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
 
         return poDS;
     }
-
     // Create the dataset.
     CPLString osFilenameForNCCreate(pszFilename);
 #if defined(_WIN32) && !defined(NETCDF_USES_UTF8)
@@ -9321,12 +9320,31 @@ GDALDataset *netCDFDataset::Create(const char *pszFilename, int nXSize,
                                            : GDAL_DEFAULT_NCDF_CONVENTIONS);
     }
 
+    CPLStringList aosBandNames;
+    if (const char *pszBandNames = aosOptions.FetchNameValue("BAND_NAMES"))
+    {
+        aosBandNames =
+            CSLTokenizeString2(pszBandNames, ",", CSLT_HONOURSTRINGS);
+
+        if (aosBandNames.Count() != nBandsIn)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Attempted to create netCDF with %d bands but %d names "
+                     "provided in BAND_NAMES.",
+                     nBandsIn, aosBandNames.Count());
+            return nullptr;
+        }
+    }
+
     // Define bands.
     for (int iBand = 1; iBand <= nBandsIn; iBand++)
     {
-        poDS->SetBand(
-            iBand, new netCDFRasterBand(netCDFRasterBand::CONSTRUCTOR_CREATE(),
-                                        poDS, eType, iBand, poDS->bSignedData));
+        const char *pszBandName =
+            aosBandNames.empty() ? nullptr : aosBandNames[iBand - 1];
+
+        poDS->SetBand(iBand, new netCDFRasterBand(
+                                 netCDFRasterBand::CONSTRUCTOR_CREATE(), poDS,
+                                 eType, iBand, poDS->bSignedData, pszBandName));
     }
 
     CPLDebug("GDAL_netCDF", "netCDFDataset::Create(%s, ...) done", pszFilename);
