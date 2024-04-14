@@ -5004,8 +5004,43 @@ void *CPLZLibDeflate(const void *ptr, size_t nBytes, int nLevel, void *outptr,
 void *CPLZLibInflate(const void *ptr, size_t nBytes, void *outptr,
                      size_t nOutAvailableBytes, size_t *pnOutBytes)
 {
+    return CPLZLibInflateEx(ptr, nBytes, outptr, nOutAvailableBytes, false,
+                            pnOutBytes);
+}
+
+/************************************************************************/
+/*                         CPLZLibInflateEx()                           */
+/************************************************************************/
+
+/**
+ * \brief Uncompress a buffer compressed with ZLib compression.
+ *
+ * @param ptr input buffer.
+ * @param nBytes size of input buffer in bytes.
+ * @param outptr output buffer, or NULL to let the function allocate it.
+ * @param nOutAvailableBytes size of output buffer if provided, or ignored.
+ * @param bAllowResizeOutptr whether the function is allowed to grow outptr
+ *                           (using VSIRealloc) if its initial capacity
+ *                           provided by nOutAvailableBytes is not
+ *                           large enough. Ignored if outptr is NULL.
+ * @param pnOutBytes pointer to a size_t, where to store the size of the
+ *                   output buffer.
+ *
+ * @return the output buffer (to be freed with VSIFree() if not provided)
+ *         or NULL in case of error. If bAllowResizeOutptr is set to true,
+ *         only the returned pointer should be freed by the caller, as outptr
+ *         might have been reallocated or freed.
+ *
+ * @since GDAL 3.9.0
+ */
+
+void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
+                       size_t nOutAvailableBytes, bool bAllowResizeOutptr,
+                       size_t *pnOutBytes)
+{
     if (pnOutBytes != nullptr)
         *pnOutBytes = 0;
+    char *pszReallocatableBuf = nullptr;
 
 #ifdef HAVE_LIBDEFLATE
     if (outptr)
@@ -5013,6 +5048,8 @@ void *CPLZLibInflate(const void *ptr, size_t nBytes, void *outptr,
         struct libdeflate_decompressor *dec = libdeflate_alloc_decompressor();
         if (dec == nullptr)
         {
+            if (bAllowResizeOutptr)
+                VSIFree(outptr);
             return nullptr;
         }
         enum libdeflate_result res;
@@ -5028,11 +5065,34 @@ void *CPLZLibInflate(const void *ptr, size_t nBytes, void *outptr,
                                              nOutAvailableBytes, pnOutBytes);
         }
         libdeflate_free_decompressor(dec);
-        if (res != LIBDEFLATE_SUCCESS)
+        if (res == LIBDEFLATE_INSUFFICIENT_SPACE && bAllowResizeOutptr)
         {
-            return nullptr;
+            if (nOutAvailableBytes >
+                (std::numeric_limits<size_t>::max() - 1) / 2)
+            {
+                VSIFree(outptr);
+                return nullptr;
+            }
+            size_t nOutBufSize = nOutAvailableBytes * 2;
+            pszReallocatableBuf = static_cast<char *>(
+                VSI_REALLOC_VERBOSE(outptr, nOutBufSize + 1));
+            if (!pszReallocatableBuf)
+            {
+                VSIFree(outptr);
+                return nullptr;
+            }
+            nOutAvailableBytes = nOutBufSize;
         }
-        return outptr;
+        else
+        {
+            if (res != LIBDEFLATE_SUCCESS)
+            {
+                if (bAllowResizeOutptr)
+                    VSIFree(outptr);
+                return nullptr;
+            }
+            return outptr;
+        }
     }
 #endif
 
@@ -5041,8 +5101,6 @@ void *CPLZLibInflate(const void *ptr, size_t nBytes, void *outptr,
     strm.zalloc = nullptr;
     strm.zfree = nullptr;
     strm.opaque = nullptr;
-    strm.avail_in = static_cast<uInt>(nBytes);
-    strm.next_in = static_cast<Bytef *>(const_cast<void *>(ptr));
     int ret;
     // MAX_WBITS + 32 mode which detects automatically gzip vs zlib
     // encapsulation seems to be broken with
@@ -5059,88 +5117,115 @@ void *CPLZLibInflate(const void *ptr, size_t nBytes, void *outptr,
     }
     if (ret != Z_OK)
     {
+        if (bAllowResizeOutptr)
+            VSIFree(outptr);
         return nullptr;
     }
 
-    size_t nTmpSize = 0;
-    char *pszTmp = nullptr;
-#ifndef HAVE_LIBDEFLATE
-    if (outptr == nullptr)
-#endif
+    size_t nOutBufSize = 0;
+    char *pszOutBuf = nullptr;
+
+#ifdef HAVE_LIBDEFLATE
+    if (pszReallocatableBuf)
     {
-        nTmpSize = 2 * nBytes;
-        pszTmp = static_cast<char *>(VSIMalloc(nTmpSize + 1));
-        if (pszTmp == nullptr)
+        pszOutBuf = pszReallocatableBuf;
+        nOutBufSize = nOutAvailableBytes;
+    }
+    else
+#endif
+        if (!outptr)
+    {
+        if (nBytes > (std::numeric_limits<size_t>::max() - 1) / 2)
         {
             inflateEnd(&strm);
             return nullptr;
         }
+        nOutBufSize = 2 * nBytes;
+        pszOutBuf = static_cast<char *>(VSI_MALLOC_VERBOSE(nOutBufSize + 1));
+        if (pszOutBuf == nullptr)
+        {
+            inflateEnd(&strm);
+            return nullptr;
+        }
+        pszReallocatableBuf = pszOutBuf;
+        bAllowResizeOutptr = true;
     }
-#ifndef HAVE_LIBDEFLATE
     else
     {
-        pszTmp = static_cast<char *>(outptr);
-        nTmpSize = nOutAvailableBytes;
+        pszOutBuf = static_cast<char *>(outptr);
+        nOutBufSize = nOutAvailableBytes;
+        if (bAllowResizeOutptr)
+            pszReallocatableBuf = pszOutBuf;
     }
-#endif
 
-    strm.avail_out = static_cast<uInt>(nTmpSize);
-    strm.next_out = reinterpret_cast<Bytef *>(pszTmp);
+    strm.next_in = static_cast<Bytef *>(const_cast<void *>(ptr));
+    strm.next_out = reinterpret_cast<Bytef *>(pszOutBuf);
+    size_t nInBytesRemaining = nBytes;
+    size_t nOutBytesRemaining = nOutBufSize;
 
     while (true)
     {
+        strm.avail_in = static_cast<uInt>(std::min<size_t>(
+            nInBytesRemaining, std::numeric_limits<uInt>::max()));
+        const auto avail_in_before = strm.avail_in;
+        strm.avail_out = static_cast<uInt>(std::min<size_t>(
+            nOutBytesRemaining, std::numeric_limits<uInt>::max()));
+        const auto avail_out_before = strm.avail_out;
         ret = inflate(&strm, Z_FINISH);
-        if (ret == Z_BUF_ERROR)
-        {
-#ifndef HAVE_LIBDEFLATE
-            if (outptr == pszTmp)
-            {
-                inflateEnd(&strm);
-                return nullptr;
-            }
-#endif
+        nInBytesRemaining -= (avail_in_before - strm.avail_in);
+        nOutBytesRemaining -= (avail_out_before - strm.avail_out);
 
-            size_t nAlreadyWritten = nTmpSize - strm.avail_out;
-            nTmpSize = nTmpSize * 2;
-            char *pszTmpNew =
-                static_cast<char *>(VSIRealloc(pszTmp, nTmpSize + 1));
-            if (pszTmpNew == nullptr)
+        if (ret == Z_BUF_ERROR && strm.avail_out == 0)
+        {
+            if (!bAllowResizeOutptr)
             {
-                VSIFree(pszTmp);
+                VSIFree(pszReallocatableBuf);
                 inflateEnd(&strm);
                 return nullptr;
             }
-            pszTmp = pszTmpNew;
-            strm.avail_out = static_cast<uInt>(nTmpSize - nAlreadyWritten);
-            strm.next_out = reinterpret_cast<Bytef *>(pszTmp + nAlreadyWritten);
+
+            const size_t nAlreadyWritten = nOutBufSize - nOutBytesRemaining;
+            if (nOutBufSize > (std::numeric_limits<size_t>::max() - 1) / 2)
+            {
+                VSIFree(pszReallocatableBuf);
+                inflateEnd(&strm);
+                return nullptr;
+            }
+            nOutBufSize = nOutBufSize * 2;
+            char *pszNew = static_cast<char *>(
+                VSI_REALLOC_VERBOSE(pszReallocatableBuf, nOutBufSize + 1));
+            if (!pszNew)
+            {
+                VSIFree(pszReallocatableBuf);
+                inflateEnd(&strm);
+                return nullptr;
+            }
+            pszOutBuf = pszNew;
+            pszReallocatableBuf = pszOutBuf;
+            nOutBytesRemaining = nOutBufSize - nAlreadyWritten;
+            strm.next_out =
+                reinterpret_cast<Bytef *>(pszOutBuf + nAlreadyWritten);
         }
-        else
+        else if (ret != Z_OK || nInBytesRemaining == 0)
             break;
     }
 
     if (ret == Z_OK || ret == Z_STREAM_END)
     {
-        size_t nOutBytes = nTmpSize - strm.avail_out;
+        size_t nOutBytes = nOutBufSize - nOutBytesRemaining;
         // Nul-terminate if possible.
-#ifndef HAVE_LIBDEFLATE
-        if (outptr != pszTmp || nOutBytes < nTmpSize)
-#endif
+        if (outptr != pszOutBuf || nOutBytes < nOutBufSize)
         {
-            pszTmp[nOutBytes] = '\0';
+            pszOutBuf[nOutBytes] = '\0';
         }
         inflateEnd(&strm);
         if (pnOutBytes != nullptr)
             *pnOutBytes = nOutBytes;
-        return pszTmp;
+        return pszOutBuf;
     }
     else
     {
-#ifndef HAVE_LIBDEFLATE
-        if (outptr != pszTmp)
-#endif
-        {
-            VSIFree(pszTmp);
-        }
+        VSIFree(pszReallocatableBuf);
         inflateEnd(&strm);
         return nullptr;
     }
