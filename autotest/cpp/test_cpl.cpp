@@ -3928,6 +3928,43 @@ TEST_F(test_cpl, builtin_compressors)
     }
 }
 
+// Test builtin compressors/decompressor
+TEST_F(test_cpl, builtin_compressors_zlib_high_compression_rate)
+{
+    const auto pCompressor = CPLGetCompressor("zlib");
+    ASSERT_TRUE(pCompressor != nullptr);
+
+    std::vector<GByte> abyInput(1024 * 1024, 0x01);
+
+    // Compressor side
+
+    // Let it alloc the output buffer
+    void *out_buffer = nullptr;
+    size_t out_size = 0;
+    ASSERT_TRUE(pCompressor->pfnFunc(abyInput.data(), abyInput.size(),
+                                     &out_buffer, &out_size, nullptr,
+                                     pCompressor->user_data));
+    ASSERT_TRUE(out_buffer != nullptr);
+    ASSERT_TRUE(out_size != 0);
+
+    // Decompressor side
+    const auto pDecompressor = CPLGetDecompressor("zlib");
+    ASSERT_TRUE(pDecompressor != nullptr);
+
+    void *out_buffer2 = nullptr;
+    size_t out_size2 = 0;
+    ASSERT_TRUE(pDecompressor->pfnFunc(out_buffer, out_size, &out_buffer2,
+                                       &out_size2, nullptr,
+                                       pDecompressor->user_data));
+    CPLFree(out_buffer);
+
+    ASSERT_TRUE(out_buffer2 != nullptr);
+    ASSERT_TRUE(out_size2 != 0);
+    ASSERT_EQ(out_size2, abyInput.size());
+    ASSERT_TRUE(memcmp(out_buffer2, abyInput.data(), abyInput.size()) == 0);
+    CPLFree(out_buffer2);
+}
+
 template <class T> struct TesterDelta
 {
     static void test(const char *dtypeOption)
