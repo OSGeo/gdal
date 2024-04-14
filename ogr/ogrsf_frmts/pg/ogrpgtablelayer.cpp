@@ -254,8 +254,7 @@ void OGRPGTableLayer::LoadMetadata()
                    "schema_name = %s AND table_name = %s",
                    OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
                    OGRPGEscapeString(hPGConn, pszTableName).c_str()));
-    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-    CPLErrorStateBackuper oBackuper;
+    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
     auto poSqlLyr = poDS->ExecuteSQL(osSQL.c_str(), nullptr, nullptr);
     if (poSqlLyr)
     {

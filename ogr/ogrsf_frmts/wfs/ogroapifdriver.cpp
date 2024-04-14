@@ -1636,8 +1636,7 @@ void OGROAPIFLayer::GetSchema()
     if (m_osDescribedByURL.empty() || m_poDS->m_bIgnoreSchema)
         return;
 
-    CPLErrorHandlerPusher oErrorHandlerPusher(CPLQuietErrorHandler);
-    CPLErrorStateBackuper oErrorStateBackuper;
+    CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
 
     if (m_bDescribedByIsXML)
     {

@@ -1130,8 +1130,8 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                     mapExistingDstDims.find(oIterDimName->second);
                 if (oCorrespondingDimIter != mapExistingDstDims.end())
                 {
-                    CPLErrorHandlerPusher oHandlerPusher(CPLQuietErrorHandler);
-                    CPLErrorStateBackuper oErrorStateBackuper;
+                    CPLErrorStateBackuper oErrorStateBackuper(
+                        CPLQuietErrorHandler);
                     oCorrespondingDimIter->second->SetIndexingVariable(
                         std::move(dstArray));
                 }
@@ -13516,8 +13516,7 @@ void GDALPamMultiDim::Load()
         pszProxyPam ? std::string(pszProxyPam) : d->m_osFilename + ".aux.xml";
     CPLXMLTreeCloser oTree(nullptr);
     {
-        CPLErrorStateBackuper oStateBackuper;
-        CPLErrorHandlerPusher oErrorHandlerPusher(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         oTree.reset(CPLParseXMLFile(d->m_osPamFilename.c_str()));
     }
     if (!oTree)
@@ -13638,8 +13637,7 @@ void GDALPamMultiDim::Save()
         {
             char *pszWKT = nullptr;
             {
-                CPLErrorStateBackuper oErrorStateBackuper;
-                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
                 const char *const apszOptions[] = {"FORMAT=WKT2", nullptr};
                 kv.second.poSRS->exportToWkt(&pszWKT, apszOptions);
             }

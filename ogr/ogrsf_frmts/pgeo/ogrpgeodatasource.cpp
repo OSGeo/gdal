@@ -658,8 +658,7 @@ bool OGRPGeoDataSource::CountStarWorking() const
         }
 #endif
 
-        CPLErrorHandlerPusher oErrorHandler(CPLErrorHandlerPusher);
-        CPLErrorStateBackuper oStateBackuper;
+        CPLErrorStateBackuper oStateBackuper(CPLErrorHandlerPusher);
 
         CPLODBCStatement oStmt(&oSession);
         oStmt.Append("SELECT COUNT(*) FROM GDB_GeomColumns");

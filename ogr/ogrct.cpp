@@ -182,8 +182,7 @@ void OGRCoordinateTransformationOptions::Private::RefreshCheckWithInvertProj()
 
 static char *GetWktOrProjString(const OGRSpatialReference *poSRS)
 {
-    CPLErrorStateBackuper oErrorStateBackuper;
-    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+    CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
     const char *const apszOptionsWKT2_2018[] = {"FORMAT=WKT2_2018", nullptr};
     // If there's a PROJ4 EXTENSION node in WKT1, then use
     // it. For example when dealing with "+proj=longlat +lon_wrap=180"
@@ -1536,8 +1535,7 @@ int OGRProjCT::Initialize(const OGRSpatialReference *poSourceIn,
 
     const char *pszCENTER_LONG;
     {
-        CPLErrorStateBackuper oErrorStateBackuper;
-        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         pszCENTER_LONG =
             poSRSSource ? poSRSSource->GetExtension("GEOGCS", "CENTER_LONG")
                         : nullptr;
@@ -1556,8 +1554,7 @@ int OGRProjCT::Initialize(const OGRSpatialReference *poSourceIn,
     }
 
     {
-        CPLErrorStateBackuper oErrorStateBackuper;
-        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         pszCENTER_LONG =
             poSRSTarget ? poSRSTarget->GetExtension("GEOGCS", "CENTER_LONG")
                         : nullptr;
@@ -3358,8 +3355,7 @@ int OGRProjCT::TransformBounds(const double xmin, const double ymin,
 
         if (poSRSTarget->IsProjected())
         {
-            CPLErrorHandlerPusher oErrorHandlerPusher(CPLQuietErrorHandler);
-            CPLErrorStateBackuper oBackuper;
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
 
             auto poBaseTarget = std::unique_ptr<OGRSpatialReference>(
                 poSRSTarget->CloneGeogCS());

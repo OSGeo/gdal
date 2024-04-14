@@ -428,8 +428,8 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
             }
             {
                 // PROJJSON requires PROJ >= 6.2
-                CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-                CPLErrorStateBackuper oCPLErrorHandlerPusher;
+                CPLErrorStateBackuper oCPLErrorHandlerPusher(
+                    CPLQuietErrorHandler);
                 char *pszProjJson = nullptr;
                 OGRErr result =
                     OSRExportToPROJJSON(hSRS, &pszProjJson, nullptr);
@@ -721,8 +721,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
         {
             // Check that it looks like Earth before trying to reproject to wgs84...
             // OSRGetSemiMajor() may raise an error on CRS like Engineering CRS
-            CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-            CPLErrorStateBackuper oCPLErrorHandlerPusher;
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             OGRErr eErr = OGRERR_NONE;
             if (fabs(OSRGetSemiMajor(hProj, &eErr) - 6378137.0) < 10000.0 &&
                 eErr == OGRERR_NONE)
@@ -759,8 +758,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
     /* -------------------------------------------------------------------- */
     if (bJson && GDALGetRasterXSize(hDataset))
     {
-        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-        CPLErrorStateBackuper oBackuper;
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
 
         json_object *poLinearRing = json_object_new_array();
         json_object *poCornerCoordinates = json_object_new_object();
@@ -803,8 +801,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
     }
     else if (GDALGetRasterXSize(hDataset))
     {
-        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-        CPLErrorStateBackuper oBackuper;
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
 
         Concat(osStr, psOptions->bStdoutOutput, "Corner Coordinates:\n");
         GDALInfoReportCorner(psOptions, hDataset, hTransform, "Upper Left", 0.0,

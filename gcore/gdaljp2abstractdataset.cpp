@@ -655,8 +655,7 @@ char **GDALJP2AbstractDataset::GetMetadata(const char *pszDomain)
             m_aosImageStructureMetadata.Assign(
                 CSLDuplicate(GDALGeorefPamDataset::GetMetadata(pszDomain)),
                 true);
-            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             const char *pszReversibility =
                 GDALGetJPEG2000Reversibility(GetDescription(), fp);
             if (pszReversibility)

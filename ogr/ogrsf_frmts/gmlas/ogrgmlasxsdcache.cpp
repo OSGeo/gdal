@@ -146,8 +146,7 @@ bool GMLASXSDCache::CacheAllGML321()
     // Download the later and unzip it for faster fetching of GML schemas.
 
     bool bSuccess = false;
-    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-    CPLErrorStateBackuper oErrorStateBackuper;
+    CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
 
     const char *pszHTTPZIP = "https://schemas.opengis.net/gml/gml-3_2_2.zip";
     CPLHTTPResult *psResult = CPLHTTPFetch(pszHTTPZIP, nullptr);
@@ -214,8 +213,7 @@ bool GMLASXSDCache::CacheAllISO20070417()
     // Download the later and unzip it for faster fetching of ISO schemas.
 
     bool bSuccess = false;
-    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-    CPLErrorStateBackuper oErrorStateBackuper;
+    CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
 
     const char *pszHTTPZIP =
         "https://schemas.opengis.net/iso/19139/iso19139-20070417.zip";

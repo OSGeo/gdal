@@ -904,8 +904,7 @@ static bool TranslateArray(
 
         std::shared_ptr<GDALDimension> dstDim;
         {
-            CPLErrorHandlerPusher oHandlerPusher(CPLQuietErrorHandler);
-            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             if (!srcDimFullName.empty() && srcDimFullName[0] == '/')
             {
                 dstDim =
@@ -1083,8 +1082,7 @@ static bool TranslateArray(
                 }
             }
 
-            CPLErrorHandlerPusher oHandlerPusher(CPLQuietErrorHandler);
-            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             auto poDstIndexingVar(poDstGroup->OpenMDArray(newDimName));
             if (poDstIndexingVar)
                 dstDim->SetIndexingVariable(std::move(poDstIndexingVar));
@@ -1319,8 +1317,7 @@ static bool CopyGroup(
                 mapSrcToDstDims.find(oIterDimName->second);
             if (oCorrespondingDimIter != mapSrcToDstDims.end())
             {
-                CPLErrorHandlerPusher oHandlerPusher(CPLQuietErrorHandler);
-                CPLErrorStateBackuper oErrorStateBackuper;
+                CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
                 oCorrespondingDimIter->second->SetIndexingVariable(
                     std::move(dstArray));
             }

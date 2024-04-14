@@ -845,17 +845,8 @@ void CPL_STDCALL CPLErrorReset()
  *                       CPLErrorSetState()
  **********************************************************************/
 
-/**
- * Restore an error state, without emitting an error.
- *
- * Can be useful if a routine might call CPLErrorReset() and one wants to
- * preserve the previous error state.
- *
- * @since GDAL 2.0
- */
-
-void CPL_DLL CPLErrorSetState(CPLErr eErrClass, CPLErrorNum err_no,
-                              const char *pszMsg)
+static void CPLErrorSetState(CPLErr eErrClass, CPLErrorNum err_no,
+                             const char *pszMsg, GUInt32 *pnErrorCounter)
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();
     if (psCtx == nullptr)
@@ -891,6 +882,23 @@ void CPL_DLL CPLErrorSetState(CPLErr eErrClass, CPLErrorNum err_no,
     memcpy(pszLastErrMsg, pszMsg, size);
     pszLastErrMsg[size] = '\0';
     psCtx->eLastErrType = eErrClass;
+    if (pnErrorCounter)
+        psCtx->nErrorCounter = *pnErrorCounter;
+}
+
+/**
+ * Restore an error state, without emitting an error.
+ *
+ * Can be useful if a routine might call CPLErrorReset() and one wants to
+ * preserve the previous error state.
+ *
+ * @since GDAL 2.0
+ */
+
+void CPL_DLL CPLErrorSetState(CPLErr eErrClass, CPLErrorNum err_no,
+                              const char *pszMsg)
+{
+    CPLErrorSetState(eErrClass, err_no, pszMsg, nullptr);
 }
 
 /**********************************************************************
@@ -1562,4 +1570,29 @@ void CPLInstallErrorHandlerAccumulator(
 void CPLUninstallErrorHandlerAccumulator()
 {
     CPLPopErrorHandler();
+}
+
+/************************************************************************/
+/*               CPLErrorStateBackuper::CPLErrorStateBackuper()         */
+/************************************************************************/
+
+CPLErrorStateBackuper::CPLErrorStateBackuper(CPLErrorHandler hHandler)
+    : m_nLastErrorNum(CPLGetLastErrorNo()),
+      m_nLastErrorType(CPLGetLastErrorType()),
+      m_osLastErrorMsg(CPLGetLastErrorMsg()),
+      m_nLastErrorCounter(CPLGetErrorCounter()),
+      m_poErrorHandlerPusher(
+          hHandler ? std::make_unique<CPLErrorHandlerPusher>(hHandler)
+                   : nullptr)
+{
+}
+
+/************************************************************************/
+/*               CPLErrorStateBackuper::~CPLErrorStateBackuper()        */
+/************************************************************************/
+
+CPLErrorStateBackuper::~CPLErrorStateBackuper()
+{
+    CPLErrorSetState(m_nLastErrorType, m_nLastErrorNum,
+                     m_osLastErrorMsg.c_str(), &m_nLastErrorCounter);
 }

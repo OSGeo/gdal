@@ -957,8 +957,8 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                         {
                             char *pszProjJson = nullptr;
                             // PROJJSON requires PROJ >= 6.2
-                            CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-                            CPLErrorStateBackuper oCPLErrorHandlerPusher;
+                            CPLErrorStateBackuper oCPLErrorHandlerPusher(
+                                CPLQuietErrorHandler);
                             CPL_IGNORE_RET_VAL(
                                 poSRS->exportToPROJJSON(&pszProjJson, nullptr));
                             if (pszProjJson)

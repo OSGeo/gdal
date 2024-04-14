@@ -1346,8 +1346,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
         CPLJSONDocument oDoc;
         const std::string osZattrsFilename(CPLFormFilename(
             CPLGetDirname(osZarrayFilename.c_str()), ".zattrs", nullptr));
-        CPLErrorHandlerPusher quietError(CPLQuietErrorHandler);
-        CPLErrorStateBackuper errorStateBackuper;
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         if (oDoc.Load(osZattrsFilename))
         {
             oAttributes = oDoc.GetRoot();

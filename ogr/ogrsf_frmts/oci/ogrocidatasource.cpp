@@ -838,8 +838,7 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS(int nId)
     if (nId < LARGEST_EPSG_CRS_CODE && papszResult[1] != nullptr &&
         atoi(papszResult[1]) == nId)
     {
-        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-        CPLErrorStateBackuper oErrorStateBackuper;
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         OGRSpatialReference oSRS_EPSG;
         oSRS_EPSG.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         const char *const apszOptions[] = {

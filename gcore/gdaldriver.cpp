@@ -1574,8 +1574,7 @@ CPLErr GDALDriver::QuietDelete(const char *pszName,
     }
     else
     {
-        CPLErrorStateBackuper oBackuper;
-        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         poDriver = GDALDriver::FromHandle(GDALIdentifyDriver(pszName, nullptr));
     }
 
@@ -1589,8 +1588,7 @@ CPLErr GDALDriver::QuietDelete(const char *pszName,
                         poDriver->pfnDeleteDataSource == nullptr;
     if (bQuiet)
     {
-        CPLErrorStateBackuper oBackuper;
-        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         return poDriver->Delete(pszName);
     }
     else

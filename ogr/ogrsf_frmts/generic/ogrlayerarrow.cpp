@@ -7436,8 +7436,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
 
     bool bTransactionOK;
     {
-        CPLErrorHandlerPusher oHandler(CPLQuietErrorHandler);
-        CPLErrorStateBackuper oBackuper;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         bTransactionOK = StartTransaction() == OGRERR_NONE;
     }
 
