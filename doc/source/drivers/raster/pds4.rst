@@ -421,7 +421,7 @@ its parameterized variables:
 
    $ gdal_translate input.tif output.xml -of PDS4 \
                -co VAR_TARGET_TYPE=Satellite \
-               -co VAR_Target=Moon \
+               -co VAR_TARGET=Moon \
                -co VAR_OBSERVING_SYSTEM_NAME=LOLA \
                -co VAR_LOGICAL_IDENTIFIER=Lunar_LRO_LOLA_DEM_Global_64ppd.tif \
                -co VAR_TITLE="LRO LOLA Digital Elevation Model (DEM) 64ppd" \
@@ -439,7 +439,7 @@ Create a text file "myOptions.txt" with the below content
    #This is a comment
    #Conversion parameters for the LRO LOLA dataset
    -co VAR_TARGET_TYPE=Satellite
-   -co VAR_Target=Moon
+   -co VAR_TARGET=Moon
    -co VAR_OBSERVING_SYSTEM_NAME=LOLA
    -co VAR_LOGICAL_IDENTIFIER=Lunar_LRO_LOLA_DEM_Global_64ppd.tif
    -co VAR_TITLE="LRO LOLA Digital Elevation Model (DEM) 64ppd"
