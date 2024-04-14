@@ -549,7 +549,7 @@ bool GMLASSchemaAnalyzer::LaunderFieldNames(GMLASFeatureClass &oClass)
         for (size_t i = 0; i < aoFields.size(); i++)
         {
             char *pszLaundered =
-                OGRPGCommonLaunderName(aoFields[i].GetName(), "GMLAS");
+                OGRPGCommonLaunderName(aoFields[i].GetName(), "GMLAS", false);
             aoFields[i].SetName(pszLaundered);
             CPLFree(pszLaundered);
         }
@@ -640,7 +640,7 @@ void GMLASSchemaAnalyzer::LaunderClassNames()
         for (size_t i = 0; i < aoClasses.size(); i++)
         {
             char *pszLaundered =
-                OGRPGCommonLaunderName(aoClasses[i]->GetName(), "GMLAS");
+                OGRPGCommonLaunderName(aoClasses[i]->GetName(), "GMLAS", false);
             aoClasses[i]->SetName(pszLaundered);
             CPLFree(pszLaundered);
         }

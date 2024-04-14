@@ -670,6 +670,8 @@ void RegisterOGRGeoPackage()
     poDriver->SetMetadataItem(
         GDAL_DS_LAYER_CREATIONOPTIONLIST,
         "<LayerCreationOptionList>"
+        "  <Option name='LAUNDER' type='boolean' description='Whether layer "
+        "and field names will be laundered.' default='NO'/>"
         "  <Option name='GEOMETRY_NAME' type='string' description='Name of "
         "geometry column.' default='geom' deprecated_alias='GEOMETRY_COLUMN'/>"
         "  <Option name='GEOMETRY_NULLABLE' type='boolean' "

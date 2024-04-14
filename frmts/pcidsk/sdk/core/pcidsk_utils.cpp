@@ -40,6 +40,12 @@
 #include <cstdarg>
 #include <iostream>
 
+extern "C"
+{
+int CPL_DLL CPLToupper(int c);
+int CPL_DLL CPLTolower(int c);
+}
+
 #if !defined(va_copy) && defined(__va_copy)
 #define va_copy __va_copy
 #endif
@@ -104,8 +110,7 @@ std::string &PCIDSK::UCaseStr( std::string &target )
 {
     for( unsigned int i = 0; i < target.size(); i++ )
     {
-        if( islower(static_cast<unsigned char>(target[i])) )
-            target[i] = (char) toupper(static_cast<unsigned char>(target[i]));
+        target[i] = (char) CPLToupper(static_cast<unsigned char>(target[i]));
     }
 
     return target;
@@ -409,10 +414,8 @@ int PCIDSK::pci_strcasecmp( const char *string1, const char *string2 )
         char c1 = string1[i];
         char c2 = string2[i];
 
-        if( islower(static_cast<unsigned char>(c1)) )
-            c1 = (char) toupper(static_cast<unsigned char>(c1));
-        if( islower(static_cast<unsigned char>(c2)) )
-            c2 = (char) toupper(static_cast<unsigned char>(c2));
+        c1 = (char) CPLToupper(static_cast<unsigned char>(c1));
+        c2 = (char) CPLToupper(static_cast<unsigned char>(c2));
 
         if( c1 < c2 )
             return -1;
@@ -447,10 +450,8 @@ int PCIDSK::pci_strncasecmp( const char *string1, const char *string2, size_t le
         char c1 = string1[i];
         char c2 = string2[i];
 
-        if( islower(static_cast<unsigned char>(c1)) )
-            c1 = (char) toupper(static_cast<unsigned char>(c1));
-        if( islower(static_cast<unsigned char>(c2)) )
-            c2 = (char) toupper(static_cast<unsigned char>(c2));
+        c1 = (char) CPLToupper(static_cast<unsigned char>(c1));
+        c2 = (char) CPLToupper(static_cast<unsigned char>(c2));
 
         if( c1 < c2 )
             return -1;

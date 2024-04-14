@@ -458,7 +458,7 @@ OGRCARTODataSource::ICreateLayer(const char *pszNameIn,
     CPLString osName(pszNameIn);
     if (CPLFetchBool(papszOptions, "LAUNDER", true))
     {
-        char *pszTmp = OGRPGCommonLaunderName(pszNameIn);
+        char *pszTmp = OGRPGCommonLaunderName(pszNameIn, "CARTO", false);
         osName = pszTmp;
         CPLFree(pszTmp);
     }

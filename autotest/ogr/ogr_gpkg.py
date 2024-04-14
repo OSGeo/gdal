@@ -10489,3 +10489,23 @@ def test_ogr_gpkg_ST_Area_on_ellipsoid(tmp_vsimem):
         ) as sql_lyr:
             f = sql_lyr.GetNextFeature()
             assert f[0] is None
+
+
+###############################################################################
+# Test LAUNDER=YES layer creation option
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_launder(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "test_ogr_gpkg_launder.gpkg"
+
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(tmpfilename)
+    lyr = ds.CreateLayer(
+        "az+AZ09_", options=["FID=MY_FID", "GEOMETRY_NAME=MY_GEOM", "LAUNDER=YES"]
+    )
+    assert lyr.GetName() == "az_az09_"
+    assert lyr.GetFIDColumn() == "my_fid"
+    assert lyr.GetGeometryColumn() == "my_geom"
+    lyr.CreateField(ogr.FieldDefn("_"))
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef() == "x_"

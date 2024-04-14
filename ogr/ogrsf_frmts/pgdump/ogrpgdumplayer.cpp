@@ -1592,8 +1592,8 @@ OGRErr OGRPGDumpLayer::CreateField(const OGRFieldDefn *poFieldIn, int bApproxOK)
     /* -------------------------------------------------------------------- */
     if (m_bLaunderColumnNames)
     {
-        char *pszSafeName =
-            OGRPGCommonLaunderName(oField.GetNameRef(), "PGDump");
+        char *pszSafeName = OGRPGCommonLaunderName(oField.GetNameRef(),
+                                                   "PGDump", m_bUTF8ToASCII);
 
         oField.SetName(pszSafeName);
         CPLFree(pszSafeName);
@@ -1719,8 +1719,8 @@ OGRErr OGRPGDumpLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     /* -------------------------------------------------------------------- */
     if (m_bLaunderColumnNames)
     {
-        char *pszSafeName =
-            OGRPGCommonLaunderName(poGeomField->GetNameRef(), "PGDump");
+        char *pszSafeName = OGRPGCommonLaunderName(poGeomField->GetNameRef(),
+                                                   "PGDump", m_bUTF8ToASCII);
 
         poGeomField->SetName(pszSafeName);
         CPLFree(pszSafeName);

@@ -5129,4 +5129,79 @@ TEST_F(test_cpl, CPLStrtod)
     }
 }
 
+TEST_F(test_cpl, CPLForceToASCII)
+{
+    {
+        char *pszOut = CPLForceToASCII("foo", -1, '_');
+        EXPECT_STREQ(pszOut, "foo");
+        CPLFree(pszOut);
+    }
+    {
+        char *pszOut = CPLForceToASCII("foo", 1, '_');
+        EXPECT_STREQ(pszOut, "f");
+        CPLFree(pszOut);
+    }
+    {
+        char *pszOut = CPLForceToASCII("foo\xFF", -1, '_');
+        EXPECT_STREQ(pszOut, "foo_");
+        CPLFree(pszOut);
+    }
+}
+
+TEST_F(test_cpl, CPLUTF8ForceToASCII)
+{
+    {
+        char *pszOut = CPLUTF8ForceToASCII("foo", '_');
+        EXPECT_STREQ(pszOut, "foo");
+        CPLFree(pszOut);
+    }
+    {
+        // Truncated UTF-8 character
+        char *pszOut = CPLUTF8ForceToASCII("foo\xC0", '_');
+        EXPECT_STREQ(pszOut, "foo");
+        CPLFree(pszOut);
+    }
+    {
+        char *pszOut = CPLUTF8ForceToASCII("foo\xc2\x80", '_');
+        EXPECT_STREQ(pszOut, "foo_");
+        CPLFree(pszOut);
+    }
+    {
+        char *pszOut = CPLUTF8ForceToASCII("foo\xc2\x80x", '_');
+        EXPECT_STREQ(pszOut, "foo_x");
+        CPLFree(pszOut);
+    }
+    {
+        std::string s;
+        {
+            VSILFILE *f =
+                VSIFOpenL((data_ + SEP + "utf8accents.txt").c_str(), "rb");
+            ASSERT_NE(f, nullptr);
+            VSIFSeekL(f, 0, SEEK_END);
+            s.resize(static_cast<size_t>(VSIFTellL(f)));
+            VSIFSeekL(f, 0, SEEK_SET);
+            VSIFReadL(&s[0], 1, s.size(), f);
+            VSIFCloseL(f);
+            while (!s.empty() && s.back() == '\n')
+                s.pop_back();
+        }
+        std::string sRef;
+        {
+            VSILFILE *f = VSIFOpenL(
+                (data_ + SEP + "utf8accents_ascii.txt").c_str(), "rb");
+            ASSERT_NE(f, nullptr);
+            VSIFSeekL(f, 0, SEEK_END);
+            sRef.resize(static_cast<size_t>(VSIFTellL(f)));
+            VSIFSeekL(f, 0, SEEK_SET);
+            VSIFReadL(&sRef[0], 1, sRef.size(), f);
+            VSIFCloseL(f);
+            while (!sRef.empty() && sRef.back() == '\n')
+                sRef.pop_back();
+        }
+        char *pszOut = CPLUTF8ForceToASCII(s.c_str(), '_');
+        EXPECT_STREQ(pszOut, sRef.c_str());
+        CPLFree(pszOut);
+    }
+}
+
 }  // namespace

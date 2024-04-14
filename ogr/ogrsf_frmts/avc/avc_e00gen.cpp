@@ -169,7 +169,7 @@ const char *AVCE00GenStartSection(AVCE00GenInfo *psInfo, AVCFileType eType,
         for (i = 0; pszClassName[i] != '\0'; i++)
         {
             psInfo->pszBuf[i] =
-                (char)toupper(static_cast<unsigned char>(pszClassName[i]));
+                (char)CPLToupper(static_cast<unsigned char>(pszClassName[i]));
         }
         psInfo->pszBuf[i] = '\0';
     }

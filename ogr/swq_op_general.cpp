@@ -157,8 +157,8 @@ int swq_test_like(const char *input, const char *pattern, char chEscape,
             }
             else if ((!insensitive && *pattern != *input) ||
                      (insensitive &&
-                      tolower(static_cast<unsigned char>(*pattern)) !=
-                          tolower(static_cast<unsigned char>(*input))))
+                      CPLTolower(static_cast<unsigned char>(*pattern)) !=
+                          CPLTolower(static_cast<unsigned char>(*input))))
             {
                 return 0;
             }

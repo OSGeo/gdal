@@ -268,6 +268,18 @@ Layer Creation Options
       some special characters like "-" and "#" to "_". If "NO" exact names
       are preserved. If enabled the table (layer) name will also be laundered.
 
+-  .. lco:: LAUNDER_ASCII
+      :choices: YES, NO
+      :default: NO
+      :since: 3.9
+
+      Implies LAUNDER=YES, with the extra substitution of UTF-8 accented
+      characters in the `Latin-1 Supplement <https://en.wikipedia.org/wiki/Latin-1_Supplement>`__
+      and `Latin Extented-A <https://en.wikipedia.org/wiki/Latin_Extended-A>`__
+      sets with the closest ASCII letter. Other non-ASCII characters are
+      replaced with underscore.
+      Consequently this option is not appropriate for non-Latin languages.
+
 -  .. lco:: PRECISION
       :choices: YES, NO
       :default: YES

@@ -69,7 +69,8 @@ void CPL_DLL OGRPGCommonAppendFieldValue(
     OGRPGCommonEscapeStringCbk pfnEscapeString, void *userdata);
 
 char CPL_DLL *OGRPGCommonLaunderName(const char *pszSrcName,
-                                     const char *pszDebugPrefix = "OGR");
+                                     const char *pszDebugPrefix,
+                                     bool bUTF8ToASCII);
 
 /************************************************************************/
 /*                        OGRPGDumpGeomFieldDefn                        */
@@ -110,6 +111,7 @@ class OGRPGDumpLayer final : public OGRLayer
     OGRFeatureDefn *m_poFeatureDefn = nullptr;
     OGRPGDumpDataSource *m_poDS = nullptr;
     bool m_bLaunderColumnNames = true;
+    bool m_bUTF8ToASCII = false;
     bool m_bPreservePrecision = true;
     int m_bUseCopy = USE_COPY_UNSET;
     bool m_bWriteAsHex = false;
@@ -189,6 +191,11 @@ class OGRPGDumpLayer final : public OGRLayer
     void SetLaunderFlag(bool bFlag)
     {
         m_bLaunderColumnNames = bFlag;
+    }
+
+    void SetUTF8ToASCIIFlag(bool bFlag)
+    {
+        m_bUTF8ToASCII = bFlag;
     }
 
     void SetPrecisionFlag(bool bFlag)

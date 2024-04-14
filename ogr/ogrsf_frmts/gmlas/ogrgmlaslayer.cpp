@@ -1262,7 +1262,8 @@ CPLString OGRGMLASLayer::LaunderFieldName(const CPLString &osFieldName)
 
     if (m_poDS->GetConf().m_bPGIdentifierLaundering)
     {
-        char *pszLaundered = OGRPGCommonLaunderName(osLaunderedName, "GMLAS");
+        char *pszLaundered =
+            OGRPGCommonLaunderName(osLaunderedName, "GMLAS", false);
         osLaunderedName = pszLaundered;
         CPLFree(pszLaundered);
     }

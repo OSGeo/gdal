@@ -3021,3 +3021,33 @@ char **CSLParseCommandLine(const char *pszCommandLine)
 {
     return CSLTokenizeString(pszCommandLine);
 }
+
+/************************************************************************/
+/*                              CPLToupper()                            */
+/************************************************************************/
+
+/** Converts a (ASCII) lowercase character to uppercase.
+ *
+ * Same as standard toupper(), except that it is not locale sensitive.
+ *
+ * @since GDAL 3.9
+ */
+int CPLToupper(int c)
+{
+    return (c >= 'a' && c <= 'z') ? (c - 'a' + 'A') : c;
+}
+
+/************************************************************************/
+/*                              CPLTolower()                            */
+/************************************************************************/
+
+/** Converts a (ASCII) uppercase character to lowercase.
+ *
+ * Same as standard tolower(), except that it is not locale sensitive.
+ *
+ * @since GDAL 3.9
+ */
+int CPLTolower(int c)
+{
+    return (c >= 'A' && c <= 'Z') ? (c - 'A' + 'a') : c;
+}

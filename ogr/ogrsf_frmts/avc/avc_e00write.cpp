@@ -480,7 +480,8 @@ static void _AVCE00WriteRenameTable(AVCTableDef *psTableDef,
 
     snprintf(szNewName, sizeof(szNewName), "%s", pszNewCoverName);
     for (i = 0; szNewName[i] != '\0'; i++)
-        szNewName[i] = (char)toupper(static_cast<unsigned char>(szNewName[i]));
+        szNewName[i] =
+            (char)CPLToupper(static_cast<unsigned char>(szNewName[i]));
 
     /*-----------------------------------------------------------------
      * Extract components from the current table name.
@@ -662,7 +663,7 @@ static int _AVCE00WriteCreateCoverFile(AVCE00WritePtr psInfo, AVCFileType eType,
      * Make sure filename is all lowercase and attempt to create the file
      *----------------------------------------------------------------*/
     for (i = 0; szFname[i] != '\0'; i++)
-        szFname[i] = (char)tolower(static_cast<unsigned char>(szFname[i]));
+        szFname[i] = (char)CPLTolower(static_cast<unsigned char>(szFname[i]));
 
     if (nStatus == 0)
     {
@@ -961,8 +962,8 @@ int AVCE00DeleteCoverage(const char *pszCoverToDelete)
         {
             /* Convert table filename to lowercases */
             for (j = 0; papszFiles[i] && papszFiles[i][j] != '\0'; j++)
-                papszFiles[i][j] =
-                    (char)tolower(static_cast<unsigned char>(papszFiles[i][j]));
+                papszFiles[i][j] = (char)CPLTolower(
+                    static_cast<unsigned char>(papszFiles[i][j]));
 
             /* Delete the .DAT file */
             pszFname = CPLSPrintf("%s%s.dat", pszInfoPath, papszFiles[i]);

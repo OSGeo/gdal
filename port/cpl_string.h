@@ -190,6 +190,9 @@ typedef enum
 
 CPLValueType CPL_DLL CPLGetValueType(const char *pszValue);
 
+int CPL_DLL CPLToupper(int c);
+int CPL_DLL CPLTolower(int c);
+
 size_t CPL_DLL CPLStrlcpy(char *pszDest, const char *pszSrc, size_t nDestSize);
 size_t CPL_DLL CPLStrlcat(char *pszDest, const char *pszSrc, size_t nDestSize);
 size_t CPL_DLL CPLStrnlen(const char *pszStr, size_t nMaxLen);
@@ -273,6 +276,8 @@ int CPL_DLL CPLIsUTF8(const char *pabyData, int nLen);
 bool CPL_DLL CPLIsASCII(const char *pabyData, size_t nLen);
 char CPL_DLL *CPLForceToASCII(const char *pabyData, int nLen,
                               char chReplacementChar) CPL_WARN_UNUSED_RESULT;
+char CPL_DLL *CPLUTF8ForceToASCII(const char *pszStr, char chReplacementChar)
+    CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CPLStrlenUTF8(const char *pszUTF8Str);
 int CPL_DLL CPLCanRecode(const char *pszTestStr, const char *pszSrcEncoding,
                          const char *pszDstEncoding) CPL_WARN_UNUSED_RESULT;
