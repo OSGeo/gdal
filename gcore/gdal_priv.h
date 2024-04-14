@@ -265,6 +265,11 @@ class CPL_DLL GDALDefaultOverviews
                                     void *pProgressData,
                                     CSLConstList papszOptions);
 
+    CPLErr BuildOverviewsMask(const char *pszResampling, int nOverviews,
+                              const int *panOverviewList,
+                              GDALProgressFunc pfnProgress, void *pProgressData,
+                              CSLConstList papszOptions);
+
     CPLErr CleanOverviews();
 
     // Mask Related

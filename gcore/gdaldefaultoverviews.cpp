@@ -604,6 +604,29 @@ CPLErr GDALDefaultOverviews::BuildOverviewsSubDataset(
 }
 
 /************************************************************************/
+/*                           GetOptionValue()                           */
+/************************************************************************/
+
+static const char *GetOptionValue(CSLConstList papszOptions,
+                                  const char *pszOptionKey,
+                                  const char *pszConfigOptionKey)
+{
+    const char *pszVal =
+        pszOptionKey ? CSLFetchNameValue(papszOptions, pszOptionKey) : nullptr;
+    if (pszVal)
+    {
+        return pszVal;
+    }
+    pszVal = CSLFetchNameValue(papszOptions, pszConfigOptionKey);
+    if (pszVal)
+    {
+        return pszVal;
+    }
+    pszVal = CPLGetConfigOption(pszConfigOptionKey, nullptr);
+    return pszVal;
+}
+
+/************************************************************************/
 /*                           BuildOverviews()                           */
 /************************************************************************/
 
@@ -620,32 +643,14 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
     if (nOverviews == 0)
         return CleanOverviews();
 
-    const auto GetOptionValue =
-        [papszOptions](const char *pszOptionKey, const char *pszConfigOptionKey)
-    {
-        const char *pszVal = pszOptionKey
-                                 ? CSLFetchNameValue(papszOptions, pszOptionKey)
-                                 : nullptr;
-        if (pszVal)
-        {
-            return pszVal;
-        }
-        pszVal = CSLFetchNameValue(papszOptions, pszConfigOptionKey);
-        if (pszVal)
-        {
-            return pszVal;
-        }
-        pszVal = CPLGetConfigOption(pszConfigOptionKey, nullptr);
-        return pszVal;
-    };
-
     /* -------------------------------------------------------------------- */
     /*      If we don't already have an overview file, we need to decide    */
     /*      what format to use.                                             */
     /* -------------------------------------------------------------------- */
     if (poODS == nullptr)
     {
-        const char *pszUseRRD = GetOptionValue(nullptr, "USE_RRD");
+        const char *pszUseRRD =
+            GetOptionValue(papszOptions, nullptr, "USE_RRD");
         bOvrIsAux = pszUseRRD && CPLTestBool(pszUseRRD);
         if (bOvrIsAux)
         {
@@ -970,48 +975,14 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
     /* -------------------------------------------------------------------- */
     /*      If we have a mask file, we need to build its overviews too.     */
     /* -------------------------------------------------------------------- */
-    if (HaveMaskFile() && poMaskDS && eErr == CE_None)
+    if (HaveMaskFile() && eErr == CE_None)
     {
-        // Some options are not compatible with mask overviews
-        // so unset them, and define more sensible values.
-        CPLStringList aosMaskOptions(papszOptions);
-        const char *pszCompress =
-            GetOptionValue("COMPRESS", "COMPRESS_OVERVIEW");
-        const bool bJPEG = pszCompress && EQUAL(pszCompress, "JPEG");
-        const char *pszPhotometric =
-            GetOptionValue("PHOTOMETRIC", "PHOTOMETRIC_OVERVIEW");
-        const bool bPHOTOMETRIC_YCBCR =
-            pszPhotometric && EQUAL(pszPhotometric, "YCBCR");
-        if (bJPEG)
-            aosMaskOptions.SetNameValue("COMPRESS", "DEFLATE");
-        if (bPHOTOMETRIC_YCBCR)
-            aosMaskOptions.SetNameValue("PHOTOMETRIC", "MINISBLACK");
-
         pScaledProgress = GDALCreateScaledProgress(
             double(nBands) / (nBands + 1), 1.0, pfnProgress, pProgressData);
-        eErr = poMaskDS->BuildOverviews(
-            pszResampling, nOverviews, panOverviewList, 0, nullptr,
-            GDALScaledProgress, pScaledProgress, aosMaskOptions.List());
+        eErr = BuildOverviewsMask(pszResampling, nOverviews, panOverviewList,
+                                  GDALScaledProgress, pScaledProgress,
+                                  papszOptions);
         GDALDestroyScaledProgress(pScaledProgress);
-
-        if (bOwnMaskDS)
-        {
-            // Reset the poMask member of main dataset bands, since it
-            // will become invalid after poMaskDS closing.
-            for (int iBand = 1; iBand <= poDS->GetRasterCount(); iBand++)
-            {
-                GDALRasterBand *poOtherBand = poDS->GetRasterBand(iBand);
-                if (poOtherBand != nullptr)
-                    poOtherBand->InvalidateMaskBand();
-            }
-
-            GDALClose(poMaskDS);
-        }
-
-        // force next request to reread mask file.
-        poMaskDS = nullptr;
-        bOwnMaskDS = false;
-        bCheckedForMask = false;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1035,6 +1006,62 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
                 poOverDS->oOvManager.poDS = poOverDS;
             }
         }
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                          BuildOverviewsMask()                        */
+/************************************************************************/
+
+CPLErr GDALDefaultOverviews::BuildOverviewsMask(const char *pszResampling,
+                                                int nOverviews,
+                                                const int *panOverviewList,
+                                                GDALProgressFunc pfnProgress,
+                                                void *pProgressData,
+                                                CSLConstList papszOptions)
+{
+    CPLErr eErr = CE_None;
+    if (HaveMaskFile() && poMaskDS)
+    {
+        // Some options are not compatible with mask overviews
+        // so unset them, and define more sensible values.
+        CPLStringList aosMaskOptions(papszOptions);
+        const char *pszCompress =
+            GetOptionValue(papszOptions, "COMPRESS", "COMPRESS_OVERVIEW");
+        const bool bJPEG = pszCompress && EQUAL(pszCompress, "JPEG");
+        const char *pszPhotometric =
+            GetOptionValue(papszOptions, "PHOTOMETRIC", "PHOTOMETRIC_OVERVIEW");
+        const bool bPHOTOMETRIC_YCBCR =
+            pszPhotometric && EQUAL(pszPhotometric, "YCBCR");
+        if (bJPEG)
+            aosMaskOptions.SetNameValue("COMPRESS", "DEFLATE");
+        if (bPHOTOMETRIC_YCBCR)
+            aosMaskOptions.SetNameValue("PHOTOMETRIC", "MINISBLACK");
+
+        eErr = poMaskDS->BuildOverviews(
+            pszResampling, nOverviews, panOverviewList, 0, nullptr, pfnProgress,
+            pProgressData, aosMaskOptions.List());
+
+        if (bOwnMaskDS)
+        {
+            // Reset the poMask member of main dataset bands, since it
+            // will become invalid after poMaskDS closing.
+            for (int iBand = 1; iBand <= poDS->GetRasterCount(); iBand++)
+            {
+                GDALRasterBand *poOtherBand = poDS->GetRasterBand(iBand);
+                if (poOtherBand != nullptr)
+                    poOtherBand->InvalidateMaskBand();
+            }
+
+            GDALClose(poMaskDS);
+        }
+
+        // force next request to reread mask file.
+        poMaskDS = nullptr;
+        bOwnMaskDS = false;
+        bCheckedForMask = false;
     }
 
     return eErr;
