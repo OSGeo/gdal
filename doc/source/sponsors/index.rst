@@ -147,6 +147,10 @@ the health of the project:
 
         `Umbra <https://umbra.space/>`__
 
+    .. container:: horizontal-logo
+
+        `Vortex f.d.c. <https://vortexfdc.com/>`__
+
 .. raw:: html
 
    <script type="text/javascript">
