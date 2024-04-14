@@ -234,7 +234,7 @@ jobs:
     - name: Standalone Python bindings build from source
       run: |
         (cd $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python && python setup.py sdist)
-        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/dist/GDAL-*.tar.gz gdal-python.tar.gz
+        mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python/dist/gdal-*.tar.gz gdal-python.tar.gz
         mv $GITHUB_WORKSPACE/superbuild/build/gdal/swig/python gdal-swig-python
         python3 -m venv myvenv
         source myvenv/bin/activate
