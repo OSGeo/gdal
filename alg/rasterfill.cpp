@@ -368,17 +368,17 @@ inline void QUAD_CHECK(double &dfQuadDist, float &fQuadValue, int target_x,
  * Fill selected raster regions by interpolation from the edges.
  *
  * This algorithm will interpolate values for all designated
- * nodata pixels (marked by zeros in hMaskBand).  For each pixel
+ * nodata pixels (marked by zeros in hMaskBand). For each pixel
  * a four direction conic search is done to find values to interpolate
- * from (using inverse distance weighting).  Once all values are
+ * from (using inverse distance weighting by default). Once all values are
  * interpolated, zero or more smoothing iterations (3x3 average
  * filters on interpolated pixels) are applied to smooth out
  * artifacts.
  *
  * This algorithm is generally suitable for interpolating missing
  * regions of fairly continuously varying rasters (such as elevation
- * models for instance).  It is also suitable for filling small holes
- * and cracks in more irregularly varying images (like airphotos).  It
+ * models for instance). It is also suitable for filling small holes
+ * and cracks in more irregularly varying images (like airphotos). It
  * is generally not so great for interpolating a raster from sparse
  * point data - see the algorithms defined in gdal_grid.h for that case.
  *
@@ -397,6 +397,9 @@ inline void QUAD_CHECK(double &dfQuadDist, float &fQuadValue, int target_x,
  * <li>NODATA=value (starting with GDAL 2.4).
  * Source pixels at that value will be ignored by the interpolator. Warning:
  * currently this will not be honored by smoothing passes.</li>
+ * <li>INTERPOLATION=INV_DIST/NEAREST (GDAL >= 3.9). By default, pixels are
+ * interpolated using an inverse distance weighting (INV_DIST). It is also
+ * possible to choose a nearest neighbour (NEAREST) strategy.</li>
  * </ul>
  * @param pfnProgress the progress function to report completion.
  * @param pProgressArg callback data for progress function.
@@ -422,6 +425,17 @@ CPLErr CPL_STDCALL GDALFillNodata(GDALRasterBandH hTargetBand,
         dfMaxSearchDist = std::max(nXSize, nYSize) + 1;
 
     const int nMaxSearchDist = static_cast<int>(floor(dfMaxSearchDist));
+
+    const char *pszInterpolation =
+        CSLFetchNameValueDef(papszOptions, "INTERPOLATION", "INV_DIST");
+    const bool bNearest = EQUAL(pszInterpolation, "NEAREST");
+    if (!EQUAL(pszInterpolation, "INV_DIST") &&
+        !EQUAL(pszInterpolation, "NEAREST"))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported interpolation method: %s", pszInterpolation);
+        return CE_Failure;
+    }
 
     // Special "x" pixel values identifying pixels as special.
     GDALDataType eType = GDT_UInt16;
@@ -791,14 +805,22 @@ CPLErr CPL_STDCALL GDALFillNodata(GDALRasterBandH hTargetBand,
             if (pabyMask[iX])
                 continue;
 
-            // Quadrants 0:topleft, 1:bottomleft, 2:topright, 3:bottomright
-            double adfQuadDist[4] = {};
-            float fQuadValue[4] = {};
+            enum Quadrants
+            {
+                QUAD_TOP_LEFT = 0,
+                QUAD_BOTTOM_LEFT = 1,
+                QUAD_TOP_RIGHT = 2,
+                QUAD_BOTTOM_RIGHT = 3,
+            };
 
-            for (int iQuad = 0; iQuad < 4; iQuad++)
+            constexpr int QUAD_COUNT = 4;
+            double adfQuadDist[QUAD_COUNT] = {};
+            float afQuadValue[QUAD_COUNT] = {};
+
+            for (int iQuad = 0; iQuad < QUAD_COUNT; iQuad++)
             {
                 adfQuadDist[iQuad] = dfMaxSearchDist + 1.0;
-                fQuadValue[iQuad] = 0.0;
+                afQuadValue[iQuad] = 0.0;
             }
 
             // Step left and right by one pixel searching for the closest
@@ -809,12 +831,14 @@ CPLErr CPL_STDCALL GDALFillNodata(GDALRasterBandH hTargetBand,
                 const int iRightX = std::min(nXSize - 1, iX + iStep);
 
                 // Top left includes current line.
-                QUAD_CHECK(adfQuadDist[0], fQuadValue[0], iLeftX,
+                QUAD_CHECK(adfQuadDist[QUAD_TOP_LEFT],
+                           afQuadValue[QUAD_TOP_LEFT], iLeftX,
                            panTopDownY[iLeftX], iX, iY, pafTopDownValue[iLeftX],
                            nNoDataVal);
 
                 // Bottom left.
-                QUAD_CHECK(adfQuadDist[1], fQuadValue[1], iLeftX,
+                QUAD_CHECK(adfQuadDist[QUAD_BOTTOM_LEFT],
+                           afQuadValue[QUAD_BOTTOM_LEFT], iLeftX,
                            panLastY[iLeftX], iX, iY, pafLastValue[iLeftX],
                            nNoDataVal);
 
@@ -823,12 +847,14 @@ CPLErr CPL_STDCALL GDALFillNodata(GDALRasterBandH hTargetBand,
                     continue;
 
                 // Top right includes current line.
-                QUAD_CHECK(adfQuadDist[2], fQuadValue[2], iRightX,
+                QUAD_CHECK(adfQuadDist[QUAD_TOP_RIGHT],
+                           afQuadValue[QUAD_TOP_RIGHT], iRightX,
                            panTopDownY[iRightX], iX, iY,
                            pafTopDownValue[iRightX], nNoDataVal);
 
                 // Bottom right.
-                QUAD_CHECK(adfQuadDist[3], fQuadValue[3], iRightX,
+                QUAD_CHECK(adfQuadDist[QUAD_BOTTOM_RIGHT],
+                           afQuadValue[QUAD_BOTTOM_RIGHT], iRightX,
                            panLastY[iRightX], iX, iY, pafLastValue[iRightX],
                            nNoDataVal);
 
@@ -839,35 +865,68 @@ CPLErr CPL_STDCALL GDALFillNodata(GDALRasterBandH hTargetBand,
                                  std::max(adfQuadDist[2], adfQuadDist[3]))));
             }
 
-            double dfWeightSum = 0.0;
-            double dfValueSum = 0.0;
             bool bHasSrcValues = false;
-
-            for (int iQuad = 0; iQuad < 4; iQuad++)
+            if (bNearest)
             {
-                if (adfQuadDist[iQuad] <= dfMaxSearchDist)
+                double dfNearestDist = dfMaxSearchDist + 1;
+                float fNearestValue = 0.0f;
+
+                for (int iQuad = 0; iQuad < QUAD_COUNT; iQuad++)
                 {
-                    bHasSrcValues = true;
-                    if (!bHasNoData || fQuadValue[iQuad] != fNoData)
+                    if (adfQuadDist[iQuad] < dfNearestDist)
                     {
-                        const double dfWeight = 1.0 / adfQuadDist[iQuad];
-                        dfWeightSum += dfWeight;
-                        dfValueSum += fQuadValue[iQuad] * dfWeight;
+                        bHasSrcValues = true;
+                        if (!bHasNoData || afQuadValue[iQuad] != fNoData)
+                        {
+                            fNearestValue = afQuadValue[iQuad];
+                            dfNearestDist = adfQuadDist[iQuad];
+                        }
                     }
                 }
-            }
 
-            if (bHasSrcValues)
-            {
-                pabyFiltMask[iX] = 255;
-                if (dfWeightSum > 0.0)
+                if (bHasSrcValues)
                 {
-                    pabyMask[iX] = 255;
-                    pafScanline[iX] =
-                        static_cast<float>(dfValueSum / dfWeightSum);
+                    pabyFiltMask[iX] = 255;
+                    if (dfNearestDist <= dfMaxSearchDist)
+                    {
+                        pabyMask[iX] = 255;
+                        pafScanline[iX] = fNearestValue;
+                    }
+                    else
+                        pafScanline[iX] = fNoData;
                 }
-                else
-                    pafScanline[iX] = fNoData;
+            }
+            else
+            {
+                double dfWeightSum = 0.0;
+                double dfValueSum = 0.0;
+
+                for (int iQuad = 0; iQuad < QUAD_COUNT; iQuad++)
+                {
+                    if (adfQuadDist[iQuad] <= dfMaxSearchDist)
+                    {
+                        bHasSrcValues = true;
+                        if (!bHasNoData || afQuadValue[iQuad] != fNoData)
+                        {
+                            const double dfWeight = 1.0 / adfQuadDist[iQuad];
+                            dfWeightSum += dfWeight;
+                            dfValueSum += afQuadValue[iQuad] * dfWeight;
+                        }
+                    }
+                }
+
+                if (bHasSrcValues)
+                {
+                    pabyFiltMask[iX] = 255;
+                    if (dfWeightSum > 0.0)
+                    {
+                        pabyMask[iX] = 255;
+                        pafScanline[iX] =
+                            static_cast<float>(dfValueSum / dfWeightSum);
+                    }
+                    else
+                        pafScanline[iX] = fNoData;
+                }
             }
         }
 

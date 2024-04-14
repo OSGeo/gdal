@@ -146,3 +146,33 @@ def test_gdal_fillnodata_smoothing(script_path, tmp_path):
     ds = gdal.Open(result_tif)
     assert struct.unpack("B" * 16, ds.GetRasterBand(1).ReadRaster()) == expected_data
     ds = None
+
+
+###############################################################################
+# Test -interp nearest
+
+
+def test_gdal_fillnodata_nearest(script_path, tmp_path):
+
+    input_tif = str(tmp_path / "test_gdal_fillnodata_nearest_in.tif")
+    result_tif = str(tmp_path / "test_gdal_fillnodata_nearest.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(input_tif, 3, 3)
+    ds.GetRasterBand(1).SetNoDataValue(0)
+    input_data = (20, 30, 40, 50, 0, 60, 70, 80, 90)
+    ds.GetRasterBand(1).WriteRaster(
+        0, 0, 3, 3, b"".join([struct.pack("B", x) for x in input_data])
+    )
+    ds = None
+
+    test_py_scripts.run_py_script(
+        script_path,
+        "gdal_fillnodata",
+        f"-interp nearest {input_tif} {result_tif}",
+    )
+
+    expected_data = (20, 30, 40, 50, 30, 60, 70, 80, 90)
+
+    ds = gdal.Open(result_tif)
+    assert struct.unpack("B" * 9, ds.GetRasterBand(1).ReadRaster()) == expected_data
+    ds = None

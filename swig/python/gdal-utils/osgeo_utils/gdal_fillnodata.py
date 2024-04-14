@@ -57,10 +57,14 @@ def gdal_fillnodata(
     mask: str = "default",
     max_distance: Real = 100,
     smoothing_iterations: int = 0,
+    interpolation: Optional[str] = None,
     options: Optional[list] = None,
 ):
     options = options or []
     creation_options = creation_options or []
+
+    if interpolation:
+        options.append("INTERPOLATION=" + interpolation)
 
     # =============================================================================
     # 	Verify we have next gen bindings with the sievefilter method.
@@ -220,6 +224,14 @@ class GDALFillNoData(GDALScript):
             default="default",
             help="Use the first band of the specified file as a validity mask "
             "(zero is invalid, non-zero is valid).",
+        )
+
+        parser.add_argument(
+            "-interp",
+            "--interpolation",
+            dest="interpolation",
+            choices=["inv_dist", "nearest"],
+            help="Interpolation method.",
         )
 
         parser.add_argument(
