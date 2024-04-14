@@ -991,8 +991,7 @@ PROJ options
 
       Used by :cpp:func:`OGRLineString::transform`.
 
-      Can be set to YES to remove points that can't be reprojected. See #3758 for the
-      purpose of this option.
+      Can be set to YES to remove points that cannot be reprojected. This can for example help reproject lines that have an extremity at a pole, when the reprojection does not support coordinates at poles.
 
 -  .. config:: OGR_CT_USE_SRS_COORDINATE_EPOCH
       :choices: YES, NO
