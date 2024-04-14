@@ -39,10 +39,8 @@
 /************************************************************************/
 
 GMLASXLinkResolver::GMLASXLinkResolver()
-    : m_nGlobalResolutionTime(0),
-      m_nMaxRAMCacheSize(
-          atoi(CPLGetConfigOption("GMLAS_XLINK_RAM_CACHE_SIZE", "10000000"))),
-      m_nCurrentRAMCacheSize(0)
+    : m_nMaxRAMCacheSize(
+          atoi(CPLGetConfigOption("GMLAS_XLINK_RAM_CACHE_SIZE", "10000000")))
 {
 }
 
