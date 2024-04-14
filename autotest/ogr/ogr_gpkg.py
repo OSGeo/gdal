@@ -206,7 +206,9 @@ def point_no_spi_but_with_dashes(gpkg_ds):
 @pytest.fixture()
 def point_with_spi_and_dashes(gpkg_ds):
 
-    lyr = gpkg_ds.CreateLayer("point-with-spi-and-dashes", geom_type=ogr.wkbPoint)
+    lyr = gpkg_ds.CreateLayer(
+        "point-with-spi-and-dashes", geom_type=ogr.wkbPoint, options=["SRID=0"]
+    )
     assert lyr.TestCapability(ogr.OLCFastSpatialFilter) == 1
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1000 30000000)"))
@@ -2168,6 +2170,131 @@ def test_ogr_gpkg_write_srs_undefined_Cartesian(tmp_path):
     srs_wkt = lyr.GetSpatialRef().ExportToWkt()
     assert srs_wkt.find("Undefined Cartesian SRS") >= 0, srs_wkt
     assert lyr.GetSpatialRef().IsLocal()
+
+    gpkg_ds = None
+
+
+###############################################################################
+# Test writing a None SRS
+
+
+@pytest.mark.parametrize("crs_wkt_extension", [True, False])
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_write_no_srs(tmp_path, crs_wkt_extension):
+
+    fname = tmp_path / "test_ogr_gpkg_write_no_srs.gpkg"
+
+    options = []
+    if crs_wkt_extension:
+        options += ["CRS_WKT_EXTENSION=YES"]
+    gpkg_ds = gdaltest.gpkg_dr.CreateDataSource(fname, options=options)
+    assert gpkg_ds is not None
+
+    lyr = gpkg_ds.CreateLayer("layer1", geom_type=ogr.wkbPoint, srs=None)
+    assert lyr.GetSpatialRef() is None
+
+    lyr = gpkg_ds.CreateLayer("layer2", geom_type=ogr.wkbPoint, srs=None)
+    assert lyr.GetSpatialRef() is None
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput(
+        'LOCAL_CS["Undefined SRS",LOCAL_DATUM["unknown",32767],UNIT["unknown",0],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
+    )
+    gpkg_ds.CreateLayer("layer3", geom_type=ogr.wkbPoint, srs=srs)
+
+    gpkg_ds = None
+    gpkg_ds = ogr.Open(fname)
+
+    # Check no unexpected SRS entries have been inserted into gpkg_spatial_ref_sys
+    with gpkg_ds.ExecuteSQL("SELECT COUNT(*) FROM gpkg_spatial_ref_sys") as sql_lyr:
+        assert sql_lyr.GetNextFeature().GetField(0) == 4
+
+    # Check no new SRS entries have been inserted into gpkg_spatial_ref_sys
+    with gpkg_ds.ExecuteSQL(
+        "SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id = 99999"
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["srs_name"] == "Undefined SRS"
+        assert f["organization"] == "GDAL"
+        assert f["organization_coordsys_id"] == 99999
+        assert (
+            f["definition"]
+            == 'LOCAL_CS["Undefined SRS",LOCAL_DATUM["unknown",32767],UNIT["unknown",0],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
+        )
+        if crs_wkt_extension:
+            assert (
+                f["definition_12_063"]
+                == 'ENGCRS["Undefined SRS",EDATUM["unknown"],CS[Cartesian,2],AXIS["easting",east,ORDER[1],LENGTHUNIT["unknown",0]],AXIS["northing",north,ORDER[2],LENGTHUNIT["unknown",0]]]'
+            )
+        assert f["description"] == "Custom undefined coordinate reference system"
+
+    for lyr in gpkg_ds:
+        assert lyr.GetSpatialRef() is None
+
+    gpkg_ds = None
+
+
+###############################################################################
+# Test SRID layer creation option
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "srid,expected_wkt",
+    [
+        (-1, 'ENGCRS["Undefined Cartesian SRS",'),
+        (0, 'GEOGCRS["Undefined geographic SRS",'),
+        (4326, 'GEOGCRS["WGS 84",'),
+        (4258, 'GEOGCRS["ETRS89",'),
+        (1, None),
+        (99999, None),
+        (123456, None),
+    ],
+)
+def test_ogr_gpkg_SRID_creation_option(tmp_path, srid, expected_wkt):
+
+    fname = tmp_path / "test_ogr_gpkg_SRID_creation_option.gpkg"
+
+    gpkg_ds = gdaltest.gpkg_dr.CreateDataSource(fname)
+    assert gpkg_ds is not None
+
+    if srid in (1, 123456):
+        with gdal.quiet_errors():
+            lyr = gpkg_ds.CreateLayer(
+                "layer1", geom_type=ogr.wkbPoint, options=[f"SRID={srid}"]
+            )
+        assert (
+            gdal.GetLastErrorMsg()
+            == f"No entry in gpkg_spatial_ref_sys matching SRID={srid}"
+        )
+    else:
+        lyr = gpkg_ds.CreateLayer(
+            "layer1", geom_type=ogr.wkbPoint, options=[f"SRID={srid}"]
+        )
+    got_srs = lyr.GetSpatialRef()
+    if expected_wkt is None:
+        assert got_srs is None
+    else:
+        assert got_srs.ExportToWkt(["FORMAT=WKT2_2019"]).startswith(expected_wkt)
+
+    gpkg_ds = None
+    gpkg_ds = ogr.Open(fname)
+
+    if srid in (1, 123456):
+        with gdal.quiet_errors():
+            lyr = gpkg_ds.GetLayer(0)
+            got_srs = lyr.GetSpatialRef()
+        assert (
+            gdal.GetLastErrorMsg()
+            == f"unable to read srs_id '{srid}' from gpkg_spatial_ref_sys"
+        )
+    else:
+        lyr = gpkg_ds.GetLayer(0)
+        got_srs = lyr.GetSpatialRef()
+    if expected_wkt is None:
+        assert got_srs is None
+    else:
+        assert got_srs.ExportToWkt(["FORMAT=WKT2_2019"]).startswith(expected_wkt)
 
     gpkg_ds = None
 
@@ -6619,7 +6746,7 @@ def test_ogr_gpkg_views(tmp_vsimem, tmp_path):
 
     filename = tmp_vsimem / "test_ogr_gpkg_views.gpkg"
     ds = gdaltest.gpkg_dr.CreateDataSource(filename)
-    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint)
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint, options=["SRID=0"])
     lyr.CreateField(ogr.FieldDefn("str_field"))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 0)"))
@@ -7846,8 +7973,7 @@ def test_ogr_gpkg_alter_geom_field_defn(tmp_vsimem, tmp_path):
     ds = ogr.Open(filename, update=1)
     lyr = ds.GetLayer(0)
     srs = lyr.GetSpatialRef()
-    assert srs is not None
-    assert srs.GetName() == "Undefined geographic SRS"
+    assert srs is None
 
     new_geom_field_defn = ogr.GeomFieldDefn("", ogr.wkbNone)
     new_geom_field_defn.SetSpatialRef(srs_4326)

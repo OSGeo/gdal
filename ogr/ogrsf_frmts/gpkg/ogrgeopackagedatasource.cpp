@@ -251,8 +251,9 @@ static OGRErr GDALGPKGImportFromEPSG(OGRSpatialReference *poSpatialRef,
     return eErr;
 }
 
-OGRSpatialReference *GDALGeoPackageDataset::GetSpatialRef(int iSrsId,
-                                                          bool bFallbackToEPSG)
+OGRSpatialReference *
+GDALGeoPackageDataset::GetSpatialRef(int iSrsId, bool bFallbackToEPSG,
+                                     bool bEmitErrorIfNotFound)
 {
     std::map<int, OGRSpatialReference *>::const_iterator oIter =
         m_oMapSrsIdToSrs.find(iSrsId);
@@ -288,7 +289,8 @@ OGRSpatialReference *GDALGeoPackageDataset::GetSpatialRef(int iSrsId,
     }
 
     CPLString oSQL;
-    oSQL.Printf("SELECT definition, organization, organization_coordsys_id%s%s "
+    oSQL.Printf("SELECT srs_name, definition, organization, "
+                "organization_coordsys_id%s%s "
                 "FROM gpkg_spatial_ref_sys WHERE "
                 "srs_id = %d LIMIT 2",
                 m_bHasDefinition12_063 ? ", definition_12_063" : "",
@@ -311,7 +313,7 @@ OGRSpatialReference *GDALGeoPackageDataset::GetSpatialRef(int iSrsId,
             }
             poSRS->Release();
         }
-        else
+        else if (bEmitErrorIfNotFound)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "unable to read srs_id '%d' from gpkg_spatial_ref_sys",
@@ -321,17 +323,23 @@ OGRSpatialReference *GDALGeoPackageDataset::GetSpatialRef(int iSrsId,
         return nullptr;
     }
 
-    const char *pszWkt = oResult->GetValue(0, 0);
+    const char *pszName = oResult->GetValue(0, 0);
+    if (pszName && EQUAL(pszName, "Undefined SRS"))
+    {
+        m_oMapSrsIdToSrs[iSrsId] = nullptr;
+        return nullptr;
+    }
+    const char *pszWkt = oResult->GetValue(1, 0);
     if (pszWkt == nullptr)
         return nullptr;
-    const char *pszOrganization = oResult->GetValue(1, 0);
-    const char *pszOrganizationCoordsysID = oResult->GetValue(2, 0);
+    const char *pszOrganization = oResult->GetValue(2, 0);
+    const char *pszOrganizationCoordsysID = oResult->GetValue(3, 0);
     const char *pszWkt2 =
-        m_bHasDefinition12_063 ? oResult->GetValue(3, 0) : nullptr;
+        m_bHasDefinition12_063 ? oResult->GetValue(4, 0) : nullptr;
     if (pszWkt2 && !EQUAL(pszWkt2, "undefined"))
         pszWkt = pszWkt2;
     const char *pszCoordinateEpoch =
-        m_bHasEpochColumn ? oResult->GetValue(4, 0) : nullptr;
+        m_bHasEpochColumn ? oResult->GetValue(5, 0) : nullptr;
     const double dfCoordinateEpoch =
         pszCoordinateEpoch ? CPLAtof(pszCoordinateEpoch) : 0.0;
 
@@ -537,14 +545,75 @@ bool GDALGeoPackageDataset::ConvertGpkgSpatialRefSysToExtensionWkt2(
     return bRet;
 }
 
-int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference &oSRS)
+int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference *poSRSIn)
 {
-    std::unique_ptr<OGRSpatialReference> poSRS(oSRS.Clone());
+    const char *pszName = poSRSIn ? poSRSIn->GetName() : nullptr;
+    if (!poSRSIn || poSRSIn->IsEmpty() ||
+        (pszName && EQUAL(pszName, "Undefined SRS")))
+    {
+        OGRErr err = OGRERR_NONE;
+        const int nSRSId = SQLGetInteger(
+            hDB,
+            "SELECT srs_id FROM gpkg_spatial_ref_sys WHERE srs_name = "
+            "'Undefined SRS' AND organization = 'GDAL'",
+            &err);
+        if (err == OGRERR_NONE)
+            return nSRSId;
+
+        // The below WKT definitions are somehow questionable (using a unknown
+        // unit). For GDAL >= 3.9, they won't be used. They will only be used
+        // for earlier versions.
+        const char *pszSQL;
+#define UNDEFINED_CRS_SRS_ID 99999
+        static_assert(UNDEFINED_CRS_SRS_ID == FIRST_CUSTOM_SRSID - 1);
+#define STRINGIFY(x) #x
+#define XSTRINGIFY(x) STRINGIFY(x)
+        if (m_bHasDefinition12_063)
+        {
+            /* clang-format off */
+            pszSQL =
+                "INSERT INTO gpkg_spatial_ref_sys "
+                "(srs_name,srs_id,organization,organization_coordsys_id,"
+                "definition, definition_12_063, description) VALUES "
+                "('Undefined SRS'," XSTRINGIFY(UNDEFINED_CRS_SRS_ID) ",'GDAL',"
+                XSTRINGIFY(UNDEFINED_CRS_SRS_ID) ","
+                "'LOCAL_CS[\"Undefined SRS\",LOCAL_DATUM[\"unknown\",32767],"
+                "UNIT[\"unknown\",0],AXIS[\"Easting\",EAST],"
+                "AXIS[\"Northing\",NORTH]]',"
+                "'ENGCRS[\"Undefined SRS\",EDATUM[\"unknown\"],CS[Cartesian,2],"
+                "AXIS[\"easting\",east,ORDER[1],LENGTHUNIT[\"unknown\",0]],"
+                "AXIS[\"northing\",north,ORDER[2],LENGTHUNIT[\"unknown\",0]]]',"
+                "'Custom undefined coordinate reference system')";
+            /* clang-format on */
+        }
+        else
+        {
+            /* clang-format off */
+            pszSQL =
+                "INSERT INTO gpkg_spatial_ref_sys "
+                "(srs_name,srs_id,organization,organization_coordsys_id,"
+                "definition, description) VALUES "
+                "('Undefined SRS'," XSTRINGIFY(UNDEFINED_CRS_SRS_ID) ",'GDAL',"
+                XSTRINGIFY(UNDEFINED_CRS_SRS_ID) ","
+                "'LOCAL_CS[\"Undefined SRS\",LOCAL_DATUM[\"unknown\",32767],"
+                "UNIT[\"unknown\",0],AXIS[\"Easting\",EAST],"
+                "AXIS[\"Northing\",NORTH]]',"
+                "'Custom undefined coordinate reference system')";
+            /* clang-format on */
+        }
+        if (SQLCommand(hDB, pszSQL) == OGRERR_NONE)
+            return UNDEFINED_CRS_SRS_ID;
+#undef UNDEFINED_CRS_SRS_ID
+#undef XSTRINGIFY
+#undef STRINGIFY
+        return -1;
+    }
+
+    std::unique_ptr<OGRSpatialReference> poSRS(poSRSIn->Clone());
 
     if (poSRS->IsGeographic() || poSRS->IsLocal())
     {
         // See corresponding tests in GDALGeoPackageDataset::GetSpatialRef
-        const char *pszName = poSRS->GetName();
         if (pszName != nullptr && strlen(pszName) > 0)
         {
             if (EQUAL(pszName, "Undefined geographic SRS"))
@@ -575,7 +644,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference &oSRS)
             }
         }
 
-        poSRS->SetCoordinateEpoch(oSRS.GetCoordinateEpoch());
+        poSRS->SetCoordinateEpoch(poSRSIn->GetCoordinateEpoch());
     }
 
     // Check whether the EPSG authority code is already mapped to a
@@ -610,7 +679,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference &oSRS)
     }
 
     if (pszAuthorityName != nullptr && strlen(pszAuthorityName) > 0 &&
-        oSRS.GetCoordinateEpoch() == 0)
+        poSRSIn->GetCoordinateEpoch() == 0)
     {
         pszSQL =
             sqlite3_mprintf("SELECT srs_id FROM gpkg_spatial_ref_sys WHERE "
@@ -658,10 +727,10 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference &oSRS)
     const char *const apszOptionsWkt2_2019[] = {"FORMAT=WKT2_2019", nullptr};
 
     std::string osEpochTest;
-    if (oSRS.GetCoordinateEpoch() > 0 && m_bHasEpochColumn)
+    if (poSRSIn->GetCoordinateEpoch() > 0 && m_bHasEpochColumn)
     {
         osEpochTest =
-            CPLSPrintf(" AND epoch = %.18g", oSRS.GetCoordinateEpoch());
+            CPLSPrintf(" AND epoch = %.18g", poSRSIn->GetCoordinateEpoch());
     }
 
     if (!(poSRS->IsGeographic() && poSRS->GetAxesCount() == 3))
@@ -698,7 +767,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference &oSRS)
         return DEFAULT_SRID;
     }
 
-    if (oSRS.GetCoordinateEpoch() == 0 || m_bHasEpochColumn)
+    if (poSRSIn->GetCoordinateEpoch() == 0 || m_bHasEpochColumn)
     {
         // Search if there is already an existing entry with this WKT
         if (m_bHasDefinition12_063 && (pszWKT2_2015 || pszWKT2_2019))
@@ -746,7 +815,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference &oSRS)
     }
 
     if (pszAuthorityName != nullptr && strlen(pszAuthorityName) > 0 &&
-        oSRS.GetCoordinateEpoch() == 0)
+        poSRSIn->GetCoordinateEpoch() == 0)
     {
         bool bTryToReuseSRSId = true;
         if (EQUAL(pszAuthorityName, "EPSG"))
@@ -796,7 +865,7 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference &oSRS)
     }
 
     // Add epoch column if needed
-    if (oSRS.GetCoordinateEpoch() > 0 && !m_bHasEpochColumn)
+    if (poSRSIn->GetCoordinateEpoch() > 0 && !m_bHasEpochColumn)
     {
         if (m_bHasDefinition12_063)
         {
@@ -851,27 +920,27 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference &oSRS)
         // Get the current maximum srid in the srs table.
         const int nMaxSRSId = SQLGetInteger(
             hDB, "SELECT MAX(srs_id) FROM gpkg_spatial_ref_sys", nullptr);
-        // At least 100000 to avoid conflicting with EPSG codes
-        nSRSId = std::max(100000, nMaxSRSId + 1);
+        nSRSId = std::max(FIRST_CUSTOM_SRSID, nMaxSRSId + 1);
     }
 
     std::string osEpochColumn;
     std::string osEpochVal;
-    if (oSRS.GetCoordinateEpoch() > 0)
+    if (poSRSIn->GetCoordinateEpoch() > 0)
     {
         osEpochColumn = ", epoch";
-        osEpochVal = CPLSPrintf(", %.18g", oSRS.GetCoordinateEpoch());
+        osEpochVal = CPLSPrintf(", %.18g", poSRSIn->GetCoordinateEpoch());
     }
 
     // Add new SRS row to gpkg_spatial_ref_sys.
     if (m_bHasDefinition12_063)
     {
         // Force WKT2_2019 when we have a dynamic CRS and coordinate epoch
-        const char *pszWKT2 =
-            oSRS.IsDynamic() && oSRS.GetCoordinateEpoch() > 0 && pszWKT2_2019
-                ? pszWKT2_2019.get()
-            : pszWKT2_2015 ? pszWKT2_2015.get()
-                           : pszWKT2_2019.get();
+        const char *pszWKT2 = poSRSIn->IsDynamic() &&
+                                      poSRSIn->GetCoordinateEpoch() > 0 &&
+                                      pszWKT2_2019
+                                  ? pszWKT2_2019.get()
+                              : pszWKT2_2015 ? pszWKT2_2015.get()
+                                             : pszWKT2_2019.get();
 
         if (pszAuthorityName != nullptr && nAuthorityCode > 0)
         {
@@ -3106,16 +3175,7 @@ CPLErr GDALGeoPackageDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
         return CE_Failure;
     }
 
-    int nSRID = -1;
-    if (poSRS == nullptr || poSRS->IsEmpty())
-    {
-        // nSRID = -1;
-    }
-    else
-    {
-        nSRID = GetSrsId(*poSRS);
-    }
-
+    const int nSRID = GetSrsId(poSRS);
     const auto poTS = GetTilingScheme(m_osTilingScheme);
     if (poTS && nSRID != poTS->nEPSGCode)
     {
@@ -6774,6 +6834,7 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
     }
     poLayer->SetCreationParameters(
         eGType, pszGeomColumnName, bGeomNullable, poSRS,
+        CSLFetchNameValue(papszOptions, "SRID"),
         poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetCoordinatePrecision()
                            : OGRGeomCoordinatePrecision(),
         CPLTestBool(
@@ -8561,7 +8622,7 @@ static void OGRGeoPackageImportFromEPSG(sqlite3_context *pContext, int /*argc*/,
         return;
     }
 
-    sqlite3_result_int(pContext, poDS->GetSrsId(oSRS));
+    sqlite3_result_int(pContext, poDS->GetSrsId(&oSRS));
 }
 
 /************************************************************************/
@@ -9052,7 +9113,7 @@ static void GPKG_ogr_layer_Extent(sqlite3_context *pContext, int /*argc*/,
     poRing->addPoint(sExtent.MinX, sExtent.MinY);
 
     const auto poSRS = poLayer->GetSpatialRef();
-    const int nSRID = poSRS ? poDS->GetSrsId(*poSRS) : 0;
+    const int nSRID = poDS->GetSrsId(poSRS);
     size_t nBLOBDestLen = 0;
     GByte *pabyDestBLOB =
         GPkgGeometryFromOGR(&oPoly, nSRID, nullptr, &nBLOBDestLen);
