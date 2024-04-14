@@ -33,7 +33,7 @@ endfunction()
 find_package(PkgConfig QUIET)
 if(PKG_CONFIG_FOUND)
     pkg_check_modules(PC_OPENJPEG QUIET libopenjp2)
-    set(OPENJPEG_VERSION_STRING ${PC_OPENJPEG_VERSION})
+    set(OpenJPEG_VERSION_STRING ${PC_OPENJPEG_VERSION})
 endif()
 
 
@@ -56,8 +56,8 @@ find_library(OPENJPEG_LIBRARY
 mark_as_advanced(OPENJPEG_LIBRARY OPENJPEG_INCLUDE_DIR)
 
 if(OPENJPEG_INCLUDE_DIR)
-    if(OPENJPEG_VERSION_STRING)
-        string(REGEX MATCH "([0-9]+).([0-9]+).([0-9]+)" OPJ_VERSION ${OPENJPEG_VERSION_STRING})
+    if(OpenJPEG_VERSION_STRING)
+        string(REGEX MATCH "([0-9]+).([0-9]+).([0-9]+)" OPJ_VERSION ${OpenJPEG_VERSION_STRING})
         if(OPJ_VERSION)
             transform_version(OPENJPEG_VERSION_NUM ${CMAKE_MATCH_1} ${CMAKE_MATCH_2} ${CMAKE_MATCH_3})
         else()
@@ -96,7 +96,7 @@ if(OPENJPEG_INCLUDE_DIR)
                   REV_VERSION ${REV_VERSION})
                 unset(VERSION_H_CONTENTS)
             endif()
-            set(OPENJPEG_VERSION_STRING "${MAJOR_VERSION}.${MINOR_VERSION}.${REV_VERSION}")
+            set(OpenJPEG_VERSION_STRING "${MAJOR_VERSION}.${MINOR_VERSION}.${REV_VERSION}")
             TRANSFORM_VERSION(OPENJPEG_VERSION_NUM ${MAJOR_VERSION} ${MINOR_VERSION} ${REV_VERSION})
             unset(MAJOR_VERSION)
             unset(MINOR_VERSION)
@@ -109,7 +109,7 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(OpenJPEG
                                   FOUND_VAR OPENJPEG_FOUND
                                   REQUIRED_VARS OPENJPEG_LIBRARY OPENJPEG_INCLUDE_DIR
-                                  VERSION_VAR OPENJPEG_VERSION_STRING)
+                                  VERSION_VAR OpenJPEG_VERSION_STRING)
 if(OPENJPEG_FOUND)
   set(OPENJPEG_LIBRARIES "${OPENJPEG_LIBRARY}")
   set(OPENJPEG_INCLUDE_DIRS "${OPENJPEG_INCLUDE_DIR}")
