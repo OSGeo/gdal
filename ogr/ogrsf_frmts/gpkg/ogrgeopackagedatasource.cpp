@@ -6907,8 +6907,7 @@ GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
     poLayer->SetCreationParameters(
         eGType,
         bLaunder ? LaunderName(pszGeomColumnName).c_str() : pszGeomColumnName,
-        bGeomNullable, poSRS,
-        CSLFetchNameValue(papszOptions, "SRID"),
+        bGeomNullable, poSRS, CSLFetchNameValue(papszOptions, "SRID"),
         poSrcGeomFieldDefn ? poSrcGeomFieldDefn->GetCoordinatePrecision()
                            : OGRGeomCoordinatePrecision(),
         CPLTestBool(
