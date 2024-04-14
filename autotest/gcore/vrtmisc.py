@@ -36,7 +36,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-import gdaltest
 import pytest
 
 from osgeo import gdal, osr
@@ -597,14 +596,13 @@ def test_vrtmisc_write_srs():
 
 def test_vrtmisc_mask_implicit_overviews():
 
-    with gdaltest.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
-        ds = gdal.Translate(
-            "/vsimem/cog.tif",
-            "data/stefan_full_rgba.tif",
-            options="-outsize 2048 0 -b 1 -b 2 -b 3 -mask 4",
-        )
-        ds.BuildOverviews("NEAR", [2, 4])
-        ds = None
+    ds = gdal.Translate(
+        "/vsimem/cog.tif",
+        "data/stefan_full_rgba.tif",
+        options="-outsize 2048 0 -b 1 -b 2 -b 3 -mask 4",
+    )
+    ds.BuildOverviews("NEAR", [2, 4])
+    ds = None
     gdal.Translate("/vsimem/cog.vrt", "/vsimem/cog.tif")
     ds = gdal.Open("/vsimem/cog.vrt")
     assert ds.GetRasterBand(1).GetOverview(0).GetMaskFlags() == gdal.GMF_PER_DATASET

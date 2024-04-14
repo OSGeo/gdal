@@ -4063,7 +4063,8 @@ def test_tiff_read_lerc():
 def test_tiff_read_overview_of_external_mask():
 
     filename = "/vsimem/tiff_read_overview_of_external_mask.tif"
-    gdal.Translate(filename, "data/byte.tif", options="-b 1 -mask 1")
+    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
+        gdal.Translate(filename, "data/byte.tif", options="-b 1 -mask 1")
     ds = gdal.Open(filename, gdal.GA_Update)
     ds.BuildOverviews("CUBIC", overviewlist=[2])
     ds = None
@@ -4345,9 +4346,7 @@ def test_tiff_read_cog_with_mask_vsicurl():
             ],
         )
         src_ds.BuildOverviews("NEAR", [256])
-        with gdaltest.config_options(
-            {"GDAL_TIFF_INTERNAL_MASK": "YES", "GDAL_TIFF_DEFLATE_SUBCODEC": "ZLIB"}
-        ):
+        with gdal.config_option("GDAL_TIFF_DEFLATE_SUBCODEC", "ZLIB"):
             src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
             gdal.GetDriverByName("GTIFF").CreateCopy(
                 cog_filename,
@@ -5124,8 +5123,7 @@ def test_tiff_read_jpeg_cached_multi_range_issue_9563(tmp_vsimem):
             (15.18310546875 - 15.205078125) / 128,
         ]
     )
-    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
-        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     ds = None
 
     cog = str(tmp_vsimem / "cog.tif")

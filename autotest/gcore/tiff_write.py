@@ -3416,8 +3416,7 @@ def test_tiff_write_89():
             options=["COMPRESS=JPEG", "PHOTOMETRIC=YCBCR", "JPEG_QUALITY=%d" % quality],
         )
 
-        with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
-            ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
 
         data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
         ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
@@ -3843,16 +3842,14 @@ def test_tiff_write_94():
     src_ds = gdal.GetDriverByName("GTiff").Create(
         "tmp/tiff_write_94_src.tif", 1024, 1024, 3
     )
-    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
-        src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, "\xff", 1, 1)
 
-    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
-        ds = gdal.GetDriverByName("GTiff").CreateCopy(
-            "tmp/tiff_write_94_dst.tif",
-            src_ds,
-            options=["COMPRESS=JPEG", "PHOTOMETRIC=YCBCR", "JPEG_QUALITY=30"],
-        )
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        "tmp/tiff_write_94_dst.tif",
+        src_ds,
+        options=["COMPRESS=JPEG", "PHOTOMETRIC=YCBCR", "JPEG_QUALITY=30"],
+    )
 
     src_ds = None
     ds = None
@@ -3893,43 +3890,40 @@ def test_tiff_write_95():
 
 
 ###############################################################################
-# Test that COPY_SRC_OVERVIEWS combined with GDAL_TIFF_INTERNAL_MASK=YES work well
+# Test that COPY_SRC_OVERVIEWS combined with internal masks work well
 
 
 def test_tiff_write_96(other_options=[], nbands=1, nbits=8):
 
-    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
-        src_ds = gdaltest.tiff_drv.Create(
-            "tmp/tiff_write_96_src.tif",
-            100,
-            100,
-            nbands,
-            options=["NBITS=" + str(nbits)],
-        )
-        src_ds.GetRasterBand(1).Fill(255 if nbits == 8 else 127)
-        src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-        src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(25, 25, 50, 50, b"\xff", 1, 1)
-        src_ds.BuildOverviews("NEAR", overviewlist=[2, 4])
-        expected_cs = src_ds.GetRasterBand(1).Checksum()
-        expected_cs_mask = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
-        expected_cs_ovr_1 = src_ds.GetRasterBand(1).GetOverview(0).Checksum()
-        expected_cs_ovr_mask_1 = (
-            src_ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
-        )
-        expected_cs_ovr_2 = src_ds.GetRasterBand(1).GetOverview(1).Checksum()
-        expected_cs_ovr_mask_2 = (
-            src_ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
-        )
+    src_ds = gdaltest.tiff_drv.Create(
+        "tmp/tiff_write_96_src.tif",
+        100,
+        100,
+        nbands,
+        options=["NBITS=" + str(nbits)],
+    )
+    src_ds.GetRasterBand(1).Fill(255 if nbits == 8 else 127)
+    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(25, 25, 50, 50, b"\xff", 1, 1)
+    src_ds.BuildOverviews("NEAR", overviewlist=[2, 4])
+    expected_cs = src_ds.GetRasterBand(1).Checksum()
+    expected_cs_mask = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
+    expected_cs_ovr_1 = src_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    expected_cs_ovr_mask_1 = (
+        src_ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
+    )
+    expected_cs_ovr_2 = src_ds.GetRasterBand(1).GetOverview(1).Checksum()
+    expected_cs_ovr_mask_2 = (
+        src_ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
+    )
 
-        ds = gdaltest.tiff_drv.CreateCopy(
-            "tmp/tiff_write_96_dst.tif",
-            src_ds,
-            options=["COPY_SRC_OVERVIEWS=YES"]
-            + other_options
-            + ["NBITS=" + str(nbits)],
-        )
-        ds = None
-        src_ds = None
+    ds = gdaltest.tiff_drv.CreateCopy(
+        "tmp/tiff_write_96_dst.tif",
+        src_ds,
+        options=["COPY_SRC_OVERVIEWS=YES"] + other_options + ["NBITS=" + str(nbits)],
+    )
+    ds = None
+    src_ds = None
 
     ds = gdal.Open("tmp/tiff_write_96_dst.tif")
     cs = ds.GetRasterBand(1).Checksum()
@@ -4027,12 +4021,11 @@ def test_tiff_write_ifd_offsets():
     src_ds.BuildOverviews("NEAR", overviewlist=[2, 4])
 
     filename = "/vsimem/test_tiff_write_ifd_offsets.tif"
-    with gdaltest.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
-        ds = gdal.GetDriverByName("GTiff").CreateCopy(
-            filename,
-            src_ds,
-            options=["COPY_SRC_OVERVIEWS=YES", "TILED=YES", "COMPRESS=LZW"],
-        )
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        filename,
+        src_ds,
+        options=["COPY_SRC_OVERVIEWS=YES", "TILED=YES", "COMPRESS=LZW"],
+    )
     val0_ref = int(ds.GetRasterBand(1).GetMetadataItem("IFD_OFFSET", "TIFF"))
     val1_ref = int(
         ds.GetRasterBand(1).GetMaskBand().GetMetadataItem("IFD_OFFSET", "TIFF")
@@ -4069,12 +4062,11 @@ def test_tiff_write_ifd_offsets():
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     src_ds.BuildOverviews("NEAR", overviewlist=[2, 4])
 
-    with gdaltest.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
-        ds = gdal.GetDriverByName("GTiff").CreateCopy(
-            filename,
-            src_ds,
-            options=["COPY_SRC_OVERVIEWS=YES", "TILED=YES", "COMPRESS=LZW"],
-        )
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        filename,
+        src_ds,
+        options=["COPY_SRC_OVERVIEWS=YES", "TILED=YES", "COMPRESS=LZW"],
+    )
     val0 = int(ds.GetRasterBand(1).GetMetadataItem("IFD_OFFSET", "TIFF"))
     val1 = int(ds.GetRasterBand(1).GetMaskBand().GetMetadataItem("IFD_OFFSET", "TIFF"))
     val2 = int(ds.GetRasterBand(1).GetOverview(0).GetMetadataItem("IFD_OFFSET", "TIFF"))
@@ -9046,10 +9038,9 @@ def test_tiff_write_rewrite_lzw_strip():
 def test_tiff_write_overviews_mask_no_ovr_on_mask():
 
     tmpfile = "/vsimem/test_tiff_write_overviews_mask_no_ovr_on_mask.tif"
-    with gdaltest.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
-        ds = gdaltest.tiff_drv.Create(tmpfile, 100, 100)
-        ds.GetRasterBand(1).Fill(255)
-        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    ds = gdaltest.tiff_drv.Create(tmpfile, 100, 100)
+    ds.GetRasterBand(1).Fill(255)
+    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
 
     ds = gdal.Open(tmpfile)
     gdal.ErrorReset()

@@ -1896,13 +1896,15 @@ def test_vrt_usemaskband():
 
     ds = gdal.GetDriverByName("GTiff").Create("/vsimem/src1.tif", 3, 1)
     ds.GetRasterBand(1).Fill(255)
-    ds.CreateMaskBand(0)
+    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
+        ds.CreateMaskBand(0)
     ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, b"\xff")
     ds = None
 
     ds = gdal.GetDriverByName("GTiff").Create("/vsimem/src2.tif", 3, 1)
     ds.GetRasterBand(1).Fill(127)
-    ds.CreateMaskBand(0)
+    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
+        ds.CreateMaskBand(0)
     ds.GetRasterBand(1).GetMaskBand().WriteRaster(1, 0, 1, 1, b"\xff")
     ds = None
 
