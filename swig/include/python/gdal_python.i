@@ -3096,7 +3096,10 @@ def VectorTranslateOptions(options=None, format=None,
             for item in selectFields:
                 if val:
                     val += ','
-                val += item
+                if ',' in item or ' ' in item or '"' in item:
+                    val += '"' + item.replace('"', '\\"') + '"'
+                else:
+                    val += item
             new_options += ['-select', val]
 
         if datasetCreationOptions is not None:

@@ -243,11 +243,8 @@ struct GDALVectorTranslateOptions
      * has been to disable fields. */
     bool bSelFieldsSet = false;
 
-    /*! list of fields from input layer to copy to the new layer. A field is
-       skipped if mentioned previously in the list even if the input layer has
-       duplicate field names. (Defaults to all; any field is skipped if a
-       subsequent field with same name is found.) Geometry fields can also be
-       specified in the list. */
+    /*! list of fields from input layer to copy to the new layer.
+     * Geometry fields can also be specified in the list. */
     CPLStringList aosSelFields{};
 
     /*! SQL statement to execute. The resulting table/layer will be saved to the
@@ -6777,7 +6774,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
             {
                 psOptions->bSelFieldsSet = true;
                 psOptions->aosSelFields =
-                    CSLTokenizeStringComplex(s.c_str(), " ,", FALSE, FALSE);
+                    CSLTokenizeStringComplex(s.c_str(), ",", TRUE, FALSE);
             })
         .help(_("Comma-delimited list of fields from input layer to copy to "
                 "the new layer."));

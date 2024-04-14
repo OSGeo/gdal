@@ -166,7 +166,7 @@ def test_ogr2ogr_lib_5():
 
 
 ###############################################################################
-# Test selFields
+# Test selectFields
 
 
 def test_ogr2ogr_lib_6():
@@ -184,7 +184,7 @@ def test_ogr2ogr_lib_6():
 
 
 ###############################################################################
-# Test selFields to []
+# Test selectFields to []
 
 
 def test_ogr2ogr_lib_sel_fields_empty():
@@ -193,6 +193,37 @@ def test_ogr2ogr_lib_sel_fields_empty():
     ds = gdal.VectorTranslate("", srcDS, format="Memory", selectFields=[])
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 0
+
+
+###############################################################################
+# Test selectFields with field names with spaces
+
+
+def test_ogr2ogr_lib_sel_fields_with_space():
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    lyr = srcDS.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("with space"))
+    lyr.CreateField(ogr.FieldDefn("with,comma"))
+    lyr.CreateField(ogr.FieldDefn("unselected"))
+    lyr.CreateField(ogr.FieldDefn('with,double"quote'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["with space"] = "a"
+    f["with,comma"] = "b"
+    f['with,double"quote'] = "c"
+    lyr.CreateFeature(f)
+    ds = gdal.VectorTranslate(
+        "",
+        srcDS,
+        format="Memory",
+        selectFields=["with space", "with,comma", 'with,double"quote'],
+    )
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 3
+    f = lyr.GetNextFeature()
+    assert f["with space"] == "a"
+    assert f["with,comma"] == "b"
+    assert f['with,double"quote'] == "c"
 
 
 ###############################################################################
