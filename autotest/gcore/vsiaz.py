@@ -1603,6 +1603,36 @@ def test_vsiaz_rmdirrecursive():
         "GET",
         "/azure/blob/myaccount/rmdirrec?comp=list&delimiter=%2F&maxresults=1&prefix=subdir%2Fsubdir2%2F&restype=container",
         200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>subdir/subdir2/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>subdir/subdir2/.gdal_marker_for_dir</Name>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""",
+    )
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/rmdirrec?comp=list&delimiter=%2F&maxresults=1&prefix=subdir%2Fsubdir2%2F&restype=container",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>subdir/subdir2/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>subdir/subdir2/.gdal_marker_for_dir</Name>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""",
+    )
+    handler.add(
+        "DELETE",
+        "/azure/blob/myaccount/rmdirrec/subdir/subdir2/.gdal_marker_for_dir",
+        202,
     )
     handler.add("HEAD", "/azure/blob/myaccount/rmdirrec/subdir/", 404)
     handler.add(
@@ -1612,6 +1642,69 @@ def test_vsiaz_rmdirrecursive():
     )
     with webserver.install_http_handler(handler):
         assert gdal.RmdirRecursive("/vsiaz/rmdirrec/subdir") == 0
+
+
+###############################################################################
+# Test RmdirRecursive() with a fake server
+
+
+def test_vsiaz_rmdirrecursive_empty_dir():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/rmdirrec?comp=list&prefix=empty_dir%2F&restype=container",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>empty_dir/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>empty_dir/.gdal_marker_for_dir</Name>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""",
+    )
+    handler.add("HEAD", "/azure/blob/myaccount/rmdirrec/empty_dir/", 404)
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/rmdirrec?comp=list&delimiter=%2F&maxresults=1&prefix=empty_dir%2F&restype=container",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>empty_dir/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>empty_dir/.gdal_marker_for_dir</Name>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""",
+    )
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/rmdirrec?comp=list&delimiter=%2F&maxresults=1&prefix=empty_dir%2F&restype=container",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>empty_dir/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>empty_dir/.gdal_marker_for_dir</Name>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""",
+    )
+    handler.add(
+        "DELETE", "/azure/blob/myaccount/rmdirrec/empty_dir/.gdal_marker_for_dir", 202
+    )
+    with webserver.install_http_handler(handler):
+        assert gdal.RmdirRecursive("/vsiaz/rmdirrec/empty_dir") == 0
 
 
 ###############################################################################
