@@ -656,6 +656,15 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
     {
         return OGRSQLiteLayer::GetExtent(iGeomField, psExtent, bForce);
     }
+
+    bool
+    ValidateGeometryFieldIndexForSetSpatialFilter(int iGeomField,
+                                                  const OGRGeometry *poGeomIn,
+                                                  bool bIsSelectLayer) override
+    {
+        return OGRSQLiteLayer::ValidateGeometryFieldIndexForSetSpatialFilter(
+            iGeomField, poGeomIn, bIsSelectLayer);
+    }
 };
 
 /************************************************************************/

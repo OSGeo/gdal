@@ -1440,12 +1440,56 @@ OGRGeometryH OGR_L_GetSpatialFilter(OGRLayerH hLayer)
 }
 
 /************************************************************************/
+/*             ValidateGeometryFieldIndexForSetSpatialFilter()          */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+bool OGRLayer::ValidateGeometryFieldIndexForSetSpatialFilter(
+    int iGeomField, const OGRGeometry *poGeomIn, bool bIsSelectLayer)
+{
+    if (iGeomField == 0 && poGeomIn == nullptr &&
+        GetLayerDefn()->GetGeomFieldCount() == 0)
+    {
+        // Setting a null spatial filter on geometry field idx 0
+        // when there are no geometry field can't harm, and is accepted silently
+        // for backward compatibility with existing practice.
+    }
+    else if (iGeomField < 0 ||
+             iGeomField >= GetLayerDefn()->GetGeomFieldCount())
+    {
+        if (iGeomField == 0)
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                bIsSelectLayer
+                    ? "Cannot set spatial filter: no geometry field selected."
+                    : "Cannot set spatial filter: no geometry field present in "
+                      "layer.");
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot set spatial filter on non-existing geometry field "
+                     "of index %d.",
+                     iGeomField);
+        }
+        return false;
+    }
+    return true;
+}
+
+//! @endcond
+
+/************************************************************************/
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
 
 void OGRLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
 
 {
+    if (poGeomIn && !ValidateGeometryFieldIndexForSetSpatialFilter(0, poGeomIn))
+        return;
+
     m_iGeomFieldFilter = 0;
     if (InstallFilter(poGeomIn))
         ResetReading();
@@ -1456,17 +1500,18 @@ void OGRLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
 {
     if (iGeomField == 0)
     {
+        if (poGeomIn &&
+            !ValidateGeometryFieldIndexForSetSpatialFilter(0, poGeomIn))
+            return;
+
         m_iGeomFieldFilter = iGeomField;
         SetSpatialFilter(poGeomIn);
     }
     else
     {
-        if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
+        if (!ValidateGeometryFieldIndexForSetSpatialFilter(iGeomField,
+                                                           poGeomIn))
             return;
-        }
 
         m_iGeomFieldFilter = iGeomField;
         if (InstallFilter(poGeomIn))

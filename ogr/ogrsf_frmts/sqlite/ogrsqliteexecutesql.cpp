@@ -1181,7 +1181,16 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
         bStringsAsUTF8);
 
     if (poSpatialFilter != nullptr)
+    {
+        const auto nErrorCounter = CPLGetErrorCounter();
         poLayer->SetSpatialFilter(0, poSpatialFilter);
+        if (CPLGetErrorCounter() > nErrorCounter &&
+            CPLGetLastErrorType() != CE_None)
+        {
+            delete poLayer;
+            return nullptr;
+        }
+    }
 
     if (poSingleSrcLayer != nullptr)
         poLayer->SetMetadata(poSingleSrcLayer->GetMetadata("NATIVE_DATA"),

@@ -1164,6 +1164,16 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer,
     {
         return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce);
     }
+
+    bool
+    ValidateGeometryFieldIndexForSetSpatialFilter(int iGeomField,
+                                                  const OGRGeometry *poGeomIn,
+                                                  bool bIsSelectLayer) override
+    {
+        return OGRGeoPackageLayer::
+            ValidateGeometryFieldIndexForSetSpatialFilter(iGeomField, poGeomIn,
+                                                          bIsSelectLayer);
+    }
 };
 
 #endif /* OGR_GEOPACKAGE_H_INCLUDED */
