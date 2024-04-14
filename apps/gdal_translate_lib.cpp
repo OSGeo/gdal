@@ -2762,7 +2762,8 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
         _("Convert raster data between different formats, with potential "
           "subsetting, resampling, and rescaling pixels in the process."));
 
-    argParser->add_epilog(_("https://gdal.org/programs/gdal_translate.html"));
+    argParser->add_epilog(_("For more details, consult "
+                            "https://gdal.org/programs/gdal_translate.html"));
 
     argParser->add_output_type_argument(psOptions->eOutputType);
 

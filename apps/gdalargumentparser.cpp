@@ -120,6 +120,32 @@ void GDALArgumentParser::add_quiet_argument(bool *pVar)
 }
 
 /************************************************************************/
+/*                      add_input_format_argument()                     */
+/************************************************************************/
+
+void GDALArgumentParser::add_input_format_argument(CPLStringList *pvar)
+{
+    add_argument("-if")
+        .append()
+        .metavar("<format>")
+        .action(
+            [pvar](const std::string &s)
+            {
+                if (pvar)
+                {
+                    if (GDALGetDriverByName(s.c_str()) == nullptr)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "%s is not a recognized driver", s.c_str());
+                    }
+                    pvar->AddString(s.c_str());
+                }
+            })
+        .help(
+            _("Format/driver name(s) to be attempted to open the input file."));
+}
+
+/************************************************************************/
 /*                      add_output_format_argument()                    */
 /************************************************************************/
 

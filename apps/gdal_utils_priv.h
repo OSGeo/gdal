@@ -56,25 +56,6 @@ struct GDALInfoOptionsForBinary
     char **papszAllowInputDrivers;
 };
 
-struct GDALWarpAppOptionsForBinary
-{
-    char **papszSrcFiles;
-    char *pszDstFilename;
-    int bQuiet;
-    char **papszOpenOptions;
-
-    /*! output dataset open option (format specific) */
-    char **papszDestOpenOptions;
-
-    char **papszCreateOptions;
-
-    int bOverwrite;
-    int bCreateOutput;
-
-    /* Allowed input drivers. */
-    char **papszAllowInputDrivers;
-};
-
 struct GDALDEMProcessingOptionsForBinary
 {
     char *pszProcessing;
@@ -229,6 +210,25 @@ struct GDALTranslateOptionsForBinary
     CPLStringList aosAllowedInputDrivers{};
 };
 
+struct GDALWarpAppOptionsForBinary
+{
+    CPLStringList aosSrcFiles{};
+    std::string osDstFilename{};
+    bool bQuiet = false;
+    CPLStringList aosOpenOptions{};
+
+    /*! output dataset open option (format specific) */
+    CPLStringList aosDestOpenOptions{};
+
+    CPLStringList aosCreateOptions{};
+
+    bool bOverwrite = false;
+    bool bCreateOutput = false;
+
+    /* Allowed input drivers. */
+    CPLStringList aosAllowedInputDrivers{};
+};
+
 std::string CPL_DLL GDALNearblackGetParserUsage();
 
 std::string CPL_DLL GDALVectorInfoGetParserUsage();
@@ -236,6 +236,8 @@ std::string CPL_DLL GDALVectorInfoGetParserUsage();
 std::string CPL_DLL GDALTranslateGetParserUsage();
 
 std::string CPL_DLL GDALVectorTranslateGetParserUsage();
+
+std::string CPL_DLL GDALWarpAppGetParserUsage();
 
 #endif /* #ifndef DOXYGEN_SKIP */
 

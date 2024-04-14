@@ -2186,7 +2186,8 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
     argParser->add_description(
         _("Lists information about an OGR-supported data source."));
 
-    argParser->add_epilog(_("https://gdal.org/programs/ogrinfo.html"));
+    argParser->add_epilog(
+        _("For more details, consult https://gdal.org/programs/ogrinfo.html"));
 
     argParser->add_argument("-json")
         .flag()
