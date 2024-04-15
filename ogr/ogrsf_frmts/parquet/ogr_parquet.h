@@ -83,10 +83,16 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     std::vector<std::shared_ptr<arrow::DataType>>
         m_apoArrowDataTypes{};  // .size() == field ocunt
     std::vector<int> m_anMapFieldIndexToParquetColumn{};
-    std::vector<int> m_anMapGeomFieldIndexToParquetColumn{};
+    std::vector<std::vector<int>> m_anMapGeomFieldIndexToParquetColumns{};
     bool m_bHasMissingMappingToParquet = false;
 
-    std::vector<int64_t> m_anSelectedGroupsStartFeatureIdx{};
+    //! Contains pairs of (selected feature idx, total feature idx) break points.
+    std::vector<std::pair<int64_t, int64_t>> m_asFeatureIdxRemapping{};
+    //! Iterator over m_asFeatureIdxRemapping
+    std::vector<std::pair<int64_t, int64_t>>::iterator
+        m_oFeatureIdxRemappingIter{};
+    //! Feature index among the potentially restricted set of selected row gropus
+    int64_t m_nFeatureIdxSelected = 0;
     std::vector<int> m_anRequestedParquetColumns{};  // only valid when
                                                      // m_bIgnoredFields is set
 #ifdef DEBUG
@@ -139,6 +145,8 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     }
 
     bool FastGetExtent(int iGeomField, OGREnvelope *psExtent) const override;
+
+    void IncrFeatureIdx() override;
 
   public:
     OGRParquetLayer(OGRParquetDataset *poDS, const char *pszLayerName,

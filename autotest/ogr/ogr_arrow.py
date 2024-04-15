@@ -112,7 +112,7 @@ def test_ogr_arrow_read_all_geom_types(filename_prefix, dim):
     ],
 )
 @pytest.mark.parametrize("dim", ["", "_z", "_m", "_zm"])
-@pytest.mark.parametrize("encoding", ["WKB", "WKT", "GEOARROW"])
+@pytest.mark.parametrize("encoding", ["WKB", "WKT", "GEOARROW", "GEOARROW_INTERLEAVED"])
 def test_ogr_arrow_write_all_geom_types(filename_prefix, dim, encoding):
 
     test_filename = (
@@ -124,7 +124,7 @@ def test_ogr_arrow_write_all_geom_types(filename_prefix, dim, encoding):
     ds_ref = ogr.Open(test_filename)
     lyr_ref = ds_ref.GetLayer(0)
 
-    if encoding != "GEOARROW" or lyr_ref.GetGeomType() not in (
+    if not encoding.startswith("GEOARROW") or lyr_ref.GetGeomType() not in (
         ogr.wkbGeometryCollection,
         ogr.wkbGeometryCollection25D,
         ogr.wkbGeometryCollectionM,

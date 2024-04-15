@@ -836,6 +836,74 @@ static bool IsListOfPointType(const std::shared_ptr<arrow::DataType> &type,
 }
 
 /************************************************************************/
+/*                         IsPointStructType()                          */
+/************************************************************************/
+
+static bool IsPointStructType(const std::shared_ptr<arrow::DataType> &type,
+                              bool &bHasZOut, bool &bHasMOut)
+{
+    if (type->id() != arrow::Type::STRUCT)
+        return false;
+    auto poStructType = std::static_pointer_cast<arrow::StructType>(type);
+    const int nNumFields = poStructType->num_fields();
+    if (nNumFields < 2 || nNumFields > 4)
+        return false;
+    bHasZOut = false;
+    bHasMOut = false;
+    const auto poFieldX = poStructType->field(0);
+    if (poFieldX->name() != "x" ||
+        poFieldX->type()->id() != arrow::Type::DOUBLE)
+        return false;
+    const auto poFieldY = poStructType->field(1);
+    if (poFieldY->name() != "y" ||
+        poFieldY->type()->id() != arrow::Type::DOUBLE)
+        return false;
+    if (nNumFields == 2)
+        return true;
+    const auto poField2 = poStructType->field(2);
+    if (poField2->type()->id() != arrow::Type::DOUBLE)
+        return false;
+    if (poField2->name() == "z")
+    {
+        bHasZOut = true;
+        if (nNumFields == 4)
+        {
+            const auto poField3 = poStructType->field(3);
+            if (poField3->name() != "m" ||
+                poField3->type()->id() != arrow::Type::DOUBLE)
+                return false;
+            bHasMOut = true;
+        }
+    }
+    else if (poField2->name() == "m")
+    {
+        bHasMOut = true;
+    }
+    else
+    {
+        return false;
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                    IsListOfPointStructType()                         */
+/************************************************************************/
+
+static bool
+IsListOfPointStructType(const std::shared_ptr<arrow::DataType> &type,
+                        int nDepth, bool &bHasZOut, bool &bHasMOut)
+{
+    if (type->id() != arrow::Type::LIST)
+        return false;
+    auto poListType = std::static_pointer_cast<arrow::ListType>(type);
+    return nDepth == 1
+               ? IsPointStructType(poListType->value_type(), bHasZOut, bHasMOut)
+               : IsListOfPointStructType(poListType->value_type(), nDepth - 1,
+                                         bHasZOut, bHasMOut);
+}
+
+/************************************************************************/
 /*                        IsValidGeometryEncoding()                     */
 /************************************************************************/
 
@@ -871,7 +939,7 @@ inline bool OGRArrowLayer::IsValidGeometryEncoding(
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Geometry column %s has a non String type: %s. "
                      "Handling it as a regular field",
-                     fieldName.c_str(), fieldType->name().c_str());
+                     fieldName.c_str(), fieldType->ToString().c_str());
             return false;
         }
         eOGRArrowGeomEncodingOut = OGRArrowGeomEncoding::WKT;
@@ -891,7 +959,7 @@ inline bool OGRArrowLayer::IsValidGeometryEncoding(
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Geometry column %s has a non Binary type: %s. "
                      "Handling it as a regular field",
-                     fieldName.c_str(), fieldType->name().c_str());
+                     fieldName.c_str(), fieldType->ToString().c_str());
             return false;
         }
         eOGRArrowGeomEncodingOut = OGRArrowGeomEncoding::WKB;
@@ -900,108 +968,168 @@ inline bool OGRArrowLayer::IsValidGeometryEncoding(
 
     bool bHasZ = false;
     bool bHasM = false;
-    if (osEncoding == "geoarrow.point")
+    if (osEncoding == "geoarrow.point" || osEncoding == "point")
     {
-        if (!IsPointType(fieldType, bHasZ, bHasM))
+        if (IsPointType(fieldType, bHasZ, bHasM))
+        {
+            eOGRArrowGeomEncodingOut = OGRArrowGeomEncoding::GEOARROW_FSL_POINT;
+        }
+        else if (IsPointStructType(fieldType, bHasZ, bHasM))
+        {
+            eOGRArrowGeomEncodingOut =
+                OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT;
+        }
+        else
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Geometry column %s has a type != fixed_size_list<xy: "
-                     "double>[2]>: %s. "
+                     "double>[2]> and != struct<x: double, y: double>: %s. "
                      "Handling it as a regular field",
                      fieldName.c_str(), fieldType->name().c_str());
             return false;
         }
         eGeomTypeOut = OGR_GT_SetModifier(wkbPoint, static_cast<int>(bHasZ),
                                           static_cast<int>(bHasM));
-        eOGRArrowGeomEncodingOut = OGRArrowGeomEncoding::GEOARROW_POINT;
         return true;
     }
 
-    if (osEncoding == "geoarrow.linestring")
+    else if (osEncoding == "geoarrow.linestring" || osEncoding == "linestring")
     {
-        if (!IsListOfPointType(fieldType, 1, bHasZ, bHasM))
+        if (IsListOfPointType(fieldType, 1, bHasZ, bHasM))
+        {
+            eOGRArrowGeomEncodingOut =
+                OGRArrowGeomEncoding::GEOARROW_FSL_LINESTRING;
+        }
+        else if (IsListOfPointStructType(fieldType, 1, bHasZ, bHasM))
+        {
+            eOGRArrowGeomEncodingOut =
+                OGRArrowGeomEncoding::GEOARROW_STRUCT_LINESTRING;
+        }
+        else
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Geometry column %s has a type != fixed_size_list<xy: "
-                     "double>[2]>: %s. "
+                     "double>[2]> and != list<element: struct<x: double, y: "
+                     "double>>: %s. "
                      "Handling it as a regular field",
-                     fieldName.c_str(), fieldType->name().c_str());
+                     fieldName.c_str(), fieldType->ToString().c_str());
             return false;
         }
         eGeomTypeOut = OGR_GT_SetModifier(
             wkbLineString, static_cast<int>(bHasZ), static_cast<int>(bHasM));
-        eOGRArrowGeomEncodingOut = OGRArrowGeomEncoding::GEOARROW_LINESTRING;
         return true;
     }
 
-    if (osEncoding == "geoarrow.polygon")
+    else if (osEncoding == "geoarrow.polygon" || osEncoding == "polygon")
     {
-        if (!IsListOfPointType(fieldType, 2, bHasZ, bHasM))
+        if (IsListOfPointType(fieldType, 2, bHasZ, bHasM))
+        {
+            eOGRArrowGeomEncodingOut =
+                OGRArrowGeomEncoding::GEOARROW_FSL_POLYGON;
+        }
+        else if (IsListOfPointStructType(fieldType, 2, bHasZ, bHasM))
+        {
+            eOGRArrowGeomEncodingOut =
+                OGRArrowGeomEncoding::GEOARROW_STRUCT_POLYGON;
+        }
+        else
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Geometry column %s has a type != list<vertices: "
-                     "fixed_size_list<xy: double>[2]>>: %s. "
+                     "fixed_size_list<xy: double>[2]>> and != list<element: "
+                     "list<element: struct<x: double, y: double>>>: %s. "
                      "Handling it as a regular field",
-                     fieldName.c_str(), fieldType->name().c_str());
+                     fieldName.c_str(), fieldType->ToString().c_str());
             return false;
         }
         eGeomTypeOut = OGR_GT_SetModifier(wkbPolygon, static_cast<int>(bHasZ),
                                           static_cast<int>(bHasM));
-        eOGRArrowGeomEncodingOut = OGRArrowGeomEncoding::GEOARROW_POLYGON;
         return true;
     }
 
-    if (osEncoding == "geoarrow.multipoint")
+    else if (osEncoding == "geoarrow.multipoint" || osEncoding == "multipoint")
     {
-        if (!IsListOfPointType(fieldType, 1, bHasZ, bHasM))
+        if (IsListOfPointType(fieldType, 1, bHasZ, bHasM))
+        {
+            eOGRArrowGeomEncodingOut =
+                OGRArrowGeomEncoding::GEOARROW_FSL_MULTIPOINT;
+        }
+        else if (IsListOfPointStructType(fieldType, 1, bHasZ, bHasM))
+        {
+            eOGRArrowGeomEncodingOut =
+                OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOINT;
+        }
+        else
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Geometry column %s has a type != fixed_size_list<xy: "
-                     "double>[2]>: %s. "
+                     "double>[2]> and != list<element: struct<x: double, y: "
+                     "double>>: %s. "
                      "Handling it as a regular field",
-                     fieldName.c_str(), fieldType->name().c_str());
+                     fieldName.c_str(), fieldType->ToString().c_str());
             return false;
         }
         eGeomTypeOut = OGR_GT_SetModifier(
             wkbMultiPoint, static_cast<int>(bHasZ), static_cast<int>(bHasM));
-        eOGRArrowGeomEncodingOut = OGRArrowGeomEncoding::GEOARROW_MULTIPOINT;
         return true;
     }
 
-    if (osEncoding == "geoarrow.multilinestring")
+    else if (osEncoding == "geoarrow.multilinestring" ||
+             osEncoding == "multilinestring")
     {
-        if (!IsListOfPointType(fieldType, 2, bHasZ, bHasM))
+        if (IsListOfPointType(fieldType, 2, bHasZ, bHasM))
+        {
+            eOGRArrowGeomEncodingOut =
+                OGRArrowGeomEncoding::GEOARROW_FSL_MULTILINESTRING;
+        }
+        else if (IsListOfPointStructType(fieldType, 2, bHasZ, bHasM))
+        {
+            eOGRArrowGeomEncodingOut =
+                OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTILINESTRING;
+        }
+        else
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Geometry column %s has a type != list<vertices: "
-                     "fixed_size_list<xy: double>[2]>>: %s. "
+                     "fixed_size_list<xy: double>[2]>> and != list<element: "
+                     "list<element: struct<x: double, y: double>>>: %s. "
                      "Handling it as a regular field",
-                     fieldName.c_str(), fieldType->name().c_str());
+                     fieldName.c_str(), fieldType->ToString().c_str());
             return false;
         }
         eGeomTypeOut =
             OGR_GT_SetModifier(wkbMultiLineString, static_cast<int>(bHasZ),
                                static_cast<int>(bHasM));
-        eOGRArrowGeomEncodingOut =
-            OGRArrowGeomEncoding::GEOARROW_MULTILINESTRING;
         return true;
     }
 
-    if (osEncoding == "geoarrow.multipolygon")
+    else if (osEncoding == "geoarrow.multipolygon" ||
+             osEncoding == "multipolygon")
     {
-        if (!IsListOfPointType(fieldType, 3, bHasZ, bHasM))
+        if (IsListOfPointType(fieldType, 3, bHasZ, bHasM))
+        {
+            eOGRArrowGeomEncodingOut =
+                OGRArrowGeomEncoding::GEOARROW_FSL_MULTIPOLYGON;
+        }
+        else if (IsListOfPointStructType(fieldType, 3, bHasZ, bHasM))
+        {
+            eOGRArrowGeomEncodingOut =
+                OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOLYGON;
+        }
+        else
         {
             CPLError(
                 CE_Warning, CPLE_AppDefined,
                 "Geometry column %s has a type != list<polygons: list<rings: "
-                "list<vertices: fixed_size_list<xy: double>[2]>>>: %s. "
+                "list<vertices: fixed_size_list<xy: double>[2]>>> and != "
+                "list<element: list<element: list<element: struct<x: double, "
+                "y: double>>>>: %s. "
                 "Handling it as a regular field",
-                fieldName.c_str(), fieldType->name().c_str());
+                fieldName.c_str(), fieldType->ToString().c_str());
             return false;
         }
         eGeomTypeOut = OGR_GT_SetModifier(
             wkbMultiPolygon, static_cast<int>(bHasZ), static_cast<int>(bHasM));
-        eOGRArrowGeomEncodingOut = OGRArrowGeomEncoding::GEOARROW_MULTIPOLYGON;
         return true;
     }
 
@@ -1653,9 +1781,8 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
 /************************************************************************/
 
 template <bool bHasZ, bool bHasM, int nDim>
-void SetPointsOfLine(OGRLineString *poLS,
-                     const std::shared_ptr<arrow::DoubleArray> &pointValues,
-                     int pointOffset, int numPoints)
+void SetPointsOfLine(OGRLineString *poLS, const arrow::DoubleArray *pointValues,
+                     size_t pointOffset, int numPoints)
 {
     if (!bHasZ && !bHasM)
     {
@@ -1670,9 +1797,9 @@ void SetPointsOfLine(OGRLineString *poLS,
     poLS->setNumPoints(numPoints, FALSE);
     for (int k = 0; k < numPoints; k++)
     {
-        if (bHasZ)
+        if constexpr (bHasZ)
         {
-            if (bHasM)
+            if constexpr (bHasM)
             {
                 poLS->setPoint(k, pointValues->Value(pointOffset + nDim * k),
                                pointValues->Value(pointOffset + nDim * k + 1),
@@ -1695,9 +1822,8 @@ void SetPointsOfLine(OGRLineString *poLS,
     }
 }
 
-typedef void (*SetPointsOfLineType)(OGRLineString *,
-                                    const std::shared_ptr<arrow::DoubleArray> &,
-                                    int, int);
+typedef void (*SetPointsOfLineType)(OGRLineString *, const arrow::DoubleArray *,
+                                    size_t, int);
 
 static SetPointsOfLineType GetSetPointsOfLine(bool bHasZ, bool bHasM)
 {
@@ -1708,6 +1834,89 @@ static SetPointsOfLineType GetSetPointsOfLine(bool bHasZ, bool bHasM)
     if (bHasM)
         return SetPointsOfLine<false, true, 3>;
     return SetPointsOfLine<false, false, 2>;
+}
+
+/************************************************************************/
+/*                        SetPointsOfLineStruct()                       */
+/************************************************************************/
+
+template <bool bHasZ, bool bHasM, int nDim>
+void SetPointsOfLineStruct(OGRLineString *poLS,
+                           const arrow::StructArray *structArray,
+                           size_t pointOffset, int numPoints)
+{
+    CPLAssert(structArray->num_fields() == nDim);
+    const auto &fields = structArray->fields();
+    const auto &fieldX = fields[0];
+    CPLAssert(fieldX->type_id() == arrow::Type::DOUBLE);
+    const auto fieldXDouble = static_cast<arrow::DoubleArray *>(fieldX.get());
+    const auto &fieldY = fields[1];
+    CPLAssert(fieldY->type_id() == arrow::Type::DOUBLE);
+    const auto fieldYDouble = static_cast<arrow::DoubleArray *>(fieldY.get());
+    const arrow::DoubleArray *fieldZDouble = nullptr;
+    const arrow::DoubleArray *fieldMDouble = nullptr;
+    int iField = 2;
+    if constexpr (bHasZ)
+    {
+        const auto &field = fields[iField];
+        ++iField;
+        CPLAssert(field->type_id() == arrow::Type::DOUBLE);
+        fieldZDouble = static_cast<arrow::DoubleArray *>(field.get());
+    }
+    if constexpr (bHasM)
+    {
+        const auto &field = fields[iField];
+        CPLAssert(field->type_id() == arrow::Type::DOUBLE);
+        fieldMDouble = static_cast<arrow::DoubleArray *>(field.get());
+    }
+
+    poLS->setNumPoints(numPoints, FALSE);
+    for (int k = 0; k < numPoints; k++)
+    {
+        if constexpr (bHasZ)
+        {
+            if constexpr (bHasM)
+            {
+                poLS->setPoint(k, fieldXDouble->Value(pointOffset + k),
+                               fieldYDouble->Value(pointOffset + k),
+                               fieldZDouble->Value(pointOffset + k),
+                               fieldMDouble->Value(pointOffset + k));
+            }
+            else
+            {
+                poLS->setPoint(k, fieldXDouble->Value(pointOffset + k),
+                               fieldYDouble->Value(pointOffset + k),
+                               fieldZDouble->Value(pointOffset + k));
+            }
+        }
+        else if constexpr (bHasM)
+        {
+            poLS->setPointM(k, fieldXDouble->Value(pointOffset + k),
+                            fieldYDouble->Value(pointOffset + k),
+                            fieldMDouble->Value(pointOffset + k));
+        }
+        else
+        {
+            poLS->setPoint(k, fieldXDouble->Value(pointOffset + k),
+                           fieldYDouble->Value(pointOffset + k));
+        }
+    }
+}
+
+typedef void (*SetPointsOfLineStructType)(OGRLineString *,
+                                          const arrow::StructArray *, size_t,
+                                          int);
+
+static SetPointsOfLineStructType GetSetPointsOfLineStruct(bool bHasZ,
+                                                          bool bHasM)
+{
+    if (bHasZ && bHasM)
+        return SetPointsOfLineStruct<true, true, 4>;
+    if (bHasZ)
+        return SetPointsOfLineStruct<true, false, 3>;
+    if (bHasM)
+        return SetPointsOfLineStruct<false, true, 3>;
+    return SetPointsOfLineStruct<false, false, 2>;
 }
 
 /************************************************************************/
@@ -2231,8 +2440,7 @@ inline OGRGeometry *OGRArrowLayer::ReadGeometry(int iGeomField,
     const int nDim = 2 + (bHasZ ? 1 : 0) + (bHasM ? 1 : 0);
 
     const auto CreatePoint =
-        [bHasZ, bHasM](const std::shared_ptr<arrow::DoubleArray> &pointValues,
-                       int pointOffset)
+        [bHasZ, bHasM](const arrow::DoubleArray *pointValues, int pointOffset)
     {
         if (bHasZ)
         {
@@ -2262,6 +2470,76 @@ inline OGRGeometry *OGRArrowLayer::ReadGeometry(int iGeomField,
                                 pointValues->Value(pointOffset + 1));
         }
     };
+
+    const auto CreateStructPoint =
+        [nDim, bHasZ, bHasM](const arrow::StructArray *structArray,
+                             int64_t pointOffset)
+    {
+        CPL_IGNORE_RET_VAL(nDim);
+        CPLAssert(structArray->num_fields() == nDim);
+        const auto &fieldX = structArray->field(0);
+        CPLAssert(fieldX->type_id() == arrow::Type::DOUBLE);
+        const auto fieldXDouble =
+            static_cast<arrow::DoubleArray *>(fieldX.get());
+        const auto &fieldY = structArray->field(1);
+        CPLAssert(fieldY->type_id() == arrow::Type::DOUBLE);
+        const auto fieldYDouble =
+            static_cast<arrow::DoubleArray *>(fieldY.get());
+        if (bHasZ)
+        {
+            const auto &fieldZ = structArray->field(2);
+            CPLAssert(fieldZ->type_id() == arrow::Type::DOUBLE);
+            const auto fieldZDouble =
+                static_cast<arrow::DoubleArray *>(fieldZ.get());
+            if (bHasM)
+            {
+                const auto &fieldM = structArray->field(3);
+                CPLAssert(fieldM->type_id() == arrow::Type::DOUBLE);
+                const auto fieldMDouble =
+                    static_cast<arrow::DoubleArray *>(fieldM.get());
+                return new OGRPoint(fieldXDouble->Value(pointOffset),
+                                    fieldYDouble->Value(pointOffset),
+                                    fieldZDouble->Value(pointOffset),
+                                    fieldMDouble->Value(pointOffset));
+            }
+            else
+            {
+                return new OGRPoint(fieldXDouble->Value(pointOffset),
+                                    fieldYDouble->Value(pointOffset),
+                                    fieldZDouble->Value(pointOffset));
+            }
+        }
+        else if (bHasM)
+        {
+            const auto &fieldM = structArray->field(2);
+            CPLAssert(fieldM->type_id() == arrow::Type::DOUBLE);
+            const auto fieldMDouble =
+                static_cast<arrow::DoubleArray *>(fieldM.get());
+            return OGRPoint::createXYM(fieldXDouble->Value(pointOffset),
+                                       fieldYDouble->Value(pointOffset),
+                                       fieldMDouble->Value(pointOffset));
+        }
+        else
+        {
+            return new OGRPoint(fieldXDouble->Value(pointOffset),
+                                fieldYDouble->Value(pointOffset));
+        }
+    };
+
+    // Arrow 14 since https://github.com/apache/arrow/commit/95a8bfb319b2729c8f6daa069433caba3b4ddddd
+    // returns reference to shared pointers, so we can safely take the raw pointer
+    // and cast it.
+    // Earlier versions returned a non-reference shared pointer, so formally it
+    // is safer to use static_pointer_cast (although in practice given that
+    // "values" is a member variable), the Arrow >= 14 path might work...
+#if ARROW_VERSION_MAJOR >= 14
+#define GET_PTR_FROM_VALUES(var, type, values)                                 \
+    const auto var = static_cast<const type *>((values).get())
+#else
+#define GET_PTR_FROM_VALUES(var, type, values)                                 \
+    const auto var##tmp = std::static_pointer_cast<type>(values);              \
+    const auto var = var##tmp.get()
+#endif
 
     switch (m_aeGeomEncoding[iGeomField])
     {
@@ -2330,21 +2608,21 @@ inline OGRGeometry *OGRArrowLayer::ReadGeometry(int iGeomField,
             break;
         }
 
-        case OGRArrowGeomEncoding::GEOARROW_GENERIC:
+        case OGRArrowGeomEncoding::GEOARROW_FSL_GENERIC:
+        case OGRArrowGeomEncoding::GEOARROW_STRUCT_GENERIC:
         {
             CPLAssert(false);
             break;
         }
 
-        case OGRArrowGeomEncoding::GEOARROW_POINT:
+        case OGRArrowGeomEncoding::GEOARROW_FSL_POINT:
         {
             CPLAssert(array->type_id() == arrow::Type::FIXED_SIZE_LIST);
             const auto listArray =
                 static_cast<const arrow::FixedSizeListArray *>(array);
             CPLAssert(listArray->values()->type_id() == arrow::Type::DOUBLE);
-            const auto pointValues =
-                std::static_pointer_cast<arrow::DoubleArray>(
-                    listArray->values());
+            GET_PTR_FROM_VALUES(pointValues, arrow::DoubleArray,
+                                listArray->values());
             if (!pointValues->IsNull(nDim * nIdxInBatch))
             {
                 poGeometry = CreatePoint(pointValues,
@@ -2355,20 +2633,18 @@ inline OGRGeometry *OGRArrowLayer::ReadGeometry(int iGeomField,
             break;
         }
 
-        case OGRArrowGeomEncoding::GEOARROW_LINESTRING:
+        case OGRArrowGeomEncoding::GEOARROW_FSL_LINESTRING:
         {
             CPLAssert(array->type_id() == arrow::Type::LIST);
             const auto listArray = static_cast<const arrow::ListArray *>(array);
             CPLAssert(listArray->values()->type_id() ==
                       arrow::Type::FIXED_SIZE_LIST);
-            const auto listOfPointsValues =
-                std::static_pointer_cast<arrow::FixedSizeListArray>(
-                    listArray->values());
+            GET_PTR_FROM_VALUES(listOfPointsValues, arrow::FixedSizeListArray,
+                                listArray->values());
             CPLAssert(listOfPointsValues->values()->type_id() ==
                       arrow::Type::DOUBLE);
-            const auto pointValues =
-                std::static_pointer_cast<arrow::DoubleArray>(
-                    listOfPointsValues->values());
+            GET_PTR_FROM_VALUES(pointValues, arrow::DoubleArray,
+                                listOfPointsValues->values());
             const auto nPoints = listArray->value_length(nIdxInBatch);
             const auto nPointOffset =
                 listArray->value_offset(nIdxInBatch) * nDim;
@@ -2389,26 +2665,23 @@ inline OGRGeometry *OGRArrowLayer::ReadGeometry(int iGeomField,
             break;
         }
 
-        case OGRArrowGeomEncoding::GEOARROW_POLYGON:
+        case OGRArrowGeomEncoding::GEOARROW_FSL_POLYGON:
         {
             CPLAssert(array->type_id() == arrow::Type::LIST);
             const auto listOfRingsArray =
                 static_cast<const arrow::ListArray *>(array);
             CPLAssert(listOfRingsArray->values()->type_id() ==
                       arrow::Type::LIST);
-            const auto listOfRingsValues =
-                std::static_pointer_cast<arrow::ListArray>(
-                    listOfRingsArray->values());
+            GET_PTR_FROM_VALUES(listOfRingsValues, arrow::ListArray,
+                                listOfRingsArray->values());
             CPLAssert(listOfRingsValues->values()->type_id() ==
                       arrow::Type::FIXED_SIZE_LIST);
-            const auto listOfPointsValues =
-                std::static_pointer_cast<arrow::FixedSizeListArray>(
-                    listOfRingsValues->values());
+            GET_PTR_FROM_VALUES(listOfPointsValues, arrow::FixedSizeListArray,
+                                listOfRingsValues->values());
             CPLAssert(listOfPointsValues->values()->type_id() ==
                       arrow::Type::DOUBLE);
-            const auto pointValues =
-                std::static_pointer_cast<arrow::DoubleArray>(
-                    listOfPointsValues->values());
+            GET_PTR_FROM_VALUES(pointValues, arrow::DoubleArray,
+                                listOfPointsValues->values());
             const auto setPointsFun = GetSetPointsOfLine(bHasZ, bHasM);
             const auto nRings = listOfRingsArray->value_length(nIdxInBatch);
             const auto nRingOffset =
@@ -2438,20 +2711,18 @@ inline OGRGeometry *OGRArrowLayer::ReadGeometry(int iGeomField,
             break;
         }
 
-        case OGRArrowGeomEncoding::GEOARROW_MULTIPOINT:
+        case OGRArrowGeomEncoding::GEOARROW_FSL_MULTIPOINT:
         {
             CPLAssert(array->type_id() == arrow::Type::LIST);
             const auto listArray = static_cast<const arrow::ListArray *>(array);
             CPLAssert(listArray->values()->type_id() ==
                       arrow::Type::FIXED_SIZE_LIST);
-            const auto listOfPointsValues =
-                std::static_pointer_cast<arrow::FixedSizeListArray>(
-                    listArray->values());
+            GET_PTR_FROM_VALUES(listOfPointsValues, arrow::FixedSizeListArray,
+                                listArray->values());
             CPLAssert(listOfPointsValues->values()->type_id() ==
                       arrow::Type::DOUBLE);
-            const auto pointValues =
-                std::static_pointer_cast<arrow::DoubleArray>(
-                    listOfPointsValues->values());
+            GET_PTR_FROM_VALUES(pointValues, arrow::DoubleArray,
+                                listOfPointsValues->values());
             const auto nPoints = listArray->value_length(nIdxInBatch);
             const auto nPointOffset =
                 listArray->value_offset(nIdxInBatch) * nDim;
@@ -2472,26 +2743,23 @@ inline OGRGeometry *OGRArrowLayer::ReadGeometry(int iGeomField,
             break;
         }
 
-        case OGRArrowGeomEncoding::GEOARROW_MULTILINESTRING:
+        case OGRArrowGeomEncoding::GEOARROW_FSL_MULTILINESTRING:
         {
             CPLAssert(array->type_id() == arrow::Type::LIST);
             const auto listOfStringsArray =
                 static_cast<const arrow::ListArray *>(array);
             CPLAssert(listOfStringsArray->values()->type_id() ==
                       arrow::Type::LIST);
-            const auto listOfStringsValues =
-                std::static_pointer_cast<arrow::ListArray>(
-                    listOfStringsArray->values());
+            GET_PTR_FROM_VALUES(listOfStringsValues, arrow::ListArray,
+                                listOfStringsArray->values());
             CPLAssert(listOfStringsValues->values()->type_id() ==
                       arrow::Type::FIXED_SIZE_LIST);
-            const auto listOfPointsValues =
-                std::static_pointer_cast<arrow::FixedSizeListArray>(
-                    listOfStringsValues->values());
+            GET_PTR_FROM_VALUES(listOfPointsValues, arrow::FixedSizeListArray,
+                                listOfStringsValues->values());
             CPLAssert(listOfPointsValues->values()->type_id() ==
                       arrow::Type::DOUBLE);
-            const auto pointValues =
-                std::static_pointer_cast<arrow::DoubleArray>(
-                    listOfPointsValues->values());
+            GET_PTR_FROM_VALUES(pointValues, arrow::DoubleArray,
+                                listOfPointsValues->values());
             const auto setPointsFun = GetSetPointsOfLine(bHasZ, bHasM);
             const auto nStrings = listOfStringsArray->value_length(nIdxInBatch);
             const auto nRingOffset =
@@ -2521,31 +2789,27 @@ inline OGRGeometry *OGRArrowLayer::ReadGeometry(int iGeomField,
             break;
         }
 
-        case OGRArrowGeomEncoding::GEOARROW_MULTIPOLYGON:
+        case OGRArrowGeomEncoding::GEOARROW_FSL_MULTIPOLYGON:
         {
             CPLAssert(array->type_id() == arrow::Type::LIST);
             const auto listOfPartsArray =
                 static_cast<const arrow::ListArray *>(array);
             CPLAssert(listOfPartsArray->values()->type_id() ==
                       arrow::Type::LIST);
-            const auto listOfPartsValues =
-                std::static_pointer_cast<arrow::ListArray>(
-                    listOfPartsArray->values());
+            GET_PTR_FROM_VALUES(listOfPartsValues, arrow::ListArray,
+                                listOfPartsArray->values());
             CPLAssert(listOfPartsValues->values()->type_id() ==
                       arrow::Type::LIST);
-            const auto listOfRingsValues =
-                std::static_pointer_cast<arrow::ListArray>(
-                    listOfPartsValues->values());
+            GET_PTR_FROM_VALUES(listOfRingsValues, arrow::ListArray,
+                                listOfPartsValues->values());
             CPLAssert(listOfRingsValues->values()->type_id() ==
                       arrow::Type::FIXED_SIZE_LIST);
-            const auto listOfPointsValues =
-                std::static_pointer_cast<arrow::FixedSizeListArray>(
-                    listOfRingsValues->values());
+            GET_PTR_FROM_VALUES(listOfPointsValues, arrow::FixedSizeListArray,
+                                listOfRingsValues->values());
             CPLAssert(listOfPointsValues->values()->type_id() ==
                       arrow::Type::DOUBLE);
-            const auto pointValues =
-                std::static_pointer_cast<arrow::DoubleArray>(
-                    listOfPointsValues->values());
+            GET_PTR_FROM_VALUES(pointValues, arrow::DoubleArray,
+                                listOfPointsValues->values());
             auto poMP = new OGRMultiPolygon();
             poGeometry = poMP;
             poGeometry->assignSpatialReference(
@@ -2567,6 +2831,212 @@ inline OGRGeometry *OGRArrowLayer::ReadGeometry(int iGeomField,
                         listOfRingsValues->value_length(nRingOffset + k);
                     const auto nPointOffset =
                         listOfRingsValues->value_offset(nRingOffset + k) * nDim;
+                    auto poRing = new OGRLinearRing();
+                    if (nPoints)
+                    {
+                        setPointsFun(poRing, pointValues, nPointOffset,
+                                     nPoints);
+                    }
+                    poPoly->addRingDirectly(poRing);
+                }
+                poMP->addGeometryDirectly(poPoly);
+            }
+            if (poGeometry->IsEmpty())
+            {
+                poGeometry->set3D(bHasZ);
+                poGeometry->setMeasured(bHasM);
+            }
+            break;
+        }
+
+        case OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT:
+        {
+            CPLAssert(array->type_id() == arrow::Type::STRUCT);
+            const auto structArray =
+                static_cast<const arrow::StructArray *>(array);
+            if (!structArray->IsNull(nIdxInBatch))
+            {
+                poGeometry = CreateStructPoint(structArray, nIdxInBatch);
+                poGeometry->assignSpatialReference(
+                    poGeomFieldDefn->GetSpatialRef());
+            }
+            break;
+        }
+
+        case OGRArrowGeomEncoding::GEOARROW_STRUCT_LINESTRING:
+        {
+            CPLAssert(array->type_id() == arrow::Type::LIST);
+            const auto listArray = static_cast<const arrow::ListArray *>(array);
+            CPLAssert(listArray->values()->type_id() == arrow::Type::STRUCT);
+            GET_PTR_FROM_VALUES(pointValues, arrow::StructArray,
+                                listArray->values());
+            const auto nPoints = listArray->value_length(nIdxInBatch);
+            const auto nPointOffset = listArray->value_offset(nIdxInBatch);
+            auto poLineString = new OGRLineString();
+            poGeometry = poLineString;
+            poGeometry->assignSpatialReference(
+                poGeomFieldDefn->GetSpatialRef());
+            if (nPoints)
+            {
+                GetSetPointsOfLineStruct(bHasZ, bHasM)(
+                    poLineString, pointValues, nPointOffset, nPoints);
+            }
+            else
+            {
+                poGeometry->set3D(bHasZ);
+                poGeometry->setMeasured(bHasM);
+            }
+            break;
+        }
+
+        case OGRArrowGeomEncoding::GEOARROW_STRUCT_POLYGON:
+        {
+            CPLAssert(array->type_id() == arrow::Type::LIST);
+            const auto listOfRingsArray =
+                static_cast<const arrow::ListArray *>(array);
+            CPLAssert(listOfRingsArray->values()->type_id() ==
+                      arrow::Type::LIST);
+            GET_PTR_FROM_VALUES(listOfRingsValues, arrow::ListArray,
+                                listOfRingsArray->values());
+            CPLAssert(listOfRingsValues->values()->type_id() ==
+                      arrow::Type::STRUCT);
+            GET_PTR_FROM_VALUES(pointValues, arrow::StructArray,
+                                listOfRingsValues->values());
+            const auto setPointsFun = GetSetPointsOfLineStruct(bHasZ, bHasM);
+            const auto nRings = listOfRingsArray->value_length(nIdxInBatch);
+            const auto nRingOffset =
+                listOfRingsArray->value_offset(nIdxInBatch);
+            auto poPoly = new OGRPolygon();
+            poGeometry = poPoly;
+            poGeometry->assignSpatialReference(
+                poGeomFieldDefn->GetSpatialRef());
+            for (auto k = decltype(nRings){0}; k < nRings; k++)
+            {
+                const auto nPoints =
+                    listOfRingsValues->value_length(nRingOffset + k);
+                const auto nPointOffset =
+                    listOfRingsValues->value_offset(nRingOffset + k);
+                auto poRing = new OGRLinearRing();
+                if (nPoints)
+                {
+                    setPointsFun(poRing, pointValues, nPointOffset, nPoints);
+                }
+                poPoly->addRingDirectly(poRing);
+            }
+            if (poGeometry->IsEmpty())
+            {
+                poGeometry->set3D(bHasZ);
+                poGeometry->setMeasured(bHasM);
+            }
+            break;
+        }
+
+        case OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOINT:
+        {
+            CPLAssert(array->type_id() == arrow::Type::LIST);
+            const auto listArray = static_cast<const arrow::ListArray *>(array);
+            CPLAssert(listArray->values()->type_id() == arrow::Type::STRUCT);
+            GET_PTR_FROM_VALUES(pointValues, arrow::StructArray,
+                                listArray->values());
+            const auto nPoints = listArray->value_length(nIdxInBatch);
+            const auto nPointOffset = listArray->value_offset(nIdxInBatch);
+            auto poMultiPoint = new OGRMultiPoint();
+            poGeometry = poMultiPoint;
+            poGeometry->assignSpatialReference(
+                poGeomFieldDefn->GetSpatialRef());
+            for (auto k = decltype(nPoints){0}; k < nPoints; k++)
+            {
+                poMultiPoint->addGeometryDirectly(
+                    CreateStructPoint(pointValues, nPointOffset + k));
+            }
+            if (poGeometry->IsEmpty())
+            {
+                poGeometry->set3D(bHasZ);
+                poGeometry->setMeasured(bHasM);
+            }
+            break;
+        }
+
+        case OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTILINESTRING:
+        {
+            CPLAssert(array->type_id() == arrow::Type::LIST);
+            const auto listOfStringsArray =
+                static_cast<const arrow::ListArray *>(array);
+            CPLAssert(listOfStringsArray->values()->type_id() ==
+                      arrow::Type::LIST);
+            GET_PTR_FROM_VALUES(listOfStringsValues, arrow::ListArray,
+                                listOfStringsArray->values());
+            CPLAssert(listOfStringsValues->values()->type_id() ==
+                      arrow::Type::STRUCT);
+            GET_PTR_FROM_VALUES(pointValues, arrow::StructArray,
+                                listOfStringsValues->values());
+            const auto setPointsFun = GetSetPointsOfLineStruct(bHasZ, bHasM);
+            const auto nStrings = listOfStringsArray->value_length(nIdxInBatch);
+            const auto nRingOffset =
+                listOfStringsArray->value_offset(nIdxInBatch);
+            auto poMLS = new OGRMultiLineString();
+            poGeometry = poMLS;
+            poGeometry->assignSpatialReference(
+                poGeomFieldDefn->GetSpatialRef());
+            for (auto k = decltype(nStrings){0}; k < nStrings; k++)
+            {
+                const auto nPoints =
+                    listOfStringsValues->value_length(nRingOffset + k);
+                const auto nPointOffset =
+                    listOfStringsValues->value_offset(nRingOffset + k);
+                auto poLS = new OGRLineString();
+                if (nPoints)
+                {
+                    setPointsFun(poLS, pointValues, nPointOffset, nPoints);
+                }
+                poMLS->addGeometryDirectly(poLS);
+            }
+            if (poGeometry->IsEmpty())
+            {
+                poGeometry->set3D(bHasZ);
+                poGeometry->setMeasured(bHasM);
+            }
+            break;
+        }
+
+        case OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOLYGON:
+        {
+            CPLAssert(array->type_id() == arrow::Type::LIST);
+            const auto listOfPartsArray =
+                static_cast<const arrow::ListArray *>(array);
+            CPLAssert(listOfPartsArray->values()->type_id() ==
+                      arrow::Type::LIST);
+            GET_PTR_FROM_VALUES(listOfPartsValues, arrow::ListArray,
+                                listOfPartsArray->values());
+            CPLAssert(listOfPartsValues->values()->type_id() ==
+                      arrow::Type::LIST);
+            GET_PTR_FROM_VALUES(listOfRingsValues, arrow::ListArray,
+                                listOfPartsValues->values());
+            CPLAssert(listOfRingsValues->values()->type_id() ==
+                      arrow::Type::STRUCT);
+            GET_PTR_FROM_VALUES(pointValues, arrow::StructArray,
+                                listOfRingsValues->values());
+            auto poMP = new OGRMultiPolygon();
+            poGeometry = poMP;
+            poGeometry->assignSpatialReference(
+                poGeomFieldDefn->GetSpatialRef());
+            const auto setPointsFun = GetSetPointsOfLineStruct(bHasZ, bHasM);
+            const auto nParts = listOfPartsArray->value_length(nIdxInBatch);
+            const auto nPartOffset =
+                listOfPartsArray->value_offset(nIdxInBatch);
+            for (auto j = decltype(nParts){0}; j < nParts; j++)
+            {
+                const auto nRings =
+                    listOfPartsValues->value_length(nPartOffset + j);
+                const auto nRingOffset =
+                    listOfPartsValues->value_offset(nPartOffset + j);
+                auto poPoly = new OGRPolygon();
+                for (auto k = decltype(nRings){0}; k < nRings; k++)
+                {
+                    const auto nPoints =
+                        listOfRingsValues->value_length(nRingOffset + k);
+                    const auto nPointOffset =
+                        listOfRingsValues->value_offset(nRingOffset + k);
                     auto poRing = new OGRLinearRing();
                     if (nPoints)
                     {
@@ -3468,11 +3938,11 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
             iCol = m_anMapGeomFieldIndexToArrowColumn[m_iGeomFieldFilter];
         }
 
-        OGREnvelope sEnvelopeSkipToNextFeatureDueToBBOX;
-        const auto SkipToNextFeatureDueToBBOX =
-            [this, &sEnvelopeSkipToNextFeatureDueToBBOX]()
+        if (m_poArrayXMinFloat || m_poArrayXMinDouble)
         {
-            if (!m_poArrayBBOX || !m_poArrayBBOX->IsNull(m_nIdxInBatch))
+            OGREnvelope sEnvelopeSkipToNextFeatureDueToBBOX;
+            const auto IntersectsBBOX =
+                [this, &sEnvelopeSkipToNextFeatureDueToBBOX]()
             {
                 if (m_poArrayXMinFloat &&
                     !m_poArrayXMinFloat->IsNull(m_nIdxInBatch))
@@ -3485,7 +3955,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                         m_poArrayXMaxFloat->Value(m_nIdxInBatch);
                     sEnvelopeSkipToNextFeatureDueToBBOX.MaxY =
                         m_poArrayYMaxFloat->Value(m_nIdxInBatch);
-                    if (!m_sFilterEnvelope.Intersects(
+                    if (m_sFilterEnvelope.Intersects(
                             sEnvelopeSkipToNextFeatureDueToBBOX))
                     {
                         return true;
@@ -3502,46 +3972,60 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                         m_poArrayXMaxDouble->Value(m_nIdxInBatch);
                     sEnvelopeSkipToNextFeatureDueToBBOX.MaxY =
                         m_poArrayYMaxDouble->Value(m_nIdxInBatch);
-                    if (!m_sFilterEnvelope.Intersects(
+                    if (m_sFilterEnvelope.Intersects(
                             sEnvelopeSkipToNextFeatureDueToBBOX))
                     {
                         return true;
                     }
                 }
-            }
-            return false;
-        };
+                return false;
+            };
 
-        if (iCol >= 0 &&
-            m_aeGeomEncoding[m_iGeomFieldFilter] == OGRArrowGeomEncoding::WKB)
+            while (true)
+            {
+                if (!m_poArrayBBOX->IsNull(m_nIdxInBatch) && IntersectsBBOX() &&
+                    (m_asAttributeFilterConstraints.empty() ||
+                     !SkipToNextFeatureDueToAttributeFilter()))
+                {
+                    break;
+                }
+
+                IncrFeatureIdx();
+                m_nIdxInBatch++;
+                if (m_nIdxInBatch == m_poBatch->num_rows())
+                {
+                    m_bEOF = !ReadNextBatch();
+                    if (m_bEOF)
+                        return nullptr;
+                }
+            }
+        }
+        else if (iCol >= 0 && m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                                  OGRArrowGeomEncoding::WKB)
         {
             CPLAssert(m_poArrayWKB || m_poArrayWKBLarge);
             OGREnvelope sEnvelope;
 
             while (true)
             {
-                bool bSkipToNextFeature = false;
+                bool bMatchBBOX = false;
                 if ((m_poArrayWKB && m_poArrayWKB->IsNull(m_nIdxInBatch)) ||
                     (m_poArrayWKBLarge &&
                      m_poArrayWKBLarge->IsNull(m_nIdxInBatch)))
                 {
-                    bSkipToNextFeature = true;
+                    // nothing to do
                 }
                 else
                 {
-                    if (m_poArrayXMinFloat || m_poArrayXMinDouble)
-                    {
-                        bSkipToNextFeature = SkipToNextFeatureDueToBBOX();
-                    }
-                    else if (m_poArrayWKB)
+                    if (m_poArrayWKB)
                     {
                         int out_length = 0;
                         const uint8_t *data =
                             m_poArrayWKB->GetValue(m_nIdxInBatch, &out_length);
                         if (OGRWKBGetBoundingBox(data, out_length, sEnvelope) &&
-                            !m_sFilterEnvelope.Intersects(sEnvelope))
+                            m_sFilterEnvelope.Intersects(sEnvelope))
                         {
-                            bSkipToNextFeature = true;
+                            bMatchBBOX = true;
                         }
                     }
                     else
@@ -3554,23 +4038,19 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                             OGRWKBGetBoundingBox(data,
                                                  static_cast<int>(out_length64),
                                                  sEnvelope) &&
-                            !m_sFilterEnvelope.Intersects(sEnvelope))
+                            m_sFilterEnvelope.Intersects(sEnvelope))
                         {
-                            bSkipToNextFeature = true;
+                            bMatchBBOX = true;
                         }
                     }
                 }
-                if (!bSkipToNextFeature)
-                {
-                    break;
-                }
-                if (!m_asAttributeFilterConstraints.empty() &&
-                    !SkipToNextFeatureDueToAttributeFilter())
+                if (bMatchBBOX && (m_asAttributeFilterConstraints.empty() ||
+                                   !SkipToNextFeatureDueToAttributeFilter()))
                 {
                     break;
                 }
 
-                m_nFeatureIdx++;
+                IncrFeatureIdx();
                 m_nIdxInBatch++;
                 if (m_nIdxInBatch == m_poBatch->num_rows())
                 {
@@ -3580,8 +4060,9 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                 }
             }
         }
-        else if (iCol >= 0 && m_aeGeomEncoding[m_iGeomFieldFilter] ==
-                                  OGRArrowGeomEncoding::GEOARROW_MULTIPOLYGON)
+        else if (iCol >= 0 &&
+                 m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                     OGRArrowGeomEncoding::GEOARROW_FSL_MULTIPOLYGON)
         {
             const auto poGeomFieldDefn =
                 m_poFeatureDefn->GetGeomFieldDefn(m_iGeomFieldFilter);
@@ -3590,133 +4071,603 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
             const bool bHasM = CPL_TO_BOOL(OGR_GT_HasM(eGeomType));
             const int nDim = 2 + (bHasZ ? 1 : 0) + (bHasM ? 1 : 0);
 
-        begin_multipolygon:
-            auto array = m_poBatchColumns[iCol].get();
-            CPLAssert(array->type_id() == arrow::Type::LIST);
-            auto listOfPartsArray =
-                static_cast<const arrow::ListArray *>(array);
-            CPLAssert(listOfPartsArray->values()->type_id() ==
-                      arrow::Type::LIST);
-            auto listOfPartsValues = std::static_pointer_cast<arrow::ListArray>(
-                listOfPartsArray->values());
-            CPLAssert(listOfPartsValues->values()->type_id() ==
-                      arrow::Type::LIST);
-            auto listOfRingsValues = std::static_pointer_cast<arrow::ListArray>(
-                listOfPartsValues->values());
-            CPLAssert(listOfRingsValues->values()->type_id() ==
-                      arrow::Type::FIXED_SIZE_LIST);
-            auto listOfPointsValues =
-                std::static_pointer_cast<arrow::FixedSizeListArray>(
-                    listOfRingsValues->values());
-            CPLAssert(listOfPointsValues->values()->type_id() ==
-                      arrow::Type::DOUBLE);
-            auto pointValues = std::static_pointer_cast<arrow::DoubleArray>(
-                listOfPointsValues->values());
-
-            while (true)
+            bool bReturnFeature;
+            do
             {
-                bool bSkipToNextFeature = false;
-                if (m_poArrayXMinFloat || m_poArrayXMinDouble)
+                bReturnFeature = false;
+                auto array = m_poBatchColumns[iCol].get();
+                CPLAssert(array->type_id() == arrow::Type::LIST);
+                auto listOfPartsArray =
+                    static_cast<const arrow::ListArray *>(array);
+                CPLAssert(listOfPartsArray->values()->type_id() ==
+                          arrow::Type::LIST);
+                auto listOfPartsValues =
+                    std::static_pointer_cast<arrow::ListArray>(
+                        listOfPartsArray->values());
+                CPLAssert(listOfPartsValues->values()->type_id() ==
+                          arrow::Type::LIST);
+                auto listOfRingsValues =
+                    std::static_pointer_cast<arrow::ListArray>(
+                        listOfPartsValues->values());
+                CPLAssert(listOfRingsValues->values()->type_id() ==
+                          arrow::Type::FIXED_SIZE_LIST);
+                auto listOfPointsValues =
+                    std::static_pointer_cast<arrow::FixedSizeListArray>(
+                        listOfRingsValues->values());
+                CPLAssert(listOfPointsValues->values()->type_id() ==
+                          arrow::Type::DOUBLE);
+                auto pointValues = std::static_pointer_cast<arrow::DoubleArray>(
+                    listOfPointsValues->values());
+
+                while (true)
                 {
-                    bSkipToNextFeature = SkipToNextFeatureDueToBBOX();
-                }
-                else if (!listOfPartsArray->IsNull(m_nIdxInBatch))
-                {
-                    OGREnvelope sEnvelope;
-                    const auto nParts =
-                        listOfPartsArray->value_length(m_nIdxInBatch);
-                    const auto nPartOffset =
-                        listOfPartsArray->value_offset(m_nIdxInBatch);
-                    for (auto j = decltype(nParts){0}; j < nParts; j++)
+                    bool bMatchBBOX = false;
+                    if (!listOfPartsArray->IsNull(m_nIdxInBatch))
                     {
+                        OGREnvelope sEnvelope;
+                        const auto nParts =
+                            listOfPartsArray->value_length(m_nIdxInBatch);
+                        const auto nPartOffset =
+                            listOfPartsArray->value_offset(m_nIdxInBatch);
+                        for (auto j = decltype(nParts){0}; j < nParts; j++)
+                        {
+                            const auto nRings = listOfPartsValues->value_length(
+                                nPartOffset + j);
+                            const auto nRingOffset =
+                                listOfPartsValues->value_offset(nPartOffset +
+                                                                j);
+                            if (nRings >= 1)
+                            {
+                                const auto nPoints =
+                                    listOfRingsValues->value_length(
+                                        nRingOffset);
+                                const auto nPointOffset =
+                                    listOfRingsValues->value_offset(
+                                        nRingOffset) *
+                                    nDim;
+                                const double *padfRawValue =
+                                    pointValues->raw_values() + nPointOffset;
+                                for (auto l = decltype(nPoints){0}; l < nPoints;
+                                     ++l)
+                                {
+                                    sEnvelope.Merge(padfRawValue[nDim * l],
+                                                    padfRawValue[nDim * l + 1]);
+                                }
+                                // for bounding box, only the first ring matters
+                            }
+                        }
+
+                        if (nParts != 0 &&
+                            m_sFilterEnvelope.Intersects(sEnvelope))
+                        {
+                            bMatchBBOX = true;
+                        }
+                    }
+                    if (bMatchBBOX &&
+                        (m_asAttributeFilterConstraints.empty() ||
+                         !SkipToNextFeatureDueToAttributeFilter()))
+                    {
+                        bReturnFeature = true;
+                        break;
+                    }
+
+                    IncrFeatureIdx();
+                    m_nIdxInBatch++;
+                    if (m_nIdxInBatch == m_poBatch->num_rows())
+                    {
+                        m_bEOF = !ReadNextBatch();
+                        if (m_bEOF)
+                            return nullptr;
+                        break;
+                    }
+                }
+            } while (!bReturnFeature);
+        }
+        else if (iCol >= 0 && m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                                  OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT)
+        {
+            bool bReturnFeature;
+            do
+            {
+                bReturnFeature = false;
+                auto array = m_poBatchColumns[iCol].get();
+                CPLAssert(array->type_id() == arrow::Type::STRUCT);
+                auto pointValues =
+                    static_cast<const arrow::StructArray *>(array);
+                const auto &fields = pointValues->fields();
+                const auto &fieldX = fields[0];
+                CPLAssert(fieldX->type_id() == arrow::Type::DOUBLE);
+                const auto fieldXDouble =
+                    static_cast<arrow::DoubleArray *>(fieldX.get());
+                const auto &fieldY = fields[1];
+                CPLAssert(fieldY->type_id() == arrow::Type::DOUBLE);
+                const auto fieldYDouble =
+                    static_cast<arrow::DoubleArray *>(fieldY.get());
+
+                while (true)
+                {
+                    bool bMatchBBOX = false;
+                    if (!array->IsNull(m_nIdxInBatch))
+                    {
+                        const double dfX = fieldXDouble->Value(m_nIdxInBatch);
+                        const double dfY = fieldYDouble->Value(m_nIdxInBatch);
+                        if (dfX >= m_sFilterEnvelope.MinX &&
+                            dfY >= m_sFilterEnvelope.MinY &&
+                            dfX <= m_sFilterEnvelope.MaxX &&
+                            dfY <= m_sFilterEnvelope.MaxY)
+                        {
+                            bMatchBBOX = true;
+                        }
+                    }
+                    if (bMatchBBOX &&
+                        (m_asAttributeFilterConstraints.empty() ||
+                         !SkipToNextFeatureDueToAttributeFilter()))
+                    {
+                        bReturnFeature = true;
+                        break;
+                    }
+
+                    IncrFeatureIdx();
+                    m_nIdxInBatch++;
+                    if (m_nIdxInBatch == m_poBatch->num_rows())
+                    {
+                        m_bEOF = !ReadNextBatch();
+                        if (m_bEOF)
+                            return nullptr;
+                        break;
+                    }
+                }
+            } while (!bReturnFeature);
+        }
+        else if (iCol >= 0 &&
+                 m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                     OGRArrowGeomEncoding::GEOARROW_STRUCT_LINESTRING)
+        {
+            bool bReturnFeature;
+            do
+            {
+                bReturnFeature = false;
+                auto array = m_poBatchColumns[iCol].get();
+                CPLAssert(array->type_id() == arrow::Type::LIST);
+                const auto listArray =
+                    static_cast<const arrow::ListArray *>(array);
+                CPLAssert(listArray->values()->type_id() ==
+                          arrow::Type::STRUCT);
+                auto pointValues = std::static_pointer_cast<arrow::StructArray>(
+                    listArray->values());
+                const auto &fields = pointValues->fields();
+                const auto &fieldX = fields[0];
+                CPLAssert(fieldX->type_id() == arrow::Type::DOUBLE);
+                const auto fieldXDouble =
+                    static_cast<arrow::DoubleArray *>(fieldX.get());
+                const auto &fieldY = fields[1];
+                CPLAssert(fieldY->type_id() == arrow::Type::DOUBLE);
+                const auto fieldYDouble =
+                    static_cast<arrow::DoubleArray *>(fieldY.get());
+
+                while (true)
+                {
+                    bool bMatchBBOX = false;
+                    if (!listArray->IsNull(m_nIdxInBatch))
+                    {
+                        OGREnvelope sEnvelope;
+                        const auto nPoints =
+                            listArray->value_length(m_nIdxInBatch);
+                        const auto nPointOffset =
+                            listArray->value_offset(m_nIdxInBatch);
+                        if (nPoints > 0)
+                        {
+                            const double *padfRawXValue =
+                                fieldXDouble->raw_values() + nPointOffset;
+                            const double *padfRawYValue =
+                                fieldYDouble->raw_values() + nPointOffset;
+                            for (auto l = decltype(nPoints){0}; l < nPoints;
+                                 ++l)
+                            {
+                                sEnvelope.Merge(padfRawXValue[l],
+                                                padfRawYValue[l]);
+                            }
+                            if (m_sFilterEnvelope.Intersects(sEnvelope))
+                            {
+                                bMatchBBOX = true;
+                            }
+                        }
+                    }
+                    if (bMatchBBOX &&
+                        (m_asAttributeFilterConstraints.empty() ||
+                         !SkipToNextFeatureDueToAttributeFilter()))
+                    {
+                        bReturnFeature = true;
+                        break;
+                    }
+
+                    IncrFeatureIdx();
+                    m_nIdxInBatch++;
+                    if (m_nIdxInBatch == m_poBatch->num_rows())
+                    {
+                        m_bEOF = !ReadNextBatch();
+                        if (m_bEOF)
+                            return nullptr;
+                        break;
+                    }
+                }
+            } while (!bReturnFeature);
+        }
+        else if (iCol >= 0 && m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                                  OGRArrowGeomEncoding::GEOARROW_STRUCT_POLYGON)
+        {
+            bool bReturnFeature;
+            do
+            {
+                bReturnFeature = false;
+                auto array = m_poBatchColumns[iCol].get();
+                CPLAssert(array->type_id() == arrow::Type::LIST);
+                const auto listOfRingsArray =
+                    static_cast<const arrow::ListArray *>(array);
+                CPLAssert(listOfRingsArray->values()->type_id() ==
+                          arrow::Type::LIST);
+                const auto listOfRingsValues =
+                    std::static_pointer_cast<arrow::ListArray>(
+                        listOfRingsArray->values());
+                CPLAssert(listOfRingsValues->values()->type_id() ==
+                          arrow::Type::STRUCT);
+                auto pointValues = std::static_pointer_cast<arrow::StructArray>(
+                    listOfRingsValues->values());
+                const auto &fields = pointValues->fields();
+                const auto &fieldX = fields[0];
+                CPLAssert(fieldX->type_id() == arrow::Type::DOUBLE);
+                const auto fieldXDouble =
+                    static_cast<arrow::DoubleArray *>(fieldX.get());
+                const auto &fieldY = fields[1];
+                CPLAssert(fieldY->type_id() == arrow::Type::DOUBLE);
+                const auto fieldYDouble =
+                    static_cast<arrow::DoubleArray *>(fieldY.get());
+
+                while (true)
+                {
+                    bool bMatchBBOX = false;
+                    if (!listOfRingsArray->IsNull(m_nIdxInBatch))
+                    {
+                        OGREnvelope sEnvelope;
                         const auto nRings =
-                            listOfPartsValues->value_length(nPartOffset + j);
+                            listOfRingsArray->value_length(m_nIdxInBatch);
                         const auto nRingOffset =
-                            listOfPartsValues->value_offset(nPartOffset + j);
+                            listOfRingsArray->value_offset(m_nIdxInBatch);
                         if (nRings >= 1)
                         {
                             const auto nPoints =
                                 listOfRingsValues->value_length(nRingOffset);
                             const auto nPointOffset =
-                                listOfRingsValues->value_offset(nRingOffset) *
-                                nDim;
-                            const double *padfRawValue =
-                                pointValues->raw_values() + nPointOffset;
+                                listOfRingsValues->value_offset(nRingOffset);
+                            const double *padfRawXValue =
+                                fieldXDouble->raw_values() + nPointOffset;
+                            const double *padfRawYValue =
+                                fieldYDouble->raw_values() + nPointOffset;
                             for (auto l = decltype(nPoints){0}; l < nPoints;
                                  ++l)
                             {
-                                sEnvelope.Merge(padfRawValue[nDim * l],
-                                                padfRawValue[nDim * l + 1]);
+                                sEnvelope.Merge(padfRawXValue[l],
+                                                padfRawYValue[l]);
                             }
                             // for bounding box, only the first ring matters
+
+                            if (m_sFilterEnvelope.Intersects(sEnvelope))
+                            {
+                                bMatchBBOX = true;
+                            }
                         }
                     }
-
-                    if (nParts != 0 && m_sFilterEnvelope.Intersects(sEnvelope))
+                    if (bMatchBBOX &&
+                        (m_asAttributeFilterConstraints.empty() ||
+                         !SkipToNextFeatureDueToAttributeFilter()))
                     {
-                        bSkipToNextFeature = true;
+                        bReturnFeature = true;
+                        break;
+                    }
+
+                    IncrFeatureIdx();
+                    m_nIdxInBatch++;
+                    if (m_nIdxInBatch == m_poBatch->num_rows())
+                    {
+                        m_bEOF = !ReadNextBatch();
+                        if (m_bEOF)
+                            return nullptr;
+                        break;
                     }
                 }
-                if (!bSkipToNextFeature)
-                {
-                    break;
-                }
-                if (!m_asAttributeFilterConstraints.empty() &&
-                    !SkipToNextFeatureDueToAttributeFilter())
-                {
-                    break;
-                }
+            } while (!bReturnFeature);
+        }
+        else if (iCol >= 0 &&
+                 m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                     OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOINT)
+        {
+            bool bReturnFeature;
+            do
+            {
+                bReturnFeature = false;
+                auto array = m_poBatchColumns[iCol].get();
+                CPLAssert(array->type_id() == arrow::Type::LIST);
+                const auto listArray =
+                    static_cast<const arrow::ListArray *>(array);
+                CPLAssert(listArray->values()->type_id() ==
+                          arrow::Type::STRUCT);
+                auto pointValues = std::static_pointer_cast<arrow::StructArray>(
+                    listArray->values());
+                const auto &fields = pointValues->fields();
+                const auto &fieldX = fields[0];
+                CPLAssert(fieldX->type_id() == arrow::Type::DOUBLE);
+                const auto fieldXDouble =
+                    static_cast<arrow::DoubleArray *>(fieldX.get());
+                const auto &fieldY = fields[1];
+                CPLAssert(fieldY->type_id() == arrow::Type::DOUBLE);
+                const auto fieldYDouble =
+                    static_cast<arrow::DoubleArray *>(fieldY.get());
 
-                m_nFeatureIdx++;
-                m_nIdxInBatch++;
-                if (m_nIdxInBatch == m_poBatch->num_rows())
+                while (true)
                 {
-                    m_bEOF = !ReadNextBatch();
-                    if (m_bEOF)
-                        return nullptr;
-                    goto begin_multipolygon;
+                    bool bMatchBBOX = false;
+                    if (!listArray->IsNull(m_nIdxInBatch))
+                    {
+                        const auto nPoints =
+                            listArray->value_length(m_nIdxInBatch);
+                        const auto nPointOffset =
+                            listArray->value_offset(m_nIdxInBatch);
+                        if (nPoints > 0)
+                        {
+                            const double *padfRawXValue =
+                                fieldXDouble->raw_values() + nPointOffset;
+                            const double *padfRawYValue =
+                                fieldYDouble->raw_values() + nPointOffset;
+                            for (auto l = decltype(nPoints){0}; l < nPoints;
+                                 ++l)
+                            {
+                                if (padfRawXValue[l] >=
+                                        m_sFilterEnvelope.MinX &&
+                                    padfRawYValue[l] >=
+                                        m_sFilterEnvelope.MinY &&
+                                    padfRawXValue[l] <=
+                                        m_sFilterEnvelope.MaxX &&
+                                    padfRawYValue[l] <= m_sFilterEnvelope.MaxY)
+                                {
+                                    bMatchBBOX = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (bMatchBBOX &&
+                        (m_asAttributeFilterConstraints.empty() ||
+                         !SkipToNextFeatureDueToAttributeFilter()))
+                    {
+                        bReturnFeature = true;
+                        break;
+                    }
+
+                    IncrFeatureIdx();
+                    m_nIdxInBatch++;
+                    if (m_nIdxInBatch == m_poBatch->num_rows())
+                    {
+                        m_bEOF = !ReadNextBatch();
+                        if (m_bEOF)
+                            return nullptr;
+                        break;
+                    }
                 }
-            }
+            } while (!bReturnFeature);
+        }
+        else if (iCol >= 0 &&
+                 m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                     OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTILINESTRING)
+        {
+            bool bReturnFeature;
+            do
+            {
+                bReturnFeature = false;
+                auto array = m_poBatchColumns[iCol].get();
+                CPLAssert(array->type_id() == arrow::Type::LIST);
+                auto listOfPartsArray =
+                    static_cast<const arrow::ListArray *>(array);
+                CPLAssert(listOfPartsArray->values()->type_id() ==
+                          arrow::Type::LIST);
+                auto listOfPartsValues =
+                    std::static_pointer_cast<arrow::ListArray>(
+                        listOfPartsArray->values());
+                CPLAssert(listOfPartsValues->values()->type_id() ==
+                          arrow::Type::STRUCT);
+                auto pointValues = std::static_pointer_cast<arrow::StructArray>(
+                    listOfPartsValues->values());
+                const auto &fields = pointValues->fields();
+                const auto &fieldX = fields[0];
+                CPLAssert(fieldX->type_id() == arrow::Type::DOUBLE);
+                const auto fieldXDouble =
+                    static_cast<arrow::DoubleArray *>(fieldX.get());
+                const auto &fieldY = fields[1];
+                CPLAssert(fieldY->type_id() == arrow::Type::DOUBLE);
+                const auto fieldYDouble =
+                    static_cast<arrow::DoubleArray *>(fieldY.get());
+
+                while (true)
+                {
+                    bool bMatchBBOX = false;
+                    if (!listOfPartsArray->IsNull(m_nIdxInBatch))
+                    {
+                        const auto nParts =
+                            listOfPartsArray->value_length(m_nIdxInBatch);
+                        const auto nPartOffset =
+                            listOfPartsArray->value_offset(m_nIdxInBatch);
+                        for (auto j = decltype(nParts){0};
+                             j < nParts && !bMatchBBOX; j++)
+                        {
+                            OGREnvelope sEnvelope;
+                            const auto nPoints =
+                                listOfPartsValues->value_length(nPartOffset +
+                                                                j);
+                            const auto nPointOffset =
+                                listOfPartsValues->value_offset(nPartOffset +
+                                                                j);
+                            const double *padfRawXValue =
+                                fieldXDouble->raw_values() + nPointOffset;
+                            const double *padfRawYValue =
+                                fieldYDouble->raw_values() + nPointOffset;
+                            for (auto l = decltype(nPoints){0}; l < nPoints;
+                                 ++l)
+                            {
+                                sEnvelope.Merge(padfRawXValue[l],
+                                                padfRawYValue[l]);
+                            }
+
+                            if (m_sFilterEnvelope.Intersects(sEnvelope))
+                            {
+                                bMatchBBOX = true;
+                            }
+                        }
+                    }
+                    if (bMatchBBOX &&
+                        (m_asAttributeFilterConstraints.empty() ||
+                         !SkipToNextFeatureDueToAttributeFilter()))
+                    {
+                        bReturnFeature = true;
+                        break;
+                    }
+
+                    IncrFeatureIdx();
+                    m_nIdxInBatch++;
+                    if (m_nIdxInBatch == m_poBatch->num_rows())
+                    {
+                        m_bEOF = !ReadNextBatch();
+                        if (m_bEOF)
+                            return nullptr;
+                        break;
+                    }
+                }
+            } while (!bReturnFeature);
+        }
+        else if (iCol >= 0 &&
+                 m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                     OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOLYGON)
+        {
+            bool bReturnFeature;
+            do
+            {
+                bReturnFeature = false;
+                auto array = m_poBatchColumns[iCol].get();
+                CPLAssert(array->type_id() == arrow::Type::LIST);
+                auto listOfPartsArray =
+                    static_cast<const arrow::ListArray *>(array);
+                CPLAssert(listOfPartsArray->values()->type_id() ==
+                          arrow::Type::LIST);
+                auto listOfPartsValues =
+                    std::static_pointer_cast<arrow::ListArray>(
+                        listOfPartsArray->values());
+                CPLAssert(listOfPartsValues->values()->type_id() ==
+                          arrow::Type::LIST);
+                auto listOfRingsValues =
+                    std::static_pointer_cast<arrow::ListArray>(
+                        listOfPartsValues->values());
+                CPLAssert(listOfRingsValues->values()->type_id() ==
+                          arrow::Type::STRUCT);
+                auto pointValues = std::static_pointer_cast<arrow::StructArray>(
+                    listOfRingsValues->values());
+                const auto &fields = pointValues->fields();
+                const auto &fieldX = fields[0];
+                CPLAssert(fieldX->type_id() == arrow::Type::DOUBLE);
+                const auto fieldXDouble =
+                    static_cast<arrow::DoubleArray *>(fieldX.get());
+                const auto &fieldY = fields[1];
+                CPLAssert(fieldY->type_id() == arrow::Type::DOUBLE);
+                const auto fieldYDouble =
+                    static_cast<arrow::DoubleArray *>(fieldY.get());
+
+                while (true)
+                {
+                    bool bMatchBBOX = false;
+                    if (!listOfPartsArray->IsNull(m_nIdxInBatch))
+                    {
+                        const auto nParts =
+                            listOfPartsArray->value_length(m_nIdxInBatch);
+                        const auto nPartOffset =
+                            listOfPartsArray->value_offset(m_nIdxInBatch);
+                        for (auto j = decltype(nParts){0};
+                             j < nParts && !bMatchBBOX; j++)
+                        {
+                            OGREnvelope sEnvelope;
+                            const auto nRings = listOfPartsValues->value_length(
+                                nPartOffset + j);
+                            const auto nRingOffset =
+                                listOfPartsValues->value_offset(nPartOffset +
+                                                                j);
+                            if (nRings >= 1)
+                            {
+                                const auto nPoints =
+                                    listOfRingsValues->value_length(
+                                        nRingOffset);
+                                const auto nPointOffset =
+                                    listOfRingsValues->value_offset(
+                                        nRingOffset);
+                                const double *padfRawXValue =
+                                    fieldXDouble->raw_values() + nPointOffset;
+                                const double *padfRawYValue =
+                                    fieldYDouble->raw_values() + nPointOffset;
+                                for (auto l = decltype(nPoints){0}; l < nPoints;
+                                     ++l)
+                                {
+                                    sEnvelope.Merge(padfRawXValue[l],
+                                                    padfRawYValue[l]);
+                                }
+
+                                if (m_sFilterEnvelope.Intersects(sEnvelope))
+                                {
+                                    bMatchBBOX = true;
+                                }
+                                // for bounding box, only the first ring matters
+                            }
+                        }
+                    }
+                    if (bMatchBBOX &&
+                        (m_asAttributeFilterConstraints.empty() ||
+                         !SkipToNextFeatureDueToAttributeFilter()))
+                    {
+                        bReturnFeature = true;
+                        break;
+                    }
+
+                    IncrFeatureIdx();
+                    m_nIdxInBatch++;
+                    if (m_nIdxInBatch == m_poBatch->num_rows())
+                    {
+                        m_bEOF = !ReadNextBatch();
+                        if (m_bEOF)
+                            return nullptr;
+                        break;
+                    }
+                }
+            } while (!bReturnFeature);
         }
         else if (iCol >= 0)
         {
             auto array = m_poBatchColumns[iCol].get();
             while (true)
             {
-                bool bSkipToNextFeature = false;
-                if (m_poArrayXMinFloat || m_poArrayXMinDouble)
+                bool bMatchBBOX = false;
+
+                auto poGeometry = std::unique_ptr<OGRGeometry>(
+                    ReadGeometry(m_iGeomFieldFilter, array, m_nIdxInBatch));
+                if (poGeometry && !poGeometry->IsEmpty())
                 {
-                    bSkipToNextFeature = SkipToNextFeatureDueToBBOX();
-                }
-                else
-                {
-                    auto poGeometry = std::unique_ptr<OGRGeometry>(
-                        ReadGeometry(m_iGeomFieldFilter, array, m_nIdxInBatch));
-                    if (poGeometry == nullptr || poGeometry->IsEmpty())
+                    OGREnvelope sEnvelope;
+                    poGeometry->getEnvelope(&sEnvelope);
+                    if (m_sFilterEnvelope.Intersects(sEnvelope))
                     {
-                        bSkipToNextFeature = true;
-                    }
-                    else
-                    {
-                        OGREnvelope sEnvelope;
-                        poGeometry->getEnvelope(&sEnvelope);
-                        if (!m_sFilterEnvelope.Intersects(sEnvelope))
-                        {
-                            bSkipToNextFeature = true;
-                        }
+                        bMatchBBOX = true;
                     }
                 }
-                if (!bSkipToNextFeature)
-                {
-                    break;
-                }
-                if (!m_asAttributeFilterConstraints.empty() &&
-                    !SkipToNextFeatureDueToAttributeFilter())
+                if (bMatchBBOX && (m_asAttributeFilterConstraints.empty() ||
+                                   !SkipToNextFeatureDueToAttributeFilter()))
                 {
                     break;
                 }
 
-                m_nFeatureIdx++;
+                IncrFeatureIdx();
                 m_nIdxInBatch++;
                 if (m_nIdxInBatch == m_poBatch->num_rows())
                 {
@@ -3738,7 +4689,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                 break;
             }
 
-            m_nFeatureIdx++;
+            IncrFeatureIdx();
             m_nIdxInBatch++;
             if (m_nIdxInBatch == m_poBatch->num_rows())
             {
@@ -3754,7 +4705,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
     if (m_iFIDArrowColumn < 0)
         poFeature->SetFID(m_nFeatureIdx);
 
-    m_nFeatureIdx++;
+    IncrFeatureIdx();
     m_nIdxInBatch++;
 
     return poFeature;
@@ -3970,7 +4921,6 @@ inline OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
                 }
             }
 
-            m_nFeatureIdx++;
             m_nIdxInBatch++;
             if (m_nIdxInBatch == m_poBatch->num_rows())
             {
@@ -4000,7 +4950,7 @@ inline OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         }
     }
     else if (m_aeGeomEncoding[iGeomField] ==
-             OGRArrowGeomEncoding::GEOARROW_MULTIPOLYGON)
+             OGRArrowGeomEncoding::GEOARROW_FSL_MULTIPOLYGON)
     {
         ResetReading();
         if (m_poBatch == nullptr)
@@ -4070,7 +5020,6 @@ inline OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
                 }
             }
 
-            m_nFeatureIdx++;
             m_nIdxInBatch++;
             if (m_nIdxInBatch == m_poBatch->num_rows())
             {
@@ -4599,7 +5548,11 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         OverrideArrowRelease(m_poArrowDS, out_array);
 
         const auto nFeatureIdxCur = m_nFeatureIdx;
-        m_nFeatureIdx += m_nIdxInBatch;
+        // TODO: We likely have an issue regarding FIDs based on m_nFeatureIdx
+        // when m_iFIDArrowColumn < 0, only a subset of row groups is
+        // selected, and this batch goes accross non consecutive row groups.
+        for (int64_t i = 0; i < m_nIdxInBatch; ++i)
+            IncrFeatureIdx();
 
         if (m_poAttrQuery || m_poFilterGeom)
         {

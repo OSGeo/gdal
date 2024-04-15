@@ -68,10 +68,17 @@ Layer creation options
      "/vsistdout/" or its extension is ".arrows", in which case STREAM is used.
 
 - .. lco:: GEOMETRY_ENCODING
-     :choices: GEOARROW, WKB, WKT
+     :choices: GEOARROW, WKB, WKT, GEOARROW_INTERLEAVED
      :default: GEOARROW
 
      Geometry encoding.
+     As of GDAL 3.9, GEOARROW uses the GeoArrow "struct" based
+     encodings (where points are modeled as a struct field with a x and y subfield,
+     lines are modeled as a list of such points, etc.).
+     The GEOARROW_INTERLEAVED option has been renamed in GDAL 3.9 from what was
+     named GEOARROW in previous versions, and uses an encoding where points uses
+     a FixedSizedList of (x,y), lines a variable-size list of such
+     FixedSizedList of points, etc.
 
 - .. lco:: BATCH_SIZE
      :choices: <integer>
