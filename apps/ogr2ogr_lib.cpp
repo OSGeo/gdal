@@ -3880,7 +3880,9 @@ bool SetupTargetLayer::CanUseWriteArrowBatch(
         !psOptions->bMakeValid)
     {
         struct ArrowArrayStream streamSrc;
-        if (poSrcLayer->GetArrowStream(&streamSrc, nullptr))
+        const char *const apszOptions[] = {"SILENCE_GET_SCHEMA_ERROR=YES",
+                                           nullptr};
+        if (poSrcLayer->GetArrowStream(&streamSrc, apszOptions))
         {
             struct ArrowSchema schemaSrc;
             if (streamSrc.get_schema(&streamSrc, &schemaSrc) == 0)
