@@ -299,6 +299,9 @@ void CPL_DLL *CPLZLibDeflate(const void *ptr, size_t nBytes, int nLevel,
                              size_t *pnOutBytes);
 void CPL_DLL *CPLZLibInflate(const void *ptr, size_t nBytes, void *outptr,
                              size_t nOutAvailableBytes, size_t *pnOutBytes);
+void CPL_DLL *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
+                               size_t nOutAvailableBytes,
+                               bool bAllowResizeOutptr, size_t *pnOutBytes);
 
 /* -------------------------------------------------------------------- */
 /*      XML validation.                                                 */

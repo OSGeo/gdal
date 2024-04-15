@@ -108,7 +108,8 @@ class OGRPMTilesDataset final : public GDALDataset
     /** Return a short-lived decompressed buffer for metadata or directory
      * entries or nullptr in case of error.
      */
-    const std::string *ReadInternal(uint64_t nOffset, uint64_t nSize);
+    const std::string *ReadInternal(uint64_t nOffset, uint64_t nSize,
+                                    const char *pszDataType);
 
     /** Return a short-lived decompressed buffer for tile data.
      *  or nullptr in case of error.
@@ -153,7 +154,8 @@ class OGRPMTilesDataset final : public GDALDataset
     /** Return a short-lived decompressed buffer, or nullptr in case of error
      */
     const std::string *Read(const CPLCompressor *psDecompressor,
-                            uint64_t nOffset, uint64_t nSize);
+                            uint64_t nOffset, uint64_t nSize,
+                            const char *pszDataType);
 
     CPL_DISALLOW_COPY_ASSIGN(OGRPMTilesDataset)
 };

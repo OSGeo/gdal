@@ -1465,10 +1465,10 @@ static bool CPLZlibDecompressor(const void *input_data, size_t input_size,
             *output_size = 0;
             return false;
         }
-        if (nullptr == CPLZLibInflate(input_data, input_size, tmpOutBuffer,
-                                      nOutSize, &nOutSize))
+        tmpOutBuffer = CPLZLibInflateEx(input_data, input_size, tmpOutBuffer,
+                                        nOutSize, true, &nOutSize);
+        if (!tmpOutBuffer)
         {
-            VSIFree(tmpOutBuffer);
             *output_size = 0;
             return false;
         }
@@ -1490,10 +1490,10 @@ static bool CPLZlibDecompressor(const void *input_data, size_t input_size,
             return false;
         }
         size_t nOutSizeOut = 0;
-        if (nullptr == CPLZLibInflate(input_data, input_size, tmpOutBuffer,
-                                      nOutSize, &nOutSizeOut))
+        tmpOutBuffer = CPLZLibInflateEx(input_data, input_size, tmpOutBuffer,
+                                        nOutSize, true, &nOutSizeOut);
+        if (!tmpOutBuffer)
         {
-            VSIFree(tmpOutBuffer);
             *output_size = 0;
             return false;
         }
