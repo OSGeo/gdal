@@ -1139,7 +1139,11 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
                      // null seems to be specific of D12 software
                      // See https://github.com/OSGeo/gdal/issues/5095
                      (i + 5 < poOpenInfo->nHeaderBytes &&
-                      memcmp(poOpenInfo->pabyHeader + i, "null ", 5) == 0)) &&
+                      memcmp(poOpenInfo->pabyHeader + i, "null ", 5) == 0) ||
+                     (i + 4 < poOpenInfo->nHeaderBytes &&
+                      EQUALN(reinterpret_cast<const char *>(
+                                 poOpenInfo->pabyHeader + i),
+                             "nan ", 4))) &&
                     poOpenInfo->pabyHeader[i] != '\n' &&
                     poOpenInfo->pabyHeader[i] != '\r')
                 {

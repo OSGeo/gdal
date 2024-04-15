@@ -478,3 +478,14 @@ def test_aaigrid_write_south_up_raster():
     gdal.GetDriverByName("AAIGRID").Delete(
         "/vsimem/test_aaigrid_write_south_up_raster.asc"
     )
+
+
+###############################################################################
+# Test reading a file starting with nan (https://github.com/OSGeo/gdal/issues/9666)
+
+
+def test_aaigrid_starting_with_nan():
+
+    ds = gdal.Open("data/aaigrid/starting_with_nan.asc")
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
+    assert ds.GetRasterBand(1).Checksum() == 65300
