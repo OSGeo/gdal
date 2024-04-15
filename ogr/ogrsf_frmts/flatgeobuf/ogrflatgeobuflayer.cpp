@@ -2535,7 +2535,7 @@ OGRFlatGeobufLayer *OGRFlatGeobufLayer::Open(const char *pszFilename,
                  "Header size too large (> 10 MB)");
         return nullptr;
     }
-    std::unique_ptr<GByte, CPLFreeReleaser> buf(
+    std::unique_ptr<GByte, VSIFreeReleaser> buf(
         static_cast<GByte *>(VSIMalloc(headerSize)));
     if (buf == nullptr)
     {
