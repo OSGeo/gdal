@@ -360,8 +360,15 @@ size_t VSICachedFile::Read(void *pBuffer, size_t nSize, size_t nCount)
     /*      Make sure the cache is loaded for the whole request region.     */
     /* ==================================================================== */
     const vsi_l_offset nStartBlock = m_nOffset / m_nChunkSize;
-    const vsi_l_offset nEndBlock =
-        (m_nOffset + nRequestedBytes - 1) / m_nChunkSize;
+    // Calculate last block
+    const vsi_l_offset nLastBlock = m_nFileSize / m_nChunkSize;
+    vsi_l_offset nEndBlock = (m_nOffset + nRequestedBytes - 1) / m_nChunkSize;
+
+    // if nLastBlock is not 0 consider the min value to avoid out-of-range reads
+    if (nLastBlock != 0 && nEndBlock > nLastBlock)
+    {
+        nEndBlock = nLastBlock;
+    }
 
     for (vsi_l_offset iBlock = nStartBlock; iBlock <= nEndBlock; iBlock++)
     {
