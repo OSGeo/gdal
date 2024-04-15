@@ -41,6 +41,16 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("AAIGRID")
 
+
+###############################################################################
+
+
+def test_aaigrid_read_byte_tif_grd():
+
+    ds = gdal.Open("data/aaigrid/byte.tif.grd")
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
 ###############################################################################
 # Perform simple read test.
 
