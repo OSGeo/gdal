@@ -217,6 +217,27 @@ def pytest_collection_modifyitems(config, items):
             if not gdaltest.built_against_curl():
                 item.add_marker(pytest.mark.skip("curl support not available"))
 
+            required_version = [
+                mark.args[0] if len(mark.args) > 0 else 0,
+                mark.args[1] if len(mark.args) > 1 else 0,
+                mark.args[2] if len(mark.args) > 2 else 0,
+            ]
+
+            actual_version = [0, 0, 0]
+            for build_info_item in gdal.VersionInfo("BUILD_INFO").strip().split("\n"):
+                if build_info_item.startswith("CURL_VERSION="):
+                    actual_version = [
+                        int(x)
+                        for x in build_info_item[len("CURL_VERSION=") :].split(".")
+                    ]
+
+            if actual_version < required_version:
+                item.add_marker(
+                    pytest.mark.skip(
+                        f"Requires curl >= {'.'.join(str(x) for x in required_version)}"
+                    )
+                )
+
 
 def pytest_addoption(parser):
     parser.addini("gdal_version", "GDAL version for which pytest.ini was generated")
