@@ -62,6 +62,30 @@ def test_aaigrid_1():
 
 
 ###############################################################################
+# CreateCopy tests
+
+init_list = [
+    ("byte.tif", 4672),
+    ("int16.tif", 4672),
+    ("uint16.tif", 4672),
+    ("float32.tif", 4672),
+    ("utmsmall.tif", 50054),
+]
+
+
+@pytest.mark.parametrize(
+    "filename,checksum",
+    init_list,
+    ids=[tup[0].split(".")[0] for tup in init_list],
+)
+def test_aaigrid_createcopy(filename, checksum):
+    ut = gdaltest.GDALTest(
+        "AAIGrid", "../gcore/data/" + filename, 1, checksum, filename_absolute=True
+    )
+    ut.testCreateCopy()
+
+
+###############################################################################
 # Verify some auxiliary data.
 
 
