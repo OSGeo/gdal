@@ -148,8 +148,21 @@ MAIN_START(argc, argv)
 #ifdef __AFL_HAVE_MANUAL_CONTROL
             continue;
 #else
-        fprintf(stderr, "gdalinfo failed - unable to open '%s'.\n",
-                psOptionsForBinary->pszFilename);
+        VSIStatBuf sStat;
+        CPLString message;
+        message.Printf("gdalinfo failed - unable to open '%s'.",
+                       psOptionsForBinary->pszFilename);
+        if (VSIStat(psOptionsForBinary->pszFilename, &sStat) == 0)
+        {
+            GDALDriverH drv =
+                GDALIdentifyDriverEx(psOptionsForBinary->pszFilename,
+                                     GDAL_OF_VECTOR, nullptr, nullptr);
+            if (drv)
+            {
+                message += " Did you intend to call ogrinfo?";
+            }
+        }
+        fprintf(stderr, "%s\n", message.c_str());
 
         /* --------------------------------------------------------------------
          */

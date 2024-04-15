@@ -2559,18 +2559,18 @@ int GDALValidateOptions(const char *pszOptionList,
 /************************************************************************/
 
 /**
- * \brief Identify the driver that can open a raster file.
+ * \brief Identify the driver that can open a dataset.
  *
  * This function will try to identify the driver that can open the passed file
  * name by invoking the Identify method of each registered GDALDriver in turn.
- * The first driver that successful identifies the file name will be returned.
+ * The first driver that successfully identifies the file name will be returned.
  * If all drivers fail then NULL is returned.
  *
- * In order to reduce the need for such searches touch the operating system
+ * In order to reduce the need for such searches to touch the operating system
  * file system machinery, it is possible to give an optional list of files.
  * This is the list of all files at the same level in the file system as the
  * target file, including the target file. The filenames will not include any
- * path components, are essentially just the output of VSIReadDir() on the
+ * path components, and are essentially just the output of VSIReadDir() on the
  * parent directory. If the target object does not have filesystem semantics
  * then the file list should be NULL.
  *
@@ -2598,18 +2598,18 @@ GDALDriverH CPL_STDCALL GDALIdentifyDriver(const char *pszFilename,
 /************************************************************************/
 
 /**
- * \brief Identify the driver that can open a raster file.
+ * \brief Identify the driver that can open a dataset.
  *
  * This function will try to identify the driver that can open the passed file
  * name by invoking the Identify method of each registered GDALDriver in turn.
- * The first driver that successful identifies the file name will be returned.
+ * The first driver that successfully identifies the file name will be returned.
  * If all drivers fail then NULL is returned.
  *
- * In order to reduce the need for such searches touch the operating system
+ * In order to reduce the need for such searches to touch the operating system
  * file system machinery, it is possible to give an optional list of files.
  * This is the list of all files at the same level in the file system as the
  * target file, including the target file. The filenames will not include any
- * path components, are essentially just the output of VSIReadDir() on the
+ * path components, and are essentially just the output of VSIReadDir() on the
  * parent directory. If the target object does not have filesystem semantics
  * then the file list should be NULL.
  *

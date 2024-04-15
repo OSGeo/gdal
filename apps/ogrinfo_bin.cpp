@@ -154,8 +154,22 @@ MAIN_START(argc, argv)
         if (poDS == nullptr)
         {
             nRet = 1;
-            fprintf(stderr, "ogrinfo failed - unable to open '%s'.\n",
-                    psOptionsForBinary->osFilename.c_str());
+
+            VSIStatBuf sStat;
+            CPLString message;
+            message.Printf("ogrinfo failed - unable to open '%s'.",
+                           psOptionsForBinary->osFilename.c_str());
+            if (VSIStat(psOptionsForBinary->osFilename.c_str(), &sStat) == 0)
+            {
+                GDALDriverH drv =
+                    GDALIdentifyDriverEx(psOptionsForBinary->osFilename.c_str(),
+                                         GDAL_OF_RASTER, nullptr, nullptr);
+                if (drv)
+                {
+                    message += " Did you intend to call gdalinfo?";
+                }
+            }
+            fprintf(stderr, "%s\n", message.c_str());
         }
         else
         {
