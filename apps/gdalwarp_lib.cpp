@@ -5507,7 +5507,7 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
         .help(_("Set output file size in pixels and lines."));
 
     argParser->add_argument("-te")
-        .metavar("<xmin> <ymin> <max> <ymaX")
+        .metavar("<xmin> <ymin> <xmax> <ymax>")
         .nargs(4)
         .scan<'g', double>()
         .help(_("Set georeferenced extents of output file to be created."));
