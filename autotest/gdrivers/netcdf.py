@@ -6489,3 +6489,27 @@ def test_gdal_subdataset_bogus(bogus):
     """Test it doesn't crash"""
 
     gdal.GetSubdatasetInfo(bogus)
+
+
+@gdaltest.enable_exceptions()
+def test_band_names_creation_option(tmp_path):
+
+    fname = tmp_path / "twobands.nc"
+
+    # 1 band, 2 names
+    with pytest.raises(Exception, match="but 2 names provided"):
+        gdal.GetDriverByName("NetCDF").Create(
+            fname, 1, 1, 1, options={"BAND_NAMES": "t2m,prate"}
+        )
+
+    # 2 bands, 2 names
+    with gdal.GetDriverByName("NetCDF").Create(
+        fname, 1, 1, 2, options={"BAND_NAMES": "t2m,prate"}
+    ):
+        pass
+
+    with gdal.Open(fname) as ds:
+        sds_names = [sds[0] for sds in ds.GetSubDatasets()]
+
+        assert gdal.GetSubdatasetInfo(sds_names[0]).GetSubdatasetComponent() == "t2m"
+        assert gdal.GetSubdatasetInfo(sds_names[1]).GetSubdatasetComponent() == "prate"
