@@ -2251,7 +2251,7 @@ OGRwkbGeometryType OGR_L_GetGeomType(OGRLayerH hLayer)
 /*                          SetIgnoredFields()                          */
 /************************************************************************/
 
-OGRErr OGRLayer::SetIgnoredFields(const char **papszFields)
+OGRErr OGRLayer::SetIgnoredFields(CSLConstList papszFields)
 {
     OGRFeatureDefn *poDefn = GetLayerDefn();
 
@@ -2266,13 +2266,9 @@ OGRErr OGRLayer::SetIgnoredFields(const char **papszFields)
     }
     poDefn->SetStyleIgnored(FALSE);
 
-    if (papszFields == nullptr)
-        return OGRERR_NONE;
-
     // ignore some fields
-    while (*papszFields)
+    for (const char *pszFieldName : cpl::Iterate(papszFields))
     {
-        const char *pszFieldName = *papszFields;
         // check special fields
         if (EQUAL(pszFieldName, "OGR_GEOMETRY"))
             poDefn->SetGeometryIgnored(TRUE);
@@ -2296,7 +2292,6 @@ OGRErr OGRLayer::SetIgnoredFields(const char **papszFields)
             else
                 poDefn->GetFieldDefn(iField)->SetIgnored(TRUE);
         }
-        papszFields++;
     }
 
     return OGRERR_NONE;
@@ -5440,7 +5435,7 @@ OGRLayer::GetGeometryTypes(int iGeomField, int nFlagsGGT, int &nEntryCountOut,
     if (poDefn->IsStyleIgnored())
         aosIgnoredFieldsRestore.AddString("OGR_STYLE");
     aosIgnoredFields.AddString("OGR_STYLE");
-    SetIgnoredFields(const_cast<const char **>(aosIgnoredFields.List()));
+    SetIgnoredFields(aosIgnoredFields.List());
 
     // Iterate over features
     std::map<OGRwkbGeometryType, int64_t> oMapCount;
@@ -5488,7 +5483,7 @@ OGRLayer::GetGeometryTypes(int iGeomField, int nFlagsGGT, int &nEntryCountOut,
     }
 
     // Restore ignore fields state
-    SetIgnoredFields(const_cast<const char **>(aosIgnoredFieldsRestore.List()));
+    SetIgnoredFields(aosIgnoredFieldsRestore.List());
 
     if (bInterrupted)
     {

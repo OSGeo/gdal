@@ -300,7 +300,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual const char *GetFIDColumn();
     virtual const char *GetGeometryColumn();
 
-    virtual OGRErr SetIgnoredFields(const char **papszFields);
+    virtual OGRErr SetIgnoredFields(CSLConstList papszFields);
 
     virtual OGRGeometryTypeCounter *
     GetGeometryTypes(int iGeomField, int nFlagsGGT, int &nEntryCountOut,

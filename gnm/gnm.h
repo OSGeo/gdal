@@ -552,7 +552,7 @@ class GNMGenericLayer : public OGRLayer
     virtual const char *GetFIDColumn() override;
     virtual const char *GetGeometryColumn() override;
 
-    virtual OGRErr SetIgnoredFields(const char **papszFields) override;
+    virtual OGRErr SetIgnoredFields(CSLConstList papszFields) override;
 
     /** Intersection */
     OGRErr Intersection(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,

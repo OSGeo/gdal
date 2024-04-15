@@ -157,7 +157,7 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     OGRFeature *GetFeature(GIntBig nFID) override;
     GIntBig GetFeatureCount(int bForce) override;
     int TestCapability(const char *pszCap) override;
-    OGRErr SetIgnoredFields(const char **papszFields) override;
+    OGRErr SetIgnoredFields(CSLConstList papszFields) override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
     char **GetMetadata(const char *pszDomain = "") override;

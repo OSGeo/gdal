@@ -1814,7 +1814,7 @@ void OGRParquetLayer::InvalidateCachedBatches()
 /*                        SetIgnoredFields()                            */
 /************************************************************************/
 
-OGRErr OGRParquetLayer::SetIgnoredFields(const char **papszFields)
+OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
 {
     m_bIgnoredFields = false;
     m_anRequestedParquetColumns.clear();

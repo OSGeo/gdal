@@ -645,7 +645,7 @@ class OGRGeoPackageLayer CPL_NON_FINAL : public OGRLayer,
         return m_poFeatureDefn;
     }
 
-    OGRErr SetIgnoredFields(const char **papszFields) override;
+    OGRErr SetIgnoredFields(CSLConstList papszFields) override;
 
     virtual bool HasFastSpatialFilter(int /*iGeomCol*/) override
     {

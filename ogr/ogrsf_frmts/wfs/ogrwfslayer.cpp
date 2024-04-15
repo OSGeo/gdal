@@ -1284,7 +1284,7 @@ void OGRWFSLayer::ResetReading()
 /*                         SetIgnoredFields()                           */
 /************************************************************************/
 
-OGRErr OGRWFSLayer::SetIgnoredFields(const char **papszFields)
+OGRErr OGRWFSLayer::SetIgnoredFields(CSLConstList papszFields)
 {
     bReloadNeeded = true;
     ResetReading();
