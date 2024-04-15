@@ -31,6 +31,7 @@
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 #include "commonutils.h"
+#include "gdalargumentparser.h"
 
 #include <cmath>
 #include <cstdint>
@@ -925,17 +926,273 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
 }
 
 /************************************************************************/
-/*                            IsNumber()                               */
+/*                       GDALGridOptionsGetParser()                     */
 /************************************************************************/
 
-static bool IsNumber(const char *pszStr)
+/*! @cond Doxygen_Suppress */
+
+static std::unique_ptr<GDALArgumentParser>
+GDALGridOptionsGetParser(GDALGridOptions *psOptions,
+                         GDALGridOptionsForBinary *psOptionsForBinary,
+                         int nCountClipSrc)
 {
-    if (*pszStr == '-' || *pszStr == '+')
-        pszStr++;
-    if (*pszStr == '.')
-        pszStr++;
-    return *pszStr >= '0' && *pszStr <= '9';
+    auto argParser = std::make_unique<GDALArgumentParser>(
+        "gdal_grid", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    argParser->add_description(
+        _("Creates a regular grid (raster) from the scattered data read from a "
+          "vector datasource."));
+
+    argParser->add_epilog(_(
+        "Available algorithms and parameters with their defaults:\n"
+        "    Inverse distance to a power (default)\n"
+        "        "
+        "invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_"
+        "points=0:min_points=0:nodata=0.0\n"
+        "    Inverse distance to a power with nearest neighbor search\n"
+        "        "
+        "invdistnn:power=2.0:radius=1.0:max_points=12:min_points=0:nodata=0\n"
+        "    Moving average\n"
+        "        "
+        "average:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0\n"
+        "    Nearest neighbor\n"
+        "        nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0\n"
+        "    Various data metrics\n"
+        "        <metric "
+        "name>:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0\n"
+        "        possible metrics are:\n"
+        "            minimum\n"
+        "            maximum\n"
+        "            range\n"
+        "            count\n"
+        "            average_distance\n"
+        "            average_distance_pts\n"
+        "    Linear\n"
+        "        linear:radius=-1.0:nodata=0.0\n"
+        "\n"
+        "For more details, consult https://gdal.org/programs/gdal_grid.html"));
+
+    argParser->add_quiet_argument(
+        psOptionsForBinary ? &psOptionsForBinary->bQuiet : nullptr);
+
+    argParser->add_output_format_argument(psOptions->osFormat);
+
+    argParser->add_output_type_argument(psOptions->eOutputType);
+
+    argParser->add_argument("-txe")
+        .metavar("<xmin> <xmax>")
+        .nargs(2)
+        .scan<'g', double>()
+        .help(_("Set georeferenced X extents of output file to be created."));
+
+    argParser->add_argument("-tye")
+        .metavar("<ymin> <ymax>")
+        .nargs(2)
+        .scan<'g', double>()
+        .help(_("Set georeferenced Y extents of output file to be created."));
+
+    argParser->add_argument("-outsize")
+        .metavar("<xsize> <ysize>")
+        .nargs(2)
+        .scan<'i', int>()
+        .help(_("Set the size of the output file."));
+
+    argParser->add_argument("-tr")
+        .metavar("<xres> <yes>")
+        .nargs(2)
+        .scan<'g', double>()
+        .help(_("Set target resolution."));
+
+    argParser->add_creation_options_argument(psOptions->aosCreateOptions);
+
+    argParser->add_argument("-zfield")
+        .metavar("<field_name>")
+        .store_into(psOptions->osBurnAttribute)
+        .help(_("Field name from which to get Z values."));
+
+    argParser->add_argument("-z_increase")
+        .metavar("<increase_value>")
+        .store_into(psOptions->dfIncreaseBurnValue)
+        .help(_("Addition to the attribute field on the features to be used to "
+                "get a Z value from."));
+
+    argParser->add_argument("-z_multiply")
+        .metavar("<multiply_value>")
+        .store_into(psOptions->dfMultiplyBurnValue)
+        .help(_("Multiplication ratio for the Z field.."));
+
+    argParser->add_argument("-where")
+        .metavar("<expression>")
+        .store_into(psOptions->osWHERE)
+        .help(_("Query expression to be applied to select features to process "
+                "from the input layer(s)."));
+
+    argParser->add_argument("-l")
+        .metavar("<layer_name>")
+        .append()
+        .action([psOptions](const std::string &s)
+                { psOptions->aosLayers.AddString(s.c_str()); })
+        .help(_("Layer(s) from the datasource that will be used for input "
+                "features."));
+
+    argParser->add_argument("-sql")
+        .metavar("<select_statement>")
+        .store_into(psOptions->osSQL)
+        .help(_("SQL statement to be evaluated to produce a layer of features "
+                "to be processed."));
+
+    argParser->add_argument("-spat")
+        .metavar("<xmin> <ymin> <xmax> <ymax>")
+        .nargs(4)
+        .scan<'g', double>()
+        .help(_("The area of interest. Only features within the rectangle will "
+                "be reported."));
+
+    argParser->add_argument("-clipsrc")
+        .nargs(nCountClipSrc)
+        .metavar("[<xmin> <ymin> <xmax> <ymax>]|<WKT>|<datasource>|spat_extent")
+        .help(_("Clip geometries (in source SRS)."));
+
+    argParser->add_argument("-clipsrcsql")
+        .metavar("<sql_statement>")
+        .store_into(psOptions->osClipSrcSQL)
+        .help(_("Select desired geometries from the source clip datasource "
+                "using an SQL query."));
+
+    argParser->add_argument("-clipsrclayer")
+        .metavar("<layername>")
+        .store_into(psOptions->osClipSrcLayer)
+        .help(_("Select the named layer from the source clip datasource."));
+
+    argParser->add_argument("-clipsrcwhere")
+        .metavar("<expression>")
+        .store_into(psOptions->osClipSrcWhere)
+        .help(_("Restrict desired geometries from the source clip layer based "
+                "on an attribute query."));
+
+    argParser->add_argument("-a_srs")
+        .metavar("<srs_def>")
+        .action(
+            [psOptions](const std::string &osOutputSRSDef)
+            {
+                OGRSpatialReference oOutputSRS;
+
+                if (oOutputSRS.SetFromUserInput(osOutputSRSDef.c_str()) !=
+                    OGRERR_NONE)
+                {
+                    throw std::invalid_argument(
+                        std::string("Failed to process SRS definition: ")
+                            .append(osOutputSRSDef));
+                }
+
+                char *pszWKT = nullptr;
+                oOutputSRS.exportToWkt(&pszWKT);
+                if (pszWKT)
+                    psOptions->osOutputSRS = pszWKT;
+                CPLFree(pszWKT);
+            })
+        .help(_("Assign an output SRS, but without reprojecting."));
+
+    argParser->add_argument("-a")
+        .metavar("<algorithm>[[:<parameter1>=<value1>]...]")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                const char *pszAlgorithm = s.c_str();
+                void *pOptions = nullptr;
+                if (GDALGridParseAlgorithmAndOptions(pszAlgorithm,
+                                                     &psOptions->eAlgorithm,
+                                                     &pOptions) != CE_None)
+                {
+                    throw std::invalid_argument(
+                        "Failed to process algorithm name and parameters");
+                }
+                psOptions->pOptions.reset(pOptions);
+
+                const CPLStringList aosParams(
+                    CSLTokenizeString2(pszAlgorithm, ":", FALSE));
+                const char *pszNoDataValue = aosParams.FetchNameValue("nodata");
+                if (pszNoDataValue != nullptr)
+                {
+                    psOptions->bNoDataSet = true;
+                    psOptions->dfNoDataValue = CPLAtofM(pszNoDataValue);
+                }
+            })
+        .help(_("Set the interpolation algorithm or data metric name and "
+                "(optionally) its parameters."));
+
+    if (psOptionsForBinary)
+    {
+        argParser->add_open_options_argument(
+            &(psOptionsForBinary->aosOpenOptions));
+    }
+
+    if (psOptionsForBinary)
+    {
+        argParser->add_argument("src_dataset_name")
+            .metavar("<src_dataset_name>")
+            .store_into(psOptionsForBinary->osSource)
+            .help(_("Input dataset."));
+
+        argParser->add_argument("dst_dataset_name")
+            .metavar("<dst_dataset_name>")
+            .store_into(psOptionsForBinary->osDest)
+            .help(_("Output dataset."));
+    }
+
+    return argParser;
 }
+
+/*! @endcond */
+
+/************************************************************************/
+/*                         GDALGridGetParserUsage()                     */
+/************************************************************************/
+
+std::string GDALGridGetParserUsage()
+{
+    try
+    {
+        GDALGridOptions sOptions;
+        GDALGridOptionsForBinary sOptionsForBinary;
+        auto argParser =
+            GDALGridOptionsGetParser(&sOptions, &sOptionsForBinary, 1);
+        return argParser->usage();
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                 err.what());
+        return std::string();
+    }
+}
+
+/************************************************************************/
+/*                   CHECK_HAS_ENOUGH_ADDITIONAL_ARGS()                 */
+/************************************************************************/
+
+#ifndef CheckHasEnoughAdditionalArgs_defined
+#define CheckHasEnoughAdditionalArgs_defined
+
+static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
+                                         int nExtraArg, int nArgc)
+{
+    if (i + nExtraArg >= nArgc)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "%s option requires %d argument%s", papszArgv[i], nExtraArg,
+                 nExtraArg == 1 ? "" : "s");
+        return false;
+    }
+    return true;
+}
+#endif
+
+#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg)                            \
+    if (!CheckHasEnoughAdditionalArgs(papszArgv, i, nExtraArg, nArgc))         \
+    {                                                                          \
+        return nullptr;                                                        \
+    }
 
 /************************************************************************/
 /*                             GDALGridOptionsNew()                     */
@@ -963,85 +1220,81 @@ GDALGridOptionsNew(char **papszArgv,
 {
     auto psOptions = std::make_unique<GDALGridOptions>();
 
-    bool bGotSourceFilename = false;
-    bool bGotDestFilename = false;
     /* -------------------------------------------------------------------- */
-    /*      Handle command line arguments.                                  */
+    /*      Pre-processing for custom syntax that ArgumentParser does not   */
+    /*      support.                                                        */
     /* -------------------------------------------------------------------- */
-    const int argc = CSLCount(papszArgv);
-    for (int i = 0; i < argc && papszArgv != nullptr && papszArgv[i] != nullptr;
-         i++)
+
+    CPLStringList aosArgv;
+    const int nArgc = CSLCount(papszArgv);
+    int nCountClipSrc = 0;
+    for (int i = 0;
+         i < nArgc && papszArgv != nullptr && papszArgv[i] != nullptr; i++)
     {
-        if (i < argc - 1 &&
-            (EQUAL(papszArgv[i], "-of") || EQUAL(papszArgv[i], "-f")))
+        if (EQUAL(papszArgv[i], "-clipsrc"))
         {
-            ++i;
-            psOptions->osFormat = papszArgv[i];
-        }
-
-        else if (EQUAL(papszArgv[i], "-q") || EQUAL(papszArgv[i], "-quiet"))
-        {
-            if (psOptionsForBinary)
+            if (nCountClipSrc)
             {
-                psOptionsForBinary->bQuiet = true;
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "%s switch only supported from gdal_grid binary.",
+                CPLError(CE_Failure, CPLE_AppDefined, "Duplicate argument %s",
                          papszArgv[i]);
-            }
-        }
-
-        else if (EQUAL(papszArgv[i], "-ot") && papszArgv[i + 1])
-        {
-            for (int iType = 1; iType < GDT_TypeCount; iType++)
-            {
-                if (GDALGetDataTypeName(static_cast<GDALDataType>(iType)) !=
-                        nullptr &&
-                    EQUAL(GDALGetDataTypeName(static_cast<GDALDataType>(iType)),
-                          papszArgv[i + 1]))
-                {
-                    psOptions->eOutputType = static_cast<GDALDataType>(iType);
-                }
-            }
-
-            if (psOptions->eOutputType == GDT_Unknown)
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "Unknown output pixel type: %s.", papszArgv[i + 1]);
                 return nullptr;
             }
-            i++;
+            // argparse doesn't handle well variable number of values
+            // just before the positional arguments, so we have to detect
+            // it manually and set the correct number.
+            nCountClipSrc = 1;
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            if (CPLGetValueType(papszArgv[i + 1]) != CPL_VALUE_STRING &&
+                i + 4 < nArgc)
+            {
+                nCountClipSrc = 4;
+            }
+
+            for (int j = 0; j < 1 + nCountClipSrc; ++j)
+            {
+                aosArgv.AddString(papszArgv[i]);
+                ++i;
+            }
+            --i;
         }
 
-        else if (i + 2 < argc && EQUAL(papszArgv[i], "-txe"))
+        else
         {
-            psOptions->dfXMin = CPLAtof(papszArgv[++i]);
-            psOptions->dfXMax = CPLAtof(papszArgv[++i]);
+            aosArgv.AddString(papszArgv[i]);
+        }
+    }
+
+    try
+    {
+        auto argParser = GDALGridOptionsGetParser(
+            psOptions.get(), psOptionsForBinary, nCountClipSrc);
+
+        argParser->parse_args_without_binary_name(aosArgv.List());
+
+        if (auto oTXE = argParser->present<std::vector<double>>("-txe"))
+        {
+            psOptions->dfXMin = (*oTXE)[0];
+            psOptions->dfXMax = (*oTXE)[1];
             psOptions->bIsXExtentSet = true;
         }
 
-        else if (i + 2 < argc && EQUAL(papszArgv[i], "-tye"))
+        if (auto oTYE = argParser->present<std::vector<double>>("-tye"))
         {
-            psOptions->dfYMin = CPLAtof(papszArgv[++i]);
-            psOptions->dfYMax = CPLAtof(papszArgv[++i]);
+            psOptions->dfYMin = (*oTYE)[0];
+            psOptions->dfYMax = (*oTYE)[1];
             psOptions->bIsYExtentSet = true;
         }
 
-        else if (i + 2 < argc && EQUAL(papszArgv[i], "-outsize"))
+        if (auto oOutsize = argParser->present<std::vector<int>>("-outsize"))
         {
-            CPLAssert(papszArgv[i + 1]);
-            CPLAssert(papszArgv[i + 2]);
-            psOptions->nXSize = atoi(papszArgv[i + 1]);
-            psOptions->nYSize = atoi(papszArgv[i + 2]);
-            i += 2;
+            psOptions->nXSize = (*oOutsize)[0];
+            psOptions->nYSize = (*oOutsize)[1];
         }
 
-        else if (i + 2 < argc && EQUAL(papszArgv[i], "-tr"))
+        if (auto adfTargetRes = argParser->present<std::vector<double>>("-tr"))
         {
-            psOptions->dfXRes = CPLAtofM(papszArgv[++i]);
-            psOptions->dfYRes = CPLAtofM(papszArgv[++i]);
+            psOptions->dfXRes = (*adfTargetRes)[0];
+            psOptions->dfYRes = (*adfTargetRes)[1];
             if (psOptions->dfXRes <= 0 || psOptions->dfYRes <= 0)
             {
                 CPLError(CE_Failure, CPLE_IllegalArg,
@@ -1050,281 +1303,132 @@ GDALGridOptionsNew(char **papszArgv,
             }
         }
 
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-co"))
-        {
-            psOptions->aosCreateOptions.AddString(papszArgv[++i]);
-        }
-
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-zfield"))
-        {
-            psOptions->osBurnAttribute = papszArgv[++i];
-        }
-
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-z_increase"))
-        {
-            psOptions->dfIncreaseBurnValue = CPLAtof(papszArgv[++i]);
-        }
-
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-z_multiply"))
-        {
-            psOptions->dfMultiplyBurnValue = CPLAtof(papszArgv[++i]);
-        }
-
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-where"))
-        {
-            psOptions->osWHERE = papszArgv[++i];
-        }
-
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-l"))
-        {
-            psOptions->aosLayers.AddString(papszArgv[++i]);
-        }
-
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-sql"))
-        {
-            psOptions->osSQL = papszArgv[++i];
-        }
-
-        else if (i + 4 < argc && EQUAL(papszArgv[i], "-spat"))
+        if (auto oSpat = argParser->present<std::vector<double>>("-spat"))
         {
             OGRLinearRing oRing;
+            const double dfMinX = (*oSpat)[0];
+            const double dfMinY = (*oSpat)[1];
+            const double dfMaxX = (*oSpat)[2];
+            const double dfMaxY = (*oSpat)[3];
 
-            oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                           CPLAtof(papszArgv[i + 2]));
-            oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                           CPLAtof(papszArgv[i + 4]));
-            oRing.addPoint(CPLAtof(papszArgv[i + 3]),
-                           CPLAtof(papszArgv[i + 4]));
-            oRing.addPoint(CPLAtof(papszArgv[i + 3]),
-                           CPLAtof(papszArgv[i + 2]));
-            oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                           CPLAtof(papszArgv[i + 2]));
+            oRing.addPoint(dfMinX, dfMinY);
+            oRing.addPoint(dfMinX, dfMaxY);
+            oRing.addPoint(dfMaxX, dfMaxY);
+            oRing.addPoint(dfMaxX, dfMinY);
+            oRing.addPoint(dfMinX, dfMinY);
 
-            auto poPoly = std::make_unique<OGRPolygon>();
-            poPoly->addRing(&oRing);
-            psOptions->poSpatialFilter = std::move(poPoly);
-            i += 4;
+            auto poPolygon = std::make_unique<OGRPolygon>();
+            poPolygon->addRing(&oRing);
+            psOptions->poSpatialFilter = std::move(poPolygon);
         }
 
-        else if (EQUAL(papszArgv[i], "-clipsrc"))
+        if (auto oClipSrc =
+                argParser->present<std::vector<std::string>>("-clipsrc"))
         {
-            if (i + 1 >= argc || papszArgv[i + 1] == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "%s option requires 1 or 4 arguments", papszArgv[i]);
-                return nullptr;
-            }
+            const std::string &osVal = (*oClipSrc)[0];
+
+            psOptions->poClipSrc.reset();
+            psOptions->osClipSrcDS.clear();
 
             VSIStatBufL sStat;
             psOptions->bClipSrc = true;
-            if (IsNumber(papszArgv[i + 1]) && papszArgv[i + 2] != nullptr &&
-                papszArgv[i + 3] != nullptr && papszArgv[i + 4] != nullptr)
+            if (oClipSrc->size() == 4)
             {
+                const double dfMinX = CPLAtofM((*oClipSrc)[0].c_str());
+                const double dfMinY = CPLAtofM((*oClipSrc)[1].c_str());
+                const double dfMaxX = CPLAtofM((*oClipSrc)[2].c_str());
+                const double dfMaxY = CPLAtofM((*oClipSrc)[3].c_str());
+
                 OGRLinearRing oRing;
 
-                oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                               CPLAtof(papszArgv[i + 2]));
-                oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                               CPLAtof(papszArgv[i + 4]));
-                oRing.addPoint(CPLAtof(papszArgv[i + 3]),
-                               CPLAtof(papszArgv[i + 4]));
-                oRing.addPoint(CPLAtof(papszArgv[i + 3]),
-                               CPLAtof(papszArgv[i + 2]));
-                oRing.addPoint(CPLAtof(papszArgv[i + 1]),
-                               CPLAtof(papszArgv[i + 2]));
+                oRing.addPoint(dfMinX, dfMinY);
+                oRing.addPoint(dfMinX, dfMaxY);
+                oRing.addPoint(dfMaxX, dfMaxY);
+                oRing.addPoint(dfMaxX, dfMinY);
+                oRing.addPoint(dfMinX, dfMinY);
 
                 auto poPoly = std::make_unique<OGRPolygon>();
                 poPoly->addRing(&oRing);
                 psOptions->poClipSrc = std::move(poPoly);
-                i += 4;
             }
-            else if ((STARTS_WITH_CI(papszArgv[i + 1], "POLYGON") ||
-                      STARTS_WITH_CI(papszArgv[i + 1], "MULTIPOLYGON")) &&
-                     VSIStatL(papszArgv[i + 1], &sStat) != 0)
+            else if ((STARTS_WITH_CI(osVal.c_str(), "POLYGON") ||
+                      STARTS_WITH_CI(osVal.c_str(), "MULTIPOLYGON")) &&
+                     VSIStatL(osVal.c_str(), &sStat) != 0)
             {
-                OGRGeometry *poClipSrc = nullptr;
-                OGRGeometryFactory::createFromWkt(papszArgv[i + 1], nullptr,
-                                                  &poClipSrc);
-                if (!poClipSrc)
+                OGRGeometry *poGeom = nullptr;
+                OGRGeometryFactory::createFromWkt(osVal.c_str(), nullptr,
+                                                  &poGeom);
+                psOptions->poClipSrc.reset(poGeom);
+                if (psOptions->poClipSrc == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
                              "Invalid geometry. Must be a valid POLYGON or "
                              "MULTIPOLYGON WKT");
                     return nullptr;
                 }
-                psOptions->poClipSrc.reset(poClipSrc);
-                i++;
             }
-            else if (EQUAL(papszArgv[i + 1], "spat_extent"))
+            else if (EQUAL(osVal.c_str(), "spat_extent"))
             {
-                i++;
+                // Nothing to do
             }
             else
             {
-                psOptions->osClipSrcDS = papszArgv[i + 1];
-                i++;
+                psOptions->osClipSrcDS = osVal;
             }
         }
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-clipsrcsql"))
-        {
-            psOptions->osClipSrcSQL = papszArgv[i + 1];
-            i++;
-        }
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-clipsrclayer"))
-        {
-            psOptions->osClipSrcLayer = papszArgv[i + 1];
-            i++;
-        }
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-clipsrcwhere"))
-        {
-            psOptions->osClipSrcWhere = papszArgv[i + 1];
-            i++;
-        }
 
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-a_srs"))
+        if (psOptions->bClipSrc && !psOptions->osClipSrcDS.empty())
         {
-            OGRSpatialReference oOutputSRS;
-
-            if (oOutputSRS.SetFromUserInput(papszArgv[i + 1]) != OGRERR_NONE)
+            psOptions->poClipSrc = LoadGeometry(
+                psOptions->osClipSrcDS, psOptions->osClipSrcSQL,
+                psOptions->osClipSrcLayer, psOptions->osClipSrcWhere);
+            if (!psOptions->poClipSrc)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Failed to process SRS definition: %s",
-                         papszArgv[i + 1]);
+                         "Cannot load source clip geometry.");
                 return nullptr;
             }
-
-            char *pszWKT = nullptr;
-            oOutputSRS.exportToWkt(&pszWKT);
-            if (pszWKT)
-                psOptions->osOutputSRS = pszWKT;
-            CPLFree(pszWKT);
-            i++;
         }
-
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-a"))
+        else if (psOptions->bClipSrc && !psOptions->poClipSrc &&
+                 !psOptions->poSpatialFilter)
         {
-            const char *pszAlgorithm = papszArgv[++i];
-            void *pOptions = nullptr;
-            if (GDALGridParseAlgorithmAndOptions(
-                    pszAlgorithm, &psOptions->eAlgorithm, &pOptions) != CE_None)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Failed to process algorithm name and parameters");
-                return nullptr;
-            }
-            psOptions->pOptions.reset(pOptions);
-
-            const CPLStringList aosParams(
-                CSLTokenizeString2(pszAlgorithm, ":", FALSE));
-            const char *pszNoDataValue = aosParams.FetchNameValue("nodata");
-            if (pszNoDataValue != nullptr)
-            {
-                psOptions->bNoDataSet = true;
-                psOptions->dfNoDataValue = CPLAtofM(pszNoDataValue);
-            }
-        }
-        else if (i + 1 < argc && EQUAL(papszArgv[i], "-oo"))
-        {
-            i++;
-            if (psOptionsForBinary)
-            {
-                psOptionsForBinary->aosOpenOptions.AddString(papszArgv[i]);
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "-oo switch only supported from gdal_grid binary.");
-            }
-        }
-        else if (papszArgv[i][0] == '-')
-        {
-            CPLError(CE_Failure, CPLE_NotSupported, "Unknown option name '%s'",
-                     papszArgv[i]);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "-clipsrc must be used with -spat option or \n"
+                     "a bounding box, WKT string or datasource must be "
+                     "specified.");
             return nullptr;
         }
-        else if (!bGotSourceFilename)
+
+        if (psOptions->poSpatialFilter)
         {
-            bGotSourceFilename = true;
-            if (psOptionsForBinary)
+            if (psOptions->poClipSrc)
             {
-                psOptionsForBinary->osSource = papszArgv[i];
-            }
-            else
-            {
-                CPLError(
-                    CE_Failure, CPLE_NotSupported,
-                    "{source_filename} only supported from gdal_grid binary.");
-            }
-        }
-        else if (!bGotDestFilename)
-        {
-            bGotDestFilename = true;
-            if (psOptionsForBinary)
-            {
-                psOptionsForBinary->bDestSpecified = true;
-                psOptionsForBinary->osDest = papszArgv[i];
-            }
-            else
-            {
-                CPLError(
-                    CE_Failure, CPLE_NotSupported,
-                    "{dest_filename} only supported from gdal_grid binary.");
+                auto poTemp = std::unique_ptr<OGRGeometry>(
+                    psOptions->poSpatialFilter->Intersection(
+                        psOptions->poClipSrc.get()));
+                if (poTemp)
+                {
+                    psOptions->poSpatialFilter = std::move(poTemp);
+                }
+
+                psOptions->poClipSrc.reset();
             }
         }
         else
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Too many command options '%s'", papszArgv[i]);
-            return nullptr;
+            if (psOptions->poClipSrc)
+            {
+                psOptions->poSpatialFilter = std::move(psOptions->poClipSrc);
+            }
         }
-    }
 
-    if (psOptions->bClipSrc && !psOptions->osClipSrcDS.empty())
-    {
-        psOptions->poClipSrc =
-            LoadGeometry(psOptions->osClipSrcDS, psOptions->osClipSrcSQL,
-                         psOptions->osClipSrcLayer, psOptions->osClipSrcWhere);
-        if (!psOptions->poClipSrc)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot load source clip geometry.");
-            return nullptr;
-        }
+        return psOptions.release();
     }
-    else if (psOptions->bClipSrc && !psOptions->poClipSrc &&
-             !psOptions->poSpatialFilter)
+    catch (const std::exception &err)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "-clipsrc must be used with -spat option or \n"
-                 "a bounding box, WKT string or datasource must be "
-                 "specified.");
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", err.what());
         return nullptr;
     }
-
-    if (psOptions->poSpatialFilter)
-    {
-        if (psOptions->poClipSrc)
-        {
-            auto poTemp = std::unique_ptr<OGRGeometry>(
-                psOptions->poSpatialFilter->Intersection(
-                    psOptions->poClipSrc.get()));
-            if (poTemp)
-            {
-                psOptions->poSpatialFilter = std::move(poTemp);
-            }
-
-            psOptions->poClipSrc.reset();
-        }
-    }
-    else
-    {
-        if (psOptions->poClipSrc)
-        {
-            psOptions->poSpatialFilter = std::move(psOptions->poClipSrc);
-        }
-    }
-
-    return psOptions.release();
 }
 
 /************************************************************************/
@@ -1367,3 +1471,5 @@ void GDALGridOptionsSetProgress(GDALGridOptions *psOptions,
     if (pfnProgress == GDALTermProgress)
         psOptions->bQuiet = false;
 }
+
+#undef CHECK_HAS_ENOUGH_ADDITIONAL_ARGS
