@@ -84,26 +84,26 @@ CPLString GetParameterValue(short type, const CPLString &typeName, bool isArray)
         CPLString arrayType = "STRING";
         switch (type)
         {
-            case odbc::SQLDataTypes::TinyInt:
+            case QGRHanaDataTypes::TinyInt:
                 arrayType = "TINYINT";
                 break;
-            case odbc::SQLDataTypes::SmallInt:
+            case QGRHanaDataTypes::SmallInt:
                 arrayType = "SMALLINT";
                 break;
-            case odbc::SQLDataTypes::Integer:
+            case QGRHanaDataTypes::Integer:
                 arrayType = "INT";
                 break;
-            case odbc::SQLDataTypes::BigInt:
+            case QGRHanaDataTypes::BigInt:
                 arrayType = "BIGINT";
                 break;
-            case odbc::SQLDataTypes::Float:
-            case odbc::SQLDataTypes::Real:
+            case QGRHanaDataTypes::Float:
+            case QGRHanaDataTypes::Real:
                 arrayType = "REAL";
                 break;
-            case odbc::SQLDataTypes::Double:
+            case QGRHanaDataTypes::Double:
                 arrayType = "DOUBLE";
                 break;
-            case odbc::SQLDataTypes::WVarChar:
+            case QGRHanaDataTypes::WVarChar:
                 arrayType = "STRING";
                 break;
         }
@@ -174,30 +174,30 @@ ColumnTypeInfo ParseColumnTypeInfo(const CPLString &typeDef)
         if (typeSize.empty() || typeSize.size() > 2)
         {
             incorrectFormatErr();
-            return {"", odbc::SQLDataTypes::Unknown, 0, 0};
+            return {"", QGRHanaDataTypes::Unknown, 0, 0};
         }
     }
 
     typeName.Trim();
 
     if (EQUAL(typeName.c_str(), "BOOLEAN"))
-        return {typeName, odbc::SQLDataTypes::Boolean, 0, 0};
+        return {typeName, QGRHanaDataTypes::Boolean, 0, 0};
     else if (EQUAL(typeName.c_str(), "TINYINT"))
-        return {typeName, odbc::SQLDataTypes::TinyInt, 0, 0};
+        return {typeName, QGRHanaDataTypes::TinyInt, 0, 0};
     else if (EQUAL(typeName.c_str(), "SMALLINT"))
-        return {typeName, odbc::SQLDataTypes::SmallInt, 0, 0};
+        return {typeName, QGRHanaDataTypes::SmallInt, 0, 0};
     else if (EQUAL(typeName.c_str(), "INTEGER"))
-        return {typeName, odbc::SQLDataTypes::Integer, 0, 0};
+        return {typeName, QGRHanaDataTypes::Integer, 0, 0};
     else if (EQUAL(typeName.c_str(), "DECIMAL"))
     {
         switch (typeSize.size())
         {
             case 0:
-                return {typeName, odbc::SQLDataTypes::Decimal, 0, 0};
+                return {typeName, QGRHanaDataTypes::Decimal, 0, 0};
             case 1:
-                return {typeName, odbc::SQLDataTypes::Decimal, typeSize[0], 0};
+                return {typeName, QGRHanaDataTypes::Decimal, typeSize[0], 0};
             case 2:
-                return {typeName, odbc::SQLDataTypes::Decimal, typeSize[0],
+                return {typeName, QGRHanaDataTypes::Decimal, typeSize[0],
                         typeSize[1]};
         }
     }
@@ -206,29 +206,29 @@ ColumnTypeInfo ParseColumnTypeInfo(const CPLString &typeDef)
         switch (typeSize.size())
         {
             case 0:
-                return {typeName, odbc::SQLDataTypes::Float, 10, 0};
+                return {typeName, QGRHanaDataTypes::Float, 10, 0};
             case 1:
-                return {typeName, odbc::SQLDataTypes::Float, typeSize[0], 0};
+                return {typeName, QGRHanaDataTypes::Float, typeSize[0], 0};
             default:
                 incorrectFormatErr();
-                return {"", odbc::SQLDataTypes::Unknown, 0, 0};
+                return {"", QGRHanaDataTypes::Unknown, 0, 0};
         }
     }
     else if (EQUAL(typeName.c_str(), "REAL"))
-        return {typeName, odbc::SQLDataTypes::Real, 0, 0};
+        return {typeName, QGRHanaDataTypes::Real, 0, 0};
     else if (EQUAL(typeName.c_str(), "DOUBLE"))
-        return {typeName, odbc::SQLDataTypes::Double, 0, 0};
+        return {typeName, QGRHanaDataTypes::Double, 0, 0};
     else if (EQUAL(typeName.c_str(), "VARCHAR"))
     {
         switch (typeSize.size())
         {
             case 0:
-                return {typeName, odbc::SQLDataTypes::VarChar, 1, 0};
+                return {typeName, QGRHanaDataTypes::VarChar, 1, 0};
             case 1:
-                return {typeName, odbc::SQLDataTypes::VarChar, typeSize[0], 0};
+                return {typeName, QGRHanaDataTypes::VarChar, typeSize[0], 0};
             default:
                 incorrectFormatErr();
-                return {"", odbc::SQLDataTypes::Unknown, 0, 0};
+                return {"", QGRHanaDataTypes::Unknown, 0, 0};
         }
     }
     else if (EQUAL(typeName.c_str(), "NVARCHAR"))
@@ -236,42 +236,54 @@ ColumnTypeInfo ParseColumnTypeInfo(const CPLString &typeDef)
         switch (typeSize.size())
         {
             case 0:
-                return {typeName, odbc::SQLDataTypes::WVarChar, 1, 0};
+                return {typeName, QGRHanaDataTypes::WVarChar, 1, 0};
             case 1:
-                return {typeName, odbc::SQLDataTypes::WVarChar, typeSize[0], 0};
+                return {typeName, QGRHanaDataTypes::WVarChar, typeSize[0], 0};
             case 2:
                 incorrectFormatErr();
-                return {"", odbc::SQLDataTypes::Unknown, 0, 0};
+                return {"", QGRHanaDataTypes::Unknown, 0, 0};
         }
     }
     else if (EQUAL(typeName.c_str(), "NCLOB"))
-        return {typeName, odbc::SQLDataTypes::WLongVarChar, 0, 0};
+        return {typeName, QGRHanaDataTypes::WLongVarChar, 0, 0};
     else if (EQUAL(typeName.c_str(), "DATE"))
-        return {typeName, odbc::SQLDataTypes::Date, 0, 0};
+        return {typeName, QGRHanaDataTypes::Date, 0, 0};
     else if (EQUAL(typeName.c_str(), "TIME"))
-        return {typeName, odbc::SQLDataTypes::Time, 0, 0};
+        return {typeName, QGRHanaDataTypes::Time, 0, 0};
     else if (EQUAL(typeName.c_str(), "TIMESTAMP"))
-        return {typeName, odbc::SQLDataTypes::Timestamp, 0, 0};
+        return {typeName, QGRHanaDataTypes::Timestamp, 0, 0};
     else if (EQUAL(typeName.c_str(), "VARBINARY"))
     {
         switch (typeSize.size())
         {
             case 0:
-                return {typeName, odbc::SQLDataTypes::VarBinary, 1, 0};
+                return {typeName, QGRHanaDataTypes::VarBinary, 1, 0};
             case 1:
-                return {typeName, odbc::SQLDataTypes::VarBinary, typeSize[0],
-                        0};
+                return {typeName, QGRHanaDataTypes::VarBinary, typeSize[0], 0};
             case 2:
                 incorrectFormatErr();
-                return {"", odbc::SQLDataTypes::Unknown, 0, 0};
+                return {"", QGRHanaDataTypes::Unknown, 0, 0};
         }
     }
     else if (EQUAL(typeName.c_str(), "BLOB"))
-        return {typeName, odbc::SQLDataTypes::LongVarBinary, 0, 0};
+        return {typeName, QGRHanaDataTypes::LongVarBinary, 0, 0};
+    else if (EQUAL(typeName.c_str(), "REAL_VECTOR"))
+    {
+        switch (typeSize.size())
+        {
+            case 0:
+                return {typeName, QGRHanaDataTypes::RealVector, 1, 0};
+            case 1:
+                return {typeName, QGRHanaDataTypes::RealVector, typeSize[0], 0};
+            case 2:
+                incorrectFormatErr();
+                return {"", QGRHanaDataTypes::Unknown, 0, 0};
+        }
+    }
 
     CPLError(CE_Failure, CPLE_NotSupported, "Unknown column type '%s'.",
              typeName.c_str());
-    return {std::move(typeName), odbc::SQLDataTypes::Unknown, 0, 0};
+    return {std::move(typeName), QGRHanaDataTypes::Unknown, 0, 0};
 }
 
 CPLString GetColumnDefinition(const ColumnTypeInfo &typeInfo)
@@ -282,17 +294,17 @@ CPLString GetColumnDefinition(const ColumnTypeInfo &typeInfo)
     {
         switch (typeInfo.type)
         {
-            case odbc::SQLDataTypes::SmallInt:
+            case QGRHanaDataTypes::SmallInt:
                 return "SMALLINT ARRAY";
-            case odbc::SQLDataTypes::Integer:
+            case QGRHanaDataTypes::Integer:
                 return "INTEGER ARRAY";
-            case odbc::SQLDataTypes::BigInt:
+            case QGRHanaDataTypes::BigInt:
                 return "BIGINT ARRAY";
-            case odbc::SQLDataTypes::Real:
+            case QGRHanaDataTypes::Real:
                 return "REAL ARRAY";
-            case odbc::SQLDataTypes::Double:
+            case QGRHanaDataTypes::Double:
                 return "DOUBLE ARRAY";
-            case odbc::SQLDataTypes::WVarChar:
+            case QGRHanaDataTypes::WVarChar:
                 return "NVARCHAR(512) ARRAY";
             default:
                 return "UNKNOWN";
@@ -301,34 +313,35 @@ CPLString GetColumnDefinition(const ColumnTypeInfo &typeInfo)
 
     switch (typeInfo.type)
     {
-        case odbc::SQLDataTypes::Boolean:
-        case odbc::SQLDataTypes::TinyInt:
-        case odbc::SQLDataTypes::SmallInt:
-        case odbc::SQLDataTypes::Integer:
-        case odbc::SQLDataTypes::BigInt:
-        case odbc::SQLDataTypes::Float:
-        case odbc::SQLDataTypes::Real:
-        case odbc::SQLDataTypes::Double:
-        case odbc::SQLDataTypes::Date:
-        case odbc::SQLDataTypes::TypeDate:
-        case odbc::SQLDataTypes::Time:
-        case odbc::SQLDataTypes::TypeTime:
-        case odbc::SQLDataTypes::Timestamp:
-        case odbc::SQLDataTypes::TypeTimestamp:
-        case odbc::SQLDataTypes::Char:
-        case odbc::SQLDataTypes::WChar:
-        case odbc::SQLDataTypes::LongVarChar:
-        case odbc::SQLDataTypes::LongVarBinary:
+        case QGRHanaDataTypes::Boolean:
+        case QGRHanaDataTypes::TinyInt:
+        case QGRHanaDataTypes::SmallInt:
+        case QGRHanaDataTypes::Integer:
+        case QGRHanaDataTypes::BigInt:
+        case QGRHanaDataTypes::Float:
+        case QGRHanaDataTypes::Real:
+        case QGRHanaDataTypes::Double:
+        case QGRHanaDataTypes::Date:
+        case QGRHanaDataTypes::TypeDate:
+        case QGRHanaDataTypes::Time:
+        case QGRHanaDataTypes::TypeTime:
+        case QGRHanaDataTypes::Timestamp:
+        case QGRHanaDataTypes::TypeTimestamp:
+        case QGRHanaDataTypes::Char:
+        case QGRHanaDataTypes::WChar:
+        case QGRHanaDataTypes::LongVarChar:
+        case QGRHanaDataTypes::LongVarBinary:
             return typeInfo.name;
-        case odbc::SQLDataTypes::Decimal:
-        case odbc::SQLDataTypes::Numeric:
+        case QGRHanaDataTypes::Decimal:
+        case QGRHanaDataTypes::Numeric:
             return CPLString().Printf("DECIMAL(%d,%d)", typeInfo.width,
                                       typeInfo.precision);
-        case odbc::SQLDataTypes::VarChar:
-        case odbc::SQLDataTypes::WVarChar:
-        case odbc::SQLDataTypes::Binary:
-        case odbc::SQLDataTypes::VarBinary:
-        case odbc::SQLDataTypes::WLongVarChar:
+        case QGRHanaDataTypes::VarChar:
+        case QGRHanaDataTypes::WVarChar:
+        case QGRHanaDataTypes::Binary:
+        case QGRHanaDataTypes::VarBinary:
+        case QGRHanaDataTypes::WLongVarChar:
+        case QGRHanaDataTypes::RealVector:
             return (typeInfo.width == 0)
                        ? typeInfo.name
                        : CPLString().Printf("%s(%d)", typeInfo.name.c_str(),
@@ -345,58 +358,59 @@ void SetFieldDefn(OGRFieldDefn &field, const ColumnTypeInfo &typeInfo)
 
     switch (typeInfo.type)
     {
-        case odbc::SQLDataTypes::Bit:
-        case odbc::SQLDataTypes::Boolean:
+        case QGRHanaDataTypes::Bit:
+        case QGRHanaDataTypes::Boolean:
             field.SetType(OFTInteger);
             field.SetSubType(OFSTBoolean);
             break;
-        case odbc::SQLDataTypes::TinyInt:
-        case odbc::SQLDataTypes::SmallInt:
+        case QGRHanaDataTypes::TinyInt:
+        case QGRHanaDataTypes::SmallInt:
             field.SetType(isArray() ? OFTIntegerList : OFTInteger);
             field.SetSubType(OFSTInt16);
             break;
-        case odbc::SQLDataTypes::Integer:
+        case QGRHanaDataTypes::Integer:
             field.SetType(isArray() ? OFTIntegerList : OFTInteger);
             break;
-        case odbc::SQLDataTypes::BigInt:
+        case QGRHanaDataTypes::BigInt:
             field.SetType(isArray() ? OFTInteger64List : OFTInteger64);
             break;
-        case odbc::SQLDataTypes::Double:
-        case odbc::SQLDataTypes::Real:
-        case odbc::SQLDataTypes::Float:
+        case QGRHanaDataTypes::Double:
+        case QGRHanaDataTypes::Real:
+        case QGRHanaDataTypes::Float:
             field.SetType(isArray() ? OFTRealList : OFTReal);
-            if (typeInfo.type != odbc::SQLDataTypes::Double)
+            if (typeInfo.type != QGRHanaDataTypes::Double)
                 field.SetSubType(OFSTFloat32);
             break;
-        case odbc::SQLDataTypes::Decimal:
-        case odbc::SQLDataTypes::Numeric:
+        case QGRHanaDataTypes::Decimal:
+        case QGRHanaDataTypes::Numeric:
             field.SetType(isArray() ? OFTRealList : OFTReal);
             break;
-        case odbc::SQLDataTypes::Char:
-        case odbc::SQLDataTypes::VarChar:
-        case odbc::SQLDataTypes::LongVarChar:
+        case QGRHanaDataTypes::Char:
+        case QGRHanaDataTypes::VarChar:
+        case QGRHanaDataTypes::LongVarChar:
             field.SetType(isArray() ? OFTStringList : OFTString);
             break;
-        case odbc::SQLDataTypes::WChar:
-        case odbc::SQLDataTypes::WVarChar:
-        case odbc::SQLDataTypes::WLongVarChar:
+        case QGRHanaDataTypes::WChar:
+        case QGRHanaDataTypes::WVarChar:
+        case QGRHanaDataTypes::WLongVarChar:
             field.SetType(isArray() ? OFTStringList : OFTString);
             break;
-        case odbc::SQLDataTypes::Date:
-        case odbc::SQLDataTypes::TypeDate:
+        case QGRHanaDataTypes::Date:
+        case QGRHanaDataTypes::TypeDate:
             field.SetType(OFTDate);
             break;
-        case odbc::SQLDataTypes::Time:
-        case odbc::SQLDataTypes::TypeTime:
+        case QGRHanaDataTypes::Time:
+        case QGRHanaDataTypes::TypeTime:
             field.SetType(OFTTime);
             break;
-        case odbc::SQLDataTypes::Timestamp:
-        case odbc::SQLDataTypes::TypeTimestamp:
+        case QGRHanaDataTypes::Timestamp:
+        case QGRHanaDataTypes::TypeTimestamp:
             field.SetType(OFTDateTime);
             break;
-        case odbc::SQLDataTypes::Binary:
-        case odbc::SQLDataTypes::VarBinary:
-        case odbc::SQLDataTypes::LongVarBinary:
+        case QGRHanaDataTypes::Binary:
+        case QGRHanaDataTypes::VarBinary:
+        case QGRHanaDataTypes::LongVarBinary:
+        case QGRHanaDataTypes::RealVector:
             field.SetType(OFTBinary);
             break;
         default:
@@ -659,7 +673,7 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
 
             switch (clmDesc.type)
             {
-                case odbc::SQLDataTypes::Integer:
+                case QGRHanaDataTypes::Integer:
                     if (feature->GetFID() == OGRNullFID)
                         statement.setInt(paramIndex, odbc::Int());
                     else
@@ -682,7 +696,7 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                                              feature->GetFID())));
                     }
                     break;
-                case odbc::SQLDataTypes::BigInt:
+                case QGRHanaDataTypes::BigInt:
                     if (feature->GetFID() == OGRNullFID)
                         statement.setLong(paramIndex, odbc::Long());
                     else
@@ -707,12 +721,12 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
 
         switch (clmDesc.type)
         {
-            case odbc::SQLDataTypes::Bit:
-            case odbc::SQLDataTypes::Boolean:
+            case QGRHanaDataTypes::Bit:
+            case QGRHanaDataTypes::Boolean:
                 statement.setBoolean(paramIndex,
                                      featReader.GetFieldAsBoolean(fieldIndex));
                 break;
-            case odbc::SQLDataTypes::TinyInt:
+            case QGRHanaDataTypes::TinyInt:
                 if (clmDesc.isArray)
                     statement.setString(
                         paramIndex, featReader.GetFieldAsIntArray(fieldIndex));
@@ -720,7 +734,7 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                     statement.setByte(paramIndex,
                                       featReader.GetFieldAsByte(fieldIndex));
                 break;
-            case odbc::SQLDataTypes::SmallInt:
+            case QGRHanaDataTypes::SmallInt:
                 if (clmDesc.isArray)
                     statement.setString(
                         paramIndex, featReader.GetFieldAsIntArray(fieldIndex));
@@ -728,7 +742,7 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                     statement.setShort(paramIndex,
                                        featReader.GetFieldAsShort(fieldIndex));
                 break;
-            case odbc::SQLDataTypes::Integer:
+            case QGRHanaDataTypes::Integer:
                 if (clmDesc.isArray)
                     statement.setString(
                         paramIndex, featReader.GetFieldAsIntArray(fieldIndex));
@@ -736,7 +750,7 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                     statement.setInt(paramIndex,
                                      featReader.GetFieldAsInt(fieldIndex));
                 break;
-            case odbc::SQLDataTypes::BigInt:
+            case QGRHanaDataTypes::BigInt:
                 if (clmDesc.isArray)
                     statement.setString(
                         paramIndex,
@@ -745,8 +759,8 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                     statement.setLong(paramIndex,
                                       featReader.GetFieldAsLong(fieldIndex));
                 break;
-            case odbc::SQLDataTypes::Float:
-            case odbc::SQLDataTypes::Real:
+            case QGRHanaDataTypes::Float:
+            case QGRHanaDataTypes::Real:
                 if (clmDesc.isArray)
                     statement.setString(
                         paramIndex, featReader.GetFieldAsRealArray(fieldIndex));
@@ -754,7 +768,7 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                     statement.setFloat(paramIndex,
                                        featReader.GetFieldAsFloat(fieldIndex));
                 break;
-            case odbc::SQLDataTypes::Double:
+            case QGRHanaDataTypes::Double:
                 if (clmDesc.isArray)
                     statement.setString(
                         paramIndex,
@@ -763,8 +777,8 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                     statement.setDouble(
                         paramIndex, featReader.GetFieldAsDouble(fieldIndex));
                 break;
-            case odbc::SQLDataTypes::Decimal:
-            case odbc::SQLDataTypes::Numeric:
+            case QGRHanaDataTypes::Decimal:
+            case QGRHanaDataTypes::Numeric:
                 if ((!feature->IsFieldSet(fieldIndex) ||
                      feature->IsFieldNull(fieldIndex)) &&
                     feature->GetFieldDefnRef(fieldIndex)->GetDefault() ==
@@ -774,9 +788,9 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                     statement.setDouble(
                         paramIndex, featReader.GetFieldAsDouble(fieldIndex));
                 break;
-            case odbc::SQLDataTypes::Char:
-            case odbc::SQLDataTypes::VarChar:
-            case odbc::SQLDataTypes::LongVarChar:
+            case QGRHanaDataTypes::Char:
+            case QGRHanaDataTypes::VarChar:
+            case QGRHanaDataTypes::LongVarChar:
                 if (clmDesc.isArray)
                     statement.setString(
                         paramIndex,
@@ -786,9 +800,9 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                                         featReader.GetFieldAsString(
                                             fieldIndex, clmDesc.length));
                 break;
-            case odbc::SQLDataTypes::WChar:
-            case odbc::SQLDataTypes::WVarChar:
-            case odbc::SQLDataTypes::WLongVarChar:
+            case QGRHanaDataTypes::WChar:
+            case QGRHanaDataTypes::WVarChar:
+            case QGRHanaDataTypes::WLongVarChar:
                 if (clmDesc.isArray)
                     statement.setString(
                         paramIndex,
@@ -798,26 +812,27 @@ OGRErr OGRHanaTableLayer::SetStatementParameters(
                                         featReader.GetFieldAsNString(
                                             fieldIndex, clmDesc.length));
                 break;
-            case odbc::SQLDataTypes::Binary:
-            case odbc::SQLDataTypes::VarBinary:
-            case odbc::SQLDataTypes::LongVarBinary:
+            case QGRHanaDataTypes::Binary:
+            case QGRHanaDataTypes::VarBinary:
+            case QGRHanaDataTypes::LongVarBinary:
+            case QGRHanaDataTypes::RealVector:
             {
                 Binary bin = featReader.GetFieldAsBinary(fieldIndex);
                 statement.setBytes(paramIndex, bin.data, bin.size);
             }
             break;
-            case odbc::SQLDataTypes::DateTime:
-            case odbc::SQLDataTypes::TypeDate:
+            case QGRHanaDataTypes::DateTime:
+            case QGRHanaDataTypes::TypeDate:
                 statement.setDate(paramIndex,
                                   featReader.GetFieldAsDate(fieldIndex));
                 break;
-            case odbc::SQLDataTypes::Time:
-            case odbc::SQLDataTypes::TypeTime:
+            case QGRHanaDataTypes::Time:
+            case QGRHanaDataTypes::TypeTime:
                 statement.setTime(paramIndex,
                                   featReader.GetFieldAsTime(fieldIndex));
                 break;
-            case odbc::SQLDataTypes::Timestamp:
-            case odbc::SQLDataTypes::TypeTimestamp:
+            case QGRHanaDataTypes::Timestamp:
+            case QGRHanaDataTypes::TypeTimestamp:
                 statement.setTimestamp(
                     paramIndex, featReader.GetFieldAsTimestamp(fieldIndex));
                 break;
@@ -955,98 +970,97 @@ OGRHanaTableLayer::GetColumnTypeInfo(const OGRFieldDefn &field) const
         case OFTInteger:
             if (preservePrecision_ && field.GetWidth() > 10)
             {
-                return {"DECIMAL", odbc::SQLDataTypes::Decimal,
-                        field.GetWidth(), 0};
+                return {"DECIMAL", QGRHanaDataTypes::Decimal, field.GetWidth(),
+                        0};
             }
             else
             {
                 if (field.GetSubType() == OFSTBoolean)
-                    return {"BOOLEAN", odbc::SQLDataTypes::Boolean,
+                    return {"BOOLEAN", QGRHanaDataTypes::Boolean,
                             field.GetWidth(), 0};
                 else if (field.GetSubType() == OFSTInt16)
-                    return {"SMALLINT", odbc::SQLDataTypes::SmallInt,
+                    return {"SMALLINT", QGRHanaDataTypes::SmallInt,
                             field.GetWidth(), 0};
                 else
-                    return {"INTEGER", odbc::SQLDataTypes::Integer,
+                    return {"INTEGER", QGRHanaDataTypes::Integer,
                             field.GetWidth(), 0};
             }
             break;
         case OFTInteger64:
             if (preservePrecision_ && field.GetWidth() > 20)
             {
-                return {"DECIMAL", odbc::SQLDataTypes::Decimal,
-                        field.GetWidth(), 0};
+                return {"DECIMAL", QGRHanaDataTypes::Decimal, field.GetWidth(),
+                        0};
             }
             else
-                return {"BIGINT", odbc::SQLDataTypes::BigInt, field.GetWidth(),
+                return {"BIGINT", QGRHanaDataTypes::BigInt, field.GetWidth(),
                         0};
             break;
         case OFTReal:
             if (preservePrecision_ && field.GetWidth() != 0)
             {
-                return {"DECIMAL", odbc::SQLDataTypes::Decimal,
-                        field.GetWidth(), field.GetPrecision()};
+                return {"DECIMAL", QGRHanaDataTypes::Decimal, field.GetWidth(),
+                        field.GetPrecision()};
             }
             else
             {
                 if (field.GetSubType() == OFSTFloat32)
-                    return {"REAL", odbc::SQLDataTypes::Real, field.GetWidth(),
+                    return {"REAL", QGRHanaDataTypes::Real, field.GetWidth(),
                             field.GetPrecision()};
                 else
-                    return {"DOUBLE", odbc::SQLDataTypes::Double,
+                    return {"DOUBLE", QGRHanaDataTypes::Double,
                             field.GetWidth(), field.GetPrecision()};
             }
         case OFTString:
             if (field.GetWidth() == 0 || !preservePrecision_)
             {
                 int width = static_cast<int>(defaultStringSize_);
-                return {"NVARCHAR", odbc::SQLDataTypes::WLongVarChar, width, 0};
+                return {"NVARCHAR", QGRHanaDataTypes::WLongVarChar, width, 0};
             }
             else
             {
-                if (field.GetWidth() <= 5000)
-                    return {"NVARCHAR", odbc::SQLDataTypes::WLongVarChar,
+                if (field.GetWidth() >= 1 && field.GetWidth() <= 5000)
+                    return {"NVARCHAR", QGRHanaDataTypes::WLongVarChar,
                             field.GetWidth(), 0};
                 else
-                    return {"NCLOB", odbc::SQLDataTypes::WLongVarChar, 0, 0};
+                    return {"NCLOB", QGRHanaDataTypes::WLongVarChar, 0, 0};
             }
         case OFTBinary:
-            if (field.GetWidth() <= 5000)
-                return {"VARBINARY", odbc::SQLDataTypes::VarBinary,
+            if (field.GetWidth() >= 1 && field.GetWidth() <= 5000)
+                return {"VARBINARY", QGRHanaDataTypes::VarBinary,
                         field.GetWidth(), 0};
             else
-                return {"BLOB", odbc::SQLDataTypes::LongVarBinary,
+                return {"BLOB", QGRHanaDataTypes::LongVarBinary,
                         field.GetWidth(), 0};
         case OFTDate:
-            return {"DATE", odbc::SQLDataTypes::TypeDate, field.GetWidth(), 0};
+            return {"DATE", QGRHanaDataTypes::TypeDate, field.GetWidth(), 0};
         case OFTTime:
-            return {"TIME", odbc::SQLDataTypes::TypeTime, field.GetWidth(), 0};
+            return {"TIME", QGRHanaDataTypes::TypeTime, field.GetWidth(), 0};
         case OFTDateTime:
-            return {"TIMESTAMP", odbc::SQLDataTypes::TypeTimestamp,
+            return {"TIMESTAMP", QGRHanaDataTypes::TypeTimestamp,
                     field.GetWidth(), 0};
         case OFTIntegerList:
             if (field.GetSubType() == OGRFieldSubType::OFSTInt16)
-                return {"ARRAY", odbc::SQLDataTypes::SmallInt, field.GetWidth(),
+                return {"ARRAY", QGRHanaDataTypes::SmallInt, field.GetWidth(),
                         0};
             else
-                return {"ARRAY", odbc::SQLDataTypes::Integer, field.GetWidth(),
+                return {"ARRAY", QGRHanaDataTypes::Integer, field.GetWidth(),
                         0};
         case OFTInteger64List:
-            return {"ARRAY", odbc::SQLDataTypes::BigInt, field.GetWidth(), 0};
+            return {"ARRAY", QGRHanaDataTypes::BigInt, field.GetWidth(), 0};
         case OFTRealList:
             if (field.GetSubType() == OGRFieldSubType::OFSTFloat32)
-                return {"ARRAY", odbc::SQLDataTypes::Real, field.GetWidth(), 0};
+                return {"ARRAY", QGRHanaDataTypes::Real, field.GetWidth(), 0};
             else
-                return {"ARRAY", odbc::SQLDataTypes::Double, field.GetWidth(),
-                        0};
+                return {"ARRAY", QGRHanaDataTypes::Double, field.GetWidth(), 0};
             break;
         case OFTStringList:
-            return {"ARRAY", odbc::SQLDataTypes::WVarChar, 512, 0};
+            return {"ARRAY", QGRHanaDataTypes::WVarChar, 512, 0};
         default:
             break;
     }
 
-    return {"", odbc::SQLDataTypes::Unknown, 0, 0};
+    return {"", QGRHanaDataTypes::Unknown, 0, 0};
 }
 
 /* -------------------------------------------------------------------- */
@@ -1446,7 +1460,7 @@ OGRErr OGRHanaTableLayer::CreateField(const OGRFieldDefn *srsField,
     ColumnTypeInfo columnTypeInfo = GetColumnTypeInfo(dstField);
     CPLString columnDef = GetColumnDefinition(columnTypeInfo);
 
-    if (columnTypeInfo.type == odbc::SQLDataTypes::Unknown)
+    if (columnTypeInfo.type == QGRHanaDataTypes::Unknown)
     {
         if (columnTypeInfo.name.empty())
             return OGRERR_FAILURE;
@@ -1481,7 +1495,8 @@ OGRErr OGRHanaTableLayer::CreateField(const OGRFieldDefn *srsField,
     if (dstField.GetDefault() != nullptr && !dstField.IsDefaultDriverSpecific())
     {
         if (IsArrayField(dstField.GetType()) ||
-            columnTypeInfo.type == odbc::SQLDataTypes::LongVarBinary)
+            columnTypeInfo.type == QGRHanaDataTypes::LongVarBinary ||
+            columnTypeInfo.type == QGRHanaDataTypes::RealVector)
         {
             CPLError(
                 CE_Failure, CPLE_NotSupported,

@@ -114,63 +114,73 @@ CreateFieldDefn(const AttributeColumnDescription &columnDesc)
 
     OGRFieldType ogrFieldType = OFTString;
     OGRFieldSubType ogrFieldSubType = OGRFieldSubType::OFSTNone;
+    int width = columnDesc.length;
 
     switch (columnDesc.type)
     {
-        case odbc::SQLDataTypes::Bit:
-        case odbc::SQLDataTypes::Boolean:
+        case QGRHanaDataTypes::Bit:
+        case QGRHanaDataTypes::Boolean:
             ogrFieldType = columnDesc.isArray ? OFTIntegerList : OFTInteger;
             ogrFieldSubType = OGRFieldSubType::OFSTBoolean;
             break;
-        case odbc::SQLDataTypes::TinyInt:
-        case odbc::SQLDataTypes::SmallInt:
+        case QGRHanaDataTypes::TinyInt:
+        case QGRHanaDataTypes::SmallInt:
             ogrFieldType = columnDesc.isArray ? OFTIntegerList : OFTInteger;
             ogrFieldSubType = OGRFieldSubType::OFSTInt16;
             break;
-        case odbc::SQLDataTypes::Integer:
+        case QGRHanaDataTypes::Integer:
             ogrFieldType = columnDesc.isArray ? OFTIntegerList : OFTInteger;
             break;
-        case odbc::SQLDataTypes::BigInt:
+        case QGRHanaDataTypes::BigInt:
             ogrFieldType = columnDesc.isArray ? OFTInteger64List : OFTInteger64;
             break;
-        case odbc::SQLDataTypes::Double:
-        case odbc::SQLDataTypes::Real:
-        case odbc::SQLDataTypes::Float:
+        case QGRHanaDataTypes::Double:
+        case QGRHanaDataTypes::Real:
+        case QGRHanaDataTypes::Float:
             ogrFieldType = columnDesc.isArray ? OFTRealList : OFTReal;
-            if (columnDesc.type != odbc::SQLDataTypes::Double)
+            if (columnDesc.type != QGRHanaDataTypes::Double)
                 ogrFieldSubType = OGRFieldSubType::OFSTFloat32;
             break;
-        case odbc::SQLDataTypes::Decimal:
-        case odbc::SQLDataTypes::Numeric:
+        case QGRHanaDataTypes::Decimal:
+        case QGRHanaDataTypes::Numeric:
             ogrFieldType = columnDesc.isArray ? OFTRealList : OFTReal;
             setFieldPrecision = true;
             break;
-        case odbc::SQLDataTypes::Char:
-        case odbc::SQLDataTypes::VarChar:
-        case odbc::SQLDataTypes::LongVarChar:
-        case odbc::SQLDataTypes::WChar:
-        case odbc::SQLDataTypes::WVarChar:
-        case odbc::SQLDataTypes::WLongVarChar:
+        case QGRHanaDataTypes::Char:
+        case QGRHanaDataTypes::VarChar:
+        case QGRHanaDataTypes::LongVarChar:
+        case QGRHanaDataTypes::WChar:
+        case QGRHanaDataTypes::WVarChar:
+        case QGRHanaDataTypes::WLongVarChar:
             // Note: OFTWideString is deprecated
             ogrFieldType = columnDesc.isArray ? OFTStringList : OFTString;
             setFieldSize = true;
             break;
-        case odbc::SQLDataTypes::Date:
-        case odbc::SQLDataTypes::TypeDate:
+        case QGRHanaDataTypes::Date:
+        case QGRHanaDataTypes::TypeDate:
             ogrFieldType = OFTDate;
             break;
-        case odbc::SQLDataTypes::Time:
-        case odbc::SQLDataTypes::TypeTime:
+        case QGRHanaDataTypes::Time:
+        case QGRHanaDataTypes::TypeTime:
             ogrFieldType = OFTTime;
             break;
-        case odbc::SQLDataTypes::Timestamp:
-        case odbc::SQLDataTypes::TypeTimestamp:
+        case QGRHanaDataTypes::Timestamp:
+        case QGRHanaDataTypes::TypeTimestamp:
             ogrFieldType = OFTDateTime;
             break;
-        case odbc::SQLDataTypes::Binary:
-        case odbc::SQLDataTypes::VarBinary:
-        case odbc::SQLDataTypes::LongVarBinary:
+        case QGRHanaDataTypes::Binary:
+        case QGRHanaDataTypes::VarBinary:
+        case QGRHanaDataTypes::LongVarBinary:
             ogrFieldType = OFTBinary;
+            setFieldSize = true;
+            break;
+        case QGRHanaDataTypes::RealVector:
+            ogrFieldType = OFTBinary;
+            // The .fvecs format is used for REAL_VECTOR with the dimension
+            // lying in the range [1,65000].
+            width = (columnDesc.precision == 0)
+                        ? 65000
+                        : 4 * (columnDesc.precision + 1);
             setFieldSize = true;
             break;
         default:
@@ -189,7 +199,7 @@ CreateFieldDefn(const AttributeColumnDescription &columnDesc)
     if (!columnDesc.isArray)
     {
         if (setFieldSize)
-            field->SetWidth(columnDesc.length);
+            field->SetWidth(width);
         if (setFieldPrecision)
         {
             field->SetWidth(columnDesc.precision);
@@ -472,13 +482,13 @@ OGRFeature *OGRHanaLayer::ReadFeature()
 
         if (clmDesc.isFeatureID)
         {
-            if (clmDesc.type == odbc::SQLDataTypes::Integer)
+            if (clmDesc.type == QGRHanaDataTypes::Integer)
             {
                 odbc::Int val = resultSet_->getInt(paramIndex);
                 if (!val.isNull())
                     feature->SetFID(static_cast<GIntBig>(*val));
             }
-            else if (clmDesc.type == odbc::SQLDataTypes::BigInt)
+            else if (clmDesc.type == QGRHanaDataTypes::BigInt)
             {
                 odbc::Long val = resultSet_->getLong(paramIndex);
                 if (!val.isNull())
@@ -504,41 +514,41 @@ OGRFeature *OGRHanaLayer::ReadFeature()
 
             switch (clmDesc.type)
             {
-                case odbc::SQLDataTypes::Boolean:
+                case QGRHanaDataTypes::Boolean:
                     featWriter.SetFieldValueAsArray<uint8_t, int32_t>(
                         fieldIndex, val);
                     break;
-                case odbc::SQLDataTypes::TinyInt:
+                case QGRHanaDataTypes::TinyInt:
                     featWriter.SetFieldValueAsArray<uint8_t, int32_t>(
                         fieldIndex, val);
                     break;
-                case odbc::SQLDataTypes::SmallInt:
+                case QGRHanaDataTypes::SmallInt:
                     featWriter.SetFieldValueAsArray<int16_t, int32_t>(
                         fieldIndex, val);
                     break;
-                case odbc::SQLDataTypes::Integer:
+                case QGRHanaDataTypes::Integer:
                     featWriter.SetFieldValueAsArray<int32_t, int32_t>(
                         fieldIndex, val);
                     break;
-                case odbc::SQLDataTypes::BigInt:
+                case QGRHanaDataTypes::BigInt:
                     featWriter.SetFieldValueAsArray<GIntBig, GIntBig>(
                         fieldIndex, val);
                     break;
-                case odbc::SQLDataTypes::Float:
-                case odbc::SQLDataTypes::Real:
+                case QGRHanaDataTypes::Float:
+                case QGRHanaDataTypes::Real:
                     featWriter.SetFieldValueAsArray<float, double>(fieldIndex,
                                                                    val);
                     break;
-                case odbc::SQLDataTypes::Double:
+                case QGRHanaDataTypes::Double:
                     featWriter.SetFieldValueAsArray<double, double>(fieldIndex,
                                                                     val);
                     break;
-                case odbc::SQLDataTypes::Char:
-                case odbc::SQLDataTypes::VarChar:
-                case odbc::SQLDataTypes::LongVarChar:
-                case odbc::SQLDataTypes::WChar:
-                case odbc::SQLDataTypes::WVarChar:
-                case odbc::SQLDataTypes::WLongVarChar:
+                case QGRHanaDataTypes::Char:
+                case QGRHanaDataTypes::VarChar:
+                case QGRHanaDataTypes::LongVarChar:
+                case QGRHanaDataTypes::WChar:
+                case QGRHanaDataTypes::WVarChar:
+                case QGRHanaDataTypes::WLongVarChar:
                     featWriter.SetFieldValueAsStringArray(fieldIndex, val);
                     break;
             }
@@ -548,65 +558,65 @@ OGRFeature *OGRHanaLayer::ReadFeature()
 
         switch (clmDesc.type)
         {
-            case odbc::SQLDataTypes::Bit:
-            case odbc::SQLDataTypes::Boolean:
+            case QGRHanaDataTypes::Bit:
+            case QGRHanaDataTypes::Boolean:
             {
                 odbc::Boolean val = resultSet_->getBoolean(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::TinyInt:
+            case QGRHanaDataTypes::TinyInt:
             {
                 odbc::Byte val = resultSet_->getByte(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::SmallInt:
+            case QGRHanaDataTypes::SmallInt:
             {
                 odbc::Short val = resultSet_->getShort(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::Integer:
+            case QGRHanaDataTypes::Integer:
             {
                 odbc::Int val = resultSet_->getInt(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::BigInt:
+            case QGRHanaDataTypes::BigInt:
             {
                 odbc::Long val = resultSet_->getLong(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::Real:
-            case odbc::SQLDataTypes::Float:
+            case QGRHanaDataTypes::Real:
+            case QGRHanaDataTypes::Float:
             {
                 odbc::Float val = resultSet_->getFloat(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::Double:
+            case QGRHanaDataTypes::Double:
             {
                 odbc::Double val = resultSet_->getDouble(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::Decimal:
-            case odbc::SQLDataTypes::Numeric:
+            case QGRHanaDataTypes::Decimal:
+            case QGRHanaDataTypes::Numeric:
             {
                 odbc::Decimal val = resultSet_->getDecimal(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, val);
             }
             break;
-            case odbc::SQLDataTypes::Char:
-            case odbc::SQLDataTypes::VarChar:
-            case odbc::SQLDataTypes::LongVarChar:
+            case QGRHanaDataTypes::Char:
+            case QGRHanaDataTypes::VarChar:
+            case QGRHanaDataTypes::LongVarChar:
             // Note: NVARCHAR data type is converted to UTF-8 on the HANA side
             // when using a connection setting CHAR_AS_UTF8=1.
-            case odbc::SQLDataTypes::WChar:
-            case odbc::SQLDataTypes::WVarChar:
-            case odbc::SQLDataTypes::WLongVarChar:
+            case QGRHanaDataTypes::WChar:
+            case QGRHanaDataTypes::WVarChar:
+            case QGRHanaDataTypes::WLongVarChar:
             {
                 std::size_t len = resultSet_->getStringLength(paramIndex);
                 if (len == odbc::ResultSet::NULL_DATA)
@@ -627,9 +637,10 @@ OGRFeature *OGRHanaLayer::ReadFeature()
                 }
             }
             break;
-            case odbc::SQLDataTypes::Binary:
-            case odbc::SQLDataTypes::VarBinary:
-            case odbc::SQLDataTypes::LongVarBinary:
+            case QGRHanaDataTypes::Binary:
+            case QGRHanaDataTypes::VarBinary:
+            case QGRHanaDataTypes::LongVarBinary:
+            case QGRHanaDataTypes::RealVector:
             {
                 std::size_t len = resultSet_->getBinaryLength(paramIndex);
                 if (len == 0)
@@ -652,22 +663,22 @@ OGRFeature *OGRHanaLayer::ReadFeature()
                 }
             }
             break;
-            case odbc::SQLDataTypes::Date:
-            case odbc::SQLDataTypes::TypeDate:
+            case QGRHanaDataTypes::Date:
+            case QGRHanaDataTypes::TypeDate:
             {
                 odbc::Date date = resultSet_->getDate(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, date);
             }
             break;
-            case odbc::SQLDataTypes::Time:
-            case odbc::SQLDataTypes::TypeTime:
+            case QGRHanaDataTypes::Time:
+            case QGRHanaDataTypes::TypeTime:
             {
                 odbc::Time time = resultSet_->getTime(paramIndex);
                 featWriter.SetFieldValue(fieldIndex, time);
             }
             break;
-            case odbc::SQLDataTypes::Timestamp:
-            case odbc::SQLDataTypes::TypeTimestamp:
+            case QGRHanaDataTypes::Timestamp:
+            case QGRHanaDataTypes::TypeTimestamp:
             {
                 odbc::Timestamp timestamp =
                     resultSet_->getTimestamp(paramIndex);
