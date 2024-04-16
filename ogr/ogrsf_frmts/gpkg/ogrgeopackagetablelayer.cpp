@@ -2765,13 +2765,16 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
 
 void OGRGeoPackageTableLayer::RemoveAsyncRTreeTempDB()
 {
-    SQLCommand(
-        m_poDS->GetDB(),
-        CPLSPrintf("DETACH DATABASE \"%s\"",
-                   SQLEscapeName(m_osAsyncDBAttachName.c_str()).c_str()));
-    m_osAsyncDBAttachName.clear();
-    VSIUnlink(m_osAsyncDBName.c_str());
-    m_osAsyncDBName.clear();
+    if (!m_osAsyncDBAttachName.empty())
+    {
+        SQLCommand(
+            m_poDS->GetDB(),
+            CPLSPrintf("DETACH DATABASE \"%s\"",
+                       SQLEscapeName(m_osAsyncDBAttachName.c_str()).c_str()));
+        m_osAsyncDBAttachName.clear();
+        VSIUnlink(m_osAsyncDBName.c_str());
+        m_osAsyncDBName.clear();
+    }
 }
 
 /************************************************************************/
@@ -2846,8 +2849,6 @@ bool OGRGeoPackageTableLayer::FlushInMemoryRTree(sqlite3 *hRTreeDB,
             sqlite3_close(m_hAsyncDBHandle);
             m_hAsyncDBHandle = nullptr;
         }
-
-        VSIUnlink(m_osAsyncDBName.c_str());
 
         m_oQueueRTreeEntries.clear();
     }
@@ -2929,15 +2930,24 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
         if (hStmt == nullptr)
         {
             const char *pszInsertSQL =
-                "INSERT INTO my_rtree VALUES (?,?,?,?,?)";
+                CPLGetConfigOption(
+                    "OGR_GPKG_SIMULATE_INSERT_INTO_MY_RTREE_PREPARATION_ERROR",
+                    nullptr)
+                    ? "INSERT INTO my_rtree_SIMULATE_ERROR VALUES (?,?,?,?,?)"
+                    : "INSERT INTO my_rtree VALUES (?,?,?,?,?)";
             if (sqlite3_prepare_v2(m_hAsyncDBHandle, pszInsertSQL, -1, &hStmt,
                                    nullptr) != SQLITE_OK)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "failed to prepare SQL: %s: %s", pszInsertSQL,
                          sqlite3_errmsg(m_hAsyncDBHandle));
-                m_oQueueRTreeEntries.clear();
+
                 m_bErrorDuringRTreeThread = true;
+
+                sqlite3_close(m_hAsyncDBHandle);
+                m_hAsyncDBHandle = nullptr;
+
+                m_oQueueRTreeEntries.clear();
                 return;
             }
 
@@ -4455,7 +4465,11 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
             sqlite3_close(m_hAsyncDBHandle);
             m_hAsyncDBHandle = nullptr;
         }
-        if (!m_bErrorDuringRTreeThread)
+        if (m_bErrorDuringRTreeThread)
+        {
+            RemoveAsyncRTreeTempDB();
+        }
+        else
         {
             bPopulateFromThreadRTree = true;
         }

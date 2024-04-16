@@ -8907,8 +8907,15 @@ def test_ogr_gpkg_get_geometry_types(tmp_vsimem):
 
 @pytest.mark.parametrize("write_to_disk", (True, False), ids=["on_disk", "in_memory"])
 @pytest.mark.parametrize("OGR_GPKG_MAX_RAM_USAGE_RTREE", (1, 1000, None))
+@pytest.mark.parametrize(
+    "OGR_GPKG_SIMULATE_INSERT_INTO_MY_RTREE_PREPARATION_ERROR", (True, False)
+)
 def test_ogr_gpkg_background_rtree_build(
-    tmp_path, tmp_vsimem, write_to_disk, OGR_GPKG_MAX_RAM_USAGE_RTREE
+    tmp_path,
+    tmp_vsimem,
+    write_to_disk,
+    OGR_GPKG_MAX_RAM_USAGE_RTREE,
+    OGR_GPKG_SIMULATE_INSERT_INTO_MY_RTREE_PREPARATION_ERROR,
 ):
 
     if write_to_disk:
@@ -8918,13 +8925,17 @@ def test_ogr_gpkg_background_rtree_build(
 
     # Batch insertion only
     gdal.ErrorReset()
-    with gdaltest.config_option(
-        "OGR_GPKG_MAX_RAM_USAGE_RTREE",
+
+    options = {}
+    options["OGR_GPKG_MAX_RAM_USAGE_RTREE"] = (
         str(OGR_GPKG_MAX_RAM_USAGE_RTREE)
         if OGR_GPKG_MAX_RAM_USAGE_RTREE is not None
-        else None,
-        thread_local=False,
-    ):
+        else None
+    )
+    options["OGR_GPKG_SIMULATE_INSERT_INTO_MY_RTREE_PREPARATION_ERROR"] = (
+        "TRUE" if OGR_GPKG_SIMULATE_INSERT_INTO_MY_RTREE_PREPARATION_ERROR else None
+    )
+    with gdaltest.config_options(options, thread_local=False):
         ds = gdaltest.gpkg_dr.CreateDataSource(filename)
         with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
             lyr = ds.CreateLayer("foo")
