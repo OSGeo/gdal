@@ -1296,3 +1296,34 @@ def test_vsifile_win32_network_path():
     drive_letter = os.getcwd()[0]
     dirname = f"\\\\localhost\\{drive_letter}$"
     assert gdal.VSIStatL(dirname) is not None
+
+
+###############################################################################
+# Test operations with VSI_CACHE=YES and past EOF reads
+
+
+@pytest.mark.require_driver("GTiff")
+def test_vsifile_eof_cache_read(tmp_path):
+    """Test issue GH #9658"""
+
+    np = pytest.importorskip("numpy")
+    # Create an empty GTiff file
+    filename = f"/vsizip/{tmp_path}/test.zip/testraster.tif"
+    driver = gdal.GetDriverByName("GTiff")
+    size = 1000
+    ds = driver.Create(
+        filename, size, size, 1, gdal.GDT_Byte, options=["STREAMABLE_OUTPUT=YES"]
+    )
+    assert ds
+    data = np.random.randint(0, 255, size=(size, size))
+    band = ds.GetRasterBand(1)
+    assert band.WriteArray(data) == 0
+    ds = None
+
+    # Read past EOF
+    with gdal.config_option("VSI_CACHE", "YES"):
+        ds = gdal.Open(filename)
+        assert ds
+        b = ds.GetRasterBand(1)
+        # Read all
+        b.ReadRaster(0, 0, size, size)
