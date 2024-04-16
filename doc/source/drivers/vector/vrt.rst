@@ -173,7 +173,7 @@ layer name, and may have the following subelements:
 
   The following attributes can be defined:
 
-  * **name** = string (recommended, and mandatory if there are several geometry fields)
+  * **name** = string (recommended, and mandatory if the VRT will expose multiple geometry fields)
 
     Name that will be used to define the VRT geometry field name. If not set,
     empty string is used.
@@ -183,7 +183,7 @@ layer name, and may have the following subelements:
     Type of geometry encoding.
 
     If the encoding is "Direct" or not specified, then the **field** attribute must
-    be set to the name of the source geometry field, if there are several source
+    be set to the name of the source geometry field, if there are multiple source
     geometry fields. If neither **encoding** nor **field** are
     specified, it is assumed that the name of source geometry field is the
     value of the **name** attribute.
@@ -209,7 +209,7 @@ layer name, and may have the following subelements:
   * **reportSrcColumn** = true/false (optional)
 
     Specify whether the source geometry fields (the fields set in the **field**,
-    **x**, **y**, **z**, **m** attributes) should be reported as fields of
+    **x**, **y**, **z**, **m** attributes) should also be included as fields of
     the VRT layer. It defaults to true. If set to false, the source
     geometry fields will only be used to build the geometry of the
     features of the VRT layer.
@@ -228,14 +228,14 @@ layer name, and may have the following subelements:
   The following child elements of **GeometryField** can be defined:
 
   *  **GeometryType** (optional) : same syntax as OGRVRTLayer-level
-     **GeometryType**. Useful when there are several geometry fields.
+     **GeometryType**. Useful when there are multiple geometry fields.
   *  **SRS** (optional) : same syntax as OGRVRTLayer-level **LayerSRS**
-     (note SRS vs LayerSRS). Useful when there are several geometry fields.
+     (note SRS vs LayerSRS). Useful when there are multiple geometry fields.
   *  **SrcRegion** (optional) : same syntax as OGRVRTLayer-level
-     **SrcRegion**. Useful when there are several geometry fields.
+     **SrcRegion**. Useful when there are multiple geometry fields.
   *  **ExtentXMin**, **ExtentYMin**, **ExtentXMax** and **ExtentXMax**
      (optional) : same syntax as OGRVRTLayer-level elements of same name.
-     Useful when there are several geometry fields.
+     Useful when there are multiple geometry fields.
   *  **XYResolution** (optional, GDAL >= 3.9):
      Resolution for the coordinate precision of the X and Y coordinates.
      Expressed in the units of the X and Y axis of the SRS
