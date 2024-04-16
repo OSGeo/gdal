@@ -106,31 +106,6 @@ static void Usage(bool bIsError, const char *pszErrorMsg)
 }
 
 /************************************************************************/
-/*                       GDALBuildVRTOptionsForBinaryNew()              */
-/************************************************************************/
-
-static GDALBuildVRTOptionsForBinary *GDALBuildVRTOptionsForBinaryNew(void)
-{
-    return static_cast<GDALBuildVRTOptionsForBinary *>(
-        CPLCalloc(1, sizeof(GDALBuildVRTOptionsForBinary)));
-}
-
-/************************************************************************/
-/*                       GDALBuildVRTOptionsForBinaryFree()            */
-/************************************************************************/
-
-static void GDALBuildVRTOptionsForBinaryFree(
-    GDALBuildVRTOptionsForBinary *psOptionsForBinary)
-{
-    if (psOptionsForBinary)
-    {
-        CSLDestroy(psOptionsForBinary->papszSrcFiles);
-        CPLFree(psOptionsForBinary->pszDstFilename);
-        CPLFree(psOptionsForBinary);
-    }
-}
-
-/************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
@@ -164,11 +139,10 @@ MAIN_START(argc, argv)
         }
     }
 
-    GDALBuildVRTOptionsForBinary *psOptionsForBinary =
-        GDALBuildVRTOptionsForBinaryNew();
+    GDALBuildVRTOptionsForBinary sOptionsForBinary;
     /* coverity[tainted_data] */
     GDALBuildVRTOptions *psOptions =
-        GDALBuildVRTOptionsNew(argv + 1, psOptionsForBinary);
+        GDALBuildVRTOptionsNew(argv + 1, &sOptionsForBinary);
     CSLDestroy(argv);
 
     if (psOptions == nullptr)
@@ -176,12 +150,12 @@ MAIN_START(argc, argv)
         Usage(true, nullptr);
     }
 
-    if (psOptionsForBinary->pszDstFilename == nullptr)
+    if (sOptionsForBinary.osDstFilename.c_str() == nullptr)
     {
         Usage(true, "No target filename specified.");
     }
 
-    if (!(psOptionsForBinary->bQuiet))
+    if (!(sOptionsForBinary.bQuiet))
     {
         GDALBuildVRTOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
@@ -189,18 +163,20 @@ MAIN_START(argc, argv)
     /* Avoid overwriting a non VRT dataset if the user did not put the */
     /* filenames in the right order */
     VSIStatBuf sBuf;
-    if (!psOptionsForBinary->bOverwrite)
+    if (!sOptionsForBinary.bOverwrite)
     {
-        int bExists = (VSIStat(psOptionsForBinary->pszDstFilename, &sBuf) == 0);
+        int bExists =
+            (VSIStat(sOptionsForBinary.osDstFilename.c_str(), &sBuf) == 0);
         if (bExists)
         {
-            GDALDriverH hDriver =
-                GDALIdentifyDriver(psOptionsForBinary->pszDstFilename, nullptr);
+            GDALDriverH hDriver = GDALIdentifyDriver(
+                sOptionsForBinary.osDstFilename.c_str(), nullptr);
             if (hDriver &&
                 !(EQUAL(GDALGetDriverShortName(hDriver), "VRT") ||
                   (EQUAL(GDALGetDriverShortName(hDriver), "API_PROXY") &&
-                   EQUAL(CPLGetExtension(psOptionsForBinary->pszDstFilename),
-                         "VRT"))))
+                   EQUAL(
+                       CPLGetExtension(sOptionsForBinary.osDstFilename.c_str()),
+                       "VRT"))))
             {
                 fprintf(
                     stderr,
@@ -209,9 +185,9 @@ MAIN_START(argc, argv)
                     "right order.\n"
                     "If you want to overwrite %s, add -overwrite option to the "
                     "command line.\n\n",
-                    psOptionsForBinary->pszDstFilename,
+                    sOptionsForBinary.osDstFilename.c_str(),
                     GDALGetDriverShortName(hDriver),
-                    psOptionsForBinary->pszDstFilename);
+                    sOptionsForBinary.osDstFilename.c_str());
                 Usage(true);
             }
         }
@@ -219,14 +195,14 @@ MAIN_START(argc, argv)
 
     int bUsageError = FALSE;
     GDALDatasetH hOutDS = GDALBuildVRT(
-        psOptionsForBinary->pszDstFilename, psOptionsForBinary->nSrcFiles,
-        nullptr, psOptionsForBinary->papszSrcFiles, psOptions, &bUsageError);
+        sOptionsForBinary.osDstFilename.c_str(),
+        sOptionsForBinary.aosSrcFiles.size(), nullptr,
+        sOptionsForBinary.aosSrcFiles.List(), psOptions, &bUsageError);
     if (bUsageError)
         Usage(true);
     int nRetCode = (hOutDS) ? 0 : 1;
 
     GDALBuildVRTOptionsFree(psOptions);
-    GDALBuildVRTOptionsForBinaryFree(psOptionsForBinary);
 
     CPLErrorReset();
     // The flush to disk is only done at that stage, so check if any error has
