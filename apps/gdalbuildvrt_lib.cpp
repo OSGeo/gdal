@@ -33,6 +33,7 @@
 #include "cpl_port.h"
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
+#include "gdalargumentparser.h"
 
 #include <cassert>
 #include <cmath>
@@ -1734,6 +1735,7 @@ static bool add_file_to_list(const char *filename, const char *tile_index,
  */
 struct GDALBuildVRTOptions
 {
+    std::string osTileIndex = "location";
     bool bStrict = false;
     std::string osResolution{};
     bool bSeparate = false;
@@ -1937,6 +1939,298 @@ static char *SanitizeSRS(const char *pszUserInput)
 }
 
 /************************************************************************/
+/*                     GDALBuildVRTOptionsGetParser()                    */
+/************************************************************************/
+
+static std::unique_ptr<GDALArgumentParser>
+GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
+                             GDALBuildVRTOptionsForBinary *psOptionsForBinary)
+{
+    auto argParser = std::make_unique<GDALArgumentParser>(
+        "gdalbuildvrt", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    argParser->add_description(_("Builds a VRT from a list of datasets."));
+
+    argParser->add_epilog(_(
+        "\n"
+        "e.g.\n"
+        "  % gdalbuildvrt doq_index.vrt doq/*.tif\n"
+        "  % gdalbuildvrt -input_file_list my_list.txt doq_index.vrt\n"
+        "\n"
+        "NOTES:\n"
+        "  o With -separate, each files goes into a separate band in the VRT "
+        "band.\n"
+        "    Otherwise, the files are considered as tiles of a larger mosaic.\n"
+        "  o -b option selects a band to add into vrt.  Multiple bands can be "
+        "listed.\n"
+        "    By default all bands are queried.\n"
+        "  o The default tile index field is 'location' unless otherwise "
+        "specified by\n"
+        "    -tileindex.\n"
+        "  o In case the resolution of all input files is not the same, the "
+        "-resolution\n"
+        "    flag enable the user to control the way the output resolution is "
+        "computed.\n"
+        "    Average is the default.\n"
+        "  o Input files may be any valid GDAL dataset or a GDAL raster tile "
+        "index.\n"
+        "  o For a GDAL raster tile index, all entries will be added to the "
+        "VRT.\n"
+        "  o If one GDAL dataset is made of several subdatasets and has 0 "
+        "raster bands,\n"
+        "    its datasets will be added to the VRT rather than the dataset "
+        "itself.\n"
+        "    Single subdataset could be selected by its number using the -sd "
+        "option.\n"
+        "  o By default, only datasets of same projection and band "
+        "characteristics\n"
+        "    may be added to the VRT.\n"
+        "\n"
+        "For more details, consult "
+        "https://gdal.org/programs/gdalbuildvrt.html"));
+
+    argParser->add_quiet_argument(
+        psOptionsForBinary ? &psOptionsForBinary->bQuiet : nullptr);
+
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+
+        group.add_argument("-strict")
+            .flag()
+            .store_into(psOptions->bStrict)
+            .help(_("Turn warnings as failures."));
+
+        group.add_argument("-non_strict")
+            .flag()
+            .action([psOptions](const std::string &)
+                    { psOptions->bStrict = false; })
+            .help(_("Skip source datasets that have issues with warnings, and "
+                    "continue processing."));
+    }
+
+    argParser->add_argument("-tile_index")
+        .metavar("<field_name>")
+        .store_into(psOptions->osTileIndex)
+        .help(_("Use the specified value as the tile index field, instead of "
+                "the default value which is 'location'."));
+
+    argParser->add_argument("-resolution")
+        .metavar("user|average|highest|lowest")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->osResolution = s;
+                if (!EQUAL(psOptions->osResolution.c_str(), "user") &&
+                    !EQUAL(psOptions->osResolution.c_str(), "average") &&
+                    !EQUAL(psOptions->osResolution.c_str(), "highest") &&
+                    !EQUAL(psOptions->osResolution.c_str(), "lowest"))
+                {
+                    throw std::invalid_argument(
+                        CPLSPrintf("Illegal resolution value (%s).",
+                                   psOptions->osResolution.c_str()));
+                }
+            })
+        .help(_("Control the way the output resolution is computed."));
+
+    argParser->add_argument("-tr")
+        .metavar("<xres> <yes>")
+        .nargs(2)
+        .scan<'g', double>()
+        .help(_("Set target resolution."));
+
+    if (psOptionsForBinary)
+    {
+        argParser->add_argument("-input_file_list")
+            .metavar("<filename>")
+            .action(
+                [psOptions, psOptionsForBinary](const std::string &s)
+                {
+                    const char *input_file_list = s.c_str();
+                    auto f = VSIVirtualHandleUniquePtr(
+                        VSIFOpenL(input_file_list, "r"));
+                    if (f)
+                    {
+                        while (1)
+                        {
+                            const char *filename = CPLReadLineL(f.get());
+                            if (filename == nullptr)
+                                break;
+                            if (!add_file_to_list(
+                                    filename, psOptions->osTileIndex.c_str(),
+                                    psOptionsForBinary->aosSrcFiles))
+                            {
+                                throw std::invalid_argument(
+                                    std::string("Cannot add ")
+                                        .append(filename)
+                                        .append(" to input file list"));
+                            }
+                        }
+                    }
+                })
+            .help(_("Text file with an input filename on each line"));
+    }
+
+    argParser->add_argument("-separate")
+        .flag()
+        .store_into(psOptions->bSeparate)
+        .help(_("Place each input file into a separate band."));
+
+    argParser->add_argument("-allow_projection_difference")
+        .flag()
+        .store_into(psOptions->bAllowProjectionDifference)
+        .help(_("Accept source files not in the same projection (but without "
+                "reprojecting them!)."));
+
+    argParser->add_argument("-sd")
+        .metavar("<n>")
+        .store_into(psOptions->nSubdataset)
+        .help(_("Use subdataset of specified index (starting at 1), instead of "
+                "the source dataset itself."));
+
+    argParser->add_argument("-tap")
+        .flag()
+        .store_into(psOptions->bTargetAlignedPixels)
+        .help(_("Align the coordinates of the extent of the output file to the "
+                "values of the resolution."));
+
+    argParser->add_argument("-te")
+        .metavar("<xmin> <ymin> <xmax> <ymax>")
+        .nargs(4)
+        .scan<'g', double>()
+        .help(_("Set georeferenced extents of output file to be created."));
+
+    argParser->add_argument("-addalpha")
+        .flag()
+        .store_into(psOptions->bAddAlpha)
+        .help(_("Adds an alpha mask band to the VRT when the source raster "
+                "have none."));
+
+    argParser->add_argument("-b")
+        .metavar("<band>")
+        .append()
+        .store_into(psOptions->anSelectedBandList)
+        .help(_("Specify input band(s) number."));
+
+    argParser->add_argument("-hidenodata")
+        .flag()
+        .store_into(psOptions->bHideNoData)
+        .help(_("Makes the VRT band not report the NoData."));
+
+    if (psOptionsForBinary)
+    {
+        argParser->add_argument("-overwrite")
+            .flag()
+            .store_into(psOptionsForBinary->bOverwrite)
+            .help(_("Overwrite the VRT if it already exists."));
+    }
+
+    argParser->add_argument("-srcnodata")
+        .metavar("\"<value>[ <value>]...\"")
+        .store_into(psOptions->osSrcNoData)
+        .help(_("Set nodata values for input bands."));
+
+    argParser->add_argument("-vrtnodata")
+        .metavar("\"<value>[ <value>]...\"")
+        .store_into(psOptions->osVRTNoData)
+        .help(_("Set nodata values at the VRT band level."));
+
+    argParser->add_argument("-a_srs")
+        .metavar("<srs_def>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                char *pszSRS = SanitizeSRS(s.c_str());
+                if (pszSRS == nullptr)
+                {
+                    throw std::invalid_argument("Invalid value for -a_srs");
+                }
+                psOptions->osOutputSRS = pszSRS;
+                CPLFree(pszSRS);
+            })
+        .help(_("Override the projection for the output file.."));
+
+    argParser->add_argument("-r")
+        .metavar("nearest|bilinear|cubic|cubicspline|lanczos|average|mode")
+        .store_into(psOptions->osResampling)
+        .help(_("Resampling algorithm."));
+
+    argParser->add_open_options_argument(&psOptions->aosOpenOptions);
+
+    argParser->add_argument("-ignore_srcmaskband")
+        .flag()
+        .action([psOptions](const std::string &)
+                { psOptions->bUseSrcMaskBand = false; })
+        .help(_("Cause mask band of sources will not be taken into account."));
+
+    argParser->add_argument("-nodata_max_mask_threshold")
+        .metavar("<threshold>")
+        .scan<'g', double>()
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->bNoDataFromMask = true;
+                psOptions->dfMaskValueThreshold = CPLAtofM(s.c_str());
+            })
+        .help(_("Replaces the value of the source with the value of -vrtnodata "
+                "when the value of the mask band of the source is less or "
+                "equal to the threshold."));
+
+    if (psOptionsForBinary)
+    {
+        if (psOptionsForBinary->osDstFilename.empty())
+        {
+            // We normally go here, unless undocumented -o switch is used
+            argParser->add_argument("vrt_dataset_name")
+                .metavar("<vrt_dataset_name>")
+                .store_into(psOptionsForBinary->osDstFilename)
+                .help(_("Output VRT."));
+        }
+
+        argParser->add_argument("src_dataset_name")
+            .metavar("<src_dataset_name>")
+            .nargs(argparse::nargs_pattern::any)
+            .action(
+                [psOptions, psOptionsForBinary](const std::string &s)
+                {
+                    if (!add_file_to_list(s.c_str(),
+                                          psOptions->osTileIndex.c_str(),
+                                          psOptionsForBinary->aosSrcFiles))
+                    {
+                        throw std::invalid_argument(
+                            std::string("Cannot add ")
+                                .append(s)
+                                .append(" to input file list"));
+                    }
+                })
+            .help(_("Input dataset(s)."));
+    }
+
+    return argParser;
+}
+
+/************************************************************************/
+/*                       GDALBuildVRTGetParserUsage()                   */
+/************************************************************************/
+
+std::string GDALBuildVRTGetParserUsage()
+{
+    try
+    {
+        GDALBuildVRTOptions sOptions;
+        GDALBuildVRTOptionsForBinary sOptionsForBinary;
+        auto argParser =
+            GDALBuildVRTOptionsGetParser(&sOptions, &sOptionsForBinary);
+        return argParser->usage();
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                 err.what());
+        return std::string();
+    }
+}
+
+/************************************************************************/
 /*                             GDALBuildVRTOptionsNew()                  */
 /************************************************************************/
 
@@ -1962,206 +2256,52 @@ GDALBuildVRTOptionsNew(char **papszArgv,
 {
     auto psOptions = std::make_unique<GDALBuildVRTOptions>();
 
-    const char *tile_index = "location";
-
-    /* -------------------------------------------------------------------- */
-    /*      Parse arguments.                                                */
-    /* -------------------------------------------------------------------- */
-    int argc = CSLCount(papszArgv);
-    for (int iArg = 0; papszArgv != nullptr && iArg < argc; iArg++)
+    CPLStringList aosArgv;
+    const int nArgc = CSLCount(papszArgv);
+    for (int i = 0;
+         i < nArgc && papszArgv != nullptr && papszArgv[i] != nullptr; i++)
     {
-        if (strcmp(papszArgv[iArg], "-strict") == 0)
+        if (psOptionsForBinary && EQUAL(papszArgv[i], "-o") && i + 1 < nArgc &&
+            papszArgv[i + 1] != nullptr)
         {
-            psOptions->bStrict = true;
-        }
-        else if (strcmp(papszArgv[iArg], "-non_strict") == 0)
-        {
-            psOptions->bStrict = false;
-        }
-        else if (EQUAL(papszArgv[iArg], "-tileindex") && iArg + 1 < argc)
-        {
-            tile_index = papszArgv[++iArg];
-        }
-        else if (EQUAL(papszArgv[iArg], "-resolution") && iArg + 1 < argc)
-        {
-            psOptions->osResolution = papszArgv[++iArg];
-            if (!EQUAL(psOptions->osResolution.c_str(), "user") &&
-                !EQUAL(psOptions->osResolution.c_str(), "average") &&
-                !EQUAL(psOptions->osResolution.c_str(), "highest") &&
-                !EQUAL(psOptions->osResolution.c_str(), "lowest"))
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Illegal resolution value (%s).",
-                         psOptions->osResolution.c_str());
-                return nullptr;
-            }
-        }
-        else if (EQUAL(papszArgv[iArg], "-input_file_list") && iArg + 1 < argc)
-        {
-            ++iArg;
-            if (psOptionsForBinary)
-            {
-                const char *input_file_list = papszArgv[iArg];
-                auto f =
-                    VSIVirtualHandleUniquePtr(VSIFOpenL(input_file_list, "r"));
-                if (f)
-                {
-                    while (1)
-                    {
-                        const char *filename = CPLReadLineL(f.get());
-                        if (filename == nullptr)
-                            break;
-                        if (!add_file_to_list(filename, tile_index,
-                                              psOptionsForBinary->aosSrcFiles))
-                        {
-                            return nullptr;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "-input_file_list not supported in non binary mode");
-            }
-        }
-        else if (EQUAL(papszArgv[iArg], "-separate"))
-        {
-            psOptions->bSeparate = TRUE;
-        }
-        else if (EQUAL(papszArgv[iArg], "-allow_projection_difference"))
-        {
-            psOptions->bAllowProjectionDifference = TRUE;
-        }
-        else if (EQUAL(papszArgv[iArg], "-sd") && iArg + 1 < argc)
-        {
-            psOptions->nSubdataset = atoi(papszArgv[++iArg]);
-        }
-        /* Alternate syntax for output file */
-        else if (EQUAL(papszArgv[iArg], "-o") && iArg + 1 < argc)
-        {
-            ++iArg;
-            if (psOptionsForBinary)
-            {
-                psOptionsForBinary->osDstFilename = papszArgv[iArg];
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "-o not supported in non binary mode");
-            }
-        }
-        else if (EQUAL(papszArgv[iArg], "-q") ||
-                 EQUAL(papszArgv[iArg], "-quiet"))
-        {
-            if (psOptionsForBinary)
-            {
-                psOptionsForBinary->bQuiet = TRUE;
-            }
-        }
-        else if (EQUAL(papszArgv[iArg], "-tr") && iArg + 2 < argc)
-        {
-            psOptions->we_res = CPLAtofM(papszArgv[++iArg]);
-            psOptions->ns_res = CPLAtofM(papszArgv[++iArg]);
-        }
-        else if (EQUAL(papszArgv[iArg], "-tap"))
-        {
-            psOptions->bTargetAlignedPixels = TRUE;
-        }
-        else if (EQUAL(papszArgv[iArg], "-te") && iArg + 4 < argc)
-        {
-            psOptions->xmin = CPLAtofM(papszArgv[++iArg]);
-            psOptions->ymin = CPLAtofM(papszArgv[++iArg]);
-            psOptions->xmax = CPLAtofM(papszArgv[++iArg]);
-            psOptions->ymax = CPLAtofM(papszArgv[++iArg]);
-        }
-        else if (EQUAL(papszArgv[iArg], "-addalpha"))
-        {
-            psOptions->bAddAlpha = TRUE;
-        }
-        else if (EQUAL(papszArgv[iArg], "-b") && iArg + 1 < argc)
-        {
-            const char *pszBand = papszArgv[++iArg];
-            int nBand = atoi(pszBand);
-            if (nBand < 1)
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Illegal band number (%s).", papszArgv[iArg]);
-                return nullptr;
-            }
-
-            psOptions->anSelectedBandList.push_back(nBand);
-        }
-        else if (EQUAL(papszArgv[iArg], "-hidenodata"))
-        {
-            psOptions->bHideNoData = TRUE;
-        }
-        else if (EQUAL(papszArgv[iArg], "-overwrite"))
-        {
-            if (psOptionsForBinary)
-                psOptionsForBinary->bOverwrite = TRUE;
-        }
-        else if (EQUAL(papszArgv[iArg], "-srcnodata") && iArg + 1 < argc)
-        {
-            psOptions->osSrcNoData = papszArgv[++iArg];
-        }
-        else if (EQUAL(papszArgv[iArg], "-vrtnodata") && iArg + 1 < argc)
-        {
-            psOptions->osVRTNoData = papszArgv[++iArg];
-        }
-        else if (EQUAL(papszArgv[iArg], "-a_srs") && iArg + 1 < argc)
-        {
-            char *pszSRS = SanitizeSRS(papszArgv[++iArg]);
-            if (pszSRS == nullptr)
-            {
-                return nullptr;
-            }
-            psOptions->osOutputSRS = pszSRS;
-            CPLFree(pszSRS);
-        }
-        else if (EQUAL(papszArgv[iArg], "-r") && iArg + 1 < argc)
-        {
-            psOptions->osResampling = papszArgv[++iArg];
-        }
-        else if (EQUAL(papszArgv[iArg], "-oo") && iArg + 1 < argc)
-        {
-            psOptions->aosOpenOptions.AddString(papszArgv[++iArg]);
-        }
-        else if (EQUAL(papszArgv[iArg], "-ignore_srcmaskband"))
-        {
-            psOptions->bUseSrcMaskBand = false;
-        }
-        else if (EQUAL(papszArgv[iArg], "-nodata_max_mask_threshold") &&
-                 iArg + 1 < argc)
-        {
-            psOptions->bNoDataFromMask = true;
-            psOptions->dfMaskValueThreshold = CPLAtofM(papszArgv[++iArg]);
-        }
-        else if (papszArgv[iArg][0] == '-')
-        {
-            CPLError(CE_Failure, CPLE_NotSupported, "Unknown option name '%s'",
-                     papszArgv[iArg]);
-            return nullptr;
+            // Undocumented alternate way of specifying the destination file
+            psOptionsForBinary->osDstFilename = papszArgv[i + 1];
+            ++i;
         }
         else
         {
-            if (psOptionsForBinary)
-            {
-                if (psOptionsForBinary->osDstFilename.empty())
-                    psOptionsForBinary->osDstFilename = papszArgv[iArg];
-                else
-                {
-                    if (!add_file_to_list(papszArgv[iArg], tile_index,
-                                          psOptionsForBinary->aosSrcFiles))
-                    {
-                        return nullptr;
-                    }
-                }
-            }
+            aosArgv.AddString(papszArgv[i]);
         }
     }
 
-    return psOptions.release();
+    try
+    {
+        auto argParser =
+            GDALBuildVRTOptionsGetParser(psOptions.get(), psOptionsForBinary);
+
+        argParser->parse_args_without_binary_name(aosArgv.List());
+
+        if (auto adfTargetRes = argParser->present<std::vector<double>>("-tr"))
+        {
+            psOptions->we_res = (*adfTargetRes)[0];
+            psOptions->ns_res = (*adfTargetRes)[1];
+        }
+
+        if (auto oTE = argParser->present<std::vector<double>>("-te"))
+        {
+            psOptions->xmin = (*oTE)[0];
+            psOptions->ymin = (*oTE)[1];
+            psOptions->xmax = (*oTE)[2];
+            psOptions->ymax = (*oTE)[3];
+        }
+
+        return psOptions.release();
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", err.what());
+        return nullptr;
+    }
 }
 
 /************************************************************************/

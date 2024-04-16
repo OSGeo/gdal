@@ -19,7 +19,7 @@ Synopsis
                  [-tileindex <field_name>]
                  [-resolution {highest|lowest|average|user}]
                  [-te <xmin> <ymin> <xmax> <ymax>] [-tr <xres> <yres>] [-tap]
-                 [-separate] [-b <band>]... [-sd <subdataset>]
+                 [-separate] [-b <band>]... [-sd <n>]
                  [-allow_projection_difference] [-q]
                  [-addalpha] [-hidenodata]
                  [-srcnodata "<value>[ <value>]..."] [-vrtnodata "<value>[ <value>]..."
@@ -72,7 +72,7 @@ changed in later versions.
 
 .. include:: options/help_and_help_general.rst
 
-.. option:: -tileindex
+.. option:: -tileindex <field_name>
 
     Use the specified value as the tile index field, instead of the default
     value which is 'location'.
@@ -161,12 +161,11 @@ changed in later versions.
     If input bands not set all bands will be added to vrt.
     Multiple :option:`-b` switches may be used to select a set of input bands.
 
-.. option:: -sd< <subdataset>
+.. option:: -sd <n>
 
-    If the input
-    dataset contains several subdatasets use a subdataset with the specified
-    number (starting from 1). This is an alternative of giving the full subdataset
-    name as an input.
+    If the input dataset contains several subdatasets, use a subdataset with the
+    specified number (starting from 1). This is an alternative of giving the full subdataset
+    name as an input to the utility.
 
 .. option:: -vrtnodata "<value>[ <value>]..."
 
