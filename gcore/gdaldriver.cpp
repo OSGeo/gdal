@@ -44,6 +44,7 @@
 #include "cpl_progress.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "ograpispy.h"
 #include "ogr_core.h"
 #include "ogrsf_frmts.h"
 
@@ -323,8 +324,18 @@ GDALDatasetH CPL_DLL CPL_STDCALL GDALCreate(GDALDriverH hDriver,
 {
     VALIDATE_POINTER1(hDriver, "GDALCreate", nullptr);
 
-    return GDALDriver::FromHandle(hDriver)->Create(
+    GDALDatasetH hDS = GDALDriver::FromHandle(hDriver)->Create(
         pszFilename, nXSize, nYSize, nBands, eBandType, papszOptions);
+
+#ifdef OGRAPISPY_ENABLED
+    if (nBands < 1)
+    {
+        OGRAPISpyCreateDataSource(hDriver, pszFilename,
+                                  const_cast<char **>(papszOptions), hDS);
+    }
+#endif
+
+    return hDS;
 }
 
 /************************************************************************/
@@ -1700,6 +1711,13 @@ CPLErr CPL_STDCALL GDALDeleteDataset(GDALDriverH hDriver,
                  pszFilename);
         return CE_Failure;
     }
+
+#ifdef OGRAPISPY_ENABLED
+    if (GDALGetMetadataItem(hDriver, GDAL_DCAP_VECTOR, nullptr))
+    {
+        OGRAPISpyDeleteDataSource(hDriver, pszFilename);
+    }
+#endif
 
     return GDALDriver::FromHandle(hDriver)->Delete(pszFilename);
 }
