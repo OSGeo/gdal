@@ -87,7 +87,7 @@ available:
      :choices: NONE, ALL, HUGE, <list>
      :default: ALL
 
-     Control the gml:xlink resolution. See `gml:xlink resolution`.
+     Control the gml:xlink resolving. See `gml:xlink resolving`_.
 
 - .. config:: GML_SAVE_RESOLVED_TO
      :choices: SAME, <filename>
