@@ -2644,8 +2644,19 @@ void OGRGeoPackageTableLayer::SetDeferredSpatialIndexCreation(bool bFlag)
         m_bAllowedRTreeThread =
             m_poDS->GetLayerCount() == 0 && sqlite3_threadsafe() != 0 &&
             CPLGetNumCPUs() >= 2 &&
-            CPLTestBool(
-                CPLGetConfigOption("OGR_GPKG_ALLOW_THREADED_RTREE", "YES"));
+            CPLTestBool(CPLGetConfigOption("OGR_GPKG_ALLOW_THREADED_RTREE",
+        // For a not yet understood reason, threaded RTree building
+        // (randomly?) fails on OSX Arm64. This may not be at all specific
+        // to that platform, but a more general problem, but it can't be
+        // reproduced elsewhere.
+        // Cf https://gis.stackexchange.com/questions/479958/how-to-fix-failed-to-prepare-sql-error-when-creating-gpkg-file-from-osm-extrac/479964#479964
+        // and random (frequent) failures on GDAL CI (https://github.com/OSGeo/gdal/commit/a83942422fd67471aee23ae11c5d06af27db2857)
+#if defined(__arm64__) && defined(__APPLE__)
+                                           "NO"
+#else
+                                           "YES"
+#endif
+                                           ));
 
         // For unit tests
         if (CPLTestBool(CPLGetConfigOption(
