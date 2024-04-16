@@ -826,10 +826,10 @@ static GIntBig VSICurlGetExpiresFromS3LikeSignedURL(const char *pszURL)
 }
 
 /************************************************************************/
-/*                           MultiPerform()                             */
+/*                       VSICURLMultiPerform()                          */
 /************************************************************************/
 
-void MultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle)
+void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle)
 {
     int repeats = 0;
 
@@ -1146,7 +1146,7 @@ retry:
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
-    MultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -1863,7 +1863,7 @@ retry:
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
-    MultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -2493,7 +2493,7 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
 
     if (!aHandles.empty())
     {
-        MultiPerform(hMultiHandle);
+        VSICURLMultiPerform(hMultiHandle);
     }
 
     int nRet = 0;
@@ -2700,7 +2700,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
     headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    MultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -3096,7 +3096,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
 
     CURLM *hMultiHandle = poFS->GetCurlMultiHandleFor(osURL);
     curl_multi_add_handle(hMultiHandle, hCurlHandle);
-    MultiPerform(hMultiHandle);
+    VSICURLMultiPerform(hMultiHandle);
 
     {
         std::lock_guard<std::mutex> oLock(m_oMutex);
@@ -4814,7 +4814,7 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER,
                                        headers);
 
-            MultiPerform(hCurlMultiHandle, hCurlHandle);
+            VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
             curl_slist_free_all(headers);
 
@@ -4973,7 +4973,7 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        MultiPerform(hCurlMultiHandle, hCurlHandle);
+        VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
         curl_slist_free_all(headers);
 
@@ -5546,8 +5546,8 @@ long CurlRequestHelper::perform(CURL *hCurlHandle, struct curl_slist *headers,
     szCurlErrBuf[0] = '\0';
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf);
 
-    MultiPerform(poFS->GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
-                 hCurlHandle);
+    VSICURLMultiPerform(poFS->GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
+                        hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 

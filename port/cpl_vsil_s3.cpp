@@ -1379,7 +1379,7 @@ int VSIS3WriteHandle::FinishChunkedTransfer()
     m_nChunkedBufferOff = 0;
     m_nChunkedBufferSize = 0;
 
-    MultiPerform(m_hCurlMulti);
+    VSICURLMultiPerform(m_hCurlMulti);
 
     long response_code;
     curl_easy_getinfo(m_hCurl, CURLINFO_RESPONSE_CODE, &response_code);

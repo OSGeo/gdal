@@ -997,7 +997,7 @@ void VSICURLInitWriteFuncStruct(WriteFuncStruct *psStruct, VSILFILE *fp,
                                 void *pReadCbkUserData);
 size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb,
                               void *req);
-void MultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle = nullptr);
+void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle = nullptr);
 void VSICURLResetHeaderAndWriterFunctions(CURL *hCurlHandle);
 
 int VSICurlParseUnixPermissions(const char *pszPermissions);
