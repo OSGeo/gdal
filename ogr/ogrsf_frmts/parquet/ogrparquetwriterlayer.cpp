@@ -763,7 +763,9 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
             }
 
             // Bounding box column definition
-            if (m_bWriteBBoxStruct)
+            if (m_bWriteBBoxStruct &&
+                CPLTestBool(CPLGetConfigOption(
+                    "OGR_PARQUET_WRITE_COVERING_BBOX_IN_METADATA", "YES")))
             {
                 CPLJSONObject oCovering;
                 oColumn.Add("covering", oCovering);

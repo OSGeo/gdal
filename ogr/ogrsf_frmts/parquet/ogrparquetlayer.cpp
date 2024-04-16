@@ -554,7 +554,7 @@ void OGRParquetLayer::EstablishFeatureDefn()
     }
 
     // Synthetize a GeoParquet bounding box column definition when detecting
-    // a Overture Map dataset
+    // a Overture Map dataset < 2024-04-16-beta.0
     if (m_oMapGeometryColumns.empty() && bUseBBOX &&
         oMapParquetColumnNameToIdx.find("geometry") !=
             oMapParquetColumnNameToIdx.end() &&
@@ -598,6 +598,56 @@ void OGRParquetLayer::EstablishFeatureDefn()
         }
         oSetBBOXColumns.insert("bbox");
         oDef.Add("encoding", "WKB");
+        m_oMapGeometryColumns["geometry"] = std::move(oDef);
+    }
+    // Overture Maps 2024-04-16-beta.0 almost follows GeoParquet 1.1, except
+    // they don't declare the "covering" element in the GeoParquet JSON metadata
+    else if (m_oMapGeometryColumns.find("geometry") !=
+                 m_oMapGeometryColumns.end() &&
+             bUseBBOX &&
+             !m_oMapGeometryColumns["geometry"].GetObj("covering").IsValid() &&
+             m_oMapGeometryColumns["geometry"].GetString("encoding") == "WKB" &&
+             oMapParquetColumnNameToIdx.find("geometry") !=
+                 oMapParquetColumnNameToIdx.end() &&
+             oMapParquetColumnNameToIdx.find("bbox.xmin") !=
+                 oMapParquetColumnNameToIdx.end() &&
+             oMapParquetColumnNameToIdx.find("bbox.ymin") !=
+                 oMapParquetColumnNameToIdx.end() &&
+             oMapParquetColumnNameToIdx.find("bbox.xmax") !=
+                 oMapParquetColumnNameToIdx.end() &&
+             oMapParquetColumnNameToIdx.find("bbox.ymax") !=
+                 oMapParquetColumnNameToIdx.end())
+    {
+        CPLJSONObject oDef = m_oMapGeometryColumns["geometry"];
+        CPLJSONObject oCovering;
+        oDef.Add("covering", oCovering);
+        CPLJSONObject oBBOX;
+        oCovering.Add("bbox", oBBOX);
+        {
+            CPLJSONArray oArray;
+            oArray.Add("bbox");
+            oArray.Add("xmin");
+            oBBOX.Add("xmin", oArray);
+        }
+        {
+            CPLJSONArray oArray;
+            oArray.Add("bbox");
+            oArray.Add("ymin");
+            oBBOX.Add("ymin", oArray);
+        }
+        {
+            CPLJSONArray oArray;
+            oArray.Add("bbox");
+            oArray.Add("xmax");
+            oBBOX.Add("xmax", oArray);
+        }
+        {
+            CPLJSONArray oArray;
+            oArray.Add("bbox");
+            oArray.Add("ymax");
+            oBBOX.Add("ymax", oArray);
+        }
+        oSetBBOXColumns.insert("bbox");
         m_oMapGeometryColumns["geometry"] = std::move(oDef);
     }
 
