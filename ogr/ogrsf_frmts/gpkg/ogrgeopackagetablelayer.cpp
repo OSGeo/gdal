@@ -2725,8 +2725,6 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
             OGRErr eErr = SQLCommand(m_poDS->GetDB(), pszSQL);
             sqlite3_free(pszSQL);
 
-            VSIUnlink(m_osAsyncDBName.c_str());
-
             if (eErr == OGRERR_NONE)
             {
                 try
@@ -2936,7 +2934,8 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
                                    nullptr) != SQLITE_OK)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "failed to prepare SQL: %s", pszInsertSQL);
+                         "failed to prepare SQL: %s: %s", pszInsertSQL,
+                         sqlite3_errmsg(m_hAsyncDBHandle));
                 m_oQueueRTreeEntries.clear();
                 m_bErrorDuringRTreeThread = true;
                 return;
