@@ -1,7 +1,7 @@
 # GDAL/OGR 3.8.0 Releases Notes
 
 GDAL/OGR 3.8.0 is a feature release.
-Those notes include changes since GDAL 3.8.0, but not already included in a
+Those notes include changes since GDAL 3.7.0, but not already included in a
 GDAL 3.7.x bugfix release.
 
 ## In a nutshell...
