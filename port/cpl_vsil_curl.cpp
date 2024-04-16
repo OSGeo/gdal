@@ -136,9 +136,6 @@ void VSICurlAuthParametersChanged()
     gnGenerationAuthParameters++;
 }
 
-namespace cpl
-{
-
 // Do not access those variables directly !
 // Use VSICURLGetDownloadChunkSize() and GetMaxRegions()
 static int N_MAX_REGIONS_DO_NOT_USE_DIRECTLY = 0;
@@ -444,6 +441,9 @@ static std::string VSICurlGetURLFromFilename(
     return pszFilename;
 }
 
+namespace cpl
+{
+
 /************************************************************************/
 /*                           VSICurlHandle()                            */
 /************************************************************************/
@@ -570,6 +570,8 @@ int VSICurlHandle::Seek(vsi_l_offset nOffset, int nWhence)
     return 0;
 }
 
+}  // namespace cpl
+
 /************************************************************************/
 /*                 VSICurlGetTimeStampFromRFC822DateTime()              */
 /************************************************************************/
@@ -621,7 +623,7 @@ static GIntBig VSICurlGetTimeStampFromRFC822DateTime(const char *pszDT)
 /*                    VSICURLInitWriteFuncStruct()                      */
 /************************************************************************/
 
-void VSICURLInitWriteFuncStruct(WriteFuncStruct *psStruct, VSILFILE *fp,
+void VSICURLInitWriteFuncStruct(cpl::WriteFuncStruct *psStruct, VSILFILE *fp,
                                 VSICurlReadCbkFunc pfnReadCbk,
                                 void *pReadCbkUserData)
 {
@@ -651,7 +653,7 @@ void VSICURLInitWriteFuncStruct(WriteFuncStruct *psStruct, VSILFILE *fp,
 size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb,
                               void *req)
 {
-    WriteFuncStruct *psStruct = static_cast<WriteFuncStruct *>(req);
+    cpl::WriteFuncStruct *psStruct = static_cast<cpl::WriteFuncStruct *>(req);
     const size_t nSize = count * nmemb;
 
     if (psStruct->bInterrupted)
@@ -919,6 +921,9 @@ static bool Iso8601ToUnixTime(const char *pszDT, GIntBig *pnUnixTime)
     }
     return false;
 }
+
+namespace cpl
+{
 
 /************************************************************************/
 /*                   ManagePlanetaryComputerSigning()                   */
@@ -5812,6 +5817,8 @@ std::string NetworkStatisticsLogger::GetReportAsSerializedJSON()
     return oJSON.Format(CPLJSONObject::PrettyFormat::Pretty);
 }
 
+} /* end of namespace cpl */
+
 /************************************************************************/
 /*                     VSICurlParseUnixPermissions()                    */
 /************************************************************************/
@@ -5847,19 +5854,19 @@ int VSICurlParseUnixPermissions(const char *pszPermissions)
 /************************************************************************/
 
 static std::mutex oCacheFilePropMutex;
-static lru11::Cache<std::string, FileProp> *poCacheFileProp = nullptr;
+static lru11::Cache<std::string, cpl::FileProp> *poCacheFileProp = nullptr;
 
 /************************************************************************/
 /*                   VSICURLGetCachedFileProp()                         */
 /************************************************************************/
 
-bool VSICURLGetCachedFileProp(const char *pszURL, FileProp &oFileProp)
+bool VSICURLGetCachedFileProp(const char *pszURL, cpl::FileProp &oFileProp)
 {
     std::lock_guard<std::mutex> oLock(oCacheFilePropMutex);
     return poCacheFileProp != nullptr &&
            poCacheFileProp->tryGet(std::string(pszURL), oFileProp) &&
            // Let a chance to use new auth parameters
-           !(oFileProp.eExists == EXIST_NO &&
+           !(oFileProp.eExists == cpl::EXIST_NO &&
              gnGenerationAuthParameters != oFileProp.nGenerationAuthParameters);
 }
 
@@ -5867,11 +5874,12 @@ bool VSICURLGetCachedFileProp(const char *pszURL, FileProp &oFileProp)
 /*                   VSICURLSetCachedFileProp()                         */
 /************************************************************************/
 
-void VSICURLSetCachedFileProp(const char *pszURL, FileProp &oFileProp)
+void VSICURLSetCachedFileProp(const char *pszURL, cpl::FileProp &oFileProp)
 {
     std::lock_guard<std::mutex> oLock(oCacheFilePropMutex);
     if (poCacheFileProp == nullptr)
-        poCacheFileProp = new lru11::Cache<std::string, FileProp>(100 * 1024);
+        poCacheFileProp =
+            new lru11::Cache<std::string, cpl::FileProp>(100 * 1024);
     oFileProp.nGenerationAuthParameters = gnGenerationAuthParameters;
     poCacheFileProp->insert(std::string(pszURL), oFileProp);
 }
@@ -5898,8 +5906,9 @@ void VSICURLInvalidateCachedFilePropPrefix(const char *pszURL)
     {
         std::list<std::string> keysToRemove;
         const size_t nURLSize = strlen(pszURL);
-        auto lambda = [&keysToRemove, &pszURL, nURLSize](
-                          const lru11::KeyValuePair<std::string, FileProp> &kv)
+        auto lambda =
+            [&keysToRemove, &pszURL, nURLSize](
+                const lru11::KeyValuePair<std::string, cpl::FileProp> &kv)
         {
             if (strncmp(kv.key.c_str(), pszURL, nURLSize) == 0)
                 keysToRemove.push_back(kv.key);
@@ -5920,8 +5929,6 @@ void VSICURLDestroyCacheFileProp()
     delete poCacheFileProp;
     poCacheFileProp = nullptr;
 }
-
-} /* end of namespace cpl */
 
 /************************************************************************/
 /*                       VSICURLMultiCleanup()                          */
