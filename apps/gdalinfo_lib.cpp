@@ -132,7 +132,7 @@ struct GDALInfoOptions
     CPLStringList aosExtraMDDomains;
 
     /*! WKT format used for SRS */
-    std::string osWKTFormat = "WKT1";
+    std::string osWKTFormat = "WKT2";
 
     bool bStdoutOutput = false;
 };
@@ -239,7 +239,7 @@ GDALInfoAppOptionsGetParser(GDALInfoOptions *psOptions,
         .help(_("Display the output in json format."));
 
     argParser->add_argument("-mm")
-        .store_into(psOptions->bListMDD)
+        .store_into(psOptions->bComputeMinMax)
         .help(_("Force computation of the actual min/max values for each band "
                 "in the dataset."));
 
@@ -261,29 +261,31 @@ GDALInfoAppOptionsGetParser(GDALInfoOptions *psOptions,
         .store_into(psOptions->bReportHistograms)
         .help(_("Report histogram information for all bands."));
 
-    argParser->add_argument("-nogcp")
-        .default_value(true)
-        .implicit_value(false)
-        .store_into(psOptions->bShowGCPs)
-        .help(_("Suppress ground control points list printing."));
+    // Helper to set an inverted logic flag
+    auto setInvFlag = [&argParser](const std::string &name, bool &storage,
+                                   const std::string &help)
+    {
+        argParser->add_argument(name)
+            .default_value(true)
+            .implicit_value(false)
+            .action([&storage](const auto &) { storage = false; })
+            .help(help);
+    };
 
-    argParser->add_argument("-nomd")
-        .default_value(true)
-        .implicit_value(false)
-        .store_into(psOptions->bShowMetadata)
-        .help(_("Suppress metadata printing."));
+    setInvFlag("-nogcp", psOptions->bShowGCPs,
+               _("Suppress ground control points list printing."));
 
-    argParser->add_argument("-norat")
-        .default_value(true)
-        .implicit_value(false)
-        .store_into(psOptions->bShowRAT)
-        .help(_("Suppress printing of raster attribute table."));
+    setInvFlag("-nomd", psOptions->bShowMetadata,
+               _("Suppress metadata printing."));
 
-    argParser->add_argument("-noct")
-        .default_value(true)
-        .implicit_value(false)
-        .store_into(psOptions->bShowColorTable)
-        .help(_("Suppress printing of color table."));
+    setInvFlag("-norat", psOptions->bShowRAT,
+               _("Suppress printing of raster attribute table."));
+
+    setInvFlag("-noct", psOptions->bShowColorTable,
+               _("Suppress printing of color table."));
+
+    setInvFlag("-nofl", psOptions->bShowFileList,
+               _("Suppress display of the file list."));
 
     argParser->add_argument("-checksum")
         .flag()
@@ -295,12 +297,6 @@ GDALInfoAppOptionsGetParser(GDALInfoOptions *psOptions,
         .flag()
         .store_into(psOptions->bListMDD)
         .help(_("List all metadata domains available for the dataset."));
-
-    argParser->add_argument("-nofl")
-        .default_value(true)
-        .implicit_value(false)
-        .store_into(psOptions->bShowFileList)
-        .help(_("Suppress display of the file list."));
 
     argParser->add_argument("-proj4")
         .flag()

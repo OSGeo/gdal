@@ -121,7 +121,7 @@ def test_gdalinfo_lib_5():
         computeMinMax=True,
         reportHistograms=True,
         reportProj4=True,
-        stats=True,
+        # stats=True, this is mutually exclusive with approxStats
         approxStats=True,
         computeChecksum=True,
         showGCPs=False,
