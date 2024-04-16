@@ -555,7 +555,13 @@ void OGRParquetLayer::EstablishFeatureDefn()
 
     // Synthetize a GeoParquet bounding box column definition when detecting
     // a Overture Map dataset < 2024-04-16-beta.0
-    if (m_oMapGeometryColumns.empty() && bUseBBOX &&
+    if ((m_oMapGeometryColumns.empty() ||
+         // Below is for release 2024-01-17-alpha.0
+         (m_oMapGeometryColumns.find("geometry") !=
+              m_oMapGeometryColumns.end() &&
+          !m_oMapGeometryColumns["geometry"].GetObj("covering").IsValid() &&
+          m_oMapGeometryColumns["geometry"].GetString("encoding") == "WKB")) &&
+        bUseBBOX &&
         oMapParquetColumnNameToIdx.find("geometry") !=
             oMapParquetColumnNameToIdx.end() &&
         oMapParquetColumnNameToIdx.find("bbox.minx") !=
@@ -568,6 +574,11 @@ void OGRParquetLayer::EstablishFeatureDefn()
             oMapParquetColumnNameToIdx.end())
     {
         CPLJSONObject oDef;
+        if (m_oMapGeometryColumns.find("geometry") !=
+            m_oMapGeometryColumns.end())
+        {
+            oDef = m_oMapGeometryColumns["geometry"];
+        }
         CPLJSONObject oCovering;
         oDef.Add("covering", oCovering);
         CPLJSONObject oBBOX;
