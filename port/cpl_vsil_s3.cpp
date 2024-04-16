@@ -802,7 +802,7 @@ VSIS3WriteHandle::~VSIS3WriteHandle()
             curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
             curl_easy_cleanup(m_hCurl);
         }
-        curl_multi_cleanup(m_hCurlMulti);
+        VSICURLMultiCleanup(m_hCurlMulti);
     }
     CPLFree(m_sWriteFuncHeaderData.pBuffer);
 }

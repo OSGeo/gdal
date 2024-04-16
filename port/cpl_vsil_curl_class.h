@@ -1011,6 +1011,8 @@ void VSICURLDestroyCacheFileProp();
 
 }  // namespace cpl
 
+void VSICURLMultiCleanup(CURLM *hCurlMultiHandle);
+
 //! @endcond
 
 #endif  // HAVE_CURL

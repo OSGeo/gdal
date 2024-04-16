@@ -43,6 +43,7 @@
 #include "cpl_http.h"
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
+#include "cpl_vsil_curl_class.h"
 
 // gcc or clang complains about C-style cast in #define like
 // CURL_ZERO_TERMINATED
@@ -1630,7 +1631,7 @@ CPLHTTPResult **CPLHTTPMultiFetch(const char *const *papszURL, int nURLCount,
             auto oIter = poSessionMultiMap->find(osSessionName);
             if (oIter != poSessionMultiMap->end())
             {
-                curl_multi_cleanup(oIter->second);
+                VSICURLMultiCleanup(oIter->second);
                 poSessionMultiMap->erase(oIter);
                 if (poSessionMultiMap->empty())
                 {
@@ -1806,7 +1807,7 @@ CPLHTTPResult **CPLHTTPMultiFetch(const char *const *papszURL, int nURLCount,
     }
 
     if (!pszPersistent)
-        curl_multi_cleanup(hCurlMultiHandle);
+        VSICURLMultiCleanup(hCurlMultiHandle);
 
     for (size_t i = 0; i < aHeaders.size(); i++)
         curl_slist_free_all(aHeaders[i]);
@@ -2557,7 +2558,7 @@ void CPLHTTPCleanup()
         {
             for (auto &kv : *poSessionMultiMap)
             {
-                curl_multi_cleanup(kv.second);
+                VSICURLMultiCleanup(kv.second);
             }
             delete poSessionMultiMap;
             poSessionMultiMap = nullptr;

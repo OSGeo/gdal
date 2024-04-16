@@ -3465,7 +3465,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
 
         NetworkStatisticsLogger::LogGET(nTotalDownloaded);
 
-        curl_multi_cleanup(hMultiHandle);
+        VSICURLMultiCleanup(hMultiHandle);
     };
     m_oThreadAdviseRead = std::thread(task, l_osURL);
 }
@@ -3590,7 +3590,7 @@ void CachedConnection::clear()
 {
     if (hCurlMultiHandle)
     {
-        curl_multi_cleanup(hCurlMultiHandle);
+        VSICURLMultiCleanup(hCurlMultiHandle);
         hCurlMultiHandle = nullptr;
     }
 }
@@ -5922,6 +5922,17 @@ void VSICURLDestroyCacheFileProp()
 }
 
 } /* end of namespace cpl */
+
+/************************************************************************/
+/*                       VSICURLMultiCleanup()                          */
+/************************************************************************/
+
+void VSICURLMultiCleanup(CURLM *hCurlMultiHandle)
+{
+    void *old_handler = CPLHTTPIgnoreSigPipe();
+    curl_multi_cleanup(hCurlMultiHandle);
+    CPLHTTPRestoreSigPipeHandler(old_handler);
+}
 
 /************************************************************************/
 /*                      VSICurlInstallReadCbk()                         */
