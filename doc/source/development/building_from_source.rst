@@ -1699,7 +1699,7 @@ PROJ
     .. versionadded:: 3.9
 
     Control the mode used for find_package(PROJ).
-    Alters how the default CMake seach logic
+    Alters how the default CMake search logic
     (https://cmake.org/cmake/help/latest/command/find_package.html) applies.
     Defaults to CUSTOM, where the CONFIG mode is applied for PROJ >= 8, and
     fallbacks to default MODULE mode otherwise.

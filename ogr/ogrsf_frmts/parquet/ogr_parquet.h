@@ -91,7 +91,7 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     //! Iterator over m_asFeatureIdxRemapping
     std::vector<std::pair<int64_t, int64_t>>::iterator
         m_oFeatureIdxRemappingIter{};
-    //! Feature index among the potentially restricted set of selected row gropus
+    //! Feature index among the potentially restricted set of selected row groups
     int64_t m_nFeatureIdxSelected = 0;
     std::vector<int> m_anRequestedParquetColumns{};  // only valid when
                                                      // m_bIgnoredFields is set

@@ -502,7 +502,7 @@ Examples
 
 %feature("docstring") GetSemiMajor "
 
-Get spheroid semi major axis (in metres starting with GDAL 3.0)
+Get spheroid semi major axis (in meters starting with GDAL 3.0)
 
 See :cpp:func:`OGRSpatialReference::GetSemiMajor`.
 

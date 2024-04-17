@@ -639,7 +639,7 @@ custom entry of srs_id=99999 with the following properties:
 Note that the use of a LOCAL_CS / EngineeringCRS is mostly to provide a valid
 CRS definition to comply with the requirements of the GeoPackage specification
 and to be compatible of other applications (or GDAL 3.8 or earlier), but the
-semantics of that entry is intented to be "undefined SRS of any kind".
+semantics of that entry is intended to be "undefined SRS of any kind".
 
 Level of support of GeoPackage Extensions
 -----------------------------------------

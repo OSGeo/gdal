@@ -305,3 +305,4 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
      FAIL_REGEX "[Uu]nknown switch"                         # PGI
 * Esben Mose Hansen, Ange Optimization ApS
             SetLinearUnits("kilometre", 1000.0);
+    // F(ixed) S(ize) L(ist) of (x,y[,z][,m]) values / Interleaved layout
