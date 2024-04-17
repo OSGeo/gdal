@@ -49,8 +49,8 @@ struct GDALInfoOptionsForBinary
     /* Open options. */
     CPLStringList aosOpenOptions{};
 
-    /* > for reporting on a particular subdataset */
-    int nSubdataset;
+    /* For reporting on a particular subdataset */
+    int nSubdataset = 0;
 
     /* Allowed input drivers. */
     CPLStringList aosAllowedInputDrivers{};

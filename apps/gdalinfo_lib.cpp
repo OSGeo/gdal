@@ -115,10 +115,10 @@ struct GDALInfoOptions
     bool bShowMetadata = true;
 
     /*! allow or suppress printing of raster attribute table */
-    bool bShowRAT = false;
+    bool bShowRAT = true;
 
     /*! allow or suppress printing of color table */
-    bool bShowColorTable = false;
+    bool bShowColorTable = true;
 
     /*! list all metadata domains available for the dataset */
     bool bListMDD = false;

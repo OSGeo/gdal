@@ -60,7 +60,7 @@ def test_gdalinfo_1(gdalinfo_path):
         gdalinfo_path + " ../gcore/data/byte.tif",
         encoding="UTF-8",
     )
-    assert err is None or err == "", "got error/warning"
+    assert err is None or err == "", f"got error/warning {err}"
     assert ret.find("Driver: GTiff/GeoTIFF") != -1
 
 
@@ -460,7 +460,7 @@ def test_gdalinfo_28(gdalinfo_path):
         encoding="UTF-8",
     )
     ret = json.loads(ret)
-    assert err is None or err == "", "got error/warning"
+    assert err is None or err == "", f"got error/warning {err}"
     assert ret["driverShortName"] == "GTiff"
 
 
