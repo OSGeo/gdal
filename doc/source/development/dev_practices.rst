@@ -16,6 +16,9 @@ of a RFC (request for comment) document.
 
 GDAL's policy on substantial code additions is documented at :ref:`rfc-85`.
 
+Developer Guidelines are detailed in :ref:`rfc-8`. For specific topics, it
+may be relevant to consult one of the potential related existing RFCs,
+listed in :ref:`rfclist`.
 
 Git usage
 ---------
