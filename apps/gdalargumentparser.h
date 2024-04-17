@@ -96,6 +96,16 @@ class GDALArgumentParser : public ArgumentParser
     //! Return the non positional arguments.
     CPLStringList get_non_positional_arguments(const CPLStringList &aosArgs);
 
+    /**
+     * Add an inverted logic (default true, false when set) flag
+     * @param name        flag name
+     * @param store_into  optional pointer to a bool variable where to store the value
+     * @param help        optional help text
+     */
+    Argument &add_inverted_logic_flag(const std::string &name,
+                                      bool *store_into = nullptr,
+                                      const std::string &help = "");
+
   private:
     std::map<std::string, ArgumentParser::argument_it>::iterator
     find_argument(const std::string &name);

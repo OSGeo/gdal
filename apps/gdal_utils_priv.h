@@ -44,16 +44,16 @@ CPL_C_START
 struct GDALInfoOptionsForBinary
 {
     /* Filename to open. */
-    char *pszFilename;
+    std::string osFilename{};
 
     /* Open options. */
-    char **papszOpenOptions;
+    CPLStringList aosOpenOptions{};
 
-    /* > for reporting on a particular subdataset */
-    int nSubdataset;
+    /* For reporting on a particular subdataset */
+    int nSubdataset = 0;
 
     /* Allowed input drivers. */
-    char **papszAllowInputDrivers;
+    CPLStringList aosAllowedInputDrivers{};
 };
 
 struct GDALDEMProcessingOptionsForBinary
@@ -238,6 +238,8 @@ std::string CPL_DLL GDALTranslateGetParserUsage();
 std::string CPL_DLL GDALVectorTranslateGetParserUsage();
 
 std::string CPL_DLL GDALWarpAppGetParserUsage();
+
+std::string CPL_DLL GDALInfoAppGetParserUsage();
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
