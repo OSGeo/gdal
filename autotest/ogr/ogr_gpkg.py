@@ -8907,8 +8907,15 @@ def test_ogr_gpkg_get_geometry_types(tmp_vsimem):
 
 @pytest.mark.parametrize("write_to_disk", (True, False), ids=["on_disk", "in_memory"])
 @pytest.mark.parametrize("OGR_GPKG_MAX_RAM_USAGE_RTREE", (1, 1000, None))
+@pytest.mark.parametrize(
+    "OGR_GPKG_SIMULATE_INSERT_INTO_MY_RTREE_PREPARATION_ERROR", (True, False)
+)
 def test_ogr_gpkg_background_rtree_build(
-    tmp_path, tmp_vsimem, write_to_disk, OGR_GPKG_MAX_RAM_USAGE_RTREE
+    tmp_path,
+    tmp_vsimem,
+    write_to_disk,
+    OGR_GPKG_MAX_RAM_USAGE_RTREE,
+    OGR_GPKG_SIMULATE_INSERT_INTO_MY_RTREE_PREPARATION_ERROR,
 ):
 
     if write_to_disk:
@@ -8918,13 +8925,17 @@ def test_ogr_gpkg_background_rtree_build(
 
     # Batch insertion only
     gdal.ErrorReset()
-    with gdaltest.config_option(
-        "OGR_GPKG_MAX_RAM_USAGE_RTREE",
+
+    options = {}
+    options["OGR_GPKG_MAX_RAM_USAGE_RTREE"] = (
         str(OGR_GPKG_MAX_RAM_USAGE_RTREE)
         if OGR_GPKG_MAX_RAM_USAGE_RTREE is not None
-        else None,
-        thread_local=False,
-    ):
+        else None
+    )
+    options["OGR_GPKG_SIMULATE_INSERT_INTO_MY_RTREE_PREPARATION_ERROR"] = (
+        "TRUE" if OGR_GPKG_SIMULATE_INSERT_INTO_MY_RTREE_PREPARATION_ERROR else None
+    )
+    with gdaltest.config_options(options, thread_local=False):
         ds = gdaltest.gpkg_dr.CreateDataSource(filename)
         with gdaltest.config_option("OGR_GPKG_THREADED_RTREE_AT_FIRST_FEATURE", "YES"):
             lyr = ds.CreateLayer("foo")
@@ -8964,13 +8975,7 @@ def test_ogr_gpkg_background_rtree_build(
         f = sql_lyr.GetNextFeature()
         assert f.GetField(0) == "ok"
     with ds.ExecuteSQL("SELECT * FROM rtree_foo_geom") as sql_lyr:
-        fc = sql_lyr.GetFeatureCount()
-        if fc != 1000 and gdaltest.is_travis_branch("macos_build_conda"):
-            # Fails with
-            # ERROR 1: failed to prepare SQL: INSERT INTO my_rtree VALUES (?,?,?,?,?)
-            # FAILED ogr/ogr_gpkg.py::test_ogr_gpkg_background_rtree_build[1000-in_memory] - AssertionError: assert 0 == 1000
-            pytest.xfail("fails for unknown reason on MacOS ARM64")
-        assert fc == 1000
+        assert sql_lyr.GetFeatureCount() == 1000
     foo_lyr = ds.GetLayerByName("foo")
     for i in range(1000):
         foo_lyr.SetSpatialFilterRect(10000 + i - 0.5, i - 0.5, 10000 + i + 0.5, i + 0.5)

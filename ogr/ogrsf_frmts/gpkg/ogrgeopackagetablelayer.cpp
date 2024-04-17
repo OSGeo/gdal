@@ -2644,8 +2644,19 @@ void OGRGeoPackageTableLayer::SetDeferredSpatialIndexCreation(bool bFlag)
         m_bAllowedRTreeThread =
             m_poDS->GetLayerCount() == 0 && sqlite3_threadsafe() != 0 &&
             CPLGetNumCPUs() >= 2 &&
-            CPLTestBool(
-                CPLGetConfigOption("OGR_GPKG_ALLOW_THREADED_RTREE", "YES"));
+            CPLTestBool(CPLGetConfigOption("OGR_GPKG_ALLOW_THREADED_RTREE",
+        // For a not yet understood reason, threaded RTree building
+        // (randomly?) fails on OSX Arm64. This may not be at all specific
+        // to that platform, but a more general problem, but it can't be
+        // reproduced elsewhere.
+        // Cf https://gis.stackexchange.com/questions/479958/how-to-fix-failed-to-prepare-sql-error-when-creating-gpkg-file-from-osm-extrac/479964#479964
+        // and random (frequent) failures on GDAL CI (https://github.com/OSGeo/gdal/commit/a83942422fd67471aee23ae11c5d06af27db2857)
+#if defined(__arm64__) && defined(__APPLE__)
+                                           "NO"
+#else
+                                           "YES"
+#endif
+                                           ));
 
         // For unit tests
         if (CPLTestBool(CPLGetConfigOption(
@@ -2725,8 +2736,6 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
             OGRErr eErr = SQLCommand(m_poDS->GetDB(), pszSQL);
             sqlite3_free(pszSQL);
 
-            VSIUnlink(m_osAsyncDBName.c_str());
-
             if (eErr == OGRERR_NONE)
             {
                 try
@@ -2767,13 +2776,16 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
 
 void OGRGeoPackageTableLayer::RemoveAsyncRTreeTempDB()
 {
-    SQLCommand(
-        m_poDS->GetDB(),
-        CPLSPrintf("DETACH DATABASE \"%s\"",
-                   SQLEscapeName(m_osAsyncDBAttachName.c_str()).c_str()));
-    m_osAsyncDBAttachName.clear();
-    VSIUnlink(m_osAsyncDBName.c_str());
-    m_osAsyncDBName.clear();
+    if (!m_osAsyncDBAttachName.empty())
+    {
+        SQLCommand(
+            m_poDS->GetDB(),
+            CPLSPrintf("DETACH DATABASE \"%s\"",
+                       SQLEscapeName(m_osAsyncDBAttachName.c_str()).c_str()));
+        m_osAsyncDBAttachName.clear();
+        VSIUnlink(m_osAsyncDBName.c_str());
+        m_osAsyncDBName.clear();
+    }
 }
 
 /************************************************************************/
@@ -2848,8 +2860,6 @@ bool OGRGeoPackageTableLayer::FlushInMemoryRTree(sqlite3 *hRTreeDB,
             sqlite3_close(m_hAsyncDBHandle);
             m_hAsyncDBHandle = nullptr;
         }
-
-        VSIUnlink(m_osAsyncDBName.c_str());
 
         m_oQueueRTreeEntries.clear();
     }
@@ -2931,14 +2941,24 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
         if (hStmt == nullptr)
         {
             const char *pszInsertSQL =
-                "INSERT INTO my_rtree VALUES (?,?,?,?,?)";
+                CPLGetConfigOption(
+                    "OGR_GPKG_SIMULATE_INSERT_INTO_MY_RTREE_PREPARATION_ERROR",
+                    nullptr)
+                    ? "INSERT INTO my_rtree_SIMULATE_ERROR VALUES (?,?,?,?,?)"
+                    : "INSERT INTO my_rtree VALUES (?,?,?,?,?)";
             if (sqlite3_prepare_v2(m_hAsyncDBHandle, pszInsertSQL, -1, &hStmt,
                                    nullptr) != SQLITE_OK)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "failed to prepare SQL: %s", pszInsertSQL);
-                m_oQueueRTreeEntries.clear();
+                         "failed to prepare SQL: %s: %s", pszInsertSQL,
+                         sqlite3_errmsg(m_hAsyncDBHandle));
+
                 m_bErrorDuringRTreeThread = true;
+
+                sqlite3_close(m_hAsyncDBHandle);
+                m_hAsyncDBHandle = nullptr;
+
+                m_oQueueRTreeEntries.clear();
                 return;
             }
 
@@ -4456,7 +4476,11 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
             sqlite3_close(m_hAsyncDBHandle);
             m_hAsyncDBHandle = nullptr;
         }
-        if (!m_bErrorDuringRTreeThread)
+        if (m_bErrorDuringRTreeThread)
+        {
+            RemoveAsyncRTreeTempDB();
+        }
+        else
         {
             bPopulateFromThreadRTree = true;
         }
