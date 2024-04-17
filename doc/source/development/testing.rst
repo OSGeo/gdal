@@ -56,7 +56,7 @@ can be done by running the following from the build directory:
 
     pytest autotest/gcore/vrt_read.py
 
-On Windows, the test files remain in the source tree, but the pytest configuration file ``pytest.ini`` is only available in the build directory. To accommodate this, the above command would be  modified as follows:
+On Windows, the test files remain in the source tree, but the pytest configuration file ``pytest.ini`` is only available in the build directory. To accommodate this, the above command would be modified as follows:
 
 .. code-block:: bash
 
