@@ -21,7 +21,7 @@ Synopsis
                   [-e] [-a nodata] [-v] [-q] [-h] [-k] [-n] [-u <url>]
                   [-w <webviewer>] [-t <title>] [-c <copyright>]
                   [--processes=<NB_PROCESSES>] [--mpi] [--xyz]
-                  [--tilesize=<PIXELS>] [--tmscompatible]
+                  [--tilesize=<PIXELS>] --tiledriver=<DRIVER> [--tmscompatible]
                   [--excluded-values=<EXCLUDED_VALUES>] [--excluded-values-pct-threshold=<EXCLUDED_VALUES_PCT_THRESHOLD>]
                   [-g <googlekey] [-b <bingkey>] <input_file> [<output_dir>] [<COMMON_OPTIONS>]
 
@@ -139,8 +139,8 @@ can publish a picture without proper georeferencing too.
 .. option:: --tiledriver=<DRIVER>
 
   Which output driver to use for the tiles, determines the file format of the tiles.
-  Currently PNG and WEBP are supported. Default is PNG.
-  Additional configuration for the WEBP driver are documented below.
+  Currently PNG, WEBP and JPEG (JPEG added in GDAL 3.9) are supported. Default is PNG.
+  Additional configuration for the WEBP and JPEG drivers are documented below.
 
   .. versionadded:: 3.6
 
@@ -266,6 +266,19 @@ The following configuration options are available to further customize the webp 
     GDAL :ref:`WEBP driver <raster.webp>` documentation can be consulted
 
 
+JPEG options
++++++++++++++
+
+JPEG tiledriver support is new to GDAL 3.9. It is enabled by using --tiledriver=JPEG.
+
+Note that JPEG does not support transparency, hence edge tiles will display black
+pixels in areas not covered by the source raster.
+
+The following configuration options are available to further customize the webp output:
+
+.. option:: ---jpeg-quality=JPEG_QUALITY
+
+    QUALITY is a integer between 1-100. Default is 75.
 
 
 Examples
