@@ -201,7 +201,7 @@ class OGRVRTLayer final : public OGRLayer
     virtual OGRErr CommitTransaction() override;
     virtual OGRErr RollbackTransaction() override;
 
-    virtual OGRErr SetIgnoredFields(const char **papszFields) override;
+    virtual OGRErr SetIgnoredFields(CSLConstList papszFields) override;
 
     GDALDataset *GetSrcDataset();
 };

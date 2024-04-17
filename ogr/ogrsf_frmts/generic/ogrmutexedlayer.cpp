@@ -292,7 +292,7 @@ const char *OGRMutexedLayer::GetGeometryColumn()
     return OGRLayerDecorator::GetGeometryColumn();
 }
 
-OGRErr OGRMutexedLayer::SetIgnoredFields(const char **papszFields)
+OGRErr OGRMutexedLayer::SetIgnoredFields(CSLConstList papszFields)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::SetIgnoredFields(papszFields);

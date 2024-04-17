@@ -1654,7 +1654,7 @@ OGRErr OGRNGWLayer::ICreateFeature(OGRFeature *poFeature)
 /*
  * SetIgnoredFields()
  */
-OGRErr OGRNGWLayer::SetIgnoredFields(const char **papszFields)
+OGRErr OGRNGWLayer::SetIgnoredFields(CSLConstList papszFields)
 {
     OGRErr eResult = OGRLayer::SetIgnoredFields(papszFields);
     if (eResult != OGRERR_NONE)
@@ -1832,7 +1832,7 @@ OGRErr OGRNGWLayer::SetSelectedFields(const std::set<std::string> &aosFields)
         }
         aosIgnoreFields.AddString(poFieldDefn->GetNameRef());
     }
-    return SetIgnoredFields(const_cast<const char **>(aosIgnoreFields.List()));
+    return SetIgnoredFields(aosIgnoreFields.List());
 }
 
 /*

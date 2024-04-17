@@ -666,7 +666,7 @@ const char *OGRProxiedLayer::GetGeometryColumn()
 /*                          SetIgnoredFields()                          */
 /************************************************************************/
 
-OGRErr OGRProxiedLayer::SetIgnoredFields(const char **papszFields)
+OGRErr OGRProxiedLayer::SetIgnoredFields(CSLConstList papszFields)
 {
     if (poUnderlyingLayer == nullptr && !OpenUnderlyingLayer())
         return OGRERR_FAILURE;

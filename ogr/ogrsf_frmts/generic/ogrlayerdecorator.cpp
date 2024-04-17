@@ -347,7 +347,7 @@ const char *OGRLayerDecorator::GetGeometryColumn()
     return m_poDecoratedLayer->GetGeometryColumn();
 }
 
-OGRErr OGRLayerDecorator::SetIgnoredFields(const char **papszFields)
+OGRErr OGRLayerDecorator::SetIgnoredFields(CSLConstList papszFields)
 {
     if (!m_poDecoratedLayer)
         return OGRERR_FAILURE;
