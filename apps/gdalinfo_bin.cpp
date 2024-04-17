@@ -92,11 +92,11 @@ MAIN_START(argc, argv)
 
     GDALInfoOptionsForBinary sOptionsForBinary;
 
-    GDALInfoOptions *psOptions =
-        GDALInfoOptionsNew(argv + 1, &sOptionsForBinary);
+    std::unique_ptr<GDALInfoOptions, decltype(&GDALInfoOptionsFree)> psOptions{
+        GDALInfoOptionsNew(argv + 1, &sOptionsForBinary), GDALInfoOptionsFree};
     CSLDestroy(argv);
 
-    if (psOptions == nullptr)
+    if (!psOptions)
     {
         Usage();
     }
@@ -183,8 +183,6 @@ MAIN_START(argc, argv)
             }
         }
 
-        GDALInfoOptionsFree(psOptions);
-
         GDALDumpOpenDatasets(stderr);
 
         GDALDestroyDriverManager();
@@ -229,7 +227,7 @@ MAIN_START(argc, argv)
             }
         }
 
-        char *pszGDALInfoOutput = GDALInfo(hDataset, psOptions);
+        char *pszGDALInfoOutput = GDALInfo(hDataset, psOptions.get());
 
         if (pszGDALInfoOutput)
             printf("%s", pszGDALInfoOutput);
@@ -240,8 +238,6 @@ MAIN_START(argc, argv)
 #ifdef __AFL_HAVE_MANUAL_CONTROL
     }
 #endif
-
-    GDALInfoOptionsFree(psOptions);
 
     GDALDumpOpenDatasets(stderr);
 
