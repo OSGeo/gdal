@@ -409,7 +409,10 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
             auto bbox_field_xmax(arrow::field("xmax", arrow::float32(), false));
             auto bbox_field_ymax(arrow::field("ymax", arrow::float32(), false));
             auto bbox_field(arrow::field(
-                std::string(poGeomFieldDefn->GetNameRef()).append("_bbox"),
+                CPLGetConfigOption("OGR_PARQUET_COVERING_BBOX_NAME",
+                                   std::string(poGeomFieldDefn->GetNameRef())
+                                       .append("_bbox")
+                                       .c_str()),
                 arrow::struct_(
                     {std::move(bbox_field_xmin), std::move(bbox_field_ymin),
                      std::move(bbox_field_xmax), std::move(bbox_field_ymax)}),
