@@ -261,31 +261,22 @@ GDALInfoAppOptionsGetParser(GDALInfoOptions *psOptions,
         .store_into(psOptions->bReportHistograms)
         .help(_("Report histogram information for all bands."));
 
-    // Helper to set an inverted logic flag
-    auto setInvFlag = [&argParser](const std::string &name, bool &storage,
-                                   const std::string &help)
-    {
-        argParser->add_argument(name)
-            .default_value(true)
-            .implicit_value(false)
-            .action([&storage](const auto &) { storage = false; })
-            .help(help);
-    };
+    argParser->add_inverted_logic_flag(
+        "-nogcp", &psOptions->bShowGCPs,
+        _("Suppress ground control points list printing."));
 
-    setInvFlag("-nogcp", psOptions->bShowGCPs,
-               _("Suppress ground control points list printing."));
+    argParser->add_inverted_logic_flag("-nomd", &psOptions->bShowMetadata,
+                                       _("Suppress metadata printing."));
 
-    setInvFlag("-nomd", psOptions->bShowMetadata,
-               _("Suppress metadata printing."));
+    argParser->add_inverted_logic_flag(
+        "-norat", &psOptions->bShowRAT,
+        _("Suppress printing of raster attribute table."));
 
-    setInvFlag("-norat", psOptions->bShowRAT,
-               _("Suppress printing of raster attribute table."));
+    argParser->add_inverted_logic_flag("-noct", &psOptions->bShowColorTable,
+                                       _("Suppress printing of color table."));
 
-    setInvFlag("-noct", psOptions->bShowColorTable,
-               _("Suppress printing of color table."));
-
-    setInvFlag("-nofl", psOptions->bShowFileList,
-               _("Suppress display of the file list."));
+    argParser->add_inverted_logic_flag("-nofl", &psOptions->bShowFileList,
+                                       _("Suppress display of the file list."));
 
     argParser->add_argument("-checksum")
         .flag()
@@ -305,20 +296,16 @@ GDALInfoAppOptionsGetParser(GDALInfoOptions *psOptions,
                 "system."));
 
     argParser->add_argument("-wkt_format")
-        .metavar("<WKT1|WKT2|WKT2_2015|WKT2_2018>")
-        .choices("WKT1", "WKT2", "WKT2_2015", "WKT2_2018")
-        .nargs(1)
+        .metavar("<WKT1|WKT2|WKT2_2015|WKT2_2018|WKT2_2019>")
+        .choices("WKT1", "WKT2", "WKT2_2015", "WKT2_2018", "WKT2_2019")
         .store_into(psOptions->osWKTFormat)
         .help(_("WKT format used for SRS."));
 
     argParser->add_argument("-sd")
-        .metavar("<sd>")
-        .nargs(1)
+        .metavar("<n>")
         .store_into(psOptionsForBinary->nSubdataset)
-        .help(
-            _("If the input dataset contains several subdatasets read and "
-              "display a subdataset with specified n number (starting from 1). "
-              "This is an alternative of giving the full subdataset name."));
+        .help(_("Use subdataset of specified index (starting at 1), instead of "
+                "the source dataset itself."));
 
     argParser->add_argument("-oo")
         .metavar("<NAME>=<VALUE>")
@@ -337,7 +324,6 @@ GDALInfoAppOptionsGetParser(GDALInfoOptions *psOptions,
 
     argParser->add_argument("-mdd")
         .metavar("<domain>|all")
-        .nargs(1)
         .action(
             [psOptions](const std::string &value)
             {
@@ -2213,8 +2199,7 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
         }
         else
         {
-            aosExtraMDDomainsExpanded =
-                CSLDuplicate(psOptions->aosExtraMDDomains);
+            aosExtraMDDomainsExpanded = psOptions->aosExtraMDDomains;
         }
 
         for (const char *pszDomain : aosExtraMDDomainsExpanded)
@@ -2309,11 +2294,6 @@ GDALInfoOptionsNew(char **papszArgv,
     catch (const std::exception &error)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
-        return nullptr;
-    }
-
-    if (psOptionsForBinary != nullptr && psOptionsForBinary->osFilename.empty())
-    {
         return nullptr;
     }
 

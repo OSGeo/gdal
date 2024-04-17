@@ -339,6 +339,22 @@ GDALArgumentParser::get_non_positional_arguments(const CPLStringList &aosArgs)
     return args;
 }
 
+Argument &GDALArgumentParser::add_inverted_logic_flag(const std::string &name,
+                                                      bool *store_into,
+                                                      const std::string &help)
+{
+    return add_argument(name)
+        .default_value(true)
+        .implicit_value(false)
+        .action(
+            [store_into](const auto &)
+            {
+                if (store_into)
+                    *store_into = false;
+            })
+        .help(help);
+}
+
 /************************************************************************/
 /*                           parse_args()                               */
 /************************************************************************/
