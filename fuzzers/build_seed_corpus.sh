@@ -592,6 +592,26 @@ rm -f $OUT/lvbag_fuzzer_seed_corpus.zip
 zip -r $OUT/lvbag_fuzzer_seed_corpus.zip ./*.xml >/dev/null
 cd $OLDPWD
 
+echo "Building ogr_miramon_fuzzer_seed_corpus.zip"
+rm -f $OUT/ogr_miramon_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../autotest/ogr/data/miramon
+for subdir in *; do
+    (cd $subdir
+     for subdir2 in *; do
+      (cd $subdir2
+       printf "FUZZER_FRIENDLY_ARCHIVE\\n" > $CUR_DIR/ogr_miramon_${subdir}_${subdir2}.tar
+       for file in *; do
+           printf "***NEWFILE***:%s\\n" "$file" >> $CUR_DIR/ogr_miramon_${subdir}_${subdir2}.tar
+           cat $file >> $CUR_DIR/ogr_miramon_${subdir}_${subdir2}.tar
+       done
+       )
+     done
+    )
+done
+cd $CUR_DIR
+zip -r $OUT/ogr_miramon_fuzzer_seed_corpus.zip ogr_miramon_*.tar >/dev/null
+rm ogr_miramon_*.tar
 
 echo "Copying data to $OUT"
 cp $(dirname $0)/../data/* $OUT

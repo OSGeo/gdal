@@ -93,6 +93,7 @@ build_ogr_specialized_fuzzer avcbin RegisterOGRAVCBin "/vsimem/test.tar" "/vsita
 build_ogr_specialized_fuzzer gml RegisterOGRGML "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.gml"
 build_ogr_specialized_fuzzer gmlas RegisterOGRGMLAS "/vsimem/test.tar" "GMLAS:/vsitar//vsimem/test.tar/test.gml"
 build_ogr_specialized_fuzzer fgb RegisterOGRFlatGeobuf "/vsimem/test.fgb" "/vsimem/test.fgb"
+build_fuzzer ogr_miramon_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRMiraMon -DMEM_FILENAME="\"/vsimem/test.tar\"" -DFOR_OGR_MIRAMON
 build_fuzzer cad_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DREGISTER_FUNC=RegisterOGRCAD
 
 formats="GTiff HFA"

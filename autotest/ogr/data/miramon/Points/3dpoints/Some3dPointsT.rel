@@ -1,0 +1,112 @@
+[VERSIO]
+VersMetaDades=5
+SubVersMetaDades=0
+Vers=4
+SubVers=3
+
+[METADADES]
+language=cat
+MDIdiom=cat
+dateStamp=20240318 15131947+0100
+characterSet=006
+nOrganismes=2
+FileIdentifier=LIDAR3d_totT_14533
+
+[METADADES:ORGANISME_1]
+role=009
+IndividualName=Abel Pau
+PositionName=Tècnic SIG
+OrganisationName=CREAF
+
+[METADADES:ORGANISME_2]
+role=009
+IndividualName=Abel Pau
+PositionName=Tècnic en SIG
+OrganisationName=CREAF
+
+[IDENTIFICATION]
+code=LIDAR3d_totT_32431
+codeSpace=
+DatasetTitle=Selecció de -> Selecció de -> Fitxer extret de D:\[...]\LIDAR3d_tot.shp
+
+[SPATIAL_REFERENCE_SYSTEM:HORIZONTAL]
+HorizontalSystemIdentifier=UTM-31N-ETRS89
+
+[EXTENT]
+MinX=440544.58
+MaxX=440551.66
+MinY=4635313.38
+MaxY=4635319.81
+toler_env=0
+
+[OVERVIEW]
+CreationDate=20240318 15131943+0100
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_1_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+descriptor=Identificador Gràfic intern
+visible=0
+simbolitzable=0
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:INTENS]
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:ID_CLAS]
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:ANGLE]
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:RETURN_NR]
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:N_T_RETURN]
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:PULSE_TIME]
+MostrarUnitats=0
+
+[QUALITY:LINEAGE:PROCESS1]
+nOrganismes=1
+history=VecSelec_64.exe D:\GitHub-repository\gdal\autotest\ogr\data\miramon\Points\LidarRectangle\TMP0000.SEL D:\GitHub-repository\gdal\autotest\ogr\data\miramon\Points\LidarRectangle\Some3dPoints
+purpose=Un fitxer de text indica quines són les entitats gràfiques i registres de la base de dades que cal desar en el fitxer de sortida. En aquesta ajuda ens referirem a aquest fitxer com a fitxer de seleccions. Es recomana l'extensió SEL, tot i que no és obligatòria.
+date=20240318 15131959+0100
+NomFitxer=C:\MiraMon\VecSelec_64.exe
+
+[QUALITY:LINEAGE:PROCESS1:ORGANISME_1]
+IndividualName=Abel Pau
+PositionName=Tècnic en SIG
+OrganisationName=CREAF
+
+[QUALITY:LINEAGE:PROCESS1:SOFTWARE_REFERENCE]
+Titol=
+Edition=
+CollectiveTitle=
+ISBN=
+ISSN=
+
+[QUALITY:LINEAGE:PROCESS1:INOUT1]
+identifier=Param1
+TypeValues=S
+ResultUnits=
+source=1
+
+[QUALITY:LINEAGE:SOURCE1]
+NomFitxer=TMP0000.SEL
+
+[QUALITY:LINEAGE:PROCESS1:INOUT2]
+identifier=Param2
+sentit=1
+TypeValues=S
+ResultUnits=
+source=2
+
+[QUALITY:LINEAGE:SOURCE2]
+NomFitxer=Some3dPoints
+
+[QUALITY:LINEAGE]
+processes=1
