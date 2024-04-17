@@ -47,27 +47,27 @@ Driver capabilities
 Overview of MiraMon format
 --------------------------
 
-In MiraMon format structured vectors is the binary format of MiraMon for vector layer data, linked to
+The MiraMon format is a binary format for vector layer data, linked to
 one or more database tables, with or without topology and with rich metadata.
 More information about the structured MiraMon vector format is available `on the public
 specification <https://www.miramon.cat/new_note/eng/notes/MiraMon_structured_vectors_file_format.pdf>`__.
 
 It is important to keep in mind that a MiraMon vector layer is composed by several files as follows:
 
-To operate with a points layer, you must provide the name with the extension .pnt
+To operate with a point layer, you must provide the name with the extension .pnt
 (the T.dbf and T.rel files must accompany the .pnt).
 
-To operate with a stringlines layer, you must provide the name with the extension .arc
+To operate with a linestring layer, you must provide the name with the extension .arc
 (the A.dbf and A.rel, .nod, N.dbf, and N.rel files must accompany the .arc).
 
-To operate with a polygons layer, you must provide the name with the extension .pol
+To operate with a polygon layer, you must provide the name with the extension .pol
 (the P.dbf, P.rel, A.dbf and A.rel, .nod, N.dbf, and N.rel files must accompany the .pol).
 
-By providing only the main file name, the driver will access the rest to search for the
+By providing only the main file name, the driver will automatically use the other sidecar files to obtain the
 necessary information. In the creation of MiraMon layers, you only need to provide the name
 of the main file (with or without extension), and the driver will create the rest of the files.
 
-The following outlines the information contained within each type of file with the mentioned extensions:
+The following outlines the information contained within each sidecar file:
 
 Preliminary note: *FileName* is, in the following explanations, the first part of the name
 of the layer file.   
@@ -129,14 +129,14 @@ of the layer file.
       the GDAL MiraMon vector driver because nodes contain topological information that is not
       transferred to other formats.
 
-- **Polygon layers**: These layers contain *polygons* or *multipolygons* type features.
+- **Polygon layers**: These layers contain *polygon* or *multipolygon* type features.
   In MiraMon vector format a polygon is a closed shape described by one or more arcs.
   A polygon can have holes inside it. A polygon can also be linked to other polygons;
   in this case, it is termed a group (*multipolygon*). 
   Each layer is composed by 9 files:
 
     - *FileName.pol* file: Contains the geographic database with information about the linestring
-      vector features needed to define the polygonal (or multipolygonal) vector features.  
+      vector features needed to define the polygon (or multipolygon) vector features.  
 
     - *FileNameP.dbf* file (note the 'P' before the '.'): Contains the main table of the database
       in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/eng/notes/DBF_estesa.pdf>`__,
@@ -182,11 +182,11 @@ of the layer file.
 Encoding
 --------
 
-When reading MiraMon files, the code page setting in the header of the .dbf file
+When reading MiraMon files the code page setting in the header of the .dbf file
 is read and used to translate string fields to UTF-8 (regardless of whether they
 are in ANSI, OEM or UTF-8).
 
-When writing MiraMon files, the codepage of *.dbf* files can be ANSI or UTF8
+When writing MiraMon files the codepage of *.dbf* files can be ANSI or UTF8
 depending on the layer creation option DBFEncoding.
 
 Creation Issues
@@ -195,7 +195,7 @@ Creation Issues
 MiraMon can only store one kind of geometry per layer
 (points, arcs or polygons). Mixing different kinds of layers
 (including raster and geoservices as WMS or WMTS) is possible through MiraMon maps (.mmm).
-During creation, the driver generates the necessary files to
+During creation the driver generates the necessary files to
 accommodate each of the three possible types of geometries.
 For instance, if a layer or a dataset contains points and arcs,
 a set of point files and a set of arc files will be created.
@@ -209,7 +209,7 @@ folder or a set of files with the appropriate extension (*.pnt*, etc):
     easy open of the dataset using the MiraMon software.
   - In this case, please specify the MiraMon file output format name using the -f option (**-f MiraMonVector**).
 
-- If it the output is a **file** with extension all the translated layers in the origin dataset will be created with the specified name.
+- If the output is a **file** with extension all the translated layers in the origin dataset will be created with the specified name.
   Use this option only when you know that there is only one layer with one feature type in the origin dataset.
 
 The attributes of the MiraMon feature are stored in an associated *.dbf*.
@@ -233,7 +233,7 @@ When translating from a MiraMon vector format, the MiraMon vector driver input n
 described extensions: 
 
 -  *.pnt* for *points*.
--  *.arc* for *stringlines*.
+-  *.arc* for *linestrings*.
 -  *.pol* for *polygons* (or *multipolygons*).
 
 The extension *.nod* is not valid for translation. Take in consideration all auxiliary files described above.
@@ -241,8 +241,8 @@ The extension *.nod* is not valid for translation. Take in consideration all aux
 Field sizes
 -----------
 
-The driver knows to auto-extend string and integer fields to
-dynamically accommodate for the length of the data to be inserted.
+The driver will automatically extend string and integer fields to
+dynamically accommodate the length of the data to be inserted.
 
 Size Issues
 -----------
@@ -318,7 +318,7 @@ Layer creation options
       :choices: ENG, CAT, SPA
       :default: ENG
 
-      It is the language used in the metadata file (*.rel*) for the descriptors of
+      Sets the language used in the metadata file (*.rel*) for the descriptors of
       the *.dbf* fields.
 
 Examples
