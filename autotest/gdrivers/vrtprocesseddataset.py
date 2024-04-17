@@ -1,7 +1,5 @@
 #!/usr/bin/env pytest
 ###############################################################################
-# $Id$
-#
 # Project:  GDAL/OGR Test Suite
 # Purpose:  Test VRTProcessedDataset support.
 # Author:   Even Rouault <even.rouault at spatialys.com>
@@ -28,12 +26,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import struct
-
 import gdaltest
 import pytest
 
 from osgeo import gdal
+
+np = pytest.importorskip("numpy")
+pytest.importorskip("osgeo.gdal_array")
 
 ###############################################################################
 # Test error cases in general VRTProcessedDataset XML structure
@@ -139,9 +138,9 @@ def test_vrtprocesseddataset_affine_combination_nominal(tmp_vsimem):
 
     src_filename = str(tmp_vsimem / "src.tif")
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 2, 1, 3)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x03")
-    src_ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\x02\x06")
-    src_ds.GetRasterBand(3).WriteRaster(0, 0, 2, 1, b"\x03\x03")
+    src_ds.GetRasterBand(1).WriteArray(np.array([[1, 3]]))
+    src_ds.GetRasterBand(2).WriteArray(np.array([[2, 6]]))
+    src_ds.GetRasterBand(3).WriteArray(np.array([[3, 3]]))
     src_ds.Close()
 
     ds = gdal.Open(
@@ -168,9 +167,11 @@ def test_vrtprocesseddataset_affine_combination_nominal(tmp_vsimem):
     assert ds.GetSpatialRef() is None
     assert ds.GetGeoTransform(can_return_null=True) is None
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
-    assert struct.unpack("B" * 2, ds.GetRasterBand(1).ReadRaster()) == (15, 10 + 6)
-    assert struct.unpack("B" * 2, ds.GetRasterBand(2).ReadRaster()) == (20 + 3, 20 + 3)
-    assert struct.unpack("B" * 2, ds.GetRasterBand(3).ReadRaster()) == (30 + 1, 32)
+    np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[15, 10 + 6]]))
+    np.testing.assert_equal(
+        ds.GetRasterBand(2).ReadAsArray(), np.array([[20 + 3, 20 + 3]])
+    )
+    np.testing.assert_equal(ds.GetRasterBand(3).ReadAsArray(), np.array([[30 + 1, 32]]))
 
 
 ###############################################################################
@@ -233,9 +234,9 @@ def test_vrtprocesseddataset_affine_combination_nodata(tmp_vsimem):
 
     src_filename = str(tmp_vsimem / "src.tif")
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 2, 1, 2)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x02")
+    src_ds.GetRasterBand(1).WriteArray(np.array([[1, 2]]))
     src_ds.GetRasterBand(1).SetNoDataValue(1)
-    src_ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\x03\x03")
+    src_ds.GetRasterBand(2).WriteArray(np.array([[3, 3]]))
     src_ds.GetRasterBand(2).SetNoDataValue(1)
     src_ds.Close()
 
@@ -255,17 +256,17 @@ def test_vrtprocesseddataset_affine_combination_nodata(tmp_vsimem):
         """
     )
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
-    assert struct.unpack("B" * 2, ds.GetRasterBand(1).ReadRaster()) == (1, 5)
+    np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[1, 5]]))
     # 0 should actually be 3-2=1, but this is the nodata value hence the replacement value
-    assert struct.unpack("B" * 2, ds.GetRasterBand(2).ReadRaster()) == (1, 0)
+    np.testing.assert_equal(ds.GetRasterBand(2).ReadAsArray(), np.array([[1, 0]]))
 
 
 def test_vrtprocesseddataset_affine_combination_nodata_as_parameter(tmp_vsimem):
 
     src_filename = str(tmp_vsimem / "src.tif")
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 2, 1, 2)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x02")
-    src_ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\x03\x03")
+    src_ds.GetRasterBand(1).WriteArray(np.array([[1, 2]]))
+    src_ds.GetRasterBand(2).WriteArray(np.array([[3, 3]]))
     src_ds.Close()
 
     ds = gdal.Open(
@@ -287,9 +288,9 @@ def test_vrtprocesseddataset_affine_combination_nodata_as_parameter(tmp_vsimem):
         """
     )
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
-    assert struct.unpack("B" * 2, ds.GetRasterBand(1).ReadRaster()) == (255, 5)
+    np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[255, 5]]))
     # 254 should actually be 256+1*2+(-1)*3=255, but this is the nodata value hence the replacement value
-    assert struct.unpack("B" * 2, ds.GetRasterBand(2).ReadRaster()) == (255, 254)
+    np.testing.assert_equal(ds.GetRasterBand(2).ReadAsArray(), np.array([[255, 254]]))
 
 
 ###############################################################################
@@ -300,8 +301,8 @@ def test_vrtprocesseddataset_affine_combination_replacement_nodata(tmp_vsimem):
 
     src_filename = str(tmp_vsimem / "src.tif")
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 2, 1, 2)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x02")
-    src_ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\x03\x03")
+    src_ds.GetRasterBand(1).WriteArray(np.array([[1, 2]]))
+    src_ds.GetRasterBand(2).WriteArray(np.array([[3, 3]]))
     src_ds.Close()
 
     ds = gdal.Open(
@@ -323,9 +324,9 @@ def test_vrtprocesseddataset_affine_combination_replacement_nodata(tmp_vsimem):
         """
     )
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
-    assert struct.unpack("B" * 2, ds.GetRasterBand(1).ReadRaster()) == (255, 5)
+    np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[255, 5]]))
     # 254 should actually be 256+1*2+(-1)*3=255, but this is the nodata value hence the replacement value
-    assert struct.unpack("B" * 2, ds.GetRasterBand(2).ReadRaster()) == (255, 128)
+    np.testing.assert_equal(ds.GetRasterBand(2).ReadAsArray(), np.array([[255, 128]]))
 
 
 ###############################################################################
@@ -423,8 +424,8 @@ def test_vrtprocesseddataset_lut_nominal(tmp_vsimem):
 
     src_filename = str(tmp_vsimem / "src.tif")
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 3, 1, 2)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 1, b"\x01\x02\x03")
-    src_ds.GetRasterBand(2).WriteRaster(0, 0, 3, 1, b"\x01\x02\x03")
+    src_ds.GetRasterBand(1).WriteArray(np.array([[1, 2, 3]]))
+    src_ds.GetRasterBand(2).WriteArray(np.array([[1, 2, 3]]))
     src_ds.Close()
 
     ds = gdal.Open(
@@ -442,8 +443,10 @@ def test_vrtprocesseddataset_lut_nominal(tmp_vsimem):
     </VRTDataset>
         """
     )
-    assert struct.unpack("B" * 3, ds.GetRasterBand(1).ReadRaster()) == (10, 15, 20)
-    assert struct.unpack("B" * 3, ds.GetRasterBand(2).ReadRaster()) == (100, 150, 200)
+    np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[10, 15, 20]]))
+    np.testing.assert_equal(
+        ds.GetRasterBand(2).ReadAsArray(), np.array([[100, 150, 200]])
+    )
 
 
 ###############################################################################
@@ -454,9 +457,9 @@ def test_vrtprocesseddataset_lut_nodata(tmp_vsimem):
 
     src_filename = str(tmp_vsimem / "src.tif")
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 4, 1, 2)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x00\x01\x02\x03")
+    src_ds.GetRasterBand(1).WriteArray(np.array([[0, 1, 2, 3]]))
     src_ds.GetRasterBand(1).SetNoDataValue(0)
-    src_ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x00\x01\x02\x03")
+    src_ds.GetRasterBand(2).WriteArray(np.array([[0, 1, 2, 3]]))
     src_ds.GetRasterBand(2).SetNoDataValue(0)
     src_ds.Close()
 
@@ -475,12 +478,11 @@ def test_vrtprocesseddataset_lut_nodata(tmp_vsimem):
     </VRTDataset>
         """
     )
-    assert struct.unpack("B" * 4, ds.GetRasterBand(1).ReadRaster()) == (0, 10, 15, 20)
-    assert struct.unpack("B" * 4, ds.GetRasterBand(2).ReadRaster()) == (
-        0,
-        100,
-        150,
-        200,
+    np.testing.assert_equal(
+        ds.GetRasterBand(1).ReadAsArray(), np.array([[0, 10, 15, 20]])
+    )
+    np.testing.assert_equal(
+        ds.GetRasterBand(2).ReadAsArray(), np.array([[0, 100, 150, 200]])
     )
 
 
@@ -492,8 +494,8 @@ def test_vrtprocesseddataset_lut_nodata_as_parameter(tmp_vsimem):
 
     src_filename = str(tmp_vsimem / "src.tif")
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 4, 1, 2)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x00\x01\x02\x03")
-    src_ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x00\x01\x02\x03")
+    src_ds.GetRasterBand(1).WriteArray(np.array([[0, 1, 2, 3]]))
+    src_ds.GetRasterBand(2).WriteArray(np.array([[0, 1, 2, 3]]))
     src_ds.Close()
 
     ds = gdal.Open(
@@ -513,12 +515,11 @@ def test_vrtprocesseddataset_lut_nodata_as_parameter(tmp_vsimem):
     </VRTDataset>
         """
     )
-    assert struct.unpack("B" * 4, ds.GetRasterBand(1).ReadRaster()) == (1, 10, 15, 20)
-    assert struct.unpack("B" * 4, ds.GetRasterBand(2).ReadRaster()) == (
-        1,
-        100,
-        150,
-        200,
+    np.testing.assert_equal(
+        ds.GetRasterBand(1).ReadAsArray(), np.array([[1, 10, 15, 20]])
+    )
+    np.testing.assert_equal(
+        ds.GetRasterBand(2).ReadAsArray(), np.array([[1, 100, 150, 200]])
     )
 
 
@@ -530,8 +531,8 @@ def test_vrtprocesseddataset_lut_errors(tmp_vsimem):
 
     src_filename = str(tmp_vsimem / "src.tif")
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 3, 1, 2)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 1, b"\x01\x02\x03")
-    src_ds.GetRasterBand(2).WriteRaster(0, 0, 3, 1, b"\x01\x02\x03")
+    src_ds.GetRasterBand(1).WriteArray(np.array([[1, 2, 3]]))
+    src_ds.GetRasterBand(2).WriteArray(np.array([[1, 2, 3]]))
     src_ds.Close()
 
     with pytest.raises(Exception, match="Step 'nr 1' lacks required Argument"):
@@ -607,8 +608,8 @@ def test_vrtprocesseddataset_dehazing_nominal(tmp_vsimem):
 
     src_filename = str(tmp_vsimem / "src.tif")
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 6, 1, 2)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 6, 1, b"\x01\x02\x03\xff\x01\x01")
-    src_ds.GetRasterBand(2).WriteRaster(0, 0, 6, 1, b"\x01\x02\x03\xff\x01\x01")
+    src_ds.GetRasterBand(1).WriteArray(np.array([[1, 2, 3, 255, 1, 1]]))
+    src_ds.GetRasterBand(2).WriteArray(np.array([[1, 2, 3, 255, 1, 1]]))
     src_ds.GetRasterBand(1).SetNoDataValue(255)
     src_ds.GetRasterBand(2).SetNoDataValue(255)
     src_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
@@ -616,8 +617,8 @@ def test_vrtprocesseddataset_dehazing_nominal(tmp_vsimem):
 
     gain_filename = str(tmp_vsimem / "gain.tif")
     gain_ds = gdal.GetDriverByName("GTiff").Create(gain_filename, 6, 1, 2)
-    gain_ds.GetRasterBand(1).WriteRaster(0, 0, 6, 1, b"\x02\x04\x06\x01\xfe\x01")
-    gain_ds.GetRasterBand(2).WriteRaster(0, 0, 6, 1, b"\x03\x05\x07\x01\xfe\x01")
+    gain_ds.GetRasterBand(1).WriteArray(np.array([[2, 4, 6, 1, 254, 1]]))
+    gain_ds.GetRasterBand(2).WriteArray(np.array([[3, 5, 7, 1, 254, 1]]))
     gain_ds.GetRasterBand(1).SetNoDataValue(254)
     gain_ds.GetRasterBand(2).SetNoDataValue(254)
     gain_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
@@ -625,8 +626,8 @@ def test_vrtprocesseddataset_dehazing_nominal(tmp_vsimem):
 
     offset_filename = str(tmp_vsimem / "offset.tif")
     offset_ds = gdal.GetDriverByName("GTiff").Create(offset_filename, 6, 1, 2)
-    offset_ds.GetRasterBand(1).WriteRaster(0, 0, 6, 1, b"\x01\x02\x03\x01\x01\xfd")
-    offset_ds.GetRasterBand(2).WriteRaster(0, 0, 6, 1, b"\x02\x03\x04\x01\x01\xfd")
+    offset_ds.GetRasterBand(1).WriteArray(np.array([[1, 2, 3, 1, 1, 253]]))
+    offset_ds.GetRasterBand(2).WriteArray(np.array([[2, 3, 4, 1, 1, 253]]))
     offset_ds.GetRasterBand(1).SetNoDataValue(253)
     offset_ds.GetRasterBand(2).SetNoDataValue(253)
     offset_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
@@ -655,21 +656,11 @@ def test_vrtprocesseddataset_dehazing_nominal(tmp_vsimem):
     </VRTDataset>
         """
     )
-    assert struct.unpack("B" * 6, ds.GetRasterBand(1).ReadRaster()) == (
-        2,
-        6,
-        15,
-        255,
-        255,
-        255,
+    np.testing.assert_equal(
+        ds.GetRasterBand(1).ReadAsArray(), np.array([[2, 6, 15, 255, 255, 255]])
     )
-    assert struct.unpack("B" * 6, ds.GetRasterBand(2).ReadRaster()) == (
-        2,
-        7,
-        16,
-        255,
-        255,
-        255,
+    np.testing.assert_equal(
+        ds.GetRasterBand(2).ReadAsArray(), np.array([[2, 7, 16, 255, 255, 255]])
     )
 
 
@@ -682,19 +673,21 @@ def test_vrtprocesseddataset_dehazing_different_resolution(tmp_vsimem):
 
     src_filename = str(tmp_vsimem / "src.tif")
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 6, 2, 1)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 6, 2, b"\x01\x01\x02\x02\x03\x03" * 2)
+    src_ds.GetRasterBand(1).WriteArray(
+        np.array([[1, 1, 2, 2, 3, 3], [1, 1, 2, 2, 3, 3]])
+    )
     src_ds.SetGeoTransform([0, 0.5, 0, 0, 0, 0.5])
     src_ds.Close()
 
     gain_filename = str(tmp_vsimem / "gain.tif")
     gain_ds = gdal.GetDriverByName("GTiff").Create(gain_filename, 3, 1, 1)
-    gain_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 1, b"\x02\x04\x06")
+    gain_ds.GetRasterBand(1).WriteArray(np.array([[2, 4, 6]]))
     gain_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     gain_ds.Close()
 
     offset_filename = str(tmp_vsimem / "offset.tif")
     offset_ds = gdal.GetDriverByName("GTiff").Create(offset_filename, 3, 1, 1)
-    offset_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 1, b"\x01\x02\x03")
+    offset_ds.GetRasterBand(1).WriteArray(np.array([[1, 2, 3]]))
     offset_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     offset_ds.Close()
 
@@ -715,19 +708,9 @@ def test_vrtprocesseddataset_dehazing_different_resolution(tmp_vsimem):
     </VRTDataset>
         """
     )
-    assert struct.unpack("B" * 12, ds.GetRasterBand(1).ReadRaster()) == (
-        1,
-        2,
-        6,
-        8,
-        15,
-        15,
-        1,
-        2,
-        6,
-        8,
-        15,
-        15,
+    np.testing.assert_equal(
+        ds.GetRasterBand(1).ReadAsArray(),
+        np.array([[1, 2, 6, 8, 15, 15], [1, 2, 6, 8, 15, 15]]),
     )
 
 
@@ -739,7 +722,7 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
 
     src_filename = str(tmp_vsimem / "src.tif")
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 3, 1, 1)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 1, b"\x01\x02\x03")
+    src_ds.GetRasterBand(1).WriteArray(np.array([[1, 2, 3]]))
     src_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     src_ds.Close()
 
@@ -930,18 +913,10 @@ def test_vrtprocesseddataset_trimming_nominal(tmp_vsimem):
     B = 200.0
     NIR = 100.0
 
-    src_ds.GetRasterBand(1).WriteRaster(
-        0, 0, 6, 1, struct.pack("B" * 6, int(R), 150, 200, 0, 0, 0)
-    )
-    src_ds.GetRasterBand(2).WriteRaster(
-        0, 0, 6, 1, struct.pack("B" * 6, int(G), 200, 100, 0, 0, 0)
-    )
-    src_ds.GetRasterBand(3).WriteRaster(
-        0, 0, 6, 1, struct.pack("B" * 6, int(B), 100, 150, 0, 0, 0)
-    )
-    src_ds.GetRasterBand(4).WriteRaster(
-        0, 0, 6, 1, struct.pack("B" * 6, int(NIR), 150, 200, 0, 0, 0)
-    )
+    src_ds.GetRasterBand(1).WriteArray(np.array([[int(R), 150, 200, 0, 0, 0]]))
+    src_ds.GetRasterBand(2).WriteArray(np.array([[int(G), 200, 100, 0, 0, 0]]))
+    src_ds.GetRasterBand(3).WriteArray(np.array([[int(B), 100, 150, 0, 0, 0]]))
+    src_ds.GetRasterBand(4).WriteArray(np.array([[int(NIR), 150, 200, 0, 0, 0]]))
     src_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     src_ds.Close()
 
@@ -950,8 +925,8 @@ def test_vrtprocesseddataset_trimming_nominal(tmp_vsimem):
 
     localMaxRGB = 205.0
 
-    trimming_ds.GetRasterBand(1).WriteRaster(
-        0, 0, 6, 1, struct.pack("B" * 6, int(localMaxRGB), 210, 220, 0, 0, 0)
+    trimming_ds.GetRasterBand(1).WriteArray(
+        np.array([[int(localMaxRGB), 210, 220, 0, 0, 0]])
     )
     trimming_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     trimming_ds.Close()
@@ -998,54 +973,26 @@ def test_vrtprocesseddataset_trimming_nominal(tmp_vsimem):
 
     # print(outputR, outputG, outputB, outputNIR)
 
-    assert (
-        round(outputR)
-        == struct.unpack("B", ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1))[0]
-    )
-    assert (
-        round(outputG)
-        == struct.unpack("B", ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1))[0]
-    )
-    assert (
-        round(outputB)
-        == struct.unpack("B", ds.GetRasterBand(3).ReadRaster(0, 0, 1, 1))[0]
-    )
-    assert (
-        round(outputNIR)
-        == struct.unpack("B", ds.GetRasterBand(4).ReadRaster(0, 0, 1, 1))[0]
-    )
+    assert round(outputR) == ds.GetRasterBand(1).ReadAsArray(0, 0, 1, 1)[0][0]
+    assert round(outputG) == ds.GetRasterBand(2).ReadAsArray(0, 0, 1, 1)[0][0]
+    assert round(outputB) == ds.GetRasterBand(3).ReadAsArray(0, 0, 1, 1)[0][0]
+    assert round(outputNIR) == ds.GetRasterBand(4).ReadAsArray(0, 0, 1, 1)[0][0]
 
-    assert struct.unpack("B" * 6, ds.GetRasterBand(1).ReadRaster()) == (
-        92,  # round(outputR)
-        135,
-        164,
-        0,
-        0,
-        0,
+    np.testing.assert_equal(
+        ds.GetRasterBand(1).ReadAsArray(),
+        np.array([[92, 135, 164, 0, 0, 0]]),  # round(outputR)
     )
-    assert struct.unpack("B" * 6, ds.GetRasterBand(2).ReadRaster()) == (
-        139,  # round(outputG)
-        171,
-        86,
-        0,
-        0,
-        0,
+    np.testing.assert_equal(
+        ds.GetRasterBand(2).ReadAsArray(),
+        np.array([[139, 171, 86, 0, 0, 0]]),  # round(outputG)
     )
-    assert struct.unpack("B" * 6, ds.GetRasterBand(3).ReadRaster()) == (
-        176,  # round(outputB)
-        90,
-        129,
-        0,
-        0,
-        0,
+    np.testing.assert_equal(
+        ds.GetRasterBand(3).ReadAsArray(),
+        np.array([[176, 90, 129, 0, 0, 0]]),  # round(outputB)
     )
-    assert struct.unpack("B" * 6, ds.GetRasterBand(4).ReadRaster()) == (
-        88,  # round(outputNIR)
-        129,
-        164,
-        0,
-        0,
-        0,
+    np.testing.assert_equal(
+        ds.GetRasterBand(4).ReadAsArray(),
+        np.array([[88, 129, 164, 0, 0, 0]]),  # round(outputNIR)
     )
 
 
@@ -1057,26 +1004,16 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
 
     src_filename = str(tmp_vsimem / "src.tif")
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 6, 1, 4)
-    src_ds.GetRasterBand(1).WriteRaster(
-        0, 0, 6, 1, struct.pack("B" * 6, 100, 150, 200, 0, 0, 0)
-    )
-    src_ds.GetRasterBand(2).WriteRaster(
-        0, 0, 6, 1, struct.pack("B" * 6, 150, 200, 100, 0, 0, 0)
-    )
-    src_ds.GetRasterBand(3).WriteRaster(
-        0, 0, 6, 1, struct.pack("B" * 6, 200, 100, 150, 0, 0, 0)
-    )
-    src_ds.GetRasterBand(4).WriteRaster(
-        0, 0, 6, 1, struct.pack("B" * 6, 100, 150, 200, 0, 0, 0)
-    )
+    src_ds.GetRasterBand(1).WriteArray(np.array([[100, 150, 200, 0, 0, 0]]))
+    src_ds.GetRasterBand(2).WriteArray(np.array([[150, 200, 100, 0, 0, 0]]))
+    src_ds.GetRasterBand(3).WriteArray(np.array([[200, 100, 150, 0, 0, 0]]))
+    src_ds.GetRasterBand(4).WriteArray(np.array([[100, 150, 200, 0, 0, 0]]))
     src_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     src_ds.Close()
 
     trimming_filename = str(tmp_vsimem / "trimming.tif")
     trimming_ds = gdal.GetDriverByName("GTiff").Create(trimming_filename, 6, 1, 1)
-    trimming_ds.GetRasterBand(1).WriteRaster(
-        0, 0, 6, 1, struct.pack("B" * 6, 200, 210, 220, 0, 0, 0)
-    )
+    trimming_ds.GetRasterBand(1).WriteArray(np.array([[200, 210, 220, 0, 0, 0]]))
     trimming_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     trimming_ds.Close()
 
@@ -1224,7 +1161,7 @@ def test_vrtprocesseddataset_serialize(tmp_vsimem):
 
     src_filename = str(tmp_vsimem / "src.tif")
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 2, 1, 1)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x02")
+    src_ds.GetRasterBand(1).WriteArray(np.array([[1, 2]]))
     src_ds.Close()
 
     vrt_filename = str(tmp_vsimem / "the.vrt")
@@ -1243,13 +1180,13 @@ def test_vrtprocesseddataset_serialize(tmp_vsimem):
         """
     with gdaltest.tempfile(vrt_filename, content):
         ds = gdal.Open(vrt_filename)
-        assert struct.unpack("B" * 2, ds.GetRasterBand(1).ReadRaster()) == (11, 12)
+        np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[11, 12]]))
         assert ds.GetRasterBand(1).GetStatistics(False, False) == [0.0, 0.0, 0.0, -1.0]
         ds.GetRasterBand(1).ComputeStatistics(False)
         ds.Close()
 
         ds = gdal.Open(vrt_filename)
-        assert struct.unpack("B" * 2, ds.GetRasterBand(1).ReadRaster()) == (11, 12)
+        np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[11, 12]]))
         assert ds.GetRasterBand(1).GetStatistics(False, False) == [
             11.0,
             12.0,
