@@ -2289,11 +2289,16 @@ GDALInfoOptionsNew(char **papszArgv,
     /* -------------------------------------------------------------------- */
 
     CPLStringList aosArgv;
-    const int nArgc = CSLCount(papszArgv);
-    for (int i = 0; i < nArgc; i++)
+
+    if (papszArgv)
     {
-        aosArgv.AddString(papszArgv[i]);
+        const int nArgc = CSLCount(papszArgv);
+        for (int i = 0; i < nArgc; i++)
+        {
+            aosArgv.AddString(papszArgv[i]);
+        }
     }
+
     try
     {
         auto argParser =
