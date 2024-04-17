@@ -461,6 +461,12 @@ class CPL_DLL GDALWarpKernel
     bool bApplyVerticalShift = false;
 
     double dfMultFactorVerticalShift = 1.0;
+
+    // Tuples of values (e.g. "<R>,<G>,<B>" or "(<R1>,<G1>,<B1>),(<R2>,<G2>,<B2>)") that must
+    // be ignored as contributing source pixels during resampling. Only taken into account by
+    // Average currently
+    std::vector<std::vector<double>> m_aadfExcludedValues{};
+
     /*! @endcond */
 
     GDALWarpKernel();

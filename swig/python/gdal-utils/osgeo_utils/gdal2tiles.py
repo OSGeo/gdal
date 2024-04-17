@@ -873,7 +873,27 @@ def scale_query_to_tile(dsquery, dstile, options, tilefilename=""):
     tile_size = dstile.RasterXSize
     tilebands = dstile.RasterCount
 
-    if options.resampling == "average":
+    dsquery.SetGeoTransform(
+        (
+            0.0,
+            tile_size / float(querysize),
+            0.0,
+            0.0,
+            0.0,
+            tile_size / float(querysize),
+        )
+    )
+    dstile.SetGeoTransform((0.0, 1.0, 0.0, 0.0, 0.0, 1.0))
+
+    if options.resampling == "average" and options.excluded_values:
+
+        gdal.Warp(
+            dstile,
+            dsquery,
+            options=f"-r average -wo EXCLUDED_VALUES={options.excluded_values} -wo EXCLUDED_VALUES_PCT_THRESHOLD={options.excluded_values_pct_threshold}",
+        )
+
+    elif options.resampling == "average":
 
         # Function: gdal.RegenerateOverview()
         for i in range(1, tilebands + 1):
@@ -949,18 +969,6 @@ def scale_query_to_tile(dsquery, dstile, options, tilefilename=""):
             gdal_resampling = gdal.GRA_Q3
 
         # Other algorithms are implemented by gdal.ReprojectImage().
-        dsquery.SetGeoTransform(
-            (
-                0.0,
-                tile_size / float(querysize),
-                0.0,
-                0.0,
-                0.0,
-                tile_size / float(querysize),
-            )
-        )
-        dstile.SetGeoTransform((0.0, 1.0, 0.0, 0.0, 0.0, 1.0))
-
         res = gdal.ReprojectImage(dsquery, dstile, None, None, gdal_resampling)
         if res != 0:
             exit_with_error(
@@ -1346,6 +1354,7 @@ def create_base_tile(tile_job_info: "TileJobInfo", tile_detail: "TileDetail") ->
     # Tile dataset in memory
     tilefilename = os.path.join(output, str(tz), str(tx), "%s.%s" % (ty, tileext))
     dstile = mem_drv.Create("", tile_size, tile_size, tilebands)
+    dstile.GetRasterBand(tilebands).SetColorInterpretation(gdal.GCI_AlphaBand)
 
     data = alpha = None
 
@@ -1399,6 +1408,8 @@ def create_base_tile(tile_job_info: "TileJobInfo", tile_detail: "TileDetail") ->
             # Big ReadRaster query in memory scaled to the tile_size - all but 'near'
             # algo
             dsquery = mem_drv.Create("", querysize, querysize, tilebands)
+            dsquery.GetRasterBand(tilebands).SetColorInterpretation(gdal.GCI_AlphaBand)
+
             # TODO: fill the null value in case a tile without alpha is produced (now
             # only png tiles are supported)
             dsquery.WriteRaster(
@@ -1421,6 +1432,11 @@ def create_base_tile(tile_job_info: "TileJobInfo", tile_detail: "TileDetail") ->
         out_drv.CreateCopy(
             tilefilename, dstile, strict=0, options=_get_creation_options(options)
         )
+
+        # Remove useless side car file
+        aux_xml = tilefilename + ".aux.xml"
+        if gdal.VSIStatL(aux_xml) is not None:
+            gdal.Unlink(aux_xml)
 
     del dstile
 
@@ -1485,10 +1501,12 @@ def create_overview_tile(
     dsquery = mem_driver.Create(
         "", 2 * tile_job_info.tile_size, 2 * tile_job_info.tile_size, tilebands
     )
+    dsquery.GetRasterBand(tilebands).SetColorInterpretation(gdal.GCI_AlphaBand)
     # TODO: fill the null value
     dstile = mem_driver.Create(
         "", tile_job_info.tile_size, tile_job_info.tile_size, tilebands
     )
+    dstile.GetRasterBand(tilebands).SetColorInterpretation(gdal.GCI_AlphaBand)
 
     usable_base_tiles = []
 
@@ -1758,6 +1776,19 @@ def optparse_init() -> optparse.OptionParser:
         default="PNG",
         type="choice",
         help="which tile driver to use for the tiles",
+    )
+    p.add_option(
+        "--excluded-values",
+        dest="excluded_values",
+        type=str,
+        help="Tuples of values (e.g. <R>,<G>,<B> or (<R1>,<G1>,<B1>),(<R2>,<G2>,<B2>)) that must be ignored as contributing source pixels during resampling. Only taken into account for average resampling",
+    )
+    p.add_option(
+        "--excluded-values-pct-threshold",
+        dest="excluded_values_pct_threshold",
+        type=float,
+        default=50,
+        help="Minimum percentage of source pixels that must be set at one of the --excluded-values to cause the excluded value, that is in majority among source pixels, to be used as the target pixel value. Default value is 50 (%)",
     )
 
     # KML options
