@@ -44,7 +44,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
       hMiraMonLayerPOL(), hMiraMonLayerReadOrNonGeom(), hMMFeature(),
       m_bUpdate(CPL_TO_BOOL(bUpdateIn)),
       m_fp(fp ? fp : VSIFOpenL(pszFilename, (bUpdateIn ? "r+" : "r"))),
-      padfValues(nullptr), bValidFile(false)
+      padfValues(nullptr), pnInt64Values(nullptr), bValidFile(false)
 {
 
     CPLDebugOnly("MiraMon", "Creating/Opening MiraMon layer...");
@@ -350,6 +350,9 @@ OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
                 {
                     padfValues = static_cast<double *>(CPLCalloc(
                         (size_t)phMiraMonLayer->nMaxN, sizeof(*padfValues)));
+
+                    pnInt64Values = static_cast<GInt64 *>(CPLCalloc(
+                        (size_t)phMiraMonLayer->nMaxN, sizeof(*pnInt64Values)));
                 }
 
                 phMiraMonLayer->iMultiRecord =
@@ -644,6 +647,9 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
 
     if (padfValues != nullptr)
         CPLFree(padfValues);
+
+    if (pnInt64Values != nullptr)
+        CPLFree(pnInt64Values);
 }
 
 /****************************************************************************/
@@ -1243,8 +1249,8 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     padfValues);
             }
             else if (poFeature->GetDefnRef()
-                             ->GetFieldDefn(nIField)
-                             ->GetType() == OFTInteger64List)
+                         ->GetFieldDefn(nIField)
+                         ->GetType() == OFTInteger64List)
             {
                 if (!phMiraMonLayer->pMultRecordIndex ||
                     phMiraMonLayer->pMultRecordIndex[nIElem].nMR == 0)
@@ -1271,7 +1277,8 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                                                           .BytesPerField] =
                         '\0';
 
-                    pnInt64Values[nIRecord] = CPLAtoGIntBig(phMiraMonLayer->szStringToOperate);
+                    pnInt64Values[nIRecord] =
+                        CPLAtoGIntBig(phMiraMonLayer->szStringToOperate);
                 }
 
                 poFeature->SetField(
@@ -2264,18 +2271,20 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                                           hMMFeature.pRecords[0].nNumField))
                 return OGRERR_NOT_ENOUGH_MEMORY;
 
-            if(MMIsEmptyString(pszRawValue))
+            if (MMIsEmptyString(pszRawValue))
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 0;
             {
                 if (phMiraMonLayer->nCharSet != MM_JOC_CARAC_UTF8_DBF)
                 {
                     // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
-                    char* pszString =
+                    char *pszString =
                         CPLRecode(pszRawValue, CPL_ENC_UTF8, CPL_ENC_ISO8859_1);
                     if (MM_SecureCopyStringFieldValue(
-                        &hMMFeature.pRecords[0].pField[iField].pDinValue,
-                        pszString,
-                        &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
+                            &hMMFeature.pRecords[0].pField[iField].pDinValue,
+                            pszString,
+                            &hMMFeature.pRecords[0]
+                                 .pField[iField]
+                                 .nNumDinValue))
                     {
                         CPLFree(pszString);
                         return OGRERR_NOT_ENOUGH_MEMORY;
@@ -2285,9 +2294,11 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 else
                 {
                     if (MM_SecureCopyStringFieldValue(
-                        &hMMFeature.pRecords[0].pField[iField].pDinValue,
-                        pszRawValue,
-                        &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
+                            &hMMFeature.pRecords[0].pField[iField].pDinValue,
+                            pszRawValue,
+                            &hMMFeature.pRecords[0]
+                                 .pField[iField]
+                                 .nNumDinValue))
                     {
                         return OGRERR_NOT_ENOUGH_MEMORY;
                     }
@@ -2308,21 +2319,22 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                                           hMMFeature.pRecords[0].nNumField))
                 return OGRERR_NOT_ENOUGH_MEMORY;
 
-            if(MMIsEmptyString(pszRawValue))
+            if (MMIsEmptyString(pszRawValue))
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 0;
             else
             {
-                const OGRField* poField = poFeature->GetRawFieldRef(iField);
+                const OGRField *poField = poFeature->GetRawFieldRef(iField);
                 if (poField->Date.Year >= 0)
                     snprintf(szDate, sizeof(szDate), "%04d%02d%02d",
-                        poField->Date.Year, poField->Date.Month,
-                        poField->Date.Day);
+                             poField->Date.Year, poField->Date.Month,
+                             poField->Date.Day);
                 else
                     snprintf(szDate, sizeof(szDate), "%04d%02d%02d", 0, 0, 0);
 
                 if (MM_SecureCopyStringFieldValue(
-                    &hMMFeature.pRecords[0].pField[iField].pDinValue, szDate,
-                    &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
+                        &hMMFeature.pRecords[0].pField[iField].pDinValue,
+                        szDate,
+                        &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
                     return OGRERR_NOT_ENOUGH_MEMORY;
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 1;
             }
@@ -2338,15 +2350,15 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                                           hMMFeature.pRecords[0].nNumField))
                 return OGRERR_NOT_ENOUGH_MEMORY;
 
-            if(MMIsEmptyString(pszRawValue))
+            if (MMIsEmptyString(pszRawValue))
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 0;
             else
             {
                 // MiraMon encoding is ISO 8859-1 (Latin1) -> Recode from UTF-8
                 if (MM_SecureCopyStringFieldValue(
-                    &hMMFeature.pRecords[0].pField[iField].pDinValue,
-                    pszRawValue,
-                    &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
+                        &hMMFeature.pRecords[0].pField[iField].pDinValue,
+                        pszRawValue,
+                        &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
                     return OGRERR_NOT_ENOUGH_MEMORY;
 
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 1;
@@ -2363,7 +2375,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                                           hMMFeature.pRecords[0].nNumField))
                 return OGRERR_NOT_ENOUGH_MEMORY;
 
-            if(MMIsEmptyString(pszRawValue))
+            if (MMIsEmptyString(pszRawValue))
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 0;
             else
             {
@@ -2371,9 +2383,9 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                     poFeature->GetFieldAsInteger(iField);
 
                 if (MM_SecureCopyStringFieldValue(
-                    &hMMFeature.pRecords[0].pField[iField].pDinValue,
-                    pszRawValue,
-                    &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
+                        &hMMFeature.pRecords[0].pField[iField].pDinValue,
+                        pszRawValue,
+                        &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
                     return OGRERR_NOT_ENOUGH_MEMORY;
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 1;
             }
@@ -2389,7 +2401,7 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                                           hMMFeature.pRecords[0].nNumField))
                 return OGRERR_NOT_ENOUGH_MEMORY;
 
-            if(MMIsEmptyString(pszRawValue))
+            if (MMIsEmptyString(pszRawValue))
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 0;
             else
             {
@@ -2397,9 +2409,9 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                     poFeature->GetFieldAsInteger64(iField);
 
                 if (MM_SecureCopyStringFieldValue(
-                    &hMMFeature.pRecords[0].pField[iField].pDinValue,
-                    pszRawValue,
-                    &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
+                        &hMMFeature.pRecords[0].pField[iField].pDinValue,
+                        pszRawValue,
+                        &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
                     return OGRERR_NOT_ENOUGH_MEMORY;
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 1;
             }
@@ -2423,9 +2435,9 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                     poFeature->GetFieldAsDouble(iField);
 
                 if (MM_SecureCopyStringFieldValue(
-                    &hMMFeature.pRecords[0].pField[iField].pDinValue,
-                    pszRawValue,
-                    &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
+                        &hMMFeature.pRecords[0].pField[iField].pDinValue,
+                        pszRawValue,
+                        &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
                     return OGRERR_NOT_ENOUGH_MEMORY;
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 1;
             }
