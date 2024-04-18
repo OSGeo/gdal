@@ -12,7 +12,7 @@ of point, arc (*linestrings*), and polygon types from MiraMon vector format.
 
 In MiraMon the concepts of OGRMultiPoints and OGRMultiLineStrings are not supported,
 but the driver translates a multipoint into N points and a multistring into N arcs.
-So, when reading a MiraMon file of type *.pol*, the corresponding
+When reading a MiraMon file of type *.pol*, the corresponding
 layer will be reported as of type wkbPolygon, but depending on the
 number of parts of each geometry, the actual type of the geometry for
 each feature can be either OGRPolygon or OGRMultiPolygon.
