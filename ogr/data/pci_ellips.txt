@@ -22,13 +22,13 @@
 ! Ellipsoid_code is the code that uniquely identifies the ellipsoid
 !   within PCI software
 ! Description_string is a short description that helps users to identify
-!   the ellipsoid.  It may be listed, for example, in a dropdown list in 
+!   the ellipsoid.  It may be listed, for example, in a dropdown list in
 !   a PCI dialog box.
 ! Semimajor_axis_m is the ellipsoid semi-major (equatorial) axis length in metres.
 ! Semiminor_axis_m is the ellipsoid semi-minor (polar) axis length in metres.
 !
 ! Any extra fields may be added after these four elements if desired; they will
-!   not be read by PCI software but may be helpful for the user.  
+!   not be read by PCI software but may be helpful for the user.
 !
 !       NOTE: The range of "E908" to "E998" is set aside for
 !             the use of local customer development.
@@ -55,9 +55,9 @@
 "E019","Normal Sphere",6370997.,6370997.
 "E020","WGS 84 semimajor axis",6378137.,6378137.
 "E021","WGS 84 semiminor axis",6356752.314245,6356752.314245
-"E022", "Clarke 1866 Authalic Sphere", 6370997.000000, 6370997.000000
-"E023", "GRS 1980 Authalic Sphere", 6371007.000000, 6371007.000000
-"E024", "International 1924 Authalic Sphere", 6371228.000000, 6371228.000000
+"E022","Clarke 1866 Authalic Sphere", 6370997.000000, 6370997.000000
+"E023","GRS 1980 Authalic Sphere", 6371007.000000, 6371007.000000
+"E024","International 1924 Authalic Sphere", 6371228.000000, 6371228.000000
 "E025","GosatCAIL1B+ EarthRadius",6371008.77138,6371008.77138
 "E200","Indonesian 1974",6378160.,6356774.504086
 "E201","Everest (Pakistan)",6377309.613,6356108.570542
@@ -86,32 +86,32 @@
 "E224","Xian 1980",6378140.0,6356755.288
 "E225","EMEP Sphere",6370000,6370000
 "E226","Everest (India and Nepal)",6377301.243,6356100.228368
-"E227", "Everest (1830 Definition)", 6377299.365595, 6356098.359005, "EPSG:7042"
-"E228", "Danish 1876", 6377019.270000, 6355762.539100
-"E229", "Bessel Namibia (GLM)", 6377483.865280, 6356165.383246
-"E230", "PZ-90", 6378136.000000, 6356751.361746
-"E231", "CGCS2000", 6378137.000000, 6356752.314140
-"E232", "IAG 1975", 6378140.000000, 6356755.288158
-"E233", "NWL 9D", 6378145.000000, 6356759.769489
-"E234", "Hughes 1980", 6378273.000000, 6356889.449000
-"E235", "Clarke 1880 (international foot)", 6378306.369600, 6356571.996000
-"E236", "Clarke 1866 Michigan", 6378450.047549, 6356826.621488
-"E237", "APL 4.5 (1968)", 6378144.000000, 6356757.338698
-"E238", "Airy (War Office)", 6377542.178, 6356235.764
-"E239", "Clarke 1858 (DIGEST)", 6378235.600, 6356560.140
-"E240", "Clarke 1880 (Palestine)", 6378300.782, 6356566.427
-"E241", "Clarke 1880 (Syria)", 6378247.842, 6356513.671
-"E242", "Clarke 1880 (Fiji)", 6378301.000, 6356566.548
-"E243", "Andrae", 6377104.430, 6355847.415
-"E244", "Delambre 1810", 6376985.228, 6356323.664
-"E245", "Delambre (Carte de France)", 6376985.000, 6356323.436
-"E246", "Germaine (Djibouti)", 6378284.000, 6356589.156
-"E247", "Hayford 1909", 6378388.000, 6356909.000
-"E248", "Krayenhoff 1827", 6376950.400, 6356356.341
-"E249", "Plessis Reconstituted", 6376523.994, 6355862.907
-"E250", "GRS 1967", 6378160.000, 6356774.516
-"E251", "Svanberg", 6376797.000, 6355837.971
-"E252", "Walbeck 1819 (Planheft 1942)", 6376895.000, 6355834.000
+"E227","Everest (1830 Definition)", 6377299.365595, 6356098.359005,"EPSG:7042"
+"E228","Danish 1876", 6377019.270000, 6355762.539100
+"E229","Bessel Namibia (GLM)", 6377483.865280, 6356165.383246
+"E230","PZ-90", 6378136.000000, 6356751.361746
+"E231","CGCS2000", 6378137.000000, 6356752.314140
+"E232","IAG 1975", 6378140.000000, 6356755.288158
+"E233","NWL 9D", 6378145.000000, 6356759.769489
+"E234","Hughes 1980", 6378273.000000, 6356889.449000
+"E235","Clarke 1880 (international foot)", 6378306.369600, 6356571.996000
+"E236","Clarke 1866 Michigan", 6378450.047549, 6356826.621488
+"E237","APL 4.5 (1968)", 6378144.000000, 6356757.338698
+"E238","Airy (War Office)", 6377542.178, 6356235.764
+"E239","Clarke 1858 (DIGEST)", 6378235.600, 6356560.140
+"E240","Clarke 1880 (Palestine)", 6378300.782, 6356566.427
+"E241","Clarke 1880 (Syria)", 6378247.842, 6356513.671
+"E242","Clarke 1880 (Fiji)", 6378301.000, 6356566.548
+"E243","Andrae", 6377104.430, 6355847.415
+"E244","Delambre 1810", 6376985.228, 6356323.664
+"E245","Delambre (Carte de France)", 6376985.000, 6356323.436
+"E246","Germaine (Djibouti)", 6378284.000, 6356589.156
+"E247","Hayford 1909", 6378388.000, 6356909.000
+"E248","Krayenhoff 1827", 6376950.400, 6356356.341
+"E249","Plessis Reconstituted", 6376523.994, 6355862.907
+"E250","GRS 1967", 6378160.000, 6356774.516
+"E251","Svanberg", 6376797.000, 6355837.971
+"E252","Walbeck 1819 (Planheft 1942)", 6376895.000, 6355834.000
 "E333","Bessel 1841 (Japan By Law)",6377397.155,6356078.963
 "E600","D-PAF (Orbits)",6378144.0,6356759.0
 "E601","Test Data Set 1",6378144.0,6356759.0

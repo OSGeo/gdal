@@ -458,13 +458,13 @@
 "D765","NAD83 (Deprecated - use D122)","E008",0,0,0,"Ohio",2,2,2,354
 "D766","NAD83 HARN (USA, NADCON)","E008","Ohio","D122","ohhpgn.los","ohhpgn.las"
 "D767","NAD83 (Deprecated - use D122)","E008",0,0,0,"Oklahoma",2,2,2,354
-"D768","NAD83 HARN (USA, NADCON)","E008","Oklahoma","D122","okhpgn.los","okhpgn.las" 
+"D768","NAD83 HARN (USA, NADCON)","E008","Oklahoma","D122","okhpgn.los","okhpgn.las"
 "D769","NAD83 (Deprecated - use D122)","E008",0,0,0,"Pennsylvania",2,2,2,354
 "D770","NAD83 HARN (USA, NADCON)","E008","Pennsylvania","D122","pahpgn.los","pahpgn.las"
 "D771","NAD83 (Deprecated - use D122)","E008",0,0,0,"Puerto Rico-Virgin Is",2,2,2,354
-"D772","NAD83 HARN (USA, NADCON)","E008","Puerto Rico-Virgin Is","D122","pvhpgn.los","pvhpgn.las" 
+"D772","NAD83 HARN (USA, NADCON)","E008","Puerto Rico-Virgin Is","D122","pvhpgn.los","pvhpgn.las"
 "D773","American Samoa 1962 (Deprecated - use D189)","E000",-115,118,426,"Samoa (Eastern Islands)",25,25,25,2
-"D774","NAD83 HARN (USA, NADCON)","E008","Samoa (Eastern Islands)","D189","eshpgn.los","eshpgn.las" 
+"D774","NAD83 HARN (USA, NADCON)","E008","Samoa (Eastern Islands)","D189","eshpgn.los","eshpgn.las"
 "D775","American Samoa 1962 (Deprecated - use D189)","E000",-115,118,426,"Samoa (Western Islands)",25,25,25,2
 "D776","NAD83 HARN (USA, NADCON)","E008","Samoa (Western Islands)","D189","wshpgn.los","wshpgn.las"
 "D777","NAD83 (Deprecated - use D122)","E008",0,0,0,"South Carolina",2,2,2,354
@@ -474,7 +474,7 @@
 "D781","NAD83 (Deprecated - use D122)","E008",0,0,0,"Tennessee",2,2,2,354
 "D782","NAD83 HARN (USA, NADCON)","E008","Tennessee","D122","tnhpgn.los","tnhpgn.las"
 "D783","NAD83 (Deprecated - use D122)","E008",0,0,0,"Texas (East of 100dW)",2,2,2,354
-"D784","NAD83 HARN (USA, NADCON)","E008","Texas (East of 100dW)","D122","ethpgn.los","ethpgn.las" 
+"D784","NAD83 HARN (USA, NADCON)","E008","Texas (East of 100dW)","D122","ethpgn.los","ethpgn.las"
 "D785","NAD83 (Deprecated - use D122)","E008",0,0,0,"Texas (West of 100dW)",2,2,2,354
 "D786","NAD83 HARN (USA, NADCON)","E008","Texas (West of 100dW)","D122","wthpgn.los","wthpgn.las"
 "D787","NAD83 (Deprecated - use D122)","E008",0,0,0,"Utah",2,2,2,354
@@ -488,7 +488,7 @@
 "D795","NAD83 (Deprecated - use D122)","E008",0,0,0,"Wisconsin",2,2,2,354
 "D796","NAD83 HARN (USA, NADCON)","E008","Wisconsin","D122","wihpgn.los","wihpgn.las"
 "D797","NAD83 (Deprecated - use D122)","E008",0,0,0,"Wyoming",2,2,2,354
-"D798","NAD83 HARN (USA, NADCON)","E008","Wyoming","D122","wyhpgn.los","wyhpgn.las" 
+"D798","NAD83 HARN (USA, NADCON)","E008","Wyoming","D122","wyhpgn.los","wyhpgn.las"
 "D888","Lebanon Stereographic","E012",154.2668777,107.2190767,-263.01161212,"Lebanon",0,0,0,0,0.310716,0.218736,0.191232,0.99999913
 "D889","Lebanon Lambert","E202",190.9999,133.32473,-232.8391,"Lebanon",0,0,0,0,0.307836,0.216756,0.189036,0.9995341
 "D890","Luxembourg (LUREF)","E004",-192.986,13.673,-39.309,"Luxembourg",0,0,0,0,0.409900,2.933200,-2.688100,1.00000043
@@ -497,9 +497,9 @@
 "D893","PDO Survey Datum 1993","E001",-180.624,-225.516,173.919,"Oman",0,0,0,0,0.80970,1.89755,-8.33604,16.71006
 "D898","TWD97","E008",0,0,0,"Taiwan",0,0,0,0,0.0,0.0,0.0,0.0
 "D899","TWD67","E899",-752,-358,-179,"Taiwan",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329
-"D886", "Reseau Geodesique Francais 1993", "E899",-752,-358,-179,"France",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329
-"D887", "Reseau National Belge 1972", "E899",-752,-358,-179,"Belgium",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329
-"D819", "Xian 1980", "E224",0,0,0,"China",0,0,0,0,0,0,0,0
+"D886","Reseau Geodesique Francais 1993","E899",-752,-358,-179,"France",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329
+"D887","Reseau National Belge 1972","E899",-752,-358,-179,"Belgium",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329
+"D819","Xian 1980","E224",0,0,0,"China",0,0,0,0,0,0,0,0
 "D820","Korea 2000","E008",0.0,0.0,0.0,"South Korea",0,0,0,0
 "D821","Pulkovo 1995","E015",24.47,-130.89,-81.56,"Russian Federation",0,0,0,0,0,0,-0.13,-0.22
 "D822","Beijing 1954","E015",15.8,-154.4,-82.3,"China",0,0,0,0
@@ -520,10 +520,10 @@
 "D837","Datum Geodesi Nasional 1995 (DGN95)","E012",0.0,0.0,0.0,"Indonesia",0,0,0,0
 "D838","Korea 1995","E012",0.0,0.0,0.0,"South Korea",0,0,0,0
 "D839","Institut Geographique du Congo Belge (IGCB) 1955","E001",-79.9,-158,-168.9,"The Democratic Republic of the Congo (Zaire) - Lower Congo",0,0,0,0
-"D894", "WGS 1984 semi-major","E020",0,0,0,"WGS 1984 Auxiliary Sphere semi-major axis",0,0,0,0
+"D894","WGS 1984 semi-major","E020",0,0,0,"WGS 1984 Auxiliary Sphere semi-major axis",0,0,0,0
 "D895","ATS77","E910",-95.323,166.098,-69.942,"Maritime Provinces",0,0,0,0,0.215,1.031,-0.047,1.922
 "D896","GosatCAIL1B+ EarthRadius","E025",0,0,0,"GosatCAIL1B+ EarthRadius",0,0,0,0
-"D897","Myanmar","E227",247,785,277,"Myanmar",0,0,0,0 
+"D897","Myanmar","E227",247,785,277,"Myanmar",0,0,0,0
 "D900","China 2000","E231",0,0,0,"China 2000",0,0,0,0
 "D901","Nouvelle Triangulation Francaise (grid shift)","E202","France","-D350","ntf_r93.gsb"
 "D902","PRS92","E000",-127.62153,-67.24339,-47.04738,"Philippines Reference System 1992",0,0,0,0,3.06803,-4.90297,-1.57807,-1.06002
