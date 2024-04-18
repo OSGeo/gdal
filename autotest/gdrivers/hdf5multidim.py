@@ -827,3 +827,16 @@ def test_hdf5_multidim_eos_swath_no_explicit_dimension_map():
         coordinates[1].GetFullName()
         == "/HDFEOS/SWATHS/MySwath/Geolocation Fields/Latitude"
     )
+
+
+###############################################################################
+# Test GetBlockSize() and GetStructuralInfo()
+
+
+def test_hdf5_multidim_block_size_structural_info():
+
+    ds = gdal.OpenEx("data/hdf5/deflate.h5", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray("Band1")
+    assert var.GetBlockSize() == [1, 2]
+    assert var.GetStructuralInfo() == {"COMPRESSION": "DEFLATE", "FILTER": "SHUFFLE"}
