@@ -69,6 +69,7 @@ class OGRMiraMonLayer final
 
     // Array of doubles used in the field features processing
     double *padfValues;
+    GInt64 *pnInt64Values;
 
     OGRFeature *GetNextRawFeature();
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
