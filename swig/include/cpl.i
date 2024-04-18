@@ -943,6 +943,8 @@ int     VSIFWriteL( const char *, int, int, VSILFILE *fp );
 
 /* VSIFReadL() handled specially in python/gdal_python.i */
 
+const char* CPLReadLineL(VSILFILE* fp);
+
 void VSICurlClearCache();
 void VSICurlPartialClearCache( const char* utf8_path );
 
