@@ -1,0 +1,55 @@
+name: 👓 Handle stale issues
+on:
+  schedule:
+  - cron: "30 2 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  stale:
+    permissions:
+      # issues: write  # for actions/stale to close stale issues
+      pull-requests: write  # for actions/stale to close stale PRs
+    if: github.repository_owner == 'OSGeo'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/stale@28ca1036281a5e5922ead5184a1bbf96e5fc984e # v9.0.0
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        stale-pr-message: >
+          The GDAL project highly values your contribution and would love to see
+          this work merged!
+          Unfortunately this PR has not had any activity in the last 28 days and
+          is being automatically marked as "stale".
+          If you think this pull request should be merged, please check
+
+          - that all unit tests are passing
+
+          - that all comments by reviewers have been addressed
+
+          - that there is enough information for reviewers, in particular link
+            to any issues which this pull request fixes
+
+          - that you have written unit tests where possible
+
+          In case you should have any uncertainty, please leave a comment and we will
+          be happy to help you proceed with this pull request.
+
+          If there is no further activity on this pull request, it will be closed in 2
+          weeks.
+
+
+        close-pr-message: >
+          While we hate to see this happen, this PR has been automatically closed because
+          it has not had any activity in the last 6 weeks. If this pull request should be
+          reconsidered, please follow the guidelines in the previous comment and reopen
+          this pull request. Or, if you have any further questions, just ask! We love to
+          help, and if there's anything the GDAL project can do to help push this PR forward
+          please let us know how we can assist.
+
+
+        stale-pr-label: 'stale'
+        days-before-pr-stale: 28
+        days-before-pr-close: 14
+        operations-per-run: 1000
