@@ -623,3 +623,144 @@ def test_gdal2tiles_excluded_values(script_path, tmp_path):
         (12 + 22 + 42) // 3,
         255,
     )
+
+
+@pytest.mark.require_driver("JPEG")
+@pytest.mark.parametrize(
+    "resampling, expected_stats_z0, expected_stats_z1",
+    (
+        (
+            "average",
+            [
+                [0.0, 255.0, 62.789886474609375, 71.57543623020909],
+                [0.0, 255.0, 62.98188781738281, 70.54545410356597],
+                [0.0, 255.0, 77.94142150878906, 56.07427114858068],
+            ],
+            [
+                [0.0, 255.0, 63.620819091796875, 68.38688881060699],
+                [0.0, 255.0, 63.620819091796875, 68.38688881060699],
+                [0.0, 255.0, 87.09403991699219, 53.07665243601322],
+            ],
+        ),
+        (
+            "antialias",
+            [
+                [0.0, 255.0, 62.66636657714844, 71.70766144632985],
+                [0.0, 255.0, 62.91070556640625, 70.705889259777],
+                [0.0, 255.0, 77.78370666503906, 56.251290816620596],
+            ],
+            [
+                [0.0, 255.0, 63.61163330078125, 68.49625328462534],
+                [0.0, 255.0, 63.61163330078125, 68.49625328462534],
+                [0.0, 255.0, 87.04747009277344, 53.1751939061486],
+            ],
+        ),
+    ),
+)
+def test_gdal2tiles_py_jpeg_3band_input(
+    script_path, tmp_path, resampling, expected_stats_z0, expected_stats_z1
+):
+
+    if resampling == "antialias" and not pil_available():
+        pytest.skip("'antialias' resampling is not available")
+
+    out_dir_jpeg = str(tmp_path / "out_gdal2tiles_smallworld_jpeg")
+
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        "gdal2tiles",
+        "-q -z 0-1 -r "
+        + resampling
+        + " --tiledriver=JPEG "
+        + test_py_scripts.get_data_path("gdrivers")
+        + f"small_world.tif {out_dir_jpeg}",
+    )
+
+    ds = gdal.Open(f"{out_dir_jpeg}/0/0/0.jpg")
+    got_stats_0 = [
+        ds.GetRasterBand(i + 1).ComputeStatistics(approx_ok=0)
+        for i in range(ds.RasterCount)
+    ]
+
+    ds = gdal.Open(f"{out_dir_jpeg}/1/0/0.jpg")
+    got_stats_1 = [
+        ds.GetRasterBand(i + 1).ComputeStatistics(approx_ok=0)
+        for i in range(ds.RasterCount)
+    ]
+
+    for i in range(ds.RasterCount):
+        assert got_stats_0[i] == pytest.approx(expected_stats_z0[i], rel=0.05), (
+            i,
+            got_stats_0,
+            got_stats_1,
+        )
+
+    for i in range(ds.RasterCount):
+        assert got_stats_1[i] == pytest.approx(expected_stats_z1[i], rel=0.05), (
+            i,
+            got_stats_0,
+            got_stats_1,
+        )
+
+
+@pytest.mark.require_driver("JPEG")
+@pytest.mark.parametrize(
+    "resampling, expected_stats_z14, expected_stats_z13",
+    (
+        (
+            (
+                "average",
+                [[0.0, 255.0, 44.11726379394531, 61.766206763153946]],
+                [[0.0, 255.0, 11.057342529296875, 36.182401045647644]],
+            ),
+            (
+                "antialias",
+                [[0.0, 255.0, 43.9254150390625, 61.58666064861184]],
+                [[0.0, 255.0, 11.013427734375, 36.12022842174338]],
+            ),
+        )
+    ),
+)
+def test_gdal2tiles_py_jpeg_1band_input(
+    script_path, tmp_path, resampling, expected_stats_z14, expected_stats_z13
+):
+
+    if resampling == "antialias" and not pil_available():
+        pytest.skip("'antialias' resampling is not available")
+
+    out_dir_jpeg = str(tmp_path / "out_gdal2tiles_byte_jpeg")
+
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        "gdal2tiles",
+        "-q -z 13-14 -r "
+        + resampling
+        + " --tiledriver=JPEG "
+        + test_py_scripts.get_data_path("gcore")
+        + f"byte.tif {out_dir_jpeg}",
+    )
+
+    ds = gdal.Open(f"{out_dir_jpeg}/14/2838/9833.jpg")
+    got_stats_14 = [
+        ds.GetRasterBand(i + 1).ComputeStatistics(approx_ok=0)
+        for i in range(ds.RasterCount)
+    ]
+
+    ds = gdal.Open(f"{out_dir_jpeg}/13/1419/4916.jpg")
+    got_stats_13 = [
+        ds.GetRasterBand(i + 1).ComputeStatistics(approx_ok=0)
+        for i in range(ds.RasterCount)
+    ]
+
+    for i in range(ds.RasterCount):
+        assert got_stats_14[i] == pytest.approx(expected_stats_z14[i], rel=0.05), (
+            i,
+            got_stats_14,
+            got_stats_13,
+        )
+    for i in range(ds.RasterCount):
+        assert got_stats_13[i] == pytest.approx(expected_stats_z13[i], rel=0.05), (
+            i,
+            got_stats_14,
+            got_stats_13,
+        )
