@@ -53,7 +53,7 @@ def open_for_read(uri):
 
 
 ###############################################################################
-@pytest.fixture(autouse=True, scope="function")
+@pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
 
     with gdaltest.config_option("CPL_AZURE_VM_API_ROOT_URL", "disabled"):
