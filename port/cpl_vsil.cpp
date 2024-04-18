@@ -3358,7 +3358,7 @@ void VSICleanupFileManager()
     }
 
 #ifdef HAVE_CURL
-    cpl::VSICURLDestroyCacheFileProp();
+    VSICURLDestroyCacheFileProp();
 #endif
 }
 
