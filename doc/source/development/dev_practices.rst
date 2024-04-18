@@ -59,16 +59,16 @@ used in GDAL/OGR.
 -  *h*: an opaque handle (such as GDALDatasetH).
 -  *n*: integer number (size unspecified)
 -  *o*: C++ object
--  *os*: CPLString
+-  *os*: CPLString or std::string
 -  *p*: pointer
--  *psz*: pointer to a zero terminated string. (eg. "char \*pszName;")
--  *sz*: zero terminated string (eg." char szName[100];")
+-  *psz*: pointer to a null-terminated string. (eg. "char \*pszName;")
+-  *sz*: null-terminated string (eg." char szName[100];")
 -  *k*: compile-time constant
 
-Prefix can be stacked. The following are some examples of meaningful
+Prefixes can be stacked. The following are some examples of meaningful
 variables.
 
--  \*char !\*\ *papszTokens*: Pointer to the an array of strings.
+-  \*char !\*\ *papszTokens*: Pointer to an array of strings.
 -  \*int *panBands*: Pointer to the first element of an array of
    numbers.
 -  \*double *padfScanline*: Pointer to the first element of an array of
