@@ -1010,3 +1010,16 @@ def test_jp2kak_unsupported_srs_for_gmljp2(tmp_vsimem):
     assert ds.GetSpatialRef().IsSame(ref_srs)
     # Check that we do *not* have a GMLJP2 box
     assert "xml:gml.root-instance" not in ds.GetMetadataDomainList()
+
+
+###############################################################################
+# Test non-persistent read mode on overviews
+
+
+def test_jp2kak_non_persistent_read_overview():
+
+    with gdal.config_option("JP2KAK_PERSIST", "NO"):
+        ds = gdal.Open("data/jpeg2000/513x513.jp2")
+        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+
+    assert cs == 29642
