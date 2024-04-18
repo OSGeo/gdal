@@ -349,7 +349,10 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
 
 struct GTiffDecompressContext
 {
-    std::mutex oMutex{};
+    // The mutex must be recursive because ThreadDecompressionFuncErrorHandler()
+    // which acquires the mutex can be called from a section where the mutex is
+    // already acquired.
+    std::recursive_mutex oMutex{};
     bool bSuccess = true;
 
     std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors{};
@@ -416,7 +419,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
 {
     GTiffDecompressContext *psContext =
         static_cast<GTiffDecompressContext *>(CPLGetErrorHandlerUserData());
-    std::lock_guard<std::mutex> oLock(psContext->oMutex);
+    std::lock_guard<std::recursive_mutex> oLock(psContext->oMutex);
     psContext->aoErrors.emplace_back(eErr, eErrorNum, pszMsg);
 }
 
@@ -495,7 +498,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
     if (psJob->nSize == 0)
     {
         {
-            std::lock_guard<std::mutex> oLock(psContext->oMutex);
+            std::lock_guard<std::recursive_mutex> oLock(psContext->oMutex);
             if (!psContext->bSuccess)
                 return;
         }
@@ -616,7 +619,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
     if (psContext->bHasPRead)
     {
         {
-            std::lock_guard<std::mutex> oLock(psContext->oMutex);
+            std::lock_guard<std::recursive_mutex> oLock(psContext->oMutex);
             if (!psContext->bSuccess)
                 return;
 
@@ -634,7 +637,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
         {
             if (!AllocInputBuffer())
             {
-                std::lock_guard<std::mutex> oLock(psContext->oMutex);
+                std::lock_guard<std::recursive_mutex> oLock(psContext->oMutex);
                 psContext->bSuccess = false;
                 return;
             }
@@ -647,7 +650,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
                          static_cast<GUIntBig>(psJob->nSize),
                          static_cast<GUIntBig>(psJob->nOffset));
 
-                std::lock_guard<std::mutex> oLock(psContext->oMutex);
+                std::lock_guard<std::recursive_mutex> oLock(psContext->oMutex);
                 psContext->bSuccess = false;
                 return;
             }
@@ -655,7 +658,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
     }
     else
     {
-        std::lock_guard<std::mutex> oLock(psContext->oMutex);
+        std::lock_guard<std::recursive_mutex> oLock(psContext->oMutex);
         if (!psContext->bSuccess)
             return;
 
@@ -808,7 +811,7 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
 
         if (!bRet)
         {
-            std::lock_guard<std::mutex> oLock(psContext->oMutex);
+            std::lock_guard<std::recursive_mutex> oLock(psContext->oMutex);
             psContext->bSuccess = false;
             return;
         }
@@ -1298,7 +1301,8 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                     // false since we could have concurrent uses of the handle,
                     // when when reading the TIFF TileOffsets / TileByteCounts
                     // array
-                    std::lock_guard<std::mutex> oLock(sContext.oMutex);
+                    std::lock_guard<std::recursive_mutex> oLock(
+                        sContext.oMutex);
 
                     IsBlockAvailable(nBlockId, &asJobs[iJob].nOffset,
                                      &asJobs[iJob].nSize);
@@ -1314,7 +1318,8 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                 {
                     if (nFileSize == 0)
                     {
-                        std::lock_guard<std::mutex> oLock(sContext.oMutex);
+                        std::lock_guard<std::recursive_mutex> oLock(
+                            sContext.oMutex);
                         sContext.poHandle->Seek(0, SEEK_END);
                         nFileSize = sContext.poHandle->Tell();
                     }
@@ -1326,7 +1331,8 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                                  static_cast<GUIntBig>(asJobs[iJob].nSize),
                                  static_cast<GUIntBig>(asJobs[iJob].nOffset));
 
-                        std::lock_guard<std::mutex> oLock(sContext.oMutex);
+                        std::lock_guard<std::recursive_mutex> oLock(
+                            sContext.oMutex);
                         sContext.bSuccess = false;
                         break;
                     }
