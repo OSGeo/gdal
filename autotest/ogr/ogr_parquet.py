@@ -2981,6 +2981,7 @@ def test_ogr_parquet_nested_types():
 # Test float32 bounding box column
 
 
+@pytest.mark.require_geos
 def test_ogr_parquet_bbox_float32(tmp_vsimem):
 
     outfilename = str(tmp_vsimem / "test_ogr_parquet_bbox_float32.parquet")
@@ -3124,6 +3125,7 @@ def test_ogr_parquet_bbox_double():
 # as in Overture Maps datasets 2024-04-16-beta.0
 
 
+@pytest.mark.require_geos
 def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata():
 
     ds = ogr.Open("data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet")
