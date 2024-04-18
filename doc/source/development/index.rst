@@ -10,8 +10,8 @@ Development
 
     dev_environment
     building_from_source
-    testing
     dev_practices
+    testing
     dev_documentation
     cmake
     rfc/index
