@@ -44,9 +44,6 @@ def startup_and_cleanup():
     for filename in ["join_t.idm", "join_t.ind"]:
         assert not os.path.exists(filename)
 
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/ogr_index_10.shp")
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/ogr_index_11.dbf")
-
 
 @contextlib.contextmanager
 def create_index_p_test_file():
@@ -313,9 +310,11 @@ def test_ogr_index_creating_index_in_separate_steps_works():
 # Test fix for #4326
 
 
-def test_ogr_index_10():
+def test_ogr_index_10(tmp_path):
 
-    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/ogr_index_10.shp")
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
+        tmp_path / "ogr_index_10.shp"
+    )
     lyr = ds.CreateLayer("ogr_index_10")
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("realfield", ogr.OFTReal))
@@ -430,9 +429,11 @@ def ogr_index_11_check(lyr, expected_fids):
         assert feat.GetFID() == expected_fid
 
 
-def test_ogr_index_11():
+def test_ogr_index_11(tmp_path):
 
-    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/ogr_index_11.dbf")
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
+        tmp_path / "ogr_index_11.dbf"
+    )
     lyr = ds.CreateLayer("ogr_index_11", geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))

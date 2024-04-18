@@ -144,42 +144,30 @@ def test_ogr_georss_1_atom_ns():
 # Test writing a Atom 1.0 document (doesn't need read support)
 
 
-def test_ogr_georss_1bis():
+def test_ogr_georss_1bis(tmp_path):
 
-    try:
-        os.remove("tmp/test_atom.xml")
-    except OSError:
-        pass
+    with ogr.GetDriverByName("GeoRSS").CreateDataSource(
+        tmp_path / "test_atom.xml", options=["FORMAT=ATOM"]
+    ) as ds:
+        lyr = ds.CreateLayer("georss")
 
-    ds = ogr.GetDriverByName("GeoRSS").CreateDataSource(
-        "tmp/test_atom.xml", options=["FORMAT=ATOM"]
-    )
-    lyr = ds.CreateLayer("georss")
+        for field_value in gdaltest.atom_field_values:
+            lyr.CreateField(ogr.FieldDefn(field_value[0], field_value[2]))
+        lyr.CreateField(ogr.FieldDefn("content", ogr.OFTString))
 
-    for field_value in gdaltest.atom_field_values:
-        lyr.CreateField(ogr.FieldDefn(field_value[0], field_value[2]))
-    lyr.CreateField(ogr.FieldDefn("content", ogr.OFTString))
+        dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
+        for field_value in gdaltest.atom_field_values:
+            dst_feat.SetField(field_value[0], field_value[1])
+        dst_feat.SetField(
+            "content",
+            '<div xmlns="http://www.w3.org/1999/xhtml"><p><i>[Update: The Atom draft is finished.]</i></p></div>',
+        )
 
-    dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
-    for field_value in gdaltest.atom_field_values:
-        dst_feat.SetField(field_value[0], field_value[1])
-    dst_feat.SetField(
-        "content",
-        '<div xmlns="http://www.w3.org/1999/xhtml"><p><i>[Update: The Atom draft is finished.]</i></p></div>',
-    )
+        assert lyr.CreateFeature(dst_feat) == 0, "CreateFeature failed."
 
-    assert lyr.CreateFeature(dst_feat) == 0, "CreateFeature failed."
+    # Test reading document created at previous step
 
-    ds = None
-
-
-###############################################################################
-# Test reading document created at previous step
-
-
-def test_ogr_georss_1ter():
-
-    return ogr_georss_test_atom("tmp/test_atom.xml")
+    ogr_georss_test_atom(tmp_path / "test_atom.xml")
 
 
 ###############################################################################
