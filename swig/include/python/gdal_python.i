@@ -352,6 +352,44 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 %clear (GByte **out, vsi_l_offset *length);
 
 
+%pythonappend VSIFCloseL %{
+    args[0].this = None
+%}
+
+%pythonprepend VSIFCloseL %{
+    if args[0].this is None:
+        raise ValueError("I/O operation on closed file.")
+%}
+
+%pythonprepend VSIFEofL %{
+    if args[0].this is None:
+        raise ValueError("I/O operation on closed file.")
+%}
+
+%pythonprepend VSIFFlushL %{
+    if args[0].this is None:
+        raise ValueError("I/O operation on closed file.")
+%}
+
+%pythonprepend VSIFSeekL %{
+    if args[0].this is None:
+        raise ValueError("I/O operation on closed file.")
+%}
+
+%pythonprepend VSIFTellL %{
+    if args[0].this is None:
+        raise ValueError("I/O operation on closed file.")
+%}
+
+%pythonprepend VSIFTruncateL %{
+    if args[0].this is None:
+        raise ValueError("I/O operation on closed file.")
+%}
+
+%pythonprepend wrapper_VSIFWriteL %{
+    if args[3].this is None:
+        raise ValueError("I/O operation on closed file.")
+%}
 
 /* -------------------------------------------------------------------- */
 /*      GDAL_GCP                                                        */
