@@ -1740,3 +1740,78 @@ def test_non_square():
         assert res.ymax == pytest.approx(30.25)
         assert res.xmin == pytest.approx(9.9)
         assert res.xmax == pytest.approx(10.5)
+
+
+###############################################################################
+# Test EXCLUDED_VALUES warping option with average resampling
+
+
+def test_warp_average_excluded_values():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 3, gdal.GDT_Byte)
+    src_ds.GetRasterBand(1).WriteRaster(
+        0, 0, 2, 2, struct.pack("B" * 4, 10, 20, 30, 40)
+    )
+    src_ds.GetRasterBand(2).WriteRaster(
+        0, 0, 2, 2, struct.pack("B" * 4, 11, 21, 31, 41)
+    )
+    src_ds.GetRasterBand(3).WriteRaster(
+        0, 0, 2, 2, struct.pack("B" * 4, 12, 22, 32, 42)
+    )
+    src_ds.SetGeoTransform([1, 1, 0, 1, 0, 1])
+
+    with pytest.raises(
+        Exception,
+        match="EXCLUDED_VALUES should contain one or several tuples of 3 values",
+    ):
+        out_ds = gdal.Warp(
+            "", src_ds, options="-of MEM -ts 1 1 -r average -wo EXCLUDED_VALUES=30,31"
+        )
+
+    # The excluded value is just ignored in contributing source pixels that are average, as it represents only 25% of contributing pixels
+    out_ds = gdal.Warp(
+        "", src_ds, options="-of MEM -ts 1 1 -r average -wo EXCLUDED_VALUES=(30,31,32)"
+    )
+    assert struct.unpack("B" * 3, out_ds.ReadRaster()) == (
+        (10 + 20 + 40) // 3,
+        (11 + 21 + 41) // 3,
+        (12 + 22 + 42) // 3,
+    )
+
+    # The excluded value is selected because its contributing 25% is >= 0%
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-of MEM -ts 1 1 -r average -wo EXCLUDED_VALUES=(30,31,32) -wo EXCLUDED_VALUES_PCT_THRESHOLD=0",
+    )
+    assert struct.unpack("B" * 3, out_ds.ReadRaster()) == (30, 31, 32)
+
+    # The excluded value is selected because its contributing 25% is >= 24%
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-of MEM -ts 1 1 -r average -wo EXCLUDED_VALUES=(30,31,32) -wo EXCLUDED_VALUES_PCT_THRESHOLD=24",
+    )
+    assert struct.unpack("B" * 3, out_ds.ReadRaster()) == (30, 31, 32)
+
+    # The excluded value is selected because its contributing 25% is < 26%
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-of MEM -ts 1 1 -r average -wo EXCLUDED_VALUES=(30,31,32) -wo EXCLUDED_VALUES_PCT_THRESHOLD=26",
+    )
+    assert struct.unpack("B" * 3, out_ds.ReadRaster()) == (
+        (10 + 20 + 40) // 3,
+        (11 + 21 + 41) // 3,
+        (12 + 22 + 42) // 3,
+    )
+
+    # No match of excluded value
+    out_ds = gdal.Warp(
+        "", src_ds, options="-of MEM -ts 1 1 -r average -wo EXCLUDED_VALUES=(30,31,0)"
+    )
+    assert struct.unpack("B" * 3, out_ds.ReadRaster()) == (
+        (10 + 20 + 30 + 40) // 4,
+        (11 + 21 + 31 + 41) // 4,
+        (12 + 22 + 32 + 42) // 4,
+    )

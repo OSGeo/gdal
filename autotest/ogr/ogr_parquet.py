@@ -3078,7 +3078,7 @@ def test_ogr_parquet_bbox_float32(tmp_vsimem):
 
 ###############################################################################
 # Test GetExtent() using bbox.minx, bbox.miny, bbox.maxx, bbox.maxy fields
-# as in Ouverture Maps datasets
+# as in Overture Maps datasets
 
 
 def test_ogr_parquet_bbox_double():
@@ -3086,6 +3086,7 @@ def test_ogr_parquet_bbox_double():
     ds = ogr.Open("data/parquet/overture_map_extract.parquet")
     lyr = ds.GetLayer(0)
     assert lyr.GetGeometryColumn() == "geometry"
+    assert lyr.GetLayerDefn().GetFieldIndex("bbox.minx") < 0
     assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
     minx, maxx, miny, maxy = lyr.GetExtent()
     assert (minx, miny, maxx, maxy) == pytest.approx(
@@ -3109,10 +3110,56 @@ def test_ogr_parquet_bbox_double():
         ds = ogr.Open("data/parquet/overture_map_extract.parquet")
         lyr = ds.GetLayer(0)
         assert lyr.GetGeometryColumn() == "geometry"
+        assert lyr.GetLayerDefn().GetFieldIndex("bbox.minx") >= 0
         assert lyr.TestCapability(ogr.OLCFastGetExtent) == 0
         minx, maxx, miny, maxy = lyr.GetExtent()
         assert (minx, miny, maxx, maxy) == pytest.approx(
             (-36.831345, -10.049401, -36.831238, -10.049268)
+        )
+        ds = None
+
+
+###############################################################################
+# Test GetExtent() using bbox.minx, bbox.miny, bbox.maxx, bbox.maxy fields
+# as in Overture Maps datasets 2024-04-16-beta.0
+
+
+def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata():
+
+    ds = ogr.Open("data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeometryColumn() == "geometry"
+    assert lyr.GetLayerDefn().GetFieldIndex("bbox.xmin") < 0
+    assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
+    minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx(
+        (478315.53125, 4762880.5, 481645.3125, 4765610.5)
+    )
+
+    with ogrtest.spatial_filter(
+        lyr,
+        minx + (maxx - minx) / 2,
+        miny + (maxy - miny) / 2,
+        maxx - (maxx - minx) / 2,
+        maxy - (maxy - miny) / 2,
+    ):
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 8
+        assert lyr.GetNextFeature() is None
+
+    ds = None
+
+    with gdaltest.config_option("OGR_PARQUET_USE_BBOX", "NO"):
+        ds = ogr.Open(
+            "data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet"
+        )
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeometryColumn() == "geometry"
+        assert lyr.GetLayerDefn().GetFieldIndex("bbox.xmin") >= 0
+        assert lyr.TestCapability(ogr.OLCFastGetExtent) == 0
+        minx, maxx, miny, maxy = lyr.GetExtent()
+        assert (minx, miny, maxx, maxy) == pytest.approx(
+            (478315.53125, 4762880.5, 481645.3125, 4765610.5)
         )
         ds = None
 

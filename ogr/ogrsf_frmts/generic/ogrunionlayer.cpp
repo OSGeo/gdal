@@ -86,8 +86,7 @@ OGRUnionLayer::OGRUnionLayer(const char *pszName, int nSrcLayersIn,
       nFields(0), papoFields(nullptr), nGeomFields(0), papoGeomFields(nullptr),
       eFieldStrategy(FIELD_UNION_ALL_LAYERS), bPreserveSrcFID(FALSE),
       nFeatureCount(-1), iCurLayer(-1), pszAttributeFilter(nullptr),
-      nNextFID(0), panMap(nullptr), papszIgnoredFields(nullptr),
-      bAttrFilterPassThroughValue(-1),
+      nNextFID(0), panMap(nullptr), bAttrFilterPassThroughValue(-1),
       pabModifiedLayers(static_cast<int *>(CPLCalloc(sizeof(int), nSrcLayers))),
       pabCheckIfAutoWrap(
           static_cast<int *>(CPLCalloc(sizeof(int), nSrcLayers))),
@@ -120,7 +119,6 @@ OGRUnionLayer::~OGRUnionLayer()
 
     CPLFree(pszAttributeFilter);
     CPLFree(panMap);
-    CSLDestroy(papszIgnoredFields);
     CPLFree(pabModifiedLayers);
     CPLFree(pabCheckIfAutoWrap);
 
@@ -522,8 +520,7 @@ void OGRUnionLayer::ConfigureActiveLayer()
     for (int i = 0; i < poSrcFeatureDefn->GetFieldCount(); i++)
     {
         OGRFieldDefn *poSrcFieldDefn = poSrcFeatureDefn->GetFieldDefn(i);
-        if (CSLFindString(papszIgnoredFields, poSrcFieldDefn->GetNameRef()) ==
-            -1)
+        if (m_aosIgnoredFields.FindString(poSrcFieldDefn->GetNameRef()) == -1)
         {
             panMap[i] =
                 poFeatureDefn->GetFieldIndex(poSrcFieldDefn->GetNameRef());
@@ -536,75 +533,65 @@ void OGRUnionLayer::ConfigureActiveLayer()
 
     if (papoSrcLayers[iCurLayer]->TestCapability(OLCIgnoreFields))
     {
-        char **papszIter = papszIgnoredFields;
-        char **papszFieldsSrc = nullptr;
-        while (papszIter != nullptr && *papszIter != nullptr)
+        CPLStringList aosFieldSrc;
+        for (const char *pszFieldName : cpl::Iterate(m_aosIgnoredFields))
         {
-            const char *pszFieldName = *papszIter;
             if (EQUAL(pszFieldName, "OGR_GEOMETRY") ||
                 EQUAL(pszFieldName, "OGR_STYLE") ||
                 poSrcFeatureDefn->GetFieldIndex(pszFieldName) >= 0 ||
                 poSrcFeatureDefn->GetGeomFieldIndex(pszFieldName) >= 0)
             {
-                papszFieldsSrc = CSLAddString(papszFieldsSrc, pszFieldName);
+                aosFieldSrc.AddString(pszFieldName);
             }
-            papszIter++;
         }
 
         /* Attribute fields */
-        int *panSrcFieldsUsed = static_cast<int *>(
-            CPLCalloc(sizeof(int), poSrcFeatureDefn->GetFieldCount()));
+        std::vector<bool> abSrcFieldsUsed(poSrcFeatureDefn->GetFieldCount());
         for (int iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++)
         {
-            OGRFieldDefn *poFieldDefn = poFeatureDefn->GetFieldDefn(iField);
-            int iSrcField =
+            const OGRFieldDefn *poFieldDefn =
+                poFeatureDefn->GetFieldDefn(iField);
+            const int iSrcField =
                 poSrcFeatureDefn->GetFieldIndex(poFieldDefn->GetNameRef());
             if (iSrcField >= 0)
-                panSrcFieldsUsed[iSrcField] = TRUE;
+                abSrcFieldsUsed[iSrcField] = true;
         }
         for (int iSrcField = 0; iSrcField < poSrcFeatureDefn->GetFieldCount();
              iSrcField++)
         {
-            if (!panSrcFieldsUsed[iSrcField])
+            if (!abSrcFieldsUsed[iSrcField])
             {
-                OGRFieldDefn *poSrcDefn =
+                const OGRFieldDefn *poSrcDefn =
                     poSrcFeatureDefn->GetFieldDefn(iSrcField);
-                papszFieldsSrc =
-                    CSLAddString(papszFieldsSrc, poSrcDefn->GetNameRef());
+                aosFieldSrc.AddString(poSrcDefn->GetNameRef());
             }
         }
-        CPLFree(panSrcFieldsUsed);
 
         /* geometry fields now */
-        panSrcFieldsUsed = static_cast<int *>(
-            CPLCalloc(sizeof(int), poSrcFeatureDefn->GetGeomFieldCount()));
+        abSrcFieldsUsed.clear();
+        abSrcFieldsUsed.resize(poSrcFeatureDefn->GetGeomFieldCount());
         for (int iField = 0; iField < poFeatureDefn->GetGeomFieldCount();
              iField++)
         {
-            OGRGeomFieldDefn *poFieldDefn =
+            const OGRGeomFieldDefn *poFieldDefn =
                 poFeatureDefn->GetGeomFieldDefn(iField);
-            int iSrcField =
+            const int iSrcField =
                 poSrcFeatureDefn->GetGeomFieldIndex(poFieldDefn->GetNameRef());
             if (iSrcField >= 0)
-                panSrcFieldsUsed[iSrcField] = TRUE;
+                abSrcFieldsUsed[iSrcField] = true;
         }
         for (int iSrcField = 0;
              iSrcField < poSrcFeatureDefn->GetGeomFieldCount(); iSrcField++)
         {
-            if (!panSrcFieldsUsed[iSrcField])
+            if (!abSrcFieldsUsed[iSrcField])
             {
-                OGRGeomFieldDefn *poSrcDefn =
+                const OGRGeomFieldDefn *poSrcDefn =
                     poSrcFeatureDefn->GetGeomFieldDefn(iSrcField);
-                papszFieldsSrc =
-                    CSLAddString(papszFieldsSrc, poSrcDefn->GetNameRef());
+                aosFieldSrc.AddString(poSrcDefn->GetNameRef());
             }
         }
-        CPLFree(panSrcFieldsUsed);
 
-        papoSrcLayers[iCurLayer]->SetIgnoredFields(
-            const_cast<const char **>(papszFieldsSrc));
-
-        CSLDestroy(papszFieldsSrc);
+        papoSrcLayers[iCurLayer]->SetIgnoredFields(aosFieldSrc.List());
     }
 }
 
@@ -1393,14 +1380,13 @@ OGRFeature *OGRUnionLayer::TranslateFromSrcLayer(OGRFeature *poSrcFeature)
 /*                          SetIgnoredFields()                          */
 /************************************************************************/
 
-OGRErr OGRUnionLayer::SetIgnoredFields(const char **papszFields)
+OGRErr OGRUnionLayer::SetIgnoredFields(CSLConstList papszFields)
 {
     OGRErr eErr = OGRLayer::SetIgnoredFields(papszFields);
     if (eErr != OGRERR_NONE)
         return eErr;
 
-    CSLDestroy(papszIgnoredFields);
-    papszIgnoredFields = papszFields ? CSLDuplicate(papszFields) : nullptr;
+    m_aosIgnoredFields = papszFields;
 
     return eErr;
 }

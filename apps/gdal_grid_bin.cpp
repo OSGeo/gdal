@@ -35,65 +35,11 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
+static void Usage()
 
 {
-    fprintf(
-        bIsError ? stderr : stdout,
-        "Usage: gdal_grid [--help] [--help-general]\n"
-        "    [-oo <NAME>=<VALUE>]...\n"
-        "    [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
-        "          CInt16/CInt32/CFloat32/CFloat64}]\n"
-        "    [-of <format>] [-co <NAME>=<VALUE>]...\n"
-        "    [-zfield <field_name>] [-z_increase <increase_value>] "
-        "[-z_multiply "
-        "<multiply_value>]\n"
-        "    [-a_srs <srs_def>] [-spat <xmin> <ymin> <xmax> <ymax>]\n"
-        "    [-clipsrc <xmin> <ymin> <xmax> "
-        "<ymax>|<WKT>|<datasource>|spat_extent]\n"
-        "    [-clipsrcsql <sql_statement>] [-clipsrclayer <layer>]\n"
-        "    [-clipsrcwhere <expression>]\n"
-        "    [-l <layername>]... [-where <expression>] [-sql "
-        "<select_statement>]\n"
-        "    [-txe <xmin> <xmax>] [-tye <ymin> <ymax>] [-tr <xres> <yres>] "
-        "[-outsize <xsize> "
-        "<ysize>]\n"
-        "    [-a <algorithm>[:<parameter1>=<value1>]...]"
-        "    [-q]\n"
-        "    <src_datasource> <dst_filename>\n"
-        "\n"
-        "Available algorithms and parameters with their defaults:\n"
-        "    Inverse distance to a power (default)\n"
-        "        "
-        "invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_"
-        "points=0:min_points=0:nodata=0.0\n"
-        "    Inverse distance to a power with nearest neighbor search\n"
-        "        "
-        "invdistnn:power=2.0:radius=1.0:max_points=12:min_points=0:nodata=0\n"
-        "    Moving average\n"
-        "        "
-        "average:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0\n"
-        "    Nearest neighbor\n"
-        "        nearest:radius1=0.0:radius2=0.0:angle=0.0:nodata=0.0\n"
-        "    Various data metrics\n"
-        "        <metric "
-        "name>:radius1=0.0:radius2=0.0:angle=0.0:min_points=0:nodata=0.0\n"
-        "        possible metrics are:\n"
-        "            minimum\n"
-        "            maximum\n"
-        "            range\n"
-        "            count\n"
-        "            average_distance\n"
-        "            average_distance_pts\n"
-        "    Linear\n"
-        "        linear:radius=-1.0:nodata=0.0\n"
-        "\n");
-
-    if (pszErrorMsg != nullptr)
-        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
-
-    GDALDestroyDriverManager();
-    exit(bIsError ? 1 : 0);
+    fprintf(stderr, "%s\n", GDALGridGetParserUsage().c_str());
+    exit(1);
 }
 
 /************************************************************************/
@@ -116,22 +62,6 @@ MAIN_START(argc, argv)
     if (argc < 1)
         exit(-argc);
 
-    for (int i = 0; i < argc; i++)
-    {
-        if (EQUAL(argv[i], "--utility_version"))
-        {
-            printf("%s was compiled against GDAL %s and is running against "
-                   "GDAL %s\n",
-                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy(argv);
-            return 0;
-        }
-        else if (EQUAL(argv[i], "--help"))
-        {
-            Usage(false);
-        }
-    }
-
     GDALGridOptionsForBinary sOptionsForBinary;
     /* coverity[tainted_data] */
     GDALGridOptions *psOptions =
@@ -140,18 +70,13 @@ MAIN_START(argc, argv)
 
     if (psOptions == nullptr)
     {
-        Usage(true);
+        Usage();
     }
 
     if (!(sOptionsForBinary.bQuiet))
     {
         GDALGridOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
-
-    if (sOptionsForBinary.osSource.empty())
-        Usage(true, "No input file specified.");
-    if (!sOptionsForBinary.bDestSpecified)
-        Usage(true, "No output file specified.");
 
     /* -------------------------------------------------------------------- */
     /*      Open input file.                                                */
@@ -168,7 +93,7 @@ MAIN_START(argc, argv)
     GDALDatasetH hOutDS = GDALGrid(sOptionsForBinary.osDest.c_str(), hInDS,
                                    psOptions, &bUsageError);
     if (bUsageError == TRUE)
-        Usage(true);
+        Usage();
     int nRetCode = hOutDS ? 0 : 1;
 
     GDALClose(hInDS);

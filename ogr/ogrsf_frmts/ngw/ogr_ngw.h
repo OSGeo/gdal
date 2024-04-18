@@ -197,7 +197,7 @@ class OGRNGWLayer final : public OGRLayer
     virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                                    const char *pszDomain = "") override;
 
-    virtual OGRErr SetIgnoredFields(const char **papszFields) override;
+    virtual OGRErr SetIgnoredFields(CSLConstList papszFields) override;
     virtual OGRErr SetAttributeFilter(const char *pszQuery) override;
     virtual void SetSpatialFilter(OGRGeometry *poGeom) override;
     virtual void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;

@@ -802,7 +802,7 @@ VSIS3WriteHandle::~VSIS3WriteHandle()
             curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
             curl_easy_cleanup(m_hCurl);
         }
-        curl_multi_cleanup(m_hCurlMulti);
+        VSICURLMultiCleanup(m_hCurlMulti);
     }
     CPLFree(m_sWriteFuncHeaderData.pBuffer);
 }
@@ -1379,7 +1379,7 @@ int VSIS3WriteHandle::FinishChunkedTransfer()
     m_nChunkedBufferOff = 0;
     m_nChunkedBufferSize = 0;
 
-    MultiPerform(m_hCurlMulti);
+    VSICURLMultiPerform(m_hCurlMulti);
 
     long response_code;
     curl_easy_getinfo(m_hCurl, CURLINFO_RESPONSE_CODE, &response_code);

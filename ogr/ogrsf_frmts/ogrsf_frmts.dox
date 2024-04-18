@@ -3147,6 +3147,10 @@ form depending on the limitations of the format driver.
 
  By default, no fields are ignored.
 
+ Note that fields that are used in an attribute filter should generally not be set as
+ ignored fields, as most drivers (such as those relying on the OGR SQL engine)
+ will be unable to correctly evaluate the attribute filter.
+
  This method is the same as the C function OGR_L_SetIgnoredFields()
 
  @param papszFields an array of field names terminated by NULL item. If NULL is passed, the ignored list is cleared.
@@ -3166,6 +3170,10 @@ form depending on the limitations of the format driver.
  "OGR_STYLE" to ignore layer style.
 
  By default, no fields are ignored.
+
+ Note that fields that are used in an attribute filter should generally not be set as
+ ignored fields, as most drivers (such as those relying on the OGR SQL engine)
+ will be unable to correctly evaluate the attribute filter.
 
  This method is the same as the C++ method OGRLayer::SetIgnoredFields()
 

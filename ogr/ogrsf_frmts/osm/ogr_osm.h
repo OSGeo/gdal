@@ -124,8 +124,7 @@ class OGROSMLayer final : public OGRLayer
 
     bool m_bHasWarnedTooManyFeatures = false;
 
-    char *m_pszAllTags = nullptr;
-    bool m_bHasWarnedAllTagsTruncated = false;
+    std::string m_osAllTagsBuffer{};
 
     bool m_bUserInterested = true;
 

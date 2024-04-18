@@ -576,10 +576,11 @@ JP2KAKDataset::JP2KAKDataset() = default;
 // Constructor for overview dataset
 JP2KAKDataset::JP2KAKDataset(JP2KAKDataset *poMainDS, int nDiscardLevels,
                              const kdu_dims &dimsIn)
-    : oCodeStream(poMainDS->oCodeStream), poInput(poMainDS->poInput),
-      poRawInput(poMainDS->poRawInput), family(poMainDS->family),
-      jpip_client(poMainDS->jpip_client), dims(dimsIn),
-      nResCount(poMainDS->nResCount), bPreferNPReads(poMainDS->bPreferNPReads),
+    : m_osFilename(poMainDS->m_osFilename), oCodeStream(poMainDS->oCodeStream),
+      poInput(poMainDS->poInput), poRawInput(poMainDS->poRawInput),
+      family(poMainDS->family), jpip_client(poMainDS->jpip_client),
+      dims(dimsIn), nResCount(poMainDS->nResCount),
+      bPreferNPReads(poMainDS->bPreferNPReads),
       poThreadEnv(poMainDS->poThreadEnv), m_nDiscardLevels(nDiscardLevels),
       bCached(poMainDS->bCached), bResilient(poMainDS->bResilient),
       bFussy(poMainDS->bFussy), bUseYCC(poMainDS->bUseYCC),
@@ -1075,6 +1076,8 @@ GDALDataset *JP2KAKDataset::Open(GDALOpenInfo *poOpenInfo)
             poDS->SetBand(iBand, poBand);
         }
 
+        poDS->m_osFilename = poOpenInfo->pszFilename;
+
         // Create overviews
         if (!bHasExternalOverviews)
         {
@@ -1270,7 +1273,16 @@ CPLErr JP2KAKDataset::DirectRasterIO(GDALRWFlag /* eRWFlag */, int nXOff,
 
     if (bPreferNPReads)
     {
-        subfile_src.open(GetDescription(), bResilient, bCached);
+        try
+        {
+            subfile_src.open(m_osFilename.c_str(), bResilient, bCached);
+        }
+        catch (...)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "subfile_src.open(%s) failed",
+                     m_osFilename.c_str());
+            return CE_Failure;
+        }
 
         if (family != nullptr)
         {

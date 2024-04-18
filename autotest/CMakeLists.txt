@@ -49,6 +49,9 @@ if (Python_Interpreter_FOUND)
   configure_file(${GDAL_CMAKE_TEMPLATE_PATH}/pytest.ini.in ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini @ONLY)
   unset(PYTEST_INI_HEADER_MESSAGE)
 
+  # Symlink test files into the build directory so that we can run tests directly from that location.
+  # This doesn't work on Windows,
+
 function (copy_file_or_dir source dest)
     if (IS_DIRECTORY ${source})
         message(STATUS "Copying contents of ${source} to ${destination}")
@@ -72,44 +75,39 @@ endfunction ()
   symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/conftest.py ${CMAKE_CURRENT_BINARY_DIR}/conftest.py)
   symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/run_slow_tests.sh ${CMAKE_CURRENT_BINARY_DIR}/run_slow_tests.sh)
 
-  if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
-      foreach (subdir IN ITEMS pymod proj_grids cpp/data)
-          if (SKIP_COPYING_AUTOTEST_SUBDIRS)
-            message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}")
-          else ()
+  SET(pytest_dirs alg benchmark gcore gdrivers gnm ogr osr pyscripts slow_tests utilities)
+
+  # Link test data/scripts into the build directory for convenience (non-Windows)
+  if (WIN32)
+      SET(python_test_path ${CMAKE_CURRENT_LIST_DIR})
+  else()
+      SET(python_test_path ${CMAKE_CURRENT_BINARY_DIR})
+      if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+          foreach (subdir IN ITEMS
+                  pymod
+                  proj_grids
+                  cpp/data
+                  ${pytest_dirs})
             symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/${subdir} ${CMAKE_CURRENT_BINARY_DIR}/${subdir})
-          endif ()
-      endforeach ()
+          endforeach ()
+          unset(subdir)
+      endif()
   endif()
 
-  foreach (
-    tgt IN
-    ITEMS ogr
-          gcore
-          gdrivers
-          alg
-          osr
-          gnm
-          pyscripts
-          utilities
-          benchmark
-          slow_tests)
-    if (NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
-        if (SKIP_COPYING_AUTOTEST_SUBDIRS)
-          message(STATUS "Skipping copying ${CMAKE_CURRENT_SOURCE_DIR}/${tgt}")
-        else ()
-          symlink_or_copy(${CMAKE_CURRENT_SOURCE_DIR}/${tgt} ${CMAKE_CURRENT_BINARY_DIR}/${tgt})
-        endif ()
-    endif()
+  foreach (tgt IN ITEMS ${pytest_dirs})
     add_custom_target(
       autotest_${tgt}
-      COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} ${Python_EXECUTABLE} -m pytest -c
-              ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini ${tgt}
+      COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} ${Python_EXECUTABLE} -m pytest
+              -c ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini
+              ${python_test_path}/${tgt}
       DEPENDS ${GDAL_LIB_TARGET_NAME} gdalapps python_binding)
-    add_test(NAME autotest_${tgt} COMMAND ${Python_EXECUTABLE} -m pytest -c ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini
-                                          ${tgt})
+    add_test(NAME autotest_${tgt}
+             COMMAND ${Python_EXECUTABLE} -m pytest
+                     -c ${CMAKE_CURRENT_BINARY_DIR}/pytest.ini
+                     ${python_test_path}/${tgt})
     set_property(TEST autotest_${tgt} PROPERTY ENVIRONMENT "${PYTHON_RUN_ENV}")
   endforeach ()
+
   add_custom_target(
     autotest
     COMMAND ${CMAKE_COMMAND} -E env ${PYTHON_RUN_ENV} ${Python_EXECUTABLE} -m pytest -c

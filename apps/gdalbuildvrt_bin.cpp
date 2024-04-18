@@ -37,97 +37,13 @@
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(bool bIsError,
-                  const char *pszErrorMsg = nullptr) CPL_NO_RETURN;
+static void Usage() CPL_NO_RETURN;
 
-static void Usage(bool bIsError, const char *pszErrorMsg)
+static void Usage()
 
 {
-    fprintf(
-        bIsError ? stderr : stdout, "%s",
-        "Usage: gdalbuildvrt [--help] [--help-general]\n"
-        "                    [-tileindex <field_name>]\n"
-        "                    [-resolution {highest|lowest|average|user}]\n"
-        "                    [-te <xmin> <ymin> <xmax> <ymax>] [-tr <xres> "
-        "<yres>] [-tap]\n"
-        "                    [-separate] [-b <band>]... [-sd <subdataset>]\n"
-        "                    [-allow_projection_difference] [-q]\n"
-        "                    [-addalpha] [-hidenodata]\n"
-        "                    [-srcnodata \"<value>[ <value>]...\"] [-vrtnodata "
-        "\"<value>[ <value>]...\"\n"
-        "                    [-ignore_srcmaskband]\n"
-        "                    [-nodata_max_mask_threshold <threshold>]\n"
-        "                    [-a_srs <srs_def>]\n"
-        "                    [-r "
-        "{nearest|bilinear|cubic|cubicspline|lanczos|average|mode}]\n"
-        "                    [-oo <NAME>=<VALUE>]...\n"
-        "                    [-input_file_list <filename>] [-overwrite]\n"
-        "                    [-strict | -non_strict]\n"
-        "                    <output_filename.vrt> <input_raster> "
-        "[<input_raster>]...\n"
-        "\n"
-        "e.g.\n"
-        "  % gdalbuildvrt doq_index.vrt doq/*.tif\n"
-        "  % gdalbuildvrt -input_file_list my_list.txt doq_index.vrt\n"
-        "\n"
-        "NOTES:\n"
-        "  o With -separate, each files goes into a separate band in the VRT "
-        "band.\n"
-        "    Otherwise, the files are considered as tiles of a larger mosaic.\n"
-        "  o -b option selects a band to add into vrt.  Multiple bands can be "
-        "listed.\n"
-        "    By default all bands are queried.\n"
-        "  o The default tile index field is 'location' unless otherwise "
-        "specified by\n"
-        "    -tileindex.\n"
-        "  o In case the resolution of all input files is not the same, the "
-        "-resolution\n"
-        "    flag enable the user to control the way the output resolution is "
-        "computed.\n"
-        "    Average is the default.\n"
-        "  o Input files may be any valid GDAL dataset or a GDAL raster tile "
-        "index.\n"
-        "  o For a GDAL raster tile index, all entries will be added to the "
-        "VRT.\n"
-        "  o If one GDAL dataset is made of several subdatasets and has 0 "
-        "raster bands,\n"
-        "    its datasets will be added to the VRT rather than the dataset "
-        "itself.\n"
-        "    Single subdataset could be selected by its number using the -sd "
-        "option.\n"
-        "  o By default, only datasets of same projection and band "
-        "characteristics\n"
-        "    may be added to the VRT.\n");
-
-    if (pszErrorMsg != nullptr)
-        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
-
-    exit(bIsError ? 1 : 0);
-}
-
-/************************************************************************/
-/*                       GDALBuildVRTOptionsForBinaryNew()              */
-/************************************************************************/
-
-static GDALBuildVRTOptionsForBinary *GDALBuildVRTOptionsForBinaryNew(void)
-{
-    return static_cast<GDALBuildVRTOptionsForBinary *>(
-        CPLCalloc(1, sizeof(GDALBuildVRTOptionsForBinary)));
-}
-
-/************************************************************************/
-/*                       GDALBuildVRTOptionsForBinaryFree()            */
-/************************************************************************/
-
-static void GDALBuildVRTOptionsForBinaryFree(
-    GDALBuildVRTOptionsForBinary *psOptionsForBinary)
-{
-    if (psOptionsForBinary)
-    {
-        CSLDestroy(psOptionsForBinary->papszSrcFiles);
-        CPLFree(psOptionsForBinary->pszDstFilename);
-        CPLFree(psOptionsForBinary);
-    }
+    fprintf(stderr, "%s\n", GDALBuildVRTGetParserUsage().c_str());
+    exit(1);
 }
 
 /************************************************************************/
@@ -148,40 +64,18 @@ MAIN_START(argc, argv)
     if (argc < 1)
         exit(-argc);
 
-    for (int i = 0; argv != nullptr && argv[i] != nullptr; i++)
-    {
-        if (EQUAL(argv[i], "--utility_version"))
-        {
-            printf("%s was compiled against GDAL %s and is running against "
-                   "GDAL %s\n",
-                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy(argv);
-            return 0;
-        }
-        else if (EQUAL(argv[i], "--help"))
-        {
-            Usage(false, nullptr);
-        }
-    }
-
-    GDALBuildVRTOptionsForBinary *psOptionsForBinary =
-        GDALBuildVRTOptionsForBinaryNew();
+    GDALBuildVRTOptionsForBinary sOptionsForBinary;
     /* coverity[tainted_data] */
     GDALBuildVRTOptions *psOptions =
-        GDALBuildVRTOptionsNew(argv + 1, psOptionsForBinary);
+        GDALBuildVRTOptionsNew(argv + 1, &sOptionsForBinary);
     CSLDestroy(argv);
 
     if (psOptions == nullptr)
     {
-        Usage(true, nullptr);
+        Usage();
     }
 
-    if (psOptionsForBinary->pszDstFilename == nullptr)
-    {
-        Usage(true, "No target filename specified.");
-    }
-
-    if (!(psOptionsForBinary->bQuiet))
+    if (!(sOptionsForBinary.bQuiet))
     {
         GDALBuildVRTOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
@@ -189,18 +83,20 @@ MAIN_START(argc, argv)
     /* Avoid overwriting a non VRT dataset if the user did not put the */
     /* filenames in the right order */
     VSIStatBuf sBuf;
-    if (!psOptionsForBinary->bOverwrite)
+    if (!sOptionsForBinary.bOverwrite)
     {
-        int bExists = (VSIStat(psOptionsForBinary->pszDstFilename, &sBuf) == 0);
+        int bExists =
+            (VSIStat(sOptionsForBinary.osDstFilename.c_str(), &sBuf) == 0);
         if (bExists)
         {
-            GDALDriverH hDriver =
-                GDALIdentifyDriver(psOptionsForBinary->pszDstFilename, nullptr);
+            GDALDriverH hDriver = GDALIdentifyDriver(
+                sOptionsForBinary.osDstFilename.c_str(), nullptr);
             if (hDriver &&
                 !(EQUAL(GDALGetDriverShortName(hDriver), "VRT") ||
                   (EQUAL(GDALGetDriverShortName(hDriver), "API_PROXY") &&
-                   EQUAL(CPLGetExtension(psOptionsForBinary->pszDstFilename),
-                         "VRT"))))
+                   EQUAL(
+                       CPLGetExtension(sOptionsForBinary.osDstFilename.c_str()),
+                       "VRT"))))
             {
                 fprintf(
                     stderr,
@@ -209,24 +105,24 @@ MAIN_START(argc, argv)
                     "right order.\n"
                     "If you want to overwrite %s, add -overwrite option to the "
                     "command line.\n\n",
-                    psOptionsForBinary->pszDstFilename,
+                    sOptionsForBinary.osDstFilename.c_str(),
                     GDALGetDriverShortName(hDriver),
-                    psOptionsForBinary->pszDstFilename);
-                Usage(true);
+                    sOptionsForBinary.osDstFilename.c_str());
+                Usage();
             }
         }
     }
 
     int bUsageError = FALSE;
     GDALDatasetH hOutDS = GDALBuildVRT(
-        psOptionsForBinary->pszDstFilename, psOptionsForBinary->nSrcFiles,
-        nullptr, psOptionsForBinary->papszSrcFiles, psOptions, &bUsageError);
+        sOptionsForBinary.osDstFilename.c_str(),
+        sOptionsForBinary.aosSrcFiles.size(), nullptr,
+        sOptionsForBinary.aosSrcFiles.List(), psOptions, &bUsageError);
     if (bUsageError)
-        Usage(true);
+        Usage();
     int nRetCode = (hOutDS) ? 0 : 1;
 
     GDALBuildVRTOptionsFree(psOptions);
-    GDALBuildVRTOptionsForBinaryFree(psOptionsForBinary);
 
     CPLErrorReset();
     // The flush to disk is only done at that stage, so check if any error has

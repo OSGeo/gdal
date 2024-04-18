@@ -653,20 +653,9 @@ extern "C++"
     /** Unique pointer type to use with CSL functions returning a char** */
     using CSLUniquePtr = std::unique_ptr<char *, CSLDestroyReleaser>;
 
-    /*! @cond Doxygen_Suppress */
-    struct CPL_DLL CPLFreeReleaser
-    {
-        void operator()(void *p) const
-        {
-            CPLFree(p);
-        }
-    };
-
-    /*! @endcond */
-
     /** Unique pointer type to use with functions returning a char* to release
-     * with CPLFree */
-    using CPLCharUniquePtr = std::unique_ptr<char, CPLFreeReleaser>;
+     * with VSIFree */
+    using CPLCharUniquePtr = std::unique_ptr<char, VSIFreeReleaser>;
 
     namespace cpl
     {

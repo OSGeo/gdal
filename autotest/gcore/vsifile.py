@@ -1316,3 +1316,28 @@ def test_vsifile_eof_cache_read(tmp_path):
         data = gdal.VSIFReadL(1, 75000, f)  # reads past end of file
         gdal.VSIFCloseL(f)
         assert data == b"x" * 40000
+
+
+def test_vsifile_use_closed_file(tmp_path):
+
+    f = gdal.VSIFOpenL(tmp_path / "file.txt", "wb")
+    assert gdal.VSIFWriteL("0123456789", 1, 10, f) == 10
+    gdal.VSIFCloseL(f)
+
+    with pytest.raises(ValueError, match="closed file"):
+        gdal.VSIFCloseL(f)
+
+    with pytest.raises(ValueError, match="closed file"):
+        gdal.VSIFEofL(f)
+
+    with pytest.raises(ValueError, match="closed file"):
+        gdal.VSIFSeekL(f, 0, 0)
+
+    with pytest.raises(ValueError, match="closed file"):
+        gdal.VSIFTellL(f)
+
+    with pytest.raises(ValueError, match="closed file"):
+        gdal.VSIFTruncateL(f, 0)
+
+    with pytest.raises(ValueError, match="closed file"):
+        gdal.VSIFWriteL("0123456789", 1, 10, f)

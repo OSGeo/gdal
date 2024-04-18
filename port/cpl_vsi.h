@@ -292,6 +292,22 @@ void CPL_DLL VSIFree(void *);
 void CPL_DLL *VSIRealloc(void *, size_t) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL *VSIStrdup(const char *) CPL_WARN_UNUSED_RESULT;
 
+#if defined(__cplusplus) && defined(GDAL_COMPILATION)
+extern "C++"
+{
+    /*! @cond Doxygen_Suppress */
+    struct CPL_DLL VSIFreeReleaser
+    {
+        void operator()(void *p) const
+        {
+            VSIFree(p);
+        }
+    };
+
+    /*! @endcond */
+}
+#endif
+
 void CPL_DLL *VSIMallocAligned(size_t nAlignment,
                                size_t nSize) CPL_WARN_UNUSED_RESULT;
 void CPL_DLL *VSIMallocAlignedAuto(size_t nSize) CPL_WARN_UNUSED_RESULT;

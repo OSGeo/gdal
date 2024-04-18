@@ -2290,6 +2290,9 @@ GDALInfoOptionsNew(char **papszArgv,
             GDALInfoAppOptionsGetParser(psOptions.get(), psOptionsForBinary);
 
         argParser->parse_args_without_binary_name(aosArgv.List());
+
+        if (psOptions->bApproxStats)
+            psOptions->bStats = true;
     }
     catch (const std::exception &error)
     {

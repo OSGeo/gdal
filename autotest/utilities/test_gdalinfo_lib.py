@@ -136,6 +136,7 @@ def test_gdalinfo_lib_5():
     assert "computedMin" in band
     assert "histogram" in band
     assert "checksum" in band
+    assert "stdDev" in band
     assert ret["coordinateSystem"]["dataAxisToSRSAxisMapping"] == [1, 2]
 
     gdaltest.validate_json(ret, "gdalinfo_output.schema.json")

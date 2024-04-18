@@ -613,7 +613,7 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER,
                                        headers);
 
-            MultiPerform(hCurlMultiHandle, hCurlHandle);
+            VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
             VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
