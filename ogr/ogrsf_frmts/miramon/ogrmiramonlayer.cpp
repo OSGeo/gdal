@@ -355,7 +355,7 @@ OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
                 phMiraMonLayer->iMultiRecord =
                     MM_MULTIRECORD_NO_MULTIRECORD;  // No option iMultiRecord
                 const char *szMultiRecord =
-                    CSLFetchNameValue(papszOpenOptions, "iMultiRecord");
+                    CSLFetchNameValue(papszOpenOptions, "MultiRecordIndex");
                 if (phMiraMonLayer->isListField && szMultiRecord)
                 {
                     if (EQUAL(szMultiRecord, "Last"))

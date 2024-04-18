@@ -153,7 +153,7 @@ void RegisterOGRMiraMon()
         "    <Value>Lower</Value>"
         "    <Value>Highest</Value>"
         "  </Option>"
-        "  <Option name='iMultiRecord' scope='vector' type='string' "
+        "  <Option name='MultiRecordIndex' scope='vector' type='string' "
         "   description='Sets which of the possible records is chosen: "
         "0, 1, 2,... or the Last one. Use JSON when a serialized "
         "JSON is wanted'>"

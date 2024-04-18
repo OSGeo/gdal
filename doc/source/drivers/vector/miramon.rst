@@ -17,7 +17,7 @@ layer will be reported as of type wkbPolygon, but depending on the
 number of parts of each geometry, the actual type of the geometry for
 each feature can be either OGRPolygon or OGRMultiPolygon.
 
-The reading driver verifies if multipart polygons adhere to the 
+The reading driver verifies if multipart polygons adhere to the
 specification (that is to say, the vertices of outer rings should be
 oriented clockwise on the X/Y plane, and those of inner rings
 counterclockwise). Otherwise, the driver corrects the orientation
@@ -70,7 +70,7 @@ of the main file (with or without extension), and the driver will create the res
 The following outlines the information contained within each sidecar file:
 
 Preliminary note: *FileName* is, in the following explanations, the first part of the name
-of the layer file.   
+of the layer file.
 
 - **Point layers**: These layers contain *point* type features which are described by a single
   coordinate (x,y) or (x, y, z). Each layer is composed by 3 files:
@@ -132,11 +132,11 @@ of the layer file.
 - **Polygon layers**: These layers contain *polygon* or *multipolygon* type features.
   In MiraMon vector format a polygon is a closed shape described by one or more arcs.
   A polygon can have holes inside it. A polygon can also be linked to other polygons;
-  in this case, it is termed a group (*multipolygon*). 
+  in this case, it is termed a group (*multipolygon*).
   Each layer is composed by 9 files:
 
     - *FileName.pol* file: Contains the geographic database with information about the linestring
-      vector features needed to define the polygon (or multipolygon) vector features.  
+      vector features needed to define the polygon (or multipolygon) vector features.
 
     - *FileNameP.dbf* file (note the 'P' before the '.'): Contains the main table of the database
       in dBASE (DBF) format, or in `extended DBF format <https://www.miramon.cat/new_note/eng/notes/DBF_estesa.pdf>`__,
@@ -167,7 +167,7 @@ of the layer file.
     - *FileName.nod* file: Contains the geographic database with information about the
       linestring needed to define each node. It is necessary in the MiraMon vector format but not read by
       the GDAL MiraMon vector driver because nodes contain topological information that is not
-      transferred to other formats. 
+      transferred to other formats.
 
     - *FileNameN.dbf* file (note the 'N' before the '.'): Contains the main table of the database
       in dBASE (DBF) format, or in extended DBF if necessary. This table contains information about
@@ -230,7 +230,7 @@ Connection string
 The MiraMon driver accepts three types of sources of data:
 
 When translating from a MiraMon vector format, the MiraMon vector driver input needs a file with one of the
-described extensions: 
+described extensions:
 
 -  *.pnt* for *points*.
 -  *.arc* for *linestrings*.
@@ -262,17 +262,17 @@ The following open options are available.
 -  .. oo:: Height
       :choices: First, Lowest, Highest
 
-      Sets which of the possible heights for each vertex is read: 
+      Sets which of the possible heights for each vertex is read:
       the *first*, the *lowest* or the *highest* one. It only applies to
       MiraMon multi-height layers, where the same X,Y vertex can have more than one Z.
 
--  .. oo:: iMultiRecord
+-  .. oo:: MultiRecordIndex
       :choices: 1, 2, ..., Last, JSON
 
       In case of fields of type List, if the output driver cannot support them,
-      user can select which one wants to keep: *iMultiRecord=1* for first, *iMultiRecord=2* for second, etc
-      and *iMultiRecord=last* for the last element of the list.
-      *iMultiRecord=JSON* option converts the list in a single value in JSON format.
+      user can select which one wants to keep: *MultiRecordIndex=1* for first, *MultiRecordIndex=2* for second, etc
+      and *MultiRecordIndex=last* for the last element of the list.
+      *MultiRecordIndex=JSON* option converts the list in a single value in JSON format.
       If not specified, all elements of the list will be translated by default as a OGR list field type.
 
 -  .. oo:: OpenLanguage
@@ -294,19 +294,19 @@ Layer creation options
 -  .. lco:: Version
       :choices: V1.1, V2.0, last_version
       :default: V1.1
-      
+
       Version of the file.
       Version 1.1 is limited to an unsigned 32-bit integer for FID, for internal
-      offsets and for the number of entities the layer can handle. 
+      offsets and for the number of entities the layer can handle.
       It is the default option.
       Version 2.0 is the 64-bit version. It is practically unlimited
-      (unsigned 64-bit integer for FID and internal offsets).      
+      (unsigned 64-bit integer for FID and internal offsets).
       last_version selects to the last existing version ever.
 
 -  .. lco:: DBFEncoding
       :choices: UTF8, ANSI
       :default: ANSI
-      
+
       Encoding of the *.dbf* files.
       The MiraMon vector driver can write *.dbf* files in UTF-8 or ANSI charsets.
 
@@ -345,7 +345,7 @@ Examples
 
    ::
 
-      ogr2ogr rivers.gml rivers.arc -oo iMultiRecord=1
+      ogr2ogr rivers.gml rivers.arc -oo MultiRecordIndex=1
 
 -  A translation from a MiraMon layer 'tracks.arc' into a new *.gml* file taking the first height of
    every point is performed like this:
