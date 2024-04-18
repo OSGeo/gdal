@@ -2175,6 +2175,15 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
                              "ICreateFeature: String too long");
                     return OGRERR_FAILURE;
                 }
+                if (!CPLIsUTF8(field->String, static_cast<int>(len)))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "ICreateFeature: String '%s' is not a valid UTF-8 "
+                             "string",
+                             field->String);
+                    return OGRERR_FAILURE;
+                }
+
                 // Valid cast since feature_max_buffer_size is 2 GB
                 uint32_t l_le = static_cast<uint32_t>(len);
                 CPL_LSBPTR32(&l_le);
