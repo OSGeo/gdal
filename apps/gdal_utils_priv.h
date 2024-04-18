@@ -65,15 +65,6 @@ struct GDALDEMProcessingOptionsForBinary
     int bQuiet;
 };
 
-struct GDALBuildVRTOptionsForBinary
-{
-    int nSrcFiles;
-    char **papszSrcFiles;
-    char *pszDstFilename;
-    int bQuiet;
-    int bOverwrite;
-};
-
 CPL_C_END
 
 /* Access modes */
@@ -228,6 +219,14 @@ struct GDALWarpAppOptionsForBinary
     CPLStringList aosAllowedInputDrivers{};
 };
 
+struct GDALBuildVRTOptionsForBinary
+{
+    CPLStringList aosSrcFiles{};
+    std::string osDstFilename{};
+    bool bQuiet = false;
+    bool bOverwrite = false;
+};
+
 std::string CPL_DLL GDALNearblackGetParserUsage();
 
 std::string CPL_DLL GDALVectorInfoGetParserUsage();
@@ -241,6 +240,8 @@ std::string CPL_DLL GDALWarpAppGetParserUsage();
 std::string CPL_DLL GDALInfoAppGetParserUsage();
 
 std::string CPL_DLL GDALGridGetParserUsage();
+
+std::string CPL_DLL GDALBuildVRTGetParserUsage();
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
