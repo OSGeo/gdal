@@ -1,10 +1,10 @@
 .. _development_practices:
 
-.. include:: ../substitutions.rst
-
 ================================================================================
 Development practices
 ================================================================================
+
+.. include:: ../substitutions.rst
 
 Making changes to GDAL
 ----------------------
@@ -15,6 +15,89 @@ Major changes should be discussed on the |gdal-dev| listserv and may require the
 of a RFC (request for comment) document.
 
 GDAL's policy on substantial code additions is documented at :ref:`rfc-85`.
+
+Portability
+-----------
+
+GDAL strives to be widely portable to 32 bit and 64 bit computing
+environments, as well as little-endian and big-endian ordered CPUs.
+CPL functions in the port directory provide services to abstract platform
+specific operations.
+
+Generally speaking, where available CPL functions should be used in
+preference to operating system functions for operations like memory
+allocation, path parsing, filesystem I/O (using VSILFILE* / VSIVirtualFile*),
+ODBC access, etc.
+
+C/C++ standards
+---------------
+
+The current C and C++ standards adopted by GDAL/OGR are C99 and C++17
+(last updated per :ref:`rfc-98`)`
+
+Variable naming
+---------------
+
+Much of the existing GDAL/OGR code uses an adapted Hungarian naming
+convention. Use of this convention is not mandatory, but when
+maintaining code using this convention it is desirable to continue
+adhering to it with changes. Most importantly, please avoiding using it
+improperly as that can be very confusing.
+
+In Hungarian prefixing the prefix tells something about about the type,
+and potentially semantics of a variable. The following are some prefixes
+used in GDAL/OGR.
+
+-  *a*: array
+-  *b*: C/C++ bool. In C code that pre-dates C99 adoption, it is also used for
+        ints with only TRUE/FALSE values.
+-  *by*: byte (GByte / unsigned char).
+-  *df*: floating point value (double precision)
+-  *e*: enumeration
+-  *i*: integer number used as a zero based array or loop index.
+-  *f*: floating point value (single precision)
+-  *h*: an opaque handle (such as GDALDatasetH).
+-  *n*: integer number (size unspecified)
+-  *o*: C++ object
+-  *os*: CPLString or std::string
+-  *p*: pointer
+-  *psz*: pointer to a null-terminated string. (eg. "char \*pszName;")
+-  *sz*: null-terminated string (eg." char szName[100];")
+-  *k*: compile-time constant
+
+Prefixes can be stacked. The following are some examples of meaningful
+variables.
+
+-  \*char !\*\ *papszTokens*: Pointer to an array of strings.
+-  \*int *panBands*: Pointer to the first element of an array of
+   numbers.
+-  \*double *padfScanline*: Pointer to the first element of an array of
+   doubles.
+-  \*double *pdfMeanRet*: Pointer to a single double.
+-  \*GDALRasterBand *poBand*: Pointer to a single object.
+-  \*GByte *pabyHeader*: Pointer to an array of bytes.
+
+It may also be noted that the standard convention for variable names is
+to capitalize each word in a variable name.
+
+Memory allocation
+-----------------
+
+As per :ref:`rfc-19`, you can use VSIMalloc2(x, y) instead of
+doing CPLMalloc(x \* y) or VSIMalloc(x \* y). VSIMalloc2 will detect
+potential overflows in the multiplication and return a NULL pointer if
+it happens. This can be useful in GDAL raster drivers where x and y are
+related to the raster dimensions or raster block sizes. Similarly,
+VSIMalloc3(x, y, z) can be used as a replacement for CPLMalloc(x \* y \*
+z).
+
+File naming and code formatting
+-------------------------------
+
+- Use lower case filenames.
+- Use .cpp extension for C++ files (not .cc).
+- Code formatting rules are defined in :source_file:`.clang-format`. The
+  pre-commit utility can be used to enforce them automatically.
 
 
 Git usage
