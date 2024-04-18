@@ -2727,13 +2727,12 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
 
             if (eErr == OGRERR_NONE)
             {
+                m_hRTree = gdal_sqlite_rtree_bl_new(4096);
                 try
                 {
                     m_oThreadRTree =
                         std::thread([this]() { AsyncRTreeThreadFunction(); });
                     m_bThreadRTreeStarted = true;
-
-                    m_hRTree = gdal_sqlite_rtree_bl_new(4096);
                 }
                 catch (const std::exception &e)
                 {
@@ -2745,6 +2744,11 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
 
         if (!m_bThreadRTreeStarted)
         {
+            if (m_hRTree)
+            {
+                gdal_sqlite_rtree_bl_free(m_hRTree);
+                m_hRTree = nullptr;
+            }
             m_oQueueRTreeEntries.clear();
             m_bErrorDuringRTreeThread = true;
             sqlite3_close(m_hAsyncDBHandle);
@@ -2886,6 +2890,8 @@ static size_t GetMaxRAMUsageAllowedForRTree()
 
 void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
 {
+    CPLAssert(m_hRTree);
+
     const size_t nMaxRAMUsageAllowed = GetMaxRAMUsageAllowedForRTree();
     sqlite3_stmt *hStmt = nullptr;
     GIntBig nCount = 0;
