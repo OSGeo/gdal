@@ -1274,6 +1274,9 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
     std::vector<size_t> anSizes(nBlocks);
     int iJob = 0;
     int nAdviseReadRanges = 0;
+    const size_t nAdviseReadTotalBytesLimit =
+        sContext.poHandle->GetAdviseReadTotalBytesLimit();
+    size_t nAdviseReadAccBytes = 0;
     for (int y = 0; y < nYBlocks; ++y)
     {
         for (int x = 0; x < nXBlocks; ++x)
@@ -1383,6 +1386,48 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                         static_cast<size_t>(std::min<vsi_l_offset>(
                             std::numeric_limits<size_t>::max(),
                             asJobs[iJob].nSize));
+
+                    // If the total number of bytes we must read excess the
+                    // capacity of AdviseRead(), then split the RasterIO()
+                    // request in 2 halves.
+                    if (nAdviseReadTotalBytesLimit > 0 &&
+                        anSizes[nAdviseReadRanges] <
+                            nAdviseReadTotalBytesLimit &&
+                        anSizes[nAdviseReadRanges] >
+                            nAdviseReadTotalBytesLimit - nAdviseReadAccBytes &&
+                        nYBlocks >= 2)
+                    {
+                        const int nYOff2 =
+                            (nBlockYStart + nYBlocks / 2) * m_nBlockYSize;
+                        CPLDebugOnly("GTiff",
+                                     "Splitting request (%d,%d,%dx%d) into "
+                                     "(%d,%d,%dx%d) and (%d,%d,%dx%d)",
+                                     nXOff, nYOff, nXSize, nYSize, nXOff, nYOff,
+                                     nXSize, nYOff2 - nYOff, nXOff, nYOff2,
+                                     nXSize, nYOff + nYSize - nYOff2);
+
+                        asJobs.clear();
+                        anOffsets.clear();
+                        anSizes.clear();
+                        poQueue.reset();
+
+                        CPLErr eErr = MultiThreadedRead(
+                            nXOff, nYOff, nXSize, nYOff2 - nYOff, pData,
+                            eBufType, nBandCount, panBandMap, nPixelSpace,
+                            nLineSpace, nBandSpace);
+                        if (eErr == CE_None)
+                        {
+                            eErr = MultiThreadedRead(
+                                nXOff, nYOff2, nXSize, nYOff + nYSize - nYOff2,
+                                static_cast<GByte *>(pData) +
+                                    (nYOff2 - nYOff) * nLineSpace,
+                                eBufType, nBandCount, panBandMap, nPixelSpace,
+                                nLineSpace, nBandSpace);
+                        }
+                        return eErr;
+                    }
+                    nAdviseReadAccBytes += anSizes[nAdviseReadRanges];
+
                     ++nAdviseReadRanges;
                 }
 
