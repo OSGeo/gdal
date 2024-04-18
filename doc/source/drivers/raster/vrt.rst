@@ -423,6 +423,11 @@ the following form:
 
 The intermediary values are calculated using a linear interpolation
 between the bounding destination values of the corresponding range.
+Source values should be monotonically non-decreasing. Clamping is performed for
+input pixel values outside of the range specified by the LUT. That is, if an
+input pixel value is lower than the minimum source value, then the destination
+value corresponding to that minimum source value is used as the output pixel value.
+And similarly for an input pixel value that is greater than the maximum source value.
 
 The ComplexSource supports fetching a color component from a source raster
 band that has a color table. The ColorTableComponent value is the index of the
@@ -1906,6 +1911,22 @@ See the dedicated :ref:`vrt_multidimensional` page.
    :hidden:
 
    vrt_multidimensional
+
+Processed dataset VRT
+---------------------
+
+.. versionadded:: 3.9
+
+A VRT processed dataset is a specific variant of the :ref:`raster.vrt` format,
+to apply chained processing steps that may apply to several bands at the same time.
+
+See the dedicated :ref:`vrt_processed_dataset` page.
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   vrt_processed_dataset
 
 vrt:// connection string
 ------------------------

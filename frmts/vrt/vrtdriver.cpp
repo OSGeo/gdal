@@ -34,6 +34,8 @@
 #include "gdal_alg_priv.h"
 #include "gdal_frmts.h"
 
+#include <mutex>
+
 /*! @cond Doxygen_Suppress */
 
 /************************************************************************/
@@ -504,8 +506,16 @@ void GDALRegister_VRT()
     if (GDALGetDriverByName("VRT") != nullptr)
         return;
 
-    // First register the pixel functions
-    GDALRegisterDefaultPixelFunc();
+    static std::once_flag flag;
+    std::call_once(flag,
+                   []()
+                   {
+                       // First register the pixel functions
+                       GDALRegisterDefaultPixelFunc();
+
+                       // Register functions for VRTProcessedDataset
+                       GDALVRTRegisterDefaultProcessedDatasetFuncs();
+                   });
 
     VRTDriver *poDriver = new VRTDriver();
 

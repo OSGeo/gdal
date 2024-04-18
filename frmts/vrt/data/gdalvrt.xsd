@@ -30,29 +30,75 @@
  ****************************************************************************/
 -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="1.0">
-    <xs:element name="VRTDataset">
-        <xs:complexType>
-            <xs:sequence>
-                <xs:choice minOccurs="0" maxOccurs="unbounded">
-                    <xs:element name="SRS" type="SRSType"/>
-                    <xs:element name="GeoTransform" type="xs:string"/>
-                    <xs:element name="GCPList" type="GCPListType"/>
-                    <xs:element name="BlockXSize" type="nonNegativeInteger32"/>
-                    <xs:element name="BlockYSize" type="nonNegativeInteger32"/>
-                    <xs:element name="Metadata" type="MetadataType"/> <!-- may be repeated -->
-                    <xs:element name="VRTRasterBand" type="VRTRasterBandType"/> <!-- may be repeated -->
-                    <xs:element name="MaskBand" type="MaskBandType"/>
-                    <xs:element name="GDALWarpOptions" type="GDALWarpOptionsType"/> <!-- only if subClass="VRTWarpedDataset" -->
-                    <xs:element name="PansharpeningOptions" type="PansharpeningOptionsType"/> <!-- only if subClass="VRTPansharpenedDataset" -->
-                    <xs:element name="Group" type="GroupType"/> <!-- only for multidimensional dataset -->
-                    <xs:element name="OverviewList" type="OverviewListType"/>
-                </xs:choice>
-            </xs:sequence>
-            <xs:attribute name="subClass" type="xs:string"/>
-            <xs:attribute name="rasterXSize" type="nonNegativeInteger32"/>
-            <xs:attribute name="rasterYSize" type="nonNegativeInteger32"/>
-        </xs:complexType>
+    <xs:element name="VRTDataset" type="VRTDatasetType">
+        <xs:annotation>
+            <xs:documentation>Root element</xs:documentation>
+        </xs:annotation>
     </xs:element>
+
+    <xs:complexType name="VRTDatasetType">
+        <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="SRS" type="SRSType"/>
+                <xs:element name="GeoTransform" type="xs:string"/>
+                <xs:element name="GCPList" type="GCPListType"/>
+                <xs:element name="BlockXSize" type="nonNegativeInteger32"/>
+                <xs:element name="BlockYSize" type="nonNegativeInteger32"/>
+                <xs:element name="Metadata" type="MetadataType">
+                    <xs:annotation>
+                        <xs:documentation>May be repeated</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="VRTRasterBand" type="VRTRasterBandType">
+                    <xs:annotation>
+                        <xs:documentation>May be repeated</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="MaskBand" type="MaskBandType"/>
+                <xs:element name="GDALWarpOptions" type="GDALWarpOptionsType">
+                    <xs:annotation>
+                        <xs:documentation>Allowed only if subClass="VRTWarpedDataset"</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="PansharpeningOptions" type="PansharpeningOptionsType">
+                    <xs:annotation>
+                        <xs:documentation>Allowed only if subClass="VRTPansharpenedDataset"</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="Input" type="InputType">
+                    <xs:annotation>
+                        <xs:documentation>Allowed only if subClass="VRTProcessedDataset"</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="ProcessingSteps" type="ProcessingStepsType">
+                    <xs:annotation>
+                        <xs:documentation>Allowed only if subClass="VRTProcessedDataset"</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="Group" type="GroupType">
+                    <xs:annotation>
+                        <xs:documentation>only for multidimensional dataset</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="OverviewList" type="OverviewListType"/>
+            </xs:choice>
+        </xs:sequence>
+        <xs:attribute name="subClass" type="DatasetSubclassType"/>
+        <xs:attribute name="rasterXSize" type="nonNegativeInteger32"/>
+        <xs:attribute name="rasterYSize" type="nonNegativeInteger32"/>
+    </xs:complexType>
+
+    <xs:simpleType name="DatasetSubclassType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="VRTWarpedDataset"/>
+            <xs:enumeration value="VRTPansharpenedDataset"/>
+            <xs:enumeration value="VRTProcessedDataset">
+                <xs:annotation>
+                    <xs:documentation>Added in GDAL 3.9</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
 
     <xs:complexType name="OverviewListType">
         <xs:simpleContent>
@@ -158,6 +204,51 @@
         </xs:sequence>
     </xs:complexType>
 
+    <xs:complexType name="InputType">
+        <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="1">
+                <xs:element name="SourceFilename" type="SourceFilenameType"/>
+                <xs:element name="VRTDataset" type="VRTDatasetType"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ProcessingStepsType">
+        <xs:sequence minOccurs="1" maxOccurs="unbounded">
+            <xs:element name="Step" type="ProcessingStepType"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="ProcessingStepType">
+        <xs:annotation>
+            <xs:documentation>Processing step of a VRTPansharpenedDataset</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="Algorithm" type="xs:string" minOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>Builtin allowed names are BandAffineCombination, LUT, LocalScaleOffset, Trimming. More algorithms can be registered at run-time.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="Argument" type="ArgumentType" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="ArgumentType">
+        <xs:annotation>
+            <xs:documentation>Argument of a processing function</xs:documentation>
+        </xs:annotation>
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="name" type="xs:string" use="required">
+                    <xs:annotation>
+                        <xs:documentation>Allowed names are specific of each processing function</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
     <xs:complexType name="MDIType">
         <xs:simpleContent>
             <xs:extension base="xs:string">
@@ -234,6 +325,7 @@
             <xs:enumeration value="VRTDerivedRasterBand"/>
             <xs:enumeration value="VRTRawRasterBand"/>
             <xs:enumeration value="VRTPansharpenedRasterBand"/>
+            <xs:enumeration value="VRTProcessedRasterBand"/>
         </xs:restriction>
     </xs:simpleType>
 
