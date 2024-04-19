@@ -506,6 +506,8 @@ class VSICurlHandle : public VSIVirtualHandle
     void AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
                     const size_t *panSizes) override;
 
+    size_t GetAdviseReadTotalBytesLimit() const override;
+
     bool IsKnownFileSize() const
     {
         return oFileProp.bHasComputedFileSize;

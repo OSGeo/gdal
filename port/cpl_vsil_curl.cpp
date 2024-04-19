@@ -32,9 +32,10 @@
 
 #include <algorithm>
 #include <array>
-#include <set>
+#include <limits>
 #include <map>
 #include <memory>
+#include <set>
 
 #include "cpl_aws.h"
 #include "cpl_json.h"
@@ -3154,6 +3155,21 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
 }
 
 /************************************************************************/
+/*                  GetAdviseReadTotalBytesLimit()                      */
+/************************************************************************/
+
+size_t VSICurlHandle::GetAdviseReadTotalBytesLimit() const
+{
+    return static_cast<size_t>(std::min<unsigned long long>(
+        std::numeric_limits<size_t>::max(),
+        // 100 MB
+        std::strtoull(
+            CPLGetConfigOption("CPL_VSIL_CURL_ADVISE_READ_TOTAL_BYTES_LIMIT",
+                               "104857600"),
+            nullptr, 10)));
+}
+
+/************************************************************************/
 /*                         AdviseRead()                                 */
 /************************************************************************/
 
@@ -3171,9 +3187,10 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
 
     // Give up if we need to allocate too much memory
     vsi_l_offset nMaxSize = 0;
+    const size_t nLimit = GetAdviseReadTotalBytesLimit();
     for (int i = 0; i < nRanges; ++i)
     {
-        if (panSizes[i] > 100 * 1024 * 1024 - nMaxSize)
+        if (panSizes[i] > nLimit - nMaxSize)
         {
             CPLDebug(poFS->GetDebugKey(),
                      "Trying to request too many bytes in AdviseRead()");
@@ -3994,7 +4011,10 @@ const char *VSICurlFilesystemHandlerBase::GetActualURL(const char *pszFilename)
     "default='16384000'/>"                                                     \
     "  <Option name='CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE' type='boolean' "    \
     "description='Whether to skip files with Glacier storage class in "        \
-    "directory listing.' default='YES'/>"
+    "directory listing.' default='YES'/>"                                      \
+    "  <Option name='CPL_VSIL_CURL_ADVISE_READ_TOTAL_BYTES_LIMIT' "            \
+    "type='integer' description='Maximum number of bytes AdviseRead() is "     \
+    "allowed to fetch at once' default='104857600'/>"
 
 const char *VSICurlFilesystemHandlerBase::GetOptionsStatic()
 {

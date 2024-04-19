@@ -87,6 +87,23 @@ struct CPL_DLL VSIVirtualHandle
     {
     }
 
+    /** Return the total maximum number of bytes that AdviseRead() can handle
+     * at once.
+     *
+     * Some AdviseRead() implementations may give up if the sum of the values
+     * in the panSizes[] array provided to AdviseRead() exceeds a limit.
+     *
+     * Callers might use that threshold to optimize the efficiency of
+     * AdviseRead().
+     *
+     * A returned value of 0 indicates a unknown limit.
+     * @since GDAL 3.9
+     */
+    virtual size_t GetAdviseReadTotalBytesLimit() const
+    {
+        return 0;
+    }
+
     virtual size_t Write(const void *pBuffer, size_t nSize, size_t nCount) = 0;
 
     int Printf(CPL_FORMAT_STRING(const char *pszFormat), ...)
