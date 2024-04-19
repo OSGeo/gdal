@@ -5081,6 +5081,7 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
                 VSIFree(outptr);
                 return nullptr;
             }
+            outptr = nullptr;
             nOutAvailableBytes = nOutBufSize;
         }
         else
@@ -5119,6 +5120,7 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
     {
         if (bAllowResizeOutptr)
             VSIFree(outptr);
+        VSIFree(pszReallocatableBuf);
         return nullptr;
     }
 
@@ -5150,6 +5152,7 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
         pszReallocatableBuf = pszOutBuf;
         bAllowResizeOutptr = true;
     }
+#ifndef HAVE_LIBDEFLATE
     else
     {
         pszOutBuf = static_cast<char *>(outptr);
@@ -5157,6 +5160,7 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
         if (bAllowResizeOutptr)
             pszReallocatableBuf = pszOutBuf;
     }
+#endif
 
     strm.next_in = static_cast<Bytef *>(const_cast<void *>(ptr));
     strm.next_out = reinterpret_cast<Bytef *>(pszOutBuf);
@@ -5177,12 +5181,16 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
 
         if (ret == Z_BUF_ERROR && strm.avail_out == 0)
         {
+#ifdef HAVE_LIBDEFLATE
+            CPLAssert(bAllowResizeOutptr);
+#else
             if (!bAllowResizeOutptr)
             {
                 VSIFree(pszReallocatableBuf);
                 inflateEnd(&strm);
                 return nullptr;
             }
+#endif
 
             const size_t nAlreadyWritten = nOutBufSize - nOutBytesRemaining;
             if (nOutBufSize > (std::numeric_limits<size_t>::max() - 1) / 2)
