@@ -4214,13 +4214,9 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
             }
         }
         if (bReverseArc)
-            pCoord = pCoordReal + pCurrentArcHeader->nElemCount;
+            pCoord = pCoordReal + pCurrentArcHeader->nElemCount + 1;
         else
             pCoord += pCurrentArcHeader->nElemCount;
-
-        // If the ring is finished a jump to the next ring must be done.
-        if (hMiraMonLayer->bIsPolygon && VFG & MM_END_ARC_IN_RING)
-            pCoord++;
 
         nPolVertices += pCurrentArcHeader->nElemCount;
 
