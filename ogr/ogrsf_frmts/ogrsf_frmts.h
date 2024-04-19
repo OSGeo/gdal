@@ -741,6 +741,7 @@ void DeclareDeferredOGRArrowPlugin();
 void CPL_DLL RegisterOGRGTFS();
 void CPL_DLL RegisterOGRPMTiles();
 void CPL_DLL RegisterOGRJSONFG();
+void CPL_DLL RegisterOGRMiraMon();
 // @endcond
 
 CPL_C_END

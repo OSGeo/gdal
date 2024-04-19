@@ -263,6 +263,9 @@ void OGRRegisterAllInternal()
 #ifdef JSONFG_ENABLED
     RegisterOGRJSONFG();
 #endif
+#ifdef MIRAMON_ENABLED
+    RegisterOGRMiraMon();
+#endif
 
     // NOTE: you need to generally insert your own driver before that line.
 

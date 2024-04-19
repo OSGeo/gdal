@@ -1,0 +1,233 @@
+PSIDGEODES;ID_GEODES;NOTA_CAT;NOTA_SPA;NOTA_ENG
+ESRI:102022;Albers_Equal_Area-Africa-WGS84;;;
+ESRI:102025;Albers_Equal_Area-Asia_North-WGS84;;;
+EPSG:5070;Albers_Equal_Area-N_America-NAD83;https://epsg.io/5070;https://epsg.io/5070;https://epsg.io/5070
+Azimuthal_Equidistant;Azimuthal_Equidistant-0-90-WGS84;;;
+EPSG:4088;Cilindrical_Equidistant-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+Cylindrical_Equal_Area;Cylindrical_Equal_Area-15-0-WGS84;;;
+EPSG:22171;Gauss-Kruger_Faja1-PosGAR98;;;
+EPSG:22172;Gauss-Kruger_Faja2-PosGAR98;;;
+EPSG:22173;Gauss-Kruger_Faja3-PosGAR98;;;
+EPSG:22174;Gauss-Kruger_Faja4-PosGAR98;;;
+EPSG:22175;Gauss-Kruger_Faja5-PosGAR98;;;
+EPSG:22176;Gauss-Kruger_Faja6-PosGAR98;;;
+EPSG:22177;Gauss-Kruger_Faja7-PosGAR98;;;
+EPSG:3763;Gauss-Kruger_Portugal-ETRS89;;;
+PT-TM06/ETRS89;Gauss-Kruger_Portugal-ETRS89;;;
+EPSG:20791;Gauss-Kruger_Portugal-Lisboa1937;;;
+EPSG:2932;Gauss-Kruger_Qatar-QND;;;
+EPSG:3116;Gauss-Kruger_Zona2-MAGNA;;;
+SR-ORG:9111;Geostationary-WGS84;;;
+Goode_Homolosine;Goode_Homolosine-WGS84;;;
+ESRI:102017;LambertAzimEqualA-0-90-WGS84-Ellipsoide;https://epsg.io/102017;https://epsg.io/102017;https://epsg.io/102017
+EPSG:9821;LambertAzimEqualA-0-90-WGS84-Esfera;https://epsg.io/9821-method;https://epsg.io/9821-method;https://epsg.io/9821-method
+Lambert_Azimuthal_Equal_Area;LambertAzimEqualA-0-90-WGS84-Esfera;;;
+Lambert_Azimuthal_Equal_Area-0-90-WGS84;LambertAzimEqualA-0-90-WGS84-Esfera;;;
+EPSG:3035;Lambert_Azimuthal_Equal_Area-1052-ETRS89;;;
+urn:ogc:def:crs:EPSG::3035;Lambert_Azimuthal_Equal_Area-1052-ETRS89;;;
+ETRS-LAEA;Lambert_Azimuthal_Equal_Area-1052-ETRS89;;;
+SR-ORG:7297;Lambert_Azimuthal_Equal_Area-9-48-ETRS89;;;
+ETRS-LCC;Lambert_Conformal_Conic-Europa-ETRS89;;;
+EPSG:3034;Lambert_Conformal_Conic-Europa-ETRS89;;;
+EPSG:2154;Lambert_Conformal_Conic-França-ETRS89;;;
+EPSG:2062;Lambert_Conformal_Conic-Madrid1870;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26191;Lambert_Conformal_Conic-Maroc_N-Merchich;;;
+EPSG:27561;Lambert_Conformal_Conic-ZoneI-NTF;;;
+EPSG:27562;Lambert_Conformal_Conic-ZoneII-NTF;;;
+EPSG:27563;Lambert_Conformal_Conic-ZoneIII-NTF;;;
+Lambert_Conformal_Conic;Lambert_Conformal_Conic-ZoneIII-NTF;;;
+EPSG:27573;Lambert_Conformal_Conic-ZoneIII_ext-NTF;;;
+EPSG:27572;Lambert_Conformal_Conic-ZoneII_ext-NTF;;;
+AUTO2:LCC,1,14.5,38,35,41;Lambert_Conformal_Conic_ICC_Mediterrani;;;
+AUTO2:MERCATOR,1,0,0.0;Mercator-Equator-ED50-UB/ICC;;;
+Mercator;Mercator-Equator-ED50-UB/ICC;;;
+Mercator-ED50;Mercator-Equator-ED50-UB/ICC;;;
+Mercator-ED50-UB/ICC;Mercator-Equator-ED50-UB/ICC;;;
+Mercator-Ecuador-ED50-UB/ICC;Mercator-Equator-ED50-UB/ICC;;;
+EPSG:3395;Mercator-Equator-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+AUTO2:MERCATOR,1,0,40.60;Mercator-IHM-485-60k-ED50-UB/ICC;;;
+AUTO2:MERCATOR,1,0,41.42;Mercator-IHM-489-50k-ED50-UB/ICC;;;
+AUTO2:MERCATOR_WGS84,1,0,41.42;Mercator-IHM-489-50k-WGS84;;;
+EPSG:3785;Mercator-Popular-Visualisation-Sphere;;;
+EPSG:3857;Mercator-Popular-Visualisation-Sphere;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+urn:ogc:def:crs:EPSG::3857;Mercator-Popular-Visualisation-Sphere;;;
+EPSG:900913;Mercator-Popular-Visualisation-Sphere;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+ESRI:102100;Mercator-Popular-Visualisation-Sphere;;;
+EPSG:21782;ObliqueMercator-Rosenmund1903;;;
+SR-ORG:6842;Sinusoidal-V5-MODIS;https://spatialreference.org/ref/sr-org/modis-sinusoidal/;https://spatialreference.org/ref/sr-org/modis-sinusoidal/;https://spatialreference.org/ref/sr-org/modis-sinusoidal/
+SR-ORG:6974;Sinusoidal-V5-MODIS;https://spatialreference.org/ref/sr-org/modis-sinusoidal-3/;https://spatialreference.org/ref/sr-org/modis-sinusoidal-3/;https://spatialreference.org/ref/sr-org/modis-sinusoidal-3/
+SR-ORG:6965;Sinusoidal-V5-MODIS;https://spatialreference.org/ref/sr-org/modis-sinusoidal-2/;https://spatialreference.org/ref/sr-org/modis-sinusoidal-2/;https://spatialreference.org/ref/sr-org/modis-sinusoidal-2/
+Sinusoidal;Sinusoidal-WGS84;;;
+EPSG:3909;TransverseMercator-BalkansMGI1901;;;
+EPSG:2393;TransverseMercator-Finland-KKJ;;;
+EPSG:29903;TransverseMercator-Ireland1965;;;
+EPSG:2039;TransverseMercator-Israel1989;;;
+EPSG:3003;TransverseMercator-Monte_Mario-Italy_Z1;;;
+EPSG:3021;TransverseMercator-Sweden-RT90;;;
+EPSG:26710;UTM-10N-NAD27-CW;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:32610;UTM-10N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26901;UTM-1N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26902;UTM-2N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26903;UTM-3N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26904;UTM-4N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26905;UTM-5N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26906;UTM-6N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26906;UTM-7N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26908;UTM-8N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26909;UTM-9N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26910;UTM-10N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26911;UTM-11N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26912;UTM-12N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26913;UTM-13N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26914;UTM-14N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26915;UTM-15N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26916;UTM-16N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26917;UTM-17N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26918;UTM-18N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26919;UTM-19N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26920;UTM-20N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26921;UTM-21N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26922;UTM-22N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26923;UTM-23N-NAD83;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26711;UTM-11N-NAD27-CW;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:4486;UTM-13N-ITRF92;;;
+EPSG:26713;UTM-13N-NAD27-MX;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:4487;UTM-14N-ITRF92;;;
+EPSG:26714;UTM-14N-NAD27-MX;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:4488;UTM-15N-ITRF92;;;
+EPSG:26715;UTM-15N-NAD27-MX;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:26915;UTM-15N-NAD83;;;
+EPSG:26716;UTM-16N-NAD27-BC;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:32616;UTM-16N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:24877;UTM-17S-PSA56-P;;;
+EPSG:29187;UTM-17S-SAD69-PE;;;
+EPSG:32717;UTM-17S-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:32618;UTM-18N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:29188;UTM-18S-SAD69-CH;;;
+EPSG:32718;UTM-18S-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:29169;UTM-19N-SAD69-BR;;;
+EPSG:32619;UTM-19N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:24879;UTM-19S-PSAD56-BC;;;
+EPSG:24879-1201;UTM-19S-PSAD56-BC;Transformació per defecte segons https://epsg.io/24879;Transformación por defecto según https://epsg.io/24879;Default transformation according to https://epsg.io/24879
+EPSG:24879-1203;UTM-19S-PSAD56-CN;;;
+EPSG:24879-1209;UTM-19S-PSAD56-V;;;
+EPSG:29189;UTM-19S-SAD69-CH;;;
+EPSG:32719;UTM-19S-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:29170;UTM-20N-SAD69-BR;;;
+EPSG:32620;UTM-20N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:29190;UTM-20S-SAD69-BR;;;
+EPSG:32720;UTM-20S-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;;
+EPSG:29171;UTM-21N-SAD69-BR;;;
+EPSG:32621;UTM-21N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;;
+EPSG:29191;UTM-21S-SAD69-BR;;;
+EPSG:32721;UTM-21S-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;;
+EPSG:29172;UTM-22N-SAD69-BR;;;
+EPSG:32622;UTM-22N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;;
+EPSG:29192;UTM-22S-SAD69-BR;;;
+EPSG:32722;UTM-22S-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;;
+EPSG:29193;UTM-23S-SAD69-BR;;;
+EPSG:29194;UTM-24S-SAD69-BR;;;
+EPSG:29195;UTM-25S-SAD69-BR;;;
+ETRS-TM26;UTM-26N-ETRS89;;;
+EPSG:3038;UTM-26N-ETRS89;;;
+EPSG:3039;UTM-27N-ETRS89;;;
+ETRS-TM27;UTM-27N-ETRS89;;;
+EPSG:32627;UTM-27N-WGS84;Ordre d'eixos preferit: est-nord (XY). Sense paràmetres TOWGS84 a https://epsg.io/;Orden de ejes preferido: est-norte (XY). Sin parámetros TOWGS84 en https://epsg.io/;Preferred axis order: east-north (XY). No TOWGS84 parameters at https://epsg.io/
+EPSG:3040;UTM-28N-ETRS89;Ordre d'eixos preferit: nord-est (YX);Orden de ejes preferido: norte-est (YX). Sin parámetros TOWGS84 en https://epsg.io/;Preferred axis order: north-east (YX). No TOWGS84 parameters at https://epsg.io/
+ETRS-TM28;UTM-28N-ETRS89;;;
+EPSG:4083;UTM-28N-REGCAN95;;;
+EPSG:32628;UTM-28N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:23029;UTM-29N-S/IGN;;;
+EPSG:23029-0000;UTM-29N-ED50-ABDF;;;
+EPSG:23029-1145;UTM-29N-ED50-PS;;;
+EPSG:25829;UTM-29N-ETRS89;Ordre d'eixos preferit: est-nord (XY);Orden de ejes preferido: est-norte (XY);Preferred axis order: east-north (XY)
+EPSG:3041;UTM-29N-ETRS89;Ordre d'eixos preferit: nord-est (YX);Orden de ejes preferido: norte-est (YX);Preferred axis order: north-east (YX)
+urn:ogc:def:crs:EPSG::25829;UTM-29N-ETRS89;;;
+ETRS-TM29;UTM-29N-ETRS89;;;
+EPSG:23029-1633;UTM-29N-S/IGN;;;
+EPSG:32629;UTM-29N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+urn:ogc:def:crs:EPSG::23029;UTM-29N-S/IGN;;;
+EPSG:25830;UTM-30N-ETRS89;Ordre d'eixos preferit: est-nord (XY);Orden de ejes preferido: est-norte (XY);Preferred axis order: east-north (XY)
+EPSG:3042;UTM-30N-ETRS89;Ordre d'eixos preferit: nord-est (YX);Orden de ejes preferido: norte-est (YX);Preferred axis order: north-east (YX)
+urn:ogc:def:crs:EPSG::25830;UTM-30N-ETRS89;;;
+ETRS-TM30;UTM-30N-ETRS89;;;
+EPSG:23030;UTM-30N-S/IGN;;;
+EPSG:23030-0000;UTM-30N-ABDF;Transformació per defecte segons https://epsg.io/23030-to-4326;Transformación por defecto según https://epsg.io/23030-to-4326;Default transformation according to https://epsg.io/23030-to-4326
+EPSG:23030-15933;UTM-30N-IP;;;
+EPSG:23030-1631;UTM-30N-Balearic;;;
+EPSG:23030-1635;UTM-30N-NW_IP;;;
+EPSG:23030-1145;UTM-30N-PS;;;
+EPSG:23030-1633;UTM-30N-S/IGN;;;
+urn:ogc:def:crs:EPSG::23030;UTM-30N-S/IGN;;;
+UTM-30N;UTM-30N-S/IGN;;;
+EPSG:32630;UTM-30N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:25831;UTM-31N-ETRS89;Ordre d'eixos preferit: est-nord (XY);Orden de ejes preferido: est-norte (XY);Preferred axis order: east-north (XY)
+EPSG:3043;UTM-31N-ETRS89;Ordre d'eixos preferit: nord-est (YX);Orden de ejes preferido: norte-est (YX);Preferred axis order: north-east (YX)
+urn:ogc:def:crs:EPSG::25831;UTM-31N-ETRS89;;;
+ETRS-TM31;UTM-31N-ETRS89;;;
+UTM-31N;UTM-31N-UB/ICC;;;
+UTM-31N-ED50;UTM-31N-UB/ICC;;;
+EPSG:23031;UTM-31N-UB/ICC;Excepcionalment no es fa correspondre a UTM-31N-ABDF (=https://epsg.io/23031) sinó a UTM-31N-UB/ICC per compatibilitat descendent;Excepcionalmente no se hace corresponder a UTM-31N-ABDF (=https://epsg.io/23031) sino a UTM-31N-UB/ICC por compatibilidad descendente;Exceptionally it does not correspond to UTM-31N-ABDF (=https://epsg.io/23031) but to UTM-31N-UB/ICC for backwards compatibility
+EPSG:23031-0000;UTM-31N-ABDF;Transformació per defecte segons https://epsg.io/23031-to-4326;Transformación por defecto según https://epsg.io/23031-to-4326;Default transformation according to https://epsg.io/23031-to-4326
+urn:ogc:def:crs:EPSG::23031;UTM-31N-UB/ICC;;;
+EPSG:32631;UTM-31N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:25832;UTM-32N-ETRS89;;;
+ETRS-TM32;UTM-32N-ETRS89;;;
+EPSG:32632;UTM-32N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:25833;UTM-33N-ETRS89;;;
+ETRS-TM33;UTM-33N-ETRS89;;;
+EPSG:32633;UTM-33N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:22033;UTM-33S-Camacupa1980;;;
+EPSG:32733;UTM-33S-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:25834;UTM-34N-ETRS89;;;
+ETRS-TM34;UTM-34N-ETRS89;;;
+EPSG:2100;UTM-34N-GGRS87;;;
+EPSG:32634;UTM-34N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:25835;UTM-35N-ETRS89;;;
+ETRS-TM35;UTM-35N-ETRS89;;;
+EPSG:32635;UTM-35N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+ETRS-TM36;UTM-36N-ETRS89;;;
+EPSG:25836;UTM-36N-ETRS89;;;
+EPSG:32636;UTM-36N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:2736;UTM-36S-Tete-MZ;;;
+EPSG:32736;UTM-36S-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+ETRS-TM37;UTM-37N-ETRS89;;;
+EPSG:25837;UTM-37N-ETRS89;;;
+EPSG:32637;UTM-37N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+ETRS-TM38;UTM-38N-ETRS89;;;
+EPSG:25838;UTM-38N-ETRS89;;;
+ETRS-TM39;UTM-39N-ETRS89;;;
+EPSG:32642;UTM-42N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:32643;UTM-43N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:32644;UTM-44N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:32647;UTM-47N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:32659;UTM-59N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:32759;UTM-59S-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:32606;UTM-6N-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:4218;lat/long-Bogota;;;
+EPSG:4149;lat/long-CH1903;;;
+EPSG:4230-1145;lat/long-ED50-PS;;;
+EPSG:4230-1633;lat/long-ED50-S/IGN;;;
+EPSG:4230-0000;lat/long-ED50-ABDF;Transformació per defecte segons https://epsg.io/4230-to-4326;Transformación por defecto según https://epsg.io/4230-to-4326;Default transformation according to https://epsg.io/4230-to-4326
+EPSG:4230;lat/long-ED50-UB/ICC;;;
+lat/long-ED50;lat/long-ED50-UB/ICC;;;
+EPSG:4258;lat/long-ETRS89;;;
+EPSG:4686;lat/long-MAGNA;;;
+EPSG:4903;lat/long-Madrid1870;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:4261;lat/long-Merchich;;;
+EPSG:4267;lat/long-NAD27-BC;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+EPSG:4269;lat/long-NAD83-AA;;;
+EPSG:4275;lat/long-NTF;;;
+EPSG:4190;lat/long-PosGAR98;;;
+EPSG:4081;lat/long-REGCAN95;;;
+EPSG:5527;lat/long-SAD69-CH;;;
+EPSG:4124;lat/long-Sweden-RT90;;;
+EPSG:4127;lat/long-Tete-MZ;;;
+EPSG:4326;lat/long-WGS84;Sense paràmetres TOWGS84 a https://epsg.io/;Sin parámetros TOWGS84 en https://epsg.io/;No TOWGS84 parameters at https://epsg.io/
+urn:ogc:def:crs:EPSG::4326;lat/long-WGS84;;;
+CRS:84;lat/long-WGS84;;;
+Equirectangular;lat/long-WGS84;;;
+lat/long;lat/long-WGS84;;;
+urn:ogc:def:crs:OGC:1.3:CRS84;lat/long-WGS84;;;
+EPSG:9377;Transverse-Mercator_Colombia_ONacional;;;
+MAGNA-SIRGAS / Origen-Nacional;Transverse-Mercator_Colombia_ONacional;https://origen.igac.gov.co/herramientas.html;https://origen.igac.gov.co/herramientas.html;https://origen.igac.gov.co/herramientas.html

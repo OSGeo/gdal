@@ -1,0 +1,108 @@
+[VERSIO]
+VersMetaDades=5
+SubVersMetaDades=0
+Vers=4
+SubVers=3
+
+[METADADES]
+language=cat
+MDIdiom=cat
+dateStamp=20240319 11074377+0100
+characterSet=006
+nOrganismes=2
+FileIdentifier=MARC0000_10835
+
+[METADADES:ORGANISME_1]
+role=009
+IndividualName=Abel Pau
+PositionName=Tècnic en SIG
+OrganisationName=CREAF
+
+[METADADES:ORGANISME_2]
+role=009
+OrganisationName=Students and educational institutions
+
+[IDENTIFICATION]
+code=MARC0000_07743
+codeSpace=
+DatasetTitle=Triangulació de Delaunay - Selecció de -> Selecció de -> Retall de->D:\dades\20220909_Thiessen\AltEmporda\centroides_02.pnt [Plantill]
+
+[OVERVIEW:ASPECTES_TECNICS]
+comment1=Nodes del fitxer d'arcs 'D:\dades\20220909_Thiessen\AltEmporda\sel2\out_ID_B_tin.arc'
+
+[EXTENT]
+MinX=510886.760465633
+MaxX=511161.917984244
+MinY=4660885.499725
+MaxY=4661425.355
+toler_env=0
+
+[OVERVIEW]
+CreationDate=20240319 11074377+0100
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_N_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+visible=0
+simbolitzable=0
+MostrarUnitats=0
+descriptor=Identificador Gràfic intern
+
+[TAULA_PRINCIPAL:ARCS_A_NOD]
+MostrarUnitats=0
+descriptor=Nombre d'arcs al node
+
+[TAULA_PRINCIPAL:TIPUS_NODE]
+MostrarUnitats=0
+descriptor=Tipus de node
+
+[QUALITY:LINEAGE:PROCESS1]
+nOrganismes=1
+history=VecSelec_64.exe /EMANCIPA D:\GitHub-repository\gdal\autotest\ogr\data\miramon\Polygons\3dPolygons\TMP0000.SEL D:\GitHub-repository\gdal\autotest\ogr\data\miramon\Polygons\3dPolygons\tin_3d
+purpose=Un fitxer de text indica quines són les entitats gràfiques i registres de la base de dades que cal desar en el fitxer de sortida. En aquesta ajuda ens referirem a aquest fitxer com a fitxer de seleccions. Es recomana l'extensió SEL, tot i que no és obligatòria.
+date=20240318 15230787+0100
+NomFitxer=C:\MiraMon\VecSelec_64.exe
+
+[QUALITY:LINEAGE:PROCESS1:ORGANISME_1]
+IndividualName=Abel Pau
+PositionName=Tècnic en SIG
+OrganisationName=CREAF
+
+[QUALITY:LINEAGE:PROCESS1:SOFTWARE_REFERENCE]
+Titol=
+Edition=
+CollectiveTitle=
+ISBN=
+ISSN=
+
+[QUALITY:LINEAGE:PROCESS1:INOUT1]
+identifier=EMANCIPA
+ResultUnits=
+
+[QUALITY:LINEAGE:PROCESS1:INOUT2]
+identifier=Param1
+TypeValues=S
+ResultUnits=
+source=1
+
+[QUALITY:LINEAGE:SOURCE1]
+NomFitxer=TMP0000.SEL
+
+[QUALITY:LINEAGE:PROCESS1:INOUT3]
+identifier=Param2
+sentit=1
+TypeValues=S
+ResultUnits=
+source=2
+
+[QUALITY:LINEAGE:SOURCE2]
+NomFitxer=tin_3d
+
+[QUALITY:LINEAGE]
+processes=1
+
+[GEOMETRIA_I_TOPOLOGIA]
+NomCampArcsANode=ARCS_A_NOD
+NomCampTipusNode=TIPUS_NODE

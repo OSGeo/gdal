@@ -1,0 +1,83 @@
+[VERSIO]
+Vers=4
+SubVers=3
+VersMetaDades=5
+SubVersMetaDades=0
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_N_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+visible=0
+MostrarUnitats=0
+descriptor=Identificador Gràfic intern
+
+[TAULA_PRINCIPAL:ARCS_A_NOD]
+MostrarUnitats=0
+descriptor=Nombre d'arcs al node
+
+[TAULA_PRINCIPAL:TIPUS_NODE]
+MostrarUnitats=0
+descriptor=Tipus de node
+
+[METADADES]
+language=cat
+MDIdiom=cat
+dateStamp=20240311 09500993
+characterSet=006
+nOrganismes=2
+FileIdentifier=linies_3d_29042
+
+[METADADES:ORGANISME_1]
+role=009
+OrganisationName=CREAF
+IndividualName=Abel Pau
+PositionName=Tècnic en SIG
+
+[IDENTIFICATION]
+code=linies_3d_29042
+codeSpace=
+DatasetTitle=Linies
+
+[OVERVIEW:ASPECTES_TECNICS]
+comment1=Nombre d'arcs: 6
+comment2=El fitxer era anteriorment en la projecció UTM-31N-ETRS89
+
+[EXTENT]
+MinX=1.28287097369422
+MaxX=1.98292118178235
+MinY=41.1902658152019
+MaxY=41.6776900669325
+toler_env=0
+
+[OVERVIEW]
+CreationDate=20240311 09500616
+
+[METADADES:ORGANISME_2]
+role=009
+OrganisationName=Students and educational institutions
+
+[QUALITY:LINEAGE:PROCESS1]
+nOrganismes=1
+history=C:\MiraMon\MM64.exe
+date=20230912 16505195+0200
+
+[QUALITY:LINEAGE:PROCESS1:ORGANISME_1]
+OrganisationName=Students and educational institutions
+
+[QUALITY:LINEAGE:PROCESS2]
+nOrganismes=1
+history=Vec3D.exe 1 C:\Mapes\ColleccionsPreferides\Catalunya-ETRS89\Altimetria30m\MDE30m_ICC_Aster_mar0.img D:\dades\GDAL_V\KML\multi\+\linies.arc D:\dades\GDAL_V\KML\multi\+\linies_3d.arc 0
+purpose=Incorpora la 3a dimensió en capes vectorials
+date=20231031 13263780+0100
+
+[QUALITY:LINEAGE:PROCESS2:ORGANISME_1]
+OrganisationName=Students and educational institutions
+
+[QUALITY:LINEAGE]
+processes=1,2
+
+[GEOMETRIA_I_TOPOLOGIA]
+NomCampArcsANode=ARCS_A_NOD
+NomCampTipusNode=TIPUS_NODE
