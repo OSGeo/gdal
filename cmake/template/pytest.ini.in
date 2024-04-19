@@ -27,6 +27,10 @@ markers =
     require_proj: Skip test(s) if required PROJ version is not available
     require_run_on_demand: Skip test(s) if RUN_ON_DEMAND environment variable is not set
     slow: Skip test(s) if GDAL_RUN_SLOW_TESTS environment variable is not set
+    xdist_group: Associated test with a named group that will be sent to a single parallel worker
 
 # Make sure that all markers are declared above
-addopts = --strict-markers
+# --strict-markers causes an error if a test has a marker that is not handled
+# --dist=loadgroup instructs pytest-xdist to send tests marked with the same
+#                  xdist_group marker to the same worker.
+addopts = --strict-markers --dist=loadgroup

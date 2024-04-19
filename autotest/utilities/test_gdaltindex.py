@@ -41,6 +41,7 @@ pytestmark = [
         reason="gdaltindex not available",
     ),
     pytest.mark.random_order(disabled=True),
+    pytest.mark.xdist_group("test_gdaltindex"),
 ]
 
 

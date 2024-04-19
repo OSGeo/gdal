@@ -41,7 +41,10 @@ try:
 except ImportError:
     pytest.skip("hdbcli not available", allow_module_level=True)
 
-pytestmark = pytest.mark.require_driver("HANA")
+pytestmark = [
+    pytest.mark.require_driver("HANA"),
+    pytest.mark.random_order(disabled=True),
+]
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
@@ -1247,7 +1250,7 @@ def get_connection_str():
     if uri is not None:
         conn_str = uri + ";ENCRYPT=YES;SSL_VALIDATE_CERTIFICATE=false;CHAR_AS_UTF8=1"
     else:
-        conn_str = "HANA:autotest"
+        pytest.skip("OGR_HANA_CONNECTION_STRING not set")
 
     return conn_str
 

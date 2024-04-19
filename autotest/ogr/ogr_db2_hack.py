@@ -55,12 +55,8 @@ def test_ogr_db2_hack_1():
 
     assert wkb[0] == "1", "WKB wkbNDR point geometry has wrong byte order"
 
-
-###############################################################################
-# Verify that we can turn DB2 V7.2 mode back off!
-
-
-def test_ogr_db2_hack_2():
+    ###############################################################################
+    # Verify that we can turn DB2 V7.2 mode back off!
 
     assert (
         ogr.SetGenerate_DB2_V72_BYTE_ORDER(0) == 0

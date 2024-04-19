@@ -96,12 +96,24 @@ def aws_test_config():
         yield
 
 
+# Launch a single webserver in a module-scoped fixture.
+# Provide the port in a function-scoped fixture so that we only
+# set AWS_S3_ENDPOINT for tests that are using it.
 @pytest.fixture(scope="module")
-def webserver_port():
+def webserver_launch():
 
-    webserver_process, webserver_port = webserver.launch(
-        handler=webserver.DispatcherHttpHandler
-    )
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
+
+    yield process, port
+
+    webserver.server_stop(process, port)
+
+
+@pytest.fixture(scope="function")
+def webserver_port(webserver_launch):
+
+    webserver_process, webserver_port = webserver_launch
+
     try:
         if webserver_port == 0:
             pytest.skip()
@@ -112,13 +124,12 @@ def webserver_port():
     finally:
         gdal.VSICurlClearCache()
 
-        webserver.server_stop(webserver_process, webserver_port)
-
 
 ###############################################################################
 
 
 def test_vsis3_init(aws_test_config):
+
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
@@ -171,6 +182,7 @@ def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials)
 
 
 def test_vsis3_sync_multithreaded_download(
+    tmp_vsimem,
     aws_test_config_as_config_options_or_credentials,
 ):
     def cbk(pct, _, tab):
@@ -192,28 +204,31 @@ def test_vsis3_sync_multithreaded_download(
     ):
         assert gdal.Sync(
             "/vsis3/cdn.proj.org/test_dummy",
-            "/vsimem/test_vsis3_no_sign_request_sync",
+            tmp_vsimem / "test_vsis3_no_sign_request_sync",
             options=["NUM_THREADS=2"],
             callback=cbk,
             callback_data=tab,
         )
     assert tab[0] == 1.0
     assert (
-        gdal.VSIStatL("/vsimem/test_vsis3_no_sign_request_sync/test_dummy/foo").size
+        gdal.VSIStatL(
+            tmp_vsimem / "test_vsis3_no_sign_request_sync/test_dummy/foo"
+        ).size
         == 4
     )
     assert (
-        gdal.VSIStatL("/vsimem/test_vsis3_no_sign_request_sync/test_dummy/bar").size
+        gdal.VSIStatL(
+            tmp_vsimem / "test_vsis3_no_sign_request_sync/test_dummy/bar"
+        ).size
         == 4
     )
-    gdal.RmdirRecursive("/vsimem/test_vsis3_no_sign_request_sync")
 
 
 ###############################################################################
 # Test Sync() and multithreaded download and CHUNK_SIZE
 
 
-def test_vsis3_sync_multithreaded_download_chunk_size(aws_test_config):
+def test_vsis3_sync_multithreaded_download_chunk_size(tmp_vsimem, aws_test_config):
     def cbk(pct, _, tab):
         assert pct >= tab[0]
         tab[0] = pct
@@ -229,22 +244,24 @@ def test_vsis3_sync_multithreaded_download_chunk_size(aws_test_config):
     with gdaltest.config_options(options, thread_local=False):
         assert gdal.Sync(
             "/vsis3/cdn.proj.org/test_dummy",
-            "/vsimem/test_vsis3_no_sign_request_sync",
+            tmp_vsimem / "test_vsis3_no_sign_request_sync",
             options=["NUM_THREADS=2", "CHUNK_SIZE=3"],
             callback=cbk,
             callback_data=tab,
         )
     assert tab[0] == 1.0
     assert (
-        gdal.VSIStatL("/vsimem/test_vsis3_no_sign_request_sync/test_dummy/foo").size
+        gdal.VSIStatL(
+            tmp_vsimem / "test_vsis3_no_sign_request_sync/test_dummy/foo"
+        ).size
         == 4
     )
     assert (
-        gdal.VSIStatL("/vsimem/test_vsis3_no_sign_request_sync/test_dummy/bar").size
+        gdal.VSIStatL(
+            tmp_vsimem / "test_vsis3_no_sign_request_sync/test_dummy/bar"
+        ).size
         == 4
     )
-
-    gdal.RmdirRecursive("/vsimem/test_vsis3_no_sign_request_sync")
 
 
 ###############################################################################
@@ -3291,7 +3308,7 @@ def test_vsis3_8(aws_test_config, webserver_port):
 # Test vsisync() with SYNC_STRATEGY=ETAG
 
 
-def test_vsis3_sync_etag(aws_test_config, webserver_port):
+def test_vsis3_sync_etag(tmp_vsimem, aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
@@ -3324,7 +3341,7 @@ def test_vsis3_sync_etag(aws_test_config, webserver_port):
         expected_headers={"Content-Length": "3", "x-amz-storage-class": "GLACIER"},
     )
 
-    gdal.FileFromMemBuffer("/vsimem/testsync.txt", "foo")
+    gdal.FileFromMemBuffer(tmp_vsimem / "testsync.txt", "foo")
 
     def cbk(pct, _, tab):
         assert pct > tab[0]
@@ -3334,7 +3351,7 @@ def test_vsis3_sync_etag(aws_test_config, webserver_port):
     tab = [0]
     with webserver.install_http_handler(handler):
         assert gdal.Sync(
-            "/vsimem/testsync.txt",
+            tmp_vsimem / "testsync.txt",
             "/vsis3/out",
             options=options + ["x-amz-storage-class=GLACIER"],
             callback=cbk,
@@ -3345,9 +3362,9 @@ def test_vsis3_sync_etag(aws_test_config, webserver_port):
     # Re-try with cached ETag. Should generate no network access
     handler = webserver.SequentialHandler()
     with webserver.install_http_handler(handler):
-        assert gdal.Sync("/vsimem/testsync.txt", "/vsis3/out", options=options)
+        assert gdal.Sync(tmp_vsimem / "testsync.txt", "/vsis3/out", options=options)
         assert gdal.Sync(
-            "/vsimem/testsync.txt", "/vsis3/out/testsync.txt", options=options
+            tmp_vsimem / "testsync.txt", "/vsis3/out/testsync.txt", options=options
         )
 
     gdal.VSICurlClearCache()
@@ -3366,17 +3383,17 @@ def test_vsis3_sync_etag(aws_test_config, webserver_port):
         "foo",
     )
     with webserver.install_http_handler(handler):
-        assert gdal.Sync("/vsis3/out/testsync.txt", "/vsimem/", options=options)
+        assert gdal.Sync("/vsis3/out/testsync.txt", tmp_vsimem, options=options)
 
     # Shouldn't do any copy, but hard to verify
     with webserver.install_http_handler(webserver.SequentialHandler()):
-        assert gdal.Sync("/vsis3/out/testsync.txt", "/vsimem/", options=options)
+        assert gdal.Sync("/vsis3/out/testsync.txt", tmp_vsimem, options=options)
         assert gdal.Sync(
-            "/vsis3/out/testsync.txt", "/vsimem/testsync.txt", options=options
+            "/vsis3/out/testsync.txt", tmp_vsimem / "testsync.txt", options=options
         )
 
     # Modify target file, and redo synchronization
-    gdal.FileFromMemBuffer("/vsimem/testsync.txt", "bar")
+    gdal.FileFromMemBuffer(tmp_vsimem / "testsync.txt", "bar")
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -3387,9 +3404,9 @@ def test_vsis3_sync_etag(aws_test_config, webserver_port):
         "foo",
     )
     with webserver.install_http_handler(handler):
-        assert gdal.Sync("/vsis3/out/testsync.txt", "/vsimem/", options=options)
+        assert gdal.Sync("/vsis3/out/testsync.txt", tmp_vsimem, options=options)
 
-    f = gdal.VSIFOpenL("/vsimem/testsync.txt", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "testsync.txt", "rb")
     data = gdal.VSIFReadL(1, 3, f).decode("ascii")
     gdal.VSIFCloseL(f)
     assert data == "foo"
@@ -3411,15 +3428,15 @@ def test_vsis3_sync_etag(aws_test_config, webserver_port):
         "foo",
     )
     with webserver.install_http_handler(handler):
-        assert gdal.Sync("/vsimem/testsync.txt", "/vsis3/out", options=options)
+        assert gdal.Sync(tmp_vsimem / "testsync.txt", "/vsis3/out", options=options)
 
-    gdal.Unlink("/vsimem/testsync.txt")
+    gdal.Unlink(tmp_vsimem / "testsync.txt")
 
     # Directory copying
     gdal.VSICurlClearCache()
 
-    gdal.Mkdir("/vsimem/subdir", 0)
-    gdal.FileFromMemBuffer("/vsimem/subdir/testsync.txt", "foo")
+    gdal.Mkdir(tmp_vsimem / "subdir", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "subdir/testsync.txt", "foo")
     handler = webserver.SequentialHandler()
     handler.add(
         "GET",
@@ -3441,19 +3458,18 @@ def test_vsis3_sync_etag(aws_test_config, webserver_port):
         """,
     )
     with webserver.install_http_handler(handler):
-        assert gdal.Sync("/vsimem/subdir/", "/vsis3/out", options=options)
-    gdal.RmdirRecursive("/vsimem/subdir")
+        assert gdal.Sync(f"{tmp_vsimem}/subdir/", "/vsis3/out", options=options)
 
 
 ###############################################################################
 # Test vsisync() with SYNC_STRATEGY=TIMESTAMP
 
 
-def test_vsis3_sync_timestamp(aws_test_config, webserver_port):
+def test_vsis3_sync_timestamp(tmp_vsimem, aws_test_config, webserver_port):
 
     options = ["SYNC_STRATEGY=TIMESTAMP"]
 
-    gdal.FileFromMemBuffer("/vsimem/testsync.txt", "foo")
+    gdal.FileFromMemBuffer(tmp_vsimem / "testsync.txt", "foo")
 
     # S3 to local: S3 file is older -> download
     gdal.VSICurlClearCache()
@@ -3477,7 +3493,7 @@ def test_vsis3_sync_timestamp(aws_test_config, webserver_port):
         "foo",
     )
     with webserver.install_http_handler(handler):
-        assert gdal.Sync("/vsis3/out/testsync.txt", "/vsimem/", options=options)
+        assert gdal.Sync("/vsis3/out/testsync.txt", tmp_vsimem, options=options)
 
     # S3 to local: S3 file is newer -> do nothing
     gdal.VSICurlClearCache()
@@ -3495,7 +3511,7 @@ def test_vsis3_sync_timestamp(aws_test_config, webserver_port):
         "foo",
     )
     with webserver.install_http_handler(handler):
-        assert gdal.Sync("/vsis3/out/testsync.txt", "/vsimem/", options=options)
+        assert gdal.Sync("/vsis3/out/testsync.txt", tmp_vsimem, options=options)
 
     # Local to S3: S3 file is older -> upload
     gdal.VSICurlClearCache()
@@ -3514,7 +3530,7 @@ def test_vsis3_sync_timestamp(aws_test_config, webserver_port):
     handler.add("PUT", "/out/testsync.txt", 200)
     with webserver.install_http_handler(handler):
         assert gdal.Sync(
-            "/vsimem/testsync.txt", "/vsis3/out/testsync.txt", options=options
+            tmp_vsimem / "testsync.txt", "/vsis3/out/testsync.txt", options=options
         )
 
     # Local to S3: S3 file is newer -> do nothing
@@ -3533,10 +3549,8 @@ def test_vsis3_sync_timestamp(aws_test_config, webserver_port):
     )
     with webserver.install_http_handler(handler):
         assert gdal.Sync(
-            "/vsimem/testsync.txt", "/vsis3/out/testsync.txt", options=options
+            tmp_vsimem / "testsync.txt", "/vsis3/out/testsync.txt", options=options
         )
-
-    gdal.Unlink("/vsimem/testsync.txt")
 
 
 ###############################################################################
@@ -3548,9 +3562,9 @@ def test_vsis3_sync_timestamp(aws_test_config, webserver_port):
     gdaltest.is_ci(),
     reason="test skipped on CI due to it not being reliable (also fails randomly when run locally)",
 )
-def test_vsis3_sync_failed(aws_test_config, webserver_port):
+def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
 
-    gdal.FileFromMemBuffer("/vsimem/testsync.txt", "foo")
+    gdal.FileFromMemBuffer(tmp_vsimem / "testsync.txt", "foo")
 
     # S3 to local: S3 file is older -> download
     gdal.VSICurlClearCache()
@@ -3592,20 +3606,20 @@ def test_vsis3_sync_failed(aws_test_config, webserver_port):
     with webserver.install_http_handler(handler):
         with pytest.raises(
             Exception,
-            match="Copying of /vsis3/out/testsync.txt to /vsimem/testsync.txt failed: 2 bytes were copied whereas 3 were expected",
+            match=f"Copying of /vsis3/out/testsync.txt to {tmp_vsimem}/testsync.txt failed: 2 bytes were copied whereas 3 were expected",
         ):
-            gdal.Sync("/vsis3/out/testsync.txt", "/vsimem/")
+            gdal.Sync("/vsis3/out/testsync.txt", tmp_vsimem)
 
 
 ###############################################################################
 # Test vsisync() with SYNC_STRATEGY=OVERWRITE
 
 
-def test_vsis3_sync_overwrite(aws_test_config, webserver_port):
+def test_vsis3_sync_overwrite(tmp_vsimem, aws_test_config, webserver_port):
 
     options = ["SYNC_STRATEGY=OVERWRITE"]
 
-    gdal.FileFromMemBuffer("/vsimem/testsync.txt", "foo")
+    gdal.FileFromMemBuffer(tmp_vsimem / "testsync.txt", "foo")
 
     # S3 to local: S3 file is newer
     gdal.VSICurlClearCache()
@@ -3629,7 +3643,7 @@ def test_vsis3_sync_overwrite(aws_test_config, webserver_port):
         "foo",
     )
     with webserver.install_http_handler(handler):
-        assert gdal.Sync("/vsis3/out/testsync.txt", "/vsimem/", options=options)
+        assert gdal.Sync("/vsis3/out/testsync.txt", tmp_vsimem, options=options)
 
     # Local to S3: S3 file is newer
     gdal.VSICurlClearCache()
@@ -3648,17 +3662,15 @@ def test_vsis3_sync_overwrite(aws_test_config, webserver_port):
     handler.add("PUT", "/out/testsync.txt", 200)
     with webserver.install_http_handler(handler):
         assert gdal.Sync(
-            "/vsimem/testsync.txt", "/vsis3/out/testsync.txt", options=options
+            tmp_vsimem / "testsync.txt", "/vsis3/out/testsync.txt", options=options
         )
-
-    gdal.Unlink("/vsimem/testsync.txt")
 
 
 ###############################################################################
 # Test vsisync() with source in /vsis3 with implicit directories
 
 
-def test_vsis3_sync_implicit_directories(aws_test_config, webserver_port):
+def test_vsis3_sync_implicit_directories(tmp_path, aws_test_config, webserver_port):
 
     gdal.VSICurlClearCache()
 
@@ -3703,15 +3715,13 @@ def test_vsis3_sync_implicit_directories(aws_test_config, webserver_port):
         """,
     )
     handler.add("GET", "/mybucket/subdir/implicit_subdir/testsync.txt", 200, {}, b"abc")
-    tmpdirname = "tmp/test_vsis3_sync_implicit_directories"
+    tmpdirname = f"{tmp_path}/test_vsis3_sync_implicit_directories"
     gdal.Mkdir(tmpdirname, 0o755)
-    try:
-        with webserver.install_http_handler(handler):
-            assert gdal.Sync("/vsis3/mybucket/subdir/", tmpdirname + "/")
-        assert os.path.exists(tmpdirname + "/implicit_subdir")
-        assert os.path.exists(tmpdirname + "/implicit_subdir/testsync.txt")
-    finally:
-        gdal.RmdirRecursive(tmpdirname)
+
+    with webserver.install_http_handler(handler):
+        assert gdal.Sync("/vsis3/mybucket/subdir/", tmpdirname + "/")
+    assert os.path.exists(tmpdirname + "/implicit_subdir")
+    assert os.path.exists(tmpdirname + "/implicit_subdir/testsync.txt")
 
 
 ###############################################################################
@@ -4036,7 +4046,7 @@ def test_vsis3_fake_rename_on_existing_dir(aws_test_config, webserver_port):
 
 
 def test_vsis3_fake_sync_multithreaded_upload_chunk_size(
-    aws_test_config, webserver_port
+    tmp_vsimem, aws_test_config, webserver_port
 ):
 
     gdal.VSICurlClearCache()
@@ -4046,8 +4056,8 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size(
         tab[0] = pct
         return True
 
-    gdal.Mkdir("/vsimem/test", 0)
-    gdal.FileFromMemBuffer("/vsimem/test/foo", "foo\n")
+    gdal.Mkdir(tmp_vsimem / "test", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test/foo", "foo\n")
 
     tab = [-1]
     handler = webserver.SequentialHandler()
@@ -4142,7 +4152,7 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size(
     with gdaltest.config_option("VSIS3_SIMULATE_THREADING", "YES", thread_local=False):
         with webserver.install_http_handler(handler):
             assert gdal.Sync(
-                "/vsimem/test",
+                tmp_vsimem / "test",
                 "/vsis3/test_bucket",
                 options=[
                     "NUM_THREADS=1",
@@ -4154,17 +4164,15 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size(
             )
     assert tab[0] == 1.0
 
-    gdal.RmdirRecursive("/vsimem/test")
-
 
 def test_vsis3_fake_sync_multithreaded_upload_chunk_size_failure(
-    aws_test_config, webserver_port
+    tmp_vsimem, aws_test_config, webserver_port
 ):
 
     gdal.VSICurlClearCache()
 
-    gdal.Mkdir("/vsimem/test", 0)
-    gdal.FileFromMemBuffer("/vsimem/test/foo", "foo\n")
+    gdal.Mkdir(tmp_vsimem / "test", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test/foo", "foo\n")
 
     handler = webserver.SequentialHandler()
     handler.add("GET", "/test_bucket/?prefix=test%2F", 200)
@@ -4199,12 +4207,10 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size_failure(
         with webserver.install_http_handler(handler):
             with gdal.quiet_errors():
                 assert not gdal.Sync(
-                    "/vsimem/test",
+                    tmp_vsimem / "test",
                     "/vsis3/test_bucket",
                     options=["NUM_THREADS=1", "CHUNK_SIZE=3"],
                 )
-
-    gdal.RmdirRecursive("/vsimem/test")
 
 
 ###############################################################################
@@ -4505,18 +4511,18 @@ def test_vsis3_random_write_on_existing_file_that_does_not_exist(
 # Read credentials from simulated ~/.aws/credentials
 
 
-def test_vsis3_read_credentials_file(aws_test_config, webserver_port):
+def test_vsis3_read_credentials_file(tmp_vsimem, aws_test_config, webserver_port):
 
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
-        "CPL_AWS_CREDENTIALS_FILE": "/vsimem/aws_credentials",
+        "CPL_AWS_CREDENTIALS_FILE": f"{tmp_vsimem}/aws_credentials",
     }
 
     gdal.VSICurlClearCache()
 
     gdal.FileFromMemBuffer(
-        "/vsimem/aws_credentials",
+        tmp_vsimem / "aws_credentials",
         """
 [unrelated]
 aws_access_key_id = foo
@@ -4544,25 +4550,23 @@ aws_secret_access_key = bar
         gdal.VSIFCloseL(f)
 
     assert data == "foo"
-
-    gdal.Unlink("/vsimem/aws_credentials")
 
 
 ###############################################################################
 # Read credentials from simulated  ~/.aws/config
 
 
-def test_vsis3_read_config_file(aws_test_config, webserver_port):
+def test_vsis3_read_config_file(tmp_vsimem, aws_test_config, webserver_port):
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
-        "AWS_CONFIG_FILE": "/vsimem/aws_config",
+        "AWS_CONFIG_FILE": f"{tmp_vsimem}/aws_config",
     }
 
     gdal.VSICurlClearCache()
 
     gdal.FileFromMemBuffer(
-        "/vsimem/aws_config",
+        tmp_vsimem / "aws_config",
         """
 [unrelated]
 aws_access_key_id = foo
@@ -4591,26 +4595,26 @@ aws_secret_access_key = bar
         gdal.VSIFCloseL(f)
 
     assert data == "foo"
-
-    gdal.Unlink("/vsimem/aws_config")
 
 
 ###############################################################################
 # Read credentials from simulated ~/.aws/credentials and ~/.aws/config
 
 
-def test_vsis3_read_credentials_config_file(aws_test_config, webserver_port):
+def test_vsis3_read_credentials_config_file(
+    tmp_vsimem, aws_test_config, webserver_port
+):
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
-        "CPL_AWS_CREDENTIALS_FILE": "/vsimem/aws_credentials",
-        "AWS_CONFIG_FILE": "/vsimem/aws_config",
+        "CPL_AWS_CREDENTIALS_FILE": f"{tmp_vsimem}/aws_credentials",
+        "AWS_CONFIG_FILE": f"{tmp_vsimem}/aws_config",
     }
 
     gdal.VSICurlClearCache()
 
     gdal.FileFromMemBuffer(
-        "/vsimem/aws_credentials",
+        tmp_vsimem / "aws_credentials",
         """
 [unrelated]
 aws_access_key_id = foo
@@ -4625,7 +4629,7 @@ aws_secret_access_key = bar
     )
 
     gdal.FileFromMemBuffer(
-        "/vsimem/aws_config",
+        tmp_vsimem / "aws_config",
         """
 [unrelated]
 aws_access_key_id = foo
@@ -4654,9 +4658,6 @@ aws_secret_access_key = bar
         gdal.VSIFCloseL(f)
 
     assert data == "foo"
-
-    gdal.Unlink("/vsimem/aws_credentials")
-    gdal.Unlink("/vsimem/aws_config")
 
 
 ###############################################################################
@@ -4732,20 +4733,20 @@ aws_secret_access_key = bar
 
 
 def test_vsis3_read_credentials_config_file_inconsistent(
-    aws_test_config, webserver_port
+    tmp_vsimem, aws_test_config, webserver_port
 ):
 
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
-        "CPL_AWS_CREDENTIALS_FILE": "/vsimem/aws_credentials",
-        "AWS_CONFIG_FILE": "/vsimem/aws_config",
+        "CPL_AWS_CREDENTIALS_FILE": f"{tmp_vsimem}/aws_credentials",
+        "AWS_CONFIG_FILE": f"{tmp_vsimem}/aws_config",
     }
 
     gdal.VSICurlClearCache()
 
     gdal.FileFromMemBuffer(
-        "/vsimem/aws_credentials",
+        tmp_vsimem / "aws_credentials",
         """
 [unrelated]
 aws_access_key_id = foo
@@ -4760,7 +4761,7 @@ aws_secret_access_key = bar
     )
 
     gdal.FileFromMemBuffer(
-        "/vsimem/aws_config",
+        tmp_vsimem / "aws_config",
         """
 [unrelated]
 aws_access_key_id = foo
@@ -4792,9 +4793,6 @@ aws_secret_access_key = bar
         gdal.VSIFCloseL(f)
 
     assert data == "foo"
-
-    gdal.Unlink("/vsimem/aws_credentials")
-    gdal.Unlink("/vsimem/aws_config")
 
 
 ###############################################################################
@@ -5279,7 +5277,9 @@ def test_vsis3_read_credentials_AWS_CONTAINER_CREDENTIALS_FULL_URI(
 # Read credentials from an assumed role
 
 
-def test_vsis3_read_credentials_assumed_role(aws_test_config, webserver_port):
+def test_vsis3_read_credentials_assumed_role(
+    tmp_vsimem, aws_test_config, webserver_port
+):
 
     if webserver_port == 8080:
         expected_signature1 = (
@@ -5326,8 +5326,8 @@ def test_vsis3_read_credentials_assumed_role(aws_test_config, webserver_port):
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
-        "CPL_AWS_CREDENTIALS_FILE": "/vsimem/aws_credentials",
-        "AWS_CONFIG_FILE": "/vsimem/aws_config",
+        "CPL_AWS_CREDENTIALS_FILE": f"{tmp_vsimem}/aws_credentials",
+        "AWS_CONFIG_FILE": f"{tmp_vsimem}/aws_config",
         "AWS_PROFILE": "my_profile",
         "AWS_STS_ENDPOINT": "localhost:%d" % webserver_port,
     }
@@ -5335,7 +5335,7 @@ def test_vsis3_read_credentials_assumed_role(aws_test_config, webserver_port):
     gdal.VSICurlClearCache()
 
     gdal.FileFromMemBuffer(
-        "/vsimem/aws_credentials",
+        tmp_vsimem / "aws_credentials",
         """
 [foo]
 aws_access_key_id = AWS_ACCESS_KEY_ID
@@ -5344,7 +5344,7 @@ aws_secret_access_key = AWS_SECRET_ACCESS_KEY
     )
 
     gdal.FileFromMemBuffer(
-        "/vsimem/aws_config",
+        tmp_vsimem / "aws_config",
         """
 [profile my_profile]
 role_arn = arn:aws:iam::557268267719:role/role
@@ -5463,14 +5463,11 @@ role_session_name = my_role_session_name
         gdal.VSIFCloseL(f)
     assert data == "foo"
 
-    gdal.Unlink("/vsimem/aws_credentials")
-    gdal.Unlink("/vsimem/aws_config")
-
 
 ###############################################################################
 # Read credentials from sts AssumeRoleWithWebIdentity
 def test_vsis3_read_credentials_sts_assume_role_with_web_identity_from_config_file(
-    aws_test_config, webserver_port
+    tmp_vsimem, aws_test_config, webserver_port
 ):
 
     if webserver_port == 8080:
@@ -5509,8 +5506,8 @@ def test_vsis3_read_credentials_sts_assume_role_with_web_identity_from_config_fi
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
-        "CPL_AWS_CREDENTIALS_FILE": "/vsimem/aws_credentials",
-        "AWS_CONFIG_FILE": "/vsimem/aws_config",
+        "CPL_AWS_CREDENTIALS_FILE": f"{tmp_vsimem}/aws_credentials",
+        "AWS_CONFIG_FILE": f"{tmp_vsimem}/aws_config",
         "AWS_PROFILE": "my_profile",
         "AWS_STS_ENDPOINT": "localhost:%d" % webserver_port,
         "CPL_AWS_STS_ROOT_URL": "http://localhost:%d" % webserver_port,
@@ -5518,16 +5515,16 @@ def test_vsis3_read_credentials_sts_assume_role_with_web_identity_from_config_fi
 
     gdal.VSICurlClearCache()
 
-    gdal.FileFromMemBuffer("/vsimem/web_identity_token_file", "token\n")
+    gdal.FileFromMemBuffer(tmp_vsimem / "web_identity_token_file", "token\n")
 
-    gdal.FileFromMemBuffer("/vsimem/aws_credentials", "")
+    gdal.FileFromMemBuffer(tmp_vsimem / "aws_credentials", "")
 
     gdal.FileFromMemBuffer(
-        "/vsimem/aws_config",
-        """
+        tmp_vsimem / "aws_config",
+        f"""
 [profile foo]
 role_arn = foo_role_arn
-web_identity_token_file = /vsimem/web_identity_token_file
+web_identity_token_file = {tmp_vsimem}/web_identity_token_file
 [profile my_profile]
 role_arn = my_profile_role_arn
 source_profile = foo
@@ -5640,33 +5637,27 @@ source_profile = foo
         },
     )
 
-    try:
-        with webserver.install_http_handler(handler):
-            with gdaltest.config_options(options, thread_local=False):
-                f = open_for_read("/vsis3/s3_fake_bucket/resource")
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            f = open_for_read("/vsis3/s3_fake_bucket/resource")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+    assert data == "foo"
+
+    with webserver.install_http_handler(handler2):
+        with gdaltest.config_options(options, thread_local=False):
+            f = open_for_read("/vsis3/s3_fake_bucket/resource2")
             assert f is not None
             data = gdal.VSIFReadL(1, 4, f).decode("ascii")
             gdal.VSIFCloseL(f)
-        assert data == "foo"
+            assert data == "foo"
 
-        with webserver.install_http_handler(handler2):
-            with gdaltest.config_options(options, thread_local=False):
-                f = open_for_read("/vsis3/s3_fake_bucket/resource2")
-                assert f is not None
-                data = gdal.VSIFReadL(1, 4, f).decode("ascii")
-                gdal.VSIFCloseL(f)
-                assert data == "foo"
-
-                f = open_for_read("/vsis3/s3_fake_bucket/resource3")
-                assert f is not None
-                data = gdal.VSIFReadL(1, 4, f).decode("ascii")
-                gdal.VSIFCloseL(f)
-                assert data == "foo"
-
-    finally:
-        gdal.Unlink("/vsimem/web_identity_token_file")
-        gdal.Unlink("/vsimem/aws_credentials")
-        gdal.Unlink("/vsimem/aws_config")
+            f = open_for_read("/vsis3/s3_fake_bucket/resource3")
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+            gdal.VSIFCloseL(f)
+            assert data == "foo"
 
 
 ###############################################################################
