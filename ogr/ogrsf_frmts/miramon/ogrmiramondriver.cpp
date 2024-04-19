@@ -79,27 +79,21 @@ static GDALDataset *OGRMiraMonDriverOpen(GDALOpenInfo *poOpenInfo)
     if (OGRMiraMonDriverIdentify(poOpenInfo) == FALSE)
         return nullptr;
 
-    OGRMiraMonDataSource *poDS = new OGRMiraMonDataSource();
+    auto poDS = std::make_unique<OGRMiraMonDataSource>();
+    if (!poDS->Open(poOpenInfo->pszFilename, nullptr, nullptr,
+                    poOpenInfo->papszOpenOptions))
+    {
+        poDS.reset();
+    }
 
-    if (poDS != nullptr && poOpenInfo->eAccess == GA_Update)
+    if (poDS && poOpenInfo->eAccess == GA_Update)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "MiraMonVector driver does not support update.");
-        delete poDS;
-        poDS = nullptr;
-    }
-    else
-    {
-        if (!poDS->Open(poOpenInfo->pszFilename, nullptr, nullptr,
-                        poOpenInfo->eAccess == GA_Update,
-                        poOpenInfo->papszOpenOptions))
-        {
-            delete poDS;
-            poDS = nullptr;
-        }
+        return nullptr;
     }
 
-    return poDS;
+    return poDS.release();
 }
 
 /****************************************************************************/
@@ -111,13 +105,14 @@ OGRMiraMonDriverCreate(const char *pszName, CPL_UNUSED int /*nBands*/,
                        CPL_UNUSED int /*nXSize*/, CPL_UNUSED int /*nYSize*/,
                        CPL_UNUSED GDALDataType /*eDT*/, char **papszOptions)
 {
-    OGRMiraMonDataSource *poDS = new OGRMiraMonDataSource();
+    auto poDS = std::make_unique<OGRMiraMonDataSource>();
 
-    if (poDS->Create(pszName, papszOptions))
-        return poDS;
+    if (!poDS->Create(pszName, papszOptions))
+    {
+        poDS.reset();
+    }
 
-    delete poDS;
-    return nullptr;
+    return poDS.release();
 }
 
 /****************************************************************************/
