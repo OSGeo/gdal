@@ -4428,6 +4428,92 @@ def test_tiff_read_cog_with_mask_vsicurl(tmp_path):
 
 
 ###############################################################################
+# Test GTiffDataset::MultiThreadedRead() when the amount of requested bytes
+# exceed the allowed limit.
+
+
+@pytest.mark.require_curl()
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 0, 11),
+    reason="libtiff >= 4.0.11 required",
+)
+def test_tiff_read_vsicurl_multi_threaded_beyond_advise_read_limit(tmp_path):
+
+    webserver_process = None
+    webserver_port = 0
+
+    (webserver_process, webserver_port) = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    if webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    tmp_filename = str(tmp_path / "tmp.tif")
+    gdal.Translate(
+        tmp_filename,
+        "data/utmsmall.tif",
+        options="-co TILED=YES -co COMPRESS=LZW -outsize 1024 0",
+    )
+    ds = gdal.Open(tmp_filename)
+    expected_data = ds.ReadRaster()
+    ds = None
+
+    try:
+        filesize = os.stat(tmp_filename).st_size
+        handler = webserver.SequentialHandler()
+        handler.add("HEAD", "/test.tif", 200, {"Content-Length": "%d" % filesize})
+
+        def method(request):
+            # sys.stderr.write('%s\n' % str(request.headers))
+
+            if request.headers["Range"].startswith("bytes="):
+                rng = request.headers["Range"][len("bytes=") :]
+                assert len(rng.split("-")) == 2
+                start = int(rng.split("-")[0])
+                end = int(rng.split("-")[1])
+
+                request.protocol_version = "HTTP/1.1"
+                request.send_response(206)
+                request.send_header("Content-type", "application/octet-stream")
+                request.send_header(
+                    "Content-Range", "bytes %d-%d/%d" % (start, end, filesize)
+                )
+                request.send_header("Content-Length", end - start + 1)
+                request.send_header("Connection", "close")
+                request.end_headers()
+                with open(tmp_filename, "rb") as f:
+                    f.seek(start, 0)
+                    request.wfile.write(f.read(end - start + 1))
+
+        for i in range(3):
+            handler.add("GET", "/test.tif", custom_method=method)
+
+        with webserver.install_http_handler(handler):
+            with gdaltest.config_options(
+                {
+                    "GDAL_NUM_THREADS": "2",
+                    "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif",
+                    "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
+                    "CPL_VSIL_CURL_ADVISE_READ_TOTAL_BYTES_LIMIT": str(
+                        2 * filesize // 3
+                    ),
+                }
+            ):
+                ds = gdal.Open("/vsicurl/http://127.0.0.1:%d/test.tif" % webserver_port)
+                assert ds is not None, "could not open dataset"
+
+                got_data = ds.ReadRaster()
+                assert got_data == expected_data
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
+
+
+###############################################################################
 # Check that GetMetadataDomainList() works properly
 
 

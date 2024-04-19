@@ -2644,19 +2644,8 @@ void OGRGeoPackageTableLayer::SetDeferredSpatialIndexCreation(bool bFlag)
         m_bAllowedRTreeThread =
             m_poDS->GetLayerCount() == 0 && sqlite3_threadsafe() != 0 &&
             CPLGetNumCPUs() >= 2 &&
-            CPLTestBool(CPLGetConfigOption("OGR_GPKG_ALLOW_THREADED_RTREE",
-        // For a not yet understood reason, threaded RTree building
-        // (randomly?) fails on OSX Arm64. This may not be at all specific
-        // to that platform, but a more general problem, but it can't be
-        // reproduced elsewhere.
-        // Cf https://gis.stackexchange.com/questions/479958/how-to-fix-failed-to-prepare-sql-error-when-creating-gpkg-file-from-osm-extrac/479964#479964
-        // and random (frequent) failures on GDAL CI (https://github.com/OSGeo/gdal/commit/a83942422fd67471aee23ae11c5d06af27db2857)
-#if defined(__arm64__) && defined(__APPLE__)
-                                           "NO"
-#else
-                                           "YES"
-#endif
-                                           ));
+            CPLTestBool(
+                CPLGetConfigOption("OGR_GPKG_ALLOW_THREADED_RTREE", "YES"));
 
         // For unit tests
         if (CPLTestBool(CPLGetConfigOption(
@@ -2738,13 +2727,12 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
 
             if (eErr == OGRERR_NONE)
             {
+                m_hRTree = gdal_sqlite_rtree_bl_new(4096);
                 try
                 {
                     m_oThreadRTree =
                         std::thread([this]() { AsyncRTreeThreadFunction(); });
                     m_bThreadRTreeStarted = true;
-
-                    m_hRTree = gdal_sqlite_rtree_bl_new(4096);
                 }
                 catch (const std::exception &e)
                 {
@@ -2756,6 +2744,11 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
 
         if (!m_bThreadRTreeStarted)
         {
+            if (m_hRTree)
+            {
+                gdal_sqlite_rtree_bl_free(m_hRTree);
+                m_hRTree = nullptr;
+            }
             m_oQueueRTreeEntries.clear();
             m_bErrorDuringRTreeThread = true;
             sqlite3_close(m_hAsyncDBHandle);
@@ -2897,6 +2890,8 @@ static size_t GetMaxRAMUsageAllowedForRTree()
 
 void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
 {
+    CPLAssert(m_hRTree);
+
     const size_t nMaxRAMUsageAllowed = GetMaxRAMUsageAllowedForRTree();
     sqlite3_stmt *hStmt = nullptr;
     GIntBig nCount = 0;

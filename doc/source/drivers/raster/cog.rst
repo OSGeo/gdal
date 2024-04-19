@@ -340,7 +340,7 @@ General creation options
 - .. co:: STATISTICS
      :choices: AUTO, YES, NO
      :default: AUTO
-     :since: 3.7
+     :since: 3.8
 
      Whether band statistics should be included in the output file.
      In ``AUTO`` mode, they will be included only if available in the source

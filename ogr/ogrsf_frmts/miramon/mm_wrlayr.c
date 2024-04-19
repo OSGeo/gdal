@@ -5245,6 +5245,7 @@ int MMResizeStringToOperateIfNeeded(struct MiraMonVectLayerInfo *hMiraMonLayer,
                        "driver (MMResizeStringToOperateIfNeeded())");
             return 1;
         }
+        free_function(hMiraMonLayer->szStringToOperate);
         hMiraMonLayer->szStringToOperate = p;
         hMiraMonLayer->nNumStringToOperate = nNewSize;
     }
