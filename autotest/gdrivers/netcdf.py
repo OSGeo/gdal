@@ -6513,3 +6513,19 @@ def test_band_names_creation_option(tmp_path):
 
         assert gdal.GetSubdatasetInfo(sds_names[0]).GetSubdatasetComponent() == "t2m"
         assert gdal.GetSubdatasetInfo(sds_names[1]).GetSubdatasetComponent() == "prate"
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_create_metadata_with_equal_sign(tmp_path):
+
+    fname = tmp_path / "test_netcdf_create_metadata_with_equal_sign.nc"
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    value = "x" * 1000 + "=y"
+    src_ds.SetMetadataItem("my_var#long_name", value)
+    src_ds.GetRasterBand(1).SetMetadataItem("NETCDF_VARNAME", "my_var")
+
+    gdal.Translate(fname, src_ds)
+
+    ds = gdal.Open(fname)
+    assert ds.GetRasterBand(1).GetMetadataItem("long_name") == value
