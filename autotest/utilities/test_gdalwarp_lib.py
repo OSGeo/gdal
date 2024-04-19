@@ -3991,8 +3991,6 @@ def test_gdalwarp_lib_ortho_to_long_lat():
             data2[j * ds.RasterXSize],
             data3[j * ds.RasterXSize],
         )
-        if max_val == 0 and gdaltest.is_travis_branch("macos_build_conda"):
-            pytest.xfail("fails for unknown reason on MacOS ARM64")
         assert max_val != 0, "line %d" % j
 
 
