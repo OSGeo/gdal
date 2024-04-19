@@ -455,7 +455,7 @@ def test_gdalwarp_lib_19(testgdalwarp_gcp_tif):
 
 
 @pytest.mark.require_driver("CSV")
-def test_gdalwarp_lib_21():
+def test_gdalwarp_lib_cutline():
 
     ds = gdal.Warp(
         "",
@@ -463,6 +463,48 @@ def test_gdalwarp_lib_21():
         format="MEM",
         cutlineDSName="data/cutline.vrt",
         cutlineLayer="cutline",
+    )
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).Checksum() == 19139, "Bad checksum"
+
+    ds = None
+
+
+###############################################################################
+# Test cutline from OGR datasource with cutlineSRS
+
+
+@pytest.mark.require_driver("CSV")
+def test_gdalwarp_lib_cutline_with_cutline_srs():
+
+    ds = gdal.Warp(
+        "",
+        "../gcore/data/utmsmall.tif",
+        format="MEM",
+        cutlineDSName="data/cutline.csv",
+        cutlineLayer="cutline",
+        cutlineSRS="EPSG:26711",
+    )
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).Checksum() == 19139, "Bad checksum"
+
+    ds = None
+
+
+###############################################################################
+# Test cutline from WKT
+
+
+def test_gdalwarp_lib_cutline_WKT():
+
+    ds = gdal.Warp(
+        "",
+        "../gcore/data/utmsmall.tif",
+        format="MEM",
+        cutlineWKT="POLYGON ((445125 3748212,442222 3748212,442222 3750366,445125 3750366,445125 3748212))",
+        cutlineSRS="EPSG:26711",
     )
     assert ds is not None
 

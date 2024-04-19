@@ -2626,6 +2626,8 @@ def WarpOptions(options=None, format=None,
          srcNodata=None, dstNodata=None, multithread = False,
          tps = False, rpc = False, geoloc = False, polynomialOrder=None,
          transformerOptions=None, cutlineDSName=None,
+         cutlineWKT=None,
+         cutlineSRS=None,
          cutlineLayer=None, cutlineWhere=None, cutlineSQL=None, cutlineBlend=None, cropToCutline = False,
          copyMetadata = True, metadataConflictValue=None,
          setColorInterpretation = False,
@@ -2699,7 +2701,11 @@ def WarpOptions(options=None, format=None,
     transformerOptions:
         list or dict of transformer options
     cutlineDSName:
-        cutline dataset name
+        cutline dataset name (mutually exclusive with cutlineDSName)
+    cutlineWKT:
+        cutline WKT geometry (POLYGON or MULTIPOLYGON) (mutually exclusive with cutlineWKT)
+    cutlineSRS:
+        set/override cutline SRS
     cutlineLayer:
         cutline layer name
     cutlineWhere:
@@ -2833,7 +2839,13 @@ def WarpOptions(options=None, format=None,
                 for opt in transformerOptions:
                     new_options += ['-to', opt]
         if cutlineDSName is not None:
+            if cutlineWKT is not None:
+                raise Exception("cutlineDSName and cutlineWKT are mutually exclusive")
             new_options += ['-cutline', str(cutlineDSName)]
+        if cutlineWKT is not None:
+            new_options += ['-cutline', str(cutlineWKT)]
+        if cutlineSRS is not None:
+            new_options += ['-cutline_srs', str(cutlineSRS)]
         if cutlineLayer is not None:
             new_options += ['-cl', str(cutlineLayer)]
         if cutlineWhere is not None:

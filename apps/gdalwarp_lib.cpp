@@ -201,9 +201,13 @@ struct GDALWarpAppOptions
         ("NAME1=VALUE1","NAME2=VALUE2",...) */
     CPLStringList aosTransformerOptions{};
 
-    /*! enable use of a blend cutline from the name OGR support pszCutlineDSName
+    /*! enable use of a blend cutline from a vector dataset name or a WKT
+     * geometry
      */
-    std::string osCutlineDSName{};
+    std::string osCutlineDSNameOrWKT{};
+
+    /*! cutline SRS */
+    std::string osCutlineSRS{};
 
     /*! the named layer to be selected from the cutline datasource */
     std::string osCLayer{};
@@ -250,11 +254,10 @@ struct GDALWarpAppOptions
     std::vector<int> anDstBands{};
 };
 
-static CPLErr LoadCutline(const std::string &osCutlineDSName,
-                          const std::string &oszCLayer,
-                          const std::string &osCWHERE,
-                          const std::string &osCSQL,
-                          OGRGeometryH *phCutlineRet);
+static CPLErr
+LoadCutline(const std::string &osCutlineDSNameOrWKT, const std::string &osSRS,
+            const std::string &oszCLayer, const std::string &osCWHERE,
+            const std::string &osCSQL, OGRGeometryH *phCutlineRet);
 static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
                                        OGRGeometry *poCutline,
                                        char ***ppapszWarpOptions,
@@ -1277,7 +1280,8 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
         psOptions->dfMinY == 0 && psOptions->dfMaxX == 0 &&
         psOptions->dfMaxY == 0 && psOptions->dfXRes == 0 &&
         psOptions->dfYRes == 0 && psOptions->nForcePixels == 0 &&
-        psOptions->nForceLines == 0 && psOptions->osCutlineDSName.empty() &&
+        psOptions->nForceLines == 0 &&
+        psOptions->osCutlineDSNameOrWKT.empty() &&
         CanUseBuildVRT(nSrcCount, pahSrcDS))
     {
         CPLStringList aosArgv;
@@ -1649,10 +1653,11 @@ static bool ProcessCutlineOptions(int nSrcCount, GDALDatasetH *pahSrcDS,
                                   GDALWarpAppOptions *psOptions,
                                   OGRGeometryH &hCutline)
 {
-    if (!psOptions->osCutlineDSName.empty())
+    if (!psOptions->osCutlineDSNameOrWKT.empty())
     {
         CPLErr eError;
-        eError = LoadCutline(psOptions->osCutlineDSName, psOptions->osCLayer,
+        eError = LoadCutline(psOptions->osCutlineDSNameOrWKT,
+                             psOptions->osCutlineSRS, psOptions->osCLayer,
                              psOptions->osCWHERE, psOptions->osCSQL, &hCutline);
         if (eError == CE_Failure)
         {
@@ -3325,21 +3330,40 @@ static bool ValidateCutline(const OGRGeometry *poGeom, bool bVerbose)
 /*      Load blend cutline from OGR datasource.                         */
 /************************************************************************/
 
-static CPLErr LoadCutline(const std::string &osCutlineDSName,
-                          const std::string &osCLayer,
+static CPLErr LoadCutline(const std::string &osCutlineDSNameOrWKT,
+                          const std::string &osSRS, const std::string &osCLayer,
                           const std::string &osCWHERE,
                           const std::string &osCSQL, OGRGeometryH *phCutlineRet)
 
 {
+    if (STARTS_WITH_CI(osCutlineDSNameOrWKT.c_str(), "POLYGON(") ||
+        STARTS_WITH_CI(osCutlineDSNameOrWKT.c_str(), "POLYGON (") ||
+        STARTS_WITH_CI(osCutlineDSNameOrWKT.c_str(), "MULTIPOLYGON(") ||
+        STARTS_WITH_CI(osCutlineDSNameOrWKT.c_str(), "MULTIPOLYGON ("))
+    {
+        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
+        if (!osSRS.empty())
+        {
+            poSRS.reset(new OGRSpatialReference());
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            poSRS->SetFromUserInput(osSRS.c_str());
+        }
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt(osCutlineDSNameOrWKT.c_str(),
+                                          poSRS.get(), &poGeom);
+        *phCutlineRet = OGRGeometry::ToHandle(poGeom);
+        return *phCutlineRet ? CE_None : CE_Failure;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Open source vector dataset.                                     */
     /* -------------------------------------------------------------------- */
     auto poDS = std::unique_ptr<GDALDataset>(
-        GDALDataset::Open(osCutlineDSName.c_str(), GDAL_OF_VECTOR));
+        GDALDataset::Open(osCutlineDSNameOrWKT.c_str(), GDAL_OF_VECTOR));
     if (poDS == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s.",
-                 osCutlineDSName.c_str());
+                 osCutlineDSNameOrWKT.c_str());
         return CE_Failure;
     }
 
@@ -3412,7 +3436,18 @@ static CPLErr LoadCutline(const std::string &osCutlineDSName,
     /* -------------------------------------------------------------------- */
     /*      Ensure the coordinate system gets set on the geometry.          */
     /* -------------------------------------------------------------------- */
-    poMultiPolygon->assignSpatialReference(poLayer->GetSpatialRef());
+    if (!osSRS.empty())
+    {
+        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS(
+            new OGRSpatialReference());
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        poSRS->SetFromUserInput(osSRS.c_str());
+        poMultiPolygon->assignSpatialReference(poSRS.get());
+    }
+    else
+    {
+        poMultiPolygon->assignSpatialReference(poLayer->GetSpatialRef());
+    }
 
     *phCutlineRet = OGRGeometry::ToHandle(poMultiPolygon.release());
 
@@ -5792,10 +5827,23 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
         .help(_("Mode resampling."));
 
     argParser->add_argument("-cutline")
-        .metavar("<datasource>")
-        .store_into(psOptions->osCutlineDSName)
-        .help(_("Enable use of a blend cutline from the name OGR support "
-                "datasource."));
+        .metavar("<datasource>|<WKT>")
+        .store_into(psOptions->osCutlineDSNameOrWKT)
+        .help(_("Enable use of a blend cutline from the name of a vector "
+                "dataset or a WKT geometry."));
+
+    argParser->add_argument("-cutline_srs")
+        .metavar("<srs_def>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                if (!IsValidSRS(s.c_str()))
+                {
+                    throw std::invalid_argument("Invalid SRS for -cutline_srs");
+                }
+                psOptions->osCutlineSRS = s;
+            })
+        .help(_("Sets/overrides cutline SRS."));
 
     argParser->add_argument("-cwhere")
         .metavar("<expression>")

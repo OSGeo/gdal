@@ -30,7 +30,7 @@ Synopsis
                 [-order <1|2|3>] [-refine_gcps <tolerance> [<minimum_gcps>]] [-to <NAME>=<VALUE>]...
                 [-et <err_threshold>] [-wm <memory_in_mb>] [-srcnodata <value>[ <value>...]]
                 [-dstnodata <value>[ <value>...]] [-tap] [-wt Byte|Int8|[U]Int{16|32|64}|CInt{16|32}|[C]Float{32|64}]
-                [-cutline <datasource>] [-cwhere <expression>]
+                [-cutline <datasource>|<WKT>] [-cutline_srs <srs_def>] [-cwhere <expression>]
                 [[-cl <layername>]|[-csql <query>]]
                 [-cblend <distance>] [-crop_to_cutline] [-nomd] [-cvmd <meta_conflict_value>] [-setci]
                 [-oo <NAME>=<VALUE>]... [-doo <NAME>=<VALUE>]... [-ovr <level>|AUTO|AUTO-<n>|NONE]
@@ -402,9 +402,17 @@ with control information.
 
 .. include:: options/co.rst
 
-.. option:: -cutline <datasource>
+.. option:: -cutline <datasource>|<WKT>
 
-    Enable use of a blend cutline from the name OGR support datasource.
+    Enable use of a blend cutline from the name of a vector dataset.
+    Starting with GDAL 3.9, a WKT geometry string starting with POLYGON or
+    MULTIPOLYGON can also be specified.
+
+.. option:: -cutline_srs <srs_def>
+
+    .. versionadded:: 3.9
+
+    Sets or overrides the SRS of the cutline.
 
 .. option:: -cl <layername>
 
