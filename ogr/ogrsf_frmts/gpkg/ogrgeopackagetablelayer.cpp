@@ -2715,9 +2715,22 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
     }
     if (m_hAsyncDBHandle != nullptr)
     {
+        /* Make sure our auxiliary DB has the same page size as the main one.
+         * Because the number of RTree cells depends on the SQLite page size.
+         * However the sqlite implementation limits to 51 cells maximum per page,
+         * which is reached starting with a page size of 2048 bytes.
+         * As the default SQLite page size is 4096 currently, having potentially
+         * different page sizes >= 4096 between the main and auxiliary DBs would
+         * not be a practical issue, but better be consistent.
+         */
+        const int nPageSize =
+            SQLGetInteger(m_poDS->GetDB(), "PRAGMA page_size", nullptr);
+
         if (SQLCommand(m_hAsyncDBHandle,
-                       "PRAGMA journal_mode = OFF;\n"
-                       "PRAGMA synchronous = OFF;") == OGRERR_NONE)
+                       CPLSPrintf("PRAGMA page_size = %d;\n"
+                                  "PRAGMA journal_mode = OFF;\n"
+                                  "PRAGMA synchronous = OFF;",
+                                  nPageSize)) == OGRERR_NONE)
         {
             char *pszSQL = sqlite3_mprintf("ATTACH DATABASE '%q' AS '%q'",
                                            m_osAsyncDBName.c_str(),
@@ -2727,7 +2740,7 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
 
             if (eErr == OGRERR_NONE)
             {
-                m_hRTree = gdal_sqlite_rtree_bl_new(4096);
+                m_hRTree = gdal_sqlite_rtree_bl_new(nPageSize);
                 try
                 {
                     m_oThreadRTree =
