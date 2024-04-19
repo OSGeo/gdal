@@ -845,16 +845,11 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         delete poGeom;
                         return nullptr;
                     }
-                    MM_BOOLEAN IAmExternal;
 
                     for (nIRing = 0;
                          nIRing < phMiraMonLayer->ReadFeature.nNRings; nIRing++)
                     {
                         auto poRing = std::make_unique<OGRLinearRing>();
-
-                        IAmExternal = (MM_BOOLEAN)(phMiraMonLayer->ReadFeature
-                                                       .flag_VFG[nIRing] &
-                                                   MM_EXTERIOR_ARC_SIDE);
 
                         for (MM_N_VERTICES_TYPE nIVrt = 0;
                              nIVrt <
@@ -886,8 +881,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         }
 
                         // If I'm going to start a new polygon...
-                        if ((IAmExternal &&
-                             nIRing + 1 < phMiraMonLayer->ReadFeature.nNRings &&
+                        if ((nIRing + 1 < phMiraMonLayer->ReadFeature.nNRings &&
                              ((phMiraMonLayer->ReadFeature
                                    .flag_VFG[nIRing + 1]) &
                               MM_EXTERIOR_ARC_SIDE)) ||
