@@ -1014,7 +1014,9 @@ retry:
                         const auto invGT = pGIPTI->adfSrcInvGeoTransform;
                         const double x = invGT[0] + X * invGT[1] + Y * invGT[2];
                         const double y = invGT[3] + X * invGT[4] + Y * invGT[5];
-                        if (x >= 0 && x <= nInXSize && y >= 0 && y <= nInYSize)
+                        constexpr double EPSILON = 1e-5;
+                        if (x >= -EPSILON && x <= nInXSize + EPSILON &&
+                            y >= -EPSILON && y <= nInYSize + EPSILON)
                         {
                             if (psRTI->poForwardTransform->Transform(1, &X,
                                                                      &Y) &&
