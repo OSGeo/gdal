@@ -886,8 +886,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         }
 
                         // If I'm going to start a new polygon...
-                        if ((IAmExternal &&
-                             nIRing + 1 < phMiraMonLayer->ReadFeature.nNRings &&
+                        if ((nIRing + 1 < phMiraMonLayer->ReadFeature.nNRings &&
                              ((phMiraMonLayer->ReadFeature
                                    .flag_VFG[nIRing + 1]) &
                               MM_EXTERIOR_ARC_SIDE)) ||
