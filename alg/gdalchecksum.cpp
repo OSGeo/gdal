@@ -73,9 +73,132 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
     int iPrime = 0;
     const GDALDataType eDataType = GDALGetRasterDataType(hBand);
     const bool bComplex = CPL_TO_BOOL(GDALDataTypeIsComplex(eDataType));
+    const bool bIsFloatingPoint =
+        (eDataType == GDT_Float32 || eDataType == GDT_Float64 ||
+         eDataType == GDT_CFloat32 || eDataType == GDT_CFloat64);
 
-    if (eDataType == GDT_Float32 || eDataType == GDT_Float64 ||
-        eDataType == GDT_CFloat32 || eDataType == GDT_CFloat64)
+    const auto IntFromDouble = [](double dfVal)
+    {
+        int nVal;
+        if (CPLIsNan(dfVal) || CPLIsInf(dfVal))
+        {
+            // Most compilers seem to cast NaN or Inf to 0x80000000.
+            // but VC7 is an exception. So we force the result
+            // of such a cast.
+            nVal = 0x80000000;
+        }
+        else
+        {
+            // Standard behavior of GDALCopyWords when converting
+            // from floating point to Int32.
+            dfVal += 0.5;
+
+            if (dfVal < -2147483647.0)
+                nVal = -2147483647;
+            else if (dfVal > 2147483647)
+                nVal = 2147483647;
+            else
+                nVal = static_cast<GInt32>(floor(dfVal));
+        }
+        return nVal;
+    };
+
+    if (bIsFloatingPoint && nXOff == 0 && nYOff == 0)
+    {
+        const GDALDataType eDstDataType = bComplex ? GDT_CFloat64 : GDT_Float64;
+        int nBlockXSize = 0;
+        int nBlockYSize = 0;
+        GDALGetBlockSize(hBand, &nBlockXSize, &nBlockYSize);
+        const int nDstDataTypeSize = GDALGetDataTypeSizeBytes(eDstDataType);
+        int nChunkXSize = nBlockXSize;
+        const int nChunkYSize = nBlockYSize;
+        if (nBlockXSize < nXSize)
+        {
+            const GIntBig nMaxChunkSize =
+                std::max(static_cast<GIntBig>(10 * 1000 * 1000),
+                         GDALGetCacheMax64() / 10);
+            if (nDstDataTypeSize > 0 &&
+                static_cast<GIntBig>(nXSize) * nChunkYSize <
+                    nMaxChunkSize / nDstDataTypeSize)
+            {
+                // A full line of height nChunkYSize can fit in the maximum
+                // allowed memory
+                nChunkXSize = nXSize;
+            }
+            else
+            {
+                // Otherwise compute a size that is a multiple of nBlockXSize
+                nChunkXSize = static_cast<int>(std::min(
+                    static_cast<GIntBig>(nXSize),
+                    nBlockXSize *
+                        std::max(static_cast<GIntBig>(1),
+                                 nMaxChunkSize /
+                                     (static_cast<GIntBig>(nBlockXSize) *
+                                      nChunkYSize * nDstDataTypeSize))));
+            }
+        }
+
+        double *padfLineData = static_cast<double *>(
+            VSI_MALLOC3_VERBOSE(nChunkXSize, nChunkYSize, nDstDataTypeSize));
+        if (padfLineData == nullptr)
+        {
+            return -1;
+        }
+        const int nValsPerIter = bComplex ? 2 : 1;
+
+        const int nYBlocks = DIV_ROUND_UP(nYSize, nChunkYSize);
+        const int nXBlocks = DIV_ROUND_UP(nXSize, nChunkXSize);
+        for (int iYBlock = 0; iYBlock < nYBlocks; ++iYBlock)
+        {
+            const int iYStart = iYBlock * nChunkYSize;
+            const int iYEnd =
+                iYBlock == nYBlocks - 1 ? nYSize : iYStart + nChunkYSize;
+            const int nChunkActualHeight = iYEnd - iYStart;
+            for (int iXBlock = 0; iXBlock < nXBlocks; ++iXBlock)
+            {
+                const int iXStart = iXBlock * nChunkXSize;
+                const int iXEnd =
+                    iXBlock == nXBlocks - 1 ? nXSize : iXStart + nChunkXSize;
+                const int nChunkActualXSize = iXEnd - iXStart;
+                if (GDALRasterIO(
+                        hBand, GF_Read, iXStart, iYStart, nChunkActualXSize,
+                        nChunkActualHeight, padfLineData, nChunkActualXSize,
+                        nChunkActualHeight, eDstDataType, 0, 0) != CE_None)
+                {
+                    CPLError(CE_Failure, CPLE_FileIO,
+                             "Checksum value could not be computed due to I/O "
+                             "read error.");
+                    nChecksum = -1;
+                    iYBlock = nYBlocks;
+                    break;
+                }
+                const size_t xIters =
+                    static_cast<size_t>(nValsPerIter) * nChunkActualXSize;
+                for (int iY = iYStart; iY < iYEnd; ++iY)
+                {
+                    // Initialize iPrime so that it is consistent with a
+                    // per full line iteration strategy
+                    iPrime = (nValsPerIter *
+                              (static_cast<int64_t>(iY) * nXSize + iXStart)) %
+                             11;
+                    const size_t nOffset = nValsPerIter *
+                                           static_cast<size_t>(iY - iYStart) *
+                                           nChunkActualXSize;
+                    for (size_t i = 0; i < xIters; ++i)
+                    {
+                        const double dfVal = padfLineData[nOffset + i];
+                        nChecksum += IntFromDouble(dfVal) % anPrimes[iPrime++];
+                        if (iPrime > 10)
+                            iPrime = 0;
+                    }
+                    nChecksum &= 0xffff;
+                }
+            }
+        }
+
+        CPLFree(padfLineData);
+    }
+    else if (bIsFloatingPoint)
     {
         const GDALDataType eDstDataType = bComplex ? GDT_CFloat64 : GDT_Float64;
 
@@ -103,30 +226,8 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
 
             for (size_t i = 0; i < nCount; i++)
             {
-                double dfVal = padfLineData[i];
-                int nVal;
-                if (CPLIsNan(dfVal) || CPLIsInf(dfVal))
-                {
-                    // Most compilers seem to cast NaN or Inf to 0x80000000.
-                    // but VC7 is an exception. So we force the result
-                    // of such a cast.
-                    nVal = 0x80000000;
-                }
-                else
-                {
-                    // Standard behavior of GDALCopyWords when converting
-                    // from floating point to Int32.
-                    dfVal += 0.5;
-
-                    if (dfVal < -2147483647.0)
-                        nVal = -2147483647;
-                    else if (dfVal > 2147483647)
-                        nVal = 2147483647;
-                    else
-                        nVal = static_cast<GInt32>(floor(dfVal));
-                }
-
-                nChecksum += nVal % anPrimes[iPrime++];
+                const double dfVal = padfLineData[i];
+                nChecksum += IntFromDouble(dfVal) % anPrimes[iPrime++];
                 if (iPrime > 10)
                     iPrime = 0;
 
