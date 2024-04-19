@@ -9270,8 +9270,6 @@ GDALDataset *netCDFDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    CPLMutexHolderD(&hNCMutex);
-
     CPLStringList aosOptions(CSLDuplicate(papszOptions));
     if (aosOptions.FetchNameValue("FORMAT") == nullptr &&
         (eType == GDT_UInt16 || eType == GDT_UInt32 || eType == GDT_UInt64 ||
@@ -9280,8 +9278,28 @@ GDALDataset *netCDFDataset::Create(const char *pszFilename, int nXSize,
         CPLDebug("netCDF", "Selecting FORMAT=NC4 due to data type");
         aosOptions.SetNameValue("FORMAT", "NC4");
     }
-    netCDFDataset *poDS = netCDFDataset::CreateLL(pszFilename, nXSize, nYSize,
-                                                  nBandsIn, aosOptions.List());
+
+    CPLStringList aosBandNames;
+    if (const char *pszBandNames = aosOptions.FetchNameValue("BAND_NAMES"))
+    {
+        aosBandNames =
+            CSLTokenizeString2(pszBandNames, ",", CSLT_HONOURSTRINGS);
+
+        if (aosBandNames.Count() != nBandsIn)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Attempted to create netCDF with %d bands but %d names "
+                     "provided in BAND_NAMES.",
+                     nBandsIn, aosBandNames.Count());
+
+            return nullptr;
+        }
+    }
+
+    CPLMutexHolderD(&hNCMutex);
+
+    auto poDS = netCDFDataset::CreateLL(pszFilename, nXSize, nYSize, nBandsIn,
+                                        aosOptions.List());
 
     if (!poDS)
         return nullptr;
@@ -9318,22 +9336,6 @@ GDALDataset *netCDFDataset::Create(const char *pszFilename, int nXSize,
                            poDS->bWriteGDALHistory, "", "Create",
                            (nBandsIn == 0) ? CF_Vector_Conv
                                            : GDAL_DEFAULT_NCDF_CONVENTIONS);
-    }
-
-    CPLStringList aosBandNames;
-    if (const char *pszBandNames = aosOptions.FetchNameValue("BAND_NAMES"))
-    {
-        aosBandNames =
-            CSLTokenizeString2(pszBandNames, ",", CSLT_HONOURSTRINGS);
-
-        if (aosBandNames.Count() != nBandsIn)
-        {
-            CPLError(CE_Failure, CPLE_OpenFailed,
-                     "Attempted to create netCDF with %d bands but %d names "
-                     "provided in BAND_NAMES.",
-                     nBandsIn, aosBandNames.Count());
-            return nullptr;
-        }
     }
 
     // Define bands.
