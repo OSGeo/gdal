@@ -20,7 +20,7 @@ Synopsis
             [-if <driver_name>] [-json] [-ro] [-q] [-where <restricted_where>|@f<ilename>]
             [-spat <xmin> <ymin> <xmax> <ymax>] [-geomfield <field>] [-fid <fid>]
             [-sql <statement>|@<filename>] [-dialect <sql_dialect>] [-al] [-rl]
-            [-so|-features] [-fields={YES|NO}]]
+            [-so|-features] [-limit <nb_features>] [-fields={YES|NO}]]
             [-geom={YES|NO|SUMMARY|WKT|ISO_WKT}] [-oo <NAME>=<VALUE>]...
             [-nomd] [-listmdd] [-mdd <domain>|all]...
             [-nocount] [-nogeomtype] [[-noextent] | [-extent3D]]
@@ -87,6 +87,12 @@ edit data.
     collection of features, RAM may be exhausted.
 
     .. versionadded:: 3.7
+
+.. option:: -limit <nb_features>
+
+    .. versionadded:: 3.9
+
+    Limit the number of features per layer.
 
 .. option:: -q
 

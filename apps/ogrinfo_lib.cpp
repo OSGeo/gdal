@@ -78,6 +78,9 @@ struct GDALVectorInfoOptions
     bool bStdoutOutput = false;  // only set by ogrinfo_bin
     int nRepeatCount = 1;
 
+    /*! Maximum number of features, or -1 if no limit. */
+    GIntBig nLimit = -1;
+
     // Only used during argument parsing
     bool bSummaryParser = false;
     bool bFeaturesParser = false;
@@ -1465,8 +1468,16 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                                  : 0;
             if (bJson)
                 oLayer.Add("features", oFeatures);
+            GIntBig nFeatureCount = 0;
             for (auto &poFeature : poLayer)
             {
+                if (psOptions->nLimit >= 0 &&
+                    nFeatureCount >= psOptions->nLimit)
+                {
+                    break;
+                }
+                ++nFeatureCount;
+
                 if (bJson)
                 {
                     CPLJSONObject oFeature;
@@ -2314,6 +2325,12 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
             .store_into(psOptions->bFeaturesParser)
             .help(_("Enable listing of features"));
     }
+
+    argParser->add_argument("-limit")
+        .metavar("<nb_features>")
+        .action([psOptions](const std::string &s)
+                { psOptions->nLimit = CPLAtoGIntBig(s.c_str()); })
+        .help(_("Limit the number of features per layer."));
 
     argParser->add_argument("-fields")
         .choices("YES", "NO")

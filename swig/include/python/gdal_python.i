@@ -2186,6 +2186,7 @@ def VectorInfoOptions(options=None,
                       deserialize=True,
                       layers=None,
                       dumpFeatures=False,
+                      limit=None,
                       featureCount=True,
                       extent=True,
                       SQLStatement=None,
@@ -2217,6 +2218,8 @@ def VectorInfoOptions(options=None,
             whether to compute and display the layer extent. Can also be set to the string '3D' to request a 3D extent
         dumpFeatures:
             set to True to get the dump of all features
+        limit:
+            maximum number of features to read per layer
     """
 
     options = [] if options is None else options
@@ -2262,6 +2265,8 @@ def VectorInfoOptions(options=None,
         else:
             if not dumpFeatures:
                 new_options += ["-so"]
+        if limit:
+            new_options += ["-limit", str(limit)]
 
     return (GDALVectorInfoOptions(new_options), format, deserialize)
 
