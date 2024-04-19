@@ -91,7 +91,7 @@ def test_ogr_miramon_read_simple_point():
     check_simple_point(ds)
 
 
-def test_ogr_miramon_write_simple_pointV11(tmp_vsimem):
+def test_ogr_miramon_write_simple_point_EmptyVersion(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.pnt")
     gdal.VectorTranslate(
@@ -103,7 +103,20 @@ def test_ogr_miramon_write_simple_pointV11(tmp_vsimem):
     check_simple_point(ds)
 
 
-def test_ogr_miramon_write_simple_pointV20(tmp_vsimem):
+def test_ogr_miramon_write_simple_point_V11(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.pnt")
+    gdal.VectorTranslate(
+        out_filename,
+        "data/miramon/Points/SimplePoints/SimplePointsFile.pnt",
+        format="MiraMonVector",
+        options="-lco Version=V1.1",
+    )
+    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    check_simple_point(ds)
+
+
+def test_ogr_miramon_write_simple_point_V20(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.pnt")
     gdal.VectorTranslate(
@@ -111,6 +124,20 @@ def test_ogr_miramon_write_simple_pointV20(tmp_vsimem):
         "data/miramon/Points/SimplePoints/SimplePointsFile.pnt",
         format="MiraMonVector",
         options="-lco Version=V2.0",
+    )
+
+    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    check_simple_point(ds)
+
+
+def test_ogr_miramon_write_simple_point_last_version(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.pnt")
+    gdal.VectorTranslate(
+        out_filename,
+        "data/miramon/Points/SimplePoints/SimplePointsFile.pnt",
+        format="MiraMonVector",
+        options="-lco Version=last_version",
     )
 
     ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
@@ -187,7 +214,7 @@ def check_simple_arc(ds):
     assert f.GetField("NODE_INI") == 6
     assert f.GetField("NODE_FI") == 7
     assert f.GetFieldAsString("ATT1") == "E"
-    assert f.GetFieldAsString("ATT2") == "F"
+    assert f.GetFieldAsString("ATT2") == "FÈÊ"
 
 
 def test_ogr_miramon_read_simple_arc():
@@ -197,7 +224,7 @@ def test_ogr_miramon_read_simple_arc():
     check_simple_arc(ds)
 
 
-def test_ogr_miramon_write_simple_arcV11(tmp_vsimem):
+def test_ogr_miramon_write_simple_arc_EmptyVersion(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.arc")
     gdal.VectorTranslate(
@@ -210,7 +237,21 @@ def test_ogr_miramon_write_simple_arcV11(tmp_vsimem):
     del ds
 
 
-def test_ogr_miramon_write_simple_arcV20(tmp_vsimem):
+def test_ogr_miramon_write_simple_arc_V11(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.arc")
+    gdal.VectorTranslate(
+        out_filename,
+        "data/miramon/Arcs/SimpleArcs/SimpleArcFile.arc",
+        format="MiraMonVector",
+        options="-lco Version=V1.1",
+    )
+    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    check_simple_arc(ds)
+    del ds
+
+
+def test_ogr_miramon_write_simple_arc_V20(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.arc")
     gdal.VectorTranslate(
@@ -218,6 +259,20 @@ def test_ogr_miramon_write_simple_arcV20(tmp_vsimem):
         "data/miramon/Arcs/SimpleArcs/SimpleArcFile.arc",
         format="MiraMonVector",
         options="-lco Version=V2.0",
+    )
+    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    check_simple_arc(ds)
+    del ds
+
+
+def test_ogr_miramon_write_simple_arc_last_version(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.arc")
+    gdal.VectorTranslate(
+        out_filename,
+        "data/miramon/Arcs/SimpleArcs/SimpleArcFile.arc",
+        format="MiraMonVector",
+        options="-lco Version=last_version",
     )
     ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
     check_simple_arc(ds)
@@ -296,7 +351,7 @@ def test_ogr_miramon_read_simple_polygon():
     check_simple_polygon(ds)
 
 
-def test_ogr_miramon_write_simple_polygonV11(tmp_vsimem):
+def test_ogr_miramon_write_simple_polygon_EmptyVersion(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.pol")
     gdal.VectorTranslate(
@@ -308,7 +363,20 @@ def test_ogr_miramon_write_simple_polygonV11(tmp_vsimem):
     check_simple_polygon(ds)
 
 
-def test_ogr_miramon_write_simple_polygonV20(tmp_vsimem):
+def test_ogr_miramon_write_simple_polygon__V11(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.pol")
+    gdal.VectorTranslate(
+        out_filename,
+        "data/miramon/Polygons/SimplePolygons/SimplePolFile.pol",
+        format="MiraMonVector",
+        options="-lco Version=V1.1",
+    )
+    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    check_simple_polygon(ds)
+
+
+def test_ogr_miramon_write_simple_polygon_V20(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.pol")
     gdal.VectorTranslate(
@@ -319,6 +387,70 @@ def test_ogr_miramon_write_simple_polygonV20(tmp_vsimem):
     )
     ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
     check_simple_polygon(ds)
+
+
+def test_ogr_miramon_write_simple_polygon_last_version(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.pol")
+    gdal.VectorTranslate(
+        out_filename,
+        "data/miramon/Polygons/SimplePolygons/SimplePolFile.pol",
+        format="MiraMonVector",
+        options="-lco Version=last_version",
+    )
+    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    check_simple_polygon(ds)
+
+
+###############################################################################
+# basic multipolygon test
+
+
+def check_multi_polygon(ds):
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr is not None, "Failed to get layer"
+
+    assert lyr.GetFeatureCount() == 1
+    assert lyr.GetGeomType() == ogr.wkbMultiPolygon
+
+    # going to the first polygon
+    f = lyr.GetNextFeature()
+    assert f is not None, "Failed to get feature"
+    assert f.GetFID() == 0
+    assert (
+        f.GetGeometryRef().ExportToWkt()
+        == "MULTIPOLYGON (((32.699999937575 36.072500062925,31.959999937575 36.532500062925,30.899999937575 36.902500062925,30.509999937575 36.492500062925,29.859999937575 36.192500062925,28.789999937575 36.502500062925,27.619999937575 38.012500062925,27.399999937575 39.872500062925,31.899999937575 41.312500062925,36.079999937575 41.662500062925,37.489999937575 41.182500062925,40.329999937575 40.932500062925,41.589999937575 41.562500062925,43.929999937575 39.382500062925,44.099999937575 36.542500062925,39.489999937575 34.192500062925,35.729999937575 34.312500062925,36.129999937575 34.942500062925,35.959999937575 35.942500062925,36.339999937575 36.862500062925,35.639999937575 36.942500062925,34.719999937575 36.622500062925,34.109999937575 36.702500062925,33.549999937575 36.172500062925,32.839999937575 36.062500062925,32.699999937575 36.072500062925),(42.449999937575 38.462500062925,43.079999937575 38.402500062925,43.389999937575 38.382500062925,43.289999937575 38.722500062925,43.699999937575 38.962500062925,43.449999937575 39.102500062925,43.009999937575 38.892500062925,42.339999937575 38.772500062925,42.449999937575 38.462500062925),(37.929999937575 36.832500062925,38.139999937575 36.422500062925,37.889999937575 35.962500062925,38.469999937575 35.702500062925,38.829999937575 35.982500062925,38.229999937575 36.122500062925,38.439999937575 36.662500062925,38.019999937575 36.932500062925,37.929999937575 36.832500062925)),((34.269999937575 35.602500062925,34.779999937575 35.762500062925,34.669999937575 35.582500062925,33.919999937575 35.172500062925,33.889999937575 34.812500062925,32.819999937575 34.612500062925,32.299999937575 34.892500062925,32.409999937575 35.182500062925,32.909999937575 35.242500062925,32.939999937575 35.412500062925,33.599999937575 35.282500062925,34.269999937575 35.602500062925)))"
+    )
+    assert f.GetFieldAsString("ID_GRAFIC") == "(2:1,1)"
+    assert f.GetFieldAsString("N_VERTEXS") == "(2:56,56)"
+    assert f.GetFieldAsString("N_ARCS") == "(2:4,4)"
+    assert f.GetFieldAsString("N_POLIG") == "(2:4,4)"
+    assert f.GetFieldAsString("TEXT") == "(2:Multip 1,Multip 2)"
+    assert f.GetFieldAsString("NUMBER") == "(2:1,2)"
+    assert f.GetFieldAsString("DATA") == "2024/04/18"
+
+
+def test_ogr_miramon_read_multi_polygon():
+
+    ds = gdal.OpenEx(
+        "data/miramon/Polygons/Multipolygons/Multipolygons.pol", gdal.OF_VECTOR
+    )
+    assert ds is not None, "Failed to get dataset"
+    check_multi_polygon(ds)
+
+
+def test_ogr_miramon_write_multi_polygon_EmptyVersion(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.pol")
+    gdal.VectorTranslate(
+        out_filename,
+        "data/miramon/Polygons/Multipolygons/Multipolygons.pol",
+        format="MiraMonVector",
+    )
+    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
+    check_multi_polygon(ds)
 
 
 ###############################################################################
@@ -567,6 +699,7 @@ def test_ogr_miramon_write_3d_pol(tmp_vsimem):
         "Polygons/SimplePolygons/SimplePolFile.pol",
         "Polygons/EmptyPolygons/Empty_POL.pol",
         "Polygons/3dPolygons/tin_3d.pol",
+        "Polygons/Multipolygons/Multipolygons.pol",
     ],
 )
 def test_ogr_miramon_test_ogrsf(filename):
@@ -675,3 +808,109 @@ def test_ogr_miramon_OpenLanguageArc(Language, expected_description):
     field_def = layer_def.GetFieldDefn(field_index)
     field_description = field_def.GetAlternativeNameRef()
     assert field_description == expected_description
+
+
+###############################################################################
+# -lco tests: DBFEncoding
+
+
+@pytest.mark.parametrize(
+    "expected_encoding",
+    [
+        "UTF8",
+        "ANSI",
+    ],
+)
+def test_ogr_miramon_DBFEncoding(expected_encoding):
+    ds = gdal.OpenEx(
+        "data/miramon/Arcs/SimpleArcs/SimpleArcFile.arc",
+        gdal.OF_VECTOR,
+        open_options=["DBFEncoding=" + expected_encoding],
+    )
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, "Failed to get layer"
+
+    assert lyr.GetFeatureCount() == 4
+
+    f = lyr.GetFeature(3)
+    assert f is not None, "Failed to get feature"
+    assert f.GetFieldAsString("ATT2") == "FÈÊ"
+
+
+###############################################################################
+# unexisting file, file shorter than expected, wrong version, no sidecar files
+
+
+@pytest.mark.parametrize(
+    "name,message",
+    [
+        (
+            "data/miramon/CorruptedFiles/ShortFile.pnt",
+            "not recognized as being in a supported file format",
+        ),
+        (
+            "data/miramon/CorruptedFiles/WrongVersion.pnt",
+            "not recognized as being in a supported file format",
+        ),
+        (
+            "data/miramon/CorruptedFiles/EmptyDBF.pnt",
+            "not recognized as being in a supported file format",
+        ),
+        (
+            "data/miramon/CorruptedFiles/NoDBF.pnt",
+            "Error reading the format in the DBF file",
+        ),
+        ("data/miramon/CorruptedFiles/NoREL.pnt", "rel must exist."),
+    ],
+)
+def test_ogr_miramon_corrupted_files(name, message):
+    with pytest.raises(RuntimeError) as exc_info:
+        gdal.OpenEx(
+            name,
+            gdal.OF_VECTOR,
+        )
+    assert message in str(exc_info.value), "Unexpected error message"
+    # assert ds is None, "Failed to detect corrupted dataset"
+
+
+###############################################################################
+# multiregister test
+
+
+@pytest.mark.parametrize(
+    "expected_MultiRecordIndex,textField,expectedResult",
+    [
+        ("0", "TEXT", "Multip 1"),
+        ("1", "TEXT", "Multip 2"),
+        ("Last", "TEXT", "Multip 2"),
+        ("JSON", "TEXT", "[Multip 1,Multip 2]"),
+        ("0", "NUMBER", "1"),
+        ("1", "NUMBER", "2"),
+        ("Last", "NUMBER", "2"),
+        ("JSON", "NUMBER", "[1,2]"),
+        ("0", "DOUBLE", "22.558"),
+        ("1", "DOUBLE", "22.000"),
+        ("Last", "DOUBLE", "22.000"),
+        ("JSON", "DOUBLE", "[22.558,22.000]"),
+    ],
+)
+def test_multiregister(expected_MultiRecordIndex, textField, expectedResult):
+    ds = gdal.OpenEx(
+        "data/miramon/Polygons/Multipolygons/Multipolygons.pol",
+        gdal.OF_VECTOR,
+        open_options=["MultiRecordIndex=" + expected_MultiRecordIndex],
+    )
+    assert ds is not None, "Failed to get dataset"
+
+    lyr = ds.GetLayer(0)
+
+    assert lyr is not None, "Failed to get layer"
+
+    assert lyr.GetFeatureCount() == 1
+    assert lyr.GetGeomType() == ogr.wkbMultiPolygon
+
+    # going to the first polygon
+    f = lyr.GetNextFeature()
+    assert f is not None, "Failed to get feature"
+    assert f.GetFID() == 0
+    assert f.GetFieldAsString(textField) == expectedResult
