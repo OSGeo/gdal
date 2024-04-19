@@ -1316,3 +1316,185 @@ def test_gdal_subdataset_bogus(bogus):
     """Test it doesn't crash"""
 
     gdal.GetSubdatasetInfo(bogus)
+
+
+###############################################################################
+# Test opening a chunked HDF5EOS swath file
+
+
+def test_hdf5_eos_swath_chunking_optimization():
+
+    if False:
+
+        import h5py
+        import numpy as np
+
+        f = h5py.File("data/hdf5/dummy_HDFEOS_swath_chunked.h5", "w")
+        HDFEOS_INFORMATION = f.create_group("HDFEOS INFORMATION")
+        # Hint from https://forum.hdfgroup.org/t/nullpad-nullterm-strings/9107
+        # to use the low-level API to be able to generate NULLTERM strings
+        # without padding bytes
+        HDFEOSVersion_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
+        HDFEOSVersion_type.set_size(32)
+        HDFEOSVersion_type.set_strpad(h5py.h5t.STR_NULLTERM)
+        # HDFEOS_INFORMATION.attrs.create("HDFEOSVersion", "HDFEOS_5.1.15", dtype=HDFEOSVersion_type)
+        HDFEOSVersion_attr = h5py.h5a.create(
+            HDFEOS_INFORMATION.id,
+            "HDFEOSVersion".encode("ASCII"),
+            HDFEOSVersion_type,
+            h5py.h5s.create(h5py.h5s.SCALAR),
+        )
+        HDFEOSVersion_value = "HDFEOS_5.1.15".encode("ASCII")
+        HDFEOSVersion_value = np.frombuffer(
+            HDFEOSVersion_value, dtype="|S%d" % len(HDFEOSVersion_value)
+        )
+        HDFEOSVersion_attr.write(HDFEOSVersion_value)
+
+        StructMetadata_0_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
+        StructMetadata_0_type.set_size(32000)
+        StructMetadata_0_type.set_strpad(h5py.h5t.STR_NULLTERM)
+        StructMetadata_0 = """GROUP=SwathStructure
+    GROUP=SWATH_1
+        SwathName="MySwath"
+        GROUP=Dimension
+            OBJECT=Dimension_1
+                DimensionName="Band"
+                Size=20
+            END_OBJECT=Dimension_1
+            OBJECT=Dimension_2
+                DimensionName="AlongTrack"
+                Size=30
+            END_OBJECT=Dimension_2
+            OBJECT=Dimension_3
+                DimensionName="CrossTrack"
+                Size=40
+            END_OBJECT=Dimension_3
+        END_GROUP=Dimension
+        GROUP=DimensionMap
+        END_GROUP=DimensionMap
+        GROUP=IndexDimensionMap
+        END_GROUP=IndexDimensionMap
+        GROUP=GeoField
+            OBJECT=GeoField_1
+                GeoFieldName="Latitude"
+                DataType=H5T_NATIVE_FLOAT
+                DimList=("AlongTrack","CrossTrack")
+                MaxdimList=("AlongTrack","CrossTrack")
+            END_OBJECT=GeoField_1
+            OBJECT=GeoField_2
+                GeoFieldName="Longitude"
+                DataType=H5T_NATIVE_FLOAT
+                DimList=("AlongTrack","CrossTrack")
+                MaxdimList=("AlongTrack","CrossTrack")
+            END_OBJECT=GeoField_2
+            OBJECT=GeoField_3
+                GeoFieldName="Time"
+                DataType=H5T_NATIVE_FLOAT
+                DimList=("AlongTrack")
+                MaxdimList=("AlongTrack")
+            END_OBJECT=GeoField_3
+        END_GROUP=GeoField
+        GROUP=DataField
+            OBJECT=DataField_1
+                DataFieldName="MyDataField"
+                DataType=H5T_NATIVE_FLOAT
+                DimList=("Band","AlongTrack","CrossTrack")
+                MaxdimList=("Band","AlongTrack","CrossTrack")
+            END_OBJECT=DataField_1
+        END_GROUP=DataField
+        GROUP=ProfileField
+        END_GROUP=ProfileField
+        GROUP=MergedFields
+        END_GROUP=MergedFields
+    END_GROUP=SWATH_1
+END_GROUP=SwathStructure
+GROUP=GridStructure
+END_GROUP=GridStructure
+END
+"""
+        StructMetadata_0_dataset = h5py.h5d.create(
+            HDFEOS_INFORMATION.id,
+            "StructMetadata.0".encode("ASCII"),
+            StructMetadata_0_type,
+            h5py.h5s.create(h5py.h5s.SCALAR),
+        )
+        StructMetadata_0_value = StructMetadata_0.encode("ASCII")
+        StructMetadata_0_value = np.frombuffer(
+            StructMetadata_0_value, dtype="|S%d" % len(StructMetadata_0_value)
+        )
+        StructMetadata_0_dataset.write(
+            h5py.h5s.create(h5py.h5s.SCALAR),
+            h5py.h5s.create(h5py.h5s.SCALAR),
+            StructMetadata_0_value,
+        )
+
+        HDFEOS = f.create_group("HDFEOS")
+        ADDITIONAL = HDFEOS.create_group("ADDITIONAL")
+        ADDITIONAL.create_group("FILE_ATTRIBUTES")
+        SWATHS = HDFEOS.create_group("SWATHS")
+        MySwath = SWATHS.create_group("MySwath")
+        DataFields = MySwath.create_group("Data Fields")
+        ds = DataFields.create_dataset(
+            "MyDataField", (20, 30, 40), chunks=(3, 4, 6), dtype="f", compression="gzip"
+        )
+        ds[...] = np.array([i for i in range(20 * 30 * 40)]).reshape(ds.shape)
+        GeoLocationFields = MySwath.create_group("Geolocation Fields")
+        ds = GeoLocationFields.create_dataset("Longitude", (20, 30), dtype="f")
+        ds[...] = np.array([i for i in range(20 * 30)]).reshape(ds.shape)
+        ds = GeoLocationFields.create_dataset("Latitude", (20, 30), dtype="f")
+        ds[...] = np.array([i for i in range(20 * 30)]).reshape(ds.shape)
+        f.close()
+
+    ds = gdal.Open(
+        'HDF5:"data/hdf5/dummy_HDFEOS_swath_chunked.h5"://HDFEOS/SWATHS/MySwath/Data_Fields/MyDataField'
+    )
+    mem_ds = gdal.Translate("", ds, format="MEM")
+
+    ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
+    assert ds.GetMetadataItem("WholeBandChunkOptim", "__DEBUG__") == "DISABLED"
+
+    ds.GetRasterBand(1).ReadRaster(0, 0, ds.RasterXSize, 1)
+    assert (
+        ds.GetMetadataItem("WholeBandChunkOptim", "__DEBUG__")
+        == "DETECTION_IN_PROGRESS"
+    )
+    ds.GetRasterBand(1).ReadRaster(0, 2, ds.RasterXSize, 1)
+    assert ds.GetMetadataItem("WholeBandChunkOptim", "__DEBUG__") == "DISABLED"
+
+    ds.GetRasterBand(1).ReadRaster(0, 0, ds.RasterXSize, 1)
+    assert (
+        ds.GetMetadataItem("WholeBandChunkOptim", "__DEBUG__")
+        == "DETECTION_IN_PROGRESS"
+    )
+    ds.GetRasterBand(2).ReadRaster(0, 0, ds.RasterXSize, 1)
+    assert ds.GetMetadataItem("WholeBandChunkOptim", "__DEBUG__") == "DISABLED"
+
+    ds = gdal.Open(
+        'HDF5:"data/hdf5/dummy_HDFEOS_swath_chunked.h5"://HDFEOS/SWATHS/MySwath/Data_Fields/MyDataField'
+    )
+    assert (
+        ds.GetMetadataItem("WholeBandChunkOptim", "__DEBUG__")
+        == "DETECTION_IN_PROGRESS"
+    )
+    for i in range(ds.RasterCount):
+        assert (
+            ds.GetRasterBand(i + 1).Checksum() == mem_ds.GetRasterBand(i + 1).Checksum()
+        )
+        assert ds.GetMetadataItem("WholeBandChunkOptim", "__DEBUG__") == (
+            "DETECTION_IN_PROGRESS" if i == 0 else "ENABLED"
+        )
+    for i in range(ds.RasterCount):
+        assert (
+            ds.GetRasterBand(i + 1).ReadRaster()
+            == mem_ds.GetRasterBand(i + 1).ReadRaster()
+        )
+        assert ds.GetMetadataItem("WholeBandChunkOptim", "__DEBUG__") == "ENABLED"
+        assert ds.GetRasterBand(i + 1).ReadRaster(1, 2, 3, 4) == mem_ds.GetRasterBand(
+            i + 1
+        ).ReadRaster(1, 2, 3, 4)
+        assert ds.GetMetadataItem("WholeBandChunkOptim", "__DEBUG__") == "ENABLED"
+
+    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
+    assert ds.GetRasterBand(1).ReadBlock(1, 2) == mem_ds.GetRasterBand(1).ReadRaster(
+        1 * blockxsize, 2 * blockysize, blockxsize, blockysize
+    )
