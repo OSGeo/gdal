@@ -128,32 +128,24 @@ class OGRMiraMonLayer final
 /*                           OGRMiraMonDataSource                       */
 /************************************************************************/
 
-class OGRMiraMonDataSource final : public OGRDataSource
+class OGRMiraMonDataSource final : public GDALDataset
 {
-    OGRMiraMonLayer **papoLayers;
-    int nLayers;
-    char *pszRootName;
-    char *pszDSName;
-    bool bUpdate;
-    struct MiraMonVectMapInfo MMMap;
+    std::vector<std::unique_ptr<OGRMiraMonLayer>> m_apoLayers;
+    std::string m_osRootName{};
+    bool m_bUpdate = false;
+    struct MiraMonVectMapInfo m_MMMap;
 
   public:
     OGRMiraMonDataSource();
     ~OGRMiraMonDataSource();
 
-    int Open(const char *pszFilename, VSILFILE *fp,
-             const OGRSpatialReference *poSRS, int bUpdate,
-             CSLConstList papszOpenOptions);
-    int Create(const char *pszFilename, char **papszOptions);
-
-    const char *GetName() override
-    {
-        return pszDSName;
-    }
+    bool Open(const char *pszFilename, VSILFILE *fp,
+              const OGRSpatialReference *poSRS, CSLConstList papszOpenOptions);
+    bool Create(const char *pszFilename, CSLConstList papszOptions);
 
     int GetLayerCount() override
     {
-        return nLayers;
+        return static_cast<int>(m_apoLayers.size());
     }
 
     OGRLayer *GetLayer(int) override;
