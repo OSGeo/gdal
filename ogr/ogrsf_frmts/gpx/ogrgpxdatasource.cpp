@@ -293,10 +293,8 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszNameIn,
                 }
                 if (!osId.empty() && !osDomain.empty())
                 {
-                    SetMetadataItem("AUTHOR_EMAIL", std::string(std::move(osId))
-                                                        .append("@")
-                                                        .append(osDomain)
-                                                        .c_str());
+                    SetMetadataItem("AUTHOR_EMAIL",
+                                    osId.append("@").append(osDomain).c_str());
                 }
             }
             else if (strcmp(pszNameIn, "link") == 0)

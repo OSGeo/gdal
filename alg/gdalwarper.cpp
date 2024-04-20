@@ -1314,8 +1314,7 @@ void CPL_STDCALL GDALDestroyWarpOptions(GDALWarpOptions *psOptions)
     CPLFree(psOptions->papSrcPerBandValidityMaskFuncArg);
 
     if (psOptions->hCutline != nullptr)
-        delete OGRGeometry::FromHandle(
-            static_cast<OGRGeometryH>(psOptions->hCutline));
+        delete static_cast<OGRGeometry *>(psOptions->hCutline);
 
     CPLFree(psOptions);
 }

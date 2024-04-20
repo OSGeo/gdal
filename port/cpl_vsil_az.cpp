@@ -72,7 +72,6 @@ const char GDAL_MARKER_FOR_DIR[] = ".gdal_marker_for_dir";
 
 struct VSIDIRAz : public VSIDIRWithMissingDirSynthesis
 {
-    std::string osRootPath{};
     int nRecurseDepth = 0;
 
     std::string osNextMarker{};
