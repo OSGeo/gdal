@@ -543,15 +543,16 @@ CPLErr HDF5ImageRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 HDF5_GLOBAL_LOCK();
 
                 hsize_t count[3] = {
-                    static_cast<hsize_t>(
-                        std::min(poGDS->nBands,
-                                 (iBandChunk + 1) * poGDS->m_nBandChunkSize) -
-                        iBandChunk * poGDS->m_nBandChunkSize),
+                    std::min(static_cast<hsize_t>(poGDS->nBands),
+                             static_cast<hsize_t>(iBandChunk + 1) *
+                                 poGDS->m_nBandChunkSize) -
+                        static_cast<hsize_t>(iBandChunk) *
+                            poGDS->m_nBandChunkSize,
                     static_cast<hsize_t>(nRasterYSize),
                     static_cast<hsize_t>(nRasterXSize)};
                 H5OFFSET_TYPE offset[3] = {
-                    static_cast<H5OFFSET_TYPE>(iBandChunk *
-                                               poGDS->m_nBandChunkSize),
+                    static_cast<H5OFFSET_TYPE>(iBandChunk) *
+                        poGDS->m_nBandChunkSize,
                     static_cast<H5OFFSET_TYPE>(0),
                     static_cast<H5OFFSET_TYPE>(0)};
                 herr_t status =
