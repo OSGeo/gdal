@@ -91,7 +91,7 @@ void OGRParquetLayerBase::LoadGeoMetadata(
                 if (osVersion != "0.1.0" && osVersion != "0.2.0" &&
                     osVersion != "0.3.0" && osVersion != "0.4.0" &&
                     osVersion != "1.0.0-beta.1" && osVersion != "1.0.0-rc.1" &&
-                    osVersion != "1.0.0")
+                    osVersion != "1.0.0" && osVersion != "1.1.0")
                 {
                     CPLDebug(
                         "PARQUET",
