@@ -1962,6 +1962,21 @@ OGRArrowLayer::TimestampToOGR(int64_t timestamp,
 }
 
 /************************************************************************/
+/*                         GetStorageArray()                            */
+/************************************************************************/
+
+static const arrow::Array *GetStorageArray(const arrow::Array *array)
+{
+    if (array->type_id() == arrow::Type::EXTENSION)
+    {
+        auto extensionArray =
+            cpl::down_cast<const arrow::ExtensionArray *>(array);
+        array = extensionArray->storage().get();
+    }
+    return array;
+}
+
+/************************************************************************/
 /*                            ReadFeature()                             */
 /************************************************************************/
 
@@ -2392,7 +2407,7 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
             iCol = m_anMapGeomFieldIndexToArrowColumn[i];
         }
 
-        const auto array = poColumnArrays[iCol].get();
+        const auto array = GetStorageArray(poColumnArrays[iCol].get());
         auto poGeometry = ReadGeometry(i, array, nIdxInBatch);
         if (poGeometry)
         {
@@ -3824,7 +3839,8 @@ OGRArrowLayer::SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch)
         if (iCol >= 0 &&
             m_aeGeomEncoding[m_iGeomFieldFilter] == OGRArrowGeomEncoding::WKB)
         {
-            const arrow::Array *poArrayWKB = m_poBatchColumns[iCol].get();
+            const arrow::Array *poArrayWKB =
+                GetStorageArray(m_poBatchColumns[iCol].get());
             if (poArrayWKB->type_id() == arrow::Type::BINARY)
                 m_poArrayWKB =
                     static_cast<const arrow::BinaryArray *>(poArrayWKB);
@@ -4075,7 +4091,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
             do
             {
                 bReturnFeature = false;
-                auto array = m_poBatchColumns[iCol].get();
+                auto array = GetStorageArray(m_poBatchColumns[iCol].get());
                 CPLAssert(array->type_id() == arrow::Type::LIST);
                 auto listOfPartsArray =
                     static_cast<const arrow::ListArray *>(array);
@@ -4170,7 +4186,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
             do
             {
                 bReturnFeature = false;
-                auto array = m_poBatchColumns[iCol].get();
+                auto array = GetStorageArray(m_poBatchColumns[iCol].get());
                 CPLAssert(array->type_id() == arrow::Type::STRUCT);
                 auto pointValues =
                     static_cast<const arrow::StructArray *>(array);
@@ -4227,7 +4243,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
             do
             {
                 bReturnFeature = false;
-                auto array = m_poBatchColumns[iCol].get();
+                auto array = GetStorageArray(m_poBatchColumns[iCol].get());
                 CPLAssert(array->type_id() == arrow::Type::LIST);
                 const auto listArray =
                     static_cast<const arrow::ListArray *>(array);
@@ -4300,7 +4316,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
             do
             {
                 bReturnFeature = false;
-                auto array = m_poBatchColumns[iCol].get();
+                auto array = GetStorageArray(m_poBatchColumns[iCol].get());
                 CPLAssert(array->type_id() == arrow::Type::LIST);
                 const auto listOfRingsArray =
                     static_cast<const arrow::ListArray *>(array);
@@ -4385,7 +4401,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
             do
             {
                 bReturnFeature = false;
-                auto array = m_poBatchColumns[iCol].get();
+                auto array = GetStorageArray(m_poBatchColumns[iCol].get());
                 CPLAssert(array->type_id() == arrow::Type::LIST);
                 const auto listArray =
                     static_cast<const arrow::ListArray *>(array);
@@ -4463,7 +4479,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
             do
             {
                 bReturnFeature = false;
-                auto array = m_poBatchColumns[iCol].get();
+                auto array = GetStorageArray(m_poBatchColumns[iCol].get());
                 CPLAssert(array->type_id() == arrow::Type::LIST);
                 auto listOfPartsArray =
                     static_cast<const arrow::ListArray *>(array);
@@ -4550,7 +4566,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
             do
             {
                 bReturnFeature = false;
-                auto array = m_poBatchColumns[iCol].get();
+                auto array = GetStorageArray(m_poBatchColumns[iCol].get());
                 CPLAssert(array->type_id() == arrow::Type::LIST);
                 auto listOfPartsArray =
                     static_cast<const arrow::ListArray *>(array);
@@ -4645,7 +4661,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
         }
         else if (iCol >= 0)
         {
-            auto array = m_poBatchColumns[iCol].get();
+            auto array = GetStorageArray(m_poBatchColumns[iCol].get());
             while (true)
             {
                 bool bMatchBBOX = false;
@@ -4674,7 +4690,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                     m_bEOF = !ReadNextBatch();
                     if (m_bEOF)
                         return nullptr;
-                    array = m_poBatchColumns[iCol].get();
+                    array = GetStorageArray(m_poBatchColumns[iCol].get());
                 }
             }
         }

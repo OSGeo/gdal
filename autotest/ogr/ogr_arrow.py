@@ -486,6 +486,8 @@ def test_ogr_arrow_read_with_geoarrow_extension_registered():
         ds = ogr.Open("data/arrow/from_paleolimbot_geoarrow/point-default.feather")
         lyr = ds.GetLayer(0)
         assert lyr.GetGeometryColumn() == "geometry"
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (30 10)"
     finally:
         pa.unregister_extension_type(point_type.extension_name)
 
