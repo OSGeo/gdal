@@ -311,7 +311,11 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
         }
     }
 
-    if (!osExtensionName.empty())
+    // Preliminary/in-advance read support for future JSON Canonical Extension
+    // Cf https://github.com/apache/arrow/pull/41257 and
+    // https://github.com/apache/arrow/pull/13901
+    if (!osExtensionName.empty() &&
+        osExtensionName != EXTENSION_NAME_ARROW_JSON)
     {
         CPLDebug(GetDriverUCName().c_str(),
                  "Dealing with field %s of extension type %s as %s",
@@ -370,6 +374,8 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
         case arrow::Type::LARGE_STRING:
             bTypeOK = true;
             eType = OFTString;
+            if (osExtensionName == EXTENSION_NAME_ARROW_JSON)
+                eSubType = OFSTJSON;
             break;
         case arrow::Type::BINARY:
         case arrow::Type::LARGE_BINARY:

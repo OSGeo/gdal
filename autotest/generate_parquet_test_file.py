@@ -1211,9 +1211,44 @@ def generate_extension_custom():
     )
 
 
+def generate_extension_json():
+    import pathlib
+
+    import pyarrow as pa
+    import pyarrow.feather as feather
+    import pyarrow.parquet as pq
+
+    class JsonType(pa.ExtensionType):
+        def __init__(self):
+            super().__init__(pa.string(), "arrow.json")
+
+        def __arrow_ext_serialize__(self):
+            return b""
+
+        @classmethod
+        def __arrow_ext_deserialize__(cls, storage_type, serialized):
+            return cls()
+
+    json_type = JsonType()
+    storage_array = pa.array(['{"foo":"bar"}'], pa.string())
+    extension_json = pa.ExtensionArray.from_storage(json_type, storage_array)
+
+    names = ["extension_json"]
+
+    locals_ = locals()
+    table = pa.table([locals_[x] for x in names], names=names)
+
+    HERE = pathlib.Path(__file__).parent
+    feather.write_feather(table, HERE / "ogr/data/arrow/extension_json.feather")
+    pq.write_table(
+        table, HERE / "ogr/data/parquet/extension_json.parquet", compression="NONE"
+    )
+
+
 if __name__ == "__main__":
     generate_test_parquet()
     generate_all_geoms_parquet()
     generate_parquet_wkt_with_dict()
     generate_nested_types()
     generate_extension_custom()
+    generate_extension_json()

@@ -537,6 +537,33 @@ def test_ogr_arrow_read_with_extension_not_registered_on_regular_field():
 
 
 ###############################################################################
+# Test reading a file with the arrow.json extension
+
+
+def test_ogr_arrow_read_arrow_json_extension():
+
+    ds = ogr.Open("data/arrow/extension_json.feather")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTJSON
+    f = lyr.GetNextFeature()
+    assert f["extension_json"] == '{"foo":"bar"}'
+
+    stream = lyr.GetArrowStream()
+    schema = stream.GetSchema()
+
+    dst_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    dst_lyr = dst_ds.CreateLayer("test")
+    success, error_msg = dst_lyr.IsArrowSchemaSupported(schema)
+    assert success
+
+    for i in range(schema.GetChildrenCount()):
+        if schema.GetChild(i).GetName() not in ("wkb_geometry", "OGC_FID"):
+            dst_lyr.CreateFieldFromArrowSchema(schema.GetChild(i))
+
+    assert dst_lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTJSON
+
+
+###############################################################################
 # Test storing OGR field alternative name and comment in gdal:schema extension
 
 
