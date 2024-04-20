@@ -29,6 +29,7 @@ particular, CMake will consult (and set) the cache variable
 Before GDAL 3.5, you can use the following to create the imported library target ``GDAL::GDAL``:
 
 .. code::
+
     find_package(GDAL CONFIG QUIET)
     if(NOT TARGET GDAL::GDAL)
         find_package(GDAL REQUIRED)
