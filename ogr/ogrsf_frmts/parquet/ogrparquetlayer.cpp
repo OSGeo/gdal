@@ -220,8 +220,9 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
 
         OGRwkbGeometryType eGeomType = wkbUnknown;
         auto eGeomEncoding = OGRArrowGeomEncoding::WKB;
-        if (IsValidGeometryEncoding(field, osEncoding, eGeomType,
-                                    eGeomEncoding))
+        if (IsValidGeometryEncoding(field, osEncoding,
+                                    oIter != m_oMapGeometryColumns.end(),
+                                    eGeomType, eGeomEncoding))
         {
             bRegularField = false;
             OGRGeomFieldDefn oField(field->name().c_str(), wkbUnknown);

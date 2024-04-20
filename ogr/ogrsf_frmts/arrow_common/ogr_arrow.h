@@ -192,6 +192,7 @@ class OGRArrowLayer CPL_NON_FINAL
     static bool
     IsValidGeometryEncoding(const std::shared_ptr<arrow::Field> &field,
                             const std::string &osEncoding,
+                            bool bWarnIfUnknownEncoding,
                             OGRwkbGeometryType &eGeomTypeOut,
                             OGRArrowGeomEncoding &eGeomEncodingOut);
     static OGRwkbGeometryType

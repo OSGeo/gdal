@@ -493,6 +493,50 @@ def test_ogr_arrow_read_with_geoarrow_extension_registered():
 
 
 ###############################################################################
+# Test reading a file with an extension on a regular field registered with
+# PyArrow
+
+
+def test_ogr_arrow_read_with_extension_registered_on_regular_field():
+    pa = pytest.importorskip("pyarrow")
+
+    class MyJsonType(pa.ExtensionType):
+        def __init__(self):
+            super().__init__(pa.string(), "my_json")
+
+        def __arrow_ext_serialize__(self):
+            return b""
+
+        @classmethod
+        def __arrow_ext_deserialize__(cls, storage_type, serialized):
+            return cls()
+
+    my_json_type = MyJsonType()
+
+    pa.register_extension_type(my_json_type)
+    try:
+        ds = ogr.Open("data/arrow/extension_custom.feather")
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["extension_custom"] == '{"foo":"bar"}'
+    finally:
+        pa.unregister_extension_type(my_json_type.extension_name)
+
+
+###############################################################################
+# Test reading a file with an extension on a regular field not registered with
+# PyArrow
+
+
+def test_ogr_arrow_read_with_extension_not_registered_on_regular_field():
+
+    ds = ogr.Open("data/arrow/extension_custom.feather")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["extension_custom"] == '{"foo":"bar"}'
+
+
+###############################################################################
 # Test storing OGR field alternative name and comment in gdal:schema extension
 
 

@@ -285,7 +285,7 @@ OGRArrowLayer::IsHandledMapType(const std::shared_ptr<arrow::MapType> &mapType)
 /************************************************************************/
 
 inline bool OGRArrowLayer::MapArrowTypeToOGR(
-    const std::shared_ptr<arrow::DataType> &type,
+    const std::shared_ptr<arrow::DataType> &typeIn,
     const std::shared_ptr<arrow::Field> &field, OGRFieldDefn &oField,
     OGRFieldType &eType, OGRFieldSubType &eSubType,
     const std::vector<int> &path,
@@ -293,6 +293,32 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
         &oMapFieldNameToGDALSchemaFieldDefn)
 {
     bool bTypeOK = false;
+
+    std::string osExtensionName;
+    std::shared_ptr<arrow::DataType> type(typeIn);
+    if (type->id() == arrow::Type::EXTENSION)
+    {
+        auto extensionType = cpl::down_cast<arrow::ExtensionType *>(type.get());
+        osExtensionName = extensionType->extension_name();
+        type = extensionType->storage_type();
+    }
+    else if (const auto &field_kv_metadata = field->metadata())
+    {
+        auto extension_name = field_kv_metadata->Get("ARROW:extension:name");
+        if (extension_name.ok())
+        {
+            osExtensionName = *extension_name;
+        }
+    }
+
+    if (!osExtensionName.empty())
+    {
+        CPLDebug(GetDriverUCName().c_str(),
+                 "Dealing with field %s of extension type %s as %s",
+                 field->name().c_str(), osExtensionName.c_str(),
+                 type->ToString().c_str());
+    }
+
     switch (type->id())
     {
         case arrow::Type::NA:
@@ -909,7 +935,7 @@ IsListOfPointStructType(const std::shared_ptr<arrow::DataType> &type,
 
 inline bool OGRArrowLayer::IsValidGeometryEncoding(
     const std::shared_ptr<arrow::Field> &field, const std::string &osEncoding,
-    OGRwkbGeometryType &eGeomTypeOut,
+    bool bWarnIfUnknownEncoding, OGRwkbGeometryType &eGeomTypeOut,
     OGRArrowGeomEncoding &eOGRArrowGeomEncodingOut)
 {
     const auto &fieldName = field->name();
@@ -1133,10 +1159,13 @@ inline bool OGRArrowLayer::IsValidGeometryEncoding(
         return true;
     }
 
-    CPLError(CE_Warning, CPLE_AppDefined,
-             "Geometry column %s uses a unhandled encoding: %s. "
-             "Handling it as a regular field",
-             fieldName.c_str(), osEncoding.c_str());
+    if (bWarnIfUnknownEncoding)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Geometry column %s uses a unhandled encoding: %s. "
+                 "Handling it as a regular field",
+                 fieldName.c_str(), osEncoding.c_str());
+    }
     return false;
 }
 
@@ -2024,7 +2053,7 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
             iCol = m_anMapFieldIndexToArrowColumn[i][0];
         }
 
-        const arrow::Array *array = poColumnArrays[iCol].get();
+        const arrow::Array *array = GetStorageArray(poColumnArrays[iCol].get());
         if (array->IsNull(nIdxInBatch))
         {
             poFeature->SetFieldNull(i);
@@ -2043,7 +2072,7 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
             const int iArrowSubcol = m_anMapFieldIndexToArrowColumn[i][j];
             j++;
             CPLAssert(iArrowSubcol < static_cast<int>(subArrays.size()));
-            array = subArrays[iArrowSubcol].get();
+            array = GetStorageArray(subArrays[iArrowSubcol].get());
             if (array->IsNull(nIdxInBatch))
             {
                 poFeature->SetFieldNull(i);
@@ -2060,7 +2089,7 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
                 static_cast<const arrow::DictionaryArray *>(array);
             m_poReadFeatureTmpArray =
                 castArray->indices();  // does not return a const reference
-            array = m_poReadFeatureTmpArray.get();
+            array = GetStorageArray(m_poReadFeatureTmpArray.get());
             if (array->IsNull(nIdxInBatch))
             {
                 poFeature->SetFieldNull(i);
