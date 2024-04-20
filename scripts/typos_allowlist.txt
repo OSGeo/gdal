@@ -316,7 +316,7 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
     CPLStrlcpy(szPerimeterOfThePolygonCat, "Perimetre del poligon",
     CPLStrlcpy(szAreaOfThePolygonCat, "Area del poligon",
     CPLStrlcpy(szNumberOfElementaryPolygonsCat, "Nombre de poligons elementals",
-                    VSIFPrintfL(MMMap.fMMMap, "[VERSIO]\n");
+                    VSIFPrintfL(m_MMMap.fMMMap, "[VERSIO]\n");
 #define MM_IsDoubleInfinite(x) EsDoubleInfinit((x))
     https://www.miramon.cat/help/eng/GeMPlus/ClausREL.htm
     fprintf_function(pF, "[%s]" LineReturn, SECTION_VERSIO);
