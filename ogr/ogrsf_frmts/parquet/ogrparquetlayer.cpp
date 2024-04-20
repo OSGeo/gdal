@@ -206,195 +206,190 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
     }
 
     bool bRegularField = true;
-    // odd indetation to make backports to release/3.5 easier
+    auto oIter = m_oMapGeometryColumns.find(field->name());
+    if (oIter != m_oMapGeometryColumns.end() ||
+        STARTS_WITH(osExtensionName.c_str(), "ogc.") ||
+        STARTS_WITH(osExtensionName.c_str(), "geoarrow."))
     {
-        auto oIter = m_oMapGeometryColumns.find(field->name());
-        if (oIter != m_oMapGeometryColumns.end() ||
-            STARTS_WITH(osExtensionName.c_str(), "ogc.") ||
-            STARTS_WITH(osExtensionName.c_str(), "geoarrow."))
+        CPLJSONObject oJSONDef;
+        if (oIter != m_oMapGeometryColumns.end())
+            oJSONDef = oIter->second;
+        auto osEncoding = oJSONDef.GetString("encoding");
+        if (osEncoding.empty() && !osExtensionName.empty())
+            osEncoding = osExtensionName;
+
+        OGRwkbGeometryType eGeomType = wkbUnknown;
+        auto eGeomEncoding = OGRArrowGeomEncoding::WKB;
+        if (IsValidGeometryEncoding(field, osEncoding, eGeomType,
+                                    eGeomEncoding))
         {
-            CPLJSONObject oJSONDef;
-            if (oIter != m_oMapGeometryColumns.end())
-                oJSONDef = oIter->second;
-            auto osEncoding = oJSONDef.GetString("encoding");
-            if (osEncoding.empty() && !osExtensionName.empty())
-                osEncoding = osExtensionName;
+            bRegularField = false;
+            OGRGeomFieldDefn oField(field->name().c_str(), wkbUnknown);
 
-            OGRwkbGeometryType eGeomType = wkbUnknown;
-            auto eGeomEncoding = OGRArrowGeomEncoding::WKB;
-            if (IsValidGeometryEncoding(field, osEncoding, eGeomType,
-                                        eGeomEncoding))
+            auto oCRS = oJSONDef["crs"];
+            OGRSpatialReference *poSRS = nullptr;
+            if (!oCRS.IsValid())
             {
-                bRegularField = false;
-                OGRGeomFieldDefn oField(field->name().c_str(), wkbUnknown);
-
-                auto oCRS = oJSONDef["crs"];
-                OGRSpatialReference *poSRS = nullptr;
-                if (!oCRS.IsValid())
+                if (!m_oMapGeometryColumns.empty())
                 {
-                    if (!m_oMapGeometryColumns.empty())
+                    // WGS 84 is implied if no crs member is found.
+                    poSRS = new OGRSpatialReference();
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    poSRS->importFromEPSG(4326);
+                }
+            }
+            else if (oCRS.GetType() == CPLJSONObject::Type::String)
+            {
+                const auto osWKT = oCRS.ToString();
+                poSRS = new OGRSpatialReference();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+                if (poSRS->importFromWkt(osWKT.c_str()) != OGRERR_NONE)
+                {
+                    poSRS->Release();
+                    poSRS = nullptr;
+                }
+            }
+            else if (oCRS.GetType() == CPLJSONObject::Type::Object)
+            {
+                // CRS encoded as PROJJSON (extension)
+                const auto oType = oCRS["type"];
+                if (oType.IsValid() &&
+                    oType.GetType() == CPLJSONObject::Type::String)
+                {
+                    const auto osType = oType.ToString();
+                    if (osType.find("CRS") != std::string::npos)
                     {
-                        // WGS 84 is implied if no crs member is found.
                         poSRS = new OGRSpatialReference();
                         poSRS->SetAxisMappingStrategy(
                             OAMS_TRADITIONAL_GIS_ORDER);
-                        poSRS->importFromEPSG(4326);
-                    }
-                }
-                else if (oCRS.GetType() == CPLJSONObject::Type::String)
-                {
-                    const auto osWKT = oCRS.ToString();
-                    poSRS = new OGRSpatialReference();
-                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-                    if (poSRS->importFromWkt(osWKT.c_str()) != OGRERR_NONE)
-                    {
-                        poSRS->Release();
-                        poSRS = nullptr;
-                    }
-                }
-                else if (oCRS.GetType() == CPLJSONObject::Type::Object)
-                {
-                    // CRS encoded as PROJJSON (extension)
-                    const auto oType = oCRS["type"];
-                    if (oType.IsValid() &&
-                        oType.GetType() == CPLJSONObject::Type::String)
-                    {
-                        const auto osType = oType.ToString();
-                        if (osType.find("CRS") != std::string::npos)
+                        if (poSRS->SetFromUserInput(oCRS.ToString().c_str()) !=
+                            OGRERR_NONE)
                         {
-                            poSRS = new OGRSpatialReference();
-                            poSRS->SetAxisMappingStrategy(
-                                OAMS_TRADITIONAL_GIS_ORDER);
-
-                            if (poSRS->SetFromUserInput(
-                                    oCRS.ToString().c_str()) != OGRERR_NONE)
-                            {
-                                poSRS->Release();
-                                poSRS = nullptr;
-                            }
+                            poSRS->Release();
+                            poSRS = nullptr;
                         }
                     }
                 }
-
-                if (poSRS)
-                {
-                    const double dfCoordEpoch = oJSONDef.GetDouble("epoch");
-                    if (dfCoordEpoch > 0)
-                        poSRS->SetCoordinateEpoch(dfCoordEpoch);
-
-                    oField.SetSpatialRef(poSRS);
-
-                    poSRS->Release();
-                }
-
-                if (!m_osCRS.empty())
-                {
-                    poSRS = new OGRSpatialReference();
-                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    if (poSRS->SetFromUserInput(m_osCRS.c_str()) == OGRERR_NONE)
-                    {
-                        oField.SetSpatialRef(poSRS);
-                    }
-                    poSRS->Release();
-                }
-
-                if (oJSONDef.GetString("edges") == "spherical")
-                {
-                    SetMetadataItem("EDGES", "SPHERICAL");
-                }
-
-                // m_aeGeomEncoding be filled before calling
-                // ComputeGeometryColumnType()
-                m_aeGeomEncoding.push_back(eGeomEncoding);
-                if (eGeomType == wkbUnknown)
-                {
-                    // geometry_types since 1.0.0-beta1. Was geometry_type
-                    // before
-                    auto oType = oJSONDef.GetObj("geometry_types");
-                    if (!oType.IsValid())
-                        oType = oJSONDef.GetObj("geometry_type");
-                    if (oType.GetType() == CPLJSONObject::Type::String)
-                    {
-                        // string is no longer valid since 1.0.0-beta1
-                        const auto osType = oType.ToString();
-                        if (osType != "Unknown")
-                            eGeomType = GetGeometryTypeFromString(osType);
-                    }
-                    else if (oType.GetType() == CPLJSONObject::Type::Array)
-                    {
-                        const auto oTypeArray = oType.ToArray();
-                        if (oTypeArray.Size() == 1)
-                        {
-                            eGeomType = GetGeometryTypeFromString(
-                                oTypeArray[0].ToString());
-                        }
-                        else if (oTypeArray.Size() > 1)
-                        {
-                            const auto PromoteToCollection =
-                                [](OGRwkbGeometryType eType)
-                            {
-                                if (eType == wkbPoint)
-                                    return wkbMultiPoint;
-                                if (eType == wkbLineString)
-                                    return wkbMultiLineString;
-                                if (eType == wkbPolygon)
-                                    return wkbMultiPolygon;
-                                return eType;
-                            };
-                            bool bMixed = false;
-                            bool bHasMulti = false;
-                            bool bHasZ = false;
-                            bool bHasM = false;
-                            const auto eFirstType =
-                                OGR_GT_Flatten(GetGeometryTypeFromString(
-                                    oTypeArray[0].ToString()));
-                            const auto eFirstTypeCollection =
-                                PromoteToCollection(eFirstType);
-                            for (int i = 0; i < oTypeArray.Size(); ++i)
-                            {
-                                const auto eThisGeom =
-                                    GetGeometryTypeFromString(
-                                        oTypeArray[i].ToString());
-                                if (PromoteToCollection(OGR_GT_Flatten(
-                                        eThisGeom)) != eFirstTypeCollection)
-                                {
-                                    bMixed = true;
-                                    break;
-                                }
-                                bHasZ |= OGR_GT_HasZ(eThisGeom) != FALSE;
-                                bHasM |= OGR_GT_HasM(eThisGeom) != FALSE;
-                                bHasMulti |= (PromoteToCollection(
-                                                  OGR_GT_Flatten(eThisGeom)) ==
-                                              OGR_GT_Flatten(eThisGeom));
-                            }
-                            if (!bMixed)
-                            {
-                                if (eFirstTypeCollection == wkbMultiPolygon ||
-                                    eFirstTypeCollection == wkbMultiLineString)
-                                {
-                                    if (bHasMulti)
-                                        eGeomType = OGR_GT_SetModifier(
-                                            eFirstTypeCollection, bHasZ, bHasM);
-                                    else
-                                        eGeomType = OGR_GT_SetModifier(
-                                            eFirstType, bHasZ, bHasM);
-                                }
-                            }
-                        }
-                    }
-                    else if (CPLTestBool(CPLGetConfigOption(
-                                 "OGR_PARQUET_COMPUTE_GEOMETRY_TYPE", "YES")))
-                    {
-                        eGeomType = computeGeometryTypeFun();
-                    }
-                }
-
-                oField.SetType(eGeomType);
-                oField.SetNullable(field->nullable());
-                m_poFeatureDefn->AddGeomFieldDefn(&oField);
-                m_anMapGeomFieldIndexToArrowColumn.push_back(iFieldIdx);
             }
+
+            if (poSRS)
+            {
+                const double dfCoordEpoch = oJSONDef.GetDouble("epoch");
+                if (dfCoordEpoch > 0)
+                    poSRS->SetCoordinateEpoch(dfCoordEpoch);
+
+                oField.SetSpatialRef(poSRS);
+
+                poSRS->Release();
+            }
+
+            if (!m_osCRS.empty())
+            {
+                poSRS = new OGRSpatialReference();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (poSRS->SetFromUserInput(m_osCRS.c_str()) == OGRERR_NONE)
+                {
+                    oField.SetSpatialRef(poSRS);
+                }
+                poSRS->Release();
+            }
+
+            if (oJSONDef.GetString("edges") == "spherical")
+            {
+                SetMetadataItem("EDGES", "SPHERICAL");
+            }
+
+            // m_aeGeomEncoding be filled before calling
+            // ComputeGeometryColumnType()
+            m_aeGeomEncoding.push_back(eGeomEncoding);
+            if (eGeomType == wkbUnknown)
+            {
+                // geometry_types since 1.0.0-beta1. Was geometry_type
+                // before
+                auto oType = oJSONDef.GetObj("geometry_types");
+                if (!oType.IsValid())
+                    oType = oJSONDef.GetObj("geometry_type");
+                if (oType.GetType() == CPLJSONObject::Type::String)
+                {
+                    // string is no longer valid since 1.0.0-beta1
+                    const auto osType = oType.ToString();
+                    if (osType != "Unknown")
+                        eGeomType = GetGeometryTypeFromString(osType);
+                }
+                else if (oType.GetType() == CPLJSONObject::Type::Array)
+                {
+                    const auto oTypeArray = oType.ToArray();
+                    if (oTypeArray.Size() == 1)
+                    {
+                        eGeomType =
+                            GetGeometryTypeFromString(oTypeArray[0].ToString());
+                    }
+                    else if (oTypeArray.Size() > 1)
+                    {
+                        const auto PromoteToCollection =
+                            [](OGRwkbGeometryType eType)
+                        {
+                            if (eType == wkbPoint)
+                                return wkbMultiPoint;
+                            if (eType == wkbLineString)
+                                return wkbMultiLineString;
+                            if (eType == wkbPolygon)
+                                return wkbMultiPolygon;
+                            return eType;
+                        };
+                        bool bMixed = false;
+                        bool bHasMulti = false;
+                        bool bHasZ = false;
+                        bool bHasM = false;
+                        const auto eFirstType =
+                            OGR_GT_Flatten(GetGeometryTypeFromString(
+                                oTypeArray[0].ToString()));
+                        const auto eFirstTypeCollection =
+                            PromoteToCollection(eFirstType);
+                        for (int i = 0; i < oTypeArray.Size(); ++i)
+                        {
+                            const auto eThisGeom = GetGeometryTypeFromString(
+                                oTypeArray[i].ToString());
+                            if (PromoteToCollection(OGR_GT_Flatten(
+                                    eThisGeom)) != eFirstTypeCollection)
+                            {
+                                bMixed = true;
+                                break;
+                            }
+                            bHasZ |= OGR_GT_HasZ(eThisGeom) != FALSE;
+                            bHasM |= OGR_GT_HasM(eThisGeom) != FALSE;
+                            bHasMulti |=
+                                (PromoteToCollection(OGR_GT_Flatten(
+                                     eThisGeom)) == OGR_GT_Flatten(eThisGeom));
+                        }
+                        if (!bMixed)
+                        {
+                            if (eFirstTypeCollection == wkbMultiPolygon ||
+                                eFirstTypeCollection == wkbMultiLineString)
+                            {
+                                if (bHasMulti)
+                                    eGeomType = OGR_GT_SetModifier(
+                                        eFirstTypeCollection, bHasZ, bHasM);
+                                else
+                                    eGeomType = OGR_GT_SetModifier(
+                                        eFirstType, bHasZ, bHasM);
+                            }
+                        }
+                    }
+                }
+                else if (CPLTestBool(CPLGetConfigOption(
+                             "OGR_PARQUET_COMPUTE_GEOMETRY_TYPE", "YES")))
+                {
+                    eGeomType = computeGeometryTypeFun();
+                }
+            }
+
+            oField.SetType(eGeomType);
+            oField.SetNullable(field->nullable());
+            m_poFeatureDefn->AddGeomFieldDefn(&oField);
+            m_anMapGeomFieldIndexToArrowColumn.push_back(iFieldIdx);
         }
     }
 
