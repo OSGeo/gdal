@@ -1,7 +1,9 @@
 .. _vector.miramon:
 
 MiraMon Vector
-====================
+==============
+
+.. versionadded:: 3.9
 
 .. shortname:: MiraMonVector
 
