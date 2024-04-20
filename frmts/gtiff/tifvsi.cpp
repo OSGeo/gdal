@@ -54,6 +54,8 @@
 
 #include "xtiffio.h"
 
+#include <limits>
+
 #if (TIFFLIB_VERSION > 20220520) || defined(INTERNAL_LIBTIFF)  // > 4.4.0
 #define SUPPORTS_LIBTIFF_OPEN_OPTIONS
 
@@ -452,7 +454,7 @@ static void VSI_TIFFSetOpenOptions(TIFFOpenOptions *opts)
         else
             return CPLGetUsablePhysicalRAM() * 9 / 10;
     }();
-    if (nMemLimit > 0 && nMemLimit < TIFF_TMSIZE_T_MAX)
+    if (nMemLimit > 0 && nMemLimit < std::numeric_limits<tmsize_t>::max())
     {
         //CPLDebug("GTiff", "TIFFOpenOptionsSetMaxCumulatedMemAlloc(%" PRIu64 ")",
         //         static_cast<uint64_t>(nMemLimit));

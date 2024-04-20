@@ -38,6 +38,7 @@ constexpr const char *ARROW_EXTENSION_NAME_KEY = "ARROW:extension:name";
 constexpr const char *ARROW_EXTENSION_METADATA_KEY = "ARROW:extension:metadata";
 constexpr const char *EXTENSION_NAME_OGC_WKB = "ogc.wkb";
 constexpr const char *EXTENSION_NAME_GEOARROW_WKB = "geoarrow.wkb";
+constexpr const char *EXTENSION_NAME_ARROW_JSON = "arrow.json";
 
 std::map<std::string, std::string>
     CPL_DLL OGRParseArrowMetadata(const char *pabyMetadata);

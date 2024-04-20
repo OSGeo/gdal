@@ -60,7 +60,7 @@ constexpr size_t INPUT_BUF_SIZE = 4096;
 
 static void init_source(j_decompress_ptr cinfo)
 {
-    my_src_ptr src = (my_src_ptr)cinfo->src;
+    my_src_ptr src = reinterpret_cast<my_src_ptr>(cinfo->src);
 
     // We reset the empty-input-file flag for each image,
     // but we don't clear the input buffer.
@@ -101,7 +101,7 @@ static void init_source(j_decompress_ptr cinfo)
 
 static boolean fill_input_buffer(j_decompress_ptr cinfo)
 {
-    my_src_ptr src = (my_src_ptr)cinfo->src;
+    my_src_ptr src = reinterpret_cast<my_src_ptr>(cinfo->src);
     size_t nbytes = VSIFReadL(src->buffer, 1, INPUT_BUF_SIZE, src->infile);
 
     if (nbytes == 0)
@@ -110,13 +110,15 @@ static boolean fill_input_buffer(j_decompress_ptr cinfo)
         {
             // Treat empty input file as fatal error.
             cinfo->err->msg_code = JERR_INPUT_EMPTY;
-            cinfo->err->error_exit((j_common_ptr)(cinfo));
+            cinfo->err->error_exit(reinterpret_cast<j_common_ptr>(cinfo));
             return FALSE;  // will never reach that point
         }
-        WARNMS(cinfo, JWRN_JPEG_EOF);
+        (cinfo)->err->msg_code = JWRN_JPEG_EOF;
+        (*cinfo->err->emit_message)(reinterpret_cast<j_common_ptr>(cinfo), -1);
+
         // Insert a fake EOI marker.
-        src->buffer[0] = (JOCTET)0xFF;
-        src->buffer[1] = (JOCTET)JPEG_EOI;
+        src->buffer[0] = static_cast<JOCTET>(0xFF);
+        src->buffer[1] = static_cast<JOCTET>(JPEG_EOI);
         nbytes = 2;
     }
 
@@ -193,22 +195,22 @@ static boolean fill_input_buffer_ipp(j_decompress_ptr cinfo)
 
 static void skip_input_data(j_decompress_ptr cinfo, long num_bytes)
 {
-    my_src_ptr src = (my_src_ptr)cinfo->src;
+    my_src_ptr src = reinterpret_cast<my_src_ptr>(cinfo->src);
 
     // Just a dumb implementation for now.  Could use fseek() except
     // it doesn't work on pipes.  Not clear that being smart is worth
     // any trouble anyway --- large skips are infrequent.
     if (num_bytes > 0)
     {
-        while (num_bytes > (long)src->pub.bytes_in_buffer)
+        while (num_bytes > static_cast<long>(src->pub.bytes_in_buffer))
         {
-            num_bytes -= (long)src->pub.bytes_in_buffer;
+            num_bytes -= static_cast<long>(src->pub.bytes_in_buffer);
             (void)fill_input_buffer(cinfo);
             // note we assume that fill_input_buffer will never return FALSE,
             // so suspension need not be handled.
         }
-        src->pub.next_input_byte += (size_t)num_bytes;
-        src->pub.bytes_in_buffer -= (size_t)num_bytes;
+        src->pub.next_input_byte += static_cast<size_t>(num_bytes);
+        src->pub.bytes_in_buffer -= static_cast<size_t>(num_bytes);
     }
 }
 
@@ -247,15 +249,16 @@ void jpeg_vsiio_src(j_decompress_ptr cinfo, VSILFILE *infile)
     if (cinfo->src == nullptr)
     {
         // First time for this JPEG object?
-        cinfo->src = (struct jpeg_source_mgr *)(*cinfo->mem->alloc_small)(
-            (j_common_ptr)cinfo, JPOOL_PERMANENT, sizeof(my_source_mgr));
-        src = (my_src_ptr)cinfo->src;
-        src->buffer = (JOCTET *)(*cinfo->mem->alloc_small)(
-            (j_common_ptr)cinfo, JPOOL_PERMANENT,
-            INPUT_BUF_SIZE * sizeof(JOCTET));
+        j_common_ptr cinfo_common = reinterpret_cast<j_common_ptr>(cinfo);
+        cinfo->src =
+            static_cast<struct jpeg_source_mgr *>((*cinfo->mem->alloc_small)(
+                cinfo_common, JPOOL_PERMANENT, sizeof(my_source_mgr)));
+        src = reinterpret_cast<my_src_ptr>(cinfo->src);
+        src->buffer = static_cast<JOCTET *>((*cinfo->mem->alloc_small)(
+            cinfo_common, JPOOL_PERMANENT, INPUT_BUF_SIZE * sizeof(JOCTET)));
     }
 
-    src = (my_src_ptr)cinfo->src;
+    src = reinterpret_cast<my_src_ptr>(cinfo->src);
     src->pub.init_source = init_source;
 #ifdef IPPJ_HUFF
     src->pub.fill_input_buffer = fill_input_buffer_ipp;
@@ -297,11 +300,12 @@ constexpr size_t OUTPUT_BUF_SIZE = 4096;
 
 static void init_destination(j_compress_ptr cinfo)
 {
-    my_dest_ptr dest = (my_dest_ptr)cinfo->dest;
+    my_dest_ptr dest = reinterpret_cast<my_dest_ptr>(cinfo->dest);
 
     // Allocate the output buffer --- it will be released when done with image.
-    dest->buffer = (JOCTET *)(*cinfo->mem->alloc_small)(
-        (j_common_ptr)cinfo, JPOOL_IMAGE, OUTPUT_BUF_SIZE * sizeof(JOCTET));
+    dest->buffer = static_cast<JOCTET *>((*cinfo->mem->alloc_small)(
+        reinterpret_cast<j_common_ptr>(cinfo), JPOOL_IMAGE,
+        OUTPUT_BUF_SIZE * sizeof(JOCTET)));
 
     dest->pub.next_output_byte = dest->buffer;
     dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
@@ -330,7 +334,7 @@ static void init_destination(j_compress_ptr cinfo)
 
 static boolean empty_output_buffer(j_compress_ptr cinfo)
 {
-    my_dest_ptr dest = (my_dest_ptr)cinfo->dest;
+    my_dest_ptr dest = reinterpret_cast<my_dest_ptr>(cinfo->dest);
     size_t bytes_to_write = OUTPUT_BUF_SIZE;
 
 #ifdef IPPJ_HUFF
@@ -347,7 +351,7 @@ static boolean empty_output_buffer(j_compress_ptr cinfo)
         bytes_to_write)
     {
         cinfo->err->msg_code = JERR_FILE_WRITE;
-        cinfo->err->error_exit((j_common_ptr)(cinfo));
+        cinfo->err->error_exit(reinterpret_cast<j_common_ptr>(cinfo));
         return FALSE;  // will never reach that point
     }
 
@@ -365,7 +369,7 @@ static boolean empty_output_buffer(j_compress_ptr cinfo)
 // for error exit.
 static void term_destination(j_compress_ptr cinfo)
 {
-    my_dest_ptr dest = (my_dest_ptr)cinfo->dest;
+    my_dest_ptr dest = reinterpret_cast<my_dest_ptr>(cinfo->dest);
     size_t datacount = OUTPUT_BUF_SIZE - dest->pub.free_in_buffer;
 
     // Write any data remaining in the buffer.
@@ -374,14 +378,14 @@ static void term_destination(j_compress_ptr cinfo)
         if (VSIFWriteL(dest->buffer, 1, datacount, dest->outfile) != datacount)
         {
             cinfo->err->msg_code = JERR_FILE_WRITE;
-            cinfo->err->error_exit((j_common_ptr)(cinfo));
+            cinfo->err->error_exit(reinterpret_cast<j_common_ptr>(cinfo));
             return;  // will never reach that point
         }
     }
     if (VSIFFlushL(dest->outfile) != 0)
     {
         cinfo->err->msg_code = JERR_FILE_WRITE;
-        cinfo->err->error_exit((j_common_ptr)(cinfo));
+        cinfo->err->error_exit(reinterpret_cast<j_common_ptr>(cinfo));
         return;  // will never reach that point
     }
 }
@@ -402,11 +406,13 @@ void jpeg_vsiio_dest(j_compress_ptr cinfo, VSILFILE *outfile)
     if (cinfo->dest == nullptr)
     {
         // First time for this JPEG object?
-        cinfo->dest = (struct jpeg_destination_mgr *)(*cinfo->mem->alloc_small)(
-            (j_common_ptr)cinfo, JPOOL_PERMANENT, sizeof(my_destination_mgr));
+        cinfo->dest = static_cast<struct jpeg_destination_mgr *>(
+            (*cinfo->mem->alloc_small)(reinterpret_cast<j_common_ptr>(cinfo),
+                                       JPOOL_PERMANENT,
+                                       sizeof(my_destination_mgr)));
     }
 
-    dest = (my_dest_ptr)cinfo->dest;
+    dest = reinterpret_cast<my_dest_ptr>(cinfo->dest);
     dest->pub.init_destination = init_destination;
     dest->pub.empty_output_buffer = empty_output_buffer;
     dest->pub.term_destination = term_destination;

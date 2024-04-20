@@ -3678,3 +3678,29 @@ def test_ogr_parquet_geoarrow(
     ):
         lyr.SetSpatialFilterRect(minx + 0.1, miny + 0.1, maxx - 0.1, maxy - 0.1)
         assert lyr.GetFeatureCount() != 0
+
+
+###############################################################################
+# Test reading a file with an extension on a regular field not registered with
+# PyArrow
+
+
+def test_ogr_parquet_read_with_extension_not_registered_on_regular_field():
+
+    ds = ogr.Open("data/parquet/extension_custom.parquet")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["extension_custom"] == '{"foo":"bar"}'
+
+
+###############################################################################
+# Test reading a file with the arrow.json extension
+
+
+def test_ogr_parquet_read_arrow_json_extension():
+
+    ds = ogr.Open("data/parquet/extension_json.parquet")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTJSON
+    f = lyr.GetNextFeature()
+    assert f["extension_json"] == '{"foo":"bar"}'

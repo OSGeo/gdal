@@ -3260,8 +3260,6 @@ void netCDFDataset::SetProjectionFromVar(
     // These values from CF metadata.
     OGRSpatialReference oSRS;
     oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    char szDimNameX[NC_MAX_NAME + 1];
-    // char szDimNameY[NC_MAX_NAME + 1];
     size_t xdim = nRasterXSize;
     size_t ydim = nRasterYSize;
 
@@ -3414,28 +3412,6 @@ void netCDFDataset::SetProjectionFromVar(
              "bIsGdalFile=%d bIsGdalCfFile=%d bSwitchedXY=%d bBottomUp=%d",
              static_cast<int>(bIsGdalFile), static_cast<int>(bIsGdalCfFile),
              static_cast<int>(bSwitchedXY), static_cast<int>(bBottomUp));
-
-    // Look for dimension: lon.
-
-    memset(szDimNameX, '\0', sizeof(szDimNameX));
-    // memset(szDimNameY, '\0', sizeof(szDimNameY));
-
-    if (!bReadSRSOnly)
-    {
-        for (unsigned int i = 0;
-             i < strlen(poDS->papszDimName[poDS->nXDimID]) && i < 3; i++)
-        {
-            szDimNameX[i] = (char)CPLTolower(static_cast<unsigned char>(
-                (poDS->papszDimName[poDS->nXDimID])[i]));
-        }
-        szDimNameX[3] = '\0';
-        // for( unsigned int i = 0;
-        //      (i < strlen(poDS->papszDimName[poDS->nYDimID])
-        //                        && i < 3 ); i++ ) {
-        //    szDimNameY[i]=(char)CPLTolower(static_cast<unsigned char>((poDS->papszDimName[poDS->nYDimID])[i]));
-        // }
-        // szDimNameY[3] = '\0';
-    }
 
     // Read projection coordinates.
 

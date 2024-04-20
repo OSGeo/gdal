@@ -301,11 +301,15 @@ GDALInfoAppOptionsGetParser(GDALInfoOptions *psOptions,
         .store_into(psOptions->osWKTFormat)
         .help(_("WKT format used for SRS."));
 
-    argParser->add_argument("-sd")
-        .metavar("<n>")
-        .store_into(psOptionsForBinary->nSubdataset)
-        .help(_("Use subdataset of specified index (starting at 1), instead of "
+    if (psOptionsForBinary)
+    {
+        argParser->add_argument("-sd")
+            .metavar("<n>")
+            .store_into(psOptionsForBinary->nSubdataset)
+            .help(_(
+                "Use subdataset of specified index (starting at 1), instead of "
                 "the source dataset itself."));
+    }
 
     argParser->add_argument("-oo")
         .metavar("<NAME>=<VALUE>")

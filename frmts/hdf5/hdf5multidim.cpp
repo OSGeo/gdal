@@ -1651,8 +1651,6 @@ HDF5Array::GetCoordinateVariables() const
                                     "Geolocation Fields"));
                 if (poLongitude && poLatitude)
                 {
-                    std::vector<std::shared_ptr<GDALMDArray>>
-                        m_apoCoordinates{};
                     ret.push_back(poLongitude);
                     ret.push_back(poLatitude);
                 }

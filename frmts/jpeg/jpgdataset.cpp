@@ -406,6 +406,14 @@ void JPGDatasetCommon::ReadFLIRMetadata()
             1)
             break;
 
+        // Not a marker
+        if (abyChunkHeader[0] != 0xFF)
+            continue;
+
+        // Stop on Start of Scan
+        if (abyChunkHeader[1] == 0xDA)
+            break;
+
         int nMarkerLength = abyChunkHeader[2] * 256 + abyChunkHeader[3] - 2;
         nChunkLoc += 4 + nMarkerLength;
 

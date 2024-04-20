@@ -402,8 +402,8 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
         if (GDALGetGeoTransform(hSrcDS, adfGeoTransform) == CE_None &&
             adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0)
         {
-            GDALGenImgProjTransformInfo *psInfo{
-                static_cast<GDALGenImgProjTransformInfo *>(pTransformArg)};
+            const GDALGenImgProjTransformInfo *psInfo =
+                static_cast<const GDALGenImgProjTransformInfo *>(pTransformArg);
 
             if (psInfo && !psInfo->pSrcTransformer &&
                 !psInfo->bHasCustomTransformationPipeline &&

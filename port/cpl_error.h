@@ -301,7 +301,7 @@ extern "C++"
         /** Constructor that backs up the error state, and optionally installs
          * a thread-local temporary error handler (typically CPLQuietErrorHandler).
          */
-        CPLErrorStateBackuper(CPLErrorHandler hHandler = nullptr);
+        explicit CPLErrorStateBackuper(CPLErrorHandler hHandler = nullptr);
 
         /** Destructor that restores the error state to its initial state
          * before construction.

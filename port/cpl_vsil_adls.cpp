@@ -106,7 +106,6 @@ class VSIADLSFSHandler;
 
 struct VSIDIRADLS : public VSIDIR
 {
-    std::string m_osRootPath{};
     int m_nRecurseDepth = 0;
 
     struct Iterator

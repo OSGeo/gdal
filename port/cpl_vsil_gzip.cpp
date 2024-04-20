@@ -5053,17 +5053,20 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
             return nullptr;
         }
         enum libdeflate_result res;
+        size_t nOutBytes = 0;
         if (nBytes > 2 && static_cast<const GByte *>(ptr)[0] == 0x1F &&
             static_cast<const GByte *>(ptr)[1] == 0x8B)
         {
             res = libdeflate_gzip_decompress(dec, ptr, nBytes, outptr,
-                                             nOutAvailableBytes, pnOutBytes);
+                                             nOutAvailableBytes, &nOutBytes);
         }
         else
         {
             res = libdeflate_zlib_decompress(dec, ptr, nBytes, outptr,
-                                             nOutAvailableBytes, pnOutBytes);
+                                             nOutAvailableBytes, &nOutBytes);
         }
+        if (pnOutBytes)
+            *pnOutBytes = nOutBytes;
         libdeflate_free_decompressor(dec);
         if (res == LIBDEFLATE_INSUFFICIENT_SPACE && bAllowResizeOutptr)
         {
@@ -5084,13 +5087,18 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
             outptr = nullptr;
             nOutAvailableBytes = nOutBufSize;
         }
+        else if (res != LIBDEFLATE_SUCCESS)
+        {
+            if (bAllowResizeOutptr)
+                VSIFree(outptr);
+            return nullptr;
+        }
         else
         {
-            if (res != LIBDEFLATE_SUCCESS)
+            // Nul-terminate if possible.
+            if (nOutBytes < nOutAvailableBytes)
             {
-                if (bAllowResizeOutptr)
-                    VSIFree(outptr);
-                return nullptr;
+                static_cast<char *>(outptr)[nOutBytes] = '\0';
             }
             return outptr;
         }
@@ -5142,8 +5150,8 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
             inflateEnd(&strm);
             return nullptr;
         }
-        nOutBufSize = 2 * nBytes;
-        pszOutBuf = static_cast<char *>(VSI_MALLOC_VERBOSE(nOutBufSize + 1));
+        nOutBufSize = 2 * nBytes + 1;
+        pszOutBuf = static_cast<char *>(VSI_MALLOC_VERBOSE(nOutBufSize));
         if (pszOutBuf == nullptr)
         {
             inflateEnd(&strm);
@@ -5199,9 +5207,9 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
                 inflateEnd(&strm);
                 return nullptr;
             }
-            nOutBufSize = nOutBufSize * 2;
+            nOutBufSize = nOutBufSize * 2 + 1;
             char *pszNew = static_cast<char *>(
-                VSI_REALLOC_VERBOSE(pszReallocatableBuf, nOutBufSize + 1));
+                VSI_REALLOC_VERBOSE(pszReallocatableBuf, nOutBufSize));
             if (!pszNew)
             {
                 VSIFree(pszReallocatableBuf);
@@ -5222,7 +5230,7 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
     {
         size_t nOutBytes = nOutBufSize - nOutBytesRemaining;
         // Nul-terminate if possible.
-        if (outptr != pszOutBuf || nOutBytes < nOutBufSize)
+        if (nOutBytes < nOutBufSize)
         {
             pszOutBuf[nOutBytes] = '\0';
         }

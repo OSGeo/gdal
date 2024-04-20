@@ -3879,7 +3879,9 @@ TEST_F(test_ogr, OGRFeature_SerializeToBinary)
             OGRFeature oFeatSrc(&oFDefn);
             std::vector<GByte> abyBuffer;
 
-            oFeatSrc.SetFieldNull(oFDefn.GetFieldIndex("int"));
+            const int iFieldInt = oFDefn.GetFieldIndex("int");
+            ASSERT_TRUE(iFieldInt >= 0);
+            oFeatSrc.SetFieldNull(iFieldInt);
             EXPECT_TRUE(oFeatSrc.SerializeToBinary(abyBuffer));
             EXPECT_EQ(abyBuffer.size(), 5);
 
@@ -3904,7 +3906,9 @@ TEST_F(test_ogr, OGRFeature_SerializeToBinary)
             oFeatSrc.SetField("int64", static_cast<GIntBig>(-12345678901234));
             oFeatSrc.SetField("real", 1.25);
             oFeatSrc.SetField("str", "foo");
-            oFeatSrc.SetField(oFDefn.GetFieldIndex("binary"), 3,
+            const int iFieldBinary = oFDefn.GetFieldIndex("binary");
+            ASSERT_TRUE(iFieldBinary >= 0);
+            oFeatSrc.SetField(iFieldBinary, 3,
                               static_cast<const void *>("abc"));
             oFeatSrc.SetField("intlist", 2,
                               std::vector<int>{1, -123456}.data());
