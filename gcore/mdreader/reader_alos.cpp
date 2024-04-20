@@ -340,7 +340,7 @@ char **GDALMDReaderALOS::LoadRPCTxtFile()
         constexpr int RPC_COEFF_COUNT2 = 20;
         constexpr int RPC_COEFF_SIZE = 12;
         nRequiredSize += RPC_COEFF_COUNT1 * RPC_COEFF_COUNT2 * RPC_COEFF_SIZE;
-        if (strlen(pszFirstRow) < nRequiredSize)
+        if (strlen(pszFirstRow) < static_cast<size_t>(nRequiredSize))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "%s has only %d bytes wherea %d are required",
