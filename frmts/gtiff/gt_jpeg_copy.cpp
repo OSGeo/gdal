@@ -464,7 +464,7 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF *hTIFF, GDALDataset *poSrcDS)
     sDInfo.client_data = &setjmp_buffer;
 
     bCallDestroyDecompress = true;
-    jpeg_create_decompress(&sDInfo);
+    jpeg_CreateDecompress(&sDInfo, JPEG_LIB_VERSION, sizeof(sDInfo));
 
     jpeg_vsiio_src(&sDInfo, fpJPEG);
     jpeg_read_header(&sDInfo, TRUE);
@@ -473,7 +473,7 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags(TIFF *hTIFF, GDALDataset *poSrcDS)
     sJErr.error_exit = GTIFF_ErrorExitJPEG;
     sCInfo.client_data = &setjmp_buffer;
 
-    jpeg_create_compress(&sCInfo);
+    jpeg_CreateCompress(&sCInfo, JPEG_LIB_VERSION, sizeof(sCInfo));
     bCallDestroyCompress = true;
     jpeg_copy_critical_parameters(&sDInfo, &sCInfo);
     GTIFF_Set_TIFFTAG_JPEGTABLES(hTIFF, sDInfo, sCInfo);
@@ -612,7 +612,7 @@ static CPLErr GTIFF_CopyBlockFromJPEG(GTIFF_CopyBlockFromJPEGArgs *psArgs)
     sCInfo.client_data = &setjmp_buffer;
 
     // Initialize destination compression parameters from source values.
-    jpeg_create_compress(&sCInfo);
+    jpeg_CreateCompress(&sCInfo, JPEG_LIB_VERSION, sizeof(sCInfo));
     jpeg_copy_critical_parameters(psDInfo, &sCInfo);
 
     // Ensure libjpeg won't write any extraneous markers.
@@ -837,7 +837,7 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset *poDS, GDALDataset *poSrcDS,
     sJErr.error_exit = GTIFF_ErrorExitJPEG;
     sDInfo.client_data = &setjmp_buffer;
 
-    jpeg_create_decompress(&sDInfo);
+    jpeg_CreateDecompress(&sDInfo, JPEG_LIB_VERSION, sizeof(sDInfo));
 
     // This is to address bug related in ticket #1795.
     if (CPLGetConfigOption("JPEGMEM", nullptr) == nullptr)
