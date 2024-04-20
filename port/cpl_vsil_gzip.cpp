@@ -5053,17 +5053,20 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
             return nullptr;
         }
         enum libdeflate_result res;
+        size_t nOutBytes = 0;
         if (nBytes > 2 && static_cast<const GByte *>(ptr)[0] == 0x1F &&
             static_cast<const GByte *>(ptr)[1] == 0x8B)
         {
             res = libdeflate_gzip_decompress(dec, ptr, nBytes, outptr,
-                                             nOutAvailableBytes, pnOutBytes);
+                                             nOutAvailableBytes, &nOutBytes);
         }
         else
         {
             res = libdeflate_zlib_decompress(dec, ptr, nBytes, outptr,
-                                             nOutAvailableBytes, pnOutBytes);
+                                             nOutAvailableBytes, &nOutBytes);
         }
+        if (pnOutBytes)
+            *pnOutBytes = nOutBytes;
         libdeflate_free_decompressor(dec);
         if (res == LIBDEFLATE_INSUFFICIENT_SPACE && bAllowResizeOutptr)
         {
@@ -5093,9 +5096,9 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
         else
         {
             // Nul-terminate if possible.
-            if (*pnOutBytes < nOutAvailableBytes)
+            if (nOutBytes < nOutAvailableBytes)
             {
-                static_cast<char *>(outptr)[*pnOutBytes] = '\0';
+                static_cast<char *>(outptr)[nOutBytes] = '\0';
             }
             return outptr;
         }
