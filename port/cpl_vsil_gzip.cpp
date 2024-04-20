@@ -5084,13 +5084,18 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
             outptr = nullptr;
             nOutAvailableBytes = nOutBufSize;
         }
+        else if (res != LIBDEFLATE_SUCCESS)
+        {
+            if (bAllowResizeOutptr)
+                VSIFree(outptr);
+            return nullptr;
+        }
         else
         {
-            if (res != LIBDEFLATE_SUCCESS)
+            // Nul-terminate if possible.
+            if (*pnOutBytes < nOutAvailableBytes)
             {
-                if (bAllowResizeOutptr)
-                    VSIFree(outptr);
-                return nullptr;
+                static_cast<char *>(outptr)[*pnOutBytes] = '\0';
             }
             return outptr;
         }
@@ -5142,8 +5147,8 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
             inflateEnd(&strm);
             return nullptr;
         }
-        nOutBufSize = 2 * nBytes;
-        pszOutBuf = static_cast<char *>(VSI_MALLOC_VERBOSE(nOutBufSize + 1));
+        nOutBufSize = 2 * nBytes + 1;
+        pszOutBuf = static_cast<char *>(VSI_MALLOC_VERBOSE(nOutBufSize));
         if (pszOutBuf == nullptr)
         {
             inflateEnd(&strm);
@@ -5199,9 +5204,9 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
                 inflateEnd(&strm);
                 return nullptr;
             }
-            nOutBufSize = nOutBufSize * 2;
+            nOutBufSize = nOutBufSize * 2 + 1;
             char *pszNew = static_cast<char *>(
-                VSI_REALLOC_VERBOSE(pszReallocatableBuf, nOutBufSize + 1));
+                VSI_REALLOC_VERBOSE(pszReallocatableBuf, nOutBufSize));
             if (!pszNew)
             {
                 VSIFree(pszReallocatableBuf);
@@ -5222,7 +5227,7 @@ void *CPLZLibInflateEx(const void *ptr, size_t nBytes, void *outptr,
     {
         size_t nOutBytes = nOutBufSize - nOutBytesRemaining;
         // Nul-terminate if possible.
-        if (outptr != pszOutBuf || nOutBytes < nOutBufSize)
+        if (nOutBytes < nOutBufSize)
         {
             pszOutBuf[nOutBytes] = '\0';
         }
