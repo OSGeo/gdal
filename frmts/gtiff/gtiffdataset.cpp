@@ -248,8 +248,6 @@ std::tuple<CPLErr, bool> GTiffDataset::Finalize()
                 CPLFree(m_asCompressionJobs[i].pszTmpFilename);
             }
         }
-        CPLDestroyMutex(m_hCompressThreadPoolMutex);
-        m_hCompressThreadPoolMutex = nullptr;
         m_poCompressQueue.reset();
     }
 
