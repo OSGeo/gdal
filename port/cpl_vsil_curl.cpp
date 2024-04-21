@@ -3000,6 +3000,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
             {
                 {
                     std::unique_lock<std::mutex> oLock(poRange->oMutex);
+                    // coverity[missing_lock:FALSE]
                     while (!poRange->bDone)
                     {
                         poRange->oCV.wait(oLock);
@@ -3472,6 +3473,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
 
         for (size_t i = 0; i < m_aoAdviseReadRanges.size(); ++i)
         {
+            // coverity[missing_lock]
             if (!m_aoAdviseReadRanges[i]->bDone)
             {
                 DealWithRequest(aHandles[i]);
