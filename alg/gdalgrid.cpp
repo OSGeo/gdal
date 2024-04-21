@@ -2602,6 +2602,7 @@ static int GDALGridProgressMultiThread(GDALGridJob *psJob)
 static int GDALGridProgressMonoThread(GDALGridJob *psJob)
 {
     const int nCounter = ++(*psJob->pnCounter);
+    // coverity[missing_lock]
     if (!psJob->pfnRealProgress(nCounter / static_cast<double>(psJob->nYSize),
                                 "", psJob->pRealProgressArg))
     {
