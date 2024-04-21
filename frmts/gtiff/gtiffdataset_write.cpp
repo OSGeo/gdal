@@ -1262,7 +1262,11 @@ void GTiffDataset::WaitCompletionForJobIdx(int i)
     }
     asJobs[i].pabyCompressedBuffer = nullptr;
     asJobs[i].nBufferSize = 0;
-    asJobs[i].bReady = false;
+    {
+        // Likely useless, but makes Coverity happy
+        std::lock_guard oLock(mutex);
+        asJobs[i].bReady = false;
+    }
     asJobs[i].nStripOrTile = -1;
     oQueue.pop();
 }
