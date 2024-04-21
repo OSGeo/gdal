@@ -1350,8 +1350,10 @@ id,WKT
 
 OGRErr OGRCreateMultiPatch(const OGRGeometry *poGeomConst,
                            int bAllowSHPTTriangle, int &nParts,
-                           int *&panPartStart, int *&panPartType, int &nPoints,
-                           OGRRawPoint *&poPoints, double *&padfZ)
+                           std::vector<int> &anPartStart,
+                           std::vector<int> &anPartType, int &nPoints,
+                           std::vector<OGRRawPoint> &aoPoints,
+                           std::vector<double> &adfZ)
 {
     const OGRwkbGeometryType eType = wkbFlatten(poGeomConst->getGeometryType());
     if (eType != wkbPolygon && eType != wkbTriangle &&
@@ -1385,11 +1387,11 @@ OGRErr OGRCreateMultiPatch(const OGRGeometry *poGeomConst,
     }
 
     nParts = 0;
-    panPartStart = nullptr;
-    panPartType = nullptr;
+    anPartStart.clear();
+    anPartType.clear();
     nPoints = 0;
-    poPoints = nullptr;
-    padfZ = nullptr;
+    aoPoints.clear();
+    adfZ.clear();
     int nBeginLastPart = 0;
     for (const auto poPoly : *poMPoly)
     {
@@ -1402,124 +1404,109 @@ OGRErr OGRCreateMultiPatch(const OGRGeometry *poGeomConst,
         if (nRings == 1 && poRing->getNumPoints() == 4)
         {
             int nCorrectedPoints = nPoints;
-            if (nParts > 0 && poPoints != nullptr &&
-                panPartType[nParts - 1] == SHPP_OUTERRING &&
-                nPoints - panPartStart[nParts - 1] == 4)
+            if (nParts > 0 && anPartType[nParts - 1] == SHPP_OUTERRING &&
+                nPoints - anPartStart[nParts - 1] == 4)
             {
                 nCorrectedPoints--;
             }
 
-            if (nParts > 0 && poPoints != nullptr &&
-                ((panPartType[nParts - 1] == SHPP_TRIANGLES &&
-                  nPoints - panPartStart[nParts - 1] == 3) ||
-                 (panPartType[nParts - 1] == SHPP_OUTERRING &&
-                  nPoints - panPartStart[nParts - 1] == 4) ||
-                 panPartType[nParts - 1] == SHPP_TRIFAN) &&
-                poRing->getX(0) == poPoints[nBeginLastPart].x &&
-                poRing->getY(0) == poPoints[nBeginLastPart].y &&
-                poRing->getZ(0) == padfZ[nBeginLastPart] &&
-                poRing->getX(1) == poPoints[nCorrectedPoints - 1].x &&
-                poRing->getY(1) == poPoints[nCorrectedPoints - 1].y &&
-                poRing->getZ(1) == padfZ[nCorrectedPoints - 1])
+            if (nParts > 0 &&
+                ((anPartType[nParts - 1] == SHPP_TRIANGLES &&
+                  nPoints - anPartStart[nParts - 1] == 3) ||
+                 (anPartType[nParts - 1] == SHPP_OUTERRING &&
+                  nPoints - anPartStart[nParts - 1] == 4) ||
+                 anPartType[nParts - 1] == SHPP_TRIFAN) &&
+                poRing->getX(0) == aoPoints[nBeginLastPart].x &&
+                poRing->getY(0) == aoPoints[nBeginLastPart].y &&
+                poRing->getZ(0) == adfZ[nBeginLastPart] &&
+                poRing->getX(1) == aoPoints[nCorrectedPoints - 1].x &&
+                poRing->getY(1) == aoPoints[nCorrectedPoints - 1].y &&
+                poRing->getZ(1) == adfZ[nCorrectedPoints - 1])
             {
                 nPoints = nCorrectedPoints;
-                panPartType[nParts - 1] = SHPP_TRIFAN;
+                anPartType[nParts - 1] = SHPP_TRIFAN;
 
-                poPoints = static_cast<OGRRawPoint *>(
-                    CPLRealloc(poPoints, (nPoints + 1) * sizeof(OGRRawPoint)));
-                padfZ = static_cast<double *>(
-                    CPLRealloc(padfZ, (nPoints + 1) * sizeof(double)));
-                poPoints[nPoints].x = poRing->getX(2);
-                poPoints[nPoints].y = poRing->getY(2);
-                padfZ[nPoints] = poRing->getZ(2);
+                aoPoints.resize(nPoints + 1);
+                adfZ.resize(nPoints + 1);
+                aoPoints[nPoints].x = poRing->getX(2);
+                aoPoints[nPoints].y = poRing->getY(2);
+                adfZ[nPoints] = poRing->getZ(2);
                 nPoints++;
             }
-            else if (nParts > 0 && poPoints != nullptr &&
-                     ((panPartType[nParts - 1] == SHPP_TRIANGLES &&
-                       nPoints - panPartStart[nParts - 1] == 3) ||
-                      (panPartType[nParts - 1] == SHPP_OUTERRING &&
-                       nPoints - panPartStart[nParts - 1] == 4) ||
-                      panPartType[nParts - 1] == SHPP_TRISTRIP) &&
-                     poRing->getX(0) == poPoints[nCorrectedPoints - 2].x &&
-                     poRing->getY(0) == poPoints[nCorrectedPoints - 2].y &&
-                     poRing->getZ(0) == padfZ[nCorrectedPoints - 2] &&
-                     poRing->getX(1) == poPoints[nCorrectedPoints - 1].x &&
-                     poRing->getY(1) == poPoints[nCorrectedPoints - 1].y &&
-                     poRing->getZ(1) == padfZ[nCorrectedPoints - 1])
+            else if (nParts > 0 &&
+                     ((anPartType[nParts - 1] == SHPP_TRIANGLES &&
+                       nPoints - anPartStart[nParts - 1] == 3) ||
+                      (anPartType[nParts - 1] == SHPP_OUTERRING &&
+                       nPoints - anPartStart[nParts - 1] == 4) ||
+                      anPartType[nParts - 1] == SHPP_TRISTRIP) &&
+                     poRing->getX(0) == aoPoints[nCorrectedPoints - 2].x &&
+                     poRing->getY(0) == aoPoints[nCorrectedPoints - 2].y &&
+                     poRing->getZ(0) == adfZ[nCorrectedPoints - 2] &&
+                     poRing->getX(1) == aoPoints[nCorrectedPoints - 1].x &&
+                     poRing->getY(1) == aoPoints[nCorrectedPoints - 1].y &&
+                     poRing->getZ(1) == adfZ[nCorrectedPoints - 1])
             {
                 nPoints = nCorrectedPoints;
-                panPartType[nParts - 1] = SHPP_TRISTRIP;
+                anPartType[nParts - 1] = SHPP_TRISTRIP;
 
-                poPoints = static_cast<OGRRawPoint *>(
-                    CPLRealloc(poPoints, (nPoints + 1) * sizeof(OGRRawPoint)));
-                padfZ = static_cast<double *>(
-                    CPLRealloc(padfZ, (nPoints + 1) * sizeof(double)));
-                poPoints[nPoints].x = poRing->getX(2);
-                poPoints[nPoints].y = poRing->getY(2);
-                padfZ[nPoints] = poRing->getZ(2);
+                aoPoints.resize(nPoints + 1);
+                adfZ.resize(nPoints + 1);
+                aoPoints[nPoints].x = poRing->getX(2);
+                aoPoints[nPoints].y = poRing->getY(2);
+                adfZ[nPoints] = poRing->getZ(2);
                 nPoints++;
             }
             else
             {
-                if (nParts == 0 || panPartType[nParts - 1] != SHPP_TRIANGLES ||
+                if (nParts == 0 || anPartType[nParts - 1] != SHPP_TRIANGLES ||
                     !bAllowSHPTTriangle)
                 {
                     nBeginLastPart = nPoints;
 
-                    panPartStart = static_cast<int *>(
-                        CPLRealloc(panPartStart, (nParts + 1) * sizeof(int)));
-                    panPartType = static_cast<int *>(
-                        CPLRealloc(panPartType, (nParts + 1) * sizeof(int)));
-                    panPartStart[nParts] = nPoints;
-                    panPartType[nParts] =
+                    anPartStart.resize(nParts + 1);
+                    anPartType.resize(nParts + 1);
+                    anPartStart[nParts] = nPoints;
+                    anPartType[nParts] =
                         bAllowSHPTTriangle ? SHPP_TRIANGLES : SHPP_OUTERRING;
                     nParts++;
                 }
 
-                poPoints = static_cast<OGRRawPoint *>(
-                    CPLRealloc(poPoints, (nPoints + 4) * sizeof(OGRRawPoint)));
-                padfZ = static_cast<double *>(
-                    CPLRealloc(padfZ, (nPoints + 4) * sizeof(double)));
+                aoPoints.resize(nPoints + 4);
+                adfZ.resize(nPoints + 4);
                 for (int i = 0; i < 4; i++)
                 {
-                    poPoints[nPoints + i].x = poRing->getX(i);
-                    poPoints[nPoints + i].y = poRing->getY(i);
-                    padfZ[nPoints + i] = poRing->getZ(i);
+                    aoPoints[nPoints + i].x = poRing->getX(i);
+                    aoPoints[nPoints + i].y = poRing->getY(i);
+                    adfZ[nPoints + i] = poRing->getZ(i);
                 }
                 nPoints += bAllowSHPTTriangle ? 3 : 4;
             }
         }
         else
         {
-            panPartStart = static_cast<int *>(
-                CPLRealloc(panPartStart, (nParts + nRings) * sizeof(int)));
-            panPartType = static_cast<int *>(
-                CPLRealloc(panPartType, (nParts + nRings) * sizeof(int)));
+            anPartStart.resize(nParts + nRings);
+            anPartType.resize(nParts + nRings);
 
             for (int i = 0; i < nRings; i++)
             {
-                panPartStart[nParts + i] = nPoints;
+                anPartStart[nParts + i] = nPoints;
                 if (i == 0)
                 {
                     poRing = poPoly->getExteriorRing();
-                    panPartType[nParts + i] = SHPP_OUTERRING;
+                    anPartType[nParts + i] = SHPP_OUTERRING;
                 }
                 else
                 {
                     poRing = poPoly->getInteriorRing(i - 1);
-                    panPartType[nParts + i] = SHPP_INNERRING;
+                    anPartType[nParts + i] = SHPP_INNERRING;
                 }
-                poPoints = static_cast<OGRRawPoint *>(
-                    CPLRealloc(poPoints, (nPoints + poRing->getNumPoints()) *
-                                             sizeof(OGRRawPoint)));
-                padfZ = static_cast<double *>(
-                    CPLRealloc(padfZ, (nPoints + poRing->getNumPoints()) *
-                                          sizeof(double)));
+                aoPoints.resize(nPoints + poRing->getNumPoints());
+                adfZ.resize(nPoints + poRing->getNumPoints());
                 for (int k = 0; k < poRing->getNumPoints(); k++)
                 {
-                    poPoints[nPoints + k].x = poRing->getX(k);
-                    poPoints[nPoints + k].y = poRing->getY(k);
-                    padfZ[nPoints + k] = poRing->getZ(k);
+                    aoPoints[nPoints + k].x = poRing->getX(k);
+                    aoPoints[nPoints + k].y = poRing->getY(k);
+                    adfZ[nPoints + k] = poRing->getZ(k);
                 }
                 nPoints += poRing->getNumPoints();
             }
@@ -1528,9 +1515,9 @@ OGRErr OGRCreateMultiPatch(const OGRGeometry *poGeomConst,
         }
     }
 
-    if (nParts == 1 && panPartType[0] == SHPP_OUTERRING && nPoints == 4)
+    if (nParts == 1 && anPartType[0] == SHPP_OUTERRING && nPoints == 4)
     {
-        panPartType[0] = SHPP_TRIFAN;
+        anPartType[0] = SHPP_TRIFAN;
         nPoints = 3;
     }
 
@@ -1545,13 +1532,13 @@ OGRErr OGRWriteMultiPatchToShapeBin(const OGRGeometry *poGeom,
                                     GByte **ppabyShape, int *pnBytes)
 {
     int nParts = 0;
-    int *panPartStart = nullptr;
-    int *panPartType = nullptr;
+    std::vector<int> anPartStart;
+    std::vector<int> anPartType;
     int nPoints = 0;
-    OGRRawPoint *poPoints = nullptr;
-    double *padfZ = nullptr;
-    OGRErr eErr = OGRCreateMultiPatch(poGeom, TRUE, nParts, panPartStart,
-                                      panPartType, nPoints, poPoints, padfZ);
+    std::vector<OGRRawPoint> aoPoints;
+    std::vector<double> adfZ;
+    OGRErr eErr = OGRCreateMultiPatch(poGeom, TRUE, nParts, anPartStart,
+                                      anPartType, nPoints, aoPoints, adfZ);
     if (eErr != OGRERR_NONE)
         return eErr;
 
@@ -1610,19 +1597,19 @@ OGRErr OGRWriteMultiPatchToShapeBin(const OGRGeometry *poGeom,
 
     for (int i = 0; i < nParts; i++)
     {
-        int nPartStart = CPL_LSBWORD32(panPartStart[i]);
+        int nPartStart = CPL_LSBWORD32(anPartStart[i]);
         memcpy(pabyPtr, &nPartStart, 4);
         pabyPtr += 4;
     }
     for (int i = 0; i < nParts; i++)
     {
-        int nPartType = CPL_LSBWORD32(panPartType[i]);
+        int nPartType = CPL_LSBWORD32(anPartType[i]);
         memcpy(pabyPtr, &nPartType, 4);
         pabyPtr += 4;
     }
 
-    if (poPoints != nullptr)
-        memcpy(pabyPtr, poPoints, 2 * 8 * nPoints);
+    if (!aoPoints.empty())
+        memcpy(pabyPtr, aoPoints.data(), 2 * 8 * nPoints);
 
     // Swap box if needed. Shape doubles are always LSB.
     if (OGR_SWAP(wkbNDR))
@@ -1643,8 +1630,8 @@ OGRErr OGRWriteMultiPatchToShapeBin(const OGRGeometry *poGeom,
         }
         pabyPtr += 16;
 
-        if (padfZ != nullptr)
-            memcpy(pabyPtr, padfZ, 8 * nPoints);
+        if (!adfZ.empty())
+            memcpy(pabyPtr, adfZ.data(), 8 * nPoints);
         // Swap box if needed. Shape doubles are always LSB.
         if (OGR_SWAP(wkbNDR))
         {
@@ -1653,11 +1640,6 @@ OGRErr OGRWriteMultiPatchToShapeBin(const OGRGeometry *poGeom,
         }
         // pabyPtr += 8 * nPoints;
     }
-
-    CPLFree(panPartStart);
-    CPLFree(panPartType);
-    CPLFree(poPoints);
-    CPLFree(padfZ);
 
     return OGRERR_NONE;
 }
