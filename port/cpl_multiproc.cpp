@@ -2587,6 +2587,7 @@ void CPLReleaseLock(CPLLock *psLock)
     if (psLock->bDebugPerf && CPLAtomicDec(&(psLock->nCurrentHolders)) == 0)
     {
         const GUIntBig nStopTime = CPLrdtscp();
+        // coverity[missing_lock:FALSE]
         const GIntBig nDiffTime =
             static_cast<GIntBig>(nStopTime - psLock->nStartTime);
         if (nDiffTime > psLock->nMaxDiff)
