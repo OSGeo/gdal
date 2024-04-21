@@ -4535,6 +4535,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         auto poOldestJob = jobList.front().get();
         {
             std::unique_lock<std::mutex> oGuard(poOldestJob->mutex);
+            // coverity[missing_lock:FALSE]
             while (!poOldestJob->bFinished)
             {
                 poOldestJob->cv.wait(oGuard);
@@ -5283,6 +5284,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             auto poOldestJob = jobList.front().get();
             {
                 std::unique_lock<std::mutex> oGuard(poOldestJob->mutex);
+                // coverity[missing_lock:FALSE]
                 while (!poOldestJob->bFinished)
                 {
                     poOldestJob->cv.wait(oGuard);
