@@ -33,6 +33,8 @@
 
 #include "ogr_geometry.h"
 
+#include <vector>
+
 #define SHPT_NULL 0
 
 #ifndef SHPT_POINT
@@ -87,9 +89,10 @@ OGRErr CPL_DLL OGRWriteToShapeBin(const OGRGeometry *poGeom, GByte **ppabyShape,
 
 OGRErr CPL_DLL OGRCreateMultiPatch(const OGRGeometry *poGeom,
                                    int bAllowSHPTTriangle, int &nParts,
-                                   int *&panPartStart, int *&panPartType,
-                                   int &nPoints, OGRRawPoint *&poPoints,
-                                   double *&padfZ);
+                                   std::vector<int> &anPartStart,
+                                   std::vector<int> &anPartType, int &nPoints,
+                                   std::vector<OGRRawPoint> &aoPoints,
+                                   std::vector<double> &adfZ);
 
 OGRErr CPL_DLL OGRWriteMultiPatchToShapeBin(const OGRGeometry *poGeom,
                                             GByte **ppabyShape, int *pnBytes);
