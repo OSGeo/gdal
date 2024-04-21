@@ -1306,7 +1306,7 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
 
     if (some_problems_when_reading > 0)
     {
-        if ((offset_fals - 1) - 32 < 0)
+        if (offset_fals < 1 + 32)
             pMMBDXP->nFields = 0;
         else
             pMMBDXP->nFields =
