@@ -990,7 +990,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
         {
             if (MMResizeStringToOperateIfNeeded(
                     phMiraMonLayer,
-                    phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField))
+                    phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField + 1))
             {
                 return nullptr;
             }
