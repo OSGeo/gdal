@@ -1912,6 +1912,8 @@ def gdalurlopen(url, timeout=10):
 
         urllib.request.install_opener(opener)
 
+    import http.client
+
     try:
         handle = urllib.request.urlopen(url)
         socket.setdefaulttimeout(old_timeout)
@@ -1930,6 +1932,10 @@ def gdalurlopen(url, timeout=10):
         return None
     except socket.timeout:
         print(f"HTTP service for {url} timed out")
+        socket.setdefaulttimeout(old_timeout)
+        return None
+    except http.client.RemoteDisconnected as e:
+        print(f"HTTP service for {url} is not available: RemoteDisconnected : {e}")
         socket.setdefaulttimeout(old_timeout)
         return None
 
