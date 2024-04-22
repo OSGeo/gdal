@@ -374,12 +374,16 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
         if (poGDS->m_array->schema().domain().ndim() == 3)
         {
-            poQuery->set_subarray(oaSubarray);
+            tiledb::Subarray subarray(*poGDS->m_roCtx, *poGDS->m_roArray);
+            subarray.set_subarray(oaSubarray);
+            poQuery->set_subarray(subarray);
         }
         else
         {
-            poQuery->set_subarray(std::vector<uint64_t>(oaSubarray.cbegin() + 2,
+            tiledb::Subarray subarray(*poGDS->m_roCtx, *poGDS->m_roArray);
+            subarray.set_subarray(std::vector<uint64_t>(oaSubarray.cbegin() + 2,
                                                         oaSubarray.cend()));
+            poQuery->set_subarray(subarray);
         }
 
         SetBuffer(poQuery.get(), eDataType, osAttrName, pData, nXSize * nYSize);
@@ -576,7 +580,9 @@ CPLErr TileDBRasterDataset::IRasterIO(
 
         if (poQuery != nullptr)
         {
-            poQuery->set_subarray(oaSubarray);
+            tiledb::Subarray subarray(*m_roCtx, *m_array);
+            subarray.set_subarray(oaSubarray);
+            poQuery->set_subarray(subarray);
 
             for (int b = 0; b < nBandCount; b++)
             {
@@ -781,7 +787,8 @@ CPLErr TileDBRasterDataset::TrySaveXML()
             if (nTimestamp)
             {
                 auto oMeta = std::unique_ptr<tiledb::Array>(new tiledb::Array(
-                    *m_ctx, m_array->uri(), TILEDB_WRITE, nTimestamp));
+                    *m_ctx, m_array->uri(), TILEDB_WRITE,
+                    tiledb::TemporalPolicy(tiledb::TimeTravel, nTimestamp)));
                 oMeta->put_metadata(GDAL_ATTRIBUTE_NAME, TILEDB_UINT8,
                                     static_cast<int>(strlen(pszTree)), pszTree);
                 oMeta->close();
@@ -1177,12 +1184,14 @@ GDALDataset *TileDBRasterDataset::Open(GDALOpenInfo *poOpenInfo)
         if (eMode == TILEDB_READ)
         {
             poDS->m_array.reset(new tiledb::Array(
-                *poDS->m_ctx, osArrayPath, TILEDB_READ, poDS->nTimestamp));
+                *poDS->m_ctx, osArrayPath, TILEDB_READ,
+                tiledb::TemporalPolicy(tiledb::TimeTravel, poDS->nTimestamp)));
         }
         else
         {
             poDS->m_array.reset(new tiledb::Array(
-                *poDS->m_ctx, osArrayPath, TILEDB_WRITE, poDS->nTimestamp));
+                *poDS->m_ctx, osArrayPath, TILEDB_WRITE,
+                tiledb::TemporalPolicy(tiledb::TimeTravel, poDS->nTimestamp)));
         }
     }
     else
@@ -2081,9 +2090,10 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
 
         if (poDstDS->nTimestamp)
         {
-            poDstDS->m_array.reset(
-                new tiledb::Array(*poDstDS->m_ctx, poDstDS->GetDescription(),
-                                  TILEDB_WRITE, poDstDS->nTimestamp));
+            poDstDS->m_array.reset(new tiledb::Array(
+                *poDstDS->m_ctx, poDstDS->GetDescription(), TILEDB_WRITE,
+                tiledb::TemporalPolicy(tiledb::TimeTravel,
+                                       poDstDS->nTimestamp)));
         }
         else
             poDstDS->m_array.reset(new tiledb::Array(
@@ -2196,8 +2206,9 @@ GDALDataset *TileDBRasterDataset::Create(const char *pszFilename, int nXSize,
     tiledb::Array::create(osArrayPath, *poDS->m_schema);
 
     if (poDS->nTimestamp)
-        poDS->m_array.reset(new tiledb::Array(*poDS->m_ctx, osArrayPath,
-                                              TILEDB_WRITE, poDS->nTimestamp));
+        poDS->m_array.reset(new tiledb::Array(
+            *poDS->m_ctx, osArrayPath, TILEDB_WRITE,
+            tiledb::TemporalPolicy(tiledb::TimeTravel, poDS->nTimestamp)));
     else
         poDS->m_array.reset(
             new tiledb::Array(*poDS->m_ctx, osArrayPath, TILEDB_WRITE));
