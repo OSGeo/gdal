@@ -25,5 +25,4 @@ endif()
 gdal_standard_includes(gdal_TileDB)
 target_include_directories(gdal_TileDB PRIVATE
                            ${GDAL_RASTER_FORMAT_SOURCE_DIR}/mem)
-target_compile_definitions(gdal_TileDB PRIVATE -DTILEDB_DEPRECATED=)
 gdal_target_link_libraries(gdal_TileDB PRIVATE TileDB::tiledb_shared)

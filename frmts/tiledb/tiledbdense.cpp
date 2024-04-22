@@ -31,12 +31,6 @@
 
 #include "tiledbheaders.h"
 
-#ifdef _MSC_VER
-#pragma warning(push)
-// 'tiledb::Array::Array': was declared deprecated
-#pragma warning(disable : 4996) /* XXXX was deprecated */
-#endif
-
 constexpr const char *RASTER_DATASET_TYPE = "raster";
 
 /************************************************************************/
@@ -2412,7 +2406,3 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
     }
     return nullptr;
 }
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
