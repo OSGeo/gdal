@@ -924,7 +924,10 @@ bool TileDBArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         {
             tiledb::Query query(m_poSharedResource->GetCtx(),
                                 *(m_poTileDBArray.get()));
-            query.set_subarray(anSubArray);
+            tiledb::Subarray subarray(m_poSharedResource->GetCtx(),
+                                      *(m_poTileDBArray.get()));
+            subarray.set_subarray(anSubArray);
+            query.set_subarray(subarray);
             query.set_data_buffer(m_osAttrName, pDstBuffer, nBufferSize);
 
             if (m_bStats)
@@ -995,7 +998,10 @@ bool TileDBArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
         {
             tiledb::Query query(m_poSharedResource->GetCtx(),
                                 *(m_poTileDBArray.get()));
-            query.set_subarray(anSubArray);
+            tiledb::Subarray subarray(m_poSharedResource->GetCtx(),
+                                      *(m_poTileDBArray.get()));
+            subarray.set_subarray(anSubArray);
+            query.set_subarray(subarray);
             query.set_data_buffer(m_osAttrName, const_cast<void *>(pSrcBuffer),
                                   nBufferSize);
 

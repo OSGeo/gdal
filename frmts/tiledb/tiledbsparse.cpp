@@ -717,8 +717,9 @@ bool OGRTileDBLayer::InitFromStorage(tiledb::Context *poCtx,
     }
 
     if (m_nTimestamp)
-        m_array.reset(
-            new tiledb::Array(*m_ctx, m_osFilename, TILEDB_READ, m_nTimestamp));
+        m_array.reset(new tiledb::Array(
+            *m_ctx, m_osFilename, TILEDB_READ,
+            tiledb::TemporalPolicy(tiledb::TimeTravel, m_nTimestamp)));
     else
         m_array.reset(new tiledb::Array(*m_ctx, m_osFilename, TILEDB_READ));
 
@@ -1238,7 +1239,7 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
     m_anFIDs->resize(m_nBatchSize);
     if (!m_osFIDColumn.empty())
     {
-        m_query->set_buffer(m_osFIDColumn, *(m_anFIDs));
+        m_query->set_data_buffer(m_osFIDColumn, *(m_anFIDs));
     }
 
     if (!m_poFeatureDefn->GetGeomFieldDefn(0)->IsIgnored())
@@ -1254,16 +1255,19 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
             const auto colType = m_schema->attribute(pszGeomColName).type();
             if (colType == TILEDB_UINT8)
             {
-                m_query->set_buffer(pszGeomColName, *m_anGeometryOffsets,
-                                    *m_abyGeometries);
+                m_query->set_data_buffer(pszGeomColName, *m_abyGeometries);
+                m_query->set_offsets_buffer(pszGeomColName,
+                                            *m_anGeometryOffsets);
             }
             else if (colType == TILEDB_BLOB)
             {
-                m_query->set_buffer(
-                    pszGeomColName, m_anGeometryOffsets->data(),
-                    m_anGeometryOffsets->size(),
+                m_query->set_data_buffer(
+                    pszGeomColName,
                     reinterpret_cast<std::byte *>(m_abyGeometries->data()),
                     m_abyGeometries->size());
+                m_query->set_offsets_buffer(pszGeomColName,
+                                            m_anGeometryOffsets->data(),
+                                            m_anGeometryOffsets->size());
             }
             else
             {
@@ -1273,15 +1277,15 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
         else
         {
             m_adfXs->resize(m_nBatchSize);
-            m_query->set_buffer(m_osXDim, *m_adfXs);
+            m_query->set_data_buffer(m_osXDim, *m_adfXs);
 
             m_adfYs->resize(m_nBatchSize);
-            m_query->set_buffer(m_osYDim, *m_adfYs);
+            m_query->set_data_buffer(m_osYDim, *m_adfYs);
 
             if (!m_osZDim.empty())
             {
                 m_adfZs->resize(m_nBatchSize);
-                m_query->set_buffer(m_osZDim, *m_adfZs);
+                m_query->set_data_buffer(m_osZDim, *m_adfZs);
             }
         }
     }
@@ -1313,9 +1317,9 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                         std::get<std::shared_ptr<VECTOR_OF_BOOL>>(fieldValues));
                     v.resize(m_nBatchSize);
 #ifdef VECTOR_OF_BOOL_IS_NOT_UINT8_T
-                    m_query->set_buffer(pszFieldName, v.data(), v.size());
+                    m_query->set_data_buffer(pszFieldName, v.data(), v.size());
 #else
-                    m_query->set_buffer(pszFieldName, v);
+                    m_query->set_data_buffer(pszFieldName, v);
 #endif
                 }
                 else
@@ -1325,21 +1329,21 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                     auto &v = *(std::get<std::shared_ptr<std::vector<int16_t>>>(
                         fieldValues));
                     v.resize(m_nBatchSize);
-                    m_query->set_buffer(pszFieldName, v);
+                    m_query->set_data_buffer(pszFieldName, v);
                 }
                 else if (m_aeFieldTypes[i] == TILEDB_INT32)
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<int32_t>>>(
                         fieldValues));
                     v.resize(m_nBatchSize);
-                    m_query->set_buffer(pszFieldName, v);
+                    m_query->set_data_buffer(pszFieldName, v);
                 }
                 else if (m_aeFieldTypes[i] == TILEDB_UINT8)
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<uint8_t>>>(
                         fieldValues));
                     v.resize(m_nBatchSize);
-                    m_query->set_buffer(pszFieldName, v);
+                    m_query->set_data_buffer(pszFieldName, v);
                 }
                 else if (m_aeFieldTypes[i] == TILEDB_UINT16)
                 {
@@ -1347,7 +1351,7 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                         *(std::get<std::shared_ptr<std::vector<uint16_t>>>(
                             fieldValues));
                     v.resize(m_nBatchSize);
-                    m_query->set_buffer(pszFieldName, v);
+                    m_query->set_data_buffer(pszFieldName, v);
                 }
                 else
                 {
@@ -1390,7 +1394,8 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                         pszFieldName, m_anFieldValuesCapacity[i], nMulFactor));
                     m_anFieldValuesCapacity[i] = v.capacity();
                     anOffsets.resize(m_nBatchSize);
-                    m_query->set_buffer(pszFieldName, anOffsets, v);
+                    m_query->set_data_buffer(pszFieldName, v);
+                    m_query->set_offsets_buffer(pszFieldName, anOffsets);
                 }
                 else if (m_aeFieldTypes[i] == TILEDB_INT32)
                 {
@@ -1400,7 +1405,8 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                         pszFieldName, m_anFieldValuesCapacity[i], nMulFactor));
                     m_anFieldValuesCapacity[i] = v.capacity();
                     anOffsets.resize(m_nBatchSize);
-                    m_query->set_buffer(pszFieldName, anOffsets, v);
+                    m_query->set_data_buffer(pszFieldName, v);
+                    m_query->set_offsets_buffer(pszFieldName, anOffsets);
                 }
                 else if (m_aeFieldTypes[i] == TILEDB_UINT8)
                 {
@@ -1410,7 +1416,8 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                         pszFieldName, m_anFieldValuesCapacity[i], nMulFactor));
                     m_anFieldValuesCapacity[i] = v.capacity();
                     anOffsets.resize(m_nBatchSize);
-                    m_query->set_buffer(pszFieldName, anOffsets, v);
+                    m_query->set_data_buffer(pszFieldName, v);
+                    m_query->set_offsets_buffer(pszFieldName, anOffsets);
                 }
                 else if (m_aeFieldTypes[i] == TILEDB_UINT16)
                 {
@@ -1421,7 +1428,8 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                         pszFieldName, m_anFieldValuesCapacity[i], nMulFactor));
                     m_anFieldValuesCapacity[i] = v.capacity();
                     anOffsets.resize(m_nBatchSize);
-                    m_query->set_buffer(pszFieldName, anOffsets, v);
+                    m_query->set_data_buffer(pszFieldName, v);
+                    m_query->set_offsets_buffer(pszFieldName, anOffsets);
                 }
                 else
                 {
@@ -1438,7 +1446,7 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                 auto &v = *(std::get<std::shared_ptr<std::vector<int64_t>>>(
                     fieldValues));
                 v.resize(m_nBatchSize);
-                m_query->set_buffer(pszFieldName, v);
+                m_query->set_data_buffer(pszFieldName, v);
                 break;
             }
 
@@ -1456,7 +1464,8 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                                       nMulFactor));
                 m_anFieldValuesCapacity[i] = v.capacity();
                 anOffsets.resize(m_nBatchSize);
-                m_query->set_buffer(pszFieldName, anOffsets, v);
+                m_query->set_data_buffer(pszFieldName, v);
+                m_query->set_offsets_buffer(pszFieldName, anOffsets);
                 break;
             }
 
@@ -1467,14 +1476,14 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                     auto &v = *(std::get<std::shared_ptr<std::vector<float>>>(
                         fieldValues));
                     v.resize(m_nBatchSize);
-                    m_query->set_buffer(pszFieldName, v);
+                    m_query->set_data_buffer(pszFieldName, v);
                 }
                 else
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<double>>>(
                         fieldValues));
                     v.resize(m_nBatchSize);
-                    m_query->set_buffer(pszFieldName, v);
+                    m_query->set_data_buffer(pszFieldName, v);
                 }
                 break;
             }
@@ -1495,7 +1504,8 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                     v.resize(GetValueSize(
                         pszFieldName, m_anFieldValuesCapacity[i], nMulFactor));
                     m_anFieldValuesCapacity[i] = v.capacity();
-                    m_query->set_buffer(pszFieldName, anOffsets, v);
+                    m_query->set_data_buffer(pszFieldName, v);
+                    m_query->set_offsets_buffer(pszFieldName, anOffsets);
                 }
                 else
                 {
@@ -1504,7 +1514,8 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                     v.resize(GetValueSize(
                         pszFieldName, m_anFieldValuesCapacity[i], nMulFactor));
                     m_anFieldValuesCapacity[i] = v.capacity();
-                    m_query->set_buffer(pszFieldName, anOffsets, v);
+                    m_query->set_data_buffer(pszFieldName, v);
+                    m_query->set_offsets_buffer(pszFieldName, anOffsets);
                 }
                 break;
             }
@@ -1520,7 +1531,8 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                                           : 8));
                 m_anFieldValuesCapacity[i] = v.capacity();
                 anOffsets.resize(m_nBatchSize);
-                m_query->set_buffer(pszFieldName, anOffsets, v);
+                m_query->set_data_buffer(pszFieldName, v);
+                m_query->set_offsets_buffer(pszFieldName, anOffsets);
                 break;
             }
 
@@ -1538,13 +1550,16 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                 anOffsets.resize(m_nBatchSize);
                 if (eType == TILEDB_UINT8)
                 {
-                    m_query->set_buffer(pszFieldName, anOffsets, v);
+                    m_query->set_data_buffer(pszFieldName, v);
+                    m_query->set_offsets_buffer(pszFieldName, anOffsets);
                 }
                 else if (eType == TILEDB_BLOB)
                 {
-                    m_query->set_buffer(
-                        pszFieldName, anOffsets.data(), anOffsets.size(),
-                        reinterpret_cast<std::byte *>(v.data()), v.size());
+                    m_query->set_data_buffer(
+                        pszFieldName, reinterpret_cast<std::byte *>(v.data()),
+                        v.size());
+                    m_query->set_offsets_buffer(pszFieldName, anOffsets.data(),
+                                                anOffsets.size());
                 }
                 else
                 {
@@ -2193,8 +2208,9 @@ void OGRTileDBLayer::SwitchToReadingMode()
         try
         {
             if (m_nTimestamp)
-                m_array.reset(new tiledb::Array(*m_ctx, m_osFilename,
-                                                TILEDB_READ, m_nTimestamp));
+                m_array.reset(new tiledb::Array(
+                    *m_ctx, m_osFilename, TILEDB_READ,
+                    tiledb::TemporalPolicy(tiledb::TimeTravel, m_nTimestamp)));
             else
                 m_array.reset(
                     new tiledb::Array(*m_ctx, m_osFilename, TILEDB_READ));
@@ -3747,8 +3763,9 @@ void OGRTileDBLayer::InitializeSchemaAndArray()
 #endif
 
         if (m_nTimestamp)
-            m_array.reset(new tiledb::Array(*m_ctx, m_osFilename, TILEDB_WRITE,
-                                            m_nTimestamp));
+            m_array.reset(new tiledb::Array(
+                *m_ctx, m_osFilename, TILEDB_WRITE,
+                tiledb::TemporalPolicy(tiledb::TimeTravel, m_nTimestamp)));
         else
             m_array.reset(
                 new tiledb::Array(*m_ctx, m_osFilename, TILEDB_WRITE));
@@ -3864,8 +3881,9 @@ void OGRTileDBLayer::SwitchToWritingMode()
         try
         {
             if (m_nTimestamp)
-                m_array.reset(new tiledb::Array(*m_ctx, m_osFilename,
-                                                TILEDB_WRITE, m_nTimestamp));
+                m_array.reset(new tiledb::Array(
+                    *m_ctx, m_osFilename, TILEDB_WRITE,
+                    tiledb::TemporalPolicy(tiledb::TimeTravel, m_nTimestamp)));
             else
                 m_array.reset(
                     new tiledb::Array(*m_ctx, m_osFilename, TILEDB_WRITE));
@@ -4275,11 +4293,11 @@ void OGRTileDBLayer::FlushArrays()
         tiledb::Query query(*m_ctx, *m_array);
         query.set_layout(TILEDB_UNORDERED);
         if (!m_osFIDColumn.empty())
-            query.set_buffer(m_osFIDColumn, *m_anFIDs);
-        query.set_buffer(m_osXDim, *m_adfXs);
-        query.set_buffer(m_osYDim, *m_adfYs);
+            query.set_data_buffer(m_osFIDColumn, *m_anFIDs);
+        query.set_data_buffer(m_osXDim, *m_adfXs);
+        query.set_data_buffer(m_osYDim, *m_adfYs);
         if (!m_osZDim.empty())
-            query.set_buffer(m_osZDim, *m_adfZs);
+            query.set_data_buffer(m_osZDim, *m_adfZs);
 
         const char *pszGeomColName = GetDatabaseGeomColName();
         if (pszGeomColName)
@@ -4287,16 +4305,18 @@ void OGRTileDBLayer::FlushArrays()
             m_anGeometryOffsets->pop_back();
             if (m_schema->attribute(pszGeomColName).type() == TILEDB_UINT8)
             {
-                query.set_buffer(pszGeomColName, *m_anGeometryOffsets,
-                                 *m_abyGeometries);
+                query.set_data_buffer(pszGeomColName, *m_abyGeometries);
+                query.set_offsets_buffer(pszGeomColName, *m_anGeometryOffsets);
             }
             else if (m_schema->attribute(pszGeomColName).type() == TILEDB_BLOB)
             {
-                query.set_buffer(
-                    pszGeomColName, m_anGeometryOffsets->data(),
-                    m_anGeometryOffsets->size(),
+                query.set_data_buffer(
+                    pszGeomColName,
                     reinterpret_cast<std::byte *>(m_abyGeometries->data()),
                     m_abyGeometries->size());
+                query.set_offsets_buffer(pszGeomColName,
+                                         m_anGeometryOffsets->data(),
+                                         m_anGeometryOffsets->size());
             }
             else
             {
@@ -4332,9 +4352,9 @@ void OGRTileDBLayer::FlushArrays()
                         auto &v = *(std::get<std::shared_ptr<VECTOR_OF_BOOL>>(
                             fieldValues));
 #ifdef VECTOR_OF_BOOL_IS_NOT_UINT8_T
-                        query.set_buffer(pszFieldName, v.data(), v.size());
+                        query.set_data_buffer(pszFieldName, v.data(), v.size());
 #else
-                        query.set_buffer(pszFieldName, v);
+                        query.set_data_buffer(pszFieldName, v);
 #endif
                     }
                     else
@@ -4372,7 +4392,7 @@ void OGRTileDBLayer::FlushArrays()
 
                 case OFTInteger64:
                 {
-                    query.set_buffer(
+                    query.set_data_buffer(
                         pszFieldName,
                         *std::get<std::shared_ptr<std::vector<int64_t>>>(
                             fieldValues));
@@ -4382,10 +4402,11 @@ void OGRTileDBLayer::FlushArrays()
                 case OFTInteger64List:
                 {
                     anOffsets.pop_back();
-                    query.set_buffer(
-                        pszFieldName, anOffsets,
+                    query.set_data_buffer(
+                        pszFieldName,
                         *std::get<std::shared_ptr<std::vector<int64_t>>>(
                             fieldValues));
+                    query.set_offsets_buffer(pszFieldName, anOffsets);
                     break;
                 }
 
@@ -4393,14 +4414,14 @@ void OGRTileDBLayer::FlushArrays()
                 {
                     if (poFieldDefn->GetSubType() == OFSTFloat32)
                     {
-                        query.set_buffer(
+                        query.set_data_buffer(
                             pszFieldName,
                             *std::get<std::shared_ptr<std::vector<float>>>(
                                 fieldValues));
                     }
                     else
                     {
-                        query.set_buffer(
+                        query.set_data_buffer(
                             pszFieldName,
                             *std::get<std::shared_ptr<std::vector<double>>>(
                                 fieldValues));
@@ -4413,17 +4434,19 @@ void OGRTileDBLayer::FlushArrays()
                     anOffsets.pop_back();
                     if (poFieldDefn->GetSubType() == OFSTFloat32)
                     {
-                        query.set_buffer(
-                            pszFieldName, anOffsets,
+                        query.set_data_buffer(
+                            pszFieldName,
                             *std::get<std::shared_ptr<std::vector<float>>>(
                                 fieldValues));
+                        query.set_offsets_buffer(pszFieldName, anOffsets);
                     }
                     else
                     {
-                        query.set_buffer(
-                            pszFieldName, anOffsets,
+                        query.set_data_buffer(
+                            pszFieldName,
                             *std::get<std::shared_ptr<std::vector<double>>>(
                                 fieldValues));
+                        query.set_offsets_buffer(pszFieldName, anOffsets);
                     }
                     break;
                 }
@@ -4431,9 +4454,10 @@ void OGRTileDBLayer::FlushArrays()
                 case OFTString:
                 {
                     anOffsets.pop_back();
-                    query.set_buffer(
-                        pszFieldName, anOffsets,
+                    query.set_data_buffer(
+                        pszFieldName,
                         *std::get<std::shared_ptr<std::string>>(fieldValues));
+                    query.set_offsets_buffer(pszFieldName, anOffsets);
                     break;
                 }
 
@@ -4444,13 +4468,16 @@ void OGRTileDBLayer::FlushArrays()
                         fieldValues));
                     if (m_aeFieldTypes[i] == TILEDB_UINT8)
                     {
-                        query.set_buffer(pszFieldName, anOffsets, v);
+                        query.set_data_buffer(pszFieldName, v);
+                        query.set_offsets_buffer(pszFieldName, anOffsets);
                     }
                     else if (m_aeFieldTypes[i] == TILEDB_BLOB)
                     {
-                        query.set_buffer(
-                            pszFieldName, anOffsets.data(), anOffsets.size(),
+                        query.set_data_buffer(
+                            pszFieldName,
                             reinterpret_cast<std::byte *>(v.data()), v.size());
+                        query.set_offsets_buffer(pszFieldName, anOffsets.data(),
+                                                 anOffsets.size());
                     }
                     else
                     {
@@ -4463,7 +4490,7 @@ void OGRTileDBLayer::FlushArrays()
                 case OFTDateTime:
                 case OFTTime:
                 {
-                    query.set_buffer(
+                    query.set_data_buffer(
                         pszFieldName,
                         *std::get<std::shared_ptr<std::vector<int64_t>>>(
                             fieldValues));
