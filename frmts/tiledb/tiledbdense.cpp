@@ -351,7 +351,6 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         nBufferDTSize > 0 && (nPixelSpace % nBufferDTSize) == 0 &&
         (nLineSpace % nBufferDTSize) == 0)
     {
-        std::unique_ptr<tiledb::Query> poQuery;
         const uint64_t nBandIdx = poGDS->nBandStart + nBand - 1;
         std::vector<uint64_t> oaSubarray = {
             nBandIdx,        nBandIdx,
@@ -361,30 +360,25 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             std::rotate(oaSubarray.begin(), oaSubarray.begin() + 2,
                         oaSubarray.end());
 
-        if ((eRWFlag == GF_Read) &&
-            ((eAccess == GA_Update) && (poGDS->m_roArray)))
-        {
-            poQuery.reset(
-                new tiledb::Query(*poGDS->m_roCtx, *poGDS->m_roArray));
-        }
-        else
-        {
-            poQuery.reset(new tiledb::Query(*poGDS->m_ctx, *poGDS->m_array));
-        }
+        const bool bUseReadOnlyObjs =
+            ((eRWFlag == GF_Read) && (eAccess == GA_Update) &&
+             (poGDS->m_roArray));
+        const auto &oCtxt = bUseReadOnlyObjs ? *poGDS->m_roCtx : *poGDS->m_ctx;
+        const auto &oArray =
+            bUseReadOnlyObjs ? *poGDS->m_roArray : *poGDS->m_array;
 
+        auto poQuery = std::make_unique<tiledb::Query>(oCtxt, oArray);
+        tiledb::Subarray subarray(oCtxt, oArray);
         if (poGDS->m_array->schema().domain().ndim() == 3)
         {
-            tiledb::Subarray subarray(*poGDS->m_roCtx, *poGDS->m_roArray);
             subarray.set_subarray(oaSubarray);
-            poQuery->set_subarray(subarray);
         }
         else
         {
-            tiledb::Subarray subarray(*poGDS->m_roCtx, *poGDS->m_roArray);
             subarray.set_subarray(std::vector<uint64_t>(oaSubarray.cbegin() + 2,
                                                         oaSubarray.cend()));
-            poQuery->set_subarray(subarray);
         }
+        poQuery->set_subarray(subarray);
 
         SetBuffer(poQuery.get(), eDataType, osAttrName, pData, nXSize * nYSize);
 
@@ -564,52 +558,44 @@ CPLErr TileDBRasterDataset::IRasterIO(
         nBufferDTSize > 0 && (nPixelSpace % nBufferDTSize) == 0 &&
         (nLineSpace % nBufferDTSize) == 0)
     {
-        std::unique_ptr<tiledb::Query> poQuery;
         std::vector<uint64_t> oaSubarray = {
             (uint64_t)nYOff, (uint64_t)nYOff + nYSize - 1, (uint64_t)nXOff,
             (uint64_t)nXOff + nXSize - 1};
 
-        if ((eRWFlag == GF_Read) && (eAccess == GA_Update && m_roArray))
+        const bool bUseReadOnlyObjs =
+            ((eRWFlag == GF_Read) && (eAccess == GA_Update) && (m_roArray));
+        const auto &oCtxt = bUseReadOnlyObjs ? *m_roCtx : *m_ctx;
+        const auto &oArray = bUseReadOnlyObjs ? *m_roArray : *m_array;
+
+        auto poQuery = std::make_unique<tiledb::Query>(oCtxt, oArray);
+        tiledb::Subarray subarray(oCtxt, oArray);
+        subarray.set_subarray(oaSubarray);
+        poQuery->set_subarray(subarray);
+
+        for (int b = 0; b < nBandCount; b++)
         {
-            poQuery.reset(new tiledb::Query(*m_roCtx, *m_roArray));
+            TileDBRasterBand *poBand =
+                (TileDBRasterBand *)GetRasterBand(panBandMap[b]);
+            int nRegionSize = nBufXSize * nBufYSize * nBufferDTSize;
+            SetBuffer(poQuery.get(), eDataType, poBand->osAttrName,
+                      ((GByte *)pData) + b * nRegionSize, nRegionSize);
         }
+
+        if (bStats)
+            tiledb::Stats::enable();
+
+        auto status = poQuery->submit();
+
+        if (bStats)
+        {
+            tiledb::Stats::dump(stdout);
+            tiledb::Stats::disable();
+        }
+
+        if (status == tiledb::Query::Status::FAILED)
+            return CE_Failure;
         else
-        {
-            poQuery.reset(new tiledb::Query(*m_ctx, *m_array));
-        }
-
-        if (poQuery != nullptr)
-        {
-            tiledb::Subarray subarray(*m_roCtx, *m_array);
-            subarray.set_subarray(oaSubarray);
-            poQuery->set_subarray(subarray);
-
-            for (int b = 0; b < nBandCount; b++)
-            {
-                TileDBRasterBand *poBand =
-                    (TileDBRasterBand *)GetRasterBand(panBandMap[b]);
-                int nRegionSize = nBufXSize * nBufYSize * nBufferDTSize;
-                SetBuffer(poQuery.get(), eDataType, poBand->osAttrName,
-                          ((GByte *)pData) + b * nRegionSize, nRegionSize);
-            }
-
-            if (bStats)
-                tiledb::Stats::enable();
-
-            auto status = poQuery->submit();
-
-            if (bStats)
-            {
-                tiledb::Stats::dump(stdout);
-                tiledb::Stats::disable();
-            }
-
-            if (status == tiledb::Query::Status::FAILED)
-                return CE_Failure;
-            else
-                return CE_None;
-        }
-        return CE_Failure;
+            return CE_None;
     }
 
     return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
