@@ -327,7 +327,9 @@ MMAddStringLineCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
         }
     }
     hMiraMonLayer->ReadFeature.nNumpCoord =
-        pArcHeader[i_elem].nElemCount - (bAvoidFirst ? 1 : 0);
+        pArcHeader[i_elem].nElemCount == 0
+            ? 0
+            : pArcHeader[i_elem].nElemCount - (bAvoidFirst ? 1 : 0);
 
     return 0;
 }
