@@ -84,6 +84,7 @@ function(_set_driver_core_sources _KEY _DRIVER_TARGET)
         target_compile_definitions(${_DRIVER_TARGET}_core PRIVATE "-DPLUGIN_INSTALLATION_MESSAGE=\"${${_var_PLUGIN_INSTALLATION_MESSAGE}}\"")
     endif()
     gdal_standard_includes(${_DRIVER_TARGET}_core)
+    add_dependencies(${_DRIVER_TARGET}_core generate_gdal_version_h)
 
     target_compile_definitions(gdal_frmts PRIVATE -DDEFERRED_${_KEY}_DRIVER)
 
