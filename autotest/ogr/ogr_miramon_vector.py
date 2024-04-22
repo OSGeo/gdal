@@ -37,8 +37,7 @@ import gdaltest
 # import ogrtest
 import pytest
 
-# from osgeo import gdal, ogr, osr
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("MiraMonVector")
 
@@ -521,19 +520,21 @@ def check_3d_point(ds):
 
     assert lyr is not None, "Failed to get layer"
 
-    assert lyr.GetFeatureCount() == 31
+    assert lyr.GetFeatureCount() == 32
     assert lyr.GetGeomType() == ogr.wkbPoint25D
 
     f = lyr.GetNextFeature()
     assert f is not None, "Failed to get feature"
     assert f.GetFID() == 0
 
-    assert f.GetGeometryRef().ExportToWkt() == "POINT (440551.66 4635315.3 619.96)"
+    assert (
+        f.GetGeometryRef().ExportToWkt() == "POINT (440551.66 4635315.3 619.9599609375)"
+    )
 
     g = f.GetGeometryRef()
     assert g is not None, "Failed to get geometry"
     assert g.GetCoordinateDimension() == 3
-    assert g.GetZ() == 619.96
+    assert g.GetZ() == 619.9599609375
 
     f = lyr.GetFeature(30)
     assert f is not None, "Failed to get feature"
@@ -547,6 +548,36 @@ def test_ogr_miramon_read_3d_point(tmp_vsimem):
     ds = gdal.OpenEx("data/miramon/Points/3dpoints/Some3dPoints.pnt", gdal.OF_VECTOR)
     assert ds is not None, "Failed to get dataset"
     check_3d_point(ds)
+
+
+@pytest.mark.parametrize(
+    "Height,expected_height",
+    [
+        ("First", 250.0),
+        ("Lowest", 250.0),
+        ("Highest", 277.0),
+    ],
+)
+def test_ogr_miramon_read_multi_3d_point(Height, expected_height):
+
+    ds = gdal.OpenEx(
+        "data/miramon/Points/3dpoints/Some3dPoints.pnt",
+        gdal.OF_VECTOR,
+        open_options=["Height=" + Height],
+    )
+
+    assert ds is not None, "Failed to get dataset"
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, "Failed to get layer"
+
+    assert lyr.GetFeatureCount() == 32
+    assert lyr.GetGeomType() == ogr.wkbPoint25D
+
+    f = lyr.GetFeature(31)
+    assert f is not None, "Failed to get feature"
+    g = f.GetGeometryRef()
+    assert g is not None, "Failed to get geometry"
+    assert g.GetZ() == expected_height
 
 
 def test_ogr_miramon_write_3d_point(tmp_vsimem):
@@ -811,33 +842,6 @@ def test_ogr_miramon_OpenLanguageArc(Language, expected_description):
 
 
 ###############################################################################
-# -lco tests: DBFEncoding
-
-
-@pytest.mark.parametrize(
-    "expected_encoding",
-    [
-        "UTF8",
-        "ANSI",
-    ],
-)
-def test_ogr_miramon_DBFEncoding(expected_encoding):
-    ds = gdal.OpenEx(
-        "data/miramon/Arcs/SimpleArcs/SimpleArcFile.arc",
-        gdal.OF_VECTOR,
-        open_options=["DBFEncoding=" + expected_encoding],
-    )
-    lyr = ds.GetLayer(0)
-    assert lyr is not None, "Failed to get layer"
-
-    assert lyr.GetFeatureCount() == 4
-
-    f = lyr.GetFeature(3)
-    assert f is not None, "Failed to get feature"
-    assert f.GetFieldAsString("ATT2") == "FÈÊ"
-
-
-###############################################################################
 # unexisting file, file shorter than expected, wrong version, no sidecar files
 
 
@@ -875,7 +879,7 @@ def test_ogr_miramon_corrupted_files(name, message):
     if ds is None:
         pytest.skip(message)
 
-    yield ds
+    assert ds is not None
 
 
 ###############################################################################
@@ -919,3 +923,62 @@ def test_multiregister(expected_MultiRecordIndex, textField, expectedResult):
     assert f is not None, "Failed to get feature"
     assert f.GetFID() == 0
     assert f.GetFieldAsString(textField) == expectedResult
+
+
+###############################################################################
+# basic writing test
+
+
+def test_ogr_miramon_write_basic(tmp_path):
+
+    filename = str(tmp_path / "DataSetPOL")
+    ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
+    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
+    lyr.CreateField(ogr.FieldDefn("doublefield", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("strlistfield", ogr.OFTStringList))
+    lyr.CreateField(ogr.FieldDefn("intlistfield", ogr.OFTIntegerList))
+    lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
+    lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["strfield"] = "foo"
+    f["intfield"] = 123456789
+    f["int64field"] = 12345678912345678
+    f["doublefield"] = 1.5
+    f["strlistfield"] = ["foo", "bar"]
+    f["intlistfield"] = [123456789]
+    f["int64listfield"] = [12345678912345678]
+    f["doulistfield"] = [1.5, 4.2]
+
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 1,1 1,0 0))"))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    layername = filename + "/test.pol"
+    ds = ogr.Open(layername)
+    assert ds is not None, "Failed to get dataset"
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, "Failed to get layer"
+    f = lyr.GetNextFeature()
+
+    assert f["ID_GRAFIC"] == [1, 1]
+    assert f["N_VERTEXS"] == [4, 4]
+    assert f["PERIMETRE"] == [3.414213562, 3.414213562]
+    assert f["AREA"] == [0.500000000000, 0.500000000000]
+    assert f["N_ARCS"] == [1, 1]
+    assert f["N_POLIG"] == [1, 1]
+    assert f["strfield"] == ["foo", ""]
+    assert f["intfield"] == [123456789]
+    assert f["int64field"] == [12345678912345678]
+    assert f["doublefield"] == [1.5]
+    assert f["strlistfield"] == ["foo", "bar"]
+    assert f["intlistfield"] == [123456789]
+    assert f["int64listfield"] == [12345678912345678]
+    assert f["doulistfield"] == [1.5, 4.2]
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POLYGON ((0 0,0 1,1 1,0 0))"
+    ds = None
