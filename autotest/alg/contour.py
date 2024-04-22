@@ -52,6 +52,8 @@ def input_tif(tmp_path):
     ds.SetProjection(wkt)
     ds.SetGeoTransform([1, precision, 0, 50, 0, -precision])
 
+    ds.GetRasterBand(1).Fill(1)
+
     raw_data = struct.pack("h", 10) * int(size / 2)
     for i in range(int(size / 2)):
         ds.WriteRaster(
@@ -172,7 +174,7 @@ def test_contour_2(input_tif, tmp_path):
             49.75 - 0.125 - 0.0625,
         ],
     ]
-    expected_height = [10, 20, 25, 10000]
+    expected_height = [10, 20, 25]
 
     lyr = ogr_ds.ExecuteSQL("select * from contour order by elev asc")
 
@@ -230,7 +232,20 @@ def test_contour_real_world_case():
 # Test with -p option (polygonize)
 
 
-def test_contour_3(input_tif, tmp_path):
+@pytest.mark.parametrize(
+    "fixed_levels, expected_min, expected_max",
+    [
+        ("-10,0,10,20,25,30,40", [0, 10, 20, 25], [10, 20, 25, 30]),
+        ("-10,0,10,20,25,30", [0, 10, 20, 25], [10, 20, 25, 30]),
+        ("0,10,20,25,30", [0, 10, 20, 25], [10, 20, 25, 30]),
+        ("1,10,20,25,30", [1, 10, 20, 25], [10, 20, 25, 30]),
+        ("10,20,25,30", [1, 10, 20, 25], [10, 20, 25, 30]),
+        ("10,20,24", [1, 10, 20, 24], [10, 20, 24, 25]),
+        ("10,20,25", [1, 10, 20], [10, 20, 25]),
+        ("0,10,20", [0, 10, 20], [10, 20, 25]),
+    ],
+)
+def test_contour_3(input_tif, tmp_path, fixed_levels, expected_min, expected_max):
 
     output_shp = str(tmp_path / "contour.shp")
 
@@ -244,12 +259,11 @@ def test_contour_3(input_tif, tmp_path):
     ogr_lyr.CreateField(field_defn)
 
     ds = gdal.Open(input_tif)
-    # gdal.ContourGenerateEx(ds.GetRasterBand(1), 0, 0, 0, [10, 20, 25], 0, 0, ogr_lyr, 0, 1, 1)
     gdal.ContourGenerateEx(
         ds.GetRasterBand(1),
         ogr_lyr,
         options=[
-            "FIXED_LEVELS=10,20,25",
+            "FIXED_LEVELS=" + fixed_levels,
             "ID_FIELD=0",
             "ELEV_FIELD_MIN=1",
             "ELEV_FIELD_MAX=2",
@@ -269,41 +283,30 @@ def test_contour_3(input_tif, tmp_path):
             49.75 - 0.125 - 0.0625,
         ],
     ]
-    expected_height = [10, 20, 25, 10000]
+    if len(expected_min) < len(expected_envelopes):
+        expected_envelopes = expected_envelopes[0 : len(expected_min)]
 
-    lyr = ogr_ds.ExecuteSQL("select * from contour order by elevMin asc")
+    with ogr_ds.ExecuteSQL("select * from contour order by elevMin asc") as lyr:
 
-    assert lyr.GetFeatureCount() == len(expected_envelopes)
+        assert lyr.GetFeatureCount() == len(expected_envelopes)
 
-    i = 0
-    feat = lyr.GetNextFeature()
-    while feat is not None:
-        if i < 3 and feat.GetField("elevMax") != expected_height[i]:
-            pytest.fail(
-                "Got %f as z. Expected %f"
-                % (feat.GetField("elevMax"), expected_height[i])
-            )
-        elif i > 0 and i < 3 and feat.GetField("elevMin") != expected_height[i - 1]:
-            pytest.fail(
-                "Got %f as z. Expected %f"
-                % (feat.GetField("elevMin"), expected_height[i - 1])
-            )
+        i = 0
+        for feat in lyr:
+            assert feat.GetField("elevMin") == expected_min[i], i
+            assert feat.GetField("elevMax") == expected_max[i], i
 
-        envelope = feat.GetGeometryRef().GetEnvelope()
-        for j in range(4):
-            if expected_envelopes[i][j] != pytest.approx(
-                envelope[j], abs=precision / 2 * 1.001
-            ):
-                print("i=%d, wkt=%s" % (i, feat.GetGeometryRef().ExportToWkt()))
-                print(feat.GetGeometryRef().GetEnvelope())
-                pytest.fail(
-                    "%f, %f" % (expected_envelopes[i][j] - envelope[j], precision / 2)
-                )
-        i = i + 1
-        feat = lyr.GetNextFeature()
-
-    ogr_ds.ReleaseResultSet(lyr)
-    ogr_ds.Destroy()
+            envelope = feat.GetGeometryRef().GetEnvelope()
+            for j in range(4):
+                if expected_envelopes[i][j] != pytest.approx(
+                    envelope[j], abs=precision / 2 * 1.001
+                ):
+                    print("i=%d, wkt=%s" % (i, feat.GetGeometryRef().ExportToWkt()))
+                    print(feat.GetGeometryRef().GetEnvelope())
+                    pytest.fail(
+                        "%f, %f"
+                        % (expected_envelopes[i][j] - envelope[j], precision / 2)
+                    )
+            i = i + 1
 
 
 # Check behaviour when the nodata value as a double isn't exactly the Float32 pixel value

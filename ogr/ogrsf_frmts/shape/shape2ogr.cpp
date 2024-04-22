@@ -1050,54 +1050,41 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
     else if (hSHP->nShapeType == SHPT_MULTIPATCH)
     {
         int nParts = 0;
-        int *panPartStart = nullptr;
-        int *panPartType = nullptr;
+        std::vector<int> anPartStart;
+        std::vector<int> anPartType;
         int nPoints = 0;
-        OGRRawPoint *poPoints = nullptr;
-        double *padfZ = nullptr;
+        std::vector<OGRRawPoint> aoPoints;
+        std::vector<double> adfZ;
         OGRErr eErr = OGRCreateMultiPatch(poGeom,
                                           FALSE,  // no SHPP_TRIANGLES
-                                          nParts, panPartStart, panPartType,
-                                          nPoints, poPoints, padfZ);
+                                          nParts, anPartStart, anPartType,
+                                          nPoints, aoPoints, adfZ);
         if (eErr != OGRERR_NONE)
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
-        double *padfX =
-            static_cast<double *>(CPLMalloc(sizeof(double) * nPoints));
-        double *padfY =
-            static_cast<double *>(CPLMalloc(sizeof(double) * nPoints));
+        std::vector<double> adfX(nPoints);
+        std::vector<double> adfY(nPoints);
         for (int i = 0; i < nPoints; ++i)
         {
-            padfX[i] = poPoints[i].x;
-            padfY[i] = poPoints[i].y;
+            adfX[i] = aoPoints[i].x;
+            adfY[i] = aoPoints[i].y;
         }
-        CPLFree(poPoints);
 
-        if (!CheckNonFiniteCoordinates(padfX, nPoints) ||
-            !CheckNonFiniteCoordinates(padfY, nPoints) ||
-            !CheckNonFiniteCoordinates(padfZ, nPoints))
+        if (!CheckNonFiniteCoordinates(adfX.data(), nPoints) ||
+            !CheckNonFiniteCoordinates(adfY.data(), nPoints) ||
+            !CheckNonFiniteCoordinates(adfZ.data(), nPoints))
         {
-            CPLFree(panPartStart);
-            CPLFree(panPartType);
-            CPLFree(padfX);
-            CPLFree(padfY);
-            CPLFree(padfZ);
             return OGRERR_FAILURE;
         }
 
         SHPObject *psShape =
-            SHPCreateObject(hSHP->nShapeType, iShape, nParts, panPartStart,
-                            panPartType, nPoints, padfX, padfY, padfZ, nullptr);
+            SHPCreateObject(hSHP->nShapeType, iShape, nParts,
+                            anPartStart.data(), anPartType.data(), nPoints,
+                            adfX.data(), adfY.data(), adfZ.data(), nullptr);
         if (bRewind)
             SHPRewindObject(hSHP, psShape);
         const int nReturnedShapeID = SHPWriteObject(hSHP, iShape, psShape);
         SHPDestroyObject(psShape);
-
-        CPLFree(panPartStart);
-        CPLFree(panPartType);
-        CPLFree(padfX);
-        CPLFree(padfY);
-        CPLFree(padfZ);
 
         if (nReturnedShapeID == -1)
             return OGRERR_FAILURE;

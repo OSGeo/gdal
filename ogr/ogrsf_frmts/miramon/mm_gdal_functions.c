@@ -1306,7 +1306,7 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
 
     if (some_problems_when_reading > 0)
     {
-        if ((offset_fals - 1) - 32 < 0)
+        if (offset_fals < 1 + 32)
             pMMBDXP->nFields = 0;
         else
             pMMBDXP->nFields =
@@ -1404,6 +1404,18 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
         if (EQUAL(pMMBDXP->pField[nIField].FieldName,
                   szMMNomCampIdGraficDefecte))
             pMMBDXP->IdGraficField = nIField;
+
+        // Limit BytesPerField to avoid later integer overflows
+        // We could potentially limit further...
+        if (pMMBDXP->pField[nIField].BytesPerField > (uint32_t)(INT32_MAX - 1))
+        {
+            free_function(pMMBDXP->pField);
+            pMMBDXP->pField = nullptr;
+            pMMBDXP->nFields = 0;
+            fclose_function(pf);
+            pMMBDXP->pfDataBase = nullptr;
+            return 1;
+        }
 
         if (pMMBDXP->pField[nIField].BytesPerField == 0)
         {

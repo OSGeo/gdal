@@ -15,4 +15,5 @@ NPROC=$(sysctl -n hw.ncpu)
 echo "NPROC=${NPROC}"
 
 # Run all the Python autotests
-(cd build && ctest -V -R autotest -j${NPROC})
+# FIXME: disabled for now because of https://github.com/OSGeo/gdal/issues/9723
+#(cd build && ctest -V -R autotest -j${NPROC})

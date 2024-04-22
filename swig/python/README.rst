@@ -13,7 +13,7 @@ reference documentation, but the https://gdal.org/api/python_bindings.html#tutor
 Dependencies
 ------------
 
- * libgdal (3.8.0 or greater) and header files (gdal-devel)
+ * libgdal (3.9.0 or greater) and header files (gdal-devel)
  * numpy (1.0.0 or greater) and header files (numpy-devel) (not explicitly
    required, but many examples and utilities will not work without it)
 
@@ -61,14 +61,14 @@ To install the Python dependencies and build numpy-based raster support:
 Users can verify that numpy-based raster support has been installed with:
 
 ::
-    
+
     python3 -c 'from osgeo import gdal_array'
 
 
 If this command raises an ImportError, numpy-based raster support has not been properly installed:
 
 ::
-    
+
     Traceback (most recent call last):
     File "<string>", line 1, in <module>
     File "/usr/local/lib/python3.12/dist-packages/osgeo/gdal_array.py", line 10, in <module>

@@ -3687,10 +3687,8 @@ def test_tiff_read_huge_number_strips():
     if md["LIBTIFF"] != "INTERNAL":
         pytest.skip("Test for internal libtiff")
 
-    with gdal.quiet_errors():
-        ds = gdal.Open("data/huge-number-strips.tif")
-        with pytest.raises(Exception):
-            ds.GetRasterBand(1).Checksum()
+    with pytest.raises(Exception):
+        gdal.Open("data/huge-number-strips.tif")
 
 
 ###############################################################################
