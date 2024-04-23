@@ -1029,11 +1029,6 @@ def test_ogr_tiledb_switch_between_read_and_write():
 
 def test_ogr_tiledb_create_group():
 
-    if "CREATE_GROUP" not in gdal.GetDriverByName("TileDB").GetMetadataItem(
-        gdal.DMD_CREATIONOPTIONLIST
-    ):
-        pytest.skip("CREATE_GROUP not supported in TileDB < 2.9")
-
     if os.path.exists("tmp/test.tiledb"):
         shutil.rmtree("tmp/test.tiledb")
 

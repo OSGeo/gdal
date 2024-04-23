@@ -149,11 +149,9 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "   <Option name='BOUNDS' scope='raster' type='string' "
         "description='Specify "
         "bounds for sparse array, minx, miny, maxx, maxy'/>\n"
-#ifdef HAS_TILEDB_GROUP
         "   <Option name='CREATE_GROUP' scope='vector' type='boolean' "
         "description='Whether to create a group for multiple layer support' "
         "default='NO'/>"
-#endif
         "</CreationOptionList>\n");
 
     // clang-format off

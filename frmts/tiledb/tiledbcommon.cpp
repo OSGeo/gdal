@@ -150,14 +150,12 @@ int TileDBDataset::Identify(GDALOpenInfo *poOpenInfo)
             CPLString osArrayPath =
                 TileDBDataset::VSI_to_tiledb_uri(poOpenInfo->pszFilename);
             const auto eType = tiledb::Object::object(ctx, osArrayPath).type();
-#ifdef HAS_TILEDB_GROUP
             if ((poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0)
             {
                 if (eType == tiledb::Object::Type::Array ||
                     eType == tiledb::Object::Type::Group)
                     return true;
             }
-#endif
 #ifdef HAS_TILEDB_MULTIDIM
             if ((poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) != 0)
             {
@@ -259,7 +257,6 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
                 TileDBDataset::VSI_to_tiledb_uri(poOpenInfo->pszFilename);
 
             const auto eType = tiledb::Object::object(oCtx, osPath).type();
-#ifdef HAS_TILEDB_GROUP
             if ((poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
                 eType == tiledb::Object::Type::Group)
             {
@@ -314,7 +311,6 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
                 }
                 return nullptr;
             }
-#endif
 #endif
 
             tiledb::ArraySchema schema(oCtx, osPath);
