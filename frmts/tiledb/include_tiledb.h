@@ -43,11 +43,6 @@
 #endif
 
 #if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 10)
-#define HAS_TILEDB_BOOL
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
     (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 11)
 #define HAS_TILEDB_WORKING_OR_FILTER
 #endif
