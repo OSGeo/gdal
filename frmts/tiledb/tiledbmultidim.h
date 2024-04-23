@@ -31,8 +31,6 @@
 
 #include "tiledbheaders.h"
 
-#ifdef HAS_TILEDB_MULTIDIM
-
 constexpr const char *CRS_ATTRIBUTE_NAME = "_CRS";
 constexpr const char *UNIT_ATTRIBUTE_NAME = "_UNIT";
 constexpr const char *DIM_TYPE_ATTRIBUTE_NAME = "_DIM_TYPE";
@@ -635,7 +633,5 @@ class TileDBMultiDimDataset final : public GDALDataset
         return m_poRG;
     }
 };
-
-#endif  // HAS_TILEDB_MULTIDIM
 
 #endif  // TILEDBMULTIDIM_H_INCLUDED

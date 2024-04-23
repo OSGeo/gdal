@@ -43,15 +43,6 @@
 #endif
 
 #if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 15)
-#define HAS_TILEDB_DIMENSION_LABEL
-#endif
-
-#ifdef HAS_TILEDB_DIMENSION_LABEL
-#define HAS_TILEDB_MULTIDIM
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
     (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 21)
 #define HAS_TILEDB_GEOM_WKB_WKT
 #endif

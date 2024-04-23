@@ -228,7 +228,6 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "</LayerCreationOptionList>");
     // clang-format on
 
-#ifdef HAS_TILEDB_MULTIDIM
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_MULTIDIMENSIONAL, "YES");
 
@@ -276,7 +275,6 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "description='Whether the array should be only in-memory. Useful to "
         "create an indexing variable that is serialized as a dimension label'/>"
         "</MultiDimArrayCreationOptionList>");
-#endif
 
     poDriver->pfnIdentify = TileDBDriverIdentifySimplified;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");

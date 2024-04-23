@@ -156,20 +156,17 @@ int TileDBDataset::Identify(GDALOpenInfo *poOpenInfo)
                     eType == tiledb::Object::Type::Group)
                     return true;
             }
-#ifdef HAS_TILEDB_MULTIDIM
+
             if ((poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) != 0)
             {
                 if (eType == tiledb::Object::Type::Array ||
                     eType == tiledb::Object::Type::Group)
                     return true;
             }
-#endif
             if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0)
             {
-#ifdef HAS_TILEDB_MULTIDIM
                 if (eType == tiledb::Object::Type::Group)
                     return GDAL_IDENTIFY_UNKNOWN;
-#endif
                 return eType == tiledb::Object::Type::Array;
             }
         }
@@ -231,12 +228,10 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-#ifdef HAS_TILEDB_MULTIDIM
             if ((poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) != 0)
             {
                 return TileDBDataset::OpenMultiDimensional(poOpenInfo);
             }
-#endif
 
             const char *pszConfig = CSLFetchNameValue(
                 poOpenInfo->papszOpenOptions, "TILEDB_CONFIG");
@@ -262,7 +257,6 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 return OGRTileDBDataset::Open(poOpenInfo, eType);
             }
-#ifdef HAS_TILEDB_MULTIDIM
             else if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
                      eType == tiledb::Object::Type::Group)
             {
@@ -311,7 +305,6 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
                 }
                 return nullptr;
             }
-#endif
 
             tiledb::ArraySchema schema(oCtx, osPath);
 
@@ -364,7 +357,6 @@ GDALDataset *TileDBDataset::CreateCopy(const char *pszFilename,
                                        void *pProgressData)
 
 {
-#ifdef HAS_TILEDB_MULTIDIM
     if (poSrcDS->GetRootGroup())
     {
         auto poDrv = GDALDriver::FromHandle(GDALGetDriverByName("TileDB"));
@@ -375,7 +367,6 @@ GDALDataset *TileDBDataset::CreateCopy(const char *pszFilename,
                                             pProgressData);
         }
     }
-#endif
 
     try
     {
@@ -413,9 +404,7 @@ void GDALRegister_TileDB()
     poDriver->pfnCreate = TileDBDataset::Create;
     poDriver->pfnCreateCopy = TileDBDataset::CreateCopy;
     poDriver->pfnDelete = TileDBDataset::Delete;
-#ifdef HAS_TILEDB_MULTIDIM
     poDriver->pfnCreateMultiDimensional = TileDBDataset::CreateMultiDimensional;
-#endif
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

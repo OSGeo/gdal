@@ -28,8 +28,6 @@
 
 #include "tiledbmultidim.h"
 
-#ifdef HAS_TILEDB_MULTIDIM
-
 #include "memmultidim.h"
 
 /************************************************************************/
@@ -574,5 +572,3 @@ bool TileDBGroup::DeleteAttribute(const std::string &osName,
 {
     return DeleteAttributeImpl(osName, papszOptions);
 }
-
-#endif  // HAS_TILEDB_MULTIDIM

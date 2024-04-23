@@ -29,8 +29,6 @@
 #include "tiledbmultidim.h"
 #include "memmultidim.h"
 
-#ifdef HAS_TILEDB_MULTIDIM
-
 /************************************************************************/
 /*                TileDBAttribute::TileDBAttribute()                    */
 /************************************************************************/
@@ -199,5 +197,3 @@ bool TileDBAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
     return poParent->PutMetadata(m_osName, tiledb_dt, nValues,
                                  oRawResult.data());
 }
-
-#endif  // HAS_TILEDB_MULTIDIM
