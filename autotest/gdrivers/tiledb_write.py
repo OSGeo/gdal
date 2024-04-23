@@ -204,6 +204,12 @@ def test_tiledb_write_subdatasets(tmp_path):
     new_ds = None
     src_ds = None
 
+    ds = gdal.Open(dsname)
+    subds = ds.GetSubDatasets()
+    assert len(subds) == 2
+    assert subds[0][0] == f'TILEDB:"{dsname}":solar_zenith_angle'
+    assert subds[1][0] == f'TILEDB:"{dsname}":viewing_zenith_angle'
+
     src_ds = gdal.Open(f'TILEDB:"{dsname}":viewing_zenith_angle')
     assert src_ds.GetRasterBand(1).Checksum() == 42472
     src_ds = None
