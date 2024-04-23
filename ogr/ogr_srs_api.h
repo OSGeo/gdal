@@ -553,6 +553,7 @@ int CPL_DLL OSRIsGeographic(OGRSpatialReferenceH);
 int CPL_DLL OSRIsDerivedGeographic(OGRSpatialReferenceH);
 int CPL_DLL OSRIsLocal(OGRSpatialReferenceH);
 int CPL_DLL OSRIsProjected(OGRSpatialReferenceH);
+int CPL_DLL OSRIsDerivedProjected(OGRSpatialReferenceH);
 int CPL_DLL OSRIsCompound(OGRSpatialReferenceH);
 int CPL_DLL OSRIsGeocentric(OGRSpatialReferenceH);
 int CPL_DLL OSRIsVertical(OGRSpatialReferenceH);
