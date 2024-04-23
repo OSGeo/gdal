@@ -226,10 +226,12 @@ class TileDBRasterDataset final : public TileDBDataset
     bool m_bHasSubDatasets = false;
     CPLStringList m_aosSubdatasetMD{};
     CPLXMLTreeCloser m_poSubDatasetsTree{nullptr};
-    std::list<std::unique_ptr<GDALDataset>> lpoAttributeDS = {};
+    std::list<std::unique_ptr<GDALDataset>> m_lpoAttributeDS = {};
     uint64_t nTimestamp = 0;
-
     bool bStats = FALSE;
+    bool m_bDeferredCreateHasRun = false;
+    bool m_bDeferredCreateHasBeenSuccessful = false;
+
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                      GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
                      GDALRasterIOExtraArg *psExtraArg) override;
@@ -239,6 +241,9 @@ class TileDBRasterDataset final : public TileDBDataset
     CPLErr AddDimensions(tiledb::Domain &domain, const char *pszAttrName,
                          tiledb::Dimension &y, tiledb::Dimension &x,
                          tiledb::Dimension *poBands = nullptr);
+
+    void CreateArray();
+    bool DeferredCreate(bool bCreateArray);
 
   public:
     ~TileDBRasterDataset();
