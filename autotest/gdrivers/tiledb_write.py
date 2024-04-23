@@ -29,6 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import math
+
 import gdaltest
 import pytest
 
@@ -335,3 +337,103 @@ def test_tiledb_read_arbitrary_array(outputType, tmp_path):
         buf_type=outputType
     )
     ds = None
+
+
+@pytest.mark.parametrize(
+    "outputType, nodata, expected_nodata",
+    [
+        (gdal.GDT_Byte, 1, 1),
+        (gdal.GDT_Byte, -1, 255),
+        (gdal.GDT_Byte, 256, 255),
+        (gdal.GDT_Byte, 1.5, 255),
+        (gdal.GDT_Int8, -1, -1),
+        (gdal.GDT_UInt16, 1, 1),
+        (gdal.GDT_Int16, -1, -1),
+        (gdal.GDT_UInt32, 1, 1),
+        (gdal.GDT_Int32, -1, -1),
+        (gdal.GDT_UInt64, 1, 1),
+        (gdal.GDT_Int64, -1, -1),
+        (gdal.GDT_Float32, 1.5, 1.5),
+        (gdal.GDT_Float32, float("inf"), float("inf")),
+        (gdal.GDT_Float32, float("-inf"), float("-inf")),
+        (gdal.GDT_Float32, float("nan"), float("nan")),
+        (gdal.GDT_Float64, 1.5, 1.5),
+        (gdal.GDT_Float64, float("inf"), float("inf")),
+        (gdal.GDT_Float64, float("-inf"), float("-inf")),
+        (gdal.GDT_Float64, float("nan"), float("nan")),
+        (gdal.GDT_CInt16, 1, 1),
+        (gdal.GDT_CInt32, 1, 1),
+        (gdal.GDT_CFloat32, 1.5, 1.5),
+        (gdal.GDT_CFloat64, 1.5, 1.5),
+    ],
+)
+def test_tiledb_write_nodata_all_types(tmp_path, outputType, nodata, expected_nodata):
+
+    dsname = str(tmp_path / "test_tiledb_write_nodata_all_types.tiledb")
+
+    ds = gdal.GetDriverByName("TileDB").Create(dsname, 1, 1, 1, outputType)
+    if not math.isnan(nodata) and nodata != expected_nodata:
+        with pytest.raises(
+            Exception, match="nodata value cannot be stored in band data type"
+        ):
+            ds.GetRasterBand(1).SetNoDataValue(nodata)
+    else:
+        ds.GetRasterBand(1).SetNoDataValue(nodata)
+    ds = None
+
+    ds = gdal.Open(dsname)
+    if math.isnan(nodata):
+        assert math.isnan(ds.GetRasterBand(1).GetNoDataValue())
+    else:
+        assert ds.GetRasterBand(1).GetNoDataValue() == expected_nodata
+
+
+@pytest.mark.parametrize("mode", ["BAND", "PIXEL", "ATTRIBUTES"])
+def test_tiledb_write_nodata_all_modes(tmp_path, mode):
+
+    dsname = str(tmp_path / "test_tiledb_write_nodata_all_modes.tiledb")
+
+    ds = gdal.GetDriverByName("TileDB").Create(
+        dsname, 1, 1, 2, options=["INTERLEAVE=%s" % (mode)]
+    )
+    for i in range(2):
+        ds.GetRasterBand(i + 1).SetNoDataValue(1)
+        assert ds.GetRasterBand(i + 1).GetNoDataValue() == 1
+    ds = None
+
+    ds = gdal.Open(dsname)
+    for i in range(2):
+        assert ds.GetRasterBand(i + 1).GetNoDataValue() == 1
+
+
+def test_tiledb_write_nodata_createcopy(tmp_path):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.GetRasterBand(1).SetNoDataValue(1)
+
+    dsname = str(tmp_path / "test_tiledb_write_nodata_createcopy.tiledb")
+    gdal.GetDriverByName("TileDB").CreateCopy(dsname, src_ds)
+
+    ds = gdal.Open(dsname)
+    assert ds.GetRasterBand(1).GetNoDataValue() == 1
+
+
+def test_tiledb_write_nodata_not_identical_all_bands(tmp_path):
+
+    dsname = str(tmp_path / "test_tiledb_write_nodata_not_identical_all_bands.tiledb")
+    ds = gdal.GetDriverByName("TileDB").Create(dsname, 1, 1, 2)
+    ds.GetRasterBand(1).SetNoDataValue(1)
+    with pytest.raises(Exception, match="all bands should have the same nodata value"):
+        ds.GetRasterBand(2).SetNoDataValue(2)
+
+
+def test_tiledb_write_nodata_error_after_rasterio(tmp_path):
+
+    dsname = str(tmp_path / "test_tiledb_write_nodata_error_after_rasterio.tiledb")
+    ds = gdal.GetDriverByName("TileDB").Create(dsname, 1, 1)
+    ds.GetRasterBand(1).Fill(0)
+    ds.GetRasterBand(1).FlushCache()
+    with pytest.raises(
+        Exception, match="cannot be called after pixel values have been set"
+    ):
+        ds.GetRasterBand(1).SetNoDataValue(1)

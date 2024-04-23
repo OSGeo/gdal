@@ -236,7 +236,8 @@ class TileDBRasterDataset final : public TileDBDataset
                      GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
                      GDALRasterIOExtraArg *psExtraArg) override;
     CPLErr CreateAttribute(GDALDataType eType, const CPLString &osAttrName,
-                           const int nSubRasterCount = 1);
+                           const int nSubRasterCount, bool bHasFillValue,
+                           double dfFillValue);
 
     CPLErr AddDimensions(tiledb::Domain &domain, const char *pszAttrName,
                          tiledb::Dimension &y, tiledb::Dimension &x,

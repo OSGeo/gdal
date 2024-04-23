@@ -29,6 +29,7 @@
 #include <cassert>
 #include <limits>
 
+#include "gdal_priv_templates.hpp"
 #include "tiledbheaders.h"
 
 constexpr const char *RASTER_DATASET_TYPE = "raster";
@@ -47,6 +48,8 @@ class TileDBRasterBand final : public GDALPamRasterBand
     TileDBRasterDataset *poGDS;
     bool bStats;
     CPLString osAttrName;
+    double m_dfNoData = 0;
+    bool m_bNoDataSet = false;
 
   public:
     TileDBRasterBand(TileDBRasterDataset *, int,
@@ -57,6 +60,9 @@ class TileDBRasterBand final : public GDALPamRasterBand
                              GDALDataType, GSpacing, GSpacing,
                              GDALRasterIOExtraArg *psExtraArg) override;
     virtual GDALColorInterp GetColorInterpretation() override;
+
+    double GetNoDataValue(int *pbHasNoData) override;
+    CPLErr SetNoDataValue(double dfNoData) override;
 };
 
 static CPLErr option_to_index_type(const char *pszIndexingType,
@@ -438,6 +444,178 @@ GDALColorInterp TileDBRasterBand::GetColorInterpretation()
 }
 
 /************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double TileDBRasterBand::GetNoDataValue(int *pbHasNoData)
+{
+    if (pbHasNoData)
+        *pbHasNoData = false;
+    if (m_bNoDataSet)
+    {
+        if (pbHasNoData)
+            *pbHasNoData = true;
+        return m_dfNoData;
+    }
+    if (!poGDS->m_bDeferredCreateHasBeenSuccessful)
+        return 0.0;
+    double dfNoData = 0.0;
+    try
+    {
+        const void *value = nullptr;
+        uint64_t size = 0;
+        // Caution: 2 below statements must not be combined in a single one,
+        // as the lifetime of value is linked to the return value of
+        // attribute()
+        auto attr = (poGDS->m_roArray ? poGDS->m_roArray : poGDS->m_array)
+                        ->schema()
+                        .attribute(osAttrName);
+        attr.get_fill_value(&value, &size);
+        if (value &&
+            size == static_cast<uint64_t>(GDALGetDataTypeSizeBytes(eDataType)))
+        {
+            switch (eDataType)
+            {
+                case GDT_Byte:
+                    dfNoData = *static_cast<const uint8_t *>(value);
+                    break;
+                case GDT_Int8:
+                    dfNoData = *static_cast<const int8_t *>(value);
+                    break;
+                case GDT_UInt16:
+                    dfNoData = *static_cast<const uint16_t *>(value);
+                    break;
+                case GDT_Int16:
+                case GDT_CInt16:
+                    dfNoData = *static_cast<const int16_t *>(value);
+                    break;
+                case GDT_UInt32:
+                    dfNoData = *static_cast<const uint32_t *>(value);
+                    break;
+                case GDT_Int32:
+                case GDT_CInt32:
+                    dfNoData = *static_cast<const int32_t *>(value);
+                    break;
+                case GDT_UInt64:
+                    dfNoData = static_cast<double>(
+                        *static_cast<const uint64_t *>(value));
+                    break;
+                case GDT_Int64:
+                    dfNoData = static_cast<double>(
+                        *static_cast<const int64_t *>(value));
+                    break;
+                case GDT_Float32:
+                case GDT_CFloat32:
+                    dfNoData = *static_cast<const float *>(value);
+                    break;
+                case GDT_Float64:
+                case GDT_CFloat64:
+                    dfNoData = *static_cast<const double *>(value);
+                    break;
+                case GDT_Unknown:
+                case GDT_TypeCount:
+                    break;
+            }
+            if (pbHasNoData)
+                *pbHasNoData = true;
+        }
+    }
+    catch (const tiledb::TileDBError &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+    }
+    return dfNoData;
+}
+
+/************************************************************************/
+/*                           IsValidNoData()                            */
+/************************************************************************/
+
+template <class T> static bool IsValidNoData(double dfNoData)
+{
+    return GDALIsValueInRange<T>(dfNoData) &&
+           dfNoData == static_cast<double>(static_cast<T>(dfNoData));
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr TileDBRasterBand::SetNoDataValue(double dfNoData)
+{
+    if (poGDS->m_bDeferredCreateHasBeenSuccessful)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "TileDBRasterBand::SetNoDataValue(): cannot be called after "
+                 "pixel values have been set");
+        return CE_Failure;
+    }
+
+    if (nBand != 1 &&
+        dfNoData !=
+            cpl::down_cast<TileDBRasterBand *>(poGDS->papoBands[0])->m_dfNoData)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "TileDBRasterBand::SetNoDataValue(): all bands should have "
+                 "the same nodata value");
+        return CE_Failure;
+    }
+
+    bool bIsValid = false;
+    switch (eDataType)
+    {
+        case GDT_Byte:
+            bIsValid = IsValidNoData<uint8_t>(dfNoData);
+            break;
+        case GDT_Int8:
+            bIsValid = IsValidNoData<int8_t>(dfNoData);
+            break;
+        case GDT_UInt16:
+            bIsValid = IsValidNoData<uint16_t>(dfNoData);
+            break;
+        case GDT_Int16:
+        case GDT_CInt16:
+            bIsValid = IsValidNoData<int16_t>(dfNoData);
+            break;
+        case GDT_UInt32:
+            bIsValid = IsValidNoData<uint32_t>(dfNoData);
+            break;
+        case GDT_Int32:
+        case GDT_CInt32:
+            bIsValid = IsValidNoData<int32_t>(dfNoData);
+            break;
+        case GDT_UInt64:
+            bIsValid = IsValidNoData<uint64_t>(dfNoData);
+            break;
+        case GDT_Int64:
+            bIsValid = IsValidNoData<int64_t>(dfNoData);
+            break;
+        case GDT_Float32:
+        case GDT_CFloat32:
+            bIsValid = std::isnan(dfNoData) || IsValidNoData<float>(dfNoData);
+            break;
+        case GDT_Float64:
+        case GDT_CFloat64:
+            bIsValid = true;
+            break;
+        case GDT_Unknown:
+        case GDT_TypeCount:
+            break;
+    }
+    if (!bIsValid)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "TileDBRasterBand::SetNoDataValue(): nodata value cannot be "
+                 "stored in band data type");
+        return CE_Failure;
+    }
+
+    m_dfNoData = dfNoData;
+    m_bNoDataSet = true;
+    return CE_None;
+}
+
+/************************************************************************/
 /* ==================================================================== */
 /*                     TileDBRasterDataset                              */
 /* ==================================================================== */
@@ -554,21 +732,32 @@ CPLErr TileDBRasterDataset::AddDimensions(tiledb::Domain &domain,
 
 {
     CPLErr eErr = CE_None;
+
+    const bool bHasFillValue =
+        nBands ? cpl::down_cast<TileDBRasterBand *>(papoBands[0])->m_bNoDataSet
+               : false;
+    const double dfFillValue =
+        nBands ? cpl::down_cast<TileDBRasterBand *>(papoBands[0])->m_dfNoData
+               : 0.0;
+
     switch (eIndexMode)
     {
         case ATTRIBUTES:
             domain.add_dimensions(y, x);
-            CreateAttribute(eDataType, pszAttrName, nBands);
+            eErr = CreateAttribute(eDataType, pszAttrName, nBands,
+                                   bHasFillValue, dfFillValue);
             break;
         case PIXEL:
             assert(poBands);
             domain.add_dimensions(y, x, *poBands);
-            CreateAttribute(eDataType, pszAttrName, 1);
+            eErr = CreateAttribute(eDataType, pszAttrName, 1, bHasFillValue,
+                                   dfFillValue);
             break;
         default:  // BAND
             assert(poBands);
             domain.add_dimensions(*poBands, y, x);
-            CreateAttribute(eDataType, pszAttrName, 1);
+            eErr = CreateAttribute(eDataType, pszAttrName, 1, bHasFillValue,
+                                   dfFillValue);
             break;
     }
 
@@ -1380,9 +1569,41 @@ GDALDataset *TileDBRasterDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                              CreateAttribute()                       */
 /************************************************************************/
 
+template <class T, class NoDataT = T>
+static tiledb::Attribute CreateAttribute(tiledb::Context &ctx,
+                                         const std::string &osAttrName,
+                                         tiledb::FilterList &filterList,
+                                         bool bHasFillValue, double dfFillValue)
+{
+    auto attr = tiledb::Attribute::create<T>(ctx, osAttrName, filterList);
+    if (bHasFillValue && GDALIsValueInRange<NoDataT>(dfFillValue))
+    {
+        const auto nVal = static_cast<NoDataT>(dfFillValue);
+        if (dfFillValue == static_cast<double>(nVal))
+        {
+            if constexpr (sizeof(T) == sizeof(NoDataT))
+            {
+                attr.set_fill_value(&nVal, sizeof(nVal));
+            }
+            else
+            {
+                T aVal = {nVal, nVal};
+                attr.set_fill_value(&aVal, sizeof(aVal));
+            }
+        }
+    }
+    return attr;
+}
+
+/************************************************************************/
+/*                              CreateAttribute()                       */
+/************************************************************************/
+
 CPLErr TileDBRasterDataset::CreateAttribute(GDALDataType eType,
                                             const CPLString &osAttrName,
-                                            const int nSubRasterCount)
+                                            const int nSubRasterCount,
+                                            bool bHasFillValue,
+                                            double dfFillValue)
 {
     try
     {
@@ -1410,103 +1631,116 @@ CPLErr TileDBRasterDataset::CreateAttribute(GDALDataType eType,
             {
                 case GDT_Byte:
                 {
-                    m_schema->add_attribute(
-                        tiledb::Attribute::create<unsigned char>(
-                            *m_ctx, osName, *m_filterList));
+                    m_schema->add_attribute(::CreateAttribute<unsigned char>(
+                        *m_ctx, osName, *m_filterList, bHasFillValue,
+                        dfFillValue));
                     nBitsPerSample = 8;
                     break;
                 }
                 case GDT_Int8:
                 {
-                    m_schema->add_attribute(tiledb::Attribute::create<int8_t>(
-                        *m_ctx, osName, *m_filterList));
+                    m_schema->add_attribute(
+                        ::CreateAttribute<int8_t>(*m_ctx, osName, *m_filterList,
+                                                  bHasFillValue, dfFillValue));
                     nBitsPerSample = 8;
                     break;
                 }
                 case GDT_UInt16:
                 {
-                    m_schema->add_attribute(
-                        tiledb::Attribute::create<unsigned short>(
-                            *m_ctx, osName, *m_filterList));
+                    m_schema->add_attribute(::CreateAttribute<uint16_t>(
+                        *m_ctx, osName, *m_filterList, bHasFillValue,
+                        dfFillValue));
                     nBitsPerSample = 16;
                     break;
                 }
                 case GDT_UInt32:
                 {
-                    m_schema->add_attribute(
-                        tiledb::Attribute::create<unsigned int>(*m_ctx, osName,
-                                                                *m_filterList));
+                    m_schema->add_attribute(::CreateAttribute<uint32_t>(
+                        *m_ctx, osName, *m_filterList, bHasFillValue,
+                        dfFillValue));
                     nBitsPerSample = 32;
                     break;
                 }
                 case GDT_UInt64:
                 {
-                    m_schema->add_attribute(tiledb::Attribute::create<uint64_t>(
-                        *m_ctx, osName, *m_filterList));
+                    m_schema->add_attribute(::CreateAttribute<uint64_t>(
+                        *m_ctx, osName, *m_filterList, bHasFillValue,
+                        dfFillValue));
                     nBitsPerSample = 64;
                     break;
                 }
                 case GDT_Int16:
                 {
-                    m_schema->add_attribute(tiledb::Attribute::create<short>(
-                        *m_ctx, osName, *m_filterList));
+                    m_schema->add_attribute(::CreateAttribute<int16_t>(
+                        *m_ctx, osName, *m_filterList, bHasFillValue,
+                        dfFillValue));
                     nBitsPerSample = 16;
                     break;
                 }
                 case GDT_Int32:
                 {
-                    m_schema->add_attribute(tiledb::Attribute::create<int>(
-                        *m_ctx, osName, *m_filterList));
+                    m_schema->add_attribute(::CreateAttribute<int32_t>(
+                        *m_ctx, osName, *m_filterList, bHasFillValue,
+                        dfFillValue));
                     nBitsPerSample = 32;
                     break;
                 }
                 case GDT_Int64:
                 {
-                    m_schema->add_attribute(tiledb::Attribute::create<int64_t>(
-                        *m_ctx, osName, *m_filterList));
+                    m_schema->add_attribute(::CreateAttribute<int64_t>(
+                        *m_ctx, osName, *m_filterList, bHasFillValue,
+                        dfFillValue));
                     nBitsPerSample = 64;
                     break;
                 }
                 case GDT_Float32:
                 {
-                    m_schema->add_attribute(tiledb::Attribute::create<float>(
-                        *m_ctx, osName, *m_filterList));
+                    m_schema->add_attribute(
+                        ::CreateAttribute<float>(*m_ctx, osName, *m_filterList,
+                                                 bHasFillValue, dfFillValue));
                     nBitsPerSample = 32;
                     break;
                 }
                 case GDT_Float64:
                 {
-                    m_schema->add_attribute(tiledb::Attribute::create<double>(
-                        *m_ctx, osName, *m_filterList));
+                    m_schema->add_attribute(
+                        ::CreateAttribute<double>(*m_ctx, osName, *m_filterList,
+                                                  bHasFillValue, dfFillValue));
                     nBitsPerSample = 64;
                     break;
                 }
                 case GDT_CInt16:
                 {
-                    m_schema->add_attribute(tiledb::Attribute::create<short[2]>(
-                        *m_ctx, osName, *m_filterList));
+                    m_schema->add_attribute(
+                        ::CreateAttribute<int16_t[2], int16_t>(
+                            *m_ctx, osName, *m_filterList, bHasFillValue,
+                            dfFillValue));
                     nBitsPerSample = 16;
                     break;
                 }
                 case GDT_CInt32:
                 {
-                    m_schema->add_attribute(tiledb::Attribute::create<int[2]>(
-                        *m_ctx, osName, *m_filterList));
+                    m_schema->add_attribute(
+                        ::CreateAttribute<int32_t[2], int32_t>(
+                            *m_ctx, osName, *m_filterList, bHasFillValue,
+                            dfFillValue));
                     nBitsPerSample = 32;
                     break;
                 }
                 case GDT_CFloat32:
                 {
-                    m_schema->add_attribute(tiledb::Attribute::create<float[2]>(
-                        *m_ctx, osName, *m_filterList));
+                    m_schema->add_attribute(::CreateAttribute<float[2], float>(
+                        *m_ctx, osName, *m_filterList, bHasFillValue,
+                        dfFillValue));
                     nBitsPerSample = 32;
                     break;
                 }
                 case GDT_CFloat64:
                 {
                     m_schema->add_attribute(
-                        tiledb::Attribute::create<double[2]>(*m_ctx, osName,
-                                                             *m_filterList));
+                        ::CreateAttribute<double[2], double>(
+                            *m_ctx, osName, *m_filterList, bHasFillValue,
+                            dfFillValue));
                     nBitsPerSample = 64;
                     break;
                 }
@@ -1825,20 +2059,23 @@ bool TileDBRasterDataset::DeferredCreate(bool bCreateArray)
                                                       uint64_t(nBlockYSize));
 
         {
+            CPLErr eErr;
             // Only used for unit test purposes (to check ability of GDAL to read
             // an arbitrary array)
             const char *pszAttrName =
                 CPLGetConfigOption("TILEDB_ATTRIBUTE", TILEDB_VALUES);
             if ((nBands == 0) || (eIndexMode == ATTRIBUTES))
             {
-                AddDimensions(domain, pszAttrName, d2, d1, nullptr);
+                eErr = AddDimensions(domain, pszAttrName, d2, d1, nullptr);
             }
             else
             {
                 auto d3 = tiledb::Dimension::create<uint64_t>(
                     *m_ctx, "BANDS", {1, uint64_t(nBands)}, 1);
-                AddDimensions(domain, pszAttrName, d2, d1, &d3);
+                eErr = AddDimensions(domain, pszAttrName, d2, d1, &d3);
             }
+            if (eErr != CE_None)
+                return false;
         }
 
         m_schema->set_domain(domain).set_order(
@@ -1851,7 +2088,10 @@ bool TileDBRasterDataset::DeferredCreate(bool bCreateArray)
             const char *pszAttrName =
                 CPLGetBasename(poAttrDS->GetDescription());
             GDALRasterBand *poAttrBand = poAttrDS->GetRasterBand(1);
-            CreateAttribute(poAttrBand->GetRasterDataType(), pszAttrName, 1);
+            int bHasNoData = false;
+            const double dfNoData = poAttrBand->GetNoDataValue(&bHasNoData);
+            CreateAttribute(poAttrBand->GetRasterDataType(), pszAttrName, 1,
+                            CPL_TO_BOOL(bHasNoData), dfNoData);
         }
 
         if (bCreateArray)
@@ -1935,9 +2175,14 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
 
         const char *pszAttrName = apszTokens[2];
 
-        poDstDS->CreateAttribute(
-            poSubDataset->GetRasterBand(1)->GetRasterDataType(), pszAttrName,
-            poSubDataset->GetRasterCount());
+        auto poFirstSubDSBand = poSubDataset->GetRasterBand(1);
+        int bFirstSubDSBandHasNoData = FALSE;
+        const double dfFirstSubDSBandNoData =
+            poFirstSubDSBand->GetNoDataValue(&bFirstSubDSBandHasNoData);
+        poDstDS->CreateAttribute(poFirstSubDSBand->GetRasterDataType(),
+                                 pszAttrName, poSubDataset->GetRasterCount(),
+                                 CPL_TO_BOOL(bFirstSubDSBandHasNoData),
+                                 dfFirstSubDSBandNoData);
         apoDatasets.push_back(std::move(poSubDataset));
 
         for (const auto &[pszKey, pszValue] :
@@ -1965,6 +2210,9 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
                 int nBlockXSize, nBlockYSize;
                 poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
+                int bHasNoData = FALSE;
+                const double dfNoData = poBand->GetNoDataValue(&bHasNoData);
+
                 if ((poSubDS->GetRasterXSize() != (int)nSubXSize) ||
                     (poSubDS->GetRasterYSize() != (int)nSubYSize) ||
                     (nBlockXSize != poDstDS->nBlockXSize) ||
@@ -1972,7 +2220,7 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Sub-datasets must have the same dimension,"
-                             " and block sizes, skipping %s\n",
+                             " and block sizes, skipping %s",
                              pszSubDSName);
                 }
                 else
@@ -1980,7 +2228,8 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
                     pszAttrName = apszTokens[2];
                     poDstDS->CreateAttribute(
                         poSubDS->GetRasterBand(1)->GetRasterDataType(),
-                        pszAttrName, poSubDS->GetRasterCount());
+                        pszAttrName, poSubDS->GetRasterCount(),
+                        CPL_TO_BOOL(bHasNoData), dfNoData);
                     apoDatasets.push_back(std::move(poSubDS));
                 }
             }
@@ -2212,6 +2461,15 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
                 return nullptr;
             }
 
+            for (int i = 1; i <= nBands; ++i)
+            {
+                int bHasNoData = FALSE;
+                const double dfNoData =
+                    poSrcDS->GetRasterBand(i)->GetNoDataValue(&bHasNoData);
+                if (bHasNoData)
+                    poDstDS->GetRasterBand(i)->SetNoDataValue(dfNoData);
+            }
+
             CPLErr eErr =
                 GDALDatasetCopyWholeRaster(poSrcDS, poDstDS.get(), papszOptions,
                                            pfnProgress, pProgressData);
@@ -2307,9 +2565,12 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
             poDstDS->FlushCache(false);
         }
 
-        poDstDS->m_array->close();
-        poDstDS->eAccess = GA_ReadOnly;
-        poDstDS->m_array->open(TILEDB_READ);
+        if (poDstDS->m_array)
+        {
+            poDstDS->m_array->close();
+            poDstDS->eAccess = GA_ReadOnly;
+            poDstDS->m_array->open(TILEDB_READ);
+        }
 
         return poDstDS.release();
     }
