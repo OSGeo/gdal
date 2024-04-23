@@ -1907,6 +1907,8 @@ TileDB
 The `TileDB <https://github.com/TileDB-Inc/TileDB>` library is required for the :ref:`raster.tiledb` driver.
 Specify install prefix in the ``CMAKE_PREFIX_PATH`` variable.
 
+TileDB >= 2.15 is required since GDAL 3.9
+
 .. option:: GDAL_USE_TILEDB=ON/OFF
 
     Control whether to use TileDB. Defaults to ON when TileDB is found.
