@@ -1662,8 +1662,9 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     if (poGeom == nullptr)
     {
         eErr = LOG_ACTION(MMProcessGeometry(nullptr, poFeature, TRUE));
-        if (phMiraMonLayer->bIsDBF)
-            poFeature->SetFID(phMiraMonLayer->TopHeader.nElemCount - 1);
+        if (phMiraMonLayer->bIsDBF && phMiraMonLayer->TopHeader.nElemCount > 0)
+            poFeature->SetFID((GIntBig)phMiraMonLayer->TopHeader.nElemCount -
+                              1);
         return eErr;
     }
 
