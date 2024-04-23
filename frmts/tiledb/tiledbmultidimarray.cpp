@@ -1408,9 +1408,10 @@ std::shared_ptr<TileDBArray> TileDBArray::CreateOnDisk(
     {
         const auto osSanitizedName =
             TileDBSharedResource::SanitizeNameForPath(osName);
-        if (osSanitizedName.empty() || osName.find("./") == 0 ||
-            osName.find("../") == 0 || osName.find(".\\") == 0 ||
-            osName.find("..\\") == 0)
+        if (osSanitizedName.empty() || STARTS_WITH(osName.c_str(), "./") ||
+            STARTS_WITH(osName.c_str(), "../") ||
+            STARTS_WITH(osName.c_str(), ".\\") ||
+            STARTS_WITH(osName.c_str(), "..\\"))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid array name");
             return nullptr;
