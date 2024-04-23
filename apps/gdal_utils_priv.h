@@ -44,35 +44,16 @@ CPL_C_START
 struct GDALInfoOptionsForBinary
 {
     /* Filename to open. */
-    char *pszFilename;
+    std::string osFilename{};
 
     /* Open options. */
-    char **papszOpenOptions;
+    CPLStringList aosOpenOptions{};
 
-    /* > for reporting on a particular subdataset */
-    int nSubdataset;
-
-    /* Allowed input drivers. */
-    char **papszAllowInputDrivers;
-};
-
-struct GDALWarpAppOptionsForBinary
-{
-    char **papszSrcFiles;
-    char *pszDstFilename;
-    int bQuiet;
-    char **papszOpenOptions;
-
-    /*! output dataset open option (format specific) */
-    char **papszDestOpenOptions;
-
-    char **papszCreateOptions;
-
-    int bOverwrite;
-    int bCreateOutput;
+    /* For reporting on a particular subdataset */
+    int nSubdataset = 0;
 
     /* Allowed input drivers. */
-    char **papszAllowInputDrivers;
+    CPLStringList aosAllowedInputDrivers{};
 };
 
 struct GDALDEMProcessingOptionsForBinary
@@ -82,15 +63,6 @@ struct GDALDEMProcessingOptionsForBinary
     char *pszColorFilename;
     char *pszDstFilename;
     int bQuiet;
-};
-
-struct GDALBuildVRTOptionsForBinary
-{
-    int nSrcFiles;
-    char **papszSrcFiles;
-    char *pszDstFilename;
-    int bQuiet;
-    int bOverwrite;
 };
 
 CPL_C_END
@@ -168,7 +140,6 @@ struct GDALVectorInfoOptionsForBinary
 struct GDALGridOptionsForBinary
 {
     std::string osSource{};
-    bool bDestSpecified = false;
     std::string osDest{};
     bool bQuiet = false;
     CPLStringList aosOpenOptions{};
@@ -229,6 +200,33 @@ struct GDALTranslateOptionsForBinary
     CPLStringList aosAllowedInputDrivers{};
 };
 
+struct GDALWarpAppOptionsForBinary
+{
+    CPLStringList aosSrcFiles{};
+    std::string osDstFilename{};
+    bool bQuiet = false;
+    CPLStringList aosOpenOptions{};
+
+    /*! output dataset open option (format specific) */
+    CPLStringList aosDestOpenOptions{};
+
+    CPLStringList aosCreateOptions{};
+
+    bool bOverwrite = false;
+    bool bCreateOutput = false;
+
+    /* Allowed input drivers. */
+    CPLStringList aosAllowedInputDrivers{};
+};
+
+struct GDALBuildVRTOptionsForBinary
+{
+    CPLStringList aosSrcFiles{};
+    std::string osDstFilename{};
+    bool bQuiet = false;
+    bool bOverwrite = false;
+};
+
 std::string CPL_DLL GDALNearblackGetParserUsage();
 
 std::string CPL_DLL GDALVectorInfoGetParserUsage();
@@ -236,6 +234,14 @@ std::string CPL_DLL GDALVectorInfoGetParserUsage();
 std::string CPL_DLL GDALTranslateGetParserUsage();
 
 std::string CPL_DLL GDALVectorTranslateGetParserUsage();
+
+std::string CPL_DLL GDALWarpAppGetParserUsage();
+
+std::string CPL_DLL GDALInfoAppGetParserUsage();
+
+std::string CPL_DLL GDALGridGetParserUsage();
+
+std::string CPL_DLL GDALBuildVRTGetParserUsage();
 
 #endif /* #ifndef DOXYGEN_SKIP */
 

@@ -57,7 +57,7 @@ const char *GNMGenericLayer::GetGeometryColumn()
     return m_poLayer->GetGeometryColumn();
 }
 
-OGRErr GNMGenericLayer::SetIgnoredFields(const char **papszFields)
+OGRErr GNMGenericLayer::SetIgnoredFields(CSLConstList papszFields)
 {
     return m_poLayer->SetIgnoredFields(papszFields);
 }

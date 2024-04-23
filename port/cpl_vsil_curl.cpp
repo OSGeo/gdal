@@ -32,9 +32,10 @@
 
 #include <algorithm>
 #include <array>
-#include <set>
+#include <limits>
 #include <map>
 #include <memory>
+#include <set>
 
 #include "cpl_aws.h"
 #include "cpl_json.h"
@@ -135,9 +136,6 @@ void VSICurlAuthParametersChanged()
 {
     gnGenerationAuthParameters++;
 }
-
-namespace cpl
-{
 
 // Do not access those variables directly !
 // Use VSICURLGetDownloadChunkSize() and GetMaxRegions()
@@ -444,6 +442,9 @@ static std::string VSICurlGetURLFromFilename(
     return pszFilename;
 }
 
+namespace cpl
+{
+
 /************************************************************************/
 /*                           VSICurlHandle()                            */
 /************************************************************************/
@@ -570,6 +571,8 @@ int VSICurlHandle::Seek(vsi_l_offset nOffset, int nWhence)
     return 0;
 }
 
+}  // namespace cpl
+
 /************************************************************************/
 /*                 VSICurlGetTimeStampFromRFC822DateTime()              */
 /************************************************************************/
@@ -621,7 +624,7 @@ static GIntBig VSICurlGetTimeStampFromRFC822DateTime(const char *pszDT)
 /*                    VSICURLInitWriteFuncStruct()                      */
 /************************************************************************/
 
-void VSICURLInitWriteFuncStruct(WriteFuncStruct *psStruct, VSILFILE *fp,
+void VSICURLInitWriteFuncStruct(cpl::WriteFuncStruct *psStruct, VSILFILE *fp,
                                 VSICurlReadCbkFunc pfnReadCbk,
                                 void *pReadCbkUserData)
 {
@@ -651,7 +654,7 @@ void VSICURLInitWriteFuncStruct(WriteFuncStruct *psStruct, VSILFILE *fp,
 size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb,
                               void *req)
 {
-    WriteFuncStruct *psStruct = static_cast<WriteFuncStruct *>(req);
+    cpl::WriteFuncStruct *psStruct = static_cast<cpl::WriteFuncStruct *>(req);
     const size_t nSize = count * nmemb;
 
     if (psStruct->bInterrupted)
@@ -826,10 +829,10 @@ static GIntBig VSICurlGetExpiresFromS3LikeSignedURL(const char *pszURL)
 }
 
 /************************************************************************/
-/*                           MultiPerform()                             */
+/*                       VSICURLMultiPerform()                          */
 /************************************************************************/
 
-void MultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle)
+void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle)
 {
     int repeats = 0;
 
@@ -919,6 +922,9 @@ static bool Iso8601ToUnixTime(const char *pszDT, GIntBig *pnUnixTime)
     }
     return false;
 }
+
+namespace cpl
+{
 
 /************************************************************************/
 /*                   ManagePlanetaryComputerSigning()                   */
@@ -1146,7 +1152,7 @@ retry:
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
-    MultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -1863,7 +1869,7 @@ retry:
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FILETIME, 1);
 
-    MultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -2493,7 +2499,7 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
 
     if (!aHandles.empty())
     {
-        MultiPerform(hMultiHandle);
+        VSICURLMultiPerform(hMultiHandle);
     }
 
     int nRet = 0;
@@ -2700,7 +2706,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
     headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    MultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -3096,7 +3102,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
 
     CURLM *hMultiHandle = poFS->GetCurlMultiHandleFor(osURL);
     curl_multi_add_handle(hMultiHandle, hCurlHandle);
-    MultiPerform(hMultiHandle);
+    VSICURLMultiPerform(hMultiHandle);
 
     {
         std::lock_guard<std::mutex> oLock(m_oMutex);
@@ -3149,6 +3155,21 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
 }
 
 /************************************************************************/
+/*                  GetAdviseReadTotalBytesLimit()                      */
+/************************************************************************/
+
+size_t VSICurlHandle::GetAdviseReadTotalBytesLimit() const
+{
+    return static_cast<size_t>(std::min<unsigned long long>(
+        std::numeric_limits<size_t>::max(),
+        // 100 MB
+        std::strtoull(
+            CPLGetConfigOption("CPL_VSIL_CURL_ADVISE_READ_TOTAL_BYTES_LIMIT",
+                               "104857600"),
+            nullptr, 10)));
+}
+
+/************************************************************************/
 /*                         AdviseRead()                                 */
 /************************************************************************/
 
@@ -3166,9 +3187,10 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
 
     // Give up if we need to allocate too much memory
     vsi_l_offset nMaxSize = 0;
+    const size_t nLimit = GetAdviseReadTotalBytesLimit();
     for (int i = 0; i < nRanges; ++i)
     {
-        if (panSizes[i] > 100 * 1024 * 1024 - nMaxSize)
+        if (panSizes[i] > nLimit - nMaxSize)
         {
             CPLDebug(poFS->GetDebugKey(),
                      "Trying to request too many bytes in AdviseRead()");
@@ -3465,7 +3487,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
 
         NetworkStatisticsLogger::LogGET(nTotalDownloaded);
 
-        curl_multi_cleanup(hMultiHandle);
+        VSICURLMultiCleanup(hMultiHandle);
     };
     m_oThreadAdviseRead = std::thread(task, l_osURL);
 }
@@ -3590,7 +3612,7 @@ void CachedConnection::clear()
 {
     if (hCurlMultiHandle)
     {
-        curl_multi_cleanup(hCurlMultiHandle);
+        VSICURLMultiCleanup(hCurlMultiHandle);
         hCurlMultiHandle = nullptr;
     }
 }
@@ -3989,7 +4011,10 @@ const char *VSICurlFilesystemHandlerBase::GetActualURL(const char *pszFilename)
     "default='16384000'/>"                                                     \
     "  <Option name='CPL_VSIL_CURL_IGNORE_GLACIER_STORAGE' type='boolean' "    \
     "description='Whether to skip files with Glacier storage class in "        \
-    "directory listing.' default='YES'/>"
+    "directory listing.' default='YES'/>"                                      \
+    "  <Option name='CPL_VSIL_CURL_ADVISE_READ_TOTAL_BYTES_LIMIT' "            \
+    "type='integer' description='Maximum number of bytes AdviseRead() is "     \
+    "allowed to fetch at once' default='104857600'/>"
 
 const char *VSICurlFilesystemHandlerBase::GetOptionsStatic()
 {
@@ -4814,7 +4839,7 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
             unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER,
                                        headers);
 
-            MultiPerform(hCurlMultiHandle, hCurlHandle);
+            VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
             curl_slist_free_all(headers);
 
@@ -4973,7 +4998,7 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-        MultiPerform(hCurlMultiHandle, hCurlHandle);
+        VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
         curl_slist_free_all(headers);
 
@@ -5546,8 +5571,8 @@ long CurlRequestHelper::perform(CURL *hCurlHandle, struct curl_slist *headers,
     szCurlErrBuf[0] = '\0';
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf);
 
-    MultiPerform(poFS->GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
-                 hCurlHandle);
+    VSICURLMultiPerform(poFS->GetCurlMultiHandleFor(poS3HandleHelper->GetURL()),
+                        hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -5812,6 +5837,8 @@ std::string NetworkStatisticsLogger::GetReportAsSerializedJSON()
     return oJSON.Format(CPLJSONObject::PrettyFormat::Pretty);
 }
 
+} /* end of namespace cpl */
+
 /************************************************************************/
 /*                     VSICurlParseUnixPermissions()                    */
 /************************************************************************/
@@ -5847,19 +5874,19 @@ int VSICurlParseUnixPermissions(const char *pszPermissions)
 /************************************************************************/
 
 static std::mutex oCacheFilePropMutex;
-static lru11::Cache<std::string, FileProp> *poCacheFileProp = nullptr;
+static lru11::Cache<std::string, cpl::FileProp> *poCacheFileProp = nullptr;
 
 /************************************************************************/
 /*                   VSICURLGetCachedFileProp()                         */
 /************************************************************************/
 
-bool VSICURLGetCachedFileProp(const char *pszURL, FileProp &oFileProp)
+bool VSICURLGetCachedFileProp(const char *pszURL, cpl::FileProp &oFileProp)
 {
     std::lock_guard<std::mutex> oLock(oCacheFilePropMutex);
     return poCacheFileProp != nullptr &&
            poCacheFileProp->tryGet(std::string(pszURL), oFileProp) &&
            // Let a chance to use new auth parameters
-           !(oFileProp.eExists == EXIST_NO &&
+           !(oFileProp.eExists == cpl::EXIST_NO &&
              gnGenerationAuthParameters != oFileProp.nGenerationAuthParameters);
 }
 
@@ -5867,11 +5894,12 @@ bool VSICURLGetCachedFileProp(const char *pszURL, FileProp &oFileProp)
 /*                   VSICURLSetCachedFileProp()                         */
 /************************************************************************/
 
-void VSICURLSetCachedFileProp(const char *pszURL, FileProp &oFileProp)
+void VSICURLSetCachedFileProp(const char *pszURL, cpl::FileProp &oFileProp)
 {
     std::lock_guard<std::mutex> oLock(oCacheFilePropMutex);
     if (poCacheFileProp == nullptr)
-        poCacheFileProp = new lru11::Cache<std::string, FileProp>(100 * 1024);
+        poCacheFileProp =
+            new lru11::Cache<std::string, cpl::FileProp>(100 * 1024);
     oFileProp.nGenerationAuthParameters = gnGenerationAuthParameters;
     poCacheFileProp->insert(std::string(pszURL), oFileProp);
 }
@@ -5898,8 +5926,9 @@ void VSICURLInvalidateCachedFilePropPrefix(const char *pszURL)
     {
         std::list<std::string> keysToRemove;
         const size_t nURLSize = strlen(pszURL);
-        auto lambda = [&keysToRemove, &pszURL, nURLSize](
-                          const lru11::KeyValuePair<std::string, FileProp> &kv)
+        auto lambda =
+            [&keysToRemove, &pszURL, nURLSize](
+                const lru11::KeyValuePair<std::string, cpl::FileProp> &kv)
         {
             if (strncmp(kv.key.c_str(), pszURL, nURLSize) == 0)
                 keysToRemove.push_back(kv.key);
@@ -5921,7 +5950,16 @@ void VSICURLDestroyCacheFileProp()
     poCacheFileProp = nullptr;
 }
 
-} /* end of namespace cpl */
+/************************************************************************/
+/*                       VSICURLMultiCleanup()                          */
+/************************************************************************/
+
+void VSICURLMultiCleanup(CURLM *hCurlMultiHandle)
+{
+    void *old_handler = CPLHTTPIgnoreSigPipe();
+    curl_multi_cleanup(hCurlMultiHandle);
+    CPLHTTPRestoreSigPipeHandler(old_handler);
+}
 
 /************************************************************************/
 /*                      VSICurlInstallReadCbk()                         */

@@ -911,3 +911,21 @@ def test_ogr_osm_tags_json():
     assert lyr_defn.GetFieldDefn(other_tags_idx).GetSubType() == ogr.OFSTJSON
     f = lyr.GetNextFeature()
     assert f["other_tags"] == '{"foo":"bar"}'
+
+
+###############################################################################
+# Test TAGS_FORMAT=JSON
+
+
+def test_ogr_osm_tags_json_special_characters():
+
+    ds = gdal.OpenEx("data/osm/test_json.pbf", open_options=["TAGS_FORMAT=JSON"])
+
+    lyr = ds.GetLayerByName("points")
+    lyr_defn = lyr.GetLayerDefn()
+    other_tags_idx = lyr_defn.GetFieldIndex("other_tags")
+    assert other_tags_idx >= 0
+    assert lyr_defn.GetFieldDefn(other_tags_idx).GetType() == ogr.OFTString
+    assert lyr_defn.GetFieldDefn(other_tags_idx).GetSubType() == ogr.OFSTJSON
+    f = lyr.GetNextFeature()
+    assert f["other_tags"] == """{"foo":"x'\\\\\\"\\t\\n\\ry"}"""

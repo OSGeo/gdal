@@ -90,6 +90,7 @@ build_ogr_specialized_fuzzer(avcbin RegisterOGRAVCBin "/vsimem/test.tar" "/vsita
 build_ogr_specialized_fuzzer(gml RegisterOGRGML "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.gml")
 
 build_fuzzer(NAME cad_fuzzer SOURCES ogr_fuzzer.cpp DEFINITIONS -DREGISTER_FUNC=RegisterOGRCAD)
+build_fuzzer(NAME ogr_miramon_fuzzer SOURCES ogr_fuzzer.cpp DEFINITIONS -DREGISTER_FUNC=RegisterOGRMiraMon -DMEM_FILENAME="/vsimem/test.tar" -DFOR_OGR_MIRAMON)
 
 function (build_gdal_specialized_fuzzer _format _registerFunc _memfile _gdalfile)
   build_fuzzer(

@@ -6,8 +6,8 @@
 # a new member or virtual function in a public C++ class, etc.
 # This will typically happen for each GDAL feature release (change of X or Y in
 # a X.Y.Z numbering scheme), but should not happen for a bugfix release (change of Z)
-# Previous value: 34 for GDAL 3.8
-set(GDAL_SOVERSION 34)
+# Previous value: 35 for GDAL 3.9
+set(GDAL_SOVERSION 35)
 
 # Switches to control build targets(cached)
 option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
@@ -320,8 +320,7 @@ macro(set_alternate_linker linker)
   endif()
 endmacro()
 
-# CMake >= 3.13 needed for add_link_options()
-if( (CMAKE_VERSION VERSION_GREATER_EQUAL 3.13) AND ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") )
+if( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" )
   set(USE_ALTERNATE_LINKER "" CACHE STRING "Use alternate linker. Leave empty for system default; potential alternatives are 'gold', 'lld', 'bfd', 'mold'")
   if(NOT "${USE_ALTERNATE_LINKER}" STREQUAL "")
     set_alternate_linker(${USE_ALTERNATE_LINKER})
@@ -335,13 +334,11 @@ endif()
 add_definitions(-DGDAL_COMPILATION)
 
 if (ENABLE_IPO)
-  if (POLICY CMP0069)
     include(CheckIPOSupported)
     check_ipo_supported(RESULT result)
     if (result)
       set(CMAKE_INTERPROCEDURAL_OPTIMIZATION True)
     endif ()
-  endif ()
 endif ()
 
 # ######################################################################################################################
@@ -718,17 +715,11 @@ if (NOT GDAL_ENABLE_MACOSX_FRAMEWORK)
   endif ()
 
   include(CMakePackageConfigHelpers)
-  if(CMAKE_VERSION VERSION_LESS 3.11)
-      set(comptatibility_check ExactVersion)
-  else()
-      # SameMinorVersion compatibility are supported CMake >= 3.11
-      # Our C++ ABI remains stable only among major.minor.XXX patch releases
-      set(comptatibility_check SameMinorVersion)
-  endif()
+  # SameMinorVersion as our C++ ABI remains stable only among major.minor.XXX patch releases
   write_basic_package_version_file(
     GDALConfigVersion.cmake
     VERSION ${GDAL_VERSION}
-    COMPATIBILITY ${comptatibility_check})
+    COMPATIBILITY SameMinorVersion)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/GDALConfigVersion.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/gdal/)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/template/GDALConfig.cmake.in
                  ${CMAKE_CURRENT_BINARY_DIR}/GDALConfig.cmake @ONLY)

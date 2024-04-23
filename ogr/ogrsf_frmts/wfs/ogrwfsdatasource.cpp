@@ -1389,9 +1389,9 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
                             apoSupportedCRSList.emplace_back(std::move(poSRS));
                         }
                     }
-                    CPLErrorHandlerPusher oErrorHandlerPusher(
+
+                    CPLErrorStateBackuper oErrorStateBackuper(
                         CPLQuietErrorHandler);
-                    CPLErrorStateBackuper oErrorStateBackuper;
                     for (const CPLXMLNode *psIter = psOtherSRS; psIter;
                          psIter = psIter->psNext)
                     {

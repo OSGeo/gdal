@@ -40,6 +40,9 @@ MIGRATION GUIDE FROM GDAL 3.8 to GDAL 3.9
   GeoPackage, PostgreSQL, Shapefile, OpenFileGDB, MITAB, Memory, GeoJSON, JSONFG,
   TopoJSON, ESRIJSON, ODS, XLSX.
 
+- OGRLayer::SetIgnoredFields() now accepts a ``CSLConstList papszIgnoredFields``
+  instead of a ``const char** papszIgnoredFields``
+
 MIGRATION GUIDE FROM GDAL 3.7 to GDAL 3.8
 -----------------------------------------
 

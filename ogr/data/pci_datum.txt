@@ -1,67 +1,76 @@
 !
-! By email on December 2nd, 2010:
+! From https://github.com/OSGeo/gdal/issues/8034, June 30, 2023
 !
-! I, Louis Burry, on behalf of PCI Geomatics agree to allow the ellips.txt
+! I, Michael Goldberg, on behalf of PCI Geomatics agree to allow the ellips.txt
 ! and datum.txt file to be distributed under the GDAL open source license.
 !
-! Louis Burry
-! VP Technology & Delivery
+! Michael Goldberg
+! Development Manager
 ! PCI Geomatics
 !
-!       NOTE: The range of "D900" to "D998" is set aside for
+!
+!       NOTE: The range of "D950" to "D998" is set aside for
 !             the use of local customer development.
 !
 !             And the range of "D-90" to "D-98" is set aside for
 !             the use of local customer development.
 !
+!For datums using a grid shift file entries are:
+!DatumNumber,DatumName,EllipsoidNumber,Location,GridShiftTo,GridShiftFile,GridShiftFile
+!If GridShiftTo is negative the shift is reversed
+!For datums not using a grid shift file converting to WGS84 using coordinate frame rotation
+!   (EPSG:9607 which is opposite rotation to EPSG TOWGS84) entries are:
+!DatumNumber,DatumName,EllipsoidNumber,XOffset,YOffset,ZOffset,Location,XSigma,YSigma,ZSigma,Doppler,XRotate,YRotate,ZRotate,Scale
 "DoD World Geodetic System 1984, DMA TR 8350.2"
 "4 JUL 1997, Third Printing, Includes 3 JAN 2000 Updates"
-"D-01","NAD27 (USA, NADCON)","E000","Conterminous U.S.","conus.los","conus.las"
-"D-02","NAD83 (USA, NADCON)","E008","Conterminous U.S.","conus.los","conus.las"
-"D-03","NAD27 (Canada, NTv1)","E000","Canada","grid.dac"
-"D-04","NAD83 (Canada, NTv1)","E008","Canada","grid.dac"
-"D-07","NAD27 (USA, NADCON)","E000","Alaska","alaska.los","alaska.las"
-"D-08","NAD83 (USA, NADCON)","E008","Alaska","alaska.los","alaska.las"
-"D-09","NAD27 (USA, NADCON)","E000","St. George","stgeorge.los","stgeorge.las"
-"D-10","NAD83 (USA, NADCON)","E008","St. George","stgeorge.los","stgeorge.las"
-"D-11","NAD27 (USA, NADCON)","E000","St. Lawrence","stlrnc.los","stlrnc.las"
-"D-12","NAD83 (USA, NADCON)","E008","St. Lawrence","stlrnc.los","stlrnc.las"
-"D-13","NAD27 (USA, NADCON)","E000","St. Paul","stpaul.los","stpaul.las"
-"D-14","NAD83 (USA, NADCON)","E008","St. Paul","stpaul.los","stpaul.las"
-"D-15","Old Hawaiian (USA, NADCON)","E000","Hawaii","hawaii.los","hawaii.las"
-"D-16","NAD83 (USA, NADCON)","E008","Hawaii","hawaii.los","hawaii.las"
-"D-17","NAD27 (USA, NADCON)","E000","Puerto Rico Virgin Islands","prvi.los","prvi.las"
-"D-18","NAD83 (USA, NADCON)","E008","Puerto Rico Virgin Islands","prvi.los","prvi.las"
-!"D-19","AGD66 (NTv2)","E014","Australia","A66 National (13.09.01).gsb"
-!"D-20","AGD84 (NTv2)","E014","Australia","National 84 (02.07.01).gsb"
-!"D-21","GDA94 (from AGD66, NTv2)","E008","Australia","A66 National (13.09.01).gsb"
-!"D-22","GDA94 (from AGD84, NTv2)","E008","Australia","National 84 (02.07.01).gsb"
-!"D-23","NZGD49 (NTv2)","E004","New Zealand","nzgd2kgrid0005.gsb"
-!"D-24","NZGD2000 (NTv2)","E008","New Zealand","nzgd2kgrid0005.gsb"
-!"D-66","NAD27 (NTv2)","E000","Quebec","na27scrs.gsb"
-!"D-67","NAD83 (SCRS) (NTv2)","E008","Quebec","na27scrs.gsb"
-!"D-68","NAD27 (NTv2)","E000","Quebec","na27na83.gsb"
-!"D-69","NAD83 (NTv2)","E008","Quebec","na27na83.gsb"
-!"D-70","NAD27 (CGQ77) (NTv2)","E000","Quebec","cq77scrs.gsb"
-!"D-71","NAD83 (SCRS) (NTv2)","E008","Quebec","cq77scrs.gsb"
-!"D-72","NAD27 (CGQ77) (NTv2)","E000","Quebec","cq77na83.gsb"
-!"D-73","NAD83 (NTv2)","E008","Quebec","cq77na83.gsb"
-!"D-74","NAD83 (NTv2)","E008","Quebec","na83scrs.gsb"
-!"D-75","NAD83 (SCRS) (NTv2)","E008","Quebec","na83scrs.gsb"
-!"D-76","NAD27 (NTv2)","E000","Saskatchewan","sk27-98.gsb"
-!"D-77","NAD83 (CSRS98) (NTv2)","E008","Saskatchewan","sk27-98.gsb"
-!"D-78","NAD83 (NTv2)","E008","Saskatchewan","sk83-98.gsb"
-!"D-79","NAD83 (CSRS98) (NTv2)","E008","Saskatchewan","sk83-98.gsb"
-!"D-80","ATS77 (NTv2)","E910","Nova Scotia","ns778301.gsb"
-!"D-81","NAD83 (CSRS98) (NTv2)","E008","Nova Scotia","ns778301.gsb"
-!"D-82","ATS77 (NTv2)","E910","Prince Edward Island","pe7783v2.gsb"
-!"D-83","NAD83 (CSRS98) (NTv2)","E008","Prince Edward Island","pe7783v2.gsb"
-!"D-84","ATS77 (NTv2)","E910","New Brunswick","nb7783v2.gsb"
-!"D-85","NAD83 (CSRS98) (NTv2)","E008","New Brunswick","nb7783v2.gsb"
-!"D-86","NAD27 (NTv2)","E000","Canada","ntv2_0.gsb"
-!"D-87","NAD83 (NTv2)","E008","Canada","ntv2_0.gsb"
-!"D-88","NAD27 (1976)  (NTv2)","E000","Ontario","may76v20.gsb"
-!"D-89","NAD83 (NTv2)","E008","Ontario","may76v20.gsb"
+"D-01","NAD27 (USA, NADCON)","E000","Conterminous U.S.","D122","conus.los","conus.las"
+"D-02","NAD83 (Deprecated - use D122)","E008",0,0,0,"Conterminous U.S.",2,2,2,354
+"D-03","NAD27 (Canada, NTv1)","E000","Canada","D122","grid.dac"
+"D-04","NAD83 (Deprecated - use D122)","E008",0,0,0,"Canada",2,2,2,354
+"D-07","NAD27 (USA, NADCON)","E000","Alaska","D122","alaska.los","alaska.las"
+"D-08","NAD83 (Deprecated - use D122)","E008",0,0,0,"Alaska",2,2,2,354
+"D-09","NAD27 (USA, NADCON)","E000","St. George","D122","stgeorge.los","stgeorge.las"
+"D-10","NAD83 (Deprecated - use D122)","E008",0,0,0,"St. George",2,2,2,354
+"D-11","NAD27 (USA, NADCON)","E000","St. Lawrence","D122","stlrnc.los","stlrnc.las"
+"D-12","NAD83 (Deprecated - use D122)","E008",0,0,0,"St. Lawrence",2,2,2,354
+"D-13","NAD27 (USA, NADCON)","E000","St. Paul","D122","stpaul.los","stpaul.las"
+"D-14","NAD83 (Deprecated - use D122)","E008",0,0,0,"St. Paul",2,2,2,354
+"D-15","Old Hawaiian (USA, NADCON)","E000","Hawaii","D122","hawaii.los","hawaii.las"
+"D-16","NAD83 (Deprecated - use D122)","E008",0,0,0,"Hawaii",2,2,2,354
+"D-17","NAD27 (USA, NADCON)","E000","Puerto Rico Virgin Islands","D122","prvi.los","prvi.las"
+"D-18","NAD83 (Deprecated - use D122)","E008",0,0,0,"Puerto Rico Virgin Islands",2,2,2,354
+"D-21","GDA94 (from AGD66, NTv2)","E008","Australia","D029","A66_National_13_09_01_.gsb"
+"D-22","GDA94 (from AGD84, NTv2)","E008","Australia","D030","National_84_02.07.01.gsb"
+"D-24","NZGD2000 (NTv2)","E008","New Zealand","D510","nzgd2kgrid0005.gsb"
+"D-25","GDA2020 (conformal, from GDA94, NTv2)","E008","Australia","D536","GDA94_GDA2020_conformal.gsb"
+"D-26","GDA2020 (conformal and distortion, from GDA94, NTv2)","E008","Australia","D536","GDA94_GDA2020_conformal_and_distortion.gsb"
+"D-27","GDA2020 (conformal, from GDA94, NTv2)","E008","Australia (Christmas Island)","D536","GDA94_GDA2020_conformal_christmas_island.gsb"
+"D-28","GDA2020 (conformal, from GDA94, NTv2)","E008","Australia (Cocos Islands)","D536","GDA94_GDA2020_conformal_cocos_island.gsb"
+"D-55","NAD83 (CSRS 2002) (NTv2)","E008","British Columbia","D122","BC_93_05.gsb"
+"D-56","NAD27 (NTv2)","E000","British Columbia","-D-55","BC_27_05.gsb"
+"D-57","NAD83 (CSRS) (NTv2)","E008","BC (CRD)","D122","CRD93_00.gsb"
+"D-58","NAD27 (NTv2)","E000","BC (CRD)","-D-57","CRD27_00.gsb"
+"D-59","NAD83 (CSRS) (NTv2)","E008","BC (Vancouver Island)","D122","NVI93_05.gsb"
+"D-62","NAD27 (NTv2)","E000","Ontario (Toronto)","-D-65","TO27CSv1.gsb"
+"D-63","NAD27 (NTv2)","E000","Ontario","-D-65","ON27CSv1.gsb"
+"D-64","NAD27 (1976) (NTv2)","E000","Ontario","-D-65","ON76CSv1.gsb"
+"D-65","NAD83 (CSRS98) (NTv2)","E008","Ontario","D122","ON83CSv1.gsb"
+"D-67","NAD83 (SCRS) (NTv2)","E008","Quebec","D-68","na27scrs.gsb"
+"D-68","NAD27 (NTv2)","E000","Quebec","-D122","na27na83.gsb"
+"D-71","NAD83 (SCRS) (NTv2)","E008","Quebec","D-72","cq77scrs.gsb"
+"D-72","NAD27 (CGQ77) (NTv2)","E000","Quebec","D122","cq77na83.gsb"
+"D-75","NAD83 (SCRS) (NTv2)","E008","Quebec","D122","na83scrs.gsb"
+"D-76","NAD27 (NTv2)","E000","Saskatchewan","-D-79","sk27-98.gsb"
+"D-77","NAD27 (NTv2)","E000","Saskatchewan","-D122","sk27-83.gsb"
+"D-79","NAD83 (CSRS98) (NTv2)","E008","Saskatchewan","-D122","sk83-98.gsb"
+"D-81","NAD83 (CSRS98) (NTv2)","E008","Nova Scotia","D895","ns778301.gsb"
+"D-82","ATS77 (NTv2)","E910","Nova Scotia","-D122","GS7783.GSB"
+"D-83","NAD83 (CSRS98) (NTv2)","E008","Prince Edward Island","D895","pe7783v2.gsb"
+"D-84","NAD83 (CSRS98) (NTv2)","E008","New Brunswick","D122","nb2783v2.gsb"
+"D-85","NAD83 (CSRS98) (NTv2)","E008","New Brunswick","D895","nb7783v2.gsb"
+"D-86","NAD27 (NTv2)","E000","Canada","-D122","ntv2_0.gsb"
+"D-87","NAD83 (CSRS98) (NTv2)","E008","Alberta","D122","ABCSRSV4.DAC"
+"D-88","NAD27 (1976) (NTv2)","E000","Ontario","D122","may76v20.gsb"
 "D800","Normal Sphere","E019",0,0,0,"",0,0,0,0
 "D000","WGS 1984","E012",0,0,0,"Global Definition",0,0,0,0
 "D001","WGS 1972","E005",0,0,0,"Global Definition",3,3,3,1
@@ -215,7 +224,7 @@
 "D149","Provisional S. American 1956","E004",-295,173,-371,"Venezuela",9,14,15,24
 "D150","Provisional S. Chilean 1963","E004",16,196,93,"Chile (South, Near 53dS) (Hito XVIII)",25,25,25,2
 "D151","Puerto Rico","E000",11,72,-101,"Puerto Rico, Virgin Islands",3,3,3,11
-"D152","Qatar National","E004",-128,-283,22,"Qatar",20,20,20,3
+"D152","Qatar National Datum 1995","E004",-127.78098,-283.37477,21.24081,"Qatar",20,20,20,3
 "D153","Qornoq","E004",164,138,-189,"Greenland (South)",25,25,32,2
 "D154","Reunion","E004",94,-948,-1262,"Mascarene Islands",25,25,25,1
 "D155","Rome 1940","E004",-225,-65,9,"Italy (Sardinia)",25,25,25,1
@@ -225,7 +234,7 @@
 "D159","Schwarzeck","E900",616,97,-251,"Namibia",20,20,20,3
 "D160","Selvagem Grande 1938","E004",-289,-124,60,"Salvage Islands",25,25,25,1
 "D161","SGS 85","E905",3,9,-9,"Soviet Geodetic System 1985",10,10,10,1
-"D162","South American 1969","E907",-57,1,-41,"MEAN Solution,",15,6,9,84
+"D162","South American 1969 (SAD69)","E907",-57,1,-41,"MEAN Solution,",15,6,9,84
 "D163","South American 1969","E907",-62,-1,-37,"Argentina",5,5,5,10
 "D164","South American 1969","E907",-61,2,-48,"Bolivia",15,15,15,4
 "D165","South American 1969 (old)","E907",-60,-2,-41,"Brazil",3,5,5,22
@@ -316,7 +325,7 @@
 "D516","SL datum 1999","E006",-0.2933,766.9499,87.7131,"Sri Lanka",0,0,0,0,-0.1957040,-1.6950677,-3.4730161,-0.0393
 "D517","Cape (Supercedes D040)","E205",-134.73,-110.92,-292.66,"South Africa",0,0,0,0
 "D518","Hartebeesthoek94","E012",0,0,0,"South Africa",0,0,0,0
-"D519","Abidjan 1987","E001",-124.76,53,466.79,"C\uffffte d'Ivoire",0,0,0,0
+"D519","Abidjan 1987","E001",-124.76,53,466.79,"Cote d'Ivoire",0,0,0,0
 "D520","Accra","E204",-199,32,322,"Ghana",0,0,0,0
 "D521","Azores Central 1948","E004",-104,167,-38,"Azores",0,0,0,0
 "D522","Azores Oriental 1940","E004",-203,141,53,"Azores",0,0,0,0
@@ -351,113 +360,171 @@
 "D600","D-PAF (Orbits)","E600",0.082,-0.502,-0.224,"Satellite Orbits",0,0,0,0,0.30444,0.04424,0.00609,0.9999999937
 "D601","Test Data Set 1","E601",0.071,-0.509,-0.166,"Test 1",0,0,0,0,0.0179,-0.0005,0.0067,0.999999983
 "D602","Test Data Set 2","E602",580.0,80.9,399.8,"Test 2",0,0,0,0,0.35,0.1,3.026,1.0000113470025
+"D610","US Standard Datum (USA, NADCON5)","E000","Conterminous U.S.","D611","nadcon5.ussd.nad27.conus.lon.trn.20160901.b","nadcon5.ussd.nad27.conus.lat.trn.20160901.b"
+"D611","NAD27 (USA, NADCON5)","E000","Conterminous U.S.","D122","nadcon5.nad27.nad83_1986.conus.lon.trn.20160901.b","nadcon5.nad27.nad83_1986.conus.lat.trn.20160901.b"
+"D612","NAD83 (HARN) (USA, NADCON5)","E008","Conterminous U.S.","-D122","nadcon5.nad83_1986.nad83_harn.conus.lon.trn.20160901.b","nadcon5.nad83_1986.nad83_harn.conus.lat.trn.20160901.b"
+"D613","NAD83 (FBN) (USA, NADCON5)","E008","Conterminous U.S.","-D612","nadcon5.nad83_harn.nad83_fbn.conus.lon.trn.20160901.b","nadcon5.nad83_harn.nad83_fbn.conus.lat.trn.20160901.b","nadcon5.nad83_harn.nad83_fbn.conus.eht.trn.20160901.b"
+"D614","NAD83 (NSRS 2007) (USA, NADCON5)","E008","Conterminous U.S.","-D613","nadcon5.nad83_fbn.nad83_2007.conus.lon.trn.20160901.b","nadcon5.nad83_fbn.nad83_2007.conus.lat.trn.20160901.b","nadcon5.nad83_fbn.nad83_2007.conus.eht.trn.20160901.b"
+"D615","NAD83 (2011) (USA, NADCON5)","E008","Conterminous U.S.","-D614","nadcon5.nad83_2007.nad83_2011.conus.lon.trn.20160901.b","nadcon5.nad83_2007.nad83_2011.conus.lat.trn.20160901.b","nadcon5.nad83_2007.nad83_2011.conus.eht.trn.20160901.b"
+"D620","Puerto Rico Datum, adjustment of 1940 (USA, NADCON5)","E000","Puerto Rico, Virgin Islands","D122","nadcon5.pr40.nad83_1986.prvi.lon.trn.20160901.b","nadcon5.pr40.nad83_1986.prvi.lat.trn.20160901.b"
+"D621","NAD83 (1993) (USA, NADCON5)","E008","Puerto Rico, Virgin Islands","-D122","nadcon5.nad83_1986.nad83_1993.prvi.lon.trn.20160901.b","nadcon5.nad83_1986.nad83_1993.prvi.lat.trn.20160901.b"
+"D622","NAD83 (1997) (USA, NADCON5)","E008","Puerto Rico, Virgin Islands","-D621","nadcon5.nad83_1993.nad83_1997.prvi.lon.trn.20160901.b","nadcon5.nad83_1993.nad83_1997.prvi.lat.trn.20160901.b","nadcon5.nad83_1993.nad83_1997.prvi.eht.trn.20160901.b"
+"D623","NAD83 (2002) (USA, NADCON5)","E008","Puerto Rico, Virgin Islands","-D622","nadcon5.nad83_1997.nad83_2002.prvi.lon.trn.20160901.b","nadcon5.nad83_1997.nad83_2002.prvi.lat.trn.20160901.b","nadcon5.nad83_1997.nad83_2002.prvi.eht.trn.20160901.b"
+"D624","NAD83 (NSRS 2007) (USA, NADCON5)","E008","Puerto Rico, Virgin Islands","-D623","nadcon5.nad83_2002.nad83_2007.prvi.lon.trn.20160901.b","nadcon5.nad83_2002.nad83_2007.prvi.lat.trn.20160901.b","nadcon5.nad83_2002.nad83_2007.prvi.eht.trn.20160901.b"
+"D625","NAD83 (2011) (USA, NADCON5)","E008","Puerto Rico, Virgin Islands","-D624","nadcon5.nad83_2007.nad83_2011.prvi.lon.trn.20160901.b","nadcon5.nad83_2007.nad83_2011.prvi.lat.trn.20160901.b","nadcon5.nad83_2007.nad83_2011.prvi.eht.trn.20160901.b"
+"D630","Old Hawaiian Datum (USA, NADCON5)","E000","Hawaii","D122","nadcon5.ohd.nad83_1986.hawaii.lon.trn.20160901.b","nadcon5.ohd.nad83_1986.hawaii.lat.trn.20160901.b"
+"D631","NAD83 (1993) (USA, NADCON5)","E008","Hawaii","-D122","nadcon5.nad83_1986.nad83_1993.hawaii.lon.trn.20160901.b","nadcon5.nad83_1986.nad83_1993.hawaii.lat.trn.20160901.b"
+"D632","NAD83 (PA11) (USA, NADCON5)","E008","Hawaii","-D631","nadcon5.nad83_1993.nad83_pa11.hawaii.lon.trn.20160901.b","nadcon5.nad83_1993.nad83_pa11.hawaii.lat.trn.20160901.b","nadcon5.nad83_1993.nad83_pa11.hawaii.eht.trn.20160901.b"
+"D640","NAD27 (USA, NADCON5)","E000","Alaska","D122","nadcon5.nad27.nad83_1986.alaska.lon.trn.20160901.b","nadcon5.nad27.nad83_1986.alaska.lat.trn.20160901.b"
+"D641","NAD83 (1992) (USA, NADCON5)","E008","Alaska","-D122","nadcon5.nad83_1986.nad83_1992.alaska.lon.trn.20160901.b","nadcon5.nad83_1986.nad83_1992.alaska.lat.trn.20160901.b"
+"D642","NAD83 (NSRS 2007) (USA, NADCON5)","E008","Alaska","-D641","nadcon5.nad83_1992.nad83_2007.alaska.lon.trn.20160901.b","nadcon5.nad83_1992.nad83_2007.alaska.lat.trn.20160901.b","nadcon5.nad83_1992.nad83_2007.alaska.eht.trn.20160901.b"
+"D643","NAD83 (2011) (USA, NADCON5)","E008","Alaska","-D642","nadcon5.nad83_2007.nad83_2011.alaska.lon.trn.20160901.b","nadcon5.nad83_2007.nad83_2011.alaska.lat.trn.20160901.b","nadcon5.nad83_2007.nad83_2011.alaska.eht.trn.20160901.b"
+"D650","St. Paul 1897 (USA, NADCON5)","E000","St. Paul, Alaska","D651","nadcon5.sp1897.sp1952.stpaul.lon.trn.20160901.b","nadcon5.sp1897.sp1952.stpaul.lat.trn.20160901.b"
+"D651","St. Paul 1952 (USA, NADCON5)","E000","St. Paul, Alaska","D122","nadcon5.sp1952.nad83_1986.stpaul.lon.trn.20160901.b","nadcon5.sp1952.nad83_1986.stpaul.lat.trn.20160901.b"
+"D652","St. George 1897 (USA, NADCON5)","E000","St. George, Alaska","D653","nadcon5.sg1897.sg1952.stgeorge.lon.trn.20160901.b","nadcon5.sg1897.sg1952.stgeorge.lat.trn.20160901.b"
+"D653","St. George 1952 (USA, NADCON5)","E000","St. George, Alaska","D122","nadcon5.sg1952.nad83_1986.stgeorge.lon.trn.20160901.b","nadcon5.sg1952.nad83_1986.stgeorge.lat.trn.20160901.b"
+"D654","St. Lawrence 1952 (USA, NADCON5)","E000","St. Lawrence, Alaska","D122","nadcon5.sl1952.nad83_1986.stlawrence.lon.trn.20160901.b","nadcon5.sl1952.nad83_1986.stlawrence.lat.trn.20160901.b"
+"D660","American Samoa 1962 (USA, NADCON5)","E000","American Samoa","D122","nadcon5.as62.nad83_1993.as.lon.trn.20160901.b","nadcon5.as62.nad83_1993.as.lat.trn.20160901.b"
+"D661","NAD83 (2002) (USA, NADCON5)","E008","American Samoa","-D122","nadcon5.nad83_1993.nad83_2002.as.lon.trn.20160901.b","nadcon5.nad83_1993.nad83_2002.as.lat.trn.20160901.b","nadcon5.nad83_1993.nad83_2002.as.eht.trn.20160901.b"
+"D662","NAD83 (PA11) (USA, NADCON5)","E008","American Samoa","-D661","nadcon5.nad83_2002.nad83_pa11.as.lon.trn.20160901.b","nadcon5.nad83_2002.nad83_pa11.as.lat.trn.20160901.b","nadcon5.nad83_2002.nad83_pa11.as.eht.trn.20160901.b"
+"D670","Guam 1963 (USA, NADCON5)","E000","Guam and the Commonwealth of the Northern Mariana Islands","D122","nadcon5.gu63.nad83_1993.guamcnmi.lon.trn.20160901.b","nadcon5.gu63.nad83_1993.guamcnmi.lat.trn.20160901.b"
+"D671","NAD83 (2002) (USA, NADCON5)","E008","Guam and the Commonwealth of the Northern Mariana Islands","-D122","nadcon5.nad83_1993.nad83_2002.guamcnmi.lon.trn.20160901.b","nadcon5.nad83_1993.nad83_2002.guamcnmi.lat.trn.20160901.b","nadcon5.nad83_1993.nad83_2002.guamcnmi.eht.trn.20160901.b"
+"D672","NAD83 (MA11) (USA, NADCON5)","E008","Guam and the Commonwealth of the Northern Mariana Islands","-D671","nadcon5.nad83_2002.nad83_ma11.guamcnmi.lon.trn.20160901.b","nadcon5.nad83_2002.nad83_ma11.guamcnmi.lat.trn.20160901.b","nadcon5.nad83_2002.nad83_ma11.guamcnmi.eht.trn.20160901.b"
 "D700","MODIS","E700",0,0,0,"Global Definition",0,0,0,0
-"D701","NAD83 (USA, NADCON)","E008","Alabama","alhpgn.los","alhpgn.las"
-"D702","NAD83 HARN (USA, NADCON)","E008","Alabama","alhpgn.los","alhpgn.las"
-"D703","NAD83 (USA, NADCON)","E008","Arkansas","arhpgn.los","arhpgn.las"
-"D704","NAD83 HARN (USA, NADCON)","E008","Arkansas","arhpgn.los","arhpgn.las"
-"D705","NAD83 (USA, NADCON)","E008","Arizona","azhpgn.los","azhpgn.las"
-"D706","NAD83 HARN (USA, NADCON)","E008","Arizona","azhpgn.los","azhpgn.las"
-"D707","NAD83 (USA, NADCON)","E008","California (North of 37dN)","cnhpgn.los","cnhpgn.las"
-"D708","NAD83 HARN (USA, NADCON)","E008","California (North of 37dN)","cnhpgn.los","cnhpgn.las"
-"D709","NAD83 (USA, NADCON)","E008","California (South of 37dN)","cshpgn.los","cshpgn.las"
-"D710","NAD83 HARN (USA, NADCON)","E008","California (South of 37dN)","cshpgn.los","cshpgn.las"
-"D711","NAD83 (USA, NADCON)","E008","Colorado","cohpgn.los","cohpgn.las"
-"D712","NAD83 HARN (USA, NADCON)","E008","Colorado","cohpgn.los","cohpgn.las"
-"D713","NAD83 (USA, NADCON)","E008","Florida","flhpgn.los","flhpgn.las"
-"D714","NAD83 HARN (USA, NADCON)","E008","Florida","flhpgn.los","flhpgn.las"
-"D715","NAD83 (USA, NADCON)","E008","Georgia","gahpgn.los","gahpgn.las"
-"D716","NAD83 HARN (USA, NADCON)","E008","Georgia","gahpgn.los","gahpgn.las"
-"D717","Guam 1963 (USA, NADCON)","E000","Guam","guhpgn.los","guhpgn.las"
-"D718","NAD83 HARN (USA, NADCON)","E008","Guam","guhpgn.los","guhpgn.las"
-"D719","NAD83 (USA, NADCON)","E008","Hawaii","hihpgn.los","hihpgn.las"
-"D720","NAD83 HARN (USA, NADCON)","E008","Hawaii","hihpgn.los","hihpgn.las"
-"D721","NAD83 (USA, NADCON)","E008","Idaho-Montana (East of 113dW)","emhpgn.los","emhpgn.las"
-"D722","NAD83 HARN (USA, NADCON)","E008","Idaho-Montana (East of 113dW)","emhpgn.los","emhpgn.las"
-"D723","NAD83 (USA, NADCON)","E008","Idaho-Montana (West of 113dW)","wmhpgn.los","wmhpgn.las"
-"D724","NAD83 HARN (USA, NADCON)","E008","Idaho-Montana (West of 113dW)","wmhpgn.los","wmhpgn.las"
-"D725","NAD83 (USA, NADCON)","E008","Iowa","iahpgn.los","iahpgn.las"
-"D726","NAD83 HARN (USA, NADCON)","E008","Iowa","iahpgn.los","iahpgn.las"
-"D727","NAD83 (USA, NADCON)","E008","Illinois","ilhpgn.los","ilhpgn.las"
-"D728","NAD83 HARN (USA, NADCON)","E008","Illinois","ilhpgn.los","ilhpgn.las"
-"D729","NAD83 (USA, NADCON)","E008","Indiana","inhpgn.los","inhpgn.las"
-"D730","NAD83 HARN (USA, NADCON)","E008","Indiana","inhpgn.los","inhpgn.las"
-"D731","NAD83 (USA, NADCON)","E008","Kansas","kshpgn.los","kshpgn.las"
-"D732","NAD83 HARN (USA, NADCON)","E008","Kansas","kshpgn.los","kshpgn.las"
-"D733","NAD83 (USA, NADCON)","E008","Kentucky","kyhpgn.los","kyhpgn.las"
-"D734","NAD83 HARN (USA, NADCON)","E008","Kentucky","kyhpgn.los","kyhpgn.las"
-"D735","NAD83 (USA, NADCON)","E008","Louisiana","lahpgn.los","lahpgn.las"
-"D736","NAD83 HARN (USA, NADCON)","E008","Louisiana","lahpgn.los","lahpgn.las"
-"D737","NAD83 (USA, NADCON)","E008","Maryland-Delaware","mdhpgn.los","mdhpgn.las"
-"D738","NAD83 HARN (USA, NADCON)","E008","Maryland-Delaware","mdhpgn.los","mdhpgn.las"
-"D739","NAD83 (USA, NADCON)","E008","Maine","mehpgn.los","mehpgn.las"
-"D740","NAD83 HARN (USA, NADCON)","E008","Maine","mehpgn.los","mehpgn.las"
-"D741","NAD83 (USA, NADCON)","E008","Michigan","mihpgn.los","mihpgn.las"
-"D742","NAD83 HARN (USA, NADCON)","E008","Michigan","mihpgn.los","mihpgn.las"
-"D743","NAD83 (USA, NADCON)","E008","Minnesota","mnhpgn.los","mnhpgn.las"
-"D744","NAD83 HARN (USA, NADCON)","E008","Minnesota","mnhpgn.los","mnhpgn.las"
-"D745","NAD83 (USA, NADCON)","E008","Mississippi","mshpgn.los","mshpgn.las"
-"D746","NAD83 HARN (USA, NADCON)","E008","Mississippi","mshpgn.los","mshpgn.las"
-"D747","NAD83 (USA, NADCON)","E008","Missouri","mohpgn.los","mohpgn.las"
-"D748","NAD83 HARN (USA, NADCON)","E008","Missouri","mohpgn.los","mohpgn.las"
-"D749","NAD83 (USA, NADCON)","E008","Nebraska","nbhpgn.los","nbhpgn.las"
-"D750","NAD83 HARN (USA, NADCON)","E008","Nebraska","nbhpgn.los","nbhpgn.las"
-"D751","NAD83 (USA, NADCON)","E008","Nevada","nvhpgn.los","nvhpgn.las"
-"D752","NAD83 HARN (USA, NADCON)","E008","Nevada","nvhpgn.los","nvhpgn.las"
-"D753","NAD83 (USA, NADCON)","E008","New England (CT,MA,NH,RI,VT)","nehpgn.los","nehpgn.las"
-"D754","NAD83 HARN (USA, NADCON)","E008","New England (CT,MA,NH,RI,VT)","nehpgn.los","nehpgn.las"
-"D755","NAD83 (USA, NADCON)","E008","New Jersey","njhpgn.los","njhpgn.las"
-"D756","NAD83 HARN (USA, NADCON)","E008","New Jersey","njhpgn.los","njhpgn.las"
-"D757","NAD83 (USA, NADCON)","E008","New Mexico","nmhpgn.los","nmhpgn.las"
-"D758","NAD83 HARN (USA, NADCON)","E008","New Mexico","nmhpgn.los","nmhpgn.las"
-"D759","NAD83 (USA, NADCON)","E008","New York","nyhpgn.los","nyhpgn.las"
-"D760","NAD83 HARN (USA, NADCON)","E008","New York","nyhpgn.los","nyhpgn.las"
-"D761","NAD83 (USA, NADCON)","E008","North Carolina","nchpgn.los","nchpgn.las"
-"D762","NAD83 HARN (USA, NADCON)","E008","North Carolina","nchpgn.los","nchpgn.las"
-"D763","NAD83 (USA, NADCON)","E008","North Dakota","ndhpgn.los","ndhpgn.las"
-"D764","NAD83 HARN (USA, NADCON)","E008","North Dakota","ndhpgn.los","ndhpgn.las"
-"D765","NAD83 (USA, NADCON)","E008","Ohio","ohhpgn.los","ohhpgn.las"
-"D766","NAD83 HARN (USA, NADCON)","E008","Ohio","ohhpgn.los","ohhpgn.las"
-"D767","NAD83 (USA, NADCON)","E008","Oklahoma","okhpgn.los","okhpgn.las"
-"D768","NAD83 HARN (USA, NADCON)","E008","Oklahoma","okhpgn.los","okhpgn.las"
-"D769","NAD83 (USA, NADCON)","E008","Pennsylvania","pahpgn.los","pahpgn.las"
-"D770","NAD83 HARN (USA, NADCON)","E008","Pennsylvania","pahpgn.los","pahpgn.las"
-"D771","NAD83 (USA, NADCON)","E008","Puerto Rico-Virgin Is","pvhpgn.los","pvhpgn.las"
-"D772","NAD83 HARN (USA, NADCON)","E008","Puerto Rico-Virgin Is","pvhpgn.los","pvhpgn.las"
-"D773","American Samoa 1962 (USA, NADCON)","E000","Samoa (Eastern Islands)","eshpgn.los","eshpgn.las"
-"D774","NAD83 HARN (USA, NADCON)","E008","Samoa (Eastern Islands)","eshpgn.los","eshpgn.las"
-"D775","American Samoa 1962 (USA, NADCON)","E000","Samoa (Western Islands)","wshpgn.los","wshpgn.las"
-"D776","NAD83 HARN (USA, NADCON)","E008","Samoa (Western Islands)","wshpgn.los","wshpgn.las"
-"D777","NAD83 (USA, NADCON)","E008","South Carolina","schpgn.los","schpgn.las"
-"D778","NAD83 HARN (USA, NADCON)","E008","South Carolina","schpgn.los","schpgn.las"
-"D779","NAD83 (USA, NADCON)","E008","South Dakota","sdhpgn.los","sdhpgn.las"
-"D780","NAD83 HARN (USA, NADCON)","E008","South Dakota","sdhpgn.los","sdhpgn.las"
-"D781","NAD83 (USA, NADCON)","E008","Tennessee","tnhpgn.los","tnhpgn.las"
-"D782","NAD83 HARN (USA, NADCON)","E008","Tennessee","tnhpgn.los","tnhpgn.las"
-"D783","NAD83 (USA, NADCON)","E008","Texas (East of 100dW)","ethpgn.los","ethpgn.las"
-"D784","NAD83 HARN (USA, NADCON)","E008","Texas (East of 100dW)","ethpgn.los","ethpgn.las"
-"D785","NAD83 (USA, NADCON)","E008","Texas (West of 100dW)","wthpgn.los","wthpgn.las"
-"D786","NAD83 HARN (USA, NADCON)","E008","Texas (West of 100dW)","wthpgn.los","wthpgn.las"
-"D787","NAD83 (USA, NADCON)","E008","Utah","uthpgn.los","uthpgn.las"
-"D788","NAD83 HARN (USA, NADCON)","E008","Utah","uthpgn.los","uthpgn.las"
-"D789","NAD83 (USA, NADCON)","E008","Virginia","vahpgn.los","vahpgn.las"
-"D790","NAD83 HARN (USA, NADCON)","E008","Virginia","vahpgn.los","vahpgn.las"
-"D791","NAD83 (USA, NADCON)","E008","Washington-Oregon","wohpgn.los","wohpgn.las"
-"D792","NAD83 HARN (USA, NADCON)","E008","Washington-Oregon","wohpgn.los","wohpgn.las"
-"D793","NAD83 (USA, NADCON)","E008","West Virginia","wvhpgn.los","wvhpgn.las"
-"D794","NAD83 HARN (USA, NADCON)","E008","West Virginia","wvhpgn.los","wvhpgn.las"
-"D795","NAD83 (USA, NADCON)","E008","Wisconsin","wihpgn.los","wihpgn.las"
-"D796","NAD83 HARN (USA, NADCON)","E008","Wisconsin","wihpgn.los","wihpgn.las"
-"D797","NAD83 (USA, NADCON)","E008","Wyoming","wyhpgn.los","wyhpgn.las"
-"D798","NAD83 HARN (USA, NADCON)","E008","Wyoming","wyhpgn.los","wyhpgn.las"
-"D886","Reseau Geodesique Francais 1993","E899",-752,-358,-179,"Taiwan",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329
-"D887","Reseau National Belge 1972","E899",-752,-358,-179,"Taiwan",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329
+"D701","NAD83 (Deprecated - use D122)","E008",0,0,0,"Alabama",2,2,2,354
+"D702","NAD83 HARN (USA, NADCON)","E008","Alabama","D122","alhpgn.los","alhpgn.las"
+"D703","NAD83 (Deprecated - use D122)","E008",0,0,0,"Arkansas",2,2,2,354
+"D704","NAD83 HARN (USA, NADCON)","E008","Arkansas","D122","arhpgn.los","arhpgn.las"
+"D705","NAD83 (Deprecated - use D122)","E008",0,0,0,"Arizona",2,2,2,354
+"D706","NAD83 HARN (USA, NADCON)","E008","Arizona","D122","azhpgn.los","azhpgn.las"
+"D707","NAD83 (Deprecated - use D122)","E008",0,0,0,"California (North of 37dN)",2,2,2,354
+"D708","NAD83 HARN (USA, NADCON)","E008","California (North of 37dN)","D122","cnhpgn.los","cnhpgn.las"
+"D709","NAD83 (Deprecated - use D122)","E008",0,0,0,"California (South of 37dN)",2,2,2,354
+"D710","NAD83 HARN (USA, NADCON)","E008","California (South of 37dN)","D122","cshpgn.los","cshpgn.las"
+"D711","NAD83 (Deprecated - use D122)","E008",0,0,0,"Colorado",2,2,2,354
+"D712","NAD83 HARN (USA, NADCON)","E008","Colorado","D122","cohpgn.los","cohpgn.las"
+"D713","NAD83 (Deprecated - use D122)","E008",0,0,0,"Florida",2,2,2,354
+"D714","NAD83 HARN (USA, NADCON)","E008","Florida","D122","flhpgn.los","flhpgn.las"
+"D715","NAD83 (Deprecated - use D122)","E008",0,0,0,"Georgia",2,2,2,354
+"D716","NAD83 HARN (USA, NADCON)","E008","Georgia","D122","gahpgn.los","gahpgn.las"
+"D717","Guam 1963 (Deprecated - use D068)","E000",-100,-248,259,"Guam",3,3,3,5
+"D718","NAD83 HARN (USA, NADCON)","E008","Guam","D068","guhpgn.los","guhpgn.las"
+"D719","NAD83 (Deprecated - use D122)","E008",0,0,0,"Hawaii",2,2,2,354
+"D720","NAD83 HARN (USA, NADCON)","E008","Hawaii","D122","hihpgn.los","hihpgn.las"
+"D721","NAD83 (Deprecated - use D122)","E008",0,0,0,"Idaho-Montana (East of 113dW)",2,2,2,354
+"D722","NAD83 HARN (USA, NADCON)","E008","Idaho-Montana (East of 113dW)","D122","emhpgn.los","emhpgn.las"
+"D723","NAD83 (Deprecated - use D122)","E008",0,0,0,"Idaho-Montana (West of 113dW)",2,2,2,354
+"D724","NAD83 HARN (USA, NADCON)","E008","Idaho-Montana (West of 113dW)","D122","wmhpgn.los","wmhpgn.las"
+"D725","NAD83 (Deprecated - use D122)","E008",0,0,0,"Iowa",2,2,2,354
+"D726","NAD83 HARN (USA, NADCON)","E008","Iowa","D122","iahpgn.los","iahpgn.las"
+"D727","NAD83 (Deprecated - use D122)","E008",0,0,0,"Illinois",2,2,2,354
+"D728","NAD83 HARN (USA, NADCON)","E008","Illinois","D122","ilhpgn.los","ilhpgn.las"
+"D729","NAD83 (Deprecated - use D122)","E008",0,0,0,"Indiana",2,2,2,354
+"D730","NAD83 HARN (USA, NADCON)","E008","Indiana","D122","inhpgn.los","inhpgn.las"
+"D731","NAD83 (Deprecated - use D122)","E008",0,0,0,"Kansas",2,2,2,354
+"D732","NAD83 HARN (USA, NADCON)","E008","Kansas","D122","kshpgn.los","kshpgn.las"
+"D733","NAD83 (Deprecated - use D122)","E008",0,0,0,"Kentucky",2,2,2,354
+"D734","NAD83 HARN (USA, NADCON)","E008","Kentucky","D122","kyhpgn.los","kyhpgn.las"
+"D735","NAD83 (Deprecated - use D122)","E008",0,0,0,"Louisiana",2,2,2,354
+"D736","NAD83 HARN (USA, NADCON)","E008","Louisiana","D122","lahpgn.los","lahpgn.las"
+"D737","NAD83 (Deprecated - use D122)","E008",0,0,0,"Maryland-Delaware",2,2,2,354
+"D738","NAD83 HARN (USA, NADCON)","E008","Maryland-Delaware","D122","mdhpgn.los","mdhpgn.las"
+"D739","NAD83 (Deprecated - use D122)","E008",0,0,0,"Maine",2,2,2,354
+"D740","NAD83 HARN (USA, NADCON)","E008","Maine","D122","mehpgn.los","mehpgn.las"
+"D741","NAD83 (Deprecated - use D122)","E008",0,0,0,"Michigan",2,2,2,354
+"D742","NAD83 HARN (USA, NADCON)","E008","Michigan","D122","mihpgn.los","mihpgn.las"
+"D743","NAD83 (Deprecated - use D122)","E008",0,0,0,"Minnesota",2,2,2,354
+"D744","NAD83 HARN (USA, NADCON)","E008","Minnesota","D122","mnhpgn.los","mnhpgn.las"
+"D745","NAD83 (Deprecated - use D122)","E008",0,0,0,"Mississippi",2,2,2,354
+"D746","NAD83 HARN (USA, NADCON)","E008","Mississippi","D122","mshpgn.los","mshpgn.las"
+"D747","NAD83 (Deprecated - use D122)","E008",0,0,0,"Missouri",2,2,2,354
+"D748","NAD83 HARN (USA, NADCON)","E008","Missouri","D122","mohpgn.los","mohpgn.las"
+"D749","NAD83 (Deprecated - use D122)","E008",0,0,0,"Nebraska",2,2,2,354
+"D750","NAD83 HARN (USA, NADCON)","E008","Nebraska","D122","nbhpgn.los","nbhpgn.las"
+"D751","NAD83 (Deprecated - use D122)","E008",0,0,0,"Nevada",2,2,2,354
+"D752","NAD83 HARN (USA, NADCON)","E008","Nevada","D122","nvhpgn.los","nvhpgn.las"
+"D753","NAD83 (Deprecated - use D122)","E008",0,0,0,"New England (CT,MA,NH,RI,VT",2,2,2,354
+"D754","NAD83 HARN (USA, NADCON)","E008","New England (CT,MA,NH,RI,VT)","D122","nehpgn.los","nehpgn.las"
+"D755","NAD83 (Deprecated - use D122)","E008",0,0,0,"New Jersey",2,2,2,354
+"D756","NAD83 HARN (USA, NADCON)","E008","New Jersey","D122","njhpgn.los","njhpgn.las"
+"D757","NAD83 (Deprecated - use D122)","E008",0,0,0,"New Mexico",2,2,2,354
+"D758","NAD83 HARN (USA, NADCON)","E008","New Mexico","D122","nmhpgn.los","nmhpgn.las"
+"D759","NAD83 (Deprecated - use D122)","E008",0,0,0,"New York",2,2,2,354
+"D760","NAD83 HARN (USA, NADCON)","E008","New York","D122","nyhpgn.los","nyhpgn.las"
+"D761","NAD83 (Deprecated - use D122)","E008",0,0,0,"North Carolina",2,2,2,354
+"D762","NAD83 HARN (USA, NADCON)","E008","North Carolina","D122","nchpgn.los","nchpgn.las"
+"D763","NAD83 (Deprecated - use D122)","E008",0,0,0,"North Dakota",2,2,2,354
+"D764","NAD83 HARN (USA, NADCON)","E008","North Dakota","D122","ndhpgn.los","ndhpgn.las"
+"D765","NAD83 (Deprecated - use D122)","E008",0,0,0,"Ohio",2,2,2,354
+"D766","NAD83 HARN (USA, NADCON)","E008","Ohio","D122","ohhpgn.los","ohhpgn.las"
+"D767","NAD83 (Deprecated - use D122)","E008",0,0,0,"Oklahoma",2,2,2,354
+"D768","NAD83 HARN (USA, NADCON)","E008","Oklahoma","D122","okhpgn.los","okhpgn.las"
+"D769","NAD83 (Deprecated - use D122)","E008",0,0,0,"Pennsylvania",2,2,2,354
+"D770","NAD83 HARN (USA, NADCON)","E008","Pennsylvania","D122","pahpgn.los","pahpgn.las"
+"D771","NAD83 (Deprecated - use D122)","E008",0,0,0,"Puerto Rico-Virgin Is",2,2,2,354
+"D772","NAD83 HARN (USA, NADCON)","E008","Puerto Rico-Virgin Is","D122","pvhpgn.los","pvhpgn.las"
+"D773","American Samoa 1962 (Deprecated - use D189)","E000",-115,118,426,"Samoa (Eastern Islands)",25,25,25,2
+"D774","NAD83 HARN (USA, NADCON)","E008","Samoa (Eastern Islands)","D189","eshpgn.los","eshpgn.las"
+"D775","American Samoa 1962 (Deprecated - use D189)","E000",-115,118,426,"Samoa (Western Islands)",25,25,25,2
+"D776","NAD83 HARN (USA, NADCON)","E008","Samoa (Western Islands)","D189","wshpgn.los","wshpgn.las"
+"D777","NAD83 (Deprecated - use D122)","E008",0,0,0,"South Carolina",2,2,2,354
+"D778","NAD83 HARN (USA, NADCON)","E008","South Carolina","D122","schpgn.los","schpgn.las"
+"D779","NAD83 (Deprecated - use D122)","E008",0,0,0,"South Dakota",2,2,2,354
+"D780","NAD83 HARN (USA, NADCON)","E008","South Dakota","D122","sdhpgn.los","sdhpgn.las"
+"D781","NAD83 (Deprecated - use D122)","E008",0,0,0,"Tennessee",2,2,2,354
+"D782","NAD83 HARN (USA, NADCON)","E008","Tennessee","D122","tnhpgn.los","tnhpgn.las"
+"D783","NAD83 (Deprecated - use D122)","E008",0,0,0,"Texas (East of 100dW)",2,2,2,354
+"D784","NAD83 HARN (USA, NADCON)","E008","Texas (East of 100dW)","D122","ethpgn.los","ethpgn.las"
+"D785","NAD83 (Deprecated - use D122)","E008",0,0,0,"Texas (West of 100dW)",2,2,2,354
+"D786","NAD83 HARN (USA, NADCON)","E008","Texas (West of 100dW)","D122","wthpgn.los","wthpgn.las"
+"D787","NAD83 (Deprecated - use D122)","E008",0,0,0,"Utah",2,2,2,354
+"D788","NAD83 HARN (USA, NADCON)","E008","Utah","D122","uthpgn.los","uthpgn.las"
+"D789","NAD83 (Deprecated - use D122)","E008",0,0,0,"Virginia",2,2,2,354
+"D790","NAD83 HARN (USA, NADCON)","E008","Virginia","D122","vahpgn.los","vahpgn.las"
+"D791","NAD83 (Deprecated - use D122)","E008",0,0,0,"Washington-Oregon",2,2,2,354
+"D792","NAD83 HARN (USA, NADCON)","E008","Washington-Oregon","D122","wohpgn.los","wohpgn.las"
+"D793","NAD83 (Deprecated - use D122)","E008",0,0,0,"West Virginia",2,2,2,354
+"D794","NAD83 HARN (USA, NADCON)","E008","West Virginia","D122","wvhpgn.los","wvhpgn.las"
+"D795","NAD83 (Deprecated - use D122)","E008",0,0,0,"Wisconsin",2,2,2,354
+"D796","NAD83 HARN (USA, NADCON)","E008","Wisconsin","D122","wihpgn.los","wihpgn.las"
+"D797","NAD83 (Deprecated - use D122)","E008",0,0,0,"Wyoming",2,2,2,354
+"D798","NAD83 HARN (USA, NADCON)","E008","Wyoming","D122","wyhpgn.los","wyhpgn.las"
 "D888","Lebanon Stereographic","E012",154.2668777,107.2190767,-263.01161212,"Lebanon",0,0,0,0,0.310716,0.218736,0.191232,0.99999913
 "D889","Lebanon Lambert","E202",190.9999,133.32473,-232.8391,"Lebanon",0,0,0,0,0.307836,0.216756,0.189036,0.9995341
 "D890","Luxembourg (LUREF)","E004",-192.986,13.673,-39.309,"Luxembourg",0,0,0,0,0.409900,2.933200,-2.688100,1.00000043
 "D891","Datum 73","E004",-223.237,110.193,36.649,"Portugal",0,0,0,0
 "D892","Datum Lisboa","E004",-304.046,-60.576,103.640,"Portugal",0,0,0,0
 "D893","PDO Survey Datum 1993","E001",-180.624,-225.516,173.919,"Oman",0,0,0,0,0.80970,1.89755,-8.33604,16.71006
-"D894","WGS 1984 semi-major","E020",0,0,0,"WGS 1984 Auxiliary Sphere semi-major axis",0,0,0,0
 "D898","TWD97","E008",0,0,0,"Taiwan",0,0,0,0,0.0,0.0,0.0,0.0
 "D899","TWD67","E899",-752,-358,-179,"Taiwan",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329
+"D886","Reseau Geodesique Francais 1993","E899",-752,-358,-179,"France",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329
+"D887","Reseau National Belge 1972","E899",-752,-358,-179,"Belgium",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329
+"D819","Xian 1980","E224",0,0,0,"China",0,0,0,0,0,0,0,0
+"D820","Korea 2000","E008",0.0,0.0,0.0,"South Korea",0,0,0,0
+"D821","Pulkovo 1995","E015",24.47,-130.89,-81.56,"Russian Federation",0,0,0,0,0,0,-0.13,-0.22
+"D822","Beijing 1954","E015",15.8,-154.4,-82.3,"China",0,0,0,0
+"D823","Stockholm 1938 (RT38)","E002",0.0,0.0,0.0,"Sweden",0,0,0,0
+"D824","Greenland 1996 (GR96)","E008",0.0,0.0,0.0,"Greenland",0,0,0,0
+"D825","Libyan Geodetic Datum 2006 (LGD2006)","E004",-208.406,-109.878,-2.5764,"Libya",0,0,0,0
+"D826","Reseau Geodesique de la Polynesie Francaise (RGPF)","E008",0.072,-0.507,-0.245,"French Polynesia",0,0,0,0,0.0183,-0.0003,0.007,-0.0093
+"D827","IGC 1962 6th Parallel South","E001",0.0,0.0,0.0,"Democratic Republic of the Congo - adjacent to 6th parallel south",0,0,0,0
+"D828","Geodetic Datum of Malaysia (GDM)","E008",0.0,0.0,0.0,"Malaysia",0,0,0,0
+"D829","New Beijing","E015",0.0,0.0,0.0,"China",0,0,0,0
+"D830","Turkish National Reference Frame (TUKREF)","E008",0.0,0.0,0.0,"Turkey",0,0,0,0
+"D831","Bhutan National Geodetic Datum (DRUKREF)","E008",0.0,0.0,0.0,"Bhutan",0,0,0,0
+"D832","Ukraine 2000","E015",0.0,0.0,0.0,"Ukraine",0,0,0,0
+"D833","Japanese Geodetic Datum 2011 (JGD2011)","E008",0.0,0.0,0.0,"Japan",0,0,0,0
+"D834","Posiciones Geodesicas Argentinas 1998 (POSGAR 98)","E008",0.0,0.0,0.0,"Argentina",0,0,0,0
+"D835","Posiciones Geodesicas Argentinas 1994 (POSGAR 94)","E012",0.0,0.0,0.0,"Argentina",0,0,0,0
+"D836","Posiciones Geodesicas Argentinas 2007 (POSGAR 07)","E008",0.0,0.0,0.0,"Argentina",0,0,0,0
+"D837","Datum Geodesi Nasional 1995 (DGN95)","E012",0.0,0.0,0.0,"Indonesia",0,0,0,0
+"D838","Korea 1995","E012",0.0,0.0,0.0,"South Korea",0,0,0,0
+"D839","Institut Geographique du Congo Belge (IGCB) 1955","E001",-79.9,-158,-168.9,"The Democratic Republic of the Congo (Zaire) - Lower Congo",0,0,0,0
+"D894","WGS 1984 semi-major","E020",0,0,0,"WGS 1984 Auxiliary Sphere semi-major axis",0,0,0,0
+"D895","ATS77","E910",-95.323,166.098,-69.942,"Maritime Provinces",0,0,0,0,0.215,1.031,-0.047,1.922
+"D896","GosatCAIL1B+ EarthRadius","E025",0,0,0,"GosatCAIL1B+ EarthRadius",0,0,0,0
+"D897","Myanmar","E227",247,785,277,"Myanmar",0,0,0,0
+"D900","China 2000","E231",0,0,0,"China 2000",0,0,0,0
+"D901","Nouvelle Triangulation Francaise (grid shift)","E202","France","-D350","ntf_r93.gsb"
+"D902","PRS92","E000",-127.62153,-67.24339,-47.04738,"Philippines Reference System 1992",0,0,0,0,3.06803,-4.90297,-1.57807,-1.06002
+"D903","North American 1983 2011","E008",0,0,0,"Alaska, Canada, CONUS, Central America, Mexico",2,2,2,354

@@ -41,6 +41,16 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("AAIGRID")
 
+
+###############################################################################
+
+
+def test_aaigrid_read_byte_tif_grd():
+
+    ds = gdal.Open("data/aaigrid/byte.tif.grd")
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
 ###############################################################################
 # Perform simple read test.
 
@@ -49,6 +59,30 @@ def test_aaigrid_1():
 
     tst = gdaltest.GDALTest("aaigrid", "aaigrid/pixel_per_line.asc", 1, 1123)
     tst.testOpen()
+
+
+###############################################################################
+# CreateCopy tests
+
+init_list = [
+    ("byte.tif", 4672),
+    ("int16.tif", 4672),
+    ("uint16.tif", 4672),
+    ("float32.tif", 4672),
+    ("utmsmall.tif", 50054),
+]
+
+
+@pytest.mark.parametrize(
+    "filename,checksum",
+    init_list,
+    ids=[tup[0].split(".")[0] for tup in init_list],
+)
+def test_aaigrid_createcopy(filename, checksum):
+    ut = gdaltest.GDALTest(
+        "AAIGrid", "../gcore/data/" + filename, 1, checksum, filename_absolute=True
+    )
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -478,3 +512,14 @@ def test_aaigrid_write_south_up_raster():
     gdal.GetDriverByName("AAIGRID").Delete(
         "/vsimem/test_aaigrid_write_south_up_raster.asc"
     )
+
+
+###############################################################################
+# Test reading a file starting with nan (https://github.com/OSGeo/gdal/issues/9666)
+
+
+def test_aaigrid_starting_with_nan():
+
+    ds = gdal.Open("data/aaigrid/starting_with_nan.asc")
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
+    assert ds.GetRasterBand(1).Checksum() == 65300

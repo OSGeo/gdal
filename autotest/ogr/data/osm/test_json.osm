@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="hand">
+ <bounds minlat="49" minlon="2" maxlat="50" maxlon="3"/>
+ <node id="3" lat="49.5" lon="3" user="some_user" uid="1" version="1" changeset="1" timestamp="2012-07-10T00:00:00Z">
+  <tag k="foo" v="x'\&quot;&#9;&#10;&#13;y"/>
+ </node>
+</osm>

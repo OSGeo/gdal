@@ -1740,8 +1740,13 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
         oFieldDefn.SetWidth(0);
     oFieldDefn.SetPrecision(0);
 
+    if (m_bLaunder)
+        oFieldDefn.SetName(
+            GDALGeoPackageDataset::LaunderName(oFieldDefn.GetNameRef())
+                .c_str());
+
     if (m_pszFidColumn != nullptr &&
-        EQUAL(poField->GetNameRef(), m_pszFidColumn) &&
+        EQUAL(oFieldDefn.GetNameRef(), m_pszFidColumn) &&
         poField->GetType() != OFTInteger &&
         poField->GetType() != OFTInteger64 &&
         // typically a GeoPackage exported with QGIS as a shapefile and
@@ -1750,7 +1755,7 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
           poField->GetPrecision() == 0))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Wrong field type for %s",
-                 poField->GetNameRef());
+                 oFieldDefn.GetNameRef());
         return OGRERR_FAILURE;
     }
 
@@ -1763,7 +1768,7 @@ OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
 
         osCommand.Printf("ALTER TABLE \"%s\" ADD COLUMN \"%s\" %s",
                          SQLEscapeName(m_pszTableName).c_str(),
-                         SQLEscapeName(poField->GetNameRef()).c_str(),
+                         SQLEscapeName(oFieldDefn.GetNameRef()).c_str(),
                          GPkgFieldFromOGR(poField->GetType(),
                                           poField->GetSubType(), nMaxWidth));
         if (!poField->IsNullable())
@@ -1973,8 +1978,7 @@ OGRGeoPackageTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     }
 
     const OGRSpatialReference *poSRS = oGeomField.GetSpatialRef();
-    if (poSRS != nullptr)
-        m_iSrs = m_poDS->GetSrsId(*poSRS);
+    m_iSrs = m_poDS->GetSrsId(poSRS);
 
     /* -------------------------------------------------------------------- */
     /*      Create the new field.                                           */
@@ -2711,9 +2715,22 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
     }
     if (m_hAsyncDBHandle != nullptr)
     {
+        /* Make sure our auxiliary DB has the same page size as the main one.
+         * Because the number of RTree cells depends on the SQLite page size.
+         * However the sqlite implementation limits to 51 cells maximum per page,
+         * which is reached starting with a page size of 2048 bytes.
+         * As the default SQLite page size is 4096 currently, having potentially
+         * different page sizes >= 4096 between the main and auxiliary DBs would
+         * not be a practical issue, but better be consistent.
+         */
+        const int nPageSize =
+            SQLGetInteger(m_poDS->GetDB(), "PRAGMA page_size", nullptr);
+
         if (SQLCommand(m_hAsyncDBHandle,
-                       "PRAGMA journal_mode = OFF;\n"
-                       "PRAGMA synchronous = OFF;") == OGRERR_NONE)
+                       CPLSPrintf("PRAGMA page_size = %d;\n"
+                                  "PRAGMA journal_mode = OFF;\n"
+                                  "PRAGMA synchronous = OFF;",
+                                  nPageSize)) == OGRERR_NONE)
         {
             char *pszSQL = sqlite3_mprintf("ATTACH DATABASE '%q' AS '%q'",
                                            m_osAsyncDBName.c_str(),
@@ -2721,17 +2738,14 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
             OGRErr eErr = SQLCommand(m_poDS->GetDB(), pszSQL);
             sqlite3_free(pszSQL);
 
-            VSIUnlink(m_osAsyncDBName.c_str());
-
             if (eErr == OGRERR_NONE)
             {
+                m_hRTree = gdal_sqlite_rtree_bl_new(nPageSize);
                 try
                 {
                     m_oThreadRTree =
                         std::thread([this]() { AsyncRTreeThreadFunction(); });
                     m_bThreadRTreeStarted = true;
-
-                    m_hRTree = gdal_sqlite_rtree_bl_new(4096);
                 }
                 catch (const std::exception &e)
                 {
@@ -2743,6 +2757,11 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
 
         if (!m_bThreadRTreeStarted)
         {
+            if (m_hRTree)
+            {
+                gdal_sqlite_rtree_bl_free(m_hRTree);
+                m_hRTree = nullptr;
+            }
             m_oQueueRTreeEntries.clear();
             m_bErrorDuringRTreeThread = true;
             sqlite3_close(m_hAsyncDBHandle);
@@ -2763,13 +2782,16 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
 
 void OGRGeoPackageTableLayer::RemoveAsyncRTreeTempDB()
 {
-    SQLCommand(
-        m_poDS->GetDB(),
-        CPLSPrintf("DETACH DATABASE \"%s\"",
-                   SQLEscapeName(m_osAsyncDBAttachName.c_str()).c_str()));
-    m_osAsyncDBAttachName.clear();
-    VSIUnlink(m_osAsyncDBName.c_str());
-    m_osAsyncDBName.clear();
+    if (!m_osAsyncDBAttachName.empty())
+    {
+        SQLCommand(
+            m_poDS->GetDB(),
+            CPLSPrintf("DETACH DATABASE \"%s\"",
+                       SQLEscapeName(m_osAsyncDBAttachName.c_str()).c_str()));
+        m_osAsyncDBAttachName.clear();
+        VSIUnlink(m_osAsyncDBName.c_str());
+        m_osAsyncDBName.clear();
+    }
 }
 
 /************************************************************************/
@@ -2845,8 +2867,6 @@ bool OGRGeoPackageTableLayer::FlushInMemoryRTree(sqlite3 *hRTreeDB,
             m_hAsyncDBHandle = nullptr;
         }
 
-        VSIUnlink(m_osAsyncDBName.c_str());
-
         m_oQueueRTreeEntries.clear();
     }
     sqlite3_free(pszErrMsg);
@@ -2883,6 +2903,8 @@ static size_t GetMaxRAMUsageAllowedForRTree()
 
 void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
 {
+    CPLAssert(m_hRTree);
+
     const size_t nMaxRAMUsageAllowed = GetMaxRAMUsageAllowedForRTree();
     sqlite3_stmt *hStmt = nullptr;
     GIntBig nCount = 0;
@@ -2927,14 +2949,24 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
         if (hStmt == nullptr)
         {
             const char *pszInsertSQL =
-                "INSERT INTO my_rtree VALUES (?,?,?,?,?)";
+                CPLGetConfigOption(
+                    "OGR_GPKG_SIMULATE_INSERT_INTO_MY_RTREE_PREPARATION_ERROR",
+                    nullptr)
+                    ? "INSERT INTO my_rtree_SIMULATE_ERROR VALUES (?,?,?,?,?)"
+                    : "INSERT INTO my_rtree VALUES (?,?,?,?,?)";
             if (sqlite3_prepare_v2(m_hAsyncDBHandle, pszInsertSQL, -1, &hStmt,
                                    nullptr) != SQLITE_OK)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "failed to prepare SQL: %s", pszInsertSQL);
-                m_oQueueRTreeEntries.clear();
+                         "failed to prepare SQL: %s: %s", pszInsertSQL,
+                         sqlite3_errmsg(m_hAsyncDBHandle));
+
                 m_bErrorDuringRTreeThread = true;
+
+                sqlite3_close(m_hAsyncDBHandle);
+                m_hAsyncDBHandle = nullptr;
+
+                m_oQueueRTreeEntries.clear();
                 return;
             }
 
@@ -4452,7 +4484,11 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
             sqlite3_close(m_hAsyncDBHandle);
             m_hAsyncDBHandle = nullptr;
         }
-        if (!m_bErrorDuringRTreeThread)
+        if (m_bErrorDuringRTreeThread)
+        {
+            RemoveAsyncRTreeTempDB();
+        }
+        else
         {
             bPopulateFromThreadRTree = true;
         }
@@ -5605,10 +5641,10 @@ void OGRGeoPackageTableLayer::SetOpeningParameters(
 
 void OGRGeoPackageTableLayer::SetCreationParameters(
     OGRwkbGeometryType eGType, const char *pszGeomColumnName, int bGeomNullable,
-    OGRSpatialReference *poSRS, const OGRGeomCoordinatePrecision &oCoordPrec,
-    bool bDiscardCoordLSB, bool bUndoDiscardCoordLSBOnReading,
-    const char *pszFIDColumnName, const char *pszIdentifier,
-    const char *pszDescription)
+    const OGRSpatialReference *poSRS, const char *pszSRID,
+    const OGRGeomCoordinatePrecision &oCoordPrec, bool bDiscardCoordLSB,
+    bool bUndoDiscardCoordLSBOnReading, const char *pszFIDColumnName,
+    const char *pszIdentifier, const char *pszDescription)
 {
     m_bIsSpatial = eGType != wkbNone;
     m_bIsInGpkgContents =
@@ -5626,9 +5662,59 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
         m_nZFlag = wkbHasZ(eGType) ? 1 : 0;
         m_nMFlag = wkbHasM(eGType) ? 1 : 0;
         OGRGeomFieldDefn oGeomFieldDefn(pszGeomColumnName, eGType);
-        if (poSRS)
-            m_iSrs = m_poDS->GetSrsId(*poSRS);
+
         oGeomFieldDefn.SetSpatialRef(poSRS);
+        if (pszSRID)
+        {
+            m_iSrs = atoi(pszSRID);
+            if (m_iSrs == GDALGeoPackageDataset::FIRST_CUSTOM_SRSID - 1)
+            {
+                m_iSrs = m_poDS->GetSrsId(nullptr);
+                oGeomFieldDefn.SetSpatialRef(nullptr);
+            }
+            else
+            {
+                auto poGotSRS =
+                    m_poDS->GetSpatialRef(m_iSrs, /* bFallbackToEPSG = */ false,
+                                          /* bEmitErrorIfNotFound = */ false);
+                if (poGotSRS)
+                {
+                    oGeomFieldDefn.SetSpatialRef(poGotSRS);
+                    poGotSRS->Release();
+                }
+                else
+                {
+                    bool bOK = false;
+                    OGRSpatialReference *poSRSTmp = new OGRSpatialReference();
+                    if (m_iSrs < 32767)
+                    {
+                        CPLErrorHandlerPusher oErrorHandler(
+                            CPLQuietErrorHandler);
+                        CPLErrorStateBackuper oBackuper;
+                        if (poSRSTmp->importFromEPSG(m_iSrs) == OGRERR_NONE)
+                        {
+                            bOK = true;
+                            poSRSTmp->SetAxisMappingStrategy(
+                                OAMS_TRADITIONAL_GIS_ORDER);
+                            m_iSrs = m_poDS->GetSrsId(poSRSTmp);
+                            oGeomFieldDefn.SetSpatialRef(poSRSTmp);
+                        }
+                    }
+                    if (!bOK)
+                    {
+                        CPLError(
+                            CE_Warning, CPLE_AppDefined,
+                            "No entry in gpkg_spatial_ref_sys matching SRID=%s",
+                            pszSRID);
+                    }
+                    poSRSTmp->Release();
+                }
+            }
+        }
+        else
+        {
+            m_iSrs = m_poDS->GetSrsId(poSRS);
+        }
         oGeomFieldDefn.SetNullable(bGeomNullable);
         oGeomFieldDefn.SetCoordinatePrecision(oCoordPrec);
 
@@ -7271,8 +7357,7 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
             if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
                 return OGRERR_FAILURE;
 
-            const int nNewSRID =
-                poNewSRS ? m_poDS->GetSrsId(*(poNewSRS.get())) : 0;
+            const int nNewSRID = m_poDS->GetSrsId(poNewSRS.get());
 
             // Replace the old SRID by the new ones in geometry blobs
             uint32_t nNewSRID_LSB = nNewSRID;

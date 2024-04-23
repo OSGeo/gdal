@@ -14,6 +14,8 @@ add_gdal_driver(
           vrtdataset.cpp
           pixelfunctions.cpp
           vrtpansharpened.cpp
+          vrtprocesseddataset.cpp
+          vrtprocesseddatasetfunctions.cpp
           vrtmultidim.cpp
           gdaltileindexdataset.cpp
           STRONG_CXX_WFLAGS)

@@ -120,6 +120,32 @@ void GDALArgumentParser::add_quiet_argument(bool *pVar)
 }
 
 /************************************************************************/
+/*                      add_input_format_argument()                     */
+/************************************************************************/
+
+void GDALArgumentParser::add_input_format_argument(CPLStringList *pvar)
+{
+    add_argument("-if")
+        .append()
+        .metavar("<format>")
+        .action(
+            [pvar](const std::string &s)
+            {
+                if (pvar)
+                {
+                    if (GDALGetDriverByName(s.c_str()) == nullptr)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "%s is not a recognized driver", s.c_str());
+                    }
+                    pvar->AddString(s.c_str());
+                }
+            })
+        .help(
+            _("Format/driver name(s) to be attempted to open the input file."));
+}
+
+/************************************************************************/
 /*                      add_output_format_argument()                    */
 /************************************************************************/
 
@@ -311,6 +337,22 @@ GDALArgumentParser::get_non_positional_arguments(const CPLStringList &aosArgs)
     }
 
     return args;
+}
+
+Argument &GDALArgumentParser::add_inverted_logic_flag(const std::string &name,
+                                                      bool *store_into,
+                                                      const std::string &help)
+{
+    return add_argument(name)
+        .default_value(true)
+        .implicit_value(false)
+        .action(
+            [store_into](const auto &)
+            {
+                if (store_into)
+                    *store_into = false;
+            })
+        .help(help);
 }
 
 /************************************************************************/

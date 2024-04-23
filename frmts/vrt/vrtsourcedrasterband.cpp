@@ -1007,8 +1007,7 @@ CPLErr VRTSourcedRasterBand::ComputeRasterMinMax(int bApproxOK,
             CPLErr eErr;
             std::string osLastErrorMsg;
             {
-                CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-                CPLErrorStateBackuper oErrorStateBackuper;
+                CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
                 CPLErrorReset();
                 eErr =
                     ComputeStatistics(bApproxOK, &adfMinMax[0], &adfMinMax[1],
@@ -1404,8 +1403,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 static_cast<uint64_t>(poSimpleSourceBand->GetXSize()) *
                 poSimpleSourceBand->GetYSize();
 
-            CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             CPLErr eErr = poSimpleSourceBand->ComputeStatistics(
                 psContext->bApproxOK, &psJob->dfMin, &psJob->dfMax,
                 &psJob->dfMean, &psJob->dfStdDev,

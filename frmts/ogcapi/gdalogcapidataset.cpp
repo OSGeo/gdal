@@ -1633,8 +1633,7 @@ ParseXMLSchema(const std::string &osURL,
                std::vector<std::unique_ptr<OGRFieldDefn>> &apoFields,
                OGRwkbGeometryType &eGeomType)
 {
-    CPLErrorHandlerPusher oErrorHandlerPusher(CPLQuietErrorHandler);
-    CPLErrorStateBackuper oErrorStateBackuper;
+    CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
 
     std::vector<GMLFeatureClass *> apoClasses;
     bool bFullyUnderstood = false;

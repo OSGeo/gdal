@@ -1,0 +1,161 @@
+[VERSIO]
+Vers=4
+SubVers=3
+VersMetaDades=5
+SubVersMetaDades=0
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_N_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+visible=0
+MostrarUnitats=0
+descriptor=Identificador Gràfic intern
+
+[TAULA_PRINCIPAL:N_VERTEXS]
+visible=0
+MostrarUnitats=0
+descriptor=Nombre de vèrtexs
+
+[TAULA_PRINCIPAL:LONG_ARC]
+visible=0
+descriptor=Longitud de l'arc (projecció)
+
+[TAULA_PRINCIPAL:LONG_ARCE]
+unitats=m
+descriptor=Longitud de l'arc (el·lipsoide)
+
+[TAULA_PRINCIPAL:NODE_INI]
+visible=0
+MostrarUnitats=0
+descriptor=Node inicial
+
+[TAULA_PRINCIPAL:NODE_FI]
+visible=0
+MostrarUnitats=0
+descriptor=Node final
+
+[METADADES]
+language=cat
+MDIdiom=cat
+dateStamp=20240311 09500830
+characterSet=006
+nOrganismes=2
+FileIdentifier=linies_3d_29042
+
+[METADADES:ORGANISME_1]
+role=009
+OrganisationName=CREAF
+IndividualName=Abel Pau
+PositionName=Tècnic en SIG
+
+[IDENTIFICATION]
+code=linies_3d_29042
+codeSpace=
+DatasetTitle=Linies
+
+[SPATIAL_REFERENCE_SYSTEM:HORIZONTAL]
+HorizontalSystemIdentifier=lat/long-WGS84
+
+[EXTENT]
+MinX=1.28287097369422
+MaxX=1.98292118178235
+MinY=41.1902658152019
+MaxY=41.6776900669325
+toler_env=0
+
+[OVERVIEW]
+CreationDate=20240311 09500477
+
+[OVERVIEW:ASPECTES_TECNICS]
+comment1=Nombre d'arcs: 6
+comment2=El fitxer era anteriorment en la projecció UTM-31N-ETRS89
+
+[METADADES:ORGANISME_2]
+role=009
+OrganisationName=Students and educational institutions
+
+[QUALITY:LINEAGE:PROCESS1]
+nOrganismes=1
+history=C:\MiraMon\MM64.exe
+date=20230912 16505195+0200
+
+[QUALITY:LINEAGE:PROCESS1:ORGANISME_1]
+OrganisationName=Students and educational institutions
+
+[QUALITY:LINEAGE:PROCESS2]
+nOrganismes=1
+history=Vec3D.exe 1 C:\Mapes\ColleccionsPreferides\Catalunya-ETRS89\Altimetria30m\MDE30m_ICC_Aster_mar0.img D:\dades\GDAL_V\KML\multi\+\linies.arc D:\dades\GDAL_V\KML\multi\+\linies_3d.arc 0
+purpose=Incorpora la 3a dimensió en capes vectorials
+date=20231031 13263780+0100
+
+[QUALITY:LINEAGE:PROCESS2:ORGANISME_1]
+OrganisationName=Students and educational institutions
+
+[QUALITY:LINEAGE:PROCESS3]
+nOrganismes=1
+history=CanviPrj_64.exe D:\dades\GDAL_V\KML\multi\+\linies_3d.arc D:\dades\GDAL_V\KML\multi\+\linies_3d_WGS84.arc lat/long-WGS84
+purpose=Permet fer la transformació per a vectors estructurats de punts (PNT), d'arcs (ARC) i polígons (POL). Per a transformar fitxers de nodes (NOD) cal transformar el fitxer d'arcs associat.
+date=20231113 11502174+0100
+NomFitxer=C:\miramon\CanviPrj_64.exe
+
+[QUALITY:LINEAGE:PROCESS3:ORGANISME_1]
+OrganisationName=Students and educational institutions
+
+[QUALITY:LINEAGE:PROCESS3:SOFTWARE_REFERENCE]
+Titol=
+Edition=
+CollectiveTitle=
+ISBN=
+ISSN=
+
+[QUALITY:LINEAGE:PROCESS3:INOUT1]
+identifier=Param1
+TypeValues=S
+ResultUnits=
+source=1
+
+[QUALITY:LINEAGE:SOURCE1]
+NomFitxer=linies_3d.arc
+processes=4,5
+
+[QUALITY:LINEAGE:PROCESS4]
+nOrganismes=1
+history=C:\MiraMon\MM64.exe
+date=20230912 16505195+0200
+
+[QUALITY:LINEAGE:PROCESS4:ORGANISME_1]
+OrganisationName=Students and educational institutions
+
+[QUALITY:LINEAGE:PROCESS5]
+nOrganismes=1
+history=Vec3D.exe 1 C:\Mapes\ColleccionsPreferides\Catalunya-ETRS89\Altimetria30m\MDE30m_ICC_Aster_mar0.img D:\dades\GDAL_V\KML\multi\+\linies.arc D:\dades\GDAL_V\KML\multi\+\linies_3d.arc 0
+purpose=Incorpora la 3a dimensió en capes vectorials
+date=20231031 13263780+0100
+
+[QUALITY:LINEAGE:PROCESS5:ORGANISME_1]
+OrganisationName=Students and educational institutions
+
+[QUALITY:LINEAGE:PROCESS3:INOUT2]
+identifier=Param2
+sentit=1
+TypeValues=S
+ResultUnits=
+source=<Parent>
+
+[QUALITY:LINEAGE:PROCESS3:INOUT3]
+identifier=Param3
+TypeValues=C
+ResultValue=lat/long-WGS84
+ResultUnits=
+
+[QUALITY:LINEAGE]
+processes=1,2,3
+
+[GEOMETRIA_I_TOPOLOGIA]
+NomCampNVertexs=N_VERTEXS
+NomCampLongitudArc=LONG_ARC
+NomCampLongitudArcEllipsoidal=LONG_ARCE
+NomCampNodeIni=NODE_INI
+NomCampNodeFi=NODE_FI

@@ -5948,6 +5948,11 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
                     if (poDS && poDS->GetFieldDomain(oIter.second))
                         oFieldDefn.SetDomainName(oIter.second);
                 }
+                else if (oIter.first == ARROW_EXTENSION_NAME_KEY &&
+                         oIter.second == EXTENSION_NAME_ARROW_JSON)
+                {
+                    oFieldDefn.SetSubType(OFSTJSON);
+                }
                 else
                 {
                     CPLDebug("OGR", "Unknown field metadata: %s",
@@ -7436,8 +7441,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
 
     bool bTransactionOK;
     {
-        CPLErrorHandlerPusher oHandler(CPLQuietErrorHandler);
-        CPLErrorStateBackuper oBackuper;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
         bTransactionOK = StartTransaction() == OGRERR_NONE;
     }
 

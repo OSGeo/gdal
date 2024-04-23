@@ -678,7 +678,14 @@ def test_binary_field_bcp(mssql_ds):
             res_ds = gdal.VectorTranslate(
                 mssql_ds.GetDescription(),
                 filename,
-                options=["-nln", "test_binary_field", "-lco", "OVERWRITE=YES"],
+                options=[
+                    "-nln",
+                    "test_binary_field",
+                    "-lco",
+                    "OVERWRITE=YES",
+                    "-a_srs",
+                    "EPSG:4326",
+                ],
             )
 
             assert res_ds is not None

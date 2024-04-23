@@ -49,77 +49,71 @@ def module_disable_exceptions():
 
 
 @pytest.mark.parametrize("use_gdal", [True, False])
-def test_ogr_sql_execute_sql(use_gdal):
+def test_ogr_sql_execute_sql(tmp_path, use_gdal):
 
-    shutil.copy("data/poly.shp", "tmp/test_ogr_sql_execute_sql.shp")
-    shutil.copy("data/poly.shx", "tmp/test_ogr_sql_execute_sql.shx")
+    shutil.copy("data/poly.shp", tmp_path / "test_ogr_sql_execute_sql.shp")
+    shutil.copy("data/poly.shx", tmp_path / "test_ogr_sql_execute_sql.shx")
 
-    try:
+    def get_dataset():
+        return (
+            gdal.OpenEx(tmp_path / "test_ogr_sql_execute_sql.shp")
+            if use_gdal
+            else ogr.Open(tmp_path / "test_ogr_sql_execute_sql.shp")
+        )
 
-        def get_dataset():
-            return (
-                gdal.OpenEx("tmp/test_ogr_sql_execute_sql.shp")
-                if use_gdal
-                else ogr.Open("tmp/test_ogr_sql_execute_sql.shp")
-            )
+    def check_historic_way():
+        ds = get_dataset()
 
-        def check_historic_way():
-            ds = get_dataset()
+        # "Manual" / historic way of using ExecuteSQL() / ReleaseResultSet()
+        lyr = ds.ExecuteSQL("SELECT * FROM test_ogr_sql_execute_sql")
+        assert lyr.GetFeatureCount() == 10
+        ds.ReleaseResultSet(lyr)
 
-            # "Manual" / historic way of using ExecuteSQL() / ReleaseResultSet()
-            lyr = ds.ExecuteSQL("SELECT * FROM test_ogr_sql_execute_sql")
-            assert lyr.GetFeatureCount() == 10
+        # lyr invalidated
+        with pytest.raises(Exception):
+            lyr.GetName()
+
+        # lyr invalidated
+        with pytest.raises(Exception):
             ds.ReleaseResultSet(lyr)
 
-            # lyr invalidated
-            with pytest.raises(Exception):
-                lyr.GetName()
+        ds = None
 
-            # lyr invalidated
-            with pytest.raises(Exception):
-                ds.ReleaseResultSet(lyr)
+    check_historic_way()
 
-            ds = None
+    def check_context_manager():
+        ds = get_dataset()
 
-        check_historic_way()
-
-        def check_context_manager():
-            ds = get_dataset()
-
-            # ExecuteSQL() as context manager
-            with ds.ExecuteSQL("SELECT * FROM test_ogr_sql_execute_sql") as lyr:
-                assert lyr.GetFeatureCount() == 10
-
-            # lyr invalidated
-            with pytest.raises(Exception):
-                lyr.GetName()
-
-            ds = None
-
-        check_context_manager()
-
-        # ExecuteSQL() with keep_ref_on_ds=True
-        def get_lyr():
-            return get_dataset().ExecuteSQL(
-                "SELECT * FROM test_ogr_sql_execute_sql", keep_ref_on_ds=True
-            )
-
-        with get_lyr() as lyr:
+        # ExecuteSQL() as context manager
+        with ds.ExecuteSQL("SELECT * FROM test_ogr_sql_execute_sql") as lyr:
             assert lyr.GetFeatureCount() == 10
 
         # lyr invalidated
         with pytest.raises(Exception):
             lyr.GetName()
 
-        assert get_lyr().GetFeatureCount() == 10
+        ds = None
 
-        # Check that we can actually remove the files (i.e. references on dataset have been dropped)
-        os.unlink("tmp/test_ogr_sql_execute_sql.shp")
-        os.unlink("tmp/test_ogr_sql_execute_sql.shx")
+    check_context_manager()
 
-    except Exception:
-        os.unlink("tmp/test_ogr_sql_execute_sql.shp")
-        os.unlink("tmp/test_ogr_sql_execute_sql.shx")
+    # ExecuteSQL() with keep_ref_on_ds=True
+    def get_lyr():
+        return get_dataset().ExecuteSQL(
+            "SELECT * FROM test_ogr_sql_execute_sql", keep_ref_on_ds=True
+        )
+
+    with get_lyr() as lyr:
+        assert lyr.GetFeatureCount() == 10
+
+    # lyr invalidated
+    with pytest.raises(Exception):
+        lyr.GetName()
+
+    assert get_lyr().GetFeatureCount() == 10
+
+    # Check that we can actually remove the files (i.e. references on dataset have been dropped)
+    os.unlink(tmp_path / "test_ogr_sql_execute_sql.shp")
+    os.unlink(tmp_path / "test_ogr_sql_execute_sql.shx")
 
 
 @pytest.mark.require_driver("SQLite")
@@ -1863,3 +1857,19 @@ def test_ogr_sql_ilike_utf8():
 
     lyr.SetAttributeFilter("'éven' ILIKE '%xen'")
     assert lyr.GetFeatureCount() == 0
+
+
+###############################################################################
+# Test error on setting a spatial filter during ExecuteSQL
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_sql_test_execute_sql_error_on_spatial_filter_mem_layer():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))")
+    with pytest.raises(
+        Exception, match="Cannot set spatial filter: no geometry field present in layer"
+    ):
+        ds.ExecuteSQL("SELECT 1 FROM test", spatialFilter=geom)

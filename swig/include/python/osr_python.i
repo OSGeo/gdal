@@ -16,8 +16,12 @@
 #define MODULE_NAME           "osr"
 %}
 
+%include "osr_docs.i"
+%include "osr_spatialreference_docs.i"
+%include "osr_coordinatetransformation_docs.i"
 %include "python_exceptions.i"
 %include "python_strings.i"
+
 #endif
 
 %include typemaps_python.i
@@ -115,6 +119,29 @@ def TransformPoint(self, *args):
     TransformPoint(CoordinateTransformation self, double [4] inout)
     TransformPoint(CoordinateTransformation self, double x, double y, double z=0.0)
     TransformPoint(CoordinateTransformation self, double x, double y, double z, double t)
+
+    Transform a single point.
+
+    See :cpp:func:`OCTTransform`.
+
+    Returns
+    -------
+    tuple
+        A tuple of (x, y, z) or (x, y, z, t) values, depending on the input.
+
+    Examples
+    --------
+    >>> wgs84 = osr.SpatialReference()
+    >>> wgs84.ImportFromEPSG(4326)
+    0
+    >>> vt_sp = osr.SpatialReference()
+    >>> vt_sp.ImportFromEPSG(5646)
+    0
+    >>> ct = osr.CoordinateTransformation(wgs84, ps)
+    >>> ct.TransformPoint(-72.58, 44.26)
+    (7390620.052019633, -51202148.77747277, 0.0)
+    >>> ct.TransformPoint(-72.58, 44.26, 103)
+    (7390620.052019633, -51202148.77747277, 103.0)
     """
 
     import collections.abc

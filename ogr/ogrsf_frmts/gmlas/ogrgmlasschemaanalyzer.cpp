@@ -165,12 +165,12 @@ void GMLASPrefixMappingHander::startPrefixMapping(const XMLCh *const prefix,
 /************************************************************************/
 
 static void CollectNamespacePrefixes(
-    const char *pszXSDFilename, VSILFILE *fpXSD,
+    const char *pszXSDFilename, const std::shared_ptr<VSIVirtualHandle> &fpXSD,
     std::map<CPLString, CPLString> &oMapURIToPrefix,
     const std::map<CPLString, CPLString> &oMapDocNSURIToPrefix,
     CPLString &osGMLVersionFound)
 {
-    GMLASInputSource oSource(pszXSDFilename, fpXSD, false);
+    GMLASInputSource oSource(pszXSDFilename, fpXSD);
     // This is a bit silly but the startPrefixMapping() callback only gets
     // called when using SAX2XMLReader::parse(), and not when using
     // loadGrammar(), so we have to parse the doc twice.
@@ -237,8 +237,9 @@ class GMLASAnalyzerEntityResolver final : public GMLASBaseEntityResolver
     {
     }
 
-    virtual void DoExtraSchemaProcessing(const CPLString &osFilename,
-                                         VSILFILE *fp) override;
+    virtual void DoExtraSchemaProcessing(
+        const CPLString &osFilename,
+        const std::shared_ptr<VSIVirtualHandle> &fp) override;
 };
 
 /************************************************************************/
@@ -246,11 +247,11 @@ class GMLASAnalyzerEntityResolver final : public GMLASBaseEntityResolver
 /************************************************************************/
 
 void GMLASAnalyzerEntityResolver::DoExtraSchemaProcessing(
-    const CPLString &osFilename, VSILFILE *fp)
+    const CPLString &osFilename, const std::shared_ptr<VSIVirtualHandle> &fp)
 {
     CollectNamespacePrefixes(osFilename, fp, m_oMapURIToPrefix,
                              m_oMapDocNSURIToPrefix, m_osGMLVersionFound);
-    VSIFSeekL(fp, 0, SEEK_SET);
+    fp->Seek(0, SEEK_SET);
 }
 
 /************************************************************************/
@@ -548,7 +549,7 @@ bool GMLASSchemaAnalyzer::LaunderFieldNames(GMLASFeatureClass &oClass)
         for (size_t i = 0; i < aoFields.size(); i++)
         {
             char *pszLaundered =
-                OGRPGCommonLaunderName(aoFields[i].GetName(), "GMLAS");
+                OGRPGCommonLaunderName(aoFields[i].GetName(), "GMLAS", false);
             aoFields[i].SetName(pszLaundered);
             CPLFree(pszLaundered);
         }
@@ -639,7 +640,7 @@ void GMLASSchemaAnalyzer::LaunderClassNames()
         for (size_t i = 0; i < aoClasses.size(); i++)
         {
             char *pszLaundered =
-                OGRPGCommonLaunderName(aoClasses[i]->GetName(), "GMLAS");
+                OGRPGCommonLaunderName(aoClasses[i]->GetName(), "GMLAS", false);
             aoClasses[i]->SetName(pszLaundered);
             CPLFree(pszLaundered);
         }

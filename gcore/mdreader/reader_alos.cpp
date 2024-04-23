@@ -299,10 +299,6 @@ void GDALMDReaderALOS::LoadMetadata()
     }
 }
 
-static const char *const apszRPCTXT20ValItems[] = {
-    RPC_LINE_NUM_COEFF, RPC_LINE_DEN_COEFF, RPC_SAMP_NUM_COEFF,
-    RPC_SAMP_DEN_COEFF, nullptr};
-
 /**
  * LoadRPCTxtFile
  */
@@ -311,74 +307,77 @@ char **GDALMDReaderALOS::LoadRPCTxtFile()
     if (m_osRPBSourceFilename.empty())
         return nullptr;
 
-    char **papszLines = CSLLoad(m_osRPBSourceFilename);
-    if (nullptr == papszLines)
+    const CPLStringList aosLines(CSLLoad(m_osRPBSourceFilename));
+    if (aosLines.empty())
         return nullptr;
 
-    const char *pszFirstRow = papszLines[0];
-    char **papszRPB = nullptr;
+    const char *pszFirstRow = aosLines[0];
+    CPLStringList aosRPB;
     if (nullptr != pszFirstRow)
     {
-        char buff[50] = {0};
-        int nOffset = 0;
-        CPLStrlcpy(buff, pszFirstRow + nOffset, 7);
-        nOffset += 6;
-        papszRPB = CSLAddNameValue(papszRPB, RPC_LINE_OFF, buff);
-
-        CPLStrlcpy(buff, pszFirstRow + nOffset, 6);
-        nOffset += 5;
-        papszRPB = CSLAddNameValue(papszRPB, RPC_SAMP_OFF, buff);
-
-        CPLStrlcpy(buff, pszFirstRow + nOffset, 9);
-        nOffset += 8;
-        papszRPB = CSLAddNameValue(papszRPB, RPC_LAT_OFF, buff);
-
-        CPLStrlcpy(buff, pszFirstRow + nOffset, 10);
-        nOffset += 9;
-        papszRPB = CSLAddNameValue(papszRPB, RPC_LONG_OFF, buff);
-
-        CPLStrlcpy(buff, pszFirstRow + nOffset, 6);
-        nOffset += 5;
-        papszRPB = CSLAddNameValue(papszRPB, RPC_HEIGHT_OFF, buff);
-
-        CPLStrlcpy(buff, pszFirstRow + nOffset, 7);
-        nOffset += 6;
-        papszRPB = CSLAddNameValue(papszRPB, RPC_LINE_SCALE, buff);
-
-        CPLStrlcpy(buff, pszFirstRow + nOffset, 6);
-        nOffset += 5;
-        papszRPB = CSLAddNameValue(papszRPB, RPC_SAMP_SCALE, buff);
-
-        CPLStrlcpy(buff, pszFirstRow + nOffset, 9);
-        nOffset += 8;
-        papszRPB = CSLAddNameValue(papszRPB, RPC_LAT_SCALE, buff);
-
-        CPLStrlcpy(buff, pszFirstRow + nOffset, 10);
-        nOffset += 9;
-        papszRPB = CSLAddNameValue(papszRPB, RPC_LONG_SCALE, buff);
-
-        CPLStrlcpy(buff, pszFirstRow + nOffset, 6);
-        nOffset += 5;
-        papszRPB = CSLAddNameValue(papszRPB, RPC_HEIGHT_SCALE, buff);
-
-        int i, j;
-        for (i = 0; apszRPCTXT20ValItems[i] != nullptr; i++)
+        static const struct
         {
-            CPLString value;
-            for (j = 1; j < 21; j++)
-            {
-                CPLStrlcpy(buff, pszFirstRow + nOffset, 13);
-                nOffset += 12;
+            const char *pszName;
+            int nSize;
+        } apsFieldDescriptors[] = {
+            {RPC_LINE_OFF, 6},     {RPC_SAMP_OFF, 5},   {RPC_LAT_OFF, 8},
+            {RPC_LONG_OFF, 9},     {RPC_HEIGHT_OFF, 5}, {RPC_LINE_SCALE, 6},
+            {RPC_SAMP_SCALE, 5},   {RPC_LAT_SCALE, 8},  {RPC_LONG_SCALE, 9},
+            {RPC_HEIGHT_SCALE, 5},
+        };
 
-                value = value + " " + CPLString(buff);
+        int nRequiredSize = 0;
+        for (const auto &sFieldDescriptor : apsFieldDescriptors)
+        {
+            nRequiredSize += sFieldDescriptor.nSize;
+        }
+
+        static const char *const apszRPCTXT20ValItems[] = {
+            RPC_LINE_NUM_COEFF, RPC_LINE_DEN_COEFF, RPC_SAMP_NUM_COEFF,
+            RPC_SAMP_DEN_COEFF};
+
+        constexpr int RPC_COEFF_COUNT1 = CPL_ARRAYSIZE(apszRPCTXT20ValItems);
+        constexpr int RPC_COEFF_COUNT2 = 20;
+        constexpr int RPC_COEFF_SIZE = 12;
+        nRequiredSize += RPC_COEFF_COUNT1 * RPC_COEFF_COUNT2 * RPC_COEFF_SIZE;
+        if (strlen(pszFirstRow) < static_cast<size_t>(nRequiredSize))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "%s has only %d bytes wherea %d are required",
+                     m_osRPBSourceFilename.c_str(), int(strlen(pszFirstRow)),
+                     nRequiredSize);
+            return nullptr;
+        }
+
+        int nOffset = 0;
+        char buff[16] = {0};
+        for (const auto &sFieldDescriptor : apsFieldDescriptors)
+        {
+            CPLAssert(sFieldDescriptor.nSize < int(sizeof(buff)));
+            memcpy(buff, pszFirstRow + nOffset, sFieldDescriptor.nSize);
+            buff[sFieldDescriptor.nSize] = 0;
+            aosRPB.SetNameValue(sFieldDescriptor.pszName, buff);
+            nOffset += sFieldDescriptor.nSize;
+        }
+
+        for (const char *pszItem : apszRPCTXT20ValItems)
+        {
+            std::string osValue;
+            for (int j = 0; j < RPC_COEFF_COUNT2; j++)
+            {
+                memcpy(buff, pszFirstRow + nOffset, RPC_COEFF_SIZE);
+                buff[RPC_COEFF_SIZE] = 0;
+                nOffset += RPC_COEFF_SIZE;
+
+                if (!osValue.empty())
+                    osValue += " ";
+                osValue += buff;
             }
-            papszRPB =
-                CSLAddNameValue(papszRPB, apszRPCTXT20ValItems[i], value);
+            aosRPB.SetNameValue(pszItem, osValue.c_str());
         }
     }
-    CSLDestroy(papszLines);
 
-    return papszRPB;
+    return aosRPB.StealList();
 }
 
 /**

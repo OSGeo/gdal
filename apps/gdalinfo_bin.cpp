@@ -35,53 +35,36 @@
 #include "gdal_utils_priv.h"
 
 /************************************************************************/
+/*                               GDALExit()                             */
+/*  This function exits and cleans up GDAL and OGR resources            */
+/*  Perhaps it should be added to C api and used in all apps?           */
+/************************************************************************/
+
+static int GDALExit(int nCode)
+{
+    const char *pszDebug = CPLGetConfigOption("CPL_DEBUG", nullptr);
+    if (pszDebug && (EQUAL(pszDebug, "ON") || EQUAL(pszDebug, "")))
+    {
+        GDALDumpOpenDatasets(stderr);
+        CPLDumpSharedList(nullptr);
+    }
+
+    GDALDestroyDriverManager();
+
+    OGRCleanupAll();
+
+    exit(nCode);
+}
+
+/************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
+static void Usage()
 
 {
-    fprintf(
-        bIsError ? stderr : stdout,
-        "Usage: gdalinfo [--help] [--help-general]\n"
-        "                [-json] [-mm] [-stats | -approx_stats] [-hist]\n"
-        "                [-nogcp] [-nomd] [-norat] [-noct] [-nofl]\n"
-        "                [-checksum] [-listmdd] [-mdd <domain>|all]\n"
-        "                [-proj4] [-wkt_format {WKT1|WKT2|<other_format>}]...\n"
-        "                [-sd <subdataset>] [-oo <NAME>=<VALUE>]... [-if "
-        "<format>]...\n"
-        "                <datasetname>\n");
-
-    if (pszErrorMsg != nullptr)
-        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
-
-    exit(bIsError ? 1 : 0);
-}
-
-/************************************************************************/
-/*                         GDALInfoOptionsForBinary()                   */
-/************************************************************************/
-
-static GDALInfoOptionsForBinary *GDALInfoOptionsForBinaryNew(void)
-{
-    return static_cast<GDALInfoOptionsForBinary *>(
-        CPLCalloc(1, sizeof(GDALInfoOptionsForBinary)));
-}
-
-/************************************************************************/
-/*                       GDALInfoOptionsForBinaryFree()                 */
-/************************************************************************/
-
-static void
-GDALInfoOptionsForBinaryFree(GDALInfoOptionsForBinary *psOptionsForBinary)
-{
-    if (psOptionsForBinary)
-    {
-        CPLFree(psOptionsForBinary->pszFilename);
-        CSLDestroy(psOptionsForBinary->papszOpenOptions);
-        CSLDestroy(psOptionsForBinary->papszAllowInputDrivers);
-        CPLFree(psOptionsForBinary);
-    }
+    fprintf(stderr, "%s\n", GDALInfoAppGetParserUsage().c_str());
+    GDALExit(1);
 }
 
 /************************************************************************/
@@ -93,39 +76,30 @@ MAIN_START(argc, argv)
 {
     EarlySetConfigOptions(argc, argv);
 
-    GDALAllRegister();
+    /* -------------------------------------------------------------------- */
+    /*      Register standard GDAL drivers, and process generic GDAL        */
+    /*      command options.                                                */
+    /* -------------------------------------------------------------------- */
 
+    GDALAllRegister();
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
     if (argc < 1)
-        exit(-argc);
+        GDALExit(-argc);
 
-    for (int i = 0; argv != nullptr && argv[i] != nullptr; i++)
+    /* -------------------------------------------------------------------- */
+    /*      Parse command line                                              */
+    /* -------------------------------------------------------------------- */
+
+    GDALInfoOptionsForBinary sOptionsForBinary;
+
+    std::unique_ptr<GDALInfoOptions, decltype(&GDALInfoOptionsFree)> psOptions{
+        GDALInfoOptionsNew(argv + 1, &sOptionsForBinary), GDALInfoOptionsFree};
+    CSLDestroy(argv);
+
+    if (!psOptions)
     {
-        if (EQUAL(argv[i], "--utility_version"))
-        {
-            printf("%s was compiled against GDAL %s and is running against "
-                   "GDAL %s\n",
-                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy(argv);
-            return 0;
-        }
-        else if (EQUAL(argv[i], "--help"))
-        {
-            Usage(false);
-        }
+        Usage();
     }
-    argv = CSLAddString(argv, "-stdout");
-
-    GDALInfoOptionsForBinary *psOptionsForBinary =
-        GDALInfoOptionsForBinaryNew();
-
-    GDALInfoOptions *psOptions =
-        GDALInfoOptionsNew(argv + 1, psOptionsForBinary);
-    if (psOptions == nullptr)
-        Usage(true);
-
-    if (psOptionsForBinary->pszFilename == nullptr)
-        Usage(true, "No datasource specified.");
 
 /* -------------------------------------------------------------------- */
 /*      Open dataset.                                                   */
@@ -138,37 +112,50 @@ MAIN_START(argc, argv)
 #endif
 
         GDALDatasetH hDataset = GDALOpenEx(
-            psOptionsForBinary->pszFilename,
+            sOptionsForBinary.osFilename.c_str(),
             GDAL_OF_READONLY | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
-            psOptionsForBinary->papszAllowInputDrivers,
-            psOptionsForBinary->papszOpenOptions, nullptr);
+            sOptionsForBinary.aosAllowedInputDrivers,
+            sOptionsForBinary.aosOpenOptions, nullptr);
 
         if (hDataset == nullptr)
         {
 #ifdef __AFL_HAVE_MANUAL_CONTROL
             continue;
 #else
-        fprintf(stderr, "gdalinfo failed - unable to open '%s'.\n",
-                psOptionsForBinary->pszFilename);
+        VSIStatBuf sStat;
+        CPLString message;
+        message.Printf("gdalinfo failed - unable to open '%s'.",
+                       sOptionsForBinary.osFilename.c_str());
+        if (VSIStat(sOptionsForBinary.osFilename.c_str(), &sStat) == 0)
+        {
+            GDALDriverH drv =
+                GDALIdentifyDriverEx(sOptionsForBinary.osFilename.c_str(),
+                                     GDAL_OF_VECTOR, nullptr, nullptr);
+            if (drv)
+            {
+                message += " Did you intend to call ogrinfo?";
+            }
+        }
+        fprintf(stderr, "%s\n", message.c_str());
 
         /* --------------------------------------------------------------------
          */
         /*      If argument is a VSIFILE, then print its contents */
         /* --------------------------------------------------------------------
          */
-        if (STARTS_WITH(psOptionsForBinary->pszFilename, "/vsizip/") ||
-            STARTS_WITH(psOptionsForBinary->pszFilename, "/vsitar/"))
+        if (STARTS_WITH(sOptionsForBinary.osFilename.c_str(), "/vsizip/") ||
+            STARTS_WITH(sOptionsForBinary.osFilename.c_str(), "/vsitar/"))
         {
             const char *const apszOptions[] = {"NAME_AND_TYPE_ONLY=YES",
                                                nullptr};
-            VSIDIR *psDir =
-                VSIOpenDir(psOptionsForBinary->pszFilename, -1, apszOptions);
+            VSIDIR *psDir = VSIOpenDir(sOptionsForBinary.osFilename.c_str(), -1,
+                                       apszOptions);
             if (psDir)
             {
                 fprintf(stdout,
                         "Unable to open source `%s' directly.\n"
                         "The archive contains several files:\n",
-                        psOptionsForBinary->pszFilename);
+                        sOptionsForBinary.osFilename.c_str());
                 int nCount = 0;
                 while (auto psEntry = VSIGetNextDirEntry(psDir))
                 {
@@ -176,13 +163,13 @@ MAIN_START(argc, argv)
                         psEntry->pszName[strlen(psEntry->pszName) - 1] != '/')
                     {
                         fprintf(stdout, "       %s/%s/\n",
-                                psOptionsForBinary->pszFilename,
+                                sOptionsForBinary.osFilename.c_str(),
                                 psEntry->pszName);
                     }
                     else
                     {
                         fprintf(stdout, "       %s/%s\n",
-                                psOptionsForBinary->pszFilename,
+                                sOptionsForBinary.osFilename.c_str(),
                                 psEntry->pszName);
                     }
                     nCount++;
@@ -195,12 +182,6 @@ MAIN_START(argc, argv)
                 VSICloseDir(psDir);
             }
         }
-
-        CSLDestroy(argv);
-
-        GDALInfoOptionsForBinaryFree(psOptionsForBinary);
-
-        GDALInfoOptionsFree(psOptions);
 
         GDALDumpOpenDatasets(stderr);
 
@@ -217,19 +198,19 @@ MAIN_START(argc, argv)
         /*      Read specified subdataset if requested. */
         /* --------------------------------------------------------------------
          */
-        if (psOptionsForBinary->nSubdataset > 0)
+        if (sOptionsForBinary.nSubdataset > 0)
         {
             char **papszSubdatasets = GDALGetMetadata(hDataset, "SUBDATASETS");
             int nSubdatasets = CSLCount(papszSubdatasets);
 
             if (nSubdatasets > 0 &&
-                psOptionsForBinary->nSubdataset <= nSubdatasets)
+                sOptionsForBinary.nSubdataset <= nSubdatasets)
             {
                 char szKeyName[1024];
                 char *pszSubdatasetName;
 
                 snprintf(szKeyName, sizeof(szKeyName), "SUBDATASET_%d_NAME",
-                         psOptionsForBinary->nSubdataset);
+                         sOptionsForBinary.nSubdataset);
                 szKeyName[sizeof(szKeyName) - 1] = '\0';
                 pszSubdatasetName =
                     CPLStrdup(CSLFetchNameValue(papszSubdatasets, szKeyName));
@@ -242,11 +223,11 @@ MAIN_START(argc, argv)
                 fprintf(stderr,
                         "gdalinfo warning: subdataset %d of %d requested. "
                         "Reading the main dataset.\n",
-                        psOptionsForBinary->nSubdataset, nSubdatasets);
+                        sOptionsForBinary.nSubdataset, nSubdatasets);
             }
         }
 
-        char *pszGDALInfoOutput = GDALInfo(hDataset, psOptions);
+        char *pszGDALInfoOutput = GDALInfo(hDataset, psOptions.get());
 
         if (pszGDALInfoOutput)
             printf("%s", pszGDALInfoOutput);
@@ -258,17 +239,12 @@ MAIN_START(argc, argv)
     }
 #endif
 
-    GDALInfoOptionsForBinaryFree(psOptionsForBinary);
-
-    GDALInfoOptionsFree(psOptions);
-
-    CSLDestroy(argv);
-
     GDALDumpOpenDatasets(stderr);
 
     GDALDestroyDriverManager();
 
     CPLDumpSharedList(nullptr);
+
     GDALDestroy();
 
     exit(0);

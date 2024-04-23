@@ -113,6 +113,10 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     // int          FilterGeometry( OGRGeometry *, OGREnvelope*
     // psGeometryEnvelope);
     int InstallFilter(OGRGeometry *);
+    bool
+    ValidateGeometryFieldIndexForSetSpatialFilter(int iGeomField,
+                                                  const OGRGeometry *poGeomIn,
+                                                  bool bIsSelectLayer = false);
 
     OGRErr GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bForce);
     //! @endcond
@@ -296,7 +300,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual const char *GetFIDColumn();
     virtual const char *GetGeometryColumn();
 
-    virtual OGRErr SetIgnoredFields(const char **papszFields);
+    virtual OGRErr SetIgnoredFields(CSLConstList papszFields);
 
     virtual OGRGeometryTypeCounter *
     GetGeometryTypes(int iGeomField, int nFlagsGGT, int &nEntryCountOut,
@@ -737,6 +741,7 @@ void DeclareDeferredOGRArrowPlugin();
 void CPL_DLL RegisterOGRGTFS();
 void CPL_DLL RegisterOGRPMTiles();
 void CPL_DLL RegisterOGRJSONFG();
+void CPL_DLL RegisterOGRMiraMon();
 // @endcond
 
 CPL_C_END

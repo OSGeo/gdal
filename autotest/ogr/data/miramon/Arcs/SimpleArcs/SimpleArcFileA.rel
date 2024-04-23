@@ -1,0 +1,102 @@
+[VERSIO]
+VersMetaDades=5
+SubVersMetaDades=0
+Vers=4
+SubVers=3
+
+[METADADES]
+language=cat,spa,eng
+MDIdiom=cat,spa,eng
+dateStamp=20230628 16235471+0200
+characterSet=006
+nOrganismes=1
+FileIdentifier=16b4eae3-8f74-4145-95db-babb7f0feb0f_SimpleArcFileA
+
+[METADADES:ORGANISME_1]
+role=009
+IndividualName=Abel Pau
+PositionName=Tècnic SIG
+OrganisationName=Students and educational institutions
+
+[IDENTIFICATION]
+code=16b4eae3-8f74-4145-95db-babb7f0feb0f_SimpleArcFileA
+codeSpace=
+DatasetTitle=Simple Arc File
+
+[SPATIAL_REFERENCE_SYSTEM:HORIZONTAL]
+HorizontalSystemDefinition=Local
+HorizontalSystemIdentifier=plane
+unitats=STB#T_pixels
+unitatsY=?
+
+[EXTENT]
+toler_env=0
+MinX=351.333967649907
+MaxX=1369.30161750719
+MinY=201.191246431919
+MaxY=931.88582302564
+
+[OVERVIEW]
+CreationDate=20230628 16235470+0200
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_N_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+visible=0
+descriptor=Identificador Gràfic intern
+descriptor_spa=Identificador Gráfico interno
+descriptor_eng=Internal Graphic identifier
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:N_VERTEXS]
+visible=0
+MostrarUnitats=0
+descriptor=Nombre de vèrtexs
+descriptor_spa=Número de vertices
+descriptor_eng=Number of vertices
+
+[TAULA_PRINCIPAL:LONG_ARC]
+descriptor=Longitud de l'arc
+descriptor_spa=Longitud del arco
+descriptor_eng=Lenght of arc
+
+[TAULA_PRINCIPAL:NODE_INI]
+visible=0
+MostrarUnitats=0
+descriptor=Node inicial
+descriptor_spa=Nodo inicial
+descriptor_eng=Initial node
+
+[TAULA_PRINCIPAL:NODE_FI]
+visible=0
+MostrarUnitats=0
+descriptor=Node final
+descriptor_spa=Nodo final
+descriptor_eng=Final node
+
+[TAULA_PRINCIPAL:ATT1]
+descriptor=Atributte1
+
+[TAULA_PRINCIPAL:ATT2]
+descriptor=Attribute2
+
+[QUALITY:LINEAGE:PROCESS1]
+nOrganismes=1
+history=C:\MiraMon\MM64.exe
+date=20230628 16235471+0200
+
+[QUALITY:LINEAGE:PROCESS1:ORGANISME_1]
+IndividualName=Abel Pau
+PositionName=Tècnic SIG
+OrganisationName=Students and educational institutions
+
+[QUALITY:LINEAGE]
+processes=1
+
+[GEOMETRIA_I_TOPOLOGIA]
+NomCampNVertexs=N_VERTEXS
+NomCampLongitudArc=LONG_ARC
+NomCampNodeIni=NODE_INI
+NomCampNodeFi=NODE_FI

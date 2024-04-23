@@ -324,6 +324,7 @@ class OGRPGTableLayer final : public OGRPGLayer
     CPLString osWHERE{};
 
     int bLaunderColumnNames = true;
+    bool m_bUTF8ToASCII = false;
     int bPreservePrecision = true;
     int bUseCopy = USE_COPY_UNSET;
     int bCopyActive = false;
@@ -463,6 +464,11 @@ class OGRPGTableLayer final : public OGRPGLayer
     void SetLaunderFlag(int bFlag)
     {
         bLaunderColumnNames = bFlag;
+    }
+
+    void SetUTF8ToASCIIFlag(bool bFlag)
+    {
+        m_bUTF8ToASCII = bFlag;
     }
 
     void SetPrecisionFlag(int bFlag)

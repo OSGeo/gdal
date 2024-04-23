@@ -72,7 +72,6 @@ const char GDAL_MARKER_FOR_DIR[] = ".gdal_marker_for_dir";
 
 struct VSIDIRAz : public VSIDIRWithMissingDirSynthesis
 {
-    std::string osRootPath{};
     int nRecurseDepth = 0;
 
     std::string osNextMarker{};
@@ -129,14 +128,14 @@ bool VSIDIRAz::AnalyseAzureFileList(const std::string &osBaseURL,
     CPLXMLNode *psEnumerationResults =
         CPLGetXMLNode(psTree, "=EnumerationResults");
 
-    bool bNonEmpty = false;
+    bool bOK = false;
     if (psEnumerationResults)
     {
         CPLString osPrefix = CPLGetXMLValue(psEnumerationResults, "Prefix", "");
         if (osPrefix.empty())
         {
             // in the case of an empty bucket
-            bNonEmpty = true;
+            bOK = true;
         }
         else if (osPrefix.endsWith(m_osFilterPrefix))
         {
@@ -148,7 +147,7 @@ bool VSIDIRAz::AnalyseAzureFileList(const std::string &osBaseURL,
         {
             psBlobs = CPLGetXMLNode(psEnumerationResults, "Containers");
             if (psBlobs != nullptr)
-                bNonEmpty = true;
+                bOK = true;
         }
 
         std::string GDAL_MARKER_FOR_DIR_WITH_LEADING_SLASH("/");
@@ -167,6 +166,7 @@ bool VSIDIRAz::AnalyseAzureFileList(const std::string &osBaseURL,
                 const char *pszKey = CPLGetXMLValue(psIter, "Name", nullptr);
                 if (pszKey && strstr(pszKey, GDAL_MARKER_FOR_DIR) != nullptr)
                 {
+                    bOK = true;
                     if (nRecurseDepth < 0)
                     {
                         if (strcmp(pszKey + osPrefix.size(),
@@ -181,18 +181,17 @@ bool VSIDIRAz::AnalyseAzureFileList(const std::string &osBaseURL,
                         aoNameCount[pszName]++;
                         CPLFree(pszName);
                     }
-                    bNonEmpty = true;
                 }
                 else if (pszKey && strlen(pszKey) > osPrefix.size())
                 {
-                    bNonEmpty = true;
+                    bOK = true;
                     aoNameCount[pszKey + osPrefix.size()]++;
                 }
             }
             else if (strcmp(psIter->pszValue, "BlobPrefix") == 0 ||
                      strcmp(psIter->pszValue, "Container") == 0)
             {
-                bNonEmpty = true;
+                bOK = true;
 
                 const char *pszKey = CPLGetXMLValue(psIter, "Name", nullptr);
                 if (pszKey &&
@@ -378,7 +377,7 @@ bool VSIDIRAz::AnalyseAzureFileList(const std::string &osBaseURL,
     }
     CPLDestroyXMLNode(psTree);
 
-    return bNonEmpty;
+    return bOK;
 }
 
 /************************************************************************/

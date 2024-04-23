@@ -352,6 +352,44 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 %clear (GByte **out, vsi_l_offset *length);
 
 
+%pythonappend VSIFCloseL %{
+    args[0].this = None
+%}
+
+%pythonprepend VSIFCloseL %{
+    if args[0].this is None:
+        raise ValueError("I/O operation on closed file.")
+%}
+
+%pythonprepend VSIFEofL %{
+    if args[0].this is None:
+        raise ValueError("I/O operation on closed file.")
+%}
+
+%pythonprepend VSIFFlushL %{
+    if args[0].this is None:
+        raise ValueError("I/O operation on closed file.")
+%}
+
+%pythonprepend VSIFSeekL %{
+    if args[0].this is None:
+        raise ValueError("I/O operation on closed file.")
+%}
+
+%pythonprepend VSIFTellL %{
+    if args[0].this is None:
+        raise ValueError("I/O operation on closed file.")
+%}
+
+%pythonprepend VSIFTruncateL %{
+    if args[0].this is None:
+        raise ValueError("I/O operation on closed file.")
+%}
+
+%pythonprepend wrapper_VSIFWriteL %{
+    if args[3].this is None:
+        raise ValueError("I/O operation on closed file.")
+%}
 
 /* -------------------------------------------------------------------- */
 /*      GDAL_GCP                                                        */
@@ -2148,6 +2186,7 @@ def VectorInfoOptions(options=None,
                       deserialize=True,
                       layers=None,
                       dumpFeatures=False,
+                      limit=None,
                       featureCount=True,
                       extent=True,
                       SQLStatement=None,
@@ -2179,6 +2218,8 @@ def VectorInfoOptions(options=None,
             whether to compute and display the layer extent. Can also be set to the string '3D' to request a 3D extent
         dumpFeatures:
             set to True to get the dump of all features
+        limit:
+            maximum number of features to read per layer
     """
 
     options = [] if options is None else options
@@ -2224,6 +2265,8 @@ def VectorInfoOptions(options=None,
         else:
             if not dumpFeatures:
                 new_options += ["-so"]
+        if limit:
+            new_options += ["-limit", str(limit)]
 
     return (GDALVectorInfoOptions(new_options), format, deserialize)
 
@@ -2588,6 +2631,8 @@ def WarpOptions(options=None, format=None,
          srcNodata=None, dstNodata=None, multithread = False,
          tps = False, rpc = False, geoloc = False, polynomialOrder=None,
          transformerOptions=None, cutlineDSName=None,
+         cutlineWKT=None,
+         cutlineSRS=None,
          cutlineLayer=None, cutlineWhere=None, cutlineSQL=None, cutlineBlend=None, cropToCutline = False,
          copyMetadata = True, metadataConflictValue=None,
          setColorInterpretation = False,
@@ -2661,7 +2706,11 @@ def WarpOptions(options=None, format=None,
     transformerOptions:
         list or dict of transformer options
     cutlineDSName:
-        cutline dataset name
+        cutline dataset name (mutually exclusive with cutlineDSName)
+    cutlineWKT:
+        cutline WKT geometry (POLYGON or MULTIPOLYGON) (mutually exclusive with cutlineWKT)
+    cutlineSRS:
+        set/override cutline SRS
     cutlineLayer:
         cutline layer name
     cutlineWhere:
@@ -2795,7 +2844,13 @@ def WarpOptions(options=None, format=None,
                 for opt in transformerOptions:
                     new_options += ['-to', opt]
         if cutlineDSName is not None:
+            if cutlineWKT is not None:
+                raise Exception("cutlineDSName and cutlineWKT are mutually exclusive")
             new_options += ['-cutline', str(cutlineDSName)]
+        if cutlineWKT is not None:
+            new_options += ['-cutline', str(cutlineWKT)]
+        if cutlineSRS is not None:
+            new_options += ['-cutline_srs', str(cutlineSRS)]
         if cutlineLayer is not None:
             new_options += ['-cl', str(cutlineLayer)]
         if cutlineWhere is not None:
@@ -3096,7 +3151,10 @@ def VectorTranslateOptions(options=None, format=None,
             for item in selectFields:
                 if val:
                     val += ','
-                val += item
+                if ',' in item or ' ' in item or '"' in item:
+                    val += '"' + item.replace('"', '\\"') + '"'
+                else:
+                    val += item
             new_options += ['-select', val]
 
         if datasetCreationOptions is not None:

@@ -172,6 +172,11 @@ They can also be specified independently as open options to the driver.
       Should all the low level geometry
       primitives be returned as special IsolatedNode, ConnectedNode, Edge
       and Face layers.
+      Note that for features of the Edge layer, the returned OGR LineString
+      geometry does not include the start and end nodes. Their coordinates can
+      be retrieved by joining with the NAME_RCID_0 (identifier of the start node)
+      and NAME_RCID_1 (identifier of the end node) with the RCID field of
+      the ConnectedNode layer.
 
 -  .. oo:: PRESERVE_EMPTY_NUMBERS
       :choices: ON, OFF

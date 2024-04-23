@@ -279,6 +279,8 @@ class IOGRSQLiteSelectLayer
     virtual OGRErr BaseGetExtent(OGREnvelope *psExtent, int bForce) = 0;
     virtual OGRErr BaseGetExtent(int iGeomField, OGREnvelope *psExtent,
                                  int bForce) = 0;
+    virtual bool ValidateGeometryFieldIndexForSetSpatialFilter(
+        int iGeomField, const OGRGeometry *poGeomIn, bool bIsSelectLayer) = 0;
 };
 
 /************************************************************************/

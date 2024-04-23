@@ -2914,10 +2914,7 @@ CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
     /* -------------------------------------------------------------------- */
     CPLErr eErr = CE_None;
 
-    const char *pszInternalMask =
-        CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", nullptr);
-    if (m_poMaskDS != nullptr && m_poMaskDS->GetRasterCount() == 1 &&
-        (pszInternalMask == nullptr || CPLTestBool(pszInternalMask)))
+    if (m_poMaskDS != nullptr && m_poMaskDS->GetRasterCount() == 1)
     {
         int nMaskOvrCompression;
         if (strstr(GDALGetMetadataItem(GDALGetDriverByName("GTiff"),
@@ -3242,7 +3239,13 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     /* -------------------------------------------------------------------- */
     /*      Refresh overviews for the mask                                  */
     /* -------------------------------------------------------------------- */
-    if (m_poMaskDS != nullptr && m_poMaskDS->GetRasterCount() == 1)
+    const bool bHasInternalMask =
+        m_poMaskDS != nullptr && m_poMaskDS->GetRasterCount() == 1;
+    const bool bHasExternalMask =
+        !bHasInternalMask && oOvManager.HaveMaskFile();
+    const bool bHasMask = bHasInternalMask || bHasExternalMask;
+
+    if (bHasInternalMask)
     {
         int nMaskOverviews = 0;
 
@@ -3257,11 +3260,24 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             }
         }
 
+        void *pScaledProgressData = GDALCreateScaledProgress(
+            0, 1.0 / (nBands + 1), pfnProgress, pProgressData);
         eErr = GDALRegenerateOverviewsEx(
             m_poMaskDS->GetRasterBand(1), nMaskOverviews,
             reinterpret_cast<GDALRasterBandH *>(papoOverviewBands),
-            pszResampling, GDALDummyProgress, nullptr, papszOptions);
+            pszResampling, GDALScaledProgress, pScaledProgressData,
+            papszOptions);
+        GDALDestroyScaledProgress(pScaledProgressData);
         CPLFree(papoOverviewBands);
+    }
+    else if (bHasExternalMask)
+    {
+        void *pScaledProgressData = GDALCreateScaledProgress(
+            0, 1.0 / (nBands + 1), pfnProgress, pProgressData);
+        eErr = oOvManager.BuildOverviewsMask(
+            pszResampling, nOverviews, panOverviewList, GDALScaledProgress,
+            pScaledProgressData, papszOptions);
+        GDALDestroyScaledProgress(pScaledProgressData);
     }
 
     // If we have an alpha band, we want it to be generated before downsampling
@@ -3370,9 +3386,16 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             }
         }
 
-        GDALRegenerateOverviewsMultiBand(
-            nBandsIn, papoBandList, nNewOverviews, papapoOverviewBands,
-            pszResampling, pfnProgress, pProgressData, papszOptions);
+        void *pScaledProgressData =
+            bHasMask ? GDALCreateScaledProgress(1.0 / (nBands + 1), 1.0,
+                                                pfnProgress, pProgressData)
+                     : GDALCreateScaledProgress(0.0, 1.0, pfnProgress,
+                                                pProgressData);
+        GDALRegenerateOverviewsMultiBand(nBandsIn, papoBandList, nNewOverviews,
+                                         papapoOverviewBands, pszResampling,
+                                         GDALScaledProgress,
+                                         pScaledProgressData, papszOptions);
+        GDALDestroyScaledProgress(pScaledProgressData);
 
         for (int iBand = 0; iBand < nBandsIn; ++iBand)
         {
@@ -3385,6 +3408,8 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     {
         GDALRasterBand **papoOverviewBands = static_cast<GDALRasterBand **>(
             CPLCalloc(sizeof(void *), nOverviews));
+
+        const int iBandOffset = bHasMask ? 1 : 0;
 
         for (int iBand = 0; iBand < nBandsIn && eErr == CE_None; ++iBand)
         {
@@ -3442,9 +3467,11 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
             }
 
             void *pScaledProgressData = GDALCreateScaledProgress(
-                iBand / static_cast<double>(nBandsIn),
-                (iBand + 1) / static_cast<double>(nBandsIn), pfnProgress,
-                pProgressData);
+                (iBand + iBandOffset) /
+                    static_cast<double>(nBandsIn + iBandOffset),
+                (iBand + iBandOffset + 1) /
+                    static_cast<double>(nBandsIn + iBandOffset),
+                pfnProgress, pProgressData);
 
             eErr = GDALRegenerateOverviewsEx(
                 poBand, nNewOverviews,
@@ -3506,8 +3533,7 @@ static bool IsSRSCompatibleOfGeoTIFF(const OGRSpatialReference *poSRS,
     }
     OGRErr eErr;
     {
-        CPLErrorStateBackuper oErrorStateBackuper;
-        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         if (poSRS->IsDerivedGeographic() ||
             (poSRS->IsProjected() && !poSRS->IsCompound() &&
              poSRS->GetAxesCount() == 3))
@@ -8734,7 +8760,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
 
 bool GTiffDataset::MustCreateInternalMask()
 {
-    return CPLTestBool(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", "NO"));
+    return CPLTestBool(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", "YES"));
 }
 
 /************************************************************************/
@@ -8752,7 +8778,11 @@ CPLErr GTiffRasterBand::CreateMaskBand(int nFlagsIn)
         return CE_Failure;
     }
 
-    if (CPLTestBool(CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", "NO")))
+    const char *pszGDAL_TIFF_INTERNAL_MASK =
+        CPLGetConfigOption("GDAL_TIFF_INTERNAL_MASK", nullptr);
+    if ((pszGDAL_TIFF_INTERNAL_MASK &&
+         CPLTestBool(pszGDAL_TIFF_INTERNAL_MASK)) ||
+        nFlagsIn == GMF_PER_DATASET)
     {
         return m_poGDS->CreateMaskBand(nFlagsIn);
     }

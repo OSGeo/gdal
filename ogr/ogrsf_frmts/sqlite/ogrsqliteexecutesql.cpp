@@ -493,14 +493,18 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *, const char *, OGRGeometry *,
 
 class OGRSQLiteExecuteSQLLayer final : public OGRSQLiteSelectLayer
 {
-    char *pszTmpDBName;
+    char *m_pszTmpDBName = nullptr;
+    bool m_bStringsAsUTF8 = false;
 
   public:
     OGRSQLiteExecuteSQLLayer(char *pszTmpDBName, OGRSQLiteDataSource *poDS,
                              const CPLString &osSQL, sqlite3_stmt *hStmt,
                              bool bUseStatementForGetNextFeature,
-                             bool bEmptyLayer, bool bCanReopenBaseDS);
+                             bool bEmptyLayer, bool bCanReopenBaseDS,
+                             bool bStringsAsUTF8);
     virtual ~OGRSQLiteExecuteSQLLayer();
+
+    int TestCapability(const char *pszCap) override;
 };
 
 /************************************************************************/
@@ -510,11 +514,11 @@ class OGRSQLiteExecuteSQLLayer final : public OGRSQLiteSelectLayer
 OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(
     char *pszTmpDBNameIn, OGRSQLiteDataSource *poDSIn, const CPLString &osSQL,
     sqlite3_stmt *hStmtIn, bool bUseStatementForGetNextFeature,
-    bool bEmptyLayer, bool bCanReopenBaseDS)
+    bool bEmptyLayer, bool bCanReopenBaseDS, bool bStringsAsUTF8)
     : OGRSQLiteSelectLayer(poDSIn, osSQL, hStmtIn,
                            bUseStatementForGetNextFeature, bEmptyLayer, true,
                            bCanReopenBaseDS),
-      pszTmpDBName(pszTmpDBNameIn)
+      m_pszTmpDBName(pszTmpDBNameIn), m_bStringsAsUTF8(bStringsAsUTF8)
 {
 }
 
@@ -531,8 +535,19 @@ OGRSQLiteExecuteSQLLayer::~OGRSQLiteExecuteSQLLayer()
     Finalize();
 
     delete m_poDS;
-    VSIUnlink(pszTmpDBName);
-    CPLFree(pszTmpDBName);
+    VSIUnlink(m_pszTmpDBName);
+    CPLFree(m_pszTmpDBName);
+}
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int OGRSQLiteExecuteSQLLayer::TestCapability(const char *pszCap)
+{
+    if (EQUAL(pszCap, OLCStringsAsUTF8))
+        return m_bStringsAsUTF8;
+    return OGRSQLiteSelectLayer::TestCapability(pszCap);
 }
 
 /************************************************************************/
@@ -993,6 +1008,7 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
     /*      For each of those tables, create a Virtual Table.               */
     /* -------------------------------------------------------------------- */
     OGRLayer *poSingleSrcLayer = nullptr;
+    bool bStringsAsUTF8 = true;
     for (; oIter != oSetLayers.end(); ++oIter)
     {
         const LayerDesc &oLayerDesc = *oIter;
@@ -1048,6 +1064,9 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
 
             nExtraDS = OGR2SQLITE_AddExtraDS(poModule, poOtherDS);
         }
+
+        if (!poLayer->TestCapability(OLCStringsAsUTF8))
+            bStringsAsUTF8 = false;
 
         if (oSetLayers.size() == 1)
             poSingleSrcLayer = poLayer;
@@ -1158,10 +1177,20 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
         !(poDrv && EQUAL(poDrv->GetDescription(), "Memory"));
     OGRSQLiteSelectLayer *poLayer = new OGRSQLiteExecuteSQLLayer(
         pszTmpDBName, poSQLiteDS, pszStatement, hSQLStmt,
-        bUseStatementForGetNextFeature, bEmptyLayer, bCanReopenBaseDS);
+        bUseStatementForGetNextFeature, bEmptyLayer, bCanReopenBaseDS,
+        bStringsAsUTF8);
 
     if (poSpatialFilter != nullptr)
+    {
+        const auto nErrorCounter = CPLGetErrorCounter();
         poLayer->SetSpatialFilter(0, poSpatialFilter);
+        if (CPLGetErrorCounter() > nErrorCounter &&
+            CPLGetLastErrorType() != CE_None)
+        {
+            delete poLayer;
+            return nullptr;
+        }
+    }
 
     if (poSingleSrcLayer != nullptr)
         poLayer->SetMetadata(poSingleSrcLayer->GetMetadata("NATIVE_DATA"),

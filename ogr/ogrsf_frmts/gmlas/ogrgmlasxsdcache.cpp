@@ -34,24 +34,6 @@
 #include "cpl_sha256.h"
 
 /************************************************************************/
-/*                         GMLASResourceCache()                         */
-/************************************************************************/
-
-GMLASResourceCache::GMLASResourceCache()
-    : m_bHasCheckedCacheDirectory(false), m_bRefresh(false),
-      m_bAllowDownload(true)
-{
-}
-
-/************************************************************************/
-/*                        ~GMLASResourceCache()                         */
-/************************************************************************/
-
-GMLASResourceCache::~GMLASResourceCache()
-{
-}
-
-/************************************************************************/
 /*                         SetCacheDirectory()                          */
 /************************************************************************/
 
@@ -154,22 +136,6 @@ std::string GMLASResourceCache::GetCachedFilename(const std::string &osResource)
 }
 
 /************************************************************************/
-/*                          GMLASXSDCache()                             */
-/************************************************************************/
-
-GMLASXSDCache::GMLASXSDCache()
-{
-}
-
-/************************************************************************/
-/*                         ~GMLASXSDCache()                             */
-/************************************************************************/
-
-GMLASXSDCache::~GMLASXSDCache()
-{
-}
-
-/************************************************************************/
 /*                          CacheAllGML321()                            */
 /************************************************************************/
 
@@ -180,8 +146,7 @@ bool GMLASXSDCache::CacheAllGML321()
     // Download the later and unzip it for faster fetching of GML schemas.
 
     bool bSuccess = false;
-    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-    CPLErrorStateBackuper oErrorStateBackuper;
+    CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
 
     const char *pszHTTPZIP = "https://schemas.opengis.net/gml/gml-3_2_2.zip";
     CPLHTTPResult *psResult = CPLHTTPFetch(pszHTTPZIP, nullptr);
@@ -248,8 +213,7 @@ bool GMLASXSDCache::CacheAllISO20070417()
     // Download the later and unzip it for faster fetching of ISO schemas.
 
     bool bSuccess = false;
-    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-    CPLErrorStateBackuper oErrorStateBackuper;
+    CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
 
     const char *pszHTTPZIP =
         "https://schemas.opengis.net/iso/19139/iso19139-20070417.zip";

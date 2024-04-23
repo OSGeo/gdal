@@ -2981,6 +2981,7 @@ def test_ogr_parquet_nested_types():
 # Test float32 bounding box column
 
 
+@pytest.mark.require_geos
 def test_ogr_parquet_bbox_float32(tmp_vsimem):
 
     outfilename = str(tmp_vsimem / "test_ogr_parquet_bbox_float32.parquet")
@@ -3078,7 +3079,7 @@ def test_ogr_parquet_bbox_float32(tmp_vsimem):
 
 ###############################################################################
 # Test GetExtent() using bbox.minx, bbox.miny, bbox.maxx, bbox.maxy fields
-# as in Ouverture Maps datasets
+# as in Overture Maps datasets
 
 
 def test_ogr_parquet_bbox_double():
@@ -3086,6 +3087,7 @@ def test_ogr_parquet_bbox_double():
     ds = ogr.Open("data/parquet/overture_map_extract.parquet")
     lyr = ds.GetLayer(0)
     assert lyr.GetGeometryColumn() == "geometry"
+    assert lyr.GetLayerDefn().GetFieldIndex("bbox.minx") < 0
     assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
     minx, maxx, miny, maxy = lyr.GetExtent()
     assert (minx, miny, maxx, maxy) == pytest.approx(
@@ -3109,10 +3111,57 @@ def test_ogr_parquet_bbox_double():
         ds = ogr.Open("data/parquet/overture_map_extract.parquet")
         lyr = ds.GetLayer(0)
         assert lyr.GetGeometryColumn() == "geometry"
+        assert lyr.GetLayerDefn().GetFieldIndex("bbox.minx") >= 0
         assert lyr.TestCapability(ogr.OLCFastGetExtent) == 0
         minx, maxx, miny, maxy = lyr.GetExtent()
         assert (minx, miny, maxx, maxy) == pytest.approx(
             (-36.831345, -10.049401, -36.831238, -10.049268)
+        )
+        ds = None
+
+
+###############################################################################
+# Test GetExtent() using bbox.minx, bbox.miny, bbox.maxx, bbox.maxy fields
+# as in Overture Maps datasets 2024-04-16-beta.0
+
+
+@pytest.mark.require_geos
+def test_ogr_parquet_bbox_float32_but_no_covering_in_metadata():
+
+    ds = ogr.Open("data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeometryColumn() == "geometry"
+    assert lyr.GetLayerDefn().GetFieldIndex("bbox.xmin") < 0
+    assert lyr.TestCapability(ogr.OLCFastGetExtent) == 1
+    minx, maxx, miny, maxy = lyr.GetExtent()
+    assert (minx, miny, maxx, maxy) == pytest.approx(
+        (478315.53125, 4762880.5, 481645.3125, 4765610.5)
+    )
+
+    with ogrtest.spatial_filter(
+        lyr,
+        minx + (maxx - minx) / 2,
+        miny + (maxy - miny) / 2,
+        maxx - (maxx - minx) / 2,
+        maxy - (maxy - miny) / 2,
+    ):
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 8
+        assert lyr.GetNextFeature() is None
+
+    ds = None
+
+    with gdaltest.config_option("OGR_PARQUET_USE_BBOX", "NO"):
+        ds = ogr.Open(
+            "data/parquet/bbox_similar_to_overturemaps_2024-04-16-beta.0.parquet"
+        )
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeometryColumn() == "geometry"
+        assert lyr.GetLayerDefn().GetFieldIndex("bbox.xmin") >= 0
+        assert lyr.TestCapability(ogr.OLCFastGetExtent) == 0
+        minx, maxx, miny, maxy = lyr.GetExtent()
+        assert (minx, miny, maxx, maxy) == pytest.approx(
+            (478315.53125, 4762880.5, 481645.3125, 4765610.5)
         )
         ds = None
 
@@ -3482,3 +3531,176 @@ def test_ogr_parquet_sort_by_bbox(tmp_vsimem):
         layerCreationOptions=["SORT_BY_BBOX=YES", "ROW_GROUP_SIZE=100"],
     )
     check_file(outfilename2)
+
+
+###############################################################################
+# Check GeoArrow struct encoding
+
+
+@pytest.mark.parametrize(
+    "wkt",
+    [
+        "POINT (1 2)",
+        "POINT Z (1 2 3)",
+        "LINESTRING (1 2,3 4)",
+        "LINESTRING Z (1 2 3,4 5 6)",
+        "POLYGON ((0 1,2 3,10 20,0 1))",
+        "POLYGON ((0 0,0 10,10 10,10 0,0 0),(1 1,1 9,9 9,9 1,1 1))",
+        "POLYGON Z ((0 1 10,2 3 20,10 20 30,0 1 10))",
+        "MULTIPOINT ((1 2),(3 4))",
+        "MULTIPOINT Z ((1 2 3),(4 5 6))",
+        "MULTILINESTRING ((1 2,3 4),(5 6,7 8,9 10))",
+        "MULTILINESTRING Z ((1 2 3,4 5 6),(7 8 9,10 11 12,13 14 15))",
+        "MULTIPOLYGON (((0 1,2 3,10 20,0 1)),((100 110,100 120,120 120,100 110)))",
+        "MULTIPOLYGON (((0 0,0 10,10 10,10 0,0 0),(1 1,1 9,9 9,9 1,1 1)),((100 110,100 120,120 120,100 110)))",
+        "MULTIPOLYGON Z (((0 1 10,2 3 20,10 20 30,0 1 10)))",
+    ],
+)
+@pytest.mark.parametrize("check_with_pyarrow", [True, False])
+@pytest.mark.parametrize("covering_bbox", [True, False])
+@gdaltest.enable_exceptions()
+def test_ogr_parquet_geoarrow(
+    tmp_vsimem, tmp_path, wkt, check_with_pyarrow, covering_bbox
+):
+
+    geom = ogr.CreateGeometryFromWkt(wkt)
+
+    if check_with_pyarrow:
+        pa_parquet = pytest.importorskip("pyarrow.parquet")
+        filename = str(tmp_path / "test_ogr_parquet_geoarrow.parquet")
+    else:
+        filename = str(tmp_vsimem / "test_ogr_parquet_geoarrow.parquet")
+
+    ds = ogr.GetDriverByName("Parquet").CreateDataSource(filename)
+
+    lyr = ds.CreateLayer(
+        "test",
+        geom_type=geom.GetGeometryType(),
+        options=[
+            "GEOMETRY_ENCODING=GEOARROW",
+            "WRITE_COVERING_BBOX=" + ("YES" if covering_bbox else "NO"),
+        ],
+    )
+    lyr.CreateField(ogr.FieldDefn("foo"))
+
+    # Nominal geometry
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(geom)
+    lyr.CreateFeature(f)
+
+    # Null geometry
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    # Empty geometry
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.Geometry(geom.GetGeometryType()))
+    lyr.CreateFeature(f)
+
+    # Nominal geometry
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(geom)
+    lyr.CreateFeature(f)
+
+    geom2 = None
+    if geom.GetGeometryCount() > 1:
+        geom2 = geom.Clone()
+        geom2.RemoveGeometry(1)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(geom2)
+        lyr.CreateFeature(f)
+
+    ds = None
+
+    # Check we actually use a GeoArrow encoding
+    if check_with_pyarrow:
+        table = pa_parquet.read_table(filename)
+        import pyarrow as pa
+
+        if geom.GetGeometryType() in [ogr.wkbPoint, ogr.wkbPoint25D]:
+            assert pa.types.is_struct(table.schema.field("geometry").type)
+        else:
+            assert pa.types.is_list(table.schema.field("geometry").type)
+
+    _validate(filename)
+
+    def check(lyr):
+        assert lyr.GetGeomType() == geom.GetGeometryType()
+
+        f = lyr.GetNextFeature()
+        ogrtest.check_feature_geometry(f, geom)
+
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef() is None
+
+        f = lyr.GetNextFeature()
+        ogrtest.check_feature_geometry(f, ogr.Geometry(geom.GetGeometryType()))
+
+        f = lyr.GetNextFeature()
+        ogrtest.check_feature_geometry(f, geom)
+
+        if geom2:
+            f = lyr.GetNextFeature()
+            ogrtest.check_feature_geometry(f, geom2)
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    check(lyr)
+
+    # Check that ignoring attribute fields doesn't impact geometry reading
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    lyr.SetIgnoredFields(["foo"])
+    check(lyr)
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    minx, maxx, miny, maxy = geom.GetEnvelope()
+
+    lyr.SetSpatialFilter(geom)
+    assert lyr.GetFeatureCount() == (3 if geom.GetGeometryCount() > 1 else 2)
+
+    lyr.SetSpatialFilterRect(maxx + 1, miny, maxx + 2, maxy)
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetSpatialFilterRect(minx, maxy + 1, maxx, maxy + 2)
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetSpatialFilterRect(minx - 2, miny, minx - 1, maxy)
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetSpatialFilterRect(minx, miny - 2, maxx, miny - 1)
+    assert lyr.GetFeatureCount() == 0
+    if (
+        minx != miny
+        and maxx != maxy
+        and ogr.GT_Flatten(geom.GetGeometryType()) != ogr.wkbMultiPoint
+    ):
+        lyr.SetSpatialFilterRect(minx + 0.1, miny + 0.1, maxx - 0.1, maxy - 0.1)
+        assert lyr.GetFeatureCount() != 0
+
+
+###############################################################################
+# Test reading a file with an extension on a regular field not registered with
+# PyArrow
+
+
+def test_ogr_parquet_read_with_extension_not_registered_on_regular_field():
+
+    ds = ogr.Open("data/parquet/extension_custom.parquet")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["extension_custom"] == '{"foo":"bar"}'
+
+
+###############################################################################
+# Test reading a file with the arrow.json extension
+
+
+def test_ogr_parquet_read_arrow_json_extension():
+
+    ds = ogr.Open("data/parquet/extension_json.parquet")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTJSON
+    f = lyr.GetNextFeature()
+    assert f["extension_json"] == '{"foo":"bar"}'

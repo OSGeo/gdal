@@ -59,8 +59,6 @@
 constexpr int SWITCH_THRESHOLD = 10000;
 constexpr int MAX_THRESHOLD = 100000;
 
-constexpr int ALLTAGS_LENGTH = 8192;
-
 /************************************************************************/
 /*                          OGROSMLayer()                               */
 /************************************************************************/
@@ -69,8 +67,7 @@ OGROSMLayer::OGROSMLayer(OGROSMDataSource *poDSIn, int nIdxLayerIn,
                          const char *pszName)
     : m_poDS(poDSIn), m_nIdxLayer(nIdxLayerIn),
       m_poFeatureDefn(new OGRFeatureDefn(pszName)),
-      m_poSRS(new OGRSpatialReference()),
-      m_pszAllTags(static_cast<char *>(CPLMalloc(ALLTAGS_LENGTH)))
+      m_poSRS(new OGRSpatialReference())
 {
     SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->Reference();
@@ -112,8 +109,6 @@ OGROSMLayer::~OGROSMLayer()
     {
         sqlite3_finalize(m_oComputedAttributes[i].hStmt);
     }
-
-    CPLFree(m_pszAllTags);
 
     CPLFree(m_papoFeatures);
 }
@@ -520,25 +515,61 @@ int OGROSMLayer::AddInOtherOrAllTags(const char *pszK)
 }
 
 /************************************************************************/
-/*                        OGROSMEscapeString()                          */
+/*                     OGROSMEscapeStringHSTORE()                       */
 /************************************************************************/
 
-static int OGROSMEscapeString(const char *pszV, char *pszAllTags)
+static void OGROSMEscapeStringHSTORE(const char *pszV, std::string &sOut)
 {
-    int nAllTagsOff = 0;
-
-    pszAllTags[nAllTagsOff++] = '"';
+    sOut += '"';
 
     for (int k = 0; pszV[k] != '\0'; k++)
     {
         if (pszV[k] == '"' || pszV[k] == '\\')
-            pszAllTags[nAllTagsOff++] = '\\';
-        pszAllTags[nAllTagsOff++] = pszV[k];
+            sOut += '\\';
+        sOut += pszV[k];
     }
 
-    pszAllTags[nAllTagsOff++] = '"';
+    sOut += '"';
+}
 
-    return nAllTagsOff;
+/************************************************************************/
+/*                     OGROSMEscapeStringJSON()                         */
+/************************************************************************/
+
+static void OGROSMEscapeStringJSON(const char *pszV, std::string &sOut)
+{
+    sOut += '"';
+
+    for (int k = 0; pszV[k] != '\0'; k++)
+    {
+        const char ch = pszV[k];
+        switch (ch)
+        {
+            case '"':
+                sOut += "\\\"";
+                break;
+            case '\\':
+                sOut += "\\\\";
+                break;
+            case '\n':
+                sOut += "\\n";
+                break;
+            case '\r':
+                sOut += "\\r";
+                break;
+            case '\t':
+                sOut += "\\t";
+                break;
+            default:
+                if (static_cast<unsigned char>(ch) < ' ')
+                    sOut += CPLSPrintf("\\u%04X", ch);
+                else
+                    sOut += ch;
+                break;
+        }
+    }
+
+    sOut += '"';
 }
 
 /************************************************************************/
@@ -627,7 +658,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID,
         poFeature->SetField("osm_changeset", (int)psInfo->nChangeset);
     }
 
-    int nAllTagsOff = 0;
+    m_osAllTagsBuffer.clear();
     for (unsigned int j = 0; j < nTags; j++)
     {
         const char *pszK = pasTags[j].pszK;
@@ -643,48 +674,27 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID,
         {
             if (AddInOtherOrAllTags(pszK))
             {
-                const int nLenK = static_cast<int>(strlen(pszK));
-                const int nLenV = static_cast<int>(strlen(pszV));
-                const int nLenKEscaped = 1 + 2 * nLenK + 1;
-                const int nLenVEscaped = 1 + 2 * nLenV + 1;
-                // 3 is either for
-                // - HSTORE: ',' separator and '=>'
-                // - JSON: leading '{' or ',', ':' and closing '}'
-                if (nAllTagsOff + nLenKEscaped + nLenVEscaped + 3 >=
-                    ALLTAGS_LENGTH - 1)
-                {
-                    if (!m_bHasWarnedAllTagsTruncated)
-                        CPLDebug("OSM",
-                                 "all_tags/other_tags field truncated for "
-                                 "feature " CPL_FRMT_GIB,
-                                 nID);
-                    m_bHasWarnedAllTagsTruncated = true;
-                    continue;
-                }
-
                 if (m_poDS->m_bTagsAsHSTORE)
                 {
-                    if (nAllTagsOff)
-                        m_pszAllTags[nAllTagsOff++] = ',';
+                    if (!m_osAllTagsBuffer.empty())
+                        m_osAllTagsBuffer += ',';
 
-                    nAllTagsOff +=
-                        OGROSMEscapeString(pszK, m_pszAllTags + nAllTagsOff);
+                    OGROSMEscapeStringHSTORE(pszK, m_osAllTagsBuffer);
 
-                    m_pszAllTags[nAllTagsOff++] = '=';
-                    m_pszAllTags[nAllTagsOff++] = '>';
+                    m_osAllTagsBuffer += '=';
+                    m_osAllTagsBuffer += '>';
 
-                    nAllTagsOff +=
-                        OGROSMEscapeString(pszV, m_pszAllTags + nAllTagsOff);
+                    OGROSMEscapeStringHSTORE(pszV, m_osAllTagsBuffer);
                 }
                 else
                 {
-                    m_pszAllTags[nAllTagsOff] = nAllTagsOff ? ',' : '{';
-                    nAllTagsOff++;
-                    nAllTagsOff +=
-                        OGROSMEscapeString(pszK, m_pszAllTags + nAllTagsOff);
-                    m_pszAllTags[nAllTagsOff++] = ':';
-                    nAllTagsOff +=
-                        OGROSMEscapeString(pszV, m_pszAllTags + nAllTagsOff);
+                    if (!m_osAllTagsBuffer.empty())
+                        m_osAllTagsBuffer += ',';
+                    else
+                        m_osAllTagsBuffer = '{';
+                    OGROSMEscapeStringJSON(pszK, m_osAllTagsBuffer);
+                    m_osAllTagsBuffer += ':';
+                    OGROSMEscapeStringJSON(pszV, m_osAllTagsBuffer);
                 }
             }
 
@@ -698,17 +708,16 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID,
         }
     }
 
-    if (nAllTagsOff)
+    if (!m_osAllTagsBuffer.empty())
     {
         if (!m_poDS->m_bTagsAsHSTORE)
         {
-            m_pszAllTags[nAllTagsOff++] = '}';
+            m_osAllTagsBuffer += '}';
         }
-        m_pszAllTags[nAllTagsOff] = '\0';
         if (m_nIndexAllTags >= 0)
-            poFeature->SetField(m_nIndexAllTags, m_pszAllTags);
+            poFeature->SetField(m_nIndexAllTags, m_osAllTagsBuffer.c_str());
         else
-            poFeature->SetField(m_nIndexOtherTags, m_pszAllTags);
+            poFeature->SetField(m_nIndexOtherTags, m_osAllTagsBuffer.c_str());
     }
 
     for (size_t i = 0; i < m_oComputedAttributes.size(); i++)

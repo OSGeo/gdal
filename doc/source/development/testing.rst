@@ -48,23 +48,33 @@ and the Python bindings:
     python3 -c 'from osgeo import gdal; print(gdal.__version__)'
     # 3.7.0dev-5327c149f5-dirty
 
-List tests containing "tiff" in the name:
-
-.. code-block:: bash
-
-    pytest --collect-only autotest -k tiff
-
-Running an individual test file
+Tests can then be run by calling ``pytest``, for example on an individual file.
+On Linux and MacOS builds, the tests are symlinked into the build directory, so this
+can be done by running the following from the build directory:
 
 .. code-block:: bash
 
     pytest autotest/gcore/vrt_read.py
+
+On Windows, the test files remain in the source tree, but the pytest configuration file ``pytest.ini`` is only available in the build directory. To accommodate this, the above command would be modified as follows:
+
+.. code-block:: bash
+
+    pytest -c pytest.ini ../autotest/gcore/vrt_read.py
 
 A subset of tests within an individual test file can be run by providing a regular expression to the ``-k`` argument to ``pytest``.
 
 .. code-block:: bash
 
     pytest autotest/gcore/vrt_read.py -k test_vrt_read_non_existing_source
+
+``pytest`` can also report information on the tests without running them. For
+example, to list tests containing "tiff" in the name:
+
+.. code-block:: bash
+
+    pytest --collect-only autotest -k tiff
+
 
 .. warning:: Not all Python tests can be run independently; some tests depend on state set by a previous tests in the same file.
 

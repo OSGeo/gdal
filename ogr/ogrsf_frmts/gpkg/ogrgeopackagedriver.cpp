@@ -670,11 +670,16 @@ void RegisterOGRGeoPackage()
     poDriver->SetMetadataItem(
         GDAL_DS_LAYER_CREATIONOPTIONLIST,
         "<LayerCreationOptionList>"
+        "  <Option name='LAUNDER' type='boolean' description='Whether layer "
+        "and field names will be laundered.' default='NO'/>"
         "  <Option name='GEOMETRY_NAME' type='string' description='Name of "
         "geometry column.' default='geom' deprecated_alias='GEOMETRY_COLUMN'/>"
         "  <Option name='GEOMETRY_NULLABLE' type='boolean' "
         "description='Whether the values of the geometry column can be NULL' "
         "default='YES'/>"
+        "  <Option name='SRID' type='integer' description='Forced srs_id of "
+        "the "
+        "entry in the gpkg_spatial_ref_sys table to point to'/>"
         "  <Option name='DISCARD_COORD_LSB' type='boolean' "
         "description='Whether the geometry coordinate precision should be used "
         "to set to zero non-significant least-significant bits of geometries. "

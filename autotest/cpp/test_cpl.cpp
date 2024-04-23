@@ -3928,6 +3928,43 @@ TEST_F(test_cpl, builtin_compressors)
     }
 }
 
+// Test builtin compressors/decompressor
+TEST_F(test_cpl, builtin_compressors_zlib_high_compression_rate)
+{
+    const auto pCompressor = CPLGetCompressor("zlib");
+    ASSERT_TRUE(pCompressor != nullptr);
+
+    std::vector<GByte> abyInput(1024 * 1024, 0x01);
+
+    // Compressor side
+
+    // Let it alloc the output buffer
+    void *out_buffer = nullptr;
+    size_t out_size = 0;
+    ASSERT_TRUE(pCompressor->pfnFunc(abyInput.data(), abyInput.size(),
+                                     &out_buffer, &out_size, nullptr,
+                                     pCompressor->user_data));
+    ASSERT_TRUE(out_buffer != nullptr);
+    ASSERT_TRUE(out_size != 0);
+
+    // Decompressor side
+    const auto pDecompressor = CPLGetDecompressor("zlib");
+    ASSERT_TRUE(pDecompressor != nullptr);
+
+    void *out_buffer2 = nullptr;
+    size_t out_size2 = 0;
+    ASSERT_TRUE(pDecompressor->pfnFunc(out_buffer, out_size, &out_buffer2,
+                                       &out_size2, nullptr,
+                                       pDecompressor->user_data));
+    CPLFree(out_buffer);
+
+    ASSERT_TRUE(out_buffer2 != nullptr);
+    ASSERT_TRUE(out_size2 != 0);
+    ASSERT_EQ(out_size2, abyInput.size());
+    ASSERT_TRUE(memcmp(out_buffer2, abyInput.data(), abyInput.size()) == 0);
+    CPLFree(out_buffer2);
+}
+
 template <class T> struct TesterDelta
 {
     static void test(const char *dtypeOption)
@@ -5126,6 +5163,81 @@ TEST_F(test_cpl, CPLStrtod)
         char *pszEnd = nullptr;
         EXPECT_TRUE(std::isnan(CPLStrtod(pszVal, &pszEnd)));
         EXPECT_EQ(pszEnd, pszVal + strlen(pszVal));
+    }
+}
+
+TEST_F(test_cpl, CPLForceToASCII)
+{
+    {
+        char *pszOut = CPLForceToASCII("foo", -1, '_');
+        EXPECT_STREQ(pszOut, "foo");
+        CPLFree(pszOut);
+    }
+    {
+        char *pszOut = CPLForceToASCII("foo", 1, '_');
+        EXPECT_STREQ(pszOut, "f");
+        CPLFree(pszOut);
+    }
+    {
+        char *pszOut = CPLForceToASCII("foo\xFF", -1, '_');
+        EXPECT_STREQ(pszOut, "foo_");
+        CPLFree(pszOut);
+    }
+}
+
+TEST_F(test_cpl, CPLUTF8ForceToASCII)
+{
+    {
+        char *pszOut = CPLUTF8ForceToASCII("foo", '_');
+        EXPECT_STREQ(pszOut, "foo");
+        CPLFree(pszOut);
+    }
+    {
+        // Truncated UTF-8 character
+        char *pszOut = CPLUTF8ForceToASCII("foo\xC0", '_');
+        EXPECT_STREQ(pszOut, "foo");
+        CPLFree(pszOut);
+    }
+    {
+        char *pszOut = CPLUTF8ForceToASCII("foo\xc2\x80", '_');
+        EXPECT_STREQ(pszOut, "foo_");
+        CPLFree(pszOut);
+    }
+    {
+        char *pszOut = CPLUTF8ForceToASCII("foo\xc2\x80x", '_');
+        EXPECT_STREQ(pszOut, "foo_x");
+        CPLFree(pszOut);
+    }
+    {
+        std::string s;
+        {
+            VSILFILE *f =
+                VSIFOpenL((data_ + SEP + "utf8accents.txt").c_str(), "rb");
+            ASSERT_NE(f, nullptr);
+            VSIFSeekL(f, 0, SEEK_END);
+            s.resize(static_cast<size_t>(VSIFTellL(f)));
+            VSIFSeekL(f, 0, SEEK_SET);
+            VSIFReadL(&s[0], 1, s.size(), f);
+            VSIFCloseL(f);
+            while (!s.empty() && s.back() == '\n')
+                s.pop_back();
+        }
+        std::string sRef;
+        {
+            VSILFILE *f = VSIFOpenL(
+                (data_ + SEP + "utf8accents_ascii.txt").c_str(), "rb");
+            ASSERT_NE(f, nullptr);
+            VSIFSeekL(f, 0, SEEK_END);
+            sRef.resize(static_cast<size_t>(VSIFTellL(f)));
+            VSIFSeekL(f, 0, SEEK_SET);
+            VSIFReadL(&sRef[0], 1, sRef.size(), f);
+            VSIFCloseL(f);
+            while (!sRef.empty() && sRef.back() == '\n')
+                sRef.pop_back();
+        }
+        char *pszOut = CPLUTF8ForceToASCII(s.c_str(), '_');
+        EXPECT_STREQ(pszOut, sRef.c_str());
+        CPLFree(pszOut);
     }
 }
 

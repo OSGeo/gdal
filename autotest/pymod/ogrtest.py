@@ -172,6 +172,14 @@ def check_feature_geometry(
         if ogr.GT_Flatten(actual.GetGeometryType()) == ogr.wkbPoint:
             count = 1
 
+            # Point Empty is often encoded with NaN values, hence do not attempt
+            # X/Y comparisons
+            if expected.IsEmpty():
+                assert actual.IsEmpty()
+                return
+            else:
+                assert not actual.IsEmpty()
+
         for i in range(count):
             actual_pt = [actual.GetX(i), actual.GetY(i)]
             expected_pt = [expected.GetX(i), expected.GetY(i)]

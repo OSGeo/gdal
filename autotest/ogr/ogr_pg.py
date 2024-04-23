@@ -5911,3 +5911,45 @@ def test_ogr_pg_schema_case_createlayer(pg_ds, tmp_schema):
             pg_ds.CreateLayer(f"{tmp_schema_mixedcase}.yet_another_layer")
     finally:
         pg_ds.ExecuteSQL(f'DROP SCHEMA "{tmp_schema_uppercase}" CASCADE')
+
+
+###############################################################################
+# Test LAUNDER=YES
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_pg_LAUNDER_YES(pg_ds, tmp_schema):
+
+    eacute = b"\xC3\xA9".decode("utf-8")
+    lyr = pg_ds.CreateLayer(f"{tmp_schema}.a" + eacute + "#", options=["LAUNDER=YES"])
+    assert lyr.GetName() == f"{tmp_schema}.a" + eacute + "_"
+    lyr.CreateField(ogr.FieldDefn("b" + eacute + "#"))
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef() == "b" + eacute + "_"
+
+
+###############################################################################
+# Test LAUNDER=NO
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_pg_LAUNDER_NO(pg_ds, tmp_schema):
+
+    eacute = b"\xC3\xA9".decode("utf-8")
+    lyr = pg_ds.CreateLayer(f"{tmp_schema}.a" + eacute + "#", options=["LAUNDER=NO"])
+    assert lyr.GetName() == f"{tmp_schema}.a" + eacute + "#"
+    lyr.CreateField(ogr.FieldDefn("b" + eacute + "#"))
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef() == "b" + eacute + "#"
+
+
+###############################################################################
+# Test LAUNDER_ASCII
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_pg_LAUNDER_ASCII(pg_ds, tmp_schema):
+
+    eacute = b"\xC3\xA9".decode("utf-8")
+    lyr = pg_ds.CreateLayer(f"{tmp_schema}.a" + eacute, options=["LAUNDER_ASCII=YES"])
+    assert lyr.GetName() == f"{tmp_schema}.ae"
+    lyr.CreateField(ogr.FieldDefn("b" + eacute))
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef() == "be"

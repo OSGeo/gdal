@@ -1195,14 +1195,14 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
         case wkbGeometryCollection:
         {
             int nParts = 0;
-            int *panPartStart = nullptr;
-            int *panPartType = nullptr;
+            std::vector<int> anPartStart;
+            std::vector<int> anPartType;
             int nPoints = 0;
-            OGRRawPoint *poPoints = nullptr;
-            double *padfZ = nullptr;
+            std::vector<OGRRawPoint> aoPoints;
+            std::vector<double> adfZ;
             OGRErr eErr =
-                OGRCreateMultiPatch(poGeom, TRUE, nParts, panPartStart,
-                                    panPartType, nPoints, poPoints, padfZ);
+                OGRCreateMultiPatch(poGeom, TRUE, nParts, anPartStart,
+                                    anPartType, nPoints, aoPoints, adfZ);
             if (eErr != OGRERR_NONE)
                 return false;
 
@@ -1229,22 +1229,18 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
 
                 if (!EncodeEnvelope(m_abyGeomBuffer, poGeomField, poGeom))
                 {
-                    CPLFree(panPartStart);
-                    CPLFree(panPartType);
-                    CPLFree(poPoints);
-                    CPLFree(padfZ);
                     return false;
                 }
 
                 for (int i = 0; i < nParts - 1; i++)
                 {
                     WriteVarUInt(m_abyGeomBuffer,
-                                 panPartStart[i + 1] - panPartStart[i]);
+                                 anPartStart[i + 1] - anPartStart[i]);
                 }
 
                 for (int i = 0; i < nParts; i++)
                 {
-                    WriteVarUInt(m_abyGeomBuffer, panPartType[i]);
+                    WriteVarUInt(m_abyGeomBuffer, anPartType[i]);
                 }
 
                 {
@@ -1253,7 +1249,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
                     for (int i = 0; i < nPoints; ++i)
                     {
                         double dfVal = std::round(
-                            (poPoints[i].x - poGeomField->GetXOrigin()) *
+                            (aoPoints[i].x - poGeomField->GetXOrigin()) *
                             poGeomField->GetXYScale());
                         CHECK_CAN_BE_ENCODED_ON_VARINT(dfVal, nLastX,
                                                        "Cannot encode value");
@@ -1261,7 +1257,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
                         WriteVarInt(m_abyGeomBuffer, nX - nLastX);
 
                         dfVal = std::round(
-                            (poPoints[i].y - poGeomField->GetYOrigin()) *
+                            (aoPoints[i].y - poGeomField->GetYOrigin()) *
                             poGeomField->GetXYScale());
                         CHECK_CAN_BE_ENCODED_ON_VARINT(dfVal, nLastY,
                                                        "Cannot encode Y value");
@@ -1278,7 +1274,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
                     for (int i = 0; i < nPoints; ++i)
                     {
                         double dfVal =
-                            std::round((padfZ[i] - poGeomField->GetZOrigin()) *
+                            std::round((adfZ[i] - poGeomField->GetZOrigin()) *
                                        poGeomField->GetZScale());
                         CHECK_CAN_BE_ENCODED_ON_VARINT(dfVal, nLastZ,
                                                        "Bad Z value");
@@ -1289,10 +1285,6 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
                     }
                 }
             }
-            CPLFree(panPartStart);
-            CPLFree(panPartType);
-            CPLFree(poPoints);
-            CPLFree(padfZ);
             return true;
         }
 

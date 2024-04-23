@@ -67,11 +67,11 @@ def setup_driver():
 ###############################################################################
 
 
-def test_ogr_openfilegdb_invalid_filename():
+def test_ogr_openfilegdb_invalid_filename(tmp_vsimem):
 
     with gdal.quiet_errors():
         ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(
-            "/vsimem/bad.extension"
+            tmp_vsimem / "bad.extension"
         )
         assert ds is None
 
@@ -85,9 +85,9 @@ def test_ogr_openfilegdb_invalid_filename():
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_empty():
+def test_ogr_openfilegdb_write_empty(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
+    dirname = tmp_vsimem / "out.gdb"
     ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
     assert ds is not None
     ds = None
@@ -104,9 +104,9 @@ def test_ogr_openfilegdb_write_empty():
 
 
 @pytest.mark.parametrize("use_synctodisk", [False, True])
-def test_ogr_openfilegdb_write_field_types(use_synctodisk):
+def test_ogr_openfilegdb_write_field_types(tmp_vsimem, use_synctodisk):
 
-    dirname = "/vsimem/out.gdb"
+    dirname = tmp_vsimem / "out.gdb"
     try:
         ds = gdal.GetDriverByName("OpenFileGDB").Create(
             dirname, 0, 0, 0, gdal.GDT_Unknown
@@ -568,65 +568,65 @@ testdata = [
 
 
 @pytest.mark.parametrize("geom_type,read_geom_type,wkt,expected_wkt", testdata)
-def test_ogr_openfilegdb_write_all_geoms(geom_type, read_geom_type, wkt, expected_wkt):
+def test_ogr_openfilegdb_write_all_geoms(
+    tmp_vsimem, geom_type, read_geom_type, wkt, expected_wkt
+):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        assert ds is not None
-        options = [
-            "XORIGIN=-1000",
-            "YORIGIN=-2000",
-            "XYSCALE=10000",
-            "XYTOLERANCE=0.001",
-        ]
-        lyr = ds.CreateLayer("test", geom_type=geom_type, options=options)
-        assert lyr is not None
-        f = ogr.Feature(lyr.GetLayerDefn())
-        if wkt:
-            ref_geom = ogr.CreateGeometryFromWkt(wkt)
-            assert ref_geom is not None
+    dirname = tmp_vsimem / "out.gdb"
+
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    assert ds is not None
+    options = [
+        "XORIGIN=-1000",
+        "YORIGIN=-2000",
+        "XYSCALE=10000",
+        "XYTOLERANCE=0.001",
+    ]
+    lyr = ds.CreateLayer("test", geom_type=geom_type, options=options)
+    assert lyr is not None
+    f = ogr.Feature(lyr.GetLayerDefn())
+    if wkt:
+        ref_geom = ogr.CreateGeometryFromWkt(wkt)
+        assert ref_geom is not None
+    else:
+        ref_geom = None
+    f.SetGeometry(ref_geom)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(dirname)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == read_geom_type
+    f = lyr.GetNextFeature()
+    got_geom = f.GetGeometryRef()
+    if ref_geom is None or ref_geom.IsEmpty():
+        assert got_geom is None
+    else:
+        if expected_wkt:
+            expected_geom = ogr.CreateGeometryFromWkt(expected_wkt)
         else:
-            ref_geom = None
-        f.SetGeometry(ref_geom)
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        ds = None
+            expected_geom = ogr.ForceTo(ref_geom, read_geom_type)
+        ogrtest.check_feature_geometry(got_geom, expected_geom)
 
-        ds = ogr.Open(dirname)
-        assert ds is not None
-        lyr = ds.GetLayer(0)
-        assert lyr.GetGeomType() == read_geom_type
-        f = lyr.GetNextFeature()
-        got_geom = f.GetGeometryRef()
-        if ref_geom is None or ref_geom.IsEmpty():
-            assert got_geom is None
-        else:
-            if expected_wkt:
-                expected_geom = ogr.CreateGeometryFromWkt(expected_wkt)
-            else:
-                expected_geom = ogr.ForceTo(ref_geom, read_geom_type)
-            ogrtest.check_feature_geometry(got_geom, expected_geom)
+    # Test presence of a spatial index
+    if (
+        ref_geom is not None
+        and not ref_geom.IsEmpty()
+        and ogr.GT_Flatten(geom_type) != ogr.wkbPoint
+        and (
+            ogr.GT_Flatten(geom_type) != ogr.wkbMultiPoint
+            or ref_geom.GetPointCount() > 1
+        )
+        and geom_type != ogr.wkbGeometryCollection25D
+    ):
+        assert gdal.VSIStatL(f"{dirname}/a00000009.spx") is not None
+        minx, maxx, miny, maxy = ref_geom.GetEnvelope()
+        lyr.SetSpatialFilterRect(minx, miny, maxx, maxy)
+        lyr.ResetReading()
+        assert lyr.GetNextFeature() is not None
 
-        # Test presence of a spatial index
-        if (
-            ref_geom is not None
-            and not ref_geom.IsEmpty()
-            and ogr.GT_Flatten(geom_type) != ogr.wkbPoint
-            and (
-                ogr.GT_Flatten(geom_type) != ogr.wkbMultiPoint
-                or ref_geom.GetPointCount() > 1
-            )
-            and geom_type != ogr.wkbGeometryCollection25D
-        ):
-            assert gdal.VSIStatL(dirname + "/a00000009.spx") is not None
-            minx, maxx, miny, maxy = ref_geom.GetEnvelope()
-            lyr.SetSpatialFilterRect(minx, miny, maxx, maxy)
-            lyr.ResetReading()
-            assert lyr.GetNextFeature() is not None
-
-        ds = None
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = None
 
 
 ###############################################################################
@@ -641,55 +641,50 @@ def test_ogr_openfilegdb_write_all_geoms(geom_type, read_geom_type, wkt, expecte
         (ogr.wkbTINZ, "LINESTRING (0 0,1 1)"),
     ],
 )
-def test_ogr_openfilegdb_write_bad_geoms(geom_type, wkt):
+def test_ogr_openfilegdb_write_bad_geoms(tmp_vsimem, geom_type, wkt):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        assert ds is not None
-        lyr = ds.CreateLayer("test", geom_type=geom_type)
-        assert lyr is not None
-        f = ogr.Feature(lyr.GetLayerDefn())
-        ref_geom = ogr.CreateGeometryFromWkt(wkt)
-        f.SetGeometry(ref_geom)
-        with gdal.quiet_errors():
-            assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
-        ds = None
-    finally:
-        gdal.RmdirRecursive(dirname)
+    dirname = tmp_vsimem / "out.gdb"
+
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    assert ds is not None
+    lyr = ds.CreateLayer("test", geom_type=geom_type)
+    assert lyr is not None
+    f = ogr.Feature(lyr.GetLayerDefn())
+    ref_geom = ogr.CreateGeometryFromWkt(wkt)
+    f.SetGeometry(ref_geom)
+    with gdal.quiet_errors():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+    ds = None
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_text_utf16():
+def test_ogr_openfilegdb_write_text_utf16(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer(
-            "test", geom_type=ogr.wkbNone, options=["CONFIGURATION_KEYWORD=TEXT_UTF16"]
-        )
-        assert lyr is not None
-        fld_defn = ogr.FieldDefn("str", ogr.OFTString)
-        fld_defn.SetDefault("'éven'")
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "évenéven")
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        ds = None
+    dirname = tmp_vsimem / "out.gdb"
 
-        ds = ogr.Open(dirname)
-        assert ds is not None
-        lyr = ds.GetLayer(0)
-        fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
-        assert fld_defn.GetDefault() == "'éven'"
-        f = lyr.GetNextFeature()
-        assert f["str"] == "évenéven"
-        ds = None
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer(
+        "test", geom_type=ogr.wkbNone, options=["CONFIGURATION_KEYWORD=TEXT_UTF16"]
+    )
+    assert lyr is not None
+    fld_defn = ogr.FieldDefn("str", ogr.OFTString)
+    fld_defn.SetDefault("'éven'")
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "évenéven")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = None
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = ogr.Open(dirname)
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fld_defn.GetDefault() == "'éven'"
+    f = lyr.GetNextFeature()
+    assert f["str"] == "évenéven"
+    ds = None
 
 
 ###############################################################################
@@ -746,271 +741,259 @@ def gdbtablx_has_bitmap(gdbtablx_filename):
     ],
 )
 @pytest.mark.parametrize("sync", [True, False])
-def test_ogr_openfilegdb_write_create_feature_with_id_set(has_bitmap, ids, sync):
+def test_ogr_openfilegdb_write_create_feature_with_id_set(
+    tmp_vsimem, has_bitmap, ids, sync
+):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        assert ds is not None
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
-        lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
-        for id in ids:
-            if isinstance(id, tuple):
-                id, ok = id
-            else:
-                ok = True
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f.SetFID(id)
-            if id < (1 << 31):
-                f.SetField(0, id)
-            if ok:
-                assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-            else:
-                with gdal.quiet_errors():
-                    assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
-            if sync:
-                lyr.SyncToDisk()
-        ds = None
+    dirname = tmp_vsimem / "out.gdb"
 
-        if has_bitmap:
-            assert gdbtablx_has_bitmap(dirname + "/a00000009.gdbtablx")
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    assert ds is not None
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+    for id in ids:
+        if isinstance(id, tuple):
+            id, ok = id
         else:
-            assert not gdbtablx_has_bitmap(dirname + "/a00000009.gdbtablx")
+            ok = True
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFID(id)
+        if id < (1 << 31):
+            f.SetField(0, id)
+        if ok:
+            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        else:
+            with gdal.quiet_errors():
+                assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+        if sync:
+            lyr.SyncToDisk()
+    ds = None
 
-        # Check that everything has been written correctly
-        ds = ogr.Open(dirname)
-        lyr = ds.GetLayer(0)
-        ids_only = []
-        for id in ids:
-            if isinstance(id, tuple):
-                id, ok = id
-                if ok:
-                    ids_only.append(id)
-            else:
+    if has_bitmap:
+        assert gdbtablx_has_bitmap(f"{dirname}/a00000009.gdbtablx")
+    else:
+        assert not gdbtablx_has_bitmap(f"{dirname}/a00000009.gdbtablx")
+
+    # Check that everything has been written correctly
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    ids_only = []
+    for id in ids:
+        if isinstance(id, tuple):
+            id, ok = id
+            if ok:
                 ids_only.append(id)
-        for id in sorted(ids_only):
-            gdal.ErrorReset()
-            f = lyr.GetNextFeature()
-            assert gdal.GetLastErrorMsg() == ""
-            assert f.GetFID() == id
-            assert f[0] == id
-        assert lyr.GetNextFeature() is None
-        ds = None
-    finally:
-        gdal.RmdirRecursive(dirname)
+        else:
+            ids_only.append(id)
+    for id in sorted(ids_only):
+        gdal.ErrorReset()
+        f = lyr.GetNextFeature()
+        assert gdal.GetLastErrorMsg() == ""
+        assert f.GetFID() == id
+        assert f[0] == id
+    assert lyr.GetNextFeature() is None
+    ds = None
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_delete_feature():
+def test_ogr_openfilegdb_write_delete_feature(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
-        assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
-        assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
-        assert lyr.DeleteFeature(1) == ogr.OGRERR_NONE
-        assert lyr.DeleteFeature(0) == ogr.OGRERR_NON_EXISTING_FEATURE
-        assert lyr.DeleteFeature(1) == ogr.OGRERR_NON_EXISTING_FEATURE
-        assert lyr.DeleteFeature(3) == ogr.OGRERR_NON_EXISTING_FEATURE
-        assert lyr.DeleteFeature(-1) == ogr.OGRERR_NON_EXISTING_FEATURE
-        ds = None
+    dirname = tmp_vsimem / "out.gdb"
 
-        ds = ogr.Open(dirname)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == 1
-        f = lyr.GetNextFeature()
-        assert f.GetFID() == 2
-        ds = None
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
+    assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
+    assert lyr.DeleteFeature(1) == ogr.OGRERR_NONE
+    assert lyr.DeleteFeature(0) == ogr.OGRERR_NON_EXISTING_FEATURE
+    assert lyr.DeleteFeature(1) == ogr.OGRERR_NON_EXISTING_FEATURE
+    assert lyr.DeleteFeature(3) == ogr.OGRERR_NON_EXISTING_FEATURE
+    assert lyr.DeleteFeature(-1) == ogr.OGRERR_NON_EXISTING_FEATURE
+    ds = None
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 2
+    ds = None
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_update_feature():
+def test_ogr_openfilegdb_write_update_feature(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
-        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    dirname = tmp_vsimem / "out.gdb"
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "one")
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(3)
-        f.SetField("str", "three")
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "one")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(4)
-        f.SetField("str", "four")
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(3)
+    f.SetField("str", "three")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(0)
-        assert lyr.SetFeature(f) == ogr.OGRERR_NON_EXISTING_FEATURE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(4)
+    f.SetField("str", "four")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(5)
-        assert lyr.SetFeature(f) == ogr.OGRERR_NON_EXISTING_FEATURE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(0)
+    assert lyr.SetFeature(f) == ogr.OGRERR_NON_EXISTING_FEATURE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(2)
-        assert lyr.SetFeature(f) == ogr.OGRERR_NON_EXISTING_FEATURE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(5)
+    assert lyr.SetFeature(f) == ogr.OGRERR_NON_EXISTING_FEATURE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(1)
-        # rewrite same size
-        f.SetField("str", "ONE")
-        assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(2)
+    assert lyr.SetFeature(f) == ogr.OGRERR_NON_EXISTING_FEATURE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(4)
-        # larger feature
-        f.SetField("str", "four4")
-        assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1)
+    # rewrite same size
+    f.SetField("str", "ONE")
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(3)
-        # smaller feature
-        f.SetField("str", "3")
-        assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(4)
+    # larger feature
+    f.SetField("str", "four4")
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
 
-        ds = None
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(3)
+    # smaller feature
+    f.SetField("str", "3")
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
 
-        ds = ogr.Open(dirname)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == 3
+    ds = None
 
-        f = lyr.GetNextFeature()
-        assert f["str"] == "ONE"
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 3
 
-        f = lyr.GetNextFeature()
-        assert f["str"] == "3"
+    f = lyr.GetNextFeature()
+    assert f["str"] == "ONE"
 
-        f = lyr.GetNextFeature()
-        assert f["str"] == "four4"
-        ds = None
+    f = lyr.GetNextFeature()
+    assert f["str"] == "3"
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    f = lyr.GetNextFeature()
+    assert f["str"] == "four4"
+    ds = None
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_add_field_to_non_empty_table():
+def test_ogr_openfilegdb_write_add_field_to_non_empty_table(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
-        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    dirname = tmp_vsimem / "out.gdb"
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "one")
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        f = None
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "two")
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        f = None
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "one")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
 
-        fld_defn = ogr.FieldDefn(
-            "cannot_add_non_nullable_field_without_default_val", ogr.OFTString
-        )
-        fld_defn.SetNullable(False)
-        with gdal.quiet_errors():
-            assert lyr.CreateField(fld_defn) != ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "two")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
 
-        # No need to rewrite the file
-        assert lyr.CreateField(ogr.FieldDefn("str2", ogr.OFTString)) == ogr.OGRERR_NONE
-        assert lyr.CreateField(ogr.FieldDefn("str3", ogr.OFTString)) == ogr.OGRERR_NONE
-        assert lyr.CreateField(ogr.FieldDefn("str4", ogr.OFTString)) == ogr.OGRERR_NONE
-        assert lyr.CreateField(ogr.FieldDefn("str5", ogr.OFTString)) == ogr.OGRERR_NONE
-        assert lyr.CreateField(ogr.FieldDefn("str6", ogr.OFTString)) == ogr.OGRERR_NONE
-        assert lyr.CreateField(ogr.FieldDefn("str7", ogr.OFTString)) == ogr.OGRERR_NONE
+    fld_defn = ogr.FieldDefn(
+        "cannot_add_non_nullable_field_without_default_val", ogr.OFTString
+    )
+    fld_defn.SetNullable(False)
+    with gdal.quiet_errors():
+        assert lyr.CreateField(fld_defn) != ogr.OGRERR_NONE
 
-        assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+    # No need to rewrite the file
+    assert lyr.CreateField(ogr.FieldDefn("str2", ogr.OFTString)) == ogr.OGRERR_NONE
+    assert lyr.CreateField(ogr.FieldDefn("str3", ogr.OFTString)) == ogr.OGRERR_NONE
+    assert lyr.CreateField(ogr.FieldDefn("str4", ogr.OFTString)) == ogr.OGRERR_NONE
+    assert lyr.CreateField(ogr.FieldDefn("str5", ogr.OFTString)) == ogr.OGRERR_NONE
+    assert lyr.CreateField(ogr.FieldDefn("str6", ogr.OFTString)) == ogr.OGRERR_NONE
+    assert lyr.CreateField(ogr.FieldDefn("str7", ogr.OFTString)) == ogr.OGRERR_NONE
 
-        ds = None
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
 
-        ds = ogr.Open(dirname)
-        lyr = ds.GetLayer(0)
-        f = lyr.GetNextFeature()
-        assert f["str"] == "one"
-        assert f["str2"] is None
-        assert f["str7"] is None
-        f = lyr.GetNextFeature()
-        assert f["str"] == "two"
-        assert f["str2"] is None
-        assert f["str7"] is None
-        ds = None
+    ds = None
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["str"] == "one"
+    assert f["str2"] is None
+    assert f["str7"] is None
+    f = lyr.GetNextFeature()
+    assert f["str"] == "two"
+    assert f["str2"] is None
+    assert f["str7"] is None
+    ds = None
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_add_field_to_non_empty_table_extra_nullable():
+def test_ogr_openfilegdb_write_add_field_to_non_empty_table_extra_nullable(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
-        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    dirname = tmp_vsimem / "out.gdb"
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "one")
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        f = None
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "two")
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        f = None
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "one")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
 
-        assert lyr.CreateField(ogr.FieldDefn("str2", ogr.OFTString)) == ogr.OGRERR_NONE
-        assert lyr.CreateField(ogr.FieldDefn("str3", ogr.OFTString)) == ogr.OGRERR_NONE
-        assert lyr.CreateField(ogr.FieldDefn("str4", ogr.OFTString)) == ogr.OGRERR_NONE
-        assert lyr.CreateField(ogr.FieldDefn("str5", ogr.OFTString)) == ogr.OGRERR_NONE
-        assert lyr.CreateField(ogr.FieldDefn("str6", ogr.OFTString)) == ogr.OGRERR_NONE
-        assert lyr.CreateField(ogr.FieldDefn("str7", ogr.OFTString)) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "two")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
 
-        # Will trigger a table rewrite
-        assert lyr.CreateField(ogr.FieldDefn("str8", ogr.OFTString)) == ogr.OGRERR_NONE
+    assert lyr.CreateField(ogr.FieldDefn("str2", ogr.OFTString)) == ogr.OGRERR_NONE
+    assert lyr.CreateField(ogr.FieldDefn("str3", ogr.OFTString)) == ogr.OGRERR_NONE
+    assert lyr.CreateField(ogr.FieldDefn("str4", ogr.OFTString)) == ogr.OGRERR_NONE
+    assert lyr.CreateField(ogr.FieldDefn("str5", ogr.OFTString)) == ogr.OGRERR_NONE
+    assert lyr.CreateField(ogr.FieldDefn("str6", ogr.OFTString)) == ogr.OGRERR_NONE
+    assert lyr.CreateField(ogr.FieldDefn("str7", ogr.OFTString)) == ogr.OGRERR_NONE
 
-        assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+    # Will trigger a table rewrite
+    assert lyr.CreateField(ogr.FieldDefn("str8", ogr.OFTString)) == ogr.OGRERR_NONE
 
-        ds = None
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
 
-        ds = ogr.Open(dirname)
-        lyr = ds.GetLayer(0)
-        f = lyr.GetNextFeature()
-        assert f["str"] == "one"
-        assert f["str2"] is None
-        assert f["str7"] is None
-        assert f["str8"] is None
-        f = lyr.GetNextFeature()
-        assert f["str"] == "two"
-        assert f["str2"] is None
-        assert f["str7"] is None
-        assert f["str8"] is None
-        ds = None
+    ds = None
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["str"] == "one"
+    assert f["str2"] is None
+    assert f["str7"] is None
+    assert f["str8"] is None
+    f = lyr.GetNextFeature()
+    assert f["str"] == "two"
+    assert f["str2"] is None
+    assert f["str7"] is None
+    assert f["str8"] is None
+    ds = None
 
 
 ###############################################################################
@@ -1026,187 +1009,18 @@ if sys.platform != "win32":
 
 
 @pytest.mark.parametrize("options", modify_inplace_options)
-@pytest.mark.parametrize(
-    "dirname",
-    ["/vsimem/out.gdb", "tmp/add_field_to_non_empty_table_extra_non_nullable.gdb"],
-)
+@pytest.mark.parametrize("location", ["vsimem", "disk"])
 def test_ogr_openfilegdb_write_add_field_to_non_empty_table_extra_non_nullable(
-    options, dirname
+    options, location, tmp_path, tmp_vsimem
 ):
 
-    with gdaltest.config_options(options):
-        try:
-            ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-            lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
-            lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
-
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f.SetField("str", "one")
-            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-            f = None
-
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f.SetField("str", "two")
-            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-            f = None
-
-            fld_defn = ogr.FieldDefn("str2", ogr.OFTString)
-            fld_defn.SetNullable(False)
-            fld_defn.SetDefault("'default val'")
-            assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
-
-            fld_defn = ogr.FieldDefn("int16", ogr.OFTInteger)
-            fld_defn.SetSubType(ogr.OFSTInt16)
-            fld_defn.SetNullable(False)
-            fld_defn.SetDefault("-32768")
-            assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
-
-            fld_defn = ogr.FieldDefn("int32", ogr.OFTInteger)
-            fld_defn.SetNullable(False)
-            fld_defn.SetDefault("123456789")
-            assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
-
-            fld_defn = ogr.FieldDefn("float32", ogr.OFTReal)
-            fld_defn.SetSubType(ogr.OFSTFloat32)
-            fld_defn.SetNullable(False)
-            fld_defn.SetDefault("1.25")
-            assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
-
-            fld_defn = ogr.FieldDefn("float64", ogr.OFTReal)
-            fld_defn.SetNullable(False)
-            fld_defn.SetDefault("1.23456789")
-            assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
-
-            fld_defn = ogr.FieldDefn("dt", ogr.OFTDateTime)
-            fld_defn.SetNullable(False)
-            fld_defn.SetDefault("'2022-11-04T12:34:56+02:00'")
-            assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
-
-            fld_defn = ogr.FieldDefn("dt_invalid_default", ogr.OFTDateTime)
-            fld_defn.SetDefault("'foo'")
-            with gdal.quiet_errors():
-                assert lyr.CreateField(fld_defn, False) == ogr.OGRERR_FAILURE
-                assert gdal.GetLastErrorMsg() == "Cannot parse foo as a date time"
-
-            fld_defn = ogr.FieldDefn("dt_CURRENT_TIMESTAMP", ogr.OFTDateTime)
-            fld_defn.SetDefault("CURRENT_TIMESTAMP")
-            with gdal.quiet_errors():
-                assert lyr.CreateField(fld_defn, False) == ogr.OGRERR_FAILURE
-                assert (
-                    gdal.GetLastErrorMsg()
-                    == "CURRENT_TIMESTAMP is not supported as a default value in File Geodatabase"
-                )
-
-            fld_defn = ogr.FieldDefn("dt_CURRENT_TIMESTAMP_2", ogr.OFTDateTime)
-            fld_defn.SetDefault("CURRENT_TIMESTAMP")
-            with gdal.quiet_errors():
-                assert lyr.CreateField(fld_defn, True) == ogr.OGRERR_NONE
-                assert (
-                    gdal.GetLastErrorMsg()
-                    == "CURRENT_TIMESTAMP is not supported as a default value in File Geodatabase"
-                )
-
-            assert lyr.SyncToDisk() == ogr.OGRERR_NONE
-
-            ds = None
-
-            assert gdal.VSIStatL(dirname + "/a00000009.gdbtable.backup") is None
-            assert gdal.VSIStatL(dirname + "/a00000009.gdbtablx.backup") is None
-            assert gdal.VSIStatL(dirname + "/a00000009.gdbtable.compress") is None
-            assert gdal.VSIStatL(dirname + "/a00000009.gdbtablx.compress") is None
-
-            ds = ogr.Open(dirname)
-            lyr = ds.GetLayer(0)
-            f = lyr.GetNextFeature()
-            assert f["str"] == "one"
-            assert f["str2"] == "default val"
-            assert f["int16"] == -32768
-            assert f["int32"] == 123456789
-            assert f["float32"] == 1.25
-            assert f["float64"] == 1.23456789
-            assert f["dt"] == "2022/11/04 10:34:56+00"
-            assert f.IsFieldNull("dt_CURRENT_TIMESTAMP_2")
-            f = lyr.GetNextFeature()
-            assert f["str"] == "two"
-            assert f["str2"] == "default val"
-            ds = None
-
-        finally:
-            gdal.RmdirRecursive(dirname)
-
-
-###############################################################################
-
-
-@pytest.mark.parametrize("options", modify_inplace_options)
-@pytest.mark.parametrize(
-    "dirname",
-    [
-        "/vsimem/out.gdb",
-        "tmp/add_field_to_non_empty_table_extra_non_nullable_simul_error.gdb",
-    ],
-)
-def test_ogr_openfilegdb_write_add_field_to_non_empty_table_extra_non_nullable_simul_error(
-    options, dirname
-):
+    if location == "vsimem":
+        dirname = tmp_vsimem / "out.gdb"
+    else:
+        dirname = tmp_path / "out.gdb"
 
     with gdaltest.config_options(options):
-        try:
-            ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-            lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
-            lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
-
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f.SetField("str", "one")
-            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-            f = None
-
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f.SetField("str", "two")
-            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-            f = None
-
-            fld_defn = ogr.FieldDefn("str2", ogr.OFTString)
-            fld_defn.SetNullable(False)
-            fld_defn.SetDefault("'default val'")
-            with gdal.quiet_errors():
-                with gdaltest.config_option(
-                    "OPENFILEGDB_SIMUL_ERROR_IN_RewriteTableToAddLastAddedField", "TRUE"
-                ):
-                    assert lyr.CreateField(fld_defn) != ogr.OGRERR_NONE
-
-            ds = None
-
-            assert gdal.VSIStatL(dirname + "/a00000009.gdbtable.backup") is None
-            assert gdal.VSIStatL(dirname + "/a00000009.gdbtablx.backup") is None
-            assert gdal.VSIStatL(dirname + "/a00000009.gdbtable.compress") is None
-            assert gdal.VSIStatL(dirname + "/a00000009.gdbtablx.compress") is None
-
-            ds = ogr.Open(dirname)
-            lyr = ds.GetLayer(0)
-            assert lyr.GetLayerDefn().GetFieldCount() == 1
-            f = lyr.GetNextFeature()
-            assert f["str"] == "one"
-            f = lyr.GetNextFeature()
-            assert f["str"] == "two"
-            ds = None
-
-        finally:
-            gdal.RmdirRecursive(dirname)
-
-
-###############################################################################
-
-
-def test_ogr_openfilegdb_write_add_field_after_reopening():
-
-    dirname = "/vsimem/out.gdb"
-    try:
         ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        assert ds is not None
-        ds = None
-
-        ds = ogr.Open(dirname, update=1)
         lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
         lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
 
@@ -1220,36 +1034,195 @@ def test_ogr_openfilegdb_write_add_field_after_reopening():
         assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
         f = None
 
+        fld_defn = ogr.FieldDefn("str2", ogr.OFTString)
+        fld_defn.SetNullable(False)
+        fld_defn.SetDefault("'default val'")
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        fld_defn = ogr.FieldDefn("int16", ogr.OFTInteger)
+        fld_defn.SetSubType(ogr.OFSTInt16)
+        fld_defn.SetNullable(False)
+        fld_defn.SetDefault("-32768")
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        fld_defn = ogr.FieldDefn("int32", ogr.OFTInteger)
+        fld_defn.SetNullable(False)
+        fld_defn.SetDefault("123456789")
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        fld_defn = ogr.FieldDefn("float32", ogr.OFTReal)
+        fld_defn.SetSubType(ogr.OFSTFloat32)
+        fld_defn.SetNullable(False)
+        fld_defn.SetDefault("1.25")
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        fld_defn = ogr.FieldDefn("float64", ogr.OFTReal)
+        fld_defn.SetNullable(False)
+        fld_defn.SetDefault("1.23456789")
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        fld_defn = ogr.FieldDefn("dt", ogr.OFTDateTime)
+        fld_defn.SetNullable(False)
+        fld_defn.SetDefault("'2022-11-04T12:34:56+02:00'")
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        fld_defn = ogr.FieldDefn("dt_invalid_default", ogr.OFTDateTime)
+        fld_defn.SetDefault("'foo'")
+        with gdal.quiet_errors():
+            assert lyr.CreateField(fld_defn, False) == ogr.OGRERR_FAILURE
+            assert gdal.GetLastErrorMsg() == "Cannot parse foo as a date time"
+
+        fld_defn = ogr.FieldDefn("dt_CURRENT_TIMESTAMP", ogr.OFTDateTime)
+        fld_defn.SetDefault("CURRENT_TIMESTAMP")
+        with gdal.quiet_errors():
+            assert lyr.CreateField(fld_defn, False) == ogr.OGRERR_FAILURE
+            assert (
+                gdal.GetLastErrorMsg()
+                == "CURRENT_TIMESTAMP is not supported as a default value in File Geodatabase"
+            )
+
+        fld_defn = ogr.FieldDefn("dt_CURRENT_TIMESTAMP_2", ogr.OFTDateTime)
+        fld_defn.SetDefault("CURRENT_TIMESTAMP")
+        with gdal.quiet_errors():
+            assert lyr.CreateField(fld_defn, True) == ogr.OGRERR_NONE
+            assert (
+                gdal.GetLastErrorMsg()
+                == "CURRENT_TIMESTAMP is not supported as a default value in File Geodatabase"
+            )
+
+        assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+
         ds = None
 
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-        assert lyr.CreateField(ogr.FieldDefn("str2", ogr.OFTString)) == ogr.OGRERR_NONE
-        ds = None
+        assert gdal.VSIStatL(dirname / "a00000009.gdbtable.backup") is None
+        assert gdal.VSIStatL(dirname / "a00000009.gdbtablx.backup") is None
+        assert gdal.VSIStatL(dirname / "a00000009.gdbtable.compress") is None
+        assert gdal.VSIStatL(dirname / "a00000009.gdbtablx.compress") is None
 
         ds = ogr.Open(dirname)
         lyr = ds.GetLayer(0)
-        assert lyr.GetLayerDefn().GetFieldCount() == 2
         f = lyr.GetNextFeature()
         assert f["str"] == "one"
-        assert f["str2"] is None
+        assert f["str2"] == "default val"
+        assert f["int16"] == -32768
+        assert f["int32"] == 123456789
+        assert f["float32"] == 1.25
+        assert f["float64"] == 1.23456789
+        assert f["dt"] == "2022/11/04 10:34:56+00"
+        assert f.IsFieldNull("dt_CURRENT_TIMESTAMP_2")
         f = lyr.GetNextFeature()
         assert f["str"] == "two"
+        assert f["str2"] == "default val"
+        ds = None
 
-        sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
-        assert sql_lyr
-        f = sql_lyr.GetNextFeature()
-        xml = f.GetField(0)
+
+###############################################################################
+
+
+@pytest.mark.parametrize("options", modify_inplace_options)
+@pytest.mark.parametrize("location", ["vsimem", "disk"])
+def test_ogr_openfilegdb_write_add_field_to_non_empty_table_extra_non_nullable_simul_error(
+    location, options, tmp_path, tmp_vsimem
+):
+
+    if location == "vsimem":
+        dirname = tmp_vsimem / "out.gdb"
+    else:
+        dirname = tmp_path / "out.gdb"
+
+    with gdaltest.config_options(options):
+        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("str", "one")
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
         f = None
-        ds.ReleaseResultSet(sql_lyr)
 
-        assert "<Name>str</Name>" in xml
-        assert "<Name>str2</Name>" in xml
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("str", "two")
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        f = None
+
+        fld_defn = ogr.FieldDefn("str2", ogr.OFTString)
+        fld_defn.SetNullable(False)
+        fld_defn.SetDefault("'default val'")
+        with gdal.quiet_errors():
+            with gdaltest.config_option(
+                "OPENFILEGDB_SIMUL_ERROR_IN_RewriteTableToAddLastAddedField", "TRUE"
+            ):
+                assert lyr.CreateField(fld_defn) != ogr.OGRERR_NONE
 
         ds = None
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+        assert gdal.VSIStatL(dirname / "a00000009.gdbtable.backup") is None
+        assert gdal.VSIStatL(dirname / "a00000009.gdbtablx.backup") is None
+        assert gdal.VSIStatL(dirname / "a00000009.gdbtable.compress") is None
+        assert gdal.VSIStatL(dirname / "a00000009.gdbtablx.compress") is None
+
+        ds = ogr.Open(dirname)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetLayerDefn().GetFieldCount() == 1
+        f = lyr.GetNextFeature()
+        assert f["str"] == "one"
+        f = lyr.GetNextFeature()
+        assert f["str"] == "two"
+        ds = None
+
+
+###############################################################################
+
+
+def test_ogr_openfilegdb_write_add_field_after_reopening(tmp_vsimem):
+
+    dirname = tmp_vsimem / "out.gdb"
+
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    assert ds is not None
+    ds = None
+
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "one")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "two")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
+
+    ds = None
+
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.CreateField(ogr.FieldDefn("str2", ogr.OFTString)) == ogr.OGRERR_NONE
+    ds = None
+
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
+    f = lyr.GetNextFeature()
+    assert f["str"] == "one"
+    assert f["str2"] is None
+    f = lyr.GetNextFeature()
+    assert f["str"] == "two"
+
+    sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    xml = f.GetField(0)
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
+
+    assert "<Name>str</Name>" in xml
+    assert "<Name>str2</Name>" in xml
+
+    ds = None
 
 
 ###############################################################################
@@ -1257,246 +1230,234 @@ def test_ogr_openfilegdb_write_add_field_after_reopening():
 
 @pytest.mark.parametrize("use_synctodisk", [False, True])
 @pytest.mark.parametrize("field_to_delete", [0, 1])
-def test_ogr_openfilegdb_write_delete_field(use_synctodisk, field_to_delete):
+def test_ogr_openfilegdb_write_delete_field(
+    tmp_vsimem, use_synctodisk, field_to_delete
+):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    dirname = tmp_vsimem / "out.gdb"
 
-        assert lyr.CreateField(ogr.FieldDefn("str1", ogr.OFTString)) == ogr.OGRERR_NONE
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
 
-        fld_defn = ogr.FieldDefn("str2", ogr.OFTString)
-        fld_defn.SetNullable(False)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    assert lyr.CreateField(ogr.FieldDefn("str1", ogr.OFTString)) == ogr.OGRERR_NONE
 
-        assert lyr.CreateField(ogr.FieldDefn("str3", ogr.OFTString)) == ogr.OGRERR_NONE
+    fld_defn = ogr.FieldDefn("str2", ogr.OFTString)
+    fld_defn.SetNullable(False)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str1", "str1_1")
-        f.SetField("str2", "str2_1")
-        f.SetField("str3", "str3_1")
-        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        f = None
+    assert lyr.CreateField(ogr.FieldDefn("str3", ogr.OFTString)) == ogr.OGRERR_NONE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str1", "str1_2")
-        f.SetField("str2", "str2_2")
-        f.SetField("str3", "str3_2")
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        f = None
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str1", "str1_1")
+    f.SetField("str2", "str2_1")
+    f.SetField("str3", "str3_1")
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
 
-        if use_synctodisk:
-            assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str1", "str1_2")
+    f.SetField("str2", "str2_2")
+    f.SetField("str3", "str3_2")
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
 
-        assert lyr.DeleteField(field_to_delete) == ogr.OGRERR_NONE
-        assert lyr.GetLayerDefn().GetFieldCount() == 2
-
-        if field_to_delete == 0:
-            other_field = "str2"
-        else:
-            other_field = "str1"
-
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField(other_field, "str2_3")
-        f.SetField("str3", "str3_3")
-        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3)"))
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        f = None
-
-        def check_values(lyr):
-            f = lyr.GetNextFeature()
-            assert f[other_field].endswith("_1")
-            assert f["str3"] == "str3_1"
-            assert f.GetGeometryRef() is not None
-            f = None
-
-            f = lyr.GetNextFeature()
-            assert f[other_field].endswith("_2")
-            assert f["str3"] == "str3_2"
-            assert f.GetGeometryRef() is None
-            f = None
-
-            f = lyr.GetNextFeature()
-            assert f[other_field].endswith("_3")
-            assert f["str3"] == "str3_3"
-            assert f.GetGeometryRef() is not None
-
-        check_values(lyr)
-
+    if use_synctodisk:
         assert lyr.SyncToDisk() == ogr.OGRERR_NONE
 
-        lyr.ResetReading()
-        check_values(lyr)
+    assert lyr.DeleteField(field_to_delete) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
 
-        ds = None
+    if field_to_delete == 0:
+        other_field = "str2"
+    else:
+        other_field = "str1"
 
-        ds = ogr.Open(dirname)
-        lyr = ds.GetLayer(0)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(other_field, "str2_3")
+    f.SetField("str3", "str3_3")
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
 
-        check_values(lyr)
-
-        sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
-        assert sql_lyr
-        f = sql_lyr.GetNextFeature()
-        xml = f.GetField(0)
-        f = None
-        ds.ReleaseResultSet(sql_lyr)
-
-        if field_to_delete == 0:
-            assert "<Name>str1</Name>" not in xml
-            assert "<Name>str2</Name>" in xml
-        else:
-            assert "<Name>str1</Name>" in xml
-            assert "<Name>str2</Name>" not in xml
-        assert "<Name>str3</Name>" in xml
-
-        ds = None
-
-    finally:
-        gdal.RmdirRecursive(dirname)
-
-
-###############################################################################
-
-
-def test_ogr_openfilegdb_write_delete_field_before_geom():
-
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-
-        with gdaltest.config_option("OPENFILEGDB_CREATE_FIELD_BEFORE_GEOMETRY", "YES"):
-            lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
-
-        assert lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString)) == ogr.OGRERR_NONE
-
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("field_before_geom", "to be deleted")
-        f.SetField("str", "foo")
-        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        f = None
-
-        assert (
-            lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex("field_before_geom"))
-            == ogr.OGRERR_NONE
-        )
-
-        lyr.ResetReading()
+    def check_values(lyr):
         f = lyr.GetNextFeature()
-        assert f.GetField("str") == "foo"
+        assert f[other_field].endswith("_1")
+        assert f["str3"] == "str3_1"
+        assert f.GetGeometryRef() is not None
+        f = None
+
+        f = lyr.GetNextFeature()
+        assert f[other_field].endswith("_2")
+        assert f["str3"] == "str3_2"
+        assert f.GetGeometryRef() is None
+        f = None
+
+        f = lyr.GetNextFeature()
+        assert f[other_field].endswith("_3")
+        assert f["str3"] == "str3_3"
         assert f.GetGeometryRef() is not None
 
-        ds = None
+    check_values(lyr)
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
 
+    lyr.ResetReading()
+    check_values(lyr)
 
-###############################################################################
+    ds = None
 
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
 
-def test_ogr_openfilegdb_write_feature_dataset_no_crs():
+    check_values(lyr)
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        assert ds is not None
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.CreateLayer(
-            "test",
-            geom_type=ogr.wkbPoint,
-            options=["FEATURE_DATASET=my_feature_dataset"],
-        )
-        assert lyr is not None
-        lyr = ds.CreateLayer(
-            "test2",
-            geom_type=ogr.wkbPoint,
-            options=["FEATURE_DATASET=my_feature_dataset"],
-        )
-        assert lyr is not None
-        ds = None
+    sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    xml = f.GetField(0)
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
 
-        ds = gdal.OpenEx(dirname)
-        rg = ds.GetRootGroup()
+    if field_to_delete == 0:
+        assert "<Name>str1</Name>" not in xml
+        assert "<Name>str2</Name>" in xml
+    else:
+        assert "<Name>str1</Name>" in xml
+        assert "<Name>str2</Name>" not in xml
+    assert "<Name>str3</Name>" in xml
 
-        assert rg.GetGroupNames() == ["my_feature_dataset"]
-
-        fd = rg.OpenGroup("my_feature_dataset")
-        assert fd is not None
-        assert fd.GetVectorLayerNames() == ["test", "test2"]
-
-        lyr = ds.GetLayerByName("GDB_Items")
-        assert (
-            lyr.GetFeatureCount() == 5
-        )  # == root, workspace, feature dataset, 2 layers
-
-        lyr = ds.GetLayerByName("GDB_ItemRelationships")
-        assert lyr.GetFeatureCount() == 3  # == feature dataset, 2 layers
-
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = None
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_feature_dataset_crs():
+def test_ogr_openfilegdb_write_delete_field_before_geom(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    dirname = tmp_vsimem / "out.gdb"
 
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(4326)
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
 
+    with gdaltest.config_option("OPENFILEGDB_CREATE_FIELD_BEFORE_GEOMETRY", "YES"):
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+
+    assert lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString)) == ogr.OGRERR_NONE
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("field_before_geom", "to be deleted")
+    f.SetField("str", "foo")
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
+
+    assert (
+        lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex("field_before_geom"))
+        == ogr.OGRERR_NONE
+    )
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetField("str") == "foo"
+    assert f.GetGeometryRef() is not None
+
+    ds = None
+
+
+###############################################################################
+
+
+def test_ogr_openfilegdb_write_feature_dataset_no_crs(tmp_vsimem):
+
+    dirname = tmp_vsimem / "out.gdb"
+
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    assert ds is not None
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.CreateLayer(
+        "test",
+        geom_type=ogr.wkbPoint,
+        options=["FEATURE_DATASET=my_feature_dataset"],
+    )
+    assert lyr is not None
+    lyr = ds.CreateLayer(
+        "test2",
+        geom_type=ogr.wkbPoint,
+        options=["FEATURE_DATASET=my_feature_dataset"],
+    )
+    assert lyr is not None
+    ds = None
+
+    ds = gdal.OpenEx(dirname)
+    rg = ds.GetRootGroup()
+
+    assert rg.GetGroupNames() == ["my_feature_dataset"]
+
+    fd = rg.OpenGroup("my_feature_dataset")
+    assert fd is not None
+    assert fd.GetVectorLayerNames() == ["test", "test2"]
+
+    lyr = ds.GetLayerByName("GDB_Items")
+    assert lyr.GetFeatureCount() == 5  # == root, workspace, feature dataset, 2 layers
+
+    lyr = ds.GetLayerByName("GDB_ItemRelationships")
+    assert lyr.GetFeatureCount() == 3  # == feature dataset, 2 layers
+
+
+###############################################################################
+
+
+def test_ogr_openfilegdb_write_feature_dataset_crs(tmp_vsimem):
+
+    dirname = tmp_vsimem / "out.gdb"
+
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+
+    lyr = ds.CreateLayer(
+        "test",
+        geom_type=ogr.wkbPoint,
+        srs=srs,
+        options=["FEATURE_DATASET=my_feature_dataset"],
+    )
+    assert lyr is not None
+
+    lyr = ds.CreateLayer(
+        "test2",
+        geom_type=ogr.wkbPoint,
+        srs=srs,
+        options=["FEATURE_DATASET=my_feature_dataset"],
+    )
+    assert lyr is not None
+
+    lyr = ds.CreateLayer(
+        "inherited_srs",
+        geom_type=ogr.wkbPoint,
+        options=["FEATURE_DATASET=my_feature_dataset"],
+    )
+    assert lyr is not None
+
+    other_srs = osr.SpatialReference()
+    other_srs.ImportFromEPSG(4269)
+
+    with gdal.quiet_errors():
         lyr = ds.CreateLayer(
-            "test",
+            "other_srs",
             geom_type=ogr.wkbPoint,
-            srs=srs,
+            srs=other_srs,
             options=["FEATURE_DATASET=my_feature_dataset"],
         )
-        assert lyr is not None
+        assert lyr is None
 
-        lyr = ds.CreateLayer(
-            "test2",
-            geom_type=ogr.wkbPoint,
-            srs=srs,
-            options=["FEATURE_DATASET=my_feature_dataset"],
-        )
-        assert lyr is not None
+    ds = None
 
-        lyr = ds.CreateLayer(
-            "inherited_srs",
-            geom_type=ogr.wkbPoint,
-            options=["FEATURE_DATASET=my_feature_dataset"],
-        )
-        assert lyr is not None
-
-        other_srs = osr.SpatialReference()
-        other_srs.ImportFromEPSG(4269)
-
-        with gdal.quiet_errors():
-            lyr = ds.CreateLayer(
-                "other_srs",
-                geom_type=ogr.wkbPoint,
-                srs=other_srs,
-                options=["FEATURE_DATASET=my_feature_dataset"],
-            )
-            assert lyr is None
-
-        ds = None
-
-        ds = gdal.OpenEx(dirname)
-        lyr = ds.GetLayerByName("inherited_srs")
-        srs = lyr.GetSpatialRef()
-        assert srs is not None
-        assert srs.GetAuthorityCode(None) == "4326"
-
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = gdal.OpenEx(dirname)
+    lyr = ds.GetLayerByName("inherited_srs")
+    srs = lyr.GetSpatialRef()
+    assert srs is not None
+    assert srs.GetAuthorityCode(None) == "4326"
 
 
 ###############################################################################
@@ -1531,344 +1492,334 @@ def test_ogr_openfilegdb_write_feature_dataset_crs():
         #  (340*341, None), # depth 2   # a bit too slow for unit tests
     ],
 )
-def test_ogr_openfilegdb_write_spatial_index(numPoints, maxFeaturesPerSpxPage):
+def test_ogr_openfilegdb_write_spatial_index(
+    tmp_vsimem, numPoints, maxFeaturesPerSpxPage
+):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("points", geom_type=ogr.wkbPoint)
-        for j in range(numPoints):
-            feat = ogr.Feature(lyr.GetLayerDefn())
-            geom = ogr.CreateGeometryFromWkt("POINT(%d %d)" % (j, j))
-            feat.SetGeometry(geom)
-            lyr.CreateFeature(feat)
-        with gdaltest.config_option(
-            "OPENFILEGDB_MAX_FEATURES_PER_SPX_PAGE",
-            str(maxFeaturesPerSpxPage) if maxFeaturesPerSpxPage else None,
-        ):
-            if maxFeaturesPerSpxPage == 2 and numPoints > 30:
-                with gdal.quiet_errors():
-                    gdal.ErrorReset()
-                    lyr.SyncToDisk()
-                    assert gdal.GetLastErrorMsg() != ""
-            else:
+    dirname = tmp_vsimem / "out.gdb"
+
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("points", geom_type=ogr.wkbPoint)
+    for j in range(numPoints):
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        geom = ogr.CreateGeometryFromWkt("POINT(%d %d)" % (j, j))
+        feat.SetGeometry(geom)
+        lyr.CreateFeature(feat)
+    with gdaltest.config_option(
+        "OPENFILEGDB_MAX_FEATURES_PER_SPX_PAGE",
+        str(maxFeaturesPerSpxPage) if maxFeaturesPerSpxPage else None,
+    ):
+        if maxFeaturesPerSpxPage == 2 and numPoints > 30:
+            with gdal.quiet_errors():
                 gdal.ErrorReset()
                 lyr.SyncToDisk()
-                assert gdal.GetLastErrorMsg() == ""
-        ds = None
-
-        ds = ogr.Open(dirname)
-        lyr = ds.GetLayer(0)
-        if numPoints > 1000:
-            j = 0
-            lyr.SetSpatialFilterRect(j - 0.1, j - 0.1, j + 0.1, j + 0.1)
-            lyr.ResetReading()
-            f = lyr.GetNextFeature()
-            assert f is not None
-
-            j = numPoints - 1
-            lyr.SetSpatialFilterRect(j - 0.1, j - 0.1, j + 0.1, j + 0.1)
-            lyr.ResetReading()
-            f = lyr.GetNextFeature()
-            assert f is not None
+                assert gdal.GetLastErrorMsg() != ""
         else:
-            for j in range(numPoints):
-                lyr.SetSpatialFilterRect(j - 0.1, j - 0.1, j + 0.1, j + 0.1)
-                lyr.ResetReading()
-                f = lyr.GetNextFeature()
-                assert f is not None, j
-        ds = None
-
-    finally:
-        gdal.RmdirRecursive(dirname)
-
-
-###############################################################################
-
-
-def test_ogr_openfilegdb_write_attribute_index():
-
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
-        fld_defn = ogr.FieldDefn("int16", ogr.OFTInteger)
-        fld_defn.SetSubType(ogr.OFSTInt16)
-        lyr.CreateField(fld_defn)
-        fld_defn = ogr.FieldDefn("int32", ogr.OFTInteger)
-        lyr.CreateField(fld_defn)
-        fld_defn = ogr.FieldDefn("float32", ogr.OFTReal)
-        fld_defn.SetSubType(ogr.OFSTFloat32)
-        lyr.CreateField(fld_defn)
-        fld_defn = ogr.FieldDefn("float64", ogr.OFTReal)
-        lyr.CreateField(fld_defn)
-        fld_defn = ogr.FieldDefn("str", ogr.OFTString)
-        lyr.CreateField(fld_defn)
-        fld_defn = ogr.FieldDefn("lower_str", ogr.OFTString)
-        lyr.CreateField(fld_defn)
-        fld_defn = ogr.FieldDefn("dt", ogr.OFTDateTime)
-        lyr.CreateField(fld_defn)
-
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f["int16"] = -1234
-        f["int32"] = -12346789
-        f["float32"] = 1.25
-        f["float64"] = 1.256789
-        f["str"] = "my str"
-        f["lower_str"] = "MY STR"
-        f["dt"] = "2022-06-03T16:06:00Z"
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f["str"] = "x" * 100
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f["str"] = ("x" * 100) + "y"
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        f = None
-
-        # Errors of index creation
-        with gdal.quiet_errors():
             gdal.ErrorReset()
-            ds.ExecuteSQL("CREATE INDEX this_name_is_wayyyyy_tooo_long ON test(int16)")
-            assert gdal.GetLastErrorMsg() != ""
-
-            gdal.ErrorReset()
-            ds.ExecuteSQL("CREATE INDEX idx_int16 ON non_existing_layer(int16)")
-            assert gdal.GetLastErrorMsg() != ""
-
-            gdal.ErrorReset()
-            ds.ExecuteSQL("CREATE INDEX invalid_field ON test(invalid_field)")
-            assert gdal.GetLastErrorMsg() != ""
-
-            # Reserved keyword
-            gdal.ErrorReset()
-            ds.ExecuteSQL("CREATE INDEX SELECT ON test(int16)")
-            assert gdal.GetLastErrorMsg() != ""
-
-            gdal.ErrorReset()
-            ds.ExecuteSQL("CREATE INDEX _starting_by_ ON test(int16)")
-            assert gdal.GetLastErrorMsg() != ""
-
-            gdal.ErrorReset()
-            ds.ExecuteSQL("CREATE INDEX a&b ON test(int16)")
-            assert gdal.GetLastErrorMsg() != ""
-
-        # Create indexes
-        gdal.ErrorReset()
-        for i in range(lyr.GetLayerDefn().GetFieldCount()):
-            fld_name = lyr.GetLayerDefn().GetFieldDefn(i).GetName()
-            if fld_name == "lower_str":
-                ds.ExecuteSQL(
-                    "CREATE INDEX idx_%s ON test(LOWER(%s))" % (fld_name, fld_name)
-                )
-            else:
-                ds.ExecuteSQL("CREATE INDEX idx_%s ON test(%s)" % (fld_name, fld_name))
+            lyr.SyncToDisk()
             assert gdal.GetLastErrorMsg() == ""
-            assert (
-                gdal.VSIStatL(dirname + "/a00000009.idx_" + fld_name + ".atx")
-                is not None
-            )
+    ds = None
 
-        fld_defn = ogr.FieldDefn("unindexed", ogr.OFTString)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    if numPoints > 1000:
+        j = 0
+        lyr.SetSpatialFilterRect(j - 0.1, j - 0.1, j + 0.1, j + 0.1)
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        assert f is not None
 
-        with gdal.quiet_errors():
-            # Re-using an index name
-            gdal.ErrorReset()
-            ds.ExecuteSQL("CREATE INDEX idx_int16 ON test(unindexed)")
-            assert gdal.GetLastErrorMsg() != ""
-
-            # Trying to index twice a field
-            gdal.ErrorReset()
-            ds.ExecuteSQL("CREATE INDEX int16_again ON test(int16)")
-            assert gdal.GetLastErrorMsg() != ""
-
-            gdal.ErrorReset()
-            ds.ExecuteSQL("CREATE INDEX lower_str_again ON test(lower_str)")
-            assert gdal.GetLastErrorMsg() != ""
-
-        ds = None
-
-        def check_index_fully_used(ds, lyr):
-            sql_lyr = ds.ExecuteSQL("GetLayerAttrIndexUse " + lyr.GetName())
-            attr_index_use = int(sql_lyr.GetNextFeature().GetField(0))
-            ds.ReleaseResultSet(sql_lyr)
-            assert attr_index_use == 2  # IteratorSufficientToEvaluateFilter
-
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-
-        lyr.SetAttributeFilter("int16 = -1234")
-        check_index_fully_used(ds, lyr)
-        assert lyr.GetFeatureCount() == 1
-
-        lyr.SetAttributeFilter("int16 = 1234")
-        assert lyr.GetFeatureCount() == 0
-
-        lyr.SetAttributeFilter("int32 = -12346789")
-        check_index_fully_used(ds, lyr)
-        assert lyr.GetFeatureCount() == 1
-
-        lyr.SetAttributeFilter("int32 = 12346789")
-        assert lyr.GetFeatureCount() == 0
-
-        lyr.SetAttributeFilter("float32 = 1.25")
-        check_index_fully_used(ds, lyr)
-        assert lyr.GetFeatureCount() == 1
-
-        lyr.SetAttributeFilter("float32 = -1.25")
-        assert lyr.GetFeatureCount() == 0
-
-        lyr.SetAttributeFilter("float64 = 1.256789")
-        assert lyr.GetFeatureCount() == 1
-
-        lyr.SetAttributeFilter("float64 = -1.256789")
-        assert lyr.GetFeatureCount() == 0
-
-        lyr.SetAttributeFilter("str = 'my str'")
-        assert lyr.GetFeatureCount() == 1
-
-        lyr.SetAttributeFilter("str = 'MY STR'")
-        assert lyr.GetFeatureCount() == 0
-
-        lyr.SetAttributeFilter("str = 'my st'")
-        assert lyr.GetFeatureCount() == 0
-
-        lyr.SetAttributeFilter("str = 'my str2'")
-        assert lyr.GetFeatureCount() == 0
-
-        # Test truncation to 80 characters
-        # lyr.SetAttributeFilter("str = '%s'" % ('x' * 100))
-        # assert lyr.GetFeatureCount() == 1
-
-        # lyr.SetAttributeFilter("str = '%s'" % ('x' * 100 + 'y'))
-        # assert lyr.GetFeatureCount() == 1
-
-        # lyr.SetAttributeFilter("str = '%s'" % ('x' * 100 + 'z'))
-        # assert lyr.GetFeatureCount() == 0
-
-        # Actually should be "LOWER(lower_str) = 'my str'" ...
-        # so this test may break if we implement this in a cleaner way
-        lyr.SetAttributeFilter("lower_str = 'my str'")
-        assert lyr.GetFeatureCount() == 1
-
-        lyr.SetAttributeFilter("dt = '2022/06/03 16:06:00Z'")
-        check_index_fully_used(ds, lyr)
-        assert lyr.GetFeatureCount() == 1
-
-        # Check that .gdbindexes is properly updated on field renaming
-        fld_defn = ogr.FieldDefn("int32_renamed", ogr.OFTInteger)
-        assert (
-            lyr.AlterFieldDefn(
-                lyr.GetLayerDefn().GetFieldIndex("int32"), fld_defn, ogr.ALTER_ALL_FLAG
-            )
-            == ogr.OGRERR_NONE
-        )
-
-        lyr.SetAttributeFilter("int32_renamed = -12346789")
-        check_index_fully_used(ds, lyr)
-        assert lyr.GetFeatureCount() == 1
-
-        ds = None
-
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-
-        lyr.SetAttributeFilter("int32_renamed = -12346789")
-        check_index_fully_used(ds, lyr)
-        assert lyr.GetFeatureCount() == 1
-
-        # Check that the index is destroy on field deletion
-        assert gdal.VSIStatL(dirname + "/a00000009.idx_int32.atx") is not None
-        assert (
-            lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex("int32_renamed"))
-            == ogr.OGRERR_NONE
-        )
-        assert gdal.VSIStatL(dirname + "/a00000009.idx_int32.atx") is None
-
-        ds = None
-
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-
-        lyr.SetAttributeFilter("int16 = -1234")
-        check_index_fully_used(ds, lyr)
-        assert lyr.GetFeatureCount() == 1
-
-        lyr.SetAttributeFilter("float32 = 1.25")
-        check_index_fully_used(ds, lyr)
-        assert lyr.GetFeatureCount() == 1
-
-        ds = None
-
-    finally:
-        gdal.RmdirRecursive(dirname)
+        j = numPoints - 1
+        lyr.SetSpatialFilterRect(j - 0.1, j - 0.1, j + 0.1, j + 0.1)
+        lyr.ResetReading()
+        f = lyr.GetNextFeature()
+        assert f is not None
+    else:
+        for j in range(numPoints):
+            lyr.SetSpatialFilterRect(j - 0.1, j - 0.1, j + 0.1, j + 0.1)
+            lyr.ResetReading()
+            f = lyr.GetNextFeature()
+            assert f is not None, j
+    ds = None
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_delete_layer():
+def test_ogr_openfilegdb_write_attribute_index(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        assert ds is not None
-        ds = ogr.Open(dirname, update=1)
-        ds.CreateLayer("test", geom_type=ogr.wkbPoint)
-        ds.CreateLayer("test2", geom_type=ogr.wkbPoint)
-        ds = None
+    dirname = tmp_vsimem / "out.gdb"
 
-        ds = ogr.Open(dirname, update=1)
-        assert ds.TestCapability(ogr.ODsCDeleteLayer) == 1
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    fld_defn = ogr.FieldDefn("int16", ogr.OFTInteger)
+    fld_defn.SetSubType(ogr.OFSTInt16)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("int32", ogr.OFTInteger)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("float32", ogr.OFTReal)
+    fld_defn.SetSubType(ogr.OFSTFloat32)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("float64", ogr.OFTReal)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("str", ogr.OFTString)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("lower_str", ogr.OFTString)
+    lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("dt", ogr.OFTDateTime)
+    lyr.CreateField(fld_defn)
 
-        lyr = ds.GetLayerByName("GDB_SystemCatalog")
-        assert lyr.GetFeatureCount() == 10  # 8 system tables + 2 layers
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["int16"] = -1234
+    f["int32"] = -12346789
+    f["float32"] = 1.25
+    f["float64"] = 1.256789
+    f["str"] = "my str"
+    f["lower_str"] = "MY STR"
+    f["dt"] = "2022-06-03T16:06:00Z"
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        lyr = ds.GetLayerByName("GDB_Items")
-        assert lyr.GetFeatureCount() == 4  # root, workspace + 2 layers
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["str"] = "x" * 100
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        lyr = ds.GetLayerByName("GDB_ItemRelationships")
-        assert lyr.GetFeatureCount() == 2  # 2 layers
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["str"] = ("x" * 100) + "y"
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
 
-        ds.ExecuteSQL("DELLAYER:test")
-        assert ds.GetLayerCount() == 1
+    # Errors of index creation
+    with gdal.quiet_errors():
+        gdal.ErrorReset()
+        ds.ExecuteSQL("CREATE INDEX this_name_is_wayyyyy_tooo_long ON test(int16)")
+        assert gdal.GetLastErrorMsg() != ""
 
-        for filename in gdal.ReadDir(dirname):
-            assert not filename.startswith("a00000009.gdbtable")
+        gdal.ErrorReset()
+        ds.ExecuteSQL("CREATE INDEX idx_int16 ON non_existing_layer(int16)")
+        assert gdal.GetLastErrorMsg() != ""
 
-        assert ds.DeleteLayer(-1) != ogr.OGRERR_NONE
-        assert ds.DeleteLayer(1) != ogr.OGRERR_NONE
+        gdal.ErrorReset()
+        ds.ExecuteSQL("CREATE INDEX invalid_field ON test(invalid_field)")
+        assert gdal.GetLastErrorMsg() != ""
 
-        # The following should not work
-        with gdal.quiet_errors():
-            gdal.ErrorReset()
-            ds.ExecuteSQL("DELLAYER:not_existing")
-            assert gdal.GetLastErrorMsg() != ""
-        with gdal.quiet_errors():
-            gdal.ErrorReset()
-            ds.ExecuteSQL("DELLAYER:GDB_SystemCatalog")
-            assert gdal.GetLastErrorMsg() != ""
+        # Reserved keyword
+        gdal.ErrorReset()
+        ds.ExecuteSQL("CREATE INDEX SELECT ON test(int16)")
+        assert gdal.GetLastErrorMsg() != ""
 
-        ds = None
+        gdal.ErrorReset()
+        ds.ExecuteSQL("CREATE INDEX _starting_by_ ON test(int16)")
+        assert gdal.GetLastErrorMsg() != ""
 
-        ds = ogr.Open(dirname)
-        assert ds.GetLayerCount() == 1
-        assert ds.GetLayer(0).GetName() == "test2"
+        gdal.ErrorReset()
+        ds.ExecuteSQL("CREATE INDEX a&b ON test(int16)")
+        assert gdal.GetLastErrorMsg() != ""
 
-        lyr = ds.GetLayerByName("GDB_SystemCatalog")
-        assert lyr.GetFeatureCount() == 9
+    # Create indexes
+    gdal.ErrorReset()
+    for i in range(lyr.GetLayerDefn().GetFieldCount()):
+        fld_name = lyr.GetLayerDefn().GetFieldDefn(i).GetName()
+        if fld_name == "lower_str":
+            ds.ExecuteSQL(
+                "CREATE INDEX idx_%s ON test(LOWER(%s))" % (fld_name, fld_name)
+            )
+        else:
+            ds.ExecuteSQL("CREATE INDEX idx_%s ON test(%s)" % (fld_name, fld_name))
+        assert gdal.GetLastErrorMsg() == ""
+        assert gdal.VSIStatL(dirname / f"a00000009.idx_{fld_name}.atx") is not None
 
-        lyr = ds.GetLayerByName("GDB_Items")
-        assert lyr.GetFeatureCount() == 3
+    fld_defn = ogr.FieldDefn("unindexed", ogr.OFTString)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-        lyr = ds.GetLayerByName("GDB_ItemRelationships")
-        assert lyr.GetFeatureCount() == 1
+    with gdal.quiet_errors():
+        # Re-using an index name
+        gdal.ErrorReset()
+        ds.ExecuteSQL("CREATE INDEX idx_int16 ON test(unindexed)")
+        assert gdal.GetLastErrorMsg() != ""
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+        # Trying to index twice a field
+        gdal.ErrorReset()
+        ds.ExecuteSQL("CREATE INDEX int16_again ON test(int16)")
+        assert gdal.GetLastErrorMsg() != ""
+
+        gdal.ErrorReset()
+        ds.ExecuteSQL("CREATE INDEX lower_str_again ON test(lower_str)")
+        assert gdal.GetLastErrorMsg() != ""
+
+    ds = None
+
+    def check_index_fully_used(ds, lyr):
+        sql_lyr = ds.ExecuteSQL("GetLayerAttrIndexUse " + lyr.GetName())
+        attr_index_use = int(sql_lyr.GetNextFeature().GetField(0))
+        ds.ReleaseResultSet(sql_lyr)
+        assert attr_index_use == 2  # IteratorSufficientToEvaluateFilter
+
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+
+    lyr.SetAttributeFilter("int16 = -1234")
+    check_index_fully_used(ds, lyr)
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("int16 = 1234")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("int32 = -12346789")
+    check_index_fully_used(ds, lyr)
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("int32 = 12346789")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("float32 = 1.25")
+    check_index_fully_used(ds, lyr)
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("float32 = -1.25")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("float64 = 1.256789")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("float64 = -1.256789")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("str = 'my str'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("str = 'MY STR'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("str = 'my st'")
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetAttributeFilter("str = 'my str2'")
+    assert lyr.GetFeatureCount() == 0
+
+    # Test truncation to 80 characters
+    # lyr.SetAttributeFilter("str = '%s'" % ('x' * 100))
+    # assert lyr.GetFeatureCount() == 1
+
+    # lyr.SetAttributeFilter("str = '%s'" % ('x' * 100 + 'y'))
+    # assert lyr.GetFeatureCount() == 1
+
+    # lyr.SetAttributeFilter("str = '%s'" % ('x' * 100 + 'z'))
+    # assert lyr.GetFeatureCount() == 0
+
+    # Actually should be "LOWER(lower_str) = 'my str'" ...
+    # so this test may break if we implement this in a cleaner way
+    lyr.SetAttributeFilter("lower_str = 'my str'")
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("dt = '2022/06/03 16:06:00Z'")
+    check_index_fully_used(ds, lyr)
+    assert lyr.GetFeatureCount() == 1
+
+    # Check that .gdbindexes is properly updated on field renaming
+    fld_defn = ogr.FieldDefn("int32_renamed", ogr.OFTInteger)
+    assert (
+        lyr.AlterFieldDefn(
+            lyr.GetLayerDefn().GetFieldIndex("int32"), fld_defn, ogr.ALTER_ALL_FLAG
+        )
+        == ogr.OGRERR_NONE
+    )
+
+    lyr.SetAttributeFilter("int32_renamed = -12346789")
+    check_index_fully_used(ds, lyr)
+    assert lyr.GetFeatureCount() == 1
+
+    ds = None
+
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+
+    lyr.SetAttributeFilter("int32_renamed = -12346789")
+    check_index_fully_used(ds, lyr)
+    assert lyr.GetFeatureCount() == 1
+
+    # Check that the index is destroy on field deletion
+    assert gdal.VSIStatL(dirname / "a00000009.idx_int32.atx") is not None
+    assert (
+        lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex("int32_renamed"))
+        == ogr.OGRERR_NONE
+    )
+    assert gdal.VSIStatL(dirname / "a00000009.idx_int32.atx") is None
+
+    ds = None
+
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+
+    lyr.SetAttributeFilter("int16 = -1234")
+    check_index_fully_used(ds, lyr)
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetAttributeFilter("float32 = 1.25")
+    check_index_fully_used(ds, lyr)
+    assert lyr.GetFeatureCount() == 1
+
+    ds = None
+
+
+###############################################################################
+
+
+def test_ogr_openfilegdb_write_delete_layer(tmp_vsimem):
+
+    dirname = tmp_vsimem / "out.gdb"
+
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    assert ds is not None
+    ds = ogr.Open(dirname, update=1)
+    ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    ds.CreateLayer("test2", geom_type=ogr.wkbPoint)
+    ds = None
+
+    ds = ogr.Open(dirname, update=1)
+    assert ds.TestCapability(ogr.ODsCDeleteLayer) == 1
+
+    lyr = ds.GetLayerByName("GDB_SystemCatalog")
+    assert lyr.GetFeatureCount() == 10  # 8 system tables + 2 layers
+
+    lyr = ds.GetLayerByName("GDB_Items")
+    assert lyr.GetFeatureCount() == 4  # root, workspace + 2 layers
+
+    lyr = ds.GetLayerByName("GDB_ItemRelationships")
+    assert lyr.GetFeatureCount() == 2  # 2 layers
+
+    ds.ExecuteSQL("DELLAYER:test")
+    assert ds.GetLayerCount() == 1
+
+    for filename in gdal.ReadDir(dirname):
+        assert not filename.startswith("a00000009.gdbtable")
+
+    assert ds.DeleteLayer(-1) != ogr.OGRERR_NONE
+    assert ds.DeleteLayer(1) != ogr.OGRERR_NONE
+
+    # The following should not work
+    with gdal.quiet_errors():
+        gdal.ErrorReset()
+        ds.ExecuteSQL("DELLAYER:not_existing")
+        assert gdal.GetLastErrorMsg() != ""
+    with gdal.quiet_errors():
+        gdal.ErrorReset()
+        ds.ExecuteSQL("DELLAYER:GDB_SystemCatalog")
+        assert gdal.GetLastErrorMsg() != ""
+
+    ds = None
+
+    ds = ogr.Open(dirname)
+    assert ds.GetLayerCount() == 1
+    assert ds.GetLayer(0).GetName() == "test2"
+
+    lyr = ds.GetLayerByName("GDB_SystemCatalog")
+    assert lyr.GetFeatureCount() == 9
+
+    lyr = ds.GetLayerByName("GDB_Items")
+    assert lyr.GetFeatureCount() == 3
+
+    lyr = ds.GetLayerByName("GDB_ItemRelationships")
+    assert lyr.GetFeatureCount() == 1
 
 
 ###############################################################################
@@ -1886,773 +1837,729 @@ def _check_freelist_consistency(ds, lyr):
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_freelist():
+def test_ogr_openfilegdb_write_freelist(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    table_filename = dirname + "/a00000009.gdbtable"
-    freelist_filename = dirname + "/a00000009.freelist"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        assert ds is not None
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
-        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    dirname = tmp_vsimem / "out.gdb"
+    table_filename = dirname / "a00000009.gdbtable"
+    freelist_filename = dirname / "a00000009.freelist"
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "X" * 5)
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    assert ds is not None
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
 
-        lyr.SyncToDisk()
-        filesize = gdal.VSIStatL(table_filename).size
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "X" * 5)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        assert lyr.DeleteFeature(1) == 0
+    lyr.SyncToDisk()
+    filesize = gdal.VSIStatL(table_filename).size
 
-        assert gdal.VSIStatL(freelist_filename) is not None
-        _check_freelist_consistency(ds, lyr)
+    assert lyr.DeleteFeature(1) == 0
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "Y" * 5)
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert gdal.VSIStatL(freelist_filename) is not None
+    _check_freelist_consistency(ds, lyr)
 
-        assert filesize == gdal.VSIStatL(table_filename).size
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "Y" * 5)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        f = lyr.GetNextFeature()
-        assert f["str"] == "Y" * 5
+    assert filesize == gdal.VSIStatL(table_filename).size
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "X" * 6)
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        to_delete = [f.GetFID()]
+    f = lyr.GetNextFeature()
+    assert f["str"] == "Y" * 5
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "X" * 6)
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        to_delete.append(f.GetFID())
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "X" * 6)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    to_delete = [f.GetFID()]
 
-        filesize = gdal.VSIStatL(table_filename).size
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "X" * 6)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    to_delete.append(f.GetFID())
 
-        for fid in to_delete:
-            assert lyr.DeleteFeature(fid) == 0
+    filesize = gdal.VSIStatL(table_filename).size
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "Y" * 6)
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    for fid in to_delete:
+        assert lyr.DeleteFeature(fid) == 0
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "Y" * 6)
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "Y" * 6)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        assert filesize == gdal.VSIStatL(table_filename).size
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "Y" * 6)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        assert gdal.VSIStatL(freelist_filename) is not None
-        _check_freelist_consistency(ds, lyr)
+    assert filesize == gdal.VSIStatL(table_filename).size
 
-        lyr.SyncToDisk()
-        assert gdal.VSIStatL(freelist_filename) is None
+    assert gdal.VSIStatL(freelist_filename) is not None
+    _check_freelist_consistency(ds, lyr)
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    lyr.SyncToDisk()
+    assert gdal.VSIStatL(freelist_filename) is None
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_freelist_not_exactly_matching_sizes():
+def test_ogr_openfilegdb_write_freelist_not_exactly_matching_sizes(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    table_filename = dirname + "/a00000009.gdbtable"
-    freelist_filename = dirname + "/a00000009.freelist"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        assert ds is not None
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
-        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    dirname = tmp_vsimem / "out.gdb"
+    table_filename = dirname / "a00000009.gdbtable"
+    freelist_filename = dirname / "a00000009.freelist"
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "X" * 500)
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    assert ds is not None
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "X" * 502)
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "X" * 500)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        lyr.SyncToDisk()
-        filesize = gdal.VSIStatL(table_filename).size
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "X" * 502)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        assert lyr.DeleteFeature(1) == 0
-        assert lyr.DeleteFeature(2) == 0
+    lyr.SyncToDisk()
+    filesize = gdal.VSIStatL(table_filename).size
 
-        assert gdal.VSIStatL(freelist_filename) is not None
-        _check_freelist_consistency(ds, lyr)
+    assert lyr.DeleteFeature(1) == 0
+    assert lyr.DeleteFeature(2) == 0
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "Y" * 490)
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert gdal.VSIStatL(freelist_filename) is not None
+    _check_freelist_consistency(ds, lyr)
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "Y" * 501)
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "Y" * 490)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        f = lyr.GetNextFeature()
-        assert f["str"] == "Y" * 490
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "Y" * 501)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        f = lyr.GetNextFeature()
-        assert f["str"] == "Y" * 501
+    f = lyr.GetNextFeature()
+    assert f["str"] == "Y" * 490
 
-        assert filesize == gdal.VSIStatL(table_filename).size
-        _check_freelist_consistency(ds, lyr)
+    f = lyr.GetNextFeature()
+    assert f["str"] == "Y" * 501
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    assert filesize == gdal.VSIStatL(table_filename).size
+    _check_freelist_consistency(ds, lyr)
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_freelist_scenario_two_sizes():
+def test_ogr_openfilegdb_write_freelist_scenario_two_sizes(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    table_filename = dirname + "/a00000009.gdbtable"
-    freelist_filename = dirname + "/a00000009.freelist"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        assert ds is not None
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
-        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    dirname = tmp_vsimem / "out.gdb"
+    table_filename = dirname / "a00000009.gdbtable"
+    freelist_filename = dirname / "a00000009.freelist"
 
-        NFEATURES = 400
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    assert ds is not None
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
 
-        # 500 and 600 are in the [440, 772[ range of the freelist Fibonacci suite
-        SIZE1 = 600
-        SIZE2 = 500
-        assert SIZE2 < SIZE1
+    NFEATURES = 400
 
-        for i in range(NFEATURES):
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f["str"] = "x" * SIZE1
-            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    # 500 and 600 are in the [440, 772[ range of the freelist Fibonacci suite
+    SIZE1 = 600
+    SIZE2 = 500
+    assert SIZE2 < SIZE1
 
-        for i in range(NFEATURES):
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f["str"] = "x" * SIZE2
-            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    for i in range(NFEATURES):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "x" * SIZE1
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        for i in range(NFEATURES):
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f["str"] = "x" * SIZE1
-            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    for i in range(NFEATURES):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "x" * SIZE2
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        for i in range(NFEATURES):
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f["str"] = "x" * SIZE2
-            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    for i in range(NFEATURES):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "x" * SIZE1
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        lyr.SyncToDisk()
-        filesize = gdal.VSIStatL(table_filename).size
+    for i in range(NFEATURES):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "x" * SIZE2
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        for i in range(NFEATURES * 4):
-            assert lyr.DeleteFeature(1 + i) == ogr.OGRERR_NONE
+    lyr.SyncToDisk()
+    filesize = gdal.VSIStatL(table_filename).size
 
-        _check_freelist_consistency(ds, lyr)
+    for i in range(NFEATURES * 4):
+        assert lyr.DeleteFeature(1 + i) == ogr.OGRERR_NONE
 
-        for i in range(NFEATURES):
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f["str"] = "x" * SIZE1
-            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    _check_freelist_consistency(ds, lyr)
 
-        for i in range(NFEATURES):
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f["str"] = "x" * SIZE2
-            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    for i in range(NFEATURES):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "x" * SIZE1
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        for i in range(NFEATURES):
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f["str"] = "x" * SIZE1
-            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    for i in range(NFEATURES):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "x" * SIZE2
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        for i in range(NFEATURES):
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f["str"] = "x" * SIZE2
-            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    for i in range(NFEATURES):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "x" * SIZE1
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        assert filesize == gdal.VSIStatL(table_filename).size
+    for i in range(NFEATURES):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "x" * SIZE2
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        assert gdal.VSIStatL(freelist_filename) is not None
-        _check_freelist_consistency(ds, lyr)
-        lyr.SyncToDisk()
-        assert gdal.VSIStatL(freelist_filename) is None
+    assert filesize == gdal.VSIStatL(table_filename).size
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    assert gdal.VSIStatL(freelist_filename) is not None
+    _check_freelist_consistency(ds, lyr)
+    lyr.SyncToDisk()
+    assert gdal.VSIStatL(freelist_filename) is None
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_freelist_scenario_random():
+def test_ogr_openfilegdb_write_freelist_scenario_random(tmp_vsimem):
 
     import functools
     import random
 
     r = random.Random(0)
 
-    dirname = "/vsimem/out.gdb"
-    table_filename = dirname + "/a00000009.gdbtable"
-    freelist_filename = dirname + "/a00000009.freelist"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        assert ds is not None
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
-        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    dirname = tmp_vsimem / "out.gdb"
+    table_filename = dirname / "a00000009.gdbtable"
+    freelist_filename = dirname / "a00000009.freelist"
 
-        NFEATURES = 1000
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    assert ds is not None
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
 
-        sizes = []
-        fids = []
-        # Ranges that are used to allocate a slot in a series of page
-        fibo_suite = functools.reduce(
-            lambda x, _: x + [x[-1] + x[-2]], range(20 - 2), [8, 16]
-        )
+    NFEATURES = 1000
 
-        # Create features of random sizes
-        for i in range(NFEATURES):
-            series = r.randint(0, len(fibo_suite) - 2)
-            size = r.randint(fibo_suite[series], fibo_suite[series + 1] - 1)
-            sizes.append(size)
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f["str"] = "x" * size
-            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-            fids.append(f.GetFID())
+    sizes = []
+    fids = []
+    # Ranges that are used to allocate a slot in a series of page
+    fibo_suite = functools.reduce(
+        lambda x, _: x + [x[-1] + x[-2]], range(20 - 2), [8, 16]
+    )
 
-        # Delete them in random order
-        for i in range(NFEATURES):
-            idx = r.randint(0, len(fids) - 1)
-            fid = fids[idx]
-            del fids[idx]
+    # Create features of random sizes
+    for i in range(NFEATURES):
+        series = r.randint(0, len(fibo_suite) - 2)
+        size = r.randint(fibo_suite[series], fibo_suite[series + 1] - 1)
+        sizes.append(size)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "x" * size
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        fids.append(f.GetFID())
 
-            assert lyr.DeleteFeature(fid) == ogr.OGRERR_NONE
+    # Delete them in random order
+    for i in range(NFEATURES):
+        idx = r.randint(0, len(fids) - 1)
+        fid = fids[idx]
+        del fids[idx]
 
-        _check_freelist_consistency(ds, lyr)
-        lyr.SyncToDisk()
-        filesize = gdal.VSIStatL(table_filename).size
+        assert lyr.DeleteFeature(fid) == ogr.OGRERR_NONE
 
-        # Re-create feature of the same previous sizes, in random order
-        for i in range(NFEATURES):
-            idx = r.randint(0, len(sizes) - 1)
-            size = sizes[idx]
-            del sizes[idx]
+    _check_freelist_consistency(ds, lyr)
+    lyr.SyncToDisk()
+    filesize = gdal.VSIStatL(table_filename).size
 
-            f = ogr.Feature(lyr.GetLayerDefn())
-            f["str"] = "x" * size
-            assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    # Re-create feature of the same previous sizes, in random order
+    for i in range(NFEATURES):
+        idx = r.randint(0, len(sizes) - 1)
+        size = sizes[idx]
+        del sizes[idx]
 
-        assert filesize == gdal.VSIStatL(table_filename).size
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "x" * size
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        assert gdal.VSIStatL(freelist_filename) is not None
-        _check_freelist_consistency(ds, lyr)
-        lyr.SyncToDisk()
-        assert gdal.VSIStatL(freelist_filename) is None
+    assert filesize == gdal.VSIStatL(table_filename).size
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    assert gdal.VSIStatL(freelist_filename) is not None
+    _check_freelist_consistency(ds, lyr)
+    lyr.SyncToDisk()
+    assert gdal.VSIStatL(freelist_filename) is None
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_freelist_scenario_issue_7504():
+def test_ogr_openfilegdb_write_freelist_scenario_issue_7504(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
-        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    dirname = tmp_vsimem / "out.gdb"
 
-        N = 173
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f["str"] = "a" * N
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    N = 173
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f["str"] = "b"
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["str"] = "a" * N
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f["str"] = "c"
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["str"] = "b"
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        # Length is > N: feature is rewritten at end of file
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(1)
-        f["str"] = "d" * (N + 1)
-        assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["str"] = "c"
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        # Before bugfix #7504, the space initially taken by feature 1 before
-        # its edition would have been reused for feature 3, consequently
-        # overwriting the first few bytes of feature 2...
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(3)
-        f["str"] = "e" * (N + 3)  # must not be greater than N+3 to test the bug
-        assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+    # Length is > N: feature is rewritten at end of file
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1)
+    f["str"] = "d" * (N + 1)
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
 
-        assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+    # Before bugfix #7504, the space initially taken by feature 1 before
+    # its edition would have been reused for feature 3, consequently
+    # overwriting the first few bytes of feature 2...
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(3)
+    f["str"] = "e" * (N + 3)  # must not be greater than N+3 to test the bug
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
 
-        f = lyr.GetFeature(1)
-        assert f["str"] == "d" * (N + 1)
+    assert lyr.SyncToDisk() == ogr.OGRERR_NONE
 
-        f = lyr.GetFeature(2)
-        assert f["str"] == "b"
+    f = lyr.GetFeature(1)
+    assert f["str"] == "d" * (N + 1)
 
-        f = lyr.GetFeature(3)
-        assert f["str"] == "e" * (N + 3)
+    f = lyr.GetFeature(2)
+    assert f["str"] == "b"
 
-        ds = None
+    f = lyr.GetFeature(3)
+    assert f["str"] == "e" * (N + 3)
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = None
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_repack():
+def test_ogr_openfilegdb_write_repack(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    table_filename = dirname + "/a00000009.gdbtable"
-    freelist_filename = dirname + "/a00000009.freelist"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
-        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    dirname = tmp_vsimem / "out.gdb"
+    table_filename = dirname / "a00000009.gdbtable"
+    freelist_filename = dirname / "a00000009.freelist"
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "1" * 10)
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "2" * 10)
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "1" * 10)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("str", "3" * 10)
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "2" * 10)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        lyr.SyncToDisk()
-        filesize = gdal.VSIStatL(table_filename).size
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "3" * 10)
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        with gdal.quiet_errors():
-            assert ds.ExecuteSQL("REPACK unexisting_table") is None
+    lyr.SyncToDisk()
+    filesize = gdal.VSIStatL(table_filename).size
 
-        # Repack: nothing to do
-        sql_lyr = ds.ExecuteSQL("REPACK")
-        assert sql_lyr
-        f = sql_lyr.GetNextFeature()
-        assert f[0] == "true"
-        ds.ReleaseResultSet(sql_lyr)
+    with gdal.quiet_errors():
+        assert ds.ExecuteSQL("REPACK unexisting_table") is None
 
-        assert filesize == gdal.VSIStatL(table_filename).size
+    # Repack: nothing to do
+    sql_lyr = ds.ExecuteSQL("REPACK")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    assert f[0] == "true"
+    ds.ReleaseResultSet(sql_lyr)
 
-        # Suppress last feature
-        assert lyr.DeleteFeature(3) == 0
+    assert filesize == gdal.VSIStatL(table_filename).size
 
-        # Repack: truncate file
-        sql_lyr = ds.ExecuteSQL("REPACK test")
-        assert sql_lyr
-        f = sql_lyr.GetNextFeature()
-        assert f[0] == "true"
-        ds.ReleaseResultSet(sql_lyr)
+    # Suppress last feature
+    assert lyr.DeleteFeature(3) == 0
 
-        assert gdal.VSIStatL(table_filename).size < filesize
-        filesize = gdal.VSIStatL(table_filename).size
+    # Repack: truncate file
+    sql_lyr = ds.ExecuteSQL("REPACK test")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    assert f[0] == "true"
+    ds.ReleaseResultSet(sql_lyr)
 
-        # Suppress first feature
-        assert lyr.DeleteFeature(1) == 0
+    assert gdal.VSIStatL(table_filename).size < filesize
+    filesize = gdal.VSIStatL(table_filename).size
 
-        assert gdal.VSIStatL(freelist_filename) is not None
+    # Suppress first feature
+    assert lyr.DeleteFeature(1) == 0
 
-        # Repack: rewrite whole file
-        sql_lyr = ds.ExecuteSQL("REPACK")
-        assert sql_lyr
-        f = sql_lyr.GetNextFeature()
-        assert f[0] == "true"
-        ds.ReleaseResultSet(sql_lyr)
+    assert gdal.VSIStatL(freelist_filename) is not None
 
-        assert gdal.VSIStatL(table_filename).size < filesize
-        filesize = gdal.VSIStatL(table_filename).size
+    # Repack: rewrite whole file
+    sql_lyr = ds.ExecuteSQL("REPACK")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    assert f[0] == "true"
+    ds.ReleaseResultSet(sql_lyr)
 
-        assert gdal.VSIStatL(freelist_filename) is None
+    assert gdal.VSIStatL(table_filename).size < filesize
+    filesize = gdal.VSIStatL(table_filename).size
 
-        lyr.ResetReading()
-        f = lyr.GetNextFeature()
-        assert f.GetField(0) == "2" * 10
+    assert gdal.VSIStatL(freelist_filename) is None
 
-        # Repack: nothing to do
-        sql_lyr = ds.ExecuteSQL("REPACK")
-        assert sql_lyr
-        f = sql_lyr.GetNextFeature()
-        assert f[0] == "true"
-        ds.ReleaseResultSet(sql_lyr)
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetField(0) == "2" * 10
 
-        assert gdal.VSIStatL(table_filename).size == filesize
+    # Repack: nothing to do
+    sql_lyr = ds.ExecuteSQL("REPACK")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    assert f[0] == "true"
+    ds.ReleaseResultSet(sql_lyr)
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    assert gdal.VSIStatL(table_filename).size == filesize
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_recompute_extent_on():
+def test_ogr_openfilegdb_write_recompute_extent_on(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    dirname = tmp_vsimem / "out.gdb"
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (5 6)"))
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (5 6)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        assert lyr.GetExtent() == (1, 5, 2, 6)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
 
-        assert lyr.DeleteFeature(1) == ogr.OGRERR_NONE
+    assert lyr.GetExtent() == (1, 5, 2, 6)
 
-        assert lyr.GetExtent() == (1, 5, 2, 6)
+    assert lyr.DeleteFeature(1) == ogr.OGRERR_NONE
 
+    assert lyr.GetExtent() == (1, 5, 2, 6)
+
+    gdal.ErrorReset()
+    assert ds.ExecuteSQL("RECOMPUTE EXTENT ON test") is None
+    assert gdal.GetLastErrorMsg() == ""
+
+    with gdal.quiet_errors():
         gdal.ErrorReset()
-        assert ds.ExecuteSQL("RECOMPUTE EXTENT ON test") is None
-        assert gdal.GetLastErrorMsg() == ""
+        assert ds.ExecuteSQL("RECOMPUTE EXTENT ON non_existing_layer") is None
+        assert gdal.GetLastErrorMsg() != ""
 
-        with gdal.quiet_errors():
-            gdal.ErrorReset()
-            assert ds.ExecuteSQL("RECOMPUTE EXTENT ON non_existing_layer") is None
-            assert gdal.GetLastErrorMsg() != ""
+    assert lyr.GetExtent() == (3, 5, 4, 6)
 
-        assert lyr.GetExtent() == (3, 5, 4, 6)
+    ds = None
 
-        ds = None
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetExtent() == (3, 5, 4, 6)
 
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetExtent() == (3, 5, 4, 6)
+    assert lyr.DeleteFeature(2) == ogr.OGRERR_NONE
+    assert lyr.DeleteFeature(3) == ogr.OGRERR_NONE
 
-        assert lyr.DeleteFeature(2) == ogr.OGRERR_NONE
-        assert lyr.DeleteFeature(3) == ogr.OGRERR_NONE
+    assert ds.ExecuteSQL("RECOMPUTE EXTENT ON test") is None
 
-        assert ds.ExecuteSQL("RECOMPUTE EXTENT ON test") is None
+    assert lyr.GetExtent(can_return_null=True) is None
 
-        assert lyr.GetExtent(can_return_null=True) is None
-
-        ds = None
-
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = None
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_alter_field_defn():
+def test_ogr_openfilegdb_write_alter_field_defn(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
-        assert lyr.TestCapability(ogr.OLCAlterFieldDefn) == 1
+    dirname = tmp_vsimem / "out.gdb"
 
-        fld_defn = ogr.FieldDefn("str", ogr.OFTString)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    assert lyr.TestCapability(ogr.OLCAlterFieldDefn) == 1
+
+    fld_defn = ogr.FieldDefn("str", ogr.OFTString)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    assert (
+        lyr.CreateField(ogr.FieldDefn("other_field", ogr.OFTString)) == ogr.OGRERR_NONE
+    )
+
+    # No-op
+    assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
+
+    # Invalid index
+    with gdal.quiet_errors():
+        assert lyr.AlterFieldDefn(-1, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
         assert (
-            lyr.CreateField(ogr.FieldDefn("other_field", ogr.OFTString))
-            == ogr.OGRERR_NONE
+            lyr.AlterFieldDefn(
+                lyr.GetLayerDefn().GetFieldCount(), fld_defn, ogr.ALTER_ALL_FLAG
+            )
+            != ogr.OGRERR_NONE
         )
 
-        # No-op
-        assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
+    ds = None
 
-        # Invalid index
-        with gdal.quiet_errors():
-            assert (
-                lyr.AlterFieldDefn(-1, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
-            )
-            assert (
-                lyr.AlterFieldDefn(
-                    lyr.GetLayerDefn().GetFieldCount(), fld_defn, ogr.ALTER_ALL_FLAG
-                )
-                != ogr.OGRERR_NONE
-            )
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
 
-        ds = None
-
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-
-        # Changing type not supported
-        fld_defn = ogr.FieldDefn("str", ogr.OFTInteger)
-        with gdal.quiet_errors():
-            assert (
-                lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
-            )
-            fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
-            assert fld_defn.GetType() == ogr.OFTString
-
-        # Changing subtype not supported
-        fld_defn = ogr.FieldDefn("str", ogr.OFTString)
-        fld_defn.SetSubType(ogr.OFSTUUID)
-        with gdal.quiet_errors():
-            assert (
-                lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
-            )
-            fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
-            assert fld_defn.GetType() == ogr.OFTString
-            assert fld_defn.GetSubType() == ogr.OFSTNone
-
-        # Changing nullable state not supported
-        fld_defn = ogr.FieldDefn("str", ogr.OFTString)
-        fld_defn.SetNullable(False)
-        with gdal.quiet_errors():
-            assert (
-                lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
-            )
-            fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
-            assert fld_defn.IsNullable()
-
-        # Renaming to an other existing field not supported
-        fld_defn = ogr.FieldDefn("other_field", ogr.OFTString)
-        with gdal.quiet_errors():
-            assert (
-                lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
-            )
-            fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
-            assert fld_defn.GetName() == "str"
-
-        fld_defn = ogr.FieldDefn("SHAPE", ogr.OFTString)
-        with gdal.quiet_errors():
-            assert (
-                lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
-            )
-            fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
-            assert fld_defn.GetName() == "str"
-
-        fld_defn = ogr.FieldDefn("str_renamed", ogr.OFTString)
-        fld_defn.SetAlternativeName("alias")
-        fld_defn.SetWidth(10)
-        fld_defn.SetDefault("'aaa'")
-
-        assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
-
+    # Changing type not supported
+    fld_defn = ogr.FieldDefn("str", ogr.OFTInteger)
+    with gdal.quiet_errors():
+        assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
         fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
         assert fld_defn.GetType() == ogr.OFTString
-        assert fld_defn.GetName() == "str_renamed"
-        assert fld_defn.GetAlternativeName() == "alias"
-        assert fld_defn.GetWidth() == 10
-        assert fld_defn.GetDefault() == "'aaa'"
 
-        ds = None
-
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-
+    # Changing subtype not supported
+    fld_defn = ogr.FieldDefn("str", ogr.OFTString)
+    fld_defn.SetSubType(ogr.OFSTUUID)
+    with gdal.quiet_errors():
+        assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
         fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
         assert fld_defn.GetType() == ogr.OFTString
-        assert fld_defn.GetName() == "str_renamed"
-        assert fld_defn.GetAlternativeName() == "alias"
-        assert fld_defn.GetWidth() == 10
-        assert fld_defn.GetDefault() == "'aaa'"
+        assert fld_defn.GetSubType() == ogr.OFSTNone
 
-        sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
-        assert sql_lyr
-        f = sql_lyr.GetNextFeature()
-        xml = f.GetField(0)
-        f = None
-        ds.ReleaseResultSet(sql_lyr)
-        assert "<Name>str_renamed</Name>" in xml
+    # Changing nullable state not supported
+    fld_defn = ogr.FieldDefn("str", ogr.OFTString)
+    fld_defn.SetNullable(False)
+    with gdal.quiet_errors():
+        assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+        assert fld_defn.IsNullable()
 
-        ds = None
+    # Renaming to an other existing field not supported
+    fld_defn = ogr.FieldDefn("other_field", ogr.OFTString)
+    with gdal.quiet_errors():
+        assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+        assert fld_defn.GetName() == "str"
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    fld_defn = ogr.FieldDefn("SHAPE", ogr.OFTString)
+    with gdal.quiet_errors():
+        assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+        assert fld_defn.GetName() == "str"
+
+    fld_defn = ogr.FieldDefn("str_renamed", ogr.OFTString)
+    fld_defn.SetAlternativeName("alias")
+    fld_defn.SetWidth(10)
+    fld_defn.SetDefault("'aaa'")
+
+    assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
+
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fld_defn.GetType() == ogr.OFTString
+    assert fld_defn.GetName() == "str_renamed"
+    assert fld_defn.GetAlternativeName() == "alias"
+    assert fld_defn.GetWidth() == 10
+    assert fld_defn.GetDefault() == "'aaa'"
+
+    ds = None
+
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
+    assert fld_defn.GetType() == ogr.OFTString
+    assert fld_defn.GetName() == "str_renamed"
+    assert fld_defn.GetAlternativeName() == "alias"
+    assert fld_defn.GetWidth() == 10
+    assert fld_defn.GetDefault() == "'aaa'"
+
+    sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    xml = f.GetField(0)
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
+    assert "<Name>str_renamed</Name>" in xml
+
+    ds = None
 
 
 ###############################################################################
 # Test writing field domains
 
 
-def test_ogr_openfilegdb_write_domains():
+def test_ogr_openfilegdb_write_domains(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = gdal.GetDriverByName("OpenFileGDB").Create(
-            dirname, 0, 0, 0, gdal.GDT_Unknown
-        )
+    dirname = tmp_vsimem / "out.gdb"
 
-        domain = ogr.CreateCodedFieldDomain(
-            "domain", "desc", ogr.OFTInteger, ogr.OFSTNone, {1: "one", "2": None}
-        )
-        assert ds.AddFieldDomain(domain)
+    ds = gdal.GetDriverByName("OpenFileGDB").Create(dirname, 0, 0, 0, gdal.GDT_Unknown)
 
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    domain = ogr.CreateCodedFieldDomain(
+        "domain", "desc", ogr.OFTInteger, ogr.OFSTNone, {1: "one", "2": None}
+    )
+    assert ds.AddFieldDomain(domain)
 
-        fld_defn = ogr.FieldDefn("foo", ogr.OFTInteger)
-        fld_defn.SetDomainName("domain")
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
 
-        fld_defn = ogr.FieldDefn("foo2", ogr.OFTInteger)
-        fld_defn.SetDomainName("domain")
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    fld_defn = ogr.FieldDefn("foo", ogr.OFTInteger)
+    fld_defn.SetDomainName("domain")
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-        domain = ogr.CreateRangeFieldDomainDateTime(
-            "datetime_range",
-            "datetime_range_desc",
-            "2023-07-03T12:13:14",
-            True,
-            "2023-07-03T12:13:15",
-            True,
-        )
-        assert ds.AddFieldDomain(domain)
-        ds = None
+    fld_defn = ogr.FieldDefn("foo2", ogr.OFTInteger)
+    fld_defn.SetDomainName("domain")
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-        ds = gdal.OpenEx(dirname)
-        assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 2
+    domain = ogr.CreateRangeFieldDomainDateTime(
+        "datetime_range",
+        "datetime_range_desc",
+        "2023-07-03T12:13:14",
+        True,
+        "2023-07-03T12:13:15",
+        True,
+    )
+    assert ds.AddFieldDomain(domain)
+    ds = None
 
-        domain = ds.GetFieldDomain("datetime_range")
-        assert domain is not None
-        assert domain.GetName() == "datetime_range"
-        assert domain.GetDescription() == "datetime_range_desc"
-        assert domain.GetDomainType() == ogr.OFDT_RANGE
-        assert domain.GetFieldType() == ogr.OFTDateTime
-        assert domain.GetFieldSubType() == ogr.OFSTNone
-        assert domain.GetMinAsString() == "2023-07-03T12:13:14"
-        assert domain.GetMaxAsString() == "2023-07-03T12:13:15"
+    ds = gdal.OpenEx(dirname)
+    assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 2
 
-        ds = None
+    domain = ds.GetFieldDomain("datetime_range")
+    assert domain is not None
+    assert domain.GetName() == "datetime_range"
+    assert domain.GetDescription() == "datetime_range_desc"
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == ogr.OFTDateTime
+    assert domain.GetFieldSubType() == ogr.OFSTNone
+    assert domain.GetMinAsString() == "2023-07-03T12:13:14"
+    assert domain.GetMaxAsString() == "2023-07-03T12:13:15"
 
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-        assert lyr.DeleteField(0) == ogr.OGRERR_NONE
-        ds = None
+    ds = None
 
-        ds = ogr.Open(dirname, update=1)
-        assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 2
-        ds = None
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    ds = None
 
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-        assert lyr.DeleteField(0) == ogr.OGRERR_NONE
-        ds = None
+    ds = ogr.Open(dirname, update=1)
+    assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 2
+    ds = None
 
-        ds = ogr.Open(dirname, update=1)
-        assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 1
-        ds = None
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    ds = None
 
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-        fld_defn = ogr.FieldDefn("foo", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
-        ds = None
+    ds = ogr.Open(dirname, update=1)
+    assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 1
+    ds = None
 
-        ds = ogr.Open(dirname, update=1)
-        assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 1
-        ds = None
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+    fld_defn = ogr.FieldDefn("foo", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    ds = None
 
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-        fld_defn = ogr.FieldDefn("foo", ogr.OFTInteger)
-        fld_defn.SetDomainName("domain")
-        assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
-        assert lyr.GetLayerDefn().GetFieldDefn(0).GetDomainName() == "domain"
-        ds = None
+    ds = ogr.Open(dirname, update=1)
+    assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 1
+    ds = None
 
-        ds = ogr.Open(dirname, update=1)
-        assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 2
-        ds = None
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+    fld_defn = ogr.FieldDefn("foo", ogr.OFTInteger)
+    fld_defn.SetDomainName("domain")
+    assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
+    assert lyr.GetLayerDefn().GetFieldDefn(0).GetDomainName() == "domain"
+    ds = None
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = ogr.Open(dirname, update=1)
+    assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 2
+    ds = None
 
 
 ###############################################################################
 # Test writing relationships
 
 
-def test_ogr_openfilegdb_write_relationships():
+def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = gdal.GetDriverByName("OpenFileGDB").Create(
-            dirname, 0, 0, 0, gdal.GDT_Unknown
-        )
+    dirname = tmp_vsimem / "out.gdb"
 
-        relationship = gdal.Relationship(
-            "my_relationship", "origin_table", "dest_table", gdal.GRC_ONE_TO_ONE
-        )
-        relationship.SetLeftTableFields(["o_pkey"])
-        relationship.SetRightTableFields(["dest_pkey"])
-        relationship.SetRelatedTableType("media")
+    ds = gdal.GetDriverByName("OpenFileGDB").Create(dirname, 0, 0, 0, gdal.GDT_Unknown)
 
-        # no tables yet
-        assert not ds.AddRelationship(relationship)
+    relationship = gdal.Relationship(
+        "my_relationship", "origin_table", "dest_table", gdal.GRC_ONE_TO_ONE
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+    relationship.SetRelatedTableType("media")
 
-        lyr = ds.CreateLayer("origin_table", geom_type=ogr.wkbNone)
-        fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    # no tables yet
+    assert not ds.AddRelationship(relationship)
 
-        lyr = ds.CreateLayer("dest_table", geom_type=ogr.wkbNone)
-        fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    lyr = ds.CreateLayer("origin_table", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    lyr = ds.CreateLayer("dest_table", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-        items_lyr = ds.GetLayerByName("GDB_Items")
-        f = items_lyr.GetFeature(1)
-        assert f["Path"] == "\\"
-        root_dataset_uuid = f["UUID"]
+    ds = gdal.OpenEx(dirname, gdal.GA_Update)
 
-        f = items_lyr.GetFeature(3)
-        assert f["Name"] == "origin_table"
-        origin_table_uuid = f["UUID"]
+    items_lyr = ds.GetLayerByName("GDB_Items")
+    f = items_lyr.GetFeature(1)
+    assert f["Path"] == "\\"
+    root_dataset_uuid = f["UUID"]
 
-        f = items_lyr.GetFeature(4)
-        assert f["Name"] == "dest_table"
-        dest_table_uuid = f["UUID"]
+    f = items_lyr.GetFeature(3)
+    assert f["Name"] == "origin_table"
+    origin_table_uuid = f["UUID"]
 
-        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    f = items_lyr.GetFeature(4)
+    assert f["Name"] == "dest_table"
+    dest_table_uuid = f["UUID"]
 
-        assert ds.AddRelationship(relationship)
+    ds = gdal.OpenEx(dirname, gdal.GA_Update)
 
-        assert set(ds.GetRelationshipNames()) == {"my_relationship"}
-        retrieved_rel = ds.GetRelationship("my_relationship")
-        assert retrieved_rel.GetCardinality() == gdal.GRC_ONE_TO_ONE
-        assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
-        assert retrieved_rel.GetLeftTableName() == "origin_table"
-        assert retrieved_rel.GetRightTableName() == "dest_table"
-        assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
-        assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
-        assert retrieved_rel.GetRelatedTableType() == "media"
+    assert ds.AddRelationship(relationship)
 
-        # check metadata contents
-        items_lyr = ds.GetLayerByName("GDB_Items")
-        f = items_lyr.GetFeature(5)
-        relationship_uuid = f["UUID"]
-        assert f["Name"] == "my_relationship"
-        assert (
-            f["Definition"]
-            == """<DERelationshipClassInfo xsi:type="typens:DERelationshipClassInfo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typens="http://www.esri.com/schemas/ArcGIS/10.1">
+    assert set(ds.GetRelationshipNames()) == {"my_relationship"}
+    retrieved_rel = ds.GetRelationship("my_relationship")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_ONE_TO_ONE
+    assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+    assert retrieved_rel.GetLeftTableName() == "origin_table"
+    assert retrieved_rel.GetRightTableName() == "dest_table"
+    assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+    assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+    assert retrieved_rel.GetRelatedTableType() == "media"
+
+    # check metadata contents
+    items_lyr = ds.GetLayerByName("GDB_Items")
+    f = items_lyr.GetFeature(5)
+    relationship_uuid = f["UUID"]
+    assert f["Name"] == "my_relationship"
+    assert (
+        f["Definition"]
+        == """<DERelationshipClassInfo xsi:type="typens:DERelationshipClassInfo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typens="http://www.esri.com/schemas/ArcGIS/10.1">
   <CatalogPath>\\my_relationship</CatalogPath>
   <Name>my_relationship</Name>
   <ChildrenExpanded>false</ChildrenExpanded>
@@ -2715,12 +2622,12 @@ def test_ogr_openfilegdb_write_relationships():
   <ChangeTracked>false</ChangeTracked>
   <ReplicaTracked>false</ReplicaTracked>
 </DERelationshipClassInfo>\n"""
-        )
-        assert f["DatasetSubtype1"] == 1
-        assert f["DatasetSubtype2"] == 0
-        assert (
-            f["Documentation"]
-            == """<metadata xml:lang="en">
+    )
+    assert f["DatasetSubtype1"] == 1
+    assert f["DatasetSubtype2"] == 0
+    assert (
+        f["Documentation"]
+        == """<metadata xml:lang="en">
   <Esri>
     <CreaDate></CreaDate>
     <CreaTime></CreaTime>
@@ -2732,10 +2639,10 @@ def test_ogr_openfilegdb_write_relationships():
   </Esri>
 </metadata>
 """
-        )
-        assert (
-            f["ItemInfo"]
-            == """<ESRI_ItemInformation culture="">
+    )
+    assert (
+        f["ItemInfo"]
+        == """<ESRI_ItemInformation culture="">
   <name>my_relationship</name>
   <catalogPath>\\my_relationship</catalogPath>
   <snippet></snippet>
@@ -2773,77 +2680,77 @@ def test_ogr_openfilegdb_write_relationships():
   <propValues></propValues>
 </ESRI_ItemInformation>
 """
-        )
-        # check item relationships have been created
-        item_relationships_lyr = ds.GetLayerByName("GDB_ItemRelationships")
+    )
+    # check item relationships have been created
+    item_relationships_lyr = ds.GetLayerByName("GDB_ItemRelationships")
 
-        f = item_relationships_lyr.GetFeature(3)
-        assert f["OriginID"] == origin_table_uuid
-        assert f["DestID"] == relationship_uuid
-        assert f["Type"] == "{725BADAB-3452-491B-A795-55F32D67229C}"
+    f = item_relationships_lyr.GetFeature(3)
+    assert f["OriginID"] == origin_table_uuid
+    assert f["DestID"] == relationship_uuid
+    assert f["Type"] == "{725BADAB-3452-491B-A795-55F32D67229C}"
 
-        f = item_relationships_lyr.GetFeature(4)
-        assert f["OriginID"] == dest_table_uuid
-        assert f["DestID"] == relationship_uuid
-        assert f["Type"] == "{725BADAB-3452-491B-A795-55F32D67229C}"
+    f = item_relationships_lyr.GetFeature(4)
+    assert f["OriginID"] == dest_table_uuid
+    assert f["DestID"] == relationship_uuid
+    assert f["Type"] == "{725BADAB-3452-491B-A795-55F32D67229C}"
 
-        f = item_relationships_lyr.GetFeature(5)
-        assert f["OriginID"] == root_dataset_uuid
-        assert f["DestID"] == relationship_uuid
-        assert f["Type"] == "{DC78F1AB-34E4-43AC-BA47-1C4EABD0E7C7}"
+    f = item_relationships_lyr.GetFeature(5)
+    assert f["OriginID"] == root_dataset_uuid
+    assert f["DestID"] == relationship_uuid
+    assert f["Type"] == "{DC78F1AB-34E4-43AC-BA47-1C4EABD0E7C7}"
 
-        ds = gdal.OpenEx(dirname, gdal.GA_Update)
-        assert set(ds.GetRelationshipNames()) == {"my_relationship"}
+    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    assert set(ds.GetRelationshipNames()) == {"my_relationship"}
 
-        # one to many
-        lyr = ds.CreateLayer("origin_table_1_to_many", geom_type=ogr.wkbNone)
-        fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    # one to many
+    lyr = ds.CreateLayer("origin_table_1_to_many", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-        lyr = ds.CreateLayer("dest_table_1_to_many", geom_type=ogr.wkbNone)
-        fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    lyr = ds.CreateLayer("dest_table_1_to_many", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.OpenEx(dirname, gdal.GA_Update)
 
-        # should be rejected -- duplicate name
-        assert not ds.AddRelationship(relationship)
+    # should be rejected -- duplicate name
+    assert not ds.AddRelationship(relationship)
 
-        relationship = gdal.Relationship(
-            "my_one_to_many_relationship",
-            "origin_table_1_to_many",
-            "dest_table_1_to_many",
-            gdal.GRC_ONE_TO_MANY,
-        )
-        relationship.SetLeftTableFields(["o_pkey"])
-        relationship.SetRightTableFields(["dest_pkey"])
-        relationship.SetType(gdal.GRT_COMPOSITE)
-        relationship.SetForwardPathLabel("fwd label")
-        relationship.SetBackwardPathLabel("backward label")
-        assert ds.AddRelationship(relationship)
+    relationship = gdal.Relationship(
+        "my_one_to_many_relationship",
+        "origin_table_1_to_many",
+        "dest_table_1_to_many",
+        gdal.GRC_ONE_TO_MANY,
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+    relationship.SetType(gdal.GRT_COMPOSITE)
+    relationship.SetForwardPathLabel("fwd label")
+    relationship.SetBackwardPathLabel("backward label")
+    assert ds.AddRelationship(relationship)
 
-        ds = gdal.OpenEx(dirname, gdal.GA_Update)
-        assert set(ds.GetRelationshipNames()) == {
-            "my_relationship",
-            "my_one_to_many_relationship",
-        }
-        retrieved_rel = ds.GetRelationship("my_one_to_many_relationship")
-        assert retrieved_rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
-        assert retrieved_rel.GetType() == gdal.GRT_COMPOSITE
-        assert retrieved_rel.GetLeftTableName() == "origin_table_1_to_many"
-        assert retrieved_rel.GetRightTableName() == "dest_table_1_to_many"
-        assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
-        assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
-        assert retrieved_rel.GetForwardPathLabel() == "fwd label"
-        assert retrieved_rel.GetBackwardPathLabel() == "backward label"
-        assert retrieved_rel.GetRelatedTableType() == "features"
+    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    assert set(ds.GetRelationshipNames()) == {
+        "my_relationship",
+        "my_one_to_many_relationship",
+    }
+    retrieved_rel = ds.GetRelationship("my_one_to_many_relationship")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert retrieved_rel.GetType() == gdal.GRT_COMPOSITE
+    assert retrieved_rel.GetLeftTableName() == "origin_table_1_to_many"
+    assert retrieved_rel.GetRightTableName() == "dest_table_1_to_many"
+    assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+    assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+    assert retrieved_rel.GetForwardPathLabel() == "fwd label"
+    assert retrieved_rel.GetBackwardPathLabel() == "backward label"
+    assert retrieved_rel.GetRelatedTableType() == "features"
 
-        items_lyr = ds.GetLayerByName("GDB_Items")
-        f = items_lyr.GetFeature(8)
-        assert f["Name"] == "my_one_to_many_relationship"
-        assert (
-            f["Definition"]
-            == """<DERelationshipClassInfo xsi:type="typens:DERelationshipClassInfo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typens="http://www.esri.com/schemas/ArcGIS/10.1">
+    items_lyr = ds.GetLayerByName("GDB_Items")
+    f = items_lyr.GetFeature(8)
+    assert f["Name"] == "my_one_to_many_relationship"
+    assert (
+        f["Definition"]
+        == """<DERelationshipClassInfo xsi:type="typens:DERelationshipClassInfo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typens="http://www.esri.com/schemas/ArcGIS/10.1">
   <CatalogPath>\\my_one_to_many_relationship</CatalogPath>
   <Name>my_one_to_many_relationship</Name>
   <ChildrenExpanded>false</ChildrenExpanded>
@@ -2906,74 +2813,74 @@ def test_ogr_openfilegdb_write_relationships():
   <ChangeTracked>false</ChangeTracked>
   <ReplicaTracked>false</ReplicaTracked>
 </DERelationshipClassInfo>\n"""
-        )
-        assert f["DatasetSubtype1"] == 2
-        assert f["DatasetSubtype2"] == 0
+    )
+    assert f["DatasetSubtype1"] == 2
+    assert f["DatasetSubtype2"] == 0
 
-        # many to many relationship
-        lyr = ds.CreateLayer("origin_table_many_to_many", geom_type=ogr.wkbNone)
-        fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    # many to many relationship
+    lyr = ds.CreateLayer("origin_table_many_to_many", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-        lyr = ds.CreateLayer("dest_table_many_to_many", geom_type=ogr.wkbNone)
-        fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    lyr = ds.CreateLayer("dest_table_many_to_many", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-        lyr = ds.CreateLayer("mapping_table_many_to_many", geom_type=ogr.wkbNone)
-        fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    lyr = ds.CreateLayer("mapping_table_many_to_many", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-        lyr = ds.CreateLayer("many_to_many", geom_type=ogr.wkbNone)
-        fld_defn = ogr.FieldDefn("RID", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
-        fld_defn = ogr.FieldDefn("origin_fk", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
-        fld_defn = ogr.FieldDefn("destination_fk", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    lyr = ds.CreateLayer("many_to_many", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("RID", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    fld_defn = ogr.FieldDefn("origin_fk", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    fld_defn = ogr.FieldDefn("destination_fk", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-        ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.OpenEx(dirname, gdal.GA_Update)
 
-        relationship = gdal.Relationship(
-            "many_to_many",
-            "origin_table_many_to_many",
-            "dest_table_many_to_many",
-            gdal.GRC_MANY_TO_MANY,
-        )
-        relationship.SetLeftTableFields(["o_pkey"])
-        relationship.SetRightTableFields(["dest_pkey"])
-        relationship.SetMappingTableName("mapping_table_many_to_many")
-        relationship.SetLeftMappingTableFields(["origin_fk"])
-        relationship.SetRightMappingTableFields(["destination_fk"])
+    relationship = gdal.Relationship(
+        "many_to_many",
+        "origin_table_many_to_many",
+        "dest_table_many_to_many",
+        gdal.GRC_MANY_TO_MANY,
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+    relationship.SetMappingTableName("mapping_table_many_to_many")
+    relationship.SetLeftMappingTableFields(["origin_fk"])
+    relationship.SetRightMappingTableFields(["destination_fk"])
 
-        # this should be rejected -- the mapping table name MUST match the relationship name
-        assert not ds.AddRelationship(relationship)
+    # this should be rejected -- the mapping table name MUST match the relationship name
+    assert not ds.AddRelationship(relationship)
 
-        relationship.SetMappingTableName("many_to_many")
-        assert ds.AddRelationship(relationship)
+    relationship.SetMappingTableName("many_to_many")
+    assert ds.AddRelationship(relationship)
 
-        ds = gdal.OpenEx(dirname, gdal.GA_Update)
-        assert set(ds.GetRelationshipNames()) == {
-            "my_relationship",
-            "my_one_to_many_relationship",
-            "many_to_many",
-        }
-        retrieved_rel = ds.GetRelationship("many_to_many")
-        assert retrieved_rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
-        assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
-        assert retrieved_rel.GetLeftTableName() == "origin_table_many_to_many"
-        assert retrieved_rel.GetRightTableName() == "dest_table_many_to_many"
-        assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
-        assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
-        assert retrieved_rel.GetMappingTableName() == "many_to_many"
-        assert retrieved_rel.GetLeftMappingTableFields() == ["origin_fk"]
-        assert retrieved_rel.GetRightMappingTableFields() == ["destination_fk"]
+    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    assert set(ds.GetRelationshipNames()) == {
+        "my_relationship",
+        "my_one_to_many_relationship",
+        "many_to_many",
+    }
+    retrieved_rel = ds.GetRelationship("many_to_many")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+    assert retrieved_rel.GetLeftTableName() == "origin_table_many_to_many"
+    assert retrieved_rel.GetRightTableName() == "dest_table_many_to_many"
+    assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+    assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+    assert retrieved_rel.GetMappingTableName() == "many_to_many"
+    assert retrieved_rel.GetLeftMappingTableFields() == ["origin_fk"]
+    assert retrieved_rel.GetRightMappingTableFields() == ["destination_fk"]
 
-        items_lyr = ds.GetLayerByName("GDB_Items")
-        f = items_lyr.GetFeature(13)
-        assert f["Name"] == "many_to_many"
-        assert (
-            f["Definition"]
-            == """<DERelationshipClassInfo xsi:type="typens:DERelationshipClassInfo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typens="http://www.esri.com/schemas/ArcGIS/10.1">
+    items_lyr = ds.GetLayerByName("GDB_Items")
+    f = items_lyr.GetFeature(13)
+    assert f["Name"] == "many_to_many"
+    assert (
+        f["Definition"]
+        == """<DERelationshipClassInfo xsi:type="typens:DERelationshipClassInfo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typens="http://www.esri.com/schemas/ArcGIS/10.1">
   <CatalogPath>\\many_to_many</CatalogPath>
   <Name>many_to_many</Name>
   <ChildrenExpanded>false</ChildrenExpanded>
@@ -3058,421 +2965,414 @@ def test_ogr_openfilegdb_write_relationships():
   <ChangeTracked>false</ChangeTracked>
   <ReplicaTracked>false</ReplicaTracked>
 </DERelationshipClassInfo>\n"""
+    )
+    assert f["DatasetSubtype1"] == 3
+    assert f["DatasetSubtype2"] == 0
+
+    # many to many relationship, auto create mapping table
+    lyr = ds.CreateLayer("origin_table_many_to_many2", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    lyr = ds.CreateLayer("dest_table_many_to_many2", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+
+    relationship = gdal.Relationship(
+        "many_to_many_auto",
+        "origin_table_many_to_many2",
+        "dest_table_many_to_many2",
+        gdal.GRC_MANY_TO_MANY,
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+
+    assert ds.AddRelationship(relationship)
+
+    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    assert set(ds.GetRelationshipNames()) == {
+        "my_relationship",
+        "my_one_to_many_relationship",
+        "many_to_many",
+        "many_to_many_auto",
+    }
+    retrieved_rel = ds.GetRelationship("many_to_many_auto")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
+    assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+    assert retrieved_rel.GetLeftTableName() == "origin_table_many_to_many2"
+    assert retrieved_rel.GetRightTableName() == "dest_table_many_to_many2"
+    assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+    assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+    assert retrieved_rel.GetMappingTableName() == "many_to_many_auto"
+    assert retrieved_rel.GetLeftMappingTableFields() == ["origin_fk"]
+    assert retrieved_rel.GetRightMappingTableFields() == ["destination_fk"]
+    # make sure mapping table was created
+    mapping_table = ds.GetLayerByName("many_to_many_auto")
+    assert mapping_table is not None
+    lyr_defn = mapping_table.GetLayerDefn()
+    assert mapping_table.GetFIDColumn() == "RID"
+    assert lyr_defn.GetFieldIndex("origin_fk") >= 0
+    assert lyr_defn.GetFieldIndex("destination_fk") >= 0
+
+    items_lyr = ds.GetLayerByName("GDB_Items")
+    f = items_lyr.GetFeature(16)
+    relationship_uuid = f["UUID"]
+    assert f["Name"] == "many_to_many_auto"
+    assert f["Type"] == "{B606A7E1-FA5B-439C-849C-6E9C2481537B}"
+
+    # delete relationship
+    assert not ds.DeleteRelationship("i dont exist")
+    assert set(ds.GetRelationshipNames()) == {
+        "my_relationship",
+        "my_one_to_many_relationship",
+        "many_to_many",
+        "many_to_many_auto",
+    }
+
+    assert ds.DeleteRelationship("many_to_many_auto")
+    assert set(ds.GetRelationshipNames()) == {
+        "my_relationship",
+        "my_one_to_many_relationship",
+        "many_to_many",
+    }
+    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    assert set(ds.GetRelationshipNames()) == {
+        "my_relationship",
+        "my_one_to_many_relationship",
+        "many_to_many",
+    }
+
+    # make sure we are correctly cleaned up
+    items_lyr = ds.GetLayerByName("GDB_Items")
+    for f in items_lyr:
+        assert f["UUID"] != relationship_uuid
+
+    # check item relationships have been created
+    item_relationships_lyr = ds.GetLayerByName("GDB_ItemRelationships")
+    for f in item_relationships_lyr:
+        assert f["OriginID"] != relationship_uuid
+        assert f["DestID"] != relationship_uuid
+
+    # update relationship
+    relationship = gdal.Relationship(
+        "i dont exist",
+        "origin_table_1_to_many",
+        "dest_table_1_to_many",
+        gdal.GRC_ONE_TO_MANY,
+    )
+    assert not ds.UpdateRelationship(relationship)
+
+    relationship = gdal.Relationship(
+        "my_one_to_many_relationship",
+        "origin_table_1_to_many",
+        "dest_table_1_to_many",
+        gdal.GRC_ONE_TO_MANY,
+    )
+    relationship.SetLeftTableFields(["o_pkey"])
+    relationship.SetRightTableFields(["dest_pkey"])
+    relationship.SetType(gdal.GRT_COMPOSITE)
+    relationship.SetForwardPathLabel("my new fwd label")
+    relationship.SetBackwardPathLabel("my new backward label")
+    assert ds.UpdateRelationship(relationship)
+
+    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    assert set(ds.GetRelationshipNames()) == {
+        "my_relationship",
+        "my_one_to_many_relationship",
+        "many_to_many",
+    }
+    retrieved_rel = ds.GetRelationship("my_one_to_many_relationship")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert retrieved_rel.GetType() == gdal.GRT_COMPOSITE
+    assert retrieved_rel.GetLeftTableName() == "origin_table_1_to_many"
+    assert retrieved_rel.GetRightTableName() == "dest_table_1_to_many"
+    assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
+    assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
+    assert retrieved_rel.GetForwardPathLabel() == "my new fwd label"
+    assert retrieved_rel.GetBackwardPathLabel() == "my new backward label"
+    assert retrieved_rel.GetRelatedTableType() == "features"
+
+    # change relationship tables
+    lyr = ds.CreateLayer("new_origin_table", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("new_o_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    lyr = ds.CreateLayer("new_dest_table", geom_type=ogr.wkbNone)
+    fld_defn = ogr.FieldDefn("new_dest_pkey", ogr.OFTInteger)
+    assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    relationship = gdal.Relationship(
+        "my_one_to_many_relationship",
+        "new_origin_table",
+        "new_dest_table",
+        gdal.GRC_ONE_TO_MANY,
+    )
+    relationship.SetLeftTableFields(["new_o_pkey"])
+    relationship.SetRightTableFields(["new_dest_pkey"])
+    assert ds.UpdateRelationship(relationship)
+
+    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    assert set(ds.GetRelationshipNames()) == {
+        "my_relationship",
+        "my_one_to_many_relationship",
+        "many_to_many",
+    }
+    retrieved_rel = ds.GetRelationship("my_one_to_many_relationship")
+    assert retrieved_rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
+    assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
+    assert retrieved_rel.GetLeftTableName() == "new_origin_table"
+    assert retrieved_rel.GetRightTableName() == "new_dest_table"
+    assert retrieved_rel.GetLeftTableFields() == ["new_o_pkey"]
+    assert retrieved_rel.GetRightTableFields() == ["new_dest_pkey"]
+
+    # make sure GDB_ItemRelationships table has been updated
+    items_lyr = ds.GetLayerByName("GDB_Items")
+    f = items_lyr.GetFeature(8)
+    relationship_uuid = f["UUID"]
+    assert f["Name"] == "my_one_to_many_relationship"
+    assert f["Type"] == "{B606A7E1-FA5B-439C-849C-6E9C2481537B}"
+
+    f = items_lyr.GetFeature(18)
+    assert f["Name"] == "new_origin_table"
+    origin_table_uuid = f["UUID"]
+
+    f = items_lyr.GetFeature(19)
+    assert f["Name"] == "new_dest_table"
+    dest_table_uuid = f["UUID"]
+
+    item_relationships_lyr = ds.GetLayerByName("GDB_ItemRelationships")
+
+    assert (
+        len(
+            [
+                f
+                for f in item_relationships_lyr
+                if f["OriginID"] == origin_table_uuid
+                and f["DestID"] == relationship_uuid
+                and f["Type"] == "{725BADAB-3452-491B-A795-55F32D67229C}"
+            ]
         )
-        assert f["DatasetSubtype1"] == 3
-        assert f["DatasetSubtype2"] == 0
-
-        # many to many relationship, auto create mapping table
-        lyr = ds.CreateLayer("origin_table_many_to_many2", geom_type=ogr.wkbNone)
-        fld_defn = ogr.FieldDefn("o_pkey", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
-
-        lyr = ds.CreateLayer("dest_table_many_to_many2", geom_type=ogr.wkbNone)
-        fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
-
-        ds = gdal.OpenEx(dirname, gdal.GA_Update)
-
-        relationship = gdal.Relationship(
-            "many_to_many_auto",
-            "origin_table_many_to_many2",
-            "dest_table_many_to_many2",
-            gdal.GRC_MANY_TO_MANY,
+        == 1
+    )
+    assert (
+        len(
+            [
+                f
+                for f in item_relationships_lyr
+                if f["OriginID"] == dest_table_uuid
+                and f["DestID"] == relationship_uuid
+                and f["Type"] == "{725BADAB-3452-491B-A795-55F32D67229C}"
+            ]
         )
-        relationship.SetLeftTableFields(["o_pkey"])
-        relationship.SetRightTableFields(["dest_pkey"])
-
-        assert ds.AddRelationship(relationship)
-
-        ds = gdal.OpenEx(dirname, gdal.GA_Update)
-        assert set(ds.GetRelationshipNames()) == {
-            "my_relationship",
-            "my_one_to_many_relationship",
-            "many_to_many",
-            "many_to_many_auto",
-        }
-        retrieved_rel = ds.GetRelationship("many_to_many_auto")
-        assert retrieved_rel.GetCardinality() == gdal.GRC_MANY_TO_MANY
-        assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
-        assert retrieved_rel.GetLeftTableName() == "origin_table_many_to_many2"
-        assert retrieved_rel.GetRightTableName() == "dest_table_many_to_many2"
-        assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
-        assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
-        assert retrieved_rel.GetMappingTableName() == "many_to_many_auto"
-        assert retrieved_rel.GetLeftMappingTableFields() == ["origin_fk"]
-        assert retrieved_rel.GetRightMappingTableFields() == ["destination_fk"]
-        # make sure mapping table was created
-        mapping_table = ds.GetLayerByName("many_to_many_auto")
-        assert mapping_table is not None
-        lyr_defn = mapping_table.GetLayerDefn()
-        assert mapping_table.GetFIDColumn() == "RID"
-        assert lyr_defn.GetFieldIndex("origin_fk") >= 0
-        assert lyr_defn.GetFieldIndex("destination_fk") >= 0
-
-        items_lyr = ds.GetLayerByName("GDB_Items")
-        f = items_lyr.GetFeature(16)
-        relationship_uuid = f["UUID"]
-        assert f["Name"] == "many_to_many_auto"
-        assert f["Type"] == "{B606A7E1-FA5B-439C-849C-6E9C2481537B}"
-
-        # delete relationship
-        assert not ds.DeleteRelationship("i dont exist")
-        assert set(ds.GetRelationshipNames()) == {
-            "my_relationship",
-            "my_one_to_many_relationship",
-            "many_to_many",
-            "many_to_many_auto",
-        }
-
-        assert ds.DeleteRelationship("many_to_many_auto")
-        assert set(ds.GetRelationshipNames()) == {
-            "my_relationship",
-            "my_one_to_many_relationship",
-            "many_to_many",
-        }
-        ds = gdal.OpenEx(dirname, gdal.GA_Update)
-        assert set(ds.GetRelationshipNames()) == {
-            "my_relationship",
-            "my_one_to_many_relationship",
-            "many_to_many",
-        }
-
-        # make sure we are correctly cleaned up
-        items_lyr = ds.GetLayerByName("GDB_Items")
-        for f in items_lyr:
-            assert f["UUID"] != relationship_uuid
-
-        # check item relationships have been created
-        item_relationships_lyr = ds.GetLayerByName("GDB_ItemRelationships")
-        for f in item_relationships_lyr:
-            assert f["OriginID"] != relationship_uuid
-            assert f["DestID"] != relationship_uuid
-
-        # update relationship
-        relationship = gdal.Relationship(
-            "i dont exist",
-            "origin_table_1_to_many",
-            "dest_table_1_to_many",
-            gdal.GRC_ONE_TO_MANY,
+        == 1
+    )
+    assert (
+        len(
+            [
+                f
+                for f in item_relationships_lyr
+                if f["OriginID"] == root_dataset_uuid
+                and f["DestID"] == relationship_uuid
+                and f["Type"] == "{DC78F1AB-34E4-43AC-BA47-1C4EABD0E7C7}"
+            ]
         )
-        assert not ds.UpdateRelationship(relationship)
-
-        relationship = gdal.Relationship(
-            "my_one_to_many_relationship",
-            "origin_table_1_to_many",
-            "dest_table_1_to_many",
-            gdal.GRC_ONE_TO_MANY,
-        )
-        relationship.SetLeftTableFields(["o_pkey"])
-        relationship.SetRightTableFields(["dest_pkey"])
-        relationship.SetType(gdal.GRT_COMPOSITE)
-        relationship.SetForwardPathLabel("my new fwd label")
-        relationship.SetBackwardPathLabel("my new backward label")
-        assert ds.UpdateRelationship(relationship)
-
-        ds = gdal.OpenEx(dirname, gdal.GA_Update)
-        assert set(ds.GetRelationshipNames()) == {
-            "my_relationship",
-            "my_one_to_many_relationship",
-            "many_to_many",
-        }
-        retrieved_rel = ds.GetRelationship("my_one_to_many_relationship")
-        assert retrieved_rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
-        assert retrieved_rel.GetType() == gdal.GRT_COMPOSITE
-        assert retrieved_rel.GetLeftTableName() == "origin_table_1_to_many"
-        assert retrieved_rel.GetRightTableName() == "dest_table_1_to_many"
-        assert retrieved_rel.GetLeftTableFields() == ["o_pkey"]
-        assert retrieved_rel.GetRightTableFields() == ["dest_pkey"]
-        assert retrieved_rel.GetForwardPathLabel() == "my new fwd label"
-        assert retrieved_rel.GetBackwardPathLabel() == "my new backward label"
-        assert retrieved_rel.GetRelatedTableType() == "features"
-
-        # change relationship tables
-        lyr = ds.CreateLayer("new_origin_table", geom_type=ogr.wkbNone)
-        fld_defn = ogr.FieldDefn("new_o_pkey", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
-
-        lyr = ds.CreateLayer("new_dest_table", geom_type=ogr.wkbNone)
-        fld_defn = ogr.FieldDefn("new_dest_pkey", ogr.OFTInteger)
-        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
-
-        ds = gdal.OpenEx(dirname, gdal.GA_Update)
-        relationship = gdal.Relationship(
-            "my_one_to_many_relationship",
-            "new_origin_table",
-            "new_dest_table",
-            gdal.GRC_ONE_TO_MANY,
-        )
-        relationship.SetLeftTableFields(["new_o_pkey"])
-        relationship.SetRightTableFields(["new_dest_pkey"])
-        assert ds.UpdateRelationship(relationship)
-
-        ds = gdal.OpenEx(dirname, gdal.GA_Update)
-        assert set(ds.GetRelationshipNames()) == {
-            "my_relationship",
-            "my_one_to_many_relationship",
-            "many_to_many",
-        }
-        retrieved_rel = ds.GetRelationship("my_one_to_many_relationship")
-        assert retrieved_rel.GetCardinality() == gdal.GRC_ONE_TO_MANY
-        assert retrieved_rel.GetType() == gdal.GRT_ASSOCIATION
-        assert retrieved_rel.GetLeftTableName() == "new_origin_table"
-        assert retrieved_rel.GetRightTableName() == "new_dest_table"
-        assert retrieved_rel.GetLeftTableFields() == ["new_o_pkey"]
-        assert retrieved_rel.GetRightTableFields() == ["new_dest_pkey"]
-
-        # make sure GDB_ItemRelationships table has been updated
-        items_lyr = ds.GetLayerByName("GDB_Items")
-        f = items_lyr.GetFeature(8)
-        relationship_uuid = f["UUID"]
-        assert f["Name"] == "my_one_to_many_relationship"
-        assert f["Type"] == "{B606A7E1-FA5B-439C-849C-6E9C2481537B}"
-
-        f = items_lyr.GetFeature(18)
-        assert f["Name"] == "new_origin_table"
-        origin_table_uuid = f["UUID"]
-
-        f = items_lyr.GetFeature(19)
-        assert f["Name"] == "new_dest_table"
-        dest_table_uuid = f["UUID"]
-
-        item_relationships_lyr = ds.GetLayerByName("GDB_ItemRelationships")
-
-        assert (
-            len(
-                [
-                    f
-                    for f in item_relationships_lyr
-                    if f["OriginID"] == origin_table_uuid
-                    and f["DestID"] == relationship_uuid
-                    and f["Type"] == "{725BADAB-3452-491B-A795-55F32D67229C}"
-                ]
-            )
-            == 1
-        )
-        assert (
-            len(
-                [
-                    f
-                    for f in item_relationships_lyr
-                    if f["OriginID"] == dest_table_uuid
-                    and f["DestID"] == relationship_uuid
-                    and f["Type"] == "{725BADAB-3452-491B-A795-55F32D67229C}"
-                ]
-            )
-            == 1
-        )
-        assert (
-            len(
-                [
-                    f
-                    for f in item_relationships_lyr
-                    if f["OriginID"] == root_dataset_uuid
-                    and f["DestID"] == relationship_uuid
-                    and f["Type"] == "{DC78F1AB-34E4-43AC-BA47-1C4EABD0E7C7}"
-                ]
-            )
-            == 1
-        )
-
-    finally:
-        gdal.RmdirRecursive(dirname)
+        == 1
+    )
 
 
 ###############################################################################
 # Test emulated transactions
 
 
-def test_ogr_openfilegdb_write_emulated_transactions():
+def test_ogr_openfilegdb_write_emulated_transactions(tmp_path):
 
-    dirname = "tmp/test_ogr_openfilegdb_write_emulated_transactions.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    dirname = tmp_path / "test_ogr_openfilegdb_write_emulated_transactions.gdb"
 
-        gdal.Mkdir(dirname + "/.ogrtransaction_backup", 0o755)
-        with gdal.quiet_errors():
-            assert ds.StartTransaction(True) == ogr.OGRERR_FAILURE
-        gdal.Rmdir(dirname + "/.ogrtransaction_backup")
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
 
-        assert ds.TestCapability(ogr.ODsCEmulatedTransactions)
-        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+    gdal.Mkdir(dirname / ".ogrtransaction_backup", 0o755)
+    with gdal.quiet_errors():
+        assert ds.StartTransaction(True) == ogr.OGRERR_FAILURE
+    gdal.Rmdir(dirname / ".ogrtransaction_backup")
 
-        assert gdal.VSIStatL(dirname + "/.ogrtransaction_backup") is not None
+    assert ds.TestCapability(ogr.ODsCEmulatedTransactions)
+    assert ds.StartTransaction(True) == ogr.OGRERR_NONE
 
-        assert ds.CommitTransaction() == ogr.OGRERR_NONE
+    assert gdal.VSIStatL(dirname / ".ogrtransaction_backup") is not None
 
-        assert gdal.VSIStatL(dirname + "/.ogrtransaction_backup") is None
+    assert ds.CommitTransaction() == ogr.OGRERR_NONE
 
-        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
-        assert ds.RollbackTransaction() == ogr.OGRERR_NONE
+    assert gdal.VSIStatL(dirname / ".ogrtransaction_backup") is None
 
-        assert gdal.VSIStatL(dirname + "/.ogrtransaction_backup") is None
+    assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+    assert ds.RollbackTransaction() == ogr.OGRERR_NONE
 
-        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
-        with gdal.quiet_errors():
-            assert ds.StartTransaction(True) != ogr.OGRERR_NONE
-        assert ds.RollbackTransaction() == ogr.OGRERR_NONE
+    assert gdal.VSIStatL(dirname / ".ogrtransaction_backup") is None
 
-        assert gdal.VSIStatL(dirname + "/.ogrtransaction_backup") is None
+    assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+    with gdal.quiet_errors():
+        assert ds.StartTransaction(True) != ogr.OGRERR_NONE
+    assert ds.RollbackTransaction() == ogr.OGRERR_NONE
 
-        with gdal.quiet_errors():
-            assert ds.CommitTransaction() != ogr.OGRERR_NONE
+    assert gdal.VSIStatL(dirname / ".ogrtransaction_backup") is None
 
-        assert gdal.VSIStatL(dirname + "/.ogrtransaction_backup") is None
+    with gdal.quiet_errors():
+        assert ds.CommitTransaction() != ogr.OGRERR_NONE
 
-        with gdal.quiet_errors():
-            assert ds.RollbackTransaction() != ogr.OGRERR_NONE
+    assert gdal.VSIStatL(dirname / ".ogrtransaction_backup") is None
 
-        assert gdal.VSIStatL(dirname + "/.ogrtransaction_backup") is None
+    with gdal.quiet_errors():
+        assert ds.RollbackTransaction() != ogr.OGRERR_NONE
 
-        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
-        lyr = ds.CreateLayer("foo", geom_type=ogr.wkbNone)
-        assert gdal.VSIStatL(dirname + "/.ogrtransaction_backup") is not None
-        assert lyr is not None
-        assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
-        assert lyr.GetFeatureCount() == 1
-        assert ds.RollbackTransaction() == ogr.OGRERR_NONE
+    assert gdal.VSIStatL(dirname / ".ogrtransaction_backup") is None
 
-        assert gdal.VSIStatL(dirname + "/.ogrtransaction_backup") is None
+    assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbNone)
+    assert gdal.VSIStatL(dirname / ".ogrtransaction_backup") is not None
+    assert lyr is not None
+    assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == 1
+    assert ds.RollbackTransaction() == ogr.OGRERR_NONE
 
-        # It is in a ghost state after rollback
-        assert lyr.GetFeatureCount() == 0
+    assert gdal.VSIStatL(dirname / ".ogrtransaction_backup") is None
 
-        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+    # It is in a ghost state after rollback
+    assert lyr.GetFeatureCount() == 0
 
-        # Implicit rollback
+    assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+
+    # Implicit rollback
+    ds = None
+
+    ds = ogr.Open(dirname, update=1)
+    assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+    gdal.Rmdir(dirname / ".ogrtransaction_backup")
+    with gdal.quiet_errors():
+        assert ds.RollbackTransaction() == ogr.OGRERR_FAILURE
         ds = None
 
-        ds = ogr.Open(dirname, update=1)
-        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
-        gdal.Rmdir(dirname + "/.ogrtransaction_backup")
-        with gdal.quiet_errors():
-            assert ds.RollbackTransaction() == ogr.OGRERR_FAILURE
-            ds = None
+    ds = ogr.Open(dirname, update=1)
+    assert ds.TestCapability(ogr.ODsCEmulatedTransactions)
+    assert ds.GetLayerCount() == 0
+    assert gdal.VSIStatL(dirname / "a00000009.gdbtable") is None
 
-        ds = ogr.Open(dirname, update=1)
-        assert ds.TestCapability(ogr.ODsCEmulatedTransactions)
-        assert ds.GetLayerCount() == 0
-        assert gdal.VSIStatL(dirname + "/a00000009.gdbtable") is None
+    assert ds.StartTransaction(True) == ogr.OGRERR_NONE
 
-        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+    assert ds.CreateLayer("foo", geom_type=ogr.wkbNone) is not None
+    assert gdal.VSIStatL(dirname / "a00000009.gdbtable") is not None
 
-        assert ds.CreateLayer("foo", geom_type=ogr.wkbNone) is not None
-        assert gdal.VSIStatL(dirname + "/a00000009.gdbtable") is not None
+    assert ds.DeleteLayer(0) == ogr.OGRERR_NONE
+    assert gdal.VSIStatL(dirname / "a00000009.gdbtable") is None
 
-        assert ds.DeleteLayer(0) == ogr.OGRERR_NONE
-        assert gdal.VSIStatL(dirname + "/a00000009.gdbtable") is None
+    assert ds.CreateLayer("foo2", geom_type=ogr.wkbNone) is not None
+    assert gdal.VSIStatL(dirname / "a0000000a.gdbtable") is not None
 
-        assert ds.CreateLayer("foo2", geom_type=ogr.wkbNone) is not None
-        assert gdal.VSIStatL(dirname + "/a0000000a.gdbtable") is not None
+    assert ds.CommitTransaction() == ogr.OGRERR_NONE
 
-        assert ds.CommitTransaction() == ogr.OGRERR_NONE
+    assert gdal.VSIStatL(dirname / "a0000000a.gdbtable") is not None
 
-        assert gdal.VSIStatL(dirname + "/a0000000a.gdbtable") is not None
+    assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+    assert ds.DeleteLayer(0) == ogr.OGRERR_NONE
+    assert gdal.VSIStatL(dirname / "a0000000a.gdbtable") is None
+    assert ds.RollbackTransaction() == ogr.OGRERR_NONE
+    assert gdal.VSIStatL(dirname / "a0000000a.gdbtable") is not None
+    ds = None
 
-        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
-        assert ds.DeleteLayer(0) == ogr.OGRERR_NONE
-        assert gdal.VSIStatL(dirname + "/a0000000a.gdbtable") is None
-        assert ds.RollbackTransaction() == ogr.OGRERR_NONE
-        assert gdal.VSIStatL(dirname + "/a0000000a.gdbtable") is not None
-        ds = None
+    gdal.Mkdir(dirname / ".ogrtransaction_backup", 0o755)
+    with gdal.quiet_errors():
+        # Cannot open in update mode with an existing backup directory
+        assert ogr.Open(dirname, update=1) is None
 
-        gdal.Mkdir(dirname + "/.ogrtransaction_backup", 0o755)
-        with gdal.quiet_errors():
-            # Cannot open in update mode with an existing backup directory
-            assert ogr.Open(dirname, update=1) is None
+        # Emit warning in read-only mode when opening with an existing backup directory
+        gdal.ErrorReset()
+        assert ogr.Open(dirname) is not None
+        assert "A previous backup directory" in gdal.GetLastErrorMsg()
+    gdal.Rmdir(dirname / ".ogrtransaction_backup")
 
-            # Emit warning in read-only mode when opening with an existing backup directory
-            gdal.ErrorReset()
-            assert ogr.Open(dirname) is not None
-            assert "A previous backup directory" in gdal.GetLastErrorMsg()
-        gdal.Rmdir(dirname + "/.ogrtransaction_backup")
+    # Transaction not supported in read-only mode
+    ds = ogr.Open(dirname)
+    assert ds.TestCapability(ogr.ODsCEmulatedTransactions) == 0
+    with gdal.quiet_errors():
+        assert ds.StartTransaction(True) == ogr.OGRERR_FAILURE
+    ds = None
 
-        # Transaction not supported in read-only mode
-        ds = ogr.Open(dirname)
-        assert ds.TestCapability(ogr.ODsCEmulatedTransactions) == 0
-        with gdal.quiet_errors():
-            assert ds.StartTransaction(True) == ogr.OGRERR_FAILURE
-        ds = None
+    ds = ogr.Open(dirname, update=1)
+    assert ds.GetLayerCount() == 1
+    lyr = ds.GetLayerByName("foo2")
 
-        ds = ogr.Open(dirname, update=1)
-        assert ds.GetLayerCount() == 1
-        lyr = ds.GetLayerByName("foo2")
+    assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+    assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == 1
+    assert ds.CommitTransaction() == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == 1
 
-        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
-        assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
-        assert lyr.GetFeatureCount() == 1
-        assert ds.CommitTransaction() == ogr.OGRERR_NONE
-        assert lyr.GetFeatureCount() == 1
+    ds = None
 
-        ds = None
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayerByName("foo2")
+    assert lyr.GetFeatureCount() == 1
 
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayerByName("foo2")
-        assert lyr.GetFeatureCount() == 1
+    assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+    assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == 2
+    assert ds.RollbackTransaction() == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == 1
 
-        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
-        assert lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn())) == ogr.OGRERR_NONE
-        assert lyr.GetFeatureCount() == 2
-        assert ds.RollbackTransaction() == ogr.OGRERR_NONE
-        assert lyr.GetFeatureCount() == 1
+    # Test that StartTransaction() / RollbackTransaction() doesn't destroy
+    # unmodified layers! (https://github.com/OSGeo/gdal/issues/5952)
+    assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+    assert ds.RollbackTransaction() == ogr.OGRERR_NONE
 
-        # Test that StartTransaction() / RollbackTransaction() doesn't destroy
-        # unmodified layers! (https://github.com/OSGeo/gdal/issues/5952)
-        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
-        assert ds.RollbackTransaction() == ogr.OGRERR_NONE
+    ds = None
 
-        ds = None
-
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayerByName("foo2")
-        assert lyr.GetFeatureCount() == 1
-        ds = None
-
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayerByName("foo2")
+    assert lyr.GetFeatureCount() == 1
+    ds = None
 
 
 ###############################################################################
 
 
-def test_ogr_openfilegdb_write_emulated_transactions_delete_field_before_geom():
+def test_ogr_openfilegdb_write_emulated_transactions_delete_field_before_geom(
+    tmp_vsimem,
+):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    dirname = tmp_vsimem / "out.gdb"
 
-        with gdaltest.config_option("OPENFILEGDB_CREATE_FIELD_BEFORE_GEOMETRY", "YES"):
-            lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
 
-        assert lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString)) == ogr.OGRERR_NONE
+    with gdaltest.config_option("OPENFILEGDB_CREATE_FIELD_BEFORE_GEOMETRY", "YES"):
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetField("field_before_geom", "to be deleted")
-        f.SetField("str", "foo")
-        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        f = None
+    assert lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString)) == ogr.OGRERR_NONE
 
-        assert ds.StartTransaction(True) == ogr.OGRERR_NONE
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("field_before_geom", "to be deleted")
+    f.SetField("str", "foo")
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    f = None
 
-        assert (
-            lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex("field_before_geom"))
-            == ogr.OGRERR_NONE
-        )
+    assert ds.StartTransaction(True) == ogr.OGRERR_NONE
 
-        assert ds.RollbackTransaction() == ogr.OGRERR_NONE
+    assert (
+        lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex("field_before_geom"))
+        == ogr.OGRERR_NONE
+    )
 
-        lyr.ResetReading()
-        f = lyr.GetNextFeature()
-        assert f.GetField("field_before_geom") == "to be deleted"
-        assert f.GetField("str") == "foo"
-        assert f.GetGeometryRef() is not None
+    assert ds.RollbackTransaction() == ogr.OGRERR_NONE
 
-        ds = None
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetField("field_before_geom") == "to be deleted"
+    assert f.GetField("str") == "foo"
+    assert f.GetGeometryRef() is not None
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = None
 
 
 ###############################################################################
@@ -3480,168 +3380,162 @@ def test_ogr_openfilegdb_write_emulated_transactions_delete_field_before_geom():
 
 
 @pytest.mark.parametrize("options", [[], ["FEATURE_DATASET=fd1"]])
-def test_ogr_openfilegdb_write_rename_layer(options):
+def test_ogr_openfilegdb_write_rename_layer(tmp_path, options):
 
-    dirname = "tmp/rename.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("other_layer", geom_type=ogr.wkbNone)
-        lyr.SyncToDisk()
+    dirname = tmp_path / "rename.gdb"
 
-        lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint, options=options)
-        assert lyr.TestCapability(ogr.OLCRename) == 1
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("other_layer", geom_type=ogr.wkbNone)
+    lyr.SyncToDisk()
 
-        assert lyr.Rename("bar") == ogr.OGRERR_NONE
-        assert lyr.GetDescription() == "bar"
-        assert lyr.GetLayerDefn().GetName() == "bar"
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint, options=options)
+    assert lyr.TestCapability(ogr.OLCRename) == 1
 
-        # Too long layer name
-        with gdal.quiet_errors():
-            assert lyr.Rename("x" * 200) != ogr.OGRERR_NONE
+    assert lyr.Rename("bar") == ogr.OGRERR_NONE
+    assert lyr.GetDescription() == "bar"
+    assert lyr.GetLayerDefn().GetName() == "bar"
 
-        with gdal.quiet_errors():
-            assert lyr.Rename("bar") != ogr.OGRERR_NONE
+    # Too long layer name
+    with gdal.quiet_errors():
+        assert lyr.Rename("x" * 200) != ogr.OGRERR_NONE
 
-        with gdal.quiet_errors():
-            assert lyr.Rename("other_layer") != ogr.OGRERR_NONE
+    with gdal.quiet_errors():
+        assert lyr.Rename("bar") != ogr.OGRERR_NONE
 
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (1 2)"))
-        lyr.CreateFeature(f)
+    with gdal.quiet_errors():
+        assert lyr.Rename("other_layer") != ogr.OGRERR_NONE
 
-        ds = ogr.Open(dirname, update=1)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr.CreateFeature(f)
 
-        # Check system tables
-        system_catolog_lyr = ds.GetLayerByName("GDB_SystemCatalog")
-        f = system_catolog_lyr.GetFeature(10)
-        assert f["Name"] == "bar"
+    ds = ogr.Open(dirname, update=1)
 
-        items_lyr = ds.GetLayerByName("GDB_Items")
-        if options == []:
-            f = items_lyr.GetFeature(4)
-            assert f["Path"] == "\\bar"
-            assert "<CatalogPath>\\bar</CatalogPath>" in f["Definition"]
-        else:
-            f = items_lyr.GetFeature(5)
-            assert f["Path"] == "\\fd1\\bar"
-            assert "<CatalogPath>\\fd1\\bar</CatalogPath>" in f["Definition"]
-        assert f["Name"] == "bar"
-        assert f["PhysicalName"] == "BAR"
-        assert "<Name>bar</Name>" in f["Definition"]
+    # Check system tables
+    system_catolog_lyr = ds.GetLayerByName("GDB_SystemCatalog")
+    f = system_catolog_lyr.GetFeature(10)
+    assert f["Name"] == "bar"
 
-        # Second renaming, after dataset reopening
-        lyr = ds.GetLayerByName("bar")
-        assert lyr.Rename("baz") == ogr.OGRERR_NONE
-        assert lyr.GetDescription() == "baz"
-        assert lyr.GetLayerDefn().GetName() == "baz"
+    items_lyr = ds.GetLayerByName("GDB_Items")
+    if options == []:
+        f = items_lyr.GetFeature(4)
+        assert f["Path"] == "\\bar"
+        assert "<CatalogPath>\\bar</CatalogPath>" in f["Definition"]
+    else:
+        f = items_lyr.GetFeature(5)
+        assert f["Path"] == "\\fd1\\bar"
+        assert "<CatalogPath>\\fd1\\bar</CatalogPath>" in f["Definition"]
+    assert f["Name"] == "bar"
+    assert f["PhysicalName"] == "BAR"
+    assert "<Name>bar</Name>" in f["Definition"]
 
-        lyr.ResetReading()
-        f = lyr.GetNextFeature()
-        assert f.GetGeometryRef() is not None
+    # Second renaming, after dataset reopening
+    lyr = ds.GetLayerByName("bar")
+    assert lyr.Rename("baz") == ogr.OGRERR_NONE
+    assert lyr.GetDescription() == "baz"
+    assert lyr.GetLayerDefn().GetName() == "baz"
 
-        ds = None
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef() is not None
 
-        ds = ogr.Open(dirname)
+    ds = None
 
-        # Check system tables
-        system_catolog_lyr = ds.GetLayerByName("GDB_SystemCatalog")
-        f = system_catolog_lyr.GetFeature(10)
-        assert f["Name"] == "baz"
+    ds = ogr.Open(dirname)
 
-        items_lyr = ds.GetLayerByName("GDB_Items")
-        if options == []:
-            f = items_lyr.GetFeature(4)
-            assert f["Path"] == "\\baz"
-            assert "<CatalogPath>\\baz</CatalogPath>" in f["Definition"]
-        else:
-            f = items_lyr.GetFeature(5)
-            assert f["Path"] == "\\fd1\\baz"
-            assert "<CatalogPath>\\fd1\\baz</CatalogPath>" in f["Definition"]
-        assert f["Name"] == "baz"
-        assert f["PhysicalName"] == "BAZ"
-        assert "<Name>baz</Name>" in f["Definition"]
+    # Check system tables
+    system_catolog_lyr = ds.GetLayerByName("GDB_SystemCatalog")
+    f = system_catolog_lyr.GetFeature(10)
+    assert f["Name"] == "baz"
 
-        lyr = ds.GetLayerByName("baz")
-        assert lyr is not None, [
-            ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount())
-        ]
+    items_lyr = ds.GetLayerByName("GDB_Items")
+    if options == []:
+        f = items_lyr.GetFeature(4)
+        assert f["Path"] == "\\baz"
+        assert "<CatalogPath>\\baz</CatalogPath>" in f["Definition"]
+    else:
+        f = items_lyr.GetFeature(5)
+        assert f["Path"] == "\\fd1\\baz"
+        assert "<CatalogPath>\\fd1\\baz</CatalogPath>" in f["Definition"]
+    assert f["Name"] == "baz"
+    assert f["PhysicalName"] == "BAZ"
+    assert "<Name>baz</Name>" in f["Definition"]
 
-        lyr.ResetReading()
-        f = lyr.GetNextFeature()
-        assert f.GetGeometryRef() is not None
+    lyr = ds.GetLayerByName("baz")
+    assert lyr is not None, [
+        ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount())
+    ]
 
-        ds = None
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef() is not None
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = None
 
 
 ###############################################################################
 # Test field name laundering (#4458)
 
 
-def test_ogr_openfilegdb_field_name_laundering():
+def test_ogr_openfilegdb_field_name_laundering(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
-        with gdal.quiet_errors():
-            lyr.CreateField(ogr.FieldDefn("FROM", ogr.OFTInteger))  # reserved keyword
-            lyr.CreateField(
-                ogr.FieldDefn("1NUMBER", ogr.OFTInteger)
-            )  # starting with a number
-            lyr.CreateField(
-                ogr.FieldDefn("WITH SPACE AND !$*!- special characters", ogr.OFTInteger)
-            )  # unallowed characters
-            lyr.CreateField(ogr.FieldDefn("é" * 64, ogr.OFTInteger))  # OK
-            lyr.CreateField(
-                ogr.FieldDefn(
-                    "A123456789012345678901234567890123456789012345678901234567890123",
-                    ogr.OFTInteger,
-                )
-            )  # 64 characters : ok
-            lyr.CreateField(
-                ogr.FieldDefn(
-                    "A1234567890123456789012345678901234567890123456789012345678901234",
-                    ogr.OFTInteger,
-                )
-            )  # 65 characters : nok
-            lyr.CreateField(
-                ogr.FieldDefn(
-                    "A12345678901234567890123456789012345678901234567890123456789012345",
-                    ogr.OFTInteger,
-                )
-            )  # 66 characters : nok
+    dirname = tmp_vsimem / "out.gdb"
 
-        lyr_defn = lyr.GetLayerDefn()
-        expected_names = [
-            "FROM_",
-            "_1NUMBER",
-            "WITH_SPACE_AND_______special_characters",
-            "é" * 64,
-            "A123456789012345678901234567890123456789012345678901234567890123",
-            "A1234567890123456789012345678901234567890123456789012345678901_1",
-            "A1234567890123456789012345678901234567890123456789012345678901_2",
-        ]
-        for i in range(5):
-            assert lyr_defn.GetFieldIndex(expected_names[i]) == i, (
-                "did not find %s" % expected_names[i]
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    with gdal.quiet_errors():
+        lyr.CreateField(ogr.FieldDefn("FROM", ogr.OFTInteger))  # reserved keyword
+        lyr.CreateField(
+            ogr.FieldDefn("1NUMBER", ogr.OFTInteger)
+        )  # starting with a number
+        lyr.CreateField(
+            ogr.FieldDefn("WITH SPACE AND !$*!- special characters", ogr.OFTInteger)
+        )  # unallowed characters
+        lyr.CreateField(ogr.FieldDefn("é" * 64, ogr.OFTInteger))  # OK
+        lyr.CreateField(
+            ogr.FieldDefn(
+                "A123456789012345678901234567890123456789012345678901234567890123",
+                ogr.OFTInteger,
             )
+        )  # 64 characters : ok
+        lyr.CreateField(
+            ogr.FieldDefn(
+                "A1234567890123456789012345678901234567890123456789012345678901234",
+                ogr.OFTInteger,
+            )
+        )  # 65 characters : nok
+        lyr.CreateField(
+            ogr.FieldDefn(
+                "A12345678901234567890123456789012345678901234567890123456789012345",
+                ogr.OFTInteger,
+            )
+        )  # 66 characters : nok
 
-        ds = None
+    lyr_defn = lyr.GetLayerDefn()
+    expected_names = [
+        "FROM_",
+        "_1NUMBER",
+        "WITH_SPACE_AND_______special_characters",
+        "é" * 64,
+        "A123456789012345678901234567890123456789012345678901234567890123",
+        "A1234567890123456789012345678901234567890123456789012345678901_1",
+        "A1234567890123456789012345678901234567890123456789012345678901_2",
+    ]
+    for i in range(5):
+        assert lyr_defn.GetFieldIndex(expected_names[i]) == i, (
+            "did not find %s" % expected_names[i]
+        )
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = None
 
 
 ###############################################################################
 # Test layer name laundering (#4466)
 
 
-def test_ogr_openfilegdb_layer_name_laundering():
+def test_ogr_openfilegdb_layer_name_laundering(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
+    dirname = tmp_vsimem / "out.gdb"
 
     _160char = "A123456789" * 16
 
@@ -3655,423 +3549,397 @@ def test_ogr_openfilegdb_layer_name_laundering():
         _160char + "B",  # still too long
     ]
 
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        with gdal.quiet_errors():
-            for in_name in in_names:
-                ds.CreateLayer(in_name, geom_type=ogr.wkbPoint)
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    with gdal.quiet_errors():
+        for in_name in in_names:
+            ds.CreateLayer(in_name, geom_type=ogr.wkbPoint)
 
-        expected_names = [
-            "FROM_",
-            "_1NUMBER",
-            "WITH_SPACE_AND_______special_characters",
-            "_sde_foo",
-            _160char,
-            _160char[0:158] + "_1",
-            _160char[0:158] + "_2",
-        ]
-        for i, exp_name in enumerate(expected_names):
-            assert ds.GetLayerByIndex(i).GetName() == exp_name, (
-                "did not find %s" % exp_name
-            )
+    expected_names = [
+        "FROM_",
+        "_1NUMBER",
+        "WITH_SPACE_AND_______special_characters",
+        "_sde_foo",
+        _160char,
+        _160char[0:158] + "_1",
+        _160char[0:158] + "_2",
+    ]
+    for i, exp_name in enumerate(expected_names):
+        assert ds.GetLayerByIndex(i).GetName() == exp_name, "did not find %s" % exp_name
 
-        ds = None
-
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = None
 
 
 ###############################################################################
 # Test creating layer with documentation
 
 
-def test_ogr_openfilegdb_layer_documentation():
+def test_ogr_openfilegdb_layer_documentation(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
+    dirname = tmp_vsimem / "out.gdb"
 
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        ds.CreateLayer(
-            "test", geom_type=ogr.wkbPoint, options=["DOCUMENTATION=<my_doc/>"]
-        )
-        ds = None
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    ds.CreateLayer("test", geom_type=ogr.wkbPoint, options=["DOCUMENTATION=<my_doc/>"])
+    ds = None
 
-        ds = ogr.Open(dirname)
-        sql_lyr = ds.ExecuteSQL("GetLayerMetadata test")
-        f = sql_lyr.GetNextFeature()
-        assert f.GetField(0) == "<my_doc/>"
-        ds.ReleaseResultSet(sql_lyr)
-        ds = None
-
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = ogr.Open(dirname)
+    sql_lyr = ds.ExecuteSQL("GetLayerMetadata test")
+    f = sql_lyr.GetNextFeature()
+    assert f.GetField(0) == "<my_doc/>"
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
 
 
 ###############################################################################
 # Test explicit CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES option
 
 
-def test_ogr_openfilegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_explicit():
+def test_ogr_openfilegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_explicit(tmp_vsimem):
 
     dirname = (
-        "/vsimem/test_ogr_openfilegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_explicit.gdb"
+        tmp_vsimem
+        / "test_ogr_openfilegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_explicit.gdb"
     )
 
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
 
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(4326)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
 
-        lyr = ds.CreateLayer(
-            "line",
-            srs=srs,
-            geom_type=ogr.wkbLineString,
-            options=["CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES"],
+    lyr = ds.CreateLayer(
+        "line",
+        srs=srs,
+        geom_type=ogr.wkbLineString,
+        options=["CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES"],
+    )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING(0 0,2 0)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("COMPOUNDCURVE((0 0,2 0))"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt("MULTILINESTRING((0 0,2 0),(10 0,15 0))")
+    )
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt("MULTICURVE((0 0,2 0),(10 0,15 0))")
+    )
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+
+    lyr = ds.CreateLayer(
+        "area",
+        srs=srs,
+        geom_type=ogr.wkbPolygon,
+        options=["CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES"],
+    )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2))"
         )
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING(0 0,2 0)"))
-        lyr.CreateFeature(f)
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("COMPOUNDCURVE((0 0,2 0))"))
-        lyr.CreateFeature(f)
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometryDirectly(
-            ogr.CreateGeometryFromWkt("MULTILINESTRING((0 0,2 0),(10 0,15 0))")
+    )
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt(
+            "CURVEPOLYGON((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2))"
         )
-        lyr.CreateFeature(f)
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometryDirectly(
-            ogr.CreateGeometryFromWkt("MULTICURVE((0 0,2 0),(10 0,15 0))")
+    )
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt(
+            "MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2)),((10 0,10 1,11 1,11 0,10 0)))"
         )
-        lyr.CreateFeature(f)
-        f = ogr.Feature(lyr.GetLayerDefn())
-        lyr.CreateFeature(f)
-
-        lyr = ds.CreateLayer(
-            "area",
-            srs=srs,
-            geom_type=ogr.wkbPolygon,
-            options=["CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES"],
+    )
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt(
+            "MULTISURFACE(((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2)),((10 0,10 1,11 1,11 0,10 0)))"
         )
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometryDirectly(
-            ogr.CreateGeometryFromWkt(
-                "POLYGON((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2))"
-            )
-        )
-        lyr.CreateFeature(f)
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometryDirectly(
-            ogr.CreateGeometryFromWkt(
-                "CURVEPOLYGON((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2))"
-            )
-        )
-        lyr.CreateFeature(f)
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometryDirectly(
-            ogr.CreateGeometryFromWkt(
-                "MULTIPOLYGON(((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2)),((10 0,10 1,11 1,11 0,10 0)))"
-            )
-        )
-        lyr.CreateFeature(f)
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetGeometryDirectly(
-            ogr.CreateGeometryFromWkt(
-                "MULTISURFACE(((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 0.2,0.2 0.2)),((10 0,10 1,11 1,11 0,10 0)))"
-            )
-        )
-        lyr.CreateFeature(f)
-        f = ogr.Feature(lyr.GetLayerDefn())
-        lyr.CreateFeature(f)
+    )
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
 
-        ds = None
+    ds = None
 
-        ds = ogr.Open(dirname, update=1)
+    ds = ogr.Open(dirname, update=1)
 
-        lyr = ds.GetLayerByName("line")
-        lyr_defn = lyr.GetLayerDefn()
-        assert lyr_defn.GetFieldIndex("Shape_Length") >= 0
-        assert lyr_defn.GetFieldIndex("Shape_Area") < 0
-        assert (
-            lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("Shape_Length")).GetDefault()
-            == "FILEGEODATABASE_SHAPE_LENGTH"
-        )
-        f = lyr.GetNextFeature()
-        assert f["Shape_Length"] == 2
-        f = lyr.GetNextFeature()
-        assert f["Shape_Length"] == 2
-        f = lyr.GetNextFeature()
-        assert f["Shape_Length"] == 2 + 5
-        f = lyr.GetNextFeature()
-        assert f["Shape_Length"] == 2 + 5
-        f = lyr.GetNextFeature()
-        assert f["Shape_Length"] is None
+    lyr = ds.GetLayerByName("line")
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldIndex("Shape_Length") >= 0
+    assert lyr_defn.GetFieldIndex("Shape_Area") < 0
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("Shape_Length")).GetDefault()
+        == "FILEGEODATABASE_SHAPE_LENGTH"
+    )
+    f = lyr.GetNextFeature()
+    assert f["Shape_Length"] == 2
+    f = lyr.GetNextFeature()
+    assert f["Shape_Length"] == 2
+    f = lyr.GetNextFeature()
+    assert f["Shape_Length"] == 2 + 5
+    f = lyr.GetNextFeature()
+    assert f["Shape_Length"] == 2 + 5
+    f = lyr.GetNextFeature()
+    assert f["Shape_Length"] is None
 
-        lyr = ds.GetLayerByName("area")
-        lyr_defn = lyr.GetLayerDefn()
-        assert lyr_defn.GetFieldIndex("Shape_Length") >= 0
-        assert lyr_defn.GetFieldIndex("Shape_Area") >= 0
-        assert (
-            lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("Shape_Area")).GetDefault()
-            == "FILEGEODATABASE_SHAPE_AREA"
-        )
-        assert (
-            lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("Shape_Length")).GetDefault()
-            == "FILEGEODATABASE_SHAPE_LENGTH"
-        )
-        f = lyr.GetNextFeature()
-        assert f["Shape_Length"] == pytest.approx(6.4)
-        assert f["Shape_Area"] == pytest.approx(0.64)
-        f = lyr.GetNextFeature()
-        assert f["Shape_Length"] == pytest.approx(6.4)
-        assert f["Shape_Area"] == pytest.approx(0.64)
-        f = lyr.GetNextFeature()
-        assert f["Shape_Length"] == pytest.approx(6.4 + 4)
-        assert f["Shape_Area"] == pytest.approx(0.64 + 1)
-        f = lyr.GetNextFeature()
-        assert f["Shape_Length"] == pytest.approx(6.4 + 4)
-        assert f["Shape_Area"] == pytest.approx(0.64 + 1)
-        f = lyr.GetNextFeature()
-        assert f["Shape_Length"] is None
-        assert f["Shape_Area"] is None
+    lyr = ds.GetLayerByName("area")
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldIndex("Shape_Length") >= 0
+    assert lyr_defn.GetFieldIndex("Shape_Area") >= 0
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("Shape_Area")).GetDefault()
+        == "FILEGEODATABASE_SHAPE_AREA"
+    )
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("Shape_Length")).GetDefault()
+        == "FILEGEODATABASE_SHAPE_LENGTH"
+    )
+    f = lyr.GetNextFeature()
+    assert f["Shape_Length"] == pytest.approx(6.4)
+    assert f["Shape_Area"] == pytest.approx(0.64)
+    f = lyr.GetNextFeature()
+    assert f["Shape_Length"] == pytest.approx(6.4)
+    assert f["Shape_Area"] == pytest.approx(0.64)
+    f = lyr.GetNextFeature()
+    assert f["Shape_Length"] == pytest.approx(6.4 + 4)
+    assert f["Shape_Area"] == pytest.approx(0.64 + 1)
+    f = lyr.GetNextFeature()
+    assert f["Shape_Length"] == pytest.approx(6.4 + 4)
+    assert f["Shape_Area"] == pytest.approx(0.64 + 1)
+    f = lyr.GetNextFeature()
+    assert f["Shape_Length"] is None
+    assert f["Shape_Area"] is None
 
-        # Rename Shape_Length and Shape_Area fields (not sure the FileGDB SDK likes it)
-        iShapeLength = lyr_defn.GetFieldIndex("Shape_Length")
-        fld_defn = ogr.FieldDefn("Shape_Length_renamed", ogr.OFTReal)
-        assert (
-            lyr.AlterFieldDefn(iShapeLength, fld_defn, ogr.ALTER_NAME_FLAG)
-            == ogr.OGRERR_NONE
-        )
+    # Rename Shape_Length and Shape_Area fields (not sure the FileGDB SDK likes it)
+    iShapeLength = lyr_defn.GetFieldIndex("Shape_Length")
+    fld_defn = ogr.FieldDefn("Shape_Length_renamed", ogr.OFTReal)
+    assert (
+        lyr.AlterFieldDefn(iShapeLength, fld_defn, ogr.ALTER_NAME_FLAG)
+        == ogr.OGRERR_NONE
+    )
 
-        iShapeArea = lyr_defn.GetFieldIndex("Shape_Area")
-        fld_defn = ogr.FieldDefn("Shape_Area_renamed", ogr.OFTReal)
-        assert (
-            lyr.AlterFieldDefn(iShapeArea, fld_defn, ogr.ALTER_NAME_FLAG)
-            == ogr.OGRERR_NONE
-        )
+    iShapeArea = lyr_defn.GetFieldIndex("Shape_Area")
+    fld_defn = ogr.FieldDefn("Shape_Area_renamed", ogr.OFTReal)
+    assert (
+        lyr.AlterFieldDefn(iShapeArea, fld_defn, ogr.ALTER_NAME_FLAG) == ogr.OGRERR_NONE
+    )
 
-        ds = ogr.Open(dirname, update=1)
+    ds = ogr.Open(dirname, update=1)
 
-        sql_lyr = ds.ExecuteSQL("GetLayerDefinition area")
-        assert sql_lyr
-        f = sql_lyr.GetNextFeature()
-        xml = f.GetField(0)
-        f = None
-        ds.ReleaseResultSet(sql_lyr)
-        assert "<AreaFieldName>Shape_Area_renamed</AreaFieldName>" in xml
-        assert "<LengthFieldName>Shape_Length_renamed</LengthFieldName>" in xml
+    sql_lyr = ds.ExecuteSQL("GetLayerDefinition area")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    xml = f.GetField(0)
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
+    assert "<AreaFieldName>Shape_Area_renamed</AreaFieldName>" in xml
+    assert "<LengthFieldName>Shape_Length_renamed</LengthFieldName>" in xml
 
-        lyr = ds.GetLayerByName("area")
-        lyr_defn = lyr.GetLayerDefn()
+    lyr = ds.GetLayerByName("area")
+    lyr_defn = lyr.GetLayerDefn()
 
-        # Delete Shape_Length and Shape_Area fields
-        assert (
-            lyr.DeleteField(lyr_defn.GetFieldIndex("Shape_Length_renamed"))
-            == ogr.OGRERR_NONE
-        )
-        assert (
-            lyr.DeleteField(lyr_defn.GetFieldIndex("Shape_Area_renamed"))
-            == ogr.OGRERR_NONE
-        )
+    # Delete Shape_Length and Shape_Area fields
+    assert (
+        lyr.DeleteField(lyr_defn.GetFieldIndex("Shape_Length_renamed"))
+        == ogr.OGRERR_NONE
+    )
+    assert (
+        lyr.DeleteField(lyr_defn.GetFieldIndex("Shape_Area_renamed")) == ogr.OGRERR_NONE
+    )
 
-        f = ogr.Feature(lyr_defn)
-        f.SetGeometryDirectly(
-            ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))")
-        )
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        ds = None
+    f = ogr.Feature(lyr_defn)
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    ds = None
 
-        ds = ogr.Open(dirname)
+    ds = ogr.Open(dirname)
 
-        sql_lyr = ds.ExecuteSQL("GetLayerDefinition area")
-        assert sql_lyr
-        f = sql_lyr.GetNextFeature()
-        xml = f.GetField(0)
-        f = None
-        ds.ReleaseResultSet(sql_lyr)
-        assert "<AreaFieldName />" in xml
-        assert "<LengthFieldName />" in xml
+    sql_lyr = ds.ExecuteSQL("GetLayerDefinition area")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    xml = f.GetField(0)
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
+    assert "<AreaFieldName />" in xml
+    assert "<LengthFieldName />" in xml
 
-        ds = None
-
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = None
 
 
 ###############################################################################
 # Test explicit CREATE_SHAPE_AREA_AND_LENGTH_FIELDS=YES option
 
 
-def test_ogr_openfilegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit():
+def test_ogr_openfilegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit(tmp_vsimem):
 
     dirname = (
-        "/vsimem/test_ogr_openfilegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit.gdb"
+        tmp_vsimem
+        / "test_ogr_openfilegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit.gdb"
     )
-    try:
-        gdal.VectorTranslate(
-            dirname,
-            "data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb",
-            options="-f OpenFileGDB -fid 1",
-        )
 
-        ds = ogr.Open(dirname)
-        lyr = ds.GetLayer(0)
-        lyr_defn = lyr.GetLayerDefn()
-        assert (
-            lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("Shape_Area")).GetDefault()
-            == "FILEGEODATABASE_SHAPE_AREA"
-        )
-        assert (
-            lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("Shape_Length")).GetDefault()
-            == "FILEGEODATABASE_SHAPE_LENGTH"
-        )
+    gdal.VectorTranslate(
+        dirname,
+        "data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb",
+        options="-f OpenFileGDB -fid 1",
+    )
 
-        ds = None
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    lyr_defn = lyr.GetLayerDefn()
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("Shape_Area")).GetDefault()
+        == "FILEGEODATABASE_SHAPE_AREA"
+    )
+    assert (
+        lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("Shape_Length")).GetDefault()
+        == "FILEGEODATABASE_SHAPE_LENGTH"
+    )
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = None
 
 
 ###############################################################################
 # Test AlterGeomFieldDefn()
 
 
-def test_ogr_openfilegdb_write_alter_geom_field_defn():
+def test_ogr_openfilegdb_write_alter_geom_field_defn(tmp_vsimem):
 
-    dirname = "/vsimem/test_ogr_openfilegdb_alter_geom_field_defn.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    dirname = tmp_vsimem / "test_ogr_openfilegdb_alter_geom_field_defn.gdb"
 
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(4326)
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
 
-        ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbLineString)
-        ds = None
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
 
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
+    ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbLineString)
+    ds = None
 
-        assert lyr.TestCapability(ogr.OLCAlterGeomFieldDefn)
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
 
-        # Change name
-        fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbLineString)
+    assert lyr.TestCapability(ogr.OLCAlterGeomFieldDefn)
+
+    # Change name
+    fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbLineString)
+    assert (
+        lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_NAME_FLAG)
+        == ogr.OGRERR_NONE
+    )
+    assert lyr.GetGeometryColumn() == "shape_renamed"
+    ds = None
+
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+
+    sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    xml = f.GetField(0)
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
+    assert "<Name>shape_renamed</Name>" in xml
+    assert "WKID" in xml
+
+    assert lyr.GetGeometryColumn() == "shape_renamed"
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+
+    # Set SRS to None
+    fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbLineString)
+    fld_defn.SetSpatialRef(None)
+    assert (
+        lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_SRS_FLAG)
+        == ogr.OGRERR_NONE
+    )
+    assert lyr.GetSpatialRef() is None
+    ds = None
+
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetSpatialRef() is None
+
+    sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    xml = f.GetField(0)
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
+    assert "WKID" not in xml
+
+    # Set SRS to EPSG:4326
+    fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbLineString)
+    fld_defn.SetSpatialRef(srs)
+    assert (
+        lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_SRS_FLAG)
+        == ogr.OGRERR_NONE
+    )
+    assert lyr.GetSpatialRef() is not None
+    ds = None
+
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetSpatialRef() is not None
+
+    sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    xml = f.GetField(0)
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
+    assert "<WKID>4326</WKID>" in xml
+
+    srs4269 = osr.SpatialReference()
+    srs4269.ImportFromEPSG(4269)
+
+    # Set SRS to EPSG:4269
+    fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbLineString)
+    fld_defn.SetSpatialRef(srs4269)
+    assert (
+        lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_SRS_FLAG)
+        == ogr.OGRERR_NONE
+    )
+    assert lyr.GetSpatialRef() is not None
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4269"
+    ds = None
+
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetSpatialRef() is not None
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4269"
+
+    sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
+    assert sql_lyr
+    f = sql_lyr.GetNextFeature()
+    xml = f.GetField(0)
+    f = None
+    ds.ReleaseResultSet(sql_lyr)
+    assert "<WKID>4269</WKID>" in xml
+
+    # Changing geometry type not supported
+    fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbPolygon)
+    with gdal.quiet_errors():
         assert (
-            lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_NAME_FLAG)
-            == ogr.OGRERR_NONE
+            lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_TYPE_FLAG)
+            != ogr.OGRERR_NONE
         )
-        assert lyr.GetGeometryColumn() == "shape_renamed"
-        ds = None
 
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-
-        sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
-        assert sql_lyr
-        f = sql_lyr.GetNextFeature()
-        xml = f.GetField(0)
-        f = None
-        ds.ReleaseResultSet(sql_lyr)
-        assert "<Name>shape_renamed</Name>" in xml
-        assert "WKID" in xml
-
-        assert lyr.GetGeometryColumn() == "shape_renamed"
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
-
-        # Set SRS to None
-        fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbLineString)
-        fld_defn.SetSpatialRef(None)
+    # Changing nullable state not supported
+    fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbPolygon)
+    fld_defn.SetNullable(False)
+    with gdal.quiet_errors():
         assert (
-            lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_SRS_FLAG)
-            == ogr.OGRERR_NONE
+            lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG)
+            != ogr.OGRERR_NONE
         )
-        assert lyr.GetSpatialRef() is None
-        ds = None
 
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetSpatialRef() is None
-
-        sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
-        assert sql_lyr
-        f = sql_lyr.GetNextFeature()
-        xml = f.GetField(0)
-        f = None
-        ds.ReleaseResultSet(sql_lyr)
-        assert "WKID" not in xml
-
-        # Set SRS to EPSG:4326
-        fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbLineString)
-        fld_defn.SetSpatialRef(srs)
-        assert (
-            lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_SRS_FLAG)
-            == ogr.OGRERR_NONE
-        )
-        assert lyr.GetSpatialRef() is not None
-        ds = None
-
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetSpatialRef() is not None
-
-        sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
-        assert sql_lyr
-        f = sql_lyr.GetNextFeature()
-        xml = f.GetField(0)
-        f = None
-        ds.ReleaseResultSet(sql_lyr)
-        assert "<WKID>4326</WKID>" in xml
-
-        srs4269 = osr.SpatialReference()
-        srs4269.ImportFromEPSG(4269)
-
-        # Set SRS to EPSG:4269
-        fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbLineString)
-        fld_defn.SetSpatialRef(srs4269)
-        assert (
-            lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_SRS_FLAG)
-            == ogr.OGRERR_NONE
-        )
-        assert lyr.GetSpatialRef() is not None
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4269"
-        ds = None
-
-        ds = ogr.Open(dirname, update=1)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetSpatialRef() is not None
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4269"
-
-        sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
-        assert sql_lyr
-        f = sql_lyr.GetNextFeature()
-        xml = f.GetField(0)
-        f = None
-        ds.ReleaseResultSet(sql_lyr)
-        assert "<WKID>4269</WKID>" in xml
-
-        # Changing geometry type not supported
-        fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbPolygon)
-        with gdal.quiet_errors():
-            assert (
-                lyr.AlterGeomFieldDefn(0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_TYPE_FLAG)
-                != ogr.OGRERR_NONE
-            )
-
-        # Changing nullable state not supported
-        fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbPolygon)
-        fld_defn.SetNullable(False)
-        with gdal.quiet_errors():
-            assert (
-                lyr.AlterGeomFieldDefn(
-                    0, fld_defn, ogr.ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG
-                )
-                != ogr.OGRERR_NONE
-            )
-
-        ds = None
-
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = None
 
 
 ###############################################################################
@@ -4080,118 +3948,113 @@ def test_ogr_openfilegdb_write_alter_geom_field_defn():
 
 
 @pytest.mark.parametrize("field_type", [ogr.OFTInteger, ogr.OFTInteger64, ogr.OFTReal])
-def test_ogr_openfilegdb_write_create_OBJECTID(field_type):
+def test_ogr_openfilegdb_write_create_OBJECTID(tmp_vsimem, field_type):
 
-    dirname = "/vsimem/test_ogr_openfilegdb_write_create_OBJECTID.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    dirname = tmp_vsimem / "test_ogr_openfilegdb_write_create_OBJECTID.gdb"
+
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    assert (
+        lyr.CreateField(ogr.FieldDefn("unused_before", ogr.OFTString))
+        == ogr.OGRERR_NONE
+    )
+    assert (
+        lyr.CreateField(ogr.FieldDefn(lyr.GetFIDColumn(), field_type))
+        == ogr.OGRERR_NONE
+    )
+    assert (
+        lyr.CreateField(ogr.FieldDefn("int_field", ogr.OFTInteger)) == ogr.OGRERR_NONE
+    )
+    assert lyr.GetLayerDefn().GetFieldCount() == 3
+
+    # No FID, but OBJECTID
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f[lyr.GetFIDColumn()] = 10
+    f["int_field"] = 2
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert f.GetFID() == 10
+    f = None
+
+    field_idx = lyr.GetLayerDefn().GetFieldIndex("unused_before")
+    assert lyr.DeleteField(field_idx) == ogr.OGRERR_NONE
+
+    assert (
+        lyr.CreateField(ogr.FieldDefn("int_field2", ogr.OFTInteger)) == ogr.OGRERR_NONE
+    )
+
+    # FID and OBJECTID, both equal
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(11)
+    f[lyr.GetFIDColumn()] = 11
+    f["int_field"] = 3
+    f["int_field2"] = 30
+    assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+    assert f.GetFID() == 11
+
+    f["int_field"] = 4
+    assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+
+    # FID and OBJECTID, different ==> error
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(12)
+    f[lyr.GetFIDColumn()] = 13
+    with gdal.quiet_errors():
+        assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
+
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 10
+    assert f[lyr.GetFIDColumn()] == 10
+    assert f["int_field"] == 2
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 11
+    assert f[lyr.GetFIDColumn()] == 11
+    assert f["int_field"] == 4
+    assert f["int_field2"] == 30
+
+    # Can't delete or alter OBJECTID field
+    field_idx = lyr.GetLayerDefn().GetFieldIndex(lyr.GetFIDColumn())
+    with gdal.quiet_errors():
+        assert lyr.DeleteField(field_idx) == ogr.OGRERR_FAILURE
         assert (
-            lyr.CreateField(ogr.FieldDefn("unused_before", ogr.OFTString))
-            == ogr.OGRERR_NONE
-        )
-        assert (
-            lyr.CreateField(ogr.FieldDefn(lyr.GetFIDColumn(), field_type))
-            == ogr.OGRERR_NONE
-        )
-        assert (
-            lyr.CreateField(ogr.FieldDefn("int_field", ogr.OFTInteger))
-            == ogr.OGRERR_NONE
-        )
-        assert lyr.GetLayerDefn().GetFieldCount() == 3
-
-        # No FID, but OBJECTID
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f[lyr.GetFIDColumn()] = 10
-        f["int_field"] = 2
-        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        assert f.GetFID() == 10
-        f = None
-
-        field_idx = lyr.GetLayerDefn().GetFieldIndex("unused_before")
-        assert lyr.DeleteField(field_idx) == ogr.OGRERR_NONE
-
-        assert (
-            lyr.CreateField(ogr.FieldDefn("int_field2", ogr.OFTInteger))
-            == ogr.OGRERR_NONE
-        )
-
-        # FID and OBJECTID, both equal
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(11)
-        f[lyr.GetFIDColumn()] = 11
-        f["int_field"] = 3
-        f["int_field2"] = 30
-        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
-        assert f.GetFID() == 11
-
-        f["int_field"] = 4
-        assert lyr.SetFeature(f) == ogr.OGRERR_NONE
-
-        # FID and OBJECTID, different ==> error
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(12)
-        f[lyr.GetFIDColumn()] = 13
-        with gdal.quiet_errors():
-            assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
-
-        lyr.ResetReading()
-        f = lyr.GetNextFeature()
-        assert f.GetFID() == 10
-        assert f[lyr.GetFIDColumn()] == 10
-        assert f["int_field"] == 2
-        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
-
-        f = lyr.GetNextFeature()
-        assert f.GetFID() == 11
-        assert f[lyr.GetFIDColumn()] == 11
-        assert f["int_field"] == 4
-        assert f["int_field2"] == 30
-
-        # Can't delete or alter OBJECTID field
-        field_idx = lyr.GetLayerDefn().GetFieldIndex(lyr.GetFIDColumn())
-        with gdal.quiet_errors():
-            assert lyr.DeleteField(field_idx) == ogr.OGRERR_FAILURE
-            assert (
-                lyr.AlterFieldDefn(
-                    field_idx,
-                    lyr.GetLayerDefn().GetFieldDefn(field_idx),
-                    ogr.ALTER_ALL_FLAG,
-                )
-                == ogr.OGRERR_FAILURE
+            lyr.AlterFieldDefn(
+                field_idx,
+                lyr.GetLayerDefn().GetFieldDefn(field_idx),
+                ogr.ALTER_ALL_FLAG,
             )
+            == ogr.OGRERR_FAILURE
+        )
 
-        ds = None
+    ds = None
 
-        ds = ogr.Open(dirname)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetLayerDefn().GetFieldCount() == 2
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 2
 
-        lyr.ResetReading()
-        f = lyr.GetNextFeature()
-        assert f.GetFID() == 10
-        assert f["int_field"] == 2
-        assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 10
+    assert f["int_field"] == 2
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
 
-        f = lyr.GetNextFeature()
-        assert f.GetFID() == 11
-        assert f["int_field"] == 4
-        assert f["int_field2"] == 30
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 11
+    assert f["int_field"] == 4
+    assert f["int_field2"] == 30
 
-        ds = None
-
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = None
 
 
 ###############################################################################
 # Test driver Delete() method
 
 
-def test_ogr_openfilegdb_write_delete():
+def test_ogr_openfilegdb_write_delete(tmp_path):
 
-    dirname = "tmp/test_ogr_openfilegdb_write_delete.gdb"
+    dirname = tmp_path / "test_ogr_openfilegdb_write_delete.gdb"
     if gdal.VSIStatL(dirname) is not None:
         gdal.RmdirRecursive(dirname)
     drv = ogr.GetDriverByName("OpenFileGDB")
@@ -4211,78 +4074,75 @@ def test_ogr_openfilegdb_write_delete():
     "write_wkid,write_vcswkid", [(True, True), (True, False), (False, False)]
 )
 @pytest.mark.require_proj(7, 2)
-def test_ogr_openfilegdb_write_compound_crs(write_wkid, write_vcswkid):
+def test_ogr_openfilegdb_write_compound_crs(tmp_vsimem, write_wkid, write_vcswkid):
 
-    dirname = "/vsimem/test_ogr_openfilegdb_write_compound_crs.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        srs = osr.SpatialReference()
-        srs.SetFromUserInput(
-            """COMPOUNDCRS["WGS_1984_Complex_UTM_Zone_22N + MSL height",
-    PROJCRS["WGS_1984_Complex_UTM_Zone_22N",
-        BASEGEOGCRS["WGS 84",
-            DATUM["World Geodetic System 1984",
-                ELLIPSOID["WGS 84",6378137,298.257223563,
-                    LENGTHUNIT["metre",1]]],
-            PRIMEM["Greenwich",0,
-                ANGLEUNIT["Degree",0.0174532925199433]]],
-        CONVERSION["UTM zone 22N",
-            METHOD["Transverse Mercator",
-                ID["EPSG",9807]],
-            PARAMETER["Latitude of natural origin",0,
-                ANGLEUNIT["Degree",0.0174532925199433],
-                ID["EPSG",8801]],
-            PARAMETER["Longitude of natural origin",-51,
-                ANGLEUNIT["Degree",0.0174532925199433],
-                ID["EPSG",8802]],
-            PARAMETER["Scale factor at natural origin",0.9996,
-                SCALEUNIT["unity",1],
-                ID["EPSG",8805]],
-            PARAMETER["False easting",500000,
-                LENGTHUNIT["metre",1],
-                ID["EPSG",8806]],
-            PARAMETER["False northing",0,
-                LENGTHUNIT["metre",1],
-                ID["EPSG",8807]]],
-        CS[Cartesian,2],
-            AXIS["(E)",east,
-                ORDER[1],
-                LENGTHUNIT["metre",1]],
-            AXIS["(N)",north,
-                ORDER[2],
-                LENGTHUNIT["metre",1]],
-        USAGE[
-            SCOPE["Not known."],
-            AREA["Between 54°W and 48°W, northern hemisphere between equator and 84°N, onshore and offshore."],
-            BBOX[0,-54,84,-48]],
-        ID["ESRI",102572]],
-    VERTCRS["MSL height",
-        VDATUM["Mean Sea Level"],
-        CS[vertical,1],
-            AXIS["gravity-related height (H)",up,
-                LENGTHUNIT["metre",1]],
-        USAGE[
-            SCOPE["Hydrography, drilling."],
-            AREA["World."],
-            BBOX[-90,-180,90,180]],
-        ID["EPSG",5714]]]
-        """
-        )
-        d = {
-            "OPENFILEGDB_WRITE_WKID": None if write_wkid else "FALSE",
-            "OPENFILEGDB_WRITE_VCSWKID": None if write_vcswkid else "FALSE",
-        }
-        with gdaltest.config_options(d):
-            ds.CreateLayer("test", geom_type=ogr.wkbPoint, srs=srs)
-            ds = None
+    dirname = tmp_vsimem / "test_ogr_openfilegdb_write_compound_crs.gdb"
 
-        ds = ogr.Open(dirname)
-        lyr = ds.GetLayer(0)
-        got_srs = lyr.GetSpatialRef()
-        assert got_srs.IsSame(srs)
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput(
+        """COMPOUNDCRS["WGS_1984_Complex_UTM_Zone_22N + MSL height",
+PROJCRS["WGS_1984_Complex_UTM_Zone_22N",
+    BASEGEOGCRS["WGS 84",
+        DATUM["World Geodetic System 1984",
+            ELLIPSOID["WGS 84",6378137,298.257223563,
+                LENGTHUNIT["metre",1]]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["Degree",0.0174532925199433]]],
+    CONVERSION["UTM zone 22N",
+        METHOD["Transverse Mercator",
+            ID["EPSG",9807]],
+        PARAMETER["Latitude of natural origin",0,
+            ANGLEUNIT["Degree",0.0174532925199433],
+            ID["EPSG",8801]],
+        PARAMETER["Longitude of natural origin",-51,
+            ANGLEUNIT["Degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["Scale factor at natural origin",0.9996,
+            SCALEUNIT["unity",1],
+            ID["EPSG",8805]],
+        PARAMETER["False easting",500000,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]]],
+    CS[Cartesian,2],
+        AXIS["(E)",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1]],
+        AXIS["(N)",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1]],
+    USAGE[
+        SCOPE["Not known."],
+        AREA["Between 54°W and 48°W, northern hemisphere between equator and 84°N, onshore and offshore."],
+        BBOX[0,-54,84,-48]],
+    ID["ESRI",102572]],
+VERTCRS["MSL height",
+    VDATUM["Mean Sea Level"],
+    CS[vertical,1],
+        AXIS["gravity-related height (H)",up,
+            LENGTHUNIT["metre",1]],
+    USAGE[
+        SCOPE["Hydrography, drilling."],
+        AREA["World."],
+        BBOX[-90,-180,90,180]],
+    ID["EPSG",5714]]]
+    """
+    )
+    d = {
+        "OPENFILEGDB_WRITE_WKID": None if write_wkid else "FALSE",
+        "OPENFILEGDB_WRITE_VCSWKID": None if write_vcswkid else "FALSE",
+    }
+    with gdaltest.config_options(d):
+        ds.CreateLayer("test", geom_type=ogr.wkbPoint, srs=srs)
+        ds = None
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    got_srs = lyr.GetSpatialRef()
+    assert got_srs.IsSame(srs)
 
 
 ###############################################################################
@@ -4306,51 +4166,44 @@ def test_ogr_openfilegdb_write_compound_crs(write_wkid, write_vcswkid):
         ogr.wkbMultiPolygonZM,
     ],
 )
-def test_ogr_openfilegdb_write_empty_geoms(geom_type):
+def test_ogr_openfilegdb_write_empty_geoms(tmp_vsimem, geom_type):
 
-    dirname = "/vsimem/test_ogr_openfilegdb_write_empty_geoms.gdb"
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        lyr = ds.CreateLayer("test", geom_type=geom_type)
-        f = ogr.Feature(lyr.GetLayerDefn())
-        g = ogr.Geometry(geom_type)
-        f.SetGeometry(g)
-        with gdaltest.config_option("OGR_OPENFILEGDB_WRITE_EMPTY_GEOMETRY", "YES"):
-            lyr.CreateFeature(f)
-        ds = None
+    dirname = tmp_vsimem / "test_ogr_openfilegdb_write_empty_geoms.gdb"
 
-        ds = ogr.Open(dirname)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetGeomType() == geom_type
-        f = lyr.GetNextFeature()
-        g = f.GetGeometryRef()
-        assert g.GetGeometryType() == geom_type
-        assert g.IsEmpty()
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=geom_type)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    g = ogr.Geometry(geom_type)
+    f.SetGeometry(g)
+    with gdaltest.config_option("OGR_OPENFILEGDB_WRITE_EMPTY_GEOMETRY", "YES"):
+        lyr.CreateFeature(f)
+    ds = None
 
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == geom_type
+    f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g.GetGeometryType() == geom_type
+    assert g.IsEmpty()
 
 
 ###############################################################################
 # Test creating layer with alias name
 
 
-def test_ogr_openfilegdb_layer_alias_name():
+def test_ogr_openfilegdb_layer_alias_name(tmp_vsimem):
 
-    dirname = "/vsimem/out.gdb"
+    dirname = tmp_vsimem / "out.gdb"
 
-    try:
-        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
-        ds.CreateLayer("test", geom_type=ogr.wkbPoint, options=["LAYER_ALIAS=my_alias"])
-        ds = None
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    ds.CreateLayer("test", geom_type=ogr.wkbPoint, options=["LAYER_ALIAS=my_alias"])
+    ds = None
 
-        ds = ogr.Open(dirname)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetMetadataItem("ALIAS_NAME") == "my_alias"
-        ds = None
-
-    finally:
-        gdal.RmdirRecursive(dirname)
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetMetadataItem("ALIAS_NAME") == "my_alias"
+    ds = None
 
 
 ###############################################################################

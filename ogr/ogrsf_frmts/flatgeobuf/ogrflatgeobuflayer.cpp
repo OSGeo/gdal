@@ -163,8 +163,7 @@ OGRFlatGeobufLayer::OGRFlatGeobufLayer(const Header *poHeader, GByte *headerBuf,
     if (const auto metadata = poHeader->metadata())
     {
         CPLJSONDocument oDoc;
-        CPLErrorHandlerPusher oQuietError(CPLQuietErrorHandler);
-        CPLErrorStateBackuper oErrorStateBackuper;
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         if (oDoc.LoadMemory(metadata->c_str()) &&
             oDoc.GetRoot().GetType() == CPLJSONObject::Type::Object)
         {
@@ -2176,6 +2175,15 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
                              "ICreateFeature: String too long");
                     return OGRERR_FAILURE;
                 }
+                if (!CPLIsUTF8(field->String, static_cast<int>(len)))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "ICreateFeature: String '%s' is not a valid UTF-8 "
+                             "string",
+                             field->String);
+                    return OGRERR_FAILURE;
+                }
+
                 // Valid cast since feature_max_buffer_size is 2 GB
                 uint32_t l_le = static_cast<uint32_t>(len);
                 CPL_LSBPTR32(&l_le);
@@ -2536,7 +2544,7 @@ OGRFlatGeobufLayer *OGRFlatGeobufLayer::Open(const char *pszFilename,
                  "Header size too large (> 10 MB)");
         return nullptr;
     }
-    std::unique_ptr<GByte, CPLFreeReleaser> buf(
+    std::unique_ptr<GByte, VSIFreeReleaser> buf(
         static_cast<GByte *>(VSIMalloc(headerSize)));
     if (buf == nullptr)
     {

@@ -931,7 +931,7 @@ void GDALDataset::SetBand(int nNewBand, std::unique_ptr<GDALRasterBand> poBand)
 
 */
 
-int GDALDataset::GetRasterXSize()
+int GDALDataset::GetRasterXSize() const
 {
     return nRasterXSize;
 }
@@ -968,7 +968,7 @@ int CPL_STDCALL GDALGetRasterXSize(GDALDatasetH hDataset)
 
 */
 
-int GDALDataset::GetRasterYSize()
+int GDALDataset::GetRasterYSize() const
 {
     return nRasterYSize;
 }
@@ -1029,6 +1029,43 @@ GDALRasterBand *GDALDataset::GetRasterBand(int nBandId)
 }
 
 /************************************************************************/
+/*                           GetRasterBand()                            */
+/************************************************************************/
+
+/**
+
+ \brief Fetch a band object for a dataset.
+
+ See GetBands() for a C++ iterator version of this method.
+
+ Equivalent of the C function GDALGetRasterBand().
+
+ @param nBandId the index number of the band to fetch, from 1 to
+                GetRasterCount().
+
+ @return the nBandId th band object
+
+*/
+
+const GDALRasterBand *GDALDataset::GetRasterBand(int nBandId) const
+
+{
+    if (papoBands)
+    {
+        if (nBandId < 1 || nBandId > nBands)
+        {
+            ReportError(CE_Failure, CPLE_IllegalArg,
+                        "GDALDataset::GetRasterBand(%d) - Illegal band #\n",
+                        nBandId);
+            return nullptr;
+        }
+
+        return papoBands[nBandId - 1];
+    }
+    return nullptr;
+}
+
+/************************************************************************/
 /*                         GDALGetRasterBand()                          */
 /************************************************************************/
 
@@ -1058,7 +1095,7 @@ GDALRasterBandH CPL_STDCALL GDALGetRasterBand(GDALDatasetH hDS, int nBandId)
  * @return the number of raster bands.
  */
 
-int GDALDataset::GetRasterCount()
+int GDALDataset::GetRasterCount() const
 {
     return papoBands ? nBands : 0;
 }
@@ -4500,7 +4537,7 @@ int GDALDataset::CloseDependentDatasets()
  */
 
 void GDALDataset::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
-                              const char *fmt, ...)
+                              const char *fmt, ...) const
 {
     va_list args;
     va_start(args, fmt);
@@ -6972,15 +7009,19 @@ OGRLayer *GDALDataset::BuildLayerFromSelectInfo(
     swq_select *psSelectInfo, OGRGeometry *poSpatialFilter,
     const char *pszDialect, swq_select_parse_options *poSelectParseOptions)
 {
-    OGRGenSQLResultsLayer *poResults = nullptr;
+    std::unique_ptr<OGRGenSQLResultsLayer> poResults;
     GDALSQLParseInfo *psParseInfo =
         BuildParseInfo(psSelectInfo, poSelectParseOptions);
 
     if (psParseInfo)
     {
-        poResults =
-            new OGRGenSQLResultsLayer(this, psSelectInfo, poSpatialFilter,
-                                      psParseInfo->pszWHERE, pszDialect);
+        const auto nErrorCounter = CPLGetErrorCounter();
+        poResults = std::make_unique<OGRGenSQLResultsLayer>(
+            this, psSelectInfo, poSpatialFilter, psParseInfo->pszWHERE,
+            pszDialect);
+        if (CPLGetErrorCounter() > nErrorCounter &&
+            CPLGetLastErrorType() != CE_None)
+            poResults.reset();
     }
     else
     {
@@ -6988,7 +7029,7 @@ OGRLayer *GDALDataset::BuildLayerFromSelectInfo(
     }
     DestroyParseInfo(psParseInfo);
 
-    return poResults;
+    return poResults.release();
 }
 
 /************************************************************************/

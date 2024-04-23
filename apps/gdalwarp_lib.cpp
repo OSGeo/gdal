@@ -32,6 +32,7 @@
 #include "cpl_port.h"
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
+#include "gdalargumentparser.h"
 
 #include <cctype>
 #include <cmath>
@@ -200,9 +201,13 @@ struct GDALWarpAppOptions
         ("NAME1=VALUE1","NAME2=VALUE2",...) */
     CPLStringList aosTransformerOptions{};
 
-    /*! enable use of a blend cutline from the name OGR support pszCutlineDSName
+    /*! enable use of a blend cutline from a vector dataset name or a WKT
+     * geometry
      */
-    std::string osCutlineDSName{};
+    std::string osCutlineDSNameOrWKT{};
+
+    /*! cutline SRS */
+    std::string osCutlineSRS{};
 
     /*! the named layer to be selected from the cutline datasource */
     std::string osCLayer{};
@@ -249,11 +254,10 @@ struct GDALWarpAppOptions
     std::vector<int> anDstBands{};
 };
 
-static CPLErr LoadCutline(const std::string &osCutlineDSName,
-                          const std::string &oszCLayer,
-                          const std::string &osCWHERE,
-                          const std::string &osCSQL,
-                          OGRGeometryH *phCutlineRet);
+static CPLErr
+LoadCutline(const std::string &osCutlineDSNameOrWKT, const std::string &osSRS,
+            const std::string &oszCLayer, const std::string &osCWHERE,
+            const std::string &osCSQL, OGRGeometryH *phCutlineRet);
 static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
                                        OGRGeometry *poCutline,
                                        char ***ppapszWarpOptions,
@@ -270,7 +274,7 @@ static void RemoveConflictingMetadata(GDALMajorObjectH hObj,
                                       const char *pszValueConflict);
 
 static bool GetResampleAlg(const char *pszResampling,
-                           GDALResampleAlg &eResampleAlg);
+                           GDALResampleAlg &eResampleAlg, bool bThrow = false);
 
 static double GetAverageSegmentLength(const OGRGeometry *poGeom)
 {
@@ -365,8 +369,7 @@ static CPLString GetSrcDSProjection(GDALDatasetH hDS, CSLConstList papszTO)
     {
         char *pszWKT = nullptr;
         {
-            CPLErrorStateBackuper oErrorStateBackuper;
-            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             if (OSRExportToWkt(hSRS, &pszWKT) != OGRERR_NONE)
             {
                 CPLFree(pszWKT);
@@ -1277,7 +1280,8 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
         psOptions->dfMinY == 0 && psOptions->dfMaxX == 0 &&
         psOptions->dfMaxY == 0 && psOptions->dfXRes == 0 &&
         psOptions->dfYRes == 0 && psOptions->nForcePixels == 0 &&
-        psOptions->nForceLines == 0 && psOptions->osCutlineDSName.empty() &&
+        psOptions->nForceLines == 0 &&
+        psOptions->osCutlineDSNameOrWKT.empty() &&
         CanUseBuildVRT(nSrcCount, pahSrcDS))
     {
         CPLStringList aosArgv;
@@ -1649,10 +1653,11 @@ static bool ProcessCutlineOptions(int nSrcCount, GDALDatasetH *pahSrcDS,
                                   GDALWarpAppOptions *psOptions,
                                   OGRGeometryH &hCutline)
 {
-    if (!psOptions->osCutlineDSName.empty())
+    if (!psOptions->osCutlineDSNameOrWKT.empty())
     {
         CPLErr eError;
-        eError = LoadCutline(psOptions->osCutlineDSName, psOptions->osCLayer,
+        eError = LoadCutline(psOptions->osCutlineDSNameOrWKT,
+                             psOptions->osCutlineSRS, psOptions->osCLayer,
                              psOptions->osCWHERE, psOptions->osCSQL, &hCutline);
         if (eError == CE_Failure)
         {
@@ -3325,21 +3330,40 @@ static bool ValidateCutline(const OGRGeometry *poGeom, bool bVerbose)
 /*      Load blend cutline from OGR datasource.                         */
 /************************************************************************/
 
-static CPLErr LoadCutline(const std::string &osCutlineDSName,
-                          const std::string &osCLayer,
+static CPLErr LoadCutline(const std::string &osCutlineDSNameOrWKT,
+                          const std::string &osSRS, const std::string &osCLayer,
                           const std::string &osCWHERE,
                           const std::string &osCSQL, OGRGeometryH *phCutlineRet)
 
 {
+    if (STARTS_WITH_CI(osCutlineDSNameOrWKT.c_str(), "POLYGON(") ||
+        STARTS_WITH_CI(osCutlineDSNameOrWKT.c_str(), "POLYGON (") ||
+        STARTS_WITH_CI(osCutlineDSNameOrWKT.c_str(), "MULTIPOLYGON(") ||
+        STARTS_WITH_CI(osCutlineDSNameOrWKT.c_str(), "MULTIPOLYGON ("))
+    {
+        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
+        if (!osSRS.empty())
+        {
+            poSRS.reset(new OGRSpatialReference());
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            poSRS->SetFromUserInput(osSRS.c_str());
+        }
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt(osCutlineDSNameOrWKT.c_str(),
+                                          poSRS.get(), &poGeom);
+        *phCutlineRet = OGRGeometry::ToHandle(poGeom);
+        return *phCutlineRet ? CE_None : CE_Failure;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Open source vector dataset.                                     */
     /* -------------------------------------------------------------------- */
     auto poDS = std::unique_ptr<GDALDataset>(
-        GDALDataset::Open(osCutlineDSName.c_str(), GDAL_OF_VECTOR));
+        GDALDataset::Open(osCutlineDSNameOrWKT.c_str(), GDAL_OF_VECTOR));
     if (poDS == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s.",
-                 osCutlineDSName.c_str());
+                 osCutlineDSNameOrWKT.c_str());
         return CE_Failure;
     }
 
@@ -3412,7 +3436,18 @@ static CPLErr LoadCutline(const std::string &osCutlineDSName,
     /* -------------------------------------------------------------------- */
     /*      Ensure the coordinate system gets set on the geometry.          */
     /* -------------------------------------------------------------------- */
-    poMultiPolygon->assignSpatialReference(poLayer->GetSpatialRef());
+    if (!osSRS.empty())
+    {
+        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS(
+            new OGRSpatialReference());
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        poSRS->SetFromUserInput(osSRS.c_str());
+        poMultiPolygon->assignSpatialReference(poSRS.get());
+    }
+    else
+    {
+        poMultiPolygon->assignSpatialReference(poLayer->GetSpatialRef());
+    }
 
     *phCutlineRet = OGRGeometry::ToHandle(poMultiPolygon.release());
 
@@ -4195,8 +4230,7 @@ static GDALDatasetH GDALWarpCreateOutput(
             {
                 OGRSpatialReference oSrcSRS;
                 OGRSpatialReference oDstSRS;
-                CPLErrorStateBackuper oErrorStateBackuper;
-                CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
                 // DemoteTo2D requires PROJ >= 6.3
                 if (oSrcSRS.SetFromUserInput(osThisSourceSRS.c_str()) ==
                         OGRERR_NONE &&
@@ -5392,19 +5426,589 @@ static bool IsValidSRS(const char *pszUserInput)
     OGRSpatialReferenceH hSRS;
     bool bRes = true;
 
-    CPLErrorReset();
-
     hSRS = OSRNewSpatialReference(nullptr);
     if (OSRSetFromUserInput(hSRS, pszUserInput) != OGRERR_NONE)
     {
         bRes = false;
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Translating source or target SRS failed:\n%s", pszUserInput);
     }
 
     OSRDestroySpatialReference(hSRS);
 
     return bRes;
+}
+
+/************************************************************************/
+/*                     GDALWarpAppOptionsGetParser()                    */
+/************************************************************************/
+
+static std::unique_ptr<GDALArgumentParser>
+GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
+                            GDALWarpAppOptionsForBinary *psOptionsForBinary)
+{
+    auto argParser = std::make_unique<GDALArgumentParser>(
+        "gdalwarp", /* bForBinary=*/psOptionsForBinary != nullptr);
+
+    argParser->add_description(_("Image reprojection and warping utility."));
+
+    argParser->add_epilog(
+        _("For more details, consult https://gdal.org/programs/gdalwarp.html"));
+
+    argParser->add_quiet_argument(
+        psOptionsForBinary ? &psOptionsForBinary->bQuiet : nullptr);
+
+    argParser->add_argument("-overwrite")
+        .flag()
+        .action(
+            [psOptionsForBinary](const std::string &)
+            {
+                if (psOptionsForBinary)
+                    psOptionsForBinary->bOverwrite = true;
+            })
+        .help(_("Overwrite the target dataset if it already exists."));
+
+    argParser->add_output_format_argument(psOptions->osFormat);
+
+    argParser->add_argument("-co")
+        .metavar("<NAME>=<VALUE>")
+        .append()
+        .action(
+            [psOptions, psOptionsForBinary](const std::string &s)
+            {
+                psOptions->aosCreateOptions.AddString(s.c_str());
+                psOptions->bCreateOutput = true;
+
+                if (psOptionsForBinary)
+                    psOptionsForBinary->aosCreateOptions.AddString(s.c_str());
+            })
+        .help(_("Creation option(s)."));
+
+    argParser->add_argument("-s_srs")
+        .metavar("<srs_def>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                if (!IsValidSRS(s.c_str()))
+                {
+                    throw std::invalid_argument("Invalid SRS for -s_srs");
+                }
+                psOptions->aosTransformerOptions.SetNameValue("SRC_SRS",
+                                                              s.c_str());
+            })
+        .help(_("Set source spatial reference."));
+
+    argParser->add_argument("-t_srs")
+        .metavar("<srs_def>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                if (!IsValidSRS(s.c_str()))
+                {
+                    throw std::invalid_argument("Invalid SRS for -t_srs");
+                }
+                psOptions->aosTransformerOptions.SetNameValue("DST_SRS",
+                                                              s.c_str());
+            })
+        .help(_("Set target spatial reference."));
+
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+        group.add_argument("-srcalpha")
+            .flag()
+            .store_into(psOptions->bEnableSrcAlpha)
+            .help(_("Force the last band of a source image to be considered as "
+                    "a source alpha band."));
+        group.add_argument("-nosrcalpha")
+            .flag()
+            .store_into(psOptions->bDisableSrcAlpha)
+            .help(_("Prevent the alpha band of a source image to be considered "
+                    "as such."));
+    }
+
+    argParser->add_argument("-dstalpha")
+        .flag()
+        .store_into(psOptions->bEnableDstAlpha)
+        .help(_("Create an output alpha band to identify nodata "
+                "(unset/transparent) pixels."));
+
+    // Parsing of that option is done in a preprocessing stage
+    argParser->add_argument("-tr")
+        .metavar("<xres> <yres>|square")
+        .help(_("Target resolution."));
+
+    argParser->add_argument("-ts")
+        .metavar("<width> <height>")
+        .nargs(2)
+        .scan<'i', int>()
+        .help(_("Set output file size in pixels and lines."));
+
+    argParser->add_argument("-te")
+        .metavar("<xmin> <ymin> <xmax> <ymax>")
+        .nargs(4)
+        .scan<'g', double>()
+        .help(_("Set georeferenced extents of output file to be created."));
+
+    argParser->add_argument("-te_srs")
+        .metavar("<srs_def>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                if (!IsValidSRS(s.c_str()))
+                {
+                    throw std::invalid_argument("Invalid SRS for -te_srs");
+                }
+                psOptions->osTE_SRS = s;
+                psOptions->bCreateOutput = true;
+            })
+        .help(_("Set source spatial reference."));
+
+    argParser->add_argument("-r")
+        .metavar("near|bilinear|cubic|cubicspline|lanczos|average|rms|mode|min|"
+                 "max|med|q1|q3|sum")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                GetResampleAlg(s.c_str(), psOptions->eResampleAlg,
+                               /*bThrow=*/true);
+                psOptions->bResampleAlgSpecifiedByUser = true;
+            })
+        .help(_("Resampling method to use."));
+
+    argParser->add_output_type_argument(psOptions->eOutputType);
+
+    ///////////////////////////////////////////////////////////////////////
+    argParser->add_group("Advanced options");
+
+    const auto CheckSingleMethod = [psOptions]()
+    {
+        const char *pszMethod =
+            psOptions->aosTransformerOptions.FetchNameValue("METHOD");
+        if (pszMethod)
+            CPLError(CE_Warning, CPLE_IllegalArg,
+                     "Warning: only one METHOD can be used. Method %s is "
+                     "already defined.",
+                     pszMethod);
+        const char *pszMAX_GCP_ORDER =
+            psOptions->aosTransformerOptions.FetchNameValue("MAX_GCP_ORDER");
+        if (pszMAX_GCP_ORDER)
+            CPLError(CE_Warning, CPLE_IllegalArg,
+                     "Warning: only one METHOD can be used. -order %s "
+                     "option was specified, so it is likely that "
+                     "GCP_POLYNOMIAL was implied.",
+                     pszMAX_GCP_ORDER);
+    };
+
+    argParser->add_argument("-wo")
+        .metavar("<NAME>=<VALUE>")
+        .append()
+        .action([psOptions](const std::string &s)
+                { psOptions->aosWarpOptions.AddString(s.c_str()); })
+        .help(_("Warping option(s)."));
+
+    argParser->add_argument("-multi")
+        .flag()
+        .store_into(psOptions->bMulti)
+        .help(_("Multithreaded input/output."));
+
+    argParser->add_argument("-s_coord_epoch")
+        .metavar("<epoch>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->aosTransformerOptions.SetNameValue(
+                    "SRC_COORDINATE_EPOCH", s.c_str());
+            })
+        .help(_("Assign a coordinate epoch, linked with the source SRS when "
+                "-s_srs is used."));
+
+    argParser->add_argument("-t_coord_epoch")
+        .metavar("<epoch>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->aosTransformerOptions.SetNameValue(
+                    "DST_COORDINATE_EPOCH", s.c_str());
+            })
+        .help(_("Assign a coordinate epoch, linked with the output SRS when "
+                "-t_srs is used."));
+
+    argParser->add_argument("-ct")
+        .metavar("<string>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->aosTransformerOptions.SetNameValue(
+                    "COORDINATE_OPERATION", s.c_str());
+            })
+        .help(_("Set a coordinate transformation."));
+
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+        group.add_argument("-tps")
+            .flag()
+            .action(
+                [psOptions, CheckSingleMethod](const std::string &)
+                {
+                    CheckSingleMethod();
+                    psOptions->aosTransformerOptions.SetNameValue("METHOD",
+                                                                  "GCP_TPS");
+                })
+            .help(_("Force use of thin plate spline transformer based on "
+                    "available GCPs."));
+
+        group.add_argument("-rpc")
+            .flag()
+            .action(
+                [psOptions, CheckSingleMethod](const std::string &)
+                {
+                    CheckSingleMethod();
+                    psOptions->aosTransformerOptions.SetNameValue("METHOD",
+                                                                  "RPC");
+                })
+            .help(_("Force use of RPCs."));
+
+        group.add_argument("-geoloc")
+            .flag()
+            .action(
+                [psOptions, CheckSingleMethod](const std::string &)
+                {
+                    CheckSingleMethod();
+                    psOptions->aosTransformerOptions.SetNameValue(
+                        "METHOD", "GEOLOC_ARRAY");
+                })
+            .help(_("Force use of Geolocation Arrays."));
+    }
+
+    argParser->add_argument("-order")
+        .metavar("<1|2|3>")
+        .choices("1", "2", "3")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                const char *pszMethod =
+                    psOptions->aosTransformerOptions.FetchNameValue("METHOD");
+                if (pszMethod)
+                    CPLError(
+                        CE_Warning, CPLE_IllegalArg,
+                        "Warning: only one METHOD can be used. Method %s is "
+                        "already defined",
+                        pszMethod);
+                psOptions->aosTransformerOptions.SetNameValue("MAX_GCP_ORDER",
+                                                              s.c_str());
+            })
+        .help(_("Order of polynomial used for GCP warping."));
+
+    // Parsing of that option is done in a preprocessing stage
+    argParser->add_argument("-refine_gcps")
+        .metavar("<tolerance> [<minimum_gcps>]")
+        .help(_("Refines the GCPs by automatically eliminating outliers."));
+
+    argParser->add_argument("-to")
+        .metavar("<NAME>=<VALUE>")
+        .append()
+        .action([psOptions](const std::string &s)
+                { psOptions->aosTransformerOptions.AddString(s.c_str()); })
+        .help(_("Transform option(s)."));
+
+    argParser->add_argument("-et")
+        .metavar("<err_threshold>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->dfErrorThreshold = CPLAtofM(s.c_str());
+                psOptions->aosWarpOptions.AddString(CPLSPrintf(
+                    "ERROR_THRESHOLD=%.16g", psOptions->dfErrorThreshold));
+            })
+        .help(_("Error threshold."));
+
+    argParser->add_argument("-wm")
+        .metavar("<memory_in_mb>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                if (CPLAtofM(s.c_str()) < 10000)
+                    psOptions->dfWarpMemoryLimit =
+                        CPLAtofM(s.c_str()) * 1024 * 1024;
+                else
+                    psOptions->dfWarpMemoryLimit = CPLAtofM(s.c_str());
+            })
+        .help(_("Error threshold."));
+
+    argParser->add_argument("-srcnodata")
+        .metavar("<value>[ <value>...]")
+        .store_into(psOptions->osSrcNodata)
+        .help(_("Nodata masking values for input bands."));
+
+    argParser->add_argument("-dstnodata")
+        .metavar("<value>[ <value>...]")
+        .store_into(psOptions->osDstNodata)
+        .help(_("Nodata masking values for output bands."));
+
+    argParser->add_argument("-tap")
+        .flag()
+        .store_into(psOptions->bTargetAlignedPixels)
+        .help(_("Force target aligned pixels."));
+
+    argParser->add_argument("-wt")
+        .metavar("Byte|Int8|[U]Int{16|32|64}|CInt{16|32}|[C]Float{32|64}")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                psOptions->eWorkingType = GDALGetDataTypeByName(s.c_str());
+                if (psOptions->eWorkingType == GDT_Unknown)
+                {
+                    throw std::invalid_argument(
+                        std::string("Unknown output pixel type: ").append(s));
+                }
+            })
+        .help(_("Working data type."));
+
+    // Non-documented alias of -r nearest
+    argParser->add_argument("-rn")
+        .flag()
+        .hidden()
+        .action([psOptions](const std::string &)
+                { psOptions->eResampleAlg = GRA_NearestNeighbour; })
+        .help(_("Nearest neighbour resampling."));
+
+    // Non-documented alias of -r bilinear
+    argParser->add_argument("-rb")
+        .flag()
+        .hidden()
+        .action([psOptions](const std::string &)
+                { psOptions->eResampleAlg = GRA_Bilinear; })
+        .help(_("Bilinear resampling."));
+
+    // Non-documented alias of -r cubic
+    argParser->add_argument("-rc")
+        .flag()
+        .hidden()
+        .action([psOptions](const std::string &)
+                { psOptions->eResampleAlg = GRA_Cubic; })
+        .help(_("Cubic resampling."));
+
+    // Non-documented alias of -r cubicspline
+    argParser->add_argument("-rcs")
+        .flag()
+        .hidden()
+        .action([psOptions](const std::string &)
+                { psOptions->eResampleAlg = GRA_CubicSpline; })
+        .help(_("Cubic spline resampling."));
+
+    // Non-documented alias of -r lanczos
+    argParser->add_argument("-rl")
+        .flag()
+        .hidden()
+        .action([psOptions](const std::string &)
+                { psOptions->eResampleAlg = GRA_Lanczos; })
+        .help(_("Lanczos resampling."));
+
+    // Non-documented alias of -r average
+    argParser->add_argument("-ra")
+        .flag()
+        .hidden()
+        .action([psOptions](const std::string &)
+                { psOptions->eResampleAlg = GRA_Average; })
+        .help(_("Average resampling."));
+
+    // Non-documented alias of -r rms
+    argParser->add_argument("-rrms")
+        .flag()
+        .hidden()
+        .action([psOptions](const std::string &)
+                { psOptions->eResampleAlg = GRA_RMS; })
+        .help(_("RMS resampling."));
+
+    // Non-documented alias of -r mode
+    argParser->add_argument("-rm")
+        .flag()
+        .hidden()
+        .action([psOptions](const std::string &)
+                { psOptions->eResampleAlg = GRA_Mode; })
+        .help(_("Mode resampling."));
+
+    argParser->add_argument("-cutline")
+        .metavar("<datasource>|<WKT>")
+        .store_into(psOptions->osCutlineDSNameOrWKT)
+        .help(_("Enable use of a blend cutline from the name of a vector "
+                "dataset or a WKT geometry."));
+
+    argParser->add_argument("-cutline_srs")
+        .metavar("<srs_def>")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                if (!IsValidSRS(s.c_str()))
+                {
+                    throw std::invalid_argument("Invalid SRS for -cutline_srs");
+                }
+                psOptions->osCutlineSRS = s;
+            })
+        .help(_("Sets/overrides cutline SRS."));
+
+    argParser->add_argument("-cwhere")
+        .metavar("<expression>")
+        .store_into(psOptions->osCWHERE)
+        .help(_("Restrict desired cutline features based on attribute query."));
+
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+        group.add_argument("-cl")
+            .metavar("<layername>")
+            .store_into(psOptions->osCLayer)
+            .help(_("Select the named layer from the cutline datasource."));
+
+        group.add_argument("-csql")
+            .metavar("<query>")
+            .store_into(psOptions->osCSQL)
+            .help(_("Select cutline features using an SQL query."));
+    }
+
+    argParser->add_argument("-cblend")
+        .metavar("<distance>")
+        .action(
+            [psOptions](const std::string &s) {
+                psOptions->aosWarpOptions.SetNameValue("CUTLINE_BLEND_DIST",
+                                                       s.c_str());
+            })
+        .help(_(
+            "Set a blend distance to use to blend over cutlines (in pixels)."));
+
+    argParser->add_argument("-crop_to_cutline")
+        .flag()
+        .action(
+            [psOptions](const std::string &)
+            {
+                psOptions->bCropToCutline = true;
+                psOptions->bCreateOutput = true;
+            })
+        .help(_("Crop the extent of the target dataset to the extent of the "
+                "cutline."));
+
+    argParser->add_argument("-nomd")
+        .flag()
+        .action(
+            [psOptions](const std::string &)
+            {
+                psOptions->bCopyMetadata = false;
+                psOptions->bCopyBandInfo = false;
+            })
+        .help(_("Do not copy metadata."));
+
+    argParser->add_argument("-cvmd")
+        .metavar("<meta_conflict_value>")
+        .store_into(psOptions->osMDConflictValue)
+        .help(_("Value to set metadata items that conflict between source "
+                "datasets."));
+
+    argParser->add_argument("-setci")
+        .flag()
+        .store_into(psOptions->bSetColorInterpretation)
+        .help(_("Set the color interpretation of the bands of the target "
+                "dataset from the source dataset."));
+
+    argParser->add_open_options_argument(
+        psOptionsForBinary ? &(psOptionsForBinary->aosOpenOptions) : nullptr);
+
+    argParser->add_argument("-doo")
+        .metavar("<NAME>=<VALUE>")
+        .append()
+        .action(
+            [psOptionsForBinary](const std::string &s)
+            {
+                if (psOptionsForBinary)
+                    psOptionsForBinary->aosDestOpenOptions.AddString(s.c_str());
+            })
+        .help(_("Open option(s) for output dataset."));
+
+    argParser->add_argument("-ovr")
+        .metavar("<level>|AUTO|AUTO-<n>|NONE")
+        .action(
+            [psOptions](const std::string &s)
+            {
+                const char *pszOvLevel = s.c_str();
+                if (EQUAL(pszOvLevel, "AUTO"))
+                    psOptions->nOvLevel = OVR_LEVEL_AUTO;
+                else if (STARTS_WITH_CI(pszOvLevel, "AUTO-"))
+                    psOptions->nOvLevel =
+                        OVR_LEVEL_AUTO - atoi(pszOvLevel + strlen("AUTO-"));
+                else if (EQUAL(pszOvLevel, "NONE"))
+                    psOptions->nOvLevel = OVR_LEVEL_NONE;
+                else if (CPLGetValueType(pszOvLevel) == CPL_VALUE_INTEGER)
+                    psOptions->nOvLevel = atoi(pszOvLevel);
+                else
+                {
+                    throw std::invalid_argument(CPLSPrintf(
+                        "Invalid value '%s' for -ov option", pszOvLevel));
+                }
+            })
+        .help(_("Specify which overview level of source files must be used."));
+
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+        group.add_argument("-vshift")
+            .flag()
+            .store_into(psOptions->bVShift)
+            .help(_("Force the use of vertical shift."));
+        group.add_argument("-novshift", "-novshiftgrid")
+            .flag()
+            .store_into(psOptions->bNoVShift)
+            .help(_("Disable the use of vertical shift."));
+    }
+
+    argParser->add_input_format_argument(
+        psOptionsForBinary ? &psOptionsForBinary->aosAllowedInputDrivers
+                           : nullptr);
+
+    argParser->add_argument("-b", "-srcband")
+        .metavar("<band>")
+        .append()
+        .store_into(psOptions->anSrcBands)
+        .help(_("Specify input band(s) number to warp."));
+
+    argParser->add_argument("-dstband")
+        .metavar("<band>")
+        .append()
+        .store_into(psOptions->anDstBands)
+        .help(_("Specify the output band number in which to warp."));
+
+    if (psOptionsForBinary)
+    {
+        argParser->add_argument("src_dataset_name")
+            .metavar("<src_dataset_name>")
+            .nargs(argparse::nargs_pattern::at_least_one)
+            .action([psOptionsForBinary](const std::string &s)
+                    { psOptionsForBinary->aosSrcFiles.AddString(s.c_str()); })
+            .help(_("Input dataset(s)."));
+
+        argParser->add_argument("dst_dataset_name")
+            .metavar("<dst_dataset_name>")
+            .store_into(psOptionsForBinary->osDstFilename)
+            .help(_("Output dataset."));
+    }
+
+    return argParser;
+}
+
+/************************************************************************/
+/*                       GDALWarpAppGetParserUsage()                    */
+/************************************************************************/
+
+std::string GDALWarpAppGetParserUsage()
+{
+    try
+    {
+        GDALWarpAppOptions sOptions;
+        GDALWarpAppOptionsForBinary sOptionsForBinary;
+        auto argParser =
+            GDALWarpAppOptionsGetParser(&sOptions, &sOptionsForBinary);
+        return argParser->usage();
+    }
+    catch (const std::exception &err)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                 err.what());
+        return std::string();
+    }
 }
 
 /************************************************************************/
@@ -5457,129 +6061,16 @@ GDALWarpAppOptionsNew(char **papszArgv,
     auto psOptions = std::make_unique<GDALWarpAppOptions>();
 
     /* -------------------------------------------------------------------- */
-    /*      Parse arguments.                                                */
+    /*      Pre-processing for custom syntax that ArgumentParser does not   */
+    /*      support.                                                        */
     /* -------------------------------------------------------------------- */
-    int nArgc = CSLCount(papszArgv);
-    for (int i = 0; papszArgv != nullptr && i < nArgc; i++)
+
+    CPLStringList aosArgv;
+    const int nArgc = CSLCount(papszArgv);
+    for (int i = 0;
+         i < nArgc && papszArgv != nullptr && papszArgv[i] != nullptr; i++)
     {
-        if (EQUAL(papszArgv[i], "-tps") || EQUAL(papszArgv[i], "-rpc") ||
-            EQUAL(papszArgv[i], "-geoloc"))
-        {
-            const char *pszMethod =
-                psOptions->aosTransformerOptions.FetchNameValue("METHOD");
-            if (pszMethod)
-                CPLError(CE_Warning, CPLE_IllegalArg,
-                         "Warning: only one METHOD can be used. Method %s is "
-                         "already defined.",
-                         pszMethod);
-            const char *pszMAX_GCP_ORDER =
-                psOptions->aosTransformerOptions.FetchNameValue(
-                    "MAX_GCP_ORDER");
-            if (pszMAX_GCP_ORDER)
-                CPLError(CE_Warning, CPLE_IllegalArg,
-                         "Warning: only one METHOD can be used. -order %s "
-                         "option was specified, so it is likely that "
-                         "GCP_POLYNOMIAL was implied.",
-                         pszMAX_GCP_ORDER);
-        } /* do not add 'else' in front of the next line */
-
-        if (EQUAL(papszArgv[i], "-co"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszVal = papszArgv[++i];
-            psOptions->aosCreateOptions.AddString(pszVal);
-            psOptions->bCreateOutput = true;
-
-            if (psOptionsForBinary)
-                psOptionsForBinary->papszCreateOptions = CSLAddString(
-                    psOptionsForBinary->papszCreateOptions, pszVal);
-        }
-        else if (EQUAL(papszArgv[i], "-wo"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->aosWarpOptions.AddString(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-multi"))
-        {
-            psOptions->bMulti = true;
-        }
-        else if (EQUAL(papszArgv[i], "-q") || EQUAL(papszArgv[i], "-quiet"))
-        {
-            if (psOptionsForBinary)
-                psOptionsForBinary->bQuiet = true;
-        }
-        else if (EQUAL(papszArgv[i], "-dstalpha"))
-        {
-            psOptions->bEnableDstAlpha = true;
-        }
-        else if (EQUAL(papszArgv[i], "-srcalpha"))
-        {
-            psOptions->bEnableSrcAlpha = true;
-        }
-        else if (EQUAL(papszArgv[i], "-nosrcalpha"))
-        {
-            psOptions->bDisableSrcAlpha = true;
-        }
-        else if (EQUAL(papszArgv[i], "-of") || EQUAL(papszArgv[i], "-f"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osFormat = papszArgv[++i];
-            psOptions->bCreateOutput = true;
-        }
-        else if (EQUAL(papszArgv[i], "-t_srs"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszSRS = papszArgv[++i];
-            if (!IsValidSRS(pszSRS))
-            {
-                return nullptr;
-            }
-            psOptions->aosTransformerOptions.SetNameValue("DST_SRS", pszSRS);
-        }
-        else if (i + 1 < nArgc && EQUAL(papszArgv[i], "-t_coord_epoch"))
-        {
-            const char *pszCoordinateEpoch = papszArgv[++i];
-            psOptions->aosTransformerOptions.SetNameValue(
-                "DST_COORDINATE_EPOCH", pszCoordinateEpoch);
-        }
-        else if (EQUAL(papszArgv[i], "-s_srs"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszSRS = papszArgv[++i];
-            if (!IsValidSRS(pszSRS))
-            {
-                return nullptr;
-            }
-            psOptions->aosTransformerOptions.SetNameValue("SRC_SRS", pszSRS);
-        }
-        else if (EQUAL(papszArgv[i], "-s_coord_epoch"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszCoordinateEpoch = papszArgv[++i];
-            psOptions->aosTransformerOptions.SetNameValue(
-                "SRC_COORDINATE_EPOCH", pszCoordinateEpoch);
-        }
-        else if (EQUAL(papszArgv[i], "-ct"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszCT = papszArgv[++i];
-            psOptions->aosTransformerOptions.SetNameValue(
-                "COORDINATE_OPERATION", pszCT);
-        }
-        else if (EQUAL(papszArgv[i], "-order"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszMethod =
-                psOptions->aosTransformerOptions.FetchNameValue("METHOD");
-            if (pszMethod)
-                CPLError(CE_Warning, CPLE_IllegalArg,
-                         "Warning: only one METHOD can be used. Method %s is "
-                         "already defined",
-                         pszMethod);
-            psOptions->aosTransformerOptions.SetNameValue("MAX_GCP_ORDER",
-                                                          papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-refine_gcps"))
+        if (EQUAL(papszArgv[i], "-refine_gcps"))
         {
             CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
             psOptions->aosTransformerOptions.SetNameValue("REFINE_TOLERANCE",
@@ -5602,51 +6093,6 @@ GDALWarpAppOptionsNew(char **papszArgv,
                     "REFINE_MINIMUM_GCPS", "-1");
             }
         }
-        else if (EQUAL(papszArgv[i], "-tps"))
-        {
-            psOptions->aosTransformerOptions.SetNameValue("METHOD", "GCP_TPS");
-        }
-        else if (EQUAL(papszArgv[i], "-rpc"))
-        {
-            psOptions->aosTransformerOptions.SetNameValue("METHOD", "RPC");
-        }
-        else if (EQUAL(papszArgv[i], "-geoloc"))
-        {
-            psOptions->aosTransformerOptions.SetNameValue("METHOD",
-                                                          "GEOLOC_ARRAY");
-        }
-        else if (EQUAL(papszArgv[i], "-to"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->aosTransformerOptions.AddString(papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-et"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->dfErrorThreshold = CPLAtofM(papszArgv[++i]);
-            psOptions->aosWarpOptions.AddString(CPLSPrintf(
-                "ERROR_THRESHOLD=%.16g", psOptions->dfErrorThreshold));
-        }
-        else if (EQUAL(papszArgv[i], "-wm"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            if (CPLAtofM(papszArgv[i + 1]) < 10000)
-                psOptions->dfWarpMemoryLimit =
-                    CPLAtofM(papszArgv[i + 1]) * 1024 * 1024;
-            else
-                psOptions->dfWarpMemoryLimit = CPLAtofM(papszArgv[i + 1]);
-            i++;
-        }
-        else if (EQUAL(papszArgv[i], "-srcnodata"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osSrcNodata = papszArgv[++i];
-        }
-        else if (EQUAL(papszArgv[i], "-dstnodata"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osDstNodata = papszArgv[++i];
-        }
         else if (EQUAL(papszArgv[i], "-tr") && i + 1 < nArgc &&
                  EQUAL(papszArgv[i + 1], "square"))
         {
@@ -5667,301 +6113,69 @@ GDALWarpAppOptionsNew(char **papszArgv,
             }
             psOptions->bCreateOutput = true;
         }
-        else if (EQUAL(papszArgv[i], "-tap"))
-        {
-            psOptions->bTargetAlignedPixels = true;
-        }
-        else if (EQUAL(papszArgv[i], "-ot"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            int iType;
-
-            for (iType = 1; iType < GDT_TypeCount; iType++)
-            {
-                if (GDALGetDataTypeName(static_cast<GDALDataType>(iType)) !=
-                        nullptr &&
-                    EQUAL(GDALGetDataTypeName(static_cast<GDALDataType>(iType)),
-                          papszArgv[i + 1]))
-                {
-                    psOptions->eOutputType = static_cast<GDALDataType>(iType);
-                }
-            }
-
-            if (psOptions->eOutputType == GDT_Unknown)
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Unknown output pixel type: %s.", papszArgv[i + 1]);
-                return nullptr;
-            }
-            i++;
-            psOptions->bCreateOutput = true;
-        }
-        else if (EQUAL(papszArgv[i], "-wt"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            int iType;
-
-            for (iType = 1; iType < GDT_TypeCount; iType++)
-            {
-                if (GDALGetDataTypeName(static_cast<GDALDataType>(iType)) !=
-                        nullptr &&
-                    EQUAL(GDALGetDataTypeName(static_cast<GDALDataType>(iType)),
-                          papszArgv[i + 1]))
-                {
-                    psOptions->eWorkingType = static_cast<GDALDataType>(iType);
-                }
-            }
-
-            if (psOptions->eWorkingType == GDT_Unknown)
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Unknown working pixel type: %s.", papszArgv[i + 1]);
-                return nullptr;
-            }
-            i++;
-        }
-        else if (EQUAL(papszArgv[i], "-ts"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(2);
-            psOptions->nForcePixels = atoi(papszArgv[++i]);
-            psOptions->nForceLines = atoi(papszArgv[++i]);
-            psOptions->bCreateOutput = true;
-        }
-        else if (EQUAL(papszArgv[i], "-te"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(4);
-            psOptions->dfMinX = CPLAtofM(papszArgv[++i]);
-            psOptions->dfMinY = CPLAtofM(papszArgv[++i]);
-            psOptions->dfMaxX = CPLAtofM(papszArgv[++i]);
-            psOptions->dfMaxY = CPLAtofM(papszArgv[++i]);
-            psOptions->bCreateOutput = true;
-        }
-        else if (EQUAL(papszArgv[i], "-te_srs"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszSRS = papszArgv[++i];
-            if (!IsValidSRS(pszSRS))
-            {
-                return nullptr;
-            }
-            psOptions->osTE_SRS = pszSRS;
-            psOptions->bCreateOutput = true;
-        }
-        else if (EQUAL(papszArgv[i], "-rn"))
-            psOptions->eResampleAlg = GRA_NearestNeighbour;
-
-        else if (EQUAL(papszArgv[i], "-rb"))
-            psOptions->eResampleAlg = GRA_Bilinear;
-
-        else if (EQUAL(papszArgv[i], "-rc"))
-            psOptions->eResampleAlg = GRA_Cubic;
-
-        else if (EQUAL(papszArgv[i], "-rcs"))
-            psOptions->eResampleAlg = GRA_CubicSpline;
-
-        else if (EQUAL(papszArgv[i], "-rl"))
-            psOptions->eResampleAlg = GRA_Lanczos;
-
-        else if (EQUAL(papszArgv[i], "-ra"))
-            psOptions->eResampleAlg = GRA_Average;
-
-        else if (EQUAL(papszArgv[i], "-rrms"))
-            psOptions->eResampleAlg = GRA_RMS;
-
-        else if (EQUAL(papszArgv[i], "-rm"))
-            psOptions->eResampleAlg = GRA_Mode;
-
-        else if (EQUAL(papszArgv[i], "-r"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszResampling = papszArgv[++i];
-            if (!GetResampleAlg(pszResampling, psOptions->eResampleAlg))
-            {
-                return nullptr;
-            }
-            psOptions->bResampleAlgSpecifiedByUser = true;
-        }
-
-        else if (EQUAL(papszArgv[i], "-cutline"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osCutlineDSName = papszArgv[++i];
-        }
-        else if (EQUAL(papszArgv[i], "-cwhere"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osCWHERE = papszArgv[++i];
-        }
-        else if (EQUAL(papszArgv[i], "-cl"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osCLayer = papszArgv[++i];
-        }
-        else if (EQUAL(papszArgv[i], "-csql"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osCSQL = papszArgv[++i];
-        }
-        else if (EQUAL(papszArgv[i], "-cblend"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->aosWarpOptions.SetNameValue("CUTLINE_BLEND_DIST",
-                                                   papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-crop_to_cutline"))
-        {
-            psOptions->bCropToCutline = true;
-            psOptions->bCreateOutput = true;
-        }
-        else if (EQUAL(papszArgv[i], "-overwrite"))
-        {
-            if (psOptionsForBinary)
-                psOptionsForBinary->bOverwrite = TRUE;
-        }
-        else if (EQUAL(papszArgv[i], "-nomd"))
-        {
-            psOptions->bCopyMetadata = false;
-            psOptions->bCopyBandInfo = false;
-        }
-        else if (EQUAL(papszArgv[i], "-cvmd"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->osMDConflictValue = papszArgv[++i];
-        }
-        else if (EQUAL(papszArgv[i], "-setci"))
-            psOptions->bSetColorInterpretation = true;
-        else if (EQUAL(papszArgv[i], "-oo"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            if (psOptionsForBinary)
-                psOptionsForBinary->papszOpenOptions = CSLAddString(
-                    psOptionsForBinary->papszOpenOptions, papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-doo"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            if (psOptionsForBinary)
-                psOptionsForBinary->papszDestOpenOptions = CSLAddString(
-                    psOptionsForBinary->papszDestOpenOptions, papszArgv[++i]);
-        }
-        else if (EQUAL(papszArgv[i], "-ovr"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            const char *pszOvLevel = papszArgv[++i];
-            if (EQUAL(pszOvLevel, "AUTO"))
-                psOptions->nOvLevel = OVR_LEVEL_AUTO;
-            else if (STARTS_WITH_CI(pszOvLevel, "AUTO-"))
-                psOptions->nOvLevel =
-                    OVR_LEVEL_AUTO - atoi(pszOvLevel + strlen("AUTO-"));
-            else if (EQUAL(pszOvLevel, "NONE"))
-                psOptions->nOvLevel = OVR_LEVEL_NONE;
-            else if (CPLGetValueType(pszOvLevel) == CPL_VALUE_INTEGER)
-                psOptions->nOvLevel = atoi(pszOvLevel);
-            else
-            {
-                CPLError(CE_Failure, CPLE_IllegalArg,
-                         "Invalid value '%s' for -ov option", pszOvLevel);
-                return nullptr;
-            }
-        }
-
-        else if (EQUAL(papszArgv[i], "-vshift"))
-        {
-            psOptions->bVShift = true;
-        }
-
-        else if (EQUAL(papszArgv[i], "-novshiftgrid") ||
-                 EQUAL(papszArgv[i], "-novshift"))
-        {
-            psOptions->bNoVShift = true;
-        }
-
-        else if (EQUAL(papszArgv[i], "-if"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            i++;
-            if (psOptionsForBinary)
-            {
-                if (GDALGetDriverByName(papszArgv[i]) == nullptr)
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "%s is not a recognized driver", papszArgv[i]);
-                }
-                psOptionsForBinary->papszAllowInputDrivers = CSLAddString(
-                    psOptionsForBinary->papszAllowInputDrivers, papszArgv[i]);
-            }
-        }
-
-        else if (EQUAL(papszArgv[i], "-srcband") || EQUAL(papszArgv[i], "-b"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->anSrcBands.push_back(atoi(papszArgv[++i]));
-        }
-
-        else if (EQUAL(papszArgv[i], "-dstband"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            psOptions->anDstBands.push_back(atoi(papszArgv[++i]));
-        }
-
-        else if (papszArgv[i][0] == '-')
-        {
-            CPLError(CE_Failure, CPLE_NotSupported, "Unknown option name '%s'",
-                     papszArgv[i]);
-            return nullptr;
-        }
-
         else
         {
-            if (psOptionsForBinary)
+            aosArgv.AddString(papszArgv[i]);
+        }
+    }
+
+    try
+    {
+        auto argParser =
+            GDALWarpAppOptionsGetParser(psOptions.get(), psOptionsForBinary);
+
+        argParser->parse_args_without_binary_name(aosArgv.List());
+
+        if (auto oTS = argParser->present<std::vector<int>>("-ts"))
+        {
+            psOptions->nForcePixels = (*oTS)[0];
+            psOptions->nForceLines = (*oTS)[1];
+            psOptions->bCreateOutput = true;
+        }
+
+        if (auto oTE = argParser->present<std::vector<double>>("-te"))
+        {
+            psOptions->dfMinX = (*oTE)[0];
+            psOptions->dfMinY = (*oTE)[1];
+            psOptions->dfMaxX = (*oTE)[2];
+            psOptions->dfMaxY = (*oTE)[3];
+            psOptions->bCreateOutput = true;
+        }
+
+        if (!psOptions->anDstBands.empty() &&
+            psOptions->anSrcBands.size() != psOptions->anDstBands.size())
+        {
+            CPLError(
+                CE_Failure, CPLE_IllegalArg,
+                "-srcband should be specified as many times as -dstband is");
+            return nullptr;
+        }
+        else if (!psOptions->anSrcBands.empty() &&
+                 psOptions->anDstBands.empty())
+        {
+            for (int i = 0; i < static_cast<int>(psOptions->anSrcBands.size());
+                 ++i)
             {
-                psOptionsForBinary->papszSrcFiles = CSLAddString(
-                    psOptionsForBinary->papszSrcFiles, papszArgv[i]);
+                psOptions->anDstBands.push_back(i + 1);
             }
         }
-    }
 
-    if (psOptions->bEnableSrcAlpha && psOptions->bDisableSrcAlpha)
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "-srcalpha and -nosrcalpha cannot be used together");
-        return nullptr;
-    }
-
-    if (!psOptions->anDstBands.empty() &&
-        psOptions->anSrcBands.size() != psOptions->anDstBands.size())
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "-srcband should be specified as many times as -dstband is");
-        return nullptr;
-    }
-    else if (!psOptions->anSrcBands.empty() && psOptions->anDstBands.empty())
-    {
-        for (int i = 0; i < static_cast<int>(psOptions->anSrcBands.size()); ++i)
+        if (!psOptions->osFormat.empty() ||
+            psOptions->eOutputType != GDT_Unknown)
         {
-            psOptions->anDstBands.push_back(i + 1);
+            psOptions->bCreateOutput = true;
         }
+
+        if (psOptionsForBinary)
+            psOptionsForBinary->bCreateOutput = psOptions->bCreateOutput;
+
+        return psOptions.release();
     }
-
-    if (psOptionsForBinary)
-        psOptionsForBinary->bCreateOutput = psOptions->bCreateOutput;
-
-    /* -------------------------------------------------------------------- */
-    /*      The last filename in the file list is really our destination    */
-    /*      file.                                                           */
-    /* -------------------------------------------------------------------- */
-    if (psOptionsForBinary && CSLCount(psOptionsForBinary->papszSrcFiles) > 1)
+    catch (const std::exception &err)
     {
-        psOptionsForBinary->pszDstFilename =
-            psOptionsForBinary
-                ->papszSrcFiles[CSLCount(psOptionsForBinary->papszSrcFiles) -
-                                1];
-        psOptionsForBinary
-            ->papszSrcFiles[CSLCount(psOptionsForBinary->papszSrcFiles) - 1] =
-            nullptr;
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", err.what());
+        return nullptr;
     }
-
-    return psOptions.release();
 }
 
 /************************************************************************/
@@ -5969,7 +6183,7 @@ GDALWarpAppOptionsNew(char **papszArgv,
 /************************************************************************/
 
 static bool GetResampleAlg(const char *pszResampling,
-                           GDALResampleAlg &eResampleAlg)
+                           GDALResampleAlg &eResampleAlg, bool bThrow)
 {
     if (STARTS_WITH_CI(pszResampling, "near"))
         eResampleAlg = GRA_NearestNeighbour;
@@ -6001,9 +6215,16 @@ static bool GetResampleAlg(const char *pszResampling,
         eResampleAlg = GRA_Sum;
     else
     {
-        CPLError(CE_Failure, CPLE_IllegalArg, "Unknown resampling method: %s.",
-                 pszResampling);
-        return false;
+        if (bThrow)
+        {
+            throw std::invalid_argument("Unknown resampling method");
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Unknown resampling method: %s.", pszResampling);
+            return false;
+        }
     }
     return true;
 }

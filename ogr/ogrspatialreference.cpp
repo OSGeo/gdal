@@ -369,8 +369,7 @@ void OGRSpatialReference::Private::refreshRootFromProjObj()
 
         const char *pszWKT;
         {
-            CPLErrorStateBackuper oErrorStateBackuper;
-            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             pszWKT = proj_as_wkt(getPROJContext(), m_pj_crs,
                                  m_bMorphToESRI ? PJ_WKT1_ESRI : PJ_WKT1_GDAL,
                                  aosOptions.List());
@@ -1589,13 +1588,13 @@ static PJ *GDAL_proj_crs_create_bound_crs_to_WGS84(PJ_CONTEXT *ctx, PJ *pj,
  *     node is returned.
  *     WKT1 is an alias of WKT1_GDAL.
  *     WKT2 will default to the latest revision implemented (currently
- * WKT2_2018) WKT2_2019 can be used as an alias of WKT2_2018 since GDAL 3.2
+ *     WKT2_2018) WKT2_2019 can be used as an alias of WKT2_2018 since GDAL 3.2
+ * </li>
  * <li>ALLOW_ELLIPSOIDAL_HEIGHT_AS_VERTICAL_CRS=YES/NO. Default is NO. If set
  * to YES and FORMAT=WKT1_GDAL, a Geographic 3D CRS or a Projected 3D CRS will
  * be exported as a compound CRS whose vertical part represents an ellipsoidal
  * height (for example for use with LAS 1.4 WKT1).
  * Requires PROJ 7.2.1 and GDAL 3.2.1.</li>
- * </li>
  * </ul>
  *
  * Starting with GDAL 3.0.3, if the OSR_ADD_TOWGS84_ON_EXPORT_TO_WKT1
@@ -1754,6 +1753,57 @@ OGRErr OGRSpatialReference::exportToWkt(char **ppszResult,
     *ppszResult = CPLStrdup(pszWKT);
     proj_destroy(boundCRS);
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            exportToWkt()                             */
+/************************************************************************/
+
+/**
+ * Convert this SRS into a WKT string.
+ *
+ * Consult also the <a href="wktproblems.html">OGC WKT Coordinate System
+ * Issues</a> page for implementation details of WKT 1 in OGR.
+ *
+ * @param papszOptions NULL terminated list of options, or NULL. Currently
+ * supported options are
+ * <ul>
+ * <li>MULTILINE=YES/NO. Defaults to NO.</li>
+ * <li>FORMAT=SFSQL/WKT1_SIMPLE/WKT1/WKT1_GDAL/WKT1_ESRI/WKT2_2015/WKT2_2018/WKT2/DEFAULT.
+ *     If SFSQL, a WKT1 string without AXIS, TOWGS84, AUTHORITY or EXTENSION
+ *     node is returned.
+ *     If WKT1_SIMPLE, a WKT1 string without AXIS, AUTHORITY or EXTENSION
+ *     node is returned.
+ *     WKT1 is an alias of WKT1_GDAL.
+ *     WKT2 will default to the latest revision implemented (currently
+ *     WKT2_2019)
+ * </li>
+ * <li>ALLOW_ELLIPSOIDAL_HEIGHT_AS_VERTICAL_CRS=YES/NO. Default is NO. If set
+ * to YES and FORMAT=WKT1_GDAL, a Geographic 3D CRS or a Projected 3D CRS will
+ * be exported as a compound CRS whose vertical part represents an ellipsoidal
+ * height (for example for use with LAS 1.4 WKT1).
+ * Requires PROJ 7.2.1.</li>
+ * </ul>
+ *
+ * If the OSR_ADD_TOWGS84_ON_EXPORT_TO_WKT1
+ * configuration option is set to YES, when exporting to WKT1_GDAL, this method
+ * will try to add a TOWGS84[] node, if there's none attached yet to the SRS and
+ * if the SRS has a EPSG code. See the AddGuessedTOWGS84() method for how this
+ * TOWGS84[] node may be added.
+ *
+ * @return a non-empty string if successful.
+ * @since GDAL 3.9
+ */
+
+std::string
+OGRSpatialReference::exportToWkt(const char *const *papszOptions) const
+{
+    std::string osWKT;
+    char *pszWKT = nullptr;
+    if (exportToWkt(&pszWKT, papszOptions) == OGRERR_NONE)
+        osWKT = pszWKT;
+    CPLFree(pszWKT);
+    return osWKT;
 }
 
 /************************************************************************/

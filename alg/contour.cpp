@@ -118,7 +118,7 @@ struct PolygonContourWriter
     CPL_DISALLOW_COPY_ASSIGN(PolygonContourWriter)
 
     explicit PolygonContourWriter(OGRContourWriterInfo *poInfo, double minLevel)
-        : poInfo_(poInfo), previousLevel_(minLevel)
+        : poInfo_(poInfo), currentLevel_(minLevel)
     {
     }
 
@@ -175,8 +175,8 @@ struct PolygonContourWriter
     std::unique_ptr<OGRMultiPolygon> currentGeometry_ = {};
     OGRPolygon *currentPart_ = nullptr;
     OGRContourWriterInfo *poInfo_ = nullptr;
-    double currentLevel_ = 0;
-    double previousLevel_;
+    double currentLevel_;
+    double previousLevel_ = 0;
 };
 
 struct GDALRingAppender
@@ -582,13 +582,19 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
     opt = CSLFetchNameValue(options, "FIXED_LEVELS");
     if (opt)
     {
-        char **values = CSLTokenizeStringComplex(opt, ",", FALSE, FALSE);
-        fixedLevels.resize(CSLCount(values));
+        const CPLStringList aosLevels(
+            CSLTokenizeStringComplex(opt, ",", FALSE, FALSE));
+        fixedLevels.resize(aosLevels.size());
         for (size_t i = 0; i < fixedLevels.size(); i++)
         {
-            fixedLevels[i] = CPLAtof(values[i]);
+            fixedLevels[i] = CPLAtof(aosLevels[i]);
+            if (i > 0 && !(fixedLevels[i] >= fixedLevels[i - 1]))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "FIXED_LEVELS should be strictly increasing");
+                return CE_Failure;
+            }
         }
-        CSLDestroy(values);
     }
 
     bool useNoData = false;
@@ -661,16 +667,44 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
     {
         if (polygonize)
         {
-            int bSuccess;
-            PolygonContourWriter w(&oCWI,
-                                   GDALGetRasterMinimum(hBand, &bSuccess));
+            int bSuccessMin = FALSE;
+            double dfMinimum = GDALGetRasterMinimum(hBand, &bSuccessMin);
+            int bSuccessMax = FALSE;
+            double dfMaximum = GDALGetRasterMaximum(hBand, &bSuccessMax);
+            if ((!bSuccessMin || !bSuccessMax) && !fixedLevels.empty())
+            {
+                double adfMinMax[2];
+                if (GDALComputeRasterMinMax(hBand, false, adfMinMax) == CE_None)
+                {
+                    dfMinimum = adfMinMax[0];
+                    dfMaximum = adfMinMax[1];
+                }
+            }
+            if (!fixedLevels.empty())
+            {
+                // If the minimum raster value is larger than the first requested
+                // level, select the requested level that is just below the
+                // minimum raster value
+                if (fixedLevels[0] < dfMinimum)
+                {
+                    for (size_t i = 1; i < fixedLevels.size(); ++i)
+                    {
+                        if (fixedLevels[i] >= dfMinimum)
+                        {
+                            dfMinimum = fixedLevels[i - 1];
+                            break;
+                        }
+                    }
+                }
+            }
+
+            PolygonContourWriter w(&oCWI, dfMinimum);
             typedef PolygonRingAppender<PolygonContourWriter> RingAppender;
             RingAppender appender(w);
             if (!fixedLevels.empty())
             {
-                FixedLevelRangeIterator levels(
-                    &fixedLevels[0], fixedLevels.size(),
-                    GDALGetRasterMaximum(hBand, &bSuccess));
+                FixedLevelRangeIterator levels(&fixedLevels[0],
+                                               fixedLevels.size(), dfMaximum);
                 SegmentMerger<RingAppender, FixedLevelRangeIterator> writer(
                     appender, levels, /* polygonize */ true);
                 ContourGeneratorFromRaster<decltype(writer),

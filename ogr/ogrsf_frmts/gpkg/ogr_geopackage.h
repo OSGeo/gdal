@@ -374,10 +374,15 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
         return nSoftTransactionLevel > 0;
     }
 
-    int GetSrsId(const OGRSpatialReference &oSRS);
+    static std::string LaunderName(const std::string &osStr);
+
+    // At least 100000 to avoid conflicting with EPSG codes
+    static constexpr int FIRST_CUSTOM_SRSID = 100000;
+
+    int GetSrsId(const OGRSpatialReference *poSRS);
     const char *GetSrsName(const OGRSpatialReference &oSRS);
-    OGRSpatialReference *GetSpatialRef(int iSrsId,
-                                       bool bFallbackToEPSG = false);
+    OGRSpatialReference *GetSpatialRef(int iSrsId, bool bFallbackToEPSG = false,
+                                       bool bEmitErrorIfNotFound = true);
     OGRErr CreateExtensionsTableIfNecessary();
     bool HasExtensionsTable();
 
@@ -640,7 +645,7 @@ class OGRGeoPackageLayer CPL_NON_FINAL : public OGRLayer,
         return m_poFeatureDefn;
     }
 
-    OGRErr SetIgnoredFields(const char **papszFields) override;
+    OGRErr SetIgnoredFields(CSLConstList papszFields) override;
 
     virtual bool HasFastSpatialFilter(int /*iGeomCol*/) override
     {
@@ -704,6 +709,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     bool m_bTruncateFields = false;
     bool m_bDeferredCreation = false;
     bool m_bTableCreatedInTransaction = false;
+    bool m_bLaunder = false;
     int m_iFIDAsRegularColumnIndex = -1;
     std::string m_osInsertionBuffer{};  // used by FeatureBindParameters to
                                         // store datetime values
@@ -918,10 +924,11 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
                               const char *pszGeomType, bool bHasZ, bool bHasM);
     void SetCreationParameters(
         OGRwkbGeometryType eGType, const char *pszGeomColumnName,
-        int bGeomNullable, OGRSpatialReference *poSRS,
-        const OGRGeomCoordinatePrecision &oCoordPrec, bool bDiscardCoordLSB,
-        bool bUndoDiscardCoordLSBOnReading, const char *pszFIDColumnName,
-        const char *pszIdentifier, const char *pszDescription);
+        int bGeomNullable, const OGRSpatialReference *poSRS,
+        const char *pszSRID, const OGRGeomCoordinatePrecision &oCoordPrec,
+        bool bDiscardCoordLSB, bool bUndoDiscardCoordLSBOnReading,
+        const char *pszFIDColumnName, const char *pszIdentifier,
+        const char *pszDescription);
     void SetDeferredSpatialIndexCreation(bool bFlag);
 
     void SetASpatialVariant(GPKGASpatialVariant eASpatialVariant)
@@ -971,6 +978,11 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     void SetTruncateFieldsFlag(int bFlag)
     {
         m_bTruncateFields = CPL_TO_BOOL(bFlag);
+    }
+
+    void SetLaunder(bool bFlag)
+    {
+        m_bLaunder = bFlag;
     }
 
     OGRErr RunDeferredCreationIfNecessary();
@@ -1159,6 +1171,16 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer,
                                  int bForce) override
     {
         return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce);
+    }
+
+    bool
+    ValidateGeometryFieldIndexForSetSpatialFilter(int iGeomField,
+                                                  const OGRGeometry *poGeomIn,
+                                                  bool bIsSelectLayer) override
+    {
+        return OGRGeoPackageLayer::
+            ValidateGeometryFieldIndexForSetSpatialFilter(iGeomField, poGeomIn,
+                                                          bIsSelectLayer);
     }
 };
 

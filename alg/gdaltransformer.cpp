@@ -402,8 +402,8 @@ CPLErr CPL_STDCALL GDALSuggestedWarpOutput2(GDALDatasetH hSrcDS,
         if (GDALGetGeoTransform(hSrcDS, adfGeoTransform) == CE_None &&
             adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0)
         {
-            GDALGenImgProjTransformInfo *psInfo{
-                static_cast<GDALGenImgProjTransformInfo *>(pTransformArg)};
+            const GDALGenImgProjTransformInfo *psInfo =
+                static_cast<const GDALGenImgProjTransformInfo *>(pTransformArg);
 
             if (psInfo && !psInfo->pSrcTransformer &&
                 !psInfo->bHasCustomTransformationPipeline &&
@@ -1014,7 +1014,9 @@ retry:
                         const auto invGT = pGIPTI->adfSrcInvGeoTransform;
                         const double x = invGT[0] + X * invGT[1] + Y * invGT[2];
                         const double y = invGT[3] + X * invGT[4] + Y * invGT[5];
-                        if (x >= 0 && x <= nInXSize && y >= 0 && y <= nInYSize)
+                        constexpr double EPSILON = 1e-5;
+                        if (x >= -EPSILON && x <= nInXSize + EPSILON &&
+                            y >= -EPSILON && y <= nInYSize + EPSILON)
                         {
                             if (psRTI->poForwardTransform->Transform(1, &X,
                                                                      &Y) &&

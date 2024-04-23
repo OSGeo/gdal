@@ -429,6 +429,7 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
         "description='Path to a XML configuration file (or content inlined)'/>"
         "   <Option name='WRITE_GDAL_VERSION' type='boolean' default='YES'/>"
         "   <Option name='WRITE_GDAL_HISTORY' type='boolean' default='YES'/>"
+        "   <Option name='BAND_NAMES' type='string' scope='raster' />"
         "</CreationOptionList>");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
 

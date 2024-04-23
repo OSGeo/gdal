@@ -293,6 +293,7 @@ class HDF5Array final : public GDALMDArray
     mutable bool m_bHasDimensionLabels = false;
     std::shared_ptr<OGRSpatialReference> m_poSRS{};
     haddr_t m_nOffset;
+    mutable CPLStringList m_aosStructuralInfo{};
 
     HDF5Array(const std::string &osParentName, const std::string &osName,
               const std::shared_ptr<HDF5SharedResources> &poShared,
@@ -364,6 +365,10 @@ class HDF5Array final : public GDALMDArray
 
     std::vector<std::shared_ptr<GDALAttribute>>
     GetAttributes(CSLConstList papszOptions = nullptr) const override;
+
+    std::vector<GUInt64> GetBlockSize() const override;
+
+    CSLConstList GetStructuralInfo() const override;
 
     const void *GetRawNoDataValue() const override
     {
@@ -1646,8 +1651,6 @@ HDF5Array::GetCoordinateVariables() const
                                     "Geolocation Fields"));
                 if (poLongitude && poLatitude)
                 {
-                    std::vector<std::shared_ptr<GDALMDArray>>
-                        m_apoCoordinates{};
                     ret.push_back(poLongitude);
                     ret.push_back(poLatitude);
                 }
@@ -1806,6 +1809,85 @@ HDF5Array::GetAttributes(CSLConstList papszOptions) const
     H5Aiterate(m_hArray, nullptr, GetAttributesCallback,
                const_cast<void *>(static_cast<const void *>(this)));
     return m_oListAttributes;
+}
+
+/************************************************************************/
+/*                           GetBlockSize()                             */
+/************************************************************************/
+
+std::vector<GUInt64> HDF5Array::GetBlockSize() const
+{
+    HDF5_GLOBAL_LOCK();
+
+    const auto nDimCount = GetDimensionCount();
+    std::vector<GUInt64> res(nDimCount);
+    if (res.empty())
+        return res;
+
+    const hid_t nListId = H5Dget_create_plist(m_hArray);
+    if (nListId > 0)
+    {
+        if (H5Pget_layout(nListId) == H5D_CHUNKED)
+        {
+            std::vector<hsize_t> anChunkDims(nDimCount);
+            const int nDimSize = H5Pget_chunk(
+                nListId, static_cast<int>(nDimCount), &anChunkDims[0]);
+            if (static_cast<size_t>(nDimSize) == nDimCount)
+            {
+                for (size_t i = 0; i < nDimCount; ++i)
+                {
+                    res[i] = anChunkDims[i];
+                }
+            }
+        }
+
+        H5Pclose(nListId);
+    }
+
+    return res;
+}
+
+/************************************************************************/
+/*                         GetStructuralInfo()                          */
+/************************************************************************/
+
+CSLConstList HDF5Array::GetStructuralInfo() const
+{
+    if (m_aosStructuralInfo.empty())
+    {
+        HDF5_GLOBAL_LOCK();
+        const hid_t nListId = H5Dget_create_plist(m_hArray);
+        if (nListId > 0)
+        {
+            const int nFilters = H5Pget_nfilters(nListId);
+            for (int i = 0; i < nFilters; ++i)
+            {
+                unsigned int flags = 0;
+                size_t cd_nelmts = 0;
+                char szName[64 + 1] = {0};
+                const auto eFilter = H5Pget_filter(
+                    nListId, i, &flags, &cd_nelmts, nullptr, 64, szName);
+                if (eFilter == H5Z_FILTER_DEFLATE)
+                {
+                    m_aosStructuralInfo.SetNameValue("COMPRESSION", "DEFLATE");
+                }
+                else if (eFilter == H5Z_FILTER_SZIP)
+                {
+                    m_aosStructuralInfo.SetNameValue("COMPRESSION", "SZIP");
+                }
+                else if (eFilter == H5Z_FILTER_SHUFFLE)
+                {
+                    m_aosStructuralInfo.SetNameValue("FILTER", "SHUFFLE");
+                }
+                else
+                {
+                    CPLDebug("HDF5", "Filter used: %s", szName);
+                }
+            }
+            H5Pclose(nListId);
+        }
+    }
+    return m_aosStructuralInfo.List();
 }
 
 /************************************************************************/

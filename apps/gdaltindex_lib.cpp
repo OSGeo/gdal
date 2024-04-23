@@ -147,7 +147,7 @@ static bool PatternMatch(const char *input, const char *pattern)
         }
         else
         {
-            if (tolower(*pattern) != tolower(*input))
+            if (CPLTolower(*pattern) != CPLTolower(*input))
             {
                 return false;
             }

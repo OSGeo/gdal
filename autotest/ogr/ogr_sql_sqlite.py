@@ -2477,3 +2477,36 @@ def test_ogr_sql_sqlite_like_utf8():
         dialect="SQLite",
     ) as sql_lyr:
         assert sql_lyr.GetFeatureCount() == 0
+
+
+###############################################################################
+# Test error on setting a spatial filter during ExecuteSQL
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_sql_sqlite_execute_sql_error_on_spatial_filter_mem_layer():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ds.CreateLayer("test")
+    geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))")
+    with pytest.raises(
+        Exception, match="Cannot set spatial filter: no geometry field selected"
+    ):
+        ds.ExecuteSQL("SELECT 1 FROM test", spatialFilter=geom, dialect="SQLITE")
+
+
+###############################################################################
+# Test error on setting a spatial filter during ExecuteSQL
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_sql_sqlite_execute_sql_error_on_spatial_filter_shp_layer(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.shp")
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(filename)
+    ds.CreateLayer("test")
+    geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))")
+    with pytest.raises(
+        Exception, match="Cannot set spatial filter: no geometry field selected"
+    ):
+        ds.ExecuteSQL("SELECT 1 FROM test", spatialFilter=geom, dialect="SQLITE")

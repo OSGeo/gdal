@@ -178,8 +178,8 @@ class OGRSOSISimpleDataType
 
 class OGRSOSIDataType
 {
-    OGRSOSISimpleDataType *poElements;
-    int nElementCount;
+    OGRSOSISimpleDataType *poElements = nullptr;
+    int nElementCount = 0;
 
     OGRSOSIDataType &operator=(const OGRSOSIDataType &) = delete;
 

@@ -521,8 +521,11 @@ def generate_test_parquet():
         type=pa.binary(),
     )
 
+    null = pa.array([None] * 5, type=pa.null())
+
     names = [
         "boolean",
+        "null",
         "uint8",
         "int8",
         "uint16",
@@ -1174,8 +1177,78 @@ def generate_nested_types():
     )
 
 
+def generate_extension_custom():
+    import pathlib
+
+    import pyarrow as pa
+    import pyarrow.feather as feather
+    import pyarrow.parquet as pq
+
+    class MyJsonType(pa.ExtensionType):
+        def __init__(self):
+            super().__init__(pa.string(), "my_json")
+
+        def __arrow_ext_serialize__(self):
+            return b""
+
+        @classmethod
+        def __arrow_ext_deserialize__(cls, storage_type, serialized):
+            return cls()
+
+    my_json_type = MyJsonType()
+    storage_array = pa.array(['{"foo":"bar"}'], pa.string())
+    extension_custom = pa.ExtensionArray.from_storage(my_json_type, storage_array)
+
+    names = ["extension_custom"]
+
+    locals_ = locals()
+    table = pa.table([locals_[x] for x in names], names=names)
+
+    HERE = pathlib.Path(__file__).parent
+    feather.write_feather(table, HERE / "ogr/data/arrow/extension_custom.feather")
+    pq.write_table(
+        table, HERE / "ogr/data/parquet/extension_custom.parquet", compression="NONE"
+    )
+
+
+def generate_extension_json():
+    import pathlib
+
+    import pyarrow as pa
+    import pyarrow.feather as feather
+    import pyarrow.parquet as pq
+
+    class JsonType(pa.ExtensionType):
+        def __init__(self):
+            super().__init__(pa.string(), "arrow.json")
+
+        def __arrow_ext_serialize__(self):
+            return b""
+
+        @classmethod
+        def __arrow_ext_deserialize__(cls, storage_type, serialized):
+            return cls()
+
+    json_type = JsonType()
+    storage_array = pa.array(['{"foo":"bar"}'], pa.string())
+    extension_json = pa.ExtensionArray.from_storage(json_type, storage_array)
+
+    names = ["extension_json"]
+
+    locals_ = locals()
+    table = pa.table([locals_[x] for x in names], names=names)
+
+    HERE = pathlib.Path(__file__).parent
+    feather.write_feather(table, HERE / "ogr/data/arrow/extension_json.feather")
+    pq.write_table(
+        table, HERE / "ogr/data/parquet/extension_json.parquet", compression="NONE"
+    )
+
+
 if __name__ == "__main__":
     generate_test_parquet()
     generate_all_geoms_parquet()
     generate_parquet_wkt_with_dict()
     generate_nested_types()
+    generate_extension_custom()
+    generate_extension_json()

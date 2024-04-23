@@ -1296,3 +1296,48 @@ def test_vsifile_win32_network_path():
     drive_letter = os.getcwd()[0]
     dirname = f"\\\\localhost\\{drive_letter}$"
     assert gdal.VSIStatL(dirname) is not None
+
+
+###############################################################################
+# Test operations with VSI_CACHE=YES and past EOF reads
+
+
+@pytest.mark.require_driver("GTiff")
+def test_vsifile_eof_cache_read(tmp_path):
+    """Test issue GH #9658"""
+
+    tmp_filename = str(tmp_path / "vsifile_eof_cache_read.bin")
+    f = gdal.VSIFOpenL(tmp_filename, "wb")
+    gdal.VSIFWriteL(b"x" * 100000, 100000, 1, f)
+    gdal.VSIFCloseL(f)
+    with gdal.config_option("VSI_CACHE", "YES"):
+        f = gdal.VSIFOpenL(tmp_filename, "rb")
+        gdal.VSIFSeekL(f, 60000, 0)
+        data = gdal.VSIFReadL(1, 75000, f)  # reads past end of file
+        gdal.VSIFCloseL(f)
+        assert data == b"x" * 40000
+
+
+def test_vsifile_use_closed_file(tmp_path):
+
+    f = gdal.VSIFOpenL(tmp_path / "file.txt", "wb")
+    assert gdal.VSIFWriteL("0123456789", 1, 10, f) == 10
+    gdal.VSIFCloseL(f)
+
+    with pytest.raises(ValueError, match="closed file"):
+        gdal.VSIFCloseL(f)
+
+    with pytest.raises(ValueError, match="closed file"):
+        gdal.VSIFEofL(f)
+
+    with pytest.raises(ValueError, match="closed file"):
+        gdal.VSIFSeekL(f, 0, 0)
+
+    with pytest.raises(ValueError, match="closed file"):
+        gdal.VSIFTellL(f)
+
+    with pytest.raises(ValueError, match="closed file"):
+        gdal.VSIFTruncateL(f, 0)
+
+    with pytest.raises(ValueError, match="closed file"):
+        gdal.VSIFWriteL("0123456789", 1, 10, f)

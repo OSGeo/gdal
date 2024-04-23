@@ -121,7 +121,7 @@ def test_gdalinfo_lib_5():
         computeMinMax=True,
         reportHistograms=True,
         reportProj4=True,
-        stats=True,
+        # stats=True, this is mutually exclusive with approxStats
         approxStats=True,
         computeChecksum=True,
         showGCPs=False,
@@ -136,6 +136,7 @@ def test_gdalinfo_lib_5():
     assert "computedMin" in band
     assert "histogram" in band
     assert "checksum" in band
+    assert "stdDev" in band
     assert ret["coordinateSystem"]["dataAxisToSRSAxisMapping"] == [1, 2]
 
     gdaltest.validate_json(ret, "gdalinfo_output.schema.json")

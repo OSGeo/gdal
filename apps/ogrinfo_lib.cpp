@@ -78,6 +78,9 @@ struct GDALVectorInfoOptions
     bool bStdoutOutput = false;  // only set by ogrinfo_bin
     int nRepeatCount = 1;
 
+    /*! Maximum number of features, or -1 if no limit. */
+    GIntBig nLimit = -1;
+
     // Only used during argument parsing
     bool bSummaryParser = false;
     bool bFeaturesParser = false;
@@ -957,8 +960,8 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                         {
                             char *pszProjJson = nullptr;
                             // PROJJSON requires PROJ >= 6.2
-                            CPLErrorHandlerPusher oPusher(CPLQuietErrorHandler);
-                            CPLErrorStateBackuper oCPLErrorHandlerPusher;
+                            CPLErrorStateBackuper oCPLErrorHandlerPusher(
+                                CPLQuietErrorHandler);
                             CPL_IGNORE_RET_VAL(
                                 poSRS->exportToPROJJSON(&pszProjJson, nullptr));
                             if (pszProjJson)
@@ -1465,8 +1468,16 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                                  : 0;
             if (bJson)
                 oLayer.Add("features", oFeatures);
+            GIntBig nFeatureCount = 0;
             for (auto &poFeature : poLayer)
             {
+                if (psOptions->nLimit >= 0 &&
+                    nFeatureCount >= psOptions->nLimit)
+                {
+                    break;
+                }
+                ++nFeatureCount;
+
                 if (bJson)
                 {
                     CPLJSONObject oFeature;
@@ -2186,7 +2197,8 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
     argParser->add_description(
         _("Lists information about an OGR-supported data source."));
 
-    argParser->add_epilog(_("https://gdal.org/programs/ogrinfo.html"));
+    argParser->add_epilog(
+        _("For more details, consult https://gdal.org/programs/ogrinfo.html"));
 
     argParser->add_argument("-json")
         .flag()
@@ -2313,6 +2325,12 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
             .store_into(psOptions->bFeaturesParser)
             .help(_("Enable listing of features"));
     }
+
+    argParser->add_argument("-limit")
+        .metavar("<nb_features>")
+        .action([psOptions](const std::string &s)
+                { psOptions->nLimit = CPLAtoGIntBig(s.c_str()); })
+        .help(_("Limit the number of features per layer."));
 
     argParser->add_argument("-fields")
         .choices("YES", "NO")

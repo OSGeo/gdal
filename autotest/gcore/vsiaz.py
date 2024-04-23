@@ -1603,6 +1603,36 @@ def test_vsiaz_rmdirrecursive():
         "GET",
         "/azure/blob/myaccount/rmdirrec?comp=list&delimiter=%2F&maxresults=1&prefix=subdir%2Fsubdir2%2F&restype=container",
         200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>subdir/subdir2/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>subdir/subdir2/.gdal_marker_for_dir</Name>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""",
+    )
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/rmdirrec?comp=list&delimiter=%2F&maxresults=1&prefix=subdir%2Fsubdir2%2F&restype=container",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>subdir/subdir2/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>subdir/subdir2/.gdal_marker_for_dir</Name>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""",
+    )
+    handler.add(
+        "DELETE",
+        "/azure/blob/myaccount/rmdirrec/subdir/subdir2/.gdal_marker_for_dir",
+        202,
     )
     handler.add("HEAD", "/azure/blob/myaccount/rmdirrec/subdir/", 404)
     handler.add(
@@ -1615,21 +1645,84 @@ def test_vsiaz_rmdirrecursive():
 
 
 ###############################################################################
+# Test RmdirRecursive() with a fake server
+
+
+def test_vsiaz_rmdirrecursive_empty_dir():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/rmdirrec?comp=list&prefix=empty_dir%2F&restype=container",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>empty_dir/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>empty_dir/.gdal_marker_for_dir</Name>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""",
+    )
+    handler.add("HEAD", "/azure/blob/myaccount/rmdirrec/empty_dir/", 404)
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/rmdirrec?comp=list&delimiter=%2F&maxresults=1&prefix=empty_dir%2F&restype=container",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>empty_dir/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>empty_dir/.gdal_marker_for_dir</Name>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""",
+    )
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/rmdirrec?comp=list&delimiter=%2F&maxresults=1&prefix=empty_dir%2F&restype=container",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+                    <EnumerationResults>
+                        <Prefix>empty_dir/</Prefix>
+                        <Blobs>
+                          <Blob>
+                            <Name>empty_dir/.gdal_marker_for_dir</Name>
+                          </Blob>
+                        </Blobs>
+                    </EnumerationResults>""",
+    )
+    handler.add(
+        "DELETE", "/azure/blob/myaccount/rmdirrec/empty_dir/.gdal_marker_for_dir", 202
+    )
+    with webserver.install_http_handler(handler):
+        assert gdal.RmdirRecursive("/vsiaz/rmdirrec/empty_dir") == 0
+
+
+###############################################################################
 # Test Sync() and multithreaded download and CHUNK_SIZE
 
 
 @pytest.mark.skipif(
     gdaltest.is_travis_branch("macos_build"), reason="randomly fails on macos"
 )
-def test_vsiaz_fake_sync_multithreaded_upload_chunk_size():
+def test_vsiaz_fake_sync_multithreaded_upload_chunk_size(tmp_vsimem):
 
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
     gdal.VSICurlClearCache()
 
-    gdal.Mkdir("/vsimem/test", 0)
-    gdal.FileFromMemBuffer("/vsimem/test/foo", "foo\n")
+    gdal.Mkdir(tmp_vsimem / "test", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test/foo", "foo\n")
 
     tab = [-1]
     handler = webserver.SequentialHandler()
@@ -1770,7 +1863,7 @@ def test_vsiaz_fake_sync_multithreaded_upload_chunk_size():
     with gdaltest.config_option("VSIS3_SIMULATE_THREADING", "YES", thread_local=False):
         with webserver.install_http_handler(handler):
             assert gdal.Sync(
-                "/vsimem/test",
+                tmp_vsimem / "test",
                 "/vsiaz/test_bucket",
                 options=["NUM_THREADS=1", "CHUNK_SIZE=3"],
                 callback=cbk,
@@ -1778,22 +1871,20 @@ def test_vsiaz_fake_sync_multithreaded_upload_chunk_size():
             )
     assert tab[0] == 1.0
 
-    gdal.RmdirRecursive("/vsimem/test")
-
 
 ###############################################################################
 # Test Sync() and multithreaded download of a single file
 
 
-def test_vsiaz_fake_sync_multithreaded_upload_single_file():
+def test_vsiaz_fake_sync_multithreaded_upload_single_file(tmp_vsimem):
 
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
     gdal.VSICurlClearCache()
 
-    gdal.Mkdir("/vsimem/test", 0)
-    gdal.FileFromMemBuffer("/vsimem/test/foo", "foo\n")
+    gdal.Mkdir(tmp_vsimem / "test", 0)
+    gdal.FileFromMemBuffer(tmp_vsimem / "test/foo", "foo\n")
 
     handler = webserver.SequentialHandler()
     handler.add(
@@ -1870,12 +1961,10 @@ def test_vsiaz_fake_sync_multithreaded_upload_single_file():
     with gdaltest.config_option("VSIS3_SIMULATE_THREADING", "YES", thread_local=False):
         with webserver.install_http_handler(handler):
             assert gdal.Sync(
-                "/vsimem/test/foo",
+                tmp_vsimem / "test/foo",
                 "/vsiaz/test_bucket",
                 options=["NUM_THREADS=1", "CHUNK_SIZE=3"],
             )
-
-    gdal.RmdirRecursive("/vsimem/test")
 
 
 ###############################################################################

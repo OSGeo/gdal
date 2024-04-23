@@ -1270,8 +1270,7 @@ bool GDALJP2Metadata::IsSRSCompatible(const OGRSpatialReference *poSRS)
             return true;
     }
 
-    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-    CPLErrorStateBackuper oErrorStateBackuper;
+    CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
     char *pszGMLDef = nullptr;
     const bool bRet = (poSRS->exportToXML(&pszGMLDef, nullptr) == OGRERR_NONE);
     CPLFree(pszGMLDef);

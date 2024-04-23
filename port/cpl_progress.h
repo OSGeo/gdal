@@ -46,4 +46,20 @@ void CPL_DLL *CPL_STDCALL GDALCreateScaledProgress(double, double,
 void CPL_DLL CPL_STDCALL GDALDestroyScaledProgress(void *);
 CPL_C_END
 
+#if defined(__cplusplus) && defined(GDAL_COMPILATION)
+extern "C++"
+{
+    /*! @cond Doxygen_Suppress */
+    struct CPL_DLL GDALScaledProgressReleaser
+    {
+        void operator()(void *p) const
+        {
+            GDALDestroyScaledProgress(p);
+        }
+    };
+
+    /*! @endcond */
+}
+#endif
+
 #endif /* ndef CPL_PROGRESS_H_INCLUDED */

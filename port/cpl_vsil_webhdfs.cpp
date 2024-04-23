@@ -353,7 +353,7 @@ retry:
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                                VSICurlHandleWriteFunc);
 
-    MultiPerform(m_poFS->GetCurlMultiHandleFor(m_osURL), hCurlHandle);
+    VSICURLMultiPerform(m_poFS->GetCurlMultiHandleFor(m_osURL), hCurlHandle);
 
     curl_slist_free_all(headers);
 
@@ -430,7 +430,7 @@ bool VSIWebHDFSWriteHandle::Append()
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                                VSICurlHandleWriteFunc);
 
-    MultiPerform(m_poFS->GetCurlMultiHandleFor(m_osURL), hCurlHandle);
+    VSICURLMultiPerform(m_poFS->GetCurlMultiHandleFor(m_osURL), hCurlHandle);
 
     curl_slist_free_all(headers);
 
@@ -489,7 +489,7 @@ bool VSIWebHDFSWriteHandle::Append()
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
                                VSICurlHandleWriteFunc);
 
-    MultiPerform(m_poFS->GetCurlMultiHandleFor(m_osURL), hCurlHandle);
+    VSICURLMultiPerform(m_poFS->GetCurlMultiHandleFor(m_osURL), hCurlHandle);
 
     curl_slist_free_all(headers);
 
@@ -619,7 +619,7 @@ char **VSIWebHDFSFSHandler::GetFileList(const char *pszDirname,
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    MultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -724,7 +724,7 @@ int VSIWebHDFSFSHandler::Unlink(const char *pszFilename)
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    MultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -847,7 +847,7 @@ int VSIWebHDFSFSHandler::Mkdir(const char *pszDirname, long nMode)
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    MultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -961,7 +961,7 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize(bool bSetError)
     szCurlErrBuf[0] = '\0';
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER, szCurlErrBuf);
 
-    MultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
@@ -1091,7 +1091,7 @@ retry:
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
-    MultiPerform(hCurlMultiHandle, hCurlHandle);
+    VSICURLMultiPerform(hCurlMultiHandle, hCurlHandle);
 
     VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 

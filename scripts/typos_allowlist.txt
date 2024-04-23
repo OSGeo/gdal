@@ -305,3 +305,26 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
      FAIL_REGEX "[Uu]nknown switch"                         # PGI
 * Esben Mose Hansen, Ange Optimization ApS
             SetLinearUnits("kilometre", 1000.0);
+    // F(ixed) S(ize) L(ist) of (x,y[,z][,m]) values / Interleaved layout
+ *           https://www.miramon.cat/eng/QuiSom.htm
+#define SECTION_VERSIO "VERSIO"
+#define szMMNomCampPerimetreDefecte "PERIMETRE"
+#define szMMNomCampNPoligonsDefecte "N_POLIG"
+#define MM_MIN_WIDTH_LONG 14  // For LONG_ARC and PERIMETRE
+#define MM_MIN_WIDTH_AREA 19  // For LONG_ARC and PERIMETRE
+    CPLStrlcpy(szPerimeterOfThePolygonCat, "Perimetre del poligon",
+    CPLStrlcpy(szPerimeterOfThePolygonCat, "Perimetre del poligon",
+    CPLStrlcpy(szAreaOfThePolygonCat, "Area del poligon",
+    CPLStrlcpy(szNumberOfElementaryPolygonsCat, "Nombre de poligons elementals",
+                    VSIFPrintfL(m_MMMap.fMMMap, "[VERSIO]\n");
+#define MM_IsDoubleInfinite(x) EsDoubleInfinit((x))
+    https://www.miramon.cat/help/eng/GeMPlus/ClausREL.htm
+    fprintf_function(pF, "[%s]" LineReturn, SECTION_VERSIO);
+        fprintf_function(pF, "NomCampPerimetre=%s" LineReturn,
+        fprintf_function(pF, "NomCampNPoligons=%s" LineReturn,
+        MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO, nullptr);
+        MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO, KEY_Vers);
+    pszLine = MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO,
+    assert f.GetField("PERIMETRE") == pytest.approx(1289.866489495, abs=1e-5)
+    assert f.GetField("PERIMETRE") == pytest.approx(1123.514024, abs=1e-5)
+    assert f.GetField("PERIMETRE") == pytest.approx(680.544697, abs=1e-5)

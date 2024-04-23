@@ -1983,6 +1983,15 @@ def test_ogr_shape_50():
 
     assert reconv_possible, "TestCapability(OLCStringsAsUTF8) should return TRUE"
 
+    with ds.ExecuteSQL(f"SELECT * FROM {lyr.GetName()}") as sql_lyr:
+        assert sql_lyr.TestCapability(ogr.OLCStringsAsUTF8)
+
+    if ogr.GetDriverByName("SQLITE"):
+        with ds.ExecuteSQL(
+            f"SELECT * FROM {lyr.GetName()}", dialect="SQLITE"
+        ) as sql_lyr:
+            assert sql_lyr.TestCapability(ogr.OLCStringsAsUTF8)
+
 
 ###############################################################################
 # Test that we can add a field when there's no dbf file initially

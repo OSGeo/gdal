@@ -36,31 +36,38 @@
 #include <algorithm>
 
 /************************************************************************/
+/*                 XercesInitializer::XercesInitializer()               */
+/************************************************************************/
+
+OGRGMLASDataSource::XercesInitializer::XercesInitializer()
+{
+    OGRInitializeXerces();
+}
+
+/************************************************************************/
+/*                 XercesInitializer::~XercesInitializer()              */
+/************************************************************************/
+
+OGRGMLASDataSource::XercesInitializer::~XercesInitializer()
+{
+    OGRDeinitializeXerces();
+}
+
+/************************************************************************/
 /*                          OGRGMLASDataSource()                        */
 /************************************************************************/
 
 OGRGMLASDataSource::OGRGMLASDataSource()
+    : m_poFieldsMetadataLayer(std::make_unique<OGRMemLayer>(
+          szOGR_FIELDS_METADATA, nullptr, wkbNone)),
+      m_poLayersMetadataLayer(std::make_unique<OGRMemLayer>(
+          szOGR_LAYERS_METADATA, nullptr, wkbNone)),
+      m_poRelationshipsLayer(std::make_unique<OGRMemLayer>(
+          szOGR_LAYER_RELATIONSHIPS, nullptr, wkbNone)),
+      m_poOtherMetadataLayer(
+          std::make_unique<OGRMemLayer>(szOGR_OTHER_METADATA, nullptr, wkbNone))
 {
-    OGRInitializeXerces();
-
-    m_fpGML = nullptr;
-    m_fpGMLParser = nullptr;
-    m_bLayerInitFinished = false;
-    m_bValidate = false;
-    m_bSchemaFullChecking = false;
-    m_bHandleMultipleImports = false;
-    m_bRemoveUnusedLayers = false;
-    m_bRemoveUnusedFields = false;
-    m_bFirstPassDone = false;
-    m_eSwapCoordinates = GMLAS_SWAP_AUTO;
-    m_nFileSize = 0;
-    m_poReader = nullptr;
-    m_bEndOfReaderLayers = false;
-    m_nCurMetadataLayerIdx = -1;
-    m_poFieldsMetadataLayer =
-        new OGRMemLayer(szOGR_FIELDS_METADATA, nullptr, wkbNone);
-    m_bFoundSWE = false;
-
+    // Initialize m_poFieldsMetadataLayer
     {
         OGRFieldDefn oFieldDefn(szLAYER_NAME, OFTString);
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
@@ -124,8 +131,7 @@ OGRGMLASDataSource::OGRGMLASDataSource()
         m_poFieldsMetadataLayer->CreateField(&oFieldDefn);
     }
 
-    m_poLayersMetadataLayer =
-        new OGRMemLayer(szOGR_LAYERS_METADATA, nullptr, wkbNone);
+    // Initialize m_poLayersMetadataLayer
     {
         OGRFieldDefn oFieldDefn(szLAYER_NAME, OFTString);
         m_poLayersMetadataLayer->CreateField(&oFieldDefn);
@@ -151,8 +157,7 @@ OGRGMLASDataSource::OGRGMLASDataSource()
         m_poLayersMetadataLayer->CreateField(&oFieldDefn);
     }
 
-    m_poRelationshipsLayer =
-        new OGRMemLayer(szOGR_LAYER_RELATIONSHIPS, nullptr, wkbNone);
+    // Initialize m_poRelationshipsLayer
     {
         OGRFieldDefn oFieldDefn(szPARENT_LAYER, OFTString);
         m_poRelationshipsLayer->CreateField(&oFieldDefn);
@@ -173,8 +178,8 @@ OGRGMLASDataSource::OGRGMLASDataSource()
         OGRFieldDefn oFieldDefn(szCHILD_PKID, OFTString);
         m_poRelationshipsLayer->CreateField(&oFieldDefn);
     }
-    m_poOtherMetadataLayer =
-        new OGRMemLayer(szOGR_OTHER_METADATA, nullptr, wkbNone);
+
+    // Initialize m_poOtherMetadataLayer
     {
         OGRFieldDefn oFieldDefn(szKEY, OFTString);
         m_poOtherMetadataLayer->CreateField(&oFieldDefn);
@@ -183,27 +188,6 @@ OGRGMLASDataSource::OGRGMLASDataSource()
         OGRFieldDefn oFieldDefn(szVALUE, OFTString);
         m_poOtherMetadataLayer->CreateField(&oFieldDefn);
     }
-}
-
-/************************************************************************/
-/*                         ~OGRGMLASDataSource()                        */
-/************************************************************************/
-
-OGRGMLASDataSource::~OGRGMLASDataSource()
-{
-    for (size_t i = 0; i < m_apoLayers.size(); i++)
-        delete m_apoLayers[i];
-    delete m_poFieldsMetadataLayer;
-    delete m_poLayersMetadataLayer;
-    delete m_poRelationshipsLayer;
-    delete m_poOtherMetadataLayer;
-    if (m_fpGML != nullptr)
-        VSIFCloseL(m_fpGML);
-    if (m_fpGMLParser != nullptr)
-        VSIFCloseL(m_fpGMLParser);
-    delete m_poReader;
-
-    OGRDeinitializeXerces();
 }
 
 /************************************************************************/
@@ -233,7 +217,7 @@ OGRLayer *OGRGMLASDataSource::GetLayer(int i)
 
     if (i < 0 || i >= nBaseLayers)
         return nullptr;
-    return m_apoLayers[i];
+    return m_apoLayers[i].get();
 }
 
 /************************************************************************/
@@ -242,27 +226,24 @@ OGRLayer *OGRGMLASDataSource::GetLayer(int i)
 
 OGRLayer *OGRGMLASDataSource::GetLayerByName(const char *pszName)
 {
-    OGRLayer *poLayer = GDALDataset::GetLayerByName(pszName);
-    if (poLayer)
+    if (OGRLayer *poLayer = GDALDataset::GetLayerByName(pszName))
         return poLayer;
 
-    OGRLayer *apoLayers[4];
-    apoLayers[0] = m_poFieldsMetadataLayer;
-    apoLayers[1] = m_poLayersMetadataLayer;
-    apoLayers[2] = m_poRelationshipsLayer;
-    apoLayers[3] = m_poOtherMetadataLayer;
-    for (size_t i = 0; i < CPL_ARRAYSIZE(apoLayers); ++i)
+    OGRLayer *apoLayers[] = {
+        m_poFieldsMetadataLayer.get(), m_poLayersMetadataLayer.get(),
+        m_poRelationshipsLayer.get(), m_poOtherMetadataLayer.get()};
+    for (auto *poLayer : apoLayers)
     {
-        if (EQUAL(pszName, apoLayers[i]->GetName()))
+        if (EQUAL(pszName, poLayer->GetName()))
         {
             if (std::find(m_apoRequestedMetadataLayers.begin(),
                           m_apoRequestedMetadataLayers.end(),
-                          apoLayers[i]) == m_apoRequestedMetadataLayers.end())
+                          poLayer) == m_apoRequestedMetadataLayers.end())
             {
-                m_apoRequestedMetadataLayers.push_back(apoLayers[i]);
+                m_apoRequestedMetadataLayers.push_back(poLayer);
             }
             RunFirstPassIfNeeded(nullptr, nullptr, nullptr);
-            return apoLayers[i];
+            return poLayer;
         }
     }
 
@@ -281,9 +262,9 @@ void OGRGMLASDataSource::TranslateClasses(OGRGMLASLayer *poParentLayer,
     // CPLDebug("GMLAS", "TranslateClasses(%s,%s)",
     //          oFC.GetName().c_str(), oFC.GetXPath().c_str());
 
-    OGRGMLASLayer *poLayer = new OGRGMLASLayer(this, oFC, poParentLayer,
-                                               m_oConf.m_bAlwaysGenerateOGRId);
-    m_apoLayers.push_back(poLayer);
+    m_apoLayers.emplace_back(std::make_unique<OGRGMLASLayer>(
+        this, oFC, poParentLayer, m_oConf.m_bAlwaysGenerateOGRId));
+    auto poLayer = m_apoLayers.back().get();
 
     for (size_t i = 0; i < aoClasses.size(); ++i)
     {
@@ -297,20 +278,17 @@ void OGRGMLASDataSource::TranslateClasses(OGRGMLASLayer *poParentLayer,
 
 class GMLASTopElementParser : public DefaultHandler
 {
-    std::vector<PairURIFilename> m_aoFilenames;
-    int m_nStartElementCounter;
-    bool m_bFinish;
-    bool m_bFoundSWE;
-    std::map<CPLString, CPLString> m_oMapDocNSURIToPrefix;
+    std::vector<PairURIFilename> m_aoFilenames{};
+    int m_nStartElementCounter = 0;
+    bool m_bFinish = false;
+    bool m_bFoundSWE = false;
+    std::map<CPLString, CPLString> m_oMapDocNSURIToPrefix{};
 
   public:
-    GMLASTopElementParser();
+    GMLASTopElementParser() = default;
 
-    virtual ~GMLASTopElementParser()
-    {
-    }
-
-    void Parse(const CPLString &osFilename, VSILFILE *fp);
+    void Parse(const CPLString &osFilename,
+               const std::shared_ptr<VSIVirtualHandle> &fp);
 
     const std::vector<PairURIFilename> &GetXSDs() const
     {
@@ -334,21 +312,14 @@ class GMLASTopElementParser : public DefaultHandler
 };
 
 /************************************************************************/
-/*                          GMLASTopElementParser()                     */
-/************************************************************************/
-
-GMLASTopElementParser::GMLASTopElementParser()
-    : m_nStartElementCounter(0), m_bFinish(false), m_bFoundSWE(false)
-{
-}
-
-/************************************************************************/
 /*                               Parse()                                */
 /************************************************************************/
 
-void GMLASTopElementParser::Parse(const CPLString &osFilename, VSILFILE *fp)
+void GMLASTopElementParser::Parse(const CPLString &osFilename,
+                                  const std::shared_ptr<VSIVirtualHandle> &fp)
 {
-    SAX2XMLReader *poSAXReader = XMLReaderFactory::createXMLReader();
+    auto poSAXReader =
+        std::unique_ptr<SAX2XMLReader>(XMLReaderFactory::createXMLReader());
 
     poSAXReader->setFeature(XMLUni::fgSAX2CoreNameSpaces, true);
     poSAXReader->setFeature(XMLUni::fgSAX2CoreNameSpacePrefixes, true);
@@ -362,12 +333,12 @@ void GMLASTopElementParser::Parse(const CPLString &osFilename, VSILFILE *fp)
     GMLASErrorHandler oErrorHandler;
     poSAXReader->setErrorHandler(&oErrorHandler);
 
-    GMLASInputSource *poIS = new GMLASInputSource(osFilename, fp, false);
+    GMLASInputSource oIS(osFilename, fp);
 
     try
     {
         XMLPScanToken oToFill;
-        if (poSAXReader->parseFirst(*poIS, oToFill))
+        if (poSAXReader->parseFirst(oIS, oToFill))
         {
             while (!m_bFinish && poSAXReader->parseNext(oToFill))
             {
@@ -385,9 +356,6 @@ void GMLASTopElementParser::Parse(const CPLString &osFilename, VSILFILE *fp)
         CPLError(CE_Failure, CPLE_AppDefined, "%s",
                  transcode(toCatch.getMessage()).c_str());
     }
-
-    delete poSAXReader;
-    delete poIS;
 }
 
 /************************************************************************/
@@ -487,42 +455,42 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
     {
         if (STARTS_WITH(osConfigFile, "<Configuration"))
         {
-            OGRFeature *poFeature = new OGRFeature(poFDefn);
-            poFeature->SetField(szKEY, szCONFIGURATION_INLINED);
-            poFeature->SetField(szVALUE, osConfigFile.c_str());
+            OGRFeature oFeature(poFDefn);
+            oFeature.SetField(szKEY, szCONFIGURATION_INLINED);
+            oFeature.SetField(szVALUE, osConfigFile.c_str());
             CPL_IGNORE_RET_VAL(
-                m_poOtherMetadataLayer->CreateFeature(poFeature));
-            delete poFeature;
+                m_poOtherMetadataLayer->CreateFeature(&oFeature));
         }
         else
         {
-            OGRFeature *poFeature = new OGRFeature(poFDefn);
-            poFeature->SetField(szKEY, szCONFIGURATION_FILENAME);
-            char *pszCurDir = CPLGetCurrentDir();
-            if (!bKeepRelativePathsForMetadata &&
-                CPLIsFilenameRelative(osConfigFile) && pszCurDir != nullptr)
             {
-                poFeature->SetField(
-                    szVALUE, CPLFormFilename(pszCurDir, osConfigFile, nullptr));
+                OGRFeature oFeature(poFDefn);
+                oFeature.SetField(szKEY, szCONFIGURATION_FILENAME);
+                char *pszCurDir = CPLGetCurrentDir();
+                if (!bKeepRelativePathsForMetadata &&
+                    CPLIsFilenameRelative(osConfigFile) && pszCurDir != nullptr)
+                {
+                    oFeature.SetField(
+                        szVALUE,
+                        CPLFormFilename(pszCurDir, osConfigFile, nullptr));
+                }
+                else
+                {
+                    oFeature.SetField(szVALUE, osConfigFile.c_str());
+                }
+                CPLFree(pszCurDir);
+                CPL_IGNORE_RET_VAL(
+                    m_poOtherMetadataLayer->CreateFeature(&oFeature));
             }
-            else
-            {
-                poFeature->SetField(szVALUE, osConfigFile.c_str());
-            }
-            CPLFree(pszCurDir);
-            CPL_IGNORE_RET_VAL(
-                m_poOtherMetadataLayer->CreateFeature(poFeature));
-            delete poFeature;
 
             GByte *pabyRet = nullptr;
             if (VSIIngestFile(nullptr, osConfigFile, &pabyRet, nullptr, -1))
             {
-                poFeature = new OGRFeature(poFDefn);
-                poFeature->SetField(szKEY, szCONFIGURATION_INLINED);
-                poFeature->SetField(szVALUE, reinterpret_cast<char *>(pabyRet));
+                OGRFeature oFeature(poFDefn);
+                oFeature.SetField(szKEY, szCONFIGURATION_INLINED);
+                oFeature.SetField(szVALUE, reinterpret_cast<char *>(pabyRet));
                 CPL_IGNORE_RET_VAL(
-                    m_poOtherMetadataLayer->CreateFeature(poFeature));
-                delete poFeature;
+                    m_poOtherMetadataLayer->CreateFeature(&oFeature));
             }
             VSIFree(pabyRet);
         }
@@ -538,20 +506,19 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
             CSLFetchNameValue(poOpenInfo->papszOpenOptions, pszKey);
         if (pszVal)
         {
-            OGRFeature *poFeature = new OGRFeature(poFDefn);
-            poFeature->SetField(szKEY, pszKey);
-            poFeature->SetField(szVALUE, pszVal);
+            OGRFeature oFeature(poFDefn);
+            oFeature.SetField(szKEY, pszKey);
+            oFeature.SetField(szVALUE, pszVal);
             CPL_IGNORE_RET_VAL(
-                m_poOtherMetadataLayer->CreateFeature(poFeature));
-            delete poFeature;
+                m_poOtherMetadataLayer->CreateFeature(&oFeature));
         }
     }
 
     CPLString osAbsoluteGMLFilename;
     if (!m_osGMLFilename.empty())
     {
-        OGRFeature *poFeature = new OGRFeature(poFDefn);
-        poFeature->SetField(szKEY, szDOCUMENT_FILENAME);
+        OGRFeature oFeature(poFDefn);
+        oFeature.SetField(szKEY, szDOCUMENT_FILENAME);
         char *pszCurDir = CPLGetCurrentDir();
         if (!bKeepRelativePathsForMetadata &&
             CPLIsFilenameRelative(m_osGMLFilename) && pszCurDir != nullptr)
@@ -561,10 +528,9 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
         }
         else
             osAbsoluteGMLFilename = m_osGMLFilename;
-        poFeature->SetField(szVALUE, osAbsoluteGMLFilename.c_str());
+        oFeature.SetField(szVALUE, osAbsoluteGMLFilename.c_str());
         CPLFree(pszCurDir);
-        CPL_IGNORE_RET_VAL(m_poOtherMetadataLayer->CreateFeature(poFeature));
-        delete poFeature;
+        CPL_IGNORE_RET_VAL(m_poOtherMetadataLayer->CreateFeature(&oFeature));
     }
 
     int nNSIdx = 1;
@@ -579,37 +545,40 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
         if (osURI == szOGRGMLAS_URI)
             continue;
 
-        OGRFeature *poFeature = new OGRFeature(poFDefn);
-        poFeature->SetField(szKEY, CPLSPrintf(szNAMESPACE_URI_FMT, nNSIdx));
-        poFeature->SetField(szVALUE, osURI.c_str());
-        CPL_IGNORE_RET_VAL(m_poOtherMetadataLayer->CreateFeature(poFeature));
-        delete poFeature;
+        {
+            OGRFeature oFeature(poFDefn);
+            oFeature.SetField(szKEY, CPLSPrintf(szNAMESPACE_URI_FMT, nNSIdx));
+            oFeature.SetField(szVALUE, osURI.c_str());
+            CPL_IGNORE_RET_VAL(
+                m_poOtherMetadataLayer->CreateFeature(&oFeature));
+        }
 
-        poFeature = new OGRFeature(poFDefn);
-        poFeature->SetField(szKEY,
-                            CPLSPrintf(szNAMESPACE_LOCATION_FMT, nNSIdx));
+        {
+            OGRFeature oFeature(poFDefn);
+            oFeature.SetField(szKEY,
+                              CPLSPrintf(szNAMESPACE_LOCATION_FMT, nNSIdx));
 
-        const CPLString osAbsoluteXSDFilename(
-            (osXSDFilename.find("http://") != 0 &&
-             osXSDFilename.find("https://") != 0 &&
-             CPLIsFilenameRelative(osXSDFilename))
-                ? CPLString(
-                      CPLFormFilename(CPLGetDirname(osAbsoluteGMLFilename),
-                                      osXSDFilename, nullptr))
-                : osXSDFilename);
-        poFeature->SetField(szVALUE, osAbsoluteXSDFilename.c_str());
-        CPL_IGNORE_RET_VAL(m_poOtherMetadataLayer->CreateFeature(poFeature));
-        delete poFeature;
+            const CPLString osAbsoluteXSDFilename(
+                (osXSDFilename.find("http://") != 0 &&
+                 osXSDFilename.find("https://") != 0 &&
+                 CPLIsFilenameRelative(osXSDFilename))
+                    ? CPLString(
+                          CPLFormFilename(CPLGetDirname(osAbsoluteGMLFilename),
+                                          osXSDFilename, nullptr))
+                    : osXSDFilename);
+            oFeature.SetField(szVALUE, osAbsoluteXSDFilename.c_str());
+            CPL_IGNORE_RET_VAL(
+                m_poOtherMetadataLayer->CreateFeature(&oFeature));
+        }
 
         if (m_oMapURIToPrefix.find(osURI) != m_oMapURIToPrefix.end())
         {
-            poFeature = new OGRFeature(poFDefn);
-            poFeature->SetField(szKEY,
-                                CPLSPrintf(szNAMESPACE_PREFIX_FMT, nNSIdx));
-            poFeature->SetField(szVALUE, m_oMapURIToPrefix[osURI].c_str());
+            OGRFeature oFeature(poFDefn);
+            oFeature.SetField(szKEY,
+                              CPLSPrintf(szNAMESPACE_PREFIX_FMT, nNSIdx));
+            oFeature.SetField(szVALUE, m_oMapURIToPrefix[osURI].c_str());
             CPL_IGNORE_RET_VAL(
-                m_poOtherMetadataLayer->CreateFeature(poFeature));
-            delete poFeature;
+                m_poOtherMetadataLayer->CreateFeature(&oFeature));
         }
 
         nNSIdx++;
@@ -624,20 +593,23 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
             osURI != szXML_URI && osURI != szXS_URI && osURI != szXSI_URI &&
             osURI != szXMLNS_URI && osURI != szOGRGMLAS_URI)
         {
-            OGRFeature *poFeature = new OGRFeature(poFDefn);
-            poFeature->SetField(szKEY, CPLSPrintf(szNAMESPACE_URI_FMT, nNSIdx));
-            poFeature->SetField(szVALUE, osURI.c_str());
-            CPL_IGNORE_RET_VAL(
-                m_poOtherMetadataLayer->CreateFeature(poFeature));
-            delete poFeature;
+            {
+                OGRFeature oFeature(poFDefn);
+                oFeature.SetField(szKEY,
+                                  CPLSPrintf(szNAMESPACE_URI_FMT, nNSIdx));
+                oFeature.SetField(szVALUE, osURI.c_str());
+                CPL_IGNORE_RET_VAL(
+                    m_poOtherMetadataLayer->CreateFeature(&oFeature));
+            }
 
-            poFeature = new OGRFeature(poFDefn);
-            poFeature->SetField(szKEY,
-                                CPLSPrintf(szNAMESPACE_PREFIX_FMT, nNSIdx));
-            poFeature->SetField(szVALUE, osPrefix.c_str());
-            CPL_IGNORE_RET_VAL(
-                m_poOtherMetadataLayer->CreateFeature(poFeature));
-            delete poFeature;
+            {
+                OGRFeature oFeature(poFDefn);
+                oFeature.SetField(szKEY,
+                                  CPLSPrintf(szNAMESPACE_PREFIX_FMT, nNSIdx));
+                oFeature.SetField(szVALUE, osPrefix.c_str());
+                CPL_IGNORE_RET_VAL(
+                    m_poOtherMetadataLayer->CreateFeature(&oFeature));
+            }
 
             nNSIdx++;
         }
@@ -645,11 +617,10 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
 
     if (!m_osGMLVersionFound.empty())
     {
-        OGRFeature *poFeature = new OGRFeature(poFDefn);
-        poFeature->SetField(szKEY, szGML_VERSION);
-        poFeature->SetField(szVALUE, m_osGMLVersionFound);
-        CPL_IGNORE_RET_VAL(m_poOtherMetadataLayer->CreateFeature(poFeature));
-        delete poFeature;
+        OGRFeature oFeature(poFDefn);
+        oFeature.SetField(szKEY, szGML_VERSION);
+        oFeature.SetField(szVALUE, m_osGMLVersionFound);
+        CPL_IGNORE_RET_VAL(m_poOtherMetadataLayer->CreateFeature(&oFeature));
     }
 
     int nSchemaIdx = 1;
@@ -657,13 +628,11 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
     {
         for (const auto &osSchemaURL : oSetSchemaURLs)
         {
-            OGRFeature *poFeature = new OGRFeature(poFDefn);
-            poFeature->SetField(szKEY,
-                                CPLSPrintf(szSCHEMA_NAME_FMT, nSchemaIdx));
-            poFeature->SetField(szVALUE, osSchemaURL.c_str());
+            OGRFeature oFeature(poFDefn);
+            oFeature.SetField(szKEY, CPLSPrintf(szSCHEMA_NAME_FMT, nSchemaIdx));
+            oFeature.SetField(szVALUE, osSchemaURL.c_str());
             CPL_IGNORE_RET_VAL(
-                m_poOtherMetadataLayer->CreateFeature(poFeature));
-            delete poFeature;
+                m_poOtherMetadataLayer->CreateFeature(&oFeature));
 
             nSchemaIdx++;
         }
@@ -779,10 +748,10 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
     CPLString osXSDFilenames =
         CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, szXSD_OPTION, "");
 
-    VSILFILE *fpGML = nullptr;
+    std::shared_ptr<VSIVirtualHandle> fpGML;
     if (!m_osGMLFilename.empty())
     {
-        fpGML = VSIFOpenL(m_osGMLFilename, "rb");
+        fpGML.reset(VSIFOpenL(m_osGMLFilename, "rb"), VSIVirtualHandleCloser{});
         if (fpGML == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s",
@@ -831,10 +800,10 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
             CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "HASH", "");
         if (m_osHash.empty())
         {
-            VSIFSeekL(fpGML, 0, SEEK_SET);
+            fpGML->Seek(0, SEEK_SET);
             std::string osBuffer;
             osBuffer.resize(8192);
-            size_t nRead = VSIFReadL(&osBuffer[0], 1, 8192, fpGML);
+            size_t nRead = fpGML->Read(&osBuffer[0], 1, 8192);
             osBuffer.resize(nRead);
             size_t nPos = osBuffer.find("timeStamp=\"");
             if (nPos != std::string::npos)
@@ -868,7 +837,7 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
             CPLFree(pszHash);
         }
 
-        VSIFSeekL(fpGML, 0, SEEK_SET);
+        fpGML->Seek(0, SEEK_SET);
         PushUnusedGMLFilePointer(fpGML);
     }
 
@@ -919,10 +888,10 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
                      szEXPOSE_METADATA_LAYERS_OPTION,
                      m_oConf.m_bExposeMetadataLayers))
     {
-        m_apoRequestedMetadataLayers.push_back(m_poFieldsMetadataLayer);
-        m_apoRequestedMetadataLayers.push_back(m_poLayersMetadataLayer);
-        m_apoRequestedMetadataLayers.push_back(m_poRelationshipsLayer);
-        m_apoRequestedMetadataLayers.push_back(m_poOtherMetadataLayer);
+        m_apoRequestedMetadataLayers.push_back(m_poFieldsMetadataLayer.get());
+        m_apoRequestedMetadataLayers.push_back(m_poLayersMetadataLayer.get());
+        m_apoRequestedMetadataLayers.push_back(m_poRelationshipsLayer.get());
+        m_apoRequestedMetadataLayers.push_back(m_poOtherMetadataLayer.get());
     }
 
     const char *pszSwapCoordinates = CSLFetchNameValueDef(
@@ -943,23 +912,23 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
     const std::vector<GMLASFeatureClass> &aoClasses = oAnalyzer.GetClasses();
 
     // First "standard" tables
-    for (size_t i = 0; i < aoClasses.size(); ++i)
+    for (auto &oClass : aoClasses)
     {
-        if (aoClasses[i].GetParentXPath().empty())
-            TranslateClasses(nullptr, aoClasses[i]);
+        if (oClass.GetParentXPath().empty())
+            TranslateClasses(nullptr, oClass);
     }
     // Then junction tables
-    for (size_t i = 0; i < aoClasses.size(); ++i)
+    for (auto &oClass : aoClasses)
     {
-        if (!aoClasses[i].GetParentXPath().empty())
-            TranslateClasses(nullptr, aoClasses[i]);
+        if (!oClass.GetParentXPath().empty())
+            TranslateClasses(nullptr, oClass);
     }
 
     // And now do initialization since we need to have instantiated everything
     // to be able to do cross-layer links
-    for (size_t i = 0; i < m_apoLayers.size(); i++)
+    for (auto &poLayer : m_apoLayers)
     {
-        m_apoLayers[i]->PostInit(m_oConf.m_bIncludeGeometryXML);
+        poLayer->PostInit(m_oConf.m_bIncludeGeometryXML);
     }
     m_bLayerInitFinished = true;
 
@@ -1013,22 +982,24 @@ int OGRGMLASDataSource::TestCapability(const char *pszCap)
 /*                           CreateReader()                             */
 /************************************************************************/
 
-GMLASReader *OGRGMLASDataSource::CreateReader(VSILFILE *&fpGML,
-                                              GDALProgressFunc pfnProgress,
-                                              void *pProgressData)
+GMLASReader *
+OGRGMLASDataSource::CreateReader(std::shared_ptr<VSIVirtualHandle> &fpGML,
+                                 GDALProgressFunc pfnProgress,
+                                 void *pProgressData)
 {
     if (fpGML == nullptr)
     {
         // Try recycling an already opened and unused file pointer
         fpGML = PopUnusedGMLFilePointer();
         if (fpGML == nullptr)
-            fpGML = VSIFOpenL(GetGMLFilename(), "rb");
+            fpGML.reset(VSIFOpenL(GetGMLFilename(), "rb"),
+                        VSIVirtualHandleCloser{});
         if (fpGML == nullptr)
             return nullptr;
     }
 
-    GMLASReader *poReader =
-        new GMLASReader(GetCache(), GetIgnoredXPathMatcher(), m_oXLinkResolver);
+    auto poReader = std::make_unique<GMLASReader>(
+        GetCache(), GetIgnoredXPathMatcher(), m_oXLinkResolver);
     poReader->Init(GetGMLFilename(), fpGML, GetMapURIToPrefix(), GetLayers(),
                    false, std::vector<PairURIFilename>(), m_bSchemaFullChecking,
                    m_bHandleMultipleImports);
@@ -1037,9 +1008,8 @@ GMLASReader *OGRGMLASDataSource::CreateReader(VSILFILE *&fpGML,
 
     poReader->SetFileSize(m_nFileSize);
 
-    if (!RunFirstPassIfNeeded(poReader, pfnProgress, pProgressData))
+    if (!RunFirstPassIfNeeded(poReader.get(), pfnProgress, pProgressData))
     {
-        delete poReader;
         return nullptr;
     }
 
@@ -1047,7 +1017,7 @@ GMLASReader *OGRGMLASDataSource::CreateReader(VSILFILE *&fpGML,
 
     poReader->SetHash(m_osHash);
 
-    return poReader;
+    return poReader.release();
 }
 
 /************************************************************************/
@@ -1056,10 +1026,9 @@ GMLASReader *OGRGMLASDataSource::CreateReader(VSILFILE *&fpGML,
 
 void OGRGMLASDataSource::ResetReading()
 {
-    delete m_poReader;
-    m_poReader = nullptr;
-    for (size_t i = 0; i < m_apoRequestedMetadataLayers.size(); ++i)
-        m_apoRequestedMetadataLayers[i]->ResetReading();
+    m_poReader.reset();
+    for (auto *poLayer : m_apoRequestedMetadataLayers)
+        poLayer->ResetReading();
     m_bEndOfReaderLayers = false;
     m_nCurMetadataLayerIdx = -1;
 }
@@ -1118,9 +1087,9 @@ OGRFeature *OGRGMLASDataSource::GetNextFeature(OGRLayer **ppoBelongingLayer,
         void *pScaledProgress = GDALCreateScaledProgress(
             0.0, dfInitialScanRatio, pfnProgress, pProgressData);
 
-        m_poReader = CreateReader(
+        m_poReader.reset(CreateReader(
             m_fpGMLParser, pScaledProgress ? GDALScaledProgress : nullptr,
-            pScaledProgress);
+            pScaledProgress));
 
         GDALDestroyScaledProgress(pScaledProgress);
 
@@ -1150,16 +1119,17 @@ OGRFeature *OGRGMLASDataSource::GetNextFeature(OGRLayer **ppoBelongingLayer,
     while (true)
     {
         OGRGMLASLayer *poBelongingLayer = nullptr;
-        OGRFeature *poFeature = m_poReader->GetNextFeature(
+        auto poFeature = std::unique_ptr<OGRFeature>(m_poReader->GetNextFeature(
             &poBelongingLayer, pScaledProgress ? GDALScaledProgress : nullptr,
-            pScaledProgress);
-        if (poFeature == nullptr || poBelongingLayer->EvaluateFilter(poFeature))
+            pScaledProgress));
+        if (poFeature == nullptr ||
+            poBelongingLayer->EvaluateFilter(poFeature.get()))
         {
             if (ppoBelongingLayer != nullptr)
                 *ppoBelongingLayer = poBelongingLayer;
             if (pdfProgressPct != nullptr)
             {
-                const vsi_l_offset nOffset = VSIFTellL(m_fpGMLParser);
+                const vsi_l_offset nOffset = m_fpGMLParser->Tell();
                 if (nOffset == m_nFileSize)
                     *pdfProgressPct = 1.0;
                 else
@@ -1183,9 +1153,8 @@ OGRFeature *OGRGMLASDataSource::GetNextFeature(OGRLayer **ppoBelongingLayer,
                 }
             }
             else
-                return poFeature;
+                return poFeature.release();
         }
-        delete poFeature;
     }
 }
 
@@ -1195,11 +1164,11 @@ OGRFeature *OGRGMLASDataSource::GetNextFeature(OGRLayer **ppoBelongingLayer,
 
 OGRGMLASLayer *OGRGMLASDataSource::GetLayerByXPath(const CPLString &osXPath)
 {
-    for (size_t i = 0; i < m_apoLayers.size(); i++)
+    for (auto &poLayer : m_apoLayers)
     {
-        if (m_apoLayers[i]->GetFeatureClass().GetXPath() == osXPath)
+        if (poLayer->GetFeatureClass().GetXPath() == osXPath)
         {
-            return m_apoLayers[i];
+            return poLayer.get();
         }
     }
     return nullptr;
@@ -1209,13 +1178,16 @@ OGRGMLASLayer *OGRGMLASDataSource::GetLayerByXPath(const CPLString &osXPath)
 /*                       PushUnusedGMLFilePointer()                     */
 /************************************************************************/
 
-void OGRGMLASDataSource::PushUnusedGMLFilePointer(VSILFILE *fpGML)
+void OGRGMLASDataSource::PushUnusedGMLFilePointer(
+    std::shared_ptr<VSIVirtualHandle> &fpGML)
 {
     if (m_fpGML == nullptr)
-        m_fpGML = fpGML;
+    {
+        std::swap(m_fpGML, fpGML);
+    }
     else
     {
-        VSIFCloseL(fpGML);
+        fpGML.reset();
     }
 }
 
@@ -1223,10 +1195,10 @@ void OGRGMLASDataSource::PushUnusedGMLFilePointer(VSILFILE *fpGML)
 /*                        PopUnusedGMLFilePointer()                     */
 /************************************************************************/
 
-VSILFILE *OGRGMLASDataSource::PopUnusedGMLFilePointer()
+std::shared_ptr<VSIVirtualHandle> OGRGMLASDataSource::PopUnusedGMLFilePointer()
 {
-    VSILFILE *fpGML = m_fpGML;
-    m_fpGML = nullptr;
+    std::shared_ptr<VSIVirtualHandle> fpGML;
+    std::swap(fpGML, m_fpGML);
     return fpGML;
 }
 
@@ -1242,7 +1214,7 @@ void OGRGMLASDataSource::InitReaderWithFirstPassElements(GMLASReader *poReader)
         poReader->SetMapGeomFieldDefnToSRSName(m_oMapGeomFieldDefnToSRSName);
         poReader->SetProcessDataRecord(m_bFoundSWE &&
                                        m_oConf.m_bSWEProcessDataRecord);
-        poReader->SetSWEDataArrayLayers(m_apoSWEDataArrayLayers);
+        poReader->SetSWEDataArrayLayersRef(m_apoSWEDataArrayLayersRef);
         poReader->SetMapElementIdToLayer(m_oMapElementIdToLayer);
         poReader->SetMapElementIdToPKID(m_oMapElementIdToPKID);
         poReader->SetDefaultSrsDimension(m_nDefaultSrsDimension);
@@ -1268,10 +1240,10 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded(GMLASReader *poReader,
     // Determine if we have geometry fields in any layer
     // If so, do an initial pass to determine the SRS of those geometry fields.
     bool bHasGeomFields = false;
-    for (size_t i = 0; i < m_apoLayers.size(); i++)
+    for (auto &poLayer : m_apoLayers)
     {
-        m_apoLayers[i]->SetLayerDefnFinalized(true);
-        if (m_apoLayers[i]->GetLayerDefn()->GetGeomFieldCount() > 0)
+        poLayer->SetLayerDefnFinalized(true);
+        if (poLayer->GetLayerDefn()->GetGeomFieldCount() > 0)
         {
             bHasGeomFields = true;
             break;
@@ -1288,12 +1260,13 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded(GMLASReader *poReader,
          (m_oConf.m_bSWEProcessDataRecord || m_oConf.m_bSWEProcessDataArray)))
     {
         bool bJustOpenedFiled = false;
-        VSILFILE *fp = nullptr;
+        std::shared_ptr<VSIVirtualHandle> fp;
         if (poReader)
             fp = poReader->GetFP();
         else
         {
-            fp = VSIFOpenL(GetGMLFilename(), "rb");
+            fp.reset(VSIFOpenL(GetGMLFilename(), "rb"),
+                     VSIVirtualHandleCloser{});
             if (fp == nullptr)
             {
                 return false;
@@ -1301,8 +1274,8 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded(GMLASReader *poReader,
             bJustOpenedFiled = true;
         }
 
-        GMLASReader *poReaderFirstPass =
-            new GMLASReader(m_oCache, m_oIgnoredXPathMatcher, m_oXLinkResolver);
+        auto poReaderFirstPass = std::make_unique<GMLASReader>(
+            m_oCache, m_oIgnoredXPathMatcher, m_oXLinkResolver);
         poReaderFirstPass->Init(GetGMLFilename(), fp, GetMapURIToPrefix(),
                                 GetLayers(), m_bValidate,
                                 m_aoXSDsManuallyPassed, m_bSchemaFullChecking,
@@ -1326,16 +1299,16 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded(GMLASReader *poReader,
             pfnProgress, pProgressData, m_bRemoveUnusedLayers,
             m_bRemoveUnusedFields,
             m_bFoundSWE && m_oConf.m_bSWEProcessDataArray,
-            m_poFieldsMetadataLayer, m_poLayersMetadataLayer,
-            m_poRelationshipsLayer, aoSetRemovedLayerNames);
+            m_poFieldsMetadataLayer.get(), m_poLayersMetadataLayer.get(),
+            m_poRelationshipsLayer.get(), aoSetRemovedLayerNames);
 
-        const std::vector<OGRGMLASLayer *> &apoSWEDataArrayLayers =
-            poReaderFirstPass->GetSWEDataArrayLayers();
-        m_apoSWEDataArrayLayers = apoSWEDataArrayLayers;
-        for (size_t i = 0; i < apoSWEDataArrayLayers.size(); i++)
+        std::vector<std::unique_ptr<OGRGMLASLayer>> apoSWEDataArrayLayers =
+            poReaderFirstPass->StealSWEDataArrayLayersOwned();
+        for (auto &poLayer : apoSWEDataArrayLayers)
         {
-            apoSWEDataArrayLayers[i]->SetDataSource(this);
-            m_apoLayers.push_back(apoSWEDataArrayLayers[i]);
+            poLayer->SetDataSource(this);
+            m_apoSWEDataArrayLayersRef.push_back(poLayer.get());
+            m_apoLayers.emplace_back(std::move(poLayer));
         }
 
         // If we have removed layers, we also need to cleanup our special
@@ -1344,10 +1317,8 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded(GMLASReader *poReader,
         {
             // Removing features while iterating works here given the layers
             // are MEM layers
-            OGRFeature *poFeature;
             m_poLayersMetadataLayer->ResetReading();
-            while ((poFeature = m_poLayersMetadataLayer->GetNextFeature()) !=
-                   nullptr)
+            for (auto &poFeature : *m_poLayersMetadataLayer)
             {
                 const char *pszLayerName =
                     poFeature->GetFieldAsString(szLAYER_NAME);
@@ -1357,13 +1328,11 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded(GMLASReader *poReader,
                     CPL_IGNORE_RET_VAL(m_poLayersMetadataLayer->DeleteFeature(
                         poFeature->GetFID()));
                 }
-                delete poFeature;
             }
             m_poLayersMetadataLayer->ResetReading();
 
             m_poFieldsMetadataLayer->ResetReading();
-            while ((poFeature = m_poFieldsMetadataLayer->GetNextFeature()) !=
-                   nullptr)
+            for (auto &poFeature : *m_poFieldsMetadataLayer)
             {
                 const char *pszLayerName =
                     poFeature->GetFieldAsString(szLAYER_NAME);
@@ -1377,13 +1346,11 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded(GMLASReader *poReader,
                     CPL_IGNORE_RET_VAL(m_poFieldsMetadataLayer->DeleteFeature(
                         poFeature->GetFID()));
                 }
-                delete poFeature;
             }
             m_poFieldsMetadataLayer->ResetReading();
 
             m_poRelationshipsLayer->ResetReading();
-            while ((poFeature = m_poRelationshipsLayer->GetNextFeature()) !=
-                   nullptr)
+            for (auto &poFeature : *m_poRelationshipsLayer)
             {
                 const char *pszParentLayerName =
                     poFeature->GetFieldAsString(szPARENT_LAYER);
@@ -1397,7 +1364,6 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded(GMLASReader *poReader,
                     CPL_IGNORE_RET_VAL(m_poRelationshipsLayer->DeleteFeature(
                         poFeature->GetFID()));
                 }
-                delete poFeature;
             }
             m_poRelationshipsLayer->ResetReading();
         }
@@ -1412,9 +1378,9 @@ bool OGRGMLASDataSource::RunFirstPassIfNeeded(GMLASReader *poReader,
         m_oMapElementIdToPKID = poReaderFirstPass->GetMapElementIdToPKID();
         m_nDefaultSrsDimension = poReaderFirstPass->GetDefaultSrsDimension();
 
-        delete poReaderFirstPass;
+        poReaderFirstPass.reset();
 
-        VSIFSeekL(fp, 0, SEEK_SET);
+        fp->Seek(0, SEEK_SET);
         if (bJustOpenedFiled)
             PushUnusedGMLFilePointer(fp);
 

@@ -21,7 +21,8 @@ Synopsis
                   [-e] [-a nodata] [-v] [-q] [-h] [-k] [-n] [-u <url>]
                   [-w <webviewer>] [-t <title>] [-c <copyright>]
                   [--processes=<NB_PROCESSES>] [--mpi] [--xyz]
-                  [--tilesize=<PIXELS>] [--tmscompatible]
+                  [--tilesize=<PIXELS>] --tiledriver=<DRIVER> [--tmscompatible]
+                  [--excluded-values=<EXCLUDED_VALUES>] [--excluded-values-pct-threshold=<EXCLUDED_VALUES_PCT_THRESHOLD>]
                   [-g <googlekey] [-b <bingkey>] <input_file> [<output_dir>] [<COMMON_OPTIONS>]
 
 Description
@@ -138,11 +139,28 @@ can publish a picture without proper georeferencing too.
 .. option:: --tiledriver=<DRIVER>
 
   Which output driver to use for the tiles, determines the file format of the tiles.
-  Currently PNG and WEBP are supported. Default is PNG.
-  Additional configuration for the WEBP driver are documented below.
+  Currently PNG, WEBP and JPEG (JPEG added in GDAL 3.9) are supported. Default is PNG.
+  Additional configuration for the WEBP and JPEG drivers are documented below.
 
   .. versionadded:: 3.6
 
+.. option:: --excluded-values=<EXCLUDED_VALUES>
+
+  Comma-separated tuple of values (thus typically "R,G,B"), that are ignored
+  as contributing source * pixels during resampling. The number of values in
+  the tuple must be the same as the number of bands, excluding the alpha band.
+  Several tuples of excluded values may be specified using the "(R1,G1,B2),(R2,G2,B2)" syntax.
+  Only taken into account by Average currently.
+  This concept is a bit similar to nodata/alpha, but the main difference is
+  that pixels matching one of the excluded value tuples are still considered
+  as valid, when determining the target pixel validity/density.
+
+.. option:: --excluded-values-pct-threshold=EXCLUDED_VALUES_PCT_THRESHOLD
+
+  Minimum percentage of source pixels that must be set at one of the --excluded-values to cause the excluded
+  value, that is in majority among source pixels, to be used as the target pixel value. Default value is 50(%)
+
+  .. versionadded:: 3.9
 
 .. option:: -h, --help
 
@@ -248,6 +266,19 @@ The following configuration options are available to further customize the webp 
     GDAL :ref:`WEBP driver <raster.webp>` documentation can be consulted
 
 
+JPEG options
++++++++++++++
+
+JPEG tiledriver support is new to GDAL 3.9. It is enabled by using --tiledriver=JPEG.
+
+Note that JPEG does not support transparency, hence edge tiles will display black
+pixels in areas not covered by the source raster.
+
+The following configuration options are available to further customize the webp output:
+
+.. option:: ---jpeg-quality=JPEG_QUALITY
+
+    QUALITY is a integer between 1-100. Default is 75.
 
 
 Examples

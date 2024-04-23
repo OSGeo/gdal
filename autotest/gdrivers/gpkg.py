@@ -1383,8 +1383,7 @@ def test_gpkg_15():
     out_ds = None
 
     out_ds = gdal.Open("/vsimem/tmp.gpkg")
-    assert out_ds.GetSpatialRef().IsLocal()
-    assert out_ds.GetProjectionRef().find("Undefined Cartesian SRS") >= 0
+    assert out_ds.GetSpatialRef() is None
     # Test setting on read-only dataset
     with gdal.quiet_errors():
         ret = out_ds.SetProjection("")

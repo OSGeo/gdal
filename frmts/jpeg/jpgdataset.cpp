@@ -406,6 +406,14 @@ void JPGDatasetCommon::ReadFLIRMetadata()
             1)
             break;
 
+        // Not a marker
+        if (abyChunkHeader[0] != 0xFF)
+            continue;
+
+        // Stop on Start of Scan
+        if (abyChunkHeader[1] == 0xDA)
+            break;
+
         int nMarkerLength = abyChunkHeader[2] * 256 + abyChunkHeader[3] - 2;
         nChunkLoc += 4 + nMarkerLength;
 
@@ -4021,9 +4029,6 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
                                     void *pProgressData)
 
 {
-    if (!pfnProgress(0.0, nullptr, pProgressData))
-        return nullptr;
-
     const int nBands = poSrcDS->GetRasterCount();
 
     const char *pszLossLessCopy =
@@ -4039,6 +4044,9 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
             GDALGetCompressionFormatForJPEG(pJPEGContent, nJPEGContent)
                     .find(";colorspace=RGBA") == std::string::npos)
         {
+            if (!pfnProgress(0.0, nullptr, pProgressData))
+                return nullptr;
+
             CPLDebug("JPEG", "Lossless copy from source dataset");
             std::vector<GByte> abyJPEG;
             try
@@ -4357,7 +4365,7 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
     {
         CPLError(bStrict ? CE_Failure : CE_Warning, CPLE_NotSupported,
                  "JPEG driver doesn't support data type %s. "
-                 "Only eight and twelve bit bands supported (Mk1 libjpeg).\n",
+                 "Only eight and twelve bit bands supported.",
                  GDALGetDataTypeName(
                      poSrcDS->GetRasterBand(1)->GetRasterDataType()));
 
@@ -4451,6 +4459,9 @@ GDALDataset *JPGDataset::CreateCopyStage2(
             VSIFCloseL(fpImage);
         return nullptr;
     }
+
+    if (!pfnProgress(0.0, nullptr, pProgressData))
+        return nullptr;
 
     // Initialize JPG access to the file.
     sCInfo.err = jpeg_std_error(&sJErr);

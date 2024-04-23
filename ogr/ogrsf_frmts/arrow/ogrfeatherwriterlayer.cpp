@@ -97,15 +97,18 @@ bool OGRFeatherWriterLayer::SetOptions(const std::string &osFilename,
 
     const char *pszGeomEncoding =
         CSLFetchNameValue(papszOptions, "GEOMETRY_ENCODING");
-    m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_GENERIC;
+    m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_STRUCT_GENERIC;
     if (pszGeomEncoding)
     {
         if (EQUAL(pszGeomEncoding, "WKB"))
             m_eGeomEncoding = OGRArrowGeomEncoding::WKB;
         else if (EQUAL(pszGeomEncoding, "WKT"))
             m_eGeomEncoding = OGRArrowGeomEncoding::WKT;
-        else if (EQUAL(pszGeomEncoding, "GEOARROW"))
-            m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_GENERIC;
+        else if (EQUAL(pszGeomEncoding, "GEOARROW_INTERLEAVED"))
+            m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_FSL_GENERIC;
+        else if (EQUAL(pszGeomEncoding, "GEOARROW") ||
+                 EQUAL(pszGeomEncoding, "GEOARROW_STRUCT"))
+            m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_STRUCT_GENERIC;
         else
         {
             CPLError(CE_Failure, CPLE_NotSupported,
@@ -129,10 +132,12 @@ bool OGRFeatherWriterLayer::SetOptions(const std::string &osFilename,
 
         m_poFeatureDefn->SetGeomType(eGType);
         auto eGeomEncoding = m_eGeomEncoding;
-        if (eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_GENERIC)
+        if (eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_FSL_GENERIC ||
+            eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_STRUCT_GENERIC)
         {
-            eGeomEncoding = GetPreciseArrowGeomEncoding(eGType);
-            if (eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_GENERIC)
+            const auto eEncodingType = eGeomEncoding;
+            eGeomEncoding = GetPreciseArrowGeomEncoding(eEncodingType, eGType);
+            if (eGeomEncoding == eEncodingType)
                 return false;
         }
         m_aeGeomEncoding.push_back(eGeomEncoding);
@@ -237,7 +242,7 @@ void OGRFeatherWriterLayer::CreateSchema()
             CPLJSONObject oColumn;
             oColumns.Add(poGeomFieldDefn->GetNameRef(), oColumn);
             oColumn.Add("encoding",
-                        GetGeomEncodingAsString(m_aeGeomEncoding[i], true));
+                        GetGeomEncodingAsString(m_aeGeomEncoding[i], false));
 
             const auto poSRS = poGeomFieldDefn->GetSpatialRef();
             if (poSRS)

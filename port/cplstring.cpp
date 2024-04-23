@@ -278,7 +278,7 @@ size_t CPLString::ifind(const char *s, size_t nPos) const
 {
     const char *pszHaystack = c_str();
     const char chFirst =
-        static_cast<char>(::tolower(static_cast<unsigned char>(s[0])));
+        static_cast<char>(CPLTolower(static_cast<unsigned char>(s[0])));
     const size_t nTargetLen = strlen(s);
 
     if (nPos > size())
@@ -288,7 +288,7 @@ size_t CPLString::ifind(const char *s, size_t nPos) const
 
     while (*pszHaystack != '\0')
     {
-        if (chFirst == ::tolower(static_cast<unsigned char>(*pszHaystack)))
+        if (chFirst == CPLTolower(static_cast<unsigned char>(*pszHaystack)))
         {
             if (EQUALN(pszHaystack, s, nTargetLen))
                 return nPos;
@@ -313,7 +313,7 @@ CPLString &CPLString::toupper()
 
 {
     for (size_t i = 0; i < size(); i++)
-        (*this)[i] = static_cast<char>(::toupper((*this)[i]));
+        (*this)[i] = static_cast<char>(CPLToupper((*this)[i]));
 
     return *this;
 }
@@ -330,8 +330,7 @@ CPLString &CPLString::tolower()
 
 {
     for (size_t i = 0; i < size(); i++)
-        (*this)[i] = static_cast<char>(
-            ::tolower(static_cast<unsigned char>((*this)[i])));
+        (*this)[i] = static_cast<char>(CPLTolower((*this)[i]));
 
     return *this;
 }

@@ -127,27 +127,32 @@ void OGRPGDumpDataSource::LogCommit()
 /*                         OGRPGCommonLaunderName()                     */
 /************************************************************************/
 
-char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix)
+char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix,
+                             bool bUTF8ToASCII)
 
 {
-    char *pszSafeName = CPLStrdup(pszSrcName);
+    char *pszSafeName = bUTF8ToASCII ? CPLUTF8ForceToASCII(pszSrcName, '_')
+                                     : CPLStrdup(pszSrcName);
 
     int i = 0;  // needed after loop
     for (; i < OGR_PG_NAMEDATALEN - 1 && pszSafeName[i] != '\0'; i++)
     {
-        pszSafeName[i] =
-            (char)tolower(static_cast<unsigned char>(pszSafeName[i]));
-        if (pszSafeName[i] == '\'' || pszSafeName[i] == '-' ||
-            pszSafeName[i] == '#')
+        if (static_cast<unsigned char>(pszSafeName[i]) <= 127)
         {
-            pszSafeName[i] = '_';
+            pszSafeName[i] =
+                (char)CPLTolower(static_cast<unsigned char>(pszSafeName[i]));
+            if (pszSafeName[i] == '\'' || pszSafeName[i] == '-' ||
+                pszSafeName[i] == '#')
+            {
+                pszSafeName[i] = '_';
+            }
         }
     }
     pszSafeName[i] = '\0';
 
     if (strcmp(pszSrcName, pszSafeName) != 0)
     {
-        if (strlen(pszSafeName) < strlen(pszSrcName))
+        if (CPLStrlenUTF8(pszSafeName) < CPLStrlenUTF8(pszSrcName))
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "%s identifier truncated to %s", pszSrcName, pszSafeName);
@@ -250,7 +255,10 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     const char *pszDotPos = strstr(pszLayerName, ".");
     std::string osTable;
     std::string osSchema;
-    const bool bLaunder = CPLFetchBool(papszOptions, "LAUNDER", true);
+    const bool bUTF8ToASCII =
+        CPLFetchBool(papszOptions, "LAUNDER_ASCII", false);
+    const bool bLaunder =
+        bUTF8ToASCII || CPLFetchBool(papszOptions, "LAUNDER", true);
 
     if (pszDotPos != nullptr && bExtractSchemaFromLayerName)
     {
@@ -260,8 +268,8 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
 
         if (bLaunder)
         {
-            char *pszTmp =
-                OGRPGCommonLaunderName(pszDotPos + 1, "PGDump");  // skip "."
+            char *pszTmp = OGRPGCommonLaunderName(pszDotPos + 1, "PGDump",
+                                                  bUTF8ToASCII);  // skip "."
             osTable = pszTmp;
             CPLFree(pszTmp);
         }
@@ -272,7 +280,8 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     {
         if (bLaunder)
         {
-            char *pszTmp = OGRPGCommonLaunderName(pszLayerName, "PGDump");
+            char *pszTmp =
+                OGRPGCommonLaunderName(pszLayerName, "PGDump", bUTF8ToASCII);
             osTable = pszTmp;
             CPLFree(pszTmp);
         }
@@ -470,8 +479,8 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     {
         if (bLaunder)
         {
-            char *pszLaunderedFid =
-                OGRPGCommonLaunderName(pszFIDColumnNameIn, "PGDump");
+            char *pszLaunderedFid = OGRPGCommonLaunderName(
+                pszFIDColumnNameIn, "PGDump", bUTF8ToASCII);
             osFIDColumnName = pszLaunderedFid;
             CPLFree(pszLaunderedFid);
         }
@@ -622,6 +631,7 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
         !osFIDColumnName.empty() ? osFIDColumnName.c_str() : nullptr,
         bWriteAsHex, bCreateTable);
     poLayer->SetLaunderFlag(bLaunder);
+    poLayer->SetUTF8ToASCIIFlag(bUTF8ToASCII);
     poLayer->SetPrecisionFlag(CPLFetchBool(papszOptions, "PRECISION", true));
 
     const char *pszOverrideColumnTypes =

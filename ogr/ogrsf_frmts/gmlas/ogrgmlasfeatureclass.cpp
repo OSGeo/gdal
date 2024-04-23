@@ -31,19 +31,6 @@
 #include "ogr_gmlas.h"
 
 /************************************************************************/
-/*                              GMLASField()                            */
-/************************************************************************/
-
-GMLASField::GMLASField()
-    : m_eType(GMLAS_FT_STRING), m_eGeomType(wkbNone), m_nWidth(0),
-      m_bNotNullable(false), m_bArray(false), m_bList(false),
-      m_eCategory(REGULAR), m_nMinOccurs(-1), m_nMaxOccurs(-1),
-      m_bRepetitionOnSequence(false), m_bIncludeThisEltInBlob(false),
-      m_bIgnored(false), m_bMayAppearOutOfOrder(false)
-{
-}
-
-/************************************************************************/
 /*                             GetTypeFromString()                      */
 /************************************************************************/
 
@@ -119,15 +106,6 @@ void GMLASField::SetType(GMLASFieldType eType, const char *pszTypeName)
 {
     m_eType = eType;
     m_osTypeName = pszTypeName;
-}
-
-/************************************************************************/
-/*                          GMLASFeatureClass()                         */
-/************************************************************************/
-
-GMLASFeatureClass::GMLASFeatureClass()
-    : m_bIsRepeatedSequence(false), m_bIsGroup(false), m_bIsTopLevelElt(false)
-{
 }
 
 /************************************************************************/

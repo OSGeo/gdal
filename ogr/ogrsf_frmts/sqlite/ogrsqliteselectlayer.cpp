@@ -141,8 +141,8 @@ OGRSQLiteSelectLayer::OGRSQLiteSelectLayer(
                     sqlite3_column_table_name(m_hStmt, poGeomFieldDefn->m_iCol);
                 if (pszTableName != nullptr)
                 {
-                    CPLErrorStateBackuper oErrorStateBackuper;
-                    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                    CPLErrorStateBackuper oErrorStateBackuper(
+                        CPLQuietErrorHandler);
                     OGRSQLiteLayer *m_poLayer =
                         cpl::down_cast<OGRSQLiteLayer *>(
                             m_poDS->GetLayerByName(pszTableName));
@@ -382,6 +382,9 @@ void OGRSQLiteSelectLayer::SetSpatialFilter(int iGeomField,
 {
     if (!m_bCanReopenBaseDS && iGeomField == 0)
     {
+        if (!ValidateGeometryFieldIndexForSetSpatialFilter(iGeomField, poGeomIn,
+                                                           true))
+            return;
         // For a Memory datasource, short-circuit
         // OGRSQLiteExecuteSQL::SetSpatialFilter()
         // that would try to re-open the Memory datasource, which would fail.
@@ -397,18 +400,9 @@ void OGRSQLiteSelectLayerCommonBehaviour::SetSpatialFilter(
     int iGeomField, OGRGeometry *poGeomIn)
 
 {
-    if (iGeomField == 0 && poGeomIn == nullptr &&
-        m_poLayer->GetLayerDefn()->GetGeomFieldCount() == 0)
-    {
-        /* do nothing */
-    }
-    else if (iGeomField < 0 ||
-             iGeomField >= m_poLayer->GetLayerDefn()->GetGeomFieldCount())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid geometry field index : %d", iGeomField);
+    if (!m_poLayer->ValidateGeometryFieldIndexForSetSpatialFilter(
+            iGeomField, poGeomIn, true))
         return;
-    }
 
     m_bAllowResetReadingEvenIfIndexAtZero = true;
 

@@ -2316,9 +2316,9 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
     for (int i = 0; szExtUpper[i] != '\0'; i++)
     {
         szExtUpper[i] = static_cast<char>(
-            toupper(static_cast<unsigned char>(szExtUpper[i])));
+            CPLToupper(static_cast<unsigned char>(szExtUpper[i])));
         szExtLower[i] = static_cast<char>(
-            tolower(static_cast<unsigned char>(szExtLower[i])));
+            CPLTolower(static_cast<unsigned char>(szExtLower[i])));
     }
 
     const char *pszTFW = CPLResetExtension(pszBaseFilename, szExtLower);

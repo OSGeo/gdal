@@ -1242,7 +1242,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn(const char *pszLayerName,
 /*                          SetIgnoredFields()                          */
 /************************************************************************/
 
-OGRErr OGRGeoPackageLayer::SetIgnoredFields(const char **papszFields)
+OGRErr OGRGeoPackageLayer::SetIgnoredFields(CSLConstList papszFields)
 {
     OGRErr eErr = OGRLayer::SetIgnoredFields(papszFields);
     if (eErr == OGRERR_NONE)

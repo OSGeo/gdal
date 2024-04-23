@@ -560,8 +560,8 @@ void OGROCISession::CleanName(char *pszName)
 
     for (i = 0; pszName[i] != '\0'; i++)
     {
-        pszName[i] =
-            static_cast<char>(toupper(static_cast<unsigned char>(pszName[i])));
+        pszName[i] = static_cast<char>(
+            CPLToupper(static_cast<unsigned char>(pszName[i])));
 
         if ((pszName[i] < '0' || pszName[i] > '9') &&
             (pszName[i] < 'A' || pszName[i] > 'Z') && pszName[i] != '_')

@@ -2249,9 +2249,9 @@ class GDALPDFStreamPdfium : public GDALPDFStream
   private:
     RetainPtr<const CPDF_Stream> m_pStream;
     int64_t m_nSize = 0;
-    std::unique_ptr<uint8_t, CPLFreeReleaser> m_pData = nullptr;
+    std::unique_ptr<uint8_t, VSIFreeReleaser> m_pData = nullptr;
     int64_t m_nRawSize = 0;
-    std::unique_ptr<uint8_t, CPLFreeReleaser> m_pRawData = nullptr;
+    std::unique_ptr<uint8_t, VSIFreeReleaser> m_pRawData = nullptr;
 
     void Decompress();
     void FillRaw();

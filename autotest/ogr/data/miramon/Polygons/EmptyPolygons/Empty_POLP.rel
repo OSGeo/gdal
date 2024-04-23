@@ -1,0 +1,52 @@
+[VERSIO]
+VersMetaDades=5
+SubVersMetaDades=0
+Vers=4
+SubVers=3
+
+[OVERVIEW:ASPECTES_TECNICS]
+ArcSource=Empty_POL.arc
+
+[EXTENT]
+toler_env=0
+MinX=2.9E+301
+MaxX=2.9E+301
+MinY=2.9E+301
+MaxY=2.9E+301
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_N_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+descriptor=Identificador Gràfic intern
+visible=0
+TractamentVariable=Ordinal
+
+[TAULA_PRINCIPAL:N_VERTEXS]
+descriptor=Nombre de vèrtexs
+visible=0
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:PERIMETRE]
+descriptor=Perímetre del polígon
+
+[TAULA_PRINCIPAL:AREA]
+descriptor=Àrea del polígon
+
+[TAULA_PRINCIPAL:N_ARCS]
+descriptor=Nombre d'arcs
+visible=0
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:N_POLIG]
+descriptor=Nombre de polígons elementals
+visible=0
+MostrarUnitats=0
+
+[GEOMETRIA_I_TOPOLOGIA]
+NomCampNVertexs=N_VERTEXS
+NomCampPerimetre=PERIMETRE
+NomCampArea=AREA
+NomCampNArcs=N_ARCS
+NomCampNPoligons=N_POLIG

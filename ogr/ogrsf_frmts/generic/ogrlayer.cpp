@@ -1440,12 +1440,56 @@ OGRGeometryH OGR_L_GetSpatialFilter(OGRLayerH hLayer)
 }
 
 /************************************************************************/
+/*             ValidateGeometryFieldIndexForSetSpatialFilter()          */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+bool OGRLayer::ValidateGeometryFieldIndexForSetSpatialFilter(
+    int iGeomField, const OGRGeometry *poGeomIn, bool bIsSelectLayer)
+{
+    if (iGeomField == 0 && poGeomIn == nullptr &&
+        GetLayerDefn()->GetGeomFieldCount() == 0)
+    {
+        // Setting a null spatial filter on geometry field idx 0
+        // when there are no geometry field can't harm, and is accepted silently
+        // for backward compatibility with existing practice.
+    }
+    else if (iGeomField < 0 ||
+             iGeomField >= GetLayerDefn()->GetGeomFieldCount())
+    {
+        if (iGeomField == 0)
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                bIsSelectLayer
+                    ? "Cannot set spatial filter: no geometry field selected."
+                    : "Cannot set spatial filter: no geometry field present in "
+                      "layer.");
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot set spatial filter on non-existing geometry field "
+                     "of index %d.",
+                     iGeomField);
+        }
+        return false;
+    }
+    return true;
+}
+
+//! @endcond
+
+/************************************************************************/
 /*                          SetSpatialFilter()                          */
 /************************************************************************/
 
 void OGRLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
 
 {
+    if (poGeomIn && !ValidateGeometryFieldIndexForSetSpatialFilter(0, poGeomIn))
+        return;
+
     m_iGeomFieldFilter = 0;
     if (InstallFilter(poGeomIn))
         ResetReading();
@@ -1456,17 +1500,18 @@ void OGRLayer::SetSpatialFilter(int iGeomField, OGRGeometry *poGeomIn)
 {
     if (iGeomField == 0)
     {
+        if (poGeomIn &&
+            !ValidateGeometryFieldIndexForSetSpatialFilter(0, poGeomIn))
+            return;
+
         m_iGeomFieldFilter = iGeomField;
         SetSpatialFilter(poGeomIn);
     }
     else
     {
-        if (iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount())
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid geometry field index : %d", iGeomField);
+        if (!ValidateGeometryFieldIndexForSetSpatialFilter(iGeomField,
+                                                           poGeomIn))
             return;
-        }
 
         m_iGeomFieldFilter = iGeomField;
         if (InstallFilter(poGeomIn))
@@ -2206,7 +2251,7 @@ OGRwkbGeometryType OGR_L_GetGeomType(OGRLayerH hLayer)
 /*                          SetIgnoredFields()                          */
 /************************************************************************/
 
-OGRErr OGRLayer::SetIgnoredFields(const char **papszFields)
+OGRErr OGRLayer::SetIgnoredFields(CSLConstList papszFields)
 {
     OGRFeatureDefn *poDefn = GetLayerDefn();
 
@@ -2221,13 +2266,9 @@ OGRErr OGRLayer::SetIgnoredFields(const char **papszFields)
     }
     poDefn->SetStyleIgnored(FALSE);
 
-    if (papszFields == nullptr)
-        return OGRERR_NONE;
-
     // ignore some fields
-    while (*papszFields)
+    for (const char *pszFieldName : cpl::Iterate(papszFields))
     {
-        const char *pszFieldName = *papszFields;
         // check special fields
         if (EQUAL(pszFieldName, "OGR_GEOMETRY"))
             poDefn->SetGeometryIgnored(TRUE);
@@ -2251,7 +2292,6 @@ OGRErr OGRLayer::SetIgnoredFields(const char **papszFields)
             else
                 poDefn->GetFieldDefn(iField)->SetIgnored(TRUE);
         }
-        papszFields++;
     }
 
     return OGRERR_NONE;
@@ -5395,7 +5435,7 @@ OGRLayer::GetGeometryTypes(int iGeomField, int nFlagsGGT, int &nEntryCountOut,
     if (poDefn->IsStyleIgnored())
         aosIgnoredFieldsRestore.AddString("OGR_STYLE");
     aosIgnoredFields.AddString("OGR_STYLE");
-    SetIgnoredFields(const_cast<const char **>(aosIgnoredFields.List()));
+    SetIgnoredFields(aosIgnoredFields.List());
 
     // Iterate over features
     std::map<OGRwkbGeometryType, int64_t> oMapCount;
@@ -5443,7 +5483,7 @@ OGRLayer::GetGeometryTypes(int iGeomField, int nFlagsGGT, int &nEntryCountOut,
     }
 
     // Restore ignore fields state
-    SetIgnoredFields(const_cast<const char **>(aosIgnoredFieldsRestore.List()));
+    SetIgnoredFields(aosIgnoredFieldsRestore.List());
 
     if (bInterrupted)
     {

@@ -1245,7 +1245,6 @@ public:
 
 // NEEDED
 // Custom python __init__ which takes a tuple.
-// TransformPoints which takes list of 3-tuples
 
 %rename (CoordinateTransformation) OSRCoordinateTransformationShadow;
 class OSRCoordinateTransformationShadow {

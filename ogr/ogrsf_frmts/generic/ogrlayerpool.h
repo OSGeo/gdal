@@ -186,7 +186,7 @@ class OGRProxiedLayer : public OGRAbstractProxiedLayer
     virtual const char *GetFIDColumn() override;
     virtual const char *GetGeometryColumn() override;
 
-    virtual OGRErr SetIgnoredFields(const char **papszFields) override;
+    virtual OGRErr SetIgnoredFields(CSLConstList papszFields) override;
 
     virtual OGRErr Rename(const char *pszNewName) override;
 };

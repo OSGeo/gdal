@@ -3791,11 +3791,32 @@ static int TestLayerSQL(GDALDataset *poDS, OGRLayer *poLayer)
     oPoly.addRing(&oRing);
 
     CPLErrorReset();
-    poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), &oPoly, nullptr));
-    if (CPLGetLastErrorType() == CE_Failure)
+    if (poLayer->GetLayerDefn()->GetGeomFieldCount() == 0)
     {
-        bRet = FALSE;
-        printf("ERROR: ExecuteSQL() triggered an unexpected error.\n");
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), &oPoly, nullptr));
+        CPLPopErrorHandler();
+        if (poSQLLyr)
+        {
+            printf("WARNING: ExecuteSQL() with a spatial filter on a "
+                   "non-spatial layer should have triggered an error.\n");
+        }
+    }
+    else
+    {
+        poSQLLyr = LOG_ACTION(poDS->ExecuteSQL(osSQL.c_str(), &oPoly, nullptr));
+        if (CPLGetLastErrorType() == CE_Failure &&
+            poLayer->GetLayerDefn()->GetGeomFieldCount() > 0)
+        {
+            bRet = FALSE;
+            printf("ERROR: ExecuteSQL() triggered an unexpected error.\n");
+        }
+        if (!poSQLLyr)
+        {
+            printf("ERROR: ExecuteSQL() should have returned a non-NULL "
+                   "result.\n");
+            bRet = FALSE;
+        }
     }
     if (poSQLLyr)
     {
@@ -3814,11 +3835,6 @@ static int TestLayerSQL(GDALDataset *poDS, OGRLayer *poLayer)
         }
         DestroyFeatureAndNullify(poSQLFeat);
         LOG_ACTION(poDS->ReleaseResultSet(poSQLLyr));
-    }
-    else
-    {
-        printf("ERROR: ExecuteSQL() should have returned a non-NULL result.\n");
-        bRet = FALSE;
     }
 
     if (bRet && bVerbose)

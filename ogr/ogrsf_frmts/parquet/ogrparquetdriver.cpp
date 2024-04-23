@@ -838,10 +838,14 @@ void OGRParquetDriver::InitMetadata()
         CPLAddXMLAttributeAndValue(psOption, "description",
                                    "Encoding of geometry columns");
         CPLAddXMLAttributeAndValue(psOption, "default", "WKB");
-        for (const char *pszEncoding : {"WKB", "WKT", "GEOARROW"})
+        for (const char *pszEncoding :
+             {"WKB", "WKT", "GEOARROW", "GEOARROW_INTERLEAVED"})
         {
             auto poValueNode = CPLCreateXMLNode(psOption, CXT_Element, "Value");
             CPLCreateXMLNode(poValueNode, CXT_Text, pszEncoding);
+            if (EQUAL(pszEncoding, "GEOARROW"))
+                CPLAddXMLAttributeAndValue(poValueNode, "alias",
+                                           "GEOARROW_STRUCT");
         }
     }
 

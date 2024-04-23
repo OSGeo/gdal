@@ -216,14 +216,14 @@ the GDAL package by one of the current owners : HowardB/FrankW/EvenR)
 
     c) python3 setup.py sdist
 
-    d) Check the output:
-        twine check dist/GDAL-*.gz
+    d) Check the output (this assumes setuptools >= 65.3.0, otherwise the filename is GDAL-*.gz):
+        twine check dist/gdal-*.gz
 
     e) For trial :
-        twine upload dist/GDAL-*.gz -r pypitest
+        twine upload dist/gdal-*.gz -r pypitest
 
     f) For real :
-        twine upload dist/GDAL-*.gz
+        twine upload dist/gdal-*.gz
 
 15.3) create gdal-utils wheel and upload to pypi:
 

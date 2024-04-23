@@ -342,6 +342,21 @@ Layer creation options
 
 The following layer creation options are available:
 
+-  .. lco:: LAUNDER
+      :choices: YES, NO
+      :default: NO
+      :since: 3.9
+
+      Whether layer and field names will be laundered. Laundering makes sure
+      that the recommendation of https://www.geopackage.org/guidance/getting-started.html
+      is followed: an identifier should start with a lowercase character and
+      only use lowercase characters, numbers 0-9, and underscores (_). UTF-8
+      accented characters in the `Latin-1 Supplement <https://en.wikipedia.org/wiki/Latin-1_Supplement>`__
+      and `Latin Extented-A <https://en.wikipedia.org/wiki/Latin_Extended-A>`__
+      sets are replaced when possible with the closest ASCII letter.
+      Characters that do not match the recommendation are replaced with underscore.
+      Consequently this option is not appropriate for non-Latin languages.
+
 -  .. lco:: GEOMETRY_NAME
       :default: geom
 
@@ -356,6 +371,16 @@ The following layer creation options are available:
       Whether the values of the
       geometry column can be NULL. Can be set to NO so that geometry is
       required.
+
+-  .. lco:: SRID
+      :choices: <integer>
+      :since: 3.9
+
+      Forced ``srs_id`` of the entry in the ``gpkg_spatial_ref_sys`` table to point to.
+      This may be -1 ("Undefined Cartesian SRS"), 0 ("Undefined geographic SRS"),
+      99999 ("Undefined SRS"), a valid EPSG CRS code or an existing entry of the
+      ``gpkg_spatial_ref_sys`` table. If pointing to a non-existing entry, only a warning
+      will be emitted.
 
 -  .. lco:: DISCARD_COORD_LSB
       :choices: YES, NO
@@ -594,12 +619,27 @@ also supported by GeoPackage and stored in the ``gpkg_spatial_ref_sys`` table.
 
 Two special hard-coded CRS are reserved per the GeoPackage specification:
 
-- SRID 0, for a Undefined Geographic CRS. This one is selected by default if
-  creating a spatial layer without any explicit CRS
+- srs_id=0, for a Undefined Geographic CRS. For GDAL 3.8 or earlier, this one is
+  selected by default if creating a spatial layer without any explicit CRS
 
-- SRID -1, for a Undefined Projected CRS. It might be selected by creating a
+- srs_id=-1, for a Undefined Projected CRS. It might be selected by creating a
   layer with a CRS instantiated from the following WKT string:
-  ``LOCAL_CS["Undefined cartesian SRS"]``. (GDAL >= 3.3)
+  ``LOCAL_CS["Undefined Cartesian SRS"]``. (GDAL >= 3.3)
+
+Starting with GDAL 3.9, a layer without any explicit CRS is mapped from/to a
+custom entry of srs_id=99999 with the following properties:
+
+- ``srs_name``: ``Undefined SRS``
+- ``organization``: ``GDAL``
+- ``organization_coordsys_id``: 99999
+- ``definition``: ``LOCAL_CS["Undefined SRS",LOCAL_DATUM["unknown",32767],UNIT["unknown",0],AXIS["Easting",EAST],AXIS["Northing",NORTH]]``
+- ``definition_12_063`` (when the CRS WKT extension is used): ``ENGCRS["Undefined SRS",EDATUM["unknown"],CS[Cartesian,2],AXIS["easting",east,ORDER[1],LENGTHUNIT["unknown",0]],AXIS["northing",north,ORDER[2],LENGTHUNIT["unknown",0]]]``
+- ``description``: ``Custom undefined coordinate reference system``
+
+Note that the use of a LOCAL_CS / EngineeringCRS is mostly to provide a valid
+CRS definition to comply with the requirements of the GeoPackage specification
+and to be compatible of other applications (or GDAL 3.8 or earlier), but the
+semantics of that entry is intended to be "undefined SRS of any kind".
 
 Level of support of GeoPackage Extensions
 -----------------------------------------

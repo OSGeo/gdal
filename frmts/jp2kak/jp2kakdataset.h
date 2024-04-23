@@ -65,6 +65,7 @@ class JP2KAKDataset final : public GDALJP2AbstractDataset
 {
     friend class JP2KAKRasterBand;
 
+    std::string m_osFilename{};
     kdu_codestream oCodeStream;
     kdu_compressed_source *poInput = nullptr;
     kdu_compressed_source *poRawInput = nullptr;

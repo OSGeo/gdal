@@ -83,6 +83,37 @@ class HDF5ImageDataset final : public HDF5Dataset
     int m_nYIndex = -1;
     int m_nOtherDimIndex = -1;
 
+    int m_nBlockXSize = 0;
+    int m_nBlockYSize = 0;
+    int m_nBandChunkSize = 1;  //! Number of bands in a chunk
+
+    enum WholeBandChunkOptim
+    {
+        WBC_DETECTION_IN_PROGRESS,
+        WBC_DISABLED,
+        WBC_ENABLED,
+    };
+
+    //! Flag to detect if the read pattern of HDF5ImageRasterBand::IRasterIO()
+    // is whole band after whole band.
+    WholeBandChunkOptim m_eWholeBandChunkOptim = WBC_DETECTION_IN_PROGRESS;
+    //! Value of nBand during last HDF5ImageRasterBand::IRasterIO() call
+    int m_nLastRasterIOBand = -1;
+    //! Value of nXOff during last HDF5ImageRasterBand::IRasterIO() call
+    int m_nLastRasterIOXOff = -1;
+    //! Value of nYOff during last HDF5ImageRasterBand::IRasterIO() call
+    int m_nLastRasterIOYOff = -1;
+    //! Value of nXSize during last HDF5ImageRasterBand::IRasterIO() call
+    int m_nLastRasterIOXSize = -1;
+    //! Value of nYSize during last HDF5ImageRasterBand::IRasterIO() call
+    int m_nLastRasterIOYSize = -1;
+    //! Value such that m_abyBandChunk represent band data in the range
+    // [m_iCurrentBandChunk * m_nBandChunkSize, (m_iCurrentBandChunk+1) * m_nBandChunkSize[
+    int m_iCurrentBandChunk = -1;
+    //! Cached values (in native data type) for bands in the range
+    // [m_iCurrentBandChunk * m_nBandChunkSize, (m_iCurrentBandChunk+1) * m_nBandChunkSize[
+    std::vector<GByte> m_abyBandChunk{};
+
     CPLErr CreateODIMH5Projection();
 
   public:
@@ -105,6 +136,9 @@ class HDF5ImageDataset final : public HDF5Dataset
                      GSpacing nPixelSpace, GSpacing nLineSpace,
                      GSpacing nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
+
+    const char *GetMetadataItem(const char *pszName,
+                                const char *pszDomain = "") override;
 
     Hdf5ProductType GetSubdatasetType() const
     {
@@ -220,8 +254,9 @@ class HDF5ImageRasterBand final : public GDALPamRasterBand
 {
     friend class HDF5ImageDataset;
 
-    bool bNoDataSet;
-    double dfNoDataValue;
+    bool bNoDataSet = false;
+    double dfNoDataValue = -9999.0;
+    int m_nIRasterIORecCounter = 0;
 
   public:
     HDF5ImageRasterBand(HDF5ImageDataset *, int, GDALDataType);
@@ -251,32 +286,12 @@ HDF5ImageRasterBand::~HDF5ImageRasterBand()
 /************************************************************************/
 HDF5ImageRasterBand::HDF5ImageRasterBand(HDF5ImageDataset *poDSIn, int nBandIn,
                                          GDALDataType eType)
-    : bNoDataSet(false), dfNoDataValue(-9999.0)
 {
     poDS = poDSIn;
     nBand = nBandIn;
     eDataType = eType;
-    nBlockXSize = poDS->GetRasterXSize();
-    nBlockYSize = 1;
-
-    // Check for chunksize and set it as the blocksize (optimizes read).
-    const hid_t listid = H5Dget_create_plist(poDSIn->dataset_id);
-    if (listid > 0)
-    {
-        if (H5Pget_layout(listid) == H5D_CHUNKED)
-        {
-            hsize_t panChunkDims[3] = {0, 0, 0};
-            const int nDimSize = H5Pget_chunk(listid, 3, panChunkDims);
-            CPL_IGNORE_RET_VAL(nDimSize);
-            CPLAssert(nDimSize == poDSIn->ndims);
-            nBlockXSize = static_cast<int>(panChunkDims[poDSIn->GetXIndex()]);
-            if (poDSIn->GetYIndex() >= 0)
-                nBlockYSize =
-                    static_cast<int>(panChunkDims[poDSIn->GetYIndex()]);
-        }
-
-        H5Pclose(listid);
-    }
+    nBlockXSize = poDSIn->m_nBlockXSize;
+    nBlockYSize = poDSIn->m_nBlockYSize;
 
     // netCDF convention for nodata
     bNoDataSet =
@@ -308,8 +323,6 @@ double HDF5ImageRasterBand::GetNoDataValue(int *pbSuccess)
 CPLErr HDF5ImageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                        void *pImage)
 {
-    HDF5_GLOBAL_LOCK();
-
     HDF5ImageDataset *poGDS = static_cast<HDF5ImageDataset *>(poDS);
 
     memset(pImage, 0,
@@ -320,6 +333,29 @@ CPLErr HDF5ImageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     {
         return CE_None;
     }
+
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
+    const int nYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
+    if (poGDS->m_eWholeBandChunkOptim == HDF5ImageDataset::WBC_ENABLED)
+    {
+        const bool bIsBandInterleavedData =
+            poGDS->ndims == 3 && poGDS->m_nOtherDimIndex == 0 &&
+            poGDS->GetYIndex() == 1 && poGDS->GetXIndex() == 2;
+        if (poGDS->nBands == 1 || bIsBandInterleavedData)
+        {
+            GDALRasterIOExtraArg sExtraArg;
+            INIT_RASTERIO_EXTRA_ARG(sExtraArg);
+            const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+            return IRasterIO(GF_Read, nXOff, nYOff, nXSize, nYSize, pImage,
+                             nXSize, nYSize, eDataType, nDTSize,
+                             static_cast<GSpacing>(nDTSize) * nBlockXSize,
+                             &sExtraArg);
+        }
+    }
+
+    HDF5_GLOBAL_LOCK();
 
     hsize_t count[3] = {0, 0, 0};
     H5OFFSET_TYPE offset[3] = {0, 0, 0};
@@ -335,22 +371,14 @@ CPLErr HDF5ImageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     }
 
     const int nYIndex = poGDS->GetYIndex();
-    if (nYIndex >= 0)
-        offset[nYIndex] = nBlockYOff * static_cast<hsize_t>(nBlockYSize);
-    offset[poGDS->GetXIndex()] = nBlockXOff * static_cast<hsize_t>(nBlockXSize);
-    if (nYIndex >= 0)
-        count[nYIndex] = nBlockYSize;
-    count[poGDS->GetXIndex()] = nBlockXSize;
-
     // Blocksize may not be a multiple of imagesize.
     if (nYIndex >= 0)
     {
-        count[nYIndex] = std::min(hsize_t(nBlockYSize),
-                                  poDS->GetRasterYSize() - offset[nYIndex]);
+        offset[nYIndex] = nYOff;
+        count[nYIndex] = nYSize;
     }
-    count[poGDS->GetXIndex()] =
-        std::min(hsize_t(nBlockXSize),
-                 poDS->GetRasterXSize() - offset[poGDS->GetXIndex()]);
+    offset[poGDS->GetXIndex()] = nXOff;
+    count[poGDS->GetXIndex()] = nXSize;
 
     // Select block from file space.
     herr_t status = H5Sselect_hyperslab(poGDS->dataspace_id, H5S_SELECT_SET,
@@ -402,14 +430,188 @@ CPLErr HDF5ImageRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 {
     HDF5ImageDataset *poGDS = static_cast<HDF5ImageDataset *>(poDS);
 
-    const bool bIsExpectedLayout =
-        ((poGDS->ndims == 3 && poGDS->m_nOtherDimIndex == 0 &&
-          poGDS->GetYIndex() == 1 && poGDS->GetXIndex() == 2) ||
-         (poGDS->ndims == 2 && poGDS->GetYIndex() == 0 &&
-          poGDS->GetXIndex() == 1));
+    const bool bIsBandInterleavedData =
+        poGDS->ndims == 3 && poGDS->m_nOtherDimIndex == 0 &&
+        poGDS->GetYIndex() == 1 && poGDS->GetXIndex() == 2;
 
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
 
+    // Try to detect if we read whole bands by chunks of whole lines
+    // If so, then read and cache whole band (or group of m_nBandChunkSize bands)
+    // to save HDF5 decompression.
+    if (m_nIRasterIORecCounter == 0)
+    {
+        bool bInvalidateWholeBandChunkOptim = false;
+        if (!(nXSize == nBufXSize && nYSize == nBufYSize))
+        {
+            bInvalidateWholeBandChunkOptim = true;
+        }
+        // Is the first request on band 1, line 0 and one or several full lines?
+        else if (poGDS->m_eWholeBandChunkOptim !=
+                     HDF5ImageDataset::WBC_ENABLED &&
+                 nBand == 1 && nXOff == 0 && nYOff == 0 &&
+                 nXSize == nRasterXSize)
+        {
+            poGDS->m_eWholeBandChunkOptim =
+                HDF5ImageDataset::WBC_DETECTION_IN_PROGRESS;
+            poGDS->m_nLastRasterIOBand = 1;
+            poGDS->m_nLastRasterIOXOff = nXOff;
+            poGDS->m_nLastRasterIOYOff = nYOff;
+            poGDS->m_nLastRasterIOXSize = nXSize;
+            poGDS->m_nLastRasterIOYSize = nYSize;
+        }
+        else if (poGDS->m_eWholeBandChunkOptim ==
+                 HDF5ImageDataset::WBC_DETECTION_IN_PROGRESS)
+        {
+            if (poGDS->m_nLastRasterIOBand == 1 && nBand == 1)
+            {
+                // Is this request a continuation of the previous one?
+                if (nXOff == 0 && poGDS->m_nLastRasterIOXOff == 0 &&
+                    nYOff == poGDS->m_nLastRasterIOYOff +
+                                 poGDS->m_nLastRasterIOYSize &&
+                    poGDS->m_nLastRasterIOXSize == nRasterXSize &&
+                    nXSize == nRasterXSize)
+                {
+                    poGDS->m_nLastRasterIOXOff = nXOff;
+                    poGDS->m_nLastRasterIOYOff = nYOff;
+                    poGDS->m_nLastRasterIOXSize = nXSize;
+                    poGDS->m_nLastRasterIOYSize = nYSize;
+                }
+                else
+                {
+                    bInvalidateWholeBandChunkOptim = true;
+                }
+            }
+            else if (poGDS->m_nLastRasterIOBand == 1 && nBand == 2)
+            {
+                // Are we switching to band 2 while having fully read band 1?
+                if (nXOff == 0 && nYOff == 0 && nXSize == nRasterXSize &&
+                    poGDS->m_nLastRasterIOXOff == 0 &&
+                    poGDS->m_nLastRasterIOXSize == nRasterXSize &&
+                    poGDS->m_nLastRasterIOYOff + poGDS->m_nLastRasterIOYSize ==
+                        nRasterYSize)
+                {
+                    if ((poGDS->m_nBandChunkSize > 1 ||
+                         nBufYSize < nRasterYSize) &&
+                        static_cast<int64_t>(poGDS->m_nBandChunkSize) *
+                                nRasterXSize * nRasterYSize * nDTSize <
+                            CPLGetUsablePhysicalRAM() / 10)
+                    {
+                        poGDS->m_eWholeBandChunkOptim =
+                            HDF5ImageDataset::WBC_ENABLED;
+                    }
+                    else
+                    {
+                        bInvalidateWholeBandChunkOptim = true;
+                    }
+                }
+                else
+                {
+                    bInvalidateWholeBandChunkOptim = true;
+                }
+            }
+            else
+            {
+                bInvalidateWholeBandChunkOptim = true;
+            }
+        }
+        if (bInvalidateWholeBandChunkOptim)
+        {
+            poGDS->m_eWholeBandChunkOptim = HDF5ImageDataset::WBC_DISABLED;
+            poGDS->m_nLastRasterIOBand = -1;
+            poGDS->m_nLastRasterIOXOff = -1;
+            poGDS->m_nLastRasterIOYOff = -1;
+            poGDS->m_nLastRasterIOXSize = -1;
+            poGDS->m_nLastRasterIOYSize = -1;
+        }
+    }
+
+    if (poGDS->m_eWholeBandChunkOptim == HDF5ImageDataset::WBC_ENABLED &&
+        nXSize == nBufXSize && nYSize == nBufYSize)
+    {
+        if (poGDS->nBands == 1 || bIsBandInterleavedData)
+        {
+            if (poGDS->m_iCurrentBandChunk < 0)
+                CPLDebug("HDF5", "Using whole band chunk caching");
+            const int iBandChunk = (nBand - 1) / poGDS->m_nBandChunkSize;
+            if (iBandChunk != poGDS->m_iCurrentBandChunk)
+            {
+                poGDS->m_abyBandChunk.resize(
+                    static_cast<size_t>(poGDS->m_nBandChunkSize) *
+                    nRasterXSize * nRasterYSize * nDTSize);
+
+                HDF5_GLOBAL_LOCK();
+
+                hsize_t count[3] = {
+                    std::min(static_cast<hsize_t>(poGDS->nBands),
+                             static_cast<hsize_t>(iBandChunk + 1) *
+                                 poGDS->m_nBandChunkSize) -
+                        static_cast<hsize_t>(iBandChunk) *
+                            poGDS->m_nBandChunkSize,
+                    static_cast<hsize_t>(nRasterYSize),
+                    static_cast<hsize_t>(nRasterXSize)};
+                H5OFFSET_TYPE offset[3] = {
+                    static_cast<H5OFFSET_TYPE>(iBandChunk) *
+                        poGDS->m_nBandChunkSize,
+                    static_cast<H5OFFSET_TYPE>(0),
+                    static_cast<H5OFFSET_TYPE>(0)};
+                herr_t status =
+                    H5Sselect_hyperslab(poGDS->dataspace_id, H5S_SELECT_SET,
+                                        offset, nullptr, count, nullptr);
+                if (status < 0)
+                    return CE_Failure;
+
+                const hid_t memspace =
+                    H5Screate_simple(poGDS->ndims, count, nullptr);
+                H5OFFSET_TYPE mem_offset[3] = {0, 0, 0};
+                status =
+                    H5Sselect_hyperslab(memspace, H5S_SELECT_SET, mem_offset,
+                                        nullptr, count, nullptr);
+                if (status < 0)
+                {
+                    H5Sclose(memspace);
+                    return CE_Failure;
+                }
+
+                status = H5Dread(poGDS->dataset_id, poGDS->native, memspace,
+                                 poGDS->dataspace_id, H5P_DEFAULT,
+                                 poGDS->m_abyBandChunk.data());
+
+                H5Sclose(memspace);
+
+                if (status < 0)
+                {
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "HDF5ImageRasterBand::IRasterIO(): H5Dread() failed");
+                    return CE_Failure;
+                }
+
+                poGDS->m_iCurrentBandChunk = iBandChunk;
+            }
+
+            for (int iY = 0; iY < nYSize; ++iY)
+            {
+                GDALCopyWords(poGDS->m_abyBandChunk.data() +
+                                  static_cast<size_t>((nBand - 1) %
+                                                      poGDS->m_nBandChunkSize) *
+                                      nRasterYSize * nRasterXSize * nDTSize +
+                                  static_cast<size_t>(nYOff + iY) *
+                                      nRasterXSize * nDTSize +
+                                  nXOff * nDTSize,
+                              eDataType, nDTSize,
+                              static_cast<GByte *>(pData) +
+                                  static_cast<size_t>(iY) * nLineSpace,
+                              eBufType, static_cast<int>(nPixelSpace), nXSize);
+            }
+            return CE_None;
+        }
+    }
+
+    const bool bIsExpectedLayout =
+        (bIsBandInterleavedData ||
+         (poGDS->ndims == 2 && poGDS->GetYIndex() == 0 &&
+          poGDS->GetXIndex() == 1));
     if (eRWFlag == GF_Read && bIsExpectedLayout && nXSize == nBufXSize &&
         nYSize == nBufYSize && eBufType == eDataType &&
         nPixelSpace == nDTSize && nLineSpace == nXSize * nPixelSpace)
@@ -474,10 +676,13 @@ CPLErr HDF5ImageRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             CPLAssert(pMemData);
             // Read from HDF5 into the temporary MEMDataset using the
             // natural interleaving of the HDF5 dataset
-            if (IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pMemData,
+            ++m_nIRasterIORecCounter;
+            CPLErr eErr =
+                IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pMemData,
                           nXSize, nYSize, eDataType, nDTSize,
-                          static_cast<GSpacing>(nXSize) * nDTSize,
-                          psExtraArg) != CE_None)
+                          static_cast<GSpacing>(nXSize) * nDTSize, psExtraArg);
+            --m_nIRasterIORecCounter;
+            if (eErr != CE_None)
             {
                 return CE_Failure;
             }
@@ -930,6 +1135,58 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
+    poDS->m_nBlockXSize = poDS->GetRasterXSize();
+    poDS->m_nBlockYSize = 1;
+    poDS->m_nBandChunkSize = 1;
+
+    // Check for chunksize and set it as the blocksize (optimizes read).
+    const hid_t listid = H5Dget_create_plist(poDS->dataset_id);
+    if (listid > 0)
+    {
+        if (H5Pget_layout(listid) == H5D_CHUNKED)
+        {
+            hsize_t panChunkDims[3] = {0, 0, 0};
+            const int nDimSize = H5Pget_chunk(listid, 3, panChunkDims);
+            CPL_IGNORE_RET_VAL(nDimSize);
+            CPLAssert(nDimSize == poDS->ndims);
+            poDS->m_nBlockXSize =
+                static_cast<int>(panChunkDims[poDS->GetXIndex()]);
+            if (poDS->GetYIndex() >= 0)
+                poDS->m_nBlockYSize =
+                    static_cast<int>(panChunkDims[poDS->GetYIndex()]);
+            if (nBands > 1)
+            {
+                poDS->m_nBandChunkSize =
+                    static_cast<int>(panChunkDims[poDS->m_nOtherDimIndex]);
+
+                poDS->SetMetadataItem("BAND_CHUNK_SIZE",
+                                      CPLSPrintf("%d", poDS->m_nBandChunkSize),
+                                      "IMAGE_STRUCTURE");
+            }
+        }
+
+        const int nFilters = H5Pget_nfilters(listid);
+        for (int i = 0; i < nFilters; ++i)
+        {
+            unsigned int flags = 0;
+            size_t cd_nelmts = 0;
+            char szName[64 + 1] = {0};
+            const auto eFilter = H5Pget_filter(listid, i, &flags, &cd_nelmts,
+                                               nullptr, 64, szName);
+            if (eFilter == H5Z_FILTER_DEFLATE)
+            {
+                poDS->SetMetadataItem("COMPRESSION", "DEFLATE",
+                                      "IMAGE_STRUCTURE");
+            }
+            else if (eFilter == H5Z_FILTER_SZIP)
+            {
+                poDS->SetMetadataItem("COMPRESSION", "SZIP", "IMAGE_STRUCTURE");
+            }
+        }
+
+        H5Pclose(listid);
+    }
+
     for (int i = 0; i < nBands; i++)
     {
         HDF5ImageRasterBand *const poBand = new HDF5ImageRasterBand(
@@ -1261,6 +1518,29 @@ CPLErr HDF5ImageDataset::CreateProjections()
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                         GetMetadataItem()                            */
+/************************************************************************/
+
+const char *HDF5ImageDataset::GetMetadataItem(const char *pszName,
+                                              const char *pszDomain)
+{
+    if (pszDomain && EQUAL(pszDomain, "__DEBUG__") &&
+        EQUAL(pszName, "WholeBandChunkOptim"))
+    {
+        switch (m_eWholeBandChunkOptim)
+        {
+            case WBC_DETECTION_IN_PROGRESS:
+                return "DETECTION_IN_PROGRESS";
+            case WBC_DISABLED:
+                return "DISABLED";
+            case WBC_ENABLED:
+                return "ENABLED";
+        }
+    }
+    return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
 }
 
 /************************************************************************/

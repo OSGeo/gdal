@@ -1109,19 +1109,47 @@ def test_vsicurl_NETRC_FILE():
 # Check auth with bearer token
 
 
-def test_vsicurl_bearer():
-    if gdaltest.is_travis_branch("ubuntu_1804") or gdaltest.is_travis_branch(
-        "ubuntu_1804_32bit"
-    ):
-        pytest.skip("Too old libcurl version, requires at least 7.61.0")
+@gdaltest.enable_exceptions()
+@pytest.mark.require_curl(7, 61, 0)
+def test_vsicurl_bearer(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/", 404)
+    handler.add(
+        "HEAD",
+        "/test_vsicurl_bearer.bin",
+        200,
+        {"Content-Length": "3"},
+        expected_headers={
+            "Authorization": "Bearer myuniqtok",
+        },
+    )
+    handler.add(
+        "GET",
+        "/test_vsicurl_bearer.bin",
+        200,
+        {"Content-Length": "3"},
+        b"foo",
+        expected_headers={
+            "Authorization": "Bearer myuniqtok",
+        },
+    )
+
     token = "myuniqtok"
-    with gdal.config_options({"GDAL_HTTP_AUTH": "BEARER", "GDAL_HTTP_BEARER": token}):
-        f = gdal.VSIFOpenL("/vsicurl/http://httpbin.org/bearer", "rb")
-        gdal.VSIFSeekL(f, 0, 2)
-        vsilen = gdal.VSIFTellL(f)
-        gdal.VSIFSeekL(f, 0, 0)
-        data = gdal.VSIFReadL(1, vsilen, f).decode("ascii")
-        assert token in data
+    with webserver.install_http_handler(handler):
+        with gdal.config_options(
+            {"GDAL_HTTP_AUTH": "BEARER", "GDAL_HTTP_BEARER": token}
+        ):
+            f = gdal.VSIFOpenL(
+                "/vsicurl/http://localhost:%d/test_vsicurl_bearer.bin" % server.port,
+                "rb",
+            )
+            assert f
+            data = gdal.VSIFReadL(1, 3, f)
+            gdal.VSIFCloseL(f)
+            assert data == b"foo"
 
 
 ###############################################################################

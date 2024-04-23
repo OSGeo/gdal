@@ -506,6 +506,8 @@ class VSICurlHandle : public VSIVirtualHandle
     void AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
                     const size_t *panSizes) override;
 
+    size_t GetAdviseReadTotalBytesLimit() const override;
+
     bool IsKnownFileSize() const
     {
         return oFileProp.bHasComputedFileSize;
@@ -990,26 +992,28 @@ struct NetworkStatisticsAction
     }
 };
 
+}  // namespace cpl
+
 int VSICURLGetDownloadChunkSize();
 
-void VSICURLInitWriteFuncStruct(WriteFuncStruct *psStruct, VSILFILE *fp,
+void VSICURLInitWriteFuncStruct(cpl::WriteFuncStruct *psStruct, VSILFILE *fp,
                                 VSICurlReadCbkFunc pfnReadCbk,
                                 void *pReadCbkUserData);
 size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb,
                               void *req);
-void MultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle = nullptr);
+void VSICURLMultiPerform(CURLM *hCurlMultiHandle, CURL *hEasyHandle = nullptr);
 void VSICURLResetHeaderAndWriterFunctions(CURL *hCurlHandle);
 
 int VSICurlParseUnixPermissions(const char *pszPermissions);
 
 // Cache of file properties (size, etc.)
-bool VSICURLGetCachedFileProp(const char *pszURL, FileProp &oFileProp);
-void VSICURLSetCachedFileProp(const char *pszURL, FileProp &oFileProp);
+bool VSICURLGetCachedFileProp(const char *pszURL, cpl::FileProp &oFileProp);
+void VSICURLSetCachedFileProp(const char *pszURL, cpl::FileProp &oFileProp);
 void VSICURLInvalidateCachedFileProp(const char *pszURL);
 void VSICURLInvalidateCachedFilePropPrefix(const char *pszURL);
 void VSICURLDestroyCacheFileProp();
 
-}  // namespace cpl
+void VSICURLMultiCleanup(CURLM *hCurlMultiHandle);
 
 //! @endcond
 

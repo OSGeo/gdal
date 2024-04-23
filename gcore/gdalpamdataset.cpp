@@ -233,8 +233,7 @@ CPLXMLNode *GDALPamDataset::SerializeToXML(const char *pszUnused)
     {
         char *pszWKT = nullptr;
         {
-            CPLErrorStateBackuper oErrorStateBackuper;
-            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             if (psPam->poSRS->exportToWkt(&pszWKT) != OGRERR_NONE)
             {
                 CPLFree(pszWKT);
@@ -905,8 +904,7 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
             papszSiblingFiles, CPLGetFilename(psPam->pszPamFilename));
         if (iSibling >= 0)
         {
-            CPLErrorStateBackuper oErrorStateBackuper;
-            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             psTree = CPLParseXMLFile(psPam->pszPamFilename);
         }
     }
@@ -914,8 +912,7 @@ CPLErr GDALPamDataset::TryLoadXML(char **papszSiblingFiles)
                         VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
              VSI_ISREG(sStatBuf.st_mode))
     {
-        CPLErrorStateBackuper oErrorStateBackuper;
-        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
         psTree = CPLParseXMLFile(psPam->pszPamFilename);
     }
 
@@ -1042,8 +1039,7 @@ CPLErr GDALPamDataset::TrySaveXML()
                        VSI_STAT_EXISTS_FLAG | VSI_STAT_NATURE_FLAG) == 0 &&
             VSI_ISREG(sStatBuf.st_mode))
         {
-            CPLErrorStateBackuper oErrorStateBackuper;
-            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             psOldTree = CPLParseXMLFile(psPam->pszPamFilename);
         }
 

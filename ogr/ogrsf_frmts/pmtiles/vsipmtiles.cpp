@@ -259,8 +259,7 @@ VSIPMTilesFilesystemHandler::Open(const char *pszFilename,
     if (nComponents != 3)
         return nullptr;
 
-    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-    CPLErrorStateBackuper oBackuper;
+    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
 
     OGRPMTilesTileIterator oIter(poDS.get(), nZ, nX, nY, nX, nY);
     auto sTile = oIter.GetNextTile();
@@ -320,8 +319,7 @@ int VSIPMTilesFilesystemHandler::Stat(const char *pszFilename,
         return 0;
     }
 
-    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-    CPLErrorStateBackuper oBackuper;
+    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
 
     OGRPMTilesTileIterator oIter(poDS.get(), nZ, nX, nY, nX, nY);
     auto sTile = oIter.GetNextTile();

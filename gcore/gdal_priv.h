@@ -265,6 +265,11 @@ class CPL_DLL GDALDefaultOverviews
                                     void *pProgressData,
                                     CSLConstList papszOptions);
 
+    CPLErr BuildOverviewsMask(const char *pszResampling, int nOverviews,
+                              const int *panOverviewList,
+                              GDALProgressFunc pfnProgress, void *pProgressData,
+                              CSLConstList papszOptions);
+
     CPLErr CleanOverviews();
 
     // Mask Related
@@ -616,10 +621,11 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     virtual CPLErr Close();
 
-    int GetRasterXSize();
-    int GetRasterYSize();
-    int GetRasterCount();
+    int GetRasterXSize() const;
+    int GetRasterYSize() const;
+    int GetRasterCount() const;
     GDALRasterBand *GetRasterBand(int);
+    const GDALRasterBand *GetRasterBand(int) const;
 
     /**
      * @brief SetQueryLoggerFunc
@@ -807,8 +813,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     );
 
 #ifndef DOXYGEN_XML
-    void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)
-        CPL_PRINT_FUNC_FORMAT(4, 5);
+    void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
+                     ...) const CPL_PRINT_FUNC_FORMAT(4, 5);
 
     static void ReportError(const char *pszDSName, CPLErr eErrClass,
                             CPLErrorNum err_no, const char *fmt, ...)

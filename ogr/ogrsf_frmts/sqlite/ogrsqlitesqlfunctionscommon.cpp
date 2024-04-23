@@ -48,6 +48,7 @@ class OGRSQLiteExtensionData
 #ifdef DEBUG
     void *pDummy = nullptr; /* to track memory leaks */
 #endif
+
     std::map<std::pair<int, int>, std::unique_ptr<OGRCoordinateTransformation>>
         oCachedTransformsMap{};
     std::map<std::string, std::unique_ptr<GDALDataset>> oCachedDS{};

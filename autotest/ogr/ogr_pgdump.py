@@ -28,8 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
-
 import gdaltest
 import ogrtest
 import pytest
@@ -49,14 +47,9 @@ def module_disable_exceptions():
 # Create table from data/poly.shp
 
 
-def test_ogr_pgdump_1():
+def test_ogr_pgdump_1(tmp_path):
 
-    try:
-        os.remove("tmp/tpoly.sql")
-    except OSError:
-        pass
-
-    ds = ogr.GetDriverByName("PGDump").CreateDataSource("tmp/tpoly.sql")
+    ds = ogr.GetDriverByName("PGDump").CreateDataSource(tmp_path / "tpoly.sql")
 
     ######################################################
     # Create Layer
@@ -83,21 +76,17 @@ def test_ogr_pgdump_1():
     shp_ds = ogr.Open("data/poly.shp")
     shp_lyr = shp_ds.GetLayer(0)
     feat = shp_lyr.GetNextFeature()
-    gdaltest.poly_feat = []
 
     while feat is not None:
-
-        gdaltest.poly_feat.append(feat)
 
         dst_feat.SetFrom(feat)
         lyr.CreateFeature(dst_feat)
 
         feat = shp_lyr.GetNextFeature()
 
-    dst_feat.Destroy()
-    ds.Destroy()
+    ds.Close()
 
-    with open("tmp/tpoly.sql") as f:
+    with open(tmp_path / "tpoly.sql") as f:
         sql = f.read()
 
     # print(sql)
@@ -138,17 +127,12 @@ def test_ogr_pgdump_1():
 # Create table from data/poly.shp with PG_USE_COPY=YES
 
 
-def test_ogr_pgdump_2():
-
-    try:
-        os.remove("tmp/tpoly.sql")
-    except OSError:
-        pass
+def test_ogr_pgdump_2(tmp_path):
 
     with gdal.config_option("PG_USE_COPY", "YES"):
 
         ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-            "tmp/tpoly.sql", options=["LINEFORMAT=CRLF"]
+            tmp_path / "tpoly.sql", options=["LINEFORMAT=CRLF"]
         )
 
         ######################################################
@@ -179,21 +163,17 @@ def test_ogr_pgdump_2():
         shp_ds = ogr.Open("data/poly.shp")
         shp_lyr = shp_ds.GetLayer(0)
         feat = shp_lyr.GetNextFeature()
-        gdaltest.poly_feat = []
 
         while feat is not None:
-
-            gdaltest.poly_feat.append(feat)
 
             dst_feat.SetFrom(feat)
             lyr.CreateFeature(dst_feat)
 
             feat = shp_lyr.GetNextFeature()
 
-        dst_feat.Destroy()
-        ds.Destroy()
+        ds.Close()
 
-    with open("tmp/tpoly.sql") as f:
+    with open(tmp_path / "tpoly.sql") as f:
         sql = f.read()
 
     # print(sql)
@@ -244,17 +224,12 @@ def test_ogr_pgdump_2():
 # Create table from data/poly.shp without any geometry
 
 
-def test_ogr_pgdump_3():
-
-    try:
-        os.remove("tmp/tpoly.sql")
-    except OSError:
-        pass
+def test_ogr_pgdump_3(tmp_path):
 
     with gdal.config_option("PG_USE_COPY", "YES"):
 
         ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-            "tmp/tpoly.sql", options=["LINEFORMAT=LF"]
+            tmp_path / "tpoly.sql", options=["LINEFORMAT=LF"]
         )
 
         ######################################################
@@ -284,13 +259,10 @@ def test_ogr_pgdump_3():
         shp_ds = ogr.Open("data/poly.shp")
         shp_lyr = shp_ds.GetLayer(0)
         feat = shp_lyr.GetNextFeature()
-        gdaltest.poly_feat = []
 
         i = 0
 
         while feat is not None:
-
-            gdaltest.poly_feat.append(feat)
 
             dst_feat.SetFrom(feat)
             if i == 0:
@@ -305,10 +277,9 @@ def test_ogr_pgdump_3():
 
             feat = shp_lyr.GetNextFeature()
 
-        dst_feat.Destroy()
-        ds.Destroy()
+        ds.Close()
 
-    with open("tmp/tpoly.sql") as f:
+    with open(tmp_path / "tpoly.sql") as f:
         sql = f.read()
 
     # print(sql)
@@ -355,10 +326,10 @@ def test_ogr_pgdump_3():
 # Test multi-geometry support
 
 
-def test_ogr_pgdump_4():
+def test_ogr_pgdump_4(tmp_vsimem):
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_4.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "ogr_pgdump_4.sql", options=["LINEFORMAT=LF"]
     )
     assert ds.TestCapability(ogr.ODsCCreateGeomFieldAfterCreateLayer) != 0
 
@@ -389,11 +360,9 @@ def test_ogr_pgdump_4():
 
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_4.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_4.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/ogr_pgdump_4.sql")
 
     # print(sql)
 
@@ -428,10 +397,10 @@ def test_ogr_pgdump_4():
 # Test non nullable, unique and comment field support
 
 
-def test_ogr_pgdump_non_nullable_unique_comment():
+def test_ogr_pgdump_non_nullable_unique_comment(tmp_vsimem):
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_5.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "ogr_pgdump_5.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
     field_defn = ogr.FieldDefn("field_not_nullable", ogr.OFTString)
@@ -472,11 +441,9 @@ def test_ogr_pgdump_non_nullable_unique_comment():
 
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_5.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_5.sql", "rb")
     sql = gdal.VSIFReadL(1, 1000, f).decode("ascii")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/ogr_pgdump_5.sql")
 
     # print(sql)
 
@@ -510,10 +477,10 @@ def test_ogr_pgdump_non_nullable_unique_comment():
 # Test default values
 
 
-def test_ogr_pgdump_6():
+def test_ogr_pgdump_6(tmp_vsimem):
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_6.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "ogr_pgdump_6.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
 
@@ -580,11 +547,9 @@ def test_ogr_pgdump_6():
 
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_6.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_6.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/ogr_pgdump_6.sql")
 
     # print(sql)
 
@@ -626,10 +591,10 @@ def test_ogr_pgdump_6():
 # Test creating a field with the fid name (PG_USE_COPY=NO)
 
 
-def test_ogr_pgdump_7():
+def test_ogr_pgdump_7(tmp_vsimem):
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_7.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "ogr_pgdump_7.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["FID=myfid"])
 
@@ -699,11 +664,9 @@ def test_ogr_pgdump_7():
 
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_7.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_7.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/ogr_pgdump_7.sql")
 
     # print(sql)
 
@@ -735,10 +698,10 @@ def test_ogr_pgdump_7():
 # Test creating a field with the fid name (PG_USE_COPY=YES)
 
 
-def test_ogr_pgdump_8():
+def test_ogr_pgdump_8(tmp_vsimem):
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_8.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "ogr_pgdump_8.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["FID=myfid"])
 
@@ -811,11 +774,9 @@ def test_ogr_pgdump_8():
 
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_8.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_8.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/ogr_pgdump_8.sql")
 
     # print(sql)
 
@@ -851,11 +812,11 @@ def test_ogr_pgdump_8():
 
 
 @pytest.mark.parametrize("pg_use_copy", ["YES", "NO"])
-def test_ogr_pgdump_9(pg_use_copy):
+def test_ogr_pgdump_9(tmp_vsimem, pg_use_copy):
 
     with gdaltest.config_option("PG_USE_COPY", pg_use_copy):
         ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-            "/vsimem/ogr_pgdump_9.sql", options=["LINEFORMAT=LF"]
+            tmp_vsimem / "ogr_pgdump_9.sql", options=["LINEFORMAT=LF"]
         )
         lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
 
@@ -887,11 +848,9 @@ def test_ogr_pgdump_9(pg_use_copy):
 
         ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_9.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_9.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/ogr_pgdump_9.sql")
 
     if pg_use_copy == "YES":
         eofield = "\t"
@@ -909,10 +868,10 @@ def test_ogr_pgdump_9(pg_use_copy):
 # Export POINT EMPTY for PostGIS 2.2
 
 
-def test_ogr_pgdump_11():
+def test_ogr_pgdump_11(tmp_vsimem):
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_11.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "ogr_pgdump_11.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -921,11 +880,9 @@ def test_ogr_pgdump_11():
     f = None
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_11.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_11.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/ogr_pgdump_11.sql")
 
     # clang -m32 generates F8FF..., instead of F87F... for all other systems
     assert (
@@ -941,10 +898,10 @@ def test_ogr_pgdump_11():
 # is not-nullable, and hence the CreateGeomField() interface is used.
 
 
-def test_ogr_pgdump_12():
+def test_ogr_pgdump_12(tmp_vsimem):
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_12.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "ogr_pgdump_12.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer(
         "test", geom_type=ogr.wkbNone, options=["GEOMETRY_NAME=another_name"]
@@ -952,11 +909,9 @@ def test_ogr_pgdump_12():
     lyr.CreateGeomField(ogr.GeomFieldDefn("my_geom", ogr.wkbPoint))
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_12.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_12.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/ogr_pgdump_12.sql")
 
     assert "another_name" in sql
 
@@ -1098,10 +1053,10 @@ tests_zm = [
 
 
 @pytest.mark.parametrize("geom_type,options,wkt,expected_strings", tests_zm)
-def test_ogr_pgdump_zm(geom_type, options, wkt, expected_strings):
+def test_ogr_pgdump_zm(tmp_vsimem, geom_type, options, wkt, expected_strings):
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_13.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "ogr_pgdump_13.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer("test", geom_type=geom_type, options=options)
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1110,23 +1065,23 @@ def test_ogr_pgdump_zm(geom_type, options, wkt, expected_strings):
     f = None
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_13.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_13.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/ogr_pgdump_13.sql")
 
     for expected_string in expected_strings:
         assert expected_string in sql, (geom_type, options, wkt, expected_string)
 
 
 @pytest.mark.parametrize("geom_type,options,wkt,expected_strings", tests_zm)
-def test_ogr_pgdump_zm_creategeomfield(geom_type, options, wkt, expected_strings):
+def test_ogr_pgdump_zm_creategeomfield(
+    tmp_vsimem, geom_type, options, wkt, expected_strings
+):
     if "GEOM_TYPE=geography" in options:
         return
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_13.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "ogr_pgdump_13.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=options)
     lyr.CreateGeomField(ogr.GeomFieldDefn("my_geom", geom_type))
@@ -1136,11 +1091,9 @@ def test_ogr_pgdump_zm_creategeomfield(geom_type, options, wkt, expected_strings
     f = None
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_13.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_13.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/ogr_pgdump_13.sql")
 
     for expected_string in expected_strings:
         assert expected_string in sql, (geom_type, options, wkt, expected_string)
@@ -1150,11 +1103,11 @@ def test_ogr_pgdump_zm_creategeomfield(geom_type, options, wkt, expected_strings
 # Test description
 
 
-def test_ogr_pgdump_14():
+def test_ogr_pgdump_14(tmp_vsimem):
 
     # Set with DESCRIPTION layer creation option
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_14.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "ogr_pgdump_14.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer(
         "ogr_pgdump_14", geom_type=ogr.wkbPoint, options=["DESCRIPTION=foo"]
@@ -1164,11 +1117,9 @@ def test_ogr_pgdump_14():
     lyr.SetMetadataItem("DESCRIPTION", "baz")
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_14.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_14.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/ogr_pgdump_14.sql")
 
     assert (
         """COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'foo';""" in sql
@@ -1176,34 +1127,39 @@ def test_ogr_pgdump_14():
         and "baz" not in sql
     )
 
+
+def test_ogr_pgdump_14_a(tmp_vsimem):
+
     # Set with SetMetadataItem()
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_14.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "ogr_pgdump_14.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer("ogr_pgdump_14", geom_type=ogr.wkbPoint)
     lyr.SetMetadataItem("DESCRIPTION", "bar")
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_14.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_14.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
 
-    gdal.Unlink("/vsimem/ogr_pgdump_14.sql")
+    gdal.Unlink(tmp_vsimem / "ogr_pgdump_14.sql")
     assert """COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'bar';""" in sql
+
+
+def test_ogr_pgdump_14_b(tmp_vsimem):
 
     # Set with SetMetadata()
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_14.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "ogr_pgdump_14.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer("ogr_pgdump_14", geom_type=ogr.wkbPoint)
     lyr.SetMetadata({"DESCRIPTION": "baz"})
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_14.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_14.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
 
-    gdal.Unlink("/vsimem/ogr_pgdump_14.sql")
     assert """COMMENT ON TABLE "public"."ogr_pgdump_14" IS 'baz';""" in sql
 
 
@@ -1211,10 +1167,10 @@ def test_ogr_pgdump_14():
 # NULL vs unset
 
 
-def test_ogr_pgdump_15():
+def test_ogr_pgdump_15(tmp_vsimem):
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_15.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "ogr_pgdump_15.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
@@ -1226,11 +1182,9 @@ def test_ogr_pgdump_15():
     f = None
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_15.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_15.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/ogr_pgdump_15.sql")
 
     assert (
         'INSERT INTO "public"."test" ("str") VALUES (NULL)' in sql
@@ -1243,11 +1197,11 @@ def test_ogr_pgdump_15():
 
 
 @pytest.mark.parametrize("pg_use_copy", ["YES", "NO"])
-def test_ogr_pgdump_16(pg_use_copy):
+def test_ogr_pgdump_16(tmp_vsimem, pg_use_copy):
 
     with gdal.config_option("PG_USE_COPY", pg_use_copy):
         ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-            "/vsimem/ogr_pgdump_16.sql", options=["LINEFORMAT=LF"]
+            tmp_vsimem / "ogr_pgdump_16.sql", options=["LINEFORMAT=LF"]
         )
         lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
         lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
@@ -1257,11 +1211,9 @@ def test_ogr_pgdump_16(pg_use_copy):
         f = None
         ds = None
 
-        f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_16.sql", "rb")
+        f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_16.sql", "rb")
         sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
         gdal.VSIFCloseL(f)
-
-        gdal.Unlink("/vsimem/ogr_pgdump_16.sql")
 
         assert (
             """SELECT setval(pg_get_serial_sequence('"public"."test"', 'ogc_fid'), MAX("ogc_fid")) FROM "public"."test";"""
@@ -1273,10 +1225,10 @@ def test_ogr_pgdump_16(pg_use_copy):
 # Test temporary layer creation option
 
 
-def test_ogr_pgdump_17():
+def test_ogr_pgdump_17(tmp_vsimem):
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/ogr_pgdump_17.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "ogr_pgdump_17.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint, options=["TEMPORARY=ON"])
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1285,11 +1237,9 @@ def test_ogr_pgdump_17():
     f = None
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_pgdump_17.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_17.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/ogr_pgdump_17.sql")
 
     # print(sql)
 
@@ -1319,11 +1269,11 @@ def test_ogr_pgdump_17():
 
 
 @pytest.mark.parametrize("pg_use_copy", ["YES", "NO"])
-def test_ogr_pgdump_GEOM_COLUMN_POSITION_END(pg_use_copy):
+def test_ogr_pgdump_GEOM_COLUMN_POSITION_END(tmp_vsimem, pg_use_copy):
 
     with gdaltest.config_option("PG_USE_COPY", pg_use_copy):
         ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-            "/vsimem/test_ogr_pgdump_GEOM_COLUMN_POSITION_END.sql",
+            tmp_vsimem / "test_ogr_pgdump_GEOM_COLUMN_POSITION_END.sql",
             options=["LINEFORMAT=LF"],
         )
         lyr = ds.CreateLayer(
@@ -1342,11 +1292,11 @@ def test_ogr_pgdump_GEOM_COLUMN_POSITION_END(pg_use_copy):
         f = None
         ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/test_ogr_pgdump_GEOM_COLUMN_POSITION_END.sql", "rb")
+    f = gdal.VSIFOpenL(
+        tmp_vsimem / "test_ogr_pgdump_GEOM_COLUMN_POSITION_END.sql", "rb"
+    )
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/test_ogr_pgdump_GEOM_COLUMN_POSITION_END.sql")
 
     # print(sql)
 
@@ -1386,11 +1336,11 @@ def test_ogr_pgdump_GEOM_COLUMN_POSITION_END(pg_use_copy):
 
 
 @pytest.mark.parametrize("pg_use_copy", ["YES", "NO"])
-def test_ogr_pgdump_GEOM_COLUMN_POSITION_END_FID_empty(pg_use_copy):
+def test_ogr_pgdump_GEOM_COLUMN_POSITION_END_FID_empty(tmp_vsimem, pg_use_copy):
 
     with gdaltest.config_option("PG_USE_COPY", pg_use_copy):
         ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-            "/vsimem/test_ogr_pgdump_GEOM_COLUMN_POSITION_END_FID_empty.sql",
+            tmp_vsimem / "test_ogr_pgdump_GEOM_COLUMN_POSITION_END_FID_empty.sql",
             options=["LINEFORMAT=LF"],
         )
         lyr = ds.CreateLayer(
@@ -1410,12 +1360,10 @@ def test_ogr_pgdump_GEOM_COLUMN_POSITION_END_FID_empty(pg_use_copy):
         ds = None
 
     f = gdal.VSIFOpenL(
-        "/vsimem/test_ogr_pgdump_GEOM_COLUMN_POSITION_END_FID_empty.sql", "rb"
+        tmp_vsimem / "test_ogr_pgdump_GEOM_COLUMN_POSITION_END_FID_empty.sql", "rb"
     )
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/test_ogr_pgdump_GEOM_COLUMN_POSITION_END_FID_empty.sql")
 
     # print(sql)
 
@@ -1454,10 +1402,10 @@ def test_ogr_pgdump_GEOM_COLUMN_POSITION_END_FID_empty(pg_use_copy):
 # Test creating a layer without feature
 
 
-def test_ogr_pgdump_no_feature():
+def test_ogr_pgdump_no_feature(tmp_vsimem):
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/test_ogr_pgdump_no_feature.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "test_ogr_pgdump_no_feature.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer(
         "test", geom_type=ogr.wkbPoint, options=["GEOM_COLUMN_POSITION=END"]
@@ -1465,11 +1413,9 @@ def test_ogr_pgdump_no_feature():
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/test_ogr_pgdump_no_feature.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "test_ogr_pgdump_no_feature.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/test_ogr_pgdump_no_feature.sql")
 
     # print(sql)
 
@@ -1496,10 +1442,10 @@ def test_ogr_pgdump_no_feature():
 # Test CREATE_TABLE=NO
 
 
-def test_ogr_pgdump_CREATE_TABLE_NO():
+def test_ogr_pgdump_CREATE_TABLE_NO(tmp_vsimem):
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/test_ogr_pgdump_CREATE_TABLE_NO.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "test_ogr_pgdump_CREATE_TABLE_NO.sql", options=["LINEFORMAT=LF"]
     )
     lyr = ds.CreateLayer(
         "test",
@@ -1513,11 +1459,9 @@ def test_ogr_pgdump_CREATE_TABLE_NO():
     lyr.CreateFeature(f)
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/test_ogr_pgdump_CREATE_TABLE_NO.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "test_ogr_pgdump_CREATE_TABLE_NO.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/test_ogr_pgdump_CREATE_TABLE_NO.sql")
 
     # print(sql)
 
@@ -1540,10 +1484,10 @@ def test_ogr_pgdump_CREATE_TABLE_NO():
 # Test long identifiers
 
 
-def test_ogr_pgdump_long_identifiers():
+def test_ogr_pgdump_long_identifiers(tmp_vsimem):
 
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(
-        "/vsimem/test_ogr_pgdump_long_identifiers.sql", options=["LINEFORMAT=LF"]
+        tmp_vsimem / "test_ogr_pgdump_long_identifiers.sql", options=["LINEFORMAT=LF"]
     )
 
     long_name = "test_" + ("X" * 64) + "_long_name"
@@ -1558,11 +1502,9 @@ def test_ogr_pgdump_long_identifiers():
     lyr.CreateFeature(f)
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/test_ogr_pgdump_long_identifiers.sql", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "test_ogr_pgdump_long_identifiers.sql", "rb")
     sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/test_ogr_pgdump_long_identifiers.sql")
 
     # print(sql)
 
@@ -1581,12 +1523,60 @@ def test_ogr_pgdump_long_identifiers():
 
 
 ###############################################################################
-# Cleanup
+# Test LAUNDER=YES
 
 
-def test_ogr_pgdump_cleanup():
+def test_ogr_pgdump_LAUNDER_YES(tmp_vsimem):
 
-    try:
-        os.remove("tmp/tpoly.sql")
-    except OSError:
-        pass
+    eacute = b"\xC3\xA9".decode("utf-8")
+    filename = str(tmp_vsimem / "test_ogr_pgdump_LAUNDER_YES.sql")
+    ds = ogr.GetDriverByName("PGDump").CreateDataSource(filename)
+    lyr = ds.CreateLayer("a" + eacute + "#", options=["LAUNDER=YES"])
+    lyr.CreateField(ogr.FieldDefn("b" + eacute + "#"))
+    ds = None
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+    assert '"a' + eacute + '_"' in sql
+    assert '"b' + eacute + '_"' in sql
+
+
+###############################################################################
+# Test LAUNDER=NO
+
+
+def test_ogr_pgdump_LAUNDER_NO(tmp_vsimem):
+
+    eacute = b"\xC3\xA9".decode("utf-8")
+    filename = str(tmp_vsimem / "test_ogr_pgdump_LAUNDER_NO.sql")
+    ds = ogr.GetDriverByName("PGDump").CreateDataSource(filename)
+    lyr = ds.CreateLayer("a" + eacute + "#", options=["LAUNDER=NO"])
+    lyr.CreateField(ogr.FieldDefn("b" + eacute + "#"))
+    ds = None
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+    assert '"a' + eacute + '#"' in sql
+    assert '"b' + eacute + '#"' in sql
+
+
+###############################################################################
+# Test LAUNDER_ASCII
+
+
+def test_ogr_pgdump_LAUNDER_ASCII(tmp_vsimem):
+
+    eacute = b"\xC3\xA9".decode("utf-8")
+    filename = str(tmp_vsimem / "test_ogr_pgdump_LAUNDER_ASCII.sql")
+    ds = ogr.GetDriverByName("PGDump").CreateDataSource(filename)
+    lyr = ds.CreateLayer("a" + eacute, options=["LAUNDER_ASCII=YES"])
+    lyr.CreateField(ogr.FieldDefn("b" + eacute))
+    ds = None
+
+    f = gdal.VSIFOpenL(filename, "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+    assert '"ae"' in sql
+    assert '"be"' in sql

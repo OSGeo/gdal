@@ -104,11 +104,28 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -select <field_list>
 
-    Comma-delimited list of fields from input layer to copy to the new layer. A
-    field is skipped if mentioned previously in the list even if the input
-    layer has duplicate field names. (Defaults to ``all``; any field is skipped
-    if a subsequent field with same name is found.) Geometry fields can also be
-    specified in the list.
+    Comma-delimited list of fields from input layer to copy to the new layer.
+
+    Starting with GDAL 3.9, field names with spaces, commas or double-quote
+    should be surrounded with a starting and ending double-quote character, and
+    double-quote characters in a field name should be escaped with backslash.
+
+    Depending on the shell used, this might require further quoting. For example,
+    to select ``regular_field``, ``a_field_with space, and comma`` and
+    ``a field with " double quote`` with a Unix shell:
+
+    .. code-block:: bash
+
+        -select "regular_field,\"a_field_with space, and comma\",\"a field with \\\" double quote\""
+
+    A field is only selected once, even if mentioned several times in the list
+    and if the input layer has duplicate field names.
+
+    Geometry fields can also be specified in the list.
+
+    All fields are selected when -select is not specified. Specifying the
+    empty string can be used to disable selecting any attribute field, and only
+    keep geometries.
 
     Note this setting cannot be used together with ``-append``. To control the
     selection of fields when appending to a layer, use ``-fieldmap`` or ``-sql``.
@@ -608,6 +625,21 @@ significant insertion performance boost. See the PG driver documentation page.
 
 More generally, consult the documentation page of the input and output drivers
 for performance hints.
+
+Known issues
+------------
+
+Starting with GDAL 3.8, ogr2ogr uses internally an Arrow array based API
+(cf :ref:`rfc-86`) for some source formats (in particular GeoPackage or FlatGeoBuf),
+and for the most basic types of operations, to improve performance.
+This substantial change in the ogr2ogr internal logic has required a number of
+fixes throughout the GDAL 3.8.x bugfix releases to fully stabilize it, and we believe
+most issues are resolved with GDAL 3.9.
+If you hit errors not met with earlier GDAL versions, you may specify
+``--config OGR2OGR_USE_ARROW_API NO`` on the ogr2ogr command line to opt for the
+classic algorithm using an iterative feature based approach. If that flag is
+needed with GDAL >= 3.9, please file an issue on the
+`GDAL issue tracker <https://github.com/OSGeo/gdal/issues>`__.
 
 C API
 -----

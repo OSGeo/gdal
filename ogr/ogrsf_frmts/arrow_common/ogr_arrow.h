@@ -41,13 +41,24 @@ enum class OGRArrowGeomEncoding
 {
     WKB,
     WKT,
-    GEOARROW_GENERIC,  // only used by OGRArrowWriterLayer::m_eGeomEncoding
-    GEOARROW_POINT,
-    GEOARROW_LINESTRING,
-    GEOARROW_POLYGON,
-    GEOARROW_MULTIPOINT,
-    GEOARROW_MULTILINESTRING,
-    GEOARROW_MULTIPOLYGON,
+
+    // F(ixed) S(ize) L(ist) of (x,y[,z][,m]) values / Interleaved layout
+    GEOARROW_FSL_GENERIC,  // only used by OGRArrowWriterLayer::m_eGeomEncoding
+    GEOARROW_FSL_POINT,
+    GEOARROW_FSL_LINESTRING,
+    GEOARROW_FSL_POLYGON,
+    GEOARROW_FSL_MULTIPOINT,
+    GEOARROW_FSL_MULTILINESTRING,
+    GEOARROW_FSL_MULTIPOLYGON,
+
+    // Struct of (x,y,[,z][,m])
+    GEOARROW_STRUCT_GENERIC,  // only used by OGRArrowWriterLayer::m_eGeomEncoding
+    GEOARROW_STRUCT_POINT,
+    GEOARROW_STRUCT_LINESTRING,
+    GEOARROW_STRUCT_POLYGON,
+    GEOARROW_STRUCT_MULTIPOINT,
+    GEOARROW_STRUCT_MULTILINESTRING,
+    GEOARROW_STRUCT_MULTIPOLYGON,
 };
 
 /************************************************************************/
@@ -181,6 +192,7 @@ class OGRArrowLayer CPL_NON_FINAL
     static bool
     IsValidGeometryEncoding(const std::shared_ptr<arrow::Field> &field,
                             const std::string &osEncoding,
+                            bool bWarnIfUnknownEncoding,
                             OGRwkbGeometryType &eGeomTypeOut,
                             OGRArrowGeomEncoding &eGeomEncodingOut);
     static OGRwkbGeometryType
@@ -234,6 +246,11 @@ class OGRArrowLayer CPL_NON_FINAL
                        struct ArrowSchema *out) override;
     int GetNextArrowArray(struct ArrowArrayStream *,
                           struct ArrowArray *out) override;
+
+    virtual void IncrFeatureIdx()
+    {
+        ++m_nFeatureIdx;
+    }
 
   public:
     virtual ~OGRArrowLayer() override;
@@ -340,6 +357,10 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     std::vector<OGRArrowGeomEncoding> m_aeGeomEncoding{};
     int m_nWKTCoordinatePrecision = -1;
 
+    //! Base struct data type for GeoArrow struct geometry columns.
+    // Constraint: if not empty, m_apoBaseStructGeomType.size() == m_poFeatureDefn->GetGeomFieldCount()
+    std::vector<std::shared_ptr<arrow::DataType>> m_apoBaseStructGeomType{};
+
     //! Whether to use a struct field with the values of the bounding box
     // of the geometries. Used by Parquet.
     bool m_bWriteBBoxStruct = false;
@@ -376,7 +397,8 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
         m_oSetWrittenGeometryTypes{};  // size: GetGeomFieldCount()
 
     static OGRArrowGeomEncoding
-    GetPreciseArrowGeomEncoding(OGRwkbGeometryType eGType);
+    GetPreciseArrowGeomEncoding(OGRArrowGeomEncoding eEncodingType,
+                                OGRwkbGeometryType eGType);
     static const char *
     GetGeomEncodingAsString(OGRArrowGeomEncoding eGeomEncoding,
                             bool bForParquetGeo);

@@ -113,8 +113,7 @@ OGRGPSBabelDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
         if (!bGPSBabelFound)
 #endif
         {
-            CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-            CPLErrorStateBackuper oErrorStateBackuper;
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             const char *const apszArgs[] = {"gpsbabel", "-V", nullptr};
             CPLString osTmpFileName("/vsimem/gpsbabel_tmp.tmp");
             VSILFILE *tmpfp = VSIFOpenL(osTmpFileName, "wb");

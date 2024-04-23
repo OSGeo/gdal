@@ -366,8 +366,24 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
             m_eGeomEncoding = OGRArrowGeomEncoding::WKB;
         else if (EQUAL(pszGeomEncoding, "WKT"))
             m_eGeomEncoding = OGRArrowGeomEncoding::WKT;
-        else if (EQUAL(pszGeomEncoding, "GEOARROW"))
-            m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_GENERIC;
+        else if (EQUAL(pszGeomEncoding, "GEOARROW_INTERLEAVED"))
+        {
+            static bool bHasWarned = false;
+            if (!bHasWarned)
+            {
+                bHasWarned = true;
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Use of GEOMETRY_ENCODING=GEOARROW_INTERLEAVED is not "
+                    "recommended. "
+                    "GeoParquet 1.1 uses GEOMETRY_ENCODING=GEOARROW (struct) "
+                    "instead.");
+            }
+            m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_FSL_GENERIC;
+        }
+        else if (EQUAL(pszGeomEncoding, "GEOARROW") ||
+                 EQUAL(pszGeomEncoding, "GEOARROW_STRUCT"))
+            m_eGeomEncoding = OGRArrowGeomEncoding::GEOARROW_STRUCT_GENERIC;
         else
         {
             CPLError(CE_Failure, CPLE_NotSupported,
@@ -395,10 +411,12 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
 
         m_poFeatureDefn->SetGeomType(eGType);
         auto eGeomEncoding = m_eGeomEncoding;
-        if (eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_GENERIC)
+        if (eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_FSL_GENERIC ||
+            eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_STRUCT_GENERIC)
         {
-            eGeomEncoding = GetPreciseArrowGeomEncoding(eGType);
-            if (eGeomEncoding == OGRArrowGeomEncoding::GEOARROW_GENERIC)
+            const auto eEncodingType = eGeomEncoding;
+            eGeomEncoding = GetPreciseArrowGeomEncoding(eEncodingType, eGType);
+            if (eGeomEncoding == eEncodingType)
                 return false;
         }
         m_aeGeomEncoding.push_back(eGeomEncoding);
@@ -634,7 +652,11 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
         CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_GEO", "YES")))
     {
         CPLJSONObject oRoot;
-        oRoot.Add("version", "1.0.0");
+        oRoot.Add("version",
+                  m_eGeomEncoding ==
+                          OGRArrowGeomEncoding::GEOARROW_STRUCT_GENERIC
+                      ? "1.1.0"
+                      : "1.0.0");
         oRoot.Add("primary_column",
                   m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
         CPLJSONObject oColumns;
@@ -741,7 +763,9 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
             }
 
             // Bounding box column definition
-            if (m_bWriteBBoxStruct)
+            if (m_bWriteBBoxStruct &&
+                CPLTestBool(CPLGetConfigOption(
+                    "OGR_PARQUET_WRITE_COVERING_BBOX_IN_METADATA", "YES")))
             {
                 CPLJSONObject oCovering;
                 oColumn.Add("covering", oCovering);

@@ -217,9 +217,56 @@ def pytest_collection_modifyitems(config, items):
             if not gdaltest.built_against_curl():
                 item.add_marker(pytest.mark.skip("curl support not available"))
 
+            required_version = [
+                mark.args[0] if len(mark.args) > 0 else 0,
+                mark.args[1] if len(mark.args) > 1 else 0,
+                mark.args[2] if len(mark.args) > 2 else 0,
+            ]
+
+            actual_version = [0, 0, 0]
+            for build_info_item in gdal.VersionInfo("BUILD_INFO").strip().split("\n"):
+                if build_info_item.startswith("CURL_VERSION="):
+                    actual_version = [
+                        int(x)
+                        for x in build_info_item[len("CURL_VERSION=") :].split(".")
+                    ]
+
+            if actual_version < required_version:
+                item.add_marker(
+                    pytest.mark.skip(
+                        f"Requires curl >= {'.'.join(str(x) for x in required_version)}"
+                    )
+                )
+
+        # For any tests marked to run sequentially (pytest.mark.random_order(disabled=True)
+        # check to make sure they are also marked with pytest.mark.xdist_group()
+        # so they are sent to the same xdist worker.
+        unmarked_modules = set()
+        xdist = config.pluginmanager.getplugin("xdist")
+        if xdist and xdist.is_xdist_worker(item.session):
+            for mark in item.iter_markers("random_order"):
+                if (
+                    mark.kwargs["disabled"]
+                    and not next(item.iter_markers("xdist_group"), None)
+                    and item.module.__name__ not in unmarked_modules
+                ):
+                    unmarked_modules.add(item.module.__name__)
+                    import warnings
+
+                    warnings.warn(
+                        f"module {item.module.__name__} marked as random_order(disabled=True) but does not have an assigned xdist_group"
+                    )
+
 
 def pytest_addoption(parser):
     parser.addini("gdal_version", "GDAL version for which pytest.ini was generated")
+
+    # our pytest.ini specifies --dist=loadgroup but we don't want to fail if the
+    # user doesn't have this extension installed.
+    try:
+        import xdist  # noqa: F401
+    except ImportError:
+        parser.addoption("--dist")
 
 
 def pytest_configure(config):
