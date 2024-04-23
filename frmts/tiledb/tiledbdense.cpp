@@ -272,8 +272,8 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     const int nBufferDTSize(GDALGetDataTypeSizeBytes(eBufType));
 
     if (eBufType == eDataType && nXSize == nBufXSize && nYSize == nBufYSize &&
-        nBufferDTSize > 0 && (nPixelSpace % nBufferDTSize) == 0 &&
-        (nLineSpace % nBufferDTSize) == 0)
+        nBufferDTSize > 0 && nPixelSpace == nBufferDTSize &&
+        nLineSpace == nBufXSize * nBufferDTSize)
     {
         const uint64_t nBandIdx = poGDS->nBandStart + nBand - 1;
         std::vector<uint64_t> oaSubarray = {
@@ -476,8 +476,10 @@ CPLErr TileDBRasterDataset::IRasterIO(
 
     if (eIndexMode == ATTRIBUTES && nBandCount == nBands &&
         eBufType == eDataType && nXSize == nBufXSize && nYSize == nBufYSize &&
-        nBufferDTSize > 0 && (nPixelSpace % nBufferDTSize) == 0 &&
-        (nLineSpace % nBufferDTSize) == 0)
+        nBufferDTSize > 0 && nPixelSpace == nBufferDTSize &&
+        nLineSpace == nBufXSize * nBufferDTSize &&
+        ((nBandSpace == 0 && nBandCount == 1) ||
+         nBandSpace == nBufYSize * nLineSpace))
     {
         std::vector<uint64_t> oaSubarray = {
             (uint64_t)nYOff, (uint64_t)nYOff + nYSize - 1, (uint64_t)nXOff,
