@@ -223,12 +223,9 @@ class TileDBRasterDataset final : public TileDBDataset
     int nBlocksX = 0;
     int nBlocksY = 0;
     uint64_t nBandStart = 1;
-    bool bHasSubDatasets = false;
-    int nSubDataCount = 0;
-    char **papszSubDatasets = nullptr;
-    CPLStringList m_osSubdatasetMD{};
-    CPLXMLNode *psSubDatasetsTree = nullptr;
-    char **papszAttributes = nullptr;
+    bool m_bHasSubDatasets = false;
+    CPLStringList m_aosSubdatasetMD{};
+    CPLXMLTreeCloser m_poSubDatasetsTree{nullptr};
     std::list<std::unique_ptr<GDALDataset>> lpoAttributeDS = {};
     uint64_t nTimestamp = 0;
 
@@ -258,8 +255,8 @@ class TileDBRasterDataset final : public TileDBDataset
     static TileDBRasterDataset *CreateLL(const char *pszFilename, int nXSize,
                                          int nYSize, int nBands,
                                          GDALDataType eType,
-                                         char **papszOptions);
-    static void SetBlockSize(GDALRasterBand *poBand, char **&papszOptions);
+                                         CSLConstList papszOptions);
+    static void SetBlockSize(GDALRasterBand *poBand, CPLStringList &aosOptions);
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
