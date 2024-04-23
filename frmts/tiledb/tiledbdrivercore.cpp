@@ -102,12 +102,7 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "Integer Integer64 Real String Date Time DateTime "
         "IntegerList Integer64List RealList Binary");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
-#ifdef HAS_TILEDB_BOOL
-                              "Boolean Int16 Float32"
-#else
-                              "Int16 Float32"
-#endif
-    );
+                              "Boolean Int16 Float32");
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,
         "<CreationOptionList>\n"

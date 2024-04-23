@@ -45,7 +45,7 @@ pytestmark = pytest.mark.require_driver("TileDB")
 ###############################################################################
 
 
-def create_tiledb_dataset(nullable, batch_size, include_bool, extra_feature=False):
+def create_tiledb_dataset(nullable, batch_size, extra_feature=False):
 
     ds = ogr.GetDriverByName("TileDB").CreateDataSource("tmp/test.tiledb")
     srs = osr.SpatialReference()
@@ -79,11 +79,10 @@ def create_tiledb_dataset(nullable, batch_size, include_bool, extra_feature=Fals
     with gdal.config_option("TILEDB_INT_TYPE", "UINT16"):
         lyr.CreateField(fld_defn)
 
-    if include_bool:
-        fld_defn = ogr.FieldDefn("boolfield", ogr.OFTInteger)
-        fld_defn.SetNullable(nullable)
-        fld_defn.SetSubType(ogr.OFSTBoolean)
-        lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("boolfield", ogr.OFTInteger)
+    fld_defn.SetNullable(nullable)
+    fld_defn.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(fld_defn)
 
     fld_defn = ogr.FieldDefn("int64field", ogr.OFTInteger64)
     fld_defn.SetNullable(nullable)
@@ -111,11 +110,10 @@ def create_tiledb_dataset(nullable, batch_size, include_bool, extra_feature=Fals
     fld_defn.SetSubType(ogr.OFSTInt16)
     lyr.CreateField(fld_defn)
 
-    if include_bool:
-        fld_defn = ogr.FieldDefn("boollistfield", ogr.OFTIntegerList)
-        fld_defn.SetNullable(nullable)
-        fld_defn.SetSubType(ogr.OFSTBoolean)
-        lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("boollistfield", ogr.OFTIntegerList)
+    fld_defn.SetNullable(nullable)
+    fld_defn.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(fld_defn)
 
     fld_defn = ogr.FieldDefn("doublelistfield", ogr.OFTRealList)
     fld_defn.SetNullable(nullable)
@@ -148,8 +146,7 @@ def create_tiledb_dataset(nullable, batch_size, include_bool, extra_feature=Fals
     f["strfield"] = "foo"
     f["intfield"] = -123456789
     f["int16field"] = -32768
-    if include_bool:
-        f["boolfield"] = True
+    f["boolfield"] = True
     f["uint8field"] = 0
     f["uint16field"] = 0
     f["int64field"] = -1234567890123456
@@ -158,8 +155,7 @@ def create_tiledb_dataset(nullable, batch_size, include_bool, extra_feature=Fals
     f["binaryfield"] = b"\xDE\xAD\xBE\xEF"
     f["intlistfield"] = [-123456789, 123]
     f["int16listfield"] = [-32768, 32767]
-    if include_bool:
-        f["boollistfield"] = [True, False]
+    f["boollistfield"] = [True, False]
     f["doublelistfield"] = [1.2345, -1.2345]
     f["floatlistfield"] = [1.5, -1.5, 0]
     f["datetimefield"] = "2023-04-07T12:34:56.789Z"
@@ -184,8 +180,7 @@ def create_tiledb_dataset(nullable, batch_size, include_bool, extra_feature=Fals
     f["strfield"] = "barbaz"
     f["intfield"] = 123456789
     f["int16field"] = 32767
-    if include_bool:
-        f["boolfield"] = False
+    f["boolfield"] = False
     f["uint8field"] = 255
     f["uint16field"] = 65535
     f["int64field"] = 1234567890123456
@@ -194,8 +189,7 @@ def create_tiledb_dataset(nullable, batch_size, include_bool, extra_feature=Fals
     f["binaryfield"] = b"\xBE\xEF\xDE\xAD"
     f["intlistfield"] = [123456789, -123]
     f["int16listfield"] = [32767, -32768]
-    if include_bool:
-        f["boollistfield"] = [False, True]
+    f["boollistfield"] = [False, True]
     f["doublelistfield"] = [-1.2345, 1.2345]
     f["floatlistfield"] = [0.0, -1.5, 1.5]
     # Will be transformed to "2023/04/07 10:19:56.789+00"
@@ -212,8 +206,7 @@ def create_tiledb_dataset(nullable, batch_size, include_bool, extra_feature=Fals
         f["strfield"] = "something"
         f["intfield"] = 8765432
         f["int16field"] = 32767
-        if include_bool:
-            f["boolfield"] = False
+        f["boolfield"] = False
         f["uint8field"] = 255
         f["uint16field"] = 65535
         f["int64field"] = 9876543210123456
@@ -222,8 +215,7 @@ def create_tiledb_dataset(nullable, batch_size, include_bool, extra_feature=Fals
         f["binaryfield"] = b"\xDE\xAD\xBE\xEF"
         f["intlistfield"] = [-123456789, -123]
         f["int16listfield"] = [32767, -32768]
-        if include_bool:
-            f["boollistfield"] = [False, True]
+        f["boollistfield"] = [False, True]
         f["doublelistfield"] = [-1.2345, 1.2345]
         f["floatlistfield"] = [0.0, -1.5, 1.5]
         # Will be transformed to "2023/04/07 10:19:56.789+00"
@@ -248,7 +240,7 @@ def test_ogr_tiledb_basic(nullable, batch_size):
     if os.path.exists("tmp/test.tiledb"):
         shutil.rmtree("tmp/test.tiledb")
 
-    field_count, srs, options = create_tiledb_dataset(nullable, batch_size, True)
+    field_count, srs, options = create_tiledb_dataset(nullable, batch_size)
 
     ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
@@ -1132,10 +1124,7 @@ def test_ogr_tiledb_arrow_stream_pyarrow(nullable, batch_size):
     if os.path.exists("tmp/test.tiledb"):
         shutil.rmtree("tmp/test.tiledb")
 
-    include_bool = "Boolean" in gdal.GetDriverByName("TileDB").GetMetadataItem(
-        gdal.DMD_CREATIONFIELDDATASUBTYPES
-    )
-    _, _, options = create_tiledb_dataset(nullable, batch_size, include_bool)
+    _, _, options = create_tiledb_dataset(nullable, batch_size)
 
     ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
@@ -1173,11 +1162,10 @@ def test_ogr_tiledb_arrow_stream_pyarrow(nullable, batch_size):
             ("timefield", "time32[ms]"),
             ("intfieldextra", "int32"),
             ("wkb_geometry", "large_binary"),
+            ("boolfield", "bool"),
+            ("boollistfield", "large_list<item: bool not null>"),
         ]
     )
-    if include_bool:
-        expected_fields.add(("boolfield", "bool"))
-        expected_fields.add(("boollistfield", "large_list<item: bool not null>"))
     assert fields == expected_fields
 
     def check_batch(batch):
@@ -1243,10 +1231,7 @@ def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
     if os.path.exists("tmp/test.tiledb"):
         shutil.rmtree("tmp/test.tiledb")
 
-    include_bool = True
-    _, _, options = create_tiledb_dataset(
-        nullable, batch_size, include_bool, extra_feature=True
-    )
+    _, _, options = create_tiledb_dataset(nullable, batch_size, extra_feature=True)
 
     ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
@@ -1342,10 +1327,9 @@ def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
             "timefield",
             "intfieldextra",
             "wkb_geometry",
+            "boolfield",
+            "boollistfield",
         }
-        if include_bool:
-            expected_fields.add("boolfield")
-            expected_fields.add("boollistfield")
         assert batch.keys() == expected_fields
 
         check_batch(batch)

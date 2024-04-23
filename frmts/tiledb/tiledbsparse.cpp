@@ -73,12 +73,10 @@ template <> struct GetType<TILEDB_UINT16>
     using EltType = std::vector<uint16_t>;
 };
 
-#ifdef HAS_TILEDB_BOOL
 template <> struct GetType<TILEDB_BOOL>
 {
     using EltType = VECTOR_OF_BOOL;
 };
-#endif
 
 template <> struct GetType<TILEDB_INT64>
 {
@@ -143,11 +141,9 @@ template <template <class> class Func> struct ProcessField
             case TILEDB_UINT16:
                 Func<GetType<TILEDB_UINT16>::EltType>::exec(array);
                 break;
-#ifdef HAS_TILEDB_BOOL
             case TILEDB_BOOL:
                 Func<GetType<TILEDB_BOOL>::EltType>::exec(array);
                 break;
-#endif
             case TILEDB_INT64:
                 Func<GetType<TILEDB_INT64>::EltType>::exec(array);
                 break;
@@ -761,13 +757,11 @@ bool OGRTileDBLayer::InitFromStorage(tiledb::Context *poCtx,
                 eType = OFTString;
                 fieldValues.push_back(std::make_shared<std::string>());
                 break;
-#ifdef HAS_TILEDB_BOOL
             case TILEDB_BOOL:
                 eType = bIsSingle ? OFTInteger : OFTIntegerList;
                 eSubType = OFSTBoolean;
                 fieldValues.push_back(std::make_shared<VECTOR_OF_BOOL>());
                 break;
-#endif
             case TILEDB_DATETIME_DAY:
                 eType = OFTDate;
                 fieldValues.push_back(std::make_shared<std::vector<int64_t>>());
@@ -1298,7 +1292,6 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
         {
             case OFTInteger:
             {
-#ifdef HAS_TILEDB_BOOL
                 if (m_aeFieldTypes[i] == TILEDB_BOOL)
                 {
                     auto &v = *(
@@ -1310,9 +1303,7 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                     m_query->set_data_buffer(pszFieldName, v);
 #endif
                 }
-                else
-#endif
-                    if (m_aeFieldTypes[i] == TILEDB_INT16)
+                else if (m_aeFieldTypes[i] == TILEDB_INT16)
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<int16_t>>>(
                         fieldValues));
@@ -1356,7 +1347,6 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                         ? static_cast<int>(
                               std::min<uint64_t>(1000, iter->second))
                         : 8;
-#ifdef HAS_TILEDB_BOOL
                 if (m_aeFieldTypes[i] == TILEDB_BOOL)
                 {
                     auto &v = *(
@@ -1372,9 +1362,7 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                     m_query->set_data_buffer(pszFieldName, v);
 #endif
                 }
-                else
-#endif
-                    if (m_aeFieldTypes[i] == TILEDB_INT16)
+                else if (m_aeFieldTypes[i] == TILEDB_INT16)
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<int16_t>>>(
                         fieldValues));
@@ -1909,16 +1897,13 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
             {
                 case OFTInteger:
                 {
-#ifdef HAS_TILEDB_BOOL
                     if (m_aeFieldTypes[i] == TILEDB_BOOL)
                     {
                         auto &v = *(std::get<std::shared_ptr<VECTOR_OF_BOOL>>(
                             fieldValues));
                         v.resize(result.second);
                     }
-                    else
-#endif
-                        if (m_aeFieldTypes[i] == TILEDB_INT16)
+                    else if (m_aeFieldTypes[i] == TILEDB_INT16)
                     {
                         auto &v =
                             *(std::get<std::shared_ptr<std::vector<int16_t>>>(
@@ -1955,7 +1940,6 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
 
                 case OFTIntegerList:
                 {
-#ifdef HAS_TILEDB_BOOL
                     if (m_aeFieldTypes[i] == TILEDB_BOOL)
                     {
                         auto &v = *(std::get<std::shared_ptr<VECTOR_OF_BOOL>>(
@@ -1969,9 +1953,7 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
                             v.resize(static_cast<size_t>(result.second));
                         }
                     }
-                    else
-#endif
-                        if (m_aeFieldTypes[i] == TILEDB_INT16)
+                    else if (m_aeFieldTypes[i] == TILEDB_INT16)
                     {
                         auto &v =
                             *(std::get<std::shared_ptr<std::vector<int16_t>>>(
@@ -2457,7 +2439,7 @@ std::unique_ptr<tiledb::QueryCondition> OGRTileDBLayer::CreateQueryCondition(
                     CPLAssert(false);
                     return nullptr;
                 }
-#ifdef HAS_TILEDB_BOOL
+
                 if (m_aeFieldTypes[poColumn->field_index] == TILEDB_BOOL)
                 {
                     if (nVal == 0 || nVal == 1)
@@ -2478,9 +2460,7 @@ std::unique_ptr<tiledb::QueryCondition> OGRTileDBLayer::CreateQueryCondition(
                         return nullptr;
                     }
                 }
-                else
-#endif
-                    if (m_aeFieldTypes[poColumn->field_index] == TILEDB_INT16)
+                else if (m_aeFieldTypes[poColumn->field_index] == TILEDB_INT16)
                 {
                     return CreateQueryConditionForIntType<int16_t>(
                         *(m_ctx.get()), poFieldDefn, nVal, tiledb_op,
@@ -3017,7 +2997,6 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
         {
             case OFTInteger:
             {
-#ifdef HAS_TILEDB_BOOL
                 if (m_aeFieldTypes[i] == TILEDB_BOOL)
                 {
                     const auto &v = *(
@@ -3025,9 +3004,7 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
                     poFeature->SetFieldSameTypeUnsafe(i,
                                                       v[m_nOffsetInResultSet]);
                 }
-                else
-#endif
-                    if (m_aeFieldTypes[i] == TILEDB_INT16)
+                else if (m_aeFieldTypes[i] == TILEDB_INT16)
                 {
                     const auto &v =
                         *(std::get<std::shared_ptr<std::vector<int16_t>>>(
@@ -3068,7 +3045,6 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
 
             case OFTIntegerList:
             {
-#ifdef HAS_TILEDB_BOOL
                 if (m_aeFieldTypes[i] == TILEDB_BOOL)
                 {
                     const auto &v = *(
@@ -3085,9 +3061,7 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
                     poFeature->SetField(i, static_cast<int>(nEltCount),
                                         tmp.data());
                 }
-                else
-#endif
-                    if (m_aeFieldTypes[i] == TILEDB_INT16)
+                else if (m_aeFieldTypes[i] == TILEDB_INT16)
                 {
                     const auto &v =
                         *(std::get<std::shared_ptr<std::vector<int16_t>>>(
@@ -3586,16 +3560,13 @@ void OGRTileDBLayer::InitializeSchemaAndArray()
                 case OFTInteger:
                 case OFTIntegerList:
                 {
-#ifdef HAS_TILEDB_BOOL
                     if (poFieldDefn->GetSubType() == OFSTBoolean)
                     {
                         CreateAttr(TILEDB_BOOL, eType == OFTIntegerList);
                         aFieldValues.push_back(
                             std::make_shared<VECTOR_OF_BOOL>());
                     }
-                    else
-#endif
-                        if (poFieldDefn->GetSubType() == OFSTInt16)
+                    else if (poFieldDefn->GetSubType() == OFSTInt16)
                     {
                         CreateAttr(TILEDB_INT16, eType == OFTIntegerList);
                         aFieldValues.push_back(
@@ -3971,13 +3942,10 @@ OGRErr OGRTileDBLayer::ICreateFeature(OGRFeature *poFeature)
             {
                 const int nVal =
                     bFieldIsValid ? poFeature->GetFieldAsIntegerUnsafe(i) : 0;
-#ifdef HAS_TILEDB_BOOL
                 if (m_aeFieldTypes[i] == TILEDB_BOOL)
                     std::get<std::shared_ptr<VECTOR_OF_BOOL>>(fieldValues)
                         ->push_back(static_cast<uint8_t>(nVal));
-                else
-#endif
-                    if (m_aeFieldTypes[i] == TILEDB_INT16)
+                else if (m_aeFieldTypes[i] == TILEDB_INT16)
                     std::get<std::shared_ptr<std::vector<int16_t>>>(fieldValues)
                         ->push_back(static_cast<int16_t>(nVal));
                 else if (m_aeFieldTypes[i] == TILEDB_INT32)
@@ -4004,7 +3972,6 @@ OGRErr OGRTileDBLayer::ICreateFeature(OGRFeature *poFeature)
                     poFeature->GetFieldAsIntegerList(i, &nCount);
                 if (anOffsets.empty())
                     anOffsets.push_back(0);
-#ifdef HAS_TILEDB_BOOL
                 if (m_aeFieldTypes[i] == TILEDB_BOOL)
                 {
                     auto &v = *(
@@ -4014,9 +3981,7 @@ OGRErr OGRTileDBLayer::ICreateFeature(OGRFeature *poFeature)
                     anOffsets.push_back(anOffsets.back() +
                                         nCount * sizeof(v[0]));
                 }
-                else
-#endif
-                    if (m_aeFieldTypes[i] == TILEDB_INT16)
+                else if (m_aeFieldTypes[i] == TILEDB_INT16)
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<int16_t>>>(
                         fieldValues));
@@ -4332,7 +4297,6 @@ void OGRTileDBLayer::FlushArrays()
                         query.set_offsets_buffer(pszFieldName, anOffsets);
                     }
 
-#ifdef HAS_TILEDB_BOOL
                     if (m_aeFieldTypes[i] == TILEDB_BOOL)
                     {
                         auto &v = *(std::get<std::shared_ptr<VECTOR_OF_BOOL>>(
@@ -4343,9 +4307,7 @@ void OGRTileDBLayer::FlushArrays()
                         query.set_data_buffer(pszFieldName, v);
 #endif
                     }
-                    else
-#endif
-                        if (m_aeFieldTypes[i] == TILEDB_INT16)
+                    else if (m_aeFieldTypes[i] == TILEDB_INT16)
                     {
                         auto &v =
                             *(std::get<std::shared_ptr<std::vector<int16_t>>>(
@@ -4619,12 +4581,9 @@ int OGRTileDBLayer::GetArrowSchema(struct ArrowArrayStream *out_stream,
                 eType == OFTInteger
                     ? out_schema->children[iSchemaChild]->format
                     : out_schema->children[iSchemaChild]->children[0]->format;
-#ifdef HAS_TILEDB_BOOL
             if (m_aeFieldTypes[i] == TILEDB_BOOL)
                 format = "b";
-            else
-#endif
-                if (m_aeFieldTypes[i] == TILEDB_INT16)
+            else if (m_aeFieldTypes[i] == TILEDB_INT16)
                 format = "s";
             else if (m_aeFieldTypes[i] == TILEDB_INT32)
                 format = "i";
@@ -5319,14 +5278,11 @@ int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             {
                 case OFTInteger:
                 {
-#ifdef HAS_TILEDB_BOOL
                     if (m_aeFieldTypes[i] == TILEDB_BOOL)
                     {
                         FillBoolArray(psChild, i, abyValidityFromFilters);
                     }
-                    else
-#endif
-                        if (m_aeFieldTypes[i] == TILEDB_INT16)
+                    else if (m_aeFieldTypes[i] == TILEDB_INT16)
                     {
                         FillPrimitiveArray<int16_t>(psChild, i,
                                                     abyValidityFromFilters);
@@ -5355,14 +5311,11 @@ int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
                 case OFTIntegerList:
                 {
-#ifdef HAS_TILEDB_BOOL
                     if (m_aeFieldTypes[i] == TILEDB_BOOL)
                     {
                         FillBoolListArray(psChild, i, abyValidityFromFilters);
                     }
-                    else
-#endif
-                        if (m_aeFieldTypes[i] == TILEDB_INT16)
+                    else if (m_aeFieldTypes[i] == TILEDB_INT16)
                     {
                         FillPrimitiveListArray<int16_t>(psChild, i,
                                                         abyValidityFromFilters);
