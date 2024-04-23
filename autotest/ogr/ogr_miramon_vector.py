@@ -929,13 +929,7 @@ def test_multiregister(expected_MultiRecordIndex, textField, expectedResult):
 # basic writing test
 
 
-def test_ogr_miramon_write_basic_polygon(tmp_path):
-
-    filename = str(tmp_path / "DataSetPOL")
-    ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(32631)
-    lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
+def create_common_attributes(lyr):
     lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
@@ -944,7 +938,9 @@ def test_ogr_miramon_write_basic_polygon(tmp_path):
     lyr.CreateField(ogr.FieldDefn("intlistfield", ogr.OFTIntegerList))
     lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
     lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
-    f = ogr.Feature(lyr.GetLayerDefn())
+
+
+def assign_common_attributes(f):
     f["strfield"] = "foo"
     f["intfield"] = 123456789
     f["int64field"] = 12345678912345678
@@ -953,6 +949,29 @@ def test_ogr_miramon_write_basic_polygon(tmp_path):
     f["intlistfield"] = [123456789]
     f["int64listfield"] = [12345678912345678]
     f["doulistfield"] = [1.5, 4.2]
+
+
+def check_common_attributes(f):
+    assert f["strfield"] == ["foo", ""]
+    assert f["intfield"] == [123456789]
+    assert f["int64field"] == [12345678912345678]
+    assert f["doublefield"] == [1.5]
+    assert f["strlistfield"] == ["foo", "bar"]
+    assert f["intlistfield"] == [123456789]
+    assert f["int64listfield"] == [12345678912345678]
+    assert f["doulistfield"] == [1.5, 4.2]
+
+
+def test_ogr_miramon_write_basic_polygon(tmp_path):
+
+    filename = str(tmp_path / "DataSetPOL")
+    ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
+    create_common_attributes(lyr)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assign_common_attributes(f)
 
     f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 1,1 1,0 0))"))
     lyr.CreateFeature(f)
@@ -972,14 +991,7 @@ def test_ogr_miramon_write_basic_polygon(tmp_path):
     assert f["AREA"] == [0.500000000000, 0.500000000000]
     assert f["N_ARCS"] == [1, 1]
     assert f["N_POLIG"] == [1, 1]
-    assert f["strfield"] == ["foo", ""]
-    assert f["intfield"] == [123456789]
-    assert f["int64field"] == [12345678912345678]
-    assert f["doublefield"] == [1.5]
-    assert f["strlistfield"] == ["foo", "bar"]
-    assert f["intlistfield"] == [123456789]
-    assert f["int64listfield"] == [12345678912345678]
-    assert f["doulistfield"] == [1.5, 4.2]
+    check_common_attributes(f)
     assert f.GetGeometryRef().ExportToIsoWkt() == "POLYGON ((0 0,0 1,1 1,0 0))"
     ds = None
 
@@ -991,23 +1003,9 @@ def test_ogr_miramon_write_basic_multipolygon(tmp_path):
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
     lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
-    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
-    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
-    lyr.CreateField(ogr.FieldDefn("doublefield", ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn("strlistfield", ogr.OFTStringList))
-    lyr.CreateField(ogr.FieldDefn("intlistfield", ogr.OFTIntegerList))
-    lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
-    lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
+    create_common_attributes(lyr)
     f = ogr.Feature(lyr.GetLayerDefn())
-    f["strfield"] = "foo"
-    f["intfield"] = 123456789
-    f["int64field"] = 12345678912345678
-    f["doublefield"] = 1.5
-    f["strlistfield"] = ["foo", "bar"]
-    f["intlistfield"] = [123456789]
-    f["int64listfield"] = [12345678912345678]
-    f["doulistfield"] = [1.5, 4.2]
+    assign_common_attributes(f)
 
     f.SetGeometry(
         ogr.CreateGeometryFromWkt(
@@ -1032,14 +1030,7 @@ def test_ogr_miramon_write_basic_multipolygon(tmp_path):
     assert f["AREA"] == [24, 24]
     assert f["N_ARCS"] == [4, 4]
     assert f["N_POLIG"] == [4, 4]
-    assert f["strfield"] == ["foo", ""]
-    assert f["intfield"] == [123456789]
-    assert f["int64field"] == [12345678912345678]
-    assert f["doublefield"] == [1.5]
-    assert f["strlistfield"] == ["foo", "bar"]
-    assert f["intlistfield"] == [123456789]
-    assert f["int64listfield"] == [12345678912345678]
-    assert f["doulistfield"] == [1.5, 4.2]
+    check_common_attributes(f)
     assert (
         f.GetGeometryRef().ExportToIsoWkt()
         == "MULTIPOLYGON (((0 0,0 5,5 5,5 0,0 0),(1 1,2 1,2 2,1 2,1 1),(3 3,4 3,4 4,3 4,3 3)),((5 6,5 7,6 7,6 6,5 6)))"
@@ -1054,23 +1045,9 @@ def test_ogr_miramon_write_basic_linestring(tmp_path):
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
     lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
-    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
-    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
-    lyr.CreateField(ogr.FieldDefn("doublefield", ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn("strlistfield", ogr.OFTStringList))
-    lyr.CreateField(ogr.FieldDefn("intlistfield", ogr.OFTIntegerList))
-    lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
-    lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
+    create_common_attributes(lyr)
     f = ogr.Feature(lyr.GetLayerDefn())
-    f["strfield"] = "foo"
-    f["intfield"] = 123456789
-    f["int64field"] = 12345678912345678
-    f["doublefield"] = 1.5
-    f["strlistfield"] = ["foo", "bar"]
-    f["intlistfield"] = [123456789]
-    f["int64listfield"] = [12345678912345678]
-    f["doulistfield"] = [1.5, 4.2]
+    assign_common_attributes(f)
 
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0 0,0 1,1 1)"))
     lyr.CreateFeature(f)
@@ -1089,14 +1066,7 @@ def test_ogr_miramon_write_basic_linestring(tmp_path):
     assert f["LONG_ARC"] == [2.0, 2.0]
     assert f["NODE_INI"] == [0, 0]
     assert f["NODE_FI"] == [1, 1]
-    assert f["strfield"] == ["foo", ""]
-    assert f["intfield"] == [123456789]
-    assert f["int64field"] == [12345678912345678]
-    assert f["doublefield"] == [1.5]
-    assert f["strlistfield"] == ["foo", "bar"]
-    assert f["intlistfield"] == [123456789]
-    assert f["int64listfield"] == [12345678912345678]
-    assert f["doulistfield"] == [1.5, 4.2]
+    check_common_attributes(f)
     assert f.GetGeometryRef().ExportToIsoWkt() == "LINESTRING (0 0,0 1,1 1)"
     ds = None
 
@@ -1108,23 +1078,9 @@ def test_ogr_miramon_write_basic_linestringZ(tmp_path):
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
     lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
-    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
-    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
-    lyr.CreateField(ogr.FieldDefn("doublefield", ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn("strlistfield", ogr.OFTStringList))
-    lyr.CreateField(ogr.FieldDefn("intlistfield", ogr.OFTIntegerList))
-    lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
-    lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
+    create_common_attributes(lyr)
     f = ogr.Feature(lyr.GetLayerDefn())
-    f["strfield"] = "foo"
-    f["intfield"] = 123456789
-    f["int64field"] = 12345678912345678
-    f["doublefield"] = 1.5
-    f["strlistfield"] = ["foo", "bar"]
-    f["intlistfield"] = [123456789]
-    f["int64listfield"] = [12345678912345678]
-    f["doulistfield"] = [1.5, 4.2]
+    assign_common_attributes(f)
 
     f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING Z (0 0 4,0 1 3,1 1 2)"))
     lyr.CreateFeature(f)
@@ -1143,14 +1099,7 @@ def test_ogr_miramon_write_basic_linestringZ(tmp_path):
     assert f["LONG_ARC"] == [2.0, 2.0]
     assert f["NODE_INI"] == [0, 0]
     assert f["NODE_FI"] == [1, 1]
-    assert f["strfield"] == ["foo", ""]
-    assert f["intfield"] == [123456789]
-    assert f["int64field"] == [12345678912345678]
-    assert f["doublefield"] == [1.5]
-    assert f["strlistfield"] == ["foo", "bar"]
-    assert f["intlistfield"] == [123456789]
-    assert f["int64listfield"] == [12345678912345678]
-    assert f["doulistfield"] == [1.5, 4.2]
+    check_common_attributes(f)
     assert f.GetGeometryRef().ExportToIsoWkt() == "LINESTRING Z (0 0 4,0 1 3,1 1 2)"
     ds = None
 
@@ -1162,23 +1111,9 @@ def test_ogr_miramon_write_basic_multilinestring(tmp_path):
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
     lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
-    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
-    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
-    lyr.CreateField(ogr.FieldDefn("doublefield", ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn("strlistfield", ogr.OFTStringList))
-    lyr.CreateField(ogr.FieldDefn("intlistfield", ogr.OFTIntegerList))
-    lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
-    lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
+    create_common_attributes(lyr)
     f = ogr.Feature(lyr.GetLayerDefn())
-    f["strfield"] = "foo"
-    f["intfield"] = 123456789
-    f["int64field"] = 12345678912345678
-    f["doublefield"] = 1.5
-    f["strlistfield"] = ["foo", "bar"]
-    f["intlistfield"] = [123456789]
-    f["int64listfield"] = [12345678912345678]
-    f["doulistfield"] = [1.5, 4.2]
+    assign_common_attributes(f)
 
     f.SetGeometry(
         ogr.CreateGeometryFromWkt("MULTILINESTRING ((0 0,0 1,1 1),(0 0,0 3))")
@@ -1199,14 +1134,7 @@ def test_ogr_miramon_write_basic_multilinestring(tmp_path):
     assert f["LONG_ARC"] == [2.0, 2.0]
     assert f["NODE_INI"] == [0, 0]
     assert f["NODE_FI"] == [1, 1]
-    assert f["strfield"] == ["foo", ""]
-    assert f["intfield"] == [123456789]
-    assert f["int64field"] == [12345678912345678]
-    assert f["doublefield"] == [1.5]
-    assert f["strlistfield"] == ["foo", "bar"]
-    assert f["intlistfield"] == [123456789]
-    assert f["int64listfield"] == [12345678912345678]
-    assert f["doulistfield"] == [1.5, 4.2]
+    check_common_attributes(f)
     assert f.GetGeometryRef().ExportToIsoWkt() == "LINESTRING (0 0,0 1,1 1)"
 
     f = lyr.GetNextFeature()
@@ -1216,14 +1144,7 @@ def test_ogr_miramon_write_basic_multilinestring(tmp_path):
     assert f["LONG_ARC"] == [3.0, 3.0]
     assert f["NODE_INI"] == [2, 2]
     assert f["NODE_FI"] == [3, 3]
-    assert f["strfield"] == ["foo", ""]
-    assert f["intfield"] == [123456789]
-    assert f["int64field"] == [12345678912345678]
-    assert f["doublefield"] == [1.5]
-    assert f["strlistfield"] == ["foo", "bar"]
-    assert f["intlistfield"] == [123456789]
-    assert f["int64listfield"] == [12345678912345678]
-    assert f["doulistfield"] == [1.5, 4.2]
+    check_common_attributes(f)
     assert f.GetGeometryRef().ExportToIsoWkt() == "LINESTRING (0 0,0 3)"
 
     ds = None
@@ -1237,23 +1158,9 @@ def test_ogr_miramon_write_basic_point(tmp_path):
     srs.ImportFromEPSG(32631)
     options = ["DBFEncoding=UTF8"]
     lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown, options=options)
-    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
-    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
-    lyr.CreateField(ogr.FieldDefn("doublefield", ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn("strlistfield", ogr.OFTStringList))
-    lyr.CreateField(ogr.FieldDefn("intlistfield", ogr.OFTIntegerList))
-    lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
-    lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
+    create_common_attributes(lyr)
     f = ogr.Feature(lyr.GetLayerDefn())
-    f["strfield"] = "foo"
-    f["intfield"] = 123456789
-    f["int64field"] = 12345678912345678
-    f["doublefield"] = 1.5
-    f["strlistfield"] = ["foo", "bar"]
-    f["intlistfield"] = [123456789]
-    f["int64listfield"] = [12345678912345678]
-    f["doulistfield"] = [1.5, 4.2]
+    assign_common_attributes(f)
 
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
     lyr.CreateFeature(f)
@@ -1272,27 +1179,13 @@ def test_ogr_miramon_write_basic_point(tmp_path):
     f = lyr.GetNextFeature()
 
     assert f["ID_GRAFIC"] == [0, 0]
-    assert f["strfield"] == ["foo", ""]
-    assert f["intfield"] == [123456789]
-    assert f["int64field"] == [12345678912345678]
-    assert f["doublefield"] == [1.5]
-    assert f["strlistfield"] == ["foo", "bar"]
-    assert f["intlistfield"] == [123456789]
-    assert f["int64listfield"] == [12345678912345678]
-    assert f["doulistfield"] == [1.5, 4.2]
+    check_common_attributes(f)
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (0 0)"
 
     f = lyr.GetNextFeature()
 
     assert f["ID_GRAFIC"] == [1, 1]
-    assert f["strfield"] == ["foo", ""]
-    assert f["intfield"] == [123456789]
-    assert f["int64field"] == [12345678912345678]
-    assert f["doublefield"] == [1.5]
-    assert f["strlistfield"] == ["foo", "bar"]
-    assert f["intlistfield"] == [123456789]
-    assert f["int64listfield"] == [12345678912345678]
-    assert f["doulistfield"] == [1.5, 4.2]
+    check_common_attributes(f)
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 0)"
 
     ds = None
@@ -1305,23 +1198,9 @@ def test_ogr_miramon_write_basic_pointZ(tmp_path):
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
     lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
-    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
-    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
-    lyr.CreateField(ogr.FieldDefn("doublefield", ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn("strlistfield", ogr.OFTStringList))
-    lyr.CreateField(ogr.FieldDefn("intlistfield", ogr.OFTIntegerList))
-    lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
-    lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
+    create_common_attributes(lyr)
     f = ogr.Feature(lyr.GetLayerDefn())
-    f["strfield"] = "foo"
-    f["intfield"] = 123456789
-    f["int64field"] = 12345678912345678
-    f["doublefield"] = 1.5
-    f["strlistfield"] = ["foo", "bar"]
-    f["intlistfield"] = [123456789]
-    f["int64listfield"] = [12345678912345678]
-    f["doulistfield"] = [1.5, 4.2]
+    assign_common_attributes(f)
 
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT Z (0 0 6)"))
     lyr.CreateFeature(f)
@@ -1340,27 +1219,13 @@ def test_ogr_miramon_write_basic_pointZ(tmp_path):
     f = lyr.GetNextFeature()
 
     assert f["ID_GRAFIC"] == [0, 0]
-    assert f["strfield"] == ["foo", ""]
-    assert f["intfield"] == [123456789]
-    assert f["int64field"] == [12345678912345678]
-    assert f["doublefield"] == [1.5]
-    assert f["strlistfield"] == ["foo", "bar"]
-    assert f["intlistfield"] == [123456789]
-    assert f["int64listfield"] == [12345678912345678]
-    assert f["doulistfield"] == [1.5, 4.2]
+    check_common_attributes(f)
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT Z (0 0 6)"
 
     f = lyr.GetNextFeature()
 
     assert f["ID_GRAFIC"] == [1, 1]
-    assert f["strfield"] == ["foo", ""]
-    assert f["intfield"] == [123456789]
-    assert f["int64field"] == [12345678912345678]
-    assert f["doublefield"] == [1.5]
-    assert f["strlistfield"] == ["foo", "bar"]
-    assert f["intlistfield"] == [123456789]
-    assert f["int64listfield"] == [12345678912345678]
-    assert f["doulistfield"] == [1.5, 4.2]
+    check_common_attributes(f)
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT Z (1 0 5)"
 
     ds = None
@@ -1373,23 +1238,9 @@ def test_ogr_miramon_write_basic_multipoint(tmp_path):
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
     lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
-    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
-    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
-    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
-    lyr.CreateField(ogr.FieldDefn("doublefield", ogr.OFTReal))
-    lyr.CreateField(ogr.FieldDefn("strlistfield", ogr.OFTStringList))
-    lyr.CreateField(ogr.FieldDefn("intlistfield", ogr.OFTIntegerList))
-    lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
-    lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
+    create_common_attributes(lyr)
     f = ogr.Feature(lyr.GetLayerDefn())
-    f["strfield"] = "foo"
-    f["intfield"] = 123456789
-    f["int64field"] = 12345678912345678
-    f["doublefield"] = 1.5
-    f["strlistfield"] = ["foo", "bar"]
-    f["intlistfield"] = [123456789]
-    f["int64listfield"] = [12345678912345678]
-    f["doulistfield"] = [1.5, 4.2]
+    assign_common_attributes(f)
 
     f.SetGeometry(ogr.CreateGeometryFromWkt("MULTIPOINT (0 0, 1 0)"))
     lyr.CreateFeature(f)
@@ -1405,27 +1256,13 @@ def test_ogr_miramon_write_basic_multipoint(tmp_path):
     f = lyr.GetNextFeature()
 
     assert f["ID_GRAFIC"] == [0, 0]
-    assert f["strfield"] == ["foo", ""]
-    assert f["intfield"] == [123456789]
-    assert f["int64field"] == [12345678912345678]
-    assert f["doublefield"] == [1.5]
-    assert f["strlistfield"] == ["foo", "bar"]
-    assert f["intlistfield"] == [123456789]
-    assert f["int64listfield"] == [12345678912345678]
-    assert f["doulistfield"] == [1.5, 4.2]
+    check_common_attributes(f)
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (0 0)"
 
     f = lyr.GetNextFeature()
 
     assert f["ID_GRAFIC"] == [1, 1]
-    assert f["strfield"] == ["foo", ""]
-    assert f["intfield"] == [123456789]
-    assert f["int64field"] == [12345678912345678]
-    assert f["doublefield"] == [1.5]
-    assert f["strlistfield"] == ["foo", "bar"]
-    assert f["intlistfield"] == [123456789]
-    assert f["int64listfield"] == [12345678912345678]
-    assert f["doulistfield"] == [1.5, 4.2]
+    check_common_attributes(f)
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 0)"
 
     ds = None
