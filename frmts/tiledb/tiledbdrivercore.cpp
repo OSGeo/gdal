@@ -218,11 +218,7 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "array at this timestamp, the timestamp should be > 0'/>"
         "   <Option name='TILEDB_STRING_TYPE' type='string-select' "
         "description='Which TileDB type to create string attributes' "
-#ifdef HAS_TILEDB_WORKING_UTF8_STRING_FILTER
        "default='UTF8'"
-#else
-       "default='ASCII'"
-#endif
         ">"
         "       <Value>UTF8</Value>"
         "       <Value>ASCII</Value>"
@@ -280,10 +276,6 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "description='Whether the array should be only in-memory. Useful to "
         "create an indexing variable that is serialized as a dimension label'/>"
         "</MultiDimArrayCreationOptionList>");
-#endif
-
-#if !defined(HAS_TILEDB_WORKING_UTF8_STRING_FILTER)
-    poDriver->SetMetadataItem("HAS_TILEDB_WORKING_UTF8_STRING_FILTER", "NO");
 #endif
 
     poDriver->pfnIdentify = TileDBDriverIdentifySimplified;
