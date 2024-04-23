@@ -984,9 +984,72 @@ def test_ogr_miramon_write_basic_polygon(tmp_path):
     ds = None
 
 
+def test_ogr_miramon_write_basic_multipolygon(tmp_path):
+
+    filename = str(tmp_path / "DataSetMULTIPOL")
+    ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
+    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
+    lyr.CreateField(ogr.FieldDefn("doublefield", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("strlistfield", ogr.OFTStringList))
+    lyr.CreateField(ogr.FieldDefn("intlistfield", ogr.OFTIntegerList))
+    lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
+    lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["strfield"] = "foo"
+    f["intfield"] = 123456789
+    f["int64field"] = 12345678912345678
+    f["doublefield"] = 1.5
+    f["strlistfield"] = ["foo", "bar"]
+    f["intlistfield"] = [123456789]
+    f["int64listfield"] = [12345678912345678]
+    f["doulistfield"] = [1.5, 4.2]
+
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "MULTIPOLYGON (((0 0,0 5,5 5,5 0,0 0), (1 1,2 1,2 2,1 2,1 1), (3 3,4 3,4 4,3 4,3 3)),((5 6,5 7,6 7,6 6,5 6)))"
+        )
+    )
+
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    layername = filename + "/test.pol"
+    ds = ogr.Open(layername)
+    assert ds is not None, "Failed to get dataset"
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, "Failed to get layer"
+    f = lyr.GetNextFeature()
+
+    assert f["ID_GRAFIC"] == [1, 1]
+    assert f["N_VERTEXS"] == [20, 20]
+    assert f["PERIMETRE"] == [32, 32]
+    assert f["AREA"] == [24, 24]
+    assert f["N_ARCS"] == [4, 4]
+    assert f["N_POLIG"] == [4, 4]
+    assert f["strfield"] == ["foo", ""]
+    assert f["intfield"] == [123456789]
+    assert f["int64field"] == [12345678912345678]
+    assert f["doublefield"] == [1.5]
+    assert f["strlistfield"] == ["foo", "bar"]
+    assert f["intlistfield"] == [123456789]
+    assert f["int64listfield"] == [12345678912345678]
+    assert f["doulistfield"] == [1.5, 4.2]
+    assert (
+        f.GetGeometryRef().ExportToIsoWkt()
+        == "MULTIPOLYGON (((0 0,0 5,5 5,5 0,0 0),(1 1,2 1,2 2,1 2,1 1),(3 3,4 3,4 4,3 4,3 3)),((5 6,5 7,6 7,6 6,5 6)))"
+    )
+    ds = None
+
+
 def test_ogr_miramon_write_basic_linestring(tmp_path):
 
-    filename = str(tmp_path / "DataSetARC")
+    filename = str(tmp_path / "DataSetLINESTRING")
     ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
@@ -1038,9 +1101,63 @@ def test_ogr_miramon_write_basic_linestring(tmp_path):
     ds = None
 
 
+def test_ogr_miramon_write_basic_linestringZ(tmp_path):
+
+    filename = str(tmp_path / "DataSetLINESTRING")
+    ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
+    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
+    lyr.CreateField(ogr.FieldDefn("doublefield", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("strlistfield", ogr.OFTStringList))
+    lyr.CreateField(ogr.FieldDefn("intlistfield", ogr.OFTIntegerList))
+    lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
+    lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["strfield"] = "foo"
+    f["intfield"] = 123456789
+    f["int64field"] = 12345678912345678
+    f["doublefield"] = 1.5
+    f["strlistfield"] = ["foo", "bar"]
+    f["intlistfield"] = [123456789]
+    f["int64listfield"] = [12345678912345678]
+    f["doulistfield"] = [1.5, 4.2]
+
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING Z (0 0 4,0 1 3,1 1 2)"))
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    layername = filename + "/test.arc"
+    ds = ogr.Open(layername)
+    assert ds is not None, "Failed to get dataset"
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, "Failed to get layer"
+    f = lyr.GetNextFeature()
+
+    assert f["ID_GRAFIC"] == [0, 0]
+    assert f["N_VERTEXS"] == [3, 3]
+    assert f["LONG_ARC"] == [2.0, 2.0]
+    assert f["NODE_INI"] == [0, 0]
+    assert f["NODE_FI"] == [1, 1]
+    assert f["strfield"] == ["foo", ""]
+    assert f["intfield"] == [123456789]
+    assert f["int64field"] == [12345678912345678]
+    assert f["doublefield"] == [1.5]
+    assert f["strlistfield"] == ["foo", "bar"]
+    assert f["intlistfield"] == [123456789]
+    assert f["int64listfield"] == [12345678912345678]
+    assert f["doulistfield"] == [1.5, 4.2]
+    assert f.GetGeometryRef().ExportToIsoWkt() == "LINESTRING Z (0 0 4,0 1 3,1 1 2)"
+    ds = None
+
+
 def test_ogr_miramon_write_basic_multilinestring(tmp_path):
 
-    filename = str(tmp_path / "DataSetARC")
+    filename = str(tmp_path / "DataSetMULTILINESTRING")
     ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
@@ -1064,7 +1181,7 @@ def test_ogr_miramon_write_basic_multilinestring(tmp_path):
     f["doulistfield"] = [1.5, 4.2]
 
     f.SetGeometry(
-        ogr.CreateGeometryFromWkt("MULTILINESTRING ((0 0,0 1,1 1),(0 0,0 2))")
+        ogr.CreateGeometryFromWkt("MULTILINESTRING ((0 0,0 1,1 1),(0 0,0 3))")
     )
     lyr.CreateFeature(f)
     f = None
@@ -1096,7 +1213,7 @@ def test_ogr_miramon_write_basic_multilinestring(tmp_path):
 
     assert f["ID_GRAFIC"] == [1, 1]
     assert f["N_VERTEXS"] == [2, 2]
-    assert f["LONG_ARC"] == [2.0, 2.0]
+    assert f["LONG_ARC"] == [3.0, 3.0]
     assert f["NODE_INI"] == [2, 2]
     assert f["NODE_FI"] == [3, 3]
     assert f["strfield"] == ["foo", ""]
@@ -1107,18 +1224,19 @@ def test_ogr_miramon_write_basic_multilinestring(tmp_path):
     assert f["intlistfield"] == [123456789]
     assert f["int64listfield"] == [12345678912345678]
     assert f["doulistfield"] == [1.5, 4.2]
-    assert f.GetGeometryRef().ExportToIsoWkt() == "LINESTRING (0 0,0 2)"
+    assert f.GetGeometryRef().ExportToIsoWkt() == "LINESTRING (0 0,0 3)"
 
     ds = None
 
 
 def test_ogr_miramon_write_basic_point(tmp_path):
 
-    filename = str(tmp_path / "DataSetPNT")
+    filename = str(tmp_path / "DataSetPOINT")
     ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
-    lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
+    options = ["DBFEncoding=UTF8"]
+    lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown, options=options)
     lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
@@ -1180,9 +1298,77 @@ def test_ogr_miramon_write_basic_point(tmp_path):
     ds = None
 
 
+def test_ogr_miramon_write_basic_pointZ(tmp_path):
+
+    filename = str(tmp_path / "DataSetPOINT")
+    ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
+    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("int64field", ogr.OFTInteger64))
+    lyr.CreateField(ogr.FieldDefn("doublefield", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("strlistfield", ogr.OFTStringList))
+    lyr.CreateField(ogr.FieldDefn("intlistfield", ogr.OFTIntegerList))
+    lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
+    lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["strfield"] = "foo"
+    f["intfield"] = 123456789
+    f["int64field"] = 12345678912345678
+    f["doublefield"] = 1.5
+    f["strlistfield"] = ["foo", "bar"]
+    f["intlistfield"] = [123456789]
+    f["int64listfield"] = [12345678912345678]
+    f["doulistfield"] = [1.5, 4.2]
+
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT Z (0 0 6)"))
+    lyr.CreateFeature(f)
+
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT Z (1 0 5)"))
+    lyr.CreateFeature(f)
+
+    f = None
+    ds = None
+
+    layername = filename + "/test.pnt"
+    ds = ogr.Open(layername)
+    assert ds is not None, "Failed to get dataset"
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, "Failed to get layer"
+    f = lyr.GetNextFeature()
+
+    assert f["ID_GRAFIC"] == [0, 0]
+    assert f["strfield"] == ["foo", ""]
+    assert f["intfield"] == [123456789]
+    assert f["int64field"] == [12345678912345678]
+    assert f["doublefield"] == [1.5]
+    assert f["strlistfield"] == ["foo", "bar"]
+    assert f["intlistfield"] == [123456789]
+    assert f["int64listfield"] == [12345678912345678]
+    assert f["doulistfield"] == [1.5, 4.2]
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT Z (0 0 6)"
+
+    f = lyr.GetNextFeature()
+
+    assert f["ID_GRAFIC"] == [1, 1]
+    assert f["strfield"] == ["foo", ""]
+    assert f["intfield"] == [123456789]
+    assert f["int64field"] == [12345678912345678]
+    assert f["doublefield"] == [1.5]
+    assert f["strlistfield"] == ["foo", "bar"]
+    assert f["intlistfield"] == [123456789]
+    assert f["int64listfield"] == [12345678912345678]
+    assert f["doulistfield"] == [1.5, 4.2]
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT Z (1 0 5)"
+
+    ds = None
+
+
 def test_ogr_miramon_write_basic_multipoint(tmp_path):
 
-    filename = str(tmp_path / "DataSetPNT")
+    filename = str(tmp_path / "DataSetMULTIPOINT")
     ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
