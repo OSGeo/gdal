@@ -1953,7 +1953,9 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
         // copy over subdatasets by block
         tiledb::Query query(*poDstDS->m_ctx, *poDstDS->m_array);
         query.set_layout(TILEDB_GLOBAL_ORDER);
-        int nTotalBlocks = poDstDS->nBlocksX * poDstDS->nBlocksY;
+        const uint64_t nTotalBlocks =
+            static_cast<uint64_t>(poDstDS->nBlocksX) * poDstDS->nBlocksY;
+        uint64_t nBlockCounter = 0;
 
         // row-major
         for (int j = 0; j < poDstDS->nBlocksY; ++j)
@@ -1965,25 +1967,28 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
                 int iAttr = 0;
                 for (auto &poSubDS : apoDatasets)
                 {
-                    GDALDataType eDT =
+                    const GDALDataType eDT =
                         poSubDS->GetRasterBand(1)->GetRasterDataType();
 
                     for (int b = 1; b <= poSubDS->GetRasterCount(); ++b)
                     {
-                        int nBytes = GDALGetDataTypeSizeBytes(eDT);
-                        int nValues = nBytes * poDstDS->nBlockXSize *
-                                      poDstDS->nBlockYSize;
-                        void *pBlock = VSIMalloc(nBytes * nValues);
+                        const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
+                        const size_t nValues =
+                            static_cast<size_t>(poDstDS->nBlockXSize) *
+                            poDstDS->nBlockYSize;
+                        void *pBlock = VSI_MALLOC_VERBOSE(nDTSize * nValues);
+                        if (!pBlock)
+                            return CE_Failure;
                         aBlocks.emplace_back(pBlock, &VSIFree);
                         GDALRasterBand *poBand = poSubDS->GetRasterBand(b);
                         if (poBand->ReadBlock(i, j, pBlock) == CE_None)
                         {
                             SetBuffer(
                                 &query, eDT,
-                                poDstDS->m_schema->attribute(iAttr++).name(),
-                                pBlock,
-                                poDstDS->nBlockXSize * poDstDS->nBlockYSize);
+                                poDstDS->m_schema->attribute(iAttr).name(),
+                                pBlock, nValues);
                         }
+                        ++iAttr;
                     }
                 }
 
@@ -2003,9 +2008,9 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
                     return CE_Failure;
                 }
 
-                int nBlocks = ((j + 1) * poDstDS->nBlocksX);
-
-                if (!pfnProgress(nBlocks / static_cast<double>(nTotalBlocks),
+                ++nBlockCounter;
+                if (!pfnProgress(static_cast<double>(nBlockCounter) /
+                                     static_cast<double>(nTotalBlocks),
                                  nullptr, pProgressData))
                 {
                     CPLError(CE_Failure, CPLE_UserInterrupt,
