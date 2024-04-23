@@ -107,8 +107,6 @@ static const char *index_type_name(TILEDB_INTERLEAVE_MODE eMode)
 /*                             SetBuffer()                              */
 /************************************************************************/
 
-#if ((TILEDB_VERSION_MAJOR > 2) ||                                             \
-     (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4))
 static CPLErr SetBuffer(tiledb::Query *poQuery, GDALDataType eType,
                         const CPLString &osAttrName, void *pImage, int nSize)
 {
@@ -175,74 +173,6 @@ static CPLErr SetBuffer(tiledb::Query *poQuery, GDALDataType eType,
     }
     return CE_None;
 }
-#else
-static CPLErr SetBuffer(tiledb::Query *poQuery, GDALDataType eType,
-                        const CPLString &osAttrName, void *pImage, int nSize)
-{
-    switch (eType)
-    {
-        case GDT_Byte:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<unsigned char *>(pImage), nSize);
-            break;
-        case GDT_Int8:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<int8_t *>(pImage),
-                                nSize);
-            break;
-        case GDT_UInt16:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<unsigned short *>(pImage), nSize);
-            break;
-        case GDT_UInt32:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<unsigned int *>(pImage), nSize);
-            break;
-        case GDT_UInt64:
-            poQuery->set_buffer(osAttrName,
-                                reinterpret_cast<uint64_t *>(pImage), nSize);
-            break;
-        case GDT_Int16:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<short *>(pImage),
-                                nSize);
-            break;
-        case GDT_Int32:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<int *>(pImage),
-                                nSize);
-            break;
-        case GDT_Int64:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<int64_t *>(pImage),
-                                nSize);
-            break;
-        case GDT_Float32:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<float *>(pImage),
-                                nSize);
-            break;
-        case GDT_Float64:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<double *>(pImage),
-                                nSize);
-            break;
-        case GDT_CInt16:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<short *>(pImage),
-                                nSize * 2);
-            break;
-        case GDT_CInt32:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<int *>(pImage),
-                                nSize * 2);
-            break;
-        case GDT_CFloat32:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<float *>(pImage),
-                                nSize * 2);
-            break;
-        case GDT_CFloat64:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<double *>(pImage),
-                                nSize * 2);
-            break;
-        default:
-            return CE_Failure;
-    }
-    return CE_None;
-}
-#endif
 
 /************************************************************************/
 /*                          TileDBRasterBand()                          */
@@ -683,11 +613,7 @@ CPLErr TileDBRasterDataset::TrySaveXML()
         if (psTree == nullptr)
         {
             /* If we have unset all metadata, we have to delete the PAM file */
-#if TILEDB_VERSION_MAJOR == 1 && TILEDB_VERSION_MINOR < 7
-            vfs.remove_file(psPam->pszPamFilename);
-#else
             m_array->delete_metadata(GDAL_ATTRIBUTE_NAME);
-#endif
             return CE_None;
         }
 
@@ -757,11 +683,9 @@ CPLErr TileDBRasterDataset::TrySaveXML()
         /*      Try saving the auxiliary metadata. */
         /* --------------------------------------------------------------------
          */
-        bool bSaved = false;
         CPLErrorHandlerPusher oQuietError(CPLQuietErrorHandler);
         char *pszTree = CPLSerializeXMLTree(psTree);
 
-#if TILEDB_VERSION_MAJOR > 1 || TILEDB_VERSION_MINOR >= 7
         if (eAccess == GA_ReadOnly)
         {
             if (nTimestamp)
@@ -791,63 +715,7 @@ CPLErr TileDBRasterDataset::TrySaveXML()
                                   static_cast<int>(strlen(pszTree)), pszTree);
         }
 
-        bSaved = true;
-#endif
-
-        // cppcheck-suppress knownConditionTrueFalse
-        if (!bSaved)
-        {
-            vfs.touch(psPam->pszPamFilename);
-            tiledb::VFS::filebuf fbuf(vfs);
-            fbuf.open(psPam->pszPamFilename, std::ios::out);
-            std::ostream os(&fbuf);
-
-            if (os.good())
-            {
-                os.write(pszTree, strlen(pszTree));
-                bSaved = true;
-            }
-
-            fbuf.close();
-        }
-
         CPLFree(pszTree);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      If it fails, check if we have a proxy directory for auxiliary */
-        /*      metadata to be stored in, and try to save there. */
-        /* --------------------------------------------------------------------
-         */
-        CPLErr eErr = CE_None;
-
-        if (bSaved)
-            eErr = CE_None;
-        else
-        {
-            const char *pszBasename = GetDescription();
-
-            if (psPam->osPhysicalFilename.length() > 0)
-                pszBasename = psPam->osPhysicalFilename;
-
-            const char *pszNewPam = nullptr;
-            if (PamGetProxy(pszBasename) == nullptr &&
-                ((pszNewPam = PamAllocateProxy(pszBasename)) != nullptr))
-            {
-                CPLErrorReset();
-                CPLFree(psPam->pszPamFilename);
-                psPam->pszPamFilename = CPLStrdup(pszNewPam);
-                eErr = TrySaveXML();
-            }
-            /* No way we can save into a /vsicurl resource */
-            else if (!VSISupportsSequentialWrite(psPam->pszPamFilename, false))
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Unable to save auxiliary information in %s.",
-                         psPam->pszPamFilename);
-                eErr = CE_Warning;
-            }
-        }
 
         /* --------------------------------------------------------------------
          */
@@ -857,7 +725,7 @@ CPLErr TileDBRasterDataset::TrySaveXML()
         if (psTree)
             CPLDestroyXMLNode(psTree);
 
-        return eErr;
+        return CE_None;
     }
     catch (const std::exception &e)
     {
@@ -927,7 +795,6 @@ CPLErr TileDBRasterDataset::TryLoadCachedXML(char ** /*papszSiblingFiles*/,
         {
             CPLErrorHandlerPusher oQuietError(CPLQuietErrorHandler);
 
-#if TILEDB_VERSION_MAJOR > 1 || TILEDB_VERSION_MINOR >= 7
             if (bReload)
             {
                 tiledb_datatype_t v_type =
@@ -957,7 +824,7 @@ CPLErr TileDBRasterDataset::TryLoadCachedXML(char ** /*papszSiblingFiles*/,
                 }
                 psTree = CPLParseXMLString(osMetaDoc);
             }
-#endif
+
             if (bReload && psTree == nullptr &&
                 vfs.is_file(psPam->pszPamFilename))
             {
