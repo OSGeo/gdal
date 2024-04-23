@@ -418,9 +418,21 @@ OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
                                                ? OFTRealList
                                                : OFTReal);
                         else
-                            oField.SetType(phMiraMonLayer->isListField
-                                               ? OFTIntegerList
-                                               : OFTInteger);
+                        {
+                            if (phMiraMonLayer->pMMBDXP->pField[nIField]
+                                    .BytesPerField < 10)
+                            {
+                                oField.SetType(phMiraMonLayer->isListField
+                                                   ? OFTIntegerList
+                                                   : OFTInteger);
+                            }
+                            else
+                            {
+                                oField.SetType(phMiraMonLayer->isListField
+                                                   ? OFTInteger64List
+                                                   : OFTInteger64);
+                            }
+                        }
                     }
                     // It's a serialized JSON array
                     else if (phMiraMonLayer->iMultiRecord ==
@@ -1217,6 +1229,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
                     continue;
                 }
+                MM_EXT_DBF_N_MULTIPLE_RECORDS nRealMR = 0;
                 for (nIRecord = 0;
                      nIRecord < phMiraMonLayer->pMultRecordIndex[nIElem].nMR;
                      nIRecord++)
@@ -1234,13 +1247,15 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                                                           .BytesPerField] =
                         '\0';
 
-                    padfValues[nIRecord] =
-                        atof(phMiraMonLayer->szStringToOperate);
+                    if (!MMIsEmptyString(phMiraMonLayer->szStringToOperate))
+                    {
+                        padfValues[nRealMR] =
+                            atof(phMiraMonLayer->szStringToOperate);
+                        nRealMR++;
+                    }
                 }
 
-                poFeature->SetField(
-                    nIField, phMiraMonLayer->pMultRecordIndex[nIElem].nMR,
-                    padfValues);
+                poFeature->SetField(nIField, nRealMR, padfValues);
             }
             else if (poFeature->GetDefnRef()
                          ->GetFieldDefn(nIField)
@@ -1254,6 +1269,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                         phMiraMonLayer->pMMBDXP->pField[nIField].BytesPerField);
                     continue;
                 }
+                MM_EXT_DBF_N_MULTIPLE_RECORDS nRealMR = 0;
                 for (nIRecord = 0;
                      nIRecord < phMiraMonLayer->pMultRecordIndex[nIElem].nMR;
                      nIRecord++)
@@ -1271,13 +1287,15 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                                                           .BytesPerField] =
                         '\0';
 
-                    pnInt64Values[nIRecord] =
-                        CPLAtoGIntBig(phMiraMonLayer->szStringToOperate);
+                    if (!MMIsEmptyString(phMiraMonLayer->szStringToOperate))
+                    {
+                        pnInt64Values[nRealMR] =
+                            CPLAtoGIntBig(phMiraMonLayer->szStringToOperate);
+                        nRealMR++;
+                    }
                 }
 
-                poFeature->SetField(
-                    nIField, phMiraMonLayer->pMultRecordIndex[nIElem].nMR,
-                    pnInt64Values);
+                poFeature->SetField(nIField, nRealMR, pnInt64Values);
             }
             else if (poFeature->GetDefnRef()
                              ->GetFieldDefn(nIField)
@@ -1335,8 +1353,19 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                                             .BytesPerField] = '\0';
                 MM_RemoveWhitespacesFromEndOfString(
                     phMiraMonLayer->szStringToOperate);
-                poFeature->SetField(nIField,
-                                    atof(phMiraMonLayer->szStringToOperate));
+
+                if (poFeature->GetDefnRef()->GetFieldDefn(nIField)->GetType() ==
+                    OFTInteger64)
+                {
+                    poFeature->SetField(
+                        nIField,
+                        CPLAtoGIntBig(phMiraMonLayer->szStringToOperate));
+                }
+                else
+                {
+                    poFeature->SetField(
+                        nIField, atof(phMiraMonLayer->szStringToOperate));
+                }
             }
             else if (poFeature->GetDefnRef()
                          ->GetFieldDefn(nIField)
@@ -2140,8 +2169,6 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             // It will contains the i-th element of the list.
             for (nIRecord = 0; nIRecord < nRealNumRecords; nIRecord++)
             {
-                hMMFeature.pRecords[nIRecord].nNumField = nNumFields;
-
                 if (MMResizeMiraMonFieldValue(
                         &(hMMFeature.pRecords[nIRecord].pField),
                         &hMMFeature.pRecords[nIRecord].nMaxField,
@@ -2184,8 +2211,6 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             // It will contains the i-th element of the list.
             for (nIRecord = 0; nIRecord < nRealNumRecords; nIRecord++)
             {
-                hMMFeature.pRecords[nIRecord].nNumField = nNumFields;
-
                 if (MMResizeMiraMonFieldValue(
                         &(hMMFeature.pRecords[nIRecord].pField),
                         &hMMFeature.pRecords[nIRecord].nMaxField,
@@ -2229,8 +2254,6 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             // It will contains the i-th element of the list.
             for (nIRecord = 0; nIRecord < nRealNumRecords; nIRecord++)
             {
-                hMMFeature.pRecords[nIRecord].nNumField = iField;
-
                 if (MMResizeMiraMonFieldValue(
                         &(hMMFeature.pRecords[nIRecord].pField),
                         &hMMFeature.pRecords[nIRecord].nMaxField,
