@@ -31,8 +31,6 @@
 #include <algorithm>
 #include <limits>
 
-#ifdef HAS_TILEDB_MULTIDIM
-
 /************************************************************************/
 /*                   TileDBArray::TileDBArray()                         */
 /************************************************************************/
@@ -1576,5 +1574,3 @@ CSLConstList TileDBArray::GetStructuralInfo() const
 {
     return m_aosStructuralInfo.List();
 }
-
-#endif  // HAS_TILEDB_MULTIDIM

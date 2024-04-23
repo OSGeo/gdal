@@ -190,13 +190,12 @@ class TileDBDataset : public GDALPamDataset
                                    char **papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
-#ifdef HAS_TILEDB_MULTIDIM
+
     static GDALDataset *OpenMultiDimensional(GDALOpenInfo *);
     static GDALDataset *
     CreateMultiDimensional(const char *pszFilename,
                            CSLConstList papszRootGroupOptions,
                            CSLConstList papszOptions);
-#endif
 };
 
 /************************************************************************/
