@@ -2540,11 +2540,6 @@ std::unique_ptr<tiledb::QueryCondition> OGRTileDBLayer::CreateQueryCondition(
                     CPLAssert(false);
                     return nullptr;
                 }
-#if !defined(HAS_TILEDB_WORKING_UTF8_STRING_FILTER)
-                if (m_schema->attribute(poFieldDefn->GetNameRef()).type() !=
-                    TILEDB_STRING_ASCII)
-                    return nullptr;
-#endif
                 return std::make_unique<tiledb::QueryCondition>(
                     tiledb::QueryCondition::create(
                         *(m_ctx.get()), poFieldDefn->GetNameRef(),
@@ -2781,14 +2776,6 @@ OGRTileDBLayer::CreateQueryCondition(const swq_expr_node *poNode,
     {
         const OGRFieldDefn *poFieldDefn =
             m_poFeatureDefn->GetFieldDefn(poNode->papoSubExpr[0]->field_index);
-#if !defined(HAS_TILEDB_WORKING_UTF8_STRING_FILTER)
-        if (poFieldDefn->GetType() == OFTString &&
-            m_schema->attribute(poFieldDefn->GetNameRef()).type() !=
-                TILEDB_STRING_ASCII)
-        {
-            return nullptr;
-        }
-#endif
         if (!poFieldDefn->IsNullable())
         {
             bAlwaysFalse = true;
@@ -2810,14 +2797,6 @@ OGRTileDBLayer::CreateQueryCondition(const swq_expr_node *poNode,
     {
         const OGRFieldDefn *poFieldDefn = m_poFeatureDefn->GetFieldDefn(
             poNode->papoSubExpr[0]->papoSubExpr[0]->field_index);
-#if !defined(HAS_TILEDB_WORKING_UTF8_STRING_FILTER)
-        if (poFieldDefn->GetType() == OFTString &&
-            m_schema->attribute(poFieldDefn->GetNameRef()).type() !=
-                TILEDB_STRING_ASCII)
-        {
-            return nullptr;
-        }
-#endif
         if (!poFieldDefn->IsNullable())
         {
             bAlwaysTrue = true;
