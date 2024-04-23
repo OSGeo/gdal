@@ -43,11 +43,6 @@
 #endif
 
 #if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 11)
-#define HAS_TILEDB_WORKING_OR_FILTER
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
     (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 14)
 #define HAS_TILEDB_WORKING_UTF8_STRING_FILTER
 #endif

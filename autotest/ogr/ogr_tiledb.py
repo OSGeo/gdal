@@ -578,38 +578,33 @@ def test_ogr_tiledb_basic(nullable, batch_size):
     assert set(f.GetFID() for f in lyr) == set([1])
 
     # Test OR
-    has_working_or_filter = (
-        gdal.GetDriverByName("TileDB").GetMetadataItem("HAS_TILEDB_WORKING_OR_FILTER")
-        != "NO"
-    )
-    if has_working_or_filter:
-        lyr.SetAttributeFilter("intfield = 321 OR intfield = -123456789")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == set([1])
+    lyr.SetAttributeFilter("intfield = 321 OR intfield = -123456789")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == set([1])
 
-        lyr.SetAttributeFilter("intfield = -123456789 OR intfield = 321")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == set([1])
+    lyr.SetAttributeFilter("intfield = -123456789 OR intfield = 321")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == set([1])
 
-        lyr.SetAttributeFilter("intfield = 321 OR intfield = 123")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == set([])
+    lyr.SetAttributeFilter("intfield = 321 OR intfield = 123")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == set([])
 
-        lyr.SetAttributeFilter("(1 = 1) OR intfield = -123456789")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "NONE"
-        assert set(f.GetFID() for f in lyr) == set([1, 2, 3])
+    lyr.SetAttributeFilter("(1 = 1) OR intfield = -123456789")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "NONE"
+    assert set(f.GetFID() for f in lyr) == set([1, 2, 3])
 
-        lyr.SetAttributeFilter("(1 = 0) OR intfield = -123456789")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "NONE"
-        assert set(f.GetFID() for f in lyr) == set([1])
+    lyr.SetAttributeFilter("(1 = 0) OR intfield = -123456789")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "NONE"
+    assert set(f.GetFID() for f in lyr) == set([1])
 
-        lyr.SetAttributeFilter("intfield = -123456789 OR (1 = 1)")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "NONE"
-        assert set(f.GetFID() for f in lyr) == set([1, 2, 3])
+    lyr.SetAttributeFilter("intfield = -123456789 OR (1 = 1)")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "NONE"
+    assert set(f.GetFID() for f in lyr) == set([1, 2, 3])
 
-        lyr.SetAttributeFilter("intfield = -123456789 OR (1 = 0)")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "NONE"
-        assert set(f.GetFID() for f in lyr) == set([1])
+    lyr.SetAttributeFilter("intfield = -123456789 OR (1 = 0)")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "NONE"
+    assert set(f.GetFID() for f in lyr) == set([1])
 
     # Test NOT
     lyr.SetAttributeFilter("NOT (intfield = -123456789)")
@@ -617,14 +612,13 @@ def test_ogr_tiledb_basic(nullable, batch_size):
     assert set(f.GetFID() for f in lyr) == (set([3]) if nullable else set([2, 3]))
 
     # Test IN
-    if has_working_or_filter:
-        lyr.SetAttributeFilter("intfield IN (321, -123456789)")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == set([1])
+    lyr.SetAttributeFilter("intfield IN (321, -123456789)")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == set([1])
 
-        lyr.SetAttributeFilter("intfield IN (-123456789, 321)")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == set([1])
+    lyr.SetAttributeFilter("intfield IN (-123456789, 321)")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == set([1])
 
     # Test IS NULL / IS NOT NULL
     lyr.SetAttributeFilter("strfield IS NULL")
@@ -688,54 +682,46 @@ def test_ogr_tiledb_basic(nullable, batch_size):
     assert set(f.GetFID() for f in lyr) == set()
 
     # Test IS NULL and OR (for always_false situations)
-    if has_working_or_filter:
-        lyr.SetAttributeFilter("intfield IS NULL OR intfieldextra <> 4")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == set([1, 2, 3])
+    lyr.SetAttributeFilter("intfield IS NULL OR intfieldextra <> 4")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == set([1, 2, 3])
 
-        lyr.SetAttributeFilter("intfield IS NULL OR intfield IS NULL")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == (set([2]) if nullable else set())
+    lyr.SetAttributeFilter("intfield IS NULL OR intfield IS NULL")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == (set([2]) if nullable else set())
 
-        lyr.SetAttributeFilter("intfieldextra <> 4 OR intfield IS NULL")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == set([1, 2, 3])
+    lyr.SetAttributeFilter("intfieldextra <> 4 OR intfield IS NULL")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == set([1, 2, 3])
 
-        lyr.SetAttributeFilter("intfield IS NULL OR intfieldextra = 4")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == (set([2]) if nullable else set())
+    lyr.SetAttributeFilter("intfield IS NULL OR intfieldextra = 4")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == (set([2]) if nullable else set())
 
-        lyr.SetAttributeFilter("intfieldextra = 4 OR intfield IS NULL")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == (set([2]) if nullable else set())
+    lyr.SetAttributeFilter("intfieldextra = 4 OR intfield IS NULL")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == (set([2]) if nullable else set())
 
     # Test IS NOT NULL and OR (for always_true situations)
-    if has_working_or_filter:
-        lyr.SetAttributeFilter("intfield IS NOT NULL OR intfieldextra <> 4")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == set([1, 2, 3])
+    lyr.SetAttributeFilter("intfield IS NOT NULL OR intfieldextra <> 4")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == set([1, 2, 3])
 
-        lyr.SetAttributeFilter("intfield IS NOT NULL OR intfield IS NOT NULL")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == (
-            set([1, 3]) if nullable else set([1, 2, 3])
-        )
+    lyr.SetAttributeFilter("intfield IS NOT NULL OR intfield IS NOT NULL")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == (set([1, 3]) if nullable else set([1, 2, 3]))
 
-        lyr.SetAttributeFilter("intfieldextra <> 4 OR intfield IS NOT NULL")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == set([1, 2, 3])
+    lyr.SetAttributeFilter("intfieldextra <> 4 OR intfield IS NOT NULL")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == set([1, 2, 3])
 
-        lyr.SetAttributeFilter("intfield IS NOT NULL OR intfieldextra = 4")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == (
-            set([1, 3]) if nullable else set([1, 2, 3])
-        )
+    lyr.SetAttributeFilter("intfield IS NOT NULL OR intfieldextra = 4")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == (set([1, 3]) if nullable else set([1, 2, 3]))
 
-        lyr.SetAttributeFilter("intfieldextra = 4 OR intfield IS NOT NULL")
-        assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
-        assert set(f.GetFID() for f in lyr) == (
-            set([1, 3]) if nullable else set([1, 2, 3])
-        )
+    lyr.SetAttributeFilter("intfieldextra = 4 OR intfield IS NOT NULL")
+    assert lyr.GetMetadataItem("ATTRIBUTE_FILTER_TRANSLATION", "_DEBUG_") == "WHOLE"
+    assert set(f.GetFID() for f in lyr) == (set([1, 3]) if nullable else set([1, 2, 3]))
 
     tiledb_md = json.loads(lyr.GetMetadata_List("json:TILEDB")[0])
     md = tiledb_md["array"]["metadata"]

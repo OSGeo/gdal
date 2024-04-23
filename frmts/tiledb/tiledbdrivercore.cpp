@@ -286,10 +286,6 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem("HAS_TILEDB_WORKING_UTF8_STRING_FILTER", "NO");
 #endif
 
-#if !defined(HAS_TILEDB_WORKING_OR_FILTER)
-    poDriver->SetMetadataItem("HAS_TILEDB_WORKING_OR_FILTER", "NO");
-#endif
-
     poDriver->pfnIdentify = TileDBDriverIdentifySimplified;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");

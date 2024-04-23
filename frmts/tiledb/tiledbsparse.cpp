@@ -2679,7 +2679,6 @@ OGRTileDBLayer::CreateQueryCondition(const swq_expr_node *poNode,
         return right;
     }
 
-#ifdef HAS_TILEDB_WORKING_OR_FILTER
     // A OR B
     else if (poNode->eNodeType == SNT_OPERATION &&
              poNode->nOperation == SWQ_OR && poNode->nSubExprCount == 2)
@@ -2761,7 +2760,6 @@ OGRTileDBLayer::CreateQueryCondition(const swq_expr_node *poNode,
             bAlwaysFalse = true;
         return cond;
     }
-#endif
 
     // field_name =/<>/</>/<=/>= constant (or the reverse)
     else if (poNode->eNodeType == SNT_OPERATION &&
