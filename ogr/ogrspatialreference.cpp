@@ -4256,6 +4256,7 @@ OGRErr OGRSpatialReference::importFromURNPart(const char *pszAuthority,
                                               const char *pszURN)
 {
 #if PROJ_AT_LEAST_VERSION(8, 1, 0)
+    (void)this;
     (void)pszAuthority;
     (void)pszCode;
     (void)pszURN;
