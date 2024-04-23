@@ -108,7 +108,7 @@ static const char *index_type_name(TILEDB_INTERLEAVE_MODE eMode)
 /************************************************************************/
 
 static CPLErr SetBuffer(tiledb::Query *poQuery, GDALDataType eType,
-                        const CPLString &osAttrName, void *pImage, int nSize)
+                        const CPLString &osAttrName, void *pImage, size_t nSize)
 {
     switch (eType)
     {
@@ -304,7 +304,8 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
         poQuery->set_subarray(subarray);
 
-        SetBuffer(poQuery.get(), eDataType, osAttrName, pData, nXSize * nYSize);
+        const size_t nValues = static_cast<size_t>(nBufXSize) * nBufYSize;
+        SetBuffer(poQuery.get(), eDataType, osAttrName, pData, nValues);
 
         // write additional co-registered values
         std::vector<std::unique_ptr<void, decltype(&VSIFree)>> aBlocks;
@@ -316,9 +317,7 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 GDALRasterBand *poAttrBand = poAttrDS->GetRasterBand(nBand);
                 GDALDataType eAttrType = poAttrBand->GetRasterDataType();
                 int nBytes = GDALGetDataTypeSizeBytes(eAttrType);
-                size_t nValues = static_cast<size_t>(nBufXSize) * nBufYSize;
-                void *pAttrBlock = VSIMalloc(nBytes * nValues);
-                aBlocks.emplace_back(pAttrBlock, &VSIFree);
+                void *pAttrBlock = VSI_MALLOC_VERBOSE(nBytes * nValues);
 
                 if (pAttrBlock == nullptr)
                 {
@@ -326,6 +325,7 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              "Cannot allocate attribute buffer");
                     return CE_Failure;
                 }
+                aBlocks.emplace_back(pAttrBlock, &VSIFree);
 
                 poAttrBand->AdviseRead(nXOff, nYOff, nXSize, nYSize, nBufXSize,
                                        nBufYSize, eAttrType, nullptr);
@@ -341,7 +341,7 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                         "%s", CPLGetBasename(poAttrDS->GetDescription()));
 
                     SetBuffer(poQuery.get(), eAttrType, osName, pAttrBlock,
-                              nBufXSize * nBufYSize);
+                              nValues);
                 }
                 else
                 {
@@ -495,11 +495,13 @@ CPLErr TileDBRasterDataset::IRasterIO(
 
         for (int b = 0; b < nBandCount; b++)
         {
-            TileDBRasterBand *poBand =
-                (TileDBRasterBand *)GetRasterBand(panBandMap[b]);
-            int nRegionSize = nBufXSize * nBufYSize * nBufferDTSize;
+            TileDBRasterBand *poBand = cpl::down_cast<TileDBRasterBand *>(
+                GetRasterBand(panBandMap[b]));
+            const size_t nRegionSize =
+                static_cast<size_t>(nBufXSize) * nBufYSize * nBufferDTSize;
             SetBuffer(poQuery.get(), eDataType, poBand->osAttrName,
-                      ((GByte *)pData) + b * nRegionSize, nRegionSize);
+                      static_cast<GByte *>(pData) + b * nRegionSize,
+                      nRegionSize);
         }
 
         if (bStats)
