@@ -1,0 +1,58 @@
+[VERSIO]
+Vers=4
+SubVers=3
+VersMetaDades=5
+SubVersMetaDades=0
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_N_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+visible=0
+simbolitzable=0
+MostrarUnitats=0
+descriptor=Identificador Gràfic intern
+descriptor_spa=Identificador Gráfico interno
+descriptor_eng=Internal Graphic identifier
+
+[TAULA_PRINCIPAL:ATT1]
+descriptor=Atributte1
+
+[TAULA_PRINCIPAL:ATTRIBUTE_2]
+descriptor=Atributte2
+
+[METADADES]
+language=cat,spa,eng
+MDIdiom=cat,spa,eng
+dateStamp=20230628 16344458+0200
+characterSet=006
+nOrganismes=1
+FileIdentifier=68ddf845-79e8-4791-bf7a-5459eb951a04_SimplePointsFile
+
+[METADADES:ORGANISME_1]
+role=009
+IndividualName=Abel Pau
+PositionName=Tècnic SIG
+OrganisationName=Students and educational institutions
+
+[IDENTIFICATION]
+code=68ddf845-79e8-4791-bf7a-5459eb951a04_SimplePointsFile
+codeSpace=
+DatasetTitle=Simple Points File
+
+[SPATIAL_REFERENCE_SYSTEM:HORIZONTAL]
+HorizontalSystemDefinition=Local
+HorizontalSystemIdentifier=plane
+unitats=STB#T_pixels
+
+[EXTENT]
+MinX=342.325404376834
+MaxX=594.503182156354
+MinY=715.680304471881
+MaxY=848.806850618409
+toler_env=0
+
+[OVERVIEW]
+CreationDate=20230628 16351606+0200
+ContentDate=20230629 12064184+0200
