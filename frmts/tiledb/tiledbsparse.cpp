@@ -274,7 +274,6 @@ GDALDataset *OGRTileDBDataset::Open(GDALOpenInfo *poOpenInfo,
     };
 
     CPL_IGNORE_RET_VAL(objectType);
-#ifdef HAS_TILEDB_GROUP
     if (objectType == tiledb::Object::Type::Group)
     {
         poDS->m_osGroupName = osFilename;
@@ -293,7 +292,6 @@ GDALDataset *OGRTileDBDataset::Open(GDALOpenInfo *poOpenInfo,
         }
     }
     else
-#endif
     {
         if (!AddLayer(osFilename))
             return nullptr;
@@ -347,7 +345,6 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
         return nullptr;
     }
 
-#ifdef HAS_TILEDB_GROUP
     if (!m_osGroupName.empty() && strchr(pszName, '/'))
     {
         // Otherwise a layer name wit ha slash when groups are enabled causes
@@ -357,7 +354,6 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
                  "Slash is not supported in layer name");
         return nullptr;
     }
-#endif
 
     const auto eGType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
     const auto poSpatialRef =
@@ -365,17 +361,11 @@ OGRTileDBDataset::ICreateLayer(const char *pszName,
 
     if (m_osGroupName.empty() && !m_apoLayers.empty())
     {
-#ifdef HAS_TILEDB_GROUP
         CPLError(CE_Failure, CPLE_NotSupported,
                  "CreateLayer() failed: no more than one layer per dataset "
                  "supported on a array object. Create a dataset with the "
                  "CREATE_GROUP=YES creation option or open such group "
                  "to enable multiple layer creation.");
-#else
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "CreateLayer() failed: no more than one layer per dataset "
-                 "supported on a array object.");
-#endif
         return nullptr;
     }
 
@@ -565,7 +555,6 @@ GDALDataset *OGRTileDBDataset::Create(const char *pszFilename,
         poDS->m_ctx.reset(new tiledb::Context());
     }
 
-#ifdef HAS_TILEDB_GROUP
     if (CPLTestBool(CSLFetchNameValueDef(papszOptions, "CREATE_GROUP", "NO")))
     {
         try
@@ -579,7 +568,6 @@ GDALDataset *OGRTileDBDataset::Create(const char *pszFilename,
         }
         poDS->m_osGroupName = poDS->GetDescription();
     }
-#endif
 
     return poDS.release();
 }
@@ -3754,13 +3742,11 @@ void OGRTileDBLayer::InitializeSchemaAndArray()
 
         tiledb::Array::create(m_osFilename, *m_schema);
 
-#ifdef HAS_TILEDB_GROUP
         if (!m_osGroupName.empty())
         {
             tiledb::Group group(*m_ctx, m_osGroupName, TILEDB_WRITE);
             group.add_member(m_osFilename, false, GetDescription());
         }
-#endif
 
         if (m_nTimestamp)
             m_array.reset(new tiledb::Array(
