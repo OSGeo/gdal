@@ -218,15 +218,23 @@ CPLMutexHolder::CPLMutexHolder(CPLMutex * /* hMutexIn */,
 {
 }
 #else
-CPLMutexHolder::CPLMutexHolder(CPLMutex *hMutexIn, double dfWaitInSeconds,
-                               const char *pszFileIn, int nLineIn)
-    : hMutex(hMutexIn), pszFile(pszFileIn), nLine(nLineIn)
+
+static CPLMutex *GetMutexHolderMutexMember(CPLMutex *hMutexIn,
+                                           double dfWaitInSeconds)
 {
-    if (hMutex != nullptr && !CPLAcquireMutex(hMutex, dfWaitInSeconds))
+    if (hMutexIn && !CPLAcquireMutex(hMutexIn, dfWaitInSeconds))
     {
         fprintf(stderr, "CPLMutexHolder: Failed to acquire mutex!\n");
-        hMutex = nullptr;
+        return nullptr;
     }
+    return hMutexIn;
+}
+
+CPLMutexHolder::CPLMutexHolder(CPLMutex *hMutexIn, double dfWaitInSeconds,
+                               const char *pszFileIn, int nLineIn)
+    : hMutex(GetMutexHolderMutexMember(hMutexIn, dfWaitInSeconds)),
+      pszFile(pszFileIn), nLine(nLineIn)
+{
 }
 #endif  // ndef MUTEX_NONE
 
@@ -2587,6 +2595,7 @@ void CPLReleaseLock(CPLLock *psLock)
     if (psLock->bDebugPerf && CPLAtomicDec(&(psLock->nCurrentHolders)) == 0)
     {
         const GUIntBig nStopTime = CPLrdtscp();
+        // coverity[missing_lock:FALSE]
         const GIntBig nDiffTime =
             static_cast<GIntBig>(nStopTime - psLock->nStartTime);
         if (nDiffTime > psLock->nMaxDiff)

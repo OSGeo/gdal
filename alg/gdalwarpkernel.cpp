@@ -275,6 +275,7 @@ static int GWKProgressThread(GWKJobStruct *psJob)
 static int GWKProgressMonoThread(GWKJobStruct *psJob)
 {
     GDALWarpKernel *poWK = psJob->poWK;
+    // coverity[missing_lock]
     if (!poWK->pfnProgress(
             poWK->dfProgressBase +
                 poWK->dfProgressScale *

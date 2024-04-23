@@ -505,6 +505,7 @@ size_t VSIMemHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
 int VSIMemHandle::Eof()
 
 {
+    CPL_SHARED_LOCK oLock(poFile->m_oMutex);
     return bEOF;
 }
 

@@ -1554,7 +1554,7 @@ void OGRGeoPackageTableLayer::CancelAsyncNextArrowArray()
 {
     if (m_poFillArrowArray)
     {
-        std::lock_guard<std::mutex> oLock(m_poFillArrowArray->oMutex);
+        std::lock_guard oLock(m_poFillArrowArray->oMutex);
         m_poFillArrowArray->nCountRows = -1;
         m_poFillArrowArray->oCV.notify_one();
     }
@@ -1572,7 +1572,7 @@ void OGRGeoPackageTableLayer::CancelAsyncNextArrowArray()
         m_oQueueArrowArrayPrefetchTasks.pop();
 
         {
-            std::lock_guard<std::mutex> oLock(task->m_oMutex);
+            std::lock_guard oLock(task->m_oMutex);
             task->m_bStop = true;
             task->m_oCV.notify_one();
         }
@@ -8260,7 +8260,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
 
     if (m_poFillArrowArray)
     {
-        std::lock_guard<std::mutex> oLock(m_poFillArrowArray->oMutex);
+        std::lock_guard oLock(m_poFillArrowArray->oMutex);
         if (m_poFillArrowArray->bIsFinished)
         {
             return 0;
@@ -8341,7 +8341,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
     }
     else
     {
-        std::lock_guard<std::mutex> oLock(m_poFillArrowArray->oMutex);
+        std::lock_guard oLock(m_poFillArrowArray->oMutex);
         if (m_poFillArrowArray->bErrorOccurred)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s",
@@ -8514,7 +8514,7 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
                             -1, SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
                             nullptr, nullptr, nullptr);
 
-    std::lock_guard<std::mutex> oLock(m_poFillArrowArray->oMutex);
+    std::lock_guard oLock(m_poFillArrowArray->oMutex);
     m_poFillArrowArray->bIsFinished = true;
     if (m_poFillArrowArray->nCountRows >= 0)
     {
@@ -8625,7 +8625,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         const auto stopThread = [&task]()
         {
             {
-                std::lock_guard<std::mutex> oLock(task->m_oMutex);
+                std::lock_guard oLock(task->m_oMutex);
                 task->m_bStop = true;
                 task->m_oCV.notify_one();
             }
@@ -8675,7 +8675,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                 {
                     // Wake-up thread with new task
                     {
-                        std::lock_guard<std::mutex> oLock(task->m_oMutex);
+                        std::lock_guard oLock(task->m_oMutex);
                         task->m_bFetchRows = true;
                         task->m_oCV.notify_one();
                     }
@@ -8777,7 +8777,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             auto taskPtr = task.get();
             auto taskRunner = [taskPtr]()
             {
-                std::unique_lock<std::mutex> oLock(taskPtr->m_oMutex);
+                std::unique_lock oLock(taskPtr->m_oMutex);
                 do
                 {
                     taskPtr->m_bFetchRows = false;
@@ -8789,6 +8789,11 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                     if (taskPtr->m_bMemoryLimitReached)
                         break;
                     // cppcheck-suppress knownConditionTrueFalse
+                    // Coverity apparently is confused by the fact that we
+                    // use unique_lock here to guard access for m_bStop whereas
+                    // in other places we use a lock_guard, but there's nothing
+                    // wrong.
+                    // coverity[missing_lock:FALSE]
                     while (!taskPtr->m_bStop && !taskPtr->m_bFetchRows)
                     {
                         taskPtr->m_oCV.wait(oLock);

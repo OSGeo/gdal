@@ -943,8 +943,6 @@ void GTiffDataset::InitCompressionThreads(bool bUpdateMode,
                                                  &m_asCompressionJobs[i]));
                         m_asCompressionJobs[i].nStripOrTile = -1;
                     }
-                    m_hCompressThreadPoolMutex = CPLCreateMutex();
-                    CPLReleaseMutex(m_hCompressThreadPoolMutex);
 
                     // This is kind of a hack, but basically using
                     // TIFFWriteRawStrip/Tile and then TIFFReadEncodedStrip/Tile
@@ -1053,13 +1051,11 @@ void GTiffDataset::ThreadCompressionFunc(void *pData)
         psJob->nCompressedBufferSize = 0;
     }
 
-    auto mutex = poDS->m_poBaseDS ? poDS->m_poBaseDS->m_hCompressThreadPoolMutex
-                                  : poDS->m_hCompressThreadPoolMutex;
-    if (mutex)
+    auto poMainDS = poDS->m_poBaseDS ? poDS->m_poBaseDS : poDS;
+    if (poMainDS->m_poCompressQueue)
     {
-        CPLAcquireMutex(mutex, 1000.0);
+        std::lock_guard oLock(poMainDS->m_oCompressThreadPoolMutex);
         psJob->bReady = true;
-        CPLReleaseMutex(mutex);
     }
 }
 
@@ -1223,13 +1219,11 @@ void GTiffDataset::WriteRawStripOrTile(int nStripOrTile,
 
 void GTiffDataset::WaitCompletionForJobIdx(int i)
 {
-    auto poQueue = m_poBaseDS ? m_poBaseDS->m_poCompressQueue.get()
-                              : m_poCompressQueue.get();
-    auto &oQueue = m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
-    auto &asJobs =
-        m_poBaseDS ? m_poBaseDS->m_asCompressionJobs : m_asCompressionJobs;
-    auto mutex = m_poBaseDS ? m_poBaseDS->m_hCompressThreadPoolMutex
-                            : m_hCompressThreadPoolMutex;
+    auto poMainDS = m_poBaseDS ? m_poBaseDS : this;
+    auto poQueue = poMainDS->m_poCompressQueue.get();
+    auto &oQueue = poMainDS->m_asQueueJobIdx;
+    auto &asJobs = poMainDS->m_asCompressionJobs;
+    auto &mutex = poMainDS->m_oCompressThreadPoolMutex;
 
     CPLAssert(i >= 0 && static_cast<size_t>(i) < asJobs.size());
     CPLAssert(asJobs[i].nStripOrTile >= 0);
@@ -1238,9 +1232,11 @@ void GTiffDataset::WaitCompletionForJobIdx(int i)
     bool bHasWarned = false;
     while (true)
     {
-        CPLAcquireMutex(mutex, 1000.0);
-        const bool bReady = asJobs[i].bReady;
-        CPLReleaseMutex(mutex);
+        bool bReady;
+        {
+            std::lock_guard oLock(mutex);
+            bReady = asJobs[i].bReady;
+        }
         if (!bReady)
         {
             if (!bHasWarned)
@@ -1266,7 +1262,11 @@ void GTiffDataset::WaitCompletionForJobIdx(int i)
     }
     asJobs[i].pabyCompressedBuffer = nullptr;
     asJobs[i].nBufferSize = 0;
-    asJobs[i].bReady = false;
+    {
+        // Likely useless, but makes Coverity happy
+        std::lock_guard oLock(mutex);
+        asJobs[i].bReady = false;
+    }
     asJobs[i].nStripOrTile = -1;
     oQueue.pop();
 }
@@ -1395,9 +1395,9 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
         return false;
     }
 
-    auto &oQueue = m_poBaseDS ? m_poBaseDS->m_asQueueJobIdx : m_asQueueJobIdx;
-    auto &asJobs =
-        m_poBaseDS ? m_poBaseDS->m_asCompressionJobs : m_asCompressionJobs;
+    auto poMainDS = m_poBaseDS ? m_poBaseDS : this;
+    auto &oQueue = poMainDS->m_asQueueJobIdx;
+    auto &asJobs = poMainDS->m_asCompressionJobs;
 
     int nNextCompressionJobAvail = -1;
 

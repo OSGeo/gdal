@@ -2331,10 +2331,12 @@ bool VSIGZipWriteHandleMT::ProcessCompletedJobs()
             {
                 apoFinishedJobs_.erase(iter);
 
+                const bool bIsSeqNumberExpectedZero =
+                    (nSeqNumberExpected_ == 0);
                 sMutex_.unlock();
 
                 const size_t nToWrite = psJob->sCompressedData_.size();
-                if (panSOZIPIndex_ && nSeqNumberExpected_ != 0 &&
+                if (panSOZIPIndex_ && !bIsSeqNumberExpectedZero &&
                     !psJob->pBuffer_->empty())
                 {
                     uint64_t nOffset = poBaseHandle_->Tell() - nStartOffset_;

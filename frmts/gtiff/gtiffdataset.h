@@ -32,6 +32,7 @@
 
 #include "gdal_pam.h"
 
+#include <mutex>
 #include <queue>
 
 #include "cpl_mem_cache.h"
@@ -164,7 +165,7 @@ class GTiffDataset final : public GDALPamDataset
     CPLVirtualMem *m_psVirtualMemIOMapping = nullptr;
     CPLWorkerThreadPool *m_poThreadPool = nullptr;
     std::unique_ptr<CPLJobQueue> m_poCompressQueue{};
-    CPLMutex *m_hCompressThreadPoolMutex = nullptr;
+    std::mutex m_oCompressThreadPoolMutex{};
 
     lru11::Cache<int, std::pair<vsi_l_offset, vsi_l_offset>>
         m_oCacheStrileToOffsetByteCount{1024};
