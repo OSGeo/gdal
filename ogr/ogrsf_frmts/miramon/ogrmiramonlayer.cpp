@@ -788,6 +788,8 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 // Get X,Y (z). MiraMon has no multipoints
                 if (MMGetGeoFeatureFromVector(phMiraMonLayer, nIElem))
                 {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "\nWrong file format.");
                     delete poGeom;
                     return nullptr;
                 }
@@ -806,6 +808,8 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 // Get X,Y (Z) n times MiraMon has no multilines
                 if (MMGetGeoFeatureFromVector(phMiraMonLayer, nIElem))
                 {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "\nWrong file format.");
                     delete poGeom;
                     return nullptr;
                 }
@@ -843,13 +847,14 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     // Get X,Y (Z) n times MiraMon has no multilines
                     if (MMGetGeoFeatureFromVector(phMiraMonLayer, nIElem))
                     {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "\nWrong file format.");
                         delete poGeom;
                         return nullptr;
                     }
 
                     nIVrtAcum = 0;
-                    if (!phMiraMonLayer->bIsPolygon &&
-                        !(phMiraMonLayer->ReadFeature.flag_VFG[0] &
+                    if (!(phMiraMonLayer->ReadFeature.flag_VFG[0] &
                           MM_EXTERIOR_ARC_SIDE))
                     {
                         CPLError(CE_Failure, CPLE_NoWriteAccess,
@@ -917,6 +922,8 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     // Get X,Y (Z) n times because MiraMon has no multilinetrings
                     if (MMGetGeoFeatureFromVector(phMiraMonLayer, nIElem))
                     {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "\nWrong file format.");
                         delete poGeom;
                         return nullptr;
                     }
