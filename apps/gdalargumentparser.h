@@ -64,28 +64,28 @@ class GDALArgumentParser : public ArgumentParser
     void display_error_and_usage(const std::exception &err);
 
     //! Add -q/--quiet argument, and store its value in *pVar (if pVar not null)
-    void add_quiet_argument(bool *pVar);
+    Argument &add_quiet_argument(bool *pVar);
 
     //! Add "-if format_name" argument for input format, and store its value into *pvar.
-    void add_input_format_argument(CPLStringList *pvar);
+    Argument &add_input_format_argument(CPLStringList *pvar);
 
     //! Add "-of format_name" argument for output format, and store its value into var.
-    void add_output_format_argument(std::string &var);
+    Argument &add_output_format_argument(std::string &var);
 
     //! Add "-co KEY=VALUE" argument for creation options, and store its value into var.
-    void add_creation_options_argument(CPLStringList &var);
+    Argument &add_creation_options_argument(CPLStringList &var);
 
     //! Add "-mo KEY=VALUE" argument for metadata item options, and store its value into var.
-    void add_metadata_item_options_argument(CPLStringList &var);
+    Argument &add_metadata_item_options_argument(CPLStringList &var);
 
     //! Add "-oo KEY=VALUE" argument for open options, and store its value into var.
-    void add_open_options_argument(CPLStringList &var);
+    Argument &add_open_options_argument(CPLStringList &var);
 
     //! Add "-oo KEY=VALUE" argument for open options, and store its value into *pvar.
-    void add_open_options_argument(CPLStringList *pvar);
+    Argument &add_open_options_argument(CPLStringList *pvar);
 
     //! Add "-ot data_type" argument for output type, and store its value into eDT.
-    void add_output_type_argument(GDALDataType &eDT);
+    Argument &add_output_type_argument(GDALDataType &eDT);
 
     //! Parse command line arguments, without the initial program name.
     void parse_args_without_binary_name(CSLConstList papszArgs);
