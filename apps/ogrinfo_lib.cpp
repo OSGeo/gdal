@@ -2261,8 +2261,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
 
     argParser->add_argument("-fid")
         .metavar("<FID>")
-        .action([psOptions](const std::string &s)
-                { psOptions->nFetchFID = CPLAtoGIntBig(s.c_str()); })
+        .store_into(psOptions->nFetchFID)
         .help(_("Only the feature with this feature id will be reported."));
 
     argParser->add_argument("-spat")
@@ -2328,8 +2327,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
 
     argParser->add_argument("-limit")
         .metavar("<nb_features>")
-        .action([psOptions](const std::string &s)
-                { psOptions->nLimit = CPLAtoGIntBig(s.c_str()); })
+        .store_into(psOptions->nLimit)
         .help(_("Limit the number of features per layer."));
 
     argParser->add_argument("-fields")
