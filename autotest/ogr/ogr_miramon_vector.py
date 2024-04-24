@@ -102,43 +102,24 @@ def test_ogr_miramon_write_simple_point_EmptyVersion(tmp_vsimem):
     check_simple_point(ds)
 
 
-def test_ogr_miramon_write_simple_point_V11(tmp_vsimem):
+@pytest.mark.parametrize(
+    "version",
+    [
+        "V1.1",
+        "V2.0",
+        "last_version",
+        "VX.0",
+    ],
+)
+def test_ogr_miramon_write_simple_point_V11(tmp_vsimem, version):
 
     out_filename = str(tmp_vsimem / "out.pnt")
     gdal.VectorTranslate(
         out_filename,
         "data/miramon/Points/SimplePoints/SimplePointsFile.pnt",
         format="MiraMonVector",
-        options="-lco Version=V1.1",
+        options="-lco Version=" + version,
     )
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
-    check_simple_point(ds)
-
-
-def test_ogr_miramon_write_simple_point_V20(tmp_vsimem):
-
-    out_filename = str(tmp_vsimem / "out.pnt")
-    gdal.VectorTranslate(
-        out_filename,
-        "data/miramon/Points/SimplePoints/SimplePointsFile.pnt",
-        format="MiraMonVector",
-        options="-lco Version=V2.0",
-    )
-
-    ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
-    check_simple_point(ds)
-
-
-def test_ogr_miramon_write_simple_point_last_version(tmp_vsimem):
-
-    out_filename = str(tmp_vsimem / "out.pnt")
-    gdal.VectorTranslate(
-        out_filename,
-        "data/miramon/Points/SimplePoints/SimplePointsFile.pnt",
-        format="MiraMonVector",
-        options="-lco Version=last_version",
-    )
-
     ds = gdal.OpenEx(out_filename, gdal.OF_VECTOR)
     check_simple_point(ds)
 
@@ -865,6 +846,10 @@ def test_ogr_miramon_OpenLanguageArc(Language, expected_description):
             "Error reading the format in the DBF file",
         ),
         ("data/miramon/CorruptedFiles/NoREL/NoREL.pnt", "rel must exist."),
+        ("data/miramon/CorruptedFiles/NoNode/SimpleArcFile.arc", "Cannot open file"),
+        ("data/miramon/CorruptedFiles/NoArcRel/SimpleArcFile.arc", "rel must exist"),
+        ("data/miramon/CorruptedFiles/NoPolRel/SimplePolFile.pol", "rel must exist"),
+        ("data/miramon/CorruptedFiles/BadCycle/SimplePolFile.pol", "Cannot open file"),
     ],
 )
 def test_ogr_miramon_corrupted_files(name, message):
@@ -873,6 +858,46 @@ def test_ogr_miramon_corrupted_files(name, message):
             name,
             gdal.OF_VECTOR,
         )
+
+
+###############################################################################
+# features test: unexisting coordinates, unexpected polygon construction
+
+
+@pytest.mark.parametrize(
+    "name,message",
+    [
+        (
+            "data/miramon/CorruptedFiles/CorruptedCoordinates/CorruptedCoordinatesPoint.pnt",
+            "Wrong file format",
+        ),
+        (
+            "data/miramon/CorruptedFiles/CorruptedCoordinates/CorruptedCoordinates.arc",
+            "Wrong file format",
+        ),
+        (
+            "data/miramon/CorruptedFiles/CorruptedCoordinates/CorruptedCoordinates.pol",
+            "Wrong file format",
+        ),
+        (
+            "data/miramon/CorruptedFiles/CorruptedPolygon/Multipolygons.pol",
+            "Wrong polygon format",
+        ),
+    ],
+)
+def test_ogr_miramon_corrupted_features_point(name, message):
+
+    ds = gdal.OpenEx(
+        name,
+        gdal.OF_VECTOR,
+    )
+    assert ds is not None, "Failed to get dataset"
+    lyr = ds.GetLayer(0)
+
+    assert lyr is not None, "Failed to get layer"
+    with pytest.raises(Exception, match=message):
+        for f in lyr:
+            pass
 
 
 ###############################################################################
@@ -931,6 +956,7 @@ def create_common_attributes(lyr):
     lyr.CreateField(ogr.FieldDefn("intlistfield", ogr.OFTIntegerList))
     lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
     lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
+    lyr.CreateField(ogr.FieldDefn("datefield", ogr.OFTDate))
 
 
 def assign_common_attributes(f):
@@ -942,6 +968,7 @@ def assign_common_attributes(f):
     f["intlistfield"] = [123456789]
     f["int64listfield"] = [12345678912345678]
     f["doulistfield"] = [1.5, 4.2]
+    f["datefield"] = "2024/04/24"
 
 
 def check_common_attributes(f):
@@ -953,6 +980,16 @@ def check_common_attributes(f):
     assert f["intlistfield"] == [123456789]
     assert f["int64listfield"] == [12345678912345678]
     assert f["doulistfield"] == [1.5, 4.2]
+    assert f["datefield"] == "2024/04/24"
+
+
+def open_ds_lyr_0_feature_0(layername):
+    ds = ogr.Open(layername)
+    assert ds is not None, "Failed to get dataset"
+    lyr = ds.GetLayer(0)
+    assert lyr is not None, "Failed to get layer"
+    f = lyr.GetNextFeature()
+    return ds, lyr, f
 
 
 def test_ogr_miramon_write_basic_polygon(tmp_path):
@@ -972,11 +1009,7 @@ def test_ogr_miramon_write_basic_polygon(tmp_path):
     ds = None
 
     layername = filename + "/test.pol"
-    ds = ogr.Open(layername)
-    assert ds is not None, "Failed to get dataset"
-    lyr = ds.GetLayer(0)
-    assert lyr is not None, "Failed to get layer"
-    f = lyr.GetNextFeature()
+    ds, lyr, f = open_ds_lyr_0_feature_0(layername)
 
     assert f["ID_GRAFIC"] == [1, 1]
     assert f["N_VERTEXS"] == [4, 4]
@@ -1011,11 +1044,7 @@ def test_ogr_miramon_write_basic_multipolygon(tmp_path):
     ds = None
 
     layername = filename + "/test.pol"
-    ds = ogr.Open(layername)
-    assert ds is not None, "Failed to get dataset"
-    lyr = ds.GetLayer(0)
-    assert lyr is not None, "Failed to get layer"
-    f = lyr.GetNextFeature()
+    ds, lyr, f = open_ds_lyr_0_feature_0(layername)
 
     assert f["ID_GRAFIC"] == [1, 1]
     assert f["N_VERTEXS"] == [20, 20]
@@ -1027,6 +1056,44 @@ def test_ogr_miramon_write_basic_multipolygon(tmp_path):
     assert (
         f.GetGeometryRef().ExportToIsoWkt()
         == "MULTIPOLYGON (((0 0,0 5,5 5,5 0,0 0),(1 1,2 1,2 2,1 2,1 1),(3 3,4 3,4 4,3 4,3 3)),((5 6,5 7,6 7,6 6,5 6)))"
+    )
+    ds = None
+
+
+def test_ogr_miramon_write_basic_multipolygon_3d(tmp_path):
+
+    filename = str(tmp_path / "DataSetMULTIPOL3d")
+    ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
+    create_common_attributes(lyr)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assign_common_attributes(f)
+
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "MULTIPOLYGON Z (((0 0 3,0 5 3,5 5 4,5 0 5,0 0 3), (1 1 6,2 1 3,2 2 9.2,1 2 3.14,1 1 6), (3 3 1,4 3 12,4 4 21,3 4 2,3 3 1)),((5 6 2,5 7 2,6 7 3,6 6 3,5 6 2)))"
+        )
+    )
+
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    layername = filename + "/test.pol"
+    ds, lyr, f = open_ds_lyr_0_feature_0(layername)
+
+    assert f["ID_GRAFIC"] == [1, 1]
+    assert f["N_VERTEXS"] == [20, 20]
+    assert f["PERIMETRE"] == [32, 32]
+    assert f["AREA"] == [24, 24]
+    assert f["N_ARCS"] == [4, 4]
+    assert f["N_POLIG"] == [4, 4]
+    check_common_attributes(f)
+    assert (
+        f.GetGeometryRef().ExportToIsoWkt()
+        == "MULTIPOLYGON Z (((0 0 3,0 5 3,5 5 4,5 0 5,0 0 3),(1 1 6,2 1 3,2 2 9.2,1 2 3.14,1 1 6),(3 3 1,4 3 12,4 4 21,3 4 2,3 3 1)),((5 6 2,5 7 2,6 7 3,6 6 3,5 6 2)))"
     )
     ds = None
 
@@ -1048,11 +1115,7 @@ def test_ogr_miramon_write_basic_linestring(tmp_path):
     ds = None
 
     layername = filename + "/test.arc"
-    ds = ogr.Open(layername)
-    assert ds is not None, "Failed to get dataset"
-    lyr = ds.GetLayer(0)
-    assert lyr is not None, "Failed to get layer"
-    f = lyr.GetNextFeature()
+    ds, lyr, f = open_ds_lyr_0_feature_0(layername)
 
     assert f["ID_GRAFIC"] == [0, 0]
     assert f["N_VERTEXS"] == [3, 3]
@@ -1081,11 +1144,7 @@ def test_ogr_miramon_write_basic_linestringZ(tmp_path):
     ds = None
 
     layername = filename + "/test.arc"
-    ds = ogr.Open(layername)
-    assert ds is not None, "Failed to get dataset"
-    lyr = ds.GetLayer(0)
-    assert lyr is not None, "Failed to get layer"
-    f = lyr.GetNextFeature()
+    ds, lyr, f = open_ds_lyr_0_feature_0(layername)
 
     assert f["ID_GRAFIC"] == [0, 0]
     assert f["N_VERTEXS"] == [3, 3]
@@ -1116,11 +1175,7 @@ def test_ogr_miramon_write_basic_multilinestring(tmp_path):
     ds = None
 
     layername = filename + "/test.arc"
-    ds = ogr.Open(layername)
-    assert ds is not None, "Failed to get dataset"
-    lyr = ds.GetLayer(0)
-    assert lyr is not None, "Failed to get layer"
-    f = lyr.GetNextFeature()
+    ds, lyr, f = open_ds_lyr_0_feature_0(layername)
 
     assert f["ID_GRAFIC"] == [0, 0]
     assert f["N_VERTEXS"] == [3, 3]
@@ -1143,13 +1198,20 @@ def test_ogr_miramon_write_basic_multilinestring(tmp_path):
     ds = None
 
 
-def test_ogr_miramon_write_basic_point(tmp_path):
+@pytest.mark.parametrize(
+    "DBFEncoding",
+    [
+        "UTF8",
+        "ANSI",
+    ],
+)
+def test_ogr_miramon_write_basic_point(tmp_path, DBFEncoding):
 
     filename = str(tmp_path / "DataSetPOINT")
     ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
-    options = ["DBFEncoding=UTF8"]
+    options = ["DBFEncoding=" + DBFEncoding]
     lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown, options=options)
     create_common_attributes(lyr)
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -1165,11 +1227,7 @@ def test_ogr_miramon_write_basic_point(tmp_path):
     ds = None
 
     layername = filename + "/test.pnt"
-    ds = ogr.Open(layername)
-    assert ds is not None, "Failed to get dataset"
-    lyr = ds.GetLayer(0)
-    assert lyr is not None, "Failed to get layer"
-    f = lyr.GetNextFeature()
+    ds, lyr, f = open_ds_lyr_0_feature_0(layername)
 
     assert f["ID_GRAFIC"] == [0, 0]
     check_common_attributes(f)
@@ -1205,11 +1263,7 @@ def test_ogr_miramon_write_basic_pointZ(tmp_path):
     ds = None
 
     layername = filename + "/test.pnt"
-    ds = ogr.Open(layername)
-    assert ds is not None, "Failed to get dataset"
-    lyr = ds.GetLayer(0)
-    assert lyr is not None, "Failed to get layer"
-    f = lyr.GetNextFeature()
+    ds, lyr, f = open_ds_lyr_0_feature_0(layername)
 
     assert f["ID_GRAFIC"] == [0, 0]
     check_common_attributes(f)
@@ -1242,11 +1296,7 @@ def test_ogr_miramon_write_basic_multipoint(tmp_path):
     ds = None
 
     layername = filename + "/test.pnt"
-    ds = ogr.Open(layername)
-    assert ds is not None, "Failed to get dataset"
-    lyr = ds.GetLayer(0)
-    assert lyr is not None, "Failed to get layer"
-    f = lyr.GetNextFeature()
+    ds, lyr, f = open_ds_lyr_0_feature_0(layername)
 
     assert f["ID_GRAFIC"] == [0, 0]
     check_common_attributes(f)
@@ -1257,5 +1307,63 @@ def test_ogr_miramon_write_basic_multipoint(tmp_path):
     assert f["ID_GRAFIC"] == [1, 1]
     check_common_attributes(f)
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 0)"
+
+    ds = None
+
+
+def test_ogr_miramon_write_basic_multigeometry(tmp_path):
+
+    filename = str(tmp_path / "DataSetMULTIGEOM")
+    ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
+    create_common_attributes(lyr)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assign_common_attributes(f)
+
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+    lyr.CreateFeature(f)
+
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0 0,0 1,1 1)"))
+    lyr.CreateFeature(f)
+
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "MULTIPOLYGON (((0 0,0 5,5 5,5 0,0 0), (1 1,2 1,2 2,1 2,1 1), (3 3,4 3,4 4,3 4,3 3)),((5 6,5 7,6 7,6 6,5 6)))"
+        )
+    )
+    lyr.CreateFeature(f)
+
+    f = None
+    ds = None
+
+    layername = filename + "/test.pnt"
+    ds, lyr, f = open_ds_lyr_0_feature_0(layername)
+
+    assert f["ID_GRAFIC"] == [0, 0]
+    check_common_attributes(f)
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (0 0)"
+
+    ds = None
+
+    layername = filename + "/test.arc"
+    ds, lyr, f = open_ds_lyr_0_feature_0(layername)
+
+    assert f["ID_GRAFIC"] == [0, 0]
+    check_common_attributes(f)
+    assert f.GetGeometryRef().ExportToIsoWkt() == "LINESTRING (0 0,0 1,1 1)"
+
+    ds = None
+
+    layername = filename + "/test.pol"
+    ds, lyr, f = open_ds_lyr_0_feature_0(layername)
+
+    assert f["ID_GRAFIC"] == [1, 1]
+    check_common_attributes(f)
+    assert (
+        f.GetGeometryRef().ExportToIsoWkt()
+        == "MULTIPOLYGON (((0 0,0 5,5 5,5 0,0 0),(1 1,2 1,2 2,1 2,1 1),(3 3,4 3,4 4,3 4,3 3)),((5 6,5 7,6 7,6 6,5 6)))"
+    )
 
     ds = None
