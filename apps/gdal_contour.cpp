@@ -33,45 +33,169 @@
 #include "gdal_version.h"
 #include "gdal.h"
 #include "gdal_alg.h"
+#include "gdalargumentparser.h"
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 #include "commonutils.h"
 
 /************************************************************************/
-/*                     ArgIsNumericContour()                            */
+/*                     GDALContourOptions                               */
 /************************************************************************/
 
-static bool ArgIsNumericContour(const char *pszArg)
-
+struct GDALContourOptions
 {
-    return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
-}
+    int nBand = 1;
+    double dfInterval = 0.0;
+    double dfNoData = 0.0;
+    double dfOffset = 0.0;
+    double dfExpBase = 0.0;
+    bool b3D = false;
+    bool bPolygonize = false;
+    bool bNoDataSet = false;
+    bool bIgnoreNoData = false;
+    std::string osNewLayerName = "contour";
+    std::string osFormat;
+    std::string osElevAttrib;
+    std::string osElevAttribMin;
+    std::string osElevAttribMax;
+    std::vector<double> adfFixedLevels;
+    CPLStringList aosOpenOptions;
+    CPLStringList aosCreationOptions;
+    bool bQuiet = false;
+    std::string aosDestFilename;
+    std::string aosSrcFilename;
+};
 
 /************************************************************************/
-/*                               Usage()                                */
+/*                     GDALContourAppOptionsGetParser()                 */
 /************************************************************************/
 
-static void Usage(bool bIsError, const char *pszErrorMsg = nullptr)
-
+static std::unique_ptr<GDALArgumentParser>
+GDALContourAppOptionsGetParser(GDALContourOptions *psOptions)
 {
-    fprintf(
-        bIsError ? stderr : stdout,
-        "Usage: gdal_contour [--help] [--help-general]\n"
-        "                    [-b <band>] [-a <attribute_name>] [-amin "
-        "<attribute_name>] [-amax <attribute_name>]\n"
-        "                    [-3d] [-inodata] [-snodata <n>] [-f <formatname>] "
-        "[-i <interval>]\n"
-        "                    [-dsco <NAME>=<VALUE>]... "
-        "[-lco <NAME>=<VALUE>]...\n"
-        "                    [-off <offset>] [-fl <level> <level>...] [-e "
-        "<exp_base>]\n"
-        "                    [-nln <outlayername>] [-q] [-p]\n"
-        "                    <src_filename> <dst_filename>\n");
+    auto argParser = std::make_unique<GDALArgumentParser>(
+        "gdal_contour", /* bForBinary */ true);
 
-    if (pszErrorMsg != nullptr)
-        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
+    argParser->add_description(_("Creates contour lines from a raster file."));
+    argParser->add_epilog(_(
+        "For more details, consult the full documentation for the gdal_contour "
+        "utility: http://gdal.org/gdal_contour.html"));
 
-    exit(bIsError ? 1 : 0);
+    argParser->add_argument("-b")
+        .metavar("<name>")
+        .default_value(1)
+        .nargs(1)
+        .scan<'i', int>()
+        .store_into(psOptions->nBand)
+        .help(_("Select an input band band containing the DEM data."));
+
+    argParser->add_argument("-a")
+        .metavar("<name>")
+        .store_into(psOptions->osElevAttrib)
+        .help(_("Provides a name for the attribute in which to put the "
+                "elevation."));
+
+    argParser->add_argument("-amin")
+        .metavar("<name>")
+        .store_into(psOptions->osElevAttribMin)
+        .help(_("Provides a name for the attribute in which to put the minimum "
+                "elevation."));
+
+    argParser->add_argument("-amax")
+        .metavar("<name>")
+        .store_into(psOptions->osElevAttribMax)
+        .help(_("Provides a name for the attribute in which to put the maximum "
+                "elevation."));
+
+    argParser->add_argument("-3d")
+        .flag()
+        .store_into(psOptions->b3D)
+        .help(_("Force production of 3D vectors instead of 2D."));
+
+    argParser->add_argument("-inodata")
+        .flag()
+        .store_into(psOptions->bIgnoreNoData)
+        .help(_("Ignore any nodata value implied in the dataset - treat all "
+                "values as valid."));
+
+    argParser->add_argument("-snodata")
+        .metavar("<value>")
+        .scan<'g', double>()
+        .action(
+            [psOptions](const auto &d)
+            {
+                psOptions->bNoDataSet = true;
+                psOptions->dfNoData = CPLAtofM(d.c_str());
+            })
+        .help(_("Input pixel value to treat as \"nodata\"."));
+
+    argParser->add_output_format_argument(psOptions->osFormat);
+
+    argParser->add_argument("-dsco")
+        .metavar("<NAME>=<VALUE>")
+        .append()
+        .action([psOptions](const std::string &s)
+                { psOptions->aosOpenOptions.AddString(s.c_str()); })
+        .help(_("Dataset creation option (format specific)."));
+
+    argParser->add_argument("-lco")
+        .metavar("<NAME>=<VALUE>")
+        .append()
+        .action([psOptions](const std::string &s)
+                { psOptions->aosCreationOptions.AddString(s.c_str()); })
+        .help(_("Layer creation option (format specific)."));
+
+    auto &group = argParser->add_mutually_exclusive_group();
+
+    group.add_argument("-i")
+        .metavar("<interval>")
+        .scan<'g', double>()
+        .store_into(psOptions->dfInterval)
+        .help(_("Elevation interval between contours."));
+
+    group.add_argument("-fl")
+        .metavar("<level>")
+        .nargs(argparse::nargs_pattern::at_least_one)
+        .scan<'g', double>()
+        .action([psOptions](const std::string &s)
+                { psOptions->adfFixedLevels.push_back(CPLAtof(s.c_str())); })
+        .help(_("Name one or more \"fixed levels\" to extract."));
+
+    group.add_argument("-e")
+        .metavar("<base>")
+        .scan<'g', double>()
+        .store_into(psOptions->dfExpBase)
+        .help(_("Generate levels on an exponential scale: base ^ k, for k an "
+                "integer."));
+
+    argParser->add_argument("-off")
+        .metavar("<offset>")
+        .scan<'g', double>()
+        .store_into(psOptions->dfOffset)
+        .help(_("Offset from zero relative to which to interpret intervals."));
+
+    argParser->add_argument("-nln")
+        .metavar("<name>")
+        .store_into(psOptions->osNewLayerName)
+        .help(_("Provide a name for the output vector layer. Defaults to "
+                "\"contour\"."));
+
+    argParser->add_argument("-p")
+        .flag()
+        .store_into(psOptions->bPolygonize)
+        .help(_("Generate contour polygons instead of lines."));
+
+    argParser->add_quiet_argument(&psOptions->bQuiet);
+
+    argParser->add_argument("src_filename")
+        .store_into(psOptions->aosSrcFilename)
+        .help("The source raster file.");
+
+    argParser->add_argument("dst_filename")
+        .store_into(psOptions->aosDestFilename)
+        .help("The destination vector file.");
+
+    return argParser;
 }
 
 static void CreateElevAttrib(const char *pszElevAttrib, OGRLayerH hLayer)
@@ -89,225 +213,90 @@ static void CreateElevAttrib(const char *pszElevAttrib, OGRLayerH hLayer)
 /*                                main()                                */
 /************************************************************************/
 
-#define CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(nExtraArg)                            \
-    do                                                                         \
-    {                                                                          \
-        if (i + nExtraArg >= argc)                                             \
-            Usage(true, CPLSPrintf("%s option requires %d argument(s)",        \
-                                   argv[i], nExtraArg));                       \
-    } while (false)
-
 MAIN_START(argc, argv)
 
 {
-    bool b3D = false;
-    int bNoDataSet = FALSE;
-    bool bIgnoreNoData = false;
-    int nBandIn = 1;
-    double dfInterval = 0.0;
-    double dfNoData = 0.0;
-    double dfOffset = 0.0;
-    double dfExpBase = 0.0;
-    const char *pszSrcFilename = nullptr;
-    const char *pszDstFilename = nullptr;
-    const char *pszElevAttrib = nullptr;
-    const char *pszElevAttribMin = nullptr;
-    const char *pszElevAttribMax = nullptr;
-    const char *pszFormat = nullptr;
-    char **papszDSCO = nullptr;
-    char **papszLCO = nullptr;
-    double adfFixedLevels[1000];
-    int nFixedLevelCount = 0;
-    const char *pszNewLayerName = "contour";
-    bool bQuiet = false;
-    GDALProgressFunc pfnProgress = nullptr;
-    bool bPolygonize = false;
 
-    // Check that we are running against at least GDAL 1.4.
-    // Note to developers: if we use newer API, please change the requirement.
-    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1400)
-    {
-        fprintf(stderr,
-                "At least, GDAL >= 1.4.0 is required for this version of %s, "
-                "which was compiled against GDAL %s\n",
-                argv[0], GDAL_RELEASE_NAME);
-        exit(1);
-    }
+    GDALProgressFunc pfnProgress = nullptr;
+
+    EarlySetConfigOptions(argc, argv);
+
+    /* -------------------------------------------------------------------- */
+    /*      Register standard GDAL drivers, and process generic GDAL        */
+    /*      command options.                                                */
+    /* -------------------------------------------------------------------- */
 
     GDALAllRegister();
     OGRRegisterAll();
 
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
+    if (argc < 1)
+        exit(-argc);
 
     /* -------------------------------------------------------------------- */
     /*      Parse arguments.                                                */
     /* -------------------------------------------------------------------- */
-    for (int i = 1; i < argc; i++)
+
+    if (argc < 2)
     {
-        if (EQUAL(argv[i], "--utility_version"))
+        try
         {
-            printf("%s was compiled against GDAL %s and "
-                   "is running against GDAL %s\n",
-                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy(argv);
-            return 0;
+            GDALContourOptions sOptions;
+            auto argParser = GDALContourAppOptionsGetParser(&sOptions);
+            fprintf(stderr, "%s\n", argParser->usage().c_str());
         }
-        else if (EQUAL(argv[i], "--help"))
-            Usage(false);
-        else if (EQUAL(argv[i], "-a"))
+        catch (const std::exception &err)
         {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            // coverity[tainted_data]
-            pszElevAttrib = argv[++i];
+            CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                     err.what());
         }
-        else if (EQUAL(argv[i], "-amin"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            // coverity[tainted_data]
-            pszElevAttribMin = argv[++i];
-        }
-        else if (EQUAL(argv[i], "-amax"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            // coverity[tainted_data]
-            pszElevAttribMax = argv[++i];
-        }
-        else if (EQUAL(argv[i], "-off"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            // coverity[tainted_data]
-            dfOffset = CPLAtof(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-i"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            // coverity[tainted_data]
-            dfInterval = CPLAtof(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-e"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            // coverity[tainted_data]
-            dfExpBase = CPLAtof(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-p"))
-        {
-            bPolygonize = true;
-        }
-        else if (EQUAL(argv[i], "-fl"))
-        {
-            if (i >= argc - 1)
-                Usage(true, CPLSPrintf("%s option requires at least 1 argument",
-                                       argv[i]));
-            while (i < argc - 1 &&
-                   nFixedLevelCount < static_cast<int>(sizeof(adfFixedLevels) /
-                                                       sizeof(double)) &&
-                   ArgIsNumericContour(argv[i + 1]))
-                // coverity[tainted_data]
-                adfFixedLevels[nFixedLevelCount++] = CPLAtof(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-b"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            // coverity[tainted_data]
-            nBandIn = atoi(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-f") || EQUAL(argv[i], "-of"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            // coverity[tainted_data]
-            pszFormat = argv[++i];
-        }
-        else if (EQUAL(argv[i], "-dsco"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            // coverity[tainted_data]
-            papszDSCO = CSLAddString(papszDSCO, argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-lco"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            // coverity[tainted_data]
-            papszLCO = CSLAddString(papszLCO, argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-3d"))
-        {
-            b3D = true;
-        }
-        else if (EQUAL(argv[i], "-snodata"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            bNoDataSet = TRUE;
-            // coverity[tainted_data]
-            dfNoData = CPLAtof(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-nln"))
-        {
-            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
-            // coverity[tainted_data]
-            pszNewLayerName = argv[++i];
-        }
-        else if (EQUAL(argv[i], "-inodata"))
-        {
-            bIgnoreNoData = true;
-        }
-        else if (EQUAL(argv[i], "-q") || EQUAL(argv[i], "-quiet"))
-        {
-            bQuiet = TRUE;
-        }
-        else if (pszSrcFilename == nullptr)
-        {
-            pszSrcFilename = argv[i];
-        }
-        else if (pszDstFilename == nullptr)
-        {
-            pszDstFilename = argv[i];
-        }
-        else
-            Usage(true, "Too many command options.");
+        exit(1);
     }
 
-    if (dfInterval == 0.0 && nFixedLevelCount == 0 && dfExpBase == 0.0)
+    GDALContourOptions sOptions;
+
+    try
     {
-        Usage(true, "Neither -i nor -fl nor -e are specified.");
+        auto argParser = GDALContourAppOptionsGetParser(&sOptions);
+        argParser->parse_args_without_binary_name(argv + 1);
+    }
+    catch (const std::exception &error)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", error.what());
+        exit(1);
     }
 
-    if (pszSrcFilename == nullptr)
+    if (sOptions.aosSrcFilename.find("/vsistdout/") != std::string::npos ||
+        sOptions.aosDestFilename.find("/vsistdout/") != std::string::npos)
     {
-        Usage(true, "Missing source filename.");
+        sOptions.bQuiet = true;
     }
 
-    if (pszDstFilename == nullptr)
-    {
-        Usage(true, "Missing destination filename.");
-    }
-
-    if (strcmp(pszDstFilename, "/vsistdout/") == 0 ||
-        strcmp(pszDstFilename, "/dev/stdout") == 0)
-    {
-        bQuiet = true;
-    }
-
-    if (!bQuiet)
+    if (!sOptions.bQuiet)
         pfnProgress = GDALTermProgress;
 
     /* -------------------------------------------------------------------- */
     /*      Open source raster file.                                        */
     /* -------------------------------------------------------------------- */
-    GDALDatasetH hSrcDS = GDALOpen(pszSrcFilename, GA_ReadOnly);
+    GDALDatasetH hSrcDS =
+        GDALOpen(sOptions.aosSrcFilename.c_str(), GA_ReadOnly);
     if (hSrcDS == nullptr)
         exit(2);
 
-    GDALRasterBandH hBand = GDALGetRasterBand(hSrcDS, nBandIn);
+    GDALRasterBandH hBand = GDALGetRasterBand(hSrcDS, sOptions.nBand);
     if (hBand == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Band %d does not exist on dataset.", nBandIn);
+                 "Band %d does not exist on dataset.", sOptions.nBand);
         exit(2);
     }
 
-    if (!bNoDataSet && !bIgnoreNoData)
-        dfNoData = GDALGetRasterNoDataValue(hBand, &bNoDataSet);
+    if (!sOptions.bNoDataSet && !sOptions.bIgnoreNoData)
+    {
+        int bNoDataSet;
+        sOptions.dfNoData = GDALGetRasterNoDataValue(hBand, &bNoDataSet);
+        sOptions.bNoDataSet = bNoDataSet;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Try to get a coordinate system from the raster.                 */
@@ -318,14 +307,14 @@ MAIN_START(argc, argv)
     /*      Create the output file.                                         */
     /* -------------------------------------------------------------------- */
     CPLString osFormat;
-    if (pszFormat == nullptr)
+    if (sOptions.osFormat.empty())
     {
-        const auto aoDrivers =
-            GetOutputDriversFor(pszDstFilename, GDAL_OF_VECTOR);
+        const auto aoDrivers = GetOutputDriversFor(
+            sOptions.aosDestFilename.c_str(), GDAL_OF_VECTOR);
         if (aoDrivers.empty())
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot guess driver for %s",
-                     pszDstFilename);
+                     sOptions.aosDestFilename.c_str());
             exit(10);
         }
         else
@@ -334,14 +323,15 @@ MAIN_START(argc, argv)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Several drivers matching %s extension. Using %s",
-                         CPLGetExtension(pszDstFilename), aoDrivers[0].c_str());
+                         CPLGetExtension(sOptions.aosDestFilename.c_str()),
+                         aoDrivers[0].c_str());
             }
             osFormat = aoDrivers[0];
         }
     }
     else
     {
-        osFormat = pszFormat;
+        osFormat = sOptions.osFormat;
     }
 
     OGRSFDriverH hDriver = OGRGetDriverByName(osFormat.c_str());
@@ -353,16 +343,17 @@ MAIN_START(argc, argv)
         exit(10);
     }
 
-    OGRDataSourceH hDS =
-        OGR_Dr_CreateDataSource(hDriver, pszDstFilename, papszDSCO);
+    OGRDataSourceH hDS = OGR_Dr_CreateDataSource(
+        hDriver, sOptions.aosDestFilename.c_str(), sOptions.aosCreationOptions);
     if (hDS == nullptr)
         exit(1);
 
     OGRLayerH hLayer = OGR_DS_CreateLayer(
-        hDS, pszNewLayerName, hSRS,
-        bPolygonize ? (b3D ? wkbMultiPolygon25D : wkbMultiPolygon)
-                    : (b3D ? wkbLineString25D : wkbLineString),
-        papszLCO);
+        hDS, sOptions.osNewLayerName.c_str(), hSRS,
+        sOptions.bPolygonize
+            ? (sOptions.b3D ? wkbMultiPolygon25D : wkbMultiPolygon)
+            : (sOptions.b3D ? wkbLineString25D : wkbLineString),
+        sOptions.aosCreationOptions);
     if (hLayer == nullptr)
         exit(1);
 
@@ -371,11 +362,11 @@ MAIN_START(argc, argv)
     OGR_L_CreateField(hLayer, hFld, FALSE);
     OGR_Fld_Destroy(hFld);
 
-    if (bPolygonize)
+    if (sOptions.bPolygonize)
     {
-        if (pszElevAttrib)
+        if (!sOptions.osElevAttrib.empty())
         {
-            pszElevAttrib = nullptr;
+            sOptions.osElevAttrib.clear();
             CPLError(CE_Warning, CPLE_NotSupported,
                      "-a is ignored in polygonal contouring mode. "
                      "Use -amin and/or -amax instead");
@@ -383,88 +374,94 @@ MAIN_START(argc, argv)
     }
     else
     {
-        if (pszElevAttribMin != nullptr || pszElevAttribMax != nullptr)
+        if (!sOptions.osElevAttribMin.empty() ||
+            !sOptions.osElevAttribMax.empty())
         {
-            pszElevAttribMin = nullptr;
-            pszElevAttribMax = nullptr;
+            sOptions.osElevAttribMin.clear();
+            sOptions.osElevAttribMax.clear();
             CPLError(CE_Warning, CPLE_NotSupported,
                      "-amin and/or -amax are ignored in line contouring mode. "
                      "Use -a instead");
         }
     }
 
-    if (pszElevAttrib)
+    if (!sOptions.osElevAttrib.empty())
     {
-        CreateElevAttrib(pszElevAttrib, hLayer);
+        CreateElevAttrib(sOptions.osElevAttrib.c_str(), hLayer);
     }
 
-    if (pszElevAttribMin)
+    if (!sOptions.osElevAttribMin.empty())
     {
-        CreateElevAttrib(pszElevAttribMin, hLayer);
+        CreateElevAttrib(sOptions.osElevAttribMin.c_str(), hLayer);
     }
 
-    if (pszElevAttribMax)
+    if (!sOptions.osElevAttribMax.empty())
     {
-        CreateElevAttrib(pszElevAttribMax, hLayer);
+        CreateElevAttrib(sOptions.osElevAttribMax.c_str(), hLayer);
     }
 
     /* -------------------------------------------------------------------- */
     /*      Invoke.                                                         */
     /* -------------------------------------------------------------------- */
     int iIDField = OGR_FD_GetFieldIndex(OGR_L_GetLayerDefn(hLayer), "ID");
-    int iElevField =
-        (pszElevAttrib == nullptr)
+    int iElevField = (sOptions.osElevAttrib.empty())
+                         ? -1
+                         : OGR_FD_GetFieldIndex(OGR_L_GetLayerDefn(hLayer),
+                                                sOptions.osElevAttrib.c_str());
+
+    int iElevFieldMin =
+        (sOptions.osElevAttribMin.empty())
             ? -1
-            : OGR_FD_GetFieldIndex(OGR_L_GetLayerDefn(hLayer), pszElevAttrib);
+            : OGR_FD_GetFieldIndex(OGR_L_GetLayerDefn(hLayer),
+                                   sOptions.osElevAttribMin.c_str());
 
-    int iElevFieldMin = (pszElevAttribMin == nullptr)
-                            ? -1
-                            : OGR_FD_GetFieldIndex(OGR_L_GetLayerDefn(hLayer),
-                                                   pszElevAttribMin);
-
-    int iElevFieldMax = (pszElevAttribMax == nullptr)
-                            ? -1
-                            : OGR_FD_GetFieldIndex(OGR_L_GetLayerDefn(hLayer),
-                                                   pszElevAttribMax);
+    int iElevFieldMax =
+        (sOptions.osElevAttribMax.empty())
+            ? -1
+            : OGR_FD_GetFieldIndex(OGR_L_GetLayerDefn(hLayer),
+                                   sOptions.osElevAttribMax.c_str());
 
     char **options = nullptr;
-    if (nFixedLevelCount > 0)
+    if (!sOptions.adfFixedLevels.empty())
     {
         std::string values = "FIXED_LEVELS=";
-        for (int i = 0; i < nFixedLevelCount; i++)
+        for (size_t i = 0; i < sOptions.adfFixedLevels.size(); i++)
         {
             const int sz = 32;
             char *newValue = new char[sz + 1];
-            if (i == nFixedLevelCount - 1)
+            if (i == sOptions.adfFixedLevels.size() - 1)
             {
-                CPLsnprintf(newValue, sz + 1, "%f", adfFixedLevels[i]);
+                CPLsnprintf(newValue, sz + 1, "%f", sOptions.adfFixedLevels[i]);
             }
             else
             {
-                CPLsnprintf(newValue, sz + 1, "%f,", adfFixedLevels[i]);
+                CPLsnprintf(newValue, sz + 1, "%f,",
+                            sOptions.adfFixedLevels[i]);
             }
             values = values + std::string(newValue);
             delete[] newValue;
         }
         options = CSLAddString(options, values.c_str());
     }
-    else if (dfExpBase != 0.0)
+    else if (sOptions.dfExpBase != 0.0)
     {
-        options = CSLAppendPrintf(options, "LEVEL_EXP_BASE=%f", dfExpBase);
+        options =
+            CSLAppendPrintf(options, "LEVEL_EXP_BASE=%f", sOptions.dfExpBase);
     }
-    else if (dfInterval != 0.0)
+    else if (sOptions.dfInterval != 0.0)
     {
-        options = CSLAppendPrintf(options, "LEVEL_INTERVAL=%f", dfInterval);
-    }
-
-    if (dfOffset != 0.0)
-    {
-        options = CSLAppendPrintf(options, "LEVEL_BASE=%f", dfOffset);
+        options =
+            CSLAppendPrintf(options, "LEVEL_INTERVAL=%f", sOptions.dfInterval);
     }
 
-    if (bNoDataSet)
+    if (sOptions.dfOffset != 0.0)
     {
-        options = CSLAppendPrintf(options, "NODATA=%.19g", dfNoData);
+        options = CSLAppendPrintf(options, "LEVEL_BASE=%f", sOptions.dfOffset);
+    }
+
+    if (sOptions.bNoDataSet)
+    {
+        options = CSLAppendPrintf(options, "NODATA=%.19g", sOptions.dfNoData);
     }
     if (iIDField != -1)
     {
@@ -482,7 +479,7 @@ MAIN_START(argc, argv)
     {
         options = CSLAppendPrintf(options, "ELEV_FIELD_MAX=%d", iElevFieldMax);
     }
-    if (bPolygonize)
+    if (sOptions.bPolygonize)
     {
         options = CSLAppendPrintf(options, "POLYGONIZE=YES");
     }
@@ -496,8 +493,6 @@ MAIN_START(argc, argv)
     GDALClose(hSrcDS);
 
     CSLDestroy(argv);
-    CSLDestroy(papszDSCO);
-    CSLDestroy(papszLCO);
     GDALDestroyDriverManager();
     OGRCleanupAll();
 
