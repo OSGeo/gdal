@@ -371,7 +371,14 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                         "DCAP_VIRTUALIO" in md
                         and size != 0
                         and drv.ShortName
-                        not in ["JPEG2000", "KMLSUPEROVERLAY", "HF2", "ZMap", "DDS"]
+                        not in [
+                            "JPEG2000",
+                            "KMLSUPEROVERLAY",
+                            "HF2",
+                            "ZMap",
+                            "DDS",
+                            "TileDB",
+                        ]
                         and drv.ShortName not in ["GIF", "JP2ECW", "JP2Lura"]
                     ):
 
