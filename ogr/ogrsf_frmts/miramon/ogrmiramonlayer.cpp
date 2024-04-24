@@ -788,8 +788,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 // Get X,Y (z). MiraMon has no multipoints
                 if (MMGetGeoFeatureFromVector(phMiraMonLayer, nIElem))
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "\nWrong file format.");
+                    CPLError(CE_Failure, CPLE_AppDefined, "Wrong file format.");
                     delete poGeom;
                     return nullptr;
                 }
@@ -808,8 +807,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                 // Get X,Y (Z) n times MiraMon has no multilines
                 if (MMGetGeoFeatureFromVector(phMiraMonLayer, nIElem))
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "\nWrong file format.");
+                    CPLError(CE_Failure, CPLE_AppDefined, "Wrong file format.");
                     delete poGeom;
                     return nullptr;
                 }
@@ -848,7 +846,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     if (MMGetGeoFeatureFromVector(phMiraMonLayer, nIElem))
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                 "\nWrong file format.");
+                                 "Wrong file format.");
                         delete poGeom;
                         return nullptr;
                     }
@@ -858,7 +856,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                           MM_EXTERIOR_ARC_SIDE))
                     {
                         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                                 "\nWrong polygon format.");
+                                 "Wrong polygon format.");
                         delete poGeom;
                         return nullptr;
                     }
@@ -923,7 +921,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                     if (MMGetGeoFeatureFromVector(phMiraMonLayer, nIElem))
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                 "\nWrong file format.");
+                                 "Wrong file format.");
                         delete poGeom;
                         return nullptr;
                     }
@@ -936,7 +934,7 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
                               MM_EXTERIOR_ARC_SIDE))
                         {
                             CPLError(CE_Failure, CPLE_AssertionFailed,
-                                     "\nWrong polygon format.");
+                                     "Wrong polygon format.");
                             delete poGeom;
                             return nullptr;
                         }
@@ -1491,9 +1489,8 @@ OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
 
     if (poGeom == nullptr)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "\nFeatures without geometry not supported by MiraMon writer.");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Features without geometry not supported by MiraMon writer.");
         return LOG_ACTION(OGRERR_FAILURE);
     }
 
@@ -2597,7 +2594,7 @@ OGRErr OGRMiraMonLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
             if (!bApproxOK)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "\nField %s is of an unsupported type: %s.",
+                         "Field %s is of an unsupported type: %s.",
                          poField->GetNameRef(),
                          poField->GetFieldTypeName(poField->GetType()));
                 return OGRERR_FAILURE;
