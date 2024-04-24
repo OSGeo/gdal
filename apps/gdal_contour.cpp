@@ -129,11 +129,7 @@ GDALContourAppOptionsGetParser(GDALContourOptions *psOptions)
             })
         .help(_("Input pixel value to treat as \"nodata\"."));
 
-    argParser->add_argument("-f")
-        .metavar("<format>")
-        .store_into(psOptions->osFormat)
-        .help(_("Select the output format. Normally the format is guessed from "
-                "the file extension."));
+    argParser->add_output_format_argument(psOptions->osFormat);
 
     argParser->add_argument("-dsco")
         .metavar("<NAME>=<VALUE>")
@@ -202,26 +198,6 @@ GDALContourAppOptionsGetParser(GDALContourOptions *psOptions)
     return argParser;
 }
 
-/************************************************************************/
-/*                       GDALContourGetParserUsage                      */
-/************************************************************************/
-
-std::string GDALContourGetParserUsage()
-{
-    try
-    {
-        GDALContourOptions sOptions;
-        auto argParser = GDALContourAppOptionsGetParser(&sOptions);
-        return argParser->usage();
-    }
-    catch (const std::exception &err)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
-                 err.what());
-        return std::string();
-    }
-}
-
 static void CreateElevAttrib(const char *pszElevAttrib, OGRLayerH hLayer)
 {
     OGRFieldDefnH hFld = OGR_Fld_Create(pszElevAttrib, OFTReal);
@@ -261,16 +237,19 @@ MAIN_START(argc, argv)
     /*      Parse arguments.                                                */
     /* -------------------------------------------------------------------- */
 
-    CPLStringList aosArgv;
-
-    for (int i = 1; i < argc; i++)
+    if (argc < 2)
     {
-        aosArgv.AddString(argv[i]);
-    }
-
-    if (aosArgv.size() < 1)
-    {
-        fprintf(stderr, "%s\n", GDALContourGetParserUsage().c_str());
+        try
+        {
+            GDALContourOptions sOptions;
+            auto argParser = GDALContourAppOptionsGetParser(&sOptions);
+            fprintf(stderr, "%s\n", argParser->usage().c_str());
+        }
+        catch (const std::exception &err)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                     err.what());
+        }
         exit(1);
     }
 
