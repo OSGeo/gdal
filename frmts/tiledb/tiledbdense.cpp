@@ -2220,6 +2220,7 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
             {
                 CPLError(eErr, CPLE_AppDefined,
                          "Error copying raster to TileDB.");
+                return nullptr;
             }
         }
         else
@@ -2227,6 +2228,7 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
             CPLError(CE_Failure, CPLE_NotSupported,
                      "TileDB driver does not support "
                      "source dataset with zero bands.");
+            return nullptr;
         }
     }
     else
