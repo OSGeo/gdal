@@ -399,7 +399,7 @@ void GDALArgumentParser::parse_args(const CPLStringList &aosArgs)
                     argument->consume(it, end, "", /* dry_run = */ true);
                 for (; it != next_it; ++it)
                 {
-                    if ((*it)[0] == '-')
+                    if (!Argument::is_positional(*it, m_prefix_chars))
                     {
                         next_it = it;
                         break;
