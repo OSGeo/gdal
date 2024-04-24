@@ -1,0 +1,64 @@
+[VERSIO]
+VersMetaDades=5
+SubVersMetaDades=0
+Vers=4
+SubVers=3
+
+[METADADES]
+language=cat
+MDIdiom=cat
+dateStamp=20230628 16235470+0200
+characterSet=006
+nOrganismes=1
+FileIdentifier=e4365dc3-82f4-4da8-ae1f-3f73922adc27_SimpleArcFileN
+
+[METADADES:ORGANISME_1]
+role=009
+IndividualName=Abel Pau
+PositionName=Tècnic SIG
+OrganisationName=Students and educational institutions
+
+[IDENTIFICATION]
+code=e4365dc3-82f4-4da8-ae1f-3f73922adc27_SimpleArcFileN
+codeSpace=
+DatasetTitle=Simple Arc File [píxels]
+
+[EXTENT]
+toler_env=0
+
+[OVERVIEW]
+CreationDate=20230628 16235469+0200
+
+[TAULA_PRINCIPAL]
+IdGrafic=ID_GRAFIC
+TipusRelacio=RELACIO_1_N_DICC
+
+[TAULA_PRINCIPAL:ID_GRAFIC]
+visible=0
+descriptor=Identificador Gràfic intern
+MostrarUnitats=0
+
+[TAULA_PRINCIPAL:ARCS_A_NOD]
+MostrarUnitats=0
+descriptor=Nombre d'arcs al node
+
+[TAULA_PRINCIPAL:TIPUS_NODE]
+MostrarUnitats=0
+descriptor=Tipus de node
+
+[QUALITY:LINEAGE:PROCESS1]
+nOrganismes=1
+history=C:\MiraMon\MM64.exe
+date=20230628 16235470+0200
+
+[QUALITY:LINEAGE:PROCESS1:ORGANISME_1]
+IndividualName=Abel Pau
+PositionName=Tècnic SIG
+OrganisationName=Students and educational institutions
+
+[QUALITY:LINEAGE]
+processes=1
+
+[GEOMETRIA_I_TOPOLOGIA]
+NomCampArcsANode=ARCS_A_NOD
+NomCampTipusNode=TIPUS_NODE
