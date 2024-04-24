@@ -159,8 +159,8 @@ GDALContourAppOptionsGetParser(GDALContourOptions *psOptions)
 
     group.add_argument("-fl")
         .metavar("<level>")
+        .nargs(argparse::nargs_pattern::at_least_one)
         .scan<'g', double>()
-        .append()
         .action([psOptions](const std::string &s)
                 { psOptions->adfFixedLevels.push_back(CPLAtof(s.c_str())); })
         .help(_("Name one or more \"fixed levels\" to extract."));
@@ -328,7 +328,7 @@ MAIN_START(argc, argv)
     /*      Create the output file.                                         */
     /* -------------------------------------------------------------------- */
     CPLString osFormat;
-    if (!sOptions.osFormat.empty())
+    if (sOptions.osFormat.empty())
     {
         const auto aoDrivers = GetOutputDriversFor(
             sOptions.aosDestFilename.c_str(), GDAL_OF_VECTOR);
@@ -411,12 +411,12 @@ MAIN_START(argc, argv)
         CreateElevAttrib(sOptions.osElevAttrib.c_str(), hLayer);
     }
 
-    if (sOptions.osElevAttribMin.empty())
+    if (!sOptions.osElevAttribMin.empty())
     {
         CreateElevAttrib(sOptions.osElevAttribMin.c_str(), hLayer);
     }
 
-    if (sOptions.osElevAttribMax.empty())
+    if (!sOptions.osElevAttribMax.empty())
     {
         CreateElevAttrib(sOptions.osElevAttribMax.c_str(), hLayer);
     }
