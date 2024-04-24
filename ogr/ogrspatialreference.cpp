@@ -4256,6 +4256,7 @@ OGRErr OGRSpatialReference::importFromURNPart(const char *pszAuthority,
                                               const char *pszURN)
 {
 #if PROJ_AT_LEAST_VERSION(8, 1, 0)
+    (void)this;
     (void)pszAuthority;
     (void)pszCode;
     (void)pszURN;
@@ -8858,7 +8859,7 @@ int OGRSpatialReference::IsDerivedGeographic() const
 /*                      OSRIsDerivedGeographic()                        */
 /************************************************************************/
 /**
- * \brief Check if derived geographic coordinate system.
+ * \brief Check if the CRS is a derived geographic coordinate system.
  * (for example a rotated long/lat grid)
  *
  * This function is the same as OGRSpatialReference::IsDerivedGeographic().
@@ -8869,6 +8870,51 @@ int OSRIsDerivedGeographic(OGRSpatialReferenceH hSRS)
     VALIDATE_POINTER1(hSRS, "OSRIsDerivedGeographic", 0);
 
     return ToPointer(hSRS)->IsDerivedGeographic();
+}
+
+/************************************************************************/
+/*                      IsDerivedProjected()                            */
+/************************************************************************/
+
+/**
+ * \brief Check if the CRS is a derived projected coordinate system.
+ *
+ * This method is the same as the C function OSRIsDerivedGeographic().
+ *
+ * @since GDAL 3.9.0 (and may only return non-zero starting with PROJ 9.2.0)
+ */
+
+int OGRSpatialReference::IsDerivedProjected() const
+
+{
+#if PROJ_AT_LEAST_VERSION(9, 2, 0)
+    d->refreshProjObj();
+    d->demoteFromBoundCRS();
+    const bool isDerivedProjected =
+        d->m_pjType == PJ_TYPE_DERIVED_PROJECTED_CRS;
+    d->undoDemoteFromBoundCRS();
+    return isDerivedProjected ? TRUE : FALSE;
+#else
+    return FALSE;
+#endif
+}
+
+/************************************************************************/
+/*                      OSRIsDerivedProjected()                         */
+/************************************************************************/
+/**
+ * \brief Check if the CRS is a derived projected coordinate system.
+ *
+ * This function is the same as OGRSpatialReference::IsDerivedProjected().
+ *
+ * @since GDAL 3.9.0 (and may only return non-zero starting with PROJ 9.2.0)
+ */
+int OSRIsDerivedProjected(OGRSpatialReferenceH hSRS)
+
+{
+    VALIDATE_POINTER1(hSRS, "OSRIsDerivedProjected", 0);
+
+    return ToPointer(hSRS)->IsDerivedProjected();
 }
 
 /************************************************************************/

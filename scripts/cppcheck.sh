@@ -99,6 +99,9 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DFLT_EVAL_METHOD \
         -DKDU_HAS_ROI_RECT \
         -Dflatbuffers=gdal_flatbuffers \
+        -DPROJ_VERSION_MAJOR=9 \
+        -DPROJ_VERSION_MINOR=4 \
+        -DPROJ_VERSION_PATCH=0 \
         --include="${CPL_CONFIG_H}" \
         --include=port/cpl_port.h \
         -I "${CPL_CONFIG_H_DIR}" \
