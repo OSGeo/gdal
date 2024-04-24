@@ -698,12 +698,13 @@ public:
     return *this;
   }
 
-  auto &store_into(int &var) {
+  template <typename T, typename std::enable_if<std::is_integral<T>::value>::type * = nullptr>
+  auto &store_into(T &var) {
     if (m_default_value.has_value()) {
-      var = std::any_cast<int>(m_default_value);
+      var = std::any_cast<T>(m_default_value);
     }
     action([&var](const auto &s) {
-      var = details::parse_number<int, details::radix_10>()(s);
+      var = details::parse_number<T, details::radix_10>()(s);
     });
     return *this;
   }
@@ -1771,8 +1772,8 @@ public:
   void parse_args(const std::vector<std::string> &arguments) {
     parse_args_internal(arguments);
     // Check if all arguments are parsed
-    for (const auto &iter : m_argument_map) {
-      iter.second->validate();
+    for ([[maybe_unused]] const auto &[unused, argument] : m_argument_map) {
+      argument->validate();
     }
 
     // Check each mutually exclusive group and make sure
