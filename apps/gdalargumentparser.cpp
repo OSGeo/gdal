@@ -107,7 +107,7 @@ void GDALArgumentParser::display_error_and_usage(const std::exception &err)
 /*                         add_quiet_argument()                         */
 /************************************************************************/
 
-Argument &GDALArgumentParser::add_quiet_argument(bool *pVar)
+void GDALArgumentParser::add_quiet_argument(bool *pVar)
 {
     auto &arg =
         this->add_argument("-q", "--quiet")
@@ -117,16 +117,15 @@ Argument &GDALArgumentParser::add_quiet_argument(bool *pVar)
                   "output."));
     if (pVar)
         arg.store_into(*pVar);
-    return arg;
 }
 
 /************************************************************************/
 /*                      add_input_format_argument()                     */
 /************************************************************************/
 
-Argument &GDALArgumentParser::add_input_format_argument(CPLStringList *pvar)
+void GDALArgumentParser::add_input_format_argument(CPLStringList *pvar)
 {
-    return add_argument("-if")
+    add_argument("-if")
         .append()
         .metavar("<format>")
         .action(
@@ -150,23 +149,22 @@ Argument &GDALArgumentParser::add_input_format_argument(CPLStringList *pvar)
 /*                      add_output_format_argument()                    */
 /************************************************************************/
 
-Argument &GDALArgumentParser::add_output_format_argument(std::string &var)
+void GDALArgumentParser::add_output_format_argument(std::string &var)
 {
     auto &arg = add_argument("-of")
                     .metavar("<output_format>")
                     .store_into(var)
                     .help(_("Output format."));
     add_hidden_alias_for(arg, "-f");
-    return arg;
 }
 
 /************************************************************************/
 /*                     add_creation_options_argument()                  */
 /************************************************************************/
 
-Argument &GDALArgumentParser::add_creation_options_argument(CPLStringList &var)
+void GDALArgumentParser::add_creation_options_argument(CPLStringList &var)
 {
-    return add_argument("-co")
+    add_argument("-co")
         .metavar("<NAME>=<VALUE>")
         .append()
         .action([&var](const std::string &s) { var.AddString(s.c_str()); })
@@ -177,10 +175,9 @@ Argument &GDALArgumentParser::add_creation_options_argument(CPLStringList &var)
 /*                   add_metadata_item_options_argument()               */
 /************************************************************************/
 
-Argument &
-GDALArgumentParser::add_metadata_item_options_argument(CPLStringList &var)
+void GDALArgumentParser::add_metadata_item_options_argument(CPLStringList &var)
 {
-    return add_argument("-mo")
+    add_argument("-mo")
         .metavar("<NAME>=<VALUE>")
         .append()
         .action([&var](const std::string &s) { var.AddString(s.c_str()); })
@@ -191,16 +188,16 @@ GDALArgumentParser::add_metadata_item_options_argument(CPLStringList &var)
 /*                       add_open_options_argument()                    */
 /************************************************************************/
 
-Argument &GDALArgumentParser::add_open_options_argument(CPLStringList &var)
+void GDALArgumentParser::add_open_options_argument(CPLStringList &var)
 {
-    return add_open_options_argument(&var);
+    add_open_options_argument(&var);
 }
 
 /************************************************************************/
 /*                       add_open_options_argument()                    */
 /************************************************************************/
 
-Argument &GDALArgumentParser::add_open_options_argument(CPLStringList *pvar)
+void GDALArgumentParser::add_open_options_argument(CPLStringList *pvar)
 {
     auto &arg = add_argument("-oo")
                     .metavar("<NAME>=<VALUE>")
@@ -211,16 +208,15 @@ Argument &GDALArgumentParser::add_open_options_argument(CPLStringList *pvar)
         arg.action([pvar](const std::string &s)
                    { pvar->AddString(s.c_str()); });
     }
-    return arg;
 }
 
 /************************************************************************/
 /*                       add_output_type_argument()                     */
 /************************************************************************/
 
-Argument &GDALArgumentParser::add_output_type_argument(GDALDataType &eDT)
+void GDALArgumentParser::add_output_type_argument(GDALDataType &eDT)
 {
-    return add_argument("-ot")
+    add_argument("-ot")
         .metavar("Byte|Int8|[U]Int{16|32|64}|CInt{16|32}|[C]Float{32|64}")
         .action(
             [&eDT](const std::string &s)
