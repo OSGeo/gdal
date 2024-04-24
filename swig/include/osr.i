@@ -363,6 +363,10 @@ public:
     return OSRIsProjected(self);
   }
 
+  int IsDerivedProjected() {
+    return OSRIsDerivedProjected(self);
+  }
+
   int IsCompound() {
     return OSRIsCompound(self);
   }
