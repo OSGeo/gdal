@@ -33,6 +33,9 @@
 #include "gdal.h"
 #include "commonutils.h"
 #include "ogr_spatialref.h"
+#include "gdalargumentparser.h"
+
+#include <limits>
 #include <vector>
 
 #include <cctype>
@@ -44,49 +47,15 @@
 #endif
 
 /************************************************************************/
-/*                               Usage()                                */
+/*                             GetSRSAsWKT                              */
 /************************************************************************/
 
-static void Usage(bool bIsError)
+static std::string GetSRSAsWKT(const char *pszUserInput)
 
 {
-    fprintf(
-        bIsError ? stderr : stdout,
-        "Usage: gdallocationinfo [--help] [--help-general]\n"
-        "                        [-xml] [-lifonly] [-valonly]\n"
-        "                        [-E] [-field_sep <sep>] "
-        "[-ignore_extra_input]\n"
-        "                        [-b <band>]... [-overview <overview_level>]\n"
-        "                        [-l_srs <srs_def>] [-geoloc] [-wgs84]\n"
-        "                        [-oo <NAME>=<VALUE>]... <srcfile> [<x> <y>]\n"
-        "\n");
-    exit(1);
-}
-
-/************************************************************************/
-/*                             SanitizeSRS                              */
-/************************************************************************/
-
-static char *SanitizeSRS(const char *pszUserInput)
-
-{
-    CPLErrorReset();
-
-    OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
-
-    char *pszResult = nullptr;
-    if (OSRSetFromUserInput(hSRS, pszUserInput) == OGRERR_NONE)
-        OSRExportToWkt(hSRS, &pszResult);
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Translating source or target SRS failed:\n%s", pszUserInput);
-        exit(1);
-    }
-
-    OSRDestroySpatialReference(hSRS);
-
-    return pszResult;
+    OGRSpatialReference oSRS;
+    oSRS.SetFromUserInput(pszUserInput);
+    return oSRS.exportToWkt();
 }
 
 /************************************************************************/
@@ -96,14 +65,15 @@ static char *SanitizeSRS(const char *pszUserInput)
 MAIN_START(argc, argv)
 
 {
-    const char *pszLocX = nullptr, *pszLocY = nullptr;
-    const char *pszSrcFilename = nullptr;
-    char *pszSourceSRS = nullptr;
+    double dfGeoX = std::numeric_limits<double>::quiet_NaN();
+    double dfGeoY = std::numeric_limits<double>::quiet_NaN();
+    std::string osSrcFilename;
+    std::string osSourceSRS;
     std::vector<int> anBandList;
     bool bAsXML = false, bLIFOnly = false;
     bool bQuiet = false, bValOnly = false;
-    int nOverview = -1;
-    char **papszOpenOptions = nullptr;
+    int nOverview = 0;
+    CPLStringList aosOpenOptions;
     std::string osFieldSep;
     bool bIgnoreExtraInput = false;
     bool bEcho = false;
@@ -112,101 +82,146 @@ MAIN_START(argc, argv)
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
     if (argc < 1)
         exit(-argc);
+    CPLStringList aosArgv;
+    aosArgv.Assign(argv, /* bAssign = */ true);
 
-    /* -------------------------------------------------------------------- */
-    /*      Parse arguments.                                                */
-    /* -------------------------------------------------------------------- */
-    for (int i = 1; i < argc; i++)
+    GDALArgumentParser argParser(aosArgv[0], /* bForBinary=*/true);
+
+    argParser.add_description(_("Raster query tool."));
+
+    const char *pszEpilog =
+        _("For more details, consult "
+          "https://gdal.org/programs/gdallocationinfo.html");
+    argParser.add_epilog(pszEpilog);
+
+    argParser.add_argument("-xml").flag().store_into(bAsXML).help(
+        _("Format the output report as XML."));
+
+    argParser.add_argument("-lifonly")
+        .flag()
+        .store_into(bLIFOnly)
+        .help(_("Only outputs filenames from the LocationInfo request against "
+                "the database."));
+
+    argParser.add_argument("-valonly")
+        .flag()
+        .store_into(bValOnly)
+        .help(_("Only outputs pixel values of the selected pixel on each of "
+                "the selected bands."));
+
+    argParser.add_argument("-E").flag().store_into(bEcho).help(
+        _("Enable Echo mode, where input coordinates are prepended to the "
+          "output lines in -valonly mode."));
+
+    argParser.add_argument("-field_sep")
+        .metavar("<sep>")
+        .store_into(osFieldSep)
+        .help(_("Defines the field separator, used in -valonly mode, to "
+                "separate different values."));
+
+    argParser.add_argument("-ignore_extra_input")
+        .flag()
+        .store_into(bIgnoreExtraInput)
+        .help(_("Set this flag to avoid extra non-numeric content at end of "
+                "input lines."));
+
+    argParser.add_argument("-b")
+        .append()
+        .metavar("<band>")
+        .store_into(anBandList)
+        .help(_("Select band(s)."));
+
+    argParser.add_argument("-overview")
+        .metavar("<overview_level>")
+        .store_into(nOverview)
+        .help(_("Query the (overview_level)th overview (overview_level=1 is "
+                "the 1st overview)."));
+
     {
-        if (EQUAL(argv[i], "--utility_version"))
-        {
-            printf("%s was compiled against GDAL %s and is running against "
-                   "GDAL %s\n",
-                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            GDALDestroyDriverManager();
-            CSLDestroy(argv);
-            return 0;
-        }
-        else if (EQUAL(argv[i], "--help"))
-        {
-            Usage(false);
-        }
-        else if (i < argc - 1 && EQUAL(argv[i], "-b"))
-        {
-            anBandList.push_back(atoi(argv[++i]));
-        }
-        else if (i < argc - 1 && EQUAL(argv[i], "-overview"))
-        {
-            nOverview = atoi(argv[++i]) - 1;
-        }
-        else if (i < argc - 1 && EQUAL(argv[i], "-l_srs"))
-        {
-            CPLFree(pszSourceSRS);
-            // coverity[tainted_data]
-            pszSourceSRS = SanitizeSRS(argv[++i]);
-        }
-        else if (EQUAL(argv[i], "-geoloc"))
-        {
-            CPLFree(pszSourceSRS);
-            pszSourceSRS = CPLStrdup("-geoloc");
-        }
-        else if (EQUAL(argv[i], "-wgs84"))
-        {
-            CPLFree(pszSourceSRS);
-            pszSourceSRS = SanitizeSRS("WGS84");
-        }
-        else if (EQUAL(argv[i], "-xml"))
-        {
-            bAsXML = true;
-        }
-        else if (EQUAL(argv[i], "-lifonly"))
-        {
-            bLIFOnly = true;
-            bQuiet = true;
-        }
-        else if (EQUAL(argv[i], "-valonly"))
-        {
-            bValOnly = true;
-            bQuiet = true;
-        }
-        else if (i < argc - 1 && EQUAL(argv[i], "-field_sep"))
-        {
-            osFieldSep = CPLString(argv[++i])
-                             .replaceAll("\\t", '\t')
-                             .replaceAll("\\r", '\r')
-                             .replaceAll("\\n", '\n');
-        }
-        else if (EQUAL(argv[i], "-ignore_extra_input"))
-        {
-            bIgnoreExtraInput = true;
-        }
-        else if (EQUAL(argv[i], "-E"))
-        {
-            bEcho = true;
-        }
-        else if (i < argc - 1 && EQUAL(argv[i], "-oo"))
-        {
-            papszOpenOptions = CSLAddString(papszOpenOptions, argv[++i]);
-        }
-        else if (argv[i][0] == '-' &&
-                 !isdigit(static_cast<unsigned char>(argv[i][1])))
-            Usage(true);
+        auto &group = argParser.add_mutually_exclusive_group();
 
-        else if (pszSrcFilename == nullptr)
-            pszSrcFilename = argv[i];
+        group.add_argument("-l_srs")
+            .metavar("<srs_def>")
+            .store_into(osSourceSRS)
+            .help(_("Coordinate system of the input x, y location."));
 
-        else if (pszLocX == nullptr)
-            pszLocX = argv[i];
+        group.add_argument("-geoloc")
+            .flag()
+            .action([&osSourceSRS](const std::string &)
+                    { osSourceSRS = "-geoloc"; })
+            .help(_("Indicates input x,y points are in the georeferencing "
+                    "system of the image."));
 
-        else if (pszLocY == nullptr)
-            pszLocY = argv[i];
-
-        else
-            Usage(true);
+        group.add_argument("-wgs84")
+            .flag()
+            .action([&osSourceSRS](const std::string &)
+                    { osSourceSRS = GetSRSAsWKT("WGS84"); })
+            .help(_("Indicates input x,y points are WGS84 long, lat."));
     }
 
-    if (pszSrcFilename == nullptr || (pszLocX != nullptr && pszLocY == nullptr))
-        Usage(true);
+    argParser.add_open_options_argument(&aosOpenOptions);
+
+    argParser.add_argument("srcfile")
+        .metavar("<srcfile>")
+        .nargs(1)
+        .store_into(osSrcFilename)
+        .help(_("The source GDAL raster datasource name."));
+
+    argParser.add_argument("x")
+        .metavar("<x>")
+        .nargs(argparse::nargs_pattern::optional)
+        .store_into(dfGeoX)
+        .help(_("X location of target pixel."));
+
+    argParser.add_argument("y")
+        .metavar("<y>")
+        .nargs(argparse::nargs_pattern::optional)
+        .store_into(dfGeoY)
+        .help(_("Y location of target pixel."));
+
+    const auto displayUsage = [&argParser]()
+    {
+        std::stringstream usageStringStream;
+        usageStringStream << argParser.usage();
+        std::cerr << CPLString(usageStringStream.str())
+                         .replaceAll("<x> <y>", "[<x> <y>]")
+                  << std::endl
+                  << std::endl;
+        std::cout << _("Note: ") << "gdallocationinfo"
+                  << _(" --long-usage for full help.") << std::endl;
+    };
+
+    try
+    {
+        argParser.parse_args(aosArgv);
+    }
+    catch (const std::exception &err)
+    {
+        std::cerr << _("Error: ") << err.what() << std::endl;
+        displayUsage();
+        std::exit(1);
+    }
+
+    if (bLIFOnly || bValOnly)
+        bQuiet = true;
+
+    // User specifies with 1-based index, but internally we use 0-based index
+    --nOverview;
+
+    // Deal with special characters
+    osFieldSep = CPLString(osFieldSep)
+                     .replaceAll("\\t", '\t')
+                     .replaceAll("\\r", '\r')
+                     .replaceAll("\\n", '\n');
+
+    if (!std::isnan(dfGeoX) && std::isnan(dfGeoY))
+    {
+        fprintf(stderr, "<y> should be specified when <x> is specified\n\n");
+        displayUsage();
+        exit(1);
+    }
+
+    const bool bIsXYSpecifiedAsArgument = !std::isnan(dfGeoX);
 
     if (bEcho && !bValOnly)
     {
@@ -233,9 +248,9 @@ MAIN_START(argc, argv)
     /* -------------------------------------------------------------------- */
     /*      Open source file.                                               */
     /* -------------------------------------------------------------------- */
-    GDALDatasetH hSrcDS =
-        GDALOpenEx(pszSrcFilename, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
-                   nullptr, papszOpenOptions, nullptr);
+    GDALDatasetH hSrcDS = GDALOpenEx(osSrcFilename.c_str(),
+                                     GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                                     nullptr, aosOpenOptions.List(), nullptr);
     if (hSrcDS == nullptr)
         exit(1);
 
@@ -244,10 +259,10 @@ MAIN_START(argc, argv)
     /* -------------------------------------------------------------------- */
     OGRSpatialReferenceH hSrcSRS = nullptr;
     OGRCoordinateTransformationH hCT = nullptr;
-    if (pszSourceSRS != nullptr && !EQUAL(pszSourceSRS, "-geoloc"))
+    if (!osSourceSRS.empty() && !EQUAL(osSourceSRS.c_str(), "-geoloc"))
     {
 
-        hSrcSRS = OSRNewSpatialReference(pszSourceSRS);
+        hSrcSRS = OSRNewSpatialReference(osSourceSRS.c_str());
         OSRSetAxisMappingStrategy(hSrcSRS, OAMS_TRADITIONAL_GIS_ORDER);
         auto hTrgSRS = GDALGetSpatialRef(hSrcDS);
         if (!hTrgSRS)
@@ -271,19 +286,17 @@ MAIN_START(argc, argv)
     /*      Turn the location into a pixel and line location.               */
     /* -------------------------------------------------------------------- */
     bool inputAvailable = true;
-    double dfGeoX = 0;
-    double dfGeoY = 0;
     CPLString osXML;
     char szLine[1024];
     int nLine = 0;
     std::string osExtraContent;
 
-    if (pszLocX == nullptr && pszLocY == nullptr)
+    if (std::isnan(dfGeoX))
     {
         // Is it an interactive terminal ?
         if (isatty(static_cast<int>(fileno(stdin))))
         {
-            if (pszSourceSRS != nullptr)
+            if (!osSourceSRS.empty())
             {
                 fprintf(
                     stderr,
@@ -332,11 +345,6 @@ MAIN_START(argc, argv)
             inputAvailable = false;
         }
     }
-    else
-    {
-        dfGeoX = CPLAtof(pszLocX);
-        dfGeoY = CPLAtof(pszLocY);
-    }
 
     int nRetCode = 0;
     while (inputAvailable)
@@ -349,7 +357,7 @@ MAIN_START(argc, argv)
                 exit(1);
         }
 
-        if (pszSourceSRS != nullptr)
+        if (!osSourceSRS.empty())
         {
             double adfGeoTransform[6] = {};
             if (GDALGetGeoTransform(hSrcDS, adfGeoTransform) != CE_None)
@@ -628,7 +636,7 @@ MAIN_START(argc, argv)
             printf("\n");
         }
 
-        if (pszLocX != nullptr && pszLocY != nullptr)
+        if (bIsXYSpecifiedAsArgument)
             break;
 
         osExtraContent.clear();
@@ -695,10 +703,6 @@ MAIN_START(argc, argv)
 
     GDALDumpOpenDatasets(stderr);
     GDALDestroyDriverManager();
-    CPLFree(pszSourceSRS);
-    CSLDestroy(papszOpenOptions);
-
-    CSLDestroy(argv);
 
     return nRetCode;
 }
