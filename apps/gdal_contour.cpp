@@ -203,10 +203,10 @@ GDALContourAppOptionsGetParser(GDALContourOptions *psOptions)
 }
 
 /************************************************************************/
-/*                       GDALInfoAppGetParserUsage()                    */
+/*                       GDALContourGetParserUsage                      */
 /************************************************************************/
 
-std::string GDALContourAppGetParserUsage()
+std::string GDALContourGetParserUsage()
 {
     try
     {
@@ -270,7 +270,7 @@ MAIN_START(argc, argv)
 
     if (aosArgv.size() < 1)
     {
-        fprintf(stderr, "%s\n", GDALContourAppGetParserUsage().c_str());
+        fprintf(stderr, "%s\n", GDALContourGetParserUsage().c_str());
         exit(1);
     }
 
