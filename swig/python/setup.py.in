@@ -73,6 +73,7 @@ def get_numpy_include():
     _set_builtin("__NUMPY_SETUP__", False)
 
     import numpy
+    print('Using numpy ' + numpy.__version__)
     return numpy.get_include()
 
 
