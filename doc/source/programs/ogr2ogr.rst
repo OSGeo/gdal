@@ -511,8 +511,13 @@ output coordinate system or even reprojecting the features during translation.
 
 .. option:: -gcp <ungeoref_x> <ungeoref_y> <georef_x> <georef_y> [<elevation>]
 
-    Add the indicated ground control point. This option may be provided
-    multiple times to provide a set of GCPs.
+    Use the indicated ground control point to compute a coordinate transformation.
+    The transformation method can be selected by specifying the :option:`-order`
+    or :option:`-tps` options.
+    Note that unlike raster tools such as gdal_edit or gdal_translate, GCPs
+    are not added to the output dataset.
+    This option may be provided multiple times to provide a set of GCPs (at
+    least 2 GCPs are needed).
 
 .. option:: -order <n>
 
