@@ -46,6 +46,7 @@ See [alpine-normal/Dockerfile](alpine-normal/Dockerfile)
 # Ubuntu based
 
 Ubuntu version:
+* 24.04 for GDAL 3.9
 * 22.04 for GDAL 3.6, 3.7 and 3.8
 * 20.04 for GDAL 3.4 and 3.5
 
