@@ -2133,21 +2133,6 @@ size_t MM_DefineFirstPointFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp)
     return i_camp;
 }
 
-static MM_BOOLEAN MM_EmptyString_function(const char *cadena)
-{
-    const char *ptr = cadena;
-
-    for (; *ptr; ptr++)
-    {
-        if (*ptr != ' ' && *ptr != '\t')
-        {
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
 int MM_SecureCopyStringFieldValue(char **pszStringDst, const char *pszStringSrc,
                                   MM_EXT_DBF_N_FIELDS *nStringCurrentLength)
 {
