@@ -201,7 +201,6 @@ const char *MMLog(const char *pszMsg, int nLineNumber)
 
 static const char MM_EmptyString[] = {""};
 #define MM_SetEndOfString (*MM_EmptyString)
-static const char MM_BlankString[] = {" "};
 
 void fclose_and_nullify(FILE_TYPE **pFunc)
 {
