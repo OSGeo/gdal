@@ -362,7 +362,7 @@ In all the above tiling schemes, consecutive zoom levels defer by a
 resolution of a factor of two.
 
 Starting with GDAL 3.2, it is also possible to use a Tile Matrix Set definition,
-encoded as a JSon file, according to the `OGC Two Dimensional Tile Matrix Set standard`_
+encoded as a JSON file, according to the `OGC Two Dimensional Tile Matrix Set standard`_
 Examples of such files can be found at http://schemas.opengis.net/tms/1.0/json/examples/
 The GDAL data directory also contains files prefixed with ``tms_`` and with a ``.json``
 extension. If there is a ``tms_FOO.json`` file, then ``FOO`` can be used as the

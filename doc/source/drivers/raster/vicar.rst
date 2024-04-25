@@ -30,7 +30,7 @@ Metadata
 --------
 
 Starting with GDAL 3.1, the VICAR label can be retrieved as
-JSon-serialized content in the json:VICAR metadata domain.
+JSON-serialized content in the json:VICAR metadata domain.
 
 For example:
 

@@ -355,7 +355,7 @@ The following creation options are available:
 
    -  .. co:: CONF
 
-         Layer configuration as a JSon serialized string.
+         Layer configuration as a JSON serialized string.
 
    -  .. co:: SIMPLIFICATION
          :choices: <float>
@@ -439,7 +439,7 @@ Layer configuration (vector)
 ----------------------------
 
 The above mentioned CONF dataset creation option can be set to a string
-whose value is a JSon serialized document such as the below one:
+whose value is a JSON serialized document such as the below one:
 
 ::
 
