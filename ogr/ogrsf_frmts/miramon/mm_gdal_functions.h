@@ -109,7 +109,6 @@ MM_FIRST_RECORD_OFFSET_TYPE
 MM_GiveOffsetExtendedFieldName(const struct MM_FIELD *camp);
 struct MM_DATA_BASE_XP *MM_CreateDBFHeader(MM_EXT_DBF_N_FIELDS n_camps,
                                            MM_BYTE nCharSet);
-MM_BYTE MM_DBFFieldTypeToVariableProcessing(MM_BYTE tipus_camp_DBF);
 void MM_ReleaseMainFields(struct MM_DATA_BASE_XP *data_base_XP);
 void MM_ReleaseDBFHeader(struct MM_DATA_BASE_XP *data_base_XP);
 MM_BOOLEAN MM_CreateDBFFile(struct MM_DATA_BASE_XP *bd_xp,
@@ -134,8 +133,7 @@ int MM_SecureCopyStringFieldValue(char **pszStringDst, const char *pszStringSrc,
 int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
                            MM_EXT_DBF_N_FIELDS quincamp,
                            MM_BYTES_PER_FIELD_TYPE_DBF novaamplada,
-                           MM_BYTE nou_decimals,
-                           MM_BYTE que_fer_amb_reformatat_decimals);
+                           MM_BYTE nou_decimals);
 
 int MM_GetArcHeights(double *coord_z, FILE_TYPE *pF, MM_N_VERTICES_TYPE n_vrt,
                      struct MM_ZD *pZDescription, uint32_t flag);

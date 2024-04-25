@@ -369,73 +369,6 @@ static int MMWriteHeader(FILE_TYPE *pF, struct MM_TH *pMMHeader)
     return 0;
 }
 
-int MMWriteEmptyHeader(FILE_TYPE *pF, int layerType, int nVersion)
-{
-    struct MM_TH pMMHeader;
-
-    memset(&pMMHeader, 0, sizeof(pMMHeader));
-    switch (nVersion)
-    {
-        case MM_32BITS_VERSION:
-            pMMHeader.aLayerVersion[0] = '0';
-            pMMHeader.aLayerVersion[1] = '1';
-            pMMHeader.aLayerSubVersion = '1';
-            break;
-        case MM_64BITS_VERSION:
-        case MM_LAST_VERSION:
-        default:
-            pMMHeader.aLayerVersion[0] = '0';
-            pMMHeader.aLayerVersion[1] = '2';
-            pMMHeader.aLayerSubVersion = '0';
-            break;
-    }
-    switch (layerType)
-    {
-        case MM_LayerType_Point:
-            pMMHeader.aFileType[0] = 'P';
-            pMMHeader.aFileType[1] = 'N';
-            pMMHeader.aFileType[2] = 'T';
-            break;
-        case MM_LayerType_Point3d:
-            pMMHeader.aFileType[0] = 'P';
-            pMMHeader.aFileType[1] = 'N';
-            pMMHeader.aFileType[2] = 'T';
-            pMMHeader.bIs3d = 1;
-            break;
-        case MM_LayerType_Arc:
-            pMMHeader.aFileType[0] = 'A';
-            pMMHeader.aFileType[1] = 'R';
-            pMMHeader.aFileType[2] = 'C';
-            break;
-        case MM_LayerType_Arc3d:
-            pMMHeader.aFileType[0] = 'A';
-            pMMHeader.aFileType[1] = 'R';
-            pMMHeader.aFileType[2] = 'C';
-            pMMHeader.bIs3d = 1;
-            break;
-        case MM_LayerType_Pol:
-            pMMHeader.aFileType[0] = 'P';
-            pMMHeader.aFileType[1] = 'O';
-            pMMHeader.aFileType[2] = 'L';
-            break;
-        case MM_LayerType_Pol3d:
-            pMMHeader.aFileType[0] = 'P';
-            pMMHeader.aFileType[1] = 'O';
-            pMMHeader.aFileType[2] = 'L';
-            pMMHeader.bIs3d = 1;
-            break;
-        default:
-            break;
-    }
-    pMMHeader.nElemCount = 0;
-    pMMHeader.hBB.dfMinX = MM_UNDEFINED_STATISTICAL_VALUE;
-    pMMHeader.hBB.dfMaxX = -MM_UNDEFINED_STATISTICAL_VALUE;
-    pMMHeader.hBB.dfMinY = MM_UNDEFINED_STATISTICAL_VALUE;
-    pMMHeader.hBB.dfMaxY = -MM_UNDEFINED_STATISTICAL_VALUE;
-
-    return MMWriteHeader(pF, &pMMHeader);
-}
-
 /* -------------------------------------------------------------------- */
 /*      Layer Functions: Z section                                      */
 /* -------------------------------------------------------------------- */
@@ -6459,8 +6392,7 @@ MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
         if (MM_ChangeDBFWidthField(
                 pMMAdmDB->pMMBDXP, nIField, nNewWidth,
-                pMMAdmDB->pMMBDXP->pField[nIField].DecimalsIfFloat,
-                (MM_BYTE)MM_NOU_N_DECIMALS_NO_APLICA))
+                pMMAdmDB->pMMBDXP->pField[nIField].DecimalsIfFloat))
             return 1;
 
         // The record on course also has to change its size.
