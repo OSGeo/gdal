@@ -71,8 +71,6 @@ ln -s "libinternalproj.so.${PROJ_SO}" "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libi
 ln -s "libinternalproj.so.${PROJ_SO}" "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so"
 
 rm "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib"/libproj.*
-ln -s "libinternalproj.so.${PROJ_SO}" "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO}"
-ln -s "libinternalproj.so.${PROJ_SO}" "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO_FIRST}"
 
 if [ "${WITH_DEBUG_SYMBOLS}" = "yes" ]; then
     # separate debug symbols
@@ -98,3 +96,10 @@ else
         ${GCC_ARCH}-linux-gnu-strip -s "$P" 2>/dev/null || /bin/true;
     done;
 fi
+
+apt-get update -y
+DEBIAN_FRONTEND=noninteractive apt-get install -y patchelf
+patchelf --set-soname libinternalproj.so.${PROJ_SO_FIRST} ${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO}
+for i in ${DESTDIR}${PROJ_INSTALL_PREFIX}/bin/*; do
+  patchelf --replace-needed libproj.so.${PROJ_SO_FIRST} libinternalproj.so.${PROJ_SO_FIRST} $i;
+done
