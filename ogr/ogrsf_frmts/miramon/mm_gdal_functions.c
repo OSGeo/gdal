@@ -313,20 +313,6 @@ struct MM_DATA_BASE_XP *MM_CreateDBFHeader(MM_EXT_DBF_N_FIELDS n_camps,
     return bd_xp;
 }
 
-MM_BYTE MM_DBFFieldTypeToVariableProcessing(MM_BYTE tipus_camp_DBF)
-{
-    switch (tipus_camp_DBF)
-    {
-        case 'N':
-            return MM_QUANTITATIVE_CONTINUOUS_FIELD;
-        case 'D':
-        case 'C':
-        case 'L':
-            return MM_CATEGORICAL_FIELD;
-    }
-    return MM_CATEGORICAL_FIELD;
-}
-
 static MM_BYTE MM_GetDefaultDesiredDBFFieldWidth(const struct MM_FIELD *camp)
 {
     size_t a, b, c, d, e;
