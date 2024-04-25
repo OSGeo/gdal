@@ -140,61 +140,23 @@ CPLString OGRPGDataSource::GetCurrentSchema()
 void OGRPGDataSource::OGRPGDecodeVersionString(PGver *psVersion,
                                                const char *pszVer)
 {
+    // Skip leading spaces
     while (*pszVer == ' ')
         pszVer++;
+    std::string osVer(pszVer);
+    // And truncate at the first space
+    const auto nPosSpace = osVer.find(' ');
+    if (nPosSpace != std::string::npos)
+        osVer.resize(nPosSpace);
 
-    const char *ptr = pszVer;
-    // get Version string
-    while (*ptr && *ptr != ' ')
-        ptr++;
-    GUInt32 iLen = static_cast<int>(ptr - pszVer);
-    char szVer[10] = {};
-    if (iLen > sizeof(szVer) - 1)
-        iLen = sizeof(szVer) - 1;
-    strncpy(szVer, pszVer, iLen);
-    szVer[iLen] = '\0';
-
-    ptr = pszVer = szVer;
-
-    // get Major number
-    while (*ptr && *ptr != '.')
-        ptr++;
-    iLen = static_cast<int>(ptr - pszVer);
-    char szNum[25] = {};
-    if (iLen > sizeof(szNum) - 1)
-        iLen = sizeof(szNum) - 1;
-    strncpy(szNum, pszVer, iLen);
-    szNum[iLen] = '\0';
-    psVersion->nMajor = atoi(szNum);
-
-    if (*ptr == 0)
-        return;
-    pszVer = ++ptr;
-
-    // get Minor number
-    while (*ptr && *ptr != '.')
-        ptr++;
-    iLen = static_cast<int>(ptr - pszVer);
-    if (iLen > sizeof(szNum) - 1)
-        iLen = sizeof(szNum) - 1;
-    strncpy(szNum, pszVer, iLen);
-    szNum[iLen] = '\0';
-    psVersion->nMinor = atoi(szNum);
-
-    if (*ptr)
-    {
-        pszVer = ++ptr;
-
-        // get Release number
-        while (*ptr && *ptr != '.')
-            ptr++;
-        iLen = static_cast<int>(ptr - pszVer);
-        if (iLen > sizeof(szNum) - 1)
-            iLen = sizeof(szNum) - 1;
-        strncpy(szNum, pszVer, iLen);
-        szNum[iLen] = '\0';
-        psVersion->nRelease = atoi(szNum);
-    }
+    memset(psVersion, 0, sizeof(*psVersion));
+    const CPLStringList aosTokens(CSLTokenizeString2(osVer.c_str(), ".", 0));
+    if (aosTokens.size() >= 1)
+        psVersion->nMajor = atoi(aosTokens[0]);
+    if (aosTokens.size() >= 2)
+        psVersion->nMinor = atoi(aosTokens[1]);
+    if (aosTokens.size() >= 3)
+        psVersion->nRelease = atoi(aosTokens[2]);
 }
 
 /************************************************************************/
