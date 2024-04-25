@@ -3434,7 +3434,9 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             if (nOptions == 0)
                 nOptions = GDAL_OF_RASTER;
 
-            printf("Supported Formats:\n"); /*ok*/
+            printf(/*ok*/
+                   "Supported Formats: (ro:read-only, rw:read-write, +:update, "
+                   "v:virtual-I/O s:subdatasets)\n");
             for (int iDr = 0; iDr < GDALGetDriverCount(); iDr++)
             {
                 GDALDriverH hDriver = GDALGetDriver(iDr);
