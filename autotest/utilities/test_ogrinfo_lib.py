@@ -609,3 +609,31 @@ def test_ogrinfo_lib_json_features_resolution():
 
     s = gdal.VectorInfo(content, dumpFeatures=True)
     assert "POINT Z (1.2 1.2 1.23)" in s
+
+
+###############################################################################
+# Test layers option
+
+
+def test_ogrinfo_lib_layers():
+
+    ds = gdal.GetDriverByName("Memory").Create("dummy", 0, 0, 0, gdal.GDT_Unknown)
+    ds.CreateLayer("foo")
+    ds.CreateLayer("bar")
+
+    j = gdal.VectorInfo(ds, format="json", layers=[])
+    assert len(j["layers"]) == 2
+    assert j["layers"][0]["name"] == "foo"
+    assert j["layers"][1]["name"] == "bar"
+
+    j = gdal.VectorInfo(ds, format="json", layers=["foo"])
+    assert len(j["layers"]) == 1
+    assert j["layers"][0]["name"] == "foo"
+
+    j = gdal.VectorInfo(ds, format="json", layers=["foo", "bar"])
+    assert len(j["layers"]) == 2
+    assert j["layers"][0]["name"] == "foo"
+    assert j["layers"][1]["name"] == "bar"
+
+    with pytest.raises(Exception, match="Couldn't fetch requested layer"):
+        gdal.VectorInfo(ds, format="json", layers=["invalid"])
