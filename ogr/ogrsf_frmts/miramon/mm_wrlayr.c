@@ -6392,8 +6392,7 @@ MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
         if (MM_ChangeDBFWidthField(
                 pMMAdmDB->pMMBDXP, nIField, nNewWidth,
-                pMMAdmDB->pMMBDXP->pField[nIField].DecimalsIfFloat,
-                (MM_BYTE)MM_NOU_N_DECIMALS_NO_APLICA))
+                pMMAdmDB->pMMBDXP->pField[nIField].DecimalsIfFloat))
             return 1;
 
         // The record on course also has to change its size.
