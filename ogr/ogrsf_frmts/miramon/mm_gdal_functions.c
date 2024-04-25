@@ -201,7 +201,6 @@ const char *MMLog(const char *pszMsg, int nLineNumber)
 
 static const char MM_EmptyString[] = {""};
 #define MM_SetEndOfString (*MM_EmptyString)
-static const char MM_BlankString[] = {" "};
 
 void fclose_and_nullify(FILE_TYPE **pFunc)
 {
@@ -311,20 +310,6 @@ struct MM_DATA_BASE_XP *MM_CreateDBFHeader(MM_EXT_DBF_N_FIELDS n_camps,
         camp->BytesPerField = 50;
     }
     return bd_xp;
-}
-
-MM_BYTE MM_DBFFieldTypeToVariableProcessing(MM_BYTE tipus_camp_DBF)
-{
-    switch (tipus_camp_DBF)
-    {
-        case 'N':
-            return MM_QUANTITATIVE_CONTINUOUS_FIELD;
-        case 'D':
-        case 'C':
-        case 'L':
-            return MM_CATEGORICAL_FIELD;
-    }
-    return MM_CATEGORICAL_FIELD;
 }
 
 static MM_BYTE MM_GetDefaultDesiredDBFFieldWidth(const struct MM_FIELD *camp)
@@ -2148,142 +2133,6 @@ size_t MM_DefineFirstPointFieldsDB_XP(struct MM_DATA_BASE_XP *bd_xp)
     return i_camp;
 }
 
-static int MM_SprintfDoubleWidth(char *cadena, size_t cadena_size, int amplada,
-                                 int n_decimals, double valor_double,
-                                 MM_BOOLEAN *Error_sprintf_n_decimals)
-{
-#define VALOR_LIMIT_IMPRIMIR_EN_FORMAT_E 1E+17
-#define VALOR_MASSA_PETIT_PER_IMPRIMIR_f 1E-17
-    char cadena_treball[MM_CHARACTERS_DOUBLE + 1];
-    int retorn_printf;
-
-    if (MM_IsNANDouble(valor_double))
-    {
-        if (amplada < 3)
-        {
-            *cadena = *MM_EmptyString;
-            return EOF;
-        }
-        return snprintf(cadena, cadena_size, "NAN");
-    }
-    if (MM_IsDoubleInfinite(valor_double))
-    {
-        if (amplada < 3)
-        {
-            *cadena = *MM_EmptyString;
-            return EOF;
-        }
-        return snprintf(cadena, cadena_size, "INF");
-    }
-
-    *Error_sprintf_n_decimals = FALSE;
-    if (valor_double == 0)
-    {
-        retorn_printf = snprintf(cadena_treball, sizeof(cadena_treball),
-                                 "%*.*f", amplada, n_decimals, valor_double);
-        if (retorn_printf >= (int)sizeof(cadena_treball))
-        {
-            *cadena = *MM_EmptyString;
-            return retorn_printf;
-        }
-
-        if (retorn_printf > amplada)
-        {
-            int escurcament = retorn_printf - amplada;
-            if (escurcament > n_decimals)
-            {
-                *cadena = *MM_EmptyString;
-                return EOF;
-            }
-            *Error_sprintf_n_decimals = TRUE;
-            n_decimals = n_decimals - escurcament;
-            retorn_printf = snprintf(cadena, cadena_size, "%*.*f", amplada,
-                                     n_decimals, valor_double);
-        }
-        else
-            CPLStrlcpy(cadena, cadena_treball, cadena_size);
-
-        return retorn_printf;
-    }
-
-    if (valor_double > VALOR_LIMIT_IMPRIMIR_EN_FORMAT_E ||
-        valor_double < -VALOR_LIMIT_IMPRIMIR_EN_FORMAT_E ||
-        (valor_double < VALOR_MASSA_PETIT_PER_IMPRIMIR_f &&
-         valor_double > -VALOR_MASSA_PETIT_PER_IMPRIMIR_f))
-    {
-        retorn_printf = snprintf(cadena_treball, sizeof(cadena_treball),
-                                 "%*.*E", amplada, n_decimals, valor_double);
-
-        if (retorn_printf >= (int)sizeof(cadena_treball))
-        {
-            *cadena = *MM_EmptyString;
-            return retorn_printf;
-        }
-        if (retorn_printf > amplada)
-        {
-            int escurcament = retorn_printf - amplada;
-            if (escurcament > n_decimals)
-            {
-                *cadena = *MM_EmptyString;
-                return EOF;
-            }
-            *Error_sprintf_n_decimals = TRUE;
-            n_decimals = n_decimals - escurcament;
-            retorn_printf = snprintf(cadena, cadena_size, "%*.*E", amplada,
-                                     n_decimals, valor_double);
-        }
-        else
-            CPLStrlcpy(cadena, cadena_treball, cadena_size);
-
-        return retorn_printf;
-    }
-
-    retorn_printf = snprintf(cadena_treball, sizeof(cadena_treball), "%*.*f",
-                             amplada, n_decimals, valor_double);
-
-    if (retorn_printf >= (int)sizeof(cadena_treball))
-    {
-        *cadena = *MM_EmptyString;
-        return retorn_printf;
-    }
-
-    if (retorn_printf > amplada)
-    {
-        int escurcament = retorn_printf - amplada;
-        if (escurcament > n_decimals)
-        {
-            *cadena = *MM_EmptyString;
-            return EOF;
-        }
-        *Error_sprintf_n_decimals = TRUE;
-        n_decimals = n_decimals - escurcament;
-        retorn_printf = snprintf(cadena, cadena_size, "%*.*f", amplada,
-                                 n_decimals, valor_double);
-    }
-    else
-        CPLStrlcpy(cadena, cadena_treball, cadena_size);
-
-    return retorn_printf;
-
-#undef VALOR_LIMIT_IMPRIMIR_EN_FORMAT_E
-#undef VALOR_MASSA_PETIT_PER_IMPRIMIR_f
-}  // End of MM_SprintfDoubleWidth()
-
-static MM_BOOLEAN MM_EmptyString_function(const char *cadena)
-{
-    const char *ptr = cadena;
-
-    for (; *ptr; ptr++)
-    {
-        if (*ptr != ' ' && *ptr != '\t')
-        {
-            return FALSE;
-        }
-    }
-
-    return TRUE;
-}
-
 int MM_SecureCopyStringFieldValue(char **pszStringDst, const char *pszStringSrc,
                                   MM_EXT_DBF_N_FIELDS *nStringCurrentLength)
 {
@@ -2319,8 +2168,7 @@ int MM_SecureCopyStringFieldValue(char **pszStringDst, const char *pszStringSrc,
 int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
                            MM_EXT_DBF_N_FIELDS nIField,
                            MM_BYTES_PER_FIELD_TYPE_DBF nNewWidth,
-                           MM_BYTE nNewPrecision,
-                           MM_BYTE que_fer_amb_reformatat_decimals)
+                           MM_BYTE nNewPrecision)
 {
     char *record, *whites = nullptr;
     MM_BYTES_PER_FIELD_TYPE_DBF l_glop1, l_glop2, i_glop2;
@@ -2330,8 +2178,6 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
     MM_EXT_DBF_N_FIELDS i_camp;
     size_t retorn_fwrite;
     int retorn_TruncaFitxer;
-
-    MM_BOOLEAN error_sprintf_n_decimals = FALSE;
 
     canvi_amplada = nNewWidth - data_base_XP->pField[nIField].BytesPerField;
 
@@ -2421,136 +2267,55 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
                     }
                     break;
                 case 'N':
-                    if (nNewPrecision ==
-                            data_base_XP->pField[nIField].DecimalsIfFloat ||
-                        que_fer_amb_reformatat_decimals ==
-                            MM_NOU_N_DECIMALS_NO_APLICA)
-                        que_fer_amb_reformatat_decimals =
-                            MM_NOMES_DOCUMENTAR_NOU_N_DECIMALS;
-                    else if (que_fer_amb_reformatat_decimals ==
-                             MM_PREGUNTA_SI_APLICAR_NOU_N_DECIM)
-                        que_fer_amb_reformatat_decimals =
-                            MM_NOMES_DOCUMENTAR_NOU_N_DECIMALS;
 
-                    if (que_fer_amb_reformatat_decimals ==
-                        MM_NOMES_DOCUMENTAR_NOU_N_DECIMALS)
+                    if (canvi_amplada >= 0)
                     {
-                        if (canvi_amplada >= 0)
-                        {
-                            if (1 !=
-                                    fwrite_function(whites, canvi_amplada, 1,
-                                                    data_base_XP->pfDataBase) ||
-                                1 != fwrite_function(
-                                         record + l_glop1,
-                                         data_base_XP->pField[nIField]
-                                             .BytesPerField,
-                                         1, data_base_XP->pfDataBase))
-                            {
-                                free_function(whites);
-                                free_function(record);
-                                return 1;
-                            }
-                        }
-                        else if (canvi_amplada < 0)
-                        {
-                            j = (GInt32)(l_glop1 +
-                                         (data_base_XP->pField[nIField]
-                                              .BytesPerField -
-                                          1));
-                            while (TRUE)
-                            {
-                                j--;
-
-                                if (j < (GInt32)l_glop1 || record[j] == ' ')
-                                {
-                                    j++;
-                                    break;
-                                }
-                            }
-
-                            if ((data_base_XP->pField[nIField].BytesPerField +
-                                 l_glop1 - j) < nNewWidth)
-                                j -= (GInt32)(nNewWidth -
-                                              (data_base_XP->pField[nIField]
-                                                   .BytesPerField +
-                                               l_glop1 - j));
-
-                            retorn_fwrite =
-                                fwrite_function(record + j, nNewWidth, 1,
-                                                data_base_XP->pfDataBase);
-                            if (1 != retorn_fwrite)
-                            {
-                                free_function(whites);
-                                free_function(record);
-                                return 1;
-                            }
-                        }
-                    }
-                    else  // MM_APLICAR_NOU_N_DECIMALS
-                    {
-                        double valor;
-                        char *sz_valor;
-                        size_t sz_valor_size =
-                            max_function(
-                                nNewWidth,
-                                data_base_XP->pField[nIField].BytesPerField) +
-                            1;
-
-                        if ((sz_valor = calloc_function(sz_valor_size)) ==
-                            nullptr)  // Sumo 1 per poder posar-hi el \0
+                        if (1 != fwrite_function(whites, canvi_amplada, 1,
+                                                 data_base_XP->pfDataBase) ||
+                            1 !=
+                                fwrite_function(
+                                    record + l_glop1,
+                                    data_base_XP->pField[nIField].BytesPerField,
+                                    1, data_base_XP->pfDataBase))
                         {
                             free_function(whites);
                             free_function(record);
                             return 1;
                         }
-                        memcpy(sz_valor, record + l_glop1,
-                               data_base_XP->pField[nIField].BytesPerField);
-                        sz_valor[data_base_XP->pField[nIField].BytesPerField] =
-                            0;
-
-                        if (!MM_EmptyString_function(sz_valor))
-                        {
-                            if (sscanf(sz_valor, "%lf", &valor) != 1)
-                                memset(
-                                    sz_valor, *MM_BlankString,
-                                    max_function(nNewWidth,
-                                                 data_base_XP->pField[nIField]
-                                                     .BytesPerField));
-                            else
-                            {
-                                MM_SprintfDoubleWidth(
-                                    sz_valor, sz_valor_size, nNewWidth,
-                                    nNewPrecision, valor,
-                                    &error_sprintf_n_decimals);
-                            }
-
-                            retorn_fwrite =
-                                fwrite_function(sz_valor, nNewWidth, 1,
-                                                data_base_XP->pfDataBase);
-                            if (1 != retorn_fwrite)
-                            {
-                                free_function(whites);
-                                free_function(record);
-                                free_function(sz_valor);
-                                return 1;
-                            }
-                        }
-                        else
-                        {
-                            memset(sz_valor, *MM_BlankString, nNewWidth);
-                            retorn_fwrite =
-                                fwrite_function(sz_valor, nNewWidth, 1,
-                                                data_base_XP->pfDataBase);
-                            if (1 != retorn_fwrite)
-                            {
-                                free_function(whites);
-                                free_function(record);
-                                free_function(sz_valor);
-                                return 1;
-                            }
-                        }
-                        free_function(sz_valor);
                     }
+                    else if (canvi_amplada < 0)
+                    {
+                        j = (GInt32)(l_glop1 + (data_base_XP->pField[nIField]
+                                                    .BytesPerField -
+                                                1));
+                        while (TRUE)
+                        {
+                            j--;
+
+                            if (j < (GInt32)l_glop1 || record[j] == ' ')
+                            {
+                                j++;
+                                break;
+                            }
+                        }
+
+                        if ((data_base_XP->pField[nIField].BytesPerField +
+                             l_glop1 - j) < nNewWidth)
+                            j -= (GInt32)(nNewWidth -
+                                          (data_base_XP->pField[nIField]
+                                               .BytesPerField +
+                                           l_glop1 - j));
+
+                        retorn_fwrite = fwrite_function(
+                            record + j, nNewWidth, 1, data_base_XP->pfDataBase);
+                        if (1 != retorn_fwrite)
+                        {
+                            free_function(whites);
+                            free_function(record);
+                            return 1;
+                        }
+                    }
+
                     break;
                 default:
                     free_function(whites);
@@ -2605,8 +2370,6 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
             data_base_XP->pField[i_camp].AccumulatedBytes += canvi_amplada;
     }
     data_base_XP->pField[nIField].DecimalsIfFloat = nNewPrecision;
-
-    //DonaData(&(data_base_XP->day), &(data_base_XP->month), &(data_base_XP->year));
 
     if ((MM_UpdateEntireHeader(data_base_XP)) == FALSE)
         return 1;
