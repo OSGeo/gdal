@@ -83,6 +83,21 @@ Verify that the necessary dependencies have been installed and then run the foll
     pip install --no-cache --force-reinstall gdal[numpy]=="$(gdal-config --version).*"
 
 
+Potential issues with GDAL >= 3.9, Python >= 3.9 and NumPy 2.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The pyproject.toml file of GDAL 3.9 requires numpy >= 2.0.0rc1 (for Python >= 3.9)
+at build time to be able to build bindings that are compatible of both NumPy 1
+and NumPy 2.
+If for some reason the numpy >= 2.0.0rc1 build dependency can not be installed,
+it is possible to manually install the build requirements, and invoke ``pip install``
+with the ``--no-build-isolation`` flag.
+
+::
+
+    pip install numpy==<required_version> wheel setuptools>=67
+    pip install gdal[numpy]=="$(gdal-config --version).*" --no-build-isolation
+
 
 Building as part of the GDAL library source tree
 ------------------------------------------------
