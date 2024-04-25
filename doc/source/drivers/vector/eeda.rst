@@ -141,7 +141,7 @@ The following attributes will always be present:
     +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
     | band_crs            | String    | CRS as EPSG:XXXX or WKT (only set if equal among all bands)  | No                            |
     +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
-    | other_properties    | String    | Serialized JSon dictionary with key/value pairs where key is | No                            |
+    | other_properties    | String    | Serialized JSON dictionary with key/value pairs where key is | No                            |
     |                     |           | not a standalone field                                       |                               |
     +---------------------+-----------+--------------------------------------------------------------+-------------------------------+
 

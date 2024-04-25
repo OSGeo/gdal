@@ -96,12 +96,12 @@ Creation Options
       the `OGC GML in JPEG2000, version
       2.0.1 <http://docs.opengeospatial.org/is/08-085r5/08-085r5.html>`__
       specification should be included in the file. *filename* must point
-      to a file with a JSon content that defines how the GMLJP2 v2 box
+      to a file with a JSON content that defines how the GMLJP2 v2 box
       should be built. See :ref:`GMLJP2v2 definition file
       section <gmjp2v2def>` in documentation of
-      the JP2OpenJPEG driver for the syntax of the JSon configuration file.
+      the JP2OpenJPEG driver for the syntax of the JSON configuration file.
       It is also possible to
-      directly pass the JSon content inlined as a string. If filename is
+      directly pass the JSON content inlined as a string. If filename is
       just set to YES, a minimal instance will be built.
 
 -  .. co:: GeoJP2

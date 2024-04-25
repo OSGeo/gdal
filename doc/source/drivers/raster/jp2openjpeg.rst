@@ -144,9 +144,9 @@ Creation Options
       a GML box conforming to the `OGC GML in JPEG2000, version
       2.0.1 <http://docs.opengeospatial.org/is/08-085r5/08-085r5.html>`__
       specification should be included in the file. *filename* must point
-      to a file with a JSon content that defines how the GMLJP2 v2 box
-      should be built. See below section for the syntax of the JSon
-      configuration file. It is also possible to directly pass the JSon
+      to a file with a JSON content that defines how the GMLJP2 v2 box
+      should be built. See below section for the syntax of the JSON 
+      configuration file. It is also possible to directly pass the JSON 
       content inlined as a string. If filename is just set to YES, a
       minimal instance will be built. Note: GDAL 2.0 and 2.1 use the older
       `OGC GML in JPEG2000, version

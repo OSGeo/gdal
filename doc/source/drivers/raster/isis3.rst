@@ -46,7 +46,7 @@ Metadata
 --------
 
 Starting with GDAL 2.2, the ISIS3 label can be retrieved as
-JSon-serialized content in the json:ISIS3 metadata domain.
+JSON-serialized content in the json:ISIS3 metadata domain.
 
 For example:
 
@@ -317,7 +317,7 @@ Python :
    from osgeo import gdal
 
    src_ds = gdal.Open('in.lbl')
-   # Load source label as JSon
+   # Load source label as JSON 
    label = json.loads( src_ds.GetMetadata_List('json:ISIS3')[0] )
    # Update parameter
    label["IsisCube"]["Mapping"]["TargetName"] = "Moon"

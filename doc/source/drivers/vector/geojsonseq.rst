@@ -100,8 +100,8 @@ Layer creation options
       :since: 3.8
 
       Whether to write
-      NaN / Infinity values. Such values are not allowed in strict JSon
-      mode, but some JSon parsers (libjson-c >= 0.12 for example) can
+      NaN / Infinity values. Such values are not allowed in strict JSON 
+      mode, but some JSON parsers (libjson-c >= 0.12 for example) can
       understand them as they are allowed by ECMAScript.
 
 -  .. lco:: AUTODETECT_JSON_STRINGS

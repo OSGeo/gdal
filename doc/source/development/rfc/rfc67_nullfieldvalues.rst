@@ -24,7 +24,7 @@ Rationale
 Currently, OGR supports one single concept to indicate that a field
 value is missing : the concept of unset field.
 
-So assuming a JSon feature collection with 2 features would properties
+So assuming a JSON feature collection with 2 features would properties
 would be { "foo": "bar" } and { "foo": "bar", "other_field": null }, OGR
 currently returns that the other_field is unset in both cases.
 
@@ -179,7 +179,7 @@ On the write side, for the GeoJSON driver, in GDAL 2.1 or before, a
 unset field was written as field_name: null. Starting with GDAL 2.2,
 only fields explicitly set as null with OGR_F_SetFieldNull() will be
 written with a null value. Unset fields of a feature will not be present
-in the corresponding JSon feature element.
+in the corresponding JSON feature element.
 
 MIGRATION_GUIDE.TXT is updated to discuss those compatibility issues.
 
