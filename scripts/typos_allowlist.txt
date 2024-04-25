@@ -328,3 +328,5 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
     assert f.GetField("PERIMETRE") == pytest.approx(1289.866489495, abs=1e-5)
     assert f.GetField("PERIMETRE") == pytest.approx(1123.514024, abs=1e-5)
     assert f.GetField("PERIMETRE") == pytest.approx(680.544697, abs=1e-5)
+    assert f["PERIMETRE"] == [3.414213562, 3.414213562]
+    assert f["PERIMETRE"] == [32, 32]
