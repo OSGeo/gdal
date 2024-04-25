@@ -510,7 +510,9 @@ output coordinate system or even reprojecting the features during translation.
 .. option:: -gcp <ungeoref_x> <ungeoref_y> <georef_x> <georef_y> [<elevation>]
 
     Add the indicated ground control point. This option may be provided
-    multiple times to provide a set of GCPs.
+    multiple times to provide a set of GCPs. (Note that unlike gdal_edit.py,
+    the GCPs here are used for calculating reprojection during translation,
+    not for adding to the output dataset.)
 
 .. option:: -order <n>
 
