@@ -1123,7 +1123,7 @@ int MM_ReadExtendedDBFHeaderFromFile(const char *szFileName,
     FILE_TYPE *pf;
     unsigned short int two_bytes;
     MM_EXT_DBF_N_FIELDS nIField;
-    MM_FIRST_RECORD_OFFSET_TYPE offset_primera_fitxa;
+    uint16_t offset_primera_fitxa;
     MM_FIRST_RECORD_OFFSET_TYPE offset_fals = 0;
     MM_BOOLEAN incoherent_record_size = FALSE;
     MM_BYTE un_byte;
@@ -1268,9 +1268,17 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
         memcpy(&FirstRecordOffsetLow16Bits, &offset_primera_fitxa, 2);
         memcpy(&FirstRecordOffsetHigh16Bits, &pMMBDXP->reserved_2, 2);
 
-        pMMBDXP->FirstRecordOffset =
-            ((GUInt32)FirstRecordOffsetHigh16Bits << 16) |
-            FirstRecordOffsetLow16Bits;
+        GUInt32 nTmp = ((GUInt32)FirstRecordOffsetHigh16Bits << 16) |
+                       FirstRecordOffsetLow16Bits;
+        if (nTmp > INT32_MAX)
+        {
+            free_function(pMMBDXP->pField);
+            pMMBDXP->pField = nullptr;
+            pMMBDXP->nFields = 0;
+            fclose_and_nullify(&pMMBDXP->pfDataBase);
+            return 1;
+        }
+        pMMBDXP->FirstRecordOffset = (MM_FIRST_RECORD_OFFSET_TYPE)nTmp;
 
         if (some_problems_when_reading > 0)
             offset_fals = pMMBDXP->FirstRecordOffset;
