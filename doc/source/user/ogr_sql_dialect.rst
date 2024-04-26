@@ -565,7 +565,8 @@ The OGR SQL dialect adds the geometry field of the datasource to the result set
 by default. Users do not need to select the geometry explicitly but it is still
 possible to do so. Common use case is when geometry is the only field that is needed.
 In this case the name of the geometry field to be used in the SQL statement is the
-name returned by :cpp:func:`OGRLayer::GetGeometryColumn`. If the method returns
+name returned by :cpp:func:`OGRLayer::GetGeometryColumn`, and also
+"Geometry Column = ..." in :program:`ogrinfo` output. If the method returns
 an empty string then a special name "_ogr_geometry_" must be used. The name begins
 with an underscore and SQL syntax requires that it must appear between double quotes.
 In addition the command line interpreter may require that double quotes are escaped
