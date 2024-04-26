@@ -938,3 +938,30 @@ def test_tmp_vsimem(tmp_vsimem):
     assert isinstance(tmp_vsimem, os.PathLike)
 
     assert gdal.VSIStatL(tmp_vsimem) is not None
+
+
+def test_band_iter():
+
+    ds = gdal.Open("data/rgba.tif")
+
+    assert len(ds) == 4
+
+    bands = []
+
+    for band in ds:
+        bands.append(band)
+
+    assert len(bands) == 4
+
+
+def test_band_getitem():
+
+    ds = gdal.Open("data/rgba.tif")
+
+    assert ds[2].this == ds.GetRasterBand(2).this
+
+    with pytest.raises(IndexError):
+        ds[0]
+
+    with pytest.raises(IndexError):
+        ds[5]

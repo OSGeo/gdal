@@ -30,7 +30,6 @@
 ###############################################################################
 
 import os
-import shutil
 from difflib import unified_diff
 
 import gdaltest
@@ -52,19 +51,21 @@ def module_disable_exceptions():
 # Basic test without snapshoting
 
 
-def test_ograpispy_1():
+def test_ograpispy_1(tmp_path):
 
-    os.environ["OGR_API_SPY_FILE"] = "tmp/ograpispy_1.py"
+    fname = str(tmp_path / "ograpispy_1.py")
+
+    os.environ["OGR_API_SPY_FILE"] = fname
     test_py_scripts.run_py_script("data", "testograpispy", "")
     del os.environ["OGR_API_SPY_FILE"]
 
-    if not os.path.exists("tmp/ograpispy_1.py"):
+    if not os.path.exists(fname):
         pytest.skip("OGR API spy not enabled")
 
     ref_data = open("data/testograpispy.py", "rt").read()
     ref_data = ref_data.replace("gdal.DontUseExceptions()\n", "")
     ref_data = ref_data.replace("ogr.DontUseExceptions()\n", "")
-    got_data = open("tmp/ograpispy_1.py", "rt").read()
+    got_data = open(fname, "rt").read()
 
     if ref_data != got_data:
         print()
@@ -78,86 +79,55 @@ def test_ograpispy_1():
             print(line)
         pytest.fail("did not get expected script")
 
-    gdal.Unlink("tmp/ograpispy_1.py")
-
 
 ###############################################################################
 # With snapshoting
 
 
-def test_ograpispy_2():
+def test_ograpispy_2(tmp_path):
 
-    os.environ["OGR_API_SPY_FILE"] = "tmp/ograpispy_1.py"
+    os.environ["OGR_API_SPY_FILE"] = str(tmp_path / "ograpispy_1.py")
     test_py_scripts.run_py_script("data", "testograpispy", "")
     del os.environ["OGR_API_SPY_FILE"]
 
-    if not os.path.exists("tmp/ograpispy_1.py"):
+    if not os.path.exists(tmp_path / "ograpispy_1.py"):
         pytest.skip("OGR API spy not enabled")
 
-    gdal.Unlink("tmp/ograpispy_1.py")
+    ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
+        tmp_path / "ograpispy_2.shp"
+    )
+    lyr = ds.CreateLayer("ograpispy_2")
+    lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
+    ds = None
 
-    try:
-        shutil.rmtree("tmp/snapshot_1")
-    except OSError:
-        pass
-
-    try:
-        ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(
-            "tmp/ograpispy_2.shp"
-        )
-        lyr = ds.CreateLayer("ograpispy_2")
-        lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
-        ds = None
-
-        with gdal.config_options(
-            {
-                "OGR_API_SPY_FILE": "tmp/ograpispy_2.py",
-                "OGR_API_SPY_SNAPSHOT_PATH": "tmp",
-            }
-        ):
-            ds = ogr.Open("tmp/ograpispy_2.shp", update=1)
-            lyr = ds.GetLayer(0)
-            lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
-            ds = None
-
-        ds = ogr.Open("tmp/snapshot_1/source/ograpispy_2.shp")
+    with gdal.config_options(
+        {
+            "OGR_API_SPY_FILE": str(tmp_path / "ograpispy_2.py"),
+            "OGR_API_SPY_SNAPSHOT_PATH": str(tmp_path),
+        }
+    ):
+        ds = ogr.Open(tmp_path / "ograpispy_2.shp", update=1)
         lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == 0
-        ds = None
-
-        ds = ogr.Open("tmp/snapshot_1/working/ograpispy_2.shp", update=1)
-        lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == 1
-
-        # Add a feature to check that running the script will work
         lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
         ds = None
 
-        # Check script
-        test_py_scripts.run_py_script("tmp", "ograpispy_2", "")
+    ds = ogr.Open(tmp_path / "snapshot_1/source/ograpispy_2.shp")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 0
+    ds = None
 
-        ds = ogr.Open("tmp/snapshot_1/working/ograpispy_2.shp")
-        lyr = ds.GetLayer(0)
-        assert lyr.GetFeatureCount() == 1
-        ds = None
+    ds = ogr.Open(tmp_path / "snapshot_1/working/ograpispy_2.shp", update=1)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
 
-    finally:
-        try:
-            shutil.rmtree("tmp/snapshot_1/working")
-        except OSError:
-            pass
+    # Add a feature to check that running the script will work
+    lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+    ds = None
 
-        gdal.Unlink("tmp/ograpispy_2.py")
-        gdal.Unlink("tmp/ograpispy_2.pyc")
-        try:
-            shutil.rmtree("tmp/snapshot_1")
-        except OSError:
-            pass
-        try:
-            os.stat("tmp/ograpispy_2.shp")
-            ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
-                "tmp/ograpispy_2.shp"
-            )
-        except (OSError, AttributeError):
-            pass
-        gdal.Unlink("/vsimem/test2.csv")
+    # Check script
+    test_py_scripts.run_py_script(tmp_path, "ograpispy_2", "")
+
+    ds = ogr.Open(tmp_path / "snapshot_1/working/ograpispy_2.shp")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+    ds = None

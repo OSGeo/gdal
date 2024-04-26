@@ -4914,6 +4914,11 @@ OGRErr GDALDatasetDeleteLayer(GDALDatasetH hDS, int iLayer)
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetH", OGRERR_INVALID_HANDLE);
 
+#ifdef OGRAPISPY_ENABLED
+    if (bOGRAPISpyEnabled)
+        OGRAPISpy_DS_DeleteLayer(hDS, iLayer);
+#endif
+
     return GDALDataset::FromHandle(hDS)->DeleteLayer(iLayer);
 }
 

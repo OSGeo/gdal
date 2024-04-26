@@ -2169,3 +2169,13 @@ GDALDatasetShadow* wrapper_GDALMultiDimTranslateDestName( const char* dest,
 
 %clear (const char* dest);
 
+#if defined(SWIGPYTHON)
+// This enables constructs such as isinstance(x, ogr.DataSource) to
+// return True for a gdal.Dataset. We can't include it in gdal_python.i
+// because Dataset is not defined at that point.
+%pythoncode %{
+ogr.DataSource = Dataset
+ogr.Driver = Driver
+%}
+#endif
+

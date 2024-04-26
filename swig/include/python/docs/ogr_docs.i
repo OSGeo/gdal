@@ -132,3 +132,79 @@ Examples
 >>> ogr.GetFieldTypeName(ogr.OFTReal)
 'Real'
 ";
+
+%feature("docstring") GetDriverByName "
+
+Get a vector driver. Like :py:func:`gdal.GetDriverByName`, but
+only returns drivers that handle vector data.
+
+Parameters
+----------
+name : str
+    name of the driver to fetch
+
+Returns
+-------
+gdal.Driver
+
+Examples
+--------
+>>> ogr.GetDriverByName('ESRI Shapefile').GetDescription()
+'ESRI Shapefile'
+
+>>> ogr.GetDriverByName('GTiff')
+>>>
+"
+
+%feature("docstring") GetDriverCount "
+
+Returns the number of registered drivers that handle vector data.
+
+Returns
+-------
+int
+"
+
+%feature("docstring") Open "
+
+Open a vector file as a :py:class:`gdal.Dataset`.
+Equivalent to calling :py:func:`gdal.OpenEx` with the
+:py:const:`gdal.OF_VECTOR` flag.
+
+Parameters
+----------
+utf8_path : str
+    name of the file to open
+
+Returns
+-------
+gdal.Dataset, or ``None`` on failure
+
+Examples
+--------
+>>> from osgeo import ogr
+>>> ogr.GetDriverByName('ESRI Shapefile').GetDescription()
+'ESRI Shapefile'
+>>> ogr.GetDriverByName('GTiff')
+>>>
+";
+
+
+%feature("docstring") OpenShared "
+
+Open a vector file as a :py:class:`gdal.Dataset`. If the file has already been
+opened in the current thread, return a reference to the already-opened
+:py:class:`gdal.Dataset`. Equivalent to calling :py:func:`gdal.OpenEx` with the
+:py:const:`gdal.OF_VECTOR` and :py:const:`gdal.OF_SHARED` flags.
+
+Parameters
+----------
+utf8_path : str
+    name of the file to open
+
+Returns
+-------
+gdal.Dataset, or ``None`` on failure
+
+";
+

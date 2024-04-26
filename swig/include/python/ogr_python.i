@@ -27,12 +27,10 @@
 %}
 */
 
-%include "ogr_docs.i"
-%include "ogr_layer_docs.i"
 #ifndef FROM_GDAL_I
-%include "ogr_datasource_docs.i"
-%include "ogr_driver_docs.i"
+%include "ogr_docs.i"
 #endif
+%include "ogr_layer_docs.i"
 %include "ogr_feature_docs.i"
 %include "ogr_featuredef_docs.i"
 %include "ogr_fielddef_docs.i"
@@ -48,6 +46,7 @@
 %{
 #define MODULE_NAME           "ogr"
 %}
+#endif
 
 %include "python_exceptions.i"
 %include "python_strings.i"
@@ -71,8 +70,23 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
             "In GDAL 4.0, exceptions will be enabled by default.", FutureWarning)
 %}
 
+// Need to ensure that gdal module has been loaded
+// when calling an ogr function that returns a gdal type.
 %pythonprepend Open %{
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+    from . import gdal
+%}
+
+%pythonprepend OpenShared %{
+    from . import gdal
+%}
+
+%pythonprepend GetDriverByName %{
+    from . import gdal
+%}
+
+%pythonprepend GetDriver %{
+    from . import gdal
 %}
 
 // End: to be removed in GDAL 4.0
@@ -83,254 +97,6 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
         if isinstance(args[0][i], (os.PathLike, int)):
             args[0][i] = str(args[0][i])
 %}
-
-%extend OGRDataSourceShadow {
-  %pythoncode {
-
-    def Destroy(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_DataSource(self)
-      self.thisown = 0
-      self.this = None
-      self._invalidate_layers()
-
-    def Release(self):
-      "Once called, self has effectively been destroyed.  Do not access. For backwards compatibility only"
-      _ogr.delete_DataSource(self)
-      self.thisown = 0
-      self.this = None
-      self._invalidate_layers()
-
-    def Reference(self):
-      "For backwards compatibility only."
-      return self.Reference()
-
-    def Dereference(self):
-      "For backwards compatibility only."
-      self.Dereference()
-
-    def __len__(self):
-        """Returns the number of layers on the datasource"""
-        return self.GetLayerCount()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        self.Close()
-
-    def __del__(self):
-        self._invalidate_layers()
-
-    def __getitem__(self, value):
-        """Support dictionary, list, and slice -like access to the datasource.
-        ds[0] would return the first layer on the datasource.
-        ds['aname'] would return the layer named "aname".
-        ds[0:4] would return a list of the first four layers."""
-        if isinstance(value, slice):
-            output = []
-            step = value.step if value.step else 1
-            for i in range(value.start, value.stop, step):
-                lyr = self.GetLayer(i)
-                if lyr is None:
-                    return output
-                output.append(lyr)
-            return output
-        if isinstance(value, int):
-            if value > len(self) - 1:
-                raise IndexError
-            return self.GetLayer(value)
-        elif isinstance(value, str):
-            return self.GetLayer(value)
-        else:
-            raise TypeError('Input %s is not of String or Int type' % type(value))
-
-    def GetLayer(self, iLayer=0):
-        """Return the layer given an index or a name"""
-
-        _WarnIfUserHasNotSpecifiedIfUsingExceptions()
-
-        if isinstance(iLayer, str):
-            return self.GetLayerByName(str(iLayer))
-        elif isinstance(iLayer, int):
-            return self.GetLayerByIndex(iLayer)
-        else:
-            raise TypeError("Input %s is not of String or Int type" % type(iLayer))
-
-    def _invalidate_layers(self, lyr = None):
-        if hasattr(self, '_layer_references'):
-            for lyr in self._layer_references:
-                lyr.this = None
-
-
-    def _add_layer_ref(self, lyr):
-        if not lyr:
-            return
-
-        if not hasattr(self, '_layer_references'):
-            import weakref
-
-            self._layer_references = weakref.WeakSet()
-
-        self._layer_references.add(lyr)
-  }
-
-%feature("pythonappend") GetLayerByName %{
-    self._add_layer_ref(val)
-%}
-
-%feature("pythonappend") GetLayerByIndex %{
-    self._add_layer_ref(val)
-%}
-
-%feature("pythonappend") CreateLayer %{
-    self._add_layer_ref(val)
-%}
-
-%feature("pythonappend") CopyLayer %{
-    self._add_layer_ref(val)
-%}
-
-%feature("pythonappend") Close %{
-    self.thisown = 0
-    self.this = None
-    self._invalidate_layers()
-%}
-
-%feature("shadow") DeleteLayer %{
-    def DeleteLayer(self, value) -> "OGRErr":
-        """
-        DeleteLayer(DataSource self, value) -> OGRErr
-
-        Delete the indicated layer from the datasource.
-
-        For more details: :c:func:`OGR_DS_DeleteLayer`
-
-        Parameters
-        -----------
-        value: str | int
-            index or name of the layer to delete.
-
-        Returns
-        -------
-        int:
-            :py:const:`osgeo.ogr.OGRERR_NONE` on success, or :py:const:`osgeo.ogr.OGRERR_UNSUPPORTED_OPERATION` if deleting
-            layers is not supported for this datasource.
-        """
-
-        if isinstance(value, str):
-            for i in range(self.GetLayerCount()):
-                lyr = self.GetLayer(i)
-                if lyr.GetName() == value:
-                    return $action(self, i)
-            raise ValueError("Layer %s not found to delete" % value)
-        elif isinstance(value, int):
-            return $action(self, value)
-        else:
-            raise TypeError("Input %s is not of String or Int type" % type(value))
-%}
-
-%feature("shadow") ExecuteSQL %{
-def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=False):
-    """ExecuteSQL(self, statement, spatialFilter: ogr.Geometry = None, dialect: Optional[str] = "", keep_ref_on_ds=False) -> ogr.Layer
-
-    Execute a SQL statement against the dataset
-
-    The result of a SQL query is:
-      - None (or an exception if exceptions are enabled) for statements
-        that are in error
-      - or None for statements that have no results set,
-      - or a ogr.Layer handle representing a results set from the query.
-
-    Note that this ogr.Layer is in addition to the layers in the data store
-    and must be released with ReleaseResultSet() before the data source is closed
-    (destroyed).
-
-    Starting with GDAL 3.7, this method can also be used as a context manager,
-    as a convenient way of automatically releasing the returned result layer.
-
-    For more information on the SQL dialect supported internally by OGR
-    review the OGR SQL document (:ref:`ogr_sql_sqlite_dialect`)
-    Some drivers (i.e. Oracle and PostGIS) pass the SQL directly through to the
-    underlying RDBMS.
-
-    The SQLITE dialect can also be used (:ref:`sql_sqlite_dialect`)
-
-    Parameters
-    ----------
-    statement:
-        the SQL statement to execute (e.g "SELECT * FROM layer")
-    spatialFilter:
-        a geometry which represents a spatial filter. Can be None
-    dialect:
-        allows control of the statement dialect. If set to None or empty string,
-        the OGR SQL engine will be used, except for RDBMS drivers that will
-        use their dedicated SQL engine, unless OGRSQL is explicitly passed as
-        the dialect. The SQLITE dialect can also be used.
-    keep_ref_on_ds:
-        whether the returned layer should keep a (strong) reference on
-        the current dataset. Cf example 2 for a use case.
-
-    Returns
-    -------
-    ogr.Layer:
-        a ogr.Layer containing the results of the query, that will be
-        automatically released when the context manager goes out of scope.
-
-    Examples
-    --------
-    1. Use as a context manager:
-
-    >>> with ds.ExecuteSQL("SELECT * FROM layer") as lyr:
-    ...     print(lyr.GetFeatureCount())
-
-    2. Use keep_ref_on_ds=True to return an object that keeps a reference to its dataset:
-
-    >>> def get_sql_lyr():
-    ...     return gdal.OpenEx("test.shp").ExecuteSQL("SELECT * FROM test", keep_ref_on_ds=True)
-    ...
-    ... with get_sql_lyr() as lyr:
-    ...     print(lyr.GetFeatureCount())
-    """
-
-    sql_lyr = $action(self, statement, spatialFilter, dialect)
-    if sql_lyr:
-        import weakref
-        sql_lyr._to_release = True
-        sql_lyr._dataset_weak_ref = weakref.ref(self)
-        if keep_ref_on_ds:
-            sql_lyr._dataset_strong_ref = self
-    return sql_lyr
-%}
-
-
-%feature("shadow") ReleaseResultSet %{
-def ReleaseResultSet(self, sql_lyr):
-    """ReleaseResultSet(self, sql_lyr: ogr.Layer)
-
-    Release ogr.Layer returned by ExecuteSQL() (when not called as an execution manager)
-
-    The sql_lyr object is invalidated after this call.
-
-    Parameters
-    ----------
-    sql_lyr:
-        ogr.Layer got with ExecuteSQL()
-    """
-
-    if sql_lyr and not hasattr(sql_lyr, "_to_release"):
-        raise Exception("This layer was not returned by ExecuteSQL() and should not be released with ReleaseResultSet()")
-    $action(self, sql_lyr)
-    # Invalidates the layer
-    if sql_lyr:
-        sql_lyr.thisown = None
-        sql_lyr.this = None
-%}
-
-}
-
-#endif
-
 
 %extend OGRLayerShadow {
   %pythoncode %{

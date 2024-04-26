@@ -20,6 +20,7 @@
   }
   // Will be turned on for GDAL 4.0
   // UseExceptions();
+
 %}
 
 %{
@@ -176,7 +177,6 @@ static void readraster_releasebuffer(CPLErr eErr,
 
   from osgeo.gdalconst import *
   from osgeo import gdalconst
-
 
   import sys
   byteorders = {"little": "<",
@@ -1523,6 +1523,22 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         else:
             return self._SetGCPs2(gcps, wkt_or_spatial_ref)
 
+    def Destroy(self):
+        import warnings
+        warnings.warn("Destroy() is deprecated; use a context manager or Close() instead", DeprecationWarning)
+        self.Close()
+
+    def Release(self):
+        import warnings
+        warnings.warn("Release() is deprecated; use a context manager or Close() instead", DeprecationWarning)
+        self.Close()
+
+    def SyncToDisk(self):
+        return self.FlushCache()
+
+    def GetName(self):
+        return self.GetDescription()
+
     def _add_child_ref(self, child):
         if child is None:
             return
@@ -1548,6 +1564,54 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
     def __exit__(self, *args):
         self.Close()
+
+    def __bool__(self):
+        return True
+
+    def __len__(self):
+        return self.RasterCount + self.GetLayerCount()
+
+    def __iter__(self):
+        if self.RasterCount:
+            for band in range(1, self.RasterCount + 1):
+                yield self[band]
+        else:
+            for layer in range(self.GetLayerCount()):
+                yield self[layer]
+
+    def __getitem__(self, value):
+        """Support dictionary, list, and slice -like access to the datasource.
+        ds[0] would return the first layer on the datasource.
+        ds['aname'] would return the layer named "aname".
+        ds[0:4] would return a list of the first four layers."""
+
+        if self.RasterCount and self.GetLayerCount():
+            raise ValueError("Cannot access slice of Dataset with both raster bands and vector layers")
+
+        if self.GetLayerCount():
+            get = self.GetLayer
+            min = 0
+            max = self.GetLayerCount() - 1
+        else:
+            get = self.GetRasterBand
+            min = 1
+            max = self.RasterCount
+
+        if isinstance(value, slice):
+            output = []
+            step = value.step if value.step else 1
+            for i in range(value.start, value.stop, step):
+                lyr = self.GetLayer(i)
+                if lyr is None:
+                    return output
+                output.append(lyr)
+            return output
+
+        if value < min or value > max:
+            # Exception needed to make for _ in loop finish
+            raise IndexError(value)
+
+        return get(value)
 %}
 
 %feature("pythonappend") Close %{
@@ -2082,6 +2146,27 @@ def _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions():
 
 %pythonprepend Delete %{
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+%}
+
+%pythoncode %{
+
+def CreateDataSource(self, utf8_path, options=None):
+    return self.Create(utf8_path, 0, 0, 0, GDT_Unknown, options or [])
+
+def CopyDataSource(self, ds, utf8_path, options=None):
+    return self.CreateCopy(utf8_path, ds, options = options or [])
+
+def DeleteDataSource(self, utf8_path):
+    return self.Delete(utf8_path)
+
+def Open(self, utf8_path, update=False):
+    return OpenEx(utf8_path,
+                  OF_VECTOR | (OF_UPDATE if update else 0),
+                  [self.GetDescription()])
+
+def GetName(self):
+    return self.GetDescription()
+
 %}
 
 }
@@ -4803,6 +4888,7 @@ def quiet_errors():
         yield
     finally:
         PopErrorHandler()
+
 %}
 
 

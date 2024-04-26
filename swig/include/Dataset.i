@@ -313,6 +313,16 @@ public:
     return GDALGetProjectionRef( self );
   }
 
+#ifdef SWIGPYTHON
+  int GetRefCount() {
+    return OGR_DS_GetRefCount(self);
+  }
+
+  int GetSummaryRefCount() {
+    return OGR_DS_GetSummaryRefCount(self);
+  }
+#endif
+
   %newobject GetSpatialRef;
   OSRSpatialReferenceShadow *GetSpatialRef() {
     OGRSpatialReferenceH ref = GDALGetSpatialRef(self);
@@ -910,7 +920,7 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
   }
 
 #ifdef SWIGCSHARP
-  
+
   %newobject GetNextFeature;
   OGRFeatureShadow *GetNextFeature( OGRLayerShadow** ppoBelongingLayer = NULL,
                                     double* pdfProgressPct = NULL,

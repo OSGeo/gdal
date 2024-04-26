@@ -726,39 +726,40 @@ def createTile(
 
 
 def createTileIndex(Verbose, dsName, fieldName, srs, driverName):
-    OGRDriver = ogr.GetDriverByName(driverName)
-    if OGRDriver is None:
-        print("ESRI Shapefile driver not found", file=sys.stderr)
-        return 1
+    with gdal.ExceptionMgr(useExceptions=False):
+        OGRDriver = ogr.GetDriverByName(driverName)
+        if OGRDriver is None:
+            print("ESRI Shapefile driver not found", file=sys.stderr)
+            return 1
 
-    OGRDataSource = OGRDriver.Open(dsName)
-    if OGRDataSource is not None:
-        OGRDataSource.Destroy()
-        OGRDriver.DeleteDataSource(dsName)
-        if Verbose:
-            print("truncating index " + dsName)
+        OGRDataSource = OGRDriver.Open(dsName)
+        if OGRDataSource is not None:
+            OGRDataSource.Destroy()
+            OGRDriver.DeleteDataSource(dsName)
+            if Verbose:
+                print("truncating index " + dsName)
 
-    OGRDataSource = OGRDriver.CreateDataSource(dsName)
-    if OGRDataSource is None:
-        print("Could not open datasource " + dsName, file=sys.stderr)
-        return 1
+        OGRDataSource = OGRDriver.CreateDataSource(dsName)
+        if OGRDataSource is None:
+            print("Could not open datasource " + dsName, file=sys.stderr)
+            return 1
 
-    OGRLayer = OGRDataSource.CreateLayer("index", srs, ogr.wkbPolygon)
-    if OGRLayer is None:
-        print("Could not create Layer", file=sys.stderr)
-        return 1
+        OGRLayer = OGRDataSource.CreateLayer("index", srs, ogr.wkbPolygon)
+        if OGRLayer is None:
+            print("Could not create Layer", file=sys.stderr)
+            return 1
 
-    OGRFieldDefn = ogr.FieldDefn(fieldName, ogr.OFTString)
-    if OGRFieldDefn is None:
-        print("Could not create FieldDefn for " + fieldName, file=sys.stderr)
-        return 1
+        OGRFieldDefn = ogr.FieldDefn(fieldName, ogr.OFTString)
+        if OGRFieldDefn is None:
+            print("Could not create FieldDefn for " + fieldName, file=sys.stderr)
+            return 1
 
-    OGRFieldDefn.SetWidth(256)
-    if OGRLayer.CreateField(OGRFieldDefn) != 0:
-        print("Could not create Field for " + fieldName, file=sys.stderr)
-        return 1
+        OGRFieldDefn.SetWidth(256)
+        if OGRLayer.CreateField(OGRFieldDefn) != 0:
+            print("Could not create Field for " + fieldName, file=sys.stderr)
+            return 1
 
-    return OGRDataSource
+        return OGRDataSource
 
 
 def addFeature(TileIndexFieldName, OGRDataSource, location, xlist, ylist):
