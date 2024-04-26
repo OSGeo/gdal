@@ -429,6 +429,20 @@ preamble = r"""
 \fi
 """
 
+# Package substitutefont no longer exists since TeXLive 2023 later than August 2023
+# and has been replaced with sphinxpackagesubstitutefont
+# https://github.com/jfbu/sphinx/commit/04cbd819b0e285d058549b2173af7efadf1cd020
+import sphinx
+
+if os.path.exists(
+    os.path.join(
+        os.path.dirname(sphinx.__file__), "texinputs", "sphinxpackagesubstitutefont.sty"
+    )
+):
+    substitutefont_package = "sphinxpackagesubstitutefont"
+else:
+    substitutefont_package = "substitutefont"
+
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #'papersize': 'letterpaper',
@@ -436,7 +450,9 @@ latex_elements = {
     #'pointsize': '10pt',
     # Additional stuff for the LaTeX preamble.
     "preamble": preamble,
-    "inputenc": "\\usepackage[utf8]{inputenc}\n\\usepackage{CJKutf8}\n\\usepackage{substitutefont}",
+    "inputenc": "\\usepackage[utf8]{inputenc}\n\\usepackage{CJKutf8}\n\\usepackage{"
+    + substitutefont_package
+    + "}",
     "babel": "\\usepackage[russian,main=english]{babel}\n\\selectlanguage{english}",
     "fontenc": "\\usepackage[LGR,X2,T1]{fontenc}"
     # Latex figure (float) alignment
