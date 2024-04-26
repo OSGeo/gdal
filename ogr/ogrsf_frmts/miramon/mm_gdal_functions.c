@@ -699,6 +699,7 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     char nom_camp[MM_MAX_LON_FIELD_NAME_DBF];
     size_t retorn_fwrite;
     MM_BOOLEAN table_should_be_closed = FALSE;
+    MM_BOOLEAN ret = FALSE;
 
     if (data_base_XP->pfDataBase == nullptr)
     {
@@ -748,19 +749,19 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     if (fwrite_function(&(data_base_XP->dbf_version), 1, 1,
                         data_base_XP->pfDataBase) != 1)
     {
-        return FALSE;
+        goto end_label;
     }
 
     /* MM_BYTE from 1 to 3 */
     variable_byte = (MM_BYTE)(data_base_XP->year - 1900);
     if (fwrite_function(&variable_byte, 1, 1, data_base_XP->pfDataBase) != 1)
-        return FALSE;
+        goto end_label;
     if (fwrite_function(&(data_base_XP->month), 1, 1,
                         data_base_XP->pfDataBase) != 1)
-        return FALSE;
+        goto end_label;
     if (fwrite_function(&(data_base_XP->day), 1, 1, data_base_XP->pfDataBase) !=
         1)
-        return FALSE;
+        goto end_label;
 
     /* from 4 a 7, position MM_FIRST_OFFSET_to_N_RECORDS */
     {
@@ -768,40 +769,40 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             (GUInt32)(data_base_XP->nRecords & UINT32_MAX);
         if (fwrite_function(&nRecords32LowBits, 4, 1,
                             data_base_XP->pfDataBase) != 1)
-            return FALSE;
+            goto end_label;
     }
 
     /* from 8 a 9, position MM_PRIMER_OFFSET_a_OFFSET_1a_FITXA */
     if (fwrite_function(&(data_base_XP->FirstRecordOffset), 2, 1,
                         data_base_XP->pfDataBase) != 1)
-        return FALSE;
+        goto end_label;
     /* from 10 to 11, & from 12 to 13 */
     if (MM_ES_DBF_ESTESA(data_base_XP->dbf_version))
     {
         if (fwrite_function(&(data_base_XP->BytesPerRecord),
                             sizeof(MM_ACCUMULATED_BYTES_TYPE_DBF), 1,
                             data_base_XP->pfDataBase) != 1)
-            return FALSE;
+            goto end_label;
     }
     else
     {
         /* from 10 to 11 */
         if (fwrite_function(&(data_base_XP->BytesPerRecord), 2, 1,
                             data_base_XP->pfDataBase) != 1)
-            return FALSE;
+            goto end_label;
         /* from 12 to 13 */
         if (fwrite_function(&(data_base_XP->reserved_1), 2, 1,
                             data_base_XP->pfDataBase) != 1)
-            return FALSE;
+            goto end_label;
     }
     /* byte 14 */
     if (fwrite_function(&(data_base_XP->transaction_flag), 1, 1,
                         data_base_XP->pfDataBase) != 1)
-        return FALSE;
+        goto end_label;
     /* byte 15 */
     if (fwrite_function(&(data_base_XP->encryption_flag), 1, 1,
                         data_base_XP->pfDataBase) != 1)
-        return FALSE;
+        goto end_label;
 
     /* from 16 to 27 */
     if (data_base_XP->nRecords > UINT32_MAX)
@@ -810,42 +811,42 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
         GUInt32 nRecords32HighBits = (GUInt32)(data_base_XP->nRecords >> 32);
         if (fwrite_function(&nRecords32HighBits, 4, 1,
                             data_base_XP->pfDataBase) != 1)
-            return FALSE;
+            goto end_label;
 
         /* from 20 to 27 */
         if (fwrite_function(&(data_base_XP->dbf_on_a_LAN), 8, 1,
                             data_base_XP->pfDataBase) != 1)
-            return FALSE;
+            goto end_label;
     }
     else
     {
         /* from 16 to 27 */
         if (fwrite_function(&(data_base_XP->dbf_on_a_LAN), 12, 1,
                             data_base_XP->pfDataBase) != 1)
-            return FALSE;
+            goto end_label;
     }
     /* byte 28 */
     if (fwrite_function(&(data_base_XP->MDX_flag), 1, 1,
                         data_base_XP->pfDataBase) != 1)
-        return FALSE;
+        goto end_label;
 
     /* Byte 29 */
     if (fwrite_function(&(data_base_XP->CharSet), 1, 1,
                         data_base_XP->pfDataBase) != 1)
-        return FALSE;
+        goto end_label;
 
     /* Bytes from 30 to 31, in position MM_SEGON_OFFSET_a_OFFSET_1a_FITXA */
     if (MM_ES_DBF_ESTESA(data_base_XP->dbf_version))
     {
         if (fwrite_function(((char *)&(data_base_XP->FirstRecordOffset)) + 2, 2,
                             1, data_base_XP->pfDataBase) != 1)
-            return FALSE;
+            goto end_label;
     }
     else
     {
         if (fwrite_function(&(data_base_XP->reserved_2), 2, 1,
                             data_base_XP->pfDataBase) != 1)
-            return FALSE;
+            goto end_label;
     }
 
     /* At 32th byte fields description begins   */
@@ -865,7 +866,7 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
                                             1, j, data_base_XP->pfDataBase);
             if (retorn_fwrite != (size_t)j)
             {
-                return FALSE;
+                goto end_label;
             }
             MM_InitializeOffsetExtendedFieldNameFields(data_base_XP, i);
             MM_InitializeBytesExtendedFieldNameFields(data_base_XP, i);
@@ -926,7 +927,7 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
                                 1, j, data_base_XP->pfDataBase);
             if (retorn_fwrite != (size_t)j)
             {
-                return FALSE;
+                goto end_label;
             }
 
             name_size =
@@ -936,25 +937,25 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
         }
         else
         {
-            return FALSE;
+            goto end_label;
         }
 
         if (fwrite_function(zero, 1, 11 - j, data_base_XP->pfDataBase) !=
             11 - (size_t)j)
         {
-            return FALSE;
+            goto end_label;
         }
         /* Byte 11, Field type */
         if (fwrite_function(&data_base_XP->pField[i].FieldType, 1, 1,
                             data_base_XP->pfDataBase) != 1)
         {
-            return FALSE;
+            goto end_label;
         }
         /* Bytes 12 to 15 --> Reserved */
         if (fwrite_function(&data_base_XP->pField[i].reserved_1, 4, 1,
                             data_base_XP->pfDataBase) != 1)
         {
-            return FALSE;
+            goto end_label;
         }
         /* Byte 16, or OFFSET_BYTESxCAMP_CAMP_CLASSIC --> BytesPerField */
         if (MM_ES_DBF_ESTESA(data_base_XP->dbf_version) &&
@@ -963,7 +964,7 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             if (fwrite_function((void *)&byte_zero, 1, 1,
                                 data_base_XP->pfDataBase) != 1)
             {
-                return FALSE;
+                goto end_label;
             }
         }
         else
@@ -971,7 +972,7 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             if (fwrite_function(&data_base_XP->pField[i].BytesPerField, 1, 1,
                                 data_base_XP->pfDataBase) != 1)
             {
-                return FALSE;
+                goto end_label;
             }
         }
         /* 17th byte 17 --> In fields of type 'N' and 'F' indicates decimal places.*/
@@ -981,14 +982,14 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             if (fwrite_function(&data_base_XP->pField[i].DecimalsIfFloat, 1, 1,
                                 data_base_XP->pfDataBase) != 1)
             {
-                return FALSE;
+                goto end_label;
             }
         }
         else
         {
             if (fwrite_function(zero, 1, 1, data_base_XP->pfDataBase) != 1)
             {
-                return FALSE;
+                goto end_label;
             }
         }
         if (MM_ES_DBF_ESTESA(data_base_XP->dbf_version) &&
@@ -998,7 +999,7 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             if (fwrite_function(&data_base_XP->pField[i].reserved_2,
                                 20 - 18 + 1, 1, data_base_XP->pfDataBase) != 1)
             {
-                return FALSE;
+                goto end_label;
             }
             /* Bytes from 21 to 24 --> OFFSET_BYTESxCAMP_CAMP_ESPECIAL, special fields, like C
                                     in extended DBF */
@@ -1006,14 +1007,14 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
                                 sizeof(MM_BYTES_PER_FIELD_TYPE_DBF), 1,
                                 data_base_XP->pfDataBase) != 1)
             {
-                return FALSE;
+                goto end_label;
             }
 
             /* Bytes from 25 to 30 --> Reserved */
             if (fwrite_function(&data_base_XP->pField[i].reserved_2[25 - 18],
                                 30 - 25 + 1, 1, data_base_XP->pfDataBase) != 1)
             {
-                return FALSE;
+                goto end_label;
             }
         }
         else
@@ -1026,23 +1027,23 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
             if (fwrite_function(&data_base_XP->pField[i].reserved_2, 13, 1,
                                 data_base_XP->pfDataBase) != 1)
             {
-                return FALSE;
+                goto end_label;
             }
         }
         /* Byte 31 --> MDX flag.    */
         if (fwrite_function(&data_base_XP->pField[i].MDX_field_flag, 1, 1,
                             data_base_XP->pfDataBase) != 1)
         {
-            return FALSE;
+            goto end_label;
         }
     }
 
     variable_byte = 13;
     if (fwrite_function(&variable_byte, 1, 1, data_base_XP->pfDataBase) != 1)
-        return FALSE;
+        goto end_label;
 
     if (data_base_XP->FirstRecordOffset != bytes_acumulats)
-        return FALSE;
+        goto end_label;
 
     // Extended fields
     for (i = 0; i < data_base_XP->nFields; i++)
@@ -1063,16 +1064,19 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
                                             data_base_XP->pfDataBase);
 
             if (retorn_fwrite != (size_t)name_size)
-                return FALSE;
+                goto end_label;
         }
     }
 
+    ret = TRUE;
+
+end_label:
     if (table_should_be_closed)
     {
         fclose_and_nullify(&data_base_XP->pfDataBase);
     }
 
-    return TRUE;
+    return ret;
 } /* End of MM_UpdateEntireHeader() */
 
 MM_BOOLEAN MM_CreateDBFFile(struct MM_DATA_BASE_XP *bd_xp,
