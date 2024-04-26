@@ -19,7 +19,7 @@ Synopsis
                             [-xml] [-lifonly] [-valonly]
                             [-E] [-field_sep <sep>] [-ignore_extra_input]
                             [-b <band>]... [-overview <overview_level>]
-                            [-l_srs <srs_def>] [-geoloc] [-wgs84]
+                            [[-l_srs <srs_def>] | [-geoloc] | [-wgs84]]
                             [-oo <NAME>=<VALUE>]... <srcfile> [<x> <y>]
 
 
