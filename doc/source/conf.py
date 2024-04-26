@@ -16,6 +16,41 @@ import sys
 
 sys.path.insert(0, os.path.abspath("_extensions"))
 
+# -- Check we can load the GDAL Python bindings
+
+import traceback
+
+from sphinx.util import logging
+
+logger = logging.getLogger(__name__)
+try:
+    from osgeo import gdal
+except ImportError as e:
+    logger.warn(
+        "Failed to load GDAL Python bindings. The Python bindings must be accessible to build Python API documentation."
+    )
+    if sys.version_info < (3, 10):
+        exc_info = sys.exc_info()
+        for line in traceback.format_exception(*exc_info):
+            logger.info(line[:-1])
+    else:
+        for line in traceback.format_exception(e):
+            logger.info(line[:-1])
+else:
+    version_file = os.path.join(
+        os.path.dirname(__file__), os.pardir, os.pardir, "VERSION"
+    )
+    doc_version = open(version_file).read().strip()
+    gdal_version = gdal.__version__
+    gdal_version_stripped = gdal_version
+    pos_dev = gdal_version_stripped.find("dev")
+    if pos_dev > 0:
+        gdal_version_stripped = gdal_version_stripped[0:pos_dev]
+
+    if doc_version.strip() != gdal_version_stripped:
+        logger.warn(
+            f"Building documentation for GDAL {doc_version} but osgeo.gdal module has version {gdal_version}. Python API documentation may be incorrect."
+        )
 
 # -- Project information -----------------------------------------------------
 
