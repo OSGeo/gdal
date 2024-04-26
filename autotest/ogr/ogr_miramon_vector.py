@@ -331,6 +331,18 @@ def test_ogr_miramon_read_simple_polygon():
     check_simple_polygon(ds)
 
 
+# testing a polygon where the reference to arc has no extension
+# the result has to be the same than if it has extension
+def test_ogr_miramon_read_simple_polygon_no_ext():
+
+    ds = gdal.OpenEx(
+        "data/miramon/Polygons/SimplePolygonsCycleNoExt/SimplePolFile.pol",
+        gdal.OF_VECTOR,
+    )
+    assert ds is not None, "Failed to get dataset"
+    check_simple_polygon(ds)
+
+
 def test_ogr_miramon_write_simple_polygon_EmptyVersion(tmp_vsimem):
 
     out_filename = str(tmp_vsimem / "out.pol")
@@ -850,6 +862,14 @@ def test_ogr_miramon_OpenLanguageArc(Language, expected_description):
         ("data/miramon/CorruptedFiles/NoArcRel/SimpleArcFile.arc", "rel must exist"),
         ("data/miramon/CorruptedFiles/NoPolRel/SimplePolFile.pol", "rel must exist"),
         ("data/miramon/CorruptedFiles/BadCycle/SimplePolFile.pol", "Cannot open file"),
+        (
+            "data/miramon/CorruptedFiles/InexistentCycle1/SimplePolFile.pol",
+            "Cannot open file",
+        ),
+        (
+            "data/miramon/CorruptedFiles/InexistentCycle2/SimplePolFile.pol",
+            "Error reading the ARC file in the metadata file",
+        ),
     ],
 )
 def test_ogr_miramon_corrupted_files(name, message):
@@ -885,7 +905,7 @@ def test_ogr_miramon_corrupted_files(name, message):
         ),
     ],
 )
-def test_ogr_miramon_corrupted_features_point(name, message):
+def test_ogr_miramon_corrupted_features(name, message):
 
     ds = gdal.OpenEx(
         name,
@@ -1367,3 +1387,25 @@ def test_ogr_miramon_write_basic_multigeometry(tmp_path):
     )
 
     ds = None
+
+
+def test_ogr_miramon_create_field_after_feature(tmp_path):
+
+    filename = str(tmp_path / "DataSetMULTIPOINT")
+    ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbUnknown)
+    create_common_attributes(lyr)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    assign_common_attributes(f)
+
+    f.SetGeometry(ogr.CreateGeometryFromWkt("MULTIPOINT (0 0, 1 0)"))
+    lyr.CreateFeature(f)
+
+    # MiraMon doesn't allow that
+    with pytest.raises(
+        Exception,
+        match="Cannot create fields to a layer with already existing features in it",
+    ):
+        create_common_attributes(lyr)
