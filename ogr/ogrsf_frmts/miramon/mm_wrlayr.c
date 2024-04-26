@@ -5133,7 +5133,7 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
 {
     char *value = nullptr;
 #ifndef GDAL_COMPILATION
-    char line[1024];
+    char line[10000];
 #endif
     const char *pszLine;
     char *section_header = nullptr;
@@ -5155,7 +5155,7 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
     {
         pszLine = line;
 #else
-    while ((pszLine = CPLReadLine2L(file, 1024, nullptr)) != nullptr)
+    while ((pszLine = CPLReadLine2L(file, 10000, nullptr)) != nullptr)
     {
 #endif
         char *pszString =
