@@ -421,6 +421,9 @@ be stored in RAM temporarily before flushing to disk.
 Layer Creation options
 ----------------------
 
+The following layer creation options can be specified
+(typically with the -lco name=value parameters of ogrinfo or ogr2ogr):
+
 -  .. lco:: LINEFORMAT
       :choices: CRLF, LF
 
