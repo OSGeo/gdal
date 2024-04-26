@@ -24,7 +24,7 @@ Driver capabilities
 Georeference
 ------------
 
-Note, that GDAL simple affine georeference model completely unsuitable
+Note that GDAL simple affine georeference model is completely unsuitable
 for the NOAA data. So you should not rely on it. It is recommended to
 use the thin plate spline warper (tps). Automatic image rectification
 can be done with ground control points (GCPs) from the input file.
