@@ -31,12 +31,6 @@
 
 #include "tiledbheaders.h"
 
-#ifdef _MSC_VER
-#pragma warning(push)
-// 'tiledb::Array::Array': was declared deprecated
-#pragma warning(disable : 4996) /* XXXX was deprecated */
-#endif
-
 constexpr const char *RASTER_DATASET_TYPE = "raster";
 
 /************************************************************************/
@@ -113,8 +107,6 @@ static const char *index_type_name(TILEDB_INTERLEAVE_MODE eMode)
 /*                             SetBuffer()                              */
 /************************************************************************/
 
-#if ((TILEDB_VERSION_MAJOR > 2) ||                                             \
-     (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4))
 static CPLErr SetBuffer(tiledb::Query *poQuery, GDALDataType eType,
                         const CPLString &osAttrName, void *pImage, int nSize)
 {
@@ -181,74 +173,6 @@ static CPLErr SetBuffer(tiledb::Query *poQuery, GDALDataType eType,
     }
     return CE_None;
 }
-#else
-static CPLErr SetBuffer(tiledb::Query *poQuery, GDALDataType eType,
-                        const CPLString &osAttrName, void *pImage, int nSize)
-{
-    switch (eType)
-    {
-        case GDT_Byte:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<unsigned char *>(pImage), nSize);
-            break;
-        case GDT_Int8:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<int8_t *>(pImage),
-                                nSize);
-            break;
-        case GDT_UInt16:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<unsigned short *>(pImage), nSize);
-            break;
-        case GDT_UInt32:
-            poQuery->set_buffer(
-                osAttrName, reinterpret_cast<unsigned int *>(pImage), nSize);
-            break;
-        case GDT_UInt64:
-            poQuery->set_buffer(osAttrName,
-                                reinterpret_cast<uint64_t *>(pImage), nSize);
-            break;
-        case GDT_Int16:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<short *>(pImage),
-                                nSize);
-            break;
-        case GDT_Int32:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<int *>(pImage),
-                                nSize);
-            break;
-        case GDT_Int64:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<int64_t *>(pImage),
-                                nSize);
-            break;
-        case GDT_Float32:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<float *>(pImage),
-                                nSize);
-            break;
-        case GDT_Float64:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<double *>(pImage),
-                                nSize);
-            break;
-        case GDT_CInt16:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<short *>(pImage),
-                                nSize * 2);
-            break;
-        case GDT_CInt32:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<int *>(pImage),
-                                nSize * 2);
-            break;
-        case GDT_CFloat32:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<float *>(pImage),
-                                nSize * 2);
-            break;
-        case GDT_CFloat64:
-            poQuery->set_buffer(osAttrName, reinterpret_cast<double *>(pImage),
-                                nSize * 2);
-            break;
-        default:
-            return CE_Failure;
-    }
-    return CE_None;
-}
-#endif
 
 /************************************************************************/
 /*                          TileDBRasterBand()                          */
@@ -351,7 +275,6 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         nBufferDTSize > 0 && (nPixelSpace % nBufferDTSize) == 0 &&
         (nLineSpace % nBufferDTSize) == 0)
     {
-        std::unique_ptr<tiledb::Query> poQuery;
         const uint64_t nBandIdx = poGDS->nBandStart + nBand - 1;
         std::vector<uint64_t> oaSubarray = {
             nBandIdx,        nBandIdx,
@@ -361,26 +284,25 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             std::rotate(oaSubarray.begin(), oaSubarray.begin() + 2,
                         oaSubarray.end());
 
-        if ((eRWFlag == GF_Read) &&
-            ((eAccess == GA_Update) && (poGDS->m_roArray)))
-        {
-            poQuery.reset(
-                new tiledb::Query(*poGDS->m_roCtx, *poGDS->m_roArray));
-        }
-        else
-        {
-            poQuery.reset(new tiledb::Query(*poGDS->m_ctx, *poGDS->m_array));
-        }
+        const bool bUseReadOnlyObjs =
+            ((eRWFlag == GF_Read) && (eAccess == GA_Update) &&
+             (poGDS->m_roArray));
+        const auto &oCtxt = bUseReadOnlyObjs ? *poGDS->m_roCtx : *poGDS->m_ctx;
+        const auto &oArray =
+            bUseReadOnlyObjs ? *poGDS->m_roArray : *poGDS->m_array;
 
+        auto poQuery = std::make_unique<tiledb::Query>(oCtxt, oArray);
+        tiledb::Subarray subarray(oCtxt, oArray);
         if (poGDS->m_array->schema().domain().ndim() == 3)
         {
-            poQuery->set_subarray(oaSubarray);
+            subarray.set_subarray(oaSubarray);
         }
         else
         {
-            poQuery->set_subarray(std::vector<uint64_t>(oaSubarray.cbegin() + 2,
+            subarray.set_subarray(std::vector<uint64_t>(oaSubarray.cbegin() + 2,
                                                         oaSubarray.cend()));
         }
+        poQuery->set_subarray(subarray);
 
         SetBuffer(poQuery.get(), eDataType, osAttrName, pData, nXSize * nYSize);
 
@@ -560,50 +482,44 @@ CPLErr TileDBRasterDataset::IRasterIO(
         nBufferDTSize > 0 && (nPixelSpace % nBufferDTSize) == 0 &&
         (nLineSpace % nBufferDTSize) == 0)
     {
-        std::unique_ptr<tiledb::Query> poQuery;
         std::vector<uint64_t> oaSubarray = {
             (uint64_t)nYOff, (uint64_t)nYOff + nYSize - 1, (uint64_t)nXOff,
             (uint64_t)nXOff + nXSize - 1};
 
-        if ((eRWFlag == GF_Read) && (eAccess == GA_Update && m_roArray))
+        const bool bUseReadOnlyObjs =
+            ((eRWFlag == GF_Read) && (eAccess == GA_Update) && (m_roArray));
+        const auto &oCtxt = bUseReadOnlyObjs ? *m_roCtx : *m_ctx;
+        const auto &oArray = bUseReadOnlyObjs ? *m_roArray : *m_array;
+
+        auto poQuery = std::make_unique<tiledb::Query>(oCtxt, oArray);
+        tiledb::Subarray subarray(oCtxt, oArray);
+        subarray.set_subarray(oaSubarray);
+        poQuery->set_subarray(subarray);
+
+        for (int b = 0; b < nBandCount; b++)
         {
-            poQuery.reset(new tiledb::Query(*m_roCtx, *m_roArray));
+            TileDBRasterBand *poBand =
+                (TileDBRasterBand *)GetRasterBand(panBandMap[b]);
+            int nRegionSize = nBufXSize * nBufYSize * nBufferDTSize;
+            SetBuffer(poQuery.get(), eDataType, poBand->osAttrName,
+                      ((GByte *)pData) + b * nRegionSize, nRegionSize);
         }
+
+        if (bStats)
+            tiledb::Stats::enable();
+
+        auto status = poQuery->submit();
+
+        if (bStats)
+        {
+            tiledb::Stats::dump(stdout);
+            tiledb::Stats::disable();
+        }
+
+        if (status == tiledb::Query::Status::FAILED)
+            return CE_Failure;
         else
-        {
-            poQuery.reset(new tiledb::Query(*m_ctx, *m_array));
-        }
-
-        if (poQuery != nullptr)
-        {
-            poQuery->set_subarray(oaSubarray);
-
-            for (int b = 0; b < nBandCount; b++)
-            {
-                TileDBRasterBand *poBand =
-                    (TileDBRasterBand *)GetRasterBand(panBandMap[b]);
-                int nRegionSize = nBufXSize * nBufYSize * nBufferDTSize;
-                SetBuffer(poQuery.get(), eDataType, poBand->osAttrName,
-                          ((GByte *)pData) + b * nRegionSize, nRegionSize);
-            }
-
-            if (bStats)
-                tiledb::Stats::enable();
-
-            auto status = poQuery->submit();
-
-            if (bStats)
-            {
-                tiledb::Stats::dump(stdout);
-                tiledb::Stats::disable();
-            }
-
-            if (status == tiledb::Query::Status::FAILED)
-                return CE_Failure;
-            else
-                return CE_None;
-        }
-        return CE_Failure;
+            return CE_None;
     }
 
     return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -697,11 +613,7 @@ CPLErr TileDBRasterDataset::TrySaveXML()
         if (psTree == nullptr)
         {
             /* If we have unset all metadata, we have to delete the PAM file */
-#if TILEDB_VERSION_MAJOR == 1 && TILEDB_VERSION_MINOR < 7
-            vfs.remove_file(psPam->pszPamFilename);
-#else
             m_array->delete_metadata(GDAL_ATTRIBUTE_NAME);
-#endif
             return CE_None;
         }
 
@@ -771,17 +683,16 @@ CPLErr TileDBRasterDataset::TrySaveXML()
         /*      Try saving the auxiliary metadata. */
         /* --------------------------------------------------------------------
          */
-        bool bSaved = false;
         CPLErrorHandlerPusher oQuietError(CPLQuietErrorHandler);
         char *pszTree = CPLSerializeXMLTree(psTree);
 
-#if TILEDB_VERSION_MAJOR > 1 || TILEDB_VERSION_MINOR >= 7
         if (eAccess == GA_ReadOnly)
         {
             if (nTimestamp)
             {
                 auto oMeta = std::unique_ptr<tiledb::Array>(new tiledb::Array(
-                    *m_ctx, m_array->uri(), TILEDB_WRITE, nTimestamp));
+                    *m_ctx, m_array->uri(), TILEDB_WRITE,
+                    tiledb::TemporalPolicy(tiledb::TimeTravel, nTimestamp)));
                 oMeta->put_metadata(GDAL_ATTRIBUTE_NAME, TILEDB_UINT8,
                                     static_cast<int>(strlen(pszTree)), pszTree);
                 oMeta->close();
@@ -804,63 +715,7 @@ CPLErr TileDBRasterDataset::TrySaveXML()
                                   static_cast<int>(strlen(pszTree)), pszTree);
         }
 
-        bSaved = true;
-#endif
-
-        // cppcheck-suppress knownConditionTrueFalse
-        if (!bSaved)
-        {
-            vfs.touch(psPam->pszPamFilename);
-            tiledb::VFS::filebuf fbuf(vfs);
-            fbuf.open(psPam->pszPamFilename, std::ios::out);
-            std::ostream os(&fbuf);
-
-            if (os.good())
-            {
-                os.write(pszTree, strlen(pszTree));
-                bSaved = true;
-            }
-
-            fbuf.close();
-        }
-
         CPLFree(pszTree);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      If it fails, check if we have a proxy directory for auxiliary */
-        /*      metadata to be stored in, and try to save there. */
-        /* --------------------------------------------------------------------
-         */
-        CPLErr eErr = CE_None;
-
-        if (bSaved)
-            eErr = CE_None;
-        else
-        {
-            const char *pszBasename = GetDescription();
-
-            if (psPam->osPhysicalFilename.length() > 0)
-                pszBasename = psPam->osPhysicalFilename;
-
-            const char *pszNewPam = nullptr;
-            if (PamGetProxy(pszBasename) == nullptr &&
-                ((pszNewPam = PamAllocateProxy(pszBasename)) != nullptr))
-            {
-                CPLErrorReset();
-                CPLFree(psPam->pszPamFilename);
-                psPam->pszPamFilename = CPLStrdup(pszNewPam);
-                eErr = TrySaveXML();
-            }
-            /* No way we can save into a /vsicurl resource */
-            else if (!VSISupportsSequentialWrite(psPam->pszPamFilename, false))
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Unable to save auxiliary information in %s.",
-                         psPam->pszPamFilename);
-                eErr = CE_Warning;
-            }
-        }
 
         /* --------------------------------------------------------------------
          */
@@ -870,7 +725,7 @@ CPLErr TileDBRasterDataset::TrySaveXML()
         if (psTree)
             CPLDestroyXMLNode(psTree);
 
-        return eErr;
+        return CE_None;
     }
     catch (const std::exception &e)
     {
@@ -940,7 +795,6 @@ CPLErr TileDBRasterDataset::TryLoadCachedXML(char ** /*papszSiblingFiles*/,
         {
             CPLErrorHandlerPusher oQuietError(CPLQuietErrorHandler);
 
-#if TILEDB_VERSION_MAJOR > 1 || TILEDB_VERSION_MINOR >= 7
             if (bReload)
             {
                 tiledb_datatype_t v_type =
@@ -970,7 +824,7 @@ CPLErr TileDBRasterDataset::TryLoadCachedXML(char ** /*papszSiblingFiles*/,
                 }
                 psTree = CPLParseXMLString(osMetaDoc);
             }
-#endif
+
             if (bReload && psTree == nullptr &&
                 vfs.is_file(psPam->pszPamFilename))
             {
@@ -1177,12 +1031,14 @@ GDALDataset *TileDBRasterDataset::Open(GDALOpenInfo *poOpenInfo)
         if (eMode == TILEDB_READ)
         {
             poDS->m_array.reset(new tiledb::Array(
-                *poDS->m_ctx, osArrayPath, TILEDB_READ, poDS->nTimestamp));
+                *poDS->m_ctx, osArrayPath, TILEDB_READ,
+                tiledb::TemporalPolicy(tiledb::TimeTravel, poDS->nTimestamp)));
         }
         else
         {
             poDS->m_array.reset(new tiledb::Array(
-                *poDS->m_ctx, osArrayPath, TILEDB_WRITE, poDS->nTimestamp));
+                *poDS->m_ctx, osArrayPath, TILEDB_WRITE,
+                tiledb::TemporalPolicy(tiledb::TimeTravel, poDS->nTimestamp)));
         }
     }
     else
@@ -2081,9 +1937,10 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
 
         if (poDstDS->nTimestamp)
         {
-            poDstDS->m_array.reset(
-                new tiledb::Array(*poDstDS->m_ctx, poDstDS->GetDescription(),
-                                  TILEDB_WRITE, poDstDS->nTimestamp));
+            poDstDS->m_array.reset(new tiledb::Array(
+                *poDstDS->m_ctx, poDstDS->GetDescription(), TILEDB_WRITE,
+                tiledb::TemporalPolicy(tiledb::TimeTravel,
+                                       poDstDS->nTimestamp)));
         }
         else
             poDstDS->m_array.reset(new tiledb::Array(
@@ -2196,8 +2053,9 @@ GDALDataset *TileDBRasterDataset::Create(const char *pszFilename, int nXSize,
     tiledb::Array::create(osArrayPath, *poDS->m_schema);
 
     if (poDS->nTimestamp)
-        poDS->m_array.reset(new tiledb::Array(*poDS->m_ctx, osArrayPath,
-                                              TILEDB_WRITE, poDS->nTimestamp));
+        poDS->m_array.reset(new tiledb::Array(
+            *poDS->m_ctx, osArrayPath, TILEDB_WRITE,
+            tiledb::TemporalPolicy(tiledb::TimeTravel, poDS->nTimestamp)));
     else
         poDS->m_array.reset(
             new tiledb::Array(*poDS->m_ctx, osArrayPath, TILEDB_WRITE));
@@ -2415,7 +2273,3 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
     }
     return nullptr;
 }
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif

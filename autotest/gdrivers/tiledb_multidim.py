@@ -38,18 +38,7 @@ import pytest
 
 from osgeo import gdal, osr
 
-
-def has_tiledb_multidim():
-    drv = gdal.GetDriverByName("TileDB")
-    if drv is None:
-        return False
-    return drv.GetMetadataItem(gdal.DCAP_CREATE_MULTIDIMENSIONAL) == "YES"
-
-
-pytestmark = [
-    pytest.mark.require_driver("TileDB"),
-    pytest.mark.skipif(not has_tiledb_multidim(), reason="TileDB >= 2.15 required"),
-]
+pytestmark = pytest.mark.require_driver("TileDB")
 
 
 def test_tiledb_multidim_basic():

@@ -28,8 +28,6 @@
 
 #include "tiledbmultidim.h"
 
-#ifdef HAS_TILEDB_MULTIDIM
-
 /************************************************************************/
 /*           TileDBAttributeHolder::~TileDBAttributeHolder()            */
 /************************************************************************/
@@ -300,5 +298,3 @@ bool TileDBAttributeHolder::PutMetadata(const std::string &key,
         return false;
     }
 }
-
-#endif
