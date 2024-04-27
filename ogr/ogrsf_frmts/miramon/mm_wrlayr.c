@@ -7203,7 +7203,14 @@ static int MMCloseMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     ret_code = 0;
 end_label:
+
     // Closing database files
+    if (MMAdmDB->pMMBDXP && MMAdmDB->pMMBDXP->pfDataBase &&
+        MMAdmDB->pMMBDXP->pfDataBase != MMAdmDB->pFExtDBF)
+    {
+        fclose_and_nullify(&MMAdmDB->pMMBDXP->pfDataBase);
+    }
+
     fclose_and_nullify(&MMAdmDB->pFExtDBF);
 
     return ret_code;
