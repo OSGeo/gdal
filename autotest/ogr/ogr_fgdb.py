@@ -1203,6 +1203,7 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv, test_gdb):
     # if ds.StartTransaction(force=True) != 0:
     if (
         gdaltest.is_travis_branch("ubuntu_2204")
+        or gdaltest.is_travis_branch("ubuntu_2404")
         or gdaltest.is_travis_branch("ubuntu_2004")
         or gdaltest.is_travis_branch("ubuntu_1804")
         or gdaltest.is_travis_branch("ubuntu_1604")
@@ -1683,6 +1684,7 @@ def test_ogr_fgdb_19bis(openfilegdb_drv, fgdb_drv, test_gdb):
 
     if (
         gdaltest.is_travis_branch("ubuntu_2204")
+        or gdaltest.is_travis_branch("ubuntu_2404")
         or gdaltest.is_travis_branch("ubuntu_2004")
         or gdaltest.is_travis_branch("ubuntu_1804")
         or gdaltest.is_travis_branch("ubuntu_1604")
@@ -1714,6 +1716,7 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv, tmp_path):
 
     if (
         gdaltest.is_travis_branch("ubuntu_2204")
+        or gdaltest.is_travis_branch("ubuntu_2404")
         or gdaltest.is_travis_branch("ubuntu_2004")
         or gdaltest.is_travis_branch("ubuntu_1804")
         or gdaltest.is_travis_branch("ubuntu_1604")
@@ -2202,6 +2205,7 @@ def test_ogr_fgdb_21(fgdb_drv, fgdb_sdk_1_4_or_later, tmp_path):
     # Fails on MULTIPOINT ZM
     if (
         gdaltest.is_travis_branch("ubuntu_2204")
+        or gdaltest.is_travis_branch("ubuntu_2404")
         or gdaltest.is_travis_branch("ubuntu_2004")
         or gdaltest.is_travis_branch("ubuntu_1804")
         or gdaltest.is_travis_branch("ubuntu_1604")

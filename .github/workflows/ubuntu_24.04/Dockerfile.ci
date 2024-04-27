@@ -1,0 +1,131 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --allow-unauthenticated \
+    autoconf \
+    automake \
+    bash \
+    ccache \
+    cmake \
+    clang \
+    curl \
+    doxygen \
+    fossil \
+    g++ \
+    git \
+    gpsbabel \
+    libblosc-dev \
+    libboost-dev \
+    libcairo2-dev \
+    libcfitsio-dev \
+    libcrypto++-dev \
+    libcurl4-gnutls-dev \
+    libexpat-dev \
+    libfcgi-dev \
+    libfyba-dev \
+    libfreexl-dev \
+    libgeos-dev \
+    libgeotiff-dev \
+    libgif-dev \
+    libhdf4-alt-dev \
+    libhdf5-serial-dev \
+    libjpeg-dev \
+    libjxl-dev \
+    libkml-dev \
+    liblcms2-2 \
+    liblz4-dev \
+    liblzma-dev \
+    libmysqlclient-dev \
+    libnetcdf-dev \
+    libogdi-dev \
+    libopenexr-dev \
+    libopenjp2-7-dev \
+    libpcre3-dev \
+    libpng-dev \
+    libpoppler-dev \
+    libpoppler-private-dev \
+    libpq-dev \
+    libproj-dev \
+    librasterlite2-dev \
+    libspatialite-dev \
+    libssl-dev \
+    libwebp-dev \
+    libxerces-c-dev \
+    libxml2-dev \
+    libxslt-dev \
+    libzstd-dev \
+    locales \
+    mysql-client-core-8.0 \
+    netcdf-bin \
+    openjdk-8-jdk \
+    poppler-utils \
+    postgis \
+    postgresql-client \
+    python3-dev \
+    python3-numpy \
+    python3-pip \
+    sqlite3 \
+    swig \
+    unixodbc-dev \
+    wget \
+    zip
+
+# MSSQL: client side
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+RUN curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | tee /etc/apt/sources.list.d/msprod.list
+RUN apt-get update \
+   && ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
+
+# Build mongo-c-driver
+ARG MONGO_C_DRIVER_VERSION=1.24.4
+RUN mkdir mongo-c-driver \
+    && wget -q https://github.com/mongodb/mongo-c-driver/releases/download/${MONGO_C_DRIVER_VERSION}/mongo-c-driver-${MONGO_C_DRIVER_VERSION}.tar.gz -O - \
+        | tar xz -C mongo-c-driver --strip-components=1 \
+    && cd mongo-c-driver \
+    && mkdir build_cmake \
+    && cd build_cmake \
+    && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_TESTS=NO -DCMAKE_BUILD_TYPE=Release \
+    && make -j$(nproc) \
+    && make install \
+    && cd ../.. \
+    && rm -rf mongo-c-driver
+
+# Build mongocxx
+ARG MONGOCXX_VERSION=3.8.1
+RUN mkdir mongocxx \
+    && wget -q https://github.com/mongodb/mongo-cxx-driver/archive/r${MONGOCXX_VERSION}.tar.gz -O - \
+        | tar xz -C mongocxx --strip-components=1 \
+    && cd mongocxx \
+    && mkdir build_cmake \
+    && cd build_cmake \
+    && cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_TESTS=OFF -DMONGOCXX_ENABLE_SLOW_TESTS=NO -DCMAKE_BUILD_TYPE=Release -DBUILD_VERSION=${MONGOCXX_VERSION} \
+    && make -j$(nproc) \
+    && make install \
+    && cd ../.. \
+    && rm -rf mongocxx
+
+# ESRI File Geodatabase API
+RUN curl -L -O https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5/FileGDB_API_1_5_64gcc51.tar.gz \
+	&& tar xzf FileGDB_API_1_5_64gcc51.tar.gz \
+	&& cp -r FileGDB_API-64gcc51/* /usr/ \
+	&& rm FileGDB_API_1_5_64gcc51.tar.gz \
+	&& rm -rf FileGDB_API-64gcc51 \
+	&& ldconfig
+
+# Oracle : client side (proprietary software)
+RUN curl -L -O https://download.oracle.com/otn_software/linux/instantclient/199000/instantclient-basic-linux.x64-19.9.0.0.0dbru.zip \
+    && curl -L -O https://download.oracle.com/otn_software/linux/instantclient/199000/instantclient-sdk-linux.x64-19.9.0.0.0dbru.zip \
+    && unzip instantclient-basic-linux.x64-19.9.0.0.0dbru.zip -d /opt \
+    && unzip instantclient-sdk-linux.x64-19.9.0.0.0dbru.zip -d opt \
+    && apt-get install -y libaio1t64 \
+    && ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1
+
+# Workaround libogdi packaging issue
+# Cf https://lists.debian.org/debian-gis/2024/04/msg00006.html
+RUN ln -s /usr/lib/x86_64-linux-gnu/ogdi/4.1/libvrf.so /usr/lib/x86_64-linux-gnu
+
+COPY requirements.txt /tmp/
+RUN python3 -m pip install -U --break-system-packages -r /tmp/requirements.txt
+
