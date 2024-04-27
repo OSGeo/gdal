@@ -13,14 +13,12 @@ if grep -q "ubuntu" <<< "$GHA_CI_PLATFORM"; then
     ARCH="64"
 fi
 
-# macos-latest: arm64
-# macos-latest-large: x86_64
-if grep -q "macos-latest-large" <<< "$GHA_CI_PLATFORM"; then
-    CONDA_PLAT="osx"
-    ARCH="64"
-elif grep -q "macos-latest" <<< "$GHA_CI_PLATFORM"; then
+if grep -q "macos-14" <<< "$GHA_CI_PLATFORM"; then
     CONDA_PLAT="osx"
     ARCH="arm64"
+elif grep -q "macos" <<< "$GHA_CI_PLATFORM"; then
+    CONDA_PLAT="osx"
+    ARCH="64"
 fi
 
 conda build recipe --clobber-file recipe/recipe_clobber.yaml --output-folder packages -m ".ci_support/${CONDA_PLAT}_${ARCH}_.yaml"

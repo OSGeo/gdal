@@ -28,9 +28,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        # macos-latest: arm64
-        # macos-latest-large: x86_64
-        platform: ['ubuntu-latest','windows-latest','macos-latest','macos-latest-large']
+        platform: ['ubuntu-latest','windows-latest','macos-latest','macos-14']
 
     env:
       GHA_CI_PLATFORM: ${{ matrix.platform }}
