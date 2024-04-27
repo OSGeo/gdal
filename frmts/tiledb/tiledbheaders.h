@@ -190,13 +190,12 @@ class TileDBDataset : public GDALPamDataset
                                    char **papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
-#ifdef HAS_TILEDB_MULTIDIM
+
     static GDALDataset *OpenMultiDimensional(GDALOpenInfo *);
     static GDALDataset *
     CreateMultiDimensional(const char *pszFilename,
                            CSLConstList papszRootGroupOptions,
                            CSLConstList papszOptions);
-#endif
 };
 
 /************************************************************************/
@@ -333,11 +332,7 @@ class OGRTileDBLayer final : public OGRLayer,
     uint64_t m_nRowCountInResultSet = 0;
     int m_nUseOptimizedAttributeFilter = -1;  // uninitialized
 
-#ifdef HAS_TILEDB_WORKING_UTF8_STRING_FILTER
     tiledb_datatype_t m_eTileDBStringType = TILEDB_STRING_UTF8;
-#else
-    tiledb_datatype_t m_eTileDBStringType = TILEDB_STRING_ASCII;
-#endif
 
     std::string m_osXDim = "_X";
     std::string m_osYDim = "_Y";

@@ -35,49 +35,11 @@
 #pragma GCC system_header
 #endif
 
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4996) /* XXXX was deprecated */
-#endif
-
 #ifdef INCLUDE_ONLY_TILEDB_VERSION
 #include "tiledb/tiledb_version.h"
 #else
 #include "tiledb/tiledb"
 #include "tiledb/tiledb_experimental"
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 9)
-#define HAS_TILEDB_GROUP
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 10)
-#define HAS_TILEDB_BOOL
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 11)
-#define HAS_TILEDB_WORKING_OR_FILTER
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 14)
-#define HAS_TILEDB_WORKING_UTF8_STRING_FILTER
-#endif
-
-#if TILEDB_VERSION_MAJOR > 2 ||                                                \
-    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 15)
-#define HAS_TILEDB_DIMENSION_LABEL
-#endif
-
-#ifdef HAS_TILEDB_DIMENSION_LABEL
-#define HAS_TILEDB_MULTIDIM
 #endif
 
 #if TILEDB_VERSION_MAJOR > 2 ||                                                \

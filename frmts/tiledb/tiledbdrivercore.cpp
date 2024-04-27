@@ -102,12 +102,7 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "Integer Integer64 Real String Date Time DateTime "
         "IntegerList Integer64List RealList Binary");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
-#ifdef HAS_TILEDB_BOOL
-                              "Boolean Int16 Float32"
-#else
-                              "Int16 Float32"
-#endif
-    );
+                              "Boolean Int16 Float32");
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,
         "<CreationOptionList>\n"
@@ -149,11 +144,9 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "   <Option name='BOUNDS' scope='raster' type='string' "
         "description='Specify "
         "bounds for sparse array, minx, miny, maxx, maxy'/>\n"
-#ifdef HAS_TILEDB_GROUP
         "   <Option name='CREATE_GROUP' scope='vector' type='boolean' "
         "description='Whether to create a group for multiple layer support' "
         "default='NO'/>"
-#endif
         "</CreationOptionList>\n");
 
     // clang-format off
@@ -225,11 +218,7 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "array at this timestamp, the timestamp should be > 0'/>"
         "   <Option name='TILEDB_STRING_TYPE' type='string-select' "
         "description='Which TileDB type to create string attributes' "
-#ifdef HAS_TILEDB_WORKING_UTF8_STRING_FILTER
        "default='UTF8'"
-#else
-       "default='ASCII'"
-#endif
         ">"
         "       <Value>UTF8</Value>"
         "       <Value>ASCII</Value>"
@@ -239,7 +228,6 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "</LayerCreationOptionList>");
     // clang-format on
 
-#ifdef HAS_TILEDB_MULTIDIM
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_MULTIDIMENSIONAL, "YES");
 
@@ -287,15 +275,6 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "description='Whether the array should be only in-memory. Useful to "
         "create an indexing variable that is serialized as a dimension label'/>"
         "</MultiDimArrayCreationOptionList>");
-#endif
-
-#if !defined(HAS_TILEDB_WORKING_UTF8_STRING_FILTER)
-    poDriver->SetMetadataItem("HAS_TILEDB_WORKING_UTF8_STRING_FILTER", "NO");
-#endif
-
-#if !defined(HAS_TILEDB_WORKING_OR_FILTER)
-    poDriver->SetMetadataItem("HAS_TILEDB_WORKING_OR_FILTER", "NO");
-#endif
 
     poDriver->pfnIdentify = TileDBDriverIdentifySimplified;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
