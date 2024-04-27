@@ -833,7 +833,7 @@ static bool IsPointType(const std::shared_ptr<arrow::DataType> &type,
             bHasZOut = false;
             bHasMOut = true;
         }
-        else if (osValueFieldName == "xyz")
+        else /* if (osValueFieldName == "xyz" || osValueFieldName == "element") */
         {
             bHasMOut = false;
             bHasZOut = true;

@@ -1261,10 +1261,10 @@ inline OGRErr OGRArrowWriterLayer::BuildGeometry(OGRGeometry *poGeom,
                 std::numeric_limits<double>::quiet_NaN()));
             OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
                 std::numeric_limits<double>::quiet_NaN()));
-            if (OGR_GT_HasZ(eGType))
+            if (bHasZ)
                 OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
                     std::numeric_limits<double>::quiet_NaN()));
-            if (OGR_GT_HasM(eGType))
+            if (bHasM)
                 OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
                     std::numeric_limits<double>::quiet_NaN()));
         }
@@ -1364,6 +1364,12 @@ inline OGRErr OGRArrowWriterLayer::BuildGeometry(OGRGeometry *poGeom,
                     std::numeric_limits<double>::quiet_NaN()));
                 OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
                     std::numeric_limits<double>::quiet_NaN()));
+                if (bHasZ)
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
+                        std::numeric_limits<double>::quiet_NaN()));
+                if (bHasM)
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(poValueBuilder->Append(
+                        std::numeric_limits<double>::quiet_NaN()));
             }
             else
             {
@@ -1371,13 +1377,13 @@ inline OGRErr OGRArrowWriterLayer::BuildGeometry(OGRGeometry *poGeom,
                     poValueBuilder->Append(poPoint->getX()));
                 OGR_ARROW_RETURN_OGRERR_NOT_OK(
                     poValueBuilder->Append(poPoint->getY()));
+                if (bHasZ)
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        poValueBuilder->Append(poPoint->getZ()));
+                if (bHasM)
+                    OGR_ARROW_RETURN_OGRERR_NOT_OK(
+                        poValueBuilder->Append(poPoint->getM()));
             }
-            if (bHasZ)
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                    poValueBuilder->Append(poPoint->getZ()));
-            if (bHasM)
-                OGR_ARROW_RETURN_OGRERR_NOT_OK(
-                    poValueBuilder->Append(poPoint->getM()));
             break;
         }
 
