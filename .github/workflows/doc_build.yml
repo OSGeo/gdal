@@ -30,7 +30,7 @@ jobs:
           apt update
           apt install -y libproj-dev swig
           python3 -m pip install -r doc/requirements.txt
-          python3 -m pip install numpy
+          python3 -m pip install numpy setuptools
           pushd .
           mkdir build
           cd build
@@ -43,6 +43,14 @@ jobs:
             -DOGR_BUILD_OPTIONAL_DRIVERS=OFF
           cmake --build . -j$(nproc)
           cmake --install .
+          # With the new ghcr.io/osgeo/proj-docs image based on Ubuntu 24.04
+          # a venv is activated. The above does not install the
+          # Python bindings into it (and the ones in the system are not found
+          # without overriding PYTHONPATH), so do it through pip install
+          cd swig/python
+          python3 setup.py sdist
+          cp dist/* /tmp/gdal.tar.gz
+          python3 -m pip install /tmp/gdal.tar.gz
           ldconfig
           popd
 
