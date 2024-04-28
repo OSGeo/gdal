@@ -391,20 +391,33 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
     auto fs = GetFileSystem(osBasePath, osQueryParameters);
 
     arrow::dataset::FileSystemFactoryOptions options;
-    auto partitioningFactory = arrow::dataset::HivePartitioning::MakeFactory();
-    options.partitioning =
-        arrow::dataset::PartitioningOrFactory(std::move(partitioningFactory));
-
-    arrow::fs::FileSelector selector;
-    selector.base_dir = osBasePath;
-    selector.recursive = true;
-
     std::shared_ptr<arrow::dataset::DatasetFactory> factory;
-    PARQUET_ASSIGN_OR_THROW(
-        factory, arrow::dataset::FileSystemDatasetFactory::Make(
-                     std::move(fs), std::move(selector),
-                     std::make_shared<arrow::dataset::ParquetFileFormat>(),
-                     std::move(options)));
+    VSIStatBufL sStat;
+    if (VSIStatL(osBasePath.c_str(), &sStat) == 0 && VSI_ISREG(sStat.st_mode))
+    {
+        PARQUET_ASSIGN_OR_THROW(
+            factory, arrow::dataset::FileSystemDatasetFactory::Make(
+                         std::move(fs), {osBasePath},
+                         std::make_shared<arrow::dataset::ParquetFileFormat>(),
+                         std::move(options)));
+    }
+    else
+    {
+        auto partitioningFactory =
+            arrow::dataset::HivePartitioning::MakeFactory();
+        options.partitioning = arrow::dataset::PartitioningOrFactory(
+            std::move(partitioningFactory));
+
+        arrow::fs::FileSelector selector;
+        selector.base_dir = osBasePath;
+        selector.recursive = true;
+
+        PARQUET_ASSIGN_OR_THROW(
+            factory, arrow::dataset::FileSystemDatasetFactory::Make(
+                         std::move(fs), std::move(selector),
+                         std::make_shared<arrow::dataset::ParquetFileFormat>(),
+                         std::move(options)));
+    }
 
     return OpenFromDatasetFactory(osBasePath, factory, papszOpenOptions);
 }
@@ -597,20 +610,19 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
                 // Detect if the directory contains .parquet files, or
                 // subdirectories with a name of the form "key=value", typical
                 // of HIVE partitioning.
-                char **papszFiles = VSIReadDir(osBasePath.c_str());
-                for (char **papszIter = papszFiles; papszIter && *papszIter;
-                     ++papszIter)
+                const CPLStringList aosFiles(VSIReadDir(osBasePath.c_str()));
+                for (const char *pszFilename : cpl::Iterate(aosFiles))
                 {
-                    if (EQUAL(CPLGetExtension(*papszIter), "parquet"))
+                    if (EQUAL(CPLGetExtension(pszFilename), "parquet"))
                     {
                         bLikelyParquetDataset = true;
                         break;
                     }
-                    else if (strchr(*papszIter, '='))
+                    else if (strchr(pszFilename, '='))
                     {
                         // HIVE partitioning
                         if (VSIStatL(CPLFormFilename(osBasePath.c_str(),
-                                                     *papszIter, nullptr),
+                                                     pszFilename, nullptr),
                                      &sStat) == 0 &&
                             VSI_ISDIR(sStat.st_mode))
                         {
@@ -619,7 +631,6 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
                         }
                     }
                 }
-                CSLDestroy(papszFiles);
             }
 
             if (bStartedWithParquetPrefix || bLikelyParquetDataset)

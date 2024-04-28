@@ -71,6 +71,19 @@ GDALDataset *OGRParquetLayerBase::GetDataset()
 }
 
 /************************************************************************/
+/*                           ResetReading()                             */
+/************************************************************************/
+
+void OGRParquetLayerBase::ResetReading()
+{
+    if (m_iRecordBatch != 0)
+    {
+        m_poRecordBatchReader.reset();
+    }
+    OGRArrowLayer::ResetReading();
+}
+
+/************************************************************************/
 /*                          LoadGeoMetadata()                           */
 /************************************************************************/
 
@@ -1250,10 +1263,6 @@ OGRFeature *OGRParquetLayer::GetFeature(GIntBig nFID)
 
 void OGRParquetLayer::ResetReading()
 {
-    if (m_iRecordBatch != 0)
-    {
-        m_poRecordBatchReader.reset();
-    }
     OGRParquetLayerBase::ResetReading();
     m_oFeatureIdxRemappingIter = m_asFeatureIdxRemapping.begin();
     m_nFeatureIdxSelected = 0;

@@ -96,16 +96,6 @@ void OGRParquetDatasetLayer::EstablishFeatureDefn()
 }
 
 /************************************************************************/
-/*                           ResetReading()                             */
-/************************************************************************/
-
-void OGRParquetDatasetLayer::ResetReading()
-{
-    m_poRecordBatchReader.reset();
-    OGRParquetLayerBase::ResetReading();
-}
-
-/************************************************************************/
 /*                           ReadNextBatch()                            */
 /************************************************************************/
 
