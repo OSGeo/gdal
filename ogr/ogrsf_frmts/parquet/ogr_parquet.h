@@ -66,6 +66,8 @@ class OGRParquetLayerBase CPL_NON_FINAL : public OGRArrowLayer
   public:
     int TestCapability(const char *) override;
 
+    void ResetReading() override;
+
     GDALDataset *GetDataset() override;
 };
 
@@ -245,7 +247,6 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
         const std::shared_ptr<arrow::Schema> &schema,
         CSLConstList papszOpenOptions);
 
-    void ResetReading() override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
