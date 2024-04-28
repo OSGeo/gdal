@@ -710,7 +710,7 @@ Advanced examples
 
         ogr2ogr -append -fieldmap 2,-1,4 dst.shp src.shp
 
-* Outputing geometries with the CSV driver.
+* Outputting geometries with the CSV driver.
 
   By default, this driver does not preserve geometries on layer creation by
   default. An explicit layer creation option is needed:
@@ -737,7 +737,7 @@ Advanced examples
         ogr2ogr -sql "SELECT SHAPE FROM PLSSPoint" \
           -lco GEOMETRY=AS_XY -f CSV /vsistdout/ CadNSDI.gdb.zip
 
-  For a shapefile with a unamed geometry column, ``_ogr_geometry_`` can be used as
+  For a shapefile with a unnamed geometry column, ``_ogr_geometry_`` can be used as
   a special name to designate the implicit geometry column, when using the default
   :ref:`OGR SQL <ogr_sql_dialect>` dialect. The name begins with
   an underscore and SQL syntax requires that it must appear between double quotes.

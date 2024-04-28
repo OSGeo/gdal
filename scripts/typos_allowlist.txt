@@ -330,3 +330,4 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
     assert f.GetField("PERIMETRE") == pytest.approx(680.544697, abs=1e-5)
     assert f["PERIMETRE"] == [3.414213562, 3.414213562]
     assert f["PERIMETRE"] == [32, 32]
+# Package substitutefont no longer exists since TeXLive 2023 later than August 2023
