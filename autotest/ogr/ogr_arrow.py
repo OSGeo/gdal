@@ -185,6 +185,24 @@ def test_ogr_arrow_test_ogrsf_test_feather():
 
 
 ###############################################################################
+# Run test_ogrsf on a Feather file
+
+
+def test_ogr_arrow_test_ogrsf_test_feather_all_types():
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + " -ro data/arrow/test.feather"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+
+
+###############################################################################
 # Run test_ogrsf on a IPC stream file
 
 
