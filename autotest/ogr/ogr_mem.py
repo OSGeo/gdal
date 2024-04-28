@@ -1600,6 +1600,106 @@ def test_ogr_mem_write_arrow_error_negative_fid():
 
 
 ###############################################################################
+# Test writing a ArrowArray into a OGR field whose types don't fully match
+
+
+@pytest.mark.parametrize("IF_FIELD_NOT_PRESERVED", [None, "ERROR"])
+@pytest.mark.parametrize(
+    "input_type,output_type,input_vals,output_vals",
+    [
+        [ogr.OFTInteger64, ogr.OFTInteger, [123456, None], [123456, None]],
+        [ogr.OFTInteger64, ogr.OFTInteger, [1234567890123], [(1 << 31) - 1]],
+        [ogr.OFTReal, ogr.OFTInteger, [1], [1]],
+        [ogr.OFTReal, ogr.OFTInteger, [1.23], [1]],
+        [ogr.OFTReal, ogr.OFTInteger, [float("nan")], [-(1 << 31)]],
+        [ogr.OFTReal, ogr.OFTInteger64, [1], [1]],
+        [ogr.OFTReal, ogr.OFTInteger64, [1.23], [1]],
+        [ogr.OFTReal, ogr.OFTInteger64, [float("nan")], [-(1 << 63)]],
+        [ogr.OFTInteger64, ogr.OFTReal, [1234567890123, None], [1234567890123, None]],
+        [
+            ogr.OFTInteger64,
+            ogr.OFTReal,
+            [((1 << 63) - 1), None],
+            [float((1 << 63) - 1), None],
+        ],
+        # below is never lossy
+        [ogr.OFTInteger, ogr.OFTInteger64, [123456, None], [123456, None]],
+        [ogr.OFTInteger, ogr.OFTReal, [123456, None], [123456, None]],
+    ],
+)
+@gdaltest.enable_exceptions()
+def test_ogr_mem_write_arrow_accepted_field_type_mismatch(
+    input_type, output_type, input_vals, output_vals, IF_FIELD_NOT_PRESERVED
+):
+
+    if input_vals[0] == ((1 << 63) - 1) and output_type == ogr.OFTReal:
+        # This conversion from INT64_MAX to double doesn't seem to be lossy
+        # on arm64 or s390x (weird...)
+        import platform
+
+        if platform.machine() not in ("x86_64", "AMD64"):
+            pytest.skip("Skipping test on platform.machine() = " + platform.machine())
+
+    src_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    src_lyr = src_ds.CreateLayer("src_lyr")
+
+    src_lyr.CreateField(ogr.FieldDefn("my_field", input_type))
+
+    for v in input_vals:
+        src_feature = ogr.Feature(src_lyr.GetLayerDefn())
+        if v:
+            src_feature["my_field"] = v
+        src_lyr.CreateFeature(src_feature)
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    dst_lyr = ds.CreateLayer("dst_lyr")
+    dst_lyr.CreateField(ogr.FieldDefn("my_field", output_type))
+
+    stream = src_lyr.GetArrowStream(["INCLUDE_FID=NO"])
+    schema = stream.GetSchema()
+
+    lossy_conversion = (input_vals != output_vals) or (
+        input_vals[0] == ((1 << 63) - 1) and output_type == ogr.OFTReal
+    )
+
+    while True:
+        array = stream.GetNextRecordBatch()
+        if array is None:
+            break
+        if IF_FIELD_NOT_PRESERVED:
+            if lossy_conversion:
+                with gdal.quiet_errors(), pytest.raises(
+                    Exception, match="value of field my_field cannot not preserved"
+                ):
+                    dst_lyr.WriteArrowBatch(
+                        schema,
+                        array,
+                        {"IF_FIELD_NOT_PRESERVED": IF_FIELD_NOT_PRESERVED},
+                    )
+                return
+            else:
+                dst_lyr.WriteArrowBatch(
+                    schema, array, {"IF_FIELD_NOT_PRESERVED": IF_FIELD_NOT_PRESERVED}
+                )
+        else:
+            if lossy_conversion:
+                with gdal.quiet_errors():
+                    gdal.ErrorReset()
+                    dst_lyr.WriteArrowBatch(schema, array)
+                    assert gdal.GetLastErrorType() == gdal.CE_Warning
+            else:
+                gdal.ErrorReset()
+                dst_lyr.WriteArrowBatch(schema, array)
+                assert gdal.GetLastErrorType() == gdal.CE_None
+
+    dst_lyr.ResetReading()
+
+    for v in output_vals:
+        f = dst_lyr.GetNextFeature()
+        assert f["my_field"] == v
+
+
+###############################################################################
 
 
 @gdaltest.enable_exceptions()
