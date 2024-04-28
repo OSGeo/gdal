@@ -109,7 +109,7 @@ projection,including GCP-based transformations.
 
 .. option:: -gcp <pixel> <line> <easting> <northing> [<elevation>]
 
-    Provide a GCP to be used for transformation (generally three or more are required)
+    Provide a GCP to be used for transformation (generally three or more are required). Pixel and line need not be integers.
 
 .. option:: -output_xy
 
