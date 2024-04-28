@@ -3832,6 +3832,12 @@ void OGRFeature::SetField(int iField, GIntBig nValue)
     else if (eType == OFTReal)
     {
         pauFields[iField].Real = static_cast<double>(nValue);
+        if (static_cast<GIntBig>(pauFields[iField].Real) != nValue)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Lossy conversion occurred when trying to set "
+                     "a real field from a 64 bit integer value.");
+        }
     }
     else if (eType == OFTIntegerList)
     {
@@ -3988,12 +3994,34 @@ void OGRFeature::SetField(int iField, double dfValue)
                          : dfValue > nMax ? nMax
                                           : static_cast<int>(dfValue);
         pauFields[iField].Integer = OGRFeatureGetIntegerValue(poFDefn, nVal);
+        if (!(nVal == dfValue))
+        {
+            if (std::isnan(dfValue))
+                pauFields[iField].Integer = nMin;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Lossy conversion occurred when trying to set "
+                     "32 bit integer field from a real value.");
+        }
         pauFields[iField].Set.nMarker2 = 0;
         pauFields[iField].Set.nMarker3 = 0;
     }
     else if (eType == OFTInteger64)
     {
-        pauFields[iField].Integer64 = static_cast<GIntBig>(dfValue);
+        const auto nMin = std::numeric_limits<GIntBig>::min();
+        const auto nMax = std::numeric_limits<GIntBig>::max();
+        const auto nVal = dfValue < static_cast<double>(nMin) ? nMin
+                          : dfValue > static_cast<double>(nMax)
+                              ? nMax
+                              : static_cast<GIntBig>(dfValue);
+        pauFields[iField].Integer64 = nVal;
+        if (!(static_cast<double>(nVal) == dfValue))
+        {
+            if (std::isnan(dfValue))
+                pauFields[iField].Integer64 = nMin;
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Lossy conversion occurred when trying to set "
+                     "64 bit integer field from a real value.");
+        }
         pauFields[iField].Set.nMarker3 = 0;
     }
     else if (eType == OFTRealList)
