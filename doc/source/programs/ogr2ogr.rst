@@ -734,7 +734,7 @@ Advanced examples
 
     .. code-block:: bash
 
-        ogr2ogr -sql "SELECT SHAPE FROM PLSSPoint LIMIT 2" \
+        ogr2ogr -sql "SELECT SHAPE FROM PLSSPoint" \
           -lco GEOMETRY=AS_XY -f CSV /vsistdout/ CadNSDI.gdb.zip
 
   For a shapefile with a unamed geometry column, ``_ogr_geometry_`` can be used as
@@ -746,7 +746,7 @@ Advanced examples
 
     .. code-block:: bash
 
-        ogr2ogr -sql "SELECT \"_ogr_geometry_\" FROM PLSSPoint LIMIT 2" \
+        ogr2ogr -sql "SELECT \"_ogr_geometry_\" FROM PLSSPoint" \
           -lco GEOMETRY=AS_XY -f CSV /vsistdout/ CadNSDI.shp
 
   If using the :ref:`SQL SQLite <sql_sqlite_dialect>` dialect, the special geometry
@@ -754,5 +754,5 @@ Advanced examples
 
     .. code-block:: bash
 
-        ogr2ogr -sql "SELECT geometry FROM PLSSPoint LIMIT 2" -dialect SQLite \
+        ogr2ogr -sql "SELECT geometry FROM PLSSPoint" -dialect SQLite \
           -lco GEOMETRY=AS_XY -f CSV /vsistdout/ CadNSDI.shp
