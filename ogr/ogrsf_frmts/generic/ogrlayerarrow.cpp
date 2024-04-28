@@ -6311,6 +6311,64 @@ static bool BuildOGRFieldInfo(
                         bTypeOK = true;
                         break;
                     }
+                    else if (eOGRType == OFTInteger &&
+                             sType.eType == OFTInteger64)
+                    {
+                        // Potentially lossy.
+                        CPLDebug("OGR",
+                                 "For field %s, writing from Arrow array of "
+                                 "type Int64 into OGR Int32 field. "
+                                 "Potentially loss conversion can happen",
+                                 sInfo.osName.c_str());
+                        bFallbackTypesUsed = true;
+                        bTypeOK = true;
+                        break;
+                    }
+                    else if (eOGRType == OFTInteger && sType.eType == OFTReal)
+                    {
+                        // Potentially lossy.
+                        CPLDebug("OGR",
+                                 "For field %s, writing from Arrow array of "
+                                 "type Real into OGR Int32 field. "
+                                 "Potentially loss conversion can happen",
+                                 sInfo.osName.c_str());
+                        bFallbackTypesUsed = true;
+                        bTypeOK = true;
+                        break;
+                    }
+                    else if (eOGRType == OFTInteger64 && sType.eType == OFTReal)
+                    {
+                        // Potentially lossy.
+                        CPLDebug("OGR",
+                                 "For field %s, writing from Arrow array of "
+                                 "type Real into OGR Int64 field. "
+                                 "Potentially loss conversion can happen",
+                                 sInfo.osName.c_str());
+                        bFallbackTypesUsed = true;
+                        bTypeOK = true;
+                        break;
+                    }
+                    else if (eOGRType == OFTReal && sType.eType == OFTInteger64)
+                    {
+                        // Potentially lossy.
+                        CPLDebug("OGR",
+                                 "For field %s, writing from Arrow array of "
+                                 "type Int64 into OGR Real field. "
+                                 "Potentially loss conversion can happen",
+                                 sInfo.osName.c_str());
+                        bFallbackTypesUsed = true;
+                        bTypeOK = true;
+                        break;
+                    }
+                    else if ((eOGRType == OFTInteger64 ||
+                              eOGRType == OFTReal) &&
+                             sType.eType == OFTInteger)
+                    {
+                        // Non-lossy
+                        bFallbackTypesUsed = true;
+                        bTypeOK = true;
+                        break;
+                    }
                     else
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
@@ -7153,8 +7211,18 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
  * will be supported by WriteArrowBatch().
  *
  * OGR fields for the corresponding children arrays must exist and be of a
- * compatible type. For attribute fields, they should be created with
- * CreateFieldFromArrowSchema().
+ * compatible type. For attribute fields, they should generally be created with
+ * CreateFieldFromArrowSchema(). This is strictly required for output drivers
+ * Arrow or Parquet, and strongly recommended otherwise. For geometry fields,
+ * they should be created either implicitly at CreateLayer() type
+ * (if geom_type != wkbNone), or explicitly with CreateGeomField().
+ *
+ * Starting with GDAL 3.9, some tolerance has been introduced in the base
+ * implementation of WriteArrowBatch() for scenarios that involve appending to
+ * an already existing output layer when the input Arrow field type and the
+ * OGR layer field type are 32/64-bi integers or real number, but do not match
+ * exactly, which may cause lossy conversions. The IF_FIELD_NOT_PRESERVED option
+ * can be used to control the behavior in case of lossy conversion.
  *
  * Arrays for geometry columns should be of binary or large binary type and
  * contain WKB geometry.
@@ -7179,6 +7247,14 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
  *     Setting it to ERROR will cause the function to error out. Setting it
  *     to WARNING will cause the function to emit a warning but continue its
  *     processing.
+ * </li>
+ * <li>IF_FIELD_NOT_PRESERVED=ERROR/WARNING. (since GDAL 3.9)
+ *     Action to perform when the input field value is not preserved in the
+ *     output layer.
+ *     The default is WARNING, which will cause the function to emit a warning
+ *     but continue its processing.
+ *     Setting it to ERROR will cause the function to error out if a lossy
+ *     conversion is detected.
  * </li>
  * <li>GEOMETRY_NAME=name. Name of the geometry column. If not provided,
  *     GetGeometryColumn() is used. The special name
@@ -7315,6 +7391,9 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
     const bool bWarningIfFIDNotPreserved =
         EQUAL(CSLFetchNameValueDef(papszOptions, "IF_FID_NOT_PRESERVED", ""),
               "WARNING");
+    const bool bErrorIfFieldNotPreserved =
+        EQUAL(CSLFetchNameValueDef(papszOptions, "IF_FIELD_NOT_PRESERVED", ""),
+              "ERROR");
     const char *pszGeomFieldName = CSLFetchNameValueDef(
         papszOptions, "GEOMETRY_NAME", GetGeometryColumn());
     if (!pszGeomFieldName || pszGeomFieldName[0] == 0)
@@ -7485,6 +7564,59 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                                    /*bForgiving=*/true,
                                    /*bUseISO8601ForDateTimeAsString=*/true);
             oFeatureTarget.SetFID(oFeature.GetFID());
+
+            if (bErrorIfFieldNotPreserved)
+            {
+                for (int i = 0; i < poLayerDefn->GetFieldCount(); ++i)
+                {
+                    if (!oFeature.IsFieldSetAndNotNullUnsafe(i))
+                    {
+                        continue;
+                    }
+                    bool bLossyConversion = false;
+                    const auto eSrcType =
+                        oLayerDefnTmp.GetFieldDefnUnsafe(i)->GetType();
+                    const auto eDstType =
+                        poLayerDefn->GetFieldDefnUnsafe(i)->GetType();
+                    if (eSrcType == OFTInteger64 && eDstType == OFTInteger &&
+                        oFeatureTarget.GetFieldAsIntegerUnsafe(i) !=
+                            oFeature.GetFieldAsInteger64Unsafe(i))
+                    {
+                        bLossyConversion = true;
+                    }
+                    else if (eSrcType == OFTReal && eDstType == OFTInteger &&
+                             oFeatureTarget.GetFieldAsIntegerUnsafe(i) !=
+                                 oFeature.GetFieldAsDoubleUnsafe(i))
+                    {
+                        bLossyConversion = true;
+                    }
+                    else if (eSrcType == OFTReal && eDstType == OFTInteger64 &&
+                             static_cast<double>(
+                                 oFeatureTarget.GetFieldAsInteger64Unsafe(i)) !=
+                                 oFeature.GetFieldAsDoubleUnsafe(i))
+                    {
+                        bLossyConversion = true;
+                    }
+                    else if (eSrcType == OFTInteger64 && eDstType == OFTReal &&
+                             static_cast<GIntBig>(
+                                 oFeatureTarget.GetFieldAsDoubleUnsafe(i)) !=
+                                 oFeature.GetFieldAsInteger64Unsafe(i))
+                    {
+                        bLossyConversion = true;
+                    }
+                    if (bLossyConversion)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "For feature " CPL_FRMT_GIB
+                                 ", value of field %s cannot not preserved",
+                                 oFeatureTarget.GetFID(),
+                                 oLayerDefnTmp.GetFieldDefn(i)->GetNameRef());
+                        if (bTransactionOK)
+                            RollbackTransaction();
+                        return false;
+                    }
+                }
+            }
         }
 
         const auto nInputFID = poFeatureTarget->GetFID();
@@ -7598,10 +7730,18 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
  * will be supported by WriteArrowBatch().
  *
  * OGR fields for the corresponding children arrays must exist and be of a
- * compatible type. For attribute fields, they should be created with
- * CreateFieldFromArrowSchema(). For geometry fields, they should be created
- * either implicitly at CreateLayer() type (if geom_type != wkbNone), or
- * explicitly with CreateGeomField().
+ * compatible type. For attribute fields, they should generally be created with
+ * CreateFieldFromArrowSchema(). This is strictly required for output drivers
+ * Arrow or Parquet, and strongly recommended otherwise. For geometry fields,
+ * they should be created either implicitly at CreateLayer() type
+ * (if geom_type != wkbNone), or explicitly with CreateGeomField().
+ *
+ * Starting with GDAL 3.9, some tolerance has been introduced in the base
+ * implementation of WriteArrowBatch() for scenarios that involve appending to
+ * an already existing output layer when the input Arrow field type and the
+ * OGR layer field type are 32/64-bi integers or real number, but do not match
+ * exactly, which may cause lossy conversions. The IF_FIELD_NOT_PRESERVED option
+ * can be used to control the behavior in case of lossy conversion.
  *
  * Arrays for geometry columns should be of binary or large binary type and
  * contain WKB geometry.
@@ -7626,6 +7766,14 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
  *     Setting it to ERROR will cause the function to error out. Setting it
  *     to WARNING will cause the function to emit a warning but continue its
  *     processing.
+ * </li>
+ * <li>IF_FIELD_NOT_PRESERVED=ERROR/WARNING. (since GDAL 3.9)
+ *     Action to perform when the input field value is not preserved in the
+ *     output layer.
+ *     The default is WARNING, which will cause the function to emit a warning
+ *     but continue its processing.
+ *     Setting it to ERROR will cause the function to error out if a lossy
+ *     conversion is detected.
  * </li>
  * <li>GEOMETRY_NAME=name. Name of the geometry column. If not provided,
  *     GetGeometryColumn() is used. The special name
