@@ -1898,6 +1898,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
 #endif
                    ));
         json_object_put(poJsonObject);
+        Concat(osStr, psOptions->bStdoutOutput, "\n");
     }
 
     if (psOptionsToFree != nullptr)

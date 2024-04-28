@@ -2175,6 +2175,7 @@ char *GDALVectorInfo(GDALDatasetH hDataset,
                     | JSON_C_TO_STRING_NOSLASHESCAPE
 #endif
                 ));
+        ConcatStr(osRet, psOptions->bStdoutOutput, "\n");
     }
 
     return VSI_STRDUP_VERBOSE(osRet);
