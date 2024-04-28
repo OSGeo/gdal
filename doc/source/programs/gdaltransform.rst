@@ -228,14 +228,22 @@ Produces this output measured in longitude degrees, latitude degrees and ellipso
 Ground control points
 +++++++++++++++++++++
 
-Where is the address "370 S. 300 E." in Salt Lake City, given we know
-some nearby corners' coordinates?
+Given the coordinates of three addresses in Chicago, find a fourth, and assign a fifth.
 
 .. code-block:: bash
 
-    echo 300 -370 my address | gdaltransform \
-    -gcp 0   -500 -111.89114803 40.75846686 \
-    -gcp 0   0    -111.89114717 40.76932606 \
-    -gcp 500 0    -111.87685039 40.76940631
+    cat gcps.txt
+    -gcp  1215  -9500 -87.594129 41.721961 # 1215 E  95th St.
+    -gcp -1416 -11900 -87.657268 41.677858 # 1416 W 119th St.
+    -gcp -1654 -10600 -87.663995 41.701344 # 1654 W 106th St.
+    #    -1135 -11200 -87.651048 41.690218 # 1135 W 112nd St.
+    #      -38 -10700 -87.624780 41.700052 #   38 W 107th St.
+    echo -1135 -11200 | gdaltransform -output_xy $(sed s/#.*// gcps.txt)
+    -87.6508214994363 41.6906034825254
+    echo -87.624780 41.700052 | gdaltransform -output_xy \
+       $(sed s/\#.*// gcps.txt) -i | perl -anwle \
+       'printf "$_, i.e., %.0f %s %.0f St.$/",
+       abs $F[0], $F[0]<0?"W":"E", abs $F[1]/100;'
+    -62.9754010708788 -10692.6338759596, i.e., 63 W 107 St.
 
-    -111.8825697384 40.761338402 0 my address
+(We could get even better results if we correct for north sides of streets being even, south odd, and 60 being the highest number in a block.)
