@@ -354,8 +354,6 @@ struct MMAdmDatabase
     // MiraMon table (extended DBF)
     // Name of the extended DBF file
     char pszExtDBFLayerName[MM_CPL_PATH_BUF_SIZE];
-    // Pointer to the extended DBF file
-    FILE_TYPE *pFExtDBF;
     // Pointer to a MiraMon table (auxiliary)
     struct MM_DATA_BASE_XP *pMMBDXP;
     // How to write all it to disk

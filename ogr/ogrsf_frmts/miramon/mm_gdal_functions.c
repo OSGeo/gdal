@@ -640,11 +640,12 @@ MM_GiveOffsetExtendedFieldName(const struct MM_FIELD *camp)
 
 int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
 {
-    if (!MMAdmDB->pMMBDXP || !MMAdmDB->pFExtDBF)
+    if (!MMAdmDB->pMMBDXP || !MMAdmDB->pMMBDXP->pfDataBase)
         return 0;
 
     // Updating number of features in features table
-    fseek_function(MMAdmDB->pFExtDBF, MM_FIRST_OFFSET_to_N_RECORDS, SEEK_SET);
+    fseek_function(MMAdmDB->pMMBDXP->pfDataBase, MM_FIRST_OFFSET_to_N_RECORDS,
+                   SEEK_SET);
 
     if (MMAdmDB->pMMBDXP->nRecords > UINT32_MAX)
     {
@@ -658,35 +659,39 @@ int MM_WriteNRecordsMMBD_XPFile(struct MMAdmDatabase *MMAdmDB)
     {
         GUInt32 nRecords32LowBits =
             (GUInt32)(MMAdmDB->pMMBDXP->nRecords & UINT32_MAX);
-        if (fwrite_function(&nRecords32LowBits, 4, 1, MMAdmDB->pFExtDBF) != 1)
+        if (fwrite_function(&nRecords32LowBits, 4, 1,
+                            MMAdmDB->pMMBDXP->pfDataBase) != 1)
             return 1;
     }
 
-    fseek_function(MMAdmDB->pFExtDBF, MM_SECOND_OFFSET_to_N_RECORDS, SEEK_SET);
+    fseek_function(MMAdmDB->pMMBDXP->pfDataBase, MM_SECOND_OFFSET_to_N_RECORDS,
+                   SEEK_SET);
     if (MMAdmDB->pMMBDXP->dbf_version == MM_MARCA_VERSIO_1_DBF_ESTESA)
     {
         /* from 16 to 19, position MM_SECOND_OFFSET_to_N_RECORDS */
         GUInt32 nRecords32HighBits =
             (GUInt32)(MMAdmDB->pMMBDXP->nRecords >> 32);
-        if (fwrite_function(&nRecords32HighBits, 4, 1, MMAdmDB->pFExtDBF) != 1)
+        if (fwrite_function(&nRecords32HighBits, 4, 1,
+                            MMAdmDB->pMMBDXP->pfDataBase) != 1)
             return 1;
 
         /* from 20 to 27 */
         if (fwrite_function(&(MMAdmDB->pMMBDXP->dbf_on_a_LAN), 8, 1,
-                            MMAdmDB->pFExtDBF) != 1)
+                            MMAdmDB->pMMBDXP->pfDataBase) != 1)
             return 1;
     }
     else
     {
         if (fwrite_function(&(MMAdmDB->pMMBDXP->dbf_on_a_LAN), 12, 1,
-                            MMAdmDB->pFExtDBF) != 1)
+                            MMAdmDB->pMMBDXP->pfDataBase) != 1)
             return 1;
     }
 
     return 0;
 }
 
-static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
+static MM_BOOLEAN
+MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
 {
     MM_BYTE variable_byte;
     MM_EXT_DBF_N_FIELDS i, j = 0;
@@ -698,12 +703,14 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     int estat;
     char nom_camp[MM_MAX_LON_FIELD_NAME_DBF];
     size_t retorn_fwrite;
-    MM_BOOLEAN table_should_be_closed = FALSE;
+
+    if (!data_base_XP)
+        return FALSE;
 
     if (data_base_XP->pfDataBase == nullptr)
     {
         strcpy(ModeLectura_previ, data_base_XP->ReadingMode);
-        strcpy(data_base_XP->ReadingMode, "wb");
+        strcpy(data_base_XP->ReadingMode, "wb+");
 
         if ((data_base_XP->pfDataBase =
                  fopen_function(data_base_XP->szFileName,
@@ -711,8 +718,11 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
         {
             return FALSE;
         }
-
-        table_should_be_closed = TRUE;
+    }
+    else
+    {
+        // If it's open we just update the header
+        fseek_function(data_base_XP->pfDataBase, 0, SEEK_SET);
     }
 
     if ((data_base_XP->nFields) > MM_MAX_N_CAMPS_DBF_CLASSICA)
@@ -1067,23 +1077,18 @@ static MM_BOOLEAN MM_UpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
         }
     }
 
-    if (table_should_be_closed)
-    {
-        fclose_and_nullify(&data_base_XP->pfDataBase);
-    }
-
     return TRUE;
-} /* End of MM_UpdateEntireHeader() */
+} /* End of MM_OpenIfNeededAndUpdateEntireHeader() */
 
-MM_BOOLEAN MM_CreateDBFFile(struct MM_DATA_BASE_XP *bd_xp,
-                            const char *NomFitxer)
+MM_BOOLEAN MM_CreateAndOpenDBFFile(struct MM_DATA_BASE_XP *bd_xp,
+                                   const char *NomFitxer)
 {
     if (!NomFitxer || MMIsEmptyString(NomFitxer) || !bd_xp)
         return FALSE;
 
     MM_CheckDBFHeader(bd_xp);
     CPLStrlcpy(bd_xp->szFileName, NomFitxer, sizeof(bd_xp->szFileName));
-    return MM_UpdateEntireHeader(bd_xp);
+    return MM_OpenIfNeededAndUpdateEntireHeader(bd_xp);
 }
 
 void MM_ReleaseMainFields(struct MM_DATA_BASE_XP *data_base_XP)
@@ -1138,7 +1143,7 @@ int MM_ReadExtendedDBFHeaderFromFile(const char *szFileName,
     GUInt32 nRecords32LowBits;
     char *pszString;
 
-    if (!szFileName)
+    if (!szFileName || !pMMBDXP)
         return 1;
 
     CPLStrlcpy(pMMBDXP->szFileName, szFileName, sizeof(pMMBDXP->szFileName));
@@ -2187,6 +2192,9 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
     size_t retorn_fwrite;
     int retorn_TruncaFitxer;
 
+    if (!data_base_XP)
+        return 1;
+
     canvi_amplada = nNewWidth - data_base_XP->pField[nIField].BytesPerField;
 
     if (data_base_XP->nRecords != 0)
@@ -2379,7 +2387,7 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
     }
     data_base_XP->pField[nIField].DecimalsIfFloat = nNewPrecision;
 
-    if ((MM_UpdateEntireHeader(data_base_XP)) == FALSE)
+    if ((MM_OpenIfNeededAndUpdateEntireHeader(data_base_XP)) == FALSE)
         return 1;
 
     return 0;
