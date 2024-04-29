@@ -6093,36 +6093,28 @@ int MMCheck_REL_FILE(const char *szREL_file)
 static int MMInitMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                       struct MMAdmDatabase *pMMAdmDB)
 {
-    if (!hMiraMonLayer)
-        return 1;
-
-    if (!pMMAdmDB)
+    if (!hMiraMonLayer || !pMMAdmDB)
         return 1;
 
     if (MMIsEmptyString(pMMAdmDB->pszExtDBFLayerName))
         return 0;  // No file, no error. Just continue
 
     strcpy(pMMAdmDB->pMMBDXP->ReadingMode, "wb+");
-    if (FALSE ==
-        MM_CreateDBFFile(pMMAdmDB->pMMBDXP, pMMAdmDB->pszExtDBFLayerName))
-        return 1;
-
-    // Opening the file
-    if (nullptr == (pMMAdmDB->pFExtDBF =
-                        fopen_function(pMMAdmDB->pszExtDBFLayerName,
-                                       "r+b")))  //hMiraMonLayer->pszFlags)))
+    if (FALSE == MM_CreateAndOpenDBFFile(pMMAdmDB->pMMBDXP,
+                                         pMMAdmDB->pszExtDBFLayerName))
     {
         MMCPLError(CE_Failure, CPLE_OpenFailed,
-                   "Error pMMAdmDB: Cannot open file %s.",
+                   "Error pMMAdmDB: Cannot create or open file %s.",
                    pMMAdmDB->pszExtDBFLayerName);
         return 1;
     }
-    fseek_function(pMMAdmDB->pFExtDBF, pMMAdmDB->pMMBDXP->FirstRecordOffset,
-                   SEEK_SET);
 
-    if (MMInitFlush(&pMMAdmDB->FlushRecList, pMMAdmDB->pFExtDBF, MM_1MB,
-                    &pMMAdmDB->pRecList, pMMAdmDB->pMMBDXP->FirstRecordOffset,
-                    0))
+    fseek_function(pMMAdmDB->pMMBDXP->pfDataBase,
+                   pMMAdmDB->pMMBDXP->FirstRecordOffset, SEEK_SET);
+
+    if (MMInitFlush(&pMMAdmDB->FlushRecList, pMMAdmDB->pMMBDXP->pfDataBase,
+                    MM_1MB, &pMMAdmDB->pRecList,
+                    pMMAdmDB->pMMBDXP->FirstRecordOffset, 0))
         return 1;
 
     pMMAdmDB->nNumRecordOnCourse =
@@ -6366,7 +6358,8 @@ MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
     struct MM_FIELD *camp;
     MM_BYTES_PER_FIELD_TYPE_DBF nNewWidth;
 
-    if (!hMiraMonLayer)
+    if (!hMiraMonLayer || !pMMAdmDB || !pMMAdmDB->pMMBDXP ||
+        !pMMAdmDB->pMMBDXP->pField || !pMMAdmDB->pMMBDXP->pfDataBase)
         return 1;
 
     camp = pMMAdmDB->pMMBDXP->pField + nIField;
@@ -6387,8 +6380,6 @@ MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
         pMMAdmDB->FlushRecList.SizeOfBlockToBeSaved = 0;
         if (MMAppendBlockToBuffer(&pMMAdmDB->FlushRecList))
             return 1;
-
-        pMMAdmDB->pMMBDXP->pfDataBase = pMMAdmDB->pFExtDBF;
 
         if (MM_ChangeDBFWidthField(
                 pMMAdmDB->pMMBDXP, nIField, nNewWidth,
@@ -6414,9 +6405,9 @@ MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
         // File has changed its size, so it has to be updated
         // at the Flush tool
-        fseek_function(pMMAdmDB->pFExtDBF, 0, SEEK_END);
+        fseek_function(pMMAdmDB->pMMBDXP->pfDataBase, 0, SEEK_END);
         pMMAdmDB->FlushRecList.OffsetWhereToFlush =
-            ftell_function(pMMAdmDB->pFExtDBF);
+            ftell_function(pMMAdmDB->pMMBDXP->pfDataBase);
     }
     return 0;
 }
@@ -7160,7 +7151,8 @@ static int MMCloseMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     if (hMiraMonLayer->ReadOrWrite == MM_WRITING_MODE)
     {
-        if (!MMAdmDB->pFExtDBF)
+        if (!MMAdmDB->pMMBDXP ||
+            (MMAdmDB->pMMBDXP && !MMAdmDB->pMMBDXP->pfDataBase))
         {
             // In case of 0 elements created we have to
             // create an empty DBF
@@ -7204,7 +7196,8 @@ static int MMCloseMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
     ret_code = 0;
 end_label:
     // Closing database files
-    fclose_and_nullify(&MMAdmDB->pFExtDBF);
+    if (MMAdmDB && MMAdmDB->pMMBDXP && MMAdmDB->pMMBDXP->pfDataBase)
+        fclose_and_nullify(&MMAdmDB->pMMBDXP->pfDataBase);
 
     return ret_code;
 }
@@ -7215,7 +7208,7 @@ int MMCloseMMBD_XP(struct MiraMonVectLayerInfo *hMiraMonLayer)
     if (!hMiraMonLayer)
         return 1;
 
-    if (hMiraMonLayer->pMMBDXP)
+    if (hMiraMonLayer->pMMBDXP && hMiraMonLayer->pMMBDXP->pfDataBase)
     {
         fclose_and_nullify(&hMiraMonLayer->pMMBDXP->pfDataBase);
     }
