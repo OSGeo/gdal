@@ -323,6 +323,10 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
         if (poGDS->m_lpoAttributeDS.size() > 0)
         {
+            const int nXSizeToRead =
+                nXOff + nXSize > nRasterXSize ? nRasterXSize - nXOff : nXSize;
+            const int nYSizeToRead =
+                nYOff + nYSize > nRasterYSize ? nRasterYSize - nYOff : nYSize;
             for (auto const &poAttrDS : poGDS->m_lpoAttributeDS)
             {
                 GDALRasterBand *poAttrBand = poAttrDS->GetRasterBand(nBand);
@@ -338,13 +342,14 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 }
                 aBlocks.emplace_back(pAttrBlock, &VSIFree);
 
-                poAttrBand->AdviseRead(nXOff, nYOff, nXSize, nYSize, nBufXSize,
-                                       nBufYSize, eAttrType, nullptr);
+                poAttrBand->AdviseRead(nXOff, nYOff, nXSizeToRead, nYSizeToRead,
+                                       nXSizeToRead, nYSizeToRead, eAttrType,
+                                       nullptr);
 
                 CPLErr eErr = poAttrBand->RasterIO(
-                    GF_Read, nXOff, nYOff, nXSize, nYSize, pAttrBlock,
-                    nBufXSize, nBufYSize, eAttrType, nPixelSpace, nLineSpace,
-                    psExtraArg);
+                    GF_Read, nXOff, nYOff, nXSizeToRead, nYSizeToRead,
+                    pAttrBlock, nXSizeToRead, nYSizeToRead, eAttrType,
+                    nPixelSpace, nLineSpace, psExtraArg);
 
                 if (eErr == CE_None)
                 {
