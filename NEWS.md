@@ -181,6 +181,7 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.8/MIGRATI
 * Python sample scripts: add gdalbuildvrtofvrt.py (#9451)
 * Python utilities: do not display full traceback on OpenDS failures (#9534)
 * gdalinfo: suggest trying ogrinfo if appropriate, and vice-versa
+* gdalinfo and ogrinfo -json: add newline character at end of JSON output
 
 ### Raster drivers
 
@@ -278,6 +279,7 @@ Sentinel2 driver:
  * include 10m AOT and WVP bands in 10m subdataset (#9066)
 
 TileDB driver:
+ * Remove use of deprecated API, and bump minimum version to 2.15
  * Added tiledb metadata fields to easily tag array type
  * be able to read datasets converted with 'tiledb-cf netcdf-convert'
  * make its identify() method more restrictive by not identifying /vsi file
@@ -336,6 +338,7 @@ ZMap driver:
   GEOSGeom_setPrecision_r()
 * Add a OGRGeometry::roundCoordinates() method
 * OGRFeature: add SerializeToBinary() / DeserializeFromBinary()
+* OGRFeature::SetField(): add warnings when detecting some lossy conversions (#9792)
 * Add OGR_G_GeodesicArea() / OGRSurface::get_GeodesicArea()
 * SQLite SQL dialect: implement ST_Area(geom, use_ellipsoid)
 * Add OGR_L_GetDataset() and implement GetDataset() in all drivers with creation
@@ -343,12 +346,15 @@ ZMap driver:
 * Arrow array: fix decoding of ``date32[days]`` values before Epoch
  (Arrow->OGRFeature), and fix rounding when encoding such values
  (OGRFeature->Arrow) (#9636)
+* OGRLayer::WriteArrowBatch(): add tolerance for field type mismatches if int32/int64/real;
+  Also add an option IF_FIELD_NOT_PRESERVED=ERROR to error out when lossy conversion occurs. (#9792)
 * OGRLayer::SetIgnoredFields(): make it take a CSLConstList argument instead of
   const char*
 
 ### OGRSpatialReference
 
 * Add OGRSpatialReference::exportToCF1() and importFromCF1()
+* Add OSRIsDerivedProjected() / OGRSpatialReference::IsDerivedProjected()
 * OGRCoordinateTransformation::Transform(): change nCount parameter to size_t
   (C++ API only for now) (#9074)
 * OGRProjCT::TransformWithErrorCodes(): Improve performance of axis swapping
@@ -358,6 +364,7 @@ ZMap driver:
 * Add OSRSetFromUserInputEx() and map it to SWIG (#9358)
 * Add std::string OGRSpatialReference::exportToWkt(
   const char* const* papszOptions = nullptr) const
+* OGR_CT: use PROJJSON internally rather than in WKT:2019 (#9732)
 
 ### Utilities
 
@@ -397,6 +404,7 @@ Arrow/Parquet drivers:
    pyarrow-registered extension type
  * handle fields with a pyarrow-registered extension type
  * preliminary/in-advance read support for future JSON Canonical Extension
+ * OGRCloneArrowArray(): add missing support for 'tss:' Arrow type
 
 CSV driver:
  * parse header with line breaks (#9172)
@@ -473,6 +481,10 @@ Parquet driver:
    with a Parquet dataset source (#9497)
  * make it recognize bbox field from Overture Maps 2024-01-17-alpha.0 and
    2024-04-16-beta.0 releases
+ * fix ResetReading() implementation, when using the ParquetDataset API and
+   when there's a single batch
+ * fix opening single file Parquet datasets with the ParquetDataset API when
+   using PARQUET:filename.parquet
 
 PGDUMP driver:
  * add a LAUNDER_ASCII=YES/NO (default NO) layer creation option
@@ -515,6 +527,7 @@ Java bindings:
 Python bindings:
  * lots of improvements to documentation
  * add a pyproject.toml with numpy as a build requirement (#8926, #8069)
+ * pyproject.toml: use numpy>=2.0.0rc1 for python >=3.9 (#9751)
  * bump setuptools requirement to >= 67.0
  * define entry_points.console_scripts (#8811)
  * add RasterAttributeTable::ReadValuesIOAsString, ReadValuesIOAsInteger,
