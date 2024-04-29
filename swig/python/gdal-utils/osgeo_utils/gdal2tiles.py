@@ -2010,9 +2010,14 @@ def process_args(argv: List[str], called_from_main=False) -> Tuple[str, str, Opt
         )
 
     input_file = args[0]
-    if not isfile(input_file):
+    try:
+        input_file_exists = gdal.Open(input_file) is not None
+    except Exception:
+        input_file_exists = False
+    if not input_file_exists:
         exit_with_error(
-            "The provided input file %s does not exist or is not a file" % input_file
+            "The provided input file %s does not exist or is not a recognized GDAL dataset"
+            % input_file
         )
 
     if len(args) == 2:

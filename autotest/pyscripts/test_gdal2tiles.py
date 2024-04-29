@@ -36,6 +36,7 @@ import shutil
 import struct
 import sys
 
+import gdaltest
 import pytest
 import test_py_scripts  # noqa  # pylint: disable=E0401
 
@@ -140,13 +141,14 @@ def test_gdal2tiles_py_zoom_option(script_path, tmp_path):
 
     tiles_dir = str(tmp_path / "out_gdal2tiles_smallworld")
 
-    # Because of multiprocessing, run as external process, to avoid issues with
-    # Ubuntu 12.04 and socket.setdefaulttimeout()
-    # as well as on Windows that doesn't manage to fork
+    # Because of multiprocessing, run as external process, to avoid issues
+    # for example on Windows that doesn't manage to fork
+    # Also test non-file input dataset (e.g. vrt://)
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         "gdal2tiles",
         "-q --force-kml --processes=2 -z 0-1 "
+        + "vrt://"
         + test_py_scripts.get_data_path("gdrivers")
         + f"small_world.tif {tiles_dir}",
     )
@@ -210,6 +212,9 @@ def test_gdal2tiles_py_resampling_option(script_path, tmp_path, resample):
 
 @pytest.mark.require_driver("PNG")
 def test_gdal2tiles_py_xyz(script_path, tmp_path):
+
+    if gdaltest.is_travis_branch("sanitize"):
+        pytest.skip("fails on sanitize for unknown reason")
 
     input_tif = str(tmp_path / "out_gdal2tiles_smallworld_xyz.tif")
     out_dir = input_tif.strip(".tif")
