@@ -87,8 +87,12 @@ def test_hdf5_3():
 
     ds = gdal.Open('HDF5:"data/hdf5/u8be.h5"://TestArray')
 
-    cs = ds.GetRasterBand(1).Checksum()
+    band = ds.GetRasterBand(1)
+    cs = band.Checksum()
     assert cs == 135, "did not get expected checksum"
+    assert band.GetNoDataValue() is None
+    assert band.GetOffset() is None
+    assert band.GetScale() is None
 
     ds = None
 
@@ -1585,3 +1589,16 @@ END
     assert ds.GetRasterBand(1).ReadBlock(1, 2) == mem_ds.GetRasterBand(1).ReadRaster(
         1 * blockxsize, 2 * blockysize, blockxsize, blockysize
     )
+
+
+###############################################################################
+# Test GetNoDataValue(), GetOffset(), GetScale()
+
+
+def test_hdf5_read_netcdf_nodata_scale_offset():
+
+    ds = gdal.Open("data/hdf5/scale_offset.h5")
+    band = ds.GetRasterBand(1)
+    assert band.GetNoDataValue() == pytest.approx(9.96921e36, rel=1e-7)
+    assert band.GetOffset() == 1.5
+    assert band.GetScale() == 0.01
