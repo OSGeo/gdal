@@ -202,6 +202,43 @@ static inline bool IsLargeBinary(const char *format)
     return format[0] == ARROW_LETTER_LARGE_BINARY && format[1] == 0;
 }
 
+static inline bool IsTimestampInternal(const char *format, char chType)
+{
+    return format[0] == 't' && format[1] == 's' && format[2] == chType &&
+           format[3] == ':';
+}
+
+static inline bool IsTimestampSeconds(const char *format)
+{
+    return IsTimestampInternal(format, 's');
+}
+
+static inline bool IsTimestampMilliseconds(const char *format)
+{
+    return IsTimestampInternal(format, 'm');
+}
+
+static inline bool IsTimestampMicroseconds(const char *format)
+{
+    return IsTimestampInternal(format, 'u');
+}
+
+static inline bool IsTimestampNanoseconds(const char *format)
+{
+    return IsTimestampInternal(format, 'n');
+}
+
+static inline bool IsTimestamp(const char *format)
+{
+    return IsTimestampSeconds(format) || IsTimestampMilliseconds(format) ||
+           IsTimestampMicroseconds(format) || IsTimestampNanoseconds(format);
+}
+
+static inline const char *GetTimestampTimezone(const char *format)
+{
+    return IsTimestamp(format) ? format + strlen("tm?:") : "";
+}
+
 /************************************************************************/
 /*                            TestBit()                                 */
 /************************************************************************/
@@ -2820,20 +2857,9 @@ static bool IsHandledSchema(bool bTopLevel, const struct ArrowSchema *schema,
         return true;
     }
 
-    const char *const apszHandledFormatsPrefix[] = {
-        "w:",    // fixed width binary
-        "tss:",  // timestamp [seconds] with timezone
-        "tsm:",  // timestamp [milliseconds] with timezone
-        "tsu:",  // timestamp [microseconds] with timezone
-        "tsn:",  // timestamp [nanoseconds] with timezone
-    };
-
-    for (const char *pszHandledFormat : apszHandledFormatsPrefix)
+    if (IsFixedWidthBinary(format) || IsTimestamp(format))
     {
-        if (strncmp(format, pszHandledFormat, strlen(pszHandledFormat)) == 0)
-        {
-            return true;
-        }
+        return true;
     }
 
     CPLDebug("OGR", "Field %s has unhandled format '%s'",
@@ -4303,37 +4329,30 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
                           static_cast<GIntBig>(static_cast<const int64_t *>(
                               array->buffers[1])[nOffsettedIndex]));
     }
-    else if (format[0] == 't' && format[1] == 's' && format[2] == 's' &&
-             format[3] == ':')  // STARTS_WITH(format, "tss:")
+    else if (IsTimestampSeconds(format))
     {
-        // timestamp [seconds] with timezone
         ArrowTimestampToOGRDateTime(
             static_cast<const int64_t *>(array->buffers[1])[nOffsettedIndex], 1,
-            format + strlen("tss:"), oFeature, iOGRFieldIndex);
+            GetTimestampTimezone(format), oFeature, iOGRFieldIndex);
     }
-    else if (format[0] == 't' && format[1] == 's' && format[2] == 'm' &&
-             format[3] == ':')  // STARTS_WITH(format, "tsm:"))
+    else if (IsTimestampMilliseconds(format))
     {
-        //  timestamp [milliseconds] with timezone
         ArrowTimestampToOGRDateTime(
             static_cast<const int64_t *>(array->buffers[1])[nOffsettedIndex],
-            1000, format + strlen("tsm:"), oFeature, iOGRFieldIndex);
+            1000, GetTimestampTimezone(format), oFeature, iOGRFieldIndex);
     }
-    else if (format[0] == 't' && format[1] == 's' && format[2] == 'u' &&
-             format[3] == ':')  // STARTS_WITH(format, "tsu:"))
+    else if (IsTimestampMicroseconds(format))
     {
-        //  timestamp [microseconds] with timezone
         ArrowTimestampToOGRDateTime(
             static_cast<const int64_t *>(array->buffers[1])[nOffsettedIndex],
-            1000 * 1000, format + strlen("tsu:"), oFeature, iOGRFieldIndex);
+            1000 * 1000, GetTimestampTimezone(format), oFeature,
+            iOGRFieldIndex);
     }
-    else if (format[0] == 't' && format[1] == 's' && format[2] == 'n' &&
-             format[3] == ':')  // STARTS_WITH(format, "tsn:"))
+    else if (IsTimestampNanoseconds(format))
     {
-        //  timestamp [nanoseconds] with timezone
         ArrowTimestampToOGRDateTime(
             static_cast<const int64_t *>(array->buffers[1])[nOffsettedIndex],
-            1000 * 1000 * 1000, format + strlen("tsn:"), oFeature,
+            1000 * 1000 * 1000, GetTimestampTimezone(format), oFeature,
             iOGRFieldIndex);
     }
     else if (IsFixedSizeList(format))
@@ -5227,9 +5246,7 @@ static bool OGRCloneArrowArray(const struct ArrowSchema *schema,
             }
             else if (IsUInt64(format) || IsInt64(format) || IsFloat64(format) ||
                      strcmp(format, "tdm") == 0 || strcmp(format, "ttu") == 0 ||
-                     strcmp(format, "ttn") == 0 || strcmp(format, "tss") == 0 ||
-                     STARTS_WITH(format, "tsm:") ||
-                     STARTS_WITH(format, "tsu:") || STARTS_WITH(format, "tsn:"))
+                     strcmp(format, "ttn") == 0 || IsTimestamp(format))
             {
                 nEltSize = sizeof(uint64_t);
             }
@@ -5692,20 +5709,8 @@ static bool IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
             }
         }
 
-        if (IsFixedWidthBinary(format))
+        if (IsFixedWidthBinary(format) || IsTimestamp(format))
             return true;
-
-        const char *const apszTimestamps[] = {
-            "tss:",  // timestamp[s]
-            "tsm:",  // timestamp[ms]
-            "tsu:",  // timestamp[us]
-            "tsn:"   // timestamp[ns]
-        };
-        for (const char *pszSupported : apszTimestamps)
-        {
-            if (STARTS_WITH(format, pszSupported))
-                return true;
-        }
 
         AppendError("Type '" + std::string(format) + "' for field " +
                     osFieldPrefix + fieldName + " is not supported.");
@@ -5991,10 +5996,7 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
         return AddField(OFTString, OFSTJSON, 0, 0);
     }
 
-    if (STARTS_WITH(format, "tss:") ||  // timestamp[s]
-        STARTS_WITH(format, "tsm:") ||  // timestamp[ms]
-        STARTS_WITH(format, "tsu:") ||  // timestamp[us]
-        STARTS_WITH(format, "tsn:"))    // timestamp[ns]
+    if (IsTimestamp(format))
     {
         return AddField(OFTDateTime, OFSTNone, 0, 0);
     }
@@ -6401,9 +6403,7 @@ static bool BuildOGRFieldInfo(
                 }
             }
 
-            if (!bTypeOK &&
-                (STARTS_WITH(format, "tss:") || STARTS_WITH(format, "tsm:") ||
-                 STARTS_WITH(format, "tsu:") || STARTS_WITH(format, "tsn:")))
+            if (!bTypeOK && IsTimestamp(format))
             {
                 sInfo.eNominalFieldType = OFTDateTime;
                 if (eOGRType == sInfo.eNominalFieldType)
