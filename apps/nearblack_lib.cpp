@@ -835,17 +835,17 @@ GDALNearblackOptionsGetParser(GDALNearblackOptions *psOptions,
     }
 
     argParser->add_argument("-nb")
-        .store_into(psOptions->nMaxNonBlack)
         .metavar("<non_black_pixels>")
-        .default_value(psOptions->nMaxNonBlack)
         .nargs(1)
+        .default_value(psOptions->nMaxNonBlack)
+        .store_into(psOptions->nMaxNonBlack)
         .help(_("Number of consecutive non-black pixels."));
 
     argParser->add_argument("-near")
-        .store_into(psOptions->nNearDist)
         .metavar("<dist>")
-        .default_value(psOptions->nNearDist)
         .nargs(1)
+        .default_value(psOptions->nNearDist)
+        .store_into(psOptions->nNearDist)
         .help(_("Select how far from black, white or custom colors the pixel "
                 "values can be and still considered."));
 

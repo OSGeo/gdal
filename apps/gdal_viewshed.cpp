@@ -81,8 +81,8 @@ MAIN_START(argc, argv)
 
     double dfObserverHeight = 2;
     argParser.add_argument("-oz")
-        .store_into(dfObserverHeight)
         .default_value(dfObserverHeight)
+        .store_into(dfObserverHeight)
         .metavar("<value>")
         .nargs(1)
         .help(_("The height of the observer above the DEM surface in the "
@@ -90,24 +90,24 @@ MAIN_START(argc, argv)
 
     double dfVisibleVal = 255;
     argParser.add_argument("-vv")
-        .store_into(dfVisibleVal)
         .default_value(dfVisibleVal)
+        .store_into(dfVisibleVal)
         .metavar("<value>")
         .nargs(1)
         .help(_("Pixel value to set for visible areas."));
 
     double dfInvisibleVal = 0.0;
     argParser.add_argument("-iv")
-        .store_into(dfInvisibleVal)
         .default_value(dfInvisibleVal)
+        .store_into(dfInvisibleVal)
         .metavar("<value>")
         .nargs(1)
         .help(_("Pixel value to set for invisible areas."));
 
     double dfOutOfRangeVal = 0.0;
     argParser.add_argument("-ov")
-        .store_into(dfOutOfRangeVal)
         .default_value(dfOutOfRangeVal)
+        .store_into(dfOutOfRangeVal)
         .metavar("<value>")
         .nargs(1)
         .help(
@@ -128,8 +128,8 @@ MAIN_START(argc, argv)
 
     double dfTargetHeight = 0.0;
     argParser.add_argument("-tz")
-        .store_into(dfTargetHeight)
         .default_value(dfTargetHeight)
+        .store_into(dfTargetHeight)
         .metavar("<value>")
         .nargs(1)
         .help(_("The height of the target above the DEM surface in the height "
@@ -137,8 +137,8 @@ MAIN_START(argc, argv)
 
     double dfMaxDistance = 0.0;
     argParser.add_argument("-md")
-        .store_into(dfMaxDistance)
         .default_value(dfMaxDistance)
+        .store_into(dfMaxDistance)
         .metavar("<value>")
         .nargs(1)
         .help(_("Maximum distance from observer to compute visibility."));
@@ -147,8 +147,8 @@ MAIN_START(argc, argv)
     // doc/source/programs/gdal_viewshed.rst
     double dfCurvCoeff = 0.85714;
     argParser.add_argument("-cc")
-        .store_into(dfCurvCoeff)
         .default_value(dfCurvCoeff)
+        .store_into(dfCurvCoeff)
         .metavar("<value>")
         .nargs(1)
         .help(_("Coefficient to consider the effect of the curvature and "
@@ -164,11 +164,11 @@ MAIN_START(argc, argv)
 
     std::string osOutputMode;
     argParser.add_argument("-om")
-        .store_into(osOutputMode)
         .choices("NORMAL", "DEM", "GROUND")
         .metavar("NORMAL|DEM|GROUND")
         .default_value("NORMAL")
         .nargs(1)
+        .store_into(osOutputMode)
         .help(_("Sets what information the output contains."));
 
     bool bQuiet = false;

@@ -7221,8 +7221,8 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
 
     argParser->add_argument("-datelineoffset")
         .metavar("<val_in_degree>")
-        .store_into(psOptions->dfDateLineOffset)
         .default_value(psOptions->dfDateLineOffset)
+        .store_into(psOptions->dfDateLineOffset)
         .help(_("Offset from dateline in degrees."));
 
     argParser->add_argument("-clipsrc")
