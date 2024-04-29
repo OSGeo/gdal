@@ -246,6 +246,8 @@ class TileDBRasterDataset final : public TileDBDataset
     void CreateArray();
     bool DeferredCreate(bool bCreateArray);
 
+    tiledb::Array &GetArray(bool bForWrite, tiledb::Context *&ctx);
+
   public:
     ~TileDBRasterDataset();
     CPLErr TryLoadCachedXML(char **papszSiblingFiles = nullptr,

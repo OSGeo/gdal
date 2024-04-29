@@ -295,15 +295,11 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             std::rotate(oaSubarray.begin(), oaSubarray.begin() + 2,
                         oaSubarray.end());
 
-        const bool bUseReadOnlyObjs =
-            ((eRWFlag == GF_Read) && (eAccess == GA_Update) &&
-             (poGDS->m_roArray));
-        const auto &oCtxt = bUseReadOnlyObjs ? *poGDS->m_roCtx : *poGDS->m_ctx;
-        const auto &oArray =
-            bUseReadOnlyObjs ? *poGDS->m_roArray : *poGDS->m_array;
+        tiledb::Context *ctx = poGDS->m_ctx.get();
+        const auto &oArray = poGDS->GetArray(eRWFlag == GF_Write, ctx);
 
-        auto poQuery = std::make_unique<tiledb::Query>(oCtxt, oArray);
-        tiledb::Subarray subarray(oCtxt, oArray);
+        auto poQuery = std::make_unique<tiledb::Query>(*ctx, oArray);
+        tiledb::Subarray subarray(*ctx, oArray);
         if (poGDS->m_array->schema().domain().ndim() == 3)
         {
             subarray.set_subarray(oaSubarray);
@@ -649,6 +645,50 @@ TileDBRasterDataset::~TileDBRasterDataset()
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
     }
+    try
+    {
+        if (m_roArray)
+        {
+            m_roArray->close();
+        }
+    }
+    catch (const tiledb::TileDBError &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+    }
+}
+
+/************************************************************************/
+/*                              GetArray()                              */
+/************************************************************************/
+
+tiledb::Array &TileDBRasterDataset::GetArray(bool bForWrite,
+                                             tiledb::Context *&ctx)
+{
+    if (eAccess == GA_Update && !bForWrite)
+    {
+        if (!m_roArray)
+        {
+            m_roCtx = std::make_unique<tiledb::Context>(m_ctx->config());
+            if (nTimestamp)
+            {
+                m_roArray = std::make_unique<tiledb::Array>(
+                    *m_roCtx, GetDescription(), TILEDB_READ,
+                    tiledb::TemporalPolicy(tiledb::TimeTravel, nTimestamp));
+            }
+            else
+            {
+                m_roArray = std::make_unique<tiledb::Array>(
+                    *m_roCtx, GetDescription(), TILEDB_READ);
+            }
+        }
+
+        ctx = m_roCtx.get();
+        return *(m_roArray.get());
+    }
+
+    ctx = m_ctx.get();
+    return *(m_array.get());
 }
 
 /************************************************************************/
@@ -681,13 +721,11 @@ CPLErr TileDBRasterDataset::IRasterIO(
             (uint64_t)nYOff, (uint64_t)nYOff + nYSize - 1, (uint64_t)nXOff,
             (uint64_t)nXOff + nXSize - 1};
 
-        const bool bUseReadOnlyObjs =
-            ((eRWFlag == GF_Read) && (eAccess == GA_Update) && (m_roArray));
-        const auto &oCtxt = bUseReadOnlyObjs ? *m_roCtx : *m_ctx;
-        const auto &oArray = bUseReadOnlyObjs ? *m_roArray : *m_array;
+        tiledb::Context *ctx = m_ctx.get();
+        const auto &oArray = GetArray(eRWFlag == GF_Write, ctx);
 
-        auto poQuery = std::make_unique<tiledb::Query>(oCtxt, oArray);
-        tiledb::Subarray subarray(oCtxt, oArray);
+        auto poQuery = std::make_unique<tiledb::Query>(*ctx, oArray);
+        tiledb::Subarray subarray(*ctx, oArray);
         subarray.set_subarray(oaSubarray);
         poQuery->set_subarray(subarray);
 
@@ -1229,35 +1267,29 @@ GDALDataset *TileDBRasterDataset::Open(GDALOpenInfo *poOpenInfo)
     // Initialize any PAM information.
     poDS->SetDescription(osArrayPath);
 
-    tiledb_query_type_t eMode = TILEDB_READ;
-    if (poOpenInfo->eAccess == GA_Update)
-    {
-        eMode = TILEDB_WRITE;
-        poDS->m_roCtx.reset(new tiledb::Context(poDS->m_ctx->config()));
-        poDS->m_roArray.reset(
-            new tiledb::Array(*poDS->m_roCtx, osArrayPath, TILEDB_READ));
-    }
+    const tiledb_query_type_t eMode =
+        poOpenInfo->eAccess == GA_Update ? TILEDB_WRITE : TILEDB_READ;
 
     if (poDS->nTimestamp)
     {
-        if (eMode == TILEDB_READ)
-        {
-            poDS->m_array.reset(new tiledb::Array(
-                *poDS->m_ctx, osArrayPath, TILEDB_READ,
-                tiledb::TemporalPolicy(tiledb::TimeTravel, poDS->nTimestamp)));
-        }
-        else
-        {
-            poDS->m_array.reset(new tiledb::Array(
-                *poDS->m_ctx, osArrayPath, TILEDB_WRITE,
-                tiledb::TemporalPolicy(tiledb::TimeTravel, poDS->nTimestamp)));
-        }
+        poDS->m_array = std::make_unique<tiledb::Array>(
+            *poDS->m_ctx, poDS->GetDescription(), eMode,
+            tiledb::TemporalPolicy(tiledb::TimeTravel, poDS->nTimestamp));
     }
     else
-        poDS->m_array.reset(
-            new tiledb::Array(*poDS->m_ctx, osArrayPath, eMode));
+    {
+        poDS->m_array = std::make_unique<tiledb::Array>(
+            *poDS->m_ctx, poDS->GetDescription(), eMode);
+    }
 
     poDS->eAccess = poOpenInfo->eAccess;
+
+    // Force opening read-only dataset
+    if (eMode == TILEDB_WRITE)
+    {
+        tiledb::Context *ctx = nullptr;
+        poDS->GetArray(false, ctx);
+    }
 
     // dependent on PAM metadata for information about array
     poDS->TryLoadXML();
@@ -2565,17 +2597,8 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
         int nCloneFlags = GCIF_PAM_DEFAULT & ~GCIF_MASK;
         poDstDS->CloneInfo(poSrcDS, nCloneFlags);
 
-        if (poDstDS->eIndexMode == ATTRIBUTES)
-        {
-            poDstDS->FlushCache(false);
-        }
-
-        if (poDstDS->m_array)
-        {
-            poDstDS->m_array->close();
-            poDstDS->eAccess = GA_ReadOnly;
-            poDstDS->m_array->open(TILEDB_READ);
-        }
+        if (poDstDS->FlushCache(false) != CE_None)
+            return nullptr;
 
         return poDstDS.release();
     }
