@@ -6093,10 +6093,7 @@ int MMCheck_REL_FILE(const char *szREL_file)
 static int MMInitMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                       struct MMAdmDatabase *pMMAdmDB)
 {
-    if (!hMiraMonLayer)
-        return 1;
-
-    if (!pMMAdmDB)
+    if (!hMiraMonLayer || !pMMAdmDB)
         return 1;
 
     if (MMIsEmptyString(pMMAdmDB->pszExtDBFLayerName))
@@ -6361,7 +6358,8 @@ MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
     struct MM_FIELD *camp;
     MM_BYTES_PER_FIELD_TYPE_DBF nNewWidth;
 
-    if (!hMiraMonLayer)
+    if (!hMiraMonLayer || !pMMAdmDB || !pMMAdmDB->pMMBDXP ||
+        !pMMAdmDB->pMMBDXP->pField || !pMMAdmDB->pMMBDXP->pfDataBase)
         return 1;
 
     camp = pMMAdmDB->pMMBDXP->pField + nIField;
@@ -6382,8 +6380,6 @@ MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
         pMMAdmDB->FlushRecList.SizeOfBlockToBeSaved = 0;
         if (MMAppendBlockToBuffer(&pMMAdmDB->FlushRecList))
             return 1;
-
-        //pMMAdmDB->pMMBDXP->pfDataBase = pMMAdmDB->pFExtDBF;
 
         if (MM_ChangeDBFWidthField(
                 pMMAdmDB->pMMBDXP, nIField, nNewWidth,
@@ -7212,7 +7208,7 @@ int MMCloseMMBD_XP(struct MiraMonVectLayerInfo *hMiraMonLayer)
     if (!hMiraMonLayer)
         return 1;
 
-    if (hMiraMonLayer->pMMBDXP)
+    if (hMiraMonLayer->pMMBDXP && hMiraMonLayer->pMMBDXP->pfDataBase)
     {
         fclose_and_nullify(&hMiraMonLayer->pMMBDXP->pfDataBase);
     }

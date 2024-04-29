@@ -704,6 +704,9 @@ MM_OpenIfNeededAndUpdateEntireHeader(struct MM_DATA_BASE_XP *data_base_XP)
     char nom_camp[MM_MAX_LON_FIELD_NAME_DBF];
     size_t retorn_fwrite;
 
+    if (!data_base_XP)
+        return FALSE;
+
     if (data_base_XP->pfDataBase == nullptr)
     {
         strcpy(ModeLectura_previ, data_base_XP->ReadingMode);
@@ -1140,7 +1143,7 @@ int MM_ReadExtendedDBFHeaderFromFile(const char *szFileName,
     GUInt32 nRecords32LowBits;
     char *pszString;
 
-    if (!szFileName)
+    if (!szFileName || !pMMBDXP)
         return 1;
 
     CPLStrlcpy(pMMBDXP->szFileName, szFileName, sizeof(pMMBDXP->szFileName));
@@ -2188,6 +2191,9 @@ int MM_ChangeDBFWidthField(struct MM_DATA_BASE_XP *data_base_XP,
     MM_EXT_DBF_N_FIELDS i_camp;
     size_t retorn_fwrite;
     int retorn_TruncaFitxer;
+
+    if (!data_base_XP)
+        return 1;
 
     canvi_amplada = nNewWidth - data_base_XP->pField[nIField].BytesPerField;
 

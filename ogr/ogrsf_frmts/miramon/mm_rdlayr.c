@@ -672,6 +672,8 @@ int MM_ReadExtendedDBFHeader(struct MiraMonVectLayerInfo *hMiraMonLayer)
         return 0;
 
     pMMBDXP = hMiraMonLayer->pMMBDXP = calloc_function(sizeof(*pMMBDXP));
+    if (!pMMBDXP)
+        return 1;
 
     if (hMiraMonLayer->bIsPoint)
     {
