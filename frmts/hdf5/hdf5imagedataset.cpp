@@ -256,6 +256,10 @@ class HDF5ImageRasterBand final : public GDALPamRasterBand
 
     bool bNoDataSet = false;
     double dfNoDataValue = -9999.0;
+    bool m_bHasOffset = false;
+    double m_dfOffset = 0.0;
+    bool m_bHasScale = false;
+    double m_dfScale = 1.0;
     int m_nIRasterIORecCounter = 0;
 
   public:
@@ -264,6 +268,8 @@ class HDF5ImageRasterBand final : public GDALPamRasterBand
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual double GetNoDataValue(int *) override;
+    virtual double GetOffset(int *) override;
+    virtual double GetScale(int *) override;
     // virtual CPLErr IWriteBlock( int, int, void * );
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
@@ -298,6 +304,16 @@ HDF5ImageRasterBand::HDF5ImageRasterBand(HDF5ImageDataset *poDSIn, int nBandIn,
         GH5_FetchAttribute(poDSIn->dataset_id, "_FillValue", dfNoDataValue);
     if (!bNoDataSet)
         dfNoDataValue = -9999.0;
+
+    // netCDF conventions for scale and offset
+    m_bHasOffset =
+        GH5_FetchAttribute(poDSIn->dataset_id, "add_offset", m_dfOffset);
+    if (!m_bHasOffset)
+        m_dfOffset = 0.0;
+    m_bHasScale =
+        GH5_FetchAttribute(poDSIn->dataset_id, "scale_factor", m_dfScale);
+    if (!m_bHasScale)
+        m_dfScale = 1.0;
 }
 
 /************************************************************************/
@@ -315,6 +331,42 @@ double HDF5ImageRasterBand::GetNoDataValue(int *pbSuccess)
     }
 
     return GDALPamRasterBand::GetNoDataValue(pbSuccess);
+}
+
+/************************************************************************/
+/*                             GetOffset()                              */
+/************************************************************************/
+
+double HDF5ImageRasterBand::GetOffset(int *pbSuccess)
+
+{
+    if (m_bHasOffset)
+    {
+        if (pbSuccess)
+            *pbSuccess = m_bHasOffset;
+
+        return m_dfOffset;
+    }
+
+    return GDALPamRasterBand::GetOffset(pbSuccess);
+}
+
+/************************************************************************/
+/*                             GetScale()                               */
+/************************************************************************/
+
+double HDF5ImageRasterBand::GetScale(int *pbSuccess)
+
+{
+    if (m_bHasScale)
+    {
+        if (pbSuccess)
+            *pbSuccess = m_bHasScale;
+
+        return m_dfScale;
+    }
+
+    return GDALPamRasterBand::GetScale(pbSuccess);
 }
 
 /************************************************************************/

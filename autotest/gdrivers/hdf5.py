@@ -87,8 +87,12 @@ def test_hdf5_3():
 
     ds = gdal.Open('HDF5:"data/hdf5/u8be.h5"://TestArray')
 
-    cs = ds.GetRasterBand(1).Checksum()
+    band = ds.GetRasterBand(1)
+    cs = band.Checksum()
     assert cs == 135, "did not get expected checksum"
+    assert band.GetNoDataValue() is None
+    assert band.GetOffset() is None
+    assert band.GetScale() is None
 
     ds = None
 
@@ -908,6 +912,93 @@ def test_hdf5_eos_grid_utm_projection():
 # Test opening a HDF5EOS grid file
 
 
+def test_hdf5_eos_grid_utm_projection_empty_GROUP_dimension():
+
+    # Test support for products following
+    # AMSR-E/AMSR2 Unified L3 Daily 12.5 km Brightness Temperatures,
+    # Sea Ice Concentration, Motion & Snow Depth Polar Grids
+    # (https://nsidc.org/sites/default/files/au_si12-v001-userguide_1.pdf)
+    # such as
+    # https://n5eil01u.ecs.nsidc.org/AMSA/AU_SI12.001/2012.07.02/AMSR_U2_L3_SeaIce12km_B04_20120702.he5
+
+    if False:
+
+        import h5py
+        import numpy as np
+
+        f = h5py.File(
+            "data/hdf5/dummy_HDFEOS_with_utm_projection_empty_GROUP_dimension.h5", "w"
+        )
+        HDFEOS_INFORMATION = f.create_group("HDFEOS INFORMATION")
+        # Hint from https://forum.hdfgroup.org/t/nullpad-nullterm-strings/9107
+        # to use the low-level API to be able to generate NULLTERM strings
+        # without padding bytes
+        HDFEOSVersion_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
+        HDFEOSVersion_type.set_size(32)
+        HDFEOSVersion_type.set_strpad(h5py.h5t.STR_NULLTERM)
+        # HDFEOS_INFORMATION.attrs.create("HDFEOSVersion", "HDFEOS_5.1.15", dtype=HDFEOSVersion_type)
+        HDFEOSVersion_attr = h5py.h5a.create(
+            HDFEOS_INFORMATION.id,
+            "HDFEOSVersion".encode("ASCII"),
+            HDFEOSVersion_type,
+            h5py.h5s.create(h5py.h5s.SCALAR),
+        )
+        HDFEOSVersion_value = "HDFEOS_5.1.15".encode("ASCII")
+        HDFEOSVersion_value = np.frombuffer(
+            HDFEOSVersion_value, dtype="|S%d" % len(HDFEOSVersion_value)
+        )
+        HDFEOSVersion_attr.write(HDFEOSVersion_value)
+
+        StructMetadata_0_type = h5py.h5t.TypeID.copy(h5py.h5t.C_S1)
+        StructMetadata_0_type.set_size(32000)
+        StructMetadata_0_type.set_strpad(h5py.h5t.STR_NULLTERM)
+        StructMetadata_0 = """GROUP=SwathStructure\nEND_GROUP=SwathStructure\nGROUP=GridStructure\n\tGROUP=GRID_1\n\t\tGridName=\"test\"\n\t\tXDim=10\n\t\tYDim=20\n\t\tUpperLeftPointMtrs=(440720.000, 3751320.000)\n\t\tLowerRightMtrs=(441920.000, 3750120.000)\n\t\tProjection=HE5_GCTP_UTM\n\t\tZoneCode=11\n\t\tSphereCode=12\n\t\tGridOrigin=HE5_HDFE_GD_UL\n\t\tGROUP=Dimension\n\t\tEND_GROUP=Dimension\n\t\tGROUP=DataField\n\t\t\tOBJECT=DataField_1\n\t\t\t\tDataFieldName=\"test\"\n\t\t\t\tDataType=H5T_NATIVE_UCHAR\n\t\t\t\tDimList=(\"YDim\",\"XDim\")\n\t\t\t\tMaxdimList=(\"YDim\",\"XDim\")\n\t\t\tEND_OBJECT=DataField_1\n\t\tEND_GROUP=DataField\n\t\tGROUP=MergedFields\n\t\tEND_GROUP=MergedFields\n\tEND_GROUP=GRID_1\nEND_GROUP=GridStructure\nGROUP=PointStructure\nEND_GROUP=PointStructure\nGROUP=ZaStructure\nEND_GROUP=ZaStructure\nEND\n"""
+        # HDFEOS_INFORMATION.create_dataset("StructMetadata.0", None, data=StructMetadata_0, dtype=StructMetadata_0_type)
+        StructMetadata_0_dataset = h5py.h5d.create(
+            HDFEOS_INFORMATION.id,
+            "StructMetadata.0".encode("ASCII"),
+            StructMetadata_0_type,
+            h5py.h5s.create(h5py.h5s.SCALAR),
+        )
+        StructMetadata_0_value = StructMetadata_0.encode("ASCII")
+        StructMetadata_0_value = np.frombuffer(
+            StructMetadata_0_value, dtype="|S%d" % len(StructMetadata_0_value)
+        )
+        StructMetadata_0_dataset.write(
+            h5py.h5s.create(h5py.h5s.SCALAR),
+            h5py.h5s.create(h5py.h5s.SCALAR),
+            StructMetadata_0_value,
+        )
+
+        HDFEOS = f.create_group("HDFEOS")
+        ADDITIONAL = HDFEOS.create_group("ADDITIONAL")
+        ADDITIONAL.create_group("FILE_ATTRIBUTES")
+        GRIDS = HDFEOS.create_group("GRIDS")
+        test = GRIDS.create_group("test")
+        DataFields = test.create_group("Data Fields")
+        ds = DataFields.create_dataset("test", (20, 10), dtype="B")
+        ds[...] = np.array([i for i in range(20 * 10)]).reshape(ds.shape)
+        f.close()
+
+    ds = gdal.Open(
+        "data/hdf5/dummy_HDFEOS_with_utm_projection_empty_GROUP_dimension.h5"
+    )
+    assert ds
+    assert ds.RasterXSize == 10
+    assert ds.RasterYSize == 20
+    assert ds.RasterCount == 1
+    assert ds.GetGeoTransform() == pytest.approx((440720, 120, 0, 3751320, 0, -60))
+    assert ds.GetSpatialRef().GetUTMZone() == 11
+    # WGS 84
+    assert ds.GetSpatialRef().GetSemiMajor() == 6378137
+    assert ds.GetSpatialRef().GetInvFlattening() == 298.257223563
+    ds = None
+
+
+###############################################################################
+# Test opening a HDF5EOS grid file
+
+
 def test_hdf5_eos_grid_geo_projection():
 
     if False:
@@ -1498,3 +1589,16 @@ END
     assert ds.GetRasterBand(1).ReadBlock(1, 2) == mem_ds.GetRasterBand(1).ReadRaster(
         1 * blockxsize, 2 * blockysize, blockxsize, blockysize
     )
+
+
+###############################################################################
+# Test GetNoDataValue(), GetOffset(), GetScale()
+
+
+def test_hdf5_read_netcdf_nodata_scale_offset():
+
+    ds = gdal.Open("data/hdf5/scale_offset.h5")
+    band = ds.GetRasterBand(1)
+    assert band.GetNoDataValue() == pytest.approx(9.96921e36, rel=1e-7)
+    assert band.GetOffset() == 1.5
+    assert band.GetScale() == 0.01
