@@ -756,3 +756,37 @@ def test_tiledb_multidim_open_converted_by_tiledb_cf_netcdf_convert():
     assert ds.GetGeoTransform() == pytest.approx(
         (440720.0, 60.0, 0.0, 3750120.0, 0.0, 60.0)
     )
+
+
+###############################################################################
+
+
+def test_tiledb_multidim_two_2D_arrays(tmp_path):
+    """Test that we don't recurse indefinitely when opening arrays in the same group"""
+
+    filename = str(tmp_path / "test_tiledb_multidim_two_2D_arrays.tiledb")
+
+    def test():
+
+        drv = gdal.GetDriverByName("TileDB")
+        ds = drv.CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        dim0 = rg.CreateDimension("dim0", None, None, 3)
+        dim1 = rg.CreateDimension("dim1", None, None, 5)
+        rg.CreateMDArray(
+            "ar", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        )
+        rg.CreateMDArray(
+            "ar2", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        )
+
+    def reopen_readonly():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("ar")
+        assert ar.GetDimensionCount() == 2
+        ar2 = rg.OpenMDArray("ar2")
+        assert ar2.GetDimensionCount() == 2
+
+    test()
+    reopen_readonly()
