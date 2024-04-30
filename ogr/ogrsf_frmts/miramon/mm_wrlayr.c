@@ -154,18 +154,6 @@ void MMCPLDebug(int code, const char *fmt, ...)
     printf(szBigEnoughBuffer); /*ok*/
     va_end(args);
 }
-
-int snprintf(char *str, size_t size, const char *format, ...)
-{
-    int result;
-    va_list args;
-
-    va_start(args, format);
-    result = vsnprintf(str, size, format, args);
-    va_end(args);
-
-    return result;
-}
 #endif
 
 // Checks for potential arithmetic overflow when performing multiplication
@@ -4617,7 +4605,7 @@ int MMAddFeature(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     if (hMiraMonLayer->bIsPoint)
     {
-        re = LOG_ACTION(MMCreateFeaturePoint(hMiraMonLayer, hMiraMonFeature));
+        re = MMCreateFeaturePoint(hMiraMonLayer, hMiraMonFeature);
         if (hMiraMonFeature)
         {
             hMiraMonFeature->nReadFeatures =
@@ -4627,8 +4615,7 @@ int MMAddFeature(struct MiraMonVectLayerInfo *hMiraMonLayer,
     }
     if (hMiraMonLayer->bIsArc || hMiraMonLayer->bIsPolygon)
     {
-        re =
-            LOG_ACTION(MMCreateFeaturePolOrArc(hMiraMonLayer, hMiraMonFeature));
+        re = MMCreateFeaturePolOrArc(hMiraMonLayer, hMiraMonFeature);
         if (hMiraMonFeature)
         {
             hMiraMonFeature->nReadFeatures =
@@ -4639,7 +4626,7 @@ int MMAddFeature(struct MiraMonVectLayerInfo *hMiraMonLayer,
     if (hMiraMonLayer->bIsDBF)
     {
         // Adding a record to DBF file
-        re = LOG_ACTION(MMCreateRecordDBF(hMiraMonLayer, hMiraMonFeature));
+        re = MMCreateRecordDBF(hMiraMonLayer, hMiraMonFeature);
         if (hMiraMonFeature)
         {
             hMiraMonFeature->nReadFeatures =
@@ -5135,6 +5122,7 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
 #ifndef GDAL_COMPILATION
     char line[10000];
 #endif
+    char *pszString;
     const char *pszLine;
     char *section_header = nullptr;
     size_t key_len = 0;
@@ -5151,14 +5139,15 @@ char *MMReturnValueFromSectionINIFile(const char *filename, const char *section,
         key_len = strlen(key);
 
 #ifndef GDAL_COMPILATION
-    while (fgets(line, (int)sizeof(line), file))
+    while (fgets_function(line, (int)sizeof(line), file) && !feof_64(file) &&
+           *line != '\0')
     {
         pszLine = line;
 #else
     while ((pszLine = CPLReadLine2L(file, 10000, nullptr)) != nullptr)
     {
 #endif
-        char *pszString =
+        pszString =
             CPLRecode_function(pszLine, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
 
         // Skip comments and empty lines
@@ -5256,6 +5245,10 @@ int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
     const char *pszLine;
     size_t nLong;
     char *id_geodes, *psidgeodes, *epsg;
+#ifndef GDAL_COMPILATION
+    char line[10000];
+    char *pszString;
+#endif
 
     if (!pMMSRS_or_pSRS)
     {
@@ -5289,8 +5282,17 @@ int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
     }
     free_function(aMMIDDBFFile);
 
-    // Checking the header of the csv file
-    pszLine = CPLReadLine2L(pfMMSRS, 1024, nullptr);
+// Checking the header of the csv file
+#ifndef GDAL_COMPILATION
+    fgets_function(line, (int)sizeof(line), pfMMSRS);
+    if (!feof_64(pfMMSRS))
+        pszLine = line;
+    else
+        pszLine = nullptr;
+#else
+    pszLine = CPLReadLine2L(pfMMSRS, 10000, nullptr);
+#endif
+
     if (!pszLine)
 
     {
@@ -5336,9 +5338,16 @@ int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
         return 1;
     }
 
-    // Looking for the information.
-    while ((pszLine = CPLReadLine2L(pfMMSRS, 1024, nullptr)) != nullptr)
+// Looking for the information.
+#ifndef GDAL_COMPILATION
+    while (fgets_function(line, (int)sizeof(line), pfMMSRS) &&
+           !feof_64(pfMMSRS) && *line != '\0')
     {
+        pszLine = line;
+#else
+    while ((pszLine = CPLReadLine2L(pfMMSRS, 10000, nullptr)) != nullptr)
+    {
+#endif
         id_geodes = strstr(pszLine, ";");
         if (!id_geodes)
         {
@@ -6512,7 +6521,8 @@ static int MMAddFeatureRecordToMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
                 continue;
             }
-            if (pBD_XP->pField[nIField + nNumPrivateMMField].FieldType == 'C')
+            if (pBD_XP->pField[nIField + nNumPrivateMMField].FieldType == 'C' ||
+                pBD_XP->pField[nIField + nNumPrivateMMField].FieldType == 'L')
             {
                 if (MMWriteValueToRecordDBXP(hMiraMonLayer, pszRecordOnCourse,
                                              pBD_XP->pField + nIField +

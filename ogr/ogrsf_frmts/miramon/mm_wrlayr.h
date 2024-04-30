@@ -34,6 +34,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define fwrite_function(p, s, r, f) fwrite_64((p), (s), (r), (f))
 #define fread_function(p, s, r, f) fread_64((p), (s), (r), (f))
 #define fseek_function(f, s, g) fseek_64((f), (s), (g))
+#define fgets_function(f, s, g) fgets_64((f), (s), (g))
 #define TruncateFile_function(a, b) TruncaFitxer_64((a), (b))
 #define strdup_function(p) strdup((p))
 #define get_filename_function TreuAdreca
@@ -198,8 +199,6 @@ int MMResizeDoublePointer(MM_COORD_TYPE **pDouble, MM_N_VERTICES_TYPE *nMax,
 int MMResizeStringToOperateIfNeeded(struct MiraMonVectLayerInfo *hMiraMonLayer,
                                     MM_EXT_DBF_N_FIELDS nNewSize);
 int MMIsEmptyString(const char *string);
-int MMGetNFieldValue(const char *pszStringList, GUInt32 nIRecord,
-                     char *pszPartOfRawValue, size_t nSizeOfRawValue);
 // Metadata functions
 int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *result,
                                 MM_BYTE direction);

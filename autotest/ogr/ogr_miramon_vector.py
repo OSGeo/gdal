@@ -62,6 +62,8 @@ def check_simple_point(ds):
     assert f.GetField("ID_GRAFIC") == 0
     assert f.GetFieldAsString("ATT1") == "A"
     assert f.GetFieldAsString("ATTRIBUTE_2") == "B"
+    assert f.GetFieldAsString("LOGICALY") == "1"
+    assert f.GetFieldAsString("LOGICALN") == "0"
 
     f = lyr.GetNextFeature()
     assert f is not None, "Failed to get feature"
@@ -71,6 +73,8 @@ def check_simple_point(ds):
     assert f.GetField("ID_GRAFIC") == 1
     assert f.GetFieldAsString("ATT1") == "C"
     assert f.GetFieldAsString("ATTRIBUTE_2") == "D"
+    assert f.GetFieldAsString("LOGICALY") == "1"
+    assert f.GetFieldAsString("LOGICALN") == "0"
 
     f = lyr.GetNextFeature()
     assert f is not None, "Failed to get feature"
@@ -80,6 +84,8 @@ def check_simple_point(ds):
     assert f.GetField("ID_GRAFIC") == 2
     assert f.GetFieldAsString("ATT1") == ""
     assert f.GetFieldAsString("ATTRIBUTE_2") == ""
+    assert f.GetFieldAsString("LOGICALY") == "1"
+    assert f.GetFieldAsString("LOGICALN") == "0"
 
 
 def test_ogr_miramon_read_simple_point():

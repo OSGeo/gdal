@@ -20,11 +20,6 @@ CPL_C_START                          // Necessary for compiling in GDAL project
     // Log. It should be temporal
     extern const char *MM_pszLogFilename;
 
-#define LOG_STR(str) (MMLog((str), __LINE__))
-#define LOG_ACTION(action) ((void)MMLog(#action, __LINE__), (action))
-
-const char *MMLog(const char *pszMsg, int nLineNumber);
-
 void fclose_and_nullify(FILE_TYPE **pFunc);
 
 // MiraMon feature table descriptors
@@ -98,9 +93,6 @@ extern char szNumberOfElementaryPolygonsEng[];
 extern char szNumberOfElementaryPolygonsCat[];
 extern char szNumberOfElementaryPolygonsSpa[];
 
-#ifndef GDAL_COMPILATION
-char *CPLStrlcpy(char *dest, const char *src, size_t maxlen);
-#endif
 char *MM_oemansi(char *szcadena);
 char *MM_oemansi_n(char *szcadena, size_t n_bytes);
 void MM_InitializeField(struct MM_FIELD *camp);
