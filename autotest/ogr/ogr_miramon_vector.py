@@ -998,6 +998,9 @@ def create_common_attributes(lyr):
     lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
     lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
     lyr.CreateField(ogr.FieldDefn("datefield", ogr.OFTDate))
+    f = ogr.FieldDefn("boolfield", ogr.OFTInteger)
+    f.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(f)
 
 
 def assign_common_attributes(f):
@@ -1010,6 +1013,7 @@ def assign_common_attributes(f):
     f["int64listfield"] = [12345678912345678]
     f["doulistfield"] = [1.5, 4.2]
     f["datefield"] = "2024/04/24"
+    f["boolfield"] = 1
 
 
 def check_common_attributes(f):
@@ -1022,6 +1026,7 @@ def check_common_attributes(f):
     assert f["int64listfield"] == [12345678912345678]
     assert f["doulistfield"] == [1.5, 4.2]
     assert f["datefield"] == "2024/04/24"
+    assert f["boolfield"] == [True]
 
 
 def open_ds_lyr_0_feature_0(layername):
@@ -1054,7 +1059,7 @@ def test_ogr_miramon_write_basic_polygon(tmp_path):
 
     assert f["ID_GRAFIC"] == [1, 1]
     assert f["N_VERTEXS"] == [4, 4]
-    assert f["PERIMETRE"] == [3.414213562, 3.414213562]
+    assert f["PERIMETRE"] == [3.414, 3.414]
     assert f["AREA"] == [0.500000000000, 0.500000000000]
     assert f["N_ARCS"] == [1, 1]
     assert f["N_POLIG"] == [1, 1]
