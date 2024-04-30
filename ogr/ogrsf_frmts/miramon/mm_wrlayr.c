@@ -6522,7 +6522,7 @@ int MMWritePreformatedNumberValueToRecordDBXP(
         return 1;
 
     if (!valor)
-        *hMiraMonLayer->szStringToOperate = '\0';
+        memset(hMiraMonLayer->szStringToOperate, 0, camp->BytesPerField);
     else
     {
         snprintf(hMiraMonLayer->szStringToOperate,
