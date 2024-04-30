@@ -469,7 +469,7 @@ TileDBGroup::OpenMDArray(const std::string &osName,
             }
             else if (MatchNameSuffix(CPLGetFilename(obj.uri().c_str())))
             {
-                osSubPathCandidate = osSubPath;
+                osSubPathCandidate = obj.uri();
             }
         }
     }
