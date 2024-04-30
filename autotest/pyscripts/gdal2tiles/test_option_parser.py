@@ -48,7 +48,7 @@ class AttrDict(dict):
 
 class OptionParserInputOutputTest(TestCase):
     def test_vanilla_input_output(self):
-        _, input_file = tempfile.mkstemp()
+        input_file = "../../gcore/data/byte.tif"
         output_folder = tempfile.mkdtemp()
         parsed_input, parsed_output, options = gdal2tiles.process_args(
             [input_file, output_folder]
@@ -59,10 +59,10 @@ class OptionParserInputOutputTest(TestCase):
         self.assertNotEqual(options, {})
 
     def test_output_folder_is_the_input_file_folder_when_none_passed(self):
-        _, input_file = tempfile.mkstemp()
+        input_file = "../../gcore/data/byte.tif"
         _, parsed_output, _ = gdal2tiles.process_args([input_file])
 
-        self.assertEqual(parsed_output, os.path.basename(input_file))
+        self.assertEqual(parsed_output, "byte")
 
     def _asserts_exits_with_code_2(self, params):
         with self.assertRaises(SystemExit) as cm:
