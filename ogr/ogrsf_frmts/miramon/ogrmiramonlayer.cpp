@@ -183,6 +183,24 @@ OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
                 hMiraMonLayerARC.pSRS = CPLStrdup(pszAuthorityCode);
                 hMiraMonLayerPOL.pSRS = CPLStrdup(pszAuthorityCode);
             }
+            // In the DBF, there are some reserved fields that need to
+            // know if the layer is geographic or not to write the
+            // precision (they are real)
+            if (poSRS->IsGeographic())
+            {
+                hMiraMonLayerPNT.nSRSType = hMiraMonLayerARC.nSRSType =
+                    hMiraMonLayerPOL.nSRSType = MM_SRS_LAYER_IS_GEOGRAPHIC_TYPE;
+            }
+            else
+            {
+                hMiraMonLayerPNT.nSRSType = hMiraMonLayerARC.nSRSType =
+                    hMiraMonLayerPOL.nSRSType = MM_SRS_LAYER_IS_PROJECTED_TYPE;
+            }
+        }
+        else
+        {
+            hMiraMonLayerPNT.nSRSType = hMiraMonLayerARC.nSRSType =
+                hMiraMonLayerPOL.nSRSType = MM_SRS_LAYER_IS_UNKNOWN_TYPE;
         }
     }
     else
@@ -1853,15 +1871,26 @@ OGRErr OGRMiraMonLayer::MMLoadGeometry(OGRGeometryH hGeom)
 
     int eLT = wkbFlatten(OGR_G_GetGeometryType(hGeom));
 
-    if (eLT == wkbMultiPolygon || eLT == wkbPolyhedralSurface ||
-        eLT == wkbTIN || eLT == wkbTriangle)
+    if (eLT == wkbMultiPolygon || eLT == wkbPolyhedralSurface || eLT == wkbTIN)
     {
-        for (int iGeom = 0; iGeom < nGeom; iGeom++)
+        for (int iGeom = 0; iGeom < nGeom && eErr == OGRERR_NONE; iGeom++)
         {
             OGRGeometryH poSubGeometry = OGR_G_GetGeometryRef(hGeom, iGeom);
 
             // Reads all coordinates
             eErr = MMLoadGeometry(poSubGeometry);
+            if (eErr != OGRERR_NONE)
+                return eErr;
+        }
+    }
+    if (eLT == wkbTriangle)
+    {
+        for (int iGeom = 0; iGeom < nGeom && eErr == OGRERR_NONE; iGeom++)
+        {
+            OGRGeometryH poSubGeometry = OGR_G_GetGeometryRef(hGeom, iGeom);
+
+            // Reads all coordinates
+            eErr = MMDumpVertices(poSubGeometry, TRUE, TRUE);
             if (eErr != OGRERR_NONE)
                 return eErr;
         }
@@ -2071,7 +2100,42 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
                         if (phMiraMonLayer->pLayerDB->pFields[iField]
                                 .nFieldSize == 0)
                             phMiraMonLayer->pLayerDB->pFields[iField]
-                                .nFieldSize = 1;
+                                .nFieldSize = 3;
+                    }
+
+                    // Some exceptions for some fields:
+                    if (EQUAL(
+                            m_poFeatureDefn->GetFieldDefn(iField)->GetNameRef(),
+                            "fontsize"))
+                    {
+                        phMiraMonLayer->pLayerDB->pFields[iField].nFieldSize =
+                            11;
+                        phMiraMonLayer->pLayerDB->pFields[iField]
+                            .nNumberOfDecimals = 3;
+                    }
+                    else if (EQUAL(m_poFeatureDefn->GetFieldDefn(iField)
+                                       ->GetNameRef(),
+                                   "leading") ||
+                             EQUAL(m_poFeatureDefn->GetFieldDefn(iField)
+                                       ->GetNameRef(),
+                                   "chrwidth") ||
+                             EQUAL(m_poFeatureDefn->GetFieldDefn(iField)
+                                       ->GetNameRef(),
+                                   "chrspacing"))
+                    {
+                        phMiraMonLayer->pLayerDB->pFields[iField].nFieldSize =
+                            8;
+                        phMiraMonLayer->pLayerDB->pFields[iField]
+                            .nNumberOfDecimals = 3;
+                    }
+                    else if (EQUAL(m_poFeatureDefn->GetFieldDefn(iField)
+                                       ->GetNameRef(),
+                                   "orientacio"))
+                    {
+                        phMiraMonLayer->pLayerDB->pFields[iField].nFieldSize =
+                            7;
+                        phMiraMonLayer->pLayerDB->pFields[iField]
+                            .nNumberOfDecimals = 2;
                     }
                 }
                 else
@@ -2250,9 +2314,6 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         hMMFeature.pRecords[nIRecord].nNumField))
                     return OGRERR_NOT_ENOUGH_MEMORY;
 
-                hMMFeature.pRecords[nIRecord].pField[iField].dValue =
-                    panValues[nIRecord];
-
                 if (eFSType == OFSTBoolean)
                 {
                     if (panValues[nIRecord] == 1)
@@ -2367,15 +2428,15 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                         hMMFeature.pRecords[nIRecord].nNumField))
                     return OGRERR_NOT_ENOUGH_MEMORY;
 
-                hMMFeature.pRecords[nIRecord].pField[iField].dValue =
-                    padfRLValues[nIRecord];
-
-                // TODO: decide how many decimals use. If possible.
-                //CPLStrlcpy(format, CPLSPrintf("%f", padfRLValues[nIRecord]),23);
+                char szChain[21];
+                MM_SprintfDoubleSignifFigures(
+                    szChain, sizeof(szChain),
+                    phMiraMonLayer->pLayerDB->pFields[iField].nNumberOfDecimals,
+                    padfRLValues[nIRecord]);
 
                 if (MM_SecureCopyStringFieldValue(
                         &hMMFeature.pRecords[nIRecord].pField[iField].pDinValue,
-                        CPLSPrintf("%f", padfRLValues[nIRecord]),
+                        szChain,
                         &hMMFeature.pRecords[nIRecord]
                              .pField[iField]
                              .nNumDinValue))
@@ -2502,9 +2563,6 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 0;
             else
             {
-                hMMFeature.pRecords[0].pField[iField].dValue =
-                    poFeature->GetFieldAsInteger(iField);
-
                 if (eFSType == OFSTBoolean)
                 {
                     if (!strcmp(pszRawValue, "1"))
@@ -2586,12 +2644,15 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 0;
             else
             {
-                hMMFeature.pRecords[0].pField[iField].dValue =
-                    poFeature->GetFieldAsDouble(iField);
+                char szChain[21];
+                MM_SprintfDoubleSignifFigures(
+                    szChain, sizeof(szChain),
+                    phMiraMonLayer->pLayerDB->pFields[iField].nNumberOfDecimals,
+                    poFeature->GetFieldAsDouble(iField));
 
                 if (MM_SecureCopyStringFieldValue(
                         &hMMFeature.pRecords[0].pField[iField].pDinValue,
-                        pszRawValue,
+                        szChain,
                         &hMMFeature.pRecords[0].pField[iField].nNumDinValue))
                     return OGRERR_NOT_ENOUGH_MEMORY;
                 hMMFeature.pRecords[0].pField[iField].bIsValid = 1;
