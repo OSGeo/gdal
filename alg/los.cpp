@@ -177,13 +177,11 @@ static bool IsAboveTerrain(const GDALRasterBandH hBand, const int x,
  *
  * @param[out] pnxTerrainIntersection The X location where the LOS line
  *             intersects with terrain, or nullptr if it does not intersect
- *             terrain. Not implemented currently (*pnxTerrainIntersection
- *             is set to -1)
+ *             terrain.
  *
  * @param[out] pnyTerrainIntersection The Y location where the LOS line
  *             intersects with terrain, or nullptr if it does not intersect
- *             terrain. Not implemented currently (*pnyTerrainIntersection
- *             is set to -1)
+ *             terrain.
  *
  * @param papszOptions Options for the line of sight algorithm (currently ignored).
  *
