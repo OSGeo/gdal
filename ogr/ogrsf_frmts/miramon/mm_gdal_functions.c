@@ -48,7 +48,7 @@ CPL_C_START              // Necessary for compiling in GDAL project
 #ifdef _WIN64
 #include "gdal\release-1911-x64\cpl_string.h"  // For CPL_ENC_UTF8
 #else
-#include "gdal\release-1911-32\cpl_string.h"  // For CPL_ENC_UTF8szNumberOfVerticesEsp
+#include "gdal\release-1911-32\cpl_string.h"  // For CPL_ENC_UTF8
 #endif
 #endif
 
@@ -183,21 +183,6 @@ void MM_FillFieldDescriptorByLanguage(void)
 }
 
 const char *MM_pszLogFilename = nullptr;
-
-// Logging
-const char *MMLog(const char *pszMsg, int nLineNumber)
-{
-    FILE *f;
-
-    if (MM_pszLogFilename == nullptr)
-        return pszMsg;
-    f = fopen(MM_pszLogFilename, "at");
-    if (f == nullptr)
-        return pszMsg;
-    fprintf(f, "%d: %s\n", nLineNumber, pszMsg); /*ok*/
-    fclose(f);
-    return pszMsg;
-}
 
 static const char MM_EmptyString[] = {""};
 #define MM_SetEndOfString (*MM_EmptyString)
@@ -1269,12 +1254,13 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
     {
         unsigned short FirstRecordOffsetLow16Bits;
         unsigned short FirstRecordOffsetHigh16Bits;
+        GUInt32 nTmp;
 
         memcpy(&FirstRecordOffsetLow16Bits, &offset_primera_fitxa, 2);
         memcpy(&FirstRecordOffsetHigh16Bits, &pMMBDXP->reserved_2, 2);
 
-        GUInt32 nTmp = ((GUInt32)FirstRecordOffsetHigh16Bits << 16) |
-                       FirstRecordOffsetLow16Bits;
+        nTmp = ((GUInt32)FirstRecordOffsetHigh16Bits << 16) |
+               FirstRecordOffsetLow16Bits;
         if (nTmp > INT32_MAX)
         {
             free_function(pMMBDXP->pField);
@@ -1893,28 +1879,6 @@ int MM_DuplicateFieldDBXP(struct MM_FIELD *camp_final,
 
     return 0;
 }
-
-#ifndef GDAL_COMPILATION
-size_t CPLStrlcpy(char *pszDest, const char *pszSrc, size_t nDestSize)
-{
-    if (nDestSize == 0)
-        return strlen(pszSrc);
-
-    char *pszDestIter = pszDest;
-    const char *pszSrcIter = pszSrc;
-
-    --nDestSize;
-    while (nDestSize != 0 && *pszSrcIter != '\0')
-    {
-        *pszDestIter = *pszSrcIter;
-        ++pszDestIter;
-        ++pszSrcIter;
-        --nDestSize;
-    }
-    *pszDestIter = '\0';
-    return pszSrcIter - pszSrc + strlen(pszSrcIter);
-}
-#endif
 
 // If n_bytes==SIZE_MAX, the parameter is ignored ant, then,
 // it's assumed that szcadena is NUL terminated

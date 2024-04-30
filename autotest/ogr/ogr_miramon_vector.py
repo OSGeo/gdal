@@ -59,9 +59,26 @@ def check_simple_point(ds):
     assert (
         f.GetGeometryRef().ExportToWkt() == "POINT (513.488106565226 848.806850618409)"
     )
+
+    assert (
+        lyr.GetLayerDefn()
+        .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("LOGICALY"))
+        .GetSubType()
+        == ogr.OFSTBoolean
+    )
+    assert (
+        lyr.GetLayerDefn()
+        .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("LOGICALN"))
+        .GetSubType()
+        == ogr.OFSTBoolean
+    )
+
     assert f.GetField("ID_GRAFIC") == 0
     assert f.GetFieldAsString("ATT1") == "A"
     assert f.GetFieldAsString("ATTRIBUTE_2") == "B"
+
+    assert f.GetField("LOGICALY") == 1
+    assert f.GetField("LOGICALN") == 0
 
     f = lyr.GetNextFeature()
     assert f is not None, "Failed to get feature"
@@ -71,6 +88,8 @@ def check_simple_point(ds):
     assert f.GetField("ID_GRAFIC") == 1
     assert f.GetFieldAsString("ATT1") == "C"
     assert f.GetFieldAsString("ATTRIBUTE_2") == "D"
+    assert f.GetField("LOGICALY") == 1
+    assert f.GetField("LOGICALN") == 0
 
     f = lyr.GetNextFeature()
     assert f is not None, "Failed to get feature"
@@ -80,6 +99,8 @@ def check_simple_point(ds):
     assert f.GetField("ID_GRAFIC") == 2
     assert f.GetFieldAsString("ATT1") == ""
     assert f.GetFieldAsString("ATTRIBUTE_2") == ""
+    assert f.GetField("LOGICALY") == 1
+    assert f.GetField("LOGICALN") == 0
 
 
 def test_ogr_miramon_read_simple_point():
@@ -977,6 +998,9 @@ def create_common_attributes(lyr):
     lyr.CreateField(ogr.FieldDefn("int64listfield", ogr.OFTInteger64List))
     lyr.CreateField(ogr.FieldDefn("doulistfield", ogr.OFTRealList))
     lyr.CreateField(ogr.FieldDefn("datefield", ogr.OFTDate))
+    f = ogr.FieldDefn("boolfield", ogr.OFTInteger)
+    f.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(f)
 
 
 def assign_common_attributes(f):
@@ -989,6 +1013,7 @@ def assign_common_attributes(f):
     f["int64listfield"] = [12345678912345678]
     f["doulistfield"] = [1.5, 4.2]
     f["datefield"] = "2024/04/24"
+    f["boolfield"] = 1
 
 
 def check_common_attributes(f):
@@ -1001,6 +1026,7 @@ def check_common_attributes(f):
     assert f["int64listfield"] == [12345678912345678]
     assert f["doulistfield"] == [1.5, 4.2]
     assert f["datefield"] == "2024/04/24"
+    assert f["boolfield"] == [True]
 
 
 def open_ds_lyr_0_feature_0(layername):
