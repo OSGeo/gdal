@@ -84,6 +84,7 @@ This is most often due to pip reusing a cached GDAL installation.
 Verify that the necessary dependencies have been installed and then run the following to force a clean build:
 
 ::
+
     pip install --no-cache --force-reinstall gdal[numpy]=="$(gdal-config --version).*"
 
 
