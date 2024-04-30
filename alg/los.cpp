@@ -177,13 +177,11 @@ static bool IsAboveTerrain(const GDALRasterBandH hBand, const int x,
  *
  * @param[out] pnxTerrainIntersection The X location where the LOS line
  *             intersects with terrain, or nullptr if it does not intersect
- *             terrain. Not implemented currently (*pnxTerrainIntersection
- *             is set to -1)
+ *             terrain.
  *
  * @param[out] pnyTerrainIntersection The Y location where the LOS line
  *             intersects with terrain, or nullptr if it does not intersect
- *             terrain. Not implemented currently (*pnyTerrainIntersection
- *             is set to -1)
+ *             terrain.
  *
  * @param papszOptions Options for the line of sight algorithm (currently ignored).
  *
@@ -201,6 +199,19 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
 {
     VALIDATE_POINTER1(hBand, "GDALIsLineOfSightVisible", false);
 
+    // A lambda to set the X-Y intersection if it's not null
+    auto SetXYIntersection = [&](const int x, const int y)
+    {
+        if (pnxTerrainIntersection != nullptr)
+        {
+            *pnxTerrainIntersection = x;
+        }
+        if (pnyTerrainIntersection != nullptr)
+        {
+            *pnyTerrainIntersection = y;
+        }
+    };
+
     if (pnxTerrainIntersection)
         *pnxTerrainIntersection = -1;
 
@@ -210,10 +221,12 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
     // Perform a preliminary check of the start and end points.
     if (!IsAboveTerrain(hBand, xA, yA, zA))
     {
+        SetXYIntersection(xA, yA);
         return false;
     }
     if (!IsAboveTerrain(hBand, xB, yB, zB))
     {
+        SetXYIntersection(xB, yB);
         return false;
     }
 
@@ -261,6 +274,7 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
                 const auto zTest = GetZValueFromY(y);
                 if (!IsAboveTerrain(hBand, xA, y, zTest))
                 {
+                    SetXYIntersection(xA, y);
                     return false;
                 }
             }
@@ -273,6 +287,7 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
                 const auto zTest = GetZValueFromY(y);
                 if (!IsAboveTerrain(hBand, xA, y, zTest))
                 {
+                    SetXYIntersection(xA, y);
                     return false;
                 }
             }
@@ -294,6 +309,7 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
                 const auto zTest = GetZValueFromX(x);
                 if (!IsAboveTerrain(hBand, x, yA, zTest))
                 {
+                    SetXYIntersection(x, yA);
                     return false;
                 }
             }
@@ -306,6 +322,7 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
                 const auto zTest = GetZValueFromX(x);
                 if (!IsAboveTerrain(hBand, x, yA, zTest))
                 {
+                    SetXYIntersection(x, yA);
                     return false;
                 }
             }
@@ -348,6 +365,11 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
     auto OnBresenhamPoint = [&](const int x, const int y) -> bool
     {
         const auto z = GetZValueFromXY(x, y);
+        const auto isAbove = IsAboveTerrain(hBand, x, y, z);
+        if (!isAbove)
+        {
+            SetXYIntersection(x, y);
+        }
         return IsAboveTerrain(hBand, x, y, z);
     };
 
