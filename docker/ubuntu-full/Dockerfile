@@ -330,8 +330,8 @@ RUN apt-get update \
         python3-pil \
     # Install JRE with --no-install-recommends, otherwise it draws default-jre, which draws systemd, which fails to install when running the arm64v8/ubuntu:24.04 image on a 64bit host
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends openjdk-"$JAVA_VERSION"-jre \
-    # Workaround bug in ogdi packaging
-    && ln -s /usr/lib/ogdi/libvrf.so /usr/lib \
+    # Worksround OGDI packaging bug for Ubuntu 24.04
+    && ln -s /usr/lib/$(uname -p)-linux-gnu/ogdi/4.1/libvrf.so /usr/lib/$(uname -p)-linux-gnu \
     # Install Arrow C++
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ca-certificates lsb-release wget \
     && wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
