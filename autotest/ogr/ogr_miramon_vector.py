@@ -99,8 +99,8 @@ def check_simple_point(ds):
     assert f.GetField("ID_GRAFIC") == 2
     assert f.GetFieldAsString("ATT1") == ""
     assert f.GetFieldAsString("ATTRIBUTE_2") == ""
-    assert f.GetFieldAs("LOGICALY") == 1
-    assert f.GetFieldAs("LOGICALN") == 0
+    assert f.GetField("LOGICALY") == 1
+    assert f.GetField("LOGICALN") == 0
 
 
 def test_ogr_miramon_read_simple_point():
