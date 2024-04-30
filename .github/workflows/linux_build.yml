@@ -86,6 +86,15 @@ jobs:
             build_script: build.sh
             os: ubuntu-22.04
 
+          - name: Ubuntu 24.04, gcc
+            id: ubuntu_24.04
+            travis_branch: ubuntu_2404
+            container: ubuntu_24.04
+            before_test_script: services.sh
+            build_script: build.sh
+            test_script: test.sh
+            os: ubuntu-22.04
+
           - name: Ubuntu 22.04, gcc
             id: ubuntu_22.04
             travis_branch: ubuntu_2204
