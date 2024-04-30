@@ -62,7 +62,7 @@ def check_simple_point(ds):
     assert f.GetField("ID_GRAFIC") == 0
     assert f.GetFieldAsString("ATT1") == "A"
     assert f.GetFieldAsString("ATTRIBUTE_2") == "B"
-    assert f.GetFieldAsString("LOGICALY") == "1"
+    assert f.GetField("LOGICALY") == 1
     assert f.GetFieldAsString("LOGICALN") == "0"
 
     f = lyr.GetNextFeature()
