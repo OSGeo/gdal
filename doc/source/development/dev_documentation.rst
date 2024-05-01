@@ -23,7 +23,9 @@ Building documentation
 
 HTML documentation can be built by running ``make html`` in the ``doc`` subdirectory of the GDAL source repository.
 The generated files will be output to ``doc/build`` where they can be viewed using a web browser.
+
 Doxygen content that is incorporated into the output is not automatically rebuilt but can be regenerated using ``make doxygen``.
+This ``make doxygen`` target is tolerant to Doxygen warnings, but continuous integration checks verify that there are no warnings. This can be checked by running ``make doxygen_check_warnings`` (requires Doxygen >= 1.9.3 to be warning free)
 
 To visualize documentation changes while editing, it may be useful to install the |sphinx-autobuild| python package.
 Once installed, running ``sphinx-autobuild -b html source build`` from the ``doc`` subdirectory will build documentation
