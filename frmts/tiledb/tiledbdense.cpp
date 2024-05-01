@@ -2407,8 +2407,8 @@ GDALDataset *TileDBRasterDataset::Create(const char *pszFilename, int nXSize,
                           new TileDBRasterBand(poDS.get(), i + 1, pszAttrName));
     }
 
-    // Only used for unit test purposes (to check ability of GDAL to read
-    // an arbitrary array)
+    // TILEDB_WRITE_IMAGE_STRUCTURE=NO only used for unit test purposes (to
+    // check ability of GDAL to read an arbitrary array)
     if (CPLTestBool(CPLGetConfigOption("TILEDB_WRITE_IMAGE_STRUCTURE", "YES")))
     {
         CPLStringList aosImageStruct;
