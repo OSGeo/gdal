@@ -36,6 +36,7 @@ SOFTWARE.
 #include <algorithm>
 #include <any>
 #include <array>
+#include <set>
 #include <charconv>
 #include <cstdlib>
 #include <functional>
@@ -751,6 +752,34 @@ public:
       }
       m_is_used = true;
       var.push_back(details::parse_number<int, details::radix_10>()(s));
+    });
+    return *this;
+  }
+
+  auto &store_into(std::set<std::string> &var) {
+    if (m_default_value.has_value()) {
+      var = std::any_cast<std::set<std::string>>(m_default_value);
+    }
+    action([this, &var](const std::string &s) {
+      if (!m_is_used) {
+        var.clear();
+      }
+      m_is_used = true;
+      var.insert(s);
+    });
+    return *this;
+  }
+
+  auto &store_into(std::set<int> &var) {
+    if (m_default_value.has_value()) {
+      var = std::any_cast<std::set<int>>(m_default_value);
+    }
+    action([this, &var](const std::string &s) {
+      if (!m_is_used) {
+        var.clear();
+      }
+      m_is_used = true;
+      var.insert(details::parse_number<int, details::radix_10>()(s));
     });
     return *this;
   }
