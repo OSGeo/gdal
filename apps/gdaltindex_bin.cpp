@@ -32,65 +32,17 @@
 #include "commonutils.h"
 #include "gdal_version.h"
 #include "gdal_utils_priv.h"
+#include "gdal_priv.h"
 
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(bool bIsError, const char *pszErrorMsg)
+static void Usage()
 
 {
-    fprintf(
-        bIsError ? stderr : stdout, "%s",
-        "Usage: gdaltindex [--help] [--help-general]\n"
-        "                  [-overwrite] [-recursive] [-filename_filter "
-        "<val>]...\n"
-        "                  [-min_pixel_size <val>] [-max_pixel_size <val>]\n"
-        "                  [-f <format>] [-tileindex <field_name>] "
-        "[-write_absolute_path] \n"
-        "                  [-skip_different_projection] [-t_srs <target_srs>]\n"
-        "                  [-src_srs_name field_name] [-src_srs_format "
-        "{AUTO|WKT|EPSG|PROJ}]\n"
-        "                  [-lyr_name <name>] [-lco <KEY>=<VALUE>]...\n"
-        "                  [-gti_filename <name>]\n"
-        "                  [-tr <xres> <yres>] [-te <xmin> <ymin> <xmax> "
-        "<ymax>]\n"
-        "                  [-ot <datatype>] [-bandcount <val>] [-nodata "
-        "<val>[,<val>...]]\n"
-        "                  [-colorinterp <val>[,<val>...]] [-mask]\n"
-        "                  [-mo <KEY>=<VALUE>]...\n"
-        "                  [-fetch_md <gdal_md_name> <fld_name> "
-        "<fld_type>]...\n"
-        "                  <index_file> <file_or_dir> [<file_or_dir>]...\n"
-        "\n"
-        "e.g.\n"
-        "  % gdaltindex doq_index.shp doq/*.tif\n"
-        "\n"
-        "NOTES:\n"
-        "  o The index will be created if it doesn't already exist.\n"
-        "  o The default tile index field is 'location'.\n"
-        "  o Raster filenames will be put in the file exactly as they are "
-        "specified\n"
-        "    on the commandline unless the option -write_absolute_path is "
-        "used.\n"
-        "  o If -skip_different_projection is specified, only files with same "
-        "projection ref\n"
-        "    as files already inserted in the tileindex will be inserted "
-        "(unless t_srs is specified).\n"
-        "  o If -t_srs is specified, geometries of input files will be "
-        "transformed to the desired\n"
-        "    target coordinate reference system.\n"
-        "    Note that using this option generates files that are NOT "
-        "compatible with MapServer < 6.4.\n"
-        "  o Simple rectangular polygons are generated in the same coordinate "
-        "reference system\n"
-        "    as the rasters, or in target reference system if the -t_srs "
-        "option is used.\n");
-
-    if (pszErrorMsg != nullptr)
-        fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
-
-    exit(bIsError ? 1 : 0);
+    fprintf(stderr, "%s\n", GDALTileIndexAppGetParserUsage().c_str());
+    exit(1);
 }
 
 /************************************************************************/
@@ -99,6 +51,7 @@ static void Usage(bool bIsError, const char *pszErrorMsg)
 
 MAIN_START(argc, argv)
 {
+
     EarlySetConfigOptions(argc, argv);
 
     /* -------------------------------------------------------------------- */
@@ -110,46 +63,23 @@ MAIN_START(argc, argv)
     if (argc < 1)
         exit(-argc);
 
-    for (int i = 0; argv != nullptr && argv[i] != nullptr; i++)
-    {
-        if (EQUAL(argv[i], "--utility_version"))
-        {
-            printf("%s was compiled against GDAL %s and is running against "
-                   "GDAL %s\n",
-                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy(argv);
-            return 0;
-        }
-        else if (EQUAL(argv[i], "--help"))
-        {
-            Usage(false, nullptr);
-        }
-    }
-
-    auto psOptionsForBinary = std::make_unique<GDALTileIndexOptionsForBinary>();
-    /* coverity[tainted_data] */
-    GDALTileIndexOptions *psOptions =
-        GDALTileIndexOptionsNew(argv + 1, psOptionsForBinary.get());
+    GDALTileIndexOptionsForBinary sOptionsForBinary;
+    std::unique_ptr<GDALTileIndexOptions, decltype(&GDALTileIndexOptionsFree)>
+        psOptions{GDALTileIndexOptionsNew(argv + 1, &sOptionsForBinary),
+                  GDALTileIndexOptionsFree};
     CSLDestroy(argv);
 
-    if (psOptions == nullptr)
+    if (!psOptions)
     {
-        Usage(true, nullptr);
+        Usage();
     }
 
-    if (!psOptionsForBinary->bDestSpecified)
-        Usage(true, "No index filename specified.");
-
     int bUsageError = FALSE;
-    GDALDatasetH hOutDS = GDALTileIndex(psOptionsForBinary->osDest.c_str(),
-                                        psOptionsForBinary->aosSrcFiles.size(),
-                                        psOptionsForBinary->aosSrcFiles.List(),
-                                        psOptions, &bUsageError);
-    if (bUsageError)
-        Usage(true, nullptr);
-    int nRetCode = (hOutDS) ? 0 : 1;
+    GDALDatasetH hOutDS = GDALTileIndex(
+        sOptionsForBinary.osDest.c_str(), sOptionsForBinary.aosSrcFiles.size(),
+        sOptionsForBinary.aosSrcFiles.List(), psOptions.get(), &bUsageError);
 
-    GDALTileIndexOptionsFree(psOptions);
+    int nRetCode = (hOutDS) ? 0 : 1;
 
     CPLErrorReset();
     // The flush to disk is only done at that stage, so check if any error has
