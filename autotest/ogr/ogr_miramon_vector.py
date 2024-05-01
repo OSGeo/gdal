@@ -1059,7 +1059,7 @@ def test_ogr_miramon_write_basic_polygon(tmp_path):
 
     assert f["ID_GRAFIC"] == [1, 1]
     assert f["N_VERTEXS"] == [4, 4]
-    assert f["PERIMETRE"] == [3.414213562, 3.414213562]
+    assert f["PERIMETRE"] == [3.414, 3.414]
     assert f["AREA"] == [0.500000000000, 0.500000000000]
     assert f["N_ARCS"] == [1, 1]
     assert f["N_POLIG"] == [1, 1]

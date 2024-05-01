@@ -73,6 +73,9 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define MAX_RELIABLE_SF_DOUBLE                                                 \
     15  // Maximum nr. of reliable significant figures in any double.
 
+// Maximum nr. of reliable significant figures
+#define MM_MAX_XS_DOUBLE 17
+
 // Initial width of MiraMon fields
 #define MM_MIN_WIDTH_ID_GRAFIC 3
 #define MM_MIN_WIDTH_N_VERTEXS 5
@@ -318,12 +321,9 @@ struct MiraMonVectorMetaData
 struct MiraMonFieldValue
 {
     MM_BOOLEAN bIsValid;  // If 1 the value is filled. If 0, there is no value.
-#define MM_INIT_STRING_FIELD_VALUE 50000  // Never less than 10
-    MM_EXT_DBF_N_FIELDS nNumDinValue;     // Size of the reserved string value
-    char *pDinValue;  // Used if MM_MAX_STRING_FIELD_VALUE is not enough
-    double dValue;    // For double and 32 bit integer numeric values
-    GInt64 iValue;    // For 64 bit integer values.
-    //MM_BOOLEAN kbValue;    // For binary values.
+    MM_EXT_DBF_N_FIELDS nNumDinValue;  // Size of the reserved string value
+    char *pDinValue;                   // Used to store the value as string
+    GInt64 iValue;                     // For 64 bit integer values.
 };
 
 struct MiraMonRecord
@@ -734,6 +734,12 @@ struct MiraMonVectLayerInfo
     // EPSG code of the spatial reference system.
     char *pSRS;
     int nSRS_EPSG;  // Ref. system if has EPSG code.
+
+// Used to write the precision of the reserved fields in the DBF
+#define MM_SRS_LAYER_IS_UNKNOWN_TYPE 0
+#define MM_SRS_LAYER_IS_PROJECTED_TYPE 1
+#define MM_SRS_LAYER_IS_GEOGRAPHIC_TYPE 2
+    int nSRSType;
 
     // In GDAL->MiraMon sense:
     // Transformed table from input layer to a MiraMon table.
