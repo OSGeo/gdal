@@ -31,6 +31,8 @@
 
 #include "tiledbheaders.h"
 
+#include <set>
+
 constexpr const char *CRS_ATTRIBUTE_NAME = "_CRS";
 constexpr const char *UNIT_ATTRIBUTE_NAME = "_UNIT";
 constexpr const char *DIM_TYPE_ATTRIBUTE_NAME = "_DIM_TYPE";
@@ -164,6 +166,9 @@ class TileDBGroup final : public GDALGroup, public TileDBAttributeHolder
     mutable std::map<std::string, std::shared_ptr<TileDBArray>> m_oMapArrays{};
     mutable std::map<std::string, std::shared_ptr<GDALDimension>>
         m_oMapDimensions{};
+
+    //! To prevent OpenMDArray() to indefinitely recursing
+    mutable std::set<std::string> m_oSetArrayInOpening{};
 
     TileDBGroup(const std::shared_ptr<TileDBSharedResource> &poSharedResource,
                 const std::string &osParentName, const std::string &osName,
