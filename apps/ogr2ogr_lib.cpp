@@ -6664,12 +6664,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
                 { psOptions->aosDSCO.AddString(s.c_str()); })
         .help(_("Dataset creation option (format specific)."));
 
-    argParser->add_argument("-lco")
-        .metavar("<NAME>=<VALUE>")
-        .append()
-        .action([psOptions](const std::string &s)
-                { psOptions->aosLCO.AddString(s.c_str()); })
-        .help(_("Layer creation option (format specific)."));
+    argParser->add_layer_creation_options_argument(psOptions->aosLCO);
 
     argParser->add_usage_newline();
 

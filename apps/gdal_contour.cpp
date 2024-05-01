@@ -138,12 +138,8 @@ GDALContourAppOptionsGetParser(GDALContourOptions *psOptions)
                 { psOptions->aosOpenOptions.AddString(s.c_str()); })
         .help(_("Dataset creation option (format specific)."));
 
-    argParser->add_argument("-lco")
-        .metavar("<NAME>=<VALUE>")
-        .append()
-        .action([psOptions](const std::string &s)
-                { psOptions->aosCreationOptions.AddString(s.c_str()); })
-        .help(_("Layer creation option (format specific)."));
+    argParser->add_layer_creation_options_argument(
+        psOptions->aosCreationOptions);
 
     auto &group = argParser->add_mutually_exclusive_group();
 
