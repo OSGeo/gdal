@@ -35,11 +35,20 @@
 #pragma GCC system_header
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4996) /* XXXX was deprecated */
+#endif
+
 #ifdef INCLUDE_ONLY_TILEDB_VERSION
 #include "tiledb/tiledb_version.h"
 #else
 #include "tiledb/tiledb"
 #include "tiledb/tiledb_experimental"
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(pop)
 #endif
 
 #if TILEDB_VERSION_MAJOR > 2 ||                                                \
