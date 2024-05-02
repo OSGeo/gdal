@@ -67,9 +67,12 @@ void GDALExit(int nCode)
 MAIN_START(nArgc, papszArgv)
 
 {
+
     // Check strict compilation and runtime library version as we use C++ API.
     if (!GDAL_CHECK_VERSION(papszArgv[0]))
-        exit(1);
+        GDALExit(1);
+
+    EarlySetConfigOptions(nArgc, papszArgv);
 
     /* -------------------------------------------------------------------- */
     /*      Processing command line arguments.                              */
@@ -182,12 +185,9 @@ MAIN_START(nArgc, papszArgv)
 
     CPLStringList aosArgv;
 
-    if (papszArgv)
+    for (int i = 0; i < nArgc; i++)
     {
-        for (int i = 0; i < nArgc; i++)
-        {
-            aosArgv.AddString(papszArgv[i]);
-        }
+        aosArgv.AddString(papszArgv[i]);
     }
 
     try
