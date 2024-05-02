@@ -3648,11 +3648,18 @@ int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
                                   GDALProgressFunc pProgressFunc,
                                   void *pProgressData)
 {
-    std::string osMsg("Copying of ");
-    osMsg += pszSource;
-
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("CopyFile");
+
+    if (!pszSource)
+    {
+        return VSIFilesystemHandler::CopyFile(pszSource, pszTarget, fpSource,
+                                              nSourceSize, papszOptions,
+                                              pProgressFunc, pProgressData);
+    }
+
+    std::string osMsg("Copying of ");
+    osMsg += pszSource;
 
     const std::string osPrefix(GetFSPrefix());
     if (STARTS_WITH(pszSource, osPrefix.c_str()) &&

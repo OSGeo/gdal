@@ -1314,6 +1314,7 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
     VSIVirtualHandleUniquePtr poFileHandleAutoClose;
     if (!fpSource)
     {
+        CPLAssert(pszSource);
         fpSource = VSIFOpenExL(pszSource, "rb", TRUE);
         if (!fpSource)
         {
@@ -1342,6 +1343,8 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
     CPLString osMsg;
     if (pszSource)
         osMsg.Printf("Copying of %s", pszSource);
+    else
+        pszSource = "(unknown filename)";
 
     int ret = 0;
     constexpr size_t nBufferSize = 10 * 4096;
