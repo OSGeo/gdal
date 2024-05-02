@@ -1692,6 +1692,9 @@ void GDALDriverManager::DeclareDeferredPluginDriver(
  *
  * NOTE: This function is not thread safe.  It should not be called while
  * other threads are actively using GDAL.
+ *
+ * \see GDALDestroy()
+ * \deprecated Use GDALDestroy() instead
  */
 
 void CPL_STDCALL GDALDestroyDriverManager(void)

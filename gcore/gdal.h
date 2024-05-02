@@ -1045,9 +1045,7 @@ void CPL_DLL CPL_STDCALL GDALDestroyDriver(GDALDriverH);
 int CPL_DLL CPL_STDCALL GDALRegisterDriver(GDALDriverH);
 void CPL_DLL CPL_STDCALL GDALDeregisterDriver(GDALDriverH);
 void CPL_DLL CPL_STDCALL GDALDestroyDriverManager(void);
-#ifndef DOXYGEN_SKIP
 void CPL_DLL GDALDestroy(void);
-#endif
 CPLErr CPL_DLL CPL_STDCALL GDALDeleteDataset(GDALDriverH, const char *);
 CPLErr CPL_DLL CPL_STDCALL GDALRenameDataset(GDALDriverH,
                                              const char *pszNewName,

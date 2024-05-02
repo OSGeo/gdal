@@ -301,15 +301,4 @@ std::shared_ptr<GDALGroup> OGRMutexedDataSource::GetRootGroup() const
     return m_poBaseDataSource->GetRootGroup();
 }
 
-#if defined(_WIN32) && defined(_MSC_VER)
-// Horrible hack: for some reason MSVC doesn't export the class
-// if it is not referenced from the DLL itself
-void OGRRegisterMutexedDataSource();
-
-void OGRRegisterMutexedDataSource()
-{
-    delete new OGRMutexedDataSource(NULL, FALSE, NULL, FALSE);
-}
-#endif
-
 #endif /* #ifndef DOXYGEN_SKIP */
