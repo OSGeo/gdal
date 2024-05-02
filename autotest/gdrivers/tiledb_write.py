@@ -30,6 +30,7 @@
 ###############################################################################
 
 import math
+import os
 
 import gdaltest
 import pytest
@@ -437,3 +438,169 @@ def test_tiledb_write_nodata_error_after_rasterio(tmp_path):
         Exception, match="cannot be called after pixel values have been set"
     ):
         ds.GetRasterBand(1).SetNoDataValue(1)
+
+
+def test_tiledb_write_create_group(tmp_path):
+
+    # Create dataset and add a overview level
+    dsname = str(tmp_path / "test_tiledb_write_create_group.tiledb")
+    ds = gdal.GetDriverByName("TileDB").Create(
+        dsname, 1, 2, options=["CREATE_GROUP=YES"]
+    )
+    ds.Close()
+
+    # Check that it resulted in an auxiliary dataset
+    ds = gdal.OpenEx(dsname, gdal.OF_MULTIDIM_RASTER)
+    assert set(ds.GetRootGroup().GetMDArrayNames()) == set(
+        [
+            "test_tiledb_write_create_group_0",
+        ]
+    )
+    ds.Close()
+
+    ds = gdal.Open(dsname)
+    assert ds.RasterXSize == 1
+    assert ds.RasterYSize == 2
+
+
+def test_tiledb_write_overviews(tmp_path):
+
+    # This dataset name must be kept short, otherwise strange I/O errors will
+    # occur on Windows !
+    dsname = str(tmp_path / "test.tiledb")
+
+    src_ds = gdal.Open("data/rgbsmall.tif")
+    src_ds = gdal.Translate("", src_ds, format="MEM")
+    src_ds.GetRasterBand(1).SetNoDataValue(254)
+
+    # Create dataset and add a overview level
+    ds = gdal.GetDriverByName("TileDB").CreateCopy(
+        dsname, src_ds, options=["CREATE_GROUP=YES"]
+    )
+    ds.BuildOverviews("NEAR", [2])
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert ds.GetRasterBand(1).GetOverview(-1) is None
+    assert ds.GetRasterBand(1).GetOverview(1) is None
+    ref_ds = gdal.Translate("", src_ds, format="MEM")
+    ref_ds.BuildOverviews("NEAR", [2])
+    assert [
+        ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(ds.RasterCount)
+    ] == [
+        ref_ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
+        for i in range(ref_ds.RasterCount)
+    ]
+    ds.Close()
+
+    # Check that it resulted in an auxiliary dataset
+    ds = gdal.OpenEx(dsname, gdal.OF_MULTIDIM_RASTER)
+    assert set(ds.GetRootGroup().GetMDArrayNames()) == set(
+        [
+            "test_0",
+            "test_1",
+        ]
+    )
+    ds.Close()
+    ds = gdal.Open(dsname + "/test_1")
+    assert ds.RasterXSize == src_ds.RasterXSize // 2
+    assert ds.RasterYSize == src_ds.RasterYSize // 2
+    assert ds.RasterCount == src_ds.RasterCount
+    assert ds.GetRasterBand(1).GetNoDataValue() == 254
+    assert ds.GetRasterBand(1).GetMetadataItem("RESAMPLING") == "NEAREST"
+    assert ds.GetGeoTransform()[0] == src_ds.GetGeoTransform()[0]
+    assert ds.GetGeoTransform()[1] == src_ds.GetGeoTransform()[1] * 2
+    assert ds.GetGeoTransform()[2] == src_ds.GetGeoTransform()[2] * 2
+    assert ds.GetGeoTransform()[3] == src_ds.GetGeoTransform()[3]
+    assert ds.GetGeoTransform()[4] == src_ds.GetGeoTransform()[4] * 2
+    assert ds.GetGeoTransform()[5] == src_ds.GetGeoTransform()[5] * 2
+    ds.Close()
+
+    # Check we can access the overview after re-opening
+    ds = gdal.Open(dsname)
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert ds.GetRasterBand(1).GetOverview(-1) is None
+    assert ds.GetRasterBand(1).GetOverview(1) is None
+    assert [
+        ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(ds.RasterCount)
+    ] == [
+        ref_ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
+        for i in range(ref_ds.RasterCount)
+    ]
+    with pytest.raises(
+        Exception, match="Cannot delete overviews in TileDB format in read-only mode"
+    ):
+        ds.BuildOverviews("", [])
+    with pytest.raises(
+        Exception, match="Cannot create overviews in TileDB format in read-only mode"
+    ):
+        ds.BuildOverviews("NEAR", [2])
+    ds.Close()
+
+    # Update existing overview and change to AVERAGE resampling
+    ds = gdal.Open(dsname, gdal.GA_Update)
+    ds.BuildOverviews("AVERAGE", [2])
+    ds.Close()
+
+    ds = gdal.Open(dsname)
+    ref_ds = gdal.Translate("", src_ds, format="MEM")
+    ref_ds.BuildOverviews("AVERAGE", [2])
+    assert ds.GetRasterBand(1).GetOverview(0).GetMetadataItem("RESAMPLING") == "AVERAGE"
+    assert [
+        ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(ds.RasterCount)
+    ] == [
+        ref_ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
+        for i in range(ref_ds.RasterCount)
+    ]
+    ds.Close()
+
+    # Clear overviews
+    ds = gdal.Open(dsname, gdal.GA_Update)
+    ds.BuildOverviews(None, [])
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0
+    ds.Close()
+
+    # Check there are no more overviews after reopening
+    assert not os.path.exists(dsname + "/test_1")
+
+    ds = gdal.OpenEx(dsname, gdal.OF_MULTIDIM_RASTER)
+    assert ds.GetRootGroup().GetMDArrayNames() == ["test_0"]
+    ds.Close()
+
+    ds = gdal.Open(dsname)
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0
+    ds.Close()
+
+    # Try accessing an overview band after clearing overviews
+    # (the GDAL API doesn't really promise this is safe to do in general, but
+    # this is implemented in this driver)
+    ds = gdal.Open(dsname, gdal.GA_Update)
+    ds.BuildOverviews("NEAR", [2])
+    ovr_band = ds.GetRasterBand(1).GetOverview(0)
+    ds.BuildOverviews(None, [])
+    with pytest.raises(Exception, match="Dataset has been closed"):
+        ovr_band.ReadRaster()
+    with pytest.raises(Exception, match="Dataset has been closed"):
+        ovr_band.GetDataset().ReadRaster()
+    ds.Close()
+
+    # Test adding overviews in 2 steps
+    ds = gdal.Open(dsname, gdal.GA_Update)
+    ds.BuildOverviews("NEAR", [2])
+    ds.Close()
+    ds = gdal.Open(dsname, gdal.GA_Update)
+    ds.BuildOverviews("NEAR", [4])
+    ref_ds = gdal.Translate("", src_ds, format="MEM")
+    ref_ds.BuildOverviews("NEAR", [2, 4])
+    assert ds.GetRasterBand(1).GetOverviewCount() == 2
+    assert [
+        ds.GetRasterBand(i + 1).GetOverview(0).Checksum() for i in range(ds.RasterCount)
+    ] == [
+        ref_ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
+        for i in range(ref_ds.RasterCount)
+    ]
+    assert [
+        ds.GetRasterBand(i + 1).GetOverview(1).Checksum() for i in range(ds.RasterCount)
+    ] == [
+        ref_ds.GetRasterBand(i + 1).GetOverview(1).Checksum()
+        for i in range(ref_ds.RasterCount)
+    ]
+    ds.Close()

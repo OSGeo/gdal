@@ -150,25 +150,9 @@ int TileDBDataset::Identify(GDALOpenInfo *poOpenInfo)
             CPLString osArrayPath =
                 TileDBDataset::VSI_to_tiledb_uri(poOpenInfo->pszFilename);
             const auto eType = tiledb::Object::object(ctx, osArrayPath).type();
-            if ((poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0)
-            {
-                if (eType == tiledb::Object::Type::Array ||
-                    eType == tiledb::Object::Type::Group)
-                    return true;
-            }
-
-            if ((poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) != 0)
-            {
-                if (eType == tiledb::Object::Type::Array ||
-                    eType == tiledb::Object::Type::Group)
-                    return true;
-            }
-            if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0)
-            {
-                if (eType == tiledb::Object::Type::Group)
-                    return GDAL_IDENTIFY_UNKNOWN;
-                return eType == tiledb::Object::Type::Array;
-            }
+            if (eType == tiledb::Object::Type::Array ||
+                eType == tiledb::Object::Type::Group)
+                return true;
         }
 
         return FALSE;
@@ -224,7 +208,8 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
             !STARTS_WITH_CI(poOpenInfo->pszFilename, "TILEDB://"))
         {
             // subdataset URI so this is a raster
-            return TileDBRasterDataset::Open(poOpenInfo);
+            return TileDBRasterDataset::Open(poOpenInfo,
+                                             tiledb::Object::Type::Invalid);
         }
         else
         {
@@ -252,14 +237,56 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
                 TileDBDataset::VSI_to_tiledb_uri(poOpenInfo->pszFilename);
 
             const auto eType = tiledb::Object::object(oCtx, osPath).type();
+            std::string osDatasetType;
+            if (eType == tiledb::Object::Type::Group)
+            {
+                tiledb::Group group(oCtx, osPath, TILEDB_READ);
+                tiledb_datatype_t v_type = TILEDB_UINT8;
+                const void *v_r = nullptr;
+                uint32_t v_num = 0;
+                group.get_metadata(DATASET_TYPE_ATTRIBUTE_NAME, &v_type, &v_num,
+                                   &v_r);
+                if (v_r && (v_type == TILEDB_UINT8 || v_type == TILEDB_CHAR ||
+                            v_type == TILEDB_STRING_ASCII ||
+                            v_type == TILEDB_STRING_UTF8))
+                {
+                    osDatasetType =
+                        std::string(static_cast<const char *>(v_r), v_num);
+                }
+            }
+
             if ((poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
-                eType == tiledb::Object::Type::Group)
+                eType == tiledb::Object::Type::Group &&
+                (osDatasetType.empty() ||
+                 osDatasetType == GEOMETRY_DATASET_TYPE))
             {
                 return OGRTileDBDataset::Open(poOpenInfo, eType);
             }
             else if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
-                     eType == tiledb::Object::Type::Group)
+                     (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 &&
+                     eType == tiledb::Object::Type::Group &&
+                     osDatasetType == GEOMETRY_DATASET_TYPE)
             {
+                return nullptr;
+            }
+            else if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
+                     eType == tiledb::Object::Type::Group &&
+                     osDatasetType == RASTER_DATASET_TYPE)
+            {
+                return TileDBRasterDataset::Open(poOpenInfo, eType);
+            }
+            else if ((poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
+                     (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+                     eType == tiledb::Object::Type::Group &&
+                     osDatasetType == RASTER_DATASET_TYPE)
+            {
+                return nullptr;
+            }
+            else if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
+                     eType == tiledb::Object::Type::Group &&
+                     osDatasetType.empty())
+            {
+                // Compatibility with generic arrays
                 // If this is a group which has only a single 2D array and
                 // no 3D+ arrays, then return this 2D array.
                 auto poDSUnique = std::unique_ptr<GDALDataset>(
@@ -311,7 +338,7 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
             if (schema.array_type() == TILEDB_SPARSE)
                 return OGRTileDBDataset::Open(poOpenInfo, eType);
             else
-                return TileDBRasterDataset::Open(poOpenInfo);
+                return TileDBRasterDataset::Open(poOpenInfo, eType);
         }
     }
     catch (const tiledb::TileDBError &e)
