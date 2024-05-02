@@ -2816,6 +2816,9 @@ void TileDBRasterDataset::LoadOverviews()
         return;
     m_bLoadOverviewsDone = true;
 
+    // NOTE: read overview_model.rst for a high level explanation of overviews
+    // are stored.
+
     CPLStringList aosOpenOptions;
     if (nTimestamp)
     {
@@ -2861,6 +2864,9 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
     int nListBands, const int *panBandList, GDALProgressFunc pfnProgress,
     void *pProgressData, CSLConstList papszOptions)
 {
+    // NOTE: read overview_model.rst for a high level explanation of overviews
+    // are stored.
+
     if (eAccess == GA_ReadOnly)
     {
         if (!CPLTestBool(
