@@ -5556,53 +5556,29 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
 
     if (hMMMD->ePlainLT != MM_LayerType_Node)
     {
-        if (hMMMD->pSRS && hMMMD->ePlainLT != MM_LayerType_Pol)
-        {
-            fprintf_function(pF, LineReturn "[%s:%s]" LineReturn,
-                             SECTION_SPATIAL_REFERENCE_SYSTEM,
-                             SECTION_HORIZONTAL);
-            if (!ReturnMMIDSRSFromEPSGCodeSRS(hMMMD->pSRS, aMMIDSRS) &&
-                !MMIsEmptyString(aMMIDSRS))
-                fprintf_function(pF, "%s=%s" LineReturn,
-                                 KEY_HorizontalSystemIdentifier, aMMIDSRS);
-            else
-            {
-                MMCPLWarning(CE_Warning, CPLE_NotSupported,
-                             "The MiraMon driver cannot assign any HRS.");
-                // Horizontal Reference System
-                fprintf_function(pF, "%s=plane" LineReturn,
-                                 KEY_HorizontalSystemIdentifier);
-                fprintf_function(pF, "%s=local" LineReturn,
-                                 KEY_HorizontalSystemDefinition);
-                if (hMMMD->pXUnit)
-                    fprintf_function(pF, "%s=%s" LineReturn, KEY_unitats,
-                                     hMMMD->pXUnit);
-                if (hMMMD->pYUnit)
-                {
-                    if (!hMMMD->pXUnit ||
-                        strcasecmp(hMMMD->pXUnit, hMMMD->pYUnit))
-                        fprintf_function(pF, "%s=%s" LineReturn, KEY_unitatsY,
-                                         hMMMD->pYUnit);
-                }
-            }
-        }
+        fprintf_function(pF, LineReturn "[%s:%s]" LineReturn,
+                         SECTION_SPATIAL_REFERENCE_SYSTEM, SECTION_HORIZONTAL);
+        if (!ReturnMMIDSRSFromEPSGCodeSRS(hMMMD->pSRS, aMMIDSRS) &&
+            !MMIsEmptyString(aMMIDSRS))
+            fprintf_function(pF, "%s=%s" LineReturn,
+                             KEY_HorizontalSystemIdentifier, aMMIDSRS);
         else
         {
+            MMCPLWarning(CE_Warning, CPLE_NotSupported,
+                         "The MiraMon driver cannot assign any HRS.");
+            // Horizontal Reference System
             fprintf_function(pF, "%s=plane" LineReturn,
                              KEY_HorizontalSystemIdentifier);
             fprintf_function(pF, "%s=local" LineReturn,
                              KEY_HorizontalSystemDefinition);
             if (hMMMD->pXUnit)
-            {
                 fprintf_function(pF, "%s=%s" LineReturn, KEY_unitats,
                                  hMMMD->pXUnit);
-                if (hMMMD->pYUnit)
-                {
-                    if (!hMMMD->pXUnit ||
-                        strcasecmp(hMMMD->pXUnit, hMMMD->pYUnit))
-                        fprintf_function(pF, "%s=%s" LineReturn, KEY_unitatsY,
-                                         hMMMD->pYUnit);
-                }
+            if (hMMMD->pYUnit)
+            {
+                if (!hMMMD->pXUnit || strcasecmp(hMMMD->pXUnit, hMMMD->pYUnit))
+                    fprintf_function(pF, "%s=%s" LineReturn, KEY_unitatsY,
+                                     hMMMD->pYUnit);
             }
         }
     }
@@ -5642,7 +5618,7 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         struct tm ltime;
         VSILocalTime(&currentTime, &ltime);
         snprintf(aTimeString, sizeof(aTimeString),
-                 "%04d%02d%02d %02d%02d%02d%02d+00:00", ltime.tm_year + 1900,
+                 "%04d%02d%02d %02d%02d%02d%02d", ltime.tm_year + 1900,
                  ltime.tm_mon + 1, ltime.tm_mday, ltime.tm_hour, ltime.tm_min,
                  ltime.tm_sec, 0);
         fprintf_function(pF, "%s=%s" LineReturn, KEY_CreationDate, aTimeString);
@@ -5653,10 +5629,10 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         struct tm *pLocalTime;
         pLocalTime = localtime(&currentTime);
         snprintf(aTimeString, sizeof(aTimeString),
-                 "%04d%02d%02d %02d%02d%02d%02d+00:00",
-                 pLocalTime->tm_year + 1900, pLocalTime->tm_mon + 1,
-                 pLocalTime->tm_mday, pLocalTime->tm_hour, pLocalTime->tm_min,
-                 pLocalTime->tm_sec, 0);
+                 "%04d%02d%02d %02d%02d%02d%02d", pLocalTime->tm_year + 1900,
+                 pLocalTime->tm_mon + 1, pLocalTime->tm_mday,
+                 pLocalTime->tm_hour, pLocalTime->tm_min, pLocalTime->tm_sec,
+                 0);
         fprintf_function(pF, "%s=%s" LineReturn, KEY_CreationDate, aTimeString);
         fprintf_function(pF, LineReturn);
     }
@@ -5670,8 +5646,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
     fprintf_function(pF, LineReturn);
     fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
                      szMMNomCampIdGraficDefecte);
-    fprintf_function(pF, "visible=1" LineReturn);
-    fprintf_function(pF, "MostrarUnitats=0" LineReturn);
+    fprintf_function(pF, "visible=0" LineReturn);
+    fprintf_function(pF, "simbolitzable=0" LineReturn);
 
     MMWrite_ANSI_MetadataKeyDescriptor(
         hMMMD, pF, szInternalGraphicIdentifierEng,
@@ -5684,7 +5660,6 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                          szMMNomCampNVertexsDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
-        fprintf_function(pF, "MostrarUnitats=0" LineReturn);
         MMWrite_ANSI_MetadataKeyDescriptor(hMMMD, pF, szNumberOfVerticesEng,
                                            szNumberOfVerticesCat,
                                            szNumberOfVerticesSpa);
@@ -5692,8 +5667,6 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         fprintf_function(pF, LineReturn);
         fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
                          szMMNomCampLongitudArcDefecte);
-        fprintf_function(pF, "simbolitzable=0" LineReturn);
-        fprintf_function(pF, "MostrarUnitats=0" LineReturn);
         MMWrite_ANSI_MetadataKeyDescriptor(
             hMMMD, pF, szLengthOfAarcEng, szLengthOfAarcCat, szLengthOfAarcSpa);
 
@@ -5702,7 +5675,6 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                          szMMNomCampNodeIniDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
-        fprintf_function(pF, "MostrarUnitats=0" LineReturn);
         MMWrite_ANSI_MetadataKeyDescriptor(hMMMD, pF, szInitialNodeEng,
                                            szInitialNodeCat, szInitialNodeSpa);
 
@@ -5711,7 +5683,6 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                          szMMNomCampNodeFiDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
-        fprintf_function(pF, "MostrarUnitats=0" LineReturn);
         MMWrite_ANSI_MetadataKeyDescriptor(hMMMD, pF, szFinalNodeEng,
                                            szFinalNodeCat, szFinalNodeSpa);
 
@@ -5731,9 +5702,7 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         fprintf_function(pF, LineReturn);
         fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
                          szMMNomCampArcsANodeDefecte);
-        fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
-        fprintf_function(pF, "MostrarUnitats=0" LineReturn);
         MMWrite_ANSI_MetadataKeyDescriptor(hMMMD, pF, szNumberOfArcsToNodeEng,
                                            szNumberOfArcsToNodeCat,
                                            szNumberOfArcsToNodeSpa);
@@ -5741,9 +5710,7 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         fprintf_function(pF, LineReturn);
         fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
                          szMMNomCampTipusNodeDefecte);
-        fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
-        fprintf_function(pF, "MostrarUnitats=0" LineReturn);
         MMWrite_ANSI_MetadataKeyDescriptor(hMMMD, pF, szNodeTypeEng,
                                            szNodeTypeCat, szNodeTypeSpa);
     }
@@ -5754,7 +5721,6 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                          szMMNomCampNVertexsDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
-        fprintf_function(pF, "MostrarUnitats=0" LineReturn);
         MMWrite_ANSI_MetadataKeyDescriptor(hMMMD, pF, szNumberOfVerticesEng,
                                            szNumberOfVerticesCat,
                                            szNumberOfVerticesSpa);
@@ -5762,8 +5728,6 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         fprintf_function(pF, LineReturn);
         fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
                          szMMNomCampPerimetreDefecte);
-        fprintf_function(pF, "simbolitzable=0" LineReturn);
-        fprintf_function(pF, "MostrarUnitats=0" LineReturn);
         MMWrite_ANSI_MetadataKeyDescriptor(
             hMMMD, pF, szPerimeterOfThePolygonEng, szPerimeterOfThePolygonCat,
             szPerimeterOfThePolygonSpa);
@@ -5771,8 +5735,6 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         fprintf_function(pF, LineReturn);
         fprintf_function(pF, "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
                          szMMNomCampAreaDefecte);
-        fprintf_function(pF, "simbolitzable=0" LineReturn);
-        fprintf_function(pF, "MostrarUnitats=0" LineReturn);
         MMWrite_ANSI_MetadataKeyDescriptor(hMMMD, pF, szAreaOfThePolygonEng,
                                            szAreaOfThePolygonCat,
                                            szAreaOfThePolygonSpa);
@@ -5782,7 +5744,6 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                          szMMNomCampNArcsDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
-        fprintf_function(pF, "MostrarUnitats=0" LineReturn);
         MMWrite_ANSI_MetadataKeyDescriptor(
             hMMMD, pF, szNumberOfArcsEng, szNumberOfArcsCat, szNumberOfArcsSpa);
 
@@ -5791,7 +5752,6 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
                          szMMNomCampNPoligonsDefecte);
         fprintf_function(pF, "visible=0" LineReturn);
         fprintf_function(pF, "simbolitzable=0" LineReturn);
-        fprintf_function(pF, "MostrarUnitats=0" LineReturn);
         MMWrite_ANSI_MetadataKeyDescriptor(
             hMMMD, pF, szNumberOfElementaryPolygonsEng,
             szNumberOfElementaryPolygonsCat, szNumberOfElementaryPolygonsSpa);
