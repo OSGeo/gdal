@@ -142,7 +142,6 @@ def test_contour_1(input_tif, tmp_path):
         feat = lyr.GetNextFeature()
 
     ogr_ds.ReleaseResultSet(lyr)
-    ogr_ds.Destroy()
 
 
 ###############################################################################
@@ -199,7 +198,6 @@ def test_contour_2(input_tif, tmp_path):
         feat = lyr.GetNextFeature()
 
     ogr_ds.ReleaseResultSet(lyr)
-    ogr_ds.Destroy()
 
 
 ###############################################################################

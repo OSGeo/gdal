@@ -186,7 +186,7 @@ def csvwrk_ds(tmp_path):
 def csvwrk(csvwrk_ds):
 
     dirname = csvwrk_ds.GetDescription()
-    csvwrk_ds.Destroy()
+    csvwrk_ds.Close()
 
     return pathlib.Path(dirname)
 

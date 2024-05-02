@@ -158,7 +158,6 @@ def test_gdal_contour_1(gdal_contour_path, testdata_tif, tmp_path):
         feat = lyr.GetNextFeature()
 
     ds.ReleaseResultSet(lyr)
-    ds.Destroy()
 
 
 ###############################################################################
@@ -215,7 +214,6 @@ def test_gdal_contour_2(gdal_contour_path, testdata_tif, tmp_path):
         feat = lyr.GetNextFeature()
 
     ds.ReleaseResultSet(lyr)
-    ds.Destroy()
 
 
 ###############################################################################
@@ -246,7 +244,6 @@ def test_gdal_contour_3(gdal_contour_path, tmp_path):
         feat = lyr.GetNextFeature()
 
     ds.ReleaseResultSet(lyr)
-    ds.Destroy()
 
 
 ###############################################################################
@@ -348,8 +345,6 @@ def test_gdal_contour_4(gdal_contour_path, tmp_path):
             i = i + 1
             feat = lyr.GetNextFeature()
 
-    ds.Destroy()
-
 
 ###############################################################################
 # Test contour orientation
@@ -393,5 +388,3 @@ def test_gdal_contour_5(gdal_contour_path, tmp_path):
 
             i = i + 1
             feat = lyr.GetNextFeature()
-
-    ds.Destroy()
