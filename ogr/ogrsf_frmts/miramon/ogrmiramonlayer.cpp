@@ -2005,7 +2005,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsToMM()
             {
                 case OFTInteger:
                 case OFTIntegerList:
-                    if (m_poFeatureDefn->GetFieldDefn(iField)->GetSubType())
+                    if (m_poFeatureDefn->GetFieldDefn(iField)->GetSubType() ==
+                        OFSTBoolean)
                     {
                         phMiraMonLayer->pLayerDB->pFields[iField].eFieldType =
                             MM_Logic;
@@ -2214,11 +2215,11 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
     }
 
     MM_EXT_DBF_N_MULTIPLE_RECORDS nIRecord;
-    int nNumFields = m_poFeatureDefn->GetFieldCount();
+    MM_EXT_DBF_N_FIELDS nNumFields = m_poFeatureDefn->GetFieldCount();
     MM_EXT_DBF_N_MULTIPLE_RECORDS nNumRecords, nRealNumRecords;
     hMMFeature.nNumMRecords = 0;
 
-    for (int iField = 0; iField < nNumFields; iField++)
+    for (MM_EXT_DBF_N_FIELDS iField = 0; iField < nNumFields; iField++)
     {
         OGRFieldType eFType = m_poFeatureDefn->GetFieldDefn(iField)->GetType();
         OGRFieldSubType eFSType =
