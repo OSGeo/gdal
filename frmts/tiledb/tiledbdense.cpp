@@ -295,88 +295,100 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             std::rotate(oaSubarray.begin(), oaSubarray.begin() + 2,
                         oaSubarray.end());
 
-        tiledb::Context *ctx = poGDS->m_ctx.get();
-        const auto &oArray = poGDS->GetArray(eRWFlag == GF_Write, ctx);
-
-        auto poQuery = std::make_unique<tiledb::Query>(*ctx, oArray);
-        tiledb::Subarray subarray(*ctx, oArray);
-        if (poGDS->m_array->schema().domain().ndim() == 3)
+        try
         {
-            subarray.set_subarray(oaSubarray);
-        }
-        else
-        {
-            subarray.set_subarray(std::vector<uint64_t>(oaSubarray.cbegin() + 2,
-                                                        oaSubarray.cend()));
-        }
-        poQuery->set_subarray(subarray);
+            tiledb::Context *ctx = poGDS->m_ctx.get();
+            const auto &oArray = poGDS->GetArray(eRWFlag == GF_Write, ctx);
 
-        const size_t nValues = static_cast<size_t>(nBufXSize) * nBufYSize;
-        SetBuffer(poQuery.get(), eDataType, osAttrName, pData, nValues);
-
-        // write additional co-registered values
-        std::vector<std::unique_ptr<void, decltype(&VSIFree)>> aBlocks;
-
-        if (poGDS->m_lpoAttributeDS.size() > 0)
-        {
-            const int nXSizeToRead =
-                nXOff + nXSize > nRasterXSize ? nRasterXSize - nXOff : nXSize;
-            const int nYSizeToRead =
-                nYOff + nYSize > nRasterYSize ? nRasterYSize - nYOff : nYSize;
-            for (auto const &poAttrDS : poGDS->m_lpoAttributeDS)
+            auto poQuery = std::make_unique<tiledb::Query>(*ctx, oArray);
+            tiledb::Subarray subarray(*ctx, oArray);
+            if (poGDS->m_array->schema().domain().ndim() == 3)
             {
-                GDALRasterBand *poAttrBand = poAttrDS->GetRasterBand(nBand);
-                GDALDataType eAttrType = poAttrBand->GetRasterDataType();
-                int nBytes = GDALGetDataTypeSizeBytes(eAttrType);
-                void *pAttrBlock = VSI_MALLOC_VERBOSE(nBytes * nValues);
+                subarray.set_subarray(oaSubarray);
+            }
+            else
+            {
+                subarray.set_subarray(std::vector<uint64_t>(
+                    oaSubarray.cbegin() + 2, oaSubarray.cend()));
+            }
+            poQuery->set_subarray(subarray);
 
-                if (pAttrBlock == nullptr)
+            const size_t nValues = static_cast<size_t>(nBufXSize) * nBufYSize;
+            SetBuffer(poQuery.get(), eDataType, osAttrName, pData, nValues);
+
+            // write additional co-registered values
+            std::vector<std::unique_ptr<void, decltype(&VSIFree)>> aBlocks;
+
+            if (poGDS->m_lpoAttributeDS.size() > 0)
+            {
+                const int nXSizeToRead = nXOff + nXSize > nRasterXSize
+                                             ? nRasterXSize - nXOff
+                                             : nXSize;
+                const int nYSizeToRead = nYOff + nYSize > nRasterYSize
+                                             ? nRasterYSize - nYOff
+                                             : nYSize;
+                for (auto const &poAttrDS : poGDS->m_lpoAttributeDS)
                 {
-                    CPLError(CE_Failure, CPLE_OutOfMemory,
-                             "Cannot allocate attribute buffer");
-                    return CE_Failure;
-                }
-                aBlocks.emplace_back(pAttrBlock, &VSIFree);
+                    GDALRasterBand *poAttrBand = poAttrDS->GetRasterBand(nBand);
+                    GDALDataType eAttrType = poAttrBand->GetRasterDataType();
+                    int nBytes = GDALGetDataTypeSizeBytes(eAttrType);
+                    void *pAttrBlock = VSI_MALLOC_VERBOSE(nBytes * nValues);
 
-                poAttrBand->AdviseRead(nXOff, nYOff, nXSizeToRead, nYSizeToRead,
-                                       nXSizeToRead, nYSizeToRead, eAttrType,
-                                       nullptr);
+                    if (pAttrBlock == nullptr)
+                    {
+                        CPLError(CE_Failure, CPLE_OutOfMemory,
+                                 "Cannot allocate attribute buffer");
+                        return CE_Failure;
+                    }
+                    aBlocks.emplace_back(pAttrBlock, &VSIFree);
 
-                CPLErr eErr = poAttrBand->RasterIO(
-                    GF_Read, nXOff, nYOff, nXSizeToRead, nYSizeToRead,
-                    pAttrBlock, nXSizeToRead, nYSizeToRead, eAttrType,
-                    nPixelSpace, nLineSpace, psExtraArg);
+                    poAttrBand->AdviseRead(nXOff, nYOff, nXSizeToRead,
+                                           nYSizeToRead, nXSizeToRead,
+                                           nYSizeToRead, eAttrType, nullptr);
 
-                if (eErr == CE_None)
-                {
-                    CPLString osName = CPLString().Printf(
-                        "%s", CPLGetBasename(poAttrDS->GetDescription()));
+                    CPLErr eErr = poAttrBand->RasterIO(
+                        GF_Read, nXOff, nYOff, nXSizeToRead, nYSizeToRead,
+                        pAttrBlock, nXSizeToRead, nYSizeToRead, eAttrType,
+                        nPixelSpace, nLineSpace, psExtraArg);
 
-                    SetBuffer(poQuery.get(), eAttrType, osName, pAttrBlock,
-                              nValues);
-                }
-                else
-                {
-                    return eErr;
+                    if (eErr == CE_None)
+                    {
+                        CPLString osName = CPLString().Printf(
+                            "%s", CPLGetBasename(poAttrDS->GetDescription()));
+
+                        SetBuffer(poQuery.get(), eAttrType, osName, pAttrBlock,
+                                  nValues);
+                    }
+                    else
+                    {
+                        return eErr;
+                    }
                 }
             }
+
+            if (bStats)
+                tiledb::Stats::enable();
+
+            auto status = poQuery->submit();
+
+            if (bStats)
+            {
+                tiledb::Stats::dump(stdout);
+                tiledb::Stats::disable();
+            }
+
+            if (status == tiledb::Query::Status::FAILED)
+                return CE_Failure;
+            else
+                return CE_None;
         }
-
-        if (bStats)
-            tiledb::Stats::enable();
-
-        auto status = poQuery->submit();
-
-        if (bStats)
+        catch (const tiledb::TileDBError &e)
         {
-            tiledb::Stats::dump(stdout);
-            tiledb::Stats::disable();
-        }
-
-        if (status == tiledb::Query::Status::FAILED)
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "TileDB: TileDBRasterBand::IRasterIO() failed: %s",
+                     e.what());
             return CE_Failure;
-        else
-            return CE_None;
+        }
     }
 
     return GDALPamRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -721,40 +733,50 @@ CPLErr TileDBRasterDataset::IRasterIO(
             (uint64_t)nYOff, (uint64_t)nYOff + nYSize - 1, (uint64_t)nXOff,
             (uint64_t)nXOff + nXSize - 1};
 
-        tiledb::Context *ctx = m_ctx.get();
-        const auto &oArray = GetArray(eRWFlag == GF_Write, ctx);
-
-        auto poQuery = std::make_unique<tiledb::Query>(*ctx, oArray);
-        tiledb::Subarray subarray(*ctx, oArray);
-        subarray.set_subarray(oaSubarray);
-        poQuery->set_subarray(subarray);
-
-        for (int b = 0; b < nBandCount; b++)
+        try
         {
-            TileDBRasterBand *poBand = cpl::down_cast<TileDBRasterBand *>(
-                GetRasterBand(panBandMap[b]));
-            const size_t nRegionSize =
-                static_cast<size_t>(nBufXSize) * nBufYSize * nBufferDTSize;
-            SetBuffer(poQuery.get(), eDataType, poBand->osAttrName,
-                      static_cast<GByte *>(pData) + b * nRegionSize,
-                      nRegionSize);
+            tiledb::Context *ctx = m_ctx.get();
+            const auto &oArray = GetArray(eRWFlag == GF_Write, ctx);
+
+            auto poQuery = std::make_unique<tiledb::Query>(*ctx, oArray);
+            tiledb::Subarray subarray(*ctx, oArray);
+            subarray.set_subarray(oaSubarray);
+            poQuery->set_subarray(subarray);
+
+            for (int b = 0; b < nBandCount; b++)
+            {
+                TileDBRasterBand *poBand = cpl::down_cast<TileDBRasterBand *>(
+                    GetRasterBand(panBandMap[b]));
+                const size_t nRegionSize =
+                    static_cast<size_t>(nBufXSize) * nBufYSize * nBufferDTSize;
+                SetBuffer(poQuery.get(), eDataType, poBand->osAttrName,
+                          static_cast<GByte *>(pData) + b * nRegionSize,
+                          nRegionSize);
+            }
+
+            if (bStats)
+                tiledb::Stats::enable();
+
+            auto status = poQuery->submit();
+
+            if (bStats)
+            {
+                tiledb::Stats::dump(stdout);
+                tiledb::Stats::disable();
+            }
+
+            if (status == tiledb::Query::Status::FAILED)
+                return CE_Failure;
+            else
+                return CE_None;
         }
-
-        if (bStats)
-            tiledb::Stats::enable();
-
-        auto status = poQuery->submit();
-
-        if (bStats)
+        catch (const tiledb::TileDBError &e)
         {
-            tiledb::Stats::dump(stdout);
-            tiledb::Stats::disable();
-        }
-
-        if (status == tiledb::Query::Status::FAILED)
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "TileDB: TileDBRasterDataset::IRasterIO() failed: %s",
+                     e.what());
             return CE_Failure;
-        else
-            return CE_None;
+        }
     }
 
     return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -1195,6 +1217,25 @@ char **TileDBRasterDataset::GetMetadata(const char *pszDomain)
 /************************************************************************/
 
 GDALDataset *TileDBRasterDataset::Open(GDALOpenInfo *poOpenInfo)
+
+{
+    try
+    {
+        return OpenInternal(poOpenInfo);
+    }
+    catch (const tiledb::TileDBError &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "TileDB: Open(%s) failed: %s",
+                 poOpenInfo->pszFilename, e.what());
+        return nullptr;
+    }
+}
+
+/************************************************************************/
+/*                             OpenInternal()                           */
+/************************************************************************/
+
+GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo)
 
 {
     auto poDS = std::make_unique<TileDBRasterDataset>();

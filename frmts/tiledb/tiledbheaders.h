@@ -248,6 +248,8 @@ class TileDBRasterDataset final : public TileDBDataset
 
     tiledb::Array &GetArray(bool bForWrite, tiledb::Context *&ctx);
 
+    static GDALDataset *OpenInternal(GDALOpenInfo *);
+
   public:
     ~TileDBRasterDataset();
     CPLErr TryLoadCachedXML(char **papszSiblingFiles = nullptr,
