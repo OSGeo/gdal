@@ -54,7 +54,7 @@ typedef enum
  * @param nCode exit code
  * @todo Move to API
  */
-void GDALExit(int nCode)
+static void GDALExit(int nCode)
 {
     GDALDestroy();
     exit(nCode);
