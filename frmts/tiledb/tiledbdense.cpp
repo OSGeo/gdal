@@ -2797,6 +2797,16 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
+/*                        GetOverviewsGroupName()                       */
+/************************************************************************/
+
+std::string TileDBRasterDataset::GetOverviewsGroupName() const
+{
+    return m_bDatasetInGroup ? std::string(GetDescription())
+                             : std::string(GetDescription()).append(".ovr");
+}
+
+/************************************************************************/
 /*                            LoadOverviews()                           */
 /************************************************************************/
 
@@ -2805,9 +2815,6 @@ void TileDBRasterDataset::LoadOverviews()
     if (m_bLoadOverviewsDone)
         return;
     m_bLoadOverviewsDone = true;
-
-    if (!m_bDatasetInGroup)
-        return;
 
     CPLStringList aosOpenOptions;
     if (nTimestamp)
@@ -2824,8 +2831,8 @@ void TileDBRasterDataset::LoadOverviews()
     {
         std::string osArrayName = CPLGetBasename(GetDescription());
         osArrayName += CPLSPrintf("_%d", 1 + i);
-        std::string osOvrDatasetName =
-            CPLFormFilename(GetDescription(), osArrayName.c_str(), nullptr);
+        std::string osOvrDatasetName = CPLFormFilename(
+            GetOverviewsGroupName().c_str(), osArrayName.c_str(), nullptr);
 
         GDALOpenInfo oOpenInfo(osOvrDatasetName.c_str(), eAccess);
         oOpenInfo.papszOpenOptions = aosOpenOptions.List();
@@ -2887,14 +2894,6 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
             pfnProgress, pProgressData, papszOptions);
     }
 
-    if (!m_bDatasetInGroup)
-    {
-        ReportError(CE_Failure, CPLE_NotSupported,
-                    "IBuildOverviews() only supported for datasets created "
-                    "with CREATE_GROUP=YES");
-        return CE_Failure;
-    }
-
     /* -------------------------------------------------------------------- */
     /*      Our overview support currently only works safely if all         */
     /*      bands are handled at the same time.                             */
@@ -2913,6 +2912,8 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
         GetRasterBand(1)->GetOverviewCount();
     m_bLoadOverviewsDone = true;
 
+    const std::string osOvrGroupName = GetOverviewsGroupName();
+
     /* -------------------------------------------------------------------- */
     /*      Deletes existing overviews if requested.                        */
     /* -------------------------------------------------------------------- */
@@ -2920,41 +2921,67 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
     {
         CPLErr eErr = CE_None;
 
-        // Unlink arrays from he group
-        try
+        if (m_bDatasetInGroup)
         {
-            tiledb::Group group(*m_ctx, GetDescription(), TILEDB_WRITE);
-            for (auto &&poODS : m_apoOverviewDS)
-            {
-                group.remove_member(poODS->GetDescription());
-            }
-            group.close();
-        }
-        catch (const tiledb::TileDBError &e)
-        {
-            eErr = CE_Failure;
-            CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
-        }
-
-        tiledb::VFS vfs(*m_ctx, m_ctx->config());
-
-        // Delete arrays
-        for (auto &&poODS : m_apoOverviewDS)
-        {
+            // Unlink arrays from he group
             try
             {
+                tiledb::Group group(*m_ctx, osOvrGroupName, TILEDB_WRITE);
+                for (auto &&poODS : m_apoOverviewDS)
+                {
+                    group.remove_member(poODS->GetDescription());
+                }
+                group.close();
+            }
+            catch (const tiledb::TileDBError &e)
+            {
+                eErr = CE_Failure;
+                CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+            }
+
+            tiledb::VFS vfs(*m_ctx, m_ctx->config());
+
+            // Delete arrays
+            for (auto &&poODS : m_apoOverviewDS)
+            {
+                try
+                {
+                    poODS->Close();
+                    tiledb::Array::delete_array(*m_ctx,
+                                                poODS->GetDescription());
+                    vfs.remove_dir(poODS->GetDescription());
+                }
+                catch (const tiledb::TileDBError &e)
+                {
+                    eErr = CE_Failure;
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Array::delete_array(%s) failed: %s",
+                             poODS->GetDescription(), e.what());
+                }
+                m_apoOverviewDSRemoved.emplace_back(std::move(poODS));
+            }
+        }
+        else
+        {
+            // Close overview arrays
+            for (auto &&poODS : m_apoOverviewDS)
+            {
                 poODS->Close();
-                tiledb::Array::delete_array(*m_ctx, poODS->GetDescription());
-                vfs.remove_dir(poODS->GetDescription());
+                m_apoOverviewDSRemoved.emplace_back(std::move(poODS));
+            }
+
+            try
+            {
+                tiledb::VFS vfs(*m_ctx, m_ctx->config());
+                vfs.remove_dir(osOvrGroupName);
             }
             catch (const tiledb::TileDBError &e)
             {
                 eErr = CE_Failure;
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Array::delete_array(%s) failed: %s",
-                         poODS->GetDescription(), e.what());
+                         "remove_dir(%s) failed: %s", osOvrGroupName.c_str(),
+                         e.what());
             }
-            m_apoOverviewDSRemoved.emplace_back(std::move(poODS));
         }
 
         m_apoOverviewDS.clear();
@@ -3018,10 +3045,32 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
                                                 m_osConfigFilename.c_str());
             }
 
+            if (!m_bDatasetInGroup && m_apoOverviewDS.empty())
+            {
+                try
+                {
+                    tiledb::create_group(*m_ctx.get(), osOvrGroupName);
+
+                    tiledb::Group group(*m_ctx, osOvrGroupName, TILEDB_WRITE);
+                    group.put_metadata(
+                        DATASET_TYPE_ATTRIBUTE_NAME, TILEDB_STRING_UTF8,
+                        static_cast<int>(strlen(RASTER_OVERVIEWS_TYPE)),
+                        RASTER_OVERVIEWS_TYPE);
+                    group.close();
+                }
+                catch (const tiledb::TileDBError &e)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Group creation of %s failed: %s",
+                             osOvrGroupName.c_str(), e.what());
+                    return CE_Failure;
+                }
+            }
+
             std::string osArrayName = CPLGetBasename(GetDescription());
             osArrayName += CPLSPrintf("_%d", 1 + int(m_apoOverviewDS.size()));
-            std::string osOvrDatasetName =
-                CPLFormFilename(GetDescription(), osArrayName.c_str(), nullptr);
+            std::string osOvrDatasetName = CPLFormFilename(
+                osOvrGroupName.c_str(), osArrayName.c_str(), nullptr);
 
             auto poOvrDS = std::unique_ptr<TileDBRasterDataset>(
                 Create(osOvrDatasetName.c_str(), nOXSize, nOYSize, nBands,
@@ -3060,7 +3109,7 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
 
             try
             {
-                tiledb::Group group(*m_ctx, GetDescription(), TILEDB_WRITE);
+                tiledb::Group group(*m_ctx, osOvrGroupName, TILEDB_WRITE);
                 group.add_member(osOvrDatasetName, false);
                 group.close();
             }
