@@ -49,6 +49,17 @@ typedef enum
     FORMAT_PROJ
 } SrcSRSFormat;
 
+/**
+ * @brief Makes sure the GDAL library is properly cleaned up before exiting.
+ * @param nCode exit code
+ * @todo Move to API
+ */
+void GDALExit(int nCode)
+{
+    GDALDestroy();
+    exit(nCode);
+}
+
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -186,7 +197,7 @@ MAIN_START(nArgc, papszArgv)
     catch (const std::exception &e)
     {
         argParser.display_error_and_usage(e);
-        exit(1);
+        GDALExit(1);
     }
 
     /* -------------------------------------------------------------------- */
@@ -199,7 +210,7 @@ MAIN_START(nArgc, papszArgv)
     {
         fprintf(stderr, "-src_srs_name must be specified when -src_srs_format "
                         "is specified.\n");
-        exit(1);
+        GDALExit(1);
     }
 
     bLayersWildcarded = aosLayerNames.empty() && anLayerNumbers.empty();
@@ -230,8 +241,7 @@ MAIN_START(nArgc, papszArgv)
         {
             delete poTargetSRS;
             fprintf(stderr, "Invalid target SRS `%s'.\n", osTargetSRS.c_str());
-            OGRCleanupAll();
-            exit(1);
+            GDALExit(1);
         }
         bSetTargetSRS = true;
     }
@@ -258,8 +268,7 @@ MAIN_START(nArgc, papszArgv)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Cannot guess driver for %s", osOutputName.c_str());
-                OGRCleanupAll();
-                exit(10);
+                GDALExit(10);
             }
             else
             {
@@ -301,8 +310,7 @@ MAIN_START(nArgc, papszArgv)
                     fprintf(stderr, "  -> `%s'\n", poIter->GetDescription());
                 }
             }
-            OGRCleanupAll();
-            exit(1);
+            GDALExit(1);
         }
 
         if (!CPLTestBool(CSLFetchNameValueDef(GDALGetMetadata(hDriver, nullptr),
@@ -311,8 +319,7 @@ MAIN_START(nArgc, papszArgv)
             fprintf(stderr,
                     "%s driver does not support data source creation.\n",
                     osFormat.c_str());
-            OGRCleanupAll();
-            exit(1);
+            GDALExit(1);
         }
 
         /* --------------------------------------------------------------------
@@ -327,8 +334,7 @@ MAIN_START(nArgc, papszArgv)
         {
             fprintf(stderr, "%s driver failed to create %s\n", osFormat.c_str(),
                     osOutputName.c_str());
-            OGRCleanupAll();
-            exit(1);
+            GDALExit(1);
         }
 
         if (poDstDS->GetLayerCount() == 0)
@@ -405,8 +411,7 @@ MAIN_START(nArgc, papszArgv)
     if (poDstLayer == nullptr)
     {
         fprintf(stderr, "Can't find any layer in output tileindex!\n");
-        OGRCleanupAll();
-        exit(1);
+        GDALExit(1);
     }
 
     const int iTileIndexField =
@@ -415,8 +420,7 @@ MAIN_START(nArgc, papszArgv)
     {
         fprintf(stderr, "Can't find %s field in tile index dataset.\n",
                 osTileIndexField.c_str());
-        OGRCleanupAll();
-        exit(1);
+        GDALExit(1);
     }
 
     if (!osSrcSRSName.empty())
@@ -846,7 +850,7 @@ MAIN_START(nArgc, papszArgv)
         CPLFree(existingLayersTab);
     }
 
-    OGRCleanupAll();
+    GDALDestroy();
 
     return nRetCode;
 }
