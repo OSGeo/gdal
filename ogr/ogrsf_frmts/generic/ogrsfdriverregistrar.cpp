@@ -80,7 +80,8 @@ int OGRwillNeverBeTrue = FALSE;
 /**
  * \brief Cleanup all OGR related resources.
  *
- * FIXME
+ * \see GDALDestroy()
+ * \deprecated Use GDALDestroy() instead
  */
 void OGRCleanupAll()
 
