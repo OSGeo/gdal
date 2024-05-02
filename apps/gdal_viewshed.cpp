@@ -25,25 +25,22 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "gdal_version.h"
-#include "gdal.h"
-#include "gdal_alg.h"
-#include "gdal_priv.h"
-#include "ogr_api.h"
-#include "ogr_srs_api.h"
-#include "ogr_spatialref.h"
+#include <limits>
+
 #include "commonutils.h"
+#include "gdal.h"
 #include "gdalargumentparser.h"
+
+#include "viewshed.h"
 
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
 MAIN_START(argc, argv)
-
 {
+    using namespace gdal;
+
     EarlySetConfigOptions(argc, argv);
 
     GDALAllRegister();
@@ -62,93 +59,82 @@ MAIN_START(argc, argv)
     argParser.add_epilog(_("For more details, consult "
                            "https://gdal.org/programs/gdal_viewshed.html"));
 
-    std::string osFormat;
-    argParser.add_output_format_argument(osFormat);
+    Viewshed::Options opts;
 
-    double dfObserverX = 0;
+    argParser.add_output_format_argument(opts.outputFormat);
     argParser.add_argument("-ox")
-        .store_into(dfObserverX)
+        .store_into(opts.observer.x)
         .required()
         .metavar("<value>")
         .help(_("The X position of the observer (in SRS units)."));
 
-    double dfObserverY = 0;
     argParser.add_argument("-oy")
-        .store_into(dfObserverY)
+        .store_into(opts.observer.y)
         .required()
         .metavar("<value>")
         .help(_("The Y position of the observer (in SRS units)."));
 
-    double dfObserverHeight = 2;
     argParser.add_argument("-oz")
-        .default_value(dfObserverHeight)
-        .store_into(dfObserverHeight)
+        .default_value(2)
+        .store_into(opts.observer.z)
         .metavar("<value>")
         .nargs(1)
         .help(_("The height of the observer above the DEM surface in the "
                 "height unit of the DEM."));
 
-    double dfVisibleVal = 255;
     argParser.add_argument("-vv")
-        .default_value(dfVisibleVal)
-        .store_into(dfVisibleVal)
+        .default_value(255)
+        .store_into(opts.visibleVal)
         .metavar("<value>")
         .nargs(1)
         .help(_("Pixel value to set for visible areas."));
 
-    double dfInvisibleVal = 0.0;
     argParser.add_argument("-iv")
-        .default_value(dfInvisibleVal)
-        .store_into(dfInvisibleVal)
+        .default_value(0)
+        .store_into(opts.invisibleVal)
         .metavar("<value>")
         .nargs(1)
         .help(_("Pixel value to set for invisible areas."));
 
-    double dfOutOfRangeVal = 0.0;
     argParser.add_argument("-ov")
-        .default_value(dfOutOfRangeVal)
-        .store_into(dfOutOfRangeVal)
+        .default_value(0)
+        .store_into(opts.outOfRangeVal)
         .metavar("<value>")
         .nargs(1)
         .help(
             _("Pixel value to set for the cells that fall outside of the range "
               "specified by the observer location and the maximum distance."));
 
-    CPLStringList aosCreationOptions;
-    argParser.add_creation_options_argument(aosCreationOptions);
+    argParser.add_creation_options_argument(opts.creationOpts);
 
-    double dfNoDataVal = -1.0;
     argParser.add_argument("-a_nodata")
-        .store_into(dfNoDataVal)
-        .default_value(dfNoDataVal)
+        .default_value(-1.0)
+        .store_into(opts.nodataVal)
         .metavar("<value>")
         .nargs(1)
         .help(_("The value to be set for the cells in the output raster that "
                 "have no data."));
 
-    double dfTargetHeight = 0.0;
     argParser.add_argument("-tz")
-        .default_value(dfTargetHeight)
-        .store_into(dfTargetHeight)
+        .default_value(0.0)
+        .store_into(opts.targetHeight)
         .metavar("<value>")
         .nargs(1)
         .help(_("The height of the target above the DEM surface in the height "
                 "unit of the DEM."));
 
-    double dfMaxDistance = 0.0;
     argParser.add_argument("-md")
-        .default_value(dfMaxDistance)
-        .store_into(dfMaxDistance)
+        .default_value(0)
+        .store_into(opts.maxDistance)
         .metavar("<value>")
         .nargs(1)
         .help(_("Maximum distance from observer to compute visibility."));
 
     // Value for standard atmospheric refraction. See
     // doc/source/programs/gdal_viewshed.rst
-    double dfCurvCoeff = 0.85714;
     argParser.add_argument("-cc")
-        .default_value(dfCurvCoeff)
-        .store_into(dfCurvCoeff)
+        .default_value(0.85714)
+        .store_into(opts.curveCoeff)
         .metavar("<value>")
         .nargs(1)
         .help(_("Coefficient to consider the effect of the curvature and "
@@ -156,19 +142,26 @@ MAIN_START(argc, argv)
 
     int nBandIn = 1;
     argParser.add_argument("-b")
-        .store_into(nBandIn)
         .default_value(nBandIn)
+        .store_into(nBandIn)
         .metavar("<value>")
         .nargs(1)
         .help(_("Select an input band band containing the DEM data."));
 
-    std::string osOutputMode;
     argParser.add_argument("-om")
         .choices("NORMAL", "DEM", "GROUND")
         .metavar("NORMAL|DEM|GROUND")
-        .default_value("NORMAL")
+        .action(
+            [&into = opts.outputMode](const std::string &value)
+            {
+                if (EQUAL(value.c_str(), "DEM"))
+                    into = Viewshed::OutputMode::DEM;
+                else if (EQUAL(value.c_str(), "GROUND"))
+                    into = Viewshed::OutputMode::Ground;
+                else
+                    into = Viewshed::OutputMode::Normal;
+            })
         .nargs(1)
-        .store_into(osOutputMode)
         .help(_("Sets what information the output contains."));
 
     bool bQuiet = false;
@@ -179,9 +172,8 @@ MAIN_START(argc, argv)
         .store_into(osSrcFilename)
         .metavar("<src_filename>");
 
-    std::string osDstFilename;
     argParser.add_argument("dst_filename")
-        .store_into(osDstFilename)
+        .store_into(opts.outputFilename)
         .metavar("<dst_filename>");
 
     try
@@ -194,28 +186,28 @@ MAIN_START(argc, argv)
         std::exit(1);
     }
 
-    GDALProgressFunc pfnProgress = nullptr;
-    if (!bQuiet)
-        pfnProgress = GDALTermProgress;
-
-    if (osFormat.empty())
+    if (opts.maxDistance < 0)
     {
-        osFormat = GetOutputDriverForRaster(osDstFilename.c_str());
-        if (osFormat.empty())
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Max distance must be non-negative.");
+        exit(2);
+    }
+
+    if (opts.outputFormat.empty())
+    {
+        opts.outputFormat =
+            GetOutputDriverForRaster(opts.outputFilename.c_str());
+        if (opts.outputFormat.empty())
         {
             exit(2);
         }
     }
 
-    GDALViewshedOutputType outputMode = GVOT_NORMAL;
-    if (EQUAL(osOutputMode.c_str(), "DEM"))
-    {
-        outputMode = GVOT_MIN_TARGET_HEIGHT_FROM_DEM;
-    }
-    else if (EQUAL(osOutputMode.c_str(), "GROUND"))
-    {
-        outputMode = GVOT_MIN_TARGET_HEIGHT_FROM_GROUND;
-    }
+    // For double values that are out of range for byte raster output,
+    // set to zero.  Values less than zero are sentinel as NULL nodata.
+    if (opts.outputMode == Viewshed::OutputMode::Normal &&
+        opts.nodataVal > std::numeric_limits<uint8_t>::max())
+        opts.nodataVal = 0;
 
     /* -------------------------------------------------------------------- */
     /*      Open source raster file.                                        */
@@ -232,8 +224,7 @@ MAIN_START(argc, argv)
         exit(2);
     }
 
-    const bool bCurvCoeffSpecified = argParser.is_used("-cc");
-    if (!bCurvCoeffSpecified)
+    if (!argParser.is_used("-cc"))
     {
         const OGRSpatialReference *poSRS =
             GDALDataset::FromHandle(hSrcDS)->GetSpatialRef();
@@ -245,7 +236,7 @@ MAIN_START(argc, argv)
                 fabs(dfSemiMajor - SRS_WGS84_SEMIMAJOR) >
                     0.05 * SRS_WGS84_SEMIMAJOR)
             {
-                dfCurvCoeff = 1.0;
+                opts.curveCoeff = 1.0;
                 CPLDebug("gdal_viewshed",
                          "Using -cc=1.0 as a non-Earth CRS has been detected");
             }
@@ -255,13 +246,13 @@ MAIN_START(argc, argv)
     /* -------------------------------------------------------------------- */
     /*      Invoke.                                                         */
     /* -------------------------------------------------------------------- */
-    GDALDatasetH hDstDS = GDALViewshedGenerate(
-        hBand, osFormat.c_str(), osDstFilename.c_str(),
-        aosCreationOptions.List(), dfObserverX, dfObserverY, dfObserverHeight,
-        dfTargetHeight, dfVisibleVal, dfInvisibleVal, dfOutOfRangeVal,
-        dfNoDataVal, dfCurvCoeff, GVM_Edge, dfMaxDistance, pfnProgress, nullptr,
-        outputMode, nullptr);
-    bool bSuccess = hDstDS != nullptr;
+    Viewshed oViewshed(opts);
+
+    bool bSuccess =
+        oViewshed.run(hBand, bQuiet ? GDALDummyProgress : GDALTermProgress);
+
+    GDALDatasetH hDstDS = GDALDataset::FromHandle(oViewshed.output().release());
+
     GDALClose(hSrcDS);
     if (GDALClose(hDstDS) != CE_None)
         bSuccess = false;
