@@ -618,3 +618,35 @@ def test_tiledb_write_overviews(tmp_path, use_group):
         for i in range(ref_ds.RasterCount)
     ]
     ds.Close()
+
+
+def test_tiledb_write_overviews_as_geotiff(tmp_path):
+
+    # We don't want to promote that since GDAL 3.10 because we have now native
+    # support for overviews, but GeoTIFF side-car .ovr used to work until now
+    # due to base PAM mechanisms. So test this
+
+    dsname = str(tmp_path / "test.tiledb")
+
+    src_ds = gdal.Open("data/rgbsmall.tif")
+    src_ds = gdal.Translate("", src_ds, format="MEM")
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+    gdal.GetDriverByName("TileDB").CreateCopy(dsname, src_ds)
+
+    ds = gdal.Open(dsname)
+    with gdal.config_option("TILEDB_GEOTIFF_OVERVIEWS", "YES"):
+        ds.BuildOverviews("NEAR", [2])
+    ds.Close()
+
+    assert os.path.exists(str(tmp_path / "test.tiledb" / "test.tdb_0.ovr"))
+
+    ds = gdal.Open(dsname)
+    assert ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert ds.GetRasterBand(1).GetOverview(0) is not None
+    ds.Close()
+
+    # If there are GeoTIFF .ovr, handle them through PAM even in update mode.
+    ds = gdal.Open(dsname, gdal.GA_Update)
+    ds.BuildOverviews(None, [])
+    assert ds.GetRasterBand(1).GetOverviewCount() == 0
+    ds.Close()
