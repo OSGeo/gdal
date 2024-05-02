@@ -308,7 +308,7 @@ def test_ogr_shape_12():
 def test_ogr_shape_13(shape_ds):
 
     shp_path = os.path.join(shape_ds.GetDescription(), "tpoly.shp")
-    shape_ds.Destroy()
+    shape_ds.Close()
 
     shape_ds = ogr.Open(shp_path, update=1)
     shape_lyr = shape_ds.GetLayer(0)
@@ -340,7 +340,7 @@ def test_ogr_shape_13(shape_ds):
     ###############################################################################
     # Verify last changes.
 
-    shape_ds.Destroy()
+    shape_ds.Close()
 
     shape_ds = ogr.Open(shp_path, update=1)
     shape_lyr = shape_ds.GetLayer(0)
@@ -587,7 +587,7 @@ def test_ogr_shape_21(f):
 def test_ogr_shape_22(shape_ds):
 
     shape_path = shape_ds.GetDescription()
-    shape_ds.Destroy()
+    shape_ds.Close()
 
     #######################################################
     # Create memory Layer

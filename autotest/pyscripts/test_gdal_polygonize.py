@@ -83,14 +83,11 @@ def test_gdal_polygonize_1(script_path, tmp_path):
     if os.path.exists(outfilename):
         shp_drv.DeleteDataSource(outfilename)
 
-    shp_ds = shp_drv.CreateDataSource(outfilename)
+    with shp_drv.CreateDataSource(outfilename) as shp_ds:
+        shp_layer = shp_ds.CreateLayer("poly", None, ogr.wkbPolygon)
 
-    shp_layer = shp_ds.CreateLayer("poly", None, ogr.wkbPolygon)
-
-    fd = ogr.FieldDefn("DN", ogr.OFTInteger)
-    shp_layer.CreateField(fd)
-
-    shp_ds.Destroy()
+        fd = ogr.FieldDefn("DN", ogr.OFTInteger)
+        shp_layer.CreateField(fd)
 
     # run the algorithm.
     test_py_scripts.run_py_script(
@@ -189,13 +186,12 @@ def test_gdal_polygonize_3(script_path, tmp_path):
     )
 
     # Confirm we get the set of expected features in the output layer.
-    gpkg_ds = ogr.Open(outfilename)
-    gpkg_lyr = gpkg_ds.GetLayerByName("out")
-    assert gpkg_lyr.GetFIDColumn() == "myfid"
-    geom_type = gpkg_lyr.GetGeomType()
-    geom_is_polygon = geom_type in (ogr.wkbPolygon, ogr.wkbMultiPolygon)
+    with ogr.Open(outfilename) as gpkg_ds:
+        gpkg_lyr = gpkg_ds.GetLayerByName("out")
+        assert gpkg_lyr.GetFIDColumn() == "myfid"
+        geom_type = gpkg_lyr.GetGeomType()
+        geom_is_polygon = geom_type in (ogr.wkbPolygon, ogr.wkbMultiPolygon)
 
-    gpkg_ds.Destroy()
     # Reload drv because of side effects of run_py_script()
     drv = ogr.GetDriverByName("GPKG")
     drv.DeleteDataSource(outfilename)

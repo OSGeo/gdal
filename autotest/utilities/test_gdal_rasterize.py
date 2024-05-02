@@ -111,7 +111,7 @@ def test_gdal_rasterize_1(gdal_rasterize_path, tmp_path):
     rast_lyr.CreateFeature(feat)
 
     # Close file
-    rast_ogr_ds.Destroy()
+    rast_ogr_ds.Close()
 
     # Run the algorithm.
     (_, err) = gdaltest.runexternal_out_and_err(

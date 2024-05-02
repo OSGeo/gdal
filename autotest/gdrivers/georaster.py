@@ -526,7 +526,7 @@ def test_georaster_cleanup():
     gdaltest.oci_ds.ExecuteSQL("drop table GDAL_TEST")
     gdaltest.oci_ds.ExecuteSQL("drop table GDAL_TEST_RDT")
 
-    gdaltest.oci_ds.Destroy()
+    gdaltest.oci_ds.Close()
     gdaltest.oci_ds = None
 
 
