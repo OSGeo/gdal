@@ -24,8 +24,31 @@ help:
 doxygen:
 	$(MAKE) -B .doxygen_up_to_date
 
+# Target run by the CI code_checks.yml workflow to check that there are no Doxygen warnings
+# Requires Doxygen >= 1.9.3
+doxygen_check_warnings:
+	@$(MAKE) -B .doxygen_up_to_date > /tmp/doxygen_gdal_log.txt 2>&1
+	@if grep -i warning /tmp/doxygen_gdal_log.txt; then \
+		echo "Doxygen warnings found!"; \
+		echo "---------"; \
+		echo "Full log:"; \
+		echo "---------"; \
+		cat /tmp/doxygen_gdal_log.txt; \
+		echo ""; \
+		echo "--------------------"; \
+		echo "Extract of warnings:"; \
+		echo "--------------------"; \
+		grep -i warning /tmp/doxygen_gdal_log.txt; \
+		echo "-----------------------"; \
+		echo "Doxygen warnings found!"; \
+		/bin/false; \
+	else \
+		echo "No Doxygen warnings found"; \
+	fi
+
 .doxygen_up_to_date:
 	mkdir -p build/xml && cd .. && ((cat Doxyfile | sed "s/PREDEFINED             = /PREDEFINED             = DOXYGEN_XML /"; printf "GENERATE_HTML=NO\nGENERATE_XML=YES\nXML_OUTPUT=doc/build/xml\nXML_PROGRAMLISTING=NO") | doxygen -)
+	rm -rf build/doxygen_html
 	mkdir -p build/doxygen_html && cd .. && ((cat Doxyfile; printf "HTML_OUTPUT=doc/build/doxygen_html\nINLINE_INHERITED_MEMB=YES") | doxygen -)
 	# Doxygen replaces -- with <ndash/>. This is not desirable, so revert that
 	for i in build/xml/*.xml; do sed "s/<ndash\/>/--/g" < $$i > $$i.tmp; mv $$i.tmp $$i; done
