@@ -8,8 +8,7 @@ JP2KAK -- JPEG 2000 (based on Kakadu SDK)
 
 .. build_dependencies:: Kakadu SDK
 
-The JP2KAK driver, which uses the proprietary `Kakadu SDK
-<http://www.kakadusoftware.com/>`__, supports JPEG 2000 images, which are
+The JP2KAK driver, which uses the proprietary `Kakadu SDK <http://www.kakadusoftware.com/>`__, supports JPEG 2000 images, which are
 specified in the Rec. ITU-T T.8xx | ISO/IEC 15444 family of standards. JPEG 2000
 uses a substantially different format and compression mechanism than the
 traditional JPEG compression and JPEG JFIF format. JPEG and JPEG 2000 are
@@ -19,18 +18,18 @@ wavelet compression.
 The driver supports:
 
 * reading both JPEG 2000 codestreams (.j2c or .jpc) and JP2 files (.jp2). New
-images can be also written, but existing images cannot be updated in place.
+  images can be also written, but existing images cannot be updated in place.
 
 * lossy and lossless compression of 8-bit and 16-bit images with 1 or more bands
-(components).
+  (components).
 
 * GeoTIFF style coordinate system and georeferencing information in JP2 file via
-the `GeoJP2
-(tm)<https://web.archive.org/web/20151028081930/http://www.lizardtech.com/download/geo/geotiff_box.txt>`__
-mechanism.
+  the
+  `GeoJP2(tm)<https://web.archive.org/web/20151028081930/http://www.lizardtech.com/download/geo/geotiff_box.txt>`__
+  mechanism.
 
 * both the JPEG 2000 Part 1 (Rec. ITU-T T.800 | ISO/IEC 15444-1) block coder and
-the more recent HTJ2K block coder (Rec. ITU-T T.814 | ISO/IEC 15444-15)
+  the more recent HTJ2K block coder (Rec. ITU-T T.814 | ISO/IEC 15444-15)
 
 The Kakadu SDK is a high quality and high performance JPEG 2000 library in wide
 used in the geospatial and general imaging community. However, it is not free,
@@ -59,8 +58,7 @@ Driver capabilities
 Configuration Options
 ---------------------
 
-The JP2KAK driver supports the following `Config
-Options <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__. These
+The JP2KAK driver supports the following `Config Options <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__. These
 runtime options can be used to alter the behavior of the driver.
 
 -  .. config:: JP2KAK_THREADS
@@ -196,12 +194,10 @@ Creation Options:
       :choices: <filename>, <json>, YES
 
       Indicates whether
-      a GML box conforming to the `OGC GML in JPEG 2000, version
-      2 <http://docs.opengeospatial.org/is/08-085r4/08-085r4.html>`__
+      a GML box conforming to the `OGC GML in JPEG 2000, version 2 <http://docs.opengeospatial.org/is/08-085r4/08-085r4.html>`__
       specification should be included in the file. *filename* must point
       to a file with a JSON content that defines how the GMLJP2 v2 box
-      should be built. See :ref:`GMLJP2v2 definition file
-      section <gmjp2v2def>` in documentation of
+      should be built. See :ref:`GMLJP2v2 definition file section <gmjp2v2def>` in documentation of
       the JP2OpenJPEG driver for the syntax of the JSON configuration file.
       It is also possible to directly pass the JSON content inlined as a
       string. If filename is just set to YES, a minimal instance will be
