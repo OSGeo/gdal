@@ -58,7 +58,7 @@ Driver capabilities
 Configuration Options
 ---------------------
 
-The JP2KAK driver supports the following `Config Options <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__. These
+The JP2KAK driver supports the following :ref:`configoptions`. These
 runtime options can be used to alter the behavior of the driver.
 
 -  .. config:: JP2KAK_THREADS
