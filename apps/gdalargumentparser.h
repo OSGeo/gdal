@@ -31,6 +31,7 @@
 #include "cpl_port.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "gdal.h"
 
 // Rename argparse namespace to a GDAL private one
 #define argparse gdal_argparse
