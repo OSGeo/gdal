@@ -1377,12 +1377,12 @@ GDALTileIndexOptionsNew(char **papszArgv,
             psOptions->yres = (*oTr)[1];
         }
 
-        if (auto oTe = argParser->present<std::vector<double>>("-te"))
+        if (auto oTargetExtent = argParser->present<std::vector<double>>("-te"))
         {
-            psOptions->xmin = (*oTe)[0];
-            psOptions->ymin = (*oTe)[1];
-            psOptions->xmax = (*oTe)[2];
-            psOptions->ymax = (*oTe)[3];
+            psOptions->xmin = (*oTargetExtent)[0];
+            psOptions->ymin = (*oTargetExtent)[1];
+            psOptions->xmax = (*oTargetExtent)[2];
+            psOptions->ymax = (*oTargetExtent)[3];
         }
 
         if (auto fetchMd =
