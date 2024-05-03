@@ -458,6 +458,14 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
             return 1;
         }
 
+        if (hMiraMonLayer->ReadFeature
+                .pNCoordRing[hMiraMonLayer->ReadFeature.nNRings] >
+            UINT64_MAX - pArcHeader->nElemCount)
+        {
+            free_function(pBuffer);
+            return 1;
+        }
+
         hMiraMonLayer->ReadFeature
             .pNCoordRing[hMiraMonLayer->ReadFeature.nNRings] +=
             pArcHeader->nElemCount;
@@ -526,10 +534,19 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
             return 1;
         }
 
+        if (hMiraMonLayer->ReadFeature
+                .pNCoordRing[hMiraMonLayer->ReadFeature.nNRings] >
+            UINT64_MAX - hMiraMonLayer->ReadFeature.nNumpCoord)
+        {
+            free_function(pBuffer);
+            return 1;
+        }
+
         hMiraMonLayer->ReadFeature
             .pNCoordRing[hMiraMonLayer->ReadFeature.nNRings] +=
             hMiraMonLayer->ReadFeature.nNumpCoord;
         nNAcumulVertices += hMiraMonLayer->ReadFeature.nNumpCoord;
+
         if ((hMiraMonLayer->pArcs + nIndex)->VFG & MM_POL_END_RING)
         {
             hMiraMonLayer->ReadFeature
