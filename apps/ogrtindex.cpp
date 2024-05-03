@@ -98,26 +98,28 @@ MAIN_START(nArgc, papszArgv)
 
     GDALArgumentParser argParser{"ogrtindex", true};
 
-    argParser.add_description("Program to generate a UMN MapServer compatible "
-                              "tile index for a set of OGR data sources.");
+    argParser.add_description(
+        _("Program to generate a UMN MapServer compatible "
+          "tile index for a set of OGR data sources."));
 
     argParser.add_epilog(
-        "For more details, see the full documentation for ogrtindex "
-        "at\nhttps://gdal.org/programs/ogrtindex.html");
+        _("For more details, see the full documentation for ogrtindex "
+          "at\nhttps://gdal.org/programs/ogrtindex.html"));
 
     argParser.add_argument("-lnum")
         .metavar("<n>")
         .append()
         .scan<'i', int>()
         .store_into(anLayerNumbers)
-        .help("Add layer number <n> from each source file in the tile index.");
+        .help(
+            _("Add layer number <n> from each source file in the tile index."));
 
     argParser.add_argument("-lname")
         .metavar("<name>")
         .append()
         .store_into(aosLayerNames)
-        .help(
-            "Add layer named <name> from each source file in the tile index.");
+        .help(_(
+            "Add layer named <name> from each source file in the tile index."));
 
     argParser.add_output_format_argument(osOutputFormat);
 
@@ -126,29 +128,30 @@ MAIN_START(nArgc, papszArgv)
         .default_value("LOCATION")
         .nargs(1)
         .store_into(osTileIndexField)
-        .help("Name to use for the dataset name.");
+        .help(_("Name to use for the dataset name."));
 
     argParser.add_argument("-write_absolute_path")
         .flag()
         .store_into(bWriteAbsolutePath)
-        .help("Write absolute path of the source file in the tile index.");
+        .help(_("Write absolute path of the source file in the tile index."));
 
     argParser.add_argument("-skip_different_projection")
         .flag()
         .store_into(bSkipDifferentProjection)
-        .help("Skip layers that are not in the same projection as the first "
-              "layer.");
+        .help(_("Skip layers that are not in the same projection as the first "
+                "layer."));
 
     argParser.add_argument("-t_srs")
         .metavar("<srs_def>")
         .store_into(osTargetSRS)
-        .help("Extent of input files will be transformed to the desired target "
-              "coordinate reference system.");
+        .help(
+            _("Extent of input files will be transformed to the desired target "
+              "coordinate reference system."));
 
     argParser.add_argument("-src_srs_name")
         .metavar("<field_name>")
         .store_into(osSrcSRSName)
-        .help("Name of the field to store the SRS of each tile.");
+        .help(_("Name of the field to store the SRS of each tile."));
 
     argParser.add_argument("-src_srs_format")
         .metavar("{AUTO|WKT|EPSG|PROJ}")
@@ -170,18 +173,19 @@ MAIN_START(nArgc, papszArgv)
     argParser.add_argument("-accept_different_schemas")
         .flag()
         .store_into(bAcceptDifferentSchemas)
-        .help("Disable check for identical schemas for layers in input files.");
+        .help(_(
+            "Disable check for identical schemas for layers in input files."));
 
     argParser.add_argument("output_dataset")
         .metavar("<output_dataset>")
         .store_into(osOutputName)
-        .help("Name of the output dataset.");
+        .help(_("Name of the output dataset."));
 
     argParser.add_argument("src_dataset")
         .metavar("<src_dataset>")
         .nargs(nargs_pattern::at_least_one)
         .store_into(aosSrcDatasets)
-        .help("Name of the source dataset(s).");
+        .help(_("Name of the source dataset(s)."));
 
     CPLStringList aosArgv;
 
