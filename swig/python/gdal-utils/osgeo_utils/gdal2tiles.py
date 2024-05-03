@@ -885,12 +885,17 @@ def scale_query_to_tile(dsquery, dstile, options, tilefilename=""):
     )
     dstile.SetGeoTransform((0.0, 1.0, 0.0, 0.0, 0.0, 1.0))
 
-    if options.resampling == "average" and options.excluded_values:
+    if options.resampling == "average" and (
+        options.excluded_values or options.nodata_values_pct_threshold < 100
+    ):
 
         gdal.Warp(
             dstile,
             dsquery,
-            options=f"-r average -wo EXCLUDED_VALUES={options.excluded_values} -wo EXCLUDED_VALUES_PCT_THRESHOLD={options.excluded_values_pct_threshold}",
+            options="-r average "
+            + f"-wo EXCLUDED_VALUES={options.excluded_values} "
+            + f"-wo EXCLUDED_VALUES_PCT_THRESHOLD={options.excluded_values_pct_threshold} "
+            + f"-wo NODATA_VALUES_PCT_THRESHOLD={options.nodata_values_pct_threshold}",
         )
 
     elif options.resampling == "average":
@@ -1871,6 +1876,13 @@ def optparse_init() -> optparse.OptionParser:
         type=float,
         default=50,
         help="Minimum percentage of source pixels that must be set at one of the --excluded-values to cause the excluded value, that is in majority among source pixels, to be used as the target pixel value. Default value is 50 (%)",
+    )
+    p.add_option(
+        "--nodata-values-pct-threshold",
+        dest="nodata_values_pct_threshold",
+        type=float,
+        default=100,
+        help="Minimum percentage of source pixels that must be at nodata (or alpha=0 or any other way to express transparent pixel) to cause the target pixel value to be transparent. Default value is 100 (%). Only taken into account for average resampling",
     )
 
     # KML options
