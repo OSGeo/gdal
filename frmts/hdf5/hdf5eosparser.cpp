@@ -244,7 +244,7 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
             const int nYDim = oGrid.GetInteger("YDim", 0);
             if (poGridMetadata->aoDimensions.empty() && nXDim > 0 && nYDim > 0)
             {
-                // Check that all data fiels have a DimList=(YDim,XDim)
+                // Check that all data fields have a DimList=(YDim,XDim)
                 // property. This may be unneeded, but at least if we meet
                 // this condition, that should be a strong hint that the first
                 // dimension is Y, and the second X.
