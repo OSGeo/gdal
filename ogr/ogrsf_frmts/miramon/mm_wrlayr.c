@@ -5554,7 +5554,8 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
     }
     fprintf_function(pF, "%s=%s" LineReturn, KEY_language, KEY_Value_eng);
 
-    if (hMMMD->ePlainLT != MM_LayerType_Node)
+    if (hMMMD->ePlainLT != MM_LayerType_Node &&
+        hMMMD->ePlainLT != MM_LayerType_Pol)
     {
         fprintf_function(pF, LineReturn "[%s:%s]" LineReturn,
                          SECTION_SPATIAL_REFERENCE_SYSTEM, SECTION_HORIZONTAL);
@@ -5713,6 +5714,13 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         fprintf_function(pF, "simbolitzable=0" LineReturn);
         MMWrite_ANSI_MetadataKeyDescriptor(hMMMD, pF, szNodeTypeEng,
                                            szNodeTypeCat, szNodeTypeSpa);
+
+        fprintf_function(pF, LineReturn);
+        fprintf_function(pF, "[GEOMETRIA_I_TOPOLOGIA]" LineReturn);
+        fprintf_function(pF, "NomCampArcsANode=%s" LineReturn,
+                         szMMNomCampArcsANodeDefecte);
+        fprintf_function(pF, "NomCampTipusNode=%s" LineReturn,
+                         szMMNomCampTipusNodeDefecte);
     }
     else if (hMMMD->ePlainLT == MM_LayerType_Pol)
     {
