@@ -280,7 +280,7 @@ to version 7.9.
 kdu_get_num_processors always returns 0 for some platforms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-On non-windows / non-mac installs (e.g. Linux), Kakadu SDK ight not include
+On non-windows / non-mac installs (e.g. Linux), Kakadu SDK might not include
 unistd.h in kdu_arch.cpp. This means that \_SC_NPROCESSORS_ONLN and
 \_SC_NPROCESSORS_CONF are not defined and kdu_get_num_processors will
 always return 0. Therefore the jp2kak driver might not default to
