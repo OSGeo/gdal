@@ -262,7 +262,7 @@ better understand their meaning.
    a lower bound and logarithmically spaces the layer rates over the range. The rates have to be in ASC order.
 
 Known Kakadu SDK Issues
--------------------
+-----------------------
 
 Alpha Channel Writing in v7.8
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
