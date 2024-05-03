@@ -140,7 +140,7 @@ MAIN_START(nArgc, papszArgv)
               "layer.");
 
     argParser.add_argument("-t_srs")
-        .metavar("<target_srs>")
+        .metavar("<srs_def>")
         .store_into(osTargetSRS)
         .help("Extent of input files will be transformed to the desired target "
               "coordinate reference system.");
