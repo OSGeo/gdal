@@ -15,7 +15,7 @@ traditional JPEG compression and JPEG JFIF format. JPEG and JPEG 2000 are
 distinct compression standards produced by the same group. JPEG 2000 is based on
 wavelet compression.
 
-The driver supports:
+The driver includes support for:
 
 * reading both JPEG 2000 codestreams (.j2c or .jpc) and JP2 files (.jp2). New
   images can be also written, but existing images cannot be updated in place.
@@ -28,8 +28,8 @@ The driver supports:
   `GeoJP2(tm) <https://web.archive.org/web/20151028081930/http://www.lizardtech.com/download/geo/geotiff_box.txt>`__
   mechanism.
 
-* both the JPEG 2000 Part 1 (Rec. ITU-T T.800 | ISO/IEC 15444-1) block coder and
-  the more recent HTJ2K block coder (Rec. ITU-T T.814 | ISO/IEC 15444-15)
+* JPEG 2000 Part 1 (Rec. ITU-T T.800 | ISO/IEC 15444-1), Part 2 (Rec. ITU-T
+  T.801 | ISO/IEC 15444-2) and Part 15 (HTJ2K) (Rec. ITU-T T.814 | ISO/IEC 15444-15)
 
 The Kakadu SDK is a high quality and high performance JPEG 2000 library in wide
 used in the geospatial and general imaging community. However, it is not free,
