@@ -3468,3 +3468,30 @@ OBJECT_LIST_INPUT(GDALMDArrayHS);
   PyTuple_SetItem( r, 2, PyLong_FromLong(*$3) );
   $result = t_output_helper($result,r);
 }
+
+
+
+%typemap(in,numinputs=0) (int* pnRetCode, char** ppszOutputPayload) ( int nRetCode = 0, char* pszOutputPayload = 0 )
+{
+  /* %typemap(in) (int* pnRetCode, char** ppszOutputPayload) */
+  $1 = &nRetCode;
+  $2 = &pszOutputPayload;
+}
+
+%typemap(argout) (int* pnRetCode, char** ppszOutputPayload)
+{
+   /* %typemap(argout) (int* pnRetCode, char** ppszOutputPayload)  */
+  PyObject *r = PyTuple_New( 2 );
+  PyTuple_SetItem( r, 0, PyLong_FromLong(*$1) );
+  if( *$2 )
+  {
+      PyTuple_SetItem( r, 1, GDALPythonObjectFromCStr(*$2) );
+      VSIFree(*$2);
+  }
+  else
+  {
+      Py_INCREF(Py_None);
+      PyTuple_SetItem( r, 1, Py_None );
+  }
+  $result = t_output_helper($result,r);
+}

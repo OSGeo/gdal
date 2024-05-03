@@ -739,6 +739,23 @@ int wrapper_VSICopyFile(const char* pszSource,
         nSourceSize < 0 ? static_cast<vsi_l_offset>(-1) : static_cast<vsi_l_offset>(nSourceSize),
         options, callback, callback_data );
 }
+
+#if defined(SWIGPYTHON)
+void CopyFileRestartable(const char* pszSource,
+                         const char* pszTarget,
+                         const char* pszInputPayload,
+                         int* pnRetCode,
+                         char** ppszOutputPayload,
+                         char** options = NULL,
+                         GDALProgressFunc callback=NULL,
+                         void* callback_data=NULL)
+{
+    *pnRetCode = VSICopyFileRestartable(pszSource, pszTarget, pszInputPayload,
+                                        ppszOutputPayload, options, callback,
+                                        callback_data);
+}
+#endif
+
 }
 
 %clear (const char* pszSource);

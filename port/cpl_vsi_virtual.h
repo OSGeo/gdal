@@ -283,6 +283,12 @@ class CPL_DLL VSIFilesystemHandler
                          const char *const *papszOptions,
                          GDALProgressFunc pProgressFunc, void *pProgressData);
 
+    virtual int
+    CopyFileRestartable(const char *pszSource, const char *pszTarget,
+                        const char *pszInputPayload, char **ppszOutputPayload,
+                        CSLConstList papszOptions,
+                        GDALProgressFunc pProgressFunc, void *pProgressData);
+
     virtual VSIDIR *OpenDir(const char *pszPath, int nRecurseDepth,
                             const char *const *papszOptions);
 
