@@ -1265,7 +1265,17 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  * <li>EXCLUDED_VALUES_PCT_THRESHOLD=[0-100]: (GDAL >= 3.9) Minimum percentage
  * of source pixels that must be set at one of the EXCLUDED_VALUES to cause
  * the excluded value, that is in majority among source pixels, to be used as the
- * target pixel value. Default value is 50 (%)</li>
+ * target pixel value. Default value is 50 (%).
+ * Only taken into account by Average currently.</li>
+ *
+ * <li>NODATA_VALUES_PCT_THRESHOLD=[0-100]: (GDAL >= 3.9) Minimum percentage
+ * of source pixels that must be at nodata (or alpha=0 or any other way to express
+ * transparent pixel) to cause the target pixel value to not be set. Default
+ * value is 100 (%), which means that a target pixel is not set only if all
+ * contributing source pixels are not set.
+ * Note that NODATA_VALUES_PCT_THRESHOLD is taken into account before
+ * EXCLUDED_VALUES_PCT_THRESHOLD.
+ * Only taken into account by Average currently.</li>
  *
  * </ul>
  */
