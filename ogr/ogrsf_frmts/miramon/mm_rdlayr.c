@@ -449,6 +449,15 @@ MMGetMultiPolygonCoordinates(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
         pArcHeader = hMiraMonLayer->MMPolygon.MMArc.pArcHeader +
                      (hMiraMonLayer->pArcs + nIndex)->nIArc;
+
+        if (hMiraMonLayer->ReadFeature
+                .pNCoordRing[hMiraMonLayer->ReadFeature.nNRings] >
+            UINT64_MAX - pArcHeader->nElemCount)
+        {
+            free_function(pBuffer);
+            return 1;
+        }
+
         hMiraMonLayer->ReadFeature
             .pNCoordRing[hMiraMonLayer->ReadFeature.nNRings] +=
             pArcHeader->nElemCount;
