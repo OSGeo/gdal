@@ -25,7 +25,7 @@ The driver supports:
 
 * GeoTIFF style coordinate system and georeferencing information in JP2 file via
   the
-  `GeoJP2(tm)<https://web.archive.org/web/20151028081930/http://www.lizardtech.com/download/geo/geotiff_box.txt>`__
+  `GeoJP2(tm) <https://web.archive.org/web/20151028081930/http://www.lizardtech.com/download/geo/geotiff_box.txt>`__
   mechanism.
 
 * both the JPEG 2000 Part 1 (Rec. ITU-T T.800 | ISO/IEC 15444-1) block coder and
