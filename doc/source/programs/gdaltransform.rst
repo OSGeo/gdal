@@ -233,9 +233,24 @@ some nearby corners' coordinates?
 
 .. code-block:: bash
 
-    echo 300 -370 my address | gdaltransform \
+    c="gdaltransform -output_xy \
     -gcp 0   -500 -111.89114803 40.75846686 \
     -gcp 0   0    -111.89114717 40.76932606 \
-    -gcp 500 0    -111.87685039 40.76940631
+    -gcp 500 0    -111.87685039 40.76940631"
+    echo 300 -370 370 S. 300 E.  | $c
+    -111.8825697384 40.761338402 370 S. 300 E.
 
-    -111.8825697384 40.761338402 0 my address
+Nearby, a new building needs an address. We use :option:`-i`:
+
+.. code-block:: bash
+
+    echo -111.88705 40.76502 | $c -i
+    143.301947786644 -199.32683635161
+
+(i.e., 143 E. 200 S. Or 144 if across the street.)
+Finally, where is the Great Salt Lake Base and Meridian monument?
+
+.. code-block:: bash
+
+    echo 0 0 | $c
+    -111.89114717 40.76932606
