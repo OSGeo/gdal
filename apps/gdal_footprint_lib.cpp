@@ -164,9 +164,7 @@ static std::unique_ptr<GDALArgumentParser> GDALFootprintAppOptionsGetParser(
                     "when overviews are available on the source raster."));
 
         group.add_argument("-srcnodata")
-            .metavar("<value>")
-            .nargs(nargs_pattern::at_least_one)
-            .scan<'g', double>()
+            .metavar("\"<value>[ <value>]...\"")
             .store_into(psOptions->osSrcNoData)
             .help(_("Set nodata value(s) for input bands."));
     }
@@ -235,18 +233,24 @@ static std::unique_ptr<GDALArgumentParser> GDALFootprintAppOptionsGetParser(
 
     argParser->add_output_format_argument(psOptions->osFormat);
 
-    argParser->add_argument("-location_field_name")
-        .metavar("<field_name>")
-        .default_value("location")
-        .store_into(psOptions->osLocationFieldName)
-        .help(_("Specifies the name of the field in the resulting vector "
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
+
+        group.add_argument("-location_field_name")
+            .metavar("<field_name>")
+            .default_value("location")
+            .store_into(psOptions->osLocationFieldName)
+            .help(_(
+                "Specifies the name of the field in the resulting vector "
                 "dataset where the path of the input dataset will be stored."));
 
-    argParser->add_argument("-no_location")
-        .flag()
-        .store_into(psOptions->bClearLocation)
-        .help(_("Turns off the writing of the path of the input dataset as a "
-                "field in the output vector dataset."));
+        group.add_argument("-no_location")
+            .flag()
+            .store_into(psOptions->bClearLocation)
+            .help(
+                _("Turns off the writing of the path of the input dataset as a "
+                  "field in the output vector dataset."));
+    }
 
     argParser->add_argument("-write_absolute_path")
         .flag()
