@@ -6585,6 +6585,10 @@ static void GWKAverageOrModeThread(void *pData)
         CPLAtof(CSLFetchNameValueDef(poWK->papszWarpOptions,
                                      "EXCLUDED_VALUES_PCT_THRESHOLD", "50")) /
         100.0;
+    const double dfNodataValuesThreshold =
+        CPLAtof(CSLFetchNameValueDef(poWK->papszWarpOptions,
+                                     "NODATA_VALUES_PCT_THRESHOLD", "100")) /
+        100.0;
 
     const int nXMargin =
         2 * std::max(1, static_cast<int>(std::ceil(1. / poWK->dfXScale)));
@@ -6744,7 +6748,8 @@ static void GWKAverageOrModeThread(void *pData)
             // Special Average mode where we process all bands together,
             // to avoid averaging tuples that match an entry of m_aadfExcludedValues
             if (nAlgo == GWKAOM_Average &&
-                !poWK->m_aadfExcludedValues.empty() &&
+                (!poWK->m_aadfExcludedValues.empty() ||
+                 dfNodataValuesThreshold < 1 - EPS) &&
                 !poWK->bApplyVerticalShift && !bIsComplex)
             {
                 double dfTotalWeightInvalid = 0.0;
@@ -6768,16 +6773,17 @@ static void GWKAverageOrModeThread(void *pData)
                                 (iSrcX % nSrcXSize) +
                                 static_cast<GPtrDiff_t>(iSrcY) * nSrcXSize;
 
-                        if (poWK->panUnifiedSrcValid != nullptr &&
-                            !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset))
-                        {
-                            continue;
-                        }
-
                         const double dfWeight =
                             COMPUTE_WEIGHT(iSrcX, dfWeightY);
                         if (dfWeight <= 0)
                             continue;
+
+                        if (poWK->panUnifiedSrcValid != nullptr &&
+                            !CPLMaskGet(poWK->panUnifiedSrcValid, iSrcOffset))
+                        {
+                            dfTotalWeightInvalid += dfWeight;
+                            continue;
+                        }
 
                         bool bAllValid = true;
                         for (int iBand = 0; iBand < poWK->nBands; iBand++)
@@ -6831,9 +6837,15 @@ static void GWKAverageOrModeThread(void *pData)
                 const double dfTotalWeight = dfTotalWeightInvalid +
                                              dfTotalWeightExcluded +
                                              dfTotalWeightRegular;
-                if (dfTotalWeightExcluded > 0 &&
-                    dfTotalWeightExcluded >=
-                        dfExcludedValuesThreshold * dfTotalWeight)
+                if (dfTotalWeightInvalid > 0 &&
+                    dfTotalWeightInvalid >=
+                        dfNodataValuesThreshold * dfTotalWeight)
+                {
+                    // Do nothing. Let bHasFoundDensity to false.
+                }
+                else if (dfTotalWeightExcluded > 0 &&
+                         dfTotalWeightExcluded >=
+                             dfExcludedValuesThreshold * dfTotalWeight)
                 {
                     // Find the most represented excluded value tuple
                     size_t iExcludedValue = 0;

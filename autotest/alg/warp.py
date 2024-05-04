@@ -1815,3 +1815,41 @@ def test_warp_average_excluded_values():
         (11 + 21 + 31 + 41) // 4,
         (12 + 22 + 32 + 42) // 4,
     )
+
+
+###############################################################################
+# Test NODATA_VALUES_PCT_THRESHOLD warping option with average resampling
+
+
+def test_warp_average_NODATA_VALUES_PCT_THRESHOLD():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 1, gdal.GDT_Byte)
+    src_ds.GetRasterBand(1).WriteRaster(
+        0, 0, 2, 2, struct.pack("B" * 4, 10, 20, 30, 40)
+    )
+    src_ds.SetGeoTransform([1, 1, 0, 1, 0, 1])
+    src_ds.GetRasterBand(1).SetNoDataValue(20)
+
+    out_ds = gdal.Warp("", src_ds, options="-of MEM -ts 1 1 -r average")
+    assert struct.unpack("B", out_ds.ReadRaster())[0] == round((10 + 30 + 40) / 3)
+
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-of MEM -ts 1 1 -r average -wo NODATA_VALUES_PCT_THRESHOLD=80",
+    )
+    assert struct.unpack("B", out_ds.ReadRaster())[0] == round((10 + 30 + 40) / 3)
+
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-of MEM -ts 1 1 -r average -wo NODATA_VALUES_PCT_THRESHOLD=30",
+    )
+    assert struct.unpack("B", out_ds.ReadRaster())[0] == round((10 + 30 + 40) / 3)
+
+    out_ds = gdal.Warp(
+        "",
+        src_ds,
+        options="-of MEM -ts 1 1 -r average -wo NODATA_VALUES_PCT_THRESHOLD=25",
+    )
+    assert struct.unpack("B", out_ds.ReadRaster())[0] == 20

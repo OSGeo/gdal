@@ -22,7 +22,9 @@ Synopsis
                   [-w <webviewer>] [-t <title>] [-c <copyright>]
                   [--processes=<NB_PROCESSES>] [--mpi] [--xyz]
                   [--tilesize=<PIXELS>] --tiledriver=<DRIVER> [--tmscompatible]
-                  [--excluded-values=<EXCLUDED_VALUES>] [--excluded-values-pct-threshold=<EXCLUDED_VALUES_PCT_THRESHOLD>]
+                  [--excluded-values=<EXCLUDED_VALUES>]
+                  [--excluded-values-pct-threshold=<EXCLUDED_VALUES_PCT_THRESHOLD>]
+                  [--nodata-values-pct-threshold=<NODATA_VALUES_PCT_THRESHOLD>]
                   [-g <googlekey] [-b <bingkey>] <input_file> [<output_dir>] [<COMMON_OPTIONS>]
 
 Description
@@ -155,10 +157,22 @@ can publish a picture without proper georeferencing too.
   that pixels matching one of the excluded value tuples are still considered
   as valid, when determining the target pixel validity/density.
 
+  .. versionadded:: 3.9
+
 .. option:: --excluded-values-pct-threshold=EXCLUDED_VALUES_PCT_THRESHOLD
 
   Minimum percentage of source pixels that must be set at one of the --excluded-values to cause the excluded
   value, that is in majority among source pixels, to be used as the target pixel value. Default value is 50(%)
+
+  .. versionadded:: 3.9
+
+.. option:: --nodata-values-pct-threshold=<NODATA_VALUES_PCT_THRESHOLD>
+
+  Minimum percentage of source pixels that must be at nodata (or alpha=0 or any
+  other way to express transparent pixel) to cause the target pixel value to
+  be transparent. Default value is 100 (%), which means that a target pixel is
+  transparent only if all contributing source pixels are transparent.
+  Only taken into account for average resampling.
 
   .. versionadded:: 3.9
 
