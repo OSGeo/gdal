@@ -1454,13 +1454,6 @@ GDALFootprintOptionsNew(char **papszArgv,
         return nullptr;
     }
 
-    if (!psOptions->osSrcNoData.empty() && psOptions->nOvrIndex >= 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "-srcnodata and -ovr are mutually exclusive.");
-        return nullptr;
-    }
-
     if (psOptions->bClearLocation)
     {
         psOptions->osLocationFieldName.clear();

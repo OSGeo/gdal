@@ -721,7 +721,8 @@ def test_gdal_footprint_lib_destSRS_and_targetCoordinateSystem_pixel_mutually_ex
 def test_gdal_footprint_lib_srcNodata_and_ovr_mutually_exclusive():
 
     with pytest.raises(
-        Exception, match="-srcnodata <value>...' not allowed with '-ovr <index>'"
+        Exception,
+        match=r"-srcnodata \"<value>\[ <value>\]...\"' not allowed with '-ovr <index>",
     ):
         gdal.Footprint(
             "", "../gcore/data/byte.tif", format="Memory", srcNodata=0, ovr=0
