@@ -1395,7 +1395,7 @@ GDALTileIndexOptionsNew(char **papszArgv,
             for (size_t i = 0; i < fetchMd->size(); i += 3)
             {
                 OGRFieldType type;
-                const auto typeName{fetchMd->at(i + 2)};
+                const auto &typeName{fetchMd->at(i + 2)};
                 if (typeName == "String")
                 {
                     type = OFTString;

@@ -238,7 +238,7 @@ constexpr auto consume_hex_prefix(std::string_view s)
 
 template <class T, auto Param>
 inline auto do_from_chars(std::string_view s) -> T {
-  T x;
+  T x{0};
   auto [first, last] = pointer_range(s);
   auto [ptr, ec] = std::from_chars(first, last, x, Param);
   if (ec == std::errc()) {
