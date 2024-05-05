@@ -565,6 +565,12 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     int Unlink(const char *pszFilename) override;
     int *UnlinkBatch(CSLConstList papszFiles) override;
+
+    int *DeleteObjectBatch(CSLConstList papszFilesOrDirs) override
+    {
+        return UnlinkBatch(papszFilesOrDirs);
+    }
+
     int Mkdir(const char *, long) override;
     int Rmdir(const char *) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,

@@ -679,6 +679,12 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
                        CSLConstList papszOptions) override;
 
     int *UnlinkBatch(CSLConstList papszFiles) override;
+
+    int *DeleteObjectBatch(CSLConstList papszFilesOrDirs) override
+    {
+        return UnlinkBatch(papszFilesOrDirs);
+    }
+
     int RmdirRecursive(const char *pszDirname) override;
 
     char **GetFileMetadata(const char *pszFilename, const char *pszDomain,
@@ -2413,7 +2419,7 @@ int IVSIS3LikeFSHandler::RmdirRecursiveInternal(const char *pszDirname,
             {
                 aosList.AddString((osDirnameWithoutEndSlash + '/').c_str());
             }
-            int *ret = UnlinkBatch(aosList.List());
+            int *ret = DeleteObjectBatch(aosList.List());
             if (ret == nullptr)
                 return -1;
             CPLFree(ret);
@@ -3497,6 +3503,21 @@ int IVSIS3LikeFSHandler::DeleteObject(const char *pszFilename)
 
     delete poS3HandleHelper;
     return nRet;
+}
+
+/************************************************************************/
+/*                        DeleteObjectBatch()                           */
+/************************************************************************/
+
+int *IVSIS3LikeFSHandler::DeleteObjectBatch(CSLConstList papszFilesOrDirs)
+{
+    int *panRet =
+        static_cast<int *>(CPLMalloc(sizeof(int) * CSLCount(papszFilesOrDirs)));
+    for (int i = 0; papszFilesOrDirs && papszFilesOrDirs[i]; ++i)
+    {
+        panRet[i] = DeleteObject(papszFilesOrDirs[i]) == 0;
+    }
+    return panRet;
 }
 
 /************************************************************************/
