@@ -25,6 +25,7 @@ Synopsis
                    [-s_srs <srs_def>]  [-pyramidOnly]
                    [-r {near|bilinear|cubic|cubicspline|lanczos}]
                    -levels <numberoflevels>
+                   -res res_1,res_2,...,res_n
                    [-useDirForEachRow] [-resume]
                    -targetDir <TileDirectory> <input_file> <input_file>...
 
@@ -72,6 +73,12 @@ If your number of input tiles exhausts the command line buffer, use the general
 .. option:: -levels <numberOfLevels>
 
     Number of pyramids levels to build.
+
+.. option:: -res res_1,res_2,...,res_n
+
+    A list of resolutions (pixel size) to be used for pyramid creation. This option is
+    mutually exclusive to -levels. The number of pyramid levels is equal to the number 
+    of given resolutions. 
 
 .. option:: -v
 

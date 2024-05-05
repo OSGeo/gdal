@@ -99,6 +99,14 @@ class DataSetCache(object):
         del self.dict
 
 
+class scale_factor(object):
+    """A class holding informations on level scaling"""
+
+    def __init__(self, scaleX, scaleY):
+        self.scaleX = scaleX
+        self.scaleY = scaleY
+
+
 class tile_info(object):
     """A class holding info how to tile"""
 
@@ -499,7 +507,7 @@ def _renameDataset(g, oldName, newName):
 
 
 def createPyramidTile(
-    g, levelMosaicInfo, offsetX, offsetY, width, height, tileName, OGRDS, feature_only
+    g, levelMosaicInfo, offsetX, offsetY, width, height, tileName, OGRDS, feature_only, scaleFactor
 ):
     """
     Create an individual tile for the pyramids.
@@ -510,8 +518,8 @@ def createPyramidTile(
     """
     temp_tilename = _createTempFileName(tileName)
 
-    sx = levelMosaicInfo.scaleX * 2
-    sy = levelMosaicInfo.scaleY * 2
+    sx = levelMosaicInfo.scaleX * scaleFactor.scaleX
+    sy = levelMosaicInfo.scaleY * scaleFactor.scaleY
 
     dec = AffineTransformDecorator(
         [
@@ -726,40 +734,39 @@ def createTile(
 
 
 def createTileIndex(Verbose, dsName, fieldName, srs, driverName):
-    with gdal.ExceptionMgr(useExceptions=False):
-        OGRDriver = ogr.GetDriverByName(driverName)
-        if OGRDriver is None:
-            print("ESRI Shapefile driver not found", file=sys.stderr)
-            return 1
+    OGRDriver = ogr.GetDriverByName(driverName)
+    if OGRDriver is None:
+        print("ESRI Shapefile driver not found", file=sys.stderr)
+        return 1
 
-        OGRDataSource = OGRDriver.Open(dsName)
-        if OGRDataSource is not None:
-            OGRDataSource.Destroy()
-            OGRDriver.DeleteDataSource(dsName)
-            if Verbose:
-                print("truncating index " + dsName)
+    OGRDataSource = OGRDriver.Open(dsName)
+    if OGRDataSource is not None:
+        OGRDataSource.Destroy()
+        OGRDriver.DeleteDataSource(dsName)
+        if Verbose:
+            print("truncating index " + dsName)
 
-        OGRDataSource = OGRDriver.CreateDataSource(dsName)
-        if OGRDataSource is None:
-            print("Could not open datasource " + dsName, file=sys.stderr)
-            return 1
+    OGRDataSource = OGRDriver.CreateDataSource(dsName)
+    if OGRDataSource is None:
+        print("Could not open datasource " + dsName, file=sys.stderr)
+        return 1
 
-        OGRLayer = OGRDataSource.CreateLayer("index", srs, ogr.wkbPolygon)
-        if OGRLayer is None:
-            print("Could not create Layer", file=sys.stderr)
-            return 1
+    OGRLayer = OGRDataSource.CreateLayer("index", srs, ogr.wkbPolygon)
+    if OGRLayer is None:
+        print("Could not create Layer", file=sys.stderr)
+        return 1
 
-        OGRFieldDefn = ogr.FieldDefn(fieldName, ogr.OFTString)
-        if OGRFieldDefn is None:
-            print("Could not create FieldDefn for " + fieldName, file=sys.stderr)
-            return 1
+    OGRFieldDefn = ogr.FieldDefn(fieldName, ogr.OFTString)
+    if OGRFieldDefn is None:
+        print("Could not create FieldDefn for " + fieldName, file=sys.stderr)
+        return 1
 
-        OGRFieldDefn.SetWidth(256)
-        if OGRLayer.CreateField(OGRFieldDefn) != 0:
-            print("Could not create Field for " + fieldName, file=sys.stderr)
-            return 1
+    OGRFieldDefn.SetWidth(256)
+    if OGRLayer.CreateField(OGRFieldDefn) != 0:
+        print("Could not create Field for " + fieldName, file=sys.stderr)
+        return 1
 
-        return OGRDataSource
+    return OGRDataSource
 
 
 def addFeature(TileIndexFieldName, OGRDataSource, location, xlist, ylist):
@@ -797,22 +804,34 @@ def closeTileIndex(OGRDataSource):
     OGRDataSource.Destroy()
 
 
+def getScaleFactor(lastLevelMosaicInfo, level, resolutions):
+    if len(resolutions) == 0:
+        return scale_factor(2,2)
+    
+    scaleX = abs(resolutions[level - 1] / lastLevelMosaicInfo.scaleX)
+    scaleY = abs(resolutions[level - 1] / lastLevelMosaicInfo.scaleY) 
+    return scale_factor(scaleX, scaleY)
+
+
 def buildPyramid(g, minfo, createdTileIndexDS, tileWidth, tileHeight, overlap):
     inputDS = createdTileIndexDS
     for level in range(1, g.Levels + 1):
         g.LastRowIndx = -1
         levelMosaicInfo = mosaic_info(minfo.filename, inputDS)
+
+        scaleFactor = getScaleFactor(levelMosaicInfo, level, g.Resolutions)
+
         levelOutputTileInfo = tile_info(
-            int(levelMosaicInfo.xsize / 2),
-            int(levelMosaicInfo.ysize / 2),
+            int(levelMosaicInfo.xsize / scaleFactor.scaleX),
+            int(levelMosaicInfo.ysize / scaleFactor.scaleY),
             tileWidth,
             tileHeight,
             overlap,
         )
-        inputDS = buildPyramidLevel(g, levelMosaicInfo, levelOutputTileInfo, level)
+        inputDS = buildPyramidLevel(g, levelMosaicInfo, levelOutputTileInfo, level, scaleFactor)
 
 
-def buildPyramidLevel(g, levelMosaicInfo, levelOutputTileInfo, level):
+def buildPyramidLevel(g, levelMosaicInfo, levelOutputTileInfo, level, scaleFactor):
     """
     Build the pyramids at level N and returns an OGR dataset of the tile index at that level
     """
@@ -858,6 +877,7 @@ def buildPyramidLevel(g, levelMosaicInfo, levelOutputTileInfo, level):
                 tilename,
                 OGRDS,
                 feature_only,
+                scaleFactor,
             )
 
     if g.TileIndexName is not None:
@@ -912,6 +932,14 @@ def getTileName(g, minfo, ti, xIndex, yIndex, level=-1):
     return frmt
 
 
+def parseResolutions(value):
+    resolutions = []
+    for res_string in value.split(','):
+        resolutions.append(float(res_string))
+        # TODO: handle parsing exceptions
+    return resolutions
+
+
 def UsageFormat():
     print("Valid formats:")
     count = gdal.GetDriverCount()
@@ -935,6 +963,7 @@ def Usage(isError):
     print("        [-tileIndex <tileIndexName> [-tileIndexField <fieldName>]]", file=f)
     print("        [-csv <fileName> [-csvDelim <delimiter>]]", file=f)
     print("        [-s_srs <srs_def>]  [-pyramidOnly] -levels <numberoflevels>", file=f)
+    print('        [-res res_1,res_2,...,res_n]', file=f)
     print("        [-r {near|bilinear|cubic|cubicspline|lanczos}]", file=f)
     print("        [-useDirForEachRow] [-resume]", file=f)
     print("        -targetDir <TileDirectory> <input_file> [<input_file>]...", file=f)
@@ -1018,6 +1047,9 @@ def main(args=None, g=None):
             if g.Levels < 1:
                 print("Invalid number of levels : %d" % g.Levels)
                 return 1
+        elif arg == "-res":
+            i += 1
+            g.Resolutions = parseResolutions(argv[i])
         elif arg == "-s_srs":
             i += 1
             g.Source_SRS = osr.SpatialReference()
@@ -1081,6 +1113,12 @@ def main(args=None, g=None):
         leveldir = g.TargetDir + str(0) + os.sep
         if not os.path.exists(leveldir):
             os.mkdir(leveldir)
+
+    if len(g.Resolutions) > 0:
+        if g.Levels > 0:
+            print("Error: Parameter levels and res are mutually exclusive!")
+            return 1
+        g.Levels = len(g.Resolutions)
 
     if g.Levels > 0:  # prepare Dirs for pyramid
         startIndx = 1
@@ -1162,6 +1200,7 @@ class RetileGlobals:
         "TargetDir",
         "ResamplingMethod",
         "Levels",
+        "Resolutions",
         "PyramidOnly",
         "LastRowIndx",
         "UseDirForEachRow",
@@ -1192,6 +1231,7 @@ class RetileGlobals:
         self.TargetDir = None
         self.ResamplingMethod = gdal.GRA_NearestNeighbour
         self.Levels = 0
+        self.Resolutions = []
         self.PyramidOnly = False
         self.LastRowIndx = -1
         self.UseDirForEachRow = False
