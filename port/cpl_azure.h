@@ -83,6 +83,7 @@ class VSIAzureBlobHandleHelper final : public IVSIS3LikeHandleHelper
 
     static VSIAzureBlobHandleHelper *
     BuildFromURI(const char *pszURI, const char *pszFSPrefix,
+                 const char *pszURIForPathSpecificOption = nullptr,
                  CSLConstList papszOptions = nullptr);
 
     void SetIncludeMSVersion(bool bInclude)

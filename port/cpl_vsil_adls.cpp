@@ -2102,7 +2102,7 @@ char *VSIADLSFSHandler::GetSignedURL(const char *pszFilename,
         VSIAzureBlobHandleHelper::BuildFromURI(pszFilename +
                                                    GetFSPrefix().size(),
                                                "/vsiaz/",  // use Azure blob
-                                               papszOptions));
+                                               nullptr, papszOptions));
     if (poHandleHelper == nullptr)
     {
         return nullptr;
