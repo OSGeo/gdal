@@ -49,7 +49,7 @@ jobs:
     - name: Install dependencies
       run: |
           sudo apt-get update
-          sudo apt-get install -y ccache cmake g++ swig python3-numpy libproj-dev libqhull-dev
+          sudo apt-get install -y g++ swig python3-numpy libproj-dev libqhull-dev
           sudo apt-get install -y \
             libblosc-dev \
             libboost-dev \
@@ -91,11 +91,17 @@ jobs:
             libzstd-dev \
             unixodbc-dev
 
+    - name: Install latest ninja
+      run: pip install ninja
+
     - name: Configure
       if: matrix.language == 'c-cpp'
       run: |
-          mkdir build
-          (cd build && cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DGDAL_USE_LERC_INTERNAL=OFF)
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DGDAL_USE_LERC_INTERNAL=OFF \
+            -DBUILD_TESTING=OFF \
+            -G Ninja \
 
     # Initializes the CodeQL tools for scanning.
     # We do that after running CMake to avoid CodeQL to trigger during CMake time,
@@ -118,7 +124,7 @@ jobs:
     - name: Build
       if: matrix.language == 'c-cpp'
       run: |
-          (cd build && make -j$(nproc))
+        cmake --build build -j$(nproc)
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@d39d31e687223d841ef683f52467bd88e9b21c14 # v3.25.3
