@@ -1581,21 +1581,37 @@ def test_vsigs_rmdirrecursive_empty_dir(gs_test_config, webserver_port):
         204,
     )
 
-    with gdaltest.config_options(
-        {
-            "GS_SECRET_ACCESS_KEY": "GS_SECRET_ACCESS_KEY",
-            "GS_ACCESS_KEY_ID": "GS_ACCESS_KEY_ID",
-        },
-        thread_local=False,
-    ):
+    gdal.SetPathSpecificOption(
+        "/vsigs/test_vsigs_rmdirrecursive_empty_dir",
+        "GS_SECRET_ACCESS_KEY",
+        "GS_SECRET_ACCESS_KEY",
+    )
+    gdal.SetPathSpecificOption(
+        "/vsigs/test_vsigs_rmdirrecursive_empty_dir",
+        "GS_ACCESS_KEY_ID",
+        "GS_ACCESS_KEY_ID",
+    )
 
-        with webserver.install_http_handler(handler):
+    error = [False]
+
+    def my_error_handler(errclass, errno, errmsg):
+        error[0] = True
+        print(errmsg)
+
+    try:
+        with webserver.install_http_handler(handler), gdaltest.error_handler(
+            my_error_handler
+        ):
             assert (
                 gdal.RmdirRecursive(
                     "/vsigs/test_vsigs_rmdirrecursive_empty_dir/empty_dir"
                 )
                 == 0
             )
+    finally:
+        gdal.ClearPathSpecificOptions("/vsigs/test_vsigs_rmdirrecursive_empty_dir")
+
+    assert not error[0]
 
 
 ###############################################################################

@@ -720,12 +720,13 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
 /*                          BuildFromURI()                              */
 /************************************************************************/
 
-VSIGSHandleHelper *VSIGSHandleHelper::BuildFromURI(const char *pszURI,
-                                                   const char * /*pszFSPrefix*/,
-                                                   CSLConstList papszOptions)
+VSIGSHandleHelper *VSIGSHandleHelper::BuildFromURI(
+    const char *pszURI, const char * /*pszFSPrefix*/,
+    const char *pszURIForPathSpecificOption, CSLConstList papszOptions)
 {
     std::string osPathForOption("/vsigs/");
-    osPathForOption += pszURI;
+    osPathForOption +=
+        pszURIForPathSpecificOption ? pszURIForPathSpecificOption : pszURI;
 
     // pszURI == bucket/object
     const std::string osBucketObject(pszURI);
