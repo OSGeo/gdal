@@ -648,6 +648,19 @@ Another is to set the HttpPutResponseHopLimit metadata on an AutoScalingGroup La
 
 Another possibility is to start the Docker container with host networking (``--network=host``), although this breaks isolation of containers by exposing all ports of the host to the container and has thus `security implications <https://stackoverflow.com/a/57051970/40785>`__.
 
+Configuring /vsis3/ with Minio
+++++++++++++++++++++++++++++++
+
+The following configuration options can be set to access a
+`Minio Docker image <https://min.io/docs/minio/container/index.html>`__
+
+- AWS_VIRTUAL_HOSTING=FALSE
+- AWS_HTTPS=NO
+- AWS_S3_ENDPOINT="localhost:9000"
+- AWS_REGION="us-east-1"
+- AWS_SECRET_ACCESS_KEY="your_secret_access_key"
+- AWS_ACCESS_KEY_ID="your_access_key"
+
 .. _vsis3_streaming:
 
 /vsis3_streaming/ (AWS S3 files: streaming)
@@ -1140,7 +1153,7 @@ This file system handler also allows sequential writing of files (no seeks or re
 /vsistdin/ is a file handler that allows reading from the standard input stream.
 
 The filename syntax must be only :file:`/vsistdin/`, (not e.g.,
-/vsistdin/path/to/f.csv , but "/vsistdin?buffer_limit=value" is OK.) 
+/vsistdin/path/to/f.csv , but "/vsistdin?buffer_limit=value" is OK.)
 
 The file operations available are of course limited to Read() and forward Seek().
 Full seek in the first MB of a file is possible, and it is cached so that closing,
