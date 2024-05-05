@@ -250,9 +250,9 @@ char *VSIGSFSHandler::GetSignedURL(const char *pszFilename,
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
         return nullptr;
 
-    VSIGSHandleHelper *poHandleHelper =
-        VSIGSHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
-                                        GetFSPrefix().c_str(), papszOptions);
+    VSIGSHandleHelper *poHandleHelper = VSIGSHandleHelper::BuildFromURI(
+        pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str(), nullptr,
+        papszOptions);
     if (poHandleHelper == nullptr)
     {
         return nullptr;
@@ -531,9 +531,16 @@ int *VSIGSFSHandler::UnlinkBatch(CSLConstList papszFiles)
     // Implemented using
     // https://cloud.google.com/storage/docs/json_api/v1/how-tos/batch
 
+    const char *pszFirstFilename =
+        papszFiles && papszFiles[0] ? papszFiles[0] : nullptr;
+
     auto poHandleHelper =
         std::unique_ptr<VSIGSHandleHelper>(VSIGSHandleHelper::BuildFromURI(
-            "batch/storage/v1", GetFSPrefix().c_str()));
+            "batch/storage/v1", GetFSPrefix().c_str(),
+            pszFirstFilename &&
+                    STARTS_WITH(pszFirstFilename, GetFSPrefix().c_str())
+                ? pszFirstFilename + GetFSPrefix().size()
+                : nullptr));
 
     // The JSON API cannot be used with HMAC keys
     if (poHandleHelper && poHandleHelper->UsesHMACKey())
@@ -546,8 +553,6 @@ int *VSIGSFSHandler::UnlinkBatch(CSLConstList papszFiles)
     int *panRet =
         static_cast<int *>(CPLCalloc(sizeof(int), CSLCount(papszFiles)));
 
-    const char *pszFirstFilename =
-        papszFiles && papszFiles[0] ? papszFiles[0] : nullptr;
     if (!poHandleHelper || pszFirstFilename == nullptr)
         return panRet;
 

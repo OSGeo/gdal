@@ -77,9 +77,10 @@ class VSIGSHandleHelper final : public IVSIS3LikeHandleHelper
                       const std::string &osUserProject);
     ~VSIGSHandleHelper();
 
-    static VSIGSHandleHelper *BuildFromURI(const char *pszURI,
-                                           const char *pszFSPrefix,
-                                           CSLConstList papszOptions = nullptr);
+    static VSIGSHandleHelper *
+    BuildFromURI(const char *pszURI, const char *pszFSPrefix,
+                 const char *pszURIForPathSpecificOption = nullptr,
+                 CSLConstList papszOptions = nullptr);
 
     bool UsesHMACKey() const;
 
