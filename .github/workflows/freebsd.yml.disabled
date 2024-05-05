@@ -6,6 +6,7 @@ on:
             - 'doc/**'
         branches:
             - '!backport**'
+            - '!dependabot**'
     pull_request:
         paths-ignore:
             - 'doc/**'

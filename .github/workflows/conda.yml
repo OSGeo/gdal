@@ -6,6 +6,7 @@ on:
             - 'doc/**'
         branches-ignore:
             - 'backport**'
+            - 'dependabot**'
 
     # Disabled because run is quite slow, especially for Mac
     #pull_request:

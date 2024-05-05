@@ -4,6 +4,7 @@ on:
     push:
         branches-ignore:
             - 'backport**'
+            - 'dependabot**'
     pull_request:
 
 concurrency:
