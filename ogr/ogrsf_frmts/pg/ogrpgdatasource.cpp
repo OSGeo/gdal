@@ -1271,7 +1271,8 @@ void OGRPGDataSource::LoadTables()
                 EQUAL(pszTable, "geography_columns"))
                 continue;
 
-            if (EQUAL(pszSchemaName, "information_schema"))
+            if (EQUAL(pszSchemaName, "information_schema") ||
+                EQUAL(pszSchemaName, "ogr_system_tables"))
                 continue;
 
             int GeomTypeFlags = 0;
@@ -2568,7 +2569,7 @@ OGRErr OGRPGDataSource::StartTransaction(CPL_UNUSED int bForce)
     }
 
     nSoftTransactionLevel++;
-    bUserTransactionActive = TRUE;
+    bUserTransactionActive = true;
 
     /*CPLDebug("PG", "poDS=%p StartTransaction() nSoftTransactionLevel=%d",
              this, nSoftTransactionLevel);*/
@@ -2601,7 +2602,7 @@ OGRErr OGRPGDataSource::CommitTransaction()
     }
 
     nSoftTransactionLevel--;
-    bUserTransactionActive = FALSE;
+    bUserTransactionActive = false;
 
     if (bSavePointActive)
     {
@@ -2646,7 +2647,7 @@ OGRErr OGRPGDataSource::RollbackTransaction()
     FlushCache(false);
 
     nSoftTransactionLevel--;
-    bUserTransactionActive = FALSE;
+    bUserTransactionActive = false;
 
     OGRErr eErr;
     if (bSavePointActive)
@@ -3157,4 +3158,87 @@ OGRErr OGRPGDataSource::EndCopy()
     }
     else
         return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                CreateOgrSystemTablesMetadataTableIfNeeded()          */
+/************************************************************************/
+
+void OGRPGDataSource::CreateOgrSystemTablesMetadataTableIfNeeded()
+{
+    PGresult *hResult =
+        OGRPG_PQexec(hPGConn, "CREATE SCHEMA IF NOT EXISTS ogr_system_tables");
+    OGRPGClearResult(hResult);
+
+    hResult = OGRPG_PQexec(
+        hPGConn, "CREATE TABLE IF NOT EXISTS ogr_system_tables.metadata("
+                 "id SERIAL, "
+                 "schema_name TEXT NOT NULL, "
+                 "table_name TEXT NOT NULL, "
+                 "metadata TEXT,"
+                 "UNIQUE(schema_name, table_name))");
+    OGRPGClearResult(hResult);
+
+    hResult = OGRPG_PQexec(
+        hPGConn,
+        "DROP FUNCTION IF EXISTS "
+        "ogr_system_tables.event_trigger_function_for_metadata() CASCADE");
+    OGRPGClearResult(hResult);
+
+    hResult = OGRPG_PQexec(
+        hPGConn,
+        "CREATE FUNCTION "
+        "ogr_system_tables.event_trigger_function_for_metadata()\n"
+        "RETURNS event_trigger LANGUAGE plpgsql AS $$\n"
+        "DECLARE\n"
+        "    obj record;\n"
+        "BEGIN\n"
+        "    FOR obj IN SELECT * FROM pg_event_trigger_dropped_objects()\n"
+        "    LOOP\n"
+        "        IF obj.object_type = 'table' THEN\n"
+        "            DELETE FROM ogr_system_tables.metadata m WHERE "
+        "m.schema_name = obj.schema_name AND m.table_name = "
+        "obj.object_name;\n"
+        "        END IF;\n"
+        "    END LOOP;\n"
+        "END;\n"
+        "$$;");
+    OGRPGClearResult(hResult);
+
+    hResult =
+        OGRPG_PQexec(hPGConn, "DROP EVENT TRIGGER IF EXISTS "
+                              "ogr_system_tables_event_trigger_for_metadata");
+    OGRPGClearResult(hResult);
+
+    hResult = OGRPG_PQexec(
+        hPGConn,
+        "CREATE EVENT TRIGGER ogr_system_tables_event_trigger_for_metadata "
+        "ON sql_drop "
+        "EXECUTE FUNCTION "
+        "ogr_system_tables.event_trigger_function_for_metadata()");
+    OGRPGClearResult(hResult);
+}
+
+/************************************************************************/
+/*                    HasOgrSystemTablesMetadataTable()                 */
+/************************************************************************/
+
+bool OGRPGDataSource::HasOgrSystemTablesMetadataTable()
+{
+    if (!m_bOgrSystemTablesMetadataTableExistenceTested &&
+        CPLTestBool(CPLGetConfigOption("OGR_PG_ENABLE_METADATA", "YES")))
+    {
+        m_bOgrSystemTablesMetadataTableExistenceTested = true;
+        // Check that the ogr_system_tables.metadata table exists (without
+        // causing errors that might abort transactions)
+        PGresult *hResult = OGRPG_PQexec(
+            hPGConn,
+            "SELECT c.oid FROM pg_class c "
+            "JOIN pg_namespace n ON c.relnamespace=n.oid "
+            "WHERE c.relname = 'metadata' AND n.nspname = 'ogr_system_tables'");
+        m_bOgrSystemTablesMetadataTableFound =
+            (hResult && PQntuples(hResult) == 1 && !PQgetisnull(hResult, 0, 0));
+        OGRPGClearResult(hResult);
+    }
+    return m_bOgrSystemTablesMetadataTableFound;
 }

@@ -4858,12 +4858,14 @@ def test_ogr_pg_84(pg_ds):
 def test_ogr_pg_metadata(pg_ds):
 
     pg_ds = reconnect(pg_ds, update=1)
+    pg_ds.StartTransaction()
     lyr = pg_ds.CreateLayer(
         "test_ogr_pg_metadata", geom_type=ogr.wkbPoint, options=["OVERWRITE=YES"]
     )
     lyr.SetMetadata({"foo": "bar"})
     lyr.SetMetadataItem("bar", "baz")
     lyr.SetMetadataItem("DESCRIPTION", "my_desc")
+    pg_ds.CommitTransaction()
 
     pg_ds = reconnect(pg_ds, update=1)
     with pg_ds.ExecuteSQL(
