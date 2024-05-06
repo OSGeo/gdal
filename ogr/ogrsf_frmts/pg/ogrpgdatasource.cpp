@@ -1833,6 +1833,14 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
         CPLString osCommand;
         if (eType != wkbNone && !bHavePostGIS)
         {
+            if (pszGFldName && !EQUAL(pszGFldName, "wkb_geometry"))
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "GEOMETRY_NAME=%s ignored, and set instead to "
+                         "'wkb_geometry' as it is the only geometry column "
+                         "name recognized for non-PostGIS enabled databases.",
+                         pszGFldName);
+            }
             pszGFldName = "wkb_geometry";
             osCommand.Printf("%s ( "
                              "    %s %s, "
