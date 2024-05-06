@@ -1263,7 +1263,8 @@ void OGRPGDataSource::LoadTables()
                 EQUAL(pszTable, "geography_columns"))
                 continue;
 
-            if (EQUAL(pszSchemaName, "information_schema"))
+            if (EQUAL(pszSchemaName, "information_schema") ||
+                EQUAL(pszSchemaName, "ogr_system_tables"))
                 continue;
 
             int GeomTypeFlags = 0;
