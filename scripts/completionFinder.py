@@ -37,23 +37,22 @@ def showHelp():
     print("Usage : completionFinder.py  output_script")
 
 
-def processLine(line):
-    outList = []
-    lvl1 = line.split(" ")
-    lvl2 = []
-    for item in lvl1:
-        lvl2 += item.split("[")
-    lvl3 = []
-    for item in lvl2:
-        lvl3 += item.split("]")
-    lvl4 = []
-    for item in lvl3:
-        lvl4 += item.split("|")
+def processLine(outList, line):
 
-    for item in lvl4:
-        if len(item) >= 2:
-            if item[0] == "-":
+    in_option = False
+    item = ""
+    last_c = ""
+    for c in line:
+        if last_c in ("[", "|") and c == "-" and not in_option:
+            in_option = True
+            item = c
+        elif in_option:
+            if c not in ("]", "[", " ", "|"):
+                item += c
+            else:
+                in_option = False
                 key = item
+                item = ""
                 # Handle special cases -key={A/B/C}
                 if key.count("={") == 1 and key[-1] == "}":
                     pair = key.split("=")
@@ -61,32 +60,30 @@ def processLine(line):
                     for c in choices:
                         outList.append(pair[0] + "=" + c)
                 else:
-                    outList.append(key)
+                    pos = key.find("=")
+                    if pos > 0:
+                        key = key[0:pos]
+                    if key != "-" and key not in outList:
+                        outList.append(key)
+        last_c = c
 
     return outList
 
 
 def processTool(toolName):
-    command = [toolName, "-"]
+    if toolName == "gdal_calc.py":
+        command = [toolName]
+    else:
+        command = [toolName, "--help"]
 
     process = Popen(command, stdout=PIPE, stderr=STDOUT)
     result = process.communicate()[0]
     lines = result.decode("utf-8").split("\n")
-    index = 0
-
-    while index < len(lines):
-        if "usage:" in lines[index].lower():
-            break
-        index += 1
-
     options = []
 
-    while index < len(lines):
-        cleanLine = lines[index].strip("\t\r ")
-        if not cleanLine:
-            break
-        options += processLine(cleanLine)
-        index += 1
+    for line in lines:
+        cleanLine = line.strip("\t\r ")
+        options = processLine(options, cleanLine)
 
     return options
 
