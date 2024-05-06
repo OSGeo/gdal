@@ -245,6 +245,8 @@ std::string CPL_DLL GDALBuildVRTGetParserUsage();
 
 std::string CPL_DLL GDALTileIndexAppGetParserUsage();
 
+std::string CPL_DLL GDALFootprintAppGetParserUsage();
+
 #endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* GDAL_UTILS_PRIV_H_INCLUDED */
