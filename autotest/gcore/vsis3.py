@@ -4251,7 +4251,64 @@ def test_vsis3_CopyFileRestartable_no_error(
 
     with webserver.install_http_handler(handler):
         ret_code, restart_payload = gdal.CopyFileRestartable(
-            srcfilename, dstfilename, None
+            srcfilename, dstfilename, None, ["NUM_THREADS=1"]
+        )
+    assert ret_code == 0
+    assert restart_payload is None
+
+
+###############################################################################
+# Test multithreaded gdal.CopyFileRestartable() where upload is completed in a single attempt
+
+
+def test_vsis3_CopyFileRestartable_multithreaded(
+    tmp_vsimem, aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    srcfilename = str(tmp_vsimem / "foo")
+    gdal.FileFromMemBuffer(srcfilename, "foo\n")
+
+    dstfilename = "/vsis3/test_bucket/foo"
+
+    # Use a non sequential HTTP handler as the PUT could be emitted in
+    # any order
+    handler = webserver.NonSequentialMockedHttpHandler()
+    handler.add(
+        "POST",
+        "/test_bucket/foo?uploads",
+        200,
+        {"Content-type": "application:/xml"},
+        b"""<?xml version="1.0" encoding="UTF-8"?>
+        <InitiateMultipartUploadResult>
+        <UploadId>my_id</UploadId>
+        </InitiateMultipartUploadResult>""",
+    )
+    handler.add(
+        "PUT",
+        "/test_bucket/foo?partNumber=1&uploadId=my_id",
+        200,
+        {"ETag": '"first_etag"'},
+        expected_headers={"Content-Length": "3"},
+        expected_body=b"foo",
+    )
+    handler.add(
+        "PUT",
+        "/test_bucket/foo?partNumber=2&uploadId=my_id",
+        200,
+        {"ETag": '"second_etag"'},
+        expected_headers={"Content-Length": "1"},
+        expected_body=b"\n",
+    )
+    handler.add("POST", "/test_bucket/foo?uploadId=my_id", 200)
+
+    with webserver.install_http_handler(handler):
+        ret_code, restart_payload = gdal.CopyFileRestartable(
+            srcfilename,
+            dstfilename,
+            None,
+            ["CHUNK_SIZE=3"],
         )
     assert ret_code == 0
     assert restart_payload is None
@@ -4311,7 +4368,7 @@ def test_vsis3_CopyFileRestartable_with_restart(
             srcfilename,
             dstfilename,
             None,  # input payload
-            ["CHUNK_SIZE=3"],
+            ["CHUNK_SIZE=3", "NUM_THREADS=1"],
             progress_cbk,
         )
     assert ret_code == 1
@@ -4351,7 +4408,7 @@ def test_vsis3_CopyFileRestartable_with_restart(
     )
     with webserver.install_http_handler(handler):
         ret_code, restart_payload = gdal.CopyFileRestartable(
-            srcfilename, dstfilename, restart_payload
+            srcfilename, dstfilename, restart_payload, ["NUM_THREADS=1"]
         )
     assert ret_code == 0
     assert restart_payload is None
@@ -4369,7 +4426,7 @@ def test_vsis3_CopyFileRestartable_src_file_does_not_exist(
 
     with gdal.quiet_errors():
         ret_code, restart_payload = gdal.CopyFileRestartable(
-            "/vsimem/i/do/not/exist", "/vsis3/test_bucket/dst", None
+            "/vsimem/i/do/not/exist", "/vsis3/test_bucket/dst", None, ["NUM_THREADS=1"]
         )
     assert ret_code == -1
     assert restart_payload is None
@@ -4394,9 +4451,7 @@ def test_vsis3_CopyFileRestartable_InitiateMultipartUpload_failed(
     handler.add("POST", "/test_bucket/foo?uploads", 400)
     with webserver.install_http_handler(handler), gdal.quiet_errors():
         ret_code, restart_payload = gdal.CopyFileRestartable(
-            srcfilename,
-            dstfilename,
-            None,  # input payload
+            srcfilename, dstfilename, None, ["NUM_THREADS=1"]  # input payload
         )
     assert ret_code == -1
 
@@ -4440,9 +4495,7 @@ def test_vsis3_CopyFileRestartable_CompleteMultipartUpload_failed(
 
     with webserver.install_http_handler(handler), gdal.quiet_errors():
         ret_code, restart_payload = gdal.CopyFileRestartable(
-            srcfilename,
-            dstfilename,
-            None,  # input payload
+            srcfilename, dstfilename, None, ["NUM_THREADS=1"]  # input payload
         )
     assert ret_code == -1
 
@@ -4506,7 +4559,7 @@ def test_vsis3_CopyFileRestartable_errors_input_payload(
     gdal.ErrorReset()
     with gdal.quiet_errors():
         ret_code, restart_payload = gdal.CopyFileRestartable(
-            srcfilename, dstfilename, restart_payload
+            srcfilename, dstfilename, restart_payload, ["NUM_THREADS=1"]
         )
     assert ret_code == -1
     assert restart_payload is None
@@ -4535,7 +4588,7 @@ def test_vsis3_CopyFileRestartable_server_side(
     )
     with webserver.install_http_handler(handler):
         ret_code, restart_payload = gdal.CopyFileRestartable(
-            srcfilename, dstfilename, None
+            srcfilename, dstfilename, None, ["NUM_THREADS=1"]
         )
     assert ret_code == 0
     assert restart_payload is None

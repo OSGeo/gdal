@@ -638,6 +638,10 @@ int VSICopyFile(const char *pszSource, const char *pszTarget,
  @param papszOptions Null terminated list of options, or NULL.
  Currently accepted options are:
  <ul>
+ <li>NUM_THREADS=integer or ALL_CPUS. Number of threads to use for parallel
+ file copying. Only use for when /vsis3/, /vsigs/, /vsiaz/ or /vsiadls/ is in
+ source or target. The default is 10.
+ </li>
  <li>CHUNK_SIZE=integer. Maximum size of chunk (in bytes) to use
  to split large objects. For upload to /vsis3/, this chunk size must be set at
  least to 5 MB. The default is 50 MB.
