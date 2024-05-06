@@ -228,14 +228,30 @@ Produces this output measured in longitude degrees, latitude degrees and ellipso
 Ground control points
 +++++++++++++++++++++
 
-Where is the address "370 S. 300 E." in Salt Lake City, given we know
-some nearby corners' coordinates?
+Task: find one address and assign another.
+We pick Salt Lake City, where road names *are* their grid values.
+We first establish some ground control points at road intersections.
+We'll use :ref:`--optfile <raster_common_options_optfile>` for easy reuse of our GCPs.
 
 .. code-block:: bash
 
-    echo 300 -370 my address | gdaltransform \
-    -gcp 0   -500 -111.89114803 40.75846686 \
-    -gcp 0   0    -111.89114717 40.76932606 \
-    -gcp 500 0    -111.87685039 40.76940631
+   echo -output_xy \
+   -gcp 0   0    -111.89114717 40.76932606 \
+   -gcp 0   -500 -111.89114803 40.75846686 \
+   -gcp 500 0    -111.87685039 40.76940631 > optfile.txt
 
-    -111.8825697384 40.761338402 0 my address
+Where is the address "370 S. 300 E."?
+
+.. code-block:: bash
+
+    echo 300 -370 370 S. 300 E. | gdaltransform --optfile optfile.txt
+    -111.8825697384 40.761338402 370 S. 300 E.
+
+Nearby, a newly constructed building needs an address assigned. We use :option:`-i`:
+
+.. code-block:: bash
+
+    echo -111.88705 40.76502 Building ABC123 | gdaltransform -i --optfile optfile.txt
+    143.301947786644 -199.32683635161 Building ABC123
+
+(i.e., 143 E. 200 S. Or 144 if across the street.)
