@@ -231,7 +231,7 @@ Ground control points
 Task: find one address and assign another.
 We pick Salt Lake City, where road names *are* their grid values.
 We first establish some ground control points at road intersections.
-We'll use :ref:`raster_common_options_optfile` for easy reuse of our GCPs.
+We'll use :ref:`--optfile <raster_common_options_optfile>` for easy reuse of our GCPs.
 
 .. code-block:: bash
 
