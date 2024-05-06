@@ -91,6 +91,9 @@ class GDALArgumentParser : public ArgumentParser
     //! Add "-lco NAME=VALUE" argument for layer creation options, and store its value into var.
     Argument &add_layer_creation_options_argument(CPLStringList &var);
 
+    //! Add "-dsco NAME=VALUE" argument for dataset creation options, and store its value into var.
+    Argument &add_dataset_creation_options_argument(CPLStringList &var);
+
     //! Parse command line arguments, without the initial program name.
     void parse_args_without_binary_name(CSLConstList papszArgs);
 
