@@ -4,8 +4,6 @@
 Development practices
 ================================================================================
 
-.. include:: ../substitutions.rst
-
 Making changes to GDAL
 ----------------------
 
