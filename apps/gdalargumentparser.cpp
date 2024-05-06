@@ -247,6 +247,16 @@ GDALArgumentParser::add_layer_creation_options_argument(CPLStringList &var)
         .help(_("Layer creation options (format specific)."));
 }
 
+Argument &
+GDALArgumentParser::add_dataset_creation_options_argument(CPLStringList &var)
+{
+    return add_argument("-dsco")
+        .metavar("<NAME>=<VALUE>")
+        .append()
+        .action([&var](const std::string &s) { var.AddString(s.c_str()); })
+        .help(_("Dataset creation options (format specific)."));
+}
+
 /************************************************************************/
 /*                     parse_args_without_binary_name()                 */
 /************************************************************************/
