@@ -2190,7 +2190,7 @@ def test_vsiaz_imds_authentication_object_id_client_is_msi_res_id():
                 gdal.VSIFCloseL(f)
             assert data == "foo"
 
-            # Query another buckect with different object_id/client_id/msi_res_id
+            # Query another bucket with different object_id/client_id/msi_res_id
             handler = webserver.SequentialHandler()
             handler.add(
                 "GET",
@@ -2203,16 +2203,21 @@ def test_vsiaz_imds_authentication_object_id_client_is_msi_res_id():
                         }""",
                 expected_headers={"Metadata": "true"},
             )
+
             handler.add(
-                "GET",
-                "/azure/blob/myaccount/az_fake_bucket2/resource",
-                200,
-                {"Content-Length": 3},
-                "bar",
-                expected_headers={
-                    "Authorization": "Bearer my_bearer2",
-                    "x-ms-version": "2019-12-12",
-                },
+                "POST",
+                "/azure/blob/myaccount/?comp=batch",
+                202,
+                {"content-type": "multipart/mixed; boundary=my_boundary"},
+                """--my_boundary
+    Content-Type: application/http
+    Content-ID: <0>
+
+    HTTP/1.1 202 Accepted
+
+    --my_boundary--
+        """,
+                expected_body=b"--batch_ec2ce0a7-deaf-11ed-9ad8-3fabe5ecd589\r\nContent-Type: application/http\r\nContent-ID: <0>\r\nContent-Transfer-Encoding: binary\r\n\r\nDELETE /az_fake_bucket2/myfile HTTP/1.1\r\n\r\nAuthorization: Bearer my_bearer2\r\nContent-Length: 0\r\n\r\n\r\n--batch_ec2ce0a7-deaf-11ed-9ad8-3fabe5ecd589--\r\n",
             )
 
             gdal.SetPathSpecificOption(
@@ -2224,12 +2229,14 @@ def test_vsiaz_imds_authentication_object_id_client_is_msi_res_id():
             gdal.SetPathSpecificOption(
                 "/vsiaz/az_fake_bucket2/", "AZURE_IMDS_MSI_RES_ID", "my_msi_res_id2"
             )
+
             with webserver.install_http_handler(handler):
-                f = open_for_read("/vsiaz/az_fake_bucket2/resource")
-                assert f is not None
-                data = gdal.VSIFReadL(1, 4, f).decode("ascii")
-                gdal.VSIFCloseL(f)
-            assert data == "bar"
+                ret = gdal.UnlinkBatch(
+                    [
+                        "/vsiaz/az_fake_bucket2/myfile",
+                    ]
+                )
+            assert ret
 
             # Check that querying again under /vsiaz/az_fake_bucket/ reuses
             # the cached token

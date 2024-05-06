@@ -627,6 +627,8 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBaseWritable
 
     virtual int DeleteObject(const char *pszFilename);
 
+    virtual int *DeleteObjectBatch(CSLConstList papszFilesOrDirs);
+
     bool Sync(const char *pszSource, const char *pszTarget,
               const char *const *papszOptions, GDALProgressFunc pProgressFunc,
               void *pProgressData, char ***ppapszOutputs) override;
