@@ -31,9 +31,16 @@ _gdal2xyz.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="--help --help-general -skip -srcwin -b -allbands -csv -skipnodata -srcnodata -dstnodata --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]}
+  case "$prev" in
+    --format)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       ;;
   esac
   return 0
@@ -90,7 +97,7 @@ _gdal_calc.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --help-general --calc -a --a_band -b --b_band -c --c_band -d --d_band -e --e_band -f --f_band -g --g_band -h --h_band -i --i_band -j --j_band -k --k_band -l --l_band -m --m_band -n --n_band -o --o_band -p --p_band -q --q_band -r --r_band -s --s_band -t --t_band -u --u_band -v --v_band -w --w_band -x --x_band -y --y_band -z --z_band -A --A_band -B --B_band -C --C_band -D --D_band -E --E_band -F --F_band -G --G_band -H --H_band -I --I_band -J --J_band -K --K_band -L --L_band -M --M_band -N --N_band -O --O_band -P --P_band -Q --Q_band -R --R_band -S --S_band -T --T_band -U --U_band -V --V_band -W --W_band -X --X_band -Y --Y_band -Z --Z_band --outfile --NoDataValue --hideNoData --type --format --creation-option --allBands --overwrite --debug --quiet --color-table --extent --projwin --projectionCheck --calc, --outfile --version --build --license --formats --optfile --config --pause --locale "
+      key_list="--help --help-general -a --a_band -b --b_band -c --c_band -d --d_band -e --e_band -f --f_band -g --g_band -h --h_band -i --i_band -j --j_band -k --k_band -l --l_band -m --m_band -n --n_band -o --o_band -p --p_band -q --q_band -r --r_band -s --s_band -t --t_band -u --u_band -v --v_band -w --w_band -x --x_band -y --y_band -z --z_band -A --A_band -B --B_band -C --C_band -D --D_band -E --E_band -F --F_band -G --G_band -H --H_band -I --I_band -J --J_band -K --K_band -L --L_band -M --M_band -N --N_band -O --O_band -P --P_band -Q --Q_band -R --R_band -S --S_band -T --T_band -U --U_band -V --V_band -W --W_band -X --X_band -Y --Y_band -Z --Z_band --NoDataValue --hideNoData --type --format --creation-option --allBands --overwrite --debug --quiet --color-table --extent --projectionCheck --version --build --license --formats --optfile --config --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -116,9 +123,16 @@ _gdalcompare.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="--help --help-general -dumpdiffs -skip_binary -skip_overviews -skip_geolocation -skip_geotransform -skip_metadata -skip_rpc -skip_srs -sds --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]}
+  case "$prev" in
+    --format)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       ;;
   esac
   return 0
@@ -146,14 +160,14 @@ _gdal_contour()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --help-general -b -a -amin -amax -3d -inodata -snodata -f -i -dsco -lco -off -fl -e -nln -q -p --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --long-usage --help-general -b -a -amin -amax -3d -inodata -snodata -of -dsco -lco -i -fl -e -off -nln -p --quiet --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
   esac
   tool=${COMP_WORDS[0]}
   case "$prev" in
-    -f)
+    -of)
       key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       ;;
@@ -172,13 +186,17 @@ _gdaldem()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --help-general --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --help-general -z -s -az -alt -alg -combined -compute_edges -b -of -co -q -p -trigonometric -zero_for_flat -alpha -exact_color_entry --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
   esac
   tool=${COMP_WORDS[0]}
   case "$prev" in
+    -of)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
     --format)
       key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
@@ -324,7 +342,7 @@ _gdallocationinfo()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --help-general -xml -lifonly -valonly -E -field_sep -ignore_extra_input -b -overview -l_srs -geoloc -wgs84 -oo --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --long-usage --help-general -xml -lifonly -valonly -E -field_sep -ignore_extra_input -b -overview -l_srs -geoloc -wgs84 -oo --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -346,7 +364,7 @@ _gdalmanage()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --help-general -r -fr -u -f -f -f --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --help-general -r -fr -u -f --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -372,7 +390,7 @@ _gdal_merge.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --help-general -o -of -co -ps -tap -separate -q -v -pct -ul_lr -init -n -a_nodata -ot -createonly --help-general --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --help-general -o -of -co -ps -tap -separate -q -v -pct -ul_lr -init -n -a_nodata -ot -createonly --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -402,7 +420,7 @@ _gdalmove.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --help-general -s_srs -t_srs -et --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --help-general -s_srs -et --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -510,7 +528,7 @@ _gdal_retile.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --help-general -v -q -co -of -ps -overlap -ot -tileIndex -tileIndexField -csv -csvDelim -s_srs -pyramidOnly -levels -r -useDirForEachRow -resume -targetDir --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --help-general -v -q -co -of -ps -overlap -ot -tileIndex -tileIndexField -csv -csvDelim -s_srs -pyramidOnly -r -useDirForEachRow -resume --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -540,9 +558,20 @@ _gdal_sieve.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="--help --help-general -q -st -4 -8 -o -nomask -mask -of --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]}
+  case "$prev" in
+    -of)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      ;;
+    --format)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       ;;
   esac
   return 0
@@ -555,9 +584,16 @@ _gdalsrsinfo()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list=""
+      key_list="--help-general --help -h --single-line -V -e -o --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
+      ;;
+  esac
+  tool=${COMP_WORDS[0]}
+  case "$prev" in
+    --format)
+      key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       ;;
   esac
   return 0
@@ -570,18 +606,14 @@ _gdaltindex()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --help-general -overwrite -recursive -filename_filter -min_pixel_size -max_pixel_size -f -tileindex -write_absolute_path -skip_different_projection -t_srs -src_srs_name -src_srs_format -lyr_name -lco -gti_filename -tr -te -ot -bandcount -nodata -colorinterp -mask -mo -fetch_md --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --long-usage --help-general -overwrite -recursive -filename_filter -min_pixel_size -max_pixel_size -of -tileindex -write_absolute_path -skip_different_projection -t_srs -src_srs_name -src_srs_format -lyr_name -lco -gti_filename -tr -te -bandcount -nodata -colorinterp -mask -mo -fetch_md --quiet --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
   esac
   tool=${COMP_WORDS[0]}
   case "$prev" in
-    -ot)
-      key_list="Byte Int16 UInt16 UInt32 Int32 Float32 Float64 CInt16 CInt32 CFloat32 CFloat64"
-      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
-      ;;
-    -f)
+    -of)
       key_list="$( $tool --formats | tail -n +2 | cut -f 3 -d ' ')"
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       ;;
@@ -652,7 +684,7 @@ _gdalwarp()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --long-usage --help-general --quiet -overwrite -of -co -s_srs -t_srs -srcalpha -nosrcalpha -dstalpha -tr -ts -te -te_srs -r -ot --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --long-usage --help-general --quiet -overwrite -of -co -s_srs -t_srs -srcalpha -nosrcalpha -dstalpha -tr -ts -te -te_srs -r -ot -wo -multi -s_coord_epoch -t_coord_epoch -ct -tps -rpc -geoloc -order -refine_gcps -to -et -wm -srcnodata -dstnodata -tap -wt -cutline -cutline_srs -cwhere -cl -csql -cblend -crop_to_cutline -nomd -cvmd -setci -oo -doo -ovr -vshift -novshiftgrid -if -srcband -dstband --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -682,7 +714,7 @@ _gdal_viewshed()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --long-usage --help-general -of -ox -oy -oz -vv -iv -ov -co -a_nodata -tz -md -cc -b -om --quiet --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --long-usage --help-general -of -oz -vv -iv -ov -co -a_nodata -tz -md -cc -b -om --quiet --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -738,7 +770,7 @@ _sozip()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --long-usage --help-general --recurse-paths --grow --overwrite --list --validate --optimize-from --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --long-usage --help-general --recurse-paths --grow --overwrite --list --validate --optimize-from --quiet --verbose --junk-paths --enable-sozip --sozip-chunk-size --sozip-min-file-size --content-type --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -760,7 +792,7 @@ _gdal_footprint()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --help-general -b -combine_bands -oo -ovr -srcnodata -t_cs -t_srs -split_polys -convex_hull -densify -simplify -min_ring_area -max_points -of -lyr_name -location_field_name -no_location -write_absolute_path -dsco -lco -overwrite -q --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --long-usage --help-general -b -combine_bands -ovr -srcnodata -t_cs -t_srs -split_polys -convex_hull -densify -simplify -min_ring_area -max_points --quiet -oo -of -location_field_name -no_location -write_absolute_path -lco -dsco -lyr_name -overwrite --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -786,7 +818,7 @@ _ogr2ogr()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --long-usage --help-general -of -dsco -lco -append -upsert -overwrite -update -sql -dialect -spat -where -select -nln -nlt -s_srs -a_srs -t_srs --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --long-usage --help-general -of -dsco -lco -append -upsert -overwrite -update -sql -dialect -spat -where -select -nln -nlt -s_srs -a_srs -t_srs -addfields -relaxedFieldNameMatch -fieldTypeToString -mapFieldType -fieldmap -splitlistfields -maxsubfields -emptyStrAsNull -forceNullable -unsetFieldWidth -unsetDefault -resolveDomains -dateTimeTo -)<HH> -)<HH>:<MM> -noNativeData -dim -s_coord_epoch -a_coord_epoch -t_coord_epoch -ct -spat_srs -geomfield -segmentize -simplify -makevalid -wrapdateline -datelineoffset -clipsrc -clipsrcsql -clipsrclayer -clipsrcwhere -clipdst -clipdstsql -clipdstlayer -clipdstwhere -explodecollections -zfield -gcp -tps -order -xyRes -zRes -mRes -unsetCoordPrecision --quiet -progress -if -oo -doo -fid -preserve_fid -unsetFid -skipfailures -gt -limit -ds_transaction -mo -nomd --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -850,20 +882,9 @@ _ogrtindex()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --help-general -lnum -lname -f -write_absolute_path -skip_different_projection -t_srs -src_srs_name -src_srs_format -accept_different_schemas --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --long-usage --help-general -lnum -lname -of -tileindex -write_absolute_path -skip_different_projection -t_srs -src_srs_name -src_srs_format -accept_different_schemas --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
-      ;;
-  esac
-  tool=${COMP_WORDS[0]/ogrtindex/ogr2ogr}
-  case "$prev" in
-    -f)
-      key_list="$( $tool --formats | tail -n +2 | grep -o -E '"[^"]+"' | sed 's/\ /__/')"
-      for iter in $key_list; do
-        if [[ $iter =~ ^$cur ]]; then
-          COMPREPLY+=( "${iter//__/ }" )
-        fi
-      done
       ;;
   esac
   return 0
@@ -876,7 +897,7 @@ _ogrmerge.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --help-general -o -f -single -nln -update -overwrite_ds -append -overwrite_layer -src_geom_type -dsco -lco -s_srs -t_srs -a_srs -progress -skipfailures --help-general --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --help-general -f -single -nln -update -append -src_geom_type -dsco -lco -s_srs -t_srs -a_srs -progress -skipfailures -field_strategy -src_layer_field_name -src_layer_field_content --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -902,7 +923,7 @@ _ogr_layer_algebra.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help --help-general -input_ds -input_lyr -method_ds -method_lyr -output_ds -output_lyr -overwrite -opt -f -dsco -lco -input_fields -method_fields -nlt -a_srs --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help --help-general -input_lyr -method_lyr -output_lyr -overwrite -opt -f -dsco -lco -input_fields -method_fields -nlt -a_srs --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
