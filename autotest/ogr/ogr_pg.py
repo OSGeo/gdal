@@ -191,7 +191,7 @@ def only_with_postgis(func):
 
 
 def only_without_postgis(func):
-    @pytest.mark.parametrize("use_postgis", [True], ids=["no-postgis"], indirect=True)
+    @pytest.mark.parametrize("use_postgis", [False], ids=["no-postgis"], indirect=True)
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
@@ -4803,7 +4803,6 @@ def test_ogr_pg_83(pg_ds, geom_type, options, wkt, expected_wkt):
 # Test description
 
 
-@only_without_postgis
 def test_ogr_pg_84(pg_ds):
 
     lyr = pg_ds.CreateLayer(
@@ -5953,3 +5952,22 @@ def test_ogr_pg_LAUNDER_ASCII(pg_ds, tmp_schema):
     assert lyr.GetName() == f"{tmp_schema}.ae"
     lyr.CreateField(ogr.FieldDefn("b" + eacute))
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef() == "be"
+
+
+###############################################################################
+# Test ignored GEOMETRY_NAME on non-PostGIS enabled database
+
+
+@only_without_postgis
+def test_ogr_pg_no_postgis_GEOMETRY_NAME(pg_ds):
+
+    with gdal.quiet_errors():
+        pg_ds.CreateLayer(
+            "test_ogr_pg_no_postgis_GEOMETRY_NAME",
+            geom_type=ogr.wkbPoint,
+            options=["GEOMETRY_NAME=foo"],
+        )
+        assert (
+            gdal.GetLastErrorMsg()
+            == "GEOMETRY_NAME=foo ignored, and set instead to 'wkb_geometry' as it is the only geometry column name recognized for non-PostGIS enabled databases."
+        )

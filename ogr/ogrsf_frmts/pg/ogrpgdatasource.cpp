@@ -1211,10 +1211,14 @@ void OGRPGDataSource::LoadTables()
             osCommand += " ORDER BY oid, attnum";
         }
         else
-            osCommand.Printf("SELECT c.relname, n.nspname FROM "
-                             "pg_class c, pg_namespace n "
-                             "WHERE (c.relkind in (%s) AND c.relname !~ '^pg_' "
-                             "AND c.relnamespace=n.oid)",
+            osCommand.Printf("SELECT c.relname, n.nspname, d.description FROM "
+                             "pg_class c "
+                             "JOIN pg_namespace n ON c.relnamespace=n.oid "
+                             "LEFT JOIN pg_description d "
+                             "ON d.objoid = c.oid AND d.classoid = "
+                             "'pg_class'::regclass::oid AND d.objsubid = 0 "
+                             "WHERE (c.relkind in (%s) AND "
+                             "c.relname !~ '^pg_')",
                              pszAllowedRelations);
 
         PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
@@ -1256,6 +1260,10 @@ void OGRPGDataSource::LoadTables()
                     atoi(PQgetvalue(hResult, iRecord, 6)));
                 bNullable = EQUAL(PQgetvalue(hResult, iRecord, 7), "f");
                 pszDescription = PQgetvalue(hResult, iRecord, 8);
+            }
+            else
+            {
+                pszDescription = PQgetvalue(hResult, iRecord, 2);
             }
 
             if (EQUAL(pszTable, "spatial_ref_sys") ||
@@ -1825,6 +1833,14 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
         CPLString osCommand;
         if (eType != wkbNone && !bHavePostGIS)
         {
+            if (pszGFldName && !EQUAL(pszGFldName, "wkb_geometry"))
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "GEOMETRY_NAME=%s ignored, and set instead to "
+                         "'wkb_geometry' as it is the only geometry column "
+                         "name recognized for non-PostGIS enabled databases.",
+                         pszGFldName);
+            }
             pszGFldName = "wkb_geometry";
             osCommand.Printf("%s ( "
                              "    %s %s, "
