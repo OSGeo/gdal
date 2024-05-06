@@ -191,7 +191,7 @@ def only_with_postgis(func):
 
 
 def only_without_postgis(func):
-    @pytest.mark.parametrize("use_postgis", [True], ids=["no-postgis"], indirect=True)
+    @pytest.mark.parametrize("use_postgis", [False], ids=["no-postgis"], indirect=True)
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
@@ -4803,7 +4803,6 @@ def test_ogr_pg_83(pg_ds, geom_type, options, wkt, expected_wkt):
 # Test description
 
 
-@only_without_postgis
 def test_ogr_pg_84(pg_ds):
 
     lyr = pg_ds.CreateLayer(
