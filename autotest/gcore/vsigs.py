@@ -1552,6 +1552,69 @@ def test_vsigs_read_credentials_gce_expiration(gs_test_config, webserver_port):
 
 
 ###############################################################################
+# Test RmdirRecursive() with an empty directory
+
+
+def test_vsigs_rmdirrecursive_empty_dir(gs_test_config, webserver_port):
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/test_vsigs_rmdirrecursive_empty_dir/?prefix=empty_dir%2F",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+        <ListBucketResult>
+            <Prefix>empty_dir/</Prefix>
+            <Marker/>
+            <Contents>
+                <Key>empty_dir/</Key>
+                <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                <Size>0</Size>
+            </Contents>
+        </ListBucketResult>
+        """,
+    )
+    handler.add(
+        "DELETE",
+        "/test_vsigs_rmdirrecursive_empty_dir/empty_dir/",
+        204,
+    )
+
+    gdal.SetPathSpecificOption(
+        "/vsigs/test_vsigs_rmdirrecursive_empty_dir",
+        "GS_SECRET_ACCESS_KEY",
+        "GS_SECRET_ACCESS_KEY",
+    )
+    gdal.SetPathSpecificOption(
+        "/vsigs/test_vsigs_rmdirrecursive_empty_dir",
+        "GS_ACCESS_KEY_ID",
+        "GS_ACCESS_KEY_ID",
+    )
+
+    error = [False]
+
+    def my_error_handler(errclass, errno, errmsg):
+        error[0] = True
+        print(errmsg)
+
+    try:
+        with webserver.install_http_handler(handler), gdaltest.error_handler(
+            my_error_handler
+        ):
+            assert (
+                gdal.RmdirRecursive(
+                    "/vsigs/test_vsigs_rmdirrecursive_empty_dir/empty_dir"
+                )
+                == 0
+            )
+    finally:
+        gdal.ClearPathSpecificOptions("/vsigs/test_vsigs_rmdirrecursive_empty_dir")
+
+    assert not error[0]
+
+
+###############################################################################
 # Nominal cases (require valid credentials)
 
 

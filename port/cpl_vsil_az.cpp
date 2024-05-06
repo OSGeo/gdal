@@ -565,6 +565,12 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     int Unlink(const char *pszFilename) override;
     int *UnlinkBatch(CSLConstList papszFiles) override;
+
+    int *DeleteObjectBatch(CSLConstList papszFilesOrDirs) override
+    {
+        return UnlinkBatch(papszFilesOrDirs);
+    }
+
     int Mkdir(const char *, long) override;
     int Rmdir(const char *) override;
     int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
@@ -1463,14 +1469,21 @@ int *VSIAzureFSHandler::UnlinkBatch(CSLConstList papszFiles)
 {
     // Implemented using
     // https://learn.microsoft.com/en-us/rest/api/storageservices/blob-batch
-    auto poHandleHelper =
-        std::unique_ptr<IVSIS3LikeHandleHelper>(CreateHandleHelper("", true));
+
+    const char *pszFirstFilename =
+        papszFiles && papszFiles[0] ? papszFiles[0] : nullptr;
+
+    auto poHandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+        VSIAzureBlobHandleHelper::BuildFromURI(
+            "", GetFSPrefix().c_str(),
+            pszFirstFilename &&
+                    STARTS_WITH(pszFirstFilename, GetFSPrefix().c_str())
+                ? pszFirstFilename + GetFSPrefix().size()
+                : nullptr));
 
     int *panRet =
         static_cast<int *>(CPLCalloc(sizeof(int), CSLCount(papszFiles)));
 
-    const char *pszFirstFilename =
-        papszFiles && papszFiles[0] ? papszFiles[0] : nullptr;
     if (!poHandleHelper || pszFirstFilename == nullptr)
         return panRet;
 
@@ -2484,7 +2497,7 @@ char *VSIAzureFSHandler::GetSignedURL(const char *pszFilename,
 
     VSIAzureBlobHandleHelper *poHandleHelper =
         VSIAzureBlobHandleHelper::BuildFromURI(
-            pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str(),
+            pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str(), nullptr,
             papszOptions);
     if (poHandleHelper == nullptr)
     {
