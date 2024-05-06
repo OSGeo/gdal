@@ -604,7 +604,7 @@ class OGRPGDataSource final : public OGRDataSource
     int bHavePostGIS = false;
     int bHaveGeography = false;
 
-    int bUserTransactionActive = false;
+    bool bUserTransactionActive = false;
     int bSavePointActive = false;
     int nSoftTransactionLevel = 0;
 
@@ -637,6 +637,9 @@ class OGRPGDataSource final : public OGRDataSource
     CPLString osActiveSchema{};
     int bListAllTables = false;
     bool m_bSkipViews = false;
+
+    bool m_bOgrSystemTablesMetadataTableExistenceTested = false;
+    bool m_bOgrSystemTablesMetadataTableFound = false;
 
     void LoadTables();
 
@@ -740,6 +743,14 @@ class OGRPGDataSource final : public OGRDataSource
     int UseCopy();
     void StartCopy(OGRPGTableLayer *poPGLayer);
     OGRErr EndCopy();
+
+    bool IsUserTransactionActive()
+    {
+        return bUserTransactionActive;
+    }
+
+    void CreateOgrSystemTablesMetadataTableIfNeeded();
+    bool HasOgrSystemTablesMetadataTable();
 };
 
 #endif /* ndef OGR_PG_H_INCLUDED */
