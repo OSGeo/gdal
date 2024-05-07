@@ -419,7 +419,7 @@ class GraphicState
         adfFillColor[2] = 1.0;
     }
 
-    void MultiplyBy(double adfMatrix[6])
+    void PreMultiplyBy(double adfMatrix[6])
     {
         /*
         [ a b 0 ]     [ a' b' 0]     [ aa' + bc'       ab' + bd'       0 ]
@@ -427,18 +427,25 @@ class GraphicState
         [ e f 1 ]     [ e' f' 1]     [ ea' + fc' + e'  eb' + fd' + f'  1 ]
         */
 
-        double a = adfCM[0];
-        double b = adfCM[1];
-        double c = adfCM[2];
-        double d = adfCM[3];
-        double e = adfCM[4];
-        double f = adfCM[5];
-        double ap = adfMatrix[0];
-        double bp = adfMatrix[1];
-        double cp = adfMatrix[2];
-        double dp = adfMatrix[3];
-        double ep = adfMatrix[4];
-        double fp = adfMatrix[5];
+        // Be careful about the multiplication order!
+        // PDF reference version 1.7, page 209:
+        // when a sequence of transformations is carried out, the matrix
+        // representing the combined transformation (M′) is calculated
+        // by premultiplying the matrix representing the additional transformation (MT)
+        // with the one representing all previously existing transformations (M)
+
+        double a = adfMatrix[0];
+        double b = adfMatrix[1];
+        double c = adfMatrix[2];
+        double d = adfMatrix[3];
+        double e = adfMatrix[4];
+        double f = adfMatrix[5];
+        double ap = adfCM[0];
+        double bp = adfCM[1];
+        double cp = adfCM[2];
+        double dp = adfCM[3];
+        double ep = adfCM[4];
+        double fp = adfCM[5];
         adfCM[0] = a * ap + b * cp;
         adfCM[1] = a * bp + b * dp;
         adfCM[2] = c * ap + d * cp;
@@ -1055,7 +1062,7 @@ OGRGeometry *PDFDataset::ParseContent(
                         return nullptr;
                     }
 
-                    oGS.MultiplyBy(adfMatrix);
+                    oGS.PreMultiplyBy(adfMatrix);
                 }
                 else if (EQUAL1(szToken, "b") || /* closepath, fill, stroke */
                          EQUAL2(szToken, "b*") /* closepath, eofill, stroke */)
