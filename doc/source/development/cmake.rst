@@ -33,8 +33,8 @@ This also creates the ``GDAL::GDAL`` target. It requires CMake version 3.14.
 
     cmake_minimum_required(VERSION 3.14)
 
-    find_package(GDAL CONFIG QUIET)
-    if(NOT TARGET GDAL::GDAL)
+    find_package(GDAL CONFIG)
+    if(NOT GDAL_FOUND)
         find_package(GDAL REQUIRED)
     endif()
 
