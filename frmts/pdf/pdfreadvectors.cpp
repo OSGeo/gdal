@@ -665,7 +665,7 @@ static void AddBezierCurve(std::vector<double> &oCoords, const double *x0_y0,
 OGRGeometry *PDFDataset::ParseContent(
     const char *pszContent, GDALPDFObject *poResources, int bInitBDCStack,
     int bMatchQ, std::map<CPLString, OGRPDFLayer *> &oMapPropertyToLayer,
-    OGRPDFLayer *poCurLayer)
+    const GraphicState &graphicStateIn, OGRPDFLayer *poCurLayer)
 {
     if (CPLTestBool(CPLGetConfigOption("PDF_DUMP_CONTENT", "NO")))
     {
@@ -723,7 +723,7 @@ OGRGeometry *PDFDataset::ParseContent(
     int bCollectAllObjects =
         poResources != nullptr && !bInitBDCStack && !bMatchQ;
 
-    GraphicState oGS;
+    GraphicState oGS(graphicStateIn);
     std::stack<GraphicState> oGSStack;
     std::stack<OGRPDFLayer *> oLayerStack;
 
@@ -1419,7 +1419,7 @@ OGRGeometry *PDFDataset::ParseContent(
                             {
                                 OGRGeometry *poGeom = ParseContent(
                                     pszStr, nullptr, FALSE, FALSE,
-                                    oMapPropertyToLayer, poCurLayer);
+                                    oMapPropertyToLayer, oGS, poCurLayer);
                                 CPLFree(pszStr);
                                 if (poGeom && !bCollectAllObjects)
                                     return poGeom;
@@ -1936,9 +1936,9 @@ void PDFDataset::ExploreContents(GDALPDFObject *poObj,
             int nMCID = atoi(pszMCID + 6);
             if (GetGeometryFromMCID(nMCID) == nullptr)
             {
-                OGRGeometry *poGeom =
-                    ParseContent(pszStartParsing, poResources, !bMatchQ,
-                                 bMatchQ, oMapPropertyToLayer, nullptr);
+                OGRGeometry *poGeom = ParseContent(
+                    pszStartParsing, poResources, !bMatchQ, bMatchQ,
+                    oMapPropertyToLayer, GraphicState(), nullptr);
                 if (poGeom != nullptr)
                 {
                     /* Save geometry in map */
@@ -1992,7 +1992,7 @@ void PDFDataset::ExploreContentsNonStructuredInternal(
         }
         if (pszConcatStr)
             ParseContent(pszConcatStr, poResources, FALSE, FALSE,
-                         oMapPropertyToLayer, poSingleLayer);
+                         oMapPropertyToLayer, GraphicState(), poSingleLayer);
         CPLFree(pszConcatStr);
         return;
     }
@@ -2008,7 +2008,7 @@ void PDFDataset::ExploreContentsNonStructuredInternal(
     if (!pszStr)
         return;
     ParseContent(pszStr, poResources, FALSE, FALSE, oMapPropertyToLayer,
-                 poSingleLayer);
+                 GraphicState(), poSingleLayer);
     CPLFree(pszStr);
 }
 
