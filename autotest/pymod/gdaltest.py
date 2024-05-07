@@ -1109,6 +1109,7 @@ def download_file(
     force_download=False,
     max_download_duration=None,
     base_dir="tmp/cache",
+    chunk_size=1024,
 ):
 
     if filename is None:
@@ -1143,18 +1144,18 @@ def download_file(
     if download_size >= 0:
         sys.stdout.write("Progress: ")
     nLastTick = -1
-    val = "".encode("ascii")
+    val = b""
     while len(val) < download_size or download_size < 0:
-        chunk_size = 1024
-        if download_size >= 0 and len(val) + chunk_size > download_size:
-            chunk_size = download_size - len(val)
+        to_read = chunk_size
+        if download_size >= 0 and len(val) + to_read > download_size:
+            to_read = download_size - len(val)
         try:
-            chunk = handle.read(chunk_size)
+            chunk = handle.read(to_read)
         except Exception:
             print("Did not get expected data length.")
             return False
-        val = val + chunk
-        if len(chunk) < chunk_size:
+        val += chunk
+        if len(chunk) < to_read:
             if download_size < 0:
                 break
             print("Did not get expected data length.")
@@ -1167,6 +1168,7 @@ def download_file(
                     sys.stdout.write("%d" % int((nLastTick / 4) * 10))
                 else:
                     sys.stdout.write(".")
+            sys.stdout.flush()
             nLastTick = nThisTick
             if nThisTick == 40:
                 sys.stdout.write(" - done.\n")
