@@ -760,6 +760,8 @@ OGRGeometry *PDFDataset::ParseContent(
         oLayerStack.push(nullptr);
     }
 
+    int nLineNumber = 0;
+
     while ((ch = *pszContent) != '\0')
     {
         int bPushToken = FALSE;
@@ -775,9 +777,24 @@ OGRGeometry *PDFDataset::ParseContent(
             }
             if (ch == 0)
                 break;
+            ++nLineNumber;
+            if (ch == '\r' && pszContent[1] == '\n')
+            {
+                ++pszContent;
+            }
         }
         else if (!bInString && (ch == ' ' || ch == '\r' || ch == '\n'))
         {
+            if (ch == '\r')
+            {
+                ++nLineNumber;
+                if (pszContent[1] == '\n')
+                {
+                    ++pszContent;
+                }
+            }
+            else if (ch == '\n')
+                ++nLineNumber;
             bPushToken = TRUE;
         }
 
@@ -935,13 +952,23 @@ OGRGeometry *PDFDataset::ParseContent(
                 if (pszContent[0] == 'E')
                     pszContent += 3;
                 else
+                {
+                    CPLDebug("PDF",
+                             "ParseContent(), line %d: return at line %d of "
+                             "content stream",
+                             __LINE__, nLineNumber);
                     return nullptr;
+                }
             }
             else if (EQUAL3(szToken, "BDC"))
             {
                 if (nTokenStackSize < 2)
                 {
                     CPLDebug("PDF", "not enough arguments for %s", szToken);
+                    CPLDebug("PDF",
+                             "ParseContent(), line %d: return at line %d of "
+                             "content stream",
+                             __LINE__, nLineNumber);
                     return nullptr;
                 }
                 nTokenStackSize -= 2;
@@ -970,6 +997,10 @@ OGRGeometry *PDFDataset::ParseContent(
                 if (nTokenStackSize < 1)
                 {
                     CPLDebug("PDF", "not enough arguments for %s", szToken);
+                    CPLDebug("PDF",
+                             "ParseContent(), line %d: return at line %d of "
+                             "content stream",
+                             __LINE__, nLineNumber);
                     return nullptr;
                 }
                 nTokenStackSize -= 1;
@@ -1020,6 +1051,10 @@ OGRGeometry *PDFDataset::ParseContent(
                         "PDF",
                         "Should not happen at line %d: offset %d in stream",
                         __LINE__, int(pszContent - pszContentIni));
+                    CPLDebug("PDF",
+                             "ParseContent(), line %d: return at line %d of "
+                             "content stream",
+                             __LINE__, nLineNumber);
                     return nullptr;
                 }
             }
@@ -1040,6 +1075,10 @@ OGRGeometry *PDFDataset::ParseContent(
                     if (oGSStack.empty())
                     {
                         CPLDebug("PDF", "not enough arguments for %s", szToken);
+                        CPLDebug("PDF",
+                                 "ParseContent(), line %d: return at line %d "
+                                 "of content stream",
+                                 __LINE__, nLineNumber);
                         return nullptr;
                     }
 
@@ -1059,6 +1098,10 @@ OGRGeometry *PDFDataset::ParseContent(
                             "PDF",
                             "Should not happen at line %d: offset %d in stream",
                             __LINE__, int(pszContent - pszContentIni));
+                        CPLDebug("PDF",
+                                 "ParseContent(), line %d: return at line %d "
+                                 "of content stream",
+                                 __LINE__, nLineNumber);
                         return nullptr;
                     }
 
@@ -1134,6 +1177,10 @@ OGRGeometry *PDFDataset::ParseContent(
                             "PDF",
                             "Should not happen at line %d: offset %d in stream",
                             __LINE__, int(pszContent - pszContentIni));
+                        CPLDebug("PDF",
+                                 "ParseContent(), line %d: return at line %d "
+                                 "of content stream",
+                                 __LINE__, nLineNumber);
                         return nullptr;
                     }
 
@@ -1159,6 +1206,10 @@ OGRGeometry *PDFDataset::ParseContent(
                             "PDF",
                             "Should not happen at line %d: offset %d in stream",
                             __LINE__, int(pszContent - pszContentIni));
+                        CPLDebug("PDF",
+                                 "ParseContent(), line %d: return at line %d "
+                                 "of content stream",
+                                 __LINE__, nLineNumber);
                         return nullptr;
                     }
 
@@ -1181,6 +1232,10 @@ OGRGeometry *PDFDataset::ParseContent(
                             "PDF",
                             "Should not happen at line %d: offset %d in stream",
                             __LINE__, int(pszContent - pszContentIni));
+                        CPLDebug("PDF",
+                                 "ParseContent(), line %d: return at line %d "
+                                 "of content stream",
+                                 __LINE__, nLineNumber);
                         return nullptr;
                     }
 
@@ -1204,6 +1259,10 @@ OGRGeometry *PDFDataset::ParseContent(
                             "PDF",
                             "Should not happen at line %d: offset %d in stream",
                             __LINE__, int(pszContent - pszContentIni));
+                        CPLDebug("PDF",
+                                 "ParseContent(), line %d: return at line %d "
+                                 "of content stream",
+                                 __LINE__, nLineNumber);
                         return nullptr;
                     }
 
@@ -1225,6 +1284,10 @@ OGRGeometry *PDFDataset::ParseContent(
                             "PDF",
                             "Should not happen at line %d: offset %d in stream",
                             __LINE__, int(pszContent - pszContentIni));
+                        CPLDebug("PDF",
+                                 "ParseContent(), line %d: return at line %d "
+                                 "of content stream",
+                                 __LINE__, nLineNumber);
                         return nullptr;
                     }
 
@@ -1255,6 +1318,10 @@ OGRGeometry *PDFDataset::ParseContent(
                     if (nTokenStackSize == 0)
                     {
                         CPLDebug("PDF", "not enough arguments for %s", szToken);
+                        CPLDebug("PDF",
+                                 "ParseContent(), line %d: return at line %d "
+                                 "of content stream",
+                                 __LINE__, nLineNumber);
                         return nullptr;
                     }
 
@@ -1266,6 +1333,10 @@ OGRGeometry *PDFDataset::ParseContent(
                             "PDF",
                             "Should not happen at line %d: offset %d in stream",
                             __LINE__, int(pszContent - pszContentIni));
+                        CPLDebug("PDF",
+                                 "ParseContent(), line %d: return at line %d "
+                                 "of content stream",
+                                 __LINE__, nLineNumber);
                         return nullptr;
                     }
 
@@ -1307,6 +1378,10 @@ OGRGeometry *PDFDataset::ParseContent(
                                      "Should not happen at line %d: offset %d "
                                      "in stream",
                                      __LINE__, int(pszContent - pszContentIni));
+                            CPLDebug("PDF",
+                                     "ParseContent(), line %d: return at line "
+                                     "%d of content stream",
+                                     __LINE__, nLineNumber);
                             return nullptr;
                         }
 
@@ -1319,6 +1394,10 @@ OGRGeometry *PDFDataset::ParseContent(
                                      "Should not happen at line %d: offset %d "
                                      "in stream",
                                      __LINE__, int(pszContent - pszContentIni));
+                            CPLDebug("PDF",
+                                     "ParseContent(), line %d: return at line "
+                                     "%d of content stream",
+                                     __LINE__, nLineNumber);
                             return nullptr;
                         }
 
@@ -1348,6 +1427,10 @@ OGRGeometry *PDFDataset::ParseContent(
                                          "%d in stream",
                                          __LINE__,
                                          int(pszContent - pszContentIni));
+                                CPLDebug("PDF",
+                                         "ParseContent(), line %d: return at "
+                                         "line %d of content stream",
+                                         __LINE__, nLineNumber);
                                 return nullptr;
                             }
 
@@ -1377,6 +1460,10 @@ OGRGeometry *PDFDataset::ParseContent(
                             "PDF",
                             "Should not happen at line %d: offset %d in stream",
                             __LINE__, int(pszContent - pszContentIni));
+                        CPLDebug("PDF",
+                                 "ParseContent(), line %d: return at line %d "
+                                 "of content stream",
+                                 __LINE__, nLineNumber);
                         return nullptr;
                     }
                 }
@@ -1400,6 +1487,10 @@ OGRGeometry *PDFDataset::ParseContent(
                         {
                             CPLDebug("PDF", "not enough arguments for %s",
                                      szToken);
+                            CPLDebug("PDF",
+                                     "ParseContent(), line %d: return at line "
+                                     "%d of content stream",
+                                     __LINE__, nLineNumber);
                             return nullptr;
                         }
                         nTokenStackSize -= nArgs;
@@ -1463,6 +1554,10 @@ OGRGeometry *PDFDataset::ParseContent(
             nTokenSize = 0;
         }
     }
+
+    CPLDebug("PDF", "ParseContent(): reached line %d", nLineNumber);
+    if (!oGSStack.empty())
+        CPLDebug("PDF", "GSStack not empty");
 
     if (nTokenStackSize != 0)
     {
