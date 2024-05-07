@@ -26,22 +26,16 @@ the cache variable or environment variable ``CMAKE_PREFIX_PATH``. In
 particular, CMake will consult (and set) the cache variable
 ``GDAL_DIR``.
 
-Before GDAL 3.5, you can use the following to create the imported library target ``GDAL::GDAL``:
+Before GDAL 3.5, it is recommended to use `find module supplied with CMake <https://cmake.org/cmake/help/latest/module/FindGDAL.html>`__.
+This also creates the ``GDAL::GDAL`` target. It requires CMake version 3.14.
 
 .. code::
 
-    find_package(GDAL CONFIG QUIET)
-    if(NOT TARGET GDAL::GDAL)
+    cmake_minimum_required(VERSION 3.14)
+
+    find_package(GDAL CONFIG)
+    if(NOT GDAL_FOUND)
         find_package(GDAL REQUIRED)
-        if(NOT TARGET GDAL::GDAL)
-            add_library(GDAL IMPORTED)
-            if(DEFINED GDAL_LIBRARIES)
-                target_link_libraries(GDAL INTERFACE "${GDAL_LIBRARIES}")
-                add_library(GDAL::GDAL ALIAS GDAL)
-            else()
-                message(FATAL_ERROR "Missing GDAL_LIBRARIES")
-            endif()
-        endif()
     endif()
 
     target_link_libraries(MyApp PRIVATE GDAL::GDAL)
