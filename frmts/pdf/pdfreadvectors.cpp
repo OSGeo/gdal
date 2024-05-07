@@ -393,76 +393,56 @@ OGRGeometry *PDFDataset::GetGeometryFromMCID(int nMCID)
 }
 
 /************************************************************************/
-/*                            GraphicState                              */
+/*                    GraphicState::PreMultiplyBy()                     */
 /************************************************************************/
 
-class GraphicState
+void PDFDataset::GraphicState::PreMultiplyBy(double adfMatrix[6])
 {
-  public:
-    std::array<double, 6> adfCM;
-    std::array<double, 3> adfStrokeColor;
-    std::array<double, 3> adfFillColor;
+    /*
+    [ a b 0 ]     [ a' b' 0]     [ aa' + bc'       ab' + bd'       0 ]
+    [ c d 0 ]  *  [ c' d' 0]  =  [ ca' + dc'       cb' + dd'       0 ]
+    [ e f 1 ]     [ e' f' 1]     [ ea' + fc' + e'  eb' + fd' + f'  1 ]
+    */
 
-    GraphicState()
-    {
-        adfCM[0] = 1;
-        adfCM[1] = 0;
-        adfCM[2] = 0;
-        adfCM[3] = 1;
-        adfCM[4] = 0;
-        adfCM[5] = 0;
-        adfStrokeColor[0] = 0.0;
-        adfStrokeColor[1] = 0.0;
-        adfStrokeColor[2] = 0.0;
-        adfFillColor[0] = 1.0;
-        adfFillColor[1] = 1.0;
-        adfFillColor[2] = 1.0;
-    }
+    // Be careful about the multiplication order!
+    // PDF reference version 1.7, page 209:
+    // when a sequence of transformations is carried out, the matrix
+    // representing the combined transformation (M′) is calculated
+    // by premultiplying the matrix representing the additional transformation (MT)
+    // with the one representing all previously existing transformations (M)
 
-    void PreMultiplyBy(double adfMatrix[6])
-    {
-        /*
-        [ a b 0 ]     [ a' b' 0]     [ aa' + bc'       ab' + bd'       0 ]
-        [ c d 0 ]  *  [ c' d' 0]  =  [ ca' + dc'       cb' + dd'       0 ]
-        [ e f 1 ]     [ e' f' 1]     [ ea' + fc' + e'  eb' + fd' + f'  1 ]
-        */
+    double a = adfMatrix[0];
+    double b = adfMatrix[1];
+    double c = adfMatrix[2];
+    double d = adfMatrix[3];
+    double e = adfMatrix[4];
+    double f = adfMatrix[5];
+    double ap = adfCM[0];
+    double bp = adfCM[1];
+    double cp = adfCM[2];
+    double dp = adfCM[3];
+    double ep = adfCM[4];
+    double fp = adfCM[5];
+    adfCM[0] = a * ap + b * cp;
+    adfCM[1] = a * bp + b * dp;
+    adfCM[2] = c * ap + d * cp;
+    adfCM[3] = c * bp + d * dp;
+    adfCM[4] = e * ap + f * cp + ep;
+    adfCM[5] = e * bp + f * dp + fp;
+}
 
-        // Be careful about the multiplication order!
-        // PDF reference version 1.7, page 209:
-        // when a sequence of transformations is carried out, the matrix
-        // representing the combined transformation (M′) is calculated
-        // by premultiplying the matrix representing the additional transformation (MT)
-        // with the one representing all previously existing transformations (M)
+/************************************************************************/
+/*                   GraphicState::ApplyMatrix()                        */
+/************************************************************************/
 
-        double a = adfMatrix[0];
-        double b = adfMatrix[1];
-        double c = adfMatrix[2];
-        double d = adfMatrix[3];
-        double e = adfMatrix[4];
-        double f = adfMatrix[5];
-        double ap = adfCM[0];
-        double bp = adfCM[1];
-        double cp = adfCM[2];
-        double dp = adfCM[3];
-        double ep = adfCM[4];
-        double fp = adfCM[5];
-        adfCM[0] = a * ap + b * cp;
-        adfCM[1] = a * bp + b * dp;
-        adfCM[2] = c * ap + d * cp;
-        adfCM[3] = c * bp + d * dp;
-        adfCM[4] = e * ap + f * cp + ep;
-        adfCM[5] = e * bp + f * dp + fp;
-    }
+void PDFDataset::GraphicState::ApplyMatrix(double adfCoords[2]) const
+{
+    double x = adfCoords[0];
+    double y = adfCoords[1];
 
-    void ApplyMatrix(double adfCoords[2])
-    {
-        double x = adfCoords[0];
-        double y = adfCoords[1];
-
-        adfCoords[0] = x * adfCM[0] + y * adfCM[2] + adfCM[4];
-        adfCoords[1] = x * adfCM[1] + y * adfCM[3] + adfCM[5];
-    }
-};
+    adfCoords[0] = x * adfCM[0] + y * adfCM[2] + adfCM[4];
+    adfCoords[1] = x * adfCM[1] + y * adfCM[3] + adfCM[5];
+}
 
 /************************************************************************/
 /*                         PDFCoordsToSRSCoords()                       */

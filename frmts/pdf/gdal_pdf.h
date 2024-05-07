@@ -390,6 +390,17 @@ class PDFDataset final : public GDALPamDataset
     int UnstackTokens(const char *pszToken, int nRequiredArgs,
                       char aszTokenStack[TOKEN_STACK_SIZE][MAX_TOKEN_SIZE],
                       int &nTokenStackSize, double *adfCoords);
+
+    struct GraphicState
+    {
+        std::array<double, 6> adfCM = {1, 0, 0, 1, 0, 0};
+        std::array<double, 3> adfStrokeColor = {0.0, 0.0, 0.0};
+        std::array<double, 3> adfFillColor = {1.0, 1.0, 1.0};
+
+        void PreMultiplyBy(double adfMatrix[6]);
+        void ApplyMatrix(double adfCoords[2]) const;
+    };
+
     OGRGeometry *
     ParseContent(const char *pszContent, GDALPDFObject *poResources,
                  int bInitBDCStack, int bMatchQ,
