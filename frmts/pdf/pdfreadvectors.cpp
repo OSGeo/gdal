@@ -1286,9 +1286,13 @@ OGRGeometry *PDFDataset::ParseContent(
                         }
                         else
                         {
-                            // CPLDebug("PDF", "Should not happen at line %d",
-                            // __LINE__);
-                            return nullptr;
+                            szToken[0] = '\0';
+                            nTokenSize = 0;
+
+                            CPLDebug("PDF",
+                                     "Skipping unknown object %s at line %d",
+                                     osObjectName.c_str(), nLineNumber);
+                            continue;
                         }
                     }
 
