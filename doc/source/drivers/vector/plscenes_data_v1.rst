@@ -53,7 +53,8 @@ If several parameters are specified, they must be separated by a comma.
 Open options
 ------------
 
-The following open options are available :
+|about-open-options|
+The following open options are available:
 
 -  .. oo:: VERSION
       :default: DATA_V1
@@ -119,8 +120,8 @@ The following open options are available :
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  :copy-config:`PL_API_KEY`
 

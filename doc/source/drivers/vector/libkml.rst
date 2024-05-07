@@ -69,10 +69,11 @@ as one or more
 elements. Not all of :ref:`ogr_feature_style` can translate into
 KML.
 
-Datasource creation options
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Dataset creation options
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-The following datasource creation options can be
+|about-dataset-creation-options|
+The following dataset creation options can be
 used to generate a
 `<atom:Author> <https://developers.google.com/kml/documentation/kmlreference#atomauthor>`__
 element at the top Document level.
@@ -281,6 +282,7 @@ is supported for .kml files, .kmz files, and directories.
 Layer creation options
 ~~~~~~~~~~~~~~~~~~~~~~
 
+|about-layer-creation-options|
 The following layer creation options can be used
 to generate a
 `<LookAt> <https://developers.google.com/kml/documentation/kmlreference#lookat>`__

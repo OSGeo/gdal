@@ -19,8 +19,8 @@ directly (but you may use the OGR VRT capabilities for that).
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OGR_XLS_HEADERS
       :choices: FORCE, DISABLE, AUTO

@@ -58,8 +58,8 @@ Driver capabilities
 Configuration Options
 ---------------------
 
-The JP2KAK driver supports the following :ref:`configoptions`. These
-runtime options can be used to alter the behavior of the driver.
+|about-config-options|
+The JP2KAK driver supports the following configuration options:
 
 -  .. config:: JP2KAK_THREADS
 
@@ -117,7 +117,8 @@ mentioned sources and ignore GMLJP2 boxes.
 Option Options
 --------------
 
-The following open option is available:
+|about-open-options|
+The following open options are available:
 
 -  .. oo:: 1BIT_ALPHA_PROMOTION
       :choices: YES, NO
@@ -143,7 +144,8 @@ description of the image. Overviews cannot be built as a separate
 process, but on read the image will generally be represented as having
 overview levels at various power of two factors.
 
-Creation Options:
+|about-creation-options|
+The following creation options are supported:
 
 -  .. co:: CODEC
       :choices: JP2, J2K

@@ -65,6 +65,9 @@ coverage.
 Creation options
 ----------------
 
+|about-creation-options|
+The following creation options are supported:
+
 -  .. co:: APPEND_SUBDATASET
       :choices: YES, NO
       :default: NO

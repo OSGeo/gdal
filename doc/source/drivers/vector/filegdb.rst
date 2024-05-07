@@ -123,6 +123,9 @@ None.
 Layer Creation Options
 ----------------------
 
+|about-layer-creation-options|
+The following layer creation options are supported:
+
 -  .. lco:: FEATURE_DATASET
 
       When this option is set, the new layer will be
@@ -240,8 +243,8 @@ Layer Creation Options
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 - .. config:: FGDB_BULK_LOAD
      :choices: YES, NO

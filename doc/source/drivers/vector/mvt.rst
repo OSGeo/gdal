@@ -160,6 +160,7 @@ For example, for the Finnish ETRS-TM35FIN (EPSG:3067) tiling scheme:
 Opening options
 ---------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: X
@@ -223,6 +224,9 @@ with the :config:`GDAL_NUM_THREADS` configuration option.
 
 Dataset creation options
 ------------------------
+
+|about-dataset-creation-options|
+The following dataset creation options are supported:
 
 -  .. co:: NAME
 
@@ -394,6 +398,9 @@ case.
 
 Layer creation options
 ----------------------
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: MINZOOM
       :choices: <integer>

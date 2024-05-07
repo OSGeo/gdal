@@ -70,6 +70,7 @@ details
 Configuration options
 ---------------------
 
+|about-config-options|
 The following configuration options are available :
 
 -  .. config:: GDAL_DAAS_API_KEY
@@ -91,6 +92,7 @@ The following configuration options are available :
 Open options
 ------------
 
+|about-open-options|
 The following open options are available :
 
 -  .. oo:: GET_METADATA_URL

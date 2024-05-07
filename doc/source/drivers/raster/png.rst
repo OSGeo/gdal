@@ -66,8 +66,8 @@ pixel data. If automatic conversion to RGB has been done, the color
 profile information cannot be used.
 
 All these metadata tags can be used as creation options.
-
-Creation Options:
+|about-creation-options|
+The following creation options are available:
 
 -  .. co:: WORLDFILE
       :choices: YES, NO

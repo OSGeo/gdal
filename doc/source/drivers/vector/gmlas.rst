@@ -181,6 +181,9 @@ nested elements.
 Open options
 ------------
 
+|about-open-options|
+The following open options are supported:
+
 -  .. oo:: XSD
 
       to specify an explicit XSD application schema
@@ -341,6 +344,7 @@ affected by those filters.
 Dataset creation options
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+|about-dataset-creation-options|
 The supported dataset creation options are:
 
 -  .. dsco:: INPUT_XSD

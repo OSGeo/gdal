@@ -125,6 +125,9 @@ Creation Issues
 Dataset creation options
 ------------------------
 
+|about-dataset-creation-options|
+The following dataset-creation options are supported:
+
 -  .. dsco:: 3D
       :choices: YES, NO
 

@@ -47,6 +47,7 @@ Driver capabilities
 Open options
 ------------
 
+|about-open-options|
 For open options specific to variable resolution, see following chapter.
 
 Other open options are:
@@ -258,8 +259,10 @@ file, which is by default,
 found in the GDAL data definition files. This template contains
 variables, present as ${KEYNAME} or ${KEYNAME:default_value} in the XML
 file, that can be substituted by providing a creation option whose name
-is the VAR\_ string prefixed to the key name. Currently those creation
-options are:
+is the VAR\_ string prefixed to the key name.
+
+|about-creation-options|
+The following creation options are supported:
 
 -  .. co:: VAR_INDIVIDUAL_NAME
       :default: unknown

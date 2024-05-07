@@ -79,8 +79,8 @@ Feature.properties
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OGR_JSONFG_MAX_OBJ_SIZE
       :choices: <MBytes>
@@ -91,6 +91,9 @@ available:
 
 Open options
 ------------
+
+|about-open-options|
+The following open options are supported:
 
 -  .. oo:: GEOMETRY_ELEMENT
       :choices: AUTO, PLACE, GEOMETRY
@@ -108,6 +111,9 @@ Open options
 Dataset creation options
 ------------------------
 
+|about-dataset-creation-options|
+The following dataset creation options are supported:
+
 -  .. dsco:: SINGLE_LAYER
       :choices: YES, NO
       :default: NO
@@ -118,6 +124,9 @@ Dataset creation options
 
 Layer creation options
 ----------------------
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: COORDINATE_PRECISION_GEOMETRY
       :choices: <integer>

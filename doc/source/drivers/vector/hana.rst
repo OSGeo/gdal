@@ -60,6 +60,9 @@ does allow creation of new layers (tables) within an existing schema.
 Dataset Open options
 ~~~~~~~~~~~~~~~~~~~~
 
+|about-open-options|
+The following open options are supported:
+
 -  .. oo:: DSN
 
       Data source name.
@@ -174,6 +177,9 @@ None
 
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: OVERWRITE
       :choices: YES, NO

@@ -25,6 +25,7 @@ Driver capabilities
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
+|about-config-options|
 This paragraph lists the configuration options that can be set to alter
 the default behavior of the DTED driver.
 

@@ -47,6 +47,7 @@ Driver capabilities
 Opening options
 ---------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: CLIP
@@ -101,6 +102,9 @@ mode that will involve computing them by discretizing geometry coordinates.
 
 Dataset creation options
 ------------------------
+
+|about-dataset-creation-options|
+The following dataset creation options are supported:
 
 -  .. co:: NAME
 
@@ -214,6 +218,9 @@ case.
 
 Layer creation options
 ----------------------
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: MINZOOM
       :choices: <integer>

@@ -28,6 +28,9 @@ Vector segments are also supported by the driver.
 Creation Options
 ----------------
 
+|about-creation-options|
+The following creation options are supported:
+
 Note that PCIDSK files are always produced pixel interleaved, even
 though other organizations are supported for read.
 

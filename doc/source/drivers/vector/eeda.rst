@@ -32,6 +32,7 @@ projects/earthengine-public/assets/COPERNICUS/S2.
 Open options
 ------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: COLLECTION
@@ -61,8 +62,8 @@ The following authentication methods can be used:
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  :copy-config:`EEDA_BEARER`
 

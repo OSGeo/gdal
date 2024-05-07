@@ -51,6 +51,9 @@ contains several raster layers, a list of subdatasets is returned by the driver
 Open options
 -------------
 
+|about-open-options|
+The following open options are available:
+
 -  .. oo:: NODATA_OR_MASK
       :choices: AUTO, MASK, NONE, numeric nodata value
 

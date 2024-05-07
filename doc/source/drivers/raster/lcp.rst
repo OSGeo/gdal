@@ -75,6 +75,7 @@ declared in `frmts/raw`. It should be implemented as
 Creation Options
 ----------------
 
+|about-creation-options|
 The LCP driver supports CreateCopy() and metadata values can be set via
 creation options. Below is a list of options with default values listed
 first.

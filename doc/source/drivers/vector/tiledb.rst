@@ -98,6 +98,7 @@ already been written.
 Open options
 ------------
 
+|about-open-options|
 The following open options are available:
 
 - .. oo:: TILEDB_CONFIG
@@ -136,6 +137,7 @@ The following open options are available:
 Dataset creation options
 ------------------------
 
+|about-dataset-creation-options|
 The following dataset creation options are available:
 
 - .. dsco:: TILEDB_CONFIG
@@ -157,7 +159,8 @@ The following dataset creation options are available:
 Layer creation options
 ----------------------
 
-The following layer options are available:
+|about-layer-creation-options|
+The following layer creation options are available:
 
 - .. lco:: COMPRESSION
      :choices: NONE, GZIP, ZSTD, LZ4, RLE, BZIP2, DOUBLE-DELTA, POSITIVE_DELTA

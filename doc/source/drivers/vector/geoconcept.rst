@@ -81,6 +81,9 @@ The OGR GeoConcept driver does not support deleting features.
 Dataset Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+|about-dataset-creation-options|
+The following dataset creation options are supported:
+
 -  .. dsco:: EXTENSION
       :choices: TXT, GXT
 
@@ -148,6 +151,9 @@ Dataset Creation Options
 
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: FEATURETYPE
       :choices: <TYPE.SUBTYPE>

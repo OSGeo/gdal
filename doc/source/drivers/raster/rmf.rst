@@ -42,6 +42,10 @@ Metadata
 
 Open Options
 ------------
+
+|about-open-options|
+The following open options are supported:
+
 -  .. oo:: RMF_SET_VERTCS
       :choices: ON
 
@@ -51,6 +55,9 @@ Open Options
 
 Creation Options
 ----------------
+
+|about-creation-options|
+The following creation options are supported:
 
 -  .. co:: MTW
       :choices: ON

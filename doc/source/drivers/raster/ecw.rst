@@ -70,6 +70,9 @@ is already considered to be optimized for "arbitrary overviews".
 Creation Options:
 -----------------
 
+|about-creation-options|
+The following creation options are supported:
+
 -  .. co:: LARGE_OK
       :choices: YES, NO
 
@@ -127,10 +130,8 @@ Creation Options:
 Configuration Options
 ---------------------
 
-The ERDAS ECW SDK supports a variety of `runtime configuration
-options <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__ to control
-various features. Most of these are exposed as GDAL configuration
-options. See the ECW SDK documentation for full details on the meaning
+|about-config-options|
+The ERDAS ECW SDK supports a variety of configuration options to control various features. See the ECW SDK documentation for full details on the meaning
 of these options.
 
 -  .. config:: ECW_CACHE_MAXMEM

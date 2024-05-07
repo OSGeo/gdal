@@ -72,7 +72,8 @@ options documented below.
 Open options
 ------------
 
-The following options are available:
+|about-open-options|
+The following open options are available:
 
 -  .. oo:: URL
 

@@ -184,6 +184,7 @@ to preserve as much as possible of the original label when doing VICAR
 to VICAR conversions. This can be disabled with the :co:`USE_SRC_LABEL=NO`
 creation option.
 
+|about-creation-options|
 The available creation options are:
 
 -  .. co:: GEOREF_FORMAT

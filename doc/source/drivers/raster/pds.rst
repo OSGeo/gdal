@@ -39,6 +39,9 @@ Driver capabilities
 Configuration options
 ---------------------
 
+|about-config-options|
+The following configuration option is available:
+
 -  .. config:: GDAL_TRY_PDS3_WITH_VICAR
       :choices: YES, NO
       :default: NO

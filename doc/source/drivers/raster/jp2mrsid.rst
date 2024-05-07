@@ -47,6 +47,9 @@ mentioned sources and ignore GMLJP2 boxes.
 Open Options
 ------------
 
+|about-open-options|
+The following open option is available:
+
 -  .. oo:: GEOREF_SOURCES
       :since: 2.2
 
@@ -59,7 +62,9 @@ Creation Options
 ----------------
 
 If you have the MrSID ESDK (5.x or newer), it can be used to write
-JPEG2000 files. The following creation options are supported.
+JPEG2000 files.
+|about-creation-options|
+The following creation options are supported.
 
 -  .. co:: WORLDFILE
       :choices: YES

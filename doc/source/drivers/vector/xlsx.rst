@@ -42,6 +42,7 @@ Driver capabilities
 Open options
 ------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: HEADERS
@@ -69,8 +70,8 @@ The following open options are available:
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OGR_XLSX_HEADERS
       :choices: FORCE, DISABLE, AUTO

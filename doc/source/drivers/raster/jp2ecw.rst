@@ -66,9 +66,10 @@ geotransformation matrix from a potential worldfile prioritary over PAM
 or internal JP2 boxes. Setting it to "PAM,WORLDFILE,GEOJP2" will use the
 mentioned sources and ignore GMLJP2 boxes.
 
-Option Options
---------------
+Open Options
+------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: 1BIT_ALPHA_PROMOTION
@@ -86,6 +87,9 @@ The following open options are available:
 
 Creation Options:
 -----------------
+
+|about-creation-options|
+Supported creation options are listed below.
 
 Note: Only Licensing and compression target need to be specified. The
 ECW/JP2 SDK will default all other options to recommended settings based
@@ -292,11 +296,10 @@ time.
 Configuration Options
 ---------------------
 
-The ERDAS ECW/JP2 SDK supports a variety of `runtime configuration
-options <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__ to control
-various features. Most of these are exposed as GDAL configuration
-options. See the ECW/JP2 SDK documentation for full details on the
-meaning of these options.
+|about-config-options|
+The ERDAS ECW/JP2 SDK supports a variety of runtime configuration options to
+control various features. See the ECW/JP2 SDK documentation for full details on
+the meaning of these options.
 
 -  :copy-config:`ECW_CACHE_MAXMEM`
 

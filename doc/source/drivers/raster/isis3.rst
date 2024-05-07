@@ -162,6 +162,7 @@ to preserve as much as possible of the original label when doing ISIS3
 to ISIS3 conversions. This can be disabled with the USE_SRC_LABEL=NO
 creation option.
 
+|about-creation-options|
 The available creation options are:
 
 -  .. co:: DATA_LOCATION

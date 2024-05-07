@@ -63,7 +63,8 @@ Driver capabilities
 Configuration options
 ---------------------
 
-The following open options are available:
+|about-config-options|
+The following configuration option is available:
 
 -  .. config:: MBTILES_BAND_COUNT
 
@@ -73,6 +74,7 @@ The following open options are available:
 Opening options
 ---------------
 
+|about-open-options|
 The following open options are available:
 
 -  Raster and vector:
@@ -252,6 +254,7 @@ with the :config:`GDAL_NUM_THREADS` configuration option.
 Creation options
 ----------------
 
+|about-creation-options|
 The following creation options are available:
 
 -  Raster and vector:
@@ -467,6 +470,9 @@ case.
 
 Layer creation options (vector)
 -------------------------------
+
+|about-layer-creation-options|
+The following layer creation options are available:
 
 -  .. lco:: MINZOOM
       :choices: <integer>

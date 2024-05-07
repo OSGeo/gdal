@@ -82,8 +82,8 @@ does not involve extent recomputation.
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OPENFILEGDB_IN_MEMORY_SPI
       :choices: YES, NO
@@ -102,7 +102,10 @@ available:
 Dataset open options
 --------------------
 
--  .. dsco:: LIST_ALL_TABLES
+|about-open-options|
+The following open options are supported:
+
+-  .. oo:: LIST_ALL_TABLES
       :choices: YES, NO
       :since: 3.4
 
@@ -117,6 +120,8 @@ None.
 Layer Creation Options
 ----------------------
 
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: TARGET_ARCGIS_VERSION
       :choices: ALL, ARCGIS_PRO_3_2_OR_LATER

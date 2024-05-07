@@ -37,6 +37,9 @@ a dataset:
 Layer open options
 ------------------
 
+|about-open-options|
+The following open options are supported:
+
 -  .. oo:: HOST
      :choices: <hostname>
      :default: localhost
@@ -443,6 +446,7 @@ EPSG:4326.
 Layer creation options
 ----------------------
 
+|about-layer-creation-options|
 Starting with GDAL 2.1, the driver supports the following layer creation
 options:
 
@@ -617,7 +621,8 @@ options:
 Configuration options
 ---------------------
 
-The following (deprecated) :ref:`configuration options <configoptions>` are
+|about-config-options|
+The following (deprecated) configuration options are
 available. Starting with GDAL 2.1, layer creation options are also available
 and should be preferred (see above):
 

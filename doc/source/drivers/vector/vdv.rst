@@ -37,8 +37,8 @@ Driver capabilities
 
 .. supports_virtualio::
 
-Creations issues
-----------------
+Creation issues
+---------------
 
 The driver can create new layers (either in the same file, or in
 separate files in the same directory). It can append a new layer into an
@@ -46,6 +46,7 @@ existing file, but it cannot append/edit/delete features to an existing
 layer, or modify the attribute structure of an existing layer after
 features have been written.
 
+|about-dataset-creation-options|
 The following dataset creation options are available:
 
 -  .. dsco:: SINGLE_FILE
@@ -55,6 +56,7 @@ The following dataset creation options are available:
       Whether several layers should be put in the
       same file. If NO, the name is assumed to be a directory name.
 
+|about-layer-creation-options|
 The following layer creation options are available:
 
 -  .. lco:: EXTENSION

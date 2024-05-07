@@ -22,8 +22,8 @@ Driver capabilities
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: WASP_FIELDS
 
