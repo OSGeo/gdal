@@ -360,8 +360,7 @@ class PDFDataset final : public GDALPamDataset
                                  const char *pszDefaultVal);
 
     bool m_bHasLoadedLayers = false;
-    int m_nLayers = 0;
-    OGRLayer **m_papoLayers = nullptr;
+    std::vector<std::unique_ptr<OGRPDFLayer>> m_apoLayers{};
 
     double m_dfPageWidth = 0;
     double m_dfPageHeight = 0;
@@ -399,7 +398,7 @@ class PDFDataset final : public GDALPamDataset
     OGRGeometry *BuildGeometry(std::vector<double> &oCoords, int bHasFoundFill,
                                int bHasMultiPart);
 
-    int OpenVectorLayers(GDALPDFDictionary *poPageDict);
+    bool OpenVectorLayers(GDALPDFDictionary *poPageDict);
 
     void InitOverviews();
 
