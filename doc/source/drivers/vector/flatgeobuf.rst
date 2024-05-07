@@ -40,9 +40,16 @@ FlatGeobuf header, and retrieved on reading as layer metadata.
 Open options
 ------------
 
--  **VERIFY_BUFFERS=**\ *YES/NO*: Set to YES to verify buffers when reading.
-   This can provide some protection for invalid/corrupt data with a performance
-   trade off. Defaults to YES.
+|about-open-options|
+The following open options are supported:
+
+-  .. oo:: VERIFY_BUFFERS
+      :choices: YES, NO
+      :default: YES
+
+      Set to YES to verify buffers when reading.
+      This can provide some protection for invalid/corrupt data with a performance
+      trade off.
 
 Dataset Creation Options
 ------------------------
@@ -51,6 +58,9 @@ None
 
 Layer Creation Options
 ----------------------
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: SPATIAL_INDEX
       :choices: YES, NO

@@ -58,6 +58,9 @@ Attributes are written as a HTML table.
 Dataset creation options
 ------------------------
 
+|about-dataset-creation-options|
+The following dataset creation options are supported:
+
 -  .. dsco:: HEAD
 
       Filename or inline XML content for head element.

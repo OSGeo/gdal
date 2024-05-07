@@ -54,6 +54,9 @@ ESRIJSON: to avoid any ambiguity with other drivers.
 Open options
 ------------
 
+|about-open-options|
+The following open options are supported:
+
 -  .. oo:: FEATURE_SERVER_PAGING
       :choices: YES, NO
 

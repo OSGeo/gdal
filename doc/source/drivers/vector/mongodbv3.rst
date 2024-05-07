@@ -47,7 +47,8 @@ required to make it recognize by this driver, instead of the legacy
 driver. If the URI is starting with
 *mongodb+srv://*, then it is not needed.
 
-The open options available are :
+|about-open-options|
+The open options available are:
 
 -  .. oo:: URI
 
@@ -232,6 +233,7 @@ SetFeature() operation.
 Layer creation options
 ----------------------
 
+|about-layer-creation-options|
 The following layer creation options are supported:
 
 -  .. lco:: OVERWRITE

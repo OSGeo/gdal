@@ -21,6 +21,9 @@ EXR header metadata.
 Creation Options
 ----------------
 
+|about-creation-options|
+The following creation options are supported:
+
 -  .. co:: COMPRESS
       :choices: NONE, RLE, ZIPS, ZIP, PIZ, PXR24, B44, B44A, DWAA, DWAB
       :default: ZIP

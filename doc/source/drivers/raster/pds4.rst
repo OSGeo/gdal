@@ -57,6 +57,7 @@ Open options (vector only)
 
 .. versionadded:: 3.0
 
+|about-open-options|
 When opening a PDS4 vector dataset, the following open options are
 available:
 
@@ -97,6 +98,7 @@ to preserve as much as possible of the original label when doing PDS4 to
 PDS4 conversions. This can be disabled with the :co:`USE_SRC_LABEL=NO`
 creation option.
 
+|about-creation-options|
 The following dataset creation options are available:
 
 -  Raster only:
@@ -228,6 +230,7 @@ The following dataset creation options are available:
 Layer creation options (vector/table datasets)
 ----------------------------------------------
 
+|about-layer-creation-options|
 (Starting with GDAL 3.0) When creating a PDS4 vector dataset, or
 appending a new table to an existing table, the following layer creation
 options are available:

@@ -83,6 +83,7 @@ Both multi-threading mechanism can be combined together.
 Open Options
 --------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: STRICT
@@ -120,6 +121,9 @@ The following open options are available:
 
 Creation Options
 ----------------
+
+|about-creation-options|
+The following creation options are available:
 
 -  .. co:: CODEC
       :choices: JP2, J2K

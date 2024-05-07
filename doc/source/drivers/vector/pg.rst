@@ -153,6 +153,9 @@ COPY-based approach can be chosen by setting the config option
 Dataset open options
 ~~~~~~~~~~~~~~~~~~~~
 
+|about-open-options|
+The following open options are supported:
+
 -  .. oo:: DBNAME
       :choices: <string>
 
@@ -238,6 +241,9 @@ None
 
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: GEOM_TYPE
       :choices: geometry, geography, BYTEA, OID
@@ -389,8 +395,8 @@ Layer Creation Options
 Configuration Options
 ~~~~~~~~~~~~~~~~~~~~~
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: PG_USE_COPY
 

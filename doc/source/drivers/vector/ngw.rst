@@ -64,8 +64,8 @@ if identifier is resource group. In other case this will be a separate layer.
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  :copy-config:`NGW_USERPWD`
 
@@ -166,6 +166,7 @@ immediately.
 Open options
 ------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: USERPWD
@@ -205,7 +206,8 @@ The following open options are available:
 Dataset creation options
 ------------------------
 
-The following dataset/datasource creation options are available:
+|about-dataset-creation-options|
+The following dataset creation options are available:
 
 -  .. dsco:: KEY
 
@@ -253,6 +255,7 @@ The following dataset/datasource creation options are available:
 Layer creation options
 ----------------------
 
+|about-layer-creation-options|
 The following layer creation options are available:
 
 -  .. lco:: OVERWRITE

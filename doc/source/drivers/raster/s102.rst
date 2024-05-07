@@ -35,6 +35,9 @@ Driver capabilities
 Open options
 ------------
 
+|about-open-options|
+The following open options are supported:
+
 - .. oo:: DEPTH_OR_ELEVATION
      :choices: DEPTH, ELEVATION
      :default: DEPTH

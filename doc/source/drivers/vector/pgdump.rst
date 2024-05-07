@@ -34,6 +34,9 @@ Creation options
 Dataset Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+|about-dataset-creation-options|
+The following dataset creation options are supported:
+
 -  .. dsco:: LINEFORMAT
       :choices: CRLF, LF
 
@@ -46,6 +49,9 @@ Dataset Creation Options
 
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: GEOM_TYPE
       :choices: geometry, geography
@@ -240,6 +246,9 @@ Layer Creation Options
 
 Environment variables
 ~~~~~~~~~~~~~~~~~~~~~
+
+|about-config-options|
+The following configuration options are available:
 
 -  :copy-config:`PG_USE_COPY`
 

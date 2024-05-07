@@ -83,8 +83,8 @@ with "other_tags".
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OSM_CONFIG_FILE
       :choices: <filename>
@@ -217,6 +217,9 @@ And to combine the above steps :
 
 Open options
 ------------
+
+|about-open-options|
+The following open options are supported:
 
 -  .. oo:: CONFIG_FILE
       :choices: <filename>

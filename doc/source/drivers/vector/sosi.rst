@@ -13,8 +13,8 @@ This driver requires the FYBA library.
 Open options
 ------------
 
-Starting with GDAL 3.1, the following open options can be specified
-(typically with the -oo name=value parameters of ogrinfo or ogr2ogr):
+|about-open-options|
+Starting with GDAL 3.1, the following open options can be specified:
 
 -  .. oo:: appendFieldsMap
       :default: <empty>

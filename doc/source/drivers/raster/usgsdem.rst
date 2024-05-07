@@ -56,7 +56,8 @@ export to specific product formats can take input in different
 coordinate systems (i.e. from Albers projection to NAD83 geographic for
 CDED50K production).
 
-Creation Options:
+|about-creation-options|
+The following creation options are supported:
 
 -  .. co:: PRODUCT
       :choices: DEFAULT, CDED50K

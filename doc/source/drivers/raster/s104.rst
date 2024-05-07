@@ -36,6 +36,9 @@ Driver capabilities
 Open options
 ------------
 
+|about-open-options|
+The following open options are supported:
+
 - .. oo:: NORTH_UP
      :choices: YES, NO
      :default: YES

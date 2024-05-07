@@ -38,8 +38,8 @@ polylines as linestrings.
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 - .. config:: DWG_INLINE_BLOCKS
      :choices: TRUE, FALSE

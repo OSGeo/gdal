@@ -266,6 +266,9 @@ format, the profile dimension is of unlimited size by default.
 Dataset creation options
 ------------------------
 
+|about-dataset-creation-options|
+The following dataset creation options are supported:
+
 -  .. dsco:: GEOMETRY_ENCODING
       :choices: CF_1.8, WKT
       :default: CF_1.8
@@ -314,6 +317,8 @@ The following option will only have effect when simultaneously specifying :dsco:
 
 Layer creation options
 ----------------------
+
+|about-layer-creation-options|
 
 The following option applies to both dataset types:
 

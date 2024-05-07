@@ -31,6 +31,9 @@ Driver capabilities
 Open options
 ------------
 
+|about-open-options|
+The following open options are supported:
+
 - .. oo:: GEOM_POSSIBLE_NAMES
      :since: 3.8
      :default: geometry,wkb_geometry,wkt_geometry
@@ -57,6 +60,9 @@ The driver supports creating only a single layer in a dataset.
 
 Layer creation options
 ----------------------
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 - .. lco:: COMPRESSION
      :choices: NONE, UNCOMPRESSED, SNAPPY, GZIP, BROTLI, ZSTD, LZ4_RAW, LZ4_HADOOP

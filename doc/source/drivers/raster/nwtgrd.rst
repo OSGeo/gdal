@@ -65,6 +65,9 @@ reported as -1e37.
 Creation Options
 ~~~~~~~~~~~~~~~~
 
+|about-creation-options|
+The following creation options are available:
+
 -  .. co:: ZMIN
       :default: -2e37
 

@@ -37,6 +37,9 @@ Driver capabilities
 Creation Options
 ----------------
 
+|about-creation-options|
+The following creation options are supported:
+
 -  .. co:: WORLDFILE
       :choices: YES
 

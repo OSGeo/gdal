@@ -51,13 +51,16 @@ ambiguity with other drivers.
 Configuration options
 ---------------------
 
-The following :ref:`configuration option <configoptions>` is
-available:
+|about-config-options|
+The following configuration option is available:
 
 -  :copy-config:`OGR_GEOJSON_MAX_OBJ_SIZE`
 
 Layer creation options
 ----------------------
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: RS
       :choices: YES, NO

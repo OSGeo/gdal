@@ -49,6 +49,9 @@ mentioned sources and ignore GMLJP2 boxes.
 Configuration Options
 ---------------------
 
+|about-config-options|
+The following configuration options are supported:
+
 -  .. config:: LURA_LICENSE_NUM_1
       :required: YES
 
@@ -59,9 +62,10 @@ Configuration Options
 
       Second component of license number.
 
-Option Options
---------------
+Open Options
+------------
 
+|about-open-options|
 The following open option is available:
 
 -  .. oo:: GEOREF_SOURCES
@@ -72,6 +76,9 @@ The following open option is available:
 
 Creation Options
 ----------------
+
+|about-creation-options|
+The following creation options are available:
 
 -  .. co:: CODEC
       :choices: JP2, Codestream

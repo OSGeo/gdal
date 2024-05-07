@@ -35,8 +35,8 @@ Driver capabilities
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 - .. config:: GML_PARSER
      :choices: EXPAT, XERCES
@@ -501,6 +501,9 @@ with code similar to the following one :
 Open options
 ------------
 
+|about-open-options|
+The following open options are supported:
+
 -  .. oo:: XSD
       :choices: <filename>
 
@@ -633,6 +636,9 @@ ogr:geometryProperty element on the feature.
 
 Dataset creation options
 ------------------------
+
+|about-dataset-creation-options|
+The following dataset creation options are supported:
 
 -  .. dsco:: XSISCHEMAURI
 

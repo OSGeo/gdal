@@ -205,7 +205,8 @@ have the special attribute:
 and are automatically recognised when read, so the projection info and
 transformation matrix restored back.
 
-Creation Options:
+|about-creation-options|
+The following creation options are supported:
 
 .. co:: RANK
    :choices: 2, 3
@@ -225,6 +226,7 @@ well as to particular subdatasets.
 Open options
 ------------
 
+|about-open-options|
 The following open option is supported:
 
 .. oo:: LIST_SDS

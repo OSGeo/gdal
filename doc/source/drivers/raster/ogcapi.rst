@@ -68,6 +68,7 @@ matrix set when available
 Open options
 ------------
 
+|about-open-options|
 The following open options are available:
 
 - .. oo:: API

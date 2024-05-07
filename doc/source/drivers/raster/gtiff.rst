@@ -304,6 +304,9 @@ For example to translate a CMYK file to another one :
 Open options
 ------------
 
+|about-open-options|
+This driver supports the following open options:
+
 .. oo:: NUM_THREADS
    :choices: <number_of_threads>, ALL_CPUS
    :since: 2.1
@@ -370,6 +373,9 @@ files <https://trac.osgeo.org/gdal/wiki/CloudOptimizedGeoTIFF>`__
 
 Creation Options
 ~~~~~~~~~~~~~~~~
+
+|about-creation-options|
+This driver supports the following creation options:
 
 -  .. co:: TFW
       :choices: YES, NO
@@ -906,6 +912,7 @@ block order of the streamed input.
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
+|about-config-options|
 This paragraph lists the configuration options that can be set to alter
 the default behavior of the GTiff driver.
 

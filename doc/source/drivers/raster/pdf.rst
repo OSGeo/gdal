@@ -55,6 +55,9 @@ content in the EMBEDDED_METADATA metadata domain.
 Configuration options
 ---------------------
 
+|about-config-options|
+The following configuration options are supported:
+
 -  .. config:: GDAL_PDF_DPI
       :default: 150
 
@@ -117,6 +120,7 @@ Configuration options
 Open Options
 ~~~~~~~~~~~~
 
+|about-open-options|
 Above configuration options are also available as open options.
 
 -  .. oo:: RENDERING_OPTIONS
@@ -215,6 +219,9 @@ Note: PDF write support does not require linking to any backend.
 
 Creation Options
 ~~~~~~~~~~~~~~~~
+
+|about-creation-options|
+The following creation options are available:
 
 -  .. co:: COMPRESS
       :choices: NONE, DEFLATE, JPEG, JPEG2000

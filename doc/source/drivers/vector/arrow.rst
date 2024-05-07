@@ -53,6 +53,9 @@ The driver supports creating only a single layer in a dataset.
 Layer creation options
 ----------------------
 
+|about-layer-creation-options|
+The following layer creation options are supported:
+
 - .. lco:: COMPRESSION
      :choices: NONE, ZSTD, LZ4
 

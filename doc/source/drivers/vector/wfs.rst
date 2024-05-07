@@ -306,7 +306,8 @@ That layer is returned through GetLayerByName("WFSGetCapabilities").
 Open options
 ------------
 
-The following options are available:
+|about-open-options|
+The following open options are available:
 
 -  .. oo:: URL
 
@@ -357,8 +358,8 @@ The following options are available:
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OGR_WFS_USE_STREAMING
       :choices: YES, NO

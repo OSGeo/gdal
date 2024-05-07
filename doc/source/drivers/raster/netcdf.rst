@@ -268,6 +268,7 @@ behavior.
 Open options
 ------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: HONOUR_VALID_RANGE
@@ -419,6 +420,9 @@ Can be discovered for example with:
 
 Creation Options
 ----------------
+
+|about-creation-options|
+The following creation options are available:
 
 -  .. co:: FORMAT
       :choices: NC, NC2, NC4, NC4C

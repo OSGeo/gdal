@@ -36,10 +36,11 @@ Georeferencing
 The BLX projection is fixed to WGS84 and georeferencing from BLX is
 supported in the form of one tiepoint and pixelsize.
 
-Creation Issues
----------------
+Creation Options
+----------------
 
-Creation Options:
+|about-creation-options|
+The following creation options are supported:
 
 -  .. co:: ZSCALE
       :default: 1

@@ -89,6 +89,7 @@ This metadata tag can be used as creation options.
 Configuration options
 ---------------------
 
+|about-config-options|
 The following configuration options are available :
 
 -  .. config:: GDAL_JPEG_TO_RGB
@@ -123,6 +124,7 @@ The following configuration options are available :
 Open Options
 ------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: USE_INTERNAL_OVERVIEWS
@@ -159,6 +161,9 @@ JPEG file creation is implemented by the batch (CreateCopy) method.
 YCbCrK colorspace is not supported in creation. If the source
 dataset has a nodata mask, it will be appended as a zlib compressed mask
 to the JPEG file.
+
+|about-creation-options|
+The following creation options are supported:
 
 -  .. co:: WORLDFILE
       :choices: YES

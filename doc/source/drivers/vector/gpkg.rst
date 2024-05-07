@@ -191,6 +191,7 @@ in some other applications (e.g. ESRI software).
 Dataset open options
 --------------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: LIST_ALL_TABLES
@@ -270,6 +271,7 @@ e.g. `for version 1.2 <https://www.geopackage.org/spec120/#r15>`__.
 Dataset creation options
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+|about-dataset-creation-options|
 The following creation options (specific to vector, or common with
 raster) are available:
 
@@ -340,6 +342,7 @@ documentation page.
 Layer creation options
 ~~~~~~~~~~~~~~~~~~~~~~
 
+|about-layer-creation-options|
 The following layer creation options are available:
 
 -  .. lco:: LAUNDER
@@ -481,8 +484,8 @@ The following layer creation options are available:
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 - :copy-config:`OGR_SQLITE_JOURNAL`
 

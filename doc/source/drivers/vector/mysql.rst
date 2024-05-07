@@ -103,6 +103,9 @@ The MySQL driver is not transactional at this time.
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
 
+|about-layer-creation-options|
+The following layer creation options are supported:
+
 -  .. lco:: OVERWRITE
       :choices: YES, NO
 

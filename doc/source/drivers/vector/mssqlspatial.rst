@@ -105,6 +105,9 @@ does allow creation of new layers within an existing database.
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
 
+|about-layer-creation-options|
+The following layer creation options are supported:
+
 -  .. lco:: GEOM_TYPE
       :choices: geometry, geography
       :default: geometry
@@ -212,8 +215,8 @@ Layer Creation Options
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: MSSQLSPATIAL_USE_BCP
       :since: 2.1.0

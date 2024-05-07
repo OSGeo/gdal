@@ -124,8 +124,8 @@ rebuilding the spatial index.
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OCI_FID
       :default: OGR_FID
@@ -134,6 +134,9 @@ available:
 
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: OVERWRITE
       :choices: YES, NO
@@ -287,6 +290,9 @@ Layer Creation Options
 
 Layer Open Options
 ~~~~~~~~~~~~~~~~~~
+
+|about-open-options|
+The following open options are supported:
 
 -  .. oo:: FIRST_ID
 

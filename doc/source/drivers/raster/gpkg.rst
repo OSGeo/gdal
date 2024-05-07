@@ -80,6 +80,7 @@ the USE_TILE_EXTENT=YES open option to use the actual extent of tiles at
 the maximum zoom level. Or it can specify any of MINX/MINY/MAXX/MAXY to
 have a custom extent.
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: TABLE
@@ -420,6 +421,7 @@ Float32        65535                                               65535
 Creation options
 ~~~~~~~~~~~~~~~~
 
+|about-creation-options|
 The following creation options are available:
 
 -  .. co:: RASTER_TABLE

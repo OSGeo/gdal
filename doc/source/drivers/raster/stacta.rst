@@ -24,7 +24,8 @@ attached to an asset template.
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
+|about-config-options|
+The following configuration options are
 available:
 
 -  .. config:: GDAL_STACTA_SKIP_MISSING_METATILE
@@ -49,6 +50,7 @@ The root of the JSON file must be of type ``Feature``.
 Open options
 ------------
 
+|about-open-options|
 The following open options are supported:
 
 -  .. oo:: WHOLE_METATILE

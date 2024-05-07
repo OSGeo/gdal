@@ -55,6 +55,9 @@ Informix Client SDK
 Configuration options
 ---------------------
 
+|about-config-options|
+The following configuration options are supported:
+
 -  .. config:: IDB_OGR_FID
       :default: ogc_fid
 

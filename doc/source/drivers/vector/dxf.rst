@@ -331,7 +331,8 @@ following style string parameters are understood:
        | GDAL <= 2.2.x: text (t); font size (s), treated as cap height; text
        | color (c); angle (a); anchor point (p)
 
-The dataset creation supports the following dataset creation options:
+|about-dataset-creation-options|
+The driver supports the following dataset creation options:
 
 -  .. dsco:: HEADER
       :choices: <filename>

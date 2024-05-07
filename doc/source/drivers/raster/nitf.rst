@@ -101,8 +101,6 @@ However, using this methodology writing of pseudocolor tables and
 georeferencing is not supported unless appropriate IREP (Image Representation) and
 ICORDS (Image Coordinate) creation options are supplied.
 
-Creation Options:
-
 Most file header, imagery header metadata and security fields can be
 set with appropriate **creation options** (although they are reported
 as metadata item, but must not be set as metadata). For instance
@@ -112,6 +110,9 @@ the creation option list would result in setting of the FTITLE field
 in the NITF file header. Use the official field names from the NITF
 specification document; do not put the "NITF\_" prefix that is
 reported when asking the metadata list.
+
+|about-creation-options|
+The following creation options are available:
 
 -  .. co:: IC
       :choices: NC, C3, M3, C8

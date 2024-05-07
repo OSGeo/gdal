@@ -61,7 +61,8 @@ for developers.
 Creation options
 ----------------
 
-The following creations options are supported:
+|about-creation-options|
+The following creation options are supported:
 
 -  .. oo:: BLOCKXSIZE
       :since: 3.7

@@ -260,8 +260,8 @@ is used.
 Open options
 ------------
 
-The following open options can be specified
-(typically with the -oo name=value parameters of ogrinfo or ogr2ogr):
+|about-open-options|
+The following open options are supported:
 
 -  .. oo:: SEPARATOR
       :choices: AUTO, COMMA, SEMICOLON, TAB, SPACE, PIPE
@@ -421,6 +421,9 @@ be stored in RAM temporarily before flushing to disk.
 Layer Creation options
 ----------------------
 
+|about-layer-creation-options|
+The following layer creation options are supported:
+
 -  .. lco:: LINEFORMAT
       :choices: CRLF, LF
 
@@ -484,8 +487,8 @@ Layer Creation options
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: OGR_WKT_PRECISION
       :choices: <integer>

@@ -82,6 +82,7 @@ will be a separate raster.
 Configuration options
 ---------------------
 
+|about-config-options|
 The following configuration options are available:
 
 -  .. config:: NGW_USERPWD
@@ -121,6 +122,7 @@ options.
 Open options
 ------------
 
+|about-open-options|
 The following open options are available:
 
 -  .. oo:: USERPWD

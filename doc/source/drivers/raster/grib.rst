@@ -93,6 +93,7 @@ Driver capabilities
 Configuration options
 ---------------------
 
+|about-config-options|
 This paragraph lists the configuration options that can be set to alter
 the default behavior of the GRIB driver.
 
@@ -122,6 +123,9 @@ the default behavior of the GRIB driver.
 
 Open options
 ------------
+
+|about-open-options|
+The following open options are supported:
 
 -  .. oo:: USE_IDX
       :choices: YES, NO
@@ -179,6 +183,7 @@ section" <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_sect4.shtm
 with the following creation options. Otherwise, GDAL will fill with
 default values, but readers might have trouble exploiting GRIB2 datasets
 generating with those defaults.
+|about-creation-options|
 
 -  .. co:: DISCIPLINE
       :choices: <integer>

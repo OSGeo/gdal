@@ -105,12 +105,15 @@ MapInfo feature attributes suffer a number of limitations:
 Dataset Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
--  .. config:: FORMAT
+|about-dataset-creation-options|
+The following dataset creation options are supported:
+
+-  .. dsco:: FORMAT
       :choices: TAB, MIF
 
       To create MIF/MID instead of TAB files
 
--  .. config:: SPATIAL_INDEX_MODE
+-  .. dsco:: SPATIAL_INDEX_MODE
       :choices: QUICK, OPTIMIZED
       :default: QUICK
 
@@ -118,7 +121,7 @@ Dataset Creation Options
       times faster, but spatial queries can be up to 30 times slower. This
       can be set to OPTIMIZED to generate optimized spatial index.
 
--  .. config:: BLOCKSIZE
+-  .. dsco:: BLOCKSIZE
       :choices: 512, 1024, ... , 32256
       :default: 512
 
@@ -130,6 +133,9 @@ Dataset Creation Options
 
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
+
+|about-layer-creation-options|
+The following layer creation options are supported:
 
 -  .. lco:: BOUNDS
       :choices: <xmin\,ymin\,xmax\,ymax>
@@ -157,8 +163,8 @@ Layer Creation Options
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
 
-The following :ref:`configuration options <configoptions>` are
-available:
+|about-config-options|
+The following configuration options are available:
 
 -  .. config:: MITAB_BOUNDS_FILE
 

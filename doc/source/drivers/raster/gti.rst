@@ -357,6 +357,7 @@ the above format specifications are met.
 Open options
 ------------
 
+|about-open-options|
 The following open options are available. Most of them can be
 also defined as layer metadata items or in the .gti XML file
 

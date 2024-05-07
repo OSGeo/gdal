@@ -40,6 +40,7 @@ STACIT datasets/subdatasets can be accessed with one of the following syntaxes:
 Open options
 ------------
 
+|about-open-options|
 The following open options are supported:
 
 -  .. oo:: MAX_ITEMS

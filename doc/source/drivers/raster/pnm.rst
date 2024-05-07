@@ -14,7 +14,11 @@ GDAL includes support for reading, and creating .pgm (greyscale), and
 
 Netpbm files can be created with a type of PNM.
 
-Creation Options:
+Creation Options
+----------------
+
+|about-creation-options|
+The following creation option is available:
 
 -  .. co:: MAXVAL
       :choices: <n>
