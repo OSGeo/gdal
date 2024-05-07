@@ -405,7 +405,7 @@ class PDFDataset final : public GDALPamDataset
     ParseContent(const char *pszContent, GDALPDFObject *poResources,
                  int bInitBDCStack, int bMatchQ,
                  std::map<CPLString, OGRPDFLayer *> &oMapPropertyToLayer,
-                 OGRPDFLayer *poCurLayer);
+                 const GraphicState &graphicStateIn, OGRPDFLayer *poCurLayer);
     OGRGeometry *BuildGeometry(std::vector<double> &oCoords, int bHasFoundFill,
                                int bHasMultiPart);
 
