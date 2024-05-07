@@ -2656,9 +2656,7 @@ PDFDataset::~PDFDataset()
 
     CleanupIntermediateResources();
 
-    for (int i = 0; i < m_nLayers; i++)
-        delete m_papoLayers[i];
-    CPLFree(m_papoLayers);
+    m_apoLayers.clear();
 
     // Do that only after having destroyed Poppler objects
     m_fp.reset();

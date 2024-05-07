@@ -44,36 +44,36 @@ constexpr int BEZIER_STEPS = 10;
 /*                        OpenVectorLayers()                            */
 /************************************************************************/
 
-int PDFDataset::OpenVectorLayers(GDALPDFDictionary *poPageDict)
+bool PDFDataset::OpenVectorLayers(GDALPDFDictionary *poPageDict)
 {
     if (m_bHasLoadedLayers)
-        return TRUE;
+        return true;
     m_bHasLoadedLayers = true;
 
     if (poPageDict == nullptr)
     {
         poPageDict = m_poPageObj->GetDictionary();
         if (poPageDict == nullptr)
-            return FALSE;
+            return false;
     }
 
     GetCatalog();
     if (m_poCatalogObject == nullptr ||
         m_poCatalogObject->GetType() != PDFObjectType_Dictionary)
-        return FALSE;
+        return false;
 
     GDALPDFObject *poContents = poPageDict->Get("Contents");
     if (poContents == nullptr)
-        return FALSE;
+        return false;
 
     if (poContents->GetType() != PDFObjectType_Dictionary &&
         poContents->GetType() != PDFObjectType_Array)
-        return FALSE;
+        return false;
 
     GDALPDFObject *poResources = poPageDict->Get("Resources");
     if (poResources == nullptr ||
         poResources->GetType() != PDFObjectType_Dictionary)
-        return FALSE;
+        return false;
 
     GDALPDFObject *poStructTreeRoot =
         m_poCatalogObject->GetDictionary()->Get("StructTreeRoot");
@@ -109,12 +109,12 @@ int PDFDataset::OpenVectorLayers(GDALPDFDictionary *poPageDict)
 
     CleanupIntermediateResources();
 
-    int bEmptyDS = TRUE;
-    for (int i = 0; i < m_nLayers; i++)
+    bool bEmptyDS = true;
+    for (auto &poLayer : m_apoLayers)
     {
-        if (m_papoLayers[i]->GetFeatureCount() != 0)
+        if (poLayer->GetFeatureCount(false) != 0)
         {
-            bEmptyDS = FALSE;
+            bEmptyDS = false;
             break;
         }
     }
@@ -241,10 +241,10 @@ OGRLayer *PDFDataset::GetLayer(int iLayer)
 
 {
     OpenVectorLayers(nullptr);
-    if (iLayer < 0 || iLayer >= m_nLayers)
+    if (iLayer < 0 || iLayer >= static_cast<int>(m_apoLayers.size()))
         return nullptr;
 
-    return m_papoLayers[iLayer];
+    return m_apoLayers[iLayer].get();
 }
 
 /************************************************************************/
@@ -254,7 +254,7 @@ OGRLayer *PDFDataset::GetLayer(int iLayer)
 int PDFDataset::GetLayerCount()
 {
     OpenVectorLayers(nullptr);
-    return m_nLayers;
+    return static_cast<int>(m_apoLayers.size());
 }
 
 /************************************************************************/
@@ -338,22 +338,20 @@ bool PDFDataset::ExploreTree(GDALPDFObject *poObj,
                 if (!osS.empty())
                     osLayerName = std::move(osS);
                 else
-                    osLayerName = CPLSPrintf("Layer%d", m_nLayers + 1);
+                    osLayerName = CPLSPrintf(
+                        "Layer%d", static_cast<int>(m_apoLayers.size()) + 1);
             }
 
             auto poSRSOri = GetSpatialRef();
             OGRSpatialReference *poSRS = poSRSOri ? poSRSOri->Clone() : nullptr;
-            OGRPDFLayer *poLayer =
-                new OGRPDFLayer(this, osLayerName.c_str(), poSRS, wkbUnknown);
+            auto poLayer = std::make_unique<OGRPDFLayer>(
+                this, osLayerName.c_str(), poSRS, wkbUnknown);
             if (poSRS)
                 poSRS->Release();
 
             poLayer->Fill(poArray);
 
-            m_papoLayers = (OGRLayer **)CPLRealloc(
-                m_papoLayers, (m_nLayers + 1) * sizeof(OGRLayer *));
-            m_papoLayers[m_nLayers] = poLayer;
-            m_nLayers++;
+            m_apoLayers.emplace_back(std::move(poLayer));
             bRet = true;
         }
         else
@@ -2164,26 +2162,25 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,
                 CPLString osSanitizedName(
                     PDFSanitizeLayerName(oLayerWithref.osName));
 
-                OGRPDFLayer *poLayer =
-                    (OGRPDFLayer *)GetLayerByName(osSanitizedName.c_str());
-                if (poLayer == nullptr)
+                OGRPDFLayer *poPDFLayer = dynamic_cast<OGRPDFLayer *>(
+                    GetLayerByName(osSanitizedName.c_str()));
+                if (!poPDFLayer)
                 {
                     auto poSRSOri = GetSpatialRef();
                     OGRSpatialReference *poSRS =
                         poSRSOri ? poSRSOri->Clone() : nullptr;
-                    poLayer = new OGRPDFLayer(this, osSanitizedName.c_str(),
-                                              poSRS, wkbUnknown);
+                    auto poPDFLayerUniquePtr = std::make_unique<OGRPDFLayer>(
+                        this, osSanitizedName.c_str(), poSRS, wkbUnknown);
                     if (poSRS)
                         poSRS->Release();
 
-                    m_papoLayers = (OGRLayer **)CPLRealloc(
-                        m_papoLayers, (m_nLayers + 1) * sizeof(OGRLayer *));
-                    m_papoLayers[m_nLayers] = poLayer;
-                    m_nLayers++;
+                    m_apoLayers.emplace_back(std::move(poPDFLayerUniquePtr));
+                    poPDFLayer = m_apoLayers.back().get();
                 }
 
                 oMapNumGenToLayer[std::pair(oLayerWithref.nOCGNum.toInt(),
-                                            oLayerWithref.nOCGGen)] = poLayer;
+                                            oLayerWithref.nOCGGen)] =
+                    poPDFLayer;
             }
 
             for (const auto &[osKey, poObj] :
@@ -2212,18 +2209,15 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,
     }
 
     OGRPDFLayer *poSingleLayer = nullptr;
-    if (m_nLayers == 0)
+    if (m_apoLayers.empty())
     {
         if (CPLTestBool(
                 CPLGetConfigOption("OGR_PDF_READ_NON_STRUCTURED", "NO")))
         {
-            OGRPDFLayer *poLayer =
-                new OGRPDFLayer(this, "content", nullptr, wkbUnknown);
-            m_papoLayers = (OGRLayer **)CPLRealloc(
-                m_papoLayers, (m_nLayers + 1) * sizeof(OGRLayer *));
-            m_papoLayers[m_nLayers] = poLayer;
-            m_nLayers++;
-            poSingleLayer = poLayer;
+            auto poLayer = std::make_unique<OGRPDFLayer>(this, "content",
+                                                         nullptr, wkbUnknown);
+            m_apoLayers.emplace_back(std::move(poLayer));
+            poSingleLayer = m_apoLayers.back().get();
         }
         else
         {
@@ -2235,21 +2229,17 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,
                                          oMapPropertyToLayer, poSingleLayer);
 
     /* Remove empty layers */
-    int i = 0;
-    while (i < m_nLayers)
+    for (auto oIter = m_apoLayers.begin(); oIter != m_apoLayers.end();
+         /* do nothing */)
     {
-        if (m_papoLayers[i]->GetFeatureCount() == 0)
+        if ((*oIter)->GetFeatureCount(false) == 0)
         {
-            delete m_papoLayers[i];
-            if (i < m_nLayers - 1)
-            {
-                memmove(m_papoLayers + i, m_papoLayers + i + 1,
-                        (m_nLayers - 1 - i) * sizeof(OGRPDFLayer *));
-            }
-            m_nLayers--;
+            oIter = m_apoLayers.erase(oIter);
         }
         else
-            i++;
+        {
+            ++oIter;
+        }
     }
 }
 
