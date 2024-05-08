@@ -5274,6 +5274,156 @@ def test_vsis3_read_credentials_AWS_CONTAINER_CREDENTIALS_FULL_URI(
 
 
 ###############################################################################
+# Read credentials from simulated instance with AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE
+
+
+@pytest.mark.skipif(sys.platform not in ("linux", "win32"), reason="Incorrect platform")
+def test_vsis3_read_credentials_AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE(
+    tmp_vsimem, aws_test_config, webserver_port
+):
+    options = {
+        "CPL_AWS_CREDENTIALS_FILE": "",
+        "AWS_CONFIG_FILE": "",
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_ACCESS_KEY_ID": "",
+        # Disable hypervisor related check to test if we are really on EC2
+        "CPL_AWS_AUTODETECT_EC2": "NO",
+        "CPL_AWS_WEB_IDENTITY_ENABLE": "NO",
+        "AWS_CONTAINER_CREDENTIALS_FULL_URI": f"http://localhost:{webserver_port}/AWS_CONTAINER_CREDENTIALS_FULL_URI",
+        "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE": f"{tmp_vsimem}/container_authorization_token_file",
+        "AWS_CONTAINER_AUTHORIZATION_TOKEN": "invalid",
+    }
+
+    gdal.VSICurlClearCache()
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "container_authorization_token_file", "valid\n")
+
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        request.protocol_version = "HTTP/1.1"
+
+        if "Authorization" not in request.headers:
+            sys.stderr.write("Bad headers: %s\n" % str(request.headers))
+            request.send_response(403)
+            return
+        expected_authorization = "valid"
+        actual_authorization = request.headers["Authorization"]
+        if actual_authorization != expected_authorization:
+            sys.stderr.write("Bad Authorization: '%s'\n" % str(actual_authorization))
+            request.send_response(403)
+            return
+
+        auth_response = """{
+            "AccessKeyId": "AWS_ACCESS_KEY_ID",
+            "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+            "Expiration": "3000-01-01T00:00:00Z"
+            }""".encode(
+            "ascii"
+        )
+
+        request.send_response(200)
+        request.send_header("Content-type", "application/json")
+        request.send_header("Content-Length", len(auth_response))
+        request.end_headers()
+
+        request.wfile.write(auth_response)
+
+    handler.add(
+        "GET",
+        "/AWS_CONTAINER_CREDENTIALS_FULL_URI",
+        custom_method=method,
+    )
+    handler.add(
+        "GET",
+        "/s3_fake_bucket/resource",
+        custom_method=get_s3_fake_bucket_resource_method,
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            f = open_for_read("/vsis3/s3_fake_bucket/resource")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+
+    assert data == "foo"
+
+
+###############################################################################
+# Read credentials from simulated instance with AWS_CONTAINER_AUTHORIZATION_TOKEN
+
+
+@pytest.mark.skipif(sys.platform not in ("linux", "win32"), reason="Incorrect platform")
+def test_vsis3_read_credentials_AWS_CONTAINER_AUTHORIZATION_TOKEN(
+    aws_test_config, webserver_port
+):
+    options = {
+        "CPL_AWS_CREDENTIALS_FILE": "",
+        "AWS_CONFIG_FILE": "",
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_ACCESS_KEY_ID": "",
+        # Disable hypervisor related check to test if we are really on EC2
+        "CPL_AWS_AUTODETECT_EC2": "NO",
+        "CPL_AWS_WEB_IDENTITY_ENABLE": "NO",
+        "AWS_CONTAINER_CREDENTIALS_FULL_URI": f"http://localhost:{webserver_port}/AWS_CONTAINER_CREDENTIALS_FULL_URI",
+        "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE": "",
+        "AWS_CONTAINER_AUTHORIZATION_TOKEN": "valid",
+    }
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        request.protocol_version = "HTTP/1.1"
+
+        if "Authorization" not in request.headers:
+            sys.stderr.write("Bad headers: %s\n" % str(request.headers))
+            request.send_response(403)
+            return
+        expected_authorization = "valid"
+        actual_authorization = request.headers["Authorization"]
+        if actual_authorization != expected_authorization:
+            sys.stderr.write("Bad Authorization: '%s'\n" % str(actual_authorization))
+            request.send_response(403)
+            return
+
+        auth_response = """{
+            "AccessKeyId": "AWS_ACCESS_KEY_ID",
+            "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+            "Expiration": "3000-01-01T00:00:00Z"
+            }""".encode(
+            "ascii"
+        )
+
+        request.send_response(200)
+        request.send_header("Content-type", "application/json")
+        request.send_header("Content-Length", len(auth_response))
+        request.end_headers()
+
+        request.wfile.write(auth_response)
+
+    handler.add(
+        "GET",
+        "/AWS_CONTAINER_CREDENTIALS_FULL_URI",
+        custom_method=method,
+    )
+    handler.add(
+        "GET",
+        "/s3_fake_bucket/resource",
+        custom_method=get_s3_fake_bucket_resource_method,
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(options, thread_local=False):
+            f = open_for_read("/vsis3/s3_fake_bucket/resource")
+        assert f is not None
+        data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+
+    assert data == "foo"
+
+
+###############################################################################
 # Read credentials from an assumed role
 
 
