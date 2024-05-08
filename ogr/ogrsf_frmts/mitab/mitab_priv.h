@@ -231,7 +231,8 @@ typedef struct TABDATFieldDef_t
 {
     char szName[11];
     char cType;
-    GByte byLength;
+    GByte
+        byLength; /* caution: for a native .dat file, this is a binary width for most types */
     GByte byDecimals;
 
     TABFieldType eTABType;
@@ -1876,7 +1877,8 @@ class TABDATFile
 
     int DeleteField(int iField);
     int ReorderFields(int *panMap);
-    int AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn, int nFlags);
+    int AlterFieldDefn(int iField, const OGRFieldDefn *poSrcFieldDefn,
+                       OGRFieldDefn *poNewFieldDefn, int nFlags);
 
     int SyncToDisk();
 

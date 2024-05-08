@@ -748,19 +748,20 @@ static int TABDATFileSetFieldDefinition(TABDATFieldDef *psFieldDef,
     else if (nWidth == 0)
         nWidth = 254;  // char fields.
 
-    strncpy(psFieldDef->szName, pszName, sizeof(psFieldDef->szName) - 1);
-    psFieldDef->szName[sizeof(psFieldDef->szName) - 1] = '\0';
+    snprintf(psFieldDef->szName, sizeof(psFieldDef->szName), "%s", pszName);
     psFieldDef->eTABType = eType;
-    psFieldDef->byLength = static_cast<GByte>(nWidth);
-    psFieldDef->byDecimals = static_cast<GByte>(nPrecision);
+    psFieldDef->byDecimals = 0;
 
     switch (eType)
     {
         case TABFChar:
             psFieldDef->cType = 'C';
+            psFieldDef->byLength = static_cast<GByte>(nWidth);
             break;
         case TABFDecimal:
             psFieldDef->cType = 'N';
+            psFieldDef->byLength = static_cast<GByte>(nWidth);
+            psFieldDef->byDecimals = static_cast<GByte>(nPrecision);
             break;
         case TABFInteger:
             psFieldDef->cType = 'C';
@@ -1236,8 +1237,8 @@ int TABDATFile::ReorderFields(int *panMap)
 /*                           AlterFieldDefn()                           */
 /************************************************************************/
 
-int TABDATFile::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
-                               int nFlags)
+int TABDATFile::AlterFieldDefn(int iField, const OGRFieldDefn *poSrcFieldDefn,
+                               OGRFieldDefn *poNewFieldDefn, int nFlags)
 {
     if (m_fp == nullptr)
     {
@@ -1261,20 +1262,20 @@ int TABDATFile::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
     }
 
     TABFieldType eTABType = m_pasFieldDef[iField].eTABType;
-    int nWidth = m_pasFieldDef[iField].byLength;
-    int nPrecision = m_pasFieldDef[iField].byDecimals;
-    int nWidthDummy = 0;
-    int nPrecisionDummy = 0;
+    int nWidth = poSrcFieldDefn->GetWidth();
+    int nPrecision = poSrcFieldDefn->GetPrecision();
     if (nFlags & ALTER_TYPE_FLAG)
     {
-        if (IMapInfoFile::GetTABType(poNewFieldDefn, &eTABType, &nWidthDummy,
-                                     &nPrecisionDummy) < 0)
+        if (IMapInfoFile::GetTABType(poNewFieldDefn, &eTABType, nullptr,
+                                     nullptr) < 0)
             return -1;
     }
     if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
     {
-        TABFieldType eTABTypeDummy;
-        if (IMapInfoFile::GetTABType(poNewFieldDefn, &eTABTypeDummy, &nWidth,
+        // Instead of taking directly poNewFieldDefn->GetWidth()/GetPrecision(),
+        // use GetTABType() to take into account .dat limitations on
+        // width & precision to clamp what user might have specify
+        if (IMapInfoFile::GetTABType(poNewFieldDefn, nullptr, &nWidth,
                                      &nPrecision) < 0)
             return -1;
     }
@@ -1282,22 +1283,24 @@ int TABDATFile::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
     if ((nFlags & ALTER_TYPE_FLAG) &&
         eTABType != m_pasFieldDef[iField].eTABType)
     {
-        if (eTABType != TABFChar)
+        if (eTABType != TABFChar && m_numRecords > 0)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Can only convert to OFTString");
             return -1;
         }
-        if ((nFlags & ALTER_WIDTH_PRECISION_FLAG) == 0)
+        if (eTABType == TABFChar && (nFlags & ALTER_WIDTH_PRECISION_FLAG) == 0)
             nWidth = 254;
     }
 
     if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
     {
-        if (eTABType != TABFChar && nWidth != m_pasFieldDef[iField].byLength)
+        if (eTABType != TABFChar && nWidth != poSrcFieldDefn->GetWidth() &&
+            m_numRecords > 0)
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Resizing only supported on String fields");
+            CPLError(
+                CE_Failure, CPLE_NotSupported,
+                "Resizing only supported on String fields on non-empty layer");
             return -1;
         }
     }
@@ -1330,10 +1333,29 @@ int TABDATFile::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
         }
         if (nFlags & ALTER_WIDTH_PRECISION_FLAG)
         {
-            m_pasFieldDef[iField].byLength = static_cast<GByte>(nWidth);
-            m_pasFieldDef[iField].byDecimals = static_cast<GByte>(nPrecision);
+            if (eTABType == TABFChar || eTABType == TABFDecimal)
+                m_pasFieldDef[iField].byLength = static_cast<GByte>(nWidth);
+            if (eTABType == TABFDecimal)
+                m_pasFieldDef[iField].byDecimals =
+                    static_cast<GByte>(nPrecision);
         }
         return 0;
+    }
+
+    const bool bWidthPrecisionPreserved =
+        (nWidth == poSrcFieldDefn->GetWidth() &&
+         nPrecision == poSrcFieldDefn->GetPrecision());
+    if (eTABType == m_pasFieldDef[iField].eTABType && bWidthPrecisionPreserved)
+    {
+        return 0;
+    }
+
+    if (eTABType != TABFChar)
+    {
+        // should hopefully not happen given all above checks
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported AlterFieldDefn() operation");
+        return -1;
     }
 
     // Otherwise we need to do a temporary file.
