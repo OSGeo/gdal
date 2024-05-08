@@ -25,6 +25,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -102,7 +103,7 @@ class Viewshed
      *
      * @param opts Options to use when calculating viewshed.
     */
-    CPL_DLL explicit Viewshed(const Options &opts) : oOpts{opts}, poDstDS{}
+    CPL_DLL explicit Viewshed(const Options &opts) : oOpts{opts}, dfMaxDistance2{opts.maxDistance * opts.maxDistance}, poDstDS{}, dfHeightAdjFactor{0}, adfTransform{ 0, 1, 0, 0, 0, 1 }
     {
     }
 
@@ -128,11 +129,21 @@ class Viewshed
 
   private:
     Options oOpts;
+    double dfMaxDistance2;
     std::unique_ptr<GDALDataset> poDstDS;
+    double dfHeightAdjFactor;
+    std::array<double, 6> adfTransform;
+    std::vector<double> vFirstLineVal;
+    std::vector<double> vLastLineVal;
+    std::vector<double> vThisLineVal;
+    std::vector<GByte> vResult;
+    std::vector<double> vHeightResult;
 
-    void setVisibility(int iPixel, double dfZ, double *padfZVal,
-                       std::vector<GByte> &vResult);
+    void setVisibility(int iPixel, double dfZ, std::vector<double>& vHeight);
     double calcHeight(double dfZ, double dfZ2);
+    bool adjustHeightInRange(int iPixel, int iLine, double& dfHeight);
+    bool createOutputDataset(int nXSize, int nYSize);
+    bool allocate(int nXSize);
 };
 
 }  // namespace gdal
