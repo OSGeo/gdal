@@ -664,24 +664,22 @@ static EC2InstanceCertainty IsMachinePotentiallyEC2Instance()
 }
 
 /************************************************************************/
-/*                   ReadAWSWebIdentityTokenFile()                      */
+/*                   ReadAWSTokenFile()                                 */
 /************************************************************************/
 
-static bool
-ReadAWSWebIdentityTokenFile(const std::string &osWebIdentityTokenFile,
-                            std::string &webIdentityToken)
+static bool ReadAWSTokenFile(const std::string &osAWSTokenFile,
+                             std::string &awsToken)
 {
     GByte *pabyOut = nullptr;
-    if (!VSIIngestFile(nullptr, osWebIdentityTokenFile.c_str(), &pabyOut,
-                       nullptr, -1))
+    if (!VSIIngestFile(nullptr, osAWSTokenFile.c_str(), &pabyOut, nullptr, -1))
         return false;
 
-    webIdentityToken = reinterpret_cast<char *>(pabyOut);
+    awsToken = reinterpret_cast<char *>(pabyOut);
     VSIFree(pabyOut);
     // Remove trailing end-of-line character
-    if (!webIdentityToken.empty() && webIdentityToken.back() == '\n')
-        webIdentityToken.resize(webIdentityToken.size() - 1);
-    return !webIdentityToken.empty();
+    if (!awsToken.empty() && awsToken.back() == '\n')
+        awsToken.resize(awsToken.size() - 1);
+    return !awsToken.empty();
 }
 
 /************************************************************************/
@@ -753,7 +751,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(
 
     // Get token from web identity token file
     std::string webIdentityToken;
-    if (!ReadAWSWebIdentityTokenFile(webIdentityTokenFile, webIdentityToken))
+    if (!ReadAWSTokenFile(webIdentityTokenFile, webIdentityToken))
     {
         CPLDebug("AWS", "%s is empty", webIdentityTokenFile.c_str());
         return false;
@@ -879,7 +877,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
     std::string osECSToken;
     if (!osECSTokenFile.empty())
     {
-        if (!ReadAWSWebIdentityTokenFile(osECSTokenFile, osECSToken))
+        if (!ReadAWSTokenFile(osECSTokenFile, osECSToken))
         {
             CPLDebug("AWS", "%s is empty", osECSTokenFile.c_str());
         }
