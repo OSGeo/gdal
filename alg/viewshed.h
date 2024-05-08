@@ -103,7 +103,9 @@ class Viewshed
      *
      * @param opts Options to use when calculating viewshed.
     */
-    CPL_DLL explicit Viewshed(const Options &opts) : oOpts{opts}, dfMaxDistance2{opts.maxDistance * opts.maxDistance}, poDstDS{}, dfHeightAdjFactor{0}, adfTransform{ 0, 1, 0, 0, 0, 1 }
+    CPL_DLL explicit Viewshed(const Options &opts)
+        : oOpts{opts}, dfMaxDistance2{opts.maxDistance * opts.maxDistance},
+          poDstDS{}, dfHeightAdjFactor{0}, adfTransform{0, 1, 0, 0, 0, 1}
     {
     }
 
@@ -139,9 +141,9 @@ class Viewshed
     std::vector<GByte> vResult;
     std::vector<double> vHeightResult;
 
-    void setVisibility(int iPixel, double dfZ, std::vector<double>& vHeight);
+    void setVisibility(int iPixel, double dfZ);
     double calcHeight(double dfZ, double dfZ2);
-    bool adjustHeightInRange(int iPixel, int iLine, double& dfHeight);
+    bool adjustHeightInRange(int iPixel, int iLine, double &dfHeight);
     bool createOutputDataset(int nXSize, int nYSize);
     bool allocate(int nXSize);
 };
