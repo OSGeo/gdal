@@ -859,6 +859,36 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
                                    osPathForOption.c_str(),
                                    "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", "")
                              : std::string());
+    // coverity[tainted_data]
+    const std::string osECSTokenFile(
+        (osECSFullURI.empty() && osECSRelativeURI.empty())
+            ? std::string()
+            : VSIGetPathSpecificOption(osPathForOption.c_str(),
+                                       "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE",
+                                       ""));
+
+    // coverity[tainted_data]
+    const std::string osECSTokenValue(
+        (osECSFullURI.empty() && osECSRelativeURI.empty() &&
+         !osECSTokenFile.empty())
+            ? std::string()
+            : VSIGetPathSpecificOption(osPathForOption.c_str(),
+                                       "AWS_CONTAINER_AUTHORIZATION_TOKEN",
+                                       ""));
+
+    std::string osECSToken;
+    if (!osECSTokenFile.empty())
+    {
+        if (!ReadAWSWebIdentityTokenFile(osECSTokenFile, osECSToken))
+        {
+            CPLDebug("AWS", "%s is empty", osECSTokenFile.c_str());
+        }
+    }
+    else if (!osECSTokenValue.empty())
+    {
+        osECSToken = osECSTokenValue;
+    }
+
     std::string osToken;
     if (!osECSFullURI.empty())
     {
@@ -996,6 +1026,11 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
     {
         aosOptions.SetNameValue(
             "HEADERS", ("X-aws-ec2-metadata-token: " + osToken).c_str());
+    }
+    else if (!osECSToken.empty())
+    {
+        aosOptions.SetNameValue("HEADERS",
+                                ("Authorization: " + osECSToken).c_str());
     }
     CPLHTTPResult *psResult =
         CPLHTTPFetch(osURLRefreshCredentials.c_str(), aosOptions.List());
