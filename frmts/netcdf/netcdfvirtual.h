@@ -137,8 +137,7 @@ class netCDFVGeneralAttribute : public netCDFVAttribute
     VClass value;
 
   public:
-    netCDFVGeneralAttribute<VClass, ntype>(const char *a_name,
-                                           const VClass *a_value)
+    netCDFVGeneralAttribute(const char *a_name, const VClass *a_value)
         : name(a_name), value(*a_value)
     {
     }
