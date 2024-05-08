@@ -129,6 +129,10 @@ class Viewshed
   private:
     Options oOpts;
     std::unique_ptr<GDALDataset> poDstDS;
+
+    void setVisibility(int iPixel, double dfZ, double *padfZVal,
+                       std::vector<GByte> &vResult);
+    double calcHeight(double dfZ, double dfZ2);
 };
 
 }  // namespace gdal

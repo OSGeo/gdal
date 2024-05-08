@@ -215,19 +215,6 @@ namespace gdal
 namespace
 {
 
-void SetVisibility(int iPixel, double dfZ, double dfZTarget, double *padfZVal,
-                   std::vector<GByte> &vResult, GByte byVisibleVal,
-                   GByte byInvisibleVal)
-{
-    if (padfZVal[iPixel] + dfZTarget < dfZ)
-        vResult[iPixel] = byInvisibleVal;
-    else
-        vResult[iPixel] = byVisibleVal;
-
-    if (padfZVal[iPixel] < dfZ)
-        padfZVal[iPixel] = dfZ;
-}
-
 bool AdjustHeightInRange(const double *adfGeoTransform, int iPixel, int iLine,
                          double &dfHeight, double dfDistance2,
                          double dfCurvCoeff, double dfSphereDiameter)
@@ -271,29 +258,40 @@ double CalcHeightEdge(int i, int j, double Za, double Zb, double Zo)
         return ((Za - Zo) * i + (Zb - Zo) * (j - i)) / (j - 1) + Zo;
 }
 
-double CalcHeight(double dfZ, double dfZ2, Viewshed::CellMode eMode)
-{
-    double dfHeight = dfZ;
+}  // unnamed namespace
 
-    switch (eMode)
+void Viewshed::setVisibility(int iPixel, double dfZ, double *padfZVal,
+                             std::vector<GByte> &vResult)
+{
+    if (padfZVal[iPixel] + oOpts.targetHeight < dfZ)
+        vResult[iPixel] = oOpts.invisibleVal;
+    else
+        vResult[iPixel] = oOpts.visibleVal;
+
+    if (padfZVal[iPixel] < dfZ)
+        padfZVal[iPixel] = dfZ;
+}
+
+double Viewshed::calcHeight(double dfDiagZ, double dfEdgeZ)
+{
+    double dfHeight = dfEdgeZ;
+
+    switch (oOpts.cellMode)
     {
-        case Viewshed::CellMode::Edge:
-            dfHeight = dfZ2;
-            break;
         case Viewshed::CellMode::Max:
-            dfHeight = std::max(dfZ, dfZ2);
+            dfHeight = std::max(dfDiagZ, dfEdgeZ);
             break;
         case Viewshed::CellMode::Min:
-            dfHeight = std::min(dfZ, dfZ2);
+            dfHeight = std::min(dfDiagZ, dfEdgeZ);
             break;
         case Viewshed::CellMode::Diagonal:
-            dfHeight = dfZ;
+            dfHeight = dfDiagZ;
+            break;
+        default:  // Edge case set in initialization.
             break;
     }
     return dfHeight;
 }
-
-}  // unnamed namespace
 
 bool Viewshed::run(GDALRasterBandH hBand, GDALProgressFunc pfnProgress,
                    void *pProgressArg)
@@ -467,7 +465,6 @@ bool Viewshed::run(GDALRasterBandH hBand, GDALProgressFunc pfnProgress,
     }
 
     const double dfZObserver = oOpts.observer.z + padfFirstLineVal[nX];
-    double dfZ = 0.0;
     const double dfDistance2 = oOpts.maxDistance * oOpts.maxDistance;
 
     /* If we can't get a SemiMajor axis from the SRS, it will be
@@ -534,15 +531,14 @@ bool Viewshed::run(GDALRasterBandH hBand, GDALProgressFunc pfnProgress,
                                 padfFirstLineVal[iPixel], dfDistance2,
                                 oOpts.curveCoeff, dfSphereDiameter))
         {
-            dfZ = CalcHeightLine(nX - iPixel, padfFirstLineVal[iPixel + 1],
-                                 dfZObserver);
+            double dfZ = CalcHeightLine(
+                nX - iPixel, padfFirstLineVal[iPixel + 1], dfZObserver);
 
             if (oOpts.outputMode != OutputMode::Normal)
                 dfHeightResult[iPixel] = std::max(
                     0.0, (dfZ - padfFirstLineVal[iPixel] + dfGroundLevel));
 
-            SetVisibility(iPixel, dfZ, oOpts.targetHeight, padfFirstLineVal,
-                          vResult, oOpts.visibleVal, oOpts.invisibleVal);
+            setVisibility(iPixel, dfZ, padfFirstLineVal, vResult);
         }
         else
         {
@@ -564,15 +560,14 @@ bool Viewshed::run(GDALRasterBandH hBand, GDALProgressFunc pfnProgress,
                                 padfFirstLineVal[iPixel], dfDistance2,
                                 oOpts.curveCoeff, dfSphereDiameter))
         {
-            dfZ = CalcHeightLine(iPixel - nX, padfFirstLineVal[iPixel - 1],
-                                 dfZObserver);
+            double dfZ = CalcHeightLine(
+                iPixel - nX, padfFirstLineVal[iPixel - 1], dfZObserver);
 
             if (oOpts.outputMode != OutputMode::Normal)
                 dfHeightResult[iPixel] = std::max(
                     0.0, (dfZ - padfFirstLineVal[iPixel] + dfGroundLevel));
 
-            SetVisibility(iPixel, dfZ, oOpts.targetHeight, padfFirstLineVal,
-                          vResult, oOpts.visibleVal, oOpts.invisibleVal);
+            setVisibility(iPixel, dfZ, padfFirstLineVal, vResult);
         }
         else
         {
@@ -630,14 +625,14 @@ bool Viewshed::run(GDALRasterBandH hBand, GDALProgressFunc pfnProgress,
                                 padfThisLineVal[nX], dfDistance2,
                                 oOpts.curveCoeff, dfSphereDiameter))
         {
-            dfZ = CalcHeightLine(nY - iLine, padfLastLineVal[nX], dfZObserver);
+            double dfZ =
+                CalcHeightLine(nY - iLine, padfLastLineVal[nX], dfZObserver);
 
             if (oOpts.outputMode != OutputMode::Normal)
                 dfHeightResult[nX] =
                     std::max(0.0, (dfZ - padfThisLineVal[nX] + dfGroundLevel));
 
-            SetVisibility(nX, dfZ, oOpts.targetHeight, padfThisLineVal, vResult,
-                          oOpts.visibleVal, oOpts.invisibleVal);
+            setVisibility(nX, dfZ, padfThisLineVal, vResult);
         }
         else
         {
@@ -657,32 +652,31 @@ bool Viewshed::run(GDALRasterBandH hBand, GDALProgressFunc pfnProgress,
                                     dfDistance2, oOpts.curveCoeff,
                                     dfSphereDiameter))
             {
+                double dfDiagZ = 0;
+                double dfEdgeZ = 0;
                 if (oOpts.cellMode != CellMode::Edge)
-                    dfZ = CalcHeightDiagonal(
+                    dfDiagZ = CalcHeightDiagonal(
                         nX - iPixel, nY - iLine, padfThisLineVal[iPixel + 1],
                         padfLastLineVal[iPixel], dfZObserver);
 
                 if (oOpts.cellMode != CellMode::Diagonal)
-                {
-                    double dfZ2 =
-                        nX - iPixel >= nY - iLine
-                            ? CalcHeightEdge(nY - iLine, nX - iPixel,
-                                             padfLastLineVal[iPixel + 1],
-                                             padfThisLineVal[iPixel + 1],
-                                             dfZObserver)
-                            : CalcHeightEdge(nX - iPixel, nY - iLine,
-                                             padfLastLineVal[iPixel + 1],
-                                             padfLastLineVal[iPixel],
-                                             dfZObserver);
-                    dfZ = CalcHeight(dfZ, dfZ2, oOpts.cellMode);
-                }
+                    dfEdgeZ = nX - iPixel >= nY - iLine
+                                  ? CalcHeightEdge(nY - iLine, nX - iPixel,
+                                                   padfLastLineVal[iPixel + 1],
+                                                   padfThisLineVal[iPixel + 1],
+                                                   dfZObserver)
+                                  : CalcHeightEdge(nX - iPixel, nY - iLine,
+                                                   padfLastLineVal[iPixel + 1],
+                                                   padfLastLineVal[iPixel],
+                                                   dfZObserver);
+
+                double dfZ = calcHeight(dfDiagZ, dfEdgeZ);
 
                 if (oOpts.outputMode != OutputMode::Normal)
                     dfHeightResult[iPixel] = std::max(
                         0.0, (dfZ - padfThisLineVal[iPixel] + dfGroundLevel));
 
-                SetVisibility(iPixel, dfZ, oOpts.targetHeight, padfThisLineVal,
-                              vResult, oOpts.visibleVal, oOpts.invisibleVal);
+                setVisibility(iPixel, dfZ, padfThisLineVal, vResult);
             }
             else
             {
@@ -706,31 +700,30 @@ bool Viewshed::run(GDALRasterBandH hBand, GDALProgressFunc pfnProgress,
                                     dfDistance2, oOpts.curveCoeff,
                                     dfSphereDiameter))
             {
+                double dfDiagZ = 0;
+                double dfEdgeZ = 0;
                 if (oOpts.cellMode != CellMode::Edge)
-                    dfZ = CalcHeightDiagonal(
+                    dfDiagZ = CalcHeightDiagonal(
                         iPixel - nX, nY - iLine, padfThisLineVal[iPixel - 1],
                         padfLastLineVal[iPixel], dfZObserver);
                 if (oOpts.cellMode != CellMode::Diagonal)
-                {
-                    double dfZ2 =
-                        iPixel - nX >= nY - iLine
-                            ? CalcHeightEdge(nY - iLine, iPixel - nX,
-                                             padfLastLineVal[iPixel - 1],
-                                             padfThisLineVal[iPixel - 1],
-                                             dfZObserver)
-                            : CalcHeightEdge(iPixel - nX, nY - iLine,
-                                             padfLastLineVal[iPixel - 1],
-                                             padfLastLineVal[iPixel],
-                                             dfZObserver);
-                    dfZ = CalcHeight(dfZ, dfZ2, oOpts.cellMode);
-                }
+                    dfEdgeZ = iPixel - nX >= nY - iLine
+                                  ? CalcHeightEdge(nY - iLine, iPixel - nX,
+                                                   padfLastLineVal[iPixel - 1],
+                                                   padfThisLineVal[iPixel - 1],
+                                                   dfZObserver)
+                                  : CalcHeightEdge(iPixel - nX, nY - iLine,
+                                                   padfLastLineVal[iPixel - 1],
+                                                   padfLastLineVal[iPixel],
+                                                   dfZObserver);
+
+                double dfZ = calcHeight(dfDiagZ, dfEdgeZ);
 
                 if (oOpts.outputMode != OutputMode::Normal)
                     dfHeightResult[iPixel] = std::max(
                         0.0, (dfZ - padfThisLineVal[iPixel] + dfGroundLevel));
 
-                SetVisibility(iPixel, dfZ, oOpts.targetHeight, padfThisLineVal,
-                              vResult, oOpts.visibleVal, oOpts.invisibleVal);
+                setVisibility(iPixel, dfZ, padfThisLineVal, vResult);
             }
             else
             {
@@ -787,14 +780,14 @@ bool Viewshed::run(GDALRasterBandH hBand, GDALProgressFunc pfnProgress,
                                 padfThisLineVal[nX], dfDistance2,
                                 oOpts.curveCoeff, dfSphereDiameter))
         {
-            dfZ = CalcHeightLine(iLine - nY, padfLastLineVal[nX], dfZObserver);
+            double dfZ =
+                CalcHeightLine(iLine - nY, padfLastLineVal[nX], dfZObserver);
 
             if (oOpts.outputMode != OutputMode::Normal)
                 dfHeightResult[nX] =
                     std::max(0.0, (dfZ - padfThisLineVal[nX] + dfGroundLevel));
 
-            SetVisibility(nX, dfZ, oOpts.targetHeight, padfThisLineVal, vResult,
-                          oOpts.visibleVal, oOpts.invisibleVal);
+            setVisibility(nX, dfZ, padfThisLineVal, vResult);
         }
         else
         {
@@ -815,32 +808,31 @@ bool Viewshed::run(GDALRasterBandH hBand, GDALProgressFunc pfnProgress,
                                     dfDistance2, oOpts.curveCoeff,
                                     dfSphereDiameter))
             {
+                double dfDiagZ = 0;
+                double dfEdgeZ = 0;
                 if (oOpts.cellMode != CellMode::Edge)
-                    dfZ = CalcHeightDiagonal(
+                    dfDiagZ = CalcHeightDiagonal(
                         nX - iPixel, iLine - nY, padfThisLineVal[iPixel + 1],
                         padfLastLineVal[iPixel], dfZObserver);
 
                 if (oOpts.cellMode != CellMode::Diagonal)
-                {
-                    double dfZ2 =
-                        nX - iPixel >= iLine - nY
-                            ? CalcHeightEdge(iLine - nY, nX - iPixel,
-                                             padfLastLineVal[iPixel + 1],
-                                             padfThisLineVal[iPixel + 1],
-                                             dfZObserver)
-                            : CalcHeightEdge(nX - iPixel, iLine - nY,
-                                             padfLastLineVal[iPixel + 1],
-                                             padfLastLineVal[iPixel],
-                                             dfZObserver);
-                    dfZ = CalcHeight(dfZ, dfZ2, oOpts.cellMode);
-                }
+                    dfEdgeZ = nX - iPixel >= iLine - nY
+                                  ? CalcHeightEdge(iLine - nY, nX - iPixel,
+                                                   padfLastLineVal[iPixel + 1],
+                                                   padfThisLineVal[iPixel + 1],
+                                                   dfZObserver)
+                                  : CalcHeightEdge(nX - iPixel, iLine - nY,
+                                                   padfLastLineVal[iPixel + 1],
+                                                   padfLastLineVal[iPixel],
+                                                   dfZObserver);
+
+                double dfZ = calcHeight(dfDiagZ, dfEdgeZ);
 
                 if (oOpts.outputMode != OutputMode::Normal)
                     dfHeightResult[iPixel] = std::max(
                         0.0, (dfZ - padfThisLineVal[iPixel] + dfGroundLevel));
 
-                SetVisibility(iPixel, dfZ, oOpts.targetHeight, padfThisLineVal,
-                              vResult, oOpts.visibleVal, oOpts.invisibleVal);
+                setVisibility(iPixel, dfZ, padfThisLineVal, vResult);
             }
             else
             {
@@ -864,32 +856,31 @@ bool Viewshed::run(GDALRasterBandH hBand, GDALProgressFunc pfnProgress,
                                     dfDistance2, oOpts.curveCoeff,
                                     dfSphereDiameter))
             {
+                double dfDiagZ = 0;
+                double dfEdgeZ = 0;
                 if (oOpts.cellMode != CellMode::Edge)
-                    dfZ = CalcHeightDiagonal(
+                    dfDiagZ = CalcHeightDiagonal(
                         iPixel - nX, iLine - nY, padfThisLineVal[iPixel - 1],
                         padfLastLineVal[iPixel], dfZObserver);
 
                 if (oOpts.cellMode != CellMode::Diagonal)
-                {
-                    double dfZ2 =
-                        iPixel - nX >= iLine - nY
-                            ? CalcHeightEdge(iLine - nY, iPixel - nX,
-                                             padfLastLineVal[iPixel - 1],
-                                             padfThisLineVal[iPixel - 1],
-                                             dfZObserver)
-                            : CalcHeightEdge(iPixel - nX, iLine - nY,
-                                             padfLastLineVal[iPixel - 1],
-                                             padfLastLineVal[iPixel],
-                                             dfZObserver);
-                    dfZ = CalcHeight(dfZ, dfZ2, oOpts.cellMode);
-                }
+                    dfEdgeZ = iPixel - nX >= iLine - nY
+                                  ? CalcHeightEdge(iLine - nY, iPixel - nX,
+                                                   padfLastLineVal[iPixel - 1],
+                                                   padfThisLineVal[iPixel - 1],
+                                                   dfZObserver)
+                                  : CalcHeightEdge(iPixel - nX, iLine - nY,
+                                                   padfLastLineVal[iPixel - 1],
+                                                   padfLastLineVal[iPixel],
+                                                   dfZObserver);
+
+                double dfZ = calcHeight(dfDiagZ, dfEdgeZ);
 
                 if (oOpts.outputMode != OutputMode::Normal)
                     dfHeightResult[iPixel] = std::max(
                         0.0, (dfZ - padfThisLineVal[iPixel] + dfGroundLevel));
 
-                SetVisibility(iPixel, dfZ, oOpts.targetHeight, padfThisLineVal,
-                              vResult, oOpts.visibleVal, oOpts.invisibleVal);
+                setVisibility(iPixel, dfZ, padfThisLineVal, vResult);
             }
             else
             {
