@@ -2507,11 +2507,11 @@ def test_ogr_mitab_read_multi_line_mid():
     f = lyr.GetNextFeature()
     assert f["Name"] == "NAME1"
     assert f["Notes"] == "MULTI\n\nLINE"
-    assert f["Awesome"] == "F"
+    assert f["Awesome"] is False
     f = lyr.GetNextFeature()
     assert f["Name"] == "NAME2"
     assert f["Notes"] == "MULTI\nLINE2"
-    assert f["Awesome"] == "F"
+    assert f["Awesome"] is False
 
 
 ###############################################################################
@@ -2536,37 +2536,47 @@ def test_ogr_mitab_read_single_field_mid():
 
 @pytest.mark.parametrize("ext", ["mif", "tab"])
 def test_ogr_mitab_read_write_all_data_types(tmp_vsimem, ext):
+    def check_features(lyr):
+        f = lyr.GetNextFeature()
+        assert f["field1"] == "test"
+        assert f["Field2"] == 120
+        assert f["Field3"] == 12345
+        assert (
+            lyr.GetLayerDefn()
+            .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("Field4"))
+            .GetType()
+            == ogr.OFTInteger64
+        )
+        assert f["Field4"] == 123456789012345
+        assert f["Field5"] == 12.34
+        assert f["Field6"] == 12.34
+        assert f["Field7"] == "2022/12/31"
+        assert f["Field8"] == "23:59:00"
+        assert f["Field9"] == "2022/03/23 14:56:00"
+        assert f["Field10"] is True
+
+        f = lyr.GetNextFeature()
+        assert f["Field10"] is False
 
     ds = ogr.Open("data/mitab/all_possible_fields." + ext)
     lyr = ds.GetLayer(0)
-    f = lyr.GetNextFeature()
-    assert f["field1"] == "test"
-    assert f["Field2"] == 120
-    assert f["Field3"] == 12345
-    assert (
-        lyr.GetLayerDefn()
-        .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("Field4"))
-        .GetType()
-        == ogr.OFTInteger64
-    )
-    assert f["Field4"] == 123456789012345
-    assert f["Field5"] == 12.34
-    assert f["Field6"] == 12.34
-    assert f["Field7"] == "2022/12/31"
-    assert f["Field8"] == "23:59:00"
-    assert f["Field9"] == "2022/03/23 14:56:00"
-    assert f["Field10"] == "T"
+    check_features(lyr)
 
     filename = tmp_vsimem / f"test_ogr_mitab_read_write_all_data_types.{ext}"
     out_ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(filename)
     out_lyr = out_ds.CreateLayer("test", geom_type=ogr.wkbNone)
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         out_lyr.CreateField(lyr.GetLayerDefn().GetFieldDefn(i))
-    out_f = ogr.Feature(out_lyr.GetLayerDefn())
-    out_f.SetFrom(f)
-    assert out_lyr.CreateFeature(out_f) == ogr.OGRERR_NONE
-    out_f = None
+    for f in lyr:
+        out_f = ogr.Feature(out_lyr.GetLayerDefn())
+        out_f.SetFrom(f)
+        assert out_lyr.CreateFeature(out_f) == ogr.OGRERR_NONE
+        out_f = None
     out_ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    check_features(lyr)
 
 
 ###############################################################################

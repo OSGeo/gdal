@@ -101,10 +101,9 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
         return -1;
     }
 
-    OGRFieldDefn *poFDefn = nullptr;
     for (int i = 0; i < nFields; i++)
     {
-        poFDefn = GetFieldDefnRef(i);
+        const auto poFDefn = GetFieldDefnRef(i);
         switch (poFDefn->GetType())
         {
 #ifdef MITAB_USE_OFTDATETIME
@@ -141,6 +140,22 @@ int TABFeature::ReadRecordFromMIDFile(MIDDATAFile *fp)
                 break;
             }
 #endif
+            case OFTInteger:
+            {
+                if (poFDefn->GetSubType() == OFSTBoolean)
+                {
+                    char ch = papszToken[i][0];
+                    SetField(i, (ch == 'T' || ch == 't' || ch == 'Y' ||
+                                 ch == 'y' || ch == '1')
+                                    ? 1
+                                    : 0);
+                }
+                else
+                {
+                    SetField(i, papszToken[i]);
+                }
+                break;
+            }
             case OFTString:
             {
                 CPLString osValue(papszToken[i]);
@@ -289,6 +304,18 @@ int TABFeature::WriteRecordToMIDFile(MIDDATAFile *fp)
                 break;
             }
 #endif
+            case OFTInteger:
+            {
+                if (poFDefn->GetSubType() == OFSTBoolean)
+                {
+                    fp->WriteLine("%c", GetFieldAsInteger(iField) ? 'T' : 'F');
+                }
+                else
+                {
+                    fp->WriteLine("%s", GetFieldAsString(iField));
+                }
+                break;
+            }
             default:
                 fp->WriteLine("%s", GetFieldAsString(iField));
         }

@@ -996,7 +996,8 @@ int TABFile::ParseTABFileFields()
                      *------------------------------------------------*/
                     nStatus = m_poDATFile->ValidateFieldInfoFromTAB(
                         iField, osFieldName, TABFLogical, 0, 0);
-                    poFieldDefn = new OGRFieldDefn(osFieldName, OFTString);
+                    poFieldDefn = new OGRFieldDefn(osFieldName, OFTInteger);
+                    poFieldDefn->SetSubType(OFSTBoolean);
                     poFieldDefn->SetWidth(1);
                 }
                 else
@@ -2044,7 +2045,9 @@ int TABFile::SetFeatureDefn(
             switch (poFieldDefn->GetType())
             {
                 case OFTInteger:
-                    eMapInfoType = TABFInteger;
+                    eMapInfoType = poFieldDefn->GetSubType() == OFSTBoolean
+                                       ? TABFLogical
+                                       : TABFInteger;
                     break;
                 case OFTReal:
                     if (poFieldDefn->GetWidth() > 0 ||
@@ -2226,7 +2229,8 @@ int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
             /*-------------------------------------------------
              * LOGICAL type (value "T" or "F")
              *------------------------------------------------*/
-            poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTString);
+            poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger);
+            poFieldDefn->SetSubType(OFSTBoolean);
             poFieldDefn->SetWidth(1);
             break;
         default:

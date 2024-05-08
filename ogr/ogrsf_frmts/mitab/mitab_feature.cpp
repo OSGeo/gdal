@@ -390,9 +390,9 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
             }
             case TABFLogical:
             {
-                const char *pszValue = poDATFile->ReadLogicalField(
+                const bool bValue = poDATFile->ReadLogicalField(
                     poDATFile->GetFieldWidth(iField));
-                SetField(iField, pszValue);
+                SetField(iField, bValue ? 1 : 0);
                 break;
             }
             case TABFDate:
@@ -557,8 +557,9 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
                     GetFieldAsDouble(iField), poINDFile, panIndexNo[iField]);
                 break;
             case TABFLogical:
-                nStatus = poDATFile->WriteLogicalField(
-                    GetFieldAsString(iField), poINDFile, panIndexNo[iField]);
+                nStatus =
+                    poDATFile->WriteLogicalField(GetFieldAsInteger(iField) == 1,
+                                                 poINDFile, panIndexNo[iField]);
                 break;
             case TABFDate:
 #ifdef MITAB_USE_OFTDATETIME
