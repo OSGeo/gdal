@@ -3367,7 +3367,11 @@ CPLErr GDALTileIndexDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     const bool bNeedInitBuffer = NeedInitBuffer(nBandCount, panBandMap);
 
-    const auto RenderSource = [=](SourceDesc &oSourceDesc)
+    const auto RenderSource = [this, bNeedInitBuffer, nBandNrMax, nXOff, nYOff,
+                               nXSize, nYSize, dfXOff, dfYOff, dfXSize, dfYSize,
+                               nBufXSize, nBufYSize, pData, eBufType,
+                               nBandCount, panBandMap, nPixelSpace, nLineSpace,
+                               nBandSpace, psExtraArg](SourceDesc &oSourceDesc)
     {
         auto &poTileDS = oSourceDesc.poDS;
         auto &poSource = oSourceDesc.poSource;
