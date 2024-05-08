@@ -205,9 +205,15 @@ OGRElasticLayer::OGRElasticLayer(const char *pszLayerName,
     {
         OGRFieldDefn oFieldDefn("_index", OFTString);
         poFeatureDefn->AddFieldDefn(&oFieldDefn);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         m_aaosFieldPaths.insert(m_aaosFieldPaths.begin(),
                                 std::vector<CPLString>());
-
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         for (auto &kv : m_aosMapToFieldIndex)
         {
             kv.second++;

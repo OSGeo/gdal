@@ -1063,9 +1063,16 @@ bool ZarrArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
     // Make sure that arrayStep[i] are positive for sake of simplicity
     if (negativeStep)
     {
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         arrayStartIdxMod.resize(nDims);
         arrayStepMod.resize(nDims);
         bufferStrideMod.resize(nDims);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         for (size_t i = 0; i < nDims; ++i)
         {
             if (arrayStep[i] < 0)
@@ -1558,9 +1565,16 @@ bool ZarrArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
     // Make sure that arrayStep[i] are positive for sake of simplicity
     if (negativeStep)
     {
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         arrayStartIdxMod.resize(nDims);
         arrayStepMod.resize(nDims);
         bufferStrideMod.resize(nDims);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         for (size_t i = 0; i < nDims; ++i)
         {
             if (arrayStep[i] < 0)

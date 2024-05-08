@@ -2021,7 +2021,14 @@ void GRIBArray::Finalize(GRIBGroup *poGroup, inventoryType *psInv)
         attr->Write("validity_time");
     }
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     m_dims.insert(m_dims.begin(), poDimTime);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     if (m_poSRS)
     {
         auto mapping = m_poSRS->GetDataAxisToSRSAxisMapping();

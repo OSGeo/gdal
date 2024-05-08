@@ -822,7 +822,14 @@ void field2kml(OGRFeature *poOgrFeat, OGRLIBKMLLayer *poOgrLayer,
         {
             if (!poKmlExtendedData)
                 poKmlExtendedData = poKmlFactory->CreateExtendedData();
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
             poKmlExtendedData->add_data(poKmlData);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         }
     }
 
