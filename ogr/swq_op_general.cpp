@@ -130,18 +130,21 @@ int swq_test_like(const char *input, const char *pattern, char chEscape,
                     return true;
                 };
 
-                const auto pattern_codepoint_size =
-                    utf8codepointcalcsize(pattern);
+                const auto pattern_codepoint_size = utf8codepointcalcsize(
+                    reinterpret_cast<const utf8_int8_t *>(pattern));
                 if (!IsStringLongEnough(pattern, pattern_codepoint_size))
                     return 0;
                 utf8_int32_t pattern_codepoint = 0;
-                utf8codepoint(pattern, &pattern_codepoint);
+                utf8codepoint(reinterpret_cast<const utf8_int8_t *>(pattern),
+                              &pattern_codepoint);
 
-                const auto input_codepoint_size = utf8codepointcalcsize(input);
+                const auto input_codepoint_size = utf8codepointcalcsize(
+                    reinterpret_cast<const utf8_int8_t *>(input));
                 if (!IsStringLongEnough(input, input_codepoint_size))
                     return 0;
                 utf8_int32_t input_codepoint = 0;
-                utf8codepoint(input, &input_codepoint);
+                utf8codepoint(reinterpret_cast<const utf8_int8_t *>(input),
+                              &input_codepoint);
 
                 if (!(input_codepoint == pattern_codepoint ||
                       utf8uprcodepoint(input_codepoint) ==
