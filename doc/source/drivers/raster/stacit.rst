@@ -18,10 +18,6 @@ Thus, translating it into VRT will result in a VRT file that directly references
 
 Note that `STAC API ItemCollections <https://github.com/radiantearth/stac-api-spec/blob/main/fragments/itemcollection/README.md>`_ are not the same as  `STAC Collections <https://github.com/radiantearth/stac-spec/tree/master/collection-spec>`_. STAC API ItemCollections are GeoJSON FeatureCollections enhanced with STAC entities.
 
-Note that when the ItemCollections contains overlapping items, and that some items
-are fully covered by other items that are more recent, the STACIT virtual mosaic will
-not list those fully covered items not participating to the pixel values of the mosaic.
-
 Open syntax
 -----------
 
@@ -65,6 +61,28 @@ The following open options are supported:
       :default: AVERAGE
 
       Strategy to use to determine dataset resolution.
+
+-  .. oo:: OVERLAP_STRATEGY
+      :choices: REMOVE_IF_NO_NODATA, USE_ALL, USE_MOST_RECENT
+      :default: REMOVE_IF_NO_NODATA
+      :since: 3.9.1
+
+      Strategy to use when the ItemCollections contains overlapping items, and
+      that some items are fully covered by other items that are more recent.
+
+      Starting with GDAL 3.9.1, the ``REMOVE_IF_NO_NODATA`` strategy is applied
+      by default. The STACIT virtual mosaic will omit fully covered items,
+      only if no band declares a nodata value.
+      (Note that the determination whether a band has a nodata value of not is
+      done by opening one of the items, and assuming it is representative of
+      the characteristics of the others in the collection).
+
+      This strategy can be forced in all cases by selecting the ``USE_MOST_RECENT``
+      strategy (this was the strategy applied prior to 3.9.1)
+
+      The ``USE_ALL`` strategy always causes all items to be listed in the virtual
+      mosaic, with the most recent ones being rendered on top of the less recent ones.
+
 
 Subdatasets
 -----------
