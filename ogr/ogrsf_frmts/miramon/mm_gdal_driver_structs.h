@@ -280,7 +280,7 @@ struct MiraMonVectorMetaData
 {
     char *szLayerTitle;
     char *aLayerName;
-    char *aArcFile;  // Polygon's arc name
+    char *aArcFile;  // Polygon's arc name or arc's polygon name.
     int ePlainLT;    // Plain layer type (no 3D specified): MM_LayerType_Point,
                      // MM_LayerType_Arc, MM_LayerType_Node, MM_LayerType_Pol
     char *pSRS;      // EPSG code of the spatial reference system.
