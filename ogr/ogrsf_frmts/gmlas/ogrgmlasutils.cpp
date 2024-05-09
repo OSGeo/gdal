@@ -201,7 +201,10 @@ CPLString OGRGMLASAddSerialNumber(const CPLString &osNameIn, int iOccurrence,
         }
         else
         {
-            osName.resize(osName.size() - nDigitsSize);
+            const int nTruncatedSize =
+                static_cast<int>(osName.size()) - nDigitsSize;
+            if (nTruncatedSize >= 0)
+                osName.resize(nTruncatedSize);
             osName += szDigits;
         }
     }

@@ -390,7 +390,14 @@ bool WCSDataset110::ExtractGridInfo()
     {
         CPLString s = offset_1.back();
         offset_1.erase(offset_1.end() - 1);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         offset_2.insert(offset_2.begin(), s);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     }
     std::vector<std::vector<double>> offsets;
     if (swap)

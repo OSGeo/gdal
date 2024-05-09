@@ -1070,9 +1070,12 @@ char *CPLUTF8ForceToASCII(const char *pszStr, char chReplacementChar)
         if (*reinterpret_cast<const unsigned char *>(pszPtr) > 127)
         {
             utf8_int32_t codepoint;
-            if (pszPtr + utf8codepointcalcsize(pszPtr) > pszEnd)
+            if (pszPtr + utf8codepointcalcsize(
+                             reinterpret_cast<const utf8_int8_t *>(pszPtr)) >
+                pszEnd)
                 break;
-            auto pszNext = utf8codepoint(pszPtr, &codepoint);
+            auto pszNext = reinterpret_cast<const char *>(utf8codepoint(
+                reinterpret_cast<const utf8_int8_t *>(pszPtr), &codepoint));
             char ch = chReplacementChar;
             for (const auto &latin1char : aLatinCharacters)
             {
