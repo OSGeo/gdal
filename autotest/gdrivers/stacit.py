@@ -156,7 +156,7 @@ def test_stacit_overlapping_sources():
 
     # Check that the source covered by another one is not listed
     vrt = ds.GetMetadata("xml:VRT")[0]
-    placement_vrt = """
+    only_one_simple_source = """
     <ColorInterp>Gray</ColorInterp>
     <SimpleSource>
       <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
@@ -166,4 +166,78 @@ def test_stacit_overlapping_sources():
     </SimpleSource>
   </VRTRasterBand>"""
     # print(vrt)
-    assert placement_vrt in vrt
+    assert only_one_simple_source in vrt
+
+    ds = gdal.OpenEx(
+        "data/stacit/overlapping_sources.json",
+        open_options=["OVERLAP_STRATEGY=REMOVE_IF_NO_NODATA"],
+    )
+    assert ds is not None
+    vrt = ds.GetMetadata("xml:VRT")[0]
+    assert only_one_simple_source in vrt
+
+    ds = gdal.OpenEx(
+        "data/stacit/overlapping_sources.json",
+        open_options=["OVERLAP_STRATEGY=USE_MOST_RECENT"],
+    )
+    assert ds is not None
+    vrt = ds.GetMetadata("xml:VRT")[0]
+    assert only_one_simple_source in vrt
+
+    ds = gdal.OpenEx(
+        "data/stacit/overlapping_sources.json",
+        open_options=["OVERLAP_STRATEGY=USE_ALL"],
+    )
+    assert ds is not None
+    assert len(ds.GetFileList()) == 4
+    vrt = ds.GetMetadata("xml:VRT")[0]
+
+
+@pytest.mark.require_geos
+def test_stacit_overlapping_sources_with_nodata():
+
+    ds = gdal.Open("data/stacit/overlapping_sources_with_nodata.json")
+    assert ds is not None
+    assert len(ds.GetFileList()) == 3
+    vrt = ds.GetMetadata("xml:VRT")[0]
+    # print(vrt)
+    two_sources = """<ComplexSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <NODATA>0</NODATA>
+    </ComplexSource>
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">data/byte_nodata_0.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SrcRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
+      <NODATA>0</NODATA>
+    </ComplexSource>"""
+    assert two_sources in vrt
+
+    ds = gdal.OpenEx(
+        "data/stacit/overlapping_sources_with_nodata.json",
+        open_options=["OVERLAP_STRATEGY=REMOVE_IF_NO_NODATA"],
+    )
+    assert ds is not None
+    vrt = ds.GetMetadata("xml:VRT")[0]
+    assert len(ds.GetFileList()) == 3
+    assert two_sources in vrt
+
+    ds = gdal.OpenEx(
+        "data/stacit/overlapping_sources_with_nodata.json",
+        open_options=["OVERLAP_STRATEGY=USE_MOST_RECENT"],
+    )
+    assert ds is not None
+    assert len(ds.GetFileList()) == 2
+
+    ds = gdal.OpenEx(
+        "data/stacit/overlapping_sources_with_nodata.json",
+        open_options=["OVERLAP_STRATEGY=USE_ALL"],
+    )
+    assert ds is not None
+    vrt = ds.GetMetadata("xml:VRT")[0]
+    assert len(ds.GetFileList()) == 3
+    assert two_sources in vrt
