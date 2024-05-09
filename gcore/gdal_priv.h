@@ -536,23 +536,31 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     explicit GDALDataset(int bForceCachedIO);
 
     void RasterInitialize(int, int);
-    void SetBand(int, GDALRasterBand *);
+    void SetBand(int nNewBand, GDALRasterBand *poBand);
     void SetBand(int nNewBand, std::unique_ptr<GDALRasterBand> poBand);
 
     GDALDefaultOverviews oOvManager{};
 
-    virtual CPLErr IBuildOverviews(const char *, int, const int *, int,
-                                   const int *, GDALProgressFunc, void *,
+    virtual CPLErr IBuildOverviews(const char *pszResampling, int nOverviews,
+                                   const int *panOverviewList, int nListBands,
+                                   const int *panBandList,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData,
                                    CSLConstList papszOptions);
 
     virtual CPLErr
-    IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int, GDALDataType,
-              int, int *, GSpacing, GSpacing, GSpacing,
+    IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+              void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+              int nBandCount, int *panBandMap, GSpacing nPixelSpace,
+              GSpacing nLineSpace, GSpacing nBandSpace,
               GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
     CPLErr
-    BlockBasedRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                       GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
+    BlockBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                       int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                       GDALDataType eBufType, int nBandCount, int *panBandMap,
+                       GSpacing nPixelSpace, GSpacing nLineSpace,
+                       GSpacing nBandSpace,
                        GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
     CPLErr BlockBasedFlushCache(bool bAtClosing);
 
@@ -724,7 +732,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                      int nBufXSize, int nBufYSize, GDALDataType eBufType,
                      int nBandCount, int *panBandMap, int nPixelSpace,
                      int nLineSpace, int nBandSpace, char **papszOptions);
-    virtual void EndAsyncReader(GDALAsyncReader *);
+    virtual void EndAsyncReader(GDALAsyncReader *poARIO);
 
     //! @cond Doxygen_Suppress
     struct RawBinaryLayout
@@ -750,13 +758,22 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual bool GetRawBinaryLayout(RawBinaryLayout &);
     //! @endcond
 
-    CPLErr RasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                    GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
-                    GDALRasterIOExtraArg *psExtraArg
 #ifndef DOXYGEN_SKIP
-                        OPTIONAL_OUTSIDE_GDAL(nullptr)
+    CPLErr RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                    int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                    GDALDataType eBufType, int nBandCount, int *panBandMap,
+                    GSpacing nPixelSpace, GSpacing nLineSpace,
+                    GSpacing nBandSpace,
+                    GDALRasterIOExtraArg *psExtraArg
+                        OPTIONAL_OUTSIDE_GDAL(nullptr)) CPL_WARN_UNUSED_RESULT;
+#else
+    CPLErr RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                    int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                    GDALDataType eBufType, int nBandCount, int *panBandMap,
+                    GSpacing nPixelSpace, GSpacing nLineSpace,
+                    GSpacing nBandSpace,
+                    GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 #endif
-                        ) CPL_WARN_UNUSED_RESULT;
 
     virtual CPLStringList GetCompressionFormats(int nXOff, int nYOff,
                                                 int nXSize, int nYSize,
@@ -804,13 +821,19 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     static GDALDataset **GetOpenDatasets(int *pnDatasetCount);
 
-    CPLErr BuildOverviews(const char *, int, const int *, int, const int *,
-                          GDALProgressFunc, void *,
-                          CSLConstList papszOptions
 #ifndef DOXYGEN_SKIP
-                              OPTIONAL_OUTSIDE_GDAL(nullptr)
+    CPLErr
+    BuildOverviews(const char *pszResampling, int nOverviews,
+                   const int *panOverviewList, int nListBands,
+                   const int *panBandList, GDALProgressFunc pfnProgress,
+                   void *pProgressData,
+                   CSLConstList papszOptions OPTIONAL_OUTSIDE_GDAL(nullptr));
+#else
+    CPLErr BuildOverviews(const char *pszResampling, int nOverviews,
+                          const int *panOverviewList, int nListBands,
+                          const int *panBandList, GDALProgressFunc pfnProgress,
+                          void *pProgressData, CSLConstList papszOptions);
 #endif
-    );
 
 #ifndef DOXYGEN_XML
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt,
@@ -1324,11 +1347,11 @@ class CPL_DLL GDALColorTable
     GDALPaletteInterp GetPaletteInterpretation() const;
 
     int GetColorEntryCount() const;
-    const GDALColorEntry *GetColorEntry(int) const;
-    int GetColorEntryAsRGB(int, GDALColorEntry *) const;
-    void SetColorEntry(int, const GDALColorEntry *);
-    int CreateColorRamp(int, const GDALColorEntry *, int,
-                        const GDALColorEntry *);
+    const GDALColorEntry *GetColorEntry(int i) const;
+    int GetColorEntryAsRGB(int i, GDALColorEntry *poEntry) const;
+    void SetColorEntry(int i, const GDALColorEntry *poEntry);
+    int CreateColorRamp(int nStartIndex, const GDALColorEntry *psStartColor,
+                        int nEndIndex, const GDALColorEntry *psEndColor);
     bool IsIdentity() const;
 
     /** Convert a GDALColorTable* to a GDALRasterBandH.
@@ -1391,7 +1414,7 @@ class GDALAbstractBandBlockCache
     virtual ~GDALAbstractBandBlockCache();
 
     GDALRasterBlock *CreateBlock(int nXBlockOff, int nYBlockOff);
-    void AddBlockToFreeList(GDALRasterBlock *);
+    void AddBlockToFreeList(GDALRasterBlock *poBlock);
     void IncDirtyBlocks(int nInc);
     void WaitCompletionPendingTasks();
 
@@ -1556,8 +1579,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     friend class GDALDefaultOverviews;
 
     CPLErr
-    RasterIOResampled(GDALRWFlag, int, int, int, int, void *, int, int,
-                      GDALDataType, GSpacing, GSpacing,
+    RasterIOResampled(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                      GDALDataType eBufType, GSpacing nPixelSpace,
+                      GSpacing nLineSpace,
                       GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
     int EnterReadWrite(GDALRWFlag eRWFlag);
@@ -1572,8 +1597,9 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void *pData);
 
     virtual CPLErr
-    IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int, GDALDataType,
-              GSpacing, GSpacing,
+    IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+              void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+              GSpacing nPixelSpace, GSpacing nLineSpace,
               GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
     virtual int IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
@@ -1581,8 +1607,10 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                        double *pdfDataPct);
     //! @cond Doxygen_Suppress
     CPLErr
-    OverviewRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing, GSpacing,
+    OverviewRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, GSpacing nPixelSpace,
+                     GSpacing nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
     CPLErr TryOverviewRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
@@ -1620,31 +1648,42 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     GDALDataset *GetDataset();
 
     GDALDataType GetRasterDataType(void);
-    void GetBlockSize(int *, int *);
-    CPLErr GetActualBlockSize(int, int, int *, int *);
+    void GetBlockSize(int *pnXSize, int *pnYSize);
+    CPLErr GetActualBlockSize(int nXBlockOff, int nYBlockOff, int *pnXValid,
+                              int *pnYValid);
 
     virtual GDALSuggestedBlockAccessPattern
     GetSuggestedBlockAccessPattern() const;
 
     GDALAccess GetAccess();
 
-    CPLErr RasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                    GDALDataType, GSpacing, GSpacing,
-                    GDALRasterIOExtraArg *psExtraArg
 #ifndef DOXYGEN_SKIP
-                        OPTIONAL_OUTSIDE_GDAL(nullptr)
+    CPLErr RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                    int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                    GDALDataType eBufType, GSpacing nPixelSpace,
+                    GSpacing nLineSpace,
+                    GDALRasterIOExtraArg *psExtraArg
+                        OPTIONAL_OUTSIDE_GDAL(nullptr)) CPL_WARN_UNUSED_RESULT;
+#else
+    CPLErr RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                    int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                    GDALDataType eBufType, GSpacing nPixelSpace,
+                    GSpacing nLineSpace,
+                    GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 #endif
-                        ) CPL_WARN_UNUSED_RESULT;
-    CPLErr ReadBlock(int, int, void *) CPL_WARN_UNUSED_RESULT;
+    CPLErr ReadBlock(int nXBlockOff, int nYBlockOff,
+                     void *pImage) CPL_WARN_UNUSED_RESULT;
 
-    CPLErr WriteBlock(int, int, void *) CPL_WARN_UNUSED_RESULT;
+    CPLErr WriteBlock(int nXBlockOff, int nYBlockOff,
+                      void *pImage) CPL_WARN_UNUSED_RESULT;
 
     GDALRasterBlock *
     GetLockedBlockRef(int nXBlockOff, int nYBlockOff,
                       int bJustInitialize = FALSE) CPL_WARN_UNUSED_RESULT;
     GDALRasterBlock *TryGetLockedBlockRef(int nXBlockOff, int nYBlockYOff)
         CPL_WARN_UNUSED_RESULT;
-    CPLErr FlushBlock(int, int, int bWriteDirtyBlock = TRUE);
+    CPLErr FlushBlock(int nXBlockOff, int nYBlockOff,
+                      int bWriteDirtyBlock = TRUE);
 
     unsigned char *
     GetIndexColorTranslationTo(/* const */ GDALRasterBand *poReferenceBand,
@@ -1688,7 +1727,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                                      void *pProgressData);
     virtual CPLErr SetStatistics(double dfMin, double dfMax, double dfMean,
                                  double dfStdDev);
-    virtual CPLErr ComputeRasterMinMax(int, double *);
+    virtual CPLErr ComputeRasterMinMax(int bApproxOK, double *adfMinMax);
 
 // Only defined when Doxygen enabled
 #ifdef DOXYGEN_SKIP
@@ -1701,7 +1740,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     virtual int HasArbitraryOverviews();
     virtual int GetOverviewCount();
-    virtual GDALRasterBand *GetOverview(int);
+    virtual GDALRasterBand *GetOverview(int i);
     virtual GDALRasterBand *GetRasterSampleOverview(GUIntBig);
     virtual CPLErr BuildOverviews(const char *pszResampling, int nOverviews,
                                   const int *panOverviewList,

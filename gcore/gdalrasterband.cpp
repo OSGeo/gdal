@@ -7100,19 +7100,27 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT(GDALRasterBandH hBand,
  * \brief Return the mask band associated with the band.
  *
  * The GDALRasterBand class includes a default implementation of GetMaskBand()
- * that returns one of four default implementations : <ul> <li>If a
- * corresponding .msk file exists it will be used for the mask band.</li> <li>If
- * the dataset has a NODATA_VALUES metadata item, an instance of the new
+ * that returns one of four default implementations :
+ * <ul>
+ * <li>If a corresponding .msk file exists it will be used for the mask band.
+ * </li>
+ * <li>If the dataset has a NODATA_VALUES metadata item, an instance of the new
  * GDALNoDataValuesMaskBand class will be returned. GetMaskFlags() will return
- * GMF_NODATA | GMF_PER_DATASET. @since GDAL 1.6.0</li> <li>If the band has a
- * nodata value set, an instance of the new GDALNodataMaskRasterBand class will
- * be returned. GetMaskFlags() will return GMF_NODATA.</li> <li>If there is no
- * nodata value, but the dataset has an alpha band that seems to apply to this
- * band (specific rules yet to be determined) and that is of type GDT_Byte then
- * that alpha band will be returned, and the flags GMF_PER_DATASET and GMF_ALPHA
- * will be returned in the flags.</li> <li>If neither of the above apply, an
- * instance of the new GDALAllValidRasterBand class will be returned that has
- * 255 values for all pixels. The null flags will return GMF_ALL_VALID.</li>
+ * GMF_NODATA | GMF_PER_DATASET.
+ * </li>
+ * <li>If the band has a nodata value set, an instance of the new
+ * GDALNodataMaskRasterBand class will be returned. GetMaskFlags() will return
+ * GMF_NODATA.
+ * </li>
+ * <li>If there is no nodata value, but the dataset has an alpha band that seems
+ * to apply to this band (specific rules yet to be determined) and that is of
+ * type GDT_Byte then that alpha band will be returned, and the flags
+ * GMF_PER_DATASET and GMF_ALPHA will be returned in the flags.
+ * </li>
+ * <li>If neither of the above apply, an instance of the new
+ * GDALAllValidRasterBand class will be returned that has 255 values for all
+ * pixels. The null flags will return GMF_ALL_VALID.
+ * </li>
  * </ul>
  *
  * Note that the GetMaskBand() should always return a GDALRasterBand mask, even
@@ -7416,28 +7424,41 @@ GDALRasterBandH CPL_STDCALL GDALGetMaskBand(GDALRasterBandH hBand)
  * the following available definitions that may be extended in the future:
  * <ul>
  * <li>GMF_ALL_VALID(0x01): There are no invalid pixels, all mask values will be
- * 255. When used this will normally be the only flag set.</li>
+ * 255. When used this will normally be the only flag set.
+ * </li>
  * <li>GMF_PER_DATASET(0x02): The mask band is shared between all bands on the
- * dataset.</li> <li>GMF_ALPHA(0x04): The mask band is actually an alpha band
- * and may have values other than 0 and 255.</li> <li>GMF_NODATA(0x08):
- * Indicates the mask is actually being generated from nodata values. (mutually
- * exclusive of GMF_ALPHA)</li>
+ * dataset.
+ * </li>
+ * <li>GMF_ALPHA(0x04): The mask band is actually an alpha band
+ * and may have values other than 0 and 255.
+ * </li>
+ * <li>GMF_NODATA(0x08): Indicates the mask is actually being generated from
+ * nodata values. (mutually exclusive of GMF_ALPHA)
+ * </li>
  * </ul>
  *
  * The GDALRasterBand class includes a default implementation of GetMaskBand()
- * that returns one of four default implementations : <ul> <li>If a
- * corresponding .msk file exists it will be used for the mask band.</li> <li>If
- * the dataset has a NODATA_VALUES metadata item, an instance of the new
+ * that returns one of four default implementations:
+ * <ul>
+ * <li>If a corresponding .msk file exists it will be used for the mask band.
+ * </li>
+ * <li>If the dataset has a NODATA_VALUES metadata item, an instance of the new
  * GDALNoDataValuesMaskBand class will be returned. GetMaskFlags() will return
- * GMF_NODATA | GMF_PER_DATASET. @since GDAL 1.6.0</li> <li>If the band has a
- * nodata value set, an instance of the new GDALNodataMaskRasterBand class will
- * be returned. GetMaskFlags() will return GMF_NODATA.</li> <li>If there is no
- * nodata value, but the dataset has an alpha band that seems to apply to this
- * band (specific rules yet to be determined) and that is of type GDT_Byte then
- * that alpha band will be returned, and the flags GMF_PER_DATASET and GMF_ALPHA
- * will be returned in the flags.</li> <li>If neither of the above apply, an
- * instance of the new GDALAllValidRasterBand class will be returned that has
- * 255 values for all pixels. The null flags will return GMF_ALL_VALID.</li>
+ * GMF_NODATA | GMF_PER_DATASET.
+ * </li>
+ * <li>If the band has a nodata value set, an instance of the new
+ * GDALNodataMaskRasterBand class will be returned. GetMaskFlags() will return
+ * GMF_NODATA.
+ * </li>
+ * <li>If there is no nodata value, but the dataset has an alpha band that
+ * seems to apply to this band (specific rules yet to be determined) and that is
+ * of type GDT_Byte then that alpha band will be returned, and the flags
+ * GMF_PER_DATASET and GMF_ALPHA will be returned in the flags.
+ * </li>
+ * <li>If neither of the above apply, an instance of the new
+ * GDALAllValidRasterBand class will be returned that has 255 values for all
+ * pixels. The null flags will return GMF_ALL_VALID.
+ * </li>
  * </ul>
  *
  * For an external .msk file to be recognized by GDAL, it must be a valid GDAL
@@ -8351,9 +8372,11 @@ void GDALRasterBand::InitRWLock()
 
 //! @endcond
 
+// clang-format off
+
 /**
- * \fn GDALRasterBand::SetMetadata( char ** papszMetadata, const char *
- * pszDomain) \brief Set metadata.
+ * \fn GDALRasterBand::SetMetadata( char ** papszMetadata, const char * pszDomain)
+ * \brief Set metadata.
  *
  * CAUTION: depending on the format, older values of the updated information
  * might still be found in the file in a "ghost" state, even if no longer
@@ -8372,8 +8395,8 @@ void GDALRasterBand::InitRWLock()
  */
 
 /**
- * \fn GDALRasterBand::SetMetadataItem( const char * pszName, const char *
- * pszValue, const char * pszDomain) \brief Set single metadata item.
+ * \fn GDALRasterBand::SetMetadataItem( const char * pszName, const char * pszValue, const char * pszDomain)
+ * \brief Set single metadata item.
  *
  * CAUTION: depending on the format, older values of the updated information
  * might still be found in the file in a "ghost" state, even if no longer
@@ -8388,6 +8411,8 @@ void GDALRasterBand::InitRWLock()
  *
  * @return CE_None on success, or an error code on failure.
  */
+
+// clang-format on
 
 //! @cond Doxygen_Suppress
 /************************************************************************/

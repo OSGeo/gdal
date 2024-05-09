@@ -4656,6 +4656,8 @@ char **GDALDataset::GetMetadata(const char *pszDomain)
     return GDALMajorObject::GetMetadata(pszDomain);
 }
 
+// clang-format off
+
 /**
  * \fn GDALDataset::SetMetadata( char ** papszMetadata, const char * pszDomain)
  * \brief Set metadata.
@@ -4677,8 +4679,7 @@ char **GDALDataset::GetMetadata(const char *pszDomain)
  */
 
 /**
- * \fn GDALDataset::SetMetadataItem( const char * pszName, const char *
- * pszValue, const char * pszDomain)
+ * \fn GDALDataset::SetMetadataItem( const char * pszName, const char * pszValue, const char * pszDomain)
  * \brief Set single metadata item.
  *
  * CAUTION: depending on the format, older values of the updated information
@@ -4694,6 +4695,8 @@ char **GDALDataset::GetMetadata(const char *pszDomain)
  *
  * @return CE_None on success, or an error code on failure.
  */
+
+// clang-format on
 
 /************************************************************************/
 /*                            GetMetadataDomainList()                   */
