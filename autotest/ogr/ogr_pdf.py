@@ -29,6 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os
+
 import gdaltest
 import ogrtest
 import pytest
@@ -431,3 +433,38 @@ def test_ogr_pdf_layer_with_ocmd(tmp_vsimem):
     assert ds.GetLayerCount() == 1
     assert ds.GetLayer(0).GetName() == "parent_poly"
     assert ds.GetLayer(0).GetFeatureCount() == 1
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/9870
+
+
+@pytest.mark.require_curl()
+@pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
+def test_ogr_pdf_arcgis_12_9():
+
+    srv = "https://raw.githubusercontent.com/OSGeo/gdal-test-datasets/master/pdf/nsw.gov.au/9130-3N%2BPARRAMATTA%2BRIVER/README.txt"
+    if gdaltest.gdalurlopen(srv, timeout=5) is None:
+        pytest.skip(reason=f"{srv} is down")
+
+    gdaltest.download_or_skip(
+        "https://raw.githubusercontent.com/OSGeo/gdal-test-datasets/master/pdf/nsw.gov.au/9130-3N%2BPARRAMATTA%2BRIVER/9130-3N%2BPARRAMATTA%2BRIVER.pdf",
+        "9130-3N+PARRAMATTA+RIVER.pdf",
+        chunk_size=1024 * 128,
+        force_download="CI" in os.environ,
+    )
+
+    ds = ogr.Open("tmp/cache/9130-3N+PARRAMATTA+RIVER.pdf")
+    assert ds.GetLayerCount() == 58
+    lyr = ds.GetLayer("Background")
+    background_extent = lyr.GetExtent()
+    assert background_extent == pytest.approx(
+        (313422.48894187197, 342337.1271782691, 6249436.830917485, 6264705.818204939),
+        rel=1e-5,
+    )
+    lyr = ds.GetLayer("Map_Frame_NSW_TopoMap_Layers_BUILDINGS_POINTS_NSW_Building")
+    buildings_extent = lyr.GetExtent()
+    assert buildings_extent == pytest.approx(
+        (314770.38136460556, 338159.3346125973, 6249907.04700745, 6264139.920707164),
+        rel=1e-5,
+    )
