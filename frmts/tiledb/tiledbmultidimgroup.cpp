@@ -49,7 +49,7 @@ TileDBGroup::~TileDBGroup()
         {
             // Will leak memory, but better that than crashing
             // Cf https://github.com/TileDB-Inc/TileDB/issues/4101
-            m_poTileDBGroup.release();
+            CPL_IGNORE_RET_VAL(m_poTileDBGroup.release());
             CPLError(CE_Failure, CPLE_AppDefined,
                      "TileDBGroup::~TileDBGroup(): %s", e.what());
         }

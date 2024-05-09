@@ -7629,6 +7629,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
         if (nInputFID != OGRNullFID)
         {
             if (bWarningIfFIDNotPreserved &&
+                // cppcheck-suppress knownConditionTrueFalse
                 poFeatureTarget->GetFID() != nInputFID)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
@@ -7636,6 +7637,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                          nInputFID);
             }
             else if (bErrorIfFIDNotPreserved &&
+                     // cppcheck-suppress knownConditionTrueFalse
                      poFeatureTarget->GetFID() != nInputFID)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,

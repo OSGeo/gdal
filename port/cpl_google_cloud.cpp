@@ -602,24 +602,24 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
             bool bClientInfoFromEnv = false;
             bool bClientInfoFromFile = false;
 
-            int nCount = (!osClientId.empty() ? 1 : 0) +
-                         (!osClientSecret.empty() ? 1 : 0);
-            if (nCount == 1)
+            const int nCountClientIdSecret = (!osClientId.empty() ? 1 : 0) +
+                                             (!osClientSecret.empty() ? 1 : 0);
+            if (nCountClientIdSecret == 1)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Either both or none of GS_OAUTH2_CLIENT_ID and "
                          "GS_OAUTH2_CLIENT_SECRET must be set");
                 return false;
             }
-            else if (nCount == 2)
+            else if (nCountClientIdSecret == 2)
             {
                 bClientInfoFromEnv = true;
             }
-            else if (nCount == 0)
+            else if (nCountClientIdSecret == 0)
             {
-                nCount = (!osOAuth2ClientId.empty() ? 1 : 0) +
-                         (!osOAuth2ClientSecret.empty() ? 1 : 0);
-                if (nCount == 1)
+                int nCountOAuth2IdSecret = (!osOAuth2ClientId.empty() ? 1 : 0);
+                nCountOAuth2IdSecret += (!osOAuth2ClientSecret.empty() ? 1 : 0);
+                if (nCountOAuth2IdSecret == 1)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Either both or none of client_id and "
@@ -627,7 +627,7 @@ bool VSIGSHandleHelper::GetConfiguration(const std::string &osPathForOption,
                              osCredentials.c_str());
                     return false;
                 }
-                else if (nCount == 2)
+                else if (nCountOAuth2IdSecret == 2)
                 {
                     osClientId = std::move(osOAuth2ClientId);
                     osClientSecret = std::move(osOAuth2ClientSecret);

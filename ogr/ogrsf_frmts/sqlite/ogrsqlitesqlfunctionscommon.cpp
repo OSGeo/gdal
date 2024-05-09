@@ -50,6 +50,7 @@ class OGRSQLiteExtensionData
 #endif
 
     std::map<std::pair<int, int>, std::unique_ptr<OGRCoordinateTransformation>>
+        // cppcheck-suppress unusedStructMember
         oCachedTransformsMap{};
     std::map<std::string, std::unique_ptr<GDALDataset>> oCachedDS{};
 
