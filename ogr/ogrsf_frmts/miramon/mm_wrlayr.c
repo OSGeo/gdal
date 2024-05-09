@@ -5584,14 +5584,22 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         }
     }
 
-    // Writing OVERVIEW:ASPECTES_TECNICS in polygon metadata file.
-    // ArcSource=fitx_pol.arc
-    if (hMMMD->ePlainLT == MM_LayerType_Pol)
+    if (hMMMD->ePlainLT == MM_LayerType_Pol && hMMMD->aArcFile)
     {
+        // Writing OVERVIEW:ASPECTES_TECNICS in polygon metadata file.
+        // ArcSource=fitx_pol.arc
         fprintf_function(pF, LineReturn "[%s]" LineReturn,
                          SECTION_OVVW_ASPECTES_TECNICS);
         fprintf_function(pF, "%s=\"%s\"" LineReturn, KEY_ArcSource,
                          hMMMD->aArcFile);
+    }
+    else if (hMMMD->ePlainLT == MM_LayerType_Arc && hMMMD->aArcFile)
+    {
+        // Writing OVERVIEW:ASPECTES_TECNICS in arc metadata file.
+        // Ciclat1=fitx_arc.pol
+        fprintf_function(pF, LineReturn "[%s]" LineReturn,
+                         SECTION_OVVW_ASPECTES_TECNICS);
+        fprintf_function(pF, "Ciclat1=\"%s\"" LineReturn, hMMMD->aArcFile);
     }
 
     // Writing EXTENT section
@@ -5846,6 +5854,8 @@ static int MMWriteVectorMetadataFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
     }
     else if (layerPlainType == MM_LayerType_Arc)
     {
+        int nResult;
+
         // Arcs and not polygons
         if (layerMainPlainType == MM_LayerType_Arc)
         {
@@ -5868,7 +5878,11 @@ static int MMWriteVectorMetadataFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
                    sizeof(hMMMD.hBB));
             hMMMD.pLayerDB = nullptr;
         }
-        return MMWriteMetadataFile(&hMMMD);
+        hMMMD.aArcFile = strdup_function(
+            get_filename_function(hMiraMonLayer->MMPolygon.pszLayerName));
+        nResult = MMWriteMetadataFile(&hMMMD);
+        free_function(hMMMD.aArcFile);
+        return nResult;
     }
     else if (layerPlainType == MM_LayerType_Pol)
     {
