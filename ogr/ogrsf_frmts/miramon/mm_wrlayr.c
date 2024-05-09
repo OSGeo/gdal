@@ -5854,6 +5854,8 @@ static int MMWriteVectorMetadataFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
     }
     else if (layerPlainType == MM_LayerType_Arc)
     {
+        int nResult;
+
         // Arcs and not polygons
         if (layerMainPlainType == MM_LayerType_Arc)
         {
@@ -5878,7 +5880,9 @@ static int MMWriteVectorMetadataFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
         }
         hMMMD.aArcFile = strdup_function(
             get_filename_function(hMiraMonLayer->MMPolygon.pszLayerName));
-        return MMWriteMetadataFile(&hMMMD);
+        nResult = MMWriteMetadataFile(&hMMMD);
+        free_function(hMMMD.aArcFile);
+        return nResult;
     }
     else if (layerPlainType == MM_LayerType_Pol)
     {
