@@ -2336,20 +2336,23 @@ def test_vsis3_5(aws_test_config, webserver_port):
 
 
 def test_vsis3_unlink_batch(aws_test_config, webserver_port):
-    def method(request):
-        if request.headers["Content-MD5"] != "Ze0X4LdlTwCsT+WpNxD9FA==":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(403)
-            return
 
-        content = request.rfile.read(int(request.headers["Content-Length"])).decode(
-            "ascii"
-        )
-        if (
-            content
-            != """<?xml version="1.0" encoding="UTF-8"?>
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/unlink_batch/?delete",
+        200,
+        {"Content-type": "application/xml"},
+        """<DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+        <Deleted>
+        <Key>foo</Key>
+        </Deleted>
+        <Deleted>
+        <Key>bar/baz</Key>
+        </Deleted>
+        </DeleteResult>""",
+        expected_headers={"Content-MD5": "Ze0X4LdlTwCsT+WpNxD9FA=="},
+        expected_body=b"""<?xml version="1.0" encoding="UTF-8"?>
 <Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
   <Object>
     <Key>foo</Key>
@@ -2358,30 +2361,9 @@ def test_vsis3_unlink_batch(aws_test_config, webserver_port):
     <Key>bar/baz</Key>
   </Object>
 </Delete>
-"""
-        ):
-            sys.stderr.write("Did not get expected content: %s\n" % content)
-            request.send_response(403)
-            return
+""",
+    )
 
-        request.protocol_version = "HTTP/1.1"
-        request.send_response(200)
-        response = """
-        <DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-        <Deleted>
-        <Key>foo</Key>
-        </Deleted>
-        <Deleted>
-        <Key>bar/baz</Key>
-        </Deleted>
-        </DeleteResult>"""
-        request.send_header("Content-Length", len(response))
-        request.send_header("Connection", "close")
-        request.end_headers()
-        request.wfile.write(response.encode("ascii"))
-
-    handler = webserver.SequentialHandler()
-    handler.add("POST", "/unlink_batch/?delete", custom_method=method)
     handler.add(
         "POST",
         "/unlink_batch/?delete",
@@ -2459,13 +2441,21 @@ def test_vsis3_rmdir_recursive(aws_test_config, webserver_port):
         """,
     )
 
-    def method(request):
-        content = request.rfile.read(int(request.headers["Content-Length"])).decode(
-            "ascii"
-        )
-        if (
-            content
-            != """<?xml version="1.0" encoding="UTF-8"?>
+    handler.add(
+        "POST",
+        "/test_rmdir_recursive/?delete",
+        200,
+        {"Content-type": "application/xml"},
+        """
+        <DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+        <Deleted>
+        <Key>somedir/test.txt</Key>
+        </Deleted>
+        <Deleted>
+        <Key>somedir/subdir/</Key>
+        </Deleted>
+        </DeleteResult>""",
+        expected_body=b"""<?xml version="1.0" encoding="UTF-8"?>
 <Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
   <Object>
     <Key>somedir/test.txt</Key>
@@ -2474,37 +2464,24 @@ def test_vsis3_rmdir_recursive(aws_test_config, webserver_port):
     <Key>somedir/subdir/</Key>
   </Object>
 </Delete>
-"""
-        ):
-            sys.stderr.write("Did not get expected content: %s\n" % content)
-            request.send_response(403)
-            return
+""",
+    )
 
-        request.protocol_version = "HTTP/1.1"
-        request.send_response(200)
-        response = """
+    handler.add(
+        "POST",
+        "/test_rmdir_recursive/?delete",
+        200,
+        {"Content-type": "application/xml"},
+        """
         <DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
         <Deleted>
-        <Key>somedir/test.txt</Key>
+        <Key>somedir/subdir/test.txt</Key>
         </Deleted>
         <Deleted>
-        <Key>somedir/subdir/</Key>
+        <Key>somedir/</Key>
         </Deleted>
-        </DeleteResult>"""
-        request.send_header("Content-Length", len(response))
-        request.send_header("Connection", "close")
-        request.end_headers()
-        request.wfile.write(response.encode("ascii"))
-
-    handler.add("POST", "/test_rmdir_recursive/?delete", custom_method=method)
-
-    def method(request):
-        content = request.rfile.read(int(request.headers["Content-Length"])).decode(
-            "ascii"
-        )
-        if (
-            content
-            != """<?xml version="1.0" encoding="UTF-8"?>
+        </DeleteResult>""",
+        expected_body=b"""<?xml version="1.0" encoding="UTF-8"?>
 <Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
   <Object>
     <Key>somedir/subdir/test.txt</Key>
@@ -2513,29 +2490,8 @@ def test_vsis3_rmdir_recursive(aws_test_config, webserver_port):
     <Key>somedir/</Key>
   </Object>
 </Delete>
-"""
-        ):
-            sys.stderr.write("Did not get expected content: %s\n" % content)
-            request.send_response(403)
-            return
-
-        request.protocol_version = "HTTP/1.1"
-        request.send_response(200)
-        response = """
-        <DeleteResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-        <Deleted>
-        <Key>somedir/subdir/test.txt</Key>
-        </Deleted>
-        <Deleted>
-        <Key>somedir/</Key>
-        </Deleted>
-        </DeleteResult>"""
-        request.send_header("Content-Length", len(response))
-        request.send_header("Connection", "close")
-        request.end_headers()
-        request.wfile.write(response.encode("ascii"))
-
-    handler.add("POST", "/test_rmdir_recursive/?delete", custom_method=method)
+""",
+    )
 
     with gdaltest.config_option("CPL_VSIS3_UNLINK_BATCH_SIZE", "2", thread_local=False):
         with webserver.install_http_handler(handler):
@@ -2672,25 +2628,13 @@ def test_vsis3_6(aws_test_config, webserver_port):
 
     handler.add("POST", "/s3_fake_bucket4/large_file.tif?uploads", custom_method=method)
     handler.add("POST", "/s3_fake_bucket4/large_file.tif?uploads", custom_method=method)
-
-    def method(request):
-        if request.headers["Content-Length"] != "1048576":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            request.send_header("Content-Length", 0)
-            request.end_headers()
-            return
-        request.send_response(200)
-        request.send_header("ETag", '"first_etag"')
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
     handler.add(
         "PUT",
         "/s3_fake_bucket4/large_file.tif?partNumber=1&uploadId=my_id",
-        custom_method=method,
+        200,
+        {"ETag": '"first_etag"', "Content-Length": "0"},
+        b"",
+        expected_headers={"Content-Length": "1048576"},
     )
 
     with webserver.install_http_handler(handler):
@@ -2698,58 +2642,29 @@ def test_vsis3_6(aws_test_config, webserver_port):
     assert ret == size
     handler = webserver.SequentialHandler()
 
-    def method(request):
-        if request.headers["Content-Length"] != "1":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            return
-        request.send_response(200)
-        request.send_header("ETag", '"second_etag"')
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
     handler.add(
         "PUT",
         "/s3_fake_bucket4/large_file.tif?partNumber=2&uploadId=my_id",
-        custom_method=method,
+        200,
+        {"ETag": '"second_etag"', "Content-Length": "0"},
+        b"",
+        expected_headers={"Content-Length": "1"},
     )
 
-    def method(request):
-
-        if request.headers["Content-Length"] != "186":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            request.send_header("Content-Length", 0)
-            request.end_headers()
-            return
-
-        content = request.rfile.read(186).decode("ascii")
-        if (
-            content
-            != """<CompleteMultipartUpload>
+    handler.add(
+        "POST",
+        "/s3_fake_bucket4/large_file.tif?uploadId=my_id",
+        200,
+        {},
+        b"",
+        expected_headers={"Content-Length": "186"},
+        expected_body=b"""<CompleteMultipartUpload>
 <Part>
 <PartNumber>1</PartNumber><ETag>"first_etag"</ETag></Part>
 <Part>
 <PartNumber>2</PartNumber><ETag>"second_etag"</ETag></Part>
 </CompleteMultipartUpload>
-"""
-        ):
-            sys.stderr.write("Did not get expected content: %s\n" % content)
-            request.send_response(400)
-            request.send_header("Content-Length", 0)
-            request.end_headers()
-            return
-
-        request.send_response(200)
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
-    handler.add(
-        "POST", "/s3_fake_bucket4/large_file.tif?uploadId=my_id", custom_method=method
+""",
     )
 
     gdal.ErrorReset()
@@ -3920,26 +3835,17 @@ def test_vsis3_fake_rename(aws_test_config, webserver_port):
     )
     handler.add("GET", "/test/target.txt", 404)
     handler.add("GET", "/test/?delimiter=%2F&max-keys=100&prefix=target.txt%2F", 200)
-
-    def method(request):
-        if request.headers["Content-Length"] != "0":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            return
-        if request.headers["x-amz-copy-source"] != "/test/source.txt":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            return
-
-        request.send_response(200)
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
-    handler.add("PUT", "/test/target.txt", custom_method=method)
+    handler.add(
+        "PUT",
+        "/test/target.txt",
+        200,
+        {"Content-Length": "0"},
+        b"",
+        expected_headers={
+            "Content-Length": "0",
+            "x-amz-copy-source": "/test/source.txt",
+        },
+    )
     handler.add("DELETE", "/test/source.txt", 204)
 
     with webserver.install_http_handler(handler):
@@ -3991,25 +3897,17 @@ def test_vsis3_fake_rename_dir(aws_test_config, webserver_port):
 
     handler.add("PUT", "/test/target_dir/", custom_method=method)
 
-    def method(request):
-        if request.headers["Content-Length"] != "0":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            return
-        if request.headers["x-amz-copy-source"] != "/test/source_dir/test.txt":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            return
-
-        request.send_response(200)
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
-    handler.add("PUT", "/test/target_dir/test.txt", custom_method=method)
+    handler.add(
+        "PUT",
+        "/test/target_dir/test.txt",
+        200,
+        {"Content-Length": "0"},
+        b"",
+        expected_headers={
+            "Content-Length": "0",
+            "x-amz-copy-source": "/test/source_dir/test.txt",
+        },
+    )
 
     handler.add("DELETE", "/test/source_dir/test.txt", 204)
 
@@ -4080,74 +3978,39 @@ def test_vsis3_fake_sync_multithreaded_upload_chunk_size(
         headers={"Content-type": "application/xml"},
     )
 
-    def method(request):
-        if request.headers["Content-Length"] != "3":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            request.send_header("Content-Length", 0)
-            request.end_headers()
-            return
-        request.send_response(200)
-        request.send_header("ETag", '"first_etag"')
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
     handler.add(
-        "PUT", "/test_bucket/test/foo?partNumber=1&uploadId=my_id", custom_method=method
+        "PUT",
+        "/test_bucket/test/foo?partNumber=1&uploadId=my_id",
+        200,
+        {"ETag": '"first_etag"'},
+        b"",
+        expected_headers={"Content-Length": "3"},
     )
 
-    def method(request):
-        if request.headers["Content-Length"] != "1":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            request.send_header("Content-Length", 0)
-            request.end_headers()
-            return
-        request.send_response(200)
-        request.send_header("ETag", '"second_etag"')
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
     handler.add(
-        "PUT", "/test_bucket/test/foo?partNumber=2&uploadId=my_id", custom_method=method
+        "PUT",
+        "/test_bucket/test/foo?partNumber=2&uploadId=my_id",
+        200,
+        {"ETag": '"second_etag"'},
+        b"",
+        expected_headers={"Content-Length": "1"},
     )
 
-    def method(request):
-        if request.headers["Content-Length"] != "186":
-            sys.stderr.write(
-                "Did not get expected headers: %s\n" % str(request.headers)
-            )
-            request.send_response(400)
-            request.send_header("Content-Length", 0)
-            request.end_headers()
-            return
-
-        content = request.rfile.read(186).decode("ascii")
-        if (
-            content
-            != """<CompleteMultipartUpload>
+    handler.add(
+        "POST",
+        "/test_bucket/test/foo?uploadId=my_id",
+        200,
+        {},
+        b"",
+        expected_headers={"Content-Length": "186"},
+        expected_body=b"""<CompleteMultipartUpload>
 <Part>
 <PartNumber>1</PartNumber><ETag>"first_etag"</ETag></Part>
 <Part>
 <PartNumber>2</PartNumber><ETag>"second_etag"</ETag></Part>
 </CompleteMultipartUpload>
-"""
-        ):
-            sys.stderr.write("Did not get expected content: %s\n" % content)
-            request.send_response(400)
-            request.send_header("Content-Length", 0)
-            request.end_headers()
-            return
-
-        request.send_response(200)
-        request.send_header("Content-Length", 0)
-        request.end_headers()
-
-    handler.add("POST", "/test_bucket/test/foo?uploadId=my_id", custom_method=method)
+""",
+    )
 
     with gdaltest.config_option("VSIS3_SIMULATE_THREADING", "YES", thread_local=False):
         with webserver.install_http_handler(handler):
@@ -5300,39 +5163,17 @@ def test_vsis3_read_credentials_AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE(
 
     handler = webserver.SequentialHandler()
 
-    def method(request):
-        request.protocol_version = "HTTP/1.1"
-
-        if "Authorization" not in request.headers:
-            sys.stderr.write("Bad headers: %s\n" % str(request.headers))
-            request.send_response(403)
-            return
-        expected_authorization = "valid"
-        actual_authorization = request.headers["Authorization"]
-        if actual_authorization != expected_authorization:
-            sys.stderr.write("Bad Authorization: '%s'\n" % str(actual_authorization))
-            request.send_response(403)
-            return
-
-        auth_response = """{
-            "AccessKeyId": "AWS_ACCESS_KEY_ID",
-            "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
-            "Expiration": "3000-01-01T00:00:00Z"
-            }""".encode(
-            "ascii"
-        )
-
-        request.send_response(200)
-        request.send_header("Content-type", "application/json")
-        request.send_header("Content-Length", len(auth_response))
-        request.end_headers()
-
-        request.wfile.write(auth_response)
-
     handler.add(
         "GET",
         "/AWS_CONTAINER_CREDENTIALS_FULL_URI",
-        custom_method=method,
+        200,
+        {"Content-Type": "application/json"},
+        b"""{
+            "AccessKeyId": "AWS_ACCESS_KEY_ID",
+            "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+            "Expiration": "3000-01-01T00:00:00Z"
+            }""",
+        expected_headers={"Authorization": "valid"},
     )
     handler.add(
         "GET",
@@ -5374,39 +5215,17 @@ def test_vsis3_read_credentials_AWS_CONTAINER_AUTHORIZATION_TOKEN(
 
     handler = webserver.SequentialHandler()
 
-    def method(request):
-        request.protocol_version = "HTTP/1.1"
-
-        if "Authorization" not in request.headers:
-            sys.stderr.write("Bad headers: %s\n" % str(request.headers))
-            request.send_response(403)
-            return
-        expected_authorization = "valid"
-        actual_authorization = request.headers["Authorization"]
-        if actual_authorization != expected_authorization:
-            sys.stderr.write("Bad Authorization: '%s'\n" % str(actual_authorization))
-            request.send_response(403)
-            return
-
-        auth_response = """{
-            "AccessKeyId": "AWS_ACCESS_KEY_ID",
-            "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
-            "Expiration": "3000-01-01T00:00:00Z"
-            }""".encode(
-            "ascii"
-        )
-
-        request.send_response(200)
-        request.send_header("Content-type", "application/json")
-        request.send_header("Content-Length", len(auth_response))
-        request.end_headers()
-
-        request.wfile.write(auth_response)
-
     handler.add(
         "GET",
         "/AWS_CONTAINER_CREDENTIALS_FULL_URI",
-        custom_method=method,
+        200,
+        {"Content-Type": "application/json"},
+        b"""{
+            "AccessKeyId": "AWS_ACCESS_KEY_ID",
+            "SecretAccessKey": "AWS_SECRET_ACCESS_KEY",
+            "Expiration": "3000-01-01T00:00:00Z"
+            }""",
+        expected_headers={"Authorization": "valid"},
     )
     handler.add(
         "GET",
