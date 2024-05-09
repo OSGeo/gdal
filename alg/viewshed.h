@@ -74,6 +74,29 @@ class Viewshed
     };
 
     /**
+     * A window in a raster including pixels in [xStart, xEnd) and [yStart, yEnd).
+     */
+    struct Window
+    {
+        int xStart{};  //!< X start position
+        int xStop{};   //!< X end position
+        int yStart{};  //!< Y start position
+        int yStop{};   //!< Y end position
+
+        /// \brief  Window size in the X direction.
+        int xSize()
+        {
+            return xStop - xStart;
+        }
+
+        /// \brief  Window size in the Y direction.
+        int ySize()
+        {
+            return yStop - yStart;
+        }
+    };
+
+    /**
      * Options for viewshed generation.
      */
     struct Options
@@ -131,10 +154,13 @@ class Viewshed
 
   private:
     Options oOpts;
+    Window oOutExtent;
     double dfMaxDistance2;
     std::unique_ptr<GDALDataset> poDstDS;
+    GDALRasterBandH hBand;
     double dfHeightAdjFactor;
     std::array<double, 6> adfTransform;
+    std::array<double, 6> adfInvTransform;
     std::vector<double> vFirstLineVal;
     std::vector<double> vLastLineVal;
     std::vector<double> vThisLineVal;
@@ -143,9 +169,11 @@ class Viewshed
 
     void setVisibility(int iPixel, double dfZ);
     double calcHeight(double dfZ, double dfZ2);
+    bool readLine(int nLine, double *data);
     bool adjustHeightInRange(int iPixel, int iLine, double &dfHeight);
-    bool createOutputDataset(int nXSize, int nYSize);
-    bool allocate(int nXSize);
+    bool calcOutputExtent(int nX, int nY);
+    bool createOutputDataset();
+    bool allocate();
 };
 
 }  // namespace gdal
