@@ -288,6 +288,10 @@ static void ParseAsset(const CPLJSONObject &jAsset,
         for (const auto &oItem : oProjTransform)
             transform.push_back(oItem.ToDouble());
         CPLAssert(transform.size() == 6 || transform.size() == 9);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         if (transform[0] <= 0 || transform[1] != 0 || transform[3] != 0 ||
             transform[4] >= 0 ||
             (transform.size() == 9 &&
@@ -300,6 +304,9 @@ static void ParseAsset(const CPLJSONObject &jAsset,
                 osAssetName.c_str());
             return;
         }
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     }
 
     if (bIsBBOXValid && bIsShapeValid)
