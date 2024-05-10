@@ -31,6 +31,7 @@
 
 
 import pathlib
+import shutil
 
 import gdaltest
 import pytest
@@ -110,9 +111,12 @@ def test_gdalinfo_lib_4():
 # Test all options
 
 
-def test_gdalinfo_lib_5():
+def test_gdalinfo_lib_5(tmp_path):
 
-    ds = gdal.Open("../gdrivers/data/byte.tif")
+    tmp_tif = str(tmp_path / "byte.tif")
+    shutil.copy("../gcore/data/byte.tif", tmp_tif)
+
+    ds = gdal.Open(tmp_tif)
 
     ret = gdal.Info(
         ds,
@@ -142,8 +146,6 @@ def test_gdalinfo_lib_5():
     gdaltest.validate_json(ret, "gdalinfo_output.schema.json")
 
     ds = None
-
-    gdal.Unlink("../gdrivers/data/byte.tif.aux.xml")
 
 
 ###############################################################################

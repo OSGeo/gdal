@@ -626,9 +626,7 @@ def test_gdal_translate_23(gdal_translate_path, tmp_path):
 
     shutil.copy("../gcore/data/byte.tif", src_tif)
 
-    gdaltest.runexternal(
-        f"{gdal_translate_path} -stats ../gcore/data/byte.tif {dst_tif}"
-    )
+    gdaltest.runexternal(f"{gdal_translate_path} -stats {src_tif} {dst_tif}")
 
     ds = gdal.Open(dst_tif)
     md = ds.GetRasterBand(1).GetMetadata()

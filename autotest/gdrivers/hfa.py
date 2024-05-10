@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import shutil
 import struct
 
 import gdaltest
@@ -1237,21 +1238,17 @@ def test_hfa_write_rat():
 # Test STATISTICS creation option
 
 
-def test_hfa_createcopy_statistics():
+def test_hfa_createcopy_statistics(tmp_path):
 
-    tmpAuxXml = "../gcore/data/byte.tif.aux.xml"
-    try:
-        os.remove(tmpAuxXml)
-    except OSError:
-        pass
-    ds_src = gdal.Open("../gcore/data/byte.tif")
+    tmp_tif = str(tmp_path / "byte.tif")
+    shutil.copy("../gcore/data/byte.tif", tmp_tif)
+
+    ds_src = gdal.Open(tmp_tif)
     out_ds = gdal.GetDriverByName("HFA").CreateCopy(
         "/vsimem/byte.img", ds_src, options=["STATISTICS=YES"]
     )
     del out_ds
     ds_src = None
-    if os.path.exists(tmpAuxXml):
-        os.remove(tmpAuxXml)
 
     gdal.Unlink("/vsimem/byte.img.aux.xml")
 

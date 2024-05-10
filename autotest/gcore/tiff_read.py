@@ -747,14 +747,12 @@ def test_tiff_12bitjpeg():
 # Test that statistics for TIFF files are stored and correctly read from .aux.xml
 
 
-def test_tiff_read_stats_from_pam():
+def test_tiff_read_stats_from_pam(tmp_path):
 
-    try:
-        os.remove("data/byte.tif.aux.xml")
-    except OSError:
-        pass
+    tmp_tif = str(tmp_path / "byte.tif")
+    shutil.copy("data/byte.tif", tmp_tif)
 
-    ds = gdal.Open("data/byte.tif")
+    ds = gdal.Open(tmp_tif)
     md = ds.GetRasterBand(1).GetMetadata()
     assert "STATISTICS_MINIMUM" not in md, "Unexpected presence of STATISTICS_MINIMUM"
 
@@ -763,21 +761,13 @@ def test_tiff_read_stats_from_pam():
     assert stats[0] == 74.0 and stats[1] == 255.0
 
     ds = None
-    try:
-        os.stat("data/byte.tif.aux.xml")
-    except OSError:
-        pytest.fail("Expected generation of data/byte.tif.aux.xml")
+    assert os.path.exists(tmp_tif + ".aux.xml")
 
-    ds = gdal.Open("data/byte.tif")
+    ds = gdal.Open(tmp_tif)
     # Just read statistics (from PAM) without forcing their computation
     stats = ds.GetRasterBand(1).GetStatistics(0, 0)
     assert stats[0] == 74.0 and stats[1] == 255.0
     ds = None
-
-    try:
-        os.remove("data/byte.tif.aux.xml")
-    except OSError:
-        pass
 
 
 ###############################################################################
