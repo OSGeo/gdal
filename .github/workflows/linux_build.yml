@@ -110,8 +110,7 @@ jobs:
             container: ubuntu_22.04
             build_script: build.sh
             test_script: test.sh
-            # We force the host OS to be 20.04 to avoid "AddressSanitizer:DEADLYSIGNAL"
-            os: ubuntu-20.04
+            os: ubuntu-22.04
 
           - name: Ubuntu 20.04, gcc
             id: ubuntu_20.04
@@ -166,6 +165,13 @@ jobs:
           echo "CACHE_CONTAINER_TAG_CLEAN=${CACHE_CONTAINER_TAG_CLEAN}"
           echo "CACHE_CONTAINER_TAG_CLEAN=${CACHE_CONTAINER_TAG_CLEAN}" >> ${GITHUB_ENV}
           echo "CONTAINER_NAME_FULL=${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER,,}/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN}"  >>${GITHUB_ENV}
+
+      # Work around segfaults in ASan/MSan jobs
+      # Cf https://github.com/libjpeg-turbo/libjpeg-turbo/commit/2dfe6c0fe9e18671105e94f7cbf044d4a1d157e6
+      # and https://github.com/actions/runner-images/issues/9491
+      - name: Set up build
+        run: |
+          sudo sysctl vm.mmap_rnd_bits=28
 
       - name: Checkout
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4

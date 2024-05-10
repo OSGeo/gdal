@@ -45,8 +45,6 @@ find -L \
         ! -name ogr_gpsbabel.py `# new-delete-type-mismatch error in gpsbabel binary that we can't suppress` \
         ! -name "__init__.py" \
         ! -path 'ogr/data/*' \
-        ! -name test_gdal_merge.py \
-        ! -name test_gdal_retile.py \
     -print \
     -exec ./pytest_wrapper.sh {} \; \
     | tee ./test-output.txt

@@ -33,7 +33,6 @@ import os
 import shutil
 import sys
 
-import gdaltest
 import pytest
 import test_py_scripts
 
@@ -140,9 +139,6 @@ def test_gdal_edit_py_1(script_path, tmp_path, read_only):
 
 
 def test_gdal_edit_py_1b(script_path, tmp_path):
-
-    if gdaltest.is_travis_branch("sanitize"):
-        pytest.skip("fails on sanitize for unknown reason")
 
     filename = str(tmp_path / "test_gdal_edit_py.tif")
     shutil.copy(test_py_scripts.get_data_path("gcore") + "byte.tif", filename)
