@@ -874,7 +874,8 @@ static CPLErr GDALRasterizeGeometriesInternal(
  * <ul>
  * <li>"ALL_TOUCHED": May be set to TRUE to set all pixels touched
  * by the line or polygons, not just those whose center is within the polygon
- * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</li>
+ * (behavior is unspecified when the polygon is just touching the pixel center)
+ * or that are selected by Brezenham's line algorithm.  Defaults to FALSE.</li>
  * <li>"BURN_VALUE_FROM": May be set to "Z" to use the Z values of the
  * geometries. dfBurnValue is added to this before burning.
  * Defaults to GDALBurnValueSrc.GBV_UserBurnValue in which case just the
@@ -1432,7 +1433,8 @@ static CPLErr GDALRasterizeGeometriesInternal(
  * not exceed the cache.</li>
  * <li>"ALL_TOUCHED": May be set to TRUE to set all pixels touched
  * by the line or polygons, not just those whose center is within the polygon
- * or that are selected by brezenhams line algorithm.  Defaults to FALSE.
+ * (behavior is unspecified when the polygon is just touching the pixel center)
+ * or that are selected by Brezenham's line algorithm.  Defaults to FALSE.
  * <li>"BURN_VALUE_FROM": May be set to "Z" to use the Z values of the</li>
  * geometries. The value from padfLayerBurnValues or the attribute field value
  * is added to this before burning. In default case dfBurnValue is burned as it
@@ -1806,7 +1808,8 @@ CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
  * pointer.</li>
  * <li>"ALL_TOUCHED": May be set to TRUE to set all pixels touched
  * by the line or polygons, not just those whose center is within the polygon
- * or that are selected by brezenhams line algorithm.  Defaults to FALSE.</li>
+ * (behavior is unspecified when the polygon is just touching the pixel center)
+ * or that are selected by Brezenham's line algorithm.  Defaults to FALSE.</li>
  * <li>"BURN_VALUE_FROM": May be set to "Z" to use
  * the Z values of the geometries. dfBurnValue or the attribute field value is
  * added to this before burning. In default case dfBurnValue is burned as it
