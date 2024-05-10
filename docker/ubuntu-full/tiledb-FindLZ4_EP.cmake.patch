@@ -1,0 +1,17 @@
+--- cmake/Modules/FindLZ4_EP.cmake	2024-05-10 22:51:18.653929735 +0200
++++ cmake/Modules/FindLZ4_EP.cmake	2024-05-10 22:51:44.045893652 +0200
+@@ -34,10 +34,10 @@
+ # Include some common helper functions.
+ include(TileDBCommon)
+
+-if(TILEDB_VCPKG)
+-  find_package(lz4 REQUIRED)
+-  return()
+-endif()
++#if(TILEDB_VCPKG)
++#  find_package(lz4 REQUIRED)
++#  return()
++#endif()
+
+ # First check for a static version in the EP prefix.
+ find_library(LZ4_LIBRARIES
