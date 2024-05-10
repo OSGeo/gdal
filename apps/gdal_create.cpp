@@ -126,9 +126,26 @@ GDALCreateAppOptionsGetParser(GDALCreateOptions *psOptions)
     argParser->add_argument("-burn")
         .metavar("<value>")
         .nargs(nargs_pattern::at_least_one)
+        .append()
         .scan<'g', double>()
-        .action([psOptions](const std::string &s)
-                { psOptions->adfBurnValues.push_back(CPLAtof(s.c_str())); })
+        .action(
+            [psOptions](const std::string &s)
+            {
+                if (s.find(' ') != std::string::npos)
+                {
+                    char **papszTokens = CSLTokenizeString(s.c_str());
+                    for (int i = 0; papszTokens[i] != nullptr; i++)
+                    {
+                        psOptions->adfBurnValues.push_back(
+                            CPLAtof(papszTokens[i]));
+                    }
+                    CSLDestroy(papszTokens);
+                }
+                else
+                {
+                    psOptions->adfBurnValues.push_back(CPLAtof(s.c_str()));
+                }
+            })
         .help(
             _("A fixed value to burn into a band for all objects. A list of "
               "-burn options can be supplied, one per band being written to."));
