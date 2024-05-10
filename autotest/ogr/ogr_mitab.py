@@ -2812,3 +2812,109 @@ def test_ogr_mitab_label_without_text(tmp_vsimem):
 def test_ogr_mitab_write_LCC_2SP_non_metre_unit(tmp_vsimem, ext):
 
     _test_srs(tmp_vsimem, "EPSG:2277", ext=ext)  # "NAD83 / Texas Central (ftUS)"
+
+
+###############################################################################
+
+
+def test_ogr_mitab_alter_field_defn_integer_width_4(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "foo.tab")
+
+    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(filename)
+    lyr = ds.CreateLayer("foo")
+    fld_defn = ogr.FieldDefn("int_field", ogr.OFTInteger)
+    fld_defn.SetWidth(5)
+    lyr.CreateField(fld_defn)
+
+    # Changing field defn while no feature has been written is OK
+    idx = lyr.GetLayerDefn().GetFieldIndex("int_field")
+
+    new_fld_defn = ogr.FieldDefn("real_field", ogr.OFTReal)
+    new_fld_defn.SetWidth(15)
+    new_fld_defn.SetPrecision(6)
+    assert lyr.AlterFieldDefn(idx, new_fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+    assert fld_defn.GetType() == ogr.OFTReal
+    assert fld_defn.GetWidth() == 15
+    assert fld_defn.GetPrecision() == 6
+
+    new_fld_defn = ogr.FieldDefn("real_field", ogr.OFTReal)
+    new_fld_defn.SetWidth(30)
+    new_fld_defn.SetPrecision(6)
+    assert lyr.AlterFieldDefn(idx, new_fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+    assert fld_defn.GetType() == ogr.OFTReal
+    assert fld_defn.GetWidth() == 20
+    assert fld_defn.GetPrecision() == 6
+
+    new_fld_defn = ogr.FieldDefn("int_field", ogr.OFTInteger)
+    # Use 4 as this is also sizeof(int32) and there was a confusion before
+    # the fix linked with that test between decimal width and binary width.
+    new_fld_defn.SetWidth(4)
+    assert lyr.AlterFieldDefn(idx, new_fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+    assert fld_defn.GetType() == ogr.OFTInteger
+    assert fld_defn.GetWidth() == 4
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["int_field"] = 1234
+    lyr.CreateFeature(f)
+    f = None
+
+    new_fld_defn = ogr.FieldDefn("int_field", ogr.OFTInteger64)
+    with gdal.quiet_errors():
+        assert (
+            lyr.AlterFieldDefn(idx, new_fld_defn, ogr.ALTER_ALL_FLAG) != ogr.OGRERR_NONE
+        )
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+    assert fld_defn.GetType() == ogr.OFTInteger
+    assert fld_defn.GetWidth() == 4
+
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    idx = lyr.GetLayerDefn().GetFieldIndex("int_field")
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+    assert fld_defn.GetWidth() == 4
+    # We don't change anything actually
+    assert lyr.AlterFieldDefn(idx, fld_defn, ogr.ALTER_ALL_FLAG) == ogr.OGRERR_NONE
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+    assert fld_defn.GetType() == ogr.OFTInteger
+    assert fld_defn.GetWidth() == 4
+    f = lyr.GetNextFeature()
+    assert f["int_field"] == 1234
+
+
+###############################################################################
+
+
+def test_ogr_mitab_alter_field_defn_to_string(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "foo.tab")
+
+    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(filename)
+    lyr = ds.CreateLayer("foo")
+    fld_defn = ogr.FieldDefn("int_field", ogr.OFTInteger)
+    fld_defn.SetWidth(5)
+    lyr.CreateField(fld_defn)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["int_field"] = 1234
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open(filename, update=1)
+    lyr = ds.GetLayer(0)
+    idx = lyr.GetLayerDefn().GetFieldIndex("int_field")
+    new_fld_defn = ogr.FieldDefn("str_field", ogr.OFTString)
+    assert (
+        lyr.AlterFieldDefn(idx, new_fld_defn, ogr.ALTER_NAME_FLAG | ogr.ALTER_TYPE_FLAG)
+        == ogr.OGRERR_NONE
+    )
+    fld_defn = lyr.GetLayerDefn().GetFieldDefn(idx)
+    assert fld_defn.GetType() == ogr.OFTString
+    assert fld_defn.GetWidth() == 254
+    f = lyr.GetNextFeature()
+    assert f["str_field"] == "1234"

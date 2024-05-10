@@ -2839,18 +2839,17 @@ OGRErr TABFile::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
         return OGRERR_FAILURE;
     }
 
-    if (m_poDATFile->AlterFieldDefn(iField, poNewFieldDefn, nFlagsIn) == 0)
+    OGRFieldDefn *poFieldDefn = m_poDefn->GetFieldDefn(iField);
+    if (m_poDATFile->AlterFieldDefn(iField, poFieldDefn, poNewFieldDefn,
+                                    nFlagsIn) == 0)
     {
         m_bNeedTABRewrite = TRUE;
 
-        OGRFieldDefn *poFieldDefn = m_poDefn->GetFieldDefn(iField);
         auto oTemporaryUnsealer(poFieldDefn->GetTemporaryUnsealer());
         if ((nFlagsIn & ALTER_TYPE_FLAG) &&
             poNewFieldDefn->GetType() != poFieldDefn->GetType())
         {
             poFieldDefn->SetType(poNewFieldDefn->GetType());
-            if ((nFlagsIn & ALTER_WIDTH_PRECISION_FLAG) == 0)
-                poFieldDefn->SetWidth(254);
         }
         if (nFlagsIn & ALTER_NAME_FLAG)
         {
@@ -2859,11 +2858,23 @@ OGRErr TABFile::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
             m_oSetFields.insert(
                 CPLString(poNewFieldDefn->GetNameRef()).toupper());
         }
-        if ((nFlagsIn & ALTER_WIDTH_PRECISION_FLAG) &&
-            poFieldDefn->GetType() == OFTString)
+        if (poFieldDefn->GetType() == OFTString)
         {
             poFieldDefn->SetWidth(m_poDATFile->GetFieldWidth(iField));
         }
+        else if (nFlagsIn & ALTER_WIDTH_PRECISION_FLAG)
+        {
+            poFieldDefn->SetWidth(poNewFieldDefn->GetWidth());
+            poFieldDefn->SetPrecision(poNewFieldDefn->GetPrecision());
+        }
+
+        // Take into account .dat limitations on width & precision to clamp
+        // what user might have specify
+        int nWidth = 0;
+        int nPrecision = 0;
+        GetTABType(poFieldDefn, nullptr, &nWidth, &nPrecision);
+        poFieldDefn->SetWidth(nWidth);
+        poFieldDefn->SetPrecision(nPrecision);
 
         if (m_eAccessMode == TABReadWrite)
             WriteTABFile();
