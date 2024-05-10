@@ -4315,3 +4315,15 @@ def test_ogr_gml_geom_coord_precision(tmp_vsimem):
     prec = geom_fld.GetCoordinatePrecision()
     assert prec.GetXYResolution() == 1e-5
     assert prec.GetZResolution() == 1e-3
+
+
+###############################################################################
+# Test weird scenario of https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=68850
+
+
+def test_ogr_gml_geom_link_to_immediate_child():
+
+    ds = gdal.OpenEx(
+        "data/gml/link_to_immediate_child.gml", open_options=["WRITE_GFS=NO"]
+    )
+    assert ds
