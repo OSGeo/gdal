@@ -24,7 +24,8 @@ All GDAL command line programs support the following common options.
 .. _raster_common_options_optfile:
 .. option:: --optfile <filename>
 
-    Read the named file and substitute the contents into the command line options list. Lines beginning with # will be ignored. Multi-word arguments may be kept together with double quotes.
+    Read the named file and substitute the contents into the command line options list. Lines beginning with # will be ignored. Multi-word arguments may be kept together with double quotes. Multiple --optfiles may be used: --optfile file1 --optfile file2...
+
 
 .. option:: --config <key> <value>
 
