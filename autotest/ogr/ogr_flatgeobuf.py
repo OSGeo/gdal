@@ -1401,3 +1401,21 @@ def test_ogr_flatgeobuf_write_arrow(tmp_vsimem):
 
 """
     )
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_flatgeobuf_write_mismatch_geom_type(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "temp.fgb")
+    ds = ogr.GetDriverByName("FlatGeoBuf").CreateDataSource(filename)
+    lyr = ds.CreateLayer("src_lyr", geom_type=ogr.wkbPoint)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (1 2,3 4)"))
+    with pytest.raises(
+        Exception,
+        match="ICreateFeature: Mismatched geometry type. Feature geometry type is Line String, expected layer geometry type is Point",
+    ):
+        lyr.CreateFeature(f)
