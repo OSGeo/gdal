@@ -124,6 +124,19 @@ def chdir_to_test_file(request):
     os.chdir(old)
 
 
+@pytest.fixture(autouse=True, scope="function")
+def check_no_unintended_side_car_files(request):
+    """Detect if some tests generate unintended side car files that can cause
+    troubles to other tests.
+    """
+    yield
+
+    filename = os.path.dirname(__file__) + "/gcore/data/byte.tif.aux.xml"
+    if os.path.exists(filename):
+        os.unlink(filename)
+        assert False, f"{filename} exists but should not"
+
+
 def pytest_collection_modifyitems(config, items):
     # skip test with @ptest.mark.require_run_on_demand when RUN_ON_DEMAND is not set
     skip_run_on_demand_not_set = pytest.mark.skip("RUN_ON_DEMAND not set")
