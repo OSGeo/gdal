@@ -273,7 +273,7 @@ SHPHandle SHPAPI_CALL SHPOpenLL(const char *pszLayer, const char *pszAccess,
     /* -------------------------------------------------------------------- */
     /*  Initialize the info structure.                  */
     /* -------------------------------------------------------------------- */
-    SHPHandle psSHP = STATIC_CAST(SHPHandle, calloc(sizeof(SHPInfo), 1));
+    SHPHandle psSHP = STATIC_CAST(SHPHandle, calloc(1, sizeof(SHPInfo)));
 
     psSHP->bUpdated = FALSE;
     memcpy(&(psSHP->sHooks), psHooks, sizeof(SAHooks));
@@ -1083,7 +1083,7 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
         return SHPLIB_NULLPTR;
     }
 
-    SHPHandle psSHP = STATIC_CAST(SHPHandle, calloc(sizeof(SHPInfo), 1));
+    SHPHandle psSHP = STATIC_CAST(SHPHandle, calloc(1, sizeof(SHPInfo)));
 
     psSHP->bUpdated = FALSE;
     memcpy(&(psSHP->sHooks), psHooks, sizeof(SAHooks));
@@ -1226,7 +1226,7 @@ SHPObject SHPAPI_CALL1(*)
         psObject->nParts = MAX(1, nParts);
 
         psObject->panPartStart =
-            STATIC_CAST(int *, calloc(sizeof(int), psObject->nParts));
+            STATIC_CAST(int *, calloc(psObject->nParts, sizeof(int)));
         psObject->panPartType =
             STATIC_CAST(int *, malloc(sizeof(int) * psObject->nParts));
 
@@ -1255,16 +1255,16 @@ SHPObject SHPAPI_CALL1(*)
         const size_t nSize = sizeof(double) * nVertices;
         psObject->padfX =
             STATIC_CAST(double *, padfX ? malloc(nSize)
-                                        : calloc(sizeof(double), nVertices));
+                                        : calloc(nVertices, sizeof(double)));
         psObject->padfY =
             STATIC_CAST(double *, padfY ? malloc(nSize)
-                                        : calloc(sizeof(double), nVertices));
+                                        : calloc(nVertices, sizeof(double)));
         psObject->padfZ = STATIC_CAST(
             double *,
-            padfZ &&bHasZ ? malloc(nSize) : calloc(sizeof(double), nVertices));
+            padfZ &&bHasZ ? malloc(nSize) : calloc(nVertices, sizeof(double)));
         psObject->padfM = STATIC_CAST(
             double *,
-            padfM &&bHasM ? malloc(nSize) : calloc(sizeof(double), nVertices));
+            padfM &&bHasM ? malloc(nSize) : calloc(nVertices, sizeof(double)));
         if (padfX != SHPLIB_NULLPTR)
             memcpy(psObject->padfX, padfX, nSize);
         if (padfY != SHPLIB_NULLPTR)
