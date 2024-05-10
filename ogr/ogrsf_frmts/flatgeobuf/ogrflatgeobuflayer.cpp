@@ -2285,7 +2285,11 @@ OGRErr OGRFlatGeobufLayer::ICreateFeature(OGRFeature *poNewFeature)
         ogrGeometry->getGeometryType() != m_eGType)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "ICreateFeature: Mismatched geometry type");
+                 "ICreateFeature: Mismatched geometry type. "
+                 "Feature geometry type is %s, "
+                 "expected layer geometry type is %s",
+                 OGRGeometryTypeToName(ogrGeometry->getGeometryType()),
+                 OGRGeometryTypeToName(m_eGType));
         return OGRERR_FAILURE;
     }
 
