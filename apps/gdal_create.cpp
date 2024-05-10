@@ -133,13 +133,12 @@ GDALCreateAppOptionsGetParser(GDALCreateOptions *psOptions)
             {
                 if (s.find(' ') != std::string::npos)
                 {
-                    char **papszTokens = CSLTokenizeString(s.c_str());
-                    for (int i = 0; papszTokens[i] != nullptr; i++)
+                    const CPLStringList aosTokens(CSLTokenizeString(s.c_str()));
+                    for (int i = 0; i < aosTokens.size(); i++)
                     {
                         psOptions->adfBurnValues.push_back(
-                            CPLAtof(papszTokens[i]));
+                            CPLAtof(aosTokens[i]));
                     }
-                    CSLDestroy(papszTokens);
                 }
                 else
                 {
