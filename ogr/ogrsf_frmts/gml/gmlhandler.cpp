@@ -1685,7 +1685,20 @@ OGRErr GMLHandler::endElementGeometry()
                 // m_oMapElementToSubstitute at the end of the current feature.
                 while (psLastChild->psNext)
                     psLastChild = psLastChild->psNext;
-                psLastChild->psNext = CPLCloneXMLTree(psThisNode);
+                if (psLastChild == psThisNode)
+                {
+                    /* Can happen in situations like:
+                     <foo xlink:href="#X">
+                        <bar gml:id="X"/>
+                     </foo>
+                     Do not attempt substitution as that would cause a memory
+                     leak.
+                    */
+                }
+                else
+                {
+                    psLastChild->psNext = CPLCloneXMLTree(psThisNode);
+                }
                 psThisNode->psNext = psAfter;
             }
         }
