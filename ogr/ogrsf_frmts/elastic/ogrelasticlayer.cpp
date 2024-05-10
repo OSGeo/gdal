@@ -3271,7 +3271,8 @@ json_object *OGRElasticLayer::TranslateSQLToFilter(swq_expr_node *poNode)
 {
     if (poNode->eNodeType == SNT_OPERATION)
     {
-        int nFieldIdx;
+        int nFieldIdx = 0;
+        CPL_IGNORE_RET_VAL(nFieldIdx);  // to make cppcheck happy
         if (poNode->nOperation == SWQ_AND && poNode->nSubExprCount == 2)
         {
             // For AND, we can deal with a failure in one of the branch

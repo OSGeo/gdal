@@ -43,6 +43,29 @@ jobs:
           cd build
           ../scripts/cppcheck.sh
 
+  cppcheck_2404:
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+
+      - name: Install Requirements
+        run: |
+          apt update
+          apt install -y cppcheck libsqlite3-dev ccache sqlite3 libproj-dev cmake g++ make
+
+      - name: Run cmake
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+
+      - name: Run cppcheck test
+        run: |
+          cd build
+          ../scripts/cppcheck.sh
+
   code_quality_checks:
     runs-on: ubuntu-latest
     steps:
