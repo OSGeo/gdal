@@ -1944,13 +1944,13 @@ int SHPAPI_CALL DBFReorderFields(DBFHandle psDBF, const int *panMap)
     /* a simple malloc() would be enough, but calloc() helps clang static
      * analyzer */
     int *panFieldOffsetNew =
-        STATIC_CAST(int *, calloc(sizeof(int), psDBF->nFields));
+        STATIC_CAST(int *, calloc(psDBF->nFields, sizeof(int)));
     int *panFieldSizeNew =
-        STATIC_CAST(int *, calloc(sizeof(int), psDBF->nFields));
+        STATIC_CAST(int *, calloc(psDBF->nFields, sizeof(int)));
     int *panFieldDecimalsNew =
-        STATIC_CAST(int *, calloc(sizeof(int), psDBF->nFields));
+        STATIC_CAST(int *, calloc(psDBF->nFields, sizeof(int)));
     char *pachFieldTypeNew =
-        STATIC_CAST(char *, calloc(sizeof(char), psDBF->nFields));
+        STATIC_CAST(char *, calloc(psDBF->nFields, sizeof(char)));
     char *pszHeaderNew = STATIC_CAST(
         char *, malloc(sizeof(char) * XBASE_FLDHDR_SZ * psDBF->nFields));
 
