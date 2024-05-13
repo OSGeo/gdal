@@ -1873,3 +1873,128 @@ def test_ogr_sql_test_execute_sql_error_on_spatial_filter_mem_layer():
         Exception, match="Cannot set spatial filter: no geometry field present in layer"
     ):
         ds.ExecuteSQL("SELECT 1 FROM test", spatialFilter=geom)
+
+
+###############################################################################
+# Test NOT/IN on a comparison where a NULL value was involved
+
+
+@pytest.fixture(scope="module")
+def ds_for_test_ogr_sql_on_null():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("test_ogr_sql_on_null")
+    lyr = ds.CreateLayer("layer")
+    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("realfield", ogr.OFTReal))
+    lyr.CreateField(ogr.FieldDefn("datetimefield", ogr.OFTDateTime))
+    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat["intfield"] = 1
+    feat["realfield"] = 1
+    feat["datetimefield"] = "2024-01-01T00:00:00"
+    feat["strfield"] = "foo"
+    lyr.CreateFeature(feat)
+
+    yield ds
+
+
+def get_available_dialects():
+    return [None, "SQLite"] if ogr.GetDriverByName("SQLite") else [None]
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "where,feature_count",
+    [  # intfield
+        ("1 + intfield >= 0", 1),
+        ("intfield = 0", 0),
+        ("intfield = 1", 1),
+        ("NOT intfield = 0", 1),
+        ("NOT intfield = 1", 0),
+        ("intfield IS NULL", 1),
+        ("intfield IS NOT NULL", 1),
+        ("intfield IN (NULL)", 0),
+        ("NULL IN (NULL)", 0),
+        ("NULL NOT IN (NULL)", 0),
+        ("intfield NOT IN (NULL)", 0),
+        ("intfield IN (1, NULL)", 1),
+        ("intfield IN (0, NULL)", 0),
+        ("intfield IN (NULL, 1)", 1),
+        ("intfield IN (NULL, 0)", 0),
+        ("intfield NOT IN (1, NULL)", 0),
+        ("intfield NOT IN (0, NULL)", 0),
+        ("intfield NOT IN (NULL, 1)", 0),
+        ("intfield NOT IN (NULL, 0)", 0),
+        ("(NOT intfield = 0) OR intfield IS NULL", 2),
+        ("NOT (intfield = 0 OR intfield = 0)", 1),
+        ("(NOT intfield = 0) AND NOT (intfield = 0)", 1),
+        ("NOT (intfield = 0 OR intfield IS NULL)", 1),
+        ("(NOT intfield = 0) AND NOT (intfield IS NULL)", 1),
+        ("NOT (intfield = 0 OR intfield IS NOT NULL)", 0),
+        ("(NOT intfield = 0) AND NOT (intfield IS NOT NULL)", 0),
+        # realfield
+        ("1 + realfield >= 0", 1),
+        ("realfield = 0", 0),
+        ("realfield = 1", 1),
+        ("NOT realfield = 0", 1),
+        ("NOT realfield = 1", 0),
+        ("realfield IS NULL", 1),
+        ("realfield IS NOT NULL", 1),
+        ("realfield IN (NULL)", 0),
+        ("realfield NOT IN (NULL)", 0),
+        ("realfield IN (1, NULL)", 1),
+        ("realfield IN (0, NULL)", 0),
+        ("realfield NOT IN (1, NULL)", 0),
+        ("realfield NOT IN (0, NULL)", 0),
+        ("(NOT realfield = 0) OR realfield IS NULL", 2),
+        ("NOT (realfield = 0 OR realfield = 0)", 1),
+        ("NOT (realfield = 0 OR realfield IS NULL)", 1),
+        ("NOT (realfield = 0 OR realfield IS NOT NULL)", 0),
+        # strfield
+        ("strfield = ''", 0),
+        ("strfield = 'foo'", 1),
+        ("NOT strfield = ''", 1),
+        ("NOT strfield = 'foo'", 0),
+        ("strfield IS NULL", 1),
+        ("strfield IS NOT NULL", 1),
+        ("strfield IN ('foo', NULL)", 1),
+        ("strfield NOT IN ('foo', NULL)", 0),
+        ("strfield IN ('', NULL)", 0),
+        ("strfield NOT IN ('', NULL)", 0),
+        # datetimefield
+        ("datetimefield = '1970-01-01T00:00:00'", 0),
+        ("datetimefield = '2024-01-01T00:00:00'", 1),
+        ("NOT datetimefield = '1970-01-01T00:00:00'", 1),
+        ("NOT datetimefield = '2024-01-01T00:00:00'", 0),
+        ("datetimefield IS NULL", 1),
+        ("datetimefield IS NOT NULL", 1),
+        ("datetimefield IN ('2024-01-01T00:00:00', NULL)", 1),
+        ("datetimefield NOT IN ('2024-01-01T00:00:00', NULL)", 0),
+        ("datetimefield IN ('1970-01-01T00:00:00', NULL)", 0),
+        ("datetimefield NOT IN ('1970-01-01T00:00:00', NULL)", 0),
+        ("datetimefield IN ('invalid', NULL)", None),
+    ],
+)
+@pytest.mark.parametrize("dialect", get_available_dialects())
+def test_ogr_sql_on_null(where, feature_count, dialect, ds_for_test_ogr_sql_on_null):
+
+    if feature_count is None:
+        if dialect == "SQLite":
+            with pytest.raises(Exception):
+                with ds_for_test_ogr_sql_on_null.ExecuteSQL(
+                    "select * from layer where " + where, dialect=dialect
+                ) as sql_lyr:
+                    pass
+        else:
+            with ds_for_test_ogr_sql_on_null.ExecuteSQL(
+                "select * from layer where " + where, dialect=dialect
+            ) as sql_lyr:
+                with pytest.raises(Exception):
+                    sql_lyr.GetFeatureCount()
+    else:
+        with ds_for_test_ogr_sql_on_null.ExecuteSQL(
+            "select * from layer where " + where, dialect=dialect
+        ) as sql_lyr:
+            assert sql_lyr.GetFeatureCount() == feature_count
