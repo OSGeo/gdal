@@ -481,8 +481,12 @@ int OGRParquetLayerBase::TestCapability(const char *pszCap)
 
     if (EQUAL(pszCap, OLCFastSpatialFilter))
     {
-        return m_oMapGeomFieldIndexToGeomColBBOX.find(m_iGeomFieldFilter) !=
-               m_oMapGeomFieldIndexToGeomColBBOX.end();
+        if (m_oMapGeomFieldIndexToGeomColBBOX.find(m_iGeomFieldFilter) !=
+            m_oMapGeomFieldIndexToGeomColBBOX.end())
+        {
+            return true;
+        }
+        return false;
     }
 
     return OGRArrowLayer::TestCapability(pszCap);
@@ -2103,6 +2107,17 @@ int OGRParquetLayer::TestCapability(const char *pszCap)
 
     if (EQUAL(pszCap, OLCIgnoreFields))
         return !m_bHasMissingMappingToParquet;
+
+    if (EQUAL(pszCap, OLCFastSpatialFilter))
+    {
+        if (m_iGeomFieldFilter >= 0 &&
+            m_iGeomFieldFilter < static_cast<int>(m_aeGeomEncoding.size()) &&
+            OGRArrowIsGeoArrowStruct(m_aeGeomEncoding[m_iGeomFieldFilter]))
+        {
+            return true;
+        }
+        // fallback to base method
+    }
 
     return OGRParquetLayerBase::TestCapability(pszCap);
 }

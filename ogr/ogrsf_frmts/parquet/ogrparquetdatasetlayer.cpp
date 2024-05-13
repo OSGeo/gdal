@@ -286,7 +286,50 @@ void OGRParquetDatasetLayer::BuildScanner()
                          cp::field_ref(arrow::FieldRef(
                              oBBOXDef.iArrowCol, oBBOXDef.iArrowSubfieldYMax)),
                          cp::literal(m_sFilterEnvelope.MinY))});
+            }
+            else if (m_iGeomFieldFilter >= 0 &&
+                     m_iGeomFieldFilter <
+                         static_cast<int>(m_aeGeomEncoding.size()) &&
+                     m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                         OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT)
+            {
+                const int iCol =
+                    m_anMapGeomFieldIndexToArrowColumn[m_iGeomFieldFilter];
+                const auto &field = m_poSchema->fields()[iCol];
+                auto type = field->type();
+                std::vector<arrow::FieldRef> fieldRefs;
+                fieldRefs.emplace_back(iCol);
+                if (type->id() == arrow::Type::STRUCT)
+                {
+                    const auto fieldStruct =
+                        std::static_pointer_cast<arrow::StructType>(type);
+                    const auto fieldX = fieldStruct->GetFieldByName("x");
+                    const auto fieldY = fieldStruct->GetFieldByName("y");
+                    if (fieldX && fieldY)
+                    {
+                        auto fieldRefX(fieldRefs);
+                        fieldRefX.emplace_back("x");
+                        auto fieldRefY(fieldRefs);
+                        fieldRefY.emplace_back("y");
+                        expression = cp::and_(
+                            {cp::less_equal(
+                                 cp::field_ref(arrow::FieldRef(fieldRefX)),
+                                 cp::literal(m_sFilterEnvelope.MaxX)),
+                             cp::less_equal(
+                                 cp::field_ref(arrow::FieldRef(fieldRefY)),
+                                 cp::literal(m_sFilterEnvelope.MaxY)),
+                             cp::greater_equal(
+                                 cp::field_ref(arrow::FieldRef(fieldRefX)),
+                                 cp::literal(m_sFilterEnvelope.MinX)),
+                             cp::greater_equal(
+                                 cp::field_ref(arrow::FieldRef(fieldRefY)),
+                                 cp::literal(m_sFilterEnvelope.MinY))});
+                    }
+                }
+            }
 
+            if (expression.is_valid())
+            {
                 m_bBaseArrowIgnoreSpatialFilterRect = true;
 
                 const bool bIsPoint =
@@ -887,6 +930,18 @@ int OGRParquetDatasetLayer::TestCapability(const char *pszCap)
 {
     if (EQUAL(pszCap, OLCIgnoreFields))
         return true;
+
+    if (EQUAL(pszCap, OLCFastSpatialFilter))
+    {
+        if (m_iGeomFieldFilter >= 0 &&
+            m_iGeomFieldFilter < static_cast<int>(m_aeGeomEncoding.size()) &&
+            m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT)
+        {
+            return true;
+        }
+        // fallback to base method
+    }
 
     return OGRParquetLayerBase::TestCapability(pszCap);
 }

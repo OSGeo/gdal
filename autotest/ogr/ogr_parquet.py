@@ -3747,7 +3747,12 @@ def test_ogr_parquet_sort_by_bbox(tmp_vsimem):
 @pytest.mark.parametrize("covering_bbox", [True, False])
 @gdaltest.enable_exceptions()
 def test_ogr_parquet_geoarrow(
-    tmp_vsimem, tmp_path, wkt, check_with_pyarrow, covering_bbox
+    tmp_vsimem,
+    tmp_path,
+    wkt,
+    check_with_pyarrow,
+    covering_bbox,
+    with_arrow_dataset_or_not,
 ):
 
     geom = ogr.CreateGeometryFromWkt(wkt)
@@ -3830,17 +3835,28 @@ def test_ogr_parquet_geoarrow(
             f = lyr.GetNextFeature()
             ogrtest.check_feature_geometry(f, geom2)
 
-    ds = ogr.Open(filename)
+    filename_to_open = ("PARQUET:" if with_arrow_dataset_or_not else "") + filename
+
+    ds = ogr.Open(filename_to_open)
     lyr = ds.GetLayer(0)
     check(lyr)
 
+    if (
+        covering_bbox
+        or not with_arrow_dataset_or_not
+        or lyr.GetGeomType() in (ogr.wkbPoint, ogr.wkbPoint25D)
+    ):
+        assert lyr.TestCapability(ogr.OLCFastSpatialFilter)
+    else:
+        assert not lyr.TestCapability(ogr.OLCFastSpatialFilter)
+
     # Check that ignoring attribute fields doesn't impact geometry reading
-    ds = ogr.Open(filename)
+    ds = ogr.Open(filename_to_open)
     lyr = ds.GetLayer(0)
     lyr.SetIgnoredFields(["foo"])
     check(lyr)
 
-    ds = ogr.Open(filename)
+    ds = ogr.Open(filename_to_open)
     lyr = ds.GetLayer(0)
     minx, maxx, miny, maxy = geom.GetEnvelope()
 
