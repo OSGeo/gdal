@@ -3863,7 +3863,7 @@ OGRArrowLayer::SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch)
         SanityCheckOfSetBatch();
     }
 
-    if (m_poBatch && m_poFilterGeom)
+    if (m_poBatch && m_poFilterGeom && !m_bBaseArrowIgnoreSpatialFilterRect)
     {
         int iCol;
         if (m_bIgnoredFields)
@@ -4041,7 +4041,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
 
     // Evaluate spatial filter by computing the bounding box of each geometry
     // but without creating a OGRGeometry
-    if (m_poFilterGeom)
+    if (m_poFilterGeom && !m_bBaseArrowIgnoreSpatialFilterRect)
     {
         int iCol;
         if (m_bIgnoredFields)
@@ -5577,6 +5577,10 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             }
         }
 
+        const bool bNeedsPostFilter =
+                (m_poAttrQuery) ||
+                (m_poFilterGeom && !m_bBaseArrowIgnoreSpatialFilter);
+
         struct ArrowSchema schema;
         memset(&schema, 0, sizeof(schema));
         auto status = arrow::ExportRecordBatch(*m_poBatch, out_array, &schema);
@@ -5694,7 +5698,7 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         for (int64_t i = 0; i < m_nIdxInBatch; ++i)
             IncrFeatureIdx();
 
-        if (m_poAttrQuery || m_poFilterGeom)
+        if (bNeedsPostFilter)
         {
             CPLStringList aosOptions;
             if (m_iFIDArrowColumn < 0)

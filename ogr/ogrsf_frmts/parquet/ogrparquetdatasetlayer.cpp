@@ -199,6 +199,8 @@ void OGRParquetDatasetLayer::BuildScanner()
 {
     m_bRebuildScanner = false;
     m_bSkipFilterGeometry = false;
+    m_bBaseArrowIgnoreSpatialFilterRect = false;
+    m_bBaseArrowIgnoreSpatialFilter = false;
 
     try
     {
@@ -281,10 +283,14 @@ void OGRParquetDatasetLayer::BuildScanner()
                              oBBOXDef.iArrowCol, oBBOXDef.iArrowSubfieldYMax)),
                          cp::literal(m_sFilterEnvelope.MinY))});
 
+                m_bBaseArrowIgnoreSpatialFilterRect = true;
+
                 const bool bIsPoint =
                     wkbFlatten(
                         m_poFeatureDefn->GetGeomFieldDefn(m_iGeomFieldFilter)
                             ->GetType()) == wkbPoint;
+                m_bBaseArrowIgnoreSpatialFilter =
+                    m_bFilterIsEnvelope && bIsPoint;
 
                 m_bSkipFilterGeometry =
                     m_bFilterIsEnvelope &&
@@ -646,16 +652,6 @@ OGRErr OGRParquetDatasetLayer::SetIgnoredFields(CSLConstList papszFields)
                     m_anMapGeomFieldIndexToArrayIndex.push_back(
                         static_cast<int>(m_aosProjectedFields.size()));
                     m_aosProjectedFields.emplace_back(field->name());
-
-                    auto oIter = m_oMapGeomFieldIndexToGeomColBBOX.find(i);
-                    if (oIter != m_oMapGeomFieldIndexToGeomColBBOX.end() &&
-                        !OGRArrowIsGeoArrowStruct(m_aeGeomEncoding[i]))
-                    {
-                        oIter->second.iArrayIdx =
-                            static_cast<int>(m_aosProjectedFields.size());
-                        m_aosProjectedFields.emplace_back(
-                            fields[oIter->second.iArrowCol]->name());
-                    }
                 }
                 else
                 {

@@ -143,6 +143,16 @@ class OGRArrowLayer CPL_NON_FINAL
     std::vector<int> m_anMapGeomFieldIndexToArrowColumn{};
     std::vector<OGRArrowGeomEncoding> m_aeGeomEncoding{};
 
+    //! Whether bounding box based spatial filter should be skipped.
+    // This is set to true by OGRParquetDatasetLayer when there is a bounding
+    // box field, as an optimization.
+    bool m_bBaseArrowIgnoreSpatialFilterRect = false;
+
+    //! Whether spatial filter should be skipped (by GetNextArrowArray())
+    // This is set to true by OGRParquetDatasetLayer when filtering points in
+    // a rectangle.
+    bool m_bBaseArrowIgnoreSpatialFilter = false;
+
     //! Describe the bbox column of a geometry column
     struct GeomColBBOX
     {
