@@ -135,12 +135,11 @@ void OGRParquetLayerBase::LoadGeoMetadata(
 /************************************************************************/
 
 //! Parse bounding box column definition
-static bool ParseGeometryColumnCovering(const CPLJSONObject &oJSONDef,
-                                        std::string &osBBOXColumn,
-                                        std::string &osXMin,
-                                        std::string &osYMin,
-                                        std::string &osXMax,
-                                        std::string &osYMax)
+/*static */
+bool OGRParquetLayerBase::ParseGeometryColumnCovering(
+    const CPLJSONObject &oJSONDef, std::string &osBBOXColumn,
+    std::string &osXMin, std::string &osYMin, std::string &osXMax,
+    std::string &osYMax)
 {
     const auto oCovering = oJSONDef["covering"];
     if (oCovering.IsValid() &&
@@ -470,6 +469,12 @@ int OGRParquetLayerBase::TestCapability(const char *pszCap)
     if (EQUAL(pszCap, OLCFastSetNextByIndex))
         return true;
 
+    if (EQUAL(pszCap, OLCFastSpatialFilter))
+    {
+        return m_oMapGeomFieldIndexToGeomColBBOX.find(m_iGeomFieldFilter) !=
+               m_oMapGeomFieldIndexToGeomColBBOX.end();
+    }
+
     return OGRArrowLayer::TestCapability(pszCap);
 }
 
@@ -529,8 +534,8 @@ void OGRParquetLayer::EstablishFeatureDefn()
         return;
     }
 
-    const bool bUseBBOX = CPLTestBool(CPLGetConfigOption(
-        ("OGR_" + GetDriverUCName() + "_USE_BBOX").c_str(), "YES"));
+    const bool bUseBBOX =
+        CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_BBOX", "YES"));
 
     // Keep track of declared bounding box columns in GeoParquet JSON metadata,
     // in order not to expose them as regular fields.

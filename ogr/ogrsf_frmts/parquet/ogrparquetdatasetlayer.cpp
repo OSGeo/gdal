@@ -5,7 +5,7 @@
  * Author:   Even Rouault, <even.rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2022, Planet Labs
+ * Copyright (c) 2022-2024, Planet Labs
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,7 @@
 #include "ogrsf_frmts.h"
 
 #include <algorithm>
+#include <cassert>
 #include <map>
 #include <set>
 #include <utility>
@@ -43,16 +44,77 @@
 /************************************************************************/
 
 OGRParquetDatasetLayer::OGRParquetDatasetLayer(
-    OGRParquetDataset *poDS, const char *pszLayerName,
-    const std::shared_ptr<arrow::dataset::Scanner> &scanner,
-    const std::shared_ptr<arrow::Schema> &schema, CSLConstList papszOpenOptions)
+    OGRParquetDataset *poDS, const char *pszLayerName, bool bIsVSI,
+    const std::shared_ptr<arrow::dataset::Dataset> &dataset,
+    CSLConstList papszOpenOptions)
     : OGRParquetLayerBase(poDS, pszLayerName, papszOpenOptions),
-      m_poScanner(scanner)
+      m_bIsVSI(bIsVSI), m_poDataset(dataset)
 {
-    m_poSchema = schema;
+    m_poSchema = m_poDataset->schema();
     EstablishFeatureDefn();
     CPLAssert(static_cast<int>(m_aeGeomEncoding.size()) ==
               m_poFeatureDefn->GetGeomFieldCount());
+}
+
+/************************************************************************/
+/*                  ProcessGeometryColumnCovering()                     */
+/************************************************************************/
+
+/** Process GeoParquet JSON geometry field object to extract information about
+ * its bounding box column, and appropriately fill m_oMapGeomFieldIndexToGeomColBBOX
+ * member with information on that bounding box column.
+ */
+void OGRParquetDatasetLayer::ProcessGeometryColumnCovering(
+    const std::shared_ptr<arrow::Field> &field,
+    const CPLJSONObject &oJSONGeometryColumn)
+{
+    std::string osBBOXColumn;
+    std::string osXMin, osYMin, osXMax, osYMax;
+    if (ParseGeometryColumnCovering(oJSONGeometryColumn, osBBOXColumn, osXMin,
+                                    osYMin, osXMax, osYMax))
+    {
+        OGRArrowLayer::GeomColBBOX sDesc;
+        sDesc.iArrowCol = m_poSchema->GetFieldIndex(osBBOXColumn);
+        const auto fieldBBOX = m_poSchema->GetFieldByName(osBBOXColumn);
+        if (sDesc.iArrowCol >= 0 && fieldBBOX &&
+            fieldBBOX->type()->id() == arrow::Type::STRUCT)
+        {
+            const auto fieldBBOXStruct =
+                std::static_pointer_cast<arrow::StructType>(fieldBBOX->type());
+            const auto fieldXMin = fieldBBOXStruct->GetFieldByName(osXMin);
+            const auto fieldYMin = fieldBBOXStruct->GetFieldByName(osYMin);
+            const auto fieldXMax = fieldBBOXStruct->GetFieldByName(osXMax);
+            const auto fieldYMax = fieldBBOXStruct->GetFieldByName(osYMax);
+            const int nXMinIdx = fieldBBOXStruct->GetFieldIndex(osXMin);
+            const int nYMinIdx = fieldBBOXStruct->GetFieldIndex(osYMin);
+            const int nXMaxIdx = fieldBBOXStruct->GetFieldIndex(osXMax);
+            const int nYMaxIdx = fieldBBOXStruct->GetFieldIndex(osYMax);
+            if (nXMinIdx >= 0 && nYMinIdx >= 0 && nXMaxIdx >= 0 &&
+                nYMaxIdx >= 0 && fieldXMin && fieldYMin && fieldXMax &&
+                fieldYMax &&
+                (fieldXMin->type()->id() == arrow::Type::FLOAT ||
+                 fieldXMin->type()->id() == arrow::Type::DOUBLE) &&
+                fieldXMin->type()->id() == fieldYMin->type()->id() &&
+                fieldXMin->type()->id() == fieldXMax->type()->id() &&
+                fieldXMin->type()->id() == fieldYMax->type()->id())
+            {
+                CPLDebug("PARQUET",
+                         "Bounding box column '%s' detected for "
+                         "geometry column '%s'",
+                         osBBOXColumn.c_str(), field->name().c_str());
+                sDesc.iArrowSubfieldXMin = nXMinIdx;
+                sDesc.iArrowSubfieldYMin = nYMinIdx;
+                sDesc.iArrowSubfieldXMax = nXMaxIdx;
+                sDesc.iArrowSubfieldYMax = nYMaxIdx;
+                sDesc.bIsFloat =
+                    (fieldXMin->type()->id() == arrow::Type::FLOAT);
+
+                m_oMapGeomFieldIndexToGeomColBBOX
+                    [m_poFeatureDefn->GetGeomFieldCount() - 1] =
+                        std::move(sDesc);
+            }
+        }
+    }
 }
 
 /************************************************************************/
@@ -69,6 +131,26 @@ void OGRParquetDatasetLayer::EstablishFeatureDefn()
 
     LoadGDALMetadata(kv_metadata.get());
 
+    const bool bUseBBOX =
+        CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_BBOX", "YES"));
+
+    // Keep track of declared bounding box columns in GeoParquet JSON metadata,
+    // in order not to expose them as regular fields.
+    std::set<std::string> oSetBBOXColumns;
+    if (bUseBBOX)
+    {
+        for (const auto &iter : m_oMapGeometryColumns)
+        {
+            std::string osBBOXColumn;
+            std::string osXMin, osYMin, osXMax, osYMax;
+            if (ParseGeometryColumnCovering(iter.second, osBBOXColumn, osXMin,
+                                            osYMin, osXMax, osYMax))
+            {
+                oSetBBOXColumns.insert(osBBOXColumn);
+            }
+        }
+    }
+
     const auto &fields = m_poSchema->fields();
     for (int i = 0; i < m_poSchema->num_fields(); ++i)
     {
@@ -80,9 +162,23 @@ void OGRParquetDatasetLayer::EstablishFeatureDefn()
             continue;
         }
 
+        if (oSetBBOXColumns.find(field->name()) != oSetBBOXColumns.end())
+        {
+            m_oSetBBoxArrowColumns.insert(i);
+            continue;
+        }
+
         const bool bGeometryField =
             DealWithGeometryColumn(i, field, []() { return wkbUnknown; });
-        if (!bGeometryField)
+        if (bGeometryField)
+        {
+            const auto oIter = m_oMapGeometryColumns.find(field->name());
+            if (bUseBBOX && oIter != m_oMapGeometryColumns.end())
+            {
+                ProcessGeometryColumnCovering(field, oIter->second);
+            }
+        }
+        else
         {
             CreateFieldFromSchema(field, {i},
                                   oMapFieldNameToGDALSchemaFieldDefn);
@@ -96,15 +192,120 @@ void OGRParquetDatasetLayer::EstablishFeatureDefn()
 }
 
 /************************************************************************/
+/*                              BuildScanner()                          */
+/************************************************************************/
+
+void OGRParquetDatasetLayer::BuildScanner()
+{
+    m_bRebuildScanner = false;
+
+    try
+    {
+        std::shared_ptr<arrow::dataset::ScannerBuilder> scannerBuilder;
+        PARQUET_ASSIGN_OR_THROW(scannerBuilder, m_poDataset->NewScan());
+        assert(scannerBuilder);
+
+        // We cannot use the shared memory pool. Otherwise we get random
+        // crashes in multi-threaded arrow code (apparently some cleanup code),
+        // that may used the memory pool after it has been destroyed.
+        // At least this was true with some older libarrow version
+        // PARQUET_THROW_NOT_OK(scannerBuilder->Pool(m_poMemoryPool));
+
+        if (m_bIsVSI)
+        {
+            const int nFragmentReadAhead = atoi(
+                CPLGetConfigOption("OGR_PARQUET_FRAGMENT_READ_AHEAD", "2"));
+            PARQUET_THROW_NOT_OK(
+                scannerBuilder->FragmentReadahead(nFragmentReadAhead));
+        }
+
+        const char *pszBatchSize =
+            CPLGetConfigOption("OGR_PARQUET_BATCH_SIZE", nullptr);
+        if (pszBatchSize)
+        {
+            PARQUET_THROW_NOT_OK(
+                scannerBuilder->BatchSize(CPLAtoGIntBig(pszBatchSize)));
+        }
+
+        const char *pszUseThreads =
+            CPLGetConfigOption("OGR_PARQUET_USE_THREADS", nullptr);
+        if (pszUseThreads)
+        {
+            PARQUET_THROW_NOT_OK(
+                scannerBuilder->UseThreads(CPLTestBool(pszUseThreads)));
+        }
+
+#if PARQUET_VERSION_MAJOR >= 10
+        const char *pszBatchReadAhead =
+            CPLGetConfigOption("OGR_PARQUET_BATCH_READ_AHEAD", nullptr);
+        if (pszBatchReadAhead)
+        {
+            PARQUET_THROW_NOT_OK(
+                scannerBuilder->BatchReadahead(atoi(pszBatchReadAhead)));
+        }
+#endif
+
+        namespace cp = ::arrow::compute;
+        cp::Expression expression;
+        if (m_poFilterGeom &&
+            CPLTestBool(CPLGetConfigOption(
+                "OGR_PARQUET_OPTIMIZED_SPATIAL_FILTER", "YES")))
+        {
+            const auto oIter =
+                m_oMapGeomFieldIndexToGeomColBBOX.find(m_iGeomFieldFilter);
+            if (oIter != m_oMapGeomFieldIndexToGeomColBBOX.end())
+            {
+                // This actually requires Arrow >= 15 (https://github.com/apache/arrow/issues/39064)
+                // to be more efficient.
+                const auto &oBBOXDef = oIter->second;
+                expression = cp::and_(
+                    {cp::less_equal(
+                         cp::field_ref(arrow::FieldRef(
+                             oBBOXDef.iArrowCol, oBBOXDef.iArrowSubfieldXMin)),
+                         cp::literal(m_sFilterEnvelope.MaxX)),
+                     cp::less_equal(
+                         cp::field_ref(arrow::FieldRef(
+                             oBBOXDef.iArrowCol, oBBOXDef.iArrowSubfieldYMin)),
+                         cp::literal(m_sFilterEnvelope.MaxY)),
+                     cp::greater_equal(
+                         cp::field_ref(arrow::FieldRef(
+                             oBBOXDef.iArrowCol, oBBOXDef.iArrowSubfieldXMax)),
+                         cp::literal(m_sFilterEnvelope.MinX)),
+                     cp::greater_equal(
+                         cp::field_ref(arrow::FieldRef(
+                             oBBOXDef.iArrowCol, oBBOXDef.iArrowSubfieldYMax)),
+                         cp::literal(m_sFilterEnvelope.MinY))});
+            }
+        }
+        if (expression.is_valid())
+        {
+            PARQUET_THROW_NOT_OK(scannerBuilder->Filter(expression));
+        }
+
+        PARQUET_ASSIGN_OR_THROW(m_poScanner, scannerBuilder->Finish());
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Arrow/Parquet exception: %s",
+                 e.what());
+    }
+}
+
+/************************************************************************/
 /*                           ReadNextBatch()                            */
 /************************************************************************/
 
 bool OGRParquetDatasetLayer::ReadNextBatch()
 {
+    if (m_bRebuildScanner)
+        BuildScanner();
+
     m_nIdxInBatch = 0;
 
     if (m_poRecordBatchReader == nullptr)
     {
+        if (!m_poScanner)
+            return false;
         auto result = m_poScanner->ToRecordBatchReader();
         if (!result.ok())
         {
@@ -138,6 +339,8 @@ bool OGRParquetDatasetLayer::ReadNextBatch()
         }
     } while (poNextBatch->num_rows() == 0);
 
+    // CPLDebug("PARQUET", "Current batch has %d rows", int(poNextBatch->num_rows()));
+
     SetBatch(poNextBatch);
 
     return true;
@@ -160,6 +363,10 @@ GIntBig OGRParquetDatasetLayer::GetFeatureCount(int bForce)
 {
     if (m_poAttrQuery == nullptr && m_poFilterGeom == nullptr)
     {
+        if (m_bRebuildScanner)
+            BuildScanner();
+        if (!m_poScanner)
+            return -1;
         auto status = m_poScanner->CountRows();
         if (status.ok())
             return *status;
@@ -222,7 +429,7 @@ OGRErr OGRParquetDatasetLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
     auto oIter = m_oMapGeometryColumns.find(pszGeomFieldName);
     if (oIter != m_oMapGeometryColumns.end())
     {
-        auto statusFragments = m_poScanner->dataset()->GetFragments();
+        auto statusFragments = m_poDataset->GetFragments();
         if (statusFragments.ok())
         {
             *psExtent = OGREnvelope();
@@ -271,4 +478,19 @@ OGRErr OGRParquetDatasetLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
     }
 
     return OGRParquetLayerBase::GetExtent(iGeomField, psExtent, bForce);
+}
+
+/************************************************************************/
+/*                        SetSpatialFilter()                            */
+/************************************************************************/
+
+void OGRParquetDatasetLayer::SetSpatialFilter(int iGeomField,
+                                              OGRGeometry *poGeomIn)
+
+{
+    OGRParquetLayerBase::SetSpatialFilter(iGeomField, poGeomIn);
+    m_bRebuildScanner = true;
+
+    // Full invalidation
+    InvalidateCachedBatches();
 }

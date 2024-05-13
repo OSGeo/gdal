@@ -1643,9 +1643,33 @@ def test_ogr_parquet_read_partitioned_geo():
     assert lyr.GetExtent() == (1, 3, 2, 4)
     assert lyr.GetExtent() == (1, 3, 2, 4)
 
+    assert lyr.GetLayerDefn().GetFieldCount() == 0
+
+    assert lyr.TestCapability(ogr.OLCFastSpatialFilter) == 1
+
     lyr.SetSpatialFilterRect(0, 0, 10, 10)
     lyr.ResetReading()
     assert lyr.GetFeatureCount() == 2
+
+    lyr.SetSpatialFilterRect(0.9, 1.9, 1.1, 2.1)
+    lyr.ResetReading()
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetSpatialFilterRect(0.9, 1.9, 0.95, 2.1)
+    lyr.ResetReading()
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetSpatialFilterRect(1.05, 1.9, 1.1, 2.1)
+    lyr.ResetReading()
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetSpatialFilterRect(0.9, 1.9, 1.1, 1.95)
+    lyr.ResetReading()
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetSpatialFilterRect(0.9, 2.05, 1.1, 2.1)
+    lyr.ResetReading()
+    assert lyr.GetFeatureCount() == 0
 
     lyr.SetSpatialFilterRect(-100, -100, -100, -100)
     lyr.ResetReading()

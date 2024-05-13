@@ -4813,13 +4813,8 @@ inline void OGRArrowLayer::SetSpatialFilter(int iGeomField,
                                             OGRGeometry *poGeomIn)
 
 {
-    if (iGeomField < 0 || (iGeomField >= GetLayerDefn()->GetGeomFieldCount() &&
-                           !(iGeomField == 0 && poGeomIn == nullptr)))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid geometry field index : %d", iGeomField);
+    if (!ValidateGeometryFieldIndexForSetSpatialFilter(iGeomField, poGeomIn))
         return;
-    }
 
     // When changing filters, we need to invalidate cached batches, as
     // PostFilterArrowArray() has potentially modified array contents

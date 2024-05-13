@@ -31,6 +31,8 @@
 
 #include "ogrsf_frmts.h"
 
+#include "cpl_json.h"
+
 #include <functional>
 #include <map>
 
@@ -62,6 +64,13 @@ class OGRParquetLayerBase CPL_NON_FINAL : public OGRArrowLayer
     bool DealWithGeometryColumn(
         int iFieldIdx, const std::shared_ptr<arrow::Field> &field,
         std::function<OGRwkbGeometryType(void)> computeGeometryTypeFun);
+
+    static bool ParseGeometryColumnCovering(const CPLJSONObject &oJSONDef,
+                                            std::string &osBBOXColumn,
+                                            std::string &osXMin,
+                                            std::string &osYMin,
+                                            std::string &osXMax,
+                                            std::string &osYMax);
 
   public:
     int TestCapability(const char *) override;
@@ -224,9 +233,17 @@ class OGRParquetLayer final : public OGRParquetLayerBase
 
 class OGRParquetDatasetLayer final : public OGRParquetLayerBase
 {
+    bool m_bIsVSI = false;
+    bool m_bRebuildScanner = true;
+    std::shared_ptr<arrow::dataset::Dataset> m_poDataset{};
     std::shared_ptr<arrow::dataset::Scanner> m_poScanner{};
 
     void EstablishFeatureDefn();
+    void
+    ProcessGeometryColumnCovering(const std::shared_ptr<arrow::Field> &field,
+                                  const CPLJSONObject &oJSONGeometryColumn);
+
+    void BuildScanner();
 
   protected:
     std::string GetDriverUCName() const override
@@ -242,15 +259,21 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
 
   public:
     OGRParquetDatasetLayer(
-        OGRParquetDataset *poDS, const char *pszLayerName,
-        const std::shared_ptr<arrow::dataset::Scanner> &scanner,
-        const std::shared_ptr<arrow::Schema> &schema,
+        OGRParquetDataset *poDS, const char *pszLayerName, bool bIsVSI,
+        const std::shared_ptr<arrow::dataset::Dataset> &dataset,
         CSLConstList papszOpenOptions);
 
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                      int bForce = TRUE) override;
+
+    void SetSpatialFilter(OGRGeometry *poGeom) override
+    {
+        SetSpatialFilter(0, poGeom);
+    }
+
+    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
 
     // TODO
     std::unique_ptr<OGRFieldDomain>
