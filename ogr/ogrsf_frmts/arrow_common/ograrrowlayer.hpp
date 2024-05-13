@@ -3858,7 +3858,10 @@ OGRArrowLayer::SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch)
     m_poArrayYMaxFloat = nullptr;
 
     if (m_poBatch)
+    {
         m_poBatchColumns = m_poBatch->columns();
+        SanityCheckOfSetBatch();
+    }
 
     if (m_poBatch && m_poFilterGeom)
     {
@@ -3957,6 +3960,67 @@ OGRArrowLayer::SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch)
             }
         }
     }
+}
+
+/************************************************************************/
+/*                      SanityCheckOfSetBatch()                         */
+/************************************************************************/
+
+inline void OGRArrowLayer::SanityCheckOfSetBatch() const
+{
+#ifdef DEBUG
+    CPLAssert(m_poBatch);
+
+    const auto &poColumns = m_poBatch->columns();
+
+    // Sanity checks
+    CPLAssert(m_poBatch->num_columns() == (m_bIgnoredFields
+                                               ? m_nExpectedBatchColumns
+                                               : m_poSchema->num_fields()));
+    const auto &fields = m_poSchema->fields();
+
+    for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i)
+    {
+        int iCol;
+        if (m_bIgnoredFields)
+        {
+            iCol = m_anMapFieldIndexToArrayIndex[i];
+            if (iCol < 0)
+                continue;
+        }
+        else
+        {
+            iCol = m_anMapFieldIndexToArrowColumn[i][0];
+        }
+        CPL_IGNORE_RET_VAL(iCol);  // to make cppcheck happy
+
+        CPLAssert(iCol < static_cast<int>(poColumns.size()));
+        CPLAssert(fields[m_anMapFieldIndexToArrowColumn[i][0]]->type()->id() ==
+                  poColumns[iCol]->type_id());
+    }
+
+    for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
+    {
+        int iCol;
+        if (m_bIgnoredFields)
+        {
+            iCol = m_anMapGeomFieldIndexToArrayIndex[i];
+            if (iCol < 0)
+                continue;
+        }
+        else
+        {
+            iCol = m_anMapGeomFieldIndexToArrowColumn[i];
+        }
+        CPL_IGNORE_RET_VAL(iCol);  // to make cppcheck happy
+
+        CPLAssert(iCol < static_cast<int>(poColumns.size()));
+        CPLAssert(fields[m_anMapGeomFieldIndexToArrowColumn[i]]->type()->id() ==
+                  poColumns[iCol]->type_id());
+    }
+#else
+    CPL_IGNORE_RET_VAL(m_nExpectedBatchColumns);
+#endif
 }
 
 /************************************************************************/

@@ -108,11 +108,6 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     int64_t m_nFeatureIdxSelected = 0;
     std::vector<int> m_anRequestedParquetColumns{};  // only valid when
                                                      // m_bIgnoredFields is set
-#ifdef DEBUG
-    int m_nExpectedBatchColumns =
-        0;  // Should be equal to m_poBatch->num_columns() (when
-            // m_bIgnoredFields is set)
-#endif
     CPLStringList m_aosFeatherMetadata{};
 
     //! Describe the bbox column of a geometry column

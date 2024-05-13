@@ -1825,57 +1825,6 @@ bool OGRParquetLayer::ReadNextBatch()
 
     SetBatch(poNextBatch);
 
-#ifdef DEBUG
-    const auto &poColumns = m_poBatch->columns();
-
-    // Sanity checks
-    CPLAssert(m_poBatch->num_columns() == (m_bIgnoredFields
-                                               ? m_nExpectedBatchColumns
-                                               : m_poSchema->num_fields()));
-
-    for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i)
-    {
-        int iCol;
-        if (m_bIgnoredFields)
-        {
-            iCol = m_anMapFieldIndexToArrayIndex[i];
-            if (iCol < 0)
-                continue;
-        }
-        else
-        {
-            iCol = m_anMapFieldIndexToArrowColumn[i][0];
-        }
-        CPL_IGNORE_RET_VAL(iCol);  // to make cppcheck happy
-
-        CPLAssert(iCol < static_cast<int>(poColumns.size()));
-        CPLAssert(m_poSchema->fields()[m_anMapFieldIndexToArrowColumn[i][0]]
-                      ->type()
-                      ->id() == poColumns[iCol]->type_id());
-    }
-
-    for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
-    {
-        int iCol;
-        if (m_bIgnoredFields)
-        {
-            iCol = m_anMapGeomFieldIndexToArrayIndex[i];
-            if (iCol < 0)
-                continue;
-        }
-        else
-        {
-            iCol = m_anMapGeomFieldIndexToArrowColumn[i];
-        }
-        CPL_IGNORE_RET_VAL(iCol);  // to make cppcheck happy
-
-        CPLAssert(iCol < static_cast<int>(poColumns.size()));
-        CPLAssert(m_poSchema->fields()[m_anMapGeomFieldIndexToArrowColumn[i]]
-                      ->type()
-                      ->id() == poColumns[iCol]->type_id());
-    }
-#endif
-
     return true;
 }
 
@@ -1902,12 +1851,12 @@ OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
     m_anMapGeomFieldIndexToArrayIndex.clear();
     m_nRequestedFIDColumn = -1;
     OGRErr eErr = OGRLayer::SetIgnoredFields(papszFields);
+    int nBatchColumns = 0;
     if (!m_bHasMissingMappingToParquet && eErr == OGRERR_NONE)
     {
         m_bIgnoredFields = papszFields != nullptr && papszFields[0] != nullptr;
         if (m_bIgnoredFields)
         {
-            int nBatchColumns = 0;
             if (m_iFIDParquetColumn >= 0)
             {
                 m_nRequestedFIDColumn = nBatchColumns;
@@ -2037,11 +1986,10 @@ OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
             CPLAssert(
                 static_cast<int>(m_anMapGeomFieldIndexToArrayIndex.size()) ==
                 m_poFeatureDefn->GetGeomFieldCount());
-#ifdef DEBUG
-            m_nExpectedBatchColumns = nBatchColumns;
-#endif
         }
     }
+
+    m_nExpectedBatchColumns = m_bIgnoredFields ? nBatchColumns : -1;
 
     ComputeConstraintsArrayIdx();
 

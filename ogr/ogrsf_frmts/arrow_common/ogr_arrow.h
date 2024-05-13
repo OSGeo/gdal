@@ -181,6 +181,10 @@ class OGRArrowLayer CPL_NON_FINAL
         // m_bIgnoredFields is set
     int m_nRequestedFIDColumn = -1;  // only valid when m_bIgnoredFields is set
 
+    int m_nExpectedBatchColumns =
+        -1;  // Should be equal to m_poBatch->num_columns() (when
+             // m_bIgnoredFields is set)
+
     bool m_bEOF = false;
     int64_t m_nFeatureIdx = 0;
     int64_t m_nIdxInBatch = 0;
@@ -273,6 +277,8 @@ class OGRArrowLayer CPL_NON_FINAL
     {
         ++m_nFeatureIdx;
     }
+
+    void SanityCheckOfSetBatch() const;
 
   public:
     virtual ~OGRArrowLayer() override;
