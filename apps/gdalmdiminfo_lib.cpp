@@ -1102,22 +1102,8 @@ static std::unique_ptr<GDALArgumentParser> GDALMultiDimInfoAppOptionsGetParser(
         argParser->add_open_options_argument(
             psOptionsForBinary->aosOpenOptions);
 
-        argParser->add_argument("-if")
-            .append()
-            .metavar("<format>")
-            .action(
-                [psOptionsForBinary](const std::string &s)
-                {
-                    if (GDALGetDriverByName(s.c_str()) == nullptr)
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "%s is not a recognized driver", s.c_str());
-                    }
-                    psOptionsForBinary->aosAllowInputDrivers.AddString(
-                        s.c_str());
-                })
-            .help(
-                _("Format/driver name(s) to try when opening the input file."));
+        argParser->add_input_format_argument(
+            &psOptionsForBinary->aosOpenOptions);
 
         argParser->add_argument("dataset_name")
             .metavar("<dataset_name>")
@@ -1126,7 +1112,7 @@ static std::unique_ptr<GDALArgumentParser> GDALMultiDimInfoAppOptionsGetParser(
     }
 
     argParser->add_argument("-arrayoption")
-        .metavar("<NAME=VALUE>")
+        .metavar("<NAME>=<VALUE>")
         .append()
         .action([psOptions](const std::string &s)
                 { psOptions->aosArrayOptions.AddString(s.c_str()); })
@@ -1138,10 +1124,9 @@ static std::unique_ptr<GDALArgumentParser> GDALMultiDimInfoAppOptionsGetParser(
         .store_into(psOptions->bStats)
         .help(_("Read and display image statistics."));
 
-    argParser->add_argument("-stdout")
-        .flag()
-        .store_into(psOptions->bStdoutOutput)
-        .help(_("Write output to stdout instead of a JSON file."));
+    // Only used by gdalmdiminfo binary to write output to stdout instead of in a string, in JSON mode
+    argParser->add_argument("-stdout").flag().hidden().store_into(
+        psOptions->bStdoutOutput);
 
     return argParser;
 }
