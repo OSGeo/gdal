@@ -234,6 +234,7 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
 {
     bool m_bIsVSI = false;
     bool m_bRebuildScanner = true;
+    bool m_bSkipFilterGeometry = false;
     std::shared_ptr<arrow::dataset::Dataset> m_poDataset{};
     std::shared_ptr<arrow::dataset::Scanner> m_poScanner{};
     std::vector<std::string> m_aosProjectedFields{};
@@ -260,6 +261,8 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
         OGRParquetDataset *poDS, const char *pszLayerName, bool bIsVSI,
         const std::shared_ptr<arrow::dataset::Dataset> &dataset,
         CSLConstList papszOpenOptions);
+
+    OGRFeature *GetNextFeature() override;
 
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;

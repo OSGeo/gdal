@@ -4053,7 +4053,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
             iCol = m_anMapGeomFieldIndexToArrowColumn[m_iGeomFieldFilter];
         }
 
-        if (m_poArrayXMinFloat || m_poArrayXMinDouble)
+        if (iCol >= 0 && (m_poArrayXMinFloat || m_poArrayXMinDouble))
         {
             OGREnvelope sEnvelopeSkipToNextFeatureDueToBBOX;
             const auto IntersectsBBOX =

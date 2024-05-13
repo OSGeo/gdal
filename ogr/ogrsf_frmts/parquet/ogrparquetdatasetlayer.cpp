@@ -198,6 +198,7 @@ void OGRParquetDatasetLayer::EstablishFeatureDefn()
 void OGRParquetDatasetLayer::BuildScanner()
 {
     m_bRebuildScanner = false;
+    m_bSkipFilterGeometry = false;
 
     try
     {
@@ -279,6 +280,17 @@ void OGRParquetDatasetLayer::BuildScanner()
                          cp::field_ref(arrow::FieldRef(
                              oBBOXDef.iArrowCol, oBBOXDef.iArrowSubfieldYMax)),
                          cp::literal(m_sFilterEnvelope.MinY))});
+
+                const bool bIsPoint =
+                    wkbFlatten(
+                        m_poFeatureDefn->GetGeomFieldDefn(m_iGeomFieldFilter)
+                            ->GetType()) == wkbPoint;
+
+                m_bSkipFilterGeometry =
+                    m_bFilterIsEnvelope &&
+                    (bIsPoint ||
+                     m_poFeatureDefn->GetGeomFieldDefn(m_iGeomFieldFilter)
+                         ->IsIgnored());
             }
         }
         if (expression.is_valid())
@@ -363,6 +375,29 @@ bool OGRParquetDatasetLayer::ReadNextBatch()
     SetBatch(poNextBatch);
 
     return true;
+}
+
+/************************************************************************/
+/*                        GetNextFeature()                              */
+/************************************************************************/
+
+OGRFeature *OGRParquetDatasetLayer::GetNextFeature()
+{
+    while (true)
+    {
+        OGRFeature *poFeature = GetNextRawFeature();
+        if (poFeature == nullptr)
+            return nullptr;
+
+        if ((m_poFilterGeom == nullptr || m_bSkipFilterGeometry ||
+             FilterGeometry(poFeature->GetGeometryRef())) &&
+            (m_poAttrQuery == nullptr || m_poAttrQuery->Evaluate(poFeature)))
+        {
+            return poFeature;
+        }
+        else
+            delete poFeature;
+    }
 }
 
 /************************************************************************/

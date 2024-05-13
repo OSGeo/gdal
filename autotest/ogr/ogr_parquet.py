@@ -3945,3 +3945,34 @@ def test_ogr_parquet_read_arrow_json_extension():
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTJSON
     f = lyr.GetNextFeature()
     assert f["extension_json"] == '{"foo":"bar"}'
+
+
+###############################################################################
+# Test ignored fields with arrow::dataset and bounding box column
+
+
+@pytest.mark.skipif(not _has_arrow_dataset(), reason="GDAL not built with ArrowDataset")
+def test_ogr_parquet_ignored_fields_bounding_box_column_arrow_dataset(tmp_path):
+
+    filename = str(tmp_path / "test.parquet")
+    ds = ogr.GetDriverByName("Parquet").CreateDataSource(filename)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint, options=["FID=fid"])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1)
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr.CreateFeature(f)
+    f = None
+    ds.Close()
+
+    ds = ogr.Open("PARQUET:" + filename)
+    lyr = ds.GetLayer(0)
+    lyr.SetIgnoredFields([lyr.GetGeometryColumn()])
+    lyr.SetSpatialFilterRect(0, 0, 10, 10)
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 1
+    assert f.GetGeometryRef() is None
+
+    lyr.SetSpatialFilterRect(0, 0, 0, 0)
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is None
