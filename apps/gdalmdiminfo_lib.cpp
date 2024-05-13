@@ -1103,7 +1103,7 @@ static std::unique_ptr<GDALArgumentParser> GDALMultiDimInfoAppOptionsGetParser(
             psOptionsForBinary->aosOpenOptions);
 
         argParser->add_input_format_argument(
-            &psOptionsForBinary->aosOpenOptions);
+            &psOptionsForBinary->aosAllowInputDrivers);
 
         argParser->add_argument("dataset_name")
             .metavar("<dataset_name>")
