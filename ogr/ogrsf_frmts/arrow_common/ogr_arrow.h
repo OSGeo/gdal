@@ -62,6 +62,28 @@ enum class OGRArrowGeomEncoding
 };
 
 /************************************************************************/
+/*                        OGRArrowIsGeoArrowStruct()                    */
+/************************************************************************/
+
+inline bool OGRArrowIsGeoArrowStruct(OGRArrowGeomEncoding eEncoding)
+{
+    switch (eEncoding)
+    {
+        case OGRArrowGeomEncoding::GEOARROW_STRUCT_GENERIC:
+        case OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT:
+        case OGRArrowGeomEncoding::GEOARROW_STRUCT_LINESTRING:
+        case OGRArrowGeomEncoding::GEOARROW_STRUCT_POLYGON:
+        case OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOINT:
+        case OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTILINESTRING:
+        case OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOLYGON:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+/************************************************************************/
 /*                         OGRArrowLayer                                */
 /************************************************************************/
 

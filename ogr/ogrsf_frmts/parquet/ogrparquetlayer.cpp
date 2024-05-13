@@ -1461,18 +1461,7 @@ bool OGRParquetLayer::ReadNextBatch()
                      m_anMapGeomFieldIndexToParquetColumns.size()) &&
              m_anMapGeomFieldIndexToParquetColumns[m_iGeomFieldFilter].size() >=
                  2 &&
-             (m_aeGeomEncoding[m_iGeomFieldFilter] ==
-                  OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT ||
-              m_aeGeomEncoding[m_iGeomFieldFilter] ==
-                  OGRArrowGeomEncoding::GEOARROW_STRUCT_LINESTRING ||
-              m_aeGeomEncoding[m_iGeomFieldFilter] ==
-                  OGRArrowGeomEncoding::GEOARROW_STRUCT_POLYGON ||
-              m_aeGeomEncoding[m_iGeomFieldFilter] ==
-                  OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOINT ||
-              m_aeGeomEncoding[m_iGeomFieldFilter] ==
-                  OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTILINESTRING ||
-              m_aeGeomEncoding[m_iGeomFieldFilter] ==
-                  OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOLYGON));
+             OGRArrowIsGeoArrowStruct(m_aeGeomEncoding[m_iGeomFieldFilter]));
 
         if (m_asAttributeFilterConstraints.empty() && !bUSEBBOXFields &&
             !(bIsGeoArrowStruct && m_poFilterGeom))
@@ -2029,34 +2018,14 @@ OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
                         m_oMapGeomFieldIndexToGeomColBBOXParquet.find(i);
                     if (oIter != m_oMapGeomFieldIndexToGeomColBBOX.end() &&
                         oIterParquet !=
-                            m_oMapGeomFieldIndexToGeomColBBOXParquet.end())
+                            m_oMapGeomFieldIndexToGeomColBBOXParquet.end() &&
+                        !OGRArrowIsGeoArrowStruct(m_aeGeomEncoding[i]))
                     {
-                        const bool bIsGeoArrowStruct =
-                            (m_aeGeomEncoding[i] ==
-                                 OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT ||
-                             m_aeGeomEncoding[i] ==
-                                 OGRArrowGeomEncoding::
-                                     GEOARROW_STRUCT_LINESTRING ||
-                             m_aeGeomEncoding[i] ==
-                                 OGRArrowGeomEncoding::
-                                     GEOARROW_STRUCT_POLYGON ||
-                             m_aeGeomEncoding[i] ==
-                                 OGRArrowGeomEncoding::
-                                     GEOARROW_STRUCT_MULTIPOINT ||
-                             m_aeGeomEncoding[i] ==
-                                 OGRArrowGeomEncoding::
-                                     GEOARROW_STRUCT_MULTILINESTRING ||
-                             m_aeGeomEncoding[i] ==
-                                 OGRArrowGeomEncoding::
-                                     GEOARROW_STRUCT_MULTIPOLYGON);
-                        if (!bIsGeoArrowStruct)
-                        {
-                            oIter->second.iArrayIdx = nBatchColumns++;
-                            m_anRequestedParquetColumns.insert(
-                                m_anRequestedParquetColumns.end(),
-                                oIterParquet->second.anParquetCols.begin(),
-                                oIterParquet->second.anParquetCols.end());
-                        }
+                        oIter->second.iArrayIdx = nBatchColumns++;
+                        m_anRequestedParquetColumns.insert(
+                            m_anRequestedParquetColumns.end(),
+                            oIterParquet->second.anParquetCols.begin(),
+                            oIterParquet->second.anParquetCols.end());
                     }
                 }
                 else
