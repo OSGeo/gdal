@@ -514,7 +514,7 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
     std::unique_ptr<OGROpenFileGDBLayer>
     BuildLayerFromName(const char *pszName);
     OGRLayer *AddLayer(const CPLString &osName, int nInterestTable,
-                       int &nCandidateLayers, int &nLayersSDCOrCDF,
+                       int &nCandidateLayers, int &nLayersCDF,
                        const CPLString &osDefinition,
                        const CPLString &osDocumentation,
                        OGRwkbGeometryType eGeomType,

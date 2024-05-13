@@ -2371,8 +2371,6 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
 
     //! @cond Doxygen_Suppress
     static char **GetSearchPaths(const char *pszGDAL_DRIVER_PATH);
-    int GetDriverCount(bool bIncludeHidden) const;
-    GDALDriver *GetDriver(int iDriver, bool bIncludeHidden);
     //! @endcond
 
   public:
@@ -2395,6 +2393,11 @@ class CPL_DLL GDALDriverManager : public GDALMajorObject
     static void AutoLoadPythonDrivers();
 
     void DeclareDeferredPluginDriver(GDALPluginDriverProxy *poProxyDriver);
+
+    //! @cond Doxygen_Suppress
+    int GetDriverCount(bool bIncludeHidden) const;
+    GDALDriver *GetDriver(int iDriver, bool bIncludeHidden);
+    //! @endcond
 };
 
 CPL_C_START
