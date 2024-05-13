@@ -2659,7 +2659,12 @@ GDALDriverH CPL_STDCALL GDALIdentifyDriverEx(
 {
     GDALDriverManager *poDM = GetGDALDriverManager();
     CPLAssert(nullptr != poDM);
-    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly, papszFileList);
+
+    // If no driver kind is specified, assume all are to be probed.
+    if ((nIdentifyFlags & GDAL_OF_KIND_MASK) == 0)
+        nIdentifyFlags |= GDAL_OF_KIND_MASK & ~GDAL_OF_MULTIDIM_RASTER;
+
+    GDALOpenInfo oOpenInfo(pszFilename, nIdentifyFlags, papszFileList);
 
     CPLErrorStateBackuper oBackuper;
     CPLErrorSetState(CE_None, CPLE_AppDefined, "");
