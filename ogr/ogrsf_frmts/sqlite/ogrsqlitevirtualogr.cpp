@@ -1201,10 +1201,12 @@ static int OGR2SQLITE_Filter(sqlite3_vtab_cursor *pCursor,
         }
 
         bool bExpectRightOperator = true;
-        switch (panConstraints[2 * i + 2])
+        std::string osOp;
+        const auto eSQLiteConstraintOp = panConstraints[2 * i + 2];
+        switch (eSQLiteConstraintOp)
         {
             case SQLITE_INDEX_CONSTRAINT_EQ:
-                osAttributeFilter += " = ";
+                osOp = " = ";
                 break;
             case SQLITE_INDEX_CONSTRAINT_GT:
                 osAttributeFilter += " > ";
@@ -1257,30 +1259,38 @@ static int OGR2SQLITE_Filter(sqlite3_vtab_cursor *pCursor,
 
         if (bExpectRightOperator)
         {
-            if (sqlite3_value_type(argv[i]) == SQLITE_INTEGER)
+            const auto eSQLiteType = sqlite3_value_type(argv[i]);
+            if (eSQLiteType == SQLITE_INTEGER)
             {
+                osAttributeFilter += osOp;
                 osAttributeFilter +=
                     CPLSPrintf(CPL_FRMT_GIB, sqlite3_value_int64(argv[i]));
             }
-            else if (sqlite3_value_type(argv[i]) == SQLITE_FLOAT)
+            else if (eSQLiteType == SQLITE_FLOAT)
             {  // Insure that only Decimal.Points are used, never local settings
                 // such as Decimal.Comma.
+                osAttributeFilter += osOp;
                 osAttributeFilter +=
                     CPLSPrintf("%.18g", sqlite3_value_double(argv[i]));
             }
-            else if (sqlite3_value_type(argv[i]) == SQLITE_TEXT)
+            else if (eSQLiteType == SQLITE_TEXT)
             {
+                osAttributeFilter += osOp;
                 osAttributeFilter += "'";
                 osAttributeFilter +=
                     SQLEscapeLiteral((const char *)sqlite3_value_text(argv[i]));
                 osAttributeFilter += "'";
             }
+            else if (eSQLiteConstraintOp == SQLITE_INDEX_CONSTRAINT_EQ &&
+                     eSQLiteType == SQLITE_NULL)
+            {
+                osAttributeFilter += " IN (NULL)";
+            }
             else
             {
                 sqlite3_free(pMyCursor->pVTab->zErrMsg);
-                pMyCursor->pVTab->zErrMsg =
-                    sqlite3_mprintf("Unhandled constraint data type : %d",
-                                    sqlite3_value_type(argv[i]));
+                pMyCursor->pVTab->zErrMsg = sqlite3_mprintf(
+                    "Unhandled constraint data type : %d", eSQLiteType);
                 return SQLITE_ERROR;
             }
         }
