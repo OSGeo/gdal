@@ -105,7 +105,9 @@ MAIN_START(argc, argv)
 
     GDALClose(hDataset);
 
-    GDALExit(0);
+    GDALDestroy();
+
+    return 0;
 }
 
 MAIN_END
