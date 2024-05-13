@@ -286,6 +286,21 @@ void OGRParquetDatasetLayer::BuildScanner()
             PARQUET_THROW_NOT_OK(scannerBuilder->Filter(expression));
         }
 
+        if (m_bIgnoredFields)
+        {
+#ifdef DEBUG
+            std::string osFields;
+            for (const std::string &osField : m_aosProjectedFields)
+            {
+                if (!osFields.empty())
+                    osFields += ',';
+                osFields += osField;
+            }
+            CPLDebug("PARQUET", "Projected fields: %s", osFields.c_str());
+#endif
+            PARQUET_THROW_NOT_OK(scannerBuilder->Project(m_aosProjectedFields));
+        }
+
         PARQUET_ASSIGN_OR_THROW(m_poScanner, scannerBuilder->Finish());
     }
     catch (const std::exception &e)
@@ -348,15 +363,6 @@ bool OGRParquetDatasetLayer::ReadNextBatch()
     SetBatch(poNextBatch);
 
     return true;
-}
-
-/************************************************************************/
-/*                     InvalidateCachedBatches()                        */
-/************************************************************************/
-
-void OGRParquetDatasetLayer::InvalidateCachedBatches()
-{
-    ResetReading();
 }
 
 /************************************************************************/
@@ -497,4 +503,150 @@ void OGRParquetDatasetLayer::SetSpatialFilter(int iGeomField,
 
     // Full invalidation
     InvalidateCachedBatches();
+}
+
+/************************************************************************/
+/*                        SetIgnoredFields()                            */
+/************************************************************************/
+
+OGRErr OGRParquetDatasetLayer::SetIgnoredFields(CSLConstList papszFields)
+{
+    m_bRebuildScanner = true;
+    m_aosProjectedFields.clear();
+    m_bIgnoredFields = false;
+    m_anMapFieldIndexToArrayIndex.clear();
+    m_anMapGeomFieldIndexToArrayIndex.clear();
+    m_nRequestedFIDColumn = -1;
+    OGRErr eErr = OGRParquetLayerBase::SetIgnoredFields(papszFields);
+    if (eErr == OGRERR_NONE)
+    {
+        m_bIgnoredFields = papszFields != nullptr && papszFields[0] != nullptr;
+        if (m_bIgnoredFields)
+        {
+            if (m_iFIDArrowColumn >= 0)
+            {
+                m_nRequestedFIDColumn =
+                    static_cast<int>(m_aosProjectedFields.size());
+                m_aosProjectedFields.emplace_back(GetFIDColumn());
+            }
+
+            const auto &fields = m_poSchema->fields();
+            for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i)
+            {
+                const auto &field =
+                    fields[m_anMapFieldIndexToArrowColumn[i][0]];
+                const auto eArrowType = field->type()->id();
+                if (eArrowType == arrow::Type::STRUCT)
+                {
+                    // For a struct, for the sake of simplicity in
+                    // GetNextRawFeature(), as soon as one of the member if
+                    // requested, request the struct field, so that the Arrow
+                    // type doesn't change
+                    bool bFoundNotIgnored = false;
+                    for (int j = i; j < m_poFeatureDefn->GetFieldCount() &&
+                                    m_anMapFieldIndexToArrowColumn[i][0] ==
+                                        m_anMapFieldIndexToArrowColumn[j][0];
+                         ++j)
+                    {
+                        if (!m_poFeatureDefn->GetFieldDefn(j)->IsIgnored())
+                        {
+                            bFoundNotIgnored = true;
+                            break;
+                        }
+                    }
+                    if (bFoundNotIgnored)
+                    {
+                        int j;
+                        for (j = i; j < m_poFeatureDefn->GetFieldCount() &&
+                                    m_anMapFieldIndexToArrowColumn[i][0] ==
+                                        m_anMapFieldIndexToArrowColumn[j][0];
+                             ++j)
+                        {
+                            if (!m_poFeatureDefn->GetFieldDefn(j)->IsIgnored())
+                            {
+                                m_anMapFieldIndexToArrayIndex.push_back(
+                                    static_cast<int>(
+                                        m_aosProjectedFields.size()));
+                            }
+                            else
+                            {
+                                m_anMapFieldIndexToArrayIndex.push_back(-1);
+                            }
+                        }
+                        i = j - 1;
+
+                        m_aosProjectedFields.emplace_back(field->name());
+                    }
+                    else
+                    {
+                        int j;
+                        for (j = i; j < m_poFeatureDefn->GetFieldCount() &&
+                                    m_anMapFieldIndexToArrowColumn[i][0] ==
+                                        m_anMapFieldIndexToArrowColumn[j][0];
+                             ++j)
+                        {
+                            m_anMapFieldIndexToArrayIndex.push_back(-1);
+                        }
+                        i = j - 1;
+                    }
+                }
+                else if (!m_poFeatureDefn->GetFieldDefn(i)->IsIgnored())
+                {
+                    m_anMapFieldIndexToArrayIndex.push_back(
+                        static_cast<int>(m_aosProjectedFields.size()));
+                    m_aosProjectedFields.emplace_back(field->name());
+                }
+                else
+                {
+                    m_anMapFieldIndexToArrayIndex.push_back(-1);
+                }
+            }
+
+            for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
+            {
+                const auto &field =
+                    fields[m_anMapGeomFieldIndexToArrowColumn[i]];
+                if (!m_poFeatureDefn->GetGeomFieldDefn(i)->IsIgnored())
+                {
+                    m_anMapGeomFieldIndexToArrayIndex.push_back(
+                        static_cast<int>(m_aosProjectedFields.size()));
+                    m_aosProjectedFields.emplace_back(field->name());
+
+                    auto oIter = m_oMapGeomFieldIndexToGeomColBBOX.find(i);
+                    if (oIter != m_oMapGeomFieldIndexToGeomColBBOX.end() &&
+                        !OGRArrowIsGeoArrowStruct(m_aeGeomEncoding[i]))
+                    {
+                        oIter->second.iArrayIdx =
+                            static_cast<int>(m_aosProjectedFields.size());
+                        m_aosProjectedFields.emplace_back(
+                            fields[oIter->second.iArrowCol]->name());
+                    }
+                }
+                else
+                {
+                    m_anMapGeomFieldIndexToArrayIndex.push_back(-1);
+                }
+            }
+        }
+    }
+
+    m_nExpectedBatchColumns =
+        m_bIgnoredFields ? static_cast<int>(m_aosProjectedFields.size()) : -1;
+
+    // Full invalidation
+    InvalidateCachedBatches();
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                         TestCapability()                             */
+/************************************************************************/
+
+int OGRParquetDatasetLayer::TestCapability(const char *pszCap)
+{
+    if (EQUAL(pszCap, OLCIgnoreFields))
+        return true;
+
+    return OGRParquetLayerBase::TestCapability(pszCap);
 }

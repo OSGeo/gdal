@@ -87,6 +87,14 @@ def _validate(filename, check_data=False):
 
 
 ###############################################################################
+
+
+def _has_arrow_dataset():
+    drv = gdal.GetDriverByName("Parquet")
+    return drv is not None and drv.GetMetadataItem("ARROW_DATASET") is not None
+
+
+###############################################################################
 # Read invalid file
 
 
@@ -102,9 +110,11 @@ def test_ogr_parquet_invalid():
 
 def _check_test_parquet(
     filename,
+    expect_layer_geom_type=True,
     expect_fast_feature_count=True,
     expect_fast_get_extent=True,
     expect_ignore_fields=True,
+    expect_domain=True,
 ):
     with gdaltest.config_option("OGR_PARQUET_BATCH_SIZE", "2"):
         ds = gdal.OpenEx(filename)
@@ -121,7 +131,8 @@ def _check_test_parquet(
     srs = lyr_defn.GetGeomFieldDefn(0).GetSpatialRef()
     assert srs is not None
     assert srs.GetAuthorityCode(None) == "4326"
-    assert lyr_defn.GetGeomFieldDefn(0).GetType() == ogr.wkbPoint
+    if expect_layer_geom_type:
+        assert lyr_defn.GetGeomFieldDefn(0).GetType() == ogr.wkbPoint
     # import pprint
     # pprint.pprint(got_field_defns)
     expected_field_defns = [
@@ -245,17 +256,18 @@ def _check_test_parquet(
     with pytest.raises(Exception):
         lyr.GetExtent(geom_field=1)
 
-    assert ds.GetFieldDomainNames() == ["dictDomain"]
-    assert ds.GetFieldDomain("not_existing") is None
-    for _ in range(2):
-        domain = ds.GetFieldDomain("dictDomain")
-        assert domain is not None
-        assert domain.GetName() == "dictDomain"
-        assert domain.GetDescription() == ""
-        assert domain.GetDomainType() == ogr.OFDT_CODED
-        assert domain.GetFieldType() == ogr.OFTInteger
-        assert domain.GetFieldSubType() == ogr.OFSTNone
-        assert domain.GetEnumeration() == {"0": "foo", "1": "bar", "2": "baz"}
+    if expect_domain:
+        assert ds.GetFieldDomainNames() == ["dictDomain"]
+        assert ds.GetFieldDomain("not_existing") is None
+        for _ in range(2):
+            domain = ds.GetFieldDomain("dictDomain")
+            assert domain is not None
+            assert domain.GetName() == "dictDomain"
+            assert domain.GetDescription() == ""
+            assert domain.GetDomainType() == ogr.OFDT_CODED
+            assert domain.GetFieldType() == ogr.OFTInteger
+            assert domain.GetFieldSubType() == ogr.OFSTNone
+            assert domain.GetEnumeration() == {"0": "foo", "1": "bar", "2": "baz"}
 
     f = lyr.GetNextFeature()
     assert f.GetFID() == 0
@@ -492,6 +504,32 @@ def test_ogr_parquet_1(use_vsi):
 
 
 ###############################################################################
+
+
+@pytest.mark.skipif(not _has_arrow_dataset(), reason="GDAL not built with ArrowDataset")
+@pytest.mark.parametrize("use_vsi", [False, True])
+def test_ogr_parquet_check_dataset(use_vsi):
+
+    filename = "data/parquet/test.parquet"
+    if use_vsi:
+        vsifilename = "/vsimem/test.parquet"
+        gdal.FileFromMemBuffer(vsifilename, open(filename, "rb").read())
+        filename = vsifilename
+
+    try:
+        _check_test_parquet(
+            "PARQUET:" + filename,
+            expect_layer_geom_type=False,
+            expect_fast_feature_count=False,
+            expect_fast_get_extent=False,
+            expect_domain=False,
+        )
+    finally:
+        if use_vsi:
+            gdal.Unlink(vsifilename)
+
+
+###############################################################################
 # Run test_ogrsf
 
 
@@ -536,6 +574,25 @@ def test_ogr_parquet_test_ogrsf_all_geoms():
 
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path() + " -ro data/parquet/all_geoms.parquet"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+
+
+###############################################################################
+# Run test_ogrsf
+
+
+@pytest.mark.skipif(not _has_arrow_dataset(), reason="GDAL not built with ArrowDataset")
+def test_ogr_parquet_test_ogrsf_all_geoms_with_arrow_dataset():
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path()
+        + " -ro PARQUET:data/parquet/all_geoms.parquet"
     )
 
     assert "INFO" in ret
@@ -1507,14 +1564,6 @@ def test_ogr_parquet_is_null():
 
     finally:
         gdal.Unlink(outfilename)
-
-
-###############################################################################
-
-
-def _has_arrow_dataset():
-    drv = gdal.GetDriverByName("Parquet")
-    return drv is not None and drv.GetMetadataItem("ARROW_DATASET") is not None
 
 
 ###############################################################################

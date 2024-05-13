@@ -67,6 +67,8 @@ class OGRParquetLayerBase CPL_NON_FINAL : public OGRArrowLayer
         int iFieldIdx, const std::shared_ptr<arrow::Field> &field,
         std::function<OGRwkbGeometryType(void)> computeGeometryTypeFun);
 
+    void InvalidateCachedBatches() override;
+
     static bool ParseGeometryColumnCovering(const CPLJSONObject &oJSONDef,
                                             std::string &osBBOXColumn,
                                             std::string &osXMin,
@@ -234,6 +236,7 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
     bool m_bRebuildScanner = true;
     std::shared_ptr<arrow::dataset::Dataset> m_poDataset{};
     std::shared_ptr<arrow::dataset::Scanner> m_poScanner{};
+    std::vector<std::string> m_aosProjectedFields{};
 
     void EstablishFeatureDefn();
     void
@@ -249,8 +252,6 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
     }
 
     bool ReadNextBatch() override;
-
-    void InvalidateCachedBatches() override;
 
     bool FastGetExtent(int iGeomField, OGREnvelope *psExtent) const override;
 
@@ -271,6 +272,10 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
     }
 
     void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
+
+    OGRErr SetIgnoredFields(CSLConstList papszFields) override;
+
+    int TestCapability(const char *) override;
 
     // TODO
     std::unique_ptr<OGRFieldDomain>

@@ -84,6 +84,16 @@ void OGRParquetLayerBase::ResetReading()
 }
 
 /************************************************************************/
+/*                     InvalidateCachedBatches()                        */
+/************************************************************************/
+
+void OGRParquetLayerBase::InvalidateCachedBatches()
+{
+    m_iRecordBatch = -1;
+    ResetReading();
+}
+
+/************************************************************************/
 /*                          LoadGeoMetadata()                           */
 /************************************************************************/
 
@@ -1834,9 +1844,8 @@ bool OGRParquetLayer::ReadNextBatch()
 
 void OGRParquetLayer::InvalidateCachedBatches()
 {
-    m_iRecordBatch = -1;
     m_bSingleBatch = false;
-    ResetReading();
+    OGRParquetLayerBase::InvalidateCachedBatches();
 }
 
 /************************************************************************/
