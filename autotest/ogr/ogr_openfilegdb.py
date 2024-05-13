@@ -2695,3 +2695,15 @@ def test_ogr_openfilegdb_get_extent_getextent3d():
             0.0,
         )
     )
+
+
+###############################################################################
+# Test IdentifyDriver()
+
+
+def test_ogr_openfilegdb_try_identify_vector_as_raster():
+
+    assert gdal.IdentifyDriverEx("data/filegdb/empty_polygon.gdb") is not None
+    assert (
+        gdal.IdentifyDriverEx("data/filegdb/empty_polygon.gdb", gdal.OF_RASTER) is None
+    )
