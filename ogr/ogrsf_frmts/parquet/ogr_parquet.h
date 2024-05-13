@@ -246,6 +246,11 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
 
     void BuildScanner();
 
+    //! Translate a OGR SQL expression into an Arrow one
+    // bFullyTranslated should be set to true before calling this method.
+    arrow::compute::Expression BuildArrowFilter(const swq_expr_node *poNode,
+                                                bool &bFullyTranslated);
+
   protected:
     std::string GetDriverUCName() const override
     {
@@ -275,6 +280,8 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
     }
 
     void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
+
+    OGRErr SetAttributeFilter(const char *pszFilter) override;
 
     OGRErr SetIgnoredFields(CSLConstList papszFields) override;
 

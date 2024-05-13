@@ -34,10 +34,14 @@
 #include <set>
 #include <utility>
 
+#include "cpl_time.h"
+
 #include "ogr_parquet.h"
 
 #include "../arrow_common/ograrrowlayer.hpp"
 #include "../arrow_common/ograrrowdataset.hpp"
+
+namespace cp = ::arrow::compute;
 
 /************************************************************************/
 /*                        OGRParquetLayer()                             */
@@ -201,6 +205,7 @@ void OGRParquetDatasetLayer::BuildScanner()
     m_bSkipFilterGeometry = false;
     m_bBaseArrowIgnoreSpatialFilterRect = false;
     m_bBaseArrowIgnoreSpatialFilter = false;
+    m_bBaseArrowIgnoreAttributeFilter = false;
 
     try
     {
@@ -252,7 +257,6 @@ void OGRParquetDatasetLayer::BuildScanner()
         }
 #endif
 
-        namespace cp = ::arrow::compute;
         cp::Expression expression;
         if (m_poFilterGeom &&
             CPLTestBool(CPLGetConfigOption(
@@ -299,6 +303,32 @@ void OGRParquetDatasetLayer::BuildScanner()
                          ->IsIgnored());
             }
         }
+
+        if (m_poAttrQuery &&
+            CPLTestBool(CPLGetConfigOption(
+                "OGR_PARQUET_OPTIMIZED_ATTRIBUTE_FILTER", "YES")))
+        {
+            const swq_expr_node *poNode =
+                static_cast<swq_expr_node *>(m_poAttrQuery->GetSWQExpr());
+            bool bFullyTranslated = true;
+            auto expressionFilter = BuildArrowFilter(poNode, bFullyTranslated);
+            if (expressionFilter.is_valid())
+            {
+                if (bFullyTranslated)
+                {
+                    CPLDebugOnly("PARQUET",
+                                 "Attribute filter fully translated to Arrow");
+                    m_asAttributeFilterConstraints.clear();
+                    m_bBaseArrowIgnoreAttributeFilter = true;
+                }
+
+                if (expression.is_valid())
+                    expression = cp::and_(expression, expressionFilter);
+                else
+                    expression = std::move(expressionFilter);
+            }
+        }
+
         if (expression.is_valid())
         {
             PARQUET_THROW_NOT_OK(scannerBuilder->Filter(expression));
@@ -326,6 +356,184 @@ void OGRParquetDatasetLayer::BuildScanner()
         CPLError(CE_Failure, CPLE_AppDefined, "Arrow/Parquet exception: %s",
                  e.what());
     }
+}
+
+/************************************************************************/
+/*                           BuildArrowFilter()                         */
+/************************************************************************/
+
+cp::Expression
+OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
+                                         bool &bFullyTranslated)
+{
+    if (poNode->eNodeType == SNT_OPERATION && poNode->nOperation == SWQ_AND &&
+        poNode->nSubExprCount == 2)
+    {
+        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        auto sRight =
+            BuildArrowFilter(poNode->papoSubExpr[1], bFullyTranslated);
+        if (sLeft.is_valid() && sRight.is_valid())
+            return cp::and_(sLeft, sRight);
+        if (sLeft.is_valid())
+            return sLeft;
+        if (sRight.is_valid())
+            return sRight;
+    }
+
+    else if (poNode->eNodeType == SNT_OPERATION &&
+             poNode->nOperation == SWQ_OR && poNode->nSubExprCount == 2)
+    {
+        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        auto sRight =
+            BuildArrowFilter(poNode->papoSubExpr[1], bFullyTranslated);
+        if (sLeft.is_valid() && sRight.is_valid())
+            return cp::or_(sLeft, sRight);
+    }
+
+    else if (poNode->eNodeType == SNT_OPERATION &&
+             poNode->nOperation == SWQ_NOT && poNode->nSubExprCount == 1)
+    {
+        auto expr = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        if (expr.is_valid())
+            return cp::not_(expr);
+    }
+
+    else if (poNode->eNodeType == SNT_COLUMN)
+    {
+        if (poNode->field_index >= 0 &&
+            poNode->field_index < m_poFeatureDefn->GetFieldCount())
+        {
+            std::vector<arrow::FieldRef> fieldRefs;
+            for (int idx : m_anMapFieldIndexToArrowColumn[poNode->field_index])
+                fieldRefs.emplace_back(idx);
+            auto expr = cp::field_ref(arrow::FieldRef(std::move(fieldRefs)));
+
+            // Comparing a boolean column to 0 or 1 fails without explicit cast
+            if (m_poFeatureDefn->GetFieldDefn(poNode->field_index)
+                    ->GetSubType() == OFSTBoolean)
+            {
+                expr = cp::call("cast", {expr},
+                                cp::CastOptions::Safe(arrow::uint8()));
+            }
+            return expr;
+        }
+        else if (poNode->field_index ==
+                     m_poFeatureDefn->GetFieldCount() + SPF_FID &&
+                 m_iFIDArrowColumn >= 0)
+        {
+            return cp::field_ref(arrow::FieldRef(m_iFIDArrowColumn));
+        }
+    }
+
+    else if (poNode->eNodeType == SNT_CONSTANT)
+    {
+        switch (poNode->field_type)
+        {
+            case SWQ_INTEGER:
+            case SWQ_INTEGER64:
+                return cp::literal(static_cast<int64_t>(poNode->int_value));
+
+            case SWQ_FLOAT:
+                return cp::literal(poNode->float_value);
+
+            case SWQ_STRING:
+                return cp::literal(poNode->string_value);
+
+            case SWQ_TIMESTAMP:
+            {
+                OGRField sField;
+                if (OGRParseDate(poNode->string_value, &sField, 0))
+                {
+                    struct tm brokenDown;
+                    brokenDown.tm_year = sField.Date.Year - 1900;
+                    brokenDown.tm_mon = sField.Date.Month - 1;
+                    brokenDown.tm_mday = sField.Date.Day;
+                    brokenDown.tm_hour = sField.Date.Hour;
+                    brokenDown.tm_min = sField.Date.Minute;
+                    brokenDown.tm_sec = static_cast<int>(sField.Date.Second);
+                    int64_t nVal =
+                        CPLYMDHMSToUnixTime(&brokenDown) * 1000 +
+                        (static_cast<int>(sField.Date.Second * 1000 + 0.5) %
+                         1000);
+                    if (sField.Date.TZFlag > OGR_TZFLAG_MIXED_TZ)
+                    {
+                        // Convert for sField.Date.TZFlag to UTC
+                        const int TZOffset =
+                            (sField.Date.TZFlag - OGR_TZFLAG_UTC) * 15;
+                        const int TZOffsetMS = TZOffset * 60 * 1000;
+                        nVal -= TZOffsetMS;
+                        return cp::literal(arrow::TimestampScalar(
+                            nVal, arrow::TimeUnit::MILLI, "UTC"));
+                    }
+                    else
+                    {
+                        return cp::literal(arrow::TimestampScalar(
+                            nVal, arrow::TimeUnit::MILLI));
+                    }
+                }
+            }
+
+            default:
+                break;
+        }
+    }
+
+    else if (poNode->eNodeType == SNT_OPERATION && poNode->nSubExprCount == 2 &&
+             IsComparisonOp(poNode->nOperation))
+    {
+        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        auto sRight =
+            BuildArrowFilter(poNode->papoSubExpr[1], bFullyTranslated);
+        if (sLeft.is_valid() && sRight.is_valid())
+        {
+            if (poNode->nOperation == SWQ_EQ)
+                return cp::equal(sLeft, sRight);
+            if (poNode->nOperation == SWQ_LT)
+                return cp::less(sLeft, sRight);
+            if (poNode->nOperation == SWQ_LE)
+                return cp::less_equal(sLeft, sRight);
+            if (poNode->nOperation == SWQ_GT)
+                return cp::greater(sLeft, sRight);
+            if (poNode->nOperation == SWQ_GE)
+                return cp::greater_equal(sLeft, sRight);
+            if (poNode->nOperation == SWQ_NE)
+                return cp::not_equal(sLeft, sRight);
+        }
+    }
+
+    else if (poNode->eNodeType == SNT_OPERATION && poNode->nSubExprCount == 2 &&
+             (poNode->nOperation == SWQ_LIKE ||
+              poNode->nOperation == SWQ_ILIKE) &&
+             poNode->papoSubExpr[1]->eNodeType == SNT_CONSTANT &&
+             poNode->papoSubExpr[1]->field_type == SWQ_STRING)
+    {
+        auto sLeft = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        if (sLeft.is_valid())
+        {
+            if (cp::GetFunctionRegistry()
+                    ->GetFunction("match_like")
+                    .ValueOr(nullptr))
+            {
+                // match_like is only available is Arrow built against RE2.
+                return cp::call(
+                    "match_like", {sLeft},
+                    cp::MatchSubstringOptions(
+                        poNode->papoSubExpr[1]->string_value,
+                        /* ignore_case=*/poNode->nOperation == SWQ_ILIKE));
+            }
+        }
+    }
+
+    else if (poNode->eNodeType == SNT_OPERATION &&
+             poNode->nOperation == SWQ_ISNULL && poNode->nSubExprCount == 1)
+    {
+        auto expr = BuildArrowFilter(poNode->papoSubExpr[0], bFullyTranslated);
+        if (expr.is_valid())
+            return cp::is_null(expr);
+    }
+
+    bFullyTranslated = false;
+    return {};
 }
 
 /************************************************************************/
@@ -397,7 +605,8 @@ OGRFeature *OGRParquetDatasetLayer::GetNextFeature()
 
         if ((m_poFilterGeom == nullptr || m_bSkipFilterGeometry ||
              FilterGeometry(poFeature->GetGeometryRef())) &&
-            (m_poAttrQuery == nullptr || m_poAttrQuery->Evaluate(poFeature)))
+            (m_poAttrQuery == nullptr || m_bBaseArrowIgnoreAttributeFilter ||
+             m_poAttrQuery->Evaluate(poFeature)))
         {
             return poFeature;
         }
@@ -680,4 +889,14 @@ int OGRParquetDatasetLayer::TestCapability(const char *pszCap)
         return true;
 
     return OGRParquetLayerBase::TestCapability(pszCap);
+}
+
+/***********************************************************************/
+/*                         SetAttributeFilter()                        */
+/***********************************************************************/
+
+OGRErr OGRParquetDatasetLayer::SetAttributeFilter(const char *pszFilter)
+{
+    m_bRebuildScanner = true;
+    return OGRParquetLayerBase::SetAttributeFilter(pszFilter);
 }

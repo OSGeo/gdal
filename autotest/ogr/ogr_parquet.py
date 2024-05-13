@@ -95,6 +95,18 @@ def _has_arrow_dataset():
 
 
 ###############################################################################
+
+
+@pytest.fixture(scope="module", params=[True, False], ids=["arrow-dataset", "regular"])
+def with_arrow_dataset_or_not(request):
+
+    if request.param and not _has_arrow_dataset():
+        pytest.skip("Test requires build with ArrowDataset")
+
+    yield request.param
+
+
+###############################################################################
 # Read invalid file
 
 
@@ -1445,16 +1457,40 @@ def test_ogr_parquet_multiple_geom_columns():
         "string >= 'l'",
         "decimal128 = -1234.567",
         "decimal256 = -1234.567",
-        # not optimized
+        "uint8 = 5 AND int8 = 2",
+        "uint8 = -5 AND int8 = 2",
+        "int8 = 2 AND uint8 = -5",
+        "uint8 = -5 AND int8 = 200",
+        "NOT uint8 = 5 AND uint8 IS NOT NULL",
+        "NOT uint8 = 50 AND uint8 IS NOT NULL",
+        # not optimized for non-dataset layer
+        "FID = 0",
         "boolean = 0 OR boolean = 1",
+        "uint8 = 1 OR uint8 = -1",
+        "uint8 = -1 OR uint8 = 1",
         "1 = 1",
         "boolean = boolean",
         "FID = 1",
         '"struct_field.a" = 1',
         '"struct_field.a" = 0',
+        "string LIKE 'd'",
+        "string LIKE 'D'",
+        "string ILIKE 'D'",
+        "string LIKE 'f'",
+        "timestamp_ms_gmt = '2019/01/01 14:00:00.500Z'",
+        "timestamp_ms_gmt < '2019/01/01 14:00:00.500Z'",
+        "timestamp_s_no_tz = '2019/01/01 14:00:00'",
+        "timestamp_s_no_tz < '2019/01/01 14:00:00'",
+        # partially optimized
+        "boolean = 0 AND OGR_GEOMETRY IS NOT NULL",
+        "OGR_GEOMETRY IS NOT NULL AND boolean = 0",
+        # not optimized
+        "OGR_GEOMETRY IS NOT NULL AND OGR_GEOMETRY IS NOT NULL",
+        "boolean = 0 OR OGR_GEOMETRY IS NOT NULL",
+        "OGR_GEOMETRY IS NOT NULL OR boolean = 0",
     ],
 )
-def test_ogr_parquet_attribute_filter(filter):
+def test_ogr_parquet_attribute_filter(filter, with_arrow_dataset_or_not):
 
     with gdaltest.config_option("OGR_PARQUET_OPTIMIZED_ATTRIBUTE_FILTER", "NO"):
         ds = ogr.Open("data/parquet/test.parquet")
@@ -1463,10 +1499,24 @@ def test_ogr_parquet_attribute_filter(filter):
         ref_fc = lyr.GetFeatureCount()
         ds = None
 
-    ds = ogr.Open("data/parquet/test.parquet")
+    prefix = "PARQUET:" if with_arrow_dataset_or_not else ""
+    ds = ogr.Open(prefix + "data/parquet/test.parquet")
     lyr = ds.GetLayer(0)
     assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
     assert lyr.GetFeatureCount() == ref_fc
+
+
+def test_ogr_parquet_attribute_filter_on_fid_column(with_arrow_dataset_or_not):
+
+    filter = "fid = 1"
+
+    prefix = "PARQUET:" if with_arrow_dataset_or_not else ""
+    ds = ogr.Open(prefix + "data/parquet/test_with_fid_and_geometry_bbox.parquet")
+    lyr = ds.GetLayer(0)
+    assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 1
+    assert lyr.GetNextFeature() is None
 
 
 def test_ogr_parquet_attribute_filter_and_then_ignored_fields():
@@ -1512,7 +1562,7 @@ def test_ogr_parquet_ignored_fields_and_then_attribute_filter():
     assert lyr.GetFeatureCount() == 1
 
 
-def test_ogr_parquet_attribute_filter_and_spatial_filter():
+def test_ogr_parquet_attribute_filter_and_spatial_filter(with_arrow_dataset_or_not):
 
     filter = "int8 != 0"
 
@@ -1525,9 +1575,36 @@ def test_ogr_parquet_attribute_filter_and_spatial_filter():
         assert ref_fc > 0
         ds = None
 
-    ds = ogr.Open("data/parquet/test.parquet")
+    prefix = "PARQUET:" if with_arrow_dataset_or_not else ""
+    ds = ogr.Open(prefix + "data/parquet/test.parquet")
     lyr = ds.GetLayer(0)
     lyr.SetSpatialFilterRect(4, 2, 4, 2)
+    assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == ref_fc
+
+
+def test_ogr_parquet_attribute_filter_and_spatial_filter_with_spatial_index(
+    tmp_path, with_arrow_dataset_or_not
+):
+
+    filename = str(tmp_path / "test.parquet")
+    gdal.VectorTranslate(filename, "data/parquet/test.parquet")
+
+    filter = "uint8 != 1"
+
+    with gdaltest.config_option("OGR_PARQUET_OPTIMIZED_ATTRIBUTE_FILTER", "NO"):
+        ds = ogr.Open("data/parquet/test.parquet")
+        lyr = ds.GetLayer(0)
+        lyr.SetSpatialFilterRect(1, 2, 3, 2)
+        assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+        ref_fc = lyr.GetFeatureCount()
+        assert ref_fc > 0
+        ds = None
+
+    prefix = "PARQUET:" if with_arrow_dataset_or_not else ""
+    ds = ogr.Open(prefix + filename)
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(1, 2, 3, 2)
     assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
     assert lyr.GetFeatureCount() == ref_fc
 

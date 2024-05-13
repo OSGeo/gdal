@@ -3130,7 +3130,9 @@ inline void OGRArrowLayer::ResetReading()
 /*                        GetColumnSubNode()                           */
 /***********************************************************************/
 
-static const swq_expr_node *GetColumnSubNode(const swq_expr_node *poNode)
+/* static*/
+inline const swq_expr_node *
+OGRArrowLayer::GetColumnSubNode(const swq_expr_node *poNode)
 {
     if (poNode->eNodeType == SNT_OPERATION && poNode->nSubExprCount == 2)
     {
@@ -3146,7 +3148,9 @@ static const swq_expr_node *GetColumnSubNode(const swq_expr_node *poNode)
 /*                        GetConstantSubNode()                         */
 /***********************************************************************/
 
-static const swq_expr_node *GetConstantSubNode(const swq_expr_node *poNode)
+/* static */
+inline const swq_expr_node *
+OGRArrowLayer::GetConstantSubNode(const swq_expr_node *poNode)
 {
     if (poNode->eNodeType == SNT_OPERATION && poNode->nSubExprCount == 2)
     {
@@ -3162,7 +3166,8 @@ static const swq_expr_node *GetConstantSubNode(const swq_expr_node *poNode)
 /*                           IsComparisonOp()                          */
 /***********************************************************************/
 
-static bool IsComparisonOp(int op)
+/* static*/
+inline bool OGRArrowLayer::IsComparisonOp(int op)
 {
     return (op == SWQ_EQ || op == SWQ_NE || op == SWQ_LT || op == SWQ_LE ||
             op == SWQ_GT || op == SWQ_GE);
@@ -5578,8 +5583,8 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         }
 
         const bool bNeedsPostFilter =
-                (m_poAttrQuery) ||
-                (m_poFilterGeom && !m_bBaseArrowIgnoreSpatialFilter);
+            (m_poAttrQuery && !m_bBaseArrowIgnoreAttributeFilter) ||
+            (m_poFilterGeom && !m_bBaseArrowIgnoreSpatialFilter);
 
         struct ArrowSchema schema;
         memset(&schema, 0, sizeof(schema));

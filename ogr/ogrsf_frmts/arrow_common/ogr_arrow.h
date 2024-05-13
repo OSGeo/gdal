@@ -210,6 +210,11 @@ class OGRArrowLayer CPL_NON_FINAL
 
     std::vector<Constraint> m_asAttributeFilterConstraints{};
 
+    //! Whether attribute filter should be skipped.
+    // This is set to true by OGRParquetDatasetLayer when it can fully translate
+    // a filter, as an optimization.
+    bool m_bBaseArrowIgnoreAttributeFilter = false;
+
     std::map<std::string, std::unique_ptr<OGRFieldDefn>>
     LoadGDALSchema(const arrow::KeyValueMetadata *kv_metadata);
 
@@ -272,6 +277,10 @@ class OGRArrowLayer CPL_NON_FINAL
 
     // Refreshes Constraint.iArrayIdx from iField. To be called by SetIgnoredFields()
     void ComputeConstraintsArrayIdx();
+
+    static const swq_expr_node *GetColumnSubNode(const swq_expr_node *poNode);
+    static const swq_expr_node *GetConstantSubNode(const swq_expr_node *poNode);
+    static bool IsComparisonOp(int op);
 
     virtual bool FastGetExtent(int iGeomField, OGREnvelope *psExtent) const;
     bool FastGetExtent3D(int iGeomField, OGREnvelope3D *psExtent) const;
