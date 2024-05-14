@@ -3705,11 +3705,15 @@ public:
   }
 
   %newobject Buffer;
-#ifndef SWIGJAVA
+#if !defined(SWIGJAVA) && !defined(SWIGPYTHON)
   %feature("kwargs") Buffer;
 #endif
   OGRGeometryShadow* Buffer( double distance, int quadsecs=30 ) {
     return (OGRGeometryShadow*) OGR_G_Buffer( self, distance, quadsecs );
+  }
+
+  OGRGeometryShadow* Buffer( double distance, char** options ) {
+    return (OGRGeometryShadow*) OGR_G_BufferEx( self, distance, options );
   }
 
 %apply Pointer NONNULL {OGRGeometryShadow* other};
