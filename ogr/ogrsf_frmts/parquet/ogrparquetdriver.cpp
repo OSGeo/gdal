@@ -250,22 +250,6 @@ static GDALDataset *OpenFromDatasetFactory(
         arrow::MemoryPool::CreateDefault().release());
 
     const bool bIsVSI = STARTS_WITH(osBasePath.c_str(), "/vsi");
-    const char *pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-    if (bIsVSI || pszNumThreads)
-    {
-        int nNumThreads = 0;
-        if (pszNumThreads == nullptr)
-            nNumThreads = std::min(4, CPLGetNumCPUs());
-        else
-            nNumThreads = EQUAL(pszNumThreads, "ALL_CPUS")
-                              ? CPLGetNumCPUs()
-                              : atoi(pszNumThreads);
-        if (nNumThreads >= 1)
-        {
-            CPL_IGNORE_RET_VAL(arrow::SetCpuThreadPoolCapacity(nNumThreads));
-        }
-    }
-
     auto poDS = std::make_unique<OGRParquetDataset>(poMemoryPool);
     auto poLayer = std::make_unique<OGRParquetDatasetLayer>(
         poDS.get(), CPLGetBasename(osBasePath.c_str()), bIsVSI, dataset,

@@ -59,6 +59,8 @@ class OGRParquetLayerBase CPL_NON_FINAL : public OGRArrowLayer
     CPLStringList m_aosGeomPossibleNames{};
     std::string m_osCRS{};
 
+    static int GetNumCPUs();
+
     void LoadGeoMetadata(
         const std::shared_ptr<const arrow::KeyValueMetadata> &kv_metadata);
     bool DealWithGeometryColumn(

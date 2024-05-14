@@ -479,6 +479,27 @@ int OGRParquetLayerBase::TestCapability(const char *pszCap)
 }
 
 /************************************************************************/
+/*                           GetNumCPUs()                               */
+/************************************************************************/
+
+/* static */
+int OGRParquetLayerBase::GetNumCPUs()
+{
+    const char *pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+    int nNumThreads = 0;
+    if (pszNumThreads == nullptr)
+        nNumThreads = std::min(4, CPLGetNumCPUs());
+    else
+        nNumThreads = EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs()
+                                                       : atoi(pszNumThreads);
+    if (nNumThreads > 1)
+    {
+        CPL_IGNORE_RET_VAL(arrow::SetCpuThreadPoolCapacity(nNumThreads));
+    }
+    return nNumThreads;
+}
+
+/************************************************************************/
 /*                        OGRParquetLayer()                             */
 /************************************************************************/
 
@@ -494,16 +515,15 @@ OGRParquetLayer::OGRParquetLayer(
     if (pszParquetBatchSize)
         m_poArrowReader->set_batch_size(CPLAtoGIntBig(pszParquetBatchSize));
 
-    const char *pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-    int nNumThreads = 0;
-    if (pszNumThreads == nullptr)
-        nNumThreads = std::min(4, CPLGetNumCPUs());
-    else
-        nNumThreads = EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs()
-                                                       : atoi(pszNumThreads);
-    if (nNumThreads > 1)
+    const int nNumCPUs = GetNumCPUs();
+    const char *pszUseThreads =
+        CPLGetConfigOption("OGR_PARQUET_USE_THREADS", nullptr);
+    if (!pszUseThreads && nNumCPUs > 1)
     {
-        CPL_IGNORE_RET_VAL(arrow::SetCpuThreadPoolCapacity(nNumThreads));
+        pszUseThreads = "YES";
+    }
+    if (CPLTestBool(pszUseThreads))
+    {
         m_poArrowReader->set_use_threads(true);
     }
 

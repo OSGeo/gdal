@@ -227,12 +227,16 @@ void OGRParquetDatasetLayer::BuildScanner()
                 scannerBuilder->BatchSize(CPLAtoGIntBig(pszBatchSize)));
         }
 
+        const int nNumCPUs = GetNumCPUs();
         const char *pszUseThreads =
             CPLGetConfigOption("OGR_PARQUET_USE_THREADS", nullptr);
-        if (pszUseThreads)
+        if (!pszUseThreads && nNumCPUs > 1)
         {
-            PARQUET_THROW_NOT_OK(
-                scannerBuilder->UseThreads(CPLTestBool(pszUseThreads)));
+            pszUseThreads = "YES";
+        }
+        if (CPLTestBool(pszUseThreads))
+        {
+            PARQUET_THROW_NOT_OK(scannerBuilder->UseThreads(true));
         }
 
 #if PARQUET_VERSION_MAJOR >= 10
