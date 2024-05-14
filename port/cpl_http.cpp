@@ -2208,6 +2208,24 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
         unchecked_curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYHOST, 0L);
     }
 
+    /* HTTP(S) Basic auth username */
+    const char *pszUsername = CSLFetchNameValue(papszOptions, "USERNAME");
+    if (pszUsername == nullptr)
+        pszUsername = CPLGetConfigOption("GDAL_HTTP_USERNAME", nullptr);
+    if (pszUsername != nullptr) 
+    {
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_USERNAME, pszUsername);
+    }
+
+    /* HTTP(S) Basic auth user password */
+    const char *pszPassword = CSLFetchNameValue(papszOptions, "PASSWORD");
+    if (pszPassword == nullptr)
+        pszPassword = CPLGetConfigOption("GDAL_HTTP_PASSWORD", nullptr);
+    if (pszPassword != nullptr)
+    {
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_PASSWORD, pszPassword);
+    }
+
     const char *pszUseCAPIStore =
         CSLFetchNameValue(papszOptions, "USE_CAPI_STORE");
     if (pszUseCAPIStore == nullptr)

@@ -390,6 +390,8 @@ Starting with GDAL 2.3, options can be passed in the filename with the following
 - proxy=value
 - proxyauth=value
 - proxyuserpwd=value
+- username=value: HTTP(S) basic auth username
+- password=value: HTTP(S) basic auth password
 - pc_url_signing=yes/no: whether to use the URL signing mechanism of Microsoft Planetary Computer (https://planetarycomputer.microsoft.com/docs/concepts/sas/). (GDAL >= 3.5.2). Note that starting with GDAL 3.9, this may also be set with the path-specific option ( cf :cpp:func:`VSISetPathSpecificOption`) ``VSICURL_PC_URL_SIGNING`` set to ``YES``.
 - pc_collection=name: name of the collection of the dataset for Planetary Computer URL signing. Only used when pc_url_signing=yes. (GDAL >= 3.5.2)
 

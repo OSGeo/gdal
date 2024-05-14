@@ -392,6 +392,7 @@ static std::string VSICurlGetURLFromFilename(
 #endif
                          EQUAL(pszKey, "low_speed_time") ||
                          EQUAL(pszKey, "low_speed_limit") ||
+                         EQUAL(pszKey, "username") || EQUAL(pszKey, "password") ||
                          EQUAL(pszKey, "proxy") || EQUAL(pszKey, "proxyauth") ||
                          EQUAL(pszKey, "proxyuserpwd"))
                 {
