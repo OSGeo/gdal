@@ -55,7 +55,7 @@ file <raster.wld>` with the extension .tfw, .tifw/.tiffw or
 .wld, as well as a MapInfo .tab file.
 
 By default, information is fetched in following order (first listed is
-the most prioritary): PAM (Persistent Auxiliary metadata) .aux.xml
+the highest priority): PAM (Persistent Auxiliary metadata) .aux.xml
 sidecar file, INTERNAL (GeoTIFF keys and tags), TABFILE (.tab),
 WORLDFILE (.tfw, .tifw/.tiffw or .wld), XML (.xml)
 
@@ -63,11 +63,11 @@ Starting with GDAL 2.2, the allowed sources and their priority order can
 be changed with the :config:`GDAL_GEOREF_SOURCES` configuration option (or
 :oo:`GEOREF_SOURCES` open option) whose value is a comma-separated list of the
 following keywords : PAM, INTERNAL, TABFILE, WORLDFILE, XML (added in 3.7), NONE.
-First mentioned sources are the most prioritary over the next ones. A non
+Earlier mentioned sources take priority over later ones. A non
 mentioned source will be ignored.
 
 For example setting it to "WORLDFILE,PAM,INTERNAL" will make a
-geotransformation matrix from a potential worldfile prioritary over PAM
+geotransformation matrix from a potential worldfile priority over PAM
 or GeoTIFF.
 
 Minimum support for extracting the CRS from ESRI .xml side car files has been
