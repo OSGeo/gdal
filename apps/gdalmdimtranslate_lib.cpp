@@ -119,8 +119,16 @@ GDALMultiDimTranslateAppOptionsGetParser(
     // Note: this is mutually exclusive with "view" option in -array
     argParser->add_argument("-scaleaxes")
         .metavar("<scaleaxes_spec>")
-        .scan<'i', int>()
-        .store_into(psOptions->aosScaleFactor)
+        .action(
+            [psOptions](const std::string &s)
+            {
+                CPLStringList aosScaleFactors(
+                    CSLTokenizeString2(s.c_str(), ",", 0));
+                for (int j = 0; j < aosScaleFactors.size(); j++)
+                {
+                    psOptions->aosScaleFactor.push_back(aosScaleFactors[j]);
+                }
+            })
         .help(
             _("Applies a integral scale factor to one or several dimensions."));
 
