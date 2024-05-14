@@ -42,6 +42,12 @@
 #include "../arrow_common/ograrrowlayer.hpp"
 #include "../arrow_common/ograrrowdataset.hpp"
 
+#if PARQUET_VERSION_MAJOR >= 13
+// Using field indices for FieldRef is only supported since
+// https://github.com/apache/arrow/commit/10eedbe63c71f4cf8f0621f3a2304ab3168a2ae5
+#define SUPPORTS_INDICES_IN_FIELD_REF
+#endif
+
 namespace cp = ::arrow::compute;
 
 /************************************************************************/
@@ -489,6 +495,7 @@ void OGRParquetDatasetLayer::BuildScanner()
             {
                 // This actually requires Arrow >= 15 (https://github.com/apache/arrow/issues/39064)
                 // to be more efficient.
+#ifdef SUPPORTS_INDICES_IN_FIELD_REF
                 const auto &oBBOXDef = oIter->second;
                 expression = cp::and_(
                     {cp::less_equal(
@@ -507,6 +514,31 @@ void OGRParquetDatasetLayer::BuildScanner()
                          cp::field_ref(arrow::FieldRef(
                              oBBOXDef.iArrowCol, oBBOXDef.iArrowSubfieldYMax)),
                          cp::literal(m_sFilterEnvelope.MinY))});
+#else
+                const auto oIter2 = m_oMapGeometryColumns.find(
+                    m_poFeatureDefn->GetGeomFieldDefn(m_iGeomFieldFilter)
+                        ->GetNameRef());
+                std::string osBBOXColumn;
+                std::string osXMin, osYMin, osXMax, osYMax;
+                if (ParseGeometryColumnCovering(oIter2->second, osBBOXColumn,
+                                                osXMin, osYMin, osXMax, osYMax))
+                {
+                    expression = cp::and_(
+                        {cp::less_equal(cp::field_ref(arrow::FieldRef(
+                                            osBBOXColumn, osXMin)),
+                                        cp::literal(m_sFilterEnvelope.MaxX)),
+                         cp::less_equal(cp::field_ref(arrow::FieldRef(
+                                            osBBOXColumn, osYMin)),
+                                        cp::literal(m_sFilterEnvelope.MaxY)),
+                         cp::greater_equal(cp::field_ref(arrow::FieldRef(
+                                               osBBOXColumn, osXMax)),
+                                           cp::literal(m_sFilterEnvelope.MinX)),
+                         cp::greater_equal(
+                             cp::field_ref(
+                                 arrow::FieldRef(osBBOXColumn, osYMax)),
+                             cp::literal(m_sFilterEnvelope.MinY))});
+                }
+#endif
             }
             else if (m_iGeomFieldFilter >= 0 &&
                      m_iGeomFieldFilter <
@@ -519,7 +551,11 @@ void OGRParquetDatasetLayer::BuildScanner()
                 const auto &field = m_poSchema->fields()[iCol];
                 auto type = field->type();
                 std::vector<arrow::FieldRef> fieldRefs;
+#ifdef SUPPORTS_INDICES_IN_FIELD_REF
                 fieldRefs.emplace_back(iCol);
+#else
+                fieldRefs.emplace_back(field->name());
+#endif
                 if (type->id() == arrow::Type::STRUCT)
                 {
                     const auto fieldStruct =
@@ -560,7 +596,11 @@ void OGRParquetDatasetLayer::BuildScanner()
                 if (field->type()->id() == arrow::Type::BINARY &&
                     RegisterOGRWKBIntersectsIfNeeded())
                 {
+#ifdef SUPPORTS_INDICES_IN_FIELD_REF
                     auto oFieldRef = arrow::FieldRef(iCol);
+#else
+                    auto oFieldRef = arrow::FieldRef(field->name());
+#endif
                     std::vector<GByte> abyFilterGeomWkb;
                     abyFilterGeomWkb.resize(m_poFilterGeom->WkbSize());
                     m_poFilterGeom->exportToWkb(wkbNDR, abyFilterGeomWkb.data(),
@@ -697,8 +737,28 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
             poNode->field_index < m_poFeatureDefn->GetFieldCount())
         {
             std::vector<arrow::FieldRef> fieldRefs;
+#ifdef SUPPORTS_INDICES_IN_FIELD_REF
             for (int idx : m_anMapFieldIndexToArrowColumn[poNode->field_index])
                 fieldRefs.emplace_back(idx);
+#else
+            std::shared_ptr<arrow::Field> field;
+            for (int idx : m_anMapFieldIndexToArrowColumn[poNode->field_index])
+            {
+                if (!field)
+                {
+                    field = m_poSchema->fields()[idx];
+                }
+                else
+                {
+                    CPLAssert(field->type()->id() == arrow::Type::STRUCT);
+                    const auto fieldStruct =
+                        std::static_pointer_cast<arrow::StructType>(
+                            field->type());
+                    field = fieldStruct->fields()[idx];
+                }
+                fieldRefs.emplace_back(field->name());
+            }
+#endif
             auto expr = cp::field_ref(arrow::FieldRef(std::move(fieldRefs)));
 
             // Comparing a boolean column to 0 or 1 fails without explicit cast
@@ -714,7 +774,12 @@ OGRParquetDatasetLayer::BuildArrowFilter(const swq_expr_node *poNode,
                      m_poFeatureDefn->GetFieldCount() + SPF_FID &&
                  m_iFIDArrowColumn >= 0)
         {
+#ifdef SUPPORTS_INDICES_IN_FIELD_REF
             return cp::field_ref(arrow::FieldRef(m_iFIDArrowColumn));
+#else
+            return cp::field_ref(arrow::FieldRef(
+                m_poSchema->fields()[m_iFIDArrowColumn]->name()));
+#endif
         }
     }
 
