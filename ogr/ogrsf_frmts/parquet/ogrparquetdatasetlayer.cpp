@@ -35,6 +35,7 @@
 #include <utility>
 
 #include "cpl_time.h"
+#include "ogr_api.h"
 
 #include "ogr_parquet.h"
 
@@ -195,6 +196,226 @@ void OGRParquetDatasetLayer::EstablishFeatureDefn()
               m_poFeatureDefn->GetGeomFieldCount());
 }
 
+namespace
+{
+
+/************************************************************************/
+/*                        WKBGeometryOptionsType                        */
+/************************************************************************/
+
+class WKBGeometryOptions;
+
+class WKBGeometryOptionsType : public cp::FunctionOptionsType
+{
+    WKBGeometryOptionsType() = default;
+
+    static const WKBGeometryOptions &Cast(const cp::FunctionOptions &opts);
+
+  public:
+    const char *type_name() const override
+    {
+        return "WKBGeometryOptionsType";
+    }
+
+    std::string Stringify(const cp::FunctionOptions &) const override;
+    bool Compare(const cp::FunctionOptions &,
+                 const cp::FunctionOptions &) const override;
+    std::unique_ptr<cp::FunctionOptions>
+    Copy(const cp::FunctionOptions &) const override;
+
+    static WKBGeometryOptionsType *GetSingleton()
+    {
+        static WKBGeometryOptionsType instance;
+        return &instance;
+    }
+};
+
+/************************************************************************/
+/*                         WKBGeometryOptions                           */
+/************************************************************************/
+
+class WKBGeometryOptions : public cp::FunctionOptions
+{
+
+  public:
+    explicit WKBGeometryOptions(
+        const std::vector<GByte> &abyFilterGeomWkbIn = std::vector<GByte>())
+        : cp::FunctionOptions(WKBGeometryOptionsType::GetSingleton()),
+          abyFilterGeomWkb(abyFilterGeomWkbIn)
+    {
+    }
+
+    bool operator==(const WKBGeometryOptions &other) const
+    {
+        return abyFilterGeomWkb == other.abyFilterGeomWkb;
+    }
+
+    std::vector<GByte> abyFilterGeomWkb;
+};
+
+const WKBGeometryOptions &
+WKBGeometryOptionsType::Cast(const cp::FunctionOptions &opts)
+{
+    return *cpl::down_cast<const WKBGeometryOptions *>(&opts);
+}
+
+bool WKBGeometryOptionsType::Compare(const cp::FunctionOptions &optsA,
+                                     const cp::FunctionOptions &optsB) const
+{
+    return Cast(optsA) == Cast(optsB);
+}
+
+std::string
+WKBGeometryOptionsType::Stringify(const cp::FunctionOptions &opts) const
+{
+    const auto &bboxOptions = Cast(opts);
+    std::string osRet(type_name());
+    osRet += '-';
+    for (GByte byVal : bboxOptions.abyFilterGeomWkb)
+        osRet += CPLSPrintf("%02X", byVal);
+    return osRet;
+}
+
+std::unique_ptr<cp::FunctionOptions>
+WKBGeometryOptionsType::Copy(const cp::FunctionOptions &opts) const
+{
+    return std::make_unique<WKBGeometryOptions>(Cast(opts));
+}
+
+/************************************************************************/
+/*                            OptionsWrapper                            */
+/************************************************************************/
+
+/// KernelState adapter for the common case of kernels whose only
+/// state is an instance of a subclass of FunctionOptions.
+template <typename OptionsType> struct OptionsWrapper : public cp::KernelState
+{
+    explicit OptionsWrapper(OptionsType optionsIn)
+        : options(std::move(optionsIn))
+    {
+    }
+
+    static arrow::Result<std::unique_ptr<cp::KernelState>>
+    Init(cp::KernelContext *, const cp::KernelInitArgs &args)
+    {
+        auto options = cpl::down_cast<const OptionsType *>(args.options);
+        CPLAssert(options);
+        return std::make_unique<OptionsWrapper>(*options);
+    }
+
+    static const OptionsType &Get(cp::KernelContext *ctx)
+    {
+        return cpl::down_cast<const OptionsWrapper *>(ctx->state())->options;
+    }
+
+    OptionsType options;
+};
+}  // namespace
+
+/************************************************************************/
+/*                       ExecOGRWKBIntersects()                         */
+/************************************************************************/
+
+static arrow::Status ExecOGRWKBIntersects(cp::KernelContext *ctx,
+                                          const cp::ExecSpan &batch,
+                                          cp::ExecResult *out)
+{
+    // Get filter geometry
+    const auto &opts = OptionsWrapper<WKBGeometryOptions>::Get(ctx);
+    OGRGeometry *poGeomTmp = nullptr;
+    OGRErr eErr = OGRGeometryFactory::createFromWkb(
+        opts.abyFilterGeomWkb.data(), nullptr, &poGeomTmp,
+        opts.abyFilterGeomWkb.size());
+    CPL_IGNORE_RET_VAL(eErr);
+    CPLAssert(eErr == OGRERR_NONE);
+    CPLAssert(poGeomTmp != nullptr);
+    std::unique_ptr<OGRGeometry> poFilterGeom(poGeomTmp);
+    OGREnvelope sFilterEnvelope;
+    poFilterGeom->getEnvelope(&sFilterEnvelope);
+    const bool bFilterIsEnvelope = poFilterGeom->IsRectangle();
+
+    // Deal with input array
+    CPLAssert(batch.num_values() == 1);
+    const arrow::ArraySpan &input = batch[0].array;
+    CPLAssert(input.type->id() == arrow::Type::BINARY);
+    // Packed array of bits
+    const auto pabyInputValidity = input.buffers[0].data;
+    const auto nInputOffsets = input.offset;
+    const auto panWkbOffsets = input.GetValues<int32_t>(1);
+    const auto pabyWkbArray = input.buffers[2].data;
+
+    // Deal with output array
+    CPLAssert(out->type()->id() == arrow::Type::BOOL);
+    auto out_span = out->array_span();
+    // Below array holds 8 bits per uint8_t
+    uint8_t *pabitsOutValues = out_span->buffers[1].data;
+    const auto nOutOffset = out_span->offset;
+
+    // Iterate over WKB geometries
+    OGRPreparedGeometry *pPreparedFilterGeom = nullptr;
+    OGREnvelope sEnvelope;
+    for (int64_t i = 0; i < batch.length; ++i)
+    {
+        const bool bInputIsNull =
+            (pabyInputValidity &&
+             arrow::bit_util::GetBit(pabyInputValidity, i + nInputOffsets) ==
+                 0);
+        bool bOutputVal = false;
+        if (!bInputIsNull)
+        {
+            const GByte *pabyWkb = pabyWkbArray + panWkbOffsets[i];
+            const size_t nWkbSize = panWkbOffsets[i + 1] - panWkbOffsets[i];
+            bOutputVal = OGRLayer::FilterWKBGeometry(
+                pabyWkb, nWkbSize,
+                /* bEnvelopeAlreadySet = */ false, sEnvelope,
+                poFilterGeom.get(), bFilterIsEnvelope, sFilterEnvelope,
+                pPreparedFilterGeom);
+        }
+        if (bOutputVal)
+            arrow::bit_util::SetBit(pabitsOutValues, i + nOutOffset);
+        else
+            arrow::bit_util::ClearBit(pabitsOutValues, i + nOutOffset);
+    }
+
+    // Cleanup
+    if (pPreparedFilterGeom)
+        OGRDestroyPreparedGeometry(pPreparedFilterGeom);
+
+    return arrow::Status::OK();
+}
+
+/************************************************************************/
+/*                    RegisterOGRWKBIntersectsIfNeeded()                */
+/************************************************************************/
+
+static bool RegisterOGRWKBIntersectsIfNeeded()
+{
+    auto registry = cp::GetFunctionRegistry();
+    bool bRet =
+        registry->GetFunction("OGRWKBIntersects").ValueOr(nullptr) != nullptr;
+    if (!bRet)
+    {
+        static const WKBGeometryOptions defaultOpts;
+
+        // Below assert is completely useless but helps improve test coverage
+        CPLAssert(WKBGeometryOptionsType::GetSingleton()->Compare(
+            defaultOpts, *(WKBGeometryOptionsType::GetSingleton()
+                               ->Copy(defaultOpts)
+                               .get())));
+
+        auto func = std::make_shared<cp::ScalarFunction>(
+            "OGRWKBIntersects", cp::Arity::Unary(), cp::FunctionDoc(),
+            &defaultOpts);
+        cp::ScalarKernel kernel({arrow::binary()}, arrow::boolean(),
+                                ExecOGRWKBIntersects,
+                                OptionsWrapper<WKBGeometryOptions>::Init);
+        kernel.null_handling = cp::NullHandling::OUTPUT_NOT_NULL;
+        bRet = func->AddKernel(std::move(kernel)).ok() &&
+               registry->AddFunction(std::move(func)).ok();
+    }
+    return bRet;
+}
+
 /************************************************************************/
 /*                              BuildScanner()                          */
 /************************************************************************/
@@ -258,7 +479,7 @@ void OGRParquetDatasetLayer::BuildScanner()
 #endif
 
         cp::Expression expression;
-        if (m_poFilterGeom &&
+        if (m_poFilterGeom && !m_poFilterGeom->IsEmpty() &&
             CPLTestBool(CPLGetConfigOption(
                 "OGR_PARQUET_OPTIMIZED_SPATIAL_FILTER", "YES")))
         {
@@ -327,8 +548,37 @@ void OGRParquetDatasetLayer::BuildScanner()
                     }
                 }
             }
+            else if (m_iGeomFieldFilter >= 0 &&
+                     m_iGeomFieldFilter <
+                         static_cast<int>(m_aeGeomEncoding.size()) &&
+                     m_aeGeomEncoding[m_iGeomFieldFilter] ==
+                         OGRArrowGeomEncoding::WKB)
+            {
+                const int iCol =
+                    m_anMapGeomFieldIndexToArrowColumn[m_iGeomFieldFilter];
+                const auto &field = m_poSchema->fields()[iCol];
+                if (field->type()->id() == arrow::Type::BINARY &&
+                    RegisterOGRWKBIntersectsIfNeeded())
+                {
+                    auto oFieldRef = arrow::FieldRef(iCol);
+                    std::vector<GByte> abyFilterGeomWkb;
+                    abyFilterGeomWkb.resize(m_poFilterGeom->WkbSize());
+                    m_poFilterGeom->exportToWkb(wkbNDR, abyFilterGeomWkb.data(),
+                                                wkbVariantIso);
+                    expression =
+                        cp::call("OGRWKBIntersects", {cp::field_ref(oFieldRef)},
+                                 WKBGeometryOptions(abyFilterGeomWkb));
 
-            if (expression.is_valid())
+                    if (expression.is_valid())
+                    {
+                        m_bBaseArrowIgnoreSpatialFilterRect = true;
+                        m_bBaseArrowIgnoreSpatialFilter = true;
+                        m_bSkipFilterGeometry = true;
+                    }
+                }
+            }
+
+            if (expression.is_valid() && !m_bSkipFilterGeometry)
             {
                 m_bBaseArrowIgnoreSpatialFilterRect = true;
 

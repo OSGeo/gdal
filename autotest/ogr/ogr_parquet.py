@@ -127,6 +127,7 @@ def _check_test_parquet(
     expect_fast_get_extent=True,
     expect_ignore_fields=True,
     expect_domain=True,
+    fid_reliable_after_spatial_filtering=True,
 ):
     with gdaltest.config_option("OGR_PARQUET_BATCH_SIZE", "2"):
         ds = gdal.OpenEx(filename)
@@ -422,7 +423,9 @@ def _check_test_parquet(
     lyr.SetSpatialFilterRect(4, 2, 4, 2)
     lyr.ResetReading()
     f = lyr.GetNextFeature()
-    assert f.GetFID() == 4
+    if fid_reliable_after_spatial_filtering:
+        assert f.GetFID() == 4
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (4 2)"
 
     lyr.SetSpatialFilterRect(-100, -100, -100, -100)
     lyr.ResetReading()
@@ -535,6 +538,7 @@ def test_ogr_parquet_check_dataset(use_vsi):
             expect_fast_feature_count=False,
             expect_fast_get_extent=False,
             expect_domain=False,
+            fid_reliable_after_spatial_filtering=False,
         )
     finally:
         if use_vsi:
