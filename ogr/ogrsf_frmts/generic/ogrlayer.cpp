@@ -1879,22 +1879,38 @@ bool OGRLayer::FilterWKBGeometry(const GByte *pabyWKB, size_t nWKBSize,
                                  bool bEnvelopeAlreadySet,
                                  OGREnvelope &sEnvelope) const
 {
-    if (!m_poFilterGeom)
+    OGRPreparedGeometry *pPreparedFilterGeom = m_pPreparedFilterGeom;
+    bool bRet = FilterWKBGeometry(
+        pabyWKB, nWKBSize, bEnvelopeAlreadySet, sEnvelope, m_poFilterGeom,
+        m_bFilterIsEnvelope, m_sFilterEnvelope, pPreparedFilterGeom);
+    const_cast<OGRLayer *>(this)->m_pPreparedFilterGeom = pPreparedFilterGeom;
+    return bRet;
+}
+
+/* static */
+bool OGRLayer::FilterWKBGeometry(const GByte *pabyWKB, size_t nWKBSize,
+                                 bool bEnvelopeAlreadySet,
+                                 OGREnvelope &sEnvelope,
+                                 const OGRGeometry *poFilterGeom,
+                                 bool bFilterIsEnvelope,
+                                 const OGREnvelope &sFilterEnvelope,
+                                 OGRPreparedGeometry *&pPreparedFilterGeom)
+{
+    if (!poFilterGeom)
         return true;
 
     if ((bEnvelopeAlreadySet ||
          OGRWKBGetBoundingBox(pabyWKB, nWKBSize, sEnvelope)) &&
-        m_sFilterEnvelope.Intersects(sEnvelope))
+        sFilterEnvelope.Intersects(sEnvelope))
     {
-        if (m_bFilterIsEnvelope && m_sFilterEnvelope.Contains(sEnvelope))
+        if (bFilterIsEnvelope && sFilterEnvelope.Contains(sEnvelope))
         {
             return true;
         }
         else
         {
-            if (m_bFilterIsEnvelope &&
-                OGRWKBIntersectsPessimistic(pabyWKB, nWKBSize,
-                                            m_sFilterEnvelope))
+            if (bFilterIsEnvelope &&
+                OGRWKBIntersectsPessimistic(pabyWKB, nWKBSize, sFilterEnvelope))
             {
                 return true;
             }
@@ -1905,12 +1921,19 @@ bool OGRLayer::FilterWKBGeometry(const GByte *pabyWKB, size_t nWKBSize,
                 if (OGRGeometryFactory::createFromWkb(pabyWKB, nullptr, &poGeom,
                                                       nWKBSize) == OGRERR_NONE)
                 {
-                    if (m_pPreparedFilterGeom)
+                    if (!pPreparedFilterGeom)
+                    {
+                        pPreparedFilterGeom =
+                            OGRCreatePreparedGeometry(OGRGeometry::ToHandle(
+                                const_cast<OGRGeometry *>(poFilterGeom)));
+                    }
+                    if (pPreparedFilterGeom)
                         ret = OGRPreparedGeometryIntersects(
-                            m_pPreparedFilterGeom,
-                            OGRGeometry::ToHandle(poGeom));
+                            pPreparedFilterGeom,
+                            OGRGeometry::ToHandle(
+                                const_cast<OGRGeometry *>(poGeom)));
                     else
-                        ret = m_poFilterGeom->Intersects(poGeom);
+                        ret = poFilterGeom->Intersects(poGeom);
                 }
                 delete poGeom;
                 return CPL_TO_BOOL(ret);
