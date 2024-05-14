@@ -84,7 +84,7 @@ MAIN_START(argc, argv)
                     decltype(&GDALMultiDimTranslateOptionsFree)>
         psOptions{GDALMultiDimTranslateOptionsNew(argv + 1, &sOptionsForBinary),
                   GDALMultiDimTranslateOptionsFree};
-
+    CSLDestroy(argv);
     if (!psOptions)
     {
         Usage();

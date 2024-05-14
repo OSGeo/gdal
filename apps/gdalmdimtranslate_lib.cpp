@@ -88,7 +88,7 @@ GDALMultiDimTranslateAppOptionsGetParser(
 
     auto &group = argParser->add_mutually_exclusive_group();
     group.add_argument("-array")
-        .metavar("<array_spec")
+        .metavar("<array_spec>")
         .append()
         .store_into(psOptions->aosArraySpec)
         .help(_(
