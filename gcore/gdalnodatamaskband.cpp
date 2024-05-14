@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <utility>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -166,7 +167,6 @@ bool GDALNoDataMaskBand::IsNoDataInRange(double dfNoDataValue,
         {
             return GDALIsValueInRange<GUInt32>(dfNoDataValue);
         }
-
         case GDT_Int32:
         {
             return GDALIsValueInRange<GInt32>(dfNoDataValue);
@@ -279,19 +279,65 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         return CE_None;
     }
 
+    const auto AllocTempBufferOrFallback =
+        [this, eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
+         nBufYSize, eBufType, nPixelSpace, nLineSpace,
+         psExtraArg](int nWrkDTSize) -> std::pair<CPLErr, void *>
+    {
+        auto poParentDS = m_poParent->GetDataset();
+        // Check if we must simulate a memory allocation failure
+        // Before checking the env variable, which is slightly expensive,
+        // check first for a special dataset name, which is a cheap test.
+        const char *pszOptVal =
+            poParentDS && strcmp(poParentDS->GetDescription(), "__debug__") == 0
+                ? CPLGetConfigOption(
+                      "GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND", "NO")
+                : "NO";
+        const bool bSimulMemAllocFailure =
+            EQUAL(pszOptVal, "ALWAYS") ||
+            (CPLTestBool(pszOptVal) &&
+             GDALMajorObject::GetMetadataItem(__func__, "__INTERNAL__") ==
+                 nullptr);
+        void *pTemp = nullptr;
+        if (!bSimulMemAllocFailure)
+        {
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+            pTemp = VSI_MALLOC3_VERBOSE(nWrkDTSize, nBufXSize, nBufYSize);
+        }
+        if (!pTemp)
+        {
+            const bool bAllocHasAlreadyFailed =
+                GDALMajorObject::GetMetadataItem(__func__, "__INTERNAL__") !=
+                nullptr;
+            CPLError(bAllocHasAlreadyFailed ? CE_Failure : CE_Warning,
+                     CPLE_OutOfMemory,
+                     "GDALNoDataMaskBand::IRasterIO(): cannot allocate %d x %d "
+                     "x %d bytes%s",
+                     nBufXSize, nBufYSize, nWrkDTSize,
+                     bAllocHasAlreadyFailed
+                         ? ""
+                         : ". Falling back to block-based approach");
+            if (bAllocHasAlreadyFailed)
+                return std::pair(CE_Failure, nullptr);
+            // Sets a metadata item to prevent potential infinite recursion
+            GDALMajorObject::SetMetadataItem(__func__, "IN", "__INTERNAL__");
+            const CPLErr eErr = GDALRasterBand::IRasterIO(
+                eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
+                nBufYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg);
+            GDALMajorObject::SetMetadataItem(__func__, nullptr, "__INTERNAL__");
+            return std::pair(eErr, nullptr);
+        }
+        return std::pair(CE_None, pTemp);
+    };
+
     if (eBufType == GDT_Byte)
     {
         const int nWrkDTSize = GDALGetDataTypeSizeBytes(eWrkDT);
-        void *pTemp = VSI_MALLOC3_VERBOSE(nWrkDTSize, nBufXSize, nBufYSize);
-        if (pTemp == nullptr)
-        {
-            return GDALRasterBand::IRasterIO(
-                eRWFlag, nXOff, nYOff, nXSize, nYSize, pTemp, nBufXSize,
-                nBufYSize, eWrkDT, nWrkDTSize,
-                static_cast<GSpacing>(nBufXSize) * nWrkDTSize, psExtraArg);
-        }
+        auto [eErr, pTemp] = AllocTempBufferOrFallback(nWrkDTSize);
+        if (!pTemp)
+            return eErr;
 
-        const CPLErr eErr = m_poParent->RasterIO(
+        eErr = m_poParent->RasterIO(
             GF_Read, nXOff, nYOff, nXSize, nYSize, pTemp, nBufXSize, nBufYSize,
             eWrkDT, nWrkDTSize, static_cast<GSpacing>(nBufXSize) * nWrkDTSize,
             psExtraArg);
@@ -453,30 +499,26 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     // Output buffer is non-Byte. Ask for Byte and expand to user requested
     // type
-    GByte *pabyBuf =
-        static_cast<GByte *>(VSI_MALLOC2_VERBOSE(nBufXSize, nBufYSize));
-    if (pabyBuf == nullptr)
-    {
-        return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                         pData, nBufXSize, nBufYSize, eBufType,
-                                         nPixelSpace, nLineSpace, psExtraArg);
-    }
-    const CPLErr eErr =
-        IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pabyBuf, nBufXSize,
-                  nBufYSize, GDT_Byte, 1, nBufXSize, psExtraArg);
+    auto [eErr, pTemp] = AllocTempBufferOrFallback(sizeof(GByte));
+    if (!pTemp)
+        return eErr;
+
+    eErr = IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pTemp, nBufXSize,
+                     nBufYSize, GDT_Byte, 1, nBufXSize, psExtraArg);
     if (eErr != CE_None)
     {
-        VSIFree(pabyBuf);
+        VSIFree(pTemp);
         return eErr;
     }
 
     for (int iY = 0; iY < nBufYSize; iY++)
     {
-        GDALCopyWords(pabyBuf + static_cast<size_t>(iY) * nBufXSize, GDT_Byte,
-                      1, static_cast<GByte *>(pData) + iY * nLineSpace,
-                      eBufType, static_cast<int>(nPixelSpace), nBufXSize);
+        GDALCopyWords(
+            static_cast<GByte *>(pTemp) + static_cast<size_t>(iY) * nBufXSize,
+            GDT_Byte, 1, static_cast<GByte *>(pData) + iY * nLineSpace,
+            eBufType, static_cast<int>(nPixelSpace), nBufXSize);
     }
-    VSIFree(pabyBuf);
+    VSIFree(pTemp);
     return CE_None;
 }
 
