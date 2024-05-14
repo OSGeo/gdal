@@ -3434,17 +3434,19 @@ def test_ogr_gmlas_read_srsDimension_3_on_top_gml_Envelope():
 @pytest.mark.require_curl()
 def test_ogr_gmlas_get_gml_and_iso_schemas(tmp_path):
 
-    url = "https://schemas.opengis.net/iso/19139/iso19139-20070417.zip"
-    conn = gdaltest.gdalurlopen(url, timeout=4)
-    if conn is None:
-        pytest.skip(f"cannot open {url}")
+    iso19139_url = "https://schemas.opengis.net/iso/19139/iso19139-20070417.zip"
+    inspire_url = "https://inspire.ec.europa.eu/schemas/base/3.3/BaseTypes.xsd"
+    for url in [iso19139_url, inspire_url]:
+        conn = gdaltest.gdalurlopen(url, timeout=4)
+        if conn is None:
+            pytest.skip(f"cannot open {url}")
 
     cache_path = str(tmp_path / "cache")
 
     ds = gdal.OpenEx(
         "GMLAS:",
         open_options=[
-            "XSD=https://inspire.ec.europa.eu/schemas/base/3.3/BaseTypes.xsd",
+            "XSD=" + inspire_url,
             f"CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>true</AllowRemoteSchemaDownload><SchemaCache><Directory>{cache_path}</Directory></SchemaCache><LayerBuildingRules><IdentifierMaxLength>10</IdentifierMaxLength><PostgreSQLIdentifierLaundering>false</PostgreSQLIdentifierLaundering></LayerBuildingRules></Configuration>",
         ],
     )
