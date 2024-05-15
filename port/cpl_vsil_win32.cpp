@@ -352,23 +352,35 @@ int VSIWin32Handle::Flush()
 size_t VSIWin32Handle::Read(void *pBuffer, size_t nSize, size_t nCount)
 
 {
-    DWORD dwSizeRead = 0;
-    size_t nResult = 0;
+    GByte *const pabyBuffer = static_cast<GByte *>(pBuffer);
+    size_t nTotalRead = 0;
+    size_t nRemaining = nSize * nCount;
+    while (nRemaining > 0)
+    {
+        DWORD dwSizeRead = 0;
+        DWORD dwToRead = static_cast<DWORD>(
+            nRemaining > UINT32_MAX ? UINT32_MAX : nRemaining);
 
-    if (!ReadFile(hFile, pBuffer, static_cast<DWORD>(nSize * nCount),
-                  &dwSizeRead, nullptr))
-    {
-        bError = true;
-        nResult = 0;
-        errno = ErrnoFromGetLastError();
-    }
-    else
-    {
-        if (nSize == 0)
-            nResult = 0;
+        if (!ReadFile(hFile, pabyBuffer + nTotalRead, dwToRead, &dwSizeRead,
+                      nullptr))
+        {
+            bError = true;
+            errno = ErrnoFromGetLastError();
+            return 0;
+        }
         else
-            nResult = dwSizeRead / nSize;
+        {
+            nTotalRead += dwSizeRead;
+            nRemaining -= dwSizeRead;
+            if (dwSizeRead < dwToRead)
+                break;
+        }
+    }
 
+    size_t nResult = 0;
+    if (nSize)
+    {
+        nResult = nTotalRead / nSize;
         if (nResult != nCount)
             bEOF = true;
     }
@@ -385,6 +397,12 @@ size_t VSIWin32Handle::Write(const void *pBuffer, size_t nSize, size_t nCount)
 {
     DWORD dwSizeWritten = 0;
     size_t nResult = 0;
+
+    if (nSize > 0 && nCount > UINT32_MAX / nSize)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Too many bytes to write at once");
+        return 0;
+    }
 
     if (!WriteFile(hFile, pBuffer, static_cast<DWORD>(nSize * nCount),
                    &dwSizeWritten, nullptr))
