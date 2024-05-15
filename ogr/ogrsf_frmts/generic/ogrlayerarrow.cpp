@@ -889,7 +889,7 @@ static inline bool IsValidField(const OGRField *psRawField)
 static uint8_t *AllocValidityBitmap(size_t nSize)
 {
     auto pabyValidity = static_cast<uint8_t *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nSize + 7) / 8));
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE((1 + nSize + 7) / 8));
     if (pabyValidity)
     {
         // All valid initially
@@ -912,7 +912,7 @@ static bool FillArray(struct ArrowArray *psChild,
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
     T *panValues = static_cast<T *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * nFeatureCountLimit));
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (1 + nFeatureCountLimit)));
     if (panValues == nullptr)
         return false;
     psChild->buffers[1] = panValues;
@@ -959,7 +959,7 @@ static bool FillBoolArray(struct ArrowArray *psChild,
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
     uint8_t *panValues = static_cast<uint8_t *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nFeatureCountLimit + 7) / 8));
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nFeatureCountLimit + 7 + 1) / 8));
     if (panValues == nullptr)
         return false;
     memset(panValues, 0, (nFeatureCountLimit + 7) / 8);
@@ -1094,8 +1094,8 @@ FillListArray(struct ArrowArray *psChild,
     psValueChild->buffers =
         static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     psValueChild->length = nOffset;
-    T *panValues =
-        static_cast<T *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * nOffset));
+    T *panValues = static_cast<T *>(
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (nOffset + 1)));
     if (panValues == nullptr)
         return 0;
     psValueChild->buffers[1] = panValues;
@@ -1188,7 +1188,7 @@ FillListArrayBool(struct ArrowArray *psChild,
         static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     psValueChild->length = nOffset;
     uint8_t *panValues = static_cast<uint8_t *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nOffset + 7) / 8));
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nOffset + 7 + 1) / 8));
     if (panValues == nullptr)
         return 0;
     memset(panValues, 0, (nOffset + 7) / 8);
@@ -1269,7 +1269,7 @@ FillStringArray(struct ArrowArray *psChild,
     panOffsets[nFeatCount] = static_cast<T>(nOffset);
 
     char *pachValues =
-        static_cast<char *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nOffset));
+        static_cast<char *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nOffset + 1));
     if (pachValues == nullptr)
         return 0;
     psChild->buffers[2] = pachValues;
@@ -1378,7 +1378,7 @@ after_loop:
     psValueChild->buffers[1] = panChildOffsets;
 
     char *pachValues =
-        static_cast<char *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nCountChars));
+        static_cast<char *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nCountChars + 1));
     if (pachValues == nullptr)
         return 0;
     psValueChild->buffers[2] = pachValues;
@@ -1461,7 +1461,7 @@ FillBinaryArray(struct ArrowArray *psChild,
     panOffsets[nFeatCount] = nOffset;
 
     GByte *pabyValues =
-        static_cast<GByte *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nOffset));
+        static_cast<GByte *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nOffset + 1));
     if (pabyValues == nullptr)
         return 0;
     psChild->buffers[2] = pabyValues;
@@ -1496,9 +1496,10 @@ FillFixedWidthBinaryArray(struct ArrowArray *psChild,
     psChild->buffers = static_cast<const void **>(CPLCalloc(3, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
 
-    assert(nFeatureCountLimit <= std::numeric_limits<size_t>::max() / nWidth);
+    assert(nFeatureCountLimit + 1 <=
+           std::numeric_limits<size_t>::max() / nWidth);
     GByte *pabyValues = static_cast<GByte *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nFeatureCountLimit * nWidth));
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nFeatureCountLimit + 1) * nWidth));
     if (pabyValues == nullptr)
         return false;
     psChild->buffers[1] = pabyValues;
@@ -1614,7 +1615,7 @@ FillWKBGeometryArray(struct ArrowArray *psChild,
     panOffsets[nFeatCount] = static_cast<T>(nOffset);
 
     GByte *pabyValues =
-        static_cast<GByte *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nOffset));
+        static_cast<GByte *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nOffset + 1));
     if (pabyValues == nullptr)
         return 0;
     psChild->buffers[2] = pabyValues;
@@ -1653,8 +1654,8 @@ static bool FillDateArray(struct ArrowArray *psChild,
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
-    int32_t *panValues = static_cast<int32_t *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int32_t) * nFeatureCountLimit));
+    int32_t *panValues = static_cast<int32_t *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
+        sizeof(int32_t) * (nFeatureCountLimit + 1)));
     if (panValues == nullptr)
         return false;
     psChild->buffers[1] = panValues;
@@ -1705,8 +1706,8 @@ static bool FillTimeArray(struct ArrowArray *psChild,
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
-    int32_t *panValues = static_cast<int32_t *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int32_t) * nFeatureCountLimit));
+    int32_t *panValues = static_cast<int32_t *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
+        sizeof(int32_t) * (nFeatureCountLimit + 1)));
     if (panValues == nullptr)
         return false;
     psChild->buffers[1] = panValues;
@@ -1755,8 +1756,8 @@ FillDateTimeArray(struct ArrowArray *psChild,
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     uint8_t *pabyValidity = nullptr;
-    int64_t *panValues = static_cast<int64_t *>(
-        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int64_t) * nFeatureCountLimit));
+    int64_t *panValues = static_cast<int64_t *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
+        sizeof(int64_t) * (nFeatureCountLimit + 1)));
     if (panValues == nullptr)
         return false;
     psChild->buffers[1] = panValues;
@@ -1933,7 +1934,7 @@ int OGRLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
         int64_t *panValues =
             static_cast<int64_t *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
-                sizeof(int64_t) * oFeatureQueue.size()));
+                sizeof(int64_t) * (oFeatureQueue.size() + 1)));
         if (panValues == nullptr)
             goto error;
         psChild->buffers[1] = panValues;
