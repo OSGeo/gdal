@@ -255,6 +255,7 @@ void OGRGeoRSSLayer::ResetReading()
     if (fpGeoRSS)
     {
         VSIFSeekL(fpGeoRSS, 0, SEEK_SET);
+        VSIFClearErrL(fpGeoRSS);
 #ifdef HAVE_EXPAT
         if (oParser)
             XML_ParserFree(oParser);
@@ -968,7 +969,7 @@ OGRFeature *OGRGeoRSSLayer::GetNextFeature()
         return ppoFeatureTab[nFeatureTabIndex++];
     }
 
-    if (VSIFEofL(fpGeoRSS))
+    if (VSIFEofL(fpGeoRSS) || VSIFErrorL(fpGeoRSS))
         return nullptr;
 
     CPLFree(ppoFeatureTab);
@@ -982,7 +983,7 @@ OGRFeature *OGRGeoRSSLayer::GetNextFeature()
     {
         unsigned int nLen = static_cast<unsigned int>(
             VSIFReadL(aBuf.data(), 1, aBuf.size(), fpGeoRSS));
-        nDone = VSIFEofL(fpGeoRSS);
+        nDone = nLen < aBuf.size();
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1792,7 +1793,7 @@ void OGRGeoRSSLayer::LoadSchema()
         nDataHandlerCounter = 0;
         unsigned int nLen =
             (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fpGeoRSS);
-        nDone = VSIFEofL(fpGeoRSS);
+        nDone = nLen < aBuf.size();
         if (XML_Parse(oSchemaParser, aBuf.data(), nLen, nDone) ==
             XML_STATUS_ERROR)
         {

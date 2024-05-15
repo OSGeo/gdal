@@ -1318,7 +1318,7 @@ void OGRODSDataSource::AnalyseFile()
         nDataHandlerCounter = 0;
         unsigned int nLen = static_cast<unsigned int>(
             VSIFReadL(aBuf.data(), 1, aBuf.size(), fpContent));
-        nDone = VSIFEofL(fpContent);
+        nDone = (nLen < aBuf.size());
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1501,7 +1501,7 @@ void OGRODSDataSource::AnalyseSettings()
         nDataHandlerCounter = 0;
         unsigned int nLen =
             (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fpSettings);
-        nDone = VSIFEofL(fpSettings);
+        nDone = (nLen < aBuf.size());
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,

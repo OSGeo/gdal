@@ -110,7 +110,7 @@ bool LTIVSIStream::isEOF()
     CPLAssert(poFileHandle);
 
     errno = 0;
-    bool bIsEOF = (0 != poFileHandle->Eof());
+    bool bIsEOF = (poFileHandle->Eof() != 0 || poFileHandle->Error() != 0);
     nError = errno;
 
     return bIsEOF;

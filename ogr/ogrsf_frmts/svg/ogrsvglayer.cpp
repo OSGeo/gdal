@@ -158,6 +158,7 @@ void OGRSVGLayer::ResetReading()
     if (fpSVG)
     {
         VSIFSeekL(fpSVG, 0, SEEK_SET);
+        VSIFClearErrL(fpSVG);
 #ifdef HAVE_EXPAT
         if (oParser)
             XML_ParserFree(oParser);
@@ -536,7 +537,7 @@ OGRFeature *OGRSVGLayer::GetNextFeature()
         return ppoFeatureTab[nFeatureTabIndex++];
     }
 
-    if (VSIFEofL(fpSVG))
+    if (VSIFEofL(fpSVG) || VSIFErrorL(fpSVG))
         return nullptr;
 
     std::vector<char> aBuf(PARSER_BUF_SIZE);
@@ -554,7 +555,7 @@ OGRFeature *OGRSVGLayer::GetNextFeature()
         nDataHandlerCounter = 0;
         unsigned int nLen =
             (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fpSVG);
-        nDone = VSIFEofL(fpSVG);
+        nDone = nLen < aBuf.size();
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(
@@ -664,7 +665,7 @@ void OGRSVGLayer::LoadSchema()
         nDataHandlerCounter = 0;
         unsigned int nLen =
             (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fpSVG);
-        nDone = VSIFEofL(fpSVG);
+        nDone = nLen < aBuf.size();
         if (XML_Parse(oSchemaParser, aBuf.data(), nLen, nDone) ==
             XML_STATUS_ERROR)
         {

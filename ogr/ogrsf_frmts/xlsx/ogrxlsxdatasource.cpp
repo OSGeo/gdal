@@ -1235,7 +1235,7 @@ void OGRXLSXDataSource::BuildLayer(OGRXLSXLayer *poLayer)
         nDataHandlerCounter = 0;
         unsigned int nLen =
             (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fp);
-        nDone = VSIFEofL(fp);
+        nDone = (nLen < aBuf.size());
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1419,7 +1419,7 @@ void OGRXLSXDataSource::AnalyseSharedStrings(VSILFILE *fpSharedStrings)
         nDataHandlerCounter = 0;
         unsigned int nLen = (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(),
                                                     fpSharedStrings);
-        nDone = VSIFEofL(fpSharedStrings);
+        nDone = (nLen < aBuf.size());
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1501,7 +1501,7 @@ void OGRXLSXDataSource::AnalyseWorkbookRels(VSILFILE *fpWorkbookRels)
         nDataHandlerCounter = 0;
         unsigned int nLen = (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(),
                                                     fpWorkbookRels);
-        nDone = VSIFEofL(fpWorkbookRels);
+        nDone = (nLen < aBuf.size());
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1616,7 +1616,7 @@ void OGRXLSXDataSource::AnalyseWorkbook(VSILFILE *fpWorkbook)
         nDataHandlerCounter = 0;
         unsigned int nLen =
             (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fpWorkbook);
-        nDone = VSIFEofL(fpWorkbook);
+        nDone = (nLen < aBuf.size());
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1780,7 +1780,7 @@ void OGRXLSXDataSource::AnalyseStyles(VSILFILE *fpStyles)
         nDataHandlerCounter = 0;
         unsigned int nLen =
             (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fpStyles);
-        nDone = VSIFEofL(fpStyles);
+        nDone = (nLen < aBuf.size());
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,

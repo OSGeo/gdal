@@ -1019,7 +1019,7 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
         return poFeature;
     }
 
-    if (m_fpGPX->Eof())
+    if (m_fpGPX->Eof() || m_fpGPX->Error())
         return nullptr;
 
     std::vector<char> aBuf(PARSER_BUF_SIZE);
@@ -1031,7 +1031,7 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
         m_nDataHandlerCounter = 0;
         unsigned int nLen = static_cast<unsigned int>(
             m_fpGPX->Read(aBuf.data(), 1, aBuf.size()));
-        nDone = m_fpGPX->Eof();
+        nDone = (nLen < aBuf.size());
         if (XML_Parse(m_oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -1892,7 +1892,7 @@ void OGRGPXLayer::LoadExtensionsSchema()
         m_nDataHandlerCounter = 0;
         unsigned int nLen = static_cast<unsigned int>(
             m_fpGPX->Read(aBuf.data(), 1, aBuf.size()));
-        nDone = m_fpGPX->Eof();
+        nDone = (nLen < aBuf.size());
         if (XML_Parse(m_oSchemaParser, aBuf.data(), nLen, nDone) ==
             XML_STATUS_ERROR)
         {
