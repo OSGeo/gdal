@@ -625,6 +625,14 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBaseWritable
                          GDALProgressFunc pProgressFunc,
                          void *pProgressData) override;
 
+    virtual int CopyFileRestartable(const char *pszSource,
+                                    const char *pszTarget,
+                                    const char *pszInputPayload,
+                                    char **ppszOutputPayload,
+                                    CSLConstList papszOptions,
+                                    GDALProgressFunc pProgressFunc,
+                                    void *pProgressData) override;
+
     virtual int DeleteObject(const char *pszFilename);
 
     virtual int *DeleteObjectBatch(CSLConstList papszFilesOrDirs);
@@ -663,6 +671,9 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBaseWritable
                                 int nMaxRetry, double dfRetryDelay);
 
     bool AbortPendingUploads(const char *pszFilename) override;
+
+    int GetUploadChunkSizeInBytes(const char *pszFilename,
+                                  const char *pszSpecifiedValInBytes);
 };
 
 /************************************************************************/

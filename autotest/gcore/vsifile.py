@@ -1341,3 +1341,26 @@ def test_vsifile_use_closed_file(tmp_path):
 
     with pytest.raises(ValueError, match="closed file"):
         gdal.VSIFWriteL("0123456789", 1, 10, f)
+
+
+###############################################################################
+# Test gdal.CopyFileRestartable()
+
+
+def test_vsifile_CopyFileRestartable(tmp_vsimem):
+
+    dstfilename = str(tmp_vsimem / "out.txt")
+
+    retcode, output_payload = gdal.CopyFileRestartable(
+        str(tmp_vsimem / "i_do_not_exist.txt"), dstfilename, None
+    )
+    assert retcode == -1
+    assert output_payload is None
+    assert gdal.VSIStatL(dstfilename) is None
+
+    srcfilename = str(tmp_vsimem / "in.txt")
+    gdal.FileFromMemBuffer(srcfilename, "foo")
+    retcode, output_payload = gdal.CopyFileRestartable(srcfilename, dstfilename, None)
+    assert retcode == 0
+    assert output_payload is None
+    assert gdal.VSIStatL(dstfilename).size == 3
