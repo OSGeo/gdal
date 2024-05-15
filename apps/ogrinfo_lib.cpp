@@ -2427,15 +2427,16 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
             })
         .help(_("Format/driver name(s) to try when opening the input file."));
 
-    argParser->add_argument("filename")
-        .nargs(argparse::nargs_pattern::optional)
-        .action(
-            [psOptionsForBinary](const std::string &s)
-            {
-                if (psOptionsForBinary)
-                    psOptionsForBinary->osFilename = s;
-            })
-        .help(_("The data source to open."));
+    auto &argFilename = argParser->add_argument("filename")
+                            .action(
+                                [psOptionsForBinary](const std::string &s)
+                                {
+                                    if (psOptionsForBinary)
+                                        psOptionsForBinary->osFilename = s;
+                                })
+                            .help(_("The data source to open."));
+    if (!psOptionsForBinary)
+        argFilename.nargs(argparse::nargs_pattern::optional);
 
     argParser->add_argument("layer")
         .remaining()

@@ -64,6 +64,16 @@ def test_ogrinfo_1(ogrinfo_path):
 
 
 ###############################################################################
+# Missing filename
+
+
+def test_ogrinfo_missing_filename(ogrinfo_path):
+
+    (_, err) = gdaltest.runexternal_out_and_err(ogrinfo_path)
+    assert "filename: 1 argument(s) expected. 0 provided" in err
+
+
+###############################################################################
 # Test -ro option
 
 
