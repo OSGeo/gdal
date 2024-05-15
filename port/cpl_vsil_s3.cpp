@@ -28,6 +28,7 @@
 
 #include "cpl_atomic_ops.h"
 #include "cpl_port.h"
+#include "cpl_json.h"
 #include "cpl_http.h"
 #include "cpl_md5.h"
 #include "cpl_minixml.h"
@@ -39,10 +40,12 @@
 #include <errno.h>
 
 #include <algorithm>
+#include <condition_variable>
 #include <functional>
 #include <set>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <utility>
 
 #include "cpl_aws.h"
@@ -762,25 +765,7 @@ VSIS3WriteHandle::VSIS3WriteHandle(IVSIS3LikeFSHandler *poFS,
 
     if (!m_bUseChunked)
     {
-        const int nChunkSizeMB = atoi(VSIGetPathSpecificOption(
-            pszFilename,
-            (std::string("VSI") + poFS->GetDebugKey() + "_CHUNK_SIZE").c_str(),
-            "50"));
-        if (nChunkSizeMB <= 0 || nChunkSizeMB > 1000)
-            m_nBufferSize = 0;
-        else
-            m_nBufferSize = nChunkSizeMB * 1024 * 1024;
-
-        // For testing only !
-        const char *pszChunkSizeBytes = VSIGetPathSpecificOption(
-            pszFilename,
-            (std::string("VSI") + poFS->GetDebugKey() + "_CHUNK_SIZE_BYTES")
-                .c_str(),
-            nullptr);
-        if (pszChunkSizeBytes)
-            m_nBufferSize = atoi(pszChunkSizeBytes);
-        if (m_nBufferSize <= 0 || m_nBufferSize > 1000 * 1024 * 1024)
-            m_nBufferSize = 50 * 1024 * 1024;
+        m_nBufferSize = poFS->GetUploadChunkSizeInBytes(pszFilename, nullptr);
 
         m_pabyBuffer = static_cast<GByte *>(VSIMalloc(m_nBufferSize));
         if (m_pabyBuffer == nullptr)
@@ -790,6 +775,42 @@ VSIS3WriteHandle::VSIS3WriteHandle(IVSIS3LikeFSHandler *poFS,
                      m_poFS->GetFSPrefix().c_str());
         }
     }
+}
+
+/************************************************************************/
+/*                      GetUploadChunkSizeInBytes()                     */
+/************************************************************************/
+
+int IVSIS3LikeFSHandler::GetUploadChunkSizeInBytes(
+    const char *pszFilename, const char *pszSpecifiedValInBytes)
+{
+    int nChunkSize = 0;
+
+    const int nChunkSizeMB = atoi(VSIGetPathSpecificOption(
+        pszFilename,
+        std::string("VSI").append(GetDebugKey()).append("_CHUNK_SIZE").c_str(),
+        "50"));
+    if (nChunkSizeMB <= 0 || nChunkSizeMB > 1000)
+        nChunkSize = 0;
+    else
+        nChunkSize = nChunkSizeMB * 1024 * 1024;
+
+    const char *pszChunkSizeBytes =
+        pszSpecifiedValInBytes ? pszSpecifiedValInBytes :
+                               // For testing only !
+            VSIGetPathSpecificOption(pszFilename,
+                                     std::string("VSI")
+                                         .append(GetDebugKey())
+                                         .append("_CHUNK_SIZE_BYTES")
+                                         .c_str(),
+                                     nullptr);
+    if (pszChunkSizeBytes)
+        nChunkSize = atoi(pszChunkSizeBytes);
+
+    if (nChunkSize <= 0 || nChunkSize > 1000 * 1024 * 1024)
+        nChunkSize = 50 * 1024 * 1024;
+
+    return nChunkSize;
 }
 
 /************************************************************************/
@@ -3669,11 +3690,18 @@ int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
                                   GDALProgressFunc pProgressFunc,
                                   void *pProgressData)
 {
-    std::string osMsg("Copying of ");
-    osMsg += pszSource;
-
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("CopyFile");
+
+    if (!pszSource)
+    {
+        return VSIFilesystemHandler::CopyFile(pszSource, pszTarget, fpSource,
+                                              nSourceSize, papszOptions,
+                                              pProgressFunc, pProgressData);
+    }
+
+    std::string osMsg("Copying of ");
+    osMsg += pszSource;
 
     const std::string osPrefix(GetFSPrefix());
     if (STARTS_WITH(pszSource, osPrefix.c_str()) &&
@@ -3741,6 +3769,440 @@ int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
     }
 
     return ret;
+}
+
+/************************************************************************/
+/*                    GetRequestedNumThreadsForCopy()                   */
+/************************************************************************/
+
+static int GetRequestedNumThreadsForCopy(CSLConstList papszOptions)
+{
+#if defined(CPL_MULTIPROC_STUB)
+    (void)papszOptions;
+    return 1;
+#else
+    // 10 threads used by default by the Python s3transfer library
+    const char *pszValue =
+        CSLFetchNameValueDef(papszOptions, "NUM_THREADS", "10");
+    if (EQUAL(pszValue, "ALL_CPUS"))
+        return CPLGetNumCPUs();
+    return atoi(pszValue);
+#endif
+}
+
+/************************************************************************/
+/*                       CopyFileRestartable()                          */
+/************************************************************************/
+
+int IVSIS3LikeFSHandler::CopyFileRestartable(
+    const char *pszSource, const char *pszTarget, const char *pszInputPayload,
+    char **ppszOutputPayload, CSLConstList papszOptions,
+    GDALProgressFunc pProgressFunc, void *pProgressData)
+{
+    const std::string osPrefix(GetFSPrefix());
+    NetworkStatisticsFileSystem oContextFS(osPrefix.c_str());
+    NetworkStatisticsAction oContextAction("CopyFileRestartable");
+
+    *ppszOutputPayload = nullptr;
+
+    if (!STARTS_WITH(pszTarget, osPrefix.c_str()))
+        return -1;
+
+    std::string osMsg("Copying of ");
+    osMsg += pszSource;
+
+    // Can we use server-side copy ?
+    if (STARTS_WITH(pszSource, osPrefix.c_str()) &&
+        STARTS_WITH(pszTarget, osPrefix.c_str()))
+    {
+        bool bRet = CopyObject(pszSource, pszTarget, papszOptions) == 0;
+        if (bRet && pProgressFunc)
+        {
+            bRet = pProgressFunc(1.0, osMsg.c_str(), pProgressData) != 0;
+        }
+        return bRet ? 0 : -1;
+    }
+
+    // If multipart upload is not supported, fallback to regular CopyFile()
+    if (!SupportsParallelMultipartUpload())
+    {
+        return CopyFile(pszSource, pszTarget, nullptr,
+                        static_cast<vsi_l_offset>(-1), papszOptions,
+                        pProgressFunc, pProgressData);
+    }
+
+    VSIVirtualHandleUniquePtr fpSource(VSIFOpenExL(pszSource, "rb", TRUE));
+    if (!fpSource)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s", pszSource);
+        return -1;
+    }
+
+    const char *pszChunkSize = CSLFetchNameValue(papszOptions, "CHUNK_SIZE");
+    int nChunkSize = GetUploadChunkSizeInBytes(pszTarget, pszChunkSize);
+
+    VSIStatBufL sStatBuf;
+    if (VSIStatL(pszSource, &sStatBuf) != 0)
+        return -1;
+
+    auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
+        CreateHandleHelper(pszTarget + osPrefix.size(), false));
+    if (poS3HandleHelper == nullptr)
+        return -1;
+
+    int nChunkCount = 0;
+    std::vector<std::string> aosEtags;
+    std::string osUploadID;
+
+    if (pszInputPayload)
+    {
+        // If there is an input payload, parse it, and do sanity checks
+        // and initial setup
+
+        CPLJSONDocument oDoc;
+        if (!oDoc.LoadMemory(pszInputPayload))
+            return -1;
+
+        auto oRoot = oDoc.GetRoot();
+        if (oRoot.GetString("source") != pszSource)
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "'source' field in input payload does not match pszSource");
+            return -1;
+        }
+
+        if (oRoot.GetString("target") != pszTarget)
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "'target' field in input payload does not match pszTarget");
+            return -1;
+        }
+
+        if (static_cast<uint64_t>(oRoot.GetLong("source_size")) !=
+            static_cast<uint64_t>(sStatBuf.st_size))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'source_size' field in input payload does not match "
+                     "source file size");
+            return -1;
+        }
+
+        if (oRoot.GetLong("source_mtime") !=
+            static_cast<GIntBig>(sStatBuf.st_mtime))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'source_mtime' field in input payload does not match "
+                     "source file modification time");
+            return -1;
+        }
+
+        osUploadID = oRoot.GetString("upload_id");
+        if (osUploadID.empty())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'upload_id' field in input payload missing or invalid");
+            return -1;
+        }
+
+        nChunkSize = oRoot.GetInteger("chunk_size");
+        if (nChunkSize <= 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'chunk_size' field in input payload missing or invalid");
+            return -1;
+        }
+
+        auto oEtags = oRoot.GetArray("chunk_etags");
+        if (!oEtags.IsValid())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'chunk_etags' field in input payload missing or invalid");
+            return -1;
+        }
+
+        const auto nChunkCountLarge =
+            (sStatBuf.st_size + nChunkSize - 1) / nChunkSize;
+        if (nChunkCountLarge != oEtags.Size())
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "'chunk_etags' field in input payload has not expected size");
+            return -1;
+        }
+        nChunkCount = oEtags.Size();
+        for (int iChunk = 0; iChunk < nChunkCount; ++iChunk)
+        {
+            aosEtags.push_back(oEtags[iChunk].ToString());
+        }
+    }
+    else
+    {
+        // Compute the number of chunks
+        auto nChunkCountLarge =
+            (sStatBuf.st_size + nChunkSize - 1) / nChunkSize;
+        if (nChunkCountLarge > knMAX_PART_NUMBER)
+        {
+            // Re-adjust the chunk size if needed
+            constexpr int nWishedChunkCount = knMAX_PART_NUMBER / 10;
+            const auto nMinChunkSizeLarge =
+                (sStatBuf.st_size + nWishedChunkCount - 1) / nWishedChunkCount;
+            if (pszChunkSize)
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Too small CHUNK_SIZE compared to file size. Should be at "
+                    "least " CPL_FRMT_GUIB,
+                    static_cast<GUIntBig>(nMinChunkSizeLarge));
+                return -1;
+            }
+            if (nMinChunkSizeLarge > 1000 * 1024 * 1024)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Too large file");
+                return -1;
+            }
+            nChunkSize = static_cast<int>(nMinChunkSizeLarge);
+            nChunkCountLarge = (sStatBuf.st_size + nChunkSize - 1) / nChunkSize;
+        }
+        nChunkCount = static_cast<int>(nChunkCountLarge);
+        aosEtags.resize(nChunkCount);
+    }
+
+    // coverity[tainted_data]
+    const double dfRetryDelay = CPLAtof(
+        VSIGetPathSpecificOption(pszSource, "GDAL_HTTP_RETRY_DELAY",
+                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
+    const int nMaxRetry =
+        atoi(VSIGetPathSpecificOption(pszSource, "GDAL_HTTP_MAX_RETRY",
+                                      CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
+
+    if (osUploadID.empty())
+    {
+        osUploadID = InitiateMultipartUpload(pszTarget, poS3HandleHelper.get(),
+                                             nMaxRetry, dfRetryDelay, nullptr);
+        if (osUploadID.empty())
+        {
+            return -1;
+        }
+    }
+
+    const int nRequestedThreads = GetRequestedNumThreadsForCopy(papszOptions);
+    const int nNeededThreads = std::min(nRequestedThreads, nChunkCount);
+    std::mutex oMutex;
+    std::condition_variable oCV;
+    bool bSuccess = true;
+    bool bStop = false;
+    bool bAbort = false;
+    int iCurChunk = 0;
+
+    const bool bRunInThread = nNeededThreads > 1;
+
+    const auto threadFunc =
+        [this, &fpSource, &aosEtags, &oMutex, &oCV, &iCurChunk, &bStop, &bAbort,
+         &bSuccess, &osMsg, &osUploadID, &sStatBuf, &poS3HandleHelper,
+         &osPrefix, bRunInThread, pszSource, pszTarget, nChunkCount, nChunkSize,
+         nMaxRetry, dfRetryDelay, pProgressFunc, pProgressData]()
+    {
+        VSIVirtualHandleUniquePtr fpUniquePtr;
+        VSIVirtualHandle *fp = nullptr;
+        std::unique_ptr<IVSIS3LikeHandleHelper>
+            poS3HandleHelperThisThreadUniquePtr;
+        IVSIS3LikeHandleHelper *poS3HandleHelperThisThread = nullptr;
+
+        std::vector<GByte> abyBuffer;
+        try
+        {
+            abyBuffer.resize(nChunkSize);
+        }
+        catch (const std::exception &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Cannot allocate working buffer");
+            std::lock_guard oLock(oMutex);
+            bSuccess = false;
+            bStop = true;
+            return;
+        }
+
+        while (true)
+        {
+            int iChunk;
+            {
+                std::lock_guard oLock(oMutex);
+                if (bStop)
+                    break;
+                if (iCurChunk == nChunkCount)
+                    break;
+                iChunk = iCurChunk;
+                ++iCurChunk;
+            }
+            if (!fp)
+            {
+                if (iChunk == 0)
+                {
+                    fp = fpSource.get();
+                    poS3HandleHelperThisThread = poS3HandleHelper.get();
+                }
+                else
+                {
+                    fpUniquePtr.reset(VSIFOpenExL(pszSource, "rb", TRUE));
+                    if (!fpUniquePtr)
+                    {
+                        CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s",
+                                 pszSource);
+
+                        std::lock_guard oLock(oMutex);
+                        bSuccess = false;
+                        bStop = true;
+                        break;
+                    }
+                    fp = fpUniquePtr.get();
+
+                    poS3HandleHelperThisThreadUniquePtr.reset(
+                        CreateHandleHelper(pszTarget + osPrefix.size(), false));
+                    if (!poS3HandleHelperThisThreadUniquePtr)
+                    {
+                        std::lock_guard oLock(oMutex);
+                        bSuccess = false;
+                        bStop = true;
+                        break;
+                    }
+                    poS3HandleHelperThisThread =
+                        poS3HandleHelperThisThreadUniquePtr.get();
+                }
+            }
+
+            if (aosEtags[iChunk].empty())
+            {
+                const auto nCurPos =
+                    iChunk * static_cast<vsi_l_offset>(nChunkSize);
+                CPL_IGNORE_RET_VAL(fp->Seek(nCurPos, SEEK_SET));
+                const auto nRemaining = sStatBuf.st_size - nCurPos;
+                const size_t nToRead =
+                    nRemaining > static_cast<vsi_l_offset>(nChunkSize)
+                        ? nChunkSize
+                        : static_cast<int>(nRemaining);
+                const size_t nRead = fp->Read(abyBuffer.data(), 1, nToRead);
+                if (nRead != nToRead)
+                {
+                    CPLError(
+                        CE_Failure, CPLE_FileIO,
+                        "Did not get expected number of bytes from input file");
+                    std::lock_guard oLock(oMutex);
+                    bAbort = true;
+                    bSuccess = false;
+                    bStop = true;
+                    break;
+                }
+                const auto osEtag = UploadPart(
+                    pszTarget, 1 + iChunk, osUploadID, nCurPos,
+                    abyBuffer.data(), nToRead, poS3HandleHelperThisThread,
+                    nMaxRetry, dfRetryDelay, nullptr);
+                if (osEtag.empty())
+                {
+                    std::lock_guard oLock(oMutex);
+                    bSuccess = false;
+                    bStop = true;
+                    break;
+                }
+                aosEtags[iChunk] = osEtag;
+            }
+
+            if (bRunInThread)
+            {
+                std::lock_guard oLock(oMutex);
+                oCV.notify_one();
+            }
+            else
+            {
+                if (pProgressFunc &&
+                    !pProgressFunc(double(iCurChunk) / nChunkCount,
+                                   osMsg.c_str(), pProgressData))
+                {
+                    bSuccess = false;
+                    break;
+                }
+            }
+        }
+    };
+
+    if (bRunInThread)
+    {
+        std::vector<std::thread> aThreads;
+        for (int i = 0; i < nNeededThreads; i++)
+        {
+            aThreads.emplace_back(std::thread(threadFunc));
+        }
+        if (pProgressFunc)
+        {
+            std::unique_lock oLock(oMutex);
+            while (!bStop)
+            {
+                oCV.wait(oLock);
+                oLock.unlock();
+                const bool bInterrupt =
+                    !pProgressFunc(double(iCurChunk) / nChunkCount,
+                                   osMsg.c_str(), pProgressData);
+                oLock.lock();
+                if (bInterrupt)
+                {
+                    bSuccess = false;
+                    bStop = true;
+                    break;
+                }
+            }
+        }
+        for (auto &thread : aThreads)
+        {
+            thread.join();
+        }
+    }
+    else
+    {
+        threadFunc();
+    }
+
+    if (bAbort)
+    {
+        AbortMultipart(pszTarget, osUploadID, poS3HandleHelper.get(), nMaxRetry,
+                       dfRetryDelay);
+        return -1;
+    }
+    else if (!bSuccess)
+    {
+        // Compose an output restart payload
+        CPLJSONDocument oDoc;
+        auto oRoot = oDoc.GetRoot();
+        oRoot.Add("type", "CopyFileRestartablePayload");
+        oRoot.Add("source", pszSource);
+        oRoot.Add("target", pszTarget);
+        oRoot.Add("source_size", static_cast<uint64_t>(sStatBuf.st_size));
+        oRoot.Add("source_mtime", static_cast<GIntBig>(sStatBuf.st_mtime));
+        oRoot.Add("chunk_size", nChunkSize);
+        oRoot.Add("upload_id", osUploadID);
+        CPLJSONArray oArray;
+        for (int iChunk = 0; iChunk < nChunkCount; ++iChunk)
+        {
+            if (aosEtags[iChunk].empty())
+                oArray.AddNull();
+            else
+                oArray.Add(aosEtags[iChunk]);
+        }
+        oRoot.Add("chunk_etags", oArray);
+        *ppszOutputPayload = CPLStrdup(oDoc.SaveAsString().c_str());
+        return 1;
+    }
+
+    if (!CompleteMultipart(pszTarget, osUploadID, aosEtags, sStatBuf.st_size,
+                           poS3HandleHelper.get(), nMaxRetry, dfRetryDelay))
+    {
+        AbortMultipart(pszTarget, osUploadID, poS3HandleHelper.get(), nMaxRetry,
+                       dfRetryDelay);
+        return -1;
+    }
+
+    return 0;
 }
 
 /************************************************************************/
@@ -4000,14 +4462,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
     std::vector<ChunkToCopy> aoChunksToCopy;
     std::set<std::string> aoSetDirsToCreate;
     const char *pszChunkSize = CSLFetchNameValue(papszOptions, "CHUNK_SIZE");
-#if !defined(CPL_MULTIPROC_STUB)
-    // 10 threads used by default by the Python s3transfer library
-    const int nRequestedThreads =
-        atoi(CSLFetchNameValueDef(papszOptions, "NUM_THREADS", "10"));
-#else
-    const int nRequestedThreads =
-        atoi(CSLFetchNameValueDef(papszOptions, "NUM_THREADS", "1"));
-#endif
+    const int nRequestedThreads = GetRequestedNumThreadsForCopy(papszOptions);
     auto poTargetFSHandler = dynamic_cast<IVSIS3LikeFSHandler *>(
         VSIFileManager::GetHandler(pszTarget));
     const bool bSupportsParallelMultipartUpload =

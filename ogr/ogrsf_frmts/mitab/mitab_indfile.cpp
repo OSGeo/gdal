@@ -1788,7 +1788,7 @@ int TABINDNode::SplitNode()
 #ifdef DEBUG
         // Just in case, reset space previously used by moved entries
         memset(m_poDataBlock->GetCurDataPtr(), 0,
-               numInNode2 * (m_nKeyLength + 4));
+               static_cast<size_t>(numInNode2) * (m_nKeyLength + 4));
 #endif
         // And update current node members
         m_numEntriesInNode = numInNode1;
@@ -1860,7 +1860,7 @@ int TABINDNode::SplitNode()
         // Just in case, reset space previously used by moved entries
         memset(m_poDataBlock->GetCurDataPtr() +
                    static_cast<size_t>(numInNode2) * (m_nKeyLength + 4),
-               0, numInNode1 * (m_nKeyLength + 4));
+               0, static_cast<size_t>(numInNode1) * (m_nKeyLength + 4));
 #endif
 
         // And update current node members
@@ -1943,7 +1943,7 @@ int TABINDNode::SplitRootNode()
 #ifdef DEBUG
     // Just in case, reset space previously used by moved entries
     memset(m_poDataBlock->GetCurDataPtr(), 0,
-           m_numEntriesInNode * (m_nKeyLength + 4));
+           static_cast<size_t>(m_numEntriesInNode) * (m_nKeyLength + 4));
 #endif
 
     /*-----------------------------------------------------------------

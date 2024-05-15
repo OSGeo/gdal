@@ -157,18 +157,23 @@ ogrtest.openfilegdb_datalist_m = [
 ]
 
 
+@pytest.fixture(autouse=True, scope="module")
+def fgdb_drv():
+    drv = ogr.GetDriverByName("FileGDB")
+    yield drv
+
+
 @pytest.fixture(scope="module", autouse=True)
-def setup_driver():
+def setup_driver(fgdb_drv):
     # remove FileGDB driver before running tests
-    filegdb_driver = ogr.GetDriverByName("FileGDB")
-    if filegdb_driver is not None:
-        filegdb_driver.Deregister()
+    if fgdb_drv is not None:
+        fgdb_drv.Deregister()
 
     yield
 
-    if filegdb_driver is not None:
+    if fgdb_drv is not None:
         print("Reregistering FileGDB driver")
-        filegdb_driver.Register()
+        fgdb_drv.Register()
 
 
 @pytest.fixture()
@@ -2694,4 +2699,38 @@ def test_ogr_openfilegdb_get_extent_getextent3d():
             0.0,
             0.0,
         )
+    )
+
+
+###############################################################################
+# Test IdentifyDriver()
+
+
+def test_ogr_openfilegdb_try_identify_vector_as_raster():
+
+    assert gdal.IdentifyDriverEx("data/filegdb/empty_polygon.gdb") is not None
+    assert (
+        gdal.IdentifyDriverEx("data/filegdb/empty_polygon.gdb", gdal.OF_RASTER) is None
+    )
+
+
+###############################################################################
+# Test reading a database with a compressed layer (.cdf)
+
+
+@gdaltest.disable_exceptions()
+def test_ogr_openfilegdb_read_cdf():
+
+    msgs = []
+
+    def error_handler(klass, type, msg):
+        msgs.append(msg)
+
+    with gdaltest.error_handler(error_handler):
+        assert ogr.Open("data/filegdb/with_cdf.gdb") is None
+
+    assert len(msgs) == 1
+    assert (
+        "file using Compressed Data Format (CDF) that is unhandled by the OpenFileGDB driver, but could be handled by the FileGDB driver"
+        in msgs[0]
     )

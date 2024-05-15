@@ -1576,7 +1576,9 @@ int MIFFile::SetFeatureDefn(
             switch (poFieldDefn->GetType())
             {
                 case OFTInteger:
-                    eMapInfoType = TABFInteger;
+                    eMapInfoType = poFieldDefn->GetSubType() == OFSTBoolean
+                                       ? TABFLogical
+                                       : TABFInteger;
                     break;
                 case OFTReal:
                     eMapInfoType = TABFFloat;
@@ -1764,7 +1766,8 @@ int MIFFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
             /*-------------------------------------------------
              * LOGICAL type (value "T" or "F")
              *------------------------------------------------*/
-            poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTString);
+            poFieldDefn = new OGRFieldDefn(osName.c_str(), OFTInteger);
+            poFieldDefn->SetSubType(OFSTBoolean);
             poFieldDefn->SetWidth(1);
             break;
         default:

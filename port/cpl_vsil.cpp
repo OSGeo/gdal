@@ -589,6 +589,102 @@ int VSICopyFile(const char *pszSource, const char *pszTarget,
 }
 
 /************************************************************************/
+/*                       VSICopyFileRestartable()                       */
+/************************************************************************/
+
+/**
+ \brief Copy a source file into a target file in a way that can (potentially)
+ be restarted.
+
+ This function provides the possibility of efficiently restarting upload of
+ large files to cloud storage that implements upload in a chunked way,
+ such as /vsis3/ and /vsigs/.
+ For other destination file systems, this function may fallback to
+ VSICopyFile() and not provide any smart restartable implementation.
+
+ Example of a potential workflow:
+
+ @code{.cpp}
+ char* pszOutputPayload = NULL;
+ int ret = VSICopyFileRestartable(pszSource, pszTarget, NULL,
+                                  &pszOutputPayload, NULL, NULL, NULL);
+ while( ret == 1 ) // add also a limiting counter to avoid potentiall endless looping
+ {
+     // TODO: wait for some time
+
+     char* pszOutputPayloadNew = NULL;
+     const char* pszInputPayload = pszOutputPayload;
+     ret = VSICopyFileRestartable(pszSource, pszTarget, pszInputPayload,
+                                  &pszOutputPayloadNew, NULL, NULL, NULL);
+     VSIFree(pszOutputPayload);
+     pszOutputPayload = pszOutputPayloadNew;
+ }
+ VSIFree(pszOutputPayload);
+ @endcode
+
+ @param pszSource Source filename. UTF-8 encoded. Must not be NULL
+ @param pszTarget Target filename. UTF-8 encoded. Must not be NULL
+ @param pszInputPayload NULL at the first invocation. When doing a retry,
+                        should be the content of *ppszOutputPayload from a
+                        previous invocation.
+ @param[out] ppszOutputPayload Pointer to an output string that will be set to
+                               a value that can be provided as pszInputPayload
+                               for a next call to VSICopyFileRestartable().
+                               ppszOutputPayload must not be NULL.
+                               The string set in *ppszOutputPayload, if not NULL,
+                               is JSON-encoded, and can be re-used in another
+                               process instance. It must be freed with VSIFree()
+                               when no longer needed.
+ @param papszOptions Null terminated list of options, or NULL.
+ Currently accepted options are:
+ <ul>
+ <li>NUM_THREADS=integer or ALL_CPUS. Number of threads to use for parallel
+ file copying. Only use for when /vsis3/, /vsigs/, /vsiaz/ or /vsiadls/ is in
+ source or target. The default is 10.
+ </li>
+ <li>CHUNK_SIZE=integer. Maximum size of chunk (in bytes) to use
+ to split large objects. For upload to /vsis3/, this chunk size must be set at
+ least to 5 MB. The default is 50 MB.
+ </li>
+ </ul>
+ @param pProgressFunc Progress callback, or NULL.
+ @param pProgressData User data of progress callback, or NULL.
+ @return 0 on success,
+         -1 on (non-restartable) failure,
+         1 if VSICopyFileRestartable() can be called again in a restartable way
+ @since GDAL 3.10
+
+ @see VSIAbortPendingUploads()
+*/
+
+int VSICopyFileRestartable(const char *pszSource, const char *pszTarget,
+                           const char *pszInputPayload,
+                           char **ppszOutputPayload,
+                           const char *const *papszOptions,
+                           GDALProgressFunc pProgressFunc, void *pProgressData)
+
+{
+    if (!pszSource)
+    {
+        return -1;
+    }
+    if (!pszTarget || pszTarget[0] == '\0')
+    {
+        return -1;
+    }
+    if (!ppszOutputPayload)
+    {
+        return -1;
+    }
+
+    VSIFilesystemHandler *poFSHandlerTarget =
+        VSIFileManager::GetHandler(pszTarget);
+    return poFSHandlerTarget->CopyFileRestartable(
+        pszSource, pszTarget, pszInputPayload, ppszOutputPayload, papszOptions,
+        pProgressFunc, pProgressData);
+}
+
+/************************************************************************/
 /*                             VSISync()                                */
 /************************************************************************/
 
@@ -699,7 +795,7 @@ int VSISync(const char *pszSource, const char *pszTarget,
 }
 
 /************************************************************************/
-/*                         VSIAbortOngoingUploads()                     */
+/*                         VSIAbortPendingUploads()                     */
 /************************************************************************/
 
 /**
@@ -1314,6 +1410,7 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
     VSIVirtualHandleUniquePtr poFileHandleAutoClose;
     if (!fpSource)
     {
+        CPLAssert(pszSource);
         fpSource = VSIFOpenExL(pszSource, "rb", TRUE);
         if (!fpSource)
         {
@@ -1342,6 +1439,8 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
     CPLString osMsg;
     if (pszSource)
         osMsg.Printf("Copying of %s", pszSource);
+    else
+        pszSource = "(unknown filename)";
 
     int ret = 0;
     constexpr size_t nBufferSize = 10 * 4096;
@@ -1391,6 +1490,22 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
         ret = -1;
     }
     return ret;
+}
+
+/************************************************************************/
+/*                       CopyFileRestartable()                          */
+/************************************************************************/
+
+int VSIFilesystemHandler::CopyFileRestartable(
+    const char *pszSource, const char *pszTarget,
+    const char * /* pszInputPayload */, char **ppszOutputPayload,
+    CSLConstList papszOptions, GDALProgressFunc pProgressFunc,
+    void *pProgressData)
+{
+    *ppszOutputPayload = nullptr;
+    return CopyFile(pszSource, pszTarget, nullptr,
+                    static_cast<vsi_l_offset>(-1), papszOptions, pProgressFunc,
+                    pProgressData);
 }
 
 /************************************************************************/
