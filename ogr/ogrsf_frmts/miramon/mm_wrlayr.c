@@ -5877,9 +5877,9 @@ static int MMWriteVectorMetadataFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
             memcpy(&hMMMD.hBB, &hMiraMonLayer->MMPolygon.TopArcHeader.hBB,
                    sizeof(hMMMD.hBB));
             hMMMD.pLayerDB = nullptr;
+            hMMMD.aArcFile = strdup_function(
+                get_filename_function(hMiraMonLayer->MMPolygon.pszLayerName));
         }
-        hMMMD.aArcFile = strdup_function(
-            get_filename_function(hMiraMonLayer->MMPolygon.pszLayerName));
         nResult = MMWriteMetadataFile(&hMMMD);
         free_function(hMMMD.aArcFile);
         return nResult;
