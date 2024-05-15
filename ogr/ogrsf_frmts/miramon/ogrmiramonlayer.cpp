@@ -1816,6 +1816,7 @@ OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
                               MM_MEAN_NUMBER_OF_NCOORDS, 0))
         return OGRERR_FAILURE;
 
+    hMMFeature.bAllZHaveSameValue = TRUE;
     for (int iPoint = 0;
          (MM_N_VERTICES_TYPE)iPoint < hMMFeature.pNCoordRing[hMMFeature.nIRing];
          iPoint++)
@@ -1830,6 +1831,15 @@ OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
             hMMFeature.pZCoord[hMMFeature.nICoord] = OGR_G_GetZ(hGeom, iPoint);
             phMiraMonLayer->bIsReal3d = 1;
         }
+
+        // Asking if last Z-coordinate is the same than this one.
+        // If all Z-coordinates are the same, following MiraMon specification
+        // only the hMMFeature.pZCoord[0] value will be used and the number of
+        // vertices will be saved as a negative number on disk
+        if (iPoint > 0 &&
+            !CPLIsEqual(hMMFeature.pZCoord[hMMFeature.nICoord],
+                        hMMFeature.pZCoord[hMMFeature.nICoord - 1]))
+            hMMFeature.bAllZHaveSameValue = FALSE;
 
         hMMFeature.nICoord++;
     }
@@ -1939,9 +1949,11 @@ OGRErr OGRMiraMonLayer::MMWriteGeometry()
     {
         CPLDebugOnly("MiraMon", "Error in MMAddFeature() "
                                 "MM_STOP_WRITING_FEATURES");
-        CPLError(CE_Failure, CPLE_FileIO, "MiraMon format limitations.");
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Try V2.0 option (-lco Version=V2.0).");
+                 "MiraMon format limitations. Try V2.0 option (-lco "
+                 "Version=V2.0). " sprintf_UINT64
+                 " elements have been written correctly.",
+                 phMiraMonLayer->TopHeader.nElemCount);
         return OGRERR_FAILURE;
     }
 
