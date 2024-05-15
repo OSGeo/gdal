@@ -1239,24 +1239,40 @@ def test_vsifile_vsimem_truncate_zeroize():
 # Test VSICopyFile()
 
 
-def test_vsifile_copyfile():
+def test_vsifile_copyfile_regular(tmp_vsimem):
 
     # Most simple invocation
-    dstfilename = "/vsimem/test_vsifile_copyfile.tif"
+    dstfilename = str(tmp_vsimem / "out.bin")
     assert gdal.CopyFile("data/byte.tif", dstfilename) == 0
     assert gdal.VSIStatL(dstfilename).size == gdal.VSIStatL("data/byte.tif").size
 
+
+def test_vsifile_copyfile_srcfilename_none(tmp_vsimem):
+
     # Test srcfilename passed to None
-    srcfilename = "/vsimem/test.bin"
+    srcfilename = str(tmp_vsimem / "src.bin")
+    dstfilename = str(tmp_vsimem / "out.bin")
     f = gdal.VSIFOpenL(srcfilename, "wb+")
     gdal.VSIFTruncateL(f, 1000 * 1000)
     assert gdal.CopyFile(None, dstfilename, f) == 0
     gdal.VSIFCloseL(f)
-    gdal.Unlink(srcfilename)
     assert gdal.VSIStatL(dstfilename).size == 1000 * 1000
 
+
+def test_vsifile_copyfile_srcfilename_and_srcfilehandle_none(tmp_vsimem):
+
+    # Test srcfilename passed to None
+    dstfilename = str(tmp_vsimem / "out.bin")
+    with gdal.quiet_errors():
+        assert gdal.CopyFile(None, dstfilename) != 0
+    assert gdal.VSIStatL(dstfilename) is None
+
+
+def test_vsifile_copyfile_progress(tmp_vsimem):
+
     # Test progress callback
-    srcfilename = "/vsimem/test.bin"
+    srcfilename = str(tmp_vsimem / "src.bin")
+    dstfilename = str(tmp_vsimem / "out.bin")
     f = gdal.VSIFOpenL(srcfilename, "wb+")
     gdal.VSIFTruncateL(f, 1000 * 1000)
     gdal.VSIFCloseL(f)
@@ -1271,11 +1287,14 @@ def test_vsifile_copyfile():
         == 0
     )
     assert tab[-1] == 1.0
-    gdal.Unlink(srcfilename)
     assert gdal.VSIStatL(dstfilename).size == 1000 * 1000
 
+
+def test_vsifile_copyfile_progress_cancel(tmp_vsimem):
+
     # Test progress callback in error situation
-    srcfilename = "/vsimem/test.bin"
+    srcfilename = str(tmp_vsimem / "src.bin")
+    dstfilename = str(tmp_vsimem / "out.bin")
     f = gdal.VSIFOpenL(srcfilename, "wb+")
     gdal.VSIFTruncateL(f, 1000 * 1000)
     gdal.VSIFCloseL(f)
@@ -1287,15 +1306,33 @@ def test_vsifile_copyfile():
         return 1
 
     tab = []
-    assert (
-        gdal.CopyFile(srcfilename, dstfilename, callback=progress, callback_data=tab)
-        != 0
-    )
+    with gdal.quiet_errors():
+        assert (
+            gdal.CopyFile(
+                srcfilename, dstfilename, callback=progress, callback_data=tab
+            )
+            != 0
+        )
     assert tab[-1] != 1.0
-    gdal.Unlink(srcfilename)
-    assert gdal.VSIStatL(dstfilename).size != 1000 * 1000
+    assert gdal.VSIStatL(dstfilename) is None
 
-    gdal.Unlink(dstfilename)
+
+def test_vsifile_copyfile_error_on_input(tmp_vsimem):
+
+    srcfilename = "/vsigzip/data/corrupted_z_buf_error.gz"
+    dstfilename = str(tmp_vsimem / "out.bin")
+    fp = gdal.VSIFOpenL(srcfilename, "rb")
+    assert fp
+    try:
+        with gdal.quiet_errors():
+            assert gdal.CopyFile(None, dstfilename, fpSource=fp) != 0
+        assert "error while reading source file" in gdal.GetLastErrorMsg()
+        assert gdal.VSIStatL(dstfilename) is None
+    finally:
+        gdal.VSIFCloseL(fp)
+
+
+###############################################################################
 
 
 def test_vsimem_illegal_filename():

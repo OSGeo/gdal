@@ -1448,27 +1448,41 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
     GUIntBig nOffset = 0;
     while (true)
     {
-        size_t nRead = VSIFReadL(&abyBuffer[0], 1, nBufferSize, fpSource);
-        size_t nWritten = VSIFWriteL(&abyBuffer[0], 1, nRead, fpOut);
-        if (nWritten != nRead)
+        const size_t nRead = VSIFReadL(&abyBuffer[0], 1, nBufferSize, fpSource);
+        if (nRead < nBufferSize && VSIFErrorL(fpSource))
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Copying of %s to %s failed",
-                     pszSource, pszTarget);
+            CPLError(
+                CE_Failure, CPLE_FileIO,
+                "Copying of %s to %s failed: error while reading source file",
+                pszSource, pszTarget);
             ret = -1;
             break;
         }
-        nOffset += nRead;
-        if (pProgressFunc &&
-            !pProgressFunc(nSourceSize == 0 ? 1.0
-                           : nSourceSize > 0 &&
-                                   nSourceSize != static_cast<vsi_l_offset>(-1)
-                               ? double(nOffset) / nSourceSize
-                               : 0.0,
-                           !osMsg.empty() ? osMsg.c_str() : nullptr,
-                           pProgressData))
+        if (nRead > 0)
         {
-            ret = -1;
-            break;
+            const size_t nWritten = VSIFWriteL(&abyBuffer[0], 1, nRead, fpOut);
+            if (nWritten != nRead)
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Copying of %s to %s failed: error while writing into "
+                         "target file",
+                         pszSource, pszTarget);
+                ret = -1;
+                break;
+            }
+            nOffset += nRead;
+            if (pProgressFunc &&
+                !pProgressFunc(
+                    nSourceSize == 0 ? 1.0
+                    : nSourceSize > 0 &&
+                            nSourceSize != static_cast<vsi_l_offset>(-1)
+                        ? double(nOffset) / nSourceSize
+                        : 0.0,
+                    !osMsg.empty() ? osMsg.c_str() : nullptr, pProgressData))
+            {
+                ret = -1;
+                break;
+            }
         }
         if (nRead < nBufferSize)
         {
@@ -1490,6 +1504,10 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
     {
         ret = -1;
     }
+
+    if (ret != 0)
+        VSIUnlink(pszTarget);
+
     return ret;
 }
 
