@@ -2299,7 +2299,7 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
             if (osRegion.empty())
             {
                 if (!bInterrupted)
-                    bEOF = true;
+                    bError = true;
                 return 0;
             }
         }
@@ -3505,12 +3505,34 @@ size_t VSICurlHandle::Write(const void * /* pBuffer */, size_t /* nSize */,
 }
 
 /************************************************************************/
-/*                                 Eof()                                */
+/*                             ClearErr()                               */
+/************************************************************************/
+
+void VSICurlHandle::ClearErr()
+
+{
+    bEOF = false;
+    bError = false;
+}
+
+/************************************************************************/
+/*                              Error()                                 */
+/************************************************************************/
+
+int VSICurlHandle::Error()
+
+{
+    return bError ? TRUE : FALSE;
+}
+
+/************************************************************************/
+/*                                Eof()                                 */
 /************************************************************************/
 
 int VSICurlHandle::Eof()
+
 {
-    return bEOF;
+    return bEOF ? TRUE : FALSE;
 }
 
 /************************************************************************/
@@ -5501,15 +5523,6 @@ size_t VSIAppendWriteHandle::Write(const void *pBuffer, size_t nSize,
         nBytesToWrite -= nToWriteInBuffer;
     }
     return nMemb;
-}
-
-/************************************************************************/
-/*                                Eof()                                 */
-/************************************************************************/
-
-int VSIAppendWriteHandle::Eof()
-{
-    return FALSE;
 }
 
 /************************************************************************/

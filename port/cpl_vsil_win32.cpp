@@ -108,27 +108,29 @@ class VSIWin32Handle final : public VSIVirtualHandle
   public:
     HANDLE hFile = nullptr;
     bool bEOF = false;
+    bool bError = false;
     bool m_bWriteThrough = false;
 
     VSIWin32Handle() = default;
 
-    virtual int Seek(vsi_l_offset nOffset, int nWhence) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
-    virtual size_t Write(const void *pBuffer, size_t nSize,
-                         size_t nMemb) override;
-    virtual int Eof() override;
-    virtual int Flush() override;
-    virtual int Close() override;
-    virtual int Truncate(vsi_l_offset nNewSize) override;
+    int Seek(vsi_l_offset nOffset, int nWhence) override;
+    vsi_l_offset Tell() override;
+    size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
+    size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    void ClearErr() override;
+    int Eof() override;
+    int Error() override;
+    int Flush() override;
+    int Close() override;
+    int Truncate(vsi_l_offset nNewSize) override;
 
-    virtual void *GetNativeFileDescriptor() override
+    void *GetNativeFileDescriptor() override
     {
         return static_cast<void *>(hFile);
     }
 
-    virtual VSIRangeStatus GetRangeStatus(vsi_l_offset nOffset,
-                                          vsi_l_offset nLength) override;
+    VSIRangeStatus GetRangeStatus(vsi_l_offset nOffset,
+                                  vsi_l_offset nLength) override;
 };
 
 /************************************************************************/
@@ -356,16 +358,20 @@ size_t VSIWin32Handle::Read(void *pBuffer, size_t nSize, size_t nCount)
     if (!ReadFile(hFile, pBuffer, static_cast<DWORD>(nSize * nCount),
                   &dwSizeRead, nullptr))
     {
+        bError = true;
         nResult = 0;
         errno = ErrnoFromGetLastError();
     }
-    else if (nSize == 0)
-        nResult = 0;
     else
-        nResult = dwSizeRead / nSize;
+    {
+        if (nSize == 0)
+            nResult = 0;
+        else
+            nResult = dwSizeRead / nSize;
 
-    if (nResult != nCount)
-        bEOF = true;
+        if (nResult != nCount)
+            bEOF = true;
+    }
 
     return nResult;
 }
@@ -397,13 +403,34 @@ size_t VSIWin32Handle::Write(const void *pBuffer, size_t nSize, size_t nCount)
 }
 
 /************************************************************************/
+/*                             ClearErr()                               */
+/************************************************************************/
+
+void VSIWin32Handle::ClearErr()
+
+{
+    bEOF = false;
+    bError = false;
+}
+
+/************************************************************************/
+/*                              Error()                                 */
+/************************************************************************/
+
+int VSIWin32Handle::Error()
+
+{
+    return bError ? TRUE : FALSE;
+}
+
+/************************************************************************/
 /*                                Eof()                                 */
 /************************************************************************/
 
 int VSIWin32Handle::Eof()
 
 {
-    return bEOF;
+    return bEOF ? TRUE : FALSE;
 }
 
 /************************************************************************/

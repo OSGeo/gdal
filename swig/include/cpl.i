@@ -902,6 +902,8 @@ VSILFILE   *wrapper_VSIFOpenExL( const char *utf8_path, const char *pszMode, int
 %clear char **;
 
 int VSIFEofL( VSILFILE* fp );
+int VSIFErrorL( VSILFILE* fp );
+void VSIFClearErrL( VSILFILE* fp );
 int VSIFFlushL( VSILFILE* fp );
 
 VSI_RETVAL VSIFCloseL( VSILFILE* fp );

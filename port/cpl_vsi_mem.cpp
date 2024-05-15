@@ -148,6 +148,8 @@ class VSIMemHandle final : public VSIVirtualHandle
     vsi_l_offset Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    void ClearErr() override;
+    int Error() override;
     int Eof() override;
     int Close() override;
     int Truncate(vsi_l_offset nNewSize) override;
@@ -507,6 +509,29 @@ size_t VSIMemHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
 }
 
 /************************************************************************/
+/*                             ClearErr()                               */
+/************************************************************************/
+
+void VSIMemHandle::ClearErr()
+
+{
+    CPL_SHARED_LOCK oLock(poFile->m_oMutex);
+    bEOF = false;
+    m_bError = false;
+}
+
+/************************************************************************/
+/*                              Error()                                 */
+/************************************************************************/
+
+int VSIMemHandle::Error()
+
+{
+    CPL_SHARED_LOCK oLock(poFile->m_oMutex);
+    return m_bError ? TRUE : FALSE;
+}
+
+/************************************************************************/
 /*                                Eof()                                 */
 /************************************************************************/
 
@@ -514,7 +539,7 @@ int VSIMemHandle::Eof()
 
 {
     CPL_SHARED_LOCK oLock(poFile->m_oMutex);
-    return bEOF;
+    return bEOF ? TRUE : FALSE;
 }
 
 /************************************************************************/

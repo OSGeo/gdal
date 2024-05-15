@@ -764,6 +764,7 @@ class VSICryptFileHandle final : public VSIVirtualHandle
     bool bUpdateHeader = false;
     vsi_l_offset nCurPos = 0;
     bool bEOF = false;
+    bool bError = false;
 
     CryptoPP::BlockCipher *poEncCipher = nullptr;
     CryptoPP::BlockCipher *poDecCipher = nullptr;
@@ -793,6 +794,8 @@ class VSICryptFileHandle final : public VSIVirtualHandle
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
+    int Error() override;
+    void ClearErr() override;
     int Flush() override;
     int Close() override;
     int Truncate(vsi_l_offset nNewSize) override;
@@ -1091,6 +1094,7 @@ size_t VSICryptFileHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
 
     if ((nPerms & VSICRYPT_READ) == 0)
     {
+        bError = true;
         return 0;
     }
 
@@ -1131,11 +1135,13 @@ size_t VSICryptFileHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
         poBaseHandle->Seek(poHeader->nHeaderSize + nSectorOffset, SEEK_SET);
         if (poBaseHandle->Read(pabyWB, poHeader->nSectorSize, 1) != 1)
         {
-            bEOF = true;
+            bEOF = poBaseHandle->Eof();
+            bError = poBaseHandle->Error();
             break;
         }
         if (!DecryptBlock(pabyWB, nSectorOffset))
         {
+            bError = true;
             break;
         }
         if ((nPerms & VSICRYPT_WRITE) &&
@@ -1355,6 +1361,32 @@ int VSICryptFileHandle::Eof()
     CPLDebug("VSICRYPT", "Eof() = %d", static_cast<int>(bEOF));
 #endif
     return bEOF;
+}
+
+/************************************************************************/
+/*                              Error()                                 */
+/************************************************************************/
+
+int VSICryptFileHandle::Error()
+{
+#ifdef VERBOSE_VSICRYPT
+    CPLDebug("VSICRYPT", "Error() = %d", static_cast<int>(bError));
+#endif
+    return bError;
+}
+
+/************************************************************************/
+/*                             ClearErr()                               */
+/************************************************************************/
+
+void VSICryptFileHandle::ClearErr()
+{
+#ifdef VERBOSE_VSICRYPT
+    CPLDebug("VSICRYPT", "ClearErr()");
+#endif
+    bEOF = false;
+    bError = false;
+    poBaseHandle->ClearErr();
 }
 
 /************************************************************************/
