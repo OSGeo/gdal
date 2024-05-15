@@ -1409,9 +1409,10 @@ def test_vsifile_CopyFileRestartable(tmp_vsimem):
 
     dstfilename = str(tmp_vsimem / "out.txt")
 
-    retcode, output_payload = gdal.CopyFileRestartable(
-        str(tmp_vsimem / "i_do_not_exist.txt"), dstfilename, None
-    )
+    with gdal.quiet_errors():
+        retcode, output_payload = gdal.CopyFileRestartable(
+            str(tmp_vsimem / "i_do_not_exist.txt"), dstfilename, None
+        )
     assert retcode == -1
     assert output_payload is None
     assert gdal.VSIStatL(dstfilename) is None
