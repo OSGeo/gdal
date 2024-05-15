@@ -2561,7 +2561,8 @@ void GDALWarpOperation::ComputeSourceWindowStartingFromSource(
     const double dfStepSize = 1.0 / (nStepCount - 1);
     int iPoint = 0;
 #ifdef DEBUG
-    const size_t nSampleMax = (nStepCount + 2) * (nStepCount + 2);
+    const size_t nSampleMax =
+        static_cast<size_t>(nStepCount + 2) * (nStepCount + 2);
     CPL_IGNORE_RET_VAL(nSampleMax);
     CPLAssert(privateData->adfDstX.size() == nSampleMax);
     CPLAssert(privateData->adfDstY.size() == nSampleMax);
