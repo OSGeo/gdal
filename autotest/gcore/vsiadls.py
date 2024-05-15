@@ -56,7 +56,19 @@ def open_for_read(uri):
 @pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
 
-    with gdaltest.config_option("CPL_AZURE_VM_API_ROOT_URL", "disabled"):
+    with gdaltest.config_options(
+        {
+            "AZURE_STORAGE_CONNECTION_STRING": None,
+            "AZURE_STORAGE_ACCOUNT": None,
+            "AZURE_STORAGE_ACCESS_KEY": None,
+            "AZURE_STORAGE_SAS_TOKEN": None,
+            "AZURE_NO_SIGN_REQUEST": None,
+            "AZURE_CONFIG_DIR": "",
+            "AZURE_STORAGE_ACCESS_TOKEN": "",
+            "AZURE_FEDERATED_TOKEN_FILE": "",
+            "CPL_AZURE_VM_API_ROOT_URL": "disabled",
+        }
+    ):
         assert gdal.GetSignedURL("/vsiadls/foo/bar") is None
 
     gdaltest.webserver_process = None
