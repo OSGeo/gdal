@@ -1092,6 +1092,7 @@ def test_gti_overlapping_sources(tmp_vsimem):
 
     with pytest.raises(Exception, match="Unsupported type for field z_order"):
         gdal.Open(index_filename)
+    gdal.Unlink(index_filename)
 
     # Test non existent SORT_FIELD
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
@@ -1102,6 +1103,7 @@ def test_gti_overlapping_sources(tmp_vsimem):
 
     with pytest.raises(Exception, match="Cannot find field non_existing"):
         gdal.Open(index_filename)
+    gdal.Unlink(index_filename)
 
     # Test sort_field_type = OFTString
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
