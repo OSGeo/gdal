@@ -1021,6 +1021,12 @@ size_t VSIGZipHandle::Read(void *const buf, size_t const nSize,
         return 0;
     }
 
+    if (nSize > 0 && nMemb > UINT32_MAX / nSize)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Too many bytes to read at once");
+        return 0;
+    }
+
     const unsigned len =
         static_cast<unsigned int>(nSize) * static_cast<unsigned int>(nMemb);
     Bytef *pStart =
@@ -1691,6 +1697,12 @@ size_t VSIDeflate64Handle::Read(void *const buf, size_t const nSize,
     {
         if (z_err == Z_STREAM_END && nSize > 0 && nMemb > 0)
             m_bEOF = true;
+        return 0;
+    }
+
+    if (nSize > 0 && nMemb > UINT32_MAX / nSize)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Too many bytes to read at once");
         return 0;
     }
 
