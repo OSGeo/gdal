@@ -800,29 +800,37 @@ static CPLErr GDALRasterizeOptions(CSLConstList papszOptions, int *pbAllTouched,
     }
 
     /* -------------------------------------------------------------------- */
-    /*      OPTIM=[AUTO]/RASTER/VECTOR                               */
+    /*      OPTIM=[AUTO]/RASTER/VECTOR                                      */
     /* -------------------------------------------------------------------- */
-    *peOptim = GRO_Auto;
     pszOpt = CSLFetchNameValue(papszOptions, "OPTIM");
     if (pszOpt)
     {
-        if (EQUAL(pszOpt, "RASTER"))
-        {
-            *peOptim = GRO_Raster;
-        }
-        else if (EQUAL(pszOpt, "VECTOR"))
-        {
-            *peOptim = GRO_Vector;
-        }
-        else if (EQUAL(pszOpt, "AUTO"))
+        if (peOptim)
         {
             *peOptim = GRO_Auto;
+            if (EQUAL(pszOpt, "RASTER"))
+            {
+                *peOptim = GRO_Raster;
+            }
+            else if (EQUAL(pszOpt, "VECTOR"))
+            {
+                *peOptim = GRO_Vector;
+            }
+            else if (EQUAL(pszOpt, "AUTO"))
+            {
+                *peOptim = GRO_Auto;
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unrecognized value '%s' for OPTIM.", pszOpt);
+                return CE_Failure;
+            }
         }
         else
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unrecognized value '%s' for OPTIM.", pszOpt);
-            return CE_Failure;
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Option OPTIM is not supported by this function");
         }
     }
 
@@ -890,6 +898,13 @@ static CPLErr GDALRasterizeGeometriesInternal(
  * used. Default size will be estimated based on the GDAL cache buffer size
  * using formula: cache_size_bytes/scanline_size_bytes, so the chunk will
  * not exceed the cache. Not used in OPTIM=RASTER mode.</li>
+ * <li>"OPTIM": May be set to "AUTO", "RASTER", "VECTOR". Force the algorithm
+ * used (results are identical). The raster mode is used in most cases and
+ * optimise read/write operations. The vector mode is useful with a decent
+ * amount of input features and optimize the CPU use. That mode has to be used
+ * with tiled images to be efficient. The auto mode (the default) will chose
+ * the algorithm based on input and output properties.
+ * </li>
  * </ul>
  * @param pfnProgress the progress function to report completion.
  * @param pProgressArg callback data for progress function.
@@ -917,7 +932,7 @@ static CPLErr GDALRasterizeGeometriesInternal(
  *      // or create it as follows
  *      // GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
  *      // GDALDatasetH hMemDset = GDALCreate(hMemDriver, "", nBufXSize,
- *nBufYSize, nBandCount, eType, NULL);
+ *                                      nBufYSize, nBandCount, eType, NULL);
  *
  *      double adfGeoTransform[6];
  *      // Assign GeoTransform parameters,Omitted here.
@@ -930,9 +945,10 @@ static CPLErr GDALRasterizeGeometriesInternal(
  *
  *      int bandList[3] = { 1, 2, 3};
  *      std::vector<double> geomBurnValue(nGeomCount*nBandCount,255.0);
- *      CPLErr err = GDALRasterizeGeometries(hMemDset, nBandCount, bandList,
- *                              nGeomCount, pahGeoms, pfnTransformer,
- *pTransformArg, geomBurnValue.data(), papszOptions, pfnProgress, pProgressArg);
+ *      CPLErr err = GDALRasterizeGeometries(
+ *          hMemDset, nBandCount, bandList, nGeomCount, pahGeoms, pfnTransformer,
+ *          pTransformArg, geomBurnValue.data(), papszOptions,
+ *          pfnProgress, pProgressArg);
  *      if( err != CE_None )
  *      {
  *          // Do something ...
@@ -1483,9 +1499,8 @@ CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
     int bAllTouched = FALSE;
     GDALBurnValueSrc eBurnValueSource = GBV_UserBurnValue;
     GDALRasterMergeAlg eMergeAlg = GRMA_Replace;
-    GDALRasterizeOptim eOptim = GRO_Auto;
     if (GDALRasterizeOptions(papszOptions, &bAllTouched, &eBurnValueSource,
-                             &eMergeAlg, &eOptim) == CE_Failure)
+                             &eMergeAlg, nullptr) == CE_Failure)
     {
         return CE_Failure;
     }
@@ -1890,9 +1905,8 @@ CPLErr GDALRasterizeLayersBuf(
     int bAllTouched = FALSE;
     GDALBurnValueSrc eBurnValueSource = GBV_UserBurnValue;
     GDALRasterMergeAlg eMergeAlg = GRMA_Replace;
-    GDALRasterizeOptim eOptim = GRO_Auto;
     if (GDALRasterizeOptions(papszOptions, &bAllTouched, &eBurnValueSource,
-                             &eMergeAlg, &eOptim) == CE_Failure)
+                             &eMergeAlg, nullptr) == CE_Failure)
     {
         return CE_Failure;
     }
