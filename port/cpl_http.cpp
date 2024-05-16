@@ -589,7 +589,7 @@ double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay,
                           strstr(pszCurlError, "Connection reset by peer") ||
                           strstr(pszCurlError, "Connection was reset"))))
     {
-        // 'Operation tmied out': seen during some long running operation 'hang'
+        // 'Operation timed out': seen during some long running operation 'hang'
         // no error but no response from server and we are in the cURL loop
         // infinitely.
 
