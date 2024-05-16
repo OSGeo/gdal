@@ -1164,7 +1164,7 @@ static CPLErr GDALRasterizeGeometriesInternal(
             eErr = poDS->RasterIO(
                 GF_Read, 0, iY, poDS->GetRasterXSize(), nThisYChunkSize,
                 pabyChunkBuf, poDS->GetRasterXSize(), nThisYChunkSize, eType,
-                nBandCount, const_cast<int *>(panBandList), 0, 0, 0, nullptr);
+                nBandCount, panBandList, 0, 0, 0, nullptr);
             if (eErr != CE_None)
                 break;
 
@@ -1186,7 +1186,7 @@ static CPLErr GDALRasterizeGeometriesInternal(
             eErr = poDS->RasterIO(
                 GF_Write, 0, iY, poDS->GetRasterXSize(), nThisYChunkSize,
                 pabyChunkBuf, poDS->GetRasterXSize(), nThisYChunkSize, eType,
-                nBandCount, const_cast<int *>(panBandList), 0, 0, 0, nullptr);
+                nBandCount, panBandList, 0, 0, 0, nullptr);
 
             if (!pfnProgress((iY + nThisYChunkSize) /
                                  static_cast<double>(poDS->GetRasterYSize()),
@@ -1332,7 +1332,7 @@ static CPLErr GDALRasterizeGeometriesInternal(
                         GF_Read, xB * nXBlockSize, yB * nYBlockSize,
                         nThisXChunkSize, nThisYChunkSize, pabyChunkBuf,
                         nThisXChunkSize, nThisYChunkSize, eType, nBandCount,
-                        const_cast<int *>(panBandList), 0, 0, 0, nullptr);
+                        panBandList, 0, 0, 0, nullptr);
                     if (eErr != CE_None)
                         break;
 
@@ -1355,7 +1355,7 @@ static CPLErr GDALRasterizeGeometriesInternal(
                         GF_Write, xB * nXBlockSize, yB * nYBlockSize,
                         nThisXChunkSize, nThisYChunkSize, pabyChunkBuf,
                         nThisXChunkSize, nThisYChunkSize, eType, nBandCount,
-                        const_cast<int *>(panBandList), 0, 0, 0, nullptr);
+                        panBandList, 0, 0, 0, nullptr);
                     if (eErr != CE_None)
                         break;
                 }

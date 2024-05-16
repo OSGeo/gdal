@@ -123,6 +123,9 @@ class GDALDataset::Private
 
     bool m_bOverviewsEnabled = true;
 
+    std::vector<int>
+        m_anBandMap{};  // used by RasterIO(). Values are 1, 2, etc.
+
     Private() = default;
 };
 
@@ -2438,13 +2441,11 @@ CPLErr GDALDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-CPLErr GDALDataset::BandBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                                      int nXSize, int nYSize, void *pData,
-                                      int nBufXSize, int nBufYSize,
-                                      GDALDataType eBufType, int nBandCount,
-                                      int *panBandMap, GSpacing nPixelSpace,
-                                      GSpacing nLineSpace, GSpacing nBandSpace,
-                                      GDALRasterIOExtraArg *psExtraArg)
+CPLErr GDALDataset::BandBasedRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    int nBandCount, const int *panBandMap, GSpacing nPixelSpace,
+    GSpacing nLineSpace, GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg)
 
 {
     int iBandIndex;
@@ -2502,7 +2503,7 @@ CPLErr GDALDataset::BandBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
     const char *pszCallingFunc, int *pbStopProcessingOnCENone, int nXOff,
     int nYOff, int nXSize, int nYSize, int nBufXSize, int nBufYSize,
-    int nBandCount, int *panBandMap)
+    int nBandCount, const int *panBandMap)
 {
 
     /* -------------------------------------------------------------------- */
@@ -2662,7 +2663,8 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
  *
  * @param panBandMap the list of nBandCount band numbers being read/written.
  * Note band numbers are 1 based. This may be NULL to select the first
- * nBandCount bands.
+ * nBandCount bands. (Note: before GDAL 3.10, argument type was "int*", and
+ * not "const int*")
  *
  * @param nPixelSpace The byte offset from the start of one pixel value in
  * pData to the start of the next pixel value within a scanline. If defaulted
@@ -2689,7 +2691,7 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
 CPLErr GDALDataset::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, int *panBandMap,
+                             int nBandCount, const int *panBandMap,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
@@ -2774,30 +2776,18 @@ CPLErr GDALDataset::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         nBandSpace = nLineSpace * nBufYSize;
     }
 
-    bool bNeedToFreeBandMap = false;
-    int anBandMap[] = {1, 2, 3, 4};
     if (panBandMap == nullptr)
     {
-        if (nBandCount > 4)
+        if (!m_poPrivate)
+            return CE_Failure;
+        const int nOldBandMapSize =
+            static_cast<int>(m_poPrivate->m_anBandMap.size());
+        if (nOldBandMapSize < nBandCount)
         {
-            panBandMap =
-                static_cast<int *>(VSIMalloc2(sizeof(int), nBandCount));
-            if (panBandMap == nullptr)
-            {
-                ReportError(CE_Failure, CPLE_OutOfMemory,
-                            "Out of memory while allocating band map array");
-                return CE_Failure;
-            }
-
-            for (int i = 0; i < nBandCount; ++i)
-                panBandMap[i] = i + 1;
-
-            bNeedToFreeBandMap = true;
+            for (int i = nOldBandMapSize; i < nBandCount; ++i)
+                m_poPrivate->m_anBandMap.push_back(i + 1);
         }
-        else
-        {
-            panBandMap = anBandMap;
-        }
+        panBandMap = m_poPrivate->m_anBandMap.data();
     }
 
     int bCallLeaveReadWrite = EnterReadWrite(eRWFlag);
@@ -2820,18 +2810,15 @@ CPLErr GDALDataset::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     else
     {
         eErr = IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
-                         nBufXSize, nBufYSize, eBufType, nBandCount, panBandMap,
-                         nPixelSpace, nLineSpace, nBandSpace, psExtraArg);
+                         nBufXSize, nBufYSize, eBufType, nBandCount,
+                         // TODO: remove this const_cast once IRasterIO()
+                         // takes a const int*
+                         const_cast<int *>(panBandMap), nPixelSpace, nLineSpace,
+                         nBandSpace, psExtraArg);
     }
 
     if (bCallLeaveReadWrite)
         LeaveReadWrite();
-
-    /* -------------------------------------------------------------------- */
-    /*      Cleanup                                                         */
-    /* -------------------------------------------------------------------- */
-    if (bNeedToFreeBandMap)
-        CPLFree(panBandMap);
 
     return eErr;
 }
@@ -2846,6 +2833,8 @@ CPLErr GDALDataset::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
  * Use GDALDatasetRasterIOEx() if 64 bit spacings or extra arguments (resampling
  * resolution, progress callback, etc. are needed)
  *
+ * Note: before GDAL 3.10, panBandMap type was "int*", and not "const int*"
+ *
  * @see GDALDataset::RasterIO()
  */
 
@@ -2853,7 +2842,7 @@ CPLErr CPL_STDCALL GDALDatasetRasterIO(GDALDatasetH hDS, GDALRWFlag eRWFlag,
                                        int nXOff, int nYOff, int nXSize,
                                        int nYSize, void *pData, int nBufXSize,
                                        int nBufYSize, GDALDataType eBufType,
-                                       int nBandCount, int *panBandMap,
+                                       int nBandCount, const int *panBandMap,
                                        int nPixelSpace, int nLineSpace,
                                        int nBandSpace)
 
@@ -2875,6 +2864,8 @@ CPLErr CPL_STDCALL GDALDatasetRasterIO(GDALDatasetH hDS, GDALRWFlag eRWFlag,
 /**
  * \brief Read/write a region of image data from multiple bands.
  *
+ * Note: before GDAL 3.10, panBandMap type was "int*", and not "const int*"
+ *
  * @see GDALDataset::RasterIO()
  * @since GDAL 2.0
  */
@@ -2882,7 +2873,7 @@ CPLErr CPL_STDCALL GDALDatasetRasterIO(GDALDatasetH hDS, GDALRWFlag eRWFlag,
 CPLErr CPL_STDCALL GDALDatasetRasterIOEx(
     GDALDatasetH hDS, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
     int nYSize, void *pData, int nBufXSize, int nBufYSize,
-    GDALDataType eBufType, int nBandCount, int *panBandMap,
+    GDALDataType eBufType, int nBandCount, const int *panBandMap,
     GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
     GDALRasterIOExtraArg *psExtraArg)
 
