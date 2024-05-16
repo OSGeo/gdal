@@ -4460,3 +4460,62 @@ def test_ogr_geom_GeodesicArea():
     g.AssignSpatialReference(srs)
     with pytest.raises(Exception, match="CRS has no geodetic CRS"):
         g.GeodesicArea()
+
+
+@pytest.mark.require_geos
+@gdaltest.enable_exceptions()
+def test_ogr_geom_buffer_with_args():
+
+    geom = ogr.CreateGeometryFromWkt("LINESTRING (0 0, 10 10, 20 0)")
+
+    baseline = geom.Buffer(1, 32)
+
+    smooth = geom.Buffer(1, {"QUADRANT_SEGMENTS": 64})
+
+    assert (
+        smooth.GetGeometryRef(0).GetPointCount()
+        > baseline.GetGeometryRef(0).GetPointCount()
+    )
+
+    one_sided = geom.Buffer(1, {"QUADRANT_SEGMENTS": 32, "SINGLE_SIDED": "YES"})
+
+    assert one_sided.GetArea() < baseline.GetArea()
+
+    modified = geom.Buffer(
+        1,
+        {
+            "QUADRANT_SEGMENTS": 32,
+            "JOIN_STYLE": "MITRE",
+            "ENDCAP_STYLE": "FLAT",
+            "MITRE_LIMIT": "0.25",
+        },
+    )
+
+    assert modified.ExportToWkt() != baseline.ExportToWkt()
+
+    with pytest.raises(Exception, match="Invalid value for JOIN_STYLE"):
+        geom.Buffer(1, {"JOIN_STYLE": "SMOOTH"})
+
+    with pytest.raises(Exception, match="Invalid value for ENDCAP_STYLE"):
+        geom.Buffer(1, {"ENDCAP_STYLE": "AVANT_GARDE"})
+
+    with pytest.raises(Exception, match="Invalid value for QUADRANT_SEGMENTS"):
+        geom.Buffer(1, {"QUADRANT_SEGMENTS": "LOTS"})
+
+    with pytest.raises(Exception, match="Invalid value for QUADRANT_SEGMENTS"):
+        geom.Buffer(1, {"QUADRANT_SEGMENTS": " "})
+
+    with pytest.raises(Exception, match="Invalid value for QUADRANT_SEGMENTS"):
+        geom.Buffer(1, {"QUADRANT_SEGMENTS": ""})
+
+    with pytest.raises(Exception, match="Invalid value for QUADRANT_SEGMENTS"):
+        geom.Buffer(1, {"QUADRANT_SEGMENTS": "10000000000000"})
+
+    with pytest.raises(Exception, match="Invalid value for MITRE_LIMIT"):
+        geom.Buffer(1, {"MITRE_LIMIT": ""})
+
+    with pytest.raises(Exception, match="Invalid value for MITRE_LIMIT"):
+        geom.Buffer(1, {"MITRE_LIMIT": " "})
+
+    with pytest.raises(Exception, match="Unsupported buffer option"):
+        geom.Buffer(1, {"QUALITY": "HIGH"})

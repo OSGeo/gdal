@@ -559,6 +559,9 @@ distance: float
 quadsecs: int, default=30
     The number of segments used to approximate a 90 degree
     (quadrant) of curvature.
+options: list/dict
+    An optional list of options to control the buffer output.
+    See :cpp:func:`OGR_G_BufferEx`.
 
 Returns
 --------
