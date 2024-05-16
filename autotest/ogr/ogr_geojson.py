@@ -5161,3 +5161,22 @@ def test_ogr_geojson_open_with_featureType_non_jsonfg():
 
     ds = gdal.OpenEx("data/geojson/featuretype.json")
     assert ds.GetDriver().GetDescription() == "GeoJSON"
+
+
+###############################################################################
+# Test force opening a JSONFG file with the GeoJSON driver
+
+
+def test_ogr_geojson_open_jsonfg_with_geojson():
+
+    ds = gdal.OpenEx("data/jsonfg/crs_none.json", allowed_drivers=["GeoJSON"])
+    assert ds.GetDriver().GetDescription() == "GeoJSON"
+
+    if gdal.GetDriverByName("JSONFG"):
+        ds = gdal.OpenEx("data/jsonfg/crs_none.json")
+        assert ds.GetDriver().GetDescription() == "JSONFG"
+
+        ds = gdal.OpenEx(
+            "data/jsonfg/crs_none.json", allowed_drivers=["GeoJSON", "JSONFG"]
+        )
+        assert ds.GetDriver().GetDescription() == "JSONFG"

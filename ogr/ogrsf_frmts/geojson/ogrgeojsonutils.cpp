@@ -157,7 +157,8 @@ static CPLString GetCompactJSon(const char *pszText, size_t nMaxSize)
 /************************************************************************/
 
 static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
-                                bool &bReadMoreBytes)
+                                bool &bReadMoreBytes,
+                                CSLConstList papszAllowedDrivers)
 {
     bMightBeSequence = false;
     bReadMoreBytes = false;
@@ -168,8 +169,12 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
     if (IsTypeSomething(pszText, "Topology"))
         return false;
 
-    if (JSONFGIsObject(pszText) && GDALGetDriverByName("JSONFG"))
+    if ((!papszAllowedDrivers ||
+         CSLFindString(papszAllowedDrivers, "JSONFG") >= 0) &&
+        GDALGetDriverByName("JSONFG") && JSONFGIsObject(pszText))
+    {
         return false;
+    }
 
     if (IsTypeSomething(pszText, "FeatureCollection"))
     {
@@ -230,7 +235,8 @@ static bool IsGeoJSONLikeObject(const char *pszText)
 {
     bool bMightBeSequence;
     bool bReadMoreBytes;
-    return IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes);
+    return IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes,
+                               nullptr);
 }
 
 /************************************************************************/
@@ -396,13 +402,14 @@ static bool GeoJSONFileIsObject(GDALOpenInfo *poOpenInfo)
     bool bReadMoreBytes = false;
     if (!IsGeoJSONLikeObject(
             reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-            bMightBeSequence, bReadMoreBytes))
+            bMightBeSequence, bReadMoreBytes, poOpenInfo->papszAllowedDrivers))
     {
         if (!(bReadMoreBytes && poOpenInfo->nHeaderBytes >= 6000 &&
               poOpenInfo->TryToIngest(1000 * 1000) &&
               !IsGeoJSONLikeObject(
                   reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-                  bMightBeSequence, bReadMoreBytes)))
+                  bMightBeSequence, bReadMoreBytes,
+                  poOpenInfo->papszAllowedDrivers)))
         {
             return false;
         }
@@ -417,11 +424,12 @@ static bool GeoJSONFileIsObject(GDALOpenInfo *poOpenInfo)
 /*                           GeoJSONIsObject()                          */
 /************************************************************************/
 
-bool GeoJSONIsObject(const char *pszText)
+bool GeoJSONIsObject(const char *pszText, CSLConstList papszAllowedDrivers)
 {
     bool bMightBeSequence = false;
     bool bReadMoreBytes = false;
-    if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes))
+    if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes,
+                             papszAllowedDrivers))
     {
         return false;
     }
@@ -452,13 +460,15 @@ static bool GeoJSONSeqFileIsObject(GDALOpenInfo *poOpenInfo)
 
     bool bMightBeSequence = false;
     bool bReadMoreBytes = false;
-    if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes))
+    if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes,
+                             poOpenInfo->papszAllowedDrivers))
     {
         if (!(bReadMoreBytes && poOpenInfo->nHeaderBytes >= 6000 &&
               poOpenInfo->TryToIngest(1000 * 1000) &&
               IsGeoJSONLikeObject(
                   reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-                  bMightBeSequence, bReadMoreBytes)))
+                  bMightBeSequence, bReadMoreBytes,
+                  poOpenInfo->papszAllowedDrivers)))
         {
             return false;
         }
@@ -476,7 +486,8 @@ bool GeoJSONSeqIsObject(const char *pszText)
 
     bool bMightBeSequence = false;
     bool bReadMoreBytes = false;
-    if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes))
+    if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes,
+                             nullptr))
     {
         return false;
     }
@@ -661,11 +672,12 @@ GeoJSONSourceType GeoJSONGetSourceType(GDALOpenInfo *poOpenInfo)
             return eGeoJSONSourceFile;
         }
         const char *pszText = poOpenInfo->pszFilename + strlen("GeoJSON:");
-        if (GeoJSONIsObject(pszText))
+        if (GeoJSONIsObject(pszText, poOpenInfo->papszAllowedDrivers))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
-    else if (GeoJSONIsObject(poOpenInfo->pszFilename))
+    else if (GeoJSONIsObject(poOpenInfo->pszFilename,
+                             poOpenInfo->papszAllowedDrivers))
     {
         srcType = eGeoJSONSourceText;
     }
