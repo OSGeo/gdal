@@ -173,9 +173,10 @@ class VSIGZipHandle final : public VSIVirtualHandle
 
     /* Fields from gz_stream structure */
     z_stream stream;
-    int z_err = Z_OK; /* error code for last stream operation */
-    int z_eof = 0;    /* set if end of input file (but not necessarily of the
-                         uncompressed stream ! "in" must be null too ) */
+    int z_err = Z_OK;    /* error code for last stream operation */
+    int z_eof = 0;       /* set if end of input file (but not necessarily of the
+                         uncompressed stream !) */
+    bool m_bEOF = false; /* EOF flag for uncompressed stream */
     Byte *inbuf = nullptr;  /* input buffer */
     Byte *outbuf = nullptr; /* output buffer */
     uLong crc = 0;          /* crc32 of uncompressed data */
@@ -282,9 +283,10 @@ class VSIDeflate64Handle final : public VSIVirtualHandle
 
     /* Fields from gz_stream structure */
     z_stream stream;
-    int z_err = Z_OK; /* error code for last stream operation */
-    int z_eof = 0;    /* set if end of input file (but not necessarily of the
-                         uncompressed stream ! "in" must be null too ) */
+    int z_err = Z_OK;    /* error code for last stream operation */
+    int z_eof = 0;       /* set if end of input file (but not necessarily of the
+                         uncompressed stream ! ) */
+    bool m_bEOF = false; /* EOF flag for uncompressed stream */
     Byte *inbuf = nullptr;  /* input buffer */
     Byte *outbuf = nullptr; /* output buffer */
     std::vector<GByte> extraOutput{};
@@ -723,6 +725,7 @@ int VSIGZipHandle::gzrewind()
 {
     z_err = Z_OK;
     z_eof = 0;
+    m_bEOF = false;
     stream.avail_in = 0;
     stream.next_in = inbuf;
     crc = 0;
@@ -739,6 +742,8 @@ int VSIGZipHandle::gzrewind()
 
 int VSIGZipHandle::Seek(vsi_l_offset nOffset, int nWhence)
 {
+    m_bEOF = false;
+
     return gzseek(nOffset, nWhence) ? 0 : -1;
 }
 
@@ -1005,14 +1010,11 @@ size_t VSIGZipHandle::Read(void *const buf, size_t const nSize,
              static_cast<int>(nMemb));
 #endif
 
-    if ((z_eof && in == 0) || z_err == Z_STREAM_END)
+    if (m_bEOF || z_err != Z_OK)
     {
-        z_eof = 1;
-        in = 0;
-#ifdef ENABLE_DEBUG
-        CPLDebug("GZIP", "Read: Eof");
-#endif
-        return 0; /* EOF */
+        if (z_err == Z_STREAM_END && nSize > 0 && nMemb > 0)
+            m_bEOF = true;
+        return 0;
     }
 
     const unsigned len =
@@ -1048,8 +1050,10 @@ size_t VSIGZipHandle::Read(void *const buf, size_t const nSize,
                 const uInt nToRead = static_cast<uInt>(
                     std::min(m_compressed_size - (in + nRead),
                              static_cast<vsi_l_offset>(stream.avail_out)));
-                uInt nReadFromFile = static_cast<uInt>(
+                const uInt nReadFromFile = static_cast<uInt>(
                     m_poBaseHandle->Read(next_out, 1, nToRead));
+                if (nReadFromFile < nToRead && !m_poBaseHandle->Eof())
+                    z_err = Z_ERRNO;
                 stream.avail_out -= nReadFromFile;
                 nRead += nReadFromFile;
             }
@@ -1057,8 +1061,8 @@ size_t VSIGZipHandle::Read(void *const buf, size_t const nSize,
             out += nRead;
             if (nRead < len)
             {
+                m_bEOF = true;
                 z_eof = 1;
-                in = 0;
             }
 #ifdef ENABLE_DEBUG
             CPLDebug("GZIP", "Read return %d", static_cast<int>(nRead / nSize));
@@ -1078,8 +1082,7 @@ size_t VSIGZipHandle::Read(void *const buf, size_t const nSize,
                 // discarding it.
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "File size of underlying /vsigzip/ file has changed");
-                z_eof = 1;
-                in = 0;
+                z_err = Z_ERRNO;
                 CPL_VSIL_GZ_RETURN(0);
                 return 0;
             }
@@ -1204,12 +1207,15 @@ size_t VSIGZipHandle::Read(void *const buf, size_t const nSize,
     size_t ret = (len - stream.avail_out) / nSize;
     if (z_err != Z_OK && z_err != Z_STREAM_END)
     {
-        z_eof = 1;
-        in = 0;
+        m_bEOF = true;  // wrong...
         CPLError(CE_Failure, CPLE_AppDefined,
                  "In file %s, at line %d, decompression failed with "
                  "z_err = %d, return = %d",
                  __FILE__, __LINE__, z_err, static_cast<int>(ret));
+    }
+    else if (ret < nMemb)
+    {
+        m_bEOF = true;
     }
 
 #ifdef ENABLE_DEBUG
@@ -1261,7 +1267,7 @@ int VSIGZipHandle::Eof()
 #ifdef ENABLE_DEBUG
     CPLDebug("GZIP", "Eof()");
 #endif
-    return z_eof && in == 0;
+    return m_bEOF;
 }
 
 /************************************************************************/
@@ -1467,6 +1473,7 @@ int VSIDeflate64Handle::gzrewind()
 
 int VSIDeflate64Handle::Seek(vsi_l_offset nOffset, int nWhence)
 {
+    m_bEOF = false;
     return gzseek(nOffset, nWhence) ? 0 : -1;
 }
 
@@ -1652,14 +1659,11 @@ size_t VSIDeflate64Handle::Read(void *const buf, size_t const nSize,
              static_cast<int>(nMemb));
 #endif
 
-    if ((z_eof && in == 0) || z_err == Z_STREAM_END)
+    if (m_bEOF || z_err != Z_OK)
     {
-        z_eof = 1;
-        in = 0;
-#ifdef ENABLE_DEBUG
-        CPLDebug("GZIP", "Read: Eof");
-#endif
-        return 0; /* EOF */
+        if (z_err == Z_STREAM_END && nSize > 0 && nMemb > 0)
+            m_bEOF = true;
+        return 0;
     }
 
     const unsigned len =
@@ -1708,8 +1712,7 @@ size_t VSIDeflate64Handle::Read(void *const buf, size_t const nSize,
                 // discarding it.
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "File size of underlying /vsigzip/ file has changed");
-                z_eof = 1;
-                in = 0;
+                z_err = Z_ERRNO;
                 CPL_VSIL_GZ_RETURN(0);
                 return 0;
             }
@@ -1873,12 +1876,15 @@ size_t VSIDeflate64Handle::Read(void *const buf, size_t const nSize,
     size_t ret = (len - stream.avail_out) / nSize;
     if (z_err != Z_OK && z_err != Z_STREAM_END)
     {
-        z_eof = 1;
-        in = 0;
+        m_bEOF = true;  // Wrong...
         CPLError(CE_Failure, CPLE_AppDefined,
                  "In file %s, at line %d, decompression failed with "
                  "z_err = %d, return = %d",
                  __FILE__, __LINE__, z_err, static_cast<int>(ret));
+    }
+    else if (ret < nMemb)
+    {
+        m_bEOF = true;
     }
 
 #ifdef ENABLE_DEBUG
@@ -1909,7 +1915,7 @@ int VSIDeflate64Handle::Eof()
 #ifdef ENABLE_DEBUG
     CPLDebug("GZIP", "Eof()");
 #endif
-    return z_eof && in == 0;
+    return m_bEOF;
 }
 
 /************************************************************************/
