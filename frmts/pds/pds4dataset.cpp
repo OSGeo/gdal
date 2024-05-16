@@ -4544,7 +4544,11 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     }
     else
     {
-        fpImage = VSIFOpenL(osImageFilename, bAppend ? "rb+" : "wb");
+        fpImage = VSIFOpenL(
+            osImageFilename,
+            bAppend                                                 ? "rb+"
+            : VSISupportsRandomWrite(osImageFilename.c_str(), true) ? "wb+"
+                                                                    : "wb");
         if (fpImage == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s",
