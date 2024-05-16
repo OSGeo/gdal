@@ -1090,7 +1090,9 @@ size_t VSICryptFileHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
 #endif
 
     if ((nPerms & VSICRYPT_READ) == 0)
+    {
         return 0;
+    }
 
     if (nCurPos >= poHeader->nPayloadFileSize)
     {
@@ -1584,11 +1586,11 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
         return nullptr;
     }
 
+    CPLString osAccess(pszAccess);
+    if (strchr(pszAccess, 'b') == nullptr)
+        osAccess += "b";
     if (strchr(pszAccess, 'r'))
     {
-        CPLString osAccess(pszAccess);
-        if (strchr(pszAccess, 'b') == nullptr)
-            osAccess += "b";
         VSIVirtualHandle *fpBase = reinterpret_cast<VSIVirtualHandle *>(
             VSIFOpenL(osFilename, osAccess));
         if (fpBase == nullptr)
@@ -1721,8 +1723,8 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
             return nullptr;
         }
 
-        VSIVirtualHandle *fpBase =
-            reinterpret_cast<VSIVirtualHandle *>(VSIFOpenL(osFilename, "wb+"));
+        VSIVirtualHandle *fpBase = reinterpret_cast<VSIVirtualHandle *>(
+            VSIFOpenL(osFilename, osAccess.c_str()));
         if (fpBase == nullptr)
         {
             memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
