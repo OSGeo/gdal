@@ -394,6 +394,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
     int m_nMaxRetry = 0;
     double m_dfRetryDelay = 0.0;
+    std::string m_osRetryCodes{};
 
     CPLStringList m_aosHeaders{};
 

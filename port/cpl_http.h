@@ -180,7 +180,8 @@ void CPL_DLL *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
                                 const char *const *papszOptions);
 char **CPLHTTPGetOptionsFromEnv(const char *pszFilename);
 double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay,
-                               const char *pszErrBuf, const char *pszCurlError);
+                               const char *pszErrBuf, const char *pszCurlError,
+                               const char *pszRetriableCodes = nullptr);
 void CPL_DLL *CPLHTTPIgnoreSigPipe();
 void CPL_DLL CPLHTTPRestoreSigPipeHandler(void *old_handler);
 bool CPLMultiPerformWait(void *hCurlMultiHandle, int &repeats);
