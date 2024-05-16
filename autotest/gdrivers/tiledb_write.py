@@ -29,6 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import math
+
 import gdaltest
 import pytest
 
@@ -38,16 +40,15 @@ pytestmark = pytest.mark.require_driver("TileDB")
 
 
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
-def test_tiledb_write_complex(mode):
+def test_tiledb_write_complex(tmp_path, mode):
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     src_ds = gdal.Open("../gcore/data/cfloat64.tif")
 
     options = ["INTERLEAVE=%s" % (mode)]
 
-    new_ds = gdaltest.tiledb_drv.CreateCopy(
-        "tmp/tiledb_complex64", src_ds, options=options
-    )
+    dsname = str(tmp_path / "tiledb_complex64")
+    new_ds = gdaltest.tiledb_drv.CreateCopy(dsname, src_ds, options=options)
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
     assert meta["INTERLEAVE"] == mode, "Did not get expected mode"
     assert meta["DATASET_TYPE"] == "raster", "Did not get expected dataset type"
@@ -57,20 +58,18 @@ def test_tiledb_write_complex(mode):
 
     bnd = None
     new_ds = None
-    gdaltest.tiledb_drv.Delete("tmp/tiledb_complex64")
 
 
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL", "ATTRIBUTES"])
-def test_tiledb_write_custom_blocksize(mode):
+def test_tiledb_write_custom_blocksize(tmp_path, mode):
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     src_ds = gdal.Open("../gcore/data/utmsmall.tif")
 
     options = ["BLOCKXSIZE=32", "BLOCKYSIZE=32", "INTERLEAVE=%s" % (mode)]
 
-    new_ds = gdaltest.tiledb_drv.CreateCopy(
-        "tmp/tiledb_custom", src_ds, options=options
-    )
+    dsname = str(tmp_path / "tiledb_custom")
+    new_ds = gdaltest.tiledb_drv.CreateCopy(dsname, src_ds, options=options)
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
     assert meta["INTERLEAVE"] == mode, "Did not get expected mode"
     assert meta["DATASET_TYPE"] == "raster", "Did not get expected dataset type"
@@ -82,19 +81,18 @@ def test_tiledb_write_custom_blocksize(mode):
     bnd = None
     new_ds = None
 
-    gdaltest.tiledb_drv.Delete("tmp/tiledb_custom")
-
 
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
-def test_tiledb_write_update(mode):
+def test_tiledb_write_update(tmp_path, mode):
     np = pytest.importorskip("numpy")
 
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     options = ["INTERLEAVE=%s" % (mode)]
 
+    dsname = str(tmp_path / "tiledb_update")
     new_ds = gdaltest.tiledb_drv.Create(
-        "tmp/tiledb_update", 20, 20, 1, gdal.GDT_Byte, options=options
+        dsname, 20, 20, 1, gdal.GDT_Byte, options=options
     )
     new_ds.GetRasterBand(1).WriteArray(np.zeros((20, 20)))
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
@@ -102,30 +100,30 @@ def test_tiledb_write_update(mode):
     assert meta["DATASET_TYPE"] == "raster", "Did not get expected dataset type"
     del new_ds
 
-    update_ds = gdal.Open("tmp/tiledb_update", gdal.GA_Update)
+    update_ds = gdal.Open(dsname, gdal.GA_Update)
     update_bnd = update_ds.GetRasterBand(1)
     # make a partial block write
     update_bnd.WriteArray(np.ones((10, 10)) * 255)
     update_bnd = None
     update_ds = None
 
-    test_ds = gdal.Open("tmp/tiledb_update")
+    test_ds = gdal.Open(dsname)
     assert (
         test_ds.GetRasterBand(1).Checksum() == 1217
     ), "Did not get expected checksum on file update"
     test_ds = None
 
-    gdaltest.tiledb_drv.Delete("tmp/tiledb_update")
-
 
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL", "ATTRIBUTES"])
-def test_tiledb_write_rgb(mode):
+def test_tiledb_write_rgb(tmp_path, mode):
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     src_ds = gdal.Open("../gcore/data/rgbsmall.tif")
 
     options = ["INTERLEAVE=%s" % (mode)]
-    new_ds = gdaltest.tiledb_drv.CreateCopy("tmp/tiledb_rgb", src_ds, options=options)
+
+    dsname = str(tmp_path / "tiledb_rgb")
+    new_ds = gdaltest.tiledb_drv.CreateCopy(dsname, src_ds, options=options)
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
     assert meta["INTERLEAVE"] == mode, "Did not get expected mode"
     assert meta["DATASET_TYPE"] == "raster", "Did not get expected dataset type"
@@ -135,33 +133,28 @@ def test_tiledb_write_rgb(mode):
 
     new_ds = None
 
-    gdaltest.tiledb_drv.Delete("tmp/tiledb_rgb")
-
 
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
-def test_tiledb_write_attributes(mode):
+def test_tiledb_write_attributes(tmp_path, tmp_vsimem, mode):
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     src_ds = gdal.Open("../gcore/data/rgbsmall.tif")
     w, h, num_bands = src_ds.RasterXSize, src_ds.RasterYSize, src_ds.RasterCount
 
     # build attribute data in memory
-    gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/temp1.tif", w, h, num_bands, gdal.GDT_Int32
-    )
-    gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/temp2.tif", w, h, num_bands, gdal.GDT_Float32
-    )
+    temp1_name = str(tmp_vsimem / "temp1.tif")
+    gdal.GetDriverByName("GTiff").Create(temp1_name, w, h, num_bands, gdal.GDT_Int32)
+    temp2_name = str(tmp_vsimem / "temp2.tif")
+    gdal.GetDriverByName("GTiff").Create(temp2_name, w, h, num_bands, gdal.GDT_Float32)
 
     options = [
-        "TILEDB_ATTRIBUTE=%s" % ("/vsimem/temp1.tif"),
-        "TILEDB_ATTRIBUTE=%s" % ("/vsimem/temp2.tif"),
+        f"TILEDB_ATTRIBUTE={temp1_name}",
+        f"TILEDB_ATTRIBUTE={temp2_name}",
         "INTERLEAVE=%s" % (mode),
     ]
 
-    new_ds = gdaltest.tiledb_drv.CreateCopy(
-        "tmp/tiledb_rgb_atts", src_ds, options=options
-    )
+    dsname = str(tmp_path / "tiledb_rgb_atts")
+    new_ds = gdaltest.tiledb_drv.CreateCopy(dsname, src_ds, options=options)
     assert new_ds is not None
     assert new_ds.RasterXSize == src_ds.RasterXSize
     assert new_ds.RasterYSize == src_ds.RasterYSize
@@ -174,13 +167,9 @@ def test_tiledb_write_attributes(mode):
         new_ds = None
 
     # check we can open the attributes with the band as well as the pixel values
-    att1_ds = gdal.OpenEx(
-        "tmp/tiledb_rgb_atts", open_options=["TILEDB_ATTRIBUTE=temp1"]
-    )
-    att2_ds = gdal.OpenEx(
-        "tmp/tiledb_rgb_atts", open_options=["TILEDB_ATTRIBUTE=temp2"]
-    )
-    val_ds = gdal.Open("tmp/tiledb_rgb_atts")
+    att1_ds = gdal.OpenEx(dsname, open_options=["TILEDB_ATTRIBUTE=temp1"])
+    att2_ds = gdal.OpenEx(dsname, open_options=["TILEDB_ATTRIBUTE=temp2"])
+    val_ds = gdal.Open(dsname)
 
     meta = val_ds.GetMetadata("IMAGE_STRUCTURE")
     assert "TILEDB_ATTRIBUTE_1" in meta
@@ -201,49 +190,49 @@ def test_tiledb_write_attributes(mode):
     att2_ds = None
     val_ds = None
 
-    gdaltest.tiledb_drv.Delete("tmp/tiledb_rgb_atts")
-
-    src_ds = None
-    gdal.GetDriverByName("GTiff").Delete("/vsimem/temp1.tif")
-    gdal.GetDriverByName("GTiff").Delete("/vsimem/temp2.tif")
-
 
 @pytest.mark.require_driver("HDF5")
-def test_tiledb_write_subdatasets():
+def test_tiledb_write_subdatasets(tmp_path):
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     src_ds = gdal.Open(
         "data/tiledb_input/DeepBlue-SeaWiFS-1.0_L3_20100101_v004-20130604T131317Z.h5"
     )
 
-    new_ds = gdaltest.tiledb_drv.CreateCopy("tmp/test_sds_array", src_ds, False)
+    dsname = str(tmp_path / "test_sds_array")
+    new_ds = gdaltest.tiledb_drv.CreateCopy(dsname, src_ds, False)
 
     assert new_ds is not None
     new_ds = None
     src_ds = None
 
-    src_ds = gdal.Open('TILEDB:"tmp/test_sds_array":viewing_zenith_angle')
+    ds = gdal.Open(dsname)
+    subds = ds.GetSubDatasets()
+    assert len(subds) == 2
+    assert subds[0][0] == f'TILEDB:"{dsname}":solar_zenith_angle'
+    assert subds[1][0] == f'TILEDB:"{dsname}":viewing_zenith_angle'
+
+    src_ds = gdal.Open(f'TILEDB:"{dsname}":viewing_zenith_angle')
     assert src_ds.GetRasterBand(1).Checksum() == 42472
     src_ds = None
 
     with pytest.raises(Exception):
-        gdal.Open('TILEDB:"tmp/test_sds_array":i_dont_exist')
-
-    gdaltest.tiledb_drv.Delete("tmp/test_sds_array")
+        gdal.Open(f'TILEDB:"{dsname}":i_dont_exist')
 
 
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL", "ATTRIBUTES"])
-def test_tiledb_write_band_meta(mode):
+def test_tiledb_write_band_meta(tmp_path, mode):
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
     src_ds = gdal.Open("../gcore/data/rgbsmall.tif")
 
     options = ["INTERLEAVE=%s" % (mode)]
 
-    gdaltest.tiledb_drv.CreateCopy("tmp/tiledb_meta", src_ds, options=options)
+    dsname = str(tmp_path / "tiledb_meta")
+    gdaltest.tiledb_drv.CreateCopy(dsname, src_ds, options=options)
 
     # open array in update mode
-    new_ds = gdal.Open("tmp/tiledb_meta", gdal.GA_Update)
+    new_ds = gdal.Open(dsname, gdal.GA_Update)
 
     meta = new_ds.GetMetadata("IMAGE_STRUCTURE")
     assert meta["INTERLEAVE"] == mode, "Did not get expected mode"
@@ -255,25 +244,22 @@ def test_tiledb_write_band_meta(mode):
     bnd = None
     new_ds = None
 
-    new_ds = gdal.Open("tmp/tiledb_meta")
+    new_ds = gdal.Open(dsname)
     assert new_ds.GetRasterBand(1).GetMetadataItem("Item") == "Value"
     new_ds = None
 
-    gdaltest.tiledb_drv.Delete("tmp/tiledb_meta")
-
-    src_ds = None
-
 
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
-def test_tiledb_write_history(mode):
+def test_tiledb_write_history(tmp_path, mode):
     np = pytest.importorskip("numpy")
 
     options = ["INTERLEAVE=%s" % (mode), "TILEDB_TIMESTAMP=1"]
 
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
 
+    dsname = str(tmp_path / "tiledb_versioning")
     new_ds = gdaltest.tiledb_drv.Create(
-        "tmp/tiledb_versioning", 20, 20, 1, gdal.GDT_Byte, options=options
+        dsname, 20, 20, 1, gdal.GDT_Byte, options=options
     )
     new_ds.GetRasterBand(1).WriteArray(np.zeros((20, 20)))
 
@@ -287,7 +273,7 @@ def test_tiledb_write_history(mode):
 
     for t in ts:
         update_ds = gdal.OpenEx(
-            "tmp/tiledb_versioning",
+            dsname,
             gdal.GA_Update,
             open_options=["TILEDB_TIMESTAMP=%i" % (t)],
         )
@@ -299,9 +285,7 @@ def test_tiledb_write_history(mode):
         update_ds = None
 
     for t in ts:
-        ds = gdal.OpenEx(
-            "tmp/tiledb_versioning", open_options=["TILEDB_TIMESTAMP=%i" % (t)]
-        )
+        ds = gdal.OpenEx(dsname, open_options=["TILEDB_TIMESTAMP=%i" % (t)])
         bnd = ds.GetRasterBand(1)
         assert int(bnd.GetMetadataItem("TILEDB_TIMESTAMP")) == t
         assert bnd.Checksum() == 20 * 20 * t
@@ -309,13 +293,11 @@ def test_tiledb_write_history(mode):
         ds = None
 
     # open at a later non-existent timestamp
-    ds = gdal.OpenEx("tmp/tiledb_versioning", open_options=["TILEDB_TIMESTAMP=6"])
+    ds = gdal.OpenEx(dsname, open_options=["TILEDB_TIMESTAMP=6"])
     bnd = ds.GetRasterBand(1)
     assert int(bnd.GetMetadataItem("TILEDB_TIMESTAMP")) == 5
     bnd = None
     ds = None
-
-    gdaltest.tiledb_drv.Delete("tmp/tiledb_versioning")
 
 
 @pytest.mark.parametrize(
@@ -356,4 +338,102 @@ def test_tiledb_read_arbitrary_array(outputType, tmp_path):
     )
     ds = None
 
-    gdal.GetDriverByName("TileDB").Delete(dsname)
+
+@pytest.mark.parametrize(
+    "outputType, nodata, expected_nodata",
+    [
+        (gdal.GDT_Byte, 1, 1),
+        (gdal.GDT_Byte, -1, 255),
+        (gdal.GDT_Byte, 256, 255),
+        (gdal.GDT_Byte, 1.5, 255),
+        (gdal.GDT_Int8, -1, -1),
+        (gdal.GDT_UInt16, 1, 1),
+        (gdal.GDT_Int16, -1, -1),
+        (gdal.GDT_UInt32, 1, 1),
+        (gdal.GDT_Int32, -1, -1),
+        (gdal.GDT_UInt64, 1, 1),
+        (gdal.GDT_Int64, -1, -1),
+        (gdal.GDT_Float32, 1.5, 1.5),
+        (gdal.GDT_Float32, float("inf"), float("inf")),
+        (gdal.GDT_Float32, float("-inf"), float("-inf")),
+        (gdal.GDT_Float32, float("nan"), float("nan")),
+        (gdal.GDT_Float64, 1.5, 1.5),
+        (gdal.GDT_Float64, float("inf"), float("inf")),
+        (gdal.GDT_Float64, float("-inf"), float("-inf")),
+        (gdal.GDT_Float64, float("nan"), float("nan")),
+        (gdal.GDT_CInt16, 1, 1),
+        (gdal.GDT_CInt32, 1, 1),
+        (gdal.GDT_CFloat32, 1.5, 1.5),
+        (gdal.GDT_CFloat64, 1.5, 1.5),
+    ],
+)
+def test_tiledb_write_nodata_all_types(tmp_path, outputType, nodata, expected_nodata):
+
+    dsname = str(tmp_path / "test_tiledb_write_nodata_all_types.tiledb")
+
+    ds = gdal.GetDriverByName("TileDB").Create(dsname, 1, 1, 1, outputType)
+    if not math.isnan(nodata) and nodata != expected_nodata:
+        with pytest.raises(
+            Exception, match="nodata value cannot be stored in band data type"
+        ):
+            ds.GetRasterBand(1).SetNoDataValue(nodata)
+    else:
+        ds.GetRasterBand(1).SetNoDataValue(nodata)
+    ds = None
+
+    ds = gdal.Open(dsname)
+    if math.isnan(nodata):
+        assert math.isnan(ds.GetRasterBand(1).GetNoDataValue())
+    else:
+        assert ds.GetRasterBand(1).GetNoDataValue() == expected_nodata
+
+
+@pytest.mark.parametrize("mode", ["BAND", "PIXEL", "ATTRIBUTES"])
+def test_tiledb_write_nodata_all_modes(tmp_path, mode):
+
+    dsname = str(tmp_path / "test_tiledb_write_nodata_all_modes.tiledb")
+
+    ds = gdal.GetDriverByName("TileDB").Create(
+        dsname, 1, 1, 2, options=["INTERLEAVE=%s" % (mode)]
+    )
+    for i in range(2):
+        ds.GetRasterBand(i + 1).SetNoDataValue(1)
+        assert ds.GetRasterBand(i + 1).GetNoDataValue() == 1
+    ds = None
+
+    ds = gdal.Open(dsname)
+    for i in range(2):
+        assert ds.GetRasterBand(i + 1).GetNoDataValue() == 1
+
+
+def test_tiledb_write_nodata_createcopy(tmp_path):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.GetRasterBand(1).SetNoDataValue(1)
+
+    dsname = str(tmp_path / "test_tiledb_write_nodata_createcopy.tiledb")
+    gdal.GetDriverByName("TileDB").CreateCopy(dsname, src_ds)
+
+    ds = gdal.Open(dsname)
+    assert ds.GetRasterBand(1).GetNoDataValue() == 1
+
+
+def test_tiledb_write_nodata_not_identical_all_bands(tmp_path):
+
+    dsname = str(tmp_path / "test_tiledb_write_nodata_not_identical_all_bands.tiledb")
+    ds = gdal.GetDriverByName("TileDB").Create(dsname, 1, 1, 2)
+    ds.GetRasterBand(1).SetNoDataValue(1)
+    with pytest.raises(Exception, match="all bands should have the same nodata value"):
+        ds.GetRasterBand(2).SetNoDataValue(2)
+
+
+def test_tiledb_write_nodata_error_after_rasterio(tmp_path):
+
+    dsname = str(tmp_path / "test_tiledb_write_nodata_error_after_rasterio.tiledb")
+    ds = gdal.GetDriverByName("TileDB").Create(dsname, 1, 1)
+    ds.GetRasterBand(1).Fill(0)
+    ds.GetRasterBand(1).FlushCache()
+    with pytest.raises(
+        Exception, match="cannot be called after pixel values have been set"
+    ):
+        ds.GetRasterBand(1).SetNoDataValue(1)

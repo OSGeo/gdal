@@ -223,25 +223,28 @@ class TileDBRasterDataset final : public TileDBDataset
     int nBlocksX = 0;
     int nBlocksY = 0;
     uint64_t nBandStart = 1;
-    bool bHasSubDatasets = false;
-    int nSubDataCount = 0;
-    char **papszSubDatasets = nullptr;
-    CPLStringList m_osSubdatasetMD{};
-    CPLXMLNode *psSubDatasetsTree = nullptr;
-    char **papszAttributes = nullptr;
-    std::list<std::unique_ptr<GDALDataset>> lpoAttributeDS = {};
+    bool m_bHasSubDatasets = false;
+    CPLStringList m_aosSubdatasetMD{};
+    CPLXMLTreeCloser m_poSubDatasetsTree{nullptr};
+    std::list<std::unique_ptr<GDALDataset>> m_lpoAttributeDS = {};
     uint64_t nTimestamp = 0;
-
     bool bStats = FALSE;
+    bool m_bDeferredCreateHasRun = false;
+    bool m_bDeferredCreateHasBeenSuccessful = false;
+
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                      GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
                      GDALRasterIOExtraArg *psExtraArg) override;
     CPLErr CreateAttribute(GDALDataType eType, const CPLString &osAttrName,
-                           const int nSubRasterCount = 1);
+                           const int nSubRasterCount, bool bHasFillValue,
+                           double dfFillValue);
 
     CPLErr AddDimensions(tiledb::Domain &domain, const char *pszAttrName,
                          tiledb::Dimension &y, tiledb::Dimension &x,
                          tiledb::Dimension *poBands = nullptr);
+
+    void CreateArray();
+    bool DeferredCreate(bool bCreateArray);
 
   public:
     ~TileDBRasterDataset();
@@ -258,8 +261,8 @@ class TileDBRasterDataset final : public TileDBDataset
     static TileDBRasterDataset *CreateLL(const char *pszFilename, int nXSize,
                                          int nYSize, int nBands,
                                          GDALDataType eType,
-                                         char **papszOptions);
-    static void SetBlockSize(GDALRasterBand *poBand, char **&papszOptions);
+                                         CSLConstList papszOptions);
+    static void SetBlockSize(GDALRasterBand *poBand, CPLStringList &aosOptions);
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
