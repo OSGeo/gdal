@@ -330,7 +330,7 @@ Example of retrieving information on a file in JSON format without showing detai
                 4765610.5
               ],
               "coordinateSystem":{
-                "wkt":"PROJCRS[\"OSGB36 / British National Grid\",BASEGEOGCRS[\"OSGB36\",DATUM...
+                "wkt":"PROJCRS[\"OSGB36 / British National Grid\",BASEGEOGCRS[\"OSGB36\",DATUM...",
                 "projjson":{
                   "$schema":"https://proj.org/schemas/v0.6/projjson.schema.json",
                   "type":"ProjectedCRS",
@@ -443,7 +443,7 @@ Example of retrieving information on a file in JSON format without showing detai
                     ]
                   },
                   "scope":"Engineering survey, topographic mapping.",
-                  "area":"United Kingdom (UK) - offshore to boundary of UKCS within 49°45...
+                  "area":"United Kingdom (UK) - offshore to boundary of UKCS within 49°45...",
                   "bbox":{
                     "south_latitude":49.75,
                     "west_longitude":-9,
