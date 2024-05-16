@@ -555,9 +555,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle *fp,
         return VSICryptReadError();
 
     osIV.resize(nIVSize);
-    // TODO(schwehr): Using the const buffer of a string is a bad idea.
-    if (fp->Read(reinterpret_cast<void *>(const_cast<char *>(osIV.c_str())), 1,
-                 nIVSize) != nIVSize)
+    if (fp->Read(osIV.data(), 1, nIVSize) != nIVSize)
         return VSICryptReadError();
 
     GUInt16 nFreeTextSize;
@@ -565,9 +563,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle *fp,
         return VSICryptReadError();
 
     osFreeText.resize(nFreeTextSize);
-    if (fp->Read(
-            reinterpret_cast<void *>(const_cast<char *>(osFreeText.c_str())), 1,
-            nFreeTextSize) != nFreeTextSize)
+    if (fp->Read(osFreeText.data(), 1, nFreeTextSize) != nFreeTextSize)
         return VSICryptReadError();
 
     GByte nKeyCheckSize;
@@ -578,9 +574,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle *fp,
     {
         CPLString osKeyCheck;
         osKeyCheck.resize(nKeyCheckSize);
-        if (fp->Read(reinterpret_cast<void *>(
-                         const_cast<char *>(osKeyCheck.c_str())),
-                     1, nKeyCheckSize) != nKeyCheckSize)
+        if (fp->Read(osKeyCheck.data(), 1, nKeyCheckSize) != nKeyCheckSize)
             return VSICryptReadError();
 
         if (osKey.empty() && pabyGlobalKey == nullptr)
@@ -657,8 +651,8 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle *fp,
     nExtraContentSize = CPL_LSBWORD16(nExtraContentSize);
 
     osExtraContent.resize(nExtraContentSize);
-    if (fp->Read(const_cast<char *>(osExtraContent.c_str()), 1,
-                 nExtraContentSize) != nExtraContentSize)
+    if (fp->Read(osExtraContent.data(), 1, nExtraContentSize) !=
+        nExtraContentSize)
         return VSICryptReadError();
 
     return TRUE;
@@ -1589,7 +1583,7 @@ static CPLString GetKey(const char *pszFilename)
             CPLFree(key);
         }
         // coverity[tainted_data]
-        memset(const_cast<char *>(osKeyB64.c_str()), 0, osKeyB64.size());
+        memset(osKeyB64.data(), 0, osKeyB64.size());
     }
     return osKey;
 }
@@ -1630,7 +1624,7 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
         VSICryptFileHeader *poHeader = new VSICryptFileHeader();
         if (!poHeader->ReadFromFile(fpBase, osKey))
         {
-            memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
+            memset(osKey.data(), 0, osKey.size());
             fpBase->Close();
             delete fpBase;
             delete poHeader;
@@ -1643,11 +1637,11 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
                                    : VSICRYPT_READ);
         if (!poHandle->Init(osKey, false))
         {
-            memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
+            memset(osKey.data(), 0, osKey.size());
             delete poHandle;
             poHandle = nullptr;
         }
-        memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
+        memset(osKey.data(), 0, osKey.size());
         return poHandle;
     }
     else if (strchr(pszAccess, 'w'))
@@ -1687,7 +1681,7 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cipher algorithm not supported in this build: %s",
                      osAlg.c_str());
-            memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
+            memset(osKey.data(), 0, osKey.size());
             return nullptr;
         }
         int nMinKeySize = static_cast<int>(poBlock->MinKeyLength());
@@ -1701,7 +1695,7 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "IV should be %d byte large", nBlockSize);
-                memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
+                memset(osKey.data(), 0, osKey.size());
                 return nullptr;
             }
         }
@@ -1710,9 +1704,7 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
             osIV.resize(nBlockSize);
             CryptoPP::OS_GenerateRandomBlock(
                 false,  // Do not need cryptographic randomness.
-                reinterpret_cast<cryptopp_byte *>(
-                    const_cast<char *>(osIV.c_str())),
-                osIV.size());
+                reinterpret_cast<cryptopp_byte *>(osIV.data()), osIV.size());
         }
 
         if (EQUAL(osKey, "GENERATE_IT"))
@@ -1725,9 +1717,7 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
                 // Config option for speeding tests.
                 CPLTestBool(
                     CPLGetConfigOption("VSICRYPT_CRYPTO_RANDOM", "TRUE")),
-                reinterpret_cast<cryptopp_byte *>(
-                    const_cast<char *>(osKey.c_str())),
-                osKey.size());
+                reinterpret_cast<cryptopp_byte *>(osKey.data()), osKey.size());
 
             char *pszB64 =
                 CPLBase64Encode(static_cast<int>(osKey.size()),
@@ -1751,7 +1741,7 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Key is too short: %d bytes. Should be at least %d bytes",
                      nKeyLength, nMinKeySize);
-            memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
+            memset(osKey.data(), 0, osKey.size());
             return nullptr;
         }
 
@@ -1759,7 +1749,7 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
             VSIFOpenL(osFilename, osAccess.c_str()));
         if (fpBase == nullptr)
         {
-            memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
+            memset(osKey.data(), 0, osKey.size());
             return nullptr;
         }
 
@@ -1778,11 +1768,11 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
                                    : VSICRYPT_WRITE);
         if (!poHandle->Init(osKey, true))
         {
-            memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
+            memset(osKey.data(), 0, osKey.size());
             delete poHandle;
             poHandle = nullptr;
         }
-        memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
+        memset(osKey.data(), 0, osKey.size());
         return poHandle;
     }
     else if (strchr(pszAccess, 'a'))
@@ -1791,13 +1781,13 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
             reinterpret_cast<VSIVirtualHandle *>(VSIFOpenL(osFilename, "rb+"));
         if (fpBase == nullptr)
         {
-            memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
+            memset(osKey.data(), 0, osKey.size());
             return VSIFilesystemHandler::Open(pszFilename, "wb+");
         }
         VSICryptFileHeader *poHeader = new VSICryptFileHeader();
         if (!poHeader->ReadFromFile(fpBase, osKey))
         {
-            memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
+            memset(osKey.data(), 0, osKey.size());
             fpBase->Close();
             delete fpBase;
             delete poHeader;
@@ -1811,7 +1801,7 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
             delete poHandle;
             poHandle = nullptr;
         }
-        memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
+        memset(osKey.data(), 0, osKey.size());
         if (poHandle != nullptr)
             poHandle->Seek(0, SEEK_END);
         return poHandle;
@@ -1841,13 +1831,13 @@ int VSICryptFilesystemHandler::Stat(const char *pszFilename,
     CPLString osKey(GetKey(pszFilename));
     if (!poHeader->ReadFromFile(fp, osKey))
     {
-        memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
+        memset(osKey.data(), 0, osKey.size());
         fp->Close();
         delete fp;
         delete poHeader;
         return -1;
     }
-    memset(const_cast<char *>(osKey.c_str()), 0, osKey.size());
+    memset(osKey.data(), 0, osKey.size());
     fp->Close();
     delete fp;
     if (poHeader)
