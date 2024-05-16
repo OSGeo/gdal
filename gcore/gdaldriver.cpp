@@ -2642,6 +2642,7 @@ GDALDriverH CPL_STDCALL GDALIdentifyDriverEx(
     GDALDriverManager *poDM = GetGDALDriverManager();
     CPLAssert(nullptr != poDM);
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly, papszFileList);
+    oOpenInfo.papszAllowedDrivers = papszAllowedDrivers;
 
     CPLErrorStateBackuper oBackuper;
     CPLErrorSetState(CE_None, CPLE_AppDefined, "");
