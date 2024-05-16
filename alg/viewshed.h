@@ -130,6 +130,8 @@ class Viewshed
         : oOpts{opts}, dfMaxDistance2{opts.maxDistance * opts.maxDistance},
           poDstDS{}, dfHeightAdjFactor{0}, adfTransform{0, 1, 0, 0, 0, 1}
     {
+        if (dfMaxDistance2 == 0)
+            dfMaxDistance2 = std::numeric_limits<double>::max();
     }
 
     /**
@@ -171,6 +173,8 @@ class Viewshed
     double calcHeight(double dfZ, double dfZ2);
     bool readLine(int nLine, double *data);
     bool adjustHeightInRange(int iPixel, int iLine, double &dfHeight);
+    std::pair<int, int> adjustHeight(int iLine, int nX, double dfObserverHeight,
+                                     double *const pdfNx);
     bool calcOutputExtent(int nX, int nY);
     bool createOutputDataset();
     bool allocate();

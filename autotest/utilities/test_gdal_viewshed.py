@@ -68,7 +68,7 @@ def viewshed_input(tmp_path):
     gdaltest.runexternal(
         test_cli_utilities.get_gdalwarp_path()
         + " -t_srs EPSG:32617 -overwrite ../gdrivers/data/n43.tif "
-        + fname
+        + fname,
     )
 
     return fname
@@ -160,7 +160,6 @@ def test_gdal_viewshed_alternative_modes(gdal_viewshed_path, tmp_path, viewshed_
     assert cs == 8381
     assert nodata is None
 
-
 ###############################################################################
 
 
@@ -211,6 +210,89 @@ def test_gdal_viewshed_all_options(gdal_viewshed_path, tmp_path, viewshed_input)
     assert cs == 24435
     assert nodata == 0
 
+###############################################################################
+
+def test_gdal_viewshed_value_options(gdal_viewshed_path, tmp_path, viewshed_input):
+
+    viewshed_out = str(tmp_path / "test_gdal_viewshed_out.tif")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_viewshed_path
+        + " -om NORMAL -f GTiff -oz {} -ox {} -oy {} -b 1 -a_nodata 0 -iv 127 -vv 254 -ov 0 {} {}".format(
+            oz[1], ox[0], oy[0], viewshed_input, viewshed_out
+        )
+    )
+    assert err is None or err == ""
+    ds = gdal.Open(viewshed_out)
+    assert ds
+    cs = ds.GetRasterBand(1).Checksum()
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+    assert cs == 35091
+    assert nodata == 0
+
+###############################################################################
+
+def test_gdal_viewshed_tz_option(gdal_viewshed_path, tmp_path, viewshed_input):
+
+    viewshed_out = str(tmp_path / "test_gdal_viewshed_out.tif")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_viewshed_path
+        + " -om NORMAL -f GTiff -oz {} -ox {} -oy {} -b 1 -a_nodata 0 -tz 5 {} {}".format(
+            oz[1], ox[0], oy[0], viewshed_input, viewshed_out
+        )
+    )
+    assert err is None or err == ""
+    ds = gdal.Open(viewshed_out)
+    assert ds
+    cs = ds.GetRasterBand(1).Checksum()
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+    assert cs == 33725
+    assert nodata == 0
+
+###############################################################################
+
+def test_gdal_viewshed_cc_option(gdal_viewshed_path, tmp_path, viewshed_input):
+
+    viewshed_out = str(tmp_path / "test_gdal_viewshed_out.tif")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_viewshed_path
+        + " -om NORMAL -f GTiff -oz {} -ox {} -oy {} -b 1 -a_nodata 0 -cc 0 {} {}".format(
+            oz[1], ox[0], oy[0], viewshed_input, viewshed_out
+        )
+    )
+    assert err is None or err == ""
+    ds = gdal.Open(viewshed_out)
+    assert ds
+    cs = ds.GetRasterBand(1).Checksum()
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+    assert cs == 17241
+    assert nodata == 0
+
+###############################################################################
+
+def test_gdal_viewshed_md_option(gdal_viewshed_path, tmp_path, viewshed_input):
+
+    viewshed_out = str(tmp_path / "test_gdal_viewshed_out.tif")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_viewshed_path
+        + " -om NORMAL -f GTiff -oz {} -ox {} -oy {} -b 1 -a_nodata 0 -tz 5 -md 20000 {} {}".format(
+            oz[1], ox[0], oy[0], viewshed_input, viewshed_out
+        )
+    )
+    assert err is None or err == ""
+    ds = gdal.Open(viewshed_out)
+    assert ds
+    cs = ds.GetRasterBand(1).Checksum()
+    nodata = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+    assert cs == 22617
+    assert nodata == 0
 
 ###############################################################################
 
