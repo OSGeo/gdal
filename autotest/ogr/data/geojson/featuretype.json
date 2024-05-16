@@ -1,0 +1,30 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "featureType": "Pipe"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            10.618902721,
+            59.949950678
+          ],
+          [
+            10.619008536,
+            59.949828304
+          ]
+        ]
+      }
+    }
+  ],
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::4326"
+    }
+  }
+}

@@ -31,6 +31,7 @@
 #include <assert.h>
 #include "cpl_port.h"
 #include "cpl_conv.h"
+#include "cpl_json_streaming_parser.h"
 #include "ogr_geometry.h"
 #include <json.h>  // JSON-C
 
@@ -530,9 +531,7 @@ bool JSONFGIsObject(const char *pszText)
         }
     }
 
-    if (osWithoutSpace.find("\"coordRefSys\":") != std::string::npos ||
-        osWithoutSpace.find("\"featureType\":\"") != std::string::npos ||
-        osWithoutSpace.find("\"place\":{\"type\":") != std::string::npos ||
+    if (osWithoutSpace.find("\"place\":{\"type\":") != std::string::npos ||
         osWithoutSpace.find("\"place\":{\"coordinates\":") !=
             std::string::npos ||
         osWithoutSpace.find("\"time\":{\"date\":") != std::string::npos ||
@@ -540,6 +539,69 @@ bool JSONFGIsObject(const char *pszText)
         osWithoutSpace.find("\"time\":{\"interval\":") != std::string::npos)
     {
         return true;
+    }
+
+    if (osWithoutSpace.find("\"coordRefSys\":") != std::string::npos ||
+        osWithoutSpace.find("\"featureType\":") != std::string::npos)
+    {
+        // Check that coordRefSys and/or featureType are either at the
+        // FeatureCollection or Feature level
+        struct MyParser : public CPLJSonStreamingParser
+        {
+            bool m_bFoundJSONFGFeatureType = false;
+            bool m_bFoundJSONFGCoordrefSys = false;
+            std::string m_osLevel{};
+
+            void StartObjectMember(const char *pszKey, size_t nLength) override
+            {
+                if (!m_bFoundJSONFGFeatureType &&
+                    nLength == strlen("featureType") &&
+                    strcmp(pszKey, "featureType") == 0)
+                {
+                    m_bFoundJSONFGFeatureType =
+                        (m_osLevel == "{" ||   // At FeatureCollection level
+                         m_osLevel == "{[{");  // At Feature level
+                }
+                else if (!m_bFoundJSONFGCoordrefSys &&
+                         nLength == strlen("coordRefSys") &&
+                         strcmp(pszKey, "coordRefSys") == 0)
+                {
+                    m_bFoundJSONFGCoordrefSys =
+                        (m_osLevel == "{" ||   // At FeatureCollection level
+                         m_osLevel == "{[{");  // At Feature level
+                }
+            }
+
+            void StartObject() override
+            {
+                m_osLevel += '{';
+            }
+
+            void EndObject() override
+            {
+                if (!m_osLevel.empty())
+                    m_osLevel.pop_back();
+            }
+
+            void StartArray() override
+            {
+                m_osLevel += '[';
+            }
+
+            void EndArray() override
+            {
+                if (!m_osLevel.empty())
+                    m_osLevel.pop_back();
+            }
+        };
+
+        MyParser oParser;
+        oParser.Parse(pszText, strlen(pszText), true);
+        if (oParser.m_bFoundJSONFGFeatureType ||
+            oParser.m_bFoundJSONFGCoordrefSys)
+        {
+            return true;
+        }
     }
 
     return false;

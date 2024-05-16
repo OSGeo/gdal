@@ -5151,3 +5151,13 @@ def test_ogr_geojson_geom_coord_precision_RFC7946(tmp_vsimem):
     prec = geom_fld.GetCoordinatePrecision()
     assert prec.GetXYResolution() == pytest.approx(8.983152841195214e-09)
     assert prec.GetZResolution() == 1e-3
+
+
+###############################################################################
+# Test opening a file that has a featureType property, but is not JSONFG.
+
+
+def test_ogr_geojson_open_with_featureType_non_jsonfg():
+
+    ds = gdal.OpenEx("data/geojson/featuretype.json")
+    assert ds.GetDriver().GetDescription() == "GeoJSON"
