@@ -99,14 +99,16 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define MM_LayerType_Node 7     // Layer of Nodes (internal)
 #define MM_LayerType_Raster 8   // Layer of Raster Type
 
-#define MM_FIRST_NUMBER_OF_POINTS 10000
-#define MM_INCR_NUMBER_OF_POINTS 1000
-#define MM_FIRST_NUMBER_OF_ARCS 10000
-#define MM_INCR_NUMBER_OF_ARCS 1000
-#define MM_FIRST_NUMBER_OF_NODES 20000  // 2*MM_FIRST_NUMBER_OF_ARCS
-#define MM_INCR_NUMBER_OF_NODES 2000
-#define MM_FIRST_NUMBER_OF_POLYGONS 10000
-#define MM_INCR_NUMBER_OF_POLYGONS 1000
+// FIRST are used for a first allocation and
+// INCR for needed memory increase
+#define MM_FIRST_NUMBER_OF_POINTS 100000    // 3.5 Mb
+#define MM_INCR_NUMBER_OF_POINTS 100000     // 3.5 Mb
+#define MM_FIRST_NUMBER_OF_ARCS 100000      // 5.3 Mb
+#define MM_INCR_NUMBER_OF_ARCS 100000       // 5.3 Mb
+#define MM_FIRST_NUMBER_OF_NODES 200000     // 2*MM_FIRST_NUMBER_OF_ARCS 1.5 Mb
+#define MM_INCR_NUMBER_OF_NODES 200000      // 1.5 Mb
+#define MM_FIRST_NUMBER_OF_POLYGONS 100000  // 6 Mb
+#define MM_INCR_NUMBER_OF_POLYGONS 100000   // 6 Mb
 #define MM_FIRST_NUMBER_OF_VERTICES 10000
 #define MM_INCR_NUMBER_OF_VERTICES 1000
 
@@ -653,6 +655,7 @@ struct MiraMonFeature
     // Number of used elements in *pZCoord
     MM_N_VERTICES_TYPE nNumpZCoord;
     MM_COORD_TYPE *pZCoord;
+    MM_BOOLEAN bAllZHaveSameValue;
 
     // Records of the feature
     MM_EXT_DBF_N_MULTIPLE_RECORDS nNumMRecords;
