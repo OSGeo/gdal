@@ -135,8 +135,10 @@ class VSIMemHandle final : public VSIVirtualHandle
   public:
     std::shared_ptr<VSIMemFile> poFile = nullptr;
     vsi_l_offset m_nOffset = 0;
+    bool m_bReadAllowed = false;
     bool bUpdate = false;
     bool bEOF = false;
+    bool m_bError = false;
     bool bExtendFileAtNextWrite = false;
 
     VSIMemHandle() = default;
@@ -397,6 +399,12 @@ size_t VSIMemHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 {
     CPL_SHARED_LOCK oLock(poFile->m_oMutex);
 
+    if (!m_bReadAllowed)
+    {
+        m_bError = true;
+        return 0;
+    }
+
     size_t nBytesToRead = nSize * nCount;
     if (nBytesToRead == 0)
         return 0;
@@ -641,14 +649,15 @@ VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
     poHandle->poFile = poFile;
     poHandle->m_nOffset = 0;
     poHandle->bEOF = false;
-    poHandle->bUpdate = strstr(pszAccess, "w") || strstr(pszAccess, "+") ||
-                        strstr(pszAccess, "a");
+    poHandle->bUpdate = strchr(pszAccess, 'w') || strchr(pszAccess, '+') ||
+                        strchr(pszAccess, 'a');
+    poHandle->m_bReadAllowed = strchr(pszAccess, 'r') || strchr(pszAccess, '+');
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("VSIMEM", "Opening handle %p on %s: ref_count=%d", poHandle,
              pszFilename, static_cast<int>(poFile.use_count()));
 #endif
-    if (strstr(pszAccess, "a"))
+    if (strchr(pszAccess, 'a'))
     {
         CPL_SHARED_LOCK oLock(poFile->m_oMutex);
         poHandle->m_nOffset = poFile->nLength;
@@ -1062,6 +1071,7 @@ VSILFILE *VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
 
     poHandle->poFile = std::move(poFile);
     poHandle->bUpdate = true;
+    poHandle->m_bReadAllowed = true;
     return poHandle;
 }
 
