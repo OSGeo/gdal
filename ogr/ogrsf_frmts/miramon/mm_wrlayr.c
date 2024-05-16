@@ -7397,8 +7397,8 @@ static void MMDestroyMMDBFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     if (pMMAdmDB && pMMAdmDB->pMMBDXP)
     {
-        MM_ReleaseDBFHeader(pMMAdmDB->pMMBDXP);
-        hMiraMonLayer->pMMBDXP = pMMAdmDB->pMMBDXP = nullptr;
+        MM_ReleaseDBFHeader(&pMMAdmDB->pMMBDXP);
+        hMiraMonLayer->pMMBDXP = nullptr;
     }
     if (pMMAdmDB && pMMAdmDB->pRecList)
     {
