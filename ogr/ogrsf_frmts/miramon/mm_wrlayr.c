@@ -4261,7 +4261,7 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
             }
             else
             {
-                // One diferent altitude for each vertice
+                // One different altitude for each vertice
                 pZDesc[pArcTopHeader->nElemCount].nZCount = 1;
             }
 
