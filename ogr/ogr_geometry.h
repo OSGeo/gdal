@@ -581,6 +581,9 @@ class CPL_DLL OGRGeometry
     virtual OGRGeometry *
     Buffer(double dfDist, int nQuadSegs = 30) const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry *
+    BufferEx(double dfDistance,
+             CSLConstList papszOptions) const CPL_WARN_UNUSED_RESULT;
+    virtual OGRGeometry *
     Intersection(const OGRGeometry *) const CPL_WARN_UNUSED_RESULT;
     virtual OGRGeometry *
     Union(const OGRGeometry *) const CPL_WARN_UNUSED_RESULT;

@@ -38,6 +38,8 @@
 #include <cstring>
 #include <limits>
 #include <memory>
+#include <stdexcept>
+#include <string>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -4532,6 +4534,264 @@ OGRGeometryH OGR_G_Buffer(OGRGeometryH hTarget, double dfDist, int nQuadSegs)
 
     return OGRGeometry::ToHandle(
         OGRGeometry::FromHandle(hTarget)->Buffer(dfDist, nQuadSegs));
+}
+
+/**
+ * \brief Compute buffer of geometry.
+ *
+ * Builds a new geometry containing the buffer region around the geometry
+ * on which it is invoked.  The buffer is a polygon containing the region within
+ * the buffer distance of the original geometry.
+ *
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * The following options are supported. See the GEOS library for more detailed
+ * descriptions.
+ *
+ * <ul>
+ * <li>ENDCAP_STYLE=ROUND/FLAT/SQUARE</li>
+ * <li>JOIN_STYLE=ROUND/MITRE/BEVEL</li>
+ * <li>MITRE_LIMIT=double</li>
+ * <li>QUADRANT_SEGMENTS=double</li>
+ * <li>SINGLE_SIDED=YES/NO</li>
+ * </ul>
+ *
+ * This function is the same as the C function OGR_G_BufferEx().
+ *
+ * @param dfDist the buffer distance to be applied. Should be expressed into
+ *               the same unit as the coordinates of the geometry.
+ * @param papszOptions NULL terminated list of options (may be NULL)
+ *
+ * @return the newly created geometry, or NULL if an error occurs.
+ * @since GDAL 3.10
+ */
+
+OGRGeometry *
+OGRGeometry::BufferEx(UNUSED_IF_NO_GEOS double dfDist,
+                      UNUSED_IF_NO_GEOS CSLConstList papszOptions) const
+{
+#ifndef HAVE_GEOS
+
+    CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
+    return nullptr;
+
+#else
+    OGRGeometry *poOGRProduct = nullptr;
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+
+    auto hParams = GEOSBufferParams_create_r(hGEOSCtxt);
+    bool bParamsAreValid = true;
+
+    for (const auto &[pszParam, pszValue] : cpl::IterateNameValue(papszOptions))
+    {
+        if (EQUAL(pszParam, "ENDCAP_STYLE"))
+        {
+            int nStyle;
+            if (EQUAL(pszValue, "ROUND"))
+            {
+                nStyle = GEOSBUF_CAP_ROUND;
+            }
+            else if (EQUAL(pszValue, "FLAT"))
+            {
+                nStyle = GEOSBUF_CAP_FLAT;
+            }
+            else if (EQUAL(pszValue, "SQUARE"))
+            {
+                nStyle = GEOSBUF_CAP_SQUARE;
+            }
+            else
+            {
+                bParamsAreValid = false;
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Invalid value for ENDCAP_STYLE: %s", pszValue);
+                break;
+            }
+
+            if (!GEOSBufferParams_setEndCapStyle_r(hGEOSCtxt, hParams, nStyle))
+            {
+                bParamsAreValid = false;
+            }
+        }
+        else if (EQUAL(pszParam, "JOIN_STYLE"))
+        {
+            int nStyle;
+            if (EQUAL(pszValue, "ROUND"))
+            {
+                nStyle = GEOSBUF_JOIN_ROUND;
+            }
+            else if (EQUAL(pszValue, "MITRE"))
+            {
+                nStyle = GEOSBUF_JOIN_MITRE;
+            }
+            else if (EQUAL(pszValue, "BEVEL"))
+            {
+                nStyle = GEOSBUF_JOIN_BEVEL;
+            }
+            else
+            {
+                bParamsAreValid = false;
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Invalid value for JOIN_STYLE: %s", pszValue);
+                break;
+            }
+
+            if (!GEOSBufferParams_setJoinStyle_r(hGEOSCtxt, hParams, nStyle))
+            {
+                bParamsAreValid = false;
+                break;
+            }
+        }
+        else if (EQUAL(pszParam, "MITRE_LIMIT"))
+        {
+            try
+            {
+                std::size_t end;
+                double dfLimit = std::stod(pszValue, &end);
+
+                if (end != strlen(pszValue))
+                {
+                    throw std::invalid_argument("");
+                }
+
+                if (!GEOSBufferParams_setMitreLimit_r(hGEOSCtxt, hParams,
+                                                      dfLimit))
+                {
+                    bParamsAreValid = false;
+                    break;
+                }
+            }
+            catch (const std::invalid_argument &)
+            {
+                bParamsAreValid = false;
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for MITRE_LIMIT: %s", pszValue);
+            }
+            catch (const std::out_of_range &)
+            {
+                bParamsAreValid = false;
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for MITRE_LIMIT: %s", pszValue);
+            }
+        }
+        else if (EQUAL(pszParam, "QUADRANT_SEGMENTS"))
+        {
+            try
+            {
+                std::size_t end;
+                int nQuadSegs = std::stoi(pszValue, &end, 10);
+
+                if (end != strlen(pszValue))
+                {
+                    throw std::invalid_argument("");
+                }
+
+                if (!GEOSBufferParams_setQuadrantSegments_r(hGEOSCtxt, hParams,
+                                                            nQuadSegs))
+                {
+                    bParamsAreValid = false;
+                    break;
+                }
+            }
+            catch (const std::invalid_argument &)
+            {
+                bParamsAreValid = false;
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for QUADRANT_SEGMENTS: %s", pszValue);
+            }
+            catch (const std::out_of_range &)
+            {
+                bParamsAreValid = false;
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid value for QUADRANT_SEGMENTS: %s", pszValue);
+            }
+        }
+        else if (EQUAL(pszParam, "SINGLE_SIDED"))
+        {
+            bool bSingleSided = CPLTestBool(pszValue);
+
+            if (!GEOSBufferParams_setSingleSided_r(hGEOSCtxt, hParams,
+                                                   bSingleSided))
+            {
+                bParamsAreValid = false;
+                break;
+            }
+        }
+        else
+        {
+            bParamsAreValid = false;
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unsupported buffer option: %s", pszValue);
+        }
+    }
+
+    if (bParamsAreValid)
+    {
+        GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
+        if (hGeosGeom != nullptr)
+        {
+            GEOSGeom hGeosProduct =
+                GEOSBufferWithParams_r(hGEOSCtxt, hGeosGeom, hParams, dfDist);
+            GEOSGeom_destroy_r(hGEOSCtxt, hGeosGeom);
+
+            if (hGeosProduct != nullptr)
+            {
+                poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosProduct,
+                                                     this, nullptr);
+            }
+        }
+    }
+
+    GEOSBufferParams_destroy_r(hGEOSCtxt, hParams);
+    freeGEOSContext(hGEOSCtxt);
+    return poOGRProduct;
+#endif
+}
+
+/**
+ * \brief Compute buffer of geometry.
+ *
+ * Builds a new geometry containing the buffer region around the geometry
+ * on which it is invoked.  The buffer is a polygon containing the region within
+ * the buffer distance of the original geometry.
+ *
+ * This function is built on the GEOS library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS library, this function will always fail,
+ * issuing a CPLE_NotSupported error.
+ *
+ * The following options are supported. See the GEOS library for more detailed
+ * descriptions.
+ *
+ * <ul>
+ * <li>ENDCAP_STYLE=ROUND/FLAT/SQUARE</li>
+ * <li>JOIN_STYLE=ROUND/MITRE/BEVEL</li>
+ * <li>MITRE_LIMIT=double</li>
+ * <li>QUADRANT_SEGMENTS=double</li>
+ * <li>SINGLE_SIDED=YES/NO</li>
+ * </ul>
+ *
+ * This function is the same as the C++ method OGRGeometry::BufferEx().
+ *
+ * @param hTarget the geometry.
+ * @param dfDist the buffer distance to be applied. Should be expressed into
+ *               the same unit as the coordinates of the geometry.
+ * @param papszOptions NULL terminated list of options (may be NULL)
+ *
+ * @return the newly created geometry, or NULL if an error occurs.
+ * @since GDAL 3.10
+ */
+
+OGRGeometryH OGR_G_BufferEx(OGRGeometryH hTarget, double dfDist,
+                            CSLConstList papszOptions)
+
+{
+    VALIDATE_POINTER1(hTarget, "OGR_G_BufferEx", nullptr);
+
+    return OGRGeometry::ToHandle(
+        OGRGeometry::FromHandle(hTarget)->BufferEx(dfDist, papszOptions));
 }
 
 /************************************************************************/
