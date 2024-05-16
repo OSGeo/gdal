@@ -172,7 +172,6 @@ class Viewshed
     void setVisibility(int iPixel, double dfZ);
     double calcHeight(double dfZ, double dfZ2);
     bool readLine(int nLine, double *data);
-    bool adjustHeightInRange(int iPixel, int iLine, double &dfHeight);
     std::pair<int, int> adjustHeight(int iLine, int nX, double dfObserverHeight,
                                      double *const pdfNx);
     bool calcOutputExtent(int nX, int nY);

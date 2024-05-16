@@ -240,7 +240,7 @@ double CalcHeightAdjFactor(const GDALDataset *poDataset, double dfCurveCoeff)
     return 0;
 }
 
-double CalcHeightLine(int i, double Za, [[maybe_unused]] double Zo)
+double CalcHeightLine(int i, double Za)
 {
     if (i == 1)
         return Za;
@@ -248,17 +248,15 @@ double CalcHeightLine(int i, double Za, [[maybe_unused]] double Zo)
         return Za * i / (i - 1);
 }
 
-double CalcHeightDiagonal(int i, int j, double Za, double Zb,
-                          [[maybe_unused]] double Zo)
+double CalcHeightDiagonal(int i, int j, double Za, double Zb)
 {
     return (Za * i + Zb * j) / (i + j - 1);
 }
 
-double CalcHeightEdge(int i, int j, double Za, double Zb,
-                      [[maybe_unused]] double Zo)
+double CalcHeightEdge(int i, int j, double Za, double Zb)
 {
     if (i == j)
-        return CalcHeightLine(i, Za, Zo);
+        return CalcHeightLine(i, Za);
     else
         return (Za * i + Zb * (j - i)) / (j - 1);
 }
@@ -329,7 +327,6 @@ bool Viewshed::readLine(int nLine, double *data)
                  oOutExtent.xStart, nLine, oOutExtent.xSize(), 1);
         return false;
     }
-
     return true;
 }
 
@@ -418,20 +415,6 @@ double Viewshed::calcHeight(double dfDiagZ, double dfEdgeZ)
             break;
     }
     return dfHeight;
-}
-
-bool Viewshed::adjustHeightInRange(int iPixel, int iLine, double &dfHeight)
-{
-    if (dfMaxDistance2 == 0 && dfHeightAdjFactor == 0)
-        return true;
-
-    double dfX = adfTransform[1] * iPixel + adfTransform[2] * iLine;
-    double dfY = adfTransform[4] * iPixel + adfTransform[5] * iLine;
-    double dfR2 = dfX * dfX + dfY * dfY;
-
-    dfHeight -= dfHeightAdjFactor * dfR2;
-
-    return (dfMaxDistance2 == 0 || dfR2 <= dfMaxDistance2);
 }
 
 bool Viewshed::createOutputDataset()
@@ -599,8 +582,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         /* process left direction */
         for (int iPixel = nX - 2; iPixel >= iLeft; iPixel--)
         {
-            double dfZ = CalcHeightLine(nX - iPixel, vThisLineVal[iPixel + 1],
-                                        dfZObserver);
+            double dfZ = CalcHeightLine(nX - iPixel, vThisLineVal[iPixel + 1]);
 
             if (oOpts.outputMode != OutputMode::Normal)
             {
@@ -621,8 +603,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         /* process right direction */
         for (int iPixel = nX + 2; iPixel < iRight; iPixel++)
         {
-            double dfZ = CalcHeightLine(iPixel - nX, vThisLineVal[iPixel - 1],
-                                        dfZObserver);
+            double dfZ = CalcHeightLine(iPixel - nX, vThisLineVal[iPixel - 1]);
 
             if (oOpts.outputMode != OutputMode::Normal)
             {
@@ -677,8 +658,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         // Handle cell at nX if in range.
         if (iLeft < iRight)
         {
-            double dfZ =
-                CalcHeightLine(nY - iLine, vLastLineVal[nX], dfZObserver);
+            double dfZ = CalcHeightLine(nY - iLine, vLastLineVal[nX]);
 
             if (oOpts.outputMode != OutputMode::Normal)
             {
@@ -703,17 +683,16 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
             if (oOpts.cellMode != CellMode::Edge)
                 dfDiagZ = CalcHeightDiagonal(nX - iPixel, nY - iLine,
                                              vThisLineVal[iPixel + 1],
-                                             vLastLineVal[iPixel], dfZObserver);
+                                             vLastLineVal[iPixel]);
 
             if (oOpts.cellMode != CellMode::Diagonal)
-                dfEdgeZ =
-                    nX - iPixel >= nY - iLine
-                        ? CalcHeightEdge(nY - iLine, nX - iPixel,
-                                         vLastLineVal[iPixel + 1],
-                                         vThisLineVal[iPixel + 1], dfZObserver)
-                        : CalcHeightEdge(nX - iPixel, nY - iLine,
-                                         vLastLineVal[iPixel + 1],
-                                         vLastLineVal[iPixel], dfZObserver);
+                dfEdgeZ = nX - iPixel >= nY - iLine
+                              ? CalcHeightEdge(nY - iLine, nX - iPixel,
+                                               vLastLineVal[iPixel + 1],
+                                               vThisLineVal[iPixel + 1])
+                              : CalcHeightEdge(nX - iPixel, nY - iLine,
+                                               vLastLineVal[iPixel + 1],
+                                               vLastLineVal[iPixel]);
 
             double dfZ = calcHeight(dfDiagZ, dfEdgeZ);
 
@@ -740,16 +719,15 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
             if (oOpts.cellMode != CellMode::Edge)
                 dfDiagZ = CalcHeightDiagonal(iPixel - nX, nY - iLine,
                                              vThisLineVal[iPixel - 1],
-                                             vLastLineVal[iPixel], dfZObserver);
+                                             vLastLineVal[iPixel]);
             if (oOpts.cellMode != CellMode::Diagonal)
-                dfEdgeZ =
-                    iPixel - nX >= nY - iLine
-                        ? CalcHeightEdge(nY - iLine, iPixel - nX,
-                                         vLastLineVal[iPixel - 1],
-                                         vThisLineVal[iPixel - 1], dfZObserver)
-                        : CalcHeightEdge(iPixel - nX, nY - iLine,
-                                         vLastLineVal[iPixel - 1],
-                                         vLastLineVal[iPixel], dfZObserver);
+                dfEdgeZ = iPixel - nX >= nY - iLine
+                              ? CalcHeightEdge(nY - iLine, iPixel - nX,
+                                               vLastLineVal[iPixel - 1],
+                                               vThisLineVal[iPixel - 1])
+                              : CalcHeightEdge(iPixel - nX, nY - iLine,
+                                               vLastLineVal[iPixel - 1],
+                                               vLastLineVal[iPixel]);
 
             double dfZ = calcHeight(dfDiagZ, dfEdgeZ);
 
@@ -813,8 +791,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         /* set up initial point on the scanline */
         if (iLeft < iRight)
         {
-            double dfZ =
-                CalcHeightLine(iLine - nY, vLastLineVal[nX], dfZObserver);
+            double dfZ = CalcHeightLine(iLine - nY, vLastLineVal[nX]);
 
             if (oOpts.outputMode != OutputMode::Normal)
             {
@@ -839,17 +816,16 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
             if (oOpts.cellMode != CellMode::Edge)
                 dfDiagZ = CalcHeightDiagonal(nX - iPixel, iLine - nY,
                                              vThisLineVal[iPixel + 1],
-                                             vLastLineVal[iPixel], dfZObserver);
+                                             vLastLineVal[iPixel]);
 
             if (oOpts.cellMode != CellMode::Diagonal)
-                dfEdgeZ =
-                    nX - iPixel >= iLine - nY
-                        ? CalcHeightEdge(iLine - nY, nX - iPixel,
-                                         vLastLineVal[iPixel + 1],
-                                         vThisLineVal[iPixel + 1], dfZObserver)
-                        : CalcHeightEdge(nX - iPixel, iLine - nY,
-                                         vLastLineVal[iPixel + 1],
-                                         vLastLineVal[iPixel], dfZObserver);
+                dfEdgeZ = nX - iPixel >= iLine - nY
+                              ? CalcHeightEdge(iLine - nY, nX - iPixel,
+                                               vLastLineVal[iPixel + 1],
+                                               vThisLineVal[iPixel + 1])
+                              : CalcHeightEdge(nX - iPixel, iLine - nY,
+                                               vLastLineVal[iPixel + 1],
+                                               vLastLineVal[iPixel]);
 
             double dfZ = calcHeight(dfDiagZ, dfEdgeZ);
 
@@ -877,17 +853,16 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
             if (oOpts.cellMode != CellMode::Edge)
                 dfDiagZ = CalcHeightDiagonal(iPixel - nX, iLine - nY,
                                              vThisLineVal[iPixel - 1],
-                                             vLastLineVal[iPixel], dfZObserver);
+                                             vLastLineVal[iPixel]);
 
             if (oOpts.cellMode != CellMode::Diagonal)
-                dfEdgeZ =
-                    iPixel - nX >= iLine - nY
-                        ? CalcHeightEdge(iLine - nY, iPixel - nX,
-                                         vLastLineVal[iPixel - 1],
-                                         vThisLineVal[iPixel - 1], dfZObserver)
-                        : CalcHeightEdge(iPixel - nX, iLine - nY,
-                                         vLastLineVal[iPixel - 1],
-                                         vLastLineVal[iPixel], dfZObserver);
+                dfEdgeZ = iPixel - nX >= iLine - nY
+                              ? CalcHeightEdge(iLine - nY, iPixel - nX,
+                                               vLastLineVal[iPixel - 1],
+                                               vThisLineVal[iPixel - 1])
+                              : CalcHeightEdge(iPixel - nX, iLine - nY,
+                                               vLastLineVal[iPixel - 1],
+                                               vLastLineVal[iPixel]);
 
             double dfZ = calcHeight(dfDiagZ, dfEdgeZ);
 
