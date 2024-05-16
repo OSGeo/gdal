@@ -1173,7 +1173,16 @@ def test_ogr_miramon_write_basic_linestring(tmp_path):
     ds = None
 
 
-def test_ogr_miramon_write_basic_linestringZ(tmp_path):
+# There are to ways of writing/reading repeated Z's in a linestring file.
+# So let's test both ways (different Z's in each vertice or the same Z for all of them)
+@pytest.mark.parametrize(
+    "LinestringZ",
+    [
+        "LINESTRING Z (0 0 4,0 1 3,1 1 2)",
+        "LINESTRING Z (0 0 4,0 1 4,1 1 4)",
+    ],
+)
+def test_ogr_miramon_write_basic_linestringZ(tmp_path, LinestringZ):
 
     filename = str(tmp_path / "DataSetLINESTRING")
     ds = ogr.GetDriverByName("MiramonVector").CreateDataSource(filename)
@@ -1184,7 +1193,7 @@ def test_ogr_miramon_write_basic_linestringZ(tmp_path):
     f = ogr.Feature(lyr.GetLayerDefn())
     assign_common_attributes(f)
 
-    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING Z (0 0 4,0 1 3,1 1 2)"))
+    f.SetGeometry(ogr.CreateGeometryFromWkt(LinestringZ))
     lyr.CreateFeature(f)
     f = None
     ds = None
@@ -1198,7 +1207,7 @@ def test_ogr_miramon_write_basic_linestringZ(tmp_path):
     assert f["NODE_INI"] == [0, 0]
     assert f["NODE_FI"] == [1, 1]
     check_common_attributes(f)
-    assert f.GetGeometryRef().ExportToIsoWkt() == "LINESTRING Z (0 0 4,0 1 3,1 1 2)"
+    assert f.GetGeometryRef().ExportToIsoWkt() == LinestringZ
     ds = None
 
 
