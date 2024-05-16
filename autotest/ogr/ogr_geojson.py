@@ -5180,3 +5180,24 @@ def test_ogr_geojson_open_jsonfg_with_geojson():
             "data/jsonfg/crs_none.json", allowed_drivers=["GeoJSON", "JSONFG"]
         )
         assert ds.GetDriver().GetDescription() == "JSONFG"
+
+
+###############################################################################
+# Test force identifying a JSONFG file with the GeoJSON driver
+
+
+def test_ogr_geojson_identify_jsonfg_with_geojson():
+
+    drv = gdal.IdentifyDriverEx(
+        "data/jsonfg/crs_none.json", allowed_drivers=["GeoJSON"]
+    )
+    assert drv.GetDescription() == "GeoJSON"
+
+    if gdal.GetDriverByName("JSONFG"):
+        drv = gdal.IdentifyDriverEx("data/jsonfg/crs_none.json")
+        assert drv.GetDescription() == "JSONFG"
+
+        drv = gdal.IdentifyDriverEx(
+            "data/jsonfg/crs_none.json", allowed_drivers=["GeoJSON", "JSONFG"]
+        )
+        assert drv.GetDescription() == "JSONFG"
