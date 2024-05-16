@@ -882,7 +882,7 @@ int OGRGeoJSONDataSource::ReadFromService(GDALOpenInfo *poOpenInfo,
     /* -------------------------------------------------------------------- */
     if (EQUAL(pszSource, poOpenInfo->pszFilename) && osJSonFlavor_ == "GeoJSON")
     {
-        if (!GeoJSONIsObject(pszGeoData_))
+        if (!GeoJSONIsObject(pszGeoData_, poOpenInfo->papszAllowedDrivers))
         {
             if (ESRIJSONIsObject(pszGeoData_) ||
                 TopoJSONIsObject(pszGeoData_) ||
@@ -1003,7 +1003,7 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo *poOpenInfo,
         oOpenInfo.fpL = nullptr;
     }
 
-    if (!GeoJSONIsObject(pszGeoData_))
+    if (!GeoJSONIsObject(pszGeoData_, poOpenInfo->papszAllowedDrivers))
     {
         CPLDebug(pszJSonFlavor, "No valid %s data found in source '%s'",
                  pszJSonFlavor, pszName_);
