@@ -508,17 +508,24 @@ bool JSONFGIsObject(const char *pszText)
 
     const std::string osWithoutSpace = GetCompactJSon(pszText, strlen(pszText));
 
+    // In theory, conformsTo should be required, but let be lax...
     {
         const auto nPos = osWithoutSpace.find("\"conformsTo\":[");
         if (nPos != std::string::npos)
         {
-            if (osWithoutSpace.find("\"[ogc-json-fg-1-0.1:core]\"", nPos) !=
-                    std::string::npos ||
-                osWithoutSpace.find(
-                    "\"http://www.opengis.net/spec/json-fg-1/0.1\"", nPos) !=
-                    std::string::npos)
+            for (const char *pszVersion : {"0.1", "0.2", "0.3"})
             {
-                return true;
+                if (osWithoutSpace.find(
+                        CPLSPrintf("\"[ogc-json-fg-1-%s:core]\"", pszVersion),
+                        nPos) != std::string::npos ||
+                    osWithoutSpace.find(
+                        CPLSPrintf(
+                            "\"http://www.opengis.net/spec/json-fg-1/%s\"",
+                            pszVersion),
+                        nPos) != std::string::npos)
+                {
+                    return true;
+                }
             }
         }
     }
