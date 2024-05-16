@@ -565,21 +565,23 @@ bool JSONFGIsObject(const char *pszText)
 
             void StartObjectMember(const char *pszKey, size_t nLength) override
             {
-                if (!m_bFoundJSONFGFeatureType &&
-                    nLength == strlen("featureType") &&
+                if (nLength == strlen("featureType") &&
                     strcmp(pszKey, "featureType") == 0)
                 {
                     m_bFoundJSONFGFeatureType =
                         (m_osLevel == "{" ||   // At FeatureCollection level
                          m_osLevel == "{[{");  // At Feature level
+                    if (m_bFoundJSONFGFeatureType)
+                        StopParsing();
                 }
-                else if (!m_bFoundJSONFGCoordrefSys &&
-                         nLength == strlen("coordRefSys") &&
+                else if (nLength == strlen("coordRefSys") &&
                          strcmp(pszKey, "coordRefSys") == 0)
                 {
                     m_bFoundJSONFGCoordrefSys =
                         (m_osLevel == "{" ||   // At FeatureCollection level
                          m_osLevel == "{[{");  // At Feature level
+                    if (m_bFoundJSONFGCoordrefSys)
+                        StopParsing();
                 }
             }
 
