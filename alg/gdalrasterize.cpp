@@ -1129,14 +1129,24 @@ static CPLErr GDALRasterizeGeometriesInternal(
         const GDALDataType eType =
             GDALGetNonComplexDataType(poBand->GetRasterDataType());
 
-        const int nScanlineBytes = nBandCount * poDS->GetRasterXSize() *
-                                   GDALGetDataTypeSizeBytes(eType);
+        const uint64_t nScanlineBytes = static_cast<uint64_t>(nBandCount) *
+                                        poDS->GetRasterXSize() *
+                                        GDALGetDataTypeSizeBytes(eType);
 
-        int nYChunkSize = 0;
-        const char *pszYChunkSize =
-            CSLFetchNameValue(papszOptions, "CHUNKYSIZE");
-        if (pszYChunkSize == nullptr ||
-            ((nYChunkSize = atoi(pszYChunkSize))) == 0)
+#if SIZEOF_VOIDP < 8
+        // Only on 32-bit systems and in pathological cases
+        if (nScanlineBytes > std::numeric_limits<size_t>::max())
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Too big raster");
+            if (bNeedToFreeTransformer)
+                GDALDestroyTransformer(pTransformArg);
+            return CE_Failure;
+        }
+#endif
+
+        int nYChunkSize =
+            atoi(CSLFetchNameValueDef(papszOptions, "CHUNKYSIZE", "0"));
+        if (nYChunkSize <= 0)
         {
             const GIntBig nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
             const int knIntMax = std::numeric_limits<int>::max();
@@ -1154,8 +1164,8 @@ static CPLErr GDALRasterizeGeometriesInternal(
                  (poDS->GetRasterYSize() + nYChunkSize - 1) / nYChunkSize,
                  nYChunkSize);
 
-        pabyChunkBuf = static_cast<unsigned char *>(
-            VSI_MALLOC2_VERBOSE(nYChunkSize, nScanlineBytes));
+        pabyChunkBuf = static_cast<unsigned char *>(VSI_MALLOC2_VERBOSE(
+            nYChunkSize, static_cast<size_t>(nScanlineBytes)));
         if (pabyChunkBuf == nullptr)
         {
             if (bNeedToFreeTransformer)
@@ -1192,10 +1202,13 @@ static CPLErr GDALRasterizeGeometriesInternal(
                     OGRGeometry::FromHandle(pahGeometries[iShape]),
                     eBurnValueType,
                     padfGeomBurnValues
-                        ? padfGeomBurnValues + iShape * nBandCount
+                        ? padfGeomBurnValues +
+                              static_cast<size_t>(iShape) * nBandCount
                         : nullptr,
-                    panGeomBurnValues ? panGeomBurnValues + iShape * nBandCount
-                                      : nullptr,
+                    panGeomBurnValues
+                        ? panGeomBurnValues +
+                              static_cast<size_t>(iShape) * nBandCount
+                        : nullptr,
                     eBurnValueSource, eMergeAlg, pfnTransformer, pTransformArg);
             }
 
@@ -1244,17 +1257,29 @@ static CPLErr GDALRasterizeGeometriesInternal(
             std::min(static_cast<GIntBig>(knIntMax / nPixelSize / nYBlockSize /
                                           nXBlockSize),
                      nbMaxBlocks64));
-        const int nbBlocsX = std::max(
+        const int nbBlocksX = std::max(
             1,
             std::min(static_cast<int>(sqrt(static_cast<double>(nbMaxBlocks))),
                      nXBlocks));
-        const int nbBlocsY =
-            std::max(1, std::min(nbMaxBlocks / nbBlocsX, nYBlocks));
+        const int nbBlocksY =
+            std::max(1, std::min(nbMaxBlocks / nbBlocksX, nYBlocks));
 
-        const int nScanblocks = nXBlockSize * nbBlocsX * nYBlockSize * nbBlocsY;
+        const uint64_t nChunkSize = static_cast<uint64_t>(nXBlockSize) *
+                                    nbBlocksX * nYBlockSize * nbBlocksY;
+
+#if SIZEOF_VOIDP < 8
+        // Only on 32-bit systems and in pathological cases
+        if (nChunkSize > std::numeric_limits<size_t>::max())
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Too big raster");
+            if (bNeedToFreeTransformer)
+                GDALDestroyTransformer(pTransformArg);
+            return CE_Failure;
+        }
+#endif
 
         pabyChunkBuf = static_cast<unsigned char *>(
-            VSI_MALLOC2_VERBOSE(nPixelSize, nScanblocks));
+            VSI_MALLOC2_VERBOSE(nPixelSize, static_cast<size_t>(nChunkSize)));
         if (pabyChunkBuf == nullptr)
         {
             if (bNeedToFreeTransformer)
@@ -1262,8 +1287,11 @@ static CPLErr GDALRasterizeGeometriesInternal(
             return CE_Failure;
         }
 
-        int *panSuccessTransform =
-            static_cast<int *>(CPLCalloc(sizeof(int), 2));
+        OGREnvelope sRasterEnvelope;
+        sRasterEnvelope.MinX = 0;
+        sRasterEnvelope.MinY = 0;
+        sRasterEnvelope.MaxX = poDS->GetRasterXSize();
+        sRasterEnvelope.MaxY = poDS->GetRasterYSize();
 
         /* --------------------------------------------------------------------
          */
@@ -1278,47 +1306,57 @@ static CPLErr GDALRasterizeGeometriesInternal(
                 OGRGeometry::FromHandle(pahGeometries[iShape]);
             if (poGeometry == nullptr || poGeometry->IsEmpty())
                 continue;
-            /* --------------------------------------------------------------------
-             */
-            /*      get the envelope of the geometry and transform it to pixels
-             * coo */
-            /* --------------------------------------------------------------------
-             */
-            OGREnvelope psGeomEnvelope;
-            poGeometry->getEnvelope(&psGeomEnvelope);
+            /* ------------------------------------------------------------ */
+            /*      get the envelope of the geometry and transform it to    */
+            /*      pixels coordinates.                                     */
+            /* ------------------------------------------------------------ */
+            OGREnvelope sGeomEnvelope;
+            poGeometry->getEnvelope(&sGeomEnvelope);
             if (pfnTransformer != nullptr)
             {
+                int anSuccessTransform[2] = {0};
                 double apCorners[4];
-                apCorners[0] = psGeomEnvelope.MinX;
-                apCorners[1] = psGeomEnvelope.MaxX;
-                apCorners[2] = psGeomEnvelope.MinY;
-                apCorners[3] = psGeomEnvelope.MaxY;
-                // TODO: need to add all appropriate error checking
-                pfnTransformer(pTransformArg, FALSE, 2, &(apCorners[0]),
-                               &(apCorners[2]), nullptr, panSuccessTransform);
-                psGeomEnvelope.MinX = std::min(apCorners[0], apCorners[1]);
-                psGeomEnvelope.MaxX = std::max(apCorners[0], apCorners[1]);
-                psGeomEnvelope.MinY = std::min(apCorners[2], apCorners[3]);
-                psGeomEnvelope.MaxY = std::max(apCorners[2], apCorners[3]);
+                apCorners[0] = sGeomEnvelope.MinX;
+                apCorners[1] = sGeomEnvelope.MaxX;
+                apCorners[2] = sGeomEnvelope.MinY;
+                apCorners[3] = sGeomEnvelope.MaxY;
+
+                if (!pfnTransformer(pTransformArg, FALSE, 2, &(apCorners[0]),
+                                    &(apCorners[2]), nullptr,
+                                    anSuccessTransform) ||
+                    !anSuccessTransform[0] || !anSuccessTransform[1])
+                {
+                    continue;
+                }
+                sGeomEnvelope.MinX = std::min(apCorners[0], apCorners[1]);
+                sGeomEnvelope.MaxX = std::max(apCorners[0], apCorners[1]);
+                sGeomEnvelope.MinY = std::min(apCorners[2], apCorners[3]);
+                sGeomEnvelope.MaxY = std::max(apCorners[2], apCorners[3]);
             }
+            if (!sGeomEnvelope.Intersects(sRasterEnvelope))
+                continue;
+            sGeomEnvelope.Intersect(sRasterEnvelope);
+            CPLAssert(sGeomEnvelope.MinX >= 0 &&
+                      sGeomEnvelope.MinX <= poDS->GetRasterXSize());
+            CPLAssert(sGeomEnvelope.MinY >= 0 &&
+                      sGeomEnvelope.MinY <= poDS->GetRasterYSize());
+            CPLAssert(sGeomEnvelope.MaxX >= 0 &&
+                      sGeomEnvelope.MaxX <= poDS->GetRasterXSize());
+            CPLAssert(sGeomEnvelope.MaxY >= 0 &&
+                      sGeomEnvelope.MaxY <= poDS->GetRasterYSize());
+            const int minBlockX = int(sGeomEnvelope.MinX) / nXBlockSize;
+            const int minBlockY = int(sGeomEnvelope.MinY) / nYBlockSize;
+            const int maxBlockX = int(sGeomEnvelope.MaxX + 1) / nXBlockSize;
+            const int maxBlockY = int(sGeomEnvelope.MaxY + 1) / nYBlockSize;
 
-            int minBlockX = std::max(0, int(psGeomEnvelope.MinX) / nXBlockSize);
-            int minBlockY = std::max(0, int(psGeomEnvelope.MinY) / nYBlockSize);
-            int maxBlockX = std::min(
-                nXBlocks - 1, int(psGeomEnvelope.MaxX + 1) / nXBlockSize);
-            int maxBlockY = std::min(
-                nYBlocks - 1, int(psGeomEnvelope.MaxY + 1) / nYBlockSize);
+            /* ------------------------------------------------------------ */
+            /*      loop over the blocks concerned by the geometry          */
+            /*      (by packs of nbBlocksX x nbBlocksY)                     */
+            /* ------------------------------------------------------------ */
 
-            /* --------------------------------------------------------------------
-             */
-            /*      loop over the blocks concerned by the geometry */
-            /*      (by packs of nbBlocsX x nbBlocsY) */
-            /* --------------------------------------------------------------------
-             */
-
-            for (int xB = minBlockX; xB <= maxBlockX; xB += nbBlocsX)
+            for (int xB = minBlockX; xB <= maxBlockX; xB += nbBlocksX)
             {
-                for (int yB = minBlockY; yB <= maxBlockY; yB += nbBlocsY)
+                for (int yB = minBlockY; yB <= maxBlockY; yB += nbBlocksY)
                 {
 
                     /* --------------------------------------------------------------------
@@ -1326,8 +1364,8 @@ static CPLErr GDALRasterizeGeometriesInternal(
                     /*      ensure to stay in the image */
                     /* --------------------------------------------------------------------
                      */
-                    int remSBX = std::min(maxBlockX - xB + 1, nbBlocsX);
-                    int remSBY = std::min(maxBlockY - yB + 1, nbBlocsY);
+                    int remSBX = std::min(maxBlockX - xB + 1, nbBlocksX);
+                    int remSBY = std::min(maxBlockY - yB + 1, nbBlocksY);
                     int nThisXChunkSize = nXBlockSize * remSBX;
                     int nThisYChunkSize = nYBlockSize * remSBY;
                     if (xB * nXBlockSize + nThisXChunkSize >
@@ -1359,10 +1397,12 @@ static CPLErr GDALRasterizeGeometriesInternal(
                         OGRGeometry::FromHandle(pahGeometries[iShape]),
                         eBurnValueType,
                         padfGeomBurnValues
-                            ? padfGeomBurnValues + iShape * nBandCount
+                            ? padfGeomBurnValues +
+                                  static_cast<size_t>(iShape) * nBandCount
                             : nullptr,
                         panGeomBurnValues
-                            ? panGeomBurnValues + iShape * nBandCount
+                            ? panGeomBurnValues +
+                                  static_cast<size_t>(iShape) * nBandCount
                             : nullptr,
                         eBurnValueSource, eMergeAlg, pfnTransformer,
                         pTransformArg);
@@ -1384,8 +1424,6 @@ static CPLErr GDALRasterizeGeometriesInternal(
                 eErr = CE_Failure;
             }
         }
-
-        CPLFree(panSuccessTransform);
 
         if (!pfnProgress(1., "", pProgressArg))
         {
