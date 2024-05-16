@@ -261,7 +261,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
 
   protected:
     VSICurlStreamingFSHandler *m_poFS = nullptr;
-    char **m_papszHTTPOptions = nullptr;
+    CPLStringList m_aosHTTPOptions{};
+    const CPLHTTPRetryParameters m_oRetryParameters;
 
   private:
     char *m_pszURL = nullptr;
@@ -377,9 +378,9 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
 
 VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler *poFS,
                                                const char *pszURL)
-    : m_poFS(poFS), m_papszHTTPOptions(CPLHTTPGetOptionsFromEnv(
+    : m_poFS(poFS), m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(
                         (poFS->GetFSPrefix() + pszURL).c_str())),
-      m_pszURL(CPLStrdup(pszURL))
+      m_oRetryParameters(m_aosHTTPOptions), m_pszURL(CPLStrdup(pszURL))
 {
     FileProp cachedFileProp;
     poFS->GetCachedFileProp(pszURL, cachedFileProp);
@@ -406,7 +407,6 @@ VSICurlStreamingHandle::~VSICurlStreamingHandle()
     StopDownload();
 
     CPLFree(m_pszURL);
-    CSLDestroy(m_papszHTTPOptions);
 
     CPLFree(pCachedData);
 
@@ -573,7 +573,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     CURL *hLocalHandle = curl_easy_init();
 
     struct curl_slist *headers =
-        VSICurlSetOptions(hLocalHandle, m_pszURL, m_papszHTTPOptions);
+        VSICurlSetOptions(hLocalHandle, m_pszURL, m_aosHTTPOptions.List());
 
     VSICURLStreamingInitWriteFuncStructStreaming(&sWriteFuncHeaderData);
 
@@ -1010,7 +1010,7 @@ void VSICurlStreamingHandle::DownloadInThread()
     CURL *hCurlHandle = curl_easy_init();
 
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, m_pszURL, m_papszHTTPOptions);
+        VSICurlSetOptions(hCurlHandle, m_pszURL, m_aosHTTPOptions.List());
     headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
@@ -1192,8 +1192,7 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
     if (nBufferRequestSize == 0)
         return 0;
 
-    int nRetryCount = 0;
-    double dfRetryDelay = 0;
+    CPLHTTPRetryContext oRetryContext(m_oRetryParameters);
 
 retry:
     GByte *pabyBuffer = static_cast<GByte *>(pBuffer);
@@ -1421,30 +1420,21 @@ retry:
 
     if (bErrorOccurred)
     {
-        const int nMaxRetry = atoi(CPLGetConfigOption(
-            "GDAL_HTTP_MAX_RETRY", CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
-        // coverity[tainted_data]
-        if (dfRetryDelay == 0)
-            dfRetryDelay = CPLAtof(
-                CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
-                                   CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-
         // Look if we should attempt a retry
         AcquireMutex();
-        const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-            static_cast<int>(nHTTPCode), dfRetryDelay, nullptr, m_szCurlErrBuf);
+        const bool bRetry = oRetryContext.CanRetry(static_cast<int>(nHTTPCode),
+                                                   nullptr, m_szCurlErrBuf);
         ReleaseMutex();
-        if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+        if (bRetry)
         {
             StopDownload();
 
             CPLError(CE_Warning, CPLE_AppDefined,
                      "HTTP error code: %d - %s. "
                      "Retrying again in %.1f secs",
-                     static_cast<int>(nHTTPCode), m_pszURL, dfRetryDelay);
-            CPLSleep(dfRetryDelay);
-            dfRetryDelay = dfNewRetryDelay;
-            nRetryCount++;
+                     static_cast<int>(nHTTPCode), m_pszURL,
+                     oRetryContext.GetCurrentDelay());
+            CPLSleep(oRetryContext.GetCurrentDelay());
             curOffset = curOffsetOri;
             goto retry;
         }

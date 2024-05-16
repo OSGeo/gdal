@@ -751,14 +751,14 @@ def test_vsiaz_write_blockblob_retry():
 
     gdal.VSICurlClearCache()
 
-    # Test creation of BlockBob
-    f = gdal.VSIFOpenL("/vsiaz/test_copy/file.bin", "wb")
-    assert f is not None
-
     with gdaltest.config_options(
         {"GDAL_HTTP_MAX_RETRY": "2", "GDAL_HTTP_RETRY_DELAY": "0.01"},
         thread_local=False,
     ):
+
+        # Test creation of BlockBob
+        f = gdal.VSIFOpenL("/vsiaz/test_copy/file.bin", "wb")
+        assert f is not None
 
         handler = webserver.SequentialHandler()
 

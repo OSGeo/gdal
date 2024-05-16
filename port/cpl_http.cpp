@@ -554,23 +554,19 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] = {
 
 char **CPLHTTPGetOptionsFromEnv(const char *pszFilename)
 {
-    char **papszOptions = nullptr;
-    for (size_t i = 0; i < CPL_ARRAYSIZE(asAssocEnvVarOptionName); ++i)
+    CPLStringList aosOptions;
+    for (const auto &sTuple : asAssocEnvVarOptionName)
     {
         const char *pszVal =
-            pszFilename
-                ? VSIGetPathSpecificOption(pszFilename,
-                                           asAssocEnvVarOptionName[i].pszEnvVar,
-                                           nullptr)
-                : CPLGetConfigOption(asAssocEnvVarOptionName[i].pszEnvVar,
-                                     nullptr);
+            pszFilename ? VSIGetPathSpecificOption(pszFilename,
+                                                   sTuple.pszEnvVar, nullptr)
+                        : CPLGetConfigOption(sTuple.pszEnvVar, nullptr);
         if (pszVal != nullptr)
         {
-            papszOptions = CSLSetNameValue(
-                papszOptions, asAssocEnvVarOptionName[i].pszOptionName, pszVal);
+            aosOptions.AddNameValue(sTuple.pszOptionName, pszVal);
         }
     }
-    return papszOptions;
+    return aosOptions.StealList();
 }
 
 /************************************************************************/
@@ -592,9 +588,10 @@ char **CPLHTTPGetOptionsFromEnv(const char *pszFilename)
  * HTTP codes (e.g. "400,500") that are accepted for retry.
  * @return the new delay, or 0 if no retry should be attempted.
  */
-double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay,
-                               const char *pszErrBuf, const char *pszCurlError,
-                               const char *pszRetriableCodes)
+static double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay,
+                                      const char *pszErrBuf,
+                                      const char *pszCurlError,
+                                      const char *pszRetriableCodes)
 {
     bool bRetry = false;
     if (pszRetriableCodes && pszRetriableCodes[0])
@@ -636,6 +633,88 @@ double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay,
         return 0;
     }
 }
+
+/*! @cond Doxygen_Suppress */
+
+/************************************************************************/
+/*                      CPLHTTPRetryParameters()                        */
+/************************************************************************/
+
+/** Constructs a CPLHTTPRetryParameters instance from configuration
+ * options or path-specific options.
+ *
+ * @param aosHTTPOptions HTTP options returned by CPLHTTPGetOptionsFromEnv()
+ */
+CPLHTTPRetryParameters::CPLHTTPRetryParameters(
+    const CPLStringList &aosHTTPOptions)
+    : nMaxRetry(atoi(aosHTTPOptions.FetchNameValueDef(
+          "MAX_RETRY", CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)))),
+      dfInitialDelay(CPLAtof(aosHTTPOptions.FetchNameValueDef(
+          "RETRY_DELAY", CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)))),
+      osRetryCodes(aosHTTPOptions.FetchNameValueDef("RETRY_CODES", ""))
+{
+}
+
+/************************************************************************/
+/*                        CPLHTTPRetryContext()                         */
+/************************************************************************/
+
+/** Constructor */
+CPLHTTPRetryContext::CPLHTTPRetryContext(const CPLHTTPRetryParameters &oParams)
+    : m_oParameters(oParams), m_dfNextDelay(oParams.dfInitialDelay)
+{
+}
+
+/************************************************************************/
+/*                     CPLHTTPRetryContext::CanRetry()                  */
+/************************************************************************/
+
+/** Returns whether we can attempt a new retry, based on the retry counter,
+ * and increment that counter.
+ */
+bool CPLHTTPRetryContext::CanRetry()
+{
+    if (m_nRetryCount >= m_oParameters.nMaxRetry)
+        return false;
+    m_nRetryCount++;
+    return true;
+}
+
+/** Returns whether we can attempt a new retry, based on the retry counter,
+ * the response code, payload and curl error buffers.
+ *
+ * If successful, the retry counter is incremented, and GetCurrentDelay()
+ * returns the delay to apply with CPLSleep().
+ */
+bool CPLHTTPRetryContext::CanRetry(int response_code, const char *pszErrBuf,
+                                   const char *pszCurlError)
+{
+    if (m_nRetryCount >= m_oParameters.nMaxRetry)
+        return false;
+    m_dfCurDelay = m_dfNextDelay;
+    m_dfNextDelay = CPLHTTPGetNewRetryDelay(response_code, m_dfNextDelay,
+                                            pszErrBuf, pszCurlError,
+                                            m_oParameters.osRetryCodes.c_str());
+    if (m_dfNextDelay == 0.0)
+        return false;
+    m_nRetryCount++;
+    return true;
+}
+
+/************************************************************************/
+/*                CPLHTTPRetryContext::GetCurrentDelay()                */
+/************************************************************************/
+
+/** Returns the delay to apply. Only valid after a successful call to CanRetry() */
+double CPLHTTPRetryContext::GetCurrentDelay() const
+{
+    if (m_nRetryCount == 0)
+        CPLDebug("CPL",
+                 "GetCurrentDelay() should only be called after CanRetry()");
+    return m_dfCurDelay;
+}
+
+/*! @endcond Doxygen_Suppress */
 
 #ifdef HAVE_CURL
 
