@@ -4272,7 +4272,7 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
                 pLastArcHeader =
                     pMMArc->pArcHeader + pArcTopHeader->nElemCount - 1;
 
-                if (hMMFeature->bAllZHaveSameValue)
+                if (pZDesc[pArcTopHeader->nElemCount - 1].nZCount < 0)
                 {
                     pZDesc[pArcTopHeader->nElemCount].nOffsetZ =
                         pZDesc[pArcTopHeader->nElemCount - 1].nOffsetZ +
