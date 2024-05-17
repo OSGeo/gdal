@@ -260,7 +260,6 @@ GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
 
     heif_context_free(ctx);
 
-    GDALPamDataset *poDS = (GDALPamDataset *)GDALOpen(pszFilename, GA_ReadOnly);
-    return poDS;
+    return GDALDataset::Open(pszFilename);
 }
 #endif
