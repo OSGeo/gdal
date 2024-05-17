@@ -418,7 +418,9 @@ bool GDALArgumentParser::is_used_globally(const std::string &name)
         // convert subparser name to lower case
         std::string subparser_name = subparser->m_program_name;
         std::transform(subparser_name.begin(), subparser_name.end(),
-                       subparser_name.begin(), ::tolower);
+                       subparser_name.begin(),
+                       [](int c) -> char
+                       { return static_cast<char>(::tolower(c)); });
         if (m_subparser_used.find(subparser_name) != m_subparser_used.end())
         {
             if (subparser->is_used_globally(name))
@@ -496,7 +498,9 @@ void GDALArgumentParser::parse_args(const CPLStringList &aosArgs)
                     std::string current_argument_lower = current_argument;
                     std::transform(current_argument_lower.begin(),
                                    current_argument_lower.end(),
-                                   current_argument_lower.begin(), ::tolower);
+                                   current_argument_lower.begin(),
+                                   [](int c) -> char
+                                   { return static_cast<char>(::tolower(c)); });
                     m_subparser_used[current_argument_lower] = true;
                     return subparser->parse_args(unprocessed_arguments);
                 }
