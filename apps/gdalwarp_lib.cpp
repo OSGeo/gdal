@@ -5731,7 +5731,7 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
                 else
                     psOptions->dfWarpMemoryLimit = CPLAtofM(s.c_str());
             })
-        .help(_("Error threshold."));
+        .help(_("Set max warp memory."));
 
     argParser->add_argument("-srcnodata")
         .metavar("<value>[ <value>...]")
