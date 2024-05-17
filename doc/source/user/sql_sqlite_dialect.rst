@@ -110,7 +110,8 @@ they are not strictly needed.
     SELECT "p"."geometry", "p"."FROM", "p"."3D" FROM "poly" p
 
 When SQL statements are used in the command shell and the statement itself is put
-between double quotes, the internal double quotes must be escaped with \\
+between double quotes, the internal double quotes must be escaped with \\.
+Windows example:
 
 .. code-block:: shell
 
