@@ -116,12 +116,6 @@ between double quotes, the internal double quotes must be escaped with \\
 
     ogrinfo p.shp -sql "SELECT geometry \"FROM\", \"3D\" FROM p"
 
-If single quotes are available in the shell, one can also use just
-
-.. code-block:: shell
-
-    ogrinfo p.shp -sql 'SELECT geometry "FROM", "3D" FROM p'
-
 Geometry field
 ++++++++++++++
 
