@@ -113,9 +113,34 @@ class GDALArgumentParser : public ArgumentParser
                                       bool *store_into = nullptr,
                                       const std::string &help = "");
 
+    /**
+     * Create and add a subparser to the argument parser, keeping ownership
+     * @param description   Subparser description
+     * @param bForBinary    True if the subparser is for a binary utility, false for a library
+     * @return              A pointer to the created subparser
+     */
+    GDALArgumentParser *add_subparser(const std::string &description,
+                                      bool bForBinary);
+
+    /**
+     * Get a subparser by name (case insensitive)
+     * @param name          Subparser name
+     * @return              The subparser or nullptr if not found
+     */
+    GDALArgumentParser *get_subparser(const std::string &name);
+
+    /**
+     * Return true if the argument is used in the command line (also checking subparsers, if any)
+     * @param name      Argument name
+     * @return          True if the argument is used, false if it is not used.
+     * @note            Opposite to the is_used() function this is case insensitive, also checks subparsers and never throws
+     */
+    bool is_used_globally(const std::string &name);
+
   private:
     std::map<std::string, ArgumentParser::argument_it>::iterator
     find_argument(const std::string &name);
+    std::vector<std::unique_ptr<GDALArgumentParser>> aoSubparsers;
 };
 
 #endif /* GDALARGUMENTPARSER_H */

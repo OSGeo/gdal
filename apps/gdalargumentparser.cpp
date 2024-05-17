@@ -381,6 +381,58 @@ Argument &GDALArgumentParser::add_inverted_logic_flag(const std::string &name,
         .help(help);
 }
 
+GDALArgumentParser *
+GDALArgumentParser::add_subparser(const std::string &description,
+                                  bool bForBinary)
+{
+    auto parser = std::make_unique<GDALArgumentParser>(description, bForBinary);
+    ArgumentParser::add_subparser(*parser.get());
+    aoSubparsers.emplace_back(std::move(parser));
+    return aoSubparsers.back().get();
+}
+
+GDALArgumentParser *GDALArgumentParser::get_subparser(const std::string &name)
+{
+    auto it = std::find_if(
+        aoSubparsers.begin(), aoSubparsers.end(),
+        [&name](const auto &parser)
+        { return EQUAL(name.c_str(), parser->m_program_name.c_str()); });
+    return it != aoSubparsers.end() ? it->get() : nullptr;
+}
+
+bool GDALArgumentParser::is_used_globally(const std::string &name)
+{
+    try
+    {
+        return ArgumentParser::is_used(name);
+    }
+    catch (std::logic_error &)
+    {
+        // ignore
+    }
+
+    // Check if it is used by a subparser
+    // loop through subparsers
+    for (const auto &subparser : aoSubparsers)
+    {
+        // convert subparser name to lower case
+        std::string subparser_name = subparser->m_program_name;
+        std::transform(subparser_name.begin(), subparser_name.end(),
+                       subparser_name.begin(),
+                       [](int c) -> char
+                       { return static_cast<char>(::tolower(c)); });
+        if (m_subparser_used.find(subparser_name) != m_subparser_used.end())
+        {
+            if (subparser->is_used_globally(name))
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 /************************************************************************/
 /*                           parse_args()                               */
 /************************************************************************/
@@ -431,6 +483,28 @@ void GDALArgumentParser::parse_args(const CPLStringList &aosArgs)
             }
             else
             {
+                // Check sub-parsers
+                auto subparser = get_subparser(current_argument);
+                if (subparser)
+                {
+
+                    // build list of remaining args
+                    const auto unprocessed_arguments =
+                        CPLStringList(std::vector<std::string>(it, end));
+
+                    // invoke subparser
+                    m_is_parsed = true;
+                    // convert to lower case
+                    std::string current_argument_lower = current_argument;
+                    std::transform(current_argument_lower.begin(),
+                                   current_argument_lower.end(),
+                                   current_argument_lower.begin(),
+                                   [](int c) -> char
+                                   { return static_cast<char>(::tolower(c)); });
+                    m_subparser_used[current_argument_lower] = true;
+                    return subparser->parse_args(unprocessed_arguments);
+                }
+
                 if (m_positional_arguments.empty())
                 {
                     throw std::runtime_error(

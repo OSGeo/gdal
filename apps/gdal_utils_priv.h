@@ -58,11 +58,11 @@ struct GDALInfoOptionsForBinary
 
 struct GDALDEMProcessingOptionsForBinary
 {
-    char *pszProcessing;
-    char *pszSrcFilename;
-    char *pszColorFilename;
-    char *pszDstFilename;
-    int bQuiet;
+    std::string osProcessing;
+    std::string osSrcFilename;
+    std::string osColorFilename;
+    std::string osDstFilename;
+    bool bQuiet = false;
 };
 
 CPL_C_END
@@ -250,6 +250,14 @@ std::string CPL_DLL GDALBuildVRTGetParserUsage();
 std::string CPL_DLL GDALTileIndexAppGetParserUsage();
 
 std::string CPL_DLL GDALFootprintAppGetParserUsage();
+
+/**
+ * Returns the gdaldem usage help string
+ * @param osProcessingMode          Processing mode (subparser name)
+ * @return                          gdaldem usage help string
+ */
+std::string CPL_DLL
+GDALDEMAppGetParserUsage(const std::string &osProcessingMode);
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
