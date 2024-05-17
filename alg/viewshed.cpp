@@ -218,6 +218,11 @@ namespace gdal
 namespace
 {
 
+const int Right = 0x01;
+const int Left = 0x02;
+const int Up = 0x04;
+const int Down = 0X08;
+
 // Calculate the height adjustment factor.
 double CalcHeightAdjFactor(const GDALDataset *poDataset, double dfCurveCoeff)
 {
@@ -240,6 +245,8 @@ double CalcHeightAdjFactor(const GDALDataset *poDataset, double dfCurveCoeff)
     return 0;
 }
 
+// Calculate the height at i units along a line through the origin given the height
+// at i - 1 units along the line.
 double CalcHeightLine(int i, double Za)
 {
     if (i == 1)
@@ -248,6 +255,10 @@ double CalcHeightLine(int i, double Za)
         return Za * i / (i - 1);
 }
 
+// Calulate the height Zc of a point (i, j, Zc) given a line through the origin (0, 0, 0)
+// and passing through the line connecting (i - 1, j, Za) and (i, j - 1, Zb).
+// In other words, the origin and the two points form a plane and we're calculating Zc
+// of the point (i, j Zc), also on the plane.
 double CalcHeightDiagonal(int i, int j, double Za, double Zb)
 {
     return (Za * i + Zb * j) / (i + j - 1);
@@ -480,6 +491,76 @@ bool Viewshed::allocate()
     return true;
 }
 
+void Viewshed::processHalfLine(int nX, int nYOffset, int iStart, int iEnd,
+                               int iDir)
+{
+    // We always go from the center out to the left or right.
+    double *pThis = vThisLineVal.data() + iStart;
+    double *pLast = vLastLineVal.data() + iStart;
+
+    if (iDir & Up)
+        nYOffset = -nYOffset;
+
+    // Calculate the visible height at iPixel. We either use edge mode or diagonal mode
+    // or we take the min/max of both.
+    auto calcZ = [&](int iPixel)
+    {
+        double dfDiagZ = 0;
+        double dfEdgeZ = 0;
+        int nXOffset = iPixel - nX;
+        int iPrev = 1;
+        if (iDir & Left)
+        {
+            nXOffset = -nXOffset;
+            iPrev = -iPrev;
+        }
+
+        if (oOpts.cellMode != CellMode::Edge)  // Diagonal, Min, Max
+            dfDiagZ = CalcHeightDiagonal(nXOffset, nYOffset, *(pThis + iPrev),
+                                         *pLast);
+
+        if (oOpts.cellMode != CellMode::Diagonal)  // Edge, Min, Max
+            dfEdgeZ = nXOffset >= nYOffset
+                          ? CalcHeightEdge(nYOffset, nXOffset, *(pLast + iPrev),
+                                           *(pThis + iPrev))
+                          : CalcHeightEdge(nXOffset, nYOffset, *(pLast + iPrev),
+                                           *pLast);
+        double dfZ = calcHeight(dfDiagZ, dfEdgeZ);
+        if (oOpts.outputMode != OutputMode::Normal)
+        {
+            vHeightResult[iPixel] += (dfZ - *pThis);
+            vHeightResult[iPixel] = std::max(0.0, vHeightResult[iPixel]);
+        }
+        setVisibility(iPixel, dfZ);
+    };
+
+    // Go from the center left or right, calculating Z as we go.
+    if (iDir & Left)
+        for (int iPixel = iStart; iPixel > iEnd; iPixel--, pThis--, pLast--)
+            calcZ(iPixel);
+    else
+        for (int iPixel = iStart; iPixel < iEnd; iPixel++, pThis++, pLast++)
+            calcZ(iPixel);
+
+    // For cells outside of the [start, end) range, set the outOfRange value.
+    auto setOor = [&](GByte *pResult, double *pHeight)
+    {
+        *pResult = oOpts.outOfRangeVal;
+        if (oOpts.outputMode != OutputMode::Normal)
+            *pHeight = oOpts.outOfRangeVal;
+    };
+
+    GByte *pResult = vResult.data() + iEnd;
+    double *pHeight = vHeightResult.data() + iEnd;
+    if (iDir & Left)
+        for (int iPixel = iEnd; iPixel >= 0; iPixel--, pResult--, pHeight--)
+            setOor(pResult, pHeight);
+    else
+        for (int iPixel = iEnd; iPixel < oOutExtent.xSize();
+             iPixel++, pResult++, pHeight++)
+            setOor(pResult, pHeight);
+}
+
 bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                    void *pProgressArg)
 {
@@ -676,74 +757,10 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         }
 
         /* process left direction */
-        for (int iPixel = nX - 1; iPixel >= iLeft; iPixel--)
-        {
-            double dfDiagZ = 0;
-            double dfEdgeZ = 0;
-            if (oOpts.cellMode != CellMode::Edge)
-                dfDiagZ = CalcHeightDiagonal(nX - iPixel, nY - iLine,
-                                             vThisLineVal[iPixel + 1],
-                                             vLastLineVal[iPixel]);
-
-            if (oOpts.cellMode != CellMode::Diagonal)
-                dfEdgeZ = nX - iPixel >= nY - iLine
-                              ? CalcHeightEdge(nY - iLine, nX - iPixel,
-                                               vLastLineVal[iPixel + 1],
-                                               vThisLineVal[iPixel + 1])
-                              : CalcHeightEdge(nX - iPixel, nY - iLine,
-                                               vLastLineVal[iPixel + 1],
-                                               vLastLineVal[iPixel]);
-
-            double dfZ = calcHeight(dfDiagZ, dfEdgeZ);
-
-            if (oOpts.outputMode != OutputMode::Normal)
-            {
-                vHeightResult[iPixel] += (dfZ - vThisLineVal[iPixel]);
-                vHeightResult[iPixel] = std::max(0.0, vHeightResult[iPixel]);
-            }
-
-            setVisibility(iPixel, dfZ);
-        }
-        for (int iPixel = 0; iPixel < iLeft; iPixel++)
-        {
-            vResult[iPixel] = oOpts.outOfRangeVal;
-            if (oOpts.outputMode != OutputMode::Normal)
-                vHeightResult[iPixel] = oOpts.outOfRangeVal;
-        }
+        processHalfLine(nX, iLine - nY, nX - 1, iLeft - 1, Up | Left);
 
         /* process right direction */
-        for (int iPixel = nX + 1; iPixel < iRight; iPixel++)
-        {
-            double dfDiagZ = 0;
-            double dfEdgeZ = 0;
-            if (oOpts.cellMode != CellMode::Edge)
-                dfDiagZ = CalcHeightDiagonal(iPixel - nX, nY - iLine,
-                                             vThisLineVal[iPixel - 1],
-                                             vLastLineVal[iPixel]);
-            if (oOpts.cellMode != CellMode::Diagonal)
-                dfEdgeZ = iPixel - nX >= nY - iLine
-                              ? CalcHeightEdge(nY - iLine, iPixel - nX,
-                                               vLastLineVal[iPixel - 1],
-                                               vThisLineVal[iPixel - 1])
-                              : CalcHeightEdge(iPixel - nX, nY - iLine,
-                                               vLastLineVal[iPixel - 1],
-                                               vLastLineVal[iPixel]);
-
-            double dfZ = calcHeight(dfDiagZ, dfEdgeZ);
-
-            if (oOpts.outputMode != OutputMode::Normal)
-            {
-                vHeightResult[iPixel] += (dfZ - vThisLineVal[iPixel]);
-                vHeightResult[iPixel] = std::max(0.0, vHeightResult[iPixel]);
-            }
-            setVisibility(iPixel, dfZ);
-        }
-        for (int iPixel = iRight; iPixel < oOutExtent.xSize(); iPixel++)
-        {
-            vResult[iPixel] = oOpts.outOfRangeVal;
-            if (oOpts.outputMode != OutputMode::Normal)
-                vHeightResult[iPixel] = oOpts.outOfRangeVal;
-        }
+        processHalfLine(nX, iLine - nY, nX + 1, iRight, Up | Right);
 
         /* write result line */
         if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - oOutExtent.yStart,
@@ -778,7 +795,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         if (!readLine(iLine, vThisLineVal.data()))
             return false;
 
-        // In DEM mode the base is the pre-adjustment value.
+        // In DEM mode the base is the input DEM value.
         // In ground mode the base is zero.
         if (oOpts.outputMode == OutputMode::DEM)
             vHeightResult = vThisLineVal;
@@ -809,77 +826,10 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         }
 
         /* process left direction */
-        for (int iPixel = nX - 1; iPixel >= iLeft; iPixel--)
-        {
-            double dfDiagZ = 0;
-            double dfEdgeZ = 0;
-            if (oOpts.cellMode != CellMode::Edge)
-                dfDiagZ = CalcHeightDiagonal(nX - iPixel, iLine - nY,
-                                             vThisLineVal[iPixel + 1],
-                                             vLastLineVal[iPixel]);
-
-            if (oOpts.cellMode != CellMode::Diagonal)
-                dfEdgeZ = nX - iPixel >= iLine - nY
-                              ? CalcHeightEdge(iLine - nY, nX - iPixel,
-                                               vLastLineVal[iPixel + 1],
-                                               vThisLineVal[iPixel + 1])
-                              : CalcHeightEdge(nX - iPixel, iLine - nY,
-                                               vLastLineVal[iPixel + 1],
-                                               vLastLineVal[iPixel]);
-
-            double dfZ = calcHeight(dfDiagZ, dfEdgeZ);
-
-            if (oOpts.outputMode != OutputMode::Normal)
-            {
-                vHeightResult[iPixel] += (dfZ - vThisLineVal[iPixel]);
-                vHeightResult[iPixel] = std::max(0.0, vHeightResult[iPixel]);
-            }
-
-            setVisibility(iPixel, dfZ);
-        }
-        for (int iPixel = 0; iPixel < iLeft; iPixel++)
-        {
-            vResult[iPixel] = oOpts.outOfRangeVal;
-            if (oOpts.outputMode != OutputMode::Normal)
-                vHeightResult[iPixel] = oOpts.outOfRangeVal;
-        }
+        processHalfLine(nX, iLine - nY, nX - 1, iLeft - 1, Down | Left);
 
         /* process right direction */
-        for (int iPixel = nX + 1; iPixel < iRight; iPixel++)
-        {
-            double dfDiagZ = 0;
-            double dfEdgeZ = 0;
-
-            if (oOpts.cellMode != CellMode::Edge)
-                dfDiagZ = CalcHeightDiagonal(iPixel - nX, iLine - nY,
-                                             vThisLineVal[iPixel - 1],
-                                             vLastLineVal[iPixel]);
-
-            if (oOpts.cellMode != CellMode::Diagonal)
-                dfEdgeZ = iPixel - nX >= iLine - nY
-                              ? CalcHeightEdge(iLine - nY, iPixel - nX,
-                                               vLastLineVal[iPixel - 1],
-                                               vThisLineVal[iPixel - 1])
-                              : CalcHeightEdge(iPixel - nX, iLine - nY,
-                                               vLastLineVal[iPixel - 1],
-                                               vLastLineVal[iPixel]);
-
-            double dfZ = calcHeight(dfDiagZ, dfEdgeZ);
-
-            if (oOpts.outputMode != OutputMode::Normal)
-            {
-                vHeightResult[iPixel] += (dfZ - vThisLineVal[iPixel]);
-                vHeightResult[iPixel] = std::max(0.0, vHeightResult[iPixel]);
-            }
-
-            setVisibility(iPixel, dfZ);
-        }
-        for (int iPixel = iRight; iPixel < oOutExtent.xSize(); iPixel++)
-        {
-            vResult[iPixel] = oOpts.outOfRangeVal;
-            if (oOpts.outputMode != OutputMode::Normal)
-                vHeightResult[iPixel] = oOpts.outOfRangeVal;
-        }
+        processHalfLine(nX, iLine - nY, nX + 1, iRight, Down | Right);
 
         /* write result line */
         if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - oOutExtent.yStart,
