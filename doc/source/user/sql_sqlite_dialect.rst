@@ -68,7 +68,8 @@ be used in joins are searched from the master database.
 
 .. code-block:: shell
 
-    ogrinfo jointest.gpkg -dialect INDIRECT_SQLITE -sql "SELECT a.ID,b.ID FROM jointest a JOIN \"jointest2.shp\".\"jointest2\" b ON a.ID=b.ID"
+    ogrinfo jointest.gpkg -dialect INDIRECT_SQLITE -sql \
+    "SELECT a.ID,b.ID FROM jointest a JOIN \"jointest2.shp\".\"jointest2\" b ON a.ID=b.ID"
 
 The column names that can be used in the result column list, in WHERE, JOIN, ... clauses
 are the field names of the layers. Expressions, SQLite functions, spatial functions, etc...
@@ -114,6 +115,12 @@ between double quotes, the internal double quotes must be escaped with \\
 .. code-block:: shell
 
     ogrinfo p.shp -sql "SELECT geometry \"FROM\", \"3D\" FROM p"
+
+If single quotes are available in the shell, one can also use just
+
+.. code-block:: shell
+
+    ogrinfo p.shp -sql 'SELECT geometry "FROM", "3D" FROM p'
 
 Geometry field
 ++++++++++++++
