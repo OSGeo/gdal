@@ -54,7 +54,7 @@ class CPL_DLL RawDataset : public GDALPamDataset
 
   protected:
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, int, int *, GSpacing nPixelSpace,
+                     GDALDataType, int, BANDMAP_TYPE, GSpacing nPixelSpace,
                      GSpacing nLineSpace, GSpacing nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
     virtual CPLErr Close() override = 0;

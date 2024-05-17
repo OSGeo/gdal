@@ -254,8 +254,9 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     virtual ~JPGDatasetCommon();
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, BANDMAP_TYPE,
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual CPLErr GetGeoTransform(double *) override;

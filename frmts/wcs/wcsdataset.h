@@ -79,13 +79,14 @@ class WCSDataset CPL_NON_FINAL : public GDALPamDataset
 
     int TestUseBlockIO(int, int, int, int, int, int) const;
     CPLErr DirectRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                          GDALDataType, int, int *, GSpacing nPixelSpace,
+                          GDALDataType, int, const int *, GSpacing nPixelSpace,
                           GSpacing nLineSpace, GSpacing nBandSpace,
                           GDALRasterIOExtraArg *psExtraArg);
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, BANDMAP_TYPE,
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual std::vector<double> GetExtent(int nXOff, int nYOff, int nXSize,
@@ -99,7 +100,7 @@ class WCSDataset CPL_NON_FINAL : public GDALPamDataset
 
     CPLErr GetCoverage(int nXOff, int nYOff, int nXSize, int nYSize,
                        int nBufXSize, int nBufYSize, int nBandCount,
-                       int *panBandList, GDALRasterIOExtraArg *psExtraArg,
+                       const int *panBandList, GDALRasterIOExtraArg *psExtraArg,
                        CPLHTTPResult **ppsResult);
 
     virtual std::string DescribeCoverageRequest()

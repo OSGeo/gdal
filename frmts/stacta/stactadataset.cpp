@@ -112,7 +112,7 @@ CPLErr STACTADataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType, int nBandCount,
-                                int *panBandMap, GSpacing nPixelSpace,
+                                BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
                                 GSpacing nLineSpace, GSpacing nBandSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 {
@@ -304,13 +304,11 @@ CPLErr STACTARawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                                   int nXSize, int nYSize, void *pData,
-                                   int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, int nBandCount,
-                                   int *panBandMap, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace, GSpacing nBandSpace,
-                                   GDALRasterIOExtraArg *psExtraArg)
+CPLErr STACTARawDataset::IRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    int nBandCount, BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+    GSpacing nLineSpace, GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     CPLDebugOnly("STACTA", "Dataset RasterIO: %d,%d,%d,%d->%d,%d", nXOff, nYOff,
                  nXSize, nYSize, nBufXSize, nBufYSize);

@@ -114,8 +114,9 @@ class PDSDataset final : public RawDataset
                                    CSLConstList papszOptions) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, BANDMAP_TYPE,
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
@@ -256,7 +257,7 @@ CPLErr PDSDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
 CPLErr PDSDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, int *panBandMap,
+                             int nBandCount, BANDMAP_TYPE panBandMap,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)

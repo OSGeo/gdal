@@ -485,6 +485,17 @@ typedef struct GDALSQLParseInfo GDALSQLParseInfo;
 #endif
 //! @endcond
 
+//! @cond Doxygen_Suppress
+// This macro can be defined to check that GDALDataset::IRasterIO()
+// implementations do not alter the passed panBandList. It is not defined
+// by default (and should not!), hence int* is used.
+#if defined(GDAL_BANDMAP_TYPE_CONST_SAFE)
+#define BANDMAP_TYPE const int *
+#else
+#define BANDMAP_TYPE int *
+#endif
+//! @endcond
+
 /** A set of associated raster bands, usually from one file. */
 class CPL_DLL GDALDataset : public GDALMajorObject
 {
@@ -551,7 +562,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual CPLErr
     IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
               void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-              int nBandCount, int *panBandMap, GSpacing nPixelSpace,
+              int nBandCount, BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
               GSpacing nLineSpace, GSpacing nBandSpace,
               GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 

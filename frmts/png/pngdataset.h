@@ -156,8 +156,8 @@ class PNGDataset final : public GDALPamDataset
                     const char *pszDomain = nullptr) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing, GSpacing,
-                             GSpacing,
+                             GDALDataType, int, BANDMAP_TYPE, GSpacing,
+                             GSpacing, GSpacing,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
 #ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION

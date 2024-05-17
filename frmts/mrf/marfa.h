@@ -495,8 +495,9 @@ class MRFDataset final : public GDALPamDataset
     }
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing, GSpacing,
-                             GSpacing, GDALRasterIOExtraArg *) override;
+                             GDALDataType, int, BANDMAP_TYPE, GSpacing,
+                             GSpacing, GSpacing,
+                             GDALRasterIOExtraArg *) override;
 
     virtual CPLErr IBuildOverviews(const char *, int, const int *, int,
                                    const int *, GDALProgressFunc, void *,
