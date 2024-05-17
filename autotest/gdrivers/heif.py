@@ -237,12 +237,8 @@ heif_codecs = ["HEIF", "JPEG", "JPEG2000"]
 
 
 @pytest.mark.parametrize("codec", heif_codecs)
-def test_heif_create_copy(codec):
-    tempfile = "tmp/test_heif_create_copy_" + codec + ".hif"
-    try:
-        os.remove(tempfile)
-    except OSError:
-        pass
+def test_heif_create_copy(tmp_path, codec):
+    tempfile = str(tmp_path / "test_heif_create_copy_" + codec + ".hif")
 
     input_ds = make_data()
 
