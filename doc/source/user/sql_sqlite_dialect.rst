@@ -128,7 +128,8 @@ For OGR layers that have a non-empty geometry column name (generally for RDBMS d
 as returned by OGRLayer::GetGeometryColumn(), the name of the geometry special field
 in the SQL statement will be the name of the geometry column of the underlying OGR layer.
 If the name of the geometry column in the source layer is empty, like with shapefiles etc.,
-the name to use in the SQL statement is always "geometry".
+the name to use in the SQL statement is always "geometry". Here we'll use it case-insensitively
+(as all field names are in a SELECT statement):
 
 .. code-block::
 
