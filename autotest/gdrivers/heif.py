@@ -238,8 +238,7 @@ heif_codecs = ["HEIF", "JPEG", "JPEG2000"]
 
 @pytest.mark.parametrize("codec", heif_codecs)
 def test_heif_create_copy(tmp_path, codec):
-    tempfile = str(tmp_path / "test_heif_create_copy_" + codec + ".hif")
-
+    tempfile = str(tmp_path / ("test_heif_create_copy_" + codec + ".hif"))
     input_ds = make_data()
 
     drv = gdal.GetDriverByName("HEIF")
@@ -253,13 +252,8 @@ def test_heif_create_copy(tmp_path, codec):
 
 
 @pytest.mark.parametrize("codec", heif_codecs)
-def test_heif_create_copy_with_alpha(codec):
-    tempfile = "tmp/test_heif_create_copy_" + codec + "_alpha.hif"
-    try:
-        os.remove(tempfile)
-    except OSError:
-        pass
-
+def test_heif_create_copy_with_alpha(tmp_path, codec):
+    tempfile = str(tmp_path / ("test_heif_create_copy_" + codec + "_alpha.hif"))
     input_ds = make_data_with_alpha()
 
     drv = gdal.GetDriverByName("HEIF")
@@ -272,13 +266,8 @@ def test_heif_create_copy_with_alpha(codec):
     assert result_ds
 
 
-def test_heif_create_copy_defaults():
-    tempfile = "tmp/test_heif_create_copy.hif"
-    try:
-        os.remove(tempfile)
-    except OSError:
-        pass
-
+def test_heif_create_copy_defaults(tmp_path):
+    tempfile = str(tmp_path / "test_heif_create_copy.hif")
     input_ds = make_data()
 
     drv = gdal.GetDriverByName("HEIF")
