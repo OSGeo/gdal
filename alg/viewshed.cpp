@@ -220,8 +220,6 @@ namespace
 
 const int Right = 0x01;
 const int Left = 0x02;
-const int Up = 0x04;
-const int Down = 0X08;
 
 // Calculate the height adjustment factor.
 double CalcHeightAdjFactor(const GDALDataset *poDataset, double dfCurveCoeff)
@@ -498,8 +496,7 @@ void Viewshed::processHalfLine(int nX, int nYOffset, int iStart, int iEnd,
     double *pThis = vThisLineVal.data() + iStart;
     double *pLast = vLastLineVal.data() + iStart;
 
-    if (iDir & Up)
-        nYOffset = -nYOffset;
+    nYOffset = std::abs(nYOffset);
 
     // Calculate the visible height at iPixel. We either use edge mode or diagonal mode
     // or we take the min/max of both.
@@ -507,13 +504,8 @@ void Viewshed::processHalfLine(int nX, int nYOffset, int iStart, int iEnd,
     {
         double dfDiagZ = 0;
         double dfEdgeZ = 0;
-        int nXOffset = iPixel - nX;
-        int iPrev = 1;
-        if (iDir & Left)
-        {
-            nXOffset = -nXOffset;
-            iPrev = -iPrev;
-        }
+        int nXOffset = std::abs(iPixel - nX);
+        int iPrev = iDir & Left ? 1 : -1;
 
         if (oOpts.cellMode != CellMode::Edge)  // Diagonal, Min, Max
             dfDiagZ = CalcHeightDiagonal(nXOffset, nYOffset, *(pThis + iPrev),
@@ -756,11 +748,9 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                 vHeightResult[nX] = oOpts.outOfRangeVal;
         }
 
-        /* process left direction */
-        processHalfLine(nX, iLine - nY, nX - 1, iLeft - 1, Up | Left);
-
-        /* process right direction */
-        processHalfLine(nX, iLine - nY, nX + 1, iRight, Up | Right);
+        // process left half and then right half of line.
+        processHalfLine(nX, iLine - nY, nX - 1, iLeft - 1, Left);
+        processHalfLine(nX, iLine - nY, nX + 1, iRight, Right);
 
         /* write result line */
         if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - oOutExtent.yStart,
@@ -825,11 +815,9 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                 vHeightResult[nX] = oOpts.outOfRangeVal;
         }
 
-        /* process left direction */
-        processHalfLine(nX, iLine - nY, nX - 1, iLeft - 1, Down | Left);
-
-        /* process right direction */
-        processHalfLine(nX, iLine - nY, nX + 1, iRight, Down | Right);
+        // process left half then right half of line
+        processHalfLine(nX, iLine - nY, nX - 1, iLeft - 1, Left);
+        processHalfLine(nX, iLine - nY, nX + 1, iRight, Right);
 
         /* write result line */
         if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - oOutExtent.yStart,
