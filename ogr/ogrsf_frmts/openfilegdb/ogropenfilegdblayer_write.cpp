@@ -30,6 +30,7 @@
 #include "ogr_openfilegdb.h"
 #include "filegdb_gdbtoogrfieldtype.h"
 
+#include <cinttypes>
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
@@ -314,7 +315,8 @@ bool OGROpenFileGDBLayer::CreateFeatureDataset(const char *pszFeatureDataset)
         if (!oTable.Open(m_poDS->m_osGDBItemsFilename.c_str(), false))
             return false;
         CPLCreateXMLElementAndValue(
-            psRoot, "DSID", CPLSPrintf("%d", 1 + oTable.GetTotalRecordCount()));
+            psRoot, "DSID",
+            CPLSPrintf("%" PRId64, 1 + oTable.GetTotalRecordCount()));
     }
 
     CPLCreateXMLElementAndValue(psRoot, "Versioned", "false");
@@ -458,7 +460,7 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
             FETCH_FIELD_IDX(iName, "Name", FGFT_STRING);
             FETCH_FIELD_IDX(iDefinition, "Definition", FGFT_XML);
 
-            for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+            for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
                  ++iCurFeat)
             {
                 iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
@@ -2635,7 +2637,8 @@ void OGROpenFileGDBLayer::RefreshXMLDefinitionInMemory()
         if (!oTable.Open(m_poDS->m_osGDBItemsFilename.c_str(), false))
             return;
         CPLCreateXMLElementAndValue(
-            psRoot, "DSID", CPLSPrintf("%d", 1 + oTable.GetTotalRecordCount()));
+            psRoot, "DSID",
+            CPLSPrintf("%" PRId64, 1 + oTable.GetTotalRecordCount()));
     }
 
     CPLCreateXMLElementAndValue(psRoot, "Versioned", "false");
@@ -3186,7 +3189,7 @@ OGRErr OGROpenFileGDBLayer::Rename(const char *pszDstTableName)
 
         FETCH_FIELD_IDX_WITH_RET(iName, "Name", FGFT_STRING, OGRERR_FAILURE);
 
-        for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+        for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
              ++iCurFeat)
         {
             iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
@@ -3224,7 +3227,7 @@ OGRErr OGROpenFileGDBLayer::Rename(const char *pszDstTableName)
         FETCH_FIELD_IDX_WITH_RET(iDefinition, "Definition", FGFT_XML,
                                  OGRERR_FAILURE);
 
-        for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+        for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
              ++iCurFeat)
         {
             iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);

@@ -33,6 +33,7 @@
 #include "filegdbtable.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <cwchar>
 #include <errno.h>
 #include <limits.h>
@@ -73,6 +74,7 @@ bool FileGDBTable::Create(const char *pszFilename, int nTablxOffsetSize,
 {
     CPLAssert(m_fpTable == nullptr);
 
+    m_eGDBTableVersion = GDBTableVersion::V3;
     m_bUpdate = true;
     m_eTableGeomType = eTableGeomType;
     m_nTablxOffsetSize = nTablxOffsetSize;
@@ -88,6 +90,7 @@ bool FileGDBTable::Create(const char *pszFilename, int nTablxOffsetSize,
     }
 
     m_osFilename = pszFilename;
+    m_osFilenameWithLayerName = m_osFilename;
     m_fpTable = VSIFOpenL(pszFilename, "wb+");
     if (m_fpTable == nullptr)
     {
@@ -152,8 +155,9 @@ bool FileGDBTable::WriteHeader(VSILFILE *fpTable)
     VSIFSeekL(fpTable, 0, SEEK_SET);
 
     bool bRet =
-        WriteUInt32(fpTable, 3) &&                    // version number
-        WriteUInt32(fpTable, m_nValidRecordCount) &&  // number of valid rows
+        WriteUInt32(fpTable, 3) &&  // version number
+        // number of valid rows
+        WriteUInt32(fpTable, static_cast<uint32_t>(m_nValidRecordCount)) &&
         WriteUInt32(fpTable,
                     m_nHeaderBufferMaxSize) &&  // largest size of a feature
                                                 // record / field description
@@ -190,8 +194,8 @@ bool FileGDBTable::WriteHeaderX(VSILFILE *fpTableX)
 {
     VSIFSeekL(fpTableX, 0, SEEK_SET);
     if (!WriteUInt32(fpTableX, 3) ||  // version number
-        !WriteUInt32(fpTableX, m_n1024BlocksPresent) ||
-        !WriteUInt32(fpTableX, m_nTotalRecordCount) ||
+        !WriteUInt32(fpTableX, static_cast<uint32_t>(m_n1024BlocksPresent)) ||
+        !WriteUInt32(fpTableX, static_cast<uint32_t>(m_nTotalRecordCount)) ||
         !WriteUInt32(fpTableX, m_nTablxOffsetSize))
     {
         CPLError(CE_Failure, CPLE_FileIO, "Cannot write .gdbtablx header");
@@ -267,7 +271,8 @@ bool FileGDBTable::Sync(VSILFILE *fpTable, VSILFILE *fpTableX)
     if (m_bDirtyHeader && fpTable)
     {
         VSIFSeekL(fpTable, 4, SEEK_SET);
-        bRet &= WriteUInt32(fpTable, m_nValidRecordCount);
+        bRet &=
+            WriteUInt32(fpTable, static_cast<uint32_t>(m_nValidRecordCount));
         m_nHeaderBufferMaxSize =
             std::max(m_nHeaderBufferMaxSize,
                      std::max(m_nRowBufferMaxSize, m_nFieldDescLength));
@@ -285,8 +290,10 @@ bool FileGDBTable::Sync(VSILFILE *fpTable, VSILFILE *fpTableX)
     if (m_bDirtyTableXHeader && fpTableX)
     {
         VSIFSeekL(fpTableX, 4, SEEK_SET);
-        bRet &= WriteUInt32(fpTableX, m_n1024BlocksPresent);
-        bRet &= WriteUInt32(fpTableX, m_nTotalRecordCount);
+        bRet &=
+            WriteUInt32(fpTableX, static_cast<uint32_t>(m_n1024BlocksPresent));
+        bRet &=
+            WriteUInt32(fpTableX, static_cast<uint32_t>(m_nTotalRecordCount));
         m_bDirtyTableXHeader = false;
     }
 
@@ -297,8 +304,8 @@ bool FileGDBTable::Sync(VSILFILE *fpTable, VSILFILE *fpTableX)
             m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE *
                 static_cast<vsi_l_offset>(m_n1024BlocksPresent);
         VSIFSeekL(fpTableX, m_nOffsetTableXTrailer, SEEK_SET);
-        const uint32_t n1024BlocksTotal =
-            DIV_ROUND_UP(m_nTotalRecordCount, TABLX_FEATURES_PER_PAGE);
+        const uint32_t n1024BlocksTotal = static_cast<uint32_t>(
+            DIV_ROUND_UP(m_nTotalRecordCount, TABLX_FEATURES_PER_PAGE));
         if (!m_abyTablXBlockMap.empty())
         {
             CPLAssert(m_abyTablXBlockMap.size() >= (n1024BlocksTotal + 7) / 8);
@@ -314,7 +321,8 @@ bool FileGDBTable::Sync(VSILFILE *fpTable, VSILFILE *fpTableX)
         m_abyTablXBlockMap.resize(nBitmapInt32Words * 4);
         bRet &= WriteUInt32(fpTableX, nBitmapInt32Words);
         bRet &= WriteUInt32(fpTableX, n1024BlocksTotal);
-        bRet &= WriteUInt32(fpTableX, m_n1024BlocksPresent);
+        bRet &=
+            WriteUInt32(fpTableX, static_cast<uint32_t>(m_n1024BlocksPresent));
         uint32_t nTrailingZero32BitWords = 0;
         for (int i = static_cast<int>(m_abyTablXBlockMap.size() / 4) - 1;
              i >= 0; --i)
@@ -339,10 +347,10 @@ bool FileGDBTable::Sync(VSILFILE *fpTable, VSILFILE *fpTableX)
                 nCountBlocks += TEST_BIT(m_abyTablXBlockMap.data(), i) != 0;
             if (nCountBlocks != m_n1024BlocksPresent)
             {
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Sync(): nCountBlocks(=%u) != m_n1024BlocksPresent(=%u)",
-                    nCountBlocks, m_n1024BlocksPresent);
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Sync(): nCountBlocks(=%u) != "
+                         "m_n1024BlocksPresent(=%" PRIu64 ")",
+                         nCountBlocks, m_n1024BlocksPresent);
             }
 #endif
             bRet &= VSIFWriteL(m_abyTablXBlockMap.data(), 1,
@@ -1602,20 +1610,21 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
     int iCorrectedRow;
     bool bWriteEmptyPageAtEnd = false;
     const uint32_t nPageSize = TABLX_FEATURES_PER_PAGE * m_nTablxOffsetSize;
+    const int nTotalRecordCount = static_cast<int>(m_nTotalRecordCount);
 
     if (m_abyTablXBlockMap.empty())
     {
         // Is the OID to write in the current allocated pages, or in the next
         // page ?
         if ((nObjectID - 1) / TABLX_FEATURES_PER_PAGE <=
-            ((m_nTotalRecordCount == 0)
+            ((nTotalRecordCount == 0)
                  ? 0
-                 : (1 + (m_nTotalRecordCount - 1) / TABLX_FEATURES_PER_PAGE)))
+                 : (1 + (nTotalRecordCount - 1) / TABLX_FEATURES_PER_PAGE)))
         {
             iCorrectedRow = nObjectID - 1;
             const auto n1024BlocksPresentBefore = m_n1024BlocksPresent;
             m_n1024BlocksPresent =
-                DIV_ROUND_UP(std::max(m_nTotalRecordCount, nObjectID),
+                DIV_ROUND_UP(std::max(nTotalRecordCount, nObjectID),
                              TABLX_FEATURES_PER_PAGE);
             bWriteEmptyPageAtEnd =
                 m_n1024BlocksPresent > n1024BlocksPresentBefore;
@@ -1626,13 +1635,13 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
             m_abyTablXBlockMap.resize(
                 (DIV_ROUND_UP(nObjectID, TABLX_FEATURES_PER_PAGE) + 7) / 8);
             for (int i = 0;
-                 i < DIV_ROUND_UP(m_nTotalRecordCount, TABLX_FEATURES_PER_PAGE);
+                 i < DIV_ROUND_UP(nTotalRecordCount, TABLX_FEATURES_PER_PAGE);
                  ++i)
                 m_abyTablXBlockMap[i / 8] |= (1 << (i % 8));
             const int iBlock = (nObjectID - 1) / TABLX_FEATURES_PER_PAGE;
             m_abyTablXBlockMap[iBlock / 8] |= (1 << (iBlock % 8));
             iCorrectedRow =
-                DIV_ROUND_UP(m_nTotalRecordCount, TABLX_FEATURES_PER_PAGE) *
+                DIV_ROUND_UP(nTotalRecordCount, TABLX_FEATURES_PER_PAGE) *
                     TABLX_FEATURES_PER_PAGE +
                 ((nObjectID - 1) % TABLX_FEATURES_PER_PAGE);
             m_n1024BlocksPresent++;
@@ -1643,7 +1652,7 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
     {
         const int iBlock = (nObjectID - 1) / TABLX_FEATURES_PER_PAGE;
 
-        if (nObjectID <= m_nTotalRecordCount)
+        if (nObjectID <= nTotalRecordCount)
         {
             CPLAssert(iBlock / 8 < static_cast<int>(m_abyTablXBlockMap.size()));
             if (TEST_BIT(m_abyTablXBlockMap.data(), iBlock) == 0)
@@ -1657,9 +1666,8 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
 
                 std::vector<GByte> abyTmp(nPageSize);
                 uint64_t nOffset =
-                    TABLX_HEADER_SIZE +
-                    static_cast<uint64_t>(m_n1024BlocksPresent) * nPageSize;
-                for (int i = m_n1024BlocksPresent - 1;
+                    TABLX_HEADER_SIZE + m_n1024BlocksPresent * nPageSize;
+                for (int i = static_cast<int>(m_n1024BlocksPresent - 1);
                      i >= static_cast<int>(nCountBlocksBefore); --i)
                 {
                     nOffset -= nPageSize;
@@ -1702,7 +1710,7 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
             }
         }
         else if (DIV_ROUND_UP(nObjectID, TABLX_FEATURES_PER_PAGE) >
-                 DIV_ROUND_UP(m_nTotalRecordCount, TABLX_FEATURES_PER_PAGE))
+                 DIV_ROUND_UP(nTotalRecordCount, TABLX_FEATURES_PER_PAGE))
         {
             m_abyTablXBlockMap.resize(
                 (DIV_ROUND_UP(nObjectID, TABLX_FEATURES_PER_PAGE) + 7) / 8);
@@ -1817,7 +1825,7 @@ bool FileGDBTable::CreateFeature(const std::vector<OGRField> &asRawFields,
                      "Maximum number of records per table reached");
             return false;
         }
-        nObjectID = m_nTotalRecordCount + 1;
+        nObjectID = static_cast<int>(m_nTotalRecordCount + 1);
     }
 
     try
@@ -1882,7 +1890,8 @@ bool FileGDBTable::CreateFeature(const std::vector<OGRField> &asRawFields,
         m_nFileSize += sizeof(uint32_t) + m_nRowBlobLength;
     }
 
-    m_nTotalRecordCount = std::max(m_nTotalRecordCount, nObjectID);
+    m_nTotalRecordCount =
+        std::max(m_nTotalRecordCount, static_cast<int64_t>(nObjectID));
     m_nValidRecordCount++;
 
     m_bDirtyHeader = true;
@@ -1897,7 +1906,7 @@ bool FileGDBTable::CreateFeature(const std::vector<OGRField> &asRawFields,
 /*                          UpdateFeature()                             */
 /************************************************************************/
 
-bool FileGDBTable::UpdateFeature(int nFID,
+bool FileGDBTable::UpdateFeature(int64_t nFID,
                                  const std::vector<OGRField> &asRawFields,
                                  const OGRGeometry *poGeom)
 {
@@ -2050,7 +2059,7 @@ bool FileGDBTable::UpdateFeature(int nFID,
 /*                          DeleteFeature()                             */
 /************************************************************************/
 
-bool FileGDBTable::DeleteFeature(int nFID)
+bool FileGDBTable::DeleteFeature(int64_t nFID)
 {
     if (!m_bUpdate)
         return false;
@@ -2627,7 +2636,7 @@ void FileGDBTable::RecomputeExtent()
     // Scan all features
     OGREnvelope sLayerEnvelope;
     OGREnvelope sFeatureEnvelope;
-    for (int iCurFeat = 0; iCurFeat < m_nTotalRecordCount; ++iCurFeat)
+    for (int64_t iCurFeat = 0; iCurFeat < m_nTotalRecordCount; ++iCurFeat)
     {
         iCurFeat = GetAndSelectNextNonEmptyRow(iCurFeat);
         if (iCurFeat < 0)

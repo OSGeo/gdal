@@ -1504,7 +1504,7 @@ OGRFeature *OGROpenFileGDBSimpleSQLLayer::GetNextFeature()
         if (m_nLimit >= 0 && m_nIterated == m_nLimit)
             return nullptr;
 
-        int nRow = poIter->GetNextRowSortedByValue();
+        const int64_t nRow = poIter->GetNextRowSortedByValue();
         if (nRow < 0)
             return nullptr;
         OGRFeature *poFeature = GetFeature(nRow + 1);
