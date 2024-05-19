@@ -4117,9 +4117,11 @@ int IVSIS3LikeFSHandler::CopyFileRestartable(
             else
             {
                 if (pProgressFunc &&
-                    !pProgressFunc(double(iCurChunk) / nChunkCount,
-                                   osMsg.c_str(), pProgressData))
+                    !pProgressFunc(double(iChunk) / nChunkCount, osMsg.c_str(),
+                                   pProgressData))
                 {
+                    // Lock taken only to make static analyzer happy...
+                    std::lock_guard oLock(oMutex);
                     bSuccess = false;
                     break;
                 }

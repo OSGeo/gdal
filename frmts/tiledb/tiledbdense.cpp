@@ -284,7 +284,7 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
     if (eBufType == eDataType && nXSize == nBufXSize && nYSize == nBufYSize &&
         nBufferDTSize > 0 && nPixelSpace == nBufferDTSize &&
-        nLineSpace == nBufXSize * nBufferDTSize)
+        nLineSpace == nBufXSize * nPixelSpace)
     {
         const uint64_t nBandIdx = poGDS->nBandStart + nBand - 1;
         std::vector<uint64_t> oaSubarray = {
@@ -668,7 +668,7 @@ CPLErr TileDBRasterDataset::IRasterIO(
     if (eIndexMode == ATTRIBUTES && nBandCount == nBands &&
         eBufType == eDataType && nXSize == nBufXSize && nYSize == nBufYSize &&
         nBufferDTSize > 0 && nPixelSpace == nBufferDTSize &&
-        nLineSpace == nBufXSize * nBufferDTSize &&
+        nLineSpace == nBufXSize * nPixelSpace &&
         ((nBandSpace == 0 && nBandCount == 1) ||
          nBandSpace == nBufYSize * nLineSpace))
     {
