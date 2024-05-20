@@ -800,11 +800,11 @@ def test_transformer_14():
         tr = gdal.Transformer(
             ds, None, ["METHOD=RPC", "RPC_DEM=data/transformer_14_dem.tif"]
         )
-    (success, pnt) = tr.TransformPoint(0, 0, 0)
+    (success, pnt) = tr.TransformPoint(0, 5, 12)
     assert (
         success
-        and pnt[0] == pytest.approx(1.9391846640653961e-05, abs=1e-7)
-        and pnt[1] == pytest.approx(-0.0038824752244123275, abs=1e-7)
+        and pnt[0] == pytest.approx(-1.935617614186202e-05, abs=1e-7)
+        and pnt[1] == pytest.approx(-0.0034168871827151997, abs=1e-7)
     )
 
     f = gdal.VSIFOpenL("/vsimem/transformer_14.csvt", "rb")
