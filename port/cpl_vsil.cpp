@@ -1464,7 +1464,8 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
                                    nSourceSize != static_cast<vsi_l_offset>(-1)
                                ? double(nOffset) / nSourceSize
                                : 0.0,
-                           pszSource ? osMsg.c_str() : nullptr, pProgressData))
+                           !osMsg.empty() ? osMsg.c_str() : nullptr,
+                           pProgressData))
         {
             ret = -1;
             break;

@@ -334,3 +334,11 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
 # Package substitutefont no longer exists since TeXLive 2023 later than August 2023
         .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("LOGICALY"))
     assert f.GetField("LOGICALY") == 1
+ * <li>JOIN_STYLE=ROUND/MITRE/BEVEL</li>
+ * <li>MITRE_LIMIT=double</li>
+            else if (EQUAL(pszValue, "MITRE"))
+                nStyle = GEOSBUF_JOIN_MITRE;
+        else if (EQUAL(pszParam, "MITRE_LIMIT"))
+                         "Invalid value for MITRE_LIMIT: %s", pszValue);
+* <li>JOIN_STYLE=ROUND/MITRE/BEVEL</li>
+* <li>MITRE_LIMIT=double</li>

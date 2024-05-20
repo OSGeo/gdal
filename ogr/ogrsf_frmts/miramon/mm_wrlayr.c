@@ -4261,7 +4261,7 @@ static int MMCreateFeaturePolOrArc(struct MiraMonVectLayerInfo *hMiraMonLayer,
             }
             else
             {
-                // One diferent altitude for each vertice
+                // One different altitude for each vertice
                 pZDesc[pArcTopHeader->nElemCount].nZCount = 1;
             }
 
@@ -7397,8 +7397,8 @@ static void MMDestroyMMDBFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     if (pMMAdmDB && pMMAdmDB->pMMBDXP)
     {
-        MM_ReleaseDBFHeader(pMMAdmDB->pMMBDXP);
-        hMiraMonLayer->pMMBDXP = pMMAdmDB->pMMBDXP = nullptr;
+        MM_ReleaseDBFHeader(&pMMAdmDB->pMMBDXP);
+        hMiraMonLayer->pMMBDXP = nullptr;
     }
     if (pMMAdmDB && pMMAdmDB->pRecList)
     {

@@ -280,6 +280,11 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
+
+    poDriver->SetMetadataItem(
+        "TILEDB_VERSION",
+        STRINGIFY(TILEDB_VERSION_MAJOR) "." STRINGIFY(
+            TILEDB_VERSION_MINOR) "." STRINGIFY(TILEDB_VERSION_PATCH));
 }
 
 /************************************************************************/

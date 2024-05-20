@@ -1695,13 +1695,17 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
     return 0;
 }  // End of MM_ReadExtendedDBFHeaderFromFile()
 
-void MM_ReleaseDBFHeader(struct MM_DATA_BASE_XP *data_base_XP)
+void MM_ReleaseDBFHeader(struct MM_DATA_BASE_XP **data_base_XP)
 {
-    if (data_base_XP)
-    {
-        MM_ReleaseMainFields(data_base_XP);
-        free_function(data_base_XP);
-    }
+    if (!data_base_XP)
+        return;
+    if (!*data_base_XP)
+        return;
+
+    MM_ReleaseMainFields(*data_base_XP);
+    free_function(*data_base_XP);
+    *data_base_XP = nullptr;
+
     return;
 }
 

@@ -42,6 +42,15 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("TileDB")
 
+
+def get_tiledb_version():
+    drv = gdal.GetDriverByName("TileDB")
+    if drv is None:
+        return (0, 0, 0)
+    x, y, z = [int(x) for x in drv.GetMetadataItem("TILEDB_VERSION").split(".")]
+    return (x, y, z)
+
+
 ###############################################################################
 
 
@@ -1620,3 +1629,49 @@ def test_ogr_tiledb_arrow_stream_numpy_detailed_spatial_filter():
     ds = None
 
     shutil.rmtree("tmp/test.tiledb")
+
+
+###############################################################################
+
+
+@pytest.mark.skipif(get_tiledb_version() < (2, 21, 0), reason="tiledb 2.21 required")
+@pytest.mark.parametrize(
+    "TILEDB_WKB_GEOMETRY_TYPE, OGR_TILEDB_WRITE_GEOMETRY_ATTRIBUTE_NAME",
+    (("BLOB", True), ("GEOM_WKB", True), (None, False)),
+)
+def test_ogr_tiledb_tiledb_geometry_type(
+    tmp_path, TILEDB_WKB_GEOMETRY_TYPE, OGR_TILEDB_WRITE_GEOMETRY_ATTRIBUTE_NAME
+):
+    with gdal.config_options(
+        {
+            "TILEDB_WKB_GEOMETRY_TYPE": TILEDB_WKB_GEOMETRY_TYPE,
+            "OGR_TILEDB_WRITE_GEOMETRY_ATTRIBUTE_NAME": "YES"
+            if OGR_TILEDB_WRITE_GEOMETRY_ATTRIBUTE_NAME
+            else "NO",
+        }
+    ):
+        filename = str(tmp_path / "test.tiledb")
+        with ogr.GetDriverByName("TileDB").CreateDataSource(filename) as ds:
+            srs = osr.SpatialReference()
+            srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+            srs.ImportFromEPSG(32631)
+            lyr = ds.CreateLayer("test", srs=srs)
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+            lyr.CreateFeature(f)
+
+        with ogr.Open(filename) as ds:
+            lyr = ds.GetLayer(0)
+            tiledb_md = json.loads(lyr.GetMetadata_List("json:TILEDB")[0])
+            expected = {
+                "name": "wkb_geometry",
+                "type": TILEDB_WKB_GEOMETRY_TYPE
+                if TILEDB_WKB_GEOMETRY_TYPE
+                else "GEOM_WKB",
+                "cell_val_num": "variable",
+                "nullable": False,
+                "filter_list": [],
+            }
+            assert expected in tiledb_md["schema"]["attributes"]
+            f = lyr.GetNextFeature()
+            assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
