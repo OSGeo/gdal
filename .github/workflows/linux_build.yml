@@ -338,11 +338,13 @@ jobs:
             ${TEST_CMD}
 
       - name: Coveralls
-        uses: coverallsapp/github-action@3dfc5567390f6fa9267c0ee9c251e4c8c3f18949 # v2.2.3
+        uses: coverallsapp/github-action@643bc377ffa44ace6394b2b5d0d3950076de9f63 # v2.3.0
         if: ${{ matrix.id == 'coverage' }}
         with:
           format: lcov
           file: build-coverage/gdal_filtered.info
+          # Pin to v0.6.10 because of issue with v0.6.11 (https://github.com/coverallsapp/coverage-reporter/issues/127)
+          coverage-reporter-version: v0.6.10
 
       - name: Push build environment
         if: github.event_name == 'push'
