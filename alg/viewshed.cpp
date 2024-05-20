@@ -242,14 +242,15 @@ double CalcHeightAdjFactor(const GDALDataset *poDataset, double dfCurveCoeff)
     return 0;
 }
 
-// Calculate the height at i units along a line through the origin given the height
-// at i - 1 units along the line.
-double CalcHeightLine(int i, double Za)
+// Calculate the height at nDistance units along a line through the origin given the height
+// at nDistance - 1 units along the line.
+double CalcHeightLine(int nDistance, double Za)
 {
-    if (i == 1)
+    nDistance = std::abs(nDistance);
+    if (nDistance == 1)
         return Za;
     else
-        return Za * i / (i - 1);
+        return Za * nDistance / (nDistance - 1);
 }
 
 // Calulate the height Zc of a point (i, j, Zc) given a line through the origin (0, 0, 0)
@@ -347,20 +348,31 @@ bool Viewshed::readLine(int nLine, double *data)
 /// Write an output line of either visibility or height data.
 ///
 /// @param  nLine  Line number being written.
-/// @param  data   Pointer to data being written.
-/// @param  dataType  Either byte (visibility data) or double (height data)
 /// @return  Success or failure.
-bool Viewshed::writeLine(int nLine, void * const data, GDALDataType dataType)
+bool Viewshed::writeLine(int nLine)
 {
-    if (GDALRasterIO(pDstBand, GF_Write, 0, nLine - oOutExtent.yStart,
-        oOutExtent.xSize(), 1, data, oOutExtent.xSize(), 1,
-        dataType, 0, 0))
+    void *data;
+    GDALDataType dataType;
+    if (oOpts.outputMode == OutputMode::Normal)
     {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "RasterIO error when writing target raster at position "
-                     "(%d,%d), size (%d,%d)",
-                     0, nLine - oOutExtent.yStart, oOutExtent.xSize(), 1);
-            return false;
+        data = static_cast<void *>(vResult.data());
+        dataType = GDT_Byte;
+    }
+    else
+    {
+        data = static_cast<void *>(vHeightResult.data());
+        dataType = GDT_Float64;
+    }
+
+    if (GDALRasterIO(pDstBand, GF_Write, 0, nLine - oOutExtent.yStart,
+                     oOutExtent.xSize(), 1, data, oOutExtent.xSize(), 1,
+                     dataType, 0, 0))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "RasterIO error when writing target raster at position "
+                 "(%d,%d), size (%d,%d)",
+                 0, nLine - oOutExtent.yStart, oOutExtent.xSize(), 1);
+        return false;
     }
     return true;
 }
@@ -397,10 +409,16 @@ bool Viewshed::emitProgress(double fraction)
 /// @param  pdfNx  Pointer to the data at the nX location of the line being adjusted
 /// @return [left, right)  Leftmost and one past the rightmost cell in the line within
 ///    the max distance
-std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX, double dfObserverHeight, double *const pdfNx)
+std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX,
+                                           double dfObserverHeight,
+                                           double *const pdfNx)
 {
     int nLeft = 0;
     int nRight = oOutExtent.xSize();
+
+    // If there is a height adjustment factor other than zero or a max distance,
+    // calculate the adjusted height of the cell, stopping if we've exceeded the max
+    // distance.
     if (static_cast<bool>(dfHeightAdjFactor) || dfMaxDistance2 > 0)
     {
         // Hoist invariants from the loops.
@@ -619,6 +637,57 @@ void Viewshed::processHalfLine(int nX, int nYOffset, int iStart, int iEnd,
             setOor(pResult, pHeight);
 }
 
+bool Viewshed::processLine(int nX, int nY, int nLine)
+{
+    int nYOffset = nLine - nY;
+
+    if (!readLine(nLine, vThisLineVal.data()))
+        return false;
+
+    // In DEM mode the base is the input DEM value.
+    // In ground mode the base is zero.
+    if (oOpts.outputMode == OutputMode::DEM)
+        vHeightResult = vThisLineVal;
+    else if (oOpts.outputMode == OutputMode::Ground)
+        std::fill(vHeightResult.begin(), vHeightResult.end(), 0.0);
+
+    const auto [iLeft, iRight] =
+        adjustHeight(nYOffset, nX, dfZObserver, vThisLineVal.data() + nX);
+
+    /* set up initial point on the scanline */
+    if (iLeft < iRight)
+    {
+        double dfZ = CalcHeightLine(nYOffset, vLastLineVal[nX]);
+
+        if (oOpts.outputMode != OutputMode::Normal)
+        {
+            vHeightResult[nX] += (dfZ - vThisLineVal[nX]);
+            vHeightResult[nX] = std::max(0.0, vHeightResult[nX]);
+        }
+
+        setVisibility(nX, dfZ);
+    }
+    else
+    {
+        vResult[nX] = oOpts.outOfRangeVal;
+        if (oOpts.outputMode != OutputMode::Normal)
+            vHeightResult[nX] = oOpts.outOfRangeVal;
+    }
+
+    // process left half then right half of line
+    processHalfLine(nX, nYOffset, nX - 1, iLeft - 1, Left);
+    processHalfLine(nX, nYOffset, nX + 1, iRight, Right);
+
+    if (!writeLine(nLine))
+        return false;
+
+    std::swap(vLastLineVal, vThisLineVal);
+
+    if (!lineProgress())
+        return false;
+    return true;
+}
+
 bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                    void *pProgressArg)
 {
@@ -666,21 +735,6 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     /* create the output dataset */
     if (!createOutputDataset())
         return false;
-
-    double dfZObserver = 0;
-
-    void *data;
-    GDALDataType dataType;
-    if (oOpts.outputMode == OutputMode::Normal)
-    {
-        data = reinterpret_cast<void *>(vResult.data());
-        dataType = GDT_Byte;
-    }
-    else
-    {
-        data = reinterpret_cast<void *>(vHeightResult.data());
-        dataType = GDT_Float64;
-    }
 
     /* process first line */
     {
@@ -749,119 +803,27 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                 vHeightResult[iPixel] = oOpts.outOfRangeVal;
         }
 
-        if (!writeLine(nY, data, dataType))
+        if (!writeLine(nY))
             return false;
     }
 
     // Save the first line for use later.
     vFirstLineVal = vThisLineVal;
+
     /* scan upwards */
-
     vLastLineVal = vThisLineVal;
-    for (int iLine = nY - 1; iLine >= oOutExtent.yStart; iLine--)
-    {
-        if (!readLine(iLine, vThisLineVal.data()))
+    for (int nLine = nY - 1; nLine >= oOutExtent.yStart; nLine--)
+        if (!processLine(nX, nY, nLine))
             return false;
-
-        // In DEM mode the base is the pre-adjustment value.
-        // In ground mode the base is zero.
-        if (oOpts.outputMode == OutputMode::DEM)
-            vHeightResult = vThisLineVal;
-        else if (oOpts.outputMode == OutputMode::Ground)
-            std::fill(vHeightResult.begin(), vHeightResult.end(), 0.0);
-
-        const auto [iLeft, iRight] =
-            adjustHeight(iLine - nY, nX, dfZObserver, vThisLineVal.data() + nX);
-
-        /* set up initial point on the scanline */
-
-        // Handle cell at nX if in range.
-        if (iLeft < iRight)
-        {
-            double dfZ = CalcHeightLine(nY - iLine, vLastLineVal[nX]);
-
-            if (oOpts.outputMode != OutputMode::Normal)
-            {
-                vHeightResult[nX] += (dfZ - vThisLineVal[nX]);
-                vHeightResult[nX] = std::max(0.0, vHeightResult[nX]);
-            }
-
-            setVisibility(nX, dfZ);
-        }
-        else
-        {
-            vResult[nX] = oOpts.outOfRangeVal;
-            if (oOpts.outputMode != OutputMode::Normal)
-                vHeightResult[nX] = oOpts.outOfRangeVal;
-        }
-
-        // process left half and then right half of line.
-        processHalfLine(nX, iLine - nY, nX - 1, iLeft - 1, Left);
-        processHalfLine(nX, iLine - nY, nX + 1, iRight, Right);
-
-        if (!writeLine(iLine, data, dataType))
-            return false;
-
-        // Make this line the last line.
-        std::swap(vLastLineVal, vThisLineVal);
-
-        if (!lineProgress())
-            return false;
-    }
 
     // Use the first line as the last. We can move since after this we're done with the
     // first line.
     vLastLineVal = std::move(vFirstLineVal);
 
     /* scan downwards */
-    for (int iLine = nY + 1; iLine < oOutExtent.yStop; iLine++)
-    {
-        if (!readLine(iLine, vThisLineVal.data()))
+    for (int nLine = nY + 1; nLine < oOutExtent.yStop; nLine++)
+        if (!processLine(nX, nY, nLine))
             return false;
-
-        // In DEM mode the base is the input DEM value.
-        // In ground mode the base is zero.
-        if (oOpts.outputMode == OutputMode::DEM)
-            vHeightResult = vThisLineVal;
-        else if (oOpts.outputMode == OutputMode::Ground)
-            std::fill(vHeightResult.begin(), vHeightResult.end(), 0.0);
-
-        const auto [iLeft, iRight] =
-            adjustHeight(iLine - nY, nX, dfZObserver, vThisLineVal.data() + nX);
-
-        /* set up initial point on the scanline */
-        if (iLeft < iRight)
-        {
-            //ABELL - Reversed Y offset
-            double dfZ = CalcHeightLine(iLine - nY, vLastLineVal[nX]);
-
-            if (oOpts.outputMode != OutputMode::Normal)
-            {
-                vHeightResult[nX] += (dfZ - vThisLineVal[nX]);
-                vHeightResult[nX] = std::max(0.0, vHeightResult[nX]);
-            }
-
-            setVisibility(nX, dfZ);
-        }
-        else
-        {
-            vResult[nX] = oOpts.outOfRangeVal;
-            if (oOpts.outputMode != OutputMode::Normal)
-                vHeightResult[nX] = oOpts.outOfRangeVal;
-        }
-
-        // process left half then right half of line
-        processHalfLine(nX, iLine - nY, nX - 1, iLeft - 1, Left);
-        processHalfLine(nX, iLine - nY, nX + 1, iRight, Right);
-
-        if (!writeLine(iLine, data, dataType))
-            return false;
-
-        std::swap(vLastLineVal, vThisLineVal);
-
-        if (!lineProgress())
-            return false;
-    }
 
     if (!emitProgress(1))
         return false;

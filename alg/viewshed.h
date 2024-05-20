@@ -128,7 +128,8 @@ class Viewshed
     */
     CPL_DLL explicit Viewshed(const Options &opts)
         : oOpts{opts}, dfMaxDistance2{opts.maxDistance * opts.maxDistance},
-          poDstDS{}, dfHeightAdjFactor{0}, nLineCount(0), adfTransform{0, 1, 0, 0, 0, 1}
+          dfZObserver{0}, poDstDS{}, dfHeightAdjFactor{0}, nLineCount{0},
+          adfTransform{0, 1, 0, 0, 0, 1}
     {
         if (dfMaxDistance2 == 0)
             dfMaxDistance2 = std::numeric_limits<double>::max();
@@ -158,6 +159,7 @@ class Viewshed
     Options oOpts;
     Window oOutExtent;
     double dfMaxDistance2;
+    double dfZObserver;
     std::unique_ptr<GDALDataset> poDstDS;
     GDALRasterBand *pSrcBand;
     GDALRasterBand *pDstBand;
@@ -175,8 +177,9 @@ class Viewshed
 
     void setVisibility(int iPixel, double dfZ);
     double calcHeight(double dfZ, double dfZ2);
-    bool readLine(int nLine, double * data);
-    bool writeLine(int nLine, void * const data, GDALDataType dataType);
+    bool readLine(int nLine, double *data);
+    bool writeLine(int nLine);
+    bool processLine(int nX, int nY, int nLine);
     void processHalfLine(int nX, int nYOffset, int iStart, int iEnd, int iDir);
     std::pair<int, int> adjustHeight(int iLine, int nX, double dfObserverHeight,
                                      double *const pdfNx);
