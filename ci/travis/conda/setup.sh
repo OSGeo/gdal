@@ -6,6 +6,9 @@ conda config --show-sources
 
 rm -f ~/.condarc
 
+# Cf https://github.com/conda-forge/gdal-feedstock/pull/939
+conda config --add channels conda-forge/label/numpy_rc
+
 conda config --show-sources
 
 conda config --show
