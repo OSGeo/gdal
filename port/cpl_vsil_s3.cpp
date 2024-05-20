@@ -43,6 +43,7 @@
 #include <condition_variable>
 #include <functional>
 #include <set>
+#include <limits>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -64,10 +65,11 @@ void VSIInstallS3FileHandler(void)
 
 #define ENABLE_DEBUG 0
 
-constexpr int knMAX_PART_NUMBER = 10000;  // Limitation from S3
-
 #define unchecked_curl_easy_setopt(handle, opt, param)                         \
     CPL_IGNORE_RET_VAL(curl_easy_setopt(handle, opt, param))
+
+// MebIByte
+constexpr int MIB_CONSTANT = 1024 * 1024;
 
 namespace cpl
 {
@@ -765,7 +767,15 @@ VSIS3LikeWriteHandle::VSIS3LikeWriteHandle(
 
     if (!m_bUseChunkedTransfer)
     {
-        m_nBufferSize = poFS->GetUploadChunkSizeInBytes(pszFilename, nullptr);
+        const char *pszChunkSize = m_aosOptions.FetchNameValue("CHUNK_SIZE");
+        if (pszChunkSize)
+            m_nBufferSize = poFS->GetUploadChunkSizeInBytes(
+                pszFilename,
+                CPLSPrintf(CPL_FRMT_GIB,
+                           CPLAtoGIntBig(pszChunkSize) * MIB_CONSTANT));
+        else
+            m_nBufferSize =
+                poFS->GetUploadChunkSizeInBytes(pszFilename, nullptr);
 
         m_pabyBuffer = static_cast<GByte *>(VSIMalloc(m_nBufferSize));
         if (m_pabyBuffer == nullptr)
@@ -781,19 +791,10 @@ VSIS3LikeWriteHandle::VSIS3LikeWriteHandle(
 /*                      GetUploadChunkSizeInBytes()                     */
 /************************************************************************/
 
-int IVSIS3LikeFSHandler::GetUploadChunkSizeInBytes(
+size_t IVSIS3LikeFSHandler::GetUploadChunkSizeInBytes(
     const char *pszFilename, const char *pszSpecifiedValInBytes)
 {
-    int nChunkSize = 0;
-
-    const int nChunkSizeMB = atoi(VSIGetPathSpecificOption(
-        pszFilename,
-        std::string("VSI").append(GetDebugKey()).append("_CHUNK_SIZE").c_str(),
-        "50"));
-    if (nChunkSizeMB <= 0 || nChunkSizeMB > 1000)
-        nChunkSize = 0;
-    else
-        nChunkSize = nChunkSizeMB * 1024 * 1024;
+    size_t nChunkSize = 0;
 
     const char *pszChunkSizeBytes =
         pszSpecifiedValInBytes ? pszSpecifiedValInBytes :
@@ -805,10 +806,46 @@ int IVSIS3LikeFSHandler::GetUploadChunkSizeInBytes(
                                          .c_str(),
                                      nullptr);
     if (pszChunkSizeBytes)
-        nChunkSize = atoi(pszChunkSizeBytes);
-
-    if (nChunkSize <= 0 || nChunkSize > 1000 * 1024 * 1024)
-        nChunkSize = 50 * 1024 * 1024;
+    {
+        const auto nChunkSizeInt = CPLAtoGIntBig(pszChunkSizeBytes);
+        if (nChunkSizeInt <= 0)
+        {
+            nChunkSize =
+                static_cast<size_t>(GetDefaultPartSizeInMiB()) * MIB_CONSTANT;
+        }
+        else if (nChunkSizeInt / MIB_CONSTANT >= GetMaximumPartSizeInMiB())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Specified chunk size too large. Clamping to %d MiB",
+                     GetMaximumPartSizeInMiB());
+            nChunkSize =
+                static_cast<size_t>(GetMaximumPartSizeInMiB()) * MIB_CONSTANT;
+        }
+        else
+            nChunkSize = static_cast<size_t>(nChunkSizeInt);
+    }
+    else
+    {
+        const int nChunkSizeMiB = atoi(VSIGetPathSpecificOption(
+            pszFilename,
+            std::string("VSI")
+                .append(GetDebugKey())
+                .append("_CHUNK_SIZE")
+                .c_str(),
+            CPLSPrintf("%d", GetDefaultPartSizeInMiB())));
+        if (nChunkSizeMiB <= 0)
+            nChunkSize = 0;
+        else if (nChunkSizeMiB > GetMaximumPartSizeInMiB())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Specified chunk size too large. Clamping to %d MiB",
+                     GetMaximumPartSizeInMiB());
+            nChunkSize =
+                static_cast<size_t>(GetMaximumPartSizeInMiB()) * MIB_CONSTANT;
+        }
+        else
+            nChunkSize = static_cast<size_t>(nChunkSizeMiB) * MIB_CONSTANT;
+    }
 
     return nChunkSize;
 }
@@ -990,15 +1027,16 @@ std::string IVSIS3LikeFSHandler::InitiateMultipartUpload(
 bool VSIS3LikeWriteHandle::UploadPart()
 {
     ++m_nPartNumber;
-    if (m_nPartNumber > knMAX_PART_NUMBER)
+    if (m_nPartNumber > m_poFS->GetMaximumPartCount())
     {
         m_bError = true;
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "%d parts have been uploaded for %s failed. "
-            "This is the maximum. "
-            "Increase VSIS3_CHUNK_SIZE to a higher value (e.g. 500 for 500 MB)",
-            knMAX_PART_NUMBER, m_osFilename.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "%d parts have been uploaded for %s failed. "
+                 "This is the maximum. "
+                 "Increase VSI%s_CHUNK_SIZE to a higher value (e.g. 500 for "
+                 "500 MiB)",
+                 m_poFS->GetMaximumPartCount(), m_osFilename.c_str(),
+                 m_poFS->GetDebugKey());
         return false;
     }
     const std::string osEtag = m_poFS->UploadPart(
@@ -1447,8 +1485,8 @@ size_t VSIS3LikeWriteHandle::Write(const void *pBuffer, size_t nSize,
     const GByte *pabySrcBuffer = reinterpret_cast<const GByte *>(pBuffer);
     while (nBytesToWrite > 0)
     {
-        const int nToWriteInBuffer = static_cast<int>(std::min(
-            static_cast<size_t>(m_nBufferSize - m_nBufferOff), nBytesToWrite));
+        const size_t nToWriteInBuffer =
+            std::min(m_nBufferSize - m_nBufferOff, nBytesToWrite);
         memcpy(m_pabyBuffer + m_nBufferOff, pabySrcBuffer, nToWriteInBuffer);
         pabySrcBuffer += nToWriteInBuffer;
         m_nBufferOff += nToWriteInBuffer;
@@ -1456,7 +1494,7 @@ size_t VSIS3LikeWriteHandle::Write(const void *pBuffer, size_t nSize,
         nBytesToWrite -= nToWriteInBuffer;
         if (m_nBufferOff == m_nBufferSize)
         {
-            if (m_nCurOffset == static_cast<vsi_l_offset>(m_nBufferSize))
+            if (m_nCurOffset == m_nBufferSize)
             {
                 m_osUploadID = m_poFS->InitiateMultipartUpload(
                     m_osFilename, m_poS3HandleHelper, m_nMaxRetry,
@@ -2226,40 +2264,56 @@ void VSIS3FSHandler::ClearCache()
 const char *VSIS3FSHandler::GetOptions()
 {
     static std::string osOptions(
-        std::string("<Options>") +
-        "  <Option name='AWS_SECRET_ACCESS_KEY' type='string' "
-        "description='Secret access key. To use with AWS_ACCESS_KEY_ID'/>"
-        "  <Option name='AWS_ACCESS_KEY_ID' type='string' "
-        "description='Access key id'/>"
-        "  <Option name='AWS_SESSION_TOKEN' type='string' "
-        "description='Session token'/>"
-        "  <Option name='AWS_REQUEST_PAYER' type='string' "
-        "description='Content of the x-amz-request-payer HTTP header. "
-        "Typically \"requester\" for requester-pays buckets'/>"
-        "  <Option name='AWS_VIRTUAL_HOSTING' type='boolean' "
-        "description='Whether to use virtual hosting server name when the "
-        "bucket name is compatible with it' default='YES'/>"
-        "  <Option name='AWS_NO_SIGN_REQUEST' type='boolean' "
-        "description='Whether to disable signing of requests' default='NO'/>"
-        "  <Option name='AWS_DEFAULT_REGION' type='string' "
-        "description='AWS S3 default region' default='us-east-1'/>"
-        "  <Option name='CPL_AWS_AUTODETECT_EC2' type='boolean' "
-        "description='Whether to check Hypervisor and DMI identifiers to "
-        "determine if current host is an AWS EC2 instance' default='YES'/>"
-        "  <Option name='AWS_DEFAULT_PROFILE' type='string' "
-        "description='Name of the profile to use for IAM credentials "
-        "retrieval on EC2 instances' default='default'/>"
-        "  <Option name='AWS_CONFIG_FILE' type='string' "
-        "description='Filename that contains AWS configuration' "
-        "default='~/.aws/config'/>"
-        "  <Option name='CPL_AWS_CREDENTIALS_FILE' type='string' "
-        "description='Filename that contains AWS credentials' "
-        "default='~/.aws/credentials'/>"
-        "  <Option name='VSIS3_CHUNK_SIZE' type='int' "
-        "description='Size in MB for chunks of files that are uploaded. The"
-        "default value of 50 MB allows for files up to 500 GB each' "
-        "default='50' min='5' max='1000'/>" +
-        VSICurlFilesystemHandlerBase::GetOptionsStatic() + "</Options>");
+        std::string("<Options>")
+            .append(
+                "  <Option name='AWS_SECRET_ACCESS_KEY' type='string' "
+                "description='Secret access key. To use with "
+                "AWS_ACCESS_KEY_ID'/>"
+                "  <Option name='AWS_ACCESS_KEY_ID' type='string' "
+                "description='Access key id'/>"
+                "  <Option name='AWS_SESSION_TOKEN' type='string' "
+                "description='Session token'/>"
+                "  <Option name='AWS_REQUEST_PAYER' type='string' "
+                "description='Content of the x-amz-request-payer HTTP header. "
+                "Typically \"requester\" for requester-pays buckets'/>"
+                "  <Option name='AWS_VIRTUAL_HOSTING' type='boolean' "
+                "description='Whether to use virtual hosting server name when "
+                "the "
+                "bucket name is compatible with it' default='YES'/>"
+                "  <Option name='AWS_NO_SIGN_REQUEST' type='boolean' "
+                "description='Whether to disable signing of requests' "
+                "default='NO'/>"
+                "  <Option name='AWS_DEFAULT_REGION' type='string' "
+                "description='AWS S3 default region' default='us-east-1'/>"
+                "  <Option name='CPL_AWS_AUTODETECT_EC2' type='boolean' "
+                "description='Whether to check Hypervisor and DMI identifiers "
+                "to "
+                "determine if current host is an AWS EC2 instance' "
+                "default='YES'/>"
+                "  <Option name='AWS_DEFAULT_PROFILE' type='string' "
+                "description='Name of the profile to use for IAM credentials "
+                "retrieval on EC2 instances' default='default'/>"
+                "  <Option name='AWS_CONFIG_FILE' type='string' "
+                "description='Filename that contains AWS configuration' "
+                "default='~/.aws/config'/>"
+                "  <Option name='CPL_AWS_CREDENTIALS_FILE' type='string' "
+                "description='Filename that contains AWS credentials' "
+                "default='~/.aws/credentials'/>"
+                "  <Option name='VSIS3_CHUNK_SIZE' type='int' "
+                "description='Size in MiB for chunks of files that are "
+                "uploaded. The"
+                "default value allows for files up to ")
+            .append(CPLSPrintf("%d", GetDefaultPartSizeInMiB() *
+                                         GetMaximumPartCount() / 1024))
+            .append("GiB each' default='")
+            .append(CPLSPrintf("%d", GetDefaultPartSizeInMiB()))
+            .append("' min='")
+            .append(CPLSPrintf("%d", GetMinimumPartSizeInMiB()))
+            .append("' max='")
+            .append(CPLSPrintf("%d", GetMaximumPartSizeInMiB()))
+            .append("'/>")
+            .append(VSICurlFilesystemHandlerBase::GetOptionsStatic())
+            .append("</Options>"));
     return osOptions.c_str();
 }
 
@@ -3842,7 +3896,7 @@ int IVSIS3LikeFSHandler::CopyFileRestartable(
     }
 
     const char *pszChunkSize = CSLFetchNameValue(papszOptions, "CHUNK_SIZE");
-    int nChunkSize = GetUploadChunkSizeInBytes(pszTarget, pszChunkSize);
+    size_t nChunkSize = GetUploadChunkSizeInBytes(pszTarget, pszChunkSize);
 
     VSIStatBufL sStatBuf;
     if (VSIStatL(pszSource, &sStatBuf) != 0)
@@ -3909,13 +3963,23 @@ int IVSIS3LikeFSHandler::CopyFileRestartable(
             return -1;
         }
 
-        nChunkSize = oRoot.GetInteger("chunk_size");
-        if (nChunkSize <= 0)
+        const auto nChunkSizeLong = oRoot.GetLong("chunk_size");
+        if (nChunkSizeLong <= 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "'chunk_size' field in input payload missing or invalid");
             return -1;
         }
+#if SIZEOF_VOIDP < 8
+        if (static_cast<uint64_t>(nChunkSizeLong) >
+            std::numeric_limits<size_t>::max())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'chunk_size' field in input payload is too large");
+            return -1;
+        }
+#endif
+        nChunkSize = static_cast<size_t>(nChunkSizeLong);
 
         auto oEtags = oRoot.GetArray("chunk_etags");
         if (!oEtags.IsValid())
@@ -3927,7 +3991,7 @@ int IVSIS3LikeFSHandler::CopyFileRestartable(
 
         const auto nChunkCountLarge =
             (sStatBuf.st_size + nChunkSize - 1) / nChunkSize;
-        if (nChunkCountLarge != oEtags.Size())
+        if (nChunkCountLarge != static_cast<size_t>(oEtags.Size()))
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
@@ -3945,11 +4009,11 @@ int IVSIS3LikeFSHandler::CopyFileRestartable(
         // Compute the number of chunks
         auto nChunkCountLarge =
             (sStatBuf.st_size + nChunkSize - 1) / nChunkSize;
-        if (nChunkCountLarge > knMAX_PART_NUMBER)
+        if (nChunkCountLarge > static_cast<size_t>(GetMaximumPartCount()))
         {
             // Re-adjust the chunk size if needed
-            constexpr int nWishedChunkCount = knMAX_PART_NUMBER / 10;
-            const auto nMinChunkSizeLarge =
+            const int nWishedChunkCount = GetMaximumPartCount() / 10;
+            const uint64_t nMinChunkSizeLarge =
                 (sStatBuf.st_size + nWishedChunkCount - 1) / nWishedChunkCount;
             if (pszChunkSize)
             {
@@ -3960,12 +4024,13 @@ int IVSIS3LikeFSHandler::CopyFileRestartable(
                     static_cast<GUIntBig>(nMinChunkSizeLarge));
                 return -1;
             }
-            if (nMinChunkSizeLarge > 1000 * 1024 * 1024)
+            if (nMinChunkSizeLarge >
+                static_cast<size_t>(GetMaximumPartSizeInMiB()) * MIB_CONSTANT)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Too large file");
                 return -1;
             }
-            nChunkSize = static_cast<int>(nMinChunkSizeLarge);
+            nChunkSize = static_cast<size_t>(nMinChunkSizeLarge);
             nChunkCountLarge = (sStatBuf.st_size + nChunkSize - 1) / nChunkSize;
         }
         nChunkCount = static_cast<int>(nChunkCountLarge);
@@ -4184,7 +4249,7 @@ int IVSIS3LikeFSHandler::CopyFileRestartable(
         oRoot.Add("target", pszTarget);
         oRoot.Add("source_size", static_cast<uint64_t>(sStatBuf.st_size));
         oRoot.Add("source_mtime", static_cast<GIntBig>(sStatBuf.st_mtime));
-        oRoot.Add("chunk_size", nChunkSize);
+        oRoot.Add("chunk_size", static_cast<uint64_t>(nChunkSize));
         oRoot.Add("upload_id", osUploadID);
         CPLJSONArray oArray;
         for (int iChunk = 0; iChunk < nChunkCount; ++iChunk)
@@ -4477,7 +4542,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         CPLTestBool(CPLGetConfigOption("VSIS3_SIMULATE_THREADING", "NO"));
     const int nMinSizeChunk =
         bSupportsParallelMultipartUpload && !bSimulateThreading
-            ? 8 * 1024 * 1024
+            ? 8 * MIB_CONSTANT
             : 1;  // 5242880 defined by S3 API as the minimum, but 8 MB used by
                   // default by the Python s3transfer library
     const int nMinThreads = bSimulateThreading ? 0 : 1;
@@ -4486,7 +4551,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                 (bDownloadFromNetworkToLocal ||
                  bSupportsParallelMultipartUpload)
             ? static_cast<size_t>(
-                  std::min(1024 * 1024 * 1024,
+                  std::min(1024 * MIB_CONSTANT,
                            std::max(nMinSizeChunk, atoi(pszChunkSize))))
             : 0;
 

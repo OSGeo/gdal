@@ -1159,7 +1159,7 @@ VSIADLSWriteHandle::VSIADLSWriteHandle(VSIADLSFSHandler *poFS,
                                        const char *pszFilename,
                                        VSIAzureBlobHandleHelper *poHandleHelper)
     : VSIAppendWriteHandle(poFS, poFS->GetFSPrefix().c_str(), pszFilename,
-                           GetAzureBufferSize()),
+                           GetAzureAppendBufferSize()),
       m_poHandleHelper(poHandleHelper)
 {
 }

@@ -121,7 +121,7 @@ class VSIAzureBlobHandleHelper final : public IVSIS3LikeHandleHelper
 
 namespace cpl
 {
-int GetAzureBufferSize();
+int GetAzureAppendBufferSize();
 }
 
 #endif /* HAVE_CURL */

@@ -672,8 +672,47 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBaseWritable
 
     bool AbortPendingUploads(const char *pszFilename) override;
 
-    int GetUploadChunkSizeInBytes(const char *pszFilename,
-                                  const char *pszSpecifiedValInBytes);
+    size_t GetUploadChunkSizeInBytes(const char *pszFilename,
+                                     const char *pszSpecifiedValInBytes);
+
+    //! Maximum number of parts for multipart upload
+    // Limit currently used by S3 and GS.
+    // Cf https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
+    // and https://cloud.google.com/storage/quotas#requests
+    virtual int GetMaximumPartCount()
+    {
+        return 10000;
+    }
+
+    //! Minimum size of a part for multipart upload (except last one), in MiB.
+    // Limit currently used by S3 and GS.
+    // Cf https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
+    // and https://cloud.google.com/storage/quotas#requests
+    virtual int GetMinimumPartSizeInMiB()
+    {
+        return 5;
+    }
+
+    //! Maximum size of a part for multipart upload, in MiB.
+    // Limit currently used by S3 and GS.
+    // Cf https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
+    // and https://cloud.google.com/storage/quotas#requests
+    virtual int GetMaximumPartSizeInMiB()
+    {
+#if SIZEOF_VOIDP == 8
+        return 5 * 1024;
+#else
+        // Cannot be larger than 4, otherwise integer overflow would occur
+        // 1 GiB is the maximum reasonable value on a 32-bit machine
+        return 1 * 1024;
+#endif
+    }
+
+    //! Default size of a part for multipart upload, in MiB.
+    virtual int GetDefaultPartSizeInMiB()
+    {
+        return 50;
+    }
 };
 
 /************************************************************************/
@@ -731,8 +770,8 @@ class VSIS3LikeWriteHandle final : public VSIVirtualHandle
     CPLStringList m_aosHTTPOptions{};
 
     vsi_l_offset m_nCurOffset = 0;
-    int m_nBufferOff = 0;
-    int m_nBufferSize = 0;
+    size_t m_nBufferOff = 0;
+    size_t m_nBufferSize = 0;
     bool m_bClosed = false;
     GByte *m_pabyBuffer = nullptr;
     std::string m_osUploadID{};

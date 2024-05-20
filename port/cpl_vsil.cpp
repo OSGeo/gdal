@@ -2023,10 +2023,10 @@ bool VSIFilesystemHandler::SetFileMetadata(const char * /* pszFilename*/,
 /************************************************************************/
 
 /**
- * \brief Open file.
+ * \brief Open/create file.
  *
- * This function opens a file with the desired access.  Large files (larger
- * than 2GB) should be supported.  Binary access is always implied and
+ * This function opens (or creates) a file with the desired access.
+ * Binary access is always implied and
  * the "b" does not need to be included in the pszAccess string.
  *
  * Note that the "VSILFILE *" returned by this function is
@@ -2064,10 +2064,10 @@ VSILFILE *VSIFOpenExL(const char *pszFilename, const char *pszAccess,
 /************************************************************************/
 
 /**
- * \brief Open file.
+ * \brief Open/create file.
  *
- * This function opens a file with the desired access.  Large files (larger
- * than 2GB) should be supported.  Binary access is always implied and
+ * This function opens (or creates) a file with the desired access.
+ * Binary access is always implied and
  * the "b" does not need to be included in the pszAccess string.
  *
  * Note that the "VSILFILE *" returned by this function is
@@ -2092,6 +2092,18 @@ VSILFILE *VSIFOpenExL(const char *pszFilename, const char *pszAccess,
  * set the FILE_FLAG_WRITE_THROUGH flag to the CreateFile() function. In that
  * mode, the data is written to the system cache but is flushed to disk without
  * delay.</li>
+ * </ul>
+ *
+ * Options specifics for /vsiaz/ in "w" mode:
+ * <ul>
+ * <li>BLOB_TYPE=APPEND/BLOCK. (GDAL >= 3.10) Type of blob. Defaults to APPEND.
+ * Append blocks are limited to 195 GiB
+ * (however if the file size is below 4 MiB, a block blob will be created in a
+ * single PUT operation)
+ * </li>
+ * <li>CHUNK_SIZE=val in MiB. (GDAL >= 3.10) Size of a block, only taken into
+ * account when BLOB_TYPE=BLOCK. It can be up to 4000 MiB. Default is 50 MiB.
+ * </li>
  * </ul>
  *
  * Analog of the POSIX fopen() function.

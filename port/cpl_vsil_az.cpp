@@ -660,6 +660,32 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     {
         return new VSIAzureFSHandler(pszPrefix);
     }
+
+    //! Maximum number of parts for multipart upload
+    // Cf https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-block-blobs--append-blobs--and-page-blobs
+    int GetMaximumPartCount() override
+    {
+        return 50000;
+    }
+
+    //! Minimum size of a part for multipart upload (except last one), in MiB.
+    int GetMinimumPartSizeInMiB() override
+    {
+        return 0;
+    }
+
+    //! Maximum size of a part for multipart upload, in MiB.
+    // Cf https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-block-blobs--append-blobs--and-page-blobs
+    int GetMaximumPartSizeInMiB() override
+    {
+#if SIZEOF_VOIDP == 8
+        return 4000;
+#else
+        // Cannot be larger than 4GiB, otherwise integer overflow would occur
+        // 1 GiB is the maximum reasonable value on a 32-bit machine
+        return 1024;
+#endif
+    }
 };
 
 /************************************************************************/
@@ -735,13 +761,27 @@ VSIAzureFSHandler::CreateWriteHandle(const char *pszFilename,
             pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str());
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = std::make_unique<VSIAzureWriteHandle>(
-        this, pszFilename, poHandleHelper, papszOptions);
-    if (!poHandle->IsOK())
+    const char *pszBlobType = CSLFetchNameValue(papszOptions, "BLOB_TYPE");
+    if (pszBlobType && EQUAL(pszBlobType, "BLOCK"))
     {
-        return nullptr;
+        auto poHandle = std::make_unique<VSIS3LikeWriteHandle>(
+            this, pszFilename, poHandleHelper, false, papszOptions);
+        if (!poHandle->IsOK())
+        {
+            return nullptr;
+        }
+        return VSIVirtualHandleUniquePtr(poHandle.release());
     }
-    return VSIVirtualHandleUniquePtr(poHandle.release());
+    else
+    {
+        auto poHandle = std::make_unique<VSIAzureWriteHandle>(
+            this, pszFilename, poHandleHelper, papszOptions);
+        if (!poHandle->IsOK())
+        {
+            return nullptr;
+        }
+        return VSIVirtualHandleUniquePtr(poHandle.release());
+    }
 }
 
 /************************************************************************/
@@ -1162,10 +1202,10 @@ VSIAzureFSHandler::GetStreamingFilename(const std::string &osFilename) const
 }
 
 /************************************************************************/
-/*                        GetAzureBufferSize()                          */
+/*                       GetAzureAppendBufferSize()                     */
 /************************************************************************/
 
-int GetAzureBufferSize()
+int GetAzureAppendBufferSize()
 {
     int nBufferSize;
     int nChunkSizeMB = atoi(CPLGetConfigOption("VSIAZ_CHUNK_SIZE", "4"));
@@ -1192,7 +1232,7 @@ VSIAzureWriteHandle::VSIAzureWriteHandle(
     VSIAzureFSHandler *poFS, const char *pszFilename,
     VSIAzureBlobHandleHelper *poHandleHelper, CSLConstList papszOptions)
     : VSIAppendWriteHandle(poFS, poFS->GetFSPrefix().c_str(), pszFilename,
-                           GetAzureBufferSize()),
+                           GetAzureAppendBufferSize()),
       m_poHandleHelper(poHandleHelper), m_aosOptions(papszOptions),
       m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename))
 {

@@ -832,6 +832,130 @@ def test_vsiaz_write_appendblob_retry():
 
 
 ###############################################################################
+# Test writing a block blob
+
+
+def test_vsiaz_write_blockblob_chunk_size_1():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    f = gdal.VSIFOpenExL(
+        "/vsiaz/test_create/file.bin", "wb", False, ["BLOB_TYPE=BLOCK", "CHUNK_SIZE=1"]
+    )
+    assert f is not None
+
+    assert gdal.VSIFWriteL(b"x", 1, 1, f) == 1
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "PUT",
+        "/azure/blob/myaccount/test_create/file.bin?blockid=000000000001&comp=block",
+        201,
+        expected_headers={"Content-Length": str(1024 * 1024)},
+    )
+
+    with webserver.install_http_handler(handler):
+        assert gdal.VSIFWriteL(b"x" * (1024 * 1024 - 1), 1024 * 1024 - 1, 1, f) == 1
+
+    assert gdal.VSIFWriteL(b"x", 1, 1, f) == 1
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "PUT",
+        "/azure/blob/myaccount/test_create/file.bin?blockid=000000000002&comp=block",
+        201,
+        expected_headers={"Content-Length": "1"},
+    )
+
+    handler.add(
+        "PUT",
+        "/azure/blob/myaccount/test_create/file.bin?comp=blocklist",
+        201,
+        expected_body=b'<?xml version="1.0" encoding="utf-8"?>\n<BlockList>\n<Latest>000000000001</Latest>\n<Latest>000000000002</Latest>\n</BlockList>\n',
+    )
+
+    with webserver.install_http_handler(handler):
+        gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test writing a block blob default chunk size
+
+
+def test_vsiaz_write_blockblob_default_chunk_size():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    f = gdal.VSIFOpenExL(
+        "/vsiaz/test_create/file.bin", "wb", False, ["BLOB_TYPE=BLOCK"]
+    )
+    assert f is not None
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "PUT",
+        "/azure/blob/myaccount/test_create/file.bin?blockid=000000000001&comp=block",
+        201,
+        expected_headers={"Content-Length": str(50 * 1024 * 1024)},
+    )
+    handler.add(
+        "PUT",
+        "/azure/blob/myaccount/test_create/file.bin?blockid=000000000002&comp=block",
+        201,
+        expected_headers={"Content-Length": "1"},
+    )
+
+    handler.add(
+        "PUT",
+        "/azure/blob/myaccount/test_create/file.bin?comp=blocklist",
+        201,
+        expected_body=b'<?xml version="1.0" encoding="utf-8"?>\n<BlockList>\n<Latest>000000000001</Latest>\n<Latest>000000000002</Latest>\n</BlockList>\n',
+    )
+
+    with webserver.install_http_handler(handler):
+        assert (
+            gdal.VSIFWriteL(b"x" * (50 * 1024 * 1024 + 1), 50 * 1024 * 1024 + 1, 1, f)
+            == 1
+        )
+        gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test writing a block blob single PUT
+
+
+def test_vsiaz_write_blockblob_single_put():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    f = gdal.VSIFOpenExL(
+        "/vsiaz/test_create/file.bin", "wb", False, ["BLOB_TYPE=BLOCK"]
+    )
+    assert f is not None
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "PUT",
+        "/azure/blob/myaccount/test_create/file.bin",
+        201,
+        expected_headers={"Content-Length": "1"},
+    )
+
+    with webserver.install_http_handler(handler):
+        assert gdal.VSIFWriteL(b"x", 1, 1, f) == 1
+        gdal.VSIFCloseL(f)
+
+
+###############################################################################
 # Test Unlink()
 
 
