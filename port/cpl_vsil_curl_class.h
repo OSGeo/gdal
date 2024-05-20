@@ -716,17 +716,17 @@ class IVSIS3LikeHandle : public VSICurlHandle
 };
 
 /************************************************************************/
-/*                            VSIS3WriteHandle                          */
+/*                           VSIS3LikeWriteHandle                       */
 /************************************************************************/
 
-class VSIS3WriteHandle final : public VSIVirtualHandle
+class VSIS3LikeWriteHandle final : public VSIVirtualHandle
 {
-    CPL_DISALLOW_COPY_ASSIGN(VSIS3WriteHandle)
+    CPL_DISALLOW_COPY_ASSIGN(VSIS3LikeWriteHandle)
 
     IVSIS3LikeFSHandler *m_poFS = nullptr;
     std::string m_osFilename{};
     IVSIS3LikeHandleHelper *m_poS3HandleHelper = nullptr;
-    bool m_bUseChunked = false;
+    bool m_bUseChunkedTransfer = false;
     CPLStringList m_aosOptions{};
     CPLStringList m_aosHTTPOptions{};
 
@@ -763,10 +763,10 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
     void InvalidateParentDirectory();
 
   public:
-    VSIS3WriteHandle(IVSIS3LikeFSHandler *poFS, const char *pszFilename,
-                     IVSIS3LikeHandleHelper *poS3HandleHelper, bool bUseChunked,
-                     CSLConstList papszOptions);
-    ~VSIS3WriteHandle() override;
+    VSIS3LikeWriteHandle(IVSIS3LikeFSHandler *poFS, const char *pszFilename,
+                         IVSIS3LikeHandleHelper *poS3HandleHelper,
+                         bool bUseChunkedTransfer, CSLConstList papszOptions);
+    ~VSIS3LikeWriteHandle() override;
 
     int Seek(vsi_l_offset nOffset, int nWhence) override;
     vsi_l_offset Tell() override;
@@ -777,7 +777,7 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
 
     bool IsOK()
     {
-        return m_bUseChunked || m_pabyBuffer != nullptr;
+        return m_bUseChunkedTransfer || m_pabyBuffer != nullptr;
     }
 };
 

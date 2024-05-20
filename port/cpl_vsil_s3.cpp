@@ -739,15 +739,15 @@ class VSIS3Handle final : public IVSIS3LikeHandle
 };
 
 /************************************************************************/
-/*                         VSIS3WriteHandle()                           */
+/*                         VSIS3LikeWriteHandle()                       */
 /************************************************************************/
 
-VSIS3WriteHandle::VSIS3WriteHandle(IVSIS3LikeFSHandler *poFS,
-                                   const char *pszFilename,
-                                   IVSIS3LikeHandleHelper *poS3HandleHelper,
-                                   bool bUseChunked, CSLConstList papszOptions)
+VSIS3LikeWriteHandle::VSIS3LikeWriteHandle(
+    IVSIS3LikeFSHandler *poFS, const char *pszFilename,
+    IVSIS3LikeHandleHelper *poS3HandleHelper, bool bUseChunked,
+    CSLConstList papszOptions)
     : m_poFS(poFS), m_osFilename(pszFilename),
-      m_poS3HandleHelper(poS3HandleHelper), m_bUseChunked(bUseChunked),
+      m_poS3HandleHelper(poS3HandleHelper), m_bUseChunkedTransfer(bUseChunked),
       m_aosOptions(papszOptions),
       m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename)),
       m_nMaxRetry(
@@ -763,7 +763,7 @@ VSIS3WriteHandle::VSIS3WriteHandle(IVSIS3LikeFSHandler *poFS,
     // Swift only supports the "Transfer-Encoding: chunked" PUT mechanism.
     // So two different implementations.
 
-    if (!m_bUseChunked)
+    if (!m_bUseChunkedTransfer)
     {
         m_nBufferSize = poFS->GetUploadChunkSizeInBytes(pszFilename, nullptr);
 
@@ -814,12 +814,12 @@ int IVSIS3LikeFSHandler::GetUploadChunkSizeInBytes(
 }
 
 /************************************************************************/
-/*                        ~VSIS3WriteHandle()                           */
+/*                        ~VSIS3LikeWriteHandle()                           */
 /************************************************************************/
 
-VSIS3WriteHandle::~VSIS3WriteHandle()
+VSIS3LikeWriteHandle::~VSIS3LikeWriteHandle()
 {
-    VSIS3WriteHandle::Close();
+    VSIS3LikeWriteHandle::Close();
     delete m_poS3HandleHelper;
     CPLFree(m_pabyBuffer);
     if (m_hCurlMulti)
@@ -838,7 +838,7 @@ VSIS3WriteHandle::~VSIS3WriteHandle()
 /*                               Seek()                                 */
 /************************************************************************/
 
-int VSIS3WriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIS3LikeWriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
 {
     if (!((nWhence == SEEK_SET && nOffset == m_nCurOffset) ||
           (nWhence == SEEK_CUR && nOffset == 0) ||
@@ -857,7 +857,7 @@ int VSIS3WriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                               Tell()                                 */
 /************************************************************************/
 
-vsi_l_offset VSIS3WriteHandle::Tell()
+vsi_l_offset VSIS3LikeWriteHandle::Tell()
 {
     return m_nCurOffset;
 }
@@ -866,8 +866,8 @@ vsi_l_offset VSIS3WriteHandle::Tell()
 /*                               Read()                                 */
 /************************************************************************/
 
-size_t VSIS3WriteHandle::Read(void * /* pBuffer */, size_t /* nSize */,
-                              size_t /* nMemb */)
+size_t VSIS3LikeWriteHandle::Read(void * /* pBuffer */, size_t /* nSize */,
+                                  size_t /* nMemb */)
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "Read not supported on writable %s files",
@@ -987,7 +987,7 @@ std::string IVSIS3LikeFSHandler::InitiateMultipartUpload(
 /*                           UploadPart()                               */
 /************************************************************************/
 
-bool VSIS3WriteHandle::UploadPart()
+bool VSIS3LikeWriteHandle::UploadPart()
 {
     ++m_nPartNumber;
     if (m_nPartNumber > knMAX_PART_NUMBER)
@@ -1134,14 +1134,16 @@ std::string IVSIS3LikeFSHandler::UploadPart(
 /*                      ReadCallBackBufferChunked()                     */
 /************************************************************************/
 
-size_t VSIS3WriteHandle::ReadCallBackBufferChunked(char *buffer, size_t size,
-                                                   size_t nitems,
-                                                   void *instream)
+size_t VSIS3LikeWriteHandle::ReadCallBackBufferChunked(char *buffer,
+                                                       size_t size,
+                                                       size_t nitems,
+                                                       void *instream)
 {
-    VSIS3WriteHandle *poThis = static_cast<VSIS3WriteHandle *>(instream);
+    VSIS3LikeWriteHandle *poThis =
+        static_cast<VSIS3LikeWriteHandle *>(instream);
     if (poThis->m_nChunkedBufferSize == 0)
     {
-        // CPLDebug("VSIS3WriteHandle", "Writing 0 byte (finish)");
+        // CPLDebug("VSIS3LikeWriteHandle", "Writing 0 byte (finish)");
         return 0;
     }
     const size_t nSizeMax = size * nitems;
@@ -1155,7 +1157,7 @@ size_t VSIS3WriteHandle::ReadCallBackBufferChunked(char *buffer, size_t size,
                poThis->m_nChunkedBufferOff,
            nSizeToWrite);
     poThis->m_nChunkedBufferOff += nSizeToWrite;
-    // CPLDebug("VSIS3WriteHandle", "Writing %d bytes", nSizeToWrite);
+    // CPLDebug("VSIS3LikeWriteHandle", "Writing %d bytes", nSizeToWrite);
     return nSizeToWrite;
 }
 
@@ -1163,8 +1165,8 @@ size_t VSIS3WriteHandle::ReadCallBackBufferChunked(char *buffer, size_t size,
 /*                          WriteChunked()                              */
 /************************************************************************/
 
-size_t VSIS3WriteHandle::WriteChunked(const void *pBuffer, size_t nSize,
-                                      size_t nMemb)
+size_t VSIS3LikeWriteHandle::WriteChunked(const void *pBuffer, size_t nSize,
+                                          size_t nMemb)
 {
     const size_t nBytesToWrite = nSize * nMemb;
 
@@ -1390,7 +1392,7 @@ size_t VSIS3WriteHandle::WriteChunked(const void *pBuffer, size_t nSize,
 /*                        FinishChunkedTransfer()                       */
 /************************************************************************/
 
-int VSIS3WriteHandle::FinishChunkedTransfer()
+int VSIS3LikeWriteHandle::FinishChunkedTransfer()
 {
     if (m_hCurl == nullptr)
         return -1;
@@ -1427,7 +1429,8 @@ int VSIS3WriteHandle::FinishChunkedTransfer()
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIS3WriteHandle::Write(const void *pBuffer, size_t nSize, size_t nMemb)
+size_t VSIS3LikeWriteHandle::Write(const void *pBuffer, size_t nSize,
+                                   size_t nMemb)
 {
     if (m_bError)
         return 0;
@@ -1436,7 +1439,7 @@ size_t VSIS3WriteHandle::Write(const void *pBuffer, size_t nSize, size_t nMemb)
     if (nBytesToWrite == 0)
         return 0;
 
-    if (m_bUseChunked)
+    if (m_bUseChunkedTransfer)
     {
         return WriteChunked(pBuffer, nSize, nMemb);
     }
@@ -1479,7 +1482,7 @@ size_t VSIS3WriteHandle::Write(const void *pBuffer, size_t nSize, size_t nMemb)
 /*                                Eof()                                 */
 /************************************************************************/
 
-int VSIS3WriteHandle::Eof()
+int VSIS3LikeWriteHandle::Eof()
 {
     return FALSE;
 }
@@ -1488,7 +1491,7 @@ int VSIS3WriteHandle::Eof()
 /*                    InvalidateParentDirectory()                       */
 /************************************************************************/
 
-void VSIS3WriteHandle::InvalidateParentDirectory()
+void VSIS3LikeWriteHandle::InvalidateParentDirectory()
 {
     m_poFS->InvalidateCachedData(m_poS3HandleHelper->GetURL().c_str());
 
@@ -1502,7 +1505,7 @@ void VSIS3WriteHandle::InvalidateParentDirectory()
 /*                           DoSinglePartPUT()                          */
 /************************************************************************/
 
-bool VSIS3WriteHandle::DoSinglePartPUT()
+bool VSIS3LikeWriteHandle::DoSinglePartPUT()
 {
     bool bSuccess = true;
     bool bRetry;
@@ -2027,13 +2030,13 @@ bool IVSIS3LikeFSHandler::AbortPendingUploads(const char *pszFilename)
 /*                                 Close()                              */
 /************************************************************************/
 
-int VSIS3WriteHandle::Close()
+int VSIS3LikeWriteHandle::Close()
 {
     int nRet = 0;
     if (!m_bClosed)
     {
         m_bClosed = true;
-        if (m_bUseChunked && m_hCurlMulti != nullptr)
+        if (m_bUseChunkedTransfer && m_hCurlMulti != nullptr)
         {
             nRet = FinishChunkedTransfer();
         }
@@ -2078,7 +2081,7 @@ VSIS3FSHandler::CreateWriteHandle(const char *pszFilename,
         CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = std::make_unique<VSIS3WriteHandle>(
+    auto poHandle = std::make_unique<VSIS3LikeWriteHandle>(
         this, pszFilename, poHandleHelper, false, papszOptions);
     if (!poHandle->IsOK())
     {
