@@ -3270,15 +3270,27 @@ void CPL_STDCALL GDALCopyWords(const void *CPL_RESTRICT pSrcData,
  *
  * This function is used to copy pixel word values from one memory buffer
  * to another, with support for conversion between data types, and differing
- * step factors.  The data type conversion is done using the normal GDAL
- * rules.  Values assigned to a lower range integer type are clipped.  For
+ * step factors. The data type conversion is done using the following
+ * rules:
+ * <ul>
+ * <li>Values assigned to a lower range integer type are clipped. For
  * instance assigning GDT_Int16 values to a GDT_Byte buffer will cause values
  * less the 0 to be set to 0, and values larger than 255 to be set to 255.
- * Assignment from floating point to integer uses default C type casting
- * semantics.   Assignment from non-complex to complex will result in the
- * imaginary part being set to zero on output.  Assignment from complex to
+ * </li>
+ * <li>
+ * Assignment from floating point to integer rounds to closest integer.
+ * +Infinity is mapped to the largest integer. -Infinity is mapped to the
+ * smallest integer. NaN is mapped to 0.
+ * </li>
+ * <li>
+ * Assignment from non-complex to complex will result in the imaginary part
+ * being set to zero on output.
+ * </li>
+ * <li> Assignment from complex to
  * non-complex will result in the complex portion being lost and the real
  * component being preserved (<i>not magnitude!</i>).
+ * </li>
+ * </ul>
  *
  * No assumptions are made about the source or destination words occurring
  * on word boundaries.  It is assumed that all values are in native machine
