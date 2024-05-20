@@ -206,7 +206,6 @@ GDALDatasetH GDALViewshedGenerate(
 
     gdal::Viewshed v(oOpts);
 
-    //ABELL - Make a function for progress that captures the progress argument.
     v.run(hBand, pfnProgress, pProgressArg);
 
     return GDALDataset::FromHandle(v.output().release());
@@ -272,15 +271,16 @@ double CalcHeightEdge(int i, int j, double Za, double Zb)
 
 }  // unnamed namespace
 
-/// \brief  Calculate the output extent of the output raster in terms of the input raster.
-/// \return  false on error, true otherwise
-/// \param nX  observer X position in the input raster
-/// \param nY  observer Y position in the input raster
+/// Calculate the output extent of the output raster in terms of the input raster.
+///
+/// @param nX  observer X position in the input raster
+/// @param nY  observer Y position in the input raster
+/// @return  false on error, true otherwise
 bool Viewshed::calcOutputExtent(int nX, int nY)
 {
     // We start with the assumption that the output size matches the input.
-    oOutExtent.xStop = GDALGetRasterBandXSize(hBand);
-    oOutExtent.yStop = GDALGetRasterBandYSize(hBand);
+    oOutExtent.xStop = GDALGetRasterBandXSize(pSrcBand);
+    oOutExtent.yStop = GDALGetRasterBandYSize(pSrcBand);
 
     if (nX < 0 || nX >= oOutExtent.xStop || nY < 0 || nY >= oOutExtent.yStop)
     {
@@ -324,9 +324,14 @@ bool Viewshed::calcOutputExtent(int nX, int nY)
     return true;
 }
 
+/// Read a line of raster data.
+///
+/// @param  nLine  Line number to read.
+/// @param  data  Pointer to location in which to store data.
+/// @return  Success or failure.
 bool Viewshed::readLine(int nLine, double *data)
 {
-    if (GDALRasterIO(hBand, GF_Read, oOutExtent.xStart, nLine,
+    if (GDALRasterIO(pSrcBand, GF_Read, oOutExtent.xStart, nLine,
                      oOutExtent.xSize(), 1, data, oOutExtent.xSize(), 1,
                      GDT_Float64, 0, 0))
     {
@@ -339,9 +344,60 @@ bool Viewshed::readLine(int nLine, double *data)
     return true;
 }
 
-std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX,
-                                           double dfObserverHeight,
-                                           double *const pdfNx)
+/// Write an output line of either visibility or height data.
+///
+/// @param  nLine  Line number being written.
+/// @param  data   Pointer to data being written.
+/// @param  dataType  Either byte (visibility data) or double (height data)
+/// @return  Success or failure.
+bool Viewshed::writeLine(int nLine, void * const data, GDALDataType dataType)
+{
+    if (GDALRasterIO(pDstBand, GF_Write, 0, nLine - oOutExtent.yStart,
+        oOutExtent.xSize(), 1, data, oOutExtent.xSize(), 1,
+        dataType, 0, 0))
+    {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "RasterIO error when writing target raster at position "
+                     "(%d,%d), size (%d,%d)",
+                     0, nLine - oOutExtent.yStart, oOutExtent.xSize(), 1);
+            return false;
+    }
+    return true;
+}
+
+/// Emit progress information saying that a line has been written to output.
+///
+/// @return  True on success, false otherwise.
+bool Viewshed::lineProgress()
+{
+    if (nLineCount < oOutExtent.ySize())
+        nLineCount++;
+    return emitProgress(nLineCount / static_cast<double>(oOutExtent.ySize()));
+}
+
+/// Emit progress information saying that a fraction of work has been completed.
+///
+/// @return  True on success, false otherwise.
+bool Viewshed::emitProgress(double fraction)
+{
+    // Call the progress function.
+    if (!oProgress(fraction, ""))
+    {
+        CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+        return false;
+    }
+    return true;
+}
+
+/// Adjust the height of the line of data by the observer height and the curvature of the
+/// earth.
+///
+/// @param  nYOffset  Y offset of the line being adjusted.
+/// @param  nX  X location of the observer.
+/// @param  pdfNx  Pointer to the data at the nX location of the line being adjusted
+/// @return [left, right)  Leftmost and one past the rightmost cell in the line within
+///    the max distance
+std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX, double dfObserverHeight, double *const pdfNx)
 {
     int nLeft = 0;
     int nRight = oOutExtent.xSize();
@@ -449,7 +505,7 @@ bool Viewshed::createOutputDataset()
     }
 
     /* copy srs */
-    GDALDatasetH hSrcDS = GDALGetBandDataset(hBand);
+    GDALDatasetH hSrcDS = GDALGetBandDataset(pSrcBand);
     if (hSrcDS)
         poDstDS->SetSpatialRef(
             GDALDataset::FromHandle(hSrcDS)->GetSpatialRef());
@@ -465,6 +521,16 @@ bool Viewshed::createOutputDataset()
     adfDstTransform[5] = adfTransform[5];
     poDstDS->SetGeoTransform(adfDstTransform.data());
 
+    pDstBand = poDstDS->GetRasterBand(1);
+    if (!pDstBand)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot get band for %s",
+                 oOpts.outputFilename.c_str());
+        return false;
+    }
+
+    if (oOpts.nodataVal >= 0)
+        GDALSetRasterNoDataValue(pDstBand, oOpts.nodataVal);
     return true;
 }
 
@@ -556,19 +622,20 @@ void Viewshed::processHalfLine(int nX, int nYOffset, int iStart, int iEnd,
 bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                    void *pProgressArg)
 {
-    hBand = band;
+    using namespace std::placeholders;
+
+    nLineCount = 0;
+    pSrcBand = static_cast<GDALRasterBand *>(band);
 
     if (!pfnProgress)
         pfnProgress = GDALDummyProgress;
+    oProgress = std::bind(pfnProgress, _1, _2, pProgressArg);
 
-    if (!pfnProgress(0.0, "", pProgressArg))
-    {
-        CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+    if (!emitProgress(0))
         return false;
-    }
 
     /* set up geotransformation */
-    GDALDatasetH hSrcDS = GDALGetBandDataset(hBand);
+    GDALDatasetH hSrcDS = GDALGetBandDataset(pSrcBand);
     if (hSrcDS != nullptr)
         GDALGetGeoTransform(hSrcDS, adfTransform.data());
 
@@ -599,17 +666,6 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     /* create the output dataset */
     if (!createOutputDataset())
         return false;
-
-    GDALRasterBand *hTargetBand = poDstDS->GetRasterBand(1);
-    if (hTargetBand == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot get band for %s",
-                 oOpts.outputFilename.c_str());
-        return false;
-    }
-
-    if (oOpts.nodataVal >= 0)
-        GDALSetRasterNoDataValue(hTargetBand, oOpts.nodataVal);
 
     double dfZObserver = 0;
 
@@ -693,17 +749,8 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                 vHeightResult[iPixel] = oOpts.outOfRangeVal;
         }
 
-        /* write result line */
-        if (GDALRasterIO(hTargetBand, GF_Write, 0, nY - oOutExtent.yStart,
-                         oOutExtent.xSize(), 1, data, oOutExtent.xSize(), 1,
-                         dataType, 0, 0))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "RasterIO error when writing target raster at position "
-                     "(%d,%d), size (%d,%d)",
-                     0, nY - oOutExtent.yStart, oOutExtent.xSize(), 1);
+        if (!writeLine(nY, data, dataType))
             return false;
-        }
     }
 
     // Save the first line for use later.
@@ -752,27 +799,14 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         processHalfLine(nX, iLine - nY, nX - 1, iLeft - 1, Left);
         processHalfLine(nX, iLine - nY, nX + 1, iRight, Right);
 
-        /* write result line */
-        if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - oOutExtent.yStart,
-                         oOutExtent.xSize(), 1, data, oOutExtent.xSize(), 1,
-                         dataType, 0, 0))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "RasterIO error when writing target raster at position "
-                     "(%d,%d), size (%d,%d)",
-                     0, iLine - oOutExtent.yStart, oOutExtent.xSize(), 1);
+        if (!writeLine(iLine, data, dataType))
             return false;
-        }
 
         // Make this line the last line.
         std::swap(vLastLineVal, vThisLineVal);
 
-        if (!pfnProgress((nY - iLine) / static_cast<double>(oOutExtent.ySize()),
-                         "", pProgressArg))
-        {
-            CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+        if (!lineProgress())
             return false;
-        }
     }
 
     // Use the first line as the last. We can move since after this we're done with the
@@ -798,6 +832,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         /* set up initial point on the scanline */
         if (iLeft < iRight)
         {
+            //ABELL - Reversed Y offset
             double dfZ = CalcHeightLine(iLine - nY, vLastLineVal[nX]);
 
             if (oOpts.outputMode != OutputMode::Normal)
@@ -819,34 +854,17 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         processHalfLine(nX, iLine - nY, nX - 1, iLeft - 1, Left);
         processHalfLine(nX, iLine - nY, nX + 1, iRight, Right);
 
-        /* write result line */
-        if (GDALRasterIO(hTargetBand, GF_Write, 0, iLine - oOutExtent.yStart,
-                         oOutExtent.xSize(), 1, data, oOutExtent.xSize(), 1,
-                         dataType, 0, 0))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "RasterIO error when writing target raster at position "
-                     "(%d,%d), size (%d,%d)",
-                     0, iLine - oOutExtent.yStart, oOutExtent.xSize(), 1);
+        if (!writeLine(iLine, data, dataType))
             return false;
-        }
 
         std::swap(vLastLineVal, vThisLineVal);
 
-        if (!pfnProgress((iLine - oOutExtent.yStart) /
-                             static_cast<double>(oOutExtent.ySize()),
-                         "", pProgressArg))
-        {
-            CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+        if (!lineProgress())
             return false;
-        }
     }
 
-    if (!pfnProgress(1.0, "", pProgressArg))
-    {
-        CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+    if (!emitProgress(1))
         return false;
-    }
 
     return true;
 }

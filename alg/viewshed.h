@@ -128,7 +128,7 @@ class Viewshed
     */
     CPL_DLL explicit Viewshed(const Options &opts)
         : oOpts{opts}, dfMaxDistance2{opts.maxDistance * opts.maxDistance},
-          poDstDS{}, dfHeightAdjFactor{0}, adfTransform{0, 1, 0, 0, 0, 1}
+          poDstDS{}, dfHeightAdjFactor{0}, nLineCount(0), adfTransform{0, 1, 0, 0, 0, 1}
     {
         if (dfMaxDistance2 == 0)
             dfMaxDistance2 = std::numeric_limits<double>::max();
@@ -159,8 +159,10 @@ class Viewshed
     Window oOutExtent;
     double dfMaxDistance2;
     std::unique_ptr<GDALDataset> poDstDS;
-    GDALRasterBandH hBand;
+    GDALRasterBand *pSrcBand;
+    GDALRasterBand *pDstBand;
     double dfHeightAdjFactor;
+    int nLineCount;
     std::array<double, 6> adfTransform;
     std::array<double, 6> adfInvTransform;
     std::vector<double> vFirstLineVal;
@@ -168,16 +170,21 @@ class Viewshed
     std::vector<double> vThisLineVal;
     std::vector<GByte> vResult;
     std::vector<double> vHeightResult;
+    using ProgressFunc = std::function<bool(double frac, const char *msg)>;
+    ProgressFunc oProgress;
 
     void setVisibility(int iPixel, double dfZ);
     double calcHeight(double dfZ, double dfZ2);
-    bool readLine(int nLine, double *data);
+    bool readLine(int nLine, double * data);
+    bool writeLine(int nLine, void * const data, GDALDataType dataType);
     void processHalfLine(int nX, int nYOffset, int iStart, int iEnd, int iDir);
     std::pair<int, int> adjustHeight(int iLine, int nX, double dfObserverHeight,
                                      double *const pdfNx);
     bool calcOutputExtent(int nX, int nY);
     bool createOutputDataset();
     bool allocate();
+    bool lineProgress();
+    bool emitProgress(double fraction);
 };
 
 }  // namespace gdal
