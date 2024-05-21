@@ -226,6 +226,7 @@ edit data.
 
     The data source to open. May be a filename, directory or other virtual
     name. See the OGR Vector Formats list for supported datasources.
+    A prefix may be used to force choosing a particular driver. See example below.
 
 .. option:: <layer>
 
@@ -528,4 +529,14 @@ Adding a column to an input file:
 
    ogrinfo input.shp -sql "ALTER TABLE input ADD fieldX float"
 
+Using a prefix to force opening with a particular driver:
 
+.. code-block:: bash
+
+    ogrinfo --formats | grep -i json
+      GeoJSON -vector- (rw+v): GeoJSON
+      GeoJSONSeq -vector- (rw+v): GeoJSON Sequence ...
+
+    ogrinfo GeoJSONSeq:file.json
+    INFO: Open of `file.GeoJSONSeq:file.json'
+          using driver `GeoJSONSeq' successful.
