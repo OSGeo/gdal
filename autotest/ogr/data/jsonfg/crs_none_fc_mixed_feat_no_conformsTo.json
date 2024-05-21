@@ -1,0 +1,12 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": 1,
+      "coordRefSys": "[EPSG:4326]",
+      "geometry": { "type": "Point", "coordinates": [2, 49] },
+      "properties": {}
+    }
+  ]
+}

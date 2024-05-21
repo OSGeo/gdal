@@ -55,6 +55,7 @@ class CPL_DLL CPLJSonStreamingParser
 
     bool m_bExceptionOccurred = false;
     bool m_bElementFound = false;
+    bool m_bStopParsing = false;
     int m_nLastChar = 0;
     int m_nLineCounter = 1;
     int m_nCharCounter = 1;
@@ -98,6 +99,7 @@ class CPL_DLL CPLJSonStreamingParser
 
   protected:
     bool EmitException(const char *pszMessage);
+    void StopParsing();
 
   public:
     CPLJSonStreamingParser();

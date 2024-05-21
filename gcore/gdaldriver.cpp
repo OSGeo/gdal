@@ -2665,6 +2665,7 @@ GDALDriverH CPL_STDCALL GDALIdentifyDriverEx(
         nIdentifyFlags |= GDAL_OF_KIND_MASK & ~GDAL_OF_MULTIDIM_RASTER;
 
     GDALOpenInfo oOpenInfo(pszFilename, nIdentifyFlags, papszFileList);
+    oOpenInfo.papszAllowedDrivers = papszAllowedDrivers;
 
     CPLErrorStateBackuper oBackuper;
     CPLErrorSetState(CE_None, CPLE_AppDefined, "");
