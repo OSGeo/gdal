@@ -102,10 +102,10 @@ class Viewshed
     struct Options
     {
         Point observer{0, 0, 0};  //!< x, y, and z of the observer
-        uint8_t visibleVal{255};  //!< raster output value for visible pixels.
-        uint8_t invisibleVal{
+        double visibleVal{255};  //!< raster output value for visible pixels.
+        double invisibleVal{
             0};  //!< raster output value for non-visible pixels.
-        uint8_t outOfRangeVal{
+        double outOfRangeVal{
             0};  //!< raster output value for pixels outside of max distance.
         double nodataVal{-1};  //!< raster output value for pixels with no data
         double targetHeight{0.0};  //!< target height above the DEM surface
@@ -170,12 +170,10 @@ class Viewshed
     std::vector<double> vFirstLineVal;
     std::vector<double> vLastLineVal;
     std::vector<double> vThisLineVal;
-    std::vector<GByte> vResult;
-    std::vector<double> vHeightResult;
+    std::vector<double> vResult;
     using ProgressFunc = std::function<bool(double frac, const char *msg)>;
     ProgressFunc oProgress;
 
-    void setVisibility(int iPixel, double dfZ);
     double calcHeight(double dfZ, double dfZ2);
     bool readLine(int nLine, double *data);
     bool writeLine(int nLine);
