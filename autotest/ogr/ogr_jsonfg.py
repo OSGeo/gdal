@@ -296,6 +296,15 @@ def test_jsonfg_read_coordRefSys_invalid(coordRefSys):
         ),
         ("data/jsonfg/crs_4326_feat_only.json", 4326, [2, 1], 2, 49, None, None),
         ("data/jsonfg/crs_none.json", 4326, [2, 1], 2, 49, None, None),
+        (
+            "data/jsonfg/crs_none_fc_mixed_feat_no_conformsTo.json",
+            4326,
+            [2, 1],
+            2,
+            49,
+            None,
+            None,
+        ),
     ],
 )
 def test_jsonfg_read_crs(
