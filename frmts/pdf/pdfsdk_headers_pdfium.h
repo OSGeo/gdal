@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  Includes PDF SDK headers
+ * Purpose:  Includes PDFium headers
  * Author:   Even Rouault <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
@@ -26,110 +26,12 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#ifndef PDFSDK_HEADERS_H
-#define PDFSDK_HEADERS_H
+#ifndef PDFSDK_HEADERS_PDFIUM_H
+#define PDFSDK_HEADERS_PDFIUM_H
 
-/* We avoid to include cpl_port.h directly or indirectly */
-#if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) &&               \
-     !defined(_MSC_VER))
+#if defined(__GNUC__) && !defined(_MSC_VER)
 #pragma GCC system_header
 #endif
-
-#ifdef HAVE_POPPLER
-
-/* Horrible hack because there's a conflict between struct FlateDecode of */
-/* include/poppler/Stream.h and the FlateDecode() function of */
-/* pdfium/core/include/fpdfapi/fpdf_parser.h. */
-/* The part of Stream.h where struct FlateDecode is defined isn't needed */
-/* by GDAL, and is luckily protected by a #ifndef ENABLE_ZLIB section */
-#ifdef HAVE_PDFIUM
-#define ENABLE_ZLIB
-#endif /* HAVE_PDFIUM */
-
-#ifdef _MSC_VER
-#pragma warning(push)
-// conversion from 'const int' to 'Guchar', possible loss of data
-#pragma warning(disable : 4244)
-// conversion from 'size_t' to 'int', possible loss of data
-#pragma warning(disable : 4267)
-#endif
-
-/* begin of poppler xpdf includes */
-#include <Object.h>
-#include <Stream.h>
-
-#define private public /* Ugly! Page::pageObj is private but we need it... */
-#include <Page.h>
-#undef private
-
-#include <Dict.h>
-
-#define private                                                                \
-    public /* Ugly! Catalog::optContent is private but we need it... */
-#include <Catalog.h>
-#undef private
-
-#define private public /* Ugly! PDFDoc::str is private but we need it... */
-#include <PDFDoc.h>
-#undef private
-
-#include <splash/SplashBitmap.h>
-#include <splash/Splash.h>
-#include <SplashOutputDev.h>
-#include <GlobalParams.h>
-#include <ErrorCodes.h>
-
-/* end of poppler xpdf includes */
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-#endif /* HAVE_POPPLER */
-
-#ifdef HAVE_PODOFO
-
-#ifdef _WIN32
-/*
- * Some Windows header defines a GetObject macro that
- * shadows a GetObject() method in PoDoFo. As pdfdataset.cpp includes cpl_spawn.h
- * which includes windows.h, so let's bite the bullet and important windows.h
- * right now, and then undef GetObject. Undef'ing GetObject is done in some
- * source files of PoDoFo itself.
- */
-#include <windows.h>
-#ifdef GetObject
-#undef GetObject
-#endif
-#endif
-
-// Related fix submitted per https://github.com/podofo/podofo/pull/98
-#ifdef HAVE_PODOFO_0_10_OR_LATER
-#define USE_HACK_BECAUSE_PdfInputStream_constructor_is_not_exported_in_podofo_0_11
-#endif
-
-#ifdef USE_HACK_BECAUSE_PdfInputStream_constructor_is_not_exported_in_podofo_0_11
-// If we <sstream> is included after our below #define private public errors out
-// with an error like:
-// /usr/include/c++/13.2.1/sstream:457:7: error: 'struct std::__cxx11::basic_stringbuf<_CharT, _Traits, _Alloc>::__xfer_bufptrs' redeclared with different access
-//  457 |       struct __xfer_bufptrs
-// so include it before, as otherwise it would get indirectly included by
-// PdfDate.h, which includes <chrono>, which includes <sstream>
-#include <sstream>
-// Ugly! PfdObjectStream::GetParent() is private but we need it...
-#define private public
-#endif
-#include "podofo.h"
-#ifdef private
-#undef private
-#endif
-
-#if PODOFO_VERSION_MAJOR > 0 ||                                                \
-    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
-#define PdfVecObjects PdfIndirectObjectList
-#endif
-
-#endif  // HAVE_PODOFO
 
 #ifdef HAVE_PDFIUM
 #include "cpl_multiproc.h"
@@ -183,4 +85,4 @@
 
 #endif  // HAVE_PDFIUM
 
-#endif
+#endif  // PDFSDK_HEADERS_PDFIUM_H

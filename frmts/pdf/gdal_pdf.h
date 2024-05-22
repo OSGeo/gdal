@@ -52,7 +52,7 @@
 #include <bitset>  // For detecting usage of PDF library
 #include <algorithm>
 
-#include "pdfsdk_headers.h"
+#include "pdfsdk_headers_all.h"
 
 #include "pdfdrivercore.h"
 

@@ -37,7 +37,7 @@
 #ifndef PDFOBJECT_H_INCLUDED
 #define PDFOBJECT_H_INCLUDED
 
-#include "pdfsdk_headers.h"
+#include "pdfsdk_headers_all.h"
 
 #include "cpl_string.h"
 #include <map>
