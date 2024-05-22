@@ -907,7 +907,7 @@ GetBufferAsCharPtrGIntBigSize( PyObject* input, GIntBig *nLen, char **pBuf, int 
   }
   for( int i=0; i<*$1; i++ ) {
     char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, (*$2)[i]);
+    snprintf(szTmp, sizeof(szTmp), CPL_FRMT_GIB, (*$2)[i]);
     PyObject* val;
     val = PyLong_FromString(szTmp, NULL, 10);
     PyList_SetItem( out, i, val );
@@ -1882,7 +1882,7 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
     }
     for ( int i = 0; i < $1; ++i ) {
       char szTmp[32];
-      sprintf(szTmp, CPL_FRMT_GUIB, integerarray[i]);
+      snprintf(szTmp, sizeof(szTmp), CPL_FRMT_GUIB, integerarray[i]);
       PyObject *o = PyLong_FromString(szTmp, NULL, 10);
       PyList_SetItem($result, i, o );
     }
@@ -2813,7 +2813,7 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
   }
   for( size_t i = 0; i < *$2; i++ ) {
       char szTmp[32];
-      sprintf(szTmp, CPL_FRMT_GUIB, (*$1)[i]);
+      snprintf(szTmp, sizeof(szTmp), CPL_FRMT_GUIB, (*$1)[i]);
       PyObject *o = PyLong_FromString(szTmp, NULL, 10);
       PyList_SetItem($result, i, o );
   }
