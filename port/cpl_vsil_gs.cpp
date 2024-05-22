@@ -364,17 +364,10 @@ char **VSIGSFSHandler::GetFileMetadata(const char *pszFilename,
     NetworkStatisticsAction oContextAction("GetFileMetadata");
 
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
+    const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
+    CPLHTTPRetryContext oRetryContext(oRetryParameters);
 
     bool bRetry;
-    // coverity[tainted_data]
-    double dfRetryDelay = CPLAtof(
-        VSIGetPathSpecificOption(pszFilename, "GDAL_HTTP_RETRY_DELAY",
-                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-    const int nMaxRetry =
-        atoi(VSIGetPathSpecificOption(pszFilename, "GDAL_HTTP_MAX_RETRY",
-                                      CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
-    int nRetryCount = 0;
-
     CPLStringList aosResult;
     do
     {
@@ -398,20 +391,18 @@ char **VSIGSFSHandler::GetFileMetadata(const char *pszFilename,
             requestHelper.sWriteFuncData.pBuffer == nullptr)
         {
             // Look if we should attempt a retry
-            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                static_cast<int>(response_code), dfRetryDelay,
-                requestHelper.sWriteFuncHeaderData.pBuffer,
-                requestHelper.szCurlErrBuf);
-            if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+            if (oRetryContext.CanRetry(
+                    static_cast<int>(response_code),
+                    requestHelper.sWriteFuncHeaderData.pBuffer,
+                    requestHelper.szCurlErrBuf))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "HTTP error code: %d - %s. "
                          "Retrying again in %.1f secs",
                          static_cast<int>(response_code),
-                         poHandleHelper->GetURL().c_str(), dfRetryDelay);
-                CPLSleep(dfRetryDelay);
-                dfRetryDelay = dfNewRetryDelay;
-                nRetryCount++;
+                         poHandleHelper->GetURL().c_str(),
+                         oRetryContext.GetCurrentDelay());
+                CPLSleep(oRetryContext.GetCurrentDelay());
                 bRetry = true;
             }
             else
@@ -475,18 +466,11 @@ bool VSIGSFSHandler::SetFileMetadata(const char *pszFilename,
     NetworkStatisticsAction oContextAction("SetFileMetadata");
 
     bool bRetry;
-    // coverity[tainted_data]
-    double dfRetryDelay = CPLAtof(
-        VSIGetPathSpecificOption(pszFilename, "GDAL_HTTP_RETRY_DELAY",
-                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-    const int nMaxRetry =
-        atoi(VSIGetPathSpecificOption(pszFilename, "GDAL_HTTP_MAX_RETRY",
-                                      CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
-    int nRetryCount = 0;
-
     bool bRet = false;
 
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
+    const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
+    CPLHTTPRetryContext oRetryContext(oRetryParameters);
 
     do
     {
@@ -512,20 +496,18 @@ bool VSIGSFSHandler::SetFileMetadata(const char *pszFilename,
         if (response_code != 200)
         {
             // Look if we should attempt a retry
-            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                static_cast<int>(response_code), dfRetryDelay,
-                requestHelper.sWriteFuncHeaderData.pBuffer,
-                requestHelper.szCurlErrBuf);
-            if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+            if (oRetryContext.CanRetry(
+                    static_cast<int>(response_code),
+                    requestHelper.sWriteFuncHeaderData.pBuffer,
+                    requestHelper.szCurlErrBuf))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "HTTP error code: %d - %s. "
                          "Retrying again in %.1f secs",
                          static_cast<int>(response_code),
-                         poHandleHelper->GetURL().c_str(), dfRetryDelay);
-                CPLSleep(dfRetryDelay);
-                dfRetryDelay = dfNewRetryDelay;
-                nRetryCount++;
+                         poHandleHelper->GetURL().c_str(),
+                         oRetryContext.GetCurrentDelay());
+                CPLSleep(oRetryContext.GetCurrentDelay());
                 bRetry = true;
             }
             else
@@ -584,14 +566,6 @@ int *VSIGSFSHandler::UnlinkBatch(CSLConstList papszFiles)
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("UnlinkBatch");
 
-    // coverity[tainted_data]
-    double dfRetryDelay = CPLAtof(
-        VSIGetPathSpecificOption(pszFirstFilename, "GDAL_HTTP_RETRY_DELAY",
-                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-    const int nMaxRetry =
-        atoi(VSIGetPathSpecificOption(pszFirstFilename, "GDAL_HTTP_MAX_RETRY",
-                                      CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
-
     // For debug / testing only
     const int nBatchSize =
         std::max(1, std::min(100, atoi(CPLGetConfigOption(
@@ -600,6 +574,8 @@ int *VSIGSFSHandler::UnlinkBatch(CSLConstList papszFiles)
 
     const CPLStringList aosHTTPOptions(
         CPLHTTPGetOptionsFromEnv(pszFirstFilename));
+    const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
+    CPLHTTPRetryContext oRetryContext(oRetryParameters);
 
     for (int i = 0; papszFiles && papszFiles[i]; i++)
     {
@@ -679,7 +655,6 @@ int *VSIGSFSHandler::UnlinkBatch(CSLConstList papszFiles)
 #endif
 
             // Run request
-            int nRetryCount = 0;
             bool bRetry;
             std::string osResponse;
             do
@@ -716,21 +691,18 @@ int *VSIGSFSHandler::UnlinkBatch(CSLConstList papszFiles)
                     requestHelper.sWriteFuncData.pBuffer == nullptr)
                 {
                     // Look if we should attempt a retry
-                    const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                        static_cast<int>(response_code), dfRetryDelay,
-                        requestHelper.sWriteFuncHeaderData.pBuffer,
-                        requestHelper.szCurlErrBuf);
-                    if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+                    if (oRetryContext.CanRetry(
+                            static_cast<int>(response_code),
+                            requestHelper.sWriteFuncHeaderData.pBuffer,
+                            requestHelper.szCurlErrBuf))
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "HTTP error code: %d - %s. "
                                  "Retrying again in %.1f secs",
                                  static_cast<int>(response_code),
                                  poHandleHelper->GetURL().c_str(),
-                                 dfRetryDelay);
-                        CPLSleep(dfRetryDelay);
-                        dfRetryDelay = dfNewRetryDelay;
-                        nRetryCount++;
+                                 oRetryContext.GetCurrentDelay());
+                        CPLSleep(oRetryContext.GetCurrentDelay());
                         bRetry = true;
                     }
                     else

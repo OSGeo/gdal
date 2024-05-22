@@ -382,7 +382,9 @@ class VSICurlHandle : public VSIVirtualHandle
     char *m_pszURL = nullptr;    // e.g "http://example.com/foo"
     mutable std::string m_osQueryString{};  // e.g. an Azure SAS
 
-    char **m_papszHTTPOptions = nullptr;
+    CPLStringList m_aosHTTPOptions{};
+    CPLHTTPRetryParameters
+        m_oRetryParameters;  // must be initialized in constructor
 
     vsi_l_offset lastDownloadedOffset = VSI_L_OFFSET_MAX;
     int nBlocksToDownload = 1;
@@ -391,9 +393,6 @@ class VSICurlHandle : public VSIVirtualHandle
     bool bInterrupted = false;
     VSICurlReadCbkFunc pfnReadCbk = nullptr;
     void *pReadCbkUserData = nullptr;
-
-    int m_nMaxRetry = 0;
-    double m_dfRetryDelay = 0.0;
 
     CPLStringList m_aosHeaders{};
 
@@ -650,25 +649,27 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBaseWritable
         return false;
     }
 
-    virtual std::string InitiateMultipartUpload(
-        const std::string &osFilename, IVSIS3LikeHandleHelper *poS3HandleHelper,
-        int nMaxRetry, double dfRetryDelay, CSLConstList papszOptions);
+    virtual std::string
+    InitiateMultipartUpload(const std::string &osFilename,
+                            IVSIS3LikeHandleHelper *poS3HandleHelper,
+                            const CPLHTTPRetryParameters &oRetryParameters,
+                            CSLConstList papszOptions);
     virtual std::string
     UploadPart(const std::string &osFilename, int nPartNumber,
                const std::string &osUploadID, vsi_l_offset nPosition,
                const void *pabyBuffer, size_t nBufferSize,
-               IVSIS3LikeHandleHelper *poS3HandleHelper, int nMaxRetry,
-               double dfRetryDelay, CSLConstList papszOptions);
-    virtual bool CompleteMultipart(const std::string &osFilename,
-                                   const std::string &osUploadID,
-                                   const std::vector<std::string> &aosEtags,
-                                   vsi_l_offset nTotalSize,
-                                   IVSIS3LikeHandleHelper *poS3HandleHelper,
-                                   int nMaxRetry, double dfRetryDelay);
+               IVSIS3LikeHandleHelper *poS3HandleHelper,
+               const CPLHTTPRetryParameters &oRetryParameters,
+               CSLConstList papszOptions);
+    virtual bool CompleteMultipart(
+        const std::string &osFilename, const std::string &osUploadID,
+        const std::vector<std::string> &aosEtags, vsi_l_offset nTotalSize,
+        IVSIS3LikeHandleHelper *poS3HandleHelper,
+        const CPLHTTPRetryParameters &oRetryParameters);
     virtual bool AbortMultipart(const std::string &osFilename,
                                 const std::string &osUploadID,
                                 IVSIS3LikeHandleHelper *poS3HandleHelper,
-                                int nMaxRetry, double dfRetryDelay);
+                                const CPLHTTPRetryParameters &oRetryParameters);
 
     bool AbortPendingUploads(const char *pszFilename) override;
 
@@ -768,6 +769,7 @@ class VSIS3LikeWriteHandle final : public VSIVirtualHandle
     bool m_bUseChunkedTransfer = false;
     CPLStringList m_aosOptions{};
     CPLStringList m_aosHTTPOptions{};
+    CPLHTTPRetryParameters m_oRetryParameters;
 
     vsi_l_offset m_nCurOffset = 0;
     size_t m_nBufferOff = 0;
@@ -787,8 +789,6 @@ class VSIS3LikeWriteHandle final : public VSIVirtualHandle
     size_t m_nChunkedBufferSize = 0;
     size_t m_nWrittenInPUT = 0;
 
-    int m_nMaxRetry = 0;
-    double m_dfRetryDelay = 0.0;
     WriteFuncStruct m_sWriteFuncHeaderData{};
 
     bool UploadPart();
@@ -832,6 +832,7 @@ class VSIAppendWriteHandle : public VSIVirtualHandle
     VSICurlFilesystemHandlerBase *m_poFS = nullptr;
     std::string m_osFSPrefix{};
     std::string m_osFilename{};
+    CPLHTTPRetryParameters m_oRetryParameters{};
 
     vsi_l_offset m_nCurOffset = 0;
     int m_nBufferOff = 0;
