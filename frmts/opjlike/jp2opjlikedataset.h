@@ -165,7 +165,7 @@ class JP2OPJLikeDataset final : public GDALJP2AbstractDataset, public BASE
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, int *panBandMap,
+                             int nBandCount, BANDMAP_TYPE panBandMap,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
@@ -186,11 +186,11 @@ class JP2OPJLikeDataset final : public GDALJP2AbstractDataset, public BASE
     static bool WriteIPRBox(VSILFILE *fp, GDALDataset *poSrcDS);
 
     CPLErr ReadBlock(int nBand, VSILFILE *fp, int nBlockXOff, int nBlockYOff,
-                     void *pImage, int nBandCount, int *panBandMap);
+                     void *pImage, int nBandCount, const int *panBandMap);
 
     int PreloadBlocks(JP2OPJLikeRasterBand<CODEC, BASE> *poBand, int nXOff,
                       int nYOff, int nXSize, int nYSize, int nBandCount,
-                      int *panBandMap);
+                      const int *panBandMap);
 
     static void ReadBlockInThread(void *userdata);
 };

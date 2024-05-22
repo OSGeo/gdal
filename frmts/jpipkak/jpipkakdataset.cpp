@@ -1144,7 +1144,7 @@ CPLErr JPIPKAKDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                  int nXSize, int nYSize, void *pData,
                                  int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType, int nBandCount,
-                                 int *panBandMap, GSpacing nPixelSpace,
+                                 BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
                                  GSpacing nLineSpace, GSpacing nBandSpace,
                                  GDALRasterIOExtraArg *psExtraArg)
 
@@ -1164,8 +1164,9 @@ CPLErr JPIPKAKDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     /* -------------------------------------------------------------------- */
     GDALAsyncReader *ario = BeginAsyncReader(
         nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize, eBufType,
-        nBandCount, panBandMap, static_cast<int>(nPixelSpace),
-        static_cast<int>(nLineSpace), static_cast<int>(nBandSpace), nullptr);
+        nBandCount, const_cast<int *>(panBandMap),
+        static_cast<int>(nPixelSpace), static_cast<int>(nLineSpace),
+        static_cast<int>(nBandSpace), nullptr);
 
     if (ario == nullptr)
         return CE_Failure;

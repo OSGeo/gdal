@@ -110,6 +110,7 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DPCIDSK_FRMT_UINT64="\"%llu\"" \
         -DGNMGFIDFormat="\"%lld\"" \
         -DGDAL_RELEASE_NAME="\"dummy\"" \
+        "-DBANDMAP_TYPE=int*" \
         --include="${CPL_CONFIG_H}" \
         --include=port/cpl_port.h \
         -I "${CPL_CONFIG_H_DIR}" \

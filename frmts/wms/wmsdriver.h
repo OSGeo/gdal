@@ -485,7 +485,7 @@ class GDALWMSDataset final : public GDALPamDataset
   protected:
     virtual CPLErr IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
                              void *buffer, int bsx, int bsy, GDALDataType bdt,
-                             int band_count, int *band_map,
+                             int band_count, BANDMAP_TYPE band_map,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;

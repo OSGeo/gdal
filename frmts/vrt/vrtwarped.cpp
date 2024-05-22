@@ -1820,13 +1820,11 @@ CPLErr VRTWarpedDataset::ProcessBlock(int iBlockX, int iBlockY)
 // - and multi-threaded warping is enabled (it only kicks in if the warped
 //   chunk is large enough) and/or when reading the source dataset is
 //   multi-threaded (e.g JP2KAK or JP2OpenJPEG driver).
-CPLErr VRTWarpedDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                                   int nXSize, int nYSize, void *pData,
-                                   int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, int nBandCount,
-                                   int *panBandMap, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace, GSpacing nBandSpace,
-                                   GDALRasterIOExtraArg *psExtraArg)
+CPLErr VRTWarpedDataset::IRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    int nBandCount, BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+    GSpacing nLineSpace, GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     if (eRWFlag == GF_Write ||
         // For too small request fall back to the block-based approach to

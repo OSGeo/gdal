@@ -421,8 +421,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
   protected:
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing, GSpacing,
-                             GSpacing,
+                             GDALDataType, int, BANDMAP_TYPE, GSpacing,
+                             GSpacing, GSpacing,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     // Coming from GDALGPKGMBTilesLikePseudoDataset

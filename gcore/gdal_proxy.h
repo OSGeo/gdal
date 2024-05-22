@@ -57,8 +57,8 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
                            GDALProgressFunc, void *,
                            CSLConstList papszOptions) override;
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
-                     GDALRasterIOExtraArg *psExtraArg) override;
+                     GDALDataType, int, BANDMAP_TYPE, GSpacing, GSpacing,
+                     GSpacing, GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
     char **GetMetadataDomainList() override;

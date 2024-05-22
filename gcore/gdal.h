@@ -1155,13 +1155,13 @@ void CPL_DLL CPL_STDCALL GDALEndAsyncReader(GDALDatasetH hDS,
 CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIO(
     GDALDatasetH hDS, GDALRWFlag eRWFlag, int nDSXOff, int nDSYOff,
     int nDSXSize, int nDSYSize, void *pBuffer, int nBXSize, int nBYSize,
-    GDALDataType eBDataType, int nBandCount, int *panBandCount, int nPixelSpace,
-    int nLineSpace, int nBandSpace) CPL_WARN_UNUSED_RESULT;
+    GDALDataType eBDataType, int nBandCount, const int *panBandCount,
+    int nPixelSpace, int nLineSpace, int nBandSpace) CPL_WARN_UNUSED_RESULT;
 
 CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIOEx(
     GDALDatasetH hDS, GDALRWFlag eRWFlag, int nDSXOff, int nDSYOff,
     int nDSXSize, int nDSYSize, void *pBuffer, int nBXSize, int nBYSize,
-    GDALDataType eBDataType, int nBandCount, int *panBandCount,
+    GDALDataType eBDataType, int nBandCount, const int *panBandCount,
     GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
     GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
