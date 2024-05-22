@@ -91,8 +91,7 @@ OGRLIBKMLDataSource::OGRLIBKMLDataSource(KmlFactory *poKmlFactory)
       bUpdate(false), bUpdated(false), m_papszOptions(nullptr), m_isKml(false),
       m_poKmlDSKml(nullptr), m_poKmlDSContainer(nullptr),
       m_poKmlUpdate(nullptr), m_isKmz(false), m_poKmlDocKml(nullptr),
-      m_poKmlDocKmlRoot(nullptr), m_poKmlStyleKml(nullptr),
-      pszStylePath(const_cast<char *>("")), m_isDir(false),
+      m_poKmlDocKmlRoot(nullptr), m_poKmlStyleKml(nullptr), m_isDir(false),
       m_poKmlFactory(poKmlFactory)
 {
 }
@@ -701,9 +700,6 @@ OGRLIBKMLDataSource::~OGRLIBKMLDataSource()
 
     CPLFree(m_pszName);
 
-    if (!EQUAL(pszStylePath, ""))
-        CPLFree(pszStylePath);
-
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
 
@@ -1003,7 +999,7 @@ int OGRLIBKMLDataSource::ParseIntoStyleTable(std::string *poKmlStyleKml,
     if (!poKmlRoot)
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "ERROR parsing style kml %s :%s",
-                 pszStylePath, oKmlErrors.c_str());
+                 pszMyStylePath, oKmlErrors.c_str());
         return false;
     }
 
@@ -1016,7 +1012,7 @@ int OGRLIBKMLDataSource::ParseIntoStyleTable(std::string *poKmlStyleKml,
     }
 
     ParseStyles(AsDocument(std::move(poKmlContainer)), &m_poStyleTable);
-    pszStylePath = CPLStrdup(pszMyStylePath);
+    m_osStylePath = pszMyStylePath;
 
     return true;
 }
@@ -1411,7 +1407,7 @@ int OGRLIBKMLDataSource::OpenDir(const char *pszFilename, int bUpdateIn)
         if (EQUAL(papszDirList[iFile], "style.kml"))
         {
             ParseStyles(AsDocument(poKmlContainer), &m_poStyleTable);
-            pszStylePath = CPLStrdup(const_cast<char *>("style.kml"));
+            m_osStylePath = "style.kml";
             continue;
         }
 
@@ -1826,7 +1822,7 @@ int OGRLIBKMLDataSource::CreateKmz(const char * /* pszFilename */,
         }
     }
 
-    pszStylePath = CPLStrdup(const_cast<char *>("style/style.kml"));
+    m_osStylePath = "style/style.kml";
 
     m_isKmz = true;
     bUpdated = true;
@@ -1868,7 +1864,7 @@ int OGRLIBKMLDataSource::CreateDir(const char *pszFilename,
         }
     }
 
-    pszStylePath = CPLStrdup(const_cast<char *>("style.kml"));
+    m_osStylePath = "style.kml";
 
     return TRUE;
 }

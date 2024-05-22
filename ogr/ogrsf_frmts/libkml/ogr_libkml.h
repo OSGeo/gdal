@@ -233,7 +233,7 @@ class OGRLIBKMLDataSource final : public OGRDataSource
     kmldom::ContainerPtr m_poKmlDocKml;
     kmldom::ElementPtr m_poKmlDocKmlRoot;
     kmldom::ContainerPtr m_poKmlStyleKml;
-    char *pszStylePath;
+    std::string m_osStylePath{};
 
     /***** for dir *****/
     int m_isDir;
@@ -285,9 +285,9 @@ class OGRLIBKMLDataSource final : public OGRDataSource
         return m_poKmlFactory;
     }
 
-    const char *GetStylePath()
+    const std::string &GetStylePath() const
     {
-        return pszStylePath;
+        return m_osStylePath;
     }
 
     int ParseIntoStyleTable(std::string *oKmlStyleKml,
