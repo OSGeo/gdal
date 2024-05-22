@@ -198,45 +198,70 @@ VSICurlHandle *VSIGSFSHandler::CreateFileHandle(const char *pszFilename)
 const char *VSIGSFSHandler::GetOptions()
 {
     static std::string osOptions(
-        std::string("<Options>") +
-        "  <Option name='GS_SECRET_ACCESS_KEY' type='string' "
-        "description='Secret access key. To use with GS_ACCESS_KEY_ID'/>"
-        "  <Option name='GS_ACCESS_KEY_ID' type='string' "
-        "description='Access key id'/>"
-        "  <Option name='GS_NO_SIGN_REQUEST' type='boolean' "
-        "description='Whether to disable signing of requests' default='NO'/>"
-        "  <Option name='GS_OAUTH2_REFRESH_TOKEN' type='string' "
-        "description='OAuth2 refresh token. For OAuth2 client authentication. "
-        "To use with GS_OAUTH2_CLIENT_ID and GS_OAUTH2_CLIENT_SECRET'/>"
-        "  <Option name='GS_OAUTH2_CLIENT_ID' type='string' "
-        "description='OAuth2 client id for OAuth2 client authentication'/>"
-        "  <Option name='GS_OAUTH2_CLIENT_SECRET' type='string' "
-        "description='OAuth2 client secret for OAuth2 client authentication'/>"
-        "  <Option name='GS_OAUTH2_PRIVATE_KEY' type='string' "
-        "description='Private key for OAuth2 service account authentication. "
-        "To use with GS_OAUTH2_CLIENT_EMAIL'/>"
-        "  <Option name='GS_OAUTH2_PRIVATE_KEY_FILE' type='string' "
-        "description='Filename that contains private key for OAuth2 service "
-        "account authentication. "
-        "To use with GS_OAUTH2_CLIENT_EMAIL'/>"
-        "  <Option name='GS_OAUTH2_CLIENT_EMAIL' type='string' "
-        "description='Client email to use with OAuth2 service account "
-        "authentication'/>"
-        "  <Option name='GS_OAUTH2_SCOPE' type='string' "
-        "description='OAuth2 authorization scope' "
-        "default='https://www.googleapis.com/auth/devstorage.read_write'/>"
-        "  <Option name='CPL_MACHINE_IS_GCE' type='boolean' "
-        "description='Whether the current machine is a Google Compute Engine "
-        "instance' default='NO'/>"
-        "  <Option name='CPL_GCE_CHECK_LOCAL_FILES' type='boolean' "
-        "description='Whether to check system logs to determine "
-        "if current machine is a GCE instance' default='YES'/>"
-        "description='Filename that contains AWS configuration' "
-        "default='~/.aws/config'/>"
-        "  <Option name='CPL_GS_CREDENTIALS_FILE' type='string' "
-        "description='Filename that contains Google Storage credentials' "
-        "default='~/.boto'/>" +
-        VSICurlFilesystemHandlerBase::GetOptionsStatic() + "</Options>");
+        std::string("<Options>")
+            .append(
+                "  <Option name='GS_SECRET_ACCESS_KEY' type='string' "
+                "description='Secret access key. To use with "
+                "GS_ACCESS_KEY_ID'/>"
+                "  <Option name='GS_ACCESS_KEY_ID' type='string' "
+                "description='Access key id'/>"
+                "  <Option name='GS_NO_SIGN_REQUEST' type='boolean' "
+                "description='Whether to disable signing of requests' "
+                "default='NO'/>"
+                "  <Option name='GS_OAUTH2_REFRESH_TOKEN' type='string' "
+                "description='OAuth2 refresh token. For OAuth2 client "
+                "authentication. "
+                "To use with GS_OAUTH2_CLIENT_ID and GS_OAUTH2_CLIENT_SECRET'/>"
+                "  <Option name='GS_OAUTH2_CLIENT_ID' type='string' "
+                "description='OAuth2 client id for OAuth2 client "
+                "authentication'/>"
+                "  <Option name='GS_OAUTH2_CLIENT_SECRET' type='string' "
+                "description='OAuth2 client secret for OAuth2 client "
+                "authentication'/>"
+                "  <Option name='GS_OAUTH2_PRIVATE_KEY' type='string' "
+                "description='Private key for OAuth2 service account "
+                "authentication. "
+                "To use with GS_OAUTH2_CLIENT_EMAIL'/>"
+                "  <Option name='GS_OAUTH2_PRIVATE_KEY_FILE' type='string' "
+                "description='Filename that contains private key for OAuth2 "
+                "service "
+                "account authentication. "
+                "To use with GS_OAUTH2_CLIENT_EMAIL'/>"
+                "  <Option name='GS_OAUTH2_CLIENT_EMAIL' type='string' "
+                "description='Client email to use with OAuth2 service account "
+                "authentication'/>"
+                "  <Option name='GS_OAUTH2_SCOPE' type='string' "
+                "description='OAuth2 authorization scope' "
+                "default='https://www.googleapis.com/auth/"
+                "devstorage.read_write'/>"
+                "  <Option name='CPL_MACHINE_IS_GCE' type='boolean' "
+                "description='Whether the current machine is a Google Compute "
+                "Engine "
+                "instance' default='NO'/>"
+                "  <Option name='CPL_GCE_CHECK_LOCAL_FILES' type='boolean' "
+                "description='Whether to check system logs to determine "
+                "if current machine is a GCE instance' default='YES'/>"
+                "description='Filename that contains AWS configuration' "
+                "default='~/.aws/config'/>"
+                "  <Option name='CPL_GS_CREDENTIALS_FILE' type='string' "
+                "description='Filename that contains Google Storage "
+                "credentials' "
+                "default='~/.boto'/>"
+                "  <Option name='VSIGS_CHUNK_SIZE' type='int' "
+                "description='Size in MiB for chunks of files that are "
+                "uploaded. The"
+                "default value allows for files up to ")
+            .append(CPLSPrintf("%d", GetDefaultPartSizeInMiB() *
+                                         GetMaximumPartCount() / 1024))
+            .append("GiB each' default='")
+            .append(CPLSPrintf("%d", GetDefaultPartSizeInMiB()))
+            .append("' min='")
+            .append(CPLSPrintf("%d", GetMinimumPartSizeInMiB()))
+            .append("' max='")
+            .append(CPLSPrintf("%d", GetMaximumPartSizeInMiB()))
+            .append("'/>")
+            .append(VSICurlFilesystemHandlerBase::GetOptionsStatic())
+            .append("</Options>"));
     return osOptions.c_str();
 }
 
@@ -303,7 +328,7 @@ VSIGSFSHandler::CreateWriteHandle(const char *pszFilename,
         CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = std::make_unique<VSIS3WriteHandle>(
+    auto poHandle = std::make_unique<VSIS3LikeWriteHandle>(
         this, pszFilename, poHandleHelper, false, papszOptions);
     if (!poHandle->IsOK())
     {
