@@ -28,7 +28,9 @@
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
+#include <thread>
 
 #include "cpl_progress.h"
 #include "gdal_priv.h"
@@ -167,18 +169,20 @@ class Viewshed
     int nLineCount;
     std::array<double, 6> adfTransform;
     std::array<double, 6> adfInvTransform;
-    std::vector<double> vFirstLineVal;
     std::vector<double> vLastLineVal;
     std::vector<double> vThisLineVal;
-    std::vector<double> vResult;
     using ProgressFunc = std::function<bool(double frac, const char *msg)>;
     ProgressFunc oProgress;
+    std::vector<std::thread> vOutWriters;
+    std::mutex oMutex;
 
+    void setOutput(double& dfResult, double& dfCellVal, double dfZ);
     double calcHeight(double dfZ, double dfZ2);
     bool readLine(int nLine, double *data);
-    bool writeLine(int nLine);
+    bool writeLine(int nLine, std::vector<double>& vResult);
     bool processLine(int nX, int nY, int nLine);
-    void processHalfLine(int nX, int nYOffset, int iStart, int iEnd, int iDir);
+    bool processFirstLine(int nX, int nY, int nLine);
+    void processHalfLine(int nX, int nYOffset, int iStart, int iEnd, int iDir, std::vector<double>& vResult);
     std::pair<int, int> adjustHeight(int iLine, int nX, double dfObserverHeight,
                                      double *const pdfNx);
     bool calcOutputExtent(int nX, int nY);
