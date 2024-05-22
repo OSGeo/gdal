@@ -138,6 +138,7 @@ class Viewshed
     }
 
     Viewshed(const Viewshed&) = delete;
+    Viewshed& operator=(const Viewshed&) = delete;
 
     /**
      * Create the viewshed for the provided raster band.
