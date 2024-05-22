@@ -981,7 +981,8 @@ CPLErr swq_select::parse(swq_field_list *field_list,
             // Record field type.
             def->field_type = this_type;
 
-            if (def->field_index == -1 && def->col_func != SWQCF_COUNT)
+            if (def->field_index == -1 && !(def->col_func == SWQCF_COUNT &&
+                                            strcmp(def->field_name, "*") == 0))
             {
                 CPLError(
                     CE_Failure, CPLE_AppDefined, "Unrecognized field name %s.",
