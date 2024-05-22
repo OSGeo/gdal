@@ -27,13 +27,15 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <limits>
-//ABELL
+#include <thread>
+/**
 #include <iostream>
 #pragma GCC diagnostic ignored "-Wold-style-cast"
+**/
 
 #include "gdal_alg.h"
-#include "gdal_priv.h"
 #include "gdal_priv_templates.hpp"
 
 #include "viewshed.h"
@@ -626,8 +628,7 @@ void Viewshed::setOutput(double& dfResult, double& dfCellVal, double dfZ)
 
 bool Viewshed::processFirstLine(int nX, int nY, int nLine, std::vector<double>& vLastLineVal)
 {
-    //ABELL - Should be zero.
-    int nYOffset = nLine - nY;
+    int nYOffset = nLine - nY;   // Should be zero.
     std::vector<double> vResult(oOutExtent.xSize());
     std::vector<double> vThisLineVal(oOutExtent.xSize());
 

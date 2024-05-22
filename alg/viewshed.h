@@ -27,10 +27,10 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
-#include <thread>
 
 #include "cpl_progress.h"
 #include "gdal_priv.h"
@@ -136,6 +136,8 @@ class Viewshed
         if (dfMaxDistance2 == 0)
             dfMaxDistance2 = std::numeric_limits<double>::max();
     }
+
+    Viewshed(const Viewshed&) = delete;
 
     /**
      * Create the viewshed for the provided raster band.
