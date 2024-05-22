@@ -343,8 +343,6 @@ jobs:
         with:
           format: lcov
           file: build-coverage/gdal_filtered.info
-          # Pin to v0.6.10 because of issue with v0.6.11 (https://github.com/coverallsapp/coverage-reporter/issues/127)
-          coverage-reporter-version: v0.6.10
 
       - name: Push build environment
         if: github.event_name == 'push'
