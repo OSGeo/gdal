@@ -169,25 +169,24 @@ class Viewshed
     int nLineCount;
     std::array<double, 6> adfTransform;
     std::array<double, 6> adfInvTransform;
-    std::vector<double> vLastLineVal;
-    std::vector<double> vThisLineVal;
     using ProgressFunc = std::function<bool(double frac, const char *msg)>;
     ProgressFunc oProgress;
-    std::vector<std::thread> vOutWriters;
     std::mutex oMutex;
+    std::mutex iMutex;
 
     void setOutput(double& dfResult, double& dfCellVal, double dfZ);
     double calcHeight(double dfZ, double dfZ2);
     bool readLine(int nLine, double *data);
     bool writeLine(int nLine, std::vector<double>& vResult);
-    bool processLine(int nX, int nY, int nLine);
-    bool processFirstLine(int nX, int nY, int nLine);
-    void processHalfLine(int nX, int nYOffset, int iStart, int iEnd, int iDir, std::vector<double>& vResult);
-    std::pair<int, int> adjustHeight(int iLine, int nX, double dfObserverHeight,
-                                     double *const pdfNx);
+    bool processLine(int nX, int nY, int nLine, std::vector<double>& vLastLineVal);
+    bool processFirstLine(int nX, int nY, int nLine, std::vector<double>& vLastLineVal);
+    void processLineLeft(int nX, int nYOffset, int iStart, int iEnd, std::vector<double>& vResult,
+        std::vector<double>& vThisLineVal, std::vector<double>& vLastLineVal);
+    void processLineRight(int nX, int nYOffset, int iStart, int iEnd, std::vector<double>& vResult,
+        std::vector<double>& vThisLineVal, std::vector<double>& vLastLineVal);
+    std::pair<int, int> adjustHeight(int iLine, int nX, double *const pdfNx);
     bool calcOutputExtent(int nX, int nY);
     bool createOutputDataset();
-    bool allocate();
     bool lineProgress();
     bool emitProgress(double fraction);
 };
