@@ -1783,8 +1783,9 @@ CPLCondTimedWaitReason CPLCondTimedWait(CPLCond *hCond, CPLMutex *hMutex,
 
     gettimeofday(&tv, nullptr);
     ts.tv_sec = time(nullptr) + static_cast<int>(dfWaitInSeconds);
-    ts.tv_nsec = tv.tv_usec * 1000 + static_cast<int>(1000 * 1000 * 1000 *
-                                                      fmod(dfWaitInSeconds, 1));
+    ts.tv_nsec =
+        static_cast<int>(tv.tv_usec) * 1000 +
+        static_cast<int>(1000 * 1000 * 1000 * fmod(dfWaitInSeconds, 1));
     ts.tv_sec += ts.tv_nsec / (1000 * 1000 * 1000);
     ts.tv_nsec %= (1000 * 1000 * 1000);
     int ret = pthread_cond_timedwait(pCond, pMutex, &ts);
