@@ -351,7 +351,8 @@ bool Viewshed::readLine(int nLine, double *data)
 /// Write an output line of either visibility or height data.
 ///
 /// @param  nLine  Line number being written.
-/// @return  Success or failure.
+/// @param vResult  Result line to write.
+/// @return  True on success, false otherwise.
 bool Viewshed::writeLine(int nLine, std::vector<double> &vResult)
 {
     // GDALRasterIO isn't thread-safe.
