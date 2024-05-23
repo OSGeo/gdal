@@ -134,7 +134,7 @@ class Viewshed
           dfMaxDistance2{opts.maxDistance * opts.maxDistance}, dfZObserver{0},
           poDstDS{}, pSrcBand{}, pDstBand{}, dfHeightAdjFactor{0},
           nLineCount{0}, adfTransform{0, 1, 0, 0, 0, 1}, adfInvTransform{},
-          oProgress{}, oMutex{}, iMutex{}
+          oProgress{}, oZcalc{}, oMutex{}, iMutex{}
     {
         if (dfMaxDistance2 == 0)
             dfMaxDistance2 = std::numeric_limits<double>::max();
