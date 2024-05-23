@@ -96,6 +96,7 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
 
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONFIELDDATATYPES,
