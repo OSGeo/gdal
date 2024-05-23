@@ -683,8 +683,23 @@ inline std::unique_ptr<OGRFieldDomain> OGRArrowLayer::BuildDomainFromBatch(
         eType = OFTInteger64;
     auto values = std::static_pointer_cast<arrow::StringArray>(dict);
     std::vector<OGRCodedValue> asValues;
-    asValues.reserve(values->length());
-    for (int i = 0; i < values->length(); ++i)
+    if (values->length() > INT_MAX)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "BuildDomainFromBatch(): too many values");
+        return nullptr;
+    }
+    try
+    {
+        asValues.reserve(static_cast<size_t>(values->length()));
+    }
+    catch (const std::bad_alloc &)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "BuildDomainFromBatch(): out of memory");
+        return nullptr;
+    }
+    for (int i = 0; i < static_cast<int>(values->length()); ++i)
     {
         if (!values->IsNull(i))
         {
@@ -1345,7 +1360,8 @@ static CPLJSONArray GetListAsJSON(const ArrowType *array,
         if (values->IsNull(nIdxStart + k))
             oArray.AddNull();
         else
-            AddToArray(oArray, values.get(), nIdxStart + k);
+            AddToArray(oArray, values.get(),
+                       static_cast<size_t>(nIdxStart + k));
     }
     return oArray;
 }
@@ -1795,10 +1811,10 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
         case arrow::Type::MAP:
         case arrow::Type::STRUCT:
         {
-            poFeature->SetField(i,
-                                GetListAsJSON(array, nIdxInArray)
-                                    .Format(CPLJSONObject::PrettyFormat::Plain)
-                                    .c_str());
+            poFeature->SetField(
+                i, GetListAsJSON(array, static_cast<size_t>(nIdxInArray))
+                       .Format(CPLJSONObject::PrettyFormat::Plain)
+                       .c_str());
             break;
         }
 
@@ -2389,7 +2405,7 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
                 const auto castArray =
                     static_cast<const arrow::MapArray *>(array);
                 poFeature->SetField(
-                    i, GetMapAsJSON(castArray, nIdxInBatch)
+                    i, GetMapAsJSON(castArray, static_cast<size_t>(nIdxInBatch))
                            .Format(CPLJSONObject::PrettyFormat::Plain)
                            .c_str());
                 break;
@@ -5315,7 +5331,8 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
     };
 
     // cppcheck-suppress unreadVariable
-    std::vector<FieldDesc> fieldDesc(out_schema->n_children);
+    std::vector<FieldDesc> fieldDesc(
+        static_cast<size_t>(out_schema->n_children));
     for (size_t i = 0; i < m_anMapFieldIndexToArrowColumn.size(); i++)
     {
         const int nArrowCol = m_anMapFieldIndexToArrowColumn[i][0];
@@ -5827,7 +5844,7 @@ OGRArrowLayer::CreateWKBArrayFromWKTArray(const struct ArrowArray *sourceArray)
 
         const size_t nWKBSize = oTranslator.TranslateWKT(
             sourceBytes + sourceOffsets[i],
-            sourceOffsets[i + 1] - sourceOffsets[i],
+            static_cast<size_t>(sourceOffsets[i + 1] - sourceOffsets[i]),
             sourceOffsets[i + 1] < sourceOffsets[nLength]);
         if (nWKBSize == static_cast<size_t>(-1))
         {
