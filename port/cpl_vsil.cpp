@@ -2094,15 +2094,20 @@ VSILFILE *VSIFOpenExL(const char *pszFilename, const char *pszAccess,
  * delay.</li>
  * </ul>
  *
- * Options specifics for /vsiaz/ in "w" mode:
+ * Options specifics to /vsis3/, /vsigs/, /vsioss/ and /vsiaz/ in "w" mode:
+ * <ul>
+ * <li>CHUNK_SIZE=val in MiB. (GDAL >= 3.10) Size of a block. Default is 50 MiB.
+ * For /vsis3/, /vsigz/, /vsioss/, it can be up to 5000 MiB.
+ * For /vsiaz/, only taken into account when BLOB_TYPE=BLOCK. It can be up to 4000 MiB.
+ * </li>
+ * </ul>
+ *
+ * Options specifics to /vsiaz/ in "w" mode:
  * <ul>
  * <li>BLOB_TYPE=APPEND/BLOCK. (GDAL >= 3.10) Type of blob. Defaults to APPEND.
  * Append blocks are limited to 195 GiB
  * (however if the file size is below 4 MiB, a block blob will be created in a
  * single PUT operation)
- * </li>
- * <li>CHUNK_SIZE=val in MiB. (GDAL >= 3.10) Size of a block, only taken into
- * account when BLOB_TYPE=BLOCK. It can be up to 4000 MiB. Default is 50 MiB.
  * </li>
  * </ul>
  *
