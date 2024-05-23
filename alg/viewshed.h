@@ -143,13 +143,6 @@ class Viewshed
     Viewshed(const Viewshed &) = delete;
     Viewshed &operator=(const Viewshed &) = delete;
 
-    /**
-     * Create the viewshed for the provided raster band.
-     *
-     * @param hBand  Handle to the raster band.
-     * @param pfnProgress  Progress reporting callback function.
-     * @param pProgressArg  Argument to pass to the progress callback.
-    */
     CPL_DLL bool run(GDALRasterBandH hBand, GDALProgressFunc pfnProgress,
                      void *pProgressArg = nullptr);
 
