@@ -1415,10 +1415,8 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     {
         poDS->m_bDatasetInGroup = true;
 
-        std::string osArrayName = CPLGetBasename(osURI.c_str());
-        osArrayName += "_0";  // Full resolution raster array
-        poDS->m_osArrayURI =
-            CPLFormFilename(osURI.c_str(), osArrayName.c_str(), nullptr);
+        // Full resolution raster array
+        poDS->m_osArrayURI = CPLFormFilename(osURI.c_str(), "l_0", nullptr);
     }
 
     const tiledb_query_type_t eMode =
@@ -2127,10 +2125,8 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
                 group.close();
             }
 
-            std::string osArrayName = CPLGetBasename(pszFilename);
-            osArrayName += "_0";  // Full resolution raster array
-            poDS->m_osArrayURI =
-                CPLFormFilename(pszFilename, osArrayName.c_str(), nullptr);
+            // Full resolution raster array
+            poDS->m_osArrayURI = CPLFormFilename(pszFilename, "l_0", nullptr);
         }
         else
         {
@@ -2825,8 +2821,7 @@ void TileDBRasterDataset::LoadOverviews()
     }
     for (int i = 0; i < m_nOverviewCountFromMetadata; ++i)
     {
-        std::string osArrayName = CPLGetBasename(GetDescription());
-        osArrayName += CPLSPrintf("_%d", 1 + i);
+        const std::string osArrayName = CPLSPrintf("l_%d", 1 + i);
         std::string osOvrDatasetName =
             CPLFormFilename(GetDescription(), osArrayName.c_str(), nullptr);
 
@@ -3024,8 +3019,8 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
                                                 m_osConfigFilename.c_str());
             }
 
-            std::string osArrayName = CPLGetBasename(GetDescription());
-            osArrayName += CPLSPrintf("_%d", 1 + int(m_apoOverviewDS.size()));
+            const std::string osArrayName =
+                CPLSPrintf("l_%d", 1 + int(m_apoOverviewDS.size()));
             std::string osOvrDatasetName =
                 CPLFormFilename(GetDescription(), osArrayName.c_str(), nullptr);
 
