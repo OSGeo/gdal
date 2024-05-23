@@ -177,6 +177,8 @@ class Viewshed
     std::array<double, 6> adfInvTransform;
     using ProgressFunc = std::function<bool(double frac, const char *msg)>;
     ProgressFunc oProgress;
+    using ZCalc = std::function<double(int, int, double, double, double)>;
+    ZCalc oZcalc;
     std::mutex oMutex;
     std::mutex iMutex;
 

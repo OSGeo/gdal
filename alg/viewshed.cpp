@@ -214,9 +214,6 @@ namespace gdal
 namespace
 {
 
-using ZCalc = std::function<double(int, int, double, double, double)>;
-ZCalc zcalc;
-
 // Calculate the height adjustment factor.
 double CalcHeightAdjFactor(const GDALDataset *poDataset, double dfCurveCoeff)
 {
@@ -584,7 +581,7 @@ void Viewshed::processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
     {
         int nXOffset = std::abs(iPixel - nX);
         double dfZ =
-            zcalc(nXOffset, nYOffset, *(pThis + 1), *pLast, *(pLast + 1));
+            oZcalc(nXOffset, nYOffset, *(pThis + 1), *pLast, *(pLast + 1));
         setOutput(vResult[iPixel], *pThis, dfZ);
     }
 
@@ -616,7 +613,7 @@ void Viewshed::processLineRight(int nX, int nYOffset, int iStart, int iEnd,
     {
         int nXOffset = std::abs(iPixel - nX);
         double dfZ =
-            zcalc(nXOffset, nYOffset, *(pThis - 1), *pLast, *(pLast - 1));
+            oZcalc(nXOffset, nYOffset, *(pThis - 1), *pLast, *(pLast - 1));
         setOutput(vResult[iPixel], *pThis, dfZ);
     }
     // For cells outside of the [start, end) range, set the outOfRange value.
@@ -821,7 +818,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     if (!createOutputDataset())
         return false;
 
-    zcalc = doLine;
+    oZcalc = doLine;
 
     std::vector<double> vFirstLineVal(oOutExtent.xSize());
 
@@ -829,13 +826,13 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         return false;
 
     if (oOpts.cellMode == CellMode::Edge)
-        zcalc = doEdge;
+        oZcalc = doEdge;
     else if (oOpts.cellMode == CellMode::Diagonal)
-        zcalc = doDiagonal;
+        oZcalc = doDiagonal;
     else if (oOpts.cellMode == CellMode::Min)
-        zcalc = doMin;
+        oZcalc = doMin;
     else if (oOpts.cellMode == CellMode::Max)
-        zcalc = doMax;
+        oZcalc = doMax;
 
     // scan upwards
     std::atomic<bool> err(false);
