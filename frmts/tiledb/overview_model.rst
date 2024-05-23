@@ -1,17 +1,15 @@
 How GDAL overviews are modeled in TileDB
 ----------------------------------------
 
-There are 2 modes:
+Overviews can only be created on a dataset with the default CREATE_GROUP=YES
+creation option.
 
-Dataset created with CREATE_GROUP=YES
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In this mode, the dataset name passed to Create() or CreateCopy() is used
+The dataset name passed to Create() or CreateCopy() is used
 to create a TileDB group, with the full resolution dataset being created
-as a TileDB array whose name is the base name of the group, suffixed with ``_0``
+as a TileDB array whose name is ``l_0``
 
 The first overview level created is a TileDB array, placed within that group,
-and whose name is the base name of the group, suffixed with ``_1``. And so on.
+and whose name is ``l_1``. And so on.
 
 .. code-block:: bash
 
@@ -19,9 +17,9 @@ and whose name is the base name of the group, suffixed with ``_1``. And so on.
 
     drwxr-xr-x  6 even even  4096 mai    2 02:13 ./
     drwxrwxr-x 57 even even 86016 mai    2 01:42 ../
-    drwxr-xr-x  8 even even  4096 mai    1 17:17 byte_group_0/      <== Full resolution dataset
-    drwxr-xr-x  8 even even  4096 mai    2 02:13 byte_group_1/      <== First overview level
-    drwxr-xr-x  8 even even  4096 mai    2 02:13 byte_group_2/      <== Second overview level
+    drwxr-xr-x  8 even even  4096 mai    1 17:17 l_0/      <== Full resolution dataset
+    drwxr-xr-x  8 even even  4096 mai    2 02:13 l_1/      <== First overview level
+    drwxr-xr-x  8 even even  4096 mai    2 02:13 l_2/      <== Second overview level
     drwxr-xr-x  2 even even  4096 mai    2 02:13 __group/
     drwxr-xr-x  2 even even  4096 mai    2 02:13 __meta/
     -rw-r--r--  1 even even     0 mai    1 17:17 __tiledb_group.tdb
@@ -57,48 +55,3 @@ For example:
       </Metadata>
       <tiledb:OverviewCount>1</tiledb:OverviewCount>
     </PAMDataset>
-
-Dataset created with CREATE_GROUP=NO (or unspecified)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In this mode, the dataset name passed to Create() or CreateCopy() is used
-to create a TileDB array.
-
-When creating overviews, they will be stored in an auxiliary TileDB group,
-located at the same level as the full resolution array, with an URI which is
-the one of the full resolution array with an additional ``.ovr`` suffix.
-
-.. code-block:: bash
-
-    $ ls -al byte.tiledb/
-
-    drwxr-xr-x  8 even even  4096 mai    2 01:34 .
-    drwxrwxr-x 57 even even 86016 mai    2 01:42 ..
-    drwxr-xr-x  2 even even  4096 mai    2 01:34 __commits
-    drwxr-xr-x  2 even even  4096 mai    2 01:34 __fragment_meta
-    drwxr-xr-x  3 even even  4096 mai    2 01:34 __fragments
-    drwxr-xr-x  2 even even  4096 mai    2 01:34 __labels
-    drwxr-xr-x  2 even even  4096 mai    2 01:42 __meta
-    drwxr-xr-x  2 even even  4096 mai    2 01:34 __schema
-
-
-.. code-block:: bash
-
-    $ ls -al byte.tiledb.ovr/
-
-    drwxr-xr-x  5 even even  4096 mai    2 02:26 .
-    drwxrwxr-x 58 even even 86016 mai    2 02:26 ..
-    drwxr-xr-x  8 even even  4096 mai    2 02:26 byte_1     <== First overview level
-    drwxr-xr-x  8 even even  4096 mai    2 02:26 byte_2     <== Second overview level
-    drwxr-xr-x  2 even even  4096 mai    2 02:26 __group
-    drwxr-xr-x  2 even even  4096 mai    2 02:26 __meta
-    -rw-r--r--  1 even even     0 mai    2 02:26 __tiledb_group.tdb
-
-
-The group has the following TileDB metadata item:
-
-* ``dataset_type``: set to ``raster_overviews``
-
-The ``_gdal`` TileDB metadata item attached to the full resolution TileDB array
-may also have the the additional ``tiledb:OverviewCount`` element with the number of
-overviews (omitted if there are none).
