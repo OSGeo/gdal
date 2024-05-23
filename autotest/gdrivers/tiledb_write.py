@@ -46,7 +46,7 @@ def test_tiledb_write_complex(tmp_path, mode):
 
     src_ds = gdal.Open("../gcore/data/cfloat64.tif")
 
-    options = ["INTERLEAVE=%s" % (mode)]
+    options = ["INTERLEAVE=%s" % (mode), "CREATE_GROUP=NO"]
 
     dsname = str(tmp_path / "tiledb_complex64")
     new_ds = gdaltest.tiledb_drv.CreateCopy(dsname, src_ds, options=options)
@@ -56,6 +56,11 @@ def test_tiledb_write_complex(tmp_path, mode):
 
     bnd = new_ds.GetRasterBand(1)
     assert bnd.Checksum() == 5028, "Did not get expected checksum on still-open file"
+
+    with pytest.raises(
+        Exception, match="only supported for datasets created with CREATE_GROUP=YES"
+    ):
+        new_ds.BuildOverviews("NEAR", [2])
 
     bnd = None
     new_ds = None
@@ -431,7 +436,9 @@ def test_tiledb_write_nodata_not_identical_all_bands(tmp_path):
 def test_tiledb_write_nodata_error_after_rasterio(tmp_path):
 
     dsname = str(tmp_path / "test_tiledb_write_nodata_error_after_rasterio.tiledb")
-    ds = gdal.GetDriverByName("TileDB").Create(dsname, 1, 1)
+    ds = gdal.GetDriverByName("TileDB").Create(
+        dsname, 1, 1, options=["CREATE_GROUP=NO"]
+    )
     ds.GetRasterBand(1).Fill(0)
     ds.GetRasterBand(1).FlushCache()
     with pytest.raises(
@@ -444,9 +451,7 @@ def test_tiledb_write_create_group(tmp_path):
 
     # Create dataset and add a overview level
     dsname = str(tmp_path / "test_tiledb_write_create_group.tiledb")
-    ds = gdal.GetDriverByName("TileDB").Create(
-        dsname, 1, 2, options=["CREATE_GROUP=YES"]
-    )
+    ds = gdal.GetDriverByName("TileDB").Create(dsname, 1, 2)
     ds.Close()
 
     # Check that it resulted in an auxiliary dataset
@@ -474,9 +479,7 @@ def test_tiledb_write_overviews(tmp_path):
     src_ds.GetRasterBand(1).SetNoDataValue(254)
 
     # Create dataset and add a overview level
-    ds = gdal.GetDriverByName("TileDB").CreateCopy(
-        dsname, src_ds, options=["CREATE_GROUP=YES"]
-    )
+    ds = gdal.GetDriverByName("TileDB").CreateCopy(dsname, src_ds)
     ds.BuildOverviews("NEAR", [2])
     assert ds.GetRasterBand(1).GetOverviewCount() == 1
     assert ds.GetRasterBand(1).GetOverview(-1) is None
@@ -617,7 +620,9 @@ def test_tiledb_write_overviews_as_geotiff(tmp_path):
     src_ds = gdal.Open("data/rgbsmall.tif")
     src_ds = gdal.Translate("", src_ds, format="MEM")
     src_ds.GetRasterBand(1).SetNoDataValue(0)
-    gdal.GetDriverByName("TileDB").CreateCopy(dsname, src_ds)
+    gdal.GetDriverByName("TileDB").CreateCopy(
+        dsname, src_ds, options=["CREATE_GROUP=NO"]
+    )
 
     ds = gdal.Open(dsname)
     with gdal.config_option("TILEDB_GEOTIFF_OVERVIEWS", "YES"):

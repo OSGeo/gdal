@@ -2109,7 +2109,7 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
         }
 
         if (CPLTestBool(
-                CSLFetchNameValueDef(papszOptions, "CREATE_GROUP", "NO")))
+                CSLFetchNameValueDef(papszOptions, "CREATE_GROUP", "YES")))
         {
             poDS->m_bDatasetInGroup = true;
             tiledb::create_group(*(poDS->m_ctx.get()), pszFilename);
@@ -2733,6 +2733,8 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
         const int nMaxFiles =
             atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
 
+        aosOptions.SetNameValue("CREATE_GROUP", "NO");
+
         if (nSubDatasetCount <= nMaxFiles)
         {
             const char *pszSource =
@@ -3004,6 +3006,7 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
         if (abRequireNewOverview[i])
         {
             CPLStringList aosCreationOptions;
+            aosCreationOptions.SetNameValue("CREATE_GROUP", "NO");
             aosCreationOptions.SetNameValue(
                 "NBITS", CPLString().Printf("%d", nBitsPerSample));
             aosCreationOptions.SetNameValue("INTERLEAVE",

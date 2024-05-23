@@ -144,8 +144,8 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "array at this timestamp, the timestamp should be > 0'/>\n"
         "   <Option name='CREATE_GROUP' type='boolean' "
         "description='Whether to create a group for multiple vector layer "
-        "support, or raster with overviews' "
-        "default='NO'/>"
+        "support (defaults to NO), or raster with overviews "
+        "(defaults to YES)'/>"
         "</CreationOptionList>\n");
 
     // clang-format off

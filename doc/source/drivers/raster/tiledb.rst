@@ -116,20 +116,17 @@ The following creation options exist:
 
 -  .. co:: CREATE_GROUP
       :choices: YES, NO
-      :default: NO
+      :default: YES since 3.10 (NO previously)
       :since: 3.10
 
       Whether the dataset should be created within a TileDB group.
 
       When the dataset is created within a TileDB group, overviews that may be
-      created are store as TileDB arrays inside that group, next to the full
+      created are stored as TileDB arrays inside that group, next to the full
       resolution array. This makes administration of the dataset easier.
 
-      Otherwise, the default behavior (CREATE_GROUP=NO) is to create the dataset
-      as a TileDB array. When creating overviews, they will be stored in an
-      auxiliary TileDB group, located at the same level as the full resolution
-      array, with an URI which is the one of the full resolution array with an
-      additional ``.ovr`` suffix.
+      Otherwise, the past default behavior (CREATE_GROUP=NO) is to create the dataset
+      as a TileDB array. Overviews cannot be created in that mode.
 
 
 Multidimensional API support
