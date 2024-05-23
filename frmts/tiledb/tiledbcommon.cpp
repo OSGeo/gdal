@@ -255,15 +255,10 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
                 }
             }
 
-            if (eType == tiledb::Object::Type::Group &&
-                osDatasetType == RASTER_OVERVIEWS_TYPE)
-            {
-                return nullptr;
-            }
-            else if ((poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
-                     eType == tiledb::Object::Type::Group &&
-                     (osDatasetType.empty() ||
-                      osDatasetType == GEOMETRY_DATASET_TYPE))
+            if ((poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
+                eType == tiledb::Object::Type::Group &&
+                (osDatasetType.empty() ||
+                 osDatasetType == GEOMETRY_DATASET_TYPE))
             {
                 return OGRTileDBDataset::Open(poOpenInfo, eType);
             }

@@ -158,7 +158,6 @@ constexpr const char *DATASET_TYPE_ATTRIBUTE_NAME = "dataset_type";
 // Potential values for dataset_type metadata:
 constexpr const char *RASTER_DATASET_TYPE = "raster";
 constexpr const char *GEOMETRY_DATASET_TYPE = "geometry";
-constexpr const char *RASTER_OVERVIEWS_TYPE = "raster_overviews";
 
 /************************************************************************/
 /* ==================================================================== */
@@ -275,9 +274,6 @@ class TileDBRasterDataset final : public TileDBDataset
 
     //! Load TileDB overviews from TileDB arrays
     void LoadOverviews();
-
-    //! Get the name of the TileDB group holding overviews
-    std::string GetOverviewsGroupName() const;
 
   public:
     ~TileDBRasterDataset();

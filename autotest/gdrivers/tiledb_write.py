@@ -463,8 +463,7 @@ def test_tiledb_write_create_group(tmp_path):
     assert ds.RasterYSize == 2
 
 
-@pytest.mark.parametrize("use_group", [True, False])
-def test_tiledb_write_overviews(tmp_path, use_group):
+def test_tiledb_write_overviews(tmp_path):
 
     # This dataset name must be kept short, otherwise strange I/O errors will
     # occur on Windows !
@@ -474,8 +473,9 @@ def test_tiledb_write_overviews(tmp_path, use_group):
     src_ds = gdal.Translate("", src_ds, format="MEM")
     src_ds.GetRasterBand(1).SetNoDataValue(254)
 
+    # Create dataset and add a overview level
     ds = gdal.GetDriverByName("TileDB").CreateCopy(
-        dsname, src_ds, options=(["CREATE_GROUP=YES"] if use_group else [])
+        dsname, src_ds, options=["CREATE_GROUP=YES"]
     )
     ds.BuildOverviews("NEAR", [2])
     assert ds.GetRasterBand(1).GetOverviewCount() == 1
@@ -492,26 +492,15 @@ def test_tiledb_write_overviews(tmp_path, use_group):
     ds.Close()
 
     # Check that it resulted in an auxiliary dataset
-    if use_group:
-        ds = gdal.OpenEx(dsname, gdal.OF_MULTIDIM_RASTER)
-        assert set(ds.GetRootGroup().GetMDArrayNames()) == set(
-            [
-                "test_0",
-                "test_1",
-            ]
-        )
-        ds.Close()
-        ds = gdal.Open(dsname + "/test_1")
-    else:
-        ovr_dsname = dsname + ".ovr"
-        ds = gdal.OpenEx(ovr_dsname, gdal.OF_MULTIDIM_RASTER)
-        assert set(ds.GetRootGroup().GetMDArrayNames()) == set(
-            [
-                "test_1",
-            ]
-        )
-        ds.Close()
-        ds = gdal.Open(ovr_dsname + "/test_1")
+    ds = gdal.OpenEx(dsname, gdal.OF_MULTIDIM_RASTER)
+    assert set(ds.GetRootGroup().GetMDArrayNames()) == set(
+        [
+            "test_0",
+            "test_1",
+        ]
+    )
+    ds.Close()
+    ds = gdal.Open(dsname + "/test_1")
     assert ds.RasterXSize == src_ds.RasterXSize // 2
     assert ds.RasterYSize == src_ds.RasterYSize // 2
     assert ds.RasterCount == src_ds.RasterCount
@@ -570,14 +559,11 @@ def test_tiledb_write_overviews(tmp_path, use_group):
     ds.Close()
 
     # Check there are no more overviews after reopening
-    if use_group:
-        assert not os.path.exists(dsname + "/test_1")
+    assert not os.path.exists(dsname + "/test_1")
 
-        ds = gdal.OpenEx(dsname, gdal.OF_MULTIDIM_RASTER)
-        assert ds.GetRootGroup().GetMDArrayNames() == ["test_0"]
-        ds.Close()
-    else:
-        assert not os.path.exists(ovr_dsname)
+    ds = gdal.OpenEx(dsname, gdal.OF_MULTIDIM_RASTER)
+    assert ds.GetRootGroup().GetMDArrayNames() == ["test_0"]
+    ds.Close()
 
     ds = gdal.Open(dsname)
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
