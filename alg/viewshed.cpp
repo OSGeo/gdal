@@ -29,10 +29,6 @@
 #include <array>
 #include <atomic>
 #include <thread>
-/**
-#include <iostream>
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-**/
 
 #include "gdal_alg.h"
 #include "gdal_priv_templates.hpp"
@@ -257,12 +253,16 @@ double CalcHeightLine(int nDistance, double Za)
 // Calulate the height Zc of a point (i, j, Zc) given a line through the origin (0, 0, 0)
 // and passing through the line connecting (i - 1, j, Za) and (i, j - 1, Zb).
 // In other words, the origin and the two points form a plane and we're calculating Zc
-// of the point (i, j Zc), also on the plane.
+// of the point (i, j, Zc), also on the plane.
 double CalcHeightDiagonal(int i, int j, double Za, double Zb)
 {
     return (Za * i + Zb * j) / (i + j - 1);
 }
 
+// Calculate the height Zc of a point (i, j, Zc) given a line through the origin (0, 0, 0)
+// and through the line connecting (i -1, j - 1, Za) and (i - 1, j, Zb). In other words,
+// the origin and the other two points form a plane and we're calculating Zc of the
+// point (i, j, Zc), also on the plane.
 double CalcHeightEdge(int i, int j, double Za, double Zb)
 {
     if (i == j)
@@ -352,14 +352,14 @@ bool Viewshed::readLine(int nLine, double *data)
 ///
 /// @param  nLine  Line number being written.
 /// @return  Success or failure.
-bool Viewshed::writeLine(int nLine, std::vector<double>& vResult)
+bool Viewshed::writeLine(int nLine, std::vector<double> &vResult)
 {
     // GDALRasterIO isn't thread-safe.
     std::lock_guard g(oMutex);
 
     if (GDALRasterIO(pDstBand, GF_Write, 0, nLine - oOutExtent.yStart,
-                     oOutExtent.xSize(), 1, vResult.data(), oOutExtent.xSize(), 1,
-                     GDT_Float64, 0, 0))
+                     oOutExtent.xSize(), 1, vResult.data(), oOutExtent.xSize(),
+                     1, GDT_Float64, 0, 0))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "RasterIO error when writing target raster at position "
@@ -402,7 +402,8 @@ bool Viewshed::emitProgress(double fraction)
 /// @param  pdfNx  Pointer to the data at the nX location of the line being adjusted
 /// @return [left, right)  Leftmost and one past the rightmost cell in the line within
 ///    the max distance
-std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX, double *const pdfNx)
+std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX,
+                                           double *const pdfNx)
 {
     int nLeft = 0;
     int nRight = oOutExtent.xSize();
@@ -457,27 +458,9 @@ std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX, double *const p
     return {nLeft, nRight};
 }
 
-double Viewshed::calcHeight(double dfDiagZ, double dfEdgeZ)
-{
-    double dfHeight = dfEdgeZ;
-
-    switch (oOpts.cellMode)
-    {
-        case Viewshed::CellMode::Max:
-            dfHeight = std::max(dfDiagZ, dfEdgeZ);
-            break;
-        case Viewshed::CellMode::Min:
-            dfHeight = std::min(dfDiagZ, dfEdgeZ);
-            break;
-        case Viewshed::CellMode::Diagonal:
-            dfHeight = dfDiagZ;
-            break;
-        default:  // Edge case set in initialization.
-            break;
-    }
-    return dfHeight;
-}
-
+/// Create the output dataset.
+///
+/// @return  True on success, false otherwise.
 bool Viewshed::createOutputDataset()
 {
     GDALDriverManager *hMgr = GetGDALDriverManager();
@@ -533,12 +516,15 @@ bool Viewshed::createOutputDataset()
 namespace
 {
 
-double doDiagonal(int nXOffset, [[maybe_unused]] int nYOffset, double dfThisPrev, double dfLast, [[maybe_unused]] double dfLastPrev)
+double doDiagonal(int nXOffset, [[maybe_unused]] int nYOffset,
+                  double dfThisPrev, double dfLast,
+                  [[maybe_unused]] double dfLastPrev)
 {
     return CalcHeightDiagonal(nXOffset, nYOffset, dfThisPrev, dfLast);
 }
 
-double doEdge(int nXOffset, int nYOffset, double dfThisPrev, double dfLast, double dfLastPrev)
+double doEdge(int nXOffset, int nYOffset, double dfThisPrev, double dfLast,
+              double dfLastPrev)
 {
     if (nXOffset >= nYOffset)
         return CalcHeightEdge(nYOffset, nXOffset, dfLastPrev, dfThisPrev);
@@ -546,43 +532,58 @@ double doEdge(int nXOffset, int nYOffset, double dfThisPrev, double dfLast, doub
         return CalcHeightEdge(nXOffset, nYOffset, dfLastPrev, dfLast);
 }
 
-double doMin(int nXOffset, int nYOffset, double dfThisPrev, double dfLast, double dfLastPrev)
+double doMin(int nXOffset, int nYOffset, double dfThisPrev, double dfLast,
+             double dfLastPrev)
 {
     double dfEdge = doEdge(nXOffset, nYOffset, dfThisPrev, dfLast, dfLastPrev);
-    double dfDiagonal = doDiagonal(nXOffset, nYOffset, dfThisPrev, dfLast, dfLastPrev);
+    double dfDiagonal =
+        doDiagonal(nXOffset, nYOffset, dfThisPrev, dfLast, dfLastPrev);
     return std::min(dfEdge, dfDiagonal);
 }
 
-double doMax(int nXOffset, int nYOffset, double dfThisPrev, double dfLast, double dfLastPrev)
+double doMax(int nXOffset, int nYOffset, double dfThisPrev, double dfLast,
+             double dfLastPrev)
 {
     double dfEdge = doEdge(nXOffset, nYOffset, dfThisPrev, dfLast, dfLastPrev);
-    double dfDiagonal = doDiagonal(nXOffset, nYOffset, dfThisPrev, dfLast, dfLastPrev);
+    double dfDiagonal =
+        doDiagonal(nXOffset, nYOffset, dfThisPrev, dfLast, dfLastPrev);
     return std::max(dfEdge, dfDiagonal);
 }
 
-double doLine(int nXOffset, [[maybe_unused]] int nYOffset, double dfThisPrev, [[maybe_unused]] double dfLast, [[maybe_unused]] double dfLastPrev)
+double doLine(int nXOffset, [[maybe_unused]] int nYOffset, double dfThisPrev,
+              [[maybe_unused]] double dfLast,
+              [[maybe_unused]] double dfLastPrev)
 {
     return CalcHeightLine(nXOffset, dfThisPrev);
 }
 
-} // unnamed namespace
+}  // unnamed namespace
 
+/// Process a line to the left of the observer.
+///
+/// @param nX  X coordinate of the observer.
+/// @param nYOffset  Offset of the line being processed from the observer
+/// @param iStart  X coordinate of the first cell to the left of the observer to be procssed.
+/// @param iEnd  X coordinate one past the last cell to be processed.
+/// @param vResult  Vector in which to store the visibility/height results.
+/// @param vThisLineVal  Height of each cell in the line being processed.
+/// @param vLastLineVal  Observable height of each cell in the previous line processed.
 void Viewshed::processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
-                               std::vector<double>& vResult,
-                               std::vector<double>& vThisLineVal,
-                               std::vector<double>& vLastLineVal)
+                               std::vector<double> &vResult,
+                               std::vector<double> &vThisLineVal,
+                               std::vector<double> &vLastLineVal)
 {
-    // We always go from the center out to the left or right.
     double *pThis = vThisLineVal.data() + iStart;
     double *pLast = vLastLineVal.data() + iStart;
 
     nYOffset = std::abs(nYOffset);
 
-    // Go from the center left or right, calculating Z as we go.
+    // Go from the observer to the left, calculating Z as we go.
     for (int iPixel = iStart; iPixel > iEnd; iPixel--, pThis--, pLast--)
     {
         int nXOffset = std::abs(iPixel - nX);
-        double dfZ = zcalc(nXOffset, nYOffset, *(pThis + 1), *pLast, *(pLast + 1));
+        double dfZ =
+            zcalc(nXOffset, nYOffset, *(pThis + 1), *pLast, *(pLast + 1));
         setOutput(vResult[iPixel], *pThis, dfZ);
     }
 
@@ -590,30 +591,43 @@ void Viewshed::processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
     std::fill(vResult.begin(), vResult.begin() + iEnd + 1, oOpts.outOfRangeVal);
 }
 
+/// Process a line to the right of the observer.
+///
+/// @param nX  X coordinate of the observer.
+/// @param nYOffset  Offset of the line being processed from the observer
+/// @param iStart  X coordinate of the first cell to the right of the observer to be procssed.
+/// @param iEnd  X coordinate one past the last cell to be processed.
+/// @param vResult  Vector in which to store the visibility/height results.
+/// @param vThisLineVal  Height of each cell in the line being processed.
+/// @param vLastLineVal  Observable height of each cell in the previous line processed.
 void Viewshed::processLineRight(int nX, int nYOffset, int iStart, int iEnd,
-                               std::vector<double>& vResult,
-                               std::vector<double>& vThisLineVal,
-                               std::vector<double>& vLastLineVal)
+                                std::vector<double> &vResult,
+                                std::vector<double> &vThisLineVal,
+                                std::vector<double> &vLastLineVal)
 {
-    // We always go from the center out to the left or right.
     double *pThis = vThisLineVal.data() + iStart;
     double *pLast = vLastLineVal.data() + iStart;
 
     nYOffset = std::abs(nYOffset);
 
-    // Go from the center left or right, calculating Z as we go.
+    // Go from the observer to the right, calculating Z as we go.
     for (int iPixel = iStart; iPixel < iEnd; iPixel++, pThis++, pLast++)
     {
         int nXOffset = std::abs(iPixel - nX);
-        double dfZ = zcalc(nXOffset, nYOffset, *(pThis - 1), *pLast, *(pLast - 1));
+        double dfZ =
+            zcalc(nXOffset, nYOffset, *(pThis - 1), *pLast, *(pLast - 1));
         setOutput(vResult[iPixel], *pThis, dfZ);
     }
     // For cells outside of the [start, end) range, set the outOfRange value.
     std::fill(vResult.begin() + iEnd, vResult.end(), oOpts.outOfRangeVal);
 }
 
-
-void Viewshed::setOutput(double& dfResult, double& dfCellVal, double dfZ)
+/// Set the output Z value depending o the observable height and computation mode.
+///
+/// dfResult  Reference to the result cell
+/// dfCellVal  Reference to the current cell height. Replace with observable height.
+/// dfZ  Observable height at cell.
+void Viewshed::setOutput(double &dfResult, double &dfCellVal, double dfZ)
 {
     if (oOpts.outputMode != OutputMode::Normal)
     {
@@ -621,13 +635,23 @@ void Viewshed::setOutput(double& dfResult, double& dfCellVal, double dfZ)
         dfResult = std::max(0.0, dfResult);
     }
     else
-        dfResult = (dfCellVal + oOpts.targetHeight < dfZ) ? oOpts.invisibleVal : oOpts.visibleVal;
+        dfResult = (dfCellVal + oOpts.targetHeight < dfZ) ? oOpts.invisibleVal
+                                                          : oOpts.visibleVal;
     dfCellVal = std::max(dfCellVal, dfZ);
 }
 
-bool Viewshed::processFirstLine(int nX, int nY, int nLine, std::vector<double>& vLastLineVal)
+/// Process the first line (the one with the X coordinate the same as the observer).
+///
+/// @param nX  X location of the observer
+/// @param nY  Y location of the observer
+/// @param nLine  Line number being processed (should always be the same as nY)
+/// @param vLastLineVal  Vector in which to store the read line. Becomes the last line
+///    in further processing.
+/// @return True on success, false otherwise.
+bool Viewshed::processFirstLine(int nX, int nY, int nLine,
+                                std::vector<double> &vLastLineVal)
 {
-    int nYOffset = nLine - nY;   // Should be zero.
+    int nYOffset = nLine - nY;  // Should be zero.
     std::vector<double> vResult(oOutExtent.xSize());
     std::vector<double> vThisLineVal(oOutExtent.xSize());
 
@@ -651,16 +675,21 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine, std::vector<double>& 
     if (oOpts.outputMode == OutputMode::DEM)
         vResult = vThisLineVal;
 
-    const auto [iLeft, iRight] = adjustHeight(nYOffset, nX, vThisLineVal.data() + nX);
+    const auto [iLeft, iRight] =
+        adjustHeight(nYOffset, nX, vThisLineVal.data() + nX);
 
-    std::thread t1([&, left = iLeft]()
+    std::thread t1(
+        [&, left = iLeft]()
         {
-            processLineLeft(nX, nYOffset, nX - 2, left - 1, vResult, vThisLineVal, vLastLineVal);
+            processLineLeft(nX, nYOffset, nX - 2, left - 1, vResult,
+                            vThisLineVal, vLastLineVal);
         });
 
-    std::thread t2([&, right = iRight]()
+    std::thread t2(
+        [&, right = iRight]()
         {
-            processLineRight(nX, nYOffset, nX + 2, right, vResult, vThisLineVal, vLastLineVal);
+            processLineRight(nX, nYOffset, nX + 2, right, vResult, vThisLineVal,
+                             vLastLineVal);
         });
     t1.join();
     t2.join();
@@ -677,7 +706,16 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine, std::vector<double>& 
     return true;
 }
 
-bool Viewshed::processLine(int nX, int nY, int nLine, std::vector<double>& vLastLineVal)
+/// Process a line above or below the observer.
+///
+/// @param nX  X location of the observer
+/// @param nY  Y location of the observer
+/// @param nLine  Line number being processed.
+/// @param vLastLineVal  Vector in which to store the read line. Becomes the last line
+///    in further processing.
+/// @return True on success, false otherwise.
+bool Viewshed::processLine(int nX, int nY, int nLine,
+                           std::vector<double> &vLastLineVal)
 {
     int nYOffset = nLine - nY;
     std::vector<double> vResult(oOutExtent.xSize());
@@ -692,7 +730,8 @@ bool Viewshed::processLine(int nX, int nY, int nLine, std::vector<double>& vLast
         vResult = vThisLineVal;
 
     // Adjust height of the read line.
-    const auto [iLeft, iRight] = adjustHeight(nYOffset, nX, vThisLineVal.data() + nX);
+    const auto [iLeft, iRight] =
+        adjustHeight(nYOffset, nX, vThisLineVal.data() + nX);
 
     // Handle the initial position on the line.
     if (iLeft < iRight)
@@ -704,14 +743,18 @@ bool Viewshed::processLine(int nX, int nY, int nLine, std::vector<double>& vLast
         vResult[nX] = oOpts.outOfRangeVal;
 
     // process left half then right half of line
-    std::thread t1([&, left = iLeft]()
+    std::thread t1(
+        [&, left = iLeft]()
         {
-            processLineLeft(nX, nYOffset, nX - 1, left - 1, vResult, vThisLineVal, vLastLineVal);
+            processLineLeft(nX, nYOffset, nX - 1, left - 1, vResult,
+                            vThisLineVal, vLastLineVal);
         });
 
-    std::thread t2([&, right = iRight]()
+    std::thread t2(
+        [&, right = iRight]()
         {
-            processLineRight(nX, nYOffset, nX + 1, right, vResult, vThisLineVal, vLastLineVal);
+            processLineRight(nX, nYOffset, nX + 1, right, vResult, vThisLineVal,
+                             vLastLineVal);
         });
     t1.join();
     t2.join();
@@ -727,6 +770,12 @@ bool Viewshed::processLine(int nX, int nY, int nLine, std::vector<double>& vLast
     return true;
 }
 
+/// Compute the viewshed of a raster band.
+///
+/// @param band  Pointer to the raster band to be processed.
+/// @param pfnProgress  Pointer to the progress function. Can be null.
+/// @param pProgressArg  Argument passed to the progress function
+/// @return  True on success, false otherwise.
 bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                    void *pProgressArg)
 {
@@ -789,17 +838,20 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
 
     // scan upwards
     std::atomic<bool> err(false);
-    std::thread tUp([&]()
+    std::thread tUp(
+        [&]()
         {
             std::vector<double> vLastLineVal = vFirstLineVal;
 
-            for (int nLine = nY - 1; nLine >= oOutExtent.yStart && !err; nLine--)
+            for (int nLine = nY - 1; nLine >= oOutExtent.yStart && !err;
+                 nLine--)
                 if (!processLine(nX, nY, nLine, vLastLineVal))
                     err = true;
         });
 
     // scan downwards
-    std::thread tDown([&]()
+    std::thread tDown(
+        [&]()
         {
             std::vector<double> vLastLineVal = vFirstLineVal;
 

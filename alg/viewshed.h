@@ -105,7 +105,7 @@ class Viewshed
     struct Options
     {
         Point observer{0, 0, 0};  //!< x, y, and z of the observer
-        double visibleVal{255};  //!< raster output value for visible pixels.
+        double visibleVal{255};   //!< raster output value for visible pixels.
         double invisibleVal{
             0};  //!< raster output value for non-visible pixels.
         double outOfRangeVal{
@@ -130,16 +130,18 @@ class Viewshed
      * @param opts Options to use when calculating viewshed.
     */
     CPL_DLL explicit Viewshed(const Options &opts)
-        : oOpts{opts}, oOutExtent{}, dfMaxDistance2{opts.maxDistance * opts.maxDistance},
-          dfZObserver{0}, poDstDS{}, pSrcBand{}, pDstBand{}, dfHeightAdjFactor{0}, nLineCount{0},
-          adfTransform{0, 1, 0, 0, 0, 1}, adfInvTransform{}, oProgress{}, oMutex{}, iMutex{}
+        : oOpts{opts}, oOutExtent{},
+          dfMaxDistance2{opts.maxDistance * opts.maxDistance}, dfZObserver{0},
+          poDstDS{}, pSrcBand{}, pDstBand{}, dfHeightAdjFactor{0},
+          nLineCount{0}, adfTransform{0, 1, 0, 0, 0, 1}, adfInvTransform{},
+          oProgress{}, oMutex{}, iMutex{}
     {
         if (dfMaxDistance2 == 0)
             dfMaxDistance2 = std::numeric_limits<double>::max();
     }
 
-    Viewshed(const Viewshed&) = delete;
-    Viewshed& operator=(const Viewshed&) = delete;
+    Viewshed(const Viewshed &) = delete;
+    Viewshed &operator=(const Viewshed &) = delete;
 
     /**
      * Create the viewshed for the provided raster band.
@@ -178,16 +180,22 @@ class Viewshed
     std::mutex oMutex;
     std::mutex iMutex;
 
-    void setOutput(double& dfResult, double& dfCellVal, double dfZ);
+    void setOutput(double &dfResult, double &dfCellVal, double dfZ);
     double calcHeight(double dfZ, double dfZ2);
     bool readLine(int nLine, double *data);
-    bool writeLine(int nLine, std::vector<double>& vResult);
-    bool processLine(int nX, int nY, int nLine, std::vector<double>& vLastLineVal);
-    bool processFirstLine(int nX, int nY, int nLine, std::vector<double>& vLastLineVal);
-    void processLineLeft(int nX, int nYOffset, int iStart, int iEnd, std::vector<double>& vResult,
-        std::vector<double>& vThisLineVal, std::vector<double>& vLastLineVal);
-    void processLineRight(int nX, int nYOffset, int iStart, int iEnd, std::vector<double>& vResult,
-        std::vector<double>& vThisLineVal, std::vector<double>& vLastLineVal);
+    bool writeLine(int nLine, std::vector<double> &vResult);
+    bool processLine(int nX, int nY, int nLine,
+                     std::vector<double> &vLastLineVal);
+    bool processFirstLine(int nX, int nY, int nLine,
+                          std::vector<double> &vLastLineVal);
+    void processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
+                         std::vector<double> &vResult,
+                         std::vector<double> &vThisLineVal,
+                         std::vector<double> &vLastLineVal);
+    void processLineRight(int nX, int nYOffset, int iStart, int iEnd,
+                          std::vector<double> &vResult,
+                          std::vector<double> &vThisLineVal,
+                          std::vector<double> &vLastLineVal);
     std::pair<int, int> adjustHeight(int iLine, int nX, double *const pdfNx);
     bool calcOutputExtent(int nX, int nY);
     bool createOutputDataset();
