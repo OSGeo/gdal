@@ -28,7 +28,6 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
-#include <limits>
 #include <thread>
 /**
 #include <iostream>
@@ -789,7 +788,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         zcalc = doMax;
 
     // scan upwards
-    std::atomic<bool> err;
+    std::atomic<bool> err(false);
     std::thread tUp([&]()
         {
             std::vector<double> vLastLineVal = vFirstLineVal;
