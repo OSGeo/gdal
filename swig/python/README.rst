@@ -52,9 +52,9 @@ Building just the bindings, from the full tree
 
 Another is to use the gdal source distribution with an
 already-installed gdal library and headers.  To do this, one must
-create a build directory and run cmake to generate makefiles.  Then,
-in swig/python, gmake python_generated_files.  Then, one can build
-using setup.py like any other distributed python module.
+create a build directory and run cmake to generate build scripts.  Then,
+run ``cmake --build . --target python_generated_files``. Finally, in swig/python,
+one can build using setup.py like any other distributed python module.
 
 Building from the PyPi module file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
