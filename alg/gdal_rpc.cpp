@@ -659,12 +659,12 @@ void *GDALCreateRPCTransformerV1(GDALRPCInfoV1 *psRPCInfo, int bReversed,
  * Create an RPC based transformer.
  *
  * The geometric sensor model describing the physical relationship between
- * image coordinates and ground coordinate is known as a Rigorous Projection
+ * image coordinates and ground coordinates is known as a Rigorous Projection
  * Model. A Rigorous Projection Model expresses the mapping of the image space
  * coordinates of rows and columns (r,c) onto the object space reference
  * surface geodetic coordinates (long, lat, height).
  *
- * RPC supports a generic description of the Rigorous Projection Models. The
+ * A RPC supports a generic description of the Rigorous Projection Models. The
  * approximation used by GDAL (RPC00) is a set of rational polynomials
  * expressing the normalized row and column values, (rn , cn), as a function of
  * normalized geodetic latitude, longitude, and height, (P, L, H), given a
@@ -675,7 +675,7 @@ void *GDALCreateRPCTransformerV1(GDALRPCInfoV1 *psRPCInfo, int bReversed,
  * normalized row and column values (rn, cn), and between the geodetic
  * latitude, longitude, and height and normalized geodetic latitude,
  * longitude, and height (P, L, H), is defined by a set of normalizing
- * translations (offsets) and scales that ensure all values are contained i
+ * translations (offsets) and scales that ensure all values are contained in
  * the range -1 to +1.
  *
  * This function creates a GDALTransformFunc compatible transformer
