@@ -15,27 +15,36 @@ Synopsis
 
 .. code-block::
 
-       gdalwarp [--help] [--long-usage] [--help-general]
-                [--quiet] [-overwrite] [-of <output_format>] [-co <NAME>=<VALUE>]... [-s_srs <srs_def>]
-                [-t_srs <srs_def>]
-                [[-srcalpha]|[-nosrcalpha]]
-                [-dstalpha] [-tr <xres> <yres>|square] [-ts <width> <height>] [-te <xmin> <ymin> <max> <ymaX]
-                [-te_srs <srs_def>] [-r near|bilinear|cubic|cubicspline|lanczos|average|rms|mode|min|max|med|q1|q3|sum]
-                [-ot Byte|Int8|[U]Int{16|32|64}|CInt{16|32}|[C]Float{32|64}]
-                <src_dataset_name>... <dst_dataset_name>
+   gdalwarp [--help] [--long-usage] [--help-general]
+            [--quiet] [-overwrite] [-of <output_format>] [-co <NAME>=<VALUE>]...
+            [-s_srs <srs_def>] [-t_srs <srs_def>]
+            [[-srcalpha]|[-nosrcalpha]]
+            [-dstalpha] [-tr <xres> <yres>|square] [-ts <width> <height>]
+            [-te <xmin> <ymin> <max> <ymaX]
+            [-te_srs <srs_def>]
+            [-r near|bilinear|cubic|cubicspline|lanczos|average|rms|mode|min|max|med|q1|q3|sum]
+            [-ot Byte|Int8|[U]Int{16|32|64}|CInt{16|32}|[C]Float{32|64}]
+            <src_dataset_name>... <dst_dataset_name>
 
-       Advanced options:
-                [-wo <NAME>=<VALUE>]... [-multi] [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>] [-ct <string>]
-                [[-tps]|[-rpc]|[-geoloc]]
-                [-order <1|2|3>] [-refine_gcps <tolerance> [<minimum_gcps>]] [-to <NAME>=<VALUE>]...
-                [-et <err_threshold>] [-wm <memory_in_mb>] [-srcnodata <value>[ <value>...]]
-                [-dstnodata <value>[ <value>...]] [-tap] [-wt Byte|Int8|[U]Int{16|32|64}|CInt{16|32}|[C]Float{32|64}]
-                [-cutline <datasource>|<WKT>] [-cutline_srs <srs_def>] [-cwhere <expression>]
-                [[-cl <layername>]|[-csql <query>]]
-                [-cblend <distance>] [-crop_to_cutline] [-nomd] [-cvmd <meta_conflict_value>] [-setci]
-                [-oo <NAME>=<VALUE>]... [-doo <NAME>=<VALUE>]... [-ovr <level>|AUTO|AUTO-<n>|NONE]
-                [[-vshift]|[-novshiftgrid]]
-                [-if <format>]... [-srcband <band>]... [-dstband <band>]...
+   Advanced options:
+            [-wo <NAME>=<VALUE>]... [-multi]
+            [-s_coord_epoch <epoch>] [-t_coord_epoch <epoch>] [-ct <string>]
+            [[-tps]|[-rpc]|[-geoloc]]
+            [-order <1|2|3>] [-refine_gcps <tolerance> [<minimum_gcps>]]
+            [-to <NAME>=<VALUE>]...
+            [-et <err_threshold>] [-wm <memory_in_mb>]
+            [-srcnodata <value>[ <value>...]]
+            [-dstnodata <value>[ <value>...]] [-tap]
+            [-wt Byte|Int8|[U]Int{16|32|64}|CInt{16|32}|[C]Float{32|64}]
+            [-cutline <datasource>|<WKT>] [-cutline_srs <srs_def>]
+            [-cwhere <expression>]
+            [[-cl <layername>]|[-csql <query>]]
+            [-cblend <distance>] [-crop_to_cutline]
+            [-nomd] [-cvmd <meta_conflict_value>] [-setci]
+            [-oo <NAME>=<VALUE>]... [-doo <NAME>=<VALUE>]...
+            [-ovr <level>|AUTO|AUTO-<n>|NONE]
+            [[-vshift]|[-novshiftgrid]]
+            [-if <format>]... [-srcband <band>]... [-dstband <band>]...
 
 
 Description
