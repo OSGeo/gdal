@@ -108,3 +108,13 @@ collections.namedtuple(is_visible: bool, col_intersection: int, row_intersection
     col_intersection is the raster column index where the LOS line intersects with terrain (will be set in the future, currently set to -1).
     row_intersection is the raster row index where the LOS line intersects with terrain (will be set in the future, currently set to -1).
 ";
+
+// gdal.ReprojectImage
+%feature("docstring") ReprojectImage "
+
+Reproject image.
+
+See :cpp:func:`GDALReprojectImage`.
+
+Consider using :py:func:`osgeo.gdal.Warp` and :py:func:`osgeo.gdal.WarpOptions` instead
+";
