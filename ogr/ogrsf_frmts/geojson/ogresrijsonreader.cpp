@@ -121,9 +121,39 @@ void OGRESRIJSONReader::ReadLayers(OGRGeoJSONDataSource *poDS,
     }
 
     auto eGeomType = OGRESRIJSONGetGeometryType(poGJObject_);
-    if (eGeomType == wkbNone && poSRS != nullptr)
+    if (eGeomType == wkbNone)
     {
-        eGeomType = wkbUnknown;
+        if (poSRS)
+        {
+            eGeomType = wkbUnknown;
+        }
+        else
+        {
+            json_object *poObjFeatures =
+                OGRGeoJSONFindMemberByName(poGJObject_, "features");
+            if (poObjFeatures &&
+                json_type_array == json_object_get_type(poObjFeatures))
+            {
+                const auto nFeatures = json_object_array_length(poObjFeatures);
+                for (auto i = decltype(nFeatures){0}; i < nFeatures; ++i)
+                {
+                    json_object *poObjFeature =
+                        json_object_array_get_idx(poObjFeatures, i);
+                    if (poObjFeature != nullptr &&
+                        json_object_get_type(poObjFeature) == json_type_object)
+                    {
+                        if (auto poObjGeometry = OGRGeoJSONFindMemberByName(
+                                poObjFeature, "geometry"))
+                        {
+                            eGeomType = wkbUnknown;
+                            poSRS =
+                                OGRESRIJSONReadSpatialReference(poObjGeometry);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     poLayer_ = new OGRGeoJSONLayer(pszName, poSRS, eGeomType, poDS, nullptr);
@@ -185,28 +215,87 @@ bool OGRESRIJSONReader::GenerateLayerDefn()
             }
         }
     }
+    else if ((poFields = OGRGeoJSONFindMemberByName(
+                  poGJObject_, "fieldAliases")) != nullptr &&
+             json_object_get_type(poFields) == json_type_object)
+    {
+        json_object_iter it;
+        it.key = nullptr;
+        it.val = nullptr;
+        it.entry = nullptr;
+        json_object_object_foreachC(poFields, it)
+        {
+            OGRFieldDefn fldDefn(it.key, OFTString);
+            poDefn->AddFieldDefn(&fldDefn);
+        }
+    }
     else
     {
-        poFields = OGRGeoJSONFindMemberByName(poGJObject_, "fieldAliases");
-        if (nullptr != poFields &&
-            json_object_get_type(poFields) == json_type_object)
+        // Guess the fields' schema from the content of the features' "attributes"
+        // element
+        json_object *poObjFeatures =
+            OGRGeoJSONFindMemberByName(poGJObject_, "features");
+        if (poObjFeatures &&
+            json_type_array == json_object_get_type(poObjFeatures))
         {
-            json_object_iter it;
-            it.key = nullptr;
-            it.val = nullptr;
-            it.entry = nullptr;
-            json_object_object_foreachC(poFields, it)
+            gdal::DirectedAcyclicGraph<int, std::string> dag;
+            std::vector<std::unique_ptr<OGRFieldDefn>> apoFieldDefn{};
+            std::map<std::string, int> oMapFieldNameToIdx{};
+            std::vector<int> anCurFieldIndices;
+            std::set<int> aoSetUndeterminedTypeFields;
+
+            const auto nFeatures = json_object_array_length(poObjFeatures);
+            for (auto i = decltype(nFeatures){0}; i < nFeatures; ++i)
             {
-                OGRFieldDefn fldDefn(it.key, OFTString);
-                poDefn->AddFieldDefn(&fldDefn);
+                json_object *poObjFeature =
+                    json_object_array_get_idx(poObjFeatures, i);
+                if (poObjFeature != nullptr &&
+                    json_object_get_type(poObjFeature) == json_type_object)
+                {
+                    int nPrevFieldIdx = -1;
+
+                    json_object *poObjProps =
+                        OGRGeoJSONFindMemberByName(poObjFeature, "attributes");
+                    if (nullptr != poObjProps &&
+                        json_object_get_type(poObjProps) == json_type_object)
+                    {
+                        json_object_iter it;
+                        it.key = nullptr;
+                        it.val = nullptr;
+                        it.entry = nullptr;
+                        json_object_object_foreachC(poObjProps, it)
+                        {
+                            anCurFieldIndices.clear();
+                            OGRGeoJSONReaderAddOrUpdateField(
+                                anCurFieldIndices, oMapFieldNameToIdx,
+                                apoFieldDefn, it.key, it.val,
+                                /*bFlattenNestedAttributes = */ true,
+                                /* chNestedAttributeSeparator = */ '.',
+                                /* bArrayAsString =*/false,
+                                /* bDateAsString = */ false,
+                                aoSetUndeterminedTypeFields);
+                            for (int idx : anCurFieldIndices)
+                            {
+                                dag.addNode(idx,
+                                            apoFieldDefn[idx]->GetNameRef());
+                                if (nPrevFieldIdx != -1)
+                                {
+                                    dag.addEdge(nPrevFieldIdx, idx);
+                                }
+                                nPrevFieldIdx = idx;
+                            }
+                        }
+                    }
+                }
             }
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid FeatureCollection object. "
-                     "Missing \'fields\' member.");
-            bSuccess = false;
+
+            const auto sortedFields = dag.getTopologicalOrdering();
+            CPLAssert(sortedFields.size() == apoFieldDefn.size());
+            for (int idx : sortedFields)
+            {
+                // cppcheck-suppress containerOutOfBounds
+                poDefn->AddFieldDefn(apoFieldDefn[idx].get());
+            }
         }
     }
 
