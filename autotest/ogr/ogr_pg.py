@@ -4855,7 +4855,8 @@ def test_ogr_pg_84(pg_ds):
 
 
 @only_without_postgis
-def test_ogr_pg_metadata(pg_ds):
+@pytest.mark.parametrize("run_number", [1, 2])
+def test_ogr_pg_metadata(pg_ds, run_number):
 
     pg_ds = reconnect(pg_ds, update=1)
     pg_ds.StartTransaction()
@@ -4887,6 +4888,71 @@ def test_ogr_pg_metadata(pg_ds):
         assert sql_lyr.GetFeatureCount() == 0
     lyr = pg_ds.GetLayerByName("test_ogr_pg_metadata")
     assert lyr.GetMetadata_Dict() == {}
+
+
+###############################################################################
+# Test reading/writing metadata with a user with limited rights
+
+
+@only_without_postgis
+def test_ogr_pg_metadata_restricted_user(pg_ds):
+
+    lyr = pg_ds.CreateLayer(
+        "test_ogr_pg_metadata_restricted_user",
+        geom_type=ogr.wkbPoint,
+        options=["OVERWRITE=YES"],
+    )
+    lyr.SetMetadata({"foo": "bar"})
+
+    pg_ds = reconnect(pg_ds, update=1)
+
+    try:
+
+        pg_ds.ExecuteSQL("CREATE ROLE test_ogr_pg_metadata_restricted_user")
+        with pg_ds.ExecuteSQL("SELECT current_schema()") as lyr:
+            f = lyr.GetNextFeature()
+            current_schema = f.GetField(0)
+        pg_ds.ExecuteSQL(
+            f"GRANT ALL PRIVILEGES ON SCHEMA {current_schema} TO test_ogr_pg_metadata_restricted_user"
+        )
+        pg_ds.ExecuteSQL("SET ROLE test_ogr_pg_metadata_restricted_user")
+
+        lyr = pg_ds.GetLayerByName("test_ogr_pg_metadata_restricted_user")
+        gdal.ErrorReset()
+        with gdal.quiet_errors():
+            assert lyr.GetMetadata() == {}
+        assert (
+            gdal.GetLastErrorMsg()
+            == "Table ogr_system_tables.metadata exists but user lacks USAGE privilege on ogr_system_tables schema"
+        )
+
+        pg_ds = reconnect(pg_ds, update=1)
+        pg_ds.ExecuteSQL("SET ROLE test_ogr_pg_metadata_restricted_user")
+
+        lyr = pg_ds.CreateLayer(
+            "test_ogr_pg_metadata_restricted_user_bis",
+            geom_type=ogr.wkbPoint,
+            options=["OVERWRITE=YES"],
+        )
+        with gdal.quiet_errors():
+            lyr.SetMetadata({"foo": "bar"})
+
+        gdal.ErrorReset()
+        pg_ds = reconnect(pg_ds, update=1)
+        assert gdal.GetLastErrorMsg() == ""
+
+    finally:
+        pg_ds = reconnect(pg_ds, update=1)
+        pg_ds.ExecuteSQL("DELLAYER:test_ogr_pg_metadata_restricted_user")
+        pg_ds.ExecuteSQL("DELLAYER:test_ogr_pg_metadata_restricted_user_bis")
+        with pg_ds.ExecuteSQL("SELECT CURRENT_USER") as lyr:
+            f = lyr.GetNextFeature()
+            current_user = f.GetField(0)
+        pg_ds.ExecuteSQL(
+            f"REASSIGN OWNED BY test_ogr_pg_metadata_restricted_user TO {current_user}"
+        )
+        pg_ds.ExecuteSQL("DROP OWNED BY test_ogr_pg_metadata_restricted_user")
+        pg_ds.ExecuteSQL("DROP ROLE test_ogr_pg_metadata_restricted_user")
 
 
 ###############################################################################
