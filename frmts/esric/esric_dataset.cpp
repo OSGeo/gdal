@@ -67,9 +67,29 @@ static int IdentifyJSON(GDALOpenInfo *poOpenInfo)
     if (!ENDS_WITH_CI(poOpenInfo->pszFilename, "root.json"))
         return false;
 #endif
-    CPLString header(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
-                     poOpenInfo->nHeaderBytes);
-    return (CPLString::npos != header.find("tileBundlesPath"));
+    for (int i = 0; i < 2; ++i)
+    {
+        const std::string osHeader(
+            reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+            poOpenInfo->nHeaderBytes);
+        if (std::string::npos != osHeader.find("tileBundlesPath"))
+        {
+            return true;
+        }
+        // If we didn't find tileBundlesPath i, the first bytes, but find
+        // other elements typically of .tpkx, then ingest more bytes and
+        // retry
+        constexpr int MORE_BYTES = 8192;
+        if (poOpenInfo->nHeaderBytes < MORE_BYTES &&
+            (std::string::npos != osHeader.find("tileInfo") ||
+             std::string::npos != osHeader.find("tileImageInfo")))
+        {
+            poOpenInfo->TryToIngest(MORE_BYTES);
+        }
+        else
+            break;
+    }
+    return false;
 }
 
 // Without full XML parsing, weak, might still fail
