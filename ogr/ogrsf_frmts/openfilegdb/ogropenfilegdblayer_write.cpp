@@ -584,8 +584,10 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
     {
         OGRFieldDefn oField("field_before_geom", OFTString);
         m_poLyrTable->CreateField(std::make_unique<FileGDBField>(
-            oField.GetNameRef(), std::string(), FGFT_STRING, true, 0,
-            FileGDBField::UNSET_FIELD));
+            oField.GetNameRef(), std::string(), FGFT_STRING,
+            /* bNullable = */ true,
+            /* bRequired = */ true,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD));
         m_poFeatureDefn->AddFieldDefn(&oField);
     }
 
@@ -699,9 +701,11 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
 
     const std::string osFIDName =
         m_aosCreationOptions.FetchNameValueDef("FID", "OBJECTID");
-    if (!m_poLyrTable->CreateField(std::unique_ptr<FileGDBField>(
-            new FileGDBField(osFIDName, std::string(), FGFT_OBJECTID, false, 0,
-                             FileGDBField::UNSET_FIELD))))
+    if (!m_poLyrTable->CreateField(std::make_unique<FileGDBField>(
+            osFIDName, std::string(), FGFT_OBJECTID,
+            /* bNullable = */ false,
+            /* bRequired = */ true,
+            /* bEditable = */ false, 0, FileGDBField::UNSET_FIELD)))
     {
         Close();
         return false;
@@ -954,9 +958,18 @@ static CPLXMLNode *CreateXMLFieldDefinition(const OGRFieldDefn *poFieldDefn,
         CPLAddXMLAttributeAndValue(psFieldType, "xmlns:typens",
                                    "http://www.esri.com/schemas/ArcGIS/10.3");
     }
-    CPLCreateXMLElementAndValue(GPFieldInfoEx, "IsNullable",
-                                poGDBFieldDefn->IsNullable() ? "true"
-                                                             : "false");
+    if (poGDBFieldDefn->IsNullable())
+    {
+        CPLCreateXMLElementAndValue(GPFieldInfoEx, "IsNullable", "true");
+    }
+    if (poGDBFieldDefn->IsRequired())
+    {
+        CPLCreateXMLElementAndValue(GPFieldInfoEx, "Required", "true");
+    }
+    if (!poGDBFieldDefn->IsEditable())
+    {
+        CPLCreateXMLElementAndValue(GPFieldInfoEx, "Editable", "false");
+    }
     if (poGDBFieldDefn->IsHighPrecision())
     {
         CPLCreateXMLElementAndValue(GPFieldInfoEx, "HighPrecision", "true");
@@ -1357,23 +1370,36 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
         }
     }
 
-    const char *pszAlias = poField->GetAlternativeNameRef();
-    if (!m_poLyrTable->CreateField(std::make_unique<FileGDBField>(
-            poField->GetNameRef(),
-            pszAlias ? std::string(pszAlias) : std::string(), eType,
-            CPL_TO_BOOL(poField->IsNullable()), nWidth, sDefault)))
-    {
-        return OGRERR_FAILURE;
-    }
+    const bool bNullable =
+        CPL_TO_BOOL(poField->IsNullable()) && eType != FGFT_GLOBALID;
+    bool bRequired = (eType == FGFT_GLOBALID);
+    bool bEditable = (eType != FGFT_GLOBALID);
 
     if (poField->GetType() == OFTReal)
     {
         const char *pszDefault = poField->GetDefault();
         if (pszDefault && EQUAL(pszDefault, "FILEGEODATABASE_SHAPE_AREA"))
+        {
             m_iAreaField = m_poFeatureDefn->GetFieldCount();
+            bRequired = true;
+            bEditable = false;
+        }
         else if (pszDefault &&
                  EQUAL(pszDefault, "FILEGEODATABASE_SHAPE_LENGTH"))
+        {
             m_iLengthField = m_poFeatureDefn->GetFieldCount();
+            bRequired = true;
+            bEditable = false;
+        }
+    }
+
+    const char *pszAlias = poField->GetAlternativeNameRef();
+    if (!m_poLyrTable->CreateField(std::make_unique<FileGDBField>(
+            poField->GetNameRef(),
+            pszAlias ? std::string(pszAlias) : std::string(), eType, bNullable,
+            bRequired, bEditable, nWidth, sDefault)))
+    {
+        return OGRERR_FAILURE;
     }
 
     whileUnsealing(m_poFeatureDefn)->AddFieldDefn(poField);
