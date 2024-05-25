@@ -102,8 +102,11 @@ class FileGDBField
     std::string m_osAlias{};
     FileGDBFieldType m_eType = FGFT_UNDEFINED;
 
-    bool m_bNullable = false;
-    bool m_bHighPrecsion = false;  // for FGFT_DATETIME
+    bool m_bNullable = false;  // Bit 1 of flag field
+    bool m_bRequired =
+        false;  // Bit 2 of flag field. Set for ObjectID, geometry field and Shape_Area/Shape_Length
+    bool m_bEditable = false;       // Bit 3 of flag field.
+    bool m_bHighPrecision = false;  // for FGFT_DATETIME
     bool m_bReadAsDouble =
         false;           // used by FileGDBTable::CreateAttributeIndex()
     int m_nMaxWidth = 0; /* for string */
@@ -117,11 +120,17 @@ class FileGDBField
 
   public:
     static const OGRField UNSET_FIELD;
+    static constexpr int BIT_NULLABLE = 0;
+    static constexpr int BIT_REQUIRED = 1;
+    static constexpr int BIT_EDITABLE = 2;
+    static constexpr int MASK_NULLABLE = 1 << BIT_NULLABLE;
+    static constexpr int MASK_REQUIRED = 1 << BIT_REQUIRED;
+    static constexpr int MASK_EDITABLE = 1 << BIT_EDITABLE;
 
     explicit FileGDBField(FileGDBTable *m_poParent);
     FileGDBField(const std::string &osName, const std::string &osAlias,
-                 FileGDBFieldType eType, bool bNullable, int nMaxWidth,
-                 const OGRField &sDefault);
+                 FileGDBFieldType eType, bool bNullable, bool bRequired,
+                 bool bEditable, int nMaxWidth, const OGRField &sDefault);
     virtual ~FileGDBField();
 
     void SetParent(FileGDBTable *poParent)
@@ -149,6 +158,16 @@ class FileGDBField
         return m_bNullable;
     }
 
+    bool IsRequired() const
+    {
+        return m_bRequired;
+    }
+
+    bool IsEditable() const
+    {
+        return m_bEditable;
+    }
+
     int GetMaxWidth() const
     {
         return m_nMaxWidth;
@@ -161,12 +180,12 @@ class FileGDBField
 
     void SetHighPrecision()
     {
-        m_bHighPrecsion = true;
+        m_bHighPrecision = true;
     }
 
     bool IsHighPrecision() const
     {
-        return m_bHighPrecsion;
+        return m_bHighPrecision;
     }
 
     int HasIndex();

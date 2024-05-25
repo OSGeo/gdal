@@ -566,14 +566,20 @@ bool OGROpenFileGDBDataSource::CreateGDBSystemCatalog()
     if (!oTable.Create(m_osGDBSystemCatalogFilename.c_str(), 4, FGTGT_NONE,
                        false, false) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "ID", std::string(), FGFT_OBJECTID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "ID", std::string(), FGFT_OBJECTID,
+            /* bNullable = */ false,
+            /* bRequired = */ true,
+            /* bEditable = */ false, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "Name", std::string(), FGFT_STRING, false, 160,
-            FileGDBField::UNSET_FIELD)) ||
+            "Name", std::string(), FGFT_STRING,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 160, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "FileFormat", std::string(), FGFT_INT32, false, 0,
-            FileGDBField::UNSET_FIELD)))
+            "FileFormat", std::string(), FGFT_INT32,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)))
     {
         return false;
     }
@@ -616,14 +622,20 @@ bool OGROpenFileGDBDataSource::CreateGDBDBTune()
     FileGDBTable oTable;
     if (!oTable.Create(osFilename.c_str(), 4, FGTGT_NONE, false, false) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "Keyword", std::string(), FGFT_STRING, false, 32,
-            FileGDBField::UNSET_FIELD)) ||
+            "Keyword", std::string(), FGFT_STRING,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 32, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "ParameterName", std::string(), FGFT_STRING, false, 32,
-            FileGDBField::UNSET_FIELD)) ||
+            "ParameterName", std::string(), FGFT_STRING,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 32, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "ConfigString", std::string(), FGFT_STRING, true, 2048,
-            FileGDBField::UNSET_FIELD)))
+            "ConfigString", std::string(), FGFT_STRING,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 2048, FileGDBField::UNSET_FIELD)))
     {
         return false;
     }
@@ -709,41 +721,65 @@ bool OGROpenFileGDBDataSource::CreateGDBSpatialRefs()
     if (!oTable.Create(m_osGDBSpatialRefsFilename.c_str(), 4, FGTGT_NONE, false,
                        false) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "ID", std::string(), FGFT_OBJECTID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "ID", std::string(), FGFT_OBJECTID,
+            /* bNullable = */ false,
+            /* bRequired = */ true,
+            /* bEditable = */ false, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "SRTEXT", std::string(), FGFT_STRING, false, 2048,
-            FileGDBField::UNSET_FIELD)) ||
+            "SRTEXT", std::string(), FGFT_STRING,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 2048, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "FalseX", std::string(), FGFT_FLOAT64, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "FalseX", std::string(), FGFT_FLOAT64,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "FalseY", std::string(), FGFT_FLOAT64, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "FalseY", std::string(), FGFT_FLOAT64,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "XYUnits", std::string(), FGFT_FLOAT64, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "XYUnits", std::string(), FGFT_FLOAT64,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "FalseZ", std::string(), FGFT_FLOAT64, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "FalseZ", std::string(), FGFT_FLOAT64,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "ZUnits", std::string(), FGFT_FLOAT64, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "ZUnits", std::string(), FGFT_FLOAT64,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "FalseM", std::string(), FGFT_FLOAT64, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "FalseM", std::string(), FGFT_FLOAT64,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "MUnits", std::string(), FGFT_FLOAT64, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "MUnits", std::string(), FGFT_FLOAT64,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "XYTolerance", std::string(), FGFT_FLOAT64, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "XYTolerance", std::string(), FGFT_FLOAT64,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "ZTolerance", std::string(), FGFT_FLOAT64, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "ZTolerance", std::string(), FGFT_FLOAT64,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "MTolerance", std::string(), FGFT_FLOAT64, true, 0,
-            FileGDBField::UNSET_FIELD)))
+            "MTolerance", std::string(), FGFT_FLOAT64,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)))
     {
         return false;
     }
@@ -789,53 +825,85 @@ bool OGROpenFileGDBDataSource::CreateGDBItems()
     if (!oTable.Create(m_osGDBItemsFilename.c_str(), 4, FGTGT_POLYGON, false,
                        false) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "ObjectID", std::string(), FGFT_OBJECTID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "ObjectID", std::string(), FGFT_OBJECTID,
+            /* bNullable = */ false,
+            /* bRequired = */ true,
+            /* bEditable = */ false, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "UUID", std::string(), FGFT_GLOBALID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "UUID", std::string(), FGFT_GLOBALID,
+            /* bNullable = */ false,
+            /* bRequired = */ true,
+            /* bEditable = */ false, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "Type", std::string(), FGFT_GUID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "Type", std::string(), FGFT_GUID,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "Name", std::string(), FGFT_STRING, true, 160,
-            FileGDBField::UNSET_FIELD)) ||
+            "Name", std::string(), FGFT_STRING,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 160, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "PhysicalName", std::string(), FGFT_STRING, true, 160,
-            FileGDBField::UNSET_FIELD)) ||
+            "PhysicalName", std::string(), FGFT_STRING,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 160, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "Path", std::string(), FGFT_STRING, true, 260,
-            FileGDBField::UNSET_FIELD)) ||
+            "Path", std::string(), FGFT_STRING,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 260, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "DatasetSubtype1", std::string(), FGFT_INT32, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "DatasetSubtype1", std::string(), FGFT_INT32,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "DatasetSubtype2", std::string(), FGFT_INT32, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "DatasetSubtype2", std::string(), FGFT_INT32,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "DatasetInfo1", std::string(), FGFT_STRING, true, 255,
-            FileGDBField::UNSET_FIELD)) ||
+            "DatasetInfo1", std::string(), FGFT_STRING,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 255, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "DatasetInfo2", std::string(), FGFT_STRING, true, 255,
-            FileGDBField::UNSET_FIELD)) ||
+            "DatasetInfo2", std::string(), FGFT_STRING,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 255, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "URL", std::string(), FGFT_STRING, true, 255,
-            FileGDBField::UNSET_FIELD)) ||
+            "URL", std::string(), FGFT_STRING,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 255, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "Definition", std::string(), FGFT_XML, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "Definition", std::string(), FGFT_XML,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "Documentation", std::string(), FGFT_XML, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "Documentation", std::string(), FGFT_XML,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "ItemInfo", std::string(), FGFT_XML, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "ItemInfo", std::string(), FGFT_XML,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "Properties", std::string(), FGFT_INT32, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "Properties", std::string(), FGFT_INT32,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "Defaults", std::string(), FGFT_BINARY, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "Defaults", std::string(), FGFT_BINARY,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::move(poGeomField)))
     {
         return false;
@@ -899,17 +967,25 @@ bool OGROpenFileGDBDataSource::CreateGDBItemTypes()
     FileGDBTable oTable;
     if (!oTable.Create(osFilename.c_str(), 4, FGTGT_NONE, false, false) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "ObjectID", std::string(), FGFT_OBJECTID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "ObjectID", std::string(), FGFT_OBJECTID,
+            /* bNullable = */ false,
+            /* bRequired = */ true,
+            /* bEditable = */ false, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "UUID", std::string(), FGFT_GUID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "UUID", std::string(), FGFT_GUID,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "ParentTypeID", std::string(), FGFT_GUID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "ParentTypeID", std::string(), FGFT_GUID,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "Name", std::string(), FGFT_STRING, false, 160,
-            FileGDBField::UNSET_FIELD)))
+            "Name", std::string(), FGFT_STRING,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 160, FileGDBField::UNSET_FIELD)))
     {
         return false;
     }
@@ -1014,26 +1090,40 @@ bool OGROpenFileGDBDataSource::CreateGDBItemRelationships()
     if (!oTable.Create(m_osGDBItemRelationshipsFilename.c_str(), 4, FGTGT_NONE,
                        false, false) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "ObjectID", std::string(), FGFT_OBJECTID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "ObjectID", std::string(), FGFT_OBJECTID,
+            /* bNullable = */ false,
+            /* bRequired = */ true,
+            /* bEditable = */ false, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "UUID", std::string(), FGFT_GLOBALID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "UUID", std::string(), FGFT_GLOBALID,
+            /* bNullable = */ false,
+            /* bRequired = */ true,
+            /* bEditable = */ false, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "OriginID", std::string(), FGFT_GUID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "OriginID", std::string(), FGFT_GUID,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "DestID", std::string(), FGFT_GUID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "DestID", std::string(), FGFT_GUID,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "Type", std::string(), FGFT_GUID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "Type", std::string(), FGFT_GUID,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "Attributes", std::string(), FGFT_XML, true, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "Attributes", std::string(), FGFT_XML,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "Properties", std::string(), FGFT_INT32, true, 0,
-            FileGDBField::UNSET_FIELD)))
+            "Properties", std::string(), FGFT_INT32,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)))
     {
         return false;
     }
@@ -1057,29 +1147,45 @@ bool OGROpenFileGDBDataSource::CreateGDBItemRelationshipTypes()
     FileGDBTable oTable;
     if (!oTable.Create(osFilename.c_str(), 4, FGTGT_NONE, false, false) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "ObjectID", std::string(), FGFT_OBJECTID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "ObjectID", std::string(), FGFT_OBJECTID,
+            /* bNullable = */ false,
+            /* bRequired = */ true,
+            /* bEditable = */ false, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "UUID", std::string(), FGFT_GUID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "UUID", std::string(), FGFT_GUID,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "OrigItemTypeID", std::string(), FGFT_GUID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "OrigItemTypeID", std::string(), FGFT_GUID,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "DestItemTypeID", std::string(), FGFT_GUID, false, 0,
-            FileGDBField::UNSET_FIELD)) ||
+            "DestItemTypeID", std::string(), FGFT_GUID,
+            /* bNullable = */ false,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "Name", std::string(), FGFT_STRING, true, 160,
-            FileGDBField::UNSET_FIELD)) ||
+            "Name", std::string(), FGFT_STRING,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 160, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "ForwardLabel", std::string(), FGFT_STRING, true, 255,
-            FileGDBField::UNSET_FIELD)) ||
+            "ForwardLabel", std::string(), FGFT_STRING,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 255, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "BackwardLabel", std::string(), FGFT_STRING, true, 255,
-            FileGDBField::UNSET_FIELD)) ||
+            "BackwardLabel", std::string(), FGFT_STRING,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 255, FileGDBField::UNSET_FIELD)) ||
         !oTable.CreateField(std::make_unique<FileGDBField>(
-            "IsContainment", std::string(), FGFT_INT16, true, 0,
-            FileGDBField::UNSET_FIELD)))
+            "IsContainment", std::string(), FGFT_INT16,
+            /* bNullable = */ true,
+            /* bRequired = */ false,
+            /* bEditable = */ true, 0, FileGDBField::UNSET_FIELD)))
     {
         return false;
     }
