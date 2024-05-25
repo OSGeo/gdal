@@ -1550,11 +1550,64 @@ int FileGDBTable::SelectRow(int iRow)
                 }
                 else
                 {
+                    // Versions of the driver before commit
+                    // fdf39012788b1110b3bf0ae6b8422a528f0ae8b6 didn't
+                    // properly update the m_nHeaderBufferMaxSize field
+                    // when updating an existing feature when the new version
+                    // takes more space than the previous version.
+                    // OpenFileGDB doesn't care but Esri software (FileGDB SDK
+                    // or ArcMap/ArcGis) do, leading to issues such as
+                    // https://github.com/qgis/QGIS/issues/57536
+
                     CPLDebug("OpenFileGDB",
                              "Invalid row length (%u) on feature %u compared "
                              "to the maximum size in the header (%u)",
                              m_nRowBlobLength, iRow + 1,
                              m_nHeaderBufferMaxSize);
+
+                    if (m_bUpdate)
+                    {
+                        if (!m_bHasWarnedAboutHeaderRepair)
+                        {
+                            m_bHasWarnedAboutHeaderRepair = true;
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "A corruption in the header of %s has "
+                                     "been detected. It is going to be "
+                                     "repaired to be properly read by other "
+                                     "software.",
+                                     m_osFilename.c_str());
+
+                            m_bDirtyHeader = true;
+
+                            // Invalidate existing indices, as the corrupted
+                            // m_nHeaderBufferMaxSize value may have cause
+                            // Esri software to generate corrupted indices.
+                            m_bDirtyIndices = true;
+
+                            // Compute file size
+                            VSIFSeekL(m_fpTable, 0, SEEK_END);
+                            m_nFileSize = VSIFTellL(m_fpTable);
+                            VSIFSeekL(m_fpTable, nOffsetTable + 4, SEEK_SET);
+                        }
+                    }
+                    else
+                    {
+                        if (!m_bHasWarnedAboutHeaderRepair)
+                        {
+                            m_bHasWarnedAboutHeaderRepair = true;
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "A corruption in the header of %s has "
+                                     "been detected. It would need to be "
+                                     "repaired to be properly read by other "
+                                     "software, either by using ogr2ogr to "
+                                     "generate a new dataset, or by opening "
+                                     "this dataset in update mode and reading "
+                                     "all its records.",
+                                     m_osFilename.c_str());
+                        }
+                    }
+
+                    m_nHeaderBufferMaxSize = m_nRowBlobLength;
                 }
             }
 
