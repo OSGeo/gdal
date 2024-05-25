@@ -2151,7 +2151,8 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
             [](OGRSpatialReference &oSRS, int nLatestCode, int nCode)
         {
             bool bSuccess = false;
-            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oQuietError(CPLQuietErrorHandler);
+
             // Try first with nLatestWKID as there is a higher chance it is a
             // EPSG code and not an ESRI one.
             if (nLatestCode > 0)
@@ -2193,8 +2194,7 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
                     CPLDebug("OpenFileGDB", "Cannot import SRID %d", nCode);
                 }
             }
-            CPLPopErrorHandler();
-            CPLErrorReset();
+
             return bSuccess;
         };
 
