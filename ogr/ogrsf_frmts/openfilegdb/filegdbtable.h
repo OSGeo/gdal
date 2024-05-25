@@ -450,6 +450,11 @@ class FileGDBTable
     vsi_l_offset m_nFileSize = 0; /* only read when needed */
     bool m_bUpdate = false;
 
+    //! This flag is set when we detect that a corruption of m_nHeaderBufferMaxSize
+    // prior to fix needs to  fdf39012788b1110b3bf0ae6b8422a528f0ae8b6 to be
+    // repaired
+    bool m_bHasWarnedAboutHeaderRepair = false;
+
     std::string m_osFilename{};
     bool m_bIsV9 = false;
     std::vector<std::unique_ptr<FileGDBField>> m_apoFields{};
