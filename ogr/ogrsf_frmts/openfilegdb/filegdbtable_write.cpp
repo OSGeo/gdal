@@ -2016,6 +2016,7 @@ bool FileGDBTable::UpdateFeature(int nFID,
         m_nRowBufferMaxSize = std::max(m_nRowBufferMaxSize, m_nRowBlobLength);
         if (nFreeOffset == OFFSET_MINUS_ONE)
         {
+            m_bDirtyHeader = true;
             m_nFileSize += sizeof(uint32_t) + m_nRowBlobLength;
         }
 
