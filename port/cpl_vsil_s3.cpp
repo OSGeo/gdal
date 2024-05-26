@@ -807,7 +807,8 @@ size_t IVSIS3LikeFSHandler::GetUploadChunkSizeInBytes(
             nChunkSize =
                 static_cast<size_t>(GetDefaultPartSizeInMiB()) * MIB_CONSTANT;
         }
-        else if (nChunkSizeInt / MIB_CONSTANT >= GetMaximumPartSizeInMiB())
+        else if (nChunkSizeInt >
+                 static_cast<int64_t>(GetMaximumPartSizeInMiB()) * MIB_CONSTANT)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Specified chunk size too large. Clamping to %d MiB",
