@@ -68,11 +68,13 @@ def test_gdalattachpct_basic(script_path, tmp_path, palette_file):
 
     out_filename = str(tmp_path / "dst.tif")
 
-    test_py_scripts.run_py_script(
+    _, err = test_py_scripts.run_py_script(
         script_path,
         "gdalattachpct",
         f" {palette_file} {src_filename} {out_filename}",
+        return_stderr=True,
     )
+    assert "UseExceptions" not in err
 
     ds = gdal.Open(out_filename)
     assert ds.GetDriver().ShortName == "GTiff"

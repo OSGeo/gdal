@@ -116,9 +116,13 @@ def test_gdal2tiles_py_simple(script_path, tmp_path):
     prev_wd = os.getcwd()
     try:
         os.chdir(tmp_path)
-        test_py_scripts.run_py_script(script_path, "gdal2tiles", f"-q {input_tif}")
+        _, err = test_py_scripts.run_py_script(
+            script_path, "gdal2tiles", f"-q {input_tif}", return_stderr=True
+        )
     finally:
         os.chdir(prev_wd)
+
+    assert "UseExceptions" not in err
 
     _verify_raster_band_checksums(
         f"{tmp_path}/out_gdal2tiles_smallworld/0/0/0.png",
