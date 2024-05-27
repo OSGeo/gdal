@@ -1363,6 +1363,35 @@ def test_ogr_gml_38(tmp_path, resolver):
 
 
 ###############################################################################
+# Test GML_SKIP_RESOLVE_ELEMS=HUGE with a file with 2 nested identical property
+# names
+
+
+@pytest.mark.require_driver("SQLite")
+@pytest.mark.require_geos
+def test_ogr_gml_huge_resolver_same_nested_property_name(tmp_path):
+
+    shutil.copy(
+        "data/gml/same_nested_property_name.gml",
+        tmp_path,
+    )
+
+    def check_ds(ds):
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["gml_id"] == "test.0"
+        assert f["test"] == "foo"
+        assert f["bar|test"] == "bar"
+
+    ds = ogr.Open(tmp_path / "same_nested_property_name.gml")
+    check_ds(ds)
+
+    with gdal.config_option("GML_SKIP_RESOLVE_ELEMS", "HUGE"):
+        ds = ogr.Open(tmp_path / "same_nested_property_name.gml")
+        check_ds(ds)
+
+
+###############################################################################
 # Test parsing XSD where simpleTypes not inlined, but defined elsewhere in the .xsd (#4328)
 
 
