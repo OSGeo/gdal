@@ -87,6 +87,11 @@ def ArgIsNumeric(s):
 
 
 def gdal_edit(argv):
+    with gdal.ExceptionMgr(), osr.ExceptionMgr():
+        return _gdal_edit(argv)
+
+
+def _gdal_edit(argv):
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
@@ -345,19 +350,15 @@ def gdal_edit(argv):
         print("", file=sys.stderr)
         return Usage(isError=True)
 
-    if open_options is not None:
+    try:
         if ro:
             ds = gdal.OpenEx(datasetname, gdal.OF_RASTER, open_options=open_options)
         else:
             ds = gdal.OpenEx(
                 datasetname, gdal.OF_RASTER | gdal.OF_UPDATE, open_options=open_options
             )
-    # GDAL 1.X compat
-    elif ro:
-        ds = gdal.Open(datasetname)
-    else:
-        ds = gdal.Open(datasetname, gdal.GA_Update)
-    if ds is None:
+    except Exception as e:
+        print(str(e), file=sys.stderr)
         return -1
 
     if scale:
@@ -538,7 +539,6 @@ def gdal_edit(argv):
 
 
 def main(argv=sys.argv):
-    gdal.UseExceptions()
     return gdal_edit(argv)
 
 

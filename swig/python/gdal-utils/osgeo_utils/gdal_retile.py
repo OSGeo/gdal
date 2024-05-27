@@ -942,8 +942,11 @@ def Usage(isError):
 
 
 def main(args=None, g=None):
+    with gdal.ExceptionMgr(), ogr.ExceptionMgr(), osr.ExceptionMgr():
+        return _main(args=args, g=g)
 
-    gdal.UseExceptions()
+
+def _main(args=None, g=None):
 
     if g is None:
         g = RetileGlobals()

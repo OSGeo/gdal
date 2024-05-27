@@ -53,6 +53,18 @@ def move(
     s_srs: Optional[str] = None,
     pixel_threshold: Optional[float] = None,
 ):
+    with gdal.ExceptionMgr(), osr.ExceptionMgr():
+        return _move(
+            filename=filename, t_srs=t_srs, s_srs=s_srs, pixel_threshold=pixel_threshold
+        )
+
+
+def _move(
+    filename: str,
+    t_srs: str,
+    s_srs: Optional[str] = None,
+    pixel_threshold: Optional[float] = None,
+):
 
     # -------------------------------------------------------------------------
     # Open the file.
@@ -245,8 +257,6 @@ def Usage(isError=True):
 
 
 def main(argv=sys.argv):
-
-    gdal.UseExceptions()
 
     # Default GDAL argument parsing.
     argv = gdal.GeneralCmdLineProcessor(argv)

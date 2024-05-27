@@ -59,8 +59,6 @@ from osgeo import gdal, osr
 
 Options = Any
 
-gdal.UseExceptions()
-
 try:
     import numpy
     from PIL import Image
@@ -273,31 +271,36 @@ class TileMatrixSet(object):
 
 tmsMap = {}
 
-profile_list = ["mercator", "geodetic", "raster"]
 
-# Read additional tile matrix sets from GDAL data directory
-filename = gdal.FindFile("gdal", "tms_MapML_APSTILE.json")
-if filename:
-    dirname = os.path.dirname(filename)
-    for tmsfilename in glob.glob(os.path.join(dirname, "tms_*.json")):
-        data = open(tmsfilename, "rb").read()
-        try:
-            j = json.loads(data.decode("utf-8"))
-        except Exception:
-            j = None
-        if j is None:
-            logger.error("Cannot parse " + tmsfilename)
-            continue
-        try:
-            tms = TileMatrixSet.parse(j)
-        except UnsupportedTileMatrixSet as e:
-            gdal.Debug("gdal2tiles", "Cannot parse " + tmsfilename + ": " + str(e))
-            continue
-        except Exception:
-            logger.error("Cannot parse " + tmsfilename)
-            continue
-        tmsMap[tms.identifier] = tms
-        profile_list.append(tms.identifier)
+def get_profile_list():
+    profile_list = ["mercator", "geodetic", "raster"]
+
+    # Read additional tile matrix sets from GDAL data directory
+    filename = gdal.FindFile("gdal", "tms_MapML_APSTILE.json")
+    if filename:
+        dirname = os.path.dirname(filename)
+        for tmsfilename in glob.glob(os.path.join(dirname, "tms_*.json")):
+            data = open(tmsfilename, "rb").read()
+            try:
+                j = json.loads(data.decode("utf-8"))
+            except Exception:
+                j = None
+            if j is None:
+                logger.error("Cannot parse " + tmsfilename)
+                continue
+            try:
+                tms = TileMatrixSet.parse(j)
+            except UnsupportedTileMatrixSet as e:
+                gdal.Debug("gdal2tiles", "Cannot parse " + tmsfilename + ": " + str(e))
+                continue
+            except Exception:
+                logger.error("Cannot parse " + tmsfilename)
+                continue
+            tmsMap[tms.identifier] = tms
+            profile_list.append(tms.identifier)
+
+    return profile_list
+
 
 threadLocal = threading.local()
 
@@ -1754,6 +1757,9 @@ def optparse_init() -> optparse.OptionParser:
 
     usage = "Usage: %prog [options] input_file [output]"
     p = optparse.OptionParser(usage, version="%prog " + __version__)
+
+    profile_list = get_profile_list()
+
     p.add_option(
         "-p",
         "--profile",
@@ -4582,6 +4588,18 @@ def single_threaded_tiling(
 def multi_threaded_tiling(
     input_file: str, output_folder: str, options: Options, pool
 ) -> None:
+    with gdal.ExceptionMgr(), osr.ExceptionMgr():
+        return _multi_threaded_tiling(
+            input_file=input_file,
+            output_folder=output_folder,
+            options=options,
+            pool=pool,
+        )
+
+
+def _multi_threaded_tiling(
+    input_file: str, output_folder: str, options: Options, pool
+) -> None:
     nb_processes = options.nb_processes or 1
 
     if options.verbose:
@@ -4634,17 +4652,6 @@ def multi_threaded_tiling(
     shutil.rmtree(os.path.dirname(conf.src_file))
 
 
-class UseExceptions(object):
-    def __enter__(self):
-        self.old_used_exceptions = gdal.GetUseExceptions()
-        if not self.old_used_exceptions:
-            gdal.UseExceptions()
-
-    def __exit__(self, type, value, tb):
-        if not self.old_used_exceptions:
-            gdal.DontUseExceptions()
-
-
 class DividedCache(object):
     def __init__(self, nb_processes):
         self.nb_processes = nb_processes
@@ -4677,7 +4684,7 @@ def main(argv: List[str] = sys.argv, called_from_main=False) -> int:
         from mpi4py import MPI
         from mpi4py.futures import MPICommExecutor
 
-        with UseExceptions(), MPICommExecutor(MPI.COMM_WORLD, root=0) as pool:
+        with MPICommExecutor(MPI.COMM_WORLD, root=0) as pool:
             if pool is None:
                 return 0
             # add interface of multiprocessing.Pool to MPICommExecutor
@@ -4690,6 +4697,13 @@ def main(argv: List[str] = sys.argv, called_from_main=False) -> int:
 
 
 def submain(argv: List[str], pool=None, pool_size=0, called_from_main=False) -> int:
+    with gdal.ExceptionMgr(), osr.ExceptionMgr():
+        return _submain(
+            argv=argv, pool=pool, pool_size=pool_size, called_from_main=called_from_main
+        )
+
+
+def _submain(argv: List[str], pool=None, pool_size=0, called_from_main=False) -> int:
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
@@ -4701,22 +4715,21 @@ def submain(argv: List[str], pool=None, pool_size=0, called_from_main=False) -> 
         options.nb_processes = pool_size
     nb_processes = options.nb_processes or 1
 
-    with UseExceptions():
-        if pool is not None:  # MPI
+    if pool is not None:  # MPI
+        multi_threaded_tiling(input_file, output_folder, options, pool)
+    elif nb_processes == 1:
+        single_threaded_tiling(input_file, output_folder, options)
+    else:
+        # Trick inspired from https://stackoverflow.com/questions/45720153/python-multiprocessing-error-attributeerror-module-main-has-no-attribute
+        # and https://bugs.python.org/issue42949
+        import __main__
+
+        if not hasattr(__main__, "__spec__"):
+            __main__.__spec__ = None
+        from multiprocessing import Pool
+
+        with DividedCache(nb_processes), Pool(processes=nb_processes) as pool:
             multi_threaded_tiling(input_file, output_folder, options, pool)
-        elif nb_processes == 1:
-            single_threaded_tiling(input_file, output_folder, options)
-        else:
-            # Trick inspired from https://stackoverflow.com/questions/45720153/python-multiprocessing-error-attributeerror-module-main-has-no-attribute
-            # and https://bugs.python.org/issue42949
-            import __main__
-
-            if not hasattr(__main__, "__spec__"):
-                __main__.__spec__ = None
-            from multiprocessing import Pool
-
-            with DividedCache(nb_processes), Pool(processes=nb_processes) as pool:
-                multi_threaded_tiling(input_file, output_folder, options, pool)
 
     return 0
 

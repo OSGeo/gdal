@@ -61,6 +61,37 @@ def gdal2xyz(
     pre_allocate_np_arrays: bool = True,
     progress_callback: OptionalProgressCallback = ...,
 ) -> Optional[Tuple]:
+    with gdal.ExceptionMgr():
+        return _gdal2xyz(
+            srcfile=srcfile,
+            dstfile=dstfile,
+            srcwin=srcwin,
+            skip=skip,
+            band_nums=band_nums,
+            delim=delim,
+            skip_nodata=skip_nodata,
+            src_nodata=src_nodata,
+            dst_nodata=dst_nodata,
+            return_np_arrays=return_np_arrays,
+            pre_allocate_np_arrays=pre_allocate_np_arrays,
+            progress_callback=progress_callback,
+        )
+
+
+def _gdal2xyz(
+    srcfile: PathOrDS,
+    dstfile: PathLikeOrStr = None,
+    srcwin: Optional[Sequence[int]] = None,
+    skip: Union[int, Sequence[int]] = 1,
+    band_nums: Optional[Sequence[int]] = None,
+    delim: str = " ",
+    skip_nodata: bool = False,
+    src_nodata: Optional[Union[Sequence, Number]] = None,
+    dst_nodata: Optional[Union[Sequence, Number]] = None,
+    return_np_arrays: bool = False,
+    pre_allocate_np_arrays: bool = True,
+    progress_callback: OptionalProgressCallback = ...,
+) -> Optional[Tuple]:
     """
     translates a raster file (or dataset) into xyz format
 
@@ -423,7 +454,6 @@ class GDAL2XYZ(GDALScript):
 
 
 def main(argv=sys.argv):
-    gdal.UseExceptions()
     return GDAL2XYZ().main(argv)
 
 

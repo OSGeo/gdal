@@ -503,8 +503,11 @@ def Usage(isError=True):
 
 
 def main(argv=sys.argv):
+    with gdal.ExceptionMgr():
+        return _main(argv=argv)
 
-    gdal.UseExceptions()
+
+def _main(argv=sys.argv):
 
     # Default GDAL argument parsing.
     argv = gdal.GeneralCmdLineProcessor(argv)

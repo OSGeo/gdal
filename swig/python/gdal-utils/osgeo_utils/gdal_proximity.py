@@ -55,6 +55,11 @@ Usage: gdal_proximity.py [--help] [--help-general]
 
 
 def main(argv=sys.argv):
+    with gdal.ExceptionMgr():
+        return _main(argv=argv)
+
+
+def _main(argv=sys.argv):
     driver_name = None
     creation_options = []
     alg_options = []
@@ -64,8 +69,6 @@ def main(argv=sys.argv):
     dst_band_n = 1
     creation_type = "Float32"
     quiet = False
-
-    gdal.UseExceptions()
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
