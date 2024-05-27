@@ -94,6 +94,7 @@ be on the right, i.e. a line string goes clockwise around a top.
 .. option:: -i <interval>
 
     Elevation interval between contours. Ignored if -fl is used.
+    Must specify either -i or -fl or -e.
 
 .. option:: -off <offset>
 
@@ -102,10 +103,12 @@ be on the right, i.e. a line string goes clockwise around a top.
 .. option:: -fl <level>
 
     Name one or more "fixed levels" to extract.
+    Must specify either -i or -fl or -e.
 
 .. option:: -e <base>
 
     Generate levels on an exponential scale: `base ^ k`, for `k` an integer.
+    Must specify either -i or -fl or -e.
 
     .. versionadded:: 2.4.0
 
