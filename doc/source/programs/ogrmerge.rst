@@ -202,5 +202,5 @@ and adds a 'country' field to each feature whose value is 'france' or
 Notes
 -----
 
-Older versions of ogrmerge were called ogrmerge.py.
+ogrmerge is a Python utility, and is only available if GDAL Python bindings are available.
 
