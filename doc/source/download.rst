@@ -432,3 +432,11 @@ Images with nightly builds of GDAL master and tagged releases are available at
 
 Information on the content of the different configurations can be found at
 `https://github.com/OSGeo/gdal/tree/master/docker <https://github.com/OSGeo/gdal/tree/master/docker>`_
+
+
+Documentation only
+------------------------------------------------------------------------------
+
+Besides being included when downloading the software, the documentation is
+also available independently as a `PDF file <gdal.pdf>`_,
+and `a .ZIP of individual HTML pages <https://github.com/OSGeo/gdal-docs/archive/refs/heads/master.zip>`_ for offline browsing. (The .ZIP also includes that .PDF.)
