@@ -1,7 +1,7 @@
 .. _gdal2xyz:
 
 ================================================================================
-gdal2xyz.py
+gdal2xyz
 ================================================================================
 
 .. only:: html
@@ -110,3 +110,5 @@ Caveats
 -------
 
 gdal2xyz output values with a limited precision. Use ``gdal_translate -of XYZ`` if more precision is desired.
+
+gdal2xyz is a Python utility, and is only available if GDAL Python bindings are available.
