@@ -1723,8 +1723,27 @@ static bool gmlHugeFileWriteResolved(huge_helper *helper,
                 {
                     char *gmlText = CPLEscapeString(
                         poProp->papszSubProperties[iSub], -1, CPLES_XML);
-                    VSIFPrintfL(fp, "      <%s>%s</%s>\n", pszPropName, gmlText,
-                                pszPropName);
+                    if (strchr(pszPropName, '|'))
+                    {
+                        const CPLStringList aosPropNameComps(
+                            CSLTokenizeString2(pszPropName, "|", 0));
+                        VSIFPrintfL(fp, "      ");
+                        for (int i = 0; i < aosPropNameComps.size(); ++i)
+                        {
+                            VSIFPrintfL(fp, "<%s>", aosPropNameComps[i]);
+                        }
+                        VSIFPrintfL(fp, "%s", gmlText);
+                        for (int i = aosPropNameComps.size() - 1; i >= 0; --i)
+                        {
+                            VSIFPrintfL(fp, "</%s>", aosPropNameComps[i]);
+                        }
+                        VSIFPrintfL(fp, "\n");
+                    }
+                    else
+                    {
+                        VSIFPrintfL(fp, "      <%s>%s</%s>\n", pszPropName,
+                                    gmlText, pszPropName);
+                    }
                     CPLFree(gmlText);
                 }
             }
