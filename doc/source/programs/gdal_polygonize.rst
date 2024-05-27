@@ -1,7 +1,7 @@
 .. _gdal_polygonize:
 
 ================================================================================
-gdal_polygonize.py
+gdal_polygonize
 ================================================================================
 
 .. only:: html
@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdal_polygonize.py [--help] [--help-general]
+    gdal_polygonize [--help] [--help-general]
                        [-8] [-o <name>=<value>]... [-nomask] 
                        [-mask <filename>] <raster_file> [-b <band>]
                        [-q] [-f <ogr_format>] [-lco <name>=<value>]...
@@ -104,3 +104,9 @@ details on the algorithm.
 
     The script runs in quiet mode.  The progress monitor is suppressed and routine
     messages are not displayed.
+
+
+Notes
+-----
+
+gdal_polygonize is a Python utility, and is only available if GDAL Python bindings are available.
