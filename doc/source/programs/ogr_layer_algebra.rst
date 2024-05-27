@@ -1,7 +1,7 @@
 .. _ogr_layer_algebra:
 
 ================================================================================
-ogr_layer_algebra.py
+ogr_layer_algebra
 ================================================================================
 
 .. versionadded:: 3.6
@@ -17,7 +17,7 @@ Synopsis
 
 .. code-block::
 
-    ogr_layer_algebra.py [--help] [--help-general]
+    ogr_layer_algebra [--help] [--help-general]
                         Union|Intersection|SymDifference|Identity|Update|Clip|Erase
                         -input_ds <path> [-input_lyr <name>]
                         -method_ds <path> [-method_lyr <name>]
@@ -30,7 +30,7 @@ Synopsis
 Description
 -----------
 
-The :program:`ogr_layer_algebra.py` provides a command line utility to perform various vector layer algebraic operations. The utility takes a vector
+The :program:`ogr_layer_algebra` provides a command line utility to perform various vector layer algebraic operations. The utility takes a vector
 input source , a method source and generates the output of the operation in the specified output file
 
 .. program:: ogr_layer_algebra
@@ -149,8 +149,7 @@ input source , a method source and generates the output of the operation in the 
     PROJ.4 declarations, or the name of a .prj file containing a WKT CRS definition.
 
 
+Notes
+-----
 
-
-
-
-
+ogr_layer_algebra is a Python utility, and is only available if GDAL Python bindings are available.
