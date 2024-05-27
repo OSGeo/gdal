@@ -355,6 +355,7 @@ class GDALPolygonize(GDALScript):
 
 
 def main(argv=sys.argv):
+    gdal.UseExceptions()
     return GDALPolygonize().main(argv)
 
 

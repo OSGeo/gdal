@@ -285,6 +285,7 @@ class GDALFillNoData(GDALScript):
 
 
 def main(argv=sys.argv):
+    gdal.UseExceptions()
     return GDALFillNoData().main(argv)
 
 

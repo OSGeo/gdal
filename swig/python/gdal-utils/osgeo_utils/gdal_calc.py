@@ -925,6 +925,7 @@ class GDALCalc(GDALScript):
 
 
 def main(argv=sys.argv):
+    gdal.UseExceptions()
     return GDALCalc().main(argv)
 
 

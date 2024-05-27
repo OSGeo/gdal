@@ -191,6 +191,8 @@ def main(argv=sys.argv):
     srs_name = None
     srs = None
 
+    gdal.UseExceptions()
+
     argv = ogr.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0

@@ -647,6 +647,7 @@ def gdal_merge(argv=None):
 
 
 def main(argv=sys.argv):
+    gdal.UseExceptions()
     return gdal_merge(argv)
 
 

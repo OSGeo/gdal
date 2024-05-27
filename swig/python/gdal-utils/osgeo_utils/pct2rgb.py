@@ -223,6 +223,7 @@ class PCT2RGB(GDALScript):
 
 
 def main(argv=sys.argv):
+    gdal.UseExceptions()
     return PCT2RGB().main(argv)
 
 

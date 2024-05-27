@@ -538,6 +538,7 @@ def gdal_edit(argv):
 
 
 def main(argv=sys.argv):
+    gdal.UseExceptions()
     return gdal_edit(argv)
 
 

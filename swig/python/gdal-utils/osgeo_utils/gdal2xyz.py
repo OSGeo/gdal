@@ -423,6 +423,7 @@ class GDAL2XYZ(GDALScript):
 
 
 def main(argv=sys.argv):
+    gdal.UseExceptions()
     return GDAL2XYZ().main(argv)
 
 
