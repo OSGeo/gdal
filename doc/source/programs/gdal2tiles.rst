@@ -1,7 +1,7 @@
 .. _gdal2tiles:
 
 ================================================================================
-gdal2tiles.py
+gdal2tiles
 ================================================================================
 
 .. only:: html
@@ -16,7 +16,7 @@ Synopsis
 .. code-block::
 
 
-    gdal2tiles.py [--help] [--help-general]
+    gdal2tiles [--help] [--help-general]
                   [-p <profile>] [-r resampling] [-s <srs>] [-z <zoom>]
                   [-e] [-a nodata] [-v] [-q] [-h] [-k] [-n] [-u <url>]
                   [-w <webviewer>] [-t <title>] [-c <copyright>]
@@ -231,7 +231,7 @@ Options for generated HTML viewers a la Google Maps
 
 .. note::
 
-    gdal2tiles.py is a Python script that needs to be run against Python GDAL binding.
+    gdal2tiles is a Python script that needs to be run against Python GDAL binding.
 
 MapML options
 +++++++++++++
@@ -302,18 +302,18 @@ Basic example:
 
 .. code-block::
 
-  gdal2tiles.py --zoom=2-5 input.tif output_folder
+  gdal2tiles --zoom=2-5 input.tif output_folder
 
 
 MapML generation:
 
 .. code-block::
 
-  gdal2tiles.py --zoom=16-18 -w mapml -p APSTILE --url "https://example.com" input.tif output_folder
+  gdal2tiles --zoom=16-18 -w mapml -p APSTILE --url "https://example.com" input.tif output_folder
 
 
 MPI example:
 
 .. code-block::
 
-  mpiexec -n $NB_PROCESSES gdal2tiles.py --mpi --config GDAL_CACHEMAX 500 --zoom=2-5 input.tif output_folder
+  mpiexec -n $NB_PROCESSES gdal2tiles --mpi --config GDAL_CACHEMAX 500 --zoom=2-5 input.tif output_folder
