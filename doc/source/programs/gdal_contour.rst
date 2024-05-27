@@ -138,3 +138,11 @@ in the ``elev`` attribute.
 .. code-block::
 
     gdal_contour -a elev dem.tif contour.shp -i 10.0
+
+Caveat
+------
+
+gdal_contour does no interpolation. If your data only contains points on elevations
+0, 100, 200... (as shown by :program:`gdal2xyz`), then using -i 50 will produce the
+same results as -i 100 .
+So the only -i and -offset values that are meaningful would are 100, 200, 300...
