@@ -133,7 +133,7 @@ void _DontUseExceptions() {
 
 static int _UserHasSpecifiedIfUsingExceptions()
 {
-    return bUserHasSpecifiedIfUsingExceptions;
+    return bUserHasSpecifiedIfUsingExceptions || bUseExceptionsLocal >= 0;
 }
 
 %}
