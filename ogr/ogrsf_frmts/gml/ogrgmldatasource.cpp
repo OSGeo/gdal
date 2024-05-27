@@ -850,7 +850,8 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Can we find a GML Feature Schema (.gfs) for the input file?
-    if (!osGFSFilename.empty() && !bHaveSchema && osXSDFilename.empty())
+    if (!osGFSFilename.empty() && !bHaveSchema && !bSchemaDone &&
+        osXSDFilename.empty())
     {
         VSIStatBufL sGFSStatBuf;
         if (bCheckAuxFile && VSIStatL(osGFSFilename, &sGFSStatBuf) == 0)
