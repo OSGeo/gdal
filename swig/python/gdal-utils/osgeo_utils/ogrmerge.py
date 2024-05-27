@@ -518,10 +518,6 @@ def _gpkg_ogrmerge(
     if dst_ds is None:
         return 1
 
-    ogr.UseExceptions()
-    gdal.UseExceptions()
-    osr.UseExceptions()
-
     class ThreadedProgress:
         def __init__(self, dst_filename, estimated_final_size):
             self.stop_thread = False
@@ -1207,6 +1203,7 @@ def ogrmerge(
 
 
 def main(argv=sys.argv):
+    gdal.UseExceptions()
     argv = ogr.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0

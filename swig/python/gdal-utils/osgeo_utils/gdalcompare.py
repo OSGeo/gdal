@@ -503,6 +503,9 @@ def Usage(isError=True):
 
 
 def main(argv=sys.argv):
+
+    gdal.UseExceptions()
+
     # Default GDAL argument parsing.
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:

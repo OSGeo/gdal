@@ -59,6 +59,8 @@ from osgeo import gdal, osr
 
 Options = Any
 
+gdal.UseExceptions()
+
 try:
     import numpy
     from PIL import Image

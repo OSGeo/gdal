@@ -941,6 +941,9 @@ def Usage(isError):
 
 
 def main(args=None, g=None):
+
+    gdal.UseExceptions()
+
     if g is None:
         g = RetileGlobals()
 

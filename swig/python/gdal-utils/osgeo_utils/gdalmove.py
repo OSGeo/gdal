@@ -245,8 +245,10 @@ def Usage(isError=True):
 
 
 def main(argv=sys.argv):
-    # Default GDAL argument parsing.
 
+    gdal.UseExceptions()
+
+    # Default GDAL argument parsing.
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0

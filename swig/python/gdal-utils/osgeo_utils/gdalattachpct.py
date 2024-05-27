@@ -48,6 +48,9 @@ def Usage(isError=True):
 
 
 def main(argv=sys.argv):
+
+    gdal.UseExceptions()
+
     pct_filename = None
     src_filename = None
     dst_filename = None

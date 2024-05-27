@@ -65,6 +65,8 @@ def main(argv=sys.argv):
     creation_type = "Float32"
     quiet = False
 
+    gdal.UseExceptions()
+
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0

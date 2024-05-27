@@ -60,6 +60,8 @@ def main(argv=sys.argv):
 
     mask = "default"
 
+    gdal.UseExceptions()
+
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0
