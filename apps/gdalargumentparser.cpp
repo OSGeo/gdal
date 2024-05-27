@@ -104,6 +104,32 @@ void GDALArgumentParser::display_error_and_usage(const std::exception &err)
 }
 
 /************************************************************************/
+/*                                usage()                               */
+/************************************************************************/
+
+std::string GDALArgumentParser::usage() const
+{
+    std::string ret(ArgumentParser::usage());
+    if (!m_osExtraUsageHint.empty())
+    {
+        ret += '\n';
+        ret += '\n';
+        ret += m_osExtraUsageHint;
+    }
+    return ret;
+}
+
+/************************************************************************/
+/*                          add_extra_usage_hint()                      */
+/************************************************************************/
+
+void GDALArgumentParser::add_extra_usage_hint(
+    const std::string &osExtraUsageHint)
+{
+    m_osExtraUsageHint = osExtraUsageHint;
+}
+
+/************************************************************************/
 /*                         add_quiet_argument()                         */
 /************************************************************************/
 
