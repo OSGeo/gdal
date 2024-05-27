@@ -473,6 +473,21 @@ in the VRT file in the following way:
 
     <GeometryField encoding="PointFromColumns" x="field_1" y="field_2" z="field_3"/>
 
+And, if both not using a VRT file, nor column headers:
+
+.. code-block:: bash
+
+   gdal_grid -l dem -oo X_POSSIBLE_NAMES=field_1 \
+      -oo Y_POSSIBLE_NAMES=field_2 -zfield field_3 dem.csv dem.tif
+
+or
+
+.. code-block:: bash
+
+    gdal_grid -l dem -oo X_POSSIBLE_NAMES=field_1 \
+       -oo Y_POSSIBLE_NAMES=field_2 -oo Z_POSSIBLE_NAMES=field_3 \
+       dem.csv dem.tif
+
 The :ref:`vector.csv` description page contains
 details on CSV format supported by GDAL/OGR.
 
