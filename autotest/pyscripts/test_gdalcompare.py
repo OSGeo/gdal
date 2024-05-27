@@ -97,9 +97,13 @@ def test_gdalcompare_same(script_path, tmp_path):
 
     source_filename = str(tmp_path / "src.tif")
     shutil.copy("../gcore/data/byte.tif", source_filename)
-    ret = test_py_scripts.run_py_script(
-        script_path, "gdalcompare", f"{source_filename} {source_filename}"
+    ret, err = test_py_scripts.run_py_script(
+        script_path,
+        "gdalcompare",
+        f"{source_filename} {source_filename}",
+        return_stderr=True,
     )
+    assert "UseExceptions" not in err
     assert "Differences Found: 0" in ret
 
 

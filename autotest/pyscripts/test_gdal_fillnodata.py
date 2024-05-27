@@ -76,11 +76,13 @@ def test_gdal_fillnodata_1(script_path, tmp_path):
 
     result_tif = str(tmp_path / "test_gdal_fillnodata_1.tif")
 
-    test_py_scripts.run_py_script(
+    _, err = test_py_scripts.run_py_script(
         script_path,
         "gdal_fillnodata",
         test_py_scripts.get_data_path("gcore") + f"byte.tif {result_tif}",
+        return_stderr=True,
     )
+    assert "UseExceptions" not in err
 
     ds = gdal.Open(result_tif)
     assert ds.GetRasterBand(1).Checksum() == 4672
