@@ -86,7 +86,7 @@ by the relevant driver, causing a error.
     on the features to be used to get a Z value from. This value overrides the Z value
     read from the feature geometry record (naturally, if you have a Z value in
     the geometry, otherwise you have no choice and should specify a field name
-    containing a Z value).
+    containing a Z value). "-zfield field_n" may also be used for field number n.
 
 .. option:: -z_increase <increase_value>
 
