@@ -172,6 +172,12 @@ def CreateLayer(
 
 
 def main(argv=sys.argv):
+    with gdal.ExceptionMgr(), ogr.ExceptionMgr(), osr.ExceptionMgr():
+        return _main(argv=argv)
+
+
+def _main(argv=sys.argv):
+
     driver_name = "ESRI Shapefile"
     quiet = False
     input_ds_name = None
@@ -190,8 +196,6 @@ def main(argv=sys.argv):
     geom_type = ogr.wkbUnknown
     srs_name = None
     srs = None
-
-    gdal.UseExceptions()
 
     argv = ogr.GeneralCmdLineProcessor(argv)
     if argv is None:

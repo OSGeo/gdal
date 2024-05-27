@@ -124,6 +124,49 @@ def Calc(
     progress_callback: Optional = gdal.TermProgress_nocb,
     **input_files,
 ):
+    with gdal.ExceptionMgr():
+        return _Calc(
+            calc=calc,
+            outfile=outfile,
+            NoDataValue=NoDataValue,
+            type=type,
+            format=format,
+            creation_options=creation_options,
+            allBands=allBands,
+            overwrite=overwrite,
+            hideNoData=hideNoData,
+            projectionCheck=projectionCheck,
+            color_table=color_table,
+            extent=extent,
+            projwin=projwin,
+            user_namespace=user_namespace,
+            debug=debug,
+            quiet=quiet,
+            progress_callback=progress_callback,
+            **input_files,
+        )
+
+
+def _Calc(
+    calc: MaybeSequence[str],
+    outfile: Optional[PathLikeOrStr] = None,
+    NoDataValue: Optional[Number] = None,
+    type: Optional[Union[GDALDataType, str]] = None,
+    format: Optional[str] = None,
+    creation_options: Optional[Sequence[str]] = None,
+    allBands: str = "",
+    overwrite: bool = False,
+    hideNoData: bool = False,
+    projectionCheck: bool = False,
+    color_table: Optional[ColorTableLike] = None,
+    extent: Optional[Extent] = None,
+    projwin: Optional[Union[Tuple, GeoRectangle]] = None,
+    user_namespace: Optional[Dict] = None,
+    debug: bool = False,
+    quiet: bool = False,
+    progress_callback: Optional = gdal.TermProgress_nocb,
+    **input_files,
+):
 
     if debug:
         print(f"gdal_calc.py starting calculation {calc}")
@@ -925,7 +968,6 @@ class GDALCalc(GDALScript):
 
 
 def main(argv=sys.argv):
-    gdal.UseExceptions()
     return GDALCalc().main(argv)
 
 

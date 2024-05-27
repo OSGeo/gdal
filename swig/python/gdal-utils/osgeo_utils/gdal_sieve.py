@@ -60,8 +60,6 @@ def main(argv=sys.argv):
 
     mask = "default"
 
-    gdal.UseExceptions()
-
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0
@@ -131,6 +129,27 @@ def main(argv=sys.argv):
 
 
 def gdal_sieve(
+    src_filename: Optional[str] = None,
+    dst_filename: PathLikeOrStr = None,
+    driver_name: Optional[str] = None,
+    mask: str = "default",
+    threshold: int = 2,
+    connectedness: int = 4,
+    quiet: bool = False,
+):
+    with gdal.ExceptionMgr():
+        return _gdal_sieve(
+            src_filename=src_filename,
+            dst_filename=dst_filename,
+            driver_name=driver_name,
+            mask=mask,
+            threshold=threshold,
+            connectedness=connectedness,
+            quiet=quiet,
+        )
+
+
+def _gdal_sieve(
     src_filename: Optional[str] = None,
     dst_filename: PathLikeOrStr = None,
     driver_name: Optional[str] = None,

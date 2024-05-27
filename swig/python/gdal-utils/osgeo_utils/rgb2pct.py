@@ -49,6 +49,23 @@ def rgb2pct(
     color_count: int = 256,
     driver_name: Optional[str] = None,
 ):
+    with gdal.ExceptionMgr():
+        return _rgb2pct(
+            src_filename=src_filename,
+            pct_filename=pct_filename,
+            dst_filename=dst_filename,
+            color_count=color_count,
+            driver_name=driver_name,
+        )
+
+
+def _rgb2pct(
+    src_filename: PathLikeOrStr,
+    pct_filename: Optional[PathLikeOrStr] = None,
+    dst_filename: Optional[PathLikeOrStr] = None,
+    color_count: int = 256,
+    driver_name: Optional[str] = None,
+):
     # Open source file
     src_ds = open_ds(src_filename)
     if src_ds is None:
@@ -202,7 +219,6 @@ class RGB2PCT(GDALScript):
 
 
 def main(argv=sys.argv):
-    gdal.UseExceptions()
     return RGB2PCT().main(argv)
 
 

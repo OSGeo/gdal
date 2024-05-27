@@ -168,6 +168,11 @@ class XMLWriter(object):
 
 
 def process(argv, progress=None, progress_arg=None):
+    with gdal.ExceptionMgr(), ogr.ExceptionMgr(), osr.ExceptionMgr():
+        return _process(argv=argv, progress=progress, progress_arg=progress_arg)
+
+
+def _process(argv, progress=None, progress_arg=None):
 
     if not argv:
         return Usage(isError=True)
@@ -1203,7 +1208,6 @@ def ogrmerge(
 
 
 def main(argv=sys.argv):
-    gdal.UseExceptions()
     argv = ogr.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0

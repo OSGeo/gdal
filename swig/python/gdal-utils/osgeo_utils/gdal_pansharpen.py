@@ -69,8 +69,11 @@ def Usage(isError):
 
 
 def main(argv=sys.argv):
+    with gdal.ExceptionMgr():
+        return _main(argv=argv)
 
-    gdal.UseExceptions()
+
+def _main(argv=sys.argv):
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:

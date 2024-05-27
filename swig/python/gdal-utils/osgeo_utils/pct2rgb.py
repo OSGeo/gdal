@@ -55,6 +55,25 @@ def pct2rgb(
     out_bands: int = 3,
     driver_name: Optional[str] = None,
 ):
+    with gdal.ExceptionMgr():
+        return _pct2rgb(
+            src_filename=src_filename,
+            pct_filename=pct_filename,
+            dst_filename=dst_filename,
+            band_number=band_number,
+            out_bands=out_bands,
+            driver_name=driver_name,
+        )
+
+
+def _pct2rgb(
+    src_filename: PathLikeOrStr,
+    pct_filename: Optional[PathLikeOrStr],
+    dst_filename: PathLikeOrStr,
+    band_number: int = 1,
+    out_bands: int = 3,
+    driver_name: Optional[str] = None,
+):
     # Open source file
     src_ds = open_ds(src_filename)
     if src_ds is None:
@@ -223,7 +242,6 @@ class PCT2RGB(GDALScript):
 
 
 def main(argv=sys.argv):
-    gdal.UseExceptions()
     return PCT2RGB().main(argv)
 
 
