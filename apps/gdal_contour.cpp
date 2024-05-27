@@ -81,6 +81,9 @@ GDALContourAppOptionsGetParser(GDALContourOptions *psOptions)
         "For more details, consult the full documentation for the gdal_contour "
         "utility: http://gdal.org/gdal_contour.html"));
 
+    argParser->add_extra_usage_hint(
+        _("One and only one of -i, -fl or -e must be specified."));
+
     argParser->add_argument("-b")
         .metavar("<name>")
         .default_value(1)
@@ -250,6 +253,13 @@ MAIN_START(argc, argv)
     {
         auto argParser = GDALContourAppOptionsGetParser(&sOptions);
         argParser->parse_args_without_binary_name(argv + 1);
+
+        if (sOptions.dfInterval == 0.0 && sOptions.adfFixedLevels.empty() &&
+            sOptions.dfExpBase == 0.0)
+        {
+            fprintf(stderr, "%s\n", argParser->usage().c_str());
+            exit(1);
+        }
     }
     catch (const std::exception &error)
     {
