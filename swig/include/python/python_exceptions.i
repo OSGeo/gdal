@@ -81,7 +81,7 @@ PythonBindingErrorHandler(CPLErr eclass, CPLErrorNum err_no, const char *msg )
 %exception _SetExceptionsLocal
 {
 %#ifdef SED_HACKS
-    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+    if( ReturnSame(TRUE) ) bLocalUseExceptionsCode = FALSE;
 %#endif
     $action
 }
