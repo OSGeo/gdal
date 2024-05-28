@@ -769,8 +769,8 @@ VSIAzureFSHandler::CreateWriteHandle(const char *pszFilename,
     const char *pszBlobType = CSLFetchNameValue(papszOptions, "BLOB_TYPE");
     if (pszBlobType && EQUAL(pszBlobType, "BLOCK"))
     {
-        auto poHandle = std::make_unique<VSIS3LikeWriteHandle>(
-            this, pszFilename, poHandleHelper, false, papszOptions);
+        auto poHandle = std::make_unique<VSIMultipartWriteHandle>(
+            this, pszFilename, poHandleHelper, papszOptions);
         if (!poHandle->IsOK())
         {
             return nullptr;
