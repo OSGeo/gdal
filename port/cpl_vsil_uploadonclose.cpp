@@ -75,6 +75,15 @@ class VSIUploadOnCloseHandle final : public VSIVirtualHandle
         return m_fpTemp->Write(pBuffer, nSize, nCount);
     }
 
+    void ClearErr() override
+    {
+    }
+
+    int Error() override
+    {
+        return 0;
+    }
+
     int Eof() override
     {
         return m_fpTemp->Eof();

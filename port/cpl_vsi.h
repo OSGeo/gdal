@@ -168,6 +168,8 @@ int CPL_DLL VSIFReadMultiRangeL(int nRanges, void **ppData,
                                 VSILFILE *) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 size_t CPL_DLL VSIFWriteL(const void *, size_t, size_t,
                           VSILFILE *) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
+void CPL_DLL VSIFClearErrL(VSILFILE *);
+int CPL_DLL VSIFErrorL(VSILFILE *) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL VSIFEofL(VSILFILE *) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
 int CPL_DLL VSIFTruncateL(VSILFILE *,
                           vsi_l_offset) EXPERIMENTAL_CPL_WARN_UNUSED_RESULT;
@@ -668,6 +670,18 @@ typedef void (*VSIFilesystemPluginAdviseReadCallback)(
     const size_t *panSizes);
 
 /**
+ * Has a read error (non end-of-file related) has occurred?
+ * @since GDAL 3.10
+ */
+typedef int (*VSIFilesystemPluginErrorCallback)(void *pFile);
+
+/**
+ * Clear error and end-of-file flags.
+ * @since GDAL 3.10
+ */
+typedef void (*VSIFilesystemPluginClearErrCallback)(void *pFile);
+
+/**
  * struct containing callbacks to used by the handler.
  * (rw), (r), (w) or () at the end indicate whether the given callback is
  * mandatory for reading and or writing handlers. A (?) indicates that the
@@ -712,6 +726,9 @@ typedef struct
 
     /** The following optional member has been added in GDAL 3.7: */
     VSIFilesystemPluginAdviseReadCallback advise_read; /**< AdviseRead() */
+
+    VSIFilesystemPluginErrorCallback error; /**< has read error occurred (r) */
+    VSIFilesystemPluginClearErrCallback clear_err; /**< clear error flags(r) */
     /*
         Callbacks are defined as a struct allocated by a call to
        VSIAllocFilesystemPluginCallbacksStruct in order to try to maintain ABI

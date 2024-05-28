@@ -157,7 +157,7 @@ int NTFRecord::ReadPhysicalLine(VSILFILE *fp, char *pszLine)
     {
         if (VSIFEofL(fp))
             return -1;
-        else
+        else /* if (VSIFErrorL(fp)) */
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Low level read error occurred while reading NTF file.");

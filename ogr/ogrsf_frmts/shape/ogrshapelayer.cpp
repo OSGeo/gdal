@@ -788,6 +788,9 @@ void OGRShapeLayer::ResetReading()
 
     if (bHeaderDirty && bUpdateAccess)
         SyncToDisk();
+
+    if (hDBF)
+        VSIFClearErrL(VSI_SHP_GetVSIL(hDBF->fp));
 }
 
 /************************************************************************/
@@ -997,7 +1000,8 @@ OGRFeature *OGRShapeLayer::GetNextFeature()
             {
                 if (DBFIsRecordDeleted(hDBF, iNextShapeId))
                     poFeature = nullptr;
-                else if (VSIFEofL(VSI_SHP_GetVSIL(hDBF->fp)))
+                else if (VSIFEofL(VSI_SHP_GetVSIL(hDBF->fp)) ||
+                         VSIFErrorL(VSI_SHP_GetVSIL(hDBF->fp)))
                     return nullptr;  //* I/O error.
                 else
                     poFeature = FetchShape(iNextShapeId);
@@ -1426,7 +1430,8 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                 if (DBFIsRecordDeleted(hDBF, iShape))
                     continue;
 
-                if (VSIFEofL(VSI_SHP_GetVSIL(hDBF->fp)))
+                if (VSIFEofL(VSI_SHP_GetVSIL(hDBF->fp)) ||
+                    VSIFErrorL(VSI_SHP_GetVSIL(hDBF->fp)))
                     break;
             }
         }
@@ -2843,7 +2848,8 @@ OGRErr OGRShapeLayer::Repack()
                 }
                 panRecordsToDelete[nDeleteCount++] = iShape;
             }
-            if (VSIFEofL(VSI_SHP_GetVSIL(hDBF->fp)))
+            if (VSIFEofL(VSI_SHP_GetVSIL(hDBF->fp)) ||
+                VSIFErrorL(VSI_SHP_GetVSIL(hDBF->fp)))
             {
                 CPLFree(panRecordsToDelete);
                 return OGRERR_FAILURE;  // I/O error.
@@ -3914,7 +3920,8 @@ int OGRShapeLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             ++iNextShapeId;
             continue;
         }
-        if (VSIFEofL(VSI_SHP_GetVSIL(hDBF->fp)))
+        if (VSIFEofL(VSI_SHP_GetVSIL(hDBF->fp)) ||
+            VSIFErrorL(VSI_SHP_GetVSIL(hDBF->fp)))
         {
             out_array->release(out_array);
             memset(out_array, 0, sizeof(*out_array));

@@ -1511,7 +1511,7 @@ static int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
     if ((fp = VSIFOpenL(pszArcDirFile, "r")) != nullptr)
     {
         char buf[380];
-        while (!VSIFEofL(fp))
+        while (!VSIFEofL(fp) && !VSIFErrorL(fp))
         {
             if (VSIFReadL(buf, 380, 1, fp) == 1)
                 numDirEntries++;

@@ -70,6 +70,16 @@ int VSIPluginHandle::Eof()
     return poFS->Eof(cbData);
 }
 
+int VSIPluginHandle::Error()
+{
+    return poFS->Error(cbData);
+}
+
+void VSIPluginHandle::ClearErr()
+{
+    poFS->ClearErr(cbData);
+}
+
 int VSIPluginHandle::Close()
 {
     int ret = poFS->Close(cbData);
@@ -357,6 +367,28 @@ int VSIPluginFilesystemHandler::Eof(void *pFile)
     CPLError(CE_Failure, CPLE_AppDefined, "Eof not implemented for %s plugin",
              m_Prefix);
     return -1;
+}
+
+int VSIPluginFilesystemHandler::Error(void *pFile)
+{
+    if (m_cb->error)
+    {
+        return m_cb->error(pFile);
+    }
+    CPLDebug("CPL", "Error() not implemented for %s plugin", m_Prefix);
+    return 0;
+}
+
+void VSIPluginFilesystemHandler::ClearErr(void *pFile)
+{
+    if (m_cb->clear_err)
+    {
+        m_cb->clear_err(pFile);
+    }
+    else
+    {
+        CPLDebug("CPL", "ClearErr() not implemented for %s plugin", m_Prefix);
+    }
 }
 
 int VSIPluginFilesystemHandler::Close(void *pFile)

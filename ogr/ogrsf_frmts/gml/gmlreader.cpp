@@ -510,7 +510,8 @@ GMLFeature *GMLReader::NextFeatureExpat()
         return nullptr;
     }
 
-    if (fpGML == nullptr || m_bStopParsing || VSIFEofL(fpGML))
+    if (fpGML == nullptr || m_bStopParsing || VSIFEofL(fpGML) ||
+        VSIFErrorL(fpGML))
         return nullptr;
 
     nFeatureTabLength = 0;
@@ -525,7 +526,7 @@ GMLFeature *GMLReader::NextFeatureExpat()
 
         unsigned int nLen = static_cast<unsigned int>(
             VSIFReadL(pabyBuf, 1, PARSER_BUF_SIZE, fpGML));
-        nDone = VSIFEofL(fpGML);
+        nDone = nLen < PARSER_BUF_SIZE;
 
         // Some files, such as APT_AIXM.xml from
         // https://nfdc.faa.gov/webContent/56DaySub/2015-03-05/aixm5.1.zip

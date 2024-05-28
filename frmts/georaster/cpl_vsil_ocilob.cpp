@@ -80,6 +80,16 @@ class VSIOCILobHandle : public VSIVirtualHandle
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
+
+    int Error() override
+    {
+        return 0;
+    }  // TODO?
+
+    void ClearErr() override
+    {
+    }  // TODO?
+
     int Close() override;
 };
 

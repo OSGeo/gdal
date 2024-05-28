@@ -109,7 +109,11 @@ struct CPL_DLL VSIVirtualHandle
     int Printf(CPL_FORMAT_STRING(const char *pszFormat), ...)
         CPL_PRINT_FUNC_FORMAT(2, 3);
 
+    virtual void ClearErr() = 0;
+
     virtual int Eof() = 0;
+
+    virtual int Error() = 0;
 
     virtual int Flush()
     {

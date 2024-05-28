@@ -1448,27 +1448,41 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
     GUIntBig nOffset = 0;
     while (true)
     {
-        size_t nRead = VSIFReadL(&abyBuffer[0], 1, nBufferSize, fpSource);
-        size_t nWritten = VSIFWriteL(&abyBuffer[0], 1, nRead, fpOut);
-        if (nWritten != nRead)
+        const size_t nRead = VSIFReadL(&abyBuffer[0], 1, nBufferSize, fpSource);
+        if (nRead < nBufferSize && VSIFErrorL(fpSource))
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Copying of %s to %s failed",
-                     pszSource, pszTarget);
+            CPLError(
+                CE_Failure, CPLE_FileIO,
+                "Copying of %s to %s failed: error while reading source file",
+                pszSource, pszTarget);
             ret = -1;
             break;
         }
-        nOffset += nRead;
-        if (pProgressFunc &&
-            !pProgressFunc(nSourceSize == 0 ? 1.0
-                           : nSourceSize > 0 &&
-                                   nSourceSize != static_cast<vsi_l_offset>(-1)
-                               ? double(nOffset) / nSourceSize
-                               : 0.0,
-                           !osMsg.empty() ? osMsg.c_str() : nullptr,
-                           pProgressData))
+        if (nRead > 0)
         {
-            ret = -1;
-            break;
+            const size_t nWritten = VSIFWriteL(&abyBuffer[0], 1, nRead, fpOut);
+            if (nWritten != nRead)
+            {
+                CPLError(CE_Failure, CPLE_FileIO,
+                         "Copying of %s to %s failed: error while writing into "
+                         "target file",
+                         pszSource, pszTarget);
+                ret = -1;
+                break;
+            }
+            nOffset += nRead;
+            if (pProgressFunc &&
+                !pProgressFunc(
+                    nSourceSize == 0 ? 1.0
+                    : nSourceSize > 0 &&
+                            nSourceSize != static_cast<vsi_l_offset>(-1)
+                        ? double(nOffset) / nSourceSize
+                        : 0.0,
+                    !osMsg.empty() ? osMsg.c_str() : nullptr, pProgressData))
+            {
+                ret = -1;
+                break;
+            }
         }
         if (nRead < nBufferSize)
         {
@@ -1490,6 +1504,10 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
     {
         ret = -1;
     }
+
+    if (ret != 0)
+        VSIUnlink(pszTarget);
+
     return ret;
 }
 
@@ -2376,7 +2394,9 @@ int VSIFFlushL(VSILFILE *fp)
  * @param nSize size of objects to read in bytes.
  * @param nCount number of objects to read.
  *
- * @return number of objects successfully read.
+ * @return number of objects successfully read. If that number is less than
+ * nCount, VSIFEofL() or VSIFErrorL() can be used to determine the reason for
+ * the short read.
  */
 
 /**
@@ -2396,7 +2416,9 @@ int VSIFFlushL(VSILFILE *fp)
  * @param nCount number of objects to read.
  * @param fp file handle opened with VSIFOpenL().
  *
- * @return number of objects successfully read.
+ * @return number of objects successfully read. If that number is less than
+ * nCount, VSIFEofL() or VSIFErrorL() can be used to determine the reason for
+ * the short read.
  */
 
 size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp)
@@ -2526,14 +2548,14 @@ size_t VSIFWriteL(const void *pBuffer, size_t nSize, size_t nCount,
  *
  * Returns TRUE (non-zero) if an end-of-file condition occurred during the
  * previous read operation. The end-of-file flag is cleared by a successful
- * VSIFSeekL() call.
+ * VSIFSeekL() call, or a call to VSIFClearErrL().
  *
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory.
  *
  * Analog of the POSIX feof() call.
  *
- * @return TRUE if at EOF else FALSE.
+ * @return TRUE if at EOF, else FALSE.
  */
 
 /**
@@ -2541,7 +2563,7 @@ size_t VSIFWriteL(const void *pBuffer, size_t nSize, size_t nCount,
  *
  * Returns TRUE (non-zero) if an end-of-file condition occurred during the
  * previous read operation. The end-of-file flag is cleared by a successful
- * VSIFSeekL() call.
+ * VSIFSeekL() call, or a call to VSIFClearErrL().
  *
  * This method goes through the VSIFileHandler virtualization and may
  * work on unusual filesystems such as in memory.
@@ -2550,13 +2572,95 @@ size_t VSIFWriteL(const void *pBuffer, size_t nSize, size_t nCount,
  *
  * @param fp file handle opened with VSIFOpenL().
  *
- * @return TRUE if at EOF else FALSE.
+ * @return TRUE if at EOF, else FALSE.
  */
 
 int VSIFEofL(VSILFILE *fp)
 
 {
     return fp->Eof();
+}
+
+/************************************************************************/
+/*                            VSIFErrorL()                              */
+/************************************************************************/
+
+/**
+ * \fn VSIVirtualHandle::Error()
+ * \brief Test the error indicator.
+ *
+ * Returns TRUE (non-zero) if an error condition occurred during the
+ * previous read operation. The error indicator is cleared by a call to
+ * VSIFClearErrL(). Note that a end-of-file situation, reported by VSIFEofL(),
+ * is *not* an error reported by VSIFErrorL().
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX ferror() call.
+ *
+ * @return TRUE if the error indicator is set, else FALSE.
+ * @since 3.10
+ */
+
+/**
+ * \brief Test the error indicator.
+ *
+ * Returns TRUE (non-zero) if an error condition occurred during the
+ * previous read operation. The error indicator is cleared by a call to
+ * VSIFClearErrL(). Note that a end-of-file situation, reported by VSIFEofL(),
+ * is *not* an error reported by VSIFErrorL().
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX feof() call.
+ *
+ * @param fp file handle opened with VSIFOpenL().
+ *
+ * @return TRUE if the error indicator is set, else FALSE.
+ * @since 3.10
+ */
+
+int VSIFErrorL(VSILFILE *fp)
+
+{
+    return fp->Error();
+}
+
+/************************************************************************/
+/*                           VSIFClearErrL()                            */
+/************************************************************************/
+
+/**
+ * \fn VSIVirtualHandle::ClearErr()
+ * \brief Reset the error and end-of-file indicators.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX clearerr() call.
+ *
+ * @since 3.10
+ */
+
+/**
+ * \brief Reset the error and end-of-file indicators.
+ *
+ * This method goes through the VSIFileHandler virtualization and may
+ * work on unusual filesystems such as in memory.
+ *
+ * Analog of the POSIX clearerr() call.
+ *
+ * @param fp file handle opened with VSIFOpenL().
+ *
+ * @since 3.10
+ */
+
+void VSIFClearErrL(VSILFILE *fp)
+
+{
+    fp->ClearErr();
 }
 
 /************************************************************************/

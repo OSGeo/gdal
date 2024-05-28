@@ -178,7 +178,7 @@ int OGRSVGDataSource::Open(const char *pszFilename)
     {
         nDataHandlerCounter = 0;
         nLen = (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fp);
-        nDone = VSIFEofL(fp);
+        nDone = nLen < aBuf.size();
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             if (nLen <= PARSER_BUF_SIZE - 1)

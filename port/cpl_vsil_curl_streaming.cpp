@@ -281,6 +281,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     vsi_l_offset nCandidateFileSize = 0;
 
     bool bEOF = false;
+    bool m_bError = false;
 
     size_t nCachedSize = 0;
     GByte *pCachedData = nullptr;
@@ -303,7 +304,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     vsi_l_offset nBodySize = 0;
     int nHTTPCode = 0;
     char m_szCurlErrBuf[CURL_ERROR_SIZE + 1];
-    bool m_bErrorOccurred = false;
+    bool m_bErrorOccurredInThread = false;
 
     void AcquireMutex();
     void ReleaseMutex();
@@ -345,6 +346,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     vsi_l_offset Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    void ClearErr() override;
+    int Error() override;
     int Eof() override;
     int Flush() override;
     int Close() override;
@@ -1056,8 +1059,8 @@ void VSICurlStreamingHandle::DownloadInThread()
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
 
     AcquireMutex();
-    m_bErrorOccurred = eRet != CURLE_OK;
-    if (m_bErrorOccurred)
+    m_bErrorOccurredInThread = eRet != CURLE_OK;
+    if (m_bErrorOccurredInThread)
     {
         // For autotest purposes only !
         const char *pszSimulatedCurlError = CPLGetConfigOption(
@@ -1109,7 +1112,7 @@ void VSICurlStreamingHandle::StartDownload()
     oRingBuffer.Reset();
     bDownloadInProgress = TRUE;
     nRingBufferFileOffset = 0;
-    m_bErrorOccurred = false;
+    m_bErrorOccurredInThread = false;
     hThread = CPLCreateJoinableThread(VSICurlDownloadInThread, this);
 }
 
@@ -1142,7 +1145,7 @@ void VSICurlStreamingHandle::StopDownload()
 
     oRingBuffer.Reset();
     bDownloadStopped = FALSE;
-    m_bErrorOccurred = false;
+    m_bErrorOccurredInThread = false;
     nRingBufferFileOffset = 0;
     bEOF = false;
 }
@@ -1252,9 +1255,9 @@ retry:
         bEOF = true;
     }
 
-    // Has a Seek() being done since the last Read()?
     bool bErrorOccurred = false;
 
+    // Has a Seek() being done since the last Read()?
     if (!bEOF && nRemaining > 0 && curOffset != nRingBufferFileOffset)
     {
         // Backward seek: Need to restart the download from the beginning.
@@ -1300,7 +1303,7 @@ retry:
                 while (oRingBuffer.GetSize() == 0 && bDownloadInProgress)
                     CPLCondWait(hCondProducer, hRingBufferMutex);
                 const int bBufferEmpty = (oRingBuffer.GetSize() == 0);
-                bErrorOccurred = m_bErrorOccurred;
+                bErrorOccurred = m_bErrorOccurredInThread;
                 ReleaseMutex();
 
                 if (bBufferEmpty && !bDownloadInProgress)
@@ -1354,7 +1357,7 @@ retry:
             while (oRingBuffer.GetSize() == 0 && bDownloadInProgress)
                 CPLCondWait(hCondProducer, hRingBufferMutex);
             const bool bBufferEmpty = oRingBuffer.GetSize() == 0;
-            bErrorOccurred = m_bErrorOccurred;
+            bErrorOccurred = m_bErrorOccurredInThread;
             ReleaseMutex();
 
             if (bBufferEmpty && !bDownloadInProgress)
@@ -1440,6 +1443,9 @@ retry:
         }
     }
 
+    if (bErrorOccurred)
+        m_bError = true;
+
     return nRet;
 }
 
@@ -1487,6 +1493,26 @@ size_t VSICurlStreamingHandle::Write(const void * /* pBuffer */,
 int VSICurlStreamingHandle::Eof()
 {
     return bEOF;
+}
+
+/************************************************************************/
+/*                               Error()                                */
+/************************************************************************/
+
+int VSICurlStreamingHandle::Error()
+
+{
+    return m_bError;
+}
+
+/************************************************************************/
+/*                             ClearErr()                               */
+/************************************************************************/
+
+void VSICurlStreamingHandle::ClearErr()
+{
+    bEOF = false;
+    m_bError = false;
 }
 
 /************************************************************************/

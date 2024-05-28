@@ -582,9 +582,16 @@ def test_vsicurl_test_retry(server):
         )
         data_len = 0
         if f:
-            data_len = len(gdal.VSIFReadL(1, 1, f))
-            gdal.VSIFCloseL(f)
-        assert data_len == 0
+            try:
+                data_len = len(gdal.VSIFReadL(1, 1, f))
+                assert data_len == 0
+                assert gdal.VSIFEofL(f) == 0
+                assert gdal.VSIFErrorL(f) == 1
+                gdal.VSIFClearErrL(f)
+                assert gdal.VSIFEofL(f) == 0
+                assert gdal.VSIFErrorL(f) == 0
+            finally:
+                gdal.VSIFCloseL(f)
 
     gdal.VSICurlClearCache()
 
@@ -601,13 +608,17 @@ def test_vsicurl_test_retry(server):
             "rb",
         )
         assert f is not None
-        gdal.ErrorReset()
-        with gdal.quiet_errors():
-            data = gdal.VSIFReadL(1, 3, f).decode("ascii")
-        error_msg = gdal.GetLastErrorMsg()
-        gdal.VSIFCloseL(f)
-        assert data == "foo"
-        assert "429" in error_msg
+        try:
+            gdal.ErrorReset()
+            with gdal.quiet_errors():
+                data = gdal.VSIFReadL(1, 3, f).decode("ascii")
+                assert data == "foo"
+            error_msg = gdal.GetLastErrorMsg()
+            assert "429" in error_msg
+            assert gdal.VSIFEofL(f) == 0
+            assert gdal.VSIFErrorL(f) == 0
+        finally:
+            gdal.VSIFCloseL(f)
 
 
 ###############################################################################

@@ -96,15 +96,15 @@ bool KML::parse()
     nWithoutEventCounter = 0;
 
     int nDone = 0;
-    int nLen = 0;
+    unsigned nLen = 0;
     std::vector<char> aBuf(PARSER_BUF_SIZE);
     bool bError = false;
 
     do
     {
         nDataHandlerCounter = 0;
-        nLen = (int)VSIFReadL(aBuf.data(), 1, aBuf.size(), pKMLFile_);
-        nDone = VSIFEofL(pKMLFile_);
+        nLen = (unsigned)VSIFReadL(aBuf.data(), 1, aBuf.size(), pKMLFile_);
+        nDone = nLen < aBuf.size();
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -185,16 +185,16 @@ void KML::checkValidity()
     oCurrentParser = oParser;
 
     int nDone = 0;
-    int nLen = 0;
+    unsigned nLen = 0;
     std::vector<char> aBuf(PARSER_BUF_SIZE);
 
     // Parses the file until we find the first element.
     do
     {
         nDataHandlerCounter = 0;
-        nLen =
-            static_cast<int>(VSIFReadL(aBuf.data(), 1, aBuf.size(), pKMLFile_));
-        nDone = VSIFEofL(pKMLFile_);
+        nLen = static_cast<unsigned>(
+            VSIFReadL(aBuf.data(), 1, aBuf.size(), pKMLFile_));
+        nDone = nLen < aBuf.size();
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             if (nLen <= PARSER_BUF_SIZE - 1)

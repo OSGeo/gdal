@@ -404,6 +404,7 @@ class VSICurlHandle : public VSIVirtualHandle
     vsi_l_offset curOffset = 0;
 
     bool bEOF = false;
+    bool bError = false;
 
     virtual std::string DownloadRegion(vsi_l_offset startOffset, int nBlocks);
 
@@ -490,7 +491,9 @@ class VSICurlHandle : public VSIVirtualHandle
                        const vsi_l_offset *panOffsets,
                        const size_t *panSizes) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    void ClearErr() override;
     int Eof() override;
+    int Error() override;
     int Flush() override;
     int Close() override;
 
@@ -811,7 +814,21 @@ class VSIS3LikeWriteHandle final : public VSIVirtualHandle
     vsi_l_offset Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
-    int Eof() override;
+
+    void ClearErr() override
+    {
+    }
+
+    int Error() override
+    {
+        return FALSE;
+    }
+
+    int Eof() override
+    {
+        return FALSE;
+    }
+
     int Close() override;
 
     bool IsOK()
@@ -856,7 +873,21 @@ class VSIAppendWriteHandle : public VSIVirtualHandle
     vsi_l_offset Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
-    int Eof() override;
+
+    void ClearErr() override
+    {
+    }
+
+    int Error() override
+    {
+        return FALSE;
+    }
+
+    int Eof() override
+    {
+        return FALSE;
+    }
+
     int Close() override;
 
     bool IsOK()
