@@ -272,17 +272,20 @@ bool OGRESRIJSONReader::ParseField(json_object *poObj)
         OGRFieldDefn fldDefn(pszObjName, eFieldType);
         fldDefn.SetSubType(eFieldSubType);
 
-        json_object *const poObjLength =
-            OGRGeoJSONFindMemberByName(poObj, "length");
-        if (poObjLength != nullptr &&
-            json_object_get_type(poObjLength) == json_type_int)
+        if (eFieldType != OFTDateTime)
         {
-            const int nWidth = json_object_get_int(poObjLength);
-            // A dummy width of 2147483647 seems to indicate no known field with
-            // which in the OGR world is better modelled as 0 field width.
-            // (#6529)
-            if (nWidth != INT_MAX)
-                fldDefn.SetWidth(nWidth);
+            json_object *const poObjLength =
+                OGRGeoJSONFindMemberByName(poObj, "length");
+            if (poObjLength != nullptr &&
+                json_object_get_type(poObjLength) == json_type_int)
+            {
+                const int nWidth = json_object_get_int(poObjLength);
+                // A dummy width of 2147483647 seems to indicate no known field with
+                // which in the OGR world is better modelled as 0 field width.
+                // (#6529)
+                if (nWidth != INT_MAX)
+                    fldDefn.SetWidth(nWidth);
+            }
         }
 
         poDefn->AddFieldDefn(&fldDefn);
