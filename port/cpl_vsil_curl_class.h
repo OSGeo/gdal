@@ -627,14 +627,6 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBaseWritable
                          GDALProgressFunc pProgressFunc,
                          void *pProgressData) override;
 
-    virtual int CopyFileRestartable(const char *pszSource,
-                                    const char *pszTarget,
-                                    const char *pszInputPayload,
-                                    char **ppszOutputPayload,
-                                    CSLConstList papszOptions,
-                                    GDALProgressFunc pProgressFunc,
-                                    void *pProgressData) override;
-
     virtual int DeleteObject(const char *pszFilename);
 
     virtual int *DeleteObjectBatch(CSLConstList papszFilesOrDirs);
@@ -645,39 +637,42 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBaseWritable
 
     VSIDIR *OpenDir(const char *pszPath, int nRecurseDepth,
                     const char *const *papszOptions) override;
+};
 
-    // Multipart upload
-    virtual bool SupportsParallelMultipartUpload() const
+/************************************************************************/
+/*                 IVSIS3LikeFSHandlerWithMultipartUpload               */
+/************************************************************************/
+
+class IVSIS3LikeFSHandlerWithMultipartUpload : public IVSIS3LikeFSHandler
+{
+    CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeFSHandlerWithMultipartUpload)
+
+  protected:
+    IVSIS3LikeFSHandlerWithMultipartUpload() = default;
+
+  public:
+    virtual bool SupportsNonSequentialMultipartUpload() const
     {
-        return false;
+        return true;
     }
 
-    virtual std::string
-    InitiateMultipartUpload(const std::string &osFilename,
-                            IVSIS3LikeHandleHelper *poS3HandleHelper,
-                            const CPLHTTPRetryParameters &oRetryParameters,
-                            CSLConstList papszOptions);
-    virtual std::string
-    UploadPart(const std::string &osFilename, int nPartNumber,
-               const std::string &osUploadID, vsi_l_offset nPosition,
-               const void *pabyBuffer, size_t nBufferSize,
-               IVSIS3LikeHandleHelper *poS3HandleHelper,
-               const CPLHTTPRetryParameters &oRetryParameters,
-               CSLConstList papszOptions);
-    virtual bool CompleteMultipart(
-        const std::string &osFilename, const std::string &osUploadID,
-        const std::vector<std::string> &aosEtags, vsi_l_offset nTotalSize,
-        IVSIS3LikeHandleHelper *poS3HandleHelper,
-        const CPLHTTPRetryParameters &oRetryParameters);
-    virtual bool AbortMultipart(const std::string &osFilename,
-                                const std::string &osUploadID,
-                                IVSIS3LikeHandleHelper *poS3HandleHelper,
-                                const CPLHTTPRetryParameters &oRetryParameters);
+    virtual bool SupportsParallelMultipartUpload() const
+    {
+        return true;
+    }
 
-    bool AbortPendingUploads(const char *pszFilename) override;
+    virtual bool SupportsMultipartAbort() const = 0;
 
     size_t GetUploadChunkSizeInBytes(const char *pszFilename,
                                      const char *pszSpecifiedValInBytes);
+
+    virtual int CopyFileRestartable(const char *pszSource,
+                                    const char *pszTarget,
+                                    const char *pszInputPayload,
+                                    char **ppszOutputPayload,
+                                    CSLConstList papszOptions,
+                                    GDALProgressFunc pProgressFunc,
+                                    void *pProgressData) override;
 
     //! Maximum number of parts for multipart upload
     // Limit currently used by S3 and GS.
@@ -717,31 +712,33 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBaseWritable
     {
         return 50;
     }
-};
 
-/************************************************************************/
-/*                 IVSIS3LikeFSHandlerWithMultipartUpload               */
-/************************************************************************/
+    virtual std::string
+    InitiateMultipartUpload(const std::string &osFilename,
+                            IVSIS3LikeHandleHelper *poS3HandleHelper,
+                            const CPLHTTPRetryParameters &oRetryParameters,
+                            CSLConstList papszOptions);
 
-class IVSIS3LikeFSHandlerWithMultipartUpload : public IVSIS3LikeFSHandler
-{
-    CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeFSHandlerWithMultipartUpload)
+    virtual std::string
+    UploadPart(const std::string &osFilename, int nPartNumber,
+               const std::string &osUploadID, vsi_l_offset nPosition,
+               const void *pabyBuffer, size_t nBufferSize,
+               IVSIS3LikeHandleHelper *poS3HandleHelper,
+               const CPLHTTPRetryParameters &oRetryParameters,
+               CSLConstList papszOptions);
 
-  protected:
-    IVSIS3LikeFSHandlerWithMultipartUpload() = default;
+    virtual bool CompleteMultipart(
+        const std::string &osFilename, const std::string &osUploadID,
+        const std::vector<std::string> &aosEtags, vsi_l_offset nTotalSize,
+        IVSIS3LikeHandleHelper *poS3HandleHelper,
+        const CPLHTTPRetryParameters &oRetryParameters);
 
-  public:
-    virtual bool SupportsNonSequentialMultipartUpload() const
-    {
-        return true;
-    }
+    virtual bool AbortMultipart(const std::string &osFilename,
+                                const std::string &osUploadID,
+                                IVSIS3LikeHandleHelper *poS3HandleHelper,
+                                const CPLHTTPRetryParameters &oRetryParameters);
 
-    bool SupportsParallelMultipartUpload() const override
-    {
-        return true;
-    }
-
-    virtual bool SupportsMultipartAbort() const = 0;
+    bool AbortPendingUploads(const char *pszFilename) override;
 
     bool MultipartUploadGetCapabilities(int *pbNonSequentialUploadSupported,
                                         int *pbParallelUploadSupported,
@@ -816,7 +813,7 @@ class VSIMultipartWriteHandle final : public VSIVirtualHandle
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIMultipartWriteHandle)
 
-    IVSIS3LikeFSHandler *m_poFS = nullptr;
+    IVSIS3LikeFSHandlerWithMultipartUpload *m_poFS = nullptr;
     std::string m_osFilename{};
     IVSIS3LikeHandleHelper *m_poS3HandleHelper = nullptr;
     CPLStringList m_aosOptions{};
@@ -841,7 +838,8 @@ class VSIMultipartWriteHandle final : public VSIVirtualHandle
     void InvalidateParentDirectory();
 
   public:
-    VSIMultipartWriteHandle(IVSIS3LikeFSHandler *poFS, const char *pszFilename,
+    VSIMultipartWriteHandle(IVSIS3LikeFSHandlerWithMultipartUpload *poFS,
+                            const char *pszFilename,
                             IVSIS3LikeHandleHelper *poS3HandleHelper,
                             CSLConstList papszOptions);
     ~VSIMultipartWriteHandle() override;
