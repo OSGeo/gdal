@@ -37,9 +37,10 @@ from typing import Optional, Union
 
 from osgeo import gdal, ogr
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
-from osgeo_utils.auxiliary.util import GetOutputDriverFor
+from osgeo_utils.auxiliary.util import GetOutputDriverFor, enable_gdal_exceptions
 
 
+@enable_gdal_exceptions
 def gdal_polygonize(
     src_filename: Optional[str] = None,
     band_number: Union[int, str] = 1,

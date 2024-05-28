@@ -35,7 +35,7 @@ import sys
 from typing import Optional, Sequence
 
 from osgeo import gdal
-from osgeo_utils.auxiliary.util import GetOutputDriverFor
+from osgeo_utils.auxiliary.util import GetOutputDriverFor, enable_gdal_exceptions
 
 
 def Usage(isError):
@@ -54,7 +54,9 @@ Usage: gdal_proximity.py [--help] [--help-general]
     return 2 if isError else 0
 
 
+@enable_gdal_exceptions
 def main(argv=sys.argv):
+
     driver_name = None
     creation_options = []
     alg_options = []

@@ -97,7 +97,7 @@ def test_gdal_edit_py_1(script_path, tmp_path, read_only):
         val_encoded = val
 
     read_only_option = " -ro" if read_only else ""
-    test_py_scripts.run_py_script(
+    _, err = test_py_scripts.run_py_script(
         script_path,
         "gdal_edit",
         filename
@@ -107,7 +107,9 @@ def test_gdal_edit_py_1(script_path, tmp_path, read_only):
         + val_encoded
         + "=UTF8"
         + read_only_option,
+        return_stderr=True,
     )
+    assert "UseExceptions" not in err
 
     ds = gdal.Open(filename)
     wkt = ds.GetProjectionRef()

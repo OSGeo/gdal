@@ -65,7 +65,7 @@ PythonBindingErrorHandler(CPLErr eclass, CPLErrorNum err_no, const char *msg )
 %exception GetUseExceptions
 {
 %#ifdef SED_HACKS
-    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+    if( ReturnSame(TRUE) ) bLocalUseExceptionsCode = FALSE;
 %#endif
     result = GetUseExceptions();
 }
@@ -73,7 +73,7 @@ PythonBindingErrorHandler(CPLErr eclass, CPLErrorNum err_no, const char *msg )
 %exception _GetExceptionsLocal
 {
 %#ifdef SED_HACKS
-    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+    if( ReturnSame(TRUE) ) bLocalUseExceptionsCode = FALSE;
 %#endif
     $action
 }
@@ -81,7 +81,7 @@ PythonBindingErrorHandler(CPLErr eclass, CPLErrorNum err_no, const char *msg )
 %exception _SetExceptionsLocal
 {
 %#ifdef SED_HACKS
-    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+    if( ReturnSame(TRUE) ) bLocalUseExceptionsCode = FALSE;
 %#endif
     $action
 }
@@ -89,7 +89,7 @@ PythonBindingErrorHandler(CPLErr eclass, CPLErrorNum err_no, const char *msg )
 %exception _UserHasSpecifiedIfUsingExceptions
 {
 %#ifdef SED_HACKS
-    if( bUseExceptions ) bLocalUseExceptionsCode = FALSE;
+    if( ReturnSame(TRUE) ) bLocalUseExceptionsCode = FALSE;
 %#endif
     $action
 }
@@ -133,7 +133,7 @@ void _DontUseExceptions() {
 
 static int _UserHasSpecifiedIfUsingExceptions()
 {
-    return bUserHasSpecifiedIfUsingExceptions;
+    return bUserHasSpecifiedIfUsingExceptions || bUseExceptionsLocal >= 0;
 }
 
 %}

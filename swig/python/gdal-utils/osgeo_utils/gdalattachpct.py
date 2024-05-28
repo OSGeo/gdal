@@ -37,7 +37,11 @@ from typing import Optional
 from osgeo import gdal
 from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.color_table import ColorTableLike, get_color_table
-from osgeo_utils.auxiliary.util import GetOutputDriverFor, open_ds
+from osgeo_utils.auxiliary.util import (
+    GetOutputDriverFor,
+    enable_gdal_exceptions,
+    open_ds,
+)
 
 
 def Usage(isError=True):
@@ -47,7 +51,9 @@ def Usage(isError=True):
     return 2 if isError else 0
 
 
+@enable_gdal_exceptions
 def main(argv=sys.argv):
+
     pct_filename = None
     src_filename = None
     dst_filename = None
