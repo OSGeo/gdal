@@ -840,3 +840,67 @@ def test_hdf5_multidim_block_size_structural_info():
     var = rg.OpenMDArray("Band1")
     assert var.GetBlockSize() == [1, 2]
     assert var.GetStructuralInfo() == {"COMPRESSION": "DEFLATE", "FILTER": "SHUFFLE"}
+
+
+###############################################################################
+# Test reading a compound data type made of 2 Float16 values
+
+
+def test_hdf5_multidim_read_cfloat16():
+
+    ds = gdal.OpenEx("data/hdf5/complex.h5", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray("f16")
+    assert var.GetDataType().GetNumericDataType() == gdal.GDT_CFloat32
+    assert struct.unpack("f" * (5 * 5 * 2), var.Read()) == (
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        2.0,
+        2.0,
+        3.0,
+        3.0,
+        4.0,
+        4.0,
+        5.0,
+        5.0,
+        6.0,
+        6.0,
+        7.0,
+        7.0,
+        8.0,
+        8.0,
+        9.0,
+        9.0,
+        10.0,
+        10.0,
+        11.0,
+        11.0,
+        12.0,
+        12.0,
+        13.0,
+        13.0,
+        14.0,
+        14.0,
+        15.0,
+        15.0,
+        16.0,
+        16.0,
+        17.0,
+        17.0,
+        18.0,
+        18.0,
+        19.0,
+        19.0,
+        20.0,
+        20.0,
+        21.0,
+        21.0,
+        22.0,
+        22.0,
+        23.0,
+        23.0,
+        24.0,
+        24.0,
+    )
