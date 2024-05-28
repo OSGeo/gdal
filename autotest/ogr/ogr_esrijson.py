@@ -101,6 +101,11 @@ def test_ogr_esrijson_read_point():
     rc = validate_layer(lyr, "esripoint", 1, ogr.wkbPoint, 7, extent)
     assert rc
 
+    layer_defn = lyr.GetLayerDefn()
+    fld_defn = layer_defn.GetFieldDefn(layer_defn.GetFieldIndex("fooDate"))
+    assert fld_defn.GetType() == ogr.OFTDateTime
+    assert fld_defn.GetWidth() == 0
+
     ref = lyr.GetSpatialRef()
     gcs = int(ref.GetAuthorityCode("GEOGCS"))
 
