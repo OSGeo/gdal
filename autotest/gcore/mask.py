@@ -996,7 +996,10 @@ def test_mask_27():
 
 
 @pytest.mark.parametrize("dt", [gdal.GDT_Byte, gdal.GDT_Int64, gdal.GDT_UInt64])
-def test_mask_setting_nodata(dt):
+@pytest.mark.parametrize(
+    "GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND", [None, "YES", "ALWAYS"]
+)
+def test_mask_setting_nodata(dt, GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND):
     def set_nodata_value(ds, val):
         if dt == gdal.GDT_Byte:
             ds.GetRasterBand(1).SetNoDataValue(val)
@@ -1005,15 +1008,41 @@ def test_mask_setting_nodata(dt):
         else:
             ds.GetRasterBand(1).SetNoDataValueAsUInt64(val)
 
-    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, dt)
-    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 255)
-    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 255)
-    set_nodata_value(ds, 0)
-    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 0)
-    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 0)
-    set_nodata_value(ds, 1)
-    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 255)
-    set_nodata_value(ds, 0)
-    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 0)
-    ds.GetRasterBand(1).DeleteNoDataValue()
-    assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 255)
+    def test():
+        ds = gdal.GetDriverByName("MEM").Create("__debug__", 1, 1, 1, dt)
+        assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 255)
+        assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 255)
+        set_nodata_value(ds, 0)
+        got = ds.GetRasterBand(1).GetMaskBand().ReadRaster()
+        if (
+            GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND == "ALWAYS"
+            and dt != gdal.GDT_Byte
+        ):
+            assert got is None
+            assert gdal.GetLastErrorType() == gdal.CE_Failure
+        else:
+            if (
+                GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND == "YES"
+                and dt != gdal.GDT_Byte
+            ):
+                assert gdal.GetLastErrorType() == gdal.CE_Warning
+            assert got == struct.pack("B", 0)
+            assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 0)
+            set_nodata_value(ds, 1)
+            assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack(
+                "B", 255
+            )
+            set_nodata_value(ds, 0)
+            assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 0)
+
+        ds.GetRasterBand(1).DeleteNoDataValue()
+        assert ds.GetRasterBand(1).GetMaskBand().ReadRaster() == struct.pack("B", 255)
+
+    if GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND:
+        with gdal.quiet_errors(), gdal.config_option(
+            "GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND",
+            GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND,
+        ):
+            test()
+    else:
+        test()
