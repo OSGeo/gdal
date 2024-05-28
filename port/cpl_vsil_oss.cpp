@@ -62,7 +62,7 @@ namespace cpl
 /*                         VSIOSSFSHandler                              */
 /************************************************************************/
 
-class VSIOSSFSHandler final : public IVSIS3LikeFSHandler
+class VSIOSSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIOSSFSHandler)
 
@@ -102,6 +102,11 @@ class VSIOSSFSHandler final : public IVSIS3LikeFSHandler
     GetStreamingFilename(const std::string &osFilename) const override
     {
         return osFilename;
+    }
+
+    bool SupportsMultipartAbort() const override
+    {
+        return true;
     }
 };
 

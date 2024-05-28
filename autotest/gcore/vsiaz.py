@@ -3059,3 +3059,30 @@ def test_vsiaz_copy_from_vsiaz_different_storage_bucket():
             )
             == 0
         )
+
+
+###############################################################################
+# Test VSIMultipartUploadXXXX()
+
+
+def test_vsiaz_MultipartUpload():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    # Test MultipartUploadGetCapabilities()
+    info = gdal.MultipartUploadGetCapabilities("/vsiaz/")
+    assert info.non_sequential_upload_supported
+    assert info.parallel_upload_supported
+    assert not info.abort_supported
+    assert info.min_part_size == 0
+    assert info.max_part_size >= 1024
+    assert info.max_part_count == 50000
+
+    # Test unsupported MultipartUploadAbort()
+    with gdal.ExceptionMgr(useExceptions=True):
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadAbort\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadAbort("/vsiaz/foo/bar", "upload_id")

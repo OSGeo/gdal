@@ -305,6 +305,31 @@ class CPL_DLL VSIFilesystemHandler
                                  const char *pszDomain,
                                  CSLConstList papszOptions);
 
+    virtual bool
+    MultipartUploadGetCapabilities(int *pbNonSequentialUploadSupported,
+                                   int *pbParallelUploadSupported,
+                                   int *pbAbortSupported, size_t *pnMinPartSize,
+                                   size_t *pnMaxPartSize, int *pnMaxPartCount);
+
+    virtual char *MultipartUploadStart(const char *pszFilename,
+                                       CSLConstList papszOptions);
+
+    virtual char *MultipartUploadAddPart(const char *pszFilename,
+                                         const char *pszUploadId,
+                                         int nPartNumber,
+                                         vsi_l_offset nFileOffset,
+                                         const void *pData, size_t nDataLength,
+                                         CSLConstList papszOptions);
+
+    virtual bool
+    MultipartUploadEnd(const char *pszFilename, const char *pszUploadId,
+                       size_t nPartIdsCount, const char *const *apszPartIds,
+                       vsi_l_offset nTotalSize, CSLConstList papszOptions);
+
+    virtual bool MultipartUploadAbort(const char *pszFilename,
+                                      const char *pszUploadId,
+                                      CSLConstList papszOptions);
+
     virtual bool AbortPendingUploads(const char * /*pszFilename*/)
     {
         return true;

@@ -720,6 +720,56 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBaseWritable
 };
 
 /************************************************************************/
+/*                 IVSIS3LikeFSHandlerWithMultipartUpload               */
+/************************************************************************/
+
+class IVSIS3LikeFSHandlerWithMultipartUpload : public IVSIS3LikeFSHandler
+{
+    CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeFSHandlerWithMultipartUpload)
+
+  protected:
+    IVSIS3LikeFSHandlerWithMultipartUpload() = default;
+
+  public:
+    virtual bool SupportsNonSequentialMultipartUpload() const
+    {
+        return true;
+    }
+
+    bool SupportsParallelMultipartUpload() const override
+    {
+        return true;
+    }
+
+    virtual bool SupportsMultipartAbort() const = 0;
+
+    bool MultipartUploadGetCapabilities(int *pbNonSequentialUploadSupported,
+                                        int *pbParallelUploadSupported,
+                                        int *pbAbortSupported,
+                                        size_t *pnMinPartSize,
+                                        size_t *pnMaxPartSize,
+                                        int *pnMaxPartCount) override;
+
+    char *MultipartUploadStart(const char *pszFilename,
+                               CSLConstList papszOptions) override;
+
+    char *MultipartUploadAddPart(const char *pszFilename,
+                                 const char *pszUploadId, int nPartNumber,
+                                 vsi_l_offset nFileOffset, const void *pData,
+                                 size_t nDataLength,
+                                 CSLConstList papszOptions) override;
+
+    bool MultipartUploadEnd(const char *pszFilename, const char *pszUploadId,
+                            size_t nPartIdsCount,
+                            const char *const *apszPartIds,
+                            vsi_l_offset nTotalSize,
+                            CSLConstList papszOptions) override;
+
+    bool MultipartUploadAbort(const char *pszFilename, const char *pszUploadId,
+                              CSLConstList papszOptions) override;
+};
+
+/************************************************************************/
 /*                          IVSIS3LikeHandle                            */
 /************************************************************************/
 

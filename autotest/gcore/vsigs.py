@@ -1615,6 +1615,22 @@ def test_vsigs_rmdirrecursive_empty_dir(gs_test_config, webserver_port):
 
 
 ###############################################################################
+# Test VSIMultipartUploadXXXX()
+
+
+def test_vsigs_MultipartUpload(gs_test_config, webserver_port):
+
+    # Test MultipartUploadGetCapabilities()
+    info = gdal.MultipartUploadGetCapabilities("/vsigs/")
+    assert info.non_sequential_upload_supported
+    assert info.parallel_upload_supported
+    assert info.abort_supported
+    assert info.min_part_size == 5
+    assert info.max_part_size >= 1024
+    assert info.max_part_count == 10000
+
+
+###############################################################################
 # Nominal cases (require valid credentials)
 
 

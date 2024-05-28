@@ -4911,3 +4911,25 @@ def quiet_errors():
     tuple.row_intersection = row_intersection
     val = tuple
 %}
+
+
+%feature("pythonappend") MultipartUploadGetCapabilities %{
+    if val:
+        non_sequential_upload_supported, parallel_upload_supported, abort_supported, min_part_size, max_part_size, max_part_count = val
+        import collections
+        tuple = collections.namedtuple('MultipartUploadGetCapabilitiesResult',
+            ['non_sequential_upload_supported',
+             'parallel_upload_supported',
+             'abort_supported',
+             'min_part_size',
+             'max_part_size',
+             'max_part_count',
+             ])
+        tuple.non_sequential_upload_supported = non_sequential_upload_supported
+        tuple.parallel_upload_supported = parallel_upload_supported
+        tuple.abort_supported = abort_supported
+        tuple.min_part_size = min_part_size
+        tuple.max_part_size = max_part_size
+        tuple.max_part_count = max_part_count
+        val = tuple
+%}
