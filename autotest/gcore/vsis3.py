@@ -3471,13 +3471,9 @@ def test_vsis3_sync_timestamp(tmp_vsimem, aws_test_config, webserver_port):
 
 
 @gdaltest.enable_exceptions()
-@pytest.mark.skipif(
-    gdaltest.is_ci(),
-    reason="test skipped on CI due to it not being reliable (also fails randomly when run locally)",
-)
 def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
 
-    gdal.FileFromMemBuffer(tmp_vsimem / "testsync.txt", "foo")
+    gdal.FileFromMemBuffer(tmp_vsimem / "testsync.txt", "x" * 30000)
 
     # S3 to local: S3 file is older -> download
     gdal.VSICurlClearCache()
@@ -3487,18 +3483,11 @@ def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
         "/out/testsync.txt",
         206,
         {
-            "Content-Length": "3",
-            "Content-Range": "bytes 0-2/3",
+            "Content-Length": "16384",
+            "Content-Range": "bytes 0-16383/30000",
             "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT",
         },
-        "xyz",
-    )
-    handler.add(
-        "GET",
-        "/out/testsync.txt",
-        200,
-        {"Content-Length": "3", "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT"},
-        "xy",  # only returns 2 bytes instead of 30, {}
+        "x" * 16384,
     )
     handler.add(
         "GET",
@@ -3511,15 +3500,21 @@ def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
             <Contents>
                 <Key>testsync.txt</Key>
                 <LastModified>1970-01-01T00:00:01.000Z</LastModified>
-                <Size>3</Size>
+                <Size>30000</Size>
             </Contents>
         </ListBucketResult>
         """,
     )
-    with webserver.install_http_handler(handler):
+    handler.add("GET", "/out/testsync.txt", 400)
+    # Do not use /vsicurl_streaming/ as source, otherwise errors may be
+    # emitted in worker thread, which isn't properly handled (should ideally
+    # be fixed)
+    with gdal.config_option(
+        "VSIS3_COPYFILE_USE_STREAMING_SOURCE", "NO"
+    ), webserver.install_http_handler(handler):
         with pytest.raises(
             Exception,
-            match=f"Copying of /vsis3/out/testsync.txt to {tmp_vsimem}/testsync.txt failed: 2 bytes were copied whereas 3 were expected",
+            match=f"Copying of /vsis3/out/testsync.txt to {tmp_vsimem}/testsync.txt failed: 0 bytes were copied whereas 30000 were expected",
         ):
             gdal.Sync("/vsis3/out/testsync.txt", tmp_vsimem)
 
