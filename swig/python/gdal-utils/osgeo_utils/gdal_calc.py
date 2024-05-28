@@ -50,7 +50,11 @@ from osgeo_utils.auxiliary.color_table import ColorTableLike, get_color_table
 from osgeo_utils.auxiliary.extent_util import GT, Extent
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
 from osgeo_utils.auxiliary.rectangle import GeoRectangle
-from osgeo_utils.auxiliary.util import GetOutputDriverFor, open_ds
+from osgeo_utils.auxiliary.util import (
+    GetOutputDriverFor,
+    enable_gdal_exceptions,
+    open_ds,
+)
 
 GDALDataType = int
 
@@ -104,50 +108,8 @@ sum all files with hidden noDataValue
 """
 
 
+@enable_gdal_exceptions
 def Calc(
-    calc: MaybeSequence[str],
-    outfile: Optional[PathLikeOrStr] = None,
-    NoDataValue: Optional[Number] = None,
-    type: Optional[Union[GDALDataType, str]] = None,
-    format: Optional[str] = None,
-    creation_options: Optional[Sequence[str]] = None,
-    allBands: str = "",
-    overwrite: bool = False,
-    hideNoData: bool = False,
-    projectionCheck: bool = False,
-    color_table: Optional[ColorTableLike] = None,
-    extent: Optional[Extent] = None,
-    projwin: Optional[Union[Tuple, GeoRectangle]] = None,
-    user_namespace: Optional[Dict] = None,
-    debug: bool = False,
-    quiet: bool = False,
-    progress_callback: Optional = gdal.TermProgress_nocb,
-    **input_files,
-):
-    with gdal.ExceptionMgr():
-        return _Calc(
-            calc=calc,
-            outfile=outfile,
-            NoDataValue=NoDataValue,
-            type=type,
-            format=format,
-            creation_options=creation_options,
-            allBands=allBands,
-            overwrite=overwrite,
-            hideNoData=hideNoData,
-            projectionCheck=projectionCheck,
-            color_table=color_table,
-            extent=extent,
-            projwin=projwin,
-            user_namespace=user_namespace,
-            debug=debug,
-            quiet=quiet,
-            progress_callback=progress_callback,
-            **input_files,
-        )
-
-
-def _Calc(
     calc: MaybeSequence[str],
     outfile: Optional[PathLikeOrStr] = None,
     NoDataValue: Optional[Number] = None,

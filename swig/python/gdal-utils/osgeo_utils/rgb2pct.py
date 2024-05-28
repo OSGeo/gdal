@@ -39,27 +39,15 @@ from osgeo import gdal
 from osgeo_utils.auxiliary.base import PathLikeOrStr
 from osgeo_utils.auxiliary.color_table import get_color_table
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
-from osgeo_utils.auxiliary.util import GetOutputDriverFor, open_ds
+from osgeo_utils.auxiliary.util import (
+    GetOutputDriverFor,
+    enable_gdal_exceptions,
+    open_ds,
+)
 
 
+@enable_gdal_exceptions
 def rgb2pct(
-    src_filename: PathLikeOrStr,
-    pct_filename: Optional[PathLikeOrStr] = None,
-    dst_filename: Optional[PathLikeOrStr] = None,
-    color_count: int = 256,
-    driver_name: Optional[str] = None,
-):
-    with gdal.ExceptionMgr():
-        return _rgb2pct(
-            src_filename=src_filename,
-            pct_filename=pct_filename,
-            dst_filename=dst_filename,
-            color_count=color_count,
-            driver_name=driver_name,
-        )
-
-
-def _rgb2pct(
     src_filename: PathLikeOrStr,
     pct_filename: Optional[PathLikeOrStr] = None,
     dst_filename: Optional[PathLikeOrStr] = None,

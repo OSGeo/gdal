@@ -33,6 +33,7 @@ import os
 import sys
 
 from osgeo import gdal, ogr, osr
+from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 
 ###############################################################################
 
@@ -171,12 +172,8 @@ def CreateLayer(
 ###############################################################################
 
 
+@enable_gdal_exceptions
 def main(argv=sys.argv):
-    with gdal.ExceptionMgr(), ogr.ExceptionMgr(), osr.ExceptionMgr():
-        return _main(argv=argv)
-
-
-def _main(argv=sys.argv):
 
     driver_name = "ESRI Shapefile"
     quiet = False
