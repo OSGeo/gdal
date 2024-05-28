@@ -94,6 +94,7 @@ set(CPL_SOURCES
     cpl_swift.cpp
     cpl_vsil_adls.cpp
     cpl_vsil_az.cpp
+    cpl_vsil_chunked_write_handle.cpp
     cpl_vsil_uploadonclose.cpp
     cpl_vsil_gs.cpp
     cpl_vsil_webhdfs.cpp

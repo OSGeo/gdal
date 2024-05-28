@@ -741,16 +741,14 @@ class VSIS3Handle final : public IVSIS3LikeHandle
 };
 
 /************************************************************************/
-/*                         VSIS3LikeWriteHandle()                       */
+/*                      VSIMultipartWriteHandle()                       */
 /************************************************************************/
 
-VSIS3LikeWriteHandle::VSIS3LikeWriteHandle(
+VSIMultipartWriteHandle::VSIMultipartWriteHandle(
     IVSIS3LikeFSHandler *poFS, const char *pszFilename,
-    IVSIS3LikeHandleHelper *poS3HandleHelper, bool bUseChunked,
-    CSLConstList papszOptions)
+    IVSIS3LikeHandleHelper *poS3HandleHelper, CSLConstList papszOptions)
     : m_poFS(poFS), m_osFilename(pszFilename),
-      m_poS3HandleHelper(poS3HandleHelper), m_bUseChunkedTransfer(bUseChunked),
-      m_aosOptions(papszOptions),
+      m_poS3HandleHelper(poS3HandleHelper), m_aosOptions(papszOptions),
       m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename)),
       m_oRetryParameters(m_aosHTTPOptions)
 {
@@ -759,25 +757,20 @@ VSIS3LikeWriteHandle::VSIS3LikeWriteHandle(
     // Swift only supports the "Transfer-Encoding: chunked" PUT mechanism.
     // So two different implementations.
 
-    if (!m_bUseChunkedTransfer)
-    {
-        const char *pszChunkSize = m_aosOptions.FetchNameValue("CHUNK_SIZE");
-        if (pszChunkSize)
-            m_nBufferSize = poFS->GetUploadChunkSizeInBytes(
-                pszFilename,
-                CPLSPrintf(CPL_FRMT_GIB,
-                           CPLAtoGIntBig(pszChunkSize) * MIB_CONSTANT));
-        else
-            m_nBufferSize =
-                poFS->GetUploadChunkSizeInBytes(pszFilename, nullptr);
+    const char *pszChunkSize = m_aosOptions.FetchNameValue("CHUNK_SIZE");
+    if (pszChunkSize)
+        m_nBufferSize = poFS->GetUploadChunkSizeInBytes(
+            pszFilename, CPLSPrintf(CPL_FRMT_GIB, CPLAtoGIntBig(pszChunkSize) *
+                                                      MIB_CONSTANT));
+    else
+        m_nBufferSize = poFS->GetUploadChunkSizeInBytes(pszFilename, nullptr);
 
-        m_pabyBuffer = static_cast<GByte *>(VSIMalloc(m_nBufferSize));
-        if (m_pabyBuffer == nullptr)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot allocate working buffer for %s",
-                     m_poFS->GetFSPrefix().c_str());
-        }
+    m_pabyBuffer = static_cast<GByte *>(VSIMalloc(m_nBufferSize));
+    if (m_pabyBuffer == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot allocate working buffer for %s",
+                 m_poFS->GetFSPrefix().c_str());
     }
 }
 
@@ -846,23 +839,14 @@ size_t IVSIS3LikeFSHandler::GetUploadChunkSizeInBytes(
 }
 
 /************************************************************************/
-/*                        ~VSIS3LikeWriteHandle()                           */
+/*                     ~VSIMultipartWriteHandle()                       */
 /************************************************************************/
 
-VSIS3LikeWriteHandle::~VSIS3LikeWriteHandle()
+VSIMultipartWriteHandle::~VSIMultipartWriteHandle()
 {
-    VSIS3LikeWriteHandle::Close();
+    VSIMultipartWriteHandle::Close();
     delete m_poS3HandleHelper;
     CPLFree(m_pabyBuffer);
-    if (m_hCurlMulti)
-    {
-        if (m_hCurl)
-        {
-            curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
-            curl_easy_cleanup(m_hCurl);
-        }
-        VSICURLMultiCleanup(m_hCurlMulti);
-    }
     CPLFree(m_sWriteFuncHeaderData.pBuffer);
 }
 
@@ -870,7 +854,7 @@ VSIS3LikeWriteHandle::~VSIS3LikeWriteHandle()
 /*                               Seek()                                 */
 /************************************************************************/
 
-int VSIS3LikeWriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIMultipartWriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
 {
     if (!((nWhence == SEEK_SET && nOffset == m_nCurOffset) ||
           (nWhence == SEEK_CUR && nOffset == 0) ||
@@ -889,7 +873,7 @@ int VSIS3LikeWriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                               Tell()                                 */
 /************************************************************************/
 
-vsi_l_offset VSIS3LikeWriteHandle::Tell()
+vsi_l_offset VSIMultipartWriteHandle::Tell()
 {
     return m_nCurOffset;
 }
@@ -898,8 +882,8 @@ vsi_l_offset VSIS3LikeWriteHandle::Tell()
 /*                               Read()                                 */
 /************************************************************************/
 
-size_t VSIS3LikeWriteHandle::Read(void * /* pBuffer */, size_t /* nSize */,
-                                  size_t /* nMemb */)
+size_t VSIMultipartWriteHandle::Read(void * /* pBuffer */, size_t /* nSize */,
+                                     size_t /* nMemb */)
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "Read not supported on writable %s files",
@@ -1017,7 +1001,7 @@ std::string IVSIS3LikeFSHandler::InitiateMultipartUpload(
 /*                           UploadPart()                               */
 /************************************************************************/
 
-bool VSIS3LikeWriteHandle::UploadPart()
+bool VSIMultipartWriteHandle::UploadPart()
 {
     ++m_nPartNumber;
     if (m_nPartNumber > m_poFS->GetMaximumPartCount())
@@ -1162,291 +1146,11 @@ IVSIS3LikeFSHandler::UploadPart(const std::string &osFilename, int nPartNumber,
 }
 
 /************************************************************************/
-/*                      ReadCallBackBufferChunked()                     */
-/************************************************************************/
-
-size_t VSIS3LikeWriteHandle::ReadCallBackBufferChunked(char *buffer,
-                                                       size_t size,
-                                                       size_t nitems,
-                                                       void *instream)
-{
-    VSIS3LikeWriteHandle *poThis =
-        static_cast<VSIS3LikeWriteHandle *>(instream);
-    if (poThis->m_nChunkedBufferSize == 0)
-    {
-        // CPLDebug("VSIS3LikeWriteHandle", "Writing 0 byte (finish)");
-        return 0;
-    }
-    const size_t nSizeMax = size * nitems;
-    size_t nSizeToWrite = nSizeMax;
-    size_t nChunkedBufferRemainingSize =
-        poThis->m_nChunkedBufferSize - poThis->m_nChunkedBufferOff;
-    if (nChunkedBufferRemainingSize < nSizeToWrite)
-        nSizeToWrite = nChunkedBufferRemainingSize;
-    memcpy(buffer,
-           static_cast<const GByte *>(poThis->m_pBuffer) +
-               poThis->m_nChunkedBufferOff,
-           nSizeToWrite);
-    poThis->m_nChunkedBufferOff += nSizeToWrite;
-    // CPLDebug("VSIS3LikeWriteHandle", "Writing %d bytes", nSizeToWrite);
-    return nSizeToWrite;
-}
-
-/************************************************************************/
-/*                          WriteChunked()                              */
-/************************************************************************/
-
-size_t VSIS3LikeWriteHandle::WriteChunked(const void *pBuffer, size_t nSize,
-                                          size_t nMemb)
-{
-    const size_t nBytesToWrite = nSize * nMemb;
-
-    if (m_hCurlMulti == nullptr)
-    {
-        m_hCurlMulti = curl_multi_init();
-    }
-
-    WriteFuncStruct sWriteFuncData;
-    CPLHTTPRetryContext oRetryContext(m_oRetryParameters);
-    // We can only easily retry at the first chunk of a transfer
-    bool bCanRetry = (m_hCurl == nullptr);
-    bool bRetry;
-    do
-    {
-        bRetry = false;
-        struct curl_slist *headers = nullptr;
-        if (m_hCurl == nullptr)
-        {
-            CURL *hCurlHandle = curl_easy_init();
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
-                                       ReadCallBackBufferChunked);
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
-
-            VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr,
-                                       nullptr);
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA,
-                                       &sWriteFuncData);
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                                       VSICurlHandleWriteFunc);
-
-            VSICURLInitWriteFuncStruct(&m_sWriteFuncHeaderData, nullptr,
-                                       nullptr, nullptr);
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA,
-                                       &m_sWriteFuncHeaderData);
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                                       VSICurlHandleWriteFunc);
-
-            headers = static_cast<struct curl_slist *>(CPLHTTPSetOptions(
-                hCurlHandle, m_poS3HandleHelper->GetURL().c_str(),
-                m_aosHTTPOptions.List()));
-            headers = VSICurlSetCreationHeadersFromOptions(
-                headers, m_aosOptions.List(), m_osFilename.c_str());
-            headers = VSICurlMergeHeaders(
-                headers, m_poS3HandleHelper->GetCurlHeaders("PUT", headers));
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER,
-                                       headers);
-
-            m_osCurlErrBuf.resize(CURL_ERROR_SIZE + 1);
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER,
-                                       &m_osCurlErrBuf[0]);
-
-            curl_multi_add_handle(m_hCurlMulti, hCurlHandle);
-            m_hCurl = hCurlHandle;
-        }
-
-        m_pBuffer = pBuffer;
-        m_nChunkedBufferOff = 0;
-        m_nChunkedBufferSize = nBytesToWrite;
-
-        int repeats = 0;
-        while (m_nChunkedBufferOff < m_nChunkedBufferSize && !bRetry)
-        {
-            int still_running;
-
-            memset(&m_osCurlErrBuf[0], 0, m_osCurlErrBuf.size());
-
-            while (curl_multi_perform(m_hCurlMulti, &still_running) ==
-                       CURLM_CALL_MULTI_PERFORM &&
-                   // cppcheck-suppress knownConditionTrueFalse
-                   m_nChunkedBufferOff < m_nChunkedBufferSize)
-            {
-                // loop
-            }
-            // cppcheck-suppress knownConditionTrueFalse
-            if (!still_running || m_nChunkedBufferOff == m_nChunkedBufferSize)
-                break;
-
-            CURLMsg *msg;
-            do
-            {
-                int msgq = 0;
-                msg = curl_multi_info_read(m_hCurlMulti, &msgq);
-                if (msg && (msg->msg == CURLMSG_DONE))
-                {
-                    CURL *e = msg->easy_handle;
-                    if (e == m_hCurl)
-                    {
-                        long response_code;
-                        curl_easy_getinfo(m_hCurl, CURLINFO_RESPONSE_CODE,
-                                          &response_code);
-                        if (response_code != 200 && response_code != 201)
-                        {
-                            // Look if we should attempt a retry
-                            if (bCanRetry &&
-                                oRetryContext.CanRetry(
-                                    static_cast<int>(response_code),
-                                    m_sWriteFuncHeaderData.pBuffer,
-                                    m_osCurlErrBuf.c_str()))
-                            {
-                                CPLError(CE_Warning, CPLE_AppDefined,
-                                         "HTTP error code: %d - %s. "
-                                         "Retrying again in %.1f secs",
-                                         static_cast<int>(response_code),
-                                         m_poS3HandleHelper->GetURL().c_str(),
-                                         oRetryContext.GetCurrentDelay());
-                                CPLSleep(oRetryContext.GetCurrentDelay());
-                                bRetry = true;
-                            }
-                            else if (sWriteFuncData.pBuffer != nullptr &&
-                                     m_poS3HandleHelper->CanRestartOnError(
-                                         sWriteFuncData.pBuffer,
-                                         m_sWriteFuncHeaderData.pBuffer, false))
-                            {
-                                bRetry = true;
-                            }
-                            else
-                            {
-                                CPLError(CE_Failure, CPLE_AppDefined,
-                                         "Error %d: %s",
-                                         static_cast<int>(response_code),
-                                         m_osCurlErrBuf.c_str());
-
-                                curl_slist_free_all(headers);
-                                bRetry = false;
-                            }
-
-                            curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
-                            curl_easy_cleanup(m_hCurl);
-
-                            CPLFree(sWriteFuncData.pBuffer);
-                            CPLFree(m_sWriteFuncHeaderData.pBuffer);
-
-                            m_hCurl = nullptr;
-                            sWriteFuncData.pBuffer = nullptr;
-                            m_sWriteFuncHeaderData.pBuffer = nullptr;
-                            if (!bRetry)
-                                return 0;
-                        }
-                    }
-                }
-            } while (msg);
-
-            CPLMultiPerformWait(m_hCurlMulti, repeats);
-        }
-
-        m_nWrittenInPUT += nBytesToWrite;
-
-        curl_slist_free_all(headers);
-
-        m_pBuffer = nullptr;
-
-        if (!bRetry)
-        {
-            long response_code;
-            curl_easy_getinfo(m_hCurl, CURLINFO_RESPONSE_CODE, &response_code);
-            if (response_code != 100)
-            {
-                // Look if we should attempt a retry
-                if (bCanRetry &&
-                    oRetryContext.CanRetry(static_cast<int>(response_code),
-                                           m_sWriteFuncHeaderData.pBuffer,
-                                           m_osCurlErrBuf.c_str()))
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "HTTP error code: %d - %s. "
-                             "Retrying again in %.1f secs",
-                             static_cast<int>(response_code),
-                             m_poS3HandleHelper->GetURL().c_str(),
-                             oRetryContext.GetCurrentDelay());
-                    CPLSleep(oRetryContext.GetCurrentDelay());
-                    bRetry = true;
-                }
-                else if (sWriteFuncData.pBuffer != nullptr &&
-                         m_poS3HandleHelper->CanRestartOnError(
-                             sWriteFuncData.pBuffer,
-                             m_sWriteFuncHeaderData.pBuffer, false))
-                {
-                    bRetry = true;
-                }
-                else
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Error %d: %s",
-                             static_cast<int>(response_code),
-                             m_osCurlErrBuf.c_str());
-                    bRetry = false;
-                    nMemb = 0;
-                }
-
-                curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
-                curl_easy_cleanup(m_hCurl);
-
-                CPLFree(sWriteFuncData.pBuffer);
-                CPLFree(m_sWriteFuncHeaderData.pBuffer);
-
-                m_hCurl = nullptr;
-                sWriteFuncData.pBuffer = nullptr;
-                m_sWriteFuncHeaderData.pBuffer = nullptr;
-            }
-        }
-    } while (bRetry);
-
-    return nMemb;
-}
-
-/************************************************************************/
-/*                        FinishChunkedTransfer()                       */
-/************************************************************************/
-
-int VSIS3LikeWriteHandle::FinishChunkedTransfer()
-{
-    if (m_hCurl == nullptr)
-        return -1;
-
-    NetworkStatisticsFileSystem oContextFS(m_poFS->GetFSPrefix().c_str());
-    NetworkStatisticsFile oContextFile(m_osFilename.c_str());
-    NetworkStatisticsAction oContextAction("Write");
-
-    NetworkStatisticsLogger::LogPUT(m_nWrittenInPUT);
-    m_nWrittenInPUT = 0;
-
-    m_pBuffer = nullptr;
-    m_nChunkedBufferOff = 0;
-    m_nChunkedBufferSize = 0;
-
-    VSICURLMultiPerform(m_hCurlMulti);
-
-    long response_code;
-    curl_easy_getinfo(m_hCurl, CURLINFO_RESPONSE_CODE, &response_code);
-    if (response_code == 200 || response_code == 201)
-    {
-        InvalidateParentDirectory();
-    }
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Error %d: %s",
-                 static_cast<int>(response_code), m_osCurlErrBuf.c_str());
-        return -1;
-    }
-    return 0;
-}
-
-/************************************************************************/
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIS3LikeWriteHandle::Write(const void *pBuffer, size_t nSize,
-                                   size_t nMemb)
+size_t VSIMultipartWriteHandle::Write(const void *pBuffer, size_t nSize,
+                                      size_t nMemb)
 {
     if (m_bError)
         return 0;
@@ -1454,11 +1158,6 @@ size_t VSIS3LikeWriteHandle::Write(const void *pBuffer, size_t nSize,
     size_t nBytesToWrite = nSize * nMemb;
     if (nBytesToWrite == 0)
         return 0;
-
-    if (m_bUseChunkedTransfer)
-    {
-        return WriteChunked(pBuffer, nSize, nMemb);
-    }
 
     const GByte *pabySrcBuffer = reinterpret_cast<const GByte *>(pBuffer);
     while (nBytesToWrite > 0)
@@ -1498,7 +1197,7 @@ size_t VSIS3LikeWriteHandle::Write(const void *pBuffer, size_t nSize,
 /*                    InvalidateParentDirectory()                       */
 /************************************************************************/
 
-void VSIS3LikeWriteHandle::InvalidateParentDirectory()
+void VSIMultipartWriteHandle::InvalidateParentDirectory()
 {
     m_poFS->InvalidateCachedData(m_poS3HandleHelper->GetURL().c_str());
 
@@ -1512,7 +1211,7 @@ void VSIS3LikeWriteHandle::InvalidateParentDirectory()
 /*                           DoSinglePartPUT()                          */
 /************************************************************************/
 
-bool VSIS3LikeWriteHandle::DoSinglePartPUT()
+bool VSIMultipartWriteHandle::DoSinglePartPUT()
 {
     bool bSuccess = true;
     bool bRetry;
@@ -2019,17 +1718,13 @@ bool IVSIS3LikeFSHandler::AbortPendingUploads(const char *pszFilename)
 /*                                 Close()                              */
 /************************************************************************/
 
-int VSIS3LikeWriteHandle::Close()
+int VSIMultipartWriteHandle::Close()
 {
     int nRet = 0;
     if (!m_bClosed)
     {
         m_bClosed = true;
-        if (m_bUseChunkedTransfer && m_hCurlMulti != nullptr)
-        {
-            nRet = FinishChunkedTransfer();
-        }
-        else if (m_osUploadID.empty())
+        if (m_osUploadID.empty())
         {
             if (!m_bError && !DoSinglePartPUT())
                 nRet = -1;
@@ -2070,8 +1765,8 @@ VSIS3FSHandler::CreateWriteHandle(const char *pszFilename,
         CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = std::make_unique<VSIS3LikeWriteHandle>(
-        this, pszFilename, poHandleHelper, false, papszOptions);
+    auto poHandle = std::make_unique<VSIMultipartWriteHandle>(
+        this, pszFilename, poHandleHelper, papszOptions);
     if (!poHandle->IsOK())
     {
         return nullptr;
