@@ -34,6 +34,7 @@ import sys
 from typing import Optional
 
 from osgeo import gdal, osr
+from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 
 ###############################################################################
 
@@ -47,19 +48,8 @@ def fmt_loc(srs_obj, loc):
 ###############################################################################
 
 
+@enable_gdal_exceptions
 def move(
-    filename: str,
-    t_srs: str,
-    s_srs: Optional[str] = None,
-    pixel_threshold: Optional[float] = None,
-):
-    with gdal.ExceptionMgr(), osr.ExceptionMgr():
-        return _move(
-            filename=filename, t_srs=t_srs, s_srs=s_srs, pixel_threshold=pixel_threshold
-        )
-
-
-def _move(
     filename: str,
     t_srs: str,
     s_srs: Optional[str] = None,

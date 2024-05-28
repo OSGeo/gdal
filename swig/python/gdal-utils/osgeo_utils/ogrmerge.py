@@ -38,7 +38,7 @@ from typing import Optional, Sequence
 
 from osgeo import gdal, ogr, osr
 from osgeo_utils.auxiliary.base import PathLikeOrStr
-from osgeo_utils.auxiliary.util import GetOutputDriverFor
+from osgeo_utils.auxiliary.util import GetOutputDriverFor, enable_gdal_exceptions
 
 
 def Usage(isError):
@@ -167,12 +167,8 @@ class XMLWriter(object):
 # process()
 
 
+@enable_gdal_exceptions
 def process(argv, progress=None, progress_arg=None):
-    with gdal.ExceptionMgr(), ogr.ExceptionMgr(), osr.ExceptionMgr():
-        return _process(argv=argv, progress=progress, progress_arg=progress_arg)
-
-
-def _process(argv, progress=None, progress_arg=None):
 
     if not argv:
         return Usage(isError=True)

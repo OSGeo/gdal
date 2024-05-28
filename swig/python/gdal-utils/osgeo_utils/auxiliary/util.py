@@ -34,7 +34,7 @@ from numbers import Real
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
 from osgeo import __version__ as gdal_version_str
-from osgeo import gdal
+from osgeo import gdal, ogr, osr
 from osgeo_utils.auxiliary.base import (
     MaybeSequence,
     OptionalBoolStr,
@@ -52,6 +52,16 @@ CreationOptions = Optional[Dict[str, Any]]
 gdal_version = tuple(int(s) for s in str(gdal_version_str).split(".") if s.isdigit())[
     :3
 ]
+
+
+def enable_gdal_exceptions(fun):
+    def enable_exceptions_wrapper(*args, **kwargs):
+        with gdal.ExceptionMgr(useExceptions=True), osr.ExceptionMgr(
+            useExceptions=True
+        ), ogr.ExceptionMgr(useExceptions=True):
+            return fun(*args, **kwargs)
+
+    return enable_exceptions_wrapper
 
 
 def DoesDriverHandleExtension(drv: gdal.Driver, ext: str) -> bool:

@@ -37,41 +37,11 @@ from typing import Optional, Union
 
 from osgeo import gdal, ogr
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
-from osgeo_utils.auxiliary.util import GetOutputDriverFor
+from osgeo_utils.auxiliary.util import GetOutputDriverFor, enable_gdal_exceptions
 
 
+@enable_gdal_exceptions
 def gdal_polygonize(
-    src_filename: Optional[str] = None,
-    band_number: Union[int, str] = 1,
-    dst_filename: Optional[str] = None,
-    overwrite: bool = False,
-    driver_name: Optional[str] = None,
-    dst_layername: Optional[str] = None,
-    dst_fieldname: Optional[str] = None,
-    quiet: bool = False,
-    mask: str = "default",
-    options: Optional[list] = None,
-    layer_creation_options: Optional[list] = None,
-    connectedness8: bool = False,
-):
-    with gdal.ExceptionMgr(), ogr.ExceptionMgr():
-        return _gdal_polygonize(
-            src_filename=src_filename,
-            band_number=band_number,
-            dst_filename=dst_filename,
-            overwrite=overwrite,
-            driver_name=driver_name,
-            dst_layername=dst_layername,
-            dst_fieldname=dst_fieldname,
-            quiet=quiet,
-            mask=mask,
-            options=options,
-            layer_creation_options=layer_creation_options,
-            connectedness8=connectedness8,
-        )
-
-
-def _gdal_polygonize(
     src_filename: Optional[str] = None,
     band_number: Union[int, str] = 1,
     dst_filename: Optional[str] = None,
