@@ -1351,6 +1351,8 @@ def test_ogr_libkml_read_write_style(tmp_vsimem):
     data = data.decode("ascii")
     gdal.VSIFCloseL(f)
 
+    assert "<styleUrl>#unknown_style</styleUrl>" in data
+
     expected_style = """<Style>
           <IconStyle>
             <color>67452301</color>
@@ -2093,3 +2095,31 @@ def test_ogr_libkml_write_layer_name_underscore(tmp_vsimem):
     content = gdal.VSIFReadL(1, 10000, f)
     gdal.VSIFCloseL(f)
     assert b'<Document id="_45_6">' in content
+
+
+###############################################################################
+# Test reading an external style
+
+
+def test_ogr_libkml_read_external_style():
+
+    ds = ogr.Open("data/kml/point_with_external_style.kml")
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+    assert (
+        feat.GetStyleString() == "style_of_point_with_external_style/style.kml#myStyle"
+    )
+
+    with gdal.config_option("LIBKML_EXTERNAL_STYLE", "YES"):
+        ds = ogr.Open("data/kml/point_with_external_style.kml")
+        lyr = ds.GetLayer(0)
+        feat = lyr.GetNextFeature()
+        assert feat.GetStyleString() == "@myStyle"
+
+    with gdal.config_options(
+        {"LIBKML_EXTERNAL_STYLE": "YES", "LIBKML_RESOLVE_STYLE": "YES"}
+    ):
+        ds = ogr.Open("data/kml/point_with_external_style.kml")
+        lyr = ds.GetLayer(0)
+        feat = lyr.GetNextFeature()
+        assert feat.GetStyleString() == "LABEL(c:#FFFFFFFF,w:110.000000)"

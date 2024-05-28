@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document id="root_doc">
+    <Document id="point">
+      <name>point</name>
+      <Placemark id="point.1">
+        <name>my point</name>
+        <styleUrl>style_of_point_with_external_style/style.kml#myStyle</styleUrl>
+        <Point><coordinates>2,49,0</coordinates></Point>
+      </Placemark>
+    </Document>
+  </Document>
+</kml>
