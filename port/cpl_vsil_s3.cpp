@@ -3384,7 +3384,9 @@ int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
     bool bUsingStreaming = false;
     if (!fpSource)
     {
-        if (STARTS_WITH(pszSource, osPrefix.c_str()))
+        if (STARTS_WITH(pszSource, osPrefix.c_str()) &&
+            CPLTestBool(CPLGetConfigOption(
+                "VSIS3_COPYFILE_USE_STREAMING_SOURCE", "YES")))
         {
             // Try to get a streaming path from the source path
             auto poSourceFSHandler = dynamic_cast<IVSIS3LikeFSHandler *>(
