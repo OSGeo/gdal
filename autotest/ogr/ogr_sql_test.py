@@ -784,8 +784,10 @@ def test_ogr_sql_28():
         "SELECT COUNT(*) FROM",
         "SELECT COUNT(*) AS foo FROM",
         "SELECT COUNT(* FROM my_layer",
+        "SELECT COUNT(i_dont_exist) FROM my_layer",
         "SELECT COUNT(FOO intfield) FROM my_layer",
         "SELECT COUNT(DISTINCT intfield FROM my_layer",
+        "SELECT COUNT(DISTINCT i_dont_exist) FROM my_layer",
         "SELECT COUNT(DISTINCT *) FROM my_layer",
         "SELECT FOO(DISTINCT intfield) FROM my_layer",
         "SELECT FOO(DISTINCT intfield) as foo FROM my_layer",
@@ -1084,7 +1086,7 @@ def test_ogr_sql_36():
 # Test select count([distinct] column) with null values (#4354)
 
 
-def test_ogr_sql_37():
+def test_ogr_sql_count_and_null():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("ogr_sql_37")
     lyr = ds.CreateLayer("layer")
