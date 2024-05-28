@@ -37,6 +37,7 @@ from typing import Optional
 
 from osgeo import gdal
 from osgeo_utils.auxiliary.gdal_argparse import GDALArgumentParser, GDALScript
+from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 
 
 def CopyBand(srcband, dstband):
@@ -47,36 +48,8 @@ def CopyBand(srcband, dstband):
         )
 
 
+@enable_gdal_exceptions
 def gdal_fillnodata(
-    src_filename: Optional[str] = None,
-    band_number: int = 1,
-    dst_filename: Optional[str] = None,
-    driver_name: str = "GTiff",
-    creation_options: Optional[list] = None,
-    quiet: bool = False,
-    mask: str = "default",
-    max_distance: Real = 100,
-    smoothing_iterations: int = 0,
-    interpolation: Optional[str] = None,
-    options: Optional[list] = None,
-):
-    with gdal.ExceptionMgr():
-        return _gdal_fillnodata(
-            src_filename=src_filename,
-            band_number=band_number,
-            dst_filename=dst_filename,
-            driver_name=driver_name,
-            creation_options=creation_options,
-            quiet=quiet,
-            mask=mask,
-            max_distance=max_distance,
-            smoothing_iterations=smoothing_iterations,
-            interpolation=interpolation,
-            options=options,
-        )
-
-
-def _gdal_fillnodata(
     src_filename: Optional[str] = None,
     band_number: int = 1,
     dst_filename: Optional[str] = None,

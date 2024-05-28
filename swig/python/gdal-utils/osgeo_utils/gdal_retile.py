@@ -34,6 +34,7 @@ import os
 import sys
 
 from osgeo import gdal, ogr, osr
+from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 
 progress = gdal.TermProgress_nocb
 
@@ -941,12 +942,8 @@ def Usage(isError):
     return 2 if isError else 0
 
 
+@enable_gdal_exceptions
 def main(args=None, g=None):
-    with gdal.ExceptionMgr(), ogr.ExceptionMgr(), osr.ExceptionMgr():
-        return _main(args=args, g=g)
-
-
-def _main(args=None, g=None):
 
     if g is None:
         g = RetileGlobals()

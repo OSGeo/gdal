@@ -32,6 +32,7 @@
 import sys
 
 from osgeo import gdal, osr
+from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 
 
 def Usage(isError):
@@ -86,12 +87,8 @@ def ArgIsNumeric(s):
     return True
 
 
+@enable_gdal_exceptions
 def gdal_edit(argv):
-    with gdal.ExceptionMgr(), osr.ExceptionMgr():
-        return _gdal_edit(argv)
-
-
-def _gdal_edit(argv):
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
