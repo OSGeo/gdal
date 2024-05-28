@@ -3585,3 +3585,55 @@ OBJECT_LIST_INPUT(GDALMDArrayHS);
   }
   $result = t_output_helper($result,r);
 }
+
+
+%typemap(in,numinputs=0) (int* pnRetCode,
+                          int *pbNonSequentialUploadSupported,
+                          int *pbParallelUploadSupported,
+                          int *pbSupportsAbort,
+                          size_t *pnMinPartSize,
+                          size_t *pnMaxPartSize,
+                          int *pnMaxPartCount) (
+                              int nRetCode = 0,
+                              int bNonSequentialUploadSupported = 0,
+                              int bParallelUploadSupported = 0,
+                              int bSupportsAbort = 0,
+                              size_t nMinPartSize = 0,
+                              size_t nMaxPartSize = 0,
+                              int nMaxPartCount = 0 )
+{
+  $1 = &nRetCode;
+  $2 = &bNonSequentialUploadSupported;
+  $3 = &bParallelUploadSupported;
+  $4 = &bSupportsAbort;
+  $5 = &nMinPartSize;
+  $6 = &nMaxPartSize;
+  $7 = &nMaxPartCount;
+}
+
+%typemap(argout) (int* pnRetCode,
+                  int *pbNonSequentialUploadSupported,
+                  int *pbParallelUploadSupported,
+                  int *pbSupportsAbort,
+                  size_t *pnMinPartSize,
+                  size_t *pnMaxPartSize,
+                  int *pnMaxPartCount)
+{
+  if( *$1 == 0 )
+  {
+      Py_DECREF($result);
+      $result = Py_None;
+      Py_INCREF(Py_None);
+  }
+  else
+  {
+      PyObject *r = PyTuple_New( 6 );
+      PyTuple_SetItem( r, 0, PyBool_FromLong(*$2) );
+      PyTuple_SetItem( r, 1, PyBool_FromLong(*$3) );
+      PyTuple_SetItem( r, 2, PyBool_FromLong(*$4) );
+      PyTuple_SetItem( r, 3, PyLong_FromUnsignedLongLong(*$5) );
+      PyTuple_SetItem( r, 4, PyLong_FromUnsignedLongLong(*$6) );
+      PyTuple_SetItem( r, 5, PyLong_FromUnsignedLongLong(*$7) );
+      $result = t_output_helper($result,r);
+  }
+}

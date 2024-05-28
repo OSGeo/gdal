@@ -1119,6 +1119,22 @@ def test_vsioss_6(server):
 
 
 ###############################################################################
+# Test VSIMultipartUploadXXXX()
+
+
+def test_vsioss_MultipartUpload(server):
+
+    # Test MultipartUploadGetCapabilities()
+    info = gdal.MultipartUploadGetCapabilities("/vsioss/")
+    assert info.non_sequential_upload_supported
+    assert info.parallel_upload_supported
+    assert info.abort_supported
+    assert info.min_part_size == 5
+    assert info.max_part_size >= 1024
+    assert info.max_part_count == 10000
+
+
+###############################################################################
 # Test Mkdir() / Rmdir()
 
 
