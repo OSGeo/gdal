@@ -44,6 +44,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_float.h"
 #include "cpl_string.h"
 #include "gdal.h"
 #include "gdal_frmts.h"
@@ -201,6 +202,10 @@ GDALDataType HDF5Dataset::GetDataType(hid_t TypeID)
             return GDT_Unknown;
 #endif
         }
+#ifdef HDF5_HAVE_FLOAT16
+        else if (H5Tequal(H5T_NATIVE_FLOAT16, TypeID))
+            return GDT_Float32;
+#endif
         else if (H5Tequal(H5T_NATIVE_FLOAT, TypeID))
             return GDT_Float32;
         else if (H5Tequal(H5T_NATIVE_DOUBLE, TypeID))
@@ -258,6 +263,10 @@ GDALDataType HDF5Dataset::GetDataType(hid_t TypeID)
             eDataType = GDT_Unknown;
 #endif
         }
+#ifdef HDF5_HAVE_FLOAT16
+        else if (H5Tequal(H5T_NATIVE_FLOAT16, ElemTypeID))
+            eDataType = GDT_CFloat32;
+#endif
         else if (H5Tequal(H5T_NATIVE_FLOAT, ElemTypeID))
             eDataType = GDT_CFloat32;
         else if (H5Tequal(H5T_NATIVE_DOUBLE, ElemTypeID))
@@ -270,6 +279,32 @@ GDALDataType HDF5Dataset::GetDataType(hid_t TypeID)
     }
 
     return GDT_Unknown;
+}
+
+/************************************************************************/
+/*                          IsNativeCFloat16()                          */
+/************************************************************************/
+
+/* static*/ bool HDF5Dataset::IsNativeCFloat16(hid_t hDataType)
+{
+#ifdef HDF5_HAVE_FLOAT16
+    // For complex the compound type must contain 2 elements
+    if (H5Tget_class(hDataType) != H5T_COMPOUND ||
+        H5Tget_nmembers(hDataType) != 2)
+        return false;
+
+    // For complex the native types of both elements should be the same
+    hid_t ElemTypeID = H5Tget_member_type(hDataType, 0);
+    hid_t Elem2TypeID = H5Tget_member_type(hDataType, 1);
+    const bool bRet = H5Tequal(ElemTypeID, H5T_NATIVE_FLOAT16) > 0 &&
+                      H5Tequal(Elem2TypeID, H5T_NATIVE_FLOAT16) > 0;
+    H5Tclose(ElemTypeID);
+    H5Tclose(Elem2TypeID);
+    return bRet;
+#else
+    CPL_IGNORE_RET_VAL(hDataType);
+    return false;
+#endif
 }
 
 /************************************************************************/
@@ -304,6 +339,10 @@ const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
             return "32/64-bit integer";
         else if (H5Tequal(H5T_NATIVE_ULONG, TypeID))
             return "32/64-bit unsigned integer";
+#ifdef HDF5_HAVE_FLOAT16
+        else if (H5Tequal(H5T_NATIVE_FLOAT16, TypeID))
+            return "16-bit floating-point";
+#endif
         else if (H5Tequal(H5T_NATIVE_FLOAT, TypeID))
             return "32-bit floating-point";
         else if (H5Tequal(H5T_NATIVE_DOUBLE, TypeID))
@@ -348,6 +387,13 @@ const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
             H5Tclose(ElemTypeID);
             return "complex, 32/64-bit integer";
         }
+#ifdef HDF5_HAVE_FLOAT16
+        else if (H5Tequal(H5T_NATIVE_FLOAT16, ElemTypeID))
+        {
+            H5Tclose(ElemTypeID);
+            return "complex, 16-bit floating-point";
+        }
+#endif
         else if (H5Tequal(H5T_NATIVE_FLOAT, ElemTypeID))
         {
             H5Tclose(ElemTypeID);
@@ -1132,6 +1178,28 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
                 psContext->m_osValue += szData;
             }
         }
+#ifdef HDF5_HAVE_FLOAT16
+        else if (H5Tequal(H5T_NATIVE_FLOAT16, hAttrNativeType) > 0)
+        {
+            for (hsize_t i = 0; i < nAttrElmts; i++)
+            {
+                const uint16_t nVal16 = static_cast<uint16_t *>(buf)[i];
+                const uint32_t nVal32 = CPLHalfToFloat(nVal16);
+                float fVal;
+                memcpy(&fVal, &nVal32, sizeof(fVal));
+                CPLsnprintf(szData, nDataLen, "%.8g", fVal);
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
+                    CPLError(CE_Warning, CPLE_OutOfMemory,
+                             "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
+                psContext->m_osValue += szData;
+            }
+        }
+#endif
         else if (H5Tequal(H5T_NATIVE_FLOAT, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
