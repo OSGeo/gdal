@@ -89,13 +89,18 @@
 
 #ifdef HAVE_PODOFO
 
+#ifdef _WIN32
 /*
  * Some Windows header defines a GetObject macro that
- * shadows a GetObject() method in PoDoFo. This
- * workaround is documented in the PoDoFo source.
+ * shadows a GetObject() method in PoDoFo. As pdfdataset.cpp includes cpl_spawn.h
+ * which includes windows.h, so let's bite the bullet and important windows.h
+ * right now, and then undef GetObject. Undef'ing GetObject is done in some
+ * source files of PoDoFo itself.
  */
+#include <windows.h>
 #ifdef GetObject
 #undef GetObject
+#endif
 #endif
 
 // Related fix submitted per https://github.com/podofo/podofo/pull/98
