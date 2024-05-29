@@ -21,6 +21,11 @@ function(declare_def DEF)
     endif()
     if(TARGET gdal_netCDF_core)
         target_compile_definitions(gdal_netCDF_core PRIVATE ${DEF})
+        if(NetCDF_TARGET AND TARGET ${NetCDF_TARGET})
+            target_include_directories(gdal_netCDF_core PRIVATE $<TARGET_PROPERTY:${NetCDF_TARGET},INTERFACE_INCLUDE_DIRECTORIES>)
+            target_compile_definitions(gdal_netCDF_core PRIVATE $<TARGET_PROPERTY:${NetCDF_TARGET},INTERFACE_COMPILE_DEFINITIONS>)
+            target_compile_definitions(gdal_netCDF_core PRIVATE HAS_NETCDF_H)
+        endif()
     endif()
 endfunction()
 
@@ -52,4 +57,4 @@ endif()
 
 gdal_standard_includes(gdal_netCDF)
 gdal_target_link_libraries(gdal_netCDF PRIVATE ${NetCDF_TARGET})
-
+target_compile_definitions(gdal_netCDF PRIVATE HAS_NETCDF_H)
