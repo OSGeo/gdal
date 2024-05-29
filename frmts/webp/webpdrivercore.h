@@ -33,8 +33,12 @@
 
 constexpr const char *DRIVER_NAME = "WEBP";
 
-int CPL_DLL WEBPDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define WEBPDriverIdentify PLUGIN_SYMBOL_NAME(WEBPDriverIdentify)
+#define WEBPDriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(WEBPDriverSetCommonMetadata)
 
-void CPL_DLL WEBPDriverSetCommonMetadata(GDALDriver *poDriver);
+int WEBPDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void WEBPDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

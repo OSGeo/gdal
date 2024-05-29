@@ -1,7 +1,8 @@
 add_gdal_driver(TARGET gdal_WEBP
                 SOURCES webp_headers.h webpdataset.cpp
                 CORE_SOURCES webpdrivercore.cpp
-                PLUGIN_CAPABLE)
+                PLUGIN_CAPABLE
+                NO_SHARED_SYMBOL_WITH_CORE)
 
 if(TARGET gdal_WEBP_core)
     target_include_directories(gdal_WEBP_core PRIVATE $<TARGET_PROPERTY:WEBP::WebP,INTERFACE_INCLUDE_DIRECTORIES>)
