@@ -28,6 +28,10 @@ arithmetic supported by numpy arrays such as ``+``, ``-``, ``*``, and
 Note that all files must have the same dimensions (unless extent option is used),
 but no projection checking is performed (unless projectionCheck option is used).
 
+.. note::
+
+    gdal_calc is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. include:: options/help_and_help_general.rst
 
 .. option:: --calc=<expression>
@@ -249,8 +253,3 @@ Work with multiple bands:
 
     gdal_calc -A input.tif --A_band=1 -B input.tif --B_band=2 \
       --outfile=result.tif --calc="(A+B)/2" --calc="B*logical_and(A>100,A<150)"
-
-Notes
------
-
-gdal_calc is a Python utility, and is only available if GDAL Python bindings are available.

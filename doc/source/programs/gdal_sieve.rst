@@ -34,7 +34,6 @@ some cases (e.g. 32-bit floating point data with min=0 and max=1).
 Additional details on the algorithm are available in the :cpp:func:`GDALSieveFilter` docs.
 
 
-Notes
------
+.. note::
 
-gdal_sieve is a Python utility, and is only available if GDAL Python bindings are available.
+    gdal_retile is a Python utility, and is only available if GDAL Python bindings are available.

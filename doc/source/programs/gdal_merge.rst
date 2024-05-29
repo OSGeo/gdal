@@ -33,6 +33,10 @@ are considered on a band by band level, i.e. a nodata/transparent pixel on
 one source band will not set a nodata/transparent value on all bands for the
 target pixel in the resulting raster nor will it overwrite a valid pixel value.
 
+.. note::
+
+    gdal_merge is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. program:: gdal_merge
 
 .. include:: options/help_and_help_general.rst
@@ -169,9 +173,3 @@ copied into the destination image if it is not already defined as nodata.
 .. code-block:: bash
 
    gdal_merge -o merge.tif -n 0 image1.tif image2.tif image3.tif image4.tif
-
-
-Notes
------
-
-gdal_merge is a Python utility, and is only available if GDAL Python bindings are available.

@@ -35,6 +35,10 @@ byte comparison done which will count as one difference. So if it is
 only important that the GDAL visible data is identical a difference
 count of 1 (the binary difference) should be considered acceptable.
 
+.. note::
+
+    gdalcompare is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. program:: gdalcompare
 
 .. include:: options/help_and_help_general.rst
@@ -129,9 +133,3 @@ Examples
     gdalcompare N.tiff N.tiff; echo $?
     Differences Found: 0
     0
-
-
-Notes
------
-
-gdalcompare is a Python utility, and is only available if GDAL Python bindings are available.

@@ -31,6 +31,10 @@ the distance from the center of each pixel to the center of the nearest
 pixel identified as a target pixel.  Target pixels are those in the source
 raster for which the raster pixel value is in the set of target pixel values.
 
+.. note::
+
+    gdal_proximity is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. program:: gdal_proximity
 
 .. include:: options/help_and_help_general.rst
@@ -93,9 +97,3 @@ raster for which the raster pixel value is in the set of target pixel values.
 
     Specify a value to be applied to all pixels that are within the
     -maxdist of target pixels (including the target pixels) instead of a distance value.
-
-
-Notes
------
-
-gdal_proximity is a Python utility, and is only available if GDAL Python bindings are available.

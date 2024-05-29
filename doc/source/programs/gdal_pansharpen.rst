@@ -36,6 +36,10 @@ dataset describing the pan-sharpening operation.
 
 More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
 
+.. note::
+
+    gdal_pansharpen is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. include:: options/help_and_help_general.rst
 
 .. option:: -of <format>
@@ -139,9 +143,3 @@ the pseudo panchromatic intensity on the 4 RGBNir bands:
 .. code-block::
 
     gdal_pansharpen -b 1 -b 2 -b 3 panchro.tif rgbnir.tif pansharpened_out.tif
-
-
-Notes
------
-
-gdal_pansharpen is a Python utility, and is only available if GDAL Python bindings are available.
