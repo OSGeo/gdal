@@ -35,8 +35,12 @@
 
 constexpr const char *DRIVER_NAME = "PCIDSK";
 
-int CPL_DLL PCIDSKDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define PCIDSKDriverIdentify PLUGIN_SYMBOL_NAME(PCIDSKDriverIdentify)
+#define PCIDSKDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(PCIDSKDriverSetCommonMetadata)
 
-void CPL_DLL PCIDSKDriverSetCommonMetadata(GDALDriver *poDriver);
+int PCIDSKDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void PCIDSKDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
