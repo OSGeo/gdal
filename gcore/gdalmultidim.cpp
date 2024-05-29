@@ -3335,7 +3335,7 @@ const char *GDALAttribute::ReadAsString() const
  *
  * This function will only return the first element if there are several.
  *
- * It can fail if its value can be not converted to integer.
+ * It can fail if its value can not be converted to integer.
  *
  * This is the same as the C function GDALAttributeReadAsInt()
  *
@@ -3360,9 +3360,9 @@ int GDALAttribute::ReadAsInt() const
  *
  * This function will only return the first element if there are several.
  *
- * It can fail if its value can be not converted to long.
+ * It can fail if its value can not be converted to long.
  *
- * This is the same as the C function GDALAttributeReadAsLong()
+ * This is the same as the C function GDALAttributeReadAsInt64()
  *
  * @return an int64_t, or INT64_MIN in case of error.
  */
@@ -3385,7 +3385,7 @@ GInt64 GDALAttribute::ReadAsInt64() const
  *
  * This function will only return the first element if there are several.
  *
- * It can fail if its value can be not converted to double.
+ * It can fail if its value can not be converted to double.
  *
  * This is the same as the C function GDALAttributeReadAsInt()
  *
@@ -12870,7 +12870,7 @@ const char *GDALAttributeReadAsString(GDALAttributeH hAttr)
  *
  * This function will only return the first element if there are several.
  *
- * It can fail if its value can be not converted to integer.
+ * It can fail if its value can not be converted to integer.
  *
  * This is the same as the C++ method GDALAttribute::ReadAsInt()
  *
@@ -12890,13 +12890,13 @@ int GDALAttributeReadAsInt(GDALAttributeH hAttr)
  *
  * This function will only return the first element if there are several.
  *
- * It can fail if its value can be not converted to integer.
+ * It can fail if its value can not be converted to integer.
  *
  * This is the same as the C++ method GDALAttribute::ReadAsInt64()
  *
  * @return an int64_t, or INT64_MIN in case of error.
  */
-GInt64 GDALAttributeReadAsLong(GDALAttributeH hAttr)
+GInt64 GDALAttributeReadAsInt64(GDALAttributeH hAttr)
 {
     VALIDATE_POINTER1(hAttr, __func__, 0);
     return hAttr->m_poImpl->ReadAsInt64();
