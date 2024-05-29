@@ -1440,32 +1440,28 @@ void CPL_DLL GDALDestroySubdatasetInfo(GDALSubdatasetInfoH hInfo);
                                                                        const GInt16                           \
                                                                            *,                                 \
                                                                        papoSource)                            \
-                                                                       [(ii) *                                \
-                                                                        2]                                    \
+                                                                       [(ii)*2]                               \
                                                                  : (eSrcType ==                               \
                                                                             GDT_CInt32                        \
                                                                         ? CPL_REINTERPRET_CAST(               \
                                                                               const GInt32                    \
                                                                                   *,                          \
                                                                               papoSource)                     \
-                                                                              [(ii) *                         \
-                                                                               2]                             \
+                                                                              [(ii)*2]                        \
                                                                         : (eSrcType ==                        \
                                                                                    GDT_CFloat32               \
                                                                                ? CPL_REINTERPRET_CAST(        \
                                                                                      const float              \
                                                                                          *,                   \
                                                                                      papoSource)              \
-                                                                                     [(ii) *                  \
-                                                                                      2]                      \
+                                                                                     [(ii)*2]                 \
                                                                                : (eSrcType ==                 \
                                                                                           GDT_CFloat64        \
                                                                                       ? CPL_REINTERPRET_CAST( \
                                                                                             const double      \
                                                                                                 *,            \
                                                                                             papoSource)       \
-                                                                                            [(ii) *           \
-                                                                                             2]               \
+                                                                                            [(ii)*2]          \
                                                                                       : 0))))))))))))
 
 /** Type of functions to pass to GDALAddDerivedBandPixelFunc.
