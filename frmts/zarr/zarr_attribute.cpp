@@ -116,7 +116,7 @@ void ZarrAttributeGroup::Init(const CPLJSONObject &obj, bool bUpdatable)
                     const size_t count = 1;
                     const GInt64 arrayStep = 0;
                     const GPtrDiff_t bufferStride = 0;
-                    const GInt64 val = item.ToLong();
+                    const int64_t val = item.ToLong();
                     poAttr->Write(
                         &arrayStartIdx, &count, &arrayStep, &bufferStride,
                         GDALExtendedDataType::Create(GDT_Int64), &val);
@@ -240,7 +240,7 @@ void ZarrAttributeGroup::Init(const CPLJSONObject &obj, bool bUpdatable)
                                 }
                                 case CPLJSONObject::Type::Long:
                                 {
-                                    const GInt64 val = subItem.ToLong();
+                                    const int64_t val = subItem.ToLong();
                                     poAttr->Write(
                                         &arrayStartIdx, &count, &arrayStep,
                                         &bufferStride,
@@ -362,13 +362,13 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
                 if (eDT == GDT_Int8 || eDT == GDT_Int16 || eDT == GDT_Int32 ||
                     eDT == GDT_Int64)
                 {
-                    const GInt64 nVal = attr->ReadAsLong();
+                    const int64_t nVal = attr->ReadAsInt64();
                     o.Add(attr->GetName(), nVal);
                 }
                 else if (eDT == GDT_Byte || eDT == GDT_UInt16 ||
                          eDT == GDT_UInt32 || eDT == GDT_UInt64)
                 {
-                    const GInt64 nVal = attr->ReadAsLong();
+                    const int64_t nVal = attr->ReadAsInt64();
                     o.Add(attr->GetName(), static_cast<uint64_t>(nVal));
                 }
                 else
@@ -383,7 +383,7 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
                 if (eDT == GDT_Int8 || eDT == GDT_Int16 || eDT == GDT_Int32 ||
                     eDT == GDT_Int64)
                 {
-                    const auto list = attr->ReadAsLongArray();
+                    const auto list = attr->ReadAsInt64Array();
                     for (const auto nVal : list)
                     {
                         arr.Add(nVal);
@@ -392,7 +392,7 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
                 else if (eDT == GDT_Byte || eDT == GDT_UInt16 ||
                          eDT == GDT_UInt32 || eDT == GDT_UInt64)
                 {
-                    const auto list = attr->ReadAsLongArray();
+                    const auto list = attr->ReadAsInt64Array();
                     for (const auto nVal : list)
                     {
                         arr.Add(static_cast<uint64_t>(nVal));

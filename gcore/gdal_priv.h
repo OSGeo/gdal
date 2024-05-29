@@ -3235,22 +3235,22 @@ class CPL_DLL GDALAttribute : virtual public GDALAbstractMDArray
     GDALRawResult ReadAsRaw() const;
     const char *ReadAsString() const;
     int ReadAsInt() const;
-    GInt64 ReadAsLong() const;
+    int64_t ReadAsInt64() const;
     double ReadAsDouble() const;
     CPLStringList ReadAsStringArray() const;
     std::vector<int> ReadAsIntArray() const;
-    std::vector<GInt64> ReadAsLongArray() const;
+    std::vector<int64_t> ReadAsInt64Array() const;
     std::vector<double> ReadAsDoubleArray() const;
 
     using GDALAbstractMDArray::Write;
     bool Write(const void *pabyValue, size_t nLen);
     bool Write(const char *);
     bool WriteInt(int);
-    bool WriteLong(GInt64);
+    bool WriteInt64(int64_t);
     bool Write(double);
     bool Write(CSLConstList);
     bool Write(const int *, size_t);
-    bool Write(const GInt64 *, size_t);
+    bool Write(const int64_t *, size_t);
     bool Write(const double *, size_t);
 
     //! @cond Doxygen_Suppress
