@@ -54,8 +54,12 @@
 
 constexpr const char *DRIVER_NAME = "MRF";
 
-int CPL_DLL MRFDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define MRFDriverIdentify PLUGIN_SYMBOL_NAME(MRFDriverIdentify)
+#define MRFDriverSetCommonMetadata                                             \
+    PLUGIN_SYMBOL_NAME(MRFDriverSetCommonMetadata)
 
-void CPL_DLL MRFDriverSetCommonMetadata(GDALDriver *poDriver);
+int MRFDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void MRFDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
