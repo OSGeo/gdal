@@ -33,8 +33,12 @@
 
 constexpr const char *KTX2_DRIVER_NAME = "KTX2";
 
-int CPL_DLL KTX2DriverIdentify(GDALOpenInfo *poOpenInfo);
+#define KTX2DriverIdentify PLUGIN_SYMBOL_NAME(KTX2DriverIdentify)
+#define KTX2DriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(KTX2DriverSetCommonMetadata)
 
-void CPL_DLL KTX2DriverSetCommonMetadata(GDALDriver *poDriver);
+int KTX2DriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void KTX2DriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
