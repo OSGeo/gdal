@@ -37,10 +37,15 @@
 
 constexpr const char *DRIVER_NAME = "JPEG";
 
-bool CPL_DLL JPEGDatasetIsJPEGLS(GDALOpenInfo *poOpenInfo);
+#define JPEGDatasetIsJPEGLS PLUGIN_SYMBOL_NAME(JPEGDatasetIsJPEGLS)
+#define JPEGDriverIdentify PLUGIN_SYMBOL_NAME(JPEGDriverIdentify)
+#define JPEGDriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(JPEGDriverSetCommonMetadata)
 
-int CPL_DLL JPEGDriverIdentify(GDALOpenInfo *poOpenInfo);
+bool JPEGDatasetIsJPEGLS(GDALOpenInfo *poOpenInfo);
 
-void CPL_DLL JPEGDriverSetCommonMetadata(GDALDriver *poDriver);
+int JPEGDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void JPEGDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
