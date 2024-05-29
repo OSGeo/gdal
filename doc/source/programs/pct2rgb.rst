@@ -1,7 +1,7 @@
 .. _pct2rgb:
 
 ================================================================================
-pct2rgb.py
+pct2rgb
 ================================================================================
 
 .. only:: html
@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    pct2rgb.py [--help] [--help-general]
+    pct2rgb [--help] [--help-general]
                [-of format] [-b band] [-rgba] [-pct palette_file] <source_file> <dest_file>
 
 Description
@@ -57,7 +57,7 @@ RGB file of the desired format.
 
     The output RGB file that will be created.
 
-NOTE: pct2rgb.py is a Python script, and will only work if GDAL was built
+NOTE: pct2rgb is a Python script, and will only work if GDAL was built
 with Python support.
 
 The '-expand rgb|rgba' option of :ref:`gdal_translate` obsoletes that utility.
