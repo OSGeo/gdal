@@ -71,7 +71,7 @@ jobs:
             build_script: build.sh
             os: ubuntu-22.04
 
-          - name: Alpine, gcc 32-bit
+          - name: Alpine, clang 32-bit
             id: alpine_32bit
             container: alpine_32bit
             build_script: build.sh

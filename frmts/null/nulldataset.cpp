@@ -164,7 +164,7 @@ CPLErr GDALNullRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (nPixelSpace == GDALGetDataTypeSizeBytes(eBufType) &&
         nLineSpace == nPixelSpace * nBufXSize)
     {
-        memset(pData, 0, nLineSpace * nBufYSize);
+        memset(pData, 0, static_cast<size_t>(nLineSpace) * nBufYSize);
     }
     else
     {

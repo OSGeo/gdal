@@ -254,8 +254,10 @@ CPLErr SAR_CEOSRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     int nPixelsRead = 0;
 
-    GByte *pabyRecord = (GByte *)CPLMalloc(
-        static_cast<size_t>(ImageDesc->BytesPerPixel) * nBlockXSize);
+    GByte *pabyRecord =
+        (GByte *)VSI_MALLOC2_VERBOSE(ImageDesc->BytesPerPixel, nBlockXSize);
+    if (!pabyRecord)
+        return CE_Failure;
 
     for (int iRecord = 0; iRecord < ImageDesc->RecordsPerLine; iRecord++)
     {
@@ -268,8 +270,9 @@ CPLErr SAR_CEOSRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
 
         CPL_IGNORE_RET_VAL(VSIFSeekL(poGDS->fpImage, offset, SEEK_SET));
         CPL_IGNORE_RET_VAL(VSIFReadL(
-            pabyRecord + nPixelsRead * ImageDesc->BytesPerPixel, 1,
-            static_cast<vsi_l_offset>(nPixelsToRead) * ImageDesc->BytesPerPixel,
+            pabyRecord +
+                static_cast<size_t>(nPixelsRead) * ImageDesc->BytesPerPixel,
+            1, static_cast<size_t>(nPixelsToRead) * ImageDesc->BytesPerPixel,
             poGDS->fpImage));
 
         nPixelsRead += nPixelsToRead;

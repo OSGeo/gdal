@@ -1702,12 +1702,12 @@ OGRErr OGRHanaTableLayer::AlterFieldDefn(int field, OGRFieldDefn *newFieldDefn,
 
     OGRFieldDefn *fieldDefn = featureDefn_->GetFieldDefn(field);
 
-    int64_t columnDescIdx = -1;
+    int columnDescIdx = -1;
     for (size_t i = 0; i < attrColumns_.size(); ++i)
     {
         if (EQUAL(attrColumns_[i].name.c_str(), fieldDefn->GetNameRef()))
         {
-            columnDescIdx = i;
+            columnDescIdx = static_cast<int>(i);
             break;
         }
     }

@@ -2705,7 +2705,8 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
             bool bValidGeom = false;
 
             if (!pabyValidity ||
-                TestBit(pabyValidity, iRow + psGeomArray->offset))
+                TestBit(pabyValidity,
+                        static_cast<size_t>(iRow + psGeomArray->offset)))
             {
                 const auto nLen =
                     bUseOffsets32 ? static_cast<size_t>(panOffsets32[iRow + 1] -
