@@ -1,7 +1,8 @@
 add_gdal_driver(TARGET gdal_EXR
                 SOURCES exrdataset.cpp
                 CORE_SOURCES exrdrivercore.cpp
-                PLUGIN_CAPABLE)
+                PLUGIN_CAPABLE
+                NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET gdal_EXR)
     return()
