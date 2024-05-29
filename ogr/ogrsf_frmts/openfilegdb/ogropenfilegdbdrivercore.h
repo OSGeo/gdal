@@ -33,9 +33,14 @@
 
 constexpr const char *DRIVER_NAME = "OpenFileGDB";
 
-GDALIdentifyEnum CPL_DLL OGROpenFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo,
-                                                      const char *&pszFilename);
+#define OGROpenFileGDBDriverIdentify                                           \
+    PLUGIN_SYMBOL_NAME(OGROpenFileGDBDriverIdentify)
+#define OGROpenFileGDBDriverSetCommonMetadata                                  \
+    PLUGIN_SYMBOL_NAME(OGROpenFileGDBDriverSetCommonMetadata)
 
-void CPL_DLL OGROpenFileGDBDriverSetCommonMetadata(GDALDriver *poDriver);
+GDALIdentifyEnum OGROpenFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo,
+                                              const char *&pszFilename);
+
+void OGROpenFileGDBDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
