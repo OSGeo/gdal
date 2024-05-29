@@ -8,7 +8,8 @@ add_gdal_driver(
           jp2lurarasterband.cpp
   CORE_SOURCES
           jp2luradrivercore.cpp
-  PLUGIN_CAPABLE)
+  PLUGIN_CAPABLE
+  NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET gdal_JP2Lura)
     return()
