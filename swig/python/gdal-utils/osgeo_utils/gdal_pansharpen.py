@@ -69,7 +69,7 @@ def Usage(isError):
 
 
 @enable_gdal_exceptions
-def main(argv=None):
+def main(argv=sys.argv):
 
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
