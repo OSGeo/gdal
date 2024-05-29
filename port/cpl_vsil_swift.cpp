@@ -301,7 +301,7 @@ VSISwiftFSHandler::CreateWriteHandle(const char *pszFilename,
         CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = std::make_unique<VSIS3WriteHandle>(
+    auto poHandle = std::make_unique<VSIS3LikeWriteHandle>(
         this, pszFilename, poHandleHelper, true, papszOptions);
     if (!poHandle->IsOK())
     {
@@ -553,15 +553,13 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
     const std::string osPrefix(osObjectKey.empty() ? std::string()
                                                    : osObjectKey + "/");
 
+    const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszDirname));
+    const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
+
     while (true)
     {
+        CPLHTTPRetryContext oRetryContext(oRetryParameters);
         bool bRetry;
-        int nRetryCount = 0;
-        const int nMaxRetry = atoi(CPLGetConfigOption(
-            "GDAL_HTTP_MAX_RETRY", CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
-        // coverity[tainted_data]
-        double dfRetryDelay = CPLAtof(CPLGetConfigOption(
-            "GDAL_HTTP_RETRY_DELAY", CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
         do
         {
             bRetry = false;
@@ -633,19 +631,17 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
             if (response_code != 200)
             {
                 // Look if we should attempt a retry
-                const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                    static_cast<int>(response_code), dfRetryDelay,
-                    sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
-                if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+                if (oRetryContext.CanRetry(static_cast<int>(response_code),
+                                           sWriteFuncHeaderData.pBuffer,
+                                           szCurlErrBuf))
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "HTTP error code: %d - %s. "
                              "Retrying again in %.1f secs",
                              static_cast<int>(response_code),
-                             poS3HandleHelper->GetURL().c_str(), dfRetryDelay);
-                    CPLSleep(dfRetryDelay);
-                    dfRetryDelay = dfNewRetryDelay;
-                    nRetryCount++;
+                             poS3HandleHelper->GetURL().c_str(),
+                             oRetryContext.GetCurrentDelay());
+                    CPLSleep(oRetryContext.GetCurrentDelay());
                     bRetry = true;
                     CPLFree(sWriteFuncData.pBuffer);
                     CPLFree(sWriteFuncHeaderData.pBuffer);

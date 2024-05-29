@@ -1,7 +1,7 @@
 .. _gdal_fillnodata:
 
 ================================================================================
-gdal_fillnodata.py
+gdal_fillnodata
 ================================================================================
 
 .. only:: html
@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdal_fillnodata.py [-q] [-md <max_distance>] [-si <smooth_iterations>]
+    gdal_fillnodata [-q] [-md <max_distance>] [-si <smooth_iterations>]
                     [-o <name>=<value>] [-b <band>]
                     [-nomask] [-mask <filename>]
                     [-interp {inv_dist,nearest}]
@@ -25,7 +25,7 @@ Synopsis
 Description
 -----------
 
-:program:`gdal_fillnodata.py` script fills selection regions (usually
+:program:`gdal_fillnodata` fills selection regions (usually
 nodata areas) by interpolating from valid pixels around the edges of the area.
 
 Additional details on the algorithm are available in the
@@ -83,3 +83,9 @@ Additional details on the algorithm are available in the
 
     The new file to create with the interpolated result.
     If not provided, the source band is updated in place.
+
+
+Notes
+-----
+
+gdal_fillnodata is a Python utility, and is only available if GDAL Python bindings are available.

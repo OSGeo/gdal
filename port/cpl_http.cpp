@@ -529,6 +529,7 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] = {
     {"GDAL_HTTP_NETRC_FILE", "NETRC_FILE"},
     {"GDAL_HTTP_MAX_RETRY", "MAX_RETRY"},
     {"GDAL_HTTP_RETRY_DELAY", "RETRY_DELAY"},
+    {"GDAL_HTTP_RETRY_CODES", "RETRY_CODES"},
     {"GDAL_CURL_CA_BUNDLE", "CAINFO"},
     {"CURL_CA_BUNDLE", "CAINFO"},
     {"SSL_CERT_FILE", "CAINFO"},
@@ -553,41 +554,65 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] = {
 
 char **CPLHTTPGetOptionsFromEnv(const char *pszFilename)
 {
-    char **papszOptions = nullptr;
-    for (size_t i = 0; i < CPL_ARRAYSIZE(asAssocEnvVarOptionName); ++i)
+    CPLStringList aosOptions;
+    for (const auto &sTuple : asAssocEnvVarOptionName)
     {
         const char *pszVal =
-            pszFilename
-                ? VSIGetPathSpecificOption(pszFilename,
-                                           asAssocEnvVarOptionName[i].pszEnvVar,
-                                           nullptr)
-                : CPLGetConfigOption(asAssocEnvVarOptionName[i].pszEnvVar,
-                                     nullptr);
+            pszFilename ? VSIGetPathSpecificOption(pszFilename,
+                                                   sTuple.pszEnvVar, nullptr)
+                        : CPLGetConfigOption(sTuple.pszEnvVar, nullptr);
         if (pszVal != nullptr)
         {
-            papszOptions = CSLSetNameValue(
-                papszOptions, asAssocEnvVarOptionName[i].pszOptionName, pszVal);
+            aosOptions.AddNameValue(sTuple.pszOptionName, pszVal);
         }
     }
-    return papszOptions;
+    return aosOptions.StealList();
 }
 
 /************************************************************************/
 /*                      CPLHTTPGetNewRetryDelay()                       */
 /************************************************************************/
 
-double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay,
-                               const char *pszErrBuf, const char *pszCurlError)
+/** Return the new retry delay.
+ *
+ * This takes into account the HTTP response code, the previous delay, the
+ * HTTP payload error message, the Curl error message and a potential list of
+ * retriable HTTP codes.
+ *
+ * @param response_code HTTP response code (e.g. 400)
+ * @param dfOldDelay Previous delay (nominally in second)
+ * @param pszErrBuf HTTP response body of the failed request (may be NULL)
+ * @param pszCurlError Curl error as returned by CURLOPT_ERRORBUFFER (may be NULL)
+ * @param pszRetriableCodes nullptr to limit to the default hard-coded scenarios,
+ * "ALL" to ask to retry for all non-200 codes, or a comma-separated list of
+ * HTTP codes (e.g. "400,500") that are accepted for retry.
+ * @return the new delay, or 0 if no retry should be attempted.
+ */
+static double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay,
+                                      const char *pszErrBuf,
+                                      const char *pszCurlError,
+                                      const char *pszRetriableCodes)
 {
-    if (response_code == 429 || response_code == 500 ||
-        (response_code >= 502 && response_code <= 504) ||
-        // S3 sends some client timeout errors as 400 Client Error
-        (response_code == 400 && pszErrBuf &&
-         strstr(pszErrBuf, "RequestTimeout")) ||
-        (pszCurlError && (strstr(pszCurlError, "Connection timed out") ||
-                          strstr(pszCurlError, "Operation timed out") ||
-                          strstr(pszCurlError, "Connection reset by peer") ||
-                          strstr(pszCurlError, "Connection was reset"))))
+    bool bRetry = false;
+    if (pszRetriableCodes && pszRetriableCodes[0])
+    {
+        bRetry = EQUAL(pszRetriableCodes, "ALL") ||
+                 strstr(pszRetriableCodes, CPLSPrintf("%d", response_code));
+    }
+    else if (response_code == 429 || response_code == 500 ||
+             (response_code >= 502 && response_code <= 504) ||
+             // S3 sends some client timeout errors as 400 Client Error
+             (response_code == 400 && pszErrBuf &&
+              strstr(pszErrBuf, "RequestTimeout")) ||
+             (pszCurlError &&
+              (strstr(pszCurlError, "Connection timed out") ||
+               strstr(pszCurlError, "Operation timed out") ||
+               strstr(pszCurlError, "Connection reset by peer") ||
+               strstr(pszCurlError, "Connection was reset"))))
+    {
+        bRetry = true;
+    }
+    if (bRetry)
     {
         // 'Operation timed out': seen during some long running operation 'hang'
         // no error but no response from server and we are in the cURL loop
@@ -608,6 +633,88 @@ double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay,
         return 0;
     }
 }
+
+/*! @cond Doxygen_Suppress */
+
+/************************************************************************/
+/*                      CPLHTTPRetryParameters()                        */
+/************************************************************************/
+
+/** Constructs a CPLHTTPRetryParameters instance from configuration
+ * options or path-specific options.
+ *
+ * @param aosHTTPOptions HTTP options returned by CPLHTTPGetOptionsFromEnv()
+ */
+CPLHTTPRetryParameters::CPLHTTPRetryParameters(
+    const CPLStringList &aosHTTPOptions)
+    : nMaxRetry(atoi(aosHTTPOptions.FetchNameValueDef(
+          "MAX_RETRY", CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)))),
+      dfInitialDelay(CPLAtof(aosHTTPOptions.FetchNameValueDef(
+          "RETRY_DELAY", CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)))),
+      osRetryCodes(aosHTTPOptions.FetchNameValueDef("RETRY_CODES", ""))
+{
+}
+
+/************************************************************************/
+/*                        CPLHTTPRetryContext()                         */
+/************************************************************************/
+
+/** Constructor */
+CPLHTTPRetryContext::CPLHTTPRetryContext(const CPLHTTPRetryParameters &oParams)
+    : m_oParameters(oParams), m_dfNextDelay(oParams.dfInitialDelay)
+{
+}
+
+/************************************************************************/
+/*                     CPLHTTPRetryContext::CanRetry()                  */
+/************************************************************************/
+
+/** Returns whether we can attempt a new retry, based on the retry counter,
+ * and increment that counter.
+ */
+bool CPLHTTPRetryContext::CanRetry()
+{
+    if (m_nRetryCount >= m_oParameters.nMaxRetry)
+        return false;
+    m_nRetryCount++;
+    return true;
+}
+
+/** Returns whether we can attempt a new retry, based on the retry counter,
+ * the response code, payload and curl error buffers.
+ *
+ * If successful, the retry counter is incremented, and GetCurrentDelay()
+ * returns the delay to apply with CPLSleep().
+ */
+bool CPLHTTPRetryContext::CanRetry(int response_code, const char *pszErrBuf,
+                                   const char *pszCurlError)
+{
+    if (m_nRetryCount >= m_oParameters.nMaxRetry)
+        return false;
+    m_dfCurDelay = m_dfNextDelay;
+    m_dfNextDelay = CPLHTTPGetNewRetryDelay(response_code, m_dfNextDelay,
+                                            pszErrBuf, pszCurlError,
+                                            m_oParameters.osRetryCodes.c_str());
+    if (m_dfNextDelay == 0.0)
+        return false;
+    m_nRetryCount++;
+    return true;
+}
+
+/************************************************************************/
+/*                CPLHTTPRetryContext::GetCurrentDelay()                */
+/************************************************************************/
+
+/** Returns the delay to apply. Only valid after a successful call to CanRetry() */
+double CPLHTTPRetryContext::GetCurrentDelay() const
+{
+    if (m_nRetryCount == 0)
+        CPLDebug("CPL",
+                 "GetCurrentDelay() should only be called after CanRetry()");
+    return m_dfCurDelay;
+}
+
+/*! @endcond Doxygen_Suppress */
 
 #ifdef HAVE_CURL
 
@@ -910,69 +1017,133 @@ int CPLHTTPPopFetchCallback(void)
 /**
  * \brief Fetch a document from an url and return in a string.
  *
- * @param pszURL valid URL recognized by underlying download library (libcurl)
- * @param papszOptions option list as a NULL-terminated array of strings. May be
- * NULL. The following options are handled : <ul>
+ * Different options may be passed through the papszOptions function parameter,
+ * or for most of them through a configuration option:
+ * <ul>
  * <li>CONNECTTIMEOUT=val, where
  * val is in seconds (possibly with decimals). This is the maximum delay for the
- * connection to be established before being aborted (GDAL >= 2.2).</li>
+ * connection to be established before being aborted (GDAL >= 2.2).
+ * Corresponding configuration option: GDAL_HTTP_CONNECTTIMEOUT.
+ * </li>
  * <li>TIMEOUT=val, where val is in seconds. This is the maximum delay for the
- * whole request to complete before being aborted.</li>
+ * whole request to complete before being aborted.
+ * Corresponding configuration option: GDAL_HTTP_TIMEOUT.
+ * </li>
  * <li>LOW_SPEED_TIME=val,
  * where val is in seconds. This is the maximum time where the transfer speed
  * should be below the LOW_SPEED_LIMIT (if not specified 1b/s), before the
- * transfer to be considered too slow and aborted. (GDAL >= 2.1)</li>
+ * transfer to be considered too slow and aborted. (GDAL >= 2.1).
+ * Corresponding configuration option: GDAL_HTTP_LOW_SPEED_TIME.
+ * </li>
  * <li>LOW_SPEED_LIMIT=val, where val is in bytes/second. See LOW_SPEED_TIME.
- * Has only effect if LOW_SPEED_TIME is specified too. (GDAL >= 2.1)</li>
+ * Has only effect if LOW_SPEED_TIME is specified too. (GDAL >= 2.1).
+ * Corresponding configuration option: GDAL_HTTP_LOW_SPEED_LIMIT.
+ * </li>
  * <li>HEADERS=val, where val is an extra header to use when getting a web page.
- *                  For example "Accept: application/x-ogcwkt"</li>
+ *                  For example "Accept: application/x-ogcwkt"
+ * Corresponding configuration option: GDAL_HTTP_HEADERS.
+ * Starting with GDAL 3.6, the GDAL_HTTP_HEADERS configuration option can also
+ * be used to specify a comma separated list of key: value pairs. This is an
+ * alternative to the GDAL_HTTP_HEADER_FILE mechanism. If a comma or a
+ * double-quote character is needed in the value, then the key: value pair must
+ * be enclosed in double-quote characters. In that situation, backslash and
+ * double quote character must be backslash-escaped. e.g GDAL_HTTP_HEADERS=Foo:
+ * Bar,"Baz: escaped backslash \\, escaped double-quote \", end of
+ * value",Another: Header
+ * </li>
  * <li>HEADER_FILE=filename: filename of a text file with "key: value" headers.
  *     The content of the file is not cached, and thus it is read again before
- *     issuing each HTTP request. (GDAL >= 2.2)</li>
+ *     issuing each HTTP request. (GDAL >= 2.2)
+ * Corresponding configuration option: GDAL_HTTP_HEADER_FILE.
+ * </li>
  * <li>HTTPAUTH=[BASIC/NTLM/NEGOTIATE/ANY/ANYSAFE/BEARER] to specify an
- * authentication scheme to use.</li>
+ * authentication scheme to use.
+ * Corresponding configuration option: GDAL_HTTP_AUTH.
+ * </li>
  * <li>USERPWD=userid:password to specify a user and password for
- * authentication</li>
+ * authentication.
+ * Corresponding configuration option: GDAL_HTTP_USERPWD.
+ * </li>
  * <li>GSSAPI_DELEGATION=[NONE/POLICY/ALWAYS] set allowed
- * GSS-API delegation. Relevant only with HTTPAUTH=NEGOTIATE (GDAL >= 3.3).</li>
+ * GSS-API delegation. Relevant only with HTTPAUTH=NEGOTIATE (GDAL >= 3.3).
+ * Corresponding configuration option: GDAL_GSSAPI_DELEGATION (note: no "HTTP_" in the name)
+ * </li>
  * <li>HTTP_BEARER=val set OAuth 2.0 Bearer Access Token.
- * Relevant only with HTTPAUTH=BEARER (GDAL >= 3.9).</li>
+ * Relevant only with HTTPAUTH=BEARER (GDAL >= 3.9).
+ * Corresponding configuration option: GDAL_HTTP_BEARER
+ * </li>
  * <li>POSTFIELDS=val, where val is a nul-terminated string to be passed to the
- * server with a POST request.</li>
+ * server with a POST request.
+ * No Corresponding configuration option.
+ * </li>
  * <li>PROXY=val, to make requests go through a
  * proxy server, where val is of the form proxy.server.com:port_number. This
- * option affects both HTTP and HTTPS URLs.</li>
+ * option affects both HTTP and HTTPS URLs.
+ * Corresponding configuration option: GDAL_HTTP_PROXY.
+ * </li>
  * <li>HTTPS_PROXY=val (GDAL
  * >= 2.4), the same meaning as PROXY, but this option is taken into account
- * only for HTTPS URLs.</li>
- * <li>PROXYUSERPWD=val, where val is of the form
- * username:password</li>
+ * only for HTTPS URLs.
+ * Corresponding configuration option: GDAL_HTTPS_PROXY.
+ * </li>
+ * <li>PROXYUSERPWD=val, where val is of the form username:password.
+ * Corresponding configuration option: GDAL_HTTP_PROXYUSERPWD
+ * </li>
  * <li>PROXYAUTH=[BASIC/NTLM/DIGEST/NEGOTIATE/ANY/ANYSAFE] to
- * specify an proxy authentication scheme to use.</li>
+ * specify an proxy authentication scheme to use..
+ * Corresponding configuration option: GDAL_PROXYAUTH (note: no "HTTP_" in the name)
+ * </li>
  * <li>NETRC=[YES/NO] to
- * enable or disable use of $HOME/.netrc (or NETRC_FILE), default YES.</li>
- * <li>NETRC_FILE=file name to read .netrc info from  (GDAL >= 3.7).</li>
- * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc.. (GDAL
- * >= 1.9.0)</li>
+ * enable or disable use of $HOME/.netrc (or NETRC_FILE), default YES.
+ * Corresponding configuration option: GDAL_HTTP_NETRC.
+ * </li>
+ * <li>NETRC_FILE=file name to read .netrc info from  (GDAL >= 3.7).
+ * Corresponding configuration option: GDAL_HTTP_NETRC_FILE.
+ * </li>
+ * <li>CUSTOMREQUEST=val, where val is GET, PUT, POST, DELETE, etc...
+ * No corresponding configuration option.
+ * </li>
  * <li>FORM_FILE_NAME=val, where val is upload file name. If this
- * option and FORM_FILE_PATH present, request type will set to POST.</li>
- * <li>FORM_FILE_PATH=val, where val is upload file path.</li>
- * <li>FORM_KEY_0=val...FORM_KEY_N, where val is name of form item.</li>
+ * option and FORM_FILE_PATH present, request type will set to POST.
+ * No corresponding configuration option.
+ * </li>
+ * <li>FORM_FILE_PATH=val, where val is upload file path.
+ * No corresponding configuration option.
+ * </li>
+ * <li>FORM_KEY_0=val...FORM_KEY_N, where val is name of form item.
+ * No corresponding configuration option.
+ * </li>
  * <li>FORM_VALUE_0=val...FORM_VALUE_N, where val is value of the form
- * item.</li>
- * <li>FORM_ITEM_COUNT=val, where val is count of form items.</li>
- * <li>COOKIE=val, where val is formatted as COOKIE1=VALUE1; COOKIE2=VALUE2;
- * ...</li>
+ * item.
+ * No corresponding configuration option.
+ * </li>
+ * <li>FORM_ITEM_COUNT=val, where val is count of form items.
+ * No corresponding configuration option.
+ * </li>
+ * <li>COOKIE=val, where val is formatted as COOKIE1=VALUE1; COOKIE2=VALUE2;...
+ * Corresponding configuration option: GDAL_HTTP_COOKIE.</li>
  * <li>COOKIEFILE=val, where val is file name to read cookies from
- * (GDAL >= 2.4)</li>
- * <li>COOKIEJAR=val, where val is file name to store cookies
- * to (GDAL >= 2.4)</li>
+ * (GDAL >= 2.4).
+ * Corresponding configuration option: GDAL_HTTP_COOKIEFILE.</li>
+ * <li>COOKIEJAR=val, where val is file name to store cookies to (GDAL >= 2.4).
+ * Corresponding configuration option: GDAL_HTTP_COOKIEJAR.</li>
  * <li>MAX_RETRY=val, where val is the maximum number of
- * retry attempts if a 429, 502, 503 or 504 HTTP error occurs. Default is 0.
- * (GDAL >= 2.0)</li>
+ * retry attempts, when a retry is allowed (cf RETRY_CODES option).
+ * Default is 0, meaning no retry.
+ * Corresponding configuration option: GDAL_HTTP_MAX_RETRY.
+ * </li>
  * <li>RETRY_DELAY=val, where val is the number of seconds
- * between retry attempts. Default is 30. (GDAL >= 2.0)</li>
- * <li>MAX_FILE_SIZE=val, where val is a number of bytes (GDAL >= 2.2)</li>
+ * between retry attempts. Default is 30.
+ * Corresponding configuration option: GDAL_HTTP_RETRY_DELAY.
+ * <li>RETRY_CODES=val, where val is "ALL" or a comma-separated list of HTTP
+ * codes that are considered for retry. By default, 429, 500, 502, 503 or 504
+ * HTTP errors are considered, as well as other situations with a particular
+ * HTTP or Curl error message. (GDAL >= 3.10).
+ * Corresponding configuration option: GDAL_HTTP_RETRY_CODES.
+ * </li>
+ * <li>MAX_FILE_SIZE=val, where val is a number of bytes (GDAL >= 2.2)
+ * No corresponding configuration option.
+ * </li>
  * <li>CAINFO=/path/to/bundle.crt. This is path to Certificate Authority (CA)
  *     bundle file. By default, it will be looked for in a system location. If
  *     the CAINFO option is not defined, GDAL will also look in the
@@ -985,64 +1156,67 @@ int CPLHTTPPopFetchCallback(void)
  *     like Google Compute Engine VMs, where 2TLS will be the default).
  *     Support for HTTP/2 requires curl 7.33 or later, built against nghttp2.
  *     "2TLS" means that HTTP/2 will be attempted for HTTPS connections only.
- * Whereas "2" means that HTTP/2 will be attempted for HTTP or HTTPS.</li>
+ *     Whereas "2" means that HTTP/2 will be attempted for HTTP or HTTPS.
+ *     Corresponding configuration option: GDAL_HTTP_VERSION.
+ * </li>
  * <li>SSL_VERIFYSTATUS=YES/NO (GDAL >= 2.3, and curl >= 7.41): determines
  * whether the status of the server cert using the "Certificate Status Request"
  * TLS extension (aka. OCSP stapling) should be checked. If this option is
  * enabled but the server does not support the TLS extension, the verification
- * will fail. Default to NO.</li>
+ * will fail. Default to NO.
+ * Corresponding configuration option: GDAL_HTTP_SSL_VERIFYSTATUS.
+ * </li>
  * <li>USE_CAPI_STORE=YES/NO (GDAL >= 2.3,
  * Windows only): whether CA certificates from the Windows certificate store.
- * Defaults to NO.</li>
+ * Defaults to NO.
+ * Corresponding configuration option: GDAL_HTTP_USE_CAPI_STORE.
+ * </li>
  * <li>TCP_KEEPALIVE=YES/NO (GDAL >= 3.6): whether to
- * enable TCP keep-alive. Defaults to NO</li> <li>TCP_KEEPIDLE=integer, in
+ * enable TCP keep-alive. Defaults to NO.
+ * Corresponding configuration option: GDAL_HTTP_TCP_KEEPALIVE.
+ * </li>
+ * <li>TCP_KEEPIDLE=integer, in
  * seconds (GDAL >= 3.6): keep-alive idle time. Defaults to 60. Only taken into
- * account if TCP_KEEPALIVE=YES.</li>
+ * account if TCP_KEEPALIVE=YES.
+ * Corresponding configuration option: GDAL_HTTP_TCP_KEEPIDLE.
+ * </li>
  * <li>TCP_KEEPINTVL=integer, in seconds
  * (GDAL >= 3.6): interval time between keep-alive probes. Defaults to 60. Only
- * taken into account if TCP_KEEPALIVE=YES.</li>
+ * taken into account if TCP_KEEPALIVE=YES.
+ * Corresponding configuration option: GDAL_HTTP_TCP_KEEPINTVL.
+ * </li>
  * <li>USERAGENT=string: value of User-Agent header. Starting with GDAL 3.7,
  * GDAL core sets it by default (during driver initialization) to GDAL/x.y.z
  * where x.y.z is the GDAL version number. Applications may override it with the
- * CPLHTTPSetDefaultUserAgent() function.</li>
+ * CPLHTTPSetDefaultUserAgent() function.
+ * Corresponding configuration option: GDAL_HTTP_USERAGENT.
+ * </li>
  * <li>SSLCERT=filename (GDAL >= 3.7): Filename of the the SSL client certificate.
- * Cf https://curl.se/libcurl/c/CURLOPT_SSLCERT.html</li>
+ * Cf https://curl.se/libcurl/c/CURLOPT_SSLCERT.html.
+ * Corresponding configuration option: GDAL_HTTP_SSLCERT.
+ * </li>
  * <li>SSLCERTTYPE=string (GDAL >= 3.7): Format of the SSL certificate: "PEM"
- * or "DER". Cf https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html</li>
+ * or "DER". Cf https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html.
+ * Corresponding configuration option: GDAL_HTTP_SSLCERTTYPE.
+ * </li>
  * <li>SSLKEY=filename (GDAL >= 3.7): Private key file for TLS and SSL client
- * certificate. Cf https://curl.se/libcurl/c/CURLOPT_SSLKEY.html</li>
+ * certificate. Cf https://curl.se/libcurl/c/CURLOPT_SSLKEY.html.
+ * Corresponding configuration option: GDAL_HTTP_SSLKEY.
+ * </li>
  * <li>KEYPASSWD=string (GDAL >= 3.7): Passphrase to private key.
- * Cf https://curl.se/libcurl/c/CURLOPT_KEYPASSWD.html</li>
+ * Cf https://curl.se/libcurl/c/CURLOPT_KEYPASSWD.html.
+ * Corresponding configuration option: GDAL_HTTP_KEYPASSWD.
  * </ul>
  *
- * Alternatively, if not defined in the papszOptions arguments, the following
- * CONNECTTIMEOUT, TIMEOUT,
- * LOW_SPEED_TIME, LOW_SPEED_LIMIT, USERPWD, PROXY, HTTPS_PROXY, PROXYUSERPWD,
- * PROXYAUTH, NETRC, NETRC_FILE, MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION,
- * SSL_VERIFYSTATUS, USE_CAPI_STORE, GSSAPI_DELEGATION, HTTP_BEARER, TCP_KEEPALIVE,
- * TCP_KEEPIDLE, TCP_KEEPINTVL, USERAGENT, SSLCERT, SSLCERTTYPE, SSLKEY,
- * KEYPASSWD values are searched in the configuration options
- * respectively named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
- * GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT, GDAL_HTTP_USERPWD,
- * GDAL_HTTP_PROXY, GDAL_HTTPS_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
- * GDAL_HTTP_NETRC, GDAL_HTTP_NETC_FILE, GDAL_HTTP_MAX_RETRY, GDAL_HTTP_RETRY_DELAY,
- * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION, GDAL_HTTP_SSL_VERIFYSTATUS,
- * GDAL_HTTP_USE_CAPI_STORE, GDAL_GSSAPI_DELEGATION, GDAL_HTTP_BEARER,
- * GDAL_HTTP_TCP_KEEPALIVE, GDAL_HTTP_TCP_KEEPIDLE, GDAL_HTTP_TCP_KEEPINTVL,
- * GDAL_HTTP_USERAGENT, GDAL_HTTP_SSLCERT, GDAL_HTTP_SSLCERTTYPE,
- * GDAL_HTTP_SSLKEY and GDAL_HTTP_KEYPASSWD.
- *
- * Starting with GDAL 3.6, the GDAL_HTTP_HEADERS configuration option can also
- * be used to specify a comma separated list of key: value pairs. This is an
- * alternative to the GDAL_HTTP_HEADER_FILE mechanism. If a comma or a
- * double-quote character is needed in the value, then the key: value pair must
- * be enclosed in double-quote characters. In that situation, backslash and
- * double quote character must be backslash-escaped. e.g GDAL_HTTP_HEADERS=Foo:
- * Bar,"Baz: escaped backslash \\, escaped double-quote \", end of
- * value",Another: Header
+ * If an option is specified through papszOptions and as a configuration option,
+ * the former takes precedence over the later.
  *
  * Starting with GDAL 3.7, the above configuration options can also be specified
  * as path-specific options with VSISetPathSpecificOption().
+ *
+ * @param pszURL valid URL recognized by underlying download library (libcurl)
+ * @param papszOptions option list as a NULL-terminated array of strings. May be
+ * NULL.
  *
  * @return a CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
@@ -1349,8 +1523,7 @@ CPLHTTPResult *CPLHTTPFetchEx(const char *pszURL, CSLConstList papszOptions,
     }
 
     /* -------------------------------------------------------------------- */
-    /*      If 429, 502, 503 or 504 status code retry this HTTP call until max
-     */
+    /*      Depending on status code, retry this HTTP call until max        */
     /*      retry has been reached                                          */
     /* -------------------------------------------------------------------- */
     const char *pszRetryDelay = CSLFetchNameValue(papszOptions, "RETRY_DELAY");
@@ -1364,6 +1537,9 @@ CPLHTTPResult *CPLHTTPFetchEx(const char *pszURL, CSLConstList papszOptions,
     // coverity[tainted_data]
     double dfRetryDelaySecs = CPLAtof(pszRetryDelay);
     int nMaxRetries = atoi(pszMaxRetries);
+    const char *pszRetryCodes = CSLFetchNameValue(papszOptions, "RETRY_CODES");
+    if (!pszRetryCodes)
+        pszRetryCodes = CPLGetConfigOption("GDAL_HTTP_RETRY_CODES", nullptr);
     int nRetryCount = 0;
 
     while (true)
@@ -1395,7 +1571,7 @@ CPLHTTPResult *CPLHTTPFetchEx(const char *pszURL, CSLConstList papszOptions,
             const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
                 static_cast<int>(response_code), dfRetryDelaySecs,
                 reinterpret_cast<const char *>(psResult->pabyData),
-                szCurlErrBuf);
+                szCurlErrBuf, pszRetryCodes);
             if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetries)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,

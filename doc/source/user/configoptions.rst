@@ -744,14 +744,27 @@ Networking options
 
 -  .. config:: GDAL_HTTP_MAX_RETRY
       :since: 2.3
+      :default: 0
 
-      Set the number of HTTP attempts in case of HTTP errors 429, 502, 503, or 504.
+      Set the number of HTTP attempts, when a retry is allowed.
+      (cf :config:`GDAL_HTTP_RETRY_CODES` for conditions where a retry is attempted.)
+      The default value is 0, meaning no retry.
 
 -  .. config:: GDAL_HTTP_RETRY_DELAY
       :choices: <seconds>
       :since: 2.3
+      :default: 30
 
       Set the delay between HTTP attempts.
+
+-  .. config:: GDAL_HTTP_RETRY_CODES
+      :choices: ALL or comma-separated list of codes
+      :since: 3.10
+
+      Specify which HTTP error codes should trigger a retry attempt.
+      Valid values are ``ALL`` or a comma-separated list of HTTP codes.
+      By default, 429, 500, 502, 503 or 504 HTTP errors are considered, as
+      well as other situations with a particular HTTP or Curl error message.
 
 -  .. config:: GDAL_HTTP_TCP_KEEPALIVE
       :choices: YES, NO

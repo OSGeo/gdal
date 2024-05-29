@@ -4409,7 +4409,10 @@ static int MMCreateRecordDBF(struct MiraMonVectLayerInfo *hMiraMonLayer,
     if (hMiraMonLayer->TopHeader.nElemCount == 0)
     {
         if (MMCreateMMDB(hMiraMonLayer, nullptr))
+        {
+            MMDestroyMMDB(hMiraMonLayer);
             return MM_FATAL_ERROR_WRITING_FEATURES;
+        }
     }
 
     result = MMAddDBFRecordToMMDB(hMiraMonLayer, hMMFeature);

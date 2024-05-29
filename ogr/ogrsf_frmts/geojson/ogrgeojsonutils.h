@@ -59,7 +59,7 @@ GeoJSONSourceType JSONFGDriverGetSourceType(GDALOpenInfo *poOpenInfo);
 /*                           GeoJSONIsObject                            */
 /************************************************************************/
 
-bool GeoJSONIsObject(const char *pszText);
+bool GeoJSONIsObject(const char *pszText, CSLConstList papszAllowedDrivers);
 bool GeoJSONSeqIsObject(const char *pszText);
 bool ESRIJSONIsObject(const char *pszText);
 bool TopoJSONIsObject(const char *pszText);

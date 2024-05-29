@@ -1,7 +1,7 @@
 .. _gdalmove:
 
 ================================================================================
-gdalmove.py
+gdalmove
 ================================================================================
 
 .. only:: html
@@ -15,14 +15,14 @@ Synopsis
 
 .. code-block::
 
-    gdalmove.py [--help] [--help-general]
+    gdalmove [--help] [--help-general]
                 [-s_srs <srs_defn>] -t_srs <srs_defn>
                 [-et <max_pixel_err>] <target_file>
 
 Description
 -----------
 
-The :program:`gdalmove.py` script transforms the bounds of a raster file from
+The :program:`gdalmove` script transforms the bounds of a raster file from
 one coordinate system to another, and then updates the coordinate system and
 geotransform of the file. This is done without altering pixel values at all. It
 is loosely similar to using gdalwarp to transform an image but avoiding the

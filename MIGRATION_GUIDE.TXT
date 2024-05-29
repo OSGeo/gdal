@@ -1,3 +1,20 @@
+MIGRATION GUIDE FROM GDAL 3.9 to GDAL 3.10
+------------------------------------------
+
+- User code using VSIFEofL() to potentially to end read loops should also test
+  the return code of the new VSIFError() function. Some virtual file systems
+  that used to report errors through VSIFEofL() now do through VSIFError().
+
+- Out-of-tree implementations of VSIVirtualHandle():
+  2 new required virtual methods must be implemented: int Error(), and
+  void ClearErr() following POSIX semantics of ferror() and clearerr().
+  This is to distinguish Read() that returns less bytes than requested because
+  of an error (Error() != 0) or because of end-of-file (Eof() != 0)
+
+  The VSIFilesystemPluginCallbacksStruct structure is extended with 2
+  corresponding optional (but recommended to be implemented to reliably detect
+  reading errors) callbacks "error" and "clear_err".
+
 MIGRATION GUIDE FROM GDAL 3.8 to GDAL 3.9
 -----------------------------------------
 

@@ -1,7 +1,7 @@
 .. _gdal_pansharpen:
 
 ================================================================================
-gdal_pansharpen.py
+gdal_pansharpen
 ================================================================================
 
 .. only:: html
@@ -30,7 +30,7 @@ Synopsis
 Description
 -----------
 
-The :program:`gdal_pansharpen.py` script performs a pan-sharpening operation. It
+:program:`gdal_pansharpen` performs a pan-sharpening operation. It
 can create a "classic" output dataset (such as GeoTIFF), or a VRT
 dataset describing the pan-sharpening operation.
 
@@ -113,29 +113,35 @@ With spectral bands in a single dataset :
 
 .. code-block::
 
-    gdal_pansharpen.py panchro.tif multispectral.tif pansharpened_out.tif
+    gdal_pansharpen panchro.tif multispectral.tif pansharpened_out.tif
 
 With a few spectral bands from a single dataset, reordered :
 
 .. code-block::
 
-    gdal_pansharpen.py panchro.tif multispectral.tif,band=3 multispectral.tif,band=2 multispectral.tif,band=1 pansharpened_out.tif
+    gdal_pansharpen panchro.tif multispectral.tif,band=3 multispectral.tif,band=2 multispectral.tif,band=1 pansharpened_out.tif
 
 With spectral bands in several datasets :
 
 .. code-block::
 
-    gdal_pansharpen.py panchro.tif band1.tif band2.tif band3.tif pansharpened_out.tif
+    gdal_pansharpen panchro.tif band1.tif band2.tif band3.tif pansharpened_out.tif
 
 Specify weights:
 
 .. code-block::
 
-    gdal_pansharpen.py -w 0.7 -w 0.2 -w 0.1 panchro.tif multispectral.tif pansharpened_out.tif
+    gdal_pansharpen -w 0.7 -w 0.2 -w 0.1 panchro.tif multispectral.tif pansharpened_out.tif
 
 Specify RGB bands from a RGBNir multispectral dataset while computing
 the pseudo panchromatic intensity on the 4 RGBNir bands:
 
 .. code-block::
 
-    gdal_pansharpen.py -b 1 -b 2 -b 3 panchro.tif rgbnir.tif pansharpened_out.tif
+    gdal_pansharpen -b 1 -b 2 -b 3 panchro.tif rgbnir.tif pansharpened_out.tif
+
+
+Notes
+-----
+
+gdal_pansharpen is a Python utility, and is only available if GDAL Python bindings are available.

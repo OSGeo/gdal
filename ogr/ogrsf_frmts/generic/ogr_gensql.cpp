@@ -901,7 +901,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
 
     /* -------------------------------------------------------------------- */
     /*      We treat COUNT(*) as a special case, and fill with              */
-    /*      GetFeatureCount().                                            */
+    /*      GetFeatureCount().                                              */
     /* -------------------------------------------------------------------- */
 
     if (psSelectInfo->result_columns() == 1 &&

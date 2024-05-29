@@ -115,6 +115,7 @@ void OGRJMLLayer::ResetReading()
     nNextFID = 0;
 
     VSIFSeekL(fp, 0, SEEK_SET);
+    VSIFClearErrL(fp);
     if (oParser)
         XML_ParserFree(oParser);
 
@@ -433,7 +434,7 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
         return ppoFeatureTab[nFeatureTabIndex++];
     }
 
-    if (VSIFEofL(fp))
+    if (VSIFEofL(fp) || VSIFErrorL(fp))
         return nullptr;
 
     std::vector<char> aBuf(PARSER_BUF_SIZE);
@@ -449,7 +450,7 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
         nDataHandlerCounter = 0;
         unsigned int nLen =
             (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fp);
-        nDone = VSIFEofL(fp);
+        nDone = (nLen < aBuf.size());
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -515,7 +516,7 @@ void OGRJMLLayer::LoadSchema()
         nDataHandlerCounter = 0;
         const unsigned int nLen = static_cast<unsigned int>(
             VSIFReadL(aBuf.data(), 1, aBuf.size(), fp));
-        nDone = VSIFEofL(fp);
+        nDone = (nLen < aBuf.size());
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,

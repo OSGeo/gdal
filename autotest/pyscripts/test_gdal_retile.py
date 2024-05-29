@@ -118,13 +118,15 @@ def test_gdal_retile_2(script_path, tmp_path):
     out_dir = tmp_path / "outretile2"
     out_dir.mkdir()
 
-    test_py_scripts.run_py_script(
+    _, err = test_py_scripts.run_py_script(
         script_path,
         "gdal_retile",
         f"-v -levels 2 -r bilinear -targetDir {out_dir} "
         + test_py_scripts.get_data_path("gcore")
         + "rgba.tif",
+        return_stderr=True,
     )
+    assert "UseExceptions" not in err
 
     ds = gdal.Open(f"{out_dir}/2/rgba_1_1.tif")
     assert ds.GetRasterBand(1).Checksum() == 35, "wrong checksum for band 1"

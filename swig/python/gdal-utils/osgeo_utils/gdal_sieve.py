@@ -35,7 +35,7 @@ from typing import Optional
 
 from osgeo import gdal
 from osgeo_utils.auxiliary.base import PathLikeOrStr
-from osgeo_utils.auxiliary.util import GetOutputDriverFor
+from osgeo_utils.auxiliary.util import GetOutputDriverFor, enable_gdal_exceptions
 
 
 def Usage(isError=True):
@@ -128,6 +128,7 @@ def main(argv=sys.argv):
     )
 
 
+@enable_gdal_exceptions
 def gdal_sieve(
     src_filename: Optional[str] = None,
     dst_filename: PathLikeOrStr = None,

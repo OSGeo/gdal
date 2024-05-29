@@ -106,7 +106,7 @@ Past Releases
 .. _`gdal-3.6.1.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.6.1/gdal-3.6.1.tar.gz
 .. _`3.6.1 md5`: https://github.com/OSGeo/gdal/releases/download/v3.6.1/gdal-3.6.1.tar.gz.md5
 
-* **2022-11-06** `3.6.0 Release Notes`_ *Warning*: this version has been official retracted and superseded per 3.6.1
+* **2022-11-06** `3.6.0 Release Notes`_ *Warning*: this version has been officially retracted and superseded per 3.6.1
 
 .. _`3.6.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.6.0/NEWS.md
 
@@ -320,9 +320,9 @@ Windows builds are available via `Conda Forge`_ (64-bit only). See the
 Debian
 ................................................................................
 
-Debian packages are now available on `Debian Unstable`_.
+Debian packages are now available on `Debian`_.
 
-.. _`Debian Unstable`: https://tracker.debian.org/pkg/gdal
+.. _`Debian`: https://tracker.debian.org/pkg/gdal
 
 .. _conda:
 
@@ -432,3 +432,11 @@ Images with nightly builds of GDAL master and tagged releases are available at
 
 Information on the content of the different configurations can be found at
 `https://github.com/OSGeo/gdal/tree/master/docker <https://github.com/OSGeo/gdal/tree/master/docker>`_
+
+
+Documentation only
+------------------------------------------------------------------------------
+
+Besides being included when downloading the software, the documentation is
+also available independently as a `PDF file <gdal.pdf>`_,
+and `a .ZIP of individual HTML pages <https://github.com/OSGeo/gdal-docs/archive/refs/heads/master.zip>`_ for offline browsing. (The .ZIP also includes that .PDF.)

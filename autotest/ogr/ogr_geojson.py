@@ -5151,3 +5151,53 @@ def test_ogr_geojson_geom_coord_precision_RFC7946(tmp_vsimem):
     prec = geom_fld.GetCoordinatePrecision()
     assert prec.GetXYResolution() == pytest.approx(8.983152841195214e-09)
     assert prec.GetZResolution() == 1e-3
+
+
+###############################################################################
+# Test opening a file that has a featureType property, but is not JSONFG.
+
+
+def test_ogr_geojson_open_with_featureType_non_jsonfg():
+
+    ds = gdal.OpenEx("data/geojson/featuretype.json")
+    assert ds.GetDriver().GetDescription() == "GeoJSON"
+
+
+###############################################################################
+# Test force opening a JSONFG file with the GeoJSON driver
+
+
+def test_ogr_geojson_open_jsonfg_with_geojson():
+
+    ds = gdal.OpenEx("data/jsonfg/crs_none.json", allowed_drivers=["GeoJSON"])
+    assert ds.GetDriver().GetDescription() == "GeoJSON"
+
+    if gdal.GetDriverByName("JSONFG"):
+        ds = gdal.OpenEx("data/jsonfg/crs_none.json")
+        assert ds.GetDriver().GetDescription() == "JSONFG"
+
+        ds = gdal.OpenEx(
+            "data/jsonfg/crs_none.json", allowed_drivers=["GeoJSON", "JSONFG"]
+        )
+        assert ds.GetDriver().GetDescription() == "JSONFG"
+
+
+###############################################################################
+# Test force identifying a JSONFG file with the GeoJSON driver
+
+
+def test_ogr_geojson_identify_jsonfg_with_geojson():
+
+    drv = gdal.IdentifyDriverEx(
+        "data/jsonfg/crs_none.json", allowed_drivers=["GeoJSON"]
+    )
+    assert drv.GetDescription() == "GeoJSON"
+
+    if gdal.GetDriverByName("JSONFG"):
+        drv = gdal.IdentifyDriverEx("data/jsonfg/crs_none.json")
+        assert drv.GetDescription() == "JSONFG"
+
+        drv = gdal.IdentifyDriverEx(
+            "data/jsonfg/crs_none.json", allowed_drivers=["GeoJSON", "JSONFG"]
+        )
+        assert drv.GetDescription() == "JSONFG"

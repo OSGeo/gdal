@@ -2701,10 +2701,8 @@ def test_vsis3_6(aws_test_config, webserver_port):
     ]
     with webserver.install_http_handler(handler):
         for filename in filenames:
-            with gdaltest.config_option(
-                "VSIS3_CHUNK_SIZE", "1", thread_local=False
-            ):  # 1 MB
-                f = gdal.VSIFOpenL(filename, "wb")
+            # CHUNK_SIZE = 1 MB
+            f = gdal.VSIFOpenExL(filename, "wb", False, ["CHUNK_SIZE=1"])
             assert f is not None
             with gdal.quiet_errors():
                 ret = gdal.VSIFWriteL(big_buffer, 1, size, f)

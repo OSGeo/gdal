@@ -737,10 +737,16 @@ def test_vsizip_deflate64():
     assert f
     try:
         data = gdal.VSIFReadL(1, size, f)
+        assert gdal.VSIFEofL(f) == 0
+        assert gdal.VSIFErrorL(f) == 0
         assert len(data) == size
         assert len(gdal.VSIFReadL(1, 1, f)) == 0
+        assert gdal.VSIFEofL(f) == 1
+        assert gdal.VSIFErrorL(f) == 0
         assert gdal.VSIFSeekL(f, 0, 0) == 0
         data2 = gdal.VSIFReadL(1, size, f)
+        assert gdal.VSIFEofL(f) == 0
+        assert gdal.VSIFErrorL(f) == 0
         len_data2 = len(data2)
         assert len_data2 == size
         assert data2 == data
@@ -752,6 +758,11 @@ def test_vsizip_deflate64():
         ]:
             assert gdal.VSIFSeekL(f, pos, 0) == 0
             data2 = gdal.VSIFReadL(1, nread, f)
+            if pos + nread > size:
+                assert gdal.VSIFEofL(f) == 1
+            else:
+                assert gdal.VSIFEofL(f) == 0
+            assert gdal.VSIFErrorL(f) == 0, (pos, nread)
             len_data2 = len(data2)
             assert len_data2 == min(nread, size - pos), (pos, nread)
             assert data2 == data[pos : pos + len_data2], (pos, nread)

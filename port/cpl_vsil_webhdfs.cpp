@@ -947,7 +947,7 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize(bool bSetError)
     CURL *hCurlHandle = curl_easy_init();
 
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_papszHTTPOptions);
+        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -1049,8 +1049,7 @@ std::string VSIWebHDFSHandle::DownloadRegion(const vsi_l_offset startOffset,
     std::string osURL(m_pszURL);
 
     WriteFuncStruct sWriteFuncData;
-    int nRetryCount = 0;
-    double dfRetryDelay = m_dfRetryDelay;
+    CPLHTTPRetryContext oRetryContext(m_oRetryParameters);
     bool bInRedirect = false;
     const vsi_l_offset nEndOffset =
         startOffset +
@@ -1075,7 +1074,7 @@ retry:
     }
 
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_papszHTTPOptions);
+        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
 
     if (!m_osDataNodeHost.empty())
     {
@@ -1139,20 +1138,15 @@ retry:
 
     if (response_code != 200)
     {
-        // If HTTP 429, 500, 502, 503, 504 error retry after a
-        // pause.
-        const double dfNewRetryDelay =
-            CPLHTTPGetNewRetryDelay(static_cast<int>(response_code),
-                                    dfRetryDelay, nullptr, szCurlErrBuf);
-        if (dfNewRetryDelay > 0 && nRetryCount < m_nMaxRetry)
+        if (oRetryContext.CanRetry(static_cast<int>(response_code), nullptr,
+                                   szCurlErrBuf))
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "HTTP error code: %d - %s. "
                      "Retrying again in %.1f secs",
-                     static_cast<int>(response_code), m_pszURL, dfRetryDelay);
-            CPLSleep(dfRetryDelay);
-            dfRetryDelay = dfNewRetryDelay;
-            nRetryCount++;
+                     static_cast<int>(response_code), m_pszURL,
+                     oRetryContext.GetCurrentDelay());
+            CPLSleep(oRetryContext.GetCurrentDelay());
             CPLFree(sWriteFuncData.pBuffer);
             curl_easy_cleanup(hCurlHandle);
             goto retry;

@@ -286,7 +286,7 @@ int OGRGeoRSSDataSource::Open(const char *pszFilename, int bUpdateIn)
         nDataHandlerCounter = 0;
         nLen = static_cast<unsigned int>(
             VSIFReadL(aBuf.data(), 1, aBuf.size(), fp));
-        nDone = VSIFEofL(fp);
+        nDone = nLen < aBuf.size();
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             if (nLen <= PARSER_BUF_SIZE - 1)

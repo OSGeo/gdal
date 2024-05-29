@@ -44,9 +44,15 @@ from osgeo_utils.auxiliary.progress import (
     OptionalProgressCallback,
     get_progress_callback,
 )
-from osgeo_utils.auxiliary.util import PathOrDS, get_bands, open_ds
+from osgeo_utils.auxiliary.util import (
+    PathOrDS,
+    enable_gdal_exceptions,
+    get_bands,
+    open_ds,
+)
 
 
+@enable_gdal_exceptions
 def gdal2xyz(
     srcfile: PathOrDS,
     dstfile: PathLikeOrStr = None,

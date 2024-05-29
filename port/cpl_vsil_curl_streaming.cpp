@@ -261,7 +261,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
 
   protected:
     VSICurlStreamingFSHandler *m_poFS = nullptr;
-    char **m_papszHTTPOptions = nullptr;
+    CPLStringList m_aosHTTPOptions{};
+    const CPLHTTPRetryParameters m_oRetryParameters;
 
   private:
     char *m_pszURL = nullptr;
@@ -280,6 +281,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     vsi_l_offset nCandidateFileSize = 0;
 
     bool bEOF = false;
+    bool m_bError = false;
 
     size_t nCachedSize = 0;
     GByte *pCachedData = nullptr;
@@ -302,7 +304,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     vsi_l_offset nBodySize = 0;
     int nHTTPCode = 0;
     char m_szCurlErrBuf[CURL_ERROR_SIZE + 1];
-    bool m_bErrorOccurred = false;
+    bool m_bErrorOccurredInThread = false;
 
     void AcquireMutex();
     void ReleaseMutex();
@@ -344,6 +346,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     vsi_l_offset Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    void ClearErr() override;
+    int Error() override;
     int Eof() override;
     int Flush() override;
     int Close() override;
@@ -377,9 +381,9 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
 
 VSICurlStreamingHandle::VSICurlStreamingHandle(VSICurlStreamingFSHandler *poFS,
                                                const char *pszURL)
-    : m_poFS(poFS), m_papszHTTPOptions(CPLHTTPGetOptionsFromEnv(
+    : m_poFS(poFS), m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(
                         (poFS->GetFSPrefix() + pszURL).c_str())),
-      m_pszURL(CPLStrdup(pszURL))
+      m_oRetryParameters(m_aosHTTPOptions), m_pszURL(CPLStrdup(pszURL))
 {
     FileProp cachedFileProp;
     poFS->GetCachedFileProp(pszURL, cachedFileProp);
@@ -406,7 +410,6 @@ VSICurlStreamingHandle::~VSICurlStreamingHandle()
     StopDownload();
 
     CPLFree(m_pszURL);
-    CSLDestroy(m_papszHTTPOptions);
 
     CPLFree(pCachedData);
 
@@ -573,7 +576,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
     CURL *hLocalHandle = curl_easy_init();
 
     struct curl_slist *headers =
-        VSICurlSetOptions(hLocalHandle, m_pszURL, m_papszHTTPOptions);
+        VSICurlSetOptions(hLocalHandle, m_pszURL, m_aosHTTPOptions.List());
 
     VSICURLStreamingInitWriteFuncStructStreaming(&sWriteFuncHeaderData);
 
@@ -1010,7 +1013,7 @@ void VSICurlStreamingHandle::DownloadInThread()
     CURL *hCurlHandle = curl_easy_init();
 
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, m_pszURL, m_papszHTTPOptions);
+        VSICurlSetOptions(hCurlHandle, m_pszURL, m_aosHTTPOptions.List());
     headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
@@ -1056,8 +1059,8 @@ void VSICurlStreamingHandle::DownloadInThread()
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
 
     AcquireMutex();
-    m_bErrorOccurred = eRet != CURLE_OK;
-    if (m_bErrorOccurred)
+    m_bErrorOccurredInThread = eRet != CURLE_OK;
+    if (m_bErrorOccurredInThread)
     {
         // For autotest purposes only !
         const char *pszSimulatedCurlError = CPLGetConfigOption(
@@ -1109,7 +1112,7 @@ void VSICurlStreamingHandle::StartDownload()
     oRingBuffer.Reset();
     bDownloadInProgress = TRUE;
     nRingBufferFileOffset = 0;
-    m_bErrorOccurred = false;
+    m_bErrorOccurredInThread = false;
     hThread = CPLCreateJoinableThread(VSICurlDownloadInThread, this);
 }
 
@@ -1142,7 +1145,7 @@ void VSICurlStreamingHandle::StopDownload()
 
     oRingBuffer.Reset();
     bDownloadStopped = FALSE;
-    m_bErrorOccurred = false;
+    m_bErrorOccurredInThread = false;
     nRingBufferFileOffset = 0;
     bEOF = false;
 }
@@ -1192,8 +1195,7 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
     if (nBufferRequestSize == 0)
         return 0;
 
-    int nRetryCount = 0;
-    double dfRetryDelay = 0;
+    CPLHTTPRetryContext oRetryContext(m_oRetryParameters);
 
 retry:
     GByte *pabyBuffer = static_cast<GByte *>(pBuffer);
@@ -1253,9 +1255,9 @@ retry:
         bEOF = true;
     }
 
-    // Has a Seek() being done since the last Read()?
     bool bErrorOccurred = false;
 
+    // Has a Seek() being done since the last Read()?
     if (!bEOF && nRemaining > 0 && curOffset != nRingBufferFileOffset)
     {
         // Backward seek: Need to restart the download from the beginning.
@@ -1301,7 +1303,7 @@ retry:
                 while (oRingBuffer.GetSize() == 0 && bDownloadInProgress)
                     CPLCondWait(hCondProducer, hRingBufferMutex);
                 const int bBufferEmpty = (oRingBuffer.GetSize() == 0);
-                bErrorOccurred = m_bErrorOccurred;
+                bErrorOccurred = m_bErrorOccurredInThread;
                 ReleaseMutex();
 
                 if (bBufferEmpty && !bDownloadInProgress)
@@ -1355,7 +1357,7 @@ retry:
             while (oRingBuffer.GetSize() == 0 && bDownloadInProgress)
                 CPLCondWait(hCondProducer, hRingBufferMutex);
             const bool bBufferEmpty = oRingBuffer.GetSize() == 0;
-            bErrorOccurred = m_bErrorOccurred;
+            bErrorOccurred = m_bErrorOccurredInThread;
             ReleaseMutex();
 
             if (bBufferEmpty && !bDownloadInProgress)
@@ -1421,34 +1423,28 @@ retry:
 
     if (bErrorOccurred)
     {
-        const int nMaxRetry = atoi(CPLGetConfigOption(
-            "GDAL_HTTP_MAX_RETRY", CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
-        // coverity[tainted_data]
-        if (dfRetryDelay == 0)
-            dfRetryDelay = CPLAtof(
-                CPLGetConfigOption("GDAL_HTTP_RETRY_DELAY",
-                                   CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-
         // Look if we should attempt a retry
         AcquireMutex();
-        const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-            static_cast<int>(nHTTPCode), dfRetryDelay, nullptr, m_szCurlErrBuf);
+        const bool bRetry = oRetryContext.CanRetry(static_cast<int>(nHTTPCode),
+                                                   nullptr, m_szCurlErrBuf);
         ReleaseMutex();
-        if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+        if (bRetry)
         {
             StopDownload();
 
             CPLError(CE_Warning, CPLE_AppDefined,
                      "HTTP error code: %d - %s. "
                      "Retrying again in %.1f secs",
-                     static_cast<int>(nHTTPCode), m_pszURL, dfRetryDelay);
-            CPLSleep(dfRetryDelay);
-            dfRetryDelay = dfNewRetryDelay;
-            nRetryCount++;
+                     static_cast<int>(nHTTPCode), m_pszURL,
+                     oRetryContext.GetCurrentDelay());
+            CPLSleep(oRetryContext.GetCurrentDelay());
             curOffset = curOffsetOri;
             goto retry;
         }
     }
+
+    if (bErrorOccurred)
+        m_bError = true;
 
     return nRet;
 }
@@ -1497,6 +1493,26 @@ size_t VSICurlStreamingHandle::Write(const void * /* pBuffer */,
 int VSICurlStreamingHandle::Eof()
 {
     return bEOF;
+}
+
+/************************************************************************/
+/*                               Error()                                */
+/************************************************************************/
+
+int VSICurlStreamingHandle::Error()
+
+{
+    return m_bError;
+}
+
+/************************************************************************/
+/*                             ClearErr()                               */
+/************************************************************************/
+
+void VSICurlStreamingHandle::ClearErr()
+{
+    bEOF = false;
+    m_bError = false;
 }
 
 /************************************************************************/

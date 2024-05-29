@@ -582,9 +582,16 @@ def test_vsicurl_test_retry(server):
         )
         data_len = 0
         if f:
-            data_len = len(gdal.VSIFReadL(1, 1, f))
-            gdal.VSIFCloseL(f)
-        assert data_len == 0
+            try:
+                data_len = len(gdal.VSIFReadL(1, 1, f))
+                assert data_len == 0
+                assert gdal.VSIFEofL(f) == 0
+                assert gdal.VSIFErrorL(f) == 1
+                gdal.VSIFClearErrL(f)
+                assert gdal.VSIFEofL(f) == 0
+                assert gdal.VSIFErrorL(f) == 0
+            finally:
+                gdal.VSIFCloseL(f)
 
     gdal.VSICurlClearCache()
 
@@ -601,13 +608,108 @@ def test_vsicurl_test_retry(server):
             "rb",
         )
         assert f is not None
+        try:
+            gdal.ErrorReset()
+            with gdal.quiet_errors():
+                data = gdal.VSIFReadL(1, 3, f).decode("ascii")
+                assert data == "foo"
+            error_msg = gdal.GetLastErrorMsg()
+            assert "429" in error_msg
+            assert gdal.VSIFEofL(f) == 0
+            assert gdal.VSIFErrorL(f) == 0
+        finally:
+            gdal.VSIFCloseL(f)
+
+
+###############################################################################
+
+
+def test_vsicurl_retry_codes_ALL(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/test_retry/", 404)
+    handler.add("HEAD", "/test_retry/test.txt", 200, {"Content-Length": "3"})
+    handler.add(
+        "GET", "/test_retry/test.txt", 400
+    )  #  non retriable by default, but here allowed because of retry_codes=ALL
+    handler.add("GET", "/test_retry/test.txt", 200, {}, "foo")
+    with webserver.install_http_handler(handler):
+        f = gdal.VSIFOpenL(
+            "/vsicurl?max_retry=1&retry_delay=0.01&retry_codes=ALL&url=http://localhost:%d/test_retry/test.txt"
+            % server.port,
+            "rb",
+        )
+        assert f is not None
         gdal.ErrorReset()
         with gdal.quiet_errors():
             data = gdal.VSIFReadL(1, 3, f).decode("ascii")
         error_msg = gdal.GetLastErrorMsg()
         gdal.VSIFCloseL(f)
         assert data == "foo"
-        assert "429" in error_msg
+        assert "400" in error_msg
+
+
+###############################################################################
+
+
+def test_vsicurl_retry_codes_enumerated(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/test_retry/", 404)
+    handler.add("HEAD", "/test_retry/test.txt", 200, {"Content-Length": "3"})
+    handler.add(
+        "GET", "/test_retry/test.txt", 400
+    )  #  non retriable by default, but here allowed because of retry_codes=ALL
+    handler.add("GET", "/test_retry/test.txt", 200, {}, "foo")
+    with webserver.install_http_handler(handler), gdal.config_option(
+        "GDAL_HTTP_RETRY_CODES", "400"
+    ):
+        f = gdal.VSIFOpenL(
+            "/vsicurl?max_retry=1&retry_delay=0.01&url=http://localhost:%d/test_retry/test.txt"
+            % server.port,
+            "rb",
+        )
+        assert f is not None
+        gdal.ErrorReset()
+        with gdal.quiet_errors():
+            data = gdal.VSIFReadL(1, 3, f).decode("ascii")
+        error_msg = gdal.GetLastErrorMsg()
+        gdal.VSIFCloseL(f)
+        assert data == "foo"
+        assert "400" in error_msg
+
+
+###############################################################################
+
+
+def test_vsicurl_retry_codes_no_match(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add("GET", "/test_retry/", 404)
+    handler.add("HEAD", "/test_retry/test.txt", 200, {"Content-Length": "3"})
+    handler.add(
+        "GET", "/test_retry/test.txt", 400
+    )  #  non retriable by default, and not listed in GDAL_HTTP_RETRY_CODES
+    with webserver.install_http_handler(handler), gdal.config_option(
+        "GDAL_HTTP_RETRY_CODES", "409"
+    ):
+        f = gdal.VSIFOpenL(
+            "/vsicurl?max_retry=1&retry_delay=0.01&url=http://localhost:%d/test_retry/test.txt"
+            % server.port,
+            "rb",
+        )
+        assert f is not None
+        gdal.ErrorReset()
+        with gdal.quiet_errors():
+            data = gdal.VSIFReadL(1, 3, f).decode("ascii")
+        gdal.VSIFCloseL(f)
+        assert len(data) == 0
 
 
 ###############################################################################

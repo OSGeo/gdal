@@ -24,9 +24,6 @@ Commonly used utilities include:
 -  gdal_calc
 -  ogrmerge
 
-For the full list see
-:ref:`Programs <programs>` and note the ones that end in ``.py``.
-
 Developers
 ----------
 

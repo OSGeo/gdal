@@ -598,12 +598,12 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     std::string PutBlock(const std::string &osFilename, int nPartNumber,
                          const void *pabyBuffer, size_t nBufferSize,
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
-                         int nMaxRetry, double dfRetryDelay,
+                         const CPLHTTPRetryParameters &oRetryParameters,
                          CSLConstList papszOptions);
     bool PutBlockList(const std::string &osFilename,
                       const std::vector<std::string> &aosBlockIds,
-                      IVSIS3LikeHandleHelper *poS3HandleHelper, int nMaxRetry,
-                      double dfRetryDelay);
+                      IVSIS3LikeHandleHelper *poS3HandleHelper,
+                      const CPLHTTPRetryParameters &oRetryParameters);
 
     // Multipart upload (mapping of S3 interface to PutBlock/PutBlockList)
 
@@ -612,11 +612,10 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
         return true;
     }
 
-    std::string
-    InitiateMultipartUpload(const std::string & /* osFilename */,
-                            IVSIS3LikeHandleHelper *, int /* nMaxRetry */,
-                            double /* dfRetryDelay */,
-                            CSLConstList /* papszOptions */) override
+    std::string InitiateMultipartUpload(
+        const std::string & /* osFilename */, IVSIS3LikeHandleHelper *,
+        const CPLHTTPRetryParameters & /* oRetryParameters */,
+        CSLConstList /* papszOptions */) override
     {
         return "dummy";
     }
@@ -626,29 +625,28 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
                            vsi_l_offset /* nPosition */, const void *pabyBuffer,
                            size_t nBufferSize,
                            IVSIS3LikeHandleHelper *poS3HandleHelper,
-                           int nMaxRetry, double dfRetryDelay,
+                           const CPLHTTPRetryParameters &oRetryParameters,
                            CSLConstList papszOptions) override
     {
         return PutBlock(osFilename, nPartNumber, pabyBuffer, nBufferSize,
-                        poS3HandleHelper, nMaxRetry, dfRetryDelay,
-                        papszOptions);
+                        poS3HandleHelper, oRetryParameters, papszOptions);
     }
 
-    bool CompleteMultipart(const std::string &osFilename,
-                           const std::string & /* osUploadID */,
-                           const std::vector<std::string> &aosEtags,
-                           vsi_l_offset /* nTotalSize */,
-                           IVSIS3LikeHandleHelper *poS3HandleHelper,
-                           int nMaxRetry, double dfRetryDelay) override
+    bool CompleteMultipart(
+        const std::string &osFilename, const std::string & /* osUploadID */,
+        const std::vector<std::string> &aosEtags, vsi_l_offset /* nTotalSize */,
+        IVSIS3LikeHandleHelper *poS3HandleHelper,
+        const CPLHTTPRetryParameters &oRetryParameters) override
     {
-        return PutBlockList(osFilename, aosEtags, poS3HandleHelper, nMaxRetry,
-                            dfRetryDelay);
+        return PutBlockList(osFilename, aosEtags, poS3HandleHelper,
+                            oRetryParameters);
     }
 
-    bool AbortMultipart(const std::string & /* osFilename */,
-                        const std::string & /* osUploadID */,
-                        IVSIS3LikeHandleHelper * /*poS3HandleHelper */,
-                        int /* nMaxRetry */, double /* dfRetryDelay */) override
+    bool AbortMultipart(
+        const std::string & /* osFilename */,
+        const std::string & /* osUploadID */,
+        IVSIS3LikeHandleHelper * /*poS3HandleHelper */,
+        const CPLHTTPRetryParameters & /* oRetryParameters */) override
     {
         return true;
     }
@@ -659,6 +657,32 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     VSIFilesystemHandler *Duplicate(const char *pszPrefix) override
     {
         return new VSIAzureFSHandler(pszPrefix);
+    }
+
+    //! Maximum number of parts for multipart upload
+    // Cf https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-block-blobs--append-blobs--and-page-blobs
+    int GetMaximumPartCount() override
+    {
+        return 50000;
+    }
+
+    //! Minimum size of a part for multipart upload (except last one), in MiB.
+    int GetMinimumPartSizeInMiB() override
+    {
+        return 0;
+    }
+
+    //! Maximum size of a part for multipart upload, in MiB.
+    // Cf https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-block-blobs--append-blobs--and-page-blobs
+    int GetMaximumPartSizeInMiB() override
+    {
+#if SIZEOF_VOIDP == 8
+        return 4000;
+#else
+        // Cannot be larger than 4GiB, otherwise integer overflow would occur
+        // 1 GiB is the maximum reasonable value on a 32-bit machine
+        return 1024;
+#endif
     }
 };
 
@@ -735,13 +759,27 @@ VSIAzureFSHandler::CreateWriteHandle(const char *pszFilename,
             pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str());
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = std::make_unique<VSIAzureWriteHandle>(
-        this, pszFilename, poHandleHelper, papszOptions);
-    if (!poHandle->IsOK())
+    const char *pszBlobType = CSLFetchNameValue(papszOptions, "BLOB_TYPE");
+    if (pszBlobType && EQUAL(pszBlobType, "BLOCK"))
     {
-        return nullptr;
+        auto poHandle = std::make_unique<VSIS3LikeWriteHandle>(
+            this, pszFilename, poHandleHelper, false, papszOptions);
+        if (!poHandle->IsOK())
+        {
+            return nullptr;
+        }
+        return VSIVirtualHandleUniquePtr(poHandle.release());
     }
-    return VSIVirtualHandleUniquePtr(poHandle.release());
+    else
+    {
+        auto poHandle = std::make_unique<VSIAzureWriteHandle>(
+            this, pszFilename, poHandleHelper, papszOptions);
+        if (!poHandle->IsOK())
+        {
+            return nullptr;
+        }
+        return VSIVirtualHandleUniquePtr(poHandle.release());
+    }
 }
 
 /************************************************************************/
@@ -850,17 +888,11 @@ char **VSIAzureFSHandler::GetFileMetadata(const char *pszFilename,
     NetworkStatisticsAction oContextAction("GetFileMetadata");
 
     bool bRetry;
-    // coverity[tainted_data]
-    double dfRetryDelay = CPLAtof(
-        VSIGetPathSpecificOption(pszFilename, "GDAL_HTTP_RETRY_DELAY",
-                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-    const int nMaxRetry =
-        atoi(VSIGetPathSpecificOption(pszFilename, "GDAL_HTTP_MAX_RETRY",
-                                      CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
-    int nRetryCount = 0;
     bool bError = true;
 
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
+    const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
+    CPLHTTPRetryContext oRetryContext(oRetryParameters);
 
     CPLStringList aosMetadata;
     do
@@ -890,20 +922,18 @@ char **VSIAzureFSHandler::GetFileMetadata(const char *pszFilename,
             requestHelper.sWriteFuncHeaderData.pBuffer == nullptr)
         {
             // Look if we should attempt a retry
-            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                static_cast<int>(response_code), dfRetryDelay,
-                requestHelper.sWriteFuncHeaderData.pBuffer,
-                requestHelper.szCurlErrBuf);
-            if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+            if (oRetryContext.CanRetry(
+                    static_cast<int>(response_code),
+                    requestHelper.sWriteFuncHeaderData.pBuffer,
+                    requestHelper.szCurlErrBuf))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "HTTP error code: %d - %s. "
                          "Retrying again in %.1f secs",
                          static_cast<int>(response_code),
-                         poHandleHelper->GetURL().c_str(), dfRetryDelay);
-                CPLSleep(dfRetryDelay);
-                dfRetryDelay = dfNewRetryDelay;
-                nRetryCount++;
+                         poHandleHelper->GetURL().c_str(),
+                         oRetryContext.GetCurrentDelay());
+                CPLSleep(oRetryContext.GetCurrentDelay());
                 bRetry = true;
             }
             else
@@ -1001,15 +1031,9 @@ bool VSIAzureFSHandler::SetFileMetadata(const char *pszFilename,
     NetworkStatisticsAction oContextAction("SetFileMetadata");
 
     bool bRetry;
-    // coverity[tainted_data]
-    double dfRetryDelay = CPLAtof(
-        VSIGetPathSpecificOption(pszFilename, "GDAL_HTTP_RETRY_DELAY",
-                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-    const int nMaxRetry =
-        atoi(VSIGetPathSpecificOption(pszFilename, "GDAL_HTTP_MAX_RETRY",
-                                      CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
-    int nRetryCount = 0;
-
+    const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
+    const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
+    CPLHTTPRetryContext oRetryContext(oRetryParameters);
     bool bRet = false;
 
     // Compose XML content for TAGS
@@ -1041,8 +1065,6 @@ bool VSIAzureFSHandler::SetFileMetadata(const char *pszFilename,
         CPLFree(pszXML);
         CPLDestroyXMLNode(psXML);
     }
-
-    const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
 
     do
     {
@@ -1114,20 +1136,18 @@ bool VSIAzureFSHandler::SetFileMetadata(const char *pszFilename,
         if (response_code != 200 && response_code != 204)
         {
             // Look if we should attempt a retry
-            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                static_cast<int>(response_code), dfRetryDelay,
-                requestHelper.sWriteFuncHeaderData.pBuffer,
-                requestHelper.szCurlErrBuf);
-            if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+            if (oRetryContext.CanRetry(
+                    static_cast<int>(response_code),
+                    requestHelper.sWriteFuncHeaderData.pBuffer,
+                    requestHelper.szCurlErrBuf))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "HTTP error code: %d - %s. "
                          "Retrying again in %.1f secs",
                          static_cast<int>(response_code),
-                         poHandleHelper->GetURL().c_str(), dfRetryDelay);
-                CPLSleep(dfRetryDelay);
-                dfRetryDelay = dfNewRetryDelay;
-                nRetryCount++;
+                         poHandleHelper->GetURL().c_str(),
+                         oRetryContext.GetCurrentDelay());
+                CPLSleep(oRetryContext.GetCurrentDelay());
                 bRetry = true;
             }
             else
@@ -1162,10 +1182,10 @@ VSIAzureFSHandler::GetStreamingFilename(const std::string &osFilename) const
 }
 
 /************************************************************************/
-/*                        GetAzureBufferSize()                          */
+/*                       GetAzureAppendBufferSize()                     */
 /************************************************************************/
 
-int GetAzureBufferSize()
+int GetAzureAppendBufferSize()
 {
     int nBufferSize;
     int nChunkSizeMB = atoi(CPLGetConfigOption("VSIAZ_CHUNK_SIZE", "4"));
@@ -1192,7 +1212,7 @@ VSIAzureWriteHandle::VSIAzureWriteHandle(
     VSIAzureFSHandler *poFS, const char *pszFilename,
     VSIAzureBlobHandleHelper *poHandleHelper, CSLConstList papszOptions)
     : VSIAppendWriteHandle(poFS, poFS->GetFSPrefix().c_str(), pszFilename,
-                           GetAzureBufferSize()),
+                           GetAzureAppendBufferSize()),
       m_poHandleHelper(poHandleHelper), m_aosOptions(papszOptions),
       m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename))
 {
@@ -1255,14 +1275,7 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
         bIsLastBlock &&
         (m_nCurOffset <= static_cast<vsi_l_offset>(m_nBufferSize));
 
-    // coverity[tainted_data]
-    double dfRetryDelay = CPLAtof(
-        VSIGetPathSpecificOption(m_osFilename.c_str(), "GDAL_HTTP_RETRY_DELAY",
-                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-    const int nMaxRetry = atoi(
-        VSIGetPathSpecificOption(m_osFilename.c_str(), "GDAL_HTTP_MAX_RETRY",
-                                 CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
-    int nRetryCount = 0;
+    CPLHTTPRetryContext oRetryContext(m_oRetryParameters);
     bool bHasAlreadyHandled409 = false;
     bool bRetry;
 
@@ -1350,20 +1363,18 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
         else if (response_code != 201)
         {
             // Look if we should attempt a retry
-            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                static_cast<int>(response_code), dfRetryDelay,
-                requestHelper.sWriteFuncHeaderData.pBuffer,
-                requestHelper.szCurlErrBuf);
-            if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+            if (oRetryContext.CanRetry(
+                    static_cast<int>(response_code),
+                    requestHelper.sWriteFuncHeaderData.pBuffer,
+                    requestHelper.szCurlErrBuf))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "HTTP error code: %d - %s. "
                          "Retrying again in %.1f secs",
                          static_cast<int>(response_code),
-                         m_poHandleHelper->GetURL().c_str(), dfRetryDelay);
-                CPLSleep(dfRetryDelay);
-                dfRetryDelay = dfNewRetryDelay;
-                nRetryCount++;
+                         m_poHandleHelper->GetURL().c_str(),
+                         oRetryContext.GetCurrentDelay());
+                CPLSleep(oRetryContext.GetCurrentDelay());
                 bRetry = true;
             }
             else
@@ -1490,13 +1501,9 @@ int *VSIAzureFSHandler::UnlinkBatch(CSLConstList papszFiles)
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsAction oContextAction("UnlinkBatch");
 
-    // coverity[tainted_data]
-    double dfRetryDelay = CPLAtof(
-        VSIGetPathSpecificOption(pszFirstFilename, "GDAL_HTTP_RETRY_DELAY",
-                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-    const int nMaxRetry =
-        atoi(VSIGetPathSpecificOption(pszFirstFilename, "GDAL_HTTP_MAX_RETRY",
-                                      CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
+    const CPLStringList aosHTTPOptions(
+        CPLHTTPGetOptionsFromEnv(pszFirstFilename));
+    const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
 
     // For debug / testing only
     const int nBatchSize =
@@ -1504,13 +1511,10 @@ int *VSIAzureFSHandler::UnlinkBatch(CSLConstList papszFiles)
                                       "CPL_VSIAZ_UNLINK_BATCH_SIZE", "256"))));
     std::string osPOSTContent;
 
-    const CPLStringList aosHTTPOptions(
-        CPLHTTPGetOptionsFromEnv(pszFirstFilename));
-
     int nFilesInBatch = 0;
     int nFirstIDInBatch = 0;
 
-    const auto DoPOST = [this, panRet, &nFilesInBatch, &dfRetryDelay, nMaxRetry,
+    const auto DoPOST = [this, panRet, &nFilesInBatch, &oRetryParameters,
                          &aosHTTPOptions, &poHandleHelper, &osPOSTContent,
                          &nFirstIDInBatch](int nLastID)
     {
@@ -1521,7 +1525,7 @@ int *VSIAzureFSHandler::UnlinkBatch(CSLConstList papszFiles)
 #endif
 
         // Run request
-        int nRetryCount = 0;
+        CPLHTTPRetryContext oRetryContext(oRetryParameters);
         bool bRetry;
         std::string osResponse;
         do
@@ -1559,20 +1563,18 @@ int *VSIAzureFSHandler::UnlinkBatch(CSLConstList papszFiles)
                 requestHelper.sWriteFuncData.pBuffer == nullptr)
             {
                 // Look if we should attempt a retry
-                const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                    static_cast<int>(response_code), dfRetryDelay,
-                    requestHelper.sWriteFuncHeaderData.pBuffer,
-                    requestHelper.szCurlErrBuf);
-                if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+                if (oRetryContext.CanRetry(
+                        static_cast<int>(response_code),
+                        requestHelper.sWriteFuncHeaderData.pBuffer,
+                        requestHelper.szCurlErrBuf))
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "HTTP error code: %d - %s. "
                              "Retrying again in %.1f secs",
                              static_cast<int>(response_code),
-                             poHandleHelper->GetURL().c_str(), dfRetryDelay);
-                    CPLSleep(dfRetryDelay);
-                    dfRetryDelay = dfNewRetryDelay;
-                    nRetryCount++;
+                             poHandleHelper->GetURL().c_str(),
+                             oRetryContext.GetCurrentDelay());
+                    CPLSleep(oRetryContext.GetCurrentDelay());
                     bRetry = true;
                 }
                 else
@@ -1770,17 +1772,10 @@ int VSIAzureFSHandler::CreateContainer(const std::string &osDirname)
 
     bool bRetry;
 
-    // coverity[tainted_data]
-    double dfRetryDelay = CPLAtof(
-        VSIGetPathSpecificOption(osDirname.c_str(), "GDAL_HTTP_RETRY_DELAY",
-                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-    const int nMaxRetry =
-        atoi(VSIGetPathSpecificOption(osDirname.c_str(), "GDAL_HTTP_MAX_RETRY",
-                                      CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
-    int nRetryCount = 0;
-
     const CPLStringList aosHTTPOptions(
         CPLHTTPGetOptionsFromEnv(osDirname.c_str()));
+    const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
+    CPLHTTPRetryContext oRetryContext(oRetryParameters);
 
     do
     {
@@ -1807,20 +1802,18 @@ int VSIAzureFSHandler::CreateContainer(const std::string &osDirname)
         if (response_code != 201)
         {
             // Look if we should attempt a retry
-            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                static_cast<int>(response_code), dfRetryDelay,
-                requestHelper.sWriteFuncHeaderData.pBuffer,
-                requestHelper.szCurlErrBuf);
-            if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+            if (oRetryContext.CanRetry(
+                    static_cast<int>(response_code),
+                    requestHelper.sWriteFuncHeaderData.pBuffer,
+                    requestHelper.szCurlErrBuf))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "HTTP error code: %d - %s. "
                          "Retrying again in %.1f secs",
                          static_cast<int>(response_code),
-                         poS3HandleHelper->GetURL().c_str(), dfRetryDelay);
-                CPLSleep(dfRetryDelay);
-                dfRetryDelay = dfNewRetryDelay;
-                nRetryCount++;
+                         poS3HandleHelper->GetURL().c_str(),
+                         oRetryContext.GetCurrentDelay());
+                CPLSleep(oRetryContext.GetCurrentDelay());
                 bRetry = true;
             }
             else
@@ -1939,17 +1932,10 @@ int VSIAzureFSHandler::DeleteContainer(const std::string &osDirname)
 
     bool bRetry;
 
-    // coverity[tainted_data]
-    double dfRetryDelay = CPLAtof(
-        VSIGetPathSpecificOption(osDirname.c_str(), "GDAL_HTTP_RETRY_DELAY",
-                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-    const int nMaxRetry =
-        atoi(VSIGetPathSpecificOption(osDirname.c_str(), "GDAL_HTTP_MAX_RETRY",
-                                      CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
-    int nRetryCount = 0;
-
     const CPLStringList aosHTTPOptions(
         CPLHTTPGetOptionsFromEnv(osDirname.c_str()));
+    const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
+    CPLHTTPRetryContext oRetryContext(oRetryParameters);
 
     do
     {
@@ -1977,20 +1963,18 @@ int VSIAzureFSHandler::DeleteContainer(const std::string &osDirname)
         if (response_code != 202)
         {
             // Look if we should attempt a retry
-            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                static_cast<int>(response_code), dfRetryDelay,
-                requestHelper.sWriteFuncHeaderData.pBuffer,
-                requestHelper.szCurlErrBuf);
-            if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+            if (oRetryContext.CanRetry(
+                    static_cast<int>(response_code),
+                    requestHelper.sWriteFuncHeaderData.pBuffer,
+                    requestHelper.szCurlErrBuf))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "HTTP error code: %d - %s. "
                          "Retrying again in %.1f secs",
                          static_cast<int>(response_code),
-                         poS3HandleHelper->GetURL().c_str(), dfRetryDelay);
-                CPLSleep(dfRetryDelay);
-                dfRetryDelay = dfNewRetryDelay;
-                nRetryCount++;
+                         poS3HandleHelper->GetURL().c_str(),
+                         oRetryContext.GetCurrentDelay());
+                CPLSleep(oRetryContext.GetCurrentDelay());
                 bRetry = true;
             }
             else
@@ -2118,15 +2102,9 @@ int VSIAzureFSHandler::CopyObject(const char *oldpath, const char *newpath,
 
     bool bRetry;
 
-    // coverity[tainted_data]
-    double dfRetryDelay = CPLAtof(
-        VSIGetPathSpecificOption(oldpath, "GDAL_HTTP_RETRY_DELAY",
-                                 CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)));
-    const int nMaxRetry = atoi(VSIGetPathSpecificOption(
-        oldpath, "GDAL_HTTP_MAX_RETRY", CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)));
-    int nRetryCount = 0;
-
     const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(oldpath));
+    const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
+    CPLHTTPRetryContext oRetryContext(oRetryParameters);
 
     do
     {
@@ -2153,20 +2131,18 @@ int VSIAzureFSHandler::CopyObject(const char *oldpath, const char *newpath,
         if (response_code != 202)
         {
             // Look if we should attempt a retry
-            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                static_cast<int>(response_code), dfRetryDelay,
-                requestHelper.sWriteFuncHeaderData.pBuffer,
-                requestHelper.szCurlErrBuf);
-            if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+            if (oRetryContext.CanRetry(
+                    static_cast<int>(response_code),
+                    requestHelper.sWriteFuncHeaderData.pBuffer,
+                    requestHelper.szCurlErrBuf))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "HTTP error code: %d - %s. "
                          "Retrying again in %.1f secs",
                          static_cast<int>(response_code),
-                         poHandleHelper->GetURL().c_str(), dfRetryDelay);
-                CPLSleep(dfRetryDelay);
-                dfRetryDelay = dfNewRetryDelay;
-                nRetryCount++;
+                         poHandleHelper->GetURL().c_str(),
+                         oRetryContext.GetCurrentDelay());
+                CPLSleep(oRetryContext.GetCurrentDelay());
                 bRetry = true;
             }
             else
@@ -2205,15 +2181,15 @@ int VSIAzureFSHandler::CopyObject(const char *oldpath, const char *newpath,
 
 std::string VSIAzureFSHandler::PutBlock(
     const std::string &osFilename, int nPartNumber, const void *pabyBuffer,
-    size_t nBufferSize, IVSIS3LikeHandleHelper *poS3HandleHelper, int nMaxRetry,
-    double dfRetryDelay, CSLConstList papszOptions)
+    size_t nBufferSize, IVSIS3LikeHandleHelper *poS3HandleHelper,
+    const CPLHTTPRetryParameters &oRetryParameters, CSLConstList papszOptions)
 {
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsFile oContextFile(osFilename.c_str());
     NetworkStatisticsAction oContextAction("PutBlock");
 
     bool bRetry;
-    int nRetryCount = 0;
+    CPLHTTPRetryContext oRetryContext(oRetryParameters);
     std::string osBlockId(CPLSPrintf("%012d", nPartNumber));
 
     const std::string osContentLength(
@@ -2278,20 +2254,18 @@ std::string VSIAzureFSHandler::PutBlock(
                  requestHelper.sWriteFuncHeaderData.pBuffer == nullptr)
         {
             // Look if we should attempt a retry
-            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                static_cast<int>(response_code), dfRetryDelay,
-                requestHelper.sWriteFuncHeaderData.pBuffer,
-                requestHelper.szCurlErrBuf);
-            if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+            if (oRetryContext.CanRetry(
+                    static_cast<int>(response_code),
+                    requestHelper.sWriteFuncHeaderData.pBuffer,
+                    requestHelper.szCurlErrBuf))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "HTTP error code: %d - %s. "
                          "Retrying again in %.1f secs",
                          static_cast<int>(response_code),
-                         poS3HandleHelper->GetURL().c_str(), dfRetryDelay);
-                CPLSleep(dfRetryDelay);
-                dfRetryDelay = dfNewRetryDelay;
-                nRetryCount++;
+                         poS3HandleHelper->GetURL().c_str(),
+                         oRetryContext.GetCurrentDelay());
+                CPLSleep(oRetryContext.GetCurrentDelay());
                 bRetry = true;
             }
             else
@@ -2319,8 +2293,8 @@ std::string VSIAzureFSHandler::PutBlock(
 
 bool VSIAzureFSHandler::PutBlockList(
     const std::string &osFilename, const std::vector<std::string> &aosBlockIds,
-    IVSIS3LikeHandleHelper *poS3HandleHelper, int nMaxRetry,
-    double dfRetryDelay)
+    IVSIS3LikeHandleHelper *poS3HandleHelper,
+    const CPLHTTPRetryParameters &oRetryParameters)
 {
     bool bSuccess = true;
 
@@ -2342,7 +2316,7 @@ bool VSIAzureFSHandler::PutBlockList(
     const CPLStringList aosHTTPOptions(
         CPLHTTPGetOptionsFromEnv(osFilename.c_str()));
 
-    int nRetryCount = 0;
+    CPLHTTPRetryContext oRetryContext(oRetryParameters);
     bool bRetry;
     do
     {
@@ -2381,20 +2355,18 @@ bool VSIAzureFSHandler::PutBlockList(
         if (response_code != 201)
         {
             // Look if we should attempt a retry
-            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                static_cast<int>(response_code), dfRetryDelay,
-                requestHelper.sWriteFuncHeaderData.pBuffer,
-                requestHelper.szCurlErrBuf);
-            if (dfNewRetryDelay > 0 && nRetryCount < nMaxRetry)
+            if (oRetryContext.CanRetry(
+                    static_cast<int>(response_code),
+                    requestHelper.sWriteFuncHeaderData.pBuffer,
+                    requestHelper.szCurlErrBuf))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "HTTP error code: %d - %s. "
                          "Retrying again in %.1f secs",
                          static_cast<int>(response_code),
-                         poS3HandleHelper->GetURL().c_str(), dfRetryDelay);
-                CPLSleep(dfRetryDelay);
-                dfRetryDelay = dfNewRetryDelay;
-                nRetryCount++;
+                         poS3HandleHelper->GetURL().c_str(),
+                         oRetryContext.GetCurrentDelay());
+                CPLSleep(oRetryContext.GetCurrentDelay());
                 bRetry = true;
             }
             else

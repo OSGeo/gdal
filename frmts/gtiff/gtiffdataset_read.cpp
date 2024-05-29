@@ -1543,7 +1543,7 @@ int GTiffDataset::VirtualMemIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                int nXSize, int nYSize, void *pData,
                                int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, int nBandCount,
-                               int *panBandMap, GSpacing nPixelSpace,
+                               const int *panBandMap, GSpacing nPixelSpace,
                                GSpacing nLineSpace, GSpacing nBandSpace,
                                GDALRasterIOExtraArg *psExtraArg)
 {
@@ -1746,7 +1746,7 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
                                     int nXSize, int nYSize, void *pData,
                                     int nBufXSize, int nBufYSize,
                                     GDALDataType eBufType, int nBandCount,
-                                    int *panBandMap, GSpacing nPixelSpace,
+                                    const int *panBandMap, GSpacing nPixelSpace,
                                     GSpacing nLineSpace, GSpacing nBandSpace)
 {
     const auto poFirstBand =
@@ -2878,8 +2878,8 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
 CPLErr GTiffDataset::CommonDirectIOClassic(
     FetchBufferDirectIO &oFetcher, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    int nBandCount, int *panBandMap, GSpacing nPixelSpace, GSpacing nLineSpace,
-    GSpacing nBandSpace)
+    int nBandCount, const int *panBandMap, GSpacing nPixelSpace,
+    GSpacing nLineSpace, GSpacing nBandSpace)
 {
     return CommonDirectIO<FetchBufferDirectIO>(
         oFetcher, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
@@ -2899,7 +2899,7 @@ CPLErr GTiffDataset::CommonDirectIOClassic(
 int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                            int nYSize, void *pData, int nBufXSize,
                            int nBufYSize, GDALDataType eBufType, int nBandCount,
-                           int *panBandMap, GSpacing nPixelSpace,
+                           const int *panBandMap, GSpacing nPixelSpace,
                            GSpacing nLineSpace, GSpacing nBandSpace,
                            GDALRasterIOExtraArg *psExtraArg)
 {

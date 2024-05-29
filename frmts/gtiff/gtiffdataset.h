@@ -394,15 +394,16 @@ class GTiffDataset final : public GDALPamDataset
 
     int DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                  int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                 GDALDataType eBufType, int nBandCount, int *panBandMap,
+                 GDALDataType eBufType, int nBandCount, const int *panBandMap,
                  GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
                  GDALRasterIOExtraArg *psExtraArg);
 
     int VirtualMemIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, int nBandCount, int *panBandMap,
-                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                     GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg);
+                     GDALDataType eBufType, int nBandCount,
+                     const int *panBandMap, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg);
 
     void SetStructuralMDFromParent(GTiffDataset *poParentDS);
 
@@ -410,14 +411,14 @@ class GTiffDataset final : public GDALPamDataset
     CPLErr CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
                           int nXSize, int nYSize, void *pData, int nBufXSize,
                           int nBufYSize, GDALDataType eBufType, int nBandCount,
-                          int *panBandMap, GSpacing nPixelSpace,
+                          const int *panBandMap, GSpacing nPixelSpace,
                           GSpacing nLineSpace, GSpacing nBandSpace);
 
     CPLErr CommonDirectIOClassic(FetchBufferDirectIO &oFetcher, int nXOff,
                                  int nYOff, int nXSize, int nYSize, void *pData,
                                  int nBufXSize, int nBufYSize,
                                  GDALDataType eBufType, int nBandCount,
-                                 int *panBandMap, GSpacing nPixelSpace,
+                                 const int *panBandMap, GSpacing nPixelSpace,
                                  GSpacing nLineSpace, GSpacing nBandSpace);
 
     void LoadGeoreferencingAndPamIfNeeded();
@@ -482,7 +483,7 @@ class GTiffDataset final : public GDALPamDataset
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, int *panBandMap,
+                             int nBandCount, BANDMAP_TYPE panBandMap,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;

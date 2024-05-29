@@ -32,6 +32,7 @@
 import sys
 
 from osgeo import gdal, osr
+from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 
 
 def Usage(isError):
@@ -86,6 +87,7 @@ def ArgIsNumeric(s):
     return True
 
 
+@enable_gdal_exceptions
 def gdal_edit(argv):
 
     argv = gdal.GeneralCmdLineProcessor(argv)
@@ -345,19 +347,15 @@ def gdal_edit(argv):
         print("", file=sys.stderr)
         return Usage(isError=True)
 
-    if open_options is not None:
+    try:
         if ro:
             ds = gdal.OpenEx(datasetname, gdal.OF_RASTER, open_options=open_options)
         else:
             ds = gdal.OpenEx(
                 datasetname, gdal.OF_RASTER | gdal.OF_UPDATE, open_options=open_options
             )
-    # GDAL 1.X compat
-    elif ro:
-        ds = gdal.Open(datasetname)
-    else:
-        ds = gdal.Open(datasetname, gdal.GA_Update)
-    if ds is None:
+    except Exception as e:
+        print(str(e), file=sys.stderr)
         return -1
 
     if scale:

@@ -1,7 +1,7 @@
 .. _gdal_edit:
 
 ================================================================================
-gdal_edit.py
+gdal_edit
 ================================================================================
 
 .. only:: html
@@ -30,7 +30,7 @@ Synopsis
 Description
 -----------
 
-The :program:`gdal_edit.py` script can be used to edit in place various
+:program:`gdal_edit` can be used to edit in place various
 information of an existing GDAL dataset (projection, geotransform,
 nodata, metadata).
 
@@ -213,3 +213,9 @@ Example
 .. code-block::
 
     gdal_edit -scale 1e3 1e4 -offset 0 10 twoBand.tif
+
+
+Notes
+-----
+
+gdal_edit is a Python utility, and is only available if GDAL Python bindings are available.

@@ -298,9 +298,9 @@ static int VSICurlIsFileInList(char **papszList, const char *pszTarget)
 /************************************************************************/
 
 static std::string VSICurlGetURLFromFilename(
-    const char *pszFilename, int *pnMaxRetry, double *pdfRetryDelay,
+    const char *pszFilename, CPLHTTPRetryParameters *poRetryParameters,
     bool *pbUseHead, bool *pbUseRedirectURLIfNoQueryStringParams,
-    bool *pbListDir, bool *pbEmptyDir, char ***ppapszHTTPOptions,
+    bool *pbListDir, bool *pbEmptyDir, CPLStringList *paosHTTPOptions,
     bool *pbPlanetaryComputerURLSigning, char **ppszPlanetaryComputerCollection)
 {
     if (ppszPlanetaryComputerCollection)
@@ -348,13 +348,18 @@ static std::string VSICurlGetURLFromFilename(
             {
                 if (EQUAL(pszKey, "max_retry"))
                 {
-                    if (pnMaxRetry)
-                        *pnMaxRetry = atoi(pszValue);
+                    if (poRetryParameters)
+                        poRetryParameters->nMaxRetry = atoi(pszValue);
                 }
                 else if (EQUAL(pszKey, "retry_delay"))
                 {
-                    if (pdfRetryDelay)
-                        *pdfRetryDelay = CPLAtof(pszValue);
+                    if (poRetryParameters)
+                        poRetryParameters->dfInitialDelay = CPLAtof(pszValue);
+                }
+                else if (EQUAL(pszKey, "retry_codes"))
+                {
+                    if (poRetryParameters)
+                        poRetryParameters->osRetryCodes = pszValue;
                 }
                 else if (EQUAL(pszKey, "use_head"))
                 {
@@ -397,10 +402,9 @@ static std::string VSICurlGetURLFromFilename(
                 {
                     // Above names are the ones supported by
                     // CPLHTTPSetOptions()
-                    if (ppapszHTTPOptions)
+                    if (paosHTTPOptions)
                     {
-                        *ppapszHTTPOptions = CSLSetNameValue(*ppapszHTTPOptions,
-                                                             pszKey, pszValue);
+                        paosHTTPOptions->SetNameValue(pszKey, pszValue);
                     }
                 }
                 else if (EQUAL(pszKey, "url"))
@@ -452,15 +456,11 @@ namespace cpl
 VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandlerBase *poFSIn,
                              const char *pszFilename, const char *pszURLIn)
     : poFS(poFSIn), m_osFilename(pszFilename),
-      m_nMaxRetry(atoi(CPLGetConfigOption(
-          "GDAL_HTTP_MAX_RETRY", CPLSPrintf("%d", CPL_HTTP_MAX_RETRY)))),
-      // coverity[tainted_data]
-      m_dfRetryDelay(CPLAtof(CPLGetConfigOption(
-          "GDAL_HTTP_RETRY_DELAY", CPLSPrintf("%f", CPL_HTTP_RETRY_DELAY)))),
+      m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename)),
+      m_oRetryParameters(m_aosHTTPOptions),
       m_bUseHead(
           CPLTestBool(CPLGetConfigOption("CPL_VSIL_CURL_USE_HEAD", "YES")))
 {
-    m_papszHTTPOptions = CPLHTTPGetOptionsFromEnv(pszFilename);
     if (pszURLIn)
     {
         m_pszURL = CPLStrdup(pszURLIn);
@@ -470,9 +470,9 @@ VSICurlHandle::VSICurlHandle(VSICurlFilesystemHandlerBase *poFSIn,
         char *pszPCCollection = nullptr;
         m_pszURL =
             CPLStrdup(VSICurlGetURLFromFilename(
-                          pszFilename, &m_nMaxRetry, &m_dfRetryDelay,
-                          &m_bUseHead, &m_bUseRedirectURLIfNoQueryStringParams,
-                          nullptr, nullptr, &m_papszHTTPOptions,
+                          pszFilename, &m_oRetryParameters, &m_bUseHead,
+                          &m_bUseRedirectURLIfNoQueryStringParams, nullptr,
+                          nullptr, &m_aosHTTPOptions,
                           &m_bPlanetaryComputerURLSigning, &pszPCCollection)
                           .c_str());
         if (pszPCCollection)
@@ -501,7 +501,6 @@ VSICurlHandle::~VSICurlHandle()
         poFS->InvalidateDirContent(CPLGetDirname(m_osFilename.c_str()));
     }
     CPLFree(m_pszURL);
-    CSLDestroy(m_papszHTTPOptions);
 }
 
 /************************************************************************/
@@ -1073,14 +1072,13 @@ vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders(bool bSetError,
     std::string osURL(m_pszURL + m_osQueryString);
     bool bRetryWithGet = false;
     bool bS3LikeRedirect = false;
-    int nRetryCount = 0;
-    double dfRetryDelay = m_dfRetryDelay;
+    CPLHTTPRetryContext oRetryContext(m_oRetryParameters);
 
 retry:
     CURL *hCurlHandle = curl_easy_init();
 
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_papszHTTPOptions);
+        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
 
     WriteFuncStruct sWriteFuncHeaderData;
     VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr,
@@ -1446,19 +1444,16 @@ retry:
         else if (response_code != 200)
         {
             // Look if we should attempt a retry
-            const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-                static_cast<int>(response_code), dfRetryDelay,
-                sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
-            if (dfNewRetryDelay > 0 && nRetryCount < m_nMaxRetry)
+            if (oRetryContext.CanRetry(static_cast<int>(response_code),
+                                       sWriteFuncHeaderData.pBuffer,
+                                       szCurlErrBuf))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "HTTP error code: %d - %s. "
                          "Retrying again in %.1f secs",
                          static_cast<int>(response_code), m_pszURL,
-                         dfRetryDelay);
-                CPLSleep(dfRetryDelay);
-                dfRetryDelay = dfNewRetryDelay;
-                nRetryCount++;
+                         oRetryContext.GetCurrentDelay());
+                CPLSleep(oRetryContext.GetCurrentDelay());
                 CPLFree(sWriteFuncData.pBuffer);
                 CPLFree(sWriteFuncHeaderData.pBuffer);
                 curl_easy_cleanup(hCurlHandle);
@@ -1806,13 +1801,12 @@ begin:
 
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
-    int nRetryCount = 0;
-    double dfRetryDelay = m_dfRetryDelay;
+    CPLHTTPRetryContext oRetryContext(m_oRetryParameters);
 
 retry:
     CURL *hCurlHandle = curl_easy_init();
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_papszHTTPOptions);
+        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
 
     if (!AllowAutomaticRedirection())
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
@@ -1934,13 +1928,12 @@ retry:
         goto retry;
     }
 
-    if (response_code == 401 && nRetryCount < m_nMaxRetry)
+    if (response_code == 401 && oRetryContext.CanRetry())
     {
         CPLDebug(poFS->GetDebugKey(), "Unauthorized, trying to authenticate");
         CPLFree(sWriteFuncData.pBuffer);
         CPLFree(sWriteFuncHeaderData.pBuffer);
         curl_easy_cleanup(hCurlHandle);
-        nRetryCount++;
         if (Authenticate(m_osFilename.c_str()))
             goto retry;
         return std::string();
@@ -1965,18 +1958,15 @@ retry:
         }
 
         // Look if we should attempt a retry
-        const double dfNewRetryDelay = CPLHTTPGetNewRetryDelay(
-            static_cast<int>(response_code), dfRetryDelay,
-            sWriteFuncHeaderData.pBuffer, szCurlErrBuf);
-        if (dfNewRetryDelay > 0 && nRetryCount < m_nMaxRetry)
+        if (oRetryContext.CanRetry(static_cast<int>(response_code),
+                                   sWriteFuncHeaderData.pBuffer, szCurlErrBuf))
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "HTTP error code: %d - %s. "
                      "Retrying again in %.1f secs",
-                     static_cast<int>(response_code), m_pszURL, dfRetryDelay);
-            CPLSleep(dfRetryDelay);
-            dfRetryDelay = dfNewRetryDelay;
-            nRetryCount++;
+                     static_cast<int>(response_code), m_pszURL,
+                     oRetryContext.GetCurrentDelay());
+            CPLSleep(oRetryContext.GetCurrentDelay());
             CPLFree(sWriteFuncData.pBuffer);
             CPLFree(sWriteFuncHeaderData.pBuffer);
             curl_easy_cleanup(hCurlHandle);
@@ -2299,7 +2289,7 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
             if (osRegion.empty())
             {
                 if (!bInterrupted)
-                    bEOF = true;
+                    bError = true;
                 return 0;
             }
         }
@@ -2440,8 +2430,8 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
         // need to wait as we already know if pipelining is possible
         // unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_PIPEWAIT, 1);
 
-        struct curl_slist *headers =
-            VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_papszHTTPOptions);
+        struct curl_slist *headers = VSICurlSetOptions(
+            hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
 
         VSICURLInitWriteFuncStruct(&asWriteFuncData[iRequest], this, pfnReadCbk,
                                    pReadCbkUserData);
@@ -2661,7 +2651,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
     CURL *hCurlHandle = curl_easy_init();
 
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, m_pszURL, m_papszHTTPOptions);
+        VSICurlSetOptions(hCurlHandle, m_pszURL, m_aosHTTPOptions.List());
 
     WriteFuncStruct sWriteFuncData;
     WriteFuncStruct sWriteFuncHeaderData;
@@ -3044,7 +3034,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     CURL *hCurlHandle = curl_easy_init();
 
     struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_papszHTTPOptions);
+        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
 
     WriteFuncStruct sWriteFuncData;
     VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -3318,7 +3308,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
             // unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_PIPEWAIT, 1);
 
             struct curl_slist *headers = VSICurlSetOptions(
-                hCurlHandle, osURL.c_str(), m_papszHTTPOptions);
+                hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
 
             VSICURLInitWriteFuncStruct(&asWriteFuncData[i], this, pfnReadCbk,
                                        pReadCbkUserData);
@@ -3505,12 +3495,34 @@ size_t VSICurlHandle::Write(const void * /* pBuffer */, size_t /* nSize */,
 }
 
 /************************************************************************/
-/*                                 Eof()                                */
+/*                             ClearErr()                               */
+/************************************************************************/
+
+void VSICurlHandle::ClearErr()
+
+{
+    bEOF = false;
+    bError = false;
+}
+
+/************************************************************************/
+/*                              Error()                                 */
+/************************************************************************/
+
+int VSICurlHandle::Error()
+
+{
+    return bError ? TRUE : FALSE;
+}
+
+/************************************************************************/
+/*                                Eof()                                 */
 /************************************************************************/
 
 int VSICurlHandle::Eof()
+
 {
-    return bEOF;
+    return bEOF ? TRUE : FALSE;
 }
 
 /************************************************************************/
@@ -4132,9 +4144,9 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
 
     bool bListDir = true;
     bool bEmptyDir = false;
-    CPL_IGNORE_RET_VAL(VSICurlGetURLFromFilename(
-        pszFilename, nullptr, nullptr, nullptr, nullptr, &bListDir, &bEmptyDir,
-        nullptr, nullptr, nullptr));
+    CPL_IGNORE_RET_VAL(VSICurlGetURLFromFilename(pszFilename, nullptr, nullptr,
+                                                 nullptr, &bListDir, &bEmptyDir,
+                                                 nullptr, nullptr, nullptr));
 
     const char *pszOptionVal = CSLFetchNameValueDef(
         papszOptions, "DISABLE_READDIR_ON_OPEN",
@@ -4392,9 +4404,9 @@ char **VSICurlFilesystemHandlerBase::ParseHTMLFileList(const char *pszFilename,
 {
     *pbGotFileList = false;
 
-    std::string osURL(VSICurlGetURLFromFilename(
-        pszFilename, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-        nullptr, nullptr, nullptr));
+    std::string osURL(VSICurlGetURLFromFilename(pszFilename, nullptr, nullptr,
+                                                nullptr, nullptr, nullptr,
+                                                nullptr, nullptr, nullptr));
     const char *pszDir = nullptr;
     if (STARTS_WITH_CI(osURL.c_str(), "http://"))
         pszDir = strchr(osURL.c_str() + strlen("http://"), '/');
@@ -4755,7 +4767,7 @@ VSICurlFilesystemHandlerBase::GetURLFromFilename(const std::string &osFilename)
 {
     return VSICurlGetURLFromFilename(osFilename.c_str(), nullptr, nullptr,
                                      nullptr, nullptr, nullptr, nullptr,
-                                     nullptr, nullptr, nullptr);
+                                     nullptr, nullptr);
 }
 
 /************************************************************************/
@@ -4787,8 +4799,8 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
     bool bListDir = true;
     bool bEmptyDir = false;
     const std::string osURL(VSICurlGetURLFromFilename(
-        pszDirname, nullptr, nullptr, nullptr, nullptr, &bListDir, &bEmptyDir,
-        nullptr, nullptr, nullptr));
+        pszDirname, nullptr, nullptr, nullptr, &bListDir, &bEmptyDir, nullptr,
+        nullptr, nullptr));
     if (bEmptyDir)
     {
         *pbGotFileList = true;
@@ -5113,9 +5125,9 @@ int VSICurlFilesystemHandlerBase::Stat(const char *pszFilename,
 
     bool bListDir = true;
     bool bEmptyDir = false;
-    std::string osURL(VSICurlGetURLFromFilename(
-        pszFilename, nullptr, nullptr, nullptr, nullptr, &bListDir, &bEmptyDir,
-        nullptr, nullptr, nullptr));
+    std::string osURL(VSICurlGetURLFromFilename(pszFilename, nullptr, nullptr,
+                                                nullptr, &bListDir, &bEmptyDir,
+                                                nullptr, nullptr, nullptr));
 
     const char *pszOptionVal = VSIGetPathSpecificOption(
         pszFilename, "GDAL_DISABLE_READDIR_ON_OPEN", "NO");
@@ -5384,6 +5396,7 @@ VSIAppendWriteHandle::VSIAppendWriteHandle(VSICurlFilesystemHandlerBase *poFS,
                                            const char *pszFilename,
                                            int nChunkSize)
     : m_poFS(poFS), m_osFSPrefix(pszFSPrefix), m_osFilename(pszFilename),
+      m_oRetryParameters(CPLStringList(CPLHTTPGetOptionsFromEnv(pszFilename))),
       m_nBufferSize(nChunkSize)
 {
     m_pabyBuffer = static_cast<GByte *>(VSIMalloc(m_nBufferSize));
@@ -5501,15 +5514,6 @@ size_t VSIAppendWriteHandle::Write(const void *pBuffer, size_t nSize,
         nBytesToWrite -= nToWriteInBuffer;
     }
     return nMemb;
-}
-
-/************************************************************************/
-/*                                Eof()                                 */
-/************************************************************************/
-
-int VSIAppendWriteHandle::Eof()
-{
-    return FALSE;
 }
 
 /************************************************************************/

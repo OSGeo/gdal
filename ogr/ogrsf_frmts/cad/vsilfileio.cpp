@@ -49,7 +49,7 @@ const char *VSILFileIO::ReadLine()
 
 bool VSILFileIO::Eof() const
 {
-    return VSIFEofL(m_oFileStream) == 0 ? false : true;
+    return VSIFEofL(m_oFileStream) || VSIFErrorL(m_oFileStream);
 }
 
 bool VSILFileIO::Open(int mode)

@@ -1,0 +1,14 @@
+<kml xmlns="http://www.opengis.net/kml/2.2">
+    <Document>
+        <Style id="myStyle">
+            <LabelStyle>
+                <color>ffffffff</color>
+                <scale>1.1</scale>
+            </LabelStyle>
+            <BalloonStyle>
+                <bgColor>ff00ffff</bgColor>
+                <text><![CDATA[This is $[name]]]></text>
+            </BalloonStyle>
+        </Style>
+    </Document>
+</kml>

@@ -827,7 +827,7 @@ static StyleSelectorPtr StyleFromStyleURL(const StyleMapPtr &stylemap,
                     /***** copy buf to the string *****/
                     szbuf[nRead] = '\0';
                     oStyle.append(szbuf);
-                } while (!VSIFEofL(fp));
+                } while (!VSIFEofL(fp) && !VSIFErrorL(fp));
 
                 VSIFCloseL(fp);
 

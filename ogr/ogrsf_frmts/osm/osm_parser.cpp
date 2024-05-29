@@ -2597,7 +2597,7 @@ static OSMRetCode XML_ProcessBlock(OSMContext *psCtxt)
 
         psCtxt->nBytesRead += nLen;
 
-        psCtxt->bEOF = CPL_TO_BOOL(VSIFEofL(psCtxt->fp));
+        psCtxt->bEOF = nLen < XML_BUFSIZE;
         const int eErr =
             XML_Parse(psCtxt->hXMLParser, (const char *)psCtxt->pabyBlob, nLen,
                       psCtxt->bEOF);

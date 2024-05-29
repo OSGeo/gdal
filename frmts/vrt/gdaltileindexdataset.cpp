@@ -173,9 +173,9 @@ class GDALTileIndexDataset final : public GDALPamDataset
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, int nBandCount, int *panBandMap,
-                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                     GSpacing nBandSpace,
+                     GDALDataType eBufType, int nBandCount,
+                     BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
     const char *GetMetadataItem(const char *pszName,
@@ -3317,13 +3317,11 @@ void GDALTileIndexDataset::InitBuffer(void *pData, int nBufXSize, int nBufYSize,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr GDALTileIndexDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
-                                       int nXSize, int nYSize, void *pData,
-                                       int nBufXSize, int nBufYSize,
-                                       GDALDataType eBufType, int nBandCount,
-                                       int *panBandMap, GSpacing nPixelSpace,
-                                       GSpacing nLineSpace, GSpacing nBandSpace,
-                                       GDALRasterIOExtraArg *psExtraArg)
+CPLErr GDALTileIndexDataset::IRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    int nBandCount, BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+    GSpacing nLineSpace, GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     if (eRWFlag != GF_Read)
         return CE_Failure;

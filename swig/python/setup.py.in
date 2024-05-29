@@ -263,6 +263,10 @@ class gdal_ext(build_ext):
                             if has_flag(self.compiler, clang_flag):
                                 ext.extra_compile_args += [clang_flag]
 
+        if "GDAL_PYTHON_CXXFLAGS" in os.environ:
+            for ext in self.extensions:
+                ext.extra_compile_args += os.environ["GDAL_PYTHON_CXXFLAGS"].split(" ")
+
         build_ext.build_extensions(self)
 
     def finalize_options(self):

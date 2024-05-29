@@ -83,6 +83,7 @@ class VSICachedFile final : public VSIVirtualHandle
         m_oCache;  // can only been initialized in constructor
 
     bool m_bEOF = false;
+    bool m_bError = false;
 
     int Seek(vsi_l_offset nOffset, int nWhence) override;
     vsi_l_offset Tell() override;
@@ -98,7 +99,9 @@ class VSICachedFile final : public VSIVirtualHandle
     }
 
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    void ClearErr() override;
     int Eof() override;
+    int Error() override;
     int Flush() override;
     int Close() override;
 
@@ -241,6 +244,8 @@ bool VSICachedFile::LoadBlocks(vsi_l_offset nStartBlock, size_t nBlockCount,
                 m_poBase->Read(oData.data(), 1, m_nChunkSize);
             if (nDataRead == 0)
                 return false;
+            if (nDataRead < m_nChunkSize && m_poBase->Error())
+                m_bError = true;
             oData.resize(nDataRead);
 
             m_oCache.insert(nStartBlock, std::move(oData));
@@ -292,11 +297,13 @@ bool VSICachedFile::LoadBlocks(vsi_l_offset nStartBlock, size_t nBlockCount,
     /*      Read the whole request into the working buffer.                 */
     /* -------------------------------------------------------------------- */
 
-    const size_t nDataRead =
-        m_poBase->Read(pabyWorkBuffer, 1, nBlockCount * m_nChunkSize);
+    const size_t nToRead = nBlockCount * m_nChunkSize;
+    const size_t nDataRead = m_poBase->Read(pabyWorkBuffer, 1, nToRead);
+    if (nDataRead < nToRead && m_poBase->Error())
+        m_bError = true;
 
     bool ret = true;
-    if (nBlockCount * m_nChunkSize > nDataRead + m_nChunkSize - 1)
+    if (nToRead > nDataRead + m_nChunkSize - 1)
     {
         size_t nNewBlockCount = (nDataRead + m_nChunkSize - 1) / m_nChunkSize;
         if (nNewBlockCount < nBlockCount)
@@ -429,7 +436,7 @@ size_t VSICachedFile::Read(void *pBuffer, size_t nSize, size_t nCount)
     m_nOffset += nAmountCopied;
 
     const size_t nRet = nAmountCopied / nSize;
-    if (nRet != nCount)
+    if (nRet != nCount && !m_bError)
         m_bEOF = true;
     return nRet;
 }
@@ -454,6 +461,28 @@ size_t VSICachedFile::Write(const void * /* pBuffer */, size_t /*nSize */,
                             size_t /* nCount */)
 {
     return 0;
+}
+
+/************************************************************************/
+/*                             ClearErr()                               */
+/************************************************************************/
+
+void VSICachedFile::ClearErr()
+
+{
+    m_poBase->ClearErr();
+    m_bEOF = false;
+    m_bError = false;
+}
+
+/************************************************************************/
+/*                              Error()                                 */
+/************************************************************************/
+
+int VSICachedFile::Error()
+
+{
+    return m_bError;
 }
 
 /************************************************************************/

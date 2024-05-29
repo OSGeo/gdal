@@ -1847,7 +1847,7 @@ int ECWDataset::TryWinRasterIO(CPL_UNUSED GDALRWFlag eFlag, int nXOff,
                                int nYOff, int nXSize, int nYSize,
                                GByte *pabyData, int nBufXSize, int nBufYSize,
                                GDALDataType eDT, int nBandCount,
-                               int *panBandList, GSpacing nPixelSpace,
+                               const int *panBandList, GSpacing nPixelSpace,
                                GSpacing nLineSpace, GSpacing nBandSpace,
                                GDALRasterIOExtraArg *psExtraArg)
 {
@@ -2035,7 +2035,7 @@ void ECWDataset::CleanupWindow()
 CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             int nBandCount, int *panBandMap,
+                             int nBandCount, BANDMAP_TYPE panBandMap,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
@@ -2252,7 +2252,7 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
         eErr = AdviseRead(nXOff, nYOff, nXSize, GetRasterYSize() - nYOff,
                           nBufXSize, (nRasterYSize - nYOff) / nYSize, eBufType,
-                          nBandCount, panBandMap, nullptr);
+                          nBandCount, const_cast<int *>(panBandMap), nullptr);
         if (eErr == CE_None &&
             TryWinRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                            (GByte *)pData, nBufXSize, nBufYSize, eBufType,

@@ -224,6 +224,7 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
     bool bLastOpWrite = false;
     bool bLastOpRead = false;
     bool bAtEOF = false;
+    bool bError = false;
     // In a+ mode, disable any optimization since the behavior of the file
     // pointer on Mac and other BSD system is to have a seek() to the end of
     // file and thus a call to our Seek(0, SEEK_SET) before a read will be a
@@ -241,7 +242,9 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
     vsi_l_offset Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    void ClearErr() override;
     int Eof() override;
+    int Error() override;
     int Flush() override;
     int Close() override;
     int Truncate(vsi_l_offset nNewSize) override;
@@ -484,13 +487,20 @@ size_t VSIUnixStdioHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 
     if (nResult != nCount)
     {
+        if (ferror(fp))
+            bError = true;
+        else
+        {
+            CPLAssert(feof(fp));
+            bAtEOF = true;
+        }
+
         errno = 0;
         vsi_l_offset nNewOffset = VSI_FTELL64(fp);
         if (errno == 0)  // ftell() can fail if we are end of file with a pipe.
             m_nOffset = nNewOffset;
         else
             CPLDebug("VSI", "%s", VSIStrerror(errno));
-        bAtEOF = CPL_TO_BOOL(feof(fp));
     }
 
     return nResult;
@@ -542,6 +552,28 @@ size_t VSIUnixStdioHandle::Write(const void *pBuffer, size_t nSize,
     bLastOpRead = false;
 
     return nResult;
+}
+
+/************************************************************************/
+/*                             ClearErr()                               */
+/************************************************************************/
+
+void VSIUnixStdioHandle::ClearErr()
+
+{
+    clearerr(fp);
+    bAtEOF = false;
+    bError = false;
+}
+
+/************************************************************************/
+/*                              Error()                                 */
+/************************************************************************/
+
+int VSIUnixStdioHandle::Error()
+
+{
+    return bError ? TRUE : FALSE;
 }
 
 /************************************************************************/

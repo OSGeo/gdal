@@ -145,6 +145,15 @@ bool CPLJSonStreamingParser::EmitException(const char *pszMessage)
 }
 
 /************************************************************************/
+/*                             StopParsing()                            */
+/************************************************************************/
+
+void CPLJSonStreamingParser::StopParsing()
+{
+    m_bStopParsing = true;
+}
+
+/************************************************************************/
 /*                          EmitUnexpectedChar()                        */
 /************************************************************************/
 
@@ -433,11 +442,10 @@ void CPLJSonStreamingParser::DecodeUnicode()
 bool CPLJSonStreamingParser::Parse(const char *pStr, size_t nLength,
                                    bool bFinished)
 {
-    if (m_bExceptionOccurred)
-        return false;
-
     while (true)
     {
+        if (m_bExceptionOccurred || m_bStopParsing)
+            return false;
         State eCurState = currentState();
         if (eCurState == INIT)
         {

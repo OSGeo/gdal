@@ -5547,6 +5547,100 @@ CPLErr GDALRegenerateOverviewsMultiBand(
 }
 
 /************************************************************************/
+/*            GDALRegenerateOverviewsMultiBand()                        */
+/************************************************************************/
+
+/**
+ * \brief Variant of GDALRegenerateOverviews, specially dedicated for generating
+ * compressed pixel-interleaved overviews (JPEG-IN-TIFF for example)
+ *
+ * This function will generate one or more overview images from a base
+ * image using the requested downsampling algorithm.  Its primary use
+ * is for generating overviews via GDALDataset::BuildOverviews(), but it
+ * can also be used to generate downsampled images in one file from another
+ * outside the overview architecture.
+ *
+ * The output bands need to exist in advance and share the same characteristics
+ * (type, dimensions)
+ *
+ * The resampling algorithms supported for the moment are "NEAREST", "AVERAGE",
+ * "RMS", "GAUSS", "CUBIC", "CUBICSPLINE", "LANCZOS" and "BILINEAR"
+ *
+ * It does not support color tables or complex data types.
+ *
+ * The pseudo-algorithm used by the function is :
+ *    for each overview
+ *       iterate on lines of the source by a step of deltay
+ *           iterate on columns of the source  by a step of deltax
+ *               read the source data of size deltax * deltay for all the bands
+ *               generate the corresponding overview block for all the bands
+ *
+ * This function will honour properly NODATA_VALUES tuples (special dataset
+ * metadata) so that only a given RGB triplet (in case of a RGB image) will be
+ * considered as the nodata value and not each value of the triplet
+ * independently per band.
+ *
+ * The GDAL_NUM_THREADS configuration option can be set
+ * to "ALL_CPUS" or a integer value to specify the number of threads to use for
+ * overview computation.
+ *
+ * @param apoSrcBands the list of source bands to downsample
+ * @param aapoOverviewBands bidimension array of bands. First dimension is
+ *                          indexed by bands. Second dimension is indexed by
+ *                          overview levels. All aapoOverviewBands[i] arrays
+ *                          must have the same size (i.e. same number of
+ *                          overviews)
+ * @param pszResampling Resampling algorithm ("NEAREST", "AVERAGE", "RMS",
+ * "GAUSS", "CUBIC", "CUBICSPLINE", "LANCZOS" or "BILINEAR").
+ * @param pfnProgress progress report function.
+ * @param pProgressData progress function callback data.
+ * @param papszOptions NULL terminated list of options as
+ *                     key=value pairs, or NULL
+ *                     The XOFF, YOFF, XSIZE and YSIZE
+ *                     options can be specified to express that overviews should
+ *                     be regenerated only in the specified subset of the source
+ *                     dataset.
+ * @return CE_None on success or CE_Failure on failure.
+ * @since 3.10
+ */
+
+CPLErr GDALRegenerateOverviewsMultiBand(
+    const std::vector<GDALRasterBand *> &apoSrcBands,
+    const std::vector<std::vector<GDALRasterBand *>> &aapoOverviewBands,
+    const char *pszResampling, GDALProgressFunc pfnProgress,
+    void *pProgressData, CSLConstList papszOptions)
+{
+    CPLAssert(apoSrcBands.size() == aapoOverviewBands.size());
+    for (size_t i = 1; i < aapoOverviewBands.size(); ++i)
+    {
+        CPLAssert(aapoOverviewBands[i].size() == aapoOverviewBands[0].size());
+    }
+
+    if (aapoOverviewBands.empty())
+        return CE_None;
+
+    std::vector<GDALRasterBand **> apapoOverviewBands;
+    for (auto &apoOverviewBands : aapoOverviewBands)
+    {
+        auto papoOverviewBands = static_cast<GDALRasterBand **>(
+            CPLMalloc(apoOverviewBands.size() * sizeof(GDALRasterBand *)));
+        for (size_t i = 0; i < apoOverviewBands.size(); ++i)
+        {
+            papoOverviewBands[i] = apoOverviewBands[i];
+        }
+        apapoOverviewBands.push_back(papoOverviewBands);
+    }
+    const CPLErr eErr = GDALRegenerateOverviewsMultiBand(
+        static_cast<int>(apoSrcBands.size()), apoSrcBands.data(),
+        static_cast<int>(aapoOverviewBands[0].size()),
+        apapoOverviewBands.data(), pszResampling, pfnProgress, pProgressData,
+        papszOptions);
+    for (GDALRasterBand **papoOverviewBands : apapoOverviewBands)
+        CPLFree(papoOverviewBands);
+    return eErr;
+}
+
+/************************************************************************/
 /*                        GDALComputeBandStats()                        */
 /************************************************************************/
 

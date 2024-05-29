@@ -737,7 +737,7 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
 CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
                                  void *buffer, int bsx, int bsy,
                                  GDALDataType bdt, int band_count,
-                                 int *band_map, GSpacing nPixelSpace,
+                                 BANDMAP_TYPE band_map, GSpacing nPixelSpace,
                                  GSpacing nLineSpace, GSpacing nBandSpace,
                                  GDALRasterIOExtraArg *psExtraArg)
 {

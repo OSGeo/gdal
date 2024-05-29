@@ -533,7 +533,7 @@ class CPL_DLL ECWDataset final : public GDALJP2AbstractDataset
     void CleanupWindow();
     CPLErr RunDeferredAdviseRead();
     int TryWinRasterIO(GDALRWFlag, int, int, int, int, GByte *, int, int,
-                       GDALDataType, int, int *, GSpacing nPixelSpace,
+                       GDALDataType, int, const int *, GSpacing nPixelSpace,
                        GSpacing nLineSpace, GSpacing nBandSpace,
                        GDALRasterIOExtraArg *psExtraArg);
     CPLErr LoadNextLine();
@@ -600,8 +600,9 @@ class CPL_DLL ECWDataset final : public GDALJP2AbstractDataset
     }
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, BANDMAP_TYPE,
+                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual char **GetMetadataDomainList() override;

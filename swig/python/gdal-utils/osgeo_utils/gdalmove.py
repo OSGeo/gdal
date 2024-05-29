@@ -34,6 +34,7 @@ import sys
 from typing import Optional
 
 from osgeo import gdal, osr
+from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 
 ###############################################################################
 
@@ -47,6 +48,7 @@ def fmt_loc(srs_obj, loc):
 ###############################################################################
 
 
+@enable_gdal_exceptions
 def move(
     filename: str,
     t_srs: str,
@@ -245,8 +247,8 @@ def Usage(isError=True):
 
 
 def main(argv=sys.argv):
-    # Default GDAL argument parsing.
 
+    # Default GDAL argument parsing.
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0

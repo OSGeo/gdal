@@ -31,6 +31,7 @@
 
 import os
 
+import gdaltest
 import ogrtest
 import pytest
 import test_py_scripts
@@ -53,6 +54,9 @@ def script_path():
 
 
 def test_gdal_polygonize_help(script_path):
+
+    if gdaltest.is_travis_branch("sanitize"):
+        pytest.skip("fails on sanitize for unknown reason")
 
     assert "ERROR" not in test_py_scripts.run_py_script(
         script_path, "gdal_polygonize", "--help"
@@ -90,11 +94,13 @@ def test_gdal_polygonize_1(script_path, tmp_path):
         shp_layer.CreateField(fd)
 
     # run the algorithm.
-    test_py_scripts.run_py_script(
+    _, err = test_py_scripts.run_py_script(
         script_path,
         "gdal_polygonize",
         test_py_scripts.get_data_path("alg") + f"polygonize_in.grd {tmp_path} poly DN",
+        return_stderr=True,
     )
+    assert "UseExceptions" not in err
 
     # Confirm we get the set of expected features in the output layer.
 

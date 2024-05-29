@@ -62,6 +62,7 @@ static size_t gnBufferAlloc = 0;  // current allocation
 static size_t gnBufferLen = 0;    // number of valid bytes in gpabyBuffer
 static uint64_t gnRealPos = 0;    // current offset on stdin
 static bool gbHasSoughtToEnd = false;
+static bool gbHasErrored = false;
 static uint64_t gnFileSize = 0;
 
 /************************************************************************/
@@ -126,6 +127,7 @@ class VSIStdinHandle final : public VSIVirtualHandle
     CPL_DISALLOW_COPY_ASSIGN(VSIStdinHandle)
 
     bool m_bEOF = false;
+    bool m_bError = false;
     uint64_t m_nCurOff = 0;
     size_t ReadAndCache(void *pBuffer, size_t nToRead);
 
@@ -141,6 +143,8 @@ class VSIStdinHandle final : public VSIVirtualHandle
     vsi_l_offset Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    void ClearErr() override;
+    int Error() override;
     int Eof() override;
     int Close() override;
 };
@@ -192,8 +196,10 @@ size_t VSIStdinHandle::ReadAndCache(void *pUserBuffer, size_t nToRead)
 
     if (nRead < nToRead)
     {
-        gnFileSize = gnRealPos;
-        gbHasSoughtToEnd = true;
+        gbHasSoughtToEnd = feof(gStdinFile);
+        if (gbHasSoughtToEnd)
+            gnFileSize = gnRealPos;
+        gbHasErrored = ferror(gStdinFile);
     }
 
     return nRead;
@@ -338,13 +344,15 @@ size_t VSIStdinHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
         const size_t nRead =
             ReadAndCache(static_cast<GByte *>(pBuffer) + nAlreadyCached,
                          nBytesToRead - nAlreadyCached);
-        m_bEOF = nRead < nBytesToRead - nAlreadyCached;
+        m_bEOF = gbHasSoughtToEnd;
+        m_bError = gbHasErrored;
 
         return (nRead + nAlreadyCached) / nSize;
     }
 
     const size_t nRead = ReadAndCache(pBuffer, nBytesToRead);
-    m_bEOF = nRead < nBytesToRead;
+    m_bEOF = gbHasSoughtToEnd;
+    m_bError = gbHasErrored;
     return nRead / nSize;
 }
 
@@ -357,6 +365,28 @@ size_t VSIStdinHandle::Write(const void * /* pBuffer */, size_t /* nSize */,
 {
     CPLError(CE_Failure, CPLE_NotSupported, "Write() unsupported on /vsistdin");
     return 0;
+}
+
+/************************************************************************/
+/*                             ClearErr()                               */
+/************************************************************************/
+
+void VSIStdinHandle::ClearErr()
+
+{
+    clearerr(gStdinFile);
+    m_bEOF = false;
+    m_bError = false;
+}
+
+/************************************************************************/
+/*                              Error()                                 */
+/************************************************************************/
+
+int VSIStdinHandle::Error()
+
+{
+    return m_bError;
 }
 
 /************************************************************************/
@@ -386,6 +416,7 @@ int VSIStdinHandle::Close()
         gnRealPos = ftell(stdin);
         gnBufferLen = 0;
         gbHasSoughtToEnd = false;
+        gbHasErrored = false;
         gnFileSize = 0;
     }
     return 0;

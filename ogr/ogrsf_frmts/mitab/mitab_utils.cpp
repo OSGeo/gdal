@@ -317,7 +317,7 @@ char **TAB_CSLLoad(const char *pszFname)
 
     if (fp)
     {
-        while (!VSIFEofL(fp))
+        while (!VSIFEofL(fp) && !VSIFErrorL(fp))
         {
             const char *pszLine = nullptr;
             if ((pszLine = CPLReadLineL(fp)) != nullptr)
