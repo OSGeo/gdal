@@ -27,6 +27,10 @@ converts the image into a pseudo-colored image using the color table.
 This conversion utilizes Floyd-Steinberg dithering (error diffusion) to
 maximize output image visual quality.
 
+.. note::
+
+    rgb2pct is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. program:: rgb2pct
 
 .. include:: options/help_and_help_general.rst
@@ -57,10 +61,6 @@ maximize output image visual quality.
 .. option:: <dest_file>
 
     The output pseudo-colored file that will be created.
-
-.. note::
-
-    rgb2pct is a Python utility, and is only available if GDAL Python bindings are available.
 
 Example
 -------

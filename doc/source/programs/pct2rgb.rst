@@ -24,6 +24,10 @@ Description
 This utility will convert a pseudo-color band on the input file into an output
 RGB file of the desired format.
 
+.. note::
+
+    pct2rgb is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. program:: pct2rgb
 
 .. include:: options/help_and_help_general.rst
@@ -56,9 +60,5 @@ RGB file of the desired format.
 .. option:: <dest_file>
 
     The output RGB file that will be created.
-
-.. note::
-
-    pct2rgb is a Python utility, and is only available if GDAL Python bindings are available.
 
 The '-expand rgb|rgba' option of :ref:`gdal_translate` obsoletes that utility.

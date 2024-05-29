@@ -38,6 +38,10 @@ Currently the transformed geotransform is computed based on the transformation
 of the top left, top right, and bottom left corners. A reduced overall error
 could be produced using a least squares fit of at least all four corner points.
 
+.. note::
+
+    gdalmove is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. include:: options/help_and_help_general.rst
 
 .. option:: -s_srs <srs_defn>
@@ -61,7 +65,3 @@ could be produced using a least squares fit of at least all four corner points.
 
     The file to be operated on. To update this must be a file format that
     supports in place updates of the geotransform and SRS.
-
-.. note::
-
-    gdalmove is a Python utility, and is only available if GDAL Python bindings are available.

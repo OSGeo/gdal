@@ -42,6 +42,10 @@ It is possible to generate shape file(s) for the tiled output.
 If your number of input tiles exhausts the command line buffer, use the general
 :ref:`--optfile <raster_common_options_optfile>` option
 
+.. note::
+
+    gdal_retile is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. program:: gdal_retile
 
 .. include:: options/help_and_help_general.rst
@@ -127,7 +131,3 @@ If your number of input tiles exhausts the command line buffer, use the general
 .. option:: -resume
 
     Resume mode. Generate only missing files.
-
-.. note::
-
-    gdal_retile is a Python utility, and is only available if GDAL Python bindings are available.
