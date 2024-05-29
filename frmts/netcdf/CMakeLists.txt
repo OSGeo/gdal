@@ -12,7 +12,8 @@ set(_SOURCES
 add_gdal_driver(TARGET gdal_netCDF
                 SOURCES ${_SOURCES}
                 CORE_SOURCES netcdfdrivercore.cpp
-                PLUGIN_CAPABLE)
+                PLUGIN_CAPABLE
+                NO_SHARED_SYMBOL_WITH_CORE)
 unset(_SOURCES)
 
 function(declare_def DEF)
