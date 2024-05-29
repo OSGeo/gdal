@@ -33,8 +33,12 @@
 
 constexpr const char *DWG_DRIVER_NAME = "DWG";
 
-int CPL_DLL OGRDWGDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRDWGDriverIdentify PLUGIN_SYMBOL_NAME(OGRDWGDriverIdentify)
+#define OGRDWGDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(OGRDWGDriverSetCommonMetadata)
 
-void CPL_DLL OGRDWGDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRDWGDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRDWGDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
