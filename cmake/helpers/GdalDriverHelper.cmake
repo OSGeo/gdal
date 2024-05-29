@@ -42,10 +42,11 @@ GdalDriverHelper
   However it has been found that this resulted in the inability of building a
   plugin for a libgdal that hadn't been built with any form of support for it,
   which is undesirable.
-  Starting with GDAL 3.9.1, it is strongly recommended to also define NO_SHARED_SYMBOL_WITH_CORE
-  so that the files pointed by CORE_SOURCES are build twice: once in libgdal
-  with a "GDAL_core_" prefix, and another time in the plugin itself with a
-  "GDAL_driver_" prefix, by using the PLUGIN_SYMBOL_NAME() macro of gdal_priv.h
+  Starting with GDAL 3.9.1, NO_SHARED_SYMBOL_WITH_CORE must also be declared
+  when CORE_SOURCES is declared, so that the files pointed by CORE_SOURCES
+  are built twice: once in libgdal with a "GDAL_core_" prefix, and another time
+  in the plugin itself with a "GDAL_driver_" prefix, by using the
+  PLUGIN_SYMBOL_NAME() macro of gdal_priv.h
 
   Example in ogrocidrivercore.h:
 
@@ -289,6 +290,8 @@ function(add_gdal_driver)
                     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/for_driver_${f}" "#include \"${CMAKE_CURRENT_SOURCE_DIR}/${f}\"")
                     target_sources(${_DRIVER_TARGET} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/for_driver_${f}")
                 endforeach()
+            else()
+                message(FATAL_ERROR "Driver ${_DRIVER_TARGET} should declare DRIVER_NO_SHARED_SYMBOL_WITH_CORE")
             endif()
             _set_driver_core_sources(${_KEY} ${_DRIVER_TARGET} ${_DRIVER_CORE_SOURCES})
         endif ()
