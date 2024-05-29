@@ -36,14 +36,6 @@ import pytest
 
 from osgeo import gdal, ogr
 
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
-
-
 ###############################################################################
 # Test ExecuteSQL()
 
@@ -498,16 +490,6 @@ def test_ogr_sql_17():
 
 
 ###############################################################################
-# Test empty request string
-
-
-def test_ogr_sql_19(data_ds):
-
-    with gdal.quiet_errors():
-        assert data_ds.ExecuteSQL("") is None
-
-
-###############################################################################
 # Test query "SELECT * from my_layer" on layer without any field (#2788)
 
 
@@ -686,7 +668,8 @@ def test_ogr_sql_27():
 # code from the grammar
 
 
-def test_ogr_sql_28():
+@pytest.fixture(scope="module")
+def ds_for_invalid_statements():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("my_ds")
     lyr = ds.CreateLayer("my_layer")
@@ -710,10 +693,13 @@ def test_ogr_sql_28():
     field_defn = ogr.FieldDefn("strfield2", ogr.OFTString)
     lyr.CreateField(field_defn)
 
-    with pytest.raises(Exception):
-        sql_lyr = ds.ExecuteSQL(None)
+    yield ds
 
-    queries = [
+
+@pytest.mark.parametrize(
+    "sql",
+    [
+        None,
         "",
         "1",
         "*",
@@ -841,19 +827,12 @@ def test_ogr_sql_28():
         "SELECT * FROM my_layer UNION ALL SELECT",
         "SELECT * FROM my_layer UNION ALL SELECT *",
         "SELECT * FROM my_layer UNION ALL SELECT * FROM",
-    ]
+    ],
+)
+def test_ogr_sql_invalid_statements(ds_for_invalid_statements, sql):
 
-    for query in queries:
-        gdal.ErrorReset()
-        # print query
-        with gdal.quiet_errors():
-            sql_lyr = ds.ExecuteSQL(query)
-        if sql_lyr is not None:
-            ds.ReleaseResultSet(sql_lyr)
-            pytest.fail('expected None result on "%s"' % query)
-        assert gdal.GetLastErrorType() != 0, 'expected error on "%s"' % query
-
-    ds = None
+    with pytest.raises(Exception):
+        ds_for_invalid_statements.ExecuteSQL(None)
 
 
 ###############################################################################
@@ -1019,11 +998,8 @@ def test_ogr_sql_34(data_ds):
 
         assert val == 1
 
-    with gdal.quiet_errors():
-        assert (
-            data_ds.ExecuteSQL("select count(*) from poly where eas_id in ('a165')")
-            is None
-        )
+    with pytest.raises(Exception):
+        data_ds.ExecuteSQL("select count(*) from poly where eas_id in ('a165')")
 
 
 ###############################################################################
@@ -1231,19 +1207,23 @@ def test_ogr_sql_43(data_ds):
 # Test hstore_get_value()
 
 
-def test_ogr_sql_44(data_ds):
-
-    # Invalid parameters
-    for sql in [
+@pytest.mark.parametrize(
+    "sql",
+    [
         "SELECT hstore_get_value('a') FROM poly",
         "SELECT hstore_get_value(1, 1) FROM poly",
-    ]:
-        with gdal.quiet_errors():
-            sql_lyr = data_ds.ExecuteSQL(sql)
-        assert sql_lyr is None, sql
+    ],
+)
+def test_ogr_sql_hstore_get_value_invalid_parameters(data_ds, sql):
 
-    # Invalid hstore syntax or empty result
-    for sql in [
+    # Invalid parameters
+    with pytest.raises(Exception):
+        data_ds.ExecuteSQL(sql)
+
+
+@pytest.mark.parametrize(
+    "sql",
+    [
         "SELECT hstore_get_value('a', null) FROM poly",
         "SELECT hstore_get_value(null, 'a') FROM poly",
         "SELECT hstore_get_value('a', 'a') FROM poly",
@@ -1258,13 +1238,19 @@ def test_ogr_sql_44(data_ds):
         "SELECT hstore_get_value('\"a\" => ', 'a') FROM poly",
         "SELECT hstore_get_value('\"a\" => \"', 'a') FROM poly",
         "SELECT hstore_get_value('\"a\" => \"\" z', 'a') FROM poly",
-    ]:
-        with data_ds.ExecuteSQL(sql) as sql_lyr:
-            f = sql_lyr.GetNextFeature()
-            assert not f.IsFieldSetAndNotNull(0), sql
+    ],
+)
+def test_ogr_sql_hstore_get_value_invalid_hstore_syntax_or_empty_result(data_ds, sql):
 
-    # Valid hstore syntax
-    for (sql, expected) in [
+    # Invalid hstore syntax or empty result
+    with data_ds.ExecuteSQL(sql) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert not f.IsFieldSetAndNotNull(0), sql
+
+
+@pytest.mark.parametrize(
+    "sql,expected",
+    [
         ("SELECT hstore_get_value('a=>b', 'a') FROM poly", "b"),
         ("SELECT hstore_get_value(' a => b ', 'a') FROM poly", "b"),
         ("SELECT hstore_get_value('\"a\"=>b', 'a') FROM poly", "b"),
@@ -1274,10 +1260,14 @@ def test_ogr_sql_44(data_ds):
         ("SELECT hstore_get_value('\"a\"=>\"b\"', 'a') FROM poly", "b"),
         ("SELECT hstore_get_value(' \"a\" => \"b\" ', 'a') FROM poly", "b"),
         ('SELECT hstore_get_value(\' "a\\"b" => "b" \', \'a"b\') FROM poly', "b"),
-    ]:
-        with data_ds.ExecuteSQL(sql) as sql_lyr:
-            f = sql_lyr.GetNextFeature()
-            assert f.GetField(0) == expected, sql
+    ],
+)
+def test_ogr_sql_hstore_get_value_valid(data_ds, sql, expected):
+
+    # Valid hstore syntax
+    with data_ds.ExecuteSQL(sql) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == expected, sql
 
 
 ###############################################################################
@@ -1317,7 +1307,8 @@ def test_ogr_sql_45():
 # Test strict SQL quoting
 
 
-def test_ogr_sql_46():
+@pytest.fixture(scope="module")
+def ogr_sql_strit_quoting_ds():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("test")
     lyr = ds.CreateLayer("test")
@@ -1331,9 +1322,13 @@ def test_ogr_sql_46():
     feat.SetField(0, 3)
     feat.SetField(1, "from")
     lyr.CreateFeature(feat)
-    feat = None
 
-    with ds.ExecuteSQL(
+    return ds
+
+
+def test_ogr_sql_strict_quoting_non_aggregate(ogr_sql_strit_quoting_ds):
+
+    with ogr_sql_strit_quoting_ds.ExecuteSQL(
         'select id, \'id\', "id" as id2, id as "id3", "from" from test where "from" = \'from\''
     ) as sql_lyr:
         feat = sql_lyr.GetNextFeature()
@@ -1346,7 +1341,10 @@ def test_ogr_sql_46():
         feat = sql_lyr.GetNextFeature()
         assert feat is None
 
-    with ds.ExecuteSQL(
+
+def test_ogr_sql_strict_quoting_aggregate(ogr_sql_strit_quoting_ds):
+
+    with ogr_sql_strit_quoting_ds.ExecuteSQL(
         'select max("id"), max(id), count("id"), count(id) from "test"'
     ) as sql_lyr:
         feat = sql_lyr.GetNextFeature()
@@ -1355,16 +1353,20 @@ def test_ogr_sql_46():
         assert feat.GetField(2) == 2
         assert feat.GetField(3) == 2
 
-    # Not accepted
-    for sql in [
+
+@pytest.mark.parametrize(
+    "sql",
+    [
         "select * from 'test'",
         "select distinct 'id' from 'test'",
         "select max('id') from 'test'",
         "select id as 'id2' from 'test'",
-    ]:
-        with gdal.quiet_errors():
-            sql_lyr = ds.ExecuteSQL("select * from 'test'")
-        assert sql_lyr is None, sql
+    ],
+)
+def test_ogr_sql_strict_quoting_errors(ogr_sql_strit_quoting_ds, sql):
+
+    with pytest.raises(Exception):
+        ogr_sql_strit_quoting_ds.ExecuteSQL(sql)
 
 
 ###############################################################################
@@ -1598,9 +1600,8 @@ def test_ogr_sql_min_max_string_field():
     ],
 )
 def test_ogr_sql_select_except_errors(data_ds, body):
-    with gdal.quiet_errors():
-        lyr = data_ds.ExecuteSQL(f"SELECT * EXCEPT {body} FROM poly")
-    assert lyr is None
+    with pytest.raises(Exception):
+        data_ds.ExecuteSQL(f"SELECT * EXCEPT {body} FROM poly")
 
 
 def test_ogr_sql_select_except_attrs(data_ds):
@@ -1865,7 +1866,6 @@ def test_ogr_sql_ilike_utf8():
 # Test error on setting a spatial filter during ExecuteSQL
 
 
-@gdaltest.enable_exceptions()
 def test_ogr_sql_test_execute_sql_error_on_spatial_filter_mem_layer():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("")
@@ -1906,7 +1906,6 @@ def get_available_dialects():
     return [None, "SQLite"] if ogr.GetDriverByName("SQLite") else [None]
 
 
-@gdaltest.enable_exceptions()
 @pytest.mark.parametrize(
     "where,feature_count",
     [  # intfield
