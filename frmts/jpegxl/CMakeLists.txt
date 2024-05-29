@@ -2,7 +2,8 @@ add_gdal_driver(
   TARGET gdal_JPEGXL
   SOURCES jpegxl.cpp
   CORE_SOURCES jpegxldrivercore.cpp
-  PLUGIN_CAPABLE)
+  PLUGIN_CAPABLE
+  NO_SHARED_SYMBOL_WITH_CORE)
 
 function(declare_def DEF)
     if(TARGET gdal_JPEGXL)
