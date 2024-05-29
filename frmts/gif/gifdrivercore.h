@@ -36,10 +36,16 @@ constexpr const char *GIF_DRIVER_NAME = "GIF";
 
 constexpr const char *BIGGIF_DRIVER_NAME = "BIGGIF";
 
-int CPL_DLL GIFDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define GIFDriverIdentify PLUGIN_SYMBOL_NAME(GIFDriverIdentify)
+#define BIGGIFDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(BIGGIFDriverSetCommonMetadata)
+#define GIFDriverSetCommonMetadata                                             \
+    PLUGIN_SYMBOL_NAME(GIFDriverSetCommonMetadata)
 
-void CPL_DLL BIGGIFDriverSetCommonMetadata(GDALDriver *poDriver);
+int GIFDriverIdentify(GDALOpenInfo *poOpenInfo);
 
-void CPL_DLL GIFDriverSetCommonMetadata(GDALDriver *poDriver);
+void BIGGIFDriverSetCommonMetadata(GDALDriver *poDriver);
+
+void GIFDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
