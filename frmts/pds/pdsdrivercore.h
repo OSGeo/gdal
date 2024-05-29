@@ -33,36 +33,57 @@
 
 constexpr const char *PDS_DRIVER_NAME = "PDS";
 
-vsi_l_offset CPL_DLL GetVICARLabelOffsetFromPDS3(const char *pszHdr,
-                                                 VSILFILE *fp,
-                                                 std::string &osVICARHeader);
+#define GetVICARLabelOffsetFromPDS3                                            \
+    PLUGIN_SYMBOL_NAME(GetVICARLabelOffsetFromPDS3)
+#define PDSDriverIdentify PLUGIN_SYMBOL_NAME(PDSDriverIdentify)
+#define PDSDriverSetCommonMetadata                                             \
+    PLUGIN_SYMBOL_NAME(PDSDriverSetCommonMetadata)
 
-int CPL_DLL PDSDriverIdentify(GDALOpenInfo *poOpenInfo);
+vsi_l_offset GetVICARLabelOffsetFromPDS3(const char *pszHdr, VSILFILE *fp,
+                                         std::string &osVICARHeader);
 
-void CPL_DLL PDSDriverSetCommonMetadata(GDALDriver *poDriver);
+int PDSDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void PDSDriverSetCommonMetadata(GDALDriver *poDriver);
 
 constexpr const char *PDS4_DRIVER_NAME = "PDS4";
 
-int CPL_DLL PDS4DriverIdentify(GDALOpenInfo *poOpenInfo);
+#define PDS4DriverIdentify PLUGIN_SYMBOL_NAME(PDS4DriverIdentify)
+#define PDS4DriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(PDS4DriverSetCommonMetadata)
 
-void CPL_DLL PDS4DriverSetCommonMetadata(GDALDriver *poDriver);
+int PDS4DriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void PDS4DriverSetCommonMetadata(GDALDriver *poDriver);
 
 constexpr const char *ISIS2_DRIVER_NAME = "ISIS2";
 
-int CPL_DLL ISIS2DriverIdentify(GDALOpenInfo *poOpenInfo);
+#define ISIS2DriverIdentify PLUGIN_SYMBOL_NAME(ISIS2DriverIdentify)
+#define ISIS2DriverSetCommonMetadata                                           \
+    PLUGIN_SYMBOL_NAME(ISIS2DriverSetCommonMetadata)
 
-void CPL_DLL ISIS2DriverSetCommonMetadata(GDALDriver *poDriver);
+int ISIS2DriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void ISIS2DriverSetCommonMetadata(GDALDriver *poDriver);
 
 constexpr const char *ISIS3_DRIVER_NAME = "ISIS3";
 
-int CPL_DLL ISIS3DriverIdentify(GDALOpenInfo *poOpenInfo);
+#define ISIS3DriverIdentify PLUGIN_SYMBOL_NAME(ISIS3DriverIdentify)
+#define ISIS3DriverSetCommonMetadata                                           \
+    PLUGIN_SYMBOL_NAME(ISIS3DriverSetCommonMetadata)
 
-void CPL_DLL ISIS3DriverSetCommonMetadata(GDALDriver *poDriver);
+int ISIS3DriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void ISIS3DriverSetCommonMetadata(GDALDriver *poDriver);
 
 constexpr const char *VICAR_DRIVER_NAME = "VICAR";
 
-int CPL_DLL VICARGetLabelOffset(GDALOpenInfo *poOpenInfo);
+#define VICARGetLabelOffset PLUGIN_SYMBOL_NAME(VICARGetLabelOffset)
+#define VICARDriverSetCommonMetadata                                           \
+    PLUGIN_SYMBOL_NAME(VICARDriverSetCommonMetadata)
 
-void CPL_DLL VICARDriverSetCommonMetadata(GDALDriver *poDriver);
+int VICARGetLabelOffset(GDALOpenInfo *poOpenInfo);
+
+void VICARDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
