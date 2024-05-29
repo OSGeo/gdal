@@ -8,7 +8,8 @@ add_gdal_driver(
           vsilfileio.h
   CORE_SOURCES
           ogrcaddrivercore.cpp
-  PLUGIN_CAPABLE)
+  PLUGIN_CAPABLE
+  NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET ogr_CAD)
     return()
