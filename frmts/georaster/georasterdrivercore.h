@@ -35,8 +35,12 @@
 
 constexpr const char *DRIVER_NAME = "GeoRaster";
 
-int CPL_DLL GEORDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define GEORDriverIdentify PLUGIN_SYMBOL_NAME(GEORDriverIdentify)
+#define GEORDriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(GEORDriverSetCommonMetadata)
 
-void CPL_DLL GEORDriverSetCommonMetadata(GDALDriver *poDriver);
+int GEORDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void GEORDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
