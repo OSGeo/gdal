@@ -2094,10 +2094,14 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
     {
         if (!SupportsRandomWrite(pszFilename, true))
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "%s not supported for %s, unless "
-                     "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES",
-                     pszAccess, GetFSPrefix().c_str());
+            if (bSetError)
+            {
+                VSIError(
+                    VSIE_FileError,
+                    "%s not supported for %s, unless "
+                    "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES",
+                    pszAccess, GetFSPrefix().c_str());
+            }
             errno = EACCES;
             return nullptr;
         }

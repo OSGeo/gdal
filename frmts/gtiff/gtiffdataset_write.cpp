@@ -5496,12 +5496,15 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     else if (eEndianness == ENDIANNESS_LITTLE)
         strcat(szOpeningFlag, "l");
 
-    VSILFILE *l_fpL = VSIFOpenL(pszFilename, bAppend ? "r+b" : "w+b");
+    VSIErrorReset();
+    VSILFILE *l_fpL = VSIFOpenExL(pszFilename, bAppend ? "r+b" : "w+b", true);
     if (l_fpL == nullptr)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Attempt to create new tiff file `%s' failed: %s", pszFilename,
-                 VSIStrerror(errno));
+        VSIToCPLErrorWithMsg(CE_Failure, CPLE_OpenFailed,
+                             std::string("Attempt to create new tiff file `")
+                                 .append(pszFilename)
+                                 .append("' failed")
+                                 .c_str());
         return nullptr;
     }
     TIFF *l_hTIFF = VSI_TIFFOpen(pszFilename, szOpeningFlag, l_fpL);

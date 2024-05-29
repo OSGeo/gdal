@@ -4191,6 +4191,14 @@ CPLErr CPL_DLL GDALRegenerateOverviewsMultiBand(
     const char *pszResampling, GDALProgressFunc pfnProgress,
     void *pProgressData, CSLConstList papszOptions);
 
+CPLErr CPL_DLL GDALRegenerateOverviewsMultiBand(
+    const std::vector<GDALRasterBand *> &apoSrcBands,
+    // First level of array is indexed by band (thus aapoOverviewBands.size() must be equal to apoSrcBands.size())
+    // Second level is indexed by overview
+    const std::vector<std::vector<GDALRasterBand *>> &aapoOverviewBands,
+    const char *pszResampling, GDALProgressFunc pfnProgress,
+    void *pProgressData, CSLConstList papszOptions);
+
 typedef CPLErr (*GDALResampleFunction)(
     double dfXRatioDstToSrc, double dfYRatioDstToSrc, double dfSrcXDelta,
     double dfSrcYDelta, GDALDataType eWrkDataType, const void *pChunk,
@@ -4204,7 +4212,7 @@ typedef CPLErr (*GDALResampleFunction)(
 GDALResampleFunction GDALGetResampleFunction(const char *pszResampling,
                                              int *pnRadius);
 
-std::string GDALGetNormalizedOvrResampling(const char *pszResampling);
+std::string CPL_DLL GDALGetNormalizedOvrResampling(const char *pszResampling);
 
 GDALDataType GDALGetOvrWorkDataType(const char *pszResampling,
                                     GDALDataType eSrcDataType);

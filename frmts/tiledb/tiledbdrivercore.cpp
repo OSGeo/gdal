@@ -96,6 +96,7 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
 
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONFIELDDATATYPES,
@@ -141,12 +142,10 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
         "   <Option name='TILEDB_TIMESTAMP' scope='raster' type='int' "
         "description='Create "
         "array at this timestamp, the timestamp should be > 0'/>\n"
-        "   <Option name='BOUNDS' scope='raster' type='string' "
-        "description='Specify "
-        "bounds for sparse array, minx, miny, maxx, maxy'/>\n"
-        "   <Option name='CREATE_GROUP' scope='vector' type='boolean' "
-        "description='Whether to create a group for multiple layer support' "
-        "default='NO'/>"
+        "   <Option name='CREATE_GROUP' type='boolean' "
+        "description='Whether to create a group for multiple vector layer "
+        "support (defaults to NO), or raster with overviews "
+        "(defaults to YES)'/>"
         "</CreationOptionList>\n");
 
     // clang-format off

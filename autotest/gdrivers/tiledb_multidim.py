@@ -685,8 +685,8 @@ def test_tiledb_multidim_array_read_gdal_raster_classic_interleave_attributes():
             filename,
             "data/small_world.tif",
             format="TileDB",
-            creationOptions=["INTERLEAVE=ATTRIBUTES"],
-        )
+            creationOptions=["INTERLEAVE=ATTRIBUTES", "CREATE_GROUP=NO"],
+        ),
         ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
         rg = ds.GetRootGroup()
         assert rg.GetMDArrayNames() == [

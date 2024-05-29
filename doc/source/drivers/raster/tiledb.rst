@@ -26,16 +26,108 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Open options
+------------
+
+The following open options exist:
+
+-  .. oo:: TILEDB_CONFIG
+      :choices: <filename>
+
+      A local file with TileDB configuration
+      `options <https://docs.tiledb.io/en/stable/tutorials/config.html>`__
+
+-  .. oo:: TILEDB_TIMESTAMP
+      :choices: <integer>
+
+      Open array at this timestamp. Should be strictly greater than zero when set.
+
+-  .. oo:: STATS
+      :choices: YES, NO
+      :default: NO
+
+      Whether TileDB `performance statistics <https://docs.tiledb.com/main/how-to/performance/using-performance-statistics>`__
+      should be displayed.
+
+-  .. oo:: TILEDB_ATTRIBUTE
+      :choices: <string>
+
+      Attribute to read from each band
+
 Creation options
 ----------------
 
-Various creation and open options exists, among them :
+The following creation options exist:
 
 -  .. co:: TILEDB_CONFIG
       :choices: <filename>
 
       A local file with TileDB configuration
       `options <https://docs.tiledb.io/en/stable/tutorials/config.html>`__
+
+-  .. co:: COMPRESSION
+      :choices: NONE, GZIP, ZSTD, LZ4, RLE, BZIP2, DOUBLE-DELTA, POSITIVE-DELTA
+
+      Compression to use. Default is NONE
+
+-  .. co:: COMPRESSION_LEVEL
+      :choices: <integer>
+
+      Compression level
+
+-  .. co:: BLOCKXSIZE
+      :choices: <integer>
+      :default: 256
+
+      Tile width.
+
+-  .. co:: BLOCKYSIZE
+      :choices: <integer>
+      :default: 256
+
+      Tile height
+
+-  .. co:: STATS
+      :choices: YES, NO
+      :default: NO
+
+      Whether TileDB `performance statistics <https://docs.tiledb.com/main/how-to/performance/using-performance-statistics>`__
+      should be displayed.
+
+-  .. co:: TILEDB_ATTRIBUTE
+      :choices: <string>
+
+      Co-registered file to add as TileDB attributes. Only applicable for interleave types of band or pixel
+
+-  .. co:: INTERLEAVE
+      :choices: BAND, PIXEL, ATTRIBUTES
+      :default: BAND
+
+      Indexing order. Influences how multi-band rasters are stored.
+
+      * ``BAND``: a 3D array is created with the slowest varying dimension being the band.
+      * ``PIXEL``: a 3D array is created with the fastest varying dimension being the band.
+      * ``ATTRIBUTES``: a 2D array is created with each band being stored in a separate TileDB attribute.
+
+-  .. co:: TILEDB_TIMESTAMP
+      :choices: <integer>
+
+      Create array at this timestamp. Should be strictly greater than zero when set.
+
+-  .. co:: CREATE_GROUP
+      :choices: YES, NO
+      :default: YES since 3.10 (NO previously)
+      :since: 3.10
+
+      Whether the dataset should be created within a TileDB group.
+
+      When the dataset is created within a TileDB group, overviews that may be
+      created are stored as TileDB arrays inside that group, next to the full
+      resolution array. This makes administration of the dataset easier.
+
+      Otherwise, the past default behavior (CREATE_GROUP=NO) is to create the dataset
+      as a TileDB array. Overviews cannot be created in that mode.
+
 
 Multidimensional API support
 ----------------------------
@@ -67,7 +159,7 @@ The following multidimensional dataset creation options are available:
 -  **TILEDB_CONFIG=config**: A local file with TileDB configuration
    `options <https://docs.tiledb.io/en/stable/tutorials/config.html>`__
 
--  **TILEDB_TIMESTAMP=val**: inclusive ending timestamp when opening this array
+-  **TILEDB_TIMESTAMP=val**: Create array at this timestamp. Should be strictly greater than zero when set.
 
 
 The following array open options are available:
@@ -87,7 +179,7 @@ The following array creation options are available:
 -  **IN_MEMORY=YES/NO**: hether the array should be only in-memory. Useful to
    create an indexing variable that is serialized as a dimension label
 
--  **TILEDB_TIMESTAMP=val**: inclusive ending timestamp when opening this array
+-  **TILEDB_TIMESTAMP=val**: Create array at this timestamp. Should be strictly greater than zero when set.
 
 
 Cf :source_file:`autotest/gdrivers/tiledb_multidim.py` for examples of how to
