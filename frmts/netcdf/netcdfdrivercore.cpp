@@ -35,6 +35,19 @@
 #include <cctype>
 #include <string_view>
 
+#ifdef HAS_NETCDF_H
+#include "netcdfdataset.h"
+#ifdef NETCDF_HAS_NC2
+#define NETCDF_CORE_HAS_NC2 1
+#endif
+#else
+// We don't have an easy way to guess that without accessing netcdf.h, so
+// assume it is present
+#ifndef NETCDF_CORE_HAS_NC2
+#define NETCDF_CORE_HAS_NC2 1
+#endif
+#endif
+
 /************************************************************************/
 /*                      netCDFIdentifyFormat()                          */
 /************************************************************************/
@@ -377,7 +390,7 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
         "<CreationOptionList>"
         "   <Option name='FORMAT' type='string-select' default='NC'>"
         "     <Value>NC</Value>"
-#ifdef NETCDF_HAS_NC2
+#if NETCDF_CORE_HAS_NC2
         "     <Value>NC2</Value>"
 #endif
         "     <Value>NC4</Value>"
@@ -479,7 +492,7 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
         "</LayerCreationOptionList>");
 
     // Make driver config and capabilities available.
-#ifdef NETCDF_HAS_NC2
+#if NETCDF_CORE_HAS_NC2
     poDriver->SetMetadataItem("NETCDF_HAS_NC2", "YES");
 #endif
     poDriver->SetMetadataItem("NETCDF_HAS_NC4", "YES");
@@ -505,7 +518,7 @@ void netCDFDriverSetCommonMetadata(GDALDriver *poDriver)
         "<MultiDimDatasetCreationOptionList>"
         "   <Option name='FORMAT' type='string-select' default='NC4'>"
         "     <Value>NC</Value>"
-#ifdef NETCDF_HAS_NC2
+#if NETCDF_CORE_HAS_NC2
         "     <Value>NC2</Value>"
 #endif
         "     <Value>NC4</Value>"
