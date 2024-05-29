@@ -747,7 +747,9 @@ bool STACITDataset::Open(GDALOpenInfo *poOpenInfo)
     GIntBig nMaxItems = CPLAtoGIntBig(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "MAX_ITEMS", "1000"));
 
-    if (CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MAX_ITEMS") == nullptr)
+    const bool bMaxItemsSpecified =
+        CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MAX_ITEMS") != nullptr;
+    if (!bMaxItemsSpecified)
     {
         // If the URL includes a limit parameter, and it's larger than our
         // default MAX_ITEMS value, then increase the later to the former.
@@ -785,7 +787,7 @@ bool STACITDataset::Open(GDALOpenInfo *poOpenInfo)
         for (const auto &oFeature : oFeatures)
         {
             nItemIter++;
-            if (nItemIter > nMaxItems)
+            if (nMaxItems > 0 && nItemIter > nMaxItems)
             {
                 break;
             }
@@ -849,10 +851,9 @@ bool STACITDataset::Open(GDALOpenInfo *poOpenInfo)
                            oMapCollection);
             }
         }
-        if (nItemIter >= nMaxItems)
+        if (nMaxItems > 0 && nItemIter >= nMaxItems)
         {
-            if (CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MAX_ITEMS") ==
-                nullptr)
+            if (!bMaxItemsSpecified)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Maximum number of items (" CPL_FRMT_GIB
