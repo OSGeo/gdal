@@ -149,7 +149,6 @@ input source , a method source and generates the output of the operation in the 
     PROJ.4 declarations, or the name of a .prj file containing a WKT CRS definition.
 
 
-Notes
------
+.. note::
 
-ogr_layer_algebra is a Python utility, and is only available if GDAL Python bindings are available.
+    ogr_layer_algebra is a Python utility, and is only available if GDAL Python bindings are available.

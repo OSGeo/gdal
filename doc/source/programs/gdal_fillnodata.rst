@@ -85,7 +85,6 @@ Additional details on the algorithm are available in the
     If not provided, the source band is updated in place.
 
 
-Notes
------
+.. note::
 
-gdal_fillnodata is a Python utility, and is only available if GDAL Python bindings are available.
+    gdal_fillnodata is a Python utility, and is only available if GDAL Python bindings are available.

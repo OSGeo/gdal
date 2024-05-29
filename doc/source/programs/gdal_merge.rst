@@ -171,7 +171,6 @@ copied into the destination image if it is not already defined as nodata.
    gdal_merge -o merge.tif -n 0 image1.tif image2.tif image3.tif image4.tif
 
 
-Notes
------
+.. note::
 
-gdal_merge is a Python utility, and is only available if GDAL Python bindings are available.
+    gdal_merge is a Python utility, and is only available if GDAL Python bindings are available.

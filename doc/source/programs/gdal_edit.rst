@@ -215,7 +215,6 @@ Example
     gdal_edit -scale 1e3 1e4 -offset 0 10 twoBand.tif
 
 
-Notes
------
+.. note::
 
-gdal_edit is a Python utility, and is only available if GDAL Python bindings are available.
+    gdal_edit is a Python utility, and is only available if GDAL Python bindings are available.

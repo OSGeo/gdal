@@ -231,7 +231,7 @@ Options for generated HTML viewers a la Google Maps
 
 .. note::
 
-    gdal2tiles is a Python script that needs to be run against Python GDAL binding.
+    gdal2tiles is a Python utility, and is only available if GDAL Python bindings are available.
 
 MapML options
 +++++++++++++

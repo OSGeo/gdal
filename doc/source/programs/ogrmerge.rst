@@ -199,8 +199,7 @@ and adds a 'country' field to each feature whose value is 'france' or
 
     ogrmerge -single -o merged.shp france.shp germany.shp -src_layer_field_name country
 
-Notes
------
+.. note::
 
-ogrmerge is a Python utility, and is only available if GDAL Python bindings are available.
+    ogrmerge is a Python utility, and is only available if GDAL Python bindings are available.
 

@@ -106,7 +106,6 @@ details on the algorithm.
     messages are not displayed.
 
 
-Notes
------
+.. note::
 
-gdal_polygonize is a Python utility, and is only available if GDAL Python bindings are available.
+    gdal_polygonize is a Python utility, and is only available if GDAL Python bindings are available.

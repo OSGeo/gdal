@@ -250,7 +250,6 @@ Work with multiple bands:
     gdal_calc -A input.tif --A_band=1 -B input.tif --B_band=2 \
       --outfile=result.tif --calc="(A+B)/2" --calc="B*logical_and(A>100,A<150)"
 
-Notes
------
+.. note::
 
-gdal_calc is a Python utility, and is only available if GDAL Python bindings are available.
+    gdal_calc is a Python utility, and is only available if GDAL Python bindings are available.

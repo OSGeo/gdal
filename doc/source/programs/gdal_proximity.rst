@@ -95,7 +95,6 @@ raster for which the raster pixel value is in the set of target pixel values.
     -maxdist of target pixels (including the target pixels) instead of a distance value.
 
 
-Notes
------
+.. note::
 
-gdal_proximity is a Python utility, and is only available if GDAL Python bindings are available.
+    gdal_proximity is a Python utility, and is only available if GDAL Python bindings are available.

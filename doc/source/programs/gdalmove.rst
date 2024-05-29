@@ -61,3 +61,7 @@ could be produced using a least squares fit of at least all four corner points.
 
     The file to be operated on. To update this must be a file format that
     supports in place updates of the geotransform and SRS.
+
+.. note::
+
+    gdalmove is a Python utility, and is only available if GDAL Python bindings are available.

@@ -131,7 +131,6 @@ Examples
     0
 
 
-Notes
------
+.. note::
 
-gdalcompare is a Python utility, and is only available if GDAL Python bindings are available.
+    gdalcompare is a Python utility, and is only available if GDAL Python bindings are available.
