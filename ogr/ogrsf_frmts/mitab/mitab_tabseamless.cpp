@@ -185,6 +185,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
         }
 
         CPLFree(m_pszFname);
+        m_pszFname = nullptr;
         CSLDestroy(papszTABFile);
         return -1;
     }
@@ -216,6 +217,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
             CPLErrorReset();
 
         CPLFree(m_pszFname);
+        m_pszFname = nullptr;
 
         return -1;
     }
