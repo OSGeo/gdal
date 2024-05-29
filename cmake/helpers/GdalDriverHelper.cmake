@@ -284,7 +284,11 @@ function(add_gdal_driver)
 
         if (_DRIVER_CORE_SOURCES)
             if (_DRIVER_NO_SHARED_SYMBOL_WITH_CORE)
-                target_sources(${_DRIVER_TARGET} PRIVATE ${_DRIVER_CORE_SOURCES})
+                foreach(f IN LISTS _DRIVER_CORE_SOURCES)
+                    # Create a separate source file, to make sure we get a different object file
+                    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/for_driver_${f}" "#include \"${CMAKE_CURRENT_SOURCE_DIR}/${f}\"")
+                    target_sources(${_DRIVER_TARGET} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/for_driver_${f}")
+                endforeach()
             endif()
             _set_driver_core_sources(${_KEY} ${_DRIVER_TARGET} ${_DRIVER_CORE_SOURCES})
         endif ()
