@@ -1361,8 +1361,8 @@ GetCSLStringAsHashTable(JNIEnv *jenv, char **stringarray, bool bFreeCSL ) {
 {
   /* %typemap(in) (double *argout[ANY]) */
   if($input == NULL || jenv->GetArrayLength($input) != $dim0) {
-      char errorMsg[512];
-      sprintf(errorMsg, "array of size %d expected", $dim0);
+      char errorMsg[128];
+      snprintf(errorMsg, sizeof(errorMsg), "array of size %d expected", $dim0);
       SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, errorMsg);
       return $null;
   }
@@ -1397,8 +1397,8 @@ GetCSLStringAsHashTable(JNIEnv *jenv, char **stringarray, bool bFreeCSL ) {
 {
   /* %typemap(in) (double argin[ANY]) */
   if($input == NULL || jenv->GetArrayLength($input) != $dim0) {
-      char errorMsg[512];
-      sprintf(errorMsg, "array of size %d expected", $dim0);
+      char errorMsg[128];
+      snprintf(errorMsg, sizeof(errorMsg), "array of size %d expected", $dim0);
       SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, errorMsg);
       return $null;
   }
@@ -1434,8 +1434,8 @@ GetCSLStringAsHashTable(JNIEnv *jenv, char **stringarray, bool bFreeCSL ) {
 {
   /* %typemap(in) (double argout[ANY]) */
   if($input == NULL || jenv->GetArrayLength($input) != $dim0) {
-      char errorMsg[512];
-      sprintf(errorMsg, "array of size %d expected", $dim0);
+      char errorMsg[128];
+      snprintf(errorMsg, sizeof(errorMsg), "array of size %d expected", $dim0);
       SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, errorMsg);
       return $null;
   }
