@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
-#include <thread>
+#include <future>
 
 #include "gdal_alg.h"
 #include "gdal_priv_templates.hpp"
@@ -676,21 +676,19 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
     const auto [iLeft, iRight] =
         adjustHeight(nYOffset, nX, vThisLineVal.data() + nX);
 
-    std::thread t1(
-        [&, left = iLeft]()
+    auto t1 = std::async(std::launch::async, [&, left = iLeft]()
         {
             processLineLeft(nX, nYOffset, nX - 2, left - 1, vResult,
                             vThisLineVal, vLastLineVal);
         });
 
-    std::thread t2(
-        [&, right = iRight]()
+    auto t2 = std::async(std::launch::async, [&, right = iRight]()
         {
             processLineRight(nX, nYOffset, nX + 2, right, vResult, vThisLineVal,
                              vLastLineVal);
         });
-    t1.join();
-    t2.join();
+    t1.wait();
+    t2.wait();
 
     // Make the current line the last line.
     vLastLineVal = std::move(vThisLineVal);
@@ -741,21 +739,19 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
         vResult[nX] = oOpts.outOfRangeVal;
 
     // process left half then right half of line
-    std::thread t1(
-        [&, left = iLeft]()
+    auto t1 = std::async(std::launch::async, [&, left = iLeft]()
         {
             processLineLeft(nX, nYOffset, nX - 1, left - 1, vResult,
                             vThisLineVal, vLastLineVal);
         });
 
-    std::thread t2(
-        [&, right = iRight]()
+    auto t2 = std::async(std::launch::async, [&, right = iRight]()
         {
             processLineRight(nX, nYOffset, nX + 1, right, vResult, vThisLineVal,
                              vLastLineVal);
         });
-    t1.join();
-    t2.join();
+    t1.wait();
+    t2.wait();
 
     // Make the current line the last line.
     vLastLineVal = std::move(vThisLineVal);
@@ -836,8 +832,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
 
     // scan upwards
     std::atomic<bool> err(false);
-    std::thread tUp(
-        [&]()
+    auto tUp = std::async(std::launch::async, [&]()
         {
             std::vector<double> vLastLineVal = vFirstLineVal;
 
@@ -848,8 +843,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         });
 
     // scan downwards
-    std::thread tDown(
-        [&]()
+    auto tDown = std::async(std::launch::async, [&]()
         {
             std::vector<double> vLastLineVal = vFirstLineVal;
 
@@ -858,8 +852,8 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                     err = true;
         });
 
-    tUp.join();
-    tDown.join();
+    tUp.wait();
+    tDown.wait();
 
     if (!emitProgress(1))
         return false;
