@@ -34,6 +34,9 @@
 
 constexpr const char *DRIVER_NAME = "OGR_OGDI";
 
-void CPL_DLL OGROGDIDriverSetCommonMetadata(GDALDriver *poDriver);
+#define OGROGDIDriverSetCommonMetadata                                         \
+    PLUGIN_SYMBOL_NAME(OGROGDIDriverSetCommonMetadata)
+
+void OGROGDIDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
