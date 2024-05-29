@@ -33,8 +33,13 @@
 
 constexpr const char *DRIVER_NAME = "Elasticsearch";
 
-int CPL_DLL OGRElasticsearchDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRElasticsearchDriverIdentify                                         \
+    PLUGIN_SYMBOL_NAME(OGRElasticsearchDriverIdentify)
+#define OGRElasticsearchDriverSetCommonMetadata                                \
+    PLUGIN_SYMBOL_NAME(OGRElasticsearchDriverSetCommonMetadata)
 
-void CPL_DLL OGRElasticsearchDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRElasticsearchDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRElasticsearchDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
