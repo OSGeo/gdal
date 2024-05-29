@@ -1701,7 +1701,15 @@ static bool gmlHugeFileWriteResolved(huge_helper *helper,
         const int iPropCount = poClass->GetPropertyCount();
 
         bool b_has_geom = false;
-        VSIFPrintfL(fp, "    <%s>\n", poClass->GetElementName());
+        VSIFPrintfL(fp, "    <%s", poClass->GetElementName());
+        const char *pszGmlId = poFeature->GetFID();
+        if (pszGmlId)
+        {
+            char *gmlText = CPLEscapeString(pszGmlId, -1, CPLES_XML);
+            VSIFPrintfL(fp, " gml:id=\"%s\"", gmlText);
+            CPLFree(gmlText);
+        }
+        VSIFPrintfL(fp, ">\n");
 
         for (int iProp = 0; iProp < iPropCount; iProp++)
         {
