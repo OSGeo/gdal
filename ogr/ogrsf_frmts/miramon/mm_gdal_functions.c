@@ -1262,13 +1262,13 @@ reintenta_lectura_per_si_error_CreaCampBD_XP:
             if (11 > (read_bytes = fread_function(charset_cpg, 1, 10, f_cpg)))
             {
                 charset_cpg[read_bytes] = '\0';
-                p = strstr(charset_cpg, "UTF-8");
+                p = MM_stristr(charset_cpg, "UTF-8");
                 if (p)
                     pMMBDXP->CharSet = MM_JOC_CARAC_UTF8_DBF;
-                p = strstr(charset_cpg, "UTF8");
+                p = MM_stristr(charset_cpg, "UTF8");
                 if (p)
                     pMMBDXP->CharSet = MM_JOC_CARAC_UTF8_DBF;
-                p = strstr(charset_cpg, "ISO-8859-1");
+                p = MM_stristr(charset_cpg, "ISO-8859-1");
                 if (p)
                     pMMBDXP->CharSet = MM_JOC_CARAC_ANSI_DBASE;
             }
@@ -1945,6 +1945,28 @@ char *MM_oemansi_n(char *szszChain, size_t n_bytes)
         }
     }
     return szszChain;
+}
+
+// An implementation of non-sensitive strstr()
+char *MM_stristr(const char *haystack, const char *needle)
+{
+    if (!haystack)
+        return nullptr;
+
+    if (!needle)
+        return nullptr;
+
+    if (!*needle)
+        return (char *)haystack;
+
+    char *p1 = (char *)haystack;
+    while (*p1 != '\0' && !EQUALN(p1, needle, strlen(needle)))
+        p1++;
+
+    if (*p1 == '\0')
+        return nullptr;
+
+    return p1;
 }
 
 char *MM_oemansi(char *szszChain)
