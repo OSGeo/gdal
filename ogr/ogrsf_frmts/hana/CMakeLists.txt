@@ -10,7 +10,8 @@ add_gdal_driver(
           ogrhanautils.cpp
   CORE_SOURCES
           ogrhanadrivercore.cpp
-  PLUGIN_CAPABLE)
+  PLUGIN_CAPABLE
+  NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET ogr_HANA)
     return()
