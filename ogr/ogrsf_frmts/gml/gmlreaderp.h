@@ -226,6 +226,11 @@ class GMLHandler
                                     const char *pszAttributeName) = 0;
     virtual char *GetAttributeByIdx(void *attr, unsigned int idx,
                                     char **ppszKey) = 0;
+
+    GMLAppSchemaType GetAppSchemaType() const
+    {
+        return eAppSchemaType;
+    }
 };
 
 #if defined(HAVE_XERCES)
