@@ -2272,6 +2272,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
  * @since 3.9
  */
 // clang-format on
+
 class GDALPluginDriverProxy : public GDALDriver
 {
     const std::string m_osPluginFileName;
@@ -3234,17 +3235,22 @@ class CPL_DLL GDALAttribute : virtual public GDALAbstractMDArray
     GDALRawResult ReadAsRaw() const;
     const char *ReadAsString() const;
     int ReadAsInt() const;
+    GInt64 ReadAsLong() const;
     double ReadAsDouble() const;
     CPLStringList ReadAsStringArray() const;
     std::vector<int> ReadAsIntArray() const;
+    std::vector<GInt64> ReadAsLongArray() const;
     std::vector<double> ReadAsDoubleArray() const;
 
     using GDALAbstractMDArray::Write;
     bool Write(const void *pabyValue, size_t nLen);
     bool Write(const char *);
     bool WriteInt(int);
+    bool WriteLong(GInt64);
     bool Write(double);
     bool Write(CSLConstList);
+    bool Write(const int *, size_t);
+    bool Write(const GInt64 *, size_t);
     bool Write(const double *, size_t);
 
     //! @cond Doxygen_Suppress
@@ -3304,6 +3310,8 @@ class CPL_DLL GDALAttributeNumeric final : public GDALAttribute
                          const std::string &osName, double dfValue);
     GDALAttributeNumeric(const std::string &osParentName,
                          const std::string &osName, int nValue);
+    GDALAttributeNumeric(const std::string &osParentName,
+                         const std::string &osName, GInt64 nValue);
     GDALAttributeNumeric(const std::string &osParentName,
                          const std::string &osName,
                          const std::vector<GUInt32> &anValues);

@@ -3335,7 +3335,7 @@ const char *GDALAttribute::ReadAsString() const
  *
  * This function will only return the first element if there are several.
  *
- * It can fail if its value can be converted to integer.
+ * It can fail if its value can be not converted to integer.
  *
  * This is the same as the C function GDALAttributeReadAsInt()
  *
@@ -3353,6 +3353,31 @@ int GDALAttribute::ReadAsInt() const
 }
 
 /************************************************************************/
+/*                            ReadAsLong()                              */
+/************************************************************************/
+
+/** Return the value of an attribute as a long.
+ *
+ * This function will only return the first element if there are several.
+ *
+ * It can fail if its value can be not converted to long.
+ *
+ * This is the same as the C function GDALAttributeReadAsLong()
+ *
+ * @return a GInt64, or std::numeric_limits<GInt64>::min() in case of error.
+ */
+GInt64 GDALAttribute::ReadAsLong() const
+{
+    const auto nDims = GetDimensionCount();
+    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<size_t> count(1 + nDims, 1);
+    GInt64 nRet = std::numeric_limits<GInt64>::min();
+    Read(startIdx.data(), count.data(), nullptr, nullptr,
+         GDALExtendedDataType::Create(GDT_Int64), &nRet, &nRet, sizeof(nRet));
+    return nRet;
+}
+
+/************************************************************************/
 /*                            ReadAsDouble()                            */
 /************************************************************************/
 
@@ -3360,7 +3385,7 @@ int GDALAttribute::ReadAsInt() const
  *
  * This function will only return the first element if there are several.
  *
- * It can fail if its value can be converted to double.
+ * It can fail if its value can be not converted to double.
  *
  * This is the same as the C function GDALAttributeReadAsInt()
  *
@@ -3438,6 +3463,36 @@ std::vector<int> GDALAttribute::ReadAsIntArray() const
     }
     Read(startIdx.data(), count.data(), nullptr, nullptr,
          GDALExtendedDataType::Create(GDT_Int32), &res[0], res.data(),
+         res.size() * sizeof(res[0]));
+    return res;
+}
+
+/************************************************************************/
+/*                          ReadAsLongArray()                           */
+/************************************************************************/
+
+/** Return the value of an attribute as an array of GInt64.
+ *
+ * This is the same as the C function GDALAttributeReadAsLongArray().
+ */
+std::vector<GInt64> GDALAttribute::ReadAsLongArray() const
+{
+    const auto nElts = GetTotalElementsCount();
+#if SIZEOF_VOIDP == 4
+    if (nElts > static_cast<size_t>(nElts))
+        return {};
+#endif
+    std::vector<GInt64> res(static_cast<size_t>(nElts));
+    const auto &dims = GetDimensions();
+    const auto nDims = GetDimensionCount();
+    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<size_t> count(1 + nDims);
+    for (size_t i = 0; i < nDims; i++)
+    {
+        count[i] = static_cast<size_t>(dims[i]->GetSize());
+    }
+    Read(startIdx.data(), count.data(), nullptr, nullptr,
+         GDALExtendedDataType::Create(GDT_Int64), &res[0], res.data(),
          res.size() * sizeof(res[0]));
     return res;
 }
@@ -3558,6 +3613,30 @@ bool GDALAttribute::WriteInt(int nVal)
 }
 
 /************************************************************************/
+/*                              WriteLong()                             */
+/************************************************************************/
+
+/** Write an attribute from a GInt64 value.
+ *
+ * Type conversion will be performed if needed. If the attribute contains
+ * multiple values, only the first one will be updated.
+ *
+ * This is the same as the C function GDALAttributeWriteInt().
+ *
+ * @param nVal Value.
+ * @return true in case of success.
+ */
+bool GDALAttribute::WriteLong(GInt64 nVal)
+{
+    const auto nDims = GetDimensionCount();
+    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<size_t> count(1 + nDims, 1);
+    return Write(startIdx.data(), count.data(), nullptr, nullptr,
+                 GDALExtendedDataType::Create(GDT_Int64), &nVal, &nVal,
+                 sizeof(nVal));
+}
+
+/************************************************************************/
 /*                                Write()                               */
 /************************************************************************/
 
@@ -3612,6 +3691,74 @@ bool GDALAttribute::Write(CSLConstList vals)
     return Write(startIdx.data(), count.data(), nullptr, nullptr,
                  GDALExtendedDataType::CreateString(), vals, vals,
                  static_cast<size_t>(GetTotalElementsCount()) * sizeof(char *));
+}
+
+/************************************************************************/
+/*                                Write()                               */
+/************************************************************************/
+
+/** Write an attribute from an array of int.
+ *
+ * Type conversion will be performed if needed.
+ *
+ * Exactly GetTotalElementsCount() strings must be provided
+ *
+ * This is the same as the C function GDALAttributeWriteIntArray()
+ *
+ * @param vals Array of int.
+ * @param nVals Should be equal to GetTotalElementsCount().
+ * @return true in case of success.
+ */
+bool GDALAttribute::Write(const int *vals, size_t nVals)
+{
+    if (nVals != GetTotalElementsCount())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid number of input values");
+        return false;
+    }
+    const auto nDims = GetDimensionCount();
+    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<size_t> count(1 + nDims);
+    const auto &dims = GetDimensions();
+    for (size_t i = 0; i < nDims; i++)
+        count[i] = static_cast<size_t>(dims[i]->GetSize());
+    return Write(startIdx.data(), count.data(), nullptr, nullptr,
+                 GDALExtendedDataType::Create(GDT_Int32), vals, vals,
+                 static_cast<size_t>(GetTotalElementsCount()) * sizeof(GInt32));
+}
+
+/************************************************************************/
+/*                                Write()                               */
+/************************************************************************/
+
+/** Write an attribute from an array of GInt64.
+ *
+ * Type conversion will be performed if needed.
+ *
+ * Exactly GetTotalElementsCount() strings must be provided
+ *
+ * This is the same as the C function GDALAttributeWriteLongArray()
+ *
+ * @param vals Array of GInt64.
+ * @param nVals Should be equal to GetTotalElementsCount().
+ * @return true in case of success.
+ */
+bool GDALAttribute::Write(const GInt64 *vals, size_t nVals)
+{
+    if (nVals != GetTotalElementsCount())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid number of input values");
+        return false;
+    }
+    const auto nDims = GetDimensionCount();
+    std::vector<GUInt64> startIdx(1 + nDims, 0);
+    std::vector<size_t> count(1 + nDims);
+    const auto &dims = GetDimensions();
+    for (size_t i = 0; i < nDims; i++)
+        count[i] = static_cast<size_t>(dims[i]->GetSize());
+    return Write(startIdx.data(), count.data(), nullptr, nullptr,
+                 GDALExtendedDataType::Create(GDT_Int64), vals, vals,
+                 static_cast<size_t>(GetTotalElementsCount()) * sizeof(GInt64));
 }
 
 /************************************************************************/
@@ -5572,6 +5719,7 @@ CreateFieldNameExtractArray(const std::shared_ptr<GDALMDArray> &self,
  * a view of it (not a copy), or nullptr in case of error.
  */
 // clang-format on
+
 std::shared_ptr<GDALMDArray>
 GDALMDArray::GetView(const std::string &viewExpr) const
 {
@@ -12721,7 +12869,7 @@ const char *GDALAttributeReadAsString(GDALAttributeH hAttr)
  *
  * This function will only return the first element if there are several.
  *
- * It can fail if its value can be converted to integer.
+ * It can fail if its value can be not converted to integer.
  *
  * This is the same as the C++ method GDALAttribute::ReadAsInt()
  *
@@ -12734,6 +12882,26 @@ int GDALAttributeReadAsInt(GDALAttributeH hAttr)
 }
 
 /************************************************************************/
+/*                      GDALAttributeReadAsLong()                       */
+/************************************************************************/
+
+/** Return the value of an attribute as a GInt64.
+ *
+ * This function will only return the first element if there are several.
+ *
+ * It can fail if its value can be not converted to integer.
+ *
+ * This is the same as the C++ method GDALAttribute::ReadAsInt()
+ *
+ * @return a GIn64, or std::numeric_limits<GInt64>::min() in case of error.
+ */
+GInt64 GDALAttributeReadAsLong(GDALAttributeH hAttr)
+{
+    VALIDATE_POINTER1(hAttr, __func__, 0);
+    return hAttr->m_poImpl->ReadAsLong();
+}
+
+/************************************************************************/
 /*                       GDALAttributeReadAsDouble()                    */
 /************************************************************************/
 
@@ -12741,7 +12909,7 @@ int GDALAttributeReadAsInt(GDALAttributeH hAttr)
  *
  * This function will only return the first element if there are several.
  *
- * It can fail if its value can be converted to double.
+ * It can fail if its value can not be converted to double.
  *
  * This is the same as the C++ method GDALAttribute::ReadAsDouble()
  *
@@ -12793,6 +12961,35 @@ int *GDALAttributeReadAsIntArray(GDALAttributeH hAttr, size_t *pnCount)
     if (!ret)
         return nullptr;
     memcpy(ret, tmp.data(), tmp.size() * sizeof(int));
+    *pnCount = tmp.size();
+    return ret;
+}
+
+/************************************************************************/
+/*                     GDALAttributeReadAsLong()                    */
+/************************************************************************/
+
+/** Return the value of an attribute as an array of GInt64.
+ *
+ * This is the same as the C++ method GDALAttribute::ReadAsLongArray()
+ *
+ * @param hAttr Attribute
+ * @param pnCount Pointer to the number of values returned. Must NOT be NULL.
+ * @return array to be freed with CPLFree(), or nullptr.
+ */
+GInt64 *GDALAttributeReadAsLongArray(GDALAttributeH hAttr, size_t *pnCount)
+{
+    VALIDATE_POINTER1(hAttr, __func__, nullptr);
+    VALIDATE_POINTER1(pnCount, __func__, nullptr);
+    *pnCount = 0;
+    auto tmp(hAttr->m_poImpl->ReadAsIntArray());
+    if (tmp.empty())
+        return nullptr;
+    auto ret =
+        static_cast<GInt64 *>(VSI_MALLOC2_VERBOSE(tmp.size(), sizeof(GInt64)));
+    if (!ret)
+        return nullptr;
+    memcpy(ret, tmp.data(), tmp.size() * sizeof(GInt64));
     *pnCount = tmp.size();
     return ret;
 }
@@ -12894,6 +13091,27 @@ int GDALAttributeWriteInt(GDALAttributeH hAttr, int nVal)
 }
 
 /************************************************************************/
+/*                        GDALAttributeWriteLong()                       */
+/************************************************************************/
+
+/** Write an attribute from a long value.
+ *
+ * Type conversion will be performed if needed. If the attribute contains
+ * multiple values, only the first one will be updated.
+ *
+ * This is the same as the C++ method GDALAttribute::WriteLong()
+ *
+ * @param hAttr Attribute
+ * @param nVal Value.
+ * @return TRUE in case of success.
+ */
+int GDALAttributeWriteLong(GDALAttributeH hAttr, GInt64 nVal)
+{
+    VALIDATE_POINTER1(hAttr, __func__, FALSE);
+    return hAttr->m_poImpl->WriteLong(nVal);
+}
+
+/************************************************************************/
 /*                        GDALAttributeWriteDouble()                    */
 /************************************************************************/
 
@@ -12936,6 +13154,56 @@ int GDALAttributeWriteStringArray(GDALAttributeH hAttr,
 {
     VALIDATE_POINTER1(hAttr, __func__, FALSE);
     return hAttr->m_poImpl->Write(papszValues);
+}
+
+/************************************************************************/
+/*                       GDALAttributeWriteIntArray()                */
+/************************************************************************/
+
+/** Write an attribute from an array of int.
+ *
+ * Type conversion will be performed if needed.
+ *
+ * Exactly GetTotalElementsCount() strings must be provided
+ *
+ * This is the same as the C++ method GDALAttribute::Write(const int *,
+ * size_t)
+ *
+ * @param hAttr Attribute
+ * @param panValues Array of int.
+ * @param nCount Should be equal to GetTotalElementsCount().
+ * @return TRUE in case of success.
+ */
+int GDALAttributeWriteIntArray(GDALAttributeH hAttr, const int *panValues,
+                               size_t nCount)
+{
+    VALIDATE_POINTER1(hAttr, __func__, FALSE);
+    return hAttr->m_poImpl->Write(panValues, nCount);
+}
+
+/************************************************************************/
+/*                       GDALAttributeWriteLongArray()                */
+/************************************************************************/
+
+/** Write an attribute from an array of GInt64.
+ *
+ * Type conversion will be performed if needed.
+ *
+ * Exactly GetTotalElementsCount() strings must be provided
+ *
+ * This is the same as the C++ method GDALAttribute::Write(const GInt4 *,
+ * size_t)
+ *
+ * @param hAttr Attribute
+ * @param panValues Array of GInt64.
+ * @param nCount Should be equal to GetTotalElementsCount().
+ * @return TRUE in case of success.
+ */
+int GDALAttributeWriteLongArray(GDALAttributeH hAttr, const GInt64 *panValues,
+                                size_t nCount)
+{
+    VALIDATE_POINTER1(hAttr, __func__, FALSE);
+    return hAttr->m_poImpl->Write(panValues, nCount);
 }
 
 /************************************************************************/
@@ -13364,8 +13632,8 @@ GDALMDArrayRegularlySpaced::GDALMDArrayRegularlySpaced(
     double dfIncrement, double dfOffsetInIncrement)
     : GDALAbstractMDArray(osParentName, osName),
       GDALMDArray(osParentName, osName), m_dfStart(dfStart),
-      m_dfIncrement(dfIncrement),
-      m_dfOffsetInIncrement(dfOffsetInIncrement), m_dims{poDim}
+      m_dfIncrement(dfIncrement), m_dfOffsetInIncrement(dfOffsetInIncrement),
+      m_dims{poDim}
 {
 }
 

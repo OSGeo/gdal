@@ -1440,28 +1440,32 @@ void CPL_DLL GDALDestroySubdatasetInfo(GDALSubdatasetInfoH hInfo);
                                                                        const GInt16                           \
                                                                            *,                                 \
                                                                        papoSource)                            \
-                                                                       [(ii)*2]                               \
+                                                                       [(ii) *                                \
+                                                                        2]                                    \
                                                                  : (eSrcType ==                               \
                                                                             GDT_CInt32                        \
                                                                         ? CPL_REINTERPRET_CAST(               \
                                                                               const GInt32                    \
                                                                                   *,                          \
                                                                               papoSource)                     \
-                                                                              [(ii)*2]                        \
+                                                                              [(ii) *                         \
+                                                                               2]                             \
                                                                         : (eSrcType ==                        \
                                                                                    GDT_CFloat32               \
                                                                                ? CPL_REINTERPRET_CAST(        \
                                                                                      const float              \
                                                                                          *,                   \
                                                                                      papoSource)              \
-                                                                                     [(ii)*2]                 \
+                                                                                     [(ii) *                  \
+                                                                                      2]                      \
                                                                                : (eSrcType ==                 \
                                                                                           GDT_CFloat64        \
                                                                                       ? CPL_REINTERPRET_CAST( \
                                                                                             const double      \
                                                                                                 *,            \
                                                                                             papoSource)       \
-                                                                                            [(ii)*2]          \
+                                                                                            [(ii) *           \
+                                                                                             2]               \
                                                                                       : 0))))))))))))
 
 /** Type of functions to pass to GDALAddDerivedBandPixelFunc.
@@ -2513,11 +2517,15 @@ void CPL_DLL GDALAttributeFreeRawResult(GDALAttributeH hAttr, GByte *raw,
                                         size_t nSize);
 const char CPL_DLL *GDALAttributeReadAsString(GDALAttributeH hAttr);
 int CPL_DLL GDALAttributeReadAsInt(GDALAttributeH hAttr);
+GInt64 CPL_DLL GDALAttributeReadAsLong(GDALAttributeH hAttr);
 double CPL_DLL GDALAttributeReadAsDouble(GDALAttributeH hAttr);
 char CPL_DLL **
 GDALAttributeReadAsStringArray(GDALAttributeH hAttr) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL *GDALAttributeReadAsIntArray(GDALAttributeH hAttr, size_t *pnCount)
     CPL_WARN_UNUSED_RESULT;
+GInt64 CPL_DLL *
+GDALAttributeReadAsLongArray(GDALAttributeH hAttr,
+                             size_t *pnCount) CPL_WARN_UNUSED_RESULT;
 double CPL_DLL *
 GDALAttributeReadAsDoubleArray(GDALAttributeH hAttr,
                                size_t *pnCount) CPL_WARN_UNUSED_RESULT;
@@ -2525,6 +2533,11 @@ int CPL_DLL GDALAttributeWriteRaw(GDALAttributeH hAttr, const void *, size_t);
 int CPL_DLL GDALAttributeWriteString(GDALAttributeH hAttr, const char *);
 int CPL_DLL GDALAttributeWriteStringArray(GDALAttributeH hAttr, CSLConstList);
 int CPL_DLL GDALAttributeWriteInt(GDALAttributeH hAttr, int);
+int CPL_DLL GDALAttributeWriteIntArray(GDALAttributeH hAttr, const int *,
+                                       size_t);
+int CPL_DLL GDALAttributeWriteLong(GDALAttributeH hAttr, int);
+int CPL_DLL GDALAttributeWriteLongArray(GDALAttributeH hAttr, const GInt64 *,
+                                        size_t);
 int CPL_DLL GDALAttributeWriteDouble(GDALAttributeH hAttr, double);
 int CPL_DLL GDALAttributeWriteDoubleArray(GDALAttributeH hAttr, const double *,
                                           size_t);
