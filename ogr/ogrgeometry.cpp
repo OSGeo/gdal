@@ -8493,3 +8493,52 @@ void OGRwkbExportOptionsSetPrecision(
     if (hPrecisionOptions)
         psOptions->sPrecision.SetFrom(*hPrecisionOptions);
 }
+
+/************************************************************************/
+/*                             IsRectangle()                            */
+/************************************************************************/
+
+/**
+ * \brief Returns whether the geometry is a polygon with 4 corners forming
+ * a rectangle.
+ *
+ * @since GDAL 3.10
+ */
+bool OGRGeometry::IsRectangle() const
+{
+    if (wkbFlatten(getGeometryType()) != wkbPolygon)
+        return false;
+
+    const OGRPolygon *poPoly = toPolygon();
+
+    if (poPoly->getNumInteriorRings() != 0)
+        return false;
+
+    const OGRLinearRing *poRing = poPoly->getExteriorRing();
+    if (!poRing)
+        return false;
+
+    if (poRing->getNumPoints() > 5 || poRing->getNumPoints() < 4)
+        return false;
+
+    // If the ring has 5 points, the last should be the first.
+    if (poRing->getNumPoints() == 5 && (poRing->getX(0) != poRing->getX(4) ||
+                                        poRing->getY(0) != poRing->getY(4)))
+        return false;
+
+    // Polygon with first segment in "y" direction.
+    if (poRing->getX(0) == poRing->getX(1) &&
+        poRing->getY(1) == poRing->getY(2) &&
+        poRing->getX(2) == poRing->getX(3) &&
+        poRing->getY(3) == poRing->getY(0))
+        return true;
+
+    // Polygon with first segment in "x" direction.
+    if (poRing->getY(0) == poRing->getY(1) &&
+        poRing->getX(1) == poRing->getX(2) &&
+        poRing->getY(2) == poRing->getY(3) &&
+        poRing->getX(3) == poRing->getX(0))
+        return true;
+
+    return false;
+}

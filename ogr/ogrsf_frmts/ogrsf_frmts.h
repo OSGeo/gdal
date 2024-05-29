@@ -387,6 +387,14 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     bool FilterWKBGeometry(const GByte *pabyWKB, size_t nWKBSize,
                            bool bEnvelopeAlreadySet,
                            OGREnvelope &sEnvelope) const;
+
+    static bool FilterWKBGeometry(const GByte *pabyWKB, size_t nWKBSize,
+                                  bool bEnvelopeAlreadySet,
+                                  OGREnvelope &sEnvelope,
+                                  const OGRGeometry *poFilterGeom,
+                                  bool bFilterIsEnvelope,
+                                  const OGREnvelope &sFilterEnvelope,
+                                  OGRPreparedGeometry *&poPreparedFilterGeom);
     //! @endcond
 
     /** Field name used by GetArrowSchema() for a FID column when

@@ -3961,4 +3961,90 @@ TEST_F(test_ogr, OGRFeature_SerializeToBinary)
     }
 }
 
+// Test OGRGeometry::IsRectangle()
+TEST_F(test_ogr, OGRGeometry_IsRectangle)
+{
+    // Not a polygon
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt("POINT EMPTY", nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_FALSE(poGeom->IsRectangle());
+        delete poGeom;
+    }
+    // Polygon empty
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt("POLYGON EMPTY", nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_FALSE(poGeom->IsRectangle());
+        delete poGeom;
+    }
+    // Polygon with inner ring
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt(
+            "POLYGON ((0 0,0 1,1 1,1 0,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.8 "
+            "0.2,0.2 0.2))",
+            nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_FALSE(poGeom->IsRectangle());
+        delete poGeom;
+    }
+    // Polygon with 3 points
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt("POLYGON ((0 0,0 1,1 1))", nullptr,
+                                          &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_FALSE(poGeom->IsRectangle());
+        delete poGeom;
+    }
+    // Polygon with 6 points
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt(
+            "POLYGON ((0 0,0.1 0,0.2 0,0.3 0,1 1,0 0))", nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_FALSE(poGeom->IsRectangle());
+        delete poGeom;
+    }
+    // Polygon with 5 points, but last one not matching first (invalid)
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt(
+            "POLYGON ((0 0,0 1,1 1,1 0,-999 -999))", nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_FALSE(poGeom->IsRectangle());
+        delete poGeom;
+    }
+    // Polygon with 5 points, but not rectangle
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt("POLYGON ((0 0,0 1.1,1 1,1 0,0 0))",
+                                          nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_FALSE(poGeom->IsRectangle());
+        delete poGeom;
+    }
+    // Rectangle (type 1)
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt("POLYGON ((0 0,0 1,1 1,1 0,0 0))",
+                                          nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_TRUE(poGeom->IsRectangle());
+        delete poGeom;
+    }
+    // Rectangle2(type 1)
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt("POLYGON ((0 0,1 0,1 1,0 1,0 0))",
+                                          nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_TRUE(poGeom->IsRectangle());
+        delete poGeom;
+    }
+}
+
 }  // namespace

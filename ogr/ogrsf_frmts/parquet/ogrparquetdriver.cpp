@@ -246,73 +246,14 @@ static GDALDataset *OpenFromDatasetFactory(
     std::shared_ptr<arrow::dataset::Dataset> dataset;
     PARQUET_ASSIGN_OR_THROW(dataset, factory->Finish());
 
-    std::shared_ptr<arrow::dataset::ScannerBuilder> scannerBuilder;
-    PARQUET_ASSIGN_OR_THROW(scannerBuilder, dataset->NewScan());
-
     auto poMemoryPool = std::shared_ptr<arrow::MemoryPool>(
         arrow::MemoryPool::CreateDefault().release());
 
-    // We cannot use the above shared memory pool. Otherwise we get random
-    // crashes in multi-threaded arrow code (apparently some cleanup code),
-    // that may used the memory pool after it has been destroyed.
-    // PARQUET_THROW_NOT_OK(scannerBuilder->Pool(poMemoryPool.get()));
-
     const bool bIsVSI = STARTS_WITH(osBasePath.c_str(), "/vsi");
-    if (bIsVSI)
-    {
-        const int nFragmentReadAhead =
-            atoi(CPLGetConfigOption("OGR_PARQUET_FRAGMENT_READ_AHEAD", "2"));
-        PARQUET_THROW_NOT_OK(
-            scannerBuilder->FragmentReadahead(nFragmentReadAhead));
-
-        const char *pszBatchSize =
-            CPLGetConfigOption("OGR_PARQUET_BATCH_SIZE", nullptr);
-        if (pszBatchSize)
-        {
-            PARQUET_THROW_NOT_OK(
-                scannerBuilder->BatchSize(CPLAtoGIntBig(pszBatchSize)));
-        }
-
-        const char *pszUseThreads =
-            CPLGetConfigOption("OGR_PARQUET_USE_THREADS", nullptr);
-        if (pszUseThreads)
-        {
-            PARQUET_THROW_NOT_OK(
-                scannerBuilder->UseThreads(CPLTestBool(pszUseThreads)));
-        }
-
-        const char *pszNumThreads =
-            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-        int nNumThreads = 0;
-        if (pszNumThreads == nullptr)
-            nNumThreads = std::min(4, CPLGetNumCPUs());
-        else
-            nNumThreads = EQUAL(pszNumThreads, "ALL_CPUS")
-                              ? CPLGetNumCPUs()
-                              : atoi(pszNumThreads);
-        if (nNumThreads > 1)
-        {
-            CPL_IGNORE_RET_VAL(arrow::SetCpuThreadPoolCapacity(nNumThreads));
-        }
-
-#if PARQUET_VERSION_MAJOR >= 10
-        const char *pszBatchReadAhead =
-            CPLGetConfigOption("OGR_PARQUET_BATCH_READ_AHEAD", nullptr);
-        if (pszBatchReadAhead)
-        {
-            PARQUET_THROW_NOT_OK(
-                scannerBuilder->BatchReadahead(atoi(pszBatchReadAhead)));
-        }
-#endif
-    }
-
-    std::shared_ptr<arrow::dataset::Scanner> scanner;
-    PARQUET_ASSIGN_OR_THROW(scanner, scannerBuilder->Finish());
-
     auto poDS = std::make_unique<OGRParquetDataset>(poMemoryPool);
     auto poLayer = std::make_unique<OGRParquetDatasetLayer>(
-        poDS.get(), CPLGetBasename(osBasePath.c_str()), scanner,
-        scannerBuilder->schema(), papszOpenOptions);
+        poDS.get(), CPLGetBasename(osBasePath.c_str()), bIsVSI, dataset,
+        papszOpenOptions);
     poDS->SetLayer(std::move(poLayer));
     return poDS.release();
 }
