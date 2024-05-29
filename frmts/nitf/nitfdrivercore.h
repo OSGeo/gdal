@@ -37,8 +37,12 @@
 
 constexpr const char *DRIVER_NAME = "NITF";
 
-int CPL_DLL NITFDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define NITFDriverIdentify PLUGIN_SYMBOL_NAME(NITFDriverIdentify)
+#define NITFDriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(NITFDriverSetCommonMetadata)
 
-void CPL_DLL NITFDriverSetCommonMetadata(GDALDriver *poDriver);
+int NITFDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void NITFDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
