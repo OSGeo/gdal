@@ -33,6 +33,9 @@
 
 constexpr const char *DRIVER_NAME = "XLS";
 
-void CPL_DLL OGRXLSDriverSetCommonMetadata(GDALDriver *poDriver);
+#define OGRXLSDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(OGRXLSDriverSetCommonMetadata)
+
+void OGRXLSDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
