@@ -7,7 +7,8 @@ add_gdal_driver(
           ogrpcidsklayer.cpp
   CORE_SOURCES
           pcidskdrivercore.cpp
-  PLUGIN_CAPABLE_IF "NOT GDAL_USE_JPEG_INTERNAL")
+  PLUGIN_CAPABLE_IF "NOT GDAL_USE_JPEG_INTERNAL"
+  NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET gdal_PCIDSK)
     return()
