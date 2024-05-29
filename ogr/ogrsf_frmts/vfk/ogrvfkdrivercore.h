@@ -35,8 +35,12 @@
 
 constexpr const char *DRIVER_NAME = "VFK";
 
-int CPL_DLL OGRVFKDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRVFKDriverIdentify PLUGIN_SYMBOL_NAME(OGRVFKDriverIdentify)
+#define OGRVFKDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(OGRVFKDriverSetCommonMetadata)
 
-void CPL_DLL OGRVFKDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRVFKDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRVFKDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
