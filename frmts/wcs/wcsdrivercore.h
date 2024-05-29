@@ -34,8 +34,12 @@
 
 constexpr const char *DRIVER_NAME = "WCS";
 
-int CPL_DLL WCSDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define WCSDriverIdentify PLUGIN_SYMBOL_NAME(WCSDriverIdentify)
+#define WCSDriverSetCommonMetadata                                             \
+    PLUGIN_SYMBOL_NAME(WCSDriverSetCommonMetadata)
 
-void CPL_DLL WCSDriverSetCommonMetadata(GDALDriver *poDriver);
+int WCSDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void WCSDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
