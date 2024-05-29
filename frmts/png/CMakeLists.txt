@@ -1,7 +1,8 @@
 add_gdal_driver(TARGET gdal_PNG
                 SOURCES pngdataset.cpp pngdataset.h
                 CORE_SOURCES pngdrivercore.cpp
-                PLUGIN_CAPABLE_IF "NOT GDAL_USE_PNG_INTERNAL\\\;NOT GDAL_USE_ZLIB_INTERNAL")
+                PLUGIN_CAPABLE_IF "NOT GDAL_USE_PNG_INTERNAL\\\;NOT GDAL_USE_ZLIB_INTERNAL"
+                NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET gdal_PNG)
     return()
