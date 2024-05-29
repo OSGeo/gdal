@@ -37,7 +37,7 @@ from numbers import Real
 from typing import List, Optional, Sequence, Union
 
 from osgeo import gdal
-from osgeo_utils.auxiliary.util import GetOutputDriverFor
+from osgeo_utils.auxiliary.util import GetOutputDriverFor, enable_gdal_exceptions
 
 
 def Usage(isError):
@@ -68,7 +68,9 @@ def Usage(isError):
     return 2 if isError else 0
 
 
+@enable_gdal_exceptions
 def main(argv=sys.argv):
+
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return 0

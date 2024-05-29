@@ -331,6 +331,22 @@ def test_basic_test_11():
         with pytest.raises(Exception):
             gdal.OpenEx("non existing")
 
+    try:
+        with gdal.ExceptionMgr(useExceptions=True):
+            try:
+                gdal.OpenEx("non existing")
+            except Exception:
+                pass
+    except Exception:
+        pytest.fails("Exception thrown whereas it should not have")
+
+    with gdal.ExceptionMgr(useExceptions=True):
+        try:
+            gdal.OpenEx("non existing")
+        except Exception:
+            pass
+        gdal.Open("data/byte.tif")
+
 
 ###############################################################################
 # Test GDAL layer API

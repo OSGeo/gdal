@@ -110,11 +110,13 @@ def test_ogr_layer_algebra_intersection(script_path, tmp_path):
     method_layer = None
 
     # executing script
-    test_py_scripts.run_py_script(
+    _, err = test_py_scripts.run_py_script(
         script_path,
         "ogr_layer_algebra",
         f"Intersection -input_ds {input_path} -output_ds {output_path}  -method_ds {method_path}",
+        return_stderr=True,
     )
+    assert "UseExceptions" not in err
 
     driver = ogr.GetDriverByName("ESRI Shapefile")
     dataSource = driver.Open(output_path, 0)

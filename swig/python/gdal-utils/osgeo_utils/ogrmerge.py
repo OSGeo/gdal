@@ -38,7 +38,7 @@ from typing import Optional, Sequence
 
 from osgeo import gdal, ogr, osr
 from osgeo_utils.auxiliary.base import PathLikeOrStr
-from osgeo_utils.auxiliary.util import GetOutputDriverFor
+from osgeo_utils.auxiliary.util import GetOutputDriverFor, enable_gdal_exceptions
 
 
 def Usage(isError):
@@ -167,6 +167,7 @@ class XMLWriter(object):
 # process()
 
 
+@enable_gdal_exceptions
 def process(argv, progress=None, progress_arg=None):
 
     if not argv:
@@ -517,10 +518,6 @@ def _gpkg_ogrmerge(
     dst_ds = drv.Create(dst_filename, 0, 0, 0, gdal.GDT_Unknown, dsco)
     if dst_ds is None:
         return 1
-
-    ogr.UseExceptions()
-    gdal.UseExceptions()
-    osr.UseExceptions()
 
     class ThreadedProgress:
         def __init__(self, dst_filename, estimated_final_size):

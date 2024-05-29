@@ -39,6 +39,7 @@ from osgeo import gdal, osr
 
 #######################################################
 from osgeo_utils.auxiliary.base import PathLikeOrStr
+from osgeo_utils.auxiliary.util import enable_gdal_exceptions
 
 my_print = print
 
@@ -502,7 +503,9 @@ def Usage(isError=True):
 #
 
 
+@enable_gdal_exceptions
 def main(argv=sys.argv):
+
     # Default GDAL argument parsing.
     argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
