@@ -907,7 +907,7 @@ void VSIFree(void *pData)
 
 void *VSIMallocAligned(size_t nAlignment, size_t nSize)
 {
-    // In particular for posix_memalign() where behaviour when passing
+    // In particular for posix_memalign() where behavior when passing
     // nSize == 0 is technically implementation defined (Valgrind complains),
     // so let's always return NULL.
     if (nSize == 0)
