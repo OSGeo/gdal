@@ -5,7 +5,10 @@ add_gdal_driver(
           pdfio.h
           pdfobject.h
           pdfcreatecopy.h
-          pdfsdk_headers.h
+          pdfsdk_headers_all.h
+          pdfsdk_headers_poppler.h
+          pdfsdk_headers_podofo.h
+          pdfsdk_headers_pdfium.h
           ogrpdflayer.cpp
           pdfcreatecopy.cpp
           pdfdataset.cpp
