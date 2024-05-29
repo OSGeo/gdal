@@ -1586,6 +1586,7 @@ static bool gmlHugeResolveEdges(CPL_UNUSED huge_helper *helper,
 static bool gmlHugeFileWriteResolved(huge_helper *helper,
                                      const char *pszOutputFilename,
                                      GMLReader *pReader,
+                                     GMLAppSchemaType eAppSchemaType,
                                      int *m_nHasSequentialLayers)
 {
     // Open the resolved GML file for writing.
@@ -1612,10 +1613,20 @@ static bool gmlHugeFileWriteResolved(huge_helper *helper,
         return false;
     }
 
+    const char *pszTopElement = "ResolvedTopoFeatureMembers";
+    // For some specific application schema, GMLHandler has specific behavior,
+    // so re-use the root XML element it recognizes.
+    if (eAppSchemaType == APPSCHEMA_AIXM)
+        pszTopElement = "AIXMBasicMessage";
+    else if (eAppSchemaType == APPSCHEMA_CITYGML)
+        pszTopElement = "CityModel";
+
     VSIFPrintfL(fp, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-    VSIFPrintfL(fp, "<ResolvedTopoFeatureCollection  "
-                    "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
-                    "xmlns:gml=\"http://www.opengis.net/gml\">\n");
+    VSIFPrintfL(fp,
+                "<%s  "
+                "xmlns:xlink=\"http://www.w3.org/1999/xlink\" "
+                "xmlns:gml=\"http://www.opengis.net/gml\">\n",
+                pszTopElement);
     VSIFPrintfL(fp, "  <ResolvedTopoFeatureMembers>\n");
 
     int iOutCount = 0;
@@ -1818,7 +1829,7 @@ static bool gmlHugeFileWriteResolved(huge_helper *helper,
     }
 
     VSIFPrintfL(fp, "  </ResolvedTopoFeatureMembers>\n");
-    VSIFPrintfL(fp, "</ResolvedTopoFeatureCollection>\n");
+    VSIFPrintfL(fp, "</%s>\n", pszTopElement);
 
     VSIFCloseL(fp);
 
@@ -1991,6 +2002,9 @@ bool GMLReader::ParseXMLHugeFile(const char *pszOutputFilename,
         return false;
     }
 
+    CPLAssert(m_poGMLHandler);
+    const GMLAppSchemaType eAppSchemaType = m_poGMLHandler->GetAppSchemaType();
+
     // Restarting the GML parser.
     if (!SetupParser())
     {
@@ -2000,6 +2014,7 @@ bool GMLReader::ParseXMLHugeFile(const char *pszOutputFilename,
 
     // Output: writing the revolved GML file.
     if (gmlHugeFileWriteResolved(&helper, pszOutputFilename, this,
+                                 eAppSchemaType,
                                  &m_nHasSequentialLayers) == false)
     {
         gmlHugeFileCleanUp(&helper);
