@@ -35,12 +35,22 @@ constexpr const char *HDF4_DRIVER_NAME = "HDF4";
 
 constexpr const char *HDF4_IMAGE_DRIVER_NAME = "HDF4Image";
 
-int CPL_DLL HDF4DatasetIdentify(GDALOpenInfo *poOpenInfo);
+#define HDF4DatasetIdentify PLUGIN_SYMBOL_NAME(HDF4DatasetIdentify)
 
-int CPL_DLL HDF4ImageDatasetIdentify(GDALOpenInfo *poOpenInfo);
+#define HDF4ImageDatasetIdentify PLUGIN_SYMBOL_NAME(HDF4ImageDatasetIdentify)
 
-void CPL_DLL HDF4DriverSetCommonMetadata(GDALDriver *poDriver);
+#define HDF4DriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(HDF4DriverSetCommonMetadata)
 
-void CPL_DLL HDF4ImageDriverSetCommonMetadata(GDALDriver *poDriver);
+#define HDF4ImageDriverSetCommonMetadata                                       \
+    PLUGIN_SYMBOL_NAME(HDF4ImageDriverSetCommonMetadata)
+
+int HDF4DatasetIdentify(GDALOpenInfo *poOpenInfo);
+
+int HDF4ImageDatasetIdentify(GDALOpenInfo *poOpenInfo);
+
+void HDF4DriverSetCommonMetadata(GDALDriver *poDriver);
+
+void HDF4ImageDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
