@@ -9,7 +9,8 @@ add_gdal_driver(
           pcrasterutil.cpp
   CORE_SOURCES
           pcrasterdrivercore.cpp
-  PLUGIN_CAPABLE)
+  PLUGIN_CAPABLE
+  NO_SHARED_SYMBOL_WITH_CORE)
 gdal_standard_includes(gdal_PCRaster)
 
 if(NOT TARGET gdal_PCRaster)
