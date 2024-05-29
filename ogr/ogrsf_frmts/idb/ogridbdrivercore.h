@@ -34,8 +34,12 @@
 
 constexpr const char *DRIVER_NAME = "IDB";
 
-int CPL_DLL OGRIDBDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRIDBDriverIdentify PLUGIN_SYMBOL_NAME(OGRIDBDriverIdentify)
+#define OGRIDBDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(OGRIDBDriverSetCommonMetadata)
 
-void CPL_DLL OGRIDBDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRIDBDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRIDBDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
