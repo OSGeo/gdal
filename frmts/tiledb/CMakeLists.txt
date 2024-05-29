@@ -9,7 +9,8 @@ add_gdal_driver(TARGET gdal_TileDB SOURCES
                 tiledbmultidimarray.cpp
                 CORE_SOURCES
                     tiledbdrivercore.cpp
-                PLUGIN_CAPABLE)
+                PLUGIN_CAPABLE
+                NO_SHARED_SYMBOL_WITH_CORE)
 
 if(TARGET gdal_TileDB_core)
     target_include_directories(gdal_TileDB_core PRIVATE $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>)

@@ -33,6 +33,9 @@
 
 constexpr const char *DRIVER_NAME = "TileDB";
 
-void CPL_DLL TileDBDriverSetCommonMetadata(GDALDriver *poDriver);
+#define TileDBDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(TileDBDriverSetCommonMetadata)
+
+void TileDBDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
