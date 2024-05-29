@@ -33,8 +33,12 @@
 
 constexpr const char *DRIVER_NAME = "PostgreSQL";
 
-int CPL_DLL OGRPGDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRPGDriverIdentify PLUGIN_SYMBOL_NAME(OGRPGDriverIdentify)
+#define OGRPGDriverSetCommonMetadata                                           \
+    PLUGIN_SYMBOL_NAME(OGRPGDriverSetCommonMetadata)
 
-void CPL_DLL OGRPGDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRPGDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRPGDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
