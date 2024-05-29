@@ -33,11 +33,16 @@
 
 constexpr const char *DRIVER_NAME = "ODBC";
 
-bool CPL_DLL
-OGRODBCDriverIsSupportedMsAccessFileExtension(const char *pszExtension);
+#define OGRODBCDriverIsSupportedMsAccessFileExtension                          \
+    PLUGIN_SYMBOL_NAME(OGRODBCDriverIsSupportedMsAccessFileExtension)
+#define OGRODBCDriverIdentify PLUGIN_SYMBOL_NAME(OGRODBCDriverIdentify)
+#define OGRODBCDriverSetCommonMetadata                                         \
+    PLUGIN_SYMBOL_NAME(OGRODBCDriverSetCommonMetadata)
 
-int CPL_DLL OGRODBCDriverIdentify(GDALOpenInfo *poOpenInfo);
+bool OGRODBCDriverIsSupportedMsAccessFileExtension(const char *pszExtension);
 
-void CPL_DLL OGRODBCDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRODBCDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRODBCDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
