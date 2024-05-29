@@ -317,13 +317,9 @@ char **TAB_CSLLoad(const char *pszFname)
 
     if (fp)
     {
-        while (!VSIFEofL(fp) && !VSIFErrorL(fp))
+        while (const char *pszLine = CPLReadLineL(fp))
         {
-            const char *pszLine = nullptr;
-            if ((pszLine = CPLReadLineL(fp)) != nullptr)
-            {
-                oList.AddString(pszLine);
-            }
+            oList.AddString(pszLine);
         }
 
         VSIFCloseL(fp);
