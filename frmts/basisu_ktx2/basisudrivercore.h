@@ -33,8 +33,12 @@
 
 constexpr const char *BASISU_DRIVER_NAME = "BASISU";
 
-int CPL_DLL BASISUDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define BASISUDriverIdentify PLUGIN_SYMBOL_NAME(BASISUDriverIdentify)
+#define BASISUDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(BASISUDriverSetCommonMetadata)
 
-void CPL_DLL BASISUDriverSetCommonMetadata(GDALDriver *poDriver);
+int BASISUDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void BASISUDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
