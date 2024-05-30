@@ -2752,6 +2752,9 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         {
             delete poGCPCoordTrans;
             poGCPCoordTrans = nullptr;
+            if (hDstDS == nullptr)
+                GDALClose(poODS);
+            return nullptr;
         }
     }
 
