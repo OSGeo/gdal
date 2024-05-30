@@ -532,7 +532,7 @@ output coordinate system or even reprojecting the features during translation.
     Note that unlike raster tools such as gdal_edit or gdal_translate, GCPs
     are not added to the output dataset.
     This option may be provided multiple times to provide a set of GCPs (at
-    least 2 GCPs are needed).
+    least three GCPs are needed).
 
 .. option:: -order <n>
 
