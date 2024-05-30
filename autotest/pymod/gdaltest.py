@@ -2182,10 +2182,17 @@ class VSIFile:
             assert type(x) is str
             x = x.encode(self._encoding)
 
-        gdal.VSIFWriteL(x, 1, len(x), self._fp)
+        planned_write = len(x)
+        actual_write = gdal.VSIFWriteL(x, 1, planned_write, self._fp)
+
+        if planned_write != actual_write:
+            raise OSError(
+                f"Expected to write {planned_write} bytes but {actual_write} were written"
+            )
 
     def seek(self, offset, whence=0):
-        return gdal.VSIFSeekL(self._fp, offset, whence)
+        if gdal.VSIFSeekL(self._fp, offset, whence) != 0:
+            raise OSError(gdal.VSIGetLastErrorMsg())
 
     def tell(self):
         return gdal.VSIFTellL(self._fp)

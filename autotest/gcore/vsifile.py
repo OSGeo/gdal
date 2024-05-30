@@ -1415,27 +1415,28 @@ def test_vsifile_class_read_ascii(tmp_path):
     assert f.read(10) == "permission"
 
     # skip a character
-    assert f.seek(1, os.SEEK_CUR) == 0
+    f.seek(1, os.SEEK_CUR)
     assert f.read(9) == "is hereby"
 
     # seek backwards
-    assert f.seek(-2, os.SEEK_CUR) == 0
+    f.seek(-2, os.SEEK_CUR)
     assert f.read(2) == "by"
 
     # jump to beginning
-    assert f.seek(0, os.SEEK_SET) == 0
+    f.seek(0, os.SEEK_SET)
     assert f.read(10) == "permission"
 
     # can't jump before the beginning
     pos = f.tell()
-    assert f.seek(-2, os.SEEK_SET) == -1
+    with pytest.raises(OSError, match="negative offset"):
+        f.seek(-2, os.SEEK_SET) == -1
     assert pos == f.tell()
 
     # jump to end
-    assert f.seek(0, os.SEEK_END) == 0
+    f.seek(0, os.SEEK_END)
     assert f.read(10) == ""
 
-    assert f.seek(-7, os.SEEK_END) == 0
+    f.seek(-7, os.SEEK_END)
     assert f.read() == "person\n"
 
     f.close()
@@ -1481,6 +1482,10 @@ def test_vsifile_class_write_binary(tmp_path):
 
     with open(fname, "rb") as f:
         assert f.read() == wkb
+
+    with gdaltest.vsi_open(fname, "rb") as f:
+        with pytest.raises(OSError, match="Expected to write"):
+            f.write(wkb)
 
 
 def random_lines():
