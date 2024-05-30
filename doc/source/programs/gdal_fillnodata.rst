@@ -15,11 +15,11 @@ Synopsis
 
 .. code-block::
 
-    gdal_fillnodata [--help] [--help-general] [-q] [-md max_distance]
-               [-si smoothing_iterations] [-o [name=value ...]]
-               [-mask filename] [-interp {inv_dist,nearest}] [-b band]
-               [-of gdal_format] [-co name=value]
-               src_filename dst_filename
+    gdal_fillnodata [--help] [--help-general] [-q] [-md <max_distance>]
+               [-si <smoothing_iterations>] [-o <name>=<value> [<name>=<value> ...]]
+               [-mask <filename>] [-interp {inv_dist,nearest}] [-b <band>]
+               [-of <gdal_format>] [-co <name>=<value>]
+               <src_file> <dst_file>
 
 
 Description
