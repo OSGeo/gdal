@@ -557,6 +557,7 @@ bool STACITDataset::SetupDataset(
               });
 
     // Create VRT bands and add sources
+    bool bAtLeastOneBandHasNoData = false;
     for (int i = 0; i < poItemDS->GetRasterCount(); i++)
     {
         auto poItemBand = poItemDS->GetRasterBand(i + 1);
@@ -566,7 +567,10 @@ bool STACITDataset::SetupDataset(
         int bHasNoData = FALSE;
         const double dfNoData = poItemBand->GetNoDataValue(&bHasNoData);
         if (bHasNoData)
+        {
+            bAtLeastOneBandHasNoData = true;
             poVRTBand->SetNoDataValue(dfNoData);
+        }
 
         const auto eInterp = poItemBand->GetColorInterpretation();
         if (eInterp != GCI_Undefined)
@@ -634,9 +638,17 @@ bool STACITDataset::SetupDataset(
             }
         }
 
-        const char *apszOptions[] = {"EMIT_ERROR_IF_GEOS_NOT_AVAILABLE=NO",
-                                     nullptr};
-        poVRTBand->RemoveCoveredSources(apszOptions);
+        const char *pszOverlapStrategy =
+            CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                 "OVERLAP_STRATEGY", "REMOVE_IF_NO_NODATA");
+        if ((EQUAL(pszOverlapStrategy, "REMOVE_IF_NO_NODATA") &&
+             !bAtLeastOneBandHasNoData) ||
+            EQUAL(pszOverlapStrategy, "USE_MOST_RECENT"))
+        {
+            const char *const apszOptions[] = {
+                "EMIT_ERROR_IF_GEOS_NOT_AVAILABLE=NO", nullptr};
+            poVRTBand->RemoveCoveredSources(apszOptions);
+        }
     }
     return true;
 }
@@ -946,6 +958,14 @@ void GDALRegister_STACIT()
         "       <Value>AVERAGE</Value>"
         "       <Value>HIGHEST</Value>"
         "       <Value>LOWEST</Value>"
+        "   </Option>"
+        "   <Option name='OVERLAP_STRATEGY' type='string-select' "
+        "default='REMOVE_IF_NO_NODATA' "
+        "description='Strategy to use when some sources are fully "
+        "covered by others'>"
+        "       <Value>REMOVE_IF_NO_NODATA</Value>"
+        "       <Value>USE_ALL</Value>"
+        "       <Value>USE_MOST_RECENT</Value>"
         "   </Option>"
         "</OpenOptionList>");
 
