@@ -676,6 +676,11 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
     const auto [iLeft, iRight] =
         adjustHeight(nYOffset, nX, vThisLineVal.data() + nX);
 
+    processLineLeft(nX, nYOffset, nX - 2, iLeft - 1, vResult, vThisLineVal,
+                    vLastLineVal);
+    processLineRight(nX, nYOffset, nX + 2, iRight, vResult, vThisLineVal,
+                     vLastLineVal);
+    /**
     auto t1 = std::async(std::launch::async, [&, left = iLeft]()
         {
             processLineLeft(nX, nYOffset, nX - 2, left - 1, vResult,
@@ -689,6 +694,7 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
         });
     t1.wait();
     t2.wait();
+    **/
 
     // Make the current line the last line.
     vLastLineVal = std::move(vThisLineVal);
@@ -739,6 +745,11 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
         vResult[nX] = oOpts.outOfRangeVal;
 
     // process left half then right half of line
+    processLineLeft(nX, nYOffset, nX - 1, iLeft - 1, vResult, vThisLineVal,
+                    vLastLineVal);
+    processLineRight(nX, nYOffset, nX + 1, iRight, vResult, vThisLineVal,
+                     vLastLineVal);
+    /**
     auto t1 = std::async(std::launch::async, [&, left = iLeft]()
         {
             processLineLeft(nX, nYOffset, nX - 1, left - 1, vResult,
@@ -752,6 +763,7 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
         });
     t1.wait();
     t2.wait();
+    **/
 
     // Make the current line the last line.
     vLastLineVal = std::move(vThisLineVal);
@@ -832,18 +844,21 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
 
     // scan upwards
     std::atomic<bool> err(false);
-    auto tUp = std::async(std::launch::async, [&]()
-        {
-            std::vector<double> vLastLineVal = vFirstLineVal;
+    auto tUp = std::async(std::launch::async,
+                          [&]()
+                          {
+                              std::vector<double> vLastLineVal = vFirstLineVal;
 
-            for (int nLine = nY - 1; nLine >= oOutExtent.yStart && !err;
-                 nLine--)
-                if (!processLine(nX, nY, nLine, vLastLineVal))
-                    err = true;
-        });
+                              for (int nLine = nY - 1;
+                                   nLine >= oOutExtent.yStart && !err; nLine--)
+                                  if (!processLine(nX, nY, nLine, vLastLineVal))
+                                      err = true;
+                          });
 
     // scan downwards
-    auto tDown = std::async(std::launch::async, [&]()
+    auto tDown = std::async(
+        std::launch::async,
+        [&]()
         {
             std::vector<double> vLastLineVal = vFirstLineVal;
 

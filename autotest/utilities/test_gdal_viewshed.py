@@ -160,6 +160,7 @@ def test_gdal_viewshed_alternative_modes(gdal_viewshed_path, tmp_path, viewshed_
     assert cs == 8381
     assert nodata is None
 
+
 ###############################################################################
 
 
@@ -210,7 +211,9 @@ def test_gdal_viewshed_all_options(gdal_viewshed_path, tmp_path, viewshed_input)
     assert cs == 24435
     assert nodata == 0
 
+
 ###############################################################################
+
 
 def test_gdal_viewshed_value_options(gdal_viewshed_path, tmp_path, viewshed_input):
 
@@ -231,7 +234,9 @@ def test_gdal_viewshed_value_options(gdal_viewshed_path, tmp_path, viewshed_inpu
     assert cs == 35091
     assert nodata == 0
 
+
 ###############################################################################
+
 
 def test_gdal_viewshed_tz_option(gdal_viewshed_path, tmp_path, viewshed_input):
 
@@ -252,7 +257,9 @@ def test_gdal_viewshed_tz_option(gdal_viewshed_path, tmp_path, viewshed_input):
     assert cs == 33725
     assert nodata == 0
 
+
 ###############################################################################
+
 
 def test_gdal_viewshed_cc_option(gdal_viewshed_path, tmp_path, viewshed_input):
 
@@ -273,7 +280,9 @@ def test_gdal_viewshed_cc_option(gdal_viewshed_path, tmp_path, viewshed_input):
     assert cs == 17241
     assert nodata == 0
 
+
 ###############################################################################
+
 
 def test_gdal_viewshed_md_option(gdal_viewshed_path, tmp_path, viewshed_input):
 
@@ -293,6 +302,7 @@ def test_gdal_viewshed_md_option(gdal_viewshed_path, tmp_path, viewshed_input):
     ds = None
     assert cs == 22617
     assert nodata == 0
+
 
 ###############################################################################
 

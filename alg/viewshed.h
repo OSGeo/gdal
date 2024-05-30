@@ -130,11 +130,11 @@ class Viewshed
      * @param opts Options to use when calculating viewshed.
     */
     CPL_DLL explicit Viewshed(const Options &opts)
-        : oOpts{opts}, oOutExtent{},
-          dfMaxDistance2{opts.maxDistance * opts.maxDistance}, dfZObserver{0},
-          poDstDS{}, pSrcBand{}, pDstBand{}, dfHeightAdjFactor{0},
-          nLineCount{0}, adfTransform{0, 1, 0, 0, 0, 1}, adfInvTransform{},
-          oProgress{}, oZcalc{}, oMutex{}, iMutex{}
+        : oOpts{opts}, oOutExtent{}, dfMaxDistance2{opts.maxDistance *
+                                                    opts.maxDistance},
+          dfZObserver{0}, poDstDS{}, pSrcBand{}, pDstBand{},
+          dfHeightAdjFactor{0}, nLineCount{0}, adfTransform{0, 1, 0, 0, 0, 1},
+          adfInvTransform{}, oProgress{}, oZcalc{}, oMutex{}, iMutex{}
     {
         if (dfMaxDistance2 == 0)
             dfMaxDistance2 = std::numeric_limits<double>::max();
