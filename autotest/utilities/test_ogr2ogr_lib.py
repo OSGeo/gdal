@@ -2710,3 +2710,17 @@ def test_ogr2ogr_lib_coordinate_precision_with_geom():
         assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (0 0,10 10)"
     else:
         assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (1 1,9 9)"
+
+
+###############################################################################
+
+
+def test_ogr2ogr_lib_not_enough_gcp():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds.CreateLayer("test")
+
+    with pytest.raises(
+        Exception, match="Failed to compute GCP transform: Not enough points available"
+    ):
+        gdal.VectorTranslate("", src_ds, options="-f Memory -gcp 0 0 0 0")
