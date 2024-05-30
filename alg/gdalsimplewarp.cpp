@@ -211,6 +211,8 @@ static void GDALSimpleWarpRemapping(int nBandCount, GByte **papabySrcData,
  * Distinct values may be listed for each band separated by columns.
  * </ul>
  *
+ * For more advanced warping capabilities, consider using GDALWarp().
+ *
  * @param hSrcDS the source image dataset.
  * @param hDstDS the destination image dataset.
  * @param nBandCount the number of bands to be warped.  If zero, all bands
@@ -225,6 +227,7 @@ static void GDALSimpleWarpRemapping(int nBandCount, GByte **papabySrcData,
  * @param papszWarpOptions additional options controlling the warp.
  *
  * @return TRUE if the operation completes, or FALSE if an error occurs.
+ * @see GDALWarp()
  */
 
 int CPL_STDCALL GDALSimpleImageWarp(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
