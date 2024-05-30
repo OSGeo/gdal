@@ -15,12 +15,12 @@ Synopsis
 
 .. code-block::
 
-    gdal_fillnodata [-q] [-md <max_distance>] [-si <smooth_iterations>]
-                    [-o <name>=<value>] [-b <band>]
-                    [-nomask] [-mask <filename>]
-                    [-interp {inv_dist,nearest}]
-                    [-of <format>]
-                    <srcfile> [<dstfile>]
+    gdal_fillnodata [--help] [--help-general] [-q] [-md <max_distance>]
+               [-si <smoothing_iterations>] [-o <name>=<value> [<name>=<value> ...]]
+               [-mask <filename>] [-interp {inv_dist,nearest}] [-b <band>]
+               [-of <gdal_format>] [-co <name>=<value>]
+               <src_file> <dst_file>
+
 
 Description
 -----------
@@ -86,4 +86,3 @@ Additional details on the algorithm are available in the
 .. option:: <dstfile>
 
     The new file to create with the interpolated result.
-    If not provided, the source band is updated in place.
