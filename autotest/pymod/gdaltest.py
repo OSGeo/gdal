@@ -2134,7 +2134,6 @@ class VSIFile:
             raise OSError(gdal.VSIGetLastErrorMsg())
 
         self._closed = False
-        self._buffer = None
 
     def __enter__(self):
         return self
