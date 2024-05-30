@@ -26,24 +26,24 @@ matrix:
         - BUILD_NAME=s390x
         - DETAILS=""
 
-    - os: linux
-      arch: arm64-graviton2
-      virt: lxd
-      group: edge
-      compiler: gcc
-      language: cpp
-      sudo: false
-      dist: jammy
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      apt:
-        packages:
-          - ccache
-      env:
-        - BUILD_NAME=graviton2
-        - DETAILS=
+    #- os: linux
+    #  arch: arm64-graviton2
+    #  virt: lxd
+    #  group: edge
+    #  compiler: gcc
+    #  language: cpp
+    #  sudo: false
+    #  dist: jammy
+    #  cache:
+    #    apt: true
+    #    directories:
+    #      - $HOME/.ccache
+    #  apt:
+    #    packages:
+    #      - ccache
+    #  env:
+    #    - BUILD_NAME=graviton2
+    #    - DETAILS=
 
 before_install:
   - if ! git diff --name-only $TRAVIS_COMMIT_RANGE | grep -qvE '(.rst)$'; then travis_terminate 0; fi
