@@ -3,6 +3,8 @@
 XODR -- OpenDRIVE Road Description Format
 =========================================
 
+.. versionadded:: 3.9
+
 .. shortname:: XODR
 
 .. build_dependencies:: libOpenDRIVE >= 0.5.0, GEOS
@@ -19,7 +21,7 @@ Driver capabilities
 Specification version
 ---------------------
 
-The currently supported OpenDRIVE version is 1.4 and basically depends on what is provided by libOpenDRIVE_. 
+The currently supported OpenDRIVE version is 1.4 and depends on what is provided by libOpenDRIVE_. 
 
 .. _libOpenDRIVE: https://github.com/pageldev/libOpenDRIVE/
 
@@ -51,7 +53,7 @@ The XODR driver uses this PROJ definition as spatial reference for creation of a
 Limitations
 -----------
 
-By default, OpenDRIVE XML files are opened by GDAL always in UTF-8 encoding, see :cpp:func:`VSIFOpenExL`.
+The supported content encoding of OpenDRIVE XML files is limited to what pugixml is able to automatically guess (see `4.6. Encodings <https://pugixml.org/docs/manual.html#loading.encoding>`_). The default fallback encoding is UTF-8.
 
 Open options
 ------------
@@ -59,11 +61,11 @@ Open options
 The following open options can be specified
 (typically with the ``-oo name=value`` parameters of :program:`ogrinfo` or :program:`ogr2ogr`):
 
--  .. oo:: EPS
+-  .. oo:: EPSILON
       :choices: <float>
       :default: 1.0
 
-      Epsilon value for linear approximation of continuous OpenDRIVE geometries. A smaller value results in a finer sampling. This parameter is internally forwarded to libOpenDRIVE.
+      Epsilon value ``> 0.0`` for linear approximation of continuous OpenDRIVE geometries. A smaller value results in a finer sampling. This parameter corresponds to libOpenDRIVE's ``eps`` parameter.
 
 -  .. oo:: DISSOLVE_TIN
       :choices: YES, NO
@@ -87,21 +89,21 @@ Examples
 
     ogr2ogr -f "GPKG" CulDeSac.gpkg CulDeSac.xodr
 
-- Convert the whole OpenDRIVE dataset with custom parameters :oo:`EPS` and :oo:`DISSOLVE_TIN` into a :ref:`GeoPackage <vector.gpkg>`:
+- Convert the whole OpenDRIVE dataset with custom parameters :oo:`EPSILON` and :oo:`DISSOLVE_TIN` into a :ref:`GeoPackage <vector.gpkg>`:
 
   ::
 
-    ogr2ogr -f "GPKG" CulDeSac.gpkg CulDeSac.xodr -oo EPS=0.9 -oo DISSOLVE_TIN=YES
+    ogr2ogr -f "GPKG" CulDeSac.gpkg CulDeSac.xodr -oo EPSILON=0.9 -oo DISSOLVE_TIN=YES
 
 Convenient usage through docker image 
 -------------------------------------
 
-To use the XODR driver inside a docker image, first build the image from the corresponding docker image directory 
+To use the XODR driver through a docker image, first build the image from the corresponding docker directory 
     
   ::
 
-    cd <gdal>/docker/ubuntu-small/
-    docker build -t gdal/xodr -f DockerfileXODR .
+    cd <gdal>/docker/ubuntu-full/
+    docker build -t gdal/xodr -f Dockerfile .
 
 For general usage information refer to `GDAL Docker images <https://github.com/OSGeo/gdal/tree/master/docker#usage>`__. Usage examples:
 
@@ -151,9 +153,9 @@ From the build directory configure CMake to activate our XODR driver as plugin:
 
   ::
 
-    cmake .. -DOGR_ENABLE_DRIVER_XODR=TRUE -DOGR_ENABLE_DRIVER_XODR_PLUGIN=TRUE -DOpenDrive_DIR=/path/to/libOpenDRIVE/installdir/cmake/
+    cmake .. -DOGR_ENABLE_DRIVER_XODR_PLUGIN=TRUE -DOpenDrive_DIR=/path/to/libOpenDRIVE/installdir/cmake/
 
-.. note:: The :file:`cmake/` path is usually automatically created when installing libOpenDRIVE and contains the necessary configuration files for inclusion into other project builds, such as this.
+.. note:: The :file:`cmake/` path is usually automatically created when installing libOpenDRIVE and contains the necessary configuration files for inclusion into other project builds.
 
 Now, build GDAL and install it:
 
@@ -174,7 +176,7 @@ Check if XODR driver is found:
     cd <gdal>/build/
     ./apps/ogrinfo --formats
 
-This should print a list of supported OGR formats, including `XODR` in the first row:
+This should print a list of supported OGR formats, including ``XODR`` in the first row:
 
   ::
 
@@ -190,9 +192,4 @@ If you are on Linux, depending on your environment, you might experience linker 
 
     ERROR 1: libOpenDrive.so: cannot open shared object file: No such file or directory
 
-In such a case set the following environment variables:
-
-  ::
-
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-    export GDAL_DRIVER_PATH=<gdal>/build/gdalplugins/
+In such cases ensure that your environment variable ``LD_LIBRARY_PATH`` points to the corresponding install directories of libOpenDRIVE and GDAL and run ``ldconfig`` afterwards.

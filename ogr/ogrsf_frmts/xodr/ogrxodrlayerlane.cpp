@@ -31,67 +31,80 @@
 #include "ogr_geometry.h"
 #include "ogr_xodr.h"
 
-OGRXODRLayerLane::OGRXODRLayerLane(RoadElements xodrRoadElements,
-                                   std::string proj4Defn,
-                                   bool dissolveTriangulatedSurface)
+OGRXODRLayerLane::OGRXODRLayerLane(const RoadElements &xodrRoadElements,
+                                   const std::string proj4Defn,
+                                   const bool dissolveTriangulatedSurface)
     : OGRXODRLayer(xodrRoadElements, proj4Defn, dissolveTriangulatedSurface)
 {
-    this->featureDefn = new OGRFeatureDefn(FEATURE_CLASS_NAME.c_str());
+    m_poFeatureDefn =
+        std::make_unique<OGRFeatureDefn>(FEATURE_CLASS_NAME.c_str());
+    m_poFeatureDefn->Reference();
     SetDescription(FEATURE_CLASS_NAME.c_str());
-    featureDefn->Reference();
-    featureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&spatialRef);
-
     defineFeatureClass();
 }
 
-OGRFeature *OGRXODRLayerLane::GetNextFeature()
+int OGRXODRLayerLane::TestCapability(const char *pszCap)
+{
+    int result = FALSE;
+
+    if (EQUAL(pszCap, OLCZGeometries))
+        result = TRUE;
+
+    return result;
+}
+
+OGRFeature *OGRXODRLayerLane::GetNextRawFeature()
 {
     std::unique_ptr<OGRFeature> feature;
 
-    while (laneIter != roadElements.lanes.end() && (*laneIter).id == 0)
+    while (m_laneIter != m_roadElements.lanes.end() && (*m_laneIter).id == 0)
     {
-        // Skip lane(s) with id 0
-        laneIter++;
-        laneMeshIter++;
-        laneRoadIDIter++;
+        // Skip lane(s) with id 0 because these "center lanes" don't have any width
+        m_laneIter++;
+        m_laneMeshIter++;
+        m_laneRoadIDIter++;
     }
 
-    if (laneIter != roadElements.lanes.end())
+    if (m_laneIter != m_roadElements.lanes.end())
     {
-        feature = std::unique_ptr<OGRFeature>(new OGRFeature(featureDefn));
 
-        odr::Lane lane = *laneIter;
-        odr::Mesh3D laneMesh = *laneMeshIter;
+        feature = std::make_unique<OGRFeature>(m_poFeatureDefn.get());
 
-        std::string laneRoadID = *laneRoadIDIter;
+        odr::Lane lane = *m_laneIter;
+        odr::Mesh3D laneMesh = *m_laneMeshIter;
 
-        OGRTriangulatedSurface tin = triangulateSurface(laneMesh);
+        std::string laneRoadID = *m_laneRoadIDIter;
 
-        if (dissolveTIN)
+        std::unique_ptr<OGRTriangulatedSurface> tin =
+            triangulateSurface(laneMesh);
+
+        if (m_bDissolveTIN)
         {
-            OGRGeometry *dissolvedPolygon = tin.UnaryUnion();
-            feature->SetGeometry(dissolvedPolygon);
+            OGRGeometry *dissolvedPolygon = tin->UnaryUnion();
+            dissolvedPolygon->assignSpatialReference(&m_poSRS);
+            feature->SetGeometryDirectly(dissolvedPolygon);
         }
         else
         {
-            //tin.MakeValid(); // TODO Works for TINs only with enabled SFCGAL support
-            feature->SetGeometry(&tin);
+            //tin->MakeValid(); // TODO Works for TINs only with enabled SFCGAL support
+            tin->assignSpatialReference(&m_poSRS);
+            feature->SetGeometryDirectly(tin.release());
         }
 
-        feature->SetFID(nNextFID++);
-        feature->SetField(featureDefn->GetFieldIndex("RoadID"),
+        feature->SetFID(m_nNextFID++);
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("RoadID"),
                           laneRoadID.c_str());
-        feature->SetField(featureDefn->GetFieldIndex("LaneID"), lane.id);
-        feature->SetField(featureDefn->GetFieldIndex("Type"),
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("LaneID"), lane.id);
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("Type"),
                           lane.type.c_str());
-        feature->SetField(featureDefn->GetFieldIndex("Predecessor"),
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("Predecessor"),
                           lane.predecessor);
-        feature->SetField(featureDefn->GetFieldIndex("Successor"),
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("Successor"),
                           lane.successor);
 
-        laneIter++;
-        laneMeshIter++;
-        laneRoadIDIter++;
+        m_laneIter++;
+        m_laneMeshIter++;
+        m_laneRoadIDIter++;
     }
 
     if (feature)
@@ -107,28 +120,29 @@ OGRFeature *OGRXODRLayerLane::GetNextFeature()
 
 void OGRXODRLayerLane::defineFeatureClass()
 {
-    if (dissolveTIN)
+    if (m_bDissolveTIN)
     {
         OGRwkbGeometryType wkbPolygonWithZ = OGR_GT_SetZ(wkbPolygon);
-        featureDefn->SetGeomType(wkbPolygonWithZ);
+        m_poFeatureDefn->SetGeomType(wkbPolygonWithZ);
     }
     else
     {
-        featureDefn->SetGeomType(wkbTINZ);
+        m_poFeatureDefn->SetGeomType(wkbTINZ);
     }
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
 
     OGRFieldDefn oFieldLaneID("LaneID", OFTInteger);
-    featureDefn->AddFieldDefn(&oFieldLaneID);
+    m_poFeatureDefn->AddFieldDefn(&oFieldLaneID);
 
     OGRFieldDefn oFieldRoadID("RoadID", OFTString);
-    featureDefn->AddFieldDefn(&oFieldRoadID);
+    m_poFeatureDefn->AddFieldDefn(&oFieldRoadID);
 
     OGRFieldDefn oFieldType("Type", OFTString);
-    featureDefn->AddFieldDefn(&oFieldType);
+    m_poFeatureDefn->AddFieldDefn(&oFieldType);
 
     OGRFieldDefn oFieldPred("Predecessor", OFTInteger);
-    featureDefn->AddFieldDefn(&oFieldPred);
+    m_poFeatureDefn->AddFieldDefn(&oFieldPred);
 
     OGRFieldDefn oFieldSuc("Successor", OFTInteger);
-    featureDefn->AddFieldDefn(&oFieldSuc);
+    m_poFeatureDefn->AddFieldDefn(&oFieldSuc);
 }

@@ -31,55 +31,63 @@
 #include "ogr_geometry.h"
 #include "ogr_xodr.h"
 
-OGRXODRLayerLaneBorder::OGRXODRLayerLaneBorder(RoadElements xodrRoadElements,
-                                               std::string proj4Defn)
+OGRXODRLayerLaneBorder::OGRXODRLayerLaneBorder(
+    const RoadElements &xodrRoadElements, const std::string proj4Defn)
     : OGRXODRLayer(xodrRoadElements, proj4Defn)
 {
-    this->featureDefn = new OGRFeatureDefn(FEATURE_CLASS_NAME.c_str());
+    m_poFeatureDefn =
+        std::make_unique<OGRFeatureDefn>(FEATURE_CLASS_NAME.c_str());
+    m_poFeatureDefn->Reference();
     SetDescription(FEATURE_CLASS_NAME.c_str());
-    featureDefn->Reference();
-    featureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&spatialRef);
-
     defineFeatureClass();
 }
 
-OGRFeature *OGRXODRLayerLaneBorder::GetNextFeature()
+int OGRXODRLayerLaneBorder::TestCapability(const char *pszCap)
+{
+    int result = FALSE;
+
+    if (EQUAL(pszCap, OLCZGeometries))
+        result = TRUE;
+
+    return result;
+}
+
+OGRFeature *OGRXODRLayerLaneBorder::GetNextRawFeature()
 {
     std::unique_ptr<OGRFeature> feature;
 
-    if (laneIter != roadElements.lanes.end())
+    if (m_laneIter != m_roadElements.lanes.end())
     {
-        feature = std::unique_ptr<OGRFeature>(new OGRFeature(featureDefn));
+        feature = std::make_unique<OGRFeature>(m_poFeatureDefn.get());
 
-        odr::Lane lane = *laneIter;
-        odr::Line3D laneOuter = *laneLinesOuterIter;
-        std::string laneRoadID = *laneRoadIDIter;
+        odr::Lane lane = *m_laneIter;
+        odr::Line3D laneOuter = *m_laneLinesOuterIter;
+        std::string laneRoadID = *m_laneRoadIDIter;
 
         OGRLineString lineString;
-        for (auto vertexIter = laneOuter.begin(); vertexIter != laneOuter.end();
-             ++vertexIter)
+        for (const auto &laneVertex : laneOuter)
         {
-            odr::Vec3D laneVertex = *vertexIter;
             lineString.addPoint(laneVertex[0], laneVertex[1], laneVertex[2]);
         }
         OGRGeometry *geometry = lineString.MakeValid();
+        geometry->assignSpatialReference(&m_poSRS);
 
-        feature->SetGeometry(geometry);
-        feature->SetField(featureDefn->GetFieldIndex("RoadID"),
+        feature->SetGeometryDirectly(geometry);
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("RoadID"),
                           laneRoadID.c_str());
-        feature->SetField(featureDefn->GetFieldIndex("ID"), lane.id);
-        feature->SetField(featureDefn->GetFieldIndex("Type"),
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("ID"), lane.id);
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("Type"),
                           lane.type.c_str());
-        feature->SetField(featureDefn->GetFieldIndex("Predecessor"),
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("Predecessor"),
                           lane.predecessor);
-        feature->SetField(featureDefn->GetFieldIndex("Successor"),
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("Successor"),
                           lane.successor);
-        feature->SetFID(nNextFID++);
+        feature->SetFID(m_nNextFID++);
 
-        laneIter++;
-        laneLinesOuterIter++;
-        laneLinesInnerIter++;  // For consistency, even though not used here
-        laneRoadIDIter++;
+        m_laneIter++;
+        m_laneLinesOuterIter++;
+        m_laneLinesInnerIter++;  // For consistency, even though not used here
+        m_laneRoadIDIter++;
     }
 
     if (feature)
@@ -96,20 +104,21 @@ OGRFeature *OGRXODRLayerLaneBorder::GetNextFeature()
 void OGRXODRLayerLaneBorder::defineFeatureClass()
 {
     OGRwkbGeometryType wkbLineStringWithZ = OGR_GT_SetZ(wkbLineString);
-    featureDefn->SetGeomType(wkbLineStringWithZ);
+    m_poFeatureDefn->SetGeomType(wkbLineStringWithZ);
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
 
     OGRFieldDefn oFieldID("ID", OFTInteger);
-    featureDefn->AddFieldDefn(&oFieldID);
+    m_poFeatureDefn->AddFieldDefn(&oFieldID);
 
     OGRFieldDefn oFieldRoadID("RoadID", OFTString);
-    featureDefn->AddFieldDefn(&oFieldRoadID);
+    m_poFeatureDefn->AddFieldDefn(&oFieldRoadID);
 
     OGRFieldDefn oFieldType("Type", OFTString);
-    featureDefn->AddFieldDefn(&oFieldType);
+    m_poFeatureDefn->AddFieldDefn(&oFieldType);
 
     OGRFieldDefn oFieldPred("Predecessor", OFTInteger);
-    featureDefn->AddFieldDefn(&oFieldPred);
+    m_poFeatureDefn->AddFieldDefn(&oFieldPred);
 
     OGRFieldDefn oFieldSuc("Successor", OFTInteger);
-    featureDefn->AddFieldDefn(&oFieldSuc);
+    m_poFeatureDefn->AddFieldDefn(&oFieldSuc);
 }

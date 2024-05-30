@@ -10,7 +10,12 @@ add_gdal_driver(
           ogrxodrlayerroadmark.cpp
           ogrxodrlayerroadobject.cpp
           ogrxodrlayerroadsignal.cpp
+  CORE_SOURCES ogrxodrdrivercore.cpp
   PLUGIN_CAPABLE)
+
+if(NOT TARGET ogr_XODR)
+    return()
+endif()
 
 gdal_standard_includes(ogr_XODR)
 gdal_target_link_libraries(ogr_XODR PRIVATE OpenDrive::OpenDrive)

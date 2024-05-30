@@ -38,62 +38,58 @@
 #include <string>
 #include <typeinfo>
 
-OGRXODRLayer::OGRXODRLayer(RoadElements xodrRoadElements, std::string proj4Defn)
+OGRXODRLayer::OGRXODRLayer(const RoadElements &xodrRoadElements,
+                           const std::string proj4Defn)
     : OGRXODRLayer(xodrRoadElements, proj4Defn, false)
 {
 }
 
-OGRXODRLayer::OGRXODRLayer(RoadElements xodrRoadElements, std::string proj4Defn,
-                           bool dissolveTriangulatedSurface)
-    : roadElements(xodrRoadElements), dissolveTIN(dissolveTriangulatedSurface)
+OGRXODRLayer::OGRXODRLayer(const RoadElements &xodrRoadElements,
+                           const std::string proj4Defn,
+                           const bool dissolveTriangulatedSurface)
+    : m_roadElements(xodrRoadElements),
+      m_bDissolveTIN(dissolveTriangulatedSurface)
 {
-    spatialRef.importFromProj4(proj4Defn.c_str());
+    m_poSRS.importFromProj4(proj4Defn.c_str());
     ResetReading();
-}
-
-OGRXODRLayer::~OGRXODRLayer()
-{
-    if (featureDefn)
-    {
-        featureDefn->Release();
-    }
 }
 
 void OGRXODRLayer::ResetReading()
 {
-    nNextFID = 0;
+    m_nNextFID = 0;
     resetRoadElementIterators();
 }
 
 void OGRXODRLayer::resetRoadElementIterators()
 {
-    roadIter = roadElements.roads.begin();
-    referenceLineIter = roadElements.referenceLines.begin();
+    m_roadIter = m_roadElements.roads.begin();
+    m_referenceLineIter = m_roadElements.referenceLines.begin();
 
-    laneIter = roadElements.lanes.begin();
-    laneSectionIter = roadElements.laneSections.begin();
-    laneRoadIDIter = roadElements.laneRoadIDs.begin();
-    laneMeshIter = roadElements.laneMeshes.begin();
+    m_laneIter = m_roadElements.lanes.begin();
+    m_laneSectionIter = m_roadElements.laneSections.begin();
+    m_laneRoadIDIter = m_roadElements.laneRoadIDs.begin();
+    m_laneMeshIter = m_roadElements.laneMeshes.begin();
 
-    laneLinesInnerIter = roadElements.laneLinesInner.begin();
-    laneLinesOuterIter = roadElements.laneLinesOuter.begin();
+    m_laneLinesInnerIter = m_roadElements.laneLinesInner.begin();
+    m_laneLinesOuterIter = m_roadElements.laneLinesOuter.begin();
 
-    roadMarkIter = roadElements.roadMarks.begin();
-    roadMarkMeshIter = roadElements.roadMarkMeshes.begin();
+    m_roadMarkIter = m_roadElements.roadMarks.begin();
+    m_roadMarkMeshIter = m_roadElements.roadMarkMeshes.begin();
 
-    roadObjectIter = roadElements.roadObjects.begin();
-    roadObjectMeshesIter = roadElements.roadObjectMeshes.begin();
+    m_roadObjectIter = m_roadElements.roadObjects.begin();
+    m_roadObjectMeshesIter = m_roadElements.roadObjectMeshes.begin();
 
-    roadSignalIter = roadElements.roadSignals.begin();
-    roadSignalMeshesIter = roadElements.roadSignalMeshes.begin();
+    m_roadSignalIter = m_roadElements.roadSignals.begin();
+    m_roadSignalMeshesIter = m_roadElements.roadSignalMeshes.begin();
 }
 
-OGRTriangulatedSurface OGRXODRLayer::triangulateSurface(odr::Mesh3D mesh)
+std::unique_ptr<OGRTriangulatedSurface>
+OGRXODRLayer::triangulateSurface(const odr::Mesh3D &mesh)
 {
     std::vector<odr::Vec3D> meshVertices = mesh.vertices;
     std::vector<uint32_t> meshIndices = mesh.indices;
 
-    OGRTriangulatedSurface tin;
+    auto tin = std::make_unique<OGRTriangulatedSurface>();
     const size_t numIndices = meshIndices.size();
     // Build triangles from mesh vertices.
     // Each triple of mesh indices defines which vertices form a triangle.
@@ -112,7 +108,7 @@ OGRTriangulatedSurface OGRXODRLayer::triangulateSurface(odr::Mesh3D mesh)
         OGRPoint r(vertexR[0], vertexR[1], vertexR[2]);
 
         OGRTriangle triangle(p, q, r);
-        tin.addGeometry(&triangle);
+        tin->addGeometry(&triangle);
     }
 
     return tin;

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  OpenGIS Simple Features for OpenDRIVE
- * Purpose:  Implementation of OGRXODRDriver.
+ * Purpose:  Definition of OGRXODRDriverCore.
  * Author:   Michael Scholz, German Aerospace Center (DLR)
  *           Gülsen Bardak, German Aerospace Center (DLR)        
  *
@@ -27,37 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_xodr.h"
-#include "ogrxodrdrivercore.h"
-#include "cpl_conv.h"
-#include "cpl_error.h"
+#pragma once
 
-static GDALDataset *OGRXODRDriverOpen(GDALOpenInfo *poOpenInfo)
-{
-    if (poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == nullptr)
-        return nullptr;
+#include "gdal_priv.h"
 
-    auto dataSource = std::make_unique<OGRXODRDataSource>();
+constexpr const char *DRIVER_NAME = "XODR";
 
-    if (!dataSource->Open(poOpenInfo->pszFilename,
-                          poOpenInfo->papszOpenOptions))
-    {
-        return nullptr;
-    }
+int CPL_DLL OGRXODRDriverIdentify(GDALOpenInfo *poOpenInfo);
 
-    return dataSource.release();
-}
-
-void RegisterOGRXODR()
-{
-    if (!GDAL_CHECK_VERSION(DRIVER_NAME))
-        return;
-
-    if (GDALGetDriverByName(DRIVER_NAME) != nullptr)
-        return;
-
-    GDALDriver *poDriver = new GDALDriver();
-    OGRXODRDriverSetCommonMetadata(poDriver);
-    poDriver->pfnOpen = OGRXODRDriverOpen;
-    GetGDALDriverManager()->RegisterDriver(poDriver);
-}
+void CPL_DLL OGRXODRDriverSetCommonMetadata(GDALDriver *poDriver);

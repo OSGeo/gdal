@@ -31,52 +31,63 @@
 #include "ogr_geometry.h"
 #include "ogr_xodr.h"
 
-OGRXODRLayerRoadMark::OGRXODRLayerRoadMark(RoadElements xodrRoadElements,
-                                           std::string proj4Defn,
-                                           bool dissolveTriangulatedSurface)
+OGRXODRLayerRoadMark::OGRXODRLayerRoadMark(
+    const RoadElements &xodrRoadElements, const std::string proj4Defn,
+    const bool dissolveTriangulatedSurface)
     : OGRXODRLayer(xodrRoadElements, proj4Defn, dissolveTriangulatedSurface)
 {
-    this->featureDefn = new OGRFeatureDefn(FEATURE_CLASS_NAME.c_str());
+    m_poFeatureDefn =
+        std::make_unique<OGRFeatureDefn>(FEATURE_CLASS_NAME.c_str());
+    m_poFeatureDefn->Reference();
     SetDescription(FEATURE_CLASS_NAME.c_str());
-    featureDefn->Reference();
-    featureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&spatialRef);
-
     defineFeatureClass();
 }
 
-OGRFeature *OGRXODRLayerRoadMark::GetNextFeature()
+int OGRXODRLayerRoadMark::TestCapability(const char *pszCap)
+{
+    int result = FALSE;
+
+    if (EQUAL(pszCap, OLCZGeometries))
+        result = TRUE;
+
+    return result;
+}
+
+OGRFeature *OGRXODRLayerRoadMark::GetNextRawFeature()
 {
     std::unique_ptr<OGRFeature> feature;
 
-    if (roadMarkIter != roadElements.roadMarks.end())
+    if (m_roadMarkIter != m_roadElements.roadMarks.end())
     {
-        feature = std::unique_ptr<OGRFeature>(new OGRFeature(featureDefn));
+        feature = std::make_unique<OGRFeature>(m_poFeatureDefn.get());
 
-        odr::RoadMark roadMark = *roadMarkIter;
-        odr::Mesh3D roadMarkMesh = *roadMarkMeshIter;
+        odr::RoadMark roadMark = *m_roadMarkIter;
+        odr::Mesh3D roadMarkMesh = *m_roadMarkMeshIter;
 
-        OGRTriangulatedSurface tin = triangulateSurface(roadMarkMesh);
-
-        if (dissolveTIN)
+        std::unique_ptr<OGRTriangulatedSurface> tin =
+            triangulateSurface(roadMarkMesh);
+        if (m_bDissolveTIN)
         {
-            OGRGeometry *dissolvedPolygon = tin.UnaryUnion();
-            feature->SetGeometry(dissolvedPolygon);
+            OGRGeometry *dissolvedPolygon = tin->UnaryUnion();
+            dissolvedPolygon->assignSpatialReference(&m_poSRS);
+            feature->SetGeometryDirectly(dissolvedPolygon);
         }
         else
         {
-            //tin.MakeValid(); // TODO Works for TINs only with enabled SFCGAL support
-            feature->SetGeometry(&tin);
+            //tin->MakeValid(); // TODO Works for TINs only with enabled SFCGAL support
+            tin->assignSpatialReference(&m_poSRS);
+            feature->SetGeometryDirectly(tin.release());
         }
-        feature->SetField(featureDefn->GetFieldIndex("RoadID"),
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("RoadID"),
                           roadMark.road_id.c_str());
-        feature->SetField(featureDefn->GetFieldIndex("LaneID"),
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("LaneID"),
                           roadMark.lane_id);
-        feature->SetField(featureDefn->GetFieldIndex("Type"),
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("Type"),
                           roadMark.type.c_str());
-        feature->SetFID(nNextFID++);
+        feature->SetFID(m_nNextFID++);
 
-        roadMarkIter++;
-        roadMarkMeshIter++;
+        m_roadMarkIter++;
+        m_roadMarkMeshIter++;
     }
 
     if (feature)
@@ -92,22 +103,23 @@ OGRFeature *OGRXODRLayerRoadMark::GetNextFeature()
 
 void OGRXODRLayerRoadMark::defineFeatureClass()
 {
-    if (dissolveTIN)
+    if (m_bDissolveTIN)
     {
         OGRwkbGeometryType wkbPolygonWithZ = OGR_GT_SetZ(wkbPolygon);
-        featureDefn->SetGeomType(wkbPolygonWithZ);
+        m_poFeatureDefn->SetGeomType(wkbPolygonWithZ);
     }
     else
     {
-        featureDefn->SetGeomType(wkbTINZ);
+        m_poFeatureDefn->SetGeomType(wkbTINZ);
     }
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
 
     OGRFieldDefn oFieldRoadID("RoadID", OFTString);
-    featureDefn->AddFieldDefn(&oFieldRoadID);
+    m_poFeatureDefn->AddFieldDefn(&oFieldRoadID);
 
     OGRFieldDefn oFieldLaneID("LaneID", OFTInteger);
-    featureDefn->AddFieldDefn(&oFieldLaneID);
+    m_poFeatureDefn->AddFieldDefn(&oFieldLaneID);
 
     OGRFieldDefn oFieldType("Type", OFTString);
-    featureDefn->AddFieldDefn(&oFieldType);
+    m_poFeatureDefn->AddFieldDefn(&oFieldType);
 }

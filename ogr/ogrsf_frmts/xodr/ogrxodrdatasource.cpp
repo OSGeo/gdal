@@ -32,149 +32,151 @@ using namespace odr;
 using namespace pugi;
 using namespace std;
 
-CPL_CVSID("$Id$")
-
-OGRXODRDataSource::OGRXODRDataSource()
-{
-    layers = nullptr;
-    nLayers = 0;
-}
-
-OGRXODRDataSource::~OGRXODRDataSource()
-{
-    for (int i = 0; i < nLayers; i++)
-    {
-        delete layers[i];
-        layers[i] = nullptr;
-    }
-    CPLFree(layers);
-}
-
-int OGRXODRDataSource::Open(const char *fileName, char **openOptions,
-                            int bUpdate)
+bool OGRXODRDataSource::Open(const char *pszFilename, CSLConstList openOptions)
 {
     VSILFILE *file = nullptr;
-
-    bool updatable = CPL_TO_BOOL(bUpdate);
-    if (updatable)
-    {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Write or update access not supported by XODR driver.");
-        return CE_Failure;
-    }
-    else
-    {
-        file = VSIFOpenExL(fileName, "r", true);
-    }
-
+    file = VSIFOpenL(pszFilename, "r");
     if (file == nullptr)
+        return FALSE;
+
+    odr::OpenDriveMap xodr(pszFilename, false);
+    bool parsingFailed = xodr.xml_doc.child("OpenDRIVE").empty();
+    if (parsingFailed)
     {
-        //TODO is this ever called on an opening error? An incorrect file name or path is caught earlier already.
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Failed to load OpenDRIVE file %s.", fileName);
-        return CE_Failure;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "The provided file does not contain any OpenDRIVE data. Is it "
+                 "empty?");
+        return FALSE;
     }
 
-    const char *openOptionValue =
-        CSLFetchNameValueDef(openOptions, "EPS", "1.0");
-    eps = CPLAtof(openOptionValue);
-    openOptionValue = CSLFetchNameValueDef(openOptions, "DISSOLVE_TIN", "NO");
-    dissolveTIN = CPLTestBool(openOptionValue);
-
-    odr::OpenDriveMap xodr(fileName, false);
-    std::string proj4Defn = xodr.proj4;
     std::vector<odr::Road> roads = xodr.get_roads();
-    RoadElements roadElements = createRoadElements(roads);
+    if (roads.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "OpenDRIVE dataset does not contain any roads.");
+        return FALSE;
+    }
 
-    nLayers = 6;
-    //TODO Do we have to update this, taking into account all different layer subclasses?
-    layers =
-        (OGRXODRLayer **)CPLRealloc(layers, sizeof(OGRXODRLayer *) * nLayers);
-    layers[0] = new OGRXODRLayerReferenceLine(roadElements, proj4Defn);
-    layers[1] = new OGRXODRLayerLaneBorder(roadElements, proj4Defn);
-    layers[2] = new OGRXODRLayerRoadMark(roadElements, proj4Defn, dissolveTIN);
-    layers[3] = new OGRXODRLayerRoadObject(roadElements, proj4Defn);
-    layers[4] = new OGRXODRLayerLane(roadElements, proj4Defn, dissolveTIN);
-    layers[5] =
-        new OGRXODRLayerRoadSignal(roadElements, proj4Defn, dissolveTIN);
+    const char *openOptionValue = CSLFetchNameValue(openOptions, "EPSILON");
+    if (openOptionValue != nullptr)
+    {
+        double dfEpsilon = CPLAtof(openOptionValue);
+        if (dfEpsilon > 0.0)
+        {
+            m_dfEpsilon = dfEpsilon;
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Invalid value for EPSILON specified. Falling back to "
+                     "default of 1.0.");
+        }
+    }
+    openOptionValue = CSLFetchNameValueDef(openOptions, "DISSOLVE_TIN", "NO");
+    bool bDissolveTIN = CPLTestBool(openOptionValue);
+
+    RoadElements roadElements = createRoadElements(roads);
+    std::string proj4Defn = xodr.proj4;
+
+    auto refLine =
+        std::make_unique<OGRXODRLayerReferenceLine>(roadElements, proj4Defn);
+    auto laneBorder =
+        std::make_unique<OGRXODRLayerLaneBorder>(roadElements, proj4Defn);
+    auto roadMark = std::make_unique<OGRXODRLayerRoadMark>(
+        roadElements, proj4Defn, bDissolveTIN);
+    auto roadObject =
+        std::make_unique<OGRXODRLayerRoadObject>(roadElements, proj4Defn);
+    auto lane = std::make_unique<OGRXODRLayerLane>(roadElements, proj4Defn,
+                                                   bDissolveTIN);
+    auto roadSignal = std::make_unique<OGRXODRLayerRoadSignal>(
+        roadElements, proj4Defn, bDissolveTIN);
+
+    m_apoLayers.push_back(std::move(refLine));
+    m_apoLayers.push_back(std::move(laneBorder));
+    m_apoLayers.push_back(std::move(roadMark));
+    m_apoLayers.push_back(std::move(roadObject));
+    m_apoLayers.push_back(std::move(lane));
+    m_apoLayers.push_back(std::move(roadSignal));
+
     return TRUE;
 }
 
 OGRLayer *OGRXODRDataSource::GetLayer(int iLayer)
 {
-    if (iLayer < 0 || iLayer >= nLayers)
+    if (iLayer < 0 || (size_t)iLayer >= m_apoLayers.size())
         return NULL;
 
-    return layers[iLayer];
+    return m_apoLayers[iLayer].get();
 }
 
-int OGRXODRDataSource::TestCapability(CPL_UNUSED const char *capability)
+int OGRXODRDataSource::TestCapability(CPL_UNUSED const char *pszCap)
 {
-    if (EQUAL(capability, ODsCCreateLayer))
-        return FALSE;
-    else if (EQUAL(capability, ODsCDeleteLayer))
-        return FALSE;
-    else if (EQUAL(capability, ODsCZGeometries))
-        return TRUE;
-    return FALSE;
+    int result = FALSE;
+
+    if (EQUAL(pszCap, ODsCZGeometries))
+        result = TRUE;
+
+    return result;
 }
 
 RoadElements
-OGRXODRDataSource::createRoadElements(const std::vector<odr::Road> roads)
+OGRXODRDataSource::createRoadElements(const std::vector<odr::Road> &roads)
 {
     RoadElements elements;
 
-    for (odr::Road road : roads)
+    for (const odr::Road &road : roads)
     {
         elements.roads.insert({road.id, road});
 
         odr::Line3D referenceLine =
-            road.ref_line.get_line(0.0, road.length, eps);
+            road.ref_line.get_line(0.0, road.length, m_dfEpsilon);
         elements.referenceLines.push_back(referenceLine);
 
-        for (odr::LaneSection laneSection : road.get_lanesections())
+        for (const odr::LaneSection &laneSection : road.get_lanesections())
         {
             elements.laneSections.push_back(laneSection);
 
-            for (odr::Lane lane : laneSection.get_lanes())
+            for (const odr::Lane &lane : laneSection.get_lanes())
             {
                 elements.laneRoadIDs.push_back(road.id);
 
                 elements.lanes.push_back(lane);
 
-                odr::Mesh3D laneMesh = road.get_lane_mesh(lane, eps);
+                odr::Mesh3D laneMesh = road.get_lane_mesh(lane, m_dfEpsilon);
                 elements.laneMeshes.push_back(laneMesh);
 
                 odr::Line3D laneLineOuter =
-                    road.get_lane_border_line(lane, eps, true);
+                    road.get_lane_border_line(lane, m_dfEpsilon, true);
                 elements.laneLinesOuter.push_back(laneLineOuter);
 
                 odr::Line3D laneLineInner =
-                    road.get_lane_border_line(lane, eps, false);
+                    road.get_lane_border_line(lane, m_dfEpsilon, false);
                 elements.laneLinesInner.push_back(laneLineInner);
 
-                for (odr::RoadMark roadMark : lane.get_roadmarks(
-                         laneSection.s0, road.get_lanesection_end(laneSection)))
+                const double sectionStart = laneSection.s0;
+                const double sectionEnd = road.get_lanesection_end(laneSection);
+                for (const odr::RoadMark &roadMark :
+                     lane.get_roadmarks(sectionStart, sectionEnd))
                 {
                     elements.roadMarks.push_back(roadMark);
 
                     odr::Mesh3D roadMarkMesh =
-                        road.get_roadmark_mesh(lane, roadMark, eps);
+                        road.get_roadmark_mesh(lane, roadMark, m_dfEpsilon);
                     elements.roadMarkMeshes.push_back(roadMarkMesh);
                 }
             }
         }
 
-        for (odr::RoadObject roadObject : road.get_road_objects())
+        for (const odr::RoadObject &roadObject : road.get_road_objects())
         {
             elements.roadObjects.push_back(roadObject);
 
             odr::Mesh3D roadObjectMesh =
-                road.get_road_object_mesh(roadObject, eps);
+                road.get_road_object_mesh(roadObject, m_dfEpsilon);
             elements.roadObjectMeshes.push_back(roadObjectMesh);
         }
 
-        for (odr::RoadSignal roadSignal : road.get_road_signals())
+        for (const odr::RoadSignal &roadSignal : road.get_road_signals())
         {
             elements.roadSignals.push_back(roadSignal);
 

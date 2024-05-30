@@ -32,46 +32,54 @@
 #include "ogr_xodr.h"
 
 OGRXODRLayerReferenceLine::OGRXODRLayerReferenceLine(
-    RoadElements xodrRoadElements, std::string proj4Defn)
+    const RoadElements &xodrRoadElements, const std::string proj4Defn)
     : OGRXODRLayer(xodrRoadElements, proj4Defn)
 {
-    this->featureDefn = new OGRFeatureDefn(FEATURE_CLASS_NAME.c_str());
+    m_poFeatureDefn =
+        std::make_unique<OGRFeatureDefn>(FEATURE_CLASS_NAME.c_str());
+    m_poFeatureDefn->Reference();
     SetDescription(FEATURE_CLASS_NAME.c_str());
-    featureDefn->Reference();
-    featureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&spatialRef);
-
     defineFeatureClass();
 }
 
-OGRFeature *OGRXODRLayerReferenceLine::GetNextFeature()
+int OGRXODRLayerReferenceLine::TestCapability(const char *pszCap)
+{
+    int result = FALSE;
+
+    if (EQUAL(pszCap, OLCZGeometries))
+        result = TRUE;
+
+    return result;
+}
+
+OGRFeature *OGRXODRLayerReferenceLine::GetNextRawFeature()
 {
     std::unique_ptr<OGRFeature> feature;
 
-    if (roadIter != roadElements.roads.end())
+    if (m_roadIter != m_roadElements.roads.end())
     {
-        feature = std::unique_ptr<OGRFeature>(new OGRFeature(featureDefn));
+        feature = std::make_unique<OGRFeature>(m_poFeatureDefn.get());
 
-        odr::Road road = (*roadIter).second;
-        odr::Line3D refLine = *referenceLineIter;
+        odr::Road road = (*m_roadIter).second;
+        odr::Line3D refLine = *m_referenceLineIter;
 
         OGRLineString lineString;
-        for (auto vertexIter = refLine.begin(); vertexIter != refLine.end();
-             ++vertexIter)
+        for (const auto &refLineVertex : refLine)
         {
-            odr::Vec3D refLineVertex = *vertexIter;
             lineString.addPoint(refLineVertex[0], refLineVertex[1],
                                 refLineVertex[2]);
         }
         OGRGeometry *geometry = lineString.MakeValid();
+        geometry->assignSpatialReference(&m_poSRS);
 
-        feature->SetGeometry(geometry);
+        feature->SetGeometryDirectly(geometry);
         feature->SetField("ID", road.id.c_str());
         feature->SetField("Length", road.length);
         feature->SetField("Junction", road.junction.c_str());
-        feature->SetFID(nNextFID++);
+        feature->SetFID(m_nNextFID++);
 
-        roadIter++;
-        referenceLineIter++;
+        m_roadIter++;
+        m_referenceLineIter++;
     }
 
     if (feature)
@@ -88,14 +96,15 @@ OGRFeature *OGRXODRLayerReferenceLine::GetNextFeature()
 void OGRXODRLayerReferenceLine::defineFeatureClass()
 {
     OGRwkbGeometryType wkbLineStringWithZ = OGR_GT_SetZ(wkbLineString);
-    featureDefn->SetGeomType(wkbLineStringWithZ);
+    m_poFeatureDefn->SetGeomType(wkbLineStringWithZ);
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
 
     OGRFieldDefn oFieldID("ID", OFTString);
-    featureDefn->AddFieldDefn(&oFieldID);
+    m_poFeatureDefn->AddFieldDefn(&oFieldID);
 
     OGRFieldDefn oFieldLen("Length", OFTReal);
-    featureDefn->AddFieldDefn(&oFieldLen);
+    m_poFeatureDefn->AddFieldDefn(&oFieldLen);
 
     OGRFieldDefn oFieldJunction("Junction", OFTString);
-    featureDefn->AddFieldDefn(&oFieldJunction);
+    m_poFeatureDefn->AddFieldDefn(&oFieldJunction);
 }

@@ -1,6 +1,4 @@
 /******************************************************************************
- * $Id$
- *
  * Project:  OpenGIS Simple Features for OpenDRIVE
  * Purpose:  Definition of OGR driver components for OpenDRIVE.
  * Author:   Michael Scholz, German Aerospace Center (DLR)
@@ -39,25 +37,25 @@
 struct RoadElements
 {
     /* Map of road to its original OpenDRIVE ID for fast lookup. */
-    std::map<std::string, odr::Road> roads;
-    std::vector<odr::Line3D> referenceLines;
+    std::map<std::string, odr::Road> roads{};
+    std::vector<odr::Line3D> referenceLines{};
 
-    std::vector<odr::Lane> lanes;
-    std::vector<odr::LaneSection> laneSections;
-    std::vector<std::string> laneRoadIDs;
-    std::vector<odr::Mesh3D> laneMeshes;
+    std::vector<odr::Lane> lanes{};
+    std::vector<odr::LaneSection> laneSections{};
+    std::vector<std::string> laneRoadIDs{};
+    std::vector<odr::Mesh3D> laneMeshes{};
 
-    std::vector<odr::Line3D> laneLinesInner;
-    std::vector<odr::Line3D> laneLinesOuter;
+    std::vector<odr::Line3D> laneLinesInner{};
+    std::vector<odr::Line3D> laneLinesOuter{};
 
-    std::vector<odr::RoadMark> roadMarks;
-    std::vector<odr::Mesh3D> roadMarkMeshes;
+    std::vector<odr::RoadMark> roadMarks{};
+    std::vector<odr::Mesh3D> roadMarkMeshes{};
 
-    std::vector<odr::RoadObject> roadObjects;
-    std::vector<odr::Mesh3D> roadObjectMeshes;
+    std::vector<odr::RoadObject> roadObjects{};
+    std::vector<odr::Mesh3D> roadObjectMeshes{};
 
-    std::vector<odr::RoadSignal> roadSignals;
-    std::vector<odr::Mesh3D> roadSignalMeshes;
+    std::vector<odr::RoadSignal> roadSignals{};
+    std::vector<odr::Mesh3D> roadSignalMeshes{};
 };
 
 /*--------------------------------------------------------------------*/
@@ -67,16 +65,9 @@ struct RoadElements
 class OGRXODRLayer : public OGRLayer
 {
   private:
-    virtual void ResetReading() override;
-
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
-        return featureDefn;
-    }
-
-    virtual int TestCapability(const char *) override
-    {
-        return FALSE;
+        return m_poFeatureDefn.get();
     }
 
     /**
@@ -85,135 +76,163 @@ class OGRXODRLayer : public OGRLayer
     void resetRoadElementIterators();
 
   protected:
-    VSILFILE *file;
-    RoadElements roadElements;
-    OGRSpatialReference spatialRef;
-    bool dissolveTIN;
-    OGRFeatureDefn *featureDefn;
-
+    RoadElements m_roadElements{};
+    bool m_bDissolveTIN{false};
+    OGRSpatialReference m_poSRS{};
     /* Unique feature ID which is automatically incremented for any new road feature creation. */
-    int nNextFID;
+    int m_nNextFID{0};
 
-    std::map<std::string, odr::Road>::iterator roadIter;
-    std::vector<odr::Line3D>::iterator referenceLineIter;
+    std::map<std::string, odr::Road>::iterator m_roadIter{};
+    std::vector<odr::Line3D>::iterator m_referenceLineIter{};
 
-    std::vector<odr::Lane>::iterator laneIter;
-    std::vector<odr::LaneSection>::iterator laneSectionIter;
-    std::vector<std::string>::iterator laneRoadIDIter;
-    std::vector<odr::Mesh3D>::iterator laneMeshIter;
+    std::vector<odr::Lane>::iterator m_laneIter{};
+    std::vector<odr::LaneSection>::iterator m_laneSectionIter{};
+    std::vector<std::string>::iterator m_laneRoadIDIter{};
+    std::vector<odr::Mesh3D>::iterator m_laneMeshIter{};
 
-    std::vector<odr::Line3D>::iterator laneLinesInnerIter;
-    std::vector<odr::Line3D>::iterator laneLinesOuterIter;
+    std::vector<odr::Line3D>::iterator m_laneLinesInnerIter{};
+    std::vector<odr::Line3D>::iterator m_laneLinesOuterIter{};
 
-    std::vector<odr::RoadMark>::iterator roadMarkIter;
-    std::vector<odr::Mesh3D>::iterator roadMarkMeshIter;
+    std::vector<odr::RoadMark>::iterator m_roadMarkIter{};
+    std::vector<odr::Mesh3D>::iterator m_roadMarkMeshIter{};
 
-    std::vector<odr::RoadObject>::iterator roadObjectIter;
-    std::vector<odr::Mesh3D>::iterator roadObjectMeshesIter;
+    std::vector<odr::RoadObject>::iterator m_roadObjectIter{};
+    std::vector<odr::Mesh3D>::iterator m_roadObjectMeshesIter{};
 
-    std::vector<odr::RoadSignal>::iterator roadSignalIter;
-    std::vector<odr::Mesh3D>::iterator roadSignalMeshesIter;
+    std::vector<odr::RoadSignal>::iterator m_roadSignalIter{};
+    std::vector<odr::Mesh3D>::iterator m_roadSignalMeshesIter{};
+
+    std::unique_ptr<OGRFeatureDefn> m_poFeatureDefn{};
 
     /**
      * Completes feature class definition with all specific attributes and geometry type
      * according to layer type.
     */
     virtual void defineFeatureClass() = 0;
+    virtual void ResetReading() override;
 
     /**
      * Builds an ordinary TIN from libOpenDRIVE's mesh.
     */
-    OGRTriangulatedSurface triangulateSurface(odr::Mesh3D mesh);
+    std::unique_ptr<OGRTriangulatedSurface>
+    triangulateSurface(const odr::Mesh3D &mesh);
 
   public:
+    OGRXODRLayer(const RoadElements &xodrRoadElements,
+                 const std::string proj4Defn);
     /**
      * \param dissolveTriangulatedSurface True if original triangulated surface meshes from 
      * libOpenDRIVE are to be dissolved into simpler geometries.
      * Only applicable for layer types derived from meshes.
     */
-    // TODO For lower memory consumption maybe better pass xodrRoadElements by reference?
-    OGRXODRLayer(RoadElements xodrRoadElements, std::string proj4Defn);
-    OGRXODRLayer(RoadElements xodrRoadElements, std::string proj4Defn,
-                 bool dissolveTriangulatedSurface);
-    ~OGRXODRLayer();
+    OGRXODRLayer(const RoadElements &xodrRoadElements,
+                 const std::string proj4Defn,
+                 const bool dissolveTriangulatedSurface);
 };
 
-class OGRXODRLayerReferenceLine : public OGRXODRLayer
+class OGRXODRLayerReferenceLine
+    : public OGRXODRLayer,
+      public OGRGetNextFeatureThroughRaw<OGRXODRLayerReferenceLine>
 {
   protected:
     virtual void defineFeatureClass() override;
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextRawFeature();
 
   public:
     const std::string FEATURE_CLASS_NAME = "ReferenceLine";
 
-    OGRXODRLayerReferenceLine(RoadElements xodrRoadElements,
-                              std::string proj4Defn);
+    OGRXODRLayerReferenceLine(const RoadElements &xodrRoadElements,
+                              const std::string proj4Defn);
+    virtual int TestCapability(const char *pszCap) override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXODRLayerReferenceLine)
 };
 
-class OGRXODRLayerLaneBorder : public OGRXODRLayer
+class OGRXODRLayerLaneBorder
+    : public OGRXODRLayer,
+      public OGRGetNextFeatureThroughRaw<OGRXODRLayerLaneBorder>
 {
   protected:
     virtual void defineFeatureClass() override;
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextRawFeature();
 
   public:
     const std::string FEATURE_CLASS_NAME = "LaneBorder";
 
-    OGRXODRLayerLaneBorder(RoadElements xodrRoadElements,
-                           std::string proj4Defn);
+    OGRXODRLayerLaneBorder(const RoadElements &xodrRoadElements,
+                           const std::string proj4Defn);
+    virtual int TestCapability(const char *pszCap) override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXODRLayerLaneBorder)
 };
 
-class OGRXODRLayerRoadMark : public OGRXODRLayer
+class OGRXODRLayerRoadMark
+    : public OGRXODRLayer,
+      public OGRGetNextFeatureThroughRaw<OGRXODRLayerRoadMark>
+
 {
   protected:
     virtual void defineFeatureClass() override;
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextRawFeature();
 
   public:
     const std::string FEATURE_CLASS_NAME = "RoadMark";
 
-    OGRXODRLayerRoadMark(RoadElements xodrRoadElements, std::string proj4Defn,
-                         bool dissolveTriangulatedSurface);
+    OGRXODRLayerRoadMark(const RoadElements &xodrRoadElements,
+                         const std::string proj4Defn,
+                         const bool dissolveTriangulatedSurface);
+    virtual int TestCapability(const char *pszCap) override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXODRLayerRoadMark)
 };
 
-class OGRXODRLayerRoadObject : public OGRXODRLayer
+class OGRXODRLayerRoadObject
+    : public OGRXODRLayer,
+      public OGRGetNextFeatureThroughRaw<OGRXODRLayerRoadObject>
 {
   protected:
     virtual void defineFeatureClass() override;
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextRawFeature();
 
   public:
     const std::string FEATURE_CLASS_NAME = "RoadObject";
 
-    OGRXODRLayerRoadObject(RoadElements xodrRoadElements,
-                           std::string proj4Defn);
+    OGRXODRLayerRoadObject(const RoadElements &xodrRoadElements,
+                           const std::string proj4Defn);
+    virtual int TestCapability(const char *pszCap) override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXODRLayerRoadObject)
 };
 
-class OGRXODRLayerRoadSignal : public OGRXODRLayer
+class OGRXODRLayerRoadSignal
+    : public OGRXODRLayer,
+      public OGRGetNextFeatureThroughRaw<OGRXODRLayerRoadSignal>
 {
   protected:
     virtual void defineFeatureClass() override;
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextRawFeature();
 
   public:
     const std::string FEATURE_CLASS_NAME = "RoadSignal";
 
-    OGRXODRLayerRoadSignal(RoadElements xodrRoadElements, std::string proj4Defn,
-                           bool dissolveTriangulatedSurface);
+    OGRXODRLayerRoadSignal(const RoadElements &xodrRoadElements,
+                           const std::string proj4Defn,
+                           const bool dissolveTriangulatedSurface);
+    virtual int TestCapability(const char *pszCap) override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXODRLayerRoadSignal)
 };
 
-class OGRXODRLayerLane : public OGRXODRLayer
+class OGRXODRLayerLane : public OGRXODRLayer,
+                         public OGRGetNextFeatureThroughRaw<OGRXODRLayerLane>
 {
   protected:
     virtual void defineFeatureClass() override;
-    virtual OGRFeature *GetNextFeature() override;
+    OGRFeature *GetNextRawFeature();
 
   public:
     const std::string FEATURE_CLASS_NAME = "Lane";
 
-    OGRXODRLayerLane(RoadElements xodrRoadElements, std::string proj4Defn,
-                     bool dissolveTriangulatedSurface);
+    OGRXODRLayerLane(const RoadElements &xodrRoadElements,
+                     const std::string proj4Defn,
+                     const bool dissolveTriangulatedSurface);
+    virtual int TestCapability(const char *pszCap) override;
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRXODRLayerLane)
 };
 
 /*--------------------------------------------------------------------*/
@@ -223,39 +242,30 @@ class OGRXODRLayerLane : public OGRXODRLayer
 class OGRXODRDataSource : public GDALDataset
 {
   private:
-    OGRXODRLayer **layers;
-    int nLayers;
+    std::vector<std::unique_ptr<OGRXODRLayer>> m_apoLayers{};
+
+    /**
+     * Approximation factor for sampling of continuous geometry functions into discrete
+     * OGC Simple Feature geometries.
+    */
+    double m_dfEpsilon{1.0};
 
     /**
      * Retrieves all necessary road elements from the underlying OpenDRIVE structure.
      * 
      * \param roads Roads of the dataset.
     */
-    RoadElements createRoadElements(const std::vector<odr::Road> roads);
+    RoadElements createRoadElements(const std::vector<odr::Road> &roads);
 
   public:
-    OGRXODRDataSource();
-    ~OGRXODRDataSource();
-
-    /**
-     * Approximation factor for sampling of continuous geometry functions into discrete
-     * OGC Simple Feature geometries.
-    */
-    double eps;
-
-    /**
-     * Whether to dissolve triangulated surfaces which are created from libOpenDRIVE's meshes.
-    */
-    bool dissolveTIN;
-
-    int Open(const char *fileName, char **openOptions, int bUpdate);
+    bool Open(const char *pszFilename, CSLConstList openOptions);
 
     int GetLayerCount() override
     {
-        return nLayers;
+        return m_apoLayers.size();
     }
 
     OGRLayer *GetLayer(int) override;
 
-    virtual int TestCapability(const char *) override;
+    virtual int TestCapability(const char *pszCap) override;
 };

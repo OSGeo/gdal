@@ -31,45 +31,56 @@
 #include "ogr_geometry.h"
 #include "ogr_xodr.h"
 
-OGRXODRLayerRoadObject::OGRXODRLayerRoadObject(RoadElements xodrRoadElements,
-                                               std::string proj4Defn)
+OGRXODRLayerRoadObject::OGRXODRLayerRoadObject(
+    const RoadElements &xodrRoadElements, const std::string proj4Defn)
     : OGRXODRLayer(xodrRoadElements, proj4Defn)
 {
-    this->featureDefn = new OGRFeatureDefn(FEATURE_CLASS_NAME.c_str());
+    m_poFeatureDefn =
+        std::make_unique<OGRFeatureDefn>(FEATURE_CLASS_NAME.c_str());
+    m_poFeatureDefn->Reference();
     SetDescription(FEATURE_CLASS_NAME.c_str());
-    featureDefn->Reference();
-    featureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&spatialRef);
-
     defineFeatureClass();
 }
 
-OGRFeature *OGRXODRLayerRoadObject::GetNextFeature()
+int OGRXODRLayerRoadObject::TestCapability(const char *pszCap)
+{
+    int result = FALSE;
+
+    if (EQUAL(pszCap, OLCZGeometries))
+        result = TRUE;
+
+    return result;
+}
+
+OGRFeature *OGRXODRLayerRoadObject::GetNextRawFeature()
 {
     std::unique_ptr<OGRFeature> feature;
 
-    if (roadObjectIter != roadElements.roadObjects.end())
+    if (m_roadObjectIter != m_roadElements.roadObjects.end())
     {
-        feature = std::unique_ptr<OGRFeature>(new OGRFeature(featureDefn));
+        feature = std::make_unique<OGRFeature>(m_poFeatureDefn.get());
 
-        odr::RoadObject roadObject = *roadObjectIter;
-        odr::Mesh3D roadObjectMesh = *roadObjectMeshesIter;
+        odr::RoadObject roadObject = *m_roadObjectIter;
+        odr::Mesh3D roadObjectMesh = *m_roadObjectMeshesIter;
 
-        OGRTriangulatedSurface tin = triangulateSurface(roadObjectMesh);
-        //tin.MakeValid(); // TODO Works for TINs only with enabled SFCGAL support
-        feature->SetGeometry(&tin);
+        std::unique_ptr<OGRTriangulatedSurface> tin =
+            triangulateSurface(roadObjectMesh);
+        //tin->MakeValid(); // TODO Works for TINs only with enabled SFCGAL support
+        tin->assignSpatialReference(&m_poSRS);
+        feature->SetGeometryDirectly(tin.release());
 
-        feature->SetField(featureDefn->GetFieldIndex("ObjectID"),
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("ObjectID"),
                           roadObject.id.c_str());
-        feature->SetField(featureDefn->GetFieldIndex("RoadID"),
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("RoadID"),
                           roadObject.road_id.c_str());
-        feature->SetField(featureDefn->GetFieldIndex("Type"),
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("Type"),
                           roadObject.type.c_str());
-        feature->SetField(featureDefn->GetFieldIndex("Name"),
+        feature->SetField(m_poFeatureDefn->GetFieldIndex("Name"),
                           roadObject.name.c_str());
-        feature->SetFID(nNextFID++);
+        feature->SetFID(m_nNextFID++);
 
-        roadObjectIter++;
-        roadObjectMeshesIter++;
+        m_roadObjectIter++;
+        m_roadObjectMeshesIter++;
     }
 
     if (feature)
@@ -85,17 +96,18 @@ OGRFeature *OGRXODRLayerRoadObject::GetNextFeature()
 
 void OGRXODRLayerRoadObject::defineFeatureClass()
 {
-    featureDefn->SetGeomType(wkbTINZ);
+    m_poFeatureDefn->SetGeomType(wkbTINZ);
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
 
     OGRFieldDefn oFieldObjectID("ObjectID", OFTString);
-    featureDefn->AddFieldDefn(&oFieldObjectID);
+    m_poFeatureDefn->AddFieldDefn(&oFieldObjectID);
 
     OGRFieldDefn oFieldRoadID("RoadID", OFTString);
-    featureDefn->AddFieldDefn(&oFieldRoadID);
+    m_poFeatureDefn->AddFieldDefn(&oFieldRoadID);
 
     OGRFieldDefn oFieldType("Type", OFTString);
-    featureDefn->AddFieldDefn(&oFieldType);
+    m_poFeatureDefn->AddFieldDefn(&oFieldType);
 
     OGRFieldDefn oFieldObjectName("Name", OFTString);
-    featureDefn->AddFieldDefn(&oFieldObjectName);
+    m_poFeatureDefn->AddFieldDefn(&oFieldObjectName);
 }
