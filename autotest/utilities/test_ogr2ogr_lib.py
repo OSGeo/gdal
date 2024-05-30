@@ -2724,3 +2724,23 @@ def test_ogr2ogr_lib_not_enough_gcp():
         Exception, match="Failed to compute GCP transform: Not enough points available"
     ):
         gdal.VectorTranslate("", src_ds, options="-f Memory -gcp 0 0 0 0")
+
+
+###############################################################################
+
+
+def test_ogr2ogr_lib_two_gcps():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 3)"))
+    src_lyr.CreateFeature(f)
+
+    out_ds = gdal.VectorTranslate(
+        "", src_ds, options="-f Memory -gcp 1 2 200 300 -gcp 3 4 300 400"
+    )
+    out_lyr = out_ds.GetLayer(0)
+    f = out_lyr.GetNextFeature()
+    assert f.GetGeometryRef().GetX(0) == pytest.approx(250)
+    assert f.GetGeometryRef().GetY(0) == pytest.approx(350)
