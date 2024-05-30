@@ -828,7 +828,7 @@ static int MMChangeFinalPartOfTheName(char *pszName, size_t nMaxSizeOfName,
     // It's the implementation on windows of the linux strrstr()
     // pszLastFound = strrstr(pszWhereToFind, pszFinalPart);
     pszWhereToFind = pszName;
-    while (nullptr != (pAux = strstr(pszWhereToFind, pszFinalPart)))
+    while (nullptr != (pAux = MM_stristr(pszWhereToFind, pszFinalPart)))
     {
         pszLastFound = pAux;
         pszWhereToFind = pAux + strlen(pAux);
@@ -5387,7 +5387,7 @@ int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
                    "Wrong format in data\\MM_m_idofic.csv.\n");
         return 1;
     }
-    id_geodes = strstr(pszLine, "ID_GEODES");
+    id_geodes = MM_stristr(pszLine, "ID_GEODES");
     if (!id_geodes)
     {
         fclose_function(pfMMSRS);
@@ -5396,7 +5396,7 @@ int MMReturnCodeFromMM_m_idofic(char *pMMSRS_or_pSRS, char *szResult,
         return 1;
     }
     id_geodes[strlen("ID_GEODES")] = '\0';
-    psidgeodes = strstr(pszLine, "PSIDGEODES");
+    psidgeodes = MM_stristr(pszLine, "PSIDGEODES");
     if (!psidgeodes)
     {
         fclose_function(pfMMSRS);
