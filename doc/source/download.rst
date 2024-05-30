@@ -439,4 +439,4 @@ Documentation only
 
 Besides being included when downloading the software, the documentation is
 also available independently as a `PDF file <gdal.pdf>`_,
-and `a .ZIP of individual HTML pages <https://github.com/OSGeo/gdal-docs/archive/refs/heads/master.zip>`_ for offline browsing. (The .ZIP also includes that .PDF.)
+and `a .ZIP of individual HTML pages <https://github.com/OSGeo/gdal-docs/archive/refs/heads/master.zip>`_ for offline browsing. (The .ZIP also includes that .PDF.) The documentation reflects the latest state of the development branch of the software.
