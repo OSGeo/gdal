@@ -3,7 +3,7 @@
 XODR -- OpenDRIVE Road Description Format
 =========================================
 
-.. versionadded:: 3.9
+.. versionadded:: 3.10
 
 .. shortname:: XODR
 
