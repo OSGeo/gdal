@@ -1415,17 +1415,27 @@ def test_vsifile_class_read_ascii(tmp_path):
     assert f.read(10) == "permission"
 
     # skip a character
-    f.seek(1, os.SEEK_CUR)
+    assert f.seek(1, os.SEEK_CUR) == 0
     assert f.read(9) == "is hereby"
 
-    f.seek(0, os.SEEK_SET)
+    # seek backwards
+    assert f.seek(-2, os.SEEK_CUR) == 0
+    assert f.read(2) == "by"
+
+    # jump to beginning
+    assert f.seek(0, os.SEEK_SET) == 0
     assert f.read(10) == "permission"
 
+    # can't jump before the beginning
+    pos = f.tell()
+    assert f.seek(-2, os.SEEK_SET) == -1
+    assert pos == f.tell()
+
     # jump to end
-    f.seek(0, os.SEEK_END)
+    assert f.seek(0, os.SEEK_END) == 0
     assert f.read(10) == ""
 
-    f.seek(-7, os.SEEK_END)
+    assert f.seek(-7, os.SEEK_END) == 0
     assert f.read() == "person\n"
 
     f.close()

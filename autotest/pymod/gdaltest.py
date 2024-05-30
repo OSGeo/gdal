@@ -2185,7 +2185,7 @@ class VSIFile:
         gdal.VSIFWriteL(x, 1, len(x), self._fp)
 
     def seek(self, offset, whence=0):
-        gdal.VSIFSeekL(self._fp, offset, whence)
+        return gdal.VSIFSeekL(self._fp, offset, whence)
 
     def tell(self):
         return gdal.VSIFTellL(self._fp)
