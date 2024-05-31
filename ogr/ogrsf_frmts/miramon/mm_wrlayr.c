@@ -3657,7 +3657,9 @@ void MMResetFeatureRecord(struct MiraMonFeature *hMMFeature)
                     '\0';
             hMMFeature->pRecords[nIRecord].pField[nIField].bIsValid = 0;
         }
+        hMMFeature->pRecords[nIRecord].nNumField = 0;
     }
+    hMMFeature->nNumMRecords = 0;
 }
 
 // Destroys all allocated memory
