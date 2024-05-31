@@ -6,7 +6,8 @@ add_gdal_driver(TARGET ogr_PLSCENES
                     ogrplscenesdriver.cpp
                 CORE_SOURCES
                     ogrplscenesdrivercore.cpp
-                PLUGIN_CAPABLE_IF "NOT GDAL_USE_JSONC_INTERNAL")
+                PLUGIN_CAPABLE_IF "NOT GDAL_USE_JSONC_INTERNAL"
+                NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET ogr_PLSCENES)
     return()

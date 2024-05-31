@@ -10,7 +10,8 @@ add_gdal_driver(
   CORE_SOURCES
           postgisrasterdrivercore.cpp
   STRONG_CXX_WFLAGS
-  PLUGIN_CAPABLE)
+  PLUGIN_CAPABLE
+  NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET gdal_PostGISRaster)
     return()

@@ -4379,6 +4379,15 @@ GDALRasterAttributeTable CPL_DLL *GDALCreateRasterAttributeTableFromMDArrays(
     const std::vector<std::shared_ptr<GDALMDArray>> &apoArrays,
     const std::vector<GDALRATFieldUsage> &aeUsages);
 
+// Macro used so that Identify and driver metadata methods in drivers built
+// as plugin can be duplicated in libgdal core and in the driver under different
+// names
+#ifdef PLUGIN_FILENAME
+#define PLUGIN_SYMBOL_NAME(x) GDAL_core_##x
+#else
+#define PLUGIN_SYMBOL_NAME(x) GDAL_driver_##x
+#endif
+
 //! @endcond
 
 #endif /* ndef GDAL_PRIV_H_INCLUDED */

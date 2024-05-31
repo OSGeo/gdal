@@ -31,8 +31,12 @@
 
 constexpr const char *DRIVER_NAME = "KEA";
 
-int CPL_DLL KEADriverIdentify(GDALOpenInfo *poOpenInfo);
+#define KEADriverIdentify PLUGIN_SYMBOL_NAME(KEADriverIdentify)
+#define KEADriverSetCommonMetadata                                             \
+    PLUGIN_SYMBOL_NAME(KEADriverSetCommonMetadata)
 
-void CPL_DLL KEADriverSetCommonMetadata(GDALDriver *poDriver);
+int KEADriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void KEADriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

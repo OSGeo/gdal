@@ -33,8 +33,12 @@
 
 constexpr const char *DRIVER_NAME = "Parquet";
 
-int CPL_DLL OGRParquetDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRParquetDriverIdentify PLUGIN_SYMBOL_NAME(OGRParquetDriverIdentify)
+#define OGRParquetDriverSetCommonMetadata                                      \
+    PLUGIN_SYMBOL_NAME(OGRParquetDriverSetCommonMetadata)
 
-void CPL_DLL OGRParquetDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRParquetDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRParquetDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

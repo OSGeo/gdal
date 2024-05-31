@@ -34,8 +34,12 @@
 
 constexpr const char *DRIVER_NAME = "PNG";
 
-int CPL_DLL PNGDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define PNGDriverIdentify PLUGIN_SYMBOL_NAME(PNGDriverIdentify)
+#define PNGDriverSetCommonMetadata                                             \
+    PLUGIN_SYMBOL_NAME(PNGDriverSetCommonMetadata)
 
-void CPL_DLL PNGDriverSetCommonMetadata(GDALDriver *poDriver);
+int PNGDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void PNGDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

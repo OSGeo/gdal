@@ -32,8 +32,12 @@
 
 constexpr const char *DRIVER_NAME = "EXR";
 
-int CPL_DLL EXRDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define EXRDriverIdentify PLUGIN_SYMBOL_NAME(EXRDriverIdentify)
+#define EXRDriverSetCommonMetadata                                             \
+    PLUGIN_SYMBOL_NAME(EXRDriverSetCommonMetadata)
 
-void CPL_DLL EXRDriverSetCommonMetadata(GDALDriver *poDriver);
+int EXRDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void EXRDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

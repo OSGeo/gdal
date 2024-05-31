@@ -36,6 +36,9 @@
 
 constexpr const char *DRIVER_NAME = "CAD";
 
-void CPL_DLL OGRCADDriverSetCommonMetadata(GDALDriver *poDriver);
+#define OGRCADDriverSetCommonMetadata                                          \
+    PLUGIN_SYMBOL_NAME(OGRCADDriverSetCommonMetadata)
+
+void OGRCADDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

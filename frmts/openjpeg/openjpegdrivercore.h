@@ -33,6 +33,9 @@
 
 constexpr const char *DRIVER_NAME = "JP2OpenJPEG";
 
-void CPL_DLL OPENJPEGDriverSetCommonMetadata(GDALDriver *poDriver);
+#define OPENJPEGDriverSetCommonMetadata                                        \
+    PLUGIN_SYMBOL_NAME(OPENJPEGDriverSetCommonMetadata)
+
+void OPENJPEGDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
