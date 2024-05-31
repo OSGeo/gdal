@@ -92,7 +92,7 @@ element at the top Document level.
      Specifieds the value of the ``<atom:email>`` element.
      It should include a ``@`` character.
 
-Additional datasource creation options affecting the top Document level:
+Additional dataset creation options affecting the top Document level:
 
 - .. dsco:: LINK
 
