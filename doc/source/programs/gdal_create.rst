@@ -58,8 +58,10 @@ like creating a PDF file from a XML composition file.
 
 .. option:: -burn <value>
 
-    A fixed value to burn into a band for all objects.  A list of :option:`-burn` options
-    can be supplied, one per band being written to.
+    A fixed value to burn into a band. A list of :option:`-burn` options
+    can be supplied, one per band (the first value will apply to the first band,
+    the second one to the second band, etc.). If a single value is specified,
+    it will apply to all bands.
 
 .. option:: -a_srs <srs_def>
 
