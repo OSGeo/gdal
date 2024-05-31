@@ -386,7 +386,7 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
                     const auto list = attr->ReadAsInt64Array();
                     for (const auto nVal : list)
                     {
-                        arr.Add(nVal);
+                        arr.Add(static_cast<GInt64>(nVal));
                     }
                 }
                 else if (eDT == GDT_Byte || eDT == GDT_UInt16 ||

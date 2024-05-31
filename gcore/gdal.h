@@ -2531,7 +2531,7 @@ int CPL_DLL GDALAttributeWriteStringArray(GDALAttributeH hAttr, CSLConstList);
 int CPL_DLL GDALAttributeWriteInt(GDALAttributeH hAttr, int);
 int CPL_DLL GDALAttributeWriteIntArray(GDALAttributeH hAttr, const int *,
                                        size_t);
-int CPL_DLL GDALAttributeWriteInt64(GDALAttributeH hAttr, int);
+int CPL_DLL GDALAttributeWriteInt64(GDALAttributeH hAttr, int64_t);
 int CPL_DLL GDALAttributeWriteInt64Array(GDALAttributeH hAttr, const int64_t *,
                                          size_t);
 int CPL_DLL GDALAttributeWriteDouble(GDALAttributeH hAttr, double);

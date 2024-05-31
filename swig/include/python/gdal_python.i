@@ -2016,6 +2016,10 @@ def GetMDArrayNames(self, options = []) -> "list[str]":
 %extend GDALAttributeHS {
 %pythoncode %{
 
+  def writetofile(self, msg):
+    with open("/tmp/gdal.log", "a") as f:
+        f.write(msg)
+
   def Read(self):
     """ Read an attribute and return it with the most appropriate type """
     dt = self.GetDataType()
@@ -2032,41 +2036,73 @@ def GetMDArrayNames(self, options = []) -> "list[str]":
             return s
         return self.ReadAsStringArray()
     if dt_class == GEDTC_NUMERIC:
-        if dt.GetNumericDataType() in (GDT_Byte, GDT_Int8, GDT_Int16, GDT_UInt16, GDT_Int32):
+        self.writetofile("Read: dt_class == GEDTC_NUMERIC\n")
+        if dt.GetNumericDataType() in (GDT_Byte, GDT_UInt16,
+                                       GDT_Int8, GDT_Int16, GDT_Int32):
+            self.writetofile("Int\n")
             if self.GetTotalElementsCount() == 1:
                 return self.ReadAsInt()
-            else:
-                return self.ReadAsIntArray()
-        else:
+            return self.ReadAsIntArray()
+        if dt.GetNumericDataType() in (GDT_UInt32, GDT_UInt64, GDT_Int64):
+            self.writetofile("Int64\n")
             if self.GetTotalElementsCount() == 1:
-                return self.ReadAsDouble()
-            else:
-                return self.ReadAsDoubleArray()
+                return self.ReadAsInt64()
+            return self.ReadAsInt64Array()
+        self.writetofile("Double\n")
+        if self.GetTotalElementsCount() == 1:
+            return self.ReadAsDouble()
+        return self.ReadAsDoubleArray()
     return self.ReadAsRaw()
 
   def Write(self, val):
+    self.writetofile("Write: val=[" + str(val) + "]\n")
     if isinstance(val, (int, type(12345678901234))):
+        self.writetofile("Write:\n")
         if val >= -0x80000000 and val <= 0x7FFFFFFF:
+            self.writetofile("Int\n")
             return self.WriteInt(val)
-        else:
-            return self.WriteDouble(val)
+        if val >= -0x8000000000000000 and val <= 0x7FFFFFFFFFFFFFFF:
+            self.writetofile("Int64\n")
+            return self.WriteInt64(val)
+        self.writetofile("BigInt\n")
+        return self.WriteDouble(val)
     if isinstance(val, float):
-      return self.WriteDouble(val)
+        self.writetofile("Double\n")
+        return self.WriteDouble(val)
     if isinstance(val, str) and self.GetDataType().GetClass() != GEDTC_COMPOUND:
-      return self.WriteString(val)
+        self.writetofile("String [" + val + "]\n")
+        return self.WriteString(val)
     if isinstance(val, list):
-      if len(val) == 0:
-        if self.GetDataType().GetClass() == GEDTC_STRING:
-            return self.WriteStringArray(val)
-        else:
+        self.writetofile("List\n")
+        if len(val) == 0:
+            if self.GetDataType().GetClass() == GEDTC_STRING:
+                self.writetofile("List-String-Empty\n")
+                return self.WriteStringArray(val)
+            self.writetofile("List-Double-Empty\n")
             return self.WriteDoubleArray(val)
-      if isinstance(val[0], (int, type(12345678901234), float)):
-        return self.WriteDoubleArray(val)
-      if isinstance(val[0], str):
-        return self.WriteStringArray(val)
-    if isinstance(val, dict) and self.GetDataType().GetSubType() == GEDTST_JSON:
+        if isinstance(val[0], (int, type(12345678901234))):
+            if all(v >= -0x80000000 and v <= 0x7FFFFFFF for v in val):
+                self.writetofile("List-Int\n")
+                return self.WriteIntArray(val)
+            if all(v >= -0x8000000000000000 and v <= 0x7FFFFFFFFFFFFFFF
+                   for v in val):
+                self.writetofile("List-Int64\n")
+                return self.WriteInt64Array(val)
+            self.writetofile("List-Double-fallback\n")
+            return self.WriteDoubleArray(val)
+        if isinstance(val[0], float):
+            self.writetofile("List-Double\n")
+            return self.WriteDoubleArray(val)
+        if isinstance(val[0], str):
+            self.writetofile("StringArray\n")
+            return self.WriteStringArray(val)
+        self.writetofile("List-Fallback\n")
+    if (isinstance(val, dict) and
+        self.GetDataType().GetSubType() == GEDTST_JSON):
+        self.writetofile("Dict-JSON\n")
         import json
         return self.WriteString(json.dumps(val))
+    self.writetofile("Raw\n")
     return self.WriteRaw(val)
 
 %}

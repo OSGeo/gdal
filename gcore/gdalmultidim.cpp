@@ -3366,7 +3366,7 @@ int GDALAttribute::ReadAsInt() const
  *
  * @return an int64_t, or INT64_MIN in case of error.
  */
-GInt64 GDALAttribute::ReadAsInt64() const
+int64_t GDALAttribute::ReadAsInt64() const
 {
     const auto nDims = GetDimensionCount();
     std::vector<GUInt64> startIdx(1 + nDims, 0);
@@ -12896,7 +12896,7 @@ int GDALAttributeReadAsInt(GDALAttributeH hAttr)
  *
  * @return an int64_t, or INT64_MIN in case of error.
  */
-GInt64 GDALAttributeReadAsInt64(GDALAttributeH hAttr)
+int64_t GDALAttributeReadAsInt64(GDALAttributeH hAttr)
 {
     VALIDATE_POINTER1(hAttr, __func__, 0);
     return hAttr->m_poImpl->ReadAsInt64();
