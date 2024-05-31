@@ -952,8 +952,8 @@ domains.
 
 Writing to /dev/stdout or /vsistdout/ is also supported.
 
-Example
--------
+Examples
+--------
 
 The following bash script will build a
 :ref:`csv <vector.csv>` file and a
@@ -962,8 +962,6 @@ to KML using :ref:`ogr2ogr` into a .kml
 file with timestamps and styling.
 
 ::
-
-
 
    #!/bin/bash
    # Copyright (c) 2010, Brian Case
@@ -1065,4 +1063,19 @@ file with timestamps and styling.
 
    ogr2ogr -f libkml qed.kml qed.vrt
 
+The following example shows how the three levels of `<name>`
+in LIBKML relate to their controlling options:
 
+.. code-block:: console
+
+    ogr2ogr -f LIBKML /dev/stdout 0.contours.csv \
+      -dsco NAME=DSCO -lco NAME=LCO \
+      -sql 'SELECT NAME FROM "0.contours"'
+
+    <Document id="root_doc">
+      <name>DSCO</name>
+      <Document id="_0.contours">
+        <name>LCO</name>
+        <Placemark id="_0.contours.1">
+          <name>-1500</name>
+          <LineString>
