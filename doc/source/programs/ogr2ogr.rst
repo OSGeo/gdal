@@ -454,10 +454,8 @@ output coordinate system or even reprojecting the features during translation.
     consecutive points of the output geometry using the
     :cpp:func:`OGRGeometry::Simplify` method
     The unit of the distance is in 
-    georeferenced units of the target vector dataset.
-    This option is applied after the reprojection implied by :option:`-t_srs`
-    Note for the same given tolerance value, actual on the ground
-    east-west tolerance decreases towards the poles.
+    georeferenced units of the source vector dataset.
+    This option is applied before the reprojection implied by :option:`-t_srs`
 
 .. option:: -segmentize <max_dist>
 
@@ -465,8 +463,6 @@ output coordinate system or even reprojecting the features during translation.
     consecutive points of the output geometry before intermediate points are added.
     The unit of the distance is georeferenced units of the source raster.
     This option is applied before the reprojection implied by :option:`-t_srs`
-    Note for the same given maximum distance value, the actual on the ground 
-    east-west value decreases towards the poles.
 
 .. option:: -makevalid
 
