@@ -1067,8 +1067,8 @@ PROJ options
 
 .. _list_config_options:
 
-List of configuration options and where they apply
---------------------------------------------------
+List of configuration options and where they are documented
+-----------------------------------------------------------
 
 .. config_index::
    :types: config

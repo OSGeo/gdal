@@ -124,7 +124,7 @@ be on the right, i.e. a line string goes clockwise around a top.
 
 .. option:: -q
 
-    Be quiet.
+    Be quiet: do not print progress indicators.
 
 C API
 -----
