@@ -450,9 +450,19 @@ output coordinate system or even reprojecting the features during translation.
     topology per feature, in particular for polygon geometries, but not for a
     whole layer.
 
+    The specified value of this option is the tolerance used to merge
+    consecutive points of the output geometry using the
+    :cpp:func:`OGRGeometry::Simplify` method
+    The unit of the distance is in 
+    georeferenced units of the source vector dataset.
+    This option is applied before the reprojection implied by :option:`-t_srs`
+
 .. option:: -segmentize <max_dist>
 
-    Maximum distance between 2 nodes. Used to create intermediate points.
+    The specified value of this option is the maximum distance between two
+    consecutive points of the output geometry before intermediate points are added.
+    The unit of the distance is georeferenced units of the source raster.
+    This option is applied before the reprojection implied by :option:`-t_srs`
 
 .. option:: -makevalid
 
