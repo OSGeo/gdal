@@ -132,7 +132,7 @@ General building notes
 
 Building of the driver as plugin is tested to work on
 
-* Ubuntu 22.04 using GCC
+* Ubuntu 24.04 using GCC
 * Windows 10 using GCC 13.1.0 (with MCF threads) + MinGW-w64 11.0.0 (MSVCRT runtime), which is obtainable from `WinLibs <https://winlibs.com/>`_.
 
 Ensure to meet the following driver dependencies:
