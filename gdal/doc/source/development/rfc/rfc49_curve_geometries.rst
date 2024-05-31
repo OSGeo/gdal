@@ -28,7 +28,7 @@ in ISO/IEC 13249 Part 3 Spatial (abbreviated as ISO SQL/MM Part 3):
 -  compound curve: a sequence of connected curves, either line strings
    or circular strings
 -  curve polygon: polygon consisting of one outer ring, and zero or more
-   inner ring. Each ring can be one of the curve implementations: line
+   inner rings. Each ring can be one of the curve implementations: line
    strings, circular strings, compound curves.
 -  multicurve: a collection of curves (line strings, circular strings,
    compound curves)
