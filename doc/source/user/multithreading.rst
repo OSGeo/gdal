@@ -38,7 +38,7 @@ Block cache related structures for a given GDALDataset are not thread-safe.
 Drivers also often implement lazy initialization strategies to access various
 metadata which are resolved only the first time the method to access them is
 invoked. Drivers may also rely on third-party libraries that expose objects
-that are not tread-safe.
+that are not thread-safe.
 
 Those restrictions apply to the C and C++ ABI, and all languages bindings (unless
 they would take special precautions to serialize calls)
