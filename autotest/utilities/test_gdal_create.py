@@ -55,14 +55,14 @@ def gdal_create_path():
 ###############################################################################
 
 
-@pytest.mark.parametrize("burn", ("-burn 1 2", '-burn "1 2"', "-burn 1 -burn 2"))
+@pytest.mark.parametrize("burn", ("-burn 1.1 2", '-burn "1 2"', "-burn 1 -burn 2"))
 def test_gdal_create_pdf_tif(gdal_create_path, tmp_path, burn):
 
     output_tif = str(tmp_path / "tmp.tif")
 
     (_, err) = gdaltest.runexternal_out_and_err(
         gdal_create_path
-        + f" {output_tif} -bands 3 -outsize 1 2 -a_srs EPSG:4326 -a_ullr 2 50 3 49 -a_nodata 5 {burn} -ot UInt16 -co COMPRESS=DEFLATE -mo FOO=BAR"
+        + f" -bands 3 -outsize 1 2 -a_srs EPSG:4326 -a_ullr 2 50 3 49 -a_nodata 5 {burn} -ot UInt16 -co COMPRESS=DEFLATE -mo FOO=BAR  {output_tif}"
     )
     assert err is None or err == "", "got error/warning"
 
