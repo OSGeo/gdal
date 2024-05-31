@@ -40,7 +40,7 @@ OGRXODRLayerLane::OGRXODRLayerLane(const RoadElements &xodrRoadElements,
         std::make_unique<OGRFeatureDefn>(FEATURE_CLASS_NAME.c_str());
     m_poFeatureDefn->Reference();
     SetDescription(FEATURE_CLASS_NAME.c_str());
-    
+
     if (m_bDissolveTIN)
     {
         OGRwkbGeometryType wkbPolygonWithZ = OGR_GT_SetZ(wkbPolygon);

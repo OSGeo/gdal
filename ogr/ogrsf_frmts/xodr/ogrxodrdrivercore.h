@@ -33,6 +33,10 @@
 
 constexpr const char *DRIVER_NAME = "XODR";
 
-int CPL_DLL OGRXODRDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRXODRDriverIdentify PLUGIN_SYMBOL_NAME(OGRXODRDriverIdentify)
+#define OGRXODRDriverSetCommonMetadata                                         \
+    PLUGIN_SYMBOL_NAME(OGRXODRDriverSetCommonMetadata)
 
-void CPL_DLL OGRXODRDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRXODRDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRXODRDriverSetCommonMetadata(GDALDriver *poDriver);
