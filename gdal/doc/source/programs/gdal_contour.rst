@@ -119,7 +119,7 @@ raster elevation model (DEM).
 
 .. option:: -q
 
-    Be quiet.
+    Be quiet: do not print progress indicators.
 
 C API
 -----
