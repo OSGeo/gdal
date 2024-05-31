@@ -32,7 +32,7 @@
 #include "ogr_xodr.h"
 
 OGRXODRLayerLane::OGRXODRLayerLane(const RoadElements &xodrRoadElements,
-                                   const std::string proj4Defn,
+                                   const std::string &proj4Defn,
                                    const bool dissolveTriangulatedSurface)
     : OGRXODRLayer(xodrRoadElements, proj4Defn, dissolveTriangulatedSurface)
 {
@@ -40,7 +40,32 @@ OGRXODRLayerLane::OGRXODRLayerLane(const RoadElements &xodrRoadElements,
         std::make_unique<OGRFeatureDefn>(FEATURE_CLASS_NAME.c_str());
     m_poFeatureDefn->Reference();
     SetDescription(FEATURE_CLASS_NAME.c_str());
-    defineFeatureClass();
+    
+    if (m_bDissolveTIN)
+    {
+        OGRwkbGeometryType wkbPolygonWithZ = OGR_GT_SetZ(wkbPolygon);
+        m_poFeatureDefn->SetGeomType(wkbPolygonWithZ);
+    }
+    else
+    {
+        m_poFeatureDefn->SetGeomType(wkbTINZ);
+    }
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
+
+    OGRFieldDefn oFieldLaneID("LaneID", OFTInteger);
+    m_poFeatureDefn->AddFieldDefn(&oFieldLaneID);
+
+    OGRFieldDefn oFieldRoadID("RoadID", OFTString);
+    m_poFeatureDefn->AddFieldDefn(&oFieldRoadID);
+
+    OGRFieldDefn oFieldType("Type", OFTString);
+    m_poFeatureDefn->AddFieldDefn(&oFieldType);
+
+    OGRFieldDefn oFieldPred("Predecessor", OFTInteger);
+    m_poFeatureDefn->AddFieldDefn(&oFieldPred);
+
+    OGRFieldDefn oFieldSuc("Successor", OFTInteger);
+    m_poFeatureDefn->AddFieldDefn(&oFieldSuc);
 }
 
 int OGRXODRLayerLane::TestCapability(const char *pszCap)
@@ -60,9 +85,9 @@ OGRFeature *OGRXODRLayerLane::GetNextRawFeature()
     while (m_laneIter != m_roadElements.lanes.end() && (*m_laneIter).id == 0)
     {
         // Skip lane(s) with id 0 because these "center lanes" don't have any width
-        m_laneIter++;
-        m_laneMeshIter++;
-        m_laneRoadIDIter++;
+        ++m_laneIter;
+        ++m_laneMeshIter;
+        ++m_laneRoadIDIter;
     }
 
     if (m_laneIter != m_roadElements.lanes.end())
@@ -102,9 +127,9 @@ OGRFeature *OGRXODRLayerLane::GetNextRawFeature()
         feature->SetField(m_poFeatureDefn->GetFieldIndex("Successor"),
                           lane.successor);
 
-        m_laneIter++;
-        m_laneMeshIter++;
-        m_laneRoadIDIter++;
+        ++m_laneIter;
+        ++m_laneMeshIter;
+        ++m_laneRoadIDIter;
     }
 
     if (feature)
@@ -116,33 +141,4 @@ OGRFeature *OGRXODRLayerLane::GetNextRawFeature()
         // End of features for the given layer reached.
         return nullptr;
     }
-}
-
-void OGRXODRLayerLane::defineFeatureClass()
-{
-    if (m_bDissolveTIN)
-    {
-        OGRwkbGeometryType wkbPolygonWithZ = OGR_GT_SetZ(wkbPolygon);
-        m_poFeatureDefn->SetGeomType(wkbPolygonWithZ);
-    }
-    else
-    {
-        m_poFeatureDefn->SetGeomType(wkbTINZ);
-    }
-    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
-
-    OGRFieldDefn oFieldLaneID("LaneID", OFTInteger);
-    m_poFeatureDefn->AddFieldDefn(&oFieldLaneID);
-
-    OGRFieldDefn oFieldRoadID("RoadID", OFTString);
-    m_poFeatureDefn->AddFieldDefn(&oFieldRoadID);
-
-    OGRFieldDefn oFieldType("Type", OFTString);
-    m_poFeatureDefn->AddFieldDefn(&oFieldType);
-
-    OGRFieldDefn oFieldPred("Predecessor", OFTInteger);
-    m_poFeatureDefn->AddFieldDefn(&oFieldPred);
-
-    OGRFieldDefn oFieldSuc("Successor", OFTInteger);
-    m_poFeatureDefn->AddFieldDefn(&oFieldSuc);
 }

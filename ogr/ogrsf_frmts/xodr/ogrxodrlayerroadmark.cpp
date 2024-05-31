@@ -32,7 +32,7 @@
 #include "ogr_xodr.h"
 
 OGRXODRLayerRoadMark::OGRXODRLayerRoadMark(
-    const RoadElements &xodrRoadElements, const std::string proj4Defn,
+    const RoadElements &xodrRoadElements, const std::string &proj4Defn,
     const bool dissolveTriangulatedSurface)
     : OGRXODRLayer(xodrRoadElements, proj4Defn, dissolveTriangulatedSurface)
 {
@@ -40,7 +40,26 @@ OGRXODRLayerRoadMark::OGRXODRLayerRoadMark(
         std::make_unique<OGRFeatureDefn>(FEATURE_CLASS_NAME.c_str());
     m_poFeatureDefn->Reference();
     SetDescription(FEATURE_CLASS_NAME.c_str());
-    defineFeatureClass();
+
+    if (m_bDissolveTIN)
+    {
+        OGRwkbGeometryType wkbPolygonWithZ = OGR_GT_SetZ(wkbPolygon);
+        m_poFeatureDefn->SetGeomType(wkbPolygonWithZ);
+    }
+    else
+    {
+        m_poFeatureDefn->SetGeomType(wkbTINZ);
+    }
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
+
+    OGRFieldDefn oFieldRoadID("RoadID", OFTString);
+    m_poFeatureDefn->AddFieldDefn(&oFieldRoadID);
+
+    OGRFieldDefn oFieldLaneID("LaneID", OFTInteger);
+    m_poFeatureDefn->AddFieldDefn(&oFieldLaneID);
+
+    OGRFieldDefn oFieldType("Type", OFTString);
+    m_poFeatureDefn->AddFieldDefn(&oFieldType);
 }
 
 int OGRXODRLayerRoadMark::TestCapability(const char *pszCap)
@@ -86,8 +105,8 @@ OGRFeature *OGRXODRLayerRoadMark::GetNextRawFeature()
                           roadMark.type.c_str());
         feature->SetFID(m_nNextFID++);
 
-        m_roadMarkIter++;
-        m_roadMarkMeshIter++;
+        ++m_roadMarkIter;
+        ++m_roadMarkMeshIter;
     }
 
     if (feature)
@@ -99,27 +118,4 @@ OGRFeature *OGRXODRLayerRoadMark::GetNextRawFeature()
         // End of features for the given layer reached.
         return nullptr;
     }
-}
-
-void OGRXODRLayerRoadMark::defineFeatureClass()
-{
-    if (m_bDissolveTIN)
-    {
-        OGRwkbGeometryType wkbPolygonWithZ = OGR_GT_SetZ(wkbPolygon);
-        m_poFeatureDefn->SetGeomType(wkbPolygonWithZ);
-    }
-    else
-    {
-        m_poFeatureDefn->SetGeomType(wkbTINZ);
-    }
-    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
-
-    OGRFieldDefn oFieldRoadID("RoadID", OFTString);
-    m_poFeatureDefn->AddFieldDefn(&oFieldRoadID);
-
-    OGRFieldDefn oFieldLaneID("LaneID", OFTInteger);
-    m_poFeatureDefn->AddFieldDefn(&oFieldLaneID);
-
-    OGRFieldDefn oFieldType("Type", OFTString);
-    m_poFeatureDefn->AddFieldDefn(&oFieldType);
 }

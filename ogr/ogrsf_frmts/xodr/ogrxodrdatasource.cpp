@@ -76,7 +76,7 @@ bool OGRXODRDataSource::Open(const char *pszFilename, CSLConstList openOptions)
     bool bDissolveTIN = CPLTestBool(openOptionValue);
 
     RoadElements roadElements = createRoadElements(roads);
-    std::string proj4Defn = xodr.proj4;
+    std::string &proj4Defn = xodr.proj4;
 
     auto refLine =
         std::make_unique<OGRXODRLayerReferenceLine>(roadElements, proj4Defn);

@@ -32,14 +32,28 @@
 #include "ogr_xodr.h"
 
 OGRXODRLayerRoadObject::OGRXODRLayerRoadObject(
-    const RoadElements &xodrRoadElements, const std::string proj4Defn)
+    const RoadElements &xodrRoadElements, const std::string &proj4Defn)
     : OGRXODRLayer(xodrRoadElements, proj4Defn)
 {
     m_poFeatureDefn =
         std::make_unique<OGRFeatureDefn>(FEATURE_CLASS_NAME.c_str());
     m_poFeatureDefn->Reference();
     SetDescription(FEATURE_CLASS_NAME.c_str());
-    defineFeatureClass();
+
+    m_poFeatureDefn->SetGeomType(wkbTINZ);
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
+
+    OGRFieldDefn oFieldObjectID("ObjectID", OFTString);
+    m_poFeatureDefn->AddFieldDefn(&oFieldObjectID);
+
+    OGRFieldDefn oFieldRoadID("RoadID", OFTString);
+    m_poFeatureDefn->AddFieldDefn(&oFieldRoadID);
+
+    OGRFieldDefn oFieldType("Type", OFTString);
+    m_poFeatureDefn->AddFieldDefn(&oFieldType);
+
+    OGRFieldDefn oFieldObjectName("Name", OFTString);
+    m_poFeatureDefn->AddFieldDefn(&oFieldObjectName);
 }
 
 int OGRXODRLayerRoadObject::TestCapability(const char *pszCap)
@@ -79,8 +93,8 @@ OGRFeature *OGRXODRLayerRoadObject::GetNextRawFeature()
                           roadObject.name.c_str());
         feature->SetFID(m_nNextFID++);
 
-        m_roadObjectIter++;
-        m_roadObjectMeshesIter++;
+        ++m_roadObjectIter;
+        ++m_roadObjectMeshesIter;
     }
 
     if (feature)
@@ -92,22 +106,4 @@ OGRFeature *OGRXODRLayerRoadObject::GetNextRawFeature()
         // End of features for the given layer reached.
         return nullptr;
     }
-}
-
-void OGRXODRLayerRoadObject::defineFeatureClass()
-{
-    m_poFeatureDefn->SetGeomType(wkbTINZ);
-    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
-
-    OGRFieldDefn oFieldObjectID("ObjectID", OFTString);
-    m_poFeatureDefn->AddFieldDefn(&oFieldObjectID);
-
-    OGRFieldDefn oFieldRoadID("RoadID", OFTString);
-    m_poFeatureDefn->AddFieldDefn(&oFieldRoadID);
-
-    OGRFieldDefn oFieldType("Type", OFTString);
-    m_poFeatureDefn->AddFieldDefn(&oFieldType);
-
-    OGRFieldDefn oFieldObjectName("Name", OFTString);
-    m_poFeatureDefn->AddFieldDefn(&oFieldObjectName);
 }

@@ -39,13 +39,13 @@
 #include <typeinfo>
 
 OGRXODRLayer::OGRXODRLayer(const RoadElements &xodrRoadElements,
-                           const std::string proj4Defn)
+                           const std::string &proj4Defn)
     : OGRXODRLayer(xodrRoadElements, proj4Defn, false)
 {
 }
 
 OGRXODRLayer::OGRXODRLayer(const RoadElements &xodrRoadElements,
-                           const std::string proj4Defn,
+                           const std::string &proj4Defn,
                            const bool dissolveTriangulatedSurface)
     : m_roadElements(xodrRoadElements),
       m_bDissolveTIN(dissolveTriangulatedSurface)

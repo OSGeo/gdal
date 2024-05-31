@@ -32,14 +32,32 @@
 #include "ogr_xodr.h"
 
 OGRXODRLayerLaneBorder::OGRXODRLayerLaneBorder(
-    const RoadElements &xodrRoadElements, const std::string proj4Defn)
+    const RoadElements &xodrRoadElements, const std::string &proj4Defn)
     : OGRXODRLayer(xodrRoadElements, proj4Defn)
 {
     m_poFeatureDefn =
         std::make_unique<OGRFeatureDefn>(FEATURE_CLASS_NAME.c_str());
     m_poFeatureDefn->Reference();
     SetDescription(FEATURE_CLASS_NAME.c_str());
-    defineFeatureClass();
+
+    OGRwkbGeometryType wkbLineStringWithZ = OGR_GT_SetZ(wkbLineString);
+    m_poFeatureDefn->SetGeomType(wkbLineStringWithZ);
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
+
+    OGRFieldDefn oFieldID("ID", OFTInteger);
+    m_poFeatureDefn->AddFieldDefn(&oFieldID);
+
+    OGRFieldDefn oFieldRoadID("RoadID", OFTString);
+    m_poFeatureDefn->AddFieldDefn(&oFieldRoadID);
+
+    OGRFieldDefn oFieldType("Type", OFTString);
+    m_poFeatureDefn->AddFieldDefn(&oFieldType);
+
+    OGRFieldDefn oFieldPred("Predecessor", OFTInteger);
+    m_poFeatureDefn->AddFieldDefn(&oFieldPred);
+
+    OGRFieldDefn oFieldSuc("Successor", OFTInteger);
+    m_poFeatureDefn->AddFieldDefn(&oFieldSuc);
 }
 
 int OGRXODRLayerLaneBorder::TestCapability(const char *pszCap)
@@ -84,10 +102,10 @@ OGRFeature *OGRXODRLayerLaneBorder::GetNextRawFeature()
                           lane.successor);
         feature->SetFID(m_nNextFID++);
 
-        m_laneIter++;
-        m_laneLinesOuterIter++;
-        m_laneLinesInnerIter++;  // For consistency, even though not used here
-        m_laneRoadIDIter++;
+        ++m_laneIter;
+        ++m_laneLinesOuterIter;
+        ++m_laneLinesInnerIter;  // For consistency, even though not used here
+        ++m_laneRoadIDIter;
     }
 
     if (feature)
@@ -99,26 +117,4 @@ OGRFeature *OGRXODRLayerLaneBorder::GetNextRawFeature()
         // End of features for the given layer reached.
         return nullptr;
     }
-}
-
-void OGRXODRLayerLaneBorder::defineFeatureClass()
-{
-    OGRwkbGeometryType wkbLineStringWithZ = OGR_GT_SetZ(wkbLineString);
-    m_poFeatureDefn->SetGeomType(wkbLineStringWithZ);
-    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(&m_poSRS);
-
-    OGRFieldDefn oFieldID("ID", OFTInteger);
-    m_poFeatureDefn->AddFieldDefn(&oFieldID);
-
-    OGRFieldDefn oFieldRoadID("RoadID", OFTString);
-    m_poFeatureDefn->AddFieldDefn(&oFieldRoadID);
-
-    OGRFieldDefn oFieldType("Type", OFTString);
-    m_poFeatureDefn->AddFieldDefn(&oFieldType);
-
-    OGRFieldDefn oFieldPred("Predecessor", OFTInteger);
-    m_poFeatureDefn->AddFieldDefn(&oFieldPred);
-
-    OGRFieldDefn oFieldSuc("Successor", OFTInteger);
-    m_poFeatureDefn->AddFieldDefn(&oFieldSuc);
 }
