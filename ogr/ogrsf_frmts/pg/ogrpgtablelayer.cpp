@@ -289,8 +289,8 @@ void OGRPGTableLayer::LoadMetadata()
 
 void OGRPGTableLayer::SerializeMetadata()
 {
-    if (!m_bMetadataModified &&
-        CPLTestBool(CPLGetConfigOption("OGR_PG_ENABLE_METADATA", "YES")))
+    if (!m_bMetadataModified ||
+        !CPLTestBool(CPLGetConfigOption("OGR_PG_ENABLE_METADATA", "YES")))
     {
         return;
     }

@@ -4869,6 +4869,12 @@ def test_ogr_pg_metadata(pg_ds, run_number):
     pg_ds.CommitTransaction()
 
     pg_ds = reconnect(pg_ds, update=1)
+
+    with gdal.config_option("OGR_PG_ENABLE_METADATA", "NO"):
+        lyr = pg_ds.GetLayerByName("test_ogr_pg_metadata")
+        assert lyr.GetMetadata_Dict() == {"DESCRIPTION": "my_desc"}
+
+    pg_ds = reconnect(pg_ds, update=1)
     with pg_ds.ExecuteSQL(
         "SELECT * FROM ogr_system_tables.metadata WHERE table_name = 'test_ogr_pg_metadata'"
     ) as sql_lyr:
@@ -4953,6 +4959,28 @@ def test_ogr_pg_metadata_restricted_user(pg_ds):
         )
         pg_ds.ExecuteSQL("DROP OWNED BY test_ogr_pg_metadata_restricted_user")
         pg_ds.ExecuteSQL("DROP ROLE test_ogr_pg_metadata_restricted_user")
+
+
+###############################################################################
+# Test disabling writing metadata
+
+
+@only_without_postgis
+def test_ogr_pg_write_metadata_disabled(pg_ds):
+
+    with gdal.config_option("OGR_PG_ENABLE_METADATA", "NO"):
+
+        pg_ds = reconnect(pg_ds, update=1)
+        lyr = pg_ds.CreateLayer(
+            "test_ogr_pg_metadata", geom_type=ogr.wkbPoint, options=["OVERWRITE=YES"]
+        )
+        lyr.SetMetadata({"foo": "bar"})
+        lyr.SetMetadataItem("bar", "baz")
+
+        pg_ds = reconnect(pg_ds, update=1)
+
+    lyr = pg_ds.GetLayerByName("test_ogr_pg_metadata")
+    assert lyr.GetMetadata_Dict() == {}
 
 
 ###############################################################################
