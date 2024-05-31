@@ -31,6 +31,10 @@ nodata areas) by interpolating from valid pixels around the edges of the area.
 Additional details on the algorithm are available in the
 :cpp:func:`GDALFillNodata` docs.
 
+.. note::
+
+    gdal_fillnodata is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. include:: options/help_and_help_general.rst
 
 .. option:: -q
@@ -83,9 +87,3 @@ Additional details on the algorithm are available in the
 
     The new file to create with the interpolated result.
     If not provided, the source band is updated in place.
-
-
-Notes
------
-
-gdal_fillnodata is a Python utility, and is only available if GDAL Python bindings are available.

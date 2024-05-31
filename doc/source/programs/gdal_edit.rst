@@ -43,6 +43,10 @@ It works only with raster formats that support update access to existing dataset
     through the GDAL API. This is for example the case of the :ref:`raster.gtiff`
     format (this is not a exhaustive list).
 
+.. note::
+
+    gdal_edit is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. include:: options/help_and_help_general.rst
 
 .. option:: -ro
@@ -213,9 +217,3 @@ Example
 .. code-block::
 
     gdal_edit -scale 1e3 1e4 -offset 0 10 twoBand.tif
-
-
-Notes
------
-
-gdal_edit is a Python utility, and is only available if GDAL Python bindings are available.

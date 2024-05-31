@@ -7013,24 +7013,23 @@ OGRLayer *GDALDataset::BuildLayerFromSelectInfo(
     swq_select *psSelectInfo, OGRGeometry *poSpatialFilter,
     const char *pszDialect, swq_select_parse_options *poSelectParseOptions)
 {
+    std::unique_ptr<swq_select> psSelectInfoUnique(psSelectInfo);
+
     std::unique_ptr<OGRGenSQLResultsLayer> poResults;
     GDALSQLParseInfo *psParseInfo =
-        BuildParseInfo(psSelectInfo, poSelectParseOptions);
+        BuildParseInfo(psSelectInfoUnique.get(), poSelectParseOptions);
 
     if (psParseInfo)
     {
         const auto nErrorCounter = CPLGetErrorCounter();
         poResults = std::make_unique<OGRGenSQLResultsLayer>(
-            this, psSelectInfo, poSpatialFilter, psParseInfo->pszWHERE,
-            pszDialect);
+            this, std::move(psSelectInfoUnique), poSpatialFilter,
+            psParseInfo->pszWHERE, pszDialect);
         if (CPLGetErrorCounter() > nErrorCounter &&
             CPLGetLastErrorType() != CE_None)
             poResults.reset();
     }
-    else
-    {
-        delete psSelectInfo;
-    }
+
     DestroyParseInfo(psParseInfo);
 
     return poResults.release();

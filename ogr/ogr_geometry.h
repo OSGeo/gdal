@@ -631,6 +631,8 @@ class CPL_DLL OGRGeometry
 
     virtual void swapXY();
 
+    bool IsRectangle() const;
+
     //! @cond Doxygen_Suppress
     static OGRGeometry *CastToIdentity(OGRGeometry *poGeom)
     {

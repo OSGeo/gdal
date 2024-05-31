@@ -34,6 +34,10 @@ The :program:`gdal2xyz` utility can be used to translate a raster file into xyz 
     * Skip or replace nodata value
     * Return the output as numpy arrays.
 
+.. note::
+
+    gdal2xyz is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. program:: gdal2xyz
 
 .. include:: options/help_and_help_general.rst
@@ -110,5 +114,3 @@ Caveats
 -------
 
 gdal2xyz output values with a limited precision. Use ``gdal_translate -of XYZ`` if more precision is desired.
-
-gdal2xyz is a Python utility, and is only available if GDAL Python bindings are available.

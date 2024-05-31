@@ -84,6 +84,16 @@ void OGRParquetLayerBase::ResetReading()
 }
 
 /************************************************************************/
+/*                     InvalidateCachedBatches()                        */
+/************************************************************************/
+
+void OGRParquetLayerBase::InvalidateCachedBatches()
+{
+    m_iRecordBatch = -1;
+    ResetReading();
+}
+
+/************************************************************************/
 /*                          LoadGeoMetadata()                           */
 /************************************************************************/
 
@@ -135,12 +145,11 @@ void OGRParquetLayerBase::LoadGeoMetadata(
 /************************************************************************/
 
 //! Parse bounding box column definition
-static bool ParseGeometryColumnCovering(const CPLJSONObject &oJSONDef,
-                                        std::string &osBBOXColumn,
-                                        std::string &osXMin,
-                                        std::string &osYMin,
-                                        std::string &osXMax,
-                                        std::string &osYMax)
+/*static */
+bool OGRParquetLayerBase::ParseGeometryColumnCovering(
+    const CPLJSONObject &oJSONDef, std::string &osBBOXColumn,
+    std::string &osXMin, std::string &osYMin, std::string &osXMax,
+    std::string &osYMax)
 {
     const auto oCovering = oJSONDef["covering"];
     if (oCovering.IsValid() &&
@@ -470,7 +479,38 @@ int OGRParquetLayerBase::TestCapability(const char *pszCap)
     if (EQUAL(pszCap, OLCFastSetNextByIndex))
         return true;
 
+    if (EQUAL(pszCap, OLCFastSpatialFilter))
+    {
+        if (m_oMapGeomFieldIndexToGeomColBBOX.find(m_iGeomFieldFilter) !=
+            m_oMapGeomFieldIndexToGeomColBBOX.end())
+        {
+            return true;
+        }
+        return false;
+    }
+
     return OGRArrowLayer::TestCapability(pszCap);
+}
+
+/************************************************************************/
+/*                           GetNumCPUs()                               */
+/************************************************************************/
+
+/* static */
+int OGRParquetLayerBase::GetNumCPUs()
+{
+    const char *pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+    int nNumThreads = 0;
+    if (pszNumThreads == nullptr)
+        nNumThreads = std::min(4, CPLGetNumCPUs());
+    else
+        nNumThreads = EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs()
+                                                       : atoi(pszNumThreads);
+    if (nNumThreads > 1)
+    {
+        CPL_IGNORE_RET_VAL(arrow::SetCpuThreadPoolCapacity(nNumThreads));
+    }
+    return nNumThreads;
 }
 
 /************************************************************************/
@@ -489,16 +529,15 @@ OGRParquetLayer::OGRParquetLayer(
     if (pszParquetBatchSize)
         m_poArrowReader->set_batch_size(CPLAtoGIntBig(pszParquetBatchSize));
 
-    const char *pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-    int nNumThreads = 0;
-    if (pszNumThreads == nullptr)
-        nNumThreads = std::min(4, CPLGetNumCPUs());
-    else
-        nNumThreads = EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs()
-                                                       : atoi(pszNumThreads);
-    if (nNumThreads > 1)
+    const int nNumCPUs = GetNumCPUs();
+    const char *pszUseThreads =
+        CPLGetConfigOption("OGR_PARQUET_USE_THREADS", nullptr);
+    if (!pszUseThreads && nNumCPUs > 1)
     {
-        CPL_IGNORE_RET_VAL(arrow::SetCpuThreadPoolCapacity(nNumThreads));
+        pszUseThreads = "YES";
+    }
+    if (CPLTestBool(pszUseThreads))
+    {
         m_poArrowReader->set_use_threads(true);
     }
 
@@ -529,8 +568,8 @@ void OGRParquetLayer::EstablishFeatureDefn()
         return;
     }
 
-    const bool bUseBBOX = CPLTestBool(CPLGetConfigOption(
-        ("OGR_" + GetDriverUCName() + "_USE_BBOX").c_str(), "YES"));
+    const bool bUseBBOX =
+        CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_BBOX", "YES"));
 
     // Keep track of declared bounding box columns in GeoParquet JSON metadata,
     // in order not to expose them as regular fields.
@@ -1436,18 +1475,7 @@ bool OGRParquetLayer::ReadNextBatch()
                      m_anMapGeomFieldIndexToParquetColumns.size()) &&
              m_anMapGeomFieldIndexToParquetColumns[m_iGeomFieldFilter].size() >=
                  2 &&
-             (m_aeGeomEncoding[m_iGeomFieldFilter] ==
-                  OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT ||
-              m_aeGeomEncoding[m_iGeomFieldFilter] ==
-                  OGRArrowGeomEncoding::GEOARROW_STRUCT_LINESTRING ||
-              m_aeGeomEncoding[m_iGeomFieldFilter] ==
-                  OGRArrowGeomEncoding::GEOARROW_STRUCT_POLYGON ||
-              m_aeGeomEncoding[m_iGeomFieldFilter] ==
-                  OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOINT ||
-              m_aeGeomEncoding[m_iGeomFieldFilter] ==
-                  OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTILINESTRING ||
-              m_aeGeomEncoding[m_iGeomFieldFilter] ==
-                  OGRArrowGeomEncoding::GEOARROW_STRUCT_MULTIPOLYGON));
+             OGRArrowIsGeoArrowStruct(m_aeGeomEncoding[m_iGeomFieldFilter]));
 
         if (m_asAttributeFilterConstraints.empty() && !bUSEBBOXFields &&
             !(bIsGeoArrowStruct && m_poFilterGeom))
@@ -1811,57 +1839,6 @@ bool OGRParquetLayer::ReadNextBatch()
 
     SetBatch(poNextBatch);
 
-#ifdef DEBUG
-    const auto &poColumns = m_poBatch->columns();
-
-    // Sanity checks
-    CPLAssert(m_poBatch->num_columns() == (m_bIgnoredFields
-                                               ? m_nExpectedBatchColumns
-                                               : m_poSchema->num_fields()));
-
-    for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i)
-    {
-        int iCol;
-        if (m_bIgnoredFields)
-        {
-            iCol = m_anMapFieldIndexToArrayIndex[i];
-            if (iCol < 0)
-                continue;
-        }
-        else
-        {
-            iCol = m_anMapFieldIndexToArrowColumn[i][0];
-        }
-        CPL_IGNORE_RET_VAL(iCol);  // to make cppcheck happy
-
-        CPLAssert(iCol < static_cast<int>(poColumns.size()));
-        CPLAssert(m_poSchema->fields()[m_anMapFieldIndexToArrowColumn[i][0]]
-                      ->type()
-                      ->id() == poColumns[iCol]->type_id());
-    }
-
-    for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
-    {
-        int iCol;
-        if (m_bIgnoredFields)
-        {
-            iCol = m_anMapGeomFieldIndexToArrayIndex[i];
-            if (iCol < 0)
-                continue;
-        }
-        else
-        {
-            iCol = m_anMapGeomFieldIndexToArrowColumn[i];
-        }
-        CPL_IGNORE_RET_VAL(iCol);  // to make cppcheck happy
-
-        CPLAssert(iCol < static_cast<int>(poColumns.size()));
-        CPLAssert(m_poSchema->fields()[m_anMapGeomFieldIndexToArrowColumn[i]]
-                      ->type()
-                      ->id() == poColumns[iCol]->type_id());
-    }
-#endif
-
     return true;
 }
 
@@ -1871,9 +1848,8 @@ bool OGRParquetLayer::ReadNextBatch()
 
 void OGRParquetLayer::InvalidateCachedBatches()
 {
-    m_iRecordBatch = -1;
     m_bSingleBatch = false;
-    ResetReading();
+    OGRParquetLayerBase::InvalidateCachedBatches();
 }
 
 /************************************************************************/
@@ -1888,12 +1864,12 @@ OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
     m_anMapGeomFieldIndexToArrayIndex.clear();
     m_nRequestedFIDColumn = -1;
     OGRErr eErr = OGRLayer::SetIgnoredFields(papszFields);
+    int nBatchColumns = 0;
     if (!m_bHasMissingMappingToParquet && eErr == OGRERR_NONE)
     {
         m_bIgnoredFields = papszFields != nullptr && papszFields[0] != nullptr;
         if (m_bIgnoredFields)
         {
-            int nBatchColumns = 0;
             if (m_iFIDParquetColumn >= 0)
             {
                 m_nRequestedFIDColumn = nBatchColumns;
@@ -2004,34 +1980,14 @@ OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
                         m_oMapGeomFieldIndexToGeomColBBOXParquet.find(i);
                     if (oIter != m_oMapGeomFieldIndexToGeomColBBOX.end() &&
                         oIterParquet !=
-                            m_oMapGeomFieldIndexToGeomColBBOXParquet.end())
+                            m_oMapGeomFieldIndexToGeomColBBOXParquet.end() &&
+                        !OGRArrowIsGeoArrowStruct(m_aeGeomEncoding[i]))
                     {
-                        const bool bIsGeoArrowStruct =
-                            (m_aeGeomEncoding[i] ==
-                                 OGRArrowGeomEncoding::GEOARROW_STRUCT_POINT ||
-                             m_aeGeomEncoding[i] ==
-                                 OGRArrowGeomEncoding::
-                                     GEOARROW_STRUCT_LINESTRING ||
-                             m_aeGeomEncoding[i] ==
-                                 OGRArrowGeomEncoding::
-                                     GEOARROW_STRUCT_POLYGON ||
-                             m_aeGeomEncoding[i] ==
-                                 OGRArrowGeomEncoding::
-                                     GEOARROW_STRUCT_MULTIPOINT ||
-                             m_aeGeomEncoding[i] ==
-                                 OGRArrowGeomEncoding::
-                                     GEOARROW_STRUCT_MULTILINESTRING ||
-                             m_aeGeomEncoding[i] ==
-                                 OGRArrowGeomEncoding::
-                                     GEOARROW_STRUCT_MULTIPOLYGON);
-                        if (!bIsGeoArrowStruct)
-                        {
-                            oIter->second.iArrayIdx = nBatchColumns++;
-                            m_anRequestedParquetColumns.insert(
-                                m_anRequestedParquetColumns.end(),
-                                oIterParquet->second.anParquetCols.begin(),
-                                oIterParquet->second.anParquetCols.end());
-                        }
+                        oIter->second.iArrayIdx = nBatchColumns++;
+                        m_anRequestedParquetColumns.insert(
+                            m_anRequestedParquetColumns.end(),
+                            oIterParquet->second.anParquetCols.begin(),
+                            oIterParquet->second.anParquetCols.end());
                     }
                 }
                 else
@@ -2043,11 +1999,10 @@ OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
             CPLAssert(
                 static_cast<int>(m_anMapGeomFieldIndexToArrayIndex.size()) ==
                 m_poFeatureDefn->GetGeomFieldCount());
-#ifdef DEBUG
-            m_nExpectedBatchColumns = nBatchColumns;
-#endif
         }
     }
+
+    m_nExpectedBatchColumns = m_bIgnoredFields ? nBatchColumns : -1;
 
     ComputeConstraintsArrayIdx();
 
@@ -2152,6 +2107,17 @@ int OGRParquetLayer::TestCapability(const char *pszCap)
 
     if (EQUAL(pszCap, OLCIgnoreFields))
         return !m_bHasMissingMappingToParquet;
+
+    if (EQUAL(pszCap, OLCFastSpatialFilter))
+    {
+        if (m_iGeomFieldFilter >= 0 &&
+            m_iGeomFieldFilter < static_cast<int>(m_aeGeomEncoding.size()) &&
+            OGRArrowIsGeoArrowStruct(m_aeGeomEncoding[m_iGeomFieldFilter]))
+        {
+            return true;
+        }
+        // fallback to base method
+    }
 
     return OGRParquetLayerBase::TestCapability(pszCap);
 }

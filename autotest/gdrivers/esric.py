@@ -181,3 +181,20 @@ def test_tpkx_4(tpkx_ds):
     cs = l1b2.Checksum()
     expectedcs = 53503
     assert cs == expectedcs, "wrong data checksum"
+
+
+###############################################################################
+# Open a tpkx dataset where we need to ingest more bytes
+
+
+def test_tpkx_ingest_more_bytes(tmp_vsimem):
+    filename = str(tmp_vsimem / "root.json")
+    f = gdal.VSIFOpenL("/vsizip/{data/esric/Usa.tpkx}/root.json", "rb")
+    assert f
+    data = gdal.VSIFReadL(1, 10000, f)
+    gdal.VSIFCloseL(f)
+    # Append spaces at the beginning of the root.json file to test we try
+    # to ingest more bytes
+    data = b"{" + (b" " * 900) + data[1:]
+    gdal.FileFromMemBuffer(filename, data)
+    gdal.Open(filename)

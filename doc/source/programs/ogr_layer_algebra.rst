@@ -33,6 +33,10 @@ Description
 The :program:`ogr_layer_algebra` provides a command line utility to perform various vector layer algebraic operations. The utility takes a vector
 input source , a method source and generates the output of the operation in the specified output file
 
+.. note::
+
+    ogr_layer_algebra is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. program:: ogr_layer_algebra
 
 .. include:: options/help_and_help_general.rst
@@ -147,9 +151,3 @@ input source , a method source and generates the output of the operation in the 
     OGRSpatialReference.SetFromUserInput() call, which includes EPSG Projected,
     Geographic or Compound CRS (i.e. EPSG:4296), a well known text (WKT) CRS definition,
     PROJ.4 declarations, or the name of a .prj file containing a WKT CRS definition.
-
-
-Notes
------
-
-ogr_layer_algebra is a Python utility, and is only available if GDAL Python bindings are available.

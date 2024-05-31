@@ -9,6 +9,7 @@ RUN apk add \
     brunsli-dev \
     ccache \
     cfitsio-dev \
+    clang \
     cmake \
     curl-dev \
     expat-dev \

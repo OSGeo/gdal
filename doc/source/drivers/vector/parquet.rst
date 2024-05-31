@@ -179,7 +179,11 @@ Starting with GDAL 3.6.0, the driver can read directories that contain several
 Parquet files, and expose them as a single layer. This support is only enabled
 if the driver is built against the ``arrowdataset`` C++ library.
 
-Note that no optimization is currently done regarding filtering.
+It is also possible to force opening single Parquet file in that mode by prefixing
+their filename with ``PARQUET:``.
+
+Optimized spatial and attribute filtering for Arrow datasets is available since
+GDAL 3.10.
 
 Metadata
 --------

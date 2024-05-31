@@ -683,8 +683,23 @@ inline std::unique_ptr<OGRFieldDomain> OGRArrowLayer::BuildDomainFromBatch(
         eType = OFTInteger64;
     auto values = std::static_pointer_cast<arrow::StringArray>(dict);
     std::vector<OGRCodedValue> asValues;
-    asValues.reserve(values->length());
-    for (int i = 0; i < values->length(); ++i)
+    if (values->length() > INT_MAX)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "BuildDomainFromBatch(): too many values");
+        return nullptr;
+    }
+    try
+    {
+        asValues.reserve(static_cast<size_t>(values->length()));
+    }
+    catch (const std::bad_alloc &)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "BuildDomainFromBatch(): out of memory");
+        return nullptr;
+    }
+    for (int i = 0; i < static_cast<int>(values->length()); ++i)
     {
         if (!values->IsNull(i))
         {
@@ -1345,7 +1360,8 @@ static CPLJSONArray GetListAsJSON(const ArrowType *array,
         if (values->IsNull(nIdxStart + k))
             oArray.AddNull();
         else
-            AddToArray(oArray, values.get(), nIdxStart + k);
+            AddToArray(oArray, values.get(),
+                       static_cast<size_t>(nIdxStart + k));
     }
     return oArray;
 }
@@ -1795,10 +1811,10 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
         case arrow::Type::MAP:
         case arrow::Type::STRUCT:
         {
-            poFeature->SetField(i,
-                                GetListAsJSON(array, nIdxInArray)
-                                    .Format(CPLJSONObject::PrettyFormat::Plain)
-                                    .c_str());
+            poFeature->SetField(
+                i, GetListAsJSON(array, static_cast<size_t>(nIdxInArray))
+                       .Format(CPLJSONObject::PrettyFormat::Plain)
+                       .c_str());
             break;
         }
 
@@ -2389,7 +2405,7 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
                 const auto castArray =
                     static_cast<const arrow::MapArray *>(array);
                 poFeature->SetField(
-                    i, GetMapAsJSON(castArray, nIdxInBatch)
+                    i, GetMapAsJSON(castArray, static_cast<size_t>(nIdxInBatch))
                            .Format(CPLJSONObject::PrettyFormat::Plain)
                            .c_str());
                 break;
@@ -3130,7 +3146,9 @@ inline void OGRArrowLayer::ResetReading()
 /*                        GetColumnSubNode()                           */
 /***********************************************************************/
 
-static const swq_expr_node *GetColumnSubNode(const swq_expr_node *poNode)
+/* static*/
+inline const swq_expr_node *
+OGRArrowLayer::GetColumnSubNode(const swq_expr_node *poNode)
 {
     if (poNode->eNodeType == SNT_OPERATION && poNode->nSubExprCount == 2)
     {
@@ -3146,7 +3164,9 @@ static const swq_expr_node *GetColumnSubNode(const swq_expr_node *poNode)
 /*                        GetConstantSubNode()                         */
 /***********************************************************************/
 
-static const swq_expr_node *GetConstantSubNode(const swq_expr_node *poNode)
+/* static */
+inline const swq_expr_node *
+OGRArrowLayer::GetConstantSubNode(const swq_expr_node *poNode)
 {
     if (poNode->eNodeType == SNT_OPERATION && poNode->nSubExprCount == 2)
     {
@@ -3162,7 +3182,8 @@ static const swq_expr_node *GetConstantSubNode(const swq_expr_node *poNode)
 /*                           IsComparisonOp()                          */
 /***********************************************************************/
 
-static bool IsComparisonOp(int op)
+/* static*/
+inline bool OGRArrowLayer::IsComparisonOp(int op)
 {
     return (op == SWQ_EQ || op == SWQ_NE || op == SWQ_LT || op == SWQ_LE ||
             op == SWQ_GT || op == SWQ_GE);
@@ -3858,9 +3879,12 @@ OGRArrowLayer::SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch)
     m_poArrayYMaxFloat = nullptr;
 
     if (m_poBatch)
+    {
         m_poBatchColumns = m_poBatch->columns();
+        SanityCheckOfSetBatch();
+    }
 
-    if (m_poBatch && m_poFilterGeom)
+    if (m_poBatch && m_poFilterGeom && !m_bBaseArrowIgnoreSpatialFilterRect)
     {
         int iCol;
         if (m_bIgnoredFields)
@@ -3960,6 +3984,67 @@ OGRArrowLayer::SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch)
 }
 
 /************************************************************************/
+/*                      SanityCheckOfSetBatch()                         */
+/************************************************************************/
+
+inline void OGRArrowLayer::SanityCheckOfSetBatch() const
+{
+#ifdef DEBUG
+    CPLAssert(m_poBatch);
+
+    const auto &poColumns = m_poBatch->columns();
+
+    // Sanity checks
+    CPLAssert(m_poBatch->num_columns() == (m_bIgnoredFields
+                                               ? m_nExpectedBatchColumns
+                                               : m_poSchema->num_fields()));
+    const auto &fields = m_poSchema->fields();
+
+    for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i)
+    {
+        int iCol;
+        if (m_bIgnoredFields)
+        {
+            iCol = m_anMapFieldIndexToArrayIndex[i];
+            if (iCol < 0)
+                continue;
+        }
+        else
+        {
+            iCol = m_anMapFieldIndexToArrowColumn[i][0];
+        }
+        CPL_IGNORE_RET_VAL(iCol);  // to make cppcheck happy
+
+        CPLAssert(iCol < static_cast<int>(poColumns.size()));
+        CPLAssert(fields[m_anMapFieldIndexToArrowColumn[i][0]]->type()->id() ==
+                  poColumns[iCol]->type_id());
+    }
+
+    for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
+    {
+        int iCol;
+        if (m_bIgnoredFields)
+        {
+            iCol = m_anMapGeomFieldIndexToArrayIndex[i];
+            if (iCol < 0)
+                continue;
+        }
+        else
+        {
+            iCol = m_anMapGeomFieldIndexToArrowColumn[i];
+        }
+        CPL_IGNORE_RET_VAL(iCol);  // to make cppcheck happy
+
+        CPLAssert(iCol < static_cast<int>(poColumns.size()));
+        CPLAssert(fields[m_anMapGeomFieldIndexToArrowColumn[i]]->type()->id() ==
+                  poColumns[iCol]->type_id());
+    }
+#else
+    CPL_IGNORE_RET_VAL(m_nExpectedBatchColumns);
+#endif
+}
+
+/************************************************************************/
 /*                        GetNextRawFeature()                           */
 /************************************************************************/
 
@@ -3977,7 +4062,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
 
     // Evaluate spatial filter by computing the bounding box of each geometry
     // but without creating a OGRGeometry
-    if (m_poFilterGeom)
+    if (m_poFilterGeom && !m_bBaseArrowIgnoreSpatialFilterRect)
     {
         int iCol;
         if (m_bIgnoredFields)
@@ -3989,7 +4074,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
             iCol = m_anMapGeomFieldIndexToArrowColumn[m_iGeomFieldFilter];
         }
 
-        if (m_poArrayXMinFloat || m_poArrayXMinDouble)
+        if (iCol >= 0 && (m_poArrayXMinFloat || m_poArrayXMinDouble))
         {
             OGREnvelope sEnvelopeSkipToNextFeatureDueToBBOX;
             const auto IntersectsBBOX =
@@ -4813,13 +4898,8 @@ inline void OGRArrowLayer::SetSpatialFilter(int iGeomField,
                                             OGRGeometry *poGeomIn)
 
 {
-    if (iGeomField < 0 || (iGeomField >= GetLayerDefn()->GetGeomFieldCount() &&
-                           !(iGeomField == 0 && poGeomIn == nullptr)))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid geometry field index : %d", iGeomField);
+    if (!ValidateGeometryFieldIndexForSetSpatialFilter(iGeomField, poGeomIn))
         return;
-    }
 
     // When changing filters, we need to invalidate cached batches, as
     // PostFilterArrowArray() has potentially modified array contents
@@ -5315,7 +5395,8 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
     };
 
     // cppcheck-suppress unreadVariable
-    std::vector<FieldDesc> fieldDesc(out_schema->n_children);
+    std::vector<FieldDesc> fieldDesc(
+        static_cast<size_t>(out_schema->n_children));
     for (size_t i = 0; i < m_anMapFieldIndexToArrowColumn.size(); i++)
     {
         const int nArrowCol = m_anMapFieldIndexToArrowColumn[i][0];
@@ -5518,6 +5599,10 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             }
         }
 
+        const bool bNeedsPostFilter =
+            (m_poAttrQuery && !m_bBaseArrowIgnoreAttributeFilter) ||
+            (m_poFilterGeom && !m_bBaseArrowIgnoreSpatialFilter);
+
         struct ArrowSchema schema;
         memset(&schema, 0, sizeof(schema));
         auto status = arrow::ExportRecordBatch(*m_poBatch, out_array, &schema);
@@ -5635,7 +5720,7 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         for (int64_t i = 0; i < m_nIdxInBatch; ++i)
             IncrFeatureIdx();
 
-        if (m_poAttrQuery || m_poFilterGeom)
+        if (bNeedsPostFilter)
         {
             CPLStringList aosOptions;
             if (m_iFIDArrowColumn < 0)
@@ -5827,7 +5912,7 @@ OGRArrowLayer::CreateWKBArrayFromWKTArray(const struct ArrowArray *sourceArray)
 
         const size_t nWKBSize = oTranslator.TranslateWKT(
             sourceBytes + sourceOffsets[i],
-            sourceOffsets[i + 1] - sourceOffsets[i],
+            static_cast<size_t>(sourceOffsets[i + 1] - sourceOffsets[i]),
             sourceOffsets[i + 1] < sourceOffsets[nLength]);
         if (nWKBSize == static_cast<size_t>(-1))
         {

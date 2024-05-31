@@ -61,6 +61,9 @@
 
 #ifdef GDAL_USE_ARROWDATASET
 #include "arrow/filesystem/filesystem.h"
+#include "arrow/compute/api_scalar.h"
+#include "arrow/compute/cast.h"
+#include "arrow/compute/registry.h"
 #include "arrow/dataset/dataset.h"
 #include "arrow/dataset/discovery.h"
 #include "arrow/dataset/file_parquet.h"

@@ -907,6 +907,11 @@ void VSIFree(void *pData)
 
 void *VSIMallocAligned(size_t nAlignment, size_t nSize)
 {
+    // In particular for posix_memalign() where behavior when passing
+    // nSize == 0 is technically implementation defined (Valgrind complains),
+    // so let's always return NULL.
+    if (nSize == 0)
+        return nullptr;
 #if defined(HAVE_POSIX_MEMALIGN) && !defined(DEBUG_VSIMALLOC)
     void *pRet = nullptr;
     if (posix_memalign(&pRet, nAlignment, nSize) != 0)
@@ -924,7 +929,6 @@ void *VSIMallocAligned(size_t nAlignment, size_t nSize)
     // Detect overflow.
     if (nSize + nAlignment < nSize)
         return nullptr;
-    // TODO(schwehr): C++11 has std::aligned_storage, alignas, and related.
     GByte *pabyData = static_cast<GByte *>(VSIMalloc(nSize + nAlignment));
     if (pabyData == nullptr)
         return nullptr;

@@ -56,6 +56,10 @@ output format is not VRT, final translation is done with :program:`ogr2ogr`
 or :py:func:`gdal.VectorTranslate`. So, for advanced uses, output to VRT,
 potential manual editing of it and :program:`ogr2ogr` can be done.
 
+.. note::
+
+    ogrmerge is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. program:: ogrmerge
 
 .. include:: options/help_and_help_general.rst
@@ -198,9 +202,3 @@ and adds a 'country' field to each feature whose value is 'france' or
 .. code-block::
 
     ogrmerge -single -o merged.shp france.shp germany.shp -src_layer_field_name country
-
-Notes
------
-
-ogrmerge is a Python utility, and is only available if GDAL Python bindings are available.
-

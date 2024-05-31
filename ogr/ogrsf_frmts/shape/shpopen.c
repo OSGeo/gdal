@@ -46,6 +46,12 @@
 #endif
 #endif
 
+/* Allows customization of the message in vendored builds (such as GDAL) */
+#ifndef SHP_RESTORE_SHX_HINT_MESSAGE
+#define SHP_RESTORE_SHX_HINT_MESSAGE                                           \
+    " Use SHPRestoreSHX() to restore or create it."
+#endif
+
 /************************************************************************/
 /*                          SHPWriteHeader()                            */
 /*                                                                      */
@@ -324,14 +330,14 @@ SHPHandle SHPAPI_CALL SHPOpenLL(const char *pszLayer, const char *pszAccess,
 
     if (psSHP->fpSHX == SHPLIB_NULLPTR)
     {
-        const size_t nMessageLen = strlen(pszFullname) * 2 + 256;
+        const size_t nMessageLen =
+            64 + strlen(pszFullname) * 2 + strlen(SHP_RESTORE_SHX_HINT_MESSAGE);
         char *pszMessage = STATIC_CAST(char *, malloc(nMessageLen));
         pszFullname[nLenWithoutExtension] = 0;
-        snprintf(pszMessage, nMessageLen,
-                 "Unable to open %s.shx or %s.SHX. "
-                 "Set SHAPE_RESTORE_SHX config option to YES to restore or "
-                 "create it.",
-                 pszFullname, pszFullname);
+        snprintf(
+            pszMessage, nMessageLen,
+            "Unable to open %s.shx or %s.SHX." SHP_RESTORE_SHX_HINT_MESSAGE,
+            pszFullname, pszFullname);
         psHooks->Error(pszMessage);
         free(pszMessage);
 

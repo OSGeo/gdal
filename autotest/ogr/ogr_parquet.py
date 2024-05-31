@@ -87,6 +87,26 @@ def _validate(filename, check_data=False):
 
 
 ###############################################################################
+
+
+def _has_arrow_dataset():
+    drv = gdal.GetDriverByName("Parquet")
+    return drv is not None and drv.GetMetadataItem("ARROW_DATASET") is not None
+
+
+###############################################################################
+
+
+@pytest.fixture(scope="module", params=[True, False], ids=["arrow-dataset", "regular"])
+def with_arrow_dataset_or_not(request):
+
+    if request.param and not _has_arrow_dataset():
+        pytest.skip("Test requires build with ArrowDataset")
+
+    yield request.param
+
+
+###############################################################################
 # Read invalid file
 
 
@@ -102,9 +122,12 @@ def test_ogr_parquet_invalid():
 
 def _check_test_parquet(
     filename,
+    expect_layer_geom_type=True,
     expect_fast_feature_count=True,
     expect_fast_get_extent=True,
     expect_ignore_fields=True,
+    expect_domain=True,
+    fid_reliable_after_spatial_filtering=True,
 ):
     with gdaltest.config_option("OGR_PARQUET_BATCH_SIZE", "2"):
         ds = gdal.OpenEx(filename)
@@ -121,7 +144,8 @@ def _check_test_parquet(
     srs = lyr_defn.GetGeomFieldDefn(0).GetSpatialRef()
     assert srs is not None
     assert srs.GetAuthorityCode(None) == "4326"
-    assert lyr_defn.GetGeomFieldDefn(0).GetType() == ogr.wkbPoint
+    if expect_layer_geom_type:
+        assert lyr_defn.GetGeomFieldDefn(0).GetType() == ogr.wkbPoint
     # import pprint
     # pprint.pprint(got_field_defns)
     expected_field_defns = [
@@ -245,17 +269,18 @@ def _check_test_parquet(
     with pytest.raises(Exception):
         lyr.GetExtent(geom_field=1)
 
-    assert ds.GetFieldDomainNames() == ["dictDomain"]
-    assert ds.GetFieldDomain("not_existing") is None
-    for _ in range(2):
-        domain = ds.GetFieldDomain("dictDomain")
-        assert domain is not None
-        assert domain.GetName() == "dictDomain"
-        assert domain.GetDescription() == ""
-        assert domain.GetDomainType() == ogr.OFDT_CODED
-        assert domain.GetFieldType() == ogr.OFTInteger
-        assert domain.GetFieldSubType() == ogr.OFSTNone
-        assert domain.GetEnumeration() == {"0": "foo", "1": "bar", "2": "baz"}
+    if expect_domain:
+        assert ds.GetFieldDomainNames() == ["dictDomain"]
+        assert ds.GetFieldDomain("not_existing") is None
+        for _ in range(2):
+            domain = ds.GetFieldDomain("dictDomain")
+            assert domain is not None
+            assert domain.GetName() == "dictDomain"
+            assert domain.GetDescription() == ""
+            assert domain.GetDomainType() == ogr.OFDT_CODED
+            assert domain.GetFieldType() == ogr.OFTInteger
+            assert domain.GetFieldSubType() == ogr.OFSTNone
+            assert domain.GetEnumeration() == {"0": "foo", "1": "bar", "2": "baz"}
 
     f = lyr.GetNextFeature()
     assert f.GetFID() == 0
@@ -398,7 +423,9 @@ def _check_test_parquet(
     lyr.SetSpatialFilterRect(4, 2, 4, 2)
     lyr.ResetReading()
     f = lyr.GetNextFeature()
-    assert f.GetFID() == 4
+    if fid_reliable_after_spatial_filtering:
+        assert f.GetFID() == 4
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (4 2)"
 
     lyr.SetSpatialFilterRect(-100, -100, -100, -100)
     lyr.ResetReading()
@@ -492,6 +519,33 @@ def test_ogr_parquet_1(use_vsi):
 
 
 ###############################################################################
+
+
+@pytest.mark.skipif(not _has_arrow_dataset(), reason="GDAL not built with ArrowDataset")
+@pytest.mark.parametrize("use_vsi", [False, True])
+def test_ogr_parquet_check_dataset(use_vsi):
+
+    filename = "data/parquet/test.parquet"
+    if use_vsi:
+        vsifilename = "/vsimem/test.parquet"
+        gdal.FileFromMemBuffer(vsifilename, open(filename, "rb").read())
+        filename = vsifilename
+
+    try:
+        _check_test_parquet(
+            "PARQUET:" + filename,
+            expect_layer_geom_type=False,
+            expect_fast_feature_count=False,
+            expect_fast_get_extent=False,
+            expect_domain=False,
+            fid_reliable_after_spatial_filtering=False,
+        )
+    finally:
+        if use_vsi:
+            gdal.Unlink(vsifilename)
+
+
+###############################################################################
 # Run test_ogrsf
 
 
@@ -536,6 +590,25 @@ def test_ogr_parquet_test_ogrsf_all_geoms():
 
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path() + " -ro data/parquet/all_geoms.parquet"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+
+
+###############################################################################
+# Run test_ogrsf
+
+
+@pytest.mark.skipif(not _has_arrow_dataset(), reason="GDAL not built with ArrowDataset")
+def test_ogr_parquet_test_ogrsf_all_geoms_with_arrow_dataset():
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path()
+        + " -ro PARQUET:data/parquet/all_geoms.parquet"
     )
 
     assert "INFO" in ret
@@ -1388,16 +1461,40 @@ def test_ogr_parquet_multiple_geom_columns():
         "string >= 'l'",
         "decimal128 = -1234.567",
         "decimal256 = -1234.567",
-        # not optimized
+        "uint8 = 5 AND int8 = 2",
+        "uint8 = -5 AND int8 = 2",
+        "int8 = 2 AND uint8 = -5",
+        "uint8 = -5 AND int8 = 200",
+        "NOT uint8 = 5 AND uint8 IS NOT NULL",
+        "NOT uint8 = 50 AND uint8 IS NOT NULL",
+        # not optimized for non-dataset layer
+        "FID = 0",
         "boolean = 0 OR boolean = 1",
+        "uint8 = 1 OR uint8 = -1",
+        "uint8 = -1 OR uint8 = 1",
         "1 = 1",
         "boolean = boolean",
         "FID = 1",
         '"struct_field.a" = 1',
         '"struct_field.a" = 0',
+        "string LIKE 'd'",
+        "string LIKE 'D'",
+        "string ILIKE 'D'",
+        "string LIKE 'f'",
+        "timestamp_ms_gmt = '2019/01/01 14:00:00.500Z'",
+        "timestamp_ms_gmt < '2019/01/01 14:00:00.500Z'",
+        "timestamp_s_no_tz = '2019/01/01 14:00:00'",
+        "timestamp_s_no_tz < '2019/01/01 14:00:00'",
+        # partially optimized
+        "boolean = 0 AND OGR_GEOMETRY IS NOT NULL",
+        "OGR_GEOMETRY IS NOT NULL AND boolean = 0",
+        # not optimized
+        "OGR_GEOMETRY IS NOT NULL AND OGR_GEOMETRY IS NOT NULL",
+        "boolean = 0 OR OGR_GEOMETRY IS NOT NULL",
+        "OGR_GEOMETRY IS NOT NULL OR boolean = 0",
     ],
 )
-def test_ogr_parquet_attribute_filter(filter):
+def test_ogr_parquet_attribute_filter(filter, with_arrow_dataset_or_not):
 
     with gdaltest.config_option("OGR_PARQUET_OPTIMIZED_ATTRIBUTE_FILTER", "NO"):
         ds = ogr.Open("data/parquet/test.parquet")
@@ -1406,10 +1503,24 @@ def test_ogr_parquet_attribute_filter(filter):
         ref_fc = lyr.GetFeatureCount()
         ds = None
 
-    ds = ogr.Open("data/parquet/test.parquet")
+    prefix = "PARQUET:" if with_arrow_dataset_or_not else ""
+    ds = ogr.Open(prefix + "data/parquet/test.parquet")
     lyr = ds.GetLayer(0)
     assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
     assert lyr.GetFeatureCount() == ref_fc
+
+
+def test_ogr_parquet_attribute_filter_on_fid_column(with_arrow_dataset_or_not):
+
+    filter = "fid = 1"
+
+    prefix = "PARQUET:" if with_arrow_dataset_or_not else ""
+    ds = ogr.Open(prefix + "data/parquet/test_with_fid_and_geometry_bbox.parquet")
+    lyr = ds.GetLayer(0)
+    assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 1
+    assert lyr.GetNextFeature() is None
 
 
 def test_ogr_parquet_attribute_filter_and_then_ignored_fields():
@@ -1455,7 +1566,7 @@ def test_ogr_parquet_ignored_fields_and_then_attribute_filter():
     assert lyr.GetFeatureCount() == 1
 
 
-def test_ogr_parquet_attribute_filter_and_spatial_filter():
+def test_ogr_parquet_attribute_filter_and_spatial_filter(with_arrow_dataset_or_not):
 
     filter = "int8 != 0"
 
@@ -1468,9 +1579,36 @@ def test_ogr_parquet_attribute_filter_and_spatial_filter():
         assert ref_fc > 0
         ds = None
 
-    ds = ogr.Open("data/parquet/test.parquet")
+    prefix = "PARQUET:" if with_arrow_dataset_or_not else ""
+    ds = ogr.Open(prefix + "data/parquet/test.parquet")
     lyr = ds.GetLayer(0)
     lyr.SetSpatialFilterRect(4, 2, 4, 2)
+    assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+    assert lyr.GetFeatureCount() == ref_fc
+
+
+def test_ogr_parquet_attribute_filter_and_spatial_filter_with_spatial_index(
+    tmp_path, with_arrow_dataset_or_not
+):
+
+    filename = str(tmp_path / "test.parquet")
+    gdal.VectorTranslate(filename, "data/parquet/test.parquet")
+
+    filter = "uint8 != 1"
+
+    with gdaltest.config_option("OGR_PARQUET_OPTIMIZED_ATTRIBUTE_FILTER", "NO"):
+        ds = ogr.Open("data/parquet/test.parquet")
+        lyr = ds.GetLayer(0)
+        lyr.SetSpatialFilterRect(1, 2, 3, 2)
+        assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
+        ref_fc = lyr.GetFeatureCount()
+        assert ref_fc > 0
+        ds = None
+
+    prefix = "PARQUET:" if with_arrow_dataset_or_not else ""
+    ds = ogr.Open(prefix + filename)
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(1, 2, 3, 2)
     assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
     assert lyr.GetFeatureCount() == ref_fc
 
@@ -1507,14 +1645,6 @@ def test_ogr_parquet_is_null():
 
     finally:
         gdal.Unlink(outfilename)
-
-
-###############################################################################
-
-
-def _has_arrow_dataset():
-    drv = gdal.GetDriverByName("Parquet")
-    return drv is not None and drv.GetMetadataItem("ARROW_DATASET") is not None
 
 
 ###############################################################################
@@ -1643,9 +1773,33 @@ def test_ogr_parquet_read_partitioned_geo():
     assert lyr.GetExtent() == (1, 3, 2, 4)
     assert lyr.GetExtent() == (1, 3, 2, 4)
 
+    assert lyr.GetLayerDefn().GetFieldCount() == 0
+
+    assert lyr.TestCapability(ogr.OLCFastSpatialFilter) == 1
+
     lyr.SetSpatialFilterRect(0, 0, 10, 10)
     lyr.ResetReading()
     assert lyr.GetFeatureCount() == 2
+
+    lyr.SetSpatialFilterRect(0.9, 1.9, 1.1, 2.1)
+    lyr.ResetReading()
+    assert lyr.GetFeatureCount() == 1
+
+    lyr.SetSpatialFilterRect(0.9, 1.9, 0.95, 2.1)
+    lyr.ResetReading()
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetSpatialFilterRect(1.05, 1.9, 1.1, 2.1)
+    lyr.ResetReading()
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetSpatialFilterRect(0.9, 1.9, 1.1, 1.95)
+    lyr.ResetReading()
+    assert lyr.GetFeatureCount() == 0
+
+    lyr.SetSpatialFilterRect(0.9, 2.05, 1.1, 2.1)
+    lyr.ResetReading()
+    assert lyr.GetFeatureCount() == 0
 
     lyr.SetSpatialFilterRect(-100, -100, -100, -100)
     lyr.ResetReading()
@@ -3597,7 +3751,12 @@ def test_ogr_parquet_sort_by_bbox(tmp_vsimem):
 @pytest.mark.parametrize("covering_bbox", [True, False])
 @gdaltest.enable_exceptions()
 def test_ogr_parquet_geoarrow(
-    tmp_vsimem, tmp_path, wkt, check_with_pyarrow, covering_bbox
+    tmp_vsimem,
+    tmp_path,
+    wkt,
+    check_with_pyarrow,
+    covering_bbox,
+    with_arrow_dataset_or_not,
 ):
 
     geom = ogr.CreateGeometryFromWkt(wkt)
@@ -3680,17 +3839,28 @@ def test_ogr_parquet_geoarrow(
             f = lyr.GetNextFeature()
             ogrtest.check_feature_geometry(f, geom2)
 
-    ds = ogr.Open(filename)
+    filename_to_open = ("PARQUET:" if with_arrow_dataset_or_not else "") + filename
+
+    ds = ogr.Open(filename_to_open)
     lyr = ds.GetLayer(0)
     check(lyr)
 
+    if (
+        covering_bbox
+        or not with_arrow_dataset_or_not
+        or lyr.GetGeomType() in (ogr.wkbPoint, ogr.wkbPoint25D)
+    ):
+        assert lyr.TestCapability(ogr.OLCFastSpatialFilter)
+    else:
+        assert not lyr.TestCapability(ogr.OLCFastSpatialFilter)
+
     # Check that ignoring attribute fields doesn't impact geometry reading
-    ds = ogr.Open(filename)
+    ds = ogr.Open(filename_to_open)
     lyr = ds.GetLayer(0)
     lyr.SetIgnoredFields(["foo"])
     check(lyr)
 
-    ds = ogr.Open(filename)
+    ds = ogr.Open(filename_to_open)
     lyr = ds.GetLayer(0)
     minx, maxx, miny, maxy = geom.GetEnvelope()
 
@@ -3872,3 +4042,34 @@ def test_ogr_parquet_read_arrow_json_extension():
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() == ogr.OFSTJSON
     f = lyr.GetNextFeature()
     assert f["extension_json"] == '{"foo":"bar"}'
+
+
+###############################################################################
+# Test ignored fields with arrow::dataset and bounding box column
+
+
+@pytest.mark.skipif(not _has_arrow_dataset(), reason="GDAL not built with ArrowDataset")
+def test_ogr_parquet_ignored_fields_bounding_box_column_arrow_dataset(tmp_path):
+
+    filename = str(tmp_path / "test.parquet")
+    ds = ogr.GetDriverByName("Parquet").CreateDataSource(filename)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint, options=["FID=fid"])
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(1)
+    f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr.CreateFeature(f)
+    f = None
+    ds.Close()
+
+    ds = ogr.Open("PARQUET:" + filename)
+    lyr = ds.GetLayer(0)
+    lyr.SetIgnoredFields([lyr.GetGeometryColumn()])
+    lyr.SetSpatialFilterRect(0, 0, 10, 10)
+    lyr.ResetReading()
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 1
+    assert f.GetGeometryRef() is None
+
+    lyr.SetSpatialFilterRect(0, 0, 0, 0)
+    lyr.ResetReading()
+    assert lyr.GetNextFeature() is None

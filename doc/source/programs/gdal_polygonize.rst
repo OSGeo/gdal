@@ -34,6 +34,10 @@ otherwise it will try to append to an existing one.
 The utility is based on the ::cpp:func:`GDALPolygonize` function which has additional
 details on the algorithm.
 
+.. note::
+
+    gdal_polygonize is a Python utility, and is only available if GDAL Python bindings are available.
+
 .. program:: gdal_polygonize
 
 .. include:: options/help_and_help_general.rst
@@ -104,9 +108,3 @@ details on the algorithm.
 
     The script runs in quiet mode.  The progress monitor is suppressed and routine
     messages are not displayed.
-
-
-Notes
------
-
-gdal_polygonize is a Python utility, and is only available if GDAL Python bindings are available.
