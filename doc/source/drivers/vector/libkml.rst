@@ -442,6 +442,8 @@ options :
       `<description> <https://developers.google.com/kml/documentation/kmlreference#description>`__
       element
 
+Do not confuse them with the libkml.html#container-properties same named _dataset creation options_!
+
 The following layer creation options can be used to control how the
 folder of a layer appear in the Places panel of the Earth browser,
 trough a
@@ -581,7 +583,8 @@ available to define how fields in input and output, map to a KML
 `<Placemark> <https://developers.google.com/kml/documentation/kmlreference#placemark>`__.
 For example, if you want a field called 'Cities' to map to the
 `<name> <https://developers.google.com/kml/documentation/kmlreference#name>`__;
-tag in KML, you can set a configuration option.
+tag in KML, you can set a configuration option. Note these are independent of layer
+creation and dataset creation options' `<name>`.
 
 -  .. config:: LIBKML_NAME_FIELD
       :default: name
