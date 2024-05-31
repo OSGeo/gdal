@@ -489,12 +489,12 @@ and then use :ref:`gdalbuildvrt` -separate and then :ref:`gdal_translate`:
     gdalbuildvrt -separate 123.vrt 1.tif 2.tif 3.tif
     gdal_translate 123.vrt 123.tif
 
-Or just :ref:`gdal_merge`, to combine the one-band files into a single one:
+Or just use :ref:`gdal_merge`, to combine the one-band files into a single one:
 
 .. code-block:: bash
 
     gdal_grid ... a.tif; gdal_grid ... b.tif; gdal_grid ... c.tif
-    gdal_merge.py -separate a.tif b.tif c.tif -o d.tif
+    gdal_merge -separate a.tif b.tif c.tif -o d.tif
 
 
 C API
