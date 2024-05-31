@@ -233,7 +233,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Arrow C++
-ARG ARROW_VERSION=16.0.0-1
+ARG ARROW_VERSION=16.1.0-1
 # ARROW_SOVERSION to be updated in the "Build final image" section too
 ARG ARROW_SOVERSION=1600
 RUN . /buildscripts/bh-set-envvars.sh \
