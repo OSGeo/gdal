@@ -51,7 +51,7 @@ OGRXODRLayer::OGRXODRLayer(const RoadElements &xodrRoadElements,
       m_bDissolveTIN(dissolveTriangulatedSurface)
 {
     m_poSRS.importFromProj4(proj4Defn.c_str());
-    ResetReading();
+    resetRoadElementIterators();
 }
 
 void OGRXODRLayer::ResetReading()

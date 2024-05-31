@@ -104,8 +104,6 @@ class OGRXODRLayer : public OGRLayer
 
     std::unique_ptr<OGRFeatureDefn> m_poFeatureDefn{};
 
-    void ResetReading() override;
-
     /**
      * Builds an ordinary TIN from libOpenDRIVE's mesh.
     */
@@ -123,6 +121,7 @@ class OGRXODRLayer : public OGRLayer
     OGRXODRLayer(const RoadElements &xodrRoadElements,
                  const std::string &proj4Defn,
                  const bool dissolveTriangulatedSurface);
+    void ResetReading() override;
 };
 
 class OGRXODRLayerReferenceLine
