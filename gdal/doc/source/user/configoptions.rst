@@ -58,8 +58,8 @@ they can be limited to only the current thread with
 For boolean options, the values YES, TRUE or ON can be used to turn the option on;
 NO, FALSE or OFF to turn it off.
 
-List of configuration options and where they apply
---------------------------------------------------
+List of configuration options and where they are documented
+-----------------------------------------------------------
 
 .. note::
     This list is known to be incomplete. It depends on proper annotation of configuration
