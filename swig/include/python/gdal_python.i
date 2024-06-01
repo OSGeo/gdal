@@ -2037,7 +2037,7 @@ def GetMDArrayNames(self, options = []) -> "list[str]":
             if self.GetTotalElementsCount() == 1:
                 return self.ReadAsInt()
             return self.ReadAsIntArray()
-        if dt.GetNumericDataType() in (GDT_UInt32, GDT_UInt64, GDT_Int64):
+        if dt.GetNumericDataType() in (GDT_UInt32, GDT_Int64):
             if self.GetTotalElementsCount() == 1:
                 return self.ReadAsInt64()
             return self.ReadAsInt64Array()

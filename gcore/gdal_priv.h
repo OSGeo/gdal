@@ -3311,8 +3311,6 @@ class CPL_DLL GDALAttributeNumeric final : public GDALAttribute
     GDALAttributeNumeric(const std::string &osParentName,
                          const std::string &osName, int nValue);
     GDALAttributeNumeric(const std::string &osParentName,
-                         const std::string &osName, GInt64 nValue);
-    GDALAttributeNumeric(const std::string &osParentName,
                          const std::string &osName,
                          const std::vector<GUInt32> &anValues);
 

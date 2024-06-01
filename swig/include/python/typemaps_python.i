@@ -518,7 +518,7 @@ CreateCInt64ListFromSequence( PyObject* pySeq, int* pnSize ) {
     *pnSize = -1;
     return NULL;
   }
-  if( (size_t)size > SIZE_MAX / sizeof(int) ) {
+  if( (size_t)size > SIZE_MAX / sizeof(long long) ) {
     PyErr_SetString(PyExc_RuntimeError, "too big sequence");
     *pnSize = -1;
     return NULL;
