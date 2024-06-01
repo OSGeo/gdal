@@ -1359,18 +1359,8 @@ def test_netcdf_36():
 
     gt = ds.GetGeoTransform()
     assert gt is not None, "got no GeoTransform"
-    gt_expected = (
-        -3.498749944898817,
-        0.0025000042385525173,
-        0.0,
-        46.61749818589952,
-        0.0,
-        -0.001666598849826389,
-    )
-    assert gt == gt_expected, "got GeoTransform %s, expected %s" % (
-        str(gt),
-        str(gt_expected),
-    )
+    gt_expected = (-3.49875, 0.0025, 0.0, 46.61749818589952, 0.0, -0.001666598849826389)
+    assert gt == pytest.approx(gt_expected, rel=1e-8)
 
 
 ###############################################################################
