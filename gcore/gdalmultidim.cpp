@@ -1782,7 +1782,7 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                     pabyDst + dstComp->GetOffset(), dstComp->GetType()))
             {
                 return false;
-            };
+            }
         }
         return true;
     }
