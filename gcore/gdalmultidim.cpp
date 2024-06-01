@@ -12983,7 +12983,7 @@ int64_t *GDALAttributeReadAsInt64Array(GDALAttributeH hAttr, size_t *pnCount)
     VALIDATE_POINTER1(hAttr, __func__, nullptr);
     VALIDATE_POINTER1(pnCount, __func__, nullptr);
     *pnCount = 0;
-    auto tmp(hAttr->m_poImpl->ReadAsIntArray());
+    auto tmp(hAttr->m_poImpl->ReadAsInt64Array());
     if (tmp.empty())
         return nullptr;
     auto ret = static_cast<int64_t *>(

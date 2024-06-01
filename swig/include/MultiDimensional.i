@@ -1272,7 +1272,7 @@ public:
     return GDALAttributeReadAsInt(self);
   }
 
-  int64_t ReadAsInt64() {
+  long long ReadAsInt64() {
     return GDALAttributeReadAsInt64(self);
   }
 
@@ -1293,8 +1293,8 @@ public:
 #endif
 
 #if defined(SWIGPYTHON)
-  void ReadAsInt64Array( int64_t** pvals, size_t* pnCount ) {
-    *pvals = GDALAttributeReadAsInt64Array(self, pnCount);
+  void ReadAsInt64Array( long long** pvals, size_t* pnCount ) {
+    *pvals = (long long*)GDALAttributeReadAsInt64Array(self, pnCount);
   }
 #endif
 
@@ -1355,9 +1355,9 @@ public:
 #endif
 
 #if defined(SWIGPYTHON)
-  CPLErr WriteInt64Array(int nList, int64_t* pList)
+  CPLErr WriteInt64Array(int nList, long long* pList)
   {
-    return GDALAttributeWriteInt64Array(self, pList, nList) ? CE_None : CE_Failure;
+    return GDALAttributeWriteInt64Array(self, (int64_t*)pList, nList) ? CE_None : CE_Failure;
   }
 #endif
 

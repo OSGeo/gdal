@@ -1447,7 +1447,9 @@ def test_zarr_create_group(format, create_z_metadata):
                 "uint64_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt64)
             )
             assert attr
-            assert attr.Write(18000000000000000000) == gdal.CE_None
+            # We cannot write UINT64_MAX
+            # assert attr.Write(18000000000000000000) == gdal.CE_None
+            assert attr.Write(9000000000000000000) == gdal.CE_None
 
             attr = rg.CreateAttribute(
                 "int_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_Int32)
@@ -1471,7 +1473,9 @@ def test_zarr_create_group(format, create_z_metadata):
                 "uint64_array_attr", [2], gdal.ExtendedDataType.Create(gdal.GDT_UInt64)
             )
             assert attr
-            assert attr.Write([12345678091234, 18000000000000000000]) == gdal.CE_None
+            # We cannot write UINT64_MAX
+            # assert attr.Write([12345678091234, 18000000000000000000]) == gdal.CE_None
+            assert attr.Write([12345678091234, 9000000000000000000]) == gdal.CE_None
 
             attr = rg.CreateAttribute(
                 "double_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
@@ -1495,123 +1499,133 @@ def test_zarr_create_group(format, create_z_metadata):
 
         create()
 
-        # TODO if create_z_metadata == "YES":
-        # TODO     f = gdal.VSIFOpenL(filename + "/.zmetadata", "rb")
-        # TODO     assert f
-        # TODO     data = gdal.VSIFReadL(1, 10000, f)
-        # TODO     gdal.VSIFCloseL(f)
-        # TODO     j = json.loads(data)
-        # TODO     assert "foo/.zgroup" in j["metadata"]
-        # TODO
-        # TODO def update():
-        # TODO     ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
-        # TODO     assert ds
-        # TODO     rg = ds.GetRootGroup()
-        # TODO     assert rg
-        # TODO     assert rg.GetGroupNames() == ["foo"]
-        # TODO
-        # TODO     attr = rg.GetAttribute("str_attr")
-        # TODO     assert attr
-        # TODO     assert attr.Read() == "my_string"
-        # TODO     assert attr.Write("my_string_modified") == gdal.CE_None
-        # TODO
-        # TODO     subgroup = rg.OpenGroup("foo")
-        # TODO     assert subgroup
-        # TODO     subgroup = rg.CreateGroup("bar")
-        # TODO     assert subgroup
-        # TODO     assert set(rg.GetGroupNames()) == set(["foo", "bar"])
-        # TODO     subgroup = rg.OpenGroup("foo")
-        # TODO     assert subgroup
-        # TODO     subsubgroup = subgroup.CreateGroup("baz")
-        # TODO     assert subsubgroup
-        # TODO     ds = None
-        # TODO
-        # TODO update()
-        # TODO
-        # TODO ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
-        # TODO assert ds
-        # TODO rg = ds.GetRootGroup()
-        # TODO assert rg
-        # TODO
-        # TODO attr = rg.GetAttribute("str_attr")
-        # TODO assert attr
-        # TODO assert attr.Read() == "my_string_modified"
-        # TODO
-        # TODO attr = rg.GetAttribute("json_attr")
-        # TODO assert attr
-        # TODO assert attr.GetDataType().GetSubType() == gdal.GEDTST_JSON
-        # TODO assert attr.Read() == {"foo": "bar"}
-        # TODO
-        # TODO attr = rg.GetAttribute("str_array_attr")
-        # TODO assert attr
-        # TODO assert attr.Read() == ["first_string", "second_string"]
-        # TODO
-        # TODO attr = rg.GetAttribute("int_attr")
-        # TODO assert attr
-        # TODO assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
-        # TODO assert attr.ReadAsInt64() == 12345678
-        # TODO
-        # TODO attr = rg.GetAttribute("uint_attr")
-        # TODO assert attr
-        # TODO assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-        # TODO assert attr.ReadAsInt64() == 4000000000
-        # TODO
-        # TODO attr = rg.GetAttribute("int64_attr")
-        # TODO assert attr
-        # TODO assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-        # TODO assert attr.ReadAsInt64() == 12345678
-        # TODO
-        # TODO attr = rg.GetAttribute("uint64_attr")
-        # TODO assert attr
-        # TODO assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-        # TODO assert attr.ReadAsInt64() == 4000000000
-        # TODO
-        # TODO attr = rg.GetAttribute("int_array_attr")
-        # TODO assert attr
-        # TODO assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
-        # TODO assert attr.ReadAsIntArray() == (12345678, -12345678)
-        # TODO
-        # TODO attr = rg.GetAttribute("uint_array_attr")
-        # TODO assert attr
-        # TODO assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
-        # TODO assert attr.ReadAsIntArray() == (12345678, -12345678)
-        # TODO
-        # TODO attr = rg.GetAttribute("int64_array_attr")
-        # TODO assert attr
-        # TODO assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-        # TODO assert attr.ReadAsIntArray() == (12345678, -12345678)
-        # TODO
-        # TODO attr = rg.GetAttribute("uint64_array_attr")
-        # TODO assert attr
-        # TODO assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
-        # TODO assert attr.ReadAsIntArray() == (12345678, -12345678)
-        # TODO
-        # TODO attr = rg.GetAttribute("double_attr")
-        # TODO assert attr
-        # TODO assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
-        # TODO assert attr.ReadAsDouble() == 12345678.5
-        # TODO
-        # TODO attr = rg.GetAttribute("double_array_attr")
-        # TODO assert attr
-        # TODO assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
-        # TODO assert attr.Read() == (12345678.5, -12345678.5)
-        # TODO
-        # TODO assert set(rg.GetGroupNames()) == set(["foo", "bar"])
-        # TODO with gdal.quiet_errors():
-        # TODO     assert rg.CreateGroup("not_opened_in_update_mode") is None
-        # TODO     assert (
-        # TODO         rg.CreateAttribute(
-        # TODO             "not_opened_in_update_mode",
-        # TODO             [],
-        # TODO             gdal.ExtendedDataType.CreateString(),
-        # TODO         )
-        # TODO         is None
-        # TODO     )
-        # TODO subgroup = rg.OpenGroup("foo")
-        # TODO assert subgroup
-        # TODO subsubgroup = subgroup.OpenGroup("baz")
-        # TODO assert subsubgroup
-        # TODO ds = None
+        if create_z_metadata == "YES":
+            f = gdal.VSIFOpenL(filename + "/.zmetadata", "rb")
+            assert f
+            data = gdal.VSIFReadL(1, 10000, f)
+            gdal.VSIFCloseL(f)
+            j = json.loads(data)
+            assert "foo/.zgroup" in j["metadata"]
+
+        def update():
+            ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+            assert ds
+            rg = ds.GetRootGroup()
+            assert rg
+            assert rg.GetGroupNames() == ["foo"]
+
+            attr = rg.GetAttribute("str_attr")
+            assert attr
+            assert attr.Read() == "my_string"
+            assert attr.Write("my_string_modified") == gdal.CE_None
+
+            subgroup = rg.OpenGroup("foo")
+            assert subgroup
+            subgroup = rg.CreateGroup("bar")
+            assert subgroup
+            assert set(rg.GetGroupNames()) == set(["foo", "bar"])
+            subgroup = rg.OpenGroup("foo")
+            assert subgroup
+            subsubgroup = subgroup.CreateGroup("baz")
+            assert subsubgroup
+            ds = None
+
+        update()
+
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+
+        attr = rg.GetAttribute("str_attr")
+        assert attr
+        assert attr.Read() == "my_string_modified"
+
+        attr = rg.GetAttribute("json_attr")
+        assert attr
+        assert attr.GetDataType().GetSubType() == gdal.GEDTST_JSON
+        assert attr.Read() == {"foo": "bar"}
+
+        attr = rg.GetAttribute("str_array_attr")
+        assert attr
+        assert attr.Read() == ["first_string", "second_string"]
+
+        attr = rg.GetAttribute("int_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
+        assert attr.ReadAsInt() == 12345678
+        assert attr.ReadAsInt64() == 12345678
+        assert attr.ReadAsDouble() == 12345678
+
+        attr = rg.GetAttribute("uint_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64() == 4000000000
+        assert attr.ReadAsDouble() == 4000000000
+
+        attr = rg.GetAttribute("int64_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64() == 12345678901234
+        assert attr.ReadAsDouble() == 12345678901234
+
+        attr = rg.GetAttribute("uint64_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64() == 9000000000000000000
+        assert attr.ReadAsDouble() == 9000000000000000000
+
+        attr = rg.GetAttribute("int_array_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int32
+        assert attr.ReadAsIntArray() == (12345678, -12345678)
+        assert attr.ReadAsInt64Array() == (12345678, -12345678)
+        assert attr.ReadAsDoubleArray() == (12345678, -12345678)
+
+        attr = rg.GetAttribute("uint_array_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64Array() == (12345678, 4000000000)
+        assert attr.ReadAsDoubleArray() == (12345678, 4000000000)
+
+        attr = rg.GetAttribute("int64_array_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64Array() == (12345678091234, -12345678091234)
+        assert attr.ReadAsDoubleArray() == (12345678091234, -12345678091234)
+
+        attr = rg.GetAttribute("uint64_array_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+        assert attr.ReadAsInt64Array() == (12345678091234, 9000000000000000000)
+        assert attr.ReadAsDoubleArray() == (12345678091234, 9000000000000000000)
+
+        attr = rg.GetAttribute("double_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+        assert attr.ReadAsDouble() == 12345678.5
+
+        attr = rg.GetAttribute("double_array_attr")
+        assert attr
+        assert attr.GetDataType().GetNumericDataType() == gdal.GDT_Float64
+        assert attr.Read() == (12345678.5, -12345678.5)
+
+        assert set(rg.GetGroupNames()) == set(["foo", "bar"])
+        with gdal.quiet_errors():
+            assert rg.CreateGroup("not_opened_in_update_mode") is None
+            assert (
+                rg.CreateAttribute(
+                    "not_opened_in_update_mode",
+                    [],
+                    gdal.ExtendedDataType.CreateString(),
+                )
+                is None
+            )
+        subgroup = rg.OpenGroup("foo")
+        assert subgroup
+        subsubgroup = subgroup.OpenGroup("baz")
+        assert subsubgroup
+        ds = None
 
     finally:
         gdal.RmdirRecursive(filename)
