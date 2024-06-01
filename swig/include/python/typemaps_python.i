@@ -249,62 +249,6 @@ CreateTupleFromIntArray( const int *first, size_t size ) {
 }
 %}
 
-%typemap(in,numinputs=0) ( int argout[ANY]) (int argout[$dim0])
-{
-  /* %typemap(in,numinputs=0) (int argout[ANY]) */
-  memset(argout, 0, sizeof(argout));
-  $1 = argout;
-}
-%typemap(argout,fragment="t_output_helper,CreateTupleFromIntArray") ( int argout[ANY])
-{
-  /* %typemap(argout) (int argout[ANY]) */
-  PyObject *out = CreateTupleFromIntArray( $1, $dim0 );
-  $result = t_output_helper($result,out);
-}
-
-%typemap(in,numinputs=0) ( int *argout[ANY]) (int *argout)
-{
-  /* %typemap(in,numinputs=0) (int *argout[ANY]) */
-  argout = NULL;
-  $1 = &argout;
-}
-%typemap(argout,fragment="t_output_helper,CreateTupleFromIntArray") ( int *argout[ANY])
-{
-  /* %typemap(argout) (int *argout[ANY]) */
-  PyObject *out = CreateTupleFromIntArray( *$1, $dim0 );
-  $result = t_output_helper($result,out);
-}
-%typemap(freearg) (int *argout[ANY])
-{
-  /* %typemap(freearg) (int *argout[ANY]) */
-  CPLFree(*$1);
-}
-%typemap(in) (int argin[ANY]) (int argin[$dim0])
-{
-  /* %typemap(in) (int argin[ANY]) */
-  $1 = argin;
-  if (! PySequence_Check($input) ) {
-    PyErr_SetString(PyExc_TypeError, "not a sequence");
-    SWIG_fail;
-  }
-  Py_ssize_t seq_size = PySequence_Size($input);
-  if ( seq_size != $dim0 ) {
-    PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
-    SWIG_fail;
-  }
-  for (unsigned int i=0; i<$dim0; i++) {
-    PyObject *o = PySequence_GetItem($input,i);
-    int val;
-    if ( !PyArg_Parse(o, "i", &val ) ) {
-      PyErr_SetString(PyExc_TypeError, "not a number");
-      Py_DECREF(o);
-      SWIG_fail;
-    }
-    $1[i] =  val;
-    Py_DECREF(o);
-  }
-}
-
 %fragment("CreateTupleFromInt64Array","header") %{
 static PyObject *
 CreateTupleFromInt64Array( const long long *first, size_t size ) {
@@ -317,62 +261,6 @@ CreateTupleFromInt64Array( const long long *first, size_t size ) {
   return out;
 }
 %}
-
-%typemap(in,numinputs=0) ( long long argout[ANY]) (long long argout[$dim0])
-{
-  /* %typemap(in,numinputs=0) (long long argout[ANY]) */
-  memset(argout, 0, sizeof(argout));
-  $1 = argout;
-}
-%typemap(argout,fragment="t_output_helper,CreateTupleFromInt64Array") ( long long argout[ANY])
-{
-  /* %typemap(argout) (long long argout[ANY]) */
-  PyObject *out = CreateTupleFromInt64Array( $1, $dim0 );
-  $result = t_output_helper($result,out);
-}
-
-%typemap(in,numinputs=0) ( long long *argout[ANY]) (long long *argout)
-{
-  /* %typemap(in,numinputs=0) (long long *argout[ANY]) */
-  argout = NULL;
-  $1 = &argout;
-}
-%typemap(argout,fragment="t_output_helper,CreateTupleFromInt64Array") ( long long *argout[ANY])
-{
-  /* %typemap(argout) (long long *argout[ANY]) */
-  PyObject *out = CreateTupleFromInt64Array( *$1, $dim0 );
-  $result = t_output_helper($result,out);
-}
-%typemap(freearg) (long long *argout[ANY])
-{
-  /* %typemap(freearg) (long long *argout[ANY]) */
-  CPLFree(*$1);
-}
-%typemap(in) (long long argin[ANY]) (long long argin[$dim0])
-{
-  /* %typemap(in) (long long argin[ANY]) */
-  $1 = argin;
-  if (! PySequence_Check($input) ) {
-    PyErr_SetString(PyExc_TypeError, "not a sequence");
-    SWIG_fail;
-  }
-  Py_ssize_t seq_size = PySequence_Size($input);
-  if ( seq_size != $dim0 ) {
-    PyErr_SetString(PyExc_TypeError, "sequence must have length ##size");
-    SWIG_fail;
-  }
-  for (unsigned int i=0; i<$dim0; i++) {
-    PyObject *o = PySequence_GetItem($input,i);
-    long long val;
-    if ( !PyArg_Parse(o, "L", &val ) ) {
-      PyErr_SetString(PyExc_TypeError, "not a number");
-      Py_DECREF(o);
-      SWIG_fail;
-    }
-    $1[i] =  val;
-    Py_DECREF(o);
-  }
-}
 
 %fragment("CreateTupleFromDoubleArray","header") %{
 static PyObject *
