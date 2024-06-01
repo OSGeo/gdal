@@ -33,7 +33,6 @@ import os
 import shutil
 import stat
 import struct
-import sys
 import time
 
 import gdaltest
@@ -1115,23 +1114,20 @@ def test_netcdf_multidim_create_nc4():
         )
         assert att.Read() == "bar"
 
-        # There is an issue on 32-bit platforms, likely in libnetcdf or libhdf5 itself,
-        # with writing more than one string
-        if sys.maxsize > 0x7FFFFFFF:
-            att = rg.CreateAttribute(
-                "att_two_strings", [2], gdal.ExtendedDataType.CreateString()
-            )
-            assert att
-            with gdal.quiet_errors():
-                assert att.Write(["not_enough_elements"]) != gdal.CE_None
-            assert att.Write([1, 2]) == gdal.CE_None
-            assert att.Read() == ["1", "2"]
-            assert att.Write(["foo", "barbaz"]) == gdal.CE_None
-            assert att.Read() == ["foo", "barbaz"]
-            att = next(
-                (x for x in rg.GetAttributes() if x.GetName() == att.GetName()), None
-            )
-            assert att.Read() == ["foo", "barbaz"]
+        att = rg.CreateAttribute(
+            "att_two_strings", [2], gdal.ExtendedDataType.CreateString()
+        )
+        assert att
+        with gdal.quiet_errors():
+            assert att.Write(["not_enough_elements"]) != gdal.CE_None
+        assert att.Write([1, 2]) == gdal.CE_None
+        assert att.Read() == ["1", "2"]
+        assert att.Write(["foo", "barbaz"]) == gdal.CE_None
+        assert att.Read() == ["foo", "barbaz"]
+        att = next(
+            (x for x in rg.GetAttributes() if x.GetName() == att.GetName()), None
+        )
+        assert att.Read() == ["foo", "barbaz"]
 
         att = rg.CreateAttribute(
             "att_double", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
