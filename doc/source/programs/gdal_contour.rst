@@ -101,8 +101,7 @@ be on the right, i.e. a line string goes clockwise around a top.
     Offset from zero relative to which to interpret intervals. Ignored if -fl is used.
 
     For example, `-i 100` requests contours at ...-100, 0, 100... 
-    Further adding `-off 25` makes that request instead ...-75, 25, 125...,
-    (as also would, say, `-off 6325`.)
+    Further adding `-off 25` makes that request instead ...-75, 25, 125...
 
 .. option:: -fl <level>
 
