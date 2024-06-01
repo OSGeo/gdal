@@ -4186,3 +4186,23 @@ def test_target_extent_consistent_size():
 
     assert ds.RasterXSize == 4793
     assert ds.RasterYSize == 4143
+
+
+###############################################################################
+# Test warping an image with [-180,180] longitude to [180 - X, 180 + X]
+
+
+def test_gdalwarp_lib_minus_180_plus_180_to_span_over_180(tmp_vsimem):
+
+    dst_filename = str(tmp_vsimem / "out.tif")
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    out_ds = gdal.Warp(dst_filename, src_ds, outputBounds=[0, -90, 360, 90])
+    # Check that east/west hemispheres have been switched
+    assert out_ds.ReadRaster(
+        0, 0, src_ds.RasterXSize // 2, src_ds.RasterYSize
+    ) == src_ds.ReadRaster(
+        src_ds.RasterXSize // 2, 0, src_ds.RasterXSize // 2, src_ds.RasterYSize
+    )
+    assert out_ds.ReadRaster(
+        src_ds.RasterXSize // 2, 0, src_ds.RasterXSize // 2, src_ds.RasterYSize
+    ) == src_ds.ReadRaster(0, 0, src_ds.RasterXSize // 2, src_ds.RasterYSize)
