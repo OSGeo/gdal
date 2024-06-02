@@ -1482,7 +1482,12 @@ static void InsertCenterLong(GDALDatasetH hDS, OGRSpatialReference *poSRS,
                           adfGeoTransform[0] + nXSize * adfGeoTransform[1] +
                               nYSize * adfGeoTransform[2]));
 
-    if (dfMaxLong - dfMinLong > 360.0)
+    const double dfEpsilon =
+        std::max(std::fabs(adfGeoTransform[1]), std::fabs(adfGeoTransform[2]));
+    // If the raster covers more than 360 degree (allow an extra pixel),
+    // give up
+    constexpr double RELATIVE_EPSILON = 0.05;  // for numeric precision issues
+    if (dfMaxLong - dfMinLong > 360.0 + dfEpsilon * (1 + RELATIVE_EPSILON))
         return;
 
     /* -------------------------------------------------------------------- */
