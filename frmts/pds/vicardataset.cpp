@@ -945,27 +945,38 @@ CPLErr VICARBASICRasterBand::IReadBlock(int /*nXBlock*/, int nYBlock,
         CPLAssert(poGDS->m_anRecordOffsets[poGDS->m_nLastRecordOffset + 1] ==
                   0);
 
+        int nRet;
         if (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC)
         {
-            VSIFSeekL(poGDS->fpImage,
-                      poGDS->m_anRecordOffsets[poGDS->m_nLastRecordOffset] -
-                          sizeof(GUInt32),
-                      SEEK_SET);
+            nRet =
+                VSIFSeekL(poGDS->fpImage,
+                          poGDS->m_anRecordOffsets[poGDS->m_nLastRecordOffset] -
+                              sizeof(GUInt32),
+                          SEEK_SET);
         }
         else
         {
-            VSIFSeekL(poGDS->fpImage,
-                      poGDS->m_nImageOffsetWithoutNBB +
-                          static_cast<vsi_l_offset>(sizeof(GUInt32)) *
-                              poGDS->m_nLastRecordOffset,
-                      SEEK_SET);
+            nRet = VSIFSeekL(poGDS->fpImage,
+                             poGDS->m_nImageOffsetWithoutNBB +
+                                 static_cast<vsi_l_offset>(sizeof(GUInt32)) *
+                                     poGDS->m_nLastRecordOffset,
+                             SEEK_SET);
         }
         GUInt32 nSize;
-        VSIFReadL(&nSize, 1, sizeof(nSize), poGDS->fpImage);
+        if (nRet != 0 ||
+            VSIFReadL(&nSize, sizeof(nSize), 1, poGDS->fpImage) != 1)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot read record %d size",
+                     poGDS->m_nLastRecordOffset);
+            return CE_Failure;
+        }
         CPL_LSBPTR32(&nSize);
         if ((poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC &&
              nSize <= sizeof(GUInt32)) ||
-            (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC2 && nSize == 0))
+            (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC2 &&
+             nSize == 0) ||
+            poGDS->m_anRecordOffsets[poGDS->m_nLastRecordOffset] >
+                std::numeric_limits<uint64_t>::max() - nSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Wrong size at record %d",
                      poGDS->m_nLastRecordOffset);
