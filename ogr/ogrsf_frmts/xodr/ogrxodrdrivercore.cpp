@@ -36,9 +36,7 @@
 
 int OGRXODRDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
-    CPLString extension = CPLString(CPLGetExtension(poOpenInfo->pszFilename));
-    extension.tolower();
-    return EQUAL(extension, "xodr");
+    return EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "xodr");
 }
 
 /************************************************************************/

@@ -34,11 +34,6 @@ using namespace std;
 
 bool OGRXODRDataSource::Open(const char *pszFilename, CSLConstList openOptions)
 {
-    VSILFILE *file = nullptr;
-    file = VSIFOpenL(pszFilename, "r");
-    if (file == nullptr)
-        return FALSE;
-
     odr::OpenDriveMap xodr(pszFilename, false);
     bool parsingFailed = xodr.xml_doc.child("OpenDRIVE").empty();
     if (parsingFailed)
