@@ -151,7 +151,7 @@
 %enddef
 
 %define TYPEMAP_ARGOUT_ARGOUT_ARRAY_IS_VALID(num_values)
-%typemap(argout) (double argout[num_values], int* isvalid)
+%typemap(argout, fragment="t_output_helper,CreateTupleFromDoubleArray") (double argout[num_values], int* isvalid)
 {
    /* %typemap(argout) (double argout[num_values], int* isvalid)  */
   PyObject *r;
@@ -235,6 +235,32 @@ TYPEMAP_ARGOUT_ARGOUT_ARRAY_IS_VALID(6)
     resultobj = PyInt_FromLong( $1 );
   }
 }
+
+%fragment("CreateTupleFromIntArray","header") %{
+static PyObject *
+CreateTupleFromIntArray( const int *first, size_t size ) {
+  PyObject *out = PyTuple_New( size );
+  for( unsigned int i=0; i<size; i++ ) {
+    PyObject *val = PyInt_FromLong( *first );
+    ++first;
+    PyTuple_SetItem( out, i, val );
+  }
+  return out;
+}
+%}
+
+%fragment("CreateTupleFromInt64Array","header") %{
+static PyObject *
+CreateTupleFromInt64Array( const long long *first, size_t size ) {
+  PyObject *out = PyTuple_New( size );
+  for( unsigned int i=0; i<size; i++ ) {
+    PyObject *val = PyLong_FromLongLong( *first );
+    ++first;
+    PyTuple_SetItem( out, i, val );
+  }
+  return out;
+}
+%}
 
 %fragment("CreateTupleFromDoubleArray","header") %{
 static PyObject *
@@ -362,6 +388,66 @@ CreateCIntListFromSequence( PyObject* pySeq, int* pnSize ) {
 %typemap(freearg) (int nList, int* pList)
 {
   /* %typemap(freearg) (int nList, int* pList) */
+  free($2);
+}
+
+%fragment("CreateCInt64ListFromSequence","header") %{
+static long long*
+CreateCInt64ListFromSequence( PyObject* pySeq, int* pnSize ) {
+  /* check if is List */
+  if ( !PySequence_Check(pySeq) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  Py_ssize_t size = PySequence_Size(pySeq);
+  if( size > (Py_ssize_t)INT_MAX ) {
+    PyErr_SetString(PyExc_RuntimeError, "too big sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  if( (size_t)size > SIZE_MAX / sizeof(long long) ) {
+    PyErr_SetString(PyExc_RuntimeError, "too big sequence");
+    *pnSize = -1;
+    return NULL;
+  }
+  *pnSize = (int)size;
+  long long* ret = (long long*) malloc((*pnSize)*sizeof(long long));
+  if( !ret ) {
+    PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+    *pnSize = -1;
+    return NULL;
+  }
+  for( int i = 0; i<*pnSize; i++ ) {
+    PyObject *o = PySequence_GetItem(pySeq,i);
+    if ( !PyArg_Parse(o,"L",&ret[i]) ) {
+        PyErr_SetString(PyExc_TypeError, "not an integer");
+        Py_DECREF(o);
+        free(ret);
+        *pnSize = -1;
+        return NULL;
+    }
+    Py_DECREF(o);
+  }
+  return ret;
+}
+%}
+
+/*
+ *  Typemap for counted arrays of int64s <- PySequence
+ */
+%typemap(in,numinputs=1,fragment="CreateCInt64ListFromSequence") (int nList, long long* pList)
+{
+  /* %typemap(in,numinputs=1) (int nList, long long* pList)*/
+  $2 = CreateCInt64ListFromSequence($input, &$1);
+  if( $1 < 0 ) {
+    SWIG_fail;
+  }
+}
+
+%typemap(freearg) (int nList, long long* pList)
+{
+  /* %typemap(freearg) (int nList, long long* pList) */
   free($2);
 }
 
@@ -544,19 +630,6 @@ CreateCDoubleListFromSequence( PyObject* pySeq, int* pnSize ) {
   /* %typemap(freearg) (int nList, double* pList) */
   free($2);
 }
-
-%fragment("CreateTupleFromIntegerArray","header") %{
-static PyObject *
-CreateTupleFromDoubleArray( int *first, unsigned int size ) {
-  PyObject *out = PyTuple_New( size );
-  for( unsigned int i=0; i<size; i++ ) {
-    PyObject *val = PyInt_FromInt( *first );
-    ++first;
-    PyTuple_SetItem( out, i, val );
-  }
-  return out;
-}
-%}
 
 /*
  * Typemap Band::ReadRaster()
@@ -2834,23 +2907,40 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
   $1 = &vals;
   $2 = &nCount;
 }
-%typemap(argout) (int** pvals, size_t* pnCount)
+%typemap(argout, fragment="t_output_helper,CreateTupleFromIntArray") (int** pvals, size_t* pnCount)
 {
   /* %typemap(argout) (int** pvals, size_t* pnCount) */
+  PyObject *list = CreateTupleFromIntArray(*$1, *$2);
   Py_DECREF($result);
-  $result = PyTuple_New( *$2 );
-  if( !$result ) {
-    SWIG_fail;
-  }
-  for( unsigned int i=0; i<*$2; i++ ) {
-    PyObject *val = PyInt_FromLong( (*$1)[i] );
-    PyTuple_SetItem( $result, i, val );
-  }
+  $result = list;
 }
 
 %typemap(freearg) (int** pvals, size_t* pnCount)
 {
   /* %typemap(freearg) (int** pvals, size_t* pnCount) */
+  CPLFree(*$1);
+}
+
+/*
+ * Typemap argout for GDALAttributeReadAsInt64Array()
+ */
+%typemap(in,numinputs=0) (long long** pvals, size_t* pnCount) ( long long* vals=0, size_t nCount = 0 )
+{
+  /* %typemap(in,numinputs=0) (long long** pvals, size_t* pnCount) */
+  $1 = &vals;
+  $2 = &nCount;
+}
+%typemap(argout, fragment="t_output_helper,CreateTupleFromInt64Array") (long long** pvals, size_t* pnCount)
+{
+  /* %typemap(argout) (int** pvals, size_t* pnCount) */
+  PyObject *list = CreateTupleFromInt64Array(*$1, *$2);
+  Py_DECREF($result);
+  $result = list;
+}
+
+%typemap(freearg) (long long** pvals, size_t* pnCount)
+{
+  /* %typemap(freearg) (long long** pvals, size_t* pnCount) */
   CPLFree(*$1);
 }
 
@@ -2863,7 +2953,7 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
   $1 = &vals;
   $2 = &nCount;
 }
-%typemap(argout) (double** pvals, size_t* pnCount)
+%typemap(argout, fragment="t_output_helper,CreateTupleFromDoubleArray") (double** pvals, size_t* pnCount)
 {
   /* %typemap(argout) (double** pvals, size_t* pnCount) */
   PyObject *list = CreateTupleFromDoubleArray(*$1, *$2);

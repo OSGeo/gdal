@@ -1272,6 +1272,10 @@ public:
     return GDALAttributeReadAsInt(self);
   }
 
+  long long ReadAsInt64() {
+    return GDALAttributeReadAsInt64(self);
+  }
+
   double ReadAsDouble() {
     return GDALAttributeReadAsDouble(self);
   }
@@ -1285,6 +1289,12 @@ public:
 #if defined(SWIGPYTHON)
   void ReadAsIntArray( int** pvals, size_t* pnCount ) {
     *pvals = GDALAttributeReadAsIntArray(self, pnCount);
+  }
+#endif
+
+#if defined(SWIGPYTHON)
+  void ReadAsInt64Array( long long** pvals, size_t* pnCount ) {
+    *pvals = (long long*)GDALAttributeReadAsInt64Array(self, pnCount);
   }
 #endif
 
@@ -1327,10 +1337,29 @@ public:
     return GDALAttributeWriteInt(self, val) ? CE_None : CE_Failure;
   }
 
+  CPLErr WriteInt64(long long val)
+  {
+    return GDALAttributeWriteInt64(self, val) ? CE_None : CE_Failure;
+  }
+
   CPLErr WriteDouble(double val)
   {
     return GDALAttributeWriteDouble(self, val) ? CE_None : CE_Failure;
   }
+
+#if defined(SWIGPYTHON)
+  CPLErr WriteIntArray(int nList, int* pList)
+  {
+    return GDALAttributeWriteIntArray(self, pList, nList) ? CE_None : CE_Failure;
+  }
+#endif
+
+#if defined(SWIGPYTHON)
+  CPLErr WriteInt64Array(int nList, long long* pList)
+  {
+    return GDALAttributeWriteInt64Array(self, (int64_t*)pList, nList) ? CE_None : CE_Failure;
+  }
+#endif
 
 #if defined(SWIGPYTHON)
   CPLErr WriteDoubleArray(int nList, double* pList)

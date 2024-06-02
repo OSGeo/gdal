@@ -2032,39 +2032,49 @@ def GetMDArrayNames(self, options = []) -> "list[str]":
             return s
         return self.ReadAsStringArray()
     if dt_class == GEDTC_NUMERIC:
-        if dt.GetNumericDataType() in (GDT_Byte, GDT_Int8, GDT_Int16, GDT_UInt16, GDT_Int32):
+        if dt.GetNumericDataType() in (GDT_Byte, GDT_UInt16,
+                                       GDT_Int8, GDT_Int16, GDT_Int32):
             if self.GetTotalElementsCount() == 1:
                 return self.ReadAsInt()
-            else:
-                return self.ReadAsIntArray()
-        else:
+            return self.ReadAsIntArray()
+        if dt.GetNumericDataType() in (GDT_UInt32, GDT_Int64):
             if self.GetTotalElementsCount() == 1:
-                return self.ReadAsDouble()
-            else:
-                return self.ReadAsDoubleArray()
+                return self.ReadAsInt64()
+            return self.ReadAsInt64Array()
+        if self.GetTotalElementsCount() == 1:
+            return self.ReadAsDouble()
+        return self.ReadAsDoubleArray()
     return self.ReadAsRaw()
 
   def Write(self, val):
     if isinstance(val, (int, type(12345678901234))):
         if val >= -0x80000000 and val <= 0x7FFFFFFF:
             return self.WriteInt(val)
-        else:
-            return self.WriteDouble(val)
+        if val >= -0x8000000000000000 and val <= 0x7FFFFFFFFFFFFFFF:
+            return self.WriteInt64(val)
+        return self.WriteDouble(val)
     if isinstance(val, float):
-      return self.WriteDouble(val)
+        return self.WriteDouble(val)
     if isinstance(val, str) and self.GetDataType().GetClass() != GEDTC_COMPOUND:
-      return self.WriteString(val)
+        return self.WriteString(val)
     if isinstance(val, list):
-      if len(val) == 0:
-        if self.GetDataType().GetClass() == GEDTC_STRING:
-            return self.WriteStringArray(val)
-        else:
+        if len(val) == 0:
+            if self.GetDataType().GetClass() == GEDTC_STRING:
+                return self.WriteStringArray(val)
             return self.WriteDoubleArray(val)
-      if isinstance(val[0], (int, type(12345678901234), float)):
-        return self.WriteDoubleArray(val)
-      if isinstance(val[0], str):
-        return self.WriteStringArray(val)
-    if isinstance(val, dict) and self.GetDataType().GetSubType() == GEDTST_JSON:
+        if isinstance(val[0], (int, type(12345678901234))):
+            if all(v >= -0x80000000 and v <= 0x7FFFFFFF for v in val):
+                return self.WriteIntArray(val)
+            if all(v >= -0x8000000000000000 and v <= 0x7FFFFFFFFFFFFFFF
+                   for v in val):
+                return self.WriteInt64Array(val)
+            return self.WriteDoubleArray(val)
+        if isinstance(val[0], float):
+            return self.WriteDoubleArray(val)
+        if isinstance(val[0], str):
+            return self.WriteStringArray(val)
+    if (isinstance(val, dict) and
+        self.GetDataType().GetSubType() == GEDTST_JSON):
         import json
         return self.WriteString(json.dumps(val))
     return self.WriteRaw(val)
