@@ -87,33 +87,6 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
 
     if (STARTS_WITH_CI(pszHeader, "CDF\001"))
     {
-        // In case the netCDF driver is registered before the GMT driver,
-        // avoid opening GMT files.
-        if (GDALGetDriverByName("GMT") != nullptr)
-        {
-            bool bFoundZ = false;
-            bool bFoundDimension = false;
-            constexpr const char *DIMENSION = "dimension";
-            constexpr int DIMENSION_LEN =
-                int(std::char_traits<char>::length(DIMENSION));
-            static_assert(DIMENSION_LEN == 9);
-            const std::string_view header(pszHeader, poOpenInfo->nHeaderBytes);
-            for (int i = 0;
-                 i < static_cast<int>(header.size()) - (1 + DIMENSION_LEN + 1);
-                 i++)
-            {
-                if (header[i] == 1 && header[i + 1] == 'z' &&
-                    header[i + 2] == 0)
-                    bFoundZ = true;
-                else if (header[i] == DIMENSION_LEN &&
-                         header.substr(i + 1, DIMENSION_LEN) == DIMENSION &&
-                         header[i + DIMENSION_LEN + 1] == 0)
-                    bFoundDimension = true;
-            }
-            if (bFoundZ && bFoundDimension)
-                return NCDF_FORMAT_UNKNOWN;
-        }
-
         return NCDF_FORMAT_NC;
     }
 
