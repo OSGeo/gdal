@@ -5201,3 +5201,13 @@ def test_ogr_geojson_identify_jsonfg_with_geojson():
             "data/jsonfg/crs_none.json", allowed_drivers=["GeoJSON", "JSONFG"]
         )
         assert drv.GetDescription() == "JSONFG"
+
+
+###############################################################################
+# Test opening a file that has a "type: "Topology" feature property
+
+
+def test_ogr_geojson_feature_with_type_Topology_property():
+
+    ds = gdal.OpenEx("data/geojson/feature_with_type_Topology_property.json")
+    assert ds.GetDriver().GetDescription() == "GeoJSON"

@@ -45,6 +45,18 @@ const char szESRIJSonFeaturesGeometryRings[] =
 const char szESRIJSonFeaturesAttributes[] = "{\"features\":[{\"attributes\":{";
 
 /************************************************************************/
+/*                           SkipUTF8BOM()                              */
+/************************************************************************/
+
+static void SkipUTF8BOM(const char *&pszText)
+{
+    /* Skip UTF-8 BOM (#5630) */
+    const GByte *pabyData = reinterpret_cast<const GByte *>(pszText);
+    if (pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF)
+        pszText += 3;
+}
+
+/************************************************************************/
 /*                           IsJSONObject()                             */
 /************************************************************************/
 
@@ -53,10 +65,7 @@ static bool IsJSONObject(const char *pszText)
     if (nullptr == pszText)
         return false;
 
-    /* Skip UTF-8 BOM (#5630) */
-    const GByte *pabyData = reinterpret_cast<const GByte *>(pszText);
-    if (pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF)
-        pszText += 3;
+    SkipUTF8BOM(pszText);
 
     /* -------------------------------------------------------------------- */
     /*      This is a primitive test, but we need to perform it fast.       */
@@ -81,30 +90,71 @@ static bool IsJSONObject(const char *pszText)
 }
 
 /************************************************************************/
-/*                           IsTypeSomething()                          */
+/*                           GetTopLevelType()                          */
 /************************************************************************/
 
-static bool IsTypeSomething(const char *pszText, const char *pszTypeValue)
+static std::string GetTopLevelType(const char *pszText)
 {
-    const char *pszIter = pszText;
-    while (true)
+    if (!strstr(pszText, "\"type\""))
+        return std::string();
+
+    SkipUTF8BOM(pszText);
+
+    struct MyParser : public CPLJSonStreamingParser
     {
-        pszIter = strstr(pszIter, "\"type\"");
-        if (pszIter == nullptr)
-            return false;
-        pszIter += strlen("\"type\"");
-        while (isspace(static_cast<unsigned char>(*pszIter)))
-            pszIter++;
-        if (*pszIter != ':')
-            return false;
-        pszIter++;
-        while (isspace(static_cast<unsigned char>(*pszIter)))
-            pszIter++;
-        CPLString osValue;
-        osValue.Printf("\"%s\"", pszTypeValue);
-        if (STARTS_WITH(pszIter, osValue.c_str()))
-            return true;
-    }
+        std::string m_osLevel{};
+        bool m_bInTopLevelType = false;
+        std::string m_osTopLevelTypeValue{};
+
+        void StartObjectMember(const char *pszKey, size_t nLength) override
+        {
+            m_bInTopLevelType = false;
+            if (nLength == strlen("type") && strcmp(pszKey, "type") == 0 &&
+                m_osLevel == "{")
+            {
+                m_bInTopLevelType = true;
+            }
+        }
+
+        void String(const char *pszValue, size_t nLength) override
+        {
+            if (m_bInTopLevelType)
+            {
+                m_osTopLevelTypeValue.assign(pszValue, nLength);
+                StopParsing();
+            }
+        }
+
+        void StartObject() override
+        {
+            m_osLevel += '{';
+            m_bInTopLevelType = false;
+        }
+
+        void EndObject() override
+        {
+            if (!m_osLevel.empty())
+                m_osLevel.pop_back();
+            m_bInTopLevelType = false;
+        }
+
+        void StartArray() override
+        {
+            m_osLevel += '[';
+            m_bInTopLevelType = false;
+        }
+
+        void EndArray() override
+        {
+            if (!m_osLevel.empty())
+                m_osLevel.pop_back();
+            m_bInTopLevelType = false;
+        }
+    };
+
+    MyParser oParser;
+    oParser.Parse(pszText, strlen(pszText), true);
+    return oParser.m_osTopLevelTypeValue;
 }
 
 /************************************************************************/
@@ -169,7 +219,8 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
     if (!IsJSONObject(pszText))
         return false;
 
-    if (IsTypeSomething(pszText, "Topology"))
+    const std::string osTopLevelType = GetTopLevelType(pszText);
+    if (osTopLevelType == "Topology")
         return false;
 
     if ((!papszAllowedDrivers ||
@@ -179,7 +230,7 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
         return false;
     }
 
-    if (IsTypeSomething(pszText, "FeatureCollection"))
+    if (osTopLevelType == "FeatureCollection")
     {
         return true;
     }
@@ -211,14 +262,11 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
         return true;
     }
 
-    if (IsTypeSomething(pszText, "Feature") ||
-        IsTypeSomething(pszText, "Point") ||
-        IsTypeSomething(pszText, "LineString") ||
-        IsTypeSomething(pszText, "Polygon") ||
-        IsTypeSomething(pszText, "MultiPoint") ||
-        IsTypeSomething(pszText, "MultiLineString") ||
-        IsTypeSomething(pszText, "MultiPolygon") ||
-        IsTypeSomething(pszText, "GeometryCollection"))
+    if (osTopLevelType == "Feature" || osTopLevelType == "Point" ||
+        osTopLevelType == "LineString" || osTopLevelType == "Polygon" ||
+        osTopLevelType == "MultiPoint" || osTopLevelType == "MultiLineString" ||
+        osTopLevelType == "MultiPolygon" ||
+        osTopLevelType == "GeometryCollection")
     {
         bMightBeSequence = true;
         return true;
@@ -287,7 +335,7 @@ bool TopoJSONIsObject(const char *pszText)
     if (!IsJSONObject(pszText))
         return false;
 
-    return IsTypeSomething(pszText, "Topology");
+    return GetTopLevelType(pszText) == "Topology";
 }
 
 /************************************************************************/
