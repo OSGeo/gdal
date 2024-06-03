@@ -50,7 +50,11 @@ The JSON-FG driver accepts three types of sources of data:
 -  Text passed directly and encoded in JSON-FG
 
 The URL/filename/text might be prefixed with
-``JSONFG:`` to avoid any ambiguity with other drivers.
+``JSONFG:`` to avoid any ambiguity with other drivers. Alternatively, starting
+with GDAL 3.10, specifying the ``-if JSONFG`` option to command line utilities
+accepting it, or ``JSONFG`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+URL/filename/text.
 
 Time support
 ------------

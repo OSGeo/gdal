@@ -33,7 +33,11 @@ The driver accepts three types of sources of data:
 -  Text passed directly and encoded in Topo JSON
 
 Starting with GDAL 2.3, the URL/filename/text might be prefixed with
-TopoJSON: to avoid any ambiguity with other drivers.
+TopoJSON: to avoid any ambiguity with other drivers. Alternatively, starting
+with GDAL 3.10, specifying the ``-if TopoJSON`` option to command line utilities
+accepting it, or ``TopoJSON`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+URL/filename/text.
 
 See Also
 --------
