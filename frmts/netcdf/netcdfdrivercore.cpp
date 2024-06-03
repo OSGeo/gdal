@@ -104,9 +104,15 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
         (poOpenInfo->nHeaderBytes > HDF5_SIG_OFFSET + HDF5_SIG_LEN &&
          memcmp(pszHeader + HDF5_SIG_OFFSET, HDF5_SIG, HDF5_SIG_LEN) == 0))
     {
+        // If only the netCDF driver is allowed, immediately recognize the file
+        if (poOpenInfo->IsSingleAllowedDriver("netCDF"))
+        {
+            return NCDF_FORMAT_NC4;
+        }
+
         // Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
         // If HDF5 is not supported in GDAL, this driver will try to open the
-        // file Else, make sure this driver does not try to open HDF5 files If
+        // file. Else, make sure this driver does not try to open HDF5 files. If
         // user really wants to open with this driver, use NETCDF:file.h5
         // format.  This check should be relaxed, but there is no clear way to
         // make a difference.
@@ -134,7 +140,16 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
     }
     else if (STARTS_WITH_CI(pszHeader, "\016\003\023\001"))
     {
-        // Requires HDF4 support in libnetcdf, but if HF4 is supported by GDAL
+        // Check for HDF4 support in libnetcdf.
+#ifdef NETCDF_HAS_HDF4
+        // If only the netCDF driver is allowed, immediately recognize the file
+        if (poOpenInfo->IsSingleAllowedDriver("netCDF"))
+        {
+            return NCDF_FORMAT_HDF4;
+        }
+#endif
+
+        // Requires HDF4 support in libnetcdf, but if HDF4 is supported by GDAL
         // don't try to open.
         // If user really wants to open with this driver, use NETCDF:file.hdf
         // syntax.
@@ -151,9 +166,9 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
 
 // Check for HDF4 support in libnetcdf.
 #ifdef NETCDF_HAS_HDF4
-        return NCDF_FORMAT_NC4;
-#else
         return NCDF_FORMAT_HDF4;
+#else
+        return NCDF_FORMAT_NONE;
 #endif
     }
 
@@ -162,7 +177,8 @@ NetCDFFormatEnum netCDFIdentifyFormat(GDALOpenInfo *poOpenInfo, bool bCheckExt)
     const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
     if (poOpenInfo->fpL != nullptr &&
         (!bCheckExt || EQUAL(pszExtension, "nc") ||
-         EQUAL(pszExtension, "cdf") || EQUAL(pszExtension, "nc4")))
+         EQUAL(pszExtension, "cdf") || EQUAL(pszExtension, "nc4") ||
+         poOpenInfo->IsSingleAllowedDriver("netCDF")))
     {
         vsi_l_offset nOffset = HDF5_SIG_OFFSET;
         for (int i = 0; i < 64; i++)
@@ -202,6 +218,11 @@ static int netCDFDatasetIdentify(GDALOpenInfo *poOpenInfo)
     if (NCDF_FORMAT_NC == eTmpFormat || NCDF_FORMAT_NC2 == eTmpFormat ||
         NCDF_FORMAT_NC4 == eTmpFormat || NCDF_FORMAT_NC4C == eTmpFormat)
         return TRUE;
+    if (eTmpFormat == NCDF_FORMAT_HDF4 &&
+        poOpenInfo->IsSingleAllowedDriver("netCDF"))
+    {
+        return TRUE;
+    }
 
     return FALSE;
 }

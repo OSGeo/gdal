@@ -6519,3 +6519,26 @@ def test_netcdf_create_metadata_with_equal_sign(tmp_path):
 
     ds = gdal.Open(fname)
     assert ds.GetRasterBand(1).GetMetadataItem("long_name") == value
+
+
+###############################################################################
+# Test force opening a HDF55 file with netCDF driver
+
+
+def test_netcdf_force_opening_hdf5_file(tmp_vsimem):
+
+    ds = gdal.OpenEx("data/hdf5/groups.h5", allowed_drivers=["netCDF"])
+    assert ds.GetDriver().GetDescription() == "netCDF"
+
+    ds = gdal.Open(ds.GetSubDatasets()[0][0])
+    assert ds.GetDriver().GetDescription() == "netCDF"
+
+
+###############################################################################
+# Test force opening, but provided file is still not recognized (for good reasons)
+
+
+def test_netcdf_force_opening_no_match():
+
+    drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["netCDF"])
+    assert drv is None
