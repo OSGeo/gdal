@@ -1324,8 +1324,8 @@ bool FileGDBIndexIterator::FindPages(int iLevel, uint64_t nPage)
     returnErrorIf(nSubPagesCount[iLevel] == 0 ||
                   nSubPagesCount[iLevel] > nMaxPerPages);
     if (nIndexDepth == 2)
-        returnErrorIf(m_nValueCountInIdx >
-                      nMaxPerPages * (nSubPagesCount[0] + 1));
+        returnErrorIf(m_nValueCountInIdx > static_cast<uint64_t>(nMaxPerPages) *
+                                               (nSubPagesCount[0] + 1));
 
     if (eOp == FGSO_ISNOTNULL)
     {
