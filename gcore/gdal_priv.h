@@ -339,6 +339,8 @@ class CPL_DLL GDALOpenInfo
     char **StealSiblingFiles();
     bool AreSiblingFilesLoaded() const;
 
+    bool IsSingleAllowedDriver(const char *pszDriverName) const;
+
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALOpenInfo)
 };
