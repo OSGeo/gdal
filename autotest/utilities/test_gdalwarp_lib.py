@@ -4186,3 +4186,47 @@ def test_target_extent_consistent_size():
 
     assert ds.RasterXSize == 4793
     assert ds.RasterYSize == 4143
+
+
+###############################################################################
+# Test warping an image with [-180,180] longitude to [180 - X, 180 + X]
+
+
+@pytest.mark.parametrize("extra_column", [False, True])
+def test_gdalwarp_lib_minus_180_plus_180_to_span_over_180(tmp_vsimem, extra_column):
+
+    dst_filename = str(tmp_vsimem / "out.tif")
+    src_ds = gdal.Open("../gdrivers/data/small_world.tif")
+    if extra_column:
+        tmp_ds = gdal.GetDriverByName("MEM").Create(
+            "", src_ds.RasterXSize + 1, src_ds.RasterYSize
+        )
+        tmp_ds.SetGeoTransform(src_ds.GetGeoTransform())
+        tmp_ds.SetSpatialRef(src_ds.GetSpatialRef())
+        tmp_ds.WriteRaster(
+            0,
+            0,
+            src_ds.RasterXSize,
+            src_ds.RasterYSize,
+            src_ds.GetRasterBand(1).ReadRaster(),
+        )
+        tmp_ds.WriteRaster(
+            src_ds.RasterXSize,
+            0,
+            1,
+            src_ds.RasterYSize,
+            src_ds.GetRasterBand(1).ReadRaster(0, 0, 1, src_ds.RasterYSize),
+        )
+        src_ds = tmp_ds
+    out_ds = gdal.Warp(dst_filename, src_ds, outputBounds=[0, -90, 360, 90])
+    # Check that east/west hemispheres have been switched
+    assert out_ds.GetRasterBand(1).ReadRaster(
+        0, 0, src_ds.RasterXSize // 2, src_ds.RasterYSize
+    ) == src_ds.GetRasterBand(1).ReadRaster(
+        src_ds.RasterXSize // 2, 0, src_ds.RasterXSize // 2, src_ds.RasterYSize
+    )
+    assert out_ds.GetRasterBand(1).ReadRaster(
+        src_ds.RasterXSize // 2, 0, src_ds.RasterXSize // 2, src_ds.RasterYSize
+    ) == src_ds.GetRasterBand(1).ReadRaster(
+        0, 0, src_ds.RasterXSize // 2, src_ds.RasterYSize
+    )
