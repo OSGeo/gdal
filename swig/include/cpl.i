@@ -908,8 +908,33 @@ int VSIFFlushL( VSILFILE* fp );
 
 VSI_RETVAL VSIFCloseL( VSILFILE* fp );
 
+// Wrap VSIFSeekL to allow negative offsets
+%rename (VSIFSeekL) wrapper_VSIFSeekL;
+%inline {
 #if defined(SWIGPYTHON)
-int     VSIFSeekL( VSILFILE* fp, GIntBig offset, int whence);
+int wrapper_VSIFSeekL( VSILFILE* fp, GIntBig offset, int whence) {
+#else
+VSI_RETVAL wrapper_VSIFSeekL( VSILFILE* fp, long offset, int whence) {
+#endif
+if (offset < 0) {
+    switch (whence) {
+        case SEEK_END: VSIFSeekL(fp, 0, SEEK_END);
+        case SEEK_CUR:
+            offset = VSIFTellL(fp) + offset;
+            whence = SEEK_SET;
+            break;
+        default:
+            VSIError(VSIE_FileError, "Cannot use negative offset with SEEK_SET");
+            return -1;
+    }
+}
+
+return VSIFSeekL(fp, offset, whence);
+}
+}
+
+
+#if defined(SWIGPYTHON)
 GIntBig    VSIFTellL( VSILFILE* fp );
 int     VSIFTruncateL( VSILFILE* fp, GIntBig length );
 
@@ -921,7 +946,6 @@ int     VSISupportsSparseFiles( const char* utf8_path );
 
 int     VSIFGetRangeStatusL( VSILFILE* fp, GIntBig offset, GIntBig length );
 #else
-VSI_RETVAL VSIFSeekL( VSILFILE* fp, long offset, int whence);
 long    VSIFTellL( VSILFILE* fp );
 VSI_RETVAL VSIFTruncateL( VSILFILE* fp, long length );
 #endif
@@ -944,6 +968,8 @@ int     VSIFWriteL( const char *, int, int, VSILFILE *fp );
 #endif
 
 /* VSIFReadL() handled specially in python/gdal_python.i */
+
+const char* CPLReadLineL(VSILFILE* fp);
 
 void VSICurlClearCache();
 void VSICurlPartialClearCache( const char* utf8_path );

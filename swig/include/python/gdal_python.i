@@ -371,7 +371,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
         raise ValueError("I/O operation on closed file.")
 %}
 
-%pythonprepend VSIFSeekL %{
+%pythonprepend wrapper_VSIFSeekL %{
     if args[0].this is None:
         raise ValueError("I/O operation on closed file.")
 %}

@@ -2116,3 +2116,86 @@ def reopen(ds, update=False, open_options=None):
         allowed_drivers=[ds_drv.GetDescription()],
         open_options=open_options,
     )
+
+
+# VSIFile helper class
+
+
+class VSIFile:
+    def __init__(self, path, mode, encoding="utf-8"):
+        self._path = path
+        self._mode = mode
+
+        self._binary = "b" in mode
+        self._encoding = encoding
+
+        self._fp = gdal.VSIFOpenExL(self._path, self._mode, True)
+        if self._fp is None:
+            raise OSError(gdal.VSIGetLastErrorMsg())
+
+        self._closed = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        line = gdal.CPLReadLineL(self._fp)
+        if line is None:
+            raise StopIteration
+        if self._binary:
+            return line.encode()
+        return line
+
+    def close(self):
+        if self._closed:
+            return
+
+        self._closed = True
+        gdal.VSIFCloseL(self._fp)
+
+    def read(self, size=-1):
+        if size == -1:
+            pos = self.tell()
+            self.seek(0, 2)
+            size = self.tell()
+            self.seek(pos)
+
+        raw = gdal.VSIFReadL(1, size, self._fp)
+
+        if self._binary:
+            return bytes(raw)
+        else:
+            return raw.decode(self._encoding)
+
+    def write(self, x):
+
+        if self._binary:
+            assert type(x) in (bytes, bytearray, memoryview)
+        else:
+            assert type(x) is str
+            x = x.encode(self._encoding)
+
+        planned_write = len(x)
+        actual_write = gdal.VSIFWriteL(x, 1, planned_write, self._fp)
+
+        if planned_write != actual_write:
+            raise OSError(
+                f"Expected to write {planned_write} bytes but {actual_write} were written"
+            )
+
+    def seek(self, offset, whence=0):
+        if gdal.VSIFSeekL(self._fp, offset, whence) != 0:
+            raise OSError(gdal.VSIGetLastErrorMsg())
+
+    def tell(self):
+        return gdal.VSIFTellL(self._fp)
+
+
+def vsi_open(path, mode="r"):
+    return VSIFile(path, mode)

@@ -66,11 +66,12 @@
  * implement the reprojection, and will default a variety of other
  * warp options.
  *
- * No metadata, projection info, or color tables are transferred
- * to the output file.
+ * Nodata values set on destination dataset are taken into account.
  *
- * Starting with GDAL 2.0, nodata values set on destination dataset are taken
- * into account.
+ * No metadata, projection info, or color tables are transferred
+ * to the output file. Source overviews are not considered.
+ *
+ * For more advanced warping capabilities, consider using GDALWarp().
  *
  * @param hSrcDS the source image file.
  * @param pszSrcWKT the source projection.  If NULL the source projection
@@ -91,6 +92,7 @@
  * @param psOptions warp options, normally NULL.
  *
  * @return CE_None on success or CE_Failure if something goes wrong.
+ * @see GDALWarp()
  */
 
 CPLErr CPL_STDCALL GDALReprojectImage(
