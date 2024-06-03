@@ -127,7 +127,6 @@ GDALCreateAppOptionsGetParser(GDALCreateOptions *psOptions)
         .metavar("<value>")
         .nargs(nargs_pattern::at_least_one)
         .append()
-        .scan<'g', double>()
         .action(
             [psOptions](const std::string &s)
             {
