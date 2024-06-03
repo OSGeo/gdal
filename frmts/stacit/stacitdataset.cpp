@@ -113,6 +113,13 @@ int STACITDataset::Identify(GDALOpenInfo *poOpenInfo)
         return true;
     }
 
+    const bool bIsSingleDriver = poOpenInfo->IsSingleAllowedDriver("STACIT");
+    if (bIsSingleDriver && (STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+                            STARTS_WITH(poOpenInfo->pszFilename, "https://")))
+    {
+        return true;
+    }
+
     if (poOpenInfo->nHeaderBytes == 0)
     {
         return false;
@@ -124,6 +131,14 @@ int STACITDataset::Identify(GDALOpenInfo *poOpenInfo)
         // before the loop.
         const char *pszHeader =
             reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+        while (*pszHeader != 0 &&
+               std::isspace(static_cast<unsigned char>(*pszHeader)))
+            ++pszHeader;
+        if (bIsSingleDriver)
+        {
+            return pszHeader[0] == '{';
+        }
+
         if (strstr(pszHeader, "\"stac_version\"") != nullptr &&
             strstr(pszHeader, "\"proj:transform\"") != nullptr)
         {
