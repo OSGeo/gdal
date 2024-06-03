@@ -687,3 +687,20 @@ def test_ogr_esrijson_identify_srs():
     sr = lyr.GetSpatialRef()
     assert sr
     assert sr.GetAuthorityCode(None) == "2223"
+
+
+###############################################################################
+# Test for https://github.com/OSGeo/gdal/issues/9996
+
+
+def test_ogr_esrijson_read_CadastralSpecialServies():
+
+    ds = ogr.Open("data/esrijson/GetLatLon.json")
+    lyr = ds.GetLayer(0)
+    sr = lyr.GetSpatialRef()
+    assert sr
+    assert sr.GetAuthorityCode(None) == "4326"
+    assert lyr.GetGeomType() != ogr.wkbNone
+    f = lyr.GetNextFeature()
+    assert f["landdescription"] == "WA330160N0260E0SN070"
+    assert f.GetGeometryRef().GetGeometryType() == ogr.wkbPolygon
