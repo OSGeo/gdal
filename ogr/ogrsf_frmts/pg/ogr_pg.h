@@ -641,6 +641,12 @@ class OGRPGDataSource final : public OGRDataSource
     bool m_bOgrSystemTablesMetadataTableExistenceTested = false;
     bool m_bOgrSystemTablesMetadataTableFound = false;
 
+    bool m_bCreateMetadataTableIfNeededRun = false;
+    bool m_bCreateMetadataTableIfNeededSuccess = false;
+
+    bool m_bHasWritePermissionsOnMetadataTableRun = false;
+    bool m_bHasWritePermissionsOnMetadataTableSuccess = false;
+
     void LoadTables();
 
     CPLString osDebugLastTransactionCommand{};
@@ -749,8 +755,9 @@ class OGRPGDataSource final : public OGRDataSource
         return bUserTransactionActive;
     }
 
-    void CreateOgrSystemTablesMetadataTableIfNeeded();
+    bool CreateMetadataTableIfNeeded();
     bool HasOgrSystemTablesMetadataTable();
+    bool HasWritePermissionsOnMetadataTable();
 };
 
 #endif /* ndef OGR_PG_H_INCLUDED */
