@@ -487,3 +487,22 @@ int GDALOpenInfo::TryToIngest(int nBytes)
 
     return TRUE;
 }
+
+/************************************************************************/
+/*                       IsSingleAllowedDriver()                        */
+/************************************************************************/
+
+/** Returns true if the driver name is the single in the list of allowed
+ * drivers.
+ *
+ * @param pszDriverName Driver name to test.
+ * @return true if the driver name is the single in the list of allowed
+ * drivers.
+ * @since GDAL 3.10
+ */
+bool GDALOpenInfo::IsSingleAllowedDriver(const char *pszDriverName) const
+{
+    return papszAllowedDrivers && papszAllowedDrivers[0] &&
+           !papszAllowedDrivers[1] &&
+           EQUAL(papszAllowedDrivers[0], pszDriverName);
+}
