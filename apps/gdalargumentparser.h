@@ -61,6 +61,12 @@ class GDALArgumentParser : public ArgumentParser
     explicit GDALArgumentParser(const std::string &program_name,
                                 bool bForBinary);
 
+    //! Return usage message
+    std::string usage() const;
+
+    //! Adds an extra usage hint.
+    void add_extra_usage_hint(const std::string &osExtraUsageHint);
+
     //! Format an exception as an error message and display the program usage
     void display_error_and_usage(const std::exception &err);
 
@@ -141,6 +147,7 @@ class GDALArgumentParser : public ArgumentParser
     std::map<std::string, ArgumentParser::argument_it>::iterator
     find_argument(const std::string &name);
     std::vector<std::unique_ptr<GDALArgumentParser>> aoSubparsers;
+    std::string m_osExtraUsageHint{};
 };
 
 #endif /* GDALARGUMENTPARSER_H */
