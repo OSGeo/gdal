@@ -676,17 +676,21 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
     const auto [iLeft, iRight] =
         adjustHeight(nYOffset, nX, vThisLineVal.data() + nX);
 
-    auto t1 = std::async(std::launch::async, [&, left = iLeft]()
-        {
-            processLineLeft(nX, nYOffset, nX - 2, left - 1, vResult,
-                            vThisLineVal, vLastLineVal);
-        });
+    auto t1 =
+        std::async(std::launch::async,
+                   [&, left = iLeft]()
+                   {
+                       processLineLeft(nX, nYOffset, nX - 2, left - 1, vResult,
+                                       vThisLineVal, vLastLineVal);
+                   });
 
-    auto t2 = std::async(std::launch::async, [&, right = iRight]()
-        {
-            processLineRight(nX, nYOffset, nX + 2, right, vResult, vThisLineVal,
-                             vLastLineVal);
-        });
+    auto t2 =
+        std::async(std::launch::async,
+                   [&, right = iRight]()
+                   {
+                       processLineRight(nX, nYOffset, nX + 2, right, vResult,
+                                        vThisLineVal, vLastLineVal);
+                   });
     t1.wait();
     t2.wait();
 
@@ -739,17 +743,21 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
         vResult[nX] = oOpts.outOfRangeVal;
 
     // process left half then right half of line
-    auto t1 = std::async(std::launch::async, [&, left = iLeft]()
-        {
-            processLineLeft(nX, nYOffset, nX - 1, left - 1, vResult,
-                            vThisLineVal, vLastLineVal);
-        });
+    auto t1 =
+        std::async(std::launch::async,
+                   [&, left = iLeft]()
+                   {
+                       processLineLeft(nX, nYOffset, nX - 1, left - 1, vResult,
+                                       vThisLineVal, vLastLineVal);
+                   });
 
-    auto t2 = std::async(std::launch::async, [&, right = iRight]()
-        {
-            processLineRight(nX, nYOffset, nX + 1, right, vResult, vThisLineVal,
-                             vLastLineVal);
-        });
+    auto t2 =
+        std::async(std::launch::async,
+                   [&, right = iRight]()
+                   {
+                       processLineRight(nX, nYOffset, nX + 1, right, vResult,
+                                        vThisLineVal, vLastLineVal);
+                   });
     t1.wait();
     t2.wait();
 
@@ -832,17 +840,16 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
 
     // scan upwards
     std::atomic<bool> err(false);
-    auto tUp = std::async(
-        std::launch::async,
-        [&]()
-        {
-                             std::vector<double> vLastLineVal = vFirstLineVal;
+    auto tUp = std::async(std::launch::async,
+                          [&]()
+                          {
+                              std::vector<double> vLastLineVal = vFirstLineVal;
 
-                             for (int nLine = nY - 1;
-                                  nLine >= oOutExtent.yStart && !err; nLine--)
-                                 if (!processLine(nX, nY, nLine, vLastLineVal))
-                                     err = true;
-                                     });
+                              for (int nLine = nY - 1;
+                                   nLine >= oOutExtent.yStart && !err; nLine--)
+                                  if (!processLine(nX, nY, nLine, vLastLineVal))
+                                      err = true;
+                          });
 
     // scan downwards
     auto tDown = std::async(
