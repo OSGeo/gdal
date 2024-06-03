@@ -6104,16 +6104,16 @@ int MMCheck_REL_FILE(const char *szREL_file)
         return 1;
     }
 
-    // SubVers>=3?
+    // SubVers>=0?
     pszLine = MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO,
                                               KEY_SubVers);
     if (pszLine)
     {
-        if (*pszLine == '\0' || atoi(pszLine) < (int)MM_SUBVERS)
+        if (*pszLine == '\0' || atoi(pszLine) < (int)MM_SUBVERS_ACCEPTED)
         {
             MMCPLError(CE_Failure, CPLE_OpenFailed,
                        "The file \"%s\" must have %s>=%d.", szREL_file,
-                       KEY_SubVers, MM_SUBVERS);
+                       KEY_SubVers, MM_SUBVERS_ACCEPTED);
 
             free_function(pszLine);
             return 1;
@@ -6124,20 +6124,20 @@ int MMCheck_REL_FILE(const char *szREL_file)
     {
         MMCPLError(CE_Failure, CPLE_OpenFailed,
                    "The file \"%s\" must have %s>=%d.", szREL_file, KEY_SubVers,
-                   MM_SUBVERS);
+                   MM_SUBVERS_ACCEPTED);
         return 1;
     }
 
-    // VersMetaDades>=5?
+    // VersMetaDades>=4?
     pszLine = MMReturnValueFromSectionINIFile(szREL_file, SECTION_VERSIO,
                                               KEY_VersMetaDades);
     if (pszLine)
     {
-        if (*pszLine == '\0' || atoi(pszLine) < (int)MM_VERS_METADADES)
+        if (*pszLine == '\0' || atoi(pszLine) < (int)MM_VERS_METADADES_ACCEPTED)
         {
             MMCPLError(CE_Failure, CPLE_OpenFailed,
                        "The file \"%s\" must have %s>=%d.", szREL_file,
-                       KEY_VersMetaDades, MM_VERS_METADADES);
+                       KEY_VersMetaDades, MM_VERS_METADADES_ACCEPTED);
             free_function(pszLine);
             return 1;
         }
@@ -6147,7 +6147,7 @@ int MMCheck_REL_FILE(const char *szREL_file)
     {
         MMCPLError(CE_Failure, CPLE_OpenFailed,
                    "The file \"%s\" must have %s>=%d.", szREL_file,
-                   KEY_VersMetaDades, MM_VERS_METADADES);
+                   KEY_VersMetaDades, MM_VERS_METADADES_ACCEPTED);
         return 1;
     }
 
