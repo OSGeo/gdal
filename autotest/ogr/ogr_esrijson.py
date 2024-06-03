@@ -693,7 +693,7 @@ def test_ogr_esrijson_identify_srs():
 # Test for https://github.com/OSGeo/gdal/issues/9996
 
 
-def test_ogr_esrijson_read_CadastralSpecialServies():
+def test_ogr_esrijson_read_CadastralSpecialServices():
 
     ds = ogr.Open("data/esrijson/GetLatLon.json")
     lyr = ds.GetLayer(0)

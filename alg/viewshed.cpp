@@ -247,7 +247,7 @@ double CalcHeightLine(int nDistance, double Za)
         return Za * nDistance / (nDistance - 1);
 }
 
-// Calulate the height Zc of a point (i, j, Zc) given a line through the origin (0, 0, 0)
+// Calculate the height Zc of a point (i, j, Zc) given a line through the origin (0, 0, 0)
 // and passing through the line connecting (i - 1, j, Za) and (i, j - 1, Zb).
 // In other words, the origin and the two points form a plane and we're calculating Zc
 // of the point (i, j, Zc), also on the plane.
