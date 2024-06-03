@@ -473,10 +473,15 @@ static int OGRGeoJSONDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
 
         return FALSE;
     }
-    if (nSrcType == eGeoJSONSourceService &&
-        !STARTS_WITH_CI(poOpenInfo->pszFilename, "GeoJSON:"))
+
+    if (nSrcType == eGeoJSONSourceService)
     {
-        return -1;
+        if (poOpenInfo->IsSingleAllowedDriver("GeoJSON"))
+            return TRUE;
+        if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "GeoJSON:"))
+        {
+            return -1;
+        }
     }
 
     // If this looks like a file that can be handled by the STACTA driver,
@@ -488,6 +493,8 @@ static int OGRGeoJSONDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
         strstr(pszHeader, "\"tiled-assets\"") != nullptr &&
         GDALGetDriverByName("STACTA") != nullptr)
     {
+        if (poOpenInfo->IsSingleAllowedDriver("GeoJSON"))
+            return TRUE;
         return FALSE;
     }
 

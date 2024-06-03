@@ -210,8 +210,8 @@ static CPLString GetCompactJSon(const char *pszText, size_t nMaxSize)
 /************************************************************************/
 
 static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
-                                bool &bReadMoreBytes,
-                                CSLConstList papszAllowedDrivers)
+                                bool &bReadMoreBytes, GDALOpenInfo *poOpenInfo,
+                                const char *pszExpectedDriverName)
 {
     bMightBeSequence = false;
     bReadMoreBytes = false;
@@ -223,9 +223,15 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
     if (osTopLevelType == "Topology")
         return false;
 
-    if ((!papszAllowedDrivers ||
-         CSLFindString(papszAllowedDrivers, "JSONFG") >= 0) &&
-        GDALGetDriverByName("JSONFG") && JSONFGIsObject(pszText))
+    if (poOpenInfo->IsSingleAllowedDriver(pszExpectedDriverName) &&
+        GDALGetDriverByName(pszExpectedDriverName))
+    {
+        return true;
+    }
+
+    if ((!poOpenInfo->papszAllowedDrivers ||
+         CSLFindString(poOpenInfo->papszAllowedDrivers, "JSONFG") >= 0) &&
+        GDALGetDriverByName("JSONFG") && JSONFGIsObject(pszText, poOpenInfo))
     {
         return false;
     }
@@ -251,7 +257,7 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
     // "{"bbox":...,"features":[..."
     if (osWithoutSpace.find(",\"features\":[") != std::string::npos)
     {
-        return !ESRIJSONIsObject(pszText);
+        return !ESRIJSONIsObject(pszText, poOpenInfo);
     }
 
     // See https://github.com/OSGeo/gdal/issues/2720
@@ -283,22 +289,29 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
     return false;
 }
 
-static bool IsGeoJSONLikeObject(const char *pszText)
+static bool IsGeoJSONLikeObject(const char *pszText, GDALOpenInfo *poOpenInfo,
+                                const char *pszExpectedDriverName)
 {
     bool bMightBeSequence;
     bool bReadMoreBytes;
     return IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes,
-                               nullptr);
+                               poOpenInfo, pszExpectedDriverName);
 }
 
 /************************************************************************/
 /*                       ESRIJSONIsObject()                             */
 /************************************************************************/
 
-bool ESRIJSONIsObject(const char *pszText)
+bool ESRIJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 {
     if (!IsJSONObject(pszText))
         return false;
+
+    if (poOpenInfo->IsSingleAllowedDriver("ESRIJSON") &&
+        GDALGetDriverByName("ESRIJSON"))
+    {
+        return true;
+    }
 
     if (  // ESRI Json geometry
         (strstr(pszText, "\"geometryType\"") != nullptr &&
@@ -330,10 +343,16 @@ bool ESRIJSONIsObject(const char *pszText)
 /*                       TopoJSONIsObject()                             */
 /************************************************************************/
 
-bool TopoJSONIsObject(const char *pszText)
+bool TopoJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 {
     if (!IsJSONObject(pszText))
         return false;
+
+    if (poOpenInfo->IsSingleAllowedDriver("TopoJSON") &&
+        GDALGetDriverByName("TopoJSON"))
+    {
+        return true;
+    }
 
     return GetTopLevelType(pszText) == "Topology";
 }
@@ -342,9 +361,9 @@ bool TopoJSONIsObject(const char *pszText)
 /*                      IsLikelyNewlineSequenceGeoJSON()                */
 /************************************************************************/
 
-static bool IsLikelyNewlineSequenceGeoJSON(VSILFILE *fpL,
-                                           const GByte *pabyHeader,
-                                           const char *pszFileContent)
+static GDALIdentifyEnum
+IsLikelyNewlineSequenceGeoJSON(VSILFILE *fpL, const GByte *pabyHeader,
+                               const char *pszFileContent)
 {
     const size_t nBufferSize = 4096 * 10;
     std::vector<GByte> abyBuffer;
@@ -353,7 +372,6 @@ static bool IsLikelyNewlineSequenceGeoJSON(VSILFILE *fpL,
     int nCurlLevel = 0;
     bool bInString = false;
     bool bLastIsEscape = false;
-    bool bCompatibleOfSequence = true;
     bool bFirstIter = true;
     bool bEOLFound = false;
     int nCountObject = 0;
@@ -399,8 +417,7 @@ static bool IsLikelyNewlineSequenceGeoJSON(VSILFILE *fpL,
                 }
                 else if (!isspace(static_cast<unsigned char>(abyBuffer[i])))
                 {
-                    bCompatibleOfSequence = false;
-                    break;
+                    return GDAL_IDENTIFY_FALSE;
                 }
             }
             else if (bInString)
@@ -431,10 +448,12 @@ static bool IsLikelyNewlineSequenceGeoJSON(VSILFILE *fpL,
                 nCurlLevel--;
             }
         }
-        if (!fpL || bEnd || !bCompatibleOfSequence || nCountObject == 2)
+        if (!fpL || bEnd || nCountObject == 2)
             break;
     }
-    return bCompatibleOfSequence && bEOLFound && nCountObject == 2;
+    if (bEOLFound && nCountObject == 2)
+        return GDAL_IDENTIFY_TRUE;
+    return GDAL_IDENTIFY_UNKNOWN;
 }
 
 /************************************************************************/
@@ -456,40 +475,40 @@ static bool GeoJSONFileIsObject(GDALOpenInfo *poOpenInfo)
     bool bReadMoreBytes = false;
     if (!IsGeoJSONLikeObject(
             reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-            bMightBeSequence, bReadMoreBytes, poOpenInfo->papszAllowedDrivers))
+            bMightBeSequence, bReadMoreBytes, poOpenInfo, "GeoJSON"))
     {
         if (!(bReadMoreBytes && poOpenInfo->nHeaderBytes >= 6000 &&
               poOpenInfo->TryToIngest(1000 * 1000) &&
               !IsGeoJSONLikeObject(
                   reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-                  bMightBeSequence, bReadMoreBytes,
-                  poOpenInfo->papszAllowedDrivers)))
+                  bMightBeSequence, bReadMoreBytes, poOpenInfo, "GeoJSON")))
         {
             return false;
         }
     }
 
-    return !(bMightBeSequence &&
-             IsLikelyNewlineSequenceGeoJSON(poOpenInfo->fpL,
-                                            poOpenInfo->pabyHeader, nullptr));
+    return !(bMightBeSequence && IsLikelyNewlineSequenceGeoJSON(
+                                     poOpenInfo->fpL, poOpenInfo->pabyHeader,
+                                     nullptr) == GDAL_IDENTIFY_TRUE);
 }
 
 /************************************************************************/
 /*                           GeoJSONIsObject()                          */
 /************************************************************************/
 
-bool GeoJSONIsObject(const char *pszText, CSLConstList papszAllowedDrivers)
+bool GeoJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 {
     bool bMightBeSequence = false;
     bool bReadMoreBytes = false;
     if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes,
-                             papszAllowedDrivers))
+                             poOpenInfo, "GeoJSON"))
     {
         return false;
     }
 
     return !(bMightBeSequence &&
-             IsLikelyNewlineSequenceGeoJSON(nullptr, nullptr, pszText));
+             IsLikelyNewlineSequenceGeoJSON(nullptr, nullptr, pszText) ==
+                 GDAL_IDENTIFY_TRUE);
 }
 
 /************************************************************************/
@@ -510,44 +529,60 @@ static bool GeoJSONSeqFileIsObject(GDALOpenInfo *poOpenInfo)
     const char *pszText =
         reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
     if (pszText[0] == '\x1e')
-        return IsGeoJSONLikeObject(pszText + 1);
+        return IsGeoJSONLikeObject(pszText + 1, poOpenInfo, "GeoJSONSeq");
 
     bool bMightBeSequence = false;
     bool bReadMoreBytes = false;
     if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes,
-                             poOpenInfo->papszAllowedDrivers))
+                             poOpenInfo, "GeoJSONSeq"))
     {
         if (!(bReadMoreBytes && poOpenInfo->nHeaderBytes >= 6000 &&
               poOpenInfo->TryToIngest(1000 * 1000) &&
               IsGeoJSONLikeObject(
                   reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
-                  bMightBeSequence, bReadMoreBytes,
-                  poOpenInfo->papszAllowedDrivers)))
+                  bMightBeSequence, bReadMoreBytes, poOpenInfo, "GeoJSONSeq")))
         {
             return false;
         }
     }
 
-    return bMightBeSequence &&
-           IsLikelyNewlineSequenceGeoJSON(poOpenInfo->fpL,
-                                          poOpenInfo->pabyHeader, nullptr);
+    if (poOpenInfo->IsSingleAllowedDriver("GeoJSONSeq") &&
+        IsLikelyNewlineSequenceGeoJSON(poOpenInfo->fpL, poOpenInfo->pabyHeader,
+                                       nullptr) != GDAL_IDENTIFY_FALSE &&
+        GDALGetDriverByName("GeoJSONSeq"))
+    {
+        return true;
+    }
+
+    return bMightBeSequence && IsLikelyNewlineSequenceGeoJSON(
+                                   poOpenInfo->fpL, poOpenInfo->pabyHeader,
+                                   nullptr) == GDAL_IDENTIFY_TRUE;
 }
 
-bool GeoJSONSeqIsObject(const char *pszText)
+bool GeoJSONSeqIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 {
     if (pszText[0] == '\x1e')
-        return IsGeoJSONLikeObject(pszText + 1);
+        return IsGeoJSONLikeObject(pszText + 1, poOpenInfo, "GeoJSONSeq");
 
     bool bMightBeSequence = false;
     bool bReadMoreBytes = false;
     if (!IsGeoJSONLikeObject(pszText, bMightBeSequence, bReadMoreBytes,
-                             nullptr))
+                             poOpenInfo, "GeoJSONSeq"))
     {
         return false;
     }
 
+    if (poOpenInfo->IsSingleAllowedDriver("GeoJSONSeq") &&
+        IsLikelyNewlineSequenceGeoJSON(nullptr, nullptr, pszText) !=
+            GDAL_IDENTIFY_FALSE &&
+        GDALGetDriverByName("GeoJSONSeq"))
+    {
+        return true;
+    }
+
     return bMightBeSequence &&
-           IsLikelyNewlineSequenceGeoJSON(nullptr, nullptr, pszText);
+           IsLikelyNewlineSequenceGeoJSON(nullptr, nullptr, pszText) ==
+               GDAL_IDENTIFY_TRUE;
 }
 
 /************************************************************************/
@@ -564,13 +599,19 @@ static bool JSONFGFileIsObject(GDALOpenInfo *poOpenInfo)
 
     const char *pszText =
         reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
-    return JSONFGIsObject(pszText);
+    return JSONFGIsObject(pszText, poOpenInfo);
 }
 
-bool JSONFGIsObject(const char *pszText)
+bool JSONFGIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 {
     if (!IsJSONObject(pszText))
         return false;
+
+    if (poOpenInfo->IsSingleAllowedDriver("JSONFG") &&
+        GDALGetDriverByName("JSONFG"))
+    {
+        return true;
+    }
 
     const std::string osWithoutSpace = GetCompactJSon(pszText, strlen(pszText));
 
@@ -709,6 +750,10 @@ GeoJSONSourceType GeoJSONGetSourceType(GDALOpenInfo *poOpenInfo)
              STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") ||
              STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp://"))
     {
+        if (poOpenInfo->IsSingleAllowedDriver("GeoJSON"))
+        {
+            return eGeoJSONSourceService;
+        }
         if ((strstr(poOpenInfo->pszFilename, "SERVICE=WFS") ||
              strstr(poOpenInfo->pszFilename, "service=WFS") ||
              strstr(poOpenInfo->pszFilename, "service=wfs")) &&
@@ -730,12 +775,11 @@ GeoJSONSourceType GeoJSONGetSourceType(GDALOpenInfo *poOpenInfo)
             return eGeoJSONSourceFile;
         }
         const char *pszText = poOpenInfo->pszFilename + strlen("GeoJSON:");
-        if (GeoJSONIsObject(pszText, poOpenInfo->papszAllowedDrivers))
+        if (GeoJSONIsObject(pszText, poOpenInfo))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
-    else if (GeoJSONIsObject(poOpenInfo->pszFilename,
-                             poOpenInfo->papszAllowedDrivers))
+    else if (GeoJSONIsObject(poOpenInfo->pszFilename, poOpenInfo))
     {
         srcType = eGeoJSONSourceText;
     }
@@ -763,6 +807,10 @@ GeoJSONSourceType ESRIJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
              STARTS_WITH(poOpenInfo->pszFilename, "https://") ||
              STARTS_WITH(poOpenInfo->pszFilename, "ftp://"))
     {
+        if (poOpenInfo->IsSingleAllowedDriver("ESRIJSON"))
+        {
+            return eGeoJSONSourceService;
+        }
         if (IsLikelyESRIJSONURL(poOpenInfo->pszFilename))
         {
             return eGeoJSONSourceService;
@@ -779,7 +827,7 @@ GeoJSONSourceType ESRIJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
             return eGeoJSONSourceFile;
         }
         const char *pszText = poOpenInfo->pszFilename + strlen("ESRIJSON:");
-        if (ESRIJSONIsObject(pszText))
+        if (ESRIJSONIsObject(pszText, poOpenInfo))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
@@ -787,7 +835,7 @@ GeoJSONSourceType ESRIJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->fpL == nullptr)
     {
         const char *pszText = poOpenInfo->pszFilename;
-        if (ESRIJSONIsObject(pszText))
+        if (ESRIJSONIsObject(pszText, poOpenInfo))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
@@ -801,8 +849,8 @@ GeoJSONSourceType ESRIJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
     }
 
     if (poOpenInfo->pabyHeader != nullptr &&
-        ESRIJSONIsObject(
-            reinterpret_cast<const char *>(poOpenInfo->pabyHeader)))
+        ESRIJSONIsObject(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         poOpenInfo))
     {
         return eGeoJSONSourceFile;
     }
@@ -825,6 +873,10 @@ GeoJSONSourceType TopoJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
              STARTS_WITH(poOpenInfo->pszFilename, "https://") ||
              STARTS_WITH(poOpenInfo->pszFilename, "ftp://"))
     {
+        if (poOpenInfo->IsSingleAllowedDriver("TOPOJSON"))
+        {
+            return eGeoJSONSourceService;
+        }
         if (IsLikelyESRIJSONURL(poOpenInfo->pszFilename))
         {
             return eGeoJSONSourceUnknown;
@@ -841,7 +893,7 @@ GeoJSONSourceType TopoJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
             return eGeoJSONSourceFile;
         }
         const char *pszText = poOpenInfo->pszFilename + strlen("TopoJSON:");
-        if (TopoJSONIsObject(pszText))
+        if (TopoJSONIsObject(pszText, poOpenInfo))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
@@ -849,7 +901,7 @@ GeoJSONSourceType TopoJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->fpL == nullptr)
     {
         const char *pszText = poOpenInfo->pszFilename;
-        if (TopoJSONIsObject(pszText))
+        if (TopoJSONIsObject(pszText, poOpenInfo))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
@@ -863,8 +915,8 @@ GeoJSONSourceType TopoJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
     }
 
     if (poOpenInfo->pabyHeader != nullptr &&
-        TopoJSONIsObject(
-            reinterpret_cast<const char *>(poOpenInfo->pabyHeader)))
+        TopoJSONIsObject(reinterpret_cast<const char *>(poOpenInfo->pabyHeader),
+                         poOpenInfo))
     {
         return eGeoJSONSourceFile;
     }
@@ -889,6 +941,10 @@ GeoJSONSourceType GeoJSONSeqGetSourceType(GDALOpenInfo *poOpenInfo)
              STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") ||
              STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp://"))
     {
+        if (poOpenInfo->IsSingleAllowedDriver("GeoJSONSeq"))
+        {
+            return eGeoJSONSourceService;
+        }
         if (IsLikelyESRIJSONURL(poOpenInfo->pszFilename))
         {
             return eGeoJSONSourceUnknown;
@@ -904,11 +960,11 @@ GeoJSONSourceType GeoJSONSeqGetSourceType(GDALOpenInfo *poOpenInfo)
             return eGeoJSONSourceFile;
         }
         const char *pszText = poOpenInfo->pszFilename + strlen("GEOJSONSeq:");
-        if (GeoJSONSeqIsObject(pszText))
+        if (GeoJSONSeqIsObject(pszText, poOpenInfo))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
-    else if (GeoJSONSeqIsObject(poOpenInfo->pszFilename))
+    else if (GeoJSONSeqIsObject(poOpenInfo->pszFilename, poOpenInfo))
     {
         srcType = eGeoJSONSourceText;
     }
@@ -938,6 +994,10 @@ GeoJSONSourceType JSONFGDriverGetSourceType(GDALOpenInfo *poOpenInfo)
              STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") ||
              STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp://"))
     {
+        if (poOpenInfo->IsSingleAllowedDriver("JSONFG"))
+        {
+            return eGeoJSONSourceService;
+        }
         if (IsLikelyESRIJSONURL(poOpenInfo->pszFilename))
         {
             return eGeoJSONSourceUnknown;
@@ -953,11 +1013,11 @@ GeoJSONSourceType JSONFGDriverGetSourceType(GDALOpenInfo *poOpenInfo)
             return eGeoJSONSourceFile;
         }
         const char *pszText = poOpenInfo->pszFilename + nJSONFGPrefixLen;
-        if (JSONFGIsObject(pszText))
+        if (JSONFGIsObject(pszText, poOpenInfo))
             return eGeoJSONSourceText;
         return eGeoJSONSourceUnknown;
     }
-    else if (JSONFGIsObject(poOpenInfo->pszFilename))
+    else if (JSONFGIsObject(poOpenInfo->pszFilename, poOpenInfo))
     {
         srcType = eGeoJSONSourceText;
     }
