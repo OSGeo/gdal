@@ -42,6 +42,7 @@ def test_stacit_basic():
 
     ds = gdal.Open("data/stacit/test.json")
     assert ds is not None
+    assert ds.GetDriver().GetDescription() == "STACIT"
     assert ds.RasterCount == 1
     assert ds.RasterXSize == 40
     assert ds.RasterYSize == 20

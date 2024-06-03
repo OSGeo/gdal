@@ -98,6 +98,7 @@ class STACITDataset final : public VRTDataset
 
 STACITDataset::STACITDataset() : VRTDataset(0, 0)
 {
+    poDriver = nullptr;  // cancel what the VRTDataset did
     SetWritable(false);
 }
 
