@@ -77,7 +77,7 @@ bool OGROpenFileGDBDataSource::GetExistingSpatialRef(
     FETCH_FIELD_IDX(iZTolerance, "ZTolerance", FGFT_FLOAT64);
     FETCH_FIELD_IDX(iMTolerance, "MTolerance", FGFT_FLOAT64);
 
-    int iCurFeat = 0;
+    int64_t iCurFeat = 0;
     while (iCurFeat < oTable.GetTotalRecordCount())
     {
         iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
@@ -246,7 +246,8 @@ bool OGROpenFileGDBDataSource::RemoveRelationshipFromItemRelationships(
     FETCH_FIELD_IDX_WITH_RET(iOriginID, "OriginID", FGFT_GUID, false);
     FETCH_FIELD_IDX_WITH_RET(iDestID, "DestID", FGFT_GUID, false);
 
-    for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount(); ++iCurFeat)
+    for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+         ++iCurFeat)
     {
         iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
         if (iCurFeat < 0)
@@ -290,7 +291,7 @@ bool OGROpenFileGDBDataSource::LinkDomainToTable(
         FETCH_FIELD_IDX(iOriginID, "OriginID", FGFT_GUID);
         FETCH_FIELD_IDX(iDestID, "DestID", FGFT_GUID);
 
-        for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+        for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
              ++iCurFeat)
         {
             iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
@@ -331,7 +332,8 @@ bool OGROpenFileGDBDataSource::UnlinkDomainToTable(
     FETCH_FIELD_IDX(iOriginID, "OriginID", FGFT_GUID);
     FETCH_FIELD_IDX(iDestID, "DestID", FGFT_GUID);
 
-    for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount(); ++iCurFeat)
+    for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+         ++iCurFeat)
     {
         iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
         if (iCurFeat < 0)
@@ -365,7 +367,8 @@ bool OGROpenFileGDBDataSource::UpdateXMLDefinition(
     FETCH_FIELD_IDX(iName, "Name", FGFT_STRING);
     FETCH_FIELD_IDX(iDefinition, "Definition", FGFT_XML);
 
-    for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount(); ++iCurFeat)
+    for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+         ++iCurFeat)
     {
         iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
         if (iCurFeat < 0)
@@ -406,7 +409,8 @@ bool OGROpenFileGDBDataSource::FindUUIDFromName(const std::string &osName,
     FETCH_FIELD_IDX(iUUID, "UUID", FGFT_GLOBALID);
     FETCH_FIELD_IDX(iName, "Name", FGFT_STRING);
 
-    for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount(); ++iCurFeat)
+    for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+         ++iCurFeat)
     {
         iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
         if (iCurFeat < 0)
@@ -1262,9 +1266,10 @@ OGROpenFileGDBDataSource::ICreateLayer(const char *pszLayerName,
     auto eType = poGeomFieldDefn ? poGeomFieldDefn->GetType() : wkbNone;
 
     FileGDBTable oTable;
-    if (!oTable.Open(m_osGDBSystemCatalogFilename.c_str(), false))
+    if (!oTable.Open(m_osGDBSystemCatalogFilename.c_str(), false) ||
+        oTable.GetTotalRecordCount() >= INT32_MAX)
         return nullptr;
-    const int nTableNum = 1 + oTable.GetTotalRecordCount();
+    const int nTableNum = static_cast<int>(1 + oTable.GetTotalRecordCount());
     oTable.Close();
 
     const std::string osFilename(CPLFormFilename(
@@ -1317,7 +1322,7 @@ OGRErr OGROpenFileGDBDataSource::DeleteLayer(int iLayer)
 
         FETCH_FIELD_IDX_WITH_RET(iName, "Name", FGFT_STRING, OGRERR_FAILURE);
 
-        for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+        for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
              ++iCurFeat)
         {
             iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
@@ -1342,7 +1347,7 @@ OGRErr OGROpenFileGDBDataSource::DeleteLayer(int iLayer)
         FETCH_FIELD_IDX_WITH_RET(iUUID, "UUID", FGFT_GLOBALID, OGRERR_FAILURE);
         FETCH_FIELD_IDX_WITH_RET(iName, "Name", FGFT_STRING, OGRERR_FAILURE);
 
-        for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+        for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
              ++iCurFeat)
         {
             iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
@@ -1374,7 +1379,7 @@ OGRErr OGROpenFileGDBDataSource::DeleteLayer(int iLayer)
                                  OGRERR_FAILURE);
         FETCH_FIELD_IDX_WITH_RET(iDestID, "DestID", FGFT_GUID, OGRERR_FAILURE);
 
-        for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+        for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
              ++iCurFeat)
         {
             iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
@@ -1561,7 +1566,7 @@ bool OGROpenFileGDBDataSource::DeleteFieldDomain(
         FETCH_FIELD_IDX(iType, "Type", FGFT_GUID);
         FETCH_FIELD_IDX(iName, "Name", FGFT_STRING);
 
-        for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+        for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
              ++iCurFeat)
         {
             iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
@@ -1601,7 +1606,7 @@ bool OGROpenFileGDBDataSource::DeleteFieldDomain(
         FETCH_FIELD_IDX(iDestID, "DestID", FGFT_GUID);
         FETCH_FIELD_IDX(iType, "Type", FGFT_GUID);
 
-        for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+        for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
              ++iCurFeat)
         {
             iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
@@ -1673,7 +1678,8 @@ bool OGROpenFileGDBDataSource::UpdateFieldDomain(
     FETCH_FIELD_IDX(iDefinition, "Definition", FGFT_XML);
 
     bool bMatchFound = false;
-    for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount(); ++iCurFeat)
+    for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+         ++iCurFeat)
     {
         iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
         if (iCurFeat < 0)
@@ -1818,12 +1824,13 @@ bool OGROpenFileGDBDataSource::AddRelationship(
     const std::string osThisGUID = OFGDBGenerateUUID();
 
     FileGDBTable oTable;
-    if (!oTable.Open(m_osGDBItemsFilename.c_str(), true))
+    if (!oTable.Open(m_osGDBItemsFilename.c_str(), true) ||
+        oTable.GetTotalRecordCount() >= INT32_MAX)
         return false;
 
     // hopefully this just needs to be a unique value. Seems to autoincrement
     // when created from ArcMap at least!
-    const int iDsId = oTable.GetTotalRecordCount() + 1;
+    const int iDsId = static_cast<int>(oTable.GetTotalRecordCount() + 1);
 
     std::string osMappingTableOidName;
     if (relationship->GetCardinality() ==
@@ -2002,7 +2009,7 @@ bool OGROpenFileGDBDataSource::DeleteRelationship(const std::string &name,
         FETCH_FIELD_IDX_WITH_RET(iType, "Type", FGFT_GUID, false);
         FETCH_FIELD_IDX_WITH_RET(iName, "Name", FGFT_STRING, false);
 
-        for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+        for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
              ++iCurFeat)
         {
             iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
@@ -2102,12 +2109,15 @@ bool OGROpenFileGDBDataSource::UpdateRelationship(
     }
 
     FileGDBTable oTable;
-    if (!oTable.Open(m_osGDBItemsFilename.c_str(), true))
+    if (!oTable.Open(m_osGDBItemsFilename.c_str(), true) ||
+        oTable.GetTotalRecordCount() >= INT32_MAX)
+    {
         return false;
+    }
 
     // hopefully this just needs to be a unique value. Seems to autoincrement
     // when created from ArcMap at least!
-    const int iDsId = oTable.GetTotalRecordCount() + 1;
+    const int iDsId = static_cast<int>(oTable.GetTotalRecordCount()) + 1;
 
     std::string osMappingTableOidName;
     if (relationship->GetCardinality() ==
@@ -2145,7 +2155,8 @@ bool OGROpenFileGDBDataSource::UpdateRelationship(
 
     bool bMatchFound = false;
     std::string osUUID;
-    for (int iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount(); ++iCurFeat)
+    for (int64_t iCurFeat = 0; iCurFeat < oTable.GetTotalRecordCount();
+         ++iCurFeat)
     {
         iCurFeat = oTable.GetAndSelectNextNonEmptyRow(iCurFeat);
         if (iCurFeat < 0)

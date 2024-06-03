@@ -837,7 +837,7 @@ bool FileGDBTable::DeleteField(int iField)
             m_apoFields[m_iGeomField]->m_eType = FGFT_BINARY;
         m_iGeomField = -1;
 
-        for (int iCurFeat = 0; iCurFeat < m_nTotalRecordCount; ++iCurFeat)
+        for (int64_t iCurFeat = 0; iCurFeat < m_nTotalRecordCount; ++iCurFeat)
         {
             iCurFeat = GetAndSelectNextNonEmptyRow(iCurFeat);
             if (iCurFeat < 0)
