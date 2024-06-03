@@ -20,9 +20,11 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define KEY_Vers "Vers"
 #define KEY_SubVers "SubVers"
 #define MM_VERS 4
+#define MM_SUBVERS_ACCEPTED 0
 #define MM_SUBVERS 3
 #define KEY_VersMetaDades "VersMetaDades"
 #define KEY_SubVersMetaDades "SubVersMetaDades"
+#define MM_VERS_METADADES_ACCEPTED 4
 #define MM_VERS_METADADES 5
 #define MM_SUBVERS_METADADES 0
 #define SECTION_METADADES "METADADES"
