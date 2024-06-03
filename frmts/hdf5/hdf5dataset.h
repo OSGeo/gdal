@@ -240,8 +240,6 @@ class HDF5Dataset CPL_NON_FINAL : public GDALPamDataset
     char *CreatePath(HDF5GroupObjects *);
     static void DestroyH5Objects(HDF5GroupObjects *);
 
-    static const char *GetDataTypeName(hid_t);
-
     /**
      * Reads an array of double attributes from the HDF5 metadata.
      * It reads the attributes directly on its binary form directly,
@@ -275,6 +273,8 @@ class HDF5Dataset CPL_NON_FINAL : public GDALPamDataset
     static std::shared_ptr<GDALGroup> OpenGroup(
         const std::shared_ptr<GDAL::HDF5SharedResources> &poSharedResources);
 
+    static bool IsNativeCFloat16(hid_t hDataType);
+    static const char *GetDataTypeName(hid_t);
     static GDALDataType GetDataType(hid_t);
 };
 

@@ -29,6 +29,8 @@
 #include "hdf5eosparser.h"
 #include "s100.h"
 
+#include "cpl_float.h"
+
 #include <algorithm>
 #include <set>
 #include <utility>
@@ -159,7 +161,16 @@ BuildDataType(hid_t hDataType, bool &bHasString, bool &bNonNativeDataType,
     const auto klass = H5Tget_class(hDataType);
     GDALDataType eDT = ::HDF5Dataset::GetDataType(hDataType);
     if (eDT != GDT_Unknown)
+    {
+#ifdef HDF5_HAVE_FLOAT16
+        if (H5Tequal(hDataType, H5T_NATIVE_FLOAT16) ||
+            HDF5Dataset::IsNativeCFloat16(hDataType))
+        {
+            bNonNativeDataType = true;
+        }
+#endif
         return GDALExtendedDataType::Create(eDT);
+    }
     else if (klass == H5T_STRING)
     {
         bHasString = true;
@@ -2326,9 +2337,44 @@ static void CopyValue(const GByte *pabySrcBuffer, hid_t hSrcDataType,
     {
         if (dstDataType.GetClass() != GEDTC_COMPOUND)
         {
+            const auto eSrcDataType = ::HDF5Dataset::GetDataType(hSrcDataType);
             // Typically source is complex data type
-            auto srcDataType(GDALExtendedDataType::Create(
-                ::HDF5Dataset::GetDataType(hSrcDataType)));
+#ifdef HDF5_HAVE_FLOAT16
+            if (eSrcDataType == GDT_CFloat32 &&
+                ::HDF5Dataset::IsNativeCFloat16(hSrcDataType))
+            {
+                if (dstDataType.GetNumericDataType() == GDT_CFloat32)
+                {
+                    for (int j = 0; j <= 1; ++j)
+                    {
+                        uint16_t nVal16;
+                        memcpy(&nVal16, pabySrcBuffer + j * sizeof(nVal16),
+                               sizeof(nVal16));
+                        const uint32_t nVal32 = CPLHalfToFloat(nVal16);
+                        memcpy(pabyDstBuffer + j * sizeof(float), &nVal32,
+                               sizeof(nVal32));
+                    }
+                }
+                else if (dstDataType.GetNumericDataType() == GDT_CFloat64)
+                {
+                    for (int j = 0; j <= 1; ++j)
+                    {
+                        uint16_t nVal16;
+                        memcpy(&nVal16, pabySrcBuffer + j * sizeof(nVal16),
+                               sizeof(nVal16));
+                        const uint32_t nVal32 = CPLHalfToFloat(nVal16);
+                        float fVal;
+                        memcpy(&fVal, &nVal32, sizeof(fVal));
+                        double dfVal = fVal;
+                        memcpy(pabyDstBuffer + j * sizeof(double), &dfVal,
+                               sizeof(dfVal));
+                    }
+                }
+                return;
+            }
+
+#endif
+            auto srcDataType(GDALExtendedDataType::Create(eSrcDataType));
             if (srcDataType.GetClass() == GEDTC_NUMERIC &&
                 srcDataType.GetNumericDataType() != GDT_Unknown)
             {
@@ -2364,6 +2410,19 @@ static void CopyValue(const GByte *pabySrcBuffer, hid_t hSrcDataType,
         CopyValue(pabySrcBuffer, hParent, pabyDstBuffer, dstDataType, {});
         H5Tclose(hParent);
     }
+#ifdef HDF5_HAVE_FLOAT16
+    else if (H5Tequal(hSrcDataType, H5T_NATIVE_FLOAT16))
+    {
+        uint16_t nVal16;
+        memcpy(&nVal16, pabySrcBuffer, sizeof(nVal16));
+        const uint32_t nVal32 = CPLHalfToFloat(nVal16);
+        float fVal;
+        memcpy(&fVal, &nVal32, sizeof(fVal));
+        GDALExtendedDataType::CopyValue(
+            &fVal, GDALExtendedDataType::Create(GDT_Float32), pabyDstBuffer,
+            dstDataType);
+    }
+#endif
     else
     {
         GDALDataType eDT = ::HDF5Dataset::GetDataType(hSrcDataType);
