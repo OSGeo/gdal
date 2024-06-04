@@ -55,6 +55,13 @@ int WMSDriverIdentify(GDALOpenInfo *poOpenInfo)
     {
         return TRUE;
     }
+    else if (poOpenInfo->nHeaderBytes == 0 &&
+             poOpenInfo->IsSingleAllowedDriver("WMS") &&
+             (STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+              STARTS_WITH(poOpenInfo->pszFilename, "https://")))
+    {
+        return true;
+    }
     else if (poOpenInfo->nHeaderBytes != 0 &&
              (strstr(pabyHeader, "<WMT_MS_Capabilities") != nullptr ||
               strstr(pabyHeader, "<WMS_Capabilities") != nullptr ||
