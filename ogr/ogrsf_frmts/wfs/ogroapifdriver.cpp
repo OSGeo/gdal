@@ -1201,7 +1201,10 @@ static int OGROAPIFDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
     return STARTS_WITH_CI(poOpenInfo->pszFilename, "WFS3:") ||
            STARTS_WITH_CI(poOpenInfo->pszFilename, "OAPIF:") ||
-           STARTS_WITH_CI(poOpenInfo->pszFilename, "OAPIF_COLLECTION:");
+           STARTS_WITH_CI(poOpenInfo->pszFilename, "OAPIF_COLLECTION:") ||
+           (poOpenInfo->IsSingleAllowedDriver("OAPIF") &&
+            (STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+             STARTS_WITH(poOpenInfo->pszFilename, "https://")));
 }
 
 /************************************************************************/
