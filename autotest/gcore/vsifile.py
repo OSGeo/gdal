@@ -1341,3 +1341,13 @@ def test_vsifile_use_closed_file(tmp_path):
 
     with pytest.raises(ValueError, match="closed file"):
         gdal.VSIFWriteL("0123456789", 1, 10, f)
+
+
+###############################################################################
+
+
+def test_vsifile_stat_directory_trailing_slash():
+
+    res = gdal.VSIStatL("data/")
+    assert res
+    assert res.IsDirectory()
