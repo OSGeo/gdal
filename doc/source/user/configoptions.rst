@@ -930,7 +930,7 @@ Networking options
 
       This string will be used to set the ``User-Agent`` header in the HTTP
       request sent to the remote server.
-      Defaults to "GDAL/x.y.z" where x.y.z is the current version.
+      Defaults to "GDAL/x.y.z" where x.y.z is the GDAL build version.
 
 -  .. config:: GDAL_HTTP_UNSAFESSL
       :choices: YES, NO
