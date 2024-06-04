@@ -59,17 +59,12 @@ int HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo)
             GDALGetDriverByName("netCDF") != nullptr)
         {
             const char *const apszAllowedDriver[] = {"netCDF", nullptr};
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            GDALDatasetH hDS = GDALOpenEx(
-                poOpenInfo->pszFilename,
-                GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VECTOR,
-                apszAllowedDriver, nullptr, nullptr);
-            CPLPopErrorHandler();
-            if (hDS)
-            {
-                GDALClose(hDS);
-                return true;
-            }
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
+            return std::unique_ptr<GDALDataset>(GDALDataset::Open(
+                       poOpenInfo->pszFilename,
+                       GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER |
+                           GDAL_OF_VECTOR,
+                       apszAllowedDriver, nullptr, nullptr)) != nullptr;
         }
         return false;
     };
@@ -78,6 +73,11 @@ int HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo)
         (poOpenInfo->nHeaderBytes > 512 + 8 &&
          memcmp(poOpenInfo->pabyHeader + 512, achSignature, 8) == 0))
     {
+        if (poOpenInfo->IsSingleAllowedDriver("HDF5"))
+        {
+            return TRUE;
+        }
+
         // The tests to avoid opening KEA and BAG drivers are not
         // necessary when drivers are built in the core lib, as they
         // are registered after HDF5, but in the case of plugins, we
@@ -113,7 +113,8 @@ int HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo)
     // The HDF5 signature can be at offsets 512, 1024, 2048, etc.
     if (poOpenInfo->fpL != nullptr &&
         (EQUAL(osExt, "h5") || EQUAL(osExt, "hdf5") || EQUAL(osExt, "nc") ||
-         EQUAL(osExt, "cdf") || EQUAL(osExt, "nc4")))
+         EQUAL(osExt, "cdf") || EQUAL(osExt, "nc4") ||
+         poOpenInfo->IsSingleAllowedDriver("HDF5")))
     {
         vsi_l_offset nOffset = 512;
         for (int i = 0; i < 64; i++)
@@ -126,6 +127,10 @@ int HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo)
             }
             if (memcmp(abyBuf, achSignature, 8) == 0)
             {
+                if (poOpenInfo->IsSingleAllowedDriver("HDF5"))
+                {
+                    return TRUE;
+                }
                 // Avoid opening NC files if the netCDF driver is available and
                 // they are recognized by it.
                 if (IsRecognizedByNetCDFDriver())
