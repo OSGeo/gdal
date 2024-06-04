@@ -1193,3 +1193,23 @@ def test_bag_write_values_at_nodata():
     ds = None
 
     gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test force opening
+
+
+def test_bag_force_opening():
+
+    drv = gdal.IdentifyDriverEx("data/netcdf/trmm-nc4.nc", allowed_drivers=["BAG"])
+    assert drv.GetDescription() == "BAG"
+
+
+###############################################################################
+# Test force opening, but provided file is still not recognized (for good reasons)
+
+
+def test_bag_force_opening_no_match():
+
+    drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["BAG"])
+    assert drv is None

@@ -359,7 +359,13 @@ int BAGDatasetIdentify(GDALOpenInfo *poOpenInfo)
 
     // Does it have the extension .bag?
     if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "bag"))
+    {
+        if (poOpenInfo->IsSingleAllowedDriver("BAG"))
+        {
+            return TRUE;
+        }
         return FALSE;
+    }
 
     return TRUE;
 }
