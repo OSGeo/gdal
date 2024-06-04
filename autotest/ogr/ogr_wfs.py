@@ -499,34 +499,32 @@ class WFSHTTPHandler(BaseHTTPRequestHandler):
 # Test reading a local fake WFS server
 
 
-def test_ogr_wfs_fake_wfs_server():
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("using_wfs_prefix", [True, False])
+def test_ogr_wfs_fake_wfs_server(using_wfs_prefix):
 
     (process, port) = webserver.launch(handler=WFSHTTPHandler)
     if port == 0:
         pytest.skip()
 
-    with gdal.config_option("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "NO"):
-        ds = ogr.Open("WFS:http://127.0.0.1:%d/fakewfs" % port)
-    if ds is None:
-        webserver.server_stop(process, port)
-        pytest.fail("did not managed to open WFS datastore")
-
-    lyr = ds.GetLayerByName("rijkswegen")
-    if lyr.GetName() != "rijkswegen":
-        print(lyr.GetName())
-        webserver.server_stop(process, port)
-        pytest.fail("did not get expected layer name")
-
-    sr = lyr.GetSpatialRef()
-    sr2 = osr.SpatialReference()
-    sr2.ImportFromEPSG(28992)
-    if not sr.IsSame(sr2):
-        print(sr)
-        webserver.server_stop(process, port)
-        pytest.fail("did not get expected SRS")
-
-    feat = lyr.GetNextFeature()
     try:
+        with gdal.config_option("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "NO"):
+            if using_wfs_prefix:
+                ds = gdal.OpenEx("WFS:http://127.0.0.1:%d/fakewfs" % port)
+            else:
+                ds = gdal.OpenEx(
+                    "http://127.0.0.1:%d/fakewfs" % port, allowed_drivers=["WFS"]
+                )
+
+        lyr = ds.GetLayerByName("rijkswegen")
+        assert lyr.GetName() == "rijkswegen"
+
+        sr = lyr.GetSpatialRef()
+        sr2 = osr.SpatialReference()
+        sr2.ImportFromEPSG(28992)
+        assert sr.IsSame(sr2), sr
+
+        feat = lyr.GetNextFeature()
         assert feat.GetField("MPLength") == "33513."
         ogrtest.check_feature_geometry(
             feat,
