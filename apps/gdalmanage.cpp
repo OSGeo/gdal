@@ -33,22 +33,22 @@
 #include "gdal_version.h"
 #include "gdal.h"
 #include "commonutils.h"
+#include "gdalargumentparser.h"
 
 /************************************************************************/
-/*                               Usage()                                */
+/*                     GDALManageOptions()                              */
 /************************************************************************/
 
-static void Usage(bool bIsError)
-
+struct GDALManageOptions
 {
-    fprintf(bIsError ? stderr : stdout,
-            "Usage: gdalmanage [--help] [--help-general]\n"
-            "    or gdalmanage identify [-r|-fr] [-u] <files>*\n"
-            "    or gdalmanage copy [-f <driver>] <oldname> <newname>\n"
-            "    or gdalmanage rename [-f <driver>] <oldname> <newname>\n"
-            "    or gdalmanage delete [-f <driver>] <datasetname>\n");
-    exit(bIsError ? 1 : 0);
-}
+    bool bRecursive = false;
+    bool bForceRecurse = false;
+    bool bReportFailures = false;
+    std::string osNewName;
+    std::string osDatasetName;
+    std::vector<std::string> aosDatasetNames;
+    std::string osDriverName;
+};
 
 /************************************************************************/
 /*                       ProcessIdentifyTarget()                        */
@@ -92,73 +92,111 @@ static void ProcessIdentifyTarget(const char *pszTarget,
 }
 
 /************************************************************************/
-/*                              Identify()                              */
+/*                     GDALManageAppOptionsGetParser()                 */
 /************************************************************************/
 
-static void Identify(int nArgc, char **papszArgv)
-
+static std::unique_ptr<GDALArgumentParser>
+GDALManageAppOptionsGetParser(GDALManageOptions *psOptions)
 {
-    /* -------------------------------------------------------------------- */
-    /*      Scan for command line switches                                   */
-    /* -------------------------------------------------------------------- */
-    bool bRecursive = false;
-    bool bForceRecurse = false;
-    bool bReportFailures = false;
+    auto argParser = std::make_unique<GDALArgumentParser>(
+        "gdalmanage", /* bForBinary */ true);
 
-    int i = 0;
-    for (; i < nArgc && papszArgv[i][0] == '-'; ++i)
+    argParser->add_description(
+        _("Identify, delete, rename and copy raster data files."));
+    argParser->add_epilog(_("For more details, consult the full documentation "
+                            "for the gdalmanage utility "
+                            "https://gdal.org/programs/gdalmanage.html"));
+
+    auto addCommonOptions = [psOptions](GDALArgumentParser *subParser)
     {
-        if (EQUAL(papszArgv[i], "-r"))
-            bRecursive = true;
-        else if (EQUAL(papszArgv[i], "-fr"))
-        {
-            bForceRecurse = true;
-            bRecursive = true;
-        }
-        else if (EQUAL(papszArgv[i], "-u"))
-            bReportFailures = true;
-        else
-            Usage(true);
-    }
+        subParser->add_argument("-f")
+            .metavar("<format>")
+            .store_into(psOptions->osDriverName)
+            .help(_("Specify format of raster file if unknown by the "
+                    "application."));
 
-    /* -------------------------------------------------------------------- */
-    /*      Process given files.                                            */
-    /* -------------------------------------------------------------------- */
-    for (; i < nArgc; ++i)
-    {
-        ProcessIdentifyTarget(papszArgv[i], nullptr, bRecursive,
-                              bReportFailures, bForceRecurse);
-    }
-}
+        subParser->add_argument("newdatasetname")
+            .metavar("<newdatasetname>")
+            .store_into(psOptions->osNewName)
+            .help(_("Name of the new file."));
+    };
 
-/************************************************************************/
-/*                               Delete()                               */
-/************************************************************************/
+    // Identify
 
-static void Delete(GDALDriverH hDriver, int nArgc, char **papszArgv)
+    auto identifyParser =
+        argParser->add_subparser("identify", /* bForBinary */ true);
+    identifyParser->add_description(_("List data format of file(s)."));
 
-{
-    if (nArgc != 1)
-        Usage(true);
+    identifyParser->add_argument("-r")
+        .flag()
+        .store_into(psOptions->bRecursive)
+        .help(_("Recursively scan files/folders for raster files."));
 
-    GDALDeleteDataset(hDriver, papszArgv[0]);
-}
+    identifyParser->add_argument("-fr")
+        .flag()
+        .store_into(psOptions->bRecursive)
+        .store_into(psOptions->bForceRecurse)
+        .help(_("Recursively scan folders for raster files, forcing "
+                "recursion in folders recognized as valid formats."));
 
-/************************************************************************/
-/*                                Copy()                                */
-/************************************************************************/
+    identifyParser->add_argument("-u")
+        .flag()
+        .store_into(psOptions->bReportFailures)
+        .help(_("Report failures if file type is unidentified."));
 
-static void Copy(GDALDriverH hDriver, int nArgc, char **papszArgv,
-                 const char *pszOperation)
+    // Note: this accepts multiple files
+    identifyParser->add_argument("datasetname")
+        .metavar("<datasetname>")
+        .store_into(psOptions->aosDatasetNames)
+        .remaining()
+        .help(_("Name(s) of the file(s) to identify."));
 
-{
-    if (nArgc != 2)
-        Usage(true);
+    // Copy
 
-    if (EQUAL(pszOperation, "copy"))
-        GDALCopyDatasetFiles(hDriver, papszArgv[1], papszArgv[0]);
-    else
-        GDALRenameDataset(hDriver, papszArgv[1], papszArgv[0]);
+    auto copyParser = argParser->add_subparser("copy", /* bForBinary */ true);
+    copyParser->add_description(
+        _("Create a copy of the raster file with a new name."));
+
+    addCommonOptions(copyParser);
+
+    copyParser->add_argument("datasetname")
+        .metavar("<datasetname>")
+        .store_into(psOptions->osDatasetName)
+        .help(_("Name of the file to copy."));
+
+    // Rename
+
+    auto renameParser =
+        argParser->add_subparser("rename", /* bForBinary */ true);
+    renameParser->add_description(_("Change the name of the raster file."));
+
+    addCommonOptions(renameParser);
+
+    renameParser->add_argument("datasetname")
+        .metavar("<datasetname>")
+        .store_into(psOptions->osDatasetName)
+        .help(_("Name of the file to rename."));
+
+    // Delete
+
+    auto deleteParser =
+        argParser->add_subparser("delete", /* bForBinary */ true);
+    deleteParser->add_description(_("Delete the raster file(s)."));
+
+    // Note: this accepts multiple files
+    deleteParser->add_argument("datasetname")
+        .metavar("<datasetname>")
+        .store_into(psOptions->aosDatasetNames)
+        .remaining()
+        .help(_("Name(s) of the file(s) to delete."));
+
+    deleteParser->add_argument("-f")
+        .metavar("<format>")
+        .store_into(psOptions->osDriverName)
+        .help(
+            _("Specify format of raster file if unknown by the application."));
+
+    return argParser;
 }
 
 /************************************************************************/
@@ -168,64 +206,70 @@ static void Copy(GDALDriverH hDriver, int nArgc, char **papszArgv,
 MAIN_START(argc, argv)
 
 {
-    char *pszDriver = nullptr;
-    GDALDriverH hDriver = nullptr;
 
-    /* Check that we are running against at least GDAL 1.5 */
-    /* Note to developers : if we use newer API, please change the requirement
-     */
-    if (atoi(GDALVersionInfo("VERSION_NUM")) < 1500)
-    {
-        fprintf(stderr,
-                "At least, GDAL >= 1.5.0 is required for this version of %s, "
-                "which was compiled against GDAL %s\n",
-                argv[0], GDAL_RELEASE_NAME);
-        exit(1);
-    }
-
-    GDALAllRegister();
+    EarlySetConfigOptions(argc, argv);
 
     argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
     if (argc < 1)
         exit(-argc);
 
-    for (int i = 0; i < argc; i++)
+    /* -------------------------------------------------------------------- */
+    /*      Parse arguments.                                                */
+    /* -------------------------------------------------------------------- */
+
+    if (argc < 2)
     {
-        if (EQUAL(argv[i], "--utility_version"))
+        try
         {
-            printf("%s was compiled against GDAL %s and is running against "
-                   "GDAL %s\n",
-                   argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            return 0;
+            GDALManageOptions sOptions;
+            auto argParser = GDALManageAppOptionsGetParser(&sOptions);
+            fprintf(stderr, "%s\n", argParser->usage().c_str());
         }
-        else if (EQUAL(argv[i], "--help"))
+        catch (const std::exception &err)
         {
-            Usage(false);
+            CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
+                     err.what());
         }
+        CSLDestroy(argv);
+        exit(1);
     }
 
-    if (argc < 3)
-        Usage(true);
+    GDALAllRegister();
 
-    /* -------------------------------------------------------------------- */
-    /*      Do we have a driver specifier?                                  */
-    /* -------------------------------------------------------------------- */
-    char **papszRemainingArgv = argv + 2;
-    int nRemainingArgc = argc - 2;
+    GDALManageOptions psOptions;
+    auto argParser = GDALManageAppOptionsGetParser(&psOptions);
 
-    if (EQUAL(papszRemainingArgv[0], "-f") && nRemainingArgc > 1)
+    try
     {
-        pszDriver = papszRemainingArgv[1];
-        papszRemainingArgv += 2;
-        nRemainingArgc -= 2;
+        argParser->parse_args_without_binary_name(argv + 1);
+        CSLDestroy(argv);
+    }
+    catch (const std::exception &error)
+    {
+        argParser->display_error_and_usage(error);
+        CSLDestroy(argv);
+        exit(1);
     }
 
-    if (pszDriver != nullptr)
+    // For some obscure reason datasetname is parsed as mandatory
+    // if used with remaining() in a subparser
+    if (psOptions.aosDatasetNames.empty() && psOptions.osDatasetName.empty())
     {
-        hDriver = GDALGetDriverByName(pszDriver);
+        std::invalid_argument error(
+            _("No dataset name provided. At least one dataset "
+              "name is required."));
+        argParser->display_error_and_usage(error);
+        exit(1);
+    }
+
+    GDALDriverH hDriver = nullptr;
+    if (!psOptions.osDriverName.empty())
+    {
+        hDriver = GDALGetDriverByName(psOptions.osDriverName.c_str());
         if (hDriver == nullptr)
         {
-            fprintf(stderr, "Unable to find driver named '%s'.\n", pszDriver);
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to find driver '%s'.",
+                     psOptions.osDriverName.c_str());
             exit(1);
         }
     }
@@ -233,26 +277,40 @@ MAIN_START(argc, argv)
     /* -------------------------------------------------------------------- */
     /*      Split out based on operation.                                   */
     /* -------------------------------------------------------------------- */
-    if (STARTS_WITH_CI(argv[1], "ident" /* identify" */))
-        Identify(nRemainingArgc, papszRemainingArgv);
 
-    else if (EQUAL(argv[1], "copy"))
-        Copy(hDriver, nRemainingArgc, papszRemainingArgv, "copy");
-
-    else if (EQUAL(argv[1], "rename"))
-        Copy(hDriver, nRemainingArgc, papszRemainingArgv, "rename");
-
-    else if (EQUAL(argv[1], "delete"))
-        Delete(hDriver, nRemainingArgc, papszRemainingArgv);
-
-    else
-        Usage(true);
+    if (argParser->is_subcommand_used("identify"))
+    {
+        // Process all files in aosDatasetName
+        for (const auto &datasetName : psOptions.aosDatasetNames)
+        {
+            ProcessIdentifyTarget(
+                datasetName.c_str(), nullptr, psOptions.bRecursive,
+                psOptions.bReportFailures, psOptions.bForceRecurse);
+        }
+    }
+    else if (argParser->is_subcommand_used("copy"))
+    {
+        GDALCopyDatasetFiles(hDriver, psOptions.osDatasetName.c_str(),
+                             psOptions.osNewName.c_str());
+    }
+    else if (argParser->is_subcommand_used("rename"))
+    {
+        GDALRenameDataset(hDriver, psOptions.osDatasetName.c_str(),
+                          psOptions.osNewName.c_str());
+    }
+    else if (argParser->is_subcommand_used("delete"))
+    {
+        // Process all files in aosDatasetName
+        for (const auto &datasetName : psOptions.aosDatasetNames)
+        {
+            GDALDeleteDataset(hDriver, datasetName.c_str());
+        }
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Cleanup                                                         */
     /* -------------------------------------------------------------------- */
-    CSLDestroy(argv);
-    GDALDestroyDriverManager();
+    GDALDestroy();
 
     exit(0);
 }
