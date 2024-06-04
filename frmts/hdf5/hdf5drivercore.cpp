@@ -252,15 +252,25 @@ static GDALSubdatasetInfo *HDF5DriverGetSubdatasetInfo(const char *pszFileName)
 /*                         IdentifySxx()                                */
 /************************************************************************/
 
-static bool IdentifySxx(GDALOpenInfo *poOpenInfo, const char *pszConfigOption,
+static bool IdentifySxx(GDALOpenInfo *poOpenInfo, const char *pszDriverName,
+                        const char *pszConfigOption,
                         const char *pszMainGroupName)
 {
+    if (STARTS_WITH(poOpenInfo->pszFilename, pszDriverName) &&
+        poOpenInfo->pszFilename[strlen(pszDriverName)] == ':')
+        return TRUE;
+
     // Is it an HDF5 file?
     static const char achSignature[] = "\211HDF\r\n\032\n";
 
     if (poOpenInfo->pabyHeader == nullptr ||
         memcmp(poOpenInfo->pabyHeader, achSignature, 8) != 0)
         return FALSE;
+
+    if (poOpenInfo->IsSingleAllowedDriver(pszDriverName))
+    {
+        return TRUE;
+    }
 
     // GDAL_Sxxx_IDENTIFY can be set to NO only for tests, to test that
     // HDF5Dataset::Open() can redirect to Sxxx if the below logic fails
@@ -308,10 +318,8 @@ static bool IdentifySxx(GDALOpenInfo *poOpenInfo, const char *pszConfigOption,
 int S102DatasetIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (STARTS_WITH(poOpenInfo->pszFilename, "S102:"))
-        return TRUE;
-
-    return IdentifySxx(poOpenInfo, "GDAL_S102_IDENTIFY", "BathymetryCoverage");
+    return IdentifySxx(poOpenInfo, "S102", "GDAL_S102_IDENTIFY",
+                       "BathymetryCoverage");
 }
 
 /************************************************************************/
@@ -321,10 +329,7 @@ int S102DatasetIdentify(GDALOpenInfo *poOpenInfo)
 int S104DatasetIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (STARTS_WITH(poOpenInfo->pszFilename, "S104:"))
-        return TRUE;
-
-    return IdentifySxx(poOpenInfo, "GDAL_S104_IDENTIFY", "WaterLevel");
+    return IdentifySxx(poOpenInfo, "S104", "GDAL_S104_IDENTIFY", "WaterLevel");
 }
 
 /************************************************************************/
@@ -334,10 +339,8 @@ int S104DatasetIdentify(GDALOpenInfo *poOpenInfo)
 int S111DatasetIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    if (STARTS_WITH(poOpenInfo->pszFilename, "S111:"))
-        return TRUE;
-
-    return IdentifySxx(poOpenInfo, "GDAL_S111_IDENTIFY", "SurfaceCurrent");
+    return IdentifySxx(poOpenInfo, "S111", "GDAL_S111_IDENTIFY",
+                       "SurfaceCurrent");
 }
 
 /************************************************************************/
