@@ -904,6 +904,15 @@ int VSIWin32FilesystemHandler::Stat(const char *pszFilename,
             return nResult;
         }
 
+#if defined(__MINGW32__)
+        // MinGW runtime for _wstat64() apparently doesn't like trailing slashes
+        // for directories.
+        const size_t nLen = wcslen(pwszFilename);
+        if (nLen > 0 &&
+            (pwszFilename[nLen - 1] == '/' || pwszFilename[nLen - 1] == '\\'))
+            pwszFilename[nLen - 1] = 0;
+#endif
+
         int nResult = _wstat64(pwszFilename, pStatBuf);
 
         // If _wstat64() fails and the original name is not an extended one,
