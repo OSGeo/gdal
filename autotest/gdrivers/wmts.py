@@ -34,6 +34,7 @@ import struct
 
 import gdaltest
 import pytest
+import webserver
 
 from osgeo import gdal
 
@@ -1925,3 +1926,82 @@ def test_wmts_24():
     data = struct.unpack("h", structval)
     #   Expect a null value for the pixel data
     assert data[0] == 0
+
+
+###############################################################################
+# Test force opening a URL as WMTS
+
+
+def test_wmts_force_identifying_url():
+
+    drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["WMTS"])
+    assert drv.GetDescription() == "WMTS"
+
+
+# Launch a single webserver in a module-scoped fixture.
+@pytest.fixture(scope="module")
+def webserver_launch():
+
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
+
+    yield process, port
+
+    webserver.server_stop(process, port)
+
+
+@pytest.fixture(scope="function")
+def webserver_port(webserver_launch):
+
+    webserver_process, webserver_port = webserver_launch
+
+    if webserver_port == 0:
+        pytest.skip()
+    yield webserver_port
+
+
+@pytest.mark.require_curl
+@gdaltest.enable_exceptions()
+def test_wmts_force_opening_url(tmp_vsimem, webserver_port):
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/",
+        200,
+        {"Content-type": "application/xml"},
+        open("data/wmts/WMTSCapabilities.xml", "rb").read(),
+    )
+    with webserver.install_http_handler(handler):
+        gdal.OpenEx(f"http://localhost:{webserver_port}", allowed_drivers=["WMTS"])
+
+
+###############################################################################
+# Test force opening
+
+
+@gdaltest.enable_exceptions()
+def test_wmts_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.foo")
+
+    with open("data/wmts/WMTSCapabilities.xml", "rb") as fsrc:
+        with gdaltest.vsi_open(filename, "wb") as fdest:
+            fdest.write(fsrc.read(1))
+            fdest.write(b" " * (1000 * 1000))
+            fdest.write(fsrc.read())
+
+    with pytest.raises(Exception):
+        gdal.OpenEx(filename)
+
+    ds = gdal.OpenEx(filename, allowed_drivers=["WMTS"])
+    assert ds.GetDriver().GetDescription() == "WMTS"
+
+
+###############################################################################
+# Test force opening, but provided file is still not recognized (for good reasons)
+
+
+def test_wmts_force_opening_no_match():
+
+    drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["WMTS"])
+    assert drv is None
