@@ -2633,9 +2633,21 @@ VRTComplexSource::XMLInit(const CPLXMLNode *psSrc, const char *pszVRTPath,
 
             // Enforce the requirement that the LUT input array is
             // monotonically non-decreasing.
-            if (nIndex > 0 &&
-                m_adfLUTInputs[nIndex] < m_adfLUTInputs[nIndex - 1])
+            if (std::isnan(m_adfLUTInputs[nIndex]) && nIndex != 0)
             {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "A Not-A-Number (NaN) source value should be the "
+                         "first one of the LUT.");
+                m_adfLUTInputs.clear();
+                m_adfLUTOutputs.clear();
+                return CE_Failure;
+            }
+            else if (nIndex > 0 &&
+                     m_adfLUTInputs[nIndex] < m_adfLUTInputs[nIndex - 1])
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Source values of the LUT are not listed in a "
+                         "monotonically non-decreasing order");
                 m_adfLUTInputs.clear();
                 m_adfLUTOutputs.clear();
                 return CE_Failure;
@@ -2662,20 +2674,29 @@ VRTComplexSource::XMLInit(const CPLXMLNode *psSrc, const char *pszVRTPath,
 
 double VRTComplexSource::LookupValue(double dfInput)
 {
+    auto beginIter = m_adfLUTInputs.begin();
+    auto endIter = m_adfLUTInputs.end();
+    size_t offset = 0;
+    if (std::isnan(m_adfLUTInputs[0]))
+    {
+        if (std::isnan(dfInput) || m_adfLUTInputs.size() == 1)
+            return m_adfLUTOutputs[0];
+        ++beginIter;
+        offset = 1;
+    }
+
     // Find the index of the first element in the LUT input array that
     // is not smaller than the input value.
-    int i = static_cast<int>(
-        std::lower_bound(m_adfLUTInputs.data(),
-                         m_adfLUTInputs.data() + m_adfLUTInputs.size(),
-                         dfInput) -
-        m_adfLUTInputs.data());
+    const size_t i =
+        offset +
+        std::distance(beginIter, std::lower_bound(beginIter, endIter, dfInput));
 
-    if (i == 0)
-        return m_adfLUTOutputs[0];
+    if (i == offset)
+        return m_adfLUTOutputs[offset];
 
     // If the index is beyond the end of the LUT input array, the input
     // value is larger than all the values in the array.
-    if (i == static_cast<int>(m_adfLUTInputs.size()))
+    if (i == m_adfLUTInputs.size())
         return m_adfLUTOutputs.back();
 
     if (m_adfLUTInputs[i] == dfInput)
