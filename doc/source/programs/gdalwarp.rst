@@ -159,8 +159,13 @@ with control information.
     A PROJ string (single step operation or multiple step string
     starting with +proj=pipeline), a WKT2 string describing a CoordinateOperation,
     or a urn:ogc:def:coordinateOperation:EPSG::XXXX URN overriding the default
-    transformation from the source to the target CRS. It must take into account the
-    axis order of the source and target CRS.
+    transformation from the source to the target CRS.
+
+    It must take into account the axis order of the source and target CRS, that
+    is typically include a ``step proj=axisswap order=2,1`` at the beginning of
+    the pipeline if the source CRS has northing/easting axis order, and/or at
+    the end of the pipeline if the target CRS has northing/easting axis order.
+
     When creating a new output file, using :option:`-t_srs` is still necessary
     to have the target CRS written in the metadata of the output file,
     but the parameters of the CoordinateOperation will override those of the

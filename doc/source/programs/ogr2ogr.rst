@@ -340,8 +340,12 @@ output coordinate system or even reprojecting the features during translation.
     A PROJ string (single step operation or multiple step string starting with
     +proj=pipeline), a WKT2 string describing a CoordinateOperation, or a
     urn:ogc:def:coordinateOperation:EPSG::XXXX URN overriding the default
-    transformation from the source to the target CRS. It must take into account
-    the axis order of the source and target CRS.
+    transformation from the source to the target CRS.
+
+    It must take into account the axis order of the source and target CRS, that
+    is typically include a ``step proj=axisswap order=2,1`` at the beginning of
+    the pipeline if the source CRS has northing/easting axis order, and/or at
+    the end of the pipeline if the target CRS has northing/easting axis order.
 
     .. versionadded:: 3.0
 
@@ -453,7 +457,7 @@ output coordinate system or even reprojecting the features during translation.
     The specified value of this option is the tolerance used to merge
     consecutive points of the output geometry using the
     :cpp:func:`OGRGeometry::Simplify` method
-    The unit of the distance is in 
+    The unit of the distance is in
     georeferenced units of the source vector dataset.
     This option is applied before the reprojection implied by :option:`-t_srs`
 
