@@ -206,37 +206,57 @@ static void OGRLIBKMLPreProcessInput(std::string &oKml)
 /*                       OGRLIBKMLRemoveSpaces()                        */
 /************************************************************************/
 
-static void OGRLIBKMLRemoveSpaces(std::string &oKml,
+static void OGRLIBKMLRemoveSpaces(std::string &osKml,
                                   const std::string &osNeedle)
 {
     size_t nPos = 0;
+    const std::string osLtNeedle(std::string("<").append(osNeedle));
+    std::string osTmp;
+    std::string osRet;
     while (true)
     {
-        nPos = oKml.find("<" + osNeedle, nPos);
-        if (nPos == std::string::npos)
+        auto nPosNew = osKml.find(osLtNeedle, nPos);
+        if (nPosNew == std::string::npos)
         {
+            osRet.append(osKml, nPos);
             break;
         }
-        const size_t nPosOri = nPos;
-        nPos = oKml.find(">", nPos);
-        if (nPos == std::string::npos || oKml[nPos + 1] != '\n')
+        const size_t nPosOri = nPosNew;
+        nPosNew = osKml.find(">\n", nPosNew);
+        if (nPosNew == std::string::npos || nPosNew + 2 == osKml.size())
         {
+            osRet.append(osKml, nPos);
             break;
         }
-        oKml = oKml.substr(0, nPos) + ">" + oKml.substr(nPos + strlen(">\n"));
-        CPLString osSpaces;
-        for (size_t nPosTmp = nPosOri - 1; oKml[nPosTmp] == ' '; nPosTmp--)
+        // Skip \n character
+        osRet.append(osKml, nPos, nPosNew - nPos + 1);
+        nPos = nPosNew + 2;
+
+        // Remove leading spaces of "    </{osNeedle}>"
+        osTmp.clear();
+        for (size_t nPosTmp = nPosOri - 1; osKml[nPosTmp] == ' '; nPosTmp--)
         {
-            osSpaces += ' ';
+            osTmp += ' ';
         }
-        nPos = oKml.find(osSpaces + "</" + osNeedle + ">", nPos);
-        if (nPos != std::string::npos)
-            oKml = oKml.substr(0, nPos) + "</" + osNeedle + ">" +
-                   oKml.substr(nPos + osSpaces.size() + strlen("</>") +
-                               osNeedle.size());
+        osTmp += "</";
+        osTmp += osNeedle;
+        osTmp += '>';
+        nPosNew = osKml.find(osTmp, nPos);
+        if (nPosNew != std::string::npos)
+        {
+            osRet.append(osKml, nPos, nPosNew - nPos);
+            osRet += "</";
+            osRet += osNeedle;
+            osRet += '>';
+            nPos = nPosNew + osTmp.size();
+        }
         else
+        {
+            osRet.append(osKml, nPos);
             break;
+        }
     }
+    osKml = std::move(osRet);
 }
 
 /************************************************************************/
