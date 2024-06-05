@@ -5220,3 +5220,17 @@ def test_tiff_read_jpeg_cached_multi_range_issue_9563(tmp_vsimem):
     out = str(tmp_vsimem / "out.tif")
     with gdal.config_option("GTIFF_HAS_OPTIMIZED_READ_MULTI_RANGE", "YES"):
         gdal.Translate(out, vrt, options="-tr 0.000071806 0.000071806 -f COG")
+
+
+###############################################################################
+# Test reading a raster with missing ExtraSamples tag in a multithreaded way
+
+
+def test_tiff_read_missing_extrasamples_multi_threaded():
+
+    with gdal.quiet_errors():
+        ds = gdal.Open("data/gtiff/missing_extrasamples.tif")
+    gdal.ErrorReset()
+    with gdal.config_option("GDAL_NUM_THREADS", "2"):
+        ds.ReadRaster()
+    assert gdal.GetLastErrorMsg() == ""
