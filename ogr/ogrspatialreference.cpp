@@ -1751,6 +1751,71 @@ OGRErr OGRSpatialReference::exportToWkt(char **ppszResult,
     }
 
     *ppszResult = CPLStrdup(pszWKT);
+
+#if !(PROJ_AT_LEAST_VERSION(9, 5, 0))
+    if (wktFormat == PJ_WKT2_2018)
+    {
+        // Works around bug fixed per https://github.com/OSGeo/PROJ/pull/4166
+        // related to a wrong EPSG code assigned to UTM South conversions
+        char *pszPtr = strstr(*ppszResult, "CONVERSION[\"UTM zone ");
+        if (pszPtr)
+        {
+            pszPtr += strlen("CONVERSION[\"UTM zone ");
+            const int nZone = atoi(pszPtr);
+            while (*pszPtr >= '0' && *pszPtr <= '9')
+                ++pszPtr;
+            if (nZone >= 1 && nZone <= 60 && *pszPtr == 'S' &&
+                pszPtr[1] == '"' && pszPtr[2] == ',')
+            {
+                pszPtr += 3;
+                int nLevel = 0;
+                bool bInString = false;
+                // Find the ID node corresponding to this CONVERSION node
+                while (*pszPtr)
+                {
+                    if (bInString)
+                    {
+                        if (*pszPtr == '"' && pszPtr[1] == '"')
+                        {
+                            ++pszPtr;
+                        }
+                        else if (*pszPtr == '"')
+                        {
+                            bInString = false;
+                        }
+                    }
+                    else if (nLevel == 0 && STARTS_WITH_CI(pszPtr, "ID["))
+                    {
+                        if (STARTS_WITH_CI(pszPtr, CPLSPrintf("ID[\"EPSG\",%d]",
+                                                              17000 + nZone)))
+                        {
+                            CPLAssert(pszPtr[11] == '7');
+                            CPLAssert(pszPtr[12] == '0');
+                            pszPtr[11] = '6';
+                            pszPtr[12] = '1';
+                        }
+                        break;
+                    }
+                    else if (*pszPtr == '"')
+                    {
+                        bInString = true;
+                    }
+                    else if (*pszPtr == '[')
+                    {
+                        ++nLevel;
+                    }
+                    else if (*pszPtr == ']')
+                    {
+                        --nLevel;
+                    }
+
+                    ++pszPtr;
+                }
+            }
+        }
+    }
+#endif
+
     proj_destroy(boundCRS);
     return OGRERR_NONE;
 }
@@ -1901,6 +1966,75 @@ OGRErr OGRSpatialReference::exportToPROJJSON(
     }
 
     *ppszResult = CPLStrdup(pszPROJJSON);
+
+#if !(PROJ_AT_LEAST_VERSION(9, 5, 0))
+    {
+        // Works around bug fixed per https://github.com/OSGeo/PROJ/pull/4166
+        // related to a wrong EPSG code assigned to UTM South conversions
+        char *pszPtr = strstr(*ppszResult, "\"name\": \"UTM zone ");
+        if (pszPtr)
+        {
+            pszPtr += strlen("\"name\": \"UTM zone ");
+            const int nZone = atoi(pszPtr);
+            while (*pszPtr >= '0' && *pszPtr <= '9')
+                ++pszPtr;
+            if (nZone >= 1 && nZone <= 60 && *pszPtr == 'S' && pszPtr[1] == '"')
+            {
+                pszPtr += 2;
+                int nLevel = 0;
+                bool bInString = false;
+                // Find the id node corresponding to this conversion node
+                while (*pszPtr)
+                {
+                    if (bInString)
+                    {
+                        if (*pszPtr == '\\')
+                        {
+                            ++pszPtr;
+                        }
+                        else if (*pszPtr == '"')
+                        {
+                            bInString = false;
+                        }
+                    }
+                    else if (nLevel == 0 && STARTS_WITH(pszPtr, "\"id\": {"))
+                    {
+                        const char *pszNextEndCurl = strchr(pszPtr, '}');
+                        const char *pszAuthEPSG =
+                            strstr(pszPtr, "\"authority\": \"EPSG\"");
+                        char *pszCode = strstr(
+                            pszPtr, CPLSPrintf("\"code\": %d", 17000 + nZone));
+                        if (pszAuthEPSG && pszCode && pszNextEndCurl &&
+                            pszNextEndCurl - pszAuthEPSG > 0 &&
+                            pszNextEndCurl - pszCode > 0)
+                        {
+                            CPLAssert(pszCode[9] == '7');
+                            CPLAssert(pszCode[10] == '0');
+                            pszCode[9] = '6';
+                            pszCode[10] = '1';
+                        }
+                        break;
+                    }
+                    else if (*pszPtr == '"')
+                    {
+                        bInString = true;
+                    }
+                    else if (*pszPtr == '{' || *pszPtr == '[')
+                    {
+                        ++nLevel;
+                    }
+                    else if (*pszPtr == '}' || *pszPtr == ']')
+                    {
+                        --nLevel;
+                    }
+
+                    ++pszPtr;
+                }
+            }
+        }
+    }
+#endif
+
     return OGRERR_NONE;
 }
 
