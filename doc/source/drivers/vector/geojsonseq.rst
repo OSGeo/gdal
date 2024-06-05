@@ -12,7 +12,7 @@ GeoJSONSeq: sequence of GeoJSON features
 This driver implements read/creation support for features encoded
 individually as `GeoJSON <http://geojson.org/>`__ Feature objects,
 separated by newline (LF) (`Newline Delimited
-JSON https://github.com/ndjson/ndjson-spec>`__) or record-separator (RS) characters (`RFC
+JSON <https://github.com/ndjson/ndjson-spec>`__) or record-separator (RS) characters (`RFC
 8142 <https://tools.ietf.org/html/rfc8142>`__ standard: GeoJSON Text
 Sequences)
 
@@ -103,7 +103,7 @@ The following layer creation options are supported:
       :since: 3.8
 
       Whether to write
-      NaN / Infinity values. Such values are not allowed in strict JSON 
+      NaN / Infinity values. Such values are not allowed in strict JSON
       mode, but some JSON parsers (libjson-c >= 0.12 for example) can
       understand them as they are allowed by ECMAScript.
 
