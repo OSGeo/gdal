@@ -32,8 +32,7 @@
 
 #include <cstddef>
 #include <algorithm>
-#include <set>
-#include <vector>
+#include <unordered_set>
 
 #include "cpl_config.h"
 #include "cpl_error.h"
@@ -47,11 +46,20 @@
 
 class GDALHashSetBandBlockCache final : public GDALAbstractBandBlockCache
 {
-    struct BlockComparator
+    struct BlockHash
     {
+        std::size_t operator()(GDALRasterBlock *const& b) const noexcept
+        {
+            std::hash<int> h;
+
+            int x = b->GetXOff();
+            int y = b->GetYOff();
+            return h(x) ^ (h(y) << 1);
+        }
         // Do not change this comparator, because this order is assumed by
         // tests like tiff_write_133 for flushing from top to bottom, left
         // to right.
+        /**
         bool operator()(const GDALRasterBlock *const &lhs,
                         const GDALRasterBlock *const &rhs) const
         {
@@ -61,9 +69,20 @@ class GDALHashSetBandBlockCache final : public GDALAbstractBandBlockCache
                 return false;
             return lhs->GetXOff() < rhs->GetXOff();
         }
+        **/
     };
 
-    std::set<GDALRasterBlock *, BlockComparator> m_oSet{};
+    struct BlockEqual
+    {
+        bool operator()(GDALRasterBlock *const& b1, GDALRasterBlock *const& b2) const noexcept
+        {
+            return b1->GetXOff() == b2->GetXOff() && b1->GetYOff() == b2->GetYOff();
+        }
+    };
+
+    using BlockCache = std::unordered_set<GDALRasterBlock *, BlockHash, BlockEqual>;
+
+    BlockCache m_oSet{};
     CPLLock *hLock = nullptr;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALHashSetBandBlockCache)
@@ -157,10 +176,10 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
 
     CPLErr eGlobalErr = poBand->eFlushBlockErr;
 
-    std::set<GDALRasterBlock *, BlockComparator> oOldSet;
+    BlockCache oOldSet;
     {
         CPLLockHolderOptionalLockD(hLock);
-        oOldSet = std::move(m_oSet);
+        std::swap(oOldSet, m_oSet);
     }
 
     StartDirtyBlockFlushingLog();
