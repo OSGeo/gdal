@@ -250,7 +250,8 @@ def test_hfa_srs_NAD83_CORS96_UTM():
 
     ds = gdal.Open("/vsimem/TestHFASRS.img")
     srs_got = ds.GetSpatialRef()
-    assert srs_got.GetAuthorityName(None) is None
+    assert srs_got.GetAuthorityName(None) == "ESRI"
+    assert srs_got.GetAuthorityCode(None) == "102411"
     assert srs_got.IsSame(sr), srs_got.ExportToWkt()
     ds = None
 
@@ -286,3 +287,25 @@ def test_hfa_srs_DISABLEPESTRING():
     ds = None
 
     gdal.Unlink(filename)
+
+
+# Not sure about the minimum PROJ version, but 6.3 doesn't work
+@pytest.mark.require_proj(8, 0)
+def test_hfa_srs_EPSG_2193(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.img")
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(2193)
+    sr.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    ds = gdal.GetDriverByName("HFA").Create(filename, 1, 1)
+    ds.SetSpatialRef(sr)
+    ds = None
+
+    ds = gdal.Open(filename)
+    srs_got = ds.GetSpatialRef()
+    assert srs_got.GetAuthorityName(None) == "EPSG"
+    assert srs_got.GetAuthorityCode(None) == "2193"
+    assert srs_got.GetDataAxisToSRSAxisMapping() == [2, 1]
+    assert srs_got.IsSame(sr)
+    ds = None
