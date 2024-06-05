@@ -33,7 +33,7 @@ import pathlib
 import gdaltest
 import pytest
 
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 ###############################################################################
 # Simple test
@@ -637,3 +637,24 @@ def test_ogrinfo_lib_layers():
 
     with pytest.raises(Exception, match="Couldn't fetch requested layer"):
         gdal.VectorInfo(ds, format="json", layers=["invalid"])
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("epoch", ["2021.0", "2021.3"])
+def test_ogrinfo_lib_coordinate_epoch(epoch):
+
+    ds = gdal.GetDriverByName("Memory").Create("dummy", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetCoordinateEpoch(float(epoch))
+    ds.CreateLayer("foo", srs=srs)
+
+    ret = gdal.VectorInfo(ds)
+    assert f"Coordinate epoch: {epoch}" in ret
+
+    j = gdal.VectorInfo(ds, format="json")
+    crs = j["layers"][0]["geometryFields"][0]["coordinateSystem"]
+    assert "coordinateEpoch" in crs
+    assert crs["coordinateEpoch"] == float(epoch)
