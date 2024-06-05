@@ -48,7 +48,7 @@ class GDALHashSetBandBlockCache final : public GDALAbstractBandBlockCache
 {
     struct BlockHash
     {
-        std::size_t operator()(GDALRasterBlock *const& b) const noexcept
+        std::size_t operator()(GDALRasterBlock *const &b) const noexcept
         {
             std::hash<int> h;
 
@@ -56,31 +56,20 @@ class GDALHashSetBandBlockCache final : public GDALAbstractBandBlockCache
             int y = b->GetYOff();
             return h(x) ^ (h(y) << 1);
         }
-        // Do not change this comparator, because this order is assumed by
-        // tests like tiff_write_133 for flushing from top to bottom, left
-        // to right.
-        /**
-        bool operator()(const GDALRasterBlock *const &lhs,
-                        const GDALRasterBlock *const &rhs) const
-        {
-            if (lhs->GetYOff() < rhs->GetYOff())
-                return true;
-            if (lhs->GetYOff() > rhs->GetYOff())
-                return false;
-            return lhs->GetXOff() < rhs->GetXOff();
-        }
-        **/
     };
 
     struct BlockEqual
     {
-        bool operator()(GDALRasterBlock *const& b1, GDALRasterBlock *const& b2) const noexcept
+        bool operator()(GDALRasterBlock *const &b1,
+                        GDALRasterBlock *const &b2) const noexcept
         {
-            return b1->GetXOff() == b2->GetXOff() && b1->GetYOff() == b2->GetYOff();
+            return b1->GetXOff() == b2->GetXOff() &&
+                   b1->GetYOff() == b2->GetYOff();
         }
     };
 
-    using BlockCache = std::unordered_set<GDALRasterBlock *, BlockHash, BlockEqual>;
+    using BlockCache =
+        std::unordered_set<GDALRasterBlock *, BlockHash, BlockEqual>;
 
     BlockCache m_oSet{};
     CPLLock *hLock = nullptr;
