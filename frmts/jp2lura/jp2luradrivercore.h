@@ -38,8 +38,12 @@ constexpr unsigned char jpc_header[] = {0xff, 0x4f, 0xff,
                                         0x51};  // SOC + RSIZ markers
 constexpr unsigned char jp2_box_jp[] = {0x6a, 0x50, 0x20, 0x20}; /* 'jP  ' */
 
-int CPL_DLL JP2LuraDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define JP2LuraDriverIdentify PLUGIN_SYMBOL_NAME(JP2LuraDriverIdentify)
+#define JP2LuraDriverSetCommonMetadata                                         \
+    PLUGIN_SYMBOL_NAME(JP2LuraDriverSetCommonMetadata)
 
-void CPL_DLL JP2LuraDriverSetCommonMetadata(GDALDriver *poDriver);
+int JP2LuraDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void JP2LuraDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

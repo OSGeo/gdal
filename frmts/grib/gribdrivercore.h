@@ -34,8 +34,12 @@
 
 constexpr const char *DRIVER_NAME = "GRIB";
 
-int CPL_DLL GRIBDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define GRIBDriverIdentify PLUGIN_SYMBOL_NAME(GRIBDriverIdentify)
+#define GRIBDriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(GRIBDriverSetCommonMetadata)
 
-void CPL_DLL GRIBDriverSetCommonMetadata(GDALDriver *poDriver);
+int GRIBDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void GRIBDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

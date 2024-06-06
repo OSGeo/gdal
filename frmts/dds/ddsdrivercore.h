@@ -36,8 +36,12 @@ constexpr const char *DRIVER_NAME = "DDS";
 
 #define DDS_SIGNATURE "DDS "
 
-int CPL_DLL DDSDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define DDSDriverIdentify PLUGIN_SYMBOL_NAME(DDSDriverIdentify)
+#define DDSDriverSetCommonMetadata                                             \
+    PLUGIN_SYMBOL_NAME(DDSDriverSetCommonMetadata)
 
-void CPL_DLL DDSDriverSetCommonMetadata(GDALDriver *poDriver);
+int DDSDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void DDSDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

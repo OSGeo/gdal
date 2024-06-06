@@ -33,8 +33,12 @@
 
 constexpr const char *DRIVER_NAME = "PLSCENES";
 
-int CPL_DLL OGRPLSCENESDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRPLSCENESDriverIdentify PLUGIN_SYMBOL_NAME(OGRPLSCENESDriverIdentify)
+#define OGRPLSCENESDriverSetCommonMetadata                                     \
+    PLUGIN_SYMBOL_NAME(OGRPLSCENESDriverSetCommonMetadata)
 
-void CPL_DLL OGRPLSCENESDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRPLSCENESDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRPLSCENESDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

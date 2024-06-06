@@ -35,8 +35,12 @@
 
 constexpr const char *DRIVER_NAME = "FITS";
 
-int CPL_DLL FITSDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define FITSDriverIdentify PLUGIN_SYMBOL_NAME(FITSDriverIdentify)
+#define FITSDriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(FITSDriverSetCommonMetadata)
 
-void CPL_DLL FITSDriverSetCommonMetadata(GDALDriver *poDriver);
+int FITSDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void FITSDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

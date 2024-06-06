@@ -33,8 +33,12 @@
 
 constexpr const char *DRIVER_NAME = "PCRaster";
 
-int CPL_DLL PCRasterDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define PCRasterDriverIdentify PLUGIN_SYMBOL_NAME(PCRasterDriverIdentify)
+#define PCRasterDriverSetCommonMetadata                                        \
+    PLUGIN_SYMBOL_NAME(PCRasterDriverSetCommonMetadata)
 
-void CPL_DLL PCRasterDriverSetCommonMetadata(GDALDriver *poDriver);
+int PCRasterDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void PCRasterDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

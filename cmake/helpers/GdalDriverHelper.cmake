@@ -12,6 +12,8 @@ GdalDriverHelper
 
   Symptoms add_gdal_driver( TARGET <target_name>
                             [SOURCES <source file> [<source file>[...]]]
+                            [CORE_SOURCES <source file> [<source file>[...]]]
+                            NO_SHARED_SYMBOL_WITH_CORE
                             BUILTIN | PLUGIN_CAPABLE | [PLUGIN_CAPABLE_IF <cond>]
                             [NO_DEPS]
                           )
@@ -30,6 +32,34 @@ GdalDriverHelper
     but extra conditions provided in <cond> (e.g "NOT GDAL_USE_JSONC_INTERNAL") are needed
 
   The NO_DEPS option express that the driver has no non-core external dependencies.
+
+  The CORE_SOURCES option points to a list of files that are used for deferred plugin
+  loading (cf RFC 96 https://gdal.org/development/rfc/rfc96_deferred_plugin_loading.html),
+  when the driver is built as a plugin.
+  Those files are build in libgdal so it has access to plugin metadata and the
+  identification method, and are typically exported so that the driver can also
+  access them.
+  However it has been found that this resulted in the inability of building a
+  plugin for a libgdal that hadn't been built with any form of support for it,
+  which is undesirable.
+  Starting with GDAL 3.9.1, NO_SHARED_SYMBOL_WITH_CORE must also be declared
+  when CORE_SOURCES is declared, so that the files pointed by CORE_SOURCES
+  are built twice: once in libgdal with a "GDAL_core_" prefix, and another time
+  in the plugin itself with a "GDAL_driver_" prefix, by using the
+  PLUGIN_SYMBOL_NAME() macro of gdal_priv.h
+
+  Example in ogrocidrivercore.h:
+
+        #define OGROCIDriverIdentify \
+           PLUGIN_SYMBOL_NAME(OGROCIDriverIdentify)
+        #define OGROCIDriverSetCommonMetadata \
+           PLUGIN_SYMBOL_NAME(OGROCIDriverSetCommonMetadata)
+
+        int OGROCIDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+        void OGROCIDriverSetCommonMetadata(GDALDriver *poDriver);
+
+
 
   There are several examples to show how to write build cmake script.
 
@@ -91,7 +121,7 @@ function(_set_driver_core_sources _KEY _DRIVER_TARGET)
 endfunction()
 
 function(add_gdal_driver)
-    set(_options BUILTIN PLUGIN_CAPABLE NO_DEPS STRONG_CXX_WFLAGS CXX_WFLAGS_EFFCXX NO_CXX_WFLAGS)
+    set(_options BUILTIN PLUGIN_CAPABLE NO_DEPS STRONG_CXX_WFLAGS CXX_WFLAGS_EFFCXX NO_CXX_WFLAGS NO_SHARED_SYMBOL_WITH_CORE)
     set(_oneValueArgs TARGET DESCRIPTION DEF PLUGIN_CAPABLE_IF DRIVER_NAME_OPTION)
     set(_multiValueArgs SOURCES CORE_SOURCES)
     cmake_parse_arguments(_DRIVER "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
@@ -254,6 +284,15 @@ function(add_gdal_driver)
         set_property(GLOBAL APPEND PROPERTY PLUGIN_MODULES ${_DRIVER_TARGET})
 
         if (_DRIVER_CORE_SOURCES)
+            if (_DRIVER_NO_SHARED_SYMBOL_WITH_CORE)
+                foreach(f IN LISTS _DRIVER_CORE_SOURCES)
+                    # Create a separate source file, to make sure we get a different object file
+                    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/for_driver_${f}" "#include \"${CMAKE_CURRENT_SOURCE_DIR}/${f}\"")
+                    target_sources(${_DRIVER_TARGET} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/for_driver_${f}")
+                endforeach()
+            else()
+                message(FATAL_ERROR "Driver ${_DRIVER_TARGET} should declare DRIVER_NO_SHARED_SYMBOL_WITH_CORE")
+            endif()
             _set_driver_core_sources(${_KEY} ${_DRIVER_TARGET} ${_DRIVER_CORE_SOURCES})
         endif ()
 

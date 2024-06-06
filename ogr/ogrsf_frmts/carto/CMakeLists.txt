@@ -9,7 +9,8 @@ add_gdal_driver(
   CORE_SOURCES
           ogrcartodrivercore.cpp
   PLUGIN_CAPABLE_IF
-          "NOT GDAL_USE_JSONC_INTERNAL")
+          "NOT GDAL_USE_JSONC_INTERNAL"
+  NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET ogr_Carto)
     return()

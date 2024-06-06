@@ -18,7 +18,8 @@ set_property(SOURCE hdf-eos/EHapi.c hdf-eos/GDapi.c hdf-eos/SWapi.c PROPERTY SKI
 add_gdal_driver(TARGET gdal_HDF4
                 SOURCES ${_SOURCES}
                 CORE_SOURCES hdf4drivercore.cpp
-                PLUGIN_CAPABLE)
+                PLUGIN_CAPABLE
+                NO_SHARED_SYMBOL_WITH_CORE)
 unset(_SOURCES)
 
 if(NOT TARGET gdal_HDF4)

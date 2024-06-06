@@ -35,12 +35,19 @@ constexpr const char *MRSID_DRIVER_NAME = "MrSID";
 
 constexpr const char *JP2MRSID_DRIVER_NAME = "JP2MrSID";
 
-int CPL_DLL MrSIDIdentify(GDALOpenInfo *poOpenInfo);
+#define MrSIDIdentify PLUGIN_SYMBOL_NAME(MrSIDIdentify)
+#define MrSIDJP2Identify PLUGIN_SYMBOL_NAME(MrSIDJP2Identify)
+#define MrSIDDriverSetCommonMetadata                                           \
+    PLUGIN_SYMBOL_NAME(MrSIDDriverSetCommonMetadata)
+#define JP2MrSIDDriverSetCommonMetadata                                        \
+    PLUGIN_SYMBOL_NAME(JP2MrSIDDriverSetCommonMetadata)
 
-int CPL_DLL MrSIDJP2Identify(GDALOpenInfo *poOpenInfo);
+int MrSIDIdentify(GDALOpenInfo *poOpenInfo);
 
-void CPL_DLL MrSIDDriverSetCommonMetadata(GDALDriver *poDriver);
+int MrSIDJP2Identify(GDALOpenInfo *poOpenInfo);
 
-void CPL_DLL JP2MrSIDDriverSetCommonMetadata(GDALDriver *poDriver);
+void MrSIDDriverSetCommonMetadata(GDALDriver *poDriver);
+
+void JP2MrSIDDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

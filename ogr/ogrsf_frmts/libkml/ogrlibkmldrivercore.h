@@ -33,8 +33,12 @@
 
 constexpr const char *DRIVER_NAME = "LIBKML";
 
-int CPL_DLL OGRLIBKMLDriverIdentify(GDALOpenInfo *poOpenInfo);
+#define OGRLIBKMLDriverIdentify PLUGIN_SYMBOL_NAME(OGRLIBKMLDriverIdentify)
+#define OGRLIBKMLDriverSetCommonMetadata                                       \
+    PLUGIN_SYMBOL_NAME(OGRLIBKMLDriverSetCommonMetadata)
 
-void CPL_DLL OGRLIBKMLDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRLIBKMLDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRLIBKMLDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

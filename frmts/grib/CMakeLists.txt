@@ -50,7 +50,8 @@ add_gdal_driver(
           gribdrivercore.cpp
       PLUGIN_CAPABLE_IF
           "NOT GDAL_USE_PNG_INTERNAL\\\;NOT GDAL_USE_ZLIB_INTERNAL"
-      NO_DEPS)
+      NO_DEPS
+      NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET gdal_GRIB)
     return()

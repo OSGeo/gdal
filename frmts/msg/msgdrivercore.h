@@ -34,6 +34,9 @@
 
 constexpr const char *DRIVER_NAME = "MSG";
 
-void CPL_DLL MSGDriverSetCommonMetadata(GDALDriver *poDriver);
+#define MSGDriverSetCommonMetadata                                             \
+    PLUGIN_SYMBOL_NAME(MSGDriverSetCommonMetadata)
+
+void MSGDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

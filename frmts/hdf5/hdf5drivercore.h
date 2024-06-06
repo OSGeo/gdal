@@ -43,28 +43,47 @@ constexpr const char *S104_DRIVER_NAME = "S104";
 
 constexpr const char *S111_DRIVER_NAME = "S111";
 
-int CPL_DLL HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo);
+#define HDF5DatasetIdentify PLUGIN_SYMBOL_NAME(HDF5DatasetIdentify)
+#define HDF5ImageDatasetIdentify PLUGIN_SYMBOL_NAME(HDF5ImageDatasetIdentify)
+#define BAGDatasetIdentify PLUGIN_SYMBOL_NAME(BAGDatasetIdentify)
+#define S102DatasetIdentify PLUGIN_SYMBOL_NAME(S102DatasetIdentify)
+#define S104DatasetIdentify PLUGIN_SYMBOL_NAME(S104DatasetIdentify)
+#define S111DatasetIdentify PLUGIN_SYMBOL_NAME(S111DatasetIdentify)
+#define HDF5DriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(HDF5DriverSetCommonMetadata)
+#define HDF5ImageDriverSetCommonMetadata                                       \
+    PLUGIN_SYMBOL_NAME(HDF5ImageDriverSetCommonMetadata)
+#define BAGDriverSetCommonMetadata                                             \
+    PLUGIN_SYMBOL_NAME(BAGDriverSetCommonMetadata)
+#define S102DriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(S102DriverSetCommonMetadata)
+#define S104DriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(S104DriverSetCommonMetadata)
+#define S111DriverSetCommonMetadata                                            \
+    PLUGIN_SYMBOL_NAME(S111DriverSetCommonMetadata)
 
-int CPL_DLL HDF5ImageDatasetIdentify(GDALOpenInfo *poOpenInfo);
+int HDF5DatasetIdentify(GDALOpenInfo *poOpenInfo);
 
-int CPL_DLL BAGDatasetIdentify(GDALOpenInfo *poOpenInfo);
+int HDF5ImageDatasetIdentify(GDALOpenInfo *poOpenInfo);
 
-int CPL_DLL S102DatasetIdentify(GDALOpenInfo *poOpenInfo);
+int BAGDatasetIdentify(GDALOpenInfo *poOpenInfo);
 
-int CPL_DLL S104DatasetIdentify(GDALOpenInfo *poOpenInfo);
+int S102DatasetIdentify(GDALOpenInfo *poOpenInfo);
 
-int CPL_DLL S111DatasetIdentify(GDALOpenInfo *poOpenInfo);
+int S104DatasetIdentify(GDALOpenInfo *poOpenInfo);
 
-void CPL_DLL HDF5DriverSetCommonMetadata(GDALDriver *poDriver);
+int S111DatasetIdentify(GDALOpenInfo *poOpenInfo);
 
-void CPL_DLL HDF5ImageDriverSetCommonMetadata(GDALDriver *poDriver);
+void HDF5DriverSetCommonMetadata(GDALDriver *poDriver);
 
-void CPL_DLL BAGDriverSetCommonMetadata(GDALDriver *poDriver);
+void HDF5ImageDriverSetCommonMetadata(GDALDriver *poDriver);
 
-void CPL_DLL S102DriverSetCommonMetadata(GDALDriver *poDriver);
+void BAGDriverSetCommonMetadata(GDALDriver *poDriver);
 
-void CPL_DLL S104DriverSetCommonMetadata(GDALDriver *poDriver);
+void S102DriverSetCommonMetadata(GDALDriver *poDriver);
 
-void CPL_DLL S111DriverSetCommonMetadata(GDALDriver *poDriver);
+void S104DriverSetCommonMetadata(GDALDriver *poDriver);
+
+void S111DriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

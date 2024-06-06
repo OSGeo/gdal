@@ -33,10 +33,16 @@
 
 constexpr const char *DRIVER_NAME = "Arrow";
 
-bool CPL_DLL OGRFeatherDriverIsArrowFileFormat(GDALOpenInfo *poOpenInfo);
+#define OGRFeatherDriverIsArrowFileFormat                                      \
+    PLUGIN_SYMBOL_NAME(OGRFeatherDriverIsArrowFileFormat)
+#define OGRFeatherDriverIdentify PLUGIN_SYMBOL_NAME(OGRFeatherDriverIdentify)
+#define OGRFeatherDriverSetCommonMetadata                                      \
+    PLUGIN_SYMBOL_NAME(OGRFeatherDriverSetCommonMetadata)
 
-int CPL_DLL OGRFeatherDriverIdentify(GDALOpenInfo *poOpenInfo);
+bool OGRFeatherDriverIsArrowFileFormat(GDALOpenInfo *poOpenInfo);
 
-void CPL_DLL OGRFeatherDriverSetCommonMetadata(GDALDriver *poDriver);
+int OGRFeatherDriverIdentify(GDALOpenInfo *poOpenInfo);
+
+void OGRFeatherDriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif

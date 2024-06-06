@@ -15,7 +15,8 @@ add_gdal_driver(
           zarrdrivercore.cpp
   STRONG_CXX_WFLAGS
   PLUGIN_CAPABLE
-  NO_DEPS)
+  NO_DEPS
+  NO_SHARED_SYMBOL_WITH_CORE)
 
 if(NOT TARGET gdal_Zarr)
     return()

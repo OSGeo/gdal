@@ -35,7 +35,15 @@ constexpr const char *DRIVER_NAME = "HANA";
 
 constexpr const char *HANA_PREFIX = "HANA:";
 
-class CPL_DLL OGRHanaLayerCreationOptionsConstants
+#define OGRHanaLayerCreationOptionsConstants                                   \
+    PLUGIN_SYMBOL_NAME(OGRHanaLayerCreationOptionsConstants)
+#define OGRHanaOpenOptionsConstants                                            \
+    PLUGIN_SYMBOL_NAME(OGRHanaOpenOptionsConstants)
+#define OGRHanaDriverIdentify PLUGIN_SYMBOL_NAME(OGRHanaDriverIdentify)
+#define OGRHANADriverSetCommonMetadata                                         \
+    PLUGIN_SYMBOL_NAME(OGRHANADriverSetCommonMetadata)
+
+class OGRHanaLayerCreationOptionsConstants
 {
   public:
     OGRHanaLayerCreationOptionsConstants() = delete;
@@ -57,7 +65,7 @@ class CPL_DLL OGRHanaLayerCreationOptionsConstants
     static const char *GetList();
 };
 
-class CPL_DLL OGRHanaOpenOptionsConstants
+class OGRHanaOpenOptionsConstants
 {
   public:
     OGRHanaOpenOptionsConstants() = delete;
@@ -92,8 +100,8 @@ class CPL_DLL OGRHanaOpenOptionsConstants
     static const char *GetList();
 };
 
-int CPL_DLL OGRHanaDriverIdentify(GDALOpenInfo *poOpenInfo);
+int OGRHanaDriverIdentify(GDALOpenInfo *poOpenInfo);
 
-void CPL_DLL OGRHANADriverSetCommonMetadata(GDALDriver *poDriver);
+void OGRHANADriverSetCommonMetadata(GDALDriver *poDriver);
 
 #endif
