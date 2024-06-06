@@ -281,31 +281,31 @@ On layer creation, the XORIGIN, YORIGIN, ZORIGIN, MORIGIN, XYSCALE, ZSCALE,
 ZORIGIN, XYTOLERANCE, ZTOLERANCE, MTOLERANCE layer creation options will be
 used in priority over the settings of :cpp:class:`OGRGeomCoordinatePrecision`.
 
-Known Issues
-------------
+Limitations
+-----------
 
 -  The SDK is known to be unable to open layers with particular spatial
    reference systems. This might be the case if messages "FGDB: Error
    opening XXXXXXX. Skipping it (Invalid function arguments.)" when
    running ``ogrinfo --debug on the.gdb`` (reported as warning in GDAL
    2.0). Using the OpenFileGDB driver will generally solve that issue.
+
 -  FGDB coordinate snapping will cause geometries to be altered during
    writing. Use the origin and scale layer creation options to control
    the snapping behavior.
--  Driver can't read data in SDC format (Smart Data Compression) because
-   operation is not supported by the ESRI SDK.
+
+-  Reading data compressed in SDC format (Smart Data Compression) is not
+   support by the driver, because it is not supported by the ESRI SDK.
+
 -  Reading data compressed in CDF format (Compressed Data Format)
    requires ESRI SDK 1.4 or later.
+
 -  Some applications create FileGeodatabases with non-spatial tables which are
    not present in the GDB_Items metadata table. These tables cannot be opened
    by the ESRI SDK, so GDAL will automatically fallback to the OpenFileGDB
    driver to read these tables. Accordingly they will be opened with the
    limitations of the OpenFileGDB driver (for instance, they will be
    read only).
-
-
-Other limitations
------------------
 
 - The driver does not support 64-bit integers.
 
