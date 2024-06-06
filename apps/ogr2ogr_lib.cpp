@@ -2641,6 +2641,10 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         }
     }
 
+    // Automatically close poODS on error, if it has been created by this
+    // method.
+    GDALDatasetUniquePtr poODSUniquePtr(hDstDS == nullptr ? poODS : nullptr);
+
     // Some syntaxic sugar to make "ogr2ogr [-f PostgreSQL] PG:dbname=....
     // source [srclayer] -lco OVERWRITE=YES" work like "ogr2ogr -overwrite
     // PG:dbname=.... source [srclayer]" The former syntax used to work at
@@ -2658,8 +2662,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "-append and -lco OVERWRITE=YES are mutually exclusive");
-            if (hDstDS == nullptr)
-                GDALClose(poODS);
             return nullptr;
         }
         bOverwrite = true;
@@ -2707,8 +2709,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Failed to process SRS definition: %s",
                      psOptions->osOutputSRSDef.c_str());
-            if (hDstDS == nullptr)
-                GDALClose(poODS);
             return nullptr;
         }
         oOutputSRSHolder.get()->SetCoordinateEpoch(
@@ -2729,8 +2729,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Failed to process SRS definition: %s",
                      psOptions->osSourceSRSDef.c_str());
-            if (hDstDS == nullptr)
-                GDALClose(poODS);
             return nullptr;
         }
         oSourceSRS.SetCoordinateEpoch(psOptions->dfSourceCoordinateEpoch);
@@ -2741,17 +2739,16 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     /*      Create a transformation object from the source to               */
     /*      destination coordinate system.                                  */
     /* -------------------------------------------------------------------- */
-    GCPCoordTransformation *poGCPCoordTrans = nullptr;
+    std::unique_ptr<GCPCoordTransformation> poGCPCoordTrans;
     if (psOptions->oGCPs.nGCPCount > 0)
     {
-        poGCPCoordTrans = new GCPCoordTransformation(
+        poGCPCoordTrans = std::make_unique<GCPCoordTransformation>(
             psOptions->oGCPs.nGCPCount, psOptions->oGCPs.pasGCPs,
             psOptions->nTransformOrder,
             poSourceSRS ? poSourceSRS : oOutputSRSHolder.get());
         if (!(poGCPCoordTrans->IsValid()))
         {
-            delete poGCPCoordTrans;
-            poGCPCoordTrans = nullptr;
+            return nullptr;
         }
     }
 
@@ -2805,7 +2802,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     oTranslator.m_poOutputSRS = oOutputSRSHolder.get();
     oTranslator.m_bNullifyOutputSRS = psOptions->bNullifyOutputSRS;
     oTranslator.m_poUserSourceSRS = poSourceSRS;
-    oTranslator.m_poGCPCoordTrans = poGCPCoordTrans;
+    oTranslator.m_poGCPCoordTrans = poGCPCoordTrans.get();
     oTranslator.m_eGType = psOptions->eGType;
     oTranslator.m_eGeomTypeConversion = psOptions->eGeomTypeConversion;
     oTranslator.m_bMakeValid = psOptions->bMakeValid;
@@ -2977,9 +2974,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "-splitlistfields not supported in this mode");
-            if (hDstDS == nullptr)
-                GDALClose(poODS);
-            delete poGCPCoordTrans;
             return nullptr;
         }
 
@@ -2992,9 +2986,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Couldn't fetch requested layer %s!", pszLayer);
-                if (hDstDS == nullptr)
-                    GDALClose(poODS);
-                delete poGCPCoordTrans;
                 return nullptr;
             }
         }
@@ -3044,9 +3035,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Couldn't fetch advertised layer %d!", iLayer);
-                    if (hDstDS == nullptr)
-                        GDALClose(poODS);
-                    delete poGCPCoordTrans;
                     return nullptr;
                 }
 
@@ -3085,9 +3073,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Couldn't fetch advertised layer %d!", iLayer);
-                if (hDstDS == nullptr)
-                    GDALClose(poODS);
-                delete poGCPCoordTrans;
                 return nullptr;
             }
 
@@ -3106,9 +3091,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                                  poLayer->GetName());
                         if (!psOptions->bSkipFailures)
                         {
-                            if (hDstDS == nullptr)
-                                GDALClose(poODS);
-                            delete poGCPCoordTrans;
                             return nullptr;
                         }
                     }
@@ -3133,8 +3115,8 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         while (true)
         {
             OGRLayer *poFeatureLayer = nullptr;
-            OGRFeature *poFeature = poDS->GetNextFeature(
-                &poFeatureLayer, nullptr, pfnProgress, pProgressArg);
+            auto poFeature = std::unique_ptr<OGRFeature>(poDS->GetNextFeature(
+                &poFeatureLayer, nullptr, pfnProgress, pProgressArg));
             if (poFeature == nullptr)
                 break;
             std::map<OGRLayer *, int>::const_iterator oIter =
@@ -3142,7 +3124,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             if (oIter == oMapLayerToIdx.end())
             {
                 // Feature in a layer that is not a layer of interest.
-                OGRFeature::DestroyFeature(poFeature);
+                // nothing to do
             }
             else
             {
@@ -3170,10 +3152,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
 
                         if (psInfo == nullptr && !psOptions->bSkipFailures)
                         {
-                            if (hDstDS == nullptr)
-                                GDALClose(poODS);
-                            delete poGCPCoordTrans;
-                            OGRFeature::DestroyFeature(poFeature);
                             return nullptr;
                         }
 
@@ -3186,9 +3164,9 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                 int iLayer = oIter->second;
                 TargetLayerInfo *psInfo = pasAssocLayers[iLayer].psInfo.get();
                 if ((psInfo == nullptr ||
-                     !oTranslator.Translate(poFeature, psInfo, 0, nullptr,
-                                            nTotalEventsDone, nullptr, nullptr,
-                                            psOptions.get())) &&
+                     !oTranslator.Translate(poFeature.release(), psInfo, 0,
+                                            nullptr, nTotalEventsDone, nullptr,
+                                            nullptr, psOptions.get())) &&
                     !psOptions->bSkipFailures)
                 {
                     CPLError(
@@ -3201,8 +3179,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                     nRetCode = 1;
                     break;
                 }
-                if (psInfo == nullptr)
-                    OGRFeature::DestroyFeature(poFeature);
             }
         }  // while true
 
@@ -3230,9 +3206,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
 
                 if (psInfo == nullptr && !psOptions->bSkipFailures)
                 {
-                    if (hDstDS == nullptr)
-                        GDALClose(poODS);
-                    delete poGCPCoordTrans;
                     return nullptr;
                 }
 
@@ -3262,9 +3235,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Couldn't fetch advertised layer %d!", iLayer);
-                    if (hDstDS == nullptr)
-                        GDALClose(poODS);
-                    delete poGCPCoordTrans;
                     return nullptr;
                 }
                 if (!poDS->IsLayerPrivate(iLayer))
@@ -3294,9 +3264,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                              psOptions->aosLayers[iLayer]);
                     if (!psOptions->bSkipFailures)
                     {
-                        if (hDstDS == nullptr)
-                            GDALClose(poODS);
-                        delete poGCPCoordTrans;
                         return nullptr;
                     }
                 }
@@ -3346,9 +3313,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                              psOptions->osWHERE.c_str(), poLayer->GetName());
                     if (!psOptions->bSkipFailures)
                     {
-                        if (hDstDS == nullptr)
-                            GDALClose(poODS);
-                        delete poGCPCoordTrans;
                         return nullptr;
                     }
                 }
@@ -3502,8 +3466,6 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         }
     }
 
-    delete poGCPCoordTrans;
-
     // Note: this guarantees that the file can be opened in a consistent state,
     // without requiring to close poODS, only if the driver declares
     // DCAP_FLUSHCACHE_CONSISTENT_STATE
@@ -3511,10 +3473,13 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         nRetCode = 1;
 
     if (nRetCode == 0)
-        return GDALDataset::ToHandle(poODS);
+    {
+        if (hDstDS)
+            return hDstDS;
+        else
+            return GDALDataset::ToHandle(poODSUniquePtr.release());
+    }
 
-    if (hDstDS == nullptr)
-        GDALClose(poODS);
     return nullptr;
 }
 
