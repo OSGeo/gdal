@@ -283,3 +283,24 @@ def test_ogr_nas_5():
         os.remove("data/nas/replace_nas.gfs")
     except OSError:
         pass
+
+
+###############################################################################
+# Test force opening a NAS file
+
+
+def test_ogr_nas_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.xml")
+
+    prolog = '<?xml version="1.0" encoding="UTF-8"?>'
+    with gdaltest.vsi_open(filename, "wb") as f:
+        with open("data/nas/replace_nas.xml", "rb") as fsrc:
+            f.write(fsrc.read(len(prolog)) + b" " * (1000 * 1000) + fsrc.read())  # '<'
+
+    with pytest.raises(Exception):
+        gdal.OpenEx(filename)
+
+    with gdal.quiet_errors():
+        ds = gdal.OpenEx(filename, allowed_drivers=["NAS"])
+    assert ds.GetDriver().GetDescription() == "NAS"

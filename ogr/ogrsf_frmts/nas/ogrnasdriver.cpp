@@ -49,26 +49,36 @@ static int OGRNASDriverIdentify(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
 
     // Used to skip to actual beginning of XML data
-    // const char* szPtr = (const char*)poOpenInfo->pabyHeader;
-    const char *szPtr = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
+    const char *pszPtr = reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
 
-    if (((unsigned char)szPtr[0] == 0xEF) &&
-        ((unsigned char)szPtr[1] == 0xBB) && ((unsigned char)szPtr[2] == 0xBF))
+    // Skip UTF-8 BOM
+    if (poOpenInfo->nHeaderBytes > 3 &&
+        memcmp(poOpenInfo->pabyHeader, "\xEF\xBB\xBF", 3) == 0)
     {
-        szPtr += 3;
+        pszPtr += 3;
     }
+
+    // Skip spaces
+    while (*pszPtr && std::isspace(static_cast<unsigned char>(*pszPtr)))
+        ++pszPtr;
 
     /* -------------------------------------------------------------------- */
     /*      Here, we expect the opening chevrons of NAS tree root element   */
     /* -------------------------------------------------------------------- */
-    if (szPtr[0] != '<')
+    if (pszPtr[0] != '<')
         return FALSE;
 
+    if (poOpenInfo->IsSingleAllowedDriver("NAS"))
+        return TRUE;
+
+    // TryToIngest() invalidates above pszPtr
+    pszPtr = nullptr;
+    CPL_IGNORE_RET_VAL(pszPtr);
     if (!poOpenInfo->TryToIngest(8192))
         return FALSE;
-    szPtr = (const char *)poOpenInfo->pabyHeader;
+    pszPtr = reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
 
-    if (strstr(szPtr, "opengis.net/gml") == nullptr)
+    if (strstr(pszPtr, "opengis.net/gml") == nullptr)
         return FALSE;
 
     char **papszIndicators = CSLTokenizeStringComplex(
@@ -79,7 +89,7 @@ static int OGRNASDriverIdentify(GDALOpenInfo *poOpenInfo)
     bool bFound = false;
     for (int i = 0; papszIndicators[i] && !bFound; i++)
     {
-        bFound = strstr(szPtr, papszIndicators[i]) != nullptr;
+        bFound = strstr(pszPtr, papszIndicators[i]) != nullptr;
     }
 
     CSLDestroy(papszIndicators);
