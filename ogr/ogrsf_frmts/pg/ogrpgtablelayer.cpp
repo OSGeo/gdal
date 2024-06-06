@@ -289,8 +289,8 @@ void OGRPGTableLayer::LoadMetadata()
 
 void OGRPGTableLayer::SerializeMetadata()
 {
-    if (!m_bMetadataModified &&
-        CPLTestBool(CPLGetConfigOption("OGR_PG_ENABLE_METADATA", "YES")))
+    if (!m_bMetadataModified ||
+        !CPLTestBool(CPLGetConfigOption("OGR_PG_ENABLE_METADATA", "YES")))
     {
         return;
     }
@@ -355,34 +355,38 @@ void OGRPGTableLayer::SerializeMetadata()
 
     if (psMD)
     {
-        poDS->CreateOgrSystemTablesMetadataTableIfNeeded();
+        if (poDS->CreateMetadataTableIfNeeded() &&
+            poDS->HasWritePermissionsOnMetadataTable())
+        {
+            CPLString osCommand;
+            osCommand.Printf("DELETE FROM ogr_system_tables.metadata WHERE "
+                             "schema_name = %s AND table_name = %s",
+                             OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
+                             OGRPGEscapeString(hPGConn, pszTableName).c_str());
+            PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+            OGRPGClearResult(hResult);
 
-        CPLString osCommand;
-        osCommand.Printf("DELETE FROM ogr_system_tables.metadata WHERE "
-                         "schema_name = %s AND table_name = %s",
-                         OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
-                         OGRPGEscapeString(hPGConn, pszTableName).c_str());
-        PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-        OGRPGClearResult(hResult);
+            CPLXMLNode *psRoot =
+                CPLCreateXMLNode(nullptr, CXT_Element, "GDALMetadata");
+            CPLAddXMLChild(psRoot, psMD);
+            char *pszXML = CPLSerializeXMLTree(psRoot);
+            // CPLDebug("PG", "Serializing %s", pszXML);
 
-        CPLXMLNode *psRoot =
-            CPLCreateXMLNode(nullptr, CXT_Element, "GDALMetadata");
-        CPLAddXMLChild(psRoot, psMD);
-        char *pszXML = CPLSerializeXMLTree(psRoot);
-        // CPLDebug("PG", "Serializing %s", pszXML);
+            osCommand.Printf(
+                "INSERT INTO ogr_system_tables.metadata (schema_name, "
+                "table_name, metadata) VALUES (%s, %s, %s)",
+                OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
+                OGRPGEscapeString(hPGConn, pszTableName).c_str(),
+                OGRPGEscapeString(hPGConn, pszXML).c_str());
+            hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
+            OGRPGClearResult(hResult);
 
-        osCommand.Printf("INSERT INTO ogr_system_tables.metadata (schema_name, "
-                         "table_name, metadata) VALUES (%s, %s, %s)",
-                         OGRPGEscapeString(hPGConn, pszSchemaName).c_str(),
-                         OGRPGEscapeString(hPGConn, pszTableName).c_str(),
-                         OGRPGEscapeString(hPGConn, pszXML).c_str());
-        hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
-        OGRPGClearResult(hResult);
-
-        CPLDestroyXMLNode(psRoot);
-        CPLFree(pszXML);
+            CPLDestroyXMLNode(psRoot);
+            CPLFree(pszXML);
+        }
     }
-    else if (poDS->HasOgrSystemTablesMetadataTable())
+    else if (poDS->HasOgrSystemTablesMetadataTable() &&
+             poDS->HasWritePermissionsOnMetadataTable())
     {
         CPLString osCommand;
         osCommand.Printf("DELETE FROM ogr_system_tables.metadata WHERE "
