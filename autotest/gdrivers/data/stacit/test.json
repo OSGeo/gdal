@@ -14,7 +14,7 @@
       "geometry": null,
       "properties": {
         "datetime": "2021-07-19T10:57:30Z",
-        "proj:epsg": 26711,
+        "proj:epsg": 26711
       },
       "collection": "my_collection",
       "assets": {
