@@ -17,10 +17,10 @@ Summary
 
 This RFC adds support for the IEEE 16-bit floating point data type
 (aka ``half``, ``float16``). It adds a new pixel data type
-``GDT_Float16``. Where supported by the compiler, it also adds a new
-C/C++ type alias ``GFloat16``. Even when the local system does not
-support ``GFloat16``, datasets of this type can still be accessed by
-converting from/to ``float``.
+``GDT_Float16``. Where supported by the compiler, it also ensures a
+the C/C++ type ``_Float16`` is available. Even when the local system
+does not support ``_Float16``, datasets of this type can still be
+accessed by converting from/to ``float``.
 
 Some drivers, in particular Zarr, will be extended to support this
 type. Drivers that do not support this type will be checked to ensure
@@ -37,6 +37,11 @@ Motivation
   attributes or datasets which ``uint16`` values should be interpreted
   as ``float16``.
 
+- Some drivers (at least the HDF5, GTiff, and Zarr) already handle
+  float16 by exposing it as float32, using software conversion
+  routines. This type should be supported without converting to
+  float32.
+
 - C++23 will introduce native support for ``std::float16_t``. However,
   it will likely be several years until C++23 will be a requirement
   for GDAL. A shorter-term solution is needed.
@@ -47,23 +52,33 @@ Motivation
 Details
 -------
 
-The following type aliases are defined in both C and C++, if supported
-by the compiler:
-- ``GFloat16`` --> e.g. ``_Float16``
+The type ``_Float16`` is defined in both C and C++, if supported by
+the compiler. This is the type name that C will (most likely) use in
+the future. Modern GCC releases provide this type already. OTher
+compilers might support this type under a different name, and in this
+case, GDAL will define ``_Float16`` as type alias.
 
 The preprocessor symbol ``GDAL_HAVE_GFLOAT16`` indicates whether
-``GFloat16`` is available at compile time. This information will also
+``_Float16`` is available at compile time. This information will also
 be available at run time via ``bool GDALHaveFloat16()``.
 
 The following pixel data types are added:
-- ``GDT_Float16``  --> ``GFloat16``
-- ``GDT_CFloat32`` --> ``std::complex<GFloat16`` / ``_Complex GFloat16``
+- ``GDT_Float16``  --> ``_Float16``
+- ``GDT_CFloat16`` --> ``std::complex<_Float16`` / ``_Complex _Float16``
 
 These enum values are added independent of the value of whether the
 compiler supports float16.
 
-For simplicity there are no attribute functions for float16 values.
-Attributes can still be read/written as raw values.
+Some drivers (at least the HDF5, GTiff, and Zarr) already handle
+float16 by exposing it as float32, using software conversion routines.
+float16 is now supported directly, i.e., without converting to
+float32, if the compiler supports float16. Otherwise, the current
+behaviour is retained, which automatically converts float16 to
+float32.
+
+For simplicity there are no new functions handling attributes for
+multidimensional datasets. Attributes of type float16 can still be
+read/written as raw values.
 
 Impacts in the code base
 ------------------------
@@ -81,7 +96,7 @@ Backward compatibility
 ----------------------
 
 C and C++ API and ABI are impacted. This design is backward-compatible
-manner, i.e. it does not break the ABI, and can thus be implement in
+manner, i.e. it does not break the ABI, and can thus be implemented in
 GDAL 3.x.
 
 Main impacts are:
