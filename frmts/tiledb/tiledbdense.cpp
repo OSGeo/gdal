@@ -2946,7 +2946,7 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
         {
             try
             {
-                poODS->Close();
+                CPL_IGNORE_RET_VAL(poODS->Close());
                 tiledb::Array::delete_array(*m_ctx, poODS->GetDescription());
                 vfs.remove_dir(poODS->GetDescription());
             }
