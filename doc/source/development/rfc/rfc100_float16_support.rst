@@ -136,6 +136,7 @@ Related issues and PRs
 - https://github.com/OSGeo/gdal/issues/10144: Supporting float16
 
 For comparison:
+
 - https://github.com/OSGeo/gdal/pull/5257: [FEATURE] Add (initial)
   support Int64 and UInt64 raster data types
 
