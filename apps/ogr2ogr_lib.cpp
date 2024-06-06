@@ -4550,8 +4550,10 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
         oGeomFieldDefn.SetSpatialRef(poOutputSRS);
         oGeomFieldDefn.SetCoordinatePrecision(oCoordPrec);
         oGeomFieldDefn.SetNullable(bGeomFieldNullable);
-        poDstLayer = m_poDstDS->CreateLayer(pszNewLayerName, &oGeomFieldDefn,
-                                            papszLCOTemp);
+        poDstLayer = m_poDstDS->CreateLayer(
+            pszNewLayerName,
+            eGCreateLayerType == wkbNone ? nullptr : &oGeomFieldDefn,
+            papszLCOTemp);
         CSLDestroy(papszLCOTemp);
 
         if (poDstLayer == nullptr)
