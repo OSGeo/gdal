@@ -28,7 +28,10 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import json
+
 import pytest
+import webserver
 
 from osgeo import gdal
 
@@ -241,3 +244,77 @@ def test_stacit_overlapping_sources_with_nodata():
     vrt = ds.GetMetadata("xml:VRT")[0]
     assert len(ds.GetFileList()) == 3
     assert two_sources in vrt
+
+
+# Launch a single webserver in a module-scoped fixture.
+@pytest.fixture(scope="module")
+def webserver_launch():
+
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
+
+    yield process, port
+
+    webserver.server_stop(process, port)
+
+
+@pytest.fixture(scope="function")
+def webserver_port(webserver_launch):
+
+    webserver_process, webserver_port = webserver_launch
+
+    if webserver_port == 0:
+        pytest.skip()
+    yield webserver_port
+
+
+@pytest.mark.require_curl
+def test_stacit_post_paging(tmp_vsimem, webserver_port):
+
+    initial_doc = {
+        "type": "FeatureCollection",
+        "stac_version": "1.0.0-beta.2",
+        "stac_extensions": [],
+        "features": json.loads(open("data/stacit/test.json", "rb").read())["features"],
+        "links": [
+            {
+                "rel": "next",
+                "href": f"http://localhost:{webserver_port}/request",
+                "method": "POST",
+                "body": {"token": "page_2"},
+                "headers": {"foo": "bar"},
+            }
+        ],
+    }
+
+    filename = str(tmp_vsimem / "tmp.json")
+    gdal.FileFromMemBuffer(filename, json.dumps(initial_doc))
+
+    next_page_doc = {
+        "type": "FeatureCollection",
+        "stac_version": "1.0.0-beta.2",
+        "stac_extensions": [],
+        "features": json.loads(open("data/stacit/test_page2.json", "rb").read())[
+            "features"
+        ],
+    }
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/request",
+        200,
+        {"Content-type": "application/json"},
+        json.dumps(next_page_doc),
+        expected_headers={"Content-Type": "application/json", "foo": "bar"},
+        expected_body=b'{\n  "token":"page_2"\n}',
+    )
+    with webserver.install_http_handler(handler):
+        ds = gdal.Open(filename)
+    assert ds is not None
+    assert ds.RasterCount == 1
+    assert ds.RasterXSize == 40
+    assert ds.RasterYSize == 20
+    assert ds.GetSpatialRef().GetName() == "NAD27 / UTM zone 11N"
+    assert ds.GetGeoTransform() == pytest.approx(
+        [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8
+    )
