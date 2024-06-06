@@ -702,7 +702,14 @@ public:
   template <typename T, typename std::enable_if<std::is_integral<T>::value>::type * = nullptr>
   auto &store_into(T &var) {
     if (m_default_value.has_value()) {
-      var = std::any_cast<T>(m_default_value);
+      try
+      {
+        var = std::any_cast<T>(m_default_value);
+      }
+      catch (...)
+      {
+        var = static_cast<T>(std::any_cast<int>(m_default_value));
+      }
     }
     action([&var](const auto &s) {
       var = details::parse_number<T, details::radix_10>()(s);
@@ -712,7 +719,14 @@ public:
 
   auto &store_into(double &var) {
     if (m_default_value.has_value()) {
-      var = std::any_cast<double>(m_default_value);
+      try
+      {
+        var = std::any_cast<double>(m_default_value);
+      }
+      catch (...)
+      {
+        var = std::any_cast<int>(m_default_value);
+      }
     }
     action([&var](const auto &s) {
       var = details::parse_number<double, details::chars_format::general>()(s);
