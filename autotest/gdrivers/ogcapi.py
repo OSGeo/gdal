@@ -455,7 +455,7 @@ def test_ogc_api_raster_tiles():
 def test_ogc_api_raster_tiles_format(image_format, raster_count, statistics):
 
     ds = gdal.OpenEx(
-        f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/blueMarble",
+        f"http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/blueMarble",
         gdal.OF_RASTER,
         open_options=[
             "API=TILES",
@@ -463,6 +463,7 @@ def test_ogc_api_raster_tiles_format(image_format, raster_count, statistics):
             "TILEMATRIXSET=WorldMercatorWGS84Quad",
             f"IMAGE_FORMAT={image_format}",
         ],
+        allowed_drivers=["OGCAPI"],
     )
 
     assert ds is not None

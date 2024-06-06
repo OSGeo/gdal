@@ -664,6 +664,10 @@ int OGCAPIDataset::Identify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "moaw"))
         return TRUE;
+    if (poOpenInfo->IsSingleAllowedDriver("OGCAPI"))
+    {
+        return TRUE;
+    }
     return FALSE;
 }
 
@@ -999,9 +1003,12 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo *poOpenInfo,
 
 bool OGCAPIDataset::InitFromURL(GDALOpenInfo *poOpenInfo)
 {
-    CPLAssert(STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:"));
+    const char *pszInitialURL =
+        STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:")
+            ? poOpenInfo->pszFilename + strlen("OGCAPI:")
+            : poOpenInfo->pszFilename;
     CPLJSONDocument oDoc;
-    CPLString osURL(poOpenInfo->pszFilename + strlen("OGCAPI:"));
+    CPLString osURL(pszInitialURL);
     if (!DownloadJSon(osURL, oDoc))
         return false;
 
@@ -2881,7 +2888,9 @@ GDALDataset *OGCAPIDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!Identify(poOpenInfo))
         return nullptr;
     auto poDS = std::make_unique<OGCAPIDataset>();
-    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:"))
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "OGCAPI:") ||
+        STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+        STARTS_WITH(poOpenInfo->pszFilename, "https://"))
     {
         if (!poDS->InitFromURL(poOpenInfo))
             return nullptr;
