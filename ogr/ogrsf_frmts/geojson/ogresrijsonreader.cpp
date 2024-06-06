@@ -324,7 +324,11 @@ bool OGRESRIJSONReader::ParseField(json_object *poObj)
         OGRFieldSubType eFieldSubType = OFSTNone;
         const char *pszObjName = json_object_get_string(poObjName);
         const char *pszObjType = json_object_get_string(poObjType);
-        if (EQUAL(pszObjType, "esriFieldTypeOID"))
+        if (EQUAL(pszObjType, "esriFieldTypeString"))
+        {
+            // do nothing
+        }
+        else if (EQUAL(pszObjType, "esriFieldTypeOID"))
         {
             eFieldType = OFTInteger;
             poLayer_->SetFIDColumn(pszObjName);

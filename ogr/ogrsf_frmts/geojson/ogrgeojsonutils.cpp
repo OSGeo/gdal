@@ -634,7 +634,9 @@ static bool IsLikelyESRIJSONURL(const char *pszURL)
 {
     // URLs with f=json are strong candidates for ESRI JSON services
     // except if they have "/items?", in which case they are likely OAPIF
-    return strstr(pszURL, "f=json") != nullptr &&
+    return (strstr(pszURL, "f=json") != nullptr ||
+            strstr(pszURL, "f=pjson") != nullptr ||
+            strstr(pszURL, "resultRecordCount=") != nullptr) &&
            strstr(pszURL, "/items?") == nullptr;
 }
 
