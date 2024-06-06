@@ -1689,3 +1689,10 @@ def test_vsifile_class_append(tmp_vsimem):
         f.write("def")
     with gdaltest.vsi_open(fname) as f:
         assert f.read() == "abcdef"
+
+
+def test_vsifile_stat_directory_trailing_slash():
+
+    res = gdal.VSIStatL("data/")
+    assert res
+    assert res.IsDirectory()
