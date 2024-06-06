@@ -4510,3 +4510,58 @@ def test_ogr_openfilegdb_write_geom_coord_precision(tmp_vsimem):
         "ZTolerance": 0.0001,
         "HighPrecision": "true",
     }
+
+
+###############################################################################
+# Test repairing a corrupted header
+# Scenario similar to https://github.com/qgis/QGIS/issues/57536
+
+
+def test_ogr_openfilegdb_repair_corrupted_header(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "out.gdb")
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer("test", srs, ogr.wkbLineString)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    g = ogr.Geometry(ogr.wkbLineString)
+    g.SetPoint_2D(10, 0, 0)
+    f.SetGeometry(g)
+    lyr.CreateFeature(f)
+    ds = None
+
+    # Corrupt m_nHeaderBufferMaxSize field
+    corrupted_filename = filename + "/a00000004.gdbtable"
+    f = gdal.VSIFOpenL(corrupted_filename, "r+b")
+    assert f
+    gdal.VSIFSeekL(f, 8, 0)
+    gdal.VSIFWriteL(b"\x00" * 4, 4, 1, f)
+    gdal.VSIFCloseL(f)
+
+    with gdal.config_option(
+        "OGR_OPENFILEGDB_ERROR_ON_INCONSISTENT_BUFFER_MAX_SIZE", "NO"
+    ), gdal.quiet_errors():
+        ds = ogr.Open(filename)
+    assert (
+        gdal.GetLastErrorMsg()
+        == f"A corruption in the header of {corrupted_filename} has been detected. It would need to be repaired to be properly read by other software, either by using ogr2ogr to generate a new dataset, or by opening this dataset in update mode and reading all its records."
+    )
+    assert ds.GetLayerCount() == 1
+
+    with gdal.config_option(
+        "OGR_OPENFILEGDB_ERROR_ON_INCONSISTENT_BUFFER_MAX_SIZE", "NO"
+    ), gdal.quiet_errors():
+        ds = ogr.Open(filename, update=1)
+    assert (
+        gdal.GetLastErrorMsg()
+        == f"A corruption in the header of {corrupted_filename} has been detected. It is going to be repaired to be properly read by other software."
+    )
+    assert ds.GetLayerCount() == 1
+
+    with gdal.config_option(
+        "OGR_OPENFILEGDB_ERROR_ON_INCONSISTENT_BUFFER_MAX_SIZE", "NO"
+    ), gdal.quiet_errors():
+        ds = ogr.Open(filename)
+    assert gdal.GetLastErrorMsg() == ""
+    assert ds.GetLayerCount() == 1

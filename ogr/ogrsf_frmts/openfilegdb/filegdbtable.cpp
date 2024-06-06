@@ -965,7 +965,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
 
             OGRField sDefault;
             OGR_RawField_SetUnset(&sDefault);
-            if ((flags & 4) != 0)
+            if (flags & FileGDBField::MASK_EDITABLE)
             {
                 /* Default value */
                 /* Found on PreNIS.gdb/a0000000d.gdbtable */
@@ -1043,7 +1043,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
 
             if (eType == FGFT_OBJECTID)
             {
-                returnErrorIf(flags != 2);
+                returnErrorIf(flags != FileGDBField::MASK_REQUIRED);
                 returnErrorIf(m_iObjectIdField >= 0);
                 m_iObjectIdField = static_cast<int>(m_apoFields.size());
             }
@@ -1052,7 +1052,9 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
             poField->m_osName = osName;
             poField->m_osAlias = osAlias;
             poField->m_eType = eType;
-            poField->m_bNullable = (flags & 1) != 0;
+            poField->m_bNullable = (flags & FileGDBField::MASK_NULLABLE) != 0;
+            poField->m_bRequired = (flags & FileGDBField::MASK_REQUIRED) != 0;
+            poField->m_bEditable = (flags & FileGDBField::MASK_EDITABLE) != 0;
             poField->m_nMaxWidth = nMaxWidth;
             poField->m_sDefault = sDefault;
             m_apoFields.emplace_back(std::move(poField));
@@ -1548,11 +1550,64 @@ int FileGDBTable::SelectRow(int iRow)
                 }
                 else
                 {
+                    // Versions of the driver before commit
+                    // fdf39012788b1110b3bf0ae6b8422a528f0ae8b6 didn't
+                    // properly update the m_nHeaderBufferMaxSize field
+                    // when updating an existing feature when the new version
+                    // takes more space than the previous version.
+                    // OpenFileGDB doesn't care but Esri software (FileGDB SDK
+                    // or ArcMap/ArcGis) do, leading to issues such as
+                    // https://github.com/qgis/QGIS/issues/57536
+
                     CPLDebug("OpenFileGDB",
                              "Invalid row length (%u) on feature %u compared "
                              "to the maximum size in the header (%u)",
                              m_nRowBlobLength, iRow + 1,
                              m_nHeaderBufferMaxSize);
+
+                    if (m_bUpdate)
+                    {
+                        if (!m_bHasWarnedAboutHeaderRepair)
+                        {
+                            m_bHasWarnedAboutHeaderRepair = true;
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "A corruption in the header of %s has "
+                                     "been detected. It is going to be "
+                                     "repaired to be properly read by other "
+                                     "software.",
+                                     m_osFilename.c_str());
+
+                            m_bDirtyHeader = true;
+
+                            // Invalidate existing indices, as the corrupted
+                            // m_nHeaderBufferMaxSize value may have cause
+                            // Esri software to generate corrupted indices.
+                            m_bDirtyIndices = true;
+
+                            // Compute file size
+                            VSIFSeekL(m_fpTable, 0, SEEK_END);
+                            m_nFileSize = VSIFTellL(m_fpTable);
+                            VSIFSeekL(m_fpTable, nOffsetTable + 4, SEEK_SET);
+                        }
+                    }
+                    else
+                    {
+                        if (!m_bHasWarnedAboutHeaderRepair)
+                        {
+                            m_bHasWarnedAboutHeaderRepair = true;
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "A corruption in the header of %s has "
+                                     "been detected. It would need to be "
+                                     "repaired to be properly read by other "
+                                     "software, either by using ogr2ogr to "
+                                     "generate a new dataset, or by opening "
+                                     "this dataset in update mode and reading "
+                                     "all its records.",
+                                     m_osFilename.c_str());
+                        }
+                    }
+
+                    m_nHeaderBufferMaxSize = m_nRowBlobLength;
                 }
             }
 
@@ -2834,11 +2889,19 @@ FileGDBField::FileGDBField(FileGDBTable *poParentIn) : m_poParent(poParentIn)
 
 FileGDBField::FileGDBField(const std::string &osName,
                            const std::string &osAlias, FileGDBFieldType eType,
-                           bool bNullable, int nMaxWidth,
-                           const OGRField &sDefault)
+                           bool bNullable, bool bRequired, bool bEditable,
+                           int nMaxWidth, const OGRField &sDefault)
     : m_osName(osName), m_osAlias(osAlias), m_eType(eType),
-      m_bNullable(bNullable), m_nMaxWidth(nMaxWidth)
+      m_bNullable(bNullable), m_bRequired(bRequired), m_bEditable(bEditable),
+      m_nMaxWidth(nMaxWidth)
 {
+    if (m_eType == FGFT_OBJECTID || m_eType == FGFT_GLOBALID)
+    {
+        CPLAssert(!m_bNullable);
+        CPLAssert(m_bRequired);
+        CPLAssert(!m_bEditable);
+    }
+
     if (m_eType == FGFT_STRING && !OGR_RawField_IsUnset(&sDefault) &&
         !OGR_RawField_IsNull(&sDefault))
     {
@@ -2918,7 +2981,8 @@ FileGDBGeomField::FileGDBGeomField(
     const std::string &osWKT, double dfXOrigin, double dfYOrigin,
     double dfXYScale, double dfXYTolerance,
     const std::vector<double> &adfSpatialIndexGridResolution)
-    : FileGDBField(osName, osAlias, FGFT_GEOMETRY, bNullable, 0,
+    : FileGDBField(osName, osAlias, FGFT_GEOMETRY, bNullable,
+                   /* bRequired = */ true, /* bEditable = */ true, 0,
                    FileGDBField::UNSET_FIELD),
       m_osWKT(osWKT), m_dfXOrigin(dfXOrigin), m_dfYOrigin(dfYOrigin),
       m_dfXYScale(dfXYScale), m_dfXYTolerance(dfXYTolerance),
