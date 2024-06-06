@@ -55,27 +55,49 @@ static int OGRGMLDriverIdentify(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        const char *szPtr = (const char *)poOpenInfo->pabyHeader;
+        const char *pszPtr =
+            reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
 
-        if (((unsigned char)szPtr[0] == 0xEF) &&
-            ((unsigned char)szPtr[1] == 0xBB) &&
-            ((unsigned char)szPtr[2] == 0xBF))
+        // Skip UTF-8 BOM
+        if (poOpenInfo->nHeaderBytes > 3 &&
+            memcmp(poOpenInfo->pabyHeader, "\xEF\xBB\xBF", 3) == 0)
         {
-            szPtr += 3;
+            pszPtr += 3;
         }
-        /* --------------------------------------------------------------------
-         */
-        /*      Here, we expect the opening chevrons of GML tree root element */
-        /* --------------------------------------------------------------------
-         */
-        if (szPtr[0] != '<')
+
+        // Skip spaces
+        while (*pszPtr && std::isspace(static_cast<unsigned char>(*pszPtr)))
+            ++pszPtr;
+
+        // Here, we expect the opening chevrons of GML tree root element */
+        if (pszPtr[0] != '<')
             return FALSE;
 
+        if (strstr(pszPtr, "<ServiceExceptionReport") ||
+            strstr(pszPtr, "<ows:ExceptionReport"))
+        {
+            return FALSE;
+        }
+
+        // If there is neither both of the below strings, this is not a GML
+        // file
+        if (!strstr(pszPtr, "opengis.net/gml") &&
+            !strstr(pszPtr, "<csw:GetRecordsResponse"))
+        {
+            return false;
+        }
+
+        if (poOpenInfo->IsSingleAllowedDriver("GML"))
+            return TRUE;
+
+        // TryToIngest() invalidates above pszPtr
+        pszPtr = nullptr;
+        CPL_IGNORE_RET_VAL(pszPtr);
         if (!poOpenInfo->TryToIngest(4096))
             return FALSE;
 
         return OGRGMLDataSource::CheckHeader(
-            (const char *)poOpenInfo->pabyHeader);
+            reinterpret_cast<const char *>(poOpenInfo->pabyHeader));
     }
 }
 

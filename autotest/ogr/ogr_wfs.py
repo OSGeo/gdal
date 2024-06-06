@@ -4427,10 +4427,8 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
         ):
             with gdal.quiet_errors():
                 f = sql_lyr.GetNextFeature()
-            assert (
-                f is None
-                and gdal.GetLastErrorMsg().find("Empty content returned by server") >= 0
-            )
+            assert f is None
+            assert "Empty content returned by server" in gdal.GetLastErrorMsg()
 
         ds = ogr.Open("WFS:/vsimem/wfs200_endpoint_join")
         with ds.ExecuteSQL(
@@ -4441,10 +4439,8 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
         ):
             with gdal.quiet_errors():
                 f = sql_lyr.GetNextFeature()
-            assert (
-                f is None
-                and gdal.GetLastErrorMsg().find("Error returned by server") >= 0
-            )
+            assert f is None
+            assert "Error returned by server" in gdal.GetLastErrorMsg()
 
         ds = ogr.Open("WFS:/vsimem/wfs200_endpoint_join")
         with ds.ExecuteSQL(
@@ -4455,7 +4451,11 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
         ):
             with gdal.quiet_errors():
                 f = sql_lyr.GetNextFeature()
-            assert f is None and gdal.GetLastErrorMsg().find("Error: cannot parse") >= 0
+            assert f is None
+            assert (
+                "Error: cannot parse" in gdal.GetLastErrorMsg()
+                or "XML parsing of GML file failed" in gdal.GetLastErrorMsg()
+            )
 
         ds = ogr.Open("WFS:/vsimem/wfs200_endpoint_join")
         with ds.ExecuteSQL(
@@ -4466,7 +4466,8 @@ def test_ogr_wfs_vsimem_wfs200_join(with_and_without_streaming):
         ):
             with gdal.quiet_errors():
                 f = sql_lyr.GetNextFeature()
-            assert f is None and gdal.GetLastErrorMsg().find("Error: cannot parse") >= 0
+            assert f is None
+            assert "Error: cannot parse" in gdal.GetLastErrorMsg()
 
         ds = ogr.Open("WFS:/vsimem/wfs200_endpoint_join")
         with gdaltest.tempfile(
