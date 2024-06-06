@@ -1085,17 +1085,19 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
             }
             else
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
+                CPLError(CE_Failure, CPLE_AppDefined,
                          "Geometry type %s is not compatible with "
-                         "GEOMETRY=AS_XYZ.",
-                         OGRGeometryTypeToName(eGType));
+                         "GEOMETRY=%s.",
+                         OGRGeometryTypeToName(eGType), pszGeometry);
+                return nullptr;
             }
         }
         else
         {
-            CPLError(CE_Warning, CPLE_AppDefined,
+            CPLError(CE_Failure, CPLE_AppDefined,
                      "Unsupported value %s for creation option GEOMETRY",
                      pszGeometry);
+            return nullptr;
         }
     }
 
