@@ -106,3 +106,4 @@ RFC list
     rfc97_feature_and_fielddefn_sealing
     rfc98_build_requirements_gdal_3_9
     rfc99_geometry_coordinate_precision
+    rfc100_float16_support
