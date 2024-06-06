@@ -2508,7 +2508,7 @@ How do I get PROJ ?
 
 PROJ is the only required build-time dependency of GDAL that is not vendorized
 in the GDAL source code tree. Consequently, the PROJ header and library must be available
-when configuring GDAL's CMake. Consult `PROJ installation <https://proj.org/install.html>`.
+when configuring GDAL's CMake. Consult `PROJ installation <https://proj.org/install.html>`__.
 
 Conflicting PROJ libraries
 **************************
