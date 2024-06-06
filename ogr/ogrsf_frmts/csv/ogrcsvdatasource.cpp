@@ -59,7 +59,7 @@ class OGRCSVEditableLayerSynchronizer final
 
   public:
     OGRCSVEditableLayerSynchronizer(OGRCSVLayer *poCSVLayer,
-                                    char **papszOpenOptions)
+                                    CSLConstList papszOpenOptions)
         : m_poCSVLayer(poCSVLayer),
           m_papszOpenOptions(CSLDuplicate(papszOpenOptions))
     {
@@ -317,7 +317,7 @@ class OGRCSVEditableLayer final : public IOGRCSVLayer, public OGREditableLayer
     std::set<CPLString> m_oSetFields;
 
   public:
-    OGRCSVEditableLayer(OGRCSVLayer *poCSVLayer, char **papszOpenOptions);
+    OGRCSVEditableLayer(OGRCSVLayer *poCSVLayer, CSLConstList papszOpenOptions);
 
     OGRLayer *GetLayer() override
     {
@@ -344,7 +344,7 @@ class OGRCSVEditableLayer final : public IOGRCSVLayer, public OGREditableLayer
 /************************************************************************/
 
 OGRCSVEditableLayer::OGRCSVEditableLayer(OGRCSVLayer *poCSVLayer,
-                                         char **papszOpenOptions)
+                                         CSLConstList papszOpenOptions)
     : OGREditableLayer(
           poCSVLayer, true,
           new OGRCSVEditableLayerSynchronizer(poCSVLayer, papszOpenOptions),
@@ -510,8 +510,9 @@ CPLString OGRCSVDataSource::GetRealExtension(CPLString osFilename)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRCSVDataSource::Open(const char *pszFilename, int bUpdateIn,
-                           int bForceOpen, char **papszOpenOptionsIn)
+bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
+                            bool bForceOpen, CSLConstList papszOpenOptionsIn,
+                            bool bSingleDriver)
 
 {
     pszName = CPLStrdup(pszFilename);
@@ -528,11 +529,12 @@ int OGRCSVDataSource::Open(const char *pszFilename, int bUpdateIn,
     const CPLString osBaseFilename = CPLGetFilename(pszFilename);
     const CPLString osExt = GetRealExtension(osFilename);
 
-    bool bIgnoreExtension = STARTS_WITH_CI(osFilename, "CSV:");
+    bool bIgnoreExtension = bSingleDriver;
     bool bUSGeonamesFile = false;
-    if (bIgnoreExtension)
+    if (STARTS_WITH_CI(osFilename, "CSV:"))
     {
-        osFilename = osFilename + 4;
+        bIgnoreExtension = true;
+        osFilename = osFilename.substr(strlen("CSV:"));
     }
 
     // Those are *not* real .XLS files, but text file with tab as column
@@ -736,7 +738,7 @@ int OGRCSVDataSource::Open(const char *pszFilename, int bUpdateIn,
 /************************************************************************/
 
 bool OGRCSVDataSource::OpenTable(const char *pszFilename,
-                                 char **papszOpenOptionsIn,
+                                 CSLConstList papszOpenOptionsIn,
                                  const char *pszNfdcRunwaysGeomField,
                                  const char *pszGeonamesGeomFieldPrefix)
 

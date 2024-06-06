@@ -25,6 +25,11 @@ For files structured as CSV, but not ending
 with the ".csv" extension, the 'CSV:' prefix can be added before the filename
 to force loading by the CSV driver.
 
+Starting with GDAL 3.10, specifying the ``-if CSV`` option to command line utilities
+accepting it, or ``CSV`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+filename, without the ``CSV:`` prefix.
+
 The OGR CSV driver supports reading and writing. Because the CSV format
 has variable length text lines, reading is done sequentially. Reading
 features in random order will generally be very slow. OGR CSV layer
