@@ -576,14 +576,14 @@ static OGRErr CreatePartsFromLineString(
 
     if (moRepers.size() < 2)
     {
-        fprintf(stderr, _("Not enough repers to proceed\n"));
+        fprintf(stderr, _("Not enough repers to proceed.\n"));
         return OGRERR_FAILURE;
     }
 
     // Check direction.
     if (!bQuiet)
     {
-        fprintf(stdout, "Check path direction\n");
+        fprintf(stdout, "Check path direction.\n");
     }
 
     // Get distance along path from pt1 and pt2.
@@ -605,7 +605,7 @@ static OGRErr CreatePartsFromLineString(
         {
             fprintf(stderr,
                     _("Warning: The path is opposite the repers direction. "
-                      "Let's reverse path\n"));
+                      "Let's reverse path.\n"));
         }
         pPathGeom->reversePoints();
 
@@ -812,7 +812,7 @@ static OGRErr CreatePartsFromLineString(
     // Create pickets
     if (!bQuiet)
     {
-        fprintf(stdout, "\nCreate pickets\n");
+        fprintf(stdout, "\nCreate pickets.\n");
     }
 
     const double dfRoundBeg = pPtBeg != nullptr
@@ -868,7 +868,7 @@ static OGRErr CreatePartsFromLineString(
 
     if (!bQuiet)
     {
-        fprintf(stdout, "\nCreate sublines\n");
+        fprintf(stdout, "\nCreate sublines.\n");
     }
 
     IT = moRepers.begin();
@@ -942,7 +942,7 @@ static OGRErr CreateParts(OGRLayer *const poLnLayer, OGRLayer *const poPkLayer,
     if (wkbFlatten(eGeomType) != wkbLineString &&
         wkbFlatten(eGeomType) != wkbMultiLineString)
     {
-        fprintf(stderr, _("Unsupported geometry type %s for path\n"),
+        fprintf(stderr, _("Unsupported geometry type %s for path.\n"),
                 OGRGeometryTypeToName(eGeomType));
         return eRetCode;
     }
@@ -962,7 +962,7 @@ static OGRErr CreateParts(OGRLayer *const poLnLayer, OGRLayer *const poPkLayer,
             {
                 fprintf(stdout,
                         _("\nThe geometry " CPL_FRMT_GIB
-                          " is wkbMultiLineString type\n"),
+                          " is wkbMultiLineString type.\n"),
                         pPathFeature->GetFID());
             }
 
@@ -1019,7 +1019,8 @@ static OGRErr CreatePartsMultiple(
     const int nLineSepFieldInd = pDefn->GetFieldIndex(pszLineSepFieldName);
     if (nLineSepFieldInd == -1)
     {
-        fprintf(stderr, _("The field %s not found\n"), pszLineSepFieldName);
+        fprintf(stderr, _("The field was %s not found.\n"),
+                pszLineSepFieldName);
         return OGRERR_FAILURE;
     }
 
@@ -1101,7 +1102,7 @@ static OGRErr GetPosition(OGRLayer *const poPkLayer, double dfX, double dfY,
 
     if (nullptr == pCloserPart)
     {
-        fprintf(stderr, _("Filed to find closest part\n"));
+        fprintf(stderr, _("Failed to find closest part.\n"));
         return OGRERR_FAILURE;
     }
     // Now we have closest part
@@ -1173,7 +1174,7 @@ static OGRErr GetCoordinates(OGRLayer *const poPkLayer, double dfPos,
     }
     else
     {
-        fprintf(stderr, _("Get coordinates for position %f failed\n"), dfPos);
+        fprintf(stderr, _("Get coordinates for position %f failed.\n"), dfPos);
         return OGRERR_FAILURE;
     }
 }
@@ -1198,6 +1199,7 @@ struct OGRLineRefOptions
 #ifdef HAVE_GEOS
     std::string osSrcPicketsLayerName;
     std::string osSrcPicketsSepFieldName;
+    std::string osSrcPicketsMFieldName;
 #endif
 
     std::string osSrcPartsDataSourceName;
@@ -1297,51 +1299,50 @@ OGRLineRefAppOptionsGetParser(OGRLineRefOptions *psOptions)
 
     argParser->add_argument("-pm")
         .metavar("<pos_field_name>")
-        .store_into(psOptions->osSrcPicketsSepFieldName)
+        .store_into(psOptions->osSrcPicketsMFieldName)
         .help(_("Line position field name."));
 
     argParser->add_argument("-pf")
         .metavar("<field_name>")
         .store_into(psOptions->osSrcPicketsSepFieldName)
-        .help(_("The field name of unique values to map input reference points "
+        .help(_("Field name of unique values to map input reference points "
                 "to lines."));
 #endif
 
     argParser->add_argument("-r")
         .metavar("<src_parts_datasource_name>")
         .store_into(psOptions->osSrcPartsDataSourceName)
-        .help(_("The path to linear reference file."));
+        .help(_("Path to linear reference file."));
 
     argParser->add_argument("-rn")
         .metavar("<layer_name>")
         .store_into(psOptions->osSrcPartsLayerName)
-        .help(_(
-            "The name of the layer in the input linear reference datasource."));
+        .help(_("Name of the layer in the input linear reference datasource."));
 
     argParser->add_argument("-o")
         .metavar("<dst_datasource_name>")
         .store_into(psOptions->osOutputDataSourceName)
-        .help(_("The path to output linear reference file (linestring "
+        .help(_("Path to output linear reference file (linestring "
                 "datasource)."));
 
     argParser->add_argument("-on")
         .metavar("<layer_name>")
         .store_into(psOptions->osOutputLayerName)
-        .help(_("The name of the layer in the output linear reference "
+        .help(_("Name of the layer in the output linear reference "
                 "datasource."));
 
 #ifdef HAVE_GEOS
     argParser->add_argument("-of")
         .metavar("<field_name>")
         .store_into(psOptions->osOutputSepFieldName)
-        .help(
-            _("The field name for storing the unique values of input lines."));
+        .help(_(
+            "Name of the field for storing the unique values of input lines."));
 
     argParser->add_argument("-s")
         .metavar("<step>")
         .scan<'g', double>()
         .store_into(psOptions->dfStep)
-        .help(_("The part size in linear units."));
+        .help(_("Part size in linear units."));
 
     argParser->add_argument("-get_pos")
         .flag()
@@ -1352,13 +1353,13 @@ OGRLineRefAppOptionsGetParser(OGRLineRefOptions *psOptions)
         .metavar("<x>")
         .scan<'g', double>()
         .store_into(psOptions->dfXPos)
-        .help(_("The x coordinate."));
+        .help(_("X coordinate."));
 
     argParser->add_argument("-y")
         .metavar("<y>")
         .scan<'g', double>()
         .store_into(psOptions->dfYPos)
-        .help(_("The y coordinate."));
+        .help(_("Y coordinate."));
 #endif
 
     argParser->add_argument("-get_coord")
@@ -1370,7 +1371,7 @@ OGRLineRefAppOptionsGetParser(OGRLineRefOptions *psOptions)
         .metavar("<position>")
         .scan<'g', double>()
         .store_into(psOptions->dfPos)
-        .help(_("The input linear distance."));
+        .help(_("Input linear distance."));
 
     argParser->add_argument("-get_subline")
         .flag()
@@ -1382,13 +1383,13 @@ OGRLineRefAppOptionsGetParser(OGRLineRefOptions *psOptions)
         .metavar("<position>")
         .scan<'g', double>()
         .store_into(psOptions->dfPosBeg)
-        .help(_("The input linear distance begin."));
+        .help(_("Input linear distance begin."));
 
     argParser->add_argument("-me")
         .metavar("<position>")
         .scan<'g', double>()
         .store_into(psOptions->dfPosEnd)
-        .help(_("The input linear distance end."));
+        .help(_("Input linear distance end."));
 
     return argParser;
 }
@@ -1497,31 +1498,31 @@ MAIN_START(argc, argv)
 #ifdef HAVE_GEOS
             if (psOptions.osOutputDataSourceName.empty())
             {
-                fprintf(stderr, _("no output datasource provided.\n"));
+                fprintf(stderr, _("No output datasource provided.\n"));
                 argParser->usage();
                 exit(1);
             }
             if (psOptions.osSrcLineDataSourceName.empty())
             {
-                fprintf(stderr, _("no path datasource provided.\n"));
+                fprintf(stderr, _("No path datasource provided.\n"));
+                argParser->usage();
+                exit(1);
+            }
+            if (psOptions.osSrcPicketsMFieldName.empty())
+            {
+                fprintf(stderr, _("No repers position field provided.\n"));
                 argParser->usage();
                 exit(1);
             }
             if (psOptions.osSrcPicketsDataSourceName.empty())
             {
-                fprintf(stderr, _("no repers datasource provided.\n"));
-                argParser->usage();
-                exit(1);
-            }
-            if (psOptions.osSrcPicketsSepFieldName.empty())
-            {
-                fprintf(stderr, _("no repers field name provided.\n"));
+                fprintf(stderr, _("No repers datasource provided.\n"));
                 argParser->usage();
                 exit(1);
             }
             if (psOptions.dfStep == std::numeric_limits<double>::quiet_NaN())
             {
-                fprintf(stderr, _("no step provided.\n"));
+                fprintf(stderr, _("No step provided.\n"));
                 argParser->usage();
                 exit(1);
             }
@@ -1630,7 +1631,7 @@ MAIN_START(argc, argv)
                                  0, GDT_Unknown, psOptions.aosDSCO);
             if (poODS == nullptr)
             {
-                fprintf(stderr, _("%s driver failed to create %s\n"),
+                fprintf(stderr, _("%s driver failed to create %s.\n"),
                         psOptions.osFormat.c_str(),
                         psOptions.osOutputDataSourceName.c_str());
                 exit(1);
@@ -1662,7 +1663,7 @@ MAIN_START(argc, argv)
 
             OGRFeatureDefn *poPkFDefn = poPkLayer->GetLayerDefn();
             int nMValField = poPkFDefn->GetFieldIndex(
-                psOptions.osSrcPicketsSepFieldName.c_str());
+                psOptions.osSrcPicketsMFieldName.c_str());
 
             OGRLayer *poOutLayer = nullptr;
             if (!psOptions.osSrcLineSepFieldName.empty() &&
@@ -1788,13 +1789,13 @@ MAIN_START(argc, argv)
         {
             if (psOptions.osSrcPartsDataSourceName.empty())
             {
-                fprintf(stderr, _("no parts datasource provided\n"));
+                fprintf(stderr, _("No parts datasource provided.\n"));
                 argParser->usage();
                 exit(1);
             }
             if (psOptions.dfPos == std::numeric_limits<double>::quiet_NaN())
             {
-                fprintf(stderr, _("no position provided\n"));
+                fprintf(stderr, _("No position provided.\n"));
                 argParser->usage();
                 exit(1);
             }
@@ -1848,19 +1849,19 @@ MAIN_START(argc, argv)
         {
             if (psOptions.dfPosBeg == std::numeric_limits<double>::quiet_NaN())
             {
-                fprintf(stderr, _("no begin position provided\n"));
+                fprintf(stderr, _("No begin position provided.\n"));
                 argParser->usage();
                 exit(1);
             }
             if (psOptions.dfPosEnd == std::numeric_limits<double>::quiet_NaN())
             {
-                fprintf(stderr, _("no end position provided\n"));
+                fprintf(stderr, _("No end position provided.\n"));
                 argParser->usage();
                 exit(1);
             }
             if (psOptions.osSrcPartsDataSourceName.empty())
             {
-                fprintf(stderr, _("no parts datasource provided\n"));
+                fprintf(stderr, _("No parts datasource provided.\n"));
                 argParser->usage();
                 exit(1);
             }
@@ -1972,7 +1973,7 @@ MAIN_START(argc, argv)
             break;
         }
         default:
-            fprintf(stderr, _("Unknown operation\n"));
+            fprintf(stderr, _("Unknown operation.\n"));
             argParser->usage();
             exit(1);
     }
