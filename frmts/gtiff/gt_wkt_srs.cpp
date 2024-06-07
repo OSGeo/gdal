@@ -1397,6 +1397,28 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
         for (; i < 10; i++)
             adfParam[i] = 0.0;
 
+        // libgeotiff is unfortunately inconsistent. When it synthetizes the
+        // projection parameters from the EPSG ProjectedCRS code, it returns
+        // them normalized in degrees. But when it gets them from
+        // ProjCoordTransGeoKey and other Proj....GeoKey's it return them in
+        // a raw way, that is in the units of GeogAngularUnitSizeGeoKey
+        // The below oSRS.SetXXXXX() methods assume the angular projection
+        // parameters to be in degrees, so convert them to degrees in that later case.
+        // From GDAL 3.0 to 3.9.0, we didn't do that conversion...
+        // And all versions of GDAL <= 3.9.0 when writing those geokeys, wrote
+        // them as degrees, hence this GTIFF_READ_ANGULAR_PARAMS_IN_DEGREE
+        // config option that can be set to YES to avoid that conversion and
+        // assume that the angular parameters have been written as degree.
+        if (GDALGTIFKeyGetSHORT(hGTIF, ProjCoordTransGeoKey, &tmp, 0, 1) &&
+            !CPLTestBool(CPLGetConfigOption(
+                "GTIFF_READ_ANGULAR_PARAMS_IN_DEGREE", "NO")))
+        {
+            adfParam[0] *= psDefn->UOMAngleInDegrees;
+            adfParam[1] *= psDefn->UOMAngleInDegrees;
+            adfParam[2] *= psDefn->UOMAngleInDegrees;
+            adfParam[3] *= psDefn->UOMAngleInDegrees;
+        }
+
         /* --------------------------------------------------------------------
          */
         /*      Translation the fundamental projection. */

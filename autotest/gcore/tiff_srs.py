@@ -1424,3 +1424,39 @@ def test_tiff_srs_build_compd_crs_name_without_citation():
 
     ds = gdal.Open("data/gtiff/compdcrs_no_citation.tif")
     assert ds.GetSpatialRef().GetName() == "WGS 84 / UTM zone 17N + EGM2008 height"
+
+
+def test_tiff_srs_read_epsg_27563_allgeokeys():
+
+    ds = gdal.Open("data/gtiff/epsg_27563_allgeokeys.tif")
+    srs = ds.GetSpatialRef()
+    wkt = srs.ExportToWkt(["FORMAT=WKT2_2019"])
+    # deal with differences of precision according to PROJ version
+    wkt = wkt.replace("49.0000000000001", "49")
+    wkt = wkt.replace("49.0000000000002", "49")
+    assert 'PARAMETER["Latitude of natural origin",49,ANGLEUNIT["grad"' in wkt
+    assert (
+        srs.ExportToProj4()
+        == "+proj=lcc +lat_1=44.1 +lat_0=44.1 +lon_0=0 +k_0=0.999877499 +x_0=600000 +y_0=200000 +ellps=clrk80ign +pm=paris +towgs84=-168,-60,320,0,0,0,0 +units=m +no_defs"
+    )
+
+
+def test_tiff_srs_write_read_epsg_27563_only_code(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.tif")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(27563)
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    ds.SetSpatialRef(srs)
+    ds = None
+
+    ds = gdal.Open(filename)
+    srs = ds.GetSpatialRef()
+    assert (
+        'PARAMETER["Latitude of natural origin",49,ANGLEUNIT["grad"'
+        in srs.ExportToWkt(["FORMAT=WKT2_2019"])
+    )
+    assert (
+        srs.ExportToProj4()
+        == "+proj=lcc +lat_1=44.1 +lat_0=44.1 +lon_0=0 +k_0=0.999877499 +x_0=600000 +y_0=200000 +ellps=clrk80ign +pm=paris +towgs84=-168,-60,320,0,0,0,0 +units=m +no_defs"
+    )
