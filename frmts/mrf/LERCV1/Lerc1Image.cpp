@@ -803,7 +803,7 @@ bool Lerc1Image::writeZTile(Byte **ppByte, int &numBytes, int r0, int r1,
     }
     if (maxZError == 0 || !std::isfinite(zMin) || !std::isfinite(zMax) ||
         ((double)zMax - zMin) / (2 * maxZError) > MAXQ)
-    {   // store valid pixels as floating point
+    {  // store valid pixels as floating point
         *ptr++ = 0;
         for (int row = r0; row < r1; row++)
             for (int col = c0; col < c1; col++)
@@ -818,8 +818,8 @@ bool Lerc1Image::writeZTile(Byte **ppByte, int &numBytes, int r0, int r1,
     }
     else
     {
-        Byte flag = 1;              // bitstuffed int array
-        double f = 0.5 / maxZError; // conversion to int multiplier
+        Byte flag = 1;               // bitstuffed int array
+        double f = 0.5 / maxZError;  // conversion to int multiplier
         unsigned int maxElem = (unsigned int)(((double)zMax - zMin) * f + 0.5);
         if (maxElem == 0)
             flag = 3;               // mark tile as constant zMin
@@ -966,7 +966,7 @@ bool Lerc1Image::readZTile(Byte **ppByte, size_t &nRemainingBytes, int r0,
 
     size_t numValid = idataVec.size();
     size_t i = 0;
-    double q = maxZErrorInFile * 2;         // quanta
+    double q = maxZErrorInFile * 2;  // quanta
     for (int row = r0; row < r1; row++)
         for (int col = c0; col < c1; col++)
             if (IsValid(row, col))
