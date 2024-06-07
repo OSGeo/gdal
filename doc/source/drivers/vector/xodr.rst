@@ -174,17 +174,20 @@ Check if XODR driver is found:
   ::
     
     cd <gdal>/build/
-    ./apps/ogrinfo --formats
+    ./apps/ogrinfo --format XODR
 
-This should print a list of supported OGR formats, including ``XODR`` in the first row:
+This should print basic capabilities of the driver:
 
   ::
 
-    Supported Formats:
-      XODR -vector- (rov): OpenDRIVE - Open Dynamic Road Information for Vehicle Environment
-      PCIDSK -raster,vector- (rw+v): PCIDSK Database File       
-      PDS4 -raster,vector- (rw+vs): NASA Planetary Data System 4
+    Format Details:
+      Short Name: XODR
+      Long Name: OpenDRIVE - Open Dynamic Road Information for Vehicle Environment
+      Supports: Vector
+      Supports: Open() - Open existing dataset.
+    <OpenOptionList>
       ...
+    </OpenOptionList>
 
 If you are on Linux, depending on your environment, you might experience linker errors like: 
 
