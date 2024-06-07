@@ -77,7 +77,7 @@ class Viewshed
     };
 
     /**
-     * A window in a raster including pixels in [xStart, xEnd) and [yStart, yEnd).
+     * A window in a raster including pixels in [xStart, xStop) and [yStart, yStop).
      */
     struct Window
     {
@@ -87,18 +87,38 @@ class Viewshed
         int yStop{};   //!< Y end position
 
         /// \brief  Window size in the X direction.
-        int xSize()
+        int xSize() const
         {
             return xStop - xStart;
         }
 
         /// \brief  Window size in the Y direction.
-        int ySize()
+        int ySize() const
         {
             return yStop - yStart;
         }
 
-        /// \brief  Shift the X dimension by nShift
+        bool containsX(int nX) const
+        {
+            return nX >= xStart && nX < xStop;
+        }
+
+        bool containsY(int nY) const
+        {
+            return nY >= xStart && nY < yStop;
+        }
+
+        bool contains(int nX, int nY) const
+        {
+            return containsX(nX) && containsY(nY);
+        }
+
+        int clampX(int nX) const
+        {
+            return xSize() ? std::clamp(nX, xStart, xStop - 1) : xStart;
+        }
+
+        /// \brief  Shift the X dimension by nShift.
         void shiftX(int nShift)
         {
             xStart += nShift;
@@ -199,7 +219,8 @@ class Viewshed
                           std::vector<double> &vResult,
                           std::vector<double> &vThisLineVal,
                           std::vector<double> &vLastLineVal);
-    std::pair<int, int> adjustHeight(int iLine, int nX, double *const pdfNx);
+    std::pair<int, int> adjustHeight(int iLine, int nX,
+                                     std::vector<double> &thisLineVal);
     bool calcOutputExtent(int nX, int nY);
     bool createOutputDataset();
     bool lineProgress();

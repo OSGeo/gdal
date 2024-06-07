@@ -30,6 +30,8 @@
 #include <atomic>
 #include <future>
 
+#include <iostream>
+
 #include "gdal_alg.h"
 #include "gdal_priv_templates.hpp"
 
@@ -270,7 +272,7 @@ double CalcHeightEdge(int i, int j, double Za, double Zb)
 
 }  // unnamed namespace
 
-/// Calculate the output extent of the output raster in terms of the input raster.
+/// Calculate the extent of the output raster in terms of the input raster.
 ///
 /// @param nX  observer X position in the input raster
 /// @param nY  observer Y position in the input raster
@@ -281,11 +283,18 @@ bool Viewshed::calcOutputExtent(int nX, int nY)
     oOutExtent.xStop = GDALGetRasterBandXSize(pSrcBand);
     oOutExtent.yStop = GDALGetRasterBandYSize(pSrcBand);
 
-    if (nX < 0 || nX >= oOutExtent.xStop || nY < 0 || nY >= oOutExtent.yStop)
+    if (!oOutExtent.containsY(nY))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "The observer location falls outside of the DEM area");
+                 "Observer position above or below the raster "
+                 "not currently supported");
         return false;
+    }
+    if (!oOutExtent.contains(nX, nY))
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "NOTE: The observer location falls outside of the DEM area");
+        //ABELL - Make sure observer Z is specified.
     }
 
     constexpr double EPSILON = 1e-8;
@@ -397,14 +406,17 @@ bool Viewshed::emitProgress(double fraction)
 ///
 /// @param  nYOffset  Y offset of the line being adjusted.
 /// @param  nX  X location of the observer.
-/// @param  pdfNx  Pointer to the data at the nX location of the line being adjusted
+/// @param  vThisLineVal  Line height data.
 /// @return [left, right)  Leftmost and one past the rightmost cell in the line within
 ///    the max distance
 std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX,
-                                           double *const pdfNx)
+                                           std::vector<double> &vThisLineVal)
 {
     int nLeft = 0;
     int nRight = oCurExtent.xSize();
+
+    // Find the starting point in the raster (nX may be outside)
+    int nXStart = oCurExtent.clampX(nX);
 
     // If there is a height adjustment factor other than zero or a max distance,
     // calculate the adjusted height of the cell, stopping if we've exceeded the max
@@ -415,8 +427,9 @@ std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX,
         const double dfLineX = adfTransform[2] * nYOffset;
         const double dfLineY = adfTransform[5] * nYOffset;
 
-        double *pdfHeight = pdfNx;
-        for (int nXOffset = 0; nXOffset >= -nX; nXOffset--, pdfHeight--)
+        double *pdfHeight = vThisLineVal.data() + nXStart;
+        for (int nXOffset = nXStart - nX; nXOffset >= -nX;
+             nXOffset--, pdfHeight--)
         {
             double dfX = adfTransform[1] * nXOffset + dfLineX;
             double dfY = adfTransform[4] * nXOffset + dfLineY;
@@ -429,9 +442,10 @@ std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX,
             *pdfHeight -= dfHeightAdjFactor * dfR2 + dfZObserver;
         }
 
-        pdfHeight = pdfNx + 1;
-        for (int nXOffset = 1; nXOffset < oCurExtent.xSize() - nX;
-             nXOffset++, pdfHeight++)
+        // Go right.
+        pdfHeight = vThisLineVal.data() + nXStart + 1;
+        for (int nXOffset = nXStart - nX + 1;
+             nXOffset < oCurExtent.xSize() - nX; nXOffset++, pdfHeight++)
         {
             double dfX = adfTransform[1] * nXOffset + dfLineX;
             double dfY = adfTransform[4] * nXOffset + dfLineY;
@@ -446,7 +460,8 @@ std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX,
     }
     else
     {
-        double *pdfHeight = pdfNx - nX;
+        // No curvature adjustment. Just normalize for the observer height.
+        double *pdfHeight = vThisLineVal.data();
         for (int i = 0; i < oCurExtent.xSize(); ++i)
         {
             *pdfHeight -= dfZObserver;
@@ -638,7 +653,7 @@ void Viewshed::setOutput(double &dfResult, double &dfCellVal, double dfZ)
     dfCellVal = std::max(dfCellVal, dfZ);
 }
 
-/// Process the first line (the one with the X coordinate the same as the observer).
+/// Process the first line (the one with the Y coordinate the same as the observer).
 ///
 /// @param nX  X location of the observer
 /// @param nY  Y location of the observer
@@ -656,25 +671,30 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
     if (!readLine(nLine, vThisLineVal.data()))
         return false;
 
-    // This bit is only relevant for the first line.
-    dfZObserver = oOpts.observer.z + vThisLineVal[nX];
+    // If the observer is outside of the raster, take the specified value as the Z height,
+    // otherwise, take it as an offset from the raster height at that location.
+    dfZObserver = oOpts.observer.z;
+    if (oCurExtent.containsX(nX))
+        dfZObserver += vThisLineVal[nX];
     dfHeightAdjFactor = CalcHeightAdjFactor(poDstDS.get(), oOpts.curveCoeff);
+
     if (oOpts.outputMode == OutputMode::Normal)
     {
-        vResult[nX] = oOpts.visibleVal;
-        if (nX - 1 >= 0)
-            vResult[nX - 1] = oOpts.visibleVal;
-        if (nX + 1 < oCurExtent.xSize())
-            vResult[nX + 1] = oOpts.visibleVal;
+        // nX may be outside the raster.
+        int nXStart = oCurExtent.clampX(nX);
+
+        //ABELL - Bound nX to allow this without over/underflow.
+        for (int iX = nXStart - 1; iX <= nXStart + 1; iX++)
+            if (oCurExtent.containsX(nXStart))
+                vResult[iX] = oOpts.visibleVal;
     }
 
-    // In DEM mode the base is the pre-adjustment value.
-    // In ground mode the base is zero.
+    // In DEM mode the base is the pre-adjustment value.  In ground mode the base is zero.
     if (oOpts.outputMode == OutputMode::DEM)
         vResult = vThisLineVal;
 
-    const auto [iLeft, iRight] =
-        adjustHeight(nYOffset, nX, vThisLineVal.data() + nX);
+    // iLeft and iRight are the processing limits for the line.
+    const auto [iLeft, iRight] = adjustHeight(nYOffset, nX, vThisLineVal);
 
     auto t1 =
         std::async(std::launch::async,
@@ -730,8 +750,7 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
         vResult = vThisLineVal;
 
     // Adjust height of the read line.
-    const auto [iLeft, iRight] =
-        adjustHeight(nYOffset, nX, vThisLineVal.data() + nX);
+    const auto [iLeft, iRight] = adjustHeight(nYOffset, nX, vThisLineVal);
 
     // Handle the initial position on the line.
     if (iLeft < iRight)
@@ -808,6 +827,16 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     double dfX, dfY;
     GDALApplyGeoTransform(adfInvTransform.data(), oOpts.observer.x,
                           oOpts.observer.y, &dfX, &dfY);
+    if (!GDALIsValueInRange<int>(dfX))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Observer X value out of range");
+        return false;
+    }
+    if (!GDALIsValueInRange<int>(dfY))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Observer Y value out of range");
+        return false;
+    }
     int nX = static_cast<int>(dfX);
     int nY = static_cast<int>(dfY);
 
@@ -816,6 +845,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         return false;
 
     // normalize horizontal index to [ 0, oOutExtent.xSize() )
+    //ABELL - verify this won't underflow.
     oCurExtent = oOutExtent;
     oCurExtent.shiftX(-oOutExtent.xStart);
     nX -= oOutExtent.xStart;
