@@ -1397,7 +1397,8 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
         for (; i < 10; i++)
             adfParam[i] = 0.0;
 
-        // libgeotiff is unfortunately inconsistent. When it synthetizes the
+#if LIBGEOTIFF_VERSION <= 1730
+        // libgeotiff <= 1.7.3 is unfortunately inconsistent. When it synthetizes the
         // projection parameters from the EPSG ProjectedCRS code, it returns
         // them normalized in degrees. But when it gets them from
         // ProjCoordTransGeoKey and other Proj....GeoKey's it return them in
@@ -1418,6 +1419,20 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
             adfParam[2] *= psDefn->UOMAngleInDegrees;
             adfParam[3] *= psDefn->UOMAngleInDegrees;
         }
+#else
+        // If GTIFF_READ_ANGULAR_PARAMS_IN_DEGREE=YES (non-nominal case), undo
+        // the conversion to degrees, that has been done by libgeotiff > 1.7.3
+        if (GDALGTIFKeyGetSHORT(hGTIF, ProjCoordTransGeoKey, &tmp, 0, 1) &&
+            psDefn->UOMAngleInDegrees != 0 && psDefn->UOMAngleInDegrees != 1 &&
+            CPLTestBool(CPLGetConfigOption(
+                "GTIFF_READ_ANGULAR_PARAMS_IN_DEGREE", "NO")))
+        {
+            adfParam[0] /= psDefn->UOMAngleInDegrees;
+            adfParam[1] /= psDefn->UOMAngleInDegrees;
+            adfParam[2] /= psDefn->UOMAngleInDegrees;
+            adfParam[3] /= psDefn->UOMAngleInDegrees;
+        }
+#endif
 
         /* --------------------------------------------------------------------
          */
