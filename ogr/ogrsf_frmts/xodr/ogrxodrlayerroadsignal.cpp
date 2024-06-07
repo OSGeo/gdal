@@ -115,16 +115,15 @@ OGRFeature *OGRXODRLayerRoadSignal::GetNextRawFeature()
             double z = roadSignal.zOffset;
             odr::Vec3D xyz = road.get_xyz(s, t, z);
 
-            OGRPoint point(xyz[0], xyz[1], xyz[2]);
-            OGRGeometry *geometry = point.MakeValid();
-            geometry->assignSpatialReference(&m_poSRS);
-            feature->SetGeometryDirectly(geometry);
+            auto point = std::make_unique<OGRPoint>(xyz[0], xyz[1], xyz[2]);
+            point->assignSpatialReference(&m_poSRS);
+            feature->SetGeometryDirectly(point.release());
         }
         else
         {
             std::unique_ptr<OGRTriangulatedSurface> tin =
                 triangulateSurface(roadSignalMesh);
-            //tin->MakeValid(); // TODO Works for TINs only with enabled SFCGAL support
+            //tin->IsValid(); // TODO Works for TINs only with enabled SFCGAL support
             tin->assignSpatialReference(&m_poSRS);
             feature->SetGeometryDirectly(tin.release());
         }

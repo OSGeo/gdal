@@ -79,7 +79,7 @@ OGRFeature *OGRXODRLayerRoadObject::GetNextRawFeature()
 
         std::unique_ptr<OGRTriangulatedSurface> tin =
             triangulateSurface(roadObjectMesh);
-        //tin->MakeValid(); // TODO Works for TINs only with enabled SFCGAL support
+        //tin->IsValid(); // TODO Works for TINs only with enabled SFCGAL support
         tin->assignSpatialReference(&m_poSRS);
         feature->SetGeometryDirectly(tin.release());
 

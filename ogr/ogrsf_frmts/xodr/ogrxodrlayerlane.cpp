@@ -106,12 +106,22 @@ OGRFeature *OGRXODRLayerLane::GetNextRawFeature()
         if (m_bDissolveTIN)
         {
             OGRGeometry *dissolvedPolygon = tin->UnaryUnion();
-            dissolvedPolygon->assignSpatialReference(&m_poSRS);
-            feature->SetGeometryDirectly(dissolvedPolygon);
+            if (dissolvedPolygon != nullptr)
+            {
+                dissolvedPolygon->assignSpatialReference(&m_poSRS);
+                feature->SetGeometryDirectly(dissolvedPolygon);
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Lane feature with FID %d has no geometry because its "
+                         "triangulated surface could not be dissolved.",
+                         m_nNextFID);
+            }
         }
         else
         {
-            //tin->MakeValid(); // TODO Works for TINs only with enabled SFCGAL support
+            //tin->IsValid(); // TODO Works for TINs only with enabled SFCGAL support
             tin->assignSpatialReference(&m_poSRS);
             feature->SetGeometryDirectly(tin.release());
         }
