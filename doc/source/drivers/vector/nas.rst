@@ -45,6 +45,10 @@ population - which was default in ALKIS-Import. The information found there was
 redundant to the relation fields also contained in original elements/tables.
 Enabling the option also made progress reporting available.
 
+Duplicate data in datasets will usually causes errors.  When importing separate
+datasets into PostgreSQL it is useful to enable "OGR_PG_SKIP_CONFLICTS" to skip
+conflicting features.
+
 This driver was implemented within the context of the `PostNAS
 project <http://trac.wheregroup.com/PostNAS>`__, which has more
 information on its use and other related projects.
