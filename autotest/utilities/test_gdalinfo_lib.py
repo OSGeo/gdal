@@ -156,7 +156,7 @@ def test_gdalinfo_lib_6():
 
     ret = gdal.Info("../gcore/data/byte.tif", options="-json")
     assert ret["driverShortName"] == "GTiff", "wrong value for driverShortName."
-    assert type(ret) == dict
+    assert isinstance(ret, dict)
 
 
 ###############################################################################
@@ -170,7 +170,7 @@ def test_gdalinfo_lib_7():
         options="-json".encode("ascii").decode("ascii"),
     )
     assert ret["driverShortName"] == "GTiff", "wrong value for driverShortName."
-    assert type(ret) == dict
+    assert isinstance(ret, dict)
 
 
 ###############################################################################
@@ -181,7 +181,7 @@ def test_gdalinfo_lib_8():
 
     ret = gdal.Info("../gcore/data/byte.tif", options=["-json"])
     assert ret["driverShortName"] == "GTiff", "wrong value for driverShortName."
-    assert type(ret) == dict
+    assert isinstance(ret, dict)
 
 
 ###############################################################################
