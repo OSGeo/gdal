@@ -98,27 +98,41 @@ class Viewshed
             return yStop - yStart;
         }
 
+        /// \brief  Determine if the X window contains the index.
+        /// \param  nX  Index to check
+        /// \return  True if the index is contained, false otherwise.
         bool containsX(int nX) const
         {
             return nX >= xStart && nX < xStop;
         }
 
+        /// \brief  Determine if the Y window contains the index.
+        /// \param  nY  Index to check
+        /// \return  True if the index is contained, false otherwise.
         bool containsY(int nY) const
         {
             return nY >= xStart && nY < yStop;
         }
 
+        /// \brief  Determine if the window contains the index.
+        /// \param  nX  X coordinate of the index to check
+        /// \param  nY  Y coordinate of the index to check
+        /// \return  True if the index is contained, false otherwise.
         bool contains(int nX, int nY) const
         {
             return containsX(nX) && containsY(nY);
         }
 
+        /// \brief  Clamp the argument to be in the window in the X dimension.
+        /// \param  nX  Value to clamp.
+        /// \return  Clamped value.
         int clampX(int nX) const
         {
             return xSize() ? std::clamp(nX, xStart, xStop - 1) : xStart;
         }
 
         /// \brief  Shift the X dimension by nShift.
+        /// \param  nShift  Amount to shift
         void shiftX(int nShift)
         {
             xStart += nShift;
