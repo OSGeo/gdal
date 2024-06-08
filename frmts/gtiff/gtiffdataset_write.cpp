@@ -73,6 +73,13 @@ static constexpr const char szPROFILE_BASELINE[] = "BASELINE";
 static constexpr const char szPROFILE_GeoTIFF[] = "GeoTIFF";
 static constexpr const char szPROFILE_GDALGeoTIFF[] = "GDALGeoTIFF";
 
+// Due to libgeotiff/xtiff.c declaring TIFFTAG_GEOTIEPOINTS with field_readcount
+// and field_writecount == -1 == TIFF_VARIABLE, we are limited to writing
+// 65535 values in that tag. That could potentially be overcome by changing the tag
+// declaration to using TIFF_VARIABLE2 where the count is a uint32_t.
+constexpr int knMAX_GCP_COUNT =
+    static_cast<int>(std::numeric_limits<uint16_t>::max() / 6);
+
 enum
 {
     ENDIANNESS_NATIVE,
@@ -3695,7 +3702,8 @@ void GTiffDataset::WriteGeoTIFFInfo()
         else if (CPLFetchBool(m_papszCreationOptions, "WORLDFILE", false))
             GDALWriteWorldFile(m_pszFilename, "wld", m_adfGeoTransform);
     }
-    else if (GetGCPCount() > 0)
+    else if (GetGCPCount() > 0 && GetGCPCount() <= knMAX_GCP_COUNT &&
+             m_eProfile != GTiffProfile::BASELINE)
     {
         m_bNeedsRewrite = true;
 
@@ -3719,9 +3727,8 @@ void GTiffDataset::WriteGeoTIFFInfo()
             }
         }
 
-        if (m_eProfile != GTiffProfile::BASELINE)
-            TIFFSetField(m_hTIFF, TIFFTAG_GEOTIEPOINTS, 6 * GetGCPCount(),
-                         padfTiePoints);
+        TIFFSetField(m_hTIFF, TIFFTAG_GEOTIEPOINTS, 6 * GetGCPCount(),
+                     padfTiePoints);
         CPLFree(padfTiePoints);
     }
 
@@ -8468,7 +8475,6 @@ CPLErr GTiffDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
             m_bGeoTransformValid = false;
             m_bForceUnsetGTOrGCPs = true;
         }
-
         if ((m_eProfile == GTiffProfile::BASELINE) &&
             (GetPamFlags() & GPF_DISABLED) == 0)
         {
@@ -8476,7 +8482,21 @@ CPLErr GTiffDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
         }
         else
         {
-            if (GDALPamDataset::GetGCPCount() > 0)
+            if (nGCPCountIn > knMAX_GCP_COUNT)
+            {
+                if (GDALPamDataset::GetGCPCount() == 0 && !m_aoGCPs.empty())
+                {
+                    m_bForceUnsetGTOrGCPs = true;
+                }
+                ReportError(CE_Warning, CPLE_AppDefined,
+                            "Trying to write %d GCPs, whereas the maximum "
+                            "supported in GeoTIFF tag is %d. "
+                            "Falling back to writing them to PAM",
+                            nGCPCountIn, knMAX_GCP_COUNT);
+                eErr = GDALPamDataset::SetGCPs(nGCPCountIn, pasGCPListIn,
+                                               poGCPSRS);
+            }
+            else if (GDALPamDataset::GetGCPCount() > 0)
             {
                 // Cancel any existing GCPs from PAM file.
                 GDALPamDataset::SetGCPs(
