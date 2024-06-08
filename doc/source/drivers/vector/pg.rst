@@ -467,6 +467,7 @@ The following configuration options are available:
 -  .. config:: OGR_PG_SKIP_CONFLICTS
       :choices: YES, NO
       :default: NO
+      :since: 3.10
 
       If set to "YES" (not the default),
       conflicts when inserting features will be skipped
