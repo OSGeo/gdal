@@ -18,7 +18,7 @@ repos:
                 autotest/ogr/data/
               )
     -   repo: https://github.com/pycqa/flake8
-        rev: 3.9.2
+        rev: 7.0.0
         hooks:
         -   id: flake8
             exclude: >
