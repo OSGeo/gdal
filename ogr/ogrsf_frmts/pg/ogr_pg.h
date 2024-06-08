@@ -339,6 +339,7 @@ class OGRPGTableLayer final : public OGRPGLayer
     void CheckGeomTypeCompatibility(int iGeomField, OGRGeometry *poGeom);
 
     int bRetrieveFID = true;
+    int bSkipConflicts = false;
     int bHasWarnedAlreadySetFID = false;
 
     char **papszOverrideColumnTypes = nullptr;
