@@ -39,7 +39,17 @@
 // Use our locale-unaware strtod()
 #define ARGPARSE_CUSTOM_STRTOD CPLStrtodM
 
+#ifdef _MSC_VER
+#pragma warning(push)
+// unreachable code
+#pragma warning(disable : 4702)
+#endif
+
 #include "argparse/argparse.hpp"
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 using namespace argparse;
 
