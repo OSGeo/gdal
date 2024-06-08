@@ -5,6 +5,8 @@
 
 #ifdef _MSC_VER
 #pragma warning(push)
+// '<=': signed/unsigned mismatch
+#pragma warning(disable : 4018)
 //conversion from 'int' to 'WORD', possible loss of data
 #pragma warning(disable : 4244)
 // '=': conversion from 'size_t' to 'int', possible loss of data
