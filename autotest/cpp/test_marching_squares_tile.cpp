@@ -34,6 +34,7 @@
 #include "marching_squares/point.h"
 #include "marching_squares/level_generator.h"
 #include "marching_squares/contour_generator.h"
+#include <limits>
 #include <map>
 #include <fstream>
 
@@ -139,7 +140,8 @@ TEST_F(test_ms_tile, dummy)
     // only one pixel of value 2.0
     // levels = 0, 10
     std::vector<double> data = {2.0};
-    IntervalLevelRangeIterator levels(0.0, 10.0);
+    IntervalLevelRangeIterator levels(0.0, 10.0,
+                                      -std::numeric_limits<double>::infinity());
     Writer writer;
 
     ContourGenerator<Writer, IntervalLevelRangeIterator> cg(
@@ -173,7 +175,9 @@ TEST_F(test_ms_tile, tile_one_pixel)
     // levels = 0, 10
     std::vector<double> data = {2.0};
     const double levels[] = {0.0};
-    FixedLevelRangeIterator levelGenerator(levels, 1);
+    FixedLevelRangeIterator levelGenerator(
+        levels, 1, -std::numeric_limits<double>::infinity(),
+        std::numeric_limits<double>::infinity());
     Writer writer;
 
     ContourGenerator<Writer, FixedLevelRangeIterator> cg(
@@ -207,7 +211,8 @@ TEST_F(test_ms_tile, tile_one_pixel_two)
     // only one pixel of value 2.0
     // levels = 2, 10
     std::vector<double> data = {2.0};
-    IntervalLevelRangeIterator levels(2.0, 10.0);
+    IntervalLevelRangeIterator levels(2.0, 10.0,
+                                      -std::numeric_limits<double>::infinity());
     Writer writer;
 
     ContourGenerator<Writer, IntervalLevelRangeIterator> cg(
@@ -299,7 +304,8 @@ TEST_F(test_ms_tile, tile_two_pixels)
 
     std::vector<double> data = {10.0, 7.0};
     {
-        IntervalLevelRangeIterator levels(8.0, 10.0);
+        IntervalLevelRangeIterator levels(
+            8.0, 10.0, -std::numeric_limits<double>::infinity());
         Writer writer;
         ContourGenerator<Writer, IntervalLevelRangeIterator> cg(
             2, 1, /* hasNoData */ false, NaN, writer, levels);
@@ -421,7 +427,8 @@ TEST_F(test_ms_tile, tile_four_pixels)
     //  NaN                 NaN                NaN                NaN
     std::vector<double> data = {10.0, 7.0, 4.0, 5.0};
     {
-        IntervalLevelRangeIterator levels(8.0, 10.0);
+        IntervalLevelRangeIterator levels(
+            8.0, 10.0, -std::numeric_limits<double>::infinity());
         Writer writer;
         ContourGenerator<Writer, IntervalLevelRangeIterator> cg(
             2, 2, /* hasNoData */ false, NaN, writer, levels);
@@ -494,7 +501,9 @@ TEST_F(test_ms_tile, tile_four_pixels_2)
     std::vector<double> data = {155.0, 155.01, 154.99, 155.0};
     {
         const double levels[] = {155.0};
-        FixedLevelRangeIterator levelGenerator(levels, 1);
+        FixedLevelRangeIterator levelGenerator(
+            levels, 1, -std::numeric_limits<double>::infinity(),
+            std::numeric_limits<double>::infinity());
         Writer writer;
         ContourGenerator<Writer, FixedLevelRangeIterator> cg(
             2, 2, /* hasNoData */ false, NaN, writer, levelGenerator);
