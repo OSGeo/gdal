@@ -538,16 +538,18 @@ Examples
        -oo Y_POSSIBLE_NAMES=latitude \
        -a_srs 'EPSG:4326'
 
--  With both input and output CSV, use `ogr2ogr -segmentize`,
+-  Use `ogr2ogr -segmentize` to densify a input geometry being specified in the ``WKT`` special field. Note that one needs to specify the GEOMETRY=AS_WKT layer creation option, otherwise the input geometry would be returned unmodified:
 
    ::
 
-    cat 0.W.csv
+    $ cat input.csv
     WKT,ID,Name
     "LINESTRING (-900 -1450,-900 100)",0,900W
-    ogr2ogr -segmentize 400 -lco GEOMETRY=AS_WKT \
-      -sql 'SELECT ID, Name from "0.W"' 0.csv 0.W.csv
-    cat 0.csv
+    
+    $ ogr2ogr -segmentize 400 -lco GEOMETRY=AS_WKT \
+      -sql "SELECT ID, Name FROM input" output.csv input.csv
+
+    $ cat output.csv
     WKT,ID,Name
     "LINESTRING (-900 -1450,-900 -1062.5,-900 -675,-900 -287.5,-900 100)","0",900W
 
