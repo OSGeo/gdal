@@ -130,7 +130,7 @@ with control information.
     source SRS is a dynamic CRS. Only taken into account if :option:`-s_srs`
     is used.
 
-    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` were
     mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -t_srs <srs_def>
@@ -151,7 +151,7 @@ with control information.
     target SRS is a dynamic CRS. Only taken into account if :option:`-t_srs`
     is used.
 
-    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` were
     mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -ct <string>
