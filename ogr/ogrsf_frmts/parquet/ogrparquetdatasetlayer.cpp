@@ -469,7 +469,7 @@ void OGRParquetDatasetLayer::BuildScanner()
         {
             pszUseThreads = "YES";
         }
-        if (CPLTestBool(pszUseThreads))
+        if (pszUseThreads && CPLTestBool(pszUseThreads))
         {
             PARQUET_THROW_NOT_OK(scannerBuilder->UseThreads(true));
         }
@@ -607,9 +607,9 @@ void OGRParquetDatasetLayer::BuildScanner()
                                                 wkbVariantIso);
                     // Silence 'Using uninitialized value oFieldRef. Field oFieldRef.impl_._M_u is uninitialized when calling FieldRef.'
                     // coverity[uninit_use_in_call]
-                    expression =
-                        cp::call("OGRWKBIntersects", {cp::field_ref(oFieldRef)},
-                                 WKBGeometryOptions(abyFilterGeomWkb));
+                    expression = cp::call("OGRWKBIntersects",
+                                          {cp::field_ref(std::move(oFieldRef))},
+                                          WKBGeometryOptions(abyFilterGeomWkb));
 
                     if (expression.is_valid())
                     {
