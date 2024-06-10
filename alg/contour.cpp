@@ -562,6 +562,14 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
     if (opt)
     {
         contourInterval = CPLAtof(opt);
+        // Written this way to catch NaN as well.
+        if (!(contourInterval > 0))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid value for LEVEL_INTERVAL. Should be strictly "
+                     "positive.");
+            return CE_Failure;
+        }
     }
 
     double contourBase = 0.0;
