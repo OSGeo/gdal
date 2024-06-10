@@ -560,3 +560,8 @@ x
     assert ds
     assert ds.GetDriver().ShortName == "VICAR"
     assert struct.unpack("B", ds.GetRasterBand(1).ReadRaster())[0] == ord("x")
+
+    ds = gdal.OpenEx("/vsimem/test", allowed_drivers=["VICAR"])
+    assert ds
+    assert ds.GetDriver().ShortName == "VICAR"
+    assert struct.unpack("B", ds.GetRasterBand(1).ReadRaster())[0] == ord("x")
