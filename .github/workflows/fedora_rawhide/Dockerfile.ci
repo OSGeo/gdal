@@ -1,6 +1,9 @@
 FROM fedora:rawhide
 
-RUN dnf upgrade -y
+# FIXME: Exclude update of dnf&rpm themselves as this results in a no longer working dnf
+# cf https://github.com/OSGeo/gdal/actions/runs/9448190401/job/26021669415?pr=10173
+# Likely a transient issue with Fedora 41 dev cycle
+RUN dnf upgrade -y -x dnf -x rpm
 RUN dnf install -y --setopt=install_weak_deps=False proj-devel
 RUN dnf install -y clang make diffutils ccache cmake \
       libxml2-devel libxslt-devel expat-devel xerces-c-devel \
