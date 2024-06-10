@@ -447,13 +447,13 @@ GDALDataset *OGRWFSJoinLayer::FetchGetFeature()
         const char *const apszAllowedDrivers[] = {"GML", nullptr};
         const char *apszOpenOptions[2] = {nullptr, nullptr};
         apszOpenOptions[0] = CPLSPrintf("XSD=%s", osXSDFileName.c_str());
-        auto poGML_DS = std::unique_ptr<GDALDataset>(
-            GDALDataset::Open(pszStreamingName, GDAL_OF_VECTOR,
-                              apszAllowedDrivers, apszOpenOptions, nullptr));
-        if (poGML_DS && poGML_DS->GetLayerCount() != 0)
+        GDALDataset *poGML_DS = (GDALDataset *)GDALOpenEx(
+            pszStreamingName, GDAL_OF_VECTOR, apszAllowedDrivers,
+            apszOpenOptions, nullptr);
+        if (poGML_DS)
         {
             // bStreamingDS = true;
-            return poGML_DS.release();
+            return poGML_DS;
         }
 
         /* In case of failure, read directly the content to examine */
@@ -516,22 +516,30 @@ GDALDataset *OGRWFSJoinLayer::FetchGetFeature()
 
     CPLHTTPDestroyResult(psResult);
 
-    auto l_poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-        osTmpFileName.c_str(), GDAL_OF_VECTOR, nullptr, nullptr, nullptr));
-    if (l_poDS && l_poDS->GetLayerCount() != 0)
+    OGRDataSource *l_poDS =
+        (OGRDataSource *)OGROpen(osTmpFileName, FALSE, nullptr);
+    if (l_poDS == nullptr)
     {
-        return l_poDS.release();
+        if (strstr((const char *)pabyData, "<wfs:FeatureCollection") ==
+                nullptr &&
+            strstr((const char *)pabyData, "<gml:FeatureCollection") == nullptr)
+        {
+            if (nDataLen > 1000)
+                pabyData[1000] = 0;
+            CPLError(CE_Failure, CPLE_AppDefined, "Error: cannot parse %s",
+                     pabyData);
+        }
+        return nullptr;
     }
 
-    if (strstr((const char *)pabyData, "<wfs:FeatureCollection") == nullptr &&
-        strstr((const char *)pabyData, "<gml:FeatureCollection") == nullptr)
+    OGRLayer *poLayer = l_poDS->GetLayer(0);
+    if (poLayer == nullptr)
     {
-        if (nDataLen > 1000)
-            pabyData[1000] = 0;
-        CPLError(CE_Failure, CPLE_AppDefined, "Error: cannot parse %s",
-                 pabyData);
+        OGRDataSource::DestroyDataSource(l_poDS);
+        return nullptr;
     }
-    return nullptr;
+
+    return l_poDS;
 }
 
 /************************************************************************/

@@ -55,49 +55,27 @@ static int OGRGMLDriverIdentify(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        const char *pszPtr =
-            reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+        const char *szPtr = (const char *)poOpenInfo->pabyHeader;
 
-        // Skip UTF-8 BOM
-        if (poOpenInfo->nHeaderBytes > 3 &&
-            memcmp(poOpenInfo->pabyHeader, "\xEF\xBB\xBF", 3) == 0)
+        if (((unsigned char)szPtr[0] == 0xEF) &&
+            ((unsigned char)szPtr[1] == 0xBB) &&
+            ((unsigned char)szPtr[2] == 0xBF))
         {
-            pszPtr += 3;
+            szPtr += 3;
         }
-
-        // Skip spaces
-        while (*pszPtr && std::isspace(static_cast<unsigned char>(*pszPtr)))
-            ++pszPtr;
-
-        // Here, we expect the opening chevrons of GML tree root element */
-        if (pszPtr[0] != '<')
+        /* --------------------------------------------------------------------
+         */
+        /*      Here, we expect the opening chevrons of GML tree root element */
+        /* --------------------------------------------------------------------
+         */
+        if (szPtr[0] != '<')
             return FALSE;
 
-        if (strstr(pszPtr, "<ServiceExceptionReport") ||
-            strstr(pszPtr, "<ows:ExceptionReport"))
-        {
-            return FALSE;
-        }
-
-        // If there is neither both of the below strings, this is not a GML
-        // file
-        if (!strstr(pszPtr, "opengis.net/gml") &&
-            !strstr(pszPtr, "<csw:GetRecordsResponse"))
-        {
-            return false;
-        }
-
-        if (poOpenInfo->IsSingleAllowedDriver("GML"))
-            return TRUE;
-
-        // TryToIngest() invalidates above pszPtr
-        pszPtr = nullptr;
-        CPL_IGNORE_RET_VAL(pszPtr);
         if (!poOpenInfo->TryToIngest(4096))
             return FALSE;
 
         return OGRGMLDataSource::CheckHeader(
-            reinterpret_cast<const char *>(poOpenInfo->pabyHeader));
+            (const char *)poOpenInfo->pabyHeader);
     }
 }
 

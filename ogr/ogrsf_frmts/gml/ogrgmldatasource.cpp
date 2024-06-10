@@ -283,45 +283,52 @@ OGRGMLDataSource::~OGRGMLDataSource()
 
 bool OGRGMLDataSource::CheckHeader(const char *pszStr)
 {
-    // Definitely a GML compatible file
-    if (strstr(pszStr, "<wfs:FeatureCollection "))
+    if (strstr(pszStr, "<wfs:FeatureCollection ") != nullptr)
         return true;
 
+    if (strstr(pszStr, "opengis.net/gml") == nullptr &&
+        strstr(pszStr, "<csw:GetRecordsResponse") == nullptr)
+    {
+        return false;
+    }
+
     // Ignore kml files
-    if (strstr(pszStr, "<kml"))
+    if (strstr(pszStr, "<kml") != nullptr)
     {
         return false;
     }
 
     // Ignore .xsd schemas.
-    if (strstr(pszStr, "<schema") || strstr(pszStr, "<xs:schema") ||
-        strstr(pszStr, "<xsd:schema"))
+    if (strstr(pszStr, "<schema") != nullptr ||
+        strstr(pszStr, "<xs:schema") != nullptr ||
+        strstr(pszStr, "<xsd:schema") != nullptr)
     {
         return false;
     }
 
     // Ignore GeoRSS documents. They will be recognized by the GeoRSS driver.
-    if (strstr(pszStr, "<rss") && strstr(pszStr, "xmlns:georss"))
+    if (strstr(pszStr, "<rss") != nullptr &&
+        strstr(pszStr, "xmlns:georss") != nullptr)
     {
         return false;
     }
 
     // Ignore OpenJUMP .jml documents.
     // They will be recognized by the OpenJUMP driver.
-    if (strstr(pszStr, "<JCSDataFile"))
+    if (strstr(pszStr, "<JCSDataFile") != nullptr)
     {
         return false;
     }
 
     // Ignore OGR WFS xml description files, or WFS Capabilities results.
-    if (strstr(pszStr, "<OGRWFSDataSource>") ||
-        strstr(pszStr, "<wfs:WFS_Capabilities"))
+    if (strstr(pszStr, "<OGRWFSDataSource>") != nullptr ||
+        strstr(pszStr, "<wfs:WFS_Capabilities") != nullptr)
     {
         return false;
     }
 
     // Ignore WMTS capabilities results.
-    if (strstr(pszStr, "http://www.opengis.net/wmts/1.0"))
+    if (strstr(pszStr, "http://www.opengis.net/wmts/1.0") != nullptr)
     {
         return false;
     }
@@ -396,21 +403,21 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Load a header chunk and check for signs it is GML.
-    GByte abyHeader[4096] = {};
-    size_t nRead = VSIFReadL(abyHeader, 1, sizeof(abyHeader) - 1, fp);
+    char szHeader[4096] = {};
+    size_t nRead = VSIFReadL(szHeader, 1, sizeof(szHeader) - 1, fp);
     if (nRead == 0)
     {
         if (fpToClose)
             VSIFCloseL(fpToClose);
         return false;
     }
-    abyHeader[nRead] = '\0';
+    szHeader[nRead] = '\0';
 
     CPLString osWithVsiGzip;
 
     // Might be a OS-Mastermap gzipped GML, so let be nice and try to open
     // it transparently with /vsigzip/.
-    if (abyHeader[0] == 0x1f && abyHeader[1] == 0x8b &&
+    if (((GByte *)szHeader)[0] == 0x1f && ((GByte *)szHeader)[1] == 0x8b &&
         EQUAL(CPLGetExtension(pszFilename), "gz") &&
         !STARTS_WITH(pszFilename, "/vsigzip/"))
     {
@@ -426,13 +433,13 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
         if (fp == nullptr)
             return false;
 
-        nRead = VSIFReadL(abyHeader, 1, sizeof(abyHeader) - 1, fp);
+        nRead = VSIFReadL(szHeader, 1, sizeof(szHeader) - 1, fp);
         if (nRead == 0)
         {
             VSIFCloseL(fpToClose);
             return false;
         }
-        abyHeader[nRead] = '\0';
+        szHeader[nRead] = '\0';
     }
 
     // Check for a UTF-8 BOM and skip if found.
@@ -441,20 +448,18 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     // Add BOM detection for other encodings.
 
     // Used to skip to actual beginning of XML data
-    const char *pszPtr = reinterpret_cast<const char *>(abyHeader);
+    char *szPtr = szHeader;
 
-    if (memcmp(pszPtr, "\xEF\xBB\xBF", 3) == 0)
+    if ((static_cast<unsigned char>(szHeader[0]) == 0xEF) &&
+        (static_cast<unsigned char>(szHeader[1]) == 0xBB) &&
+        (static_cast<unsigned char>(szHeader[2]) == 0xBF))
     {
-        pszPtr += 3;
+        szPtr += 3;
     }
-
-    // Skip spaces
-    while (*pszPtr && std::isspace(static_cast<unsigned char>(*pszPtr)))
-        ++pszPtr;
 
     bool bExpatCompatibleEncoding = false;
 
-    const char *pszEncoding = strstr(pszPtr, "encoding=");
+    const char *pszEncoding = strstr(szPtr, "encoding=");
     if (pszEncoding)
         bExpatCompatibleEncoding =
             (pszEncoding[9] == '\'' || pszEncoding[9] == '"') &&
@@ -465,12 +470,11 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     else
         bExpatCompatibleEncoding = true;  // utf-8 is the default.
 
-    const bool bHas3D = strstr(pszPtr, "srsDimension=\"3\"") != nullptr ||
-                        strstr(pszPtr, "<gml:Z>") != nullptr;
+    const bool bHas3D = strstr(szPtr, "srsDimension=\"3\"") != nullptr ||
+                        strstr(szPtr, "<gml:Z>") != nullptr;
 
     // Here, we expect the opening chevrons of GML tree root element.
-    if (pszPtr[0] != '<' ||
-        (!poOpenInfo->IsSingleAllowedDriver("GML") && !CheckHeader(pszPtr)))
+    if (szPtr[0] != '<' || !CheckHeader(szPtr))
     {
         if (fpToClose)
             VSIFCloseL(fpToClose);
@@ -484,16 +488,16 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     // Small optimization: if we parse a <wfs:FeatureCollection> and
     // that numberOfFeatures is set, we can use it to set the FeatureCount
     // but *ONLY* if there's just one class.
-    const char *pszFeatureCollection = strstr(pszPtr, "wfs:FeatureCollection");
+    const char *pszFeatureCollection = strstr(szPtr, "wfs:FeatureCollection");
     if (pszFeatureCollection == nullptr)
         // GML 3.2.1 output.
-        pszFeatureCollection = strstr(pszPtr, "gml:FeatureCollection");
+        pszFeatureCollection = strstr(szPtr, "gml:FeatureCollection");
     if (pszFeatureCollection == nullptr)
     {
         // Deegree WFS 1.0.0 output.
-        pszFeatureCollection = strstr(pszPtr, "<FeatureCollection");
+        pszFeatureCollection = strstr(szPtr, "<FeatureCollection");
         if (pszFeatureCollection &&
-            strstr(pszPtr, "xmlns:wfs=\"http://www.opengis.net/wfs\"") ==
+            strstr(szPtr, "xmlns:wfs=\"http://www.opengis.net/wfs\"") ==
                 nullptr)
             pszFeatureCollection = nullptr;
     }
@@ -503,7 +507,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     {
         bExposeGMLId = true;
         bIsWFS = true;
-        const char *pszNumberOfFeatures = strstr(pszPtr, "numberOfFeatures=");
+        const char *pszNumberOfFeatures = strstr(szPtr, "numberOfFeatures=");
         if (pszNumberOfFeatures)
         {
             pszNumberOfFeatures += 17;
@@ -514,7 +518,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
                 nNumberOfFeatures = CPLAtoGIntBig(pszNumberOfFeatures + 1);
             }
         }
-        else if ((pszNumberOfFeatures = strstr(pszPtr, "numberReturned=")) !=
+        else if ((pszNumberOfFeatures = strstr(szPtr, "numberReturned=")) !=
                  nullptr)
         {
             // WFS 2.0.0
@@ -541,10 +545,10 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        bExposeGMLId = strstr(pszPtr, " gml:id=\"") != nullptr ||
-                       strstr(pszPtr, " gml:id='") != nullptr;
-        bExposeFid = strstr(pszPtr, " fid=\"") != nullptr ||
-                     strstr(pszPtr, " fid='") != nullptr;
+        bExposeGMLId = strstr(szPtr, " gml:id=\"") != nullptr ||
+                       strstr(szPtr, " gml:id='") != nullptr;
+        bExposeFid = strstr(szPtr, " fid=\"") != nullptr ||
+                     strstr(szPtr, " fid='") != nullptr;
     }
 
     const char *pszExposeGMLId =
@@ -560,25 +564,25 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
         bExposeFid = CPLTestBool(pszExposeFid);
 
     const bool bHintConsiderEPSGAsURN =
-        strstr(pszPtr, "xmlns:fme=\"http://www.safe.com/gml/fme\"") != nullptr;
+        strstr(szPtr, "xmlns:fme=\"http://www.safe.com/gml/fme\"") != nullptr;
 
     char szSRSName[128] = {};
 
     // MTKGML.
-    if (strstr(pszPtr, "<Maastotiedot") != nullptr)
+    if (strstr(szPtr, "<Maastotiedot") != nullptr)
     {
-        if (strstr(pszPtr,
+        if (strstr(szPtr,
                    "http://xml.nls.fi/XML/Namespace/"
                    "Maastotietojarjestelma/SiirtotiedostonMalli/2011-02") ==
             nullptr)
             CPLDebug("GML", "Warning: a MTKGML file was detected, "
                             "but its namespace is unknown");
         bUseGlobalSRSName = true;
-        if (!ExtractSRSName(pszPtr, szSRSName, sizeof(szSRSName)))
+        if (!ExtractSRSName(szPtr, szSRSName, sizeof(szSRSName)))
             strcpy(szSRSName, "EPSG:3067");
     }
 
-    const char *pszSchemaLocation = strstr(pszPtr, "schemaLocation=");
+    const char *pszSchemaLocation = strstr(szPtr, "schemaLocation=");
     if (pszSchemaLocation)
         pszSchemaLocation += strlen("schemaLocation=");
 
@@ -590,7 +594,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
               strstr(pszFilename, "&SERVICE=")))
         bCheckAuxFile = false;
 
-    bool bIsWFSJointLayer = bIsWFS && strstr(pszPtr, "<wfs:Tuple>");
+    bool bIsWFSJointLayer = bIsWFS && strstr(szPtr, "<wfs:Tuple>");
     if (bIsWFSJointLayer)
         bExposeGMLId = false;
 
@@ -919,7 +923,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
                                      CPLGetConfigOption("GML_REGISTRY", "")));
             if (oRegistry.Parse())
             {
-                const CPLString osHeader(pszPtr);
+                CPLString osHeader(szHeader);
                 for (size_t iNS = 0; iNS < oRegistry.aoNamespaces.size(); iNS++)
                 {
                     GMLRegistryNamespace &oNamespace =
@@ -942,7 +946,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
 
                     const char *pszURIToFind =
                         CPLSPrintf("\"%s\"", oNamespace.osURI.c_str());
-                    if (strstr(pszPtr, pszURIToFind) != nullptr)
+                    if (strstr(szHeader, pszURIToFind) != nullptr)
                     {
                         if (oNamespace.bUseGlobalSRSName)
                             bUseGlobalSRSName = true;

@@ -4356,31 +4356,3 @@ def test_ogr_gml_geom_link_to_immediate_child():
         "data/gml/link_to_immediate_child.gml", open_options=["WRITE_GFS=NO"]
     )
     assert ds
-
-
-###############################################################################
-# Test force opening a GML file
-
-
-@gdaltest.enable_exceptions()
-def test_ogr_gml_force_opening(tmp_vsimem):
-
-    filename = str(tmp_vsimem / "test.xml")
-
-    with gdaltest.vsi_open(filename, "wb") as f:
-        f.write(
-            b"""<ogr:FeatureCollection
-     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:schemaLocation="http://ogr.maptools.org/ .xsd"
-     xmlns:ogr="http://ogr.maptools.org/"
-     xmlns:gml="http://www.opengis.net/gml"
-     xmlns:wmts="http://www.opengis.net/wmts/1.0">
-  <gml:boundedBy><gml:null>missing</gml:null></gml:boundedBy>
-</ogr:FeatureCollection>"""
-        )
-
-    with pytest.raises(Exception):
-        gdal.OpenEx(filename)
-
-    ds = gdal.OpenEx(filename, allowed_drivers=["GML"])
-    assert ds.GetDriver().GetDescription() == "GML"
