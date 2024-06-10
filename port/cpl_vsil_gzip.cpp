@@ -117,6 +117,11 @@
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
 
+// To avoid aliasing to CopyFile to CopyFileA on Windows
+#ifdef CopyFile
+#undef CopyFile
+#endif
+
 constexpr int Z_BUFSIZE = 65536;           // Original size is 16384
 constexpr int gz_magic[2] = {0x1f, 0x8b};  // gzip magic header
 
