@@ -606,6 +606,7 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
             if (pszDataType == nullptr &&
                 (strchr(pszNoData, '.') != nullptr ||
                  strchr(pszNoData, ',') != nullptr ||
+                 std::isnan(dfNoDataValue) ||
                  std::numeric_limits<int>::min() > dfNoDataValue ||
                  dfNoDataValue > std::numeric_limits<int>::max()))
             {
@@ -718,7 +719,7 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
         dfNoDataValue = CPLAtofM(pszNoData);
         if (pszDataType == nullptr &&
             (strchr(pszNoData, '.') != nullptr ||
-             strchr(pszNoData, ',') != nullptr ||
+             strchr(pszNoData, ',') != nullptr || std::isnan(dfNoDataValue) ||
              std::numeric_limits<int>::min() > dfNoDataValue ||
              dfNoDataValue > std::numeric_limits<int>::max()))
         {
