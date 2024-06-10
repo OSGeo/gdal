@@ -201,17 +201,18 @@ def test_gdalinfo_lib_nodatavalues():
 ###############################################################################
 
 
-def test_gdalinfo_lib_coordinate_epoch():
+@pytest.mark.parametrize("epoch", ["2021.0", "2021.3"])
+def test_gdalinfo_lib_coordinate_epoch(epoch):
 
     ds = gdal.Translate(
-        "", "../gcore/data/byte.tif", options='-of MEM -a_coord_epoch 2021.3"'
+        "", "../gcore/data/byte.tif", options=f'-of MEM -a_coord_epoch {epoch}"'
     )
     ret = gdal.Info(ds)
-    assert "Coordinate epoch: 2021.3" in ret
+    assert f"Coordinate epoch: {epoch}" in ret
 
     ret = gdal.Info(ds, format="json")
     assert "coordinateEpoch" in ret
-    assert ret["coordinateEpoch"] == 2021.3
+    assert ret["coordinateEpoch"] == float(epoch)
 
 
 ###############################################################################
