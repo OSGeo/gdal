@@ -401,3 +401,18 @@ def test_contour_raster_acquisition_error():
         gdal.ContourGenerateEx(
             ds.GetRasterBand(1), ogr_lyr, options=["LEVEL_INTERVAL=1", "ID_FIELD=0"]
         )
+
+
+###############################################################################
+
+
+def test_contour_invalid_LEVEL_INTERVAL():
+
+    ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    ogr_lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbLineString)
+    ds = gdal.Open("../gcore/data/byte.tif")
+
+    with pytest.raises(Exception, match="Invalid value for LEVEL_INTERVAL"):
+        gdal.ContourGenerateEx(
+            ds.GetRasterBand(1), ogr_lyr, options=["LEVEL_INTERVAL=-1"]
+        )
