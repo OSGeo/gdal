@@ -645,10 +645,20 @@ void Viewshed::processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
                                std::vector<double> &vThisLineVal,
                                std::vector<double> &vLastLineVal)
 {
-    double *pThis = vThisLineVal.data() + iStart;
-    double *pLast = vLastLineVal.data() + iStart;
+    iStart = oCurExtent.clampX(iStart);
+
+    // If the observer is to the right of the raster, mark the first cell to the left as
+    // visible.
+    if (nX >= oCurExtent.xSize())
+    {
+        if (oOpts.outputMode == OutputMode::Normal)
+            vResult[iStart] = oOpts.visibleVal;
+        iStart--;
+    }
 
     nYOffset = std::abs(nYOffset);
+    double *pThis = vThisLineVal.data() + iStart;
+    double *pLast = vLastLineVal.data() + iStart;
 
     // Go from the observer to the left, calculating Z as we go.
     for (int iPixel = iStart; iPixel > iEnd; iPixel--, pThis--, pLast--)
@@ -677,10 +687,20 @@ void Viewshed::processLineRight(int nX, int nYOffset, int iStart, int iEnd,
                                 std::vector<double> &vThisLineVal,
                                 std::vector<double> &vLastLineVal)
 {
-    double *pThis = vThisLineVal.data() + iStart;
-    double *pLast = vLastLineVal.data() + iStart;
+    iStart = oCurExtent.clampX(iStart);
+
+    // If the observer is to the left of the raster, mark the first cell to the right as
+    // visible.
+    if (nX < 0)
+    {
+        if (oOpts.outputMode == OutputMode::Normal)
+            vResult[iStart] = oOpts.visibleVal;
+        iStart++;
+    }
 
     nYOffset = std::abs(nYOffset);
+    double *pThis = vThisLineVal.data() + iStart;
+    double *pLast = vLastLineVal.data() + iStart;
 
     // Go from the observer to the right, calculating Z as we go.
     for (int iPixel = iStart; iPixel < iEnd; iPixel++, pThis++, pLast++)
