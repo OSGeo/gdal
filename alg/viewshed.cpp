@@ -563,14 +563,73 @@ double doMax(int nXOffset, int nYOffset, double dfThisPrev, double dfLast,
     return std::max(dfEdge, dfDiagonal);
 }
 
-double doLine(int nXOffset, [[maybe_unused]] int nYOffset, double dfThisPrev,
-              [[maybe_unused]] double dfLast,
-              [[maybe_unused]] double dfLastPrev)
+}  // unnamed namespace
+
+/// Process the part of the first line to the left of the observer.
+///
+/// @param nX  X coordinate of the observer.
+/// @param iStart  X coordinate of the first cell to the left of the observer to be procssed.
+/// @param iEnd  X coordinate one past the last cell to be processed.
+/// @param vResult  Vector in which to store the visibility/height results.
+/// @param vThisLineVal  Height of each cell in the line being processed.
+void Viewshed::processFirstLineLeft(int nX, int iStart, int iEnd,
+                                    std::vector<double> &vResult,
+                                    std::vector<double> &vThisLineVal)
 {
-    return CalcHeightLine(nXOffset, dfThisPrev);
+    iStart = oCurExtent.clampX(iStart);
+
+    // If the start cell is next to the observer, just mark it visible.
+    if (iStart < nX)
+    {
+        if (oOpts.outputMode == OutputMode::Normal)
+            vResult[iStart] = oOpts.visibleVal;
+        iStart--;
+    }
+
+    double *pThis = vThisLineVal.data() + iStart;
+    // Go from the observer to the left, calculating Z as we go.
+    for (int iPixel = iStart; iPixel > iEnd; iPixel--, pThis--)
+    {
+        int nXOffset = std::abs(iPixel - nX);
+        double dfZ = CalcHeightLine(nXOffset, *(pThis + 1));
+        setOutput(vResult[iPixel], *pThis, dfZ);
+    }
+    // For cells outside of the [start, end) range, set the outOfRange value.
+    std::fill(vResult.begin(), vResult.begin() + iEnd + 1, oOpts.outOfRangeVal);
 }
 
-}  // unnamed namespace
+/// Process the part of the first line to the right of the observer.
+///
+/// @param nX  X coordinate of the observer.
+/// @param iStart  X coordinate of the first cell to the right of the observer to be procssed.
+/// @param iEnd  X coordinate one past the last cell to be processed.
+/// @param vResult  Vector in which to store the visibility/height results.
+/// @param vThisLineVal  Height of each cell in the line being processed.
+void Viewshed::processFirstLineRight(int nX, int iStart, int iEnd,
+                                     std::vector<double> &vResult,
+                                     std::vector<double> &vThisLineVal)
+{
+    iStart = oCurExtent.clampX(iStart);
+
+    // If the start cell is next to the observer, just mark it visible.
+    if (iStart > nX)
+    {
+        if (oOpts.outputMode == OutputMode::Normal)
+            vResult[iStart] = oOpts.visibleVal;
+        iStart++;
+    }
+
+    double *pThis = vThisLineVal.data() + iStart;
+    // Go from the observer to the right, calculating Z as we go.
+    for (int iPixel = iStart; iPixel < iEnd; iPixel++, pThis++)
+    {
+        int nXOffset = std::abs(iPixel - nX);
+        double dfZ = CalcHeightLine(nXOffset, *(pThis - 1));
+        setOutput(vResult[iPixel], *pThis, dfZ);
+    }
+    // For cells outside of the [start, end) range, set the outOfRange value.
+    std::fill(vResult.begin() + iEnd, vResult.end(), oOpts.outOfRangeVal);
+}
 
 /// Process a line to the left of the observer.
 ///
@@ -675,19 +734,12 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
     // otherwise, take it as an offset from the raster height at that location.
     dfZObserver = oOpts.observer.z;
     if (oCurExtent.containsX(nX))
-        dfZObserver += vThisLineVal[nX];
-    dfHeightAdjFactor = CalcHeightAdjFactor(poDstDS.get(), oOpts.curveCoeff);
-
-    if (oOpts.outputMode == OutputMode::Normal)
     {
-        // nX may be outside the raster.
-        int nXStart = oCurExtent.clampX(nX);
-
-        //ABELL - Bound nX to allow this without over/underflow.
-        for (int iX = nXStart - 1; iX <= nXStart + 1; iX++)
-            if (oCurExtent.containsX(nXStart))
-                vResult[iX] = oOpts.visibleVal;
+        dfZObserver += vThisLineVal[nX];
+        if (oOpts.outputMode == OutputMode::Normal)
+            vResult[nX] = oOpts.visibleVal;
     }
+    dfHeightAdjFactor = CalcHeightAdjFactor(poDstDS.get(), oOpts.curveCoeff);
 
     // In DEM mode the base is the pre-adjustment value.  In ground mode the base is zero.
     if (oOpts.outputMode == OutputMode::DEM)
@@ -696,21 +748,13 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
     // iLeft and iRight are the processing limits for the line.
     const auto [iLeft, iRight] = adjustHeight(nYOffset, nX, vThisLineVal);
 
-    auto t1 =
-        std::async(std::launch::async,
-                   [&, left = iLeft]()
-                   {
-                       processLineLeft(nX, nYOffset, nX - 2, left - 1, vResult,
-                                       vThisLineVal, vLastLineVal);
-                   });
+    auto t1 = std::async(
+        std::launch::async, [&, left = iLeft]()
+        { processFirstLineLeft(nX, nX - 1, left - 1, vResult, vThisLineVal); });
 
-    auto t2 =
-        std::async(std::launch::async,
-                   [&, right = iRight]()
-                   {
-                       processLineRight(nX, nYOffset, nX + 2, right, vResult,
-                                        vThisLineVal, vLastLineVal);
-                   });
+    auto t2 = std::async(
+        std::launch::async, [&, right = iRight]()
+        { processFirstLineRight(nX, nX + 1, right, vResult, vThisLineVal); });
     t1.wait();
     t2.wait();
 
@@ -853,8 +897,6 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     // create the output dataset
     if (!createOutputDataset())
         return false;
-
-    oZcalc = doLine;
 
     std::vector<double> vFirstLineVal(oCurExtent.xSize());
 

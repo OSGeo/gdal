@@ -225,6 +225,12 @@ class Viewshed
                      std::vector<double> &vLastLineVal);
     bool processFirstLine(int nX, int nY, int nLine,
                           std::vector<double> &vLastLineVal);
+    void processFirstLineLeft(int nX, int iStart, int iEnd,
+                              std::vector<double> &vResult,
+                              std::vector<double> &vThisLineVal);
+    void processFirstLineRight(int nX, int iStart, int iEnd,
+                               std::vector<double> &vResult,
+                               std::vector<double> &vThisLineVal);
     void processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
                          std::vector<double> &vResult,
                          std::vector<double> &vThisLineVal,
