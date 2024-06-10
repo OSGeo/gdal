@@ -493,11 +493,11 @@ void ISIS3DriverSetCommonMetadata(GDALDriver *poDriver)
 /*                     VICARGetLabelOffset()                            */
 /************************************************************************/
 
-int VICARGetLabelOffset(GDALOpenInfo *poOpenInfo)
+vsi_l_offset VICARGetLabelOffset(GDALOpenInfo *poOpenInfo)
 
 {
     if (poOpenInfo->pabyHeader == nullptr || poOpenInfo->fpL == nullptr)
-        return -1;
+        return static_cast<vsi_l_offset>(-1);
 
     std::string osHeader;
     const char *pszHeader =
@@ -520,12 +520,12 @@ int VICARGetLabelOffset(GDALOpenInfo *poOpenInfo)
         // If opening in vector-only mode, then check when have NBB != 0
         const char *pszNBB = strstr(pszHeader, "NBB");
         if (pszNBB == nullptr)
-            return -1;
+            return static_cast<vsi_l_offset>(-1);
         const char *pszEqualSign = strchr(pszNBB, '=');
         if (pszEqualSign == nullptr)
-            return -1;
+            return static_cast<vsi_l_offset>(-1);
         if (atoi(pszEqualSign + 1) == 0)
-            return -1;
+            return static_cast<vsi_l_offset>(-1);
     }
     if (strstr(pszHeader, "LBLSIZE") != nullptr &&
         strstr(pszHeader, "FORMAT") != nullptr &&
@@ -533,9 +533,9 @@ int VICARGetLabelOffset(GDALOpenInfo *poOpenInfo)
         strstr(pszHeader, "NS") != nullptr &&
         strstr(pszHeader, "NB") != nullptr)
     {
-        return static_cast<int>(nOffset);
+        return nOffset;
     }
-    return -1;
+    return static_cast<vsi_l_offset>(-1);
 }
 
 /************************************************************************/
@@ -544,7 +544,7 @@ int VICARGetLabelOffset(GDALOpenInfo *poOpenInfo)
 
 static int VICARDriverIdentify(GDALOpenInfo *poOpenInfo)
 {
-    return VICARGetLabelOffset(poOpenInfo) >= 0;
+    return VICARGetLabelOffset(poOpenInfo) != static_cast<vsi_l_offset>(-1);
 }
 
 /************************************************************************/
