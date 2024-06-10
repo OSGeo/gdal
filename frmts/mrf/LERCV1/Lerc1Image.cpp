@@ -305,33 +305,27 @@ unsigned int
 Lerc1Image::computeNumBytesNeededToWrite(double maxZError, bool onlyZPart,
                                          InfoFromComputeNumBytes *info) const
 {
-    int numBytesOpt;
     unsigned int sz =
-        (unsigned int)sCntZImage.size() + 4 * sizeof(int) + sizeof(double);
+        (unsigned int)(sCntZImage.size() + 4 * sizeof(int) + sizeof(double));
     if (!onlyZPart)
     {
-        float cntMin, cntMax;
-        cntMin = cntMax = static_cast<float>(mask.IsValid(0) ? 1.0f : 0.0f);
-        for (int k = 0; k < getSize() && cntMin == cntMax; k++)
-            if (mask.IsValid(k))
-                cntMax = 1.0f;
-            else
-                cntMin = 0.0f;
-
-        numBytesOpt = 0;
-        if (cntMin != cntMax)
-            numBytesOpt = mask.RLEsize();
-
+        auto m = mask.IsValid(0);
         info->numTilesVertCnt = 0;
         info->numTilesHoriCnt = 0;
-        info->numBytesCnt = numBytesOpt;
-        info->maxCntInImg = cntMax;
-
-        sz += 3 * sizeof(int) + sizeof(float) + numBytesOpt;
+        info->maxCntInImg = m;
+        info->numBytesCnt = 0;
+        for (int i = 0; i < getSize(); i++)
+            if (m != mask.IsValid(i))
+            {
+                info->numBytesCnt = mask.RLEsize();
+                info->maxCntInImg = 1;
+                break;
+            }
+        sz += 3 * sizeof(int) + sizeof(float) + info->numBytesCnt;
     }
 
     // z part
-    int numTilesVert, numTilesHori;
+    int numTilesVert, numTilesHori, numBytesOpt;
     float maxValInImg;
     if (!findTiling(maxZError, numTilesVert, numTilesHori, numBytesOpt,
                     maxValInImg))
