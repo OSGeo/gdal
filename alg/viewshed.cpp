@@ -842,16 +842,16 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
 
     // scan upwards
     std::atomic<bool> err(false);
-    auto tUp = std::async(
-        std::launch::async,
-        [&]()
-        {
-            std::vector<double> vLastLineVal = vFirstLineVal;
+    auto tUp = std::async(std::launch::async,
+                          [&]()
+                          {
+                              std::vector<double> vLastLineVal = vFirstLineVal;
 
-            for (int nLine = nY - 1; nLine >= oCurExtent.yStart && !err; nLine--)
-                if (!processLine(nX, nY, nLine, vLastLineVal))
-                    err = true;
-        });
+                              for (int nLine = nY - 1;
+                                   nLine >= oCurExtent.yStart && !err; nLine--)
+                                  if (!processLine(nX, nY, nLine, vLastLineVal))
+                                      err = true;
+                          });
 
     // scan downwards
     auto tDown = std::async(
