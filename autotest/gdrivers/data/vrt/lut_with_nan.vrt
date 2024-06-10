@@ -1,0 +1,9 @@
+<VRTDataset rasterXSize="3" rasterYSize="2">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ComplexSource>
+      <SourceFilename relativeToVRT="1">../aaigrid/nodata_nan.asc</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <LUT>nan:0,0:10,2:20</LUT>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>

@@ -31,6 +31,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import math
 import os
 import struct
 
@@ -523,3 +524,14 @@ def test_aaigrid_starting_with_nan():
     ds = gdal.Open("data/aaigrid/starting_with_nan.asc")
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
     assert ds.GetRasterBand(1).Checksum() == 65300
+
+
+###############################################################################
+# Test reading a file starting with nan as nodata value
+
+
+def test_aaigrid_nodata_nan():
+
+    ds = gdal.Open("data/aaigrid/nodata_nan.asc")
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
+    assert math.isnan(ds.GetRasterBand(1).GetNoDataValue())
