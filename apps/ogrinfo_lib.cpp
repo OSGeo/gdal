@@ -1191,10 +1191,12 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
             {
                 std::string osCoordinateEpoch =
                     CPLSPrintf("%f", dfCoordinateEpoch);
-                if (osCoordinateEpoch.find('.') != std::string::npos)
+                const size_t nDotPos = osCoordinateEpoch.find('.');
+                if (nDotPos != std::string::npos)
                 {
-                    while (osCoordinateEpoch.back() == '0')
-                        osCoordinateEpoch.resize(osCoordinateEpoch.size() - 1);
+                    while (osCoordinateEpoch.size() > nDotPos + 2 &&
+                           osCoordinateEpoch.back() == '0')
+                        osCoordinateEpoch.pop_back();
                 }
                 Concat(osRet, psOptions->bStdoutOutput,
                        "Coordinate epoch: %s\n", osCoordinateEpoch.c_str());
