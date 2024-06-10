@@ -373,9 +373,9 @@ bool Viewshed::writeLine(int nLine, std::vector<double> &vResult)
 /// @return  True on success, false otherwise.
 bool Viewshed::lineProgress()
 {
-    if (nLineCount < oOutExtent.ySize())
+    if (nLineCount < oCurExtent.ySize())
         nLineCount++;
-    return emitProgress(nLineCount / static_cast<double>(oOutExtent.ySize()));
+    return emitProgress(nLineCount / static_cast<double>(oCurExtent.ySize()));
 }
 
 /// Emit progress information saying that a fraction of work has been completed.
@@ -404,7 +404,7 @@ std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX,
                                            double *const pdfNx)
 {
     int nLeft = 0;
-    int nRight = oOutExtent.xSize();
+    int nRight = oCurExtent.xSize();
 
     // If there is a height adjustment factor other than zero or a max distance,
     // calculate the adjusted height of the cell, stopping if we've exceeded the max
@@ -430,7 +430,7 @@ std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX,
         }
 
         pdfHeight = pdfNx + 1;
-        for (int nXOffset = 1; nXOffset < oOutExtent.xSize() - nX;
+        for (int nXOffset = 1; nXOffset < oCurExtent.xSize() - nX;
              nXOffset++, pdfHeight++)
         {
             double dfX = adfTransform[1] * nXOffset + dfLineX;
@@ -447,7 +447,7 @@ std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX,
     else
     {
         double *pdfHeight = pdfNx - nX;
-        for (int i = 0; i < oOutExtent.xSize(); ++i)
+        for (int i = 0; i < oCurExtent.xSize(); ++i)
         {
             *pdfHeight -= dfZObserver;
             pdfHeight++;
@@ -664,7 +664,7 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
         vResult[nX] = oOpts.visibleVal;
         if (nX - 1 >= 0)
             vResult[nX - 1] = oOpts.visibleVal;
-        if (nX + 1 < oOutExtent.xSize())
+        if (nX + 1 < oCurExtent.xSize())
             vResult[nX + 1] = oOpts.visibleVal;
     }
 
@@ -816,6 +816,8 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         return false;
 
     // normalize horizontal index to [ 0, oOutExtent.xSize() )
+    oCurExtent = oOutExtent;
+    oCurExtent.shiftX(-oOutExtent.xStart);
     nX -= oOutExtent.xStart;
 
     // create the output dataset
@@ -824,7 +826,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
 
     oZcalc = doLine;
 
-    std::vector<double> vFirstLineVal(oOutExtent.xSize());
+    std::vector<double> vFirstLineVal(oCurExtent.xSize());
 
     if (!processFirstLine(nX, nY, nY, vFirstLineVal))
         return false;
@@ -846,7 +848,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                               std::vector<double> vLastLineVal = vFirstLineVal;
 
                               for (int nLine = nY - 1;
-                                   nLine >= oOutExtent.yStart && !err; nLine--)
+                                   nLine >= oCurExtent.yStart && !err; nLine--)
                                   if (!processLine(nX, nY, nLine, vLastLineVal))
                                       err = true;
                           });
@@ -858,7 +860,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         {
             std::vector<double> vLastLineVal = vFirstLineVal;
 
-            for (int nLine = nY + 1; nLine < oOutExtent.yStop && !err; nLine++)
+            for (int nLine = nY + 1; nLine < oCurExtent.yStop && !err; nLine++)
                 if (!processLine(nX, nY, nLine, vLastLineVal))
                     err = true;
         });
