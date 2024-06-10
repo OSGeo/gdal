@@ -194,7 +194,9 @@ typedef enum
     DTEDMD_ORIGINLAT = 21,         /* UHL 13+7 */
     DTEDMD_NIMA_DESIGNATOR = 22,   /* DSI 60 + 5 */
     DTEDMD_PARTIALCELL_DSI = 23,   /* DSI 289 + 2 */
-    DTEDMD_MAX = 23
+    DTEDMD_SECURITYCONTROL = 24,   /* DSI 5 + 3 */
+    DTEDMD_SECURITYHANDLING = 25,  /* DSI 8 + 27 */
+    DTEDMD_MAX = 25
 } DTEDMetaDataCode;
 
 char *DTEDGetMetadata(DTEDInfo *, DTEDMetaDataCode);
