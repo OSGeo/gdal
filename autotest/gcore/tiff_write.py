@@ -11523,3 +11523,39 @@ def test_tiff_write_copy_mdd():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test writing more GCPs than supported
+
+
+@pytest.mark.parametrize("with_initial_gcps", [False, True])
+def test_tiff_write_too_many_gcps(tmp_vsimem, with_initial_gcps):
+
+    filename = str(tmp_vsimem / "test.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    if with_initial_gcps:
+        assert ds.SetGCPs([gdal.GCP(0, 1, 2, 3, 4)] * 10, None) == gdal.CE_None
+        ds.Close()
+        ds = gdal.Open(filename, gdal.GA_Update)
+    gcp_count = int(math.ceil(65535 / 6))
+    gcps = [gdal.GCP(0, 1, 2, 3, 4)] * gcp_count
+    with gdal.quiet_errors():
+        assert ds.SetGCPs(gcps, None) == gdal.CE_None
+    assert (
+        f"Trying to write {gcp_count} GCPs, whereas the maximum supported in GeoTIFF tag is 10922. Falling back to writing them to PAM"
+        in gdal.GetLastErrorMsg()
+    )
+    ds = None
+
+    assert gdal.VSIStatL(filename + ".aux.xml")
+
+    ds = gdal.Open(filename)
+    assert ds.GetGCPCount() == gcp_count
+    ds = None
+
+    gdal.Unlink(filename + ".aux.xml")
+
+    ds = gdal.Open(filename)
+    assert ds.GetGCPCount() == 0
+    ds = None
