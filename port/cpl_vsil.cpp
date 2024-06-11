@@ -795,16 +795,284 @@ int VSISync(const char *pszSource, const char *pszTarget,
 }
 
 /************************************************************************/
+/*                    VSIMultipartUploadGetCapabilities()               */
+/************************************************************************/
+
+/**
+ * \brief Return capabilities for multiple part file upload.
+ *
+ * @param pszFilename Filename, or virtual file system prefix, onto which
+ * capabilities should apply.
+ * @param[out] pbNonSequentialUploadSupported If not null,
+ * the pointed value is set if parts can be uploaded in a non-sequential way.
+ * @param[out] pbParallelUploadSupported If not null,
+ * the pointed value is set if parts can be uploaded in a parallel way.
+ * (implies *pbNonSequentialUploadSupported = true)
+ * @param[out] pbAbortSupported If not null,
+ * the pointed value is set if VSIMultipartUploadAbort() is implemented.
+ * @param[out] pnMinPartSize If not null, the pointed value is set to the minimum
+ * size of parts (but the last one), in MiB.
+ * @param[out] pnMaxPartSize If not null, the pointed value is set to the maximum
+ * size of parts, in MiB.
+ * @param[out] pnMaxPartCount  If not null, the pointed value is set to the
+ * maximum number of parts that can be uploaded.
+ *
+ * @return TRUE in case of success, FALSE otherwise.
+ *
+ * @since 3.10
+ */
+int VSIMultipartUploadGetCapabilities(
+    const char *pszFilename, int *pbNonSequentialUploadSupported,
+    int *pbParallelUploadSupported, int *pbAbortSupported,
+    size_t *pnMinPartSize, size_t *pnMaxPartSize, int *pnMaxPartCount)
+{
+    VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszFilename);
+
+    return poFSHandler->MultipartUploadGetCapabilities(
+        pbNonSequentialUploadSupported, pbParallelUploadSupported,
+        pbAbortSupported, pnMinPartSize, pnMaxPartSize, pnMaxPartCount);
+}
+
+/************************************************************************/
+/*                     VSIMultipartUploadStart()                        */
+/************************************************************************/
+
+/**
+ * \brief Initiates the upload a (big) file in a piece-wise way.
+ *
+ * Using this API directly is generally not needed, but in very advanced cases,
+ * as VSIFOpenL(..., "wb") + VSIFWriteL(), VSISync(), VSICopyFile() or
+ * VSICopyFileRestartable() may be able to leverage it when needed.
+ *
+ * This is only implemented for the /vsis3/, /vsigs/, /vsiaz/, /vsiadls/ and
+ * /vsioss/ virtual file systems.
+ *
+ * The typical workflow is to do :
+ * - VSIMultipartUploadStart()
+ * - VSIMultipartUploadAddPart(): several times
+ * - VSIMultipartUploadEnd()
+ *
+ * If VSIMultipartUploadAbort() is supported by the filesystem (VSIMultipartUploadGetCapabilities()
+ * can be used to determine it), this function should be called to cancel an
+ * upload. This can be needed to avoid extra billing for some cloud storage
+ * providers.
+ *
+ * The following options are supported:
+ * <ul>
+ * <li>MIME headers such as Content-Type and Content-Encoding
+ * are supported for the /vsis3/, /vsigs/, /vsiaz/, /vsiadls/ file systems.</li>
+ * </ul>
+ *
+ * @param pszFilename Filename to create
+ * @param papszOptions NULL or null-terminated list of options.
+ * @return an upload ID to pass to other VSIMultipartUploadXXXXX() functions,
+ * and to free with CPLFree() once done, or nullptr in case of error.
+ *
+ * @since 3.10
+ */
+char *VSIMultipartUploadStart(const char *pszFilename,
+                              CSLConstList papszOptions)
+{
+    VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszFilename);
+
+    return poFSHandler->MultipartUploadStart(pszFilename, papszOptions);
+}
+
+/************************************************************************/
+/*                     VSIMultipartUploadAddPart()                      */
+/************************************************************************/
+
+/**
+ * \brief Uploads a new part to a multi-part uploaded file.
+ *
+ * Cf VSIMultipartUploadStart().
+ *
+ * VSIMultipartUploadGetCapabilities() returns hints on the constraints that
+ * apply to the upload, in terms of minimum/maximum size of each part, maximum
+ * number of parts, and whether non-sequential or parallel uploads are
+ * supported.
+ *
+ * @param pszFilename Filename to which to append the new part. Should be the
+ *                    same as the one used for VSIMultipartUploadStart()
+ * @param pszUploadId Value returned by VSIMultipartUploadStart()
+ * @param nPartNumber Part number, starting at 1.
+ * @param nFileOffset Offset within the file at which (starts at 0) the passed
+ *                    data starts.
+ * @param pData       Pointer to an array of nDataLength bytes.
+ * @param nDataLength Size in bytes of pData.
+ * @param papszOptions Unused. Should be nullptr.
+ *
+ * @return a part identifier that must be passed into the apszPartIds[] array of
+ * VSIMultipartUploadEnd(), and to free with CPLFree() once done, or nullptr in
+ * case of error.
+ *
+ * @since 3.10
+ */
+char *VSIMultipartUploadAddPart(const char *pszFilename,
+                                const char *pszUploadId, int nPartNumber,
+                                vsi_l_offset nFileOffset, const void *pData,
+                                size_t nDataLength, CSLConstList papszOptions)
+{
+    VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszFilename);
+
+    return poFSHandler->MultipartUploadAddPart(pszFilename, pszUploadId,
+                                               nPartNumber, nFileOffset, pData,
+                                               nDataLength, papszOptions);
+}
+
+/************************************************************************/
+/*                       VSIMultipartUploadEnd()                        */
+/************************************************************************/
+
+/**
+ * \brief Completes a multi-part file upload.
+ *
+ * Cf VSIMultipartUploadStart().
+ *
+ * @param pszFilename Filename for which multipart upload should be completed.
+ *                    Should be the same as the one used for
+ *                    VSIMultipartUploadStart()
+ * @param pszUploadId Value returned by VSIMultipartUploadStart()
+ * @param nPartIdsCount Number of parts,  andsize of apszPartIds
+ * @param apszPartIds Array of part identifiers (as returned by
+ *                    VSIMultipartUploadAddPart()), that must be ordered in
+ *                    the sequential order of parts, and of size nPartIdsCount.
+ * @param nTotalSize  Total size of the file in bytes (must be equal to the sum
+ *                    of nDataLength passed to VSIMultipartUploadAddPart())
+ * @param papszOptions Unused. Should be nullptr.
+ *
+ * @return TRUE in case of success, FALSE in case of failure.
+ *
+ * @since 3.10
+ */
+int VSIMultipartUploadEnd(const char *pszFilename, const char *pszUploadId,
+                          size_t nPartIdsCount, const char *const *apszPartIds,
+                          vsi_l_offset nTotalSize, CSLConstList papszOptions)
+{
+    VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszFilename);
+
+    return poFSHandler->MultipartUploadEnd(pszFilename, pszUploadId,
+                                           nPartIdsCount, apszPartIds,
+                                           nTotalSize, papszOptions);
+}
+
+/************************************************************************/
+/*                       VSIMultipartUploadAbort()                      */
+/************************************************************************/
+
+/**
+ * \brief Aborts a multi-part file upload.
+ *
+ * Cf VSIMultipartUploadStart().
+ *
+ * This function is not implemented for all virtual file systems.
+ * Use VSIMultipartUploadGetCapabilities() to determine if it is supported.
+ *
+ * This can be needed to avoid extra billing for some cloud storage providers.
+ *
+ * @param pszFilename Filename for which multipart upload should be completed.
+ *                    Should be the same as the one used for
+ *                    VSIMultipartUploadStart()
+ * @param pszUploadId Value returned by VSIMultipartUploadStart()
+ * @param papszOptions Unused. Should be nullptr.
+ *
+ * @return TRUE in case of success, FALSE in case of failure.
+ *
+ * @since 3.10
+ */
+int VSIMultipartUploadAbort(const char *pszFilename, const char *pszUploadId,
+                            CSLConstList papszOptions)
+{
+    VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszFilename);
+
+    return poFSHandler->MultipartUploadAbort(pszFilename, pszUploadId,
+                                             papszOptions);
+}
+
+#ifndef DOXYGEN_SKIP
+
+/************************************************************************/
+/*                     MultipartUploadGetCapabilities()                 */
+/************************************************************************/
+
+bool VSIFilesystemHandler::MultipartUploadGetCapabilities(int *, int *, int *,
+                                                          size_t *, size_t *,
+                                                          int *)
+{
+    CPLError(
+        CE_Failure, CPLE_NotSupported,
+        "MultipartUploadGetCapabilities() not supported by this file system");
+    return false;
+}
+
+/************************************************************************/
+/*                         MultipartUploadStart()                       */
+/************************************************************************/
+
+char *VSIFilesystemHandler::MultipartUploadStart(const char *, CSLConstList)
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "MultipartUploadStart() not supported by this file system");
+    return nullptr;
+}
+
+/************************************************************************/
+/*                       MultipartUploadAddPart()                       */
+/************************************************************************/
+
+char *VSIFilesystemHandler::MultipartUploadAddPart(const char *, const char *,
+                                                   int, vsi_l_offset,
+                                                   const void *, size_t,
+                                                   CSLConstList)
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "MultipartUploadAddPart() not supported by this file system");
+    return nullptr;
+}
+
+/************************************************************************/
+/*                         MultipartUploadEnd()                         */
+/************************************************************************/
+
+bool VSIFilesystemHandler::MultipartUploadEnd(const char *, const char *,
+                                              size_t, const char *const *,
+                                              vsi_l_offset, CSLConstList)
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "MultipartUploadEnd() not supported by this file system");
+    return FALSE;
+}
+
+/************************************************************************/
+/*                         MultipartUploadAbort()                       */
+/************************************************************************/
+
+bool VSIFilesystemHandler::MultipartUploadAbort(const char *, const char *,
+                                                CSLConstList)
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "MultipartUploadAbort() not supported by this file system");
+    return FALSE;
+}
+
+#endif
+
+/************************************************************************/
 /*                         VSIAbortPendingUploads()                     */
 /************************************************************************/
 
 /**
- * \brief Abort ongoing multi-part uploads.
+ * \brief Abort all ongoing multi-part uploads.
  *
  * Abort ongoing multi-part uploads on AWS S3 and Google Cloud Storage. This
  * can be used in case a process doing such uploads was killed in a unclean way.
  *
+ * This can be needed to avoid extra billing for some cloud storage providers.
+ *
  * Without effect on other virtual file systems.
+ *
+ * VSIMultipartUploadAbort() can also be used to cancel a given upload, if the
+ * upload ID is known.
  *
  * @param pszFilename filename or prefix of a directory into which multipart
  * uploads must be aborted. This can be the root directory of a bucket.  UTF-8

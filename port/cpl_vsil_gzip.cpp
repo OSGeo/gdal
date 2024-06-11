@@ -139,6 +139,11 @@ constexpr int gz_magic[2] = {0x1f, 0x8b};  // gzip magic header
     CPLError(CE_Failure, CPLE_AppDefined, "In file %s, at line %d, return %d", \
              __FILE__, __LINE__, ret)
 
+// To avoid aliasing to CopyFile to CopyFileA on Windows
+#ifdef CopyFile
+#undef CopyFile
+#endif
+
 // #define ENABLE_DEBUG 1
 
 /************************************************************************/

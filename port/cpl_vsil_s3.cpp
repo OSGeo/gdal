@@ -635,7 +635,7 @@ bool VSICurlFilesystemHandlerBase::AnalyseS3FileList(
 /*                         VSIS3FSHandler                               */
 /************************************************************************/
 
-class VSIS3FSHandler final : public IVSIS3LikeFSHandler
+class VSIS3FSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIS3FSHandler)
 
@@ -699,17 +699,17 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
                          const char *pszDomain,
                          CSLConstList papszOptions) override;
 
-    bool SupportsParallelMultipartUpload() const override
-    {
-        return true;
-    }
-
     std::string
     GetStreamingFilename(const std::string &osFilename) const override;
 
     VSIFilesystemHandler *Duplicate(const char *pszPrefix) override
     {
         return new VSIS3FSHandler(pszPrefix);
+    }
+
+    bool SupportsMultipartAbort() const override
+    {
+        return true;
     }
 };
 
@@ -741,16 +741,14 @@ class VSIS3Handle final : public IVSIS3LikeHandle
 };
 
 /************************************************************************/
-/*                         VSIS3LikeWriteHandle()                       */
+/*                      VSIMultipartWriteHandle()                       */
 /************************************************************************/
 
-VSIS3LikeWriteHandle::VSIS3LikeWriteHandle(
-    IVSIS3LikeFSHandler *poFS, const char *pszFilename,
-    IVSIS3LikeHandleHelper *poS3HandleHelper, bool bUseChunked,
-    CSLConstList papszOptions)
+VSIMultipartWriteHandle::VSIMultipartWriteHandle(
+    IVSIS3LikeFSHandlerWithMultipartUpload *poFS, const char *pszFilename,
+    IVSIS3LikeHandleHelper *poS3HandleHelper, CSLConstList papszOptions)
     : m_poFS(poFS), m_osFilename(pszFilename),
-      m_poS3HandleHelper(poS3HandleHelper), m_bUseChunkedTransfer(bUseChunked),
-      m_aosOptions(papszOptions),
+      m_poS3HandleHelper(poS3HandleHelper), m_aosOptions(papszOptions),
       m_aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename)),
       m_oRetryParameters(m_aosHTTPOptions)
 {
@@ -759,25 +757,20 @@ VSIS3LikeWriteHandle::VSIS3LikeWriteHandle(
     // Swift only supports the "Transfer-Encoding: chunked" PUT mechanism.
     // So two different implementations.
 
-    if (!m_bUseChunkedTransfer)
-    {
-        const char *pszChunkSize = m_aosOptions.FetchNameValue("CHUNK_SIZE");
-        if (pszChunkSize)
-            m_nBufferSize = poFS->GetUploadChunkSizeInBytes(
-                pszFilename,
-                CPLSPrintf(CPL_FRMT_GIB,
-                           CPLAtoGIntBig(pszChunkSize) * MIB_CONSTANT));
-        else
-            m_nBufferSize =
-                poFS->GetUploadChunkSizeInBytes(pszFilename, nullptr);
+    const char *pszChunkSize = m_aosOptions.FetchNameValue("CHUNK_SIZE");
+    if (pszChunkSize)
+        m_nBufferSize = poFS->GetUploadChunkSizeInBytes(
+            pszFilename, CPLSPrintf(CPL_FRMT_GIB, CPLAtoGIntBig(pszChunkSize) *
+                                                      MIB_CONSTANT));
+    else
+        m_nBufferSize = poFS->GetUploadChunkSizeInBytes(pszFilename, nullptr);
 
-        m_pabyBuffer = static_cast<GByte *>(VSIMalloc(m_nBufferSize));
-        if (m_pabyBuffer == nullptr)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot allocate working buffer for %s",
-                     m_poFS->GetFSPrefix().c_str());
-        }
+    m_pabyBuffer = static_cast<GByte *>(VSIMalloc(m_nBufferSize));
+    if (m_pabyBuffer == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot allocate working buffer for %s",
+                 m_poFS->GetFSPrefix().c_str());
     }
 }
 
@@ -785,7 +778,7 @@ VSIS3LikeWriteHandle::VSIS3LikeWriteHandle(
 /*                      GetUploadChunkSizeInBytes()                     */
 /************************************************************************/
 
-size_t IVSIS3LikeFSHandler::GetUploadChunkSizeInBytes(
+size_t IVSIS3LikeFSHandlerWithMultipartUpload::GetUploadChunkSizeInBytes(
     const char *pszFilename, const char *pszSpecifiedValInBytes)
 {
     size_t nChunkSize = 0;
@@ -846,23 +839,14 @@ size_t IVSIS3LikeFSHandler::GetUploadChunkSizeInBytes(
 }
 
 /************************************************************************/
-/*                        ~VSIS3LikeWriteHandle()                           */
+/*                     ~VSIMultipartWriteHandle()                       */
 /************************************************************************/
 
-VSIS3LikeWriteHandle::~VSIS3LikeWriteHandle()
+VSIMultipartWriteHandle::~VSIMultipartWriteHandle()
 {
-    VSIS3LikeWriteHandle::Close();
+    VSIMultipartWriteHandle::Close();
     delete m_poS3HandleHelper;
     CPLFree(m_pabyBuffer);
-    if (m_hCurlMulti)
-    {
-        if (m_hCurl)
-        {
-            curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
-            curl_easy_cleanup(m_hCurl);
-        }
-        VSICURLMultiCleanup(m_hCurlMulti);
-    }
     CPLFree(m_sWriteFuncHeaderData.pBuffer);
 }
 
@@ -870,7 +854,7 @@ VSIS3LikeWriteHandle::~VSIS3LikeWriteHandle()
 /*                               Seek()                                 */
 /************************************************************************/
 
-int VSIS3LikeWriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIMultipartWriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
 {
     if (!((nWhence == SEEK_SET && nOffset == m_nCurOffset) ||
           (nWhence == SEEK_CUR && nOffset == 0) ||
@@ -889,7 +873,7 @@ int VSIS3LikeWriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                               Tell()                                 */
 /************************************************************************/
 
-vsi_l_offset VSIS3LikeWriteHandle::Tell()
+vsi_l_offset VSIMultipartWriteHandle::Tell()
 {
     return m_nCurOffset;
 }
@@ -898,8 +882,8 @@ vsi_l_offset VSIS3LikeWriteHandle::Tell()
 /*                               Read()                                 */
 /************************************************************************/
 
-size_t VSIS3LikeWriteHandle::Read(void * /* pBuffer */, size_t /* nSize */,
-                                  size_t /* nMemb */)
+size_t VSIMultipartWriteHandle::Read(void * /* pBuffer */, size_t /* nSize */,
+                                     size_t /* nMemb */)
 {
     CPLError(CE_Failure, CPLE_NotSupported,
              "Read not supported on writable %s files",
@@ -912,7 +896,7 @@ size_t VSIS3LikeWriteHandle::Read(void * /* pBuffer */, size_t /* nSize */,
 /*                        InitiateMultipartUpload()                     */
 /************************************************************************/
 
-std::string IVSIS3LikeFSHandler::InitiateMultipartUpload(
+std::string IVSIS3LikeFSHandlerWithMultipartUpload::InitiateMultipartUpload(
     const std::string &osFilename, IVSIS3LikeHandleHelper *poS3HandleHelper,
     const CPLHTTPRetryParameters &oRetryParameters, CSLConstList papszOptions)
 {
@@ -1017,7 +1001,7 @@ std::string IVSIS3LikeFSHandler::InitiateMultipartUpload(
 /*                           UploadPart()                               */
 /************************************************************************/
 
-bool VSIS3LikeWriteHandle::UploadPart()
+bool VSIMultipartWriteHandle::UploadPart()
 {
     ++m_nPartNumber;
     if (m_nPartNumber > m_poFS->GetMaximumPartCount())
@@ -1045,14 +1029,13 @@ bool VSIS3LikeWriteHandle::UploadPart()
     return !osEtag.empty();
 }
 
-std::string
-IVSIS3LikeFSHandler::UploadPart(const std::string &osFilename, int nPartNumber,
-                                const std::string &osUploadID,
-                                vsi_l_offset /* nPosition */,
-                                const void *pabyBuffer, size_t nBufferSize,
-                                IVSIS3LikeHandleHelper *poS3HandleHelper,
-                                const CPLHTTPRetryParameters &oRetryParameters,
-                                CSLConstList /* papszOptions */)
+std::string IVSIS3LikeFSHandlerWithMultipartUpload::UploadPart(
+    const std::string &osFilename, int nPartNumber,
+    const std::string &osUploadID, vsi_l_offset /* nPosition */,
+    const void *pabyBuffer, size_t nBufferSize,
+    IVSIS3LikeHandleHelper *poS3HandleHelper,
+    const CPLHTTPRetryParameters &oRetryParameters,
+    CSLConstList /* papszOptions */)
 {
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsFile oContextFile(osFilename.c_str());
@@ -1162,291 +1145,11 @@ IVSIS3LikeFSHandler::UploadPart(const std::string &osFilename, int nPartNumber,
 }
 
 /************************************************************************/
-/*                      ReadCallBackBufferChunked()                     */
-/************************************************************************/
-
-size_t VSIS3LikeWriteHandle::ReadCallBackBufferChunked(char *buffer,
-                                                       size_t size,
-                                                       size_t nitems,
-                                                       void *instream)
-{
-    VSIS3LikeWriteHandle *poThis =
-        static_cast<VSIS3LikeWriteHandle *>(instream);
-    if (poThis->m_nChunkedBufferSize == 0)
-    {
-        // CPLDebug("VSIS3LikeWriteHandle", "Writing 0 byte (finish)");
-        return 0;
-    }
-    const size_t nSizeMax = size * nitems;
-    size_t nSizeToWrite = nSizeMax;
-    size_t nChunkedBufferRemainingSize =
-        poThis->m_nChunkedBufferSize - poThis->m_nChunkedBufferOff;
-    if (nChunkedBufferRemainingSize < nSizeToWrite)
-        nSizeToWrite = nChunkedBufferRemainingSize;
-    memcpy(buffer,
-           static_cast<const GByte *>(poThis->m_pBuffer) +
-               poThis->m_nChunkedBufferOff,
-           nSizeToWrite);
-    poThis->m_nChunkedBufferOff += nSizeToWrite;
-    // CPLDebug("VSIS3LikeWriteHandle", "Writing %d bytes", nSizeToWrite);
-    return nSizeToWrite;
-}
-
-/************************************************************************/
-/*                          WriteChunked()                              */
-/************************************************************************/
-
-size_t VSIS3LikeWriteHandle::WriteChunked(const void *pBuffer, size_t nSize,
-                                          size_t nMemb)
-{
-    const size_t nBytesToWrite = nSize * nMemb;
-
-    if (m_hCurlMulti == nullptr)
-    {
-        m_hCurlMulti = curl_multi_init();
-    }
-
-    WriteFuncStruct sWriteFuncData;
-    CPLHTTPRetryContext oRetryContext(m_oRetryParameters);
-    // We can only easily retry at the first chunk of a transfer
-    bool bCanRetry = (m_hCurl == nullptr);
-    bool bRetry;
-    do
-    {
-        bRetry = false;
-        struct curl_slist *headers = nullptr;
-        if (m_hCurl == nullptr)
-        {
-            CURL *hCurlHandle = curl_easy_init();
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_UPLOAD, 1L);
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_READFUNCTION,
-                                       ReadCallBackBufferChunked);
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_READDATA, this);
-
-            VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr,
-                                       nullptr);
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA,
-                                       &sWriteFuncData);
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
-                                       VSICurlHandleWriteFunc);
-
-            VSICURLInitWriteFuncStruct(&m_sWriteFuncHeaderData, nullptr,
-                                       nullptr, nullptr);
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA,
-                                       &m_sWriteFuncHeaderData);
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
-                                       VSICurlHandleWriteFunc);
-
-            headers = static_cast<struct curl_slist *>(CPLHTTPSetOptions(
-                hCurlHandle, m_poS3HandleHelper->GetURL().c_str(),
-                m_aosHTTPOptions.List()));
-            headers = VSICurlSetCreationHeadersFromOptions(
-                headers, m_aosOptions.List(), m_osFilename.c_str());
-            headers = VSICurlMergeHeaders(
-                headers, m_poS3HandleHelper->GetCurlHeaders("PUT", headers));
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER,
-                                       headers);
-
-            m_osCurlErrBuf.resize(CURL_ERROR_SIZE + 1);
-            unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_ERRORBUFFER,
-                                       &m_osCurlErrBuf[0]);
-
-            curl_multi_add_handle(m_hCurlMulti, hCurlHandle);
-            m_hCurl = hCurlHandle;
-        }
-
-        m_pBuffer = pBuffer;
-        m_nChunkedBufferOff = 0;
-        m_nChunkedBufferSize = nBytesToWrite;
-
-        int repeats = 0;
-        while (m_nChunkedBufferOff < m_nChunkedBufferSize && !bRetry)
-        {
-            int still_running;
-
-            memset(&m_osCurlErrBuf[0], 0, m_osCurlErrBuf.size());
-
-            while (curl_multi_perform(m_hCurlMulti, &still_running) ==
-                       CURLM_CALL_MULTI_PERFORM &&
-                   // cppcheck-suppress knownConditionTrueFalse
-                   m_nChunkedBufferOff < m_nChunkedBufferSize)
-            {
-                // loop
-            }
-            // cppcheck-suppress knownConditionTrueFalse
-            if (!still_running || m_nChunkedBufferOff == m_nChunkedBufferSize)
-                break;
-
-            CURLMsg *msg;
-            do
-            {
-                int msgq = 0;
-                msg = curl_multi_info_read(m_hCurlMulti, &msgq);
-                if (msg && (msg->msg == CURLMSG_DONE))
-                {
-                    CURL *e = msg->easy_handle;
-                    if (e == m_hCurl)
-                    {
-                        long response_code;
-                        curl_easy_getinfo(m_hCurl, CURLINFO_RESPONSE_CODE,
-                                          &response_code);
-                        if (response_code != 200 && response_code != 201)
-                        {
-                            // Look if we should attempt a retry
-                            if (bCanRetry &&
-                                oRetryContext.CanRetry(
-                                    static_cast<int>(response_code),
-                                    m_sWriteFuncHeaderData.pBuffer,
-                                    m_osCurlErrBuf.c_str()))
-                            {
-                                CPLError(CE_Warning, CPLE_AppDefined,
-                                         "HTTP error code: %d - %s. "
-                                         "Retrying again in %.1f secs",
-                                         static_cast<int>(response_code),
-                                         m_poS3HandleHelper->GetURL().c_str(),
-                                         oRetryContext.GetCurrentDelay());
-                                CPLSleep(oRetryContext.GetCurrentDelay());
-                                bRetry = true;
-                            }
-                            else if (sWriteFuncData.pBuffer != nullptr &&
-                                     m_poS3HandleHelper->CanRestartOnError(
-                                         sWriteFuncData.pBuffer,
-                                         m_sWriteFuncHeaderData.pBuffer, false))
-                            {
-                                bRetry = true;
-                            }
-                            else
-                            {
-                                CPLError(CE_Failure, CPLE_AppDefined,
-                                         "Error %d: %s",
-                                         static_cast<int>(response_code),
-                                         m_osCurlErrBuf.c_str());
-
-                                curl_slist_free_all(headers);
-                                bRetry = false;
-                            }
-
-                            curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
-                            curl_easy_cleanup(m_hCurl);
-
-                            CPLFree(sWriteFuncData.pBuffer);
-                            CPLFree(m_sWriteFuncHeaderData.pBuffer);
-
-                            m_hCurl = nullptr;
-                            sWriteFuncData.pBuffer = nullptr;
-                            m_sWriteFuncHeaderData.pBuffer = nullptr;
-                            if (!bRetry)
-                                return 0;
-                        }
-                    }
-                }
-            } while (msg);
-
-            CPLMultiPerformWait(m_hCurlMulti, repeats);
-        }
-
-        m_nWrittenInPUT += nBytesToWrite;
-
-        curl_slist_free_all(headers);
-
-        m_pBuffer = nullptr;
-
-        if (!bRetry)
-        {
-            long response_code;
-            curl_easy_getinfo(m_hCurl, CURLINFO_RESPONSE_CODE, &response_code);
-            if (response_code != 100)
-            {
-                // Look if we should attempt a retry
-                if (bCanRetry &&
-                    oRetryContext.CanRetry(static_cast<int>(response_code),
-                                           m_sWriteFuncHeaderData.pBuffer,
-                                           m_osCurlErrBuf.c_str()))
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "HTTP error code: %d - %s. "
-                             "Retrying again in %.1f secs",
-                             static_cast<int>(response_code),
-                             m_poS3HandleHelper->GetURL().c_str(),
-                             oRetryContext.GetCurrentDelay());
-                    CPLSleep(oRetryContext.GetCurrentDelay());
-                    bRetry = true;
-                }
-                else if (sWriteFuncData.pBuffer != nullptr &&
-                         m_poS3HandleHelper->CanRestartOnError(
-                             sWriteFuncData.pBuffer,
-                             m_sWriteFuncHeaderData.pBuffer, false))
-                {
-                    bRetry = true;
-                }
-                else
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Error %d: %s",
-                             static_cast<int>(response_code),
-                             m_osCurlErrBuf.c_str());
-                    bRetry = false;
-                    nMemb = 0;
-                }
-
-                curl_multi_remove_handle(m_hCurlMulti, m_hCurl);
-                curl_easy_cleanup(m_hCurl);
-
-                CPLFree(sWriteFuncData.pBuffer);
-                CPLFree(m_sWriteFuncHeaderData.pBuffer);
-
-                m_hCurl = nullptr;
-                sWriteFuncData.pBuffer = nullptr;
-                m_sWriteFuncHeaderData.pBuffer = nullptr;
-            }
-        }
-    } while (bRetry);
-
-    return nMemb;
-}
-
-/************************************************************************/
-/*                        FinishChunkedTransfer()                       */
-/************************************************************************/
-
-int VSIS3LikeWriteHandle::FinishChunkedTransfer()
-{
-    if (m_hCurl == nullptr)
-        return -1;
-
-    NetworkStatisticsFileSystem oContextFS(m_poFS->GetFSPrefix().c_str());
-    NetworkStatisticsFile oContextFile(m_osFilename.c_str());
-    NetworkStatisticsAction oContextAction("Write");
-
-    NetworkStatisticsLogger::LogPUT(m_nWrittenInPUT);
-    m_nWrittenInPUT = 0;
-
-    m_pBuffer = nullptr;
-    m_nChunkedBufferOff = 0;
-    m_nChunkedBufferSize = 0;
-
-    VSICURLMultiPerform(m_hCurlMulti);
-
-    long response_code;
-    curl_easy_getinfo(m_hCurl, CURLINFO_RESPONSE_CODE, &response_code);
-    if (response_code == 200 || response_code == 201)
-    {
-        InvalidateParentDirectory();
-    }
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Error %d: %s",
-                 static_cast<int>(response_code), m_osCurlErrBuf.c_str());
-        return -1;
-    }
-    return 0;
-}
-
-/************************************************************************/
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIS3LikeWriteHandle::Write(const void *pBuffer, size_t nSize,
-                                   size_t nMemb)
+size_t VSIMultipartWriteHandle::Write(const void *pBuffer, size_t nSize,
+                                      size_t nMemb)
 {
     if (m_bError)
         return 0;
@@ -1454,11 +1157,6 @@ size_t VSIS3LikeWriteHandle::Write(const void *pBuffer, size_t nSize,
     size_t nBytesToWrite = nSize * nMemb;
     if (nBytesToWrite == 0)
         return 0;
-
-    if (m_bUseChunkedTransfer)
-    {
-        return WriteChunked(pBuffer, nSize, nMemb);
-    }
 
     const GByte *pabySrcBuffer = reinterpret_cast<const GByte *>(pBuffer);
     while (nBytesToWrite > 0)
@@ -1498,7 +1196,7 @@ size_t VSIS3LikeWriteHandle::Write(const void *pBuffer, size_t nSize,
 /*                    InvalidateParentDirectory()                       */
 /************************************************************************/
 
-void VSIS3LikeWriteHandle::InvalidateParentDirectory()
+void VSIMultipartWriteHandle::InvalidateParentDirectory()
 {
     m_poFS->InvalidateCachedData(m_poS3HandleHelper->GetURL().c_str());
 
@@ -1512,7 +1210,7 @@ void VSIS3LikeWriteHandle::InvalidateParentDirectory()
 /*                           DoSinglePartPUT()                          */
 /************************************************************************/
 
-bool VSIS3LikeWriteHandle::DoSinglePartPUT()
+bool VSIMultipartWriteHandle::DoSinglePartPUT()
 {
     bool bSuccess = true;
     bool bRetry;
@@ -1627,7 +1325,7 @@ bool VSIS3LikeWriteHandle::DoSinglePartPUT()
 /*                        CompleteMultipart()                           */
 /************************************************************************/
 
-bool IVSIS3LikeFSHandler::CompleteMultipart(
+bool IVSIS3LikeFSHandlerWithMultipartUpload::CompleteMultipart(
     const std::string &osFilename, const std::string &osUploadID,
     const std::vector<std::string> &aosEtags, vsi_l_offset /* nTotalSize */,
     IVSIS3LikeHandleHelper *poS3HandleHelper,
@@ -1739,7 +1437,7 @@ bool IVSIS3LikeFSHandler::CompleteMultipart(
 /*                          AbortMultipart()                            */
 /************************************************************************/
 
-bool IVSIS3LikeFSHandler::AbortMultipart(
+bool IVSIS3LikeFSHandlerWithMultipartUpload::AbortMultipart(
     const std::string &osFilename, const std::string &osUploadID,
     IVSIS3LikeHandleHelper *poS3HandleHelper,
     const CPLHTTPRetryParameters &oRetryParameters)
@@ -1822,7 +1520,8 @@ bool IVSIS3LikeFSHandler::AbortMultipart(
 /*                       AbortPendingUploads()                          */
 /************************************************************************/
 
-bool IVSIS3LikeFSHandler::AbortPendingUploads(const char *pszFilename)
+bool IVSIS3LikeFSHandlerWithMultipartUpload::AbortPendingUploads(
+    const char *pszFilename)
 {
     NetworkStatisticsFileSystem oContextFS(GetFSPrefix().c_str());
     NetworkStatisticsFile oContextFile(pszFilename);
@@ -2019,17 +1718,13 @@ bool IVSIS3LikeFSHandler::AbortPendingUploads(const char *pszFilename)
 /*                                 Close()                              */
 /************************************************************************/
 
-int VSIS3LikeWriteHandle::Close()
+int VSIMultipartWriteHandle::Close()
 {
     int nRet = 0;
     if (!m_bClosed)
     {
         m_bClosed = true;
-        if (m_bUseChunkedTransfer && m_hCurlMulti != nullptr)
-        {
-            nRet = FinishChunkedTransfer();
-        }
-        else if (m_osUploadID.empty())
+        if (m_osUploadID.empty())
         {
             if (!m_bError && !DoSinglePartPUT())
                 nRet = -1;
@@ -2070,8 +1765,8 @@ VSIS3FSHandler::CreateWriteHandle(const char *pszFilename,
         CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = std::make_unique<VSIS3LikeWriteHandle>(
-        this, pszFilename, poHandleHelper, false, papszOptions);
+    auto poHandle = std::make_unique<VSIMultipartWriteHandle>(
+        this, pszFilename, poHandleHelper, papszOptions);
     if (!poHandle->IsOK())
     {
         return nullptr;
@@ -3689,7 +3384,9 @@ int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
     bool bUsingStreaming = false;
     if (!fpSource)
     {
-        if (STARTS_WITH(pszSource, osPrefix.c_str()))
+        if (STARTS_WITH(pszSource, osPrefix.c_str()) &&
+            CPLTestBool(CPLGetConfigOption(
+                "VSIS3_COPYFILE_USE_STREAMING_SOURCE", "YES")))
         {
             // Try to get a streaming path from the source path
             auto poSourceFSHandler = dynamic_cast<IVSIS3LikeFSHandler *>(
@@ -3764,7 +3461,7 @@ static int GetRequestedNumThreadsForCopy(CSLConstList papszOptions)
 /*                       CopyFileRestartable()                          */
 /************************************************************************/
 
-int IVSIS3LikeFSHandler::CopyFileRestartable(
+int IVSIS3LikeFSHandlerWithMultipartUpload::CopyFileRestartable(
     const char *pszSource, const char *pszTarget, const char *pszInputPayload,
     char **ppszOutputPayload, CSLConstList papszOptions,
     GDALProgressFunc pProgressFunc, void *pProgressData)
@@ -4435,11 +4132,12 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
     std::set<std::string> aoSetDirsToCreate;
     const char *pszChunkSize = CSLFetchNameValue(papszOptions, "CHUNK_SIZE");
     const int nRequestedThreads = GetRequestedNumThreadsForCopy(papszOptions);
-    auto poTargetFSHandler = dynamic_cast<IVSIS3LikeFSHandler *>(
-        VSIFileManager::GetHandler(pszTarget));
+    auto poTargetFSMultipartHandler =
+        dynamic_cast<IVSIS3LikeFSHandlerWithMultipartUpload *>(
+            VSIFileManager::GetHandler(pszTarget));
     const bool bSupportsParallelMultipartUpload =
-        bUploadFromLocalToNetwork && poTargetFSHandler != nullptr &&
-        poTargetFSHandler->SupportsParallelMultipartUpload();
+        bUploadFromLocalToNetwork && poTargetFSMultipartHandler != nullptr &&
+        poTargetFSMultipartHandler->SupportsParallelMultipartUpload();
     const bool bSimulateThreading =
         CPLTestBool(CPLGetConfigOption("VSIS3_SIMULATE_THREADING", "NO"));
     const int nMinSizeChunk =
@@ -4459,14 +4157,15 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
 
     // Filter x-amz- options when outputting to /vsis3/
     CPLStringList aosObjectCreationOptions;
-    if (poTargetFSHandler != nullptr && papszOptions != nullptr)
+    if (poTargetFSMultipartHandler != nullptr && papszOptions != nullptr)
     {
         for (auto papszIter = papszOptions; *papszIter != nullptr; ++papszIter)
         {
             char *pszKey = nullptr;
             const char *pszValue = CPLParseNameValue(*papszIter, &pszKey);
             if (pszKey && pszValue &&
-                poTargetFSHandler->IsAllowedHeaderForObjectCreation(pszKey))
+                poTargetFSMultipartHandler->IsAllowedHeaderForObjectCreation(
+                    pszKey))
             {
                 aosObjectCreationOptions.SetNameValue(pszKey, pszValue);
             }
@@ -4492,12 +4191,12 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
     // Cleanup pending uploads in case of early exit
     struct CleanupPendingUploads
     {
-        IVSIS3LikeFSHandler *m_poFS;
+        IVSIS3LikeFSHandlerWithMultipartUpload *m_poFS;
         std::map<std::string, MultiPartDef> &m_oMapMultiPartDefs;
         const CPLHTTPRetryParameters &m_oRetryParameters;
 
         CleanupPendingUploads(
-            IVSIS3LikeFSHandler *poFSIn,
+            IVSIS3LikeFSHandlerWithMultipartUpload *poFSIn,
             std::map<std::string, MultiPartDef> &oMapMultiPartDefsIn,
             const CPLHTTPRetryParameters &oRetryParametersIn)
             : m_poFS(poFSIn), m_oMapMultiPartDefs(oMapMultiPartDefsIn),
@@ -4507,17 +4206,21 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
 
         ~CleanupPendingUploads()
         {
-            for (const auto &kv : m_oMapMultiPartDefs)
+            if (m_poFS)
             {
-                auto poS3HandleHelper = std::unique_ptr<IVSIS3LikeHandleHelper>(
-                    m_poFS->CreateHandleHelper(kv.first.c_str() +
-                                                   m_poFS->GetFSPrefix().size(),
-                                               false));
-                if (poS3HandleHelper)
+                for (const auto &kv : m_oMapMultiPartDefs)
                 {
-                    m_poFS->AbortMultipart(kv.first, kv.second.osUploadID,
-                                           poS3HandleHelper.get(),
-                                           m_oRetryParameters);
+                    auto poS3HandleHelper =
+                        std::unique_ptr<IVSIS3LikeHandleHelper>(
+                            m_poFS->CreateHandleHelper(
+                                kv.first.c_str() + m_poFS->GetFSPrefix().size(),
+                                false));
+                    if (poS3HandleHelper)
+                    {
+                        m_poFS->AbortMultipart(kv.first, kv.second.osUploadID,
+                                               poS3HandleHelper.get(),
+                                               m_oRetryParameters);
+                    }
                 }
             }
         }
@@ -4527,8 +4230,8 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         operator=(const CleanupPendingUploads &) = delete;
     };
 
-    const CleanupPendingUploads cleanupPendingUploads(this, oMapMultiPartDefs,
-                                                      oRetryParameters);
+    const CleanupPendingUploads cleanupPendingUploads(
+        poTargetFSMultipartHandler, oMapMultiPartDefs, oRetryParameters);
 
     std::string osTargetDir;  // set in the VSI_ISDIR(sSource.st_mode) case
     std::string osTarget;     // set in the !(VSI_ISDIR(sSource.st_mode)) case
@@ -4759,9 +4462,11 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                         if (poS3HandleHelper == nullptr)
                             return false;
 
-                        const auto osUploadID = InitiateMultipartUpload(
-                            osSubTarget, poS3HandleHelper.get(),
-                            oRetryParameters, aosObjectCreationOptions.List());
+                        const auto osUploadID =
+                            poTargetFSMultipartHandler->InitiateMultipartUpload(
+                                osSubTarget, poS3HandleHelper.get(),
+                                oRetryParameters,
+                                aosObjectCreationOptions.List());
                         if (osUploadID.empty())
                         {
                             return false;
@@ -4968,9 +4673,11 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                         if (poS3HandleHelper == nullptr)
                             return false;
 
-                        const auto osUploadID = InitiateMultipartUpload(
-                            osTarget, poS3HandleHelper.get(), oRetryParameters,
-                            aosObjectCreationOptions.List());
+                        const auto osUploadID =
+                            poTargetFSMultipartHandler->InitiateMultipartUpload(
+                                osTarget, poS3HandleHelper.get(),
+                                oRetryParameters,
+                                aosObjectCreationOptions.List());
                         if (osUploadID.empty())
                         {
                             return false;
@@ -5016,6 +4723,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
     struct JobQueue
     {
         IVSIS3LikeFSHandler *poFS;
+        IVSIS3LikeFSHandlerWithMultipartUpload *poTargetFSMultipartHandler;
         const std::vector<ChunkToCopy> &aoChunksToCopy;
         const std::vector<size_t> &anIndexToCopy;
         std::map<std::string, MultiPartDef> &oMapMultiPartDefs;
@@ -5034,6 +4742,8 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         const CPLStringList &aosObjectCreationOptions;
 
         JobQueue(IVSIS3LikeFSHandler *poFSIn,
+                 IVSIS3LikeFSHandlerWithMultipartUpload
+                     *poTargetFSMultipartHandlerIn,
                  const std::vector<ChunkToCopy> &aoChunksToCopyIn,
                  const std::vector<size_t> &anIndexToCopyIn,
                  std::map<std::string, MultiPartDef> &oMapMultiPartDefsIn,
@@ -5044,8 +4754,9 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                  size_t nMaxChunkSizeIn,
                  const CPLHTTPRetryParameters &oRetryParametersIn,
                  const CPLStringList &aosObjectCreationOptionsIn)
-            : poFS(poFSIn), aoChunksToCopy(aoChunksToCopyIn),
-              anIndexToCopy(anIndexToCopyIn),
+            : poFS(poFSIn),
+              poTargetFSMultipartHandler(poTargetFSMultipartHandlerIn),
+              aoChunksToCopy(aoChunksToCopyIn), anIndexToCopy(anIndexToCopyIn),
               oMapMultiPartDefs(oMapMultiPartDefsIn),
               osSourceDir(osSourceDirIn), osTargetDir(osTargetDirIn),
               osSource(osSourceIn), osTarget(osTargetIn),
@@ -5137,11 +4848,13 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                                      ? 0 /* shouldn't happen */
                                      : static_cast<int>(chunk.nStartOffset /
                                                         queue->nMaxChunkSize));
-                        const std::string osEtag = queue->poFS->UploadPart(
-                            osSubTarget, nPartNumber, iter->second.osUploadID,
-                            chunk.nStartOffset, pBuffer, nSizeToRead,
-                            poS3HandleHelper.get(), queue->oRetryParameters,
-                            queue->aosObjectCreationOptions.List());
+                        const std::string osEtag =
+                            queue->poTargetFSMultipartHandler->UploadPart(
+                                osSubTarget, nPartNumber,
+                                iter->second.osUploadID, chunk.nStartOffset,
+                                pBuffer, nSizeToRead, poS3HandleHelper.get(),
+                                queue->oRetryParameters,
+                                queue->aosObjectCreationOptions.List());
                         if (!osEtag.empty())
                         {
                             std::lock_guard<std::mutex> lock(queue->sMutex);
@@ -5190,11 +4903,11 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         }
     };
 
-    JobQueue sJobQueue(this, aoChunksToCopy, anIndexToCopy, oMapMultiPartDefs,
-                       osSourceWithoutSlash, osTargetDir, osSourceWithoutSlash,
-                       osTarget, bSupportsParallelMultipartUpload,
-                       nMaxChunkSize, oRetryParameters,
-                       aosObjectCreationOptions);
+    JobQueue sJobQueue(this, poTargetFSMultipartHandler, aoChunksToCopy,
+                       anIndexToCopy, oMapMultiPartDefs, osSourceWithoutSlash,
+                       osTargetDir, osSourceWithoutSlash, osTarget,
+                       bSupportsParallelMultipartUpload, nMaxChunkSize,
+                       oRetryParameters, aosObjectCreationOptions);
 
     if (CPLTestBool(CPLGetConfigOption("VSIS3_SYNC_MULTITHREADING", "YES")))
     {
@@ -5256,9 +4969,10 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
             {
                 CPLAssert(kv.second.nCountValidETags ==
                           kv.second.nExpectedCount);
-                if (CompleteMultipart(kv.first, kv.second.osUploadID,
-                                      kv.second.aosEtags, kv.second.nTotalSize,
-                                      poS3HandleHelper.get(), oRetryParameters))
+                if (poTargetFSMultipartHandler->CompleteMultipart(
+                        kv.first, kv.second.osUploadID, kv.second.aosEtags,
+                        kv.second.nTotalSize, poS3HandleHelper.get(),
+                        oRetryParameters))
                 {
                     sJobQueue.ret = true;
                     oSetKeysToRemove.insert(kv.first);
@@ -5275,6 +4989,123 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
     }
 
     return sJobQueue.ret;
+}
+
+/************************************************************************/
+/*                    MultipartUploadGetCapabilities()                  */
+/************************************************************************/
+
+bool IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadGetCapabilities(
+    int *pbNonSequentialUploadSupported, int *pbParallelUploadSupported,
+    int *pbAbortSupported, size_t *pnMinPartSize, size_t *pnMaxPartSize,
+    int *pnMaxPartCount)
+{
+    if (pbNonSequentialUploadSupported)
+        *pbNonSequentialUploadSupported =
+            SupportsNonSequentialMultipartUpload();
+    if (pbParallelUploadSupported)
+        *pbParallelUploadSupported = SupportsParallelMultipartUpload();
+    if (pbAbortSupported)
+        *pbAbortSupported = SupportsMultipartAbort();
+    if (pnMinPartSize)
+        *pnMinPartSize = GetMinimumPartSizeInMiB();
+    if (pnMaxPartSize)
+        *pnMaxPartSize = GetMaximumPartSizeInMiB();
+    if (pnMaxPartCount)
+        *pnMaxPartCount = GetMaximumPartCount();
+    return true;
+}
+
+/************************************************************************/
+/*                         MultipartUploadStart()                       */
+/************************************************************************/
+
+char *IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadStart(
+    const char *pszFilename, CSLConstList papszOptions)
+{
+    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
+        return nullptr;
+    auto poHandleHelper =
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    if (poHandleHelper == nullptr)
+        return nullptr;
+    const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
+    const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
+
+    const std::string osRet = InitiateMultipartUpload(
+        pszFilename, poHandleHelper, oRetryParameters, papszOptions);
+    if (osRet.empty())
+        return nullptr;
+    return CPLStrdup(osRet.c_str());
+}
+
+/************************************************************************/
+/*                       MultipartUploadAddPart()                       */
+/************************************************************************/
+
+char *IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadAddPart(
+    const char *pszFilename, const char *pszUploadId, int nPartNumber,
+    vsi_l_offset nFileOffset, const void *pData, size_t nDataLength,
+    CSLConstList papszOptions)
+{
+    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
+        return nullptr;
+    auto poHandleHelper =
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    if (poHandleHelper == nullptr)
+        return nullptr;
+    const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
+    const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
+
+    const std::string osRet =
+        UploadPart(pszFilename, nPartNumber, pszUploadId, nFileOffset, pData,
+                   nDataLength, poHandleHelper, oRetryParameters, papszOptions);
+    if (osRet.empty())
+        return nullptr;
+    return CPLStrdup(osRet.c_str());
+}
+
+/************************************************************************/
+/*                         MultipartUploadEnd()                         */
+/************************************************************************/
+
+bool IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadEnd(
+    const char *pszFilename, const char *pszUploadId, size_t nPartIdsCount,
+    const char *const *apszPartIds, vsi_l_offset nTotalSize, CSLConstList)
+{
+    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
+        return false;
+    auto poHandleHelper =
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    if (poHandleHelper == nullptr)
+        return false;
+    const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
+    const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
+
+    std::vector<std::string> aosTags;
+    for (size_t i = 0; i < nPartIdsCount; ++i)
+        aosTags.emplace_back(apszPartIds[i]);
+    return CompleteMultipart(pszFilename, pszUploadId, aosTags, nTotalSize,
+                             poHandleHelper, oRetryParameters);
+}
+
+/************************************************************************/
+/*                         MultipartUploadAbort()                       */
+/************************************************************************/
+
+bool IVSIS3LikeFSHandlerWithMultipartUpload::MultipartUploadAbort(
+    const char *pszFilename, const char *pszUploadId, CSLConstList)
+{
+    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix().c_str()))
+        return false;
+    auto poHandleHelper =
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    if (poHandleHelper == nullptr)
+        return false;
+    const CPLStringList aosHTTPOptions(CPLHTTPGetOptionsFromEnv(pszFilename));
+    const CPLHTTPRetryParameters oRetryParameters(aosHTTPOptions);
+    return AbortMultipart(pszFilename, pszUploadId, poHandleHelper,
+                          oRetryParameters);
 }
 
 /************************************************************************/

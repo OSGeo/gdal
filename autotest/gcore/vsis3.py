@@ -3471,13 +3471,9 @@ def test_vsis3_sync_timestamp(tmp_vsimem, aws_test_config, webserver_port):
 
 
 @gdaltest.enable_exceptions()
-@pytest.mark.skipif(
-    gdaltest.is_ci(),
-    reason="test skipped on CI due to it not being reliable (also fails randomly when run locally)",
-)
 def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
 
-    gdal.FileFromMemBuffer(tmp_vsimem / "testsync.txt", "foo")
+    gdal.FileFromMemBuffer(tmp_vsimem / "testsync.txt", "x" * 30000)
 
     # S3 to local: S3 file is older -> download
     gdal.VSICurlClearCache()
@@ -3487,18 +3483,11 @@ def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
         "/out/testsync.txt",
         206,
         {
-            "Content-Length": "3",
-            "Content-Range": "bytes 0-2/3",
+            "Content-Length": "16384",
+            "Content-Range": "bytes 0-16383/30000",
             "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT",
         },
-        "xyz",
-    )
-    handler.add(
-        "GET",
-        "/out/testsync.txt",
-        200,
-        {"Content-Length": "3", "Last-Modified": "Mon, 01 Jan 1970 00:00:01 GMT"},
-        "xy",  # only returns 2 bytes instead of 30, {}
+        "x" * 16384,
     )
     handler.add(
         "GET",
@@ -3511,15 +3500,21 @@ def test_vsis3_sync_failed(tmp_vsimem, aws_test_config, webserver_port):
             <Contents>
                 <Key>testsync.txt</Key>
                 <LastModified>1970-01-01T00:00:01.000Z</LastModified>
-                <Size>3</Size>
+                <Size>30000</Size>
             </Contents>
         </ListBucketResult>
         """,
     )
-    with webserver.install_http_handler(handler):
+    handler.add("GET", "/out/testsync.txt", 400)
+    # Do not use /vsicurl_streaming/ as source, otherwise errors may be
+    # emitted in worker thread, which isn't properly handled (should ideally
+    # be fixed)
+    with gdal.config_option(
+        "VSIS3_COPYFILE_USE_STREAMING_SOURCE", "NO"
+    ), webserver.install_http_handler(handler):
         with pytest.raises(
             Exception,
-            match=f"Copying of /vsis3/out/testsync.txt to {tmp_vsimem}/testsync.txt failed: 2 bytes were copied whereas 3 were expected",
+            match=f"Copying of /vsis3/out/testsync.txt to {tmp_vsimem}/testsync.txt failed: 0 bytes were copied whereas 30000 were expected",
         ):
             gdal.Sync("/vsis3/out/testsync.txt", tmp_vsimem)
 
@@ -6058,6 +6053,139 @@ def test_vsis3_DISABLE_READDIR_ON_OPEN_option(aws_test_config, webserver_port):
         assert f is not None
         assert gdal.VSIFReadL(3, 1, f) == b"foo"
         gdal.VSIFCloseL(f)
+
+
+###############################################################################
+# Test VSIMultipartUploadXXXX()
+
+
+def test_vsis3_MultipartUpload(aws_test_config, webserver_port):
+
+    # Test MultipartUploadGetCapabilities()
+    info = gdal.MultipartUploadGetCapabilities("/vsis3/")
+    assert info.non_sequential_upload_supported
+    assert info.parallel_upload_supported
+    assert info.abort_supported
+    assert info.min_part_size == 5
+    assert info.max_part_size >= 1024
+    assert info.max_part_count == 10000
+
+    # Test MultipartUploadStart()
+    handler = webserver.SequentialHandler()
+    handler.add("POST", "/test_multipartupload/test.bin?uploads", 400)
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        upload_id = gdal.MultipartUploadStart("/vsis3/test_multipartupload/test.bin")
+    assert upload_id is None
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/test_multipartupload/test.bin?uploads",
+        200,
+        {},
+        """xml version="1.0" encoding="UTF-8"?>
+        <InitiateMultipartUploadResult>
+        <UploadId>my_upload_id</UploadId>
+        </InitiateMultipartUploadResult>""",
+    )
+    with webserver.install_http_handler(handler):
+        upload_id = gdal.MultipartUploadStart("/vsis3/test_multipartupload/test.bin")
+    assert upload_id == "my_upload_id"
+
+    # Test MultipartUploadAddPart()
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "PUT",
+        "/test_multipartupload/test.bin?partNumber=1&uploadId=my_upload_id",
+        400,
+    )
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        part_id = gdal.MultipartUploadAddPart(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id", 1, 0, b"foo"
+        )
+    assert part_id is None
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "PUT",
+        "/test_multipartupload/test.bin?partNumber=1&uploadId=my_upload_id",
+        200,
+        {"ETag": '"my_part_id"', "Content-Length": "0"},
+        b"",
+        expected_body=b"foo",
+    )
+    with webserver.install_http_handler(handler):
+        part_id = gdal.MultipartUploadAddPart(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id", 1, 0, b"foo"
+        )
+    assert part_id == '"my_part_id"'
+
+    # Test MultipartUploadEnd()
+
+    handler = webserver.SequentialHandler()
+    handler.add("POST", "/test_multipartupload/test.bin?uploadId=my_upload_id", 400)
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        assert not gdal.MultipartUploadEnd(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id", ['"my_part_id"'], 3
+        )
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/test_multipartupload/test.bin?uploadId=my_upload_id",
+        200,
+        expected_body=b"""<CompleteMultipartUpload>
+<Part>
+<PartNumber>1</PartNumber><ETag>"my_part_id"</ETag></Part>
+</CompleteMultipartUpload>
+""",
+    )
+    with webserver.install_http_handler(handler):
+        assert gdal.MultipartUploadEnd(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id", ['"my_part_id"'], 3
+        )
+
+    # Test MultipartUploadAbort()
+
+    handler = webserver.SequentialHandler()
+    handler.add("DELETE", "/test_multipartupload/test.bin?uploadId=my_upload_id", 400)
+    with webserver.install_http_handler(handler), gdal.quiet_errors():
+        assert not gdal.MultipartUploadAbort(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id"
+        )
+
+    handler = webserver.SequentialHandler()
+    handler.add("DELETE", "/test_multipartupload/test.bin?uploadId=my_upload_id", 204)
+    with webserver.install_http_handler(handler):
+        assert gdal.MultipartUploadAbort(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id"
+        )
+
+
+###############################################################################
+# Test VSIMultipartUploadXXXX() when authentication fails
+
+
+def test_vsis3_MultipartUpload_unauthenticated():
+
+    options = {
+        "AWS_SECRET_ACCESS_KEY": "",
+        "AWS_ACCESS_KEY_ID": "",
+    }
+    with gdaltest.config_options(options, thread_local=False), gdal.quiet_errors():
+        assert gdal.MultipartUploadStart("/vsis3/test_multipartupload/test.bin") is None
+        assert (
+            gdal.MultipartUploadAddPart(
+                "/vsis3/test_multipartupload/test.bin", "my_upload_id", 1, 0, b"foo"
+            )
+            is None
+        )
+        assert not gdal.MultipartUploadEnd(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id", ['"my_part_id"'], 3
+        )
+        assert not gdal.MultipartUploadAbort(
+            "/vsis3/test_multipartupload/test.bin", "my_upload_id"
+        )
 
 
 ###############################################################################
