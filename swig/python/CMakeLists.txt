@@ -426,26 +426,20 @@ if (Python_Interpreter_FOUND)
   endif ()
 
   if (ONLY_GENERATE_FOR_NON_DEBUG)
-    if (POLICY CMP0087)
-      # install(SCRIPT) can use generator expressions, since CMake 3.14
-      cmake_policy(SET CMP0087 NEW)
-      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/install_python.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake.tmp
-                     @ONLY)
-      file(
-        GENERATE
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_python_$<CONFIG>.cmake
-        INPUT ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake.tmp
-      )
-      file(
-        GENERATE
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake
-        CONTENT
-          "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P \"${CMAKE_CURRENT_BINARY_DIR}/install_python_$<CONFIG>.cmake\",${CMAKE_COMMAND} -E echo \"setup.py install only run in configuration != Debug\">
-                                          WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")")
-      install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake)
-    else ()
-      message(WARNING "Installing Python bindings with a multi generator requires CMake >= 3.14")
-    endif ()
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/install_python.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake.tmp
+                   @ONLY)
+    file(
+      GENERATE
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_python_$<CONFIG>.cmake
+      INPUT ${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake.tmp
+    )
+    file(
+      GENERATE
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake
+      CONTENT
+        "execute_process(COMMAND $<IF:$<NOT:$<CONFIG:Debug>>,${CMAKE_COMMAND} ${WERROR_DEV_FLAG} -P \"${CMAKE_CURRENT_BINARY_DIR}/install_python_$<CONFIG>.cmake\",${CMAKE_COMMAND} -E echo \"setup.py install only run in configuration != Debug\">
+                                        WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\")")
+    install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/install_binding_$<CONFIG>.cmake)
   else ()
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/install_python.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/install_python.cmake"
                    @ONLY)
