@@ -243,6 +243,20 @@ AS float))) FROM test GROUP BY way_id"* will return :
      way_id (String) = 2
      LINESTRING (-2 49,-3 50)
 
+Let us proceed further, milling our CSV file down into a new pristine optimized version,
+
+::
+    $ ogr2ogr test2.csv test.csv -dialect SQLite -sql \
+         "SELECT CAST(way_id AS integer) AS way_id,
+         MakeLine(MakePoint(CAST(x AS float),CAST(y AS float)))
+         AS WKT FROM test GROUP BY way_id" -lco GEOMETRY=AS_WKT
+    $ cat test2.csv
+    WKT,way_id
+    "LINESTRING (2 49,3 50)",1
+    "LINESTRING (-2 49,-3 50)",2
+
+Now just a simple `ogrinfo -al test2.csv` gives the same results as above.
+
 VSI Virtual File System API support
 -----------------------------------
 
