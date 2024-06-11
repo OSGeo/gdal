@@ -177,6 +177,21 @@ say it must be surrounded by double-quotes, and double-quotes inside the
 string must be repeated for proper escaping), the name of such column(s)
 can be derived from the :oo:`GEOM_POSSIBLE_NAMES` open option.
 
+Let's see how it is possible to make our above CSV file not require any
+extra options to open.                                            
+
+::
+
+    $ ogr2ogr test2.csv test.csv -lco GEOMETRY=AS_WKT -oo X_POSSIBLE_NAMES=Lon* \
+        -oo Y_POSSIBLE_NAMES=Lat* -oo KEEP_GEOM_COLUMNS=NO
+    $ cat test2.csv
+    WKT,Name
+    "POINT (0.25 48.1)",First point
+    "POINT (1.1 49.2)",Second point
+    "POINT (0.75 47.5)",Third point
+
+Now all OGR commands can read *test2.csv* without needing any ``-oo`` assistance.
+
 For older versions, it is possible to extract spatial information
 (points) from a CSV file which has columns for the X and Y coordinates,
 through the use of the :ref:`VRT <vector.vrt>` driver.
@@ -246,6 +261,7 @@ AS float))) FROM test GROUP BY way_id"* will return :
 Let us proceed further, milling our CSV file down into a new pristine optimized version,
 
 ::
+
     $ ogr2ogr test2.csv test.csv -dialect SQLite -sql \
          "SELECT CAST(way_id AS integer) AS way_id,
          MakeLine(MakePoint(CAST(x AS float),CAST(y AS float)))
@@ -255,7 +271,7 @@ Let us proceed further, milling our CSV file down into a new pristine optimized 
     "LINESTRING (2 49,3 50)",1
     "LINESTRING (-2 49,-3 50)",2
 
-Now just a simple `ogrinfo -al test2.csv` gives the same results as above.
+Now just a simple ``ogrinfo -al test2.csv`` gives the same results as above.
 
 VSI Virtual File System API support
 -----------------------------------
