@@ -136,3 +136,36 @@ From a Conda enabled console
         cd c:\dev\GDAL
         cd _build.vs2019
         ctest -V --build-config Release
+
+
+.. _setting_dev_environment_variables:
+
+Setting development environment variables
+-----------------------------------------
+
+Once GDAL has been built, a number of environment variables must be set to be
+able to execute C++ or Python utilities of the build directory, or run tests.
+
+This can be done by sourcing the following from the build directory:
+
+.. code-block:: bash
+
+    . ../scripts/setdevenv.sh
+
+(with adjustments to the above path if the build directory is not a subdirectory of the GDAL source root).
+
+For Windows, a similar ``scripts/setdevenv.bat`` script exists (it currently assumes a Release build).
+
+To verify that environment variables have been set correctly, you can check the version of a GDAL binary:
+
+.. code-block:: bash
+
+    gdalinfo --version
+    # GDAL 3.7.0dev-5327c149f5-dirty, released 2018/99/99 (debug build)
+
+and the Python bindings:
+
+.. code-block:: bash
+
+    python3 -c 'from osgeo import gdal; print(gdal.__version__)'
+    # 3.7.0dev-5327c149f5-dirty
