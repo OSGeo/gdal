@@ -1424,3 +1424,106 @@ def test_tiff_srs_build_compd_crs_name_without_citation():
 
     ds = gdal.Open("data/gtiff/compdcrs_no_citation.tif")
     assert ds.GetSpatialRef().GetName() == "WGS 84 / UTM zone 17N + EGM2008 height"
+
+
+def test_tiff_srs_read_epsg_27563_allgeokeys():
+
+    ds = gdal.Open("data/gtiff/epsg_27563_allgeokeys.tif")
+    srs = ds.GetSpatialRef()
+    wkt = srs.ExportToWkt(["FORMAT=WKT2_2019"])
+    # deal with differences of precision according to PROJ version
+    wkt = wkt.replace("49.0000000000001", "49")
+    wkt = wkt.replace("49.0000000000002", "49")
+    assert 'PARAMETER["Latitude of natural origin",49,ANGLEUNIT["grad"' in wkt
+    assert (
+        srs.ExportToProj4()
+        == "+proj=lcc +lat_1=44.1 +lat_0=44.1 +lon_0=0 +k_0=0.999877499 +x_0=600000 +y_0=200000 +ellps=clrk80ign +pm=paris +towgs84=-168,-60,320,0,0,0,0 +units=m +no_defs"
+    )
+
+
+def test_tiff_srs_write_read_epsg_27563_only_code(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.tif")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(27563)
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    ds.SetSpatialRef(srs)
+    ds = None
+
+    ds = gdal.Open(filename)
+    srs = ds.GetSpatialRef()
+    assert (
+        'PARAMETER["Latitude of natural origin",49,ANGLEUNIT["grad"'
+        in srs.ExportToWkt(["FORMAT=WKT2_2019"])
+    )
+    assert (
+        srs.ExportToProj4()
+        == "+proj=lcc +lat_1=44.1 +lat_0=44.1 +lon_0=0 +k_0=0.999877499 +x_0=600000 +y_0=200000 +ellps=clrk80ign +pm=paris +towgs84=-168,-60,320,0,0,0,0 +units=m +no_defs"
+    )
+
+
+@pytest.mark.parametrize(
+    "config_options",
+    [
+        {},
+        {
+            "GTIFF_WRITE_ANGULAR_PARAMS_IN_DEGREE": "YES",
+            "GTIFF_READ_ANGULAR_PARAMS_IN_DEGREE": "YES",
+        },
+    ],
+)
+def test_tiff_srs_write_read_epsg_27563_full_def(tmp_vsimem, config_options):
+
+    with gdal.config_options(config_options):
+        filename = str(tmp_vsimem / "test.tif")
+        srs = osr.SpatialReference()
+        srs.SetFromUserInput(
+            """PROJCRS["NTF (Paris) / Lambert Sud France",
+        BASEGEOGCRS["NTF (Paris)",
+            DATUM["Nouvelle Triangulation Francaise (Paris)",
+                ELLIPSOID["Clarke 1880 (IGN)",6378249.2,293.466021293627,
+                    LENGTHUNIT["metre",1]]],
+            PRIMEM["Paris",2.5969213,
+                ANGLEUNIT["grad",0.0157079632679489]],
+            ID["EPSG",4807]],
+        CONVERSION["Lambert Sud France",
+            METHOD["Lambert Conic Conformal (1SP)",
+                ID["EPSG",9801]],
+            PARAMETER["Latitude of natural origin",49,
+                ANGLEUNIT["grad",0.0157079632679489],
+                ID["EPSG",8801]],
+            PARAMETER["Longitude of natural origin",0,
+                ANGLEUNIT["grad",0.0157079632679489],
+                ID["EPSG",8802]],
+            PARAMETER["Scale factor at natural origin",0.999877499,
+                SCALEUNIT["unity",1],
+                ID["EPSG",8805]],
+            PARAMETER["False easting",600000,
+                LENGTHUNIT["metre",1],
+                ID["EPSG",8806]],
+            PARAMETER["False northing",200000,
+                LENGTHUNIT["metre",1],
+                ID["EPSG",8807]]],
+        CS[Cartesian,2],
+            AXIS["easting (X)",east,
+                ORDER[1],
+                LENGTHUNIT["metre",1]],
+            AXIS["northing (Y)",north,
+                ORDER[2],
+                LENGTHUNIT["metre",1]]]"""
+        )
+        ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+        ds.SetSpatialRef(srs)
+        ds = None
+
+        ds = gdal.Open(filename)
+        srs = ds.GetSpatialRef()
+        wkt = srs.ExportToWkt(["FORMAT=WKT2_2019"])
+        # deal with differences of precision according to PROJ version
+        wkt = wkt.replace("49.0000000000001", "49")
+        wkt = wkt.replace("49.0000000000002", "49")
+        assert 'PARAMETER["Latitude of natural origin",49,ANGLEUNIT["grad"' in wkt
+        assert (
+            srs.ExportToProj4()
+            == "+proj=lcc +lat_1=44.1 +lat_0=44.1 +lon_0=0 +k_0=0.999877499 +x_0=600000 +y_0=200000 +ellps=clrk80ign +pm=paris +units=m +no_defs"
+        )
