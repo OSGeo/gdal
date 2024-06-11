@@ -407,7 +407,7 @@ It was designed for large supercomputing centers. Spack builds packages from
 sources, and allows tweaking their configurations.
 
 You can find information about GDAL in Spack at
-https://spack.readthedocs.io/en/latest/package_list.html#gdal
+https://packages.spack.io/package.html?name=gdal
 
 For the default GDAL build with a reduced number of drivers:
 
