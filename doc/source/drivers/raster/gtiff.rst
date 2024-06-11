@@ -1117,6 +1117,34 @@ the default behavior of the GTiff driver.
       expected to be necessary, unless GDAL is incorrectly determining the disk
       space available on the destination file system.
 
+-  .. config:: GTIFF_READ_ANGULAR_PARAMS_IN_DEGREE
+      :choices: YES, NO
+      :default: NO
+      :since: 3.9.1
+
+      Conformant GeoTIFF files should have the values of angular projection
+      parameters written in the unit of the GeogAngularUnitsGeoKey. But some
+      non-conformant implementations, such as GDAL <= 3.9.0, always wrote them
+      in degrees.
+      This option can be set to YES when reading such non-conformant GeoTIFF
+      files (typically using grads), to instruct GDAL (>= 3.9.1) that the projection
+      parameters are in degrees, instead of being expressed in the unit of the
+      GeogAngularUnitsGeoKey.
+
+-  .. config:: GTIFF_WRITE_ANGULAR_PARAMS_IN_DEGREE
+      :choices: YES, NO
+      :default: NO
+      :since: 3.9.1
+
+      Conformant GeoTIFF files should have the values of angular projection
+      parameters written in the unit of the GeogAngularUnitsGeoKey. But some
+      non-conformant implementations, such as GDAL >= 3.0 and <= 3.9.0, assumed
+      those values to be in degree.
+      This option can be set to YES to force writing such non-conformant GeoTIFF
+      files. It should *not* be nominally used, except to workaround interoperability
+      issues.
+
+
 Codec Recommendations
 ---------------------
 

@@ -2241,15 +2241,16 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
         break;
     }
 
+    for( int iParam = 0; iParam < psDefn->nParms; iParam++ )
+    {
+        switch( psDefn->ProjParmId[iParam] )
+        {
+
 /* -------------------------------------------------------------------- */
 /*      Normalize any linear parameters into meters.  In GeoTIFF        */
 /*      the linear projection parameter tags are normally in the        */
 /*      units of the coordinate system described.                       */
 /* -------------------------------------------------------------------- */
-    for( int iParam = 0; iParam < psDefn->nParms; iParam++ )
-    {
-        switch( psDefn->ProjParmId[iParam] )
-        {
           case ProjFalseEastingGeoKey:
           case ProjFalseNorthingGeoKey:
           case ProjFalseOriginEastingGeoKey:
@@ -2260,6 +2261,30 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
                 && psDefn->UOMLengthInMeters != 1.0 )
             {
                 psDefn->ProjParm[iParam] *= psDefn->UOMLengthInMeters;
+            }
+            break;
+
+/* -------------------------------------------------------------------- */
+/*      Normalize any angular parameters into degrees.  In GeoTIFF      */
+/*      the angular projection parameter tags are normally in the       */
+/*      units of GeogAngularUnit. Note: this conversion is only done    */
+/*      since libgeotiff 1.7.4                                          */
+/* -------------------------------------------------------------------- */
+
+          case ProjStdParallel1GeoKey:
+          case ProjStdParallel2GeoKey:
+          case ProjNatOriginLongGeoKey:
+          case ProjNatOriginLatGeoKey:
+          case ProjFalseOriginLongGeoKey:
+          case ProjFalseOriginLatGeoKey:
+          case ProjCenterLongGeoKey:
+          case ProjCenterLatGeoKey:
+          case ProjStraightVertPoleLongGeoKey:
+          case ProjRectifiedGridAngleGeoKey:
+            if( psDefn->UOMAngleInDegrees != 0
+                && psDefn->UOMAngleInDegrees != 1.0 )
+            {
+                psDefn->ProjParm[iParam] *= psDefn->UOMAngleInDegrees;
             }
             break;
 
