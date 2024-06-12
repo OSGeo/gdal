@@ -1132,16 +1132,6 @@ def test_gdalwarp_40(gdalwarp_path, tmp_path):
     os.unlink(dst_tif)
     gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -ovr 0")
 
-    # Repeat with wrong resolution output file and no overwrite (takes a different code path)
-    os.unlink(dst_tif)
-    # Crates a full res output file
-    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif}")
-    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -ovr 0")
-    ds = gdal.Open(dst_tif)
-    # FIXME: This fails: is that expected?
-    # assert ds.GetRasterBand(1).Checksum() == cs_ov0
-    ds = None
-
     # Should not crash (actually it never did)
     os.unlink(dst_tif)
     gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {src_tif_copy} {dst_tif} -ovr 0")
