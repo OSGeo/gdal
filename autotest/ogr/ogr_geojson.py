@@ -4309,6 +4309,28 @@ def test_ogr_geojson_test_ogrsf():
 
 
 ###############################################################################
+# Run test_ogrsf
+
+
+def test_ogr_geojson_test_ogrsf_update(tmp_path):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    filename = str(tmp_path / "out.json")
+    gdal.VectorTranslate(filename, "data/poly.shp", format="GeoJSON")
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" {filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+
+
+###############################################################################
 # Test fix for https://github.com/OSGeo/gdal/issues/7313
 
 
