@@ -205,6 +205,8 @@ GDALDatasetH GDALViewshedGenerate(
 
     gdal::Viewshed v(oOpts);
 
+    if (!pfnProgress)
+        pfnProgress = GDALDummyProgress;
     v.run(hBand, pfnProgress, pProgressArg);
 
     return GDALDataset::FromHandle(v.output().release());
@@ -283,6 +285,8 @@ bool Viewshed::calcOutputExtent(int nX, int nY)
     oOutExtent.xStop = GDALGetRasterBandXSize(pSrcBand);
     oOutExtent.yStop = GDALGetRasterBandYSize(pSrcBand);
 
+    std::cerr << "Low/High/nY = " << oOutExtent.yStart << "/"
+              << oOutExtent.yStop << "/" << nY << "!\n";
     if (!oOutExtent.containsY(nY))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -869,8 +873,6 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     nLineCount = 0;
     pSrcBand = static_cast<GDALRasterBand *>(band);
 
-    if (!pfnProgress)
-        pfnProgress = GDALDummyProgress;
     oProgress = std::bind(pfnProgress, _1, _2, pProgressArg);
 
     if (!emitProgress(0))
@@ -889,6 +891,8 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
 
     // calculate observer position
     double dfX, dfY;
+    std::cerr << "Observer = " << oOpts.observer.x << "/" << oOpts.observer.y
+              << "!\n";
     GDALApplyGeoTransform(adfInvTransform.data(), oOpts.observer.x,
                           oOpts.observer.y, &dfX, &dfY);
     if (!GDALIsValueInRange<int>(dfX))
@@ -901,6 +905,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
         CPLError(CE_Failure, CPLE_AppDefined, "Observer Y value out of range");
         return false;
     }
+    std::cerr << "dfX/Y = " << dfX << "/" << dfY << "!\n";
     int nX = static_cast<int>(dfX);
     int nY = static_cast<int>(dfY);
 

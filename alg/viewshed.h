@@ -184,7 +184,8 @@ class Viewshed
     Viewshed(const Viewshed &) = delete;
     Viewshed &operator=(const Viewshed &) = delete;
 
-    CPL_DLL bool run(GDALRasterBandH hBand, GDALProgressFunc pfnProgress,
+    CPL_DLL bool run(GDALRasterBandH hBand,
+                     GDALProgressFunc pfnProgress = GDALDummyProgress,
                      void *pProgressArg = nullptr);
 
     /**
