@@ -545,6 +545,13 @@ jobs:
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2
+
+    # Works around https://github.com/actions/runner-images/issues/10055
+    - name: Remove conflicting libraries
+      shell: bash -l {0}
+      run: |
+          find "C:/hostedtoolcache/windows/Java_Temurin-Hotspot_jdk" -name "msvcp140.dll" -exec rm {} \;
+
     - name: test (with ctest)
       shell: bash -l {0}
       run: |
