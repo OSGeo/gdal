@@ -55,6 +55,9 @@ class OGRODSLayer final : public OGRMemLayer
     bool bHasHeaderLine;
     OGRFeatureQuery *m_poAttrQueryODS;
 
+    GIntBig TranslateFIDFromMemLayer(GIntBig nFID) const;
+    GIntBig TranslateFIDToMemLayer(GIntBig nFID) const;
+
   public:
     OGRODSLayer(OGRODSDataSource *poDSIn, const char *pszName,
                 bool bUpdateIn = FALSE);
@@ -116,11 +119,7 @@ class OGRODSLayer final : public OGRMemLayer
         return OGRMemLayer::ISetFeature(poFeature);
     }
 
-    OGRErr ICreateFeature(OGRFeature *poFeature) override
-    {
-        SetUpdated();
-        return OGRMemLayer::ICreateFeature(poFeature);
-    }
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override

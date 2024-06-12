@@ -190,6 +190,28 @@ def test_ogr_xlsx_4():
 
 
 ###############################################################################
+# Run test_ogrsf
+
+
+def test_ogr_xlsx_test_ogrsf_update(tmp_path):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    filename = str(tmp_path / "out.xlsx")
+    gdal.VectorTranslate(filename, "data/poly.shp", format="XLSX")
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" {filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+
+
+###############################################################################
 # Test write support
 
 
