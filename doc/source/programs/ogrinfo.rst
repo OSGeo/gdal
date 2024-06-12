@@ -108,9 +108,10 @@ edit data.
 
     Example of ``-where`` and quoting:
 
-.. code-block: bash
+    .. code-block:: bash
 
-    -where "\"Corner Point Identifier\" LIKE '%__00_00'"
+        -where "\"Corner Point Identifier\" LIKE '%__00_00'"
+
 
 .. option:: -sql <statement>|@<filename>
 
