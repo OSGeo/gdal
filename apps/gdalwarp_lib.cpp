@@ -3680,6 +3680,18 @@ static GDALDatasetH GDALWarpCreateOutput(
             return nullptr;
         }
 
+        // Examine desired overview level and retrieve the corresponding dataset
+        // if it exists.
+        std::unique_ptr<GDALDataset> oDstDSOverview;
+        if (psOptions->nOvLevel >= 0)
+        {
+            oDstDSOverview.reset(GDALCreateOverviewDataset(
+                GDALDataset::FromHandle(hSrcDS), psOptions->nOvLevel,
+                /* bThisLevelOnly = */ true));
+            if (oDstDSOverview)
+                hSrcDS = oDstDSOverview.get();
+        }
+
         /* --------------------------------------------------------------------
          */
         /*      Check if the source dataset shares some files with the dest
@@ -4110,6 +4122,7 @@ static GDALDatasetH GDALWarpCreateOutput(
             {
                 nOptions |= GDAL_SWO_FORCE_SQUARE_PIXEL;
             }
+
             if (GDALSuggestedWarpOutput2(hSrcDS, psInfo->pfnTransform,
                                          hTransformArg, adfThisGeoTransform,
                                          &nThisPixels, &nThisLines, adfExtent,

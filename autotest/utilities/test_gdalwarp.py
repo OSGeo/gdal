@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import shutil
 import stat
 
 import gdaltest
@@ -1049,6 +1050,7 @@ def test_gdalwarp_39(gdalwarp_path, tmp_path):
 def test_gdalwarp_40(gdalwarp_path, tmp_path):
 
     src_tif = str(tmp_path / "test_gdalwarp_40_src.tif")
+    src_tif_copy = str(tmp_path / "test_gdalwarp_40_src_copy.tif")
     dst_tif = str(tmp_path / "test_gdalwarp_40.tif")
     dst_vrt = str(tmp_path / "test_gdalwarp_40.vrt")
 
@@ -1060,7 +1062,10 @@ def test_gdalwarp_40(gdalwarp_path, tmp_path):
     cs_ov0 = out_ds.GetRasterBand(1).GetOverview(0).Checksum()
     out_ds.GetRasterBand(1).GetOverview(1).Fill(255)
     cs_ov1 = out_ds.GetRasterBand(1).GetOverview(1).Checksum()
+
     out_ds = None
+
+    shutil.copy(src_tif, src_tif_copy)
 
     # Should select main resolution
     gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite")
@@ -1109,6 +1114,27 @@ def test_gdalwarp_40(gdalwarp_path, tmp_path):
     # Should select overview 0
     gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite -ts 10 10")
 
+    ds = gdal.Open(dst_tif)
+    assert ds.GetRasterBand(1).Checksum() == cs_ov0
+    ds = None
+
+    # Should select overview 0
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite -ovr 0")
+
+    ds = gdal.Open(dst_tif)
+    assert ds.GetRasterBand(1).Checksum() == cs_ov0
+    ds = None
+
+    # Should select overview 0 (no overwrite)
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -ovr 0")
+
+    # Repeat with no output file and no overwrite (takes a different code path)
+    os.unlink(dst_tif)
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -ovr 0")
+
+    # Should not crash (actually it never did)
+    os.unlink(dst_tif)
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {src_tif_copy} {dst_tif} -ovr 0")
     ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == cs_ov0
     ds = None
