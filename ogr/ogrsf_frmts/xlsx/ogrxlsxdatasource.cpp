@@ -138,20 +138,40 @@ OGRFeature *OGRXLSXLayer::GetFeature(GIntBig nFeatureId)
 }
 
 /************************************************************************/
-/*                           ISetFeature()                               */
+/*                           ISetFeature()                              */
 /************************************************************************/
 
 OGRErr OGRXLSXLayer::ISetFeature(OGRFeature *poFeature)
 {
     Init();
-    if (poFeature == nullptr)
-        return OGRMemLayer::ISetFeature(poFeature);
-
     GIntBig nFID = poFeature->GetFID();
     if (nFID != OGRNullFID)
         poFeature->SetFID(nFID - (1 + static_cast<int>(bHasHeaderLine)));
     SetUpdated();
     OGRErr eErr = OGRMemLayer::ISetFeature(poFeature);
+    poFeature->SetFID(nFID);
+    return eErr;
+}
+
+/************************************************************************/
+/*                         IUpdateFeature()                             */
+/************************************************************************/
+
+OGRErr OGRXLSXLayer::IUpdateFeature(OGRFeature *poFeature,
+                                    int nUpdatedFieldsCount,
+                                    const int *panUpdatedFieldsIdx,
+                                    int nUpdatedGeomFieldsCount,
+                                    const int *panUpdatedGeomFieldsIdx,
+                                    bool bUpdateStyleString)
+{
+    Init();
+    GIntBig nFID = poFeature->GetFID();
+    if (nFID != OGRNullFID)
+        poFeature->SetFID(nFID - (1 + static_cast<int>(bHasHeaderLine)));
+    SetUpdated();
+    OGRErr eErr = OGRMemLayer::IUpdateFeature(
+        poFeature, nUpdatedFieldsCount, panUpdatedFieldsIdx,
+        nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx, bUpdateStyleString);
     poFeature->SetFID(nFID);
     return eErr;
 }

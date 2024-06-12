@@ -113,6 +113,11 @@ class OGRXLSXLayer final : public OGRMemLayer
     virtual OGRFeature *GetNextFeature() override;
     virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
+                          const int *panUpdatedFieldsIdx,
+                          int nUpdatedGeomFieldsCount,
+                          const int *panUpdatedGeomFieldsIdx,
+                          bool bUpdateStyleString) override;
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
 
     virtual OGRErr SetNextByIndex(GIntBig nIndex) override
