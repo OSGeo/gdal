@@ -1591,7 +1591,7 @@ def test_ogr_geojson_46(tmp_vsimem):
 
 
 ###############################################################################
-# Test update support
+# Test SetFeature() support
 
 
 @gdaltest.disable_exceptions()
@@ -1764,7 +1764,7 @@ def test_ogr_geojson_47(tmp_vsimem):
 
 
 ###############################################################################
-# Test update support with file that has a single feature not in a FeatureCollection
+# Test SetFeature() support with file that has a single feature not in a FeatureCollection
 
 
 def test_ogr_geojson_48(tmp_vsimem):
@@ -1800,6 +1800,34 @@ def test_ogr_geojson_48(tmp_vsimem):
         and "FeatureCollection" not in data
         and '"myprop": "another_value"' in data
     )
+
+
+###############################################################################
+# Test UpdateFeature() support
+
+
+def test_ogr_geojson_update_feature(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.json")
+
+    with ogr.GetDriverByName("GeoJSON").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test")
+        lyr.CreateField(ogr.FieldDefn("int64list", ogr.OFTInteger64List))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["int64list"] = [123456790123, -123456790123]
+        lyr.CreateFeature(f)
+
+    with ogr.Open(filename, update=1) as ds:
+        lyr = ds.GetLayer(0)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFID(0)
+        f["int64list"] = [123456790123, -123456790123]
+        lyr.UpdateFeature(f, [0], [], False)
+
+    with ogr.Open(filename) as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f["int64list"] == [123456790123, -123456790123]
 
 
 ###############################################################################
