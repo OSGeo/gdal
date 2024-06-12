@@ -24,27 +24,7 @@ Running a subset of tests using ``pytest``
 
 The test subsets exposed by ``ctest`` are still rather large and some may take several minutes to run.
 If a higher level of specificity is needed, ``pytest`` can be called directly to run groups of tests or individual tests.
-Before running ``pytest``, it is important to set environment variables so that the development build of GDAL is tested,
-rather than a system version. This can be done by sourcing the following from the build directory:
-
-.. code-block:: bash
-
-    . ../scripts/setdevenv.sh
-
-(with adjustments to the above path if the build directory is not a subdirectory of the GDAL source root).
-To verify that environment variables were set correctly, you can check the version of a GDAL binary:
-
-.. code-block:: bash
-
-    gdalinfo --version
-    # GDAL 3.7.0dev-5327c149f5-dirty, released 2018/99/99 (debug build)
-
-and the Python bindings:
-
-.. code-block:: bash
-
-    python3 -c 'from osgeo import gdal; print(gdal.__version__)'
-    # 3.7.0dev-5327c149f5-dirty
+Before running ``pytest``, it is important to set :ref:`development environment variables <setting_dev_environment_variables>` so that the development build of GDAL is tested, rather than a system version.
 
 Tests can then be run by calling ``pytest``, for example on an individual file.
 On Linux and MacOS builds, the tests are symlinked into the build directory, so this

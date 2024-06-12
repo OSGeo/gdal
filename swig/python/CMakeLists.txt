@@ -339,6 +339,37 @@ if (Python_Interpreter_FOUND)
     endif()
   endif()
 
+  # Install launcher scripts in bin/ (for development)
+  file(GLOB SCRIPTS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils/scripts" "${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils/scripts/*.py")
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tmp_bin")
+  foreach(filename IN LISTS SCRIPTS)
+      get_filename_component(filename_without_ext "${filename}" NAME_WLE)
+      if (UNIX)
+          set(lancher_filename "${filename_without_ext}")
+      else()
+          set(lancher_filename "${filename_without_ext}.bat")
+      endif()
+      set(tmp_launcher_filename "${CMAKE_CURRENT_BINARY_DIR}/tmp_bin/${lancher_filename}")
+      if (UNIX)
+          file(WRITE "${tmp_launcher_filename}"
+                     "#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import re
+import sys
+from osgeo_utils.${filename_without_ext} import main
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\\.pyw|\\.exe)?\$', '', sys.argv[0])
+    sys.exit(main())
+")
+      else()
+          file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/gdal-utils/scripts/${filename}" NATIVE_FILENAME)
+          file(WRITE "${tmp_launcher_filename}" "@python \"${NATIVE_FILENAME}\" %*")
+      endif()
+      file(COPY "${tmp_launcher_filename}"
+           DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/bin"
+           FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+  endforeach()
+
   add_custom_target(python_binding ALL DEPENDS ${PY_SO_LIST} ${PY_SO_LIST_WITH_RPATH} ${GDAL_PYTHON_PYSOURCES} ${GDAL_LIB_TARGET_NAME})
 
   # Generate wheel
