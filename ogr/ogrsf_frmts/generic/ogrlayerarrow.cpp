@@ -5861,10 +5861,13 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
     if (poDS)
     {
         auto poDriver = poDS->GetDriver();
-        const char *pszMetadataItem =
-            poDriver->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES);
-        if (pszMetadataItem)
-            aosNativeTypes = CSLTokenizeString2(pszMetadataItem, " ", 0);
+        if (poDriver)
+        {
+            const char *pszMetadataItem =
+                poDriver->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES);
+            if (pszMetadataItem)
+                aosNativeTypes = CSLTokenizeString2(pszMetadataItem, " ", 0);
+        }
     }
 
     if (schema->dictionary &&
@@ -7373,10 +7376,13 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
     if (poDS)
     {
         auto poDriver = poDS->GetDriver();
-        const char *pszMetadataItem =
-            poDriver->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES);
-        if (pszMetadataItem)
-            aosNativeTypes = CSLTokenizeString2(pszMetadataItem, " ", 0);
+        if (poDriver)
+        {
+            const char *pszMetadataItem =
+                poDriver->GetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES);
+            if (pszMetadataItem)
+                aosNativeTypes = CSLTokenizeString2(pszMetadataItem, " ", 0);
+        }
     }
 
     std::vector<FieldInfo> asFieldInfo;
