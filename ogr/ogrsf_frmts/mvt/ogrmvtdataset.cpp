@@ -6185,6 +6185,8 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
     }
 
     poDS->SetDescription(pszFilename);
+    poDS->poDriver = GDALDriver::FromHandle(GDALGetDriverByName("MVT"));
+
     return poDS;
 }
 
