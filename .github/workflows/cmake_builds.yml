@@ -399,17 +399,6 @@ jobs:
         generator: Ninja
         cache-name: cmake-msvc
     steps:
-
-    - name: Copy in the correct VC runtime DLLs (workaround for actions/runner-images#10004)
-      shell: powershell
-      run: |
-        mkdir c:\vcruntime
-        Copy-Item (Join-Path `
-          ((Get-ChildItem -Directory `
-              -Path "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC\14.*" |
-            Sort -Descending | Select-Object -First 1).FullName
-          ) 'x64\Microsoft.VC143.CRT\*.dll') "c:\vcruntime"
-
     # To avoid git clone to mess with the line endings of GDAL autotest data
     # files that look like text, but should be handled as binary content
     - name: Set git core.autocrlf to false
@@ -458,14 +447,6 @@ jobs:
           rm -rf C:/Strawberry || /bin/true
           rm -rf "C:/Program Files/OpenSSL/lib" || /bin/true
 
-    - name: Set path for the correct VC runtime DLLs (workaround for actions/runner-images#10004)
-      shell: powershell
-      run: |
-        $env:PATH="c:\vcruntime;$env:PATH"
-        echo "PATH=$env:PATH" >> $env:GITHUB_ENV
-        echo ((Get-Command vcruntime140.dll).Path)
-        echo ((Get-Command vcruntime140.dll).Version)
-
     - name: Configure
       shell: bash -l {0}
       # Disable MySQL because of "error LNK2038: mismatch detected for '_MSC_VER': value '1800' doesn't match value '1900' in ogrmysqldatasource.obj" and other errors
@@ -481,34 +462,29 @@ jobs:
       run: cmake --build $GITHUB_WORKSPACE/build --config Release -j 2
       env:
         GIT_LFS_SKIP_SMUDGE: 1 # for PublicDecompWT github repository clone
-    # FIXME !! Disabled because of actions/runner-images#10004
-    #- name: test
-    #  shell: bash -l {0}
-    #  run: |
-    #    cmake --build $GITHUB_WORKSPACE/build --config Release --target quicktest
-    #- name: test (with ctest)
-    #  shell: bash -l {0}
-    #  run: |
-    #    ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3
-    #  env:
-    #    SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
-    #    SKIP_OGR_GMLAS_HTTP_RELATED: YES
-    #    SKIP_GDAL_HTTP_SSL_VERIFYSTATUS: YES
-    #    BUILD_NAME: "build-windows-conda"
+    - name: test
+      shell: bash -l {0}
+      run: |
+        cmake --build $GITHUB_WORKSPACE/build --config Release --target quicktest
+    - name: test (with ctest)
+      shell: bash -l {0}
+      run: |
+        ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3
+      env:
+        SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
+        SKIP_OGR_GMLAS_HTTP_RELATED: YES
+        SKIP_GDAL_HTTP_SSL_VERIFYSTATUS: YES
+        BUILD_NAME: "build-windows-conda"
     - name: Install
       shell: bash -l {0}
       run: |
         cmake --build $GITHUB_WORKSPACE/build --config Release --target install
-    # FIXME !! Disabled because of actions/runner-images#10004
-    #- name: Test install
-    #  shell: bash -l {0}
-    #  run: |
-    #    export PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH
-    #    gdalinfo --version
-    #    python -VV
-    #    PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
-    #    export PATH=$GITHUB_WORKSPACE/install-gdal/Scripts:$PATH
-    #    PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages gdal_edit --version
+        export PATH=$GITHUB_WORKSPACE/install-gdal/bin:$PATH
+        gdalinfo --version
+        python -VV
+        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+        export PATH=$GITHUB_WORKSPACE/install-gdal/Scripts:$PATH
+        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages gdal_edit --version
     - name: Show gdal.pc
       shell: bash -l {0}
       run: cat $GITHUB_WORKSPACE/build/gdal.pc
@@ -525,17 +501,6 @@ jobs:
         generator: Visual Studio 17 2022
         GDAL_PYTHON_BINDINGS_WITHOUT_NUMPY: YES
     steps:
-
-    - name: Copy in the correct VC runtime DLLs (workaround for actions/runner-images#10004)
-      shell: powershell
-      run: |
-        mkdir c:\vcruntime
-        Copy-Item (Join-Path `
-          ((Get-ChildItem -Directory `
-              -Path "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC\14.*" |
-            Sort -Descending | Select-Object -First 1).FullName
-          ) 'x64\Microsoft.VC143.CRT\*.dll') "c:\vcruntime"
-
     # To avoid git clone to mess with the line endings of GDAL autotest data
     # files that look like text, but should be handled as binary content
     - name: Set git core.autocrlf to false
@@ -559,15 +524,6 @@ jobs:
       shell: bash -l {0}
       run: |
         cmake --version
-
-    - name: Set path for the correct VC runtime DLLs (workaround for actions/runner-images#10004)
-      shell: powershell
-      run: |
-        $env:PATH="c:\vcruntime;$env:PATH"
-        echo "PATH=$env:PATH" >> $env:GITHUB_ENV
-        echo ((Get-Command vcruntime140.dll).Path)
-        echo ((Get-Command vcruntime140.dll).Version)
-
     - name: Configure
       shell: bash -l {0}
       run: |
@@ -589,14 +545,20 @@ jobs:
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2
-    # FIXME !! Disable tests because of actions/runner-images#10004
-    #- name: test (with ctest)
-    #  shell: bash -l {0}
-    #  run: |
-    #    ctest --test-dir $GITHUB_WORKSPACE/build -C RelWithDebInfo -V -j 3
-    #  env:
-    #    SKIP_GDAL_HTTP_SSL_VERIFYSTATUS: YES
-    #    BUILD_NAME: "build-windows-minimum"
+
+    # Works around https://github.com/actions/runner-images/issues/10055
+    - name: Remove conflicting libraries
+      shell: bash -l {0}
+      run: |
+          find "C:/hostedtoolcache/windows/Java_Temurin-Hotspot_jdk" -name "msvcp140.dll" -exec rm {} \;
+
+    - name: test (with ctest)
+      shell: bash -l {0}
+      run: |
+        ctest --test-dir $GITHUB_WORKSPACE/build -C RelWithDebInfo -V -j 3
+      env:
+        SKIP_GDAL_HTTP_SSL_VERIFYSTATUS: YES
+        BUILD_NAME: "build-windows-minimum"
     - name: Show gdal.pc
       shell: bash -l {0}
       run: cat $GITHUB_WORKSPACE/build/gdal.pc
