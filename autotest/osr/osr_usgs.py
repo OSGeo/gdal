@@ -113,3 +113,21 @@ def test_osr_usgs_2():
         and gdal.PackedDMSToDec(params[4]) == pytest.approx(-117.4745429, abs=0.0000005)
         and gdal.PackedDMSToDec(params[5]) == pytest.approx(33.76446203, abs=0.0000005)
     ), "Can not import Lambert Conformal Conic projection."
+
+
+###############################################################################
+# Test the osr.SpatialReference.ImportFromUSGS() function with WGS 84
+#
+
+
+def test_osr_usgs_wgs84():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    (proj_code, zone, params, datum_code) = srs.ExportToUSGS()
+
+    srs2 = osr.SpatialReference()
+    srs2.ImportFromUSGS(proj_code, zone, params, datum_code)
+
+    assert srs2.IsSame(srs)
+    assert srs2.GetAuthorityCode(None) == "32631"
