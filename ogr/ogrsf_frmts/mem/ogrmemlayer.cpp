@@ -439,7 +439,8 @@ OGRErr OGRMemLayer::ICreateFeature(OGRFeature *poFeature)
         }
     }
 
-    return ISetFeature(poFeature);
+    // Prevent calling ISetFeature() from derived classes
+    return OGRMemLayer::ISetFeature(poFeature);
 }
 
 /************************************************************************/

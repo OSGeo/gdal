@@ -112,6 +112,28 @@ OGRErr OGRODSLayer::SyncToDisk()
 }
 
 /************************************************************************/
+/*                      TranslateFIDFromMemLayer()                      */
+/************************************************************************/
+
+// Translate a FID from MEM convention (0-based) to ODS convention
+GIntBig OGRODSLayer::TranslateFIDFromMemLayer(GIntBig nFID) const
+{
+    return nFID + (1 + (bHasHeaderLine ? 1 : 0));
+}
+
+/************************************************************************/
+/*                        TranslateFIDToMemLayer()                      */
+/************************************************************************/
+
+// Translate a FID from ODS convention to MEM convention (0-based)
+GIntBig OGRODSLayer::TranslateFIDToMemLayer(GIntBig nFID) const
+{
+    if (nFID > 0)
+        return nFID - (1 + (bHasHeaderLine ? 1 : 0));
+    return OGRNullFID;
+}
+
+/************************************************************************/
 /*                          GetNextFeature()                            */
 /************************************************************************/
 
@@ -122,7 +144,7 @@ OGRFeature *OGRODSLayer::GetNextFeature()
         OGRFeature *poFeature = OGRMemLayer::GetNextFeature();
         if (poFeature == nullptr)
             return nullptr;
-        poFeature->SetFID(poFeature->GetFID() + 1 + (bHasHeaderLine ? 1 : 0));
+        poFeature->SetFID(TranslateFIDFromMemLayer(poFeature->GetFID()));
         if (m_poAttrQueryODS == nullptr ||
             m_poAttrQueryODS->Evaluate(poFeature))
         {
@@ -139,7 +161,7 @@ OGRFeature *OGRODSLayer::GetNextFeature()
 OGRFeature *OGRODSLayer::GetFeature(GIntBig nFeatureId)
 {
     OGRFeature *poFeature =
-        OGRMemLayer::GetFeature(nFeatureId - (1 + (bHasHeaderLine ? 1 : 0)));
+        OGRMemLayer::GetFeature(TranslateFIDToMemLayer(nFeatureId));
     if (poFeature)
         poFeature->SetFID(nFeatureId);
     return poFeature;
@@ -157,20 +179,74 @@ GIntBig OGRODSLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                           ISetFeature()                               */
+/*                           ISetFeature()                              */
 /************************************************************************/
 
 OGRErr OGRODSLayer::ISetFeature(OGRFeature *poFeature)
 {
-    if (poFeature == nullptr)
-        return OGRMemLayer::ISetFeature(poFeature);
-
-    GIntBig nFID = poFeature->GetFID();
-    if (nFID != OGRNullFID)
-        poFeature->SetFID(nFID - (1 + (bHasHeaderLine ? 1 : 0)));
+    const GIntBig nFIDOrigin = poFeature->GetFID();
+    if (nFIDOrigin > 0)
+    {
+        const GIntBig nFIDMemLayer = TranslateFIDToMemLayer(nFIDOrigin);
+        if (!GetFeatureRef(nFIDMemLayer))
+            return OGRERR_NON_EXISTING_FEATURE;
+        poFeature->SetFID(nFIDMemLayer);
+    }
+    else
+    {
+        return OGRERR_NON_EXISTING_FEATURE;
+    }
     SetUpdated();
     OGRErr eErr = OGRMemLayer::ISetFeature(poFeature);
-    poFeature->SetFID(nFID);
+    poFeature->SetFID(nFIDOrigin);
+    return eErr;
+}
+
+/************************************************************************/
+/*                         IUpdateFeature()                             */
+/************************************************************************/
+
+OGRErr OGRODSLayer::IUpdateFeature(OGRFeature *poFeature,
+                                   int nUpdatedFieldsCount,
+                                   const int *panUpdatedFieldsIdx,
+                                   int nUpdatedGeomFieldsCount,
+                                   const int *panUpdatedGeomFieldsIdx,
+                                   bool bUpdateStyleString)
+{
+    const GIntBig nFIDOrigin = poFeature->GetFID();
+    if (nFIDOrigin != OGRNullFID)
+        poFeature->SetFID(TranslateFIDToMemLayer(nFIDOrigin));
+    SetUpdated();
+    OGRErr eErr = OGRMemLayer::IUpdateFeature(
+        poFeature, nUpdatedFieldsCount, panUpdatedFieldsIdx,
+        nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx, bUpdateStyleString);
+    poFeature->SetFID(nFIDOrigin);
+    return eErr;
+}
+
+/************************************************************************/
+/*                          ICreateFeature()                            */
+/************************************************************************/
+
+OGRErr OGRODSLayer::ICreateFeature(OGRFeature *poFeature)
+{
+    const GIntBig nFIDOrigin = poFeature->GetFID();
+    if (nFIDOrigin > 0)
+    {
+        const GIntBig nFIDModified = TranslateFIDToMemLayer(nFIDOrigin);
+        if (GetFeatureRef(nFIDModified))
+        {
+            SetUpdated();
+            poFeature->SetFID(nFIDModified);
+            OGRErr eErr = OGRMemLayer::ISetFeature(poFeature);
+            poFeature->SetFID(nFIDOrigin);
+            return eErr;
+        }
+    }
+    SetUpdated();
+    poFeature->SetFID(OGRNullFID);
+    OGRErr eErr = OGRMemLayer::ICreateFeature(poFeature);
+    poFeature->SetFID(TranslateFIDFromMemLayer(poFeature->GetFID()));
     return eErr;
 }
 
@@ -181,7 +257,7 @@ OGRErr OGRODSLayer::ISetFeature(OGRFeature *poFeature)
 OGRErr OGRODSLayer::DeleteFeature(GIntBig nFID)
 {
     SetUpdated();
-    return OGRMemLayer::DeleteFeature(nFID - (1 + (bHasHeaderLine ? 1 : 0)));
+    return OGRMemLayer::DeleteFeature(TranslateFIDToMemLayer(nFID));
 }
 
 /************************************************************************/

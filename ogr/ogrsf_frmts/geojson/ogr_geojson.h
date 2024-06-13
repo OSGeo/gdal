@@ -82,6 +82,11 @@ class OGRGeoJSONLayer final : public OGRMemLayer
 
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr IUpdateFeature(OGRFeature *poFeature, int nUpdatedFieldsCount,
+                          const int *panUpdatedFieldsIdx,
+                          int nUpdatedGeomFieldsCount,
+                          const int *panUpdatedGeomFieldsIdx,
+                          bool bUpdateStyleString) override;
     virtual OGRErr DeleteFeature(GIntBig nFID) override;
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
@@ -140,6 +145,7 @@ class OGRGeoJSONLayer final : public OGRMemLayer
 
     bool IngestAll();
     void TerminateAppendSession();
+    bool SetOrUpdateFeaturePreparation();
 
     CPL_DISALLOW_COPY_ASSIGN(OGRGeoJSONLayer)
 };
