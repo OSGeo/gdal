@@ -236,15 +236,15 @@ double CalcHeightAdjFactor(const GDALDataset *poDataset, double dfCurveCoeff)
     return 0;
 }
 
-// Calculate the height at nDistance units along a line through the origin given the height
-// at nDistance - 1 units along the line.
+/// Calculate the height at nDistance units along a line through the origin given the height
+/// at nDistance - 1 units along the line.
+/// \param nDistance  Distance along the line for the target point.
+/// \param Za  Height at the line one unit previous to the target point.
 double CalcHeightLine(int nDistance, double Za)
 {
     nDistance = std::abs(nDistance);
-    if (nDistance == 1)
-        return Za;
-    else
-        return Za * nDistance / (nDistance - 1);
+    assert(nDistance != 1);
+    return Za * nDistance / (nDistance - 1);
 }
 
 // Calculate the height Zc of a point (i, j, Zc) given a line through the origin (0, 0, 0)
@@ -262,10 +262,8 @@ double CalcHeightDiagonal(int i, int j, double Za, double Zb)
 // point (i, j, Zc), also on the plane.
 double CalcHeightEdge(int i, int j, double Za, double Zb)
 {
-    if (i == j)
-        return CalcHeightLine(i, Za);
-    else
-        return (Za * i + Zb * (j - i)) / (j - 1);
+    assert(i != j);
+    return (Za * i + Zb * (j - i)) / (j - 1);
 }
 
 }  // unnamed namespace
@@ -580,8 +578,13 @@ void Viewshed::processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
     for (int iPixel = iStart; iPixel > iEnd; iPixel--, pThis--, pLast--)
     {
         int nXOffset = std::abs(iPixel - nX);
-        double dfZ =
-            oZcalc(nXOffset, nYOffset, *(pThis + 1), *pLast, *(pLast + 1));
+
+        double dfZ;
+        if (nXOffset == nYOffset)
+            dfZ = CalcHeightLine(nXOffset, *(pLast + 1));
+        else
+            dfZ =
+                oZcalc(nXOffset, nYOffset, *(pThis + 1), *pLast, *(pLast + 1));
         setOutput(vResult[iPixel], *pThis, dfZ);
     }
 
@@ -612,8 +615,12 @@ void Viewshed::processLineRight(int nX, int nYOffset, int iStart, int iEnd,
     for (int iPixel = iStart; iPixel < iEnd; iPixel++, pThis++, pLast++)
     {
         int nXOffset = std::abs(iPixel - nX);
-        double dfZ =
-            oZcalc(nXOffset, nYOffset, *(pThis - 1), *pLast, *(pLast - 1));
+        double dfZ;
+        if (nXOffset == nYOffset)
+            dfZ = CalcHeightLine(nXOffset, *(pLast - 1));
+        else
+            dfZ =
+                oZcalc(nXOffset, nYOffset, *(pThis - 1), *pLast, *(pLast - 1));
         setOutput(vResult[iPixel], *pThis, dfZ);
     }
     // For cells outside of the [start, end) range, set the outOfRange value.
@@ -736,7 +743,11 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
     // Handle the initial position on the line.
     if (iLeft < iRight)
     {
-        double dfZ = CalcHeightLine(nYOffset, vLastLineVal[nX]);
+        double dfZ;
+        if (nYOffset == 1)
+            dfZ = vThisLineVal[nX];
+        else
+            dfZ = CalcHeightLine(nYOffset, vLastLineVal[nX]);
         setOutput(vResult[nX], vThisLineVal[nX], dfZ);
     }
     else
@@ -786,8 +797,6 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     nLineCount = 0;
     pSrcBand = static_cast<GDALRasterBand *>(band);
 
-    if (!pfnProgress)
-        pfnProgress = GDALDummyProgress;
     oProgress = std::bind(pfnProgress, _1, _2, pProgressArg);
 
     if (!emitProgress(0))
