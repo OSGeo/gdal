@@ -1305,6 +1305,8 @@ def test_hdf5_band_specific_attribute():
         ds.attrs["fwhm"] = [0.01, 0.02]
         ds.attrs["fwhm_units"] = "Micrometers"
         ds.attrs["bad_band_list"] = [0, 1]
+        ds.attrs["center_wavelengths"] = [300, 400]
+        ds.attrs["my_coefficients"] = [1, 2]
         f.close()
 
     ds = gdal.Open("data/hdf5/fwhm.h5")
@@ -1315,11 +1317,15 @@ def test_hdf5_band_specific_attribute():
         "fwhm": "0.01",
         "fwhm_units": "Micrometers",
         "bad_band": "0",
+        "center_wavelength": "300",
+        "my_coefficient": "1",
     }
     assert ds.GetRasterBand(2).GetMetadata_Dict() == {
         "fwhm": "0.02",
         "fwhm_units": "Micrometers",
         "bad_band": "1",
+        "center_wavelength": "400",
+        "my_coefficient": "2",
     }
     ds = None
 
