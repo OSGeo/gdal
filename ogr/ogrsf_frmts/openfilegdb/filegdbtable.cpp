@@ -747,6 +747,10 @@ bool FileGDBTable::ReadTableXHeaderV4()
     m_nTablxOffsetSize = GetUInt32(abyHeader + 12, 0);
     returnErrorIf(m_nTablxOffsetSize < 4 || m_nTablxOffsetSize > 6);
 
+    returnErrorIf(m_n1024BlocksPresent >
+                  (std::numeric_limits<vsi_l_offset>::max() - 16) /
+                      (m_nTablxOffsetSize * 1024));
+
     m_nOffsetTableXTrailer =
         16 + m_nTablxOffsetSize * 1024 *
                  static_cast<vsi_l_offset>(m_n1024BlocksPresent);
