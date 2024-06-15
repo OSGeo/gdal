@@ -929,3 +929,25 @@ OGRSurfaceCasterToCurvePolygon OGRCurvePolygon::GetCasterToCurvePolygon() const
 }
 
 //! @endcond
+
+/************************************************************************/
+/*                           hasEmptyParts()                            */
+/************************************************************************/
+
+bool OGRCurvePolygon::hasEmptyParts() const
+{
+    return oCC.hasEmptyParts();
+}
+
+/************************************************************************/
+/*                          removeEmptyParts()                          */
+/************************************************************************/
+
+void OGRCurvePolygon::removeEmptyParts()
+{
+    auto poExteriorRing = getExteriorRingCurve();
+    if (poExteriorRing && poExteriorRing->IsEmpty())
+        empty();
+    else
+        oCC.removeEmptyParts();
+}
