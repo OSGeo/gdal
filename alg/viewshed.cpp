@@ -25,6 +25,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <iostream>
+#include <iomanip>
+
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -581,7 +584,12 @@ void Viewshed::processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
 
         double dfZ;
         if (nXOffset == nYOffset)
-            dfZ = CalcHeightLine(nXOffset, *(pLast + 1));
+        {
+            if (nXOffset == 1)
+                dfZ = *pThis;
+            else
+                dfZ = CalcHeightLine(nXOffset, *(pLast + 1));
+        }
         else
             dfZ =
                 oZcalc(nXOffset, nYOffset, *(pThis + 1), *pLast, *(pLast + 1));
@@ -617,7 +625,12 @@ void Viewshed::processLineRight(int nX, int nYOffset, int iStart, int iEnd,
         int nXOffset = std::abs(iPixel - nX);
         double dfZ;
         if (nXOffset == nYOffset)
-            dfZ = CalcHeightLine(nXOffset, *(pLast - 1));
+        {
+            if (nXOffset == 1)
+                dfZ = *pThis;
+            else
+                dfZ = CalcHeightLine(nXOffset, *(pLast - 1));
+        }
         else
             dfZ =
                 oZcalc(nXOffset, nYOffset, *(pThis - 1), *pLast, *(pLast - 1));
@@ -674,11 +687,20 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
         if (nX + 1 < oCurExtent.xSize())
             vResult[nX + 1] = oOpts.visibleVal;
     }
+    else
+    {
+        // In DEM mode the base is the pre-adjustment value.
+        // In ground mode the base is zero.
+        if (oOpts.outputMode == OutputMode::DEM)
+            vResult = vThisLineVal;
 
-    // In DEM mode the base is the pre-adjustment value.
-    // In ground mode the base is zero.
-    if (oOpts.outputMode == OutputMode::DEM)
-        vResult = vThisLineVal;
+        if (nX - 1 >= 0)
+            setOutput(vResult[nX - 1], vThisLineVal[nX - 1],
+                      vThisLineVal[nX - 1]);
+        if (nX + 1 < oCurExtent.xSize())
+            setOutput(vResult[nX + 1], vThisLineVal[nX + 1],
+                      vThisLineVal[nX + 1]);
+    }
 
     const auto [iLeft, iRight] =
         adjustHeight(nYOffset, nX, vThisLineVal.data() + nX);
@@ -691,6 +713,7 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
                                        vThisLineVal, vLastLineVal);
                    });
 
+    t1.wait();
     auto t2 =
         std::async(std::launch::async,
                    [&, right = iRight]()
@@ -698,7 +721,6 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
                        processLineRight(nX, nYOffset, nX + 2, right, vResult,
                                         vThisLineVal, vLastLineVal);
                    });
-    t1.wait();
     t2.wait();
 
     // Make the current line the last line.
@@ -744,7 +766,7 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
     if (iLeft < iRight)
     {
         double dfZ;
-        if (nYOffset == 1)
+        if (std::abs(nYOffset) == 1)
             dfZ = vThisLineVal[nX];
         else
             dfZ = CalcHeightLine(nYOffset, vLastLineVal[nX]);
@@ -761,6 +783,7 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
                        processLineLeft(nX, nYOffset, nX - 1, left - 1, vResult,
                                        vThisLineVal, vLastLineVal);
                    });
+    t1.wait();
 
     auto t2 =
         std::async(std::launch::async,
@@ -769,7 +792,6 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
                        processLineRight(nX, nYOffset, nX + 1, right, vResult,
                                         vThisLineVal, vLastLineVal);
                    });
-    t1.wait();
     t2.wait();
 
     // Make the current line the last line.
@@ -797,6 +819,8 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
     nLineCount = 0;
     pSrcBand = static_cast<GDALRasterBand *>(band);
 
+    if (!pfnProgress)
+        pfnProgress = GDALDummyProgress;
     oProgress = std::bind(pfnProgress, _1, _2, pProgressArg);
 
     if (!emitProgress(0))
@@ -861,6 +885,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                                   if (!processLine(nX, nY, nLine, vLastLineVal))
                                       err = true;
                           });
+    tUp.wait();
 
     // scan downwards
     auto tDown = std::async(
@@ -874,7 +899,6 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                     err = true;
         });
 
-    tUp.wait();
     tDown.wait();
 
     if (!emitProgress(1))
