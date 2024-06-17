@@ -4460,3 +4460,13 @@ def test_ogr_geom_GeodesicArea():
     g.AssignSpatialReference(srs)
     with pytest.raises(Exception, match="CRS has no geodetic CRS"):
         g.GeodesicArea()
+
+
+def test_ogr_subgeom_use_after_parent_free():
+
+    g = ogr.CreateGeometryFromWkt("POLYGON ((0 0, 1 0, 1 1, 0 0))")
+
+    exterior_ring = g.GetGeometryRef(0)
+    del g
+
+    assert exterior_ring.GetPointCount() > 0  # does not crash
