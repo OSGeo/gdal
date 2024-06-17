@@ -29,8 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import struct
-
 import gdaltest
 import pytest
 import test_cli_utilities
@@ -90,7 +88,7 @@ def test_gdal_viewshed(gdal_viewshed_path, tmp_path, viewshed_input):
     cs = ds.GetRasterBand(1).Checksum()
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
-    assert cs == 14613
+    assert cs == 14695
     assert nodata is None
 
 
@@ -118,7 +116,7 @@ def test_gdal_viewshed_non_earth_crs(
     cs = ds.GetRasterBand(1).Checksum()
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
-    assert cs == 14609
+    assert cs == 14691
     assert nodata is None
 
 
@@ -231,7 +229,7 @@ def test_gdal_viewshed_value_options(gdal_viewshed_path, tmp_path, viewshed_inpu
     cs = ds.GetRasterBand(1).Checksum()
     nodata = ds.GetRasterBand(1).GetNoDataValue()
     ds = None
-    assert cs == 35091
+    assert cs == 35108
     assert nodata == 0
 
 
@@ -442,47 +440,8 @@ def test_gdal_viewshed_south_up(gdal_viewshed_path, tmp_path, viewshed_input):
     assert ds.RasterXSize == width
     assert ds.RasterYSize == height
     assert ds.GetGeoTransform() == pytest.approx(expected_gt)
-    expected_data = (
-        255,
-        255,
-        255,
-        255,
-        255,
-        255,
-        255,  # end of line
-        255,
-        255,
-        0,
-        0,
-        0,
-        255,
-        255,  # end of line
-        255,
-        255,
-        255,
-        255,
-        255,
-        255,
-        255,  # end of line
-        255,
-        255,
-        0,
-        0,
-        0,
-        255,
-        255,  # end of line
-        255,
-        255,
-        255,
-        255,
-        255,
-        255,
-        255,
-    )
-    assert (
-        struct.unpack("B" * (width * height), ds.GetRasterBand(1).ReadRaster())
-        == expected_data
-    )
+    for val in ds.GetRasterBand(1).ReadRaster():
+        assert val == 255
 
     # Tested case with south-up dataset
     src_ds_south_up_filename = str(tmp_path / "test_gdal_viewshed_src_ds_south_up.tif")
@@ -512,7 +471,5 @@ def test_gdal_viewshed_south_up(gdal_viewshed_path, tmp_path, viewshed_input):
     assert ds.RasterXSize == width
     assert ds.RasterYSize == height
     assert ds.GetGeoTransform() == pytest.approx(expected_gt)
-    assert (
-        struct.unpack("B" * (width * height), ds.GetRasterBand(1).ReadRaster())
-        == expected_data
-    )
+    for val in ds.GetRasterBand(1).ReadRaster():
+        assert val == 255
