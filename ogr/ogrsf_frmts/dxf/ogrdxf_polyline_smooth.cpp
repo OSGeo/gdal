@@ -251,16 +251,22 @@ void DXFSmoothPolyline::EmitArc(const DXFSmoothPolylineVertex &start,
 
     if (fabs(ogrArcEndAngle - ogrArcStartAngle) <= 361.0)
     {
-        OGRLineString *poArcpoLS =
+        auto poArc = std::unique_ptr<OGRLineString>(
             OGRGeometryFactory::approximateArcAngles(
                 ogrArcCenter.x, ogrArcCenter.y, dfZ, ogrArcRadius, ogrArcRadius,
                 ogrArcRotation, ogrArcStartAngle, ogrArcEndAngle, 0.0,
                 m_bUseMaxGapWhenTessellatingArcs)
-                ->toLineString();
+                ->toLineString());
 
-        poLS->addSubLineString(poArcpoLS);
+        // Make sure extremities exactly match input start and end point.
+        // This is in particular important if the polyline is closed.
+        if (poArc->getNumPoints() >= 2)
+        {
+            poArc->setPoint(0, start.x, start.y);
+            poArc->setPoint(poArc->getNumPoints() - 1, end.x, end.y);
+        }
 
-        delete poArcpoLS;
+        poLS->addSubLineString(poArc.get());
     }
     else
     {

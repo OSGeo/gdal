@@ -32,7 +32,7 @@
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 pytestmark = pytest.mark.require_driver("FAST")
 
@@ -185,20 +185,9 @@ def test_fast_7():
     gt = (676565.09, 5, 0, 5348341.5, 0, -5)
 
     # Expected definition of the projection
-    proj = """PROJCS["UTM Zone 32, Northern Hemisphere",
-    GEOGCS["Unknown datum based upon the WGS 84 ellipsoid",
-        DATUM["Not specified (based on WGS 84 spheroid)",
-            SPHEROID["WGS 84",6378137,298.257223563,
-                AUTHORITY["EPSG","7030"]]],
-        PRIMEM["Greenwich",0],
-        UNIT["degree",0.0174532925199433]],
-    PROJECTION["Transverse_Mercator"],
-    PARAMETER["latitude_of_origin",0],
-    PARAMETER["central_meridian",9],
-    PARAMETER["scale_factor",0.9996],
-    PARAMETER["false_easting",500000],
-    PARAMETER["false_northing",0],
-    UNIT["Meter",1]]"""
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32632)
+    proj = srs.ExportToWkt()
 
     tst.testOpen(check_gt=gt, check_prj=proj)
 
