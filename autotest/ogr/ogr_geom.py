@@ -4519,3 +4519,13 @@ def test_ogr_geom_buffer_with_args():
 
     with pytest.raises(Exception, match="Unsupported buffer option"):
         geom.Buffer(1, {"QUALITY": "HIGH"})
+
+
+def test_ogr_subgeom_use_after_parent_free():
+
+    g = ogr.CreateGeometryFromWkt("POLYGON ((0 0, 1 0, 1 1, 0 0))")
+
+    exterior_ring = g.GetGeometryRef(0)
+    del g
+
+    assert exterior_ring.GetPointCount() > 0  # does not crash
