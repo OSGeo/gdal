@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <algorithm>
+
 #include "gdal_unit_test.h"
 
 #include "gtest_include.h"
