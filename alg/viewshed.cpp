@@ -713,7 +713,6 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
                                        vThisLineVal, vLastLineVal);
                    });
 
-    t1.wait();
     auto t2 =
         std::async(std::launch::async,
                    [&, right = iRight]()
@@ -721,6 +720,7 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
                        processLineRight(nX, nYOffset, nX + 2, right, vResult,
                                         vThisLineVal, vLastLineVal);
                    });
+    t1.wait();
     t2.wait();
 
     // Make the current line the last line.
@@ -783,7 +783,6 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
                        processLineLeft(nX, nYOffset, nX - 1, left - 1, vResult,
                                        vThisLineVal, vLastLineVal);
                    });
-    t1.wait();
 
     auto t2 =
         std::async(std::launch::async,
@@ -792,6 +791,7 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
                        processLineRight(nX, nYOffset, nX + 1, right, vResult,
                                         vThisLineVal, vLastLineVal);
                    });
+    t1.wait();
     t2.wait();
 
     // Make the current line the last line.
@@ -885,7 +885,6 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                                   if (!processLine(nX, nY, nLine, vLastLineVal))
                                       err = true;
                           });
-    tUp.wait();
 
     // scan downwards
     auto tDown = std::async(
@@ -899,6 +898,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                     err = true;
         });
 
+    tUp.wait();
     tDown.wait();
 
     if (!emitProgress(1))
