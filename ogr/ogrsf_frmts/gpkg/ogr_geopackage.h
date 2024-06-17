@@ -481,6 +481,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     bool OpenOrCreateDB(int flags);
     void InstallSQLFunctions();
     bool HasGDALAspatialExtension();
+    std::string CreateRasterTriggersSQL(const std::string &osTableName);
 };
 
 /************************************************************************/

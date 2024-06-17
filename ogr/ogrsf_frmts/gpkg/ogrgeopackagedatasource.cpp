@@ -5613,97 +5613,8 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
 
         if (bCreateTriggers)
         {
-            /* From D.5. sample_tile_pyramid Table 43. tiles table Trigger
-             * Definition SQL  */
-            pszSQL = sqlite3_mprintf(
-                "CREATE TRIGGER \"%w_zoom_insert\" "
-                "BEFORE INSERT ON \"%w\" "
-                "FOR EACH ROW BEGIN "
-                "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
-                "constraint: zoom_level not specified for table in "
-                "gpkg_tile_matrix') "
-                "WHERE NOT (NEW.zoom_level IN (SELECT zoom_level FROM "
-                "gpkg_tile_matrix WHERE lower(table_name) = lower('%q'))) ; "
-                "END; "
-                "CREATE TRIGGER \"%w_zoom_update\" "
-                "BEFORE UPDATE OF zoom_level ON \"%w\" "
-                "FOR EACH ROW BEGIN "
-                "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
-                "constraint: zoom_level not specified for table in "
-                "gpkg_tile_matrix') "
-                "WHERE NOT (NEW.zoom_level IN (SELECT zoom_level FROM "
-                "gpkg_tile_matrix WHERE lower(table_name) = lower('%q'))) ; "
-                "END; "
-                "CREATE TRIGGER \"%w_tile_column_insert\" "
-                "BEFORE INSERT ON \"%w\" "
-                "FOR EACH ROW BEGIN "
-                "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
-                "constraint: tile_column cannot be < 0') "
-                "WHERE (NEW.tile_column < 0) ; "
-                "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
-                "constraint: tile_column must by < matrix_width specified for "
-                "table and zoom level in gpkg_tile_matrix') "
-                "WHERE NOT (NEW.tile_column < (SELECT matrix_width FROM "
-                "gpkg_tile_matrix WHERE lower(table_name) = lower('%q') AND "
-                "zoom_level = NEW.zoom_level)); "
-                "END; "
-                "CREATE TRIGGER \"%w_tile_column_update\" "
-                "BEFORE UPDATE OF tile_column ON \"%w\" "
-                "FOR EACH ROW BEGIN "
-                "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
-                "constraint: tile_column cannot be < 0') "
-                "WHERE (NEW.tile_column < 0) ; "
-                "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
-                "constraint: tile_column must by < matrix_width specified for "
-                "table and zoom level in gpkg_tile_matrix') "
-                "WHERE NOT (NEW.tile_column < (SELECT matrix_width FROM "
-                "gpkg_tile_matrix WHERE lower(table_name) = lower('%q') AND "
-                "zoom_level = NEW.zoom_level)); "
-                "END; "
-                "CREATE TRIGGER \"%w_tile_row_insert\" "
-                "BEFORE INSERT ON \"%w\" "
-                "FOR EACH ROW BEGIN "
-                "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
-                "constraint: tile_row cannot be < 0') "
-                "WHERE (NEW.tile_row < 0) ; "
-                "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
-                "constraint: tile_row must by < matrix_height specified for "
-                "table and zoom level in gpkg_tile_matrix') "
-                "WHERE NOT (NEW.tile_row < (SELECT matrix_height FROM "
-                "gpkg_tile_matrix WHERE lower(table_name) = lower('%q') AND "
-                "zoom_level = NEW.zoom_level)); "
-                "END; "
-                "CREATE TRIGGER \"%w_tile_row_update\" "
-                "BEFORE UPDATE OF tile_row ON \"%w\" "
-                "FOR EACH ROW BEGIN "
-                "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
-                "constraint: tile_row cannot be < 0') "
-                "WHERE (NEW.tile_row < 0) ; "
-                "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
-                "constraint: tile_row must by < matrix_height specified for "
-                "table and zoom level in gpkg_tile_matrix') "
-                "WHERE NOT (NEW.tile_row < (SELECT matrix_height FROM "
-                "gpkg_tile_matrix WHERE lower(table_name) = lower('%q') AND "
-                "zoom_level = NEW.zoom_level)); "
-                "END; ",
-                m_osRasterTable.c_str(), m_osRasterTable.c_str(),
-                m_osRasterTable.c_str(), m_osRasterTable.c_str(),
-                m_osRasterTable.c_str(), m_osRasterTable.c_str(),
-                m_osRasterTable.c_str(), m_osRasterTable.c_str(),
-                m_osRasterTable.c_str(), m_osRasterTable.c_str(),
-                m_osRasterTable.c_str(), m_osRasterTable.c_str(),
-                m_osRasterTable.c_str(), m_osRasterTable.c_str(),
-                m_osRasterTable.c_str(), m_osRasterTable.c_str(),
-                m_osRasterTable.c_str(), m_osRasterTable.c_str(),
-                m_osRasterTable.c_str(), m_osRasterTable.c_str(),
-                m_osRasterTable.c_str(), m_osRasterTable.c_str(),
-                m_osRasterTable.c_str(), m_osRasterTable.c_str(),
-                m_osRasterTable.c_str(), m_osRasterTable.c_str(),
-                m_osRasterTable.c_str(), m_osRasterTable.c_str());
-
             osSQL += ";";
-            osSQL += pszSQL;
-            sqlite3_free(pszSQL);
+            osSQL += CreateRasterTriggersSQL(m_osRasterTable);
         }
 
         OGRErr eErr = SQLCommand(hDB, osSQL);
@@ -7523,88 +7434,7 @@ bool GDALGeoPackageDataset::RenameRasterLayer(const char *pszLayerName,
     // Recreate all zoom/tile triggers
     if (oTriggerResult)
     {
-        /* From D.5. sample_tile_pyramid Table 43. tiles table Trigger
-         * Definition SQL  */
-        pszSQL = sqlite3_mprintf(
-            "CREATE TRIGGER \"%w_zoom_insert\" "
-            "BEFORE INSERT ON \"%w\" "
-            "FOR EACH ROW BEGIN "
-            "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
-            "constraint: zoom_level not specified for table in "
-            "gpkg_tile_matrix') "
-            "WHERE NOT (NEW.zoom_level IN (SELECT zoom_level FROM "
-            "gpkg_tile_matrix WHERE lower(table_name) = lower('%q'))) ; "
-            "END; "
-            "CREATE TRIGGER \"%w_zoom_update\" "
-            "BEFORE UPDATE OF zoom_level ON \"%w\" "
-            "FOR EACH ROW BEGIN "
-            "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
-            "constraint: zoom_level not specified for table in "
-            "gpkg_tile_matrix') "
-            "WHERE NOT (NEW.zoom_level IN (SELECT zoom_level FROM "
-            "gpkg_tile_matrix WHERE lower(table_name) = lower('%q'))) ; "
-            "END; "
-            "CREATE TRIGGER \"%w_tile_column_insert\" "
-            "BEFORE INSERT ON \"%w\" "
-            "FOR EACH ROW BEGIN "
-            "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
-            "constraint: tile_column cannot be < 0') "
-            "WHERE (NEW.tile_column < 0) ; "
-            "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
-            "constraint: tile_column must by < matrix_width specified for "
-            "table and zoom level in gpkg_tile_matrix') "
-            "WHERE NOT (NEW.tile_column < (SELECT matrix_width FROM "
-            "gpkg_tile_matrix WHERE lower(table_name) = lower('%q') AND "
-            "zoom_level = NEW.zoom_level)); "
-            "END; "
-            "CREATE TRIGGER \"%w_tile_column_update\" "
-            "BEFORE UPDATE OF tile_column ON \"%w\" "
-            "FOR EACH ROW BEGIN "
-            "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
-            "constraint: tile_column cannot be < 0') "
-            "WHERE (NEW.tile_column < 0) ; "
-            "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
-            "constraint: tile_column must by < matrix_width specified for "
-            "table and zoom level in gpkg_tile_matrix') "
-            "WHERE NOT (NEW.tile_column < (SELECT matrix_width FROM "
-            "gpkg_tile_matrix WHERE lower(table_name) = lower('%q') AND "
-            "zoom_level = NEW.zoom_level)); "
-            "END; "
-            "CREATE TRIGGER \"%w_tile_row_insert\" "
-            "BEFORE INSERT ON \"%w\" "
-            "FOR EACH ROW BEGIN "
-            "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
-            "constraint: tile_row cannot be < 0') "
-            "WHERE (NEW.tile_row < 0) ; "
-            "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
-            "constraint: tile_row must by < matrix_height specified for "
-            "table and zoom level in gpkg_tile_matrix') "
-            "WHERE NOT (NEW.tile_row < (SELECT matrix_height FROM "
-            "gpkg_tile_matrix WHERE lower(table_name) = lower('%q') AND "
-            "zoom_level = NEW.zoom_level)); "
-            "END; "
-            "CREATE TRIGGER \"%w_tile_row_update\" "
-            "BEFORE UPDATE OF tile_row ON \"%w\" "
-            "FOR EACH ROW BEGIN "
-            "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
-            "constraint: tile_row cannot be < 0') "
-            "WHERE (NEW.tile_row < 0) ; "
-            "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
-            "constraint: tile_row must by < matrix_height specified for "
-            "table and zoom level in gpkg_tile_matrix') "
-            "WHERE NOT (NEW.tile_row < (SELECT matrix_height FROM "
-            "gpkg_tile_matrix WHERE lower(table_name) = lower('%q') AND "
-            "zoom_level = NEW.zoom_level)); "
-            "END; ",
-            pszNewLayerName, pszNewLayerName, pszNewLayerName, pszNewLayerName,
-            pszNewLayerName, pszNewLayerName, pszNewLayerName, pszNewLayerName,
-            pszNewLayerName, pszNewLayerName, pszNewLayerName, pszNewLayerName,
-            pszNewLayerName, pszNewLayerName, pszNewLayerName, pszNewLayerName,
-            pszNewLayerName, pszNewLayerName, pszNewLayerName, pszNewLayerName,
-            pszNewLayerName, pszNewLayerName, pszNewLayerName, pszNewLayerName,
-            pszNewLayerName, pszNewLayerName, pszNewLayerName, pszNewLayerName);
-        osSQL += pszSQL;
-        sqlite3_free(pszSQL);
+        osSQL += CreateRasterTriggersSQL(pszNewLayerName);
     }
 
     OGRErr eErr = SQLCommand(GetDB(), osSQL.c_str());
@@ -8231,6 +8061,99 @@ bool GDALGeoPackageDataset::HasGDALAspatialExtension()
     );
     bool bHasExtension = (oResultTable && oResultTable->RowCount() == 1);
     return bHasExtension;
+}
+
+std::string
+GDALGeoPackageDataset::CreateRasterTriggersSQL(const std::string &osTableName)
+{
+    char *pszSQL;
+    std::string osSQL;
+    /* From D.5. sample_tile_pyramid Table 43. tiles table Trigger
+     * Definition SQL  */
+    pszSQL = sqlite3_mprintf(
+        "CREATE TRIGGER \"%w_zoom_insert\" "
+        "BEFORE INSERT ON \"%w\" "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
+        "constraint: zoom_level not specified for table in "
+        "gpkg_tile_matrix') "
+        "WHERE NOT (NEW.zoom_level IN (SELECT zoom_level FROM "
+        "gpkg_tile_matrix WHERE lower(table_name) = lower('%q'))) ; "
+        "END; "
+        "CREATE TRIGGER \"%w_zoom_update\" "
+        "BEFORE UPDATE OF zoom_level ON \"%w\" "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
+        "constraint: zoom_level not specified for table in "
+        "gpkg_tile_matrix') "
+        "WHERE NOT (NEW.zoom_level IN (SELECT zoom_level FROM "
+        "gpkg_tile_matrix WHERE lower(table_name) = lower('%q'))) ; "
+        "END; "
+        "CREATE TRIGGER \"%w_tile_column_insert\" "
+        "BEFORE INSERT ON \"%w\" "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
+        "constraint: tile_column cannot be < 0') "
+        "WHERE (NEW.tile_column < 0) ; "
+        "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
+        "constraint: tile_column must by < matrix_width specified for "
+        "table and zoom level in gpkg_tile_matrix') "
+        "WHERE NOT (NEW.tile_column < (SELECT matrix_width FROM "
+        "gpkg_tile_matrix WHERE lower(table_name) = lower('%q') AND "
+        "zoom_level = NEW.zoom_level)); "
+        "END; "
+        "CREATE TRIGGER \"%w_tile_column_update\" "
+        "BEFORE UPDATE OF tile_column ON \"%w\" "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
+        "constraint: tile_column cannot be < 0') "
+        "WHERE (NEW.tile_column < 0) ; "
+        "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
+        "constraint: tile_column must by < matrix_width specified for "
+        "table and zoom level in gpkg_tile_matrix') "
+        "WHERE NOT (NEW.tile_column < (SELECT matrix_width FROM "
+        "gpkg_tile_matrix WHERE lower(table_name) = lower('%q') AND "
+        "zoom_level = NEW.zoom_level)); "
+        "END; "
+        "CREATE TRIGGER \"%w_tile_row_insert\" "
+        "BEFORE INSERT ON \"%w\" "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
+        "constraint: tile_row cannot be < 0') "
+        "WHERE (NEW.tile_row < 0) ; "
+        "SELECT RAISE(ABORT, 'insert on table ''%q'' violates "
+        "constraint: tile_row must by < matrix_height specified for "
+        "table and zoom level in gpkg_tile_matrix') "
+        "WHERE NOT (NEW.tile_row < (SELECT matrix_height FROM "
+        "gpkg_tile_matrix WHERE lower(table_name) = lower('%q') AND "
+        "zoom_level = NEW.zoom_level)); "
+        "END; "
+        "CREATE TRIGGER \"%w_tile_row_update\" "
+        "BEFORE UPDATE OF tile_row ON \"%w\" "
+        "FOR EACH ROW BEGIN "
+        "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
+        "constraint: tile_row cannot be < 0') "
+        "WHERE (NEW.tile_row < 0) ; "
+        "SELECT RAISE(ABORT, 'update on table ''%q'' violates "
+        "constraint: tile_row must by < matrix_height specified for "
+        "table and zoom level in gpkg_tile_matrix') "
+        "WHERE NOT (NEW.tile_row < (SELECT matrix_height FROM "
+        "gpkg_tile_matrix WHERE lower(table_name) = lower('%q') AND "
+        "zoom_level = NEW.zoom_level)); "
+        "END; ",
+        osTableName.c_str(), osTableName.c_str(), osTableName.c_str(),
+        osTableName.c_str(), osTableName.c_str(), osTableName.c_str(),
+        osTableName.c_str(), osTableName.c_str(), osTableName.c_str(),
+        osTableName.c_str(), osTableName.c_str(), osTableName.c_str(),
+        osTableName.c_str(), osTableName.c_str(), osTableName.c_str(),
+        osTableName.c_str(), osTableName.c_str(), osTableName.c_str(),
+        osTableName.c_str(), osTableName.c_str(), osTableName.c_str(),
+        osTableName.c_str(), osTableName.c_str(), osTableName.c_str(),
+        osTableName.c_str(), osTableName.c_str(), osTableName.c_str(),
+        osTableName.c_str());
+    osSQL = pszSQL;
+    sqlite3_free(pszSQL);
+    return osSQL;
 }
 
 /************************************************************************/
