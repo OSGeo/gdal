@@ -870,6 +870,9 @@ int OGRPolyhedralSurface::getNumGeometries() const
 
 OGRPolygon *OGRPolyhedralSurface::getGeometryRef(int i)
 {
+    if (i < 0 || i >= oMP.nGeomCount)
+        return nullptr;
+
     return oMP.papoGeoms[i]->toPolygon();
 }
 
@@ -892,6 +895,9 @@ OGRPolygon *OGRPolyhedralSurface::getGeometryRef(int i)
 
 const OGRPolygon *OGRPolyhedralSurface::getGeometryRef(int i) const
 {
+    if (i < 0 || i >= oMP.nGeomCount)
+        return nullptr;
+
     return oMP.papoGeoms[i]->toPolygon();
 }
 
