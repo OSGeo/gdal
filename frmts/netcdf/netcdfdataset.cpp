@@ -8008,9 +8008,20 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #endif
         // Note: not calling Identify() directly, because we want the file type.
         // Only support NCDF_FORMAT* formats.
-        if (!(NCDF_FORMAT_NC == eTmpFormat || NCDF_FORMAT_NC2 == eTmpFormat ||
-              NCDF_FORMAT_NC4 == eTmpFormat || NCDF_FORMAT_NC4C == eTmpFormat))
+        if (NCDF_FORMAT_NC == eTmpFormat || NCDF_FORMAT_NC2 == eTmpFormat ||
+            NCDF_FORMAT_NC4 == eTmpFormat || NCDF_FORMAT_NC4C == eTmpFormat)
+        {
+            // ok
+        }
+        else if (eTmpFormat == NCDF_FORMAT_HDF4 &&
+                 poOpenInfo->IsSingleAllowedDriver("netCDF"))
+        {
+            // ok
+        }
+        else
+        {
             return nullptr;
+        }
     }
     else
     {

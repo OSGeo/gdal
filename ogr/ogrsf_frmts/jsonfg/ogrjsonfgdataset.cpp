@@ -435,7 +435,7 @@ bool OGRJSONFGDataset::ReadFromService(GDALOpenInfo *poOpenInfo,
     char *pszStoredContent = OGRGeoJSONDriverStealStoredContent(pszSource);
     if (pszStoredContent != nullptr)
     {
-        if (JSONFGIsObject(pszStoredContent))
+        if (JSONFGIsObject(pszStoredContent, poOpenInfo))
         {
             pszGeoData_ = pszStoredContent;
             nGeoDataLen_ = strlen(pszGeoData_);
@@ -501,7 +501,7 @@ bool OGRJSONFGDataset::ReadFromService(GDALOpenInfo *poOpenInfo,
     /* -------------------------------------------------------------------- */
     if (EQUAL(pszSource, poOpenInfo->pszFilename))
     {
-        if (!JSONFGIsObject(pszGeoData_))
+        if (!JSONFGIsObject(pszGeoData_, poOpenInfo))
         {
             OGRGeoJSONDriverStoreContent(pszSource, pszGeoData_);
             pszGeoData_ = nullptr;

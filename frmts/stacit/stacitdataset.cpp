@@ -98,6 +98,7 @@ class STACITDataset final : public VRTDataset
 
 STACITDataset::STACITDataset() : VRTDataset(0, 0)
 {
+    poDriver = nullptr;  // cancel what the VRTDataset did
     SetWritable(false);
 }
 
@@ -108,6 +109,13 @@ STACITDataset::STACITDataset() : VRTDataset(0, 0)
 int STACITDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     if (STARTS_WITH(poOpenInfo->pszFilename, "STACIT:"))
+    {
+        return true;
+    }
+
+    const bool bIsSingleDriver = poOpenInfo->IsSingleAllowedDriver("STACIT");
+    if (bIsSingleDriver && (STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+                            STARTS_WITH(poOpenInfo->pszFilename, "https://")))
     {
         return true;
     }
@@ -123,6 +131,14 @@ int STACITDataset::Identify(GDALOpenInfo *poOpenInfo)
         // before the loop.
         const char *pszHeader =
             reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+        while (*pszHeader != 0 &&
+               std::isspace(static_cast<unsigned char>(*pszHeader)))
+            ++pszHeader;
+        if (bIsSingleDriver)
+        {
+            return pszHeader[0] == '{';
+        }
+
         if (strstr(pszHeader, "\"stac_version\"") != nullptr &&
             strstr(pszHeader, "\"proj:transform\"") != nullptr)
         {

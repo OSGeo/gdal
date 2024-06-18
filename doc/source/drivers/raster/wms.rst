@@ -475,6 +475,11 @@ The WMS driver can open :
    A list of subdatasets will be returned, resulting from the parsing of
    the GetCapabilities request on that server.
 
+   Starting with GDAL 3.10, specifying the ``-if WMS`` option to command line utilities
+   accepting it, or ``WMS`` as the only value of the ``papszAllowedDrivers`` of
+   :cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+   URL,  without the ``WMS:`` prefix.
+
 -  a pseudo GetMap request, such as the subdataset name
    returned by the previous syntax :
 

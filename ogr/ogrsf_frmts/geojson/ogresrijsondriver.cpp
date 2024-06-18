@@ -48,10 +48,14 @@ static int OGRESRIJSONDriverIdentify(GDALOpenInfo *poOpenInfo)
     GeoJSONSourceType nSrcType = ESRIJSONDriverGetSourceType(poOpenInfo);
     if (nSrcType == eGeoJSONSourceUnknown)
         return FALSE;
-    if (nSrcType == eGeoJSONSourceService &&
-        !STARTS_WITH_CI(poOpenInfo->pszFilename, "ESRIJSON:"))
+    if (nSrcType == eGeoJSONSourceService)
     {
-        return -1;
+        if (poOpenInfo->IsSingleAllowedDriver("ESRIJSON"))
+            return TRUE;
+        if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "ESRIJSON:"))
+        {
+            return -1;
+        }
     }
     return TRUE;
 }

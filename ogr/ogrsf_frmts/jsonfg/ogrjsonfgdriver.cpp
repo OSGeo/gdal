@@ -41,10 +41,14 @@ static int OGRJSONFGDriverIdentify(GDALOpenInfo *poOpenInfo)
     GeoJSONSourceType nSrcType = JSONFGDriverGetSourceType(poOpenInfo);
     if (nSrcType == eGeoJSONSourceUnknown)
         return FALSE;
-    if (nSrcType == eGeoJSONSourceService &&
-        !STARTS_WITH_CI(poOpenInfo->pszFilename, "JSONFG:"))
+    if (nSrcType == eGeoJSONSourceService)
     {
-        return -1;
+        if (poOpenInfo->IsSingleAllowedDriver("JSONFG"))
+            return TRUE;
+        if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "JSONFG:"))
+        {
+            return -1;
+        }
     }
     return TRUE;
 }

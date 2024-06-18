@@ -43,6 +43,11 @@ static int TileDBDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
 
+    if (poOpenInfo->IsSingleAllowedDriver("TileDB"))
+    {
+        return TRUE;
+    }
+
     const char *pszConfig =
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "TILEDB_CONFIG");
 

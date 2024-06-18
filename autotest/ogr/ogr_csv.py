@@ -3115,6 +3115,25 @@ def test_ogr_csv_invalid_geometry_option(tmp_vsimem):
 
 
 ###############################################################################
+# Test force opening a CSV file
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_csv_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.bin")
+
+    with gdaltest.vsi_open(filename, "wb") as fdest:
+        fdest.write(b"foo\nbar\n")
+
+    with pytest.raises(Exception):
+        gdal.OpenEx(filename)
+
+    ds = gdal.OpenEx(filename, allowed_drivers=["CSV"])
+    assert ds.GetDriver().GetDescription() == "CSV"
+
+
+###############################################################################
 
 
 if __name__ == "__main__":

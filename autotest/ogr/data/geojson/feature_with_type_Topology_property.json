@@ -1,0 +1,7 @@
+{
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::27700" } },
+"features": [
+{ "properties": { "type": "Topology" }, "geometry": null, "type": "Feature" }
+],
+"type": "FeatureCollection"
+}
