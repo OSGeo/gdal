@@ -309,6 +309,19 @@ def test_ogr_geos_centroid_point_empty():
 ###############################################################################
 
 
+def test_ogr_geos_centroid_polygon_with_empty_interior_ring():
+
+    g = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))")
+    g.AddGeometry(ogr.Geometry(ogr.wkbLinearRing))
+
+    centroid = g.Centroid()
+
+    assert centroid.ExportToWkt() == "POINT (0.5 0.5)"
+
+
+###############################################################################
+
+
 @pytest.mark.require_geos(3, 12)
 def test_ogr_geos_pointzm_empty():
 
