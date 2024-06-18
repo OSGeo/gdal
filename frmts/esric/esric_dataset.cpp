@@ -216,6 +216,7 @@ class ECDataset final : public GDALDataset
     CPLErr InitializeFromJSON(const CPLJSONObject &oRoot);
     CPLString compression;
     std::vector<double> resolutions;
+    int m_nMinLOD = 0;
     OGRSpatialReference oSRS;
     std::vector<GByte> tilebuffer;  // Last read tile, decompressed
     std::vector<GByte> filebuffer;  // raw tile buffer
@@ -368,19 +369,20 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         if (TSZ != oRoot.GetInteger("tileInfo/cols"))
             throw CPLString("Non-square tiles are not supported");
 
-        auto oLODs = oRoot.GetArray("tileInfo/lods");
+        const auto oLODs = oRoot.GetArray("tileInfo/lods");
         double res = 0;
         // we need to skip levels that don't have bundle files
-        int minLOD = oRoot.GetInteger("minLOD");
-        int maxLOD = oRoot.GetInteger("maxLOD");
-        int level = 0;
+        m_nMinLOD = oRoot.GetInteger("minLOD");
+        if (m_nMinLOD < 0 || m_nMinLOD >= 31)
+            throw CPLString("Invalid minLOD");
+        const int maxLOD = std::min(oRoot.GetInteger("maxLOD"), 31);
         for (const auto &oLOD : oLODs)
         {
             res = oLOD.GetDouble("resolution");
             if (!(res > 0))
                 throw CPLString("Can't parse resolution for LOD");
-            level = oLOD.GetInteger("level");
-            if (level >= minLOD && level <= maxLOD)
+            const int level = oLOD.GetInteger("level");
+            if (level >= m_nMinLOD && level <= maxLOD)
             {
                 resolutions.push_back(res);
             }
@@ -652,7 +654,8 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
 
     buffer.resize(nBytes * parent->nBands);
 
-    int lxx = static_cast<int>(parent->resolutions.size() - lvl - 1);
+    const int lxx = parent->m_nMinLOD +
+                    static_cast<int>(parent->resolutions.size() - lvl - 1);
     int bx, by;
     bx = (nBlockXOff / BSZ) * BSZ;
     by = (nBlockYOff / BSZ) * BSZ;
