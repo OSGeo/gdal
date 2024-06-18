@@ -198,3 +198,18 @@ def test_tpkx_ingest_more_bytes(tmp_vsimem):
     data = b"{" + (b" " * 900) + data[1:]
     gdal.FileFromMemBuffer(filename, data)
     gdal.Open(filename)
+
+
+###############################################################################
+# Open a tpkx dataset where minLOD > 0
+
+
+def test_tpkx_minLOD_not_zero():
+    ds = gdal.Open("data/esric/Usa_lod5.tpkx")
+    gt = ds.GetGeoTransform()
+    # Corresponds to lon=-100 lat=40
+    X = -11131949
+    Y = 4865942
+    x = (X - gt[0]) / gt[1]
+    y = (Y - gt[3]) / gt[5]
+    assert ds.GetRasterBand(1).ReadRaster(x, y, 1, 1) != b"\0"
