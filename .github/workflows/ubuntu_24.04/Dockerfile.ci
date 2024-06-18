@@ -129,3 +129,6 @@ RUN ln -s /usr/lib/x86_64-linux-gnu/ogdi/4.1/libvrf.so /usr/lib/x86_64-linux-gnu
 COPY requirements.txt /tmp/
 RUN python3 -m pip install -U --break-system-packages -r /tmp/requirements.txt
 
+# cfchecker requires udunits2
+RUN apt-get install -y --allow-unauthenticated libudunits2-0 libudunits2-data
+RUN python3 -m pip install --break-system-packages cfchecker

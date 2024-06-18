@@ -8372,13 +8372,12 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     bool bHasSimpleGeometries = false;  // but not necessarily valid
     if (poDS->nCFVersion >= 1.8)
     {
-        poDS->bSGSupport = true;
         bHasSimpleGeometries = poDS->DetectAndFillSGLayers(cdfid);
-        poDS->vcdf.enableFullVirtualMode();
-    }
-    else
-    {
-        poDS->bSGSupport = false;
+        if (bHasSimpleGeometries)
+        {
+            poDS->bSGSupport = true;
+            poDS->vcdf.enableFullVirtualMode();
+        }
     }
 
     char szConventions[NC_MAX_NAME + 1];
@@ -9347,9 +9346,12 @@ GDALDataset *netCDFDataset::Create(const char *pszFilename, int nXSize,
     // Add Conventions, GDAL info and history.
     if (poDS->cdfid >= 0)
     {
-        const char *CF_Vector_Conv = poDS->bSGSupport
-                                         ? NCDF_CONVENTIONS_CF_V1_8
-                                         : NCDF_CONVENTIONS_CF_V1_6;
+        const char *CF_Vector_Conv =
+            poDS->bSGSupport ||
+                    // Use of variable length strings require CF-1.8
+                    EQUAL(aosOptions.FetchNameValueDef("FORMAT", ""), "NC4")
+                ? NCDF_CONVENTIONS_CF_V1_8
+                : NCDF_CONVENTIONS_CF_V1_6;
         poDS->bWriteGDALVersion = CPLTestBool(
             CSLFetchNameValueDef(papszOptions, "WRITE_GDAL_VERSION", "YES"));
         poDS->bWriteGDALHistory = CPLTestBool(

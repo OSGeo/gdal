@@ -262,4 +262,3 @@ RUN ldconfig
 
 COPY requirements.txt /tmp/
 RUN python3 -m pip install -U -r /tmp/requirements.txt
-RUN python3 -m pip install cfchecker

@@ -2179,10 +2179,12 @@ def test_netcdf_52():
     f = None
     ds = None
 
-    import netcdf_cf
-
-    if netcdf_cf.cfchecks_available():
-        netcdf_cf.netcdf_cf_check_file("tmp/netcdf_52.nc", "auto")
+    # Latest release version of cfchecker (4.1.0) doesn't support variable-length
+    # strings as valid variable types, but next one will:
+    # https://github.com/cedadev/cf-checker/blob/c0486c606f7cf4d38d3b484b427726ce1bde73ee/src/cfchecker/cfchecks.py#L745
+    # import netcdf_cf
+    # if netcdf_cf.cfchecks_available():
+    #     netcdf_cf.netcdf_cf_check_file("tmp/netcdf_52.nc", "auto")
 
     gdal.Unlink("tmp/netcdf_52.nc")
     gdal.Unlink("tmp/netcdf_52.csv")
@@ -2650,10 +2652,13 @@ def test_netcdf_62():
         assert "char station(profile" in hdr
         assert "char foo(record" in hdr
 
-    import netcdf_cf
-
-    if netcdf_cf.cfchecks_available():
-        netcdf_cf.netcdf_cf_check_file("tmp/netcdf_62.nc", "auto")
+    # Disable cfchecker validation as it fails with a '(5): co-ordinate variable not monotonic'
+    # error which I believe is incorrect given the particular nature of
+    # a https://cfconventions.org/Data/cf-conventions/cf-conventions-1.11/cf-conventions.html#_indexed_ragged_array_representation_of_profiles
+    # where coordinate variables can clearly not be sorted in any order.
+    # import netcdf_cf
+    # if netcdf_cf.cfchecks_available():
+    #    netcdf_cf.netcdf_cf_check_file("tmp/netcdf_62.nc", "auto")
 
     gdal.Unlink("tmp/netcdf_62.nc")
 
