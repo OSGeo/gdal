@@ -194,6 +194,7 @@ TEST(Viewshed, simple_height)
     }
 }
 
+// Addresses cases in #9501
 TEST(Viewshed, dem_vs_ground)
 {
     auto process = [](const std::array<int8_t, 8> &in, Viewshed::Options &opts)

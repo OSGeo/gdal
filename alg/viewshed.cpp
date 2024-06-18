@@ -25,9 +25,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <iostream>
-#include <iomanip>
-
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -641,7 +638,7 @@ void Viewshed::processLineRight(int nX, int nYOffset, int iStart, int iEnd,
     std::fill(vResult.begin() + iEnd, vResult.end(), oOpts.outOfRangeVal);
 }
 
-/// Set the output Z value depending of the observable height and computation mode.
+/// Set the output Z value depending on the observable height and computation mode.
 ///
 /// dfResult  Reference to the result cell
 /// dfCellVal  Reference to the current cell height. Replace with observable height.
