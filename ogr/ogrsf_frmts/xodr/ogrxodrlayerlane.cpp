@@ -97,12 +97,11 @@ OGRFeature *OGRXODRLayerLane::GetNextRawFeature()
 
         odr::Lane lane = *m_laneIter;
         odr::Mesh3D laneMesh = *m_laneMeshIter;
-
         std::string laneRoadID = *m_laneRoadIDIter;
 
+        // Populate geometry field
         std::unique_ptr<OGRTriangulatedSurface> tin =
             triangulateSurface(laneMesh);
-
         if (m_bDissolveTIN)
         {
             OGRGeometry *dissolvedPolygon = tin->UnaryUnion();
@@ -121,11 +120,11 @@ OGRFeature *OGRXODRLayerLane::GetNextRawFeature()
         }
         else
         {
-            //tin->IsValid(); // TODO Works for TINs only with enabled SFCGAL support
             tin->assignSpatialReference(&m_poSRS);
             feature->SetGeometryDirectly(tin.release());
         }
 
+        // Populate other fields
         feature->SetFID(m_nNextFID++);
         feature->SetField(m_poFeatureDefn->GetFieldIndex("RoadID"),
                           laneRoadID.c_str());

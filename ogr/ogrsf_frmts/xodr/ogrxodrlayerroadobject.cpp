@@ -77,12 +77,14 @@ OGRFeature *OGRXODRLayerRoadObject::GetNextRawFeature()
         odr::RoadObject roadObject = *m_roadObjectIter;
         odr::Mesh3D roadObjectMesh = *m_roadObjectMeshesIter;
 
+        // Populate geometry field
+        // In contrast to other XODR layers, dissolving of RoadObject TINs is not an option, because faces of "true" 3D objects might collapse.
         std::unique_ptr<OGRTriangulatedSurface> tin =
             triangulateSurface(roadObjectMesh);
-        //tin->IsValid(); // TODO Works for TINs only with enabled SFCGAL support
         tin->assignSpatialReference(&m_poSRS);
         feature->SetGeometryDirectly(tin.release());
 
+        // Populate other fields
         feature->SetField(m_poFeatureDefn->GetFieldIndex("ObjectID"),
                           roadObject.id.c_str());
         feature->SetField(m_poFeatureDefn->GetFieldIndex("RoadID"),

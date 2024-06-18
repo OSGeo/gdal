@@ -79,27 +79,20 @@ OGRFeature *OGRXODRLayerLaneBorder::GetNextRawFeature()
         feature = std::make_unique<OGRFeature>(m_poFeatureDefn.get());
 
         odr::Lane lane = *m_laneIter;
-        odr::Line3D laneOuter = *m_laneLinesOuterIter;
+        odr::Line3D laneOuterBorder = *m_laneLinesOuterIter;
         std::string laneRoadID = *m_laneRoadIDIter;
 
+        // Populate geometry field
         auto lineString = std::make_unique<OGRLineString>();
-        for (const auto &laneVertex : laneOuter)
+        for (const auto &borderVertex : laneOuterBorder)
         {
-            lineString->addPoint(laneVertex[0], laneVertex[1], laneVertex[2]);
+            lineString->addPoint(borderVertex[0], borderVertex[1],
+                                 borderVertex[2]);
         }
-        bool isValid = lineString->IsValid();
-        if (isValid)
-        {
-            lineString->assignSpatialReference(&m_poSRS);
-            feature->SetGeometryDirectly(lineString.release());
-        }
-        else
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "LaneBorder feature with FID %d has invalid geometry.",
-                     m_nNextFID);
-        }
+        lineString->assignSpatialReference(&m_poSRS);
+        feature->SetGeometryDirectly(lineString.release());
 
+        // Populate other fields
         feature->SetField(m_poFeatureDefn->GetFieldIndex("RoadID"),
                           laneRoadID.c_str());
         feature->SetField(m_poFeatureDefn->GetFieldIndex("ID"), lane.id);

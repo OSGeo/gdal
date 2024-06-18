@@ -83,6 +83,7 @@ OGRFeature *OGRXODRLayerRoadMark::GetNextRawFeature()
         odr::RoadMark roadMark = *m_roadMarkIter;
         odr::Mesh3D roadMarkMesh = *m_roadMarkMeshIter;
 
+        // Populate geometry field
         std::unique_ptr<OGRTriangulatedSurface> tin =
             triangulateSurface(roadMarkMesh);
         if (m_bDissolveTIN)
@@ -103,10 +104,11 @@ OGRFeature *OGRXODRLayerRoadMark::GetNextRawFeature()
         }
         else
         {
-            //tin->IsValid(); // TODO Works for TINs only with enabled SFCGAL support
             tin->assignSpatialReference(&m_poSRS);
             feature->SetGeometryDirectly(tin.release());
         }
+
+        // Populate other fields
         feature->SetField(m_poFeatureDefn->GetFieldIndex("RoadID"),
                           roadMark.road_id.c_str());
         feature->SetField(m_poFeatureDefn->GetFieldIndex("LaneID"),

@@ -105,15 +105,17 @@ OGRFeature *OGRXODRLayerRoadSignal::GetNextRawFeature()
         odr::RoadSignal roadSignal = *m_roadSignalIter;
         odr::Mesh3D roadSignalMesh = *m_roadSignalMeshesIter;
 
+        // Populate geometry field
         if (m_bDissolveTIN)
         {
+            // Use simplified centroid, directly provided by libOpenDRIVE
             std::string roadId = roadSignal.road_id;
             odr::Road road = m_roadElements.roads.at(roadId);
 
             double s = roadSignal.s0;
             double t = roadSignal.t0;
-            double z = roadSignal.zOffset;
-            odr::Vec3D xyz = road.get_xyz(s, t, z);
+            double h = roadSignal.zOffset;
+            odr::Vec3D xyz = road.get_xyz(s, t, h);
 
             auto point = std::make_unique<OGRPoint>(xyz[0], xyz[1], xyz[2]);
             point->assignSpatialReference(&m_poSRS);
@@ -123,11 +125,11 @@ OGRFeature *OGRXODRLayerRoadSignal::GetNextRawFeature()
         {
             std::unique_ptr<OGRTriangulatedSurface> tin =
                 triangulateSurface(roadSignalMesh);
-            //tin->IsValid(); // TODO Works for TINs only with enabled SFCGAL support
             tin->assignSpatialReference(&m_poSRS);
             feature->SetGeometryDirectly(tin.release());
         }
 
+        // Populate other fields
         feature->SetField(m_poFeatureDefn->GetFieldIndex("SignalID"),
                           roadSignal.id.c_str());
         feature->SetField(m_poFeatureDefn->GetFieldIndex("RoadID"),

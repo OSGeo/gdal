@@ -75,25 +75,16 @@ OGRFeature *OGRXODRLayerReferenceLine::GetNextRawFeature()
         odr::Road road = (*m_roadIter).second;
         odr::Line3D refLine = *m_referenceLineIter;
 
+        // Populate geometry field
         auto lineString = std::make_unique<OGRLineString>();
-        for (const auto &refLineVertex : refLine)
+        for (const auto &lineVertex : refLine)
         {
-            lineString->addPoint(refLineVertex[0], refLineVertex[1],
-                                 refLineVertex[2]);
+            lineString->addPoint(lineVertex[0], lineVertex[1], lineVertex[2]);
         }
-        bool isValid = lineString->IsValid();
-        if (isValid)
-        {
-            lineString->assignSpatialReference(&m_poSRS);
-            feature->SetGeometryDirectly(lineString.release());
-        }
-        else
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "ReferenceLine feature with FID %d has invalid geometry.",
-                     m_nNextFID);
-        }
+        lineString->assignSpatialReference(&m_poSRS);
+        feature->SetGeometryDirectly(lineString.release());
 
+        // Populate other fields
         feature->SetField("ID", road.id.c_str());
         feature->SetField("Length", road.length);
         feature->SetField("Junction", road.junction.c_str());
