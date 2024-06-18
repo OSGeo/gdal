@@ -1180,8 +1180,10 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
     const int nBlocksPerColumn =
         (poBand->GetYSize() + nBlockYSize - 1) / nBlockYSize;
 
-    const int nBlockPixels = nBlockXSize * nBlockYSize;
-    const int nBlockCount = nBlocksPerRow * nBlocksPerColumn;
+    const GIntBig nBlockPixels =
+        static_cast<GIntBig>(nBlockXSize) * nBlockYSize;
+    const GIntBig nBlockCount =
+        static_cast<GIntBig>(nBlocksPerRow) * nBlocksPerColumn;
 
     if (nBlocksPerRow == 0 || nBlocksPerColumn == 0 || nBlockPixels == 0 ||
         nBlockCount == 0)
@@ -1206,18 +1208,18 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
     int nBlockSampleRate = 1;
 
     if ((nSamples / ((nBlockCount - 1) / nSampleRate + 1)) != 0)
-        nBlockSampleRate =
-            std::max(1, nBlockPixels /
-                            (nSamples / ((nBlockCount - 1) / nSampleRate + 1)));
+        nBlockSampleRate = static_cast<int>(std::max<GIntBig>(
+            1,
+            nBlockPixels / (nSamples / ((nBlockCount - 1) / nSampleRate + 1))));
 
     int nActualSamples = 0;
 
-    for (int iSampleBlock = 0; iSampleBlock < nBlockCount;
+    for (GIntBig iSampleBlock = 0; iSampleBlock < nBlockCount;
          iSampleBlock += nSampleRate)
     {
 
-        const int iYBlock = iSampleBlock / nBlocksPerRow;
-        const int iXBlock = iSampleBlock - nBlocksPerRow * iYBlock;
+        const int iYBlock = static_cast<int>(iSampleBlock / nBlocksPerRow);
+        const int iXBlock = static_cast<int>(iSampleBlock % nBlocksPerRow);
 
         GDALRasterBlock *const poBlock =
             poBand->GetLockedBlockRef(iXBlock, iYBlock);
