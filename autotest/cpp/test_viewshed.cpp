@@ -2,10 +2,9 @@
 //
 // Project:  C++ Test Suite for GDAL/OGR
 // Purpose:  Test general OGR features.
-// Author:   Mateusz Loskot <mateusz@loskot.net>
+// Author:   Andrew Bell
 //
 ///////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2006, Mateusz Loskot <mateusz@loskot.net>
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +26,8 @@
  ****************************************************************************/
 
 #include <algorithm>
+#include <array>
+#include <utility>
 
 #include "gdal_unit_test.h"
 
@@ -39,6 +40,7 @@ namespace gdal
 
 namespace
 {
+using Coord = std::pair<int, int>;
 using DatasetPtr = std::unique_ptr<GDALDataset>;
 using Transform = std::array<double, 6>;
 Transform identity{0, 1, 0, 0, 0, 1};
@@ -53,6 +55,11 @@ Viewshed::Options stdOptions(int x, int y)
     opts.curveCoeff = 0;
 
     return opts;
+}
+
+Viewshed::Options stdOptions(const Coord &observer)
+{
+    return stdOptions(observer.first, observer.second);
 }
 
 DatasetPtr runViewshed(int8_t *in, int edgeLength, Viewshed::Options opts)
@@ -185,6 +192,67 @@ TEST(Viewshed, simple_height)
         // Double equality is fine here as all the values are small integers.
         EXPECT_EQ(expected, ground);
     }
+}
+
+TEST(Viewshed, dem_vs_ground)
+{
+    auto process = [](const std::array<int8_t, 8> &in, Viewshed::Options &opts)
+    {
+        Viewshed v(opts);
+
+        GDALDriver *driver = (GDALDriver *)GDALGetDriverByName("MEM");
+        // 8 cols x 1 row
+        GDALDataset *dataset = driver->Create("", 8, 1, 1, GDT_Int8, nullptr);
+        EXPECT_TRUE(dataset);
+        dataset->SetGeoTransform(identity.data());
+        GDALRasterBand *band = dataset->GetRasterBand(1);
+        EXPECT_TRUE(band);
+        CPLErr err = band->RasterIO(GF_Write, 0, 0, 8, 1, (void *)in.data(), 8,
+                                    1, GDT_Int8, 0, 0, nullptr);
+        EXPECT_EQ(err, CE_None);
+
+        EXPECT_TRUE(v.run(band));
+        return v.output();
+    };
+
+    auto run = [&process](const std::array<int8_t, 8> &in, Coord observer,
+                          const std::array<double, 8> &ground,
+                          const std::array<double, 8> &dem)
+    {
+        Viewshed::Options opts = stdOptions(observer);
+
+        std::array<double, 8> out;
+        opts.outputMode = Viewshed::OutputMode::Ground;
+        DatasetPtr ds = process(in, opts);
+        GDALRasterBand *band = ds->GetRasterBand(1);
+        CPLErr err = band->RasterIO(GF_Read, 0, 0, 8, 1, out.data(), 8, 1,
+                                    GDT_Float64, 0, 0, nullptr);
+        EXPECT_EQ(err, CE_None);
+        for (size_t i = 0; i < ground.size(); ++i)
+            EXPECT_DOUBLE_EQ(out[i], ground[i]);
+
+        opts.outputMode = Viewshed::OutputMode::DEM;
+        ds = process(in, opts);
+        band = ds->GetRasterBand(1);
+        err = band->RasterIO(GF_Read, 0, 0, 8, 1, out.data(), 8, 1, GDT_Float64,
+                             0, 0, nullptr);
+        EXPECT_EQ(err, CE_None);
+        for (size_t i = 0; i < dem.size(); ++i)
+            EXPECT_DOUBLE_EQ(out[i], dem[i]);
+    };
+
+    // Input / Observer / Minimum expected above ground / Minimum expected above zero
+    run({0, 0, 0, 1, 0, 0, 0, 0}, {2, 0}, {0, 0, 0, 0, 2, 3, 4, 5},
+        {0, 0, 0, 1, 2, 3, 4, 5});
+    run({1, 1, 0, 1, 0, 1, 2, 2}, {3, 0}, {0, 0, 0, 0, 0, 0, 0, 1 / 3.0},
+        {1, 0, 0, 1, 0, 0, 1, 7 / 3.0});
+    run({0, 0, 0, 1, 1, 0, 0, 0}, {0, 0},
+        {0, 0, 0, 0, 1 / 3.0, 5 / 3.0, 6 / 3.0, 7 / 3.0},
+        {0, 0, 0, 0, 4 / 3.0, 5 / 3.0, 6 / 3.0, 7 / 3.0});
+    run({0, 0, 1, 2, 3, 4, 5, 6}, {0, 0}, {0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 3 / 2.0, 8 / 3.0, 15 / 4.0, 24 / 5.0, 35 / 6.0});
+    run({0, 0, 1, 1, 3, 4, 5, 4}, {0, 0}, {0, 0, 0, .5, 0, 0, 0, 11 / 6.0},
+        {0, 0, 0, 3 / 2.0, 2, 15 / 4.0, 24 / 5.0, 35 / 6.0});
 }
 
 }  // namespace gdal

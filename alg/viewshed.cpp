@@ -641,11 +641,11 @@ void Viewshed::processLineRight(int nX, int nYOffset, int iStart, int iEnd,
     std::fill(vResult.begin() + iEnd, vResult.end(), oOpts.outOfRangeVal);
 }
 
-/// Set the output Z value depending o the observable height and computation mode.
+/// Set the output Z value depending of the observable height and computation mode.
 ///
 /// dfResult  Reference to the result cell
 /// dfCellVal  Reference to the current cell height. Replace with observable height.
-/// dfZ  Observable height at cell.
+/// dfZ  Minimum observable height at cell.
 void Viewshed::setOutput(double &dfResult, double &dfCellVal, double dfZ)
 {
     if (oOpts.outputMode != OutputMode::Normal)
@@ -680,6 +680,15 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
     // This bit is only relevant for the first line.
     dfZObserver = oOpts.observer.z + vThisLineVal[nX];
     dfHeightAdjFactor = CalcHeightAdjFactor(poDstDS.get(), oOpts.curveCoeff);
+
+    // In DEM mode the base is the pre-adjustment value.
+    // In ground mode the base is zero.
+    if (oOpts.outputMode == OutputMode::DEM)
+        vResult = vThisLineVal;
+
+    const auto [iLeft, iRight] =
+        adjustHeight(nYOffset, nX, vThisLineVal.data() + nX);
+
     if (oOpts.outputMode == OutputMode::Normal)
     {
         vResult[nX] = oOpts.visibleVal;
@@ -690,11 +699,8 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
     }
     else
     {
-        // In DEM mode the base is the pre-adjustment value.
-        // In ground mode the base is zero.
-        if (oOpts.outputMode == OutputMode::DEM)
-            vResult = vThisLineVal;
-
+        // The minimum observable value isn't well-defined at a distance of one.
+        // We use the actual cell height.
         if (nX - 1 >= 0)
             setOutput(vResult[nX - 1], vThisLineVal[nX - 1],
                       vThisLineVal[nX - 1]);
@@ -702,9 +708,6 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
             setOutput(vResult[nX + 1], vThisLineVal[nX + 1],
                       vThisLineVal[nX + 1]);
     }
-
-    const auto [iLeft, iRight] =
-        adjustHeight(nYOffset, nX, vThisLineVal.data() + nX);
 
     auto t1 =
         std::async(std::launch::async,
