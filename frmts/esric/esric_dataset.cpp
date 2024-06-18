@@ -281,6 +281,8 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo)
         TSZ = static_cast<int>(CPLAtof(CPLGetXMLValue(TCI, "TileCols", "256")));
         if (TSZ != CPLAtof(CPLGetXMLValue(TCI, "TileRows", "256")))
             throw CPLString("Non-square tiles are not supported");
+        if (TSZ < 0 || TSZ > 8192)
+            throw CPLString("Unsupported TileCols value");
 
         CPLXMLNode *LODInfo = CPLGetXMLNode(TCI, "LODInfos.LODInfo");
         double res = 0;
@@ -368,6 +370,8 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         TSZ = oRoot.GetInteger("tileInfo/rows");
         if (TSZ != oRoot.GetInteger("tileInfo/cols"))
             throw CPLString("Non-square tiles are not supported");
+        if (TSZ < 0 || TSZ > 8192)
+            throw CPLString("Unsupported tileInfo/rows value");
 
         const auto oLODs = oRoot.GetArray("tileInfo/lods");
         double res = 0;
@@ -614,7 +618,7 @@ ECBand::ECBand(ECDataset *parent, int b, int level)
     double factor = parent->resolutions[0] / parent->resolutions[lvl];
     nRasterXSize = static_cast<int>(parent->nRasterXSize * factor + 0.5);
     nRasterYSize = static_cast<int>(parent->nRasterYSize * factor + 0.5);
-    nBlockXSize = nBlockYSize = 256;
+    nBlockXSize = nBlockYSize = parent->TSZ;
 
     // Default color interpretation
     assert(b - 1 >= 0);
