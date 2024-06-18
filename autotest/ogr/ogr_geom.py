@@ -4529,3 +4529,12 @@ def test_ogr_subgeom_use_after_parent_free():
     del g
 
     assert exterior_ring.GetPointCount() > 0  # does not crash
+
+
+def test_ogr_subgeom_use_after_remove():
+    g = ogr.CreateGeometryFromWkt("MultiPoint ((0 0))")
+    point = g.GetGeometryRef(0)
+    g.RemoveGeometry(0)
+
+    with pytest.raises(Exception):
+        point.ExportToWkt()

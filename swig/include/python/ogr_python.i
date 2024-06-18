@@ -995,6 +995,22 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 %feature("pythonappend") GetGeometryRef %{
     if val is not None:
         val._parent_geom = self
+
+        if not hasattr(self, '_geom_refs'):
+            self._geom_refs = {}
+
+        if int(val.this) not in self._geom_refs:
+            import weakref
+            self._geom_refs[int(val.this)] = weakref.WeakSet()
+        self._geom_refs[int(val.this)].add(val)
+%}
+
+%feature("pythonprepend") RemoveGeometry %{
+    g = self.GetGeometryRef(args[0])
+
+    if g is not None:
+        for obj in self._geom_refs[int(g.this)]:
+            obj.this = None
 %}
 
 }
