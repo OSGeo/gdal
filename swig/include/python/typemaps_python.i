@@ -92,12 +92,15 @@
   if ( !*$2 ) {
     Py_INCREF(Py_None);
     r = Py_None;
-    $result = t_output_helper($result,r);
   }
   else {
     r = PyFloat_FromDouble( *$1 );
-    $result = t_output_helper($result,r);
   }
+%#if SWIG_VERSION >= 0x040300
+  $result = SWIG_Python_AppendOutput($result,r,$isvoid);
+%#else
+  $result = SWIG_Python_AppendOutput($result,r);
+%#endif
 }
 
 
@@ -112,12 +115,15 @@
   if ( !*$2 ) {
     Py_INCREF(Py_None);
     r = Py_None;
-    $result = t_output_helper($result,r);
   }
   else {
     r = PyLong_FromLongLong( *$1 );
-    $result = t_output_helper($result,r);
   }
+%#if SWIG_VERSION >= 0x040300
+  $result = SWIG_Python_AppendOutput($result,r,$isvoid);
+%#else
+  $result = SWIG_Python_AppendOutput($result,r);
+%#endif
 }
 
 
@@ -132,12 +138,15 @@
   if ( !*$2 ) {
     Py_INCREF(Py_None);
     r = Py_None;
-    $result = t_output_helper($result,r);
   }
   else {
     r = PyLong_FromUnsignedLongLong( *$1 );
-    $result = t_output_helper($result,r);
   }
+%#if SWIG_VERSION >= 0x040300
+  $result = SWIG_Python_AppendOutput($result,r,$isvoid);
+%#else
+  $result = SWIG_Python_AppendOutput($result,r);
+%#endif
 }
 
 
@@ -151,7 +160,7 @@
 %enddef
 
 %define TYPEMAP_ARGOUT_ARGOUT_ARRAY_IS_VALID(num_values)
-%typemap(argout, fragment="t_output_helper,CreateTupleFromDoubleArray") (double argout[num_values], int* isvalid)
+%typemap(argout, fragment="CreateTupleFromDoubleArray") (double argout[num_values], int* isvalid)
 {
    /* %typemap(argout) (double argout[num_values], int* isvalid)  */
   PyObject *r;
@@ -162,7 +171,11 @@
   else {
     r = CreateTupleFromDoubleArray($1, num_values);
   }
-  $result = t_output_helper($result,r);
+%#if SWIG_VERSION >= 0x040300
+  $result = SWIG_Python_AppendOutput($result,r,$isvoid);
+%#else
+  $result = SWIG_Python_AppendOutput($result,r);
+%#endif
 }
 %enddef
 
@@ -281,11 +294,15 @@ CreateTupleFromDoubleArray( const double *first, size_t size ) {
   memset(argout, 0, sizeof(argout));
   $1 = argout;
 }
-%typemap(argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double argout[ANY])
+%typemap(argout,fragment="CreateTupleFromDoubleArray") ( double argout[ANY])
 {
   /* %typemap(argout) (double argout[ANY]) */
   PyObject *out = CreateTupleFromDoubleArray( $1, $dim0 );
-  $result = t_output_helper($result,out);
+%#if SWIG_VERSION >= 0x040300
+  $result = SWIG_Python_AppendOutput($result,out,$isvoid);
+%#else
+  $result = SWIG_Python_AppendOutput($result,out);
+%#endif
 }
 
 %typemap(in,numinputs=0) ( double *argout[ANY]) (double *argout)
@@ -294,11 +311,15 @@ CreateTupleFromDoubleArray( const double *first, size_t size ) {
   argout = NULL;
   $1 = &argout;
 }
-%typemap(argout,fragment="t_output_helper,CreateTupleFromDoubleArray") ( double *argout[ANY])
+%typemap(argout,fragment="CreateTupleFromDoubleArray") ( double *argout[ANY])
 {
   /* %typemap(argout) (double *argout[ANY]) */
   PyObject *out = CreateTupleFromDoubleArray( *$1, $dim0 );
-  $result = t_output_helper($result,out);
+%#if SWIG_VERSION >= 0x040300
+  $result = SWIG_Python_AppendOutput($result,out,$isvoid);
+%#else
+  $result = SWIG_Python_AppendOutput($result,out);
+%#endif
 }
 %typemap(freearg) (double *argout[ANY])
 {
@@ -1460,7 +1481,7 @@ static PyObject* CSLToList( char** stringarray, bool *pbErr )
   /* %typemap(in,numinputs=0) (char **argout) */
   $1 = &argout;
 }
-%typemap(argout,fragment="t_output_helper") (char **argout)
+%typemap(argout) (char **argout)
 {
   /* %typemap(argout) (char **argout) */
   PyObject *o;
@@ -1471,7 +1492,11 @@ static PyObject* CSLToList( char** stringarray, bool *pbErr )
     o = Py_None;
     Py_INCREF( o );
   }
-  $result = t_output_helper($result, o);
+%#if SWIG_VERSION >= 0x040300
+  $result = SWIG_Python_AppendOutput($result,o,$isvoid);
+%#else
+  $result = SWIG_Python_AppendOutput($result,o);
+%#endif
 }
 %typemap(freearg) (char **argout)
 {
@@ -2588,7 +2613,11 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
     PyTuple_SetItem( r, 0, PyLong_FromLong(*$1) );
     PyTuple_SetItem( r, 1, PyLong_FromLong(*$2) );
   }
-  $result = t_output_helper($result,r);
+%#if SWIG_VERSION >= 0x040300
+  $result = SWIG_Python_AppendOutput($result,r,$isvoid);
+%#else
+  $result = SWIG_Python_AppendOutput($result,r);
+%#endif
 }
 
 %typemap(in,numinputs=0) (OGRLayerShadow** ppoBelongingLayer, double* pdfProgressPct) ( OGRLayerShadow* poBelongingLayer = NULL, double dfProgressPct = 0 )
@@ -2617,14 +2646,19 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
         PyList_SetItem($result, 0, Py_None);
     }
 
+    PyObject* r;
     if ( !*$1 ) {
+        r = Py_None;
         Py_INCREF(Py_None);
-        $result = SWIG_Python_AppendOutput($result, Py_None);
     }
     else {
-        $result = SWIG_Python_AppendOutput($result,
-            SWIG_NewPointerObj(SWIG_as_voidptr( *$1), SWIGTYPE_p_OGRLayerShadow, 0 ));
+        r = SWIG_NewPointerObj(SWIG_as_voidptr( *$1), SWIGTYPE_p_OGRLayerShadow, 0 );
     }
+%#if SWIG_VERSION >= 0x040300
+    $result = SWIG_Python_AppendOutput($result,r,$isvoid);
+%#else
+    $result = SWIG_Python_AppendOutput($result,r);
+%#endif
   }
 
   if( arg3 )
@@ -2634,7 +2668,12 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
         $result = PyList_New(1);
         PyList_SetItem($result, 0, Py_None);
     }
-    $result = SWIG_Python_AppendOutput($result, PyFloat_FromDouble( *$2));
+    PyObject* r = PyFloat_FromDouble( *$2);
+%#if SWIG_VERSION >= 0x040300
+    $result = SWIG_Python_AppendOutput($result,r,$isvoid);
+%#else
+    $result = SWIG_Python_AppendOutput($result,r);
+%#endif
   }
 
 }
@@ -2907,7 +2946,7 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
   $1 = &vals;
   $2 = &nCount;
 }
-%typemap(argout, fragment="t_output_helper,CreateTupleFromIntArray") (int** pvals, size_t* pnCount)
+%typemap(argout, fragment="CreateTupleFromIntArray") (int** pvals, size_t* pnCount)
 {
   /* %typemap(argout) (int** pvals, size_t* pnCount) */
   PyObject *list = CreateTupleFromIntArray(*$1, *$2);
@@ -2930,7 +2969,7 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
   $1 = &vals;
   $2 = &nCount;
 }
-%typemap(argout, fragment="t_output_helper,CreateTupleFromInt64Array") (long long** pvals, size_t* pnCount)
+%typemap(argout, fragment="CreateTupleFromInt64Array") (long long** pvals, size_t* pnCount)
 {
   /* %typemap(argout) (int** pvals, size_t* pnCount) */
   PyObject *list = CreateTupleFromInt64Array(*$1, *$2);
@@ -2953,7 +2992,7 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
   $1 = &vals;
   $2 = &nCount;
 }
-%typemap(argout, fragment="t_output_helper,CreateTupleFromDoubleArray") (double** pvals, size_t* pnCount)
+%typemap(argout, fragment="CreateTupleFromDoubleArray") (double** pvals, size_t* pnCount)
 {
   /* %typemap(argout) (double** pvals, size_t* pnCount) */
   PyObject *list = CreateTupleFromDoubleArray(*$1, *$2);
@@ -3019,7 +3058,11 @@ OBJECT_LIST_INPUT(GDALEDTComponentHS)
   PyTuple_SetItem( r, 2, PyFloat_FromDouble($1[2]));
   PyTuple_SetItem( r, 3, PyFloat_FromDouble($1[3]));
   PyTuple_SetItem( r, 4, PyLong_FromLong($2[0]));
-  $result = t_output_helper($result,r);
+%#if SWIG_VERSION >= 0x040300
+  $result = SWIG_Python_AppendOutput($result,r,$isvoid);
+%#else
+  $result = SWIG_Python_AppendOutput($result,r);
+%#endif
 }
 
 
@@ -3556,7 +3599,11 @@ OBJECT_LIST_INPUT(GDALMDArrayHS);
   PyTuple_SetItem( r, 0, PyBool_FromLong(*$1) );
   PyTuple_SetItem( r, 1, PyLong_FromLong(*$2) );
   PyTuple_SetItem( r, 2, PyLong_FromLong(*$3) );
-  $result = t_output_helper($result,r);
+%#if SWIG_VERSION >= 0x040300
+  $result = SWIG_Python_AppendOutput($result,r,$isvoid);
+%#else
+  $result = SWIG_Python_AppendOutput($result,r);
+%#endif
 }
 
 
@@ -3583,7 +3630,11 @@ OBJECT_LIST_INPUT(GDALMDArrayHS);
       Py_INCREF(Py_None);
       PyTuple_SetItem( r, 1, Py_None );
   }
-  $result = t_output_helper($result,r);
+%#if SWIG_VERSION >= 0x040300
+  $result = SWIG_Python_AppendOutput($result,r,$isvoid);
+%#else
+  $result = SWIG_Python_AppendOutput($result,r);
+%#endif
 }
 
 
@@ -3634,6 +3685,10 @@ OBJECT_LIST_INPUT(GDALMDArrayHS);
       PyTuple_SetItem( r, 3, PyLong_FromUnsignedLongLong(*$5) );
       PyTuple_SetItem( r, 4, PyLong_FromUnsignedLongLong(*$6) );
       PyTuple_SetItem( r, 5, PyLong_FromUnsignedLongLong(*$7) );
-      $result = t_output_helper($result,r);
+%#if SWIG_VERSION >= 0x040300
+      $result = SWIG_Python_AppendOutput($result,r,$isvoid);
+%#else
+      $result = SWIG_Python_AppendOutput($result,r);
+%#endif
   }
 }

@@ -62,7 +62,6 @@ RUN apk add \
     sfcgal-dev \
     snappy-dev \
     sqlite-dev \
-    swig \
     tiledb-dev \
     tiff-dev \
     unixodbc-dev \
@@ -73,3 +72,11 @@ RUN apk add \
 
 COPY requirements.txt /tmp/
 RUN python3 -m pip install --break-system-packages -U -r /tmp/requirements.txt
+
+RUN apk add git autoconf automake libtool bison && \
+    git clone --branch "${SWIG_GIT_TAG:-master}" --depth 1 https://github.com/swig/swig.git swig-git && \
+    cd swig-git && \
+    ./autogen.sh && \
+    ./configure --prefix=/usr && \
+    make -j$(nproc) && \
+    make install
