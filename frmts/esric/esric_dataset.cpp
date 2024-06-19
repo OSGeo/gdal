@@ -713,7 +713,7 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
 
         CPLStringList aosOptions;
         if ((!pszExtentSource && bIsFullExtentValid) ||
-            EQUAL(pszExtentSource, "FULL_EXTENT"))
+            (pszExtentSource && EQUAL(pszExtentSource, "FULL_EXTENT")))
         {
             if (!bIsFullExtentValid)
             {
