@@ -63,7 +63,7 @@ def get_python_lib(plat_specific=0, standard_lib=0, prefix=None):
             and "real_prefix" not in sys.__dict__
             and sys.prefix == sys.base_prefix
         ):
-            return os.path.join(prefix, "lib", "python3", "dist-packages")
+            return os.path.join(libpython, "dist-packages")
         else:
             return os.path.join(libpython, "site-packages")
     elif os.name == "nt":
