@@ -7,7 +7,7 @@
   "properties": {
     "version": {
       "type": "string",
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "primary_column": {
       "type": "string",
@@ -23,7 +23,7 @@
           "properties": {
             "encoding": {
               "type": "string",
-              "const": "WKB"
+              "pattern": "^(WKB|point|linestring|polygon|multipoint|multilinestring|multipolygon)$"
             },
             "geometry_types": {
               "type": "array",
@@ -36,7 +36,7 @@
             "crs": {
               "oneOf": [
                 {
-                  "$ref": "https://proj.org/schemas/v0.5/projjson.schema.json"
+                  "$ref": "https://proj.org/schemas/v0.7/projjson.schema.json"
                 },
                 {
                   "type": "null"
@@ -71,6 +71,56 @@
             },
             "epoch": {
               "type": "number"
+            },
+            "covering": {
+              "type": "object",
+              "required": [
+                "bbox"
+              ],
+              "properties": {
+                "bbox": {
+                  "type": "object",
+                  "required": ["xmin", "xmax", "ymin", "ymax"],
+                  "properties": {
+                    "xmin": {
+                      "type": "array",
+                      "items": [
+                        { "type": "string", "minLength": 1 },
+                        { "const": "xmin" }
+                      ],
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "xmax": {
+                      "type": "array",
+                      "items": [
+                        { "type": "string", "minLength": 1 },
+                        { "const": "xmax" }
+                      ],
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "ymin": {
+                      "type": "array",
+                      "items": [
+                        { "type": "string", "minLength": 1 },
+                        { "const": "ymin" }
+                      ],
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "ymax": {
+                      "type": "array",
+                      "items": [
+                        { "type": "string", "minLength": 1 },
+                        { "const": "ymax" }
+                      ],
+                      "minItems": 2,
+                      "maxItems": 2
+                    }
+                  }
+                }
+              }
             }
           }
         }
