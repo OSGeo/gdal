@@ -258,6 +258,21 @@ RUN mkdir sqlite \
     && cd .. \
     && rm -rf sqlite
 
+# Build libOpenDRIVE
+ARG OPENDRIVE_VERSION=0.5.0-gdal
+RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
+    wget -q https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
+    && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
+    && rm -f ${OPENDRIVE_VERSION}.tar.gz \
+    && cd libOpenDRIVE-${OPENDRIVE_VERSION} \
+    && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr/ \
+    && make -j$(nproc) \
+    && make install \
+    && cd .. \
+    && rm -rf libOpenDRIVE-${OPENDRIVE_VERSION} \
+    ); fi
+
 RUN ldconfig
 
 COPY requirements.txt /tmp/

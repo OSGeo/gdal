@@ -104,6 +104,21 @@ RUN mkdir mongocxx \
     && make install \
     && cd ../.. \
     && rm -rf mongocxx
+    
+# Build libOpenDRIVE
+ARG OPENDRIVE_VERSION=0.5.0-gdal
+RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
+    wget -q https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
+    && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
+    && rm -f ${OPENDRIVE_VERSION}.tar.gz \
+    && cd libOpenDRIVE-${OPENDRIVE_VERSION} \
+    && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr/ \
+    && make -j$(nproc) \
+    && make install \
+    && cd .. \
+    && rm -rf libOpenDRIVE-${OPENDRIVE_VERSION} \
+    ); fi
 
 # ESRI File Geodatabase API
 RUN curl -L -O https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5/FileGDB_API_1_5_64gcc51.tar.gz \
