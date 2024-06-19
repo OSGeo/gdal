@@ -1,3 +1,230 @@
+# GDAL/OGR 3.9.1 Release Notes
+
+GDAL 3.9.1 is a bugfix release.
+
+## Build
+
+* PDF: fix build with PoDoFo >= 0.10 with C++20 compilation (#9875)
+* PDF: fix build against PoDoFo with MSYS2 UCRT64 and CLANG64 (#9976)
+* Fix compiler errors in C++20 and C++23 modes
+* Fix compiler warnings with gcc 14
+* CMake: add infrastructure so we can build plugins that can be loaded against
+  a libgdal that has been without any support for them.
+  Note: this is an ABI break for in-tree drivers, with deferred loading capability, when built as plugin. That is such a driver built against
+  GDAL 3.9.0 won't be able to be loaded by GDAL 3.9.1.
+
+## GDAL 3.9.1
+
+### Port
+
+* /vsis3/: include AWS_CONTAINER_CREDENTIALS_TOKEN in container credentials
+ flow (#9881)
+* VSIStatL(): allow trailing slash on mingw64 builds
+
+### Algorithms
+
+* Warper: relax longitude extend check to decide whether we can insert a
+  CENTER_LONG wrapping longitude
+* GCPTransformer: accept only 2 points for order=1 transformer (#10074)
+* GDALContourGenerateEx(): validate LEVEL_INTERVAL option (#10103)
+* GDALTranslate(): use directly generated VRT even if BLOCKXSIZE/BLOCKYSIZE
+  creation options are specified
+
+### Core
+
+* GDALIdentifyDriverEx(): transmit papszAllowedDrivers to Identify() (#9946)
+* GDALNoDataMaskBand::IRasterIO(): fix crash on memory allocation failure
+  (rasterio/rasterio#3028)
+* Rasterband methods (histogram, statistics): make them compatible of a dataset
+  with more 2 billion blocks
+
+### Raster utilities
+
+* Add argument name after 'Too few arguments' error (#10011)
+* gdalwarp: fix help message for -wm (#9960)
+* gdalinfo text output: avoid weird truncation of coordinate epoch when
+  its value is {year}.0
+* Python utilities: avoid UseExceptions() related deprecation warning when
+  launched from launcher shell scripts (#10010)
+
+### Raster drivers
+
+AAIGRID driver:
+ * fix forcing datatype to Float32 when NODATA_value is nan and pixel values
+   look as ints
+
+ESRIC driver:
+ * ingest more bytes to be able to identify more datasets (#10006)
+ * properly takes into account minLOD for .tpkx (#10229)
+ * validate tile size
+ * add a EXTENT_SOURCE open option and default to FULL_EXTENT (#10229)
+
+GRIB driver:
+ * make .idx reading compatible of /vsisubfile/ (#10214)
+
+GTiff driver:
+ * fix reading angular projection parameters in non-degree unit
+   (typically grads), when reading projection from ProjXXXXGeoKeys (#10154)
+ * fix writing angular projection parameters in non-degree unit (typically
+   grads), when writing ProjXXXXGeoKeys
+ * multithreaded reading: avoid emitting tons of warnings when ExtraSamples tag
+   is missing
+ * writer: limit number of GCPs in GeoTIFF tag to 10922 to avoid overflowing
+   uint16_t (#10164)
+
+HDF5 driver:
+ * add support for libhdf5 >= 1.14.4.2 when built with Float16
+ * make logic to assign per-band attribute more generic
+
+netCDF driver:
+ * netCDFAttribute::IWrite(): fix writing an array of (NC4) strings, from a
+   non-string array
+ * try to better round geotransform values when read from single-precsion
+   lon/lat float arrays
+
+STACIT driver:
+ * add a OVERLAP_STRATEGY opening option to determine how to handle sources
+   fully overlapping others, and taking into account nodata values
+ * honour MAX_ITEMS=0 as meaning unlimited as documented
+ * implement paging using POST method
+
+VRT driver:
+ * fix processing of LUT where the first source value is NaN
+
+## OGR 3.9.1
+
+### Core
+
+* OGRSQL: validate column name in COUNT(field_name) and error out if it
+  doesn't exist (#9972)
+
+### OGRSpatialReference
+
+* importFromESRI() Arc/Info 7 .prj: fix importing LAMBERT_AZIMUTHAL with a
+  'radius of the sphere of reference'
+* workaround bug of PROJ < 9.5 regarding wrong conversion id for UTM south
+* importFromUSGS(): use plain WGS84 datum with WGS84 ellipsoid, and identify
+  EPSG code
+
+### Vector utilities
+
+* ogrinfo: fix error message when not specifying a filename
+* ogrinfo text output: avoid weird truncation of coordinate epoch when
+  its value is {year}.0
+* ogr2ogr: do not call CreateLayer() with a geom field defn of type wkbNone
+  (#10071)
+* ogr2ogr: error out if GCP transform creation fails (#10073)
+
+### Vector drivers
+
+AVCBin driver:
+ * avoid integer overflow (ossfuzz #68814)
+
+DXF driver:
+ * avoid slight numeric imprecision with closed lwpolyline and arcs (#10153)
+
+ESRIJSON driver:
+ * do not set width on DateTime field
+ * fix paging when URL contains f=pjson instead of f=json (#10094)
+
+FileGDB driver:
+ * be robust to be called with a geometry field definition of type wkbNone
+   (#10071)
+
+FlatGeoBuf driver:
+ * more explicit error message in case of feature geometry type != layer
+   geometry type (#9893)
+
+GeoJSON driver:
+ * do not recognize GeoJSON files with a featureType feature property as JSONFG
+   (#9946)
+ * make it possible with -if/papszAllowedDrivers to force opening a JSONFG file
+   with the GeoJSON driver
+ * implement IUpdateFeature() that was broken up to now
+ * declare missing capabilities DELETE_FIELD, REORDER_FIELDS,
+   ALTER_FIELD_DEFN_FLAGS
+
+GML driver:
+ * fix memory leak due do xlink:href substitution in a non-nominal case
+   (ossfuzz #68850)
+ * GML_SKIP_RESOLVE_ELEMS=HUGE: keep gml:id in .resolved.gml file
+ * avoid assertion due to trying to load existing .gfs file after reading
+   .resolved.gml (#10015)
+ * fix issue with nested elements with identical names in
+   GML_SKIP_RESOLVE_ELEMS=HUGE mode (#10015)
+ * make sure SRS is detected when using GML_SKIP_RESOLVE_ELEMS=HUGE on a AIXM
+   file, otherwise GML_SWAP_COORDINATES might not work correctly
+
+JSONFG driver:
+ * dataset identification: recognize more JSON-FG specification version
+
+LIBKML driver:
+ * fix handling of styleUrl element referencing to an external document (#9975)
+ * fix performance issue when writing large files (#10138)
+
+MiraMonVector driver:
+ * adding which polygon cycles the linestring in the linestring metadata information (#9885)
+ * Adding more matches in the look-up table MM_m_idofic.csv
+ * Fixing error in linestring (from not polygon) metadata file
+ * Robustness fixes (ossfuzz #68809)
+ * fix a case of sensitive comparison
+ * fix MMResetFeatureRecord
+ * fix accepted metadata versions/subversions
+
+MapInfo:
+ * .tab: AlterFieldDefn(): fix data corruption when altering (for example
+   renaming) a Integer/Float32 field of size 4 (or Integer64/Float64 field of
+   size 8
+ * avoid potential double-free (ossfuzz#69332, ossfuzz#69334)
+
+netCDF driver:
+ * writer: use CF-1.8 with FORMAT=NC4 and GEOMETRY_ENCODING=WKT
+
+ODS driver:
+ * implement IUpdateFeature() that was broken up to now
+ * declare missing capabilities DELETE_FIELD, REORDER_FIELDS,
+   ALTER_FIELD_DEFN_FLAGS
+ * fix CreateFeature() implementation when a FID is set
+
+OpenFileGDB driver:
+ * writer: .gdbtable header must be rewritten when updating an existing feature
+   at the end of file (otherwise resulting file might not be readable by
+   Esri software)
+ * detect and try to repair corruption of .gdbtable header related to above item
+ * BuildSRS(): do not use CPLErrorReset()
+
+PDF driver:
+ * fix wrong order of matrix multiplication for 'cm' operator... (#9870)
+ * make ExploreContentsNonStructured() be able to parse OGCs as generated
+   by ArcGIS 12.9 (fixes #9870)
+ * just ignore unknown objects referenced by /Do (#9870)
+
+PMTiles driver:
+ * writer: fix crash in ogr2ogr (or Arrow based workflows) from GeoPackage/
+   GeoParquet to PMTiles (#10199)
+
+PG driver:
+ * avoid errors related to ogr_system_tables.metadata when user has not enough
+   permissions (#9994)
+ * really honor OGR_PG_ENABLE_METADATA=NO in SerializeMetadata()
+
+XLSX driver:
+ * implement IUpdateFeature() that was broken up to now
+ * declare missing capabilities DELETE_FIELD, REORDER_FIELDS,
+   ALTER_FIELD_DEFN_FLAGS
+ * fix CreateFeature() implementation when a FID is set
+
+## Python bindings
+
+* do not emit warnings about not having used [Dont]UseExceptions() if run under
+  gdal.ExceptionMgr()
+* avoid gdal.ExceptionMgr() to re-throw a GDAL exception already caught under it
+* avoid exception emitted and caught under gdal.ExceptionMgr() to cause later
+  issues
+* Avoid crash when using orphaned subgeometry (#9920)
+* make them compatible of SWIG 4.3.0dev
+
+
 # GDAL/OGR 3.9.0 Releases Notes
 
 GDAL/OGR 3.9.0 is a feature release.

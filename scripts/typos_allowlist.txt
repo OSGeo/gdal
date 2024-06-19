@@ -335,3 +335,4 @@ either 2 or 4 comma separated values. The same rules apply for the source and de
         .GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex("LOGICALY"))
     assert f.GetField("LOGICALY") == 1
     # Disable cfchecker validation as it fails with a '(5): co-ordinate variable not monotonic'
+* do not emit warnings about not having used [Dont]UseExceptions() if run under
