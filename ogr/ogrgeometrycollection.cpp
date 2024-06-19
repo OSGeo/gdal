@@ -454,6 +454,34 @@ OGRErr OGRGeometryCollection::removeGeometry(int iGeom, int bDelete)
 }
 
 /************************************************************************/
+/*                           hasEmptyParts()                            */
+/************************************************************************/
+
+bool OGRGeometryCollection::hasEmptyParts() const
+{
+    for (int i = 0; i < nGeomCount; ++i)
+    {
+        if (papoGeoms[i]->IsEmpty() || papoGeoms[i]->hasEmptyParts())
+            return true;
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                          removeEmptyParts()                          */
+/************************************************************************/
+
+void OGRGeometryCollection::removeEmptyParts()
+{
+    for (int i = nGeomCount - 1; i >= 0; --i)
+    {
+        papoGeoms[i]->removeEmptyParts();
+        if (papoGeoms[i]->IsEmpty())
+            removeGeometry(i, true);
+    }
+}
+
+/************************************************************************/
 /*                              WkbSize()                               */
 /*                                                                      */
 /*      Return the size of this object in well known binary             */

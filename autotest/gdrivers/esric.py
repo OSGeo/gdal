@@ -112,16 +112,18 @@ def test_esric_4(esric_ds):
 
 
 @pytest.fixture
-def tpkx_ds():
-    return gdal.Open("data/esric/Usa.tpkx")
+def tpkx_ds_extent_source_tiling_scheme():
+    return gdal.OpenEx(
+        "data/esric/Usa.tpkx", open_options=["EXTENT_SOURCE=TILING_SCHEME"]
+    )
 
 
 ###############################################################################
 # Check that the configuration was read as expected
 
 
-def test_tpkx_2(tpkx_ds):
-    ds = tpkx_ds
+def test_tpkx_2(tpkx_ds_extent_source_tiling_scheme):
+    ds = tpkx_ds_extent_source_tiling_scheme
     b1 = ds.GetRasterBand(1)
 
     assert (
@@ -145,8 +147,8 @@ def test_tpkx_2(tpkx_ds):
 # Check that the raster returns right checksums
 
 
-def test_tpkx_3(tpkx_ds):
-    ds = tpkx_ds
+def test_tpkx_3(tpkx_ds_extent_source_tiling_scheme):
+    ds = tpkx_ds_extent_source_tiling_scheme
     # There are no tiles at this level, driver will return black
     b1 = ds.GetRasterBand(1)
     b2 = ds.GetRasterBand(2)
@@ -167,8 +169,8 @@ def test_tpkx_3(tpkx_ds):
 
 
 @pytest.mark.require_driver("PNG")
-def test_tpkx_4(tpkx_ds):
-    ds = tpkx_ds
+def test_tpkx_4(tpkx_ds_extent_source_tiling_scheme):
+    ds = tpkx_ds_extent_source_tiling_scheme
 
     # Read from level 1, band 2, where we have data
     # Overviews are counted from zero, in reverse order from levels
@@ -198,3 +200,50 @@ def test_tpkx_ingest_more_bytes(tmp_vsimem):
     data = b"{" + (b" " * 900) + data[1:]
     gdal.FileFromMemBuffer(filename, data)
     gdal.Open(filename)
+
+
+###############################################################################
+# Open a tpkx dataset where minLOD > 0
+
+
+def test_tpkx_minLOD_not_zero():
+    ds = gdal.Open("data/esric/Usa_lod5.tpkx")
+    gt = ds.GetGeoTransform()
+    # Corresponds to lon=-100 lat=40
+    X = -11131949
+    Y = 4865942
+    x = (X - gt[0]) / gt[1]
+    y = (Y - gt[3]) / gt[5]
+    assert ds.GetRasterBand(1).ReadRaster(x, y, 1, 1) != b"\0"
+
+
+###############################################################################
+# Test opening a tpkx file with fullExtent / initialExtent
+
+
+@pytest.mark.parametrize("extent_source", [None, "INITIAL_EXTENT", "FULL_EXTENT"])
+def test_tpkx_default_full_extent(extent_source):
+    open_options = {}
+    if extent_source:
+        open_options["EXTENT_SOURCE"] = extent_source
+    ds = gdal.OpenEx("data/esric/Usa.tpkx", open_options=open_options)
+    assert ds.RasterXSize == 2532
+    assert ds.RasterYSize == 1921
+    assert ds.RasterCount == 4
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            -19841829.550377003848553,
+            4891.969810249979673,
+            0,
+            11545048.752193037420511,
+            0,
+            -4891.969810249979673,
+        )
+    )
+    assert ds.GetDriver().GetDescription() == "ESRIC"
+    assert ds.GetFileList() == ["data/esric/Usa.tpkx"]
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).GetBlockSize() == [256, 256]
+    assert ds.GetRasterBand(1).Checksum() == 62015
+    assert ds.GetRasterBand(1).GetOverviewCount() == 3

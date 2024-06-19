@@ -31,6 +31,11 @@ The syntax to open a OGC API - Features datasource is :
 
 where endpoint is the landing page or a the path to collections/{id}.
 
+Starting with GDAL 3.10, specifying the ``-if OAPIF`` option to command line utilities
+accepting it, or ``OAPIF`` as the only value of the ``papszAllowedDrivers`` of
+:cpp:func:`GDALOpenEx`, also forces the driver to recognize the passed
+URL without the ``OAPIF:`` prefix.
+
 Layer schema
 ------------
 
@@ -144,7 +149,7 @@ Examples
    ::
 
       $ ogrinfo OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr
-      
+
       INFO: Open of `OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr'
             using driver `OAPIF' successful.
       1: governmentalservice (title: Feuerwehrleitstellen) (Point)
@@ -153,11 +158,11 @@ Examples
 
    ::
 
-      $ ogrinfo OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr governmentalservice -al -so 
-      
+      $ ogrinfo OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr governmentalservice -al -so
+
       INFO: Open of `OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr'
             using driver `OAPIF' successful.
-      
+
       Layer name: governmentalservice
       Metadata:
         DESCRIPTION=Staatliche Verwaltungs- und Sozialdienste wie öffentliche Verwaltung, Katastrophenschutz, Schulen und Krankenhäuser, die von öffentlichen oder privaten Einrichtungen erbracht werden, soweit sie in den Anwendungsbereich der Richtlinie 2007/2/EG fallen. Dieser Datensatz enthält Informationen zu Feuerwehrleitstellen.
@@ -208,7 +213,7 @@ Examples
    ::
 
       $ ogrinfo OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr governmentalservice -al -q -where "name = 'Schwelm'"
-      
+
       Layer name: governmentalservice
       Metadata:
         DESCRIPTION=Staatliche Verwaltungs- und Sozialdienste wie öffentliche Verwaltung, Katastrophenschutz, Schulen und Krankenhäuser, die von öffentlichen oder privaten Einrichtungen erbracht werden, soweit sie in den Anwendungsbereich der Richtlinie 2007/2/EG fallen. Dieser Datensatz enthält Informationen zu Feuerwehrleitstellen.
@@ -241,7 +246,7 @@ Examples
    ::
 
       $ ogrinfo OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr governmentalservice -al -q -spat 7.1 51.2 7.2 51.5
-      
+
       Layer name: governmentalservice
       Metadata:
         DESCRIPTION=Staatliche Verwaltungs- und Sozialdienste wie öffentliche Verwaltung, Katastrophenschutz, Schulen und Krankenhäuser, die von öffentlichen oder privaten Einrichtungen erbracht werden, soweit sie in den Anwendungsbereich der Richtlinie 2007/2/EG fallen. Dieser Datensatz enthält Informationen zu Feuerwehrleitstellen.

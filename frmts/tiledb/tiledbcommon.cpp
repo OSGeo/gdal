@@ -123,6 +123,11 @@ int TileDBDataset::Identify(GDALOpenInfo *poOpenInfo)
         return TRUE;
     }
 
+    if (poOpenInfo->IsSingleAllowedDriver("TileDB"))
+    {
+        return TRUE;
+    }
+
     try
     {
         const char *pszConfig =

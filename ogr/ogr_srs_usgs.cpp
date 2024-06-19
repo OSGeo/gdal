@@ -732,9 +732,14 @@ OGRErr OGRSpatialReference::importFromUSGS(long iProjSys, long iZone,
         }
         else if (iDatum < NUMBER_OF_USGS_ELLIPSOIDS && aoEllipsUSGS[iDatum])
         {
-            if (OSRGetEllipsoidInfo(aoEllipsUSGS[iDatum], &pszName,
-                                    &dfSemiMajor,
-                                    &dfInvFlattening) == OGRERR_NONE)
+            if (aoEllipsUSGS[iDatum] == 7030)  // WGS 84 ellipsoid
+            {
+                // Assume a WGS 84 datum
+                SetWellKnownGeogCS("WGS84");
+            }
+            else if (OSRGetEllipsoidInfo(aoEllipsUSGS[iDatum], &pszName,
+                                         &dfSemiMajor,
+                                         &dfInvFlattening) == OGRERR_NONE)
             {
                 SetGeogCS(
                     CPLString().Printf(
@@ -771,6 +776,17 @@ OGRErr OGRSpatialReference::importFromUSGS(long iProjSys, long iZone,
     /* -------------------------------------------------------------------- */
     if (IsLocal() || IsProjected())
         SetLinearUnits(SRS_UL_METER, 1.0);
+
+    if (iDatum < NUMBER_OF_USGS_ELLIPSOIDS && aoEllipsUSGS[iDatum] == 7030)
+    {
+        if (AutoIdentifyEPSG() == OGRERR_NONE)
+        {
+            const char *pszAuthName = GetAuthorityName(nullptr);
+            const char *pszAuthCode = GetAuthorityCode(nullptr);
+            if (pszAuthName && pszAuthCode && EQUAL(pszAuthName, "EPSG"))
+                CPL_IGNORE_RET_VAL(importFromEPSG(atoi(pszAuthCode)));
+        }
+    }
 
     return OGRERR_NONE;
 }

@@ -831,7 +831,7 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
             OGRGeoJSONDriverStealStoredContent(pszUnprefixedFilename);
         if (pszStoredContent)
         {
-            if (!GeoJSONSeqIsObject(pszStoredContent))
+            if (!GeoJSONSeqIsObject(pszStoredContent, poOpenInfo))
             {
                 OGRGeoJSONDriverStoreContent(poOpenInfo->pszFilename,
                                              pszStoredContent);
@@ -953,10 +953,14 @@ static int OGRGeoJSONSeqDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
     nSrcType = GeoJSONSeqGetSourceType(poOpenInfo);
     if (nSrcType == eGeoJSONSourceUnknown)
         return FALSE;
-    if (nSrcType == eGeoJSONSourceService &&
-        !STARTS_WITH_CI(poOpenInfo->pszFilename, "GeoJSONSeq:"))
+    if (nSrcType == eGeoJSONSourceService)
     {
-        return -1;
+        if (poOpenInfo->IsSingleAllowedDriver("GeoJSONSeq"))
+            return TRUE;
+        if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "GeoJSONSeq:"))
+        {
+            return -1;
+        }
     }
     return TRUE;
 }

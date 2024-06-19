@@ -82,7 +82,7 @@ constexpr const char *VICAR_DRIVER_NAME = "VICAR";
 #define VICARDriverSetCommonMetadata                                           \
     PLUGIN_SYMBOL_NAME(VICARDriverSetCommonMetadata)
 
-int VICARGetLabelOffset(GDALOpenInfo *poOpenInfo);
+vsi_l_offset VICARGetLabelOffset(GDALOpenInfo *poOpenInfo);
 
 void VICARDriverSetCommonMetadata(GDALDriver *poDriver);
 

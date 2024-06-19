@@ -37,6 +37,7 @@ from time import sleep
 
 import gdaltest
 import pytest
+import webserver
 
 from osgeo import gdal
 
@@ -1162,3 +1163,40 @@ def test_wms_cache_path():
 
     with pytest.raises(Exception):
         gdal.Open("<GDAL_WMS><Service/><Cache/></GDAL_WMS>")
+
+
+# Launch a single webserver in a module-scoped fixture.
+@pytest.fixture(scope="module")
+def webserver_launch():
+
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
+
+    yield process, port
+
+    webserver.server_stop(process, port)
+
+
+@pytest.fixture(scope="function")
+def webserver_port(webserver_launch):
+
+    webserver_process, webserver_port = webserver_launch
+
+    if webserver_port == 0:
+        pytest.skip()
+    yield webserver_port
+
+
+@pytest.mark.require_curl
+@gdaltest.enable_exceptions()
+def test_wms_force_opening_url(tmp_vsimem, webserver_port):
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities",
+        200,
+        {"Content-type": "application/xml"},
+        open("data/wms/demo_mapserver_org.xml", "rb").read(),
+    )
+    with webserver.install_http_handler(handler):
+        gdal.OpenEx(f"http://localhost:{webserver_port}", allowed_drivers=["WMS"])

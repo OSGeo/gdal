@@ -122,10 +122,11 @@ def test_gdal_contour_1(gdal_contour_path, testdata_tif, tmp_path):
     ds = ogr.Open(contour_shp)
 
     expected_envelopes = [
-        [1.25, 1.75, 49.25, 49.75],
-        [1.25 + 0.125, 1.75 - 0.125, 49.25 + 0.125, 49.75 - 0.125],
+        [1.246875, 1.753125, 49.246875, 49.753125],
+        [1.253125, 1.746875, 49.253125, 49.746875],
+        [1.378125, 1.621875, 49.378125, 49.621875],
     ]
-    expected_height = [10, 20]
+    expected_height = [0, 10, 20]
 
     lyr = ds.ExecuteSQL("select * from contour order by elev asc")
 
@@ -141,21 +142,18 @@ def test_gdal_contour_1(gdal_contour_path, testdata_tif, tmp_path):
     precision = 1.0 / size
 
     i = 0
-    feat = lyr.GetNextFeature()
-    while feat is not None:
-        envelope = feat.GetGeometryRef().GetEnvelope()
+    for feat in lyr:
+        geom = feat.GetGeometryRef()
+        envelope = geom.GetEnvelope()
         assert feat.GetField("elev") == expected_height[i]
         for j in range(4):
-            if expected_envelopes[i][j] != pytest.approx(
-                envelope[j], abs=precision / 2 * 1.001
-            ):
-                print("i=%d, wkt=%s" % (i, feat.GetGeometryRef().ExportToWkt()))
-                print(feat.GetGeometryRef().GetEnvelope())
+            if expected_envelopes[i][j] != pytest.approx(envelope[j], rel=1e-8):
+                print("i=%d, wkt=%s" % (i, geom.ExportToWkt()))
+                print(geom.GetEnvelope())
                 pytest.fail(
                     "%f, %f" % (expected_envelopes[i][j] - envelope[j], precision / 2)
                 )
         i = i + 1
-        feat = lyr.GetNextFeature()
 
     ds.ReleaseResultSet(lyr)
 

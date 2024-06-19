@@ -4047,4 +4047,132 @@ TEST_F(test_ogr, OGRGeometry_IsRectangle)
     }
 }
 
+// Test OGRGeometry::removeEmptyParts()
+TEST_F(test_ogr, OGRGeometry_removeEmptyParts)
+{
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt("POINT EMPTY", nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_FALSE(poGeom->hasEmptyParts());
+        poGeom->removeEmptyParts();
+        EXPECT_TRUE(poGeom->IsEmpty());
+        delete poGeom;
+    }
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt("POLYGON ((0 0,0 1,1 0,0 0))",
+                                          nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_FALSE(poGeom->hasEmptyParts());
+        poGeom->removeEmptyParts();
+        EXPECT_NE(poGeom->toPolygon()->getExteriorRing(), nullptr);
+        delete poGeom;
+    }
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt("POLYGON ((0 0,0 1,1 0,0 0))",
+                                          nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        poGeom->toPolygon()->addRingDirectly(new OGRLinearRing());
+        EXPECT_EQ(poGeom->toPolygon()->getNumInteriorRings(), 1);
+        EXPECT_TRUE(poGeom->hasEmptyParts());
+        poGeom->removeEmptyParts();
+        EXPECT_NE(poGeom->toPolygon()->getExteriorRing(), nullptr);
+        EXPECT_EQ(poGeom->toPolygon()->getNumInteriorRings(), 0);
+        EXPECT_FALSE(poGeom->hasEmptyParts());
+        delete poGeom;
+    }
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt("COMPOUNDCURVE ((0 0,1 1))", nullptr,
+                                          &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_FALSE(poGeom->hasEmptyParts());
+        poGeom->removeEmptyParts();
+        EXPECT_EQ(poGeom->toCompoundCurve()->getNumCurves(), 1);
+        delete poGeom;
+    }
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt("COMPOUNDCURVE ((0 0,1 1),(1 1,2 2))",
+                                          nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        poGeom->toCompoundCurve()->getCurve(1)->empty();
+        EXPECT_EQ(poGeom->toCompoundCurve()->getNumCurves(), 2);
+        EXPECT_TRUE(poGeom->hasEmptyParts());
+        poGeom->removeEmptyParts();
+        EXPECT_FALSE(poGeom->hasEmptyParts());
+        EXPECT_EQ(poGeom->toCompoundCurve()->getNumCurves(), 1);
+        delete poGeom;
+    }
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt("GEOMETRYCOLLECTION (POINT(0 0))",
+                                          nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_FALSE(poGeom->hasEmptyParts());
+        poGeom->removeEmptyParts();
+        EXPECT_EQ(poGeom->toGeometryCollection()->getNumGeometries(), 1);
+        delete poGeom;
+    }
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt(
+            "GEOMETRYCOLLECTION (POINT EMPTY,POINT(0 0),POINT EMPTY)", nullptr,
+            &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_EQ(poGeom->toGeometryCollection()->getNumGeometries(), 3);
+        EXPECT_TRUE(poGeom->hasEmptyParts());
+        poGeom->removeEmptyParts();
+        EXPECT_FALSE(poGeom->hasEmptyParts());
+        EXPECT_EQ(poGeom->toGeometryCollection()->getNumGeometries(), 1);
+        delete poGeom;
+    }
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt("GEOMETRYCOLLECTION EMPTY", nullptr,
+                                          &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        OGRGeometry *poPoly = nullptr;
+        OGRGeometryFactory::createFromWkt("POLYGON ((0 0,0 1,1 0,0 0))",
+                                          nullptr, &poPoly);
+        EXPECT_NE(poPoly, nullptr);
+        if (poPoly)
+        {
+            poPoly->toPolygon()->addRingDirectly(new OGRLinearRing());
+            poGeom->toGeometryCollection()->addGeometryDirectly(poPoly);
+            EXPECT_EQ(poGeom->toGeometryCollection()->getNumGeometries(), 1);
+            EXPECT_TRUE(poGeom->hasEmptyParts());
+            poGeom->removeEmptyParts();
+            EXPECT_FALSE(poGeom->hasEmptyParts());
+            EXPECT_EQ(poGeom->toGeometryCollection()->getNumGeometries(), 1);
+        }
+        delete poGeom;
+    }
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt(
+            "POLYHEDRALSURFACE (((0 0,0 1,1 1,0 0)))", nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        EXPECT_FALSE(poGeom->hasEmptyParts());
+        poGeom->removeEmptyParts();
+        EXPECT_EQ(poGeom->toPolyhedralSurface()->getNumGeometries(), 1);
+        delete poGeom;
+    }
+    {
+        OGRGeometry *poGeom = nullptr;
+        OGRGeometryFactory::createFromWkt(
+            "POLYHEDRALSURFACE (((0 0,0 1,1 1,0 0)))", nullptr, &poGeom);
+        ASSERT_NE(poGeom, nullptr);
+        poGeom->toPolyhedralSurface()->addGeometryDirectly(new OGRPolygon());
+        EXPECT_EQ(poGeom->toPolyhedralSurface()->getNumGeometries(), 2);
+        EXPECT_TRUE(poGeom->hasEmptyParts());
+        poGeom->removeEmptyParts();
+        EXPECT_FALSE(poGeom->hasEmptyParts());
+        EXPECT_EQ(poGeom->toPolyhedralSurface()->getNumGeometries(), 1);
+        delete poGeom;
+    }
+}
+
 }  // namespace

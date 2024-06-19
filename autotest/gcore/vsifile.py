@@ -1696,3 +1696,65 @@ def test_vsifile_stat_directory_trailing_slash():
     res = gdal.VSIStatL("data/")
     assert res
     assert res.IsDirectory()
+
+
+###############################################################################
+# Test VSIMultipartUploadXXXX(), unsupported on regular file systems
+
+
+def test_vsifile_MultipartUpload():
+
+    with gdal.ExceptionMgr(useExceptions=False):
+        with gdal.quiet_errors():
+            assert gdal.MultipartUploadGetCapabilities("foo") is None
+    with gdal.ExceptionMgr(useExceptions=True):
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadGetCapabilities(None)
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadGetCapabilities\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadGetCapabilities("foo")
+
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadStart(None)
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadStart\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadStart("foo")
+
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadAddPart(None, "", 1, 0, b"")
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadAddPart("", None, 1, 0, b"")
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadAddPart\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadAddPart("", "", 1, 0, b"")
+
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadEnd(None, "", [], 0)
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadEnd("", None, [], 0)
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadEnd\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadEnd("", "", [], 0)
+
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadAbort(None, "")
+        with pytest.raises(ValueError):
+            gdal.MultipartUploadAbort("", None)
+
+        with pytest.raises(
+            Exception,
+            match=r"MultipartUploadAbort\(\) not supported by this file system",
+        ):
+            gdal.MultipartUploadAbort("", "")

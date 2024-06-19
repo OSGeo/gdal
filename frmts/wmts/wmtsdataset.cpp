@@ -133,7 +133,7 @@ class WMTSDataset final : public GDALPamDataset
     CPLString osURLFeatureInfoTemplate;
     WMTSTileMatrixSet oTMS;
 
-    char **papszHTTPOptions;
+    CPLStringList m_aosHTTPOptions{};
 
     std::vector<GDALDataset *> apoDatasets;
     OGRSpatialReference m_oSRS{};
@@ -142,9 +142,9 @@ class WMTSDataset final : public GDALPamDataset
     CPLString osLastGetFeatureInfoURL;
     CPLString osMetadataItemGetFeatureInfo;
 
-    static char **BuildHTTPRequestOpts(CPLString osOtherXML);
+    static CPLStringList BuildHTTPRequestOpts(CPLString osOtherXML);
     static CPLXMLNode *GetCapabilitiesResponse(const CPLString &osFilename,
-                                               char **papszHTTPOptions);
+                                               CSLConstList papszHTTPOptions);
     static CPLString FixCRSName(const char *pszCRS);
     static CPLString Replace(const CPLString &osStr, const char *pszOld,
                              const char *pszNew);
@@ -371,7 +371,7 @@ const char *WMTSBand::GetMetadataItem(const char *pszName,
             poGDS->osMetadataItemGetFeatureInfo = "";
             char *pszRes = nullptr;
             CPLHTTPResult *psResult =
-                CPLHTTPFetch(osURL, poGDS->papszHTTPOptions);
+                CPLHTTPFetch(osURL, poGDS->m_aosHTTPOptions.List());
             if (psResult && psResult->nStatus == 0 && psResult->pabyData)
                 pszRes = CPLStrdup((const char *)psResult->pabyData);
             CPLHTTPDestroyResult(psResult);
@@ -422,7 +422,7 @@ const char *WMTSBand::GetMetadataItem(const char *pszName,
 /*                          WMTSDataset()                               */
 /************************************************************************/
 
-WMTSDataset::WMTSDataset() : papszHTTPOptions(nullptr)
+WMTSDataset::WMTSDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGT[0] = 0;
@@ -440,7 +440,6 @@ WMTSDataset::WMTSDataset() : papszHTTPOptions(nullptr)
 WMTSDataset::~WMTSDataset()
 {
     WMTSDataset::CloseDependentDatasets();
-    CSLDestroy(papszHTTPOptions);
 }
 
 /************************************************************************/
@@ -883,7 +882,7 @@ CPLString WMTSDataset::Replace(const CPLString &osStr, const char *pszOld,
 /************************************************************************/
 
 CPLXMLNode *WMTSDataset::GetCapabilitiesResponse(const CPLString &osFilename,
-                                                 char **papszHTTPOptions)
+                                                 CSLConstList papszHTTPOptions)
 {
     CPLXMLNode *psXML;
     VSIStatBufL sStat;
@@ -965,42 +964,34 @@ CPLString WMTSDataset::GetOperationKVPURL(CPLXMLNode *psXML,
 /*                           BuildHTTPRequestOpts()                     */
 /************************************************************************/
 
-char **WMTSDataset::BuildHTTPRequestOpts(CPLString osOtherXML)
+CPLStringList WMTSDataset::BuildHTTPRequestOpts(CPLString osOtherXML)
 {
     osOtherXML = "<Root>" + osOtherXML + "</Root>";
     CPLXMLNode *psXML = CPLParseXMLString(osOtherXML);
-    char **http_request_opts = nullptr;
+    CPLStringList opts;
     if (CPLGetXMLValue(psXML, "Timeout", nullptr))
     {
-        CPLString optstr;
-        optstr.Printf("TIMEOUT=%s", CPLGetXMLValue(psXML, "Timeout", nullptr));
-        http_request_opts = CSLAddString(http_request_opts, optstr.c_str());
+        opts.SetNameValue("TIMEOUT", CPLGetXMLValue(psXML, "Timeout", nullptr));
     }
     if (CPLGetXMLValue(psXML, "UserAgent", nullptr))
     {
-        CPLString optstr;
-        optstr.Printf("USERAGENT=%s",
-                      CPLGetXMLValue(psXML, "UserAgent", nullptr));
-        http_request_opts = CSLAddString(http_request_opts, optstr.c_str());
+        opts.SetNameValue("USERAGENT",
+                          CPLGetXMLValue(psXML, "UserAgent", nullptr));
     }
     if (CPLGetXMLValue(psXML, "Referer", nullptr))
     {
-        CPLString optstr;
-        optstr.Printf("REFERER=%s", CPLGetXMLValue(psXML, "Referer", nullptr));
-        http_request_opts = CSLAddString(http_request_opts, optstr.c_str());
+        opts.SetNameValue("REFERER", CPLGetXMLValue(psXML, "Referer", nullptr));
     }
     if (CPLTestBool(CPLGetXMLValue(psXML, "UnsafeSSL", "false")))
     {
-        http_request_opts = CSLAddString(http_request_opts, "UNSAFESSL=1");
+        opts.SetNameValue("UNSAFESSL", "1");
     }
     if (CPLGetXMLValue(psXML, "UserPwd", nullptr))
     {
-        CPLString optstr;
-        optstr.Printf("USERPWD=%s", CPLGetXMLValue(psXML, "UserPwd", nullptr));
-        http_request_opts = CSLAddString(http_request_opts, optstr.c_str());
+        opts.SetNameValue("USERPWD", CPLGetXMLValue(psXML, "UserPwd", nullptr));
     }
     CPLDestroyXMLNode(psXML);
-    return http_request_opts;
+    return opts;
 }
 
 /************************************************************************/
@@ -1074,9 +1065,17 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         CSLDestroy(papszTokens);
 
-        char **papszHTTPOptions = BuildHTTPRequestOpts(osOtherXML);
-        psXML = GetCapabilitiesResponse(osGetCapabilitiesURL, papszHTTPOptions);
-        CSLDestroy(papszHTTPOptions);
+        const CPLStringList aosHTTPOptions(BuildHTTPRequestOpts(osOtherXML));
+        psXML = GetCapabilitiesResponse(osGetCapabilitiesURL,
+                                        aosHTTPOptions.List());
+    }
+    else if (poOpenInfo->IsSingleAllowedDriver("WMTS") &&
+             (STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+              STARTS_WITH(poOpenInfo->pszFilename, "https://")))
+    {
+        const CPLStringList aosHTTPOptions(BuildHTTPRequestOpts(osOtherXML));
+        psXML = GetCapabilitiesResponse(poOpenInfo->pszFilename,
+                                        aosHTTPOptions.List());
     }
 
     int bHasAOI = FALSE;
@@ -1179,11 +1178,13 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLDestroyXMLNode(psGDALWMTS);
 
         CPLDestroyXMLNode(psXML);
-        char **papszHTTPOptions = BuildHTTPRequestOpts(osOtherXML);
-        psXML = GetCapabilitiesResponse(osGetCapabilitiesURL, papszHTTPOptions);
-        CSLDestroy(papszHTTPOptions);
+        const CPLStringList aosHTTPOptions(BuildHTTPRequestOpts(osOtherXML));
+        psXML = GetCapabilitiesResponse(osGetCapabilitiesURL,
+                                        aosHTTPOptions.List());
     }
-    else if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "WMTS:"))
+    else if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "WMTS:") &&
+             !STARTS_WITH(poOpenInfo->pszFilename, "http://") &&
+             !STARTS_WITH(poOpenInfo->pszFilename, "https://"))
     {
         osGetCapabilitiesURL = poOpenInfo->pszFilename;
         psXML = CPLParseXMLFile(poOpenInfo->pszFilename);
@@ -1554,7 +1555,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
         if (!osSelectLayerAbstract.empty())
             poDS->SetMetadataItem("ABSTRACT", osSelectLayerAbstract);
 
-        poDS->papszHTTPOptions = BuildHTTPRequestOpts(osOtherXML);
+        poDS->m_aosHTTPOptions = BuildHTTPRequestOpts(osOtherXML);
         poDS->osLayer = osSelectLayer;
         poDS->osTMS = osSelectTMS;
 

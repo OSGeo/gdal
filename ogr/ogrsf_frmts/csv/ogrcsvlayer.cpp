@@ -153,7 +153,7 @@ bool OGRCSVLayer::Matches(const char *pszFieldName, char **papszPossibleNames)
 
 void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
                                    const char *pszGeonamesGeomFieldPrefix,
-                                   char **papszOpenOptions)
+                                   CSLConstList papszOpenOptions)
 {
     bMergeDelimiter = CPLFetchBool(papszOpenOptions, "MERGE_SEPARATOR", false);
     bEmptyStringNull =
@@ -903,7 +903,7 @@ static bool OGRCSVIsFalse(const char *pszStr)
 /*                        AutodetectFieldTypes()                        */
 /************************************************************************/
 
-char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
+char **OGRCSVLayer::AutodetectFieldTypes(CSLConstList papszOpenOptions,
                                          int nFieldCount)
 {
     const bool bStreaming =

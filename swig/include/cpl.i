@@ -989,3 +989,83 @@ int CPLGetNumCPUs();
 
 %rename (GetUsablePhysicalRAM) CPLGetUsablePhysicalRAM;
 GIntBig CPLGetUsablePhysicalRAM();
+
+#if defined(SWIGPYTHON)
+
+%apply Pointer NONNULL {const char *pszFilename};
+%apply Pointer NONNULL {const char *pszUploadId};
+
+%inline {
+void MultipartUploadGetCapabilities(
+    const char *pszFilename, int* pnRetCode, int *pbNonSequentialUploadSupported,
+    int *pbParallelUploadSupported, int *pbSupportsAbort, size_t *pnMinPartSize,
+    size_t *pnMaxPartSize, int *pnMaxPartCount)
+{
+    *pnRetCode = VSIMultipartUploadGetCapabilities(pszFilename,
+                        pbNonSequentialUploadSupported,
+                        pbParallelUploadSupported,
+                        pbSupportsAbort,
+                        pnMinPartSize,
+                        pnMaxPartSize,
+                        pnMaxPartCount);
+}
+}
+
+%inline {
+char* MultipartUploadStart(const char *pszFilename, char** options = NULL)
+{
+    return VSIMultipartUploadStart(pszFilename, options);
+}
+}
+
+%apply (size_t nLen, char *pBuf ) { (size_t nDataLength, const char *pData)};
+
+%inline {
+char* MultipartUploadAddPart(const char *pszFilename,
+                             const char *pszUploadId,
+                             int nPartNumber,
+                             GUIntBig nFileOffset,
+                             size_t nDataLength, const char *pData,
+                             char** options = NULL)
+{
+    return VSIMultipartUploadAddPart(pszFilename, pszUploadId,
+                                     nPartNumber, nFileOffset,
+                                     pData, nDataLength,
+                                     options);
+}
+}
+
+%apply (char **dict) { char ** partIds };
+
+%inline {
+bool MultipartUploadEnd(const char *pszFilename,
+                        const char *pszUploadId,
+                        char** partIds,
+                        GUIntBig nTotalSize,
+                        char** options = NULL)
+
+{
+    return VSIMultipartUploadEnd(pszFilename, pszUploadId,
+                                 CSLCount(partIds), partIds,
+                                 nTotalSize,
+                                 options);
+}
+}
+
+%clear (char ** partIds);
+
+%inline {
+bool MultipartUploadAbort(const char *pszFilename,
+                          const char *pszUploadId,
+                          char** options = NULL)
+{
+    return VSIMultipartUploadAbort(pszFilename, pszUploadId, options);
+}
+}
+
+%clear const char *pszFilename;
+%clear const char *pszUploadId;
+%clear (size_t nDataLength, const void *pData);
+
+#endif
+

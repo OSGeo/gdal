@@ -33,7 +33,7 @@ import gdaltest
 import ogrtest
 import pytest
 
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("GTFS")
 
@@ -56,6 +56,10 @@ def test_ogr_gtfs_open():
     assert ds.GetLayerCount() == 9
 
     ds = ogr.Open("GTFS:/vsizip/data/gtfs/gtfs_extract.zip")
+    assert ds
+    assert ds.GetLayerCount() == 9
+
+    ds = gdal.OpenEx("/vsizip/data/gtfs/gtfs_extract.zip", allowed_drivers=["GTFS"])
     assert ds
     assert ds.GetLayerCount() == 9
 

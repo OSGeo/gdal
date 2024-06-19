@@ -749,4 +749,46 @@ OGRErr OGRCurveCollection::removeCurve(int iIndex, bool bDelete)
     return OGRERR_NONE;
 }
 
+/************************************************************************/
+/*                           hasEmptyParts()                            */
+/************************************************************************/
+
+/**
+ * \brief Returns whether a geometry has empty parts/rings.
+ *
+ * Returns true if removeEmptyParts() will modify the geometry.
+ *
+ * This is different from IsEmpty().
+ *
+ * @since GDAL 3.10
+ */
+bool OGRCurveCollection::hasEmptyParts() const
+{
+    for (int i = 0; i < nCurveCount; ++i)
+    {
+        if (papoCurves[i]->IsEmpty() || papoCurves[i]->hasEmptyParts())
+            return true;
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                          removeEmptyParts()                          */
+/************************************************************************/
+
+/**
+ * \brief Remove empty parts/rings from this geometry.
+ *
+ * @since GDAL 3.10
+ */
+void OGRCurveCollection::removeEmptyParts()
+{
+    for (int i = nCurveCount - 1; i >= 0; --i)
+    {
+        papoCurves[i]->removeEmptyParts();
+        if (papoCurves[i]->IsEmpty())
+            removeCurve(i, true);
+    }
+}
+
 //! @endcond

@@ -2554,7 +2554,10 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /*      Write to the output file using CopyCreate().                    */
     /* -------------------------------------------------------------------- */
     if (EQUAL(psOptions->osFormat.c_str(), "VRT") &&
-        psOptions->aosCreateOptions.empty())
+        (psOptions->aosCreateOptions.empty() ||
+         (psOptions->aosCreateOptions.size() == 2 &&
+          psOptions->aosCreateOptions.FetchNameValue("BLOCKXSIZE") &&
+          psOptions->aosCreateOptions.FetchNameValue("BLOCKYSIZE"))))
     {
         poVDS->SetDescription(pszDest);
         hOutDS = GDALDataset::ToHandle(poVDS);

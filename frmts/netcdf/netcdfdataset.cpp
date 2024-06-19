@@ -8008,9 +8008,20 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #endif
         // Note: not calling Identify() directly, because we want the file type.
         // Only support NCDF_FORMAT* formats.
-        if (!(NCDF_FORMAT_NC == eTmpFormat || NCDF_FORMAT_NC2 == eTmpFormat ||
-              NCDF_FORMAT_NC4 == eTmpFormat || NCDF_FORMAT_NC4C == eTmpFormat))
+        if (NCDF_FORMAT_NC == eTmpFormat || NCDF_FORMAT_NC2 == eTmpFormat ||
+            NCDF_FORMAT_NC4 == eTmpFormat || NCDF_FORMAT_NC4C == eTmpFormat)
+        {
+            // ok
+        }
+        else if (eTmpFormat == NCDF_FORMAT_HDF4 &&
+                 poOpenInfo->IsSingleAllowedDriver("netCDF"))
+        {
+            // ok
+        }
+        else
+        {
             return nullptr;
+        }
     }
     else
     {
@@ -8372,13 +8383,12 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     bool bHasSimpleGeometries = false;  // but not necessarily valid
     if (poDS->nCFVersion >= 1.8)
     {
-        poDS->bSGSupport = true;
         bHasSimpleGeometries = poDS->DetectAndFillSGLayers(cdfid);
-        poDS->vcdf.enableFullVirtualMode();
-    }
-    else
-    {
-        poDS->bSGSupport = false;
+        if (bHasSimpleGeometries)
+        {
+            poDS->bSGSupport = true;
+            poDS->vcdf.enableFullVirtualMode();
+        }
     }
 
     char szConventions[NC_MAX_NAME + 1];
@@ -9347,9 +9357,12 @@ GDALDataset *netCDFDataset::Create(const char *pszFilename, int nXSize,
     // Add Conventions, GDAL info and history.
     if (poDS->cdfid >= 0)
     {
-        const char *CF_Vector_Conv = poDS->bSGSupport
-                                         ? NCDF_CONVENTIONS_CF_V1_8
-                                         : NCDF_CONVENTIONS_CF_V1_6;
+        const char *CF_Vector_Conv =
+            poDS->bSGSupport ||
+                    // Use of variable length strings require CF-1.8
+                    EQUAL(aosOptions.FetchNameValueDef("FORMAT", ""), "NC4")
+                ? NCDF_CONVENTIONS_CF_V1_8
+                : NCDF_CONVENTIONS_CF_V1_6;
         poDS->bWriteGDALVersion = CPLTestBool(
             CSLFetchNameValueDef(papszOptions, "WRITE_GDAL_VERSION", "YES"));
         poDS->bWriteGDALHistory = CPLTestBool(

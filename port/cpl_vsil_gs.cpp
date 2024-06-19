@@ -65,7 +65,7 @@ namespace cpl
 /*                         VSIGSFSHandler                               */
 /************************************************************************/
 
-class VSIGSFSHandler final : public IVSIS3LikeFSHandler
+class VSIGSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIGSFSHandler)
     const std::string m_osPrefix;
@@ -111,12 +111,6 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
     char *GetSignedURL(const char *pszFilename,
                        CSLConstList papszOptions) override;
 
-    // Multipart upload
-    bool SupportsParallelMultipartUpload() const override
-    {
-        return true;
-    }
-
     char **GetFileMetadata(const char *pszFilename, const char *pszDomain,
                            CSLConstList papszOptions) override;
 
@@ -133,6 +127,11 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
     VSIFilesystemHandler *Duplicate(const char *pszPrefix) override
     {
         return new VSIGSFSHandler(pszPrefix);
+    }
+
+    bool SupportsMultipartAbort() const override
+    {
+        return true;
     }
 };
 
@@ -328,8 +327,8 @@ VSIGSFSHandler::CreateWriteHandle(const char *pszFilename,
         CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = std::make_unique<VSIS3LikeWriteHandle>(
-        this, pszFilename, poHandleHelper, false, papszOptions);
+    auto poHandle = std::make_unique<VSIMultipartWriteHandle>(
+        this, pszFilename, poHandleHelper, papszOptions);
     if (!poHandle->IsOK())
     {
         return nullptr;

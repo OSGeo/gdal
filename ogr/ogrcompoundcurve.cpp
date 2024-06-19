@@ -970,3 +970,21 @@ double OGRCompoundCurve::get_AreaOfCurveSegments() const
     }
     return dfArea;
 }
+
+/************************************************************************/
+/*                           hasEmptyParts()                            */
+/************************************************************************/
+
+bool OGRCompoundCurve::hasEmptyParts() const
+{
+    return oCC.hasEmptyParts();
+}
+
+/************************************************************************/
+/*                          removeEmptyParts()                          */
+/************************************************************************/
+
+void OGRCompoundCurve::removeEmptyParts()
+{
+    oCC.removeEmptyParts();
+}

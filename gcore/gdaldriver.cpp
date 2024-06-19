@@ -1018,7 +1018,7 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
          */
         std::set<std::string> oSetExistingDestFiles;
         {
-            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             const char *const apszAllowedDrivers[] = {GetDescription(),
                                                       nullptr};
             auto poExistingOutputDS =
@@ -1033,7 +1033,6 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
                         CPLString(pszFileInList).replaceAll('\\', '/'));
                 }
             }
-            CPLPopErrorHandler();
         }
 
         /* --------------------------------------------------------------------
@@ -1045,7 +1044,7 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
         std::set<std::string> oSetExistingDestFilesFoundInSource;
         if (!oSetExistingDestFiles.empty())
         {
-            CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             // We need to reopen in a temporary dataset for the particular
             // case of overwritten a .tif.ovr file from a .tif
             // If we probe the file list of the .tif, it will then open the
@@ -1071,7 +1070,6 @@ CPLErr GDALDriver::QuietDeleteForCreateCopy(const char *pszFilename,
                     }
                 }
             }
-            CPLPopErrorHandler();
         }
 
         // If the source file(s) and the dest one share some files in

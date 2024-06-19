@@ -30,6 +30,10 @@ The driver supports the 2 variants of the format:
   and the metadata section is large.
   Prefixing the filename with ``ARROW_IPC_STREAM:`` (e.g "ARROW_IPC_STREAM:/vsistdin/")
   will cause the driver to unconditionally open the file as a streaming IPC format.
+  Alternatively, starting with GDAL 3.10, specifying the ``-if ARROW`` option to
+  command line utilities accepting it, or ``ARROW`` as the only value of the
+  ``papszAllowedDrivers`` of :cpp:func:`GDALOpenEx`, also forces the driver to
+  recognize the passed filename.
 
 
 This driver also supports geometry columns using the GeoArrow specification.

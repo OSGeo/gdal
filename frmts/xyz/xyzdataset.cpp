@@ -723,13 +723,14 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
     nCommentLineCount = 0;
 
     CPLString osFilename(poOpenInfo->pszFilename);
-    if (EQUAL(CPLGetExtension(osFilename), "GRA"))
+    if (EQUAL(CPLGetExtension(osFilename), "GRA") &&
+        !poOpenInfo->IsSingleAllowedDriver("XYZ"))
     {
         // IGNFHeightASCIIGRID .GRA
         return FALSE;
     }
 
-    GDALOpenInfo *poOpenInfoToDelete = nullptr;
+    std::unique_ptr<GDALOpenInfo> poOpenInfoToDelete;  // keep in this scope
     /*  GZipped .xyz files are common, so automagically open them */
     /*  if the /vsigzip/ has not been explicitly passed */
     if (strlen(poOpenInfo->pszFilename) > 6 &&
@@ -739,13 +740,13 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
     {
         osFilename = "/vsigzip/";
         osFilename += poOpenInfo->pszFilename;
-        poOpenInfo = poOpenInfoToDelete = new GDALOpenInfo(
+        poOpenInfoToDelete = std::make_unique<GDALOpenInfo>(
             osFilename.c_str(), GA_ReadOnly, poOpenInfo->GetSiblingFiles());
+        poOpenInfo = poOpenInfoToDelete.get();
     }
 
     if (poOpenInfo->nHeaderBytes == 0)
     {
-        delete poOpenInfoToDelete;
         return FALSE;
     }
 
@@ -755,10 +756,10 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
     const char *pszData =
         reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
 
-    if (poOpenInfo->nHeaderBytes >= 4 && STARTS_WITH(pszData, "DSAA"))
+    if (poOpenInfo->nHeaderBytes >= 4 && STARTS_WITH(pszData, "DSAA") &&
+        !poOpenInfo->IsSingleAllowedDriver("XYZ"))
     {
         // Do not match GSAG datasets
-        delete poOpenInfoToDelete;
         return FALSE;
     }
 
@@ -806,7 +807,6 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
             bHasHeaderLine = TRUE;
         else
         {
-            delete poOpenInfoToDelete;
             return FALSE;
         }
     }
@@ -837,7 +837,6 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
         CSLDestroy(papszTokens);
         if (nXIndex >= 0 && nYIndex >= 0 && nZIndex >= 0)
         {
-            delete poOpenInfoToDelete;
             return TRUE;
         }
     }
@@ -878,12 +877,10 @@ int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
         }
         else
         {
-            delete poOpenInfoToDelete;
             return FALSE;
         }
     }
 
-    delete poOpenInfoToDelete;
     return bHasFoundNewLine && nMaxCols >= 3;
 }
 

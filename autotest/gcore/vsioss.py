@@ -1119,6 +1119,22 @@ def test_vsioss_6(server):
 
 
 ###############################################################################
+# Test VSIMultipartUploadXXXX()
+
+
+def test_vsioss_MultipartUpload(server):
+
+    # Test MultipartUploadGetCapabilities()
+    info = gdal.MultipartUploadGetCapabilities("/vsioss/")
+    assert info.non_sequential_upload_supported
+    assert info.parallel_upload_supported
+    assert info.abort_supported
+    assert info.min_part_size == 5
+    assert info.max_part_size >= 1024
+    assert info.max_part_count == 10000
+
+
+###############################################################################
 # Test Mkdir() / Rmdir()
 
 
@@ -1226,31 +1242,6 @@ def test_vsioss_8(server):
     handler = webserver.SequentialHandler()
     with webserver.install_http_handler(handler):
         assert stat.S_ISDIR(gdal.VSIStatL("/vsioss/vsioss_8/test/").mode)
-
-
-###############################################################################
-# Test gdal.CopyFileRestartable() with fallback to regular copy
-
-
-def test_vsioss_CopyFileRestartable_fallback_to_regular_copy(tmp_vsimem, server):
-
-    gdal.VSICurlClearCache()
-
-    srcfilename = str(tmp_vsimem / "foo")
-    gdal.FileFromMemBuffer(srcfilename, "foo\n")
-
-    dstfilename = "/vsioss/test_bucket/foo"
-
-    handler = webserver.SequentialHandler()
-    handler.add("PUT", "/test_bucket/foo", 200, expected_body=b"foo\n")
-
-    with webserver.install_http_handler(handler):
-        ret_code, restart_payload = gdal.CopyFileRestartable(
-            srcfilename,
-            dstfilename,
-            None,  # input payload
-        )
-    assert ret_code == 0
 
 
 ###############################################################################

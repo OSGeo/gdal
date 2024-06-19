@@ -815,8 +815,9 @@ int OGRGeoJSONDataSource::ReadFromService(GDALOpenInfo *poOpenInfo,
     if (pszStoredContent != nullptr)
     {
         if ((osJSonFlavor_ == "ESRIJSON" &&
-             ESRIJSONIsObject(pszStoredContent)) ||
-            (osJSonFlavor_ == "TopoJSON" && TopoJSONIsObject(pszStoredContent)))
+             ESRIJSONIsObject(pszStoredContent, poOpenInfo)) ||
+            (osJSonFlavor_ == "TopoJSON" &&
+             TopoJSONIsObject(pszStoredContent, poOpenInfo)))
         {
             pszGeoData_ = pszStoredContent;
             nGeoDataLen_ = strlen(pszGeoData_);
@@ -882,11 +883,12 @@ int OGRGeoJSONDataSource::ReadFromService(GDALOpenInfo *poOpenInfo,
     /* -------------------------------------------------------------------- */
     if (EQUAL(pszSource, poOpenInfo->pszFilename) && osJSonFlavor_ == "GeoJSON")
     {
-        if (!GeoJSONIsObject(pszGeoData_, poOpenInfo->papszAllowedDrivers))
+        if (!GeoJSONIsObject(pszGeoData_, poOpenInfo))
         {
-            if (ESRIJSONIsObject(pszGeoData_) ||
-                TopoJSONIsObject(pszGeoData_) ||
-                GeoJSONSeqIsObject(pszGeoData_) || JSONFGIsObject(pszGeoData_))
+            if (ESRIJSONIsObject(pszGeoData_, poOpenInfo) ||
+                TopoJSONIsObject(pszGeoData_, poOpenInfo) ||
+                GeoJSONSeqIsObject(pszGeoData_, poOpenInfo) ||
+                JSONFGIsObject(pszGeoData_, poOpenInfo))
             {
                 OGRGeoJSONDriverStoreContent(pszSource, pszGeoData_);
                 pszGeoData_ = nullptr;
@@ -1003,7 +1005,7 @@ void OGRGeoJSONDataSource::LoadLayers(GDALOpenInfo *poOpenInfo,
         oOpenInfo.fpL = nullptr;
     }
 
-    if (!GeoJSONIsObject(pszGeoData_, poOpenInfo->papszAllowedDrivers))
+    if (!GeoJSONIsObject(pszGeoData_, poOpenInfo))
     {
         CPLDebug(pszJSonFlavor, "No valid %s data found in source '%s'",
                  pszJSonFlavor, pszName_);

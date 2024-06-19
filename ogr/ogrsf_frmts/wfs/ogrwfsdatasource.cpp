@@ -801,30 +801,18 @@ CPLXMLNode *OGRWFSDataSource::LoadFromFile(const char *pszFilename)
     if (fp == nullptr)
         return nullptr;
 
-    char achHeader[1024] = {};
-    const int nRead =
-        static_cast<int>(VSIFReadL(achHeader, 1, sizeof(achHeader) - 1, fp));
-    if (nRead == 0)
-    {
-        VSIFCloseL(fp);
-        return nullptr;
-    }
-    achHeader[nRead] = 0;
-
-    if (!STARTS_WITH_CI(achHeader, "<OGRWFSDataSource>") &&
-        strstr(achHeader, "<WFS_Capabilities") == nullptr &&
-        strstr(achHeader, "<wfs:WFS_Capabilities") == nullptr)
-    {
-        VSIFCloseL(fp);
-        return nullptr;
-    }
-
     /* -------------------------------------------------------------------- */
     /*      It is the right file, now load the full XML definition.         */
     /* -------------------------------------------------------------------- */
     VSIFSeekL(fp, 0, SEEK_END);
-    const int nLen = (int)VSIFTellL(fp);
+    const auto nLenLarge = VSIFTellL(fp);
     VSIFSeekL(fp, 0, SEEK_SET);
+    if (nLenLarge > 100 * 1024 * 1024)
+    {
+        VSIFCloseL(fp);
+        return nullptr;
+    }
+    const int nLen = static_cast<int>(nLenLarge);
 
     char *pszXML = (char *)VSI_MALLOC_VERBOSE(nLen + 1);
     if (pszXML == nullptr)
@@ -841,6 +829,13 @@ CPLXMLNode *OGRWFSDataSource::LoadFromFile(const char *pszFilename)
         return nullptr;
     }
     VSIFCloseL(fp);
+
+    if (!STARTS_WITH_CI(pszXML, "<OGRWFSDataSource>") &&
+        strstr(pszXML, "<WFS_Capabilities") == nullptr &&
+        strstr(pszXML, "<wfs:WFS_Capabilities") == nullptr)
+    {
+        return nullptr;
+    }
 
     if (strstr(pszXML, "CubeWerx"))
     {
@@ -907,7 +902,7 @@ CPLHTTPResult *OGRWFSDataSource::SendGetCapabilities(const char *pszBaseURL,
 /************************************************************************/
 
 int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
-                           char **papszOpenOptionsIn)
+                           CSLConstList papszOpenOptionsIn)
 
 {
     bUpdate = CPL_TO_BOOL(bUpdateIn);
@@ -915,7 +910,12 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
     pszName = CPLStrdup(pszFilename);
 
     const CPLXMLNode *psWFSCapabilities = nullptr;
-    CPLXMLNode *psXML = LoadFromFile(pszFilename);
+    CPLXMLNode *psXML = nullptr;
+    if (!STARTS_WITH(pszFilename, "http://") &&
+        !STARTS_WITH(pszFilename, "https://"))
+    {
+        psXML = LoadFromFile(pszFilename);
+    }
     CPLString osTypeName;
     const char *pszBaseURL = nullptr;
 
@@ -926,6 +926,8 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
     if (psXML == nullptr)
     {
         if (!STARTS_WITH_CI(pszFilename, "WFS:") &&
+            !STARTS_WITH(pszFilename, "http://") &&
+            !STARTS_WITH(pszFilename, "https://") &&
             FindSubStringInsensitive(pszFilename, "SERVICE=WFS") == nullptr)
         {
             return FALSE;
@@ -936,7 +938,7 @@ int OGRWFSDataSource::Open(const char *pszFilename, int bUpdateIn,
         {
             pszBaseURL = pszFilename;
             if (STARTS_WITH_CI(pszFilename, "WFS:"))
-                pszBaseURL += 4;
+                pszBaseURL += strlen("WFS:");
         }
 
         osBaseURL = pszBaseURL;

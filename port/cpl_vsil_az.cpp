@@ -499,7 +499,7 @@ const VSIDIREntry *VSIDIRAz::NextDirEntry()
 /*                       VSIAzureFSHandler                              */
 /************************************************************************/
 
-class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
+class VSIAzureFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIAzureFSHandler)
     const std::string m_osPrefix;
@@ -607,11 +607,6 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     // Multipart upload (mapping of S3 interface to PutBlock/PutBlockList)
 
-    bool SupportsParallelMultipartUpload() const override
-    {
-        return true;
-    }
-
     std::string InitiateMultipartUpload(
         const std::string & /* osFilename */, IVSIS3LikeHandleHelper *,
         const CPLHTTPRetryParameters & /* oRetryParameters */,
@@ -649,6 +644,18 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
         const CPLHTTPRetryParameters & /* oRetryParameters */) override
     {
         return true;
+    }
+
+    bool MultipartUploadAbort(const char *, const char *, CSLConstList) override
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "MultipartUploadAbort() not supported by this file system");
+        return false;
+    }
+
+    bool SupportsMultipartAbort() const override
+    {
+        return false;
     }
 
     std::string
@@ -762,8 +769,8 @@ VSIAzureFSHandler::CreateWriteHandle(const char *pszFilename,
     const char *pszBlobType = CSLFetchNameValue(papszOptions, "BLOB_TYPE");
     if (pszBlobType && EQUAL(pszBlobType, "BLOCK"))
     {
-        auto poHandle = std::make_unique<VSIS3LikeWriteHandle>(
-            this, pszFilename, poHandleHelper, false, papszOptions);
+        auto poHandle = std::make_unique<VSIMultipartWriteHandle>(
+            this, pszFilename, poHandleHelper, papszOptions);
         if (!poHandle->IsOK())
         {
             return nullptr;

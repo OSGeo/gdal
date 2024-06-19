@@ -70,7 +70,9 @@ static int OGRFeatherDriverIsArrowIPCStreamBasic(GDALOpenInfo *poOpenInfo)
                 1024 * 1024 -
                     (CONTINUATION_SIZE + METADATA_SIZE_SIZE + PADDING_MAX_SIZE))
             {
-                return false;
+                if (poOpenInfo->IsSingleAllowedDriver("ARROW"))
+                    return true;
+                return GDAL_IDENTIFY_UNKNOWN;
             }
             const int nSizeToRead = CONTINUATION_SIZE + METADATA_SIZE_SIZE +
                                     nMetadataSize + PADDING_MAX_SIZE;
@@ -79,6 +81,8 @@ static int OGRFeatherDriverIsArrowIPCStreamBasic(GDALOpenInfo *poOpenInfo)
                 return false;
             }
 
+            if (poOpenInfo->IsSingleAllowedDriver("ARROW"))
+                return true;
             return GDAL_IDENTIFY_UNKNOWN;
         }
 
@@ -89,6 +93,8 @@ static int OGRFeatherDriverIsArrowIPCStreamBasic(GDALOpenInfo *poOpenInfo)
             nFileSize - (CONTINUATION_SIZE + METADATA_SIZE_SIZE))
             return false;
 
+        if (poOpenInfo->IsSingleAllowedDriver("ARROW"))
+            return true;
         return GDAL_IDENTIFY_UNKNOWN;
     }
     return false;

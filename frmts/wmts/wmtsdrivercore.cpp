@@ -42,18 +42,35 @@ int WMTSDriverIdentify(GDALOpenInfo *poOpenInfo)
     if (STARTS_WITH_CI(poOpenInfo->pszFilename, "<GDAL_WMTS"))
         return TRUE;
 
+    const bool bIsSingleDriver = poOpenInfo->IsSingleAllowedDriver("WMTS");
+    if (bIsSingleDriver && (STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+                            STARTS_WITH(poOpenInfo->pszFilename, "https://")))
+    {
+        return true;
+    }
+
     if (poOpenInfo->nHeaderBytes == 0)
         return FALSE;
 
-    if (strstr((const char *)poOpenInfo->pabyHeader, "<GDAL_WMTS"))
+    const char *pszHeader =
+        reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+    if (strstr(pszHeader, "<GDAL_WMTS") ||
+        ((strstr(pszHeader, "<Capabilities") ||
+          strstr(pszHeader, "<wmts:Capabilities")) &&
+         strstr(pszHeader, "http://www.opengis.net/wmts/1.0")))
+    {
         return TRUE;
+    }
 
-    return (strstr((const char *)poOpenInfo->pabyHeader, "<Capabilities") !=
-                nullptr ||
-            strstr((const char *)poOpenInfo->pabyHeader,
-                   "<wmts:Capabilities") != nullptr) &&
-           strstr((const char *)poOpenInfo->pabyHeader,
-                  "http://www.opengis.net/wmts/1.0") != nullptr;
+    if (bIsSingleDriver)
+    {
+        while (*pszHeader != 0 &&
+               std::isspace(static_cast<unsigned char>(*pszHeader)))
+            ++pszHeader;
+        return *pszHeader == '<';
+    }
+
+    return FALSE;
 }
 
 /************************************************************************/

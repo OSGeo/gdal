@@ -30,6 +30,7 @@
 
 import json
 
+import gdaltest
 import pytest
 import webserver
 
@@ -42,6 +43,7 @@ def test_stacit_basic():
 
     ds = gdal.Open("data/stacit/test.json")
     assert ds is not None
+    assert ds.GetDriver().GetDescription() == "STACIT"
     assert ds.RasterCount == 1
     assert ds.RasterXSize == 40
     assert ds.RasterYSize == 20
@@ -318,3 +320,44 @@ def test_stacit_post_paging(tmp_vsimem, webserver_port):
     assert ds.GetGeoTransform() == pytest.approx(
         [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0], rel=1e-8
     )
+
+
+###############################################################################
+# Test force opening a STACIT file
+
+
+def test_stacit_force_opening(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test.foo")
+
+    with open("data/stacit/test.json", "rb") as fsrc:
+        with gdaltest.vsi_open(filename, "wb") as fdest:
+            fdest.write(fsrc.read(1))
+            fdest.write(b" " * (1000 * 1000))
+            fdest.write(fsrc.read())
+
+    with pytest.raises(Exception):
+        gdal.OpenEx(filename)
+
+    ds = gdal.OpenEx(filename, allowed_drivers=["STACIT"])
+    assert ds.GetDriver().GetDescription() == "STACIT"
+
+
+###############################################################################
+# Test force opening a URL as STACIT
+
+
+def test_stacit_force_opening_url():
+
+    drv = gdal.IdentifyDriverEx("http://example.com", allowed_drivers=["STACIT"])
+    assert drv.GetDescription() == "STACIT"
+
+
+###############################################################################
+# Test force opening, but provided file is still not recognized (for good reasons)
+
+
+def test_stacit_force_opening_no_match():
+
+    drv = gdal.IdentifyDriverEx("data/byte.tif", allowed_drivers=["STACIT"])
+    assert drv is None
