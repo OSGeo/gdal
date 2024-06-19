@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <cassert>
 #include <future>
 
 #include "gdal_alg.h"
@@ -236,15 +237,15 @@ double CalcHeightAdjFactor(const GDALDataset *poDataset, double dfCurveCoeff)
     return 0;
 }
 
-// Calculate the height at nDistance units along a line through the origin given the height
-// at nDistance - 1 units along the line.
+/// Calculate the height at nDistance units along a line through the origin given the height
+/// at nDistance - 1 units along the line.
+/// \param nDistance  Distance along the line for the target point.
+/// \param Za  Height at the line one unit previous to the target point.
 double CalcHeightLine(int nDistance, double Za)
 {
     nDistance = std::abs(nDistance);
-    if (nDistance == 1)
-        return Za;
-    else
-        return Za * nDistance / (nDistance - 1);
+    assert(nDistance != 1);
+    return Za * nDistance / (nDistance - 1);
 }
 
 // Calculate the height Zc of a point (i, j, Zc) given a line through the origin (0, 0, 0)
@@ -262,10 +263,8 @@ double CalcHeightDiagonal(int i, int j, double Za, double Zb)
 // point (i, j, Zc), also on the plane.
 double CalcHeightEdge(int i, int j, double Za, double Zb)
 {
-    if (i == j)
-        return CalcHeightLine(i, Za);
-    else
-        return (Za * i + Zb * (j - i)) / (j - 1);
+    assert(i != j);
+    return (Za * i + Zb * (j - i)) / (j - 1);
 }
 
 }  // unnamed namespace
@@ -580,8 +579,18 @@ void Viewshed::processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
     for (int iPixel = iStart; iPixel > iEnd; iPixel--, pThis--, pLast--)
     {
         int nXOffset = std::abs(iPixel - nX);
-        double dfZ =
-            oZcalc(nXOffset, nYOffset, *(pThis + 1), *pLast, *(pLast + 1));
+
+        double dfZ;
+        if (nXOffset == nYOffset)
+        {
+            if (nXOffset == 1)
+                dfZ = *pThis;
+            else
+                dfZ = CalcHeightLine(nXOffset, *(pLast + 1));
+        }
+        else
+            dfZ =
+                oZcalc(nXOffset, nYOffset, *(pThis + 1), *pLast, *(pLast + 1));
         setOutput(vResult[iPixel], *pThis, dfZ);
     }
 
@@ -612,19 +621,28 @@ void Viewshed::processLineRight(int nX, int nYOffset, int iStart, int iEnd,
     for (int iPixel = iStart; iPixel < iEnd; iPixel++, pThis++, pLast++)
     {
         int nXOffset = std::abs(iPixel - nX);
-        double dfZ =
-            oZcalc(nXOffset, nYOffset, *(pThis - 1), *pLast, *(pLast - 1));
+        double dfZ;
+        if (nXOffset == nYOffset)
+        {
+            if (nXOffset == 1)
+                dfZ = *pThis;
+            else
+                dfZ = CalcHeightLine(nXOffset, *(pLast - 1));
+        }
+        else
+            dfZ =
+                oZcalc(nXOffset, nYOffset, *(pThis - 1), *pLast, *(pLast - 1));
         setOutput(vResult[iPixel], *pThis, dfZ);
     }
     // For cells outside of the [start, end) range, set the outOfRange value.
     std::fill(vResult.begin() + iEnd, vResult.end(), oOpts.outOfRangeVal);
 }
 
-/// Set the output Z value depending o the observable height and computation mode.
+/// Set the output Z value depending on the observable height and computation mode.
 ///
 /// dfResult  Reference to the result cell
 /// dfCellVal  Reference to the current cell height. Replace with observable height.
-/// dfZ  Observable height at cell.
+/// dfZ  Minimum observable height at cell.
 void Viewshed::setOutput(double &dfResult, double &dfCellVal, double dfZ)
 {
     if (oOpts.outputMode != OutputMode::Normal)
@@ -659,14 +677,6 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
     // This bit is only relevant for the first line.
     dfZObserver = oOpts.observer.z + vThisLineVal[nX];
     dfHeightAdjFactor = CalcHeightAdjFactor(poDstDS.get(), oOpts.curveCoeff);
-    if (oOpts.outputMode == OutputMode::Normal)
-    {
-        vResult[nX] = oOpts.visibleVal;
-        if (nX - 1 >= 0)
-            vResult[nX - 1] = oOpts.visibleVal;
-        if (nX + 1 < oCurExtent.xSize())
-            vResult[nX + 1] = oOpts.visibleVal;
-    }
 
     // In DEM mode the base is the pre-adjustment value.
     // In ground mode the base is zero.
@@ -675,6 +685,26 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
 
     const auto [iLeft, iRight] =
         adjustHeight(nYOffset, nX, vThisLineVal.data() + nX);
+
+    if (oOpts.outputMode == OutputMode::Normal)
+    {
+        vResult[nX] = oOpts.visibleVal;
+        if (nX - 1 >= 0)
+            vResult[nX - 1] = oOpts.visibleVal;
+        if (nX + 1 < oCurExtent.xSize())
+            vResult[nX + 1] = oOpts.visibleVal;
+    }
+    else
+    {
+        // The minimum observable value isn't well-defined at a distance of one.
+        // We use the actual cell height.
+        if (nX - 1 >= 0)
+            setOutput(vResult[nX - 1], vThisLineVal[nX - 1],
+                      vThisLineVal[nX - 1]);
+        if (nX + 1 < oCurExtent.xSize())
+            setOutput(vResult[nX + 1], vThisLineVal[nX + 1],
+                      vThisLineVal[nX + 1]);
+    }
 
     auto t1 =
         std::async(std::launch::async,
@@ -736,7 +766,11 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
     // Handle the initial position on the line.
     if (iLeft < iRight)
     {
-        double dfZ = CalcHeightLine(nYOffset, vLastLineVal[nX]);
+        double dfZ;
+        if (std::abs(nYOffset) == 1)
+            dfZ = vThisLineVal[nX];
+        else
+            dfZ = CalcHeightLine(nYOffset, vLastLineVal[nX]);
         setOutput(vResult[nX], vThisLineVal[nX], dfZ);
     }
     else
