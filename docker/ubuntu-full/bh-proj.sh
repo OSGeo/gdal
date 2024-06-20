@@ -99,6 +99,7 @@ fi
 
 apt-get update -y
 DEBIAN_FRONTEND=noninteractive apt-get install -y patchelf
+rm -rf /var/lib/apt/lists/*
 patchelf --set-soname libinternalproj.so.${PROJ_SO_FIRST} ${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO}
 for i in "${DESTDIR}${PROJ_INSTALL_PREFIX}/bin"/*; do
   patchelf --replace-needed libproj.so.${PROJ_SO_FIRST} libinternalproj.so.${PROJ_SO_FIRST} $i;

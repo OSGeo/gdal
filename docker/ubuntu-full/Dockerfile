@@ -133,6 +133,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libspdlog-dev${APT_ARCH_SUFFIX} libmagic-dev${APT_ARCH_SUFFIX} \
+    && rm -rf /var/lib/apt/lists/* \
     && mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
         | tar xz -C tiledb --strip-components=1 \

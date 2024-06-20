@@ -138,6 +138,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do ${GCC_ARCH}-linux-gnu-strip -s $i 2>/dev/null || /bin/true; done \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y patchelf \
+    && rm -rf /var/lib/apt/lists/* \
     && patchelf --set-soname libinternalproj.so.${PROJ_SO_FIRST} /build${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO} \
     && for i in /build${PROJ_INSTALL_PREFIX}/bin/*; do patchelf --replace-needed libproj.so.${PROJ_SO_FIRST} libinternalproj.so.${PROJ_SO_FIRST} $i; done
 
