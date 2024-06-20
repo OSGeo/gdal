@@ -36,7 +36,6 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && rm -rf /var/lib/apt/lists/*; \
     fi
 
-
 # Setup build env for PROJ
 USER root
 RUN . /buildscripts/bh-set-envvars.sh \
@@ -298,12 +297,11 @@ ARG PROJ_VERSION=master
 RUN . /buildscripts/bh-set-envvars.sh \
     && /buildscripts/bh-proj.sh
 
+# Build GDAL
 ARG GDAL_VERSION=master
 ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
 ARG GDAL_REPOSITORY=OSGeo/gdal
-
-# Build GDAL
 
 COPY ./bh-gdal.sh /buildscripts/bh-gdal.sh
 RUN . /buildscripts/bh-set-envvars.sh \
