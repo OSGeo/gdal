@@ -45,7 +45,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
             build-essential ca-certificates \
             git make cmake wget unzip libtool automake \
             zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-gnutls-dev${APT_ARCH_SUFFIX} \
-            libtiff5-dev${APT_ARCH_SUFFIX} \
+            libtiff-dev${APT_ARCH_SUFFIX} \
     && rm -rf /var/lib/apt/lists/*
 
 # Setup build env for GDAL
