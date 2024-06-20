@@ -20,8 +20,7 @@ COPY ./bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
 
 RUN . /buildscripts/bh-set-envvars.sh \
     && if test "${TARGET_ARCH}" != ""; then \
-    rm -f /etc/apt/sources.list \
-    rm -f /etc/apt/sources.list.d/ubuntu.sources \
+    rm -f /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources \
     && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble main restricted universe" >> /etc/apt/sources.list \
     && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble-updates main restricted universe" >> /etc/apt/sources.list \
     && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble-backports main restricted universe" >> /etc/apt/sources.list \
