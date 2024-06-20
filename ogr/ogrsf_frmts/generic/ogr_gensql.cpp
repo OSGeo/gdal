@@ -176,6 +176,9 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer(
         OGRFeatureDefn *poLayerDefn = nullptr;
         int iSrcGeomField = -1;
 
+        if (psColDef->bHidden)
+            continue;
+
         if (psColDef->table_index != -1)
             poLayerDefn =
                 m_apoTableLayers[psColDef->table_index]->GetLayerDefn();
@@ -1343,7 +1346,73 @@ std::unique_ptr<OGRFeature> OGRGenSQLResultsLayer::TranslateFeature(
     for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
     {
         const swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
-        if (psColDef->field_index != -1)
+
+        if (psColDef->bHidden)
+        {
+            const char *pszDstFieldName = psColDef->field_alias
+                                              ? psColDef->field_alias
+                                              : psColDef->field_name;
+            if (EQUAL(pszDstFieldName, "OGR_STYLE"))
+            {
+                if (psColDef->field_type == SWQ_STRING)
+                {
+                    // Does this column definition directly references a
+                    // source field ?
+                    if (psColDef->field_index >= 0)
+                    {
+                        if (!IS_GEOM_FIELD_INDEX(poSrcFeat->GetDefnRef(),
+                                                 psColDef->field_index))
+                        {
+                            if (poSrcFeat->IsFieldSetAndNotNull(
+                                    psColDef->field_index))
+                            {
+                                const char *pszVal =
+                                    poSrcFeat->GetFieldAsString(
+                                        psColDef->field_index);
+                                poDstFeat->SetStyleString(pszVal);
+                            }
+                            else
+                            {
+                                poDstFeat->SetStyleString(nullptr);
+                            }
+                        }
+                        else
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "OGR_STYLE HIDDEN field should reference "
+                                     "a column of type String");
+                        }
+                    }
+                    else
+                    {
+                        auto poResult = std::unique_ptr<swq_expr_node>(
+                            psColDef->expr->Evaluate(OGRMultiFeatureFetcher,
+                                                     &apoFeatures, sContext));
+
+                        if (!poResult)
+                        {
+                            return nullptr;
+                        }
+
+                        poDstFeat->SetStyleString(poResult->is_null
+                                                      ? nullptr
+                                                      : poResult->string_value);
+                    }
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "OGR_STYLE HIDDEN field should be of type String");
+                }
+            }
+            continue;
+        }
+
+        // Does this column definition directly references a
+        // source field ?
+        // If so, skip it for now, as it will be taken into account in the
+        // next loop.
+        if (psColDef->field_index >= 0)
         {
             if (psColDef->field_type == SWQ_GEOMETRY ||
                 psColDef->target_type == SWQ_GEOMETRY)
@@ -1443,6 +1512,13 @@ std::unique_ptr<OGRFeature> OGRGenSQLResultsLayer::TranslateFeature(
     {
         const swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
 
+        if (psColDef->bHidden)
+        {
+            continue;
+        }
+
+        // Skip this column definition if it doesn't reference a field from
+        // the main feature
         if (psColDef->table_index != 0)
         {
             if (psColDef->field_type == SWQ_GEOMETRY ||
@@ -1548,6 +1624,11 @@ std::unique_ptr<OGRFeature> OGRGenSQLResultsLayer::TranslateFeature(
             if (psColDef->field_type == SWQ_GEOMETRY ||
                 psColDef->target_type == SWQ_GEOMETRY)
                 continue;
+
+            if (psColDef->bHidden)
+            {
+                continue;
+            }
 
             if (psColDef->table_index == psJoinInfo->secondary_table)
                 poDstFeat->SetField(

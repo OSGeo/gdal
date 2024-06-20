@@ -634,6 +634,25 @@ For example we can select the annotation features as:
 
     SELECT * FROM nation WHERE OGR_STYLE LIKE 'LABEL%'
 
+
+It is possible to use the ``OGR_STYLE`` field name as a special field name in
+the field selection as an alternate way of setting the :cpp:func:`OGRFeature::SetStyleString`
+value, typically by aliasing another field or a string literal.
+
+.. code-block::
+
+    SELECT *, 'BRUSH(fc:#01234567)' AS OGR_STYLE FROM source_layer
+
+
+By default, the OGR_STYLE field will still be visible as a regular field. If this
+is undesirable, starting with GDAL 3.10, it can be hidden by adding the HIDDEN
+keyword at the end of the field specification.
+
+.. code-block::
+
+    SELECT * EXCLUDE(my_style_field), my_style_field AS OGR_STYLE HIDDEN FROM source_layer
+
+
 CREATE INDEX
 ------------
 
