@@ -33,7 +33,6 @@
 #include <cstring>
 
 #include <algorithm>
-#include <cassert>
 #include <set>
 #include <vector>
 #include <utility>
@@ -211,30 +210,36 @@ CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
     /* -------------------------------------------------------------------- */
     int nXSize = GDALGetRasterBandXSize(hSrcBand);
     int nYSize = GDALGetRasterBandYSize(hSrcBand);
-    auto *panLastLineVal = static_cast<std::int64_t *>(
-        VSI_MALLOC2_VERBOSE(sizeof(std::int64_t), nXSize));
-    auto *panThisLineVal = static_cast<std::int64_t *>(
-        VSI_MALLOC2_VERBOSE(sizeof(std::int64_t), nXSize));
-    auto *panLastLineId =
-        static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
-    auto *panThisLineId =
-        static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
-    auto *panThisLineWriteVal = static_cast<std::int64_t *>(
-        VSI_MALLOC2_VERBOSE(sizeof(std::int64_t), nXSize));
-    GByte *pabyMaskLine = hMaskBand != nullptr
-                              ? static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize))
-                              : nullptr;
+    auto panLastLineValKeeper = std::unique_ptr<std::int64_t, VSIFreeReleaser>(
+        static_cast<std::int64_t *>(
+            VSI_MALLOC2_VERBOSE(sizeof(std::int64_t), nXSize)));
+    auto panThisLineValKeeper = std::unique_ptr<std::int64_t, VSIFreeReleaser>(
+        static_cast<std::int64_t *>(
+            VSI_MALLOC2_VERBOSE(sizeof(std::int64_t), nXSize)));
+    auto panLastLineIdKeeper = std::unique_ptr<GInt32, VSIFreeReleaser>(
+        static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize)));
+    auto panThisLineIdKeeper = std::unique_ptr<GInt32, VSIFreeReleaser>(
+        static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize)));
+    auto panThisLineWriteValKeeper =
+        std::unique_ptr<std::int64_t, VSIFreeReleaser>(
+            static_cast<std::int64_t *>(
+                VSI_MALLOC2_VERBOSE(sizeof(std::int64_t), nXSize)));
+    auto pabyMaskLineKeeper = std::unique_ptr<GByte, VSIFreeReleaser>(
+        hMaskBand != nullptr ? static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize))
+                             : nullptr);
+
+    auto panLastLineVal = panLastLineValKeeper.get();
+    auto panThisLineVal = panThisLineValKeeper.get();
+    auto panLastLineId = panLastLineIdKeeper.get();
+    auto panThisLineId = panThisLineIdKeeper.get();
+    auto panThisLineWriteVal = panThisLineWriteValKeeper.get();
+    auto pabyMaskLine = pabyMaskLineKeeper.get();
+
     if (panLastLineVal == nullptr || panThisLineVal == nullptr ||
         panLastLineId == nullptr || panThisLineId == nullptr ||
         panThisLineWriteVal == nullptr ||
         (hMaskBand != nullptr && pabyMaskLine == nullptr))
     {
-        CPLFree(panThisLineId);
-        CPLFree(panLastLineId);
-        CPLFree(panThisLineVal);
-        CPLFree(panLastLineVal);
-        CPLFree(panThisLineWriteVal);
-        CPLFree(pabyMaskLine);
         return CE_Failure;
     }
 
@@ -317,11 +322,27 @@ CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
         oFirstEnum.CompleteMerges();
 
     /* -------------------------------------------------------------------- */
+    /*      Check if there are polygons                                     */
+    /* -------------------------------------------------------------------- */
+    if (!oFirstEnum.panPolyIdMap || !oFirstEnum.panPolyValue)
+    {
+        // Can happen if all pixels are masked
+        if (hSrcBand == hDstBand)
+        {
+            pfnProgress(1.0, "", pProgressArg);
+            return CE_None;
+        }
+        else
+        {
+            return GDALRasterBandCopyWholeRaster(hSrcBand, hDstBand, nullptr,
+                                                 pfnProgress, pProgressArg);
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
     /*      Push the sizes of merged polygon fragments into the             */
     /*      merged polygon id's count.                                      */
     /* -------------------------------------------------------------------- */
-    assert(oFirstEnum.panPolyIdMap != nullptr);  // for Coverity
-    assert(oFirstEnum.panPolyValue != nullptr);  // for Coverity
     for (int iPoly = 0; iPoly < oFirstEnum.nNextPolygonId; iPoly++)
     {
         if (oFirstEnum.panPolyIdMap[iPoly] != iPoly)
@@ -346,7 +367,16 @@ CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
     GDALRasterPolygonEnumerator oSecondEnum(nConnectedness);
 
     std::vector<int> anBigNeighbour;
-    anBigNeighbour.resize(anPolySizes.size());
+    try
+    {
+        anBigNeighbour.resize(anPolySizes.size());
+    }
+    catch (const std::exception &)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "%s: Out of memory",
+                 __FUNCTION__);
+        return CE_Failure;
+    }
 
     for (int iPoly = 0; iPoly < static_cast<int>(anPolySizes.size()); iPoly++)
         anBigNeighbour[iPoly] = -1;
@@ -540,9 +570,7 @@ CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
     /* ==================================================================== */
     oSecondEnum.Clear();
 
-    for (int iY = 0; oFirstEnum.panPolyIdMap != nullptr &&  // for Coverity
-                     eErr == CE_None && iY < nYSize;
-         iY++)
+    for (int iY = 0; eErr == CE_None && iY < nYSize; iY++)
     {
         /* --------------------------------------------------------------------
          */
@@ -626,16 +654,6 @@ CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
             eErr = CE_Failure;
         }
     }
-
-    /* -------------------------------------------------------------------- */
-    /*      Cleanup                                                         */
-    /* -------------------------------------------------------------------- */
-    CPLFree(panThisLineId);
-    CPLFree(panLastLineId);
-    CPLFree(panThisLineVal);
-    CPLFree(panLastLineVal);
-    CPLFree(panThisLineWriteVal);
-    CPLFree(pabyMaskLine);
 
     return eErr;
 }
