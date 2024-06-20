@@ -166,14 +166,17 @@ static GDALDataset *OGRCSVDriverOpen(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    auto poDS = std::make_unique<OGRCSVDataSource>();
+    auto poDSUniquePtr = std::make_unique<OGRCSVDataSource>();
 
-    if (!poDS->Open(poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update,
-                    false, poOpenInfo->papszOpenOptions,
-                    poOpenInfo->IsSingleAllowedDriver("CSV")))
+    if (!poDSUniquePtr->Open(poOpenInfo->pszFilename,
+                             poOpenInfo->eAccess == GA_Update, false,
+                             poOpenInfo->papszOpenOptions,
+                             poOpenInfo->IsSingleAllowedDriver("CSV")))
     {
-        poDS.reset();
+        poDSUniquePtr.reset();
     }
+
+    auto poDS = poDSUniquePtr.release();
 
     if (poOpenInfo->eAccess == GA_Update && poDS != nullptr)
     {
@@ -182,11 +185,11 @@ static GDALDataset *OGRCSVDriverOpen(GDALOpenInfo *poOpenInfo)
             poMap = new std::map<CPLString, GDALDataset *>();
         if (poMap->find(poOpenInfo->pszFilename) == poMap->end())
         {
-            (*poMap)[poOpenInfo->pszFilename] = poDS.get();
+            (*poMap)[poOpenInfo->pszFilename] = poDS;
         }
     }
 
-    return poDS.release();
+    return poDS;
 }
 
 /************************************************************************/
