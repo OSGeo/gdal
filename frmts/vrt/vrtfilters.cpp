@@ -420,28 +420,16 @@ CPLErr VRTFilteredSource::RasterIO(GDALDataType eVRTBandDataType, int nXOff,
 /************************************************************************/
 
 VRTKernelFilteredSource::VRTKernelFilteredSource()
-    : m_nKernelSize(0), m_bSeparable(FALSE), m_padfKernelCoefs(nullptr),
-      m_bNormalized(FALSE)
 {
     GDALDataType aeSupTypes[] = {GDT_Float32};
     SetFilteringDataTypesSupported(1, aeSupTypes);
 }
 
 /************************************************************************/
-/*                      ~VRTKernelFilteredSource()                      */
-/************************************************************************/
-
-VRTKernelFilteredSource::~VRTKernelFilteredSource()
-
-{
-    CPLFree(m_padfKernelCoefs);
-}
-
-/************************************************************************/
 /*                           SetNormalized()                            */
 /************************************************************************/
 
-void VRTKernelFilteredSource::SetNormalized(int bNormalizedIn)
+void VRTKernelFilteredSource::SetNormalized(bool bNormalizedIn)
 
 {
     m_bNormalized = bNormalizedIn;
@@ -451,8 +439,9 @@ void VRTKernelFilteredSource::SetNormalized(int bNormalizedIn)
 /*                             SetKernel()                              */
 /************************************************************************/
 
-CPLErr VRTKernelFilteredSource::SetKernel(int nNewKernelSize, bool bSeparable,
-                                          double *padfNewCoefs)
+CPLErr
+VRTKernelFilteredSource::SetKernel(int nNewKernelSize, bool bSeparable,
+                                   const std::vector<double> &adfNewCoefs)
 
 {
     if (nNewKernelSize < 1 || (nNewKernelSize % 2) != 1)
@@ -463,16 +452,17 @@ CPLErr VRTKernelFilteredSource::SetKernel(int nNewKernelSize, bool bSeparable,
                  nNewKernelSize);
         return CE_Failure;
     }
+    if (adfNewCoefs.size() !=
+        static_cast<size_t>(nNewKernelSize) * (bSeparable ? 1 : nNewKernelSize))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "adfNewCoefs[] is not of expected size");
+        return CE_Failure;
+    }
 
-    CPLFree(m_padfKernelCoefs);
     m_nKernelSize = nNewKernelSize;
     m_bSeparable = bSeparable;
-
-    int nKernelBufferSize = m_nKernelSize * (m_bSeparable ? 1 : m_nKernelSize);
-
-    m_padfKernelCoefs =
-        static_cast<double *>(CPLMalloc(sizeof(double) * nKernelBufferSize));
-    memcpy(m_padfKernelCoefs, padfNewCoefs, sizeof(double) * nKernelBufferSize);
+    m_adfKernelCoefs = adfNewCoefs;
 
     SetExtraEdgePixels((nNewKernelSize - 1) / 2);
 
@@ -565,8 +555,8 @@ CPLErr VRTKernelFilteredSource::FilterData(int nXSize, int nYSize,
                                                   iJJ * nJStride;
                             if (bHasNoData && *pfData == fNoData)
                                 continue;
-                            dfSum += *pfData * m_padfKernelCoefs[iK];
-                            dfKernSum += m_padfKernelCoefs[iK];
+                            dfSum += *pfData * m_adfKernelCoefs[iK];
+                            dfKernSum += m_adfKernelCoefs[iK];
                         }
                     }
 
@@ -618,17 +608,16 @@ CPLErr VRTKernelFilteredSource::XMLInit(
         return CE_Failure;
     }
 
-    char **papszCoefItems =
-        CSLTokenizeString(CPLGetXMLValue(psTree, "Kernel.Coefs", ""));
+    const CPLStringList aosCoefItems(
+        CSLTokenizeString(CPLGetXMLValue(psTree, "Kernel.Coefs", "")));
 
-    const int nCoefs = CSLCount(papszCoefItems);
+    const int nCoefs = aosCoefItems.size();
 
     const bool bSquare = nCoefs == nNewKernelSize * nNewKernelSize;
     const bool bSeparable = nCoefs == nNewKernelSize && nCoefs != 1;
 
     if (!bSquare && !bSeparable)
     {
-        CSLDestroy(papszCoefItems);
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Got wrong number of filter kernel coefficients (%s).  "
                  "Expected %d or %d, got %d.",
@@ -637,19 +626,17 @@ CPLErr VRTKernelFilteredSource::XMLInit(
         return CE_Failure;
     }
 
-    double *padfNewCoefs =
-        static_cast<double *>(CPLMalloc(sizeof(double) * nCoefs));
-
+    std::vector<double> adfNewCoefs;
+    adfNewCoefs.reserve(nCoefs);
     for (int i = 0; i < nCoefs; i++)
-        padfNewCoefs[i] = CPLAtof(papszCoefItems[i]);
+        adfNewCoefs.push_back(CPLAtof(aosCoefItems[i]));
 
-    const CPLErr eErr = SetKernel(nNewKernelSize, bSeparable, padfNewCoefs);
-
-    CPLFree(padfNewCoefs);
-    CSLDestroy(papszCoefItems);
-
-    SetNormalized(atoi(CPLGetXMLValue(psTree, "Kernel.normalized", "0")));
-
+    const CPLErr eErr = SetKernel(nNewKernelSize, bSeparable, adfNewCoefs);
+    if (eErr == CE_None)
+    {
+        SetNormalized(atoi(CPLGetXMLValue(psTree, "Kernel.normalized", "0")) !=
+                      0);
+    }
     return eErr;
 }
 
@@ -673,23 +660,15 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML(const char *pszVRTPath)
 
     CPLXMLNode *psKernel = CPLCreateXMLNode(psSrc, CXT_Element, "Kernel");
 
-    if (m_bNormalized)
-        CPLCreateXMLNode(
-            CPLCreateXMLNode(psKernel, CXT_Attribute, "normalized"), CXT_Text,
-            "1");
-    else
-        CPLCreateXMLNode(
-            CPLCreateXMLNode(psKernel, CXT_Attribute, "normalized"), CXT_Text,
-            "0");
+    CPLCreateXMLNode(CPLCreateXMLNode(psKernel, CXT_Attribute, "normalized"),
+                     CXT_Text, m_bNormalized ? "1" : "0");
 
-    const int nCoefCount =
-        m_bSeparable ? m_nKernelSize : m_nKernelSize * m_nKernelSize;
     std::string osCoefs;
-    for (int iCoef = 0; iCoef < nCoefCount; iCoef++)
+    for (auto dfVal : m_adfKernelCoefs)
     {
         if (!osCoefs.empty())
             osCoefs += ' ';
-        osCoefs += CPLSPrintf("%.8g", m_padfKernelCoefs[iCoef]);
+        osCoefs += CPLSPrintf("%.8g", dfVal);
     }
 
     CPLSetXMLValue(psKernel, "Size", CPLSPrintf("%d", m_nKernelSize));
