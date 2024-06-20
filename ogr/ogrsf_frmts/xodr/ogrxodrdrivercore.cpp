@@ -3,7 +3,7 @@
  * Project:  OpenGIS Simple Features for OpenDRIVE
  * Purpose:  Implementation of OGRXODRDriverCore.
  * Author:   Michael Scholz, German Aerospace Center (DLR)
- *           Gülsen Bardak, German Aerospace Center (DLR)        
+ *           Gülsen Bardak, German Aerospace Center (DLR)
  *
  ******************************************************************************
  * Copyright 2024 German Aerospace Center (DLR), Institute of Transportation Systems
@@ -31,7 +31,7 @@
 #include "ogrxodrdrivercore.h"
 
 /************************************************************************/
-/*                    OGRXODRDriverIdentify()                            */
+/*                    OGRXODRDriverIdentify()                           */
 /************************************************************************/
 
 int OGRXODRDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -40,7 +40,7 @@ int OGRXODRDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                  OGRXODRDriverSetCommonMetadata()                  */
+/*                  OGRXODRDriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void OGRXODRDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -66,7 +66,7 @@ void OGRXODRDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                   DeclareDeferredOGRXODRPlugin()                      */
+/*                   DeclareDeferredOGRXODRPlugin()                     */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

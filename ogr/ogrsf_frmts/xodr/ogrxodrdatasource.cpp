@@ -3,7 +3,7 @@
  * Project:  OpenGIS Simple Features for OpenDRIVE
  * Purpose:  Implementation of OGRXODRDataSource.
  * Author:   Michael Scholz, German Aerospace Center (DLR)
- *           Gülsen Bardak, German Aerospace Center (DLR)        
+ *           Gülsen Bardak, German Aerospace Center (DLR)
  *
  ******************************************************************************
  * Copyright 2024 German Aerospace Center (DLR), Institute of Transportation Systems
@@ -41,7 +41,7 @@ bool OGRXODRDataSource::Open(const char *pszFilename, CSLConstList openOptions)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "The provided file does not contain any OpenDRIVE data. Is it "
                  "empty?");
-        return FALSE;
+        return false;
     }
 
     std::vector<odr::Road> roads = xodr.get_roads();
@@ -49,7 +49,7 @@ bool OGRXODRDataSource::Open(const char *pszFilename, CSLConstList openOptions)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "OpenDRIVE dataset does not contain any roads.");
-        return FALSE;
+        return false;
     }
 
     const char *openOptionValue = CSLFetchNameValue(openOptions, "EPSILON");
@@ -93,18 +93,18 @@ bool OGRXODRDataSource::Open(const char *pszFilename, CSLConstList openOptions)
     m_apoLayers.push_back(std::move(lane));
     m_apoLayers.push_back(std::move(roadSignal));
 
-    return TRUE;
+    return true;
 }
 
 OGRLayer *OGRXODRDataSource::GetLayer(int iLayer)
 {
-    if (iLayer < 0 || (size_t)iLayer >= m_apoLayers.size())
-        return NULL;
+    if (iLayer < 0 || static_cast<size_t>(iLayer) >= m_apoLayers.size())
+        return nullptr;
 
     return m_apoLayers[iLayer].get();
 }
 
-int OGRXODRDataSource::TestCapability(CPL_UNUSED const char *pszCap)
+int OGRXODRDataSource::TestCapability(const char *pszCap)
 {
     int result = FALSE;
 

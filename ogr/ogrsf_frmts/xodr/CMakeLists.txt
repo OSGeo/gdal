@@ -1,18 +1,19 @@
 add_gdal_driver(
   TARGET ogr_XODR
-  SOURCES ogr_xodr.h 
+  SOURCES ogr_xodr.h
           ogrxodrdriver.cpp
-          ogrxodrdatasource.cpp 
+          ogrxodrdatasource.cpp
           ogrxodrlayer.cpp
-          ogrxodrlayerlane.cpp 
-          ogrxodrlayerlaneborder.cpp 
+          ogrxodrlayerlane.cpp
+          ogrxodrlayerlaneborder.cpp
           ogrxodrlayerreferenceline.cpp
           ogrxodrlayerroadmark.cpp
           ogrxodrlayerroadobject.cpp
           ogrxodrlayerroadsignal.cpp
   CORE_SOURCES ogrxodrdrivercore.cpp
   PLUGIN_CAPABLE
-  NO_SHARED_SYMBOL_WITH_CORE)
+  NO_SHARED_SYMBOL_WITH_CORE
+  STRONG_CXX_WFLAGS)
 
 if(NOT TARGET ogr_XODR)
     return()
