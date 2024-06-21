@@ -106,7 +106,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateHATCH()
     /* -------------------------------------------------------------------- */
     /*      Obtain a tolerance value used when building the polygon.        */
     /* -------------------------------------------------------------------- */
-    double dfTolerance = atof(CPLGetConfigOption("DXF_HATCH_TOLERANCE", "-1"));
+    double dfTolerance = poDS->HatchTolerance();
     if (dfTolerance < 0)
     {
         // If the configuration variable isn't set, compute the bounding box
@@ -696,7 +696,7 @@ OGRErr OGRDXFLayer::CollectPolylinePath(OGRGeometryCollection *poGC,
     if (nVertexCount >= 2)
     {
         oSmoothPolyline.SetUseMaxGapWhenTessellatingArcs(poDS->InlineBlocks());
-        poGC->addGeometryDirectly(oSmoothPolyline.Tessellate());
+        poGC->addGeometryDirectly(oSmoothPolyline.Tessellate(false));
     }
 
     /* -------------------------------------------------------------------- */
