@@ -596,8 +596,6 @@ void Viewshed::processFirstLineLeft(int nX, int iStart, int iEnd,
 
     double *pThis = vThisLineVal.data() + iStart;
 
-    if (iStart >= nX)
-        return;
     // If the start cell is next to the observer, just mark it visible.
     if (iStart + 1 == nX || iStart + 1 == oCurExtent.xStop)
     {
@@ -638,9 +636,6 @@ void Viewshed::processFirstLineRight(int nX, int iStart, int iEnd,
     iStart = oCurExtent.clampX(iStart);
 
     double *pThis = vThisLineVal.data() + iStart;
-
-    if (iStart <= nX)
-        return;
 
     // If the start cell is next to the observer, just mark it visible.
     if (iStart - 1 == nX || iStart == oCurExtent.xStart)
@@ -705,7 +700,6 @@ void Viewshed::processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
     for (int iPixel = iStart; iPixel > iEnd; iPixel--, pThis--, pLast--)
     {
         int nXOffset = std::abs(iPixel - nX);
-
         double dfZ;
         if (nXOffset == nYOffset)
         {
@@ -741,7 +735,6 @@ void Viewshed::processLineRight(int nX, int nYOffset, int iStart, int iEnd,
     // If start is to the right of end, everything is taken care of by processing left.
     if (iStart >= iEnd)
         return;
-
     iStart = oCurExtent.clampX(iStart);
 
     nYOffset = std::abs(nYOffset);
@@ -813,7 +806,8 @@ void Viewshed::setOutput(double &dfResult, double &dfCellVal, double dfZ)
 bool Viewshed::processFirstLine(int nX, int nY, int nLine,
                                 std::vector<double> &vLastLineVal)
 {
-    int nYOffset = nLine - nY;  // Should be zero.
+    int nYOffset = nLine - nY;
+    assert(nYOffset == 0);
     std::vector<double> vResult(oOutExtent.xSize());
     std::vector<double> vThisLineVal(oOutExtent.xSize());
 
@@ -841,11 +835,11 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
     auto t1 = std::async(
         std::launch::async, [&, left = iLeft]()
         { processFirstLineLeft(nX, nX - 1, left - 1, vResult, vThisLineVal); });
-    t1.wait();
 
     auto t2 = std::async(
         std::launch::async, [&, right = iRight]()
         { processFirstLineRight(nX, nX + 1, right, vResult, vThisLineVal); });
+    t1.wait();
     t2.wait();
 
     // Make the current line the last line.
@@ -911,7 +905,6 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
                                        vThisLineVal, vLastLineVal);
                    });
 
-    t1.wait();
     auto t2 =
         std::async(std::launch::async,
                    [&, right = iRight]()
@@ -919,6 +912,7 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
                        processLineRight(nX, nYOffset, nX + 1, right, vResult,
                                         vThisLineVal, vLastLineVal);
                    });
+    t1.wait();
     t2.wait();
 
     // Make the current line the last line.
@@ -1020,7 +1014,6 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                                       err = true;
                           });
 
-    tUp.wait();
     // scan downwards
     auto tDown = std::async(
         std::launch::async,
@@ -1033,6 +1026,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                     err = true;
         });
 
+    tUp.wait();
     tDown.wait();
 
     if (!emitProgress(1))
