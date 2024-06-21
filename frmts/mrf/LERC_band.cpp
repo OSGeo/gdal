@@ -366,6 +366,7 @@ static GDALDataType L2toGDT(L2NS::DataType L2type)
             break;
         case L2NS::DataType::dt_char:
             dt = GDT_Int8;
+            break;
         default: // Unsigned byte
             dt = GDT_Byte;
     }
