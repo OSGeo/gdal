@@ -124,7 +124,7 @@ void MRFDriverSetCommonMetadata(GDALDriver *poDriver)
 
     // These will need to be revisited, do we support complex data types too?
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte UInt16 Int16 Int32 UInt32 Float32 Float64");
+        "Byte Int8 Int16 UInt16 Int32 UInt32 Int64 UInt64 Float32 Float64");
 
     poDriver->pfnIdentify = MRFDriverIdentify;
     poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");

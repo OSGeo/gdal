@@ -303,6 +303,9 @@ static CPLErr DecompressLERC1(buf_mgr &dst, const buf_mgr &src,
             case GDT_Byte:
                 UFILL(GByte);
                 break;
+            case GDT_Int8:
+                UFILL(GInt8);
+                break;
             case GDT_UInt16:
                 UFILL(GUInt16);
                 break;
@@ -361,8 +364,10 @@ static GDALDataType L2toGDT(L2NS::DataType L2type)
         case L2NS::DataType::dt_double:
             dt = GDT_Float64;
             break;
-        default:
-            dt = GDT_Byte;  // GDAL doesn't have a signed char type
+        case L2NS::DataType::dt_char:
+            dt = GDT_Int8;
+        default: // Unsigned byte
+            dt = GDT_Byte;
     }
     return dt;
 }
@@ -707,6 +712,16 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
 LERC_Band::LERC_Band(MRFDataset *pDS, const ILImage &image, int b, int level)
     : MRFRasterBand(pDS, image, b, level)
 {
+    // Lerc doesn't handle 64bit int types
+    if (image.dt != GDT_Byte && image.dt != GDT_Int16 &&
+        image.dt != GDT_UInt16 && image.dt != GDT_Int32 &&
+        image.dt != GDT_UInt32)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Data type not supported by Lerc compression");
+        return;
+    }
+
     // Pick 1/1000 for floats and 0.5 losless for integers.
     if (eDataType == GDT_Float32 || eDataType == GDT_Float64)
         precision = strtod(GetOptionValue("LERC_PREC", ".001"), nullptr);
