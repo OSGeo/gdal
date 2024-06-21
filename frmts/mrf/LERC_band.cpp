@@ -714,12 +714,10 @@ LERC_Band::LERC_Band(MRFDataset *pDS, const ILImage &image, int b, int level)
     : MRFRasterBand(pDS, image, b, level)
 {
     // Lerc doesn't handle 64bit int types
-    if (image.dt != GDT_Byte && image.dt != GDT_Int16 &&
-        image.dt != GDT_UInt16 && image.dt != GDT_Int32 &&
-        image.dt != GDT_UInt32)
+    if (image.dt == GDT_UInt64 || image.dt == GDT_Int64)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Data type not supported by Lerc compression");
+                 "Lerc compression of 64 bit integers is not supported");
         return;
     }
 
