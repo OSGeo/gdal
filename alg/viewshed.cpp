@@ -31,8 +31,6 @@
 #include <cassert>
 #include <future>
 
-#include <iostream>
-
 #include "gdal_alg.h"
 #include "gdal_priv_templates.hpp"
 
@@ -319,15 +317,27 @@ bool Viewshed::calcOutputExtent(int nX, int nY)
                       EPSILON) +
             (adfInvTransform[5] < 0 ? 1 : 0));
 
-        oOutExtent.xStart = std::max(nXStart, 0);
-        oOutExtent.yStart = std::max(nYStart, 0);
-        oOutExtent.xStop = std::min(nXStop, oOutExtent.xStop);
-        oOutExtent.yStop = std::min(nYStop, oOutExtent.yStop);
+        // If the limits are invalid, set the window size to zero to trigger the error below.
+        if (nXStart >= oOutExtent.xStop || nXStop < 0 ||
+            nYStart >= oOutExtent.yStop || nYStop < 0)
+        {
+            oOutExtent = Window();
+        }
+        else
+        {
+            oOutExtent.xStart = std::max(nXStart, 0);
+            oOutExtent.xStop = std::min(nXStop, oOutExtent.xStop);
+
+            oOutExtent.yStart = std::max(nYStart, 0);
+            oOutExtent.yStop = std::min(nYStop, oOutExtent.yStop);
+        }
     }
 
     if (oOutExtent.xSize() == 0 || oOutExtent.ySize() == 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid target raster size");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid target raster size due to transform "
+                 "and/or distance limitation.");
         return false;
     }
     return true;
@@ -428,6 +438,7 @@ std::pair<int, int> Viewshed::adjustHeight(int nYOffset, int nX,
         const double dfLineX = adfTransform[2] * nYOffset;
         const double dfLineY = adfTransform[5] * nYOffset;
 
+        // Go left
         double *pdfHeight = vThisLineVal.data() + nXStart;
         for (int nXOffset = nXStart - nX; nXOffset >= -nX;
              nXOffset--, pdfHeight--)
@@ -577,6 +588,10 @@ void Viewshed::processFirstLineLeft(int nX, int iStart, int iEnd,
                                     std::vector<double> &vResult,
                                     std::vector<double> &vThisLineVal)
 {
+    // If end is to the right of start, everything is taken care of by right processing.
+    if (iEnd >= iStart)
+        return;
+
     iStart = oCurExtent.clampX(iStart);
 
     double *pThis = vThisLineVal.data() + iStart;
@@ -616,6 +631,10 @@ void Viewshed::processFirstLineRight(int nX, int iStart, int iEnd,
                                      std::vector<double> &vResult,
                                      std::vector<double> &vThisLineVal)
 {
+    // If start is to the right of end, everything is taken care of by left processing.
+    if (iStart >= iEnd)
+        return;
+
     iStart = oCurExtent.clampX(iStart);
 
     double *pThis = vThisLineVal.data() + iStart;
@@ -649,7 +668,7 @@ void Viewshed::processFirstLineRight(int nX, int iStart, int iEnd,
 ///
 /// @param nX  X coordinate of the observer.
 /// @param nYOffset  Offset of the line being processed from the observer
-/// @param iStart  X coordinate of the first cell to the left of the observer to be procssed.
+/// @param iStart  X coordinate of the first cell to the left of the observer to be processed.
 /// @param iEnd  X coordinate one past the last cell to be processed.
 /// @param vResult  Vector in which to store the visibility/height results.
 /// @param vThisLineVal  Height of each cell in the line being processed.
@@ -659,20 +678,28 @@ void Viewshed::processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
                                std::vector<double> &vThisLineVal,
                                std::vector<double> &vLastLineVal)
 {
+    // If start to the left of end, everything is taken care of by processing right.
+    if (iStart <= iEnd)
+        return;
     iStart = oCurExtent.clampX(iStart);
-
-    // If the observer is to the right of the raster, mark the first cell to the left as
-    // visible.
-    if (nX >= oCurExtent.xSize())
-    {
-        if (oOpts.outputMode == OutputMode::Normal)
-            vResult[iStart] = oOpts.visibleVal;
-        iStart--;
-    }
 
     nYOffset = std::abs(nYOffset);
     double *pThis = vThisLineVal.data() + iStart;
     double *pLast = vLastLineVal.data() + iStart;
+
+    // If the observer is to the right of the raster, mark the first cell to the left as
+    // visible. This may mark an out-of-range cell with a value, but this will be fixed
+    // with the out of range assignment at the end.
+    if (iStart == oCurExtent.xStop - 1)
+    {
+        if (oOpts.outputMode == OutputMode::Normal)
+            vResult[iStart] = oOpts.visibleVal;
+        else
+            setOutput(vResult[iStart], *pThis, *pThis);
+        iStart--;
+        pThis--;
+        pLast--;
+    }
 
     // Go from the observer to the left, calculating Z as we go.
     for (int iPixel = iStart; iPixel > iEnd; iPixel--, pThis--, pLast--)
@@ -701,7 +728,7 @@ void Viewshed::processLineLeft(int nX, int nYOffset, int iStart, int iEnd,
 ///
 /// @param nX  X coordinate of the observer.
 /// @param nYOffset  Offset of the line being processed from the observer
-/// @param iStart  X coordinate of the first cell to the right of the observer to be procssed.
+/// @param iStart  X coordinate of the first cell to the right of the observer to be processed.
 /// @param iEnd  X coordinate one past the last cell to be processed.
 /// @param vResult  Vector in which to store the visibility/height results.
 /// @param vThisLineVal  Height of each cell in the line being processed.
@@ -711,20 +738,29 @@ void Viewshed::processLineRight(int nX, int nYOffset, int iStart, int iEnd,
                                 std::vector<double> &vThisLineVal,
                                 std::vector<double> &vLastLineVal)
 {
-    iStart = oCurExtent.clampX(iStart);
+    // If start is to the right of end, everything is taken care of by processing left.
+    if (iStart >= iEnd)
+        return;
 
-    // If the observer is to the left of the raster, mark the first cell to the right as
-    // visible.
-    if (nX < 0)
-    {
-        if (oOpts.outputMode == OutputMode::Normal)
-            vResult[iStart] = oOpts.visibleVal;
-        iStart++;
-    }
+    iStart = oCurExtent.clampX(iStart);
 
     nYOffset = std::abs(nYOffset);
     double *pThis = vThisLineVal.data() + iStart;
     double *pLast = vLastLineVal.data() + iStart;
+
+    // If the observer is to the left of the raster, mark the first cell to the right as
+    // visible. This may mark an out-of-range cell with a value, but this will be fixed
+    // with the out of range assignment at the end.
+    if (iStart == 0)
+    {
+        if (oOpts.outputMode == OutputMode::Normal)
+            vResult[iStart] = oOpts.visibleVal;
+        else
+            setOutput(vResult[0], *pThis, *pThis);
+        iStart++;
+        pThis++;
+        pLast++;
+    }
 
     // Go from the observer to the right, calculating Z as we go.
     for (int iPixel = iStart; iPixel < iEnd; iPixel++, pThis++, pLast++)
@@ -743,6 +779,7 @@ void Viewshed::processLineRight(int nX, int nYOffset, int iStart, int iEnd,
                 oZcalc(nXOffset, nYOffset, *(pThis - 1), *pLast, *(pLast - 1));
         setOutput(vResult[iPixel], *pThis, dfZ);
     }
+
     // For cells outside of the [start, end) range, set the outOfRange value.
     std::fill(vResult.begin() + iEnd, vResult.end(), oOpts.outOfRangeVal);
 }
@@ -804,11 +841,11 @@ bool Viewshed::processFirstLine(int nX, int nY, int nLine,
     auto t1 = std::async(
         std::launch::async, [&, left = iLeft]()
         { processFirstLineLeft(nX, nX - 1, left - 1, vResult, vThisLineVal); });
+    t1.wait();
 
     auto t2 = std::async(
         std::launch::async, [&, right = iRight]()
         { processFirstLineRight(nX, nX + 1, right, vResult, vThisLineVal); });
-    t1.wait();
     t2.wait();
 
     // Make the current line the last line.
@@ -850,17 +887,20 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
     const auto [iLeft, iRight] = adjustHeight(nYOffset, nX, vThisLineVal);
 
     // Handle the initial position on the line.
-    if (iLeft < iRight)
+    if (oCurExtent.containsX(nX))
     {
-        double dfZ;
-        if (std::abs(nYOffset) == 1)
-            dfZ = vThisLineVal[nX];
+        if (iLeft < iRight)
+        {
+            double dfZ;
+            if (std::abs(nYOffset) == 1)
+                dfZ = vThisLineVal[nX];
+            else
+                dfZ = CalcHeightLine(nYOffset, vLastLineVal[nX]);
+            setOutput(vResult[nX], vThisLineVal[nX], dfZ);
+        }
         else
-            dfZ = CalcHeightLine(nYOffset, vLastLineVal[nX]);
-        setOutput(vResult[nX], vThisLineVal[nX], dfZ);
+            vResult[nX] = oOpts.outOfRangeVal;
     }
-    else
-        vResult[nX] = oOpts.outOfRangeVal;
 
     // process left half then right half of line
     auto t1 =
@@ -871,6 +911,7 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
                                        vThisLineVal, vLastLineVal);
                    });
 
+    t1.wait();
     auto t2 =
         std::async(std::launch::async,
                    [&, right = iRight]()
@@ -878,7 +919,6 @@ bool Viewshed::processLine(int nX, int nY, int nLine,
                        processLineRight(nX, nYOffset, nX + 1, right, vResult,
                                         vThisLineVal, vLastLineVal);
                    });
-    t1.wait();
     t2.wait();
 
     // Make the current line the last line.
@@ -980,6 +1020,7 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                                       err = true;
                           });
 
+    tUp.wait();
     // scan downwards
     auto tDown = std::async(
         std::launch::async,
@@ -992,7 +1033,6 @@ bool Viewshed::run(GDALRasterBandH band, GDALProgressFunc pfnProgress,
                     err = true;
         });
 
-    tUp.wait();
     tDown.wait();
 
     if (!emitProgress(1))
