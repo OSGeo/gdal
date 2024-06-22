@@ -29,6 +29,10 @@ GDAL 3.9.1 is a bugfix release.
 * GDALContourGenerateEx(): validate LEVEL_INTERVAL option (#10103)
 * GDALTranslate(): use directly generated VRT even if BLOCKXSIZE/BLOCKYSIZE
   creation options are specified
+* GDALSieveFilter(): avoid assert() when all pixels are masked (3.9.0 regression)
+  (raster/rasterio#3101)
+* Overview generation: fix multi-threaded bug, resulting in locks/crashes with
+  GeoPackage in particular (#10245)
 
 ### Core
 
@@ -90,6 +94,11 @@ STACIT driver:
 
 VRT driver:
  * fix processing of LUT where the first source value is NaN
+ * fix serialization of separatable kernel in VRTKernelFilteredSource (#10253)
+
+Zarr driver:
+ * SerializeNumericNoData(): use CPLJSonObject::Add(uint64_t) to avoid potential
+   undefined behavior casts
 
 ## OGR 3.9.1
 
@@ -97,6 +106,14 @@ VRT driver:
 
 * OGRSQL: validate column name in COUNT(field_name) and error out if it
   doesn't exist (#9972)
+* OGR SQL: fix crash when the ON expression of a JOIN contains OGR special
+  fields (in particular feature id)
+* OGR layer algebra: honour PROMOTE_TO_MULTI=YES for Points
+* OGRFeature::SetField(int, double): avoid UndefinedBehavior when passing NaN
+* OGRFeature::SetField(int, GIntBig): avoid UndefinedBehavior when passing value
+  close to INT64_MAX
+* OGRLayer::WriteArrowBatch(): avoid UndefinedBehavior when trying to convert
+  NaN to Int64
 
 ### OGRSpatialReference
 
@@ -193,6 +210,9 @@ OpenFileGDB driver:
  * detect and try to repair corruption of .gdbtable header related to above item
  * BuildSRS(): do not use CPLErrorReset()
 
+Parquet driver:
+ * GeoParquet: always write version=1.1.0
+
 PDF driver:
  * fix wrong order of matrix multiplication for 'cm' operator... (#9870)
  * make ExploreContentsNonStructured() be able to parse OGCs as generated
@@ -207,6 +227,10 @@ PG driver:
  * avoid errors related to ogr_system_tables.metadata when user has not enough
    permissions (#9994)
  * really honor OGR_PG_ENABLE_METADATA=NO in SerializeMetadata()
+
+SQLite/GPKG drivers
+ * detect UNIQUE constraints expressed as a ', CONSTRAINT name UNIQUE (column_name)'
+   at the end of CREATE TABLE (qgis/QGIS#57823)
 
 XLSX driver:
  * implement IUpdateFeature() that was broken up to now
