@@ -70,6 +70,7 @@
 #include "cpl_time.h"
 #include "gdal.h"
 #include "gdal_frmts.h"
+#include "gdal_priv_templates.hpp"
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
 
@@ -759,22 +760,12 @@ netCDFRasterBand::netCDFRasterBand(const netCDFRasterBand::CONSTRUCTOR_OPEN &,
 #ifdef NCDF_DEBUG
             CPLDebug("GDAL_netCDF", "SetNoDataValue(%f) read", dfNoData);
 #endif
-            if (eDataType == GDT_Int64 &&
-                dfNoData >=
-                    static_cast<double>(std::numeric_limits<int64_t>::min()) &&
-                dfNoData <=
-                    static_cast<double>(std::numeric_limits<int64_t>::max()) &&
-                dfNoData == static_cast<double>(static_cast<int64_t>(dfNoData)))
+            if (eDataType == GDT_Int64 && GDALIsValueExactAs<int64_t>(dfNoData))
             {
                 SetNoDataValueNoUpdate(static_cast<int64_t>(dfNoData));
             }
             else if (eDataType == GDT_UInt64 &&
-                     dfNoData >= static_cast<double>(
-                                     std::numeric_limits<uint64_t>::min()) &&
-                     dfNoData <= static_cast<double>(
-                                     std::numeric_limits<uint64_t>::max()) &&
-                     dfNoData ==
-                         static_cast<double>(static_cast<uint64_t>(dfNoData)))
+                     GDALIsValueExactAs<uint64_t>(dfNoData))
             {
                 SetNoDataValueNoUpdate(static_cast<uint64_t>(dfNoData));
             }
