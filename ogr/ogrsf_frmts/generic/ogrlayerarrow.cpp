@@ -7585,6 +7585,22 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                         oLayerDefnTmp.GetFieldDefnUnsafe(i)->GetType();
                     const auto eDstType =
                         poLayerDefn->GetFieldDefnUnsafe(i)->GetType();
+
+                    const auto IsDoubleCastToInt64EqualTInt64 =
+                        [](double dfVal, int64_t nOtherVal)
+                    {
+                        // Values in the range [INT64_MAX - 1023, INT64_MAX - 1]
+                        // get converted to a double that once cast to int64_t
+                        // is INT64_MAX + 1, hence the strict < comparison
+                        return dfVal >=
+                                   static_cast<double>(
+                                       std::numeric_limits<int64_t>::min()) &&
+                               dfVal <
+                                   static_cast<double>(
+                                       std::numeric_limits<int64_t>::max()) &&
+                               static_cast<int64_t>(dfVal) == nOtherVal;
+                    };
+
                     if (eSrcType == OFTInteger64 && eDstType == OFTInteger &&
                         oFeatureTarget.GetFieldAsIntegerUnsafe(i) !=
                             oFeature.GetFieldAsInteger64Unsafe(i))
@@ -7605,9 +7621,9 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                         bLossyConversion = true;
                     }
                     else if (eSrcType == OFTInteger64 && eDstType == OFTReal &&
-                             static_cast<GIntBig>(
-                                 oFeatureTarget.GetFieldAsDoubleUnsafe(i)) !=
-                                 oFeature.GetFieldAsInteger64Unsafe(i))
+                             !IsDoubleCastToInt64EqualTInt64(
+                                 oFeatureTarget.GetFieldAsDoubleUnsafe(i),
+                                 oFeature.GetFieldAsInteger64Unsafe(i)))
                     {
                         bLossyConversion = true;
                     }
