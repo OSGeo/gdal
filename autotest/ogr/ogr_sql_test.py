@@ -1999,3 +1999,106 @@ def test_ogr_sql_on_null(where, feature_count, dialect, ds_for_test_ogr_sql_on_n
             "select * from layer where " + where, dialect=dialect
         ) as sql_lyr:
             assert sql_lyr.GetFeatureCount() == feature_count
+
+
+def test_ogr_sql_ogr_style_hidden():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("test_ogr_sql_ogr_style_hidden")
+    lyr = ds.CreateLayer("layer")
+    lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+    lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat["intfield"] = 1
+    feat["strfield"] = "my_style"
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(feat)
+
+    with ds.ExecuteSQL(
+        "SELECT 'BRUSH(fc:#01234567)' AS OGR_STYLE HIDDEN FROM layer"
+    ) as sql_lyr:
+        assert sql_lyr.GetLayerDefn().GetFieldCount() == 0
+        f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() == "BRUSH(fc:#01234567)"
+
+    with ds.ExecuteSQL("SELECT strfield OGR_STYLE HIDDEN FROM layer") as sql_lyr:
+        assert sql_lyr.GetLayerDefn().GetFieldCount() == 0
+        f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() == "my_style"
+        f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() is None
+
+    with ds.ExecuteSQL(
+        "SELECT CAST(strfield AS CHARACTER(255)) AS OGR_STYLE HIDDEN FROM layer"
+    ) as sql_lyr:
+        assert sql_lyr.GetLayerDefn().GetFieldCount() == 0
+        f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() == "my_style"
+        f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() is None
+
+    with ds.ExecuteSQL("SELECT strfield OGR_STYLE HIDDEN, * FROM layer") as sql_lyr:
+        assert sql_lyr.GetLayerDefn().GetFieldCount() == 2
+        f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() == "my_style"
+        assert f["intfield"] == 1
+        assert f["strfield"] == "my_style"
+        f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() is None
+        assert not f.IsFieldSet("intfield")
+        assert not f.IsFieldSet("strfield")
+
+    with pytest.raises(
+        Exception, match="HIDDEN keyword only supported on a column named OGR_STYLE"
+    ):
+        with ds.ExecuteSQL(
+            "SELECT 'foo' AS not_OGR_STYLE HIDDEN FROM layer"
+        ) as sql_lyr:
+            pass
+
+    with ds.ExecuteSQL("SELECT 123 AS OGR_STYLE HIDDEN FROM layer") as sql_lyr:
+        gdal.ErrorReset()
+        with gdal.quiet_errors():
+            f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() is None
+
+    with ds.ExecuteSQL("SELECT intfield AS OGR_STYLE HIDDEN FROM layer") as sql_lyr:
+        gdal.ErrorReset()
+        with gdal.quiet_errors():
+            f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() is None
+
+    with ds.ExecuteSQL(
+        'SELECT "_ogr_geometry_" AS OGR_STYLE HIDDEN FROM layer'
+    ) as sql_lyr:
+        gdal.ErrorReset()
+        with gdal.quiet_errors():
+            f = sql_lyr.GetNextFeature()
+        assert f.GetStyleString() is None
+
+
+def test_ogr_sql_identifier_hidden():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("test_ogr_sql_ogr_style_hidden")
+    lyr = ds.CreateLayer("hidden")
+    lyr.CreateField(ogr.FieldDefn("hidden", ogr.OFTString))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat["hidden"] = "val"
+    lyr.CreateFeature(feat)
+
+    with ds.ExecuteSQL("SELECT hidden FROM hidden") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["hidden"] == "val"
+
+    with ds.ExecuteSQL("SELECT hidden hidden FROM hidden hidden") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["hidden"] == "val"
+
+    with ds.ExecuteSQL("SELECT hidden AS hidden FROM hidden AS hidden") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["hidden"] == "val"
+
+    with ds.ExecuteSQL("SELECT 'foo' AS hidden FROM hidden") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["hidden"] == "foo"

@@ -289,6 +289,11 @@ int swqlex(YYSTYPE *ppNode, swq_parse_context *context)
             nReturn = SWQT_LIMIT;
         else if (EQUAL(osToken, "OFFSET"))
             nReturn = SWQT_OFFSET;
+        else if (EQUAL(osToken, "HIDDEN"))
+        {
+            *ppNode = new swq_expr_node(osToken);
+            nReturn = SWQT_HIDDEN;
+        }
 
         // Unhandled by OGR SQL.
         else if (EQUAL(osToken, "OUTER") || EQUAL(osToken, "INNER"))

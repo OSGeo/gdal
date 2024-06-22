@@ -176,6 +176,9 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer(
         OGRFeatureDefn *poLayerDefn = nullptr;
         int iSrcGeomField = -1;
 
+        if (psColDef->bHidden)
+            continue;
+
         if (psColDef->table_index != -1)
             poLayerDefn =
                 m_apoTableLayers[psColDef->table_index]->GetLayerDefn();
@@ -1056,12 +1059,14 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
 /*                       OGRMultiFeatureFetcher()                       */
 /************************************************************************/
 
+typedef std::vector<std::unique_ptr<OGRFeature>> VectorOfUniquePtrFeature;
+
 static swq_expr_node *OGRMultiFeatureFetcher(swq_expr_node *op,
                                              void *pFeatureList)
 
 {
-    std::vector<OGRFeature *> *papoFeatures =
-        static_cast<std::vector<OGRFeature *> *>(pFeatureList);
+    auto &apoFeatures =
+        *(static_cast<VectorOfUniquePtrFeature *>(pFeatureList));
     swq_expr_node *poRetNode = nullptr;
 
     CPLAssert(op->eNodeType == SNT_COLUMN);
@@ -1070,7 +1075,7 @@ static swq_expr_node *OGRMultiFeatureFetcher(swq_expr_node *op,
     /*      What feature are we using?  The primary or one of the joined ones?*/
     /* -------------------------------------------------------------------- */
     if (op->table_index < 0 ||
-        op->table_index >= static_cast<int>(papoFeatures->size()))
+        op->table_index >= static_cast<int>(apoFeatures.size()))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Request for unexpected table_index (%d) in field fetcher.",
@@ -1078,7 +1083,7 @@ static swq_expr_node *OGRMultiFeatureFetcher(swq_expr_node *op,
         return nullptr;
     }
 
-    OGRFeature *poFeature = (*papoFeatures)[op->table_index];
+    OGRFeature *poFeature = apoFeatures[op->table_index].get();
 
     /* -------------------------------------------------------------------- */
     /*      Fetch the value.                                                */
@@ -1317,27 +1322,27 @@ static CPLString GetFilterForJoin(swq_expr_node *poExpr, OGRFeature *poSrcFeat,
 /*                          TranslateFeature()                          */
 /************************************************************************/
 
-OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
+std::unique_ptr<OGRFeature> OGRGenSQLResultsLayer::TranslateFeature(
+    std::unique_ptr<OGRFeature> poSrcFeatUniquePtr)
 
 {
     swq_select *psSelectInfo = m_pSelectInfo.get();
-    std::vector<OGRFeature *> apoFeatures;
+    VectorOfUniquePtrFeature apoFeatures;
 
-    if (poSrcFeat == nullptr)
+    if (poSrcFeatUniquePtr == nullptr)
         return nullptr;
 
     m_nFeaturesRead++;
 
-    apoFeatures.push_back(poSrcFeat);
+    apoFeatures.push_back(std::move(poSrcFeatUniquePtr));
+    auto poSrcFeat = apoFeatures.front().get();
 
     /* -------------------------------------------------------------------- */
     /*      Fetch the corresponding features from any jointed tables.       */
     /* -------------------------------------------------------------------- */
     for (int iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++)
     {
-        CPLString osFilter;
-
-        swq_join_def *psJoinInfo = psSelectInfo->join_defs + iJoin;
+        const swq_join_def *psJoinInfo = psSelectInfo->join_defs + iJoin;
 
         /* OGRMultiFeatureFetcher assumes that the features are pushed in */
         /* apoFeatures with increasing secondary_table, so make sure */
@@ -1346,8 +1351,9 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
 
         OGRLayer *poJoinLayer = m_apoTableLayers[psJoinInfo->secondary_table];
 
-        osFilter = GetFilterForJoin(psJoinInfo->poExpr, poSrcFeat, poJoinLayer,
-                                    psJoinInfo->secondary_table);
+        const std::string osFilter =
+            GetFilterForJoin(psJoinInfo->poExpr, poSrcFeat, poJoinLayer,
+                             psJoinInfo->secondary_table);
         // CPLDebug("OGR", "Filter = %s\n", osFilter.c_str());
 
         // if source key is null, we can't do join.
@@ -1357,19 +1363,19 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
             continue;
         }
 
-        OGRFeature *poJoinFeature = nullptr;
+        std::unique_ptr<OGRFeature> poJoinFeature;
 
         poJoinLayer->ResetReading();
         if (poJoinLayer->SetAttributeFilter(osFilter.c_str()) == OGRERR_NONE)
-            poJoinFeature = poJoinLayer->GetNextFeature();
+            poJoinFeature.reset(poJoinLayer->GetNextFeature());
 
-        apoFeatures.push_back(poJoinFeature);
+        apoFeatures.push_back(std::move(poJoinFeature));
     }
 
     /* -------------------------------------------------------------------- */
     /*      Create destination feature.                                     */
     /* -------------------------------------------------------------------- */
-    OGRFeature *poDstFeat = new OGRFeature(m_poDefn);
+    auto poDstFeat = std::make_unique<OGRFeature>(m_poDefn);
 
     poDstFeat->SetFID(poSrcFeat->GetFID());
 
@@ -1385,8 +1391,74 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
     swq_evaluation_context sContext;
     for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
     {
-        swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
-        if (psColDef->field_index != -1)
+        const swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
+
+        if (psColDef->bHidden)
+        {
+            const char *pszDstFieldName = psColDef->field_alias
+                                              ? psColDef->field_alias
+                                              : psColDef->field_name;
+            if (EQUAL(pszDstFieldName, "OGR_STYLE"))
+            {
+                if (psColDef->field_type == SWQ_STRING)
+                {
+                    // Does this column definition directly references a
+                    // source field ?
+                    if (psColDef->field_index >= 0)
+                    {
+                        if (!IS_GEOM_FIELD_INDEX(poSrcFeat->GetDefnRef(),
+                                                 psColDef->field_index))
+                        {
+                            if (poSrcFeat->IsFieldSetAndNotNull(
+                                    psColDef->field_index))
+                            {
+                                const char *pszVal =
+                                    poSrcFeat->GetFieldAsString(
+                                        psColDef->field_index);
+                                poDstFeat->SetStyleString(pszVal);
+                            }
+                            else
+                            {
+                                poDstFeat->SetStyleString(nullptr);
+                            }
+                        }
+                        else
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "OGR_STYLE HIDDEN field should reference "
+                                     "a column of type String");
+                        }
+                    }
+                    else
+                    {
+                        auto poResult = std::unique_ptr<swq_expr_node>(
+                            psColDef->expr->Evaluate(OGRMultiFeatureFetcher,
+                                                     &apoFeatures, sContext));
+
+                        if (!poResult)
+                        {
+                            return nullptr;
+                        }
+
+                        poDstFeat->SetStyleString(poResult->is_null
+                                                      ? nullptr
+                                                      : poResult->string_value);
+                    }
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "OGR_STYLE HIDDEN field should be of type String");
+                }
+            }
+            continue;
+        }
+
+        // Does this column definition directly references a
+        // source field ?
+        // If so, skip it for now, as it will be taken into account in the
+        // next loop.
+        if (psColDef->field_index >= 0)
         {
             if (psColDef->field_type == SWQ_GEOMETRY ||
                 psColDef->target_type == SWQ_GEOMETRY)
@@ -1396,12 +1468,11 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
             continue;
         }
 
-        swq_expr_node *poResult = psColDef->expr->Evaluate(
-            OGRMultiFeatureFetcher, &apoFeatures, sContext);
+        auto poResult = std::unique_ptr<swq_expr_node>(psColDef->expr->Evaluate(
+            OGRMultiFeatureFetcher, &apoFeatures, sContext));
 
-        if (poResult == nullptr)
+        if (!poResult)
         {
-            delete poDstFeat;
             return nullptr;
         }
 
@@ -1411,7 +1482,6 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
                 iGeomField++;
             else
                 iRegularField++;
-            delete poResult;
             continue;
         }
 
@@ -1477,8 +1547,6 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
                 poDstFeat->SetField(iRegularField++, poResult->string_value);
                 break;
         }
-
-        delete poResult;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1488,8 +1556,15 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
     iGeomField = 0;
     for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
     {
-        swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
+        const swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
 
+        if (psColDef->bHidden)
+        {
+            continue;
+        }
+
+        // Skip this column definition if it doesn't reference a field from
+        // the main feature
         if (psColDef->table_index != 0)
         {
             if (psColDef->field_type == SWQ_GEOMETRY ||
@@ -1580,10 +1655,8 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
     /* -------------------------------------------------------------------- */
     for (int iJoin = 0; iJoin < psSelectInfo->join_count; iJoin++)
     {
-        CPLString osFilter;
-
-        swq_join_def *psJoinInfo = psSelectInfo->join_defs + iJoin;
-        OGRFeature *poJoinFeature = apoFeatures[iJoin + 1];
+        const swq_join_def *psJoinInfo = psSelectInfo->join_defs + iJoin;
+        const OGRFeature *poJoinFeature = apoFeatures[iJoin + 1].get();
 
         if (poJoinFeature == nullptr)
             continue;
@@ -1592,11 +1665,16 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
         iRegularField = 0;
         for (int iField = 0; iField < psSelectInfo->result_columns(); iField++)
         {
-            swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
+            const swq_col_def *psColDef = &psSelectInfo->column_defs[iField];
 
             if (psColDef->field_type == SWQ_GEOMETRY ||
                 psColDef->target_type == SWQ_GEOMETRY)
                 continue;
+
+            if (psColDef->bHidden)
+            {
+                continue;
+            }
 
             if (psColDef->table_index == psJoinInfo->secondary_table)
                 poDstFeat->SetField(
@@ -1605,8 +1683,6 @@ OGRFeature *OGRGenSQLResultsLayer::TranslateFeature(OGRFeature *poSrcFeat)
 
             iRegularField++;
         }
-
-        delete poJoinFeature;
     }
 
     return poDstFeat;
@@ -1680,8 +1756,7 @@ OGRFeature *OGRGenSQLResultsLayer::GetNextFeature()
         if (poSrcFeat == nullptr)
             return nullptr;
 
-        auto poFeature =
-            std::unique_ptr<OGRFeature>(TranslateFeature(poSrcFeat.get()));
+        auto poFeature = TranslateFeature(std::move(poSrcFeat));
         if (poFeature == nullptr)
             return nullptr;
 
@@ -1797,7 +1872,7 @@ OGRFeature *OGRGenSQLResultsLayer::GetFeature(GIntBig nFID)
     if (poSrcFeature == nullptr)
         return nullptr;
 
-    return TranslateFeature(poSrcFeature.get());
+    return TranslateFeature(std::move(poSrcFeature)).release();
 }
 
 /************************************************************************/

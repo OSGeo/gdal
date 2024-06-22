@@ -186,6 +186,10 @@ class CPL_UNSTABLE_API swq_expr_node
     /* nOperation == SWQ_CUSTOM_FUNC */
     char *string_value = nullptr; /* column name when SNT_COLUMN */
 
+    // May be transiently used by swq_parser.h, but should not be relied upon
+    // after parsing. swq_col_def.bHidden captures it afterwards.
+    bool bHidden = false;
+
     static CPLString QuoteIfNecessary(const CPLString &, char chQuote = '\'');
     static CPLString Quote(const CPLString &, char chQuote = '\'');
 };
@@ -331,6 +335,7 @@ typedef struct
     int field_length;
     int field_precision;
     int distinct_flag;
+    bool bHidden;
     OGRwkbGeometryType eGeomType;
     int nSRID;
     swq_expr_node *expr;
@@ -412,8 +417,8 @@ class CPL_UNSTABLE_API swq_select
 
     char *raw_select = nullptr;
 
-    int PushField(swq_expr_node *poExpr, const char *pszAlias = nullptr,
-                  int distinct_flag = FALSE);
+    int PushField(swq_expr_node *poExpr, const char *pszAlias,
+                  bool distinct_flag, bool bHidden);
 
     int PushExcludeField(swq_expr_node *poExpr);
 

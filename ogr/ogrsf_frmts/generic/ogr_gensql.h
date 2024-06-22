@@ -92,7 +92,7 @@ class OGRGenSQLResultsLayer final : public OGRLayer
 
     bool PrepareSummary();
 
-    OGRFeature *TranslateFeature(OGRFeature *);
+    std::unique_ptr<OGRFeature> TranslateFeature(std::unique_ptr<OGRFeature>);
     void CreateOrderByIndex();
     void ReadIndexFields(OGRFeature *poSrcFeat, int nOrderItems,
                          OGRField *pasIndexFields);
