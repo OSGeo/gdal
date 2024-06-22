@@ -1181,51 +1181,97 @@ static CPLString GetFilterForJoin(swq_expr_node *poExpr, OGRFeature *poSrcFeat,
             {
                 return "";
             }
-            OGRFieldType ePrimaryFieldType =
-                poSrcFeat->GetFieldDefnRef(poExpr->field_index)->GetType();
-            OGRField *psSrcField =
-                poSrcFeat->GetRawFieldRef(poExpr->field_index);
-
-            switch (ePrimaryFieldType)
+            const auto poSrcFDefn = poSrcFeat->GetDefnRef();
+            if (poExpr->field_index >= poSrcFDefn->GetFieldCount())
             {
-                case OFTInteger:
-                    return CPLString().Printf("%d", psSrcField->Integer);
-                    break;
-
-                case OFTInteger64:
-                    return CPLString().Printf(CPL_FRMT_GIB,
-                                              psSrcField->Integer64);
-                    break;
-
-                case OFTReal:
-                    return CPLString().Printf("%.16g", psSrcField->Real);
-                    break;
-
-                case OFTString:
+                CPLAssert(poExpr->field_index <
+                          poSrcFDefn->GetFieldCount() + SPECIAL_FIELD_COUNT);
+                switch (SpecialFieldTypes[poExpr->field_index -
+                                          poSrcFDefn->GetFieldCount()])
                 {
-                    char *pszEscaped = CPLEscapeString(
-                        psSrcField->String,
-                        static_cast<int>(strlen(psSrcField->String)),
-                        CPLES_SQL);
-                    CPLString osRes = "'";
-                    osRes += pszEscaped;
-                    osRes += "'";
-                    CPLFree(pszEscaped);
-                    return osRes;
+                    case SWQ_INTEGER:
+                    case SWQ_INTEGER64:
+                        return CPLString().Printf(
+                            CPL_FRMT_GIB, poSrcFeat->GetFieldAsInteger64(
+                                              poExpr->field_index));
+                        break;
+                    case SWQ_FLOAT:
+                        return CPLString().Printf(
+                            "%.18g",
+                            poSrcFeat->GetFieldAsDouble(poExpr->field_index));
+                        break;
+                    default:
+                    {
+                        char *pszEscaped = CPLEscapeString(
+                            poSrcFeat->GetFieldAsString(poExpr->field_index),
+                            -1, CPLES_SQL);
+                        CPLString osRes = "'";
+                        osRes += pszEscaped;
+                        osRes += "'";
+                        CPLFree(pszEscaped);
+                        return osRes;
+                    }
                 }
-                break;
+            }
+            else
+            {
+                const OGRFieldType ePrimaryFieldType =
+                    poSrcFeat->GetFieldDefnRef(poExpr->field_index)->GetType();
+                const OGRField *psSrcField =
+                    poSrcFeat->GetRawFieldRef(poExpr->field_index);
 
-                default:
-                    CPLAssert(false);
-                    return "";
+                switch (ePrimaryFieldType)
+                {
+                    case OFTInteger:
+                        return CPLString().Printf("%d", psSrcField->Integer);
+                        break;
+
+                    case OFTInteger64:
+                        return CPLString().Printf(CPL_FRMT_GIB,
+                                                  psSrcField->Integer64);
+                        break;
+
+                    case OFTReal:
+                        return CPLString().Printf("%.18g", psSrcField->Real);
+                        break;
+
+                    case OFTString:
+                    {
+                        char *pszEscaped = CPLEscapeString(
+                            psSrcField->String,
+                            static_cast<int>(strlen(psSrcField->String)),
+                            CPLES_SQL);
+                        CPLString osRes = "'";
+                        osRes += pszEscaped;
+                        osRes += "'";
+                        CPLFree(pszEscaped);
+                        return osRes;
+                    }
+                    break;
+
+                    default:
+                        CPLAssert(false);
+                        return "";
+                }
             }
         }
 
         if (poExpr->table_index == secondary_table)
         {
-            OGRFieldDefn *poSecondaryFieldDefn =
-                poJoinLayer->GetLayerDefn()->GetFieldDefn(poExpr->field_index);
-            return CPLSPrintf("\"%s\"", poSecondaryFieldDefn->GetNameRef());
+            const auto poJoinFDefn = poJoinLayer->GetLayerDefn();
+            if (poExpr->field_index >= poJoinFDefn->GetFieldCount())
+            {
+                CPLAssert(poExpr->field_index <
+                          poJoinFDefn->GetFieldCount() + SPECIAL_FIELD_COUNT);
+                return SpecialFieldNames[poExpr->field_index -
+                                         poJoinFDefn->GetFieldCount()];
+            }
+            else
+            {
+                const OGRFieldDefn *poSecondaryFieldDefn =
+                    poJoinFDefn->GetFieldDefn(poExpr->field_index);
+                return CPLSPrintf("\"%s\"", poSecondaryFieldDefn->GetNameRef());
+            }
         }
 
         CPLAssert(false);
