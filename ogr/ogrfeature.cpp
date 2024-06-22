@@ -3832,7 +3832,12 @@ void OGRFeature::SetField(int iField, GIntBig nValue)
     else if (eType == OFTReal)
     {
         pauFields[iField].Real = static_cast<double>(nValue);
-        if (static_cast<GIntBig>(pauFields[iField].Real) != nValue)
+        // Values in the range [INT64_MAX - 1023, INT64_MAX - 1]
+        // get converted to a double that once cast to int64_t is
+        // INT64_MAX + 1 ...
+        if (pauFields[iField].Real >=
+                static_cast<double>(std::numeric_limits<int64_t>::max()) ||
+            static_cast<GIntBig>(pauFields[iField].Real) != nValue)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Lossy conversion occurred when trying to set "
