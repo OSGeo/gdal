@@ -777,7 +777,8 @@ OGRErr OGRSpatialReference::importFromUSGS(long iProjSys, long iZone,
     if (IsLocal() || IsProjected())
         SetLinearUnits(SRS_UL_METER, 1.0);
 
-    if (iDatum < NUMBER_OF_USGS_ELLIPSOIDS && aoEllipsUSGS[iDatum] == 7030)
+    if (iDatum >= 0 && iDatum < NUMBER_OF_USGS_ELLIPSOIDS &&
+        aoEllipsUSGS[iDatum] == 7030)
     {
         if (AutoIdentifyEPSG() == OGRERR_NONE)
         {
