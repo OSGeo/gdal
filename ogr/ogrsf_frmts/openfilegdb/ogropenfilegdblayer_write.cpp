@@ -45,6 +45,7 @@
 #include "cpl_error.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "gdal_priv_templates.hpp"
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_feature.h"
@@ -2423,8 +2424,7 @@ static bool CheckFIDAndFIDColumnConsistency(const OGRFeature *poFeature,
     {
         const double dfFID =
             poFeature->GetFieldAsDouble(iFIDAsRegularColumnIndex);
-        if (dfFID >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&
-            dfFID <= static_cast<double>(std::numeric_limits<int64_t>::max()))
+        if (GDALIsValueInRange<int64_t>(dfFID))
         {
             const auto nFID = static_cast<GIntBig>(dfFID);
             if (nFID == poFeature->GetFID())
