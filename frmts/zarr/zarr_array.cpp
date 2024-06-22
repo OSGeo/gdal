@@ -557,20 +557,7 @@ void ZarrArray::SerializeNumericNoData(CPLJSONObject &oRoot) const
     else if (m_oType.GetNumericDataType() == GDT_UInt64)
     {
         const auto nVal = GetNoDataValueAsUInt64();
-        if (nVal <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max()))
-        {
-            oRoot.Add("fill_value", static_cast<GInt64>(nVal));
-        }
-        else if (nVal == static_cast<uint64_t>(static_cast<double>(nVal)))
-        {
-            oRoot.Add("fill_value", static_cast<double>(nVal));
-        }
-        else
-        {
-            // not really compliant...
-            oRoot.Add("fill_value",
-                      CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nVal)));
-        }
+        oRoot.Add("fill_value", static_cast<uint64_t>(nVal));
     }
     else
     {
