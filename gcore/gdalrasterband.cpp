@@ -5994,8 +5994,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 poBlock->DropLock();
 
                 if (!pfnProgress(static_cast<double>(iSampleBlock) /
-                                     static_cast<double>(nBlocksPerRow) *
-                                     nBlocksPerColumn,
+                                     (static_cast<double>(nBlocksPerRow) *
+                                      nBlocksPerColumn),
                                  "Compute Statistics", pProgressData))
                 {
                     ReportError(CE_Failure, CPLE_UserInterrupt,
@@ -6146,10 +6146,10 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
 
             poBlock->DropLock();
 
-            if (!pfnProgress(static_cast<double>(iSampleBlock) /
-                                 static_cast<double>(nBlocksPerRow) *
-                                 nBlocksPerColumn,
-                             "Compute Statistics", pProgressData))
+            if (!pfnProgress(
+                    static_cast<double>(iSampleBlock) /
+                        (static_cast<double>(nBlocksPerRow) * nBlocksPerColumn),
+                    "Compute Statistics", pProgressData))
             {
                 ReportError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                 CPLFree(pabyMaskData);
