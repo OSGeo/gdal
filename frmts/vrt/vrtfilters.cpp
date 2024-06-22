@@ -682,20 +682,18 @@ CPLXMLNode *VRTKernelFilteredSource::SerializeToXML(const char *pszVRTPath)
             CPLCreateXMLNode(psKernel, CXT_Attribute, "normalized"), CXT_Text,
             "0");
 
-    const int nCoefCount = m_nKernelSize * m_nKernelSize;
-    const size_t nBufLen = nCoefCount * 32;
-    char *pszKernelCoefs = static_cast<char *>(CPLMalloc(nBufLen));
-
-    strcpy(pszKernelCoefs, "");
+    const int nCoefCount =
+        m_bSeparable ? m_nKernelSize : m_nKernelSize * m_nKernelSize;
+    std::string osCoefs;
     for (int iCoef = 0; iCoef < nCoefCount; iCoef++)
-        CPLsnprintf(pszKernelCoefs + strlen(pszKernelCoefs),
-                    nBufLen - strlen(pszKernelCoefs), "%.8g ",
-                    m_padfKernelCoefs[iCoef]);
+    {
+        if (!osCoefs.empty())
+            osCoefs += ' ';
+        osCoefs += CPLSPrintf("%.8g", m_padfKernelCoefs[iCoef]);
+    }
 
     CPLSetXMLValue(psKernel, "Size", CPLSPrintf("%d", m_nKernelSize));
-    CPLSetXMLValue(psKernel, "Coefs", pszKernelCoefs);
-
-    CPLFree(pszKernelCoefs);
+    CPLSetXMLValue(psKernel, "Coefs", osCoefs.c_str());
 
     return psSrc;
 }
