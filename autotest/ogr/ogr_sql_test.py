@@ -27,6 +27,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import math
 import os
 import shutil
 
@@ -2102,3 +2103,32 @@ def test_ogr_sql_identifier_hidden():
     with ds.ExecuteSQL("SELECT 'foo' AS hidden FROM hidden") as sql_lyr:
         f = sql_lyr.GetNextFeature()
         assert f["hidden"] == "foo"
+
+
+@pytest.mark.parametrize(
+    "input,expected_output",
+    [
+        [(1, 1e100, 1, -1e100), 2],
+        [(float("inf"), 1), float("inf")],
+        [(1, float("-inf")), float("-inf")],
+        [(1, float("nan")), float("nan")],
+        [(float("inf"), float("-inf")), float("nan")],
+    ],
+)
+def test_ogr_sql_kahan_babuska_eumaier_summation(input, expected_output):
+    """Test accurate SUM() implementation using Kahan-Babuska-Neumaier algorithm"""
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("v", ogr.OFTReal))
+    for v in input:
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat["v"] = v
+        lyr.CreateFeature(feat)
+
+    with ds.ExecuteSQL("SELECT SUM(v) FROM test") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        if math.isnan(expected_output):
+            assert math.isnan(f["SUM_v"])
+        else:
+            assert f["SUM_v"] == expected_output
