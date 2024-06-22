@@ -261,6 +261,31 @@ def test_algebra_intersection_3(D1, D2, C):
     assert is_same(D1, C), "D1 != C"
 
 
+def test_algebra_intersection_multipoint():
+
+    driver = ogr.GetDriverByName("MEMORY")
+    ds = driver.CreateDataSource("ds")
+    layer1 = ds.CreateLayer("layer1")
+    layer2 = ds.CreateLayer("layer2")
+
+    g1 = "LINESTRING (0 0, 1 1)"
+    geom1 = ogr.CreateGeometryFromWkt(g1)
+    feat1 = ogr.Feature(layer1.GetLayerDefn())
+    feat1.SetGeometry(geom1)
+    layer1.CreateFeature(feat1)
+
+    g2 = "LINESTRING (0 1, 1 0)"
+    geom2 = ogr.CreateGeometryFromWkt(g2)
+    feat2 = ogr.Feature(layer2.GetLayerDefn())
+    feat2.SetGeometry(geom2)
+    layer2.CreateFeature(feat2)
+
+    layer3 = ds.CreateLayer("layer3")
+    layer1.Intersection(layer2, layer3, ["PROMOTE_TO_MULTI=YES"])
+    f = layer3.GetNextFeature()
+    assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT ((0.5 0.5))"
+
+
 def test_algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
 
     driver = ogr.GetDriverByName("MEMORY")
