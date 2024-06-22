@@ -621,7 +621,7 @@ void Viewshed::processFirstLineLeft(int nX, int iStart, int iEnd,
 /// Process the part of the first line to the right of the observer.
 ///
 /// @param nX  X coordinate of the observer.
-/// @param iStart  X coordinate of the first cell to the right of the observer to be procssed.
+/// @param iStart  X coordinate of the first cell to the right of the observer to be processed.
 /// @param iEnd  X coordinate one past the last cell to be processed.
 /// @param vResult  Vector in which to store the visibility/height results.
 /// @param vThisLineVal  Height of each cell in the line being processed.
