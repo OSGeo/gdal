@@ -1721,10 +1721,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
     if (nBitsPerSample == 8 && nSampleFormat == SAMPLEFORMAT_UINT)
     {
         uint8_t nNoDataValue = 0;
-        if (bHasNoData &&
-            dfNoDataValue >= std::numeric_limits<uint8_t>::min() &&
-            dfNoDataValue <= std::numeric_limits<uint8_t>::max() &&
-            dfNoDataValue == static_cast<uint8_t>(dfNoDataValue))
+        if (bHasNoData && GDALIsValueExactAs<uint8_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<uint8_t>(dfNoDataValue);
         }
@@ -1806,9 +1803,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
     else if (nBitsPerSample == 8 && nSampleFormat == SAMPLEFORMAT_INT)
     {
         int8_t nNoDataValue = 0;
-        if (bHasNoData && dfNoDataValue >= std::numeric_limits<int8_t>::min() &&
-            dfNoDataValue <= std::numeric_limits<int8_t>::max() &&
-            dfNoDataValue == static_cast<int8_t>(dfNoDataValue))
+        if (bHasNoData && GDALIsValueExactAs<int8_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<int8_t>(dfNoDataValue);
         }
@@ -1823,10 +1818,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
     else if (nBitsPerSample == 16 && nSampleFormat == SAMPLEFORMAT_INT)
     {
         int16_t nNoDataValue = 0;
-        if (bHasNoData &&
-            dfNoDataValue >= std::numeric_limits<int16_t>::min() &&
-            dfNoDataValue <= std::numeric_limits<int16_t>::max() &&
-            dfNoDataValue == static_cast<int16_t>(dfNoDataValue))
+        if (bHasNoData && GDALIsValueExactAs<int16_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<int16_t>(dfNoDataValue);
         }
@@ -1841,10 +1833,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
     else if (nBitsPerSample == 16 && nSampleFormat == SAMPLEFORMAT_UINT)
     {
         uint16_t nNoDataValue = 0;
-        if (bHasNoData &&
-            dfNoDataValue >= std::numeric_limits<uint16_t>::min() &&
-            dfNoDataValue <= std::numeric_limits<uint16_t>::max() &&
-            dfNoDataValue == static_cast<uint16_t>(dfNoDataValue))
+        if (bHasNoData && GDALIsValueExactAs<uint16_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<uint16_t>(dfNoDataValue);
         }
@@ -1859,10 +1848,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
     else if (nBitsPerSample == 32 && nSampleFormat == SAMPLEFORMAT_INT)
     {
         int32_t nNoDataValue = 0;
-        if (bHasNoData &&
-            dfNoDataValue >= std::numeric_limits<int32_t>::min() &&
-            dfNoDataValue <= std::numeric_limits<int32_t>::max() &&
-            dfNoDataValue == static_cast<int32_t>(dfNoDataValue))
+        if (bHasNoData && GDALIsValueExactAs<int32_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<int32_t>(dfNoDataValue);
         }
@@ -1877,10 +1863,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
     else if (nBitsPerSample == 32 && nSampleFormat == SAMPLEFORMAT_UINT)
     {
         uint32_t nNoDataValue = 0;
-        if (bHasNoData &&
-            dfNoDataValue >= std::numeric_limits<uint32_t>::min() &&
-            dfNoDataValue <= std::numeric_limits<uint32_t>::max() &&
-            dfNoDataValue == static_cast<uint32_t>(dfNoDataValue))
+        if (bHasNoData && GDALIsValueExactAs<uint32_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<uint32_t>(dfNoDataValue);
         }
@@ -1897,13 +1880,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
         // FIXME: we should not rely on dfNoDataValue when we support native
         // data type for nodata
         int64_t nNoDataValue = 0;
-        if (bHasNoData &&
-            dfNoDataValue >=
-                static_cast<double>(std::numeric_limits<int64_t>::min()) &&
-            dfNoDataValue <=
-                static_cast<double>(std::numeric_limits<int64_t>::max()) &&
-            dfNoDataValue ==
-                static_cast<double>(static_cast<int64_t>(dfNoDataValue)))
+        if (bHasNoData && GDALIsValueExactAs<int64_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<int64_t>(dfNoDataValue);
         }
@@ -1920,13 +1897,7 @@ static void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand,
         // FIXME: we should not rely on dfNoDataValue when we support native
         // data type for nodata
         uint64_t nNoDataValue = 0;
-        if (bHasNoData &&
-            dfNoDataValue >=
-                static_cast<double>(std::numeric_limits<uint64_t>::min()) &&
-            dfNoDataValue <=
-                static_cast<double>(std::numeric_limits<uint64_t>::max()) &&
-            dfNoDataValue ==
-                static_cast<double>(static_cast<uint64_t>(dfNoDataValue)))
+        if (bHasNoData && GDALIsValueExactAs<uint64_t>(dfNoDataValue))
         {
             nNoDataValue = static_cast<uint64_t>(dfNoDataValue);
         }
