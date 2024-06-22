@@ -2385,12 +2385,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 {
                     const double dfNoData =
                         CPLAtof(psOptions->osNoData.c_str());
-                    if (dfNoData >= static_cast<double>(
-                                        std::numeric_limits<int64_t>::min()) &&
-                        dfNoData <= static_cast<double>(
-                                        std::numeric_limits<int64_t>::max()) &&
-                        dfNoData ==
-                            static_cast<double>(static_cast<int64_t>(dfNoData)))
+                    if (GDALIsValueExactAs<int64_t>(dfNoData))
                     {
                         poVRTBand->SetNoDataValueAsInt64(
                             static_cast<int64_t>(dfNoData));
@@ -2428,12 +2423,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 {
                     const double dfNoData =
                         CPLAtof(psOptions->osNoData.c_str());
-                    if (dfNoData >= static_cast<double>(
-                                        std::numeric_limits<uint64_t>::min()) &&
-                        dfNoData <= static_cast<double>(
-                                        std::numeric_limits<uint64_t>::max()) &&
-                        dfNoData == static_cast<double>(
-                                        static_cast<uint64_t>(dfNoData)))
+                    if (GDALIsValueExactAs<uint64_t>(dfNoData))
                     {
                         poVRTBand->SetNoDataValueAsUInt64(
                             static_cast<uint64_t>(dfNoData));
