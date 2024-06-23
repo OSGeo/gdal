@@ -487,9 +487,15 @@ class CPL_UNSTABLE_API swq_select
     std::map<int, std::list<swq_col_def>> m_exclude_fields{};
 };
 
+/* This method should generally be invoked with pszValue set, except when
+ * called on a non-DISTINCT column definition of numeric type (SWQ_BOOLEAN,
+ * SWQ_INTEGER, SWQ_INTEGER64, SWQ_FLOAT), in which case pdfValue should
+ * rather be set.
+ */
 const char CPL_UNSTABLE_API *swq_select_summarize(swq_select *select_info,
                                                   int dest_column,
-                                                  const char *value);
+                                                  const char *pszValue,
+                                                  const double *pdfValue);
 
 int CPL_UNSTABLE_API swq_is_reserved_keyword(const char *pszStr);
 
