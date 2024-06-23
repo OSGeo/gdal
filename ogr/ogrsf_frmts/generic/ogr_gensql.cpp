@@ -247,10 +247,15 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer(
             oFDefn.SetType(OFTInteger64);
         else if (poSrcFDefn != nullptr)
         {
-            if (psColDef->col_func != SWQCF_AVG ||
-                psColDef->field_type == SWQ_DATE ||
-                psColDef->field_type == SWQ_TIME ||
-                psColDef->field_type == SWQ_TIMESTAMP)
+            if (psColDef->col_func == SWQCF_STDDEV_POP ||
+                psColDef->col_func == SWQCF_STDDEV_SAMP)
+            {
+                oFDefn.SetType(OFTReal);
+            }
+            else if (psColDef->col_func != SWQCF_AVG ||
+                     psColDef->field_type == SWQ_DATE ||
+                     psColDef->field_type == SWQ_TIME ||
+                     psColDef->field_type == SWQ_TIMESTAMP)
             {
                 oFDefn.SetType(poSrcFDefn->GetType());
                 if (psColDef->col_func == SWQCF_NONE ||
@@ -261,8 +266,13 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer(
                 }
             }
             else
+            {
                 oFDefn.SetType(OFTReal);
+            }
+
             if (psColDef->col_func != SWQCF_AVG &&
+                psColDef->col_func != SWQCF_STDDEV_POP &&
+                psColDef->col_func != SWQCF_STDDEV_SAMP &&
                 psColDef->col_func != SWQCF_SUM)
             {
                 oFDefn.SetWidth(poSrcFDefn->GetWidth());
@@ -1048,55 +1058,116 @@ bool OGRGenSQLResultsLayer::PrepareSummary()
                 const swq_summary &oSummary =
                     psSelectInfo->column_summary[iField];
 
-                if (psColDef->col_func == SWQCF_AVG && oSummary.count > 0)
+                switch (psColDef->col_func)
                 {
-                    const double dfAvg = oSummary.sum() / oSummary.count;
-                    if (psColDef->field_type == SWQ_DATE ||
-                        psColDef->field_type == SWQ_TIME ||
-                        psColDef->field_type == SWQ_TIMESTAMP)
+                    case SWQCF_NONE:
+                    case SWQCF_CUSTOM:
+                        break;
+
+                    case SWQCF_AVG:
                     {
-                        struct tm brokendowntime;
-                        CPLUnixTimeToYMDHMS(static_cast<GIntBig>(dfAvg),
-                                            &brokendowntime);
-                        m_poSummaryFeature->SetField(
-                            iField, brokendowntime.tm_year + 1900,
-                            brokendowntime.tm_mon + 1, brokendowntime.tm_mday,
-                            brokendowntime.tm_hour, brokendowntime.tm_min,
-                            static_cast<float>(brokendowntime.tm_sec +
-                                               fmod(dfAvg, 1)),
-                            0);
+                        if (oSummary.count > 0)
+                        {
+                            const double dfAvg =
+                                oSummary.sum() / oSummary.count;
+                            if (psColDef->field_type == SWQ_DATE ||
+                                psColDef->field_type == SWQ_TIME ||
+                                psColDef->field_type == SWQ_TIMESTAMP)
+                            {
+                                struct tm brokendowntime;
+                                CPLUnixTimeToYMDHMS(static_cast<GIntBig>(dfAvg),
+                                                    &brokendowntime);
+                                m_poSummaryFeature->SetField(
+                                    iField, brokendowntime.tm_year + 1900,
+                                    brokendowntime.tm_mon + 1,
+                                    brokendowntime.tm_mday,
+                                    brokendowntime.tm_hour,
+                                    brokendowntime.tm_min,
+                                    static_cast<float>(brokendowntime.tm_sec +
+                                                       fmod(dfAvg, 1)),
+                                    0);
+                            }
+                            else
+                            {
+                                m_poSummaryFeature->SetField(iField, dfAvg);
+                            }
+                        }
+                        break;
                     }
-                    else
+
+                    case SWQCF_MIN:
                     {
-                        m_poSummaryFeature->SetField(iField, dfAvg);
+                        if (oSummary.count > 0)
+                        {
+                            if (psColDef->field_type == SWQ_DATE ||
+                                psColDef->field_type == SWQ_TIME ||
+                                psColDef->field_type == SWQ_TIMESTAMP ||
+                                psColDef->field_type == SWQ_STRING)
+                                m_poSummaryFeature->SetField(
+                                    iField, oSummary.osMin.c_str());
+                            else
+                                m_poSummaryFeature->SetField(iField,
+                                                             oSummary.min);
+                        }
+                        break;
+                    }
+
+                    case SWQCF_MAX:
+                    {
+                        if (oSummary.count > 0)
+                        {
+                            if (psColDef->field_type == SWQ_DATE ||
+                                psColDef->field_type == SWQ_TIME ||
+                                psColDef->field_type == SWQ_TIMESTAMP ||
+                                psColDef->field_type == SWQ_STRING)
+                                m_poSummaryFeature->SetField(
+                                    iField, oSummary.osMax.c_str());
+                            else
+                                m_poSummaryFeature->SetField(iField,
+                                                             oSummary.max);
+                        }
+                        break;
+                    }
+
+                    case SWQCF_COUNT:
+                    {
+                        m_poSummaryFeature->SetField(iField, oSummary.count);
+                        break;
+                    }
+
+                    case SWQCF_SUM:
+                    {
+                        if (oSummary.count > 0)
+                            m_poSummaryFeature->SetField(iField,
+                                                         oSummary.sum());
+                        break;
+                    }
+
+                    case SWQCF_STDDEV_POP:
+                    {
+                        if (oSummary.count > 0)
+                        {
+                            const double dfVariance =
+                                oSummary.sq_dist_from_mean_acc / oSummary.count;
+                            m_poSummaryFeature->SetField(iField,
+                                                         sqrt(dfVariance));
+                        }
+                        break;
+                    }
+
+                    case SWQCF_STDDEV_SAMP:
+                    {
+                        if (oSummary.count > 1)
+                        {
+                            const double dfSampleVariance =
+                                oSummary.sq_dist_from_mean_acc /
+                                (oSummary.count - 1);
+                            m_poSummaryFeature->SetField(
+                                iField, sqrt(dfSampleVariance));
+                        }
+                        break;
                     }
                 }
-                else if (psColDef->col_func == SWQCF_MIN && oSummary.count > 0)
-                {
-                    if (psColDef->field_type == SWQ_DATE ||
-                        psColDef->field_type == SWQ_TIME ||
-                        psColDef->field_type == SWQ_TIMESTAMP ||
-                        psColDef->field_type == SWQ_STRING)
-                        m_poSummaryFeature->SetField(iField,
-                                                     oSummary.osMin.c_str());
-                    else
-                        m_poSummaryFeature->SetField(iField, oSummary.min);
-                }
-                else if (psColDef->col_func == SWQCF_MAX && oSummary.count > 0)
-                {
-                    if (psColDef->field_type == SWQ_DATE ||
-                        psColDef->field_type == SWQ_TIME ||
-                        psColDef->field_type == SWQ_TIMESTAMP ||
-                        psColDef->field_type == SWQ_STRING)
-                        m_poSummaryFeature->SetField(iField,
-                                                     oSummary.osMax.c_str());
-                    else
-                        m_poSummaryFeature->SetField(iField, oSummary.max);
-                }
-                else if (psColDef->col_func == SWQCF_COUNT)
-                    m_poSummaryFeature->SetField(iField, oSummary.count);
-                else if (psColDef->col_func == SWQCF_SUM && oSummary.count > 0)
-                    m_poSummaryFeature->SetField(iField, oSummary.sum());
             }
             else if (psColDef->col_func == SWQCF_COUNT)
                 m_poSummaryFeature->SetField(iField, 0);

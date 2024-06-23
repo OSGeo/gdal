@@ -63,11 +63,17 @@ typedef enum
     SWQ_CONCAT,
     SWQ_SUBSTR,
     SWQ_HSTORE_GET_VALUE,
+
     SWQ_AVG,
+    SWQ_AGGREGATE_BEGIN = SWQ_AVG,
     SWQ_MIN,
     SWQ_MAX,
     SWQ_COUNT,
     SWQ_SUM,
+    SWQ_STDDEV_POP,
+    SWQ_STDDEV_SAMP,
+    SWQ_AGGREGATE_END = SWQ_STDDEV_SAMP,
+
     SWQ_CAST,
     SWQ_CUSTOM_FUNC,  /* only if parsing done in bAcceptCustomFuncs mode */
     SWQ_ARGUMENT_LIST /* temporary value only set during parsing and replaced by
@@ -318,6 +324,8 @@ typedef enum
     SWQCF_MAX = SWQ_MAX,
     SWQCF_COUNT = SWQ_COUNT,
     SWQCF_SUM = SWQ_SUM,
+    SWQCF_STDDEV_POP = SWQ_STDDEV_POP,
+    SWQCF_STDDEV_SAMP = SWQ_STDDEV_SAMP,
     SWQCF_CUSTOM
 } swq_col_func;
 
@@ -374,6 +382,12 @@ class CPL_UNSTABLE_API swq_summary
     double sum_correction = 0.0;
     double min = 0.0;
     double max = 0.0;
+
+    // Welford's online algorithm for variance:
+    // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
+    double mean_for_variance = 0.0;
+    double sq_dist_from_mean_acc = 0.0;  // "M2"
+
     CPLString osMin{};
     CPLString osMax{};
 };

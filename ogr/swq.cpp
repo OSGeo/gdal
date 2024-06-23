@@ -534,14 +534,61 @@ const char *swq_select_summarize(swq_select *select_info, int dest_column,
                 summary.count++;
             break;
 
+        case SWQCF_STDDEV_POP:
+        case SWQCF_STDDEV_SAMP:
+        {
+            const auto UpdateVariance = [&summary](double dfValue)
+            {
+                // Welford's online algorithm for variance:
+                // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
+                summary.count++;
+                const double dfDelta = dfValue - summary.mean_for_variance;
+                summary.mean_for_variance += dfDelta / summary.count;
+                const double dfDelta2 = dfValue - summary.mean_for_variance;
+                summary.sq_dist_from_mean_acc += dfDelta * dfDelta2;
+            };
+
+            if (pdfValue)
+            {
+                UpdateVariance(*pdfValue);
+            }
+            else if (pszValue && pszValue[0] != '\0')
+            {
+                if (def->field_type == SWQ_DATE ||
+                    def->field_type == SWQ_TIME ||
+                    def->field_type == SWQ_TIMESTAMP)
+                {
+                    OGRField sField;
+                    if (OGRParseDate(pszValue, &sField, 0))
+                    {
+                        struct tm brokendowntime;
+                        brokendowntime.tm_year = sField.Date.Year - 1900;
+                        brokendowntime.tm_mon = sField.Date.Month - 1;
+                        brokendowntime.tm_mday = sField.Date.Day;
+                        brokendowntime.tm_hour = sField.Date.Hour;
+                        brokendowntime.tm_min = sField.Date.Minute;
+                        brokendowntime.tm_sec =
+                            static_cast<int>(sField.Date.Second);
+
+                        UpdateVariance(static_cast<double>(
+                            CPLYMDHMSToUnixTime(&brokendowntime)));
+                    }
+                }
+                else
+                {
+                    return "swq_select_summarize() - STDDEV() called on "
+                           "unexpected field type";
+                }
+            }
+
+            break;
+        }
+
         case SWQCF_NONE:
             break;
 
         case SWQCF_CUSTOM:
             return "swq_select_summarize() called on custom field function.";
-
-        default:
-            return "swq_select_summarize() - unexpected col_func";
     }
 
     return nullptr;

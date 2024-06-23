@@ -255,12 +255,14 @@ def test_ogr_sql_4(data_ds):
 def test_ogr_sql_5(data_ds):
 
     with data_ds.ExecuteSQL(
-        "select max(eas_id), min(eas_id), avg(eas_id), sum(eas_id), count(eas_id) from idlink"
+        "select max(eas_id), min(eas_id), avg(eas_id), STDDEV_POP(eas_id), STDDEV_SAMP(eas_id), sum(eas_id), count(eas_id) from idlink"
     ) as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         assert feat["max_eas_id"] == 179
         assert feat["min_eas_id"] == 158
         assert feat["avg_eas_id"] == pytest.approx(168.142857142857, abs=1e-12)
+        assert feat["STDDEV_POP_eas_id"] == pytest.approx(5.9384599116647205, rel=1e-15)
+        assert feat["STDDEV_SAMP_eas_id"] == pytest.approx(6.414269805898183, rel=1e-15)
         assert feat["count_eas_id"] == 7
         assert feat["sum_eas_id"] == 1177
 
@@ -789,10 +791,15 @@ def ds_for_invalid_statements():
         "SELECT MAX(foo) FROM my_layer",
         "SELECT SUM(foo) FROM my_layer",
         "SELECT AVG(foo) FROM my_layer",
+        "SELECT STDDEV_POP(foo) FROM my_layer",
+        "SELECT STDDEV_SAMP(foo) FROM my_layer",
         "SELECT SUM(strfield) FROM my_layer",
         "SELECT AVG(strfield) FROM my_layer",
         "SELECT AVG(intfield, intfield) FROM my_layer",
+        "SELECT STDDEV_POP(strfield) FROM my_layer",
+        "SELECT STDDEV_SAMP(strfield) FROM my_layer",
         "SELECT * FROM my_layer WHERE AVG(intfield) = 1",
+        "SELECT * FROM my_layer WHERE STDDEV_POP(intfield) = 1",
         "SELECT * FROM 'foo' foo",
         "SELECT * FROM my_layer WHERE strfield =",
         "SELECT * FROM my_layer WHERE strfield = foo",
@@ -1101,10 +1108,11 @@ def test_ogr_sql_count_and_null():
             assert feat.GetFieldAsInteger(2) == 4, fieldname
 
     with ds.ExecuteSQL(
-        "select avg(intfield) from layer where intfield is null"
+        "select avg(intfield), STDDEV_POP(intfield) from layer where intfield is null"
     ) as sql_lyr:
         feat = sql_lyr.GetNextFeature()
         assert feat.IsFieldSetAndNotNull(0) == 0
+        assert feat.IsFieldSetAndNotNull(1) == 0
 
     # Fix crash when first values is null (#4509)
     with ds.ExecuteSQL("select distinct strfield_first_null from layer") as sql_lyr:
