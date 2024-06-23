@@ -4265,24 +4265,35 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     oBuffer.assign(static_cast<char *>(pCompressed), nCompressedSize);
     CPLFree(pCompressed);
 
-    std::unique_ptr<std::lock_guard<std::mutex>> poLockGuard;
-    if (m_bThreadPoolOK)
-        poLockGuard = std::make_unique<std::lock_guard<std::mutex>>(m_oDBMutex);
+    const auto InsertIntoDb = [&]()
+    {
+        m_nTempTiles++;
+        sqlite3_bind_int(m_hInsertStmt, 1, nZ);
+        sqlite3_bind_int(m_hInsertStmt, 2, nTileX);
+        sqlite3_bind_int(m_hInsertStmt, 3, nTileY);
+        sqlite3_bind_text(m_hInsertStmt, 4, osTargetName.c_str(), -1,
+                          SQLITE_STATIC);
+        sqlite3_bind_int64(m_hInsertStmt, 5, nSerial);
+        sqlite3_bind_blob(m_hInsertStmt, 6, oBuffer.data(),
+                          static_cast<int>(oBuffer.size()), SQLITE_STATIC);
+        sqlite3_bind_int(m_hInsertStmt, 7,
+                         static_cast<int>(poGPBFeature->getType()));
+        sqlite3_bind_double(m_hInsertStmt, 8, dfAreaOrLength);
+        int rc = sqlite3_step(m_hInsertStmt);
+        sqlite3_reset(m_hInsertStmt);
+        return rc;
+    };
 
-    m_nTempTiles++;
-    sqlite3_bind_int(m_hInsertStmt, 1, nZ);
-    sqlite3_bind_int(m_hInsertStmt, 2, nTileX);
-    sqlite3_bind_int(m_hInsertStmt, 3, nTileY);
-    sqlite3_bind_text(m_hInsertStmt, 4, osTargetName.c_str(), -1,
-                      SQLITE_STATIC);
-    sqlite3_bind_int64(m_hInsertStmt, 5, nSerial);
-    sqlite3_bind_blob(m_hInsertStmt, 6, oBuffer.data(),
-                      static_cast<int>(oBuffer.size()), SQLITE_STATIC);
-    sqlite3_bind_int(m_hInsertStmt, 7,
-                     static_cast<int>(poGPBFeature->getType()));
-    sqlite3_bind_double(m_hInsertStmt, 8, dfAreaOrLength);
-    int rc = sqlite3_step(m_hInsertStmt);
-    sqlite3_reset(m_hInsertStmt);
+    int rc;
+    if (m_bThreadPoolOK)
+    {
+        std::lock_guard<std::mutex> oLock(m_oDBMutex);
+        rc = InsertIntoDb();
+    }
+    else
+    {
+        rc = InsertIntoDb();
+    }
 
     if (!(rc == SQLITE_OK || rc == SQLITE_DONE))
     {

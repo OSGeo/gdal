@@ -108,7 +108,7 @@ class VFKReader : public IVFKReader
     }
 
     int ReadDataBlocks(bool = false) override;
-    int ReadDataRecords(IVFKDataBlock * = nullptr) override;
+    int64_t ReadDataRecords(IVFKDataBlock * = nullptr) override;
     int LoadGeometry() override;
 
     int GetDataBlockCount() const override
@@ -166,7 +166,7 @@ class VFKReaderSQLite : public VFKReader
     }
 
     int ReadDataBlocks(bool = false) override;
-    int ReadDataRecords(IVFKDataBlock * = nullptr) override;
+    int64_t ReadDataRecords(IVFKDataBlock * = nullptr) override;
 
     sqlite3_stmt *PrepareStatement(const char *);
     OGRErr ExecuteSQL(const char *, CPLErr = CE_Failure);

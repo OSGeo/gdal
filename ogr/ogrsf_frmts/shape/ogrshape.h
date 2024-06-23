@@ -339,6 +339,7 @@ class OGRShapeDataSource final : public OGRDataSource
     VSILFILE *m_psLockFile = nullptr;
     CPLJoinableThread *m_hRefreshLockFileThread = nullptr;
     bool m_bExitRefreshLockFileThread = false;
+    bool m_bRefreshLockFileThreadStarted = false;
     double m_dfRefreshLockDelay = 0;
 
     std::vector<CPLString> GetLayerNames() const;

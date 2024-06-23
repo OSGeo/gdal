@@ -7043,7 +7043,9 @@ bool netCDFDataset::CloneGrp(int nOldGrpId, int nNewGrpId, bool bIsNC4,
     int nDimCount = -1;
     int status = nc_inq_ndims(nOldGrpId, &nDimCount);
     NCDF_ERR(status);
-    int *panDimIds = static_cast<int *>(CPLMalloc(sizeof(int) * nDimCount));
+    if (nDimCount < 0 || nDimCount > NC_MAX_DIMS)
+        return false;
+    int anDimIds[NC_MAX_DIMS];
     int nUnlimiDimID = -1;
     status = nc_inq_unlimdim(nOldGrpId, &nUnlimiDimID);
     NCDF_ERR(status);
@@ -7052,21 +7054,21 @@ bool netCDFDataset::CloneGrp(int nOldGrpId, int nNewGrpId, bool bIsNC4,
         // In NC4, the dimension ids of a group are not necessarily in
         // [0,nDimCount-1] range
         int nDimCount2 = -1;
-        status = nc_inq_dimids(nOldGrpId, &nDimCount2, panDimIds, FALSE);
+        status = nc_inq_dimids(nOldGrpId, &nDimCount2, anDimIds, FALSE);
         NCDF_ERR(status);
         CPLAssert(nDimCount == nDimCount2);
     }
     else
     {
         for (int i = 0; i < nDimCount; i++)
-            panDimIds[i] = i;
+            anDimIds[i] = i;
     }
     for (int i = 0; i < nDimCount; i++)
     {
         char szDimName[NC_MAX_NAME + 1];
         szDimName[0] = 0;
         size_t nLen = 0;
-        const int nDimId = panDimIds[i];
+        const int nDimId = anDimIds[i];
         status = nc_inq_dim(nOldGrpId, nDimId, szDimName, &nLen);
         NCDF_ERR(status);
         if (NCDFIsUnlimitedDim(bIsNC4, nOldGrpId, nDimId))
@@ -7079,11 +7081,9 @@ bool netCDFDataset::CloneGrp(int nOldGrpId, int nNewGrpId, bool bIsNC4,
         CPLAssert(nDimId == nNewDimId);
         if (status != NC_NOERR)
         {
-            CPLFree(panDimIds);
             return false;
         }
     }
-    CPLFree(panDimIds);
 
     // Clone main attributes
     if (!CloneAttributes(nOldGrpId, nNewGrpId, NC_GLOBAL, NC_GLOBAL))
@@ -7108,7 +7108,6 @@ bool netCDFDataset::CloneGrp(int nOldGrpId, int nNewGrpId, bool bIsNC4,
         int nVarDimCount = -1;
         status = nc_inq_varndims(nOldGrpId, i, &nVarDimCount);
         NCDF_ERR(status);
-        int anDimIds[NC_MAX_DIMS];
         status = nc_inq_vardimid(nOldGrpId, i, anDimIds);
         NCDF_ERR(status);
         int nNewVarId = -1;
@@ -10379,7 +10378,7 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
         NCDFSafeStrcat(&pszAttrValue, "{", &nAttrValueSize);
 
     double dfValue = 0.0;
-    size_t m;
+    size_t m = 0;
     char szTemp[256];
     bool bSetDoubleFromStr = false;
 
@@ -10398,10 +10397,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 CPLCalloc(nAttrLen, sizeof(signed char)));
             nc_get_att_schar(nCdfId, nVarId, pszAttrName, pscTemp);
             dfValue = static_cast<double>(pscTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                snprintf(szTemp, sizeof(szTemp), "%d,", pscTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    snprintf(szTemp, sizeof(szTemp), "%d,", pscTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             snprintf(szTemp, sizeof(szTemp), "%d", pscTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10414,10 +10416,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 static_cast<short *>(CPLCalloc(nAttrLen, sizeof(short)));
             nc_get_att_short(nCdfId, nVarId, pszAttrName, psTemp);
             dfValue = static_cast<double>(psTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                snprintf(szTemp, sizeof(szTemp), "%d,", psTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    snprintf(szTemp, sizeof(szTemp), "%d,", psTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             snprintf(szTemp, sizeof(szTemp), "%d", psTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10429,10 +10434,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
             int *pnTemp = static_cast<int *>(CPLCalloc(nAttrLen, sizeof(int)));
             nc_get_att_int(nCdfId, nVarId, pszAttrName, pnTemp);
             dfValue = static_cast<double>(pnTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                snprintf(szTemp, sizeof(szTemp), "%d,", pnTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    snprintf(szTemp, sizeof(szTemp), "%d,", pnTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             snprintf(szTemp, sizeof(szTemp), "%d", pnTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10445,10 +10453,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 static_cast<float *>(CPLCalloc(nAttrLen, sizeof(float)));
             nc_get_att_float(nCdfId, nVarId, pszAttrName, pfTemp);
             dfValue = static_cast<double>(pfTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), "%.8g,", pfTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    CPLsnprintf(szTemp, sizeof(szTemp), "%.8g,", pfTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             CPLsnprintf(szTemp, sizeof(szTemp), "%.8g", pfTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10461,10 +10472,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 static_cast<double *>(CPLCalloc(nAttrLen, sizeof(double)));
             nc_get_att_double(nCdfId, nVarId, pszAttrName, pdfTemp);
             dfValue = pdfTemp[0];
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), "%.16g,", pdfTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    CPLsnprintf(szTemp, sizeof(szTemp), "%.16g,", pdfTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             CPLsnprintf(szTemp, sizeof(szTemp), "%.16g", pdfTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10478,12 +10492,15 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
             nc_get_att_string(nCdfId, nVarId, pszAttrName, ppszTemp);
             bSetDoubleFromStr = true;
             dfValue = 0.0;
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                NCDFSafeStrcat(&pszAttrValue,
-                               ppszTemp[m] ? ppszTemp[m] : "{NULL}",
-                               &nAttrValueSize);
-                NCDFSafeStrcat(&pszAttrValue, ",", &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    NCDFSafeStrcat(&pszAttrValue,
+                                   ppszTemp[m] ? ppszTemp[m] : "{NULL}",
+                                   &nAttrValueSize);
+                    NCDFSafeStrcat(&pszAttrValue, ",", &nAttrValueSize);
+                }
             }
             NCDFSafeStrcat(&pszAttrValue, ppszTemp[m] ? ppszTemp[m] : "{NULL}",
                            &nAttrValueSize);
@@ -10497,10 +10514,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 CPLCalloc(nAttrLen, sizeof(unsigned char)));
             nc_get_att_uchar(nCdfId, nVarId, pszAttrName, pucTemp);
             dfValue = static_cast<double>(pucTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), "%u,", pucTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    CPLsnprintf(szTemp, sizeof(szTemp), "%u,", pucTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             CPLsnprintf(szTemp, sizeof(szTemp), "%u", pucTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10514,10 +10534,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 CPLCalloc(nAttrLen, sizeof(unsigned short)));
             nc_get_att_ushort(nCdfId, nVarId, pszAttrName, pusTemp);
             dfValue = static_cast<double>(pusTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), "%u,", pusTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    CPLsnprintf(szTemp, sizeof(szTemp), "%u,", pusTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             CPLsnprintf(szTemp, sizeof(szTemp), "%u", pusTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10530,10 +10553,13 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 static_cast<unsigned int *>(CPLCalloc(nAttrLen, sizeof(int)));
             nc_get_att_uint(nCdfId, nVarId, pszAttrName, punTemp);
             dfValue = static_cast<double>(punTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), "%u,", punTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    CPLsnprintf(szTemp, sizeof(szTemp), "%u,", punTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             CPLsnprintf(szTemp, sizeof(szTemp), "%u", punTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10546,11 +10572,14 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 static_cast<GIntBig *>(CPLCalloc(nAttrLen, sizeof(GIntBig)));
             nc_get_att_longlong(nCdfId, nVarId, pszAttrName, panTemp);
             dfValue = static_cast<double>(panTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GIB ",",
-                            panTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GIB ",",
+                                panTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GIB, panTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
@@ -10563,11 +10592,14 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
                 static_cast<GUIntBig *>(CPLCalloc(nAttrLen, sizeof(GUIntBig)));
             nc_get_att_ulonglong(nCdfId, nVarId, pszAttrName, panTemp);
             dfValue = static_cast<double>(panTemp[0]);
-            for (m = 0; m < nAttrLen - 1; m++)
+            if (nAttrLen > 1)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GUIB ",",
-                            panTemp[m]);
-                NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                for (m = 0; m < nAttrLen - 1; m++)
+                {
+                    CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GUIB ",",
+                                panTemp[m]);
+                    NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
+                }
             }
             CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GUIB, panTemp[m]);
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);

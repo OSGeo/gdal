@@ -3413,7 +3413,7 @@ TEST_F(test_gdal, gtiff_ReadCompressedData)
                   CE_None);
         EXPECT_EQ(nGotSize, nNeededSize);
         EXPECT_NE(pBuffer, nullptr);
-        if (pBuffer != nullptr && nGotSize == nNeededSize)
+        if (pBuffer != nullptr && nGotSize == nNeededSize && nNeededSize >= 2)
         {
             const GByte *pabyBuffer = static_cast<GByte *>(pBuffer);
             EXPECT_EQ(pabyBuffer[0], 0xFF);

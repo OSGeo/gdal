@@ -2117,8 +2117,11 @@ void GTiffDataset::Crystalize()
     }
     else
     {
-        TIFFSetDirectory(
-            m_hTIFF, static_cast<tdir_t>(TIFFNumberOfDirectories(m_hTIFF) - 1));
+        const tdir_t nNumberOfDirs = TIFFNumberOfDirectories(m_hTIFF);
+        if (nNumberOfDirs > 0)
+        {
+            TIFFSetDirectory(m_hTIFF, static_cast<tdir_t>(nNumberOfDirs - 1));
+        }
     }
 
     RestoreVolatileParameters(m_hTIFF);

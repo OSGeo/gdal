@@ -474,7 +474,7 @@ int CPLPipeRead(CPL_FILE_HANDLE fin, void *data, int length)
     {
         while (true)
         {
-            const int n = static_cast<int>(read(fin, pabyData, nRemain));
+            const auto n = read(fin, pabyData, nRemain);
             if (n < 0)
             {
                 if (errno == EINTR)
@@ -485,7 +485,7 @@ int CPLPipeRead(CPL_FILE_HANDLE fin, void *data, int length)
             else if (n == 0)
                 return FALSE;
             pabyData += n;
-            nRemain -= n;
+            nRemain -= static_cast<int>(n);
             break;
         }
     }
@@ -515,7 +515,7 @@ int CPLPipeWrite(CPL_FILE_HANDLE fout, const void *data, int length)
     {
         while (true)
         {
-            const int n = static_cast<int>(write(fout, pabyData, nRemain));
+            const auto n = write(fout, pabyData, nRemain);
             if (n < 0)
             {
                 if (errno == EINTR)
@@ -524,7 +524,7 @@ int CPLPipeWrite(CPL_FILE_HANDLE fout, const void *data, int length)
                     return FALSE;
             }
             pabyData += n;
-            nRemain -= n;
+            nRemain -= static_cast<int>(n);
             break;
         }
     }
