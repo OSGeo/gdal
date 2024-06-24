@@ -1206,12 +1206,58 @@ def test_ogr2ogr_lib_clipsrc_discard_lower_dimensionality():
 
 
 ###############################################################################
-# Test -clipsrc with a clip layer with an invalid polygon
+# Test -clipsrc/-clipdst with a clip layer with an invalid polygon (specified "inline" as WKT)
+
+
+@pytest.mark.require_geos
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("clipSrc", [True, False])
+def test_ogr2ogr_lib_clip_invalid_polygon_inline(tmp_vsimem, clipSrc):
+
+    srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srcLayer = srcDS.CreateLayer("test", srs=srs, geom_type=ogr.wkbLineString)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0.25 0.25)"))
+    srcLayer.CreateFeature(f)
+    f = ogr.Feature(srcLayer.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(-0.5 0.5)"))
+    srcLayer.CreateFeature(f)
+
+    # Intersection of above geometry with clipSrc bounding box is a point
+    with pytest.raises(Exception, match="geometry is invalid"):
+        gdal.VectorTranslate(
+            "",
+            srcDS,
+            format="Memory",
+            clipSrc="POLYGON((0 0,1 1,0 1,1 0,0 0))" if clipSrc else None,
+            clipDst="POLYGON((0 0,1 1,0 1,1 0,0 0))" if not clipSrc else None,
+        )
+
+    with gdal.quiet_errors():
+        ds = gdal.VectorTranslate(
+            "",
+            srcDS,
+            format="Memory",
+            makeValid=True,
+            clipSrc="POLYGON((0 0,1 1,0 1,1 0,0 0))" if clipSrc else None,
+            clipDst="POLYGON((0 0,1 1,0 1,1 0,0 0))" if not clipSrc else None,
+        )
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+    ds = None
+
+
+###############################################################################
+# Test -clipsrc with a clip layer with an invalid polygon (in a dataset)
 
 
 @pytest.mark.require_driver("GPKG")
-@pytest.mark.require_geos(3, 8)
-def test_ogr2ogr_lib_clipsrc_invalid_polygon(tmp_vsimem):
+@pytest.mark.require_geos
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("clipSrc", [True, False])
+def test_ogr2ogr_lib_clip_invalid_polygon(tmp_vsimem, clipSrc):
 
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
@@ -1235,8 +1281,24 @@ def test_ogr2ogr_lib_clipsrc_invalid_polygon(tmp_vsimem):
     clip_ds = None
 
     # Intersection of above geometry with clipSrc bounding box is a point
+    with pytest.raises(Exception, match=r"cannot load.*clip geometry"):
+        gdal.VectorTranslate(
+            "",
+            srcDS,
+            format="Memory",
+            clipSrc=clip_path if clipSrc else None,
+            clipDst=clip_path if not clipSrc else None,
+        )
+
     with gdal.quiet_errors():
-        ds = gdal.VectorTranslate("", srcDS, format="Memory", clipSrc=clip_path)
+        ds = gdal.VectorTranslate(
+            "",
+            srcDS,
+            format="Memory",
+            makeValid=True,
+            clipSrc=clip_path if clipSrc else None,
+            clipDst=clip_path if not clipSrc else None,
+        )
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
     ds = None
@@ -1247,7 +1309,7 @@ def test_ogr2ogr_lib_clipsrc_invalid_polygon(tmp_vsimem):
 
 
 @pytest.mark.require_driver("GPKG")
-@pytest.mark.require_geos(3, 8)
+@pytest.mark.require_geos
 def test_ogr2ogr_lib_clipsrc_3d_polygon(tmp_vsimem):
 
     srcDS = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
@@ -1417,7 +1479,7 @@ def test_ogr2ogr_lib_clipdst_discard_lower_dimensionality():
 
 
 ###############################################################################
-# Test /-clipsrc-clipdst with reprojection
+# Test -clipsrc / -clipdst with reprojection
 
 
 @pytest.mark.require_geos
