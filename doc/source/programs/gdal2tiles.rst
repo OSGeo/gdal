@@ -264,7 +264,7 @@ WEBP options
 WEBP tiledriver support is new to GDAL 3.6. It is enabled by using --tiledriver=WEBP.
 
 
-The following configuration options are available to further customize the webp output:
+The following configuration options are available to further customize the WebP output:
 
 .. option:: --webp-quality=<QUALITY>
 
@@ -288,7 +288,7 @@ JPEG tiledriver support is new to GDAL 3.9. It is enabled by using --tiledriver=
 Note that JPEG does not support transparency, hence edge tiles will display black
 pixels in areas not covered by the source raster.
 
-The following configuration options are available to further customize the webp output:
+The following configuration options are available to further customize the JPEG output:
 
 .. option:: ---jpeg-quality=JPEG_QUALITY
 
