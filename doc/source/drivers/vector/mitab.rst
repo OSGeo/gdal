@@ -150,8 +150,14 @@ The following layer creation options are supported:
       Define the encoding for field
       names and field values. The encoding name is specified in the format
       supported by :cpp:func:`CPLRecode` (e.g. ISO-8859-1, CP1251, CP1252 ...) and
-      internally converted to MapInfo charsets names. Default value is ''
+      internally converted to MapInfo charsets names. Default value is '' (empty string)
       that equals to 'Neutral' MapInfo charset.
+
+      Currently supported values for the encoding name are:
+
+      .. csv-table:: MapInfo encodings
+        :file: mapinfo_encodings.csv
+        :header-rows: 1
 
 -  .. lco:: DESCRIPTION
       :since: 3.1.0
