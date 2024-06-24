@@ -616,7 +616,8 @@ static OGRLayer *GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
 static std::unique_ptr<OGRGeometry> LoadGeometry(const std::string &osDS,
                                                  const std::string &osSQL,
                                                  const std::string &osLyr,
-                                                 const std::string &osWhere)
+                                                 const std::string &osWhere,
+                                                 bool bMakeValid)
 {
     auto poDS = std::unique_ptr<GDALDataset>(
         GDALDataset::Open(osDS.c_str(), GDAL_OF_VECTOR));
@@ -661,6 +662,16 @@ static std::unique_ptr<OGRGeometry> LoadGeometry(const std::string &osDS,
             {
                 if (!poSrcGeom->IsValid())
                 {
+                    if (!bMakeValid)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Geometry of feature " CPL_FRMT_GIB " of %s "
+                                 "is invalid. You can try to make it valid by "
+                                 "specifying -makevalid",
+                                 poFeat->GetFID(), osDS.c_str());
+                        oGC.empty();
+                        break;
+                    }
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Geometry of feature " CPL_FRMT_GIB " of %s "
                              "is invalid. Trying to make it valid",
@@ -2302,7 +2313,8 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     {
         psOptions->poClipSrc =
             LoadGeometry(psOptions->osClipSrcDS, psOptions->osClipSrcSQL,
-                         psOptions->osClipSrcLayer, psOptions->osClipSrcWhere);
+                         psOptions->osClipSrcLayer, psOptions->osClipSrcWhere,
+                         psOptions->bMakeValid);
         if (psOptions->poClipSrc == nullptr)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
@@ -2328,18 +2340,57 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             *pbUsageError = TRUE;
         return nullptr;
     }
+    if (psOptions->poClipSrc && !psOptions->poClipSrc->IsValid())
+    {
+        if (!psOptions->bMakeValid)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "-clipsrc geometry is invalid. You can try to make it "
+                     "valid with -makevalid");
+            return nullptr;
+        }
+        auto poValid =
+            std::unique_ptr<OGRGeometry>(psOptions->poClipSrc->MakeValid());
+        if (!poValid)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "-clipsrc geometry is invalid and cannot be made valid");
+            return nullptr;
+        }
+        psOptions->poClipSrc = std::move(poValid);
+    }
 
     if (!psOptions->osClipDstDS.empty())
     {
         psOptions->poClipDst =
             LoadGeometry(psOptions->osClipDstDS, psOptions->osClipDstSQL,
-                         psOptions->osClipDstLayer, psOptions->osClipDstWhere);
+                         psOptions->osClipDstLayer, psOptions->osClipDstWhere,
+                         psOptions->bMakeValid);
         if (psOptions->poClipDst == nullptr)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "cannot load dest clip geometry");
             return nullptr;
         }
+    }
+    if (psOptions->poClipDst && !psOptions->poClipDst->IsValid())
+    {
+        if (!psOptions->bMakeValid)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "-clipdst geometry is invalid. You can try to make it "
+                     "valid with -makevalid");
+            return nullptr;
+        }
+        auto poValid =
+            std::unique_ptr<OGRGeometry>(psOptions->poClipDst->MakeValid());
+        if (!poValid)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "-clipdst geometry is invalid and cannot be made valid");
+            return nullptr;
+        }
+        psOptions->poClipDst = std::move(poValid);
     }
 
     GDALDataset *poDS = GDALDataset::FromHandle(hSrcDS);
@@ -7708,9 +7759,10 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                 psOptions->poClipSrc.reset(poGeom);
                 if (psOptions->poClipSrc == nullptr)
                 {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid geometry. Must be a valid POLYGON or "
-                             "MULTIPOLYGON WKT");
+                    CPLError(
+                        CE_Failure, CPLE_IllegalArg,
+                        "Invalid -clipsrc geometry. Must be a valid POLYGON or "
+                        "MULTIPOLYGON WKT");
                     return nullptr;
                 }
             }
@@ -7762,9 +7814,10 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                 psOptions->poClipDst.reset(poGeom);
                 if (psOptions->poClipDst == nullptr)
                 {
-                    CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid geometry. Must be a valid POLYGON or "
-                             "MULTIPOLYGON WKT");
+                    CPLError(
+                        CE_Failure, CPLE_IllegalArg,
+                        "Invalid -clipdst geometry. Must be a valid POLYGON or "
+                        "MULTIPOLYGON WKT");
                     return nullptr;
                 }
             }
@@ -7812,6 +7865,8 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
     catch (const std::exception &err)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "%s", err.what());
+        if (psOptionsForBinary)
+            psOptionsForBinary->bShowUsageIfError = true;
         return nullptr;
     }
 }
