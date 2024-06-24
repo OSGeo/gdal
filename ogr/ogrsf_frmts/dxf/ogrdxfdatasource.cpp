@@ -100,26 +100,44 @@ OGRLayer *OGRDXFDataSource::GetLayer(int iLayer)
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRDXFDataSource::Open(const char *pszFilename, int bHeaderOnly)
+int OGRDXFDataSource::Open(const char *pszFilename, bool bHeaderOnly,
+                           CSLConstList papszOptionsIn)
 
 {
     osEncoding = CPL_ENC_ISO8859_1;
 
     osName = pszFilename;
 
-    bInlineBlocks =
-        CPLTestBool(CPLGetConfigOption("DXF_INLINE_BLOCKS", "TRUE"));
-    bMergeBlockGeometries =
-        CPLTestBool(CPLGetConfigOption("DXF_MERGE_BLOCK_GEOMETRIES", "TRUE"));
-    bTranslateEscapeSequences = CPLTestBool(
-        CPLGetConfigOption("DXF_TRANSLATE_ESCAPE_SEQUENCES", "TRUE"));
-    bIncludeRawCodeValues =
-        CPLTestBool(CPLGetConfigOption("DXF_INCLUDE_RAW_CODE_VALUES", "FALSE"));
-    b3DExtensibleMode =
-        CPLTestBool(CPLGetConfigOption("DXF_3D_EXTENSIBLE_MODE", "FALSE"));
+    bInlineBlocks = CPLTestBool(
+        CSLFetchNameValueDef(papszOptionsIn, "INLINE_BLOCKS",
+                             CPLGetConfigOption("DXF_INLINE_BLOCKS", "TRUE")));
+    bMergeBlockGeometries = CPLTestBool(CSLFetchNameValueDef(
+        papszOptionsIn, "MERGE_BLOCK_GEOMETRIES",
+        CPLGetConfigOption("DXF_MERGE_BLOCK_GEOMETRIES", "TRUE")));
 
+    bTranslateEscapeSequences = CPLTestBool(CSLFetchNameValueDef(
+        papszOptionsIn, "TRANSLATE_ESCAPE_SEQUENCES",
+        CPLGetConfigOption("DXF_TRANSLATE_ESCAPE_SEQUENCES", "TRUE")));
+
+    bIncludeRawCodeValues = CPLTestBool(CSLFetchNameValueDef(
+        papszOptionsIn, "INCLUDE_RAW_CODE_VALUES",
+        CPLGetConfigOption("DXF_INCLUDE_RAW_CODE_VALUES", "FALSE")));
+
+    b3DExtensibleMode = CPLTestBool(CSLFetchNameValueDef(
+        papszOptionsIn, "3D_EXTENSIBLE_MODE",
+        CPLGetConfigOption("DXF_3D_EXTENSIBLE_MODE", "FALSE")));
+
+    m_bClosedLineAsPolygon = CPLTestBool(CSLFetchNameValueDef(
+        papszOptionsIn, "CLOSED_LINE_AS_POLYGON",
+        CPLGetConfigOption("DXF_CLOSED_LINE_AS_POLYGON", "FALSE")));
+
+    m_dfHatchTolerance = CPLAtof(
+        CSLFetchNameValueDef(papszOptionsIn, "HATCH_TOLERANCE",
+                             CPLGetConfigOption("DXF_HATCH_TOLERANCE", "-1")));
+
+    // Only for debugging
     if (CPLTestBool(CPLGetConfigOption("DXF_HEADER_ONLY", "FALSE")))
-        bHeaderOnly = TRUE;
+        bHeaderOnly = true;
 
     /* -------------------------------------------------------------------- */
     /*      Open the file.                                                  */
@@ -151,7 +169,9 @@ int OGRDXFDataSource::Open(const char *pszFilename, int bHeaderOnly)
      */
     else if (EQUAL(szLineBuf, "TABLES"))
     {
-        osEncoding = CPLGetConfigOption("DXF_ENCODING", osEncoding);
+        osEncoding = CSLFetchNameValueDef(
+            papszOptionsIn, "ENCODING",
+            CPLGetConfigOption("DXF_ENCODING", osEncoding));
 
         if (!ReadTablesSection())
             return FALSE;

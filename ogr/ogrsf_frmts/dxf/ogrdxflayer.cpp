@@ -1170,11 +1170,15 @@ OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
     /* -------------------------------------------------------------------- */
     /*      Close polyline if necessary.                                    */
     /* -------------------------------------------------------------------- */
-    if (nPolylineFlag & 0x01)
+    const bool bIsClosed = (nPolylineFlag & 0x01) != 0;
+    if (bIsClosed)
         smoothPolyline.Close();
 
+    const bool bAsPolygon = bIsClosed && poDS->ClosedLineAsPolygon();
+
     smoothPolyline.SetUseMaxGapWhenTessellatingArcs(poDS->InlineBlocks());
-    auto poGeom = std::unique_ptr<OGRGeometry>(smoothPolyline.Tessellate());
+    auto poGeom =
+        std::unique_ptr<OGRGeometry>(smoothPolyline.Tessellate(bAsPolygon));
     poFeature->ApplyOCSTransformer(poGeom.get());
     poFeature->SetGeometryDirectly(poGeom.release());
 
@@ -1419,11 +1423,14 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
     /* -------------------------------------------------------------------- */
     /*      Close polyline if necessary.                                    */
     /* -------------------------------------------------------------------- */
-    if (nPolylineFlag & 0x01)
+    const bool bIsClosed = (nPolylineFlag & 0x01) != 0;
+    if (bIsClosed)
         smoothPolyline.Close();
 
+    const bool bAsPolygon = bIsClosed && poDS->ClosedLineAsPolygon();
+
     smoothPolyline.SetUseMaxGapWhenTessellatingArcs(poDS->InlineBlocks());
-    OGRGeometry *poGeom = smoothPolyline.Tessellate();
+    OGRGeometry *poGeom = smoothPolyline.Tessellate(bAsPolygon);
 
     if ((nPolylineFlag & 8) == 0)
         poFeature->ApplyOCSTransformer(poGeom);

@@ -189,6 +189,8 @@ class OGRDWGDataSource final : public OGRDataSource
     int bAttributes;
     int bAllAttributes;
 
+    bool m_bClosedLineAsPolygon = false;
+
     OGRDWGServices *poServices;
     OdDbDatabasePtr poDb;
 
@@ -233,6 +235,11 @@ class OGRDWGDataSource final : public OGRDataSource
     int AllAttributes()
     {
         return bAllAttributes;
+    }
+
+    bool ClosedLineAsPolygon() const
+    {
+        return m_bClosedLineAsPolygon;
     }
 
     void AddStandardFields(OGRFeatureDefn *poDef);

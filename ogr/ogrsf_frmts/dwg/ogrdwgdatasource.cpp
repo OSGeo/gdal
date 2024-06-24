@@ -100,6 +100,8 @@ int OGRDWGDataSource::Open(OGRDWGServices *poServicesIn,
     bAttributes = CPLTestBool(CPLGetConfigOption("DWG_ATTRIBUTES", "FALSE"));
     bAllAttributes =
         CPLTestBool(CPLGetConfigOption("DWG_ALL_ATTRIBUTES", "TRUE"));
+    m_bClosedLineAsPolygon =
+        CPLTestBool(CPLGetConfigOption("DWG_CLOSED_LINE_AS_POLYGON", "FALSE"));
 
     /* -------------------------------------------------------------------- */
     /*      Open the file.                                                  */

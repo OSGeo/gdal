@@ -114,7 +114,7 @@ class DXFSmoothPolyline
     {
     }
 
-    OGRGeometry *Tessellate() const;
+    OGRGeometry *Tessellate(bool bAsPolygon) const;
 
     size_t size() const
     {

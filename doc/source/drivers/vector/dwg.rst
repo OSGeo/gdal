@@ -85,6 +85,14 @@ The following configuration options are available:
      :config:`DWG_ALL_ATTRIBUTES` to TRUE value (this is the
      default value).
 
+- .. config:: DWG_CLOSED_LINE_AS_POLYGON
+     :choices: TRUE, FALSE
+     :default: FALSE
+     :since: 3.10
+
+     This option can be set to TRUE specified to ask for closed POLYLINE and
+     LWPOLYLINE to be exposed as OGR polygons.
+
 Building
 --------
 
