@@ -667,20 +667,33 @@ static std::unique_ptr<OGRGeometry> LoadGeometry(const std::string &osDS,
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "Geometry of feature " CPL_FRMT_GIB " of %s "
                                  "is invalid. You can try to make it valid by "
-                                 "specifying -makevalid",
+                                 "specifying -makevalid, but the results of "
+                                 "the operation should be manually inspected.",
                                  poFeat->GetFID(), osDS.c_str());
                         oGC.empty();
                         break;
                     }
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Geometry of feature " CPL_FRMT_GIB " of %s "
-                             "is invalid. Trying to make it valid",
-                             poFeat->GetFID(), osDS.c_str());
                     auto poValid =
                         std::unique_ptr<OGRGeometry>(poSrcGeom->MakeValid());
                     if (poValid)
                     {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Geometry of feature " CPL_FRMT_GIB " of %s "
+                                 "was invalid and has been made valid, "
+                                 "but the results of the operation "
+                                 "should be manually inspected.",
+                                 poFeat->GetFID(), osDS.c_str());
+
                         oGC.addGeometryDirectly(poValid.release());
+                    }
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Geometry of feature " CPL_FRMT_GIB " of %s "
+                                 "is invalid, and could not been made valid.",
+                                 poFeat->GetFID(), osDS.c_str());
+                        oGC.empty();
+                        break;
                     }
                 }
                 else
@@ -2346,7 +2359,8 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "-clipsrc geometry is invalid. You can try to make it "
-                     "valid with -makevalid");
+                     "valid with -makevalid, but the results of the operation "
+                     "should be manually inspected.");
             return nullptr;
         }
         auto poValid =
@@ -2354,9 +2368,13 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         if (!poValid)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
-                     "-clipsrc geometry is invalid and cannot be made valid");
+                     "-clipsrc geometry is invalid and cannot be made valid.");
             return nullptr;
         }
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "-clipsrc geometry was invalid and has been made valid, "
+                 "but the results of the operation "
+                 "should be manually inspected.");
         psOptions->poClipSrc = std::move(poValid);
     }
 
@@ -2379,7 +2397,8 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "-clipdst geometry is invalid. You can try to make it "
-                     "valid with -makevalid");
+                     "valid with -makevalid, but the results of the operation "
+                     "should be manually inspected.");
             return nullptr;
         }
         auto poValid =
@@ -2387,9 +2406,13 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         if (!poValid)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
-                     "-clipdst geometry is invalid and cannot be made valid");
+                     "-clipdst geometry is invalid and cannot be made valid.");
             return nullptr;
         }
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "-clipdst geometry was invalid and has been made valid, "
+                 "but the results of the operation "
+                 "should be manually inspected.");
         psOptions->poClipDst = std::move(poValid);
     }
 
