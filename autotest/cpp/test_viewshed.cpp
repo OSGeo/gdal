@@ -200,28 +200,6 @@ TEST(Viewshed, simple_height)
 // Addresses cases in #9501
 TEST(Viewshed, dem_vs_ground)
 {
-    // Run gdal_viewshed on the input 8 x 1 array.
-    /**
-    auto process = [](const std::array<int8_t, 8> &in, Viewshed::Options &opts)
-    {
-        Viewshed v(opts);
-
-        GDALDriver *driver = (GDALDriver *)GDALGetDriverByName("MEM");
-        // 8 cols x 1 row
-        GDALDataset *dataset = driver->Create("", 8, 1, 1, GDT_Int8, nullptr);
-        EXPECT_TRUE(dataset);
-        dataset->SetGeoTransform(identity.data());
-        GDALRasterBand *band = dataset->GetRasterBand(1);
-        EXPECT_TRUE(band);
-        CPLErr err = band->RasterIO(GF_Write, 0, 0, 8, 1, (void *)in.data(), 8,
-                                    1, GDT_Int8, 0, 0, nullptr);
-        EXPECT_EQ(err, CE_None);
-
-        EXPECT_TRUE(v.run(band));
-        return v.output();
-    };
-    **/
-
     // Run gdal_viewshed on the input 8 x 1 array in both ground and dem mode and
     // verify the results are what are expected.
     auto run = [](const std::array<int8_t, 8> &in, Coord observer,
